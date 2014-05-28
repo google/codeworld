@@ -1,0 +1,32 @@
+name:                codeworld-base
+version:             0.1.0.0
+synopsis:            Replacement base module for CodeWorld
+description:         This module replaces base when building CodeWorld apps.
+                     It simplifies the Haskell Prelude to remove the use of
+                     numeric type classes and unify some types.
+license:             BSD3
+license-file:        LICENSE
+author:              Chris Smith <cdsmith@gmail.com>
+maintainer:          Chris Smith <cdsmith@gmail.com>
+build-type:          Simple
+cabal-version:       >=1.8
+
+library
+  exposed-modules:     Prelude
+  other-modules:       Internal.Num,
+                       Internal.Prelude,
+                       Internal.Text,
+                       Internal.Color,
+                       Internal.Picture,
+                       Internal.Event,
+                       Internal.CodeWorld
+  build-depends:       base,
+                       ghcjs-base,
+                       ghcjs-dom,
+                       ghcjs-canvas,
+                       mtl,
+                       random,
+                       text,
+                       time
+  exposed:             False
+  ghc-options:         -O2

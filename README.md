@@ -19,7 +19,7 @@ This is a list of ideas for how to make this awesome.
 
 * Editor: CodeMirror, compile, auto-complete, refactoring (rename, duplicate, ...).
 * Documentation: browsable haddock, doc-on-hover.
-* Workspace: save on server, project switcher.
+* Workspace: save on server, project switcher, library projects.
 * Social: browse public projects, share with friends, comment on others' projects.
 * Collaboration: import libraries across users, joint projects.
 * Debugging: point-pins, scale-zoom controls, time-step debugger, NOT a language debugger.

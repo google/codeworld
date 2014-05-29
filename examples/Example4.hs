@@ -32,8 +32,10 @@ event (MouseRelease _ (x,y)) (Playing (Dragging p t) obstacles health tool gy g 
     then Playing NotDragging obstacles health t gy g angle 0
     else Playing NotDragging obstacles health tool gy g angle age
  
-event (MouseMovement (x,y)) (Playing NotDragging obstacles health tool gy g angle age) = Playing NotDragging obstacles health tool gy g angle age
-event (MouseMovement (x,y)) (Playing (Dragging p t) obstacles health tool gy g angle age) = Playing (Dragging (x,y) t) obstacles health tool gy g angle age
+event (MouseMovement (x,y)) (Playing NotDragging obstacles health tool gy g angle age) =
+    Playing NotDragging obstacles health tool gy g angle age
+event (MouseMovement (x,y)) (Playing (Dragging p t) obstacles health tool gy g angle age) =
+    Playing (Dragging (x,y) t) obstacles health tool gy g angle age
  
 event e w = w
  
@@ -52,16 +54,16 @@ checkDead (Playing drag obstacles health tool y g angle age) =
     else Playing drag obstacles health tool y g angle age
  
 addObstacles :: Number -> World -> World
-addObstacles dt (Playing drag obstacles health tool y (t:j:rs) angle age) = Playing drag newObstacles health tool y rs angle age
+addObstacles dt (Playing drag obstacles health tool y (t:j:rs) angle age) = Playing drag newObstacles health tool y rs' angle age
     where newObstacles = if t < dt / 5
                          then obstacles ++ [newObstacle]
                          else obstacles
           choice            = floor (5*j)
-          (newObstacle,rs') = if j == 0 then (newRock, rs)
-                             else if j == 1 then (newTree, rs)
-                             else if j == 2 then newBird rs
-                             else if j == 3 then newWorm rs
-                             else newCar rs
+          (newObstacle,rs') = if choice == 0 then (newRock, rs)
+                              else if choice == 1 then (newTree, rs)
+                              else if choice == 2 then newBird rs
+                              else if choice == 3 then newWorm rs
+                              else newCar rs
 
 newRock :: Obstacle
 newRock  = Obstacle (300,-50) (-30) Rock
@@ -120,7 +122,7 @@ draw (Splash g) = titleScreen
 
 drawBackground = pictures [
                fullPic,
-               color (dark(dark(dark violet))) (solidRectangle 500 500)
+               color (dark violet) (solidRectangle 500 500)
                ]
 drawObstacles obs = pictures [ translate x y (drawObstacle t) | (Obstacle (x,y) xs t) <- obs ]
 
@@ -247,7 +249,7 @@ wing1 = color (light (light blue)) (polygon [
 wing2 = rotate (-45) (scale (-1) 1 (wing1))
  
 eye = color blue (translate (-15) (-9) (solidCircle 2))
- 
+
 mouth = color (dark red) (line [
         (-11,-13),
         (-13,-15)
@@ -314,20 +316,19 @@ bulk = pictures [
        ]
  
 worm    = pictures [hat, wormF]
- 
-wormF   = color wcolor (pictures [eye1,eye2,part1,part2,part3,part4,part5])
- 
+
+wormF   = eye1 & eye2 & color brown (pictures [part1,part2,part3,part4,part5])
+
 part1   = solidCircle 20
 part2   = translate 20 (-10) (solidCircle 20)
 part3   = translate (-20) (-10) (solidCircle 20)
 part4   = translate 25 5 (part2)
 part5   = translate (-25) 5 (part3)
- 
+
 eye1    = color black (translate 40 0 (solidCircle 5))
 eye2    = color black (translate 55 0 (solidCircle 5))
- 
- 
-hat     = translate 47 35 (pictures [top,bottom,flower])
+
+hat     = translate 47 35 (pictures [flower, bottom, top])
 top     = solidRectangle 25 50
 bottom  = translate 0 (-20) (scale 2 1 (solidCircle 10))
 flower  = pictures [petals,center]
@@ -339,12 +340,7 @@ petal1  = color violet (translate 5 5 (solidCircle 5))
 petal2  = color violet (translate 5 (-5) (solidCircle 5))
 petal3  = color violet (translate (-5) 5 (solidCircle 5))
 petal4  = color violet (translate (-5) (-5) (solidCircle 5))
- 
-wcolor  = dark (dark (dark orange))
- 
- 
- 
- 
+
 titleScreen = pictures [
               title,
               needle2,

@@ -22,7 +22,7 @@ Building CodeWorld is, unfortunately, an involved process at the moment.  Here a
 3. Get GHCJS itself (https://github.com/ghcjs/ghcjs) and `cabal install`.
 4. Run `ghcjs-boot --init`.
 5. Check out ghcjs-dom (https://github.com/ghcjs/ghcjs-dom) and install it with `cabal install --ghcjs`.
-6. Check out ghcjs-canvas (https://github.com/ghcjs/ghcjs-canvas), fix the definitions of textAlign and textBaseline in the obvious way, and install it with `cabal install --ghcjs`.
+6. Check out ghcjs-canvas (https://github.com/ghcjs/ghcjs-canvas) and install it with `cabal install --ghcjs`.
 7. Check out codeworld (this repo), and install the codeworld-base package inside with `cabal install --ghcjs`.
 8. Install warp-static: `cabal install warp-static`.
 9. Change to the examples directory, and build and run: `./build Example4` and `./run Example4`
@@ -34,7 +34,7 @@ Feature Requests
 This is a list of ideas for how to make this awesome.
 
 * Editor: CodeMirror, compile, auto-complete, refactoring (rename, duplicate, ...).
-* Documentation: browsable haddock, doc-on-hover.
+* Documentation: browsable haddock, doc-on-hover, browsable examples.
 * Workspace: save on server, project switcher, library projects.
 * Social: browse public projects, share with friends, comment on others' projects.
 * Collaboration: import libraries across users, joint projects.

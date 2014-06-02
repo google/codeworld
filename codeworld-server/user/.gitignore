@@ -1,3 +1,5 @@
+*.hs
+*.err.txt
 *.o
 *.hi
 *.js_o

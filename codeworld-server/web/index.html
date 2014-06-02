@@ -2,11 +2,12 @@
 
 <html>
   <head>
+    <script src="codeworld.js"></script>
     <script src="codemirror-compressed.js"></script>
     <script type="text/javascript">
       function init() {
         var editor = document.getElementById('editor');
-        var myCodeMirror = CodeMirror.fromTextArea(editor, {
+        window.codeworldEditor = CodeMirror.fromTextArea(editor, {
           mode: 'haskell',
           lineNumbers: true,
           autofocus: true,
@@ -111,12 +112,14 @@
         background-color: #e5eff9;
         margin: 0px;
         display: flex;
+        align-items: stretch;
       }
 
       #source {
         flex: 1 0 500px;
         position:relative;
       }
+
       #source .CodeMirror {
         position:absolute;
         top: 0;
@@ -127,24 +130,69 @@
         height: auto;
       }
 
+      #result {
+        flex: 0 0 508px;
+        display: flex;
+        align-items: stretch;
+        flex-direction: column;
+        margin: 0px;
+      }
+
       #runner {
         flex: 0 0 500px;
       }
 
+      #message {
+        flex: 1 1 auto;
+        overflow: auto;
+      }
+      #message.error {
+        background-color: #fcc;
+      }
+
+      #compileButton {
+        flex: 0 0 auto;
+        align-self: center;
+      }
+
+      .cw-button {
+        border:1px solid #34740e;
+        border-radius: 3px;
+        font-size:12px;
+        font-family:arial, helvetica, sans-serif;
+        padding: 10px 10px 10px 10px;
+        text-decoration: none;
+        display:inline-block;
+        text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
+        font-weight:bold;
+        color: white;
+        background-color: #4ba614;
+        background-image: linear-gradient(to bottom, #4ba614, #008c00);
+      }
+
+      .cw-button:hover {
+        border:1px solid #224b09;
+        background-color: #36780f;
+        background-image: linear-gradient(to bottom, #36780f, #005900);
+      }
+
+      .cw-button:focus { outline: none; }
+      ::-moz-focus-inner { border:0; }
+
       .dropbox {
         background-color: white;
         border: solid #cccccc 1px;
-        -moz-box-shadow: 3px 3px 4px #000;
-        -webkit-box-shadow: 3px 3px 4px #000;
         box-shadow: 3px 3px 4px #000;
-        -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
-        filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
         margin: 3px 5px 5px 3px;
       }
     </style>
   </head>
   <body onload="init()" class="flex">
     <form id="source" class="dropbox"><textarea id="editor" placeholder="Type your program here..."></textarea></form>
-    <iframe src="about:blank" id="runner" class="dropbox" width="500" height="500"></iframe>
+    <div id="result">
+      <iframe id="runner" class="dropbox" width="500" height="500"></iframe>
+      <pre id="message" class="dropbox"></pre>
+      <input type="button" class="cw-button" id="compileButton" value="Run" onclick="compile()">
+    </div>
   </body>
 </html>

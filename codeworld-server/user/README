@@ -1,0 +1,10 @@
+This directory contains user code compiled by CodeWorld.  Files are named after
+an MD5 hash of the source code, with the following three extensions:
+
+  .hs    - Contains original source code
+  .jsexe - Directory with JavaScript output for a successful compile
+  .err   - Contains plain text compiler errors, for unsuccessful compile
+
+Note that CodeWorld will not try to recompile source code that's already
+included in this directory, so if something like the libraries changes, then
+the .js and .err files in this directory should be deleted.

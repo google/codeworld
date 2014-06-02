@@ -1,0 +1,10 @@
+:set -hide-package base -package codeworld-base
+:set -XRebindableSyntax
+:set -XOverloadedStrings
+:set -XNoTemplateHaskell
+:set -XNoUndecidableInstances
+:set -XNoQuasiQuotes
+:set -XExplicitForAll
+:set -XJavaScriptFFI
+import Prelude
+:set prompt "codeworld: "

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style type="text/css">
+      * { margin: 0; overflow: hidden }
+    </style>
+  </head>
+  <body style="text-align: center">
+    <canvas id="screen" width="500" height="500">
+  </body>
+  <script type="text/javascript">
+    var params = location.search.slice(1).split('&');
+    for (var i = 0; i < params.length; i++) {
+      var parts = params[i].split('=');
+      if (parts[0] == 'hash') {
+        var hash = params[i].slice(5);
+        var script = document.createElement('script');
+        script.setAttribute('type', 'text/javascript');
+        script.setAttribute('src', 'user/' + hash + '.jsexe/all.js');
+        document.head.appendChild(script);
+        break;
+      }
+    }
+  </script>
+</html>

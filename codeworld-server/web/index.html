@@ -6,171 +6,7 @@
     <script src="codemirror-compressed.js"></script>
 
     <link rel="stylesheet" href="codemirror.css">
-    <style type="text/css">
-      /* Customize the syntax highlighting. */
-
-      .CodeMirror span.cm-keyword {color: #208;font-weight:bold}
-      .CodeMirror span.cm-atom {color: #219;}
-      .CodeMirror span.cm-number {color: #a10;}
-      .CodeMirror span.cm-def {color: #00f;}
-      .CodeMirror span.cm-variable {color: black;}
-      .CodeMirror span.cm-variable-2 {color: #38c;}
-      .CodeMirror span.cm-variable-3 {color: #0a5;}
-      .CodeMirror span.cm-property {color: black;}
-      .CodeMirror span.cm-operator {color: black;}
-      .CodeMirror span.cm-comment {color: #161;}
-      .CodeMirror span.cm-string {color: #660;}
-      .CodeMirror span.cm-string-2 {color: #553;}
-      .CodeMirror span.cm-meta {color: #555;}
-      .CodeMirror span.cm-error {color: #f00;}
-      .CodeMirror span.cm-qualifier {color: #666;}
-      .CodeMirror span.cm-builtin {color: #30a;}
-      .CodeMirror span.cm-bracket {color: #cc7;}
-      .CodeMirror span.cm-tag {color: #170;}
-      .CodeMirror span.cm-attribute {color: #00c;}
-
-      /* Make bracket matching look nicer. */
-
-      .CodeMirror-matchingbracket    { color: inherit !important;
-                                       outline: solid rgba(0,0,0,0.15) 1px }
-      .CodeMirror-nonmatchingbracket { color: inherit !important;
-                                       outline: solid rgba(255,0,0,0.5) 1px }
-
-      /* Underline trailing whitespace in red, except on the current line. */
-
-      .CodeMirror .cm-trailingspace {
-        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAACCAYAAAB/qH1jAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3QUXCToH00Y1UgAAACFJREFUCNdjPMDBUc/AwNDAAAFMTAwMDA0OP34wQgX/AQBYgwYEx4f9lQAAAABJRU5ErkJggg==);
-        background-position: bottom left;
-        background-repeat: repeat-x;
-      }
-      .CodeMirror .CodeMirror-activeline .cm-trailingspace {
-        background-image: inherit
-      }
-
-      /* Grayed-out style for the empty editor placeholder. */
-
-      .CodeMirror pre.CodeMirror-placeholder {
-        color: #999;
-      }
-
-      /* Styles needed for the dialog add-on, used for search. */
-
-      .CodeMirror-dialog {
-        position: absolute;
-        left: 0; right: 0;
-        background: white;
-        z-index: 15;
-        padding: .1em .8em;
-        overflow: hidden;
-        color: #333;
-      }
-
-      .CodeMirror-dialog-top {
-        border-bottom: 1px solid #eee;
-        top: 0;
-      }
-
-      .CodeMirror-dialog-bottom {
-        border-top: 1px solid #eee;
-        bottom: 0;
-      }
-
-      .CodeMirror-dialog input {
-        border: none;
-        outline: none;
-        background: transparent;
-        width: 20em;
-        color: inherit;
-        font-family: monospace;
-      }
-
-      .CodeMirror-dialog button {
-        font-size: 70%;
-      }
-    </style>
-
-    <style type="text/css">
-      html { height: 100%; width: 100%; }
-
-      body {
-        height: 100%;
-        background-color: #e5eff9;
-        margin: 0px;
-        display: flex;
-        align-items: stretch;
-      }
-
-      #source {
-        flex: 1 0 500px;
-        position:relative;
-      }
-
-      #source .CodeMirror {
-        position:absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: auto;
-        height: auto;
-      }
-
-      #result {
-        flex: 0 0 508px;
-        display: flex;
-        align-items: stretch;
-        flex-direction: column;
-        margin: 0px;
-      }
-
-      #runner {
-        flex: 0 0 500px;
-      }
-
-      #message {
-        flex: 1 1 auto;
-        overflow: auto;
-      }
-      #message.error {
-        background-color: #fcc;
-      }
-
-      #buttons {
-        flex: 0 0 auto;
-        text-align: center;
-      }
-
-      .cw-button {
-        border:1px solid #34740e;
-        border-radius: 3px;
-        font-size:12px;
-        font-family:arial, helvetica, sans-serif;
-        padding: 10px 10px 10px 10px;
-        text-decoration: none;
-        display:inline-block;
-        text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
-        font-weight:bold;
-        color: white;
-        background-color: #4ba614;
-        background-image: linear-gradient(to bottom, #4ba614, #008c00);
-      }
-
-      .cw-button:hover {
-        border:1px solid #224b09;
-        background-color: #36780f;
-        background-image: linear-gradient(to bottom, #36780f, #005900);
-      }
-
-      .cw-button:focus { outline: none; }
-      ::-moz-focus-inner { border:0; }
-
-      .dropbox {
-        background-color: white;
-        border: solid #cccccc 1px;
-        box-shadow: 3px 3px 4px #000;
-        margin: 3px 5px 5px 3px;
-      }
-    </style>
+    <link rel="stylesheet" href="codeworld.css">
   </head>
   <body onload="init()" class="flex">
     <form id="source" class="dropbox"><textarea id="editor" placeholder="Type your program here..."></textarea></form>
@@ -178,10 +14,11 @@
       <iframe id="runner" class="dropbox" width="500" height="500"></iframe>
       <pre id="message" class="dropbox"></pre>
       <div id="buttons">
-        <input type="button" class="cw-button" value="Sample: Logo" onclick="load('examples/Logo.hs')">
-        <input type="button" class="cw-button" value="Sample: Asteroids" onclick="load('examples/Asteroids.hs')">
-        <input type="button" class="cw-button" value="Sample: Grandma" onclick="load('examples/Grandma.hs')">
-        <input type="button" class="cw-button" value="Run" onclick="compile()">
+        <input type="button" class="cw-button blue" value="Sample: Logo" onclick="load('examples/Logo.hs')">
+        <input type="button" class="cw-button blue" value="Sample: Asteroids" onclick="load('examples/Asteroids.hs')">
+        <input type="button" class="cw-button blue" value="Sample: Grandma" onclick="load('examples/Grandma.hs')">
+        <input type="button" class="cw-button red" value="Stop" onclick="stop()">
+        <input type="button" class="cw-button green" value="Run" onclick="compile()">
       </div>
     </div>
   </body>

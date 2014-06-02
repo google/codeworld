@@ -13,13 +13,26 @@ function init() {
 }                                                                                                                                     
 
 function load(file) {
-  var request = new XMLHttpRequest();
-  request.open('GET', file, false);
-  request.send();
+  if (confirm('Replace the program?')) {
+    stop();
 
-  if (request.status == 200) {
-    codeworldEditor.setValue(request.responseText);
+    var request = new XMLHttpRequest();
+    request.open('GET', file, false);
+    request.send();
+
+    if (request.status == 200) {
+      codeworldEditor.setValue(request.responseText);
+    }
   }
+}
+
+function stop() {
+  var runner = document.getElementById('runner');
+  var message = document.getElementById('message');
+
+  runner.contentWindow.location.replace('about:blank');
+  message.classList.remove('error');
+  message.textContent = '';
 }
 
 function compile() {

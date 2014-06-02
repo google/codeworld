@@ -5,7 +5,13 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE JavaScriptFFI            #-}
 
-module Internal.CodeWorld where
+module Internal.CodeWorld (
+    Program,
+    pictureOf,
+    animationOf,
+    simulationOf,
+    interactionOf
+    ) where
 
 import           Control.Concurrent
 import           Control.Concurrent.MVar
@@ -14,39 +20,30 @@ import           Control.Monad.Trans (liftIO)
 import           Data.Char (chr)
 import           Data.Text (Text, singleton)
 import           Data.Time.Clock
-import           GHCJS.DOM
-import           GHCJS.DOM.DOMWindow
-import           GHCJS.DOM.Document
-import           GHCJS.DOM.EventM
-import           GHCJS.DOM.Types (Element, unElement)
-import           GHCJS.Types
 import           Internal.Num (Number, fromDouble, toDouble)
 import           Internal.Text
 import           Internal.Color
 import           Internal.Picture
 import           Internal.Event
-import qualified JavaScript.Canvas as Canvas
 import "base"    Prelude hiding (show)
 import           System.IO.Unsafe
 import           System.Random
 
 #ifdef ghcjs_HOST_OS
 
+import           GHCJS.DOM
+import           GHCJS.DOM.DOMWindow
+import           GHCJS.DOM.Document
+import           GHCJS.DOM.EventM
+import           GHCJS.DOM.Types (Element, unElement)
+import           GHCJS.Types
+import qualified JavaScript.Canvas as Canvas
+
 foreign import javascript safe "$1['getBoundingClientRect']()['left']"
     js_getBoundingClientLeft :: JSRef Element -> IO Int
 
 foreign import javascript safe "$1['getBoundingClientRect']()['top']"
     js_getBoundingClientTop :: JSRef Element -> IO Int
-
-#else
-
-js_getBoundingClientLeft :: JSRef Element -> IO Int
-js_getBoundingClientLeft = undefined
-
-js_getBoundingClientTop :: JSRef Element -> IO Int
-js_getBoundingClientTop = undefined
-
-#endif
 
 --------------------------------------------------------------------------------
 -- Draw state.  An affine transformation matrix, plus a Bool indicating whether
@@ -308,23 +305,25 @@ run startActivity = do
     t0 <- getCurrentTime
     go t0 startActivity
 
-pictureOf :: Picture -> IO ()
+type Program = IO ()
+
+pictureOf :: Picture -> Program
 pictureOf pic = display pic
 
-animationOf :: (Number -> Picture) -> IO ()
+animationOf :: (Number -> Picture) -> Program
 animationOf f = simulationOf (const 0) (+) f
 
 simulationOf :: ([Number] -> a)
              -> (Number -> a -> a)
              -> (a -> Picture)
-             -> IO ()
+             -> Program
 simulationOf initial step draw = interactionOf initial step (const id) draw
 
 interactionOf :: ([Number] -> a)
               -> (Number -> a -> a)
               -> (Event -> a -> a)
               -> (a -> Picture)
-              -> IO ()
+              -> Program
 interactionOf initial step event draw = run (activity (initial (unsafePerformIO randoms)))
   where activity x = Activity {
                         activityStep    = (\dt -> activity (step dt x)),
@@ -336,3 +335,27 @@ interactionOf initial step event draw = run (activity (initial (unsafePerformIO 
             n  <- randomRIO (0,1)
             ns <- unsafeInterleaveIO randoms
             return (fromDouble n : ns)
+#else
+
+type Program = IO ()
+
+pictureOf :: Picture -> Program
+pictureOf _ = putStrLn "<<picture>>"
+
+animationOf :: (Number -> Picture) -> Program
+animationOf _ = putStrLn "<<animation>>"
+
+simulationOf :: ([Number] -> a)
+             -> (Number -> a -> a)
+             -> (a -> Picture)
+             -> Program
+simulationOf _ _ _ = putStrLn "<<simulation>>"
+
+interactionOf :: ([Number] -> a)
+              -> (Number -> a -> a)
+              -> (Event -> a -> a)
+              -> (a -> Picture)
+              -> Program
+interactionOf _ _ _ _ = putStrLn "<<interaction>>"
+
+#endif

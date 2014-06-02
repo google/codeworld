@@ -11,6 +11,10 @@ maintainer:          Chris Smith <cdsmith@gmail.com>
 build-type:          Simple
 cabal-version:       >=1.8
 
+flag ghcjs
+    description: Tell cabal we are using ghcjs (work around until hackage supports impl(ghcjs))
+    default: True
+
 library
   exposed-modules:     Prelude
   other-modules:       Internal.Num,
@@ -21,12 +25,14 @@ library
                        Internal.Event,
                        Internal.CodeWorld
   build-depends:       base,
-                       ghcjs-base,
-                       ghcjs-dom,
-                       ghcjs-canvas,
                        mtl,
                        random,
                        text,
                        time
   exposed:             False
   ghc-options:         -O2
+
+  if flag(ghcjs)
+    build-depends:     ghcjs-base,
+                       ghcjs-dom,
+                       ghcjs-canvas

@@ -62,6 +62,7 @@ module Prelude (
 
     -- Entry points
     IO,
+    Program,
     pictureOf,
     animationOf,
     simulationOf,

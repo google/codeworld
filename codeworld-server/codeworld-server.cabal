@@ -1,0 +1,26 @@
+Name:                codeworld-server
+Version:             0.1
+Synopsis:            Web server for CodeWorld
+Description:         The web server for the CodeWorld programming environment.
+License:             BSD3
+Author:              Chris Smith <cdsmith@gmail.com>
+Maintainer:          Chris Smith <cdsmith@gmail.com>
+Stability:           Experimental
+Category:            Web
+Build-type:          Simple
+Cabal-version:       >=1.2
+
+Executable codeworld-server
+  hs-source-dirs: src
+  main-is: Main.hs
+
+  Build-depends:
+    base                      >= 4     && < 5,
+    bytestring                >= 0.9.1 && < 0.11,
+    MonadCatchIO-transformers >= 0.2.1 && < 0.4,
+    mtl                       >= 2     && < 3,
+    snap-core                 >= 0.9   && < 0.11,
+    snap-server               >= 0.9   && < 0.11
+
+  Ghc-options: -threaded -Wall -funbox-strict-fields -O2
+               -fno-warn-unused-do-bind

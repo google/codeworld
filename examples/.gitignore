@@ -1,0 +1,5 @@
+*.o
+*.hi
+*.js_o
+*.js_hi
+*.jsexe/

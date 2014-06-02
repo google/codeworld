@@ -1,3 +1,8 @@
+{-
+  Example: Logo
+
+  A simple animated logo built out of geometric patterns.
+-}
 main       = animationOf design
 design   t = pictures [ rotate (20*t) center, border ]
 center     = pictures [ rotate  0 (color (muted red)   centerPart),

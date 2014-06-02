@@ -1,6 +1,8 @@
 {-
+  Example: Asteroids
+
   An elaborate game, consisting of scores, player controls and keys, enemies,
-  energy levels... there's quite a lot here.  This is a more involved demo of
+  energy levels... there's quite a lot here.  This is an involved demo of
   the kind of thing that's possible -- and still not too hard! -- using
   CodeWorld.
 -}

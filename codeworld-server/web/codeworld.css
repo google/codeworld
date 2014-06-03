@@ -6,6 +6,7 @@ body {
   margin: 0px;
   display: flex;
   align-items: stretch;
+  overflow: hidden;
 }
 
 #edit {

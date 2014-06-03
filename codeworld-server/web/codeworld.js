@@ -10,7 +10,12 @@ function init() {
     showTrailingSpace: true,                                                                                                          
     rulers: [{column: 80, color: "#bbb", lineStyle: "dashed"}]                                                                        
   });                                                                                                                                 
-}                                                                                                                                     
+
+  var hash = window.location.hash.slice(1);
+  if (hash.length > 0) {
+    load('user/' + hash + '.hs');
+  }
+}
 
 function load(file) {
   var modified = codeworldEditor.getDoc().historySize().undo > 0 ||
@@ -32,6 +37,16 @@ function load(file) {
       codeworldEditor.setValue(request.responseText);
       codeworldEditor.getDoc().clearHistory();
     }
+  }
+}
+
+function share() {
+  var runner = document.getElementById('runner');
+  if (runner.contentWindow.location.href == 'about:blank') {
+    alert('You must run your program before sharing it.');
+  } else {
+    prompt('Copy and share the following link:',
+           runner.contentWindow.location.href);
   }
 }
 

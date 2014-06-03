@@ -145,6 +145,7 @@ function openFile() {
 }
 
 function saveFile() {
+  alert('Saving files is not yet implemented.');
   if (!window.gapi || !gapi.client.drive) {
     return;
   }

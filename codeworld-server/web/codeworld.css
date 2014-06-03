@@ -38,6 +38,7 @@ body {
 #message {
   flex: 1 1 auto;
   overflow: auto;
+  font-size: 11px;
 }
 #message.error {
   background-color: #fcc;
@@ -108,6 +109,8 @@ body {
 }
 
 /* Customize the syntax highlighting. */
+
+.CodeMirror { font-size: 9pt; }
 
 .CodeMirror span.cm-keyword {color: #208;font-weight:bold}
 .CodeMirror span.cm-atom {color: #219;}

@@ -13,7 +13,9 @@ function init() {
 }                                                                                                                                     
 
 function load(file) {
-  if (confirm('Replace the program?')) {
+  var modified = codeworldEditor.getDoc().historySize().undo > 0 ||
+                 codeworldEditor.getDoc().historySize().redo > 0;
+  if (!modified || confirm('Replace the program?')) {
     stop();
 
     var request = new XMLHttpRequest();
@@ -22,6 +24,7 @@ function load(file) {
 
     if (request.status == 200) {
       codeworldEditor.setValue(request.responseText);
+      codeworldEditor.getDoc().clearHistory();
     }
   }
 }

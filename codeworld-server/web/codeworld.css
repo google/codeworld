@@ -5,20 +5,34 @@ body {
   background-color: #e5eff9;
   margin: 0px;
   display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
   align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
   overflow-x: hidden;
 }
 
 #edit {
   flex: 1 0 500px;
+  -webkit-flex: 1 0 500px;
+  -ms-flex: 1 0 500px;
   display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
   align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
   flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
   margin: 0px;
 }
 
 #source {
   flex: 1 1 500px;
+  -webkit-flex: 1 1 500px;
+  -ms-flex: 1 1 500px;
   position:relative;
 }
 
@@ -34,23 +48,37 @@ body {
 
 #examples {
   flex: 0 0 auto;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
   text-align: left;
 }
 
 #result {
   flex: 0 0 508px;
+  -webkit-flex: 0 0 508px;
+  -ms-flex: 0 0 508px;
   display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
   align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
   flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
   margin: 0px;
 }
 
 #runner {
   flex: 0 0 500px;
+  -webkit-flex: 0 0 500px;
+  -ms-flex: 0 0 500px;
 }
 
 #message {
   flex: 1 1 auto;
+  -webkit-flex: 1 1 auto;
+  -ms-flex: 1 1 auto;
   overflow: auto;
   font-size: 11px;
   padding: 5px;
@@ -61,6 +89,8 @@ body {
 
 #buttons {
   flex: 0 0 auto;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
   text-align: right;
 }
 

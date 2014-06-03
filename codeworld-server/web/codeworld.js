@@ -95,3 +95,39 @@ function compile() {
     message.textContent = '';
   }
 }
+
+function signinCallback(authResult) {
+  if (authResult['status']['signed_in']) {
+    document.getElementById('signin').style.display = 'none';
+    document.getElementById('signout').style.display = 'inline-block';
+    window.id_token = authResult['id_token'];
+  } else {
+    document.getElementById('signin').style.display = 'inline-block';
+    document.getElementById('signout').style.display = 'none';
+    console.log('Sign-in state: ' + authResult['error']);
+  }
+}
+
+function signin() {
+  if (window.gapi) {
+    gapi.auth.signIn({
+      callback: signinCallback,
+      clientid: '94846197422-jnkt1qd737993e7llrfa5pb1bqc72nog.apps.googleusercontent.com',
+      scope: 'profile',
+      cookiepolicy: 'single_host_origin',
+    });
+  }
+}
+
+function signout() {
+  if (window.gapi) gapi.auth.signOut();
+}
+
+(function() {
+  var po = document.createElement('script');
+  po.type = 'text/javascript';
+  po.async = true;
+  po.src = 'https://apis.google.com/js/client:plusone.js';
+  var s = document.getElementsByTagName('script')[0];
+  s.parentNode.insertBefore(po, s);
+})();

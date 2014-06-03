@@ -1,3 +1,3 @@
 #!/bin/sh
 rm -rf -- *.jsexe
-rm -- *.hi *.o *.js_hi *.js_o *.hs *.err.txt
+rm -- *.hi *.o *.js_hi *.js_o *.err.txt

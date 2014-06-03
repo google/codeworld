@@ -18,6 +18,12 @@ function load(file) {
   if (!modified || confirm('Replace the program?')) {
     stop();
 
+    if (file == '') {
+      codeworldEditor.setValue('');
+      codeworldEditor.getDoc().clearHistory();
+      return;
+    }
+
     var request = new XMLHttpRequest();
     request.open('GET', file, false);
     request.send();

@@ -9,14 +9,19 @@
     <link rel="stylesheet" href="codeworld.css">
   </head>
   <body onload="init()" class="flex">
-    <form id="source" class="dropbox"><textarea id="editor" placeholder="Type your program here..."></textarea></form>
+    <div id="edit">
+      <form id="source" class="dropbox"><textarea id="editor" placeholder="Type your program here..."></textarea></form>
+      <div id="examples">
+        <input type="button" class="cw-button green" value="New" onclick="load('')">
+        <input type="button" class="cw-button blue" value="Sample: Logo" onclick="load('examples/Logo.hs')">
+        <input type="button" class="cw-button blue" value="Sample: Asteroids" onclick="load('examples/Asteroids.hs')">
+        <input type="button" class="cw-button blue" value="Sample: Grandma" onclick="load('examples/Grandma.hs')">
+      </div>
+    </div>
     <div id="result">
       <iframe id="runner" class="dropbox" width="500" height="500"></iframe>
       <pre id="message" class="dropbox"></pre>
       <div id="buttons">
-        <input type="button" class="cw-button blue" value="Sample: Logo" onclick="load('examples/Logo.hs')">
-        <input type="button" class="cw-button blue" value="Sample: Asteroids" onclick="load('examples/Asteroids.hs')">
-        <input type="button" class="cw-button blue" value="Sample: Grandma" onclick="load('examples/Grandma.hs')">
         <input type="button" class="cw-button red" value="Stop" onclick="stop()">
         <input type="button" class="cw-button green" value="Run" onclick="compile()">
       </div>

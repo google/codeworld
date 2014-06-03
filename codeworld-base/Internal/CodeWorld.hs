@@ -35,6 +35,7 @@ import           GHCJS.DOM
 import           GHCJS.DOM.DOMWindow
 import           GHCJS.DOM.Document
 import           GHCJS.DOM.EventM
+import           GHCJS.DOM.MouseEvent
 import           GHCJS.DOM.Types (Element, unElement)
 import           GHCJS.Types
 import qualified JavaScript.Canvas as Canvas
@@ -212,11 +213,13 @@ keyCodeToText n = case n of
   where fromAscii n = singleton (chr n)
         fromNum   n = show (fromIntegral n)
 
-mapMousePos :: Element -> (Int, Int) -> IO Point
-mapMousePos canvas (ix, iy) = do
-    cx <- js_getBoundingClientLeft (unElement canvas)
-    cy <- js_getBoundingClientTop (unElement canvas)
-    return (fromIntegral (ix - cx - 250), fromIntegral (cy - iy + 250))
+getMousePos :: IsMouseEvent e => Element -> EventM e t Point
+getMousePos canvas = do
+    (ix, iy) <- mouseClientXY
+    liftIO $ do
+        cx <- js_getBoundingClientLeft (unElement canvas)
+        cy <- js_getBoundingClientTop (unElement canvas)
+        return (fromIntegral (ix - cx - 250), fromIntegral (cy - iy + 250))
 
 --------------------------------------------------------------------------------
 -- Runners for different kinds of activities.
@@ -253,29 +256,25 @@ setupEvents currentActivity canvas = do
             preventDefault
             stopPropagation
     domWindowOnmousedown window $ do
-        pos <- mouseXY
         button <- mouseButton
-        mappedPos <- liftIO $ mapMousePos canvas pos
-        let event = MousePress (fromIntegral button) mappedPos
+        pos <- getMousePos canvas
+        let event = MousePress (fromIntegral button) pos
         liftIO $ modifyMVar_ currentActivity $ \ activity -> do
             return (activityEvent activity event)
     domWindowOnmouseup window $ do
-        pos <- mouseXY
         button <- mouseButton
-        mappedPos <- liftIO $ mapMousePos canvas pos
-        let event = MouseRelease (fromIntegral button) mappedPos
+        pos <- getMousePos canvas
+        let event = MouseRelease (fromIntegral button) pos
         liftIO $ modifyMVar_ currentActivity $ \ activity -> do
             return (activityEvent activity event)
     domWindowOnmousemove window $ do
-        pos <- mouseXY
-        mappedPos <- liftIO $ mapMousePos canvas pos
-        let event = MouseMovement mappedPos
+        pos <- getMousePos canvas
+        let event = MouseMovement pos
         liftIO $ modifyMVar_ currentActivity $ \ activity -> do
             return (activityEvent activity event)
     domWindowOndrag window $ do
-        pos <- mouseXY
-        mappedPos <- liftIO $ mapMousePos canvas pos
-        let event = MouseDrag mappedPos
+        pos <- getMousePos canvas
+        let event = MouseDrag pos
         liftIO $ modifyMVar_ currentActivity $ \ activity -> do
             return (activityEvent activity event)
     return ()

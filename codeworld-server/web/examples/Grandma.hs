@@ -33,7 +33,7 @@ event (MousePress _ (x,y)) (Playing drag obstacles health tool gy g angle age) =
     else Playing drag obstacles health tool gy g angle age
 
 event (MouseRelease _ (x,y)) (Playing NotDragging obstacles health tool gy g angle age) =
-    Playing NotDragging obstacles health tool y g angle age
+    Playing NotDragging obstacles health tool gy g angle age
 event (MouseRelease _ (x,y)) (Playing (Dragging p t) obstacles health tool gy g angle age) =
     if distance (x,y) (-150,y) < 50
     then Playing NotDragging obstacles health t gy g angle 0

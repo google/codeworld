@@ -76,7 +76,7 @@ body {
   color: white;
 }
 
-.cw-button.green {
+.cw-button.green,.cw-button.green:hover:active {
   border-color: #34740e;
   background-color: #4ba614;
   background-image: linear-gradient(to bottom, #4ba614, #008c00);
@@ -88,7 +88,7 @@ body {
   background-image: linear-gradient(to bottom, #36780f, #005900);
 }
 
-.cw-button.blue {
+.cw-button.blue,.cw-button.blue:hover:active {
   border-color: #0e3474;
   background-color: #144ba6;
   background-image: linear-gradient(to bottom, #144ba6, #00008c);
@@ -100,7 +100,7 @@ body {
   background-image: linear-gradient(to bottom, #0f3678, #000059);
 }
 
-.cw-button.red {
+.cw-button.red,.cw-button.red:hover:active {
   border-color: #74340e;
   background-color: #a64b14;
   background-image: linear-gradient(to bottom, #a64b14, #8c0000);

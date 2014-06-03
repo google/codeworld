@@ -40,5 +40,5 @@ This is a list of ideas for how to make this awesome.
 * Social: browse public projects, share with friends, comment on others' projects.
 * Collaboration: import libraries across users, joint projects.
 * Debugging: click-jump to error location, point-pins, scale-zoom controls, time-step debugger, NOT a language debugger.
-* Export: permalink, chrome app, Android, iOS (maybe impossible without jailbreak?).
+* Export: chrome app, Android, iOS (maybe impossible without jailbreak?).
 * Lessons: guided help, gallery, quizzes, "helpers" (list comprehensions, etc.).

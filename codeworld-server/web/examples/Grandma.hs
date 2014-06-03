@@ -5,6 +5,9 @@
   demonstrates some interesting uses of interactions, including drag
   and drop.
 -}
+
+main = interactionOf initial step event draw
+
 type RandomNumbers = [Number]
 
 data World = Splash RandomNumbers
@@ -484,5 +487,3 @@ hairStrand2 = color (dark (dark cyan))(line [
               ( 0,129),
               ( 0,125)
               ])
-
-main = interactionOf initial step event draw

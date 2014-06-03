@@ -4,6 +4,7 @@
   A CodeWorld logo built out of geometric patterns.  This shows off
   many of the capabilities of the picture mode.
 -}
+
 main = pictureOf logo
 
 logo = pictures [

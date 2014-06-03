@@ -13,6 +13,8 @@
       <form id="source" class="dropbox"><textarea id="editor" placeholder="Type your program here..."></textarea></form>
       <div id="examples">
         <input type="button" class="cw-button green" value="New" onclick="load('')">
+        <input type="button" id="openButton" class="cw-button green" value="Open" onclick="openFile()" style="display: none">
+        <input type="button" id="saveButton" class="cw-button green" value="Save" onclick="saveFile()" style="display: none">
         <input type="button" class="cw-button blue" value="Try: Logo" onclick="load('examples/Logo.hs')">
         <input type="button" class="cw-button blue" value="Try: Ferris" onclick="load('examples/FerrisWheel.hs')">
         <input type="button" class="cw-button blue" value="Try: Asteroids" onclick="load('examples/Asteroids.hs')">

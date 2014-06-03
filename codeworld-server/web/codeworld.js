@@ -17,15 +17,24 @@ function init() {
   }
 }
 
+function setCode(code, fileId) {
+  if (!fileId) {
+    fileId = '';
+  }
+  window.openFileId = fileId;
+
+  stop();
+  codeworldEditor.setValue(code);
+  codeworldEditor.getDoc().clearHistory();
+}
+
 function load(file) {
   var modified = codeworldEditor.getDoc().historySize().undo > 0 ||
                  codeworldEditor.getDoc().historySize().redo > 0;
   if (!modified || confirm('Replace the program?')) {
-    stop();
 
     if (file == '') {
-      codeworldEditor.setValue('');
-      codeworldEditor.getDoc().clearHistory();
+      setCode('');
       return;
     }
 
@@ -34,8 +43,7 @@ function load(file) {
     request.send();
 
     if (request.status == 200) {
-      codeworldEditor.setValue(request.responseText);
-      codeworldEditor.getDoc().clearHistory();
+      setCode(request.responseText);
     }
   }
 }
@@ -96,15 +104,65 @@ function compile() {
   }
 }
 
+function openFile() {
+  if (!window.gapi || !gapi.client.drive || !google.picker) {
+    return;
+  }
+
+  function callback(data) {
+    if (data[google.picker.Response.ACTION] != google.picker.Action.PICKED) {
+      return;
+    }
+
+    var id = data[google.picker.Response.DOCUMENTS][0][google.picker.Document.ID];
+    var request = gapi.client.drive.files.get({ 'fileId': id });
+
+    request.execute(function(file) {
+      if (file.downloadUrl) {
+        var accessToken = gapi.auth.getToken().access_token;
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', file.downloadUrl, false);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+        xhr.send();
+
+        if (xhr.status == 200) {
+          setCode(xhr.responseText, id);
+        }
+      }
+    });
+  }
+
+  var view = new google.picker.DocsView(google.picker.ViewId.DOCS);
+  view.setMode(google.picker.DocsViewMode.LIST);
+  var picker = new google.picker.PickerBuilder()
+    .setAppId('codeworld-site')
+    .setOAuthToken(gapi.auth.getToken().access_token)
+    .addView(view)
+    .addView(new google.picker.DocsUploadView())
+    .setCallback(callback)
+    .build();
+  picker.setVisible(true);
+}
+
+function saveFile() {
+  if (!window.gapi || !gapi.client.drive) {
+    return;
+  }
+}
+
 function signinCallback(authResult) {
   if (authResult['status']['signed_in']) {
     document.getElementById('signin').style.display = 'none';
     document.getElementById('signout').style.display = 'inline-block';
-    window.id_token = authResult['id_token'];
+    document.getElementById('openButton').style.display = 'inline-block';
+    document.getElementById('saveButton').style.display = 'inline-block';
+    gapi.client.load('drive', 'v2');
+    gapi.load('picker');
   } else {
     document.getElementById('signin').style.display = 'inline-block';
     document.getElementById('signout').style.display = 'none';
-    console.log('Sign-in state: ' + authResult['error']);
+    document.getElementById('openButton').style.display = 'none';
+    document.getElementById('saveButton').style.display = 'none';
   }
 }
 
@@ -113,7 +171,7 @@ function signin() {
     gapi.auth.signIn({
       callback: signinCallback,
       clientid: '94846197422-jnkt1qd737993e7llrfa5pb1bqc72nog.apps.googleusercontent.com',
-      scope: 'profile',
+      scope: 'profile https://www.googleapis.com/auth/drive',
       cookiepolicy: 'single_host_origin',
     });
   }
@@ -124,10 +182,14 @@ function signout() {
 }
 
 (function() {
-  var po = document.createElement('script');
-  po.type = 'text/javascript';
-  po.async = true;
-  po.src = 'https://apis.google.com/js/client:plusone.js';
-  var s = document.getElementsByTagName('script')[0];
-  s.parentNode.insertBefore(po, s);
+  function loadAsync(src) {
+    var po = document.createElement('script');
+    po.type = 'text/javascript';
+    po.async = true;
+    po.src = src;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(po, s);
+  }
+  loadAsync('https://apis.google.com/js/client:plusone.js');
+  loadAsync('https://apis.google.com/js/api.js');
 })();

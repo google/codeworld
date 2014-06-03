@@ -117,5 +117,6 @@ sanitizeError source = T.encodeUtf8
                      . T.replace "base:GHC.Base.String -> " ""
                      . T.replace "IO ()" "Program"
                      . T.replace "Perhaps you intended to use TemplateHaskell" ""
+                     . T.replace "(imported from Prelude)" ""
                      . T.filter isAscii
                      . T.decodeUtf8

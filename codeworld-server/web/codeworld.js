@@ -11,21 +11,26 @@ function init() {
     rulers: [{column: 80, color: "#bbb", lineStyle: "dashed"}]                                                                        
   });                                                                                                                                 
 
+  CodeMirror.commands.save = function(cm) { saveFile(); }
+
   var hash = window.location.hash.slice(1);
   if (hash.length > 0) {
     load('user/' + hash + '.hs');
   }
 }
 
-function setCode(code, fileId) {
-  if (!fileId) {
-    fileId = '';
-  }
-  window.openFileId = fileId;
+function setCode(code, metadata) {
+  window.openFileMetadata = metadata;
 
   stop();
   codeworldEditor.setValue(code);
   codeworldEditor.getDoc().clearHistory();
+
+  if (window.openFileMetadata) {
+    document.getElementById('saveButton').style.display = 'inline-block';
+  } else {
+    document.getElementById('saveButton').style.display = 'none';
+  }
 }
 
 function load(file) {
@@ -59,21 +64,33 @@ function share() {
 }
 
 function stop() {
-  var runner = document.getElementById('runner');
-  var message = document.getElementById('message');
+  run('', '', false);
+}
 
-  runner.contentWindow.location.replace('about:blank');
-  message.classList.remove('error');
-  message.textContent = '';
+function run(hash, msg, error) {
+  var runner = document.getElementById('runner');
+
+  if (hash != '' && !error) {
+    runner.contentWindow.location.replace('run.html?hash=' + hash);
+    runner.contentWindow.focus();
+    document.getElementById('shareButton').style.display = 'inline-block';
+  } else {
+    runner.contentWindow.location.replace('about:blank');
+    document.getElementById('shareButton').style.display = 'none';
+  }
+
+  var message = document.getElementById('message');
+  message.textContent = msg;
+
+  if (error) {
+    message.classList.add('error');
+  } else {
+    message.classList.remove('error');
+  }
 }
 
 function compile() {
-  var runner = document.getElementById('runner');
-  var message = document.getElementById('message');
-
-  runner.contentWindow.location.replace('about:blank');
-  message.classList.remove('error');
-  message.textContent = 'Starting...';
+  run('', 'Building...', false);
 
   var source = window.codeworldEditor.getValue();
   var request = new XMLHttpRequest();
@@ -83,25 +100,18 @@ function compile() {
   var hash = request.responseText;
   var success = request.status == 200;
 
-  if (success) {
-    runner.contentWindow.location.replace('run.html?hash=' + hash);
-    runner.contentWindow.focus();
-  }
-
-  message.textContent = '';
-
   request.open('GET', 'user/' + hash + '.err.txt', false);
   request.send();
-  var msg = request.responseText;
-
+  var msg = '';
   if (request.status == 200) {
-    message.textContent = request.responseText;
-    if (!success) {
-      message.classList.add('error');
-    }
-  } else {
-    message.textContent = '';
+    msg = request.responseText;
   }
+
+  if (success && msg == '') {
+    msg = 'Program starting...';
+  }
+
+  run(hash, msg, !success);
 }
 
 function openFile() {
@@ -118,6 +128,11 @@ function openFile() {
     var request = gapi.client.drive.files.get({ 'fileId': id });
 
     request.execute(function(file) {
+      if (file.fileSize > 2000000) {
+        alert('File is too large.');
+        return;
+      }
+
       if (file.downloadUrl) {
         var accessToken = gapi.auth.getToken().access_token;
         var xhr = new XMLHttpRequest();
@@ -126,48 +141,144 @@ function openFile() {
         xhr.send();
 
         if (xhr.status == 200) {
-          setCode(xhr.responseText, id);
+          setCode(xhr.responseText, file);
         }
       }
     });
   }
 
-  var view = new google.picker.DocsView(google.picker.ViewId.DOCS);
-  view.setMode(google.picker.DocsViewMode.LIST);
+  var cwView = new google.picker.DocsView();
+  cwView.setMode(google.picker.DocsViewMode.LIST);
+  cwView.setMimeTypes('text/x-haskell');
+  cwView.setLabel('CodeWorld Files');
+
+  var allView = new google.picker.DocsView();
+  allView.setMode(google.picker.DocsViewMode.LIST);
+  allView.setIncludeFolders(true);
+
   var picker = new google.picker.PickerBuilder()
+    .setTitle('Open a CodeWorld Project')
     .setAppId('codeworld-site')
     .setOAuthToken(gapi.auth.getToken().access_token)
-    .addView(view)
-    .addView(new google.picker.DocsUploadView())
+    .disableFeature(google.picker.Feature.MINE_ONLY)
+    .addView(cwView)
+    .addView(allView)
+    .addView(google.picker.ViewId.RECENTLY_PICKED)
     .setCallback(callback)
     .build();
   picker.setVisible(true);
 }
 
 function saveFile() {
-  alert('Saving files is not yet implemented.');
-  if (!window.gapi || !gapi.client.drive) {
+  if (!window.gapi || !gapi.auth.getToken()) {
+    alert('You must sign in to save files.');
     return;
+  }
+
+  if (window.openFileMetadata) {
+    saveFileBase(openFileMetadata.title);
+  } else {
+    saveFileAs();
   }
 }
 
-function signinCallback(authResult) {
-  if (authResult['status']['signed_in']) {
-    document.getElementById('signin').style.display = 'none';
-    document.getElementById('signout').style.display = 'inline-block';
-    document.getElementById('openButton').style.display = 'inline-block';
-    document.getElementById('saveButton').style.display = 'inline-block';
-    gapi.client.load('drive', 'v2');
-    gapi.load('picker');
-  } else {
-    document.getElementById('signin').style.display = 'inline-block';
-    document.getElementById('signout').style.display = 'none';
-    document.getElementById('openButton').style.display = 'none';
-    document.getElementById('saveButton').style.display = 'none';
+function saveFileAs() {
+  if (!window.gapi || !gapi.auth.getToken()) {
+    alert('You must sign in to save files.');
+    return;
   }
+
+  window.codeworldEditor.focus();
+  var text = 'Save As: <input type="text" style="width: 10em"/>';
+
+  var defaultName;
+  if (window.openFileMetadata) {
+    defaultName = window.openFileMetadata.title;
+  } else {
+    defaultName = '';
+  }
+
+  window.codeworldEditor.openDialog(text, saveFileBase, { value: defaultName });
+}
+
+function saveFileBase(name) {
+  if (name == null || name == '') return;
+
+  if (!window.gapi || !gapi.client.drive || !google.picker) {
+    alert('Cannot save your program right now!');
+    return;
+  }
+
+  var source = window.codeworldEditor.getValue();
+  var data = btoa(source);
+
+  var method;
+  var path;
+  var metadata;
+  if (window.openFileMetadata && window.openFileMetadata.title == name) {
+    method = 'PUT';
+    path = '/upload/drive/v2/files/' + window.openFileMetadata.id,
+    metadata = window.openFileMetadata;
+  } else {
+    method = 'POST';
+    path = '/upload/drive/v2/files',
+    metadata = {
+      'title': name,
+      'mimeType': 'text/x-haskell',
+    };
+  }
+
+  const boundary = '-------314159265358979323846';
+  const delimiter = "\r\n--" + boundary + "\r\n";
+  const close_delim = "\r\n--" + boundary + "--";
+
+  var multipartRequestBody =
+      delimiter +
+      'Content-Type: application/json\r\n\r\n' +
+      JSON.stringify(metadata) +
+      delimiter +
+      'Content-Type: text/x-haskell\r\n' +
+      'Content-Transfer-Encoding: base64\r\n\r\n' +
+      data +
+      close_delim;
+
+  request = gapi.client.request({
+      'path': path,
+      'method': method,
+      'params': {'uploadType': 'multipart'},
+      'headers': {
+        'Content-Type': 'multipart/mixed; boundary="' + boundary + '"'
+      },
+      'body': multipartRequestBody
+  });
+
+  request.execute(function(file) {
+    if (file) {
+      window.openFileMetadata = file;
+    } else {
+      alert('Cannot save your program right now!');
+    }
+  });
 }
 
 function signin() {
+  function signinCallback(authResult) {
+    if (authResult['status']['signed_in']) {
+      document.getElementById('signin').style.display = 'none';
+      document.getElementById('signout').style.display = 'inline-block';
+      document.getElementById('openButton').style.display = 'inline-block';
+      document.getElementById('saveAsButton').style.display = 'inline-block';
+      gapi.client.load('drive', 'v2');
+      gapi.load('picker');
+    } else {
+      document.getElementById('signin').style.display = 'inline-block';
+      document.getElementById('signout').style.display = 'none';
+      document.getElementById('openButton').style.display = 'none';
+      document.getElementById('saveButton').style.display = 'none';
+      document.getElementById('saveAsButton').style.display = 'none';
+    }
+  }
+
   if (window.gapi) {
     gapi.auth.signIn({
       callback: signinCallback,

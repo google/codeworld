@@ -323,7 +323,7 @@ interactionOf :: ([Number] -> a)
               -> (Event -> a -> a)
               -> (a -> Picture)
               -> Program
-interactionOf initial step event draw = run (activity (initial (unsafePerformIO randoms)))
+interactionOf initial step event draw = run . activity . initial =<< randoms
   where activity x = Activity {
                         activityStep    = (\dt -> activity (step dt x)),
                         activityEvent   = (\ev -> activity (event ev x)),

@@ -34,6 +34,7 @@ import           System.Random
 import           GHCJS.DOM
 import           GHCJS.DOM.DOMWindow
 import           GHCJS.DOM.Document
+import           GHCJS.DOM.Element
 import           GHCJS.DOM.EventM
 import           GHCJS.DOM.MouseEvent
 import           GHCJS.DOM.Types (Element, unElement)
@@ -48,6 +49,9 @@ foreign import javascript safe "$1['getBoundingClientRect']()['top']"
 
 foreign import javascript interruptible "window.requestAnimationFrame($c);"
     js_waitAnimationFrame :: IO ()
+
+foreign import javascript safe "$1.drawImage($2, $3, $4);"
+    js_canvasDrawImage :: Canvas.Context -> JSRef Element -> Int -> Int -> IO ()
 
 --------------------------------------------------------------------------------
 -- Draw state.  An affine transformation matrix, plus a Bool indicating whether
@@ -145,10 +149,8 @@ drawFrame ctx pic = do
     Canvas.clearRect (-250) (-250) 500 500 ctx
     drawPicture ctx initialDS pic
 
-setupScreenContext :: IO (Element, Canvas.Context)
-setupScreenContext = do
-    Just doc <- currentDocument
-    Just canvas <- documentGetElementById doc ("screen" :: JSString)
+setupScreenContext :: Element -> IO Canvas.Context
+setupScreenContext canvas = do
     ctx <- Canvas.getContext (castRef (unElement canvas))
     Canvas.save ctx
     Canvas.translate 250 250 ctx
@@ -157,7 +159,10 @@ setupScreenContext = do
     Canvas.textBaseline Canvas.Alphabetic ctx
     Canvas.lineWidth 0 ctx
     Canvas.font "16px Times Roman" ctx
-    return (canvas, ctx)
+    return ctx
+
+canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> IO ()
+canvasDrawImage ctx elem x y = js_canvasDrawImage ctx (unElement elem) x y
 
 --------------------------------------------------------------------------------
 -- Adapters from JavaScript values to logical values used by CodeWorld.
@@ -235,7 +240,9 @@ data Activity = Activity {
 
 display :: Picture -> IO ()
 display pic = do
-    (_, ctx) <- setupScreenContext
+    Just doc <- currentDocument
+    Just canvas <- documentGetElementById doc ("screen" :: JSString)
+    ctx <- setupScreenContext canvas
     drawFrame ctx pic
     Canvas.restore ctx
 
@@ -289,12 +296,23 @@ passTime dt activity = modifyMVar activity $ \a -> do
 
 run :: Activity -> IO ()
 run startActivity = do
-    (canvas, ctx) <- setupScreenContext
+    Just doc <- currentDocument
+    Just canvas <- documentGetElementById doc ("screen" :: JSString)
+
+    Just offscreenCanvas <- documentCreateElement doc ("canvas" :: JSString)
+    elementSetAttribute offscreenCanvas ("width" :: JSString)  ("500" :: JSString)
+    elementSetAttribute offscreenCanvas ("height" :: JSString) ("500" :: JSString)
+
+    screenCtx <- Canvas.getContext (castRef (unElement canvas))
+    bufferCtx <- setupScreenContext offscreenCanvas
+
     currentActivity <- newMVar startActivity
     setupEvents currentActivity canvas
 
     let go t0 a0 = do
-            drawFrame ctx (activityDraw a0)
+            drawFrame bufferCtx (activityDraw a0)
+            Canvas.clearRect 0 0 500 500 screenCtx
+            canvasDrawImage screenCtx offscreenCanvas 0 0
             js_waitAnimationFrame
             t1 <- getCurrentTime
             a1 <- passTime (diffUTCTime t1 t0) currentActivity

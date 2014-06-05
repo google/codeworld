@@ -40,12 +40,6 @@ module Internal.Num (
     atan,
     atan2,
     acos,
-    sinh,
-    tanh,
-    cosh,
-    asinh,
-    acosh,
-    atanh,
     properFraction,
     subtract,
     even,
@@ -211,44 +205,32 @@ log = fromDouble . P.log . toDouble
 logBase :: Number -> Number -> Number
 logBase (Number b) (Number x) = fromDouble (P.logBase b x)
 
+toRadians :: Number -> Number
+toRadians d = d / 180 * pi
+
 sin :: Number -> Number
-sin = fromDouble .P.sin  . toDouble
+sin = fromDouble . P.sin  . toDouble . toRadians
 
 tan :: Number -> Number
-tan = fromDouble . P.tan . toDouble
+tan = fromDouble . P.tan . toDouble . toRadians
 
 cos :: Number -> Number
-cos = fromDouble . P.cos . toDouble
+cos = fromDouble . P.cos . toDouble . toRadians
+
+fromRadians :: Number -> Number
+fromRadians r = r / pi * 180
 
 asin :: Number -> Number
-asin = fromDouble . P.asin . toDouble
+asin = fromRadians . fromDouble . P.asin . toDouble
 
 atan :: Number -> Number
-atan = fromDouble . P.atan . toDouble
+atan = fromRadians . fromDouble . P.atan . toDouble
 
 atan2 :: Number -> Number -> Number
-atan2 (Number a) (Number b) = fromDouble (P.atan2 a b)
+atan2 (Number a) (Number b) = fromRadians (fromDouble (P.atan2 a b))
 
 acos :: Number -> Number
-acos = fromDouble . P.acos . toDouble
-
-sinh :: Number -> Number
-sinh = fromDouble . P.sinh . toDouble
-
-tanh :: Number -> Number
-tanh = fromDouble . P.tanh . toDouble
-
-cosh :: Number -> Number
-cosh = fromDouble . P.cosh . toDouble
-
-asinh :: Number -> Number
-asinh = fromDouble . P.asinh . toDouble
-
-acosh :: Number -> Number
-acosh = fromDouble . P.acosh . toDouble
-
-atanh :: Number -> Number
-atanh = fromDouble . P.atanh . toDouble
+acos = fromRadians . fromDouble . P.acos . toDouble
 
 properFraction :: Number -> (Number, Number)
 properFraction (Number x) = (fromInteger w, fromDouble p)

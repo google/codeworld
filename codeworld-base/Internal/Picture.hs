@@ -10,7 +10,18 @@ import Internal.Text
 import Internal.Color
 
 type Point = (Number, Number)
-type Vector = Point
+
+type Vector = (Number, Number)
+
+addVectors :: Vector -> Vector -> Vector
+addVectors (x1,y1) (x2,y2) = (x1 + y1, x2 + y2)
+
+scaleVector :: Number -> Vector -> Vector
+scaleVector k (x,y) = (k*x, k*y)
+
+rotateVector :: Number -> Vector -> Vector
+rotateVector angle (x,y) = (x * cos angle - y * sin angle,
+                            x * sin angle + y * cos angle)
 
 data Picture = Polygon [Point]
              | Line [Point] Number

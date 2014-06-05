@@ -81,8 +81,8 @@ step dt w = if lost w
 fence lo hi v = max 0 (min hi v)
 
 stepThrust dt ((x,y), (sx,sy)) th dir = ((x,y), (sx', sy'))
-    where sx' = sx + th * (-30) * sin (dir * pi / 180) * dt
-          sy' = sy + th *   30  * cos (dir * pi / 180) * dt
+    where sx' = sx + th * (-30) * sin dir * dt
+          sy' = sy + th *   30  * cos dir * dt
 
 stepDir dt dir l r = dir + l * 90 * dt - r * 90 * dt
 

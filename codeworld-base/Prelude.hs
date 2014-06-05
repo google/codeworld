@@ -46,6 +46,9 @@ module Prelude (
     -- * Pictures
     Point,
     Vector,
+    addVectors,
+    scaleVector,
+    rotateVector,
     Picture,
     blank,
     line,

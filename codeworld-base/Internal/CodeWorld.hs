@@ -46,6 +46,9 @@ foreign import javascript safe "$1['getBoundingClientRect']()['left']"
 foreign import javascript safe "$1['getBoundingClientRect']()['top']"
     js_getBoundingClientTop :: JSRef Element -> IO Int
 
+foreign import javascript interruptible "window.requestAnimationFrame($c);"
+    js_waitAnimationFrame :: IO ()
+
 --------------------------------------------------------------------------------
 -- Draw state.  An affine transformation matrix, plus a Bool indicating whether
 -- a color has been chosen yet.
@@ -290,16 +293,12 @@ run startActivity = do
     currentActivity <- newMVar startActivity
     setupEvents currentActivity canvas
 
-    let go t0 activity = do
-            drawFrame ctx (activityDraw activity)
-            let target = addUTCTime 0.02 t0
+    let go t0 a0 = do
+            drawFrame ctx (activityDraw a0)
+            js_waitAnimationFrame
             t1 <- getCurrentTime
-            let timeToWait = round (1e6 * diffUTCTime target t1)
-            t2 <- if timeToWait > 0
-                  then threadDelay timeToWait >> getCurrentTime
-                  else return t1
-            a2 <- passTime (diffUTCTime t2 t0) currentActivity
-            go t2 a2
+            a1 <- passTime (diffUTCTime t1 t0) currentActivity
+            go t1 a1
 
     t0 <- getCurrentTime
     go t0 startActivity

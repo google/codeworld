@@ -36,9 +36,16 @@ This is a list of ideas for how to make this awesome.
 
 * Editor: Auto-complete, refactoring (rename, duplicate, ...).
 * Documentation: browsable haddock, doc-on-hover, more browsable examples.
-* Workspace: project switcher, library projects.
+* Workspace: project switcher, better example browser, library projects.
 * Social: browse public projects, share with friends, comment on others' projects.
 * Collaboration: import libraries across users, joint projects.
 * Debugging: click-jump to error location, point-pins, scale-zoom controls, time-step debugger, NOT a language debugger.
 * Export: chrome app, Android, iOS (maybe impossible without jailbreak?).
 * Lessons: guided help, gallery, quizzes, "helpers" (list comprehensions, etc.).
+
+Bugs
+====
+
+- Document dirty state should be tracked
+- JavaScript calls (esp. XmlHttpRequest) should be asynchronous
+- MouseDrag event doesn't work

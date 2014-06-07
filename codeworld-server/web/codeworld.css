@@ -47,9 +47,9 @@ body {
 }
 
 #nav {
-  flex: 1 0 200px;
-  -webkit-flex: 1 0 200px;
-  -ms-flex: 1 0 200px;
+  flex: 0 0 auto;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
   display: flex;
   display: -webkit-flex;
   display: -ms-flex;

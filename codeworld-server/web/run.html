@@ -17,7 +17,7 @@
         var hash = params[i].slice(5);
         var script = document.createElement('script');
         script.setAttribute('type', 'text/javascript');
-        script.setAttribute('src', 'user/' + hash + '.jsexe/all.js');
+        script.setAttribute('src', 'runJS?hash=' + hash);
         document.head.appendChild(script);
 
         var link = document.createElement('a');

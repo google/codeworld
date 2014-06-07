@@ -34,39 +34,45 @@ site :: Snap ()
 site =
     route [
       ("save",    saveHandler),
-      ("compile", compileHandler)
+      ("compile", compileHandler),
+      ("runJS",   runJSHandler)
     ] <|>
     dir "user" (serveDirectory "user") <|>
     serveDirectory "web"
 
 saveHandler :: Snap ()
-saveHandler = do
-    hashed <- saveAndHash
-    writeBS hashed
+saveHandler = writeBS =<< saveAndHash
 
 compileHandler :: Snap ()
 compileHandler = do
     hashed <- saveAndHash
-    alreadyExists <- liftIO $ (&&) <$> (not <$> doesFileExist (targetFile hashed))
-                                   <*> (not <$> doesFileExist (errorFile  hashed))
-    when alreadyExists $ liftIO $ do
-        compileUserSource hashed
-    hasSource <- liftIO $ doesFileExist (targetFile hashed)
-    when (not hasSource) $ modifyResponse $ setResponseCode 500
+    liftIO $ compileIfNeeded hashed
+    hasTarget <- liftIO $ doesFileExist (targetFile hashed)
+    when (not hasTarget) $ modifyResponse $ setResponseCode 500
     writeBS hashed
+
+runJSHandler :: Snap ()
+runJSHandler = do
+    Just hashed <- getParam "hash"
+    liftIO $ compileIfNeeded hashed
+    serveFile (targetFile hashed)
 
 saveAndHash :: Snap ByteString
 saveAndHash = do
     body <- LB.toStrict <$> readRequestBody maxSourceSize
-    let hashed = hash body
+    let hashed = BC.cons 'P' $ BC.map toWebSafe $ B64.encode $ Crypto.hash body
     liftIO $ B.writeFile (sourceFile hashed) body
     return hashed
-
-hash :: ByteString -> ByteString
-hash = BC.cons 'P' . BC.map toWebSafe . B64.encode . Crypto.hash
   where toWebSafe '/' = '_'
         toWebSafe '+' = '-'
         toWebSafe c   = c
+
+compileIfNeeded :: ByteString -> IO ()
+compileIfNeeded hashed = do
+    hasSource <- doesFileExist (sourceFile hashed)
+    missingResult <- (&&) <$> (not <$> doesFileExist (targetFile hashed))
+                          <*> (not <$> doesFileExist (errorFile  hashed))
+    when (hasSource && missingResult) $ compileUserSource hashed
 
 localSourceFile :: ByteString -> FilePath
 localSourceFile hashed = BC.unpack hashed ++ ".hs"

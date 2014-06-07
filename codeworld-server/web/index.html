@@ -7,12 +7,17 @@
 
     <link rel="stylesheet" href="codemirror.css">
     <link rel="stylesheet" href="codeworld.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css">
+
+    <script type="text/template" id="exampleTemplate">
+      <a class="cw-button cw-button-left blue"><i class="fa fa-cube"></i>&nbsp; {{label}}</a>
+    </script>
   </head>
   <body onload="init()" class="flex">
     <div id="mainRow">
       <div id="nav">
         <div id="nav_mine">
-          <input type="button" class="cw-button green" value="New" onclick="load('')">
+          <a class="cw-button cw-button-left green" onclick="load('')"><i class="fa fa-plus"></i>&nbsp; New</a>
         </div>
         <div id="nav_examples">
         </div>
@@ -26,15 +31,15 @@
       </div>
     </div>
     <div id="buttons">
-      <input type="button" id="navButton" class="cw-button blue" value="Browser" onclick="toggleBrowser()">
-      <input type="button" id="openButton" class="cw-button green" value="Open" onclick="openFile()" style="display: none">
-      <input type="button" id="saveButton" class="cw-button green" value="Save" onclick="saveFile()" style="display: none">
-      <input type="button" id="saveAsButton" class="cw-button green" value="Save As" onclick="saveFileAs()" style="display: none">
-      <input type="button" id="signin"  class="cw-button green" value="Sign In"  onclick="signin()" >
-      <input type="button" id="signout" class="cw-button red"   value="Sign Out" onclick="signout()" style="display: none">
-      <input type="button" id="shareButton" class="cw-button blue" value="Share" onclick="share()">
-      <input type="button" class="cw-button red" value="Stop" onclick="stop()">
-      <input type="button" class="cw-button green" value="Run" onclick="compile()">
+      <a id="navButton" class="cw-button blue" onclick="toggleBrowser()"><i class="fa fa-list"></i>&nbsp; Browser</a>
+      <a id="openButton" class="cw-button green" onclick="openFile()" style="display: none"><i class="fa fa-open"></i>&nbsp; Open</a>
+      <a id="saveButton" class="cw-button green" onclick="saveFile()" style="display: none"><i class="fa fa-save"></i>&nbsp; Save</a>
+      <a id="saveAsButton" class="cw-button green" onclick="saveFileAs()" style="display: none"><i class="fa fa-save-as"></i>&nbsp; Save As</a>
+      <a id="signin"  class="cw-button green" onclick="signin()"><i class="fa fa-sign-in"></i>&nbsp; Sign In</a>
+      <a id="signout" class="cw-button red"   onclick="signout()" style="display: none"><i class="fa fa-sign-out"></i>&nbsp; Sign Out</a>
+      <a id="shareButton" class="cw-button blue" onclick="share()"><i class="fa fa-share"></i>&nbsp; Share</a>
+      <a class="cw-button red" onclick="stop()"><i class="fa fa-stop"></i>&nbsp; Stop</a>
+      <a class="cw-button green" onclick="compile()"><i class="fa fa-play"></i>&nbsp; Run</a>
     </div>
   </body>
 </html>

@@ -39,6 +39,11 @@ function loadExamples() {
     return;
   }
 
+  var examples = document.getElementById('nav_examples');
+  while (examples.firstChild) {
+    examples.removeChild(examples.firstChild);
+  }
+
   request.responseText.split('\n').forEach(function(filename) {
     if (filename == '') {
       return;
@@ -46,15 +51,15 @@ function loadExamples() {
 
     var name = filename.replace(/\.[^/.]+$/, '');
 
-    var elem = document.createElement('input');
-    elem.type = 'button';
-    elem.value = 'Try: ' + name;
-    elem.classList.add('cw-button');
-    elem.classList.add('blue');
+    var template = document.getElementById('exampleTemplate').innerHTML;
+    template = template.replace('{{label}}', 'Try: ' + name);
+
+    var span = document.createElement('span');
+    span.innerHTML = template;
+    var elem = span.getElementsByTagName('a')[0];
     elem.onclick = function() { load('examples/' + filename); };
 
-    var examples = document.getElementById('nav_examples');
-    examples.appendChild(elem);
+    examples.appendChild(span.removeChild(elem));
   });
 }
 

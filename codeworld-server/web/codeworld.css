@@ -149,14 +149,21 @@ body {
 .cw-button {
   border:1px solid;
   border-radius: 3px;
+  cursor: pointer;
+  text-align: center;
   font-size:12px;
   font-family:arial, helvetica, sans-serif;
+  margin: 2px 2px 2px 2px;
   padding: 10px 10px 10px 10px;
   text-decoration: none;
   display:inline-block;
   text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
   font-weight:bold;
   color: white;
+}
+
+.cw-button,.cw-button-left {
+  text-align: left;
 }
 
 .cw-button.green,.cw-button.green:hover:active {

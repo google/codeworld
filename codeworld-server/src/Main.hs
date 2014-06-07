@@ -14,6 +14,8 @@ import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Base64 as B64
 import           Data.Char
 import           Data.Int
+import           Data.List
+import           Data.Monoid
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import           Snap.Core
@@ -33,9 +35,10 @@ main = quickHttpServe site
 site :: Snap ()
 site =
     route [
-      ("save",    saveHandler),
-      ("compile", compileHandler),
-      ("runJS",   runJSHandler)
+      ("save",         saveHandler),
+      ("compile",      compileHandler),
+      ("runJS",        runJSHandler),
+      ("listExamples", listExamplesHandler)
     ] <|>
     dir "user" (serveDirectory "user") <|>
     serveDirectory "web"
@@ -56,6 +59,15 @@ runJSHandler = do
     Just hashed <- getParam "hash"
     liftIO $ compileIfNeeded hashed
     serveFile (targetFile hashed)
+
+listExamplesHandler :: Snap ()
+listExamplesHandler = do
+    files <- liftIO getExamples
+    forM_ files $ \ fname -> writeText $ T.pack fname <> "\n"
+
+getExamples :: IO [FilePath]
+getExamples = filter isExampleFile <$> getDirectoryContents "web/examples"
+  where isExampleFile p = ".hs" `isSuffixOf` p
 
 saveAndHash :: Snap ByteString
 saveAndHash = do

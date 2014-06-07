@@ -24,32 +24,43 @@ import           System.FilePath
 import           System.IO
 import           System.Process
 
+maxSourceSize :: Int64
+maxSourceSize = 2000000
+
 main :: IO ()
 main = quickHttpServe site
 
 site :: Snap ()
 site =
     route [
+      ("save",    saveHandler),
       ("compile", compileHandler)
     ] <|>
     dir "user" (serveDirectory "user") <|>
     serveDirectory "web"
 
+saveHandler :: Snap ()
+saveHandler = do
+    hashed <- saveAndHash
+    writeBS hashed
+
 compileHandler :: Snap ()
 compileHandler = do
-    body <- LB.toStrict <$> readRequestBody maxSourceSize
-    let hashed = hash body
+    hashed <- saveAndHash
     alreadyExists <- liftIO $ (&&) <$> (not <$> doesFileExist (targetFile hashed))
                                    <*> (not <$> doesFileExist (errorFile  hashed))
     when alreadyExists $ liftIO $ do
-        B.writeFile (sourceFile hashed) body
         compileUserSource hashed
     hasSource <- liftIO $ doesFileExist (targetFile hashed)
     when (not hasSource) $ modifyResponse $ setResponseCode 500
     writeBS hashed
 
-maxSourceSize :: Int64
-maxSourceSize = 2000000
+saveAndHash :: Snap ByteString
+saveAndHash = do
+    body <- LB.toStrict <$> readRequestBody maxSourceSize
+    let hashed = hash body
+    liftIO $ B.writeFile (sourceFile hashed) body
+    return hashed
 
 hash :: ByteString -> ByteString
 hash = BC.cons 'P' . BC.map toWebSafe . B64.encode . Crypto.hash

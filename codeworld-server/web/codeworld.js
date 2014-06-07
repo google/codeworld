@@ -21,6 +21,15 @@ function init() {
   loadExamples();
 }
 
+function toggleBrowser() {
+  var browser = document.getElementById('nav');
+  if (browser.style.display == 'none') {
+    browser.style.display = 'initial';
+  } else {
+    browser.style.display = 'none';
+  }
+}
+
 function loadExamples() {
   var request = new XMLHttpRequest();
   request.open('GET', 'listExamples', false);
@@ -44,7 +53,7 @@ function loadExamples() {
     elem.classList.add('blue');
     elem.onclick = function() { load('examples/' + filename); };
 
-    var examples = document.getElementById('exampleButtons');
+    var examples = document.getElementById('nav_examples');
     examples.appendChild(elem);
   });
 }
@@ -98,7 +107,14 @@ function stop() {
 }
 
 function run(hash, msg, error) {
+  var result = document.getElementById('result');
   var runner = document.getElementById('runner');
+
+  if (hash == '') {
+    result.style.display = 'none';
+  } else {
+    result.style.display = 'initial';
+  }
 
   if (hash != '' && !error) {
     runner.contentWindow.location.replace('run.html?hash=' + hash);

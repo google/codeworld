@@ -10,13 +10,72 @@ body {
   align-items: stretch;
   -webkit-align-items: stretch;
   -ms-align-items: stretch;
+  flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
   overflow-x: hidden;
 }
 
-#edit {
-  flex: 1 0 500px;
-  -webkit-flex: 1 0 500px;
-  -ms-flex: 1 0 500px;
+#mainRow {
+  flex: 1 1 500px;
+  -webkit-flex: 1 1 500px;
+  -ms-flex: 1 1 500px;
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
+  flex-direction: row;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+}
+
+#buttons {
+  flex: 0 0 auto;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
+  flex-direction: row;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+}
+
+#nav {
+  flex: 1 0 200px;
+  -webkit-flex: 1 0 200px;
+  -ms-flex: 1 0 200px;
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
+  flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  margin: 0px;
+}
+
+#nav_mine {
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
+  flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  margin: 0px;
+}
+
+#nav_examples {
   display: flex;
   display: -webkit-flex;
   display: -ms-flex;
@@ -30,10 +89,10 @@ body {
 }
 
 #source {
-  flex: 1 1 500px;
-  -webkit-flex: 1 1 500px;
-  -ms-flex: 1 1 500px;
-  position:relative;
+  flex: 1 0 500px;
+  -webkit-flex: 1 0 500px;
+  -ms-flex: 1 0 500px;
+  position: relative;
 }
 
 #source .CodeMirror {
@@ -85,13 +144,6 @@ body {
 }
 #message.error {
   background-color: #fcc;
-}
-
-#buttons {
-  flex: 0 0 auto;
-  -webkit-flex: 0 0 auto;
-  -ms-flex: 0 0 auto;
-  text-align: right;
 }
 
 .cw-button {

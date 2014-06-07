@@ -9,26 +9,32 @@
     <link rel="stylesheet" href="codeworld.css">
   </head>
   <body onload="init()" class="flex">
-    <div id="edit">
+    <div id="mainRow">
+      <div id="nav">
+        <div id="nav_mine">
+          <input type="button" class="cw-button green" value="New" onclick="load('')">
+        </div>
+        <div id="nav_examples">
+        </div>
+      </div>
+
       <form id="source" class="dropbox"><textarea id="editor" placeholder="Type your program here..."></textarea></form>
-      <div id="examples">
-        <input type="button" class="cw-button green" value="New" onclick="load('')">
-        <input type="button" id="openButton" class="cw-button green" value="Open" onclick="openFile()" style="display: none">
-        <input type="button" id="saveButton" class="cw-button green" value="Save" onclick="saveFile()" style="display: none">
-        <input type="button" id="saveAsButton" class="cw-button green" value="Save As" onclick="saveFileAs()" style="display: none">
-        <span id="exampleButtons"></span>
-        <input type="button" id="signin"  class="cw-button green" value="Sign In"  onclick="signin()" >
-        <input type="button" id="signout" class="cw-button red"   value="Sign Out" onclick="signout()" style="display: none">
+
+      <div id="result">
+        <iframe id="runner" class="dropbox" width="500" height="500"></iframe>
+        <pre id="message" class="dropbox"></pre>
       </div>
     </div>
-    <div id="result">
-      <iframe id="runner" class="dropbox" width="500" height="500"></iframe>
-      <pre id="message" class="dropbox"></pre>
-      <div id="buttons">
-        <input type="button" id="shareButton" class="cw-button blue" value="Share" onclick="share()">
-        <input type="button" class="cw-button red" value="Stop" onclick="stop()">
-        <input type="button" class="cw-button green" value="Run" onclick="compile()">
-      </div>
+    <div id="buttons">
+      <input type="button" id="navButton" class="cw-button blue" value="Browser" onclick="toggleBrowser()">
+      <input type="button" id="openButton" class="cw-button green" value="Open" onclick="openFile()" style="display: none">
+      <input type="button" id="saveButton" class="cw-button green" value="Save" onclick="saveFile()" style="display: none">
+      <input type="button" id="saveAsButton" class="cw-button green" value="Save As" onclick="saveFileAs()" style="display: none">
+      <input type="button" id="signin"  class="cw-button green" value="Sign In"  onclick="signin()" >
+      <input type="button" id="signout" class="cw-button red"   value="Sign Out" onclick="signout()" style="display: none">
+      <input type="button" id="shareButton" class="cw-button blue" value="Share" onclick="share()">
+      <input type="button" class="cw-button red" value="Stop" onclick="stop()">
+      <input type="button" class="cw-button green" value="Run" onclick="compile()">
     </div>
   </body>
 </html>

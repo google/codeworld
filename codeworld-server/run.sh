@@ -1,2 +1,3 @@
 #!/bin/sh
-./dist/build/codeworld-server/codeworld-server $@
+fuser -k -n tcp $1
+./dist/build/codeworld-server/codeworld-server -p $1

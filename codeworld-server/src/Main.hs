@@ -69,10 +69,15 @@ saveAndHash = do
 
 compileIfNeeded :: ByteString -> IO ()
 compileIfNeeded hashed = do
-    hasSource <- doesFileExist (sourceFile hashed)
-    missingResult <- (&&) <$> (not <$> doesFileExist (targetFile hashed))
-                          <*> (not <$> doesFileExist (errorFile  hashed))
-    when (hasSource && missingResult) $ compileUserSource hashed
+    hasResult <- doesFileExist (resultFile  hashed)
+    needsRebuild <- if not hasResult then return True else do
+        rebuildTime <- getModificationTime rebuildFile
+        buildTime   <- getModificationTime (resultFile hashed)
+        return (buildTime < rebuildTime)
+    when needsRebuild $ compileUserSource hashed
+
+rebuildFile :: FilePath
+rebuildFile = "user" </> "REBUILD"
 
 localSourceFile :: ByteString -> FilePath
 localSourceFile hashed = BC.unpack hashed ++ ".hs"
@@ -83,8 +88,8 @@ sourceFile hashed = "user" </> localSourceFile hashed
 targetFile :: ByteString -> FilePath
 targetFile hashed = "user" </> BC.unpack hashed ++ ".jsexe" </> "all.js"
 
-errorFile :: ByteString -> FilePath
-errorFile hashed = "user" </> BC.unpack hashed ++ ".err.txt"
+resultFile :: ByteString -> FilePath
+resultFile hashed = "user" </> BC.unpack hashed ++ ".err.txt"
 
 compileUserSource :: ByteString -> IO ()
 compileUserSource hashed = do
@@ -103,7 +108,7 @@ compileUserSource hashed = do
             "./" ++ localSourceFile hashed
           ]
     result <- runCompiler "ghcjs" ghcjsArgs
-    B.writeFile (errorFile hashed) $
+    B.writeFile (resultFile hashed) $
         sanitizeError (localSourceFile hashed) result
 
 runCompiler :: FilePath -> [String] -> IO ByteString

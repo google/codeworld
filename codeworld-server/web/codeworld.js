@@ -17,6 +17,36 @@ function init() {
   if (hash.length > 0) {
     load('user/' + hash + '.hs');
   }
+
+  loadExamples();
+}
+
+function loadExamples() {
+  var request = new XMLHttpRequest();
+  request.open('GET', 'listExamples', false);
+  request.send(null);
+
+  if (request.status != 200) {
+    return;
+  }
+
+  request.responseText.split('\n').forEach(function(filename) {
+    if (filename == '') {
+      return;
+    }
+
+    var name = filename.replace(/\.[^/.]+$/, '');
+
+    var elem = document.createElement('input');
+    elem.type = 'button';
+    elem.value = 'Try: ' + name;
+    elem.classList.add('cw-button');
+    elem.classList.add('blue');
+    elem.onclick = function() { load('examples/' + filename); };
+
+    var examples = document.getElementById('exampleButtons');
+    examples.appendChild(elem);
+  });
 }
 
 function setCode(code, metadata) {

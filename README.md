@@ -34,13 +34,15 @@ Feature Requests
 
 This is a list of ideas for how to make this awesome.
 
+* Language: Remove the Eq type class
 * Editor: Auto-complete, refactoring (rename, duplicate, ...).
 * Documentation: Fully document haddock, custom haddock theme, doc-on-hover, more browsable examples.
 * Workspace: project switcher, better example browser, library projects.
 * Social: browse public projects, share with friends, comment on others' projects.
 * Collaboration: import libraries across users, joint projects.
-* Debugging: click-jump to error location, point-pins, scale-zoom controls, time-step debugger, NOT a language debugger.
-* Export: chrome app, Android, iOS (maybe impossible without jailbreak?).
+* Debugging: Show runtime exceptions, click-jump to error location, point-pins, scale-zoom controls,
+             time-step debugger, NOT a language debugger.
+* Export: Android, iOS (maybe impossible without jailbreak?), chrome app? flash?.
 * Lessons: guided help, gallery, quizzes, "helpers" (list comprehensions, etc.).
 
 Bugs

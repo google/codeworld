@@ -161,16 +161,18 @@ function compile() {
     var hash = request.responseText;
     var success = request.status == 200;
 
-    var msg = '';
-    if (request.status == 200) {
-      msg = request.responseText;
-    }
+    sendHttp('GET', 'user/' + hash + '.err.txt', null, false, function(request) {
+      var msg = '';
+      if (request.status == 200) {
+        msg = request.responseText;
+      }
 
-    if (success && msg == '') {
-      msg = 'Running...';
-    }
+      if (success && msg == '') {
+        msg = 'Running...';
+      }
 
-    run(hash, msg, !success);
+      run(hash, msg, !success);
+    });
   });
 }
 

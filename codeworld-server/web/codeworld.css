@@ -59,10 +59,13 @@ body {
   flex-direction: column;
   -webkit-flex-direction: column;
   -ms-flex-direction: column;
-  margin: 0px;
+  overflow-y: auto;
 }
 
 #nav_mine {
+  flex: 0 0 auto;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
   display: flex;
   display: -webkit-flex;
   display: -ms-flex;
@@ -76,6 +79,9 @@ body {
 }
 
 #nav_examples {
+  flex: 0 0 auto;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
   display: flex;
   display: -webkit-flex;
   display: -ms-flex;
@@ -160,6 +166,7 @@ body {
   text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
   font-weight:bold;
   color: white;
+  white-space: nowrap;
 }
 
 .cw-button,.cw-button-left {

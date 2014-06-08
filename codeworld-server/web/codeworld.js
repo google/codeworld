@@ -1,15 +1,15 @@
-function init() {                                                                                                                     
-  var editor = document.getElementById('editor');                                                                                     
-  window.codeworldEditor = CodeMirror.fromTextArea(editor, {                                                                          
-    mode: 'haskell',                                                                                                                  
-    lineNumbers: true,                                                                                                                
-    autofocus: true,                                                                                                                  
-    matchBrackets: true,                                                                                                              
-    styleActiveLine: true,                                                                                                            
-    autoCloseBrackets: true,                                                                                                          
-    showTrailingSpace: true,                                                                                                          
-    rulers: [{column: 80, color: "#bbb", lineStyle: "dashed"}]                                                                        
-  });                                                                                                                                 
+function init() {
+  var editor = document.getElementById('editor');
+  window.codeworldEditor = CodeMirror.fromTextArea(editor, {
+    mode: 'haskell',
+    lineNumbers: true,
+    autofocus: true,
+    matchBrackets: true,
+    styleActiveLine: true,
+    autoCloseBrackets: true,
+    showTrailingSpace: true,
+    rulers: [{column: 80, color: "#bbb", lineStyle: "dashed"}]
+  });
 
   CodeMirror.commands.save = function(cm) { saveFile(); }
 
@@ -24,7 +24,7 @@ function init() {
 function toggleBrowser() {
   var browser = document.getElementById('nav');
   if (browser.style.display == 'none') {
-    browser.style.display = 'initial';
+    browser.style.display = '';
   } else {
     browser.style.display = 'none';
   }
@@ -71,7 +71,7 @@ function setCode(code, metadata) {
   codeworldEditor.getDoc().clearHistory();
 
   if (window.openFileMetadata) {
-    document.getElementById('saveButton').style.display = 'inline-block';
+    document.getElementById('saveButton').style.display = '';
   } else {
     document.getElementById('saveButton').style.display = 'none';
   }
@@ -118,13 +118,13 @@ function run(hash, msg, error) {
   if (hash == '') {
     result.style.display = 'none';
   } else {
-    result.style.display = 'initial';
+    result.style.display = '';
   }
 
   if (hash != '' && !error) {
     runner.contentWindow.location.replace('run.html?hash=' + hash);
     runner.contentWindow.focus();
-    document.getElementById('shareButton').style.display = 'inline-block';
+    document.getElementById('shareButton').style.display = '';
   } else {
     runner.contentWindow.location.replace('about:blank');
     document.getElementById('shareButton').style.display = 'none';
@@ -316,13 +316,13 @@ function signin() {
   function signinCallback(authResult) {
     if (authResult['status']['signed_in']) {
       document.getElementById('signin').style.display = 'none';
-      document.getElementById('signout').style.display = 'inline-block';
-      document.getElementById('openButton').style.display = 'inline-block';
-      document.getElementById('saveAsButton').style.display = 'inline-block';
+      document.getElementById('signout').style.display = '';
+      document.getElementById('openButton').style.display = '';
+      document.getElementById('saveAsButton').style.display = '';
       gapi.client.load('drive', 'v2');
       gapi.load('picker');
     } else {
-      document.getElementById('signin').style.display = 'inline-block';
+      document.getElementById('signin').style.display = '';
       document.getElementById('signout').style.display = 'none';
       document.getElementById('openButton').style.display = 'none';
       document.getElementById('saveButton').style.display = 'none';

@@ -1,4 +1,4 @@
-*.hs
+P*.hs
 *.err.txt
 *.o
 *.hi

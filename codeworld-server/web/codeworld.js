@@ -387,4 +387,8 @@ function signout() {
   }
   loadAsync('https://apis.google.com/js/client:plusone.js');
   loadAsync('https://apis.google.com/js/api.js');
+  loadAsync('user/base.jsexe/lib.base.js');
+  loadAsync('user/base.jsexe/rts.js');
+  loadAsync('user/base.jsexe/lib1.base.js');
+  loadAsync('user/base.jsexe/out.base.js');
 })();

@@ -34,7 +34,9 @@ maxSourceSize :: Int64
 maxSourceSize = 2000000
 
 main :: IO ()
-main = quickHttpServe $ (processBody >> site) <|> site
+main = do
+    generateBaseBundle
+    quickHttpServe $ (processBody >> site) <|> site
 
 processBody :: Snap ()
 processBody = do
@@ -111,7 +113,7 @@ compileIfNeeded hashed = do
         rebuildTime <- getModificationTime rebuildFile
         buildTime   <- getModificationTime (resultFile hashed)
         return (buildTime < rebuildTime)
-    when needsRebuild $ compileUserSource hashed
+    when needsRebuild $ compileUserSource (localSourceFile hashed) (resultFile hashed)
 
 rebuildFile :: FilePath
 rebuildFile = "user" </> "REBUILD"
@@ -123,30 +125,46 @@ sourceFile :: ByteString -> FilePath
 sourceFile hashed = "user" </> localSourceFile hashed
 
 targetFile :: ByteString -> FilePath
-targetFile hashed = "user" </> BC.unpack hashed ++ ".jsexe" </> "all.js"
+targetFile hashed = "user" </> BC.unpack hashed ++ ".jsexe" </> "out.js"
 
 resultFile :: ByteString -> FilePath
 resultFile hashed = "user" </> BC.unpack hashed ++ ".err.txt"
 
-compileUserSource :: ByteString -> IO ()
-compileUserSource hashed = do
-    let ghcjsArgs = [
-            "-O2",
-            "-hide-package", "base",
-            "-package", "codeworld-base",
-            "-XRebindableSyntax",
-            "-XImplicitPrelude",
-            "-XOverloadedStrings",
-            "-XNoTemplateHaskell",
-            "-XNoUndecidableInstances",
-            "-XNoQuasiQuotes",
-            "-XExplicitForAll",
-            "-XJavaScriptFFI",
-            "./" ++ localSourceFile hashed
+commonGHCJSArgs :: [String]
+commonGHCJSArgs = [
+    "-hide-package", "base",
+    "-package", "codeworld-base",
+    "-XRebindableSyntax",
+    "-XImplicitPrelude",
+    "-XOverloadedStrings",
+    "-XNoTemplateHaskell",
+    "-XNoUndecidableInstances",
+    "-XNoQuasiQuotes",
+    "-XExplicitForAll",
+    "-XJavaScriptFFI"
+    ]
+
+generateBaseBundle :: IO ()
+generateBaseBundle = do
+    let ghcjsArgs = commonGHCJSArgs ++ [
+            "--generate-base=LinkBase",
+            "-o", "base",
+            "LinkMain.hs"
+          ]
+    BC.putStrLn =<< runCompiler "ghcjs" ghcjsArgs
+    return ()
+
+compileUserSource :: FilePath -> FilePath -> IO ()
+compileUserSource sourcePath resultPath = do
+    let ghcjsArgs = commonGHCJSArgs ++ [
+            "--no-rts",
+            "--no-stats",
+            "--use-base=base.jsexe/out.base.symbs",
+            "./" ++ sourcePath
           ]
     result <- runCompiler "ghcjs" ghcjsArgs
-    B.writeFile (resultFile hashed) $
-        sanitizeError (localSourceFile hashed) result
+    B.writeFile resultPath $
+        sanitizeError sourcePath result
 
 runCompiler :: FilePath -> [String] -> IO ByteString
 runCompiler cmd args = do

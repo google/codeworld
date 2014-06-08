@@ -49,4 +49,4 @@ Bugs
 ====
 
 - Document dirty state should be tracked
-- MouseDrag event doesn't work
+- Better Load/Save behavior

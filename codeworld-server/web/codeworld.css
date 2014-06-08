@@ -135,9 +135,9 @@ body {
 }
 
 #message {
-  flex: 1 1 auto;
-  -webkit-flex: 1 1 auto;
-  -ms-flex: 1 1 auto;
+  flex: 1 1 20px;
+  -webkit-flex: 1 1 20px;
+  -ms-flex: 1 1 20px;
   overflow: auto;
   font-size: 11px;
   padding: 5px;

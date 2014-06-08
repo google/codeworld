@@ -1,3 +1,19 @@
+function sendHttp(method, url, body, auth, callback) {
+  var request = new XMLHttpRequest();
+  request.onreadystatechange = function() {
+    if (request.readyState == 4) callback(request);
+  };
+
+  request.open(method, url, true);
+
+  if (auth) {
+    var accessToken = gapi.auth.getToken().access_token;
+    request.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+  }
+
+  request.send(body);
+}
+
 function init() {
   var editor = document.getElementById('editor');
   window.codeworldEditor = CodeMirror.fromTextArea(editor, {
@@ -31,35 +47,33 @@ function toggleBrowser() {
 }
 
 function loadExamples() {
-  var request = new XMLHttpRequest();
-  request.open('GET', 'listExamples', false);
-  request.send(null);
-
-  if (request.status != 200) {
-    return;
-  }
-
-  var examples = document.getElementById('nav_examples');
-  while (examples.firstChild) {
-    examples.removeChild(examples.firstChild);
-  }
-
-  request.responseText.split('\n').forEach(function(filename) {
-    if (filename == '') {
+  sendHttp('GET', 'listExamples', null, false, function(request) {
+    if (request.status != 200) {
       return;
     }
 
-    var name = filename.replace(/\.[^/.]+$/, '');
+    var examples = document.getElementById('nav_examples');
+    while (examples.firstChild) {
+      examples.removeChild(examples.firstChild);
+    }
 
-    var template = document.getElementById('exampleTemplate').innerHTML;
-    template = template.replace('{{label}}', 'Try: ' + name);
+    request.responseText.split('\n').forEach(function(filename) {
+      if (filename == '') {
+        return;
+      }
 
-    var span = document.createElement('span');
-    span.innerHTML = template;
-    var elem = span.getElementsByTagName('a')[0];
-    elem.onclick = function() { load('examples/' + filename); };
+      var name = filename.replace(/\.[^/.]+$/, '');
 
-    examples.appendChild(span.removeChild(elem));
+      var template = document.getElementById('exampleTemplate').innerHTML;
+      template = template.replace('{{label}}', 'Try: ' + name);
+
+      var span = document.createElement('span');
+      span.innerHTML = template;
+      var elem = span.getElementsByTagName('a')[0];
+      elem.onclick = function() { load('examples/' + filename); };
+
+      examples.appendChild(span.removeChild(elem));
+    });
   });
 }
 
@@ -87,13 +101,11 @@ function load(file) {
       return;
     }
 
-    var request = new XMLHttpRequest();
-    request.open('GET', file, false);
-    request.send();
-
-    if (request.status == 200) {
-      setCode(request.responseText);
-    }
+    sendHttp('GET', file, null, false, function(request) {
+      if (request.status == 200) {
+        setCode(request.responseText);
+      }
+    });
   }
 }
 
@@ -115,7 +127,7 @@ function run(hash, msg, error) {
   var result = document.getElementById('result');
   var runner = document.getElementById('runner');
 
-  if (hash == '') {
+  if (hash == '' && msg == '') {
     result.style.display = 'none';
   } else {
     result.style.display = '';
@@ -144,25 +156,22 @@ function compile() {
   run('', 'Building...', false);
 
   var source = window.codeworldEditor.getValue();
-  var request = new XMLHttpRequest();
-  request.open('POST', 'compile', false);
-  request.send(source);
 
-  var hash = request.responseText;
-  var success = request.status == 200;
+  sendHttp('POST', 'compile', source, false, function(request) {
+    var hash = request.responseText;
+    var success = request.status == 200;
 
-  request.open('GET', 'user/' + hash + '.err.txt', false);
-  request.send();
-  var msg = '';
-  if (request.status == 200) {
-    msg = request.responseText;
-  }
+    var msg = '';
+    if (request.status == 200) {
+      msg = request.responseText;
+    }
 
-  if (success && msg == '') {
-    msg = 'Program starting...';
-  }
+    if (success && msg == '') {
+      msg = 'Running...';
+    }
 
-  run(hash, msg, !success);
+    run(hash, msg, !success);
+  });
 }
 
 function openFile() {
@@ -185,15 +194,11 @@ function openFile() {
       }
 
       if (file.downloadUrl) {
-        var accessToken = gapi.auth.getToken().access_token;
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', file.downloadUrl, false);
-        xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-        xhr.send();
-
-        if (xhr.status == 200) {
-          setCode(xhr.responseText, file);
-        }
+        sendHttp('GET', file.downloadUrl, null, true, function(request) {
+          if (request.status == 200) {
+            setCode(request.responseText, file);
+          }
+        });
       }
     });
   }

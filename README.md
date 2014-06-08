@@ -47,5 +47,4 @@ Bugs
 ====
 
 - Document dirty state should be tracked
-- JavaScript calls (esp. XmlHttpRequest) should be asynchronous
 - MouseDrag event doesn't work

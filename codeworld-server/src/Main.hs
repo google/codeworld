@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
@@ -7,20 +8,23 @@ import           Control.Exception
 import           Control.Monad
 import           Control.Monad.Trans
 import qualified Crypto.Hash.MD5 as Crypto
+import           Data.Aeson
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Base64 as B64
 import           Data.Char
 import           Data.Int
 import           Data.List
 import           Data.Monoid
+import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import           Network.HTTP.Conduit
 import           Snap.Core
 import           Snap.Http.Server (quickHttpServe)
 import           Snap.Util.FileServe
+import           Snap.Util.FileUploads
 import           System.Directory
 import           System.FilePath
 import           System.IO
@@ -30,7 +34,12 @@ maxSourceSize :: Int64
 maxSourceSize = 2000000
 
 main :: IO ()
-main = quickHttpServe site
+main = quickHttpServe $ (processBody >> site) <|> site
+
+processBody :: Snap ()
+processBody = do
+    handleMultipart defaultUploadPolicy (const $ return ())
+    return ()
 
 site :: Snap ()
 site =
@@ -43,8 +52,24 @@ site =
     dir "user" (serveDirectory "user") <|>
     serveDirectory "web"
 
+data User = User {
+    userId :: Text
+    }
+
+instance FromJSON User where
+    parseJSON (Object v) = User <$> v .: "user_id"
+    parseJSON _          = mzero
+
+getUser :: Snap User
+getUser = getParam "id_token" >>= \ case
+    Nothing       -> pass
+    Just id_token -> maybe pass return =<< (fmap decode $ liftIO $ simpleHttp $
+        "https://www.googleapis.com/oauth2/v1/tokeninfo?id_token=" ++ BC.unpack id_token)
+
 saveHandler :: Snap ()
-saveHandler = writeBS =<< saveAndHash
+saveHandler = do
+    user <- getUser
+    liftIO $ putStrLn $ T.unpack $ userId user
 
 compileHandler :: Snap ()
 compileHandler = do
@@ -71,7 +96,7 @@ getExamples = filter isExampleFile <$> getDirectoryContents "web/examples"
 
 saveAndHash :: Snap ByteString
 saveAndHash = do
-    body <- LB.toStrict <$> readRequestBody maxSourceSize
+    Just body <- getParam "source"
     let hashed = BC.cons 'P' $ BC.map toWebSafe $ B64.encode $ Crypto.hash body
     liftIO $ B.writeFile (sourceFile hashed) body
     return hashed

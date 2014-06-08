@@ -15,6 +15,7 @@ Executable codeworld-server
   main-is: Main.hs
 
   Build-depends:
+    aeson,
     base,
     base64-bytestring,
     bytestring,
@@ -22,6 +23,7 @@ Executable codeworld-server
     data-default,
     directory,
     filepath,
+    http-conduit,
     MonadCatchIO-transformers,
     mtl,
     process,

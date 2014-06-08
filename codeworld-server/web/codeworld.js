@@ -188,9 +188,10 @@ function run(hash, msg, error) {
 function compile() {
   run('', 'Building...', false);
 
-  var source = window.codeworldEditor.getValue();
+  var data = new FormData();
+  data.append('source', window.codeworldEditor.getValue());
 
-  sendHttp('POST', 'compile', source, false, function(request) {
+  sendHttp('POST', 'compile', data, false, function(request) {
     var hash = request.responseText;
     var success = request.status == 200;
 

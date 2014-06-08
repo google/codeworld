@@ -35,7 +35,7 @@ Feature Requests
 This is a list of ideas for how to make this awesome.
 
 * Editor: Auto-complete, refactoring (rename, duplicate, ...).
-* Documentation: browsable haddock, doc-on-hover, more browsable examples.
+* Documentation: Fully document haddock, custom haddock theme, doc-on-hover, more browsable examples.
 * Workspace: project switcher, better example browser, library projects.
 * Social: browse public projects, share with friends, comment on others' projects.
 * Collaboration: import libraries across users, joint projects.

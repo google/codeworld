@@ -282,11 +282,6 @@ setupEvents currentActivity canvas = do
         let event = MouseMovement pos
         liftIO $ modifyMVar_ currentActivity $ \ activity -> do
             return (activityEvent activity event)
-    domWindowOndrag window $ do
-        pos <- getMousePos canvas
-        let event = MouseDrag pos
-        liftIO $ modifyMVar_ currentActivity $ \ activity -> do
-            return (activityEvent activity event)
     return ()
 
 passTime :: NominalDiffTime -> MVar Activity -> IO Activity

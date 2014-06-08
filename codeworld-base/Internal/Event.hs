@@ -13,6 +13,5 @@ data Event = KeyPress Text
            | MousePress Number Point
            | MouseRelease Number Point
            | MouseMovement Point
-           | MouseDrag Point
 
 instance Show Event where show _ = "<<Event>>"

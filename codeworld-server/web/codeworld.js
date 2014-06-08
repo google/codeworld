@@ -1,20 +1,9 @@
-function sendHttp(method, url, body, auth, callback) {
-  var request = new XMLHttpRequest();
-  request.onreadystatechange = function() {
-    if (request.readyState == 4) callback(request);
-  };
-
-  request.open(method, url, true);
-
-  if (auth) {
-    var accessToken = gapi.auth.getToken().access_token;
-    request.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-  }
-
-  request.send(body);
-}
-
 function init() {
+  window.showingBrowse = true;
+  window.showingResult = false;
+
+  updateVisibility();
+
   var editor = document.getElementById('editor');
   window.codeworldEditor = CodeMirror.fromTextArea(editor, {
     mode: 'haskell',
@@ -37,13 +26,65 @@ function init() {
   loadExamples();
 }
 
-function toggleBrowser() {
-  var browser = document.getElementById('nav');
-  if (browser.style.display == 'none') {
-    browser.style.display = '';
-  } else {
-    browser.style.display = 'none';
+function sendHttp(method, url, body, auth, callback) {
+  var request = new XMLHttpRequest();
+  request.onreadystatechange = function() {
+    if (request.readyState == 4) callback(request);
+  };
+
+  request.open(method, url, true);
+
+  if (auth) {
+    var accessToken = gapi.auth.getToken().access_token;
+    request.setRequestHeader('Authorization', 'Bearer ' + accessToken);
   }
+
+  request.send(body);
+}
+
+function updateVisibility() {
+  var accessToken = gapi.auth.getToken();
+  if (accessToken) {
+    document.getElementById('signin').style.display = 'none';
+    document.getElementById('signout').style.display = '';
+    document.getElementById('openButton').style.display = '';
+    document.getElementById('saveAsButton').style.display = '';
+
+    if (window.openFileMetadata) {
+      document.getElementById('saveButton').style.display = '';
+    } else {
+      document.getElementById('saveButton').style.display = 'none';
+    }
+  } else {
+    document.getElementById('signin').style.display = '';
+    document.getElementById('signout').style.display = 'none';
+    document.getElementById('openButton').style.display = 'none';
+    document.getElementById('saveButton').style.display = 'none';
+    document.getElementById('saveAsButton').style.display = 'none';
+  }
+
+  if (window.showingBrowse) {
+    document.getElementById('nav').style.display = '';
+  } else {
+    document.getElementById('nav').style.display = 'none';
+  }
+
+  if (window.showingResult) {
+    document.getElementById('result').style.display = '';
+
+    if (window.programRunning) {
+      document.getElementById('shareButton').style.display = '';
+    } else {
+      document.getElementById('shareButton').style.display = 'none';
+    }
+  } else {
+    document.getElementById('result').style.display = 'none';
+  }
+}
+
+function toggleBrowser() {
+  window.showingBrowse = !window.showingBrowse;
+  updateVisibility();
 }
 
 function loadExamples() {
@@ -84,11 +125,7 @@ function setCode(code, metadata) {
   codeworldEditor.setValue(code);
   codeworldEditor.getDoc().clearHistory();
 
-  if (window.openFileMetadata) {
-    document.getElementById('saveButton').style.display = '';
-  } else {
-    document.getElementById('saveButton').style.display = 'none';
-  }
+  updateVisibility();
 }
 
 function load(file) {
@@ -124,22 +161,16 @@ function stop() {
 }
 
 function run(hash, msg, error) {
-  var result = document.getElementById('result');
+  window.showingResult = hash || msg;
+
   var runner = document.getElementById('runner');
-
-  if (hash == '' && msg == '') {
-    result.style.display = 'none';
-  } else {
-    result.style.display = '';
-  }
-
-  if (hash != '' && !error) {
+  if (hash && !error) {
     runner.contentWindow.location.replace('run.html?hash=' + hash);
-    runner.contentWindow.focus();
-    document.getElementById('shareButton').style.display = '';
+    document.getElementById('runner').contentWindow.focus();
+    window.programRunning = true;
   } else {
     runner.contentWindow.location.replace('about:blank');
-    document.getElementById('shareButton').style.display = 'none';
+    window.programRunning = false;
   }
 
   var message = document.getElementById('message');
@@ -150,6 +181,8 @@ function run(hash, msg, error) {
   } else {
     message.classList.remove('error');
   }
+
+  updateVisibility();
 }
 
 function compile() {
@@ -322,19 +355,10 @@ function saveFileBase(name) {
 function signin() {
   function signinCallback(authResult) {
     if (authResult['status']['signed_in']) {
-      document.getElementById('signin').style.display = 'none';
-      document.getElementById('signout').style.display = '';
-      document.getElementById('openButton').style.display = '';
-      document.getElementById('saveAsButton').style.display = '';
       gapi.client.load('drive', 'v2');
       gapi.load('picker');
-    } else {
-      document.getElementById('signin').style.display = '';
-      document.getElementById('signout').style.display = 'none';
-      document.getElementById('openButton').style.display = 'none';
-      document.getElementById('saveButton').style.display = 'none';
-      document.getElementById('saveAsButton').style.display = 'none';
     }
+    updateVisibility();
   }
 
   if (window.gapi) {

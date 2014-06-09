@@ -28,8 +28,8 @@ This is a definition of "wheel": it says that "wheel" means a circle with a radi
 A pixel is a tiny dot on the computer screen, so 10 pixels is actually not very far!
 
 In CodeWorld, you do absolutely everything by naming things.  We call the names (like
-*wheel* in that example) "variables".  So, earlier we defined a *variable* called *wheel*.
-You will define a lot of variables in CodeWorld.
+"wheel" in that example) *variables*.  So, earlier we defined a *variable* called
+"wheel". You will define a lot of variables in CodeWorld.
 
 ### Defining main ###
 
@@ -185,6 +185,71 @@ Here's an example of `scale`:
 You should try to get a good feeling for the meaning of those scaling
 factors.  Try changing the numbers in the example, and see if you can
 guess what will happen before you press run.
+
+### Putting It Together ###
+
+TODO: Add a non-trivial example here.
+
+Expressions
+-----------
+
+Now that you've spent some time trying out pictures, let's learn a few
+more tricks you can use.  The part of a definition after the equal sign
+is called an *expression*.  For example:
+
+* `circle 100` is an expression.
+* `color red (text "Help")` is also an expression.
+* So is `rectangle 20 100 & circle 50`.
+* `tree = leaves & trunk` is *not* an expression.  It's a *definition*
+  instead.  But `leaves & trunk` is an expression.
+
+Can you tell the difference?  Expressions describe something, but don't
+give it a name.  But every definition has an expression inside, after
+the equal sign.  So expressions are pretty important.
+
+### Parentheses ###
+
+Remember how we used `rotate`?  Here's a quick reminder:
+
+    main    = pictureOf diamond
+    diamond = rotate 45 square
+    square  = rectangle 50 50
+
+Nice!  However, naming everything like that can get tedious.  If you
+have a simple shape, such as `rectangle 50 50`, you may not want
+to bother giving it a name.  But then, how do you use it as part of
+another definition?  The answer is parentheses!
+
+To use one expression inside of another one, put it in parentheses.
+Try it:
+
+    main = pictureOf diamond
+    diamond = rotate 45 (rectangle 50 50)
+
+Or even:
+
+    main = pictureOf (rotate 45 (rectangle 50 50))
+
+Careful, though!  Parentheses are useful to avoid naming simple things,
+but if you use parentheses inside of parentheses inside of parentheses,
+pretty soon it's hard to tell what's going on!
+
+### Numbers ###
+
+Parentheses can be used for more than just pictures.  You can let the
+computer work out math for you on numbers, too.  When you write math
+expressions, you can use `+` and `-` the way you normally would.  To
+multiply, use `*`.  To divide, use `/`.
+
+Check out this program:
+
+    main = rotate   (1 * 180 / 3) (rectangle 100 10)
+           & rotate (2 * 180 / 3) (rectangle 100 10)
+           & rotate (3 * 180 / 3) (rectangle 100 10)
+
+We could have written `0`, `60`, and `120` (the answers to those math
+problems).  But this way, it's very clear what we are doing: dividing
+180 degrees into thirds, and then rotating a rectangle by each amount.
 
 Animations
 ==========

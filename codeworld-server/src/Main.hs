@@ -178,6 +178,9 @@ resultFile hashed = "user" </> BC.unpack hashed ++ ".err.txt"
 
 commonGHCJSArgs :: [String]
 commonGHCJSArgs = [
+    "-Wall",
+    "-fno-warn-deprecated-flags",
+    "-fno-warn-amp",
     "-hide-package", "base",
     "-package", "codeworld-base",
     "-XRebindableSyntax",
@@ -240,6 +243,7 @@ sanitizeError source = T.encodeUtf8
                      . T.replace "[GHC.Types.Char] -> " ""
                      . T.replace "base:GHC.Base.String -> " ""
                      . T.replace "IO ()" "Program"
+                     . T.replace "IO t0" "Program"
                      . T.replace "Perhaps you intended to use TemplateHaskell" ""
                      . T.replace "(imported from Prelude)" ""
                      . T.filter isAscii

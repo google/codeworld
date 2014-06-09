@@ -13,7 +13,7 @@
       for (var i = 0; i < pres.length; ++i) {
         (function() {
           var pre = pres[i];
-          var text = pre.innerText;
+          var text = pre.textContent;
           pre.innerHTML = '';
           CodeMirror.runMode(text, 'haskell', pre);
           pre.classList.add('cm-s-default');

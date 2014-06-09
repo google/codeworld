@@ -112,7 +112,7 @@ function toggleBrowser() {
 function toggleDoc() {
   window.showingDoc = !window.showingDoc;
   if (window.showingDoc) {
-    var path = document.getElementById('docPath').innerText;
+    var path = document.getElementById('docPath').textContent.trim();
     document.getElementById('doc').contentWindow.location.replace(path);
   }
   updateVisibility();

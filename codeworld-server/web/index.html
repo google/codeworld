@@ -2,6 +2,7 @@
 
 <html>
   <head>
+    <title>CodeWorld</title>
     <script src="codeworld.js"></script>
     <script src="codemirror-compressed.js"></script>
 
@@ -10,6 +11,9 @@
     <link rel="stylesheet" href="codeworld-cm.css">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css">
 
+    <script type="text/template" id="projectTemplate">
+      <a class="cw-button cw-button-left green"><i class="fa fa-lg fa-cube fa-fw"></i>&nbsp; {{label}}</a>
+    </script>
     <script type="text/template" id="exampleTemplate">
       <a class="cw-button cw-button-left blue"><i class="fa fa-lg fa-cube fa-fw"></i>&nbsp; {{label}}</a>
     </script>
@@ -19,7 +23,9 @@
     <div id="mainRow">
       <div id="nav" class="dropbox">
         <div id="nav_mine">
-          <a class="cw-button cw-button-left green" onclick="load('')"><i class="fa fa-lg fa-plus fa-fw"></i>&nbsp; New</a>
+          <a id="newButton" class="cw-button cw-button-left red" onclick="setCode('')">
+            <i class="fa fa-lg fa-plus fa-fw"></i>&nbsp; New
+          </a>
         </div>
         <div id="nav_examples">
         </div>
@@ -37,9 +43,9 @@
     <div id="buttons">
       <a id="navButton" class="cw-button blue" onclick="toggleBrowser()"><i class="fa fa-lg fa-cubes"></i>&nbsp; Browse</a>
       <a id="docButton" class="cw-button blue" onclick="toggleDoc()"><i class="fa fa-lg fa-book"></i>&nbsp; Help</a>
-      <a id="openButton" class="cw-button green" onclick="openFile()"><i class="fa fa-lg fa-cloud-download"></i>&nbsp; Open</a>
-      <a id="saveButton" class="cw-button green" onclick="saveFile()"><i class="fa fa-lg fa-cloud-upload"></i>&nbsp; Save</a>
-      <a id="saveAsButton" class="cw-button green" onclick="saveFileAs()"><i class="fa fa-lg fa-ellipsis-h"></i>&nbsp; Save As</a>
+      <a id="saveButton" class="cw-button green" onclick="saveProject()"><i class="fa fa-lg fa-cloud-upload"></i>&nbsp; Save</a>
+      <a id="saveAsButton" class="cw-button green" onclick="saveProjectAs()"><i class="fa fa-lg fa-ellipsis-h"></i>&nbsp; Save As</a>
+      <a id="deleteButton" class="cw-button green" onclick="deleteProject()"><i class="fa fa-lg fa-trash-o"></i>&nbsp; Delete</a>
       <a id="signin"  class="cw-button green" onclick="signin()"><i class="fa fa-lg fa-sign-in"></i>&nbsp; Sign In</a>
       <a id="signout" class="cw-button red"   onclick="signout()"><i class="fa fa-lg fa-sign-out"></i>&nbsp; Sign Out</a>
       <a id="shareButton" class="cw-button blue" onclick="share()"><i class="fa fa-lg fa-share"></i>&nbsp; Share</a>

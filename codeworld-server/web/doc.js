@@ -21,7 +21,9 @@
           if (text.indexOf('main ') != -1) {
             pre.classList.add('clickable');
             pre.onclick = function() {
-              replaceCode(text);
+              if (parent && parent.setCode) {
+                parent.setCode(text);
+              }
             }
           }
         })();
@@ -29,10 +31,4 @@
     }
   };
   request.send(null);
-
-  function replaceCode(code) {
-    if (parent && parent.codeworldEditor) {
-      parent.codeworldEditor.setValue(code);
-    }
-  }
 })();

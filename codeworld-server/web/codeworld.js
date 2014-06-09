@@ -1,12 +1,12 @@
 function init() {
-  window.showingBrowse = true;
-  window.showingDoc = false;
-  window.showingResult = false;
+  showingBrowse = true;
+  showingDoc = false;
+  showingResult = false;
 
   updateVisibility();
 
   var editor = document.getElementById('editor');
-  window.codeworldEditor = CodeMirror.fromTextArea(editor, {
+  codeworldEditor = CodeMirror.fromTextArea(editor, {
     mode: 'haskell',
     lineNumbers: true,
     autofocus: true,
@@ -17,14 +17,25 @@ function init() {
     rulers: [{column: 80, color: "#bbb", lineStyle: "dashed"}]
   });
 
-  CodeMirror.commands.save = function(cm) { saveFile(); }
+  CodeMirror.commands.save = function(cm) { saveProject(); }
 
-  var hash = window.location.hash.slice(1);
+  var hash = location.hash.slice(1);
   if (hash.length > 0) {
-    load('user/' + hash + '.hs');
+    loadFile('user/' + hash + '.hs');
+  } else {
+    setCode('');
   }
 
-  loadExamples();
+  discoverExamples();
+
+  onbeforeunload = function(event) {
+    if (!isEditorClean()) {
+      var msg = 'There are unsaved changes to your project. '
+              + 'If you continue, they will be lost!';
+      if (event) event.returnValue = msg;
+      return msg;
+    }
+  }
 }
 
 function sendHttp(method, url, body, auth, callback) {
@@ -51,20 +62,21 @@ function updateVisibility() {
   if (accessToken) {
     document.getElementById('signin').style.display = 'none';
     document.getElementById('signout').style.display = '';
-    document.getElementById('openButton').style.display = '';
     document.getElementById('saveAsButton').style.display = '';
 
-    if (window.openFileMetadata) {
+    if (window.openProjectName) {
       document.getElementById('saveButton').style.display = '';
+      document.getElementById('deleteButton').style.display = '';
     } else {
       document.getElementById('saveButton').style.display = 'none';
+      document.getElementById('deleteButton').style.display = 'none';
     }
   } else {
     document.getElementById('signin').style.display = '';
     document.getElementById('signout').style.display = 'none';
-    document.getElementById('openButton').style.display = 'none';
     document.getElementById('saveButton').style.display = 'none';
     document.getElementById('saveAsButton').style.display = 'none';
+    document.getElementById('deleteButton').style.display = 'none';
   }
 
   if (window.showingBrowse) {
@@ -106,7 +118,7 @@ function toggleDoc() {
   updateVisibility();
 }
 
-function loadExamples() {
+function discoverExamples() {
   sendHttp('GET', 'listExamples', null, false, function(request) {
     if (request.status != 200) {
       return;
@@ -117,7 +129,7 @@ function loadExamples() {
       examples.removeChild(examples.firstChild);
     }
 
-    request.responseText.split('\n').forEach(function(filename) {
+    JSON.parse(request.responseText).forEach(function(filename) {
       if (filename == '') {
         return;
       }
@@ -130,39 +142,112 @@ function loadExamples() {
       var span = document.createElement('span');
       span.innerHTML = template;
       var elem = span.getElementsByTagName('a')[0];
-      elem.onclick = function() { load('examples/' + filename); };
+      elem.onclick = function() {
+        loadFile('examples/' + filename);
+      };
 
       examples.appendChild(span.removeChild(elem));
     });
   });
 }
 
-function setCode(code, metadata) {
-  window.openFileMetadata = metadata;
+function discoverProjects() {
+  var projects = document.getElementById('nav_mine');
+  var newProject = document.getElementById('newButton');
 
-  stop();
-  codeworldEditor.setValue(code);
-  codeworldEditor.getDoc().clearHistory();
+  if (!window.gapi || !gapi.auth.getToken()) {
+    while (projects.lastChild && projects.lastChild != newProject) {
+      projects.removeChild(projects.lastChild);
+    }
+    return;
+  }
 
-  updateVisibility();
-}
+  var data = new FormData();
+  data.append('id_token', gapi.auth.getToken().id_token);
 
-function load(file) {
-  var modified = codeworldEditor.getDoc().historySize().undo > 0 ||
-                 codeworldEditor.getDoc().historySize().redo > 0;
-  if (!modified || confirm('Replace the program?')) {
+  sendHttp('POST', 'listProjects', data, false, function(request) {
+    while (projects.lastChild && projects.lastChild != newProject) {
+      projects.removeChild(projects.lastChild);
+    }
 
-    if (file == '') {
-      setCode('');
+    if (request.status != 200) {
       return;
     }
 
-    sendHttp('GET', file, null, false, function(request) {
-      if (request.status == 200) {
-        setCode(request.responseText);
-      }
+    JSON.parse(request.responseText).forEach(function(projectName) {
+      var encodedName = projectName.replace('&', '&amp;')
+                                   .replace('<', '&lt;')
+                                   .replace('>', '&gt;');
+
+      var template = document.getElementById('projectTemplate').innerHTML;
+      template = template.replace('{{label}}', encodedName);
+
+      var span = document.createElement('span');
+      span.innerHTML = template;
+      var elem = span.getElementsByTagName('a')[0];
+      elem.onclick = function() {
+        loadProject(projectName);
+      };
+
+      projects.appendChild(span.removeChild(elem));
     });
+  });
+}
+
+function isEditorClean() {
+  var doc = window.codeworldEditor.getDoc();
+
+  if (window.savedGeneration == null) return doc.getValue() == '';
+  else return doc.isClean(window.savedGeneration);
+}
+
+function setCode(code, history, name) {
+  var msg = 'There are unsaved changes to your project. '
+          + 'Continue and throw away your changes?';
+  if (!isEditorClean() && !confirm(msg)) {
+    return;
   }
+
+  var doc = codeworldEditor.getDoc();
+
+  openProjectName = name;
+  doc.setValue(code);
+  if (history) {
+    doc.setHistory(history);
+  } else {
+    doc.clearHistory();
+  }
+  codeworldEditor.focus();
+
+  savedGeneration = doc.changeGeneration(true);
+
+  stop();
+}
+
+function loadFile(name) {
+  sendHttp('GET', name, null, false, function(request) {
+    if (request.status == 200) {
+      setCode(request.responseText);
+    }
+  });
+}
+
+function loadProject(name) {
+  if (!signedIn()) {
+    alert('You must sign in to open projects.');
+    return;
+  }
+
+  var data = new FormData();
+  data.append('id_token', gapi.auth.getToken().id_token);
+  data.append('name', name);
+
+  sendHttp('POST', 'loadProject', data, false, function(request) {
+    if (request.status == 200) {
+      var project = JSON.parse(request.responseText);
+      setCode(project.source, project.history, name);
+    }
+  });
 }
 
 function share() {
@@ -229,163 +314,17 @@ function compile() {
   });
 }
 
-function openFile() {
-  if (!window.gapi || !gapi.client.drive || !google.picker) {
-    return;
-  }
-
-  function callback(data) {
-    if (data[google.picker.Response.ACTION] != google.picker.Action.PICKED) {
-      return;
-    }
-
-    var id = data[google.picker.Response.DOCUMENTS][0][google.picker.Document.ID];
-    var request = gapi.client.drive.files.get({ 'fileId': id });
-
-    request.execute(function(file) {
-      if (file.fileSize > 2000000) {
-        alert('File is too large.');
-        return;
-      }
-
-      if (file.downloadUrl) {
-        sendHttp('GET', file.downloadUrl, null, true, function(request) {
-          if (request.status == 200) {
-            setCode(request.responseText, file);
-          }
-        });
-      }
-    });
-  }
-
-  var cwView = new google.picker.DocsView();
-  cwView.setMode(google.picker.DocsViewMode.LIST);
-  cwView.setMimeTypes('text/x-haskell');
-  cwView.setLabel('CodeWorld Files');
-
-  var allView = new google.picker.DocsView();
-  allView.setMode(google.picker.DocsViewMode.LIST);
-  allView.setIncludeFolders(true);
-
-  var picker = new google.picker.PickerBuilder()
-    .setTitle('Open a CodeWorld Project')
-    .setAppId('codeworld-site')
-    .setOAuthToken(gapi.auth.getToken().access_token)
-    .disableFeature(google.picker.Feature.MINE_ONLY)
-    .addView(cwView)
-    .addView(allView)
-    .addView(google.picker.ViewId.RECENTLY_PICKED)
-    .setCallback(callback)
-    .build();
-  picker.setVisible(true);
-}
-
-function saveFile() {
-  if (!window.gapi || !gapi.auth.getToken()) {
-    alert('You must sign in to save files.');
-    return;
-  }
-
-  if (window.openFileMetadata) {
-    saveFileBase(openFileMetadata.title);
-  } else {
-    saveFileAs();
-  }
-}
-
-function saveFileAs() {
-  if (!window.gapi || !gapi.auth.getToken()) {
-    alert('You must sign in to save files.');
-    return;
-  }
-
-  window.codeworldEditor.focus();
-  var text = 'Save As: <input type="text" style="width: 10em"/>';
-
-  var defaultName;
-  if (window.openFileMetadata) {
-    defaultName = window.openFileMetadata.title;
-  } else {
-    defaultName = '';
-  }
-
-  window.codeworldEditor.openDialog(text, saveFileBase, { value: defaultName });
-}
-
-function saveFileBase(name) {
-  if (name == null || name == '') return;
-
-  if (!window.gapi || !gapi.client.drive || !google.picker) {
-    alert('Cannot save your program right now!');
-    return;
-  }
-
-  var source = window.codeworldEditor.getValue();
-  var data = btoa(source);
-
-  var method;
-  var path;
-  var metadata;
-  if (window.openFileMetadata && window.openFileMetadata.title == name) {
-    method = 'PUT';
-    path = '/upload/drive/v2/files/' + window.openFileMetadata.id,
-    metadata = window.openFileMetadata;
-  } else {
-    method = 'POST';
-    path = '/upload/drive/v2/files',
-    metadata = {
-      'title': name,
-      'mimeType': 'text/x-haskell',
-    };
-  }
-
-  const boundary = '-------314159265358979323846';
-  const delimiter = "\r\n--" + boundary + "\r\n";
-  const close_delim = "\r\n--" + boundary + "--";
-
-  var multipartRequestBody =
-      delimiter +
-      'Content-Type: application/json\r\n\r\n' +
-      JSON.stringify(metadata) +
-      delimiter +
-      'Content-Type: text/x-haskell\r\n' +
-      'Content-Transfer-Encoding: base64\r\n\r\n' +
-      data +
-      close_delim;
-
-  request = gapi.client.request({
-      'path': path,
-      'method': method,
-      'params': {'uploadType': 'multipart'},
-      'headers': {
-        'Content-Type': 'multipart/mixed; boundary="' + boundary + '"'
-      },
-      'body': multipartRequestBody
-  });
-
-  request.execute(function(file) {
-    if (file) {
-      window.openFileMetadata = file;
-    } else {
-      alert('Cannot save your program right now!');
-    }
-  });
-}
-
 function signin() {
-  function signinCallback(authResult) {
-    if (authResult['status']['signed_in']) {
-      gapi.client.load('drive', 'v2');
-      gapi.load('picker');
-    }
+  function callback(result) {
+    discoverProjects();
     updateVisibility();
   }
 
   if (window.gapi) {
     gapi.auth.signIn({
-      callback: signinCallback,
+      callback: callback,
       clientid: '94846197422-jnkt1qd737993e7llrfa5pb1bqc72nog.apps.googleusercontent.com',
-      scope: 'profile https://www.googleapis.com/auth/drive',
+      scope: 'profile',
       cookiepolicy: 'single_host_origin',
     });
   }
@@ -393,6 +332,101 @@ function signin() {
 
 function signout() {
   if (window.gapi) gapi.auth.signOut();
+}
+
+function signedIn() {
+  return (window.gapi && gapi.auth.getToken());
+}
+
+function saveProject() {
+  if (!signedIn()) {
+    alert('You must sign in to save files.');
+    return;
+  }
+
+  if (window.openProjectName) {
+    saveProjectBase(openProjectName);
+  } else {
+    saveProjectAs();
+  }
+}
+
+function saveProjectAs() {
+  if (!signedIn()) {
+    alert('You must sign in to save files.');
+    return;
+  }
+
+  window.codeworldEditor.focus();
+  var text = 'Save Project As: <input type="text" style="width: 10em"/>';
+
+  var defaultName;
+  if (window.openProjectName) {
+    defaultName = window.openProjectName;
+  } else {
+    defaultName = '';
+  }
+
+  window.codeworldEditor.openDialog(text, saveProjectBase, { value: defaultName });
+}
+
+function saveProjectBase(projectName) {
+  if (projectName == null || projectName == '') return;
+
+  if (!signedIn) {
+    alert('You must sign in to save files.');
+    return;
+  }
+
+  var doc = window.codeworldEditor.getDoc();
+  var project = { 'name':    projectName,
+                  'source':  doc.getValue(),
+                  'history': doc.getHistory() };
+
+  var data = new FormData();
+  data.append('id_token', gapi.auth.getToken().id_token);
+  data.append('project', JSON.stringify(project));
+
+  sendHttp('POST', 'saveProject', data, false, function(request) {
+    if (request.status != 200) {
+      alert('Could not save your project!!!');
+      return;
+    }
+
+    window.openProjectName = projectName;
+    window.savedGeneration = doc.changeGeneration(true);
+    discoverProjects();
+    updateVisibility();
+  });
+}
+
+function deleteProject() {
+  if (!window.openProjectName) return;
+
+  if (!signedIn) {
+    alert('You must sign in to do this.');
+    return;
+  }
+
+  var msg = 'Deleting a project will throw away all work, and cannot be undone. '
+          + 'Are you sure?';
+   if (!confirm(msg)) {
+    return;
+  }
+
+  var data = new FormData();
+  data.append('id_token', gapi.auth.getToken().id_token);
+  data.append('name', window.openProjectName);
+
+  sendHttp('POST', 'deleteProject', data, false, function(request) {
+    if (request.status == 200) {
+      savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
+      setCode('');
+    }
+
+    discoverProjects();
+    updateVisibility();
+  });
 }
 
 (function() {
@@ -405,7 +439,6 @@ function signout() {
     s.parentNode.insertBefore(po, s);
   }
   loadAsync('https://apis.google.com/js/client:plusone.js');
-  loadAsync('https://apis.google.com/js/api.js');
   sendHttp('GET', 'user/base.jsexe/lib.base.js');
   sendHttp('GET', 'user/base.jsexe/rts.js');
   sendHttp('GET', 'user/base.jsexe/lib1.base.js');

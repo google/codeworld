@@ -11,11 +11,12 @@ import qualified Crypto.Hash.MD5 as Crypto
 import           Data.Aeson
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Base64 as B64
 import           Data.Char
-import           Data.Int
 import           Data.List
+import           Data.Maybe
 import           Data.Monoid
 import           Data.Text (Text)
 import qualified Data.Text as T
@@ -30,8 +31,36 @@ import           System.FilePath
 import           System.IO
 import           System.Process
 
-maxSourceSize :: Int64
-maxSourceSize = 2000000
+data User = User {
+    userId :: Text
+    }
+
+instance FromJSON User where
+    parseJSON (Object v) = User <$> v .: "user_id"
+    parseJSON _          = mzero
+
+data Project = Project {
+    projectName :: Text,
+    projectSource :: Text,
+    projectHistory :: Value
+    }
+
+instance FromJSON Project where
+    parseJSON (Object v) = Project <$> v .: "name"
+                                   <*> v .: "source"
+                                   <*> v .: "history"
+    parseJSON _          = mzero
+
+instance ToJSON Project where
+    toJSON p = object [ "name"    .= projectName p,
+                        "source"  .= projectSource p,
+                        "history" .= projectHistory p ]
+
+getUser :: Snap User
+getUser = getParam "id_token" >>= \ case
+    Nothing       -> pass
+    Just id_token -> maybe pass return =<< (fmap decode $ liftIO $ simpleHttp $
+        "https://www.googleapis.com/oauth2/v1/tokeninfo?id_token=" ++ BC.unpack id_token)
 
 main :: IO ()
 main = do
@@ -46,62 +75,79 @@ processBody = do
 site :: Snap ()
 site =
     route [
-      ("save",         saveHandler),
-      ("compile",      compileHandler),
-      ("runJS",        runJSHandler),
-      ("listExamples", listExamplesHandler)
+      ("loadProject",   loadProjectHandler),
+      ("saveProject",   saveProjectHandler),
+      ("deleteProject", deleteProjectHandler),
+      ("compile",       compileHandler),
+      ("run",           runHandler),
+      ("runJS",         runHandler),
+      ("listExamples",  listExamplesHandler),
+      ("listProjects",  listProjectsHandler)
     ] <|>
     dir "user" (serveDirectory "user") <|>
     serveDirectory "web"
 
-data User = User {
-    userId :: Text
-    }
+loadProjectHandler :: Snap ()
+loadProjectHandler = do
+    user      <- getUser
+    Just name <- getParam "name"
+    let hash = T.decodeUtf8 (getHash name)
+    let fname = "projects" </> T.unpack (hash <> "." <> userId user <> ".cw")
+    serveFile fname
 
-instance FromJSON User where
-    parseJSON (Object v) = User <$> v .: "user_id"
-    parseJSON _          = mzero
-
-getUser :: Snap User
-getUser = getParam "id_token" >>= \ case
-    Nothing       -> pass
-    Just id_token -> maybe pass return =<< (fmap decode $ liftIO $ simpleHttp $
-        "https://www.googleapis.com/oauth2/v1/tokeninfo?id_token=" ++ BC.unpack id_token)
-
-saveHandler :: Snap ()
-saveHandler = do
+saveProjectHandler :: Snap ()
+saveProjectHandler = do
     user <- getUser
-    liftIO $ putStrLn $ T.unpack $ userId user
+    Just project <- decode . LB.fromStrict . fromJust <$> getParam "project"
+    let hash = getHash (T.encodeUtf8 (projectName project))
+    let fname = T.decodeUtf8 hash <> "." <> userId user <> ".cw"
+    liftIO $ LB.writeFile ("projects" </> T.unpack fname) $ encode project
+
+deleteProjectHandler :: Snap ()
+deleteProjectHandler = do
+    user      <- getUser
+    Just name <- getParam "name"
+    let hash = T.decodeUtf8 (getHash name)
+    let fname = "projects" </> T.unpack (hash <> "." <> userId user <> ".cw")
+    liftIO $ removeFile fname
 
 compileHandler :: Snap ()
 compileHandler = do
-    hashed <- saveAndHash
-    liftIO $ compileIfNeeded hashed
+    Just source <- getParam "source"
+    let hashed = BC.cons 'P' (getHash source)
+    liftIO $ do
+        B.writeFile (sourceFile hashed) source
+        compileIfNeeded hashed
     hasTarget <- liftIO $ doesFileExist (targetFile hashed)
     when (not hasTarget) $ modifyResponse $ setResponseCode 500
     writeBS hashed
 
-runJSHandler :: Snap ()
-runJSHandler = do
+runHandler :: Snap ()
+runHandler = do
     Just hashed <- getParam "hash"
     liftIO $ compileIfNeeded hashed
     serveFile (targetFile hashed)
 
 listExamplesHandler :: Snap ()
 listExamplesHandler = do
-    files <- liftIO getExamples
-    forM_ files $ \ fname -> writeText $ T.pack fname <> "\n"
+    files <- liftIO $ getFilesByExt ".hs" "web/examples"
+    writeLBS (encode files)
 
-getExamples :: IO [FilePath]
-getExamples = filter isExampleFile <$> getDirectoryContents "web/examples"
-  where isExampleFile p = ".hs" `isSuffixOf` p
+listProjectsHandler :: Snap ()
+listProjectsHandler = do
+    user  <- getUser
+    projects <- liftIO $ do
+        let ext = T.unpack $ "." <> userId user <> ".cw"
+        let base = "projects"
+        files <- getFilesByExt ext base
+        mapM (fmap (fromJust . decode) . LB.readFile . (base </>)) files :: IO [Project]
+    writeLBS (encode (map projectName projects))
 
-saveAndHash :: Snap ByteString
-saveAndHash = do
-    Just body <- getParam "source"
-    let hashed = BC.cons 'P' $ BC.map toWebSafe $ B64.encode $ Crypto.hash body
-    liftIO $ B.writeFile (sourceFile hashed) body
-    return hashed
+getFilesByExt :: FilePath -> FilePath -> IO [FilePath]
+getFilesByExt ext = fmap (filter (ext `isSuffixOf`)) . getDirectoryContents
+
+getHash :: ByteString -> ByteString
+getHash = BC.map toWebSafe . B64.encode . Crypto.hash
   where toWebSafe '/' = '_'
         toWebSafe '+' = '-'
         toWebSafe c   = c

@@ -4,6 +4,6 @@
 -}
 module Main where
 
-import LinkBase
+import LinkBase()
 
 main = pictureOf blank

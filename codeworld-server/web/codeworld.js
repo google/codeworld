@@ -1,5 +1,6 @@
 function init() {
   window.showingBrowse = true;
+  window.showingDoc = false;
   window.showingResult = false;
 
   updateVisibility();
@@ -28,9 +29,12 @@ function init() {
 
 function sendHttp(method, url, body, auth, callback) {
   var request = new XMLHttpRequest();
-  request.onreadystatechange = function() {
-    if (request.readyState == 4) callback(request);
-  };
+
+  if (callback) {
+    request.onreadystatechange = function() {
+      if (request.readyState == 4) callback(request);
+    };
+  }
 
   request.open(method, url, true);
 
@@ -69,6 +73,12 @@ function updateVisibility() {
     document.getElementById('nav').style.display = 'none';
   }
 
+  if (window.showingDoc) {
+    document.getElementById('doc').style.display = '';
+  } else {
+    document.getElementById('doc').style.display = 'none';
+  }
+
   if (window.showingResult) {
     document.getElementById('result').style.display = '';
 
@@ -84,6 +94,15 @@ function updateVisibility() {
 
 function toggleBrowser() {
   window.showingBrowse = !window.showingBrowse;
+  updateVisibility();
+}
+
+function toggleDoc() {
+  window.showingDoc = !window.showingDoc;
+  if (window.showingDoc) {
+    var path = document.getElementById('docPath').innerText;
+    document.getElementById('doc').contentWindow.location.replace(path);
+  }
   updateVisibility();
 }
 
@@ -387,8 +406,8 @@ function signout() {
   }
   loadAsync('https://apis.google.com/js/client:plusone.js');
   loadAsync('https://apis.google.com/js/api.js');
-  loadAsync('user/base.jsexe/lib.base.js');
-  loadAsync('user/base.jsexe/rts.js');
-  loadAsync('user/base.jsexe/lib1.base.js');
-  loadAsync('user/base.jsexe/out.base.js');
+  sendHttp('GET', 'user/base.jsexe/lib.base.js');
+  sendHttp('GET', 'user/base.jsexe/rts.js');
+  sendHttp('GET', 'user/base.jsexe/lib1.base.js');
+  sendHttp('GET', 'user/base.jsexe/out.base.js');
 })();

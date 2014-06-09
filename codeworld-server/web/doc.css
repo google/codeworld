@@ -1,0 +1,41 @@
+html {
+    color: #222;
+    font-size: 1em;
+    line-height: 1.4;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+}
+
+pre {
+  margin-left: 20px;
+  margin-right: 10px;
+  padding: 5px;
+  background-color: #eee;
+  border: dotted #888 1px;
+  font-family: monospace;
+  font-size: 1em;
+  overflow-x: auto;
+}
+
+pre.clickable {
+  background-color: #dfd;
+}
+
+pre.clickable:hover {
+  background-color: #efe;
+  cursor: pointer;
+}
+
+a {
+  text-decoration: none;
+  font-weight: bold;
+  color: #444;
+  margin: 1px;
+}
+
+a:hover {
+  cursor: pointer;
+  background-color: #eee;
+  border: dotted #888 1px;
+  margin: 0px;
+}

@@ -1,0 +1,81 @@
+.CodeMirror { font-size: 9pt; }
+
+.CodeMirror span.cm-keyword {color: #208;font-weight:bold}
+.CodeMirror span.cm-atom {color: #219;}
+.CodeMirror span.cm-number {color: #a10;}
+.CodeMirror span.cm-def {color: #00f;}
+.CodeMirror span.cm-variable {color: black;}
+.CodeMirror span.cm-variable-2 {color: #38c;}
+.CodeMirror span.cm-variable-3 {color: #0a5;}
+.CodeMirror span.cm-property {color: black;}
+.CodeMirror span.cm-operator {color: black;}
+.CodeMirror span.cm-comment {color: #161;}
+.CodeMirror span.cm-string {color: #660;}
+.CodeMirror span.cm-string-2 {color: #553;}
+.CodeMirror span.cm-meta {color: #555;}
+.CodeMirror span.cm-error {color: #f00;}
+.CodeMirror span.cm-qualifier {color: #666;}
+.CodeMirror span.cm-builtin {color: #30a;}
+.CodeMirror span.cm-bracket {color: #cc7;}
+.CodeMirror span.cm-tag {color: #170;}
+.CodeMirror span.cm-attribute {color: #00c;}
+
+/* Make bracket matching look nicer. */
+
+.CodeMirror-matchingbracket    { color: inherit !important;
+                                 outline: solid rgba(0,0,0,0.15) 1px }
+.CodeMirror-nonmatchingbracket { color: inherit !important;
+                                 outline: solid rgba(255,0,0,0.5) 1px }
+
+/* Underline trailing whitespace in red, except on the current line. */
+
+.CodeMirror .cm-trailingspace {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAACCAYAAAB/qH1jAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3QUXCToH00Y1UgAAACFJREFUCNdjPMDBUc/AwNDAAAFMTAwMDA0OP34wQgX/AQBYgwYEx4f9lQAAAABJRU5ErkJggg==);
+  background-position: bottom left;
+  background-repeat: repeat-x;
+}
+
+.CodeMirror .CodeMirror-activeline .cm-trailingspace {
+  background-image: inherit
+}
+
+/* Grayed-out style for the empty editor placeholder. */
+
+.CodeMirror pre.CodeMirror-placeholder {
+  color: #999;
+}
+
+/* Styles needed for the dialog add-on, used for search. */
+
+.CodeMirror-dialog {
+  position: absolute;
+  left: 0; right: 0;
+  background: white;
+  z-index: 15;
+  padding: .1em .8em;
+  overflow: hidden;
+  color: #333;
+}
+
+.CodeMirror-dialog-top {
+  border-bottom: 1px solid #eee;
+  top: 0;
+}
+
+.CodeMirror-dialog-bottom {
+  border-top: 1px solid #eee;
+  bottom: 0;
+}
+
+.CodeMirror-dialog input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 20em;
+  color: inherit;
+  font-family: monospace;
+}
+
+.CodeMirror-dialog button {
+  font-size: 70%;
+}

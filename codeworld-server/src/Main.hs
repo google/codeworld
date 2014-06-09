@@ -152,6 +152,7 @@ generateBaseBundle = do
             "LinkMain.hs"
           ]
     BC.putStrLn =<< runCompiler "ghcjs" ghcjsArgs
+    B.appendFile "user/REBUILD" ""
     return ()
 
 compileUserSource :: FilePath -> FilePath -> IO ()

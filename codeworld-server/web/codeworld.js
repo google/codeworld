@@ -439,6 +439,7 @@ function deleteProject() {
     s.parentNode.insertBefore(po, s);
   }
   loadAsync('https://apis.google.com/js/client:plusone.js');
+  sendHttp('GET', 'deep_eq.js');
   sendHttp('GET', 'user/base.jsexe/lib.base.js');
   sendHttp('GET', 'user/base.jsexe/rts.js');
   sendHttp('GET', 'user/base.jsexe/lib1.base.js');

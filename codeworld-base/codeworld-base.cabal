@@ -23,7 +23,8 @@ library
                        Internal.Color,
                        Internal.Picture,
                        Internal.Event,
-                       Internal.CodeWorld
+                       Internal.CodeWorld,
+                       Internal.DeepEq
   build-depends:       base,
                        mtl,
                        random,

@@ -20,7 +20,7 @@ data Obstacle = Obstacle Point Number ObstacleType
 
 data ObstacleType = Rock | Tree | Bird | Car | Worm
 
-data Tool = Balloons | Parachute | Pillow | None deriving Eq
+data Tool = Balloons | Parachute | Pillow | None
 
 distance (x1,y1) (x2,y2) = sqrt ((x2-x1)^2 + (y2-y1)^2)
 

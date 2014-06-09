@@ -14,7 +14,8 @@ module Internal.Prelude (
     P.either,
 
     -- Comparison
-    P.Eq(..),
+    (==),
+    (/=),
 
     -- Tuples
     P.fst,
@@ -91,8 +92,15 @@ import "base" Prelude (Bool, (.))
 import Data.Text (Text)
 import qualified Data.Text as T
 
+import Internal.DeepEq
 import Internal.Num
 import Internal.Text
+
+(==) :: a -> a -> Bool
+a == b = deepEq a b
+
+(/=) :: a -> a -> Bool
+a /= b = P.not (a == b)
 
 error :: Text -> a
 error = P.error . T.unpack

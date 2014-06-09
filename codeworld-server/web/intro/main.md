@@ -243,9 +243,10 @@ multiply, use `*`.  To divide, use `/`.
 
 Check out this program:
 
-    main = rotate   (1 * 180 / 3) (rectangle 100 10)
-           & rotate (2 * 180 / 3) (rectangle 100 10)
-           & rotate (3 * 180 / 3) (rectangle 100 10)
+    main   = pictureOf design
+    design = rotate   (1 * 180 / 3) (rectangle 100 10)
+             & rotate (2 * 180 / 3) (rectangle 100 10)
+             & rotate (3 * 180 / 3) (rectangle 100 10)
 
 We could have written `0`, `60`, and `120` (the answers to those math
 problems).  But this way, it's very clear what we are doing: dividing

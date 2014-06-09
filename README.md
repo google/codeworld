@@ -10,12 +10,15 @@ CodeWorld is an educational web-based programming environment using a variant of
 Status
 ======
 
-This is currently a proof of concept.  The core components are present: the web-based development environment, the standard library, the model, and its implementation.  The current version has been tested in recent versions of Chrome, but appears to not work in other browsers.  Many basic convenience functions (even important ones, like saving the program) are not implemented.  Use at your own risk.
+This is early alpha quality software.  The major pieces are all working, but I make
+no guarantees that projects will be saved, or that programs written for the current
+version of the language will continue to work.
 
 Build Instructions
 ==================
 
-Building CodeWorld is, unfortunately, an involved process at the moment.  Here are the approximate step by step instructions to get an example working:
+Building CodeWorld is, unfortunately, an involved process at the moment.  Here are the
+approximate step by step instructions to get an example working:
 
 1. Install GHC 7.8, since it's required for GHCJS.
 2. Get a patched version of cabal (https://github.com/ghcjs/cabal/tree/ghcjs) and `cabal install`.
@@ -25,7 +28,7 @@ Building CodeWorld is, unfortunately, an involved process at the moment.  Here a
 6. Check out ghcjs-canvas (https://github.com/ghcjs/ghcjs-canvas) and install it with `cabal install --ghcjs`.
 8. Install the codeworld-base package from this project: `cd codeworld-base && cabal install --ghcjs`.
 9. Build codeworld-server from this project: `cd codeworld-server && cabal build`
-10. Run the server: `cd codeworld-server && ./run.sh`.
+10. Run the server: `cd codeworld-server && ./run.sh 8080`.
 
 You can now access the CodeWorld system at http://localhost:8080.
 
@@ -34,7 +37,6 @@ Feature Requests
 
 This is a list of ideas for how to make this awesome.
 
-* Language: Remove the Eq type class
 * Editor: Auto-complete, refactoring (rename, duplicate, ...).
 * Documentation: Fully document haddock, custom haddock theme, doc-on-hover, more browsable examples.
 * Workspace: project switcher, better example browser, library projects.
@@ -44,9 +46,3 @@ This is a list of ideas for how to make this awesome.
              time-step debugger, NOT a language debugger.
 * Export: Android, iOS (maybe impossible without jailbreak?), chrome app? flash?.
 * Lessons: guided help, gallery, quizzes, "helpers" (list comprehensions, etc.).
-
-Bugs
-====
-
-- Document dirty state should be tracked
-- Better Load/Save behavior

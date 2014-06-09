@@ -58,8 +58,7 @@ function sendHttp(method, url, body, auth, callback) {
 }
 
 function updateVisibility() {
-  var accessToken = gapi.auth.getToken();
-  if (accessToken) {
+  if (signedIn()) {
     document.getElementById('signin').style.display = 'none';
     document.getElementById('signout').style.display = '';
     document.getElementById('saveAsButton').style.display = '';
@@ -155,7 +154,7 @@ function discoverProjects() {
   var projects = document.getElementById('nav_mine');
   var newProject = document.getElementById('newButton');
 
-  if (!window.gapi || !gapi.auth.getToken()) {
+  if (!signedIn()) {
     while (projects.lastChild && projects.lastChild != newProject) {
       projects.removeChild(projects.lastChild);
     }
@@ -335,7 +334,7 @@ function signout() {
 }
 
 function signedIn() {
-  return (window.gapi && gapi.auth.getToken());
+  return (window.gapi && window.gapi.auth && gapi.auth.getToken());
 }
 
 function saveProject() {
@@ -430,15 +429,21 @@ function deleteProject() {
 }
 
 (function() {
-  function loadAsync(src) {
+  function loadAsync(src, callback) {
     var po = document.createElement('script');
     po.type = 'text/javascript';
     po.async = true;
     po.src = src;
+    if (callback) po.onload = callback;
     var s = document.getElementsByTagName('script')[0];
     s.parentNode.insertBefore(po, s);
   }
-  loadAsync('https://apis.google.com/js/client:plusone.js');
+
+  loadAsync('https://apis.google.com/js/client:plusone.js', function() {
+    discoverProjects();
+    updateVisibility();
+  });
+
   sendHttp('GET', 'deep_eq.js');
   sendHttp('GET', 'user/base.jsexe/lib.base.js');
   sendHttp('GET', 'user/base.jsexe/rts.js');

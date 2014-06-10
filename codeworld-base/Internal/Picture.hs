@@ -14,7 +14,7 @@ type Point = (Number, Number)
 type Vector = (Number, Number)
 
 addVectors :: Vector -> Vector -> Vector
-addVectors (x1,y1) (x2,y2) = (x1 + y1, x2 + y2)
+addVectors (x1,y1) (x2,y2) = (x1 + x2, y1 + y2)
 
 scaleVector :: Number -> Vector -> Vector
 scaleVector k (x,y) = (k*x, k*y)

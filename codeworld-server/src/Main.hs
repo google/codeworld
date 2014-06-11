@@ -178,6 +178,7 @@ resultFile hashed = "user" </> BC.unpack hashed ++ ".err.txt"
 
 commonGHCJSArgs :: [String]
 commonGHCJSArgs = [
+    "--no-native",
     "-Wall",
     "-O2",
     "-fno-warn-deprecated-flags",

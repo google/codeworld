@@ -219,8 +219,6 @@ function setCode(code, history, name) {
   codeworldEditor.focus();
 
   savedGeneration = doc.changeGeneration(true);
-
-  stop();
 }
 
 function loadFile(name) {

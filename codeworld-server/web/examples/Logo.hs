@@ -1,8 +1,8 @@
 {-
-  Example: Logo
+    Example: Logo
 
-  A CodeWorld logo built out of geometric patterns.  This shows off
-  many of the capabilities of the picture mode.
+    A CodeWorld logo built out of geometric patterns.  This shows off
+    many of the capabilities of the picture mode.
 -}
 
 main = pictureOf logo

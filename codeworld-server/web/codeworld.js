@@ -275,7 +275,12 @@ function run(hash, msg, error) {
   }
 
   var message = document.getElementById('message');
-  message.textContent = msg;
+  message.innerHTML = msg
+      .replace('&', '&amp;')
+      .replace('<', '&lt;')
+      .replace('>', '&gt;')
+      .replace(/your program:(\d+):(\d+)/g,
+               '<a href="#" onclick="goto($1, $2);">Line $1, Column $2</a>');
 
   if (error) {
     message.classList.add('error');
@@ -284,6 +289,12 @@ function run(hash, msg, error) {
   }
 
   updateVisibility();
+}
+
+function goto(line, col) {
+  codeworldEditor.getDoc().setCursor(line - 1, col - 1);
+  codeworldEditor.scrollIntoView(null, 100);
+  codeworldEditor.focus();
 }
 
 function compile() {

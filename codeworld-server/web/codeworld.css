@@ -158,6 +158,10 @@ body {
   background-color: #fcc;
 }
 
+#message a {
+  cursor: pointer;
+}
+
 .cw-button {
   border:1px solid;
   border-radius: 3px;

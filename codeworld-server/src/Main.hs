@@ -144,7 +144,7 @@ listProjectsHandler = do
     writeLBS (encode (map projectName projects))
 
 getFilesByExt :: FilePath -> FilePath -> IO [FilePath]
-getFilesByExt ext = fmap (filter (ext `isSuffixOf`)) . getDirectoryContents
+getFilesByExt ext = fmap (sort . filter (ext `isSuffixOf`)) . getDirectoryContents
 
 getHash :: ByteString -> ByteString
 getHash = BC.map toWebSafe . B64.encode . Crypto.hash

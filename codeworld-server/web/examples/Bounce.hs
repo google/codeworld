@@ -26,8 +26,6 @@ bounce (Ball (x,y) (vx,vy)) = Ball (nx,ny) (nvx, nvy)
         nvx = if nx /= x then -vx else vx
         nvy = if ny /= y then -vy else vy
 
-fence lo hi x | x < lo    = lo + (lo - x)
-              | x > hi    = hi - (x - hi)
-              | otherwise = x
+fence lo hi x = max lo (min hi x)
 
 draw (Ball (x,y) _) = translate x y (solidCircle radius)

@@ -45,3 +45,11 @@ This is a list of ideas for how to make this awesome.
 * Debugging: Show runtime exceptions, point-pins, scale-zoom controls, time-step debugger
 * Export: Android, iOS (maybe impossible without jailbreak?), chrome app? flash?.
 * Lessons: guided help, gallery, quizzes, "helpers" (list comprehensions, etc.).
+
+Bugs
+====
+
+* When sign-in times out, weird things happen and buttons stop working.
+* URL should change to track currently running program.
+* Should kill compiler after a fixed time limit.
+* Should work harder to stop TemplateHaskell and other such extensions.

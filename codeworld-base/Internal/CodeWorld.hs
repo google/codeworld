@@ -18,6 +18,7 @@ import           Control.Concurrent.MVar
 import           Control.Monad
 import           Control.Monad.Trans (liftIO)
 import           Data.Char (chr)
+import           Data.IORef
 import           Data.Text (Text, singleton)
 import           Data.Time.Clock
 import           Internal.Num (Number, fromDouble, toDouble)
@@ -38,19 +39,20 @@ import           GHCJS.DOM.Element
 import           GHCJS.DOM.EventM
 import           GHCJS.DOM.MouseEvent
 import           GHCJS.DOM.Types (Element, unElement)
+import           GHCJS.Foreign
 import           GHCJS.Types
 import qualified JavaScript.Canvas as Canvas
 
-foreign import javascript safe "$1['getBoundingClientRect']()['left']"
+foreign import javascript unsafe "$1['getBoundingClientRect']()['left']"
     js_getBoundingClientLeft :: JSRef Element -> IO Int
 
-foreign import javascript safe "$1['getBoundingClientRect']()['top']"
+foreign import javascript unsafe "$1['getBoundingClientRect']()['top']"
     js_getBoundingClientTop :: JSRef Element -> IO Int
 
-foreign import javascript interruptible "window.requestAnimationFrame($c);"
-    js_waitAnimationFrame :: IO ()
+foreign import javascript unsafe "window.requestAnimationFrame($1);"
+    js_requestAnimationFrame :: JSFun (IO ()) -> IO ()
 
-foreign import javascript safe "$1.drawImage($2, $3, $4);"
+foreign import javascript unsafe "$1.drawImage($2, $3, $4);"
     js_canvasDrawImage :: Canvas.Context -> JSRef Element -> Int -> Int -> IO ()
 
 --------------------------------------------------------------------------------
@@ -285,9 +287,9 @@ setupEvents currentActivity canvas = do
     return ()
 
 passTime :: NominalDiffTime -> MVar Activity -> IO Activity
-passTime dt activity = modifyMVar activity $ \a -> do
-    let a' = activityStep a (realToFrac dt)
-    return (a', a')
+passTime dt activity = modifyMVar activity $ \a0 -> do
+    let a1 = activityStep a0 (realToFrac dt)
+    return (a1, a1)
 
 run :: Activity -> IO ()
 run startActivity = do
@@ -298,20 +300,21 @@ run startActivity = do
     elementSetAttribute offscreenCanvas ("width" :: JSString)  ("500" :: JSString)
     elementSetAttribute offscreenCanvas ("height" :: JSString) ("500" :: JSString)
 
-    screenCtx <- Canvas.getContext (castRef (unElement canvas))
-    bufferCtx <- setupScreenContext offscreenCanvas
+    screen <- Canvas.getContext (castRef (unElement canvas))
+    buffer <- setupScreenContext offscreenCanvas
 
     currentActivity <- newMVar startActivity
     setupEvents currentActivity canvas
 
     let go t0 a0 = do
-            drawFrame bufferCtx (activityDraw a0)
-            Canvas.clearRect 0 0 500 500 screenCtx
-            canvasDrawImage screenCtx offscreenCanvas 0 0
-            js_waitAnimationFrame
-            t1 <- getCurrentTime
-            a1 <- passTime (diffUTCTime t1 t0) currentActivity
-            go t1 a1
+            drawFrame buffer (activityDraw a0)
+            Canvas.clearRect 0 0 500 500 screen
+            canvasDrawImage screen offscreenCanvas 0 0
+            cb <- syncCallback NeverRetain True $ do
+                t1 <- getCurrentTime
+                a1 <- passTime (diffUTCTime t1 t0) currentActivity
+                go t1 a1
+            js_requestAnimationFrame cb
 
     t0 <- getCurrentTime
     go t0 startActivity

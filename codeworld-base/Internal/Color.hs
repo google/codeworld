@@ -7,7 +7,7 @@ module Internal.Color where
 import qualified "base" Prelude as P
 import Internal.Num
 
-data Color = RGBA Number Number Number Number
+data Color = RGBA !Number !Number !Number !Number
 instance P.Show Color where show _ = "<<Color>>"
 
 white, black :: Color

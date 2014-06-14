@@ -8,10 +8,10 @@ import Internal.Num
 import Internal.Text
 import Internal.Picture
 
-data Event = KeyPress Text
-           | KeyRelease Text
-           | MousePress Number Point
-           | MouseRelease Number Point
-           | MouseMovement Point
+data Event = KeyPress !Text
+           | KeyRelease !Text
+           | MousePress !Number !Point
+           | MouseRelease !Number !Point
+           | MouseMovement !Point
 
 instance Show Event where show _ = "<<Event>>"

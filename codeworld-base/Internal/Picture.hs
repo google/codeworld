@@ -24,13 +24,13 @@ rotateVector angle (x,y) = (x * cos angle - y * sin angle,
                             x * sin angle + y * cos angle)
 
 data Picture = Polygon [Point]
-             | Line [Point] Number
-             | Arc Number Number Number Number
-             | Text Text
-             | Color Color Picture
-             | Translate Number Number Picture
-             | Scale Number Number Picture
-             | Rotate Number Picture
+             | Line [Point] !Number
+             | Arc !Number !Number !Number !Number
+             | Text !Text
+             | Color !Color !Picture
+             | Translate !Number !Number !Picture
+             | Scale !Number !Number !Picture
+             | Rotate !Number !Picture
              | Pictures [Picture]
 
 instance P.Show Picture where show _ = "<<Picture>>"
@@ -121,4 +121,6 @@ pictures = Pictures
 
 -- Binary composition of pictures.
 (&) :: Picture -> Picture -> Picture
-a & b = Pictures [a, b]
+infixr 0 &
+a & Pictures bs = Pictures (a:bs)
+a & b           = Pictures [a, b]

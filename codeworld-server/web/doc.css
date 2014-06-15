@@ -30,7 +30,12 @@ a {
   text-decoration: none;
   font-weight: bold;
   color: #444;
+  border: none;
   margin: 1px;
+}
+
+a:focus {
+  border: none;
 }
 
 a:hover {
@@ -38,4 +43,19 @@ a:hover {
   background-color: #eee;
   border: dotted #888 1px;
   margin: 0px;
+}
+
+div.contents {
+  border: dotted #ccc 2px;
+  background-color: #ffb;
+}
+
+div.contents:before {
+  display: block;
+  content: "Table of Contents:";
+  font-size: 16px;
+  font-weight: bold;
+  border-bottom: dotted #ccc 2px;
+  padding: 5px 10px 5px 10px;
+  width: 100%;
 }

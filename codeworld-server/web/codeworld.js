@@ -22,6 +22,7 @@ function init() {
   var hash = location.hash.slice(1);
   if (hash.length > 0) {
     loadFile('user/' + hash + '.hs');
+    window.location.hash = '';
   } else {
     setCode('');
   }
@@ -267,10 +268,12 @@ function run(hash, msg, error) {
 
   var runner = document.getElementById('runner');
   if (hash && !error) {
+    window.location.hash = '#' + hash;
     runner.contentWindow.location.replace('run.html?hash=' + hash);
     document.getElementById('runner').contentWindow.focus();
     window.programRunning = true;
   } else {
+    window.location.hash = '';
     runner.contentWindow.location.replace('about:blank');
     window.programRunning = false;
   }

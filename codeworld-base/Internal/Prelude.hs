@@ -41,8 +41,8 @@ module Internal.Prelude (
     P.map,
     (P.++),
     P.filter,
-    P.head,
-    P.tail,
+    first,
+    rest,
     P.init,
     P.last,
     P.null,
@@ -110,6 +110,12 @@ ifThenElse a b c = if a then b else c
 
 length :: [a] -> Number
 length = fromInt . P.length
+
+first :: [a] -> a
+first = P.head
+
+rest :: [a] -> [a]
+rest = P.tail
 
 (!!) :: [a] -> Number -> a
 xs !! n = xs P.!! toInt n

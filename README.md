@@ -21,7 +21,8 @@ Building CodeWorld is, unfortunately, an involved process at the moment.  Here a
 approximate step by step instructions to get an example working:
 
 1. Install GHC 7.8, since it's required for GHCJS.
-2. Get a patched version of cabal (https://github.com/ghcjs/cabal/tree/ghcjs) and
+2. Get a patched version of cabal (https://github.com/ghcjs/cabal) and
+   then `git checkout ghcjs` to switch to the GHCJS branch, and finally
    `cabal install` both the Cabal and cabal-install packages.
 3. Get GHCJS itself (https://github.com/ghcjs/ghcjs) and `cabal install`.
 4. Run `ghcjs-boot --init`.

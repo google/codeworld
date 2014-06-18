@@ -80,6 +80,10 @@ getUser = getParam "id_token" >>= \ case
 
 main :: IO ()
 main = do
+    hasClientId <- doesFileExist "web/clientId.txt"
+    when (not hasClientId) $ do
+        putStrLn "WARNING: Missing web/clientId.txt"
+        putStrLn "User logins will not function properly!"
     generateBaseBundle
     quickHttpServe $ (processBody >> site) <|> site
 

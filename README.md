@@ -30,7 +30,8 @@ approximate step by step instructions to get an example working:
 6. Check out ghcjs-canvas (https://github.com/ghcjs/ghcjs-canvas) and install it with `cabal install --ghcjs`.
 7. Install the codeworld-base package from this project: `cd codeworld-base && cabal install --ghcjs`.
 8. Build codeworld-server from this project: `cd codeworld-server && cabal build`
-9. Run the server: `cd codeworld-server && ./run.sh 8080`.
+9. Get a Google API key, and store it in web/clientId.txt.
+10. Run the server: `cd codeworld-server && ./run.sh 8080`.
 
 You can now access the CodeWorld system at http://localhost:8080.
 

@@ -55,7 +55,7 @@ function init() {
   }
 }
 
-function sendHttp(method, url, body, auth, callback) {
+function sendHttp(method, url, body, callback) {
   var request = new XMLHttpRequest();
 
   if (callback) {
@@ -65,12 +65,6 @@ function sendHttp(method, url, body, auth, callback) {
   }
 
   request.open(method, url, true);
-
-  if (auth) {
-    var accessToken = gapi.auth.getToken().access_token;
-    request.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-  }
-
   request.send(body);
 }
 
@@ -135,7 +129,7 @@ function toggleDoc() {
 }
 
 function discoverExamples() {
-  sendHttp('GET', 'listExamples', null, false, function(request) {
+  sendHttp('GET', 'listExamples', null, function(request) {
     if (request.status != 200) {
       return;
     }
@@ -181,7 +175,7 @@ function discoverProjects() {
   var data = new FormData();
   data.append('id_token', gapi.auth.getToken().id_token);
 
-  sendHttp('POST', 'listProjects', data, false, function(request) {
+  sendHttp('POST', 'listProjects', data, function(request) {
     while (projects.lastChild && projects.lastChild != newProject) {
       projects.removeChild(projects.lastChild);
     }
@@ -240,7 +234,7 @@ function setCode(code, history, name) {
 }
 
 function loadFile(name) {
-  sendHttp('GET', name, null, false, function(request) {
+  sendHttp('GET', name, null, function(request) {
     if (request.status == 200) {
       setCode(request.responseText);
     }
@@ -257,7 +251,7 @@ function loadProject(name) {
   data.append('id_token', gapi.auth.getToken().id_token);
   data.append('name', name);
 
-  sendHttp('POST', 'loadProject', data, false, function(request) {
+  sendHttp('POST', 'loadProject', data, function(request) {
     if (request.status == 200) {
       var project = JSON.parse(request.responseText);
       setCode(project.source, project.history, name);
@@ -323,11 +317,11 @@ function compile() {
   var data = new FormData();
   data.append('source', window.codeworldEditor.getValue());
 
-  sendHttp('POST', 'compile', data, false, function(request) {
+  sendHttp('POST', 'compile', data, function(request) {
     var hash = request.responseText;
     var success = request.status == 200;
 
-    sendHttp('GET', 'user/' + hash + '.err.txt', null, false, function(request) {
+    sendHttp('GET', 'user/' + hash + '.err.txt', null, function(request) {
       var msg = '';
       if (request.status == 200) {
         msg = request.responseText;
@@ -342,20 +336,36 @@ function compile() {
   });
 }
 
+function withClientId(f) {
+  if (window.clientId) return f(window.clientId);
+
+  sendHttp('GET', 'clientId.txt', null, function(request) {
+    if (request.status != 200 || request.responseText == '') {
+      window.alert('Missing API client key.');
+      return null;
+    }
+
+    window.clientId = request.responseText;
+    return f(window.clientId);
+  });
+}
+
 function signin() {
   function callback(result) {
     discoverProjects();
     updateVisibility();
   }
 
-  if (window.gapi) {
-    gapi.auth.signIn({
-      callback: callback,
-      clientid: '94846197422-jnkt1qd737993e7llrfa5pb1bqc72nog.apps.googleusercontent.com',
-      scope: 'profile',
-      cookiepolicy: 'single_host_origin',
-    });
-  }
+  withClientId(function(clientid) {
+    if (window.gapi) {
+      gapi.auth.signIn({
+        callback: callback,
+        clientid: clientid,
+        scope: 'profile',
+        cookiepolicy: 'single_host_origin',
+      });
+    }
+  });
 }
 
 function signout() {
@@ -415,7 +425,7 @@ function saveProjectBase(projectName) {
   data.append('id_token', gapi.auth.getToken().id_token);
   data.append('project', JSON.stringify(project));
 
-  sendHttp('POST', 'saveProject', data, false, function(request) {
+  sendHttp('POST', 'saveProject', data, function(request) {
     if (request.status != 200) {
       alert('Could not save your project!!!');
       return;
@@ -446,7 +456,7 @@ function deleteProject() {
   data.append('id_token', gapi.auth.getToken().id_token);
   data.append('name', window.openProjectName);
 
-  sendHttp('POST', 'deleteProject', data, false, function(request) {
+  sendHttp('POST', 'deleteProject', data, function(request) {
     if (request.status == 200) {
       savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
       setCode('');

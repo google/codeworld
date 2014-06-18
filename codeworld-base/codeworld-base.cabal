@@ -1,23 +1,24 @@
-name:                codeworld-base
-version:             0.1.0.0
-synopsis:            Replacement base module for CodeWorld
-description:         This module replaces base when building CodeWorld apps.
-                     It simplifies the Haskell Prelude to remove the use of
-                     numeric type classes and unify some types.
-license:             BSD3
-license-file:        LICENSE
-author:              Chris Smith <cdsmith@gmail.com>
-maintainer:          Chris Smith <cdsmith@gmail.com>
-build-type:          Simple
-cabal-version:       >=1.8
+Name:                codeworld-base
+Version:             0.1.0.0
+Synopsis:            Replacement base module for CodeWorld
+License-file:        LICENSE
+Author:              Chris Smith
+Maintainer:          cdsmith@gmail.com
+Copyright:           (c) 2014, Google, Inc.
+Build-type:          Simple
+Cabal-version:       >=1.8
 
-flag ghcjs
-    description: Tell cabal we are using ghcjs (work around until hackage supports impl(ghcjs))
-    default: True
+Description:
+  This module replaces base when building CodeWorld apps. It simplifies the Haskell
+  Prelude to remove the use of numeric type classes and unify some types.
 
-library
-  exposed-modules:     Prelude
-  other-modules:       Internal.Num,
+Flag ghcjs
+    Description: Tell cabal we are using ghcjs (work around until hackage supports impl(ghcjs))
+    Default: True
+
+Library
+  Exposed-modules:     Prelude
+  Other-modules:       Internal.Num,
                        Internal.Prelude,
                        Internal.Text,
                        Internal.Color,
@@ -25,15 +26,15 @@ library
                        Internal.Event,
                        Internal.CodeWorld,
                        Internal.DeepEq
-  build-depends:       base,
+  Build-depends:       base,
                        mtl,
                        random,
                        text,
                        time
-  exposed:             False
-  ghc-options:         -O2
+  Exposed:             False
+  Ghc-options:         -O2
 
   if flag(ghcjs)
-    build-depends:     ghcjs-base,
+    Build-depends:     ghcjs-base,
                        ghcjs-dom,
                        ghcjs-canvas

@@ -1,18 +1,19 @@
 Name:                codeworld-server
 Version:             0.1
 Synopsis:            Web server for CodeWorld
-Description:         The web server for the CodeWorld programming environment.
-License:             BSD3
-Author:              Chris Smith <cdsmith@gmail.com>
-Maintainer:          Chris Smith <cdsmith@gmail.com>
-Stability:           Experimental
-Category:            Web
+License-file:        LICENSE
+Author:              Chris Smith
+Maintainer:          cdsmith@gmail.com
+Copyright:           (c) 2014, Google, Inc.
 Build-type:          Simple
 Cabal-version:       >=1.2
 
+Description:
+  The web server for the CodeWorld programming environment.
+
 Executable codeworld-server
-  hs-source-dirs: src
-  main-is: Main.hs
+  Hs-source-dirs: src
+  Main-is: Main.hs
 
   Build-depends:
     aeson,

@@ -110,6 +110,22 @@ body {
   margin: 0px;
 }
 
+#nav_license {
+  flex: 0 0 auto;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
+  flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  margin: 0px;
+}
+
 #source {
   flex: 1 0 300px;
   -webkit-flex: 1 0 300px;

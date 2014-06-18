@@ -119,11 +119,12 @@ function toggleBrowser() {
   updateVisibility();
 }
 
-function toggleDoc() {
+function toggleDoc(root) {
   window.showingDoc = !window.showingDoc;
   if (window.showingDoc) {
-    var path = document.getElementById('docPath').textContent.trim();
-    document.getElementById('doc').contentWindow.location.replace(path);
+    var loc = document.getElementById('doc').contentWindow.location;
+    loc.hash = root;
+    loc.reload(true);
   }
   updateVisibility();
 }
@@ -236,7 +237,19 @@ function setCode(code, history, name) {
 function loadFile(name) {
   sendHttp('GET', name, null, function(request) {
     if (request.status == 200) {
-      setCode(request.responseText);
+      var code = request.responseText;
+      var startMarker = '{----- BEGIN LICENSE TEXT -----';
+      var endMarker = '----- END LICENSE TEXT -----}';
+
+      var start = code.indexOf(startMarker);
+      var end = code.indexOf(endMarker);
+
+      if (start != -1 && end != -1) {
+        code = code.substring(0, start) +
+               code.substring(end + endMarker.length);
+      }
+
+      setCode(code);
     }
   });
 }

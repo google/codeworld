@@ -10,12 +10,11 @@ CodeWorld is an educational web-based programming environment using a variant of
 Status
 ======
 
-This is early alpha quality software.  The major pieces are all working, but I make
-no guarantees that projects will be saved, or that programs written for the current
-version of the language will continue to work.
+CodeWorld is an unofficial project.  It is not an official Google project, and Google
+provides no support for it.
 
-Build Instructions
-==================
+Build and Deployment
+====================
 
 Building CodeWorld is, unfortunately, an involved process at the moment.  Here are the
 approximate step by step instructions to get an example working:

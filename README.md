@@ -41,7 +41,7 @@ This is a list of ideas for how to make this awesome.
 
 * Editor: Auto-complete, refactoring (rename, duplicate, ...).
 * Documentation: Fully document haddock, custom haddock theme, doc-on-hover, more browsable examples.
-* Workspace: Project switcher, better example browser, library projects.
+* Workspace: Better example browser, library projects.
 * Social: Browse public projects, share with friends, comment on others' projects.
 * Collaboration: Import libraries across users, joint projects.
 * Debugging: Show runtime exceptions, point-pins, scale-zoom controls, time-step debugger
@@ -55,3 +55,4 @@ Bugs
 * URL should change to track currently running program.
 * Should kill compiler after a fixed time limit.
 * Should work harder to stop TemplateHaskell and other such extensions.
+* Should run against a sandboxed GHCJS instead of depending on user package repository.

@@ -41,12 +41,12 @@ This is a list of ideas for how to make this awesome.
 
 * Editor: Auto-complete, refactoring (rename, duplicate, ...).
 * Documentation: Fully document haddock, custom haddock theme, doc-on-hover, more browsable examples.
-* Workspace: project switcher, better example browser, library projects.
-* Social: browse public projects, share with friends, comment on others' projects.
-* Collaboration: import libraries across users, joint projects.
+* Workspace: Project switcher, better example browser, library projects.
+* Social: Browse public projects, share with friends, comment on others' projects.
+* Collaboration: Import libraries across users, joint projects.
 * Debugging: Show runtime exceptions, point-pins, scale-zoom controls, time-step debugger
-* Export: Android, iOS (maybe impossible without jailbreak?), chrome app? flash?.
-* Lessons: guided help, gallery, quizzes, "helpers" (list comprehensions, etc.).
+* Export: Android, iOS (maybe impossible without jailbreak?), Chrome app? Flash?.
+* Lessons: Guided help, gallery, quizzes, "helpers" (list comprehensions, etc.).
 
 Bugs
 ====

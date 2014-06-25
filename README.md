@@ -13,6 +13,26 @@ Status
 CodeWorld is an unofficial project.  It is not an official Google project, and Google
 provides no support for it.
 
+Discuss and Learn More
+======================
+
+To discuss and hear announcements about CodeWorld, subscribe to the mailing list at
+https://groups.google.com/forum/#!forum/codeworld-discuss
+
+The mailing list should be used to:
+- Hear announcements about and discuss upcoming changes and features.
+- Ask questions about using the system, and give feedback about your experiences.
+- Share interesting ways of using the site, related classroom activities, and more.
+
+To report bugs or file formal feature requests, try https://github.com/google/codeworld/issues --
+but it would be great if you discuss your ideas for new features before filing a feature request.
+
+Contributing
+============
+
+There is a slight bit of paperwork involved in contributing to CodeWorld.  You'll need to
+agree to a Contributor License Agreement.  See CONTRIBUTING.md for details.
+
 Build and Deployment
 ====================
 

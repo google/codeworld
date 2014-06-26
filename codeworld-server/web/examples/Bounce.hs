@@ -25,11 +25,11 @@ main = simulationOf initial step draw
 
 data World = Ball Point Vector
 
-radius = 40
-border = 250 - radius
+radius = 2
+border = 10 - radius
 
-initial (x:y:vx:vy:_) = Ball (400*x  - 200, 400*y  - 200)
-                             (400*vx - 200, 400*vy - 200)
+initial (x:y:vx:vy:_) = Ball (16*x  - 8, 16*y  - 8)
+                             (16*vx - 8, 16*vy - 8)
 
 step t world = bounce (move t world)
 

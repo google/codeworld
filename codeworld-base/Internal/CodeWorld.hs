@@ -127,7 +127,9 @@ drawFigure ctx ds w figure = do
         when (w /= 0) $ do
             Canvas.lineWidth (toDouble w) ctx
             Canvas.stroke ctx
-    when (w == 0) $ Canvas.stroke ctx
+    when (w == 0) $ do
+        Canvas.lineWidth (1/25) ctx
+        Canvas.stroke ctx
     Canvas.restore ctx
 
 drawPicture :: Canvas.Context -> DrawState -> Picture -> IO ()
@@ -172,11 +174,11 @@ setupScreenContext canvas = do
     ctx <- Canvas.getContext (castRef (unElement canvas))
     Canvas.save ctx
     Canvas.translate 250 250 ctx
-    Canvas.scale 1 (-1) ctx
+    Canvas.scale 25 (-25) ctx
     Canvas.textAlign Canvas.Left ctx
     Canvas.textBaseline Canvas.Alphabetic ctx
     Canvas.lineWidth 0 ctx
-    Canvas.font "16px Times Roman" ctx
+    Canvas.font "1px Times Roman" ctx
     return ctx
 
 canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> IO ()

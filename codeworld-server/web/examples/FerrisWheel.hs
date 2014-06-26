@@ -27,22 +27,22 @@ scene t = ferrisWheel t & backdrop t
 
 backdrop t = pictures [
     movingCloud t,
-    color (light green) (translate 0 (-200) (solidRectangle 500 100)),
-    color (light blue)  (solidRectangle 500 500)
+    color (light green) (translate 0 (-8) (solidRectangle 20 4)),
+    color (light blue)  (solidRectangle 20 20)
     ]
 
-movingCloud t = translate ((50 * t) `mod` 700 - 350) 200 cloud
+movingCloud t = translate ((2 * t) `mod` 28 - 14) 8 cloud
 
 cloud = color white (pictures [
-    translate (  0) (-10) (solidCircle 40),
-    translate (-30) ( 10) (solidCircle 30),
-    translate ( 25) (  5) (solidCircle 30)
+    translate ( 0  ) (-0.4) (solidCircle 1.6),
+    translate (-1.2) ( 0.4) (solidCircle 1.2),
+    translate ( 1  ) ( 0.2) (solidCircle 1.2)
     ])
 
 ferrisWheel t = pictures [
     movingPart t,
-    color (gray 0.5) (polygon [ (-200, -200), (0, -100), (200, -200) ]),
-    color (gray 0.3) (solidRectangle 10 250)
+    color (gray 0.5) (polygon [ (-8, -8), (0, -4), (8, -8) ]),
+    color (gray 0.3) (solidRectangle 0.4 10)
     ]
 
 movingPart t =
@@ -50,12 +50,12 @@ movingPart t =
     pictures [ circularPath (60 * a + 30 * t) car | a <- [0 .. 5] ]
 
 wheel =
-    thickCircle 150 10 &
-    pictures [ rotate (30 * a) (solidRectangle 300 5) | a <- [0 .. 5] ]
+    thickCircle 6 0.4 &
+    pictures [ rotate (30 * a) (solidRectangle 12 0.2) | a <- [0 .. 5] ]
 
 -- Rotate, translate, then rotate.  The result ends up not rotating at all in
 -- balance, but moves along a circular path anyway.
-circularPath a pic = rotate a (translate 150 0 (rotate (-a) pic))
+circularPath a pic = rotate a (translate 6 0 (rotate (-a) pic))
 
-car = translate 0 (-15) (solidRectangle  5 30) &
-      translate 0 (-30) (solidRectangle 40 20)
+car = translate 0 (-0.5) (solidRectangle 0.2 1.2) &
+      translate 0 (-1.2) (solidRectangle 1.6 0.8)

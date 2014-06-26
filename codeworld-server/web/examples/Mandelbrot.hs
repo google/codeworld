@@ -58,7 +58,7 @@ depth m z c k | diverged z = Just m
     A bit of simple math maps that to the screen.
 -}
 mandelbrot :: Number -> Number -> Picture
-mandelbrot n k = rotate 90 $ scale 125 125 $
+mandelbrot n k = rotate 90 $ scale 5 5 $
     pictures [ spot x y m | x <- [-2, -2 + width .. 2],
                             y <- [-2, -2 + width .. 2],
                             Just m <- [depth 0 (C 0 0) (C x y) k ] ]
@@ -67,4 +67,4 @@ mandelbrot n k = rotate 90 $ scale 125 125 $
         shade m    = color $ gray $ (1 - 1/m)^5
 
 main :: Program
-main = pictureOf (mandelbrot 50 25)
+main = pictureOf (mandelbrot 500 25)

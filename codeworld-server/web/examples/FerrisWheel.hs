@@ -21,41 +21,40 @@
     in seconds.
 -}
 
-main = animationOf scene
+main = animationOf(scene)
 
-scene t = ferrisWheel t & backdrop t
+scene(t) = ferrisWheel(t) & backdrop(t)
 
-backdrop t = pictures [
-    movingCloud t,
-    color (light green) (translate 0 (-8) (solidRectangle 20 4)),
-    color (light blue)  (solidRectangle 20 20)
+backdrop(t) = pictures[
+    movingCloud(t),
+    color(translate(solidRectangle(20, 4), 0, -8), light(green)),
+    color(solidRectangle(20, 20), light(blue))
     ]
 
-movingCloud t = translate ((2 * t) `mod` 28 - 14) 8 cloud
+movingCloud(t) = translate(cloud, remainder(2 * t, 28) - 14, 8)
 
-cloud = color white (pictures [
-    translate ( 0  ) (-0.4) (solidCircle 1.6),
-    translate (-1.2) ( 0.4) (solidCircle 1.2),
-    translate ( 1  ) ( 0.2) (solidCircle 1.2)
-    ])
+cloud = color(cloudParts, white)
+  where cloudParts = translate(solidCircle(1.6),  0,  -0.4)
+                   & translate(solidCircle(1.2), -1.2, 0.4)
+                   & translate(solidCircle(1.2),  1,   0.2)
 
-ferrisWheel t = pictures [
-    movingPart t,
-    color (gray 0.5) (polygon [ (-8, -8), (0, -4), (8, -8) ]),
-    color (gray 0.3) (solidRectangle 0.4 10)
+ferrisWheel(t) = pictures [
+    movingPart(t),
+    color(polygon[ (-8, -8), (0, -4), (8, -8) ], gray(0.5)),
+    color(solidRectangle(0.4, 10), gray(0.3))
     ]
 
-movingPart t =
-    rotate (30 * t) wheel &
-    pictures [ circularPath (60 * a + 30 * t) car | a <- [0 .. 5] ]
+movingPart(t) =
+    rotate(wheel, 30 * t) &
+    pictures[ circularPath(car, 60 * a + 30 * t) | a <- [0 .. 5] ]
 
 wheel =
-    thickCircle 6 0.4 &
-    pictures [ rotate (30 * a) (solidRectangle 12 0.2) | a <- [0 .. 5] ]
+    thickCircle(6, 0.4) &
+    pictures[ rotate(solidRectangle(12, 0.2), 30 * a) | a <- [0 .. 5] ]
 
 -- Rotate, translate, then rotate.  The result ends up not rotating at all in
 -- balance, but moves along a circular path anyway.
-circularPath a pic = rotate a (translate 6 0 (rotate (-a) pic))
+circularPath(pic, a) = rotate(translate(rotate(pic, -a), 6, 0), a)
 
-car = translate 0 (-0.5) (solidRectangle 0.2 1.2) &
-      translate 0 (-1.2) (solidRectangle 1.6 0.8)
+car = translate(solidRectangle(0.2, 1.2), 0, -0.5) &
+      translate(solidRectangle(1.6, 0.8), 0, -1.2)

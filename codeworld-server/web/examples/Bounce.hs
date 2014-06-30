@@ -21,26 +21,26 @@
     screen.
 -}
 
-main = simulationOf initial step draw
+main = simulationOf(initial, step, draw)
 
-data World = Ball Point Vector
+data World = Ball(Point, Vector)
 
 radius = 2
 border = 10 - radius
 
-initial (x:y:vx:vy:_) = Ball (16*x  - 8, 16*y  - 8)
-                             (16*vx - 8, 16*vy - 8)
+initial(x:y:vx:vy:_) = Ball((16*x  - 8, 16*y  - 8),
+                            (16*vx - 8, 16*vy - 8))
 
-step t world = bounce (move t world)
+step(world, dt) = bounce(move(world, dt))
 
-move t (Ball (x,y) (vx,vy)) = Ball (x + vx*t, y + vy*t) (vx, vy)
+move(Ball((x,y), (vx,vy)), dt) = Ball((x + vx*dt, y + vy*dt), (vx, vy))
 
-bounce (Ball (x,y) (vx,vy)) = Ball (nx,ny) (nvx, nvy)
-  where nx  = fence (-border) border x
-        ny  = fence (-border) border y
+bounce(Ball((x,y), (vx,vy))) = Ball((nx,ny), (nvx, nvy))
+  where nx  = fence(-border, border, x)
+        ny  = fence(-border, border, y)
         nvx = if nx /= x then -vx else vx
         nvy = if ny /= y then -vy else vy
 
-fence lo hi x = max lo (min hi x)
+fence(lo, hi, x) = max(lo, min(hi, x))
 
-draw (Ball (x,y) _) = translate x y (solidCircle radius)
+draw(Ball((x,y),_)) = translate(solidCircle(radius), x, y)

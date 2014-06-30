@@ -56,6 +56,7 @@ module Prelude (
     grey,
     light,
     dark,
+    bright,
     muted,
     translucent,
 
@@ -120,14 +121,14 @@ import Internal.CodeWorld
 --   using 'pictureOf'.  The parameter to 'pictureOf' should be a 'Picture'.
 --   Example:
 --
--- > main = pictureOf tree
+-- > main = pictureOf(tree)
 --
 -- * Animations.  To create an animation, you'll define the variable called
 --   @main@ using 'animationOf'.  The parameter to 'animationOf' should be a
 --   function, mapping each time in seconds (a 'Number') to a 'Picture' that is
 --   shown at that time.  Example:
 --
--- > main = animationOf spinningWheel
+-- > main = animationOf(spinningWheel)
 --
 -- * Simulations.  A simulation is like an animation, in that it changes over
 --   time.  But while an animation changes in a simple regular way over time, a
@@ -139,7 +140,7 @@ import Internal.CodeWorld
 --   a picture from a state.  Then you'll use 'simulationOf' to define main.
 --   Example:
 --
--- > main = simulationOf start step draw
+-- > main = simulationOf(start, step, draw)
 --
 -- * Interactions.  Finally, you can build an interactive simulation, such as
 --   a game.  This is very like a simulation, except that it also has an event
@@ -147,4 +148,4 @@ import Internal.CodeWorld
 --   keys being pressed or the mouse moving) happen.  You'll use
 --   'interactionOf' to define these.  Example:
 --
--- > main = interactionOf start step event draw
+-- > main = interactionOf(start, step, event, draw)

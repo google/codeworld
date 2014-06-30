@@ -37,13 +37,9 @@ module Internal.Num (
     round,
     ceiling,
     floor,
-    quot,
-    rem,
-    div,
-    mod,
-    quotRem,
-    divMod,
-    recip,
+    quotient,
+    remainder,
+    reciprocal,
     pi,
     exp,
     sqrt,
@@ -57,7 +53,6 @@ module Internal.Num (
     atan2,
     acos,
     properFraction,
-    subtract,
     even,
     odd,
     gcd,
@@ -127,7 +122,7 @@ instance P.Ord Number where
     compare (Number a) (Number b) = P.compare a b
 
 infixr 8  ^
-infixl 7  *, /, `quot`, `rem`, `div`, `mod`
+infixl 7  *, /
 infixl 6  +, -
 infix  4  <, <=, >=, >
 
@@ -158,11 +153,11 @@ Number a > Number b = a P.> b
 (>=) :: Number -> Number -> Bool
 Number a >= Number b = a P.>= b
 
-max :: Number -> Number -> Number
-max (Number a) (Number b) = fromDouble (P.max a b)
+max :: (Number, Number) -> Number
+max (Number a, Number b) = fromDouble (P.max a b)
 
-min :: Number -> Number -> Number
-min (Number a) (Number b) = fromDouble (P.min a b)
+min :: (Number, Number) -> Number
+min (Number a, Number b) = fromDouble (P.min a b)
 
 negate :: Number -> Number
 negate = fromDouble . P.negate . toDouble
@@ -185,26 +180,14 @@ ceiling = fromInteger . P.ceiling . toDouble
 floor :: Number -> Number
 floor = fromInteger . P.floor . toDouble
 
-quot :: Number -> Number -> Number
-quot a b = truncate (a / b)
+quotient :: (Number, Number) -> Number
+quotient (a, b) = truncate (a / b)
 
-rem :: Number -> Number -> Number
-rem a b = a - b * truncate (a / b)
+remainder :: (Number, Number) -> Number
+remainder (a, b) = a - b * truncate (a / b)
 
-div :: Number -> Number -> Number
-div a b = floor (a / b)
-
-mod :: Number -> Number -> Number
-mod a b = a - b * floor (a / b)
-
-quotRem :: Number -> Number -> (Number, Number)
-quotRem a b = let q = a `quot` b in (q, a - b * q)
-
-divMod :: Number -> Number -> (Number, Number)
-divMod a b = let q = a `div` b in (q, a - b * q)
-
-recip :: Number -> Number
-recip = fromDouble . P.recip . toDouble
+reciprocal :: Number -> Number
+reciprocal = fromDouble . P.recip . toDouble
 
 pi :: Number
 pi = fromDouble P.pi
@@ -218,11 +201,14 @@ sqrt = fromDouble . P.sqrt . toDouble
 log :: Number -> Number
 log = fromDouble . P.log . toDouble
 
-logBase :: Number -> Number -> Number
-logBase (Number b) (Number x) = fromDouble (P.logBase b x)
+logBase :: (Number, Number) -> Number
+logBase (Number b, Number x) = fromDouble (P.logBase b x)
 
 toRadians :: Number -> Number
 toRadians d = d / 180 * pi
+
+fromRadians :: Number -> Number
+fromRadians r = r / pi * 180
 
 sin :: Number -> Number
 sin = fromDouble . P.sin  . toDouble . toRadians
@@ -233,17 +219,14 @@ tan = fromDouble . P.tan . toDouble . toRadians
 cos :: Number -> Number
 cos = fromDouble . P.cos . toDouble . toRadians
 
-fromRadians :: Number -> Number
-fromRadians r = r / pi * 180
-
 asin :: Number -> Number
 asin = fromRadians . fromDouble . P.asin . toDouble
 
 atan :: Number -> Number
 atan = fromRadians . fromDouble . P.atan . toDouble
 
-atan2 :: Number -> Number -> Number
-atan2 (Number a) (Number b) = fromRadians (fromDouble (P.atan2 a b))
+atan2 :: (Number, Number) -> Number
+atan2 (Number a, Number b) = fromRadians (fromDouble (P.atan2 a b))
 
 acos :: Number -> Number
 acos = fromRadians . fromDouble . P.acos . toDouble
@@ -251,9 +234,6 @@ acos = fromRadians . fromDouble . P.acos . toDouble
 properFraction :: Number -> (Number, Number)
 properFraction (Number x) = (fromInteger w, fromDouble p)
     where (w,p) = P.properFraction x
-
-subtract :: Number -> Number -> Number
-subtract a b = a - b
 
 even :: Number -> Bool
 even n | isInteger n = P.even (toInt n)
@@ -263,15 +243,15 @@ odd :: Number -> Bool
 odd n | isInteger n = P.odd (toInt n)
       | otherwise   = False
 
-gcd :: Number -> Number -> Number
-gcd a b
+gcd :: (Number, Number) -> Number
+gcd (a, b)
     | isInteger a && isInteger b = fromInteger (P.gcd ia ib)
     | otherwise                  = P.error "gcd requires whole numbers"
     where ia = P.truncate (toDouble a)
           ib = P.truncate (toDouble b)
 
-lcm :: Number -> Number -> Number
-lcm a b
+lcm :: (Number, Number) -> Number
+lcm (a, b)
     | isInteger a && isInteger b = fromInteger (P.lcm ia ib)
     | otherwise                  = P.error "lcm requires whole numbers"
     where ia = P.truncate (toDouble a)

@@ -145,7 +145,7 @@ drawPicture ctx ds (Arc b e r w) = do
 drawPicture ctx ds (Text txt) = withDS ctx ds $ do
     Canvas.scale 1 (-1) ctx
     Canvas.fillText txt 0 0 ctx
-drawPicture ctx ds (Color (RGBA r g b a) p)
+drawPicture ctx ds (Color (RGBA (r, g, b, a)) p)
   | hasColorDS ds = drawPicture ctx ds p
   | otherwise     = do
       Canvas.save ctx
@@ -288,13 +288,13 @@ setupEvents currentActivity canvas = do
     domWindowOnmousedown window $ do
         button <- mouseButton
         pos <- getMousePos canvas
-        let event = MousePress (fromIntegral button) pos
+        let event = MousePress ((fromIntegral button), pos)
         liftIO $ modifyMVar_ currentActivity $ \ activity -> do
             return (activityEvent activity event)
     domWindowOnmouseup window $ do
         button <- mouseButton
         pos <- getMousePos canvas
-        let event = MouseRelease (fromIntegral button) pos
+        let event = MouseRelease ((fromIntegral button), pos)
         liftIO $ modifyMVar_ currentActivity $ \ activity -> do
             return (activityEvent activity event)
     domWindowOnmousemove window $ do
@@ -343,23 +343,18 @@ pictureOf :: Picture -> Program
 pictureOf pic = display pic
 
 animationOf :: (Number -> Picture) -> Program
-animationOf f = simulationOf (const 0) (+) f
+animationOf f = simulationOf (const 0, uncurry (+), f)
 
-simulationOf :: ([Number] -> a)
-             -> (Number -> a -> a)
-             -> (a -> Picture)
+simulationOf :: ([Number] -> a, (a, Number) -> a, a -> Picture)
              -> Program
-simulationOf initial step draw = interactionOf initial step (const id) draw
+simulationOf (initial, step, draw) = interactionOf (initial, step, fst, draw)
 
-interactionOf :: ([Number] -> a)
-              -> (Number -> a -> a)
-              -> (Event -> a -> a)
-              -> (a -> Picture)
+interactionOf :: ([Number] -> a, (a, Number) -> a, (a, Event) -> a, a -> Picture)
               -> Program
-interactionOf initial step event draw = run . activity . initial =<< randoms
+interactionOf (initial, step, event, draw) = run . activity . initial =<< randoms
   where activity x = Activity {
-                        activityStep    = (\dt -> activity (step dt x)),
-                        activityEvent   = (\ev -> activity (event ev x)),
+                        activityStep    = (\dt -> activity (step (x, dt))),
+                        activityEvent   = (\ev -> activity (event (x, ev))),
                         activityDraw    = draw x
                     }
         randoms :: IO [Number]
@@ -377,17 +372,12 @@ pictureOf _ = putStrLn "<<picture>>"
 animationOf :: (Number -> Picture) -> Program
 animationOf _ = putStrLn "<<animation>>"
 
-simulationOf :: ([Number] -> a)
-             -> (Number -> a -> a)
-             -> (a -> Picture)
+simulationOf :: ([Number] -> a, (a, Number) -> a, a -> Picture)
              -> Program
-simulationOf _ _ _ = putStrLn "<<simulation>>"
+simulationOf (_, _, _) = putStrLn "<<simulation>>"
 
-interactionOf :: ([Number] -> a)
-              -> (Number -> a -> a)
-              -> (Event -> a -> a)
-              -> (a -> Picture)
+interactionOf :: ([Number] -> a, (a, Number) -> a, (a, Event) -> a, a -> Picture)
               -> Program
-interactionOf _ _ _ _ = putStrLn "<<interaction>>"
+interactionOf (_, _, _, _) = putStrLn "<<interaction>>"
 
 #endif

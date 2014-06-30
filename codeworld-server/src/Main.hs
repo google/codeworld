@@ -204,7 +204,6 @@ commonGHCJSArgs = [
     "-fno-warn-deprecated-flags",
     "-fno-warn-amp",
     "-fno-warn-missing-signatures",
-    "-fdefer-type-errors",
     "-hide-package", "base",
     "-package", "codeworld-base",
     "-XRebindableSyntax",

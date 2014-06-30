@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE PackageImports    #-}
 
@@ -77,6 +78,8 @@ import "base" Prelude (Bool(..), (.), (==), (&&), map, not, otherwise)
 
 newtype Number = Number P.Double
 
+#ifndef __HADDOCK__
+
 fromDouble :: P.Double -> Number
 fromDouble x | P.isNaN x      = P.error "result is undefined"
              | P.isInfinite x = P.error "result is too large"
@@ -85,8 +88,18 @@ fromDouble x | P.isNaN x      = P.error "result is undefined"
 toDouble :: Number -> P.Double
 toDouble (Number x) = x
 
-isInteger :: Number -> Bool
-isInteger (Number x) = x == P.fromIntegral (P.truncate x)
+fromInteger :: P.Integer -> Number
+fromInteger = fromDouble . P.fromInteger
+
+fromRational :: P.Rational -> Number
+fromRational = fromDouble . P.fromRational
+
+fromInt :: P.Int -> Number
+fromInt = fromDouble . P.fromIntegral
+
+toInt :: Number -> P.Int
+toInt n | isInteger n = P.truncate (toDouble n)
+        | otherwise   = P.error "a whole number is required"
 
 instance P.Show Number where
     showsPrec p x | isInteger x = P.showsPrec p (P.truncate (toDouble x))
@@ -120,6 +133,11 @@ instance P.Enum Number where
 
 instance P.Ord Number where
     compare (Number a) (Number b) = P.compare a b
+
+#endif  // __HADDOCK__
+
+isInteger :: Number -> Bool
+isInteger (Number x) = x == P.fromIntegral (P.truncate x)
 
 infixr 8  ^
 infixl 7  *, /
@@ -274,16 +292,3 @@ maximum = fromDouble . P.maximum . P.map toDouble
 
 minimum :: [Number] -> Number
 minimum = fromDouble . P.minimum . P.map toDouble
-
-fromInteger :: P.Integer -> Number
-fromInteger = fromDouble . P.fromInteger
-
-fromRational :: P.Rational -> Number
-fromRational = fromDouble . P.fromRational
-
-fromInt :: P.Int -> Number
-fromInt = fromDouble . P.fromIntegral
-
-toInt :: Number -> P.Int
-toInt n | isInteger n = P.truncate (toDouble n)
-        | otherwise   = P.error "a whole number is required"

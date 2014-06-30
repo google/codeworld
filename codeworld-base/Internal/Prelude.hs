@@ -80,11 +80,18 @@ module Internal.Prelude (
     P.break,
     isMember,
     lookup,
+    L.transpose,
+    L.subsequences,
+    L.permutations,
+    nub, -- using deepEq
+    sort, -- specialized to Number
     ) where
 
 import qualified "base" Prelude as P
 import qualified "base" Data.Maybe as P
 import "base" Prelude (Bool, (.))
+
+import qualified Data.List as L
 
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -243,3 +250,9 @@ lookup ([],              x) = P.Nothing
 lookup ((k,v) : entries, x)
     | k == x      =  P.Just v
     | P.otherwise =  lookup (entries, x)
+
+nub :: [a] -> [a]
+nub = L.nubBy deepEq
+
+sort :: [Number] -> [Number]
+sort = L.sort

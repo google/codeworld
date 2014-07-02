@@ -29,11 +29,18 @@
 
   function deepEq(a0, b0) {
       var eq = true;
+      var seenA = [];
+      var seenB = [];
       var workA = [a0];
       var workB = [b0];
       function addWork(wa, wb) {
+          // fixme this is inefficient
+          for (var j=seenA.length-1;j>=0;j--) if(wa === seenA[j]) return;
+          for (var j=seenB.length-1;j>=0;j--) if(wb === seenB[j]) return;
           workA.push(wa);
+          seenA.push(wa);
           workB.push(wb);
+          seenB.push(wb);
       }
       while (eq && workA.length > 0) {
           var a = workA.pop();

@@ -28,19 +28,20 @@
   }
 
   function deepEq(a0, b0) {
+      if (a0 === b0) return true;
       var eq = true;
-      var seenA = [];
-      var seenB = [];
+      var seen = [];
       var workA = [a0];
       var workB = [b0];
       function addWork(wa, wb) {
+          if (wa === wb) return;
           // fixme this is inefficient
-          for (var j=seenA.length-1;j>=0;j--) if(wa === seenA[j]) return;
-          for (var j=seenB.length-1;j>=0;j--) if(wb === seenB[j]) return;
+          if (typeof wa === 'object' || typeof wb === 'object') {
+              for(var j=seen.length-1;j>=0;j--) if(wa === seen[j][0] && wb === seen[j][1]) return;
+              seen.push([wa,wb]);
+          }
           workA.push(wa);
-          seenA.push(wa);
           workB.push(wb);
-          seenB.push(wb);
       }
       while (eq && workA.length > 0) {
           var a = workA.pop();

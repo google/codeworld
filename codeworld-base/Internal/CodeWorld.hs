@@ -143,7 +143,7 @@ drawPicture ctx ds (Arc b e r w) = do
         Canvas.arc 0 0 (toDouble r) (toDouble b * pi / 180)
                    (toDouble e * pi / 180) False ctx
 drawPicture ctx ds (Text txt) = withDS ctx ds $ do
-    Canvas.scale 1 (-1) ctx
+    Canvas.scale 0.05 (-0.05) ctx
     Canvas.fillText txt 0 0 ctx
 drawPicture ctx ds (Color (RGBA (r, g, b, a)) p)
   | hasColorDS ds = drawPicture ctx ds p
@@ -178,7 +178,7 @@ setupScreenContext canvas = do
     Canvas.textAlign Canvas.Left ctx
     Canvas.textBaseline Canvas.Alphabetic ctx
     Canvas.lineWidth 0 ctx
-    Canvas.font "1px Times Roman" ctx
+    Canvas.font "20px Times Roman" ctx
     return ctx
 
 canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> IO ()

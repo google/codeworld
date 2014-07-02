@@ -247,7 +247,7 @@ getMousePos canvas = do
     liftIO $ do
         cx <- js_getBoundingClientLeft (unElement canvas)
         cy <- js_getBoundingClientTop (unElement canvas)
-        return (fromIntegral (ix - cx - 250), fromIntegral (cy - iy + 250))
+        return (fromIntegral (ix - cx - 250) / 25, fromIntegral (cy - iy + 250) / 25)
 
 --------------------------------------------------------------------------------
 -- Runners for different kinds of activities.

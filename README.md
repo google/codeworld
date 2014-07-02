@@ -44,7 +44,7 @@ approximate step by step instructions to get an example working:
    then `git checkout ghcjs` to switch to the GHCJS branch, and finally
    `cabal install` both the Cabal and cabal-install packages.
 3. Get GHCJS itself (https://github.com/ghcjs/ghcjs) and `cabal install`.
-4. Run `ghcjs-boot --init`.
+4. Run `ghcjs-boot --dev`.
 5. Check out ghcjs-dom (https://github.com/ghcjs/ghcjs-dom) and install it with `cabal install --ghcjs`.
 6. Check out ghcjs-canvas (https://github.com/ghcjs/ghcjs-canvas) and install it with `cabal install --ghcjs`.
 7. Install the codeworld-base package from this project: `cd codeworld-base && cabal install --ghcjs`.

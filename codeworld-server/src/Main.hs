@@ -84,6 +84,12 @@ main = do
     when (not hasClientId) $ do
         putStrLn "WARNING: Missing web/clientId.txt"
         putStrLn "User logins will not function properly!"
+
+    hasAutocomplete <- doesFileExist "web/autocomplete.txt"
+    when (not hasAutocomplete) $ do
+        putStrLn "WARNING: Missing web/autocomplete.txt"
+        putStrLn "Autocomplete will not function properly!"
+
     generateBaseBundle
     quickHttpServe $ (processBody >> site) <|> site
 

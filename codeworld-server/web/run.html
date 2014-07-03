@@ -16,6 +16,13 @@
   <script type="text/javascript" src="user/base.jsexe/lib1.base.js"></script>
   <script type="text/javascript" src="user/base.jsexe/out.base.js"></script>
   <script type="text/javascript">
+    function reportRuntimeError(str) {
+      var message = window.parent.addToMessage('\n\n' + str);
+
+      var message = window.parent.document.getElementById('message');
+      message.classList.add('error');
+    }
+
     var params = location.search.slice(1).split('&');
     for (var i = 0; i < params.length; i++) {
       var parts = params[i].split('=');

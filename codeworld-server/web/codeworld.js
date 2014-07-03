@@ -297,6 +297,16 @@ function stop() {
   run('', '', false);
 }
 
+function addToMessage(msg) {
+  var message = document.getElementById('message');
+  message.innerHTML += msg
+      .replace('&', '&amp;')
+      .replace('<', '&lt;')
+      .replace('>', '&gt;')
+      .replace(/your program:(\d+):(\d+)/g,
+               '<a href="#" onclick="goto($1, $2);">Line $1, Column $2</a>');
+}
+
 function run(hash, msg, error) {
   window.showingResult = hash || msg;
 
@@ -313,12 +323,8 @@ function run(hash, msg, error) {
   }
 
   var message = document.getElementById('message');
-  message.innerHTML = msg
-      .replace('&', '&amp;')
-      .replace('<', '&lt;')
-      .replace('>', '&gt;')
-      .replace(/your program:(\d+):(\d+)/g,
-               '<a href="#" onclick="goto($1, $2);">Line $1, Column $2</a>');
+  message.innerHTML = '';
+  addToMessage(msg);
 
   if (error) {
     message.classList.add('error');

@@ -31,6 +31,7 @@ module Internal.CodeWorld (
 
 import           Control.Concurrent
 import           Control.Concurrent.MVar
+import           Control.Exception
 import           Control.Monad
 import           Control.Monad.Trans (liftIO)
 import           Data.Char (chr)
@@ -38,11 +39,12 @@ import           Data.IORef
 import           Data.Text (Text, singleton)
 import           Data.Time.Clock
 import           Internal.Num (Number, fromDouble, toDouble)
-import           Internal.Text
+import           Internal.Text hiding (show)
+import qualified Internal.Text
 import           Internal.Color
 import           Internal.Picture
 import           Internal.Event
-import "base"    Prelude hiding (show)
+import "base"    Prelude
 import           System.IO.Unsafe
 import           System.Random
 
@@ -70,6 +72,9 @@ foreign import javascript unsafe "window.requestAnimationFrame($1);"
 
 foreign import javascript unsafe "$1.drawImage($2, $3, $4);"
     js_canvasDrawImage :: Canvas.Context -> JSRef Element -> Int -> Int -> IO ()
+
+foreign import javascript unsafe "window.reportRuntimeError($1);"
+    js_reportRuntimeError :: JSString -> IO ()
 
 --------------------------------------------------------------------------------
 -- Draw state.  An affine transformation matrix, plus a Bool indicating whether
@@ -239,7 +244,7 @@ keyCodeToText n = case n of
     222                      -> "'"
     _                        -> "Unknown:" <> fromNum n
   where fromAscii n = singleton (chr n)
-        fromNum   n = show (fromIntegral n)
+        fromNum   n = Internal.Text.show (fromIntegral n)
 
 getMousePos :: IsMouseEvent e => Element -> EventM e t Point
 getMousePos canvas = do
@@ -339,8 +344,11 @@ run startActivity = do
 
 type Program = IO ()
 
+reportError :: SomeException -> IO ()
+reportError e = js_reportRuntimeError (toJSString (show e))
+
 pictureOf :: Picture -> Program
-pictureOf pic = display pic
+pictureOf pic = display pic `catch` reportError
 
 animationOf :: (Number -> Picture) -> Program
 animationOf f = simulationOf (const 0, uncurry (+), f)
@@ -351,8 +359,9 @@ simulationOf (initial, step, draw) = interactionOf (initial, step, fst, draw)
 
 interactionOf :: ([Number] -> a, (a, Number) -> a, (a, Event) -> a, a -> Picture)
               -> Program
-interactionOf (initial, step, event, draw) = run . activity . initial =<< randoms
-  where activity x = Activity {
+interactionOf (initial, step, event, draw) = go `catch` reportError
+  where go = run . activity . initial =<< randoms
+        activity x = Activity {
                         activityStep    = (\dt -> activity (step (x, dt))),
                         activityEvent   = (\ev -> activity (event (x, ev))),
                         activityDraw    = draw x

@@ -24,8 +24,26 @@ main :: IO ()
 main = do
     [symbolFile] <- getArgs
     decls <- mergeContinued <$> lines <$> readFile symbolFile
-    let tokens = filter (/= "IO") $ concatMap tokensFrom decls
-    mapM_ putStrLn (sort $ nub $ keywords ++ tokens)
+    let tokens = filter (not . (`elem` blacklist)) $ concatMap tokensFrom decls
+    mapM_ putStrLn (sort $ nub $ keywords ++ whitelist ++ tokens)
+
+blacklist :: [String]
+blacklist = [
+    "IO",
+    "fromDouble",
+    "fromInt",
+    "fromInteger",
+    "fromRational",
+    "fromString",
+    "ifThenElse",
+    "toDouble",
+    "toInt"
+    ]
+
+whitelist :: [String]
+whitelist = [
+    "main"
+    ]
 
 mergeContinued :: [String] -> [String]
 mergeContinued []      = []
@@ -52,5 +70,5 @@ keywords :: [String]
 keywords = [
     "--",      "{-",      "-}",      "::",      "->",      "<-",
     "..",      "case",    "of",      "if",      "then",    "else",
-    "data",    "let",     "in",      "where",   "main"
+    "data",    "let",     "in",      "where"
     ]

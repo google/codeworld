@@ -24,8 +24,8 @@ main :: IO ()
 main = do
     [symbolFile] <- getArgs
     decls <- mergeContinued <$> lines <$> readFile symbolFile
-    let tokens = sort $ nub $ filter (/= "IO") $ concatMap tokensFrom decls
-    mapM_ putStrLn tokens
+    let tokens = filter (/= "IO") $ concatMap tokensFrom decls
+    mapM_ putStrLn (sort $ nub $ keywords ++ tokens)
 
 mergeContinued :: [String] -> [String]
 mergeContinued []      = []
@@ -35,7 +35,7 @@ mergeContinued (l1:l2:r)
     | otherwise        = l1 : mergeContinued (l2:r)
 
 tokensFrom :: String -> [String]
-tokensFrom decl = filter (not . null)
+tokensFrom decl = filter ((> 1) . length)
                 $ concatMap (everyOther . tail) (decl =~ expr :: [[String]])
   where expr = "^(([A-Za-z0-9_]*) :: .*)"
             ++ "|(\\(([^)]*)\\) :: .*)"
@@ -47,3 +47,10 @@ tokensFrom decl = filter (not . null)
 everyOther :: [a] -> [a]
 everyOther (a:b:c) = b : everyOther c
 everyOther _       = []
+
+keywords :: [String]
+keywords = [
+    "--",      "{-",      "-}",      "::",      "->",      "<-",
+    "..",      "case",    "of",      "if",      "then",    "else",
+    "data",    "let",     "in",      "where",   "main"
+    ]

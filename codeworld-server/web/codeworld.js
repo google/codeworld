@@ -30,10 +30,21 @@ function init() {
     styleActiveLine: true,
     autoCloseBrackets: true,
     showTrailingSpace: true,
-    rulers: [{column: 80, color: "#bbb", lineStyle: "dashed"}]
+    rulers: [{column: 80, color: "#bbb", lineStyle: "dashed"}],
+    extraKeys: {"Ctrl-Space": "autocomplete"}
   });
 
   CodeMirror.commands.save = function(cm) { saveProject(); }
+
+  sendHttp('GET', 'autocomplete.txt', null, function(request) {
+    if (request.status != 200) {
+      console.log('Failed to load autocomplete word list.');
+      return;
+    }
+
+    CodeMirror.registerHelper('hintWords', 'haskell',
+                              request.responseText.split('\n'));
+  });
 
   var hash = location.hash.slice(1);
   if (hash.length > 0) {

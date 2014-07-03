@@ -210,6 +210,8 @@ commonGHCJSArgs = [
     "-fno-warn-deprecated-flags",
     "-fno-warn-amp",
     "-fno-warn-missing-signatures",
+    "-fno-warn-incomplete-patterns",
+    "-fno-warn-unused-matches",
     "-hide-package", "base",
     "-package", "codeworld-base",
     "-XRebindableSyntax",
@@ -218,8 +220,23 @@ commonGHCJSArgs = [
     "-XNoTemplateHaskell",
     "-XNoUndecidableInstances",
     "-XNoQuasiQuotes",
-    "-XExplicitForAll",
-    "-XJavaScriptFFI"
+    "-XForeignFunctionInterface",
+    "-XJavaScriptFFI",
+    "-XParallelListComp",
+    "-XDisambiguateRecordFields",
+    "-XNoMonomorphismRestriction",
+    "-XScopedTypeVariables",
+    "-XBangPatterns",
+    "-XPatternGuards",
+    "-XViewPatterns",
+    "-XRankNTypes",
+    "-XExistentialQuantification",
+    "-XKindSignatures",
+    "-XEmptyDataDecls",
+    "-XLiberalTypeSynonyms",
+    "-XTypeOperators",
+    "-XRecordWildCards",
+    "-XNamedFieldPuns"
     ]
 
 generateBaseBundle :: IO ()

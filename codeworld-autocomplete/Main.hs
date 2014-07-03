@@ -42,6 +42,11 @@ blacklist = [
 
 whitelist :: [String]
 whitelist = [
+    "KeyPress",
+    "KeyRelease",
+    "MousePress",
+    "MouseRelease",
+    "MouseMovement",
     "main"
     ]
 

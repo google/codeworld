@@ -162,7 +162,7 @@ coordinatePlane = axes & numbers & guidelines
         numbers = xnumbers & ynumbers
         xnumbers = pictures [
             translate(scale(text(show(k)), 0.5, 0.5), k - 0.15, 0.15)
-            | k <- [-9, -8 .. 9], k /= 0 ]
+            | k <- [-9, -8 .. 9], k P./= 0 ]
         ynumbers = pictures [
             translate(scale(text(show(k)), 0.5, 0.5), 0.15, k - 0.15)
-            | k <- [-9, -8 .. 9], k /= 0 ]
+            | k <- [-9, -8 .. 9], k P./= 0 ]

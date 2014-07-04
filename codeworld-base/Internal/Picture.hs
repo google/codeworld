@@ -143,3 +143,26 @@ pictures = Pictures
 infixr 0 &
 a & Pictures bs = Pictures (a:bs)
 a & b           = Pictures [a, b]
+
+-- | A coordinate plane.  Adding this to your pictures can help you measure distances
+-- more accurately.
+--
+-- Example:
+--
+--    main = pictureOf(myPicture & coordinatePlane)
+--    myPicture = ...
+coordinatePlane :: Picture
+coordinatePlane = axes & numbers & guidelines
+  where xline(y) = line[(-20, y), (20, y)]
+        xaxis = color(xline(0), gray(0.25))
+        axes = xaxis & rotate(xaxis, 90)
+        xguidelines = pictures[
+            color(xline(k), gray(0.75)) | k <- [-10, -9 .. 10] ]
+        guidelines = xguidelines & rotate(xguidelines, 90)
+        numbers = xnumbers & ynumbers
+        xnumbers = pictures [
+            translate(scale(text(show(k)), 0.5, 0.5), k - 0.15, 0.15)
+            | k <- [-9, -8 .. 9], k /= 0 ]
+        ynumbers = pictures [
+            translate(scale(text(show(k)), 0.5, 0.5), 0.15, k - 0.15)
+            | k <- [-9, -8 .. 9], k /= 0 ]

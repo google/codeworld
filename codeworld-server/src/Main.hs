@@ -93,9 +93,12 @@ main = do
     generateBaseBundle
     quickHttpServe $ (processBody >> site) <|> site
 
+codeworldUploadPolicy :: UploadPolicy
+codeworldUploadPolicy = setMaximumFormInputSize (2^(22 :: Int)) defaultUploadPolicy
+
 processBody :: Snap ()
 processBody = do
-    handleMultipart defaultUploadPolicy (const $ return ())
+    handleMultipart codeworldUploadPolicy (const $ return ())
     return ()
 
 site :: Snap ()

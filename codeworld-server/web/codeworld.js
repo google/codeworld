@@ -190,7 +190,7 @@ function init() {
     'chartreuse':      'builtin',
     'circle':          'builtin',
     'color':           'builtin',
-    'coordinatePlane', 'builtin',
+    'coordinatePlane': 'builtin',
     'cyan':            'builtin',
     'dark':            'builtin',
     'empty':           'builtin',

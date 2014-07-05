@@ -87,6 +87,7 @@ module Prelude (
     rotate,
     pictures,
     (&),
+    coordinatePlane,
 
     -- * Events
     Event(..),

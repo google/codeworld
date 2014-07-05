@@ -153,7 +153,7 @@ a & b           = Pictures [a, b]
 --    myPicture = ...
 coordinatePlane :: Picture
 coordinatePlane = axes & numbers & guidelines
-  where xline(y) = line[(-20, y), (20, y)]
+  where xline(y) = line[(-10, y), (10, y)]
         xaxis = color(xline(0), gray(0.25))
         axes = xaxis & rotate(xaxis, 90)
         xguidelines = pictures[

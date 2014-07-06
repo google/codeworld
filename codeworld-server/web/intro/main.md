@@ -109,6 +109,22 @@ You can also mix colors in the same picture:
     leaves = sector(0, 180, 4)
     trunk  = solidRectangle(1, 4)
 
+You can also modify the colors!  Here are a few ways to do that:
+
+* `dark(red)`, means `red`, except a little darker.
+* `light(green)` means `green`, but a little lighter.  So `light` is the opposite
+  of `dark`.
+* `translucent(blue)` means blue, but see-through.  The word "translucent" means
+  partially transparent or see-through.
+
+Let's try an example program:
+
+    main    = pictureOf(overlap)
+    overlap = color(square,  translucent(blue))
+            & color(disk, translucent(green))
+    square  = solidRectangle(5, 5)
+    disk    = solidCircle(3)
+
 ### Transformations ###
 
 So far, all the pictures we've drawn have been at the middle of the screen.  That's
@@ -202,6 +218,21 @@ Can you tell the difference?  Expressions describe something, but don't
 give it a name.  But every definition has an expression inside, after
 the equal sign.  So expressions are pretty important.
 
+### Functions ###
+
+One special kind of expression that you use a lot in CodeWorld is
+applying a *function*.  A function is like a variable that still needs
+more information.  You've already used a lot of functions:
+
+* `rectangle` is a function.  It needs a width and a height.
+* `light` is a function.  It needs a color to make lighter.
+* `pictureOf` is a function.  It needs a picture.
+* `scale` is a function.  It needs a picture and two scaling factors.
+
+As you've already seen, to apply a function, you can write the function
+name, then the extra information it needs (these are called *parameters*)
+in parentheses after it, with commas between them.
+
 ### Nesting ###
 
 Remember how we used `rotate`?  Here's a quick reminder:
@@ -228,32 +259,367 @@ Careful, though!  You can avoid avoid naming simple things, but if you
 nest too much, you get parentheses inside of parentheses inside of
 parentheses,  and pretty soon it's hard to tell what's going on!
 
+You can also nest other things besides pictures.  Remember that `dark`,
+`light`, and `transparent` were functions that modify colors.  But since
+`dark(red)` and `light(green)` are colors themselves, so you can use the
+same functions on them!  Check out some of these colors:
+
+* `dark(dark(green))`
+* `translucent(light(blue))`
+
 ### Numbers ###
 
-Parentheses can be used for more than just pictures.  You can let the
-computer work out math for you on numbers, too.  When you write math
-expressions, you can use `+` and `-` the way you normally would.  To
-multiply, use `*`.  To divide, use `/`.
+Nesting can be used for numbers, too.  You can let the computer work out
+math for you on numbers, too.  When you write math expressions, you can
+use `+` and `-` the way you normally would.  To multiply, use `*`.  To
+divide, use `/`.
 
 Check out this program:
 
     main   = pictureOf(design)
-    design =   rotate(rectangle(4, 0.2), 1 * 180 / 3)
-             & rotate(rectangle(4, 0.2), 2 * 180 / 3)
-             & rotate(rectangle(4, 0.2), 3 * 180 / 3)
+    design =   rotate(rectangle(4, 0.2), 1 * 180 / 5)
+             & rotate(rectangle(4, 0.2), 2 * 180 / 5)
+             & rotate(rectangle(4, 0.2), 3 * 180 / 5)
+             & rotate(rectangle(4, 0.2), 4 * 180 / 5)
+             & rotate(rectangle(4, 0.2), 5 * 180 / 5)
 
-We could have written `0`, `60`, and `120` (the answers to those math
-problems).  But this way, it's very clear what we are doing: dividing
-180 degrees into thirds, and then rotating a rectangle by each amount.
+We could have written `36`, '72', '108', '144', and `180` (the answers to
+those math problems).  But this way, it's very clear what we are doing:
+dividing 180 degrees into fifths, and then rotating a rectangle by each
+amount.  And we don't have to worry about getting one of the answers
+wrong!
+
+Just like in math, you can use parentheses to group expressions, so
+`3 * (6 - 2)` is `3 * 4`, which is `12`.
+
+### Lists ###
+
+As we explore new kinds of things, we've already seen pictures and numbers.
+Now let's look at lists.  A list is, well, just a list of things.  To write
+a list, use square brackets around the whole list, and commas between the
+things in it.  For example:
+
+* `[ 1, 2, 3, 4 ]` is a list of numbers.
+* `[ circle(2), rectangle(3,5), blank ]` is a list of pictures.
+
+You can use the function called `pictures` to combine a list of pictures
+together into one picture.  For example:
+
+    main = pictureOf(allThePictures)
+    allThePictures = pictures[
+        solidRectangle(4, 0.4),
+        solidCircle(1.2),
+        circle(2)
+        ]
+
+#### List comprehensions ####
+
+Lists are a little bit interesting when you use them with `pictures`, but
+they get a lot *more* interesting if you write list *comprehensions*.  A
+list comprehension is a way to write a list of things by starting with a
+simpler list, and copying something once for each thing in it.  So if you
+have a list of numbers, you can turn it into a list of *circles*, each
+with a different radius.  That looks like this:
+
+    main = pictureOf(target)
+    target = pictures[ circle(r) | r <- [1, 2, 3, 4, 5] ]
+
+The list comprehension was `[ circle(r) | r <- [1, 2, 3, 4, 5] ]`, and it
+has a few parts:
+
+* The brackets around the whole thing tell you that it's a list. The vertical
+  line in the middle separates the left part from the right part.
+* On the left side of the vertical line is an expression, that describes the
+  elements of the *resulting* list.  Here, each element of the resulting list
+  is a circle, but with a different radius.  Notice that we use a *variable*
+  called "r" that hasn't been defined yet!
+* On the right side of the vertical line, you say what list to start with,
+  and name its members.  That's where the variable *r* came from!  You can
+  use this new variable on the left side.
+
+So when you look at that list comprehension, it says to start with the list
+`[ 1, 2, 3, 4, 5 ]`, and for every number in it, call that number `r`, and
+put `circle(r)` in the resulting list.  The resulting list is `[ circle(1),
+circle(2), circle(3), circle(4), circle(5) ]`.  But you didn't have to
+type that over and over.
+
+#### List ranges ####
+
+With list comprehensions, it's now useful to have lists of numbers, because
+you can turn them into lists of pictures.  But writing `[1, 2, 3, 4, 5]` was
+still pretty long.  And imagine if you wanted a hundred things, instead of 5!
+
+Luckily, there are easier ways to do it.  if you write `[1 .. 5]`, that's
+shorthand for `[1, 2, 3, 4, 5]`.  In the same way, `[3 .. 10]` is shorthand
+for `[ 3, 4, 5, 6, 7, 8, 9, 10 ]`.  Much easier!
+
+Even better, if you want to count by 2s or 3s or 10s, you can!.  You just
+have to give the first two numbers, then use `..` to continue from there.
+
+Here's another example:
+
+    main = pictureOf(star)
+    star = pictures[ rotate(rectangle(10, 1/10), angle)
+                     | angle <- [10, 20 .. 360] ]
+
+So we start with a list of number counting by 10s from 10 to 360.  Then we
+call each of those numbers the variable "angle", and get a list of pictures
+that rotate something by each of those angles.  Finally, we combine all of
+this pictures using the `pictures` function, and draw the result.
+
+#### Advanced list comprehensions ####
+
+There are a few other things you can do with list comprehensions.  You
+might find them useful.
+
+First, you can filter out certain members of the list you start with.
+Suppose you want to draw those circles, like in the `target` example, but
+you don't want to draw the middle one.  One way to say that is:
+
+    main = pictureOf(target)
+    target = pictures[ circle(r) | r <- [1 .. 5], r /= 3 ]
+
+Notice that `/=` means "not equal to".  So this says to make a picture out
+of circles built from each radius from 1 to 5, *except* for 3.
+
+Second, you can include base your list comprehension on several lists.
+This will draw a grid of circles:
+
+    main = pictureOf(grid)
+    grid = pictures[ translate(circle(1/2), x, y)
+                     | x <- [-9 .. 9], y <- [-9 .. 9] ]
+
+Because there are two base lists separated by commas, this will draw a
+circle for *every* *possible* *combination* of x and y from those lists.
+
+Another way to use a list comprehension with two lists is to use two
+vertical lines.  This is called a *parallel* list comprehension.  Instead
+of including a result for all possible combinations, this will only match
+the first element of each list, then the second from each list, and so on.
+Here's an example, using a list of number, and a list of colors!
+
+    main    = pictureOf(circles)
+    circles = pictures[ color(circle(r), c) | r <- sizes
+                                            | c <- colors ]
+    sizes   = [ 1, 2, 3, 4, 5 ]
+    colors  = [ red, green, blue, yellow, purple ]
+
+If you used a comma to separate the base lists, this would draw red,
+green, blue, yellow, *and* purple circles at *each* of the sizes, and that
+isn't what you want.  By using a parallel list comprehension, you make
+sure only the smallest circle is red, then the next smallest is blue, and
+so on.
+
+### Points, Lines and Polygons ###
+
+To draw more precise shapes, we can use points on a "coordinate plane".  You
+can see a coordinate plane right now, just by running this program:
+
+    main = pictureOf(coordinatePlane)
+
+The coordinate plane is made up of two directions: *horizontal* (also
+called x) and *vertical* (also called y).  The very center of the screen
+is at position zero in both x and y, and can be written as `(0, 0)`.  In
+general, points can be described by listing two numbers:
+
+* Which number they are above or below on the horizontal line.  This is
+  called the *x* *coordinate*.
+* Which number they are beside on the vertical line.  This is called the
+  *y* *coordinate*.
+
+Since zero is in the middle, one direction uses *positive* numbers, and
+the other uses *negative* numbers.  Once you have these numbers, you can
+write a point by listing them in parentheses with a comma: the x coordinate
+*always* comes first, and the y coordinate *always* comes second.
+
+Run the program above, and then try finding these points on the coordinate
+plane:
+
+* `(5, 5)`: This is in the top right part of the coordinate plane.
+* `(5, 0)`: This is on the middle right.
+* `(-5, 5)`: This one is on the top left.  Top because the y coordinate
+  (the second number) is positive, and left because the x coordinate (the
+  first number) is negative.
+
+Got it?  Great!  Now you can draw things like lines by giving a list of
+points in the coordinate plane to a function called `line`:
+
+    main = pictureOf(mystery)
+    mystery = line[(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)]
+
+Can you figure out the mystery picture before you run the program?
+
+If you prefer to fill in your shape, you can use `polygon` instead of
+`line` and you'll get a solid version:
+
+    main = pictureOf(mystery)
+    mystery = polygon[(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)]
+
+#### Using the coordinate plane to draw ####
+
+A neat trick is to use the coordinate plane as you write your program.  Say
+you want to draw a butterfly.  You might start by writing:
+
+    main = pictureOf(butterfly & coordinatePlane)
+    butterfly = blank
+
+Now run your program, and you have a coordinate plane to measure what
+points to use in your shapes.  When you're done, just remove the
+`& coordinatePlane` to get rid of the guidelines.
+
+Types
+-----
+
+We've seen many different kinds of things so far that show up in your
+programs: pictures, numbers, text, points, colors, lists of all of
+these... maybe you're wondering how to keep them all straight!  CodeWorld
+calls these kinds of things *types*.  You'll mostly see types in two
+places:
+
+* When you make a mistake, you'll often see types mentioned in *error*
+  *messages* that tell you about the problem.
+* If you want to, you can say things about types in your program.
+  If you do, the computer then knows more about what you meant, and
+  can sometimes explain the problems in your program better.
+
+### Simple Types ###
+
+Hear are some of the types that you've used in your programs:
+
+* `Program` is the type of the variable `main` that you define in all
+  programs.
+* `Picture` is the type for pictures.
+* `Number` is the type for numbers.
+* `Color` is the type for colors.
+
+Notice that while variables start with a lower-case letter, types are
+capitalized.
+
+To declare types in your programs, you can use `::`, like this:
+
+    main :: Program
+    main = pictureOf(wheel)
+
+    wheel :: Picture
+    wheel = solidCircle(size)
+
+    size :: Number
+    size = 4
+
+You don't ever have to say what type things are.  The computer can
+always figure that out on its own.  But if you do say what your types
+are, the computer can often be a lot more helpful in explaining where
+your program is wrong.
+
+### List Types ###
+
+What about lists?  Would you get their type is `List`?  Not quite!  There
+are many types of lists: lists of numbers, lists of pictures, lists of
+colors, and so on.  To write the type of a list, we just write the type
+of the things *inside* the list, and surround it with square brackets.
+
+    main = pictureOf(circles)
+    circles = pictures[ circle(r) | r <- sizes ]
+
+    sizes :: [Number]
+    sizes = [ 1, 2, 3, 4 ]
+
+Notice that I can choose to say the type for `sizes`, even if I don't
+give types for anything else.  Again, you can say as little or as much
+as you want about types!
+
+### Points and Tuples ###
+
+What about a point, like the ones we used to make lines and polygons?
+It actually works just fine to say the type is `Point`:
+
+    main = pictureOf(line[start, end])
+
+    start :: Point
+    start = (0, 0)
+
+    end :: Point
+    end = (2, -4)
+
+When the compiler talks about points, though, it sometimes calls
+their type something different: `(Number, Number)`.  This is just a
+way to say what we already know: a point is an ordered pair, with each
+part being a number!  It turns out `Point` is just shorthand for
+`(Number, Number)`, so they both mean the same thing.
+
+Types like that, with parentheses and commas, are sometimes called
+*tuples*.  So a `Point` is a specific kind of tuple.  Other tuples
+might use different types, different numbers of things, and even
+different types for the different things inside!
+
+* `(Number, Color)` is a tuple.  Some possible values are the pairs
+  `(4, red)` or `(-3, dark(green))`.
+* `(Number, Text, Number, Color)` is a tuple with four things in it.
+  A possible value is `(3, "train", 10, blue)`.
+
+Why would you use these?  Well, they can be useful for list
+comprehensions!
+
+    main = pictureOf(boxes)
+
+    boxDetails :: [(Number, Number, Color)]
+    boxDetails = [
+        (-8, 1, blue),   (-6, 1/2, red), (-1, 3, purple),
+        (3, 1/8, brown), (4, 1/2, pink), (8, 2, yellow)
+        ]
+
+    boxes = pictures[ translate(color(rectangle(s,s), c), x, 0)
+                      | (x, s, c) <- boxDetails ]
+
+See?  You can describe the important characteristics of your picture
+in a concise list, and then give the details of how to build the
+complete picture later.
+
+### Functions ###
+
+TODO: Write this section.
+
+Defining Functions
+------------------
+
+TODO: Write this section.
+
+### If: Choosing what to do ###
+
+TODO: Write this section.
+
+### Multiple parameters ###
+
+TODO: Write this section.
+
+### Pattern matching ###
+
+TODO: Write this section.
+
+### Recursion ###
+
+TODO: Write this section.
 
 Animations
 ==========
+
+TODO: Write this section.
 
     main     = animationOf(design)
     design t = rotate(slot, 60 * t) & middle & outside
     slot     = solidRectangle(4, 0.4)
     middle   = solidCircle(1.2)
     outside  = circle(2)
+
+Simulations
+===========
+
+TODO: Write this section.
+
+Interactions
+============
+
+TODO: Write this section.
 
 More Information
 ================

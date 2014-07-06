@@ -4,17 +4,13 @@
     <title>CodeWorld</title>
     <style type="text/css">
       * { margin: 0; overflow: hidden }
+      #screen { cursor: default }
     </style>
   </head>
   <body style="text-align: center">
     <canvas id="screen" width="500" height="500"></canvas>
     <div id="linker" style="align: center"></div>
   </body>
-  <script type="text/javascript" src="deep_eq.js"></script>
-  <script type="text/javascript" src="user/base.jsexe/lib.base.js"></script>
-  <script type="text/javascript" src="user/base.jsexe/rts.js"></script>
-  <script type="text/javascript" src="user/base.jsexe/lib1.base.js"></script>
-  <script type="text/javascript" src="user/base.jsexe/out.base.js"></script>
   <script type="text/javascript">
     function reportRuntimeError(str) {
       var message = window.parent.addToMessage('\n\n' + str);
@@ -22,7 +18,15 @@
       var message = window.parent.document.getElementById('message');
       message.classList.add('error');
     }
+  </script>
 
+  <script type="text/javascript" src="deep_eq.js"></script>
+  <script type="text/javascript" src="user/base.jsexe/lib.base.js"></script>
+  <script type="text/javascript" src="user/base.jsexe/rts.js"></script>
+  <script type="text/javascript" src="user/base.jsexe/lib1.base.js"></script>
+  <script type="text/javascript" src="user/base.jsexe/out.base.js"></script>
+
+  <script type="text/javascript">
     var params = location.search.slice(1).split('&');
     for (var i = 0; i < params.length; i++) {
       var parts = params[i].split('=');

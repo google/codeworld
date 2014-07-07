@@ -58,8 +58,6 @@ module Internal.Num (
     odd,
     gcd,
     lcm,
-    succ,
-    pred,
     sum,
     product,
     maximum,
@@ -127,8 +125,8 @@ instance P.Fractional Number where
     (/) = (/)
 
 instance P.Enum Number where
-    succ = succ
-    pred = pred
+    succ = fromDouble . P.succ . toDouble
+    pred = fromDouble . P.pred . toDouble
     toEnum = fromDouble . P.toEnum
     fromEnum = P.fromEnum . toDouble
     enumFrom = map fromDouble . P.enumFrom . toDouble

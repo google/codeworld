@@ -76,6 +76,11 @@ module Internal.Num (
 import qualified "base" Prelude as P
 import "base" Prelude (Bool(..), (.), (==), (&&), map, not, otherwise)
 
+{-|The type for numbers.
+
+  Numbers can be positive or negative, whole or fractional.  For example, 5,
+  3.2, and -10 are all values of the type Number.
+-}
 newtype Number = Number P.Double
 
 #ifndef __HADDOCK__
@@ -136,6 +141,11 @@ instance P.Ord Number where
 
 #endif  // __HADDOCK__
 
+{-| Tells whether a Number is an integer or not.
+
+  An integer is a whole number, such as 5, 0, or -10.  Numbers with non-zero
+  decimals, like 5.3, are not integers.
+-}
 isInteger :: Number -> Bool
 isInteger (Number x) = x == P.fromIntegral (P.truncate x)
 
@@ -144,122 +154,241 @@ infixl 7  *, /
 infixl 6  +, -
 infix  4  <, <=, >=, >
 
+{-| Adds two numbers. -}
 (+) :: Number -> Number -> Number
 Number a + Number b = fromDouble (a P.+ b)
 
+{-| Subtracts two numbers. -}
 (-) :: Number -> Number -> Number
 Number a - Number b = fromDouble (a P.- b)
 
+{-| Multiplies two numbers. -}
 (*) :: Number -> Number -> Number
 Number a * Number b = fromDouble (a P.* b)
 
+{-| Divides two numbers.  The second number should not be zero. -}
 (/) :: Number -> Number -> Number
 Number a / Number b = fromDouble (a P./ b)
 
+{-| Raises a number to a power. -}
 (^) :: Number -> Number -> Number
 Number a ^ Number b = fromDouble (a P.** b)
 
+{-| Tells whether one number is less than the other. -}
 (<) :: Number -> Number -> Bool
 Number a < Number b = a P.< b
 
+{-| Tells whether one number is less than or equal to the other. -}
 (<=) :: Number -> Number -> Bool
 Number a <= Number b = a P.<= b
 
+{-| Tells whether one number is greater than the other. -}
 (>) :: Number -> Number -> Bool
 Number a > Number b = a P.> b
 
+{-| Tells whether one number is greater than or equal to the other. -}
 (>=) :: Number -> Number -> Bool
 Number a >= Number b = a P.>= b
 
+{-| Gives the larger of two numbers. -}
 max :: (Number, Number) -> Number
 max (Number a, Number b) = fromDouble (P.max a b)
 
+{-| Gives the smaller of two numbers. -}
 min :: (Number, Number) -> Number
 min (Number a, Number b) = fromDouble (P.min a b)
 
+{-| Gives the opposite (that is, the negative) of a number. -}
 negate :: Number -> Number
 negate = fromDouble . P.negate . toDouble
 
+{-| Gives the absolute value of a number.
+
+  If the number if positive or zero, the absolute value is the same as the
+  number.  If the number is negative, the absolute value is the opposite of
+  the number.
+-}
 abs :: Number -> Number
 abs = fromDouble . P.abs . toDouble
 
+{-| Gives the sign of a number.
+
+  If the number is negative, the signum is -1.  If it's positive, the signum
+  is 1.  If the number is 0, the signum is 0.  In general, a number is equal
+  to its absolute value ('abs') times its sign ('signum').
+-}
 signum :: Number -> Number
 signum = fromDouble . P.signum . toDouble
 
+{-| Gives the number without its fractional part.
+
+  For example, truncate(4.2) is 4, while truncate(-4.7) is -4.
+-}
 truncate :: Number -> Number
 truncate = fromInteger . P.truncate . toDouble
 
+{-| Gives the number rounded to the nearest integer.
+
+  For example, round(4.2) is 4, while round(4.7) is 5.
+-}
 round :: Number -> Number
 round = fromInteger . P.round . toDouble
 
+{-| Gives the smallest integer that is greater than or equal to a number.
+
+  For example, ceiling(4) is 4, while ceiling(4.1) is 5.  With negative
+  numbers, ceiling(-3.5) is -3, since -3 is greater than -3.5.
+-}
 ceiling :: Number -> Number
 ceiling = fromInteger . P.ceiling . toDouble
 
+{-| Gives the largest integer that is less than or equal to a number.
+
+  For example, floor(4) is 4, while floor(3.9) is 3.  With negative
+  numbers, floor(-3.5) is -4, since -4 is less than -3.5.
+-}
 floor :: Number -> Number
 floor = fromInteger . P.floor . toDouble
 
+{-| Gives the integer part of the result when dividing two numbers.
+
+  For example, 3/2 is 1.5, but quotient(3, 2) is 1, which is the integer
+  part.
+-}
 quotient :: (Number, Number) -> Number
 quotient (a, b) = truncate (a / b)
 
+{-| Gives the remainder when dividing two numbers.
+
+  For example, remainder(3,2) is 1, which is the remainder when dividing
+  3 by 2.
+-}
 remainder :: (Number, Number) -> Number
 remainder (a, b) = a - b * truncate (a / b)
 
+{-| Gives the repicrocal of a number.
+
+  For example, reciprocal(5) is 1/5 (also written as 0.2).
+-}
 reciprocal :: Number -> Number
 reciprocal = fromDouble . P.recip . toDouble
 
+{-| The constant pi, which is equal to the ration between the circumference
+    and diameter of a circle.
+
+  pi is approximately 3.14159.
+-}
 pi :: Number
 pi = fromDouble P.pi
 
+{-| Gives the exponential of a number.  This is equal to the constant e,
+    raised to the power of the number.
+
+  The exp function increases faster and faster very quickly.  For example,
+  if t is the current time in seconds, exp(t) will reach a million in about
+  14 seconds.  It will reach a billion in around 21 seconds.
+-}
 exp :: Number -> Number
 exp = fromDouble . P.exp . toDouble
 
+{-| Gives the square root of a number.  This is the positive number that, when
+    multiplied by itself, gives the original number back.
+
+  The sqrt always increases, but slows down.  For example, if t is the
+  current time, sqrt(t) will reach 5 in 25 seconds.  But it will take 100
+  seconds to reach 10, and 225 seconds (almost 4 minutes) to reach 15.
+-}
 sqrt :: Number -> Number
 sqrt = fromDouble . P.sqrt . toDouble
 
+{-| Gives the natural log of a number.  This is the opposite of the exp
+    function.
+
+  Like sqrt, the log function always increases, but slows down.  However,
+  it slows down much sooner than the sqrt function.  If t is the current time
+  in seconds, it takes more than 2 minutes for log(t) to reach 5, and more
+  than 6 hours to reach 10!
+-}
 log :: Number -> Number
 log = fromDouble . P.log . toDouble
 
+{-| Gives the logarithm of the first number, using the base of the second
+    number.
+-}
 logBase :: (Number, Number) -> Number
-logBase (Number b, Number x) = fromDouble (P.logBase b x)
+logBase (Number x, Number b) = fromDouble (P.logBase b x)
 
+{-| Converts an angle from degrees to radians. -}
 toRadians :: Number -> Number
 toRadians d = d / 180 * pi
 
+{-| Converts an angle from radians to degrees. -}
 fromRadians :: Number -> Number
 fromRadians r = r / pi * 180
 
+{-| Gives the sine of an angle, where the angle is measured in degrees. -}
 sin :: Number -> Number
 sin = fromDouble . P.sin  . toDouble . toRadians
 
+{-| Gives the tangent of an angle, where the angle is measured in degrees.
+
+  This is the slope of a line at that angle from horizontal.
+-}
 tan :: Number -> Number
 tan = fromDouble . P.tan . toDouble . toRadians
 
+{-| Gives the cosine of an angle, where the angle is measured in degrees. -}
 cos :: Number -> Number
 cos = fromDouble . P.cos . toDouble . toRadians
 
+{-| Gives the inverse sine of a value, in degrees.
+
+  This is the unique angle between -90 and 90 that has the input as its sine.
+-}
 asin :: Number -> Number
 asin = fromRadians . fromDouble . P.asin . toDouble
 
+{-| Gives the inverse tangent of a value, in degrees.
+
+  This is the unique angle between -90 and 90 that has the input as its tangent.
+-}
 atan :: Number -> Number
 atan = fromRadians . fromDouble . P.atan . toDouble
 
+{-| Gives the angle between the positive x axis and a given point, in degrees. -}
 atan2 :: (Number, Number) -> Number
 atan2 (Number a, Number b) = fromRadians (fromDouble (P.atan2 a b))
 
+{-| Gives the inverse cosine of a value, in degrees.
+
+  This is the unique angle between 0 and 180 that has the input as its cosine.
+-}
 acos :: Number -> Number
 acos = fromRadians . fromDouble . P.acos . toDouble
 
+{-| Separates a number into its whole and fractional parts.
+
+  For example, properFraction(1.2) is (1, 0.2).
+-}
 properFraction :: Number -> (Number, Number)
 properFraction (Number x) = (fromInteger w, fromDouble p)
     where (w,p) = P.properFraction x
 
+{-| Tells if a number is even. -}
 even :: Number -> Bool
 even n | isInteger n = P.even (toInt n)
        | otherwise   = False
 
+{-| Tells if a number is odd. -}
 odd :: Number -> Bool
 odd n | isInteger n = P.odd (toInt n)
       | otherwise   = False
+
+{-| Gives the greatest common divisor of two numbers.
+
+  This is the largest number that divides each of the two parameters.
+  Both parameters must be integers.
+-}
 
 gcd :: (Number, Number) -> Number
 gcd (a, b)
@@ -268,6 +397,11 @@ gcd (a, b)
     where ia = P.truncate (toDouble a)
           ib = P.truncate (toDouble b)
 
+{-| Gives the least common multiple of two numbers.
+
+  This is the smallest number that is divisible by both of the two
+  parameters.  Both parameters must be integers.
+-}
 lcm :: (Number, Number) -> Number
 lcm (a, b)
     | isInteger a && isInteger b = fromInteger (P.lcm ia ib)
@@ -275,20 +409,18 @@ lcm (a, b)
     where ia = P.truncate (toDouble a)
           ib = P.truncate (toDouble b)
 
-succ :: Number -> Number
-succ x = x + 1
-
-pred :: Number -> Number
-pred x = x - 1
-
+{-| Gives the sum of a list of numbers. -}
 sum :: [Number] -> Number
 sum = fromDouble . P.sum . P.map toDouble
 
+{-| Gives the product of a list of numbers. -}
 product :: [Number] -> Number
 product = fromDouble . P.product . P.map toDouble
 
+{-| Gives the largest number from a list. -}
 maximum :: [Number] -> Number
 maximum = fromDouble . P.maximum . P.map toDouble
 
+{-| Gives the smallest number from a list. -}
 minimum :: [Number] -> Number
 minimum = fromDouble . P.minimum . P.map toDouble

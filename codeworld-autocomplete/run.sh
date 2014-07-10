@@ -1,4 +1,6 @@
 #!/bin/sh
 cabal build
-ghc -hide-package base -package codeworld-base -e ":browse Prelude" > symbols.txt
-dist/build/codeworld-autocomplete/codeworld-autocomplete symbols.txt > ../codeworld-server/web/autocomplete.txt
+(cd ../codeworld-base && cabal haddock --hoogle)
+SYMBOLS=../codeworld-base/dist/doc/html/codeworld-base/codeworld-base.txt
+OUTPUT=../codeworld-server/web/autocomplete.txt
+dist/build/codeworld-autocomplete/codeworld-autocomplete $SYMBOLS > $OUTPUT

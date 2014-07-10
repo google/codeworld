@@ -41,14 +41,7 @@ blacklist = [
     ]
 
 whitelist :: [String]
-whitelist = [
-    "KeyPress",
-    "KeyRelease",
-    "MousePress",
-    "MouseRelease",
-    "MouseMovement",
-    "main"
-    ]
+whitelist = ["main"]
 
 mergeContinued :: [String] -> [String]
 mergeContinued []      = []

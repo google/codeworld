@@ -224,10 +224,13 @@ One special kind of expression that you use a lot in CodeWorld is
 applying a *function*.  A function is like a variable that still needs
 more information.  You've already used a lot of functions:
 
-* `rectangle` is a function.  It needs a width and a height.
-* `light` is a function.  It needs a color to make lighter.
-* `pictureOf` is a function.  It needs a picture.
-* `scale` is a function.  It needs a picture and two scaling factors.
+* `rectangle` is a function.  It needs a width and a height, and makes a
+  picture.
+* `light` is a function.  It needs a color, and makes another color that's
+  about the same, but lighter.
+* `pictureOf` is a function.  It needs a picture, and makes a program.
+* `scale` is a function.  It needs a picture and two scaling factors, and
+  makes a modified picture.
 
 As you've already seen, to apply a function, you can write the function
 name, then the extra information it needs (these are called *parameters*)
@@ -577,7 +580,23 @@ complete picture later.
 
 ### Functions ###
 
-TODO: Write this section.
+There are also types for functions.  Remember those?  Here are some
+examples:
+
+* `light` is a function that needs a color and makes another color.  It
+  has the type `Color -> Color`.
+* `circle` is a function that needs a number (the radius), and makes a
+  picture (a circle with that radius).  It has the type
+  `Number -> Picture`.
+* `rectangle` is a function that needs two numbers, and makes a picture.
+  It has the type `(Number, Number) -> Picture`.
+* `translate` is a function that needs a picture and two numbers (the x
+  and y distances), and makes a new picture.  It has the type
+  `(Picture, Number, Number) -> Picture`.
+
+In general, function types have arrows (`->`).  On the left of the arrow
+is the type of things that the function needs.  On the right side of the
+arrow is the type of things that the function makes.
 
 Defining Functions
 ------------------

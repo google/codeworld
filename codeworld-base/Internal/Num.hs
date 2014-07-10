@@ -73,6 +73,7 @@ module Internal.Num (
 
 import qualified "base" Prelude as P
 import "base" Prelude (Bool(..), (.), (==), (&&), map, not, otherwise)
+import Numeric
 
 {-|The type for numbers.
 
@@ -106,7 +107,7 @@ toInt n | isInteger n = P.truncate (toDouble n)
 
 instance P.Show Number where
     showsPrec p x | isInteger x = P.showsPrec p (P.truncate (toDouble x))
-                  | otherwise   = P.showsPrec p (toDouble x)
+                  | otherwise   = showFFloat P.Nothing (toDouble x)
 
 instance P.Eq Number where
     Number a == Number b = a == b

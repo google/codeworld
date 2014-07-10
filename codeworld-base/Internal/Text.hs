@@ -47,6 +47,7 @@ module Internal.Text (
 import qualified "base" Prelude as P
 import "base" Prelude (Bool, (.))
 import "base" Data.Maybe
+import "base" Numeric
 
 import Data.Text (Text)
 import qualified Data.Text as T

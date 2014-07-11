@@ -34,8 +34,8 @@ then
   sudo yum install -y gcc-c++
   sudo yum install -y openssl-devel
 
-  # Download GHC 7.8.2
-  (cd $DOWNLOADS && wget http://www.haskell.org/ghc/dist/7.8.2/ghc-7.8.2-x86_64-unknown-linux-centos65.tar.bz2)
+  # Choose the right GHC 7.8.2 download
+  GHC_ARCH=x86_64-unknown-linux-centos65
 elif type apt-get > /dev/null
 then
   # Update and install basic dependencies
@@ -61,8 +61,8 @@ then
   sudo apt-get install -y gcc
   sudo apt-get install -y openssl
 
-  # Download GHC 7.8.2
-  (cd $DOWNLOADS && wget http://www.haskell.org/ghc/dist/7.8.2/ghc-7.8.2-x86_64-unknown-linux-deb7.tar.bz2)
+  # Choose the right GHC 7.8.2 download
+  GHC_ARCH=x86_64-unknown-linux-deb7
 else
   echo "WARNING: Couldn't find package manager."
   echo "Make sure necessary packages are installed."
@@ -70,8 +70,8 @@ fi
 
 # Install GHC 7.8, since it's required for GHCJS.
 
-(cd $DOWNLOADS && wget http://www.haskell.org/ghc/dist/7.8.2/ghc-7.8.2-x86_64-unknown-linux-centos65.tar.bz2)
-(cd $BUILD && tar -xjf $DOWNLOADS/ghc-7.8.2-x86_64-unknown-linux-centos65.tar.bz2)
+(cd $DOWNLOADS && wget http://www.haskell.org/ghc/dist/7.8.2/ghc-7.8.2-$GHC_ARCH.tar.bz2)
+(cd $BUILD && tar -xjf $DOWNLOADS/ghc-7.8.2-$GHC_ARCH.tar.bz2)
 (cd $BUILD/ghc-7.8.2 && ./configure --prefix=$BUILD)
 (cd $BUILD/ghc-7.8.2 && make install)
 

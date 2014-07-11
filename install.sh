@@ -31,13 +31,13 @@ then
   sudo apt-get update -y
 
   sudo apt-get install -y git
-  sudo apt-get install -y zlib-devel
-  sudo apt-get install -y ncurses-devel
+  sudo apt-get install -y zlib1g-dev
+  sudo apt-get install -y libncurses5-dev
 
   # Needed for GHC 7.8
 
   sudo apt-get install -y gcc
-  sudo apt-get install -y gmp-devel
+  sudo apt-get install -y libgmp-dev
 
   # Needed for ghcjs-boot --dev
 
@@ -46,8 +46,8 @@ then
   sudo apt-get install -y automake
 
   # Needed for nodejs
-  sudo apt-get install -y gcc-c++
-  sudo apt-get install -y openssl-devel
+  sudo apt-get install -y gcc
+  sudo apt-get install -y openssl
 else
   echo "WARNING: Couldn't find package manager."
   echo "Make sure necessary packages are installed."

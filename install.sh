@@ -48,6 +48,7 @@ then
 
   # Needed for GHC 7.8
 
+  sudo apt-get install -y make
   sudo apt-get install -y gcc
   sudo apt-get install -y libgmp-dev
 

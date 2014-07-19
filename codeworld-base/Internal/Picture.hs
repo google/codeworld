@@ -51,6 +51,7 @@ data Picture = Polygon [Point]
              | Scale !Number !Number !Picture
              | Rotate !Number !Picture
              | Pictures [Picture]
+             | Logo
 
 instance P.Show Picture where show _ = "<<Picture>>"
 
@@ -166,3 +167,7 @@ coordinatePlane = axes & numbers & guidelines
         ynumbers = pictures [
             translate(scale(text(show(k)), 0.5, 0.5), 0.15, k - 0.15)
             | k <- [-9, -8 .. 9], k P./= 0 ]
+
+-- | The CodeWorld logo.
+codeWorldLogo :: Picture
+codeWorldLogo = Logo

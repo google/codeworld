@@ -191,6 +191,7 @@ function init() {
     'characters':      'builtin',
     'chartreuse':      'builtin',
     'circle':          'builtin',
+    'codeWorldLogo':   'builtin',
     'color':           'builtin',
     'coordinatePlane': 'builtin',
     'cyan':            'builtin',

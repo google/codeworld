@@ -88,6 +88,7 @@ module Prelude (
     pictures,
     (&),
     coordinatePlane,
+    codeWorldLogo,
 
     -- * Events
     Event(..),

@@ -76,6 +76,12 @@ foreign import javascript unsafe "$1.drawImage($2, $3, $4);"
 foreign import javascript unsafe "window.reportRuntimeError($1);"
     js_reportRuntimeError :: JSString -> IO ()
 
+foreign import javascript unsafe "$1.drawImage(document.getElementById($2), $3, $4, $5, $6);"
+    js_drawCodeWorldLogo :: Canvas.Context -> JSString -> Int -> Int -> Int -> Int -> IO ()
+
+drawCodeWorldLogo :: Canvas.Context -> Int -> Int -> Int -> Int -> IO ()
+drawCodeWorldLogo ctx x y w h = js_drawCodeWorldLogo ctx "cwlogo" x y w h
+
 --------------------------------------------------------------------------------
 -- Draw state.  An affine transformation matrix, plus a Bool indicating whether
 -- a color has been chosen yet.
@@ -150,6 +156,9 @@ drawPicture ctx ds (Arc b e r w) = do
 drawPicture ctx ds (Text txt) = withDS ctx ds $ do
     Canvas.scale 0.05 (-0.05) ctx
     Canvas.fillText txt 0 0 ctx
+drawPicture ctx ds Logo = withDS ctx ds $ do
+    Canvas.scale 1 (-1) ctx
+    drawCodeWorldLogo ctx (-9) (-2) 18 4
 drawPicture ctx ds (Color (RGBA (r, g, b, a)) p)
   | hasColorDS ds = drawPicture ctx ds p
   | otherwise     = do

@@ -129,6 +129,7 @@ followPath _   [] = return ()
 followPath ctx ((sx,sy):ps) = do
     Canvas.moveTo (toDouble sx) (toDouble sy) ctx
     forM_ ps $ \(x,y) -> Canvas.lineTo (toDouble x) (toDouble y) ctx
+    when ((sx, sy) == last ps) $ Canvas.closePath ctx
 
 drawFigure :: Canvas.Context -> DrawState -> Number -> IO () -> IO ()
 drawFigure ctx ds w figure = do

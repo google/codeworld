@@ -148,6 +148,7 @@ compileHandler = do
         compileIfNeeded hashed
     hasTarget <- liftIO $ doesFileExist (targetFile hashed)
     when (not hasTarget) $ modifyResponse $ setResponseCode 500
+    modifyResponse $ setContentType "text/plain"
     writeBS hashed
 
 runHandler :: Snap ()
@@ -159,6 +160,7 @@ runHandler = do
 listExamplesHandler :: Snap ()
 listExamplesHandler = do
     files <- liftIO $ getFilesByExt ".hs" "web/examples"
+    modifyResponse $ setContentType "application/json"
     writeLBS (encode files)
 
 listProjectsHandler :: Snap ()
@@ -169,6 +171,7 @@ listProjectsHandler = do
         let base = "projects"
         files <- getFilesByExt ext base
         mapM (fmap (fromJust . decode) . LB.readFile . (base </>)) files :: IO [Project]
+    modifyResponse $ setContentType "application/json"
     writeLBS (encode (map projectName projects))
 
 getFilesByExt :: FilePath -> FilePath -> IO [FilePath]

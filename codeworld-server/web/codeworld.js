@@ -557,7 +557,7 @@ function addToMessage(msg) {
       .replace(/IO \(\)/g, 'Program')
       .replace(/IO [a-z][a-zA-Z0-9_]*/g, 'Program')
       .replace(/Perhaps you intended to use TemplateHaskell/g, '')
-      .replace(/\ (imported from Prelude\)/g, '');
+      .replace(/ \(imported from Prelude\)/g, '');
 }
 
 function run(hash, msg, error) {
@@ -633,16 +633,16 @@ function withClientId(f) {
   });
 }
 
-function signin() {
-  function callback(result) {
-    discoverProjects();
-    updateVisibility();
-  }
+function signinCallback(result) {
+  discoverProjects();
+  updateVisibility();
+}
 
+function signin() {
   withClientId(function(clientid) {
     if (window.gapi) {
       gapi.auth.signIn({
-        callback: callback,
+        callback: signinCallback,
         clientid: clientid,
         scope: 'profile',
         cookiepolicy: 'single_host_origin',
@@ -656,7 +656,10 @@ function signout() {
 }
 
 function signedIn() {
-  return (window.gapi && window.gapi.auth && gapi.auth.getToken());
+  return (window.gapi &&
+          window.gapi.auth &&
+          gapi.auth.getToken() &&
+          gapi.auth.getToken().id_token);
 }
 
 function saveProject() {
@@ -762,6 +765,22 @@ function deleteProject() {
   }
 
   loadAsync('https://apis.google.com/js/client:plusone.js', function() {
+    withClientId(function(clientId) {
+      gapi.auth.init(signinCallback);
+
+      // Refresh sign-in every 45 minutes to avoid letting it expire.
+      setInterval(function() {
+        if (signedIn()) {
+          gapi.auth.authorize({
+            clientid: clientId,
+            scope: 'profile',
+            cookiepolicy: 'single_host_origin',
+            immediate: true,
+          }, signinCallback);
+        }
+      }, 1000 * 60);
+    });
+
     discoverProjects();
     updateVisibility();
   });

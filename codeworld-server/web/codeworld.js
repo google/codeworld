@@ -542,11 +542,22 @@ function stop() {
 function addToMessage(msg) {
   var message = document.getElementById('message');
   message.innerHTML += msg
-      .replace('&', '&amp;')
-      .replace('<', '&lt;')
-      .replace('>', '&gt;')
-      .replace(/your program:(\d+):(\d+)/g,
-               '<a href="#" onclick="goto($1, $2);">Line $1, Column $2</a>');
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/(user\/)?P[A-Za-z0-9_=\-]*\.hs:(\d+):((\d+)(-\d+)?)/g,
+               '<a href="#" onclick="goto($2, $4);">Line $2, Column $3</a>')
+      .replace(/(user\/)?P[A-Za-z0-9_=\-]*\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
+               '<a href="#" onclick="goto($2, $3);">Line $2-$4, Column $3-$5</a>')
+      .replace(/IO action main/g, 'variable main')
+      .replace(/module Main/g,    'the program')
+      .replace(/IO action main/g, 'variable main')
+      .replace(/\[GHC\.Types\.Char\] -> /g, '')
+      .replace(/base\:GHC\.Base\.String -> /g, '')
+      .replace(/IO \(\)/g, 'Program')
+      .replace(/IO [a-z][a-zA-Z0-9_]*/g, 'Program')
+      .replace(/Perhaps you intended to use TemplateHaskell/g, '')
+      .replace(/\ (imported from Prelude\)/g, '');
 }
 
 function run(hash, msg, error) {

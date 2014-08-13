@@ -30,7 +30,6 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Base64 as B64
-import           Data.Char
 import           Data.List
 import           Data.Maybe
 import           Data.Monoid
@@ -262,8 +261,7 @@ compileUserSource sourcePath resultPath = do
             "./" ++ sourcePath
           ]
     result <- runCompiler "ghcjs" ghcjsArgs
-    B.writeFile resultPath $
-        sanitizeError sourcePath result
+    B.writeFile resultPath result
 
 runCompiler :: FilePath -> [String] -> IO ByteString
 runCompiler cmd args = do
@@ -283,17 +281,3 @@ runCompiler cmd args = do
 
     hClose outh
     return err
-
-sanitizeError :: FilePath -> ByteString -> ByteString
-sanitizeError source = T.encodeUtf8
-                     . T.replace (T.pack source) "your program"
-                     . T.replace "IO action main" "variable main"
-                     . T.replace "in module Main" "in the program"
-                     . T.replace "[GHC.Types.Char] -> " ""
-                     . T.replace "base:GHC.Base.String -> " ""
-                     . T.replace "IO ()" "Program"
-                     . T.replace "IO t0" "Program"
-                     . T.replace "Perhaps you intended to use TemplateHaskell" ""
-                     . T.replace "(imported from Prelude)" ""
-                     . T.filter isAscii
-                     . T.decodeUtf8

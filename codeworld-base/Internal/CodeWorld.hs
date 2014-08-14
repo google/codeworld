@@ -124,12 +124,12 @@ withDS ctx (a,b,c,d,e,f,_) action = do
 --------------------------------------------------------------------------------
 -- Base drawing code for pictures.
 
-followPath :: Canvas.Context -> [Point] -> IO ()
-followPath _   [] = return ()
-followPath ctx ((sx,sy):ps) = do
+followPath :: Canvas.Context -> [Point] -> Bool -> IO ()
+followPath _   [] closed = return ()
+followPath ctx ((sx,sy):ps) closed = do
     Canvas.moveTo (toDouble sx) (toDouble sy) ctx
     forM_ ps $ \(x,y) -> Canvas.lineTo (toDouble x) (toDouble y) ctx
-    when ((sx, sy) == last ps) $ Canvas.closePath ctx
+    when closed $ Canvas.closePath ctx
 
 drawFigure :: Canvas.Context -> DrawState -> Number -> IO () -> IO ()
 drawFigure ctx ds w figure = do
@@ -146,10 +146,10 @@ drawFigure ctx ds w figure = do
 
 drawPicture :: Canvas.Context -> DrawState -> Picture -> IO ()
 drawPicture ctx ds (Polygon ps) = do
-    withDS ctx ds $ followPath ctx ps
+    withDS ctx ds $ followPath ctx ps True
     Canvas.fill ctx
-drawPicture ctx ds (Line ps w) = do
-    drawFigure ctx ds w $ followPath ctx ps
+drawPicture ctx ds (Line ps w closed) = do
+    drawFigure ctx ds w $ followPath ctx ps closed
 drawPicture ctx ds (Arc b e r w) = do
     when (r > 0) $ drawFigure ctx ds w $ do
         Canvas.arc 0 0 (toDouble r) (toDouble b * pi / 180)

@@ -43,7 +43,7 @@ rotateVector ((x,y), angle) = (x * cos angle - y * sin angle,
                                x * sin angle + y * cos angle)
 
 data Picture = Polygon [Point]
-             | Line [Point] !Number
+             | Line [Point] !Number !P.Bool
              | Arc !Number !Number !Number !Number
              | Text !Text
              | Color !Color !Picture
@@ -61,32 +61,40 @@ blank = Pictures []
 
 -- A thin line with these points as endpoints
 line :: [Point] -> Picture
-line ps = Line ps 0
-
--- A solid polygon with these points as vertices
-polygon :: [Point] -> Picture
-polygon = Polygon
+line ps = Line ps 0 P.False
 
 -- A thick line, with these endpoints, with this line width
 thickLine :: ([Point], Number) -> Picture
-thickLine (ps, n) = Line ps n
+thickLine (ps, n) = Line ps n P.False
+
+-- A thin polygon with these points as vertices
+polygon :: [Point] -> Picture
+polygon ps = Line ps 0 P.True
+
+-- A thin polygon with these points as vertices
+thickPolygon :: ([Point], Number) -> Picture
+thickPolygon (ps, n) = Line ps n P.True
+
+-- A solid polygon with these points as vertices
+solidPolygon :: [Point] -> Picture
+solidPolygon = Polygon
 
 -- A thin rectangle, with this width and height
 rectangle :: (Number, Number) -> Picture
-rectangle (w, h) = line [
-    (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2), (-w/2, -h/2)
+rectangle (w, h) = polygon [
+    (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)
     ]
 
 -- A solid rectangle, with this width and height
 solidRectangle :: (Number, Number) -> Picture
-solidRectangle (w, h) = polygon [
+solidRectangle (w, h) = solidPolygon [
     (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)
     ]
 
 -- A thick rectangle, with this width and height and line width
 thickRectangle :: (Number, Number, Number) -> Picture
-thickRectangle (w, h, lw) = thickLine ([
-    (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2), (-w/2, -h/2)
+thickRectangle (w, h, lw) = thickPolygon ([
+    (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)
     ], lw)
 
 -- A thin circle, with this radius

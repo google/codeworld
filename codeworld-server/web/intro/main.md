@@ -447,16 +447,27 @@ plane:
 Got it?  Great!  Now you can draw things like lines by giving a list of
 points in the coordinate plane to a function called `line`:
 
+    main = pictureOf(zigzag)
+    zigzag = line[(-2, 0), (-1, 1), (0, -1), (1, 1), (2, 0)]
+
+To draw a closed shape, use `polygon` instead.  Can you figure out the
+mystery picture before you run the program?
+
     main = pictureOf(mystery)
     mystery = line[(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)]
 
-Can you figure out the mystery picture before you run the program?
-
-If you prefer to fill in your shape, you can use `polygon` instead of
-`line` and you'll get a solid version:
+If you prefer to fill in your shape, you can use `solidPolygon` instead of
+`polygon` and you'll get a solid version:
 
     main = pictureOf(mystery)
     mystery = polygon[(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)]
+
+There's also `thickPolygon` and `thickLine` which use an extra parameter
+for thickness:
+
+    main = pictureOf(mystery)
+    mystery = thickLine(path, 1)
+    path = [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)]
 
 #### Using the coordinate plane to draw ####
 

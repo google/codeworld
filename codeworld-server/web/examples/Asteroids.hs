@@ -133,13 +133,13 @@ drawShip(((x,y),_), dir, th) = translate(rotate(ship, dir), x, y)
                  color(body, cyan),
                  color(circle 0.48, gray 0.2)
                ]
-        fire = polygon[
+        fire = solidPolygon[
             (-0.32, -0.32),
             (-0.4,  -0.44),
             ( 0.4,  -0.44),
             ( 0.32, -0.32)
             ]
-        body = polygon[
+        body = solidPolygon[
             (-0.36, -0.32),
             ( 0.36, -0.32),
             ( 0,     0.48)

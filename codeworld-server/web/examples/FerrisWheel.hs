@@ -40,7 +40,7 @@ cloud = color(cloudParts, white)
 
 ferrisWheel(t) = pictures [
     movingPart(t),
-    color(polygon[ (-8, -8), (0, -4), (8, -8) ], gray(0.5)),
+    color(solidPolygon[ (-8, -8), (0, -4), (8, -8) ], gray(0.5)),
     color(solidRectangle(0.4, 10), gray(0.3))
     ]
 

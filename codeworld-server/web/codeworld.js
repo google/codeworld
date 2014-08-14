@@ -266,6 +266,7 @@ function init() {
   updateVisibility();
 
   var editor = document.getElementById('editor');
+
   codeworldEditor = CodeMirror.fromTextArea(editor, {
     mode: { name: 'haskell', overrideKeywords: keywordOverrides },
     lineNumbers: true,
@@ -274,8 +275,12 @@ function init() {
     styleActiveLine: true,
     autoCloseBrackets: true,
     showTrailingSpace: true,
+    indentWithTabs: false,
+    autoClearEmptyLines: true,
     rulers: [{column: 80, color: "#bbb", lineStyle: "dashed"}],
-    extraKeys: {"Ctrl-Space": "autocomplete"}
+    extraKeys: { "Ctrl-Space": "autocomplete",
+                 "Tab"       : "indentMore",
+                 "Shift-Tab" : "indentLess" }
   });
 
   CodeMirror.commands.save = function(cm) { saveProject(); }

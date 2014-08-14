@@ -500,6 +500,7 @@ function loadFile(name) {
       if (start != -1 && end != -1) {
         code = code.substring(0, start) +
                code.substring(end + endMarker.length);
+        while (code[0] == '\n') code = code.substring(1);
       }
 
       setCode(code);

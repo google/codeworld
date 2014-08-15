@@ -55,7 +55,7 @@ shapes:
 * `rectangle(4,8)`:  You can draw a rectangle by giving both a width and a height.
 * `rectangle(4,4)`:  A square is just a rectangle, where the width is the same as
   the height.
-* `solidRectange(8,4)`: Just like with circles, you can use `solidRectangle` to
+* `solidRectangle(8,4)`: Just like with circles, you can use `solidRectangle` to
   fill in the shape.
 * `text("I Love Pandas!")`: You can write text (such as letters and words) to the
   screen by using `text`.  You need quotes around the words.

@@ -280,7 +280,8 @@ function init() {
     rulers: [{column: 80, color: "#bbb", lineStyle: "dashed"}],
     extraKeys: { "Ctrl-Space": "autocomplete",
                  "Tab"       : "indentMore",
-                 "Shift-Tab" : "indentLess" }
+                 "Shift-Tab" : "indentLess",
+                 "Ctrl-Enter": compile }
   });
 
   CodeMirror.commands.save = function(cm) { saveProject(); }

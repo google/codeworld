@@ -635,14 +635,123 @@ Animations
 
 TODO: Write this section.
 
-    main     = animationOf(design)
-    design t = rotate(slot, 60 * t) & middle & outside
-    slot     = solidRectangle(4, 0.4)
-    middle   = solidCircle(1.2)
-    outside  = circle(2)
+    main      = animationOf(design)
+    design(t) = rotate(slot, 60 * t) & middle & outside
+    slot      = solidRectangle(4, 0.4)
+    middle    = solidCircle(1.2)
+    outside   = circle(2)
 
 Simulations
 ===========
+
+Animations are exciting, and get things moving.  But they suffer from one big
+drawback: they have no memory!  Every new frame of the program starts over, with
+only one number: how many seconds since the start.  You can build animations for
+simple motion, where you can immediately describe what it's like at any point as
+an expression involving time.  But animations break down when you want something
+that acts in a less predictable way.
+
+Think about a ball bouncing around in a room.  Can you write an expression that
+says exactly where the ball will be at any point in time?  It's not easy!  But
+if you know the position and direction the ball is moving, you can figure out
+where it should go next.  This is an example of something that's *hard* to
+describe as a function of time, but *easier* to describe the changes happening
+in each moment.
+
+Simulations work for precisely this situation.
+
+Parts of a Simulation
+---------------------
+
+Pictures and animations were described by a single thing: for a pictures, it was
+a picture.  For animations, it was a function mapping numbers to pictures.  But
+a simulation is actually built out of *three* separate (but related) parts.
+Here they are:
+
+### Part 1: Initial State ###
+
+The first part of a simulation is often called `initial`, and it tells you how
+the simulation is when it starts.
+
+### Part 2: Step Function ###
+
+The next part of a simulation is often called `step`, and it tells you how the
+simulation changes when time passes.
+
+### Part 3: Draw Function ###
+
+The final part of a simulation is often called `draw`, and it tells you how the
+simulation should be presented on the screen as a `Picture`.
+
+All three of these parts share some data called the "world", which records
+everything you want to *remember* about the simulation as it happens.
+
+Your First Simulation
+---------------------
+
+It may sound complicated, but let's jump in and look at an example:
+
+    main            = simulationOf(initial, step, draw)
+    initial(rs)     = (5,0)
+    step((x,y), dt) = (x - y*dt, y + x*dt)
+    draw(x,y)       = translate(rectangle(1,1), x, y)
+
+In this case, the "world" is a point: the location of an object.  The step
+function is the heart of any simulation.  Here, it changes the `x` and `y`
+coordinates to move the object, by amounts that depend on where the object is
+now.  When the object is near the top of the screen, so `y` is a large number,
+it's pushed to the left.  Conversely, when it's near the bottom and `y` is
+negative, it's pushed to the right.  When it's near the right, so `x` is a large
+number, it's pushed up.  When `x` is negative on the left side, it's pushed
+down.
+
+This still leaves `initial`, which tells us that the object starts at (5,0), and
+`draw`, which says the object looks like a square, and appears at the position
+in the world.
+
+Can you guess what this will look like?  Try it and find out!
+
+Simulations are a lot like science experiments.  You get to describe the rules
+for how things change at each moment in time, but the overall behavior of the
+system can still surprise you!
+
+Choosing a World
+----------------
+
+The world type is the first big choice you make when building a simulation.  In
+the simulation above, the world was a point.  That doesn't mean that all your
+simulations will be the same.  You should ask yourself: what do you need to
+*remember* for the simulation to continue.
+
+Think of these possibilities:
+* Do you need to remember the *locations* of things?
+* Do you need to remember the *speed* things are moving?
+* Do you need to remember the *direction* things are moving?
+* Do you need to remember the *angle* of something that turns?
+
+Anything you need to remember will go into your world type.
+
+### Defining New Types ###
+
+TODO: Write this section.
+
+Simulation Tricks
+-----------------
+
+### Linear Change ###
+
+TODO: Write this section.
+
+### Position and Velocity ###
+
+TODO: Write this section.
+
+### Constant Acceleration ###
+
+TODO: Write this section.
+
+Randomness
+----------
 
 TODO: Write this section.
 

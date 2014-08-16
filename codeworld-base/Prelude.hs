@@ -32,79 +32,13 @@ module Prelude (
 
     -- * General purpose functions
     module Internal.Prelude,
-
-    -- * Colors
-    Color(..),
-    black,
-    white,
-    red,
-    green,
-    blue,
-    cyan,
-    magenta,
-    yellow,
-    aquamarine,
-    orange,
-    azure,
-    violet,
-    chartreuse,
-    rose,
-    brown,
-    pink,
-    purple,
-    gray,
-    grey,
-    light,
-    dark,
-    bright,
-    muted,
-    translucent,
-
-    -- * Pictures
-    Point,
-    Vector,
-    addVectors,
-    scaleVector,
-    rotateVector,
-    Picture,
-    blank,
-    line,
-    thickLine,
-    polygon,
-    thickPolygon,
-    solidPolygon,
-    rectangle,
-    solidRectangle,
-    thickRectangle,
-    circle,
-    solidCircle,
-    thickCircle,
-    arc,
-    sector,
-    thickArc,
-    text,
-    color,
-    translate,
-    scale,
-    rotate,
-    pictures,
-    (&),
-    coordinatePlane,
-    codeWorldLogo,
-
-    -- * Events
-    Event(..),
-
-    -- * Entry points
     IO,
-    Program,
-    pictureOf,
-    animationOf,
-    simulationOf,
-    interactionOf
+
+    module CodeWorld
     ) where
 
 import "base" Prelude (IO)
+import CodeWorld
 
 import Internal.Num
 import Internal.Prelude

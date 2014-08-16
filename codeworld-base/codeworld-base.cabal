@@ -17,7 +17,8 @@ Flag ghcjs
     Default: True
 
 Library
-  Exposed-modules:     Prelude,
+  Exposed-modules:     CodeWorld,
+                       Prelude,
                        HaskellPrelude,
                        Control.Applicative,
                        Control.Arrow,

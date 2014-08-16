@@ -82,8 +82,6 @@ import Numeric
 -}
 newtype Number = Number P.Double
 
-#ifndef __HADDOCK__
-
 fromDouble :: P.Double -> Number
 fromDouble x | P.isNaN x      = P.error "result is undefined"
              | P.isInfinite x = P.error "result is too large"
@@ -137,8 +135,6 @@ instance P.Enum Number where
 
 instance P.Ord Number where
     compare (Number a) (Number b) = P.compare a b
-
-#endif  // __HADDOCK__
 
 {-| Tells whether a Number is an integer or not.
 

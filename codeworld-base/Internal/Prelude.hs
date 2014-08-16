@@ -85,6 +85,7 @@ module Internal.Prelude (
     L.permutations,
     nub, -- using deepEq
     sort, -- specialized to Number
+    shuffle,
     ) where
 
 import qualified "base" Prelude as P

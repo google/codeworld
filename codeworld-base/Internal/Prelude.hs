@@ -257,8 +257,8 @@ nub = L.nubBy deepEq
 sort :: [Number] -> [Number]
 sort = L.sort
 
-shuffle :: [a] -> [Number] -> ([a], [Number])
-shuffle xs ns = (P.foldr f [] (sort ns'), unused) where
+shuffle :: ([a], [Number]) -> ([a], [Number])
+shuffle (xs, ns) = (P.foldr f [] (sort ns'), unused) where
   (ns', unused) = P.splitAt (P.length xs) ns
   f r acc = (P.fromMaybe bad (P.lookup r (P.zip ns' xs))) : acc
   bad = P.error "impossible"

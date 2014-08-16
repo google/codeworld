@@ -17,7 +17,8 @@ Flag ghcjs
     Default: True
 
 Library
-  Exposed-modules:     Prelude
+  Exposed-modules:     Prelude,
+                       HaskellPrelude
   Other-modules:       Internal.Num,
                        Internal.Prelude,
                        Internal.Text,

@@ -91,6 +91,7 @@ import qualified "base" Prelude as P
 import qualified "base" Data.Maybe as P
 import "base" Prelude (Bool, (.))
 
+import Data.Function (on)
 import qualified Data.List as L
 
 import Data.Text (Text)
@@ -258,7 +259,6 @@ sort :: [Number] -> [Number]
 sort = L.sort
 
 shuffle :: ([a], [Number]) -> ([a], [Number])
-shuffle (xs, ns) = (P.foldr f [] (sort ns'), unused) where
+shuffle (xs, ns) = (shuffled, unused) where
   (ns', unused) = P.splitAt (P.length xs) ns
-  f r acc = (P.fromMaybe bad (P.lookup r (P.zip ns' xs))) : acc
-  bad = P.error "impossible"
+  shuffled = P.map P.snd (L.sortBy (P.compare `on` P.fst) (P.zip ns' xs))

@@ -18,6 +18,10 @@
 -}
 
 module CodeWorld (
+    -- Critical types
+    Number,
+    Text,
+
     -- * Colors
     Color(..),
     black,

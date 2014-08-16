@@ -1,4 +1,4 @@
 #!/bin/sh
 fuser -k -n tcp $1
-rm -rf user/base.jsexe
+(cd user && ./clean.sh)
 ./dist/build/codeworld-server/codeworld-server -p $1

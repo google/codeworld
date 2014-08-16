@@ -91,6 +91,7 @@ import qualified "base" Prelude as P
 import qualified "base" Data.Maybe as P
 import "base" Prelude (Bool, (.))
 
+import Data.Function (on)
 import qualified Data.List as L
 
 import Data.Text (Text)
@@ -256,3 +257,8 @@ nub = L.nubBy deepEq
 
 sort :: [Number] -> [Number]
 sort = L.sort
+
+shuffle :: ([a], [Number]) -> ([a], [Number])
+shuffle (xs, ns) = (shuffled, unused) where
+  (ns', unused) = P.splitAt (P.length xs) ns
+  shuffled = P.map P.snd (L.sortBy (P.compare `on` P.fst) (P.zip ns' xs))

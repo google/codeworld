@@ -197,6 +197,7 @@ Library
   Build-depends:       base,
                        mtl,
                        random,
+                       random-shuffle,
                        text,
                        time
   Exposed:             False

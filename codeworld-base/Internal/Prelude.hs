@@ -102,6 +102,9 @@ import Internal.DeepEq
 import Internal.Num
 import Internal.Text
 
+import System.Random
+import System.Random.Shuffle (shuffle')
+
 -- | Converts a Maybe value to a plain value, by using a default.
 --
 -- For example, `withDefault(Nothing, 5)` is equal to 5, while
@@ -259,7 +262,6 @@ nub = L.nubBy deepEq
 sort :: [Number] -> [Number]
 sort = L.sort
 
-shuffle :: ([a], [Number]) -> ([a], [Number])
-shuffle (xs, ns) = (shuffled, unused) where
-  (ns', unused) = P.splitAt (P.length xs) ns
-  shuffled = P.map P.snd (L.sortBy (P.compare `on` P.fst) (P.zip ns' xs))
+shuffle :: ([a], Number) -> [a]
+shuffle (xs, r) = shuffle' xs (P.length xs) gen
+  where gen = mkStdGen (P.round (P.realToFrac r P.* P.fromIntegral (P.maxBound :: P.Int)))

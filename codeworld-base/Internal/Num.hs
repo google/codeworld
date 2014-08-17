@@ -1,6 +1,7 @@
-{-# LANGUAGE CPP               #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE PackageImports    #-}
+{-# LANGUAGE CPP                        #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
+{-# LANGUAGE PackageImports             #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 {-
   Copyright 2014 Google Inc. All rights reserved.
@@ -81,6 +82,7 @@ import Numeric
   3.2, and -10 are all values of the type Number.
 -}
 newtype Number = Number P.Double
+    deriving (P.RealFrac, P.Real, P.Floating, P.RealFloat)
 
 fromDouble :: P.Double -> Number
 fromDouble x | P.isNaN x      = P.error "result is undefined"

@@ -186,7 +186,8 @@ Library
                        Text.Show,
                        Text.Show.Functions,
                        Unsafe.Coerce
-  Other-modules:       Internal.Num,
+  Other-modules:       Internal.Exports,
+                       Internal.Num,
                        Internal.Prelude,
                        Internal.Text,
                        Internal.Color,

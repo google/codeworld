@@ -34,11 +34,11 @@ module Prelude (
     module Internal.Prelude,
     IO,
 
-    module CodeWorld
+    module Internal.Exports
     ) where
 
 import "base" Prelude (IO)
-import CodeWorld
+import Internal.Exports
 
 import Internal.Num
 import Internal.Prelude

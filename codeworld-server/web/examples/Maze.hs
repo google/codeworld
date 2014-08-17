@@ -108,11 +108,11 @@ buildMaze (w,h,randoms) = go((0,0), startMaze, randoms) where
       recur = go(n, newG, rest rs)
     
 {- Maze painting code -}
-drawMaze (Maze w h _ ds) = pictures [doorsPic, allMazeLines] where
+drawMaze (Maze w h _ ds) = pictures [doorsPic, allGridLines] where
   doorsPic = pictures [drawDoor d | d <- entrance : exit : ds]
   entrance = ((-1,0), (0,0))
   exit     = ((w-1,h-1), (w,h-1))
-  allMazeLines = color (pictures [horizontalLines, verticalLines], black)
+  allGridLines = color (pictures [horizontalLines, verticalLines], black)
   horizontalLines = pictures [line [(w, y), (0, y)] | y <- [0..h]]
   verticalLines   = pictures [line [(x, h), (x, 0)] | x <- [0..w]]
 

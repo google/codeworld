@@ -68,13 +68,7 @@ data Maze = Maze {
 addDoor :: (Maze, Door) -> Maze
 addDoor (g,d) = g { doors = addToSet(doors g, d) }
 
-containsDoor :: (Set Door, Door) -> Bool
-containsDoor (ds, ((fx,fy),(tx,ty))) = any(ds, match) where
-  match ((fx',fy'),(tx',ty')) =
-    (fx == fx' && fy == fy' && tx == tx' && ty == ty') ||
-    (fx == tx' && fy == ty' && tx == fx' && ty == fy')
-    
-containsDoor' (ds, d) = isMember(ds, d) || isMember(ds, reverseDoor d)     
+containsDoor (ds, d) = isMember(ds, d) || isMember(ds, reverseDoor d)     
     
 markVisitedAt :: (Maze, Point) -> Maze
 markVisitedAt (g,p) = g { visited = addToSet(visited g, p) }

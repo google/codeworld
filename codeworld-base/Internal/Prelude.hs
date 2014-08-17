@@ -263,5 +263,6 @@ sort :: [Number] -> [Number]
 sort = L.sort
 
 shuffle :: ([a], Number) -> [a]
+shuffle ([], r) = []
 shuffle (xs, r) = shuffle' xs (P.length xs) gen
   where gen = mkStdGen (P.round (P.realToFrac r P.* P.fromIntegral (P.maxBound :: P.Int)))

@@ -17,6 +17,7 @@ Flag ghcjs
     Default: True
 
 Library
+  Hs-source-dirs:      src
   Exposed-modules:     CodeWorld,
                        Prelude,
                        HaskellPrelude,

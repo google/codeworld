@@ -13,11 +13,13 @@
     <img id="cwlogo" style="display: none" src="codeworld.png" width=900 height=200>
   </body>
   <script type="text/javascript">
-    function reportRuntimeError(str) {
+    function reportRuntimeError(err, str) {
       var message = window.parent.addToMessage('\n\n' + str);
 
-      var message = window.parent.document.getElementById('message');
-      message.classList.add('error');
+      if (err) {
+        var message = window.parent.document.getElementById('message');
+        message.classList.add('error');
+      }
     }
   </script>
 

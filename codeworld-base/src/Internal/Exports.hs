@@ -85,6 +85,9 @@ module Internal.Exports (
     -- * Events
     Event(..),
 
+    -- * Debugging
+    trace,
+
     -- * Entry points
     Program,
     pictureOf,

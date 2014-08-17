@@ -26,7 +26,8 @@ module Internal.CodeWorld (
     pictureOf,
     animationOf,
     simulationOf,
-    interactionOf
+    interactionOf,
+    trace
     ) where
 
 import           Control.Concurrent
@@ -73,8 +74,8 @@ foreign import javascript unsafe "window.requestAnimationFrame($1);"
 foreign import javascript unsafe "$1.drawImage($2, $3, $4);"
     js_canvasDrawImage :: Canvas.Context -> JSRef Element -> Int -> Int -> IO ()
 
-foreign import javascript unsafe "window.reportRuntimeError($1);"
-    js_reportRuntimeError :: JSString -> IO ()
+foreign import javascript unsafe "window.reportRuntimeError($1, $2);"
+    js_reportRuntimeError :: Bool -> JSString -> IO ()
 
 foreign import javascript unsafe "$1.drawImage(document.getElementById($2), $3, $4, $5, $6);"
     js_drawCodeWorldLogo :: Canvas.Context -> JSString -> Int -> Int -> Int -> Int -> IO ()
@@ -264,6 +265,11 @@ getMousePos canvas = do
         cy <- js_getBoundingClientTop (unElement canvas)
         return (fromIntegral (ix - cx - 250) / 25, fromIntegral (cy - iy + 250) / 25)
 
+trace :: (a, Text) -> a
+trace (x, msg) = unsafePerformIO $ do
+    js_reportRuntimeError False (toJSString msg)
+    return x
+
 --------------------------------------------------------------------------------
 -- Runners for different kinds of activities.
 
@@ -355,7 +361,7 @@ run startActivity = do
 type Program = IO ()
 
 reportError :: SomeException -> IO ()
-reportError e = js_reportRuntimeError (toJSString (show e))
+reportError e = js_reportRuntimeError True (toJSString (show e))
 
 pictureOf :: Picture -> Program
 pictureOf pic = display pic `catch` reportError
@@ -382,6 +388,9 @@ interactionOf (initial, step, event, draw) = go `catch` reportError
             ns <- unsafeInterleaveIO randoms
             return (fromDouble n : ns)
 #else
+
+trace :: (a, Text) -> a
+trace = undefined
 
 type Program = IO ()
 

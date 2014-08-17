@@ -89,7 +89,7 @@ unvisitedNeighbors (g,p) =
 
 {- The main function for building a random maze -}
 buildMaze :: (Number, Number, RandomNumbers) -> Maze
-buildMaze (w,h,randoms) = go((0,0), startMaze, randoms) where 
+buildMaze (w,h,randoms) = go((w-1,h-1), startMaze, randoms) where 
   startMaze = (Maze w h [] (entranceDoor : exitDoor : [])) where
     entranceDoor = ((-1,0), (0,0))
     exitDoor     = ((w-1,h-1), (w,h-1))  

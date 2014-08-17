@@ -95,18 +95,17 @@ unvisitedNeighbors (g,p) =
 
 {- The main function for building a random maze -}
 buildMaze :: (Number, Number, RandomNumbers) -> Maze
-buildMaze (w,h,randoms) = buildImpl(exitPoint, startMaze, randoms) where 
-  startMaze = (Maze w h [] (entranceDoor : exitDoor : []))
-  exitPoint = (w - 1, h - 1)
-  entranceDoor = ((-1,0), (0,0))
-  exitDoor     = ((w-1,h-1), (w,h-1))  
-  buildImpl :: (Point, Maze, RandomNumbers) -> Maze
-  buildImpl (current,g,rs) = foldl f newMaze nbors where
+buildMaze (w,h,randoms) = go((0,0), startMaze, randoms) where 
+  startMaze = (Maze w h [] (entranceDoor : exitDoor : [])) where
+    entranceDoor = ((-1,0), (0,0))
+    exitDoor     = ((w-1,h-1), (w,h-1))  
+  go :: (Point, Maze, RandomNumbers) -> Maze
+  go (current,g,rs) = foldl f newMaze nbors where
     newMaze = markVisitedAt(g, current)
     nbors = shuffle(unvisitedNeighbors(newMaze, current), first rs)
     f gacc n = if isVisitedAt(gacc, n) then gacc else recur where
       newG  = addDoor (gacc, (current, n))
-      recur = buildImpl(n, newG, rest rs)
+      recur = go(n, newG, rest rs)
     
 {- Maze painting code -}
 drawMaze (Maze w h _ ds) = pictures [doorsPic, allMazeLines] where

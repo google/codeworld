@@ -18,9 +18,10 @@
 -}
 
 module CodeWorld (
-    -- Critical types
+    -- Miscellaneous types and functions
     Number,
     Text,
+    shuffle,
 
     -- * Colors
     Color(..),

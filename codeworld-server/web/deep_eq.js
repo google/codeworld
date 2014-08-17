@@ -46,8 +46,8 @@
       while (eq && workA.length > 0) {
           var a = workA.pop();
           var b = workB.pop();
-          while (isHeapObject(a) && a.f == h$unbox_e) a = a.d1;
-          while (isHeapObject(b) && b.f == h$unbox_e) b = b.d1;
+          while (isHeapObject(a) && a.f === h$unbox_e) a = a.d1;
+          while (isHeapObject(b) && b.f === h$unbox_e) b = b.d1;
           if(a === null || b === null
              || a === undefined || b === undefined
              || typeof a === 'number'   || typeof b === 'number'

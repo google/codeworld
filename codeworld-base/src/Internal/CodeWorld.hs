@@ -365,7 +365,7 @@ run startActivity = do
             cb <- syncCallback NeverRetain True $ do
                 t1 <- getCurrentTime
                 a1 <- passTime (diffUTCTime t1 t0) currentActivity
-                go t1 a1
+                go t1 a1 `catch` reportError
             js_requestAnimationFrame cb
 
     t0 <- getCurrentTime

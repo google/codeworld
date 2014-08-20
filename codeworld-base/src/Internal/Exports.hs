@@ -84,6 +84,7 @@ module Internal.Exports (
 
     -- * Events
     Event(..),
+    MouseButton(..),
 
     -- * Debugging
     trace,

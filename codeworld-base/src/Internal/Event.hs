@@ -26,8 +26,10 @@ import Internal.Picture
 
 data Event = KeyPress !Text
            | KeyRelease !Text
-           | MousePress !(Number, Point)
-           | MouseRelease !(Number, Point)
+           | MousePress !(MouseButton, Point)
+           | MouseRelease !(MouseButton, Point)
            | MouseMovement !Point
+
+data MouseButton = LeftButton | MiddleButton | RightButton
 
 instance Show Event where show _ = "<<Event>>"

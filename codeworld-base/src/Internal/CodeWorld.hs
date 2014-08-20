@@ -39,6 +39,7 @@ import           Data.Char (chr)
 import           Data.IORef
 import           Data.Text (Text, singleton)
 import           Data.Time.Clock
+import           Data.Word
 import           Internal.Num (Number, fromDouble, toDouble)
 import           Internal.Text hiding (show)
 import qualified Internal.Text
@@ -265,6 +266,12 @@ getMousePos canvas = do
         cy <- js_getBoundingClientTop (unElement canvas)
         return (fromIntegral (ix - cx - 250) / 25, fromIntegral (cy - iy + 250) / 25)
 
+fromButtonNum :: Word -> Maybe MouseButton
+fromButtonNum 0 = Just LeftButton
+fromButtonNum 1 = Just MiddleButton
+fromButtonNum 2 = Just RightButton
+fromButtonNum _ = Nothing
+
 trace :: (a, Text) -> a
 trace (x, msg) = unsafePerformIO $ do
     js_reportRuntimeError False (toJSString msg)
@@ -308,16 +315,22 @@ setupEvents currentActivity canvas = do
             stopPropagation
     domWindowOnmousedown window $ do
         button <- mouseButton
-        pos <- getMousePos canvas
-        let event = MousePress ((fromIntegral button), pos)
-        liftIO $ modifyMVar_ currentActivity $ \ activity -> do
-            return (activityEvent activity event)
+        case fromButtonNum button of
+            Nothing  -> return ()
+            Just btn -> do
+                pos <- getMousePos canvas
+                let event = MousePress (btn, pos)
+                liftIO $ modifyMVar_ currentActivity $ \ activity -> do
+                    return (activityEvent activity event)
     domWindowOnmouseup window $ do
         button <- mouseButton
-        pos <- getMousePos canvas
-        let event = MouseRelease ((fromIntegral button), pos)
-        liftIO $ modifyMVar_ currentActivity $ \ activity -> do
-            return (activityEvent activity event)
+        case fromButtonNum button of
+            Nothing  -> return ()
+            Just btn -> do
+                pos <- getMousePos canvas
+                let event = MouseRelease (btn, pos)
+                liftIO $ modifyMVar_ currentActivity $ \ activity -> do
+                    return (activityEvent activity event)
     domWindowOnmousemove window $ do
         pos <- getMousePos canvas
         let event = MouseMovement pos

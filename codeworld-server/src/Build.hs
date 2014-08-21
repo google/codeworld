@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 {-
@@ -24,10 +23,12 @@ import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import           Data.Maybe
+import           Data.Monoid
 import           System.Directory
 import           System.FilePath
 import           System.IO
 import           System.Process
+import           Text.Regex.TDFA
 
 import Util
 
@@ -61,26 +62,32 @@ generateBaseBundle = do
 
 compileUserSource :: ByteString -> IO Bool
 compileUserSource hashed = do
-    let src = localSourceFile hashed
-    let err = resultFile hashed
-    let tgt = targetFile hashed
-
-    let ghcjsArgs = commonGHCJSArgs ++ [
-            "--no-rts",
-            "--no-stats",
-            "--use-base=base.jsexe/out.base.symbs",
-            "./" ++ src
-          ]
-    result <- runCompiler userCompileMicros ghcjsArgs
-    case result of
-        Nothing     -> do
-            -- A missing error file indicates that the compiler
-            -- timed out, so delete if it exists.
-            removeFileIfExists err
-            return False
-        Just output -> do
-            B.writeFile err output
-            doesFileExist tgt
+    dangerous <- checkDangerousSource fullSource
+    if dangerous then reportDangerous else compile
+  where
+    fullSource = sourceFile hashed
+    src = localSourceFile hashed
+    err = resultFile hashed
+    tgt = targetFile hashed
+    reportDangerous = do
+        B.writeFile err $ "Sorry, but your program refers to " <>
+                          "forbidden language features."
+        return False
+    compile = do
+        let ghcjsArgs = commonGHCJSArgs ++ [
+                "--no-rts",
+                "--no-stats",
+                "--use-base=base.jsexe/out.base.symbs",
+                "./" ++ src
+              ]
+        runCompiler userCompileMicros ghcjsArgs >>= respond
+    respond Nothing = do
+        removeFileIfExists err
+        removeFileIfExists tgt
+        return False
+    respond (Just output) = do
+        B.writeFile err output
+        doesFileExist tgt
 
 userCompileMicros :: Int
 userCompileMicros = 10 * 1000000
@@ -104,6 +111,15 @@ runCompiler micros args = do
 
     terminateProcess pid
     return result
+
+checkDangerousSource :: FilePath -> IO Bool
+checkDangerousSource src = do
+    contents <- B.readFile src
+    return $ matches contents ".*TemplateHaskell.*" ||
+             matches contents ".*glasgow-exts.*"
+  where
+    matches :: ByteString -> ByteString -> Bool
+    matches txt pat = txt =~ pat
 
 commonGHCJSArgs :: [String]
 commonGHCJSArgs = [

@@ -28,6 +28,7 @@ Executable codeworld-server
     MonadCatchIO-transformers,
     mtl,
     process,
+    regex-tdfa,
     snap-core,
     snap-server,
     text

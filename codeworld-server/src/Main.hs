@@ -20,21 +20,14 @@
 module Main where
 
 import           Control.Applicative
-import           Control.Concurrent
-import           Control.Exception
 import           Control.Monad
 import           Control.Monad.Trans
-import qualified Crypto.Hash.MD5 as Crypto
 import           Data.Aeson
-import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Char8 as BC
-import qualified Data.ByteString.Base64 as B64
-import           Data.List
 import           Data.Maybe
 import           Data.Monoid
-import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import           Network.HTTP.Conduit
@@ -44,32 +37,10 @@ import           Snap.Util.FileServe
 import           Snap.Util.FileUploads
 import           System.Directory
 import           System.FilePath
-import           System.IO
-import           System.IO.Error
-import           System.Process
 
-data User = User { userId :: Text }
-
-instance FromJSON User where
-    parseJSON (Object v) = User <$> v .: "user_id"
-    parseJSON _          = mzero
-
-data Project = Project {
-    projectName :: Text,
-    projectSource :: Text,
-    projectHistory :: Value
-    }
-
-instance FromJSON Project where
-    parseJSON (Object v) = Project <$> v .: "name"
-                                   <*> v .: "source"
-                                   <*> v .: "history"
-    parseJSON _          = mzero
-
-instance ToJSON Project where
-    toJSON p = object [ "name"    .= projectName p,
-                        "source"  .= projectSource p,
-                        "history" .= projectHistory p ]
+import Build
+import Model
+import Util
 
 main :: IO ()
 main = do
@@ -150,11 +121,10 @@ compileHandler :: Snap ()
 compileHandler = do
     Just source <- getParam "source"
     let hashed = BC.cons 'P' (getHash source)
-    finished <- liftIO $ do
+    success <- liftIO $ do
         B.writeFile (sourceFile hashed) source
         compileIfNeeded hashed
-    hasTarget <- liftIO $ doesFileExist (targetFile hashed)
-    when (not hasTarget || not finished) $ modifyResponse $ setResponseCode 500
+    when (not success) $ modifyResponse $ setResponseCode 500
     modifyResponse $ setContentType "text/plain"
     writeBS hashed
 
@@ -180,137 +150,3 @@ listProjectsHandler = do
         mapM (fmap (fromJust . decode) . LB.readFile . (base </>)) files :: IO [Project]
     modifyResponse $ setContentType "application/json"
     writeLBS (encode (map projectName projects))
-
-getFilesByExt :: FilePath -> FilePath -> IO [FilePath]
-getFilesByExt ext = fmap (sort . filter (ext `isSuffixOf`)) . getDirectoryContents
-
-getHash :: ByteString -> ByteString
-getHash = BC.map toWebSafe . B64.encode . Crypto.hash
-  where toWebSafe '/' = '_'
-        toWebSafe '+' = '-'
-        toWebSafe c   = c
-
-compileIfNeeded :: ByteString -> IO Bool
-compileIfNeeded hashed = do
-    hasResult <- doesFileExist (resultFile hashed)
-    needsRebuild <- if not hasResult then return True else do
-        rebuildTime <- getModificationTime rebuildFile
-        buildTime   <- getModificationTime (resultFile hashed)
-        return (buildTime < rebuildTime)
-    if needsRebuild then compileUserSource (localSourceFile hashed) (resultFile hashed) else return True
-
-rebuildFile :: FilePath
-rebuildFile = "user" </> "REBUILD"
-
-localSourceFile :: ByteString -> FilePath
-localSourceFile hashed = BC.unpack hashed ++ ".hs"
-
-sourceFile :: ByteString -> FilePath
-sourceFile hashed = "user" </> localSourceFile hashed
-
-targetFile :: ByteString -> FilePath
-targetFile hashed = "user" </> BC.unpack hashed ++ ".jsexe" </> "out.js"
-
-resultFile :: ByteString -> FilePath
-resultFile hashed = "user" </> BC.unpack hashed ++ ".err.txt"
-
-commonGHCJSArgs :: [String]
-commonGHCJSArgs = [
-    "--no-native",
-    "-Wall",
-    "-O2",
-    "-fno-warn-deprecated-flags",
-    "-fno-warn-amp",
-    "-fno-warn-missing-signatures",
-    "-fno-warn-incomplete-patterns",
-    "-fno-warn-unused-matches",
-    "-hide-package", "base",
-    "-package", "codeworld-base",
-    "-XRebindableSyntax",
-    "-XImplicitPrelude",
-    "-XOverloadedStrings",
-    "-XNoTemplateHaskell",
-    "-XNoUndecidableInstances",
-    "-XNoQuasiQuotes",
-    "-XForeignFunctionInterface",
-    "-XJavaScriptFFI",
-    "-XParallelListComp",
-    "-XDisambiguateRecordFields",
-    "-XNoMonomorphismRestriction",
-    "-XScopedTypeVariables",
-    "-XBangPatterns",
-    "-XPatternGuards",
-    "-XViewPatterns",
-    "-XRankNTypes",
-    "-XExistentialQuantification",
-    "-XKindSignatures",
-    "-XEmptyDataDecls",
-    "-XLiberalTypeSynonyms",
-    "-XTypeOperators",
-    "-XRecordWildCards",
-    "-XNamedFieldPuns"
-    ]
-
-generateBaseBundle :: IO ()
-generateBaseBundle = do
-    let ghcjsArgs = commonGHCJSArgs ++ [
-            "--generate-base=LinkBase",
-            "-o", "base",
-            "LinkMain.hs"
-          ]
-    BC.putStrLn . fromJust =<< runCompiler (maxBound :: Int) "ghcjs" ghcjsArgs
-    B.appendFile "user/REBUILD" ""
-    return ()
-
-compileUserSource :: FilePath -> FilePath -> IO Bool
-compileUserSource sourcePath resultPath = do
-    let ghcjsArgs = commonGHCJSArgs ++ [
-            "--no-rts",
-            "--no-stats",
-            "--use-base=base.jsexe/out.base.symbs",
-            "./" ++ sourcePath
-          ]
-    result <- runCompiler userCompileMicros "ghcjs" ghcjsArgs
-    case result of
-        Nothing     -> do
-            removeFileIfExists resultPath
-            return False
-        Just output -> do
-            B.writeFile resultPath output
-            return True
-
-removeFileIfExists :: FilePath -> IO ()
-removeFileIfExists fileName = removeFile fileName `catch` handleExists
-  where handleExists e
-          | isDoesNotExistError e = return ()
-          | otherwise = throwIO e
-
-userCompileMicros :: Int
-userCompileMicros = 10 * 1000000
-
-runCompiler :: Int -> FilePath -> [String] -> IO (Maybe ByteString)
-runCompiler micros cmd args = do
-    (Just inh, Just outh, Just errh, pid) <-
-        createProcess (proc cmd args){ cwd       = Just "user",
-                                       std_in    = CreatePipe,
-                                       std_out   = CreatePipe,
-                                       std_err   = CreatePipe,
-                                       close_fds = True }
-    hClose inh
-
-    status <- newMVar False
-    timer <- forkIO $ do
-        threadDelay micros
-        finished <- swapMVar status True
-        when (not finished) $ terminateProcess pid
-
-    err <- B.hGetContents errh
-    evaluate (B.length err)
-
-    waitForProcess pid
-    hClose outh
-
-    cancelled <- swapMVar status True
-    killThread timer
-
-    if cancelled then return Nothing else return (Just err)

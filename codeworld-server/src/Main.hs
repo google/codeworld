@@ -20,6 +20,7 @@
 module Main where
 
 import           Control.Applicative
+import           Control.Concurrent
 import           Control.Exception
 import           Control.Monad
 import           Control.Monad.Trans
@@ -44,11 +45,10 @@ import           Snap.Util.FileUploads
 import           System.Directory
 import           System.FilePath
 import           System.IO
+import           System.IO.Error
 import           System.Process
 
-data User = User {
-    userId :: Text
-    }
+data User = User { userId :: Text }
 
 instance FromJSON User where
     parseJSON (Object v) = User <$> v .: "user_id"
@@ -71,12 +71,6 @@ instance ToJSON Project where
                         "source"  .= projectSource p,
                         "history" .= projectHistory p ]
 
-getUser :: Snap User
-getUser = getParam "id_token" >>= \ case
-    Nothing       -> pass
-    Just id_token -> maybe pass return =<< (fmap decode $ liftIO $ simpleHttp $
-        "https://www.googleapis.com/oauth2/v1/tokeninfo?id_token=" ++ BC.unpack id_token)
-
 main :: IO ()
 main = do
     hasClientId <- doesFileExist "web/clientId.txt"
@@ -92,9 +86,22 @@ main = do
     generateBaseBundle
     quickHttpServe $ (processBody >> site) <|> site
 
+-- Retrieves the user for the current request.  The request should have an
+-- id_token parameter with an id token retrieved from the Google
+-- authentication API.  The user is returned if the id token is valid.
+getUser :: Snap User
+getUser = getParam "id_token" >>= \ case
+    Nothing       -> pass
+    Just id_token -> maybe pass return =<< (fmap decode $ liftIO $ simpleHttp $
+        "https://www.googleapis.com/oauth2/v1/tokeninfo?id_token=" ++ BC.unpack id_token)
+
+-- A revised upload policy that allows up to 4 MB of uploaded data in a
+-- request.  This is needed to handle uploads of projects including editor
+-- history.
 codeworldUploadPolicy :: UploadPolicy
 codeworldUploadPolicy = setMaximumFormInputSize (2^(22 :: Int)) defaultUploadPolicy
 
+-- Processes the body of a multipart request.
 processBody :: Snap ()
 processBody = do
     handleMultipart codeworldUploadPolicy (const $ return ())
@@ -143,11 +150,11 @@ compileHandler :: Snap ()
 compileHandler = do
     Just source <- getParam "source"
     let hashed = BC.cons 'P' (getHash source)
-    liftIO $ do
+    finished <- liftIO $ do
         B.writeFile (sourceFile hashed) source
         compileIfNeeded hashed
     hasTarget <- liftIO $ doesFileExist (targetFile hashed)
-    when (not hasTarget) $ modifyResponse $ setResponseCode 500
+    when (not hasTarget || not finished) $ modifyResponse $ setResponseCode 500
     modifyResponse $ setContentType "text/plain"
     writeBS hashed
 
@@ -183,14 +190,14 @@ getHash = BC.map toWebSafe . B64.encode . Crypto.hash
         toWebSafe '+' = '-'
         toWebSafe c   = c
 
-compileIfNeeded :: ByteString -> IO ()
+compileIfNeeded :: ByteString -> IO Bool
 compileIfNeeded hashed = do
-    hasResult <- doesFileExist (resultFile  hashed)
+    hasResult <- doesFileExist (resultFile hashed)
     needsRebuild <- if not hasResult then return True else do
         rebuildTime <- getModificationTime rebuildFile
         buildTime   <- getModificationTime (resultFile hashed)
         return (buildTime < rebuildTime)
-    when needsRebuild $ compileUserSource (localSourceFile hashed) (resultFile hashed)
+    if needsRebuild then compileUserSource (localSourceFile hashed) (resultFile hashed) else return True
 
 rebuildFile :: FilePath
 rebuildFile = "user" </> "REBUILD"
@@ -251,11 +258,11 @@ generateBaseBundle = do
             "-o", "base",
             "LinkMain.hs"
           ]
-    BC.putStrLn =<< runCompiler "ghcjs" ghcjsArgs
+    BC.putStrLn . fromJust =<< runCompiler (maxBound :: Int) "ghcjs" ghcjsArgs
     B.appendFile "user/REBUILD" ""
     return ()
 
-compileUserSource :: FilePath -> FilePath -> IO ()
+compileUserSource :: FilePath -> FilePath -> IO Bool
 compileUserSource sourcePath resultPath = do
     let ghcjsArgs = commonGHCJSArgs ++ [
             "--no-rts",
@@ -263,24 +270,47 @@ compileUserSource sourcePath resultPath = do
             "--use-base=base.jsexe/out.base.symbs",
             "./" ++ sourcePath
           ]
-    result <- runCompiler "ghcjs" ghcjsArgs
-    B.writeFile resultPath result
+    result <- runCompiler userCompileMicros "ghcjs" ghcjsArgs
+    case result of
+        Nothing     -> do
+            removeFileIfExists resultPath
+            return False
+        Just output -> do
+            B.writeFile resultPath output
+            return True
 
-runCompiler :: FilePath -> [String] -> IO ByteString
-runCompiler cmd args = do
+removeFileIfExists :: FilePath -> IO ()
+removeFileIfExists fileName = removeFile fileName `catch` handleExists
+  where handleExists e
+          | isDoesNotExistError e = return ()
+          | otherwise = throwIO e
+
+userCompileMicros :: Int
+userCompileMicros = 10 * 1000000
+
+runCompiler :: Int -> FilePath -> [String] -> IO (Maybe ByteString)
+runCompiler micros cmd args = do
     (Just inh, Just outh, Just errh, pid) <-
         createProcess (proc cmd args){ cwd       = Just "user",
                                        std_in    = CreatePipe,
                                        std_out   = CreatePipe,
                                        std_err   = CreatePipe,
                                        close_fds = True }
-
     hClose inh
+
+    status <- newMVar False
+    timer <- forkIO $ do
+        threadDelay micros
+        finished <- swapMVar status True
+        when (not finished) $ terminateProcess pid
 
     err <- B.hGetContents errh
     evaluate (B.length err)
 
     waitForProcess pid
-
     hClose outh
-    return err
+
+    cancelled <- swapMVar status True
+    killThread timer
+
+    if cancelled then return Nothing else return (Just err)

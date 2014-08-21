@@ -19,294 +19,65 @@ function init() {
   showingDoc = false;
   showingResult = false;
 
-  // We override the syntax classification of certain words, because the
-  // standard library is different.
-  var keywordOverrides = {
-    '$!':              'variable',
-    '$':               'variable',
-    '=<<':             'variable',
-    '>>=':             'variable',
-    '>>':              'variable',
-    '^^':              'variable',
-    '**':              'variable',
-    '&':               'builtin',
-    '<>':              'builtin',
-    'Bounded':         'variable-2',
-    'Char':            'variable-2',
-    'Double':          'variable-2',
-    'Enum':            'variable-2',
-    'EQ':              'variable-2',
-    'Eq':              'variable-2',
-    'FilePath':        'variable-2',
-    'Float':           'variable-2',
-    'Floating':        'variable-2',
-    'Fractional':      'variable-2',
-    'Functor':         'variable-2',
-    'GT':              'variable-2',
-    'IOError':         'variable-2',
-    'Int':             'variable-2',
-    'Integer':         'variable-2',
-    'Integral':        'variable-2',
-    'LT':              'variable-2',
-    'Monad':           'variable-2',
-    'Num':             'variable-2',
-    'Ord':             'variable-2',
-    'Ordering':        'variable-2',
-    'Rational':        'variable-2',
-    'Read':            'variable-2',
-    'ReadS':           'variable-2',
-    'Real':            'variable-2',
-    'RealFloat':       'variable-2',
-    'RealFrac':        'variable-2',
-    'Show':            'variable-2',
-    'ShowS':           'variable-2',
-    'String':          'variable-2',
-    'Color':           'builtin',
-    'Event':           'builtin',
-    'KeyPress':        'builtin',
-    'KeyRelease':      'builtin',
-    'LeftButton':      'builtin',
-    'MiddleButton':    'builtin',
-    'MouseButton':     'builtin',
-    'MouseMovement':   'builtin',
-    'MousePress':      'builtin',
-    'MouseRelease':    'builtin',
-    'Number':          'builtin',
-    'Picture':         'builtin',
-    'Point':           'builtin',
-    'Program':         'builtin',
-    'RightButton':     'builtin',
-    'Text':            'builtin',
-    'Vector':          'builtin',
-    'acosh':           'variable',
-    'appendFile':      'variable',
-    'asTypeOf':        'variable',
-    'asinh':           'variable',
-    'atanh':           'variable',
-    'catch':           'variable',
-    'compare':         'variable',
-    'cosh':            'variable',
-    'curry':           'variable',
-    'decodeFloat':     'variable',
-    'div':             'variable',
-    'divMod':          'variable',
-    'elem':            'variable',
-    'encodeFloat':     'variable',
-    'enumFrom':        'variable',
-    'enumFromThen':    'variable',
-    'enumFromThenTo':  'variable',
-    'enumFromTo':      'variable',
-    'exponent':        'variable',
-    'fail':            'variable',
-    'floatDigits':     'variable',
-    'floatRadix':      'variable',
-    'floatRange':      'variable',
-    'fmap':            'variable',
-    'foldl':           'variable',
-    'foldl1':          'variable',
-    'foldr':           'variable',
-    'foldr1':          'variable',
-    'fromEnum':        'variable',
-    'fromInteger':     'variable',
-    'fromIntegral':    'variable',
-    'fromRational':    'variable',
-    'getChar':         'variable',
-    'getContents':     'variable',
-    'getLine':         'variable',
-    'head':            'variable',
-    'interact':        'variable',
-    'ioError':         'variable',
-    'isDenormalized':  'variable',
-    'isIEEE':          'variable',
-    'isInfinite':      'variable',
-    'isNaN':           'variable',
-    'isNegativeZero':  'variable',
-    'iterate':         'variable',
-    'lex':             'variable',
-    'mapM':            'variable',
-    'mapM_':           'variable',
-    'maxBound':        'variable',
-    'minBound':        'variable',
-    'mod':             'variable',
-    'notElem':         'variable',
-    'pred':            'variable',
-    'print':           'variable',
-    'putChar':         'variable',
-    'putStr':          'variable',
-    'putStrLn':        'variable',
-    'quot':            'variable',
-    'quotRem':         'variable',
-    'read':            'variable',
-    'readFile':        'variable',
-    'readIO':          'variable',
-    'readList':        'variable',
-    'readLn':          'variable',
-    'readParen':       'variable',
-    'reads':           'variable',
-    'readsPrec':       'variable',
-    'realToFrac':      'variable',
-    'recip':           'variable',
-    'rem':             'variable',
-    'return':          'variable',
-    'scaleFloat':      'variable',
-    'scanl':           'variable',
-    'scanl1':          'variable',
-    'scanr':           'variable',
-    'scanr1':          'variable',
-    'seq':             'variable',
-    'sequence':        'variable',
-    'sequence_':       'variable',
-    'showChar':        'variable',
-    'showList':        'variable',
-    'showParen':       'variable',
-    'showString':      'variable',
-    'shows':           'variable',
-    'showsPrec':       'variable',
-    'significand':     'variable',
-    'sinh':            'variable',
-    'subtract':        'variable',
-    'succ':            'variable',
-    'tail':            'variable',
-    'tanh':            'variable',
-    'toEnum':          'variable',
-    'toInteger':       'variable',
-    'toRational':      'variable',
-    'uncurry':         'variable',
-    'unzip':           'variable',
-    'unzip3':          'variable',
-    'userError':       'variable',
-    'writeFile':       'variable',
-    'zip':             'variable',
-    'zip3':            'variable',
-    'zipWith':         'variable',
-    'zipWith3':        'variable',
-    'addVectors':      'builtin',
-    'animationOf':     'builtin',
-    'append':          'builtin',
-    'appendAll':       'builtin',
-    'aquamarine':      'builtin',
-    'arc':             'builtin',
-    'azure':           'builtin',
-    'black':           'builtin',
-    'blank':           'builtin',
-    'blue':            'builtin',
-    'bright':          'builtin',
-    'brown':           'builtin',
-    'characters':      'builtin',
-    'chartreuse':      'builtin',
-    'circle':          'builtin',
-    'codeWorldLogo':   'builtin',
-    'color':           'builtin',
-    'coordinatePlane': 'builtin',
-    'cyan':            'builtin',
-    'dark':            'builtin',
-    'empty':           'builtin',
-    'first':           'builtin',
-    'fromOperator':    'builtin',
-    'gray':            'builtin',
-    'green':           'builtin',
-    'grey':            'builtin',
-    'interactionOf':   'builtin',
-    'isInteger':       'builtin',
-    'isMember':        'builtin',
-    'join':            'builtin',
-    'light':           'builtin',
-    'line':            'builtin',
-    'magenta':         'builtin',
-    'muted':           'builtin',
-    'nub':             'builtin',
-    'numberOfCharacters': 'builtin',
-    'numberOfLines':   'builtin',
-    'numberOfWords':   'builtin',
-    'orange':          'builtin',
-    'permutations':    'builtin',
-    'pictureOf':       'builtin',
-    'pictures':        'builtin',
-    'pink':            'builtin',
-    'polygon':         'builtin',
-    'purple':          'builtin',
-    'quotient':        'builtin',
-    'reciprocal':      'builtin',
-    'rectangle':       'builtin',
-    'red':             'builtin',
-    'remainder':       'builtin',
-    'replace':         'builtin',
-    'rest':            'builtin',
-    'rose':            'builtin',
-    'rotate':          'builtin',
-    'rotateVector':    'builtin',
-    'scale':           'builtin',
-    'scaleVector':     'builtin',
-    'search':          'builtin',
-    'sector':          'builtin',
-    'simulationOf':    'builtin',
-    'solidCircle':     'builtin',
-    'solidPolygon':    'builtin',
-    'solidRectangle':  'builtin',
-    'sort':            'builtin',
-    'strip':           'builtin',
-    'stripPrefix':     'builtin',
-    'stripSuffix':     'builtin',
-    'subsequences':    'builtin',
-    'substring':       'builtin',
-    'text':            'builtin',
-    'thickArc':        'builtin',
-    'thickCircle':     'builtin',
-    'thickLine':       'builtin',
-    'thickPolygon':    'builtin',
-    'thickRectangle':  'builtin',
-    'toLower':         'builtin',
-    'toOperator':      'builtin',
-    'toUpper':         'builtin',
-    'translate':       'builtin',
-    'translucent':     'builtin',
-    'transpose':       'builtin',
-    'violet':          'builtin',
-    'white':           'builtin',
-    'withDefault':     'builtin',
-    'yellow':          'builtin',
-  };
-
   updateVisibility();
 
-  var editor = document.getElementById('editor');
-
-  codeworldEditor = CodeMirror.fromTextArea(editor, {
-    mode: { name: 'haskell', overrideKeywords: keywordOverrides },
-    lineNumbers: true,
-    autofocus: true,
-    matchBrackets: true,
-    styleActiveLine: true,
-    autoCloseBrackets: { explode: false },
-    showTrailingSpace: true,
-    indentWithTabs: false,
-    autoClearEmptyLines: true,
-    rulers: [{column: 80, color: "#bbb", lineStyle: "dashed"}],
-    extraKeys: { "Ctrl-Space": "autocomplete",
-                 "Tab"       : "indentMore",
-                 "Shift-Tab" : "indentLess",
-                 "Ctrl-Enter": compile }
-  });
-
-  CodeMirror.commands.save = function(cm) { saveProject(); }
-
   sendHttp('GET', 'autocomplete.txt', null, function(request) {
+    var words = [];
     if (request.status != 200) {
       console.log('Failed to load autocomplete word list.');
-      return;
+    } else {
+      words = request.responseText.split('\n');
     }
 
-    CodeMirror.registerHelper('hintWords', 'haskell',
-                              request.responseText.split('\n'));
-  });
+    var editor = document.getElementById('editor');
 
-  var hash = location.hash.slice(1);
-  if (hash.length > 0) {
-    loadFile('user/' + hash + '.hs');
-    window.location.hash = '';
-  } else {
-    setCode('');
-  }
+    // Override the syntax classification of words from the standard library.
+    var keywordOverrides = {};
+
+    var hints = [
+      "main", "--", "{-", "-}", "::", "->", "<-", "..", "case", "of", "if",
+      "then", "else", "data", "let", "in", "where"
+    ];
+    var hintBlacklist = [
+      "IO", "fromDouble", "fromInt", "fromInteger", "fromRational", "fromString",
+      "ifThenElse", "toDouble", "toInt"
+    ];
+
+    words.forEach(function(word) {
+      keywordOverrides[word] = 'builtin';
+      if (word.length > 1 && hintBlacklist.indexOf(word) < 0) {
+        hints.push(word);
+      }
+    });
+
+    window.codeworldEditor = CodeMirror.fromTextArea(editor, {
+      mode: { name: 'codeworld', overrideKeywords: keywordOverrides },
+      lineNumbers: true,
+      autofocus: true,
+      matchBrackets: true,
+      styleActiveLine: true,
+      autoCloseBrackets: { explode: false },
+      showTrailingSpace: true,
+      indentWithTabs: false,
+      autoClearEmptyLines: true,
+      rulers: [{column: 80, color: "#bbb", lineStyle: "dashed"}],
+      extraKeys: { "Ctrl-Space": "autocomplete",
+                   "Tab"       : "indentMore",
+                   "Shift-Tab" : "indentLess",
+                   "Ctrl-Enter": compile }
+    });
+
+    CodeMirror.commands.save = function(cm) { saveProject(); }
+    CodeMirror.registerHelper('hintWords', 'codeworld', hints);
+
+    var hash = location.hash.slice(1);
+    if (hash.length > 0) {
+      loadFile('user/' + hash + '.hs');
+      window.location.hash = '';
+    } else {
+      setCode('');
+    }
+  });
 
   discoverExamples();
 

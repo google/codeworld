@@ -33,7 +33,11 @@ initial(x:y:vx:vy:_) = Ball((16*x  - 8, 16*y  - 8),
 
 step(world, dt) = bounce(move(world, dt))
 
-move(Ball((x,y), (vx,vy)), dt) = Ball((x + vx*dt, y + vy*dt), (vx, vy))
+move(Ball((x,y), (vx,vy)), dt) = Ball((new_x, new_y), (new_vx, new_vy))
+  where new_x  = x + new_vx * dt
+        new_y  = y + new_vy * dt
+        new_vx = vx
+        new_vy = vy - 30 * dt
 
 bounce(Ball((x,y), (vx,vy))) = Ball((nx,ny), (nvx, nvy))
   where nx  = fence(-border, border, x)

@@ -340,7 +340,7 @@ setupEvents currentActivity canvas = do
 
 passTime :: NominalDiffTime -> MVar Activity -> IO Activity
 passTime dt activity = modifyMVar activity $ \a0 -> do
-    let a1 = activityStep a0 (realToFrac dt)
+    let a1 = activityStep a0 (realToFrac (min dt 0.25))
     return (a1, a1)
 
 run :: Activity -> IO ()

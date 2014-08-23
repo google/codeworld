@@ -23,17 +23,17 @@
 main = pictureOf logo
 
 logo = pictures [
-  translate(top,                     0, 6),
-  translate(color(c, muted(green)), -6,  3),
-  translate(color(o, muted(blue)),  -2,  3),
-  translate(color(d, muted(yellow)), 2,  3),
-  translate(color(e, muted(red)),    6,  3),
-  translate(w,                      -8, -2),
-  translate(o,                      -4, -2),
-  translate(r,                       0, -2),
-  translate(l,                       4, -2),
-  translate(d,                       8, -2),
-  translate(bottom,                  0, -6)
+  translate(top,                    0,  6),
+  translate(color(c, dark(green)), -6,  3),
+  translate(color(o, dark(blue)),  -2,  3),
+  translate(color(d, dark(yellow)), 2,  3),
+  translate(color(e, dark(red)),    6,  3),
+  translate(w,                     -8, -2),
+  translate(o,                     -4, -2),
+  translate(r,                      0, -2),
+  translate(l,                      4, -2),
+  translate(d,                      8, -2),
+  translate(bottom,                 0, -6)
   ]
 
 c = pictures [ rotate(line[(1.6, 0),(0,1.6)], th) | th <- [45, 55 .. 235]]

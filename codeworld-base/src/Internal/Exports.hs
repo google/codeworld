@@ -46,8 +46,6 @@ module Internal.Exports (
     grey,
     light,
     dark,
-    bright,
-    muted,
     translucent,
 
     -- * Pictures

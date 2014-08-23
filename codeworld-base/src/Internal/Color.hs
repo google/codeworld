@@ -55,35 +55,20 @@ pink   = light rose
 
 light :: Color -> Color
 light (RGBA (r, g, b, a)) = RGBA (
-    min (1, r + 0.4),
-    min (1, g + 0.4),
-    min (1, b + 0.4),
+    min (1, r + 0.3),
+    min (1, g + 0.3),
+    min (1, b + 0.3),
     a)
 
 dark :: Color -> Color
 dark (RGBA (r, g, b, a)) = RGBA (
-    max (0, r - 0.4),
-    max (0, g - 0.4),
-    max (0, b - 0.4),
+    max (0, r - 0.3),
+    max (0, g - 0.3),
+    max (0, b - 0.3),
     a)
 
 translucent :: Color -> Color
 translucent (RGBA (r, g, b, a)) = RGBA (r, g, b, a/2)
-
-bright :: Color -> Color
-bright (RGBA (r, g, b, a)) = RGBA (
-    min (1, max (0, (5*r - b - g) / 3)),
-    min (1, max (0, (5*g - r - b) / 3)),
-    min (1, max (0, (5*b - g - r) / 3)),
-    a)
-
-muted :: Color -> Color
-muted (RGBA (r, g, b, a)) = RGBA (
-    (r + avg) / 2,
-    (g + avg) / 2,
-    (b + avg) / 2,
-    a)
-  where avg = (r + g + b) / 3
 
 gray, grey :: Number -> Color
 gray = grey

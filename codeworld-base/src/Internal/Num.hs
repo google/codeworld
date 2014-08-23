@@ -106,8 +106,11 @@ toInt n | isInteger n = P.truncate (toDouble n)
         | otherwise   = P.error "a whole number is required"
 
 instance P.Show Number where
-    showsPrec p x | isInteger x = P.showsPrec p (P.truncate (toDouble x))
-                  | otherwise   = showFFloat P.Nothing (toDouble x)
+    show (Number x) = stripZeros (showFFloatAlt (P.Just 4) x "")
+      where stripZeros = P.reverse
+                       . P.dropWhile (== '.')
+                       . P.dropWhile (== '0')
+                       . P.reverse
 
 instance P.Eq Number where
     Number a == Number b = a == b

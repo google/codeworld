@@ -191,17 +191,28 @@ length = fromInt . P.length
 -- | Applies a function to each element of a list, and produces a list
 -- of results.
 --
--- For example, `map([1, 2, 3, 4, 5], circle)` is a list of circles of
+-- For example, `map(circle, [1, 2, 3, 4, 5])` is a list of circles of
 -- different sizes.
-map :: ([a], a -> b) -> [b]
-map (xs, f) = P.map f xs
+map :: (a -> b, [a]) -> [b]
+map (f, xs) = P.map f xs
 
 -- | Keeps only the elements of a list for which a function evaluates
 -- to `True`.
 --
--- For example, `filter([1, 2, 3, 4, 5], even)` is equal to `[2, 4]`.
-filter :: ([a], a -> Bool) -> [a]
-filter (xs, f) = P.filter f xs
+-- For example, `filter(even, [1, 2, 3, 4, 5])` is equal to `[2, 4]`.
+filter :: (a -> Bool, [a]) -> [a]
+filter (f, xs) = P.filter f xs
+
+-- | Reduces a list of values into a single value, by combining
+-- elements with a function.  The function should take two parameters,
+-- and should be associative (so `f(x,f(y,z)) = f(f(x,y),z)`).  The
+-- list should be non-empty.
+--
+-- For example, `reduce(fromOperator(+), [1, 3, 5])` is equal to `9`.
+reduce :: ((a, a) -> a, [a]) -> a
+reduce (f, [])   = P.error "reduce was applied to an empty list."
+reduce (f, [x])  = x
+reduce (f, x:xs) = f(x, reduce(f, xs))
 
 first :: [a] -> a
 first = P.head

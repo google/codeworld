@@ -54,6 +54,7 @@ module Internal.Prelude (
     map,
     (P.++),
     filter,
+    reduce,
     first,
     rest,
     P.init,

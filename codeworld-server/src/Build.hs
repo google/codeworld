@@ -148,6 +148,7 @@ commonGHCJSArgs = [
     "-XNoTemplateHaskell",
     "-XNoUndecidableInstances",
     "-XOverloadedStrings",
+    "-XPackageImports",
     "-XParallelListComp",
     "-XPatternGuards",
     "-XRankNTypes",

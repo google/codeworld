@@ -17,6 +17,7 @@ Flag ghcjs
     Default: True
 
 Library
+  Hs-source-dirs:      src
   Exposed-modules:     CodeWorld,
                        Prelude,
                        HaskellPrelude,
@@ -186,7 +187,8 @@ Library
                        Text.Show,
                        Text.Show.Functions,
                        Unsafe.Coerce
-  Other-modules:       Internal.Num,
+  Other-modules:       Internal.Exports,
+                       Internal.Num,
                        Internal.Prelude,
                        Internal.Text,
                        Internal.Color,
@@ -197,6 +199,7 @@ Library
   Build-depends:       base,
                        mtl,
                        random,
+                       random-shuffle,
                        text,
                        time
   Exposed:             False

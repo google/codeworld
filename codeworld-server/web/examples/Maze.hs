@@ -79,13 +79,13 @@ isVisitedAt (g,p) = isMember(visited g, p)
 {- Find all the neighbors of a particular point in a grid -}
 neighbors :: (Maze, Point) -> Set Point
 neighbors (g,p) = 
-  filter ([addDirToPoint(p,d) | d <- directions], inbounds) where
+  filter (inbounds, [addDirToPoint(p,d) | d <- directions]) where
   inbounds (x,y) = x >= 0 && x < width g && y >= 0 && y < height g
 
 {- Find all the unvisited neighbors of a point in a grid -}
 unvisitedNeighbors :: (Maze, Point) -> Set Point
 unvisitedNeighbors (g,p) = 
-  filter(neighbors(g, p), \n -> not (isVisitedAt (g, n)))
+  filter(\n -> not (isVisitedAt (g, n)), neighbors(g, p))
 
 {- The main function for building a random maze -}
 buildMaze :: (Number, Number, RandomNumbers) -> Maze

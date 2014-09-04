@@ -35,12 +35,12 @@ mergeContinued (l1:l2:r)
     | otherwise        = l1 : mergeContinued (l2:r)
 
 tokensFrom :: String -> [String]
-tokensFrom decl = concatMap (everyOther . tail) (decl =~ expr :: [[String]])
-  where expr = "^(([A-Za-z0-9_]*) :: .*)"
+tokensFrom decl = concatMap (everyOther . drop 2) (decl =~ expr :: [[String]])
+  where expr = "^((([A-Za-z0-9_]*) :: .*)"
             ++ "|(\\(([^)]*)\\) :: .*)"
             ++ "|(data ([A-Za-z0-9_]*) .*)"
             ++ "|(newtype ([A-Za-z0-9_]*) .*)"
-            ++ "|(type ([A-Za-z0-9_]*) .*)"
+            ++ "|(type ([A-Za-z0-9_]*) .*))"
             ++ "$"
 
 everyOther :: [a] -> [a]

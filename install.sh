@@ -1,3 +1,8 @@
+echo This script doesn't function properly yet!  Please follow the instructions
+echo in the README file.
+
+exit 1
+
 # Determine which package management tool is installed.
 
 BUILD=$(pwd)/build
@@ -7,7 +12,7 @@ mkdir $BUILD
 mkdir $BUILD/downloads
 mkdir $BUILD/bin
 
-export PATH=build/bin:$PATH
+export PATH=$BUILD/bin:$PATH
 
 if type yum > /dev/null
 then
@@ -140,15 +145,15 @@ ghcjs-boot --dev
 
 # Check out ghcjs-dom (https://github.com/ghcjs/ghcjs-dom) and install it
 
-git clone https://github.com/ghcjs/ghcjs-dom.git
-(cd ghcjs-dom && git checkout 1fb18971dff6a793de27d95b4561411ff0f9c722)
-(cd ghcjs-dom && cabal install --ghcjs --prefix=$BUILD)
+git clone https://github.com/ghcjs/ghcjs-dom.git $BUILD/ghcjs-dom
+(cd $BUILD/ghcjs-dom && git checkout 1fb18971dff6a793de27d95b4561411ff0f9c722)
+(cd $BUILD/ghcjs-dom && cabal install --ghcjs --prefix=$BUILD)
 
 # Check out ghcjs-canvas (https://github.com/ghcjs/ghcjs-canvas) and install it
 
-git clone https://github.com/ghcjs/ghcjs-canvas
-(cd ghcjs-canvas && git checkout 73a09bfc538b61f05299f58dedb5f3010437efcc)
-(cd ghcjs-canvas && cabal install --ghcjs --prefix=$BUILD)
+git clone https://github.com/ghcjs/ghcjs-canvas $BUILD/ghcjs-canvas
+(cd $BUILD/ghcjs-canvas && git checkout 73a09bfc538b61f05299f58dedb5f3010437efcc)
+(cd $BUILD/ghcjs-canvas && cabal install --ghcjs --prefix=$BUILD)
 
 # Install the codeworld-base package
 
@@ -156,12 +161,12 @@ git clone https://github.com/ghcjs/ghcjs-canvas
 
 # Build and run the autocomplete generator.
 
-(cd codeworld-base &&  cabal install --prefix=$BUILD --dependencies-only)
-(cd codeworld-base &&  ./run.sh)
+(cd codeworld-autocomplete &&  cabal install --prefix=$BUILD --dependencies-only)
+(cd codeworld-autocomplete &&  ./run.sh)
 
 # Build codeworld-server from this project: cd codeworld-server && cabal build
 
-(cd codeworld-server &&  cabal install --dependencies-only)
+(cd codeworld-server &&  cabal install --prefix=$BUILD --dependencies-only)
 (cd codeworld-server &&  cabal build)
 
 # Get a Google API key, and store it in web/clientId.txt.

@@ -1,7 +1,9 @@
-echo This script doesn't function properly yet!  Please follow the instructions
-echo in the README file.
+#!/bin/sh
 
-exit 1
+echo "This script does not function properly yet!  Please follow the"
+echo "instructions in the README file."
+
+# exit 1
 
 # Determine which package management tool is installed.
 
@@ -64,13 +66,13 @@ then
   sudo apt-get install -y automake
 
   # Needed for nodejs
-  sudo apt-get install -y gcc
-  sudo apt-get install -y openssl
+  sudo apt-get install -y nodejs
+  alias node=nodejs
 
   # Choose the right GHC 7.8.2 download
   GHC_ARCH=x86_64-unknown-linux-deb7
 else
-  echo "WARNING: Couldn't find package manager."
+  echo "WARNING: Could not find package manager."
   echo "Make sure necessary packages are installed."
 fi
 
@@ -81,7 +83,7 @@ fi
 (cd $BUILD/ghc-7.8.2 && ./configure --prefix=$BUILD)
 (cd $BUILD/ghc-7.8.2 && make install)
 
-# install node (seems to be necessary for ghcjs-boot)
+# install node (necessary for ghcjs-boot)
 
 (cd $DOWNLOADS && wget http://nodejs.org/dist/v0.10.29/node-v0.10.29.tar.gz)
 (cd $BUILD && tar -zxf $DOWNLOADS/node-v0.10.29.tar.gz)

@@ -18,12 +18,16 @@
 
 module Build where
 
+import           Control.Applicative
 import           Control.Exception
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
+import           Data.Char
 import           Data.Maybe
 import           Data.Monoid
+import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import           System.Directory
 import           System.FilePath
 import           System.IO
@@ -51,7 +55,23 @@ compileIfNeeded hashed = do
     if hasResult && hasTarget then return True else compileUserSource hashed
 
 generateBaseBundle :: IO ()
-generateBaseBundle = do
+generateBaseBundle = generateBase >> compileBase
+
+generateBase :: IO ()
+generateBase = do
+    lns <- T.lines <$> T.readFile ("web" </> "autocomplete.txt")
+    let exprs = catMaybes (map expression lns)
+    let defs = [ "d" <> T.pack (show i) <> " = " <> e
+                 | (i,e) <- zip [0 :: Int ..] exprs ]
+    let src = "module LinkBase where\n" <> T.intercalate "\n" defs
+    T.writeFile ("user" </> "LinkBase.hs") src
+  where expression t | T.null t           = Nothing
+                     | isUpper (T.head t) = Nothing
+                     | isLower (T.head t) = Just t
+                     | otherwise          = Just ("(" <> t <> ")")
+
+compileBase :: IO ()
+compileBase = do
     let ghcjsArgs = commonGHCJSArgs ++ [
             "--generate-base=LinkBase",
             "-o", "base",

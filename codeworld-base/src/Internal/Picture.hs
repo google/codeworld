@@ -163,10 +163,10 @@ a & b           = Pictures [a, b]
 coordinatePlane :: Picture
 coordinatePlane = axes & numbers & guidelines
   where xline(y) = line[(-10, y), (10, y)]
-        xaxis = color(xline(0), gray(0.25))
+        xaxis = color(xline(0), RGBA(0, 0, 0, 0.75))
         axes = xaxis & rotate(xaxis, 90)
         xguidelines = pictures[
-            color(xline(k), gray(0.75)) | k <- [-10, -9 .. 10] ]
+            color(xline(k), RGBA(0, 0, 0, 0.25)) | k <- [-10, -9 .. 10] ]
         guidelines = xguidelines & rotate(xguidelines, 90)
         numbers = xnumbers & ynumbers
         xnumbers = pictures [

@@ -21,8 +21,8 @@
 -}
 main = interactionOf(createWorld, fst, event, drawWorld)
 
-{- A World contains 
-    * the location of the player in the maze 
+{- A World contains
+    * the location of the player in the maze
     * the maze itself, which is a Maze
 -}
 data World = World { loc :: Point, maze :: Maze }
@@ -39,8 +39,8 @@ event(w, KeyPress "Right") = move(right, w)
 event(w, _) = w
 
 move :: (Direction, World) -> World
-move (d, w@(World p@(x, y) (Maze _ _ _ ds))) = 
-  w { loc = if (containsDoor (ds, (p, p')))  then p' else p } 
+move (d, w@(World p@(x, y) (Maze _ _ _ ds))) =
+  w { loc = if (containsDoor (ds, (p, p')))  then p' else p }
   where p' = addDirToPoint(p,d)
 
 {- Draw the maze and the player in it. -}
@@ -49,7 +49,7 @@ drawWorld w = scale (translate (pictures
   [drawBall (loc w), drawMaze (maze w)], -10, -10), 0.98, 0.98) where
   drawBall (x,y) = translate (ball, x, y)
   ball = translate (color (solidCircle 0.5, blue), 0.5, 0.5)
- 
+
 {- Maze generation code -}
 type Direction = Vector
 directions = [up, down, right, left]
@@ -64,12 +64,12 @@ reverseDoor ((fx,fy),(tx,ty)) = ((tx,ty),(fx,fy))
 data Maze = Maze {
   width   :: Number,    height :: Number,
   visited :: Set Point, doors  :: Set Door }
-                   
+
 addDoor :: (Maze, Door) -> Maze
 addDoor (g,d) = g { doors = addToSet(doors g, d) }
 
-containsDoor (ds, d) = isMember(ds, d) || isMember(ds, reverseDoor d)     
-    
+containsDoor (ds, d) = isMember(ds, d) || isMember(ds, reverseDoor d)
+
 markVisitedAt :: (Maze, Point) -> Maze
 markVisitedAt (g,p) = g { visited = addToSet(visited g, p) }
 
@@ -78,21 +78,21 @@ isVisitedAt (g,p) = isMember(visited g, p)
 
 {- Find all the neighbors of a particular point in a grid -}
 neighbors :: (Maze, Point) -> Set Point
-neighbors (g,p) = 
+neighbors (g,p) =
   filter (inbounds, [addDirToPoint(p,d) | d <- directions]) where
   inbounds (x,y) = x >= 0 && x < width g && y >= 0 && y < height g
 
 {- Find all the unvisited neighbors of a point in a grid -}
 unvisitedNeighbors :: (Maze, Point) -> Set Point
-unvisitedNeighbors (g,p) = 
+unvisitedNeighbors (g,p) =
   filter(\n -> not (isVisitedAt (g, n)), neighbors(g, p))
 
 {- The main function for building a random maze -}
 buildMaze :: (Number, Number, RandomNumbers) -> Maze
-buildMaze (w,h,randoms) = go((w-1,h-1), startMaze, randoms) where 
+buildMaze (w,h,randoms) = go((w-1,h-1), startMaze, randoms) where
   startMaze = (Maze w h [] (entranceDoor : exitDoor : [])) where
     entranceDoor = ((-1,0), (0,0))
-    exitDoor     = ((w-1,h-1), (w,h-1))  
+    exitDoor     = ((w-1,h-1), (w,h-1))
   go :: (Point, Maze, RandomNumbers) -> Maze
   go (current,g,rs) = foldl f newMaze nbors where
     newMaze = markVisitedAt(g, current)
@@ -100,7 +100,7 @@ buildMaze (w,h,randoms) = go((w-1,h-1), startMaze, randoms) where
     f gacc n = if isVisitedAt(gacc, n) then gacc else recur where
       newG  = addDoor (gacc, (current, n))
       recur = go(n, newG, rest rs)
-    
+
 {- Maze painting code -}
 drawMaze (Maze w h _ ds) = pictures [doorsPic, allGridLines] where
   doorsPic = pictures [drawDoor d | d <- ds]
@@ -111,12 +111,12 @@ drawMaze (Maze w h _ ds) = pictures [doorsPic, allGridLines] where
 drawDoor :: Door -> Picture
 drawDoor (from, to) = color (thickLine (g(from, to), 0.1), white) where
  g :: (Point, Point) -> [Point]
- g ((fx,fy), (tx,ty)) 
+ g ((fx,fy), (tx,ty))
    | fy < ty = [(fx,  fy+1), (tx+1,ty)]   -- going up
    | fy > ty = [(fx,  fy),   (tx+1,ty+1)] -- going down
    | fx < tx = [(fx+1,fy),   (tx,  ty+1)] -- going right
    | fx > tx = [(fx,  fy),   (tx+1,ty+1)] -- going left
-                                                           
+
 {- Helper Functions -}
 type RandomNumbers = [Number]
 type Set a = [a]

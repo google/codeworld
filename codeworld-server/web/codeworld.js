@@ -19,6 +19,8 @@ function init() {
   showingDoc = false;
   showingResult = false;
 
+  usingHaskellPrelude = false;
+
   updateVisibility();
 
   sendHttp('GET', 'autocomplete.txt', null, function(request) {
@@ -324,25 +326,31 @@ function stop() {
 }
 
 function addToMessage(msg) {
-  var message = document.getElementById('message');
-  message.innerHTML += msg
-      .replace(/IO action main/g, 'variable main')
-      .replace(/module Main/g,    'the program')
-      .replace(/IO action main/g, 'variable main')
-      .replace(/\[GHC\.Types\.Char\] -> /g, '')
-      .replace(/base\:GHC\.Base\.String -> /g, '')
-      .replace(/integer-gmp:(.|\n)*?-> /g, '')
-      .replace(/IO \(\)/g, 'Program')
-      .replace(/IO [a-z][a-zA-Z0-9_]*/g, 'Program')
-      .replace(/Perhaps you intended to use TemplateHaskell/g, '')
-      .replace(/ \(imported from Prelude\)/g, '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
+  msg = msg
       .replace(/(user\/)?P[A-Za-z0-9_=\-]*\.hs:(\d+):((\d+)(-\d+)?)/g,
                '<a href="#" onclick="goto($2, $4);">Line $2, Column $3</a>')
       .replace(/(user\/)?P[A-Za-z0-9_=\-]*\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
                '<a href="#" onclick="goto($2, $3);">Line $2-$4, Column $3-$5</a>')
+
+  if (!window.usingHaskellPrelude) {
+    msg = msg
+        .replace(/IO action main/g, 'variable main')
+        .replace(/module Main/g,    'the program')
+        .replace(/IO action main/g, 'variable main')
+        .replace(/\[GHC\.Types\.Char\] -> /g, '')
+        .replace(/base\:GHC\.Base\.String -> /g, '')
+        .replace(/integer-gmp:(.|\n)*?-> /g, '')
+        .replace(/IO \(\)/g, 'Program')
+        .replace(/IO [a-z][a-zA-Z0-9_]*/g, 'Program')
+        .replace(/Perhaps you intended to use TemplateHaskell/g, '')
+        .replace(/ \(imported from Prelude\)/g, '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+  }
+
+  var message = document.getElementById('message');
+  message.innerHTML += msg
 }
 
 function run(hash, msg, error) {
@@ -382,14 +390,16 @@ function goto(line, col) {
 function compile() {
   run('', 'Building...', false);
 
+  var src = window.codeworldEditor.getValue();
   var data = new FormData();
-  data.append('source', window.codeworldEditor.getValue());
+  data.append('source', src);
 
   sendHttp('POST', 'compile', data, function(request) {
     var hash = request.responseText;
     var success = request.status == 200;
 
     sendHttp('GET', 'user/' + hash + '.err.txt', null, function(request) {
+      window.usingHaskellPrelude = /HaskellPrelude/.test(src);
       var msg = '';
       if (request.status == 200) {
         msg = request.responseText;
@@ -397,11 +407,11 @@ function compile() {
         msg = "Sorry!  Your program couldn't be run right now.  Please try again.";
       }
 
-      if (success && msg == '') {
-        msg = 'Running...';
+      if (success) {
+        run(hash, 'Running...\n\n' + msg, false);
+      } else {
+        run('', msg, true);
       }
-
-      run(hash, msg, !success);
     });
   });
 }

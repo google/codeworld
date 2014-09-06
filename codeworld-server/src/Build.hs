@@ -138,7 +138,6 @@ commonGHCJSArgs = [
     "-XEmptyDataDecls",
     "-XExistentialQuantification",
     "-XForeignFunctionInterface",
-    "-XImplicitPrelude",
     "-XJavaScriptFFI",
     "-XKindSignatures",
     "-XLiberalTypeSynonyms",
@@ -156,5 +155,6 @@ commonGHCJSArgs = [
     "-XRecordWildCards",
     "-XScopedTypeVariables",
     "-XTypeOperators",
-    "-XViewPatterns"
+    "-XViewPatterns",
+    "-XImplicitPrelude"  -- MUST come after RebindableSyntax.
     ]

@@ -3,10 +3,6 @@
 echo "This script does not function properly yet!  Please follow the"
 echo "instructions in the README file."
 
-# exit 1
-
-# Determine which package management tool is installed.
-
 BUILD=$(pwd)/build
 DOWNLOADS=$BUILD/downloads
 
@@ -15,6 +11,9 @@ mkdir $BUILD/downloads
 mkdir $BUILD/bin
 
 export PATH=$BUILD/bin:$PATH
+
+# Determine which package management tool is installed, and install
+# necessary system packages.
 
 if type yum > /dev/null
 then
@@ -36,10 +35,7 @@ then
   sudo yum install -y patch
   sudo yum install -y autoconf
   sudo yum install -y automake
-
-  # Needed for nodejs
-  sudo yum install -y gcc-c++
-  sudo yum install -y openssl-devel
+  sudo yum install -y nodejs
 
   # Choose the right GHC 7.8.2 download
   GHC_ARCH=x86_64-unknown-linux-centos65
@@ -64,10 +60,7 @@ then
   sudo apt-get install -y patch
   sudo apt-get install -y autoconf
   sudo apt-get install -y automake
-
-  # Needed for nodejs
-  sudo apt-get install -y nodejs
-  alias node=nodejs
+  sudo apt-get install -y nodejs-legacy
 
   # Choose the right GHC 7.8.2 download
   GHC_ARCH=x86_64-unknown-linux-deb7
@@ -82,14 +75,6 @@ fi
 (cd $BUILD && tar -xjf $DOWNLOADS/ghc-7.8.2-$GHC_ARCH.tar.bz2)
 (cd $BUILD/ghc-7.8.2 && ./configure --prefix=$BUILD)
 (cd $BUILD/ghc-7.8.2 && make install)
-
-# install node (necessary for ghcjs-boot)
-
-(cd $DOWNLOADS && wget http://nodejs.org/dist/v0.10.29/node-v0.10.29.tar.gz)
-(cd $BUILD && tar -zxf $DOWNLOADS/node-v0.10.29.tar.gz)
-(cd $BUILD/node-v0.10.29 && ./configure --prefix=$BUILD)
-(cd $BUILD/node-v0.10.29 && make)
-(cd $BUILD/node-v0.10.29 && make install)
 
 # Install all the dependencies for cabal
 

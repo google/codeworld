@@ -143,7 +143,6 @@ checkDangerousSource src = do
 
 commonGHCJSArgs :: [String]
 commonGHCJSArgs = [
-    "--no-native",
     "-Wall",
     "-O2",
     "-fno-warn-deprecated-flags",

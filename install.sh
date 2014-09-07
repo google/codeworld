@@ -1,16 +1,5 @@
 #!/bin/bash
 
-echo "This script does not function properly yet!  Please follow the"
-echo "instructions in the README file."
-
-echo "Continue anyway?"
-select yn in "Yes" "No"; do
-    case $yn in
-        Yes ) break;;
-        No  ) exit;;
-    esac
-done
-
 BUILD=$(pwd)/build
 DOWNLOADS=$BUILD/downloads
 

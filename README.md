@@ -36,20 +36,39 @@ agree to a Contributor License Agreement.  See CONTRIBUTING.md for details.
 Build and Deployment
 ====================
 
-Building CodeWorld is, unfortunately, an involved process at the moment.  Here are the
-approximate step by step instructions to get an example working:
+Building and running CodeWorld can be a lengthy process.  Most of it is automated using
+the installation scripts in the root directory.  The step by step instructions are as
+follows:
 
-1. Install GHC 7.8, since it's required for GHCJS.
-2. Get a patched version of cabal (https://github.com/ghcjs/cabal) and
-   then `git checkout ghcjs` to switch to the GHCJS branch, and finally
-   `cabal install` both the Cabal and cabal-install packages.
-3. Get GHCJS itself (https://github.com/ghcjs/ghcjs) and `cabal install`.
-4. Run `ghcjs-boot --dev`.
-5. Check out ghcjs-dom (https://github.com/ghcjs/ghcjs-dom) and install it with `cabal install --ghcjs`.
-6. Check out ghcjs-canvas (https://github.com/ghcjs/ghcjs-canvas) and install it with `cabal install --ghcjs`.
-7. Install the codeworld-base package from this project: `cd codeworld-base && cabal install --ghcjs`.
-8. Build codeworld-server from this project: `cd codeworld-server && cabal build`
-9. Get a Google API key, and store it in web/clientId.txt.
-10. Run the server: `cd codeworld-server && ./run.sh 8080`.
+0. Read the caveats, explained below.
+1. Change to the root directory of the project.
+2. Run ./install.sh, to install GHC, GHCJS, and required libraries.
+3. Run ./run.sh to build and run CodeWorld itself.
 
 You can now access the CodeWorld system at http://localhost:8080.
+
+Caveats
+-------
+
+### Google API Key ###
+
+CodeWorld allows users to authenticate using a Google account, and save
+their projects.  For this feature to work, you need to obtain a Google API key, and store
+it in codeworld-server/web/clientId.txt.  If you don't do this, the sign-in and save
+features will not function correctly, but the rest of the site will be usable.
+
+### Swap Space ###
+
+If you are installing CodeWorld on a virtual server, be aware that the default
+RAM on these servers is often not sufficient for GHC.  CodeWorld needs to compile very
+large Haskell projects during its installation.  The following should be sufficient to
+resolve any out-of-memory problems you encounter:
+
+    $ sudo dd if=/dev/zero of=/swap bs=1024 count=2097152
+    $ sudo mkswap /swap
+    $ sudo swapon /swap
+
+This creates a 2 GB swap file to increase available virtual memory.  Installation with
+a swap file may be slow, but it will succeed.  (Unless you intend to write very large
+programs in CodeWorld, it's usually safe to remove the swap file before running the
+server.)

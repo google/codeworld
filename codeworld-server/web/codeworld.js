@@ -327,10 +327,13 @@ function stop() {
 
 function addToMessage(msg) {
   msg = msg
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
       .replace(/(user\/)?P[A-Za-z0-9_=\-]*\.hs:(\d+):((\d+)(-\d+)?)/g,
                '<a href="#" onclick="goto($2, $4);">Line $2, Column $3</a>')
       .replace(/(user\/)?P[A-Za-z0-9_=\-]*\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
-               '<a href="#" onclick="goto($2, $3);">Line $2-$4, Column $3-$5</a>')
+               '<a href="#" onclick="goto($2, $3);">Line $2-$4, Column $3-$5</a>');
 
   if (!window.usingHaskellPrelude) {
     msg = msg
@@ -343,10 +346,7 @@ function addToMessage(msg) {
         .replace(/IO \(\)/g, 'Program')
         .replace(/IO [a-z][a-zA-Z0-9_]*/g, 'Program')
         .replace(/Perhaps you intended to use TemplateHaskell/g, '')
-        .replace(/ \(imported from Prelude\)/g, '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+        .replace(/ \(imported from Prelude\)/g, '');
   }
 
   var message = document.getElementById('message');

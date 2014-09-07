@@ -112,7 +112,6 @@ Library
                        GHC.Enum,
                        GHC.Environment,
                        GHC.Err,
-                       GHC.Event,
                        GHC.Exception,
                        GHC.Exts,
                        GHC.Fingerprint,

@@ -39,23 +39,33 @@
   <body onload="init()" class="flex">
     <div id="mainRow">
       <div id="nav" class="dropbox">
+        <div id="nav_ctrl">
+          <a id="saveButton" class="cw-button cw-button-left blue" onclick="saveProject()">
+            <i class="fa fa-lg fa-cloud-upload"></i>&nbsp; Save
+          </a>
+          <a id="saveAsButton" class="cw-button cw-button-left blue" onclick="saveProjectAs()">
+            <i class="fa fa-lg fa-ellipsis-h"></i>&nbsp; Save As
+          </a>
+          <a id="deleteButton" class="cw-button cw-button-left red" onclick="deleteProject()">
+            <i class="fa fa-lg fa-trash-o"></i>&nbsp; Delete
+          </a>
+          <a id="signin"  class="cw-button cw-button-left blue" onclick="signin()">
+            <i class="fa fa-lg fa-sign-in"></i>&nbsp; Sign In
+          </a>
+          <a id="signout" class="cw-button cw-button-left blue" onclick="signout()">
+            <i class="fa fa-lg fa-sign-out"></i>&nbsp; Sign Out
+          </a>
+        </div>
         <div id="nav_mine">
           <a id="newButton" class="cw-button cw-button-left red" onclick="setCode('')">
             <i class="fa fa-lg fa-plus fa-fw"></i>&nbsp; New
-          </a>
-        </div>
-        <div id="nav_examples">
-        </div>
-        <div id="nav_license">
-          <a id="licenseButton" class="cw-button cw-button-left green" onclick="toggleDoc('license.md')">
-            <i class="fa fa-lg fa-info-circle fa-fw"></i>&nbsp; License
           </a>
         </div>
       </div>
 
       <form id="source" class="dropbox"><textarea id="editor" placeholder="Type your program here..."></textarea></form>
 
-      <iframe id="doc" class="dropbox" src="doc.html"></iframe>
+      <iframe id="doc" class="dropbox" src="doc.html?help/main.md"></iframe>
 
       <div id="result">
         <iframe id="runner" class="dropbox" width="500" height="500"></iframe>
@@ -64,12 +74,7 @@
     </div>
     <div id="buttons">
       <a id="navButton" class="cw-button blue" onclick="toggleBrowser()"><i class="fa fa-lg fa-cubes"></i>&nbsp; Browse</a>
-      <a id="docButton" class="cw-button blue" onclick="toggleDoc('intro/main.md')"><i class="fa fa-lg fa-book"></i>&nbsp; Help</a>
-      <a id="saveButton" class="cw-button green" onclick="saveProject()"><i class="fa fa-lg fa-cloud-upload"></i>&nbsp; Save</a>
-      <a id="saveAsButton" class="cw-button green" onclick="saveProjectAs()"><i class="fa fa-lg fa-ellipsis-h"></i>&nbsp; Save As</a>
-      <a id="deleteButton" class="cw-button green" onclick="deleteProject()"><i class="fa fa-lg fa-trash-o"></i>&nbsp; Delete</a>
-      <a id="signin"  class="cw-button green" onclick="signin()"><i class="fa fa-lg fa-sign-in"></i>&nbsp; Sign In</a>
-      <a id="signout" class="cw-button red"   onclick="signout()"><i class="fa fa-lg fa-sign-out"></i>&nbsp; Sign Out</a>
+      <a id="docButton" class="cw-button blue" onclick="toggleDoc('help/main.md')"><i class="fa fa-lg fa-book"></i>&nbsp; Help</a>
       <a id="shareButton" class="cw-button blue" onclick="share()"><i class="fa fa-lg fa-share"></i>&nbsp; Share</a>
       <a class="cw-button red" onclick="stop()"><i class="fa fa-lg fa-stop"></i>&nbsp; Stop</a>
       <a class="cw-button green" onclick="compile()"><i class="fa fa-lg fa-play"></i>&nbsp; Run</a>

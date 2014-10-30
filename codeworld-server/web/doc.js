@@ -85,9 +85,9 @@
       document.body.insertBefore(contents, document.body.firstChild);
     }
   }
-  var hash = window.location.hash.slice(1);
+  var path = window.location.search.slice(1);
   var request = new XMLHttpRequest();
-  request.open('GET', hash, true);
+  request.open('GET', path, true);
   request.onreadystatechange = function() {
     if (request.readyState == 4) {
       var text = request.responseText;

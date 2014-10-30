@@ -78,39 +78,7 @@ body {
   overflow-y: auto;
 }
 
-#nav_mine {
-  flex: 0 0 auto;
-  -webkit-flex: 0 0 auto;
-  -ms-flex: 0 0 auto;
-  display: flex;
-  display: -webkit-flex;
-  display: -ms-flex;
-  align-items: stretch;
-  -webkit-align-items: stretch;
-  -ms-align-items: stretch;
-  flex-direction: column;
-  -webkit-flex-direction: column;
-  -ms-flex-direction: column;
-  margin: 0px;
-}
-
-#nav_examples {
-  flex: 0 0 auto;
-  -webkit-flex: 0 0 auto;
-  -ms-flex: 0 0 auto;
-  display: flex;
-  display: -webkit-flex;
-  display: -ms-flex;
-  align-items: stretch;
-  -webkit-align-items: stretch;
-  -ms-align-items: stretch;
-  flex-direction: column;
-  -webkit-flex-direction: column;
-  -ms-flex-direction: column;
-  margin: 0px;
-}
-
-#nav_license {
+#nav_mine, #nav_ctrl {
   flex: 0 0 auto;
   -webkit-flex: 0 0 auto;
   -ms-flex: 0 0 auto;
@@ -199,10 +167,10 @@ body {
   border-radius: 3px;
   cursor: pointer;
   text-align: center;
-  font-size:12px;
+  font-size:11px;
   font-family:arial, helvetica, sans-serif;
   margin: 2px 2px 2px 2px;
-  padding: 10px 10px 10px 10px;
+  padding: 7px 7px 7px 7px;
   text-decoration: none;
   display:inline-block;
   text-shadow: -1px -1px 0 rgba(0,0,0,0.3);

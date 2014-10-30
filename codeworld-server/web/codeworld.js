@@ -81,8 +81,6 @@ function init() {
     }
   });
 
-  discoverExamples();
-
   onbeforeunload = function(event) {
     if (!isEditorClean()) {
       var msg = 'There are unsaved changes to your project. '
@@ -159,45 +157,13 @@ function toggleBrowser() {
 
 function toggleDoc(root) {
   window.showingDoc = !window.showingDoc;
-  if (window.showingDoc) {
-    var loc = document.getElementById('doc').contentWindow.location;
-    loc.hash = root;
-    loc.reload(true);
-  }
   updateVisibility();
-}
+  if (window.showingDoc) {
+    stop();
 
-function discoverExamples() {
-  sendHttp('GET', 'listExamples', null, function(request) {
-    if (request.status != 200) {
-      return;
-    }
-
-    var examples = document.getElementById('nav_examples');
-    while (examples.firstChild) {
-      examples.removeChild(examples.firstChild);
-    }
-
-    JSON.parse(request.responseText).forEach(function(filename) {
-      if (filename == '') {
-        return;
-      }
-
-      var name = filename.replace(/\.[^/.]+$/, '');
-
-      var template = document.getElementById('exampleTemplate').innerHTML;
-      template = template.replace('{{label}}', 'Try: ' + name);
-
-      var span = document.createElement('span');
-      span.innerHTML = template;
-      var elem = span.getElementsByTagName('a')[0];
-      elem.onclick = function() {
-        loadFile('examples/' + filename);
-      };
-
-      examples.appendChild(span.removeChild(elem));
-    });
-  });
+    var loc = document.getElementById('doc').contentWindow.location;
+    loc.search = root;
+  }
 }
 
 function discoverProjects() {
@@ -355,6 +321,9 @@ function addToMessage(msg) {
 
 function run(hash, msg, error) {
   window.showingResult = hash || msg;
+  if (window.showingResult) {
+    window.showingDoc = false;
+  }
 
   var runner = document.getElementById('runner');
   if (hash && !error) {

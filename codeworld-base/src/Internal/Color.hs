@@ -32,40 +32,52 @@ black = RGBA (0, 0, 0, 1)
 
 -- Primary and secondary colors
 red, green, blue, cyan, magenta, yellow :: Color
-red        = RGBA (1, 0, 0, 1)
-green      = RGBA (0, 1, 0, 1)
-blue       = RGBA (0, 0, 1, 1)
-yellow     = RGBA (1, 1, 0, 1)
-cyan       = RGBA (0, 1, 1, 1)
-magenta    = RGBA (1, 0, 1, 1)
+red        = fromHSL (  0, 0.75, 0.5)
+yellow     = fromHSL ( 60, 0.75, 0.5)
+green      = fromHSL (120, 0.75, 0.5)
+cyan       = fromHSL (180, 0.75, 0.5)
+blue       = fromHSL (240, 0.75, 0.5)
+magenta    = fromHSL (300, 0.75, 0.5)
 
 -- Tertiary colors
 orange, rose, chartreuse, aquamarine, violet, azure :: Color
-orange     = RGBA (1.0, 0.5, 0.0, 1)
-rose       = RGBA (1.0, 0.0, 0.5, 1)
-chartreuse = RGBA (0.5, 1.0, 0.0, 1)
-aquamarine = RGBA (0.0, 1.0, 0.5, 1)
-violet     = RGBA (0.5, 0.0, 1.0, 1)
-azure      = RGBA (0.0, 0.5, 1.0, 1)
+orange     = fromHSL ( 30, 0.75, 0.5)
+chartreuse = fromHSL ( 90, 0.75, 0.5)
+aquamarine = fromHSL (150, 0.75, 0.5)
+azure      = fromHSL (210, 0.75, 0.5)
+violet     = fromHSL (270, 0.75, 0.5)
+rose       = fromHSL (330, 0.75, 0.5)
 
 -- Other common colors and color names
-brown  = RGBA (0.7, 0.4, 0.3, 1)
-purple = violet
-pink   = light rose
+brown      = fromHSL ( 15, 0.5,  0.5)
+purple     = fromHSL (280, 0.75, 0.5)
+pink       = fromHSL (345, 0.75, 0.75)
+
+lighter :: (Color, Number) -> Color
+lighter (c, d) = fromHSL (hue c, saturation c, fence (luminosity c + d))
+  where fence x = max (0, min (1, x))
 
 light :: Color -> Color
-light (RGBA (r, g, b, a)) = RGBA (
-    min (1, r + 0.3),
-    min (1, g + 0.3),
-    min (1, b + 0.3),
-    a)
+light c = lighter (c, 0.15)
+
+darker :: (Color, Number) -> Color
+darker (c, d) = lighter (c, -d)
 
 dark :: Color -> Color
-dark (RGBA (r, g, b, a)) = RGBA (
-    max (0, r - 0.3),
-    max (0, g - 0.3),
-    max (0, b - 0.3),
-    a)
+dark c = darker (c, 0.15)
+
+brighter :: (Color, Number) -> Color
+brighter (c, d) = fromHSL (hue c, fence (saturation c + d), luminosity c)
+  where fence x = max (0, min (1, x))
+
+bright :: Color -> Color
+bright c = brighter (c, 0.25)
+
+duller :: (Color, Number) -> Color
+duller (c, d) = brighter (c, -d)
+
+dull :: Color -> Color
+dull c = duller (c, 0.25)
 
 translucent :: Color -> Color
 translucent (RGBA (r, g, b, a)) = RGBA (r, g, b, a/2)
@@ -73,3 +85,37 @@ translucent (RGBA (r, g, b, a)) = RGBA (r, g, b, a/2)
 gray, grey :: Number -> Color
 gray = grey
 grey k = RGBA (k, k, k, 1)
+
+hue (RGBA (r, g, b, a))
+  | hi P.== lo            = 0
+  | r P.== hi P.&& g >= b = 60 * (g - b) / (hi - lo)
+  | r P.== hi             = 60 * (g - b) / (hi - lo) + 360
+  | g P.== hi             = 60 * (b - r) / (hi - lo) + 120
+  | P.otherwise           = 60 * (r - g) / (hi - lo) + 240
+  where hi = max (r, max (g, b))
+        lo = min (r, min (g, b))
+
+saturation (RGBA (r, g, b, a))
+  | hi P.== lo  = 0
+  | P.otherwise = (hi - lo) / (1 - abs (hi + lo - 1))
+  where hi = max (r, max (g, b))
+        lo = min (r, min (g, b))
+
+luminosity (RGBA (r, g, b, a)) = (lo + hi) / 2
+  where hi = max (r, max (g, b))
+        lo = min (r, min (g, b))
+
+fromHSL (h, s, l)
+  | h < 0       = fromHSL (h + 360, s, l)
+  | h > 360     = fromHSL (h - 360, s, l)
+  | h < 60      = RGBA (c + m, x + m, m,     1)
+  | h < 120     = RGBA (x + m, c + m, m,     1)
+  | h < 180     = RGBA (m,     c + m, x + m, 1)
+  | h < 240     = RGBA (m,     x + m, c + m, 1)
+  | h < 300     = RGBA (x + m, m,     c + m, 1)
+  | P.otherwise = RGBA (c + m, m,     x + m, 1)
+  where c                      = (1 - abs (2 * l - 1)) * s
+        hnorm                  = h / 60
+        x | even (floor hnorm) = c * (1 - abs (hnorm - floor hnorm - 1))
+          | P.otherwise        = c * (1 - abs (hnorm - floor hnorm))
+        m                      = l - c / 2

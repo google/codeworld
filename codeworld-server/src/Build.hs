@@ -130,6 +130,8 @@ runCompiler micros args = do
         return err
 
     terminateProcess pid
+    _ <- waitForProcess pid
+
     return result
 
 checkDangerousSource :: FilePath -> IO Bool

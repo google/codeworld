@@ -44,6 +44,9 @@ then
   sudo apt-get update -y
 
   sudo apt-get install -y git
+  sudo apt-get install -y bzip2
+  sudo apt-get install -y psmisc
+
   sudo apt-get install -y zlib1g-dev
   sudo apt-get install -y libncurses5-dev
 

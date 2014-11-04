@@ -299,15 +299,6 @@ function stop() {
 }
 
 function addToMessage(msg) {
-  msg = msg
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/(user\/)?P[A-Za-z0-9_=\-]*\.hs:(\d+):((\d+)(-\d+)?)/g,
-               '<a href="#" onclick="goto($2, $4);">Line $2, Column $3</a>')
-      .replace(/(user\/)?P[A-Za-z0-9_=\-]*\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
-               '<a href="#" onclick="goto($2, $3);">Line $2-$4, Column $3-$5</a>');
-
   if (!window.usingHaskellPrelude) {
     msg = msg
         .replace(/IO action main/g, 'variable main')
@@ -316,11 +307,31 @@ function addToMessage(msg) {
         .replace(/\[GHC\.Types\.Char\] -> /g, '')
         .replace(/base\:GHC\.Base\.String -> /g, '')
         .replace(/integer-gmp:(.|\n)*?-> /g, '')
+        .replace(/Main\./g, '')
+        .replace(/Prelude\./g, '')
         .replace(/IO \(\)/g, 'Program')
         .replace(/IO [a-z][a-zA-Z0-9_]*/g, 'Program')
         .replace(/Perhaps you intended to use TemplateHaskell/g, '')
-        .replace(/ \(imported from Prelude\)/g, '');
+        .replace(/imported from [^)\n]*/g, 'defined in the standard library')
+        .replace(/\(and originally defined in [^)]*\)/g, '')
+        .replace(/the first argument/g, 'the parameter(s)')
+        .replace(/A data constructor of that name is in scope; did you mean DataKinds\?/,
+                 'That name refers to a value, not a type.')
+        .replace(/type constructor or class/g, 'type constructor')
+        .replace(/Illegal tuple section: use TupleSections/,
+                 'This tuple is missing a value, or has an extra comma.')
+        .replace(/in string\/character literal/,
+                 'in text literal');
   }
+
+  msg = msg
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/(user\/)?P[A-Za-z0-9_=\-]*\.hs:(\d+):((\d+)(-\d+)?)/g,
+               '<a href="#" onclick="goto($2, $4);">Line $2, Column $3</a>')
+      .replace(/(user\/)?P[A-Za-z0-9_=\-]*\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
+               '<a href="#" onclick="goto($2, $3);">Line $2-$4, Column $3-$5</a>');
 
   var message = document.getElementById('message');
   message.innerHTML += msg

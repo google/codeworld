@@ -31,7 +31,7 @@
 .CodeMirror span.cm-meta {color: #555;}
 .CodeMirror span.cm-error {color: #f00;}
 .CodeMirror span.cm-qualifier {color: #666;}
-.CodeMirror span.cm-builtin {color: #30a;}
+.CodeMirror span.cm-builtin {color: #41b; font-weight: bold}
 .CodeMirror span.cm-bracket {color: #cc7;}
 .CodeMirror span.cm-tag {color: #170;}
 .CodeMirror span.cm-attribute {color: #00c;}

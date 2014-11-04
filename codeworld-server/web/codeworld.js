@@ -66,7 +66,6 @@ function init() {
       autofocus: true,
       matchBrackets: true,
       styleActiveLine: true,
-      autoCloseBrackets: { explode: false },
       showTrailingSpace: true,
       indentWithTabs: false,
       autoClearEmptyLines: true,

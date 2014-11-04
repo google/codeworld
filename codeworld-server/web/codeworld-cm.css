@@ -22,7 +22,6 @@
 .CodeMirror span.cm-def {color: #00f;}
 .CodeMirror span.cm-variable {color: black;}
 .CodeMirror span.cm-variable-2 {color: #38c;}
-.CodeMirror span.cm-variable-3 {color: #0a5;}
 .CodeMirror span.cm-property {color: black;}
 .CodeMirror span.cm-operator {color: black;}
 .CodeMirror span.cm-comment {color: #161;}
@@ -31,7 +30,8 @@
 .CodeMirror span.cm-meta {color: #555;}
 .CodeMirror span.cm-error {color: #f00;}
 .CodeMirror span.cm-qualifier {color: #666;}
-.CodeMirror span.cm-builtin {color: #41b; font-weight: bold}
+.CodeMirror span.cm-builtin {color: #30a; font-weight: bold}
+.CodeMirror span.cm-builtin-2 {color: #38c; font-weight: bold}
 .CodeMirror span.cm-bracket {color: #cc7;}
 .CodeMirror span.cm-tag {color: #170;}
 .CodeMirror span.cm-attribute {color: #00c;}

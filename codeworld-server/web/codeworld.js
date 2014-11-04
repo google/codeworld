@@ -46,11 +46,19 @@ function init() {
     ];
 
     words.forEach(function(word) {
-      keywordOverrides[word] = 'builtin';
+      if (/^[A-Z:]/.test(word)) {
+        keywordOverrides[word] = 'builtin-2';
+      } else {
+        keywordOverrides[word] = 'builtin';
+      }
+
       if (word.length > 1 && hintBlacklist.indexOf(word) < 0) {
         hints.push(word);
       }
     });
+
+    // Special case for main, since it's morally a built-in name.
+    keywordOverrides['main'] = 'builtin';
 
     window.codeworldEditor = CodeMirror.fromTextArea(editor, {
       mode: { name: 'codeworld', overrideKeywords: keywordOverrides },

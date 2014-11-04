@@ -69,7 +69,7 @@ tokensFromNewtype decl = concatMap (elemsAt [1]) matches
 
 tokensFromType :: String -> [String]
 tokensFromType decl = concatMap (elemsAt [1]) matches
-  where matches = decl =~ "^newtype ([A-Za-z0-9_]*)( .*)?$" :: [[String]]
+  where matches = decl =~ "^type ([A-Za-z0-9_]*)( .*)?$" :: [[String]]
 
 -- Selects specific indices from a list.  The list of indices must be
 -- in non-decreasing order.

@@ -53,6 +53,14 @@ brown      = fromHSL ( 15, 0.5,  0.5)
 purple     = fromHSL (280, 0.75, 0.5)
 pink       = fromHSL (345, 0.75, 0.75)
 
+mixColors :: (Color, Color) -> Color
+mixColors (RGBA (r1,g1,b1,a1), RGBA (r2, g2, b2, a2))
+  | a1 + a2 P.== 0 = RGBA (0, 0, 0, 0)
+  | P.otherwise    = RGBA ((r1 * a1 + r2 * a2) / (a1 + a2),
+                           (g1 * a1 + g2 * a2) / (a1 + a2),
+                           (b1 * a1 + b2 * a2) / (a1 + a2),
+                           (a1 + a2) / 2)
+
 lighter :: (Color, Number) -> Color
 lighter (c, d) = fromHSL (hue c, saturation c, fence (luminosity c + d))
   where fence x = max (0, min (1, x))

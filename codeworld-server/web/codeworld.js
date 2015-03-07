@@ -79,6 +79,8 @@ function init() {
     CodeMirror.commands.save = function(cm) { saveProject(); }
     CodeMirror.registerHelper('hintWords', 'codeworld', hints);
 
+    window.codeworldEditor.on('changes', window.setTitle);
+
     var hash = location.hash.slice(1);
     if (hash.length > 0) {
       if (hash.indexOf('==', hash.length - 2) === -1) {
@@ -219,6 +221,21 @@ function discoverProjects() {
   });
 }
 
+function setTitle() {
+  var title;
+  if (window.openProjectName) {
+    title = window.openProjectName;
+  } else {
+    title = "(new)";
+  }
+
+  if (!isEditorClean()) {
+    title = "* " + title;
+  }
+
+  document.title = title + " - CodeWorld"
+}
+
 function isEditorClean() {
   var doc = window.codeworldEditor.getDoc();
 
@@ -245,6 +262,7 @@ function setCode(code, history, name) {
   codeworldEditor.focus();
 
   savedGeneration = doc.changeGeneration(true);
+  setTitle();
   updateVisibility();
 }
 
@@ -507,6 +525,7 @@ function saveProjectBase(projectName) {
     window.openProjectName = projectName;
     window.savedGeneration = doc.changeGeneration(true);
     discoverProjects();
+    setTitle();
     updateVisibility();
   });
 }

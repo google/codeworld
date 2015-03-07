@@ -35,6 +35,9 @@
       var parts = params[i].split('=');
       if (parts[0] == 'hash') {
         var hash = params[i].slice(5);
+        if (hash.indexOf('==', hash.length - 2) === -1) {
+          hash += '==';
+        }
         var script = document.createElement('script');
         script.setAttribute('type', 'text/javascript');
         script.setAttribute('src', 'runJS?hash=' + hash);

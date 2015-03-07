@@ -81,6 +81,9 @@ function init() {
 
     var hash = location.hash.slice(1);
     if (hash.length > 0) {
+      if (hash.indexOf('==', hash.length - 2) === -1) {
+        hash += '==';
+      }
       loadFile('user/' + hash + '.hs');
       window.location.hash = '';
     } else {

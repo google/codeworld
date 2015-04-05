@@ -129,6 +129,8 @@ maybe (m, f, b) = P.maybe b f m
 either :: (P.Either a b, a -> c, b -> c) -> c
 either (x, f, g) = P.either f g x
 
+infix 4 ==, /=
+
 (==) :: a -> a -> Bool
 a == b = deepEq a b
 
@@ -220,6 +222,8 @@ first = P.head
 
 rest :: [a] -> [a]
 rest = P.tail
+
+infixl 9 !!
 
 (!!) :: [a] -> Number -> a
 xs !! n = xs P.!! toInt n

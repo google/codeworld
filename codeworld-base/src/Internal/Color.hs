@@ -56,7 +56,7 @@ pink       = fromHSL (345, 0.75, 0.75)
 mixColors :: (Color, Color) -> Color
 mixColors (RGBA (r1,g1,b1,a1), RGBA (r2, g2, b2, a2))
   | a1 + a2 P.== 0 = RGBA (0, 0, 0, 0)
-  | otherwise      = RGBA (r, g, b, a)
+  | P.otherwise    = RGBA (r, g, b, a)
   where r = sqrt(r1^2 * a1 + r2^2 * a2 / (a1 + a2))
         g = sqrt(g1^2 * a1 + g2^2 * a2 / (a1 + a2))
         b = sqrt(b1^2 * a1 + b2^2 * a2 / (a1 + a2))

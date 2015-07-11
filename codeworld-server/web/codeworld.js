@@ -322,6 +322,8 @@ function stop() {
 function addToMessage(msg) {
   if (!window.usingHaskellPrelude) {
     msg = msg
+        .replace(/\u2018/g, '')
+        .replace(/\u2019/g, '')
         .replace(/IO action main/g, 'variable main')
         .replace(/module Main/g,    'the program')
         .replace(/IO action main/g, 'variable main')

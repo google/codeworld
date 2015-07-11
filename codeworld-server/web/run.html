@@ -35,6 +35,10 @@
       var parts = params[i].split('=');
       if (parts[0] == 'hash') {
         var hash = params[i].slice(5);
+        if (hash.indexOf('%3d%3d', hash.length - 6) !== -1 ||
+            hash.indexOf('%3D%3D', hash.length - 6) !== -1) {
+          hash = hash.slice(0, hash.length - 6);
+        }
         if (hash.indexOf('==', hash.length - 2) === -1) {
           hash += '==';
         }

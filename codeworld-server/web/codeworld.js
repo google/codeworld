@@ -326,7 +326,6 @@ function addToMessage(msg) {
         .replace(/\u2019/g, '')
         .replace(/IO action main/g, 'variable main')
         .replace(/module Main/g,    'the program')
-        .replace(/IO action main/g, 'variable main')
         .replace(/\[GHC\.Types\.Char\] -> /g, '')
         .replace(/base\:GHC\.Base\.String -> /g, '')
         .replace(/integer-gmp:(.|\n)*?-> /g, '')

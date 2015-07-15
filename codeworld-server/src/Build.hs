@@ -73,7 +73,7 @@ generateBase = do
 compileBase :: IO ()
 compileBase = do
     let ghcjsArgs = commonGHCJSArgs ++ [
-            "--generate-base=LinkBase",
+            "-generate-base", "LinkBase",
             "-o", "base",
             "LinkMain.hs"
           ]
@@ -95,9 +95,9 @@ compileUserSource hashed = do
         return False
     compile = do
         let ghcjsArgs = commonGHCJSArgs ++ [
-                "--no-rts",
-                "--no-stats",
-                "--use-base=base.jsexe/out.base.symbs",
+                "-no-rts",
+                "-no-stats",
+                "-use-base", "base.jsexe/out.base.symbs",
                 "./" ++ src
               ]
         runCompiler userCompileMicros ghcjsArgs >>= respond

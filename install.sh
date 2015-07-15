@@ -1,7 +1,23 @@
 #!/bin/bash
 
+function run {
+  cd $1
+  shift
+  echo RUNNING: $@
+  $@
+  if [ $? -ne 0 ]; then
+    echo ============================
+    echo = Aborting: Command failed =
+    echo ============================
+
+    exit 1
+  fi
+}
+
 BUILD=$(pwd)/build
 DOWNLOADS=$BUILD/downloads
+
+rm -rf $BUILD ~/.ghc ~/.cabal
 
 mkdir $BUILD
 mkdir $BUILD/downloads
@@ -12,58 +28,64 @@ export PATH=$BUILD/bin:$PATH
 # Determine which package management tool is installed, and install
 # necessary system packages.
 
-if type yum > /dev/null
+if type yum > /dev/null 2> /dev/null
 then
+  echo Detected 'yum': Installing packages from there.
+  echo
+
   # Update and install basic dependencies
 
-  sudo yum update -y
+  run . sudo yum update -y
 
-  sudo yum install -y git
-  sudo yum install -y zlib-devel
-  sudo yum install -y ncurses-devel
+  run . sudo yum install -y git
+  run . sudo yum install -y zlib-devel
+  run . sudo yum install -y ncurses-devel
 
   # Needed for GHC 7.8
-  sudo yum install -y gcc
-  sudo yum install -y gmp-devel
-
-  # Needed for nodejs
-  sudo yum install -y gcc-c++
-  sudo yum install -y openssl-devel
+  run . sudo yum install -y gcc
+  run . sudo yum install -y gmp-devel
 
   # Needed for ghcjs-boot --dev
-  sudo yum install -y patch
-  sudo yum install -y autoconf
-  sudo yum install -y automake
+  run . sudo yum install -y patch
+  run . sudo yum install -y autoconf
+  run . sudo yum install -y automake
+
+  # Needed for nodejs
+  run . sudo yum install -y gcc-c++
+  run . sudo yum install -y openssl-devel
 
   # Choose the right GHC 7.8.2 download
   GHC_ARCH=x86_64-unknown-linux-centos65
-elif type apt-get > /dev/null
+elif type apt-get > /dev/null 2> /dev/null
 then
+  echo Detected 'apt-get': Installing packages from there.
+  echo
+
   # Update and install basic dependencies
 
-  sudo apt-get update -y
+  run . sudo apt-get update -y
 
-  sudo apt-get install -y git
-  sudo apt-get install -y bzip2
-  sudo apt-get install -y psmisc
+  run . sudo apt-get install -y git
+  run . sudo apt-get install -y bzip2
+  run . sudo apt-get install -y psmisc
 
-  sudo apt-get install -y zlib1g-dev
-  sudo apt-get install -y libncurses5-dev
+  run . sudo apt-get install -y zlib1g-dev
+  run . sudo apt-get install -y libncurses5-dev
 
   # Needed for GHC 7.8
-  sudo apt-get install -y make
-  sudo apt-get install -y gcc
-  sudo apt-get install -y libgmp-dev
+  run . sudo apt-get install -y make
+  run . sudo apt-get install -y gcc
+  run . sudo apt-get install -y libgmp-dev
 
   # Needed for ghcjs-boot --dev
-  sudo apt-get install -y patch
-  sudo apt-get install -y autoconf
-  sudo apt-get install -y automake
-  sudo apt-get install -y nodejs-legacy
+  run . sudo apt-get install -y patch
+  run . sudo apt-get install -y autoconf
+  run . sudo apt-get install -y automake
+  run . sudo apt-get install -y nodejs-legacy
 
   # Needed for nodejs
-  sudo apt-get install -y g++
-  sudo apt-get install -y openssl
+  run . sudo apt-get install -y g++
+  run . sudo apt-get install -y openssl
 
   # Choose the right GHC 7.8.2 download
   GHC_ARCH=x86_64-unknown-linux-deb7
@@ -72,78 +94,53 @@ else
   echo "Make sure necessary packages are installed."
 fi
 
-# install node (necessary for ghcjs-boot)
+export PREFIX=$BUILD
 
-(cd $DOWNLOADS && wget http://nodejs.org/dist/v0.10.29/node-v0.10.29.tar.gz)
-(cd $BUILD && tar -zxf $DOWNLOADS/node-v0.10.29.tar.gz)
-(cd $BUILD/node-v0.10.29 && ./configure --prefix=$BUILD)
-(cd $BUILD/node-v0.10.29 && make)
-(cd $BUILD/node-v0.10.29 && make install)
+# Install GHC 7.8.3, since it's required for GHCJS.
 
-# Install GHC 7.8, since it's required for GHCJS.
-
-(cd $DOWNLOADS && wget http://www.haskell.org/ghc/dist/7.8.2/ghc-7.8.2-$GHC_ARCH.tar.bz2)
-(cd $BUILD && tar -xjf $DOWNLOADS/ghc-7.8.2-$GHC_ARCH.tar.bz2)
-(cd $BUILD/ghc-7.8.2 && ./configure --prefix=$BUILD)
-(cd $BUILD/ghc-7.8.2 && make install)
+run $DOWNLOADS        wget http://www.haskell.org/ghc/dist/7.8.3/ghc-7.8.3-$GHC_ARCH.tar.bz2
+run $BUILD            tar xjf $DOWNLOADS/ghc-7.8.3-$GHC_ARCH.tar.bz2
+run $BUILD/ghc-7.8.3  ./configure --prefix=$BUILD
+run $BUILD/ghc-7.8.3  make install
 
 # Install all the dependencies for cabal
 
-fromHackage() {
-    (cd $DOWNLOADS && wget https://hackage.haskell.org/package/$1-$2/$1-$2.tar.gz)
-    (cd $BUILD && tar -xzf $DOWNLOADS/$1-$2.tar.gz)
-    (cd $BUILD/$1-$2 && runghc $3 configure --prefix=$BUILD)
-    (cd $BUILD/$1-$2 && runghc $3 build)
-    (cd $BUILD/$1-$2 && runghc $3 install --global)
+run $DOWNLOADS                     wget https://www.haskell.org/cabal/release/cabal-install-1.22.6.0/cabal-install-1.22.6.0.tar.gz
+run $BUILD                         tar xzf $DOWNLOADS/cabal-install-1.22.6.0.tar.gz
+run $BUILD/cabal-install-1.22.6.0  ./bootstrap.sh
+run .                              cabal update
+
+function cabal_install {
+  cabal install --global --prefix=$BUILD --reorder-goals --max-backjumps=-1 $@
 }
 
-fromHackage zlib 0.5.4.1 Setup.hs
-fromHackage stm 2.4.3 Setup.hs
-fromHackage random 1.0.1.1 Setup.hs
-fromHackage mtl 2.1.3.1 Setup.hs
-fromHackage text 1.1.1.3 Setup.lhs
-fromHackage parsec 3.1.5  Setup.hs
-fromHackage network 2.5.0.0 Setup.hs
-fromHackage HTTP 4000.2.17 Setup.lhs
+# Fetch the prerequisites for GHCJS.
 
-# Get a patched version of cabal (https://github.com/ghcjs/cabal) and
-# then git checkout ghcjs to switch to the GHCJS branch, and finally
-# cabal install both the Cabal and cabal-install packages.
-
-fromLocal() {
-    (cd $1 && runghc Setup.hs configure --prefix=$BUILD)
-    (cd $1 && runghc Setup.hs build)
-    (cd $1 && runghc Setup.hs install --global)
-}
-
-git clone -b ghcjs https://github.com/ghcjs/cabal.git $BUILD/cabal
-fromLocal $BUILD/cabal/Cabal Setup.hs
-fromLocal $BUILD/cabal/cabal-install Setup.hs
-
-cabal update
+run . cabal_install happy-1.19.5 alex-3.1.4
 
 # Get GHCJS itself (https://github.com/ghcjs/ghcjs) and cabal install.
 
-cabal install --global --prefix=$BUILD alex
-cabal install --global --prefix=$BUILD happy
+run $BUILD git clone https://github.com/ghcjs/ghcjs-prim.git
+run $BUILD git clone https://github.com/ghcjs/ghcjs.git
+run $BUILD cabal_install ./ghcjs ./ghcjs-prim
 
-git clone https://github.com/ghcjs/ghcjs-prim.git $BUILD/ghcjs-prim
-(cd $BUILD/ghcjs-prim && cabal install --global --prefix=$BUILD)
+# install node (necessary for ghcjs-boot)
 
-git clone https://github.com/ghcjs/ghcjs.git $BUILD/ghcjs
-(cd $BUILD/ghcjs && cabal install --global --prefix=$BUILD)
+run $DOWNLOADS           wget http://nodejs.org/dist/v0.12.7/node-v0.12.7.tar.gz
+run $BUILD               tar xzf $DOWNLOADS/node-v0.12.7.tar.gz
+run $BUILD/node-v0.12.7  ./configure --prefix=$BUILD
+run $BUILD/node-v0.12.7  make
+run $BUILD/node-v0.12.7  make install
 
 # Bootstrap ghcjs
 
-ghcjs-boot --dev
+run . ghcjs-boot --dev
 
-# Check out ghcjs-dom (https://github.com/ghcjs/ghcjs-dom) and install it
+# Install ghcjs-dom from hackage.
 
-git clone https://github.com/ghcjs/ghcjs-dom.git $BUILD/ghcjs-dom
-(cd $BUILD/ghcjs-dom && cabal install --global --ghcjs --prefix=$BUILD)
+run $BUILD cabal_install --ghcjs ghcjs-dom
 
-# Check out ghcjs-canvas (https://github.com/ghcjs/ghcjs-canvas) and install it
+# Check out ghcjs-canvas and install it
 
-git clone https://github.com/ghcjs/ghcjs-canvas $BUILD/ghcjs-canvas
-(cd $BUILD/ghcjs-canvas && cabal install --global --ghcjs --prefix=$BUILD)
-
+run $BUILD  git clone https://github.com/ghcjs/ghcjs-canvas
+run $BUILD  cabal_install --ghcjs --prefix=$BUILD ./ghcjs-canvas

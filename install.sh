@@ -54,9 +54,6 @@ then
   # Needed for nodejs
   run . sudo yum install -y gcc-c++
   run . sudo yum install -y openssl-devel
-
-  # Choose the right GHC download
-  GHC_ARCH=x86_64-unknown-linux-centos65
 elif type apt-get > /dev/null 2> /dev/null
 then
   echo Detected 'apt-get': Installing packages from there.
@@ -86,9 +83,6 @@ then
   # Needed for nodejs
   run . sudo apt-get install -y g++
   run . sudo apt-get install -y openssl
-
-  # Choose the right GHC download
-  GHC_ARCH=x86_64-unknown-linux-deb7
 elif type zypper > /dev/null 2> /dev/null
 then
   echo Detected 'zypper': Installing packages from there.
@@ -118,9 +112,6 @@ then
   # Needed for nodejs
   run . sudo zypper -n install gcc-c++
   run . sudo zypper -n install openssl
-
-  # Choose the right GHC download
-  GHC_ARCH=x86_64-unknown-linux-deb7
 else
   echo "WARNING: Could not find package manager."
   echo "Make sure necessary packages are installed."
@@ -128,12 +119,22 @@ fi
 
 export PREFIX=$BUILD
 
-# Install GHC 7.8.3, since it's required for GHCJS.
+# Choose the right GHC download
+if /sbin/ldconfig -p | grep -q libgmp.so.10; then
+  GHC_ARCH=x86_64-unknown-linux-deb7
+elif /sbin/ldconfig -p | grep -q libgmp.so.3; then
+  GHC_ARCH=x86_64-unknown-linux-centos65
+else
+  echo Sorry, but no supported libgmp is installed.
+  exit 1
+fi
 
-run $DOWNLOADS        wget http://www.haskell.org/ghc/dist/7.8.3/ghc-7.8.3-$GHC_ARCH.tar.bz2
-run $BUILD            tar xjf $DOWNLOADS/ghc-7.8.3-$GHC_ARCH.tar.bz2
-run $BUILD/ghc-7.8.3  ./configure --prefix=$BUILD
-run $BUILD/ghc-7.8.3  make install
+# Install GHC 7.8, since it's required for GHCJS.
+
+run $DOWNLOADS        wget http://www.haskell.org/ghc/dist/7.8.4/ghc-7.8.4-$GHC_ARCH.tar.bz2
+run $BUILD            tar xjf $DOWNLOADS/ghc-7.8.4-$GHC_ARCH.tar.bz2
+run $BUILD/ghc-7.8.4  ./configure --prefix=$BUILD
+run $BUILD/ghc-7.8.4  make install
 
 # Install all the dependencies for cabal
 

@@ -81,7 +81,6 @@ then
   run . sudo apt-get install -y patch
   run . sudo apt-get install -y autoconf
   run . sudo apt-get install -y automake
-  run . sudo apt-get install -y nodejs-legacy
 
   # Needed for nodejs
   run . sudo apt-get install -y g++

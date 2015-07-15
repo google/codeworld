@@ -95,28 +95,28 @@ then
 
   # Update and install basic dependencies
 
-  run . sudo zypper refresh
+  run . sudo zypper -n refresh
 
-  run . sudo zypper install git
-  run . sudo zypper install bzip2
-  run . sudo zypper install psmisc
+  run . sudo zypper -n install git
+  run . sudo zypper -n install bzip2
+  run . sudo zypper -n install psmisc
 
-  run . sudo zypper install zlib-devel
-  run . sudo zypper install ncurses-devel
+  run . sudo zypper -n install zlib-devel
+  run . sudo zypper -n install ncurses-devel
 
   # Needed for GHC 7.8
-  run . sudo zypper install make
-  run . sudo zypper install gcc
-  run . sudo zypper install gmp-devel
+  run . sudo zypper -n install make
+  run . sudo zypper -n install gcc
+  run . sudo zypper -n install gmp-devel
 
   # Needed for ghcjs-boot --dev
-  run . sudo zypper install patch
-  run . sudo zypper install autoconf
-  run . sudo zypper install automake
+  run . sudo zypper -n install patch
+  run . sudo zypper -n install autoconf
+  run . sudo zypper -n install automake
 
   # Needed for nodejs
-  run . sudo zypper install gcc-c++
-  run . sudo zypper install openssl
+  run . sudo zypper -n install gcc-c++
+  run . sudo zypper -n install openssl
 
   # Choose the right GHC download
   GHC_ARCH=x86_64-unknown-linux-deb7

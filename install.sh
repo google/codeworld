@@ -54,7 +54,7 @@ then
   run . sudo yum install -y gcc-c++
   run . sudo yum install -y openssl-devel
 
-  # Choose the right GHC 7.8.2 download
+  # Choose the right GHC download
   GHC_ARCH=x86_64-unknown-linux-centos65
 elif type apt-get > /dev/null 2> /dev/null
 then
@@ -86,7 +86,39 @@ then
   run . sudo apt-get install -y g++
   run . sudo apt-get install -y openssl
 
-  # Choose the right GHC 7.8.2 download
+  # Choose the right GHC download
+  GHC_ARCH=x86_64-unknown-linux-deb7
+elif type zypper > /dev/null 2> /dev/null
+then
+  echo Detected 'zypper': Installing packages from there.
+  echo
+
+  # Update and install basic dependencies
+
+  run . sudo zypper refresh
+
+  run . sudo zypper install git
+  run . sudo zypper install bzip2
+  run . sudo zypper install psmisc
+
+  run . sudo zypper install zlib-devel
+  run . sudo zypper install ncurses-devel
+
+  # Needed for GHC 7.8
+  run . sudo zypper install make
+  run . sudo zypper install gcc
+  run . sudo zypper install gmp-devel
+
+  # Needed for ghcjs-boot --dev
+  run . sudo zypper install patch
+  run . sudo zypper install autoconf
+  run . sudo zypper install automake
+
+  # Needed for nodejs
+  run . sudo zypper install gcc-c++
+  run . sudo zypper install openssl
+
+  # Choose the right GHC download
   GHC_ARCH=x86_64-unknown-linux-deb7
 else
   echo "WARNING: Could not find package manager."

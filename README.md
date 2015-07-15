@@ -50,6 +50,15 @@ You can now access the CodeWorld system at http://localhost:8080.
 Caveats
 -------
 
+### Leaky GHCJS Sandboxing ###
+
+While the installation process installs most of its files inside `codeworld/build`, it does
+clobber `~/.ghc`, `~/.ghcjs`, and `~/.cabal`.  I recommend that you run CodeWorld as a
+dedicated user account to avoid causing problems for other Haskell installations.  If you
+don't, note that you will lose your user package database.
+
+See bug #4 for details.
+
 ### Google API Key ###
 
 CodeWorld allows users to authenticate using a Google account, and save

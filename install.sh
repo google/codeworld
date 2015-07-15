@@ -24,6 +24,7 @@ mkdir $BUILD/downloads
 mkdir $BUILD/bin
 
 export PATH=$BUILD/bin:$PATH
+export LANG=${LANG:-C.UTF-8}
 
 # Determine which package management tool is installed, and install
 # necessary system packages.

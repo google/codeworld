@@ -36,9 +36,9 @@ agree to a Contributor License Agreement.  See CONTRIBUTING.md for details.
 Build and Deployment
 ====================
 
-Building and running CodeWorld can be a lengthy process.  Most of it is automated using
-the installation scripts in the root directory.  The step by step instructions are as
-follows:
+Building and running CodeWorld can be a lengthy process, but is automated using the
+installation scripts in the root directory, which work on most forms of Linux, including
+Debian, Ubuntu, RedHat, and CentOS.  The step by step instructions are as follows:
 
 0. Read the caveats, explained below.
 1. Change to the root directory of the project.
@@ -70,5 +70,5 @@ resolve any out-of-memory problems you encounter:
 
 This creates a 2 GB swap file to increase available virtual memory.  Installation with
 a swap file may be slow, but it will succeed.  (Unless you intend to write very large
-programs in CodeWorld, it's usually safe to remove the swap file before running the
-server.)
+programs in CodeWorld, it's usually safe to remove the swap file after running the
+server for the first time.)

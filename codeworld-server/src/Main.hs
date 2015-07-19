@@ -29,6 +29,7 @@ import qualified Data.ByteString.Char8 as BC
 import           Data.Maybe
 import           Data.Monoid
 import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import qualified Data.Text.Encoding as T
 import           Network.HTTP.Conduit
 import           Snap.Core
@@ -42,6 +43,8 @@ import Build
 import Model
 import Util
 
+newtype ClientId = ClientId (Maybe T.Text) deriving (Eq)
+
 main :: IO ()
 main = do
     hasClientId <- doesFileExist "web/clientId.txt"
@@ -49,22 +52,34 @@ main = do
         putStrLn "WARNING: Missing web/clientId.txt"
         putStrLn "User logins will not function properly!"
 
+    clientId <- case hasClientId of
+        True -> do
+            txt <- T.readFile "web/clientId.txt"
+            return (ClientId (Just (T.strip txt)))
+        False -> return (ClientId Nothing)
+
     hasAutocomplete <- doesFileExist "web/autocomplete.txt"
     when (not hasAutocomplete) $ do
         putStrLn "WARNING: Missing web/autocomplete.txt"
         putStrLn "Autocomplete will not function properly!"
 
     generateBaseBundle
-    quickHttpServe $ (processBody >> site) <|> site
+    quickHttpServe $ (processBody >> site clientId) <|> site clientId
 
 -- Retrieves the user for the current request.  The request should have an
 -- id_token parameter with an id token retrieved from the Google
 -- authentication API.  The user is returned if the id token is valid.
-getUser :: Snap User
-getUser = getParam "id_token" >>= \ case
+getUser :: ClientId -> Snap User
+getUser clientId = getParam "id_token" >>= \ case
     Nothing       -> pass
-    Just id_token -> maybe pass return =<< (fmap decode $ liftIO $ simpleHttp $
-        "https://www.googleapis.com/oauth2/v1/tokeninfo?id_token=" ++ BC.unpack id_token)
+    Just id_token -> do
+        let url = "https://www.googleapis.com/oauth2/v1/tokeninfo?id_token=" ++ BC.unpack id_token
+        decoded <- fmap decode $ liftIO $ simpleHttp url
+        case decoded of
+            Nothing -> pass
+            Just user -> do
+                when (clientId /= ClientId (Just (audience user))) pass
+                return user
 
 -- A revised upload policy that allows up to 4 MB of uploaded data in a
 -- request.  This is needed to handle uploads of projects including editor
@@ -78,44 +93,55 @@ processBody = do
     handleMultipart codeworldUploadPolicy (const $ return ())
     return ()
 
-site :: Snap ()
-site =
+site :: ClientId -> Snap ()
+site clientId =
     route [
-      ("loadProject",   loadProjectHandler),
-      ("saveProject",   saveProjectHandler),
-      ("deleteProject", deleteProjectHandler),
+      ("loadProject",   loadProjectHandler clientId),
+      ("saveProject",   saveProjectHandler clientId),
+      ("deleteProject", deleteProjectHandler clientId),
+      ("listProjects",  listProjectsHandler clientId),
       ("compile",       compileHandler),
       ("run",           runHandler),
       ("runJS",         runHandler),
-      ("listExamples",  listExamplesHandler),
-      ("listProjects",  listProjectsHandler)
+      ("listExamples",  listExamplesHandler)
     ] <|>
     dir "user" (serveDirectory "user") <|>
     serveDirectory "web"
 
-loadProjectHandler :: Snap ()
-loadProjectHandler = do
-    user      <- getUser
+loadProjectHandler :: ClientId -> Snap ()
+loadProjectHandler clientId = do
+    user      <- getUser clientId
     Just name <- getParam "name"
     let hash = T.decodeUtf8 (getHash name)
     let fname = "projects" </> T.unpack (hash <> "." <> userId user <> ".cw")
     serveFile fname
 
-saveProjectHandler :: Snap ()
-saveProjectHandler = do
-    user <- getUser
+saveProjectHandler :: ClientId -> Snap ()
+saveProjectHandler clientId = do
+    user <- getUser clientId
     Just project <- decode . LB.fromStrict . fromJust <$> getParam "project"
     let hash = getHash (T.encodeUtf8 (projectName project))
     let fname = T.decodeUtf8 hash <> "." <> userId user <> ".cw"
     liftIO $ LB.writeFile ("projects" </> T.unpack fname) $ encode project
 
-deleteProjectHandler :: Snap ()
-deleteProjectHandler = do
-    user      <- getUser
+deleteProjectHandler :: ClientId -> Snap ()
+deleteProjectHandler clientId = do
+    user      <- getUser clientId
     Just name <- getParam "name"
     let hash = T.decodeUtf8 (getHash name)
     let fname = "projects" </> T.unpack (hash <> "." <> userId user <> ".cw")
     liftIO $ removeFile fname
+
+listProjectsHandler :: ClientId -> Snap ()
+listProjectsHandler clientId = do
+    user  <- getUser clientId
+    projects <- liftIO $ do
+        let ext = T.unpack $ "." <> userId user <> ".cw"
+        let base = "projects"
+        files <- getFilesByExt ext base
+        mapM (fmap (fromJust . decode) . LB.readFile . (base </>)) files :: IO [Project]
+    modifyResponse $ setContentType "application/json"
+    writeLBS (encode (map projectName projects))
 
 compileHandler :: Snap ()
 compileHandler = do
@@ -139,14 +165,3 @@ listExamplesHandler = do
     files <- liftIO $ getFilesByExt ".hs" "web/examples"
     modifyResponse $ setContentType "application/json"
     writeLBS (encode files)
-
-listProjectsHandler :: Snap ()
-listProjectsHandler = do
-    user  <- getUser
-    projects <- liftIO $ do
-        let ext = T.unpack $ "." <> userId user <> ".cw"
-        let base = "projects"
-        files <- getFilesByExt ext base
-        mapM (fmap (fromJust . decode) . LB.readFile . (base </>)) files :: IO [Project]
-    modifyResponse $ setContentType "application/json"
-    writeLBS (encode (map projectName projects))

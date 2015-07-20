@@ -334,7 +334,7 @@ function addToMessage(msg) {
         .replace(/Prelude\./g, '')
         .replace(/IO \(\)/g, 'Program')
         .replace(/IO [a-z][a-zA-Z0-9_]*/g, 'Program')
-        .replace(/^[ ]*Perhaps you intended to use TemplateHaskell\n$/, '')
+        .replace(/[ ]*Perhaps you intended to use TemplateHaskell\n/, '')
         .replace(/imported from [^)\n]*/g, 'defined in the standard library')
         .replace(/\(and originally defined in [^)]*\)/g, '')
         .replace(/the first argument/g, 'the parameter(s)')

@@ -87,6 +87,7 @@ module Internal.Prelude (
     nub, -- using deepEq
     sort, -- specialized to Number
     shuffle,
+    splitRandoms
     ) where
 
 import qualified "base" Prelude as P
@@ -278,7 +279,16 @@ nub = L.nubBy deepEq
 sort :: [Number] -> [Number]
 sort = L.sort
 
+numToStdGen :: Number -> StdGen
+numToStdGen r = mkStdGen (P.round (P.realToFrac r P.* P.fromIntegral (P.maxBound :: P.Int)))
+
+randomsFrom :: StdGen -> [Number]
+randomsFrom g = fromDouble a : randomsFrom g2
+  where (a, g2) = random g
+
 shuffle :: ([a], Number) -> [a]
 shuffle ([], r) = []
-shuffle (xs, r) = shuffle' xs (P.length xs) gen
-  where gen = mkStdGen (P.round (P.realToFrac r P.* P.fromIntegral (P.maxBound :: P.Int)))
+shuffle (xs, r) = shuffle' xs (P.length xs) (numToStdGen r)
+
+splitRandoms :: [Number] -> ([Number], [Number])
+splitRandoms (a:b:_) = (randomsFrom (numToStdGen a), randomsFrom (numToStdGen b))

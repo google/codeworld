@@ -86,8 +86,8 @@ module Internal.Prelude (
     L.permutations,
     nub, -- using deepEq
     sort, -- specialized to Number
-    shuffle,
-    splitRandoms
+    seedRandoms,
+    shuffle
     ) where
 
 import qualified "base" Prelude as P
@@ -290,5 +290,5 @@ shuffle :: ([a], Number) -> [a]
 shuffle ([], r) = []
 shuffle (xs, r) = shuffle' xs (P.length xs) (numToStdGen r)
 
-splitRandoms :: [Number] -> ([Number], [Number])
-splitRandoms (a:b:_) = (randomsFrom (numToStdGen a), randomsFrom (numToStdGen b))
+seedRandoms :: Number -> [Number]
+seedRandoms = randomsFrom . numToStdGen

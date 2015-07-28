@@ -196,6 +196,8 @@ Library
                        Internal.CodeWorld,
                        Internal.DeepEq
   Build-depends:       base,
+                       ghcjs-base,
+                       ghcjs-dom,
                        mtl,
                        random,
                        random-shuffle,

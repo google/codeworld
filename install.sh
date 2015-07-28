@@ -17,7 +17,7 @@ function run {
 BUILD=$(pwd)/build
 DOWNLOADS=$BUILD/downloads
 
-rm -rf $BUILD ~/.ghc ~/.cabal
+rm -rf $BUILD ~/.ghc
 
 mkdir $BUILD
 mkdir $BUILD/downloads
@@ -129,12 +129,15 @@ else
   exit 1
 fi
 
-# Install GHC 7.8, since it's required for GHCJS.
+# Install GHC, since it's required for GHCJS.
 
-run $DOWNLOADS        wget http://www.haskell.org/ghc/dist/7.8.4/ghc-7.8.4-$GHC_ARCH.tar.bz2
-run $BUILD            tar xjf $DOWNLOADS/ghc-7.8.4-$GHC_ARCH.tar.bz2
-run $BUILD/ghc-7.8.4  ./configure --prefix=$BUILD
-run $BUILD/ghc-7.8.4  make install
+GHC_VERSION=7.10.2-rc2
+GHC_REAL_VERSION=7.10.1.20150630
+
+run $DOWNLOADS                    wget http://downloads.haskell.org/~ghc/$GHC_VERSION/ghc-$GHC_REAL_VERSION-$GHC_ARCH.tar.xz
+run $BUILD                        tar xf $DOWNLOADS/ghc-$GHC_REAL_VERSION-$GHC_ARCH.tar.xz
+run $BUILD/ghc-$GHC_REAL_VERSION  ./configure --prefix=$BUILD
+run $BUILD/ghc-$GHC_REAL_VERSION  make install
 
 # Install all the dependencies for cabal
 
@@ -153,8 +156,8 @@ run . cabal_install happy-1.19.5 alex-3.1.4
 
 # Get GHCJS itself (https://github.com/ghcjs/ghcjs) and cabal install.
 
-run $BUILD git clone https://github.com/ghcjs/ghcjs-prim.git
-run $BUILD git clone https://github.com/ghcjs/ghcjs.git
+run $BUILD git clone -b improved-base https://github.com/ghcjs/ghcjs-prim.git
+run $BUILD git clone -b improved-base https://github.com/ghcjs/ghcjs.git
 run $BUILD cabal_install ./ghcjs ./ghcjs-prim
 
 # install node (necessary for ghcjs-boot)
@@ -167,13 +170,9 @@ run $BUILD/node-v0.12.7  make install
 
 # Bootstrap ghcjs
 
-run . ghcjs-boot --dev
+run . ghcjs-boot --clean --dev --ghcjs-boot-dev-branch improved-base --shims-dev-branch improved-base
 
 # Install ghcjs-dom from hackage.
 
-run $BUILD cabal_install --ghcjs ghcjs-dom
-
-# Check out ghcjs-canvas and install it
-
-run $BUILD  git clone https://github.com/ghcjs/ghcjs-canvas
-run $BUILD  cabal_install --ghcjs --prefix=$BUILD ./ghcjs-canvas
+run $BUILD  git clone https://github.com/ghcjs/ghcjs-dom
+run $BUILD  cabal_install --ghcjs --prefix=$BUILD ./ghcjs-dom

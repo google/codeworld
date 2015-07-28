@@ -39,12 +39,13 @@ import        Unsafe.Coerce
 
 #ifdef ghcjs_HOST_OS
 
-import        GHCJS.Types
 import        GHCJS.Foreign
+import        GHCJS.Types
+import        JavaScript.Array
 
 -- traverse the object and get the thunks out of it
 foreign import javascript unsafe
-  "getThunks($1)" js_getThunks :: Int -> IO (JSArray Int)
+  "getThunks($1)" js_getThunks :: Int -> IO JSArray
 
 foreign import javascript unsafe
   "deepEq($1,$2)" js_deepEq :: Int -> Int -> IO Bool
@@ -55,9 +56,7 @@ evaluateFully :: a -> IO a
 evaluateFully x = do
   x'  <- evaluate x
   ths <- js_getThunks (unsafeCoerce x')
-  when (not $ isNull ths) $ do
-    ths' <- fromArray ths
-    forM_ ths' evalElem
+  when (not $ isNull $ unsafeCoerce ths) $ forM_ (toList ths) evalElem
   return x'
   where
     evalElem :: JSRef Int -> IO ()

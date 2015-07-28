@@ -37,7 +37,8 @@ import           Control.Monad
 import           Control.Monad.Trans (liftIO)
 import           Data.Char (chr)
 import           Data.IORef
-import           Data.Text (Text, singleton)
+import           Data.JSString.Text
+import           Data.Text (Text, singleton, pack)
 import           Data.Time.Clock
 import           Data.Word
 import           Internal.Num (Number, fromDouble, toDouble)
@@ -53,7 +54,7 @@ import           System.Random
 #ifdef ghcjs_HOST_OS
 
 import           GHCJS.DOM
-import           GHCJS.DOM.DOMWindow
+import           GHCJS.DOM.Window as Window
 import           GHCJS.DOM.Document
 import           GHCJS.DOM.Element
 import           GHCJS.DOM.EventM
@@ -61,16 +62,17 @@ import           GHCJS.DOM.MouseEvent
 import           GHCJS.DOM.Types (Element, unElement)
 import           GHCJS.Foreign
 import           GHCJS.Types
-import qualified JavaScript.Canvas as Canvas
+import qualified JavaScript.Web.Canvas as Canvas
+import qualified JavaScript.Web.Canvas.Internal as Canvas
+
+foreign import javascript interruptible "window.requestAnimationFrame($c);"
+    js_waitAnimationFrame :: IO Double
 
 foreign import javascript unsafe "$1['getBoundingClientRect']()['left']"
     js_getBoundingClientLeft :: JSRef Element -> IO Int
 
 foreign import javascript unsafe "$1['getBoundingClientRect']()['top']"
     js_getBoundingClientTop :: JSRef Element -> IO Int
-
-foreign import javascript unsafe "window.requestAnimationFrame($1);"
-    js_requestAnimationFrame :: JSFun (IO ()) -> IO ()
 
 foreign import javascript unsafe "$1.drawImage($2, $3, $4);"
     js_canvasDrawImage :: Canvas.Context -> JSRef Element -> Int -> Int -> IO ()
@@ -158,7 +160,7 @@ drawPicture ctx ds (Arc b e r w) = do
                    (toDouble e * pi / 180) False ctx
 drawPicture ctx ds (Text txt) = withDS ctx ds $ do
     Canvas.scale 0.05 (-0.05) ctx
-    Canvas.fillText txt 0 0 ctx
+    Canvas.fillText (textToJSString txt) 0 0 ctx
 drawPicture ctx ds Logo = withDS ctx ds $ do
     Canvas.scale 1 (-1) ctx
     drawCodeWorldLogo ctx (-9) (-2) 18 4
@@ -188,7 +190,7 @@ drawFrame ctx pic = do
 
 setupScreenContext :: Element -> IO Canvas.Context
 setupScreenContext canvas = do
-    ctx <- Canvas.getContext (castRef (unElement canvas))
+    ctx <- Canvas.getContext $ Canvas.Canvas $ castRef $ unElement canvas
     Canvas.save ctx
     Canvas.translate 250 250 ctx
     Canvas.scale 25 (-25) ctx
@@ -258,7 +260,7 @@ keyCodeToText n = case n of
   where fromAscii n = singleton (chr n)
         fromNum   n = Internal.Text.show (fromIntegral n)
 
-getMousePos :: IsMouseEvent e => Element -> EventM e t Point
+getMousePos :: IsMouseEvent e => Element -> EventM w e Point
 getMousePos canvas = do
     (ix, iy) <- mouseClientXY
     liftIO $ do
@@ -274,7 +276,7 @@ fromButtonNum _ = Nothing
 
 trace :: (a, Text) -> a
 trace (x, msg) = unsafePerformIO $ do
-    js_reportRuntimeError False (toJSString msg)
+    js_reportRuntimeError False (textToJSString msg)
     return x
 
 --------------------------------------------------------------------------------
@@ -289,7 +291,7 @@ data Activity = Activity {
 display :: Picture -> IO ()
 display pic = do
     Just doc <- currentDocument
-    Just canvas <- documentGetElementById doc ("screen" :: JSString)
+    Just canvas <- getElementById doc ("screen" :: JSString)
     ctx <- setupScreenContext canvas
     drawFrame ctx pic
     Canvas.restore ctx
@@ -297,7 +299,7 @@ display pic = do
 setupEvents :: MVar Activity -> Element -> IO ()
 setupEvents currentActivity canvas = do
     Just window <- currentWindow
-    domWindowOnkeydown window $ do
+    on window Window.keyDown $ do
         code <- uiKeyCode
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
@@ -305,7 +307,7 @@ setupEvents currentActivity canvas = do
                 return (activityEvent activity (KeyPress keyName))
             preventDefault
             stopPropagation
-    domWindowOnkeyup window $ do
+    on window Window.keyUp $ do
         code <- uiKeyCode
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
@@ -313,7 +315,7 @@ setupEvents currentActivity canvas = do
                 return (activityEvent activity (KeyRelease keyName))
             preventDefault
             stopPropagation
-    domWindowOnmousedown window $ do
+    on window Window.mouseDown $ do
         button <- mouseButton
         case fromButtonNum button of
             Nothing  -> return ()
@@ -322,7 +324,7 @@ setupEvents currentActivity canvas = do
                 let event = MousePress (btn, pos)
                 liftIO $ modifyMVar_ currentActivity $ \ activity -> do
                     return (activityEvent activity event)
-    domWindowOnmouseup window $ do
+    on window Window.mouseUp $ do
         button <- mouseButton
         case fromButtonNum button of
             Nothing  -> return ()
@@ -331,7 +333,7 @@ setupEvents currentActivity canvas = do
                 let event = MouseRelease (btn, pos)
                 liftIO $ modifyMVar_ currentActivity $ \ activity -> do
                     return (activityEvent activity event)
-    domWindowOnmousemove window $ do
+    on window Window.mouseMove $ do
         pos <- getMousePos canvas
         let event = MouseMovement pos
         liftIO $ modifyMVar_ currentActivity $ \ activity -> do
@@ -346,13 +348,13 @@ passTime dt activity = modifyMVar activity $ \a0 -> do
 run :: Activity -> IO ()
 run startActivity = do
     Just doc <- currentDocument
-    Just canvas <- documentGetElementById doc ("screen" :: JSString)
+    Just canvas <- getElementById doc ("screen" :: JSString)
 
-    Just offscreenCanvas <- documentCreateElement doc ("canvas" :: JSString)
-    elementSetAttribute offscreenCanvas ("width" :: JSString)  ("500" :: JSString)
-    elementSetAttribute offscreenCanvas ("height" :: JSString) ("500" :: JSString)
+    Just offscreenCanvas <- createElement doc ("canvas" :: JSString)
+    setAttribute offscreenCanvas ("width" :: JSString)  ("500" :: JSString)
+    setAttribute offscreenCanvas ("height" :: JSString) ("500" :: JSString)
 
-    screen <- Canvas.getContext (castRef (unElement canvas))
+    screen <- Canvas.getContext (Canvas.Canvas (castRef (unElement canvas)))
     buffer <- setupScreenContext offscreenCanvas
 
     currentActivity <- newMVar startActivity
@@ -362,19 +364,18 @@ run startActivity = do
             drawFrame buffer (activityDraw a0)
             Canvas.clearRect 0 0 500 500 screen
             canvasDrawImage screen offscreenCanvas 0 0
-            cb <- syncCallback NeverRetain True $ do
-                t1 <- getCurrentTime
-                a1 <- passTime (diffUTCTime t1 t0) currentActivity
-                go t1 a1 `catch` reportError
-            js_requestAnimationFrame cb
+            js_waitAnimationFrame
+            t1 <- getCurrentTime
+            a1 <- passTime (diffUTCTime t1 t0) currentActivity
+            go t1 a1
 
     t0 <- getCurrentTime
-    go t0 startActivity
+    go t0 startActivity `catch` reportError
 
 type Program = IO ()
 
 reportError :: SomeException -> IO ()
-reportError e = js_reportRuntimeError True (toJSString (show e))
+reportError e = js_reportRuntimeError True (textToJSString (pack (show e)))
 
 pictureOf :: Picture -> Program
 pictureOf pic = display pic `catch` reportError

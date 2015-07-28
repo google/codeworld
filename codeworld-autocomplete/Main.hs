@@ -15,6 +15,7 @@
 -}
 
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 import Control.Applicative
 import Data.List

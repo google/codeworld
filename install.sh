@@ -17,7 +17,7 @@ function run {
 BUILD=$(pwd)/build
 DOWNLOADS=$BUILD/downloads
 
-rm -rf $BUILD ~/.ghc
+rm -rf $BUILD ~/.ghc ~/.ghcjs
 
 mkdir $BUILD
 mkdir $BUILD/downloads
@@ -170,7 +170,7 @@ run $BUILD/node-v0.12.7  make install
 
 # Bootstrap ghcjs
 
-run . ghcjs-boot --clean --dev --ghcjs-boot-dev-branch improved-base --shims-dev-branch improved-base
+run . ghcjs-boot --dev --no-prof --no-haddock --ghcjs-boot-dev-branch improved-base --shims-dev-branch improved-base
 
 # Install ghcjs-dom from hackage.
 

@@ -1,5 +1,4 @@
 dist/
-user/
 data/
-projects/
+log/
 nohup.out

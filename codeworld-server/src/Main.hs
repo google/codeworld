@@ -41,12 +41,17 @@ import           System.FilePath
 
 import Build
 import Model
+import Paths
 import Util
 
 newtype ClientId = ClientId (Maybe T.Text) deriving (Eq)
 
 main :: IO ()
 main = do
+    createDirectoryIfMissing True buildDir
+    createDirectoryIfMissing True projectDir
+    generateBaseBundle
+
     hasClientId <- doesFileExist "web/clientId.txt"
     when (not hasClientId) $ do
         putStrLn "WARNING: Missing web/clientId.txt"
@@ -63,7 +68,6 @@ main = do
         putStrLn "WARNING: Missing web/autocomplete.txt"
         putStrLn "Autocomplete will not function properly!"
 
-    generateBaseBundle
     quickHttpServe $ (processBody >> site clientId) <|> site clientId
 
 -- Retrieves the user for the current request.  The request should have an
@@ -105,7 +109,7 @@ site clientId =
       ("runJS",         runHandler),
       ("listExamples",  listExamplesHandler)
     ] <|>
-    dir "user" (serveDirectory "user") <|>
+    dir "user" (serveDirectory buildDir) <|>
     serveDirectory "web"
 
 loadProjectHandler :: ClientId -> Snap ()
@@ -113,7 +117,7 @@ loadProjectHandler clientId = do
     user      <- getUser clientId
     Just name <- getParam "name"
     let hash = T.decodeUtf8 (getHash name)
-    let fname = "projects" </> T.unpack (hash <> "." <> userId user <> ".cw")
+    let fname = projectDir </> T.unpack (hash <> "." <> userId user <> ".cw")
     serveFile fname
 
 saveProjectHandler :: ClientId -> Snap ()
@@ -122,14 +126,14 @@ saveProjectHandler clientId = do
     Just project <- decode . LB.fromStrict . fromJust <$> getParam "project"
     let hash = getHash (T.encodeUtf8 (projectName project))
     let fname = T.decodeUtf8 hash <> "." <> userId user <> ".cw"
-    liftIO $ LB.writeFile ("projects" </> T.unpack fname) $ encode project
+    liftIO $ LB.writeFile (projectDir </> T.unpack fname) $ encode project
 
 deleteProjectHandler :: ClientId -> Snap ()
 deleteProjectHandler clientId = do
     user      <- getUser clientId
     Just name <- getParam "name"
     let hash = T.decodeUtf8 (getHash name)
-    let fname = "projects" </> T.unpack (hash <> "." <> userId user <> ".cw")
+    let fname = projectDir </> T.unpack (hash <> "." <> userId user <> ".cw")
     liftIO $ removeFile fname
 
 listProjectsHandler :: ClientId -> Snap ()
@@ -137,9 +141,8 @@ listProjectsHandler clientId = do
     user  <- getUser clientId
     projects <- liftIO $ do
         let ext = T.unpack $ "." <> userId user <> ".cw"
-        let base = "projects"
-        files <- getFilesByExt ext base
-        mapM (fmap (fromJust . decode) . LB.readFile . (base </>)) files :: IO [Project]
+        files <- getFilesByExt ext projectDir
+        mapM (fmap (fromJust . decode) . LB.readFile . (projectDir </>)) files :: IO [Project]
     modifyResponse $ setContentType "application/json"
     writeLBS (encode (map projectName projects))
 

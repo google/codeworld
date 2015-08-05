@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 {-
   Copyright 2014 Google Inc. All rights reserved.
 
@@ -14,12 +16,12 @@
   limitations under the License.
 -}
 
-{-
-  This module is loaded when generating the base bundle for the incremental
-  linker.  It only needs to import LinkBase
--}
-module Main where
+module Paths where
 
-import LinkBase()
+import           System.FilePath
 
-main = pictureOf blank
+projectDir :: FilePath
+projectDir = "projects"
+
+buildDir :: FilePath
+buildDir = "user"

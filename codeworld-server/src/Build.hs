@@ -18,7 +18,6 @@
 
 module Build where
 
-import           Control.Applicative
 import           Control.Exception
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -34,19 +33,20 @@ import           System.IO
 import           System.Process
 import           Text.Regex.TDFA
 
+import Paths
 import Util
 
 localSourceFile :: ByteString -> FilePath
 localSourceFile hashed = BC.unpack hashed ++ ".hs"
 
 sourceFile :: ByteString -> FilePath
-sourceFile hashed = "user" </> localSourceFile hashed
+sourceFile hashed = buildDir </> localSourceFile hashed
 
 targetFile :: ByteString -> FilePath
-targetFile hashed = "user" </> BC.unpack hashed ++ ".jsexe" </> "out.js"
+targetFile hashed = buildDir </> BC.unpack hashed ++ ".jsexe" </> "out.js"
 
 resultFile :: ByteString -> FilePath
-resultFile hashed = "user" </> BC.unpack hashed ++ ".err.txt"
+resultFile hashed = buildDir </> BC.unpack hashed ++ ".err.txt"
 
 compileIfNeeded :: ByteString -> IO Bool
 compileIfNeeded hashed = do
@@ -64,7 +64,8 @@ generateBase = do
     let defs = [ "d" <> T.pack (show i) <> " = " <> e
                  | (i,e) <- zip [0 :: Int ..] exprs ]
     let src = "module LinkBase where\n" <> T.intercalate "\n" defs
-    T.writeFile ("user" </> "LinkBase.hs") src
+    T.writeFile (buildDir </> "LinkBase.hs") src
+    T.writeFile (buildDir </> "LinkMain.hs") "main = pictureOf(blank)"
   where expression t | T.null t           = Nothing
                      | isUpper (T.head t) = Nothing
                      | isLower (T.head t) = Just t
@@ -116,7 +117,7 @@ runCompiler :: Int -> [String] -> IO (Maybe ByteString)
 runCompiler micros args = do
     (Just inh, Just outh, Just errh, pid) <-
         createProcess (proc "ghcjs" args) {
-            cwd       = Just "user",
+            cwd       = Just buildDir,
             std_in    = CreatePipe,
             std_out   = CreatePipe,
             std_err   = CreatePipe,

@@ -1,8 +1,0 @@
-LinkBase.hs
-P*.hs
-*.err.txt
-*.o
-*.hi
-*.js_o
-*.js_hi
-*.jsexe/

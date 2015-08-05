@@ -18,10 +18,8 @@
 
 module Paths where
 
-import           System.FilePath
-
 projectDir :: FilePath
-projectDir = "projects"
+projectDir = "data/projects"
 
 buildDir :: FilePath
-buildDir = "user"
+buildDir = "data/user"

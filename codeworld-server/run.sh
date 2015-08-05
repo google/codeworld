@@ -1,6 +1,6 @@
 #!/bin/sh
 
-USER_BUILD=user
+USER_BUILD=data/user
 
 fuser -k -n tcp $1
 rm -rf $USER_BUILD/*.jsexe

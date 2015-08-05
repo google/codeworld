@@ -1,4 +1,4 @@
 dist/
-data/
 log/
+data
 nohup.out

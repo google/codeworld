@@ -121,9 +121,9 @@ export PREFIX=$BUILD
 
 # Choose the right GHC download
 if /sbin/ldconfig -p | grep -q libgmp.so.10; then
-  GHC_ARCH=x86_64-unknown-linux-deb7
+  GHC_ARCH=`uname -i`-unknown-linux-deb7
 elif /sbin/ldconfig -p | grep -q libgmp.so.3; then
-  GHC_ARCH=x86_64-unknown-linux-centos65
+  GHC_ARCH=`uname -i`-unknown-linux-centos66
 else
   echo Sorry, but no supported libgmp is installed.
   exit 1
@@ -131,13 +131,13 @@ fi
 
 # Install GHC, since it's required for GHCJS.
 
-GHC_VERSION=7.10.2-rc2
-GHC_REAL_VERSION=7.10.1.20150630
+GHC_DIR=7.10.2
+GHC_VERSION=7.10.2
 
-run $DOWNLOADS                    wget http://downloads.haskell.org/~ghc/$GHC_VERSION/ghc-$GHC_REAL_VERSION-$GHC_ARCH.tar.xz
-run $BUILD                        tar xf $DOWNLOADS/ghc-$GHC_REAL_VERSION-$GHC_ARCH.tar.xz
-run $BUILD/ghc-$GHC_REAL_VERSION  ./configure --prefix=$BUILD
-run $BUILD/ghc-$GHC_REAL_VERSION  make install
+run $DOWNLOADS               wget http://downloads.haskell.org/~ghc/$GHC_DIR/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
+run $BUILD                   tar xf $DOWNLOADS/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
+run $BUILD/ghc-$GHC_VERSION  ./configure --prefix=$BUILD
+run $BUILD/ghc-$GHC_VERSION  make install
 
 # Install all the dependencies for cabal
 

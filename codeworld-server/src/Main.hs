@@ -109,8 +109,14 @@ site clientId =
       ("runJS",         runHandler),
       ("listExamples",  listExamplesHandler)
     ] <|>
-    dir "user" (serveDirectory buildDir) <|>
+    dir "user" (serveDirectoryWith dirConfig buildDir) <|>
     serveDirectory "web"
+
+-- A DirectoryConfig that sets the cache-control header to avoid errors when new
+-- changes are made to JavaScript.
+dirConfig :: DirectoryConfig Snap
+dirConfig = defaultDirectoryConfig { preServeHook = disableCache }
+  where disableCache _ = modifyRequest (addHeader "Cache-control" "no-cache")
 
 loadProjectHandler :: ClientId -> Snap ()
 loadProjectHandler clientId = do

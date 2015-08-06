@@ -208,6 +208,9 @@ function discoverProjects() {
 
       var template = document.getElementById('projectTemplate').innerHTML;
       template = template.replace('{{label}}', encodedName);
+      template = template.replace(
+          /{{ifactive ([^}]*)}}/,
+          projectName == openProjectName ? "$1" : "");
 
       var span = document.createElement('span');
       span.innerHTML = template;
@@ -253,6 +256,8 @@ function setCode(code, history, name) {
   var doc = codeworldEditor.getDoc();
 
   openProjectName = name;
+  discoverProjects();
+
   doc.setValue(code);
   if (history) {
     doc.setHistory(history);
@@ -521,6 +526,8 @@ function saveProjectBase(projectName) {
   data.append('project', JSON.stringify(project));
 
   sendHttp('POST', 'saveProject', data, function(request) {
+    discoverProjects();
+
     if (request.status != 200) {
       alert('Could not save your project!!!');
       return;
@@ -528,7 +535,6 @@ function saveProjectBase(projectName) {
 
     window.openProjectName = projectName;
     window.savedGeneration = doc.changeGeneration(true);
-    discoverProjects();
     setTitle();
     updateVisibility();
   });

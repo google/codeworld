@@ -183,6 +183,18 @@ body {
   text-align: left;
 }
 
+.cw-button.green.project-active,.cw-button.green.project-active:hover:active {
+  border-color: #74740e;
+  background-color: #a6a614;
+  background-image: linear-gradient(to bottom, #a6a614, #8c8c00);
+}
+
+.cw-button.green.project-active:hover {
+  border-color: #4b4b09;
+  background-color: #78780f;
+  background-image: linear-gradient(to bottom, #78780f, #595900);
+}
+
 .cw-button.green,.cw-button.green:hover:active {
   border-color: #34740e;
   background-color: #4ba614;

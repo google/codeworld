@@ -201,7 +201,20 @@ function discoverProjects() {
       return;
     }
 
-    JSON.parse(request.responseText).forEach(function(projectName) {
+    var allProjects = JSON.parse(request.responseText);
+    allProjects.sort(function(a, b) {
+      if (a == b) {
+        return 0;
+      } else if (a == openProjectName) {
+        return -1;
+      } else if (b == openProjectName) {
+        return 1;
+      } else {
+        return a.localeCompare(b);
+      }
+    });
+
+    allProjects.forEach(function(projectName) {
       var encodedName = projectName.replace('&', '&amp;')
                                    .replace('<', '&lt;')
                                    .replace('>', '&gt;');

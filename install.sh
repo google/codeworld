@@ -138,6 +138,7 @@ run $DOWNLOADS               wget http://downloads.haskell.org/~ghc/$GHC_DIR/ghc
 run $BUILD                   tar xf $DOWNLOADS/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
 run $BUILD/ghc-$GHC_VERSION  ./configure --prefix=$BUILD
 run $BUILD/ghc-$GHC_VERSION  make install
+run $BUILD                   rm -rf ghc-$GHC_VERSION
 
 # Install all the dependencies for cabal
 
@@ -145,6 +146,7 @@ run $DOWNLOADS                     wget https://www.haskell.org/cabal/release/ca
 run $BUILD                         tar xzf $DOWNLOADS/cabal-install-1.22.6.0.tar.gz
 run $BUILD/cabal-install-1.22.6.0  ./bootstrap.sh
 run .                              cabal update
+run $BUILD                         rm -rf cabal-install-1.22.6.0
 
 function cabal_install {
   cabal install --global --prefix=$BUILD --reorder-goals --max-backjumps=-1 $@
@@ -152,13 +154,14 @@ function cabal_install {
 
 # Fetch the prerequisites for GHCJS.
 
-run . cabal_install happy-1.19.5 alex-3.1.4
+run .  cabal_install happy-1.19.5 alex-3.1.4
 
 # Get GHCJS itself (https://github.com/ghcjs/ghcjs) and cabal install.
 
-run $BUILD git clone -b improved-base https://github.com/ghcjs/ghcjs-prim.git
-run $BUILD git clone -b improved-base https://github.com/ghcjs/ghcjs.git
-run $BUILD cabal_install ./ghcjs ./ghcjs-prim
+run $BUILD  git clone -b improved-base https://github.com/ghcjs/ghcjs-prim.git
+run $BUILD  git clone -b improved-base https://github.com/ghcjs/ghcjs.git
+run $BUILD  cabal_install ./ghcjs ./ghcjs-prim
+run $BUILD  rm -rf ghcjs ghcjs-prim
 
 # install node (necessary for ghcjs-boot)
 
@@ -167,6 +170,7 @@ run $BUILD               tar xzf $DOWNLOADS/node-v0.12.7.tar.gz
 run $BUILD/node-v0.12.7  ./configure --prefix=$BUILD
 run $BUILD/node-v0.12.7  make
 run $BUILD/node-v0.12.7  make install
+run $BUILD               rm -rf node-v0.12.7
 
 # Bootstrap ghcjs
 
@@ -176,3 +180,6 @@ run . ghcjs-boot --dev --no-prof --no-haddock --ghcjs-boot-dev-branch improved-b
 
 run $BUILD  git clone https://github.com/ghcjs/ghcjs-dom
 run $BUILD  cabal_install --ghcjs --prefix=$BUILD ./ghcjs-dom
+run $BUILD  rm -rf ghcjs-dom
+
+run $BUILD  rm -rf downloads

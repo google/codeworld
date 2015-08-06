@@ -563,41 +563,29 @@ function deleteProject() {
   });
 }
 
-(function() {
-  function loadAsync(src, callback) {
-    var po = document.createElement('script');
-    po.type = 'text/javascript';
-    po.async = true;
-    po.src = src;
-    if (callback) po.onload = callback;
-    var s = document.getElementsByTagName('script')[0];
-    s.parentNode.insertBefore(po, s);
-  }
+function handleGAPILoad() {
+  withClientId(function(clientId) {
+    gapi.auth.init(signinCallback);
 
-  loadAsync('https://apis.google.com/js/client:plusone.js', function() {
-    withClientId(function(clientId) {
-      gapi.auth.init(signinCallback);
-
-      // Refresh sign-in every 45 minutes to avoid letting it expire.
-      setInterval(function() {
-        if (signedIn()) {
-          gapi.auth.authorize({
-            clientid: clientId,
-            scope: 'profile',
-            cookiepolicy: 'single_host_origin',
-            immediate: true,
-          }, signinCallback);
-        }
-      }, 1000 * 60);
-    });
-
-    discoverProjects();
-    updateVisibility();
+    // Refresh sign-in every 45 minutes to avoid letting it expire.
+    setInterval(function() {
+      if (signedIn()) {
+        gapi.auth.authorize({
+          clientid: clientId,
+          scope: 'profile',
+          cookiepolicy: 'single_host_origin',
+          immediate: true,
+        }, signinCallback);
+      }
+    }, 1000 * 60);
   });
+
+  discoverProjects();
+  updateVisibility();
 
   sendHttp('GET', 'deep_eq.js');
   sendHttp('GET', 'user/base.jsexe/lib.base.js');
   sendHttp('GET', 'user/base.jsexe/rts.js');
   sendHttp('GET', 'user/base.jsexe/lib1.base.js');
   sendHttp('GET', 'user/base.jsexe/out.base.js');
-})();
+}

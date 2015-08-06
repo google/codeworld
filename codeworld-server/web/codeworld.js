@@ -18,6 +18,7 @@ function init() {
   showingBrowse = true;
   showingDoc = false;
   showingResult = false;
+  allProjectNames = [];
 
   usingHaskellPrelude = false;
 
@@ -186,6 +187,7 @@ function discoverProjects() {
     while (projects.lastChild && projects.lastChild != newProject) {
       projects.removeChild(projects.lastChild);
     }
+    allProjectNames = [];
     return;
   }
 
@@ -193,16 +195,16 @@ function discoverProjects() {
   data.append('id_token', gapi.auth.getToken().id_token);
 
   sendHttp('POST', 'listProjects', data, function(request) {
-    while (projects.lastChild && projects.lastChild != newProject) {
-      projects.removeChild(projects.lastChild);
-    }
-
     if (request.status != 200) {
       return;
     }
 
-    var allProjects = JSON.parse(request.responseText);
-    allProjects.sort(function(a, b) {
+    while (projects.lastChild && projects.lastChild != newProject) {
+      projects.removeChild(projects.lastChild);
+    }
+
+    allProjectNames = JSON.parse(request.responseText);
+    allProjectNames.sort(function(a, b) {
       if (a == b) {
         return 0;
       } else if (a == openProjectName) {
@@ -214,7 +216,7 @@ function discoverProjects() {
       }
     });
 
-    allProjects.forEach(function(projectName) {
+    allProjectNames.forEach(function(projectName) {
       var encodedName = projectName.replace('&', '&amp;')
                                    .replace('<', '&lt;')
                                    .replace('>', '&gt;');
@@ -527,6 +529,15 @@ function saveProjectBase(projectName) {
   if (!signedIn) {
     alert('You must sign in to save files.');
     return;
+  }
+
+  if (allProjectNames.indexOf(projectName) != -1 && projectName != openProjectName) {
+    var answer = window.confirm(
+        'Are you sure you want to save over another project?\n\n' +
+        'The previous contents of ' + projectName + ' will be permanently destroyed!');
+    if (!answer) {
+      return;
+    }
   }
 
   var doc = window.codeworldEditor.getDoc();

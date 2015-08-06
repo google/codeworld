@@ -160,6 +160,7 @@ function updateVisibility() {
     }
   } else {
     document.getElementById('result').style.display = 'none';
+    document.getElementById('shareButton').style.display = 'none';
   }
 }
 
@@ -262,28 +263,39 @@ function isEditorClean() {
 }
 
 function setCode(code, history, name) {
-  var msg = 'There are unsaved changes to your project. '
-          + 'Continue and throw away your changes?';
-  if (!isEditorClean() && !confirm(msg)) {
-    return;
+  function go() {
+    var doc = codeworldEditor.getDoc();
+
+    openProjectName = name;
+    discoverProjects();
+
+    doc.setValue(code);
+    if (history) {
+      doc.setHistory(history);
+    } else {
+      doc.clearHistory();
+    }
+    codeworldEditor.focus();
+
+    savedGeneration = doc.changeGeneration(true);
+    setTitle();
+    updateVisibility();
   }
 
-  var doc = codeworldEditor.getDoc();
-
-  openProjectName = name;
-  discoverProjects();
-
-  doc.setValue(code);
-  if (history) {
-    doc.setHistory(history);
+  if (isEditorClean()) {
+    go();
   } else {
-    doc.clearHistory();
+    var msg = 'There are unsaved changes to your project. '
+            + 'Continue and throw away your changes?';
+    sweetAlert({
+      title: 'Warning',
+      text: msg,
+      type: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#DD6B55',
+      confirmButtonText: 'Yes, discard my changes!'
+    }, go);
   }
-  codeworldEditor.focus();
-
-  savedGeneration = doc.changeGeneration(true);
-  setTitle();
-  updateVisibility();
 }
 
 function loadFile(name) {
@@ -309,7 +321,7 @@ function loadFile(name) {
 
 function loadProject(name) {
   if (!signedIn()) {
-    alert('You must sign in to open projects.');
+    sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
     return;
   }
 
@@ -328,10 +340,22 @@ function loadProject(name) {
 function share() {
   var runner = document.getElementById('runner');
   if (runner.contentWindow.location.href == 'about:blank') {
-    alert('You must run your program before sharing it.');
+    sweetAlert('Oops!', 'You must run your program before sharing it.', 'error');
   } else {
-    prompt('Copy and share the following link:',
-           runner.contentWindow.location.href);
+    var url = runner.contentWindow.location.href;
+
+    // Strip trailing equal-signs, since some social sites mangle them.
+    url = url.replace(/=*$/, '');
+
+    sweetAlert({
+      html: true,
+      title: '<i class="fa fa-2x fa-share"></i>&nbsp; Share',
+      text: 'Copy and share this link with others!',
+      type: 'input',
+      inputValue: url,
+      confirmButtonText: 'Done',
+      animation: 'slide-from-bottom'
+    });
   }
 }
 
@@ -453,7 +477,7 @@ function withClientId(f) {
 
   sendHttp('GET', 'clientId.txt', null, function(request) {
     if (request.status != 200 || request.responseText == '') {
-      window.alert('Missing API client key.');
+      sweetAlert('Oops!', 'Missing API client key.  You will not be able to sign in.', 'warning');
       return null;
     }
 
@@ -493,7 +517,7 @@ function signedIn() {
 
 function saveProject() {
   if (!signedIn()) {
-    alert('You must sign in to save files.');
+    sweetAlert('Oops!', 'You must sign in to save files.', 'error');
     return;
   }
 
@@ -506,7 +530,7 @@ function saveProject() {
 
 function saveProjectAs() {
   if (!signedIn()) {
-    alert('You must sign in to save files.');
+    sweetAlert('Oops!', 'You must sign in to save files.', 'error');
     return;
   }
 
@@ -527,70 +551,85 @@ function saveProjectBase(projectName) {
   if (projectName == null || projectName == '') return;
 
   if (!signedIn) {
-    alert('You must sign in to save files.');
+    sweetAlert('Oops!', 'You must sign in to save files.', 'error');
     return;
   }
 
-  if (allProjectNames.indexOf(projectName) != -1 && projectName != openProjectName) {
-    var answer = window.confirm(
-        'Are you sure you want to save over another project?\n\n' +
-        'The previous contents of ' + projectName + ' will be permanently destroyed!');
-    if (!answer) {
-      return;
-    }
+  function go() {
+    var doc = window.codeworldEditor.getDoc();
+    var project = { 'name':    projectName,
+                    'source':  doc.getValue(),
+                    'history': doc.getHistory() };
+
+    var data = new FormData();
+    data.append('id_token', gapi.auth.getToken().id_token);
+    data.append('project', JSON.stringify(project));
+
+    sendHttp('POST', 'saveProject', data, function(request) {
+      discoverProjects();
+
+      if (request.status != 200) {
+        sweetAlert('Oops!', 'Could not save your project!!!  Please try again.', 'error');
+        return;
+      }
+
+      window.openProjectName = projectName;
+      window.savedGeneration = doc.changeGeneration(true);
+      setTitle();
+      updateVisibility();
+    });
   }
 
-  var doc = window.codeworldEditor.getDoc();
-  var project = { 'name':    projectName,
-                  'source':  doc.getValue(),
-                  'history': doc.getHistory() };
-
-  var data = new FormData();
-  data.append('id_token', gapi.auth.getToken().id_token);
-  data.append('project', JSON.stringify(project));
-
-  sendHttp('POST', 'saveProject', data, function(request) {
-    discoverProjects();
-
-    if (request.status != 200) {
-      alert('Could not save your project!!!');
-      return;
-    }
-
-    window.openProjectName = projectName;
-    window.savedGeneration = doc.changeGeneration(true);
-    setTitle();
-    updateVisibility();
-  });
+  if (allProjectNames.indexOf(projectName) == -1 || projectName == openProjectName) {
+    go();
+  } else {
+    var msg = 'Are you sure you want to save over another project?\n\n' +
+        'The previous contents of ' + projectName + ' will be permanently destroyed!';
+    sweetAlert({
+      title: 'Warning',
+      text: msg,
+      type: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#DD6B55',
+      confirmButtonText: 'Yes, overwrite it!'
+    }, go);
+  }
 }
 
 function deleteProject() {
   if (!window.openProjectName) return;
 
   if (!signedIn) {
-    alert('You must sign in to do this.');
+    sweetAlert('Oops', 'You must sign in to delete a project.', 'error');
     return;
+  }
+
+  function go() {
+    var data = new FormData();
+    data.append('id_token', gapi.auth.getToken().id_token);
+    data.append('name', window.openProjectName);
+
+    sendHttp('POST', 'deleteProject', data, function(request) {
+      if (request.status == 200) {
+        savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
+        setCode('');
+      }
+
+      discoverProjects();
+      updateVisibility();
+    });
   }
 
   var msg = 'Deleting a project will throw away all work, and cannot be undone. '
           + 'Are you sure?';
-   if (!confirm(msg)) {
-    return;
-  }
-
-  var data = new FormData();
-  data.append('id_token', gapi.auth.getToken().id_token);
-  data.append('name', window.openProjectName);
-
-  sendHttp('POST', 'deleteProject', data, function(request) {
-    if (request.status == 200) {
-      savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
-      setCode('');
-    }
-
-    discoverProjects();
-    updateVisibility();
-  });
+  sweetAlert({
+    title: 'Warning',
+    text: msg,
+    type: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#DD6B55',
+    confirmButtonText: 'Yes, delete it!'
+  }, go);
 }
 
 function handleGAPILoad() {

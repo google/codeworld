@@ -24,6 +24,55 @@ function init() {
 
   updateVisibility();
 
+  var editor = document.getElementById('editor');
+
+  window.codeworldEditor = CodeMirror.fromTextArea(editor, {
+    mode: { name: 'codeworld', overrideKeywords: {} },
+    lineNumbers: true,
+    autofocus: true,
+    matchBrackets: true,
+    styleActiveLine: true,
+    showTrailingSpace: true,
+    indentWithTabs: false,
+    autoClearEmptyLines: true,
+    rulers: [{column: 80, color: "#bbb", lineStyle: "dashed"}],
+    extraKeys: { "Ctrl-Space": "autocomplete",
+                 "Tab"       : "indentMore",
+                 "Shift-Tab" : "indentLess",
+                 "Ctrl-Enter": compile }
+  });
+
+  CodeMirror.commands.save = function(cm) { saveProject(); }
+  document.onkeydown = function(e) {
+    if (e.ctrlKey && e.keyCode === 83) {
+      saveProject();
+      return false;
+    }
+  };
+
+  window.codeworldEditor.on('changes', window.setTitle);
+  window.codeworldEditor.on('changes', window.updateProjects);
+
+  var hints = [
+    "main", "--", "{-", "-}", "::", "->", "<-", "..", "case", "of", "if",
+    "then", "else", "data", "let", "in", "where"
+  ];
+  var hintBlacklist = [
+    "IO", "fromDouble", "fromInt", "fromInteger", "fromRational", "fromString",
+    "ifThenElse", "toDouble", "toInt"
+  ];
+  CodeMirror.registerHelper('hintWords', 'codeworld', hints);
+
+  var hash = location.hash.slice(1);
+  if (hash.length > 0) {
+    if (hash.indexOf('==', hash.length - 2) === -1) {
+      hash += '==';
+    }
+    loadFile('user/' + hash + '.hs');
+  } else {
+    setCode('');
+  }
+
   sendHttp('GET', 'autocomplete.txt', null, function(request) {
     var words = [];
     if (request.status != 200) {
@@ -32,19 +81,8 @@ function init() {
       words = request.responseText.split('\n');
     }
 
-    var editor = document.getElementById('editor');
-
     // Override the syntax classification of words from the standard library.
     var keywordOverrides = {};
-
-    var hints = [
-      "main", "--", "{-", "-}", "::", "->", "<-", "..", "case", "of", "if",
-      "then", "else", "data", "let", "in", "where"
-    ];
-    var hintBlacklist = [
-      "IO", "fromDouble", "fromInt", "fromInteger", "fromRational", "fromString",
-      "ifThenElse", "toDouble", "toInt"
-    ];
 
     words.forEach(function(word) {
       if (/^[A-Z:]/.test(word)) {
@@ -52,50 +90,23 @@ function init() {
       } else {
         keywordOverrides[word] = 'builtin';
       }
-
-      if (word.length > 1 && hintBlacklist.indexOf(word) < 0) {
-        hints.push(word);
-      }
     });
 
     // Special case for main, since it's morally a built-in name.
     keywordOverrides['main'] = 'builtin';
 
-    window.codeworldEditor = CodeMirror.fromTextArea(editor, {
-      mode: { name: 'codeworld', overrideKeywords: keywordOverrides },
-      lineNumbers: true,
-      autofocus: true,
-      matchBrackets: true,
-      styleActiveLine: true,
-      showTrailingSpace: true,
-      indentWithTabs: false,
-      autoClearEmptyLines: true,
-      rulers: [{column: 80, color: "#bbb", lineStyle: "dashed"}],
-      extraKeys: { "Ctrl-Space": "autocomplete",
-                   "Tab"       : "indentMore",
-                   "Shift-Tab" : "indentLess",
-                   "Ctrl-Enter": compile }
-    });
+    window.codeworldEditor.setOption(
+        'mode', { name: 'codeworld', overrideKeywords: keywordOverrides });
 
-    CodeMirror.commands.save = function(cm) { saveProject(); }
-    CodeMirror.registerHelper('hintWords', 'codeworld', hints);
-
-    window.codeworldEditor.on('changes', window.setTitle);
-    window.codeworldEditor.on('changes', window.updateProjects);
-
-    var hash = location.hash.slice(1);
-    if (hash.length > 0) {
-      if (hash.indexOf('==', hash.length - 2) === -1) {
-        hash += '==';
+    words.forEach(function(word) {
+      if (word.length > 1 && hintBlacklist.indexOf(word) < 0) {
+        hints.push(word);
       }
-      loadFile('user/' + hash + '.hs');
-      window.location.hash = '';
-    } else {
-      setCode('');
-    }
+    });
+    CodeMirror.registerHelper('hintWords', 'codeworld', hints);
   });
 
-  onbeforeunload = function(event) {
+  window.onbeforeunload = function(event) {
     if (!isEditorClean()) {
       var msg = 'There are unsaved changes to your project. '
               + 'If you continue, they will be lost!';

@@ -350,7 +350,7 @@ run startActivity = do
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
 
-    Just offscreenCanvas <- createElement doc ("canvas" :: JSString)
+    Just offscreenCanvas <- createElement doc (Just "canvas" :: Maybe JSString)
     setAttribute offscreenCanvas ("width" :: JSString)  ("500" :: JSString)
     setAttribute offscreenCanvas ("height" :: JSString) ("500" :: JSString)
 

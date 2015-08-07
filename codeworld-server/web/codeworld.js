@@ -662,7 +662,7 @@ function handleGAPILoad() {
   withClientId(function(clientId) {
     gapi.auth.init(signinCallback);
 
-    // Refresh sign-in every 45 minutes to avoid letting it expire.
+    // Refresh sign-in every 15 minutes to avoid letting it expire.
     setInterval(function() {
       if (signedIn()) {
         gapi.auth.authorize({
@@ -672,7 +672,7 @@ function handleGAPILoad() {
           immediate: true,
         }, signinCallback);
       }
-    }, 1000 * 45);
+    }, 1000 * 60 * 15);
   });
 
   discoverProjects();

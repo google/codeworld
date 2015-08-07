@@ -516,6 +516,8 @@ function signin() {
 
 function signout() {
   if (window.gapi) gapi.auth.signOut();
+  updateVisibility();
+  discoverProjects();
 }
 
 function signedIn() {
@@ -659,7 +661,7 @@ function handleGAPILoad() {
           immediate: true,
         }, signinCallback);
       }
-    }, 1000 * 60);
+    }, 1000 * 45);
   });
 
   discoverProjects();

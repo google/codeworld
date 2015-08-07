@@ -81,6 +81,7 @@ function init() {
     CodeMirror.registerHelper('hintWords', 'codeworld', hints);
 
     window.codeworldEditor.on('changes', window.setTitle);
+    window.codeworldEditor.on('changes', window.updateProjects);
 
     var hash = location.hash.slice(1);
     if (hash.length > 0) {
@@ -164,6 +165,54 @@ function updateVisibility() {
   }
 }
 
+function updateProjects() {
+  var projects = document.getElementById('nav_mine');
+  var newProject = document.getElementById('newButton');
+
+  while (projects.lastChild && projects.lastChild != newProject) {
+    projects.removeChild(projects.lastChild);
+  }
+
+  allProjectNames.sort(function(a, b) {
+    if (a == b) {
+      return 0;
+    } else if (a == openProjectName) {
+      return -1;
+    } else if (b == openProjectName) {
+      return 1;
+    } else {
+      return a.localeCompare(b);
+    }
+  });
+
+  allProjectNames.forEach(function(projectName) {
+    var title = projectName;
+    var active = projectName == openProjectName;
+
+    if (active && !isEditorClean()) {
+      title = "* " + title;
+    }
+    var encodedName = title.replace('&', '&amp;')
+                           .replace('<', '&lt;')
+                           .replace('>', '&gt;');
+
+    var template = document.getElementById('projectTemplate').innerHTML;
+    template = template.replace('{{label}}', encodedName);
+    template = template.replace(
+        /{{ifactive ([^}]*)}}/,
+        projectName == openProjectName ? "$1" : "");
+
+    var span = document.createElement('span');
+    span.innerHTML = template;
+    var elem = span.getElementsByTagName('a')[0];
+    elem.onclick = function() {
+      loadProject(projectName);
+    };
+
+    projects.appendChild(span.removeChild(elem));
+  });
+}
+
 function toggleBrowser() {
   window.showingBrowse = !window.showingBrowse;
   updateVisibility();
@@ -181,14 +230,9 @@ function toggleDoc(root) {
 }
 
 function discoverProjects() {
-  var projects = document.getElementById('nav_mine');
-  var newProject = document.getElementById('newButton');
-
   if (!signedIn()) {
-    while (projects.lastChild && projects.lastChild != newProject) {
-      projects.removeChild(projects.lastChild);
-    }
     allProjectNames = [];
+    updateProjects();
     return;
   }
 
@@ -200,43 +244,8 @@ function discoverProjects() {
       return;
     }
 
-    while (projects.lastChild && projects.lastChild != newProject) {
-      projects.removeChild(projects.lastChild);
-    }
-
     allProjectNames = JSON.parse(request.responseText);
-    allProjectNames.sort(function(a, b) {
-      if (a == b) {
-        return 0;
-      } else if (a == openProjectName) {
-        return -1;
-      } else if (b == openProjectName) {
-        return 1;
-      } else {
-        return a.localeCompare(b);
-      }
-    });
-
-    allProjectNames.forEach(function(projectName) {
-      var encodedName = projectName.replace('&', '&amp;')
-                                   .replace('<', '&lt;')
-                                   .replace('>', '&gt;');
-
-      var template = document.getElementById('projectTemplate').innerHTML;
-      template = template.replace('{{label}}', encodedName);
-      template = template.replace(
-          /{{ifactive ([^}]*)}}/,
-          projectName == openProjectName ? "$1" : "");
-
-      var span = document.createElement('span');
-      span.innerHTML = template;
-      var elem = span.getElementsByTagName('a')[0];
-      elem.onclick = function() {
-        loadProject(projectName);
-      };
-
-      projects.appendChild(span.removeChild(elem));
-    });
+    updateProjects();
   });
 }
 
@@ -267,7 +276,6 @@ function setCode(code, history, name) {
     var doc = codeworldEditor.getDoc();
 
     openProjectName = name;
-    discoverProjects();
 
     doc.setValue(code);
     if (history) {
@@ -279,7 +287,9 @@ function setCode(code, history, name) {
 
     savedGeneration = doc.changeGeneration(true);
     setTitle();
-    updateVisibility();
+
+    updateProjects();
+    stop();
   }
 
   if (isEditorClean()) {
@@ -566,8 +576,6 @@ function saveProjectBase(projectName) {
     data.append('project', JSON.stringify(project));
 
     sendHttp('POST', 'saveProject', data, function(request) {
-      discoverProjects();
-
       if (request.status != 200) {
         sweetAlert('Oops!', 'Could not save your project!!!  Please try again.', 'error');
         return;
@@ -576,7 +584,12 @@ function saveProjectBase(projectName) {
       window.openProjectName = projectName;
       window.savedGeneration = doc.changeGeneration(true);
       setTitle();
+      updateProjects();
       updateVisibility();
+
+      if (allProjectNames.indexOf(projectName) == -1) {
+        discoverProjects();
+      }
     });
   }
 

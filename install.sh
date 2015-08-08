@@ -179,7 +179,7 @@ run . ghcjs-boot --dev --no-prof --no-haddock --ghcjs-boot-dev-branch improved-b
 # Install ghcjs-dom from hackage.
 
 run $BUILD  git clone https://github.com/ghcjs/ghcjs-dom
-run $BUILD  cabal_install --ghcjs --prefix=$BUILD ./ghcjs-dom
+run $BUILD  cabal_install --ghcjs  ./ghcjs-dom
 run $BUILD  rm -rf ghcjs-dom
 
 run $BUILD  rm -rf downloads

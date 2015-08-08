@@ -25,7 +25,7 @@ run codeworld-base  cabal haddock --hoogle
 # Build and run the autocomplete generator.
 
 AC_SYMBOLS=codeworld-base/dist/doc/html/codeworld-base/codeworld-base.txt
-AC_OUTPUT=codeworld-server/web/autocomplete.txt
+AC_OUTPUT=web/autocomplete.txt
 
 run .  cabal_install ./codeworld-autocomplete
 run .  codeworld-autocomplete $AC_SYMBOLS > $AC_OUTPUT
@@ -36,7 +36,7 @@ run .  cabal_install ./codeworld-server
 
 # Run the server.
 
-USER_BUILD=codeworld-server/data/user
+USER_BUILD=data/user
 
 fuser -k -n tcp 8080
 rm -rf $USER_BUILD/*.jsexe
@@ -44,4 +44,4 @@ rm -rf $USER_BUILD/*.js_hi
 rm -rf $USER_BUILD/*.js_o
 rm -rf $USER_BUILD/*.err.txt
 
-run codeworld-server  codeworld-server -p 8080
+run .  codeworld-server -p 8080

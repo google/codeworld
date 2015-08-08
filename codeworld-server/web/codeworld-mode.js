@@ -1,1 +1,0 @@
-../../third_party/codemirror/codeworld-mode.js

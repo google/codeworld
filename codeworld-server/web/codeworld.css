@@ -63,9 +63,9 @@ body {
 }
 
 #nav {
-  flex: 0 0 auto;
-  -webkit-flex: 0 0 auto;
-  -ms-flex: 0 0 auto;
+  flex: 0 1 150px;
+  -webkit-flex: 0 1 150px;
+  -ms-flex: 0 1 150px;
   display: flex;
   display: -webkit-flex;
   display: -ms-flex;
@@ -177,6 +177,7 @@ body {
   font-weight:bold;
   color: white;
   white-space: nowrap;
+  overflow: hidden;
 }
 
 .cw-button,.cw-button-left {

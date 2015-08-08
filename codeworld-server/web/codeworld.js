@@ -343,6 +343,7 @@ function loadFile(name) {
 function loadProject(name) {
   if (!signedIn()) {
     sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
+    updateVisibility();
     return;
   }
 
@@ -541,6 +542,7 @@ function signedIn() {
 function saveProject() {
   if (!signedIn()) {
     sweetAlert('Oops!', 'You must sign in to save files.', 'error');
+    updateVisibility();
     return;
   }
 
@@ -554,6 +556,7 @@ function saveProject() {
 function saveProjectAs() {
   if (!signedIn()) {
     sweetAlert('Oops!', 'You must sign in to save files.', 'error');
+    updateVisibility();
     return;
   }
 
@@ -575,6 +578,7 @@ function saveProjectBase(projectName) {
 
   if (!signedIn) {
     sweetAlert('Oops!', 'You must sign in to save files.', 'error');
+    updateVisibility();
     return;
   }
 
@@ -627,6 +631,7 @@ function deleteProject() {
 
   if (!signedIn) {
     sweetAlert('Oops', 'You must sign in to delete a project.', 'error');
+    updateVisibility();
     return;
   }
 

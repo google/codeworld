@@ -678,9 +678,7 @@ function handleGAPILoad() {
   discoverProjects();
   updateVisibility();
 
-  sendHttp('GET', 'deep_eq.js');
-  sendHttp('GET', 'user/base.jsexe/lib.base.js');
   sendHttp('GET', 'user/base.jsexe/rts.js');
-  sendHttp('GET', 'user/base.jsexe/lib1.base.js');
+  sendHttp('GET', 'user/base.jsexe/lib.base.js');
   sendHttp('GET', 'user/base.jsexe/out.base.js');
 }

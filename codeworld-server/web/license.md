@@ -4,7 +4,7 @@ Try them out!
 Some lawyers would like to tell you some things about what you are
 allowed to do with the examples.  Here goes:
 
-    Copyright 2014 Google Inc. All rights reserved.
+    Copyright 2015 Google Inc. All rights reserved.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

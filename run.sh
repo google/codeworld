@@ -1,30 +1,33 @@
 #!/bin/bash
 
-BUILD=$(pwd)/build
-DOWNLOADS=$BUILD/downloads
-
-export PATH=$BUILD/bin:$PATH
-
-function cabal_install {
-  cabal install --global --prefix=$BUILD --reorder-goals --max-backjumps=-1 $@
-}
+source base.sh
 
 # Install the codeworld-base package
 
-(cd codeworld-base && cabal_install --ghcjs)
-(cd codeworld-base && cabal haddock)
+run .  cabal_install --ghcjs ./codeworld-base
+run codeworld-base  cabal haddock --html
+run codeworld-base  cabal haddock --hoogle
 
 # Build and run the autocomplete generator.
 
-(cd codeworld-autocomplete &&  cabal_install --dependencies-only)
-(cd codeworld-autocomplete &&  cabal build)
-(cd codeworld-autocomplete &&  ./run.sh)
+AC_SYMBOLS=codeworld-base/dist/doc/html/codeworld-base/codeworld-base.txt
+AC_OUTPUT=codeworld-server/web/autocomplete.txt
 
-# Build codeworld-server from this project: cd codeworld-server && cabal build
+run .  cabal_install ./codeworld-autocomplete
+run .  codeworld-autocomplete $AC_SYMBOLS > $AC_OUTPUT
 
-(cd codeworld-server &&  cabal_install --dependencies-only)
-(cd codeworld-server &&  cabal build)
+# Build codeworld-server from this project.
 
-# Run the server: cd codeworld-server && ./run.sh 8080.
+run .  cabal_install ./codeworld-server
 
-(cd codeworld-server && ./run.sh 8080)
+# Run the server.
+
+USER_BUILD=codeworld-server/data/user
+
+fuser -k -n tcp 8080
+rm -rf $USER_BUILD/*.jsexe
+rm -rf $USER_BUILD/*.js_hi
+rm -rf $USER_BUILD/*.js_o
+rm -rf $USER_BUILD/*.err.txt
+
+run codeworld-server  codeworld-server -p 8080

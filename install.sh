@@ -1,30 +1,12 @@
 #!/bin/bash
 
-function run {
-  cd $1
-  shift
-  echo RUNNING: $@
-  $@
-  if [ $? -ne 0 ]; then
-    echo ============================
-    echo = Aborting: Command failed =
-    echo ============================
-
-    exit 1
-  fi
-}
-
-BUILD=$(pwd)/build
-DOWNLOADS=$BUILD/downloads
+source base.sh
 
 rm -rf $BUILD ~/.ghc ~/.ghcjs
 
 mkdir $BUILD
 mkdir $BUILD/downloads
 mkdir $BUILD/bin
-
-export PATH=$BUILD/bin:$PATH
-export LANG=${LANG:-C.UTF-8}
 
 # Determine which package management tool is installed, and install
 # necessary system packages.
@@ -117,8 +99,6 @@ else
   echo "Make sure necessary packages are installed."
 fi
 
-export PREFIX=$BUILD
-
 # Choose the right GHC download
 if /sbin/ldconfig -p | grep -q libgmp.so.10; then
   GHC_ARCH=`uname -i`-unknown-linux-deb7
@@ -147,10 +127,6 @@ run $BUILD                         tar xzf $DOWNLOADS/cabal-install-1.22.6.0.tar
 run $BUILD/cabal-install-1.22.6.0  ./bootstrap.sh
 run .                              cabal update
 run $BUILD                         rm -rf cabal-install-1.22.6.0
-
-function cabal_install {
-  cabal install --global --prefix=$BUILD --reorder-goals --max-backjumps=-1 $@
-}
 
 # Fetch the prerequisites for GHCJS.
 

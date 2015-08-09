@@ -270,38 +270,20 @@ function isEditorClean() {
 }
 
 function setCode(code, history, name) {
-  function go() {
-    var doc = codeworldEditor.getDoc();
+  openProjectName = name;
 
-    openProjectName = name;
+  var doc = codeworldEditor.getDoc();
+  doc.setValue(code);
+  savedGeneration = doc.changeGeneration(true);
 
-    doc.setValue(code);
-    if (history) {
-      doc.setHistory(history);
-    } else {
-      doc.clearHistory();
-    }
-    codeworldEditor.focus();
-
-    savedGeneration = doc.changeGeneration(true);
-
-    stop();
-  }
-
-  if (isEditorClean()) {
-    go();
+  if (history) {
+    doc.setHistory(history);
   } else {
-    var msg = 'There are unsaved changes to your project. '
-            + 'Continue and throw away your changes?';
-    sweetAlert({
-      title: 'Warning',
-      text: msg,
-      type: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#DD6B55',
-      confirmButtonText: 'Yes, discard my changes!'
-    }, go);
+    doc.clearHistory();
   }
+
+  codeworldEditor.focus();
+  stop();
 }
 
 function loadFile(name) {
@@ -332,16 +314,44 @@ function loadProject(name) {
     return;
   }
 
-  var data = new FormData();
-  data.append('id_token', gapi.auth.getToken().id_token);
-  data.append('name', name);
+  function go() {
+    var data = new FormData();
+    data.append('id_token', gapi.auth.getToken().id_token);
+    data.append('name', name);
 
-  sendHttp('POST', 'loadProject', data, function(request) {
-    if (request.status == 200) {
-      var project = JSON.parse(request.responseText);
-      setCode(project.source, project.history, name);
-    }
-  });
+    sendHttp('POST', 'loadProject', data, function(request) {
+      if (request.status == 200) {
+        var project = JSON.parse(request.responseText);
+        setCode(project.source, project.history, name);
+      }
+    });
+  }
+
+  if (isEditorClean()) {
+    go();
+  } else if (name == openProjectName) {
+    var msg = 'There are unsaved changes to your project. '
+            + 'Continue and reload the last saved copy?';
+    sweetAlert({
+      title: 'Warning',
+      text: msg,
+      type: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#DD6B55',
+      confirmButtonText: 'Yes, discard my changes!'
+    }, go);
+  } else {
+    var msg = 'There are unsaved changes to your project. '
+            + 'Continue and throw away your changes?';
+    sweetAlert({
+      title: 'Warning',
+      text: msg,
+      type: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#DD6B55',
+      confirmButtonText: 'Yes, discard my changes!'
+    }, go);
+  }
 }
 
 function share() {

@@ -22,8 +22,6 @@ function init() {
 
   usingHaskellPrelude = false;
 
-  updateVisibility();
-
   var editor = document.getElementById('editor');
 
   window.codeworldEditor = CodeMirror.fromTextArea(editor, {
@@ -50,8 +48,7 @@ function init() {
     }
   };
 
-  window.codeworldEditor.on('changes', window.setTitle);
-  window.codeworldEditor.on('changes', window.updateProjects);
+  window.codeworldEditor.on('changes', window.updateUI);
 
   var hints = [
     "main", "--", "{-", "-}", "::", "->", "<-", "..", "case", "of", "if",
@@ -72,6 +69,8 @@ function init() {
   } else {
     setCode('');
   }
+
+  updateUI();
 
   sendHttp('GET', 'autocomplete.txt', null, function(request) {
     var words = [];
@@ -129,7 +128,7 @@ function sendHttp(method, url, body, callback) {
   request.send(body);
 }
 
-function updateVisibility() {
+function updateUI() {
   if (signedIn()) {
     document.getElementById('signin').style.display = 'none';
     document.getElementById('signout').style.display = '';
@@ -174,9 +173,7 @@ function updateVisibility() {
     document.getElementById('result').style.display = 'none';
     document.getElementById('shareButton').style.display = 'none';
   }
-}
 
-function updateProjects() {
   var projects = document.getElementById('nav_mine');
   var newProject = document.getElementById('newButton');
 
@@ -222,45 +219,7 @@ function updateProjects() {
 
     projects.appendChild(span.removeChild(elem));
   });
-}
 
-function toggleBrowser() {
-  window.showingBrowse = !window.showingBrowse;
-  updateVisibility();
-}
-
-function toggleDoc(root) {
-  window.showingDoc = !window.showingDoc;
-  updateVisibility();
-  if (window.showingDoc) {
-    stop();
-
-    var loc = document.getElementById('doc').contentWindow.location;
-    loc.search = root;
-  }
-}
-
-function discoverProjects() {
-  if (!signedIn()) {
-    allProjectNames = [];
-    updateProjects();
-    return;
-  }
-
-  var data = new FormData();
-  data.append('id_token', gapi.auth.getToken().id_token);
-
-  sendHttp('POST', 'listProjects', data, function(request) {
-    if (request.status != 200) {
-      return;
-    }
-
-    allProjectNames = JSON.parse(request.responseText);
-    updateProjects();
-  });
-}
-
-function setTitle() {
   var title;
   if (window.openProjectName) {
     title = window.openProjectName;
@@ -273,6 +232,42 @@ function setTitle() {
   }
 
   document.title = title + " - CodeWorld"
+}
+
+function toggleBrowser() {
+  window.showingBrowse = !window.showingBrowse;
+  updateUI();
+}
+
+function toggleDoc(root) {
+  window.showingDoc = !window.showingDoc;
+  updateUI();
+  if (window.showingDoc) {
+    stop();
+
+    var loc = document.getElementById('doc').contentWindow.location;
+    loc.search = root;
+  }
+}
+
+function discoverProjects() {
+  if (!signedIn()) {
+    allProjectNames = [];
+    updateUI();
+    return;
+  }
+
+  var data = new FormData();
+  data.append('id_token', gapi.auth.getToken().id_token);
+
+  sendHttp('POST', 'listProjects', data, function(request) {
+    if (request.status != 200) {
+      return;
+    }
+
+    allProjectNames = JSON.parse(request.responseText);
+    updateUI();
+  });
 }
 
 function isEditorClean() {
@@ -297,9 +292,7 @@ function setCode(code, history, name) {
     codeworldEditor.focus();
 
     savedGeneration = doc.changeGeneration(true);
-    setTitle();
 
-    updateProjects();
     stop();
   }
 
@@ -343,7 +336,7 @@ function loadFile(name) {
 function loadProject(name) {
   if (!signedIn()) {
     sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
-    updateVisibility();
+    updateUI();
     return;
   }
 
@@ -456,7 +449,7 @@ function run(hash, msg, error) {
     message.classList.remove('error');
   }
 
-  updateVisibility();
+  updateUI();
 }
 
 function goto(line, col) {
@@ -510,7 +503,7 @@ function withClientId(f) {
 
 function signinCallback(result) {
   discoverProjects();
-  updateVisibility();
+  updateUI();
 }
 
 function signin() {
@@ -528,7 +521,7 @@ function signin() {
 
 function signout() {
   if (window.gapi) gapi.auth.signOut();
-  updateVisibility();
+  updateUI();
   discoverProjects();
 }
 
@@ -542,7 +535,7 @@ function signedIn() {
 function saveProject() {
   if (!signedIn()) {
     sweetAlert('Oops!', 'You must sign in to save files.', 'error');
-    updateVisibility();
+    updateUI();
     return;
   }
 
@@ -556,7 +549,7 @@ function saveProject() {
 function saveProjectAs() {
   if (!signedIn()) {
     sweetAlert('Oops!', 'You must sign in to save files.', 'error');
-    updateVisibility();
+    updateUI();
     return;
   }
 
@@ -578,7 +571,7 @@ function saveProjectBase(projectName) {
 
   if (!signedIn) {
     sweetAlert('Oops!', 'You must sign in to save files.', 'error');
-    updateVisibility();
+    updateUI();
     return;
   }
 
@@ -600,9 +593,7 @@ function saveProjectBase(projectName) {
 
       window.openProjectName = projectName;
       window.savedGeneration = doc.changeGeneration(true);
-      setTitle();
-      updateProjects();
-      updateVisibility();
+      updateUI();
 
       if (allProjectNames.indexOf(projectName) == -1) {
         discoverProjects();
@@ -631,7 +622,7 @@ function deleteProject() {
 
   if (!signedIn) {
     sweetAlert('Oops', 'You must sign in to delete a project.', 'error');
-    updateVisibility();
+    updateUI();
     return;
   }
 
@@ -647,7 +638,7 @@ function deleteProject() {
       }
 
       discoverProjects();
-      updateVisibility();
+      updateUI();
     });
   }
 
@@ -681,7 +672,7 @@ function handleGAPILoad() {
   });
 
   discoverProjects();
-  updateVisibility();
+  updateUI();
 
   sendHttp('GET', 'user/base.jsexe/rts.js');
   sendHttp('GET', 'user/base.jsexe/lib.base.js');

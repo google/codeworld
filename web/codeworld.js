@@ -182,15 +182,7 @@ function updateUI() {
   }
 
   allProjectNames.sort(function(a, b) {
-    if (a == b) {
-      return 0;
-    } else if (a == openProjectName) {
-      return -1;
-    } else if (b == openProjectName) {
-      return 1;
-    } else {
-      return a.localeCompare(b);
-    }
+    return a.localeCompare(b);
   });
 
   allProjectNames.forEach(function(projectName) {

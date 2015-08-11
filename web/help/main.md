@@ -139,10 +139,10 @@ You can *translate* a picture to move it up, down, left, or right on the screen.
 To use `translate`, you give it three things:
 
 * A picture to move.
-* A distance (how many pixels) to move the picture *left* or *right*.
-  Negative numbers are left, and positive numbers are right.
-* A distance (again, in pixels) to move the picture *up* or *down*.  Negative
-  numbers are down, and positive numbers are up.
+* A distance to move the picture *left* or *right*. Negative numbers
+  are left, and positive numbers are right.
+* A distance to move the picture *up* or *down*.  Negative numbers are down,
+  and positive numbers are up.
 
 Ready for an example?
 

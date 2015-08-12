@@ -22,7 +22,7 @@
         var pre = pres[i];
         var text = pre.textContent;
         pre.innerHTML = '';
-        CodeMirror.runMode(text, 'haskell', pre);
+        CodeMirror.runMode(text, 'codeworld', pre);
         pre.classList.add('cm-s-default');
 
         if (text.indexOf('main ') != -1) {

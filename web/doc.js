@@ -28,8 +28,8 @@
         if (text.indexOf('main ') != -1) {
           pre.classList.add('clickable');
           pre.onclick = function() {
-            if (parent && parent.setCode) {
-              parent.setCode(text);
+            if (parent && parent.loadSample) {
+              parent.loadSample(text);
             }
           }
         }

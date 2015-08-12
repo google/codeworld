@@ -328,39 +328,9 @@ function loadFile(name) {
   });
 }
 
-function loadProject(name) {
-  if (!signedIn()) {
-    sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
-    updateUI();
-    return;
-  }
-
-  function go() {
-    var data = new FormData();
-    data.append('id_token', gapi.auth.getToken().id_token);
-    data.append('name', name);
-
-    sendHttp('POST', 'loadProject', data, function(request) {
-      if (request.status == 200) {
-        var project = JSON.parse(request.responseText);
-        setCode(project.source, project.history, name);
-      }
-    });
-  }
-
+function warnIfUnsaved(f) {
   if (isEditorClean()) {
-    go();
-  } else if (name == openProjectName) {
-    var msg = 'There are unsaved changes to your project. '
-            + 'Continue and reload the last saved copy?';
-    sweetAlert({
-      title: 'Warning',
-      text: msg,
-      type: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#DD6B55',
-      confirmButtonText: 'Yes, discard my changes!'
-    }, go);
+    f();
   } else {
     var msg = 'There are unsaved changes to your project. '
             + 'Continue and throw away your changes?';
@@ -371,8 +341,37 @@ function loadProject(name) {
       showCancelButton: true,
       confirmButtonColor: '#DD6B55',
       confirmButtonText: 'Yes, discard my changes!'
-    }, go);
+    }, f);
   }
+}
+
+function loadSample(code) {
+  warnIfUnsaved(function() { setCode(code); });
+}
+
+function newProject() {
+  warnIfUnsaved(function() { setCode(''); });
+}
+
+function loadProject(name) {
+  if (!signedIn()) {
+    sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
+    updateUI();
+    return;
+  }
+
+  warnIfUnsaved(function() {
+    var data = new FormData();
+    data.append('id_token', gapi.auth.getToken().id_token);
+    data.append('name', name);
+
+    sendHttp('POST', 'loadProject', data, function(request) {
+      if (request.status == 200) {
+        var project = JSON.parse(request.responseText);
+        setCode(project.source, project.history, name);
+      }
+    });
+  });
 }
 
 function share() {

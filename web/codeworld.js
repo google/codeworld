@@ -14,6 +14,35 @@
  * limitations under the License.
  */
 
+/*
+ * Utility function for sending an HTTP request to fetch a resource.
+ *
+ * Args:
+ *   - method: The HTTP method to use, such as 'GET'
+ *   - url: The URL to fetch, whether absolute or relative.
+ *   - body: The request body to send.  Use null for no body.
+ *   - callback: A callback function to send when complete.  (optional)
+ *
+ * If provided, the callback will be given the XmlHttpRequest object, so
+ * it can inspect the response code and headers as well as the contents.
+ */
+function sendHttp(method, url, body, callback) {
+  var request = new XMLHttpRequest();
+
+  if (callback) {
+    request.onreadystatechange = function() {
+      if (request.readyState == 4) callback(request);
+    };
+  }
+
+  request.open(method, url, true);
+  request.send(body);
+}
+
+/*
+ * Initializes the programming environment.  This is called after the
+ * entire document body and other JavaScript has loaded.
+ */
 function init() {
   showingBrowse = true;
   showingDoc = false;
@@ -115,19 +144,11 @@ function init() {
   }
 }
 
-function sendHttp(method, url, body, callback) {
-  var request = new XMLHttpRequest();
-
-  if (callback) {
-    request.onreadystatechange = function() {
-      if (request.readyState == 4) callback(request);
-    };
-  }
-
-  request.open(method, url, true);
-  request.send(body);
-}
-
+/*
+ * Updates all UI components to reflect the current state.  The general pattern
+ * is to modify the state stored in variables and such, and then call updateUI
+ * to get the visual presentation to match.
+ */
 function updateUI() {
   if (signedIn()) {
     document.getElementById('signin').style.display = 'none';
@@ -234,9 +255,9 @@ function toggleBrowser() {
 function toggleDoc(root) {
   window.showingDoc = !window.showingDoc;
   updateUI();
+
   if (window.showingDoc) {
     stop();
-
     var loc = document.getElementById('doc').contentWindow.location;
     loc.search = root;
   }

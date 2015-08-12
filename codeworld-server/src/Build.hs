@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 {-
@@ -18,13 +19,13 @@
 
 module Build where
 
-import           Control.Exception
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import           Data.Char
 import           Data.Maybe
 import           Data.Monoid
+import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import           System.Directory
@@ -33,39 +34,18 @@ import           System.IO
 import           System.Process
 import           Text.Regex.TDFA
 
-import Paths
 import Util
 
-localSourceFile :: ByteString -> FilePath
-localSourceFile hashed = BC.unpack hashed ++ ".hs"
-
-sourceFile :: ByteString -> FilePath
-sourceFile hashed = buildDir </> localSourceFile hashed
-
-targetFile :: ByteString -> FilePath
-targetFile hashed = buildDir </> BC.unpack hashed ++ ".jsexe" </> "out.js"
-
-resultFile :: ByteString -> FilePath
-resultFile hashed = buildDir </> BC.unpack hashed ++ ".err.txt"
-
-compileIfNeeded :: ByteString -> IO Bool
-compileIfNeeded hashed = do
-    hasResult <- doesFileExist (resultFile hashed)
-    hasTarget <- doesFileExist (targetFile hashed)
-    if hasResult && hasTarget then return True else compileUserSource hashed
-
 generateBaseBundle :: IO ()
-generateBaseBundle = generateBase >> compileBase
-
-generateBase :: IO ()
-generateBase = do
-    lns <- T.lines <$> T.readFile ("web" </> "autocomplete.txt")
+generateBaseBundle = do
+    lns <- T.lines <$> T.readFile autocompletePath
     let exprs = catMaybes (map expression lns)
     let defs = [ "d" <> T.pack (show i) <> " = " <> e
                  | (i,e) <- zip [0 :: Int ..] exprs ]
     let src = "module LinkBase where\n" <> T.intercalate "\n" defs
-    T.writeFile (buildDir </> "LinkBase.hs") src
-    T.writeFile (buildDir </> "LinkMain.hs") "main = pictureOf(blank)"
+    T.writeFile (buildRootDir </> "LinkBase.hs") src
+    T.writeFile (buildRootDir </> "LinkMain.hs") "main = pictureOf(blank)"
+    compileBase
   where expression t | T.null t           = Nothing
                      | isUpper (T.head t) = Nothing
                      | isLower (T.head t) = Just t
@@ -81,43 +61,50 @@ compileBase = do
     BC.putStrLn . fromJust =<< runCompiler (maxBound :: Int) ghcjsArgs
     return ()
 
-compileUserSource :: ByteString -> IO Bool
-compileUserSource hashed = do
-    dangerous <- checkDangerousSource fullSource
-    if dangerous then reportDangerous else compile
-  where
-    fullSource = sourceFile hashed
-    src = localSourceFile hashed
-    err = resultFile hashed
-    tgt = targetFile hashed
-    reportDangerous = do
-        B.writeFile err $ "Sorry, but your program refers to " <>
-                          "forbidden language features."
+compileIfNeeded :: Text -> IO Bool
+compileIfNeeded programId = do
+    hasResult <- doesFileExist (buildRootDir </> resultFile programId)
+    if hasResult then return True else compileExistingSource programId
+
+compileExistingSource :: Text -> IO Bool
+compileExistingSource programId = checkDangerousSource programId >>= \case
+    True -> do
+        B.writeFile (buildRootDir </> resultFile programId) $
+            "Sorry, but your program refers to forbidden language features."
         return False
-    compile = do
+    False -> do
         let ghcjsArgs = commonGHCJSArgs ++ [
                 "-no-rts",
                 "-no-stats",
                 "-use-base", "base.jsexe/out.base.symbs",
-                "./" ++ src
+                sourceFile programId
               ]
-        runCompiler userCompileMicros ghcjsArgs >>= respond
-    respond Nothing = do
-        removeFileIfExists err
-        removeFileIfExists tgt
-        return False
-    respond (Just output) = do
-        B.writeFile err output
-        doesFileExist tgt
+        runCompiler userCompileMicros ghcjsArgs >>= \case
+            Nothing -> do
+                removeFileIfExists (buildRootDir </> resultFile programId)
+                removeFileIfExists (buildRootDir </> targetFile programId)
+                return False
+            Just output -> do
+                B.writeFile (buildRootDir </> resultFile programId) output
+                doesFileExist (buildRootDir </> targetFile programId)
 
 userCompileMicros :: Int
 userCompileMicros = 10 * 1000000
+
+checkDangerousSource :: Text -> IO Bool
+checkDangerousSource programId = do
+    contents <- B.readFile (buildRootDir </> sourceFile programId)
+    return $ matches contents ".*TemplateHaskell.*" ||
+             matches contents ".*glasgow-exts.*"
+  where
+    matches :: ByteString -> ByteString -> Bool
+    matches txt pat = txt =~ pat
 
 runCompiler :: Int -> [String] -> IO (Maybe ByteString)
 runCompiler micros args = do
     (Just inh, Just outh, Just errh, pid) <-
         createProcess (proc "ghcjs" args) {
-            cwd       = Just buildDir,
+            cwd       = Just buildRootDir,
             std_in    = CreatePipe,
             std_out   = CreatePipe,
             std_err   = CreatePipe,
@@ -126,7 +113,6 @@ runCompiler micros args = do
 
     result <- withTimeout micros $ do
         err <- B.hGetContents errh
-        evaluate (B.length err)
         hClose outh
         return err
 
@@ -134,15 +120,6 @@ runCompiler micros args = do
     _ <- waitForProcess pid
 
     return result
-
-checkDangerousSource :: FilePath -> IO Bool
-checkDangerousSource src = do
-    contents <- B.readFile src
-    return $ matches contents ".*TemplateHaskell.*" ||
-             matches contents ".*glasgow-exts.*"
-  where
-    matches :: ByteString -> ByteString -> Bool
-    matches txt pat = txt =~ pat
 
 commonGHCJSArgs :: [String]
 commonGHCJSArgs = [

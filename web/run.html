@@ -23,9 +23,9 @@
     }
   </script>
 
-  <script type="text/javascript" src="user/base.jsexe/rts.js"></script>
-  <script type="text/javascript" src="user/base.jsexe/lib.base.js"></script>
-  <script type="text/javascript" src="user/base.jsexe/out.base.js"></script>
+  <script type="text/javascript" src="rts.js"></script>
+  <script type="text/javascript" src="lib.base.js"></script>
+  <script type="text/javascript" src="out.base.js"></script>
 
   <script type="text/javascript">
     var params = location.search.slice(1).split('&');
@@ -37,8 +37,8 @@
             hash.indexOf('%3D%3D', hash.length - 6) !== -1) {
           hash = hash.slice(0, hash.length - 6);
         }
-        if (hash.indexOf('==', hash.length - 2) === -1) {
-          hash += '==';
+        if (hash.slice(-2) === '==') {
+          hash = hash.slice(0, -2);
         }
         var script = document.createElement('script');
         script.setAttribute('type', 'text/javascript');

@@ -62,10 +62,10 @@ function init() {
 
   var hash = location.hash.slice(1);
   if (hash.length > 0) {
-    if (hash.indexOf('==', hash.length - 2) === -1) {
-      hash += '==';
+    if (hash.slice(-2) == '==') {
+      hash = hash.slice(0, -2);
     }
-    loadFile('user/' + hash + '.hs');
+    loadFile('loadSource?hash=' + hash);
   } else {
     setCode('');
   }
@@ -414,10 +414,10 @@ function addToMessage(msg) {
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/(user\/)?P[A-Za-z0-9_=\-]*\.hs:(\d+):((\d+)(-\d+)?)/g,
-               '<a href="#" onclick="goto($2, $4);">Line $2, Column $3</a>')
-      .replace(/(user\/)?P[A-Za-z0-9_=\-]*\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
-               '<a href="#" onclick="goto($2, $3);">Line $2-$4, Column $3-$5</a>');
+      .replace(/(user\/)?(P..\/)?P[A-Za-z0-9_=\-]*\.hs:(\d+):((\d+)(-\d+)?)/g,
+               '<a href="#" onclick="goto($3, $5);">Line $3, Column $4</a>')
+      .replace(/(user\/)?(P..\/)?P[A-Za-z0-9_=\-]*\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
+               '<a href="#" onclick="goto($3, $4);">Line $3-$5, Column $4-$6</a>');
 
   var message = document.getElementById('message');
   message.innerHTML += msg
@@ -471,7 +471,7 @@ function compile() {
     var hash = request.responseText;
     var success = request.status == 200;
 
-    sendHttp('GET', 'user/' + hash + '.err.txt', null, function(request) {
+    sendHttp('GET', '/runMsg?hash=' + hash, null, function(request) {
       window.usingHaskellPrelude = /HaskellPrelude/.test(src);
       var msg = '';
       if (request.status == 200) {
@@ -676,7 +676,7 @@ function handleGAPILoad() {
   discoverProjects();
   updateUI();
 
-  sendHttp('GET', 'user/base.jsexe/rts.js');
-  sendHttp('GET', 'user/base.jsexe/lib.base.js');
-  sendHttp('GET', 'user/base.jsexe/out.base.js');
+  sendHttp('GET', 'rts.js');
+  sendHttp('GET', 'lib.base.js');
+  sendHttp('GET', 'out.base.js');
 }

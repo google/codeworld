@@ -25,15 +25,54 @@ import qualified Crypto.Hash.MD5 as Crypto
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Base64 as B64
-import           Data.List
+import           Data.Monoid
+import           Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import           System.Directory
 import           System.IO.Error
+import           System.FilePath
 
-getFilesByExt :: FilePath -> FilePath -> IO [FilePath]
-getFilesByExt ext = fmap (sort . filter (ext `isSuffixOf`)) . getDirectoryContents
+autocompletePath :: FilePath
+autocompletePath = "web/autocomplete.txt"
+
+clientIdPath :: FilePath
+clientIdPath = "web/clientId.txt"
+
+buildRootDir :: FilePath
+buildRootDir = "data" </> "user"
+
+projectRootDir :: FilePath
+projectRootDir = "data" </> "projects"
+
+sourceBase :: Text -> FilePath
+sourceBase programId = let s = T.unpack programId in take 3 s </> s
+
+sourceFile :: Text -> FilePath
+sourceFile programId = sourceBase programId <.> "hs"
+
+targetFile :: Text -> FilePath
+targetFile programId = sourceBase programId <.> "jsexe" </> "out.js"
+
+resultFile :: Text -> FilePath
+resultFile programId = sourceBase programId <.> "err.txt"
+
+sourceToProgramId :: ByteString -> Text
+sourceToProgramId = ("P" <>) . T.decodeUtf8 . getHash
+
+nameToProjectId :: Text -> Text
+nameToProjectId = ("S" <>) . T.decodeUtf8 . getHash . T.encodeUtf8
+
+ensureProgramDir :: Text -> IO ()
+ensureProgramDir programId = createDirectoryIfMissing True dir
+  where dir = buildRootDir </> take 3 (T.unpack programId)
+
+ensureUserProjectDir :: Text -> IO ()
+ensureUserProjectDir userId = createDirectoryIfMissing True dir
+  where dir = projectRootDir </> T.unpack userId
 
 getHash :: ByteString -> ByteString
-getHash = BC.map toWebSafe . B64.encode . Crypto.hash
+getHash = BC.takeWhile (/= '=') . BC.map toWebSafe . B64.encode . Crypto.hash
   where toWebSafe '/' = '_'
         toWebSafe '+' = '-'
         toWebSafe c   = c

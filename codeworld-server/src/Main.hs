@@ -41,15 +41,14 @@ import           System.FilePath
 
 import Build
 import Model
-import Paths
 import Util
 
 newtype ClientId = ClientId (Maybe T.Text) deriving (Eq)
 
 main :: IO ()
 main = do
-    createDirectoryIfMissing True buildDir
-    createDirectoryIfMissing True projectDir
+    createDirectoryIfMissing True buildRootDir
+    createDirectoryIfMissing True projectRootDir
     generateBaseBundle
 
     hasClientId <- doesFileExist "web/clientId.txt"
@@ -105,11 +104,11 @@ site clientId =
       ("deleteProject", deleteProjectHandler clientId),
       ("listProjects",  listProjectsHandler clientId),
       ("compile",       compileHandler),
+      ("loadSource",    loadSourceHandler),
       ("run",           runHandler),
       ("runJS",         runHandler),
-      ("listExamples",  listExamplesHandler)
+      ("runMsg",        runMessageHandler)
     ] <|>
-    dir "user" (serveDirectoryWith dirConfig buildDir) <|>
     serveDirectory "web"
 
 -- A DirectoryConfig that sets the cache-control header to avoid errors when new
@@ -121,56 +120,75 @@ dirConfig = defaultDirectoryConfig { preServeHook = disableCache }
 loadProjectHandler :: ClientId -> Snap ()
 loadProjectHandler clientId = do
     user      <- getUser clientId
+    liftIO $ ensureUserProjectDir (userId user)
     Just name <- getParam "name"
-    let hash = T.decodeUtf8 (getHash name)
-    let fname = projectDir </> T.unpack (hash <> "." <> userId user <> ".cw")
-    serveFile fname
+    let projectName = T.decodeUtf8 name
+    let projectId = nameToProjectId projectName
+    let file = projectRootDir </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
+    serveFile file
 
 saveProjectHandler :: ClientId -> Snap ()
 saveProjectHandler clientId = do
     user <- getUser clientId
+    liftIO $ ensureUserProjectDir (userId user)
     Just project <- decode . LB.fromStrict . fromJust <$> getParam "project"
-    let hash = getHash (T.encodeUtf8 (projectName project))
-    let fname = T.decodeUtf8 hash <> "." <> userId user <> ".cw"
-    liftIO $ LB.writeFile (projectDir </> T.unpack fname) $ encode project
+    let projectId = nameToProjectId (projectName project)
+    let file = projectRootDir </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
+    liftIO $ LB.writeFile file $ encode project
 
 deleteProjectHandler :: ClientId -> Snap ()
 deleteProjectHandler clientId = do
     user      <- getUser clientId
+    liftIO $ ensureUserProjectDir (userId user)
     Just name <- getParam "name"
-    let hash = T.decodeUtf8 (getHash name)
-    let fname = projectDir </> T.unpack (hash <> "." <> userId user <> ".cw")
-    liftIO $ removeFile fname
+    let projectName = T.decodeUtf8 name
+    let projectId = nameToProjectId projectName
+    let file = projectRootDir </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
+    liftIO $ removeFile file
 
 listProjectsHandler :: ClientId -> Snap ()
 listProjectsHandler clientId = do
     user  <- getUser clientId
-    projects <- liftIO $ do
-        let ext = T.unpack $ "." <> userId user <> ".cw"
-        files <- getFilesByExt ext projectDir
-        mapM (fmap (fromJust . decode) . LB.readFile . (projectDir </>)) files :: IO [Project]
+    liftIO $ ensureUserProjectDir (userId user)
+    projectFiles <- liftIO $ getDirectoryContents $ projectRootDir </> T.unpack (userId user)
+    projects <- liftIO $ fmap catMaybes $ forM projectFiles $ \f -> do
+        let file = projectRootDir </> T.unpack (userId user) </> f
+        if takeExtension file == ".cw" then decode <$> LB.readFile file else return Nothing
     modifyResponse $ setContentType "application/json"
     writeLBS (encode (map projectName projects))
 
 compileHandler :: Snap ()
 compileHandler = do
     Just source <- getParam "source"
-    let hashed = BC.cons 'P' (getHash source)
+    let programId = sourceToProgramId source
     success <- liftIO $ do
-        B.writeFile (sourceFile hashed) source
-        compileIfNeeded hashed
+        ensureProgramDir programId
+        B.writeFile (buildRootDir </> sourceFile programId) source
+        compileIfNeeded programId
     when (not success) $ modifyResponse $ setResponseCode 500
     modifyResponse $ setContentType "text/plain"
-    writeBS hashed
+    writeBS (T.encodeUtf8 programId)
+
+loadSourceHandler :: Snap ()
+loadSourceHandler = do
+    Just hash <- getParam "hash"
+    let programId = T.decodeUtf8 hash
+    liftIO $ compileIfNeeded programId
+    modifyResponse $ setContentType "text/x-haskell"
+    serveFile (buildRootDir </> sourceFile programId)
 
 runHandler :: Snap ()
 runHandler = do
-    Just hashed <- getParam "hash"
-    liftIO $ compileIfNeeded hashed
-    serveFile (targetFile hashed)
+    Just hash <- getParam "hash"
+    let programId = T.decodeUtf8 hash
+    liftIO $ compileIfNeeded programId
+    modifyResponse $ setContentType "text/javascript"
+    serveFile (buildRootDir </> targetFile programId)
 
-listExamplesHandler :: Snap ()
-listExamplesHandler = do
-    files <- liftIO $ getFilesByExt ".hs" "web/examples"
-    modifyResponse $ setContentType "application/json"
-    writeLBS (encode files)
+runMessageHandler :: Snap ()
+runMessageHandler = do
+    Just hash <- getParam "hash"
+    let programId = T.decodeUtf8 hash
+    liftIO $ compileIfNeeded programId
+    modifyResponse $ setContentType "text/plain"
+    serveFile (buildRootDir </> resultFile programId)

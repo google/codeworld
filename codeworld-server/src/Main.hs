@@ -173,7 +173,6 @@ loadSourceHandler :: Snap ()
 loadSourceHandler = do
     Just hash <- getParam "hash"
     let programId = T.decodeUtf8 hash
-    liftIO $ compileIfNeeded programId
     modifyResponse $ setContentType "text/x-haskell"
     serveFile (buildRootDir </> sourceFile programId)
 

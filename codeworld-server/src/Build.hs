@@ -109,12 +109,12 @@ runCompiler micros args = do
             std_out   = CreatePipe,
             std_err   = CreatePipe,
             close_fds = True }
-    hClose inh
 
+    hClose inh
     result <- withTimeout micros $ do
         err <- B.hGetContents errh
-        hClose outh
         return err
+    hClose outh
 
     terminateProcess pid
     _ <- waitForProcess pid

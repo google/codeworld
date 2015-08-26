@@ -64,7 +64,8 @@ compileBase = do
 compileIfNeeded :: Text -> IO Bool
 compileIfNeeded programId = do
     hasResult <- doesFileExist (buildRootDir </> resultFile programId)
-    if hasResult then return True else compileExistingSource programId
+    hasTarget <- doesFileExist (buildRootDir </> targetFile programId)
+    if hasResult then return hasTarget else compileExistingSource programId
 
 compileExistingSource :: Text -> IO Bool
 compileExistingSource programId = checkDangerousSource programId >>= \case

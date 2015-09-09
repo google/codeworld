@@ -44,7 +44,9 @@ generateBaseBundle = do
                  | (i,e) <- zip [0 :: Int ..] exprs ]
     let src = "module LinkBase where\n" <> T.intercalate "\n" defs
     T.writeFile (buildRootDir </> "LinkBase.hs") src
-    T.writeFile (buildRootDir </> "LinkMain.hs") "main = pictureOf(blank)"
+    T.writeFile (buildRootDir </> "LinkMain.hs") $ T.intercalate "\n" [
+        "import LinkBase",
+        "main = pictureOf(blank)"]
     compileBase
   where expression t | T.null t           = Nothing
                      | isUpper (T.head t) = Nothing

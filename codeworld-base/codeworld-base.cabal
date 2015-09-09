@@ -18,6 +18,7 @@ Flag ghcjs
 
 Library
   Hs-source-dirs:      src
+  Js-sources:          jsbits/deep_eq.js
   Exposed-modules:     CodeWorld,
                        Prelude,
                        HaskellPrelude,

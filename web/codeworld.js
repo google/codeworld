@@ -585,7 +585,15 @@ function saveProjectAs() {
     defaultName = '';
   }
 
-  window.codeworldEditor.openDialog(text, saveProjectBase, { value: defaultName });
+  sweetAlert({
+    html: true,
+    title: '<i class="fa fa-2x fa-cloud-upload"></i>&nbsp; Save As',
+    text: 'Enter a name for your project:',
+    type: 'input',
+    inputValue: defaultName,
+    confirmButtonText: 'Save',
+    showCancelButton: true
+  }, saveProjectBase);
 }
 
 function saveProjectBase(projectName) {

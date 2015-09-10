@@ -453,11 +453,13 @@ function run(hash, msg, error) {
   if (hash && !error) {
     window.location.hash = '#' + hash;
     runner.contentWindow.location.replace('run.html?hash=' + hash);
+    document.getElementById('runner').style.display = '';
     document.getElementById('runner').contentWindow.focus();
     window.programRunning = true;
   } else {
     window.location.hash = '';
     runner.contentWindow.location.replace('about:blank');
+    document.getElementById('runner').style.display = 'none';
     window.programRunning = false;
   }
 

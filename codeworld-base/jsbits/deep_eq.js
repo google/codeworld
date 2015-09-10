@@ -1,3 +1,5 @@
+#include <ghcjs/rts.h>
+
 function cw$getThunks(o) {
     function isHeapObject(o) {
         return typeof o === 'object' && o !== null && typeof o.f === 'function';
@@ -13,7 +15,8 @@ function cw$getThunks(o) {
     while(work.length > 0) {
         var o = work.pop();
         if(isHeapObject(o)) {
-            if((o.f.t === 0 && o.f !== h$unbox_e) || o.f.t === 5) {
+            if ((o.f.t === CLOSURE_TYPE_THUNK && o.f !== h$unbox_e) ||
+                o.f.t === CLOSURE_TYPE_BLACKHOLE) {
                 thunks.push(o);
             } else {
                 addWork(o.d1);

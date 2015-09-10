@@ -56,6 +56,7 @@ generateBaseBundle = do
 compileBase :: IO ()
 compileBase = do
     let ghcjsArgs = commonGHCJSArgs ++ [
+            "-fno-warn-unused-imports",
             "-generate-base", "LinkBase",
             "-o", "base",
             "LinkMain.hs"

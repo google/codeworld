@@ -16,15 +16,22 @@
 
 source base.sh
 
-USER_BUILD=data/user
+run .  cabal update
 
-fuser -k -n tcp 8080
-rm -rf $USER_BUILD/base.jsexe
-rm -rf $USER_BUILD/LinkMain.js_hi
-rm -rf $USER_BUILD/LinkMain.js_o
-rm -rf $USER_BUILD/P??/*.jsexe
-rm -rf $USER_BUILD/P??/*.js_hi
-rm -rf $USER_BUILD/P??/*.js_o
-rm -rf $USER_BUILD/P??/*.err.txt
+# Install the codeworld-base package
 
-run .  codeworld-server -p 8080
+run .  cabal_install --ghcjs ./codeworld-base
+run codeworld-base  cabal haddock --html
+run codeworld-base  cabal haddock --hoogle
+
+# Build and run the autocomplete generator.
+
+AC_SYMBOLS=codeworld-base/dist/doc/html/codeworld-base/codeworld-base.txt
+AC_OUTPUT=web/autocomplete.txt
+
+run .  cabal_install ./codeworld-autocomplete
+run .  codeworld-autocomplete $AC_SYMBOLS > $AC_OUTPUT
+
+# Build codeworld-server from this project.
+
+run .  cabal_install ./codeworld-server

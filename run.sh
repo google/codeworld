@@ -27,4 +27,5 @@ rm -rf $USER_BUILD/P??/*.js_hi
 rm -rf $USER_BUILD/P??/*.js_o
 rm -rf $USER_BUILD/P??/*.err.txt
 
+mkdir -p log
 run .  codeworld-server -p 8080

@@ -60,7 +60,7 @@ then
   run . sudo apt-get update -y
 
   run . sudo apt-get install -y git
-  run . sudo apt-get install -y bzip2
+  run . sudo apt-get install -y xz-utils
   run . sudo apt-get install -y psmisc
 
   run . sudo apt-get install -y zlib1g-dev
@@ -115,9 +115,9 @@ fi
 
 # Choose the right GHC download
 if /sbin/ldconfig -p | grep -q libgmp.so.10; then
-  GHC_ARCH=`uname -i`-unknown-linux-deb7
+  GHC_ARCH=`uname -m`-unknown-linux-deb7
 elif /sbin/ldconfig -p | grep -q libgmp.so.3; then
-  GHC_ARCH=`uname -i`-unknown-linux-centos66
+  GHC_ARCH=`uname -m`-unknown-linux-centos66
 else
   echo Sorry, but no supported libgmp is installed.
   exit 1
@@ -137,7 +137,7 @@ run $BUILD                   rm -rf ghc-$GHC_VERSION
 # Install all the dependencies for cabal
 
 run $DOWNLOADS                     wget https://www.haskell.org/cabal/release/cabal-install-1.22.6.0/cabal-install-1.22.6.0.tar.gz
-run $BUILD                         tar xzf $DOWNLOADS/cabal-install-1.22.6.0.tar.gz
+run $BUILD                         tar xf $DOWNLOADS/cabal-install-1.22.6.0.tar.gz
 run $BUILD/cabal-install-1.22.6.0  ./bootstrap.sh
 run .                              cabal update
 run $BUILD                         rm -rf cabal-install-1.22.6.0
@@ -148,10 +148,9 @@ run .  cabal_install happy-1.19.5 alex-3.1.4
 
 # Get GHCJS itself (https://github.com/ghcjs/ghcjs) and cabal install.
 
-run $BUILD  git clone -b improved-base https://github.com/ghcjs/ghcjs-prim.git
-run $BUILD  git clone -b improved-base https://github.com/ghcjs/ghcjs.git
-run $BUILD  cabal_install ./ghcjs ./ghcjs-prim
-run $BUILD  rm -rf ghcjs ghcjs-prim
+run $BUILD  git clone https://github.com/ghcjs/ghcjs.git
+run $BUILD  cabal_install ./ghcjs
+run $BUILD  rm -rf ghcjs
 
 # install node (necessary for ghcjs-boot)
 
@@ -164,7 +163,7 @@ run $BUILD               rm -rf node-v0.12.7
 
 # Bootstrap ghcjs
 
-run . ghcjs-boot --dev --no-prof --no-haddock --ghcjs-boot-dev-branch improved-base --shims-dev-branch improved-base
+run . ghcjs-boot --dev --no-prof --no-haddock
 
 # Install ghcjs-dom from hackage.
 

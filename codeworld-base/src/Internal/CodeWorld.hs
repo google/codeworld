@@ -69,13 +69,13 @@ foreign import javascript interruptible "window.requestAnimationFrame($c);"
     js_waitAnimationFrame :: IO Double
 
 foreign import javascript unsafe "$1['getBoundingClientRect']()['left']"
-    js_getBoundingClientLeft :: JSRef Element -> IO Int
+    js_getBoundingClientLeft :: JSRef -> IO Int
 
 foreign import javascript unsafe "$1['getBoundingClientRect']()['top']"
-    js_getBoundingClientTop :: JSRef Element -> IO Int
+    js_getBoundingClientTop :: JSRef -> IO Int
 
 foreign import javascript unsafe "$1.drawImage($2, $3, $4);"
-    js_canvasDrawImage :: Canvas.Context -> JSRef Element -> Int -> Int -> IO ()
+    js_canvasDrawImage :: Canvas.Context -> JSRef -> Int -> Int -> IO ()
 
 foreign import javascript unsafe "window.reportRuntimeError($1, $2);"
     js_reportRuntimeError :: Bool -> JSString -> IO ()
@@ -190,7 +190,7 @@ drawFrame ctx pic = do
 
 setupScreenContext :: Element -> IO Canvas.Context
 setupScreenContext canvas = do
-    ctx <- Canvas.getContext $ Canvas.Canvas $ castRef $ unElement canvas
+    ctx <- Canvas.getContext $ Canvas.Canvas $ unElement canvas
     Canvas.save ctx
     Canvas.translate 250 250 ctx
     Canvas.scale 25 (-25) ctx
@@ -354,7 +354,7 @@ run startActivity = do
     setAttribute offscreenCanvas ("width" :: JSString)  ("500" :: JSString)
     setAttribute offscreenCanvas ("height" :: JSString) ("500" :: JSString)
 
-    screen <- Canvas.getContext (Canvas.Canvas (castRef (unElement canvas)))
+    screen <- Canvas.getContext (Canvas.Canvas (unElement canvas))
     buffer <- setupScreenContext offscreenCanvas
 
     currentActivity <- newMVar startActivity

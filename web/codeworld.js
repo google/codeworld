@@ -594,7 +594,8 @@ function saveProjectAs() {
     type: 'input',
     inputValue: defaultName,
     confirmButtonText: 'Save',
-    showCancelButton: true
+    showCancelButton: true,
+    closeOnConfirm: false
   }, saveProjectBase);
 }
 
@@ -608,6 +609,7 @@ function saveProjectBase(projectName) {
   }
 
   function go() {
+    sweetAlert.close();
     var doc = window.codeworldEditor.getDoc();
     var project = { 'name':    projectName,
                     'source':  doc.getValue(),

@@ -75,6 +75,7 @@ then
   run . sudo apt-get install -y patch
   run . sudo apt-get install -y autoconf
   run . sudo apt-get install -y automake
+  run . sudo apt-get install -y libtinfo-dev
 
   # Needed for nodejs
   run . sudo apt-get install -y g++
@@ -146,10 +147,9 @@ run $BUILD                         rm -rf cabal-install-1.22.6.0
 
 run .  cabal_install happy-1.19.5 alex-3.1.4
 
-# Get GHCJS itself (https://github.com/ghcjs/ghcjs) and cabal install.
+# Install GHCJS itself (https://github.com/ghcjs/ghcjs) and cabal install.
 
-run $BUILD  git clone https://github.com/ghcjs/ghcjs.git
-run $BUILD  cabal_install ./ghcjs
+run $BUILD  cabal_install http://ghcjs.luite.com/master.tar.gz
 run $BUILD  rm -rf ghcjs
 
 # install node (necessary for ghcjs-boot)
@@ -163,7 +163,7 @@ run $BUILD               rm -rf node-v0.12.7
 
 # Bootstrap ghcjs
 
-run . ghcjs-boot --dev --no-prof --no-haddock
+run . ghcjs-boot --no-prof --no-haddock
 
 # Install ghcjs-dom from hackage.
 

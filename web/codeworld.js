@@ -449,15 +449,19 @@ function run(hash, msg, error) {
     window.showingDoc = false;
   }
 
+  if (hash) {
+    window.location.hash = '#' + hash;
+  } else {
+    window.location.hash = '';
+  }
+
   var runner = document.getElementById('runner');
   if (hash && !error) {
-    window.location.hash = '#' + hash;
     runner.contentWindow.location.replace('run.html?hash=' + hash);
     document.getElementById('runner').style.display = '';
     document.getElementById('runner').contentWindow.focus();
     window.programRunning = true;
   } else {
-    window.location.hash = '';
     runner.contentWindow.location.replace('about:blank');
     document.getElementById('runner').style.display = 'none';
     window.programRunning = false;
@@ -505,7 +509,7 @@ function compile() {
       if (success) {
         run(hash, 'Running...\n\n' + msg, false);
       } else {
-        run('', msg, true);
+        run(hash, msg, true);
       }
     });
   });

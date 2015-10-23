@@ -132,8 +132,12 @@ color :: (Picture, Color) -> Picture
 color (p, c) = Color c p
 
 -- | A picture drawn entirely in this color.
-colour :: (Picture, Color) -> Picture
-colour = color
+colored :: (Picture, Color) -> Picture
+colored = color
+
+-- | A picture drawn entirely in this color.
+coloured :: (Picture, Color) -> Picture
+coloured = colored
 
 -- | A picture drawn translated in these directions.
 translate :: (Picture, Number, Number) -> Picture
@@ -163,6 +167,7 @@ rotate (p, t) = Rotate t p
 rotated :: (Picture, Number) -> Picture
 rotated = rotate
 
+{-# WARNING color "Please use colored(...) instead of color(...)" #-}
 {-# WARNING translate "Please use translated(...) instead of translate(...)" #-}
 {-# WARNING rotate "Please use rotated(...) instead of rotate(...)" #-}
 {-# WARNING scale "Please use scaled(...) instead of scale(...)" #-}

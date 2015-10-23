@@ -163,9 +163,9 @@ rotate (p, t) = Rotate t p
 rotated :: (Picture, Number) -> Picture
 rotated = rotate
 
-{-# DEPRECATED translate "Use translated instead" #-}
-{-# DEPRECATED rotate "Use rotated instead" #-}
-{-# DEPRECATED scale "Use scaled instead" #-}
+{-# WARNING translate "Please use translated(...) instead of translate(...)" #-}
+{-# WARNING rotate "Please use rotated(...) instead of rotate(...)" #-}
+{-# WARNING scale "Please use scaled(...) instead of scale(...)" #-}
 
 -- A picture made by drawing these pictures, ordered from top to bottom.
 pictures :: [Picture] -> Picture

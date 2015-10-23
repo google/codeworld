@@ -25,6 +25,7 @@ module Internal.Exports (
 
     -- * Colors
     Color(..),
+    Colour,
     black,
     white,
     red,
@@ -83,9 +84,14 @@ module Internal.Exports (
     thickArc,
     text,
     color,
+    colour,
     translate,
+    translated,
     scale,
+    scaled,
+    dilated,
     rotate,
+    rotated,
     pictures,
     (&),
     coordinatePlane,

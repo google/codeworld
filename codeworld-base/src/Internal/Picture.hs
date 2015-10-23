@@ -55,93 +55,117 @@ data Picture = Polygon [Point]
 
 instance P.Show Picture where show _ = "<<Picture>>"
 
--- A blank picture
+-- | A blank picture
 blank :: Picture
 blank = Pictures []
 
--- A thin line with these points as endpoints
+-- | A thin line with these points as endpoints
 line :: [Point] -> Picture
 line ps = Line ps 0 P.False
 
--- A thick line, with these endpoints, with this line width
+-- | A thick line, with these endpoints, with this line width
 thickLine :: ([Point], Number) -> Picture
 thickLine (ps, n) = Line ps n P.False
 
--- A thin polygon with these points as vertices
+-- | A thin polygon with these points as vertices
 polygon :: [Point] -> Picture
 polygon ps = Line ps 0 P.True
 
--- A thin polygon with these points as vertices
+-- | A thin polygon with these points as vertices
 thickPolygon :: ([Point], Number) -> Picture
 thickPolygon (ps, n) = Line ps n P.True
 
--- A solid polygon with these points as vertices
+-- | A solid polygon with these points as vertices
 solidPolygon :: [Point] -> Picture
 solidPolygon = Polygon
 
--- A thin rectangle, with this width and height
+-- | A thin rectangle, with this width and height
 rectangle :: (Number, Number) -> Picture
 rectangle (w, h) = polygon [
     (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)
     ]
 
--- A solid rectangle, with this width and height
+-- | A solid rectangle, with this width and height
 solidRectangle :: (Number, Number) -> Picture
 solidRectangle (w, h) = solidPolygon [
     (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)
     ]
 
--- A thick rectangle, with this width and height and line width
+-- | A thick rectangle, with this width and height and line width
 thickRectangle :: (Number, Number, Number) -> Picture
 thickRectangle (w, h, lw) = thickPolygon ([
     (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)
     ], lw)
 
--- A thin circle, with this radius
+-- | A thin circle, with this radius
 circle :: Number -> Picture
 circle r = arc (0, 360, r)
 
--- A solid circle, with this radius
+-- | A solid circle, with this radius
 solidCircle :: Number -> Picture
 solidCircle r = thickCircle (r/2, r)
 
--- A thick circle, with this radius and line width
+-- | A thick circle, with this radius and line width
 thickCircle :: (Number, Number) -> Picture
 thickCircle (r, w) = Arc 0 360 r w
 
--- A thin arc, starting and ending at these angles, with this radius
+-- | A thin arc, starting and ending at these angles, with this radius
 arc :: (Number, Number, Number) -> Picture
 arc (b, e, r) = Arc b e r 0
 
--- A solid sector of a circle (i.e., a pie slice) starting and ending at these
+-- | A solid sector of a circle (i.e., a pie slice) starting and ending at these
 -- angles, with this radius
 sector :: (Number, Number, Number) -> Picture
 sector (b, e, r) = Arc b e (r/2) r
 
--- A thick arc, starting and ending at these angles, with this radius and
+-- | A thick arc, starting and ending at these angles, with this radius and
 -- line width
 thickArc :: (Number, Number, Number, Number) -> Picture
 thickArc (b, e, r, w) = Arc b e r w
 
--- A piece of text
+-- | A piece of text
 text :: Text -> Picture
 text = Text
 
--- A picture drawn entirely in this color.
+-- | A picture drawn entirely in this color.
 color :: (Picture, Color) -> Picture
 color (p, c) = Color c p
 
--- A picture drawn translated in these directions.
+-- | A picture drawn entirely in this color.
+colour :: (Picture, Color) -> Picture
+colour = color
+
+-- | A picture drawn translated in these directions.
 translate :: (Picture, Number, Number) -> Picture
 translate (p, x, y) = Translate x y p
 
--- A picture scaled by these factors.
+-- | A picture drawn translated in these directions.
+translated :: (Picture, Number, Number) -> Picture
+translated = translate
+
+-- | A picture scaled by these factors.
 scale :: (Picture, Number, Number) -> Picture
 scale (p, x, y) = Scale x y p
 
--- A picture scaled by this angle.
+-- | A picture scaled by these factors.
+scaled :: (Picture, Number, Number) -> Picture
+scaled = scale
+
+-- | A picture scaled by these factors.
+dilated :: (Picture, Number, Number) -> Picture
+dilated = scaled
+
+-- | A picture rotated by this angle.
 rotate :: (Picture, Number) -> Picture
 rotate (p, t) = Rotate t p
+
+-- | A picture rotated by this angle.
+rotated :: (Picture, Number) -> Picture
+rotated = rotate
+
+{-# DEPRECATED translate "Use translated instead" #-}
+{-# DEPRECATED rotate "Use rotated instead" #-}
+{-# DEPRECATED scale "Use scaled instead" #-}
 
 -- A picture made by drawing these pictures, ordered from top to bottom.
 pictures :: [Picture] -> Picture

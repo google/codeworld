@@ -26,6 +26,8 @@ import Internal.Num
 newtype Color = RGBA(Number, Number, Number, Number)
 instance P.Show Color where show _ = "<<Color>>"
 
+type Colour = Color
+
 white, black :: Color
 white = RGBA (1, 1, 1, 1)
 black = RGBA (0, 0, 0, 1)

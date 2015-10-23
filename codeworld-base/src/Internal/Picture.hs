@@ -26,21 +26,37 @@ import Internal.Text
 import Internal.Color
 
 type Point = (Number, Number)
-
 type Vector = (Number, Number)
 
 addVectors :: (Vector, Vector) -> Vector
 addVectors ((x1,y1), (x2,y2)) = (x1 + x2, y1 + y2)
 
+vectorSum :: (Vector, Vector) -> Vector
+vectorSum = addVectors
+
 subtractVectors :: (Vector, Vector) -> Vector
 subtractVectors ((x1,y1), (x2,y2)) = (x1 - x2, y1 - y2)
+
+vectorDifference :: (Vector, Vector) -> Vector
+vectorDifference = subtractVectors
 
 scaleVector :: (Vector, Number) -> Vector
 scaleVector ((x,y), k) = (k*x, k*y)
 
+scaledVector :: (Vector, Number) -> Vector
+scaledVector = scaleVector
+
 rotateVector :: (Vector, Number) -> Vector
 rotateVector ((x,y), angle) = (x * cos angle - y * sin angle,
                                x * sin angle + y * cos angle)
+
+rotatedVector :: (Vector, Number) -> Vector
+rotatedVector = rotateVector
+
+{-# WARNING addVectors "Please use vectorSum(...) instead of addVectors(...)" #-}
+{-# WARNING subtractVectors "Please use vectorDifference(...) instead of subtractVectors(...)" #-}
+{-# WARNING scaleVector "Please use scaledVector(...) instead of scaleVector(...)" #-}
+{-# WARNING rotatedVector "Please use rotatedVector(...) instead of rotateVector(...)" #-}
 
 data Picture = Polygon [Point]
              | Line [Point] !Number !P.Bool

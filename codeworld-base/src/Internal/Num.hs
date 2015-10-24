@@ -32,11 +32,13 @@ module Internal.Num (
     (<=),
     max,
     min,
+    opposite,
     negate,
     abs,
+    absoluteValue,
     signum,
-    truncate,
-    round,
+    truncation,
+    rounded,
     ceiling,
     floor,
     quotient,
@@ -45,6 +47,7 @@ module Internal.Num (
     pi,
     exp,
     sqrt,
+    squareRoot,
     log,
     logBase,
     sin,
@@ -120,7 +123,7 @@ instance P.Num Number where
     (+) = (+)
     (-) = (-)
     (*) = (*)
-    negate = negate
+    negate = opposite
     abs = abs
     signum = signum
 
@@ -199,8 +202,11 @@ min :: (Number, Number) -> Number
 min (Number a, Number b) = fromDouble (P.min a b)
 
 {-| Gives the opposite (that is, the negative) of a number. -}
+opposite :: Number -> Number
+opposite = fromDouble . P.negate . toDouble
+
 negate :: Number -> Number
-negate = fromDouble . P.negate . toDouble
+negate = opposite
 
 {-| Gives the absolute value of a number.
 
@@ -210,6 +216,9 @@ negate = fromDouble . P.negate . toDouble
 -}
 abs :: Number -> Number
 abs = fromDouble . P.abs . toDouble
+
+absoluteValue :: Number -> Number
+absoluteValue = abs
 
 {-| Gives the sign of a number.
 
@@ -224,15 +233,15 @@ signum = fromDouble . P.signum . toDouble
 
   For example, truncate(4.2) is 4, while truncate(-4.7) is -4.
 -}
-truncate :: Number -> Number
-truncate = fromInteger . P.truncate . toDouble
+truncation :: Number -> Number
+truncation = fromInteger . P.truncate . toDouble
 
 {-| Gives the number rounded to the nearest integer.
 
   For example, round(4.2) is 4, while round(4.7) is 5.
 -}
-round :: Number -> Number
-round = fromInteger . P.round . toDouble
+rounded :: Number -> Number
+rounded = fromInteger . P.round . toDouble
 
 {-| Gives the smallest integer that is greater than or equal to a number.
 
@@ -256,7 +265,7 @@ floor = fromInteger . P.floor . toDouble
   part.
 -}
 quotient :: (Number, Number) -> Number
-quotient (a, b) = truncate (a / b)
+quotient (a, b) = truncation (a / b)
 
 {-| Gives the remainder when dividing two numbers.
 
@@ -264,7 +273,7 @@ quotient (a, b) = truncate (a / b)
   3 by 2.
 -}
 remainder :: (Number, Number) -> Number
-remainder (a, b) = a - b * truncate (a / b)
+remainder (a, b) = a - b * quotient (a, b)
 
 {-| Gives the repicrocal of a number.
 
@@ -300,6 +309,9 @@ exp = fromDouble . P.exp . toDouble
 -}
 sqrt :: Number -> Number
 sqrt = fromDouble . P.sqrt . toDouble
+
+squareRoot :: Number -> Number
+squareRoot = sqrt
 
 {-| Gives the natural log of a number.  This is the opposite of the exp
     function.

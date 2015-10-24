@@ -20,7 +20,6 @@
 module Internal.Text (
     Text,
     fromString,
-    empty,
     append,
     (<>),
     appendAll,
@@ -56,9 +55,6 @@ import Internal.Num
 
 fromString :: P.String -> Text
 fromString = T.pack
-
-empty :: Text -> Bool
-empty = T.null
 
 append :: (Text, Text) -> Text
 append (a, b) = T.append a b

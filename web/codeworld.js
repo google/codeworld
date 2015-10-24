@@ -81,11 +81,33 @@ function init() {
 
   var hints = [
     "main", "--", "{-", "-}", "::", "->", "<-", "..", "case", "of", "if",
-    "then", "else", "data", "let", "in", "where"
+    "then", "else", "data", "let", "in", "where", "type"
   ];
   var hintBlacklist = [
-    "IO", "fromDouble", "fromInt", "fromInteger", "fromRational", "fromString",
-    "ifThenElse", "toDouble", "toInt"
+    // Symbols that only exist to map to Haskell.
+    "IO",
+    "fromDouble",
+    "fromInt",
+    "fromInteger",
+    "fromRational",
+    "fromString",
+    "ifThenElse",
+    "toDouble",
+    "toInt",
+
+    // Deprecated symbols from the Prelude.
+    "addVectors",
+    "color",
+    "cycle",
+    "rotate",
+    "rotateVector",
+    "scaleVector",
+    "scale",
+    "seedRandoms",
+    "shuffle",
+    "sort",
+    "subtractVectors",
+    "translate"
   ];
   CodeMirror.registerHelper('hintWords', 'codeworld', hints);
 
@@ -102,21 +124,53 @@ function init() {
   updateUI();
 
   sendHttp('GET', 'autocomplete.txt', null, function(request) {
-    var words = [];
+    var lines = [];
     if (request.status != 200) {
       console.log('Failed to load autocomplete word list.');
     } else {
-      words = request.responseText.split('\n');
+      lines = request.responseText.split('\n');
     }
 
     // Override the syntax classification of words from the standard library.
     var keywordOverrides = {};
 
-    words.forEach(function(word) {
+    lines.forEach(function(line) {
+      var startOfWord = 0;
+      if (line.startsWith("type ")) {
+        startOfWord += 5;
+      } else if (line.startsWith("data ")) {
+        startOfWord += 5;
+      } else if (line.startsWith("newtype ")) {
+        return;
+      } else if (line.startsWith("class ")) {
+        return;
+      } else if (line.startsWith("instance ")) {
+        return;
+      }
+
+      var endOfWord = line.indexOf(" ", startOfWord);
+      if (endOfWord == -1) {
+        endOfWord = line.length;
+      }
+      if (endOfWord == startOfWord) {
+        return;
+      }
+
+      if (line[startOfWord] == "(" && line[endOfWord - 1] == ")") {
+        startOfWord++;
+        endOfWord--;
+      }
+
+      var word = line.substr(startOfWord, endOfWord - startOfWord);
+
       if (/^[A-Z:]/.test(word)) {
         keywordOverrides[word] = 'builtin-2';
       } else {
         keywordOverrides[word] = 'builtin';
+      }
+
+      if (word.length > 1 && hintBlacklist.indexOf(word) < 0) {
+        hints.push(word);
       }
     });
 
@@ -126,11 +180,6 @@ function init() {
     window.codeworldEditor.setOption(
         'mode', { name: 'codeworld', overrideKeywords: keywordOverrides });
 
-    words.forEach(function(word) {
-      if (word.length > 1 && hintBlacklist.indexOf(word) < 0) {
-        hints.push(word);
-      }
-    });
     CodeMirror.registerHelper('hintWords', 'codeworld', hints);
   });
 

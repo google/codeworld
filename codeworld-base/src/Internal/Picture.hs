@@ -56,7 +56,7 @@ rotatedVector = rotateVector
 {-# WARNING addVectors "Please use vectorSum(...) instead of addVectors(...)" #-}
 {-# WARNING subtractVectors "Please use vectorDifference(...) instead of subtractVectors(...)" #-}
 {-# WARNING scaleVector "Please use scaledVector(...) instead of scaleVector(...)" #-}
-{-# WARNING rotatedVector "Please use rotatedVector(...) instead of rotateVector(...)" #-}
+{-# WARNING rotateVector "Please use rotatedVector(...) instead of rotateVector(...)" #-}
 
 data Picture = Polygon [Point]
              | Line [Point] !Number !P.Bool

@@ -92,6 +92,7 @@ function init() {
     "fromRational",
     "fromString",
     "ifThenElse",
+    "negate",
     "toDouble",
     "toInt",
 

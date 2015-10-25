@@ -135,6 +135,10 @@ function init() {
     // Override the syntax classification of words from the standard library.
     var keywordOverrides = {};
 
+    lines = lines.sort().filter(function(item, pos, array) {
+      return !pos || item != array[pos - 1];
+    });
+
     lines.forEach(function(line) {
       var startOfWord = 0;
       if (line.startsWith("type ")) {
@@ -142,7 +146,7 @@ function init() {
       } else if (line.startsWith("data ")) {
         startOfWord += 5;
       } else if (line.startsWith("newtype ")) {
-        return;
+        startOfWord += 8;
       } else if (line.startsWith("class ")) {
         return;
       } else if (line.startsWith("instance ")) {

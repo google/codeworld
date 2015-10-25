@@ -39,6 +39,7 @@ import Util
 generateBaseBundle :: IO ()
 generateBaseBundle = do
     lns <- T.lines <$> T.readFile autocompletePath
+    let preludeLines = keepOnlyPrelude lns
     let exprs = catMaybes (map expression lns)
     let defs = [ "d" <> T.pack (show i) <> " = " <> e
                  | (i,e) <- zip [0 :: Int ..] exprs ]
@@ -48,10 +49,18 @@ generateBaseBundle = do
         "import LinkBase",
         "main = pictureOf(blank)"]
     compileBase
-  where expression t | T.null t           = Nothing
-                     | isUpper (T.head t) = Nothing
-                     | isLower (T.head t) = Just t
-                     | otherwise          = Just ("(" <> t <> ")")
+  where keepOnlyPrelude lns = takeWhile (not . T.startsWith "module ")
+                            . tail
+                            . dropWhile (/= "module Prelude")
+        expression t | T.null t                   = Nothing
+                     | T.startsWith "-- " t       = Nothing
+                     | T.startsWith "data " t     = Nothing
+                     | T.startsWith "type " t     = Nothing
+                     | T.startsWith "newtype " t  = Nothing
+                     | T.startsWith "class " t    = Nothing
+                     | T.startsWith "instance " t = Nothing
+                     | isLetter (T.head t)        = Just t
+                     | otherwise                  = Just ("(" <> t <> ")")
 
 compileBase :: IO ()
 compileBase = do

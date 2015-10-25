@@ -136,6 +136,16 @@ function init() {
       lines = request.responseText.split('\n');
     }
 
+    var startLine = lines.indexOf('module Prelude') + 1;
+    var endLine = startLine;
+    while (endLine < lines.length) {
+      if (lines[endLine].startsWith("module ")) {
+        break;
+      }
+      endLine++;
+    }
+    lines = lines.slice(startLine, endLine);
+
     // Override the syntax classification of words from the standard library.
     var keywordOverrides = {};
 
@@ -184,9 +194,6 @@ function init() {
         hints.push(word);
       }
     });
-
-    // Special case for main, since it's morally a built-in name.
-    keywordOverrides['main'] = 'builtin';
 
     window.codeworldEditor.setOption(
         'mode', { name: 'codeworld', overrideKeywords: keywordOverrides });

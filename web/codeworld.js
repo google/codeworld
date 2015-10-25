@@ -221,7 +221,8 @@ function init() {
  * to get the visual presentation to match.
  */
 function updateUI() {
-  if (signedIn()) {
+  var isSignedIn = signedIn();
+  if (isSignedIn) {
     document.getElementById('signin').style.display = 'none';
     document.getElementById('signout').style.display = '';
     document.getElementById('saveAsButton').style.display = '';
@@ -278,21 +279,23 @@ function updateUI() {
   });
 
   allProjectNames.forEach(function(projectName) {
-    var title = projectName;
     var active = projectName == openProjectName;
+    if (!isSignedIn && !active) {
+      return;
+    }
 
+    var title = projectName;
     if (active && !isEditorClean()) {
       title = "* " + title;
     }
+
     var encodedName = title.replace('&', '&amp;')
                            .replace('<', '&lt;')
                            .replace('>', '&gt;');
 
     var template = document.getElementById('projectTemplate').innerHTML;
     template = template.replace('{{label}}', encodedName);
-    template = template.replace(
-        /{{ifactive ([^}]*)}}/,
-        projectName == openProjectName ? "$1" : "");
+    template = template.replace(/{{ifactive ([^}]*)}}/, active ? "$1" : "");
 
     var span = document.createElement('span');
     span.innerHTML = template;
@@ -336,7 +339,7 @@ function toggleDoc(root) {
 
 function discoverProjects() {
   if (!signedIn()) {
-    allProjectNames = [];
+    allProjectNames = window.openProjectName ? [window.openProjectName] : [];
     updateUI();
     return;
   }
@@ -620,7 +623,6 @@ function signin() {
 
 function signout() {
   if (window.gapi) gapi.auth.signOut();
-  updateUI();
   discoverProjects();
 }
 

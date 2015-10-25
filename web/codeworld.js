@@ -99,23 +99,24 @@ function init() {
 
   var hints = [
     createHint("main :: Program", 0, 4),
-    createHint("--", 0, 2),
-    createHint("{-", 0, 2),
-    createHint("-}", 0, 2),
-    createHint("::", 0, 2),
-    createHint("->", 0, 2),
-    createHint("<-", 0, 2),
-    createHint("..", 0, 2),
-    createHint("case", 0, 4),
-    createHint("of", 0, 2),
-    createHint("if", 0, 2),
-    createHint("then", 0, 4),
-    createHint("else", 0, 4),
-    createHint("data", 0, 4),
-    createHint("let", 0, 3),
-    createHint("in", 0, 2),
-    createHint("where", 0, 5),
-    createHint("type", 0, 4)
+    createHint("--  single line comment", 0, 2),
+    createHint("{-  start a multi-line comment", 0, 2),
+    createHint("-}  end a multi-line comment", 0, 2),
+    createHint("::  write a type annotation", 0, 2),
+    createHint("->  declare a function type or case branch", 0, 2),
+    createHint("<-  list comprehension index", 0, 2),
+    createHint("..  list range", 0, 2),
+    createHint("case  decide between many options", 0, 4),
+    createHint("of  finish a case statement", 0, 2),
+    createHint("if  decide between two choices", 0, 2),
+    createHint("then  1st choice of an if statement", 0, 4),
+    createHint("else  2nd choice of an if statement", 0, 4),
+    createHint("data  define a new data type", 0, 4),
+    createHint("let  define local variables", 0, 3),
+    createHint("in  finish a let statement", 0, 2),
+    createHint("where  define local variables", 0, 5),
+    createHint("type  define a type synonym", 0, 4),
+    createHint("(:) :: a -> [a] -> [a]", 1, 2)
   ];
 
   CodeMirror.registerHelper('hint', 'codeworld', function(cm) {
@@ -262,7 +263,7 @@ function init() {
     window.codeworldEditor.setOption(
         'mode', { name: 'codeworld', overrideKeywords: keywordOverrides });
 
-    hints.sort(function(a, b) { return a.source.localeCompare(b.source); });
+    hints.sort(function(a, b) { return a.source < b.source ? -1 : 1 });
     CodeMirror.registerHelper('hintWords', 'codeworld', hints);
   });
 

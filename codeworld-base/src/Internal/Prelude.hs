@@ -73,8 +73,8 @@ module Internal.Prelude (
     take,
     drop,
     split,
-    P.takeWhile,
-    P.dropWhile,
+    takeWhile,
+    dropWhile,
     splitWhen,
 
     -- Maybe

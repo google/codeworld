@@ -151,6 +151,8 @@ function init() {
         return;
       } else if (line.startsWith("instance ")) {
         return;
+      } else if (line.startsWith("-- ")) {
+        return;
       }
 
       var endOfWord = line.indexOf(" ", startOfWord);

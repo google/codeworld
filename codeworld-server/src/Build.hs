@@ -22,7 +22,6 @@ module Build where
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
-import           Data.Char
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Text (Text)
@@ -40,7 +39,7 @@ generateBaseBundle :: IO ()
 generateBaseBundle = do
     lns <- T.lines <$> T.readFile autocompletePath
     let preludeLines = keepOnlyPrelude lns
-    let exprs = catMaybes (map expression lns)
+    let exprs = catMaybes (map expression preludeLines)
     let defs = [ "d" <> T.pack (show i) <> " = " <> e
                  | (i,e) <- zip [0 :: Int ..] exprs ]
     let src = "module LinkBase where\n" <> T.intercalate "\n" defs
@@ -49,18 +48,17 @@ generateBaseBundle = do
         "import LinkBase",
         "main = pictureOf(blank)"]
     compileBase
-  where keepOnlyPrelude lns = takeWhile (not . T.startsWith "module ")
-                            . tail
-                            . dropWhile (/= "module Prelude")
+  where keepOnlyPrelude = takeWhile (not . T.isPrefixOf "module ")
+                        . drop 1
+                        . dropWhile (/= "module Prelude")
         expression t | T.null t                   = Nothing
-                     | T.startsWith "-- " t       = Nothing
-                     | T.startsWith "data " t     = Nothing
-                     | T.startsWith "type " t     = Nothing
-                     | T.startsWith "newtype " t  = Nothing
-                     | T.startsWith "class " t    = Nothing
-                     | T.startsWith "instance " t = Nothing
-                     | isLetter (T.head t)        = Just t
-                     | otherwise                  = Just ("(" <> t <> ")")
+                     | T.isPrefixOf "-- " t       = Nothing
+                     | T.isPrefixOf "data " t     = Nothing
+                     | T.isPrefixOf "type " t     = Nothing
+                     | T.isPrefixOf "newtype " t  = Nothing
+                     | T.isPrefixOf "class " t    = Nothing
+                     | T.isPrefixOf "instance " t = Nothing
+                     | otherwise                  = Just (T.takeWhile (/= ' ') t)
 
 compileBase :: IO ()
 compileBase = do

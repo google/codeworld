@@ -24,14 +24,6 @@ run .  cabal_install --ghcjs ./codeworld-base
 run codeworld-base  cabal haddock --html
 run codeworld-base  cabal haddock --hoogle
 
-# Build and run the autocomplete generator.
-
-AC_SYMBOLS=codeworld-base/dist/doc/html/codeworld-base/codeworld-base.txt
-AC_OUTPUT=web/autocomplete.txt
-
-run .  cabal_install ./codeworld-autocomplete
-run .  codeworld-autocomplete $AC_SYMBOLS > $AC_OUTPUT
-
 # Build codeworld-server from this project.
 
 run .  cabal_install ./codeworld-server

@@ -128,7 +128,7 @@ function init() {
 
   updateUI();
 
-  sendHttp('GET', 'autocomplete.txt', null, function(request) {
+  sendHttp('GET', 'codeworld-base.txt', null, function(request) {
     var lines = [];
     if (request.status != 200) {
       console.log('Failed to load autocomplete word list.');

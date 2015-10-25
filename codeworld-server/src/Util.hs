@@ -34,7 +34,7 @@ import           System.IO.Error
 import           System.FilePath
 
 autocompletePath :: FilePath
-autocompletePath = "web/autocomplete.txt"
+autocompletePath = "web/codeworld-base.txt"
 
 clientIdPath :: FilePath
 clientIdPath = "web/clientId.txt"

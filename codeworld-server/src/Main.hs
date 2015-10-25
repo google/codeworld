@@ -62,11 +62,6 @@ main = do
             return (ClientId (Just (T.strip txt)))
         False -> return (ClientId Nothing)
 
-    hasAutocomplete <- doesFileExist "web/autocomplete.txt"
-    when (not hasAutocomplete) $ do
-        putStrLn "WARNING: Missing web/autocomplete.txt"
-        putStrLn "Autocomplete will not function properly!"
-
     quickHttpServe $ (processBody >> site clientId) <|> site clientId
 
 -- Retrieves the user for the current request.  The request should have an

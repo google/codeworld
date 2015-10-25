@@ -83,8 +83,11 @@ function init() {
     "main", "--", "{-", "-}", "::", "->", "<-", "..", "case", "of", "if",
     "then", "else", "data", "let", "in", "where", "type"
   ];
+  hints.sort();
+
   var hintBlacklist = [
-    // Symbols that only exist to map to Haskell.
+    // Symbols that only exist to implement RebindableSyntax or map to
+    // built-in Haskell types.
     "IO",
     "fromDouble",
     "fromInt",
@@ -96,7 +99,8 @@ function init() {
     "toDouble",
     "toInt",
 
-    // Deprecated symbols from the Prelude.
+    // Deprecated symbols from the Prelude.  Right now, we can't detect
+    // these automatically
     "addVectors",
     "color",
     "cycle",
@@ -187,6 +191,7 @@ function init() {
     window.codeworldEditor.setOption(
         'mode', { name: 'codeworld', overrideKeywords: keywordOverrides });
 
+    hints.sort();
     CodeMirror.registerHelper('hintWords', 'codeworld', hints);
   });
 

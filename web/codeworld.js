@@ -254,7 +254,7 @@ function init() {
         keywordOverrides[word] = 'builtin';
       }
 
-      if (word.length > 1 && hintBlacklist.indexOf(word) < 0) {
+      if (hintBlacklist.indexOf(word) < 0) {
         hints.push(createHint(line, wordStart, wordEnd));
       }
     });

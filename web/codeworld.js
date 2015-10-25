@@ -149,6 +149,9 @@ function init() {
     // Override the syntax classification of words from the standard library.
     var keywordOverrides = {};
 
+    // Special case for main, since it's morally a built-in name.
+    keywordOverrides['main'] = 'builtin';
+
     lines = lines.sort().filter(function(item, pos, array) {
       return !pos || item != array[pos - 1];
     });

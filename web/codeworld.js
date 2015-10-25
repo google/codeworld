@@ -79,42 +79,63 @@ function init() {
 
   window.codeworldEditor.on('changes', window.updateUI);
 
+  function createHint(line, wordStart, wordEnd) {
+    var word = line.slice(wordStart, wordEnd);
+    function renderer(elem, data, cur) {
+      if (wordStart > 0) {
+        elem.appendChild(document.createTextNode(line.slice(0, wordStart)));
+      }
+
+      var wordElem = document.createElement("span");
+      wordElem.className = 'hint-word';
+      wordElem.appendChild(document.createTextNode(word));
+      elem.appendChild(wordElem);
+      if (wordEnd < line.length) {
+        elem.appendChild(document.createTextNode(line.slice(wordEnd)));
+      }
+    }
+    return { text: word, render: renderer, source: line };
+  }
+
   var hints = [
-    "main", "--", "{-", "-}", "::", "->", "<-", "..", "case", "of", "if",
-    "then", "else", "data", "let", "in", "where", "type"
+    createHint("main :: Program", 0, 4),
+    createHint("--", 0, 2),
+    createHint("{-", 0, 2),
+    createHint("-}", 0, 2),
+    createHint("::", 0, 2),
+    createHint("->", 0, 2),
+    createHint("<-", 0, 2),
+    createHint("..", 0, 2),
+    createHint("case", 0, 4),
+    createHint("of", 0, 2),
+    createHint("if", 0, 2),
+    createHint("then", 0, 4),
+    createHint("else", 0, 4),
+    createHint("data", 0, 4),
+    createHint("let", 0, 3),
+    createHint("in", 0, 2),
+    createHint("where", 0, 5),
+    createHint("type", 0, 4)
   ];
-  hints.sort();
 
-  var hintBlacklist = [
-    // Symbols that only exist to implement RebindableSyntax or map to
-    // built-in Haskell types.
-    "IO",
-    "fromDouble",
-    "fromInt",
-    "fromInteger",
-    "fromRational",
-    "fromString",
-    "ifThenElse",
-    "negate",
-    "toDouble",
-    "toInt",
+  CodeMirror.registerHelper('hint', 'codeworld', function(cm) {
+    var cur = cm.getCursor();
+    var token = cm.getTokenAt(cur);
+    var to = CodeMirror.Pos(cur.line, token.end);
+    if (token.string && /\w/.test(token.string[token.string.length - 1])) {
+      var term = token.string, from = CodeMirror.Pos(cur.line, token.start);
+    } else {
+      var term = "", from = to;
+    }
+    var found = [];
+    for (var i = 0; i < hints.length; i++) {
+      var hint = hints[i];
+      if (hint.text.slice(0, term.length) == term)
+        found.push(hint);
+    }
 
-    // Deprecated symbols from the Prelude.  Right now, we can't detect
-    // these automatically
-    "addVectors",
-    "color",
-    "cycle",
-    "rotate",
-    "rotateVector",
-    "scaleVector",
-    "scale",
-    "seedRandoms",
-    "shuffle",
-    "sort",
-    "subtractVectors",
-    "translate"
-  ];
-  CodeMirror.registerHelper('hintWords', 'codeworld', hints);
+    if (found.length) return {list: found, from: from, to: to};
+  });
 
   var hash = location.hash.slice(1);
   if (hash.length > 0) {
@@ -156,14 +177,43 @@ function init() {
       return !pos || item != array[pos - 1];
     });
 
+    var hintBlacklist = [
+      // Symbols that only exist to implement RebindableSyntax or map to
+      // built-in Haskell types.
+      "IO",
+      "fromDouble",
+      "fromInt",
+      "fromInteger",
+      "fromRational",
+      "fromString",
+      "ifThenElse",
+      "negate",
+      "toDouble",
+      "toInt",
+
+      // Deprecated symbols from the Prelude.  Right now, we can't detect
+      // these automatically
+      "addVectors",
+      "color",
+      "cycle",
+      "rotate",
+      "rotateVector",
+      "scaleVector",
+      "scale",
+      "seedRandoms",
+      "shuffle",
+      "sort",
+      "subtractVectors",
+      "translate"
+    ];
+
     lines.forEach(function(line) {
-      var startOfWord = 0;
-      if (line.startsWith("type ")) {
-        startOfWord += 5;
-      } else if (line.startsWith("data ")) {
-        startOfWord += 5;
+      if (line.startsWith("type Program")) {
+        // We must intervene to hide the IO type.
+        line = "data Program";
       } else if (line.startsWith("newtype ")) {
-        startOfWord += 8;
+        // Hide the distinction between newtype and data.
+        line = "data " + line.substr(8);
       } else if (line.startsWith("class ")) {
         return;
       } else if (line.startsWith("instance ")) {
@@ -172,20 +222,31 @@ function init() {
         return;
       }
 
-      var endOfWord = line.indexOf(" ", startOfWord);
-      if (endOfWord == -1) {
-        endOfWord = line.length;
+      var wordStart = 0;
+      if (line.startsWith("type ") || line.startsWith("data")) {
+        wordStart += 5;
+
+        // Hide kind annotations.
+        var kindIndex = line.indexOf(" ::");
+        if (kindIndex != -1) {
+          line = line.substr(0, kindIndex);
+        }
       }
-      if (endOfWord == startOfWord) {
+
+      var wordEnd = line.indexOf(" ", wordStart);
+      if (wordEnd == -1) {
+        wordEnd = line.length;
+      }
+      if (wordStart == wordEnd) {
         return;
       }
 
-      if (line[startOfWord] == "(" && line[endOfWord - 1] == ")") {
-        startOfWord++;
-        endOfWord--;
+      if (line[wordStart] == "(" && line[wordEnd - 1] == ")") {
+        wordStart++;
+        wordEnd--;
       }
 
-      var word = line.substr(startOfWord, endOfWord - startOfWord);
+      var word = line.substr(wordStart, wordEnd - wordStart);
 
       if (/^[A-Z:]/.test(word)) {
         keywordOverrides[word] = 'builtin-2';
@@ -194,14 +255,14 @@ function init() {
       }
 
       if (word.length > 1 && hintBlacklist.indexOf(word) < 0) {
-        hints.push(word);
+        hints.push(createHint(line, wordStart, wordEnd));
       }
     });
 
     window.codeworldEditor.setOption(
         'mode', { name: 'codeworld', overrideKeywords: keywordOverrides });
 
-    hints.sort();
+    hints.sort(function(a, b) { return a.source.localeCompare(b.source); });
     CodeMirror.registerHelper('hintWords', 'codeworld', hints);
   });
 

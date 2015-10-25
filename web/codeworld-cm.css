@@ -49,6 +49,22 @@
   color: #999;
 }
 
+/* Style overrides for the autocomplete box. */
+
+.CodeMirror-hint {
+  max-width: 100em;
+  color: #555;
+}
+
+.CodeMirror-hint-active {
+  background: #def;
+}
+
+.CodeMirror-hint .hint-word {
+  font-weight: bold;
+  color: #30a;
+}
+
 /* Styles needed for the dialog add-on, used for search. */
 
 .CodeMirror-dialog {

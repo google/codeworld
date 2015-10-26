@@ -50,13 +50,14 @@ The program
         A bit of simple math maps that to the screen.
     -}
     mandelbrot :: (Number, Number) -> Picture
-    mandelbrot(n, k) = rotate(scale(pic, 5, 5), 90)
-      where pic = pictures[ spot(x, y, m) | x <- [-2, -2 + width .. 2],
-                            y <- [-2, -2 + width .. 2],
-                            Just(m) <- [depth(0, C(0, 0), C(x, y), k)] ]
+    mandelbrot(n, k) = rotated(scaled(pic, 5, 5), 90)
+      where pic = pictures([ spot(x, y, m)
+                             | x <- [-2, -2 + width .. 2]
+                             , y <- [-2, -2 + width .. 2]
+                             , Just(m) <- [depth(0, C(0, 0), C(x, y), k)] ])
             width         = 4 / n
-            spot(x, y, m) = translate(shade(solidRectangle(width, width), m), x, y)
-            shade(p, m)   = color(p, gray((1 - 1/m)^5))
+            spot(x, y, m) = translated(shade(solidRectangle(width, width), m), x, y)
+            shade(p, m)   = colored(p, gray((1 - 1/m)^5))
 
     main :: Program
     main = pictureOf(mandelbrot(500, 25))

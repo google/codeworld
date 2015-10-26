@@ -41,7 +41,7 @@ The program
 
     fence(lo, hi, x) = max(lo, min(hi, x))
 
-    draw(Ball((x,y),_)) = translate(solidCircle(radius), x, y)
+    draw(Ball((x,y),_)) = translated(solidCircle(radius), x, y)
 
 License
 -------

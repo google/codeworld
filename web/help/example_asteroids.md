@@ -70,7 +70,7 @@ The program
     effective(w, f) | energy w > 0 = f(w)
                     | otherwise    = 0
 
-    lost(w) = any(asts(w), collision)
+    lost(w) = any([collision(ast) | ast <- asts(w)])
         where ((shipx, shipy),_) = ship(w)
               collision((x,y),_) = (x-shipx)^2 + (y-shipy)^2 < 1.68^2
 
@@ -111,18 +111,18 @@ The program
         ]
 
     drawStars(ss) = pictures[
-        color(translate(solidCircle(r), x, y), gray(0.5)) | ((x,y),r) <- ss
+        colored(translated(solidCircle(r), x, y), gray(0.5)) | ((x,y),r) <- ss
         ]
 
     drawAsts(as) = pictures[
-        color(translate(solidCircle(1.2), x, y), light(red)) | ((x,y),_) <- as
+        colored(translated(solidCircle(1.2), x, y), light(red)) | ((x,y),_) <- as
         ]
 
-    drawShip(((x,y),_), dir, th) = translate(rotate(ship, dir), x, y)
+    drawShip(((x,y),_), dir, th) = translated(rotated(ship, dir), x, y)
       where ship = pictures[
-                     if th > 0 then color(fire, orange) else blank,
-                     color(body, cyan),
-                     color(circle 0.48, gray 0.2)
+                     if th > 0 then colored(fire, orange) else blank,
+                     colored(body, cyan),
+                     colored(circle 0.48, gray 0.2)
                    ]
             fire = solidPolygon[
                 (-0.32, -0.32),
@@ -136,17 +136,17 @@ The program
                 ( 0,     0.48)
                 ]
 
-    drawEnergyBar(e) = color(translate(solidRectangle(16*e, 0.6), 0, -9.2), yellow)
+    drawEnergyBar(e) = colored(translated(solidRectangle(16*e, 0.6), 0, -9.2), yellow)
 
     drawScoreBar(s, l, m) = pictures [
-      color(translate(scale(text("Score: " <> fmtScore(s)), 0.7, 0.5), -8, 9), white),
-      color(translate(scale(text("Last: "  <> fmtScore(l)), 0.7, 0.5), -1, 9), white),
-      color(translate(scale(text("Max: "   <> fmtScore(m)), 0.7, 0.5),  6, 9), white),
-      color(translate(solidRectangle(20, 0.6), 0, 9.2), blue)
+      colored(translated(scaled(text("Score: " <> fmtScore(s)), 0.7, 0.5), -8, 9), white),
+      colored(translated(scaled(text("Last: "  <> fmtScore(l)), 0.7, 0.5), -1, 9), white),
+      colored(translated(scaled(text("Max: "   <> fmtScore(m)), 0.7, 0.5),  6, 9), white),
+      colored(translated(solidRectangle(20, 0.6), 0, 9.2), blue)
       ]
 
     fmtScore :: Number -> Text
-    fmtScore(s) = show(floor(10 * s))
+    fmtScore(s) = printed(floor(10 * s))
 
     event(w, KeyPress   "Up") = w { thrust = 1 }
     event(w, KeyRelease "Up") = w { thrust = 0 }

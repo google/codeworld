@@ -95,17 +95,17 @@ good names to the pieces.
 
 ### Colors ###
 
-Pictures don't need to be black and white.  You can use `color` to change the color
+Pictures don't need to be black and white.  You can use `colored` to change the color
 of your pictures.  Here's a simple example:
 
     main     = pictureOf(redWheel)
-    redWheel = color(wheel, red)
+    redWheel = colored(wheel, red)
     wheel    = solidCircle(4)
 
 You can also mix colors in the same picture:
 
     main   = pictureOf(tree)
-    tree   = color(leaves, green) & color(trunk, brown)
+    tree   = colored(leaves, green) & colored(trunk, brown)
     leaves = sector(0, 180, 4)
     trunk  = solidRectangle(1, 4)
 
@@ -120,8 +120,8 @@ You can also modify the colors!  Here are a few ways to do that:
 Let's try an example program:
 
     main    = pictureOf(overlap)
-    overlap = color(square,  translucent(blue))
-            & color(disk, translucent(green))
+    overlap = colored(square,  translucent(blue))
+            & colored(disk, translucent(green))
     square  = solidRectangle(5, 5)
     disk    = solidCircle(3)
 
@@ -136,7 +136,7 @@ transformations you can use in CodeWorld:
 #### Translation: Moving Your Pictures ####
 
 You can *translate* a picture to move it up, down, left, or right on the screen.
-To use `translate`, you give it three things:
+To use `translated`, you give it three things:
 
 * A picture to move.
 * A distance to move the picture *left* or *right*. Negative numbers
@@ -147,20 +147,20 @@ To use `translate`, you give it three things:
 Ready for an example?
 
     main   = pictureOf(forest)
-    forest =   translate(tree, -5, 5)
-             & translate(tree,  0, 0)
-             & translate(tree,  5,-5)
-    tree   = color(leaves, green) & color(trunk, brown)
+    forest =   translated(tree, -5, 5)
+             & translated(tree,  0, 0)
+             & translated(tree,  5,-5)
+    tree   = colored(leaves, green) & colored(trunk, brown)
     leaves = sector(0, 180, 4)
     trunk  = solidRectangle(1, 4)
 
-What does `translate(..., 0, 0)` mean?  Well, it means don't move the picture at
-all!  We wrote the `translate` there just to make things line up nicely.
+What does `translated(..., 0, 0)` mean?  Well, it means don't move the picture at
+all!  We wrote the `translated` there just to make things line up nicely.
 
 #### Rotation: Turning Your Pictures ####
 
 You can *rotate* a picture to turn it, either clockwise or counter-clockwise.
-To use `rotate`, you give it two things:
+To use `rotated`, you give it two things:
 
 * A picture to rotate.
 * A number of degrees to rotate the picture.  Negative numbers are clockwise,
@@ -169,7 +169,7 @@ To use `rotate`, you give it two things:
 Here's an example:
 
     main    = pictureOf(diamond)
-    diamond = rotate(square, 45)
+    diamond = rotated(square, 45)
     square  = solidRectangle(4, 4)
 
 A diamond is just a square, turned so it's diagonal.
@@ -177,7 +177,7 @@ A diamond is just a square, turned so it's diagonal.
 #### Scaling: Stretching Your Pictures ####
 
 Finally, you can *scale* a picture to stretch it or flip it over, either
-horizontally or vertically.  To use scale, you'll give:
+horizontally or vertically.  To use `scaled`, you'll give:
 
 * A picture to stretch.
 * A factor by which to stretch the picture horizontally.  1 means leave it
@@ -187,10 +187,10 @@ horizontally or vertically.  To use scale, you'll give:
 * A factor by which to stretch the picture vertically.  The meaning of
   numbers is the same.
 
-Here's an example of `scale`:
+Here's an example of `scaled`:
 
     main = pictureOf(oval)
-    oval = scale(base, 2, 0.5)
+    oval = scaled(base, 2, 0.5)
     base = solidCircle(4)
 
 You should try to get a good feeling for the meaning of those scaling
@@ -209,7 +209,7 @@ more tricks you can use.  The part of a definition after the equal sign
 is called an *expression*.  For example:
 
 * `circle(4)` is an expression.
-* `color(text("Help"), red)` is also an expression.
+* `colored(text("Help"), red)` is also an expression.
 * So is `rectangle(1, 4) & circle(2)`.
 * `tree = leaves & trunk` is *not* an expression.  It's a *definition*
   instead.  But `leaves & trunk` is an expression.
@@ -229,7 +229,7 @@ more information.  You've already used a lot of functions:
 * `light` is a function.  It needs a color, and makes another color that's
   about the same, but lighter.
 * `pictureOf` is a function.  It needs a picture, and makes a program.
-* `scale` is a function.  It needs a picture and two scaling factors, and
+* `scaled` is a function.  It needs a picture and two scaling factors, and
   makes a modified picture.
 
 As you've already seen, to apply a function, you can write the function
@@ -238,10 +238,10 @@ in parentheses after it, with commas between them.
 
 ### Nesting ###
 
-Remember how we used `rotate`?  Here's a quick reminder:
+Remember how we used `rotated`?  Here's a quick reminder:
 
     main    = pictureOf(diamond)
-    diamond = rotate(square, 45)
+    diamond = rotated(square, 45)
     square  = rectangle(2, 2)
 
 Nice!  However, naming everything like that can get tedious.  If you
@@ -252,11 +252,11 @@ the name would go.
 Try it:
 
     main = pictureOf(diamond)
-    diamond = rotate(rectangle(2, 2), 45)
+    diamond = rotated(rectangle(2, 2), 45)
 
 Or even:
 
-    main = pictureOf(rotate(rectangle(2, 2), 45))
+    main = pictureOf(rotated(rectangle(2, 2), 45))
 
 Careful, though!  You can avoid avoid naming simple things, but if you
 nest too much, you get parentheses inside of parentheses inside of
@@ -280,11 +280,11 @@ divide, use `/`.
 Check out this program:
 
     main   = pictureOf(design)
-    design =   rotate(rectangle(4, 0.2), 1 * 180 / 5)
-             & rotate(rectangle(4, 0.2), 2 * 180 / 5)
-             & rotate(rectangle(4, 0.2), 3 * 180 / 5)
-             & rotate(rectangle(4, 0.2), 4 * 180 / 5)
-             & rotate(rectangle(4, 0.2), 5 * 180 / 5)
+    design = rotated(rectangle(4, 0.2), 1 * 180 / 5)
+           & rotated(rectangle(4, 0.2), 2 * 180 / 5)
+           & rotated(rectangle(4, 0.2), 3 * 180 / 5)
+           & rotated(rectangle(4, 0.2), 4 * 180 / 5)
+           & rotated(rectangle(4, 0.2), 5 * 180 / 5)
 
 We could have written `36`, '72', '108', '144', and `180` (the answers to
 those math problems).  But this way, it's very clear what we are doing:
@@ -362,7 +362,7 @@ have to give the first two numbers, then use `..` to continue from there.
 Here's another example:
 
     main = pictureOf(star)
-    star = pictures[ rotate(rectangle(10, 1/10), angle)
+    star = pictures[ rotated(rectangle(10, 1/10), angle)
                      | angle <- [10, 20 .. 360] ]
 
 So we start with a list of number counting by 10s from 10 to 360.  Then we
@@ -389,7 +389,7 @@ Second, you can include base your list comprehension on several lists.
 This will draw a grid of circles:
 
     main = pictureOf(grid)
-    grid = pictures[ translate(circle(1/2), x, y)
+    grid = pictures[ translated(circle(1/2), x, y)
                      | x <- [-9 .. 9], y <- [-9 .. 9] ]
 
 Because there are two base lists separated by commas, this will draw a
@@ -402,8 +402,8 @@ the first element of each list, then the second from each list, and so on.
 Here's an example, using a list of number, and a list of colors!
 
     main    = pictureOf(circles)
-    circles = pictures[ color(circle(r), c) | r <- sizes
-                                            | c <- colors ]
+    circles = pictures[ colored(circle(r), c) | r <- sizes
+                                              | c <- colors ]
     sizes   = [ 1, 2, 3, 4, 5 ]
     colors  = [ red, green, blue, yellow, purple ]
 
@@ -582,7 +582,7 @@ comprehensions!
         (3, 1/8, brown), (4, 1/2, pink), (8, 2, yellow)
         ]
 
-    boxes = pictures[ translate(color(rectangle(s,s), c), x, 0)
+    boxes = pictures[ translated(colored(rectangle(s,s), c), x, 0)
                       | (x, s, c) <- boxDetails ]
 
 See?  You can describe the important characteristics of your picture
@@ -601,7 +601,7 @@ examples:
   `Number -> Picture`.
 * `rectangle` is a function that needs two numbers, and makes a picture.
   It has the type `(Number, Number) -> Picture`.
-* `translate` is a function that needs a picture and two numbers (the x
+* `translated` is a function that needs a picture and two numbers (the x
   and y distances), and makes a new picture.  It has the type
   `(Picture, Number, Number) -> Picture`.
 
@@ -636,7 +636,7 @@ Animations
 TODO: Write this section.
 
     main      = animationOf(design)
-    design(t) = rotate(slot, 60 * t) & middle & outside
+    design(t) = rotated(slot, 60 * t) & middle & outside
     slot      = solidRectangle(4, 0.4)
     middle    = solidCircle(1.2)
     outside   = circle(2)
@@ -694,7 +694,7 @@ It may sound complicated, but let's jump in and look at an example:
     main            = simulationOf(initial, step, draw)
     initial(rs)     = (5,0)
     step((x,y), dt) = (x - y*dt, y + x*dt)
-    draw(x,y)       = translate(rectangle(1,1), x, y)
+    draw(x,y)       = translated(rectangle(1,1), x, y)
 
 In this case, the "world" is a point: the location of an object.  The step
 function is the heart of any simulation.  Here, it changes the `x` and `y`

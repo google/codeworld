@@ -13,7 +13,7 @@ in response to actions from the user.
 The program
 -----------
 
-    main = interactionOf(createWorld, fst, event, drawWorld)
+    main = interactionOf(createWorld, firstOfPair, event, drawWorld)
 
     {- A World contains
         * the location of the player in the maze
@@ -39,17 +39,17 @@ The program
 
     {- Draw the maze and the player in it. -}
     drawWorld :: World -> Picture
-    drawWorld w = scale (translate (pictures
+    drawWorld w = scaled (translated (pictures
       [drawBall (loc w), drawMaze (maze w)], -10, -10), 0.98, 0.98) where
-      drawBall (x,y) = translate (ball, x, y)
-      ball = translate (color (solidCircle 0.5, blue), 0.5, 0.5)
+      drawBall (x,y) = translated (ball, x, y)
+      ball = translated (colored (solidCircle 0.5, blue), 0.5, 0.5)
 
     {- Maze generation code -}
     type Direction = Vector
     directions = [up, down, right, left]
     up = (0,1); down = (0,-1); right = (1,0); left = (-1, 0)
     addDirToPoint :: (Point, Direction) -> Point
-    addDirToPoint (p,d) = addVectors(p,d)
+    addDirToPoint (p,d) = vectorSum(p,d)
 
     type Door = (Point, Point)
     reverseDoor :: Door -> Door
@@ -62,24 +62,24 @@ The program
     addDoor :: (Maze, Door) -> Maze
     addDoor (g,d) = g { doors = addToSet(doors g, d) }
 
-    containsDoor (ds, d) = isMember(ds, d) || isMember(ds, reverseDoor d)
+    containsDoor (ds, d) = contains(ds, d) || contains(ds, reverseDoor(d))
 
     markVisitedAt :: (Maze, Point) -> Maze
     markVisitedAt (g,p) = g { visited = addToSet(visited g, p) }
 
     isVisitedAt :: (Maze, Point) -> Bool
-    isVisitedAt (g,p) = isMember(visited g, p)
+    isVisitedAt (g,p) = contains(visited(g), p)
 
     {- Find all the neighbors of a particular point in a grid -}
     neighbors :: (Maze, Point) -> Set Point
     neighbors (g,p) =
-      filter (inbounds, [addDirToPoint(p,d) | d <- directions]) where
-      inbounds (x,y) = x >= 0 && x < width g && y >= 0 && y < height g
+      [np | d <- directions, let np = addDirToPoint(p,d), inbounds(np)]
+      where inbounds (x,y) = x >= 0 && x < width g && y >= 0 && y < height g
 
     {- Find all the unvisited neighbors of a point in a grid -}
     unvisitedNeighbors :: (Maze, Point) -> Set Point
     unvisitedNeighbors (g,p) =
-      filter(\n -> not (isVisitedAt (g, n)), neighbors(g, p))
+      [ n | n <- neighbors(g, p), not(isVisitedAt(g,n)) ]
 
     {- The main function for building a random maze -}
     buildMaze :: (Number, Number, RandomNumbers) -> Maze
@@ -90,20 +90,20 @@ The program
       go :: (Point, Maze, RandomNumbers) -> Maze
       go (current,g,rs) = foldl f newMaze nbors where
         newMaze = markVisitedAt(g, current)
-        nbors = shuffle(unvisitedNeighbors(newMaze, current), first rs)
+        nbors = shuffled(unvisitedNeighbors(newMaze, current), at(rs, 0))
         f gacc n = if isVisitedAt(gacc, n) then gacc else recur where
           newG  = addDoor (gacc, (current, n))
-          recur = go(n, newG, rest rs)
+          recur = go(n, newG, rest(rs, 1))
 
     {- Maze painting code -}
     drawMaze (Maze w h _ ds) = pictures [doorsPic, allGridLines] where
       doorsPic = pictures [drawDoor d | d <- ds]
-      allGridLines = color (pictures [horizontalLines, verticalLines], black)
+      allGridLines = colored (pictures [horizontalLines, verticalLines], black)
       horizontalLines = pictures [line [(w, y), (0, y)] | y <- [0..h]]
       verticalLines   = pictures [line [(x, h), (x, 0)] | x <- [0..w]]
 
     drawDoor :: Door -> Picture
-    drawDoor (from, to) = color (thickLine (g(from, to), 0.1), white) where
+    drawDoor (from, to) = colored (thickLine (g(from, to), 0.1), white) where
      g :: (Point, Point) -> [Point]
      g ((fx,fy), (tx,ty))
        | fy < ty = [(fx,  fy+1), (tx+1,ty)]   -- going up
@@ -115,7 +115,7 @@ The program
     type RandomNumbers = [Number]
     type Set a = [a]
     addToSet :: (Set a, a) -> Set a
-    addToSet (as, a) = if isMember (as, a) then as else a : as
+    addToSet (as, a) = if contains(as, a) then as else a : as
 
     foldl :: (b -> a -> b) -> b -> [a] -> b
     foldl f z0 xs0 = lgo z0 xs0 where

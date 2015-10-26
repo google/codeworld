@@ -63,6 +63,10 @@ mixColors (RGBA (r1,g1,b1,a1), RGBA (r2, g2, b2, a2))
         g = sqrt(g1^2 * a1 + g2^2 * a2 / (a1 + a2))
         b = sqrt(b1^2 * a1 + b2^2 * a2 / (a1 + a2))
         a = (a1 + a2) / 2
+{-# WARNING mixColors "Please use mixOfColors(...) instead of mixColors(...)" #-}
+
+mixOfColors :: (Color, Color) -> Color
+mixOfColors = mixColors
 
 lighter :: (Color, Number) -> Color
 lighter (c, d) = fromHSL (hue c, saturation c, fence (luminosity c + d))

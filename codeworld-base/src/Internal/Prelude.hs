@@ -37,8 +37,11 @@ module Internal.Prelude (
 
     -- Basic functions
     P.id,
-    P.const,
     (.),
+
+    -- Tuples
+    firstOfPair,
+    secondOfPair,
 
     -- Failures
     error, -- Text version
@@ -46,9 +49,6 @@ module Internal.Prelude (
 
     -- List functions
     (P.++),
-    first,
-    P.last,
-    rest,
     empty,
     contains,
     length,
@@ -59,7 +59,12 @@ module Internal.Prelude (
     repeated,
     repeating,
     cycle,
-
+    first,
+    last,
+    rest,
+    while,
+    until,
+    after,
     concatenation,
     L.subsequences,
     L.permutations,
@@ -69,13 +74,6 @@ module Internal.Prelude (
     unique,
     transposed,
     combined,
-
-    take,
-    drop,
-    split,
-    takeWhile,
-    dropWhile,
-    splitWhen,
 
     -- Maybe
     P.Maybe(..),
@@ -146,17 +144,17 @@ toOperator = P.curry
 fromOperator :: (a -> b -> c) -> ((a, b) -> c)
 fromOperator = P.uncurry
 
+-- | Returns the first element of an ordered pair.
+firstOfPair :: (a, b) -> a
+firstOfPair (a, b) = a
+
+-- | Returns the second element of an ordered pair.
+secondOfPair :: (a, b) -> b
+secondOfPair (a, b) = b
+
 -- | Fails with an error message.
 error :: Text -> a
 error = P.error . T.unpack
-
--- | Gives the first member of a list.
-first :: [a] -> a
-first = P.head
-
--- | Gives all members of a list after the first one.
-rest :: [a] -> [a]
-rest = P.tail
 
 -- | Determines whether a list is empty or not.
 empty :: [a] -> Bool
@@ -208,6 +206,39 @@ cycle :: [a] -> [a]
 cycle = P.cycle
 {-# WARNING cycle "Please use repeating(...) instead of cycle(...)" #-}
 
+-- | Gives the first members of a list, up to the given number.
+first :: ([a], Number) -> [a]
+first (xs, n) = P.take (toInt n) xs
+
+-- | Gives the last members of a list, up to the given number.
+last :: ([a], Number) -> [a]
+last (xs, n) = P.drop (P.length xs P.- toInt n) xs
+
+-- | Gives all members of a list after the given number.
+--
+-- In general, `xs = first(xs, n) ++ rest(xs, n)`.
+rest :: ([a], Number) -> [a]
+rest (xs, n) = P.drop (toInt n) xs
+
+-- | Gives the longest prefix of a list for which a condition is true.
+--
+-- For example, `while([2,4,5,6], even) = [2,4]`.
+while :: ([a], a -> Bool) -> [a]
+while (xs, p) = P.takeWhile p xs
+
+-- | Gives the longest prefix of a list for which a condition is false.
+--
+-- For example, `until([2,4,5,6], odd) = [2,4]`.
+until :: ([a], a -> Bool) -> [a]
+until (xs, p) = P.takeWhile (P.not . p) xs
+
+-- | Gives the remaining portion of a list after the longest prefix
+-- for which a condition is true.
+--
+-- In general, `xs = while(xs, cond) ++ after(xs, cond)
+after :: ([a], a -> Bool) -> [a]
+after (xs, p) = P.dropWhile p xs
+
 -- | Gives the concatenation of all of the lists in its input.
 concatenation :: [[a]] -> [a]
 concatenation = P.concat
@@ -242,24 +273,6 @@ combined :: ((a, a) -> a, [a]) -> a
 combined (f, [])   = P.error "combined was applied to an empty list."
 combined (f, [x])  = x
 combined (f, x:xs) = f(x, combined(f, xs))
-
-take :: ([a], Number) -> [a]
-take (xs, n) = P.take (toInt n) xs
-
-drop :: ([a], Number) -> [a]
-drop (xs, n) = P.drop (toInt n) xs
-
-split :: ([a], Number) -> ([a], [a])
-split (xs, n) = P.splitAt (toInt n) xs
-
-takeWhile :: ([a], a -> Bool) -> [a]
-takeWhile (xs, f) = P.takeWhile f xs
-
-dropWhile :: ([a], a -> Bool) -> [a]
-dropWhile (xs, f) = P.dropWhile f xs
-
-splitWhen :: ([a], a -> Bool) -> ([a], [a])
-splitWhen (xs, f) = P.break f xs
 
 numToStdGen :: Number -> StdGen
 numToStdGen r = mkStdGen (P.round (P.realToFrac r P.* P.fromIntegral (P.maxBound :: P.Int)))

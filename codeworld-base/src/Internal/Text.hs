@@ -20,32 +20,32 @@
 module Internal.Text (
     Text,
     fromString,
-    append,
     (<>),
-    appendAll,
     numberOfCharacters,
     numberOfWords,
     numberOfLines,
-    characters,
     T.lines,
-    T.words,
     T.unlines,
+    T.words,
     T.unwords,
+    characters,
+    printed,
     show,
-    join,
-    replace,
-    T.toLower,
-    T.toUpper,
-    T.strip,
-    stripPrefix,
-    stripSuffix,
-    search,
-    substring
+    joined,
+    joinedWith,
+    lowercase,
+    uppercase,
+    capitalized,
+    startsWith,
+    endsWith,
+    substitution,
+    substitutions
     ) where
 
 import qualified "base" Prelude as P
 import "base" Prelude (Bool, (.))
 import "base" Data.Maybe
+import "base" Data.List (foldl')
 import "base" Numeric
 
 import Data.Text (Text)
@@ -56,8 +56,9 @@ import Internal.Num
 fromString :: P.String -> Text
 fromString = T.pack
 
-append :: (Text, Text) -> Text
-append (a, b) = T.append a b
+infixr 6 <>
+(<>) :: Text -> Text -> Text
+(<>) = T.append
 
 numberOfCharacters :: Text -> Number
 numberOfCharacters = fromInt . T.length
@@ -71,49 +72,48 @@ numberOfLines = fromInt . P.length . T.lines
 characters :: Text -> [Text]
 characters = P.map T.singleton . T.unpack
 
-infixr 6 <>
-(<>) :: Text -> Text -> Text
-(<>) = T.append
-
-appendAll :: [Text] -> Text
-appendAll = T.concat
+printed :: Number -> Text
+printed = T.pack . P.show
 
 show :: Number -> Text
-show = T.pack . P.show
+show = printed
+{-# WARNING show "Please use printed(...) instead of show(...)" #-}
 
-join :: ([Text], Text) -> Text
-join (ts, sep) = T.intercalate sep ts
+joined :: [Text] -> Text
+joined = T.concat
 
--- | Replaces one piece of text with another.
+joinedWith :: ([Text], Text) -> Text
+joinedWith (ts, sep) = T.intercalate sep ts
+
+lowercase :: Text -> Text
+lowercase = T.toLower
+
+uppercase :: Text -> Text
+uppercase = T.toUpper
+
+capitalized :: Text -> Text
+capitalized = T.toTitle
+
+startsWith :: (Text, Text) -> Bool
+startsWith (a, b) = T.isPrefixOf b a
+
+endsWith :: (Text, Text) -> Bool
+endsWith (a, b) = T.isSuffixOf b a
+
+-- | Gives the result of replacing one piece of text with another.
 --
--- For example, `replace("How do you do?", "do", "be")` is equal to `"How be you be?"`.
-replace :: (Text, Text, Text) -> Text
-replace (text, from, to) = T.replace from to text
+-- For example, `substitution("How do you do?", "do", "be")` is equal to
+-- `"How be you be?"`.
+substitution :: (Text, Text, Text) -> Text
+substitution (text, from, to) = T.replace from to text
 
--- | Removes a prefix from some text.
+-- | Gives the result of performing many substitutions in a piece of
+-- text.  This is commonly used to build text to show in a program,
+-- as in this example:
 --
--- For example, `stripPrefix("Dr. Jones", "Dr. ")` is equal to `"Jones"`.
--- If the prefix isn't there, the result is the same string, unchanged.
-stripPrefix :: (Text, Text) -> Text
-stripPrefix (text, pfx) = fromMaybe text (T.stripPrefix pfx text)
-
--- | Removes a suffix from some text.
---
--- For example, `stripSuffix("smallest", "est")` is equal to `"small"`.
--- If the suffix isn't there, the result is the same string, unchanged.
-stripSuffix :: (Text, Text) -> Text
-stripSuffix (text, sfx) = fromMaybe text (T.stripSuffix sfx text)
-
--- | Finds all indices where some text appears in a larger piece of text.
---
--- For example, `search("How do you do?", "do")` is equal to the list `[4, 11]`.
--- Indices start at zero.
-search :: (Text, Text) -> [Number]
-search (haystack, needle) = P.map (fromInt . T.length . P.fst) (T.breakOnAll needle haystack)
-
--- | Takes part of a string at a starting index and length.
---
--- For example, `substring("funny", 2, 2)` is equal to `"nn"`.
--- Indices start at zero.
-substring :: (Text, Number, Number) -> Text
-substring (text, start, length) = T.take (toInt length) (T.drop (toInt start) text)
+--    substitutions("Lives: [lives] of 3   Score: [score]",
+--                  [("[lives]", printed(lives)),
+--                   ("[score]", printed(score))])
+substitutions :: (Text, [(Text, Text)]) -> Text
+substitutions (text, replacements) =
+    foldl' (\ a (b, c) -> T.replace b c a) text replacements

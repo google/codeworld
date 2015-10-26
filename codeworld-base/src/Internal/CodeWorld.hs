@@ -258,7 +258,7 @@ keyCodeToText n = case n of
     222                      -> "'"
     _                        -> "Unknown:" <> fromNum n
   where fromAscii n = singleton (chr n)
-        fromNum   n = Internal.Text.show (fromIntegral n)
+        fromNum   n = Internal.Text.printed (fromIntegral n)
 
 getMousePos :: IsMouseEvent e => Element -> EventM w e Point
 getMousePos canvas = do
@@ -383,11 +383,16 @@ pictureOf pic = display pic `catch` reportError
 animationOf :: (Number -> Picture) -> Program
 animationOf f = simulationOf (const 0, uncurry (+), f)
 
-simulationOf :: ([Number] -> a, (a, Number) -> a, a -> Picture)
+simulationOf :: ([Number] -> world,
+                 (world, Number) -> world,
+                 world -> Picture)
              -> Program
 simulationOf (initial, step, draw) = interactionOf (initial, step, fst, draw)
 
-interactionOf :: ([Number] -> a, (a, Number) -> a, (a, Event) -> a, a -> Picture)
+interactionOf :: ([Number] -> world,
+                  (world, Number) -> world,
+                  (world, Event) -> world,
+                  world -> Picture)
               -> Program
 interactionOf (initial, step, event, draw) = go `catch` reportError
   where go = run . activity . initial =<< randoms

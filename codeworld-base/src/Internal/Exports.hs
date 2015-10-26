@@ -46,6 +46,7 @@ module Internal.Exports (
     gray,
     grey,
     mixColors,
+    mixOfColors,
     lighter,
     light,
     darker,

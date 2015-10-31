@@ -90,14 +90,14 @@ drawCodeWorldLogo ctx x y w h = js_drawCodeWorldLogo ctx "cwlogo" x y w h
 -- Draw state.  An affine transformation matrix, plus a Bool indicating whether
 -- a color has been chosen yet.
 
-type DrawState = (Double, Double, Double, Double, Double, Double, Bool)
+type DrawState = (Double, Double, Double, Double, Double, Double, Maybe Color)
 
 initialDS :: DrawState
-initialDS = (1, 0, 0, 1, 0, 0, False)
+initialDS = (1, 0, 0, 1, 0, 0, Nothing)
 
 translateDS :: Double -> Double -> DrawState -> DrawState
 translateDS x y (a,b,c,d,e,f,hc) =
-    (a, b, c, d, a*x + c*y + e, b*x + d*y + f, hc)
+    (a, b, c, d, a*25*x + c*25*y + e, b*25*x + d*25*y + f, hc)
 
 scaleDS :: Double -> Double -> DrawState -> DrawState
 scaleDS x y (a,b,c,d,e,f,hc) =
@@ -111,16 +111,29 @@ rotateDS r (a,b,c,d,e,f,hc) = let th = r * pi / 180 in
      d * cos th - b * sin th,
      e, f, hc)
 
-hasColorDS :: DrawState -> Bool
-hasColorDS (_,_,_,_,_,_,hc) = hc
+setColorDS :: Color -> DrawState -> DrawState
+setColorDS col (a,b,c,d,e,f,Nothing) = (a,b,c,d,e,f,Just col)
+setColorDS _ (a,b,c,d,e,f,Just col) = (a,b,c,d,e,f,Just col)
 
-setColorDS :: DrawState -> DrawState
-setColorDS (a,b,c,d,e,f,_) = (a,b,c,d,e,f,True)
+setColor :: Canvas.Context -> DrawState -> IO ()
+setColor ctx (ta,tb,tc,td,te,tf,col) = case col of
+    Nothing -> do
+      Canvas.strokeStyle 0 0 0 1 ctx
+      Canvas.fillStyle 0 0 0 1 ctx
+    Just (RGBA (r, g, b, a)) -> do
+      Canvas.strokeStyle (round $ toDouble r * 255)
+                         (round $ toDouble g * 255)
+                         (round $ toDouble b * 255)
+                         (toDouble a) ctx
+      Canvas.fillStyle (round $ toDouble r * 255)
+                       (round $ toDouble g * 255)
+                       (round $ toDouble b * 255)
+                       (toDouble a) ctx
 
 withDS :: Canvas.Context -> DrawState -> IO () -> IO ()
-withDS ctx (a,b,c,d,e,f,_) action = do
+withDS ctx (ta,tb,tc,td,te,tf,col) action = do
     Canvas.save ctx
-    Canvas.transform a b c d e f ctx
+    Canvas.transform ta tb tc td te tf ctx
     Canvas.beginPath ctx
     action
     Canvas.restore ctx
@@ -131,53 +144,44 @@ withDS ctx (a,b,c,d,e,f,_) action = do
 followPath :: Canvas.Context -> [Point] -> Bool -> IO ()
 followPath _   [] closed = return ()
 followPath ctx ((sx,sy):ps) closed = do
-    Canvas.moveTo (toDouble sx) (toDouble sy) ctx
-    forM_ ps $ \(x,y) -> Canvas.lineTo (toDouble x) (toDouble y) ctx
+    Canvas.moveTo (25 * toDouble sx) (25 * toDouble sy) ctx
+    forM_ ps $ \(x,y) -> Canvas.lineTo (25 * toDouble x) (25 * toDouble y) ctx
     when closed $ Canvas.closePath ctx
 
 drawFigure :: Canvas.Context -> DrawState -> Number -> IO () -> IO ()
 drawFigure ctx ds w figure = do
     Canvas.save ctx
+    setColor ctx ds
     withDS ctx ds $ do
         figure
         when (w /= 0) $ do
-            Canvas.lineWidth (toDouble w) ctx
+            Canvas.lineWidth (25 * toDouble w) ctx
             Canvas.stroke ctx
     when (w == 0) $ do
-        Canvas.lineWidth (1/25) ctx
+        Canvas.lineWidth 1 ctx
         Canvas.stroke ctx
     Canvas.restore ctx
 
 drawPicture :: Canvas.Context -> DrawState -> Picture -> IO ()
 drawPicture ctx ds (Polygon ps) = do
     withDS ctx ds $ followPath ctx ps True
+    setColor ctx ds
     Canvas.fill ctx
 drawPicture ctx ds (Line ps w closed) = do
     drawFigure ctx ds w $ followPath ctx ps closed
 drawPicture ctx ds (Arc b e r w) = do
     when (r > 0) $ drawFigure ctx ds w $ do
-        Canvas.arc 0 0 (toDouble r) (toDouble b * pi / 180)
+        Canvas.arc 0 0 (25 * toDouble r) (toDouble b * pi / 180)
                    (toDouble e * pi / 180) False ctx
 drawPicture ctx ds (Text txt) = withDS ctx ds $ do
-    Canvas.scale 0.05 (-0.05) ctx
+    setColor ctx ds
+    Canvas.scale 1 (-1) ctx
     Canvas.fillText (textToJSString txt) 0 0 ctx
 drawPicture ctx ds Logo = withDS ctx ds $ do
+    setColor ctx ds
     Canvas.scale 1 (-1) ctx
-    drawCodeWorldLogo ctx (-9) (-2) 18 4
-drawPicture ctx ds (Color (RGBA (r, g, b, a)) p)
-  | hasColorDS ds = drawPicture ctx ds p
-  | otherwise     = do
-      Canvas.save ctx
-      Canvas.strokeStyle (round $ toDouble r * 255)
-                         (round $ toDouble g * 255)
-                         (round $ toDouble b * 255)
-                         (toDouble a) ctx
-      Canvas.fillStyle (round $ toDouble r * 255)
-                       (round $ toDouble g * 255)
-                       (round $ toDouble b * 255)
-                       (toDouble a) ctx
-      drawPicture ctx (setColorDS ds) p
-      Canvas.restore ctx
+    drawCodeWorldLogo ctx (-225) (-50) 450 100
+drawPicture ctx ds (Color col p)     = drawPicture ctx (setColorDS col ds) p
 drawPicture ctx ds (Translate x y p) = drawPicture ctx (translateDS (toDouble x) (toDouble y) ds) p
 drawPicture ctx ds (Scale x y p)     = drawPicture ctx (scaleDS (toDouble x) (toDouble y) ds) p
 drawPicture ctx ds (Rotate r p)      = drawPicture ctx (rotateDS (toDouble r) ds) p
@@ -193,11 +197,11 @@ setupScreenContext canvas = do
     ctx <- Canvas.getContext $ Canvas.Canvas $ unElement canvas
     Canvas.save ctx
     Canvas.translate 250 250 ctx
-    Canvas.scale 25 (-25) ctx
+    Canvas.scale 1 (-1) ctx
     Canvas.textAlign Canvas.Left ctx
     Canvas.textBaseline Canvas.Alphabetic ctx
     Canvas.lineWidth 0 ctx
-    Canvas.font "20px Times Roman" ctx
+    Canvas.font "25px Times Roman" ctx
     return ctx
 
 canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> IO ()

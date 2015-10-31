@@ -202,6 +202,8 @@ setupScreenContext canvas = do
     Canvas.textBaseline Canvas.Alphabetic ctx
     Canvas.lineWidth 0 ctx
     Canvas.font "25px Times Roman" ctx
+    Canvas.textAlign Canvas.Center ctx
+    Canvas.textBaseline Canvas.Middle ctx
     return ctx
 
 canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> IO ()

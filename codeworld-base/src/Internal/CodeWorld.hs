@@ -74,17 +74,17 @@ foreign import javascript unsafe "$1['getBoundingClientRect']()['left']"
 foreign import javascript unsafe "$1['getBoundingClientRect']()['top']"
     js_getBoundingClientTop :: JSRef -> IO Int
 
+foreign import javascript unsafe "$1.globalCompositeOperation = $2"
+    js_setGlobalCompositeOperation :: Canvas.Context -> JSString -> IO ()
+
 foreign import javascript unsafe "$1.drawImage($2, $3, $4);"
-    js_canvasDrawImage :: Canvas.Context -> JSRef -> Int -> Int -> IO ()
+    js_canvasDrawImage :: Canvas.Context -> Canvas.Canvas -> Int -> Int -> IO ()
 
 foreign import javascript unsafe "window.reportRuntimeError($1, $2);"
     js_reportRuntimeError :: Bool -> JSString -> IO ()
 
 foreign import javascript unsafe "$1.drawImage(document.getElementById($2), $3, $4, $5, $6);"
     js_drawCodeWorldLogo :: Canvas.Context -> JSString -> Int -> Int -> Int -> Int -> IO ()
-
-drawCodeWorldLogo :: Canvas.Context -> Int -> Int -> Int -> Int -> IO ()
-drawCodeWorldLogo ctx x y w h = js_drawCodeWorldLogo ctx "cwlogo" x y w h
 
 --------------------------------------------------------------------------------
 -- Draw state.  An affine transformation matrix, plus a Bool indicating whether
@@ -115,8 +115,22 @@ setColorDS :: Color -> DrawState -> DrawState
 setColorDS col (a,b,c,d,e,f,Nothing) = (a,b,c,d,e,f,Just col)
 setColorDS _ (a,b,c,d,e,f,Just col) = (a,b,c,d,e,f,Just col)
 
-setColor :: Canvas.Context -> DrawState -> IO ()
-setColor ctx (ta,tb,tc,td,te,tf,col) = case col of
+getColorDS :: DrawState -> Maybe Color
+getColorDS (a,b,c,d,e,f,col) = col
+
+withDS :: Canvas.Context -> DrawState -> IO () -> IO ()
+withDS ctx (ta,tb,tc,td,te,tf,col) action = do
+    Canvas.save ctx
+    Canvas.transform ta tb tc td te tf ctx
+    Canvas.beginPath ctx
+    action
+    Canvas.restore ctx
+
+--------------------------------------------------------------------------------
+-- Base drawing code for pictures.
+
+applyColor :: Canvas.Context -> DrawState -> IO ()
+applyColor ctx ds = case getColorDS ds of
     Nothing -> do
       Canvas.strokeStyle 0 0 0 1 ctx
       Canvas.fillStyle 0 0 0 1 ctx
@@ -130,16 +144,19 @@ setColor ctx (ta,tb,tc,td,te,tf,col) = case col of
                        (round $ toDouble b * 255)
                        (toDouble a) ctx
 
-withDS :: Canvas.Context -> DrawState -> IO () -> IO ()
-withDS ctx (ta,tb,tc,td,te,tf,col) action = do
-    Canvas.save ctx
-    Canvas.transform ta tb tc td te tf ctx
-    Canvas.beginPath ctx
-    action
-    Canvas.restore ctx
-
---------------------------------------------------------------------------------
--- Base drawing code for pictures.
+drawCodeWorldLogo :: Canvas.Context -> DrawState -> Int -> Int -> Int -> Int -> IO ()
+drawCodeWorldLogo ctx ds x y w h = case getColorDS ds of
+    Nothing -> js_drawCodeWorldLogo ctx "cwlogo" x y w h
+    Just (RGBA (r, g, b, a)) -> do
+        -- This is a tough case.  The best we can do is to allocate an
+        -- offscreen buffer as a temporary.
+        buf <- Canvas.create w h
+        bufctx <- Canvas.getContext buf
+        applyColor bufctx ds
+        Canvas.fillRect 0 0 (fromIntegral w) (fromIntegral h) bufctx
+        js_setGlobalCompositeOperation bufctx "destination-in"
+        js_drawCodeWorldLogo bufctx "cwlogo" 0 0 w h
+        js_canvasDrawImage ctx buf x y
 
 followPath :: Canvas.Context -> [Point] -> Bool -> IO ()
 followPath _   [] closed = return ()
@@ -150,22 +167,21 @@ followPath ctx ((sx,sy):ps) closed = do
 
 drawFigure :: Canvas.Context -> DrawState -> Number -> IO () -> IO ()
 drawFigure ctx ds w figure = do
-    Canvas.save ctx
-    setColor ctx ds
     withDS ctx ds $ do
         figure
         when (w /= 0) $ do
             Canvas.lineWidth (25 * toDouble w) ctx
+            applyColor ctx ds
             Canvas.stroke ctx
     when (w == 0) $ do
         Canvas.lineWidth 1 ctx
+        applyColor ctx ds
         Canvas.stroke ctx
-    Canvas.restore ctx
 
 drawPicture :: Canvas.Context -> DrawState -> Picture -> IO ()
 drawPicture ctx ds (Polygon ps) = do
     withDS ctx ds $ followPath ctx ps True
-    setColor ctx ds
+    applyColor ctx ds
     Canvas.fill ctx
 drawPicture ctx ds (Line ps w closed) = do
     drawFigure ctx ds w $ followPath ctx ps closed
@@ -174,13 +190,12 @@ drawPicture ctx ds (Arc b e r w) = do
         Canvas.arc 0 0 (25 * toDouble r) (toDouble b * pi / 180)
                    (toDouble e * pi / 180) False ctx
 drawPicture ctx ds (Text txt) = withDS ctx ds $ do
-    setColor ctx ds
     Canvas.scale 1 (-1) ctx
+    applyColor ctx ds
     Canvas.fillText (textToJSString txt) 0 0 ctx
 drawPicture ctx ds Logo = withDS ctx ds $ do
-    setColor ctx ds
     Canvas.scale 1 (-1) ctx
-    drawCodeWorldLogo ctx (-225) (-50) 450 100
+    drawCodeWorldLogo ctx ds (-225) (-50) 450 100
 drawPicture ctx ds (Color col p)     = drawPicture ctx (setColorDS col ds) p
 drawPicture ctx ds (Translate x y p) = drawPicture ctx (translateDS (toDouble x) (toDouble y) ds) p
 drawPicture ctx ds (Scale x y p)     = drawPicture ctx (scaleDS (toDouble x) (toDouble y) ds) p
@@ -192,9 +207,9 @@ drawFrame ctx pic = do
     Canvas.clearRect (-250) (-250) 500 500 ctx
     drawPicture ctx initialDS pic
 
-setupScreenContext :: Element -> IO Canvas.Context
+setupScreenContext :: Canvas.Canvas -> IO Canvas.Context
 setupScreenContext canvas = do
-    ctx <- Canvas.getContext $ Canvas.Canvas $ unElement canvas
+    ctx <- Canvas.getContext canvas
     Canvas.save ctx
     Canvas.translate 250 250 ctx
     Canvas.scale 1 (-1) ctx
@@ -205,9 +220,6 @@ setupScreenContext canvas = do
     Canvas.textAlign Canvas.Center ctx
     Canvas.textBaseline Canvas.Middle ctx
     return ctx
-
-canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> IO ()
-canvasDrawImage ctx elem x y = js_canvasDrawImage ctx (unElement elem) x y
 
 --------------------------------------------------------------------------------
 -- Adapters from JavaScript values to logical values used by CodeWorld.
@@ -298,7 +310,7 @@ display :: Picture -> IO ()
 display pic = do
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    ctx <- setupScreenContext canvas
+    ctx <- setupScreenContext $ Canvas.Canvas $ unElement canvas
     drawFrame ctx pic
     Canvas.restore ctx
 
@@ -355,10 +367,7 @@ run :: Activity -> IO ()
 run startActivity = do
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-
-    Just offscreenCanvas <- createElement doc (Just "canvas" :: Maybe JSString)
-    setAttribute offscreenCanvas ("width" :: JSString)  ("500" :: JSString)
-    setAttribute offscreenCanvas ("height" :: JSString) ("500" :: JSString)
+    offscreenCanvas <- Canvas.create 500 500
 
     screen <- Canvas.getContext (Canvas.Canvas (unElement canvas))
     buffer <- setupScreenContext offscreenCanvas
@@ -369,7 +378,7 @@ run startActivity = do
     let go t0 a0 = do
             drawFrame buffer (activityDraw a0)
             Canvas.clearRect 0 0 500 500 screen
-            canvasDrawImage screen offscreenCanvas 0 0
+            js_canvasDrawImage screen offscreenCanvas 0 0
             js_waitAnimationFrame
             t1 <- getCurrentTime
             a1 <- passTime (diffUTCTime t1 t0) currentActivity

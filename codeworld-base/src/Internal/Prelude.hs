@@ -90,7 +90,7 @@ module Internal.Prelude (
 
 import qualified "base" Prelude as P
 import qualified "base" Data.Maybe as P
-import "base" Prelude (Bool, (.))
+import "base" Prelude (Bool, (.), ($))
 
 import Data.Function (on)
 import qualified Data.List as L
@@ -274,8 +274,15 @@ combined (f, [])   = P.error "combined was applied to an empty list."
 combined (f, [x])  = x
 combined (f, x:xs) = f(x, combined(f, xs))
 
+-- For some reason, randoms numbers seem to give conspicuously similar
+-- results early in the sequence, so we throw away a few to get better
+-- mixing.
 numToStdGen :: Number -> StdGen
-numToStdGen r = mkStdGen (P.round (P.realToFrac r P.* P.fromIntegral (P.maxBound :: P.Int)))
+numToStdGen r = times 10 discard $ g
+  where seed      = P.round (P.realToFrac r P.* P.fromIntegral (P.maxBound :: P.Int))
+        g         = mkStdGen seed
+        discard   = P.snd . next
+        times n f = P.foldl (.) P.id (P.replicate n f)
 
 randomsFrom :: StdGen -> [Number]
 randomsFrom g = fromDouble a : randomsFrom g2

@@ -215,10 +215,10 @@ coordinatePlane = axes & numbers & guidelines
         guidelines = xguidelines & rotate(xguidelines, 90)
         numbers = xnumbers & ynumbers
         xnumbers = pictures [
-            translate(scale(text(printed(k)), 0.5, 0.5), k - 0.15, 0.15)
+            translate(scale(text(printed(k)), 0.5, 0.5), k, 0.3)
             | k <- [-9, -8 .. 9], k P./= 0 ]
         ynumbers = pictures [
-            translate(scale(text(printed(k)), 0.5, 0.5), 0.15, k - 0.15)
+            translate(scale(text(printed(k)), 0.5, 0.5), 0.3, k)
             | k <- [-9, -8 .. 9], k P./= 0 ]
 
 -- | The CodeWorld logo.

@@ -53,7 +53,7 @@ module Internal.Prelude (
     contains,
     length,
     at,
-    (!!),
+    (#),
     any,
     all,
     repeated,
@@ -176,9 +176,9 @@ at (xs, n) = xs P.!! toInt n
 
 -- | Gives the member of a list at a given index.
 -- Indices start at 0.
-(!!) :: [a] -> Number -> a
-(!!) = toOperator(at)
-infixl 9 !!
+(#) :: [a] -> Number -> a
+(#) = toOperator(at)
+infixl 9 #
 
 -- | Determines if any proposition in a list is true.
 --

@@ -220,6 +220,7 @@ function init() {
             "color",
             "cycle",
             "mixColors",
+            "mixOfColors",
             "rotate",
             "rotateVector",
             "scaleVector",

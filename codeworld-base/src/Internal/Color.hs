@@ -55,18 +55,22 @@ brown      = fromHSL ( 15, 0.5,  0.5)
 purple     = fromHSL (280, 0.75, 0.5)
 pink       = fromHSL (345, 0.75, 0.75)
 
-mixColors :: (Color, Color) -> Color
-mixColors (RGBA (r1,g1,b1,a1), RGBA (r2, g2, b2, a2))
+mixed :: (Color, Color) -> Color
+mixed (RGBA (r1,g1,b1,a1), RGBA (r2, g2, b2, a2))
   | a1 + a2 P.== 0 = RGBA (0, 0, 0, 0)
   | P.otherwise    = RGBA (r, g, b, a)
   where r = sqrt(r1^2 * a1 + r2^2 * a2 / (a1 + a2))
         g = sqrt(g1^2 * a1 + g2^2 * a2 / (a1 + a2))
         b = sqrt(b1^2 * a1 + b2^2 * a2 / (a1 + a2))
         a = (a1 + a2) / 2
-{-# WARNING mixColors "Please use mixOfColors(...) instead of mixColors(...)" #-}
+
+mixColors :: (Color, Color) -> Color
+mixColors = mixed
+{-# WARNING mixColors "Please use mixed(...) instead of mixColors(...)" #-}
 
 mixOfColors :: (Color, Color) -> Color
 mixOfColors = mixColors
+{-# WARNING mixOfColors "Please use mixed(...) instead of mixOfColors(...)" #-}
 
 lighter :: (Color, Number) -> Color
 lighter (c, d) = fromHSL (hue c, saturation c, fence (luminosity c + d))

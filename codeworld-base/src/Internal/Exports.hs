@@ -73,6 +73,7 @@ module Internal.Exports (
     scaledVector,
     rotateVector,
     rotatedVector,
+    dotProduct,
     Picture,
     blank,
     line,

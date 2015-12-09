@@ -53,6 +53,9 @@ rotateVector ((x,y), angle) = (x * cos angle - y * sin angle,
 rotatedVector :: (Vector, Number) -> Vector
 rotatedVector = rotateVector
 
+dotProduct :: (Vector, Vector) -> Number
+dotProduct ((x1,y1), (x2, y2)) = x1 * x2 + y1 * y2
+
 {-# WARNING addVectors "Please use vectorSum(...) instead of addVectors(...)" #-}
 {-# WARNING subtractVectors "Please use vectorDifference(...) instead of subtractVectors(...)" #-}
 {-# WARNING scaleVector "Please use scaledVector(...) instead of scaleVector(...)" #-}

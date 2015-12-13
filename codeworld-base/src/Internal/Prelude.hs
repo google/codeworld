@@ -56,6 +56,7 @@ module Internal.Prelude (
     (#),
     any,
     all,
+    none,
     repeated,
     repeating,
     cycle,
@@ -191,6 +192,12 @@ any = P.or
 -- For example, `all([even(n) | n <- [2,3,4]])` is `False`, because 3 is not even.
 all :: [Bool] -> Bool
 all = P.and
+
+-- | Determines if all propositions in a list are false.
+--
+-- For example, `none([odd(n) | n <- [2,3,4]])` is `False`, because 3 is odd.
+none :: [Bool] -> Bool
+none = P.not . any
 
 -- | Forms a list by repeating a source list some number of times.
 repeated :: ([a], Number) -> [a]

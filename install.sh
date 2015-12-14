@@ -116,9 +116,9 @@ fi
 
 # Choose the right GHC download
 if /sbin/ldconfig -p | grep -q libgmp.so.10; then
-  GHC_ARCH=`uname -m`-unknown-linux-deb7
+  GHC_ARCH=`uname -m`-deb8-linux
 elif /sbin/ldconfig -p | grep -q libgmp.so.3; then
-  GHC_ARCH=`uname -m`-unknown-linux-centos66
+  GHC_ARCH=`uname -m`-centos67-linux
 else
   echo Sorry, but no supported libgmp is installed.
   exit 1
@@ -126,8 +126,8 @@ fi
 
 # Install GHC, since it's required for GHCJS.
 
-GHC_DIR=7.10.2
-GHC_VERSION=7.10.2
+GHC_DIR=7.10.3
+GHC_VERSION=7.10.3
 
 run $DOWNLOADS               wget http://downloads.haskell.org/~ghc/$GHC_DIR/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
 run $BUILD                   tar xf $DOWNLOADS/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
@@ -145,7 +145,7 @@ run $BUILD                         rm -rf cabal-install-1.22.6.0
 
 # Fetch the prerequisites for GHCJS.
 
-run .  cabal_install happy-1.19.5 alex-3.1.4
+run .  cabal_install happy-1.19.5 alex-3.1.6
 
 # Install GHCJS itself (https://github.com/ghcjs/ghcjs) and cabal install.
 
@@ -154,12 +154,14 @@ run $BUILD  rm -rf ghcjs
 
 # install node (necessary for ghcjs-boot)
 
-run $DOWNLOADS           wget http://nodejs.org/dist/v0.12.7/node-v0.12.7.tar.gz
-run $BUILD               tar xzf $DOWNLOADS/node-v0.12.7.tar.gz
-run $BUILD/node-v0.12.7  ./configure --prefix=$BUILD
-run $BUILD/node-v0.12.7  make
-run $BUILD/node-v0.12.7  make install
-run $BUILD               rm -rf node-v0.12.7
+NODEJS_VERSION=v4.2.3
+
+run $DOWNLOADS                   wget https://nodejs.org/dist/$NODEJS_VERSION/node-$NODEJS_VERSION.tar.gz
+run $BUILD                       tar xzf $DOWNLOADS/node-$NODEJS_VERSION.tar.gz
+run $BUILD/node-$NODEJS_VERSION  ./configure --prefix=$BUILD
+run $BUILD/node-$NODEJS_VERSION  make
+run $BUILD/node-$NODEJS_VERSION  make install
+run $BUILD                       rm -rf node-$NODEJS_VERSION
 
 # Bootstrap ghcjs
 

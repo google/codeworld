@@ -69,10 +69,10 @@ foreign import javascript interruptible "window.requestAnimationFrame($c);"
     js_waitAnimationFrame :: IO Double
 
 foreign import javascript unsafe "$1['getBoundingClientRect']()['left']"
-    js_getBoundingClientLeft :: JSRef -> IO Int
+    js_getBoundingClientLeft :: JSVal -> IO Int
 
 foreign import javascript unsafe "$1['getBoundingClientRect']()['top']"
-    js_getBoundingClientTop :: JSRef -> IO Int
+    js_getBoundingClientTop :: JSVal -> IO Int
 
 foreign import javascript unsafe "$1.globalCompositeOperation = $2"
     js_setGlobalCompositeOperation :: Canvas.Context -> JSString -> IO ()

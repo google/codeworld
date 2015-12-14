@@ -60,7 +60,7 @@ evaluateFully x = do
   when (not $ isNull $ unsafeCoerce ths) $ forM_ (toList ths) evalElem
   return x'
   where
-    evalElem :: JSRef -> IO ()
+    evalElem :: JSVal -> IO ()
     evalElem y =
       let (JSRefD o) = unsafeCoerce y in void (evaluateFully o)
 

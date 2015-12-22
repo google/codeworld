@@ -274,15 +274,16 @@ function init() {
 
             var word = line.substr(wordStart, wordEnd - wordStart);
 
-            if (/^[A-Z:]/.test(word)) {
+            if (hintBlacklist.indexOf(word) >= 0) {
+                keywordOverrides[word] = 'deprecated';
+            } else if (/^[A-Z:]/.test(word)) {
                 keywordOverrides[word] = 'builtin-2';
+                hints.push(createHint(line, wordStart, wordEnd));
             } else {
                 keywordOverrides[word] = 'builtin';
-            }
-
-            if (hintBlacklist.indexOf(word) < 0) {
                 hints.push(createHint(line, wordStart, wordEnd));
             }
+
         });
 
         window.codeworldEditor.setOption(

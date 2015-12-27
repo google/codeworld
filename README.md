@@ -1,31 +1,45 @@
 CodeWorld
 =========
 
-CodeWorld is an educational web-based programming environment using a variant of Haskell.  It includes:
+CodeWorld is an educational web-based programming environment using a variant
+of Haskell.  It includes:
 
-- A set of web-based tools for students to easily create their own computer drawings, animations, and games.
+- A set of web-based tools for students to easily create their own computer
+  drawings, animations, and games.
 - A simple mathematical model of computer games, inspired by gloss.
-- The ability for students to run and use their creations right in a web browser using GHCJS as a compiler.
+- The ability for students to run and use their creations right in a web
+  browser using GHCJS as a compiler.
 
 Status
 ======
 
-CodeWorld is an unofficial project.  It is not an official Google project, and Google
-provides no support for it.
+CodeWorld is not an official Google project, and Google provides no support
+for it.
+
+Getting Started
+===============
+
+Just visit https://code.world to get started.
+
+There is no need to download or install anything to use CodeWorld.  This
+repository will be useful if you prefer to fork and modify the CodeWorld
+environment, or contribute changes.
 
 Discuss and Learn More
 ======================
 
-To discuss and hear announcements about CodeWorld, subscribe to the mailing list at
-https://groups.google.com/forum/#!forum/codeworld-discuss
+To discuss and hear announcements about CodeWorld, subscribe to the mailing
+list at https://groups.google.com/forum/#!forum/codeworld-discuss
 
 The mailing list should be used to:
 - Hear announcements about and discuss upcoming changes and features.
-- Ask questions about using the system, and give feedback about your experiences.
-- Share interesting ways of using the site, related classroom activities, and more.
+- Ask questions about using the system, and give feedback about your
+  experiences.
+- Share interesting ways of using the site, related classroom activities, and
+  more.
 
-To report bugs or file formal feature requests, try https://github.com/google/codeworld/issues --
-but it would be great if you discuss your ideas for new features before filing a feature request.
+To report bugs or file formal feature requests, try
+https://github.com/google/codeworld/issues.
 
 Contributing
 ============

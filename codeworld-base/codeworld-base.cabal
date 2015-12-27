@@ -4,7 +4,7 @@ Synopsis:            Replacement base module for CodeWorld
 License-file:        LICENSE
 Author:              Chris Smith
 Maintainer:          cdsmith@gmail.com
-Copyright:           (c) 2014, Google, Inc.
+Copyright:           (c) 2015, The CodeWorld Authors
 Build-type:          Simple
 Cabal-version:       >=1.8
 

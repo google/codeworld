@@ -13,8 +13,8 @@ of Haskell.  It includes:
 Status
 ======
 
-CodeWorld is not an official Google project, and Google provides no support
-for it.
+Google is distributing the code for CodeWorld, but CodeWorld is not an
+official Google project, and Google provides no support for it.
 
 Getting Started
 ===============

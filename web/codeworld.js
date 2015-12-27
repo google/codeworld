@@ -49,8 +49,6 @@ function init() {
     showingResult = false;
     allProjectNames = [];
 
-    usingHaskellPrelude = false;
-
     var editor = document.getElementById('editor');
 
     window.codeworldEditor = CodeMirror.fromTextArea(editor, {
@@ -559,7 +557,7 @@ function stop() {
 }
 
 function addToMessage(msg) {
-    if (!window.usingHaskellPrelude) {
+    if (!usingHaskellPrelude()) {
         msg = msg
             .replace(/\u2018/g, '')
             .replace(/\u2019/g, '')
@@ -644,6 +642,11 @@ function goto(line, col) {
     codeworldEditor.focus();
 }
 
+function usingHaskellPrelude() {
+    var src = window.codeworldEditor.getValue();
+    return /HaskellPrelude/.test(src);
+}
+
 function compile() {
     run('', 'Building...', false);
 
@@ -656,7 +659,6 @@ function compile() {
         var success = request.status == 200;
 
         sendHttp('GET', '/runMsg?hash=' + hash, null, function(request) {
-            window.usingHaskellPrelude = /HaskellPrelude/.test(src);
             var msg = '';
             if (request.status == 200) {
                 msg = request.responseText;

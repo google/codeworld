@@ -51,10 +51,12 @@ function init() {
 
     var editor = document.getElementById('editor');
 
+    codeworldKeywords = {};
+
     window.codeworldEditor = CodeMirror.fromTextArea(editor, {
         mode: {
             name: 'codeworld',
-            overrideKeywords: {}
+            overrideKeywords: codeworldKeywords
         },
         lineNumbers: true,
         autofocus: true,
@@ -88,6 +90,9 @@ function init() {
     };
 
     window.codeworldEditor.on('changes', window.updateUI);
+
+    // Switch to the correct mode (Haskell vs CodeWorld) every second.
+    setInterval(function() { setMode(false); }, 1000);
 
     function createHint(line, wordStart, wordEnd) {
         var word = line.slice(wordStart, wordEnd);
@@ -193,11 +198,8 @@ function init() {
         }
         lines = lines.slice(startLine, endLine);
 
-        // Override the syntax classification of words from the standard library.
-        var keywordOverrides = {};
-
         // Special case for main, since it's morally a built-in name.
-        keywordOverrides['main'] = 'builtin';
+        codeworldKeywords['main'] = 'builtin';
 
         lines = lines.sort().filter(function(item, pos, array) {
             return !pos || item != array[pos - 1];
@@ -278,22 +280,18 @@ function init() {
             var word = line.substr(wordStart, wordEnd - wordStart);
 
             if (hintBlacklist.indexOf(word) >= 0) {
-                keywordOverrides[word] = 'deprecated';
+                codeworldKeywords[word] = 'deprecated';
             } else if (/^[A-Z:]/.test(word)) {
-                keywordOverrides[word] = 'builtin-2';
+                codeworldKeywords[word] = 'builtin-2';
                 hints.push(createHint(line, wordStart, wordEnd));
             } else {
-                keywordOverrides[word] = 'builtin';
+                codeworldKeywords[word] = 'builtin';
                 hints.push(createHint(line, wordStart, wordEnd));
             }
 
         });
 
-        window.codeworldEditor.setOption(
-            'mode', {
-                name: 'codeworld',
-                overrideKeywords: keywordOverrides
-            });
+        setMode(true);
 
         hints.sort(function(a, b) {
             return a.source < b.source ? -1 : 1
@@ -306,6 +304,22 @@ function init() {
             var msg = 'There are unsaved changes to your project. ' + 'If you continue, they will be lost!';
             if (event) event.returnValue = msg;
             return msg;
+        }
+    }
+}
+
+function setMode(force) {
+    if (usingHaskellPrelude()) {
+        if (force || window.codeworldEditor.getMode().name == 'codeworld') {
+            window.codeworldEditor.setOption('mode', 'haskell');
+        }
+    } else {
+        if (force || window.codeworldEditor.getMode().name != 'codeworld') {
+            window.codeworldEditor.setOption(
+                'mode', {
+                    name: 'codeworld',
+                    overrideKeywords: codeworldKeywords
+                });
         }
     }
 }

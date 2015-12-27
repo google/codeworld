@@ -56,33 +56,32 @@ import           System.Random
 import           GHCJS.DOM
 import           GHCJS.DOM.Window as Window
 import           GHCJS.DOM.Document
+import qualified GHCJS.DOM.ClientRect as ClientRect
 import           GHCJS.DOM.Element
 import           GHCJS.DOM.EventM
 import           GHCJS.DOM.MouseEvent
 import           GHCJS.DOM.Types (Element, unElement)
 import           GHCJS.Foreign
+import           GHCJS.Marshal.Pure
 import           GHCJS.Types
 import           JavaScript.Web.AnimationFrame
 import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
 
-foreign import javascript unsafe "$1['getBoundingClientRect']()['left']"
-    js_getBoundingClientLeft :: JSVal -> IO Int
-
-foreign import javascript unsafe "$1['getBoundingClientRect']()['top']"
-    js_getBoundingClientTop :: JSVal -> IO Int
-
 foreign import javascript unsafe "$1.globalCompositeOperation = $2"
     js_setGlobalCompositeOperation :: Canvas.Context -> JSString -> IO ()
 
-foreign import javascript unsafe "$1.drawImage($2, $3, $4);"
-    js_canvasDrawImage :: Canvas.Context -> Canvas.Canvas -> Int -> Int -> IO ()
+foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
+    js_canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
 
 foreign import javascript unsafe "window.reportRuntimeError($1, $2);"
     js_reportRuntimeError :: Bool -> JSString -> IO ()
 
-foreign import javascript unsafe "$1.drawImage(document.getElementById($2), $3, $4, $5, $6);"
-    js_drawCodeWorldLogo :: Canvas.Context -> JSString -> Int -> Int -> Int -> Int -> IO ()
+canvasFromElement :: Element -> Canvas.Canvas
+canvasFromElement = Canvas.Canvas . unElement
+
+elementFromCanvas :: Canvas.Canvas -> Element
+elementFromCanvas = pFromJSVal . jsval
 
 --------------------------------------------------------------------------------
 -- Draw state.  An affine transformation matrix, plus a Bool indicating whether
@@ -143,18 +142,21 @@ applyColor ctx ds = case getColorDS ds of
                        (toDouble a) ctx
 
 drawCodeWorldLogo :: Canvas.Context -> DrawState -> Int -> Int -> Int -> Int -> IO ()
-drawCodeWorldLogo ctx ds x y w h = case getColorDS ds of
-    Nothing -> js_drawCodeWorldLogo ctx "cwlogo" x y w h
-    Just (RGBA (r, g, b, a)) -> do
-        -- This is a tough case.  The best we can do is to allocate an
-        -- offscreen buffer as a temporary.
-        buf <- Canvas.create w h
-        bufctx <- Canvas.getContext buf
-        applyColor bufctx ds
-        Canvas.fillRect 0 0 (fromIntegral w) (fromIntegral h) bufctx
-        js_setGlobalCompositeOperation bufctx "destination-in"
-        js_drawCodeWorldLogo bufctx "cwlogo" 0 0 w h
-        js_canvasDrawImage ctx buf x y
+drawCodeWorldLogo ctx ds x y w h = do
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("cwlogo" :: JSString)
+    case getColorDS ds of
+        Nothing -> js_canvasDrawImage ctx canvas x y w h
+        Just (RGBA (r, g, b, a)) -> do
+            -- This is a tough case.  The best we can do is to allocate an
+            -- offscreen buffer as a temporary.
+            buf <- Canvas.create w h
+            bufctx <- Canvas.getContext buf
+            applyColor bufctx ds
+            Canvas.fillRect 0 0 (fromIntegral w) (fromIntegral h) bufctx
+            js_setGlobalCompositeOperation bufctx "destination-in"
+            js_canvasDrawImage bufctx canvas 0 0 w h
+            js_canvasDrawImage ctx (elementFromCanvas buf) x y w h
 
 followPath :: Canvas.Context -> [Point] -> Bool -> IO ()
 followPath _   [] closed = return ()
@@ -205,9 +207,9 @@ drawFrame ctx pic = do
     Canvas.clearRect (-250) (-250) 500 500 ctx
     drawPicture ctx initialDS pic
 
-setupScreenContext :: Canvas.Canvas -> IO Canvas.Context
+setupScreenContext :: Element -> IO Canvas.Context
 setupScreenContext canvas = do
-    ctx <- Canvas.getContext canvas
+    ctx <- Canvas.getContext (canvasFromElement canvas)
     Canvas.save ctx
     Canvas.translate 250 250 ctx
     Canvas.scale 1 (-1) ctx
@@ -280,9 +282,11 @@ getMousePos :: IsMouseEvent e => Element -> EventM w e Point
 getMousePos canvas = do
     (ix, iy) <- mouseClientXY
     liftIO $ do
-        cx <- js_getBoundingClientLeft (unElement canvas)
-        cy <- js_getBoundingClientTop (unElement canvas)
-        return (fromIntegral (ix - cx - 250) / 25, fromIntegral (cy - iy + 250) / 25)
+        Just rect <- getBoundingClientRect canvas
+        cx <- ClientRect.getLeft rect
+        cy <- ClientRect.getTop rect
+        return (fromIntegral (ix - round cx - 250) / 25,
+                fromIntegral (round cy - iy + 250) / 25)
 
 fromButtonNum :: Word -> Maybe MouseButton
 fromButtonNum 0 = Just LeftButton
@@ -308,7 +312,7 @@ display :: Picture -> IO ()
 display pic = do
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    ctx <- setupScreenContext $ Canvas.Canvas $ unElement canvas
+    ctx <- setupScreenContext canvas
     drawFrame ctx pic
     Canvas.restore ctx
 
@@ -367,8 +371,8 @@ run startActivity = do
     Just canvas <- getElementById doc ("screen" :: JSString)
     offscreenCanvas <- Canvas.create 500 500
 
-    screen <- Canvas.getContext (Canvas.Canvas (unElement canvas))
-    buffer <- setupScreenContext offscreenCanvas
+    screen <- Canvas.getContext (canvasFromElement canvas)
+    buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
 
     currentActivity <- newMVar startActivity
     setupEvents currentActivity canvas
@@ -376,7 +380,7 @@ run startActivity = do
     let go t0 a0 = do
             drawFrame buffer (activityDraw a0)
             Canvas.clearRect 0 0 500 500 screen
-            js_canvasDrawImage screen offscreenCanvas 0 0
+            js_canvasDrawImage screen (elementFromCanvas offscreenCanvas) 0 0 500 500
             t1 <- waitForAnimationFrame
             a1 <- passTime ((t1 - t0) / 1000) currentActivity
             go t1 a1

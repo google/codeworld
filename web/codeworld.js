@@ -72,6 +72,7 @@ function init() {
         }],
         extraKeys: {
             "Ctrl-Space": "autocomplete",
+            "Shift-Space": "autocomplete",
             "Tab": "indentMore",
             "Shift-Tab": "indentLess",
             "Ctrl-Enter": compile

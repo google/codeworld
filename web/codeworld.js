@@ -536,7 +536,7 @@ function share() {
     if (runner.contentWindow.location.href == 'about:blank') {
         sweetAlert('Oops!', 'You must run your program before sharing it.', 'error');
     } else {
-        var url = runner.contentWindow.location.href;
+        var url = window.location.href;
 
         // Strip trailing equal-signs, since some social sites mangle them.
         url = url.replace(/=*$/, '');

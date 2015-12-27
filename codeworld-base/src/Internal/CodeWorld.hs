@@ -62,11 +62,9 @@ import           GHCJS.DOM.MouseEvent
 import           GHCJS.DOM.Types (Element, unElement)
 import           GHCJS.Foreign
 import           GHCJS.Types
+import           JavaScript.Web.AnimationFrame
 import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
-
-foreign import javascript interruptible "window.requestAnimationFrame($c);"
-    js_waitAnimationFrame :: IO Double
 
 foreign import javascript unsafe "$1['getBoundingClientRect']()['left']"
     js_getBoundingClientLeft :: JSVal -> IO Int
@@ -358,7 +356,7 @@ setupEvents currentActivity canvas = do
             return (activityEvent activity event)
     return ()
 
-passTime :: NominalDiffTime -> MVar Activity -> IO Activity
+passTime :: Double -> MVar Activity -> IO Activity
 passTime dt activity = modifyMVar activity $ \a0 -> do
     let a1 = activityStep a0 (realToFrac (min dt 0.25))
     return (a1, a1)
@@ -379,12 +377,11 @@ run startActivity = do
             drawFrame buffer (activityDraw a0)
             Canvas.clearRect 0 0 500 500 screen
             js_canvasDrawImage screen offscreenCanvas 0 0
-            js_waitAnimationFrame
-            t1 <- getCurrentTime
-            a1 <- passTime (diffUTCTime t1 t0) currentActivity
+            t1 <- waitForAnimationFrame
+            a1 <- passTime ((t1 - t0) / 1000) currentActivity
             go t1 a1
 
-    t0 <- getCurrentTime
+    t0 <- waitForAnimationFrame
     go t0 startActivity `catch` reportError
 
 type Program = IO ()

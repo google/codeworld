@@ -165,7 +165,11 @@ function init() {
         if (hash.slice(-2) == '==') {
             hash = hash.slice(0, -2);
         }
-        loadFile('loadSource?hash=' + hash);
+        sendHttp('GET', 'loadSource?hash=' + hash, null, function(request) {
+            if (request.status == 200) {
+                setCode(request.responseText, null, null, true);
+            }
+        });
     } else {
         setCode('');
     }
@@ -456,7 +460,7 @@ function isEditorClean() {
     else return doc.isClean(window.savedGeneration);
 }
 
-function setCode(code, history, name) {
+function setCode(code, history, name, autostart) {
     openProjectName = name;
 
     var doc = codeworldEditor.getDoc();
@@ -470,15 +474,12 @@ function setCode(code, history, name) {
     }
 
     codeworldEditor.focus();
-    stop();
-}
 
-function loadFile(name) {
-    sendHttp('GET', name, null, function(request) {
-        if (request.status == 200) {
-            setCode(request.responseText);
-        }
-    });
+    if (autostart) {
+        compile();
+    } else {
+        stop();
+    }
 }
 
 function warnIfUnsaved(action) {

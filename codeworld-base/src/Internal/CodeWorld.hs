@@ -209,10 +209,13 @@ drawFrame ctx pic = do
 
 setupScreenContext :: Element -> IO Canvas.Context
 setupScreenContext canvas = do
+    Just rect <- getBoundingClientRect canvas
+    cw <- ClientRect.getWidth rect
+    ch <- ClientRect.getHeight rect
     ctx <- Canvas.getContext (canvasFromElement canvas)
     Canvas.save ctx
-    Canvas.translate 250 250 ctx
-    Canvas.scale 1 (-1) ctx
+    Canvas.translate (realToFrac cw / 2) (realToFrac ch / 2) ctx
+    Canvas.scale (realToFrac cw / 500) (- realToFrac ch / 500) ctx
     Canvas.textAlign Canvas.Left ctx
     Canvas.textBaseline Canvas.Alphabetic ctx
     Canvas.lineWidth 0 ctx

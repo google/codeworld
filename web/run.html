@@ -4,12 +4,17 @@
     <title>CodeWorld</title>
     <style type="text/css">
       * { margin: 0; overflow: hidden }
-      #screen { cursor: default }
+      #screen {
+          cursor: default;
+          width: 100vw;
+          height: 100vw;
+          max-height: 100vh;
+          max-width: 100vh;
+      }
     </style>
   </head>
   <body style="text-align: center">
-    <canvas id="screen" width="500" height="500"></canvas>
-    <div id="linker" style="align: center"></div>
+    <canvas id="screen"></canvas>
     <img id="cwlogo" style="display: none" src="codeworld.png" width=900 height=200>
   </body>
   <script type="text/javascript">
@@ -45,15 +50,13 @@
         script.setAttribute('src', 'runJS?hash=' + hash);
 
         script.onload = function() {
+          var screen = document.getElementById('screen');
+          screen.setAttribute('width', screen.getBoundingClientRect().width);
+          screen.setAttribute('height', screen.getBoundingClientRect().height);
           h$main(h$mainZCMainzimain);
         }
 
         document.head.appendChild(script);
-
-        var link = document.createElement('a');
-        link.setAttribute('href', '/env.html#' + hash);
-        link.textContent = 'source';
-        document.getElementById('linker').appendChild(link);
 
         break;
       }

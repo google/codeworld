@@ -303,6 +303,15 @@ trace (x, msg) = unsafePerformIO $ do
     return x
 
 --------------------------------------------------------------------------------
+-- Event handling to keep the canvas resolution in sync with its physical size.
+
+setCanvasSize :: Element -> IO ()
+setCanvasSize canvas = do
+    Just rect <- getBoundingClientRect canvas
+    setAttribute canvas ("width" :: JSString) =<< (show <$> ClientRect.getWidth rect)
+    setAttribute canvas ("height" :: JSString) =<< (show <$> ClientRect.getHeight rect)
+
+--------------------------------------------------------------------------------
 -- Runners for different kinds of activities.
 
 data Activity = Activity {
@@ -313,15 +322,23 @@ data Activity = Activity {
 
 display :: Picture -> IO ()
 display pic = do
+    Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    ctx <- setupScreenContext canvas
-    drawFrame ctx pic
-    Canvas.restore ctx
+    on window Window.resize $ liftIO (draw canvas)
+    draw canvas
+  where
+    draw canvas = do
+        setCanvasSize canvas
+        ctx <- setupScreenContext canvas
+        drawFrame ctx pic
+        Canvas.restore ctx
 
 setupEvents :: MVar Activity -> Element -> IO ()
 setupEvents currentActivity canvas = do
     Just window <- currentWindow
+    on window Window.resize $ do
+        liftIO $ setCanvasSize canvas
     on window Window.keyDown $ do
         code <- uiKeyCode
         let keyName = keyCodeToText code
@@ -372,6 +389,7 @@ run :: Activity -> IO ()
 run startActivity = do
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
+    setCanvasSize canvas
     offscreenCanvas <- Canvas.create 500 500
 
     screen <- Canvas.getContext (canvasFromElement canvas)
@@ -425,6 +443,7 @@ interactionOf (initial, step, event, draw) = go `catch` reportError
             n  <- randomRIO (0,1)
             ns <- unsafeInterleaveIO randoms
             return (fromDouble n : ns)
+
 #else
 
 trace :: (a, Text) -> a

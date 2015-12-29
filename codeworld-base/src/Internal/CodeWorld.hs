@@ -207,9 +207,8 @@ drawFrame ctx pic = do
     Canvas.clearRect (-250) (-250) 500 500 ctx
     drawPicture ctx initialDS pic
 
-setupScreenContext :: Element -> IO Canvas.Context
-setupScreenContext canvas = do
-    Just rect <- getBoundingClientRect canvas
+setupScreenContext :: Element -> ClientRect.ClientRect -> IO Canvas.Context
+setupScreenContext canvas rect = do
     cw <- ClientRect.getWidth rect
     ch <- ClientRect.getHeight rect
     ctx <- Canvas.getContext (canvasFromElement canvas)
@@ -334,7 +333,8 @@ display pic = do
   where
     draw canvas = do
         setCanvasSize canvas canvas
-        ctx <- setupScreenContext canvas
+        Just rect <- getBoundingClientRect canvas
+        ctx <- setupScreenContext canvas rect
         drawFrame ctx pic
         Canvas.restore ctx
 
@@ -357,7 +357,8 @@ run startActivity = do
     screen <- Canvas.getContext (canvasFromElement canvas)
 
     let go t0 a0 = do
-            buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
+            Just rect <- getBoundingClientRect canvas
+            buffer <- setupScreenContext (elementFromCanvas offscreenCanvas) rect
             drawFrame buffer (activityDraw a0)
             Canvas.restore buffer
 

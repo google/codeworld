@@ -288,8 +288,10 @@ getMousePos canvas = do
         Just rect <- getBoundingClientRect canvas
         cx <- ClientRect.getLeft rect
         cy <- ClientRect.getTop rect
-        return (fromIntegral (ix - round cx - 250) / 25,
-                fromIntegral (round cy - iy + 250) / 25)
+        cw <- ClientRect.getWidth rect
+        ch <- ClientRect.getHeight rect
+        return (20 * fromIntegral (ix - round cx) / realToFrac cw - 10,
+                20 * fromIntegral (round cy - iy) / realToFrac cw + 10)
 
 fromButtonNum :: Word -> Maybe MouseButton
 fromButtonNum 0 = Just LeftButton
@@ -305,11 +307,13 @@ trace (x, msg) = unsafePerformIO $ do
 --------------------------------------------------------------------------------
 -- Event handling to keep the canvas resolution in sync with its physical size.
 
-setCanvasSize :: Element -> IO ()
-setCanvasSize canvas = do
+setCanvasSize :: Element -> Element -> IO ()
+setCanvasSize target canvas = do
     Just rect <- getBoundingClientRect canvas
-    setAttribute canvas ("width" :: JSString) =<< (show <$> ClientRect.getWidth rect)
-    setAttribute canvas ("height" :: JSString) =<< (show <$> ClientRect.getHeight rect)
+    cx <- ClientRect.getWidth rect
+    cy <- ClientRect.getHeight rect
+    setAttribute target ("width" :: JSString) (show (round cx))
+    setAttribute target ("height" :: JSString) (show (round cy))
 
 --------------------------------------------------------------------------------
 -- Runners for different kinds of activities.
@@ -329,30 +333,63 @@ display pic = do
     draw canvas
   where
     draw canvas = do
-        setCanvasSize canvas
+        setCanvasSize canvas canvas
         ctx <- setupScreenContext canvas
         drawFrame ctx pic
         Canvas.restore ctx
 
-setupEvents :: MVar Activity -> Element -> IO ()
-setupEvents currentActivity canvas = do
+run :: Activity -> IO ()
+run startActivity = do
     Just window <- currentWindow
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
+    offscreenCanvas <- Canvas.create 500 500
+
+    setCanvasSize canvas canvas
+    setCanvasSize (elementFromCanvas offscreenCanvas) canvas
     on window Window.resize $ do
-        liftIO $ setCanvasSize canvas
+        liftIO $ setCanvasSize canvas canvas
+        liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+
+    currentActivity <- newMVar startActivity
+    setupEvents currentActivity canvas (elementFromCanvas offscreenCanvas)
+
+    screen <- Canvas.getContext (canvasFromElement canvas)
+
+    let go t0 a0 = do
+            buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
+            drawFrame buffer (activityDraw a0)
+            Canvas.restore buffer
+
+            t1 <- waitForAnimationFrame
+
+            Just rect <- getBoundingClientRect canvas
+            cw <- ClientRect.getWidth rect
+            ch <- ClientRect.getHeight rect
+
+            Canvas.clearRect 0 0 (realToFrac cw) (realToFrac ch) screen
+            js_canvasDrawImage screen (elementFromCanvas offscreenCanvas) 0 0 (round cw) (round ch)
+            a1 <- passTime ((t1 - t0) / 1000) currentActivity
+            go t1 a1
+
+    t0 <- waitForAnimationFrame
+    go t0 startActivity `catch` reportError
+
+setupEvents :: MVar Activity -> Element -> Element -> IO ()
+setupEvents currentActivity canvas offscreen = do
+    Just window <- currentWindow
     on window Window.keyDown $ do
         code <- uiKeyCode
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
-            liftIO $ modifyMVar_ currentActivity $ \ activity -> do
-                return (activityEvent activity (KeyPress keyName))
+            liftIO $ handleEvent (KeyPress keyName) currentActivity
             preventDefault
             stopPropagation
     on window Window.keyUp $ do
         code <- uiKeyCode
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
-            liftIO $ modifyMVar_ currentActivity $ \ activity -> do
-                return (activityEvent activity (KeyRelease keyName))
+            liftIO $ handleEvent (KeyRelease keyName) currentActivity
             preventDefault
             stopPropagation
     on window Window.mouseDown $ do
@@ -361,23 +398,17 @@ setupEvents currentActivity canvas = do
             Nothing  -> return ()
             Just btn -> do
                 pos <- getMousePos canvas
-                let event = MousePress (btn, pos)
-                liftIO $ modifyMVar_ currentActivity $ \ activity -> do
-                    return (activityEvent activity event)
+                liftIO $ handleEvent (MousePress (btn, pos)) currentActivity
     on window Window.mouseUp $ do
         button <- mouseButton
         case fromButtonNum button of
             Nothing  -> return ()
             Just btn -> do
                 pos <- getMousePos canvas
-                let event = MouseRelease (btn, pos)
-                liftIO $ modifyMVar_ currentActivity $ \ activity -> do
-                    return (activityEvent activity event)
+                liftIO $ handleEvent (MouseRelease (btn, pos)) currentActivity
     on window Window.mouseMove $ do
         pos <- getMousePos canvas
-        let event = MouseMovement pos
-        liftIO $ modifyMVar_ currentActivity $ \ activity -> do
-            return (activityEvent activity event)
+        liftIO $ handleEvent (MouseMovement pos) currentActivity
     return ()
 
 passTime :: Double -> MVar Activity -> IO Activity
@@ -385,29 +416,9 @@ passTime dt activity = modifyMVar activity $ \a0 -> do
     let a1 = activityStep a0 (realToFrac (min dt 0.25))
     return (a1, a1)
 
-run :: Activity -> IO ()
-run startActivity = do
-    Just doc <- currentDocument
-    Just canvas <- getElementById doc ("screen" :: JSString)
-    setCanvasSize canvas
-    offscreenCanvas <- Canvas.create 500 500
-
-    screen <- Canvas.getContext (canvasFromElement canvas)
-    buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
-
-    currentActivity <- newMVar startActivity
-    setupEvents currentActivity canvas
-
-    let go t0 a0 = do
-            drawFrame buffer (activityDraw a0)
-            Canvas.clearRect 0 0 500 500 screen
-            js_canvasDrawImage screen (elementFromCanvas offscreenCanvas) 0 0 500 500
-            t1 <- waitForAnimationFrame
-            a1 <- passTime ((t1 - t0) / 1000) currentActivity
-            go t1 a1
-
-    t0 <- waitForAnimationFrame
-    go t0 startActivity `catch` reportError
+handleEvent :: Event -> MVar Activity -> IO ()
+handleEvent event activity =
+    modifyMVar_ activity $ \a0 -> return (activityEvent a0 event)
 
 type Program = IO ()
 

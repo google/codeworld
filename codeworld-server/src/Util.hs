@@ -33,6 +33,8 @@ import           System.Directory
 import           System.IO.Error
 import           System.FilePath
 
+data BuildMode = Standard | HaskellCompatible deriving Eq
+
 autocompletePath :: FilePath
 autocompletePath = "web/codeworld-base.txt"
 
@@ -57,11 +59,13 @@ targetFile programId = sourceBase programId <.> "jsexe" </> "out.js"
 resultFile :: Text -> FilePath
 resultFile programId = sourceBase programId <.> "err.txt"
 
-sourceToProgramId :: ByteString -> Text
-sourceToProgramId = ("P" <>) . T.decodeUtf8 . getHash
+sourceToProgramId :: BuildMode -> ByteString -> Text
+sourceToProgramId Standard          = ("P" <>) . T.decodeUtf8 . getHash
+sourceToProgramId HaskellCompatible = ("Q" <>) . T.decodeUtf8 . getHash
 
-nameToProjectId :: Text -> Text
-nameToProjectId = ("S" <>) . T.decodeUtf8 . getHash . T.encodeUtf8
+nameToProjectId :: BuildMode -> Text -> Text
+nameToProjectId Standard          = ("S" <>) . T.decodeUtf8 . getHash . T.encodeUtf8
+nameToProjectId HaskellCompatible = ("T" <>) . T.decodeUtf8 . getHash . T.encodeUtf8
 
 ensureProgramDir :: Text -> IO ()
 ensureProgramDir programId = createDirectoryIfMissing True dir

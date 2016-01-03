@@ -27,7 +27,6 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Char8 as BC
 import           Data.Maybe
-import           Data.Monoid
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Encoding as T
@@ -91,6 +90,11 @@ processBody = do
     handleMultipart codeworldUploadPolicy (const $ return ())
     return ()
 
+getBuildMode :: Snap BuildMode
+getBuildMode = getParam "mode" >>= \ case
+    Just "haskell" -> return HaskellCompatible
+    _              -> return Standard
+
 site :: ClientId -> Snap ()
 site clientId =
     route [
@@ -114,35 +118,39 @@ dirConfig = defaultDirectoryConfig { preServeHook = disableCache }
 
 loadProjectHandler :: ClientId -> Snap ()
 loadProjectHandler clientId = do
+    mode      <- getBuildMode
     user      <- getUser clientId
     liftIO $ ensureUserProjectDir (userId user)
     Just name <- getParam "name"
     let projectName = T.decodeUtf8 name
-    let projectId = nameToProjectId projectName
+    let projectId = nameToProjectId mode projectName
     let file = projectRootDir </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
     serveFile file
 
 saveProjectHandler :: ClientId -> Snap ()
 saveProjectHandler clientId = do
+    mode <- getBuildMode
     user <- getUser clientId
     liftIO $ ensureUserProjectDir (userId user)
     Just project <- decode . LB.fromStrict . fromJust <$> getParam "project"
-    let projectId = nameToProjectId (projectName project)
+    let projectId = nameToProjectId mode (projectName project)
     let file = projectRootDir </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
     liftIO $ LB.writeFile file $ encode project
 
 deleteProjectHandler :: ClientId -> Snap ()
 deleteProjectHandler clientId = do
+    mode <- getBuildMode
     user      <- getUser clientId
     liftIO $ ensureUserProjectDir (userId user)
     Just name <- getParam "name"
     let projectName = T.decodeUtf8 name
-    let projectId = nameToProjectId projectName
+    let projectId = nameToProjectId mode projectName
     let file = projectRootDir </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
     liftIO $ removeFile file
 
 listProjectsHandler :: ClientId -> Snap ()
 listProjectsHandler clientId = do
+    mode <- getBuildMode
     user  <- getUser clientId
     liftIO $ ensureUserProjectDir (userId user)
     projectFiles <- liftIO $ getDirectoryContents $ projectRootDir </> T.unpack (userId user)
@@ -154,12 +162,13 @@ listProjectsHandler clientId = do
 
 compileHandler :: Snap ()
 compileHandler = do
+    mode <- getBuildMode
     Just source <- getParam "source"
-    let programId = sourceToProgramId source
+    let programId = sourceToProgramId mode source
     success <- liftIO $ do
         ensureProgramDir programId
         B.writeFile (buildRootDir </> sourceFile programId) source
-        compileIfNeeded programId
+        compileIfNeeded mode programId
     when (not success) $ modifyResponse $ setResponseCode 500
     modifyResponse $ setContentType "text/plain"
     writeBS (T.encodeUtf8 programId)
@@ -173,16 +182,18 @@ loadSourceHandler = do
 
 runHandler :: Snap ()
 runHandler = do
+    mode <- getBuildMode
     Just hash <- getParam "hash"
     let programId = T.decodeUtf8 hash
-    liftIO $ compileIfNeeded programId
+    liftIO $ compileIfNeeded mode programId
     modifyResponse $ setContentType "text/javascript"
     serveFile (buildRootDir </> targetFile programId)
 
 runMessageHandler :: Snap ()
 runMessageHandler = do
+    mode <- getBuildMode
     Just hash <- getParam "hash"
     let programId = T.decodeUtf8 hash
-    liftIO $ compileIfNeeded programId
+    liftIO $ compileIfNeeded mode programId
     modifyResponse $ setContentType "text/plain"
     serveFile (buildRootDir </> resultFile programId)

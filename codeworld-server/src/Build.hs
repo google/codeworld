@@ -62,7 +62,7 @@ generateBaseBundle = do
 
 compileBase :: IO ()
 compileBase = do
-    let ghcjsArgs = commonGHCJSArgs ++ [
+    let ghcjsArgs = standardBuildArgs ++ [
             "-fno-warn-unused-imports",
             "-generate-base", "LinkBase",
             "-o", "base",
@@ -71,25 +71,28 @@ compileBase = do
     BC.putStrLn . fromJust =<< runCompiler (maxBound :: Int) ghcjsArgs
     return ()
 
-compileIfNeeded :: Text -> IO Bool
-compileIfNeeded programId = do
+compileIfNeeded :: BuildMode -> Text -> IO Bool
+compileIfNeeded mode programId = do
     hasResult <- doesFileExist (buildRootDir </> resultFile programId)
     hasTarget <- doesFileExist (buildRootDir </> targetFile programId)
-    if hasResult then return hasTarget else compileExistingSource programId
+    if hasResult then return hasTarget else compileExistingSource mode programId
 
-compileExistingSource :: Text -> IO Bool
-compileExistingSource programId = checkDangerousSource programId >>= \case
+compileExistingSource :: BuildMode -> Text -> IO Bool
+compileExistingSource mode programId = checkDangerousSource programId >>= \case
     True -> do
         B.writeFile (buildRootDir </> resultFile programId) $
             "Sorry, but your program refers to forbidden language features."
         return False
     False -> do
-        let ghcjsArgs = commonGHCJSArgs ++ [
-                "-no-rts",
-                "-no-stats",
-                "-use-base", "base.jsexe/out.base.symbs",
-                sourceFile programId
-              ]
+        let baseArgs = case mode of
+                Standard          -> standardBuildArgs
+                HaskellCompatible -> haskellCompatibleBuildArgs
+            ghcjsArgs = baseArgs ++ [
+                  "-no-rts",
+                  "-no-stats",
+                  "-use-base", "base.jsexe/out.base.symbs",
+                  sourceFile programId
+                ]
         runCompiler userCompileMicros ghcjsArgs >>= \case
             Nothing -> do
                 removeFileIfExists (buildRootDir </> resultFile programId)
@@ -106,6 +109,7 @@ checkDangerousSource :: Text -> IO Bool
 checkDangerousSource programId = do
     contents <- B.readFile (buildRootDir </> sourceFile programId)
     return $ matches contents ".*TemplateHaskell.*" ||
+             matches contents ".*QuasiQuotes.*" ||
              matches contents ".*glasgow-exts.*"
   where
     matches :: ByteString -> ByteString -> Bool
@@ -132,8 +136,8 @@ runCompiler micros args = do
 
     return result
 
-commonGHCJSArgs :: [String]
-commonGHCJSArgs = [
+standardBuildArgs :: [String]
+standardBuildArgs = [
     "-Wall",
     "-O2",
     "-fno-warn-deprecated-flags",
@@ -167,4 +171,11 @@ commonGHCJSArgs = [
     "-XTypeOperators",
     "-XViewPatterns",
     "-XImplicitPrelude"  -- MUST come after RebindableSyntax.
+    ]
+
+haskellCompatibleBuildArgs :: [String]
+haskellCompatibleBuildArgs = [
+    "-Wall",
+    "-O2",
+    "-package", "codeworld-api"
     ]

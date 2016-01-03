@@ -1,0 +1,34 @@
+Name:                codeworld-api
+Version:             0.1.0.0
+Synopsis:            Graphics library for CodeWorld
+License-file:        LICENSE
+Author:              Chris Smith
+Maintainer:          cdsmith@gmail.com
+Copyright:           (c) 2015, The CodeWorld Authors
+Build-type:          Simple
+Cabal-version:       >=1.8
+
+Description:
+  This module provides the drawing code for CodeWorld.  It is heavily inspired by
+  Gloss, but modified for consistency and pedagogical reasons.
+
+Flag ghcjs
+    Description: Tell cabal we are using ghcjs (work around until hackage supports impl(ghcjs))
+    Default: True
+
+Library
+  Hs-source-dirs:      src
+  Exposed-modules:     CodeWorld
+  Other-modules:       CodeWorld.Color,
+                       CodeWorld.Picture,
+                       CodeWorld.Event,
+                       CodeWorld.Driver
+  Build-depends:       base,
+                       ghcjs-base,
+                       ghcjs-dom,
+                       mtl,
+                       random,
+                       text,
+                       time
+  Exposed:             True
+  Ghc-options:         -O2

@@ -153,10 +153,20 @@ listProjectsHandler clientId = do
     mode <- getBuildMode
     user  <- getUser clientId
     liftIO $ ensureUserProjectDir (userId user)
-    projectFiles <- liftIO $ getDirectoryContents $ projectRootDir </> T.unpack (userId user)
+    let projectDir = projectRootDir </> T.unpack (userId user)
+    projectFiles <- liftIO $ getDirectoryContents projectDir
     projects <- liftIO $ fmap catMaybes $ forM projectFiles $ \f -> do
         let file = projectRootDir </> T.unpack (userId user) </> f
-        if takeExtension file == ".cw" then decode <$> LB.readFile file else return Nothing
+        if takeExtension file == ".cw"
+            then do
+                decode <$> LB.readFile file >>= \ case
+                    Nothing -> return Nothing
+                    Just project -> do
+                        let projId = T.unpack (nameToProjectId mode (projectName project))
+                        if file == projectDir </> projId <.> "cw"
+                            then return (Just project)
+                            else return Nothing
+            else return Nothing
     modifyResponse $ setContentType "application/json"
     writeLBS (encode (map projectName projects))
 

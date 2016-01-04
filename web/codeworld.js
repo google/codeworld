@@ -49,6 +49,12 @@ function init() {
     showingResult = false;
     allProjectNames = [];
 
+    if (window.location.pathname.endsWith('/haskell')) {
+        window.buildMode = 'haskell'
+    } else {
+        window.buildMode = 'codeworld';
+    }
+
     var editor = document.getElementById('editor');
 
     codeworldKeywords = {};
@@ -309,7 +315,7 @@ function init() {
 }
 
 function setMode(force) {
-    if (usingHaskellPrelude()) {
+    if (usingHaskellPrelude() || window.buildMode == 'haskell') {
         if (force || window.codeworldEditor.getMode().name == 'codeworld') {
             window.codeworldEditor.setOption('mode', 'haskell');
         }
@@ -455,6 +461,7 @@ function discoverProjects() {
 
     var data = new FormData();
     data.append('id_token', gapi.auth.getToken().id_token);
+    data.append('mode', window.buildMode);
 
     sendHttp('POST', 'listProjects', data, function(request) {
         if (request.status != 200) {
@@ -534,6 +541,7 @@ function loadProject(name) {
         var data = new FormData();
         data.append('id_token', gapi.auth.getToken().id_token);
         data.append('name', name);
+        data.append('mode', window.buildMode);
 
         sendHttp('POST', 'loadProject', data, function(request) {
             if (request.status == 200) {
@@ -604,9 +612,9 @@ function addToMessage(msg) {
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/(user\/)?(P..\/)?P[A-Za-z0-9_=\-]*\.hs:(\d+):((\d+)(-\d+)?)/g,
+        .replace(/(user\/)?([PQ]..\/)?[PQ][A-Za-z0-9_=\-]*\.hs:(\d+):((\d+)(-\d+)?)/g,
             '<a href="#" onclick="goto($3, $5);">Line $3, Column $4</a>')
-        .replace(/(user\/)?(P..\/)?P[A-Za-z0-9_=\-]*\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
+        .replace(/(user\/)?([PQ]..\/)?[PQ][A-Za-z0-9_=\-]*\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
             '<a href="#" onclick="goto($3, $4);">Line $3-$5, Column $4-$6</a>');
 
     var message = document.getElementById('message');
@@ -627,7 +635,8 @@ function run(hash, msg, error) {
 
     var runner = document.getElementById('runner');
     if (hash && !error) {
-        runner.contentWindow.location.replace('run.html?hash=' + hash);
+        var loc = 'run.html?hash=' + hash + '&mode=' + window.buildMode;
+        runner.contentWindow.location.replace(loc);
         document.getElementById('runner').style.display = '';
         document.getElementById('runner').contentWindow.focus();
         window.programRunning = true;
@@ -667,12 +676,17 @@ function compile() {
     var src = window.codeworldEditor.getValue();
     var data = new FormData();
     data.append('source', src);
+    data.append('mode', window.buildMode);
 
     sendHttp('POST', 'compile', data, function(request) {
         var hash = request.responseText;
         var success = request.status == 200;
 
-        sendHttp('GET', '/runMsg?hash=' + hash, null, function(request) {
+        var data = new FormData();
+        data.append('hash', hash);
+        data.append('mode', window.buildMode);
+
+        sendHttp('POST', 'runMsg', data, function(request) {
             var msg = '';
             if (request.status == 200) {
                 msg = request.responseText;
@@ -797,6 +811,7 @@ function saveProjectBase(projectName) {
         var data = new FormData();
         data.append('id_token', gapi.auth.getToken().id_token);
         data.append('project', JSON.stringify(project));
+        data.append('mode', window.buildMode);
 
         sendHttp('POST', 'saveProject', data, function(request) {
             if (request.status != 200) {
@@ -843,6 +858,7 @@ function deleteProject() {
         var data = new FormData();
         data.append('id_token', gapi.auth.getToken().id_token);
         data.append('name', window.openProjectName);
+        data.append('mode', window.buildMode);
 
         sendHttp('POST', 'deleteProject', data, function(request) {
             if (request.status == 200) {

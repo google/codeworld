@@ -292,8 +292,8 @@ fromButtonNum 1 = Just MiddleButton
 fromButtonNum 2 = Just RightButton
 fromButtonNum _ = Nothing
 
-trace :: (a, Text) -> a
-trace (x, msg) = unsafePerformIO $ do
+trace :: Text -> a -> a
+trace msg x = unsafePerformIO $ do
     js_reportRuntimeError False (textToJSString msg)
     return x
 
@@ -415,33 +415,31 @@ handleEvent :: Event -> MVar Activity -> IO ()
 handleEvent event activity =
     modifyMVar_ activity $ \a0 -> return (activityEvent a0 event)
 
-type Program = IO ()
-
 reportError :: SomeException -> IO ()
 reportError e = js_reportRuntimeError True (textToJSString (pack (show e)))
 
-pictureOf :: Picture -> Program
+pictureOf :: Picture -> IO ()
 pictureOf pic = display pic `catch` reportError
 
-animationOf :: (Double -> Picture) -> Program
-animationOf f = simulationOf (const 0, uncurry (+), f)
+animationOf :: (Double -> Picture) -> IO ()
+animationOf f = simulationOf (const 0) (+) f
 
-simulationOf :: ([Double] -> world,
-                 (world, Double) -> world,
-                 world -> Picture)
-             -> Program
-simulationOf (initial, step, draw) = interactionOf (initial, step, fst, draw)
+simulationOf :: ([Double] -> world)
+             -> (Double -> world -> world)
+             -> (world -> Picture)
+             -> IO ()
+simulationOf initial step draw = interactionOf initial step (const id) draw
 
-interactionOf :: ([Double] -> world,
-                  (world, Double) -> world,
-                  (world, Event) -> world,
-                  world -> Picture)
-              -> Program
-interactionOf (initial, step, event, draw) = go `catch` reportError
+interactionOf :: ([Double] -> world)
+              -> (Double -> world -> world)
+              -> (Event -> world -> world)
+              -> (world -> Picture)
+              -> IO ()
+interactionOf initial step event draw = go `catch` reportError
   where go = run . activity . initial =<< randoms
         activity x = Activity {
-                        activityStep    = (\dt -> activity (step (x, dt))),
-                        activityEvent   = (\ev -> activity (event (x, ev))),
+                        activityStep    = (\dt -> activity (step dt x)),
+                        activityEvent   = (\ev -> activity (event ev x)),
                         activityDraw    = draw x
                     }
         randoms :: IO [Double]
@@ -452,23 +450,26 @@ interactionOf (initial, step, event, draw) = go `catch` reportError
 
 #else
 
-trace :: (a, Text) -> a
+trace :: Text -> a -> a
 trace = undefined
 
-type Program = IO ()
-
-pictureOf :: Picture -> Program
+pictureOf :: Picture -> IO ()
 pictureOf _ = putStrLn "<<picture>>"
 
-animationOf :: (Double -> Picture) -> Program
+animationOf :: (Double -> Picture) -> IO ()
 animationOf _ = putStrLn "<<animation>>"
 
-simulationOf :: ([Double] -> a, (a, Double) -> a, a -> Picture)
-             -> Program
+simulationOf :: ([Double] -> world)
+             -> (Double -> world -> world)
+             -> (world -> Picture)
+             -> IO ()
 simulationOf (_, _, _) = putStrLn "<<simulation>>"
 
-interactionOf :: ([Double] -> a, (a, Double) -> a, (a, Event) -> a, a -> Picture)
-              -> Program
+interactionOf :: ([Double] -> world)
+              -> (Double -> world -> world)
+              -> (Event -> world -> world)
+              -> (world -> Picture)
+              -> IO ()
 interactionOf (_, _, _, _) = putStrLn "<<interaction>>"
 
 #endif

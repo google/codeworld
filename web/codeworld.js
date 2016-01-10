@@ -97,9 +97,6 @@ function init() {
 
     window.codeworldEditor.on('changes', window.updateUI);
 
-    // Switch to the correct mode (Haskell vs CodeWorld) every second.
-    setInterval(function() { setMode(false); }, 1000);
-
     function createHint(line, wordStart, wordEnd) {
         var word = line.slice(wordStart, wordEnd);
 
@@ -315,7 +312,7 @@ function init() {
 }
 
 function setMode(force) {
-    if (usingHaskellPrelude() || window.buildMode == 'haskell') {
+    if (window.buildMode == 'haskell') {
         if (force || window.codeworldEditor.getMode().name == 'codeworld') {
             window.codeworldEditor.setOption('mode', 'haskell');
         }

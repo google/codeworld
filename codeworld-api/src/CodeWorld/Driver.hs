@@ -421,31 +421,26 @@ pictureOf :: Picture -> IO ()
 pictureOf pic = display pic `catch` reportError
 
 animationOf :: (Double -> Picture) -> IO ()
-animationOf f = simulationOf (const 0) (+) f
+animationOf f = simulationOf 0 (+) f
 
-simulationOf :: ([Double] -> world)
+simulationOf :: world
              -> (Double -> world -> world)
              -> (world -> Picture)
              -> IO ()
 simulationOf initial step draw = interactionOf initial step (const id) draw
 
-interactionOf :: ([Double] -> world)
+interactionOf :: world
               -> (Double -> world -> world)
               -> (Event -> world -> world)
               -> (world -> Picture)
               -> IO ()
 interactionOf initial step event draw = go `catch` reportError
-  where go = run . activity . initial =<< randoms
+  where go = run (activity initial)
         activity x = Activity {
                         activityStep    = (\dt -> activity (step dt x)),
                         activityEvent   = (\ev -> activity (event ev x)),
                         activityDraw    = draw x
                     }
-        randoms :: IO [Double]
-        randoms = do
-            n  <- randomRIO (0,1)
-            ns <- unsafeInterleaveIO randoms
-            return (n:ns)
 
 #else
 

@@ -18,12 +18,13 @@ source base.sh
 
 run .  cabal update
 
-# Install the codeworld-base package
+# Install the codeworld-base and codeworld-api packages
 
-run .  cabal_install --ghcjs ./codeworld-base
-run .  cabal_install --ghcjs ./codeworld-api
+run .  cabal_install --ghcjs ./codeworld-api ./codeworld-base
 run codeworld-base  cabal haddock --html
 run codeworld-base  cabal haddock --hoogle
+run codeworld-api   cabal haddock --html
+run codeworld-api   cabal haddock --hoogle
 
 # Build codeworld-server from this project.
 

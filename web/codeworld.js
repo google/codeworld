@@ -441,14 +441,14 @@ function toggleBrowser() {
     updateUI();
 }
 
-function toggleDoc(root) {
+function toggleDoc() {
     window.showingDoc = !window.showingDoc;
     updateUI();
 
     if (window.showingDoc) {
         stop();
         var loc = document.getElementById('doc').contentWindow.location;
-        loc.search = root;
+        loc.search = 'help/' + window.buildMode + '.md';
     }
 }
 

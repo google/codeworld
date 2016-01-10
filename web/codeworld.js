@@ -576,7 +576,7 @@ function stop() {
 }
 
 function addToMessage(msg) {
-    if (!usingHaskellPrelude()) {
+    if (window.buildMode == 'codeworld' && !usingHaskellPrelude()) {
         msg = msg
             .replace(/\u2018/g, '')
             .replace(/\u2019/g, '')

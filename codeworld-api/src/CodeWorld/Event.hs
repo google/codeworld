@@ -56,8 +56,8 @@ import Data.Text (Text)
 -}
 data Event = KeyPress !Text
            | KeyRelease !Text
-           | MousePress !(MouseButton, Point)
-           | MouseRelease !(MouseButton, Point)
+           | MousePress !MouseButton !Point
+           | MouseRelease !MouseButton Point
            | MouseMovement !Point
   deriving (Eq, Show)
 

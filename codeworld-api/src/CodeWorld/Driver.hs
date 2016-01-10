@@ -392,14 +392,14 @@ setupEvents currentActivity canvas offscreen = do
             Nothing  -> return ()
             Just btn -> do
                 pos <- getMousePos canvas
-                liftIO $ handleEvent (MousePress (btn, pos)) currentActivity
+                liftIO $ handleEvent (MousePress btn pos) currentActivity
     on window Window.mouseUp $ do
         button <- mouseButton
         case fromButtonNum button of
             Nothing  -> return ()
             Just btn -> do
                 pos <- getMousePos canvas
-                liftIO $ handleEvent (MouseRelease (btn, pos)) currentActivity
+                liftIO $ handleEvent (MouseRelease btn pos) currentActivity
     on window Window.mouseMove $ do
         pos <- getMousePos canvas
         liftIO $ handleEvent (MouseMovement pos) currentActivity

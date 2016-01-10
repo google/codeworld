@@ -95,11 +95,11 @@ scaleDS x y (a,b,c,d,e,f,hc) =
     (x*a, x*b, y*c, y*d, e, f, hc)
 
 rotateDS :: Double -> DrawState -> DrawState
-rotateDS r (a,b,c,d,e,f,hc) = let th = r * pi / 180 in
-    (a * cos th + c * sin th,
-     b * cos th + d * sin th,
-     c * cos th - a * sin th,
-     d * cos th - b * sin th,
+rotateDS r (a,b,c,d,e,f,hc) =
+    (a * cos r + c * sin r,
+     b * cos r + d * sin r,
+     c * cos r - a * sin r,
+     d * cos r - b * sin r,
      e, f, hc)
 
 setColorDS :: Color -> DrawState -> DrawState
@@ -181,8 +181,7 @@ drawPicture ctx ds (Line ps w closed) = do
     drawFigure ctx ds w $ followPath ctx ps closed
 drawPicture ctx ds (Arc b e r w) = do
     when (r > 0) $ drawFigure ctx ds w $ do
-        Canvas.arc 0 0 (25 * r) (b * pi / 180)
-                   (e * pi / 180) False ctx
+        Canvas.arc 0 0 (25 * r) b e False ctx
 drawPicture ctx ds (Text txt) = withDS ctx ds $ do
     Canvas.scale 1 (-1) ctx
     applyColor ctx ds

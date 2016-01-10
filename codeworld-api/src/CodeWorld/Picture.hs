@@ -106,16 +106,22 @@ thickCircle :: Double -> Double -> Picture
 thickCircle w = thickArc w 0 360
 
 -- | A thin arc, starting and ending at these angles, with this radius
+--
+-- Angles are in radians.
 arc :: Double -> Double -> Double -> Picture
 arc b e r = Arc b e r 0
 
 -- | A solid sector of a circle (i.e., a pie slice) starting and ending at these
 -- angles, with this radius
+--
+-- Angles are in radians.
 sector :: Double -> Double -> Double -> Picture
 sector b e r = Arc b e (r/2) r
 
 -- | A thick arc with this line width, starting and ending at these angles,
 -- with this radius.
+--
+-- Angles are in radians.
 thickArc :: Double -> Double -> Double -> Double -> Picture
 thickArc w b e r = Arc b e r w
 
@@ -143,7 +149,9 @@ scaled = Scale
 dilated :: Double -> Double -> Picture -> Picture
 dilated = Scale
 
--- | A picture rotated by this angle in radians.
+-- | A picture rotated by this angle.
+--
+-- Angles are in radians.
 rotated :: Double -> Picture -> Picture
 rotated = Rotate
 

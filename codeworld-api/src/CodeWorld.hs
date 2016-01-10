@@ -15,6 +15,48 @@
 -}
 
 module CodeWorld (
+    -- * Entry points
+    pictureOf,
+    animationOf,
+    simulationOf,
+    interactionOf,
+
+    -- * Pictures
+    Picture,
+    blank,
+    line,
+    thickLine,
+    polygon,
+    thickPolygon,
+    solidPolygon,
+    rectangle,
+    solidRectangle,
+    thickRectangle,
+    circle,
+    solidCircle,
+    thickCircle,
+    arc,
+    sector,
+    thickArc,
+    text,
+    colored,
+    coloured,
+    translated,
+    scaled,
+    dilated,
+    rotated,
+    pictures,
+    (&),
+    coordinatePlane,
+    codeWorldLogo,
+    Point,
+    Vector,
+    vectorSum,
+    vectorDifference,
+    scaledVector,
+    rotatedVector,
+    dotProduct,
+
     -- * Colors
     Color(..),
     Colour,
@@ -52,54 +94,12 @@ module CodeWorld (
     luminosity,
     fromHSL,
 
-    -- * Pictures
-    Point,
-    Vector,
-    vectorSum,
-    vectorDifference,
-    scaledVector,
-    rotatedVector,
-    dotProduct,
-    Picture,
-    blank,
-    line,
-    thickLine,
-    polygon,
-    thickPolygon,
-    solidPolygon,
-    rectangle,
-    solidRectangle,
-    thickRectangle,
-    circle,
-    solidCircle,
-    thickCircle,
-    arc,
-    sector,
-    thickArc,
-    text,
-    colored,
-    coloured,
-    translated,
-    scaled,
-    dilated,
-    rotated,
-    pictures,
-    (&),
-    coordinatePlane,
-    codeWorldLogo,
-
     -- * Events
     Event(..),
     MouseButton(..),
 
     -- * Debugging
-    trace,
-
-    -- * Entry points
-    pictureOf,
-    animationOf,
-    simulationOf,
-    interactionOf
+    trace
     ) where
 
 import CodeWorld.Color

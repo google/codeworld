@@ -213,6 +213,7 @@ Library
                        Internal.CodeWorld,
                        Internal.DeepEq
   Build-depends:       base,
+                       codeworld-api,
                        ghcjs-base,
                        ghcjs-dom,
                        mtl,

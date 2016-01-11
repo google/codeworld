@@ -25,26 +25,26 @@ black = RGBA 0 0 0 1
 
 -- Primary and secondary colors
 red, green, blue, cyan, magenta, yellow :: Color
-red        = fromHSL   0 0.75 0.5
-yellow     = fromHSL  60 0.75 0.5
-green      = fromHSL 120 0.75 0.5
-cyan       = fromHSL 180 0.75 0.5
-blue       = fromHSL 240 0.75 0.5
-magenta    = fromHSL 300 0.75 0.5
+red        = fromHSL (0/3 * pi) 0.75 0.5
+yellow     = fromHSL (1/3 * pi) 0.75 0.5
+green      = fromHSL (2/3 * pi) 0.75 0.5
+cyan       = fromHSL (3/3 * pi) 0.75 0.5
+blue       = fromHSL (4/3 * pi) 0.75 0.5
+magenta    = fromHSL (5/3 * pi) 0.75 0.5
 
 -- Tertiary colors
 orange, rose, chartreuse, aquamarine, violet, azure :: Color
-orange     = fromHSL  30 0.75 0.5
-chartreuse = fromHSL  90 0.75 0.5
-aquamarine = fromHSL 150 0.75 0.5
-azure      = fromHSL 210 0.75 0.5
-violet     = fromHSL 270 0.75 0.5
-rose       = fromHSL 330 0.75 0.5
+orange     = fromHSL ( 1/6 * pi) 0.75 0.5
+chartreuse = fromHSL ( 3/6 * pi) 0.75 0.5
+aquamarine = fromHSL ( 5/6 * pi) 0.75 0.5
+azure      = fromHSL ( 7/6 * pi) 0.75 0.5
+violet     = fromHSL ( 9/6 * pi) 0.75 0.5
+rose       = fromHSL (11/6 * pi) 0.75 0.5
 
 -- Other common colors and color names
-brown      = fromHSL  15 0.5  0.5
-purple     = fromHSL 280 0.75 0.5
-pink       = fromHSL 345 0.75 0.75
+brown      = fromHSL (1/6   * pi) 0.5  0.5
+purple     = fromHSL (1.556 * pi) 0.75 0.5
+pink       = fromHSL (23/12 * pi) 0.75 0.75
 
 mixed :: Color -> Color -> Color
 mixed (RGBA r1 g1 b1 a1) (RGBA r2 g2 b2 a2)
@@ -88,36 +88,41 @@ gray, grey :: Double -> Color
 gray = grey
 grey k = RGBA k k k 1
 
+hue :: Color -> Double
 hue (RGBA r g b a)
   | hi == lo           = 0
-  | r  == hi && g >= b = 60 * (g - b) / (hi - lo)
-  | r  == hi           = 60 * (g - b) / (hi - lo) + 360
-  | g  == hi           = 60 * (b - r) / (hi - lo) + 120
-  | otherwise          = 60 * (r - g) / (hi - lo) + 240
+  | r  == hi && g >= b = (g - b) / (hi - lo) * pi / 3
+  | r  == hi           = (g - b) / (hi - lo) * pi / 3 + 2 * pi
+  | g  == hi           = (b - r) / (hi - lo) * pi / 3 + 2/3 * pi
+  | otherwise          = (r - g) / (hi - lo) * pi / 3 + 4/3 * pi
   where hi = max r (max g b)
         lo = min r (min g b)
 
+saturation :: Color -> Double
 saturation (RGBA r g b a)
   | hi == lo  = 0
   | otherwise = (hi - lo) / (1 - abs (hi + lo - 1))
   where hi = max r (max g b)
         lo = min r (min g b)
 
+luminosity :: Color -> Double
 luminosity (RGBA r g b a) = (lo + hi) / 2
   where hi = max r (max g b)
         lo = min r (min g b)
 
-fromHSL h s l
-  | h < 0     = fromHSL (h + 360) s l
-  | h > 360   = fromHSL (h - 360) s l
-  | h < 60    = RGBA (c + m) (x + m) (m    ) 1
-  | h < 120   = RGBA (y + m) (c + m) (m    ) 1
-  | h < 180   = RGBA (m    ) (c + m) (x + m) 1
-  | h < 240   = RGBA (m    ) (y + m) (c + m) 1
-  | h < 300   = RGBA (x + m) (m    ) (c + m) 1
-  | otherwise = RGBA (c + m) (m    ) (y + m) 1
-  where c     = (1 - abs (2 * l - 1)) * s
-        (hnorm, rem) = properFraction (h / 60)
-        x     = c * (1 - abs (rem - 1))
-        y     = c * (1 - abs rem)
-        m     = l - c / 2
+-- Based on the algorithm from the CSS3 specification.
+fromHSL :: Double -> Double -> Double -> Color
+fromHSL h s l = RGBA r g b 1
+  where m1             = l * 2 - m2
+        m2 | l <= 0.5  = l * (s + 1)
+           | otherwise = l + s - l * s
+        r              = convert m1 m2 (h / 2 / pi + 1/3)
+        g              = convert m1 m2 (h / 2 / pi      )
+        b              = convert m1 m2 (h / 2 / pi - 1/3)
+        convert m1 m2 h
+          | h < 0     = convert m1 m2 (h + 1)
+          | h > 1     = convert m1 m2 (h - 1)
+          | h * 6 < 1 = m1 + (m2 - m1) * h * 6
+          | h * 2 < 1 = m2
+          | h * 3 < 2 = m1 + (m2 - m1) * (2/3 - h) * 6
+          | otherwise = m1

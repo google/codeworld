@@ -20,139 +20,135 @@
 
 module Internal.Picture where
 
-import qualified "base" Prelude as P
-import Internal.Num
-import Internal.Text
-import Internal.Color
+import qualified "codeworld-api" CodeWorld as CW
+import                           Internal.Num
+import                           Internal.Text
+import                           Internal.Color
+import           "base"          Prelude (map, (.))
 
 type Point = (Number, Number)
 type Vector = (Number, Number)
 
-addVectors :: (Vector, Vector) -> Vector
-addVectors ((x1,y1), (x2,y2)) = (x1 + x2, y1 + y2)
+toCWVect   :: Vector -> CW.Vector
+toCWVect (x, y) = (toDouble x, toDouble y)
+
+fromCWVect :: CW.Vector -> Vector
+fromCWVect (x, y) = (fromDouble x, fromDouble y)
 
 vectorSum :: (Vector, Vector) -> Vector
-vectorSum = addVectors
+vectorSum (v, w) = fromCWVect (CW.vectorSum (toCWVect v) (toCWVect w))
 
-subtractVectors :: (Vector, Vector) -> Vector
-subtractVectors ((x1,y1), (x2,y2)) = (x1 - x2, y1 - y2)
+addVectors :: (Vector, Vector) -> Vector
+addVectors = vectorSum
+{-# WARNING addVectors "Please use vectorSum(...) instead of addVectors(...)" #-}
 
 vectorDifference :: (Vector, Vector) -> Vector
-vectorDifference = subtractVectors
+vectorDifference (v, w) = fromCWVect (CW.vectorDifference (toCWVect v) (toCWVect w))
 
-scaleVector :: (Vector, Number) -> Vector
-scaleVector ((x,y), k) = (k*x, k*y)
+subtractVectors :: (Vector, Vector) -> Vector
+subtractVectors = vectorDifference
+{-# WARNING subtractVectors "Please use vectorDifference(...) instead of subtractVectors(...)" #-}
 
 scaledVector :: (Vector, Number) -> Vector
-scaledVector = scaleVector
+scaledVector (v, k) = fromCWVect (CW.scaledVector (toDouble k) (toCWVect v))
 
-rotateVector :: (Vector, Number) -> Vector
-rotateVector ((x,y), angle) = (x * cos angle - y * sin angle,
-                               x * sin angle + y * cos angle)
+scaleVector :: (Vector, Number) -> Vector
+scaleVector = scaledVector
+{-# WARNING scaleVector "Please use scaledVector(...) instead of scaleVector(...)" #-}
 
 rotatedVector :: (Vector, Number) -> Vector
-rotatedVector = rotateVector
+rotatedVector (v, k) = fromCWVect (CW.rotatedVector (toDouble k) (toCWVect v))
 
-dotProduct :: (Vector, Vector) -> Number
-dotProduct ((x1,y1), (x2, y2)) = x1 * x2 + y1 * y2
-
-{-# WARNING addVectors "Please use vectorSum(...) instead of addVectors(...)" #-}
-{-# WARNING subtractVectors "Please use vectorDifference(...) instead of subtractVectors(...)" #-}
-{-# WARNING scaleVector "Please use scaledVector(...) instead of scaleVector(...)" #-}
+rotateVector :: (Vector, Number) -> Vector
+rotateVector = rotatedVector
 {-# WARNING rotateVector "Please use rotatedVector(...) instead of rotateVector(...)" #-}
 
-data Picture = Polygon [Point]
-             | Line [Point] !Number !P.Bool
-             | Arc !Number !Number !Number !Number
-             | Text !Text
-             | Color !Color !Picture
-             | Translate !Number !Number !Picture
-             | Scale !Number !Number !Picture
-             | Rotate !Number !Picture
-             | Pictures [Picture]
-             | Logo
+dotProduct :: (Vector, Vector) -> Number
+dotProduct (v, w) = fromDouble (CW.dotProduct (toCWVect v) (toCWVect w))
 
-instance P.Show Picture where show _ = "<<Picture>>"
+newtype Picture = CWPic { toCWPic :: CW.Picture }
 
 -- | A blank picture
 blank :: Picture
-blank = Pictures []
+blank = CWPic CW.blank
 
 -- | A thin line with these points as endpoints
 line :: [Point] -> Picture
-line ps = Line ps 0 P.False
+line = CWPic . CW.line . map toCWVect
 
 -- | A thick line, with these endpoints, with this line width
 thickLine :: ([Point], Number) -> Picture
-thickLine (ps, n) = Line ps n P.False
+thickLine (ps, n) = CWPic (CW.thickLine (toDouble n) (map toCWVect ps))
 
 -- | A thin polygon with these points as vertices
 polygon :: [Point] -> Picture
-polygon ps = Line ps 0 P.True
+polygon = CWPic . CW.polygon . map toCWVect
 
 -- | A thin polygon with these points as vertices
 thickPolygon :: ([Point], Number) -> Picture
-thickPolygon (ps, n) = Line ps n P.True
+thickPolygon (ps, n) = CWPic (CW.thickPolygon (toDouble n) (map toCWVect ps))
 
 -- | A solid polygon with these points as vertices
 solidPolygon :: [Point] -> Picture
-solidPolygon = Polygon
+solidPolygon = CWPic . CW.solidPolygon . map toCWVect
 
 -- | A thin rectangle, with this width and height
 rectangle :: (Number, Number) -> Picture
-rectangle (w, h) = polygon [
-    (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)
-    ]
+rectangle (w, h) = CWPic (CW.rectangle (toDouble w) (toDouble h))
 
 -- | A solid rectangle, with this width and height
 solidRectangle :: (Number, Number) -> Picture
-solidRectangle (w, h) = solidPolygon [
-    (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)
-    ]
+solidRectangle (w, h) = CWPic (CW.solidRectangle (toDouble w) (toDouble h))
 
 -- | A thick rectangle, with this width and height and line width
 thickRectangle :: (Number, Number, Number) -> Picture
-thickRectangle (w, h, lw) = thickPolygon ([
-    (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)
-    ], lw)
+thickRectangle (w, h, lw) = CWPic
+    (CW.thickRectangle (toDouble lw) (toDouble w) (toDouble h))
 
 -- | A thin circle, with this radius
 circle :: Number -> Picture
-circle r = arc (0, 360, r)
+circle = CWPic . CW.circle . toDouble
 
 -- | A solid circle, with this radius
 solidCircle :: Number -> Picture
-solidCircle r = thickCircle (r/2, r)
+solidCircle = CWPic . CW.solidCircle . toDouble
 
 -- | A thick circle, with this radius and line width
 thickCircle :: (Number, Number) -> Picture
-thickCircle (r, w) = Arc 0 360 r w
+thickCircle (r, w) = CWPic (CW.thickCircle (toDouble w) (toDouble r))
 
 -- | A thin arc, starting and ending at these angles, with this radius
 arc :: (Number, Number, Number) -> Picture
-arc (b, e, r) = Arc b e r 0
+arc (b, e, r) = CWPic
+    (CW.arc (toDouble (pi * b / 180)) (toDouble (pi * e / 180)) (toDouble r))
 
 -- | A solid sector of a circle (i.e., a pie slice) starting and ending at these
 -- angles, with this radius
 sector :: (Number, Number, Number) -> Picture
-sector (b, e, r) = Arc b e (r/2) r
+sector (b, e, r) = CWPic
+    (CW.sector (toDouble (pi * b / 180)) (toDouble (pi * e / 180)) (toDouble r))
 
 -- | A thick arc, starting and ending at these angles, with this radius and
 -- line width
 thickArc :: (Number, Number, Number, Number) -> Picture
-thickArc (b, e, r, w) = Arc b e r w
+thickArc (b, e, r, w) = CWPic
+    (CW.thickArc (toDouble w)
+                 (toDouble (pi * b / 180))
+                 (toDouble (pi * e / 180))
+                 (toDouble r))
 
 -- | A piece of text
 text :: Text -> Picture
-text = Text
+text = CWPic . CW.text
 
 -- | A picture drawn entirely in this color.
 color :: (Picture, Color) -> Picture
-color (p, c) = Color c p
+color = colored
+{-# WARNING color "Please use colored(...) instead of color(...)" #-}
 
 -- | A picture drawn entirely in this color.
 colored :: (Picture, Color) -> Picture
-colored = color
+colored (p, c) = CWPic (CW.colored (toCWColor c) (toCWPic p))
 
 -- | A picture drawn entirely in this color.
 coloured :: (Picture, Color) -> Picture
@@ -160,19 +156,21 @@ coloured = colored
 
 -- | A picture drawn translated in these directions.
 translate :: (Picture, Number, Number) -> Picture
-translate (p, x, y) = Translate x y p
+translate = translated
+{-# WARNING translate "Please use translated(...) instead of translate(...)" #-}
 
 -- | A picture drawn translated in these directions.
 translated :: (Picture, Number, Number) -> Picture
-translated = translate
+translated (p, x, y) = CWPic (CW.translated (toDouble x) (toDouble y) (toCWPic p))
 
 -- | A picture scaled by these factors.
 scale :: (Picture, Number, Number) -> Picture
-scale (p, x, y) = Scale x y p
+scale = scaled
+{-# WARNING scale "Please use scaled(...) instead of scale(...)" #-}
 
 -- | A picture scaled by these factors.
 scaled :: (Picture, Number, Number) -> Picture
-scaled = scale
+scaled (p, x, y) = CWPic (CW.scaled (toDouble x) (toDouble y) (toCWPic p))
 
 -- | A picture scaled by these factors.
 dilated :: (Picture, Number, Number) -> Picture
@@ -180,26 +178,21 @@ dilated = scaled
 
 -- | A picture rotated by this angle.
 rotate :: (Picture, Number) -> Picture
-rotate (p, t) = Rotate t p
+rotate = rotated
+{-# WARNING rotate "Please use rotated(...) instead of rotate(...)" #-}
 
 -- | A picture rotated by this angle.
 rotated :: (Picture, Number) -> Picture
-rotated = rotate
-
-{-# WARNING color "Please use colored(...) instead of color(...)" #-}
-{-# WARNING translate "Please use translated(...) instead of translate(...)" #-}
-{-# WARNING rotate "Please use rotated(...) instead of rotate(...)" #-}
-{-# WARNING scale "Please use scaled(...) instead of scale(...)" #-}
+rotated (p, th) = CWPic (CW.rotated (toDouble (pi * th / 180)) (toCWPic p))
 
 -- A picture made by drawing these pictures, ordered from top to bottom.
 pictures :: [Picture] -> Picture
-pictures = Pictures
+pictures = CWPic . CW.pictures . map toCWPic
 
 -- Binary composition of pictures.
 (&) :: Picture -> Picture -> Picture
 infixr 0 &
-a & Pictures bs = Pictures (a:bs)
-a & b           = Pictures [a, b]
+a & b = CWPic (toCWPic a CW.& toCWPic b)
 
 -- | A coordinate plane.  Adding this to your pictures can help you measure distances
 -- more accurately.
@@ -209,21 +202,8 @@ a & b           = Pictures [a, b]
 --    main = pictureOf(myPicture & coordinatePlane)
 --    myPicture = ...
 coordinatePlane :: Picture
-coordinatePlane = axes & numbers & guidelines
-  where xline(y) = line[(-10, y), (10, y)]
-        xaxis = color(xline(0), RGBA(0, 0, 0, 0.75))
-        axes = xaxis & rotate(xaxis, 90)
-        xguidelines = pictures[
-            color(xline(k), RGBA(0, 0, 0, 0.25)) | k <- [-10, -9 .. 10] ]
-        guidelines = xguidelines & rotate(xguidelines, 90)
-        numbers = xnumbers & ynumbers
-        xnumbers = pictures [
-            translate(scale(text(printed(k)), 0.5, 0.5), k, 0.3)
-            | k <- [-9, -8 .. 9], k P./= 0 ]
-        ynumbers = pictures [
-            translate(scale(text(printed(k)), 0.5, 0.5), 0.3, k)
-            | k <- [-9, -8 .. 9], k P./= 0 ]
+coordinatePlane = CWPic CW.coordinatePlane
 
 -- | The CodeWorld logo.
 codeWorldLogo :: Picture
-codeWorldLogo = Logo
+codeWorldLogo = CWPic CW.codeWorldLogo

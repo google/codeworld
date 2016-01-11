@@ -17,12 +17,13 @@
   limitations under the License.
 -}
 
-module Internal.Event where
+module Internal.Event (Event(..), CW.MouseButton(..), fromCWEvent) where
 
-import "base" Prelude
-import Internal.Num
-import Internal.Text
-import Internal.Picture
+import qualified "codeworld-api" CodeWorld as CW
+import           "base"          Prelude
+import                           Internal.Num
+import                           Internal.Text
+import                           Internal.Picture
 
 {-| An event initiated by the user.
 
@@ -61,10 +62,13 @@ import Internal.Picture
 -}
 data Event = KeyPress !Text
            | KeyRelease !Text
-           | MousePress !(MouseButton, Point)
-           | MouseRelease !(MouseButton, Point)
+           | MousePress !(CW.MouseButton, Point)
+           | MouseRelease !(CW.MouseButton, Point)
            | MouseMovement !Point
 
-data MouseButton = LeftButton | MiddleButton | RightButton
-
-instance Show Event where show _ = "<<Event>>"
+fromCWEvent :: CW.Event -> Event
+fromCWEvent (CW.KeyPress      key)   = KeyPress      key
+fromCWEvent (CW.KeyRelease    key)   = KeyRelease    key
+fromCWEvent (CW.MousePress    btn p) = MousePress    (btn, fromCWVect p)
+fromCWEvent (CW.MouseRelease  btn p) = MouseRelease  (btn, fromCWVect p)
+fromCWEvent (CW.MouseMovement p)     = MouseMovement (fromCWVect p)

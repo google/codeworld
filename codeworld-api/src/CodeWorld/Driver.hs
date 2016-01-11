@@ -444,17 +444,151 @@ interactionOf initial step event draw = go `catch` reportError
 
 --------------------------------------------------------------------------------
 
+data Wrapped a = Wrapped {
+    state          :: a,
+    paused         :: Bool,
+    mouseMovedTime :: Double
+    }
+
+data Control :: * -> * where
+  PlayButton    :: Control a
+  PauseButton   :: Control a
+  StepButton    :: Control a
+  RestartButton :: Control Double
+  BackButton    :: Control Double
+  TimeLabel     :: Control Double
+
+wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
+wrappedStep f dt w = w {
+    state          = if paused w then state w else f dt (state w),
+    mouseMovedTime = mouseMovedTime w + dt
+    }
+
+wrappedEvent :: (Wrapped a -> [Control a])
+      -> (Double -> a -> a)
+      -> Event -> Wrapped a -> Wrapped a
+wrappedEvent _     _ (MouseMovement _)         w
+    = w { mouseMovedTime = 0 }
+wrappedEvent ctrls f (MousePress LeftButton p) w
+    = (foldr (handleControl f p) w (ctrls w)) { mouseMovedTime = 0 }
+wrappedEvent _     _ _                         w = w
+
+handleControl :: (Double -> a -> a)
+              -> Point
+              -> Control a
+              -> Wrapped a
+              -> Wrapped a
+handleControl _ (x,y) RestartButton w
+  | -9.4 < x && x < -8.6 && -9.4 < y && y < -8.6
+      = w { state = 0 }
+handleControl _ (x,y) PlayButton    w
+  | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6
+      = w { paused = False }
+handleControl _ (x,y) PauseButton   w
+  | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6
+      = w { paused = True }
+handleControl f (x,y) StepButton    w
+  | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6
+      = w { state = f 0.1 (state w) }
+handleControl _ (x,y) BackButton    w
+  | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6
+      = w { state = max 0 (state w - 0.1) }
+handleControl _ _     _             w = w
+
+wrappedDraw :: (Wrapped a -> [Control a])
+     -> (a -> Picture)
+     -> Wrapped a -> Picture
+wrappedDraw ctrls f w = drawControlPanel ctrls w & f (state w)
+
+drawControlPanel :: (Wrapped a -> [Control a]) -> Wrapped a -> Picture
+drawControlPanel ctrls w = pictures [ drawControl w alpha c | c <- ctrls w ]
+  where alpha | mouseMovedTime w < 4.5  = 1
+              | mouseMovedTime w < 5.0  = 10 - 2 * mouseMovedTime w
+              | otherwise               = 0
+
+drawControl :: Wrapped a -> Double -> Control a -> Picture
+drawControl _ alpha RestartButton = translated (-9) (-9) p
+  where p = colored (RGBA 0   0   0   alpha)
+                    (thickArc 0.1 (pi / 6) (11 * pi / 6) 0.2 &
+                     translated 0.173 (-0.1) (solidRectangle 0.17 0.17))
+          & colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+          & colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+
+drawControl _ alpha PlayButton = translated (-8) (-9) p
+  where p = colored (RGBA 0   0   0   alpha)
+                    (solidPolygon [ (-0.2, 0.25), (-0.2, -0.25), (0.2, 0) ])
+          & colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+          & colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+
+drawControl _ alpha PauseButton = translated (-8) (-9) p
+  where p = colored (RGBA 0   0   0   alpha)
+                    (translated (-0.15) 0 (solidRectangle 0.2 0.6) &
+                     translated ( 0.15) 0 (solidRectangle 0.2 0.6))
+          & colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+          & colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+
+drawControl _ alpha StepButton = translated (-7) (-9) p
+  where p = colored (RGBA 0   0   0   alpha)
+                    (translated (-0.15) 0 (solidRectangle 0.2 0.5) &
+                     solidPolygon [ (0.05, 0.25), (0.05, -0.25), (0.3, 0) ])
+          & colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+          & colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+
+drawControl _ alpha BackButton = translated (-6) (-9) p
+  where p = colored (RGBA 0   0   0   alpha)
+                    (translated 0.15 0 (solidRectangle 0.2 0.5) &
+                     solidPolygon [ (-0.05, 0.25), (-0.05, -0.25), (-0.3, 0) ])
+          & colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+          & colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+
+drawControl w alpha TimeLabel = translated (8) (-9) p
+  where p = colored (RGBA 0   0   0   alpha)
+                    (scaled 0.5 0.5 $
+                        text (pack (showFFloatAlt (Just 4) (state w) "s")))
+          & colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      3.0 0.8)
+          & colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 3.0 0.8)
+
+animationControls :: Wrapped Double -> [Control Double]
+animationControls w
+  | mouseMovedTime w > 5    = []
+  | paused w && state w > 0 = [ RestartButton, PlayButton, StepButton,
+                                BackButton, TimeLabel ]
+  | paused w                = [ RestartButton, PlayButton, StepButton,
+                                TimeLabel ]
+  | otherwise               = [ RestartButton, PauseButton, TimeLabel ]
+
 -- | Shows an animation, with a picture for each time given by the parameter.
 animationOf :: (Double -> Picture) -> IO ()
-animationOf f = simulationOf 0 (+) f
+animationOf f =
+    interactionOf initial
+                  (wrappedStep (+))
+                  (wrappedEvent animationControls (+))
+                  (wrappedDraw animationControls f)
+  where initial = Wrapped {
+            state          = 0,
+            paused         = False,
+            mouseMovedTime = 1000
+        }
+
+simulationControls :: Wrapped w -> [Control w]
+simulationControls w
+  | mouseMovedTime w > 5 = []
+  | paused w             = [ PlayButton, StepButton ]
+  | otherwise            = [ PauseButton ]
 
 -- | Shows a simulation, which is essentially a continuous-time dynamical
 -- system described by an initial value and step function.
-simulationOf :: world
-             -> (Double -> world -> world)
-             -> (world -> Picture)
-             -> IO ()
-simulationOf initial step draw = interactionOf initial step (const id) draw
+simulationOf :: world -> (Double -> world -> world) -> (world -> Picture) -> IO ()
+simulationOf simInitial simStep simDraw =
+    interactionOf initial
+                  (wrappedStep simStep)
+                  (wrappedEvent simulationControls simStep)
+                  (wrappedDraw simulationControls simDraw)
+  where initial = Wrapped {
+            state          = simInitial,
+            paused         = False,
+            mouseMovedTime = 1000
+        }
 
 #else
 

@@ -1,7 +1,9 @@
 {-# LANGUAGE CPP                      #-}
-{-# LANGUAGE OverloadedStrings        #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE GADTs                    #-}
 {-# LANGUAGE JavaScriptFFI            #-}
+{-# LANGUAGE KindSignatures           #-}
+{-# LANGUAGE OverloadedStrings        #-}
 
 {-
   Copyright 2016 The CodeWorld Authors. All rights reserved.
@@ -27,26 +29,24 @@ module CodeWorld.Driver (
     trace
     ) where
 
+import           Data.Text (Text, singleton, pack)
+import           CodeWorld.Picture
+import           CodeWorld.Event
+
+#ifdef ghcjs_HOST_OS
+
 import           Control.Concurrent
 import           Control.Concurrent.MVar
 import           Control.Exception
 import           Control.Monad
 import           Control.Monad.Trans (liftIO)
+import           CodeWorld.Color
 import           Data.Char (chr)
 import           Data.IORef
 import           Data.JSString.Text
 import           Data.Monoid
-import           Data.Text (Text, singleton, pack)
 import           Data.Time.Clock
 import           Data.Word
-import           CodeWorld.Color
-import           CodeWorld.Picture
-import           CodeWorld.Event
-import           System.IO.Unsafe
-import           System.Random
-
-#ifdef ghcjs_HOST_OS
-
 import           GHCJS.DOM
 import           GHCJS.DOM.Window as Window
 import           GHCJS.DOM.Document
@@ -61,15 +61,14 @@ import           GHCJS.Types
 import           JavaScript.Web.AnimationFrame
 import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
+import           Numeric
+import           System.IO.Unsafe
+import           System.Random
 
-foreign import javascript unsafe "$1.globalCompositeOperation = $2"
-    js_setGlobalCompositeOperation :: Canvas.Context -> JSString -> IO ()
+--------------------------------------------------------------------------------
 
 foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
     js_canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
-
-foreign import javascript unsafe "window.reportRuntimeError($1, $2);"
-    js_reportRuntimeError :: Bool -> JSString -> IO ()
 
 canvasFromElement :: Element -> Canvas.Canvas
 canvasFromElement = Canvas.Canvas . unElement
@@ -134,6 +133,9 @@ applyColor ctx ds = case getColorDS ds of
                        (round $ g * 255)
                        (round $ b * 255)
                        a ctx
+
+foreign import javascript unsafe "$1.globalCompositeOperation = $2"
+    js_setGlobalCompositeOperation :: Canvas.Context -> JSString -> IO ()
 
 drawCodeWorldLogo :: Canvas.Context -> DrawState -> Int -> Int -> Int -> Int -> IO ()
 drawCodeWorldLogo ctx ds x y w h = do
@@ -216,8 +218,53 @@ setupScreenContext canvas rect = do
     Canvas.textBaseline Canvas.Middle ctx
     return ctx
 
+setCanvasSize :: Element -> Element -> IO ()
+setCanvasSize target canvas = do
+    Just rect <- getBoundingClientRect canvas
+    cx <- ClientRect.getWidth rect
+    cy <- ClientRect.getHeight rect
+    setAttribute target ("width" :: JSString) (show (round cx))
+    setAttribute target ("height" :: JSString) (show (round cy))
+
 --------------------------------------------------------------------------------
--- Adapters from JavaScript values to logical values used by CodeWorld.
+
+foreign import javascript unsafe "window.reportRuntimeError($1, $2);"
+    js_reportRuntimeError :: Bool -> JSString -> IO ()
+
+-- | Prints a debug message to the CodeWorld console when a value is forced.
+-- This is equivalent to the similarly named function in `Debug.Trace`, except
+-- that it uses the CodeWorld console instead of standard output.
+trace :: Text -> a -> a
+trace msg x = unsafePerformIO $ do
+    js_reportRuntimeError False (textToJSString msg)
+    return x
+
+reportError :: SomeException -> IO ()
+reportError e = js_reportRuntimeError True (textToJSString (pack (show e)))
+
+--------------------------------------------------------------------------------
+
+-- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
+pictureOf :: Picture -> IO ()
+pictureOf pic = display pic `catch` reportError
+
+display :: Picture -> IO ()
+display pic = do
+    Just window <- currentWindow
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
+    on window Window.resize $ liftIO (draw canvas)
+    draw canvas
+  where
+    draw canvas = do
+        setCanvasSize canvas canvas
+        Just rect <- getBoundingClientRect canvas
+        ctx <- setupScreenContext canvas rect
+        drawFrame ctx pic
+        Canvas.restore ctx
+
+--------------------------------------------------------------------------------
+-- Implementation of interactionOf
 
 keyCodeToText :: Int -> Text
 keyCodeToText n = case n of
@@ -291,45 +338,56 @@ fromButtonNum 1 = Just MiddleButton
 fromButtonNum 2 = Just RightButton
 fromButtonNum _ = Nothing
 
-trace :: Text -> a -> a
-trace msg x = unsafePerformIO $ do
-    js_reportRuntimeError False (textToJSString msg)
-    return x
-
---------------------------------------------------------------------------------
--- Event handling to keep the canvas resolution in sync with its physical size.
-
-setCanvasSize :: Element -> Element -> IO ()
-setCanvasSize target canvas = do
-    Just rect <- getBoundingClientRect canvas
-    cx <- ClientRect.getWidth rect
-    cy <- ClientRect.getHeight rect
-    setAttribute target ("width" :: JSString) (show (round cx))
-    setAttribute target ("height" :: JSString) (show (round cy))
-
---------------------------------------------------------------------------------
--- Runners for different kinds of activities.
-
 data Activity = Activity {
     activityStep    :: Double -> Activity,
     activityEvent   :: Event -> Activity,
     activityDraw    :: Picture
     }
 
-display :: Picture -> IO ()
-display pic = do
+setupEvents :: MVar Activity -> Element -> Element -> IO ()
+setupEvents currentActivity canvas offscreen = do
     Just window <- currentWindow
-    Just doc <- currentDocument
-    Just canvas <- getElementById doc ("screen" :: JSString)
-    on window Window.resize $ liftIO (draw canvas)
-    draw canvas
-  where
-    draw canvas = do
-        setCanvasSize canvas canvas
-        Just rect <- getBoundingClientRect canvas
-        ctx <- setupScreenContext canvas rect
-        drawFrame ctx pic
-        Canvas.restore ctx
+    on window Window.keyDown $ do
+        code <- uiKeyCode
+        let keyName = keyCodeToText code
+        when (keyName /= "") $ do
+            liftIO $ handleEvent (KeyPress keyName) currentActivity
+            preventDefault
+            stopPropagation
+    on window Window.keyUp $ do
+        code <- uiKeyCode
+        let keyName = keyCodeToText code
+        when (keyName /= "") $ do
+            liftIO $ handleEvent (KeyRelease keyName) currentActivity
+            preventDefault
+            stopPropagation
+    on window Window.mouseDown $ do
+        button <- mouseButton
+        case fromButtonNum button of
+            Nothing  -> return ()
+            Just btn -> do
+                pos <- getMousePos canvas
+                liftIO $ handleEvent (MousePress btn pos) currentActivity
+    on window Window.mouseUp $ do
+        button <- mouseButton
+        case fromButtonNum button of
+            Nothing  -> return ()
+            Just btn -> do
+                pos <- getMousePos canvas
+                liftIO $ handleEvent (MouseRelease btn pos) currentActivity
+    on window Window.mouseMove $ do
+        pos <- getMousePos canvas
+        liftIO $ handleEvent (MouseMovement pos) currentActivity
+    return ()
+
+handleEvent :: Event -> MVar Activity -> IO ()
+handleEvent event activity =
+    modifyMVar_ activity $ \a0 -> return (activityEvent a0 event)
+
+passTime :: Double -> MVar Activity -> IO Activity
+passTime dt activity = modifyMVar activity $ \a0 -> do
+    let a1 = activityStep a0 (realToFrac (min dt 0.25))
+    return (a1, a1)
 
 run :: Activity -> IO ()
 run startActivity = do
@@ -369,66 +427,8 @@ run startActivity = do
     t0 <- waitForAnimationFrame
     go t0 startActivity `catch` reportError
 
-setupEvents :: MVar Activity -> Element -> Element -> IO ()
-setupEvents currentActivity canvas offscreen = do
-    Just window <- currentWindow
-    on window Window.keyDown $ do
-        code <- uiKeyCode
-        let keyName = keyCodeToText code
-        when (keyName /= "") $ do
-            liftIO $ handleEvent (KeyPress keyName) currentActivity
-            preventDefault
-            stopPropagation
-    on window Window.keyUp $ do
-        code <- uiKeyCode
-        let keyName = keyCodeToText code
-        when (keyName /= "") $ do
-            liftIO $ handleEvent (KeyRelease keyName) currentActivity
-            preventDefault
-            stopPropagation
-    on window Window.mouseDown $ do
-        button <- mouseButton
-        case fromButtonNum button of
-            Nothing  -> return ()
-            Just btn -> do
-                pos <- getMousePos canvas
-                liftIO $ handleEvent (MousePress btn pos) currentActivity
-    on window Window.mouseUp $ do
-        button <- mouseButton
-        case fromButtonNum button of
-            Nothing  -> return ()
-            Just btn -> do
-                pos <- getMousePos canvas
-                liftIO $ handleEvent (MouseRelease btn pos) currentActivity
-    on window Window.mouseMove $ do
-        pos <- getMousePos canvas
-        liftIO $ handleEvent (MouseMovement pos) currentActivity
-    return ()
-
-passTime :: Double -> MVar Activity -> IO Activity
-passTime dt activity = modifyMVar activity $ \a0 -> do
-    let a1 = activityStep a0 (realToFrac (min dt 0.25))
-    return (a1, a1)
-
-handleEvent :: Event -> MVar Activity -> IO ()
-handleEvent event activity =
-    modifyMVar_ activity $ \a0 -> return (activityEvent a0 event)
-
-reportError :: SomeException -> IO ()
-reportError e = js_reportRuntimeError True (textToJSString (pack (show e)))
-
-pictureOf :: Picture -> IO ()
-pictureOf pic = display pic `catch` reportError
-
-animationOf :: (Double -> Picture) -> IO ()
-animationOf f = simulationOf 0 (+) f
-
-simulationOf :: world
-             -> (Double -> world -> world)
-             -> (world -> Picture)
-             -> IO ()
-simulationOf initial step draw = interactionOf initial step (const id) draw
-
+-- | Runs an interactive event-driven CodeWorld program.  This is the most
+-- advanced CodeWorld entry point.
 interactionOf :: world
               -> (Double -> world -> world)
               -> (Event -> world -> world)
@@ -441,6 +441,20 @@ interactionOf initial step event draw = go `catch` reportError
                         activityEvent   = (\ev -> activity (event ev x)),
                         activityDraw    = draw x
                     }
+
+--------------------------------------------------------------------------------
+
+-- | Shows an animation, with a picture for each time given by the parameter.
+animationOf :: (Double -> Picture) -> IO ()
+animationOf f = simulationOf 0 (+) f
+
+-- | Shows a simulation, which is essentially a continuous-time dynamical
+-- system described by an initial value and step function.
+simulationOf :: world
+             -> (Double -> world -> world)
+             -> (world -> Picture)
+             -> IO ()
+simulationOf initial step draw = interactionOf initial step (const id) draw
 
 #else
 

@@ -99,7 +99,7 @@ circle = arc 0 360
 
 -- | A solid circle, with this radius
 solidCircle :: Double -> Picture
-solidCircle r = thickCircle (r/2) r
+solidCircle r = thickCircle r (r/2)
 
 -- | A thick circle, with this line width and radius
 thickCircle :: Double -> Double -> Picture

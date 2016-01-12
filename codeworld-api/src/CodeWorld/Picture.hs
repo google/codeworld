@@ -176,16 +176,16 @@ coordinatePlane :: Picture
 coordinatePlane = axes & numbers & guidelines
   where xline y     = line [(-10, y), (10, y)]
         xaxis       = colored (RGBA 0 0 0 0.75) (xline 0)
-        axes        = xaxis & rotated 90 xaxis
+        axes        = xaxis & rotated (pi/2) xaxis
         xguidelines = pictures
             [colored (RGBA 0 0 0 0.25) (xline k) | k <- [-10, -9 .. 10]]
-        guidelines  = xguidelines & rotated 90 xguidelines
+        guidelines  = xguidelines & rotated (pi/2) xguidelines
         numbers = xnumbers & ynumbers
         xnumbers = pictures
-            [ translated k 0.3 (scaled 0.5 0.5 (text (pack (show k))))
+            [ translated (fromIntegral k) 0.3 (scaled 0.5 0.5 (text (pack (show k))))
               | k <- [-9, -8 .. 9], k /= 0 ]
         ynumbers = pictures
-            [ translated 0.3 k (scaled 0.5 0.5 (text (pack (show k))))
+            [ translated 0.3 (fromIntegral k) (scaled 0.5 0.5 (text (pack (show k))))
               | k <- [-9, -8 .. 9], k /= 0 ]
 
 -- | The CodeWorld logo.

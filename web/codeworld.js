@@ -49,7 +49,7 @@ function init() {
     showingResult = false;
     allProjectNames = [];
 
-    if (window.location.pathname.endsWith('/haskell')) {
+    if (window.location.pathname == '/haskell') {
         window.buildMode = 'haskell'
     } else {
         window.buildMode = 'codeworld';

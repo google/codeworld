@@ -585,6 +585,7 @@ function addToMessage(msg) {
             .replace(/\[GHC\.Types\.Char\] -> /g, '')
             .replace(/base(-[0-9.]*)?\:(.|\n)*?->( |\n)*/g, '')
             .replace(/integer-gmp(-[0-9\.]*)?:(.|\n)*?->( |\n)*/g, '')
+            .replace(/GHC\.[A-Za-z.]*(\s|\n)*->( |\n)*/g, '')
             .replace(/Main\./g, '')
             .replace(/main :: t/g, 'main :: Program')
             .replace(/Prelude\./g, '')

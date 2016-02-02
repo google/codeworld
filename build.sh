@@ -21,8 +21,10 @@ run .  cabal update
 # Install the codeworld-base and codeworld-api packages
 
 run .  cabal_install --ghcjs ./codeworld-api ./codeworld-base
+run codeworld-base  cabal configure --ghcjs
 run codeworld-base  cabal haddock --html
 run codeworld-base  cabal haddock --hoogle
+run codeworld-api   cabal configure --ghcjs
 run codeworld-api   cabal haddock --html
 run codeworld-api   cabal haddock --hoogle
 

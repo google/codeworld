@@ -231,24 +231,6 @@ function init() {
             "negate",
             "toDouble",
             "toInt",
-
-            // Deprecated symbols from the Prelude.  Right now, we can't detect
-            // these automatically
-            "addVectors",
-            "color",
-            "cycle",
-            "mixColors",
-            "mixOfColors",
-            "rotate",
-            "rotateVector",
-            "scaleVector",
-            "scale",
-            "seedRandoms",
-            "show",
-            "shuffle",
-            "sort",
-            "subtractVectors",
-            "translate"
         ];
 
         lines.forEach(function(line) {

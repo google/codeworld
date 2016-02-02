@@ -38,30 +38,14 @@ fromCWVect (x, y) = (fromDouble x, fromDouble y)
 vectorSum :: (Vector, Vector) -> Vector
 vectorSum (v, w) = fromCWVect (CW.vectorSum (toCWVect v) (toCWVect w))
 
-addVectors :: (Vector, Vector) -> Vector
-addVectors = vectorSum
-{-# WARNING addVectors "Please use vectorSum(...) instead of addVectors(...)" #-}
-
 vectorDifference :: (Vector, Vector) -> Vector
 vectorDifference (v, w) = fromCWVect (CW.vectorDifference (toCWVect v) (toCWVect w))
-
-subtractVectors :: (Vector, Vector) -> Vector
-subtractVectors = vectorDifference
-{-# WARNING subtractVectors "Please use vectorDifference(...) instead of subtractVectors(...)" #-}
 
 scaledVector :: (Vector, Number) -> Vector
 scaledVector (v, k) = fromCWVect (CW.scaledVector (toDouble k) (toCWVect v))
 
-scaleVector :: (Vector, Number) -> Vector
-scaleVector = scaledVector
-{-# WARNING scaleVector "Please use scaledVector(...) instead of scaleVector(...)" #-}
-
 rotatedVector :: (Vector, Number) -> Vector
 rotatedVector (v, k) = fromCWVect (CW.rotatedVector (toDouble k) (toCWVect v))
-
-rotateVector :: (Vector, Number) -> Vector
-rotateVector = rotatedVector
-{-# WARNING rotateVector "Please use rotatedVector(...) instead of rotateVector(...)" #-}
 
 dotProduct :: (Vector, Vector) -> Number
 dotProduct (v, w) = fromDouble (CW.dotProduct (toCWVect v) (toCWVect w))
@@ -142,11 +126,6 @@ text :: Text -> Picture
 text = CWPic . CW.text
 
 -- | A picture drawn entirely in this color.
-color :: (Picture, Color) -> Picture
-color = colored
-{-# WARNING color "Please use colored(...) instead of color(...)" #-}
-
--- | A picture drawn entirely in this color.
 colored :: (Picture, Color) -> Picture
 colored (p, c) = CWPic (CW.colored (toCWColor c) (toCWPic p))
 
@@ -155,18 +134,8 @@ coloured :: (Picture, Color) -> Picture
 coloured = colored
 
 -- | A picture drawn translated in these directions.
-translate :: (Picture, Number, Number) -> Picture
-translate = translated
-{-# WARNING translate "Please use translated(...) instead of translate(...)" #-}
-
--- | A picture drawn translated in these directions.
 translated :: (Picture, Number, Number) -> Picture
 translated (p, x, y) = CWPic (CW.translated (toDouble x) (toDouble y) (toCWPic p))
-
--- | A picture scaled by these factors.
-scale :: (Picture, Number, Number) -> Picture
-scale = scaled
-{-# WARNING scale "Please use scaled(...) instead of scale(...)" #-}
 
 -- | A picture scaled by these factors.
 scaled :: (Picture, Number, Number) -> Picture
@@ -175,11 +144,6 @@ scaled (p, x, y) = CWPic (CW.scaled (toDouble x) (toDouble y) (toCWPic p))
 -- | A picture scaled by these factors.
 dilated :: (Picture, Number, Number) -> Picture
 dilated = scaled
-
--- | A picture rotated by this angle.
-rotate :: (Picture, Number) -> Picture
-rotate = rotated
-{-# WARNING rotate "Please use rotated(...) instead of rotate(...)" #-}
 
 -- | A picture rotated by this angle.
 rotated :: (Picture, Number) -> Picture

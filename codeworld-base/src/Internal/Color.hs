@@ -65,14 +65,6 @@ pink       = fromCWColor CW.pink
 mixed :: (Color, Color) -> Color
 mixed (a, b) = fromCWColor (CW.mixed (toCWColor a) (toCWColor b))
 
-mixColors :: (Color, Color) -> Color
-mixColors = mixed
-{-# WARNING mixColors "Please use mixed(...) instead of mixColors(...)" #-}
-
-mixOfColors :: (Color, Color) -> Color
-mixOfColors = mixed
-{-# WARNING mixOfColors "Please use mixed(...) instead of mixOfColors(...)" #-}
-
 lighter :: (Color, Number) -> Color
 lighter (c, d) = fromCWColor (CW.lighter (toDouble d) (toCWColor c))
 

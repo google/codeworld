@@ -30,7 +30,6 @@ module Internal.Text (
     T.unwords,
     characters,
     printed,
-    show,
     joined,
     joinedWith,
     lowercase,
@@ -74,10 +73,6 @@ characters = P.map T.singleton . T.unpack
 
 printed :: Number -> Text
 printed = T.pack . P.show
-
-show :: Number -> Text
-show = printed
-{-# WARNING show "Please use printed(...) instead of show(...)" #-}
 
 joined :: [Text] -> Text
 joined = T.concat

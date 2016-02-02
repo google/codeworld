@@ -59,7 +59,6 @@ module Internal.Prelude (
     none,
     repeated,
     repeating,
-    cycle,
     first,
     last,
     rest,
@@ -70,7 +69,6 @@ module Internal.Prelude (
     L.subsequences,
     L.permutations,
     sorted,
-    sort,
     reversed,
     unique,
     transposed,
@@ -83,10 +81,8 @@ module Internal.Prelude (
     definitely,
 
     -- Random numbers
-    seedRandoms,
     fromRandomSeed,
-    shuffled,
-    shuffle
+    shuffled
     ) where
 
 import qualified "base" Prelude as P
@@ -208,11 +204,6 @@ repeated (xs, n) = xs P.++ repeated(xs, n-1)
 repeating :: [a] -> [a]
 repeating = P.cycle
 
--- | Forms a list by repeating a source list forever.
-cycle :: [a] -> [a]
-cycle = P.cycle
-{-# WARNING cycle "Please use repeating(...) instead of cycle(...)" #-}
-
 -- | Gives the first members of a list, up to the given number.
 first :: ([a], Number) -> [a]
 first (xs, n) = P.take (toInt n) xs
@@ -254,11 +245,6 @@ concatenation = P.concat
 sorted :: [Number] -> [Number]
 sorted = L.sort
 
--- | Gives a list of numbers reordered into increasing order.
-sort :: [Number] -> [Number]
-sort = L.sort
-{-# WARNING sort "Please use sorted(...) instead of sort(...)" #-}
-
 -- | Gives a list in the opposite order of the original.
 reversed :: [a] -> [a]
 reversed = P.reverse
@@ -295,9 +281,6 @@ randomsFrom :: StdGen -> [Number]
 randomsFrom g = fromDouble a : randomsFrom g2
   where (a, g2) = random g
 
-shuffle :: ([a], Number) -> [a]
-shuffle = shuffled
-
 shuffled :: ([a], Number) -> [a]
 shuffled ([], r) = []
 shuffled (xs, r) = shuffle' xs (P.length xs) (numToStdGen r)
@@ -322,9 +305,3 @@ definitely P.Nothing = P.error "Used definitely on a value of Nothing."
 
 fromRandomSeed :: Number -> [Number]
 fromRandomSeed = randomsFrom . numToStdGen
-
-seedRandoms :: Number -> [Number]
-seedRandoms = fromRandomSeed
-
-{-# WARNING shuffle "Please use shuffled(...) instead of shuffle(...)" #-}
-{-# WARNING seedRandoms "Please use fromRandomSeed(...) instead of seedRandoms(...)" #-}

@@ -92,9 +92,6 @@ import "base" Prelude (Bool, (.), ($))
 import Data.Function (on)
 import qualified Data.List as L
 
-import Data.Text (Text)
-import qualified Data.Text as T
-
 import Internal.DeepEq
 import Internal.Num
 import Internal.Text
@@ -151,7 +148,7 @@ secondOfPair (a, b) = b
 
 -- | Fails with an error message.
 error :: Text -> a
-error = P.error . T.unpack
+error = P.error . toString
 
 -- | Determines whether a list is empty or not.
 empty :: [a] -> Bool

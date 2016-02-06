@@ -20,14 +20,17 @@
 module Internal.Text (
     Text,
     fromString,
+    toString,
+    fromCWText,
+    toCWText,
     (<>),
     numberOfCharacters,
     numberOfWords,
     numberOfLines,
-    T.lines,
-    T.unlines,
-    T.words,
-    T.unwords,
+    lines,
+    unlines,
+    words,
+    unwords,
     characters,
     printed,
     joined,
@@ -41,66 +44,89 @@ module Internal.Text (
     substitutions
     ) where
 
-import qualified "base" Prelude as P
-import "base" Prelude (Bool, (.))
+import "base" Prelude (String, Bool, (.), map, length, show)
 import "base" Data.Maybe
 import "base" Data.List (foldl')
 import "base" Numeric
 
-import Data.Text (Text)
+import qualified Data.JSString as J
+import qualified Data.JSString.Text as J
 import qualified Data.Text as T
 
 import Internal.Num
 
-fromString :: P.String -> Text
-fromString = T.pack
+data Text = T { unT :: J.JSString }
+
+fromString :: String -> Text
+fromString = T . J.pack
+
+toString :: Text -> String
+toString = J.unpack . unT
+
+fromCWText :: Text -> T.Text
+fromCWText = J.textFromJSString . unT
+
+toCWText :: T.Text -> Text
+toCWText = T . J.textToJSString
 
 infixr 6 <>
 (<>) :: Text -> Text -> Text
-(<>) = T.append
+T a <> T b = T (J.append a b)
 
 numberOfCharacters :: Text -> Number
-numberOfCharacters = fromInt . T.length
+numberOfCharacters = fromInt . J.length . unT
 
 numberOfWords :: Text -> Number
-numberOfWords = fromInt . P.length . T.words
+numberOfWords = fromInt . length . J.words . unT
 
 numberOfLines :: Text -> Number
-numberOfLines = fromInt . P.length . T.lines
+numberOfLines = fromInt . length . J.lines . unT
+
+lines :: Text -> [Text]
+lines = map T . J.lines . unT
+
+unlines :: [Text] -> Text
+unlines = T . J.unlines . map unT
+
+words :: Text -> [Text]
+words = map T . J.words . unT
+
+unwords :: [Text] -> Text
+unwords = T . J.unwords . map unT
 
 characters :: Text -> [Text]
-characters = P.map T.singleton . T.unpack
+characters = map (T . J.singleton) . J.unpack . unT
 
 printed :: Number -> Text
-printed = T.pack . P.show
+printed = T . J.pack . show
 
 joined :: [Text] -> Text
-joined = T.concat
+joined = T . J.concat . map unT
 
 joinedWith :: ([Text], Text) -> Text
-joinedWith (ts, sep) = T.intercalate sep ts
+joinedWith (ts, T sep) = T (J.intercalate sep (map unT ts))
 
 lowercase :: Text -> Text
-lowercase = T.toLower
+lowercase = T . J.toLower . unT
 
 uppercase :: Text -> Text
-uppercase = T.toUpper
+uppercase = T . J.toUpper . unT
 
 capitalized :: Text -> Text
-capitalized = T.toTitle
+capitalized = T . J.toTitle . unT
 
 startsWith :: (Text, Text) -> Bool
-startsWith (a, b) = T.isPrefixOf b a
+startsWith (T a, T b) = J.isPrefixOf b a
 
 endsWith :: (Text, Text) -> Bool
-endsWith (a, b) = T.isSuffixOf b a
+endsWith (T a, T b) = J.isSuffixOf b a
 
 -- | Gives the result of replacing one piece of text with another.
 --
 -- For example, `substitution("How do you do?", "do", "be")` is equal to
 -- `"How be you be?"`.
 substitution :: (Text, Text, Text) -> Text
-substitution (text, from, to) = T.replace from to text
+substitution (T text, T from, T to) = T (J.replace from to text)
 
 -- | Gives the result of performing many substitutions in a piece of
 -- text.  This is commonly used to build text to show in a program,
@@ -110,5 +136,5 @@ substitution (text, from, to) = T.replace from to text
 --                  [("[lives]", printed(lives)),
 --                   ("[score]", printed(score))])
 substitutions :: (Text, [(Text, Text)]) -> Text
-substitutions (text, replacements) =
-    foldl' (\ a (b, c) -> T.replace b c a) text replacements
+substitutions (T text, replacements) =
+    T (foldl' (\ a (T b, T c) -> J.replace b c a) text replacements)

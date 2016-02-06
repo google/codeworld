@@ -67,8 +67,8 @@ data Event = KeyPress !Text
            | MouseMovement !Point
 
 fromCWEvent :: CW.Event -> Event
-fromCWEvent (CW.KeyPress      key)   = KeyPress      key
-fromCWEvent (CW.KeyRelease    key)   = KeyRelease    key
+fromCWEvent (CW.KeyPress      key)   = KeyPress      (toCWText key)
+fromCWEvent (CW.KeyRelease    key)   = KeyRelease    (toCWText key)
 fromCWEvent (CW.MousePress    btn p) = MousePress    (btn, fromCWVect p)
 fromCWEvent (CW.MouseRelease  btn p) = MouseRelease  (btn, fromCWVect p)
 fromCWEvent (CW.MouseMovement p)     = MouseMovement (fromCWVect p)

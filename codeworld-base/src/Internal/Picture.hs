@@ -123,7 +123,7 @@ thickArc (b, e, r, w) = CWPic
 
 -- | A piece of text
 text :: Text -> Picture
-text = CWPic . CW.text
+text = CWPic . CW.text . fromCWText
 
 -- | A picture drawn entirely in this color.
 colored :: (Picture, Color) -> Picture

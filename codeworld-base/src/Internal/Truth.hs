@@ -30,20 +30,50 @@
 
 {- If you want to do these things you are a bad person and you should feel bad -}
 
-module Internal.DeepEq where
+module Internal.Truth where
 
-import        Control.Exception (evaluate)
-import        Control.Monad
-import "base" Prelude
-import        System.IO.Unsafe
-import        Unsafe.Coerce
+import                  Control.Exception (evaluate)
+import                  Control.Monad
+import qualified "base" Prelude as P
+import           "base" Prelude (Bool, IO, Int, ($))
+import                  System.IO.Unsafe
+import                  Unsafe.Coerce
 
 #ifdef ghcjs_HOST_OS
+import                  GHCJS.Foreign
+import                  GHCJS.Types
+import                  JavaScript.Array
+#endif
 
-import        GHCJS.Foreign
-import        GHCJS.Types
-import        JavaScript.Array
+type Truth = Bool
 
+ifThenElse :: Truth -> a -> a -> a
+ifThenElse a b c = if a then b else c
+
+infix 4 ==, /=
+
+-- | Compares values to see if they are equal.
+(==) :: a -> a -> Truth
+a == b = deepEq a b
+
+-- | Compares values to see if they are not equal.
+-- Note that `a /= b` is the same as `not (a == b)`.
+(/=) :: a -> a -> Truth
+a /= b = not (a == b)
+
+(&&) :: Truth -> Truth -> Truth
+(&&) = (P.&&)
+
+(||) :: Truth -> Truth -> Truth
+(||) = (P.||)
+
+not :: Truth -> Truth
+not = P.not
+
+otherwise :: Truth
+otherwise = P.otherwise
+
+#ifdef ghcjs_HOST_OS
 -- traverse the object and get the thunks out of it
 foreign import javascript unsafe "cw$getThunks($1)"
   js_getThunks :: Int -> IO JSArray

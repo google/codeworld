@@ -24,12 +24,13 @@ module Internal.Prelude (
     (==),
     (/=),
 
-    -- Bool
+    -- Truth
+    Truth,
     Bool(..),
-    (P.&&),
-    (P.||),
-    P.not,
-    P.otherwise,
+    (&&),
+    (||),
+    not,
+    otherwise,
 
     -- Currying and uncurrying
     toOperator,
@@ -92,26 +93,12 @@ import "base" Prelude (Bool, (.), ($))
 import Data.Function (on)
 import qualified Data.List as L
 
-import Internal.DeepEq
 import Internal.Num
 import Internal.Text
+import Internal.Truth
 
 import System.Random hiding (split)
 import System.Random.Shuffle (shuffle')
-
-ifThenElse :: Bool -> a -> a -> a
-ifThenElse a b c = if a then b else c
-
-infix 4 ==, /=
-
--- | Compares values to see if they are equal.
-(==) :: a -> a -> Bool
-a == b = deepEq a b
-
--- | Compares values to see if they are not equal.
--- Note that `a /= b` is the same as `not (a == b)`.
-(/=) :: a -> a -> Bool
-a /= b = P.not (a == b)
 
 -- | Converts a function to an operator.
 --
@@ -151,12 +138,12 @@ error :: Text -> a
 error = P.error . toString
 
 -- | Determines whether a list is empty or not.
-empty :: [a] -> Bool
+empty :: [a] -> Truth
 empty [] = P.True
 empty _ = P.False
 
 -- | Determines whether a value is a member of a list or not.
-contains :: ([a], a) -> Bool
+contains :: ([a], a) -> Truth
 contains (xs, x) = P.any (== x) xs
 
 -- | Gives the length of a list.
@@ -177,19 +164,19 @@ infixl 9 #
 -- | Determines if any proposition in a list is true.
 --
 -- For example, `any([even(n) | n <- [1,2,3]])` is `True`, because 2 is even.
-any :: [Bool] -> Bool
+any :: [Truth] -> Truth
 any = P.or
 
 -- | Determines if all propositions in a list are true.
 --
 -- For example, `all([even(n) | n <- [2,3,4]])` is `False`, because 3 is not even.
-all :: [Bool] -> Bool
+all :: [Truth] -> Truth
 all = P.and
 
 -- | Determines if all propositions in a list are false.
 --
 -- For example, `none([odd(n) | n <- [2,3,4]])` is `False`, because 3 is odd.
-none :: [Bool] -> Bool
+none :: [Truth] -> Truth
 none = P.not . any
 
 -- | Forms a list by repeating a source list some number of times.
@@ -218,20 +205,20 @@ rest (xs, n) = P.drop (toInt n) xs
 -- | Gives the longest prefix of a list for which a condition is true.
 --
 -- For example, `while([2,4,5,6], even) = [2,4]`.
-while :: ([a], a -> Bool) -> [a]
+while :: ([a], a -> Truth) -> [a]
 while (xs, p) = P.takeWhile p xs
 
 -- | Gives the longest prefix of a list for which a condition is false.
 --
 -- For example, `until([2,4,5,6], odd) = [2,4]`.
-until :: ([a], a -> Bool) -> [a]
+until :: ([a], a -> Truth) -> [a]
 until (xs, p) = P.takeWhile (P.not . p) xs
 
 -- | Gives the remaining portion of a list after the longest prefix
 -- for which a condition is true.
 --
 -- In general, `xs = while(xs, cond) ++ after(xs, cond)
-after :: ([a], a -> Bool) -> [a]
+after :: ([a], a -> Truth) -> [a]
 after (xs, p) = P.dropWhile p xs
 
 -- | Gives the concatenation of all of the lists in its input.
@@ -290,7 +277,7 @@ withDefault :: (P.Maybe a, a) -> a
 withDefault (m, d) = P.fromMaybe d m
 
 -- | Determines if a Maybe has a value.
-hasValue :: P.Maybe a -> Bool
+hasValue :: P.Maybe a -> Truth
 hasValue P.Nothing = P.False
 hasValue (P.Just _) = P.True
 

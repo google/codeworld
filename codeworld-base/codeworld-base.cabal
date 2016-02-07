@@ -211,7 +211,7 @@ Library
                        Internal.Picture,
                        Internal.Event,
                        Internal.CodeWorld,
-                       Internal.DeepEq
+                       Internal.Truth
   Build-depends:       base,
                        codeworld-api,
                        ghcjs-base,

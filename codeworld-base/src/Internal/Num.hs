@@ -76,8 +76,10 @@ module Internal.Num (
     ) where
 
 import qualified "base" Prelude as P
-import "base" Prelude (Bool(..), (.), (==), (&&), map, not, otherwise)
+import "base" Prelude (Bool(..), (.), (==), map)
 import Numeric
+
+import Internal.Truth hiding ((==))
 
 {-|The type for numbers.
 
@@ -149,7 +151,7 @@ instance P.Ord Number where
   An integer is a whole number, such as 5, 0, or -10.  Numbers with non-zero
   decimals, like 5.3, are not integers.
 -}
-isInteger :: Number -> Bool
+isInteger :: Number -> Truth
 isInteger (Number x) = x == P.fromIntegral (P.truncate x)
 
 infixr 8  ^
@@ -178,19 +180,19 @@ Number a / Number b = fromDouble (a P./ b)
 Number a ^ Number b = fromDouble (a P.** b)
 
 {-| Tells whether one number is less than the other. -}
-(<) :: Number -> Number -> Bool
+(<) :: Number -> Number -> Truth
 Number a < Number b = a P.< b
 
 {-| Tells whether one number is less than or equal to the other. -}
-(<=) :: Number -> Number -> Bool
+(<=) :: Number -> Number -> Truth
 Number a <= Number b = a P.<= b
 
 {-| Tells whether one number is greater than the other. -}
-(>) :: Number -> Number -> Bool
+(>) :: Number -> Number -> Truth
 Number a > Number b = a P.> b
 
 {-| Tells whether one number is greater than or equal to the other. -}
-(>=) :: Number -> Number -> Bool
+(>=) :: Number -> Number -> Truth
 Number a >= Number b = a P.>= b
 
 {-| Gives the larger of two numbers. -}
@@ -387,12 +389,12 @@ properFraction (Number x) = (fromInteger w, fromDouble p)
     where (w,p) = P.properFraction x
 
 {-| Tells if a number is even. -}
-even :: Number -> Bool
+even :: Number -> Truth
 even n | isInteger n = P.even (toInt n)
        | otherwise   = False
 
 {-| Tells if a number is odd. -}
-odd :: Number -> Bool
+odd :: Number -> Truth
 odd n | isInteger n = P.odd (toInt n)
       | otherwise   = False
 

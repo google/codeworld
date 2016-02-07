@@ -221,6 +221,7 @@ function init() {
         var hintBlacklist = [
             // Symbols that only exist to implement RebindableSyntax or map to
             // built-in Haskell types.
+            "Bool",
             "IO",
             "fromDouble",
             "fromInt",
@@ -237,6 +238,15 @@ function init() {
             if (line.startsWith("type Program")) {
                 // We must intervene to hide the IO type.
                 line = "data Program";
+            } else if (line.startsWith("data Bool")) {
+                // We must intervene to hide the Bool type.
+                line = "data Truth";
+            } else if (line.startsWith("type Truth")) {
+                return;
+            } else if (line.startsWith("True ::")) {
+                line = "True :: Truth";
+            } else if (line.startsWith("False ::")) {
+                line = "False :: Truth";
             } else if (line.startsWith("newtype ")) {
                 // Hide the distinction between newtype and data.
                 line = "data " + line.substr(8);
@@ -581,6 +591,7 @@ function addToMessage(msg) {
             .replace(/Main\./g, '')
             .replace(/main :: t/g, 'main :: Program')
             .replace(/Prelude\./g, '')
+            .replace(/\bBool\b/g, 'Truth')
             .replace(/IO \(\)/g, 'Program')
             .replace(/IO [a-z][a-zA-Z0-9_]*/g, 'Program')
             .replace(/[ ]*Perhaps you intended to use TemplateHaskell\n/, '')

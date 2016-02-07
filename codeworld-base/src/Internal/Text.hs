@@ -54,6 +54,7 @@ import qualified Data.JSString.Text as J
 import qualified Data.Text as T
 
 import Internal.Num
+import Internal.Truth
 
 data Text = T { unT :: J.JSString }
 
@@ -115,10 +116,10 @@ uppercase = T . J.toUpper . unT
 capitalized :: Text -> Text
 capitalized = T . J.toTitle . unT
 
-startsWith :: (Text, Text) -> Bool
+startsWith :: (Text, Text) -> Truth
 startsWith (T a, T b) = J.isPrefixOf b a
 
-endsWith :: (Text, Text) -> Bool
+endsWith :: (Text, Text) -> Truth
 endsWith (T a, T b) = J.isSuffixOf b a
 
 -- | Gives the result of replacing one piece of text with another.

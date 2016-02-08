@@ -51,6 +51,8 @@ ifThenElse :: Truth -> a -> a -> a
 ifThenElse a b c = if a then b else c
 
 infix 4 ==, /=
+infixr 3 &&
+infixr 2 ||
 
 -- | Compares values to see if they are equal.
 (==) :: a -> a -> Truth

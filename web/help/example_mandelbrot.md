@@ -36,8 +36,8 @@ The program
         points in the set, and Just k for points that leave the target box in
         k iterations.
     -}
-    diverged :: Complex -> Bool
-    diverged (C(x, y)) = abs(x) > 2 || abs(y) > 2
+    diverged :: Complex -> Truth
+    diverged(C(x, y)) = abs(x) > 2 || abs(y) > 2
 
     depth :: (Number, Complex, Complex, Number) -> Maybe Number
     depth(_, _, _, 0) = Nothing

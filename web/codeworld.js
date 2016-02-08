@@ -238,11 +238,8 @@ function init() {
             if (line.startsWith("type Program")) {
                 // We must intervene to hide the IO type.
                 line = "data Program";
-            } else if (line.startsWith("data Bool")) {
-                // We must intervene to hide the Bool type.
-                line = "data Truth";
             } else if (line.startsWith("type Truth")) {
-                return;
+                line = "data Truth";
             } else if (line.startsWith("True ::")) {
                 line = "True :: Truth";
             } else if (line.startsWith("False ::")) {

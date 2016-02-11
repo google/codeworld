@@ -710,7 +710,7 @@ function withClientId(f) {
             return null;
         }
 
-        window.clientId = request.responseText;
+        window.clientId = request.responseText.trim();
         return f(window.clientId);
     });
 }

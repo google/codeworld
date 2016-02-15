@@ -182,8 +182,8 @@ drawPicture ctx ds (Polygon ps) = do
 drawPicture ctx ds (Line ps w closed) = do
     drawFigure ctx ds w $ followPath ctx ps closed
 drawPicture ctx ds (Arc b e r w) = do
-    when (r > 0) $ drawFigure ctx ds w $ do
-        Canvas.arc 0 0 (25 * r) b e False ctx
+    drawFigure ctx ds w $ do
+        Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
 drawPicture ctx ds (Text txt) = withDS ctx ds $ do
     Canvas.scale 1 (-1) ctx
     applyColor ctx ds

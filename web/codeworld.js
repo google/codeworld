@@ -602,8 +602,9 @@ function addToMessage(msg) {
             .replace(/type constructor or class/g, 'type constructor')
             .replace(/Illegal tuple section: use TupleSections/,
                 'This tuple is missing a value, or has an extra comma.')
-            .replace(/in string\/character literal/,
-                'in text literal');
+            .replace(/in string\/character literal/, 'in text literal')
+            .replace(/lexical error at character '\\822[01]'/,
+                     'Smart quotes are not allowed.');
     }
 
     msg = msg

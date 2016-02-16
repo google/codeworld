@@ -51,6 +51,8 @@ dotProduct :: (Vector, Vector) -> Number
 dotProduct (v, w) = fromDouble (CW.dotProduct (toCWVect v) (toCWVect w))
 
 newtype Picture = CWPic { toCWPic :: CW.Picture }
+data Font = Serif | SansSerif | Monospace | Handwriting | Fancy | NamedFont !Text
+data TextStyle = Plain | Italic | Bold
 
 -- | A blank picture
 blank :: Picture
@@ -124,6 +126,20 @@ thickArc (b, e, r, w) = CWPic
 -- | A piece of text
 text :: Text -> Picture
 text = CWPic . CW.text . fromCWText
+
+-- | A styled piece of text
+styledText :: (Text, Font, TextStyle) -> Picture
+styledText (t, f, s) = CWPic
+    (CW.styledText (fromCWStyle s) (fromCWFont f) (fromCWText t))
+  where fromCWStyle Plain           = CW.Plain
+        fromCWStyle Bold            = CW.Bold
+        fromCWStyle Italic          = CW.Italic
+        fromCWFont  Serif           = CW.Serif
+        fromCWFont  SansSerif       = CW.SansSerif
+        fromCWFont  Monospace       = CW.Monospace
+        fromCWFont  Handwriting     = CW.Handwriting
+        fromCWFont  Fancy           = CW.Fancy
+        fromCWFont  (NamedFont fnt) = CW.NamedFont (fromCWText fnt)
 
 -- | A picture drawn entirely in this color.
 colored :: (Picture, Color) -> Picture

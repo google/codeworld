@@ -42,13 +42,17 @@ dotProduct (x1, y1) (x2, y2) = x1 * x2 + y1 * y2
 data Picture = Polygon [Point]
              | Line [Point] !Double !Bool
              | Arc !Double !Double !Double !Double
-             | Text !Text
+             | Text !TextStyle !Font !Text
              | Color !Color !Picture
              | Translate !Double !Double !Picture
              | Scale !Double !Double !Picture
              | Rotate !Double !Picture
              | Pictures [Picture]
              | Logo
+
+data TextStyle = Plain | Bold | Italic
+
+data Font = SansSerif | Serif | Monospace | Handwriting | Fancy | NamedFont !Text
 
 -- | A blank picture
 blank :: Picture
@@ -127,7 +131,10 @@ thickArc w b e r = Arc b e r w
 
 -- | A piece of text
 text :: Text -> Picture
-text = Text
+text = Text Plain Serif
+
+styledText :: TextStyle -> Font -> Text -> Picture
+styledText = Text
 
 -- | A picture drawn entirely in this color.
 colored :: Color -> Picture -> Picture

@@ -30,6 +30,7 @@ module CodeWorld.Driver (
     ) where
 
 import           Data.Text (Text, singleton, pack)
+import qualified Data.Text as T
 import           CodeWorld.Picture
 import           CodeWorld.Event
 
@@ -174,6 +175,18 @@ drawFigure ctx ds w figure = do
         applyColor ctx ds
         Canvas.stroke ctx
 
+fontString :: TextStyle -> Font -> JSString
+fontString style font = stylePrefix style <> "25px " <> fontName font
+  where stylePrefix Plain        = ""
+        stylePrefix Bold         = "bold "
+        stylePrefix Italic       = "italic "
+        fontName SansSerif       = "sans-serif"
+        fontName Serif           = "serif"
+        fontName Monospace       = "monospace"
+        fontName Handwriting     = "cursive"
+        fontName Fancy           = "fantasy"
+        fontName (NamedFont txt) = "\"" <> textToJSString (T.filter (/= '"') txt) <> "\""
+
 drawPicture :: Canvas.Context -> DrawState -> Picture -> IO ()
 drawPicture ctx ds (Polygon ps) = do
     withDS ctx ds $ followPath ctx ps True
@@ -184,9 +197,10 @@ drawPicture ctx ds (Line ps w closed) = do
 drawPicture ctx ds (Arc b e r w) = do
     drawFigure ctx ds w $ do
         Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
-drawPicture ctx ds (Text txt) = withDS ctx ds $ do
+drawPicture ctx ds (Text sty fnt txt) = withDS ctx ds $ do
     Canvas.scale 1 (-1) ctx
     applyColor ctx ds
+    Canvas.font (fontString sty fnt) ctx
     Canvas.fillText (textToJSString txt) 0 0 ctx
 drawPicture ctx ds Logo = withDS ctx ds $ do
     Canvas.scale 1 (-1) ctx
@@ -213,7 +227,6 @@ setupScreenContext canvas rect = do
     Canvas.textAlign Canvas.Left ctx
     Canvas.textBaseline Canvas.Alphabetic ctx
     Canvas.lineWidth 0 ctx
-    Canvas.font "25px Times Roman" ctx
     Canvas.textAlign Canvas.Center ctx
     Canvas.textBaseline Canvas.Middle ctx
     return ctx

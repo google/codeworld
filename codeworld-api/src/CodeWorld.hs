@@ -23,6 +23,8 @@ module CodeWorld (
 
     -- * Pictures
     Picture,
+    TextStyle(..),
+    Font(..),
     blank,
     line,
     thickLine,
@@ -39,6 +41,7 @@ module CodeWorld (
     sector,
     thickArc,
     text,
+    styledText,
     colored,
     coloured,
     translated,

@@ -45,7 +45,7 @@ scaledVector :: (Vector, Number) -> Vector
 scaledVector (v, k) = fromCWVect (CW.scaledVector (toDouble k) (toCWVect v))
 
 rotatedVector :: (Vector, Number) -> Vector
-rotatedVector (v, k) = fromCWVect (CW.rotatedVector (toDouble k) (toCWVect v))
+rotatedVector (v, k) = fromCWVect (CW.rotatedVector (toDouble (pi * k / 180)) (toCWVect v))
 
 dotProduct :: (Vector, Vector) -> Number
 dotProduct (v, w) = fromDouble (CW.dotProduct (toCWVect v) (toCWVect w))

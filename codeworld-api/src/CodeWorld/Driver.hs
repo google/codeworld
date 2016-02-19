@@ -72,6 +72,9 @@ import           System.Random
 foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
     js_canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
 
+foreign import javascript unsafe "$1.getContext('2d', { alpha: false })"
+    js_getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
+
 canvasFromElement :: Element -> Canvas.Canvas
 canvasFromElement = Canvas.Canvas . unElement
 
@@ -149,7 +152,7 @@ drawCodeWorldLogo ctx ds x y w h = do
             -- This is a tough case.  The best we can do is to allocate an
             -- offscreen buffer as a temporary.
             buf <- Canvas.create w h
-            bufctx <- Canvas.getContext buf
+            bufctx <- js_getCodeWorldContext buf
             applyColor bufctx ds
             Canvas.fillRect 0 0 (fromIntegral w) (fromIntegral h) bufctx
             js_setGlobalCompositeOperation bufctx "destination-in"
@@ -221,7 +224,7 @@ setupScreenContext :: Element -> ClientRect.ClientRect -> IO Canvas.Context
 setupScreenContext canvas rect = do
     cw <- ClientRect.getWidth rect
     ch <- ClientRect.getHeight rect
-    ctx <- Canvas.getContext (canvasFromElement canvas)
+    ctx <- js_getCodeWorldContext (canvasFromElement canvas)
     Canvas.save ctx
     Canvas.translate (realToFrac cw / 2) (realToFrac ch / 2) ctx
     Canvas.scale (realToFrac cw / 500) (- realToFrac ch / 500) ctx
@@ -421,7 +424,7 @@ run startActivity = do
     currentActivity <- newMVar startActivity
     setupEvents currentActivity canvas (elementFromCanvas offscreenCanvas)
 
-    screen <- Canvas.getContext (canvasFromElement canvas)
+    screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
     let go t0 a0 = do
             Just rect <- getBoundingClientRect canvas

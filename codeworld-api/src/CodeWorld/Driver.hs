@@ -222,6 +222,7 @@ setupScreenContext canvas rect = do
     cw <- ClientRect.getWidth rect
     ch <- ClientRect.getHeight rect
     ctx <- Canvas.getContext (canvasFromElement canvas)
+    Canvas.save ctx
     Canvas.translate (realToFrac cw / 2) (realToFrac ch / 2) ctx
     Canvas.scale (realToFrac cw / 500) (- realToFrac ch / 500) ctx
     Canvas.lineWidth 0 ctx
@@ -276,6 +277,7 @@ display pic = do
         Just rect <- getBoundingClientRect canvas
         ctx <- setupScreenContext canvas rect
         drawFrame ctx pic
+        Canvas.restore ctx
 
 --------------------------------------------------------------------------------
 -- Implementation of interactionOf
@@ -425,6 +427,7 @@ run startActivity = do
             Just rect <- getBoundingClientRect canvas
             buffer <- setupScreenContext (elementFromCanvas offscreenCanvas) rect
             drawFrame buffer (activityDraw a0)
+            Canvas.restore buffer
 
             t1 <- waitForAnimationFrame
 

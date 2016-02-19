@@ -217,7 +217,8 @@ drawPicture ctx ds (Pictures ps)     = mapM_ (drawPicture ctx ds) (reverse ps)
 
 drawFrame :: Canvas.Context -> Picture -> IO ()
 drawFrame ctx pic = do
-    Canvas.clearRect (-250) (-250) 500 500 ctx
+    Canvas.fillStyle 255 255 255 1 ctx
+    Canvas.fillRect (-250) (-250) 500 500 ctx
     drawPicture ctx initialDS pic
 
 setupScreenContext :: Element -> ClientRect.ClientRect -> IO Canvas.Context

@@ -16,6 +16,7 @@
 
 module CodeWorld (
     -- * Entry points
+    drawingOf,
     pictureOf,
     animationOf,
     simulationOf,

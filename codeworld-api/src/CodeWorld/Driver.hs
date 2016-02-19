@@ -22,6 +22,7 @@
 -}
 
 module CodeWorld.Driver (
+    drawingOf,
     pictureOf,
     animationOf,
     simulationOf,
@@ -256,6 +257,10 @@ reportError :: SomeException -> IO ()
 reportError e = js_reportRuntimeError True (textToJSString (pack (show e)))
 
 --------------------------------------------------------------------------------
+
+-- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
+drawingOf :: Picture -> IO ()
+drawingOf pic = display pic `catch` reportError
 
 -- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
 pictureOf :: Picture -> IO ()
@@ -610,6 +615,9 @@ trace = undefined
 
 pictureOf :: Picture -> IO ()
 pictureOf _ = putStrLn "<<picture>>"
+
+drawingOf :: Picture -> IO ()
+drawingOf _ = putStrLn "<<picture>>"
 
 animationOf :: (Double -> Picture) -> IO ()
 animationOf _ = putStrLn "<<animation>>"

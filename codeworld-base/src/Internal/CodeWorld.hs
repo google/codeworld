@@ -23,6 +23,7 @@
 
 module Internal.CodeWorld (
     Program,
+    drawingOf,
     pictureOf,
     animationOf,
     simulationOf,
@@ -43,6 +44,9 @@ trace :: (a, Text) -> a
 trace (x, msg) = CW.trace msg x
 
 type Program = IO ()
+
+drawingOf :: Picture -> Program
+drawingOf pic = CW.drawingOf (toCWPic pic)
 
 pictureOf :: Picture -> Program
 pictureOf pic = CW.pictureOf (toCWPic pic)

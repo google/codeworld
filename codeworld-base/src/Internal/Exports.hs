@@ -107,6 +107,7 @@ module Internal.Exports (
 
     -- * Entry points
     Program,
+    drawingOf,
     pictureOf,
     animationOf,
     simulationOf,

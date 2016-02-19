@@ -225,8 +225,6 @@ setupScreenContext canvas rect = do
     Canvas.save ctx
     Canvas.translate (realToFrac cw / 2) (realToFrac ch / 2) ctx
     Canvas.scale (realToFrac cw / 500) (- realToFrac ch / 500) ctx
-    Canvas.textAlign Canvas.Left ctx
-    Canvas.textBaseline Canvas.Alphabetic ctx
     Canvas.lineWidth 0 ctx
     Canvas.textAlign Canvas.Center ctx
     Canvas.textBaseline Canvas.Middle ctx

@@ -255,6 +255,9 @@ function init() {
                 return;
             }
 
+            // Filter out strictness annotations.
+            line = line.replace(/(\s)!([A-Za-z\(\[])/g, '$1$2');
+
             var wordStart = 0;
             if (line.startsWith("type ") || line.startsWith("data")) {
                 wordStart += 5;

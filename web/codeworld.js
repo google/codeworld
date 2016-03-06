@@ -456,7 +456,7 @@ function discoverProjects() {
     }
 
     var data = new FormData();
-    data.append('id_token', gapi.auth.getToken().id_token);
+    data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
     data.append('mode', window.buildMode);
 
     sendHttp('POST', 'listProjects', data, function(request) {
@@ -535,7 +535,7 @@ function loadProject(name) {
 
     warnIfUnsaved(function() {
         var data = new FormData();
-        data.append('id_token', gapi.auth.getToken().id_token);
+        data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
         data.append('name', name);
         data.append('mode', window.buildMode);
 
@@ -722,28 +722,15 @@ function signinCallback(result) {
 }
 
 function signin() {
-    withClientId(function(clientid) {
-        if (window.gapi) {
-            gapi.auth.signIn({
-                callback: signinCallback,
-                clientid: clientid,
-                scope: 'profile',
-                cookiepolicy: 'single_host_origin',
-            });
-        }
-    });
+    if (window.auth2) auth2.signIn();
 }
 
 function signout() {
-    if (window.gapi) gapi.auth.signOut();
-    discoverProjects();
+    if (window.auth2) auth2.signOut();
 }
 
 function signedIn() {
-    return (window.gapi &&
-        window.gapi.auth &&
-        gapi.auth.getToken() &&
-        gapi.auth.getToken().id_token);
+    return window.auth2 && auth2.isSignedIn.get();
 }
 
 function saveProject() {
@@ -808,7 +795,7 @@ function saveProjectBase(projectName) {
         };
 
         var data = new FormData();
-        data.append('id_token', gapi.auth.getToken().id_token);
+        data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
         data.append('project', JSON.stringify(project));
         data.append('mode', window.buildMode);
 
@@ -855,7 +842,7 @@ function deleteProject() {
 
     function go() {
         var data = new FormData();
-        data.append('id_token', gapi.auth.getToken().id_token);
+        data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
         data.append('name', window.openProjectName);
         data.append('mode', window.buildMode);
 
@@ -882,20 +869,19 @@ function deleteProject() {
 }
 
 function handleGAPILoad() {
-    withClientId(function(clientId) {
-        gapi.auth.init(signinCallback);
+    gapi.load('auth2', function() {
+        withClientId(function(clientId) {
+            window.auth2 = gapi.auth2.init({
+                client_id: clientId,
+                scope: 'profile',
+                fetch_basic_profile: false
+            });
 
-        // Refresh sign-in every 15 minutes to avoid letting it expire.
-        setInterval(function() {
-            if (signedIn()) {
-                gapi.auth.authorize({
-                    clientid: clientId,
-                    scope: 'profile',
-                    cookiepolicy: 'single_host_origin',
-                    immediate: true,
-                }, signinCallback);
-            }
-        }, 1000 * 60 * 15);
+            auth2.isSignedIn.listen(signinCallback);
+            auth2.currentUser.listen(signinCallback);
+
+            if (auth2.isSignedIn.get() == true) auth2.signIn();
+        });
     });
 
     discoverProjects();

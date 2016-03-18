@@ -90,6 +90,7 @@ import qualified "base" Prelude as P
 import qualified "base" Data.Maybe as P
 import "base" Prelude (Bool, (.), ($))
 
+import Data.Bits (xor)
 import Data.Function (on)
 import qualified Data.List as L
 
@@ -255,11 +256,9 @@ combined (f, x:xs) = f(x, combined(f, xs))
 -- results early in the sequence, so we throw away a few to get better
 -- mixing.
 numToStdGen :: Number -> StdGen
-numToStdGen r = times 10 discard $ g
-  where seed      = P.round (P.realToFrac r P.* P.fromIntegral (P.maxBound :: P.Int))
-        g         = mkStdGen seed
-        discard   = P.snd . next
-        times n f = P.foldl (.) P.id (P.replicate n f)
+numToStdGen r = mkStdGen (a `xor` P.fromIntegral b `xor` P.fromIntegral c)
+  where (sig, a) = P.decodeFloat (P.realToFrac r)
+        (b,   c) = sig `P.divMod` (2 P.^ 31)
 
 randomsFrom :: StdGen -> [Number]
 randomsFrom g = fromDouble a : randomsFrom g2

@@ -58,11 +58,19 @@ data Font = SansSerif | Serif | Monospace | Handwriting | Fancy | NamedFont !Tex
 blank :: Picture
 blank = Pictures []
 
--- | A thin line with these points as endpoints
+-- | A thin sequence of line segments, with these points as endpoints
+path :: [Point] -> Picture
+path ps = Line ps 0 False
+
+-- | A thick sequence of line segments, with given line width and endpoints
+thickPath :: Double -> [Point] -> Picture
+thickPath n ps = Line ps n False
+
+-- | A thin sequence of line segments, with these points as endpoints
 line :: [Point] -> Picture
 line ps = Line ps 0 False
 
--- | A thick line, with this line width and these endpoints
+-- | A thick sequence of line segments, with this line width and endpoints
 thickLine :: Double -> [Point] -> Picture
 thickLine n ps = Line ps n False
 

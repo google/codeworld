@@ -58,6 +58,14 @@ data TextStyle = Plain | Italic | Bold
 blank :: Picture
 blank = CWPic CW.blank
 
+-- | A thin sequence of line segments with these endpoints
+path :: [Point] -> Picture
+path = CWPic . CW.path . map toCWVect
+
+-- | A thin sequence of line segments, with these endpoints and line width
+thickPath :: ([Point], Number) -> Picture
+thickPath (ps, n) = CWPic (CW.thickPath (toDouble n) (map toCWVect ps))
+
 -- | A thin line with these points as endpoints
 line :: [Point] -> Picture
 line = CWPic . CW.line . map toCWVect

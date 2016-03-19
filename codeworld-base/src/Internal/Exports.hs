@@ -71,6 +71,8 @@ module Internal.Exports (
     Font(..),
     TextStyle(..),
     blank,
+    path,
+    thickPath,
     line,
     thickLine,
     polygon,

@@ -29,6 +29,8 @@ module CodeWorld (
     blank,
     line,
     thickLine,
+    path,
+    thickPath,
     polygon,
     thickPolygon,
     solidPolygon,

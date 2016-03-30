@@ -16,26 +16,21 @@
 
 .CodeMirror { font-size: 9pt; }
 
-.CodeMirror span.cm-keyword {color: #208;font-weight:bold}
-.CodeMirror span.cm-atom {color: #219;}
-.CodeMirror span.cm-number {color: #a10;}
-.CodeMirror span.cm-def {color: #00f;}
-.CodeMirror span.cm-variable {color: black;}
-.CodeMirror span.cm-variable-2 {color: #38c;}
-.CodeMirror span.cm-property {color: black;}
-.CodeMirror span.cm-operator {color: black;}
-.CodeMirror span.cm-comment {color: #161;}
-.CodeMirror span.cm-string {color: #660;}
-.CodeMirror span.cm-string-2 {color: #553;}
-.CodeMirror span.cm-meta {color: #555;}
-.CodeMirror span.cm-error {color: #f00;}
-.CodeMirror span.cm-qualifier {color: #666;}
 .CodeMirror span.cm-builtin {color: #30a; font-weight: bold}
 .CodeMirror span.cm-builtin-2 {color: #38c; font-weight: bold}
+.CodeMirror span.cm-keyword {color: #828; font-weight: bold}
 .CodeMirror span.cm-deprecated {color: #888; font-weight: bold; text-decoration: line-through}
-.CodeMirror span.cm-bracket {color: #cc7;}
-.CodeMirror span.cm-tag {color: #170;}
-.CodeMirror span.cm-attribute {color: #00c;}
+
+.CodeMirror span.cm-variable {color: black;}
+.CodeMirror span.cm-variable-2 {color: #38c;}
+.CodeMirror span.cm-comment {color: #161;}
+.CodeMirror span.cm-string {color: #660;}
+.CodeMirror span.cm-meta {color: #555;}
+.CodeMirror span.cm-qualifier {color: #666;}
+.CodeMirror span.cm-number {color: #a10;}
+.CodeMirror span.cm-integer {color: #a10;}
+
+.CodeMirror span.cm-error {color: #f00;}
 
 /* Make bracket matching look nicer. */
 

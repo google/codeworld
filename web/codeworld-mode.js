@@ -19,17 +19,10 @@
 // CodeMirror is copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
-(function(mod) {
-  mod(CodeMirror);
-})(function(CodeMirror) {
 "use strict";
 
+(function() {
 CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
-
-  function switchState(source, setState, f) {
-    setState(f);
-    return f(source, setState);
-  }
 
   var smallRE = /[a-z_]/;
   var largeRE = /[A-Z]/;
@@ -53,7 +46,8 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
         if (source.eat('#')) {
           t = "meta";
         }
-        return switchState(source, setState, ncomment(t, 1));
+        setState(ncomment(t, 1));
+        return (ncomment(t, 1))(source, setState);
       }
       return null;
     }
@@ -72,7 +66,8 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
     }
 
     if (ch == '"') {
-      return switchState(source, setState, stringLiteral);
+      setState(stringLiteral);
+      return stringLiteral(source, setState);
     }
 
     if (largeRE.test(ch)) {
@@ -183,7 +178,8 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
 
   function stringGap(source, setState) {
     if (source.eat('\\')) {
-      return switchState(source, setState, stringLiteral);
+      setState(stringLiteral);
+      return stringLiteral(source, setState);
     }
     source.next();
     setState(normal);
@@ -230,5 +226,4 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
   };
 
 });
-
-});
+})();

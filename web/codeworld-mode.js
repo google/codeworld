@@ -21,9 +21,7 @@
 
 "use strict";
 
-(function() {
 CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
-
   var smallRE = /[a-z_]/;
   var largeRE = /[A-Z]/;
   var digitRE = /\d/;
@@ -224,6 +222,4 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
     blockCommentEnd: "-}",
     lineComment: "--"
   };
-
 });
-})();

@@ -16,7 +16,8 @@
 
 {-# LANGUAGE PackageImports    #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-module HaskellPrelude (module M, ifThenElse) where
+
+module HaskellPrelude {-# WARNING "HaskellPrelude will be removed eventually.  Please use http://code.world/haskell instead." #-} (module M, ifThenElse) where
 import "base" Prelude as M
 import "base" Data.String as M
 ifThenElse a b c = if a then b else c

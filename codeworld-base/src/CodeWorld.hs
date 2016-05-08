@@ -16,5 +16,5 @@
   limitations under the License.
 -}
 
-module CodeWorld (module Internal.Exports) where
+module CodeWorld {-# WARNING "The CodeWorld module at http://code.world will be removed eventually.  Please use http://code.world/haskell instead." #-} (module Internal.Exports) where
 import Internal.Exports

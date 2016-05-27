@@ -69,10 +69,12 @@ thickPath (ps, n) = CWPic (CW.thickPath (toDouble n) (map toCWVect ps))
 -- | A thin line with these points as endpoints
 line :: [Point] -> Picture
 line = CWPic . CW.line . map toCWVect
+{-# WARNING line "Please use path(...) instead of line(...)" #-}
 
 -- | A thick line, with these endpoints, with this line width
 thickLine :: ([Point], Number) -> Picture
 thickLine (ps, n) = CWPic (CW.thickLine (toDouble n) (map toCWVect ps))
+{-# WARNING thickLine "Please use thickPath(...) instead of thickLine(...)" #-}
 
 -- | A thin polygon with these points as vertices
 polygon :: [Point] -> Picture

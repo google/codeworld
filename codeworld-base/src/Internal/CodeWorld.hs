@@ -50,6 +50,7 @@ drawingOf pic = CW.drawingOf (toCWPic pic)
 
 pictureOf :: Picture -> Program
 pictureOf pic = CW.pictureOf (toCWPic pic)
+{-# WARNING pictureOf "Please use drawingOf(...) instead of pictureOf(...)" #-}
 
 animationOf :: (Number -> Picture) -> Program
 animationOf f = CW.animationOf (toCWPic . f . fromDouble)

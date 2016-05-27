@@ -69,10 +69,12 @@ thickPath n ps = Line ps n False
 -- | A thin sequence of line segments, with these points as endpoints
 line :: [Point] -> Picture
 line ps = Line ps 0 False
+{-# WARNING line "Please use path instead of line" #-}
 
 -- | A thick sequence of line segments, with this line width and endpoints
 thickLine :: Double -> [Point] -> Picture
 thickLine n ps = Line ps n False
+{-# WARNING thickLine "Please use thickPath instead of thickLine" #-}
 
 -- | A thin polygon with these points as vertices
 polygon :: [Point] -> Picture

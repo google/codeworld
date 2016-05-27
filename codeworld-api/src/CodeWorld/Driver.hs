@@ -267,6 +267,7 @@ drawingOf pic = display pic `catch` reportError
 -- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
 pictureOf :: Picture -> IO ()
 pictureOf pic = display pic `catch` reportError
+{-# WARNING pictureOf "Please use drawingOf instead of pictureOf" #-}
 
 display :: Picture -> IO ()
 display pic = do

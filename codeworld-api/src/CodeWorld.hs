@@ -53,6 +53,7 @@ module CodeWorld (
     rotated,
     pictures,
     (&),
+    (<>),
     coordinatePlane,
     codeWorldLogo,
     Point,
@@ -112,3 +113,4 @@ import CodeWorld.Color
 import CodeWorld.Picture
 import CodeWorld.Event
 import CodeWorld.Driver
+import Data.Monoid

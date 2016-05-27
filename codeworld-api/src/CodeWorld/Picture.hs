@@ -181,6 +181,12 @@ pictures = Pictures
 infixr 0 &
 a & Pictures bs = Pictures (a:bs)
 a & b           = Pictures [a, b]
+{-# WARNING (&) "Please use <> from Data.Monoid instead of &" #-}
+
+instance Monoid Picture where
+  mempty = blank
+  mappend = (&)
+  mconcat = pictures
 
 -- | A coordinate plane.  Adding this to your pictures can help you measure distances
 -- more accurately.

@@ -60,7 +60,7 @@ The program
             shade(p, m)   = colored(p, gray((1 - 1/m)^5))
 
     main :: Program
-    main = pictureOf(mandelbrot(500, 25))
+    main = drawingOf(mandelbrot(500, 25))
 
 License
 -------

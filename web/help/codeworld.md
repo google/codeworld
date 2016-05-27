@@ -36,7 +36,7 @@ Sooner or later, you need to say where to start.  You do that by defining a spec
 variable called *main*.  Every CodeWorld project needs *exactly* *one* definition for
 *main*.  A complete program might look something like this:
 
-    main  = pictureOf(wheel)
+    main  = drawingOf(wheel)
     wheel = circle(2)
 
 That's a complete project, so try it out!
@@ -60,7 +60,7 @@ shapes:
 * `text("I Love Pandas!")`: You can write text (such as letters and words) to the
   screen by using `text`.  You need quotes around the words.
 
-There are plenty more: `line`, `polygon`, `thickCircle`, `thickRectangle`, `arc`,
+There are plenty more: `path`, `polygon`, `thickCircle`, `thickRectangle`, `arc`,
 `sector`... the list goes on and on!  Don't worry; you will be able to play with
 all of them.
 
@@ -70,7 +70,7 @@ Pictures would be pretty boring if they could only have one shape.  Luckily, you
 can combine more than one shape in the same picture using `&` (which means *and*).
 For example:
 
-    main   = pictureOf(design)
+    main   = drawingOf(design)
     design = solidRectangle(4, 0.4)
              & solidCircle(1.2)
              & circle(2)
@@ -84,7 +84,7 @@ spaces.  We often like to use those spaces to line things up, too.
 When combining pictures, it helps if you remember to name things!  Another way of
 writing the same program we just looked at is:
 
-    main    = pictureOf(design)
+    main    = drawingOf(design)
     design  = slot & middle & outside
     slot    = solidRectangle(4, 0.4)
     middle  = solidCircle(1.2)
@@ -98,13 +98,13 @@ good names to the pieces.
 Pictures don't need to be black and white.  You can use `colored` to change the color
 of your pictures.  Here's a simple example:
 
-    main     = pictureOf(redWheel)
+    main     = drawingOf(redWheel)
     redWheel = colored(wheel, red)
     wheel    = solidCircle(4)
 
 You can also mix colors in the same picture:
 
-    main   = pictureOf(tree)
+    main   = drawingOf(tree)
     tree   = colored(leaves, green) & colored(trunk, brown)
     leaves = sector(0, 180, 4)
     trunk  = solidRectangle(1, 4)
@@ -119,7 +119,7 @@ You can also modify the colors!  Here are a few ways to do that:
 
 Let's try an example program:
 
-    main    = pictureOf(overlap)
+    main    = drawingOf(overlap)
     overlap = colored(square,  translucent(blue))
             & colored(disk, translucent(green))
     square  = solidRectangle(5, 5)
@@ -146,7 +146,7 @@ To use `translated`, you give it three things:
 
 Ready for an example?
 
-    main   = pictureOf(forest)
+    main   = drawingOf(forest)
     forest =   translated(tree, -5, 5)
              & translated(tree,  0, 0)
              & translated(tree,  5,-5)
@@ -168,7 +168,7 @@ To use `rotated`, you give it two things:
 
 Here's an example:
 
-    main    = pictureOf(diamond)
+    main    = drawingOf(diamond)
     diamond = rotated(square, 45)
     square  = solidRectangle(4, 4)
 
@@ -189,7 +189,7 @@ horizontally or vertically.  To use `scaled`, you'll give:
 
 Here's an example of `scaled`:
 
-    main = pictureOf(oval)
+    main = drawingOf(oval)
     oval = scaled(base, 2, 0.5)
     base = solidCircle(4)
 
@@ -228,7 +228,8 @@ more information.  You've already used a lot of functions:
   picture.
 * `light` is a function.  It needs a color, and makes another color that's
   about the same, but lighter.
-* `pictureOf` is a function.  It needs a picture, and makes a program.
+* `drawingOf` is a function.  It needs a picture, and makes a program to
+  draw that picture.
 * `scaled` is a function.  It needs a picture and two scaling factors, and
   makes a modified picture.
 
@@ -240,7 +241,7 @@ in parentheses after it, with commas between them.
 
 Remember how we used `rotated`?  Here's a quick reminder:
 
-    main    = pictureOf(diamond)
+    main    = drawingOf(diamond)
     diamond = rotated(square, 45)
     square  = rectangle(2, 2)
 
@@ -251,12 +252,12 @@ the name would go.
 
 Try it:
 
-    main = pictureOf(diamond)
+    main = drawingOf(diamond)
     diamond = rotated(rectangle(2, 2), 45)
 
 Or even:
 
-    main = pictureOf(rotated(rectangle(2, 2), 45))
+    main = drawingOf(rotated(rectangle(2, 2), 45))
 
 Careful, though!  You can avoid avoid naming simple things, but if you
 nest too much, you get parentheses inside of parentheses inside of
@@ -279,7 +280,7 @@ divide, use `/`.
 
 Check out this program:
 
-    main   = pictureOf(design)
+    main   = drawingOf(design)
     design = rotated(rectangle(4, 0.2), 1 * 180 / 5)
            & rotated(rectangle(4, 0.2), 2 * 180 / 5)
            & rotated(rectangle(4, 0.2), 3 * 180 / 5)
@@ -308,12 +309,12 @@ things in it.  For example:
 You can use the function called `pictures` to combine a list of pictures
 together into one picture.  For example:
 
-    main = pictureOf(allThePictures)
-    allThePictures = pictures[
+    main = drawingOf(allThePictures)
+    allThePictures = pictures([
         solidRectangle(4, 0.4),
         solidCircle(1.2),
         circle(2)
-        ]
+        ])
 
 #### List comprehensions ####
 
@@ -324,8 +325,8 @@ simpler list, and copying something once for each thing in it.  So if you
 have a list of numbers, you can turn it into a list of *circles*, each
 with a different radius.  That looks like this:
 
-    main = pictureOf(target)
-    target = pictures[ circle(r) | r <- [1, 2, 3, 4, 5] ]
+    main = drawingOf(target)
+    target = pictures([ circle(r) | r <- [1, 2, 3, 4, 5] ])
 
 The list comprehension was `[ circle(r) | r <- [1, 2, 3, 4, 5] ]`, and it
 has a few parts:
@@ -361,9 +362,9 @@ have to give the first two numbers, then use `..` to continue from there.
 
 Here's another example:
 
-    main = pictureOf(star)
-    star = pictures[ rotated(rectangle(10, 1/10), angle)
-                     | angle <- [10, 20 .. 360] ]
+    main = drawingOf(star)
+    star = pictures([ rotated(rectangle(10, 1/10), angle)
+                      | angle <- [10, 20 .. 360] ])
 
 So we start with a list of number counting by 10s from 10 to 360.  Then we
 call each of those numbers the variable "angle", and get a list of pictures
@@ -379,8 +380,8 @@ First, you can filter out certain members of the list you start with.
 Suppose you want to draw those circles, like in the `target` example, but
 you don't want to draw the middle one.  One way to say that is:
 
-    main = pictureOf(target)
-    target = pictures[ circle(r) | r <- [1 .. 5], r /= 3 ]
+    main = drawingOf(target)
+    target = pictures([ circle(r) | r <- [1 .. 5], r /= 3 ])
 
 Notice that `/=` means "not equal to".  So this says to make a picture out
 of circles built from each radius from 1 to 5, *except* for 3.
@@ -388,9 +389,9 @@ of circles built from each radius from 1 to 5, *except* for 3.
 Second, you can include base your list comprehension on several lists.
 This will draw a grid of circles:
 
-    main = pictureOf(grid)
-    grid = pictures[ translated(circle(1/2), x, y)
-                     | x <- [-9 .. 9], y <- [-9 .. 9] ]
+    main = drawingOf(grid)
+    grid = pictures([ translated(circle(1/2), x, y)
+                      | x <- [-9 .. 9], y <- [-9 .. 9] ])
 
 Because there are two base lists separated by commas, this will draw a
 circle for *every* *possible* *combination* of x and y from those lists.
@@ -401,9 +402,9 @@ of including a result for all possible combinations, this will only match
 the first element of each list, then the second from each list, and so on.
 Here's an example, using a list of number, and a list of colors!
 
-    main    = pictureOf(circles)
-    circles = pictures[ colored(circle(r), c) | r <- sizes
-                                              | c <- colors ]
+    main    = drawingOf(circles)
+    circles = pictures([ colored(circle(r), c) | r <- sizes
+                                               | c <- colors ])
     sizes   = [ 1, 2, 3, 4, 5 ]
     colors  = [ red, green, blue, yellow, purple ]
 
@@ -418,7 +419,7 @@ so on.
 To draw more precise shapes, we can use points on a "coordinate plane".  You
 can see a coordinate plane right now, just by running this program:
 
-    main = pictureOf(coordinatePlane)
+    main = drawingOf(coordinatePlane)
 
 The coordinate plane is made up of two directions: *horizontal* (also
 called x) and *vertical* (also called y).  The very center of the screen
@@ -444,37 +445,39 @@ plane:
   (the second number) is positive, and left because the x coordinate (the
   first number) is negative.
 
-Got it?  Great!  Now you can draw things like lines by giving a list of
-points in the coordinate plane to a function called `line`:
+Got it?  Great!  Now you can draw things like paths by giving a list of
+points in the coordinate plane to a function called `path`:
 
-    main = pictureOf(zigzag)
-    zigzag = line[(-2, 0), (-1, 1), (0, -1), (1, 1), (2, 0)]
+    main = drawingOf(zigzag)
+    zigzag = path([(-2, 0), (-1, 1), (0, -1), (1, 1), (2, 0)])
 
 To draw a closed shape, use `polygon` instead.  Can you figure out the
 mystery picture before you run the program?
 
-    main = pictureOf(mystery)
-    mystery = line[(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)]
+    main = drawingOf(mystery)
+    mystery = polygon(
+        [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
 
 If you prefer to fill in your shape, you can use `solidPolygon` instead of
 `polygon` and you'll get a solid version:
 
-    main = pictureOf(mystery)
-    mystery = polygon[(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)]
+    main = drawingOf(mystery)
+    mystery = solidPolygon(
+        [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
 
-There's also `thickPolygon` and `thickLine` which use an extra parameter
+There are also `thickPolygon` and `thickPath` which use an extra parameter
 for thickness:
 
-    main = pictureOf(mystery)
-    mystery = thickLine(path, 1)
-    path = [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)]
+    main = drawingOf(mystery)
+    mystery = thickPolygon(
+        [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)], 1)
 
 #### Using the coordinate plane to draw ####
 
 A neat trick is to use the coordinate plane as you write your program.  Say
 you want to draw a butterfly.  You might start by writing:
 
-    main = pictureOf(butterfly & coordinatePlane)
+    main = drawingOf(butterfly & coordinatePlane)
     butterfly = blank
 
 Now run your program, and you have a coordinate plane to measure what
@@ -512,7 +515,7 @@ capitalized.
 To declare types in your programs, you can use `::`, like this:
 
     main :: Program
-    main = pictureOf(wheel)
+    main = drawingOf(wheel)
 
     wheel :: Picture
     wheel = solidCircle(size)
@@ -532,7 +535,7 @@ are many types of lists: lists of numbers, lists of pictures, lists of
 colors, and so on.  To write the type of a list, we just write the type
 of the things *inside* the list, and surround it with square brackets.
 
-    main = pictureOf(circles)
+    main = drawingOf(circles)
     circles = pictures[ circle(r) | r <- sizes ]
 
     sizes :: [Number]
@@ -544,10 +547,10 @@ as you want about types!
 
 ### Points and Tuples ###
 
-What about a point, like the ones we used to make lines and polygons?
+What about a point, like the ones we used to make paths and polygons?
 It actually works just fine to say the type is `Point`:
 
-    main = pictureOf(line[start, end])
+    main = drawingOf(path[start, end])
 
     start :: Point
     start = (0, 0)
@@ -574,7 +577,7 @@ different types for the different things inside!
 Why would you use these?  Well, they can be useful for list
 comprehensions!
 
-    main = pictureOf(boxes)
+    main = drawingOf(boxes)
 
     boxDetails :: [(Number, Number, Color)]
     boxDetails = [
@@ -582,8 +585,8 @@ comprehensions!
         (3, 1/8, brown), (4, 1/2, pink), (8, 2, yellow)
         ]
 
-    boxes = pictures[ translated(colored(rectangle(s,s), c), x, 0)
-                      | (x, s, c) <- boxDetails ]
+    boxes = pictures([ translated(colored(rectangle(s,s), c), x, 0)
+                       | (x, s, c) <- boxDetails ])
 
 See?  You can describe the important characteristics of your picture
 in a concise list, and then give the details of how to build the

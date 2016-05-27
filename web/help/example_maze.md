@@ -105,11 +105,11 @@ The program
       where
         doorsPic = pictures [drawDoor(d) | d <- ds]
         allGridLines = colored(horizontalLines & verticalLines, black)
-        horizontalLines = pictures([line([(w, y), (0, y)]) | y <- [0..h]])
-        verticalLines   = pictures([line([(x, h), (x, 0)]) | x <- [0..w]])
+        horizontalLines = pictures([path([(w, y), (0, y)]) | y <- [0..h]])
+        verticalLines   = pictures([path([(x, h), (x, 0)]) | x <- [0..w]])
 
     drawDoor :: Door -> Picture
-    drawDoor(from, to) = colored(thickLine(g(from, to), 0.1), white)
+    drawDoor(from, to) = colored(thickPath(g(from, to), 0.1), white)
       where
         g :: (Point, Point) -> [Point]
         g ((fx,fy), (tx,ty))

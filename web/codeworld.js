@@ -229,7 +229,10 @@ function init() {
             "fromRational",
             "fromString",
             "ifThenElse",
+            "line",
             "negate",
+            "pictureOf",
+            "thickLine",
             "toDouble",
             "toInt",
         ];

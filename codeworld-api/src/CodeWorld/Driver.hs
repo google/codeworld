@@ -46,6 +46,7 @@ import           CodeWorld.Color
 import           Data.Char (chr)
 import           Data.IORef
 import           Data.JSString.Text
+import           Data.List (zip4)
 import           Data.Monoid
 import           Data.Time.Clock
 import           Data.Word
@@ -159,12 +160,60 @@ drawCodeWorldLogo ctx ds x y w h = do
             js_canvasDrawImage bufctx canvas 0 0 w h
             js_canvasDrawImage ctx (elementFromCanvas buf) x y w h
 
-followPath :: Canvas.Context -> [Point] -> Bool -> IO ()
-followPath _   [] closed = return ()
-followPath ctx ((sx,sy):ps) closed = do
+followPath :: Canvas.Context -> [Point] -> Bool -> Bool -> IO ()
+followPath ctx [] closed _ = return ()
+followPath ctx [p1] closed _ = return ()
+followPath ctx ((sx,sy):ps) closed False = do
     Canvas.moveTo (25 * sx) (25 * sy) ctx
     forM_ ps $ \(x,y) -> Canvas.lineTo (25 * x) (25 * y) ctx
     when closed $ Canvas.closePath ctx
+followPath ctx [p1, p2] False True = followPath ctx [p1, p2] False False
+followPath ctx ps False True = do
+    let [(x1,y1), (x2,y2), (x3,y3)] = take 3 ps
+        dprev = sqrt ((x2 - x1)^2 + (y2 - y1)^2)
+        dnext = sqrt ((x3 - x2)^2 + (y3 - y2)^2)
+        p     = dprev / (dprev + dnext)
+        cx    = x2 + p * (x1 - x3) / 2
+        cy    = y2 + p * (y1 - y3) / 2
+     in do Canvas.moveTo (25 * x1) (25 * y1) ctx
+           Canvas.quadraticCurveTo (25 * cx) (25 * cy) (25 * x2) (25 * y2) ctx
+    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $
+        \((x1,y1),(x2,y2),(x3,y3),(x4,y4)) ->
+            let dp  = sqrt ((x2 - x1)^2 + (y2 - y1)^2)
+                d1  = sqrt ((x3 - x2)^2 + (y3 - y2)^2)
+                d2  = sqrt ((x4 - x3)^2 + (y4 - y3)^2)
+                p   = d1 / (d1 + d2)
+                r   = d1 / (dp + d1)
+                cx1 = x2 + r * (x3 - x1) / 2
+                cy1 = y2 + r * (y3 - y1) / 2
+                cx2 = x3 + p * (x2 - x4) / 2
+                cy2 = y3 + p * (y2 - y4) / 2
+            in  Canvas.bezierCurveTo (25 * cx1) (25 * cy1) (25 * cx2) (25 * cy2)
+                                     (25 * x3) (25 * y3) ctx
+    let [(x1,y1), (x2,y2), (x3,y3)] = reverse $ take 3 $ reverse ps
+        dp = sqrt ((x2 - x1)^2 + (y2 - y1)^2)
+        d1 = sqrt ((x3 - x2)^2 + (y3 - y2)^2)
+        r  = d1 / (dp + d1)
+        cx = x2 + r * (x3 - x1) / 2
+        cy = y2 + r * (y3 - y1) / 2
+     in Canvas.quadraticCurveTo (25 * cx) (25 * cy) (25 * x3) (25 * y3) ctx
+followPath ctx ps@(_:(sx,sy):_) True True = do
+    Canvas.moveTo (25 * sx) (25 * sy) ctx
+    let rep = cycle ps
+    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $
+        \((x1,y1),(x2,y2),(x3,y3),(x4,y4)) ->
+            let dp  = sqrt ((x2 - x1)^2 + (y2 - y1)^2)
+                d1  = sqrt ((x3 - x2)^2 + (y3 - y2)^2)
+                d2  = sqrt ((x4 - x3)^2 + (y4 - y3)^2)
+                p   = d1 / (d1 + d2)
+                r   = d1 / (dp + d1)
+                cx1 = x2 + r * (x3 - x1) / 2
+                cy1 = y2 + r * (y3 - y1) / 2
+                cx2 = x3 + p * (x2 - x4) / 2
+                cy2 = y3 + p * (y2 - y4) / 2
+            in  Canvas.bezierCurveTo (25 * cx1) (25 * cy1) (25 * cx2) (25 * cy2)
+                                     (25 * x3) (25 * y3) ctx
+    Canvas.closePath ctx
 
 drawFigure :: Canvas.Context -> DrawState -> Double -> IO () -> IO ()
 drawFigure ctx ds w figure = do
@@ -192,12 +241,12 @@ fontString style font = stylePrefix style <> "25px " <> fontName font
         fontName (NamedFont txt) = "\"" <> textToJSString (T.filter (/= '"') txt) <> "\""
 
 drawPicture :: Canvas.Context -> DrawState -> Picture -> IO ()
-drawPicture ctx ds (Polygon ps) = do
-    withDS ctx ds $ followPath ctx ps True
+drawPicture ctx ds (Polygon ps smooth) = do
+    withDS ctx ds $ followPath ctx ps True smooth
     applyColor ctx ds
     Canvas.fill ctx
-drawPicture ctx ds (Path ps w closed) = do
-    drawFigure ctx ds w $ followPath ctx ps closed
+drawPicture ctx ds (Path ps w closed smooth) = do
+    drawFigure ctx ds w $ followPath ctx ps closed smooth
 drawPicture ctx ds (Arc b e r w) = do
     drawFigure ctx ds w $ do
         Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
@@ -519,7 +568,7 @@ handleControl _ _     _             w = w
 wrappedDraw :: (Wrapped a -> [Control a])
      -> (a -> Picture)
      -> Wrapped a -> Picture
-wrappedDraw ctrls f w = drawControlPanel ctrls w & f (state w)
+wrappedDraw ctrls f w = drawControlPanel ctrls w <> f (state w)
 
 drawControlPanel :: (Wrapped a -> [Control a]) -> Wrapped a -> Picture
 drawControlPanel ctrls w = pictures [ drawControl w alpha c | c <- ctrls w ]
@@ -530,44 +579,44 @@ drawControlPanel ctrls w = pictures [ drawControl w alpha c | c <- ctrls w ]
 drawControl :: Wrapped a -> Double -> Control a -> Picture
 drawControl _ alpha RestartButton = translated (-9) (-9) p
   where p = colored (RGBA 0   0   0   alpha)
-                    (thickArc 0.1 (pi / 6) (11 * pi / 6) 0.2 &
+                    (thickArc 0.1 (pi / 6) (11 * pi / 6) 0.2 <>
                      translated 0.173 (-0.1) (solidRectangle 0.17 0.17))
-          & colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
-          & colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
 
 drawControl _ alpha PlayButton = translated (-8) (-9) p
   where p = colored (RGBA 0   0   0   alpha)
                     (solidPolygon [ (-0.2, 0.25), (-0.2, -0.25), (0.2, 0) ])
-          & colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
-          & colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
 
 drawControl _ alpha PauseButton = translated (-8) (-9) p
   where p = colored (RGBA 0   0   0   alpha)
-                    (translated (-0.15) 0 (solidRectangle 0.2 0.6) &
+                    (translated (-0.15) 0 (solidRectangle 0.2 0.6) <>
                      translated ( 0.15) 0 (solidRectangle 0.2 0.6))
-          & colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
-          & colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
 
 drawControl _ alpha StepButton = translated (-7) (-9) p
   where p = colored (RGBA 0   0   0   alpha)
-                    (translated (-0.15) 0 (solidRectangle 0.2 0.5) &
+                    (translated (-0.15) 0 (solidRectangle 0.2 0.5) <>
                      solidPolygon [ (0.05, 0.25), (0.05, -0.25), (0.3, 0) ])
-          & colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
-          & colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
 
 drawControl _ alpha BackButton = translated (-6) (-9) p
   where p = colored (RGBA 0   0   0   alpha)
-                    (translated 0.15 0 (solidRectangle 0.2 0.5) &
+                    (translated 0.15 0 (solidRectangle 0.2 0.5) <>
                      solidPolygon [ (-0.05, 0.25), (-0.05, -0.25), (-0.3, 0) ])
-          & colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
-          & colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
 
 drawControl w alpha TimeLabel = translated (8) (-9) p
   where p = colored (RGBA 0   0   0   alpha)
                     (scaled 0.5 0.5 $
                         text (pack (showFFloatAlt (Just 4) (state w) "s")))
-          & colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      3.0 0.8)
-          & colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 3.0 0.8)
+         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      3.0 0.8)
+         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 3.0 0.8)
 
 animationControls :: Wrapped Double -> [Control Double]
 animationControls w

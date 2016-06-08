@@ -17,6 +17,7 @@
 module CodeWorld.Picture where
 
 import CodeWorld.Color
+import Data.Monoid ((<>))
 import Data.Text (Text, pack)
 
 type Point = (Double, Double)
@@ -39,8 +40,8 @@ rotatedVector angle (x,y) = (x * cos angle - y * sin angle,
 dotProduct :: Vector -> Vector -> Double
 dotProduct (x1, y1) (x2, y2) = x1 * x2 + y1 * y2
 
-data Picture = Polygon [Point]
-             | Path [Point] !Double !Bool
+data Picture = Polygon [Point] !Bool
+             | Path [Point] !Double !Bool !Bool
              | Arc !Double !Double !Double !Double
              | Text !TextStyle !Font !Text
              | Color !Color !Picture
@@ -60,34 +61,54 @@ blank = Pictures []
 
 -- | A thin sequence of line segments, with these points as endpoints
 path :: [Point] -> Picture
-path ps = Path ps 0 False
+path ps = Path ps 0 False False
 
 -- | A thick sequence of line segments, with given line width and endpoints
 thickPath :: Double -> [Point] -> Picture
-thickPath n ps = Path ps n False
+thickPath n ps = Path ps n False False
 
 -- | A thin sequence of line segments, with these points as endpoints
 line :: [Point] -> Picture
-line ps = Path ps 0 False
+line ps = Path ps 0 False False
 {-# WARNING line "Please use path instead of line" #-}
 
 -- | A thick sequence of line segments, with this line width and endpoints
 thickLine :: Double -> [Point] -> Picture
-thickLine n ps = Path ps n False
+thickLine n ps = Path ps n False False
 {-# WARNING thickLine "Please use thickPath instead of thickLine" #-}
 
 -- | A thin polygon with these points as vertices
 polygon :: [Point] -> Picture
-polygon ps = Path ps 0 True
+polygon ps = Path ps 0 True False
 
 -- | A thick polygon with this line width and these points as
 -- vertices
 thickPolygon :: Double -> [Point] -> Picture
-thickPolygon n ps = Path ps n True
+thickPolygon n ps = Path ps n True False
 
 -- | A solid polygon with these points as vertices
 solidPolygon :: [Point] -> Picture
-solidPolygon = Polygon
+solidPolygon ps = Polygon ps False
+
+-- | A smooth curve passing through these points.
+curve :: [Point] -> Picture
+curve ps = Path ps 0 False True
+
+-- | A thick smooth curve with this line width, passing through these points.
+thickCurve :: Double -> [Point] -> Picture
+thickCurve n ps = Path ps n False True
+
+-- | A smooth closed loop passing through these points.
+loop :: [Point] -> Picture
+loop ps = Path ps 0 True True
+
+-- | A thick smooth closed loop with this line width, passing through these points.
+thickLoop :: Double -> [Point] -> Picture
+thickLoop n ps = Path ps n True True
+
+-- | A solid smooth closed loop passing through these points.
+solidLoop :: [Point] -> Picture
+solidLoop ps = Polygon ps True
 
 -- | A thin rectangle, with this width and height
 rectangle :: Double -> Double -> Picture
@@ -199,11 +220,11 @@ coordinatePlane :: Picture
 coordinatePlane = axes & numbers & guidelines
   where xline y     = line [(-10, y), (10, y)]
         xaxis       = colored (RGBA 0 0 0 0.75) (xline 0)
-        axes        = xaxis & rotated (pi/2) xaxis
+        axes        = xaxis <> rotated (pi/2) xaxis
         xguidelines = pictures
             [colored (RGBA 0 0 0 0.25) (xline k) | k <- [-10, -9 .. 10]]
-        guidelines  = xguidelines & rotated (pi/2) xguidelines
-        numbers = xnumbers & ynumbers
+        guidelines  = xguidelines <> rotated (pi/2) xguidelines
+        numbers = xnumbers <> ynumbers
         xnumbers = pictures
             [ translated (fromIntegral k) 0.3 (scaled 0.5 0.5 (text (pack (show k))))
               | k <- [-9, -8 .. 9], k /= 0 ]

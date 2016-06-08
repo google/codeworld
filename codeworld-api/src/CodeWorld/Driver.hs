@@ -196,7 +196,7 @@ drawPicture ctx ds (Polygon ps) = do
     withDS ctx ds $ followPath ctx ps True
     applyColor ctx ds
     Canvas.fill ctx
-drawPicture ctx ds (Line ps w closed) = do
+drawPicture ctx ds (Path ps w closed) = do
     drawFigure ctx ds w $ followPath ctx ps closed
 drawPicture ctx ds (Arc b e r w) = do
     drawFigure ctx ds w $ do

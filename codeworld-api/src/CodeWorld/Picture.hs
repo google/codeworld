@@ -40,7 +40,7 @@ dotProduct :: Vector -> Vector -> Double
 dotProduct (x1, y1) (x2, y2) = x1 * x2 + y1 * y2
 
 data Picture = Polygon [Point]
-             | Line [Point] !Double !Bool
+             | Path [Point] !Double !Bool
              | Arc !Double !Double !Double !Double
              | Text !TextStyle !Font !Text
              | Color !Color !Picture
@@ -60,30 +60,30 @@ blank = Pictures []
 
 -- | A thin sequence of line segments, with these points as endpoints
 path :: [Point] -> Picture
-path ps = Line ps 0 False
+path ps = Path ps 0 False
 
 -- | A thick sequence of line segments, with given line width and endpoints
 thickPath :: Double -> [Point] -> Picture
-thickPath n ps = Line ps n False
+thickPath n ps = Path ps n False
 
 -- | A thin sequence of line segments, with these points as endpoints
 line :: [Point] -> Picture
-line ps = Line ps 0 False
+line ps = Path ps 0 False
 {-# WARNING line "Please use path instead of line" #-}
 
 -- | A thick sequence of line segments, with this line width and endpoints
 thickLine :: Double -> [Point] -> Picture
-thickLine n ps = Line ps n False
+thickLine n ps = Path ps n False
 {-# WARNING thickLine "Please use thickPath instead of thickLine" #-}
 
 -- | A thin polygon with these points as vertices
 polygon :: [Point] -> Picture
-polygon ps = Line ps 0 True
+polygon ps = Path ps 0 True
 
 -- | A thick polygon with this line width and these points as
 -- vertices
 thickPolygon :: Double -> [Point] -> Picture
-thickPolygon n ps = Line ps n True
+thickPolygon n ps = Path ps n True
 
 -- | A solid polygon with these points as vertices
 solidPolygon :: [Point] -> Picture

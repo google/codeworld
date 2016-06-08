@@ -88,6 +88,26 @@ thickPolygon (ps, n) = CWPic (CW.thickPolygon (toDouble n) (map toCWVect ps))
 solidPolygon :: [Point] -> Picture
 solidPolygon = CWPic . CW.solidPolygon . map toCWVect
 
+-- | A thin curve passing through these points.
+curve :: [Point] -> Picture
+curve = CWPic . CW.curve . map toCWVect
+
+-- | A thick curve passing through these points, with this line width
+thickCurve :: ([Point], Number) -> Picture
+thickCurve (ps, n) = CWPic (CW.thickCurve (toDouble n) (map toCWVect ps))
+
+-- | A thin closed loop passing through these points.
+loop :: [Point] -> Picture
+loop = CWPic . CW.loop . map toCWVect
+
+-- | A thick closed loop passing through these points, with this line width.
+thickLoop :: ([Point], Number) -> Picture
+thickLoop (ps, n) = CWPic (CW.thickLoop (toDouble n) (map toCWVect ps))
+
+-- | A solid closed loop passing through these points.
+solidLoop :: [Point] -> Picture
+solidLoop = CWPic . CW.solidLoop . map toCWVect
+
 -- | A thin rectangle, with this width and height
 rectangle :: (Number, Number) -> Picture
 rectangle (w, h) = CWPic (CW.rectangle (toDouble w) (toDouble h))

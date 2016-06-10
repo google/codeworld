@@ -197,26 +197,23 @@ You should try to get a good feeling for the meaning of those scaling
 factors.  Try changing the numbers in the example, and see if you can
 guess what will happen before you press run.
 
-### Putting It Together ###
-
-TODO: Add a non-trivial example here.
-
 Expressions
 -----------
 
 Now that you've spent some time trying out pictures, let's learn a few
-more tricks you can use.  The part of a definition after the equal sign
+more tricks you can use.  Anything you can write after the equal sign
 is called an *expression*.  For example:
 
 * `circle(4)` is an expression.
 * `colored(text("Help"), red)` is also an expression.
-* So is `rectangle(1, 4) & circle(2)`.
-* `tree = leaves & trunk` is *not* an expression.  It's a *definition*
-  instead.  But `leaves & trunk` is an expression.
+* `rectangle(1, 4) & circle(2)` is an expression.
+* `leaves & trunk` is an expression.
 
-Can you tell the difference?  Expressions describe something, but don't
-give it a name.  But every definition has an expression inside, after
-the equal sign.  So expressions are pretty important.
+However, `tree = leaves & trunk` is *not* an expression.  It's a
+definition.  Can you tell the difference?  Expressions describe
+something, but don't give it a name.  But every definition has an
+expression inside, after the equal sign.  So expressions are pretty
+important.
 
 ### Functions ###
 
@@ -530,7 +527,7 @@ your program is wrong.
 
 ### List Types ###
 
-What about lists?  Would you get their type is `List`?  Not quite!  There
+What about lists?  Would you guess their type is `List`?  Not quite!  There
 are many types of lists: lists of numbers, lists of pictures, lists of
 colors, and so on.  To write the type of a list, we just write the type
 of the things *inside* the list, and surround it with square brackets.
@@ -588,7 +585,7 @@ comprehensions!
     boxes = pictures([ translated(colored(rectangle(s,s), c), x, 0)
                        | (x, s, c) <- boxDetails ])
 
-See?  You can describe the important characteristics of your picture
+You can describe the important characteristics of your picture
 in a concise list, and then give the details of how to build the
 complete picture later.
 
@@ -615,15 +612,83 @@ arrow is the type of things that the function makes.
 Defining Functions
 ------------------
 
-TODO: Write this section.
+You already know how to define variables, so that you can refer to a
+shape by a simple name, and use it several times.  But sometimes, you don't
+want *exactly* the same thing several times.  You want things with one or
+two differences.  Maybe you want three faces, but with different sized eyes.
+Or maybe you want three houses, with different colored roofs.  In these cases,
+you want to write a new function.
 
-### If: Choosing what to do ###
+A function is incomplete: it is waiting for more information, which needs to
+be provided when it is used.  Think of some of the functions that we've
+already used.  `circle` is an incomplete shape: it depends on a radius.
+`rectangle` depends on a width and a height.  Similarly, you can write your
+own functions that need their own parameters.
 
-TODO: Write this section.
+Here's how you would define a house as a function that's waiting on a color
+for the roof, and apply it to draw a house with a red roof.
 
-### Multiple parameters ###
+    main = drawingOf(scene)
+    scene = house(red)
 
-TODO: Write this section.
+    house(roofColor) =
+        colored(translated(solidRectangle(12, 1), 0, 5), roofColor) &
+        solidRectangle(10, 10)
+
+Notice that before the equal sign, you give a name for the piece of missing
+information, which is called the parameter.  When using the function, you need
+to provide parentheses with specific values for those arguments.
+
+Parameters to functions can be of any type.  The next example defines a
+function with a picture as a parameter.
+
+    main = drawingOf(ringOf(rectangle(1,1)))
+    ringOf(p) = pictures([
+        rotated(translated(p, 5, 0), a) | a <- [45, 90 .. 360] ])
+
+The name `p` is given to the parameter to `ringOf`.  When `ringOf` is used in
+the definition of `main`, it must be given a parameter, with a specific picture
+to substitute for occurrences of the parameter `p`.
+
+The idea of *substitution* is fundamental in how you define functions in
+CodeWorld.  When you use a function, the body of the function is adapted by
+finding all parameter names, and substituting the corresponding actual
+parameters from where the function is used.
+
+### Conditionals: Choosing what to do ###
+
+All of the functions defined so far have basically the same form regardless of
+their parameters.  Sometimes, you may want the definition to follow a different
+form depending on the parameters.  In this case, you need a conditional.
+
+The simplest kind of conditional uses `if`, `then`, and `else`.  Here's an
+example:
+
+    main = drawingOf(thing(1) & thing(2))
+    thing(n) = if n > 1 then rectangle(n, n) else circle(n)
+
+This program will draw one square, and one circle.  You can use `if`, `then`,
+and `else` any place you can write an expression.  In your condition, you can
+use any inequality (`<`, `>`, `<=`, or `>=`), or you can check whether two things
+are equal using `==`.  Note the *two* equal signs: think of two equal signs as
+a question (are these equal?), while the single equal sign used in a definition
+is a statement (these things are equal!).
+
+If you have more than two possibilities, you may want to use guards instead:
+
+    main = drawingOf(thing(1) & thing(2) & thing(3))
+    thing(n)
+      | n > 2     = rectangle(n, 1)
+      | n > 1     = rectangle(n, n)
+      | otherwise = circle(n)
+
+This will draw a rectangle, a square, and a circle.  Each guard has a condition,
+and if the condition matches, that choice is made for the definition.  Guards
+are evaluated from the top down, so later guards only match if an earlier guard
+hasn't matched already.  Finally, a special guard `otherwise` matches anything
+that reaches it.  Since your program will crash if no guards match a function,
+it's usually a good idea to include an `otherwise` guard just to make sure
+something matches no matter what the parameters are.
 
 ### Pattern matching ###
 

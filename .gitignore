@@ -1,4 +1,12 @@
 build/
 data
 log/
+dist
+*.o
+*.js_o
+*.js_hi
+*.hi
+*.jsexe
+*.swp
 nohup.out
+

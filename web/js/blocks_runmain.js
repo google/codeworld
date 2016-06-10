@@ -1,0 +1,1 @@
+../../funblocks-base/src/Main.jsexe/runmain.js

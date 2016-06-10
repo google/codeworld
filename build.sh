@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+cwd=$(pwd)
+
 source base.sh
 
 run .  cabal update
@@ -31,3 +33,8 @@ run codeworld-api   cabal haddock --hoogle
 # Build codeworld-server from this project.
 
 run .  cabal_install ./codeworld-server
+
+cd funblocks-base/src
+ghcjs Main.hs
+cd $cwd
+./makelinks.sh > dev/null

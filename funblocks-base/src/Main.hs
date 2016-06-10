@@ -35,17 +35,6 @@ foreign import javascript unsafe "compile($1)"
 foreign import javascript unsafe "run()"
   js_cwrun :: IO ()
 
---btnBoomClick :: Document -> Element -> IO ()
-btnBoomClick doc ws = do
-        Just body <- getBody doc
-        -- (x, y) <- mouseClientXY
-        Just newParagraph <- createElement doc (Just "p")
-        cwtext <- liftIO $ workspaceToCode ws
-        text <- createTextNode doc cwtext
-        appendChild newParagraph text
-        appendChild body (Just newParagraph)
-        return ()
-
 btnRunClick ws = do
   liftIO $ print "btnRunClick"
   Just doc <- liftIO currentDocument
@@ -58,10 +47,7 @@ btnRunClick ws = do
   liftIO $ print code
   return ()
 
-
-
 main = do 
-          
       Just doc <- currentDocument 
       Just body <- getBody doc
 
@@ -74,12 +60,3 @@ main = do
       liftIO $ setBlockTypes -- assign layout and types of Blockly blocks
 
       return ()
-    
--- main = runWebGUI $ \ webView -> do
---     enableInspector webView
---     Just doc <- webViewGetDomDocument webView
---     Just body <- getBody doc
---     setInnerHTML body (Just "<h1>Hello World</h1><div><button id='btnBoom'>test</button></div>")
---     Just btnBoom <- getElementById doc "btnBoom"  -- fmap castToHTMLButtonElement <$> getElementById doc "btnBoom"
---     on btnBoom click (btnBoomClick doc) 
---     return ()

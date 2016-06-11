@@ -4,11 +4,11 @@ version:             0.2.0.0
 
 synopsis:            A functional block-based programming language for CodeWorld
 
-homepage:            https://github.com/stefan-j/FunBlocks
 license:             Apache-2.0
 license-file:        LICENSE
 author:              Stefan Jacholke
 maintainer:          stefanjacholke@gmail.com
+Copyright:           (c) 2016, The CodeWorld Authors
 build-type:          Simple
 cabal-version:       >=1.10
 

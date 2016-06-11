@@ -1,3 +1,6 @@
 [submodule "web/blockly"]
 	path = web/blockly
 	url = https://github.com/google/blockly
+[submodule "third_party/blockly"]
+	path = third_party/blockly
+	url = https://github.com/google/blockly

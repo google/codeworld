@@ -30,7 +30,6 @@ import GHCJS.DOM.Element (setInnerHTML,setId, click, Element)
 import GHCJS.DOM.Node (appendChild)
 import GHCJS.DOM.EventM (on, mouseClientXY)
 import GHCJS.DOM.Types (castToHTMLElement, castToHTMLButtonElement)
-import qualified CodeWorld as CW
 import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Marshal

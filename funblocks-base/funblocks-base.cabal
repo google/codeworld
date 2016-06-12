@@ -1,31 +1,22 @@
-name:                funblocks-base
+Name:                funblocks-base
 
-version:             0.2.0.0
+Version:             0.2.0.0
 
-synopsis:            A functional block-based programming language for CodeWorld
+Synopsis:            A functional block-based programming language for CodeWorld
 
-license:             Apache-2.0
-license-file:        LICENSE
-author:              Stefan Jacholke
-maintainer:          stefanjacholke@gmail.com
+License:             Apache-2.0
+License-file:        LICENSE
+Author:              Stefan Jacholke
+Maintainer:          stefanjacholke@gmail.com
 Copyright:           (c) 2016, The CodeWorld Authors
-build-type:          Simple
-cabal-version:       >=1.10
-
-Flag ghcjs
-  Description: Tell cabal we are using ghcjs
-  Default: True
+Build-type:          Simple
+Cabal-version:       >=1.10
 
 Executable funblocks-base
-  build-depends:       base >=4.8 && <4.9
-  
+  Build-depends:       base >=4.8 && <4.9
   Hs-source-dirs:      src
-
   Main-is:             Main.hs
-
-  default-language:    Haskell2010
-  
-  Build-depends: ghcjs-base,
-                 ghcjs-dom,
-                 codeworld-api,
-                 mtl
+  Default-language:    Haskell2010
+  Build-depends:       ghcjs-base,
+                       ghcjs-dom,
+                       mtl

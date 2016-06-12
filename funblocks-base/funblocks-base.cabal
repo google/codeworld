@@ -27,6 +27,5 @@ Executable funblocks-base
   
   Build-depends: ghcjs-base,
                  ghcjs-dom,
-                 ghcjs-canvas,
                  codeworld-api,
                  mtl

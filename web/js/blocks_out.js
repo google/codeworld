@@ -1,1 +1,1 @@
-../../funblocks-base/src/Main.jsexe/out.js
+../../build/bin/funblocks-base.jsexe/out.js

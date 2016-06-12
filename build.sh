@@ -34,7 +34,5 @@ run codeworld-api   cabal haddock --hoogle
 
 run .  cabal_install ./codeworld-server
 
-cd funblocks-base/src
-ghcjs Main.hs
-cd $cwd
-./makelinks.sh > dev/null
+# Build the JavaScript client code for FunBlocks, the block-based UI.
+run .  cabal_install --ghcjs ./funblocks-base

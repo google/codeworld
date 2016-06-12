@@ -1,0 +1,243 @@
+/*
+ * Copyright 2016 The CodeWorld Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+html { height: 100%; width: 100%; }
+
+body {
+  height: 100%;
+  background-color: #e5eff9;
+  margin: 0px;
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
+  flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  overflow-x: hidden;
+}
+
+#mainRow {
+  flex: 1 1 500px;
+  -webkit-flex: 1 1 500px;
+  -ms-flex: 1 1 500px;
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
+  flex-direction: row;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+}
+
+#buttons {
+  flex: 0 0 auto;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
+  flex-direction: row;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+}
+
+#nav {
+  flex: 0 1 150px;
+  -webkit-flex: 0 1 150px;
+  -ms-flex: 0 1 150px;
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
+  flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  overflow-y: auto;
+}
+
+#nav_mine, #nav_ctrl {
+  flex: 0 0 auto;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
+  flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  margin: 0px;
+}
+
+#source {
+  flex: 1 0 300px;
+  -webkit-flex: 1 0 300px;
+  -ms-flex: 1 0 300px;
+  position: relative;
+}
+
+#doc {
+  flex: 1 0 200px;
+  -webkit-flex: 1 0 200px;
+  -ms-flex: 1 0 200px;
+}
+
+#source .CodeMirror {
+  position:absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: auto;
+}
+
+#examples {
+  flex: 0 0 auto;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
+  text-align: left;
+}
+
+#result {
+  flex: 0 0 508px;
+  -webkit-flex: 0 0 508px;
+  -ms-flex: 0 0 508px;
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
+  flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  margin: 0px;
+}
+
+#runner {
+  flex: 0 0 500px;
+  -webkit-flex: 0 0 500px;
+  -ms-flex: 0 0 500px;
+}
+
+#message {
+  flex: 1 1 20px;
+  -webkit-flex: 1 1 20px;
+  -ms-flex: 1 1 20px;
+  overflow: auto;
+  font-size: 11px;
+  padding: 5px;
+}
+#message.error {
+  background-color: #fcc;
+}
+
+#message a {
+  cursor: pointer;
+}
+
+.cw-button {
+  border:1px solid;
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: center;
+  font-size:11px;
+  font-family:arial, helvetica, sans-serif;
+  margin: 2px 2px 2px 2px;
+  padding: 7px 7px 7px 7px;
+  text-decoration: none;
+  display:inline-block;
+  text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
+  font-weight:bold;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.cw-button,.cw-button-left {
+  text-align: left;
+}
+
+.cw-button.green.project-active,.cw-button.green.project-active:hover:active {
+  border-color: #74740e;
+  background-color: #a6a614;
+  background-image: linear-gradient(to bottom, #a6a614, #8c8c00);
+}
+
+.cw-button.green.project-active:hover {
+  border-color: #4b4b09;
+  background-color: #78780f;
+  background-image: linear-gradient(to bottom, #78780f, #595900);
+}
+
+.cw-button.green,.cw-button.green:hover:active {
+  border-color: #34740e;
+  background-color: #4ba614;
+  background-image: linear-gradient(to bottom, #4ba614, #008c00);
+}
+
+.cw-button.green:hover {
+  border-color: #224b09;
+  background-color: #36780f;
+  background-image: linear-gradient(to bottom, #36780f, #005900);
+}
+
+.cw-button.blue,.cw-button.blue:hover:active {
+  border-color: #0e3474;
+  background-color: #144ba6;
+  background-image: linear-gradient(to bottom, #144ba6, #00008c);
+}
+
+.cw-button.blue:hover {
+  border-color: #09224b;
+  background-color: #0f3678;
+  background-image: linear-gradient(to bottom, #0f3678, #000059);
+}
+
+.cw-button.red,.cw-button.red:hover:active {
+  border-color: #74340e;
+  background-color: #a64b14;
+  background-image: linear-gradient(to bottom, #a64b14, #8c0000);
+}
+
+.cw-button.red:hover {
+  border-color: #4b2209;
+  background-color: #78360f;
+  background-image: linear-gradient(to bottom, #78360f, #590000);
+}
+
+.cw-button:focus { outline: none; }
+::-moz-focus-inner { border:0; }
+
+.dropbox {
+  background-color: white;
+  border: solid #cccccc 1px;
+  box-shadow: 3px 3px 4px #000;
+  margin: 3px 5px 5px 3px;
+}

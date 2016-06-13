@@ -1,1 +1,1 @@
-../../build/bin/funblocks-base.jsexe/lib.js
+../../build/bin/funblocks-client.jsexe/lib.js

@@ -1,1 +1,1 @@
-../../build/bin/funblocks-base.jsexe/rts.js
+../../build/bin/funblocks-client.jsexe/rts.js

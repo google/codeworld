@@ -1,18 +1,16 @@
-Name:                funblocks-base
-
+Name:                funblocks-client
 Version:             0.2.0.0
-
 Synopsis:            A functional block-based programming language for CodeWorld
 
 License:             Apache-2.0
 License-file:        LICENSE
-Author:              Stefan Jacholke
-Maintainer:          stefanjacholke@gmail.com
+Author:              The CodeWorld Authors
+Maintainer:          Stefan Jacholke <stefanjacholke@gmail.com>
 Copyright:           (c) 2016, The CodeWorld Authors
 Build-type:          Simple
 Cabal-version:       >=1.10
 
-Executable funblocks-base
+Executable funblocks-client
   Build-depends:       base >=4.8 && <4.9
   Hs-source-dirs:      src
   Main-is:             Main.hs

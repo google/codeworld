@@ -23,30 +23,24 @@ module Main (
 
 import Control.Applicative ((<$>))
 import GHCJS.DOM
-       (enableInspector, webViewGetDomDocument, runWebGUI, currentDocument, )
-import GHCJS.DOM.Document (getBody, createElement,getElementById, createTextNode, Document(..))
--- import GHCJS.DOM.HTMLButtonElement (onClick)
-import GHCJS.DOM.Element (setInnerHTML,setId, click, Element)
-import GHCJS.DOM.Node (appendChild)
-import GHCJS.DOM.EventM (on, mouseClientXY)
-import GHCJS.DOM.Types (castToHTMLElement, castToHTMLButtonElement)
+       (currentDocument, )
+import GHCJS.DOM.Document (getBody, getElementById, Document(..))
+import GHCJS.DOM.Element (setInnerHTML, click, Element)
+import GHCJS.DOM.EventM (on )
 import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Marshal
-import Data.JSString (unpack, pack)
-import System.IO.Unsafe (unsafePerformIO)
+import Data.JSString (pack)
 import Control.Monad.Trans (liftIO)
 import Blockly.Workspace
 import Blocks.CodeGen
 import Blocks.Types
 
-data Type = TNumber | TString | TPicture | TNone
-  deriving Show
-
-
+-- call blockworld.js compile
 foreign import javascript unsafe "compile($1)"
   js_cwcompile :: JSString -> IO ()
 
+-- call blockworld.js run
 foreign import javascript unsafe "run()"
   js_cwrun :: IO ()
 
@@ -55,7 +49,7 @@ btnRunClick ws = do
   Just doc <- liftIO currentDocument
   code <- liftIO $ workspaceToCode ws
   liftIO $ js_cwcompile (pack code)
-  liftIO $ js_cwrun
+  liftIO js_cwrun
   Just genCode <- getElementById doc "genCode"
   setInnerHTML genCode (Just code)
   liftIO $ print "this is new"
@@ -65,13 +59,9 @@ btnRunClick ws = do
 main = do 
       Just doc <- currentDocument 
       Just body <- getBody doc
-
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
-      liftIO $ assignAll
-
+      liftIO assignAll
       Just btnRun <- getElementById doc "btnRun" 
       on btnRun click (btnRunClick workspace)
-      
-      liftIO $ setBlockTypes -- assign layout and types of Blockly blocks
-
+      liftIO setBlockTypes -- assign layout and types of Blockly blocks
       return ()

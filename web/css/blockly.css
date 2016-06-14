@@ -155,7 +155,11 @@
   fill-opacity: .8;
 }
 .blocklyScrollbarBackground {
-  opacity: 0;
+  opacity: 0.0;
+}
+.blocklyScrollbarHandle {
+  fill: #b0b0b0;
+  opacity: 0.9;
 }
 .blocklyScrollbarKnob {
   fill: #ccc;

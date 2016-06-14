@@ -23,7 +23,8 @@ module Blockly.DesignBlock (Type(..)
                           ,Field(..)
                           ,Connection(..)
                           ,DesignBlock(..)
-                          ,Color
+                          ,Color(..)
+                          ,Tooltip(..)
                           ,setBlockType)
   where
 
@@ -34,7 +35,8 @@ import GHCJS.Marshal
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
 
-
+-- Low level bindings to construction of various different type of Blockly
+-- blocks
 
 data Type = Type String
           | NoType
@@ -51,9 +53,10 @@ data Field = Text String
 data Connection = TopCon | BotCon | TopBotCon | LeftCon
 
 -- Name inputs connectiontype color outputType tooltip
-data DesignBlock = DesignBlock String [Input] Connection Color Type String
+data DesignBlock = DesignBlock String [Input] Connection Color Type Tooltip
 
-type Color = Int
+newtype Color = Color Int
+newtype Tooltip = Tooltip String
 
 fieldCode :: FieldInput -> Field -> IO FieldInput
 fieldCode field (Text str) = js_appendTextField field (pack str)
@@ -78,7 +81,7 @@ inputCode block (Value name fieldType fields (Type type_) ) = do
  
 -- set block
 setBlockType :: DesignBlock -> IO ()
-setBlockType (DesignBlock name inputs connection color type_ tooltip) = do
+setBlockType (DesignBlock name inputs connection (Color color) type_ (Tooltip tooltip) ) = do
   cb <- syncCallback1 ContinueAsync  (\this -> do 
                                  let block = Block this 
                                  js_setColor block color

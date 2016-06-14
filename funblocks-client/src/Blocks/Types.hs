@@ -19,91 +19,107 @@ module Blocks.Types(setBlockTypes)
 
 import Blockly.DesignBlock 
 
+colorPicture = Color 160
+colorNumber = Color 210
+colorProgram = Color 0
+colorColor = Color 290
+
+typePicture = Type "Picture"
+typeNumber = Type "Number"
+typeProgram = NoType
+typeColor = Type "Color"
+
 number = DesignBlock "number" 
           [Dummy 
             [TextInput "3" "NUMBER"]
           ]
-          LeftCon 210 (Type "Number") "Enter a Number"
+          LeftCon colorNumber typeNumber 
+          (Tooltip "Enter a Number")
 
 cwText = DesignBlock "cw_text" 
           [Dummy 
             [TextInput "Hello Panda" "TEXT"
             ,Text "Text"]
           ]
-          LeftCon 160 (Type "Picture") "Enter some text"
+          LeftCon colorPicture typePicture 
+          (Tooltip "Enter some text")
 
 cwDrawingOf = DesignBlock "cw_drawingof"
           [Dummy [Text "Drawing of"] 
-           ,Value "VALUE" LeftField [] (Type "Picture")] 
-          LeftCon 00 NoType 
-          "Displays a drawing of a picture"
+           ,Value "VALUE" LeftField [] typePicture] 
+          LeftCon colorProgram typeProgram 
+          (Tooltip "Displays a drawing of a picture")
 
 cwCircle = DesignBlock "cw_circle"
           [Dummy [Text "Circle"] 
-           ,Value "RADIUS" LeftField [Text "Radius"] (Type "Number")] 
-          LeftCon 160 (Type "Picture") 
-          "Picture of a circle"
+           ,Value "RADIUS" LeftField [Text "Radius"] typeNumber] 
+          LeftCon colorPicture typePicture
+          (Tooltip "Picture of a circle")
 
 cwSolidCircle = DesignBlock "cw_solidcircle"
           [Dummy [Text "Solid Circle"] 
-           ,Value "RADIUS" LeftField [Text "Radius"] (Type "Number")] 
-          LeftCon 160 (Type "Picture") 
-          "Picture of a solid circle"
+           ,Value "RADIUS" LeftField [Text "Radius"] typeNumber] 
+          LeftCon colorPicture typePicture
+          (Tooltip "Picture of a solid circle")
 
 cwSolidRectangle = DesignBlock "cw_solidrectangle"
           [Dummy [Text "Solid Rectangle"] 
-           ,Value "WIDTH" LeftField [Text "Width"] (Type "Number") 
-           ,Value "HEIGHT" LeftField [Text "Height"] (Type "Number")] 
-          LeftCon 160 (Type "Picture") 
-          "Picture of a solid rectangle"
+           ,Value "WIDTH" LeftField [Text "Width"] typeNumber 
+           ,Value "HEIGHT" LeftField [Text "Height"] typeNumber] 
+          LeftCon colorPicture typePicture 
+          (Tooltip "Picture of a solid rectangle")
 
 cwBlue = DesignBlock "cw_blue" 
           [Dummy 
             [Text "Blue"]
           ]
-          LeftCon 290 (Type "Color") "The color blue"
+          LeftCon colorColor typeColor 
+          (Tooltip "The color blue")
 
 cwRed = DesignBlock "cw_red" 
           [Dummy 
             [Text "Red"]
           ]
-          LeftCon 290 (Type "Color") "The color red"
+          LeftCon colorColor typeColor 
+          (Tooltip "The color red")
 
 cwGreen = DesignBlock "cw_green" 
           [Dummy 
             [Text "Green"]
           ]
-          LeftCon 290 (Type "Color") "The color green"
+          LeftCon colorColor typeColor
+          (Tooltip "The color green")
 
 cwBrown = DesignBlock "cw_brown" 
           [Dummy 
             [Text "Brown"]
           ]
-          LeftCon 290 (Type "Color") "The color brown"
+          LeftCon colorColor typeColor 
+          (Tooltip "The color brown")
 
 cwColored = DesignBlock "cw_colored"
           [Dummy [Text "Change color"] 
-           ,Value "PICTURE" LeftField [Text "Picture"] (Type "Picture") 
-           ,Value "COLOR" LeftField [Text "Color"] (Type "Color")] 
-          LeftCon 160 (Type "Picture") 
-          "Change the color of a picture"
+           ,Value "PICTURE" LeftField [Text "Picture"] typePicture 
+           ,Value "COLOR" LeftField [Text "Color"] typeColor] 
+          LeftCon colorPicture typePicture
+          (Tooltip "Change the color of a picture")
 
 cwTranslate = DesignBlock "cw_translate"
           [Dummy [Text "Translate"] 
-           ,Value "PICTURE" LeftField [Text "Picture"] (Type "Picture") 
-           ,Value "X" LeftField [Text "x"] (Type "Number")
-           ,Value "Y" LeftField [Text "y"] (Type "Number")
+           ,Value "PICTURE" LeftField [Text "Picture"] typePicture 
+           ,Value "X" LeftField [Text "x"] typeNumber
+           ,Value "Y" LeftField [Text "y"] typeNumber
           ] 
-          LeftCon 160 (Type "Picture") 
-          "Translate a picture"
+          LeftCon colorPicture typePicture 
+          (Tooltip "Translate a picture")
 
 cwCombine = DesignBlock "cw_combine"
           [Dummy [Text "Combine pictures"] 
-           ,Value "PIC1" LeftField [Text "Picture"] (Type "Picture") 
-           ,Value "PIC2" LeftField [Text "Picture"] (Type "Picture") 
+           ,Value "PIC1" LeftField [Text "Picture"] typePicture 
+           ,Value "PIC2" LeftField [Text "Picture"] typePicture 
           ] 
-          LeftCon 160 (Type "Picture") 
-          "Combines two pictures"
+          LeftCon colorPicture typePicture 
+          (Tooltip "Combines two pictures")
 
 
 

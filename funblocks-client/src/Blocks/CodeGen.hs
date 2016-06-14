@@ -226,19 +226,3 @@ order CConditional    = 15; -- ?:
 order CAssignment     = 16; -- = += -= *= /= %= <<= >>= ...
 order CComma          = 17; -- ,
 order CNone           = 99; -- (...)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

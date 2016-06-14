@@ -23,11 +23,21 @@ colorPicture = Color 160
 colorNumber = Color 210
 colorProgram = Color 0
 colorColor = Color 290
+colorPoly = Color 50
 
 typePicture = Type "Picture"
 typeNumber = Type "Number"
 typeProgram = NoType
 typeColor = Type "Color"
+typeSet = Type ""
+
+letVar = DesignBlock "letVar"
+            [Dummy [TextInput "foo" "VARNAME"
+            ,Text "Let"]
+           ,Value "VARVALUE" LeftField [Text ""] typeSet]
+          
+          LeftCon colorPoly typeColor
+          (Tooltip "Enter name of the variable")
 
 number = DesignBlock "number" 
           [Dummy 
@@ -90,6 +100,13 @@ cwGreen = DesignBlock "cw_green"
           LeftCon colorColor typeColor
           (Tooltip "The color green")
 
+cwOrange = DesignBlock "cw_orange" 
+          [Dummy 
+            [Text "Orange"]
+          ]
+          LeftCon colorColor typeColor 
+          (Tooltip "The color orange")
+
 cwBrown = DesignBlock "cw_brown" 
           [Dummy 
             [Text "Brown"]
@@ -132,10 +149,12 @@ blockTypes = [ cwCircle
               ,cwRed
               ,cwGreen
               ,cwBrown
+              ,cwOrange
               ,cwColored
               ,cwTranslate
               ,cwCombine
               ,cwDrawingOf
+              ,letVar
                 ]
 
 

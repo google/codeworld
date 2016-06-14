@@ -90,16 +90,14 @@
                           <block type="cw_blue"></block>
                           <block type="cw_green"></block>
                           <block type="cw_brown"></block>
+                          <block type="cw_orange"></block>
                       </category>
-                      <category name="Temp">
-                          <block type="controls_if"></block>
-                          <block type="math_arithmetic"></block>
-                          <block type="text"></block>
+                      <category name="Definitions">
+                          <block type="letVar"></block>
                       </category>
-
                    </xml>
 
-                <div id="blocklyDiv" style="height: 800px; width:100%;"> </div>
+                <div id="blocklyDiv" style="height: 100%; width:100%;"> </div>
 
                 </br>
                 <div class="btn-group" role="group" aria-label="...">
@@ -124,16 +122,6 @@
           </div>
           <h4>Generated Code:</h4>
           <pre id="genCode" class="sh_haskell" style="width:100%; height:400px;">
-test :: a -> b -> Int
-fib 0 = 0
-fib 1 = 1
-fib n = fib (n-1) + fib (n-2)
-main :: IO ()
-main      = animationOf(design)
-design(t) = rotated(slot, 60 * t) & middle & outside
-slot      = solidRectangle(4, 0.4)
-middle    = solidCircle(1.2)
-outside   = circle(2)
           </pre> 
         </div> 
     </div>
@@ -142,8 +130,10 @@ outside   = circle(2)
     <nav class="navbar navbar-default navbar-fixed-bottom" style="padding-left:
     10px;">
       </br>
-      <button type="button" class="btn btn-primary navbar-btn">Browse</button>
-      <button type="button" class="btn btn-warning navbar-btn">Help</button>
+      <!-- <button type="button" class="btn btn-primary
+        navbar-btn">Browse</button> -->
+      <!-- <button type="button" class="btn btn-warning
+        navbar-btn">Help</button> -->
       <button type="button" class="btn btn-success navbar-btn" id="btnRun">Run</button>
       <p class="navbar-text navbar-right" style="padding-right: 30px;">Status: None</p>
     </nav>

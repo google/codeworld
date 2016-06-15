@@ -18,13 +18,19 @@
 -}
 
 module Blockly.Block ( Block(..)
-                     , getFieldValue)
+                     , getFieldValue
+                     , getBlockType
+                     , blockTest
+                     , getOutputBlock
+                     , getColour
+                     , setColour)
   where
 
 import GHCJS.Types
 import Data.JSString (pack, unpack)
 import GHCJS.Foreign
 import GHCJS.Marshal
+import Unsafe.Coerce
 
 newtype Block = Block JSVal
 
@@ -39,8 +45,24 @@ instance ToJSVal Block where
 instance FromJSVal Block where
   fromJSVal v = return $ Just $ Block v
 
-getType :: Block -> String
-getType = unpack . js_type
+getBlockType :: Block -> String
+getBlockType = unpack . js_type
+
+getOutputBlock :: Block -> Maybe Block
+getOutputBlock block = if isNull con then Nothing
+                       else let block = js_outputConnectionBlock con in 
+                         if isNull block then Nothing
+                         else Just $ unsafeCoerce block
+  where con = js_outputConnection block
+
+blockTest :: Block -> IO ()
+blockTest = js_testOutputConnection
+
+setColour :: Block -> Int -> IO ()
+setColour = js_setColour 
+
+getColour :: Block -> Int
+getColour = js_getColour 
 
 --- FFI
 
@@ -49,3 +71,21 @@ foreign import javascript unsafe "$1.getFieldValue($2)"
 
 foreign import javascript unsafe "$1.type"
   js_type :: Block -> JSString
+
+-- getConnection
+foreign import javascript unsafe "$1.outputConnection"
+  js_outputConnection :: Block -> JSVal
+
+foreign import javascript unsafe "$1.targetBlock()"
+  js_outputConnectionBlock :: JSVal -> JSVal
+
+foreign import javascript unsafe "alert($1.outputConnection.targetBlock())"
+  js_testOutputConnection :: Block -> IO ()
+
+foreign import javascript unsafe "$1.getColour()"
+  js_getColour :: Block -> Int
+
+foreign import javascript unsafe "$1.setColour($2)"
+  js_setColour :: Block -> Int -> IO ()
+
+

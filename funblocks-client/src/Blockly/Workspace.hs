@@ -29,6 +29,7 @@ import GHCJS.Types
 import Data.JSString (pack, unpack)
 import GHCJS.Foreign
 import GHCJS.Marshal
+import Unsafe.Coerce
 import Blockly.General
 import Blockly.Block (Block)
 
@@ -52,8 +53,10 @@ workspaceToCode workspace = js_blocklyWorkspaceToCode workspace >>= return . unp
 getById :: UUID -> Workspace
 getById (UUID uuidStr) = js_getById (pack uuidStr)
 
-getBlockById :: Workspace -> UUID -> Block
-getBlockById workspace (UUID uuidstr) = js_getBlockById workspace (pack uuidstr)
+getBlockById :: Workspace -> UUID -> Maybe Block
+getBlockById workspace (UUID uuidstr) = if isNull val then Nothing
+                                        else Just $ unsafeCoerce val
+  where val = js_getBlockById workspace (pack uuidstr)
 
 --- FFI
 foreign import javascript unsafe "Blockly.inject($1, { toolbox: document.getElementById($2), css: false})"
@@ -66,5 +69,5 @@ foreign import javascript unsafe "Blockly.Workspace.getById($1)"
   js_getById :: JSString -> Workspace
 
 foreign import javascript unsafe "$1.getBlockById($2)"
-  js_getBlockById :: Workspace -> JSString -> Block
+  js_getBlockById :: Workspace -> JSString -> JSVal
 

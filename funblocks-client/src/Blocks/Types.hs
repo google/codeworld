@@ -18,6 +18,8 @@ module Blocks.Types(setBlockTypes)
   where
 
 import Blockly.DesignBlock 
+import Blockly.General
+import Blockly.Event
 
 colorPicture = Color 160
 colorNumber = Color 210
@@ -156,9 +158,6 @@ blockTypes = [ cwCircle
               ,cwDrawingOf
               ,letVar
                 ]
-
-
-
 
 -- Assigns CodeGen functions defined here to the Blockly Javascript Code
 -- generator

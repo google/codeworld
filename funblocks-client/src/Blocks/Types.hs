@@ -120,14 +120,14 @@ cwBrown = DesignBlock "cw_brown"
           (Tooltip "The color brown")
 
 cwColored = DesignBlock "cw_colored"
-          [Dummy [Text "colored"] 
+          [Dummy [Text "Colored"] 
            ,Value "PICTURE" LeftField [Text "Picture"] typePicture 
            ,Value "COLOR" LeftField [Text "Color"] typeColor] 
           inlineDef colorPicture typePicture
           (Tooltip "Change the color of a picture")
 
 cwTranslate = DesignBlock "cw_translate"
-          [Dummy [Text "translated"] 
+          [Dummy [Text "Translated"] 
            ,Value "PICTURE" LeftField [Text "Picture"] typePicture 
            ,Value "X" LeftField [Text "x"] typeNumber
            ,Value "Y" LeftField [Text "y"] typeNumber
@@ -136,7 +136,7 @@ cwTranslate = DesignBlock "cw_translate"
           (Tooltip "Translate a picture")
 
 cwScale = DesignBlock "cw_scale"
-          [Dummy [Text "scaled"] 
+          [Dummy [Text "Scaled"] 
            ,Value "PICTURE" LeftField [Text "Picture"] typePicture 
            ,Value "HORZ" LeftField [Text "horizontal"] typeNumber
            ,Value "VERTZ" LeftField [Text "vertical"] typeNumber
@@ -145,7 +145,7 @@ cwScale = DesignBlock "cw_scale"
           (Tooltip "Scale a picture")
 
 cwRotate = DesignBlock "cw_rotate"
-          [Dummy [Text "rotated"] 
+          [Dummy [Text "Rotated"] 
            ,Value "PICTURE" LeftField [Text "Picture"] typePicture 
            ,Value "ANGLE" LeftField [Text "angle"] typeNumber
           ] 
@@ -153,7 +153,7 @@ cwRotate = DesignBlock "cw_rotate"
           (Tooltip "Rotate")
 
 cwCombine = DesignBlock "cw_combine"
-          [Dummy [Text "combined"] 
+          [Dummy [Text "Combined"] 
            ,Value "PIC1" LeftField [Text "Picture"] typePicture 
            ,Value "PIC2" LeftField [Text "Picture"] typePicture 
           ] 
@@ -162,9 +162,9 @@ cwCombine = DesignBlock "cw_combine"
 
 
 conIf = DesignBlock "con_if"
-        [ Value "IF" LeftField [Text "if"] typeBool
-         ,Value "THEN" LeftField [Text "then"] (Poly 0)
-         ,Value "ELSE" LeftField [Text "else"] (Poly 0)
+        [ Value "IF" LeftField [Text "If"] typeBool
+         ,Value "THEN" LeftField [Text "Then"] (Poly 0)
+         ,Value "ELSE" LeftField [Text "Else"] (Poly 0)
          ]
          inlineDef colorPoly (Poly 0)
          (Tooltip "if condition is true then give a else b")
@@ -178,14 +178,14 @@ conEq = DesignBlock "con_eq"
 
 conTrue = DesignBlock "con_true" 
           [Dummy 
-            [Text "true"]
+            [Text "True"]
           ]
           inlineDef colorBool typeBool
           (Tooltip "True logic value")
 
 conFalse = DesignBlock "con_false" 
           [Dummy 
-            [Text "false"]
+            [Text "False"]
           ]
           inlineDef colorBool typeBool
           (Tooltip "False logic value")

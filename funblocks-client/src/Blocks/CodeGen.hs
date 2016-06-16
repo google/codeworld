@@ -100,6 +100,19 @@ blockTranslate block = none $ "translated (" ++ pic ++ "," ++ x ++ "," ++ y ++ "
     x = valueToCode block "X" CNone
     y = valueToCode block "Y" CNone
 
+blockScale :: GeneratorFunction
+blockScale block = none $ "scaled (" ++ pic ++ "," ++ hor ++ "," ++ vert ++ ")"
+  where
+    pic = valueToCode block "PICTURE" CNone
+    hor = valueToCode block "HORZ" CNone
+    vert = valueToCode block "VERTZ" CNone
+
+blockRotate :: GeneratorFunction
+blockRotate block = none $ "rotated (" ++ pic ++ "," ++ angle ++ ")"
+  where
+    pic = valueToCode block "PICTURE" CNone
+    angle = valueToCode block "ANGLE" CNone
+
 blockBlue :: GeneratorFunction
 blockBlue block = none "blue"
 
@@ -111,6 +124,32 @@ blockRed block = none "red"
 
 blockGreen :: GeneratorFunction
 blockGreen block = none "green"
+
+blockLetVar :: GeneratorFunction
+blockLetVar block = none $ varName ++ " = " ++ expr 
+  where
+    varName = getFieldValue block "VARNAME" 
+    expr = valueToCode block "VARVALUE" CNone
+
+blockTrue :: GeneratorFunction
+blockTrue block = none "True"
+
+blockFalse :: GeneratorFunction
+blockFalse block = none "False"
+
+blockIf :: GeneratorFunction
+blockIf block = none $ "if " ++ ifexpr ++ " then "
+                  ++ thenexpr ++ " else " ++ elseexpr
+  where
+   ifexpr = valueToCode block "IF" CNone
+   thenexpr = valueToCode block "THEN" CNone
+   elseexpr = valueToCode block "ELSE" CNone
+
+blockEq :: GeneratorFunction
+blockEq block = member $ left ++ " == " ++ right
+  where
+    left = valueToCode block "LEFT" CAtomic
+    right = valueToCode block "RIGHT" CAtomic
 
 blockCodeMap = [ ("cw_text",blockText)
                 ,("cw_translate", blockTranslate)
@@ -125,6 +164,13 @@ blockCodeMap = [ ("cw_text",blockText)
                 ,("cw_red", blockRed)
                 ,("cw_green", blockGreen)
                 ,("cw_brown", blockBrown)
+                ,("letVar", blockLetVar)
+                ,("con_true", blockTrue)
+                ,("con_false", blockFalse)
+                ,("con_if", blockIf)
+                ,("con_eq", blockEq)
+                ,("cw_scale", blockScale)
+                ,("cw_rotate", blockRotate)
                 ]
 
 -- Assigns CodeGen functions defined here to the Blockly Javascript Code

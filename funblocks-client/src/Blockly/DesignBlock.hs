@@ -21,6 +21,7 @@ module Blockly.DesignBlock (Type(..)
                           ,FieldType(..)
                           ,Input(..)
                           ,Field(..)
+                          ,Inline(..)
                           ,Connection(..)
                           ,DesignBlock(..)
                           ,Color(..)
@@ -53,9 +54,11 @@ data Field = Text String
             | TextInput String String -- displayname, value
             
 data Connection = TopCon | BotCon | TopBotCon | LeftCon
+newtype Inline = Inline Bool
 
 -- Name inputs connectiontype color outputType tooltip
-data DesignBlock = DesignBlock String [Input] Connection Color Type Tooltip
+data DesignBlock = DesignBlock String [Input] Inline Color Type Tooltip
+
 
 newtype Color = Color Int
 newtype Tooltip = Tooltip String
@@ -94,7 +97,7 @@ inputCode block pvars (Value name fieldType fields (Poly polyIndex) ) = do
  
 -- set block
 setBlockType :: DesignBlock -> IO ()
-setBlockType (DesignBlock name inputs connection (Color color) type_ (Tooltip tooltip) ) = do
+setBlockType (DesignBlock name inputs (Inline inline) (Color color) type_ (Tooltip tooltip) ) = do
   cb <- syncCallback1 ContinueAsync  (\this -> do 
                                  let block = Block this 
                                  js_setColor block color
@@ -106,7 +109,9 @@ setBlockType (DesignBlock name inputs connection (Color color) type_ (Tooltip to
                                      Type tp -> js_setOutputTypeConc block (pack tp)
                                      Poly ind -> js_setOutputTypePoly block (tvars !! ind)
                                      _ -> js_disableOutput block 
-
+                                 case inline of
+                                    True -> js_setInputsInline block True
+                                    _ -> return ()
                                  return ()
                                  )
   js_setGenFunction (pack name) cb
@@ -163,3 +168,5 @@ foreign import javascript unsafe "$1.setTypeExpr($2)"
 foreign import javascript unsafe "$1.setTypeExpr(new Blockly.TypeExpr($2))"
   js_setTypeExprConc :: FieldInput -> JSString -> IO ()
 
+foreign import javascript unsafe "$1.setInputsInline($2)"
+  js_setInputsInline :: Block -> Bool -> IO ()

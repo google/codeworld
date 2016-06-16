@@ -35,18 +35,20 @@ typeColor = Type "Color"
 typeBool = Type "bool"
 typeSet = NoType
 
+inlineDef = Inline False
+
 letVar = DesignBlock "letVar"
             [Dummy [TextInput "foo" "VARNAME"
             ,Text "Let"]
            ,Value "VARVALUE" LeftField [Text ""] (Poly 0)]
-          LeftCon colorPoly typeSet
+          inlineDef colorPoly typeSet
           (Tooltip "Enter name of the variable")
 
 number = DesignBlock "number" 
           [Dummy 
             [TextInput "3" "NUMBER"]
           ]
-          LeftCon colorNumber typeNumber 
+          inlineDef colorNumber typeNumber 
           (Tooltip "Enter a Number")
 
 cwText = DesignBlock "cw_text" 
@@ -54,91 +56,108 @@ cwText = DesignBlock "cw_text"
             [TextInput "Hello Panda" "TEXT"
             ,Text "Text"]
           ]
-          LeftCon colorPicture typePicture 
+          inlineDef colorPicture typePicture 
           (Tooltip "Enter some text")
 
 cwDrawingOf = DesignBlock "cw_drawingof"
-          [Dummy [Text "Drawing of"] 
+          [Dummy [Text "Drawing "] 
            ,Value "VALUE" LeftField [] typePicture] 
-          LeftCon colorProgram typeProgram 
+          inlineDef colorProgram typeProgram 
           (Tooltip "Displays a drawing of a picture")
 
 cwCircle = DesignBlock "cw_circle"
           [Dummy [Text "Circle"] 
            ,Value "RADIUS" LeftField [Text "Radius"] typeNumber] 
-          LeftCon colorPicture typePicture
+          inlineDef colorPicture typePicture
           (Tooltip "Picture of a circle")
 
 cwSolidCircle = DesignBlock "cw_solidcircle"
           [Dummy [Text "Solid Circle"] 
            ,Value "RADIUS" LeftField [Text "Radius"] typeNumber] 
-          LeftCon colorPicture typePicture
+          inlineDef colorPicture typePicture
           (Tooltip "Picture of a solid circle")
 
 cwSolidRectangle = DesignBlock "cw_solidrectangle"
           [Dummy [Text "Solid Rectangle"] 
            ,Value "WIDTH" LeftField [Text "Width"] typeNumber 
            ,Value "HEIGHT" LeftField [Text "Height"] typeNumber] 
-          LeftCon colorPicture typePicture 
+          inlineDef colorPicture typePicture 
           (Tooltip "Picture of a solid rectangle")
 
 cwBlue = DesignBlock "cw_blue" 
           [Dummy 
             [Text "Blue"]
           ]
-          LeftCon colorColor typeColor 
+          inlineDef colorColor typeColor 
           (Tooltip "The color blue")
 
 cwRed = DesignBlock "cw_red" 
           [Dummy 
             [Text "Red"]
           ]
-          LeftCon colorColor typeColor 
+          inlineDef colorColor typeColor 
           (Tooltip "The color red")
 
 cwGreen = DesignBlock "cw_green" 
           [Dummy 
             [Text "Green"]
           ]
-          LeftCon colorColor typeColor
+          inlineDef colorColor typeColor
           (Tooltip "The color green")
 
 cwOrange = DesignBlock "cw_orange" 
           [Dummy 
             [Text "Orange"]
           ]
-          LeftCon colorColor typeColor 
+          inlineDef colorColor typeColor 
           (Tooltip "The color orange")
 
 cwBrown = DesignBlock "cw_brown" 
           [Dummy 
             [Text "Brown"]
           ]
-          LeftCon colorColor typeColor 
+          inlineDef colorColor typeColor 
           (Tooltip "The color brown")
 
 cwColored = DesignBlock "cw_colored"
-          [Dummy [Text "Change color"] 
+          [Dummy [Text "colored"] 
            ,Value "PICTURE" LeftField [Text "Picture"] typePicture 
            ,Value "COLOR" LeftField [Text "Color"] typeColor] 
-          LeftCon colorPicture typePicture
+          inlineDef colorPicture typePicture
           (Tooltip "Change the color of a picture")
 
 cwTranslate = DesignBlock "cw_translate"
-          [Dummy [Text "Translate"] 
+          [Dummy [Text "translated"] 
            ,Value "PICTURE" LeftField [Text "Picture"] typePicture 
            ,Value "X" LeftField [Text "x"] typeNumber
            ,Value "Y" LeftField [Text "y"] typeNumber
           ] 
-          LeftCon colorPicture typePicture 
+          inlineDef colorPicture typePicture 
           (Tooltip "Translate a picture")
 
+cwScale = DesignBlock "cw_scale"
+          [Dummy [Text "scaled"] 
+           ,Value "PICTURE" LeftField [Text "Picture"] typePicture 
+           ,Value "HORZ" LeftField [Text "horizontal"] typeNumber
+           ,Value "VERTZ" LeftField [Text "vertical"] typeNumber
+          ] 
+          inlineDef colorPicture typePicture 
+          (Tooltip "Scale a picture")
+
+cwRotate = DesignBlock "cw_rotate"
+          [Dummy [Text "rotated"] 
+           ,Value "PICTURE" LeftField [Text "Picture"] typePicture 
+           ,Value "ANGLE" LeftField [Text "angle"] typeNumber
+          ] 
+          inlineDef colorPicture typePicture 
+          (Tooltip "Rotate")
+
 cwCombine = DesignBlock "cw_combine"
-          [Dummy [Text "Combine pictures"] 
+          [Dummy [Text "combined"] 
            ,Value "PIC1" LeftField [Text "Picture"] typePicture 
            ,Value "PIC2" LeftField [Text "Picture"] typePicture 
           ] 
-          LeftCon colorPicture typePicture 
+          inlineDef colorPicture typePicture 
           (Tooltip "Combines two pictures")
 
 
@@ -147,28 +166,28 @@ conIf = DesignBlock "con_if"
          ,Value "THEN" LeftField [Text "then"] (Poly 0)
          ,Value "ELSE" LeftField [Text "else"] (Poly 0)
          ]
-         LeftCon colorPoly (Poly 0)
+         inlineDef colorPoly (Poly 0)
          (Tooltip "if condition is true then give a else b")
 
 conEq = DesignBlock "con_eq"
-        [ Value "IF" LeftField [] (Poly 0)
-         ,Value "THEN" LeftField [Text "=="] (Poly 0)
+        [ Value "LEFT" LeftField [] (Poly 0)
+         ,Value "RIGHT" LeftField [Text "=="] (Poly 0)
          ]
-         LeftCon colorPoly typeBool
+         (Inline True) colorPoly typeBool
          (Tooltip "Are two items equal")
 
 conTrue = DesignBlock "con_true" 
           [Dummy 
             [Text "true"]
           ]
-          LeftCon colorBool typeBool
+          inlineDef colorBool typeBool
           (Tooltip "True logic value")
 
 conFalse = DesignBlock "con_false" 
           [Dummy 
             [Text "false"]
           ]
-          LeftCon colorBool typeBool
+          inlineDef colorBool typeBool
           (Tooltip "False logic value")
 
 
@@ -192,6 +211,8 @@ blockTypes = [ cwCircle
               ,conEq
               ,conTrue
               ,conFalse
+              ,cwRotate
+              ,cwScale
                 ]
 
 -- Assigns CodeGen functions defined here to the Blockly Javascript Code

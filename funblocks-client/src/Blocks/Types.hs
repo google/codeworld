@@ -26,19 +26,20 @@ colorNumber = Color 210
 colorProgram = Color 0
 colorColor = Color 290
 colorPoly = Color 50
+colorBool = Color 100
 
 typePicture = Type "Picture"
 typeNumber = Type "Number"
 typeProgram = NoType
 typeColor = Type "Color"
-typeSet = Type ""
+typeBool = Type "bool"
+typeSet = NoType
 
 letVar = DesignBlock "letVar"
             [Dummy [TextInput "foo" "VARNAME"
             ,Text "Let"]
-           ,Value "VARVALUE" LeftField [Text ""] typeSet]
-          
-          LeftCon colorPoly typeColor
+           ,Value "VARVALUE" LeftField [Text ""] (Poly 0)]
+          LeftCon colorPoly typeSet
           (Tooltip "Enter name of the variable")
 
 number = DesignBlock "number" 
@@ -141,6 +142,36 @@ cwCombine = DesignBlock "cw_combine"
           (Tooltip "Combines two pictures")
 
 
+conIf = DesignBlock "con_if"
+        [ Value "IF" LeftField [Text "if"] typeBool
+         ,Value "THEN" LeftField [Text "then"] (Poly 0)
+         ,Value "ELSE" LeftField [Text "else"] (Poly 0)
+         ]
+         LeftCon colorPoly (Poly 0)
+         (Tooltip "if condition is true then give a else b")
+
+conEq = DesignBlock "con_eq"
+        [ Value "IF" LeftField [] (Poly 0)
+         ,Value "THEN" LeftField [Text "=="] (Poly 0)
+         ]
+         LeftCon colorPoly typeBool
+         (Tooltip "Are two items equal")
+
+conTrue = DesignBlock "con_true" 
+          [Dummy 
+            [Text "true"]
+          ]
+          LeftCon colorBool typeBool
+          (Tooltip "True logic value")
+
+conFalse = DesignBlock "con_false" 
+          [Dummy 
+            [Text "false"]
+          ]
+          LeftCon colorBool typeBool
+          (Tooltip "False logic value")
+
+
 
 blockTypes = [ cwCircle
               ,number 
@@ -157,6 +188,10 @@ blockTypes = [ cwCircle
               ,cwCombine
               ,cwDrawingOf
               ,letVar
+              ,conIf
+              ,conEq
+              ,conTrue
+              ,conFalse
                 ]
 
 -- Assigns CodeGen functions defined here to the Blockly Javascript Code

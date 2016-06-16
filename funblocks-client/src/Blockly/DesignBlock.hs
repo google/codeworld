@@ -34,11 +34,13 @@ import GHCJS.Foreign
 import GHCJS.Marshal
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
+import Control.Monad
 
 -- Low level bindings to construction of various different type of Blockly
 -- blocks
 
 data Type = Type String
+          | Poly Int
           | NoType
 
 data FieldType = LeftField | RightField | CentreField
@@ -62,21 +64,32 @@ fieldCode :: FieldInput -> Field -> IO FieldInput
 fieldCode field (Text str) = js_appendTextField field (pack str)
 fieldCode field (TextInput text name) = js_appendTextInputField field (pack text) (pack name)
 
-inputCode :: Block -> Input -> IO ()
-inputCode block (Dummy fields) = do 
+inputCode :: Block -> [TypeVar] -> Input -> IO ()
+inputCode block _ (Dummy fields) = do 
   fieldInput <- js_appendDummyInput block  
   foldr (\ field fi -> do
       fi_ <- fi
       fieldCode fi_ field) (return fieldInput) fields
   return ()
 
-inputCode block (Value name fieldType fields (Type type_) ) = do
+inputCode block _ (Value name fieldType fields (Type type_) ) = do
   fieldInput <- js_appendValueInput block (pack name)
   js_setCheck fieldInput (pack type_)
   foldr (\ field fi -> do
       fi_ <- fi
       fieldCode fi_ field) (return fieldInput) fields
+  js_setTypeExprConc fieldInput (pack type_)
   return ()
+
+inputCode block pvars (Value name fieldType fields (Poly polyIndex) ) = do
+  fieldInput <- js_appendValueInput block (pack name)
+  foldr (\ field fi -> do
+      fi_ <- fi
+      fieldCode fi_ field) (return fieldInput) fields
+  js_setTypeExprPoly fieldInput (pvars !! polyIndex)
+  return ()
+
+
 
  
 -- set block
@@ -86,10 +99,14 @@ setBlockType (DesignBlock name inputs connection (Color color) type_ (Tooltip to
                                  let block = Block this 
                                  js_setColor block color
                                  -- may error out if no type is set
+                                 tvars <- replicateM (length inputs) js_getUnusedTypeVar
+                                 mapM_ (inputCode block tvars) inputs
+                                 js_enableOutput block
                                  case type_ of
-                                     Type tp -> js_setOutput block True (pack tp)
-                                     NoType -> return ()
-                                 mapM_ (inputCode block) inputs
+                                     Type tp -> js_setOutputTypeConc block (pack tp)
+                                     Poly ind -> js_setOutputTypePoly block (tvars !! ind)
+                                     _ -> js_disableOutput block 
+
                                  return ()
                                  )
   js_setGenFunction (pack name) cb
@@ -97,6 +114,7 @@ setBlockType (DesignBlock name inputs connection (Color color) type_ (Tooltip to
 
 newtype Block = Block JSVal
 newtype FieldInput = FieldInput JSVal
+newtype TypeVar = TypeVar JSVal
 
 foreign import javascript unsafe "Blockly.Blocks[$1] = { init: function() { $2(this); }}"
   js_setGenFunction :: JSString -> Callback a -> IO ()
@@ -104,8 +122,18 @@ foreign import javascript unsafe "Blockly.Blocks[$1] = { init: function() { $2(t
 foreign import javascript unsafe "$1.setColour($2)"
   js_setColor :: Block -> Int -> IO ()
 
-foreign import javascript unsafe "$1.setOutput($2, $3)"
-  js_setOutput :: Block -> Bool -> JSString -> IO ()
+foreign import javascript unsafe "$1.setOutput(true)"
+  js_enableOutput :: Block -> IO ()
+
+foreign import javascript unsafe "$1.setOutput(false)"
+  js_disableOutput:: Block -> IO ()
+
+
+foreign import javascript unsafe "$1.setOutputTypeExpr(new Blockly.TypeExpr($2))"
+  js_setOutputTypeConc :: Block -> JSString -> IO ()
+
+foreign import javascript unsafe "$1.setOutputTypeExpr($2)"
+  js_setOutputTypePoly :: Block -> TypeVar -> IO ()
 
 foreign import javascript unsafe "$1.setTooltip($2)"
   js_setTooltip :: Block -> JSString -> IO ()
@@ -126,4 +154,12 @@ foreign import javascript unsafe "$1.appendField(new Blockly.FieldTextInput($2),
 foreign import javascript unsafe "$1.setCheck($2)"
   js_setCheck :: FieldInput -> JSString -> IO ()
 
+foreign import javascript unsafe "Blockly.TypeVar.getUnusedTypeVar()"
+  js_getUnusedTypeVar :: IO TypeVar
+
+foreign import javascript unsafe "$1.setTypeExpr($2)"
+  js_setTypeExprPoly :: FieldInput -> TypeVar -> IO ()
+
+foreign import javascript unsafe "$1.setTypeExpr(new Blockly.TypeExpr($2))"
+  js_setTypeExprConc :: FieldInput -> JSString -> IO ()
 

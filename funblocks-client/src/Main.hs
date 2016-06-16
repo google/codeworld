@@ -67,7 +67,7 @@ main = do
       on btnRun click (btnRunClick workspace)
       liftIO setBlockTypes -- assign layout and types of Blockly blocks
 
-      liftIO $ addChangeListener workspace (onVarConnect workspace)
+      -- liftIO $ addChangeListener workspace (onVarConnect workspace)
       return ()
 
 -- change the color of a var block 

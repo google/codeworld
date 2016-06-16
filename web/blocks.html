@@ -7,16 +7,15 @@
     <!-- JQuery -->
     <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
 
-
     <link rel="stylesheet"
     href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
     integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7"
     crossorigin="anonymous">
-
-    <!-- Optional theme -->
+    
+    <!-- Optional bootstrap theme -->
     <link rel="stylesheet" href="css/bootstrap.min.css">
-
-    <link rel="stylesheet" href="css/blockly.css">
+      <link rel="stylesheet" href="css/blockly.css">
+    <link rel="stylesheet" href="css/codemirror.css">
 
     <!-- Latest compiled and minified JavaScript -->
     <script
@@ -24,10 +23,6 @@
     integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
     crossorigin="anonymous"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-
-    <script src="js/sh_main.min.js" > </script>
-    <script src="js/sh_haskell.min.js" > </script>
-    <link rel="stylesheet" type="text/css" href="css/sh_style.css" />
 
     <script src="blockly/blockly_compressed.js"></script>
     <script src="blockly/blocks_compressed.js"></script>
@@ -37,11 +32,10 @@
     <script src="js/blockworld.js"></script> 
     <script src="js/codegen.js"></script>
     
-  
   </head>
 
 
-  <body onload="sh_highlightDocument();">
+  <body>
     <div class="container-fluid">
       <nav class="navbar navbar-default navbar-fixed-top">
         <a class="navbar-brand" href="/blocks">CodeWorld Blocks</a>
@@ -53,16 +47,16 @@
     </br></br>
   <div class="container-fluid">
     <div class="row full">
-        <div id="sidebar" class="col-md-1">
+        <!--<div id="sidebar" class="col-md-1">
   
             <h3>File</h3>
-            <!--
+            
             <div class="btn-group-vertical" style="width:100%;" role="group" aria-label="...">
                <button type="button" class="btn btn-primary">New</button>
                </br>
                <button type="button" class="btn btn-danger">Sign in</button>
-            </div>-->
-        </div>
+            </div>
+        </div> -->
 
         <div id="main" class="col-md-8">
             <div class="row">
@@ -75,6 +69,8 @@
                       </category>
                       <category name="Pictures">
                           <block type="cw_translate"></block>
+                          <block type="cw_scale"></block>
+                          <block type="cw_rotate"></block>
                           <block type="cw_combine"></block>
                           <block type="cw_colored"></block>
                           <block type="cw_text"></block>
@@ -90,16 +86,20 @@
                           <block type="cw_blue"></block>
                           <block type="cw_green"></block>
                           <block type="cw_brown"></block>
+                          <block type="cw_orange"></block>
                       </category>
-                      <category name="Temp">
-                          <block type="controls_if"></block>
-                          <block type="math_arithmetic"></block>
-                          <block type="text"></block>
+                      <category name="Definitions">
+                          <block type="letVar"></block>
                       </category>
-
+                      <category name="Control">
+                          <block type="con_if"></block>
+                          <block type="con_eq"></block>
+                          <block type="con_true"></block>
+                          <block type="con_false"></block>
+                      </category>
                    </xml>
 
-                <div id="blocklyDiv" style="height: 800px; width:100%;"> </div>
+                <div id="blocklyDiv" style="height: 85%; width:100%;"> </div>
 
                 </br>
                 <div class="btn-group" role="group" aria-label="...">
@@ -112,45 +112,40 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <h3>Play</h3>
           <div id="result">
             <iframe id="runner" class="dropbox" width="100%" 
               height="400px"></iframe>
             
-            <pre id="message" class="dropbox"
-            style="width:100%;margin-top:10px;">
-            </pre>
           </div>
           <h4>Generated Code:</h4>
-          <pre id="genCode" class="sh_haskell" style="width:100%; height:400px;">
-test :: a -> b -> Int
-fib 0 = 0
-fib 1 = 1
-fib n = fib (n-1) + fib (n-2)
-main :: IO ()
-main      = animationOf(design)
-design(t) = rotated(slot, 60 * t) & middle & outside
-slot      = solidRectangle(4, 0.4)
-middle    = solidCircle(1.2)
-outside   = circle(2)
+          <pre id="genCode" class="cm-s-default" style="width:100%;
+          height:auto;padding:10px;">
           </pre> 
         </div> 
     </div>
   </div>
+  </br>
   <div class="container-fluid">
     <nav class="navbar navbar-default navbar-fixed-bottom" style="padding-left:
     10px;">
-      </br>
-      <button type="button" class="btn btn-primary navbar-btn">Browse</button>
-      <button type="button" class="btn btn-warning navbar-btn">Help</button>
+      <!-- <button type="button" class="btn btn-primary
+        navbar-btn">Browse</button> -->
+      <!-- <button type="button" class="btn btn-warning
+        navbar-btn">Help</button> -->
       <button type="button" class="btn btn-success navbar-btn" id="btnRun">Run</button>
-      <p class="navbar-text navbar-right" style="padding-right: 30px;">Status: None</p>
+      <p class="navbar-text navbar-right" style="padding-right:
+      30px;">Status:
+        <a id="message">None</a> </p>
     </nav>
 
   </div>
 
   <script src="js/blocks_runmain.js"></script> 
+
+  <script type="text/javascript" src="js/codemirror-compressed.js"></script>
+  <script type="text/javascript" src="js/codeworld-mode.js"></script>
 
   </body>
 

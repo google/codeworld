@@ -50,67 +50,106 @@ type Code = String
 type GeneratorFunction = Block -> (Code, OrderConstant)
 
 blockText :: GeneratorFunction
-blockText block = member $ "text(\"" ++ arg ++ "\")"
+blockText block = none $ "text(\"" ++ arg ++ "\")"
   where
     arg = getFieldValue block "TEXT" 
 
+blockDrawingOf :: GeneratorFunction
+blockDrawingOf block = none $ "main = drawingOf(" ++ code ++ ");"
+  where
+    code = valueToCode block "VALUE" CNone
+
 -- TODO check if it is a number
 blockNumber :: GeneratorFunction
-blockNumber block = member arg 
+blockNumber block = none arg 
   where
     arg = getFieldValue block "NUMBER"
 
 blockSolidRectangle :: GeneratorFunction
-blockSolidRectangle block = member $ "solidRectangle(" ++ width ++ "," ++ height ++ ")"
+blockSolidRectangle block = none $ "solidRectangle(" ++ width ++ "," ++ height ++ ")"
   where
-    width = valueToCode block "WIDTH" CAtomic
-    height = valueToCode block "HEIGHT" CAtomic
+    width = valueToCode block "WIDTH" CNone
+    height = valueToCode block "HEIGHT" CNone
 
 blockSolidCircle :: GeneratorFunction
-blockSolidCircle block = member $ "solidCircle(" ++ radius ++ ")"
+blockSolidCircle block = none $ "solidCircle(" ++ radius ++ ")"
   where
     radius = valueToCode block "RADIUS" CAtomic
 
 blockCircle :: GeneratorFunction
-blockCircle block = member $ "circle(" ++ radius ++ ")"
+blockCircle block = none $ "circle(" ++ radius ++ ")"
   where
-    radius = valueToCode block "RADIUS" CAtomic
-
-blockDrawingOf :: GeneratorFunction
-blockDrawingOf block = member $ "main = drawingOf(" ++ code ++ ");"
-  where
-    code = valueToCode block "VALUE" CAtomic
+    radius = valueToCode block "RADIUS" CNone
 
 blockCombine :: GeneratorFunction
 blockCombine block = none $ "(" ++ pic1 ++ ") & (" ++ pic2 ++ ")"
   where
-    pic1 = valueToCode block "PIC1" CAtomic
-    pic2 = valueToCode block "PIC2" CAtomic
+    pic1 = valueToCode block "PIC1" CNone
+    pic2 = valueToCode block "PIC2" CNone
 
 blockColored :: GeneratorFunction
 blockColored block = none $ "colored (" ++ picture ++ ", " ++ color ++ ")"
   where
-    picture = valueToCode block "PICTURE" CAtomic
-    color = valueToCode block "COLOR" CAtomic
+    picture = valueToCode block "PICTURE" CNone
+    color = valueToCode block "COLOR" CNone
 
 blockTranslate :: GeneratorFunction
 blockTranslate block = none $ "translated (" ++ pic ++ "," ++ x ++ "," ++ y ++ ")"
   where
-    pic = valueToCode block "PICTURE" CAtomic
-    x = valueToCode block "X" CAtomic
-    y = valueToCode block "Y" CAtomic
+    pic = valueToCode block "PICTURE" CNone
+    x = valueToCode block "X" CNone
+    y = valueToCode block "Y" CNone
+
+blockScale :: GeneratorFunction
+blockScale block = none $ "scaled (" ++ pic ++ "," ++ hor ++ "," ++ vert ++ ")"
+  where
+    pic = valueToCode block "PICTURE" CNone
+    hor = valueToCode block "HORZ" CNone
+    vert = valueToCode block "VERTZ" CNone
+
+blockRotate :: GeneratorFunction
+blockRotate block = none $ "rotated (" ++ pic ++ "," ++ angle ++ ")"
+  where
+    pic = valueToCode block "PICTURE" CNone
+    angle = valueToCode block "ANGLE" CNone
 
 blockBlue :: GeneratorFunction
-blockBlue block = member "blue"
+blockBlue block = none "blue"
 
 blockBrown :: GeneratorFunction
-blockBrown block = member "brown"
+blockBrown block = none "brown"
 
 blockRed :: GeneratorFunction
-blockRed block = member "red"
+blockRed block = none "red"
 
 blockGreen :: GeneratorFunction
-blockGreen block = member "green"
+blockGreen block = none "green"
+
+blockLetVar :: GeneratorFunction
+blockLetVar block = none $ varName ++ " = " ++ expr 
+  where
+    varName = getFieldValue block "VARNAME" 
+    expr = valueToCode block "VARVALUE" CNone
+
+blockTrue :: GeneratorFunction
+blockTrue block = none "True"
+
+blockFalse :: GeneratorFunction
+blockFalse block = none "False"
+
+blockIf :: GeneratorFunction
+blockIf block = none $ "if " ++ ifexpr ++ " then "
+                  ++ thenexpr ++ " else " ++ elseexpr
+  where
+   ifexpr = valueToCode block "IF" CNone
+   thenexpr = valueToCode block "THEN" CNone
+   elseexpr = valueToCode block "ELSE" CNone
+
+blockEq :: GeneratorFunction
+blockEq block = member $ left ++ " == " ++ right
+  where
+    left = valueToCode block "LEFT" CAtomic
+    right = valueToCode block "RIGHT" CAtomic
 
 blockCodeMap = [ ("cw_text",blockText)
                 ,("cw_translate", blockTranslate)
@@ -125,6 +164,13 @@ blockCodeMap = [ ("cw_text",blockText)
                 ,("cw_red", blockRed)
                 ,("cw_green", blockGreen)
                 ,("cw_brown", blockBrown)
+                ,("letVar", blockLetVar)
+                ,("con_true", blockTrue)
+                ,("con_false", blockFalse)
+                ,("con_if", blockIf)
+                ,("con_eq", blockEq)
+                ,("cw_scale", blockScale)
+                ,("cw_rotate", blockRotate)
                 ]
 
 -- Assigns CodeGen functions defined here to the Blockly Javascript Code
@@ -134,9 +180,8 @@ assignAll = mapM_ (uncurry setCodeGen) blockCodeMap
 
 
 valueToCode :: Block -> String -> OrderConstant -> String
-valueToCode block name ordr = unpack $ js_valueToCode block (pack name) (order ordr)
-
-
+valueToCode block name ordr = unpack $ 
+                js_valueToCode block (pack name) (order ordr)
 
 --- FFI
 foreign import javascript unsafe "Blockly.FunBlocks[$1] = $2"
@@ -226,19 +271,3 @@ order CConditional    = 15; -- ?:
 order CAssignment     = 16; -- = += -= *= /= %= <<= >>= ...
 order CComma          = 17; -- ,
 order CNone           = 99; -- (...)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

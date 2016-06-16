@@ -23,55 +23,78 @@ module Main (
 
 import Control.Applicative ((<$>))
 import GHCJS.DOM
-       (enableInspector, webViewGetDomDocument, runWebGUI, currentDocument, )
-import GHCJS.DOM.Document (getBody, createElement,getElementById, createTextNode, Document(..))
--- import GHCJS.DOM.HTMLButtonElement (onClick)
-import GHCJS.DOM.Element (setInnerHTML,setId, click, Element)
-import GHCJS.DOM.Node (appendChild)
-import GHCJS.DOM.EventM (on, mouseClientXY)
-import GHCJS.DOM.Types (castToHTMLElement, castToHTMLButtonElement)
+       (currentDocument, )
+import GHCJS.DOM.Document (getBody, getElementById, Document(..))
+import GHCJS.DOM.Element (setInnerHTML, click, Element)
+import GHCJS.DOM.EventM (on )
 import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Marshal
-import Data.JSString (unpack, pack)
-import System.IO.Unsafe (unsafePerformIO)
+import Data.JSString (pack)
 import Control.Monad.Trans (liftIO)
 import Blockly.Workspace
 import Blocks.CodeGen
 import Blocks.Types
+import Blockly.Event
+import Blockly.General
+import Blockly.Block (getBlockType, blockTest, getOutputBlock, getColour, setColour)
 
-data Type = TNumber | TString | TPicture | TNone
-  deriving Show
-
-
+-- call blockworld.js compile
 foreign import javascript unsafe "compile($1)"
   js_cwcompile :: JSString -> IO ()
 
+-- call blockworld.js run
 foreign import javascript unsafe "run()"
   js_cwrun :: IO ()
+
+foreign import javascript unsafe "updateEditor($1)"
+  js_updateEditor :: JSString -> IO ()
 
 btnRunClick ws = do
   liftIO $ print "btnRunClick"
   Just doc <- liftIO currentDocument
   code <- liftIO $ workspaceToCode ws
   liftIO $ js_cwcompile (pack code)
-  liftIO $ js_cwrun
+  liftIO js_cwrun
   Just genCode <- getElementById doc "genCode"
-  setInnerHTML genCode (Just code)
-  liftIO $ print "this is new"
-  liftIO $ print code
+  liftIO $ js_updateEditor (pack code)
+  -- liftIO $ print code
   return ()
 
 main = do 
       Just doc <- currentDocument 
       Just body <- getBody doc
-
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
-      liftIO $ assignAll
-
+      liftIO assignAll
       Just btnRun <- getElementById doc "btnRun" 
       on btnRun click (btnRunClick workspace)
-      
-      liftIO $ setBlockTypes -- assign layout and types of Blockly blocks
+      liftIO setBlockTypes -- assign layout and types of Blockly blocks
 
+      -- liftIO $ addChangeListener workspace (onVarConnect workspace)
       return ()
+
+-- change the color of a var block 
+onVarConnect workspace event = do
+  let eventtype = getType event
+  case eventtype of
+    -- ChangeEvent e -> putStrLn "testing change event" 
+    -- CreateEvent e -> putStrLn "testing create event" 
+    MoveEvent e -> do
+        let uuid = getBlockId e
+        let ablock = getBlockById workspace uuid 
+        let bbs = do
+                    block_ <- getBlockById workspace uuid
+                    outBlock_ <- getOutputBlock block_
+                    let tp = getBlockType outBlock_
+                    return (block_,outBlock_,tp)
+        case bbs of
+          Just (block, outBlock,"letVar") -> do
+                                      let col = getColour block
+                                      setColour outBlock col
+                                      --putStrLn tp
+                                      return ()
+          _ -> return ()
+        return ()
+    _ -> return ()
+  return ()
+

@@ -39,6 +39,35 @@
   stroke: #fc3;
   stroke-width: 4px;
 }
+.blocklyTypeVarPath {
+  stroke-width: 3px;
+  fill: none;
+}
+.blocklyHighlightedConnectionPathBlue {
+  stroke-width: 3px;
+  stroke: blue;
+  fill: none;
+}
+.blocklyHighlightedConnectionPathRed {
+  stroke-width: 3px;
+  stroke: red;
+  fill: none;
+}
+.blocklyHighlightedConnectionPathGreen {
+  stroke-width: 3px;
+  stroke: green;
+  fill: none;
+}
+.blocklyHighlightedConnectionPathYellow {
+  stroke-width: 3px;
+  stroke: yellow;
+  fill: none;
+}
+.blocklyHighlightedConnectionPathCyan {
+  stroke-width: 3px;
+  stroke: cyan;
+  fill: none;
+}
 .blocklyPathLight {
   fill: none;
   stroke-linecap: round;
@@ -155,7 +184,11 @@
   fill-opacity: .8;
 }
 .blocklyScrollbarBackground {
-  opacity: 0;
+  opacity: 0.0;
+}
+.blocklyScrollbarHandle {
+  fill: #b0b0b0;
+  opacity: 0.9;
 }
 .blocklyScrollbarKnob {
   fill: #ccc;

@@ -17,13 +17,21 @@
   limitations under the License.
 -}
 
-module Blockly.Workspace ( Workspace(..), setWorkspace, workspaceToCode)
+module Blockly.Workspace ( Workspace(..)
+                          ,setWorkspace
+                          ,workspaceToCode
+                          ,getById
+                          ,getBlockById
+                          )
   where
 
 import GHCJS.Types
 import Data.JSString (pack, unpack)
 import GHCJS.Foreign
 import GHCJS.Marshal
+import Unsafe.Coerce
+import Blockly.General
+import Blockly.Block (Block)
 
 newtype Workspace = Workspace JSVal
 
@@ -42,6 +50,13 @@ setWorkspace canvasId toolboxId =  js_blocklyInject (pack canvasId) (pack toolbo
 workspaceToCode :: Workspace -> IO String
 workspaceToCode workspace = js_blocklyWorkspaceToCode workspace >>= return . unpack
 
+getById :: UUID -> Workspace
+getById (UUID uuidStr) = js_getById (pack uuidStr)
+
+getBlockById :: Workspace -> UUID -> Maybe Block
+getBlockById workspace (UUID uuidstr) = if isNull val then Nothing
+                                        else Just $ unsafeCoerce val
+  where val = js_getBlockById workspace (pack uuidstr)
 
 --- FFI
 foreign import javascript unsafe "Blockly.inject($1, { toolbox: document.getElementById($2), css: false})"
@@ -49,4 +64,10 @@ foreign import javascript unsafe "Blockly.inject($1, { toolbox: document.getElem
 
 foreign import javascript unsafe "Blockly.FunBlocks.workspaceToCode($1)"
   js_blocklyWorkspaceToCode :: Workspace -> IO JSString
+
+foreign import javascript unsafe "Blockly.Workspace.getById($1)"
+  js_getById :: JSString -> Workspace
+
+foreign import javascript unsafe "$1.getBlockById($2)"
+  js_getBlockById :: Workspace -> JSString -> JSVal
 

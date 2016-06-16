@@ -44,6 +44,13 @@ function addToMessage(msg) {
     message.innerHTML += msg
 }
 
+function updateEditor(code) {
+    var editor = document.getElementById('genCode');
+    CodeMirror.runMode(code
+      ,{name: 'codeworld'}
+      ,editor);
+}
+
 function run(hash, msg, error) {
     window.showingResult = hash || msg;
     if (window.showingResult) {

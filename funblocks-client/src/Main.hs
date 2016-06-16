@@ -47,6 +47,9 @@ foreign import javascript unsafe "compile($1)"
 foreign import javascript unsafe "run()"
   js_cwrun :: IO ()
 
+foreign import javascript unsafe "updateEditor($1)"
+  js_updateEditor :: JSString -> IO ()
+
 btnRunClick ws = do
   liftIO $ print "btnRunClick"
   Just doc <- liftIO currentDocument
@@ -54,8 +57,8 @@ btnRunClick ws = do
   liftIO $ js_cwcompile (pack code)
   liftIO js_cwrun
   Just genCode <- getElementById doc "genCode"
-  setInnerHTML genCode (Just code)
-  liftIO $ print code
+  liftIO $ js_updateEditor (pack code)
+  -- liftIO $ print code
   return ()
 
 main = do 

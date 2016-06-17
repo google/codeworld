@@ -60,7 +60,7 @@ blockText block = do
 blockDrawingOf :: GeneratorFunction
 blockDrawingOf block = do 
       code <- valueToCode block "VALUE" CNone
-      return $ none $ "main = drawingOf(" ++ code ++ ");"
+      return $ none $ "main = drawingOf(" ++ code ++ ")"
 
 -- TODO check if it is a number
 blockNumber :: GeneratorFunction

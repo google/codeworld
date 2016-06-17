@@ -133,7 +133,6 @@ foreign import javascript unsafe "$1.setOutput(true)"
 foreign import javascript unsafe "$1.setOutput(false)"
   js_disableOutput:: Block -> IO ()
 
-
 foreign import javascript unsafe "$1.setOutputTypeExpr(new Blockly.TypeExpr($2))"
   js_setOutputTypeConc :: Block -> JSString -> IO ()
 

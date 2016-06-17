@@ -24,39 +24,6 @@ Blockly.FunBlocks = new Blockly.Generator('FunBlocks');
 
 Blockly.FunBlocks.addReservedWords('Blockly,do,let,where,if,then,else,in');
 
-Blockly.FunBlocks.ORDER_ATOMIC = 0;         // 0 "" ...
-Blockly.FunBlocks.ORDER_MEMBER = 1;         // . []
-Blockly.FunBlocks.ORDER_NEW = 1;            // new
-Blockly.FunBlocks.ORDER_FUNCTION_CALL = 2;  // ()
-Blockly.FunBlocks.ORDER_INCREMENT = 3;      // ++
-Blockly.FunBlocks.ORDER_DECREMENT = 3;      // --
-Blockly.FunBlocks.ORDER_LOGICAL_NOT = 4;    // !
-Blockly.FunBlocks.ORDER_BITWISE_NOT = 4;    // ~
-Blockly.FunBlocks.ORDER_UNARY_PLUS = 4;     // +
-Blockly.FunBlocks.ORDER_UNARY_NEGATION = 4; // -
-Blockly.FunBlocks.ORDER_TYPEOF = 4;         // typeof
-Blockly.FunBlocks.ORDER_VOID = 4;           // void
-Blockly.FunBlocks.ORDER_DELETE = 4;         // delete
-Blockly.FunBlocks.ORDER_MULTIPLICATION = 5; // *
-Blockly.FunBlocks.ORDER_DIVISION = 5;       // /
-Blockly.FunBlocks.ORDER_MODULUS = 5;        // %
-Blockly.FunBlocks.ORDER_ADDITION = 6;       // +
-Blockly.FunBlocks.ORDER_SUBTRACTION = 6;    // -
-Blockly.FunBlocks.ORDER_BITWISE_SHIFT = 7;  // << >> >>>
-Blockly.FunBlocks.ORDER_RELATIONAL = 8;     // < <= > >=
-Blockly.FunBlocks.ORDER_IN = 8;             // in
-Blockly.FunBlocks.ORDER_INSTANCEOF = 8;     // instanceof
-Blockly.FunBlocks.ORDER_EQUALITY = 9;       // == != === !==
-Blockly.FunBlocks.ORDER_BITWISE_AND = 10;   // &
-Blockly.FunBlocks.ORDER_BITWISE_XOR = 11;   // ^
-Blockly.FunBlocks.ORDER_BITWISE_OR = 12;    // |
-Blockly.FunBlocks.ORDER_LOGICAL_AND = 13;   // &&
-Blockly.FunBlocks.ORDER_LOGICAL_OR = 14;    // ||
-Blockly.FunBlocks.ORDER_CONDITIONAL = 15;   // ?:
-Blockly.FunBlocks.ORDER_ASSIGNMENT = 16;    // = += -= *= /= %= <<= >>= ...
-Blockly.FunBlocks.ORDER_COMMA = 17;         // ,
-Blockly.FunBlocks.ORDER_NONE = 99;          // (...)
-
 Blockly.FunBlocks.init = function(workspace) {
 
   Blockly.FunBlocks.definitions_ = Object.create(null);
@@ -127,3 +94,41 @@ Blockly.FunBlocks.scrub_ = function(block, code) {
   var nextCode = Blockly.FunBlocks.blockToCode(nextBlock);
   return commentCode + code + nextCode;
 }
+
+
+Blockly.FunBlocks.workspaceToCode = function(workspace) {
+  if (!workspace) {
+    // Backwards compatability from before there could be multiple workspaces.
+    console.warn('No workspace specified in workspaceToCode call.  Guessing.');
+    workspace = Blockly.getMainWorkspace();
+  }
+  var code = [];
+  this.init(workspace);
+  var blocks = workspace.getTopBlocks(true);
+  for (var x = 0, block; block = blocks[x]; x++) {
+    if (block.outputConnection != null)
+      continue; // skip non terminal blocks
+    var line = this.blockToCode(block);
+    if (goog.isArray(line)) {
+      // Value blocks return tuples of code and operator order.
+      // Top-level blocks don't care about operator order.
+      line = line[0];
+    }
+    if (line) {
+      if (block.outputConnection && this.scrubNakedValue) {
+        // This block is a naked value.  Ask the language's code generator if
+        // it wants to append a semicolon, or something.
+        line = this.scrubNakedValue(line);
+      }
+      code.push(line);
+    }
+  }
+  code = code.join(this.lineSeparator);  // Blank line between each section.
+  code = this.finish(code);
+  // Final scrubbing of whitespace.
+  code = code.replace(/^\s+\n/, '');
+  code = code.replace(/\n\s+$/, '\n');
+  code = code.replace(/[ \t]+\n/g, '\n');
+  return code;
+};
+

@@ -37,7 +37,7 @@ import Blocks.CodeGen
 import Blocks.Types
 import Blockly.Event
 import Blockly.General
-import Blockly.Block (getBlockType, blockTest, getOutputBlock, getColour, setColour)
+import Blockly.Block (getBlockType, getOutputBlock, getColour, setColour)
 
 -- call blockworld.js compile
 foreign import javascript unsafe "compile($1)"
@@ -50,15 +50,23 @@ foreign import javascript unsafe "run()"
 foreign import javascript unsafe "updateEditor($1)"
   js_updateEditor :: JSString -> IO ()
 
+
+setErrorMessage msg = do
+  Just doc <- liftIO currentDocument
+  Just msgEl <- getElementById doc "message"
+  setInnerHTML msgEl $ Just msg
+
 btnRunClick ws = do
   liftIO $ print "btnRunClick"
   Just doc <- liftIO currentDocument
   code <- liftIO $ workspaceToCode ws
-  liftIO $ js_cwcompile (pack code)
-  liftIO js_cwrun
   Just genCode <- getElementById doc "genCode"
-  liftIO $ js_updateEditor (pack code)
-  -- liftIO $ print code
+  case code of
+    "" -> setErrorMessage "Error: Disconnected Inputs"
+    _ -> do
+          liftIO $ js_cwcompile (pack code)
+          liftIO js_cwrun
+          liftIO $ js_updateEditor (pack code)
   return ()
 
 main = do 

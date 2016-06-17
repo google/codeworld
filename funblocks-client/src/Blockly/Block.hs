@@ -20,10 +20,10 @@
 module Blockly.Block ( Block(..)
                      , getFieldValue
                      , getBlockType
-                     , blockTest
                      , getOutputBlock
                      , getColour
-                     , setColour)
+                     , setColour
+                     , getInputBlock)
   where
 
 import GHCJS.Types
@@ -64,6 +64,11 @@ setColour = js_setColour
 getColour :: Block -> Int
 getColour = js_getColour 
 
+getInputBlock :: Block -> String -> Maybe Block
+getInputBlock block name = if isNull val then Nothing
+                           else Just $ Block val
+  where val = js_getInputTargetBlock block (pack name)
+
 --- FFI
 
 foreign import javascript unsafe "$1.getFieldValue($2)"
@@ -88,4 +93,6 @@ foreign import javascript unsafe "$1.getColour()"
 foreign import javascript unsafe "$1.setColour($2)"
   js_setColour :: Block -> Int -> IO ()
 
-
+-- fetches the block associated with the input name or else null
+foreign import javascript unsafe "$1.getInputTargetBlock($2)"
+  js_getInputTargetBlock :: Block -> JSString -> JSVal

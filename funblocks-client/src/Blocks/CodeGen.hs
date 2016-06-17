@@ -29,13 +29,16 @@ import GHCJS.Marshal
 import qualified JavaScript.Array as JA
 import Unsafe.Coerce
 
-setCodeGen :: String -> (Block -> (String, OrderConstant) ) -> IO ()
+setCodeGen :: String -> (Block -> Maybe (String, OrderConstant) ) -> IO ()
 setCodeGen blockName func = do
   cb <- syncCallback1' (\x -> do Just b <- fromJSVal x 
-                                 let (code,ordr) = func b
-                                 -- alert(code)
-                                 return $ js_makeArray (pack code) (order ordr)
-                                 -- toJSVal $ JA.fromList [v,order]
+                                 case func b of
+                                    Just (code,ordr) -> do
+                                            putStrLn "JUST"
+                                            return $ js_makeArray (pack code) (order ordr)
+                                    Nothing -> do
+                                            putStrLn "NOTHING"
+                                            return $ js_makeArray (pack "") 0
                                  )
   js_setGenFunction (pack blockName) cb
 
@@ -43,113 +46,113 @@ setCodeGen blockName func = do
 -- Helper functions
 member :: Code -> (Code, OrderConstant)
 member code = (code, CMember)
-none :: Code -> (Code, OrderConstant)
+none :: Code ->(Code, OrderConstant)
 none code = (code, CNone)
 
 type Code = String
-type GeneratorFunction = Block -> (Code, OrderConstant)
+type GeneratorFunction = Block -> Maybe (Code, OrderConstant)
 
 blockText :: GeneratorFunction
-blockText block = none $ "text(\"" ++ arg ++ "\")"
-  where
-    arg = getFieldValue block "TEXT" 
+blockText block = do
+      let arg = getFieldValue block "TEXT" 
+      return $ none $ "text(\"" ++ arg ++ "\")"
 
 blockDrawingOf :: GeneratorFunction
-blockDrawingOf block = none $ "main = drawingOf(" ++ code ++ ");"
-  where
-    code = valueToCode block "VALUE" CNone
+blockDrawingOf block = do 
+      code <- valueToCode block "VALUE" CNone
+      return $ none $ "main = drawingOf(" ++ code ++ ");"
 
 -- TODO check if it is a number
 blockNumber :: GeneratorFunction
-blockNumber block = none arg 
-  where
-    arg = getFieldValue block "NUMBER"
+blockNumber block = do 
+    let arg = getFieldValue block "NUMBER"
+    return $ none arg 
 
 blockSolidRectangle :: GeneratorFunction
-blockSolidRectangle block = none $ "solidRectangle(" ++ width ++ "," ++ height ++ ")"
-  where
-    width = valueToCode block "WIDTH" CNone
-    height = valueToCode block "HEIGHT" CNone
+blockSolidRectangle block = do
+    width <- valueToCode block "WIDTH" CNone
+    height <- valueToCode block "HEIGHT" CNone
+    return $ none $ "solidRectangle(" ++ width ++ "," ++ height ++ ")"
 
 blockSolidCircle :: GeneratorFunction
-blockSolidCircle block = none $ "solidCircle(" ++ radius ++ ")"
-  where
-    radius = valueToCode block "RADIUS" CAtomic
+blockSolidCircle block = do 
+    radius <- valueToCode block "RADIUS" CAtomic
+    return $ none $ "solidCircle(" ++ radius ++ ")"
 
 blockCircle :: GeneratorFunction
-blockCircle block = none $ "circle(" ++ radius ++ ")"
-  where
-    radius = valueToCode block "RADIUS" CNone
+blockCircle block = do 
+    radius <- valueToCode block "RADIUS" CNone
+    return $ none $ "circle(" ++ radius ++ ")"
 
 blockCombine :: GeneratorFunction
-blockCombine block = none $ "(" ++ pic1 ++ ") & (" ++ pic2 ++ ")"
-  where
-    pic1 = valueToCode block "PIC1" CNone
-    pic2 = valueToCode block "PIC2" CNone
+blockCombine block = do
+    pic1 <- valueToCode block "PIC1" CNone
+    pic2 <- valueToCode block "PIC2" CNone
+    return $ none $ "(" ++ pic1 ++ ") & (" ++ pic2 ++ ")"
 
 blockColored :: GeneratorFunction
-blockColored block = none $ "colored (" ++ picture ++ ", " ++ color ++ ")"
-  where
-    picture = valueToCode block "PICTURE" CNone
-    color = valueToCode block "COLOR" CNone
+blockColored block = do 
+    picture <- valueToCode block "PICTURE" CNone
+    color <- valueToCode block "COLOR" CNone
+    return $ none $ "colored (" ++ picture ++ ", " ++ color ++ ")"
 
 blockTranslate :: GeneratorFunction
-blockTranslate block = none $ "translated (" ++ pic ++ "," ++ x ++ "," ++ y ++ ")"
-  where
-    pic = valueToCode block "PICTURE" CNone
-    x = valueToCode block "X" CNone
-    y = valueToCode block "Y" CNone
-
+blockTranslate block = do 
+    pic <- valueToCode block "PICTURE" CNone
+    x <- valueToCode block "X" CNone
+    y <- valueToCode block "Y" CNone
+    return $ none $ "translated (" ++ pic ++ "," ++ x ++ "," ++ y ++ ")"
+    
 blockScale :: GeneratorFunction
-blockScale block = none $ "scaled (" ++ pic ++ "," ++ hor ++ "," ++ vert ++ ")"
-  where
-    pic = valueToCode block "PICTURE" CNone
-    hor = valueToCode block "HORZ" CNone
-    vert = valueToCode block "VERTZ" CNone
-
+blockScale block = do
+    pic <- valueToCode block "PICTURE" CNone
+    hor <- valueToCode block "HORZ" CNone
+    vert <- valueToCode block "VERTZ" CNone
+    return $ none $ "scaled (" ++ pic ++ "," ++ hor ++ "," ++ vert ++ ")"
+    
 blockRotate :: GeneratorFunction
-blockRotate block = none $ "rotated (" ++ pic ++ "," ++ angle ++ ")"
-  where
-    pic = valueToCode block "PICTURE" CNone
-    angle = valueToCode block "ANGLE" CNone
+blockRotate block = do 
+    pic <- valueToCode block "PICTURE" CNone
+    angle <- valueToCode block "ANGLE" CNone
+    return $ none $ "rotated (" ++ pic ++ "," ++ angle ++ ")"
 
 blockBlue :: GeneratorFunction
-blockBlue block = none "blue"
+blockBlue block = return $ none "blue"
 
 blockBrown :: GeneratorFunction
-blockBrown block = none "brown"
+blockBrown block = return $ none "brown"
 
 blockRed :: GeneratorFunction
-blockRed block = none "red"
+blockRed block = return $ none "red"
 
 blockGreen :: GeneratorFunction
-blockGreen block = none "green"
+blockGreen block = return $ none "green"
 
 blockLetVar :: GeneratorFunction
-blockLetVar block = none $ varName ++ " = " ++ expr 
-  where
-    varName = getFieldValue block "VARNAME" 
-    expr = valueToCode block "VARVALUE" CNone
+blockLetVar block = do 
+    let varName = getFieldValue block "VARNAME" 
+    expr <- valueToCode block "VARVALUE" CNone
+    return $ none $ varName ++ " = " ++ expr 
 
 blockTrue :: GeneratorFunction
-blockTrue block = none "True"
+blockTrue block = return $ none "True"
 
 blockFalse :: GeneratorFunction
-blockFalse block = none "False"
+blockFalse block = return $ none "False"
 
 blockIf :: GeneratorFunction
-blockIf block = none $ "if " ++ ifexpr ++ " then "
+blockIf block = do 
+    ifexpr <- valueToCode block "IF" CNone
+    thenexpr <- valueToCode block "THEN" CNone
+    elseexpr <- valueToCode block "ELSE" CNone
+    return $ none $ "if " ++ ifexpr ++ " then "
                   ++ thenexpr ++ " else " ++ elseexpr
-  where
-   ifexpr = valueToCode block "IF" CNone
-   thenexpr = valueToCode block "THEN" CNone
-   elseexpr = valueToCode block "ELSE" CNone
 
 blockEq :: GeneratorFunction
-blockEq block = member $ left ++ " == " ++ right
-  where
-    left = valueToCode block "LEFT" CAtomic
-    right = valueToCode block "RIGHT" CAtomic
+blockEq block = do 
+    left <- valueToCode block "LEFT" CAtomic
+    right <- valueToCode block "RIGHT" CAtomic
+    return $ member $ left ++ " == " ++ right
 
 blockCodeMap = [ ("cw_text",blockText)
                 ,("cw_translate", blockTranslate)
@@ -178,10 +181,12 @@ blockCodeMap = [ ("cw_text",blockText)
 assignAll :: IO ()
 assignAll = mapM_ (uncurry setCodeGen) blockCodeMap
 
-
-valueToCode :: Block -> String -> OrderConstant -> String
-valueToCode block name ordr = unpack $ 
-                js_valueToCode block (pack name) (order ordr)
+valueToCode :: Block -> String -> OrderConstant -> Maybe String
+valueToCode block name ordr = do 
+                inputBlock <- getInputBlock block name
+                let val = unpack $ js_valueToCode block (pack name) (order ordr)
+                if val=="" then Nothing
+                else Just val 
 
 --- FFI
 foreign import javascript unsafe "Blockly.FunBlocks[$1] = $2"

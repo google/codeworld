@@ -32,7 +32,7 @@ typePicture = Type "Picture"
 typeNumber = Type "Number"
 typeProgram = NoType
 typeColor = Type "Color"
-typeBool = Type "bool"
+typeBool = Type "Bool"
 typeSet = NoType
 
 inlineDef = Inline False

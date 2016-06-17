@@ -774,6 +774,43 @@ the same word we're defining to be useless.  You can't define an athlete as
 defining functions, if you are careful, you actually *can* define something
 in terms of itself.
 
+A simple example of a recursive function is the factorial function.  It can
+be defined like this:
+
+    factorial :: Number -> Number
+    factorial(0) = 1
+    factorial(n) = n * factorial(n - 1)
+
+Notice that even though `factorial` is defined in terms of itself, it always
+has a value for natural numbers, because eventually, everything reduces to
+`factorial(0)`, which is not recursive.  Something similar happens for all
+recursive functions.  You need:
+
+* A *base* case, which is not defined in terms of itself.
+* A *recursive* cases, which is defined in terms of things that are closer
+  to the base case.  This way, everything eventually reduces to the base
+  case in the end.
+
+A more exciting use of recursive functions is building so-called "fractal"
+pictures.  These are pictures that are made up of smaller copies of
+themselves.  Here's a simple fractal:
+
+    main = drawingOf(fractal(10))
+
+    fractal :: Number -> Picture
+    fractal(0) = stem
+    fractal(n) = stem
+               & translated(part, 0,  5)
+               & translated(part, 0, -5)
+      where part = rotated(scaled(fractal(n-1), 2/3, 2/3), 90)
+
+    stem = path([(0, -10), (0, 10)])
+
+There are plenty more kinds of fractals you can build from this same pattern.
+The parameter to the function is a level of detail.  Start with a simple
+shape as the base case at the lowest level of detail.  Then define the
+general shape in terms of smaller shapes at one level of detail lower.
+
 Animations
 ==========
 

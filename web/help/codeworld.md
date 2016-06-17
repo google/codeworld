@@ -18,7 +18,8 @@ Drawing With CodeWorld
 Definitions
 -----------
 
-A CodeWorld project is a bunch of *definitions*.  You write a definition to say what
+Writing a program in CodeWorld is like writing a dictionary or glossary.  Your
+project is a bunch of *definitions*.  You write a definition to say what
 something means.  For example, you might write:
 
     wheel = circle(2)
@@ -520,10 +521,13 @@ To declare types in your programs, you can use `::`, like this:
     size :: Number
     size = 4
 
-You don't ever have to say what type things are.  The computer can
-always figure that out on its own.  But if you do say what your types
-are, the computer can often be a lot more helpful in explaining where
-your program is wrong.
+You don't *have* to say what type things are.  It's completely optional,
+and the computer can always figure that out on its own.  But if you do
+say what your types are, two things happen:
+
+* Other people reading your program can understand what's going on.
+* When you make a mistakem the computer can be more helpful explaining
+  what's wrong.
 
 ### List Types ###
 
@@ -582,6 +586,7 @@ comprehensions!
         (3, 1/8, brown), (4, 1/2, pink), (8, 2, yellow)
         ]
 
+    boxes :: [Picture]
     boxes = pictures([ translated(colored(rectangle(s,s), c), x, 0)
                        | (x, s, c) <- boxDetails ])
 
@@ -631,6 +636,7 @@ for the roof, and apply it to draw a house with a red roof.
     main = drawingOf(scene)
     scene = house(red)
 
+    house :: Color -> Picture
     house(roofColor) =
         colored(translated(solidRectangle(12, 1), 0, 5), roofColor) &
         solidRectangle(10, 10)
@@ -678,25 +684,95 @@ If you have more than two possibilities, you may want to use guards instead:
 
     main = drawingOf(thing(1) & thing(2) & thing(3))
     thing(n)
-      | n > 2     = rectangle(n, 1)
+      | n > 2     = rectangle(n, 2)
       | n > 1     = rectangle(n, n)
       | otherwise = circle(n)
 
 This will draw a rectangle, a square, and a circle.  Each guard has a condition,
 and if the condition matches, that choice is made for the definition.  Guards
 are evaluated from the top down, so later guards only match if an earlier guard
-hasn't matched already.  Finally, a special guard `otherwise` matches anything
-that reaches it.  Since your program will crash if no guards match a function,
-it's usually a good idea to include an `otherwise` guard just to make sure
-something matches no matter what the parameters are.
+hasn't matched already.
+
+Finally, a special guard `otherwise` matches anything that reaches it.  Since
+your program will crash if no guards match a function, it's usually a good idea
+to include an `otherwise` guard just to make sure something matches no matter
+what the parameters are.
 
 ### Pattern matching ###
 
-TODO: Write this section.
+So far, all of your functions have used variables to just name their parameters.
+Sometimes, though, you want to dig inside of a parameters, and match its pieces.
+You can do that, too.  Here's a really basic example:
+
+    f :: [Number] -> Number
+    f([a, b, c]) = a + b + c
+
+The function `f` expects *one* parameter, which is a list.  But it then breaks
+apart that list, and adds up three numbers that it finds inside.  If you ask
+for `f([1, 2, 3])`, the `1` will be batched to `a`, the `2` to `b`, and the `3`
+to `c`, for an answer of `6`.
+
+But what if there aren't three elements in the list?  What if there are only
+two?  Or four?  The answer, is just like when you have guards: if nothing
+matches, the program will crash!  So `f([1])` is undefined.  So is
+`f([1, 2, 3, 4])`.  The equation you've written *only* provides a value for `f`
+when its parameter is a list of length exactly `3`.
+
+The way you handle more cases is by writing multiple equations.  For example,
+you might write:
+
+    f :: [Number] -> Number
+    f([]   ) = 42
+    f([a]  ) = a + 1
+    f(other) = sum(other)
+
+This function is defined for more lists.  The first equation contains a pattern
+that just matches the empty list.  The second matches a list of length one.  And
+the final pattern matches anything else, by just using one variable name for the
+entire list.
+
+(As an aside, is `f` defined for all lists?  Surprisingly, no!  It's true that
+all lists will match one of those equations.  But the `sum` function is *itself*
+undefined for lists that are infinitely long.  So `f` will be, as well.)
+
+To better understand pattern matching, it's important to know the difference
+between a variable and a value.  On the right side of an equal sign, you can
+always use a variable as a name for its value.  But on the left side of an equal
+sign, a variable is just a parameter that will match *anything*, but a value
+will only match itself.  So this does exactly what you might guess:
+
+    f(0) = 1
+    f(1) = 2
+    f(2) = 4
+    f(n) = 10 * n
+
+But this doesn't do what you think:
+
+    f(pi   ) = 1
+    f(other) = 2
+
+You might think that function maps `pi` to the value `1` but everything else to
+`2`.  Surprisingly, though, it actually gives a value of `1` for all inputs!
+That's because `pi` is a variable, so the first equation is interpreted as
+saying: match anything, and call it `pi`.  To write the function you meant, you
+would need to write:
+
+    f(x) | x == pi   = 1
+         | otherwise = 2
+
+Pattern matching, therefore, isn't the best way to match specific values,
+because you can't use variables at all!  It is, however, a great way to write
+functions that depend on the *structure* of a parameter.
 
 ### Recursion ###
 
-TODO: Write this section.
+Recursion means defining something in terms of itself.
+
+This might sound funny, because we normally consider a definition that uses
+the same word we're defining to be useless.  You can't define an athlete as
+"someone who exercises as much as an athlete", for example.  But when
+defining functions, if you are careful, you actually *can* define something
+in terms of itself.
 
 Animations
 ==========

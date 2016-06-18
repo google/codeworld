@@ -105,7 +105,6 @@
 .blocklyTextEmph {
   cursor: default;
   fill: #fff;
-  text-transform: uppercase;
   font-size: 11pt;
   font-weight: 600;
 }

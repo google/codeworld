@@ -51,6 +51,7 @@ data Input = Value String FieldType [Field] Type
             | Dummy [Field]
 
 data Field = Text String
+            | TextE String -- Text Emph
             | TextInput String String -- displayname, value
             
 data Connection = TopCon | BotCon | TopBotCon | LeftCon
@@ -65,6 +66,7 @@ newtype Tooltip = Tooltip String
 
 fieldCode :: FieldInput -> Field -> IO FieldInput
 fieldCode field (Text str) = js_appendTextField field (pack str)
+fieldCode field (TextE str) = js_appendTextFieldEmph field (pack str)
 fieldCode field (TextInput text name) = js_appendTextInputField field (pack text) (pack name)
 
 inputCode :: Block -> [TypeVar] -> Input -> IO ()
@@ -150,6 +152,9 @@ foreign import javascript unsafe "$1.appendValueInput($2)"
 
 foreign import javascript unsafe "$1.appendField($2)"
   js_appendTextField :: FieldInput -> JSString -> IO FieldInput
+
+foreign import javascript unsafe "$1.appendField(new Blockly.FieldLabelEmph($2))"
+  js_appendTextFieldEmph :: FieldInput -> JSString -> IO FieldInput
 
 foreign import javascript unsafe "$1.appendField(new Blockly.FieldTextInput($2), $3)"
   js_appendTextInputField :: FieldInput -> JSString -> JSString -> IO FieldInput

@@ -31,7 +31,6 @@ module Blockly.DesignBlock (Type(..)
 
 import GHCJS.Types
 import Data.JSString (pack, unpack)
-import GHCJS.Foreign
 import GHCJS.Marshal
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
@@ -46,7 +45,7 @@ data Type = Type String
 
 data FieldType = LeftField | RightField | CentreField
 
-data Input = Value String FieldType [Field] Type
+data Input = Value String [Field] Type
             | Statement String [Field] Type
             | Dummy [Field]
 
@@ -77,7 +76,7 @@ inputCode block _ (Dummy fields) = do
       fieldCode fi_ field) (return fieldInput) fields
   return ()
 
-inputCode block _ (Value name fieldType fields (Type type_) ) = do
+inputCode block _ (Value name fields (Type type_) ) = do
   fieldInput <- js_appendValueInput block (pack name)
   js_setCheck fieldInput (pack type_)
   foldr (\ field fi -> do
@@ -86,7 +85,7 @@ inputCode block _ (Value name fieldType fields (Type type_) ) = do
   js_setTypeExprConc fieldInput (pack type_)
   return ()
 
-inputCode block pvars (Value name fieldType fields (Poly polyIndex) ) = do
+inputCode block pvars (Value name fields (Poly polyIndex) ) = do
   fieldInput <- js_appendValueInput block (pack name)
   foldr (\ field fi -> do
       fi_ <- fi
@@ -111,9 +110,8 @@ setBlockType (DesignBlock name inputs (Inline inline) (Color color) type_ (Toolt
                                      Type tp -> js_setOutputTypeConc block (pack tp)
                                      Poly ind -> js_setOutputTypePoly block (tvars !! ind)
                                      _ -> js_disableOutput block 
-                                 case inline of
-                                    True -> js_setInputsInline block True
-                                    _ -> return ()
+                                 when inline $ js_setInputsInline block True
+                                    -- else return ()
                                  return ()
                                  )
   js_setGenFunction (pack name) cb

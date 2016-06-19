@@ -16,20 +16,11 @@
 
 source base.sh
 
-USER_BUILD=data/user
-
 fuser -k -n tcp 8080
-rm -rf $USER_BUILD/base.jsexe
-rm -rf $USER_BUILD/LinkMain.js_hi
-rm -rf $USER_BUILD/LinkMain.js_o
-rm -rf $USER_BUILD/P??/*.jsexe
-rm -rf $USER_BUILD/P??/*.js_hi
-rm -rf $USER_BUILD/P??/*.js_o
-rm -rf $USER_BUILD/P??/*.err.txt
-rm -rf $USER_BUILD/Q??/*.jsexe
-rm -rf $USER_BUILD/Q??/*.js_hi
-rm -rf $USER_BUILD/Q??/*.js_o
-rm -rf $USER_BUILD/Q??/*.err.txt
+rm -rf data/*/user/???/*.jsexe
+rm -rf data/*/user/???/*.js_hi
+rm -rf data/*/user/???/*.js_o
+rm -rf data/*/user/???/*.err.txt
 
 mkdir -p log
 run .  codeworld-server -p 8080

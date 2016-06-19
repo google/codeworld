@@ -35,79 +35,38 @@ import           Text.Regex.TDFA
 
 import Util
 
-generateBaseBundle :: IO ()
-generateBaseBundle = do
-    lns <- T.lines <$> T.readFile autocompletePath
-    let preludeLines = keepOnlyPrelude lns
-    let exprs = catMaybes (map expression preludeLines)
-    let defs = [ "d" <> T.pack (show i) <> " = " <> e
-                 | (i,e) <- zip [0 :: Int ..] exprs ]
-    let src = "module LinkBase where\n" <> T.intercalate "\n" defs
-    T.writeFile (buildRootDir </> "LinkBase.hs") src
-    T.writeFile (buildRootDir </> "LinkMain.hs") $ T.intercalate "\n" [
-        "import LinkBase",
-        "main = pictureOf(blank)"]
-    compileBase
-  where keepOnlyPrelude = takeWhile (not . T.isPrefixOf "module ")
-                        . drop 1
-                        . dropWhile (/= "module Prelude")
-        expression t | T.null t                   = Nothing
-                     | T.isPrefixOf "-- " t       = Nothing
-                     | T.isPrefixOf "data " t     = Nothing
-                     | T.isPrefixOf "type " t     = Nothing
-                     | T.isPrefixOf "newtype " t  = Nothing
-                     | T.isPrefixOf "class " t    = Nothing
-                     | T.isPrefixOf "instance " t = Nothing
-                     | otherwise                  = Just (T.takeWhile (/= ' ') t)
-
-compileBase :: IO ()
-compileBase = do
-    let ghcjsArgs = standardBuildArgs ++ [
-            "-fno-warn-unused-imports",
-            "-generate-base", "LinkBase",
-            "-o", "base",
-            "LinkMain.hs"
-          ]
-    BC.putStrLn . fromJust =<< runCompiler (maxBound :: Int) ghcjsArgs
-    return ()
-
 compileIfNeeded :: BuildMode -> Text -> IO Bool
 compileIfNeeded mode programId = do
-    hasResult <- doesFileExist (buildRootDir </> resultFile programId)
-    hasTarget <- doesFileExist (buildRootDir </> targetFile programId)
+    hasResult <- doesFileExist (buildRootDir mode </> resultFile programId)
+    hasTarget <- doesFileExist (buildRootDir mode </> targetFile programId)
     if hasResult then return hasTarget else compileExistingSource mode programId
 
 compileExistingSource :: BuildMode -> Text -> IO Bool
-compileExistingSource mode programId = checkDangerousSource programId >>= \case
+compileExistingSource mode programId = checkDangerousSource mode programId >>= \case
     True -> do
-        B.writeFile (buildRootDir </> resultFile programId) $
+        B.writeFile (buildRootDir mode </> resultFile programId) $
             "Sorry, but your program refers to forbidden language features."
         return False
     False -> do
         let baseArgs = case mode of
-                Standard          -> standardBuildArgs
-                HaskellCompatible -> haskellCompatibleBuildArgs
-            ghcjsArgs = baseArgs ++ [
-                  "-no-rts",
-                  "-no-stats",
-                  "-use-base", "base.jsexe/out.base.symbs",
-                  sourceFile programId
-                ]
-        runCompiler userCompileMicros ghcjsArgs >>= \case
+                BuildMode "haskell"   -> haskellCompatibleBuildArgs
+                _                     -> standardBuildArgs
+            ghcjsArgs = baseArgs ++ [ sourceFile programId ]
+        runCompiler mode userCompileMicros ghcjsArgs >>= \case
             Nothing -> do
-                removeFileIfExists (buildRootDir </> resultFile programId)
-                removeFileIfExists (buildRootDir </> targetFile programId)
+                removeFileIfExists (buildRootDir mode </> resultFile programId)
+                removeFileIfExists (buildRootDir mode </> targetFile programId)
                 return False
             Just output -> do
-                B.writeFile (buildRootDir </> resultFile programId) output
-                doesFileExist (buildRootDir </> targetFile programId)
+                B.writeFile (buildRootDir mode </> resultFile programId) output
+                doesFileExist (buildRootDir mode </> targetFile programId)
 
 userCompileMicros :: Int
 userCompileMicros = 10 * 1000000
 
-checkDangerousSource :: Text -> IO Bool
-checkDangerousSource programId = do
-    contents <- B.readFile (buildRootDir </> sourceFile programId)
+checkDangerousSource :: BuildMode -> Text -> IO Bool
+checkDangerousSource mode programId = do
+    contents <- B.readFile (buildRootDir mode </> sourceFile programId)
     return $ matches contents ".*TemplateHaskell.*" ||
              matches contents ".*QuasiQuotes.*" ||
              matches contents ".*glasgow-exts.*"
@@ -115,11 +74,11 @@ checkDangerousSource programId = do
     matches :: ByteString -> ByteString -> Bool
     matches txt pat = txt =~ pat
 
-runCompiler :: Int -> [String] -> IO (Maybe ByteString)
-runCompiler micros args = do
+runCompiler :: BuildMode -> Int -> [String] -> IO (Maybe ByteString)
+runCompiler mode micros args = do
     (Just inh, Just outh, Just errh, pid) <-
         createProcess (proc "ghcjs" args) {
-            cwd       = Just buildRootDir,
+            cwd       = Just (buildRootDir mode),
             std_in    = CreatePipe,
             std_out   = CreatePipe,
             std_err   = CreatePipe,

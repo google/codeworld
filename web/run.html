@@ -28,10 +28,6 @@
     }
   </script>
 
-  <script type="text/javascript" src="js/rts.js"></script>
-  <script type="text/javascript" src="js/lib.base.js"></script>
-  <script type="text/javascript" src="js/out.base.js"></script>
-
   <script type="text/javascript">
     var params = location.search.slice(1).split('&');
     for (var i = 0; i < params.length; i++) {
@@ -47,11 +43,7 @@
         }
         var script = document.createElement('script');
         script.setAttribute('type', 'text/javascript');
-        script.setAttribute('src', 'runJS?hash=' + hash);
-
-        script.onload = function() {
-          h$main(h$mainZCMainzimain);
-        }
+        script.setAttribute('src', 'runJS?hash=' + hash + '&mode=' + window.parent.buildMode);
 
         document.head.appendChild(script);
 

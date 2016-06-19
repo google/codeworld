@@ -46,10 +46,6 @@ newtype ClientId = ClientId (Maybe T.Text) deriving (Eq)
 
 main :: IO ()
 main = do
-    createDirectoryIfMissing True buildRootDir
-    createDirectoryIfMissing True projectRootDir
-    generateBaseBundle
-
     hasClientId <- doesFileExist "web/clientId.txt"
     when (not hasClientId) $ do
         putStrLn "WARNING: Missing web/clientId.txt"
@@ -92,8 +88,8 @@ processBody = do
 
 getBuildMode :: Snap BuildMode
 getBuildMode = getParam "mode" >>= \ case
-    Just "haskell" -> return HaskellCompatible
-    _              -> return Standard
+    Just "haskell" -> return (BuildMode "haskell")
+    _              -> return (BuildMode "codeworld")
 
 site :: ClientId -> Snap ()
 site clientId =
@@ -122,49 +118,49 @@ loadProjectHandler :: ClientId -> Snap ()
 loadProjectHandler clientId = do
     mode      <- getBuildMode
     user      <- getUser clientId
-    liftIO $ ensureUserProjectDir (userId user)
+    liftIO $ ensureUserProjectDir mode (userId user)
     Just name <- getParam "name"
     let projectName = T.decodeUtf8 name
-    let projectId = nameToProjectId mode projectName
-    let file = projectRootDir </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
+    let projectId = nameToProjectId projectName
+    let file = projectRootDir mode </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
     serveFile file
 
 saveProjectHandler :: ClientId -> Snap ()
 saveProjectHandler clientId = do
     mode <- getBuildMode
     user <- getUser clientId
-    liftIO $ ensureUserProjectDir (userId user)
+    liftIO $ ensureUserProjectDir mode (userId user)
     Just project <- decode . LB.fromStrict . fromJust <$> getParam "project"
-    let projectId = nameToProjectId mode (projectName project)
-    let file = projectRootDir </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
+    let projectId = nameToProjectId (projectName project)
+    let file = projectRootDir mode </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
     liftIO $ LB.writeFile file $ encode project
 
 deleteProjectHandler :: ClientId -> Snap ()
 deleteProjectHandler clientId = do
     mode <- getBuildMode
     user      <- getUser clientId
-    liftIO $ ensureUserProjectDir (userId user)
+    liftIO $ ensureUserProjectDir mode (userId user)
     Just name <- getParam "name"
     let projectName = T.decodeUtf8 name
-    let projectId = nameToProjectId mode projectName
-    let file = projectRootDir </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
+    let projectId = nameToProjectId projectName
+    let file = projectRootDir mode </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
     liftIO $ removeFile file
 
 listProjectsHandler :: ClientId -> Snap ()
 listProjectsHandler clientId = do
     mode <- getBuildMode
     user  <- getUser clientId
-    liftIO $ ensureUserProjectDir (userId user)
-    let projectDir = projectRootDir </> T.unpack (userId user)
+    liftIO $ ensureUserProjectDir mode (userId user)
+    let projectDir = projectRootDir mode </> T.unpack (userId user)
     projectFiles <- liftIO $ getDirectoryContents projectDir
     projects <- liftIO $ fmap catMaybes $ forM projectFiles $ \f -> do
-        let file = projectRootDir </> T.unpack (userId user) </> f
+        let file = projectRootDir mode </> T.unpack (userId user) </> f
         if takeExtension file == ".cw"
             then do
                 decode <$> LB.readFile file >>= \ case
                     Nothing -> return Nothing
                     Just project -> do
-                        let projId = T.unpack (nameToProjectId mode (projectName project))
+                        let projId = T.unpack (nameToProjectId (projectName project))
                         if file == projectDir </> projId <.> "cw"
                             then return (Just project)
                             else return Nothing
@@ -176,10 +172,10 @@ compileHandler :: Snap ()
 compileHandler = do
     mode <- getBuildMode
     Just source <- getParam "source"
-    let programId = sourceToProgramId mode source
+    let programId = sourceToProgramId source
     success <- liftIO $ do
-        ensureProgramDir programId
-        B.writeFile (buildRootDir </> sourceFile programId) source
+        ensureProgramDir mode programId
+        B.writeFile (buildRootDir mode </> sourceFile programId) source
         compileIfNeeded mode programId
     when (not success) $ modifyResponse $ setResponseCode 500
     modifyResponse $ setContentType "text/plain"
@@ -187,10 +183,11 @@ compileHandler = do
 
 loadSourceHandler :: Snap ()
 loadSourceHandler = do
+    mode <- getBuildMode
     Just hash <- getParam "hash"
     let programId = T.decodeUtf8 hash
     modifyResponse $ setContentType "text/x-haskell"
-    serveFile (buildRootDir </> sourceFile programId)
+    serveFile (buildRootDir mode </> sourceFile programId)
 
 runHandler :: Snap ()
 runHandler = do
@@ -199,7 +196,7 @@ runHandler = do
     let programId = T.decodeUtf8 hash
     liftIO $ compileIfNeeded mode programId
     modifyResponse $ setContentType "text/javascript"
-    serveFile (buildRootDir </> targetFile programId)
+    serveFile (buildRootDir mode </> targetFile programId)
 
 runMessageHandler :: Snap ()
 runMessageHandler = do
@@ -208,4 +205,4 @@ runMessageHandler = do
     let programId = T.decodeUtf8 hash
     liftIO $ compileIfNeeded mode programId
     modifyResponse $ setContentType "text/plain"
-    serveFile (buildRootDir </> resultFile programId)
+    serveFile (buildRootDir mode </> resultFile programId)

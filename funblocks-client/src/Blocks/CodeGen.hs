@@ -52,27 +52,26 @@ none code = (code, CNone)
 type Code = String
 type GeneratorFunction = Block -> Maybe (Code, OrderConstant)
 
-blockText :: GeneratorFunction
-blockText block = do
-      let arg = getFieldValue block "TEXT" 
-      return $ none $ "text(\"" ++ arg ++ "\")"
-
+-- PROGRAMS --------------------------------------
 blockDrawingOf :: GeneratorFunction
 blockDrawingOf block = do 
       code <- valueToCode block "VALUE" CNone
       return $ none $ "main = drawingOf(" ++ code ++ ")"
 
--- TODO check if it is a number
-blockNumber :: GeneratorFunction
-blockNumber block = do 
-    let arg = getFieldValue block "NUMBER"
-    return $ none arg 
+-- PICTURES --------------------------------------
+blockBlank :: GeneratorFunction
+blockBlank block = return $ none "blank"
 
-blockSolidRectangle :: GeneratorFunction
-blockSolidRectangle block = do
-    width <- valueToCode block "WIDTH" CNone
-    height <- valueToCode block "HEIGHT" CNone
-    return $ none $ "solidRectangle(" ++ width ++ "," ++ height ++ ")"
+blockCoordinatePlane :: GeneratorFunction
+blockCoordinatePlane block = return $ none "coordinatePlane"
+
+blockCodeWorldLogo :: GeneratorFunction
+blockCodeWorldLogo block = return $ none "codeWorldLogo"
+
+blockText :: GeneratorFunction
+blockText block = do
+      let arg = getFieldValue block "TEXT" 
+      return $ none $ "text(\"" ++ arg ++ "\")"
 
 blockSolidCircle :: GeneratorFunction
 blockSolidCircle block = do 
@@ -83,6 +82,56 @@ blockCircle :: GeneratorFunction
 blockCircle block = do 
     radius <- valueToCode block "RADIUS" CNone
     return $ none $ "circle(" ++ radius ++ ")"
+
+blockThickCircle :: GeneratorFunction
+blockThickCircle block = do 
+    radius <- valueToCode block "RADIUS" CNone
+    linewidth <- valueToCode block "LINEWIDTH" CNone
+    return $ none $ "thickCircle(" ++ radius ++ "," ++ linewidth ++ ")"
+
+blockRectangle :: GeneratorFunction
+blockRectangle block = do
+    width <- valueToCode block "WIDTH" CNone
+    height <- valueToCode block "HEIGHT" CNone
+    return $ none $ "rectangle(" ++ width ++ "," ++ height ++ ")"
+
+blockThickRectangle :: GeneratorFunction
+blockThickRectangle block = do
+    width <- valueToCode block "WIDTH" CNone
+    height <- valueToCode block "HEIGHT" CNone
+    linewidth <- valueToCode block "LINEWIDTH" CNone
+    return $ none $ "solidRectangle(" ++ width ++ "," ++ height ++ "," ++ linewidth ++ ")"
+
+blockSolidRectangle :: GeneratorFunction
+blockSolidRectangle block = do
+    width <- valueToCode block "WIDTH" CNone
+    height <- valueToCode block "HEIGHT" CNone
+    return $ none $ "solidRectangle(" ++ width ++ "," ++ height ++ ")"
+
+blockArc :: GeneratorFunction
+blockArc block = do
+    startangle <- valueToCode block "STARTANGLE" CNone
+    endangle <- valueToCode block "ENDANGLE" CNone
+    radius <- valueToCode block "RADIUS" CNone
+    return $ none $ "arc(" ++ startangle ++ "," ++ endangle ++ "," ++ radius ++ ")"
+
+blockSector :: GeneratorFunction
+blockSector block = do
+    startangle <- valueToCode block "STARTANGLE" CNone
+    endangle <- valueToCode block "ENDANGLE" CNone
+    radius <- valueToCode block "RADIUS" CNone
+    return $ none $ "sector(" ++ startangle ++ "," ++ endangle ++ "," ++ radius ++ ")"
+
+blockThickArc :: GeneratorFunction
+blockThickArc block = do
+    startangle <- valueToCode block "STARTANGLE" CNone
+    endangle <- valueToCode block "ENDANGLE" CNone
+    radius <- valueToCode block "RADIUS" CNone
+    linewidth <- valueToCode block "LINEWIDTH" CNone
+    return $ none $ "thickArc(" ++ startangle ++ "," ++ endangle ++ "," ++ radius ++ "," ++ linewidth ++ ")"
+
+
+-- TRANSFORMATIONS ------------------------------------------------------
 
 blockCombine :: GeneratorFunction
 blockCombine block = do
@@ -116,24 +165,143 @@ blockRotate block = do
     angle <- valueToCode block "ANGLE" CNone
     return $ none $ "rotated (" ++ pic ++ "," ++ angle ++ ")"
 
-blockBlue :: GeneratorFunction
-blockBlue block = return $ none "blue"
 
-blockBrown :: GeneratorFunction
-blockBrown block = return $ none "brown"
 
-blockRed :: GeneratorFunction
-blockRed block = return $ none "red"
+-- NUMBERS -------------------------------------------------------
 
-blockGreen :: GeneratorFunction
-blockGreen block = return $ none "green"
+blockNumber :: GeneratorFunction
+blockNumber block = do 
+    let arg = getFieldValue block "NUMBER"
+    return $ none arg 
 
-blockLetVar :: GeneratorFunction
-blockLetVar block = do 
-    let varName = getFieldValue block "VARNAME" 
-    expr <- valueToCode block "VARVALUE" CNone
-    return $ none $ varName ++ " = " ++ expr 
+blockAdd :: GeneratorFunction
+blockAdd block = do 
+    left <- valueToCode block "LEFT" CAtomic
+    right <- valueToCode block "RIGHT" CAtomic
+    return $ member $ left ++ " + " ++ right
 
+blockSub :: GeneratorFunction
+blockSub block = do 
+    left <- valueToCode block "LEFT" CAtomic
+    right <- valueToCode block "RIGHT" CAtomic
+    return $ member $ left ++ " - " ++ right
+
+blockMult :: GeneratorFunction
+blockMult block = do 
+    left <- valueToCode block "LEFT" CAtomic
+    right <- valueToCode block "RIGHT" CAtomic
+    return $ member $ left ++ " + " ++ right
+
+blockDiv :: GeneratorFunction
+blockDiv block = do 
+    left <- valueToCode block "LEFT" CAtomic
+    right <- valueToCode block "RIGHT" CAtomic
+    return $ member $ left ++ " / " ++ right
+
+blockExp :: GeneratorFunction
+blockExp block = do 
+    left <- valueToCode block "LEFT" CAtomic
+    right <- valueToCode block "RIGHT" CAtomic
+    return $ member $ left ++ "^" ++ right
+
+blockMax :: GeneratorFunction
+blockMax block = do 
+    left <- valueToCode block "LEFT" CNone
+    right <- valueToCode block "RIGHT" CNone
+    return $ none $ "max(" ++ left ++ "," ++ right ++ ")"
+
+blockMin :: GeneratorFunction
+blockMin block = do 
+    left <- valueToCode block "LEFT" CNone
+    right <- valueToCode block "RIGHT" CNone
+    return $ none $ "min(" ++ left ++ "," ++ right ++ ")"
+
+blockOpposite :: GeneratorFunction
+blockOpposite block = do 
+    num <- valueToCode block "NUM" CNone
+    return $ none $ "opposite(" ++ num ++ ")"
+
+blockAbs :: GeneratorFunction
+blockAbs block = do 
+    num <- valueToCode block "NUM" CNone
+    return $ none $ "absoluteValue(" ++ num ++ ")"
+
+blockRound :: GeneratorFunction
+blockRound block = do 
+    num <- valueToCode block "NUM" CNone
+    return $ none $ "round(" ++ num ++ ")"
+
+blockReciprocal :: GeneratorFunction
+blockReciprocal block = do 
+    num <- valueToCode block "NUM" CNone
+    return $ none $ "reciprocal(" ++ num ++ ")"
+
+blockQuotient :: GeneratorFunction
+blockQuotient block = do 
+    left <- valueToCode block "LEFT" CNone
+    right <- valueToCode block "RIGHT" CNone
+    return $ none $ "quotient(" ++ left ++ "," ++ right ++ ")"
+
+blockRemainder :: GeneratorFunction
+blockRemainder block = do 
+    left <- valueToCode block "LEFT" CNone
+    right <- valueToCode block "RIGHT" CNone
+    return $ none $ "remainder(" ++ left ++ "," ++ right ++ ")"
+
+blockPi :: GeneratorFunction
+blockPi block = return $ none "pi"
+
+blockSqrt :: GeneratorFunction
+blockSqrt block = do 
+    num <- valueToCode block "NUM" CNone
+    return $ none $ "squareRoot(" ++ num ++ ")"
+
+blockGCD :: GeneratorFunction
+blockGCD block = do 
+    left <- valueToCode block "LEFT" CNone
+    right <- valueToCode block "RIGHT" CNone
+    return $ none $ "gcd(" ++ left ++ "," ++ right ++ ")"
+
+blockLCM :: GeneratorFunction
+blockLCM block = do 
+    left <- valueToCode block "LEFT" CNone
+    right <- valueToCode block "RIGHT" CNone
+    return $ none $ "lcm(" ++ left ++ "," ++ right ++ ")"
+
+-- TEXT --------------------------------------------------
+
+blockString :: GeneratorFunction
+blockString block = do 
+    left <- valueToCode block "TEXT" CNone
+    return $ none $ "\"" ++ left ++ "\""
+
+blockConcat :: GeneratorFunction
+blockConcat block = do 
+    left <- valueToCode block "LEFT" CAtomic
+    right <- valueToCode block "RIGHT" CAtomic
+    return $ member $ left ++ "<>" ++ right
+
+blockPrinted :: GeneratorFunction
+blockPrinted block = do 
+    txt <- valueToCode block "TEXT" CNone
+    return $ none $ "printed(" ++ txt ++ ")"
+
+blockUppercase :: GeneratorFunction
+blockUppercase block = do 
+    txt <- valueToCode block "TEXT" CNone
+    return $ none $ "uppercase(" ++ txt ++ ")"
+
+blockLowercase :: GeneratorFunction
+blockLowercase block = do 
+    txt <- valueToCode block "TEXT" CNone
+    return $ none $ "lowercase(" ++ txt ++ ")"
+
+blockCapitalized :: GeneratorFunction
+blockCapitalized block = do 
+    txt <- valueToCode block "TEXT" CNone
+    return $ none $ "capitalized(" ++ txt ++ ")"
+
+-- LOGIC ------------------------------------------
 blockTrue :: GeneratorFunction
 blockTrue block = return $ none "True"
 
@@ -154,27 +322,315 @@ blockEq block = do
     right <- valueToCode block "RIGHT" CAtomic
     return $ member $ left ++ " == " ++ right
 
-blockCodeMap = [ ("cw_text",blockText)
-                ,("cw_translate", blockTranslate)
-                ,("cw_combine", blockCombine)
-                ,("cw_colored", blockColored)
-                ,("cw_drawingof", blockDrawingOf)
-                ,("number",blockNumber)
-                ,("cw_solidrectangle", blockSolidRectangle)
-                ,("cw_solidcircle", blockSolidCircle)
-                ,("cw_circle", blockCircle)
-                ,("cw_blue", blockBlue)
-                ,("cw_red", blockRed)
-                ,("cw_green", blockGreen)
-                ,("cw_brown", blockBrown)
-                ,("letVar", blockLetVar)
-                ,("con_true", blockTrue)
-                ,("con_false", blockFalse)
-                ,("con_if", blockIf)
-                ,("con_eq", blockEq)
-                ,("cw_scale", blockScale)
-                ,("cw_rotate", blockRotate)
-                ]
+blockNeq :: GeneratorFunction
+blockNeq block = do 
+    left <- valueToCode block "LEFT" CAtomic
+    right <- valueToCode block "RIGHT" CAtomic
+    return $ member $ left ++ " /= " ++ right
+
+blockAnd :: GeneratorFunction
+blockAnd block = do 
+    left <- valueToCode block "LEFT" CAtomic
+    right <- valueToCode block "RIGHT" CAtomic
+    return $ member $ left ++ " && " ++ right
+
+blockOr :: GeneratorFunction
+blockOr block = do 
+    left <- valueToCode block "LEFT" CAtomic
+    right <- valueToCode block "RIGHT" CAtomic
+    return $ member $ left ++ " || " ++ right
+
+blockNot :: GeneratorFunction
+blockNot block = do 
+    val <- valueToCode block "VALUE" CNone
+    return $ none $ "not(" ++ val ++ ")"
+
+blockGreater :: GeneratorFunction
+blockGreater block = do 
+    left <- valueToCode block "LEFT" CAtomic
+    right <- valueToCode block "RIGHT" CAtomic
+    return $ member $ left ++ " > " ++ right
+
+blockGeq :: GeneratorFunction
+blockGeq block = do 
+    left <- valueToCode block "LEFT" CAtomic
+    right <- valueToCode block "RIGHT" CAtomic
+    return $ member $ left ++ " >= " ++ right
+
+blockLess :: GeneratorFunction
+blockLess block = do 
+    left <- valueToCode block "LEFT" CAtomic
+    right <- valueToCode block "RIGHT" CAtomic
+    return $ member $ left ++ " < " ++ right
+
+blockLeq :: GeneratorFunction
+blockLeq block = do 
+    left <- valueToCode block "LEFT" CAtomic
+    right <- valueToCode block "RIGHT" CAtomic
+    return $ member $ left ++ " <= " ++ right
+
+blockEven :: GeneratorFunction
+blockEven block = do 
+    val <- valueToCode block "VALUE" CNone
+    return $ none $ "even(" ++ val ++ ")" 
+
+blockOdd :: GeneratorFunction
+blockOdd block = do 
+    val <- valueToCode block "VALUE" CNone
+    return $ none $ "odd(" ++ val ++ ")" 
+
+blockStartWith :: GeneratorFunction
+blockStartWith block = do 
+    txtMain <- valueToCode block "TEXTMAIN" CNone
+    txtTest <- valueToCode block "TEXTTEST" CNone
+    return $ none $ "startsWith(" ++ txtMain ++ "," ++ txtTest ++ ")"
+
+
+blockEndWith :: GeneratorFunction
+blockEndWith block = do 
+    txtMain <- valueToCode block "TEXTMAIN" CNone
+    txtTest <- valueToCode block "TEXTTEST" CNone
+    return $ none $ "endsWith(" ++ txtMain ++ "," ++ txtTest ++ ")"
+
+blockOrange :: GeneratorFunction
+blockOrange block = return $ none "orange"
+
+blockBlue :: GeneratorFunction
+blockBlue block = return $ none "blue"
+
+blockBrown :: GeneratorFunction
+blockBrown block = return $ none "brown"
+
+blockRed :: GeneratorFunction
+blockRed block = return $ none "red"
+
+blockGreen :: GeneratorFunction
+blockGreen block = return $ none "green"
+
+blockBlack :: GeneratorFunction
+blockBlack block = return $ none "black"
+
+blockWhite :: GeneratorFunction
+blockWhite block = return $ none "white"
+
+blockCyan :: GeneratorFunction
+blockCyan block = return $ none "cyan"
+
+blockMagenta :: GeneratorFunction
+blockMagenta block = return $ none "magenta"
+
+blockYellow :: GeneratorFunction
+blockYellow block = return $ none "yellow"
+
+blockAquamarine :: GeneratorFunction
+blockAquamarine block = return $ none "aquamarine"
+
+blockAzure :: GeneratorFunction
+blockAzure block = return $ none "azure"
+
+blockViolet :: GeneratorFunction
+blockViolet block = return $ none "violet"
+
+blockChartreuse :: GeneratorFunction
+blockChartreuse block = return $ none "chartreuse"
+
+blockRose :: GeneratorFunction
+blockRose block = return $ none "rose"
+
+blockPink :: GeneratorFunction
+blockPink block = return $ none "pink"
+
+blockPurple :: GeneratorFunction
+blockPurple block = return $ none "purple"
+
+blockGray :: GeneratorFunction
+blockGray block = do 
+    val <- valueToCode block "VALUE" CNone
+    return $ none $ "gray(" ++ val ++ ")" 
+
+blockMixed :: GeneratorFunction
+blockMixed block = do 
+    col1 <- valueToCode block "COL1" CNone
+    col2 <- valueToCode block "COL2" CNone
+    return $ none $ "mixed(" ++ col1 ++ "," ++ col2 ++ ")" 
+
+blockLight :: GeneratorFunction
+blockLight block = do 
+    col <- valueToCode block "COL" CNone
+    return $ none $ "light(" ++ col ++ ")" 
+
+blockDark :: GeneratorFunction
+blockDark block = do 
+    col <- valueToCode block "COL" CNone
+    return $ none $ "dark(" ++ col ++ ")" 
+
+blockBright :: GeneratorFunction
+blockBright block = do 
+    col <- valueToCode block "COL" CNone
+    return $ none $ "bright(" ++ col ++ ")" 
+
+blockDull :: GeneratorFunction
+blockDull block = do 
+    col <- valueToCode block "COL" CNone
+    return $ none $ "dull(" ++ col ++ ")" 
+
+blockTranslucent :: GeneratorFunction
+blockTranslucent block = do 
+    col <- valueToCode block "COL" CNone
+    return $ none $ "translucent(" ++ col ++ ")" 
+
+blockRGBA :: GeneratorFunction
+blockRGBA block = do 
+    red <- valueToCode block "RED" CNone
+    blue <- valueToCode block "BLUE" CNone
+    green <- valueToCode block "GREEN" CNone
+    alpha <- valueToCode block "ALPHA" CNone
+    return $ none $ "rgba(" ++ red ++ "," ++ blue ++ "," ++ green ++ "," ++ alpha ++ ")" 
+
+blockLetVar :: GeneratorFunction
+blockLetVar block = do 
+    let varName = getFieldValue block "VARNAME" 
+    expr <- valueToCode block "VARVALUE" CNone
+    return $ none $ varName ++ " = " ++ expr 
+
+
+blockCodeMap = [ ("cwBlank",blockBlank)
+                  ,("cwCoordinatePlane",blockCoordinatePlane)
+                  ,("cwCodeWorldLogo",blockCodeWorldLogo)
+                  ,("cwText",blockText)
+                  ,("cwDrawingOf",blockDrawingOf)
+                  ,("cwCircle",blockCircle)
+                  ,("cwThickCircle",blockThickCircle)
+                  ,("cwSolidCircle",blockSolidCircle)
+                  ,("cwRectangle",blockRectangle)
+                  ,("cwThickRectangle",blockThickRectangle)
+                  ,("cwSolidRectangle",blockSolidRectangle)
+                  ,("cwArc",blockArc)
+                  ,("cwSector",blockSector)
+                  ,("cwThickArc",blockThickArc)
+                  -- TRANSFORMATIONS
+                  ,("cwColored",blockColored)
+                  ,("cwTranslate",blockTranslate)
+                  ,("cwCombine",blockCombine)
+                  ,("cwRotate",blockRotate)
+                  ,("cwScale",blockScale)
+                  -- NUMBERS
+                  ,("numNumber",blockNumber)
+                  ,("numAdd",blockAdd)
+                  ,("numSub",blockSub)
+                  ,("numMult",blockMult)
+                  ,("numDiv",blockDiv)
+                  ,("numExp",blockExp)
+                  ,("numMax",blockMax)
+                  ,("numMin",blockMin)
+                  ,("numOpposite",blockOpposite)
+                  ,("numAbs",blockAbs)
+                  ,("numRound",blockRound)
+                  ,("numReciprocal",blockReciprocal)
+                  ,("numQuot",blockQuotient)
+                  ,("numRem",blockRemainder)
+                  ,("numPi",blockPi)
+                  ,("numSqrt",blockSqrt)
+                  ,("numGCD",blockGCD)
+                  ,("numLCM",blockLCM)
+                  -- TEXT
+                  ,("txtConcat",blockConcat)
+                  ,("text",blockString)
+                  ,("txtPrinted",blockPrinted)
+                  ,("txtLowercase",blockLowercase)
+                  ,("txtUppercase",blockUppercase)
+                  ,("txtCapitalized",blockCapitalized)
+                  -- COLORS
+                  ,("cwBlue",blockBlue)
+                  ,("cwRed",blockRed)
+                  ,("cwGreen",blockGreen)
+                  ,("cwBrown",blockBrown)
+                  ,("cwOrange",blockOrange)
+                  ,("cwBlack",blockBlack)
+                  ,("cwWhite",blockWhite)
+                  ,("cwCyan",blockCyan)
+                  ,("cwMagenta",blockMagenta)
+                  ,("cwYellow",blockYellow)
+                  ,("cwAquamarine",blockAquamarine)
+                  ,("cwAzure",blockAzure)
+                  ,("cwViolet",blockViolet)
+                  ,("cwChartreuse",blockChartreuse)
+                  ,("cwRose",blockRose)
+                  ,("cwPink",blockPink)
+                  ,("cwPurple",blockPurple)
+                  ,("cwGray",blockGray)
+                  ,("cwMixed",blockMixed)
+                  ,("cwLight",blockLight)
+                  ,("cwDark",blockDark)
+                  ,("cwBright",blockBright)
+                  ,("cwDull",blockDull)
+                  ,("cwTranslucent",blockTranslucent)
+                  ,("cwRGBA",blockRGBA)
+                  -- LOGIC
+                  ,("conIf",blockIf)
+                  ,("conAnd",blockAnd)
+                  ,("conOr",blockOr)
+                  ,("conNot",blockNot)
+                  ,("conEq",blockEq)
+                  ,("conNeq",blockNeq)
+                  ,("conTrue",blockTrue)
+                  ,("conFalse",blockFalse)
+                  ,("conGreater",blockGreater)
+                  ,("conGeq",blockGeq)
+                  ,("conLess",blockLess)
+                  ,("conLeq",blockLeq)
+                  ,("conEven",blockEven)
+                  ,("conOdd",blockOdd)
+                  ,("conStartWith",blockStartWith)
+                  ,("conEndWith",blockEndWith)
+                  ,("letVar",blockLetVar)
+                    ]
+                                
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- Assigns CodeGen functions defined here to the Blockly Javascript Code
 -- generator

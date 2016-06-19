@@ -27,6 +27,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Char8 as BC
 import           Data.Maybe
+import           Data.Monoid
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Encoding as T
@@ -181,10 +182,15 @@ compileHandler = do
     modifyResponse $ setContentType "text/plain"
     writeBS (T.encodeUtf8 programId)
 
+getHashParam :: Snap B.ByteString
+getHashParam = do
+    Just h <- getParam "hash"
+    if "Q" `B.isPrefixOf` h then return ("P" <> B.drop 1 h) else return h
+
 loadSourceHandler :: Snap ()
 loadSourceHandler = do
     mode <- getBuildMode
-    Just hash <- getParam "hash"
+    hash <- getHashParam
     let programId = T.decodeUtf8 hash
     modifyResponse $ setContentType "text/x-haskell"
     serveFile (buildRootDir mode </> sourceFile programId)
@@ -192,7 +198,7 @@ loadSourceHandler = do
 runHandler :: Snap ()
 runHandler = do
     mode <- getBuildMode
-    Just hash <- getParam "hash"
+    hash <- getHashParam
     let programId = T.decodeUtf8 hash
     liftIO $ compileIfNeeded mode programId
     modifyResponse $ setContentType "text/javascript"
@@ -201,7 +207,7 @@ runHandler = do
 runMessageHandler :: Snap ()
 runMessageHandler = do
     mode <- getBuildMode
-    Just hash <- getParam "hash"
+    hash <- getHashParam
     let programId = T.decodeUtf8 hash
     liftIO $ compileIfNeeded mode programId
     modifyResponse $ setContentType "text/plain"

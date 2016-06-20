@@ -53,6 +53,9 @@ sourceBase programId = let s = T.unpack programId in take 3 s </> s
 sourceFile :: Text -> FilePath
 sourceFile programId = sourceBase programId <.> "hs"
 
+sourceXML :: Text -> FilePath
+sourceXML programId = sourceBase programId <.> "xml"
+
 targetFile :: Text -> FilePath
 targetFile programId = sourceBase programId <.> "jsexe" </> "all.js"
 

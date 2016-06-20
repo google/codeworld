@@ -14,7 +14,7 @@
     
     <!-- Optional bootstrap theme -->
     <link rel="stylesheet" href="css/bootstrap.min.css">
-      <link rel="stylesheet" href="css/blockly.css">
+    <link rel="stylesheet" href="css/blockly.css">
     <link rel="stylesheet" href="css/codemirror.css">
 
     <!-- Latest compiled and minified JavaScript -->
@@ -26,8 +26,8 @@
 
     <script src="blockly/blockly_compressed.js"></script>
     <script src="blockly/blocks_compressed.js"></script>
+    <script src="blockly/core/field_label_emph.js"></script>
     <script src="blockly/msg/js/en.js"></script>
-    <script src="blockly/javascript_compressed.js"></script>
 
     <script src="js/blockworld.js"></script> 
     <script src="js/codegen.js"></script>
@@ -65,38 +65,107 @@
 
                   <xml id="toolbox" style="display: none">
                       <category name="Programs">
-                          <block type="cw_drawingof"></block>
+                          <block type="cwDrawingOf"></block>
                       </category>
                       <category name="Pictures">
-                          <block type="cw_translate"></block>
-                          <block type="cw_scale"></block>
-                          <block type="cw_rotate"></block>
-                          <block type="cw_combine"></block>
-                          <block type="cw_colored"></block>
-                          <block type="cw_text"></block>
-                          <block type="cw_solidrectangle"></block>
-                          <block type="cw_circle"></block>
-                          <block type="cw_solidcircle"></block>
+                          <block type="cwBlank"></block>
+                          <block type="cwCoordinatePlane"></block>
+                          <block type="cwCodeWorldLogo"></block>
+                          <block type="cwText"></block>
+                          <block type="cwCircle"></block>
+                          <block type="cwThickCircle"></block>
+                          <block type="cwSolidCircle"></block>
+                          <block type="cwRectangle"></block>
+                          <block type="cwThickRectangle"></block>
+                          <block type="cwSolidRectangle"></block>
+                          <block type="cwArc"></block>
+                          <block type="cwSector"></block>
+                          <block type="cwThickArc"></block>
                       </category>
-                      <category name="Math">
-                          <block type="number"></block>
+                      <category name="Transformations">
+                          <block type="cwTranslate"></block>
+                          <block type="cwScale"></block>
+                          <block type="cwRotate"></block>
+                          <block type="cwCombine"></block>
+                          <block type="cwColored"></block>
+                      </category>
+                      <category name="Numbers">
+                          <block type="numNumber"></block>
+                          <block type="numAdd"></block>
+                          <block type="numSub"></block>
+                          <block type="numMult"></block>
+                          <block type="numDiv"></block>
+                          <block type="numExp"></block>
+                          <block type="numMax"></block>
+                          <block type="numMin"></block>
+                          <block type="numOpposite"></block>
+                          <block type="numAbs"></block>
+                          <block type="numRound"></block>
+                          <block type="numReciprocal"></block>
+                          <block type="numQuot"></block>
+                          <block type="numRem"></block>
+                          <block type="numPi"></block>
+                          <block type="numSqrt"></block>
+                          <block type="numGCD"></block>
+                          <block type="numLCM"></block>
+                      </category>
+                      <category name="Text">
+                          <block type="text"></block>
+                          <block type="txtConcat"></block>
+                          <block type="txtPrinted"></block>
+                          <block type="txtLowercase"></block>
+                          <block type="txtUppercase"></block>
+                          <block type="txtCapitalized"></block>
                       </category>
                       <category name="Colors">
-                          <block type="cw_red"></block>
-                          <block type="cw_blue"></block>
-                          <block type="cw_green"></block>
-                          <block type="cw_brown"></block>
-                          <block type="cw_orange"></block>
+                          <block type="cwRed"></block>
+                          <block type="cwBlue"></block>
+                          <block type="cwGreen"></block>
+                          <block type="cwBrown"></block>
+                          <block type="cwOrange"></block>
+                          <block type="cwBlack"></block>
+                          <block type="cwWhite"></block>
+                          <block type="cwCyan"></block>
+                          <block type="cwMagenta"></block>
+                          <block type="cwYellow"></block>
+                          <block type="cwAquamarine"></block>
+                          <block type="cwAzure"></block>
+                          <block type="cwViolet"></block>
+                          <block type="cwChartreuse"></block>
+                          <block type="cwRose"></block>
+                          <block type="cwPink"></block>
+                          <block type="cwPurple"></block>
+                          <block type="cwGray"></block>
+                          <block type="cwMixed"></block>
+                          <block type="cwLight"></block>
+                          <block type="cwDark"></block>
+                          <block type="cwBright"></block>
+                          <block type="cwDull"></block>
+                          <block type="cwTranslucent"></block>
+                          <block type="cwRGBA"></block>
+                      </category>
+                      <category name="Logic">
+                          <block type="conIf"></block>
+                          <block type="conEq"></block>
+                          <block type="conNeq"></block>
+                          <block type="conAnd"></block>
+                          <block type="conOr"></block>
+                          <block type="conNot"></block>
+                          <block type="conTrue"></block>
+                          <block type="conFalse"></block>
+                          <block type="conGreater"></block>
+                          <block type="conGeq"></block>
+                          <block type="conLess"></block>
+                          <block type="conLeq"></block>
+                          <block type="conEven"></block>
+                          <block type="conOdd"></block>
+                          <block type="conStartWith"></block>
+                          <block type="conEndWith"></block>
                       </category>
                       <category name="Definitions">
                           <block type="letVar"></block>
                       </category>
-                      <category name="Control">
-                          <block type="con_if"></block>
-                          <block type="con_eq"></block>
-                          <block type="con_true"></block>
-                          <block type="con_false"></block>
-                      </category>
+                      
                    </xml>
 
                 <div id="blocklyDiv" style="height: 85%; width:100%;"> </div>
@@ -115,8 +184,8 @@
         <div class="col-md-4">
           <h3>Play</h3>
           <div id="result">
-            <iframe id="runner" class="dropbox" width="100%" 
-              height="400px"></iframe>
+            <iframe id="runner" class="dropbox" width="400px;" 
+              height="400px;"></iframe>
             
           </div>
           <h4>Generated Code:</h4>
@@ -130,10 +199,6 @@
   <div class="container-fluid">
     <nav class="navbar navbar-default navbar-fixed-bottom" style="padding-left:
     10px;">
-      <!-- <button type="button" class="btn btn-primary
-        navbar-btn">Browse</button> -->
-      <!-- <button type="button" class="btn btn-warning
-        navbar-btn">Help</button> -->
       <button type="button" class="btn btn-success navbar-btn" id="btnRun">Run</button>
       <p class="navbar-text navbar-right" style="padding-right:
       30px;">Status:
@@ -146,7 +211,7 @@
 
   <script type="text/javascript" src="js/codemirror-compressed.js"></script>
   <script type="text/javascript" src="js/codeworld-mode.js"></script>
-
+  <script type="text/javascript">init();</script>
   </body>
 
 </html>

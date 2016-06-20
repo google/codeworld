@@ -90,6 +90,7 @@ processBody = do
 getBuildMode :: Snap BuildMode
 getBuildMode = getParam "mode" >>= \ case
     Just "haskell" -> return (BuildMode "haskell")
+    Just "blocklyXML" -> return (BuildMode "blocklyXML")
     _              -> return (BuildMode "codeworld")
 
 site :: ClientId -> Snap ()
@@ -100,6 +101,8 @@ site clientId =
       ("deleteProject", deleteProjectHandler clientId),
       ("listProjects",  listProjectsHandler clientId),
       ("compile",       compileHandler),
+      ("saveXMLhash",   saveXMLHashHandler),
+      ("loadXML",       loadXMLHandler),
       ("loadSource",    loadSourceHandler),
       ("run",           runHandler),
       ("runJS",         runHandler),
@@ -169,6 +172,17 @@ listProjectsHandler clientId = do
     modifyResponse $ setContentType "application/json"
     writeLBS (encode (map projectName projects))
 
+saveXMLHashHandler :: Snap ()
+saveXMLHashHandler = do
+    mode <- getBuildMode
+    unless (mode==BuildMode "blocklyXML") $ modifyResponse $ setResponseCode 500
+    Just source <- getParam "source"
+    let programId = sourceToProgramId source
+    liftIO $ ensureProgramDir mode programId
+    liftIO $ B.writeFile (buildRootDir mode </> sourceXML programId) source
+    modifyResponse $ setContentType "text/plain"
+    writeBS (T.encodeUtf8 programId)
+
 compileHandler :: Snap ()
 compileHandler = do
     mode <- getBuildMode
@@ -186,6 +200,15 @@ getHashParam :: Snap B.ByteString
 getHashParam = do
     Just h <- getParam "hash"
     if "Q" `B.isPrefixOf` h then return ("P" <> B.drop 1 h) else return h
+
+loadXMLHandler :: Snap ()
+loadXMLHandler = do
+    mode <- getBuildMode
+    unless (mode==BuildMode "blocklyXML") $ modifyResponse $ setResponseCode 500
+    hash <- getHashParam
+    let programId = T.decodeUtf8 hash
+    modifyResponse $ setContentType "text/plain"
+    serveFile (buildRootDir mode </> sourceXML programId)
 
 loadSourceHandler :: Snap ()
 loadSourceHandler = do

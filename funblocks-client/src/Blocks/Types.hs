@@ -232,15 +232,15 @@ numExp = DesignBlock "numExp"
          (Tooltip "Raise a number to a power")
 
 numMax = DesignBlock "numMax"
-        [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE "Maximum"] typeNumber
+        [ Value "LEFT"  [TextE "Maximum"] typeNumber
+         ,Value "RIGHT" [] typeNumber
          ]
          (Inline True) colorNumber typeNumber
          (Tooltip "Take the maximum of two numbers")
 
 numMin = DesignBlock "numMin"
-        [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE "Minimum"] typeNumber
+        [ Value "LEFT"  [TextE "Minimum"] typeNumber
+         ,Value "RIGHT" [] typeNumber
          ]
          (Inline True) colorNumber typeNumber
          (Tooltip "Take the minimum of two numbers")
@@ -261,9 +261,9 @@ numRound = DesignBlock "numRound"
          (Tooltip "Gives the number rounded to the nearest integer")
 
 numReciprocal = DesignBlock "numReciprocal"
-        [Value "NUM" [TextE "Reciprocol"] typeNumber ]
+        [Value "NUM" [TextE "Reciprocal"] typeNumber ]
          (Inline True) colorNumber typeNumber
-         (Tooltip "Gives the reciprocol of a number")
+         (Tooltip "Gives the reciprocal of a number")
 
 numQuot = DesignBlock "numQuot"
         [ Value "LEFT"  [TextE "Quotient"] typeNumber
@@ -281,10 +281,10 @@ numRem = DesignBlock "numRem"
 
 numPi = DesignBlock "numPi" 
           [Dummy 
-            [TextE "PI"]
+            [TextE "Pi"]
           ]
           inlineDef colorColor typeNumber 
-          (Tooltip "The number of Pi, 3.1415..")
+          (Tooltip "The number pi, 3.1415..")
 
 numSqrt = DesignBlock "numSqrt"
         [Value "NUM" [TextE "Square root of "] typeNumber ]
@@ -604,8 +604,8 @@ conStartWith = DesignBlock "conStartWith"
 conEndWith = DesignBlock "conEndWith"
           [Dummy [TextE "Ends With"] 
            ,Value "TEXTMAIN"  [Text "Text"] typeText 
-           ,Value "TEXTTEST"  [Text "starts with"] typeText] 
-          inlineDef colorBool typeBool 
+           ,Value "TEXTTEST"  [Text "ends with"] typeText]
+          inlineDef colorBool typeBool
           (Tooltip "Tells whether the given text ends with some other text")
 
 

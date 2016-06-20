@@ -39,6 +39,35 @@ function sendHttp(method, url, body, callback) {
     request.send(body);
 }
 
+function loadXmlHash(hash)
+{
+   sendHttp('GET', 'loadXML?hash=' + hash + '&mode=blocklyXML', null, function(request) {
+     if (request.status == 200) {
+          var workspace = Blockly.mainWorkspace;
+          Blockly.mainWorkspace.clear();
+          var xmldom = Blockly.Xml.textToDom(request.responseText);
+          Blockly.Xml.domToWorkspace(workspace, xmldom);
+     }
+    });
+}
+
+function init()
+{
+    var hash = location.hash.slice(1);
+    if (hash.length > 0) {
+        if (hash.slice(-2) == '==') {
+            hash = hash.slice(0, -2);
+        }
+        loadXmlHash(hash);
+
+    } 
+    else {
+      // Do nothing
+    }
+
+
+}
+
 function addToMessage(msg) {
     var message = document.getElementById('message');
     message.innerHTML += msg
@@ -51,14 +80,18 @@ function updateEditor(code) {
       ,editor);
 }
 
-function run(hash, msg, error) {
-    window.showingResult = hash || msg;
+function run(xmlHash, codeHash, msg, error) {
+
+    window.showingResult = xmlHash || msg;
+
+    var hash = codeHash 
+
     if (window.showingResult) {
         window.showingDoc = false;
     }
 
     if (hash) {
-        window.location.hash = '#' + hash;
+        window.location.hash = '#' + xmlHash;
     } else {
         window.location.hash = '';
     }
@@ -89,33 +122,49 @@ function run(hash, msg, error) {
 }
 
 function compile(src) {
-    run('', 'Building...', false);
+    run('', '', 'Building...', false);
+
+    var workspace = Blockly.getMainWorkspace();
+    var xml = Blockly.Xml.workspaceToDom(workspace);
+    var xml_text = Blockly.Xml.domToText(xml);
 
     var data = new FormData();
-    data.append('source', src);
-    data.append('mode', window.buildMode);
+    data.append('source', xml_text);
+    data.append('mode', 'blocklyXML');
 
-    sendHttp('POST', 'compile', data, function(request) {
-        var hash = request.responseText;
-        var success = request.status == 200;
+    sendHttp('POST', 'saveXMLhash', data, function(request) {
+
+        // XML Hash
+        var xmlHash = request.responseText;
 
         var data = new FormData();
-        data.append('hash', hash);
+        data.append('source', src);
         data.append('mode', window.buildMode);
 
-        sendHttp('POST', 'runMsg', data, function(request) {
-            var msg = '';
-            if (request.status == 200) {
-                msg = request.responseText;
-            } else if (request.status == 404) {
-                msg = "Sorry!  Your program couldn't be run right now.  Please try again.";
-            }
+        sendHttp('POST', 'compile', data, function(request) {
+            var success = request.status == 200;
 
-            if (success) {
-                run(hash, 'Running...\n\n' + msg, false);
-            } else {
-                run(hash, msg, true);
-            }
+            // Code hash
+            var codeHash = request.responseText;
+
+            var data = new FormData();
+            data.append('hash', codeHash);
+            data.append('mode', window.buildMode);
+
+            sendHttp('POST', 'runMsg', data, function(request) {
+                var msg = '';
+                if (request.status == 200) {
+                    msg = request.responseText;
+                } else if (request.status == 404) {
+                    msg = "Sorry!  Your program couldn't be run right now.  Please try again.";
+                }
+
+                if (success) {
+                    run(xmlHash, codeHash, 'Running...\n\n' + msg, false);
+                } else {
+                    run(xmlHash, codeHash, msg, true);
+                }
+            });
         });
     });
 }

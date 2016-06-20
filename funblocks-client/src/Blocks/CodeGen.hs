@@ -272,7 +272,7 @@ blockLCM block = do
 blockString :: GeneratorFunction
 blockString block = do 
     let txt = getFieldValue block "TEXT" 
-    return $ none $ "" ++ txt ++ ""
+    return $ none $ "\"" ++ txt ++ "\""
 
 blockConcat :: GeneratorFunction
 blockConcat block = do 

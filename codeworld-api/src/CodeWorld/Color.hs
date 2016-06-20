@@ -55,8 +55,13 @@ mixed (RGBA r1 g1 b1 a1) (RGBA r2 g2 b2 a2)
         b = sqrt(b1^2 * a1 + b2^2 * a2 / (a1 + a2))
         a = (a1 + a2) / 2
 
+-- Helper function that sets the alpha of the second color to that
+-- of the first
+sameAlpha :: Color -> Color -> Color
+sameAlpha (RGBA r1 g1 b1 a1) (RGBA r2 g2 b2 a2) = RGBA r2 g2 b2 a1
+
 lighter :: Double -> Color -> Color
-lighter d c = fromHSL (hue c) (saturation c) (fence (luminosity c + d))
+lighter d c = sameAlpha c $ fromHSL (hue c) (saturation c) (fence (luminosity c + d))
   where fence x = max 0 (min 1 x)
 
 light :: Color -> Color
@@ -69,7 +74,7 @@ dark :: Color -> Color
 dark = darker 0.15
 
 brighter :: Double -> Color -> Color
-brighter d c = fromHSL (hue c) (fence (saturation c + d)) (luminosity c)
+brighter d c = sameAlpha c $ fromHSL (hue c) (fence (saturation c + d)) (luminosity c)
   where fence x = max 0 (min 1 x)
 
 bright :: Color -> Color

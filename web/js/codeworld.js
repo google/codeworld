@@ -182,7 +182,7 @@ function init() {
         if (hash.slice(-2) == '==') {
             hash = hash.slice(0, -2);
         }
-        sendHttp('GET', 'loadSource?hash=' + hash, null, function(request) {
+        sendHttp('GET', 'loadSource?hash=' + hash + '&mode=' + window.buildMode, null, function(request) {
             if (request.status == 200) {
                 setCode(request.responseText, null, null, true);
             }
@@ -892,8 +892,4 @@ function handleGAPILoad() {
 
     discoverProjects();
     updateUI();
-
-    sendHttp('GET', 'rts.js');
-    sendHttp('GET', 'lib.base.js');
-    sendHttp('GET', 'out.base.js');
 }

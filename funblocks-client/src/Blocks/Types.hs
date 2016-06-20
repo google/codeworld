@@ -14,7 +14,7 @@
   limitations under the License.
 -}
 
-module Blocks.Types(setBlockTypes)
+module Blocks.Types(setBlockTypes, getTypeBlocks)
   where
 
 import Blockly.DesignBlock 
@@ -92,7 +92,7 @@ cwThickCircle = DesignBlock "cwThickCircle"
           inlineDef colorPicture typePicture
           (Tooltip "Picture of a circle")
 
-cwSolidCircle = DesignBlock "cwSolidcircle"
+cwSolidCircle = DesignBlock "cwSolidCircle"
           [Dummy [TextE "Solid Circle"] 
            ,Value "RADIUS"  [Text "Radius"] typeNumber] 
           inlineDef colorPicture typePicture
@@ -113,7 +113,7 @@ cwThickRectangle = DesignBlock "cwThickRectangle"
           inlineDef colorPicture typePicture 
           (Tooltip "Picture of a rectangle")
 
-cwSolidRectangle = DesignBlock "cwSolidrectangle"
+cwSolidRectangle = DesignBlock "cwSolidRectangle"
           [Dummy [TextE "Solid Rectangle"] 
            ,Value "WIDTH" [Text "Width"] typeNumber 
            ,Value "HEIGHT" [Text "Height"] typeNumber] 
@@ -315,7 +315,7 @@ txtConcat = DesignBlock "txtConcat"
          (Tooltip "Concatenates two pieces of text together")
 
 txtPrinted = DesignBlock "txtPrinted"
-        [ Value "TEXT"  [TextE "Printed"] typeText ]
+        [ Value "TEXT"  [TextE "Printed"] typeNumber ]
          (Inline True) colorText typeText
          (Tooltip "Gives the text value of a number")
 
@@ -608,6 +608,9 @@ conEndWith = DesignBlock "conEndWith"
           inlineDef colorBool typeBool 
           (Tooltip "Tells whether the given text ends with some other text")
 
+
+getTypeBlocks :: [String]
+getTypeBlocks = map (\(DesignBlock name _ _ _ _ _) -> name) blockTypes
 
 blockTypes = [ 
               -- PICTURE

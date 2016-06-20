@@ -16,7 +16,8 @@
   limitations under the License.
 -}
 
-module Blocks.CodeGen (assignAll)
+module Blocks.CodeGen (assignAll
+                      ,getGenerationBlocks)
   where
 
 import Blockly.Block
@@ -34,10 +35,8 @@ setCodeGen blockName func = do
   cb <- syncCallback1' (\x -> do Just b <- fromJSVal x 
                                  case func b of
                                     Just (code,ordr) -> do
-                                            putStrLn "JUST"
                                             return $ js_makeArray (pack code) (order ordr)
                                     Nothing -> do
-                                            putStrLn "NOTHING"
                                             return $ js_makeArray (pack "") 0
                                  )
   js_setGenFunction (pack blockName) cb
@@ -70,8 +69,8 @@ blockCodeWorldLogo block = return $ none "codeWorldLogo"
 
 blockText :: GeneratorFunction
 blockText block = do
-      let arg = getFieldValue block "TEXT" 
-      return $ none $ "text(\"" ++ arg ++ "\")"
+      arg <- valueToCode block "TEXT" CNone
+      return $ none $ "text(" ++ arg ++ ")"
 
 blockSolidCircle :: GeneratorFunction
 blockSolidCircle block = do 
@@ -190,7 +189,7 @@ blockMult :: GeneratorFunction
 blockMult block = do 
     left <- valueToCode block "LEFT" CAtomic
     right <- valueToCode block "RIGHT" CAtomic
-    return $ member $ left ++ " + " ++ right
+    return $ member $ left ++ " * " ++ right
 
 blockDiv :: GeneratorFunction
 blockDiv block = do 
@@ -272,8 +271,8 @@ blockLCM block = do
 
 blockString :: GeneratorFunction
 blockString block = do 
-    left <- valueToCode block "TEXT" CNone
-    return $ none $ "\"" ++ left ++ "\""
+    let txt = getFieldValue block "TEXT" 
+    return $ none $ "" ++ txt ++ ""
 
 blockConcat :: GeneratorFunction
 blockConcat block = do 
@@ -493,6 +492,8 @@ blockLetVar block = do
     expr <- valueToCode block "VARVALUE" CNone
     return $ none $ varName ++ " = " ++ expr 
 
+getGenerationBlocks :: [String]
+getGenerationBlocks = map fst blockCodeMap
 
 blockCodeMap = [ ("cwBlank",blockBlank)
                   ,("cwCoordinatePlane",blockCoordinatePlane)

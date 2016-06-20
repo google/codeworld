@@ -57,7 +57,6 @@ setErrorMessage msg = do
   setInnerHTML msgEl $ Just msg
 
 btnRunClick ws = do
-  liftIO $ print "btnRunClick"
   Just doc <- liftIO currentDocument
   code <- liftIO $ workspaceToCode ws
   Just genCode <- getElementById doc "genCode"
@@ -69,15 +68,18 @@ btnRunClick ws = do
           liftIO $ js_updateEditor (pack code)
   return ()
 
+-- test whether all blocks have codegen
+allCodeGen = filter (\x -> not $ x `elem` getGenerationBlocks) getTypeBlocks 
+
 main = do 
       Just doc <- currentDocument 
       Just body <- getBody doc
+      liftIO $ putStrLn $ "Blocks that dont have codegen: " ++ (show allCodeGen)
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
       liftIO assignAll
       Just btnRun <- getElementById doc "btnRun" 
       on btnRun click (btnRunClick workspace)
       liftIO setBlockTypes -- assign layout and types of Blockly blocks
-
       -- liftIO $ addChangeListener workspace (onVarConnect workspace)
       return ()
 

@@ -492,6 +492,9 @@ blockLetVar block = do
     expr <- valueToCode block "VARVALUE" CNone
     return $ none $ varName ++ " = " ++ expr 
 
+blockComment :: GeneratorFunction
+blockComment block = return $ none ""
+
 getGenerationBlocks :: [String]
 getGenerationBlocks = map fst blockCodeMap
 
@@ -585,52 +588,9 @@ blockCodeMap = [ ("cwBlank",blockBlank)
                   ,("conStartWith",blockStartWith)
                   ,("conEndWith",blockEndWith)
                   ,("letVar",blockLetVar)
+                  ,("comment",blockComment)
                     ]
                                 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 -- Assigns CodeGen functions defined here to the Blockly Javascript Code

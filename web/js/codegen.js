@@ -76,7 +76,7 @@ Blockly.FunBlocks.scrub_ = function(block, code) {
   if (!block.outputConnection || !block.outputConnection.targetConnection) {
     var comment = block.getCommentText();
     if (comment) {
-      commentCode += Blockly.FunBlocks.prefixLines(comment, '// ') + '\n';
+      commentCode += Blockly.FunBlocks.prefixLines(comment, '-- ') + '\n';
     }
     for (var x = 0; x < block.inputList.length; x++) {
       if (block.inputList[x].type == Blockly.INPUT_VALUE) {
@@ -84,7 +84,7 @@ Blockly.FunBlocks.scrub_ = function(block, code) {
         if (childBlock) {
           var comment = Blockly.FunBlocks.allNestedComments(childBlock);
           if (comment) {
-            commentCode += Blockly.FunBlocks.prefixLines(comment, '// ');
+            commentCode += Blockly.FunBlocks.prefixLines(comment, '-- ');
           }
         }
       }

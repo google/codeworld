@@ -56,7 +56,7 @@ import qualified Data.Text as T
 import Internal.Num
 import Internal.Truth
 
-data Text = T { unT :: J.JSString }
+newtype Text = T { unT :: J.JSString }
 
 fromString :: String -> Text
 fromString = T . J.pack

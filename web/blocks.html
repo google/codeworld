@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/blockly.css">
     <link rel="stylesheet" href="css/codemirror.css">
+    <link rel="stylesheet" href="css/codeworld-cm.css">
 
     <!-- Latest compiled and minified JavaScript -->
     <script
@@ -28,10 +29,11 @@
     <script src="blockly/blocks_compressed.js"></script>
     <script src="blockly/core/field_label_emph.js"></script>
     <script src="blockly/msg/js/en.js"></script>
-
-    <script src="js/blockworld.js"></script> 
-    <script src="js/codegen.js"></script>
     
+    <!-- Initialization in JS -->
+    <script src="js/blockworld.js"></script> 
+    <!-- JS Blockly Code Generation Initialization -->
+    <script src="js/codegen.js"></script>
   </head>
 
 
@@ -190,12 +192,13 @@
             
           </div>
           <h4>Generated Code:</h4>
-          <pre id="genCode" class="cm-s-default" style="width:100%;
+          <pre id="genCode" class="cm-s-default CodeMirror" style="width:100%;
           height:auto;padding:10px;">
           </pre> 
         </div> 
     </div>
   </div>
+  </br>
   </br>
   <div class="container-fluid">
     <nav class="navbar navbar-default navbar-fixed-bottom" style="padding-left:

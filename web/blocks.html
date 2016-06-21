@@ -49,7 +49,7 @@
     </br></br>
   <div class="container-fluid">
     <div class="row full">
-        <!--<div id="sidebar" class="col-md-1">
+        <div id="sidebar" class="col-md-1 collapsed">
   
             <h3>File</h3>
             
@@ -58,7 +58,7 @@
                </br>
                <button type="button" class="btn btn-danger">Sign in</button>
             </div>
-        </div> -->
+        </div>
 
         <div id="main" class="col-md-8">
             <div class="row">
@@ -204,6 +204,11 @@
   <div class="container-fluid">
     <nav class="navbar navbar-default navbar-fixed-bottom" style="padding-left:
     10px;">
+      <button type="button" id="toggle-sidebar" class="btn btn-default
+        navbar-btn">
+        <span class="glyphicon glyphicon-align-justify"></span>
+        <span>Browse</span>
+      </button> 
       <button type="button" class="btn btn-success navbar-btn" id="btnRun">Run</button>
       <p class="navbar-text navbar-right" style="padding-right:
         30px;">Status:
@@ -213,10 +218,38 @@
 
   </div>
 
+  <script>
+  // TODO - Move to haskell
+  $.fn.redraw = function(){
+    $(this).each(function(){
+      var redraw = this.offsetHeight;
+    });
+  };
+  $('#toggle-sidebar').on('click', function(event)
+  {
+
+    event.preventDefault();
+    $("#sidebar").toggleClass("collapsed");
+    $("#main").toggleClass("col-md-8 col-md-7");
+
+    // Ugly hacks to force redraw
+    Blockly.fireUiEvent(window, 'resize');
+    window.dispatchEvent(new Event('resize'));
+    Blockly.getMainWorkspace().resize();
+    $(window).trigger('resize');
+    $('.container-fluid').redraw();
+    $('.container-fluid').css('display', 'none').height();
+    $('.container-fluid').css('display', 'block');
+
+  });
+  </script>
+
   <script src="js/blocks_runmain.js"></script> 
 
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.0/sweetalert.min.js" async></script>
   <script type="text/javascript" src="js/codemirror-compressed.js"></script>
   <script type="text/javascript" src="js/codeworld-mode.js"></script>
+  <script type="text/javascript" src="https://apis.google.com/js/platform.js?onload=handleGAPILoad" async defer></script>
   <script type="text/javascript">init();</script>
   </body>
 

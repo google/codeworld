@@ -77,6 +77,15 @@
   stroke: #fc3;
   stroke-width: 3px;
 }
+.blocklyErrorSelected>.blocklyPath {
+  stroke: #fc3;
+  opacity: 0.8;
+  stroke-width: 4px;
+}
+.blocklyErrorSelected>.blocklyPathLight {
+  display: none;
+}
+
 .blocklySelected>.blocklyPathLight {
   display: none;
 }

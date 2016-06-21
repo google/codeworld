@@ -319,6 +319,16 @@ function run(xmlHash, codeHash, msg, error) {
 
 }
 
+function removeErrors()
+{
+    $('.blocklyDraggable').removeClass('blocklyErrorSelected');
+    var blocks = Blockly.getMainWorkspace().getAllBlocks();
+
+    blocks.forEach(function(block){
+      block.removeErrorSelect();
+    });
+}
+
 function compile(src) {
     run('', '', 'Building...', false);
 

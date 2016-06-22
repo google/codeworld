@@ -23,6 +23,9 @@ module Blockly.Block ( Block(..)
                      , getOutputBlock
                      , getColour
                      , setColour
+                     , select
+                     , addSelect
+                     , addErrorSelect
                      , getInputBlock)
   where
 
@@ -69,6 +72,16 @@ getInputBlock block name = if isNull val then Nothing
                            else Just $ Block val
   where val = js_getInputTargetBlock block (pack name)
 
+select :: Block -> IO ()
+select block = js_select block
+
+addSelect :: Block -> IO ()
+addSelect block = js_addSelect block
+
+addErrorSelect :: Block -> IO ()
+addErrorSelect block = js_addErrorSelect block
+
+
 --- FFI
 
 foreign import javascript unsafe "$1.getFieldValue($2)"
@@ -92,6 +105,15 @@ foreign import javascript unsafe "$1.getColour()"
 
 foreign import javascript unsafe "$1.setColour($2)"
   js_setColour :: Block -> Int -> IO ()
+
+foreign import javascript unsafe "$1.select()"
+  js_select :: Block -> IO ()
+
+foreign import javascript unsafe "$1.addSelect()"
+  js_addSelect :: Block -> IO ()
+
+foreign import javascript unsafe "$1.addErrorSelect()"
+  js_addErrorSelect :: Block -> IO ()
 
 -- fetches the block associated with the input name or else null
 foreign import javascript unsafe "$1.getInputTargetBlock($2)"

@@ -16,6 +16,9 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/blockly.css">
     <link rel="stylesheet" href="css/codemirror.css">
+    <link rel="stylesheet" href="css/codeworld-cm.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.0/sweetalert.min.css">
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
 
     <!-- Latest compiled and minified JavaScript -->
     <script
@@ -28,44 +31,54 @@
     <script src="blockly/blocks_compressed.js"></script>
     <script src="blockly/core/field_label_emph.js"></script>
     <script src="blockly/msg/js/en.js"></script>
-
-    <script src="js/blockworld.js"></script> 
-    <script src="js/codegen.js"></script>
     
+    <!-- Initialization in JS -->
+    <script src="js/blockworld.js"></script> 
+    <!-- JS Blockly Code Generation Initialization -->
+    <script src="js/codegen.js"></script>
   </head>
 
 
   <body>
     <div class="container-fluid">
-      <nav class="navbar navbar-default navbar-fixed-top">
+      <nav class="navbar navbar-default ">
         <a class="navbar-brand" href="/blocks">CodeWorld Blocks</a>
         <ul class="nav navbar-nav">
           <li><a href="/">Code</a></li>
         </ul>
+      <button type="button" onclick="signout()" id="signout" style="margin-right: 40px;" class="btn btn-default navbar-btn navbar-right">Sign out</button>
+      <p class="navbar-text navbar-right" style="margin-right: 40px;"
+      id="navbarsignin">Signed in as <a id="username" class="navbar-link">Johny</a></p>
+      <button type="button" onclick="signin()" id="signin" style="margin-right: 40px;" class="btn btn-default navbar-btn navbar-right">Sign in</button>
       </nav>
     </div>
-    </br></br>
+
   <div class="container-fluid">
     <div class="row full">
-        <!--<div id="sidebar" class="col-md-1">
-  
-            <h3>File</h3>
-            
-            <div class="btn-group-vertical" style="width:100%;" role="group" aria-label="...">
-               <button type="button" class="btn btn-primary">New</button>
-               </br>
-               <button type="button" class="btn btn-danger">Sign in</button>
+        <div id="sidebar" class="col-md-2 collapsed">
+            <h4>Projects</h4>
+            <div class="btn-group-vertical" style="width:100%;" role="group">
+              <button type="button" class="btn btn-default" id="newButton"
+                onclick="newProject()">New</button>
+              <button type="button" class="btn btn-default" style="display:
+                none;" id="saveButton" onclick="saveProject()">Save</button>
+              <button type="button" class="btn btn-default" style="display:
+                none;" id="saveAsButton" onclick="saveProjectAs()">Save as</button>
             </div>
-        </div> -->
+            </br></br>
+            <div class="btn-group-vertical" style="width: 100%;" id="projects">
+            </div>
+            
+        </div>
 
         <div id="main" class="col-md-8">
             <div class="row">
-              <h3>Build</h3>
                 <div class="col-md-12">
 
                   <xml id="toolbox" style="display: none">
                       <category name="Programs">
                           <block type="cwDrawingOf"></block>
+                          <block type="comment"></block>
                       </category>
                       <category name="Pictures">
                           <block type="cwBlank"></block>
@@ -167,50 +180,79 @@
                       </category>
                       
                    </xml>
+                
 
                 <div id="blocklyDiv" style="height: 85%; width:100%;"> </div>
 
                 </br>
-                <div class="btn-group" role="group" aria-label="...">
-                    <!-- <button type="button" class="btn btn-primary"
-                      id="btnBuild">Build</button> -->
-                    <!-- <button type="button" class="btn btn-warning" id="btnBoom">Boom</button>
-                    <button type="button" class="btn btn-warning"
-                    id="btnBam">Bam</button> -->
-                </div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-          <h3>Play</h3>
           <div id="result">
             <iframe id="runner" class="dropbox" width="400px;" 
               height="400px;"></iframe>
             
           </div>
           <h4>Generated Code:</h4>
-          <pre id="genCode" class="cm-s-default" style="width:100%;
+          <pre id="genCode" class="cm-s-default CodeMirror" style="width:100%;
           height:auto;padding:10px;">
           </pre> 
         </div> 
     </div>
   </div>
   </br>
+  </br>
   <div class="container-fluid">
     <nav class="navbar navbar-default navbar-fixed-bottom" style="padding-left:
     10px;">
+      <button type="button" id="toggle-sidebar" class="btn btn-default
+        navbar-btn">
+        <span class="glyphicon glyphicon-align-justify"></span>
+        <span>Browse</span>
+      </button> 
       <button type="button" class="btn btn-success navbar-btn" id="btnRun">Run</button>
       <p class="navbar-text navbar-right" style="padding-right:
-      30px;">Status:
-        <a id="message">None</a> </p>
+        30px;">Status:
+        <a id="message">None</a> 
+      </p>
     </nav>
 
   </div>
 
+  <script>
+  // TODO - Move to haskell
+  $.fn.redraw = function(){
+    $(this).each(function(){
+      var redraw = this.offsetHeight;
+    });
+  };
+  $('#toggle-sidebar').on('click', function(event)
+  {
+
+    event.preventDefault();
+    $("#sidebar").toggleClass("collapsed");
+    $("#main").toggleClass("col-md-8 col-md-6");
+    $("#toggle-sidebar").toggleClass("btn-primary btn-default");
+
+    // Ugly hacks to force redraw
+    Blockly.fireUiEvent(window, 'resize');
+    window.dispatchEvent(new Event('resize'));
+    Blockly.getMainWorkspace().resize();
+    $(window).trigger('resize');
+    $('.container-fluid').redraw();
+    $('.container-fluid').css('display', 'none').height();
+    $('.container-fluid').css('display', 'block');
+
+  });
+  </script>
+
   <script src="js/blocks_runmain.js"></script> 
 
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.0/sweetalert.min.js" async></script>
   <script type="text/javascript" src="js/codemirror-compressed.js"></script>
   <script type="text/javascript" src="js/codeworld-mode.js"></script>
+  <script type="text/javascript" src="https://apis.google.com/js/platform.js?onload=handleGAPILoad" async defer></script>
   <script type="text/javascript">init();</script>
   </body>
 

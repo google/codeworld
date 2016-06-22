@@ -30,18 +30,6 @@ import GHCJS.Marshal
 import qualified JavaScript.Array as JA
 import Unsafe.Coerce
 
-setCodeGen :: String -> (Block -> Maybe (String, OrderConstant) ) -> IO ()
-setCodeGen blockName func = do
-  cb <- syncCallback1' (\x -> do Just b <- fromJSVal x 
-                                 case func b of
-                                    Just (code,ordr) -> do
-                                            return $ js_makeArray (pack code) (order ordr)
-                                    Nothing -> do
-                                            return $ js_makeArray (pack "") 0
-                                 )
-  js_setGenFunction (pack blockName) cb
-
-
 -- Helper functions
 member :: Code -> (Code, OrderConstant)
 member code = (code, CMember)
@@ -49,7 +37,7 @@ none :: Code ->(Code, OrderConstant)
 none code = (code, CNone)
 
 type Code = String
-type GeneratorFunction = Block -> Maybe (Code, OrderConstant)
+type GeneratorFunction = Block -> Either Block (Code, OrderConstant)
 
 -- PROGRAMS --------------------------------------
 blockDrawingOf :: GeneratorFunction
@@ -492,6 +480,9 @@ blockLetVar block = do
     expr <- valueToCode block "VARVALUE" CNone
     return $ none $ varName ++ " = " ++ expr 
 
+blockComment :: GeneratorFunction
+blockComment block = return $ none ""
+
 getGenerationBlocks :: [String]
 getGenerationBlocks = map fst blockCodeMap
 
@@ -585,50 +576,22 @@ blockCodeMap = [ ("cwBlank",blockBlank)
                   ,("conStartWith",blockStartWith)
                   ,("conEndWith",blockEndWith)
                   ,("letVar",blockLetVar)
+                  ,("comment",blockComment)
                     ]
                                 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+setCodeGen :: String -> (Block -> Either Block (String, OrderConstant) ) -> IO ()
+setCodeGen blockName func = do
+  cb <- syncCallback1' (\x -> do Just b <- fromJSVal x 
+                                 case func b of
+                                    Right (code,ordr) -> do
+                                            return $ js_makeArray (pack code) (order ordr)
+                                    Left eblock -> do
+                                            addErrorSelect eblock
+                                            js_removeErrorsDelay
+                                            return $ js_makeArray (pack "") 0
+                                 )
+  js_setGenFunction (pack blockName) cb
 
 
 
@@ -638,12 +601,17 @@ blockCodeMap = [ ("cwBlank",blockBlank)
 assignAll :: IO ()
 assignAll = mapM_ (uncurry setCodeGen) blockCodeMap
 
-valueToCode :: Block -> String -> OrderConstant -> Maybe String
-valueToCode block name ordr = do 
-                inputBlock <- getInputBlock block name
-                let val = unpack $ js_valueToCode block (pack name) (order ordr)
-                if val=="" then Nothing
-                else Just val 
+valueToCode :: Block -> String -> OrderConstant -> Either Block String
+valueToCode block name ordr =  
+    case unpack $ js_valueToCode block (pack name) (order ordr) of
+      "" ->  Left block
+      val -> Right val
+                -- case getInputBlock block name of
+                --   Just inputBlock -> let val = unpack $ js_valueToCode block (pack name) (order ordr)
+                --                      in if val=="" 
+                --                         then Left block
+                --                         else Right val 
+                --   Nothing -> Left block
 
 --- FFI
 foreign import javascript unsafe "Blockly.FunBlocks[$1] = $2"
@@ -657,6 +625,8 @@ foreign import javascript unsafe "Blockly.FunBlocks.valueToCode($1, $2, $3)"
 foreign import javascript unsafe "[$1,$2]"
   js_makeArray :: JSString -> Int -> JSVal
 
+foreign import javascript unsafe "setTimeout(removeErrors,2000)"
+  js_removeErrorsDelay :: IO ()
 
 -- TODO, remove, was used for testing
 alert :: String -> IO ()

@@ -36,6 +36,7 @@ typeColor = Type "Color"
 typeBool = Type "Bool"
 typeText = Type "Text"
 typeSet = NoType
+typeNone = NoType
 
 inlineDef = Inline False
 
@@ -609,6 +610,14 @@ conEndWith = DesignBlock "conEndWith"
           (Tooltip "Tells whether the given text ends with some other text")
 
 
+comment = DesignBlock "comment" 
+          [Dummy 
+            [TextInput "" "TEXT",
+            Text "Comment"]
+          ]
+          inlineDef (Color 281) typeNone
+          (Tooltip "Enter a comment")
+
 getTypeBlocks :: [String]
 getTypeBlocks = map (\(DesignBlock name _ _ _ _ _) -> name) blockTypes
 
@@ -703,6 +712,7 @@ blockTypes = [
               ,conStartWith
               ,conEndWith
               ,letVar
+              ,comment
                 ]
 
 -- Assigns CodeGen functions defined here to the Blockly Javascript Code

@@ -26,6 +26,7 @@ module Blockly.Block ( Block(..)
                      , select
                      , addSelect
                      , addErrorSelect
+                     , setWarningText
                      , getInputBlock)
   where
 
@@ -81,6 +82,8 @@ addSelect block = js_addSelect block
 addErrorSelect :: Block -> IO ()
 addErrorSelect block = js_addErrorSelect block
 
+setWarningText :: Block -> String -> IO ()
+setWarningText block text = js_setWarningText block (pack text)
 
 --- FFI
 
@@ -114,6 +117,9 @@ foreign import javascript unsafe "$1.addSelect()"
 
 foreign import javascript unsafe "$1.addErrorSelect()"
   js_addErrorSelect :: Block -> IO ()
+
+foreign import javascript unsafe "$1.setWarningText($2)"
+  js_setWarningText :: Block -> JSString -> IO ()
 
 -- fetches the block associated with the input name or else null
 foreign import javascript unsafe "$1.getInputTargetBlock($2)"

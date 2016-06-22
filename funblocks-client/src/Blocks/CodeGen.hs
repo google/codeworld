@@ -587,6 +587,7 @@ setCodeGen blockName func = do
                                     Right (code,ordr) -> do
                                             return $ js_makeArray (pack code) (order ordr)
                                     Left eblock -> do
+                                            -- setWarningText eblock "Block must have input"
                                             addErrorSelect eblock
                                             js_removeErrorsDelay
                                             return $ js_makeArray (pack "") 0
@@ -606,12 +607,6 @@ valueToCode block name ordr =
     case unpack $ js_valueToCode block (pack name) (order ordr) of
       "" ->  Left block
       val -> Right val
-                -- case getInputBlock block name of
-                --   Just inputBlock -> let val = unpack $ js_valueToCode block (pack name) (order ordr)
-                --                      in if val=="" 
-                --                         then Left block
-                --                         else Right val 
-                --   Nothing -> Left block
 
 --- FFI
 foreign import javascript unsafe "Blockly.FunBlocks[$1] = $2"
@@ -625,7 +620,7 @@ foreign import javascript unsafe "Blockly.FunBlocks.valueToCode($1, $2, $3)"
 foreign import javascript unsafe "[$1,$2]"
   js_makeArray :: JSString -> Int -> JSVal
 
-foreign import javascript unsafe "setTimeout(removeErrors,2000)"
+foreign import javascript unsafe "setTimeout(removeErrors,5000)"
   js_removeErrorsDelay :: IO ()
 
 -- TODO, remove, was used for testing

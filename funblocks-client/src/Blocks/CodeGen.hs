@@ -87,7 +87,7 @@ blockThickRectangle block = do
     width <- valueToCode block "WIDTH" CNone
     height <- valueToCode block "HEIGHT" CNone
     linewidth <- valueToCode block "LINEWIDTH" CNone
-    return $ none $ "solidRectangle(" ++ width ++ "," ++ height ++ "," ++ linewidth ++ ")"
+    return $ none $ "thickRectangle(" ++ width ++ "," ++ height ++ "," ++ linewidth ++ ")"
 
 blockSolidRectangle :: GeneratorFunction
 blockSolidRectangle block = do

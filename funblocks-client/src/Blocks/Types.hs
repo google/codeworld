@@ -282,9 +282,9 @@ numRem = DesignBlock "numRem"
 
 numPi = DesignBlock "numPi" 
           [Dummy 
-            [TextE "Pi"]
+            [TextE "\x3C0"]
           ]
-          inlineDef colorColor typeNumber 
+          inlineDef colorNumber typeNumber
           (Tooltip "The number pi, 3.1415..")
 
 numSqrt = DesignBlock "numSqrt"
@@ -504,22 +504,22 @@ cwRGBA = DesignBlock "cwRGBA"
 -- LOGIC -------------------------------------------
 conIf = DesignBlock "conIf"
         [ Value "IF"  [TextE "If"] typeBool
-         ,Value "THEN" [Text "Then"] (Poly 0)
-         ,Value "ELSE" [Text "Else"] (Poly 0)
+         ,Value "THEN" [Text "then"] (Poly 0)
+         ,Value "ELSE" [Text "else"] (Poly 0)
          ]
          inlineDef colorPoly (Poly 0)
          (Tooltip "if condition is true then give a else b")
 
 conAnd = DesignBlock "conAnd"
         [ Value "LEFT"  [] typeBool
-         ,Value "RIGHT" [TextE "&&"] typeBool
+         ,Value "RIGHT" [TextE "and"] typeBool
          ]
          (Inline True) colorBool typeBool
          (Tooltip "Logical AND operation")
 
 conOr = DesignBlock "conOr"
         [ Value "LEFT"  [] typeBool
-         ,Value "RIGHT" [TextE "||"] typeBool
+         ,Value "RIGHT" [TextE "or"] typeBool
          ]
          (Inline True) colorBool typeBool
          (Tooltip "Logical OR operation")
@@ -531,14 +531,14 @@ conNot = DesignBlock "conNot"
 
 conEq = DesignBlock "conEq"
         [ Value "LEFT"  [] (Poly 0)
-         ,Value "RIGHT" [TextE "=="] (Poly 0)
+         ,Value "RIGHT" [TextE "="] (Poly 0)
          ]
          (Inline True) colorPoly typeBool
          (Tooltip "Are two items equal")
 
 conNeq = DesignBlock "conNeq"
         [ Value "LEFT"  [] (Poly 0)
-         ,Value "RIGHT" [TextE "/="] (Poly 0)
+         ,Value "RIGHT" [TextE "\x2260"] (Poly 0)
          ]
          (Inline True) colorPoly typeBool
          (Tooltip "Are two items not equal")
@@ -566,7 +566,7 @@ conGreater = DesignBlock "conGreater"
 
 conGeq = DesignBlock "conGeq"
         [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE ">="] typeNumber
+         ,Value "RIGHT" [TextE "\x2265"] typeNumber
          ]
          (Inline True) colorBool typeBool
          (Tooltip "Tells whether one number is greater than or equal to ther other")
@@ -580,7 +580,7 @@ conLess = DesignBlock "conLess"
 
 conLeq = DesignBlock "conLeq"
         [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE "<="] typeNumber
+         ,Value "RIGHT" [TextE "\x2264"] typeNumber
          ]
          (Inline True) colorBool typeBool
          (Tooltip "Tells whether one number is less than or equal to ther other")
@@ -608,7 +608,6 @@ conEndWith = DesignBlock "conEndWith"
            ,Value "TEXTTEST"  [Text "ends with"] typeText]
           inlineDef colorBool typeBool
           (Tooltip "Tells whether the given text ends with some other text")
-
 
 comment = DesignBlock "comment" 
           [Dummy 
@@ -719,5 +718,3 @@ blockTypes = [
 -- generator
 setBlockTypes :: IO ()
 setBlockTypes = mapM_ setBlockType blockTypes
-
-

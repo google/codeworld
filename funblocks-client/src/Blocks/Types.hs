@@ -64,7 +64,7 @@ cwCoordinatePlane = DesignBlock "cwCoordinatePlane"
 
 cwCodeWorldLogo = DesignBlock "cwCodeWorldLogo" 
           [Dummy 
-            [TextE "CodeWorld logo"]
+            [TextE "CodeWorld Logo"]
           ]
           inlineDef colorPicture typePicture 
           (Tooltip "Picture of CodeWorld logo")
@@ -181,11 +181,11 @@ cwRotate = DesignBlock "cwRotate"
           (Tooltip "Rotate")
 
 cwCombine = DesignBlock "cwCombine"
-          [Dummy [TextE "&"] 
-           ,Value "PIC1" [Text "Picture"] typePicture 
-           ,Value "PIC2" [Text "Picture"] typePicture 
-          ] 
-          inlineDef colorPicture typePicture 
+          [Dummy [TextE "&"]
+           ,Value "PIC1" [Text "Picture"] typePicture
+           ,Value "PIC2" [Text "Picture"] typePicture
+          ]
+          inlineDef colorPicture typePicture
           (Tooltip "Combines two pictures")
 
 -- NUMBERS ---------------------------------------------
@@ -213,14 +213,14 @@ numSub = DesignBlock "numSub"
 
 numMult = DesignBlock "numMult"
         [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE "*"] typeNumber
+         ,Value "RIGHT" [TextE "\xD7"] typeNumber
          ]
          (Inline True) colorNumber typeNumber
          (Tooltip "Multiply two numbers")
 
 numDiv = DesignBlock "numDiv"
         [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE "/"] typeNumber
+         ,Value "RIGHT" [TextE "\xF7"] typeNumber
          ]
          (Inline True) colorNumber typeNumber
          (Tooltip "Divide two numbers")
@@ -288,7 +288,7 @@ numPi = DesignBlock "numPi"
           (Tooltip "The number pi, 3.1415..")
 
 numSqrt = DesignBlock "numSqrt"
-        [Value "NUM" [TextE "Square root of "] typeNumber ]
+        [Value "NUM" [TextE "\x221A"] typeNumber ]
          (Inline True) colorNumber typeNumber
          (Tooltip "Gives the square root of a number")
 

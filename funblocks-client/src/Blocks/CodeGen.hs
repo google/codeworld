@@ -130,27 +130,27 @@ blockColored :: GeneratorFunction
 blockColored block = do 
     picture <- valueToCode block "PICTURE" CNone
     color <- valueToCode block "COLOR" CNone
-    return $ none $ "colored (" ++ picture ++ ", " ++ color ++ ")"
+    return $ none $ "colored(" ++ picture ++ ", " ++ color ++ ")"
 
 blockTranslate :: GeneratorFunction
 blockTranslate block = do 
     pic <- valueToCode block "PICTURE" CNone
     x <- valueToCode block "X" CNone
     y <- valueToCode block "Y" CNone
-    return $ none $ "translated (" ++ pic ++ "," ++ x ++ "," ++ y ++ ")"
+    return $ none $ "translated(" ++ pic ++ "," ++ x ++ "," ++ y ++ ")"
     
 blockScale :: GeneratorFunction
 blockScale block = do
     pic <- valueToCode block "PICTURE" CNone
     hor <- valueToCode block "HORZ" CNone
     vert <- valueToCode block "VERTZ" CNone
-    return $ none $ "scaled (" ++ pic ++ "," ++ hor ++ "," ++ vert ++ ")"
+    return $ none $ "scaled(" ++ pic ++ "," ++ hor ++ "," ++ vert ++ ")"
     
 blockRotate :: GeneratorFunction
 blockRotate block = do 
     pic <- valueToCode block "PICTURE" CNone
     angle <- valueToCode block "ANGLE" CNone
-    return $ none $ "rotated (" ++ pic ++ "," ++ angle ++ ")"
+    return $ none $ "rotated(" ++ pic ++ "," ++ angle ++ ")"
 
 
 

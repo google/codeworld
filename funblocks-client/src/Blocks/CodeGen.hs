@@ -476,9 +476,14 @@ blockRGBA block = do
 
 blockLetVar :: GeneratorFunction
 blockLetVar block = do 
-    let varName = getFieldValue block "VARNAME" 
-    expr <- valueToCode block "VARVALUE" CNone
+    let varName = getFieldValue block "NAME" 
+    expr <- valueToCode block "RETURN" CNone
     return $ none $ varName ++ " = " ++ expr 
+
+blockLetCall :: GeneratorFunction
+blockLetCall block = do 
+    let varName = getFieldValue block "NAME" 
+    return $ none varName 
 
 blockComment :: GeneratorFunction
 blockComment block = return $ none ""
@@ -575,7 +580,9 @@ blockCodeMap = [ ("cwBlank",blockBlank)
                   ,("conOdd",blockOdd)
                   ,("conStartWith",blockStartWith)
                   ,("conEndWith",blockEndWith)
-                  ,("letVar",blockLetVar)
+                  -- PROGRAMS
+                  ,("procedures_letVar",blockLetVar)
+                  ,("procedures_callreturn",blockLetCall)
                   ,("comment",blockComment)
                     ]
                                 

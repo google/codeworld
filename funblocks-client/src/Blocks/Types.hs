@@ -711,7 +711,6 @@ blockTypes = [
               ,conOdd
               ,conStartWith
               ,conEndWith
-              ,letVar
               ,comment
                 ]
 

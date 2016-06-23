@@ -643,7 +643,7 @@ blockTypes = [
               ,cwRotate
               ,cwScale
               -- NUMBERS
-              ,numNumber
+              --,numNumber
               ,numAdd
               ,numSub
               ,numMult

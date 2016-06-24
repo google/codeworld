@@ -21,12 +21,14 @@ module Blockly.Block ( Block(..)
                      , getFieldValue
                      , getBlockType
                      , getOutputBlock
+                     , getOutputConnection
                      , getColour
                      , setColour
                      , select
                      , addSelect
                      , addErrorSelect
                      , setWarningText
+                     , setDisabled
                      , getInputBlock)
   where
 
@@ -35,6 +37,7 @@ import Data.JSString (pack, unpack)
 import GHCJS.Foreign
 import GHCJS.Marshal
 import Unsafe.Coerce
+import Blockly.Connection
 
 newtype Block = Block JSVal
 
@@ -54,10 +57,16 @@ getBlockType = unpack . js_type
 
 getOutputBlock :: Block -> Maybe Block
 getOutputBlock block = if isNull con then Nothing
-                       else let block = js_outputConnectionBlock con in 
+                       else let block = js_outputConnectionBlock' con in 
                          if isNull block then Nothing
                          else Just $ unsafeCoerce block
-  where con = js_outputConnection block
+  where con = js_outputConnection' block
+
+getOutputConnection :: Block -> Maybe Connection
+getOutputConnection block = if isNull con then Nothing
+                      else Just $ Connection con 
+  where
+    con = js_outputConnection' block
 
 blockTest :: Block -> IO ()
 blockTest = js_testOutputConnection
@@ -85,6 +94,9 @@ addErrorSelect block = js_addErrorSelect block
 setWarningText :: Block -> String -> IO ()
 setWarningText block text = js_setWarningText block (pack text)
 
+setDisabled :: Block -> Bool -> IO ()
+setDisabled block stat = js_setDisabled block stat
+
 --- FFI
 
 foreign import javascript unsafe "$1.getFieldValue($2)"
@@ -95,10 +107,16 @@ foreign import javascript unsafe "$1.type"
 
 -- getConnection
 foreign import javascript unsafe "$1.outputConnection"
-  js_outputConnection :: Block -> JSVal
+  js_outputConnection' :: Block -> JSVal
+
+foreign import javascript unsafe "$1.outputConnection"
+  js_outputConnection :: Block -> Connection
 
 foreign import javascript unsafe "$1.targetBlock()"
-  js_outputConnectionBlock :: JSVal -> JSVal
+  js_outputConnectionBlock' :: JSVal -> JSVal
+
+foreign import javascript unsafe "$1.targetBlock()"
+  js_outputConnectionBlock :: Connection -> Block
 
 foreign import javascript unsafe "alert($1.outputConnection.targetBlock())"
   js_testOutputConnection :: Block -> IO ()
@@ -108,6 +126,9 @@ foreign import javascript unsafe "$1.getColour()"
 
 foreign import javascript unsafe "$1.setColour($2)"
   js_setColour :: Block -> Int -> IO ()
+
+foreign import javascript unsafe "$1.setDisabled($2)"
+  js_setDisabled :: Block -> Bool -> IO ()
 
 foreign import javascript unsafe "$1.select()"
   js_select :: Block -> IO ()

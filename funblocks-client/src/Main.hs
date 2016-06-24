@@ -37,7 +37,7 @@ import Blocks.CodeGen
 import Blocks.Types
 import Blockly.Event
 import Blockly.General
-import Blockly.Block (getBlockType, getOutputBlock, getColour, setColour)
+import Blockly.Block 
 
 -- call blockworld.js compile
 foreign import javascript unsafe "compile($1)"
@@ -81,7 +81,18 @@ main = do
       on btnRun click (btnRunClick workspace)
       liftIO setBlockTypes -- assign layout and types of Blockly blocks
       -- liftIO $ addChangeListener workspace (onVarConnect workspace)
+      liftIO $ addChangeListener workspace (onGeneral workspace)
       return ()
+
+onGeneral workspace event = case getType event of
+      MoveEvent e -> do
+        let uuid = getBlockId e
+        case getBlockById workspace uuid of
+          Just block -> case (getOutputConnection block, isTopBlock workspace block) of
+                          (Just _, True) -> setDisabled block True
+                          _ -> setDisabled block False
+          Nothing -> return ()
+      _ -> return ()
 
 -- change the color of a var block 
 onVarConnect workspace event = do

@@ -538,7 +538,6 @@ function discoverProjects() {
 
     var data = new FormData();
     data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-    // TODO change buildMode here to blocklyXML
     data.append('mode', 'blocklyXML');
 
     sendHttp('POST', 'listProjects', data, function(request) {
@@ -567,9 +566,10 @@ function loadProject(name) {
         if (request.status == 200) {
             var project = JSON.parse(request.responseText);
             openProjectName = name;
+
+            clearRunCode();
             loadWorkspace(project.source);
             updateUI();
-            //setCode(project.source, project.history, name);
         }
     });
 
@@ -708,10 +708,19 @@ function deleteProject() {
 }
 
 function newProject() {
+    clearRunCode();
     clearWorkspace();
     openProjectName = null;
     discoverProjects();
     updateUI();
+}
+
+// Clear the running iframe and generated code
+function clearRunCode()
+{
+    var runner = document.getElementById('runner');
+    runner.contentWindow.location.replace('about:blank');
+    updateEditor('');
 }
 
 function clearWorkspace()

@@ -35,6 +35,9 @@ import GHCJS.Marshal
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
 import Control.Monad
+import Data.Ord (comparing)
+import Data.List (maximumBy)
+
 
 -- Low level bindings to construction of various different type of Blockly
 -- blocks
@@ -93,7 +96,15 @@ inputCode block pvars (Value name fields (Poly polyIndex) ) = do
   js_setTypeExprPoly fieldInput (pvars !! polyIndex)
   return ()
 
-
+-- Gets the highest number of polymorphic inputs
+maxPolyCount :: [Input] -> Int
+maxPolyCount inputs = case maxInp of
+                        Value _ _ (Poly inp) -> inp+1
+                        _ -> 0
+  where 
+    maxInp = maximumBy (comparing auxComp) inputs 
+    auxComp (Value _ _ (Poly ind)) = ind
+    auxComp _ = -1
 
  
 -- set block
@@ -103,7 +114,7 @@ setBlockType (DesignBlock name inputs (Inline inline) (Color color) type_ (Toolt
                                  let block = Block this 
                                  js_setColor block color
                                  -- may error out if no type is set
-                                 tvars <- replicateM (length inputs) js_getUnusedTypeVar
+                                 tvars <- replicateM (maxPolyCount inputs) js_getUnusedTypeVar
                                  mapM_ (inputCode block tvars) inputs
                                  js_enableOutput block
                                  case type_ of

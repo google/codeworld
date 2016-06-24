@@ -260,7 +260,7 @@ blockLCM block = do
 blockString :: GeneratorFunction
 blockString block = do 
     let txt = getFieldValue block "TEXT" 
-    return $ none $ "\"" ++ txt ++ "\""
+    return $ none $ escape txt 
 
 blockConcat :: GeneratorFunction
 blockConcat block = do 
@@ -614,6 +614,16 @@ valueToCode block name ordr =
     case unpack $ js_valueToCode block (pack name) (order ordr) of
       "" ->  Left block
       val -> Right val
+
+
+-- Helper functions
+
+-- Escapes a string
+escape :: String -> String
+escape xs = "\"" ++ concatMap f xs ++ "\"" where
+    f '\\' = "\\\\"
+    f '\"' = "\\\""
+    f x    = [x]
 
 --- FFI
 foreign import javascript unsafe "Blockly.FunBlocks[$1] = $2"

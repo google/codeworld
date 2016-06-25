@@ -611,7 +611,7 @@ conEndWith = DesignBlock "conEndWith"
 comment = DesignBlock "comment" 
           [Dummy 
             [TextInput "" "TEXT",
-            TextE "Comment"]
+            TextE "--"]
           ]
           inlineDef (Color 281) typeNone
           (Tooltip "Enter a comment")

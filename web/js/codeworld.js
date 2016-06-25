@@ -436,10 +436,12 @@ function toggleBrowser() {
     updateUI();
 }
 
-function help() {
+function help(doc) {
+    if (!doc) doc = window.buildMode;
+    var url = 'doc.html?help/' + doc + '.md';
     sweetAlert({
         title: '',
-        text: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="doc.html?help/' + window.buildMode + '.md"></iframe>',
+        text: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' + url + '"></iframe>',
         html: true,
         customClass: 'helpdoc',
         allowEscapeKey: true,

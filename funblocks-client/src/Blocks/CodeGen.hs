@@ -594,7 +594,7 @@ setCodeGen blockName func = do
                                     Right (code,ordr) -> do
                                             return $ js_makeArray (pack code) (order ordr)
                                     Left eblock -> do
-                                            -- setWarningText eblock "Block must have input"
+                                            setWarningText eblock "Block contains an input field that is disconnected"
                                             addErrorSelect eblock
                                             js_removeErrorsDelay
                                             return $ js_makeArray (pack "") 0
@@ -653,7 +653,7 @@ foreign import javascript unsafe "Blockly.FunBlocks.valueToCode($1, $2, $3)"
 foreign import javascript unsafe "[$1,$2]"
   js_makeArray :: JSString -> Int -> JSVal
 
-foreign import javascript unsafe "setTimeout(removeErrors,5000)"
+foreign import javascript unsafe "setTimeout(removeErrors,10000)"
   js_removeErrorsDelay :: IO ()
 
 -- TODO, remove, was used for testing

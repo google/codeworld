@@ -89,8 +89,8 @@ onGeneral workspace event = case getType event of
         let uuid = getBlockId e
         case getBlockById workspace uuid of
           Just block -> case (getOutputConnection block, isTopBlock workspace block) of
-                          (Just _, True) -> setDisabled block True
-                          _ -> setDisabled block False
+                            (Just _, True) -> setDisabled block True
+                            _ -> setDisabled block False
           Nothing -> return ()
       _ -> return ()
 

@@ -24,10 +24,12 @@ module Blockly.Block ( Block(..)
                      , getOutputConnection
                      , getColour
                      , setColour
+                     , areAllInputsConnected
                      , select
                      , addSelect
                      , addErrorSelect
                      , setWarningText
+                     , disableWarningText
                      , setDisabled
                      , getInputBlock)
   where
@@ -83,19 +85,25 @@ getInputBlock block name = if isNull val then Nothing
   where val = js_getInputTargetBlock block (pack name)
 
 select :: Block -> IO ()
-select block = js_select block
+select = js_select 
 
 addSelect :: Block -> IO ()
-addSelect block = js_addSelect block
+addSelect = js_addSelect 
 
 addErrorSelect :: Block -> IO ()
-addErrorSelect block = js_addErrorSelect block
+addErrorSelect = js_addErrorSelect 
 
 setWarningText :: Block -> String -> IO ()
 setWarningText block text = js_setWarningText block (pack text)
 
+disableWarningText :: Block ->  IO ()
+disableWarningText = js_disableWarningText 
+
 setDisabled :: Block -> Bool -> IO ()
-setDisabled block stat = js_setDisabled block stat
+setDisabled = js_setDisabled 
+
+areAllInputsConnected :: Block -> Bool
+areAllInputsConnected = js_allInputsConnected
 
 --- FFI
 
@@ -111,6 +119,9 @@ foreign import javascript unsafe "$1.outputConnection"
 
 foreign import javascript unsafe "$1.outputConnection"
   js_outputConnection :: Block -> Connection
+
+foreign import javascript unsafe "$1.allInputsConnected()"
+  js_allInputsConnected :: Block -> Bool
 
 foreign import javascript unsafe "$1.targetBlock()"
   js_outputConnectionBlock' :: JSVal -> JSVal
@@ -141,6 +152,10 @@ foreign import javascript unsafe "$1.addErrorSelect()"
 
 foreign import javascript unsafe "$1.setWarningText($2)"
   js_setWarningText :: Block -> JSString -> IO ()
+
+foreign import javascript unsafe "$1.setWarningText(null)"
+  js_disableWarningText :: Block -> IO ()
+
 
 -- fetches the block associated with the input name or else null
 foreign import javascript unsafe "$1.getInputTargetBlock($2)"

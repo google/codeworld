@@ -334,7 +334,7 @@ function removeErrors()
 
     blocks.forEach(function(block){
       block.removeErrorSelect();
-      // block.setWarningText(null);
+      block.setWarningText(null);
     });
 }
 

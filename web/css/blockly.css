@@ -78,6 +78,8 @@
   stroke-width: 3px;
 }
 .blocklyErrorSelected>.blocklyPath {
+  stroke-width: 3px;
+  stroke: red;
   fill: maroon;
   opacity: 0.8;
 }

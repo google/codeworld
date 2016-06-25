@@ -610,10 +610,26 @@ assignAll :: IO ()
 assignAll = mapM_ (uncurry setCodeGen) blockCodeMap
 
 valueToCode :: Block -> String -> OrderConstant -> Either Block String
-valueToCode block name ordr =  
-    case unpack $ js_valueToCode block (pack name) (order ordr) of
-      "" ->  Left block
-      val -> Right val
+valueToCode block name innerOrder = do
+    inputBlock <- aux $ getInputBlock block name
+    let blockType = getBlockType inputBlock
+    func <- aux $ lookup blockType blockCodeMap
+    (code,ordr) <- func inputBlock
+    Right $ handleOrder ordr code
+  where
+    aux m = case m of
+      Just v -> Right v
+      Nothing -> Left block
+    handleOrder CAtomic code = code
+    handleOrder CNone code = code
+    handleOrder _ code = "(" ++ code ++ ")"
+
+-- valueToCode :: Block -> String -> OrderConstant -> Either Block String
+-- valueToCode block name ordr =  
+--     case unpack $ js_valueToCode block (pack name) (order ordr) of
+--       "" ->  Left block
+--       val -> Right val
+
 
 
 -- Helper functions

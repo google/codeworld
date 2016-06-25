@@ -613,7 +613,7 @@ comment = DesignBlock "comment"
             [TextInput "" "TEXT",
             TextE "--"]
           ]
-          inlineDef (Color 281) typeNone
+          inlineDef (Color 260) typeNone
           (Tooltip "Enter a comment")
 
 getTypeBlocks :: [String]

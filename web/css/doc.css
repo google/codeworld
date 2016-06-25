@@ -22,6 +22,10 @@ html {
     font-size: 13px;
 }
 
+body {
+  margin: 0px 0px 0px 0px;
+}
+
 pre {
   margin-left: 20px;
   margin-right: 10px;
@@ -42,7 +46,7 @@ pre.clickable:hover {
   cursor: pointer;
 }
 
-a {
+a[href] {
   text-decoration: none;
   font-weight: bold;
   color: #444;
@@ -50,11 +54,11 @@ a {
   margin: 1px;
 }
 
-a:focus {
+a[href]:focus {
   border: none;
 }
 
-a:hover {
+a[href]:hover {
   cursor: pointer;
   background-color: #eee;
   border: dotted #888 1px;
@@ -62,8 +66,10 @@ a:hover {
 }
 
 div.contents {
-  border: dotted #ccc 2px;
+  border-right: solid #ccc 1px;
   background-color: #ffb;
+  margin: 0px 0px 0px 0px;
+  padding: 0px 0px 0px 0px;
 }
 
 div.contents:before {
@@ -74,4 +80,19 @@ div.contents:before {
   border-bottom: dotted #ccc 2px;
   padding: 5px 10px 5px 10px;
   width: 100%;
+}
+
+#helpcontents {
+  position: fixed;
+  overflow: auto;
+  width: 300px;
+  height: 100%;
+  margin: 0px 0px 0px 0px;
+  padding: 0px 0px 0px 0px;
+}
+
+#help {
+  position: relative;
+  overflow: auto;
+  margin-left: 320px;
 }

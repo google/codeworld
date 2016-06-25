@@ -241,3 +241,22 @@ body {
   box-shadow: 3px 3px 4px #000;
   margin: 3px 5px 5px 3px;
 }
+
+.sweet-alert.helpdoc {
+  top: 3vh;
+  left: 10vw;
+  width: 80vw;
+  height: 90vh;
+  margin: 0px 0px 0px 0px !important;
+  padding: 10px 15px 15px 10px !important;
+  position: fixed;
+}
+.sweet-alert.helpdoc div { display: none; }
+.sweet-alert.helpdoc fieldset { display: none; }
+.sweet-alert.helpdoc h2 { display: none; }
+.sweet-alert.helpdoc p {
+  display: block;
+  margin: 0px 0px 0px 0px;
+  padding: 0px 0px 0px 0px;
+  height: 100%;
+}

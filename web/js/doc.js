@@ -39,6 +39,7 @@
 
     function addTableOfContents() {
         var contents = document.createElement('div');
+        contents.id = 'helpcontents';
         contents.classList.add('contents');
 
         var elems = document.getElementsByTagName('*');
@@ -48,7 +49,7 @@
         var n = 0;
         for (var i = 0; i < elems.length; ++i) {
             var header = elems[i];
-            var match = (/h([1-6])/i).exec(header.tagName);
+            var match = (/h([1-3])/i).exec(header.tagName);
             if (match == null) continue;
             var level = parseInt(match[1]);
 
@@ -68,14 +69,12 @@
 
             var anchor = document.createElement('a');
             anchor.setAttribute('name', n);
-            anchor.setAttribute('href', '#contents-' + n);
             anchor.innerHTML = header.innerHTML;
             header.innerHTML = '';
             header.appendChild(anchor);
 
             var li = document.createElement('li');
             var link = document.createElement('a');
-            link.setAttribute('name', 'contents-' + n);
             link.setAttribute('href', '#' + n);
             link.textContent = header.textContent;
             li.appendChild(link);
@@ -93,7 +92,7 @@
             var text = request.responseText;
             var converter = new Markdown.Converter();
             var html = converter.makeHtml(text);
-            document.body.innerHTML = html;
+            document.getElementById('help').innerHTML = html;
 
             linkCodeBlocks();
             addTableOfContents();

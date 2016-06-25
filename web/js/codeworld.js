@@ -55,7 +55,6 @@ function sendHttp(method, url, body, callback) {
  */
 function init() {
     showingBrowse = true;
-    showingDoc = false;
     showingResult = false;
     allProjectNames = [];
 
@@ -365,12 +364,6 @@ function updateUI() {
         document.getElementById('nav').style.display = 'none';
     }
 
-    if (window.showingDoc) {
-        document.getElementById('doc').style.display = '';
-    } else {
-        document.getElementById('doc').style.display = 'none';
-    }
-
     if (window.showingResult) {
         document.getElementById('result').style.display = '';
 
@@ -443,15 +436,16 @@ function toggleBrowser() {
     updateUI();
 }
 
-function toggleDoc() {
-    window.showingDoc = !window.showingDoc;
-    updateUI();
-
-    if (window.showingDoc) {
-        stop();
-        var loc = document.getElementById('doc').contentWindow.location;
-        loc.search = 'help/' + window.buildMode + '.md';
-    }
+function help() {
+    sweetAlert({
+        title: '',
+        text: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="doc.html?help/' + window.buildMode + '.md"></iframe>',
+        html: true,
+        customClass: 'helpdoc',
+        allowEscapeKey: true,
+        allowOutsideClick: true,
+        showConfirmButton: false,
+    });
 }
 
 function discoverProjects() {
@@ -521,6 +515,7 @@ function warnIfUnsaved(action) {
 }
 
 function loadSample(code) {
+    sweetAlert.close();
     warnIfUnsaved(function() {
         setCode(code);
     });
@@ -628,9 +623,6 @@ function addToMessage(msg) {
 
 function run(hash, msg, error) {
     window.showingResult = hash || msg;
-    if (window.showingResult) {
-        window.showingDoc = false;
-    }
 
     if (hash) {
         window.location.hash = '#' + hash;

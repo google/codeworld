@@ -181,9 +181,8 @@ cwRotate = DesignBlock "cwRotate"
           (Tooltip "Rotate")
 
 cwCombine = DesignBlock "cwCombine"
-          [Dummy [TextE "&"]
-           ,Value "PIC1" [Text "Picture"] typePicture
-           ,Value "PIC2" [Text "Picture"] typePicture
+          [ Value "PIC1" [] typePicture
+           ,Value "PIC2" [TextE "&"] typePicture
           ]
           inlineDef colorPicture typePicture
           (Tooltip "Combines two pictures")
@@ -612,7 +611,7 @@ conEndWith = DesignBlock "conEndWith"
 comment = DesignBlock "comment" 
           [Dummy 
             [TextInput "" "TEXT",
-            Text "Comment"]
+            TextE "Comment"]
           ]
           inlineDef (Color 281) typeNone
           (Tooltip "Enter a comment")

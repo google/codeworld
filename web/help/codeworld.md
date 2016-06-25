@@ -624,11 +624,11 @@ two differences.  Maybe you want three faces, but with different sized eyes.
 Or maybe you want three houses, with different colored roofs.  In these cases,
 you want to write a new function.
 
-A function is incomplete: it is waiting for more information, which needs to
-be provided when it is used.  Think of some of the functions that we've
-already used.  `circle` is an incomplete shape: it depends on a radius.
-`rectangle` depends on a width and a height.  Similarly, you can write your
-own functions that need their own parameters.
+A function is like a variable, but it is incomplete.  It is waiting for more
+information, which needs to be provided when it is used.  Think of some of
+the functions that we've already used.  `circle` is an incomplete shape: it
+needs on a radius.  `rectangle` needs a width and a height.  Similarly, you
+can write your own functions that need their own parameters.
 
 Here's how you would define a house as a function that's waiting on a color
 for the roof, and apply it to draw a house with a red roof.
@@ -637,9 +637,10 @@ for the roof, and apply it to draw a house with a red roof.
     scene = house(red)
 
     house :: Color -> Picture
-    house(roofColor) =
-        colored(translated(solidRectangle(12, 1), 0, 5), roofColor) &
-        solidRectangle(10, 10)
+    house(roofColor) = colored(roof, roofColor) & solidRectangle(6, 7)
+
+    roof :: Picture
+    roof = translated(thickArc(45, 135, 6, 1), 0, -2)
 
 Notice that before the equal sign, you give a name for the piece of missing
 information, which is called the parameter.  When using the function, you need
@@ -814,13 +815,130 @@ general shape in terms of smaller shapes at one level of detail lower.
 Animations
 ==========
 
-TODO: Write this section.
+As you saw in the first part of this guide, the `drawingOf` function can convert
+a `Picture` into a program that draws it.  Now you will add some movement to your
+programs.  The `animationOf` function is used to create animations.
 
-    main      = animationOf(design)
-    design(t) = rotated(slot, 60 * t) & middle & outside
-    slot      = solidRectangle(4, 0.4)
-    middle    = solidCircle(1.2)
-    outside   = circle(2)
+What is an animation?
+---------------------
+
+When you see a television show, movie, or computer game, it looks like things
+are moving.  Really, though, you are just looking at still pictures, called frames.
+These frames are only slightly different from each other.  Switching from one
+frame to the next very quickly creates the illusion of motion.
+
+Have you ever made a flip book?  To make a flip book, you would take a small
+notebook, and draw a slightly different picture (a frame!) on each page.  When you
+flip through the pages with your thumb, it looks as if the picture is moving, just
+like in a movie or video game.  Early animated cartoons were drawn in exactly this
+way: artists had to carefully paint many pictures, each one only slightly
+different, and put them together to produce the final product.
+
+Computers make this job much easier!  All you need to do is describe a pattern of
+motion.  The computer does the hard work of drawing many similar pictures.  The
+way you do this is with a function.
+
+    main         = animationOf(propellor)
+    propellor(t) = rotated(solidRectangle(10, 1), 60 * t)
+
+See if you can explain to yourself or someone else what is happening here.
+
+### Analyzing the animation ###
+
+The first line asks for an animation, by using the `animationOf` function.  The
+parameter is a *function* that can be used to produce the frames of the
+animation.  In our example, this function is called `propellor`.
+
+The second line defines the `propellor` function.  The parameter to this function,
+which we will usually call `t`, is the time in seconds since the program was
+started.  The result of the function should be a picture, which is the frame to
+display at that time.  Unlike movies and television shows, which only have a
+fixed sequence of frames, computers can work as fast as possible to draw as many
+frames as they can, by following the same pattern.
+
+(Have you ever heard of the graphics in video games described in "frames per
+second"?  This is, literally, the number of different frames the computer is
+capable of drawing in one second.  Slower computers can't draw as many frames,
+which can make motion appear jerky and uneven.  Faster computers can draw more
+frames, which makes the motion appear smooth and natural.)
+
+The result of the `propellor` function is just an ordinary picture, which one
+change.  Instead of a specific angle of rotation, an expression `60 * t` is
+used.  Just as with any function, this is evaluated by substitution.  So the
+frame that is drawn 4.5 seconds in is rotated by an angle of `60 * 4.5`, which
+is 270 degrees.
+
+Try making a table of angles of rotation at each point in time.  How fast (in
+degrees per second) is the propellor rotating?
+
+Kinds of motion
+---------------
+
+Animations can be built from several kinds of motion.  Anywhere you have used
+a number in the description of a picture, you could achieve change over time
+by using an expression of `t` instead!
+
+Here are a few possibilities:
+
+* The radius of a circle.
+* The width or height of a rectangle.
+* The distance by which a shape is translated, scaled, or rotated.
+* The angles of an arc or sector.
+* The x or y coordinates of points in a path or polygon.
+* The bounds of the range used for a list comprehension.
+* Red, green, or blue values in a color.
+
+The list goes on and on!  And you don't need to settle for just one of these.
+You can use `t` as many times in your animation as you like!
+
+TODO: Non-trivial example
+
+Top-down animation
+------------------
+
+TODO: write this
+
+Patterns of change
+------------------
+
+TODO: write this
+
+### Linear change ###
+
+A linear change proceeds at one fixed speed.  A good example of linear change
+is a car that moves at a fixed speed across the screen.  Another example is
+the propellor above: although the ends of the blade move in a circle rather
+than a line, the fundamental change is to an angle, and that angle increases
+at a fixed speed.
+
+TODO: write this
+
+### Periodic change ###
+
+Periodic change happens in a repeating cycle.  A good example is a swing,
+which moves back and forth in the same motion forever.
+
+TODO: write this
+
+### Quadratic change ###
+
+Quadratic change continually speeds up or slows down at a constant rate.  The
+rate at which it speeds up or slows down is called *acceleration*.  An example
+is a ball thrown in the air.  It will gradually slow down over time, until it
+stops and then falls back down, due to acceleration caused by gravity.
+
+TODO: write this
+
+### Piecewise motion ###
+
+Still more motion follows different patterns at different times.  When there
+are several distinct steps to the change in an animation, we call it "piecewise"
+because it have distinct pieces, which are different from each other.
+
+You can create piecewise motion in your programs using functions like `min` and
+`max` and `remainder`, or by using conditionals, like `if` or guards.
+
+TODO: write this
 
 Simulations
 ===========

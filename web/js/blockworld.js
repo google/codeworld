@@ -55,6 +55,7 @@ function loadWorkspace(text)
   workspace.clear();
   var xmldom = Blockly.Xml.textToDom(text);
   Blockly.Xml.domToWorkspace(workspace, xmldom);
+  lastXML = text;
 }
 
 function loadXmlHash(hash)
@@ -68,9 +69,11 @@ function loadXmlHash(hash)
 
 codeworldKeywords = {};
 openProjectName = '';
+lastXML = '';
 function init()
 {
     allProjectNames = [];
+    lastXML = null;
 
     var hash = location.hash.slice(1);
     if (hash.length > 0) {
@@ -334,6 +337,7 @@ function removeErrors()
 
     blocks.forEach(function(block){
       block.removeErrorSelect();
+      block.setWarningText(null);
     });
 }
 
@@ -344,6 +348,30 @@ function getWorkspaceXMLText()
     var xml_text = Blockly.Xml.domToText(xml);
     return xml_text;
 }
+
+function containsUnsavedChanges()
+{
+  if(!lastXML)
+    return false;
+  return getWorkspaceXMLText() != lastXML;
+}
+
+function warnIfUnsaved(action) {
+    if (!containsUnsavedChanges()) {
+        action();
+    } else {
+        var msg = 'There are unsaved changes to your project. ' + 'Continue and throw away your changes?';
+        sweetAlert({
+            title: 'Warning',
+            text: msg,
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#DD6B55',
+            confirmButtonText: 'Yes, discard my changes!'
+        }, action);
+    }
+}
+
 
 function compile(src) {
     run('', '', 'Building...', false);
@@ -371,6 +399,8 @@ function compile(src) {
             var data = new FormData();
             data.append('hash', codeHash);
             data.append('mode', window.buildMode);
+
+            lastXML = xml_text;
 
             sendHttp('POST', 'runMsg', data, function(request) {
                 var msg = '';
@@ -537,7 +567,6 @@ function discoverProjects() {
 
     var data = new FormData();
     data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-    // TODO change buildMode here to blocklyXML
     data.append('mode', 'blocklyXML');
 
     sendHttp('POST', 'listProjects', data, function(request) {
@@ -551,6 +580,8 @@ function discoverProjects() {
 }
 
 function loadProject(name) {
+    
+  warnIfUnsaved(function(){
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
         updateUI();
@@ -566,12 +597,13 @@ function loadProject(name) {
         if (request.status == 200) {
             var project = JSON.parse(request.responseText);
             openProjectName = name;
+
+            clearRunCode();
             loadWorkspace(project.source);
             updateUI();
-            //setCode(project.source, project.history, name);
         }
     });
-
+  });
 }
 
 function saveProject() {
@@ -586,6 +618,7 @@ function saveProject() {
     } else {
         saveProjectAs();
     }
+
 }
 
 function saveProjectAs() {
@@ -632,6 +665,8 @@ function saveProjectBase(projectName) {
             'source': getWorkspaceXMLText(),
             'history': ''
         };
+
+        lastXML = getWorkspaceXMLText();
 
         var data = new FormData();
         data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
@@ -707,10 +742,23 @@ function deleteProject() {
 }
 
 function newProject() {
+  warnIfUnsaved(function()
+  {
+    clearRunCode();
     clearWorkspace();
     openProjectName = null;
     discoverProjects();
     updateUI();
+    lastXML = getWorkspaceXMLText();
+  });
+}
+
+// Clear the running iframe and generated code
+function clearRunCode()
+{
+    var runner = document.getElementById('runner');
+    runner.contentWindow.location.replace('about:blank');
+    updateEditor('');
 }
 
 function clearWorkspace()

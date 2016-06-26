@@ -611,9 +611,9 @@ conEndWith = DesignBlock "conEndWith"
 comment = DesignBlock "comment" 
           [Dummy 
             [TextInput "" "TEXT",
-            TextE "Comment"]
+            TextE "--"]
           ]
-          inlineDef (Color 281) typeNone
+          inlineDef (Color 260) typeNone
           (Tooltip "Enter a comment")
 
 getTypeBlocks :: [String]
@@ -642,7 +642,7 @@ blockTypes = [
               ,cwRotate
               ,cwScale
               -- NUMBERS
-              ,numNumber
+              --,numNumber
               ,numAdd
               ,numSub
               ,numMult
@@ -709,7 +709,6 @@ blockTypes = [
               ,conOdd
               ,conStartWith
               ,conEndWith
-              ,letVar
               ,comment
                 ]
 

@@ -78,9 +78,10 @@
   stroke-width: 3px;
 }
 .blocklyErrorSelected>.blocklyPath {
-  stroke: #fc3;
+  stroke-width: 3px;
+  stroke: red;
+  fill: maroon;
   opacity: 0.8;
-  stroke-width: 4px;
 }
 .blocklyErrorSelected>.blocklyPathLight {
   display: none;
@@ -487,26 +488,3 @@
   padding: 0;
 }
 
-/* TODO Maybe move to seperate file or rename to funblocks.css */
-#sidebar {
-  transition: margin 0.3s ease;
-}
-
-.collapsed {
-  display: none;
-}
-
-@media (min-width: 992px) {
-  .collapsed {
-    display: block;
-    margin-left: -25%;
-  }
-}
-
-#row-main {
-    overflow-x: hidden;
-}
-
-#main {
-    transition: width 0.3s ease;
-}

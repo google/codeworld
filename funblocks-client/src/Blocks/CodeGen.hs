@@ -260,7 +260,7 @@ blockLCM block = do
 blockString :: GeneratorFunction
 blockString block = do 
     let txt = getFieldValue block "TEXT" 
-    return $ none $ "\"" ++ txt ++ "\""
+    return $ none $ escape txt 
 
 blockConcat :: GeneratorFunction
 blockConcat block = do 
@@ -476,9 +476,14 @@ blockRGBA block = do
 
 blockLetVar :: GeneratorFunction
 blockLetVar block = do 
-    let varName = getFieldValue block "VARNAME" 
-    expr <- valueToCode block "VARVALUE" CNone
+    let varName = getFieldValue block "NAME" 
+    expr <- valueToCode block "RETURN" CNone
     return $ none $ varName ++ " = " ++ expr 
+
+blockLetCall :: GeneratorFunction
+blockLetCall block = do 
+    let varName = getFieldValue block "NAME" 
+    return $ none varName 
 
 blockComment :: GeneratorFunction
 blockComment block = return $ none ""
@@ -575,7 +580,9 @@ blockCodeMap = [ ("cwBlank",blockBlank)
                   ,("conOdd",blockOdd)
                   ,("conStartWith",blockStartWith)
                   ,("conEndWith",blockEndWith)
-                  ,("letVar",blockLetVar)
+                  -- PROGRAMS
+                  ,("procedures_letVar",blockLetVar)
+                  ,("procedures_callreturn",blockLetCall)
                   ,("comment",blockComment)
                     ]
                                 
@@ -587,6 +594,7 @@ setCodeGen blockName func = do
                                     Right (code,ordr) -> do
                                             return $ js_makeArray (pack code) (order ordr)
                                     Left eblock -> do
+                                            setWarningText eblock "Block contains an input field that is disconnected"
                                             addErrorSelect eblock
                                             js_removeErrorsDelay
                                             return $ js_makeArray (pack "") 0
@@ -602,16 +610,36 @@ assignAll :: IO ()
 assignAll = mapM_ (uncurry setCodeGen) blockCodeMap
 
 valueToCode :: Block -> String -> OrderConstant -> Either Block String
-valueToCode block name ordr =  
-    case unpack $ js_valueToCode block (pack name) (order ordr) of
-      "" ->  Left block
-      val -> Right val
-                -- case getInputBlock block name of
-                --   Just inputBlock -> let val = unpack $ js_valueToCode block (pack name) (order ordr)
-                --                      in if val=="" 
-                --                         then Left block
-                --                         else Right val 
-                --   Nothing -> Left block
+valueToCode block name innerOrder = do
+    inputBlock <- aux $ getInputBlock block name
+    let blockType = getBlockType inputBlock
+    func <- aux $ lookup blockType blockCodeMap
+    (code,ordr) <- func inputBlock
+    Right $ handleOrder ordr code
+  where
+    aux m = case m of
+      Just v -> Right v
+      Nothing -> Left block
+    handleOrder CAtomic code = code
+    handleOrder CNone code = code
+    handleOrder _ code = "(" ++ code ++ ")"
+
+-- valueToCode :: Block -> String -> OrderConstant -> Either Block String
+-- valueToCode block name ordr =  
+--     case unpack $ js_valueToCode block (pack name) (order ordr) of
+--       "" ->  Left block
+--       val -> Right val
+
+
+
+-- Helper functions
+
+-- Escapes a string
+escape :: String -> String
+escape xs = "\"" ++ concatMap f xs ++ "\"" where
+    f '\\' = "\\\\"
+    f '\"' = "\\\""
+    f x    = [x]
 
 --- FFI
 foreign import javascript unsafe "Blockly.FunBlocks[$1] = $2"
@@ -625,7 +653,7 @@ foreign import javascript unsafe "Blockly.FunBlocks.valueToCode($1, $2, $3)"
 foreign import javascript unsafe "[$1,$2]"
   js_makeArray :: JSString -> Int -> JSVal
 
-foreign import javascript unsafe "setTimeout(removeErrors,2000)"
+foreign import javascript unsafe "setTimeout(removeErrors,10000)"
   js_removeErrorsDelay :: IO ()
 
 -- TODO, remove, was used for testing

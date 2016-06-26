@@ -108,6 +108,7 @@ site clientId =
       ("runJS",         runHandler),
       ("runMsg",        runMessageHandler),
       ("haskell",       serveFile "web/env.html"),
+      ("blocks",        serveFile "web/blocks.html"),
       ("funblocks",     serveFile "web/blocks.html")
     ] <|>
     serveDirectory "web"

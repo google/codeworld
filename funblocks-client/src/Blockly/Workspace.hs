@@ -65,7 +65,7 @@ isTopBlock = js_isTopBlock
 --- FFI
 
 -- TODO Maybe use a list of properties ?
-foreign import javascript unsafe "Blockly.inject($1, { toolbox: document.getElementById($2), css: false, disabled: false, comments: false, zoom:{wheel:true, controls: true}})"
+foreign import javascript unsafe "Blockly.inject($1, { toolbox: document.getElementById($2), css: false, disable: false, comments: false, zoom:{wheel:true, controls: true}})"
   js_blocklyInject :: JSString -> JSString -> IO Workspace
 
 foreign import javascript unsafe "Blockly.FunBlocks.workspaceToCode($1)"

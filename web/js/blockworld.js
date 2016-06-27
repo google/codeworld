@@ -74,6 +74,7 @@ function init()
 {
     allProjectNames = [];
     lastXML = null;
+    showingResult = false;
 
     var hash = location.hash.slice(1);
     if (hash.length > 0) {
@@ -290,10 +291,8 @@ function updateEditor(code) {
 }
 
 function run(xmlHash, codeHash, msg, error) {
-
-    window.showingResult = xmlHash || msg;
-
-    var hash = codeHash 
+    var hash = codeHash;
+    window.showingResult = hash || msg;
 
     if (window.showingResult) {
         window.showingDoc = false;
@@ -327,7 +326,8 @@ function run(xmlHash, codeHash, msg, error) {
     } else {
         message.classList.remove('error');
     }
-
+    document.getElementById('editButton').setAttribute('href','/#' + codeHash);
+    updateUI();
 }
 
 function removeErrors()
@@ -425,7 +425,6 @@ function updateUI()
 
   var isSignedIn = signedIn();
   // Update the user interface
-  // Currently does nothing
 
   if (isSignedIn) {
         document.getElementById('signin').style.display = 'none';
@@ -445,6 +444,23 @@ function updateUI()
         document.getElementById('saveButton').style.display = 'none';
         document.getElementById('saveAsButton').style.display = 'none';
     }
+
+
+  console.log(showingResult);
+  if (window.showingResult) {
+        // document.getElementById('result').style.display = '';
+        
+        if (window.programRunning) {
+            document.getElementById('editButton').style.display = '';
+        } else {
+            document.getElementById('editButton').style.display = 'none';
+        }
+    } else {
+        // document.getElementById('result').style.display = 'none';
+        document.getElementById('editButton').style.display = 'none';
+    }
+
+
 
     
 

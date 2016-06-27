@@ -270,8 +270,13 @@ function init()
         CodeMirror.registerHelper('hintWords', 'codeworld', hints);
     });
 
-
-
+    window.onbeforeunload = function(event) {
+        if (containsUnsavedChanges()) {
+            var msg = 'There are unsaved changes to your project. ' + 'If you continue, they will be lost!';
+            if (event) event.returnValue = msg;
+            return msg;
+        }
+    }
 
 }
 
@@ -351,8 +356,17 @@ function getWorkspaceXMLText()
 
 function containsUnsavedChanges()
 {
+  var blank = '<xml xmlns="http://www.w3.org/1999/xhtml"></xml>';
+  // Initialize if empty
   if(!lastXML)
-    return false;
+  {
+    lastXML = getWorkspaceXMLText();
+    if(lastXML == blank)
+      return false;
+    else
+      return true;
+  }
+
   return getWorkspaceXMLText() != lastXML;
 }
 
@@ -445,8 +459,6 @@ function updateUI()
         document.getElementById('saveAsButton').style.display = 'none';
     }
 
-
-  console.log(showingResult);
   if (window.showingResult) {
         // document.getElementById('result').style.display = '';
         

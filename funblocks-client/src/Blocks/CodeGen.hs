@@ -35,6 +35,9 @@ member :: Code -> (Code, OrderConstant)
 member code = (code, CMember)
 none :: Code ->(Code, OrderConstant)
 none code = (code, CNone)
+atomic :: Code ->(Code, OrderConstant)
+atomic code = (code, CAtomic)
+
 
 type Code = String
 type GeneratorFunction = Block -> Either Block (Code, OrderConstant)
@@ -122,9 +125,9 @@ blockThickArc block = do
 
 blockCombine :: GeneratorFunction
 blockCombine block = do
-    pic1 <- valueToCode block "PIC1" CNone
-    pic2 <- valueToCode block "PIC2" CNone
-    return $ none $ "(" ++ pic1 ++ ") & (" ++ pic2 ++ ")"
+    pic1 <- valueToCode block "PIC1" CCombine
+    pic2 <- valueToCode block "PIC2" CCombine
+    return ( pic1 ++ " & " ++ pic2, CCombine)
 
 blockColored :: GeneratorFunction
 blockColored block = do 
@@ -163,33 +166,33 @@ blockNumber block = do
 
 blockAdd :: GeneratorFunction
 blockAdd block = do 
-    left <- valueToCode block "LEFT" CAtomic
-    right <- valueToCode block "RIGHT" CAtomic
-    return $ member $ left ++ " + " ++ right
+    left <- valueToCode block "LEFT" CAddition
+    right <- valueToCode block "RIGHT" CAddition
+    return (left ++ " + " ++ right, CAddition)
 
 blockSub :: GeneratorFunction
 blockSub block = do 
-    left <- valueToCode block "LEFT" CAtomic
-    right <- valueToCode block "RIGHT" CAtomic
-    return $ member $ left ++ " - " ++ right
+    left <- valueToCode block "LEFT" CSubtraction
+    right <- valueToCode block "RIGHT" CSubtraction
+    return (left ++ " - " ++ right, CSubtraction)
 
 blockMult :: GeneratorFunction
 blockMult block = do 
-    left <- valueToCode block "LEFT" CAtomic
-    right <- valueToCode block "RIGHT" CAtomic
-    return $ member $ left ++ " * " ++ right
+    left <- valueToCode block "LEFT" CMultiplication
+    right <- valueToCode block "RIGHT" CMultiplication
+    return (left ++ " * " ++ right, CMultiplication)
 
 blockDiv :: GeneratorFunction
 blockDiv block = do 
-    left <- valueToCode block "LEFT" CAtomic
-    right <- valueToCode block "RIGHT" CAtomic
-    return $ member $ left ++ " / " ++ right
+    left <- valueToCode block "LEFT" CDivision
+    right <- valueToCode block "RIGHT" CDivision
+    return (left ++ " / " ++ right, CDivision)
 
 blockExp :: GeneratorFunction
 blockExp block = do 
-    left <- valueToCode block "LEFT" CAtomic
-    right <- valueToCode block "RIGHT" CAtomic
-    return $ member $ left ++ "^" ++ right
+    left <- valueToCode block "LEFT" CExponentiation
+    right <- valueToCode block "RIGHT" CExponentiation
+    return (left ++ "^" ++ right, CExponentiation)
 
 blockMax :: GeneratorFunction
 blockMax block = do 
@@ -610,27 +613,24 @@ assignAll :: IO ()
 assignAll = mapM_ (uncurry setCodeGen) blockCodeMap
 
 valueToCode :: Block -> String -> OrderConstant -> Either Block String
-valueToCode block name innerOrder = do
+valueToCode block name ordr = do
     inputBlock <- aux $ getInputBlock block name
     let blockType = getBlockType inputBlock
     func <- aux $ lookup blockType blockCodeMap
-    (code,ordr) <- func inputBlock
-    Right $ handleOrder ordr code
+    (code,innerOrder) <- func inputBlock
+    Right $ handleOrder (order innerOrder) (order ordr) code
   where
     aux m = case m of
       Just v -> Right v
       Nothing -> Left block
-    handleOrder CAtomic code = code
-    handleOrder CNone code = code
-    handleOrder _ code = "(" ++ code ++ ")"
 
--- valueToCode :: Block -> String -> OrderConstant -> Either Block String
--- valueToCode block name ordr =  
---     case unpack $ js_valueToCode block (pack name) (order ordr) of
---       "" ->  Left block
---       val -> Right val
-
-
+    handleOrder innerOrdr odrd code
+      | innerOrdr == 0 || innerOrdr == 99 = code
+    handleOrder innerOrdr ordr code = if ordr <= innerOrdr
+                          then if ordr == innerOrdr && (ordr == 0 || ordr == 99)
+                               then code
+                               else "(" ++ code ++ ")"
+                          else code
 
 -- Helper functions
 
@@ -674,13 +674,13 @@ data OrderConstant =  CAtomic
                     | CUnaryPlus
                     | CUnaryNegation
                     | CTypeOf
-                    | CVoid
-                    | CDelete
+                    | CCombine
+                    | CExponentiation
                     | CMultiplication
                     | CDivision
                     | CModulus
                     | CAddition
-                    | CSubstraction
+                    | CSubtraction
                     | CBitwiseShift
                     | CRelational
                     | CIn
@@ -710,13 +710,13 @@ order CBitwiseNot     = 4;  -- ~
 order CUnaryPlus      = 4;  -- +
 order CUnaryNegation  = 4;  -- -
 order CTypeOf         = 4;  -- typeof
-order CVoid           = 4;  -- void
-order CDelete         = 4;  -- delete
+order CExponentiation = 4;  -- ^
+order CCombine        = 5;  -- &
 order CMultiplication = 5;  -- *
 order CDivision       = 5;  -- /
 order CModulus        = 5;  -- %
 order CAddition       = 6;  -- +
-order CSubstraction   = 6;  -- -
+order CSubtraction    = 6;  -- -
 order CBitwiseShift   = 7;  -- << >> >>>
 order CRelational     = 8;  -- < <= > >=
 order CIn             = 8;  -- in

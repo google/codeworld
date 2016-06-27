@@ -47,6 +47,10 @@ foreign import javascript unsafe "compile($1)"
 foreign import javascript unsafe "run()"
   js_cwrun :: IO ()
 
+-- call blockworld.js updateUI
+foreign import javascript unsafe "updateUI()"
+  js_updateUI :: IO ()
+
 foreign import javascript unsafe "updateEditor($1)"
   js_updateEditor :: JSString -> IO ()
 

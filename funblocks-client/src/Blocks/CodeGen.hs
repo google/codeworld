@@ -164,6 +164,12 @@ blockNumber block = do
     let arg = getFieldValue block "NUMBER"
     return $ none arg 
 
+blockNumberPerc :: GeneratorFunction
+blockNumberPerc block = do 
+    let arg = getFieldValue block "NUMBER"
+    let numb = (read arg :: Float) * 0.01
+    return $ none (show numb)
+
 blockAdd :: GeneratorFunction
 blockAdd block = do 
     left <- valueToCode block "LEFT" CAddition
@@ -475,7 +481,7 @@ blockRGBA block = do
     blue <- valueToCode block "BLUE" CNone
     green <- valueToCode block "GREEN" CNone
     alpha <- valueToCode block "ALPHA" CNone
-    return $ none $ "rgba(" ++ red ++ "," ++ blue ++ "," ++ green ++ "," ++ alpha ++ ")" 
+    return $ none $ "RGBA(" ++ red ++ "," ++ green ++ "," ++ blue ++ "," ++ alpha ++ ")" 
 
 blockLetVar :: GeneratorFunction
 blockLetVar block = do 
@@ -516,6 +522,7 @@ blockCodeMap = [ ("cwBlank",blockBlank)
                   ,("cwScale",blockScale)
                   -- NUMBERS
                   ,("numNumber",blockNumber)
+                  ,("numNumberPerc",blockNumberPerc)
                   ,("numAdd",blockAdd)
                   ,("numSub",blockSub)
                   ,("numMult",blockMult)

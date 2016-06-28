@@ -9,3 +9,5 @@ dist
 *.jsexe
 *.swp
 nohup.out
+web/closure-library
+third_party/closure-library

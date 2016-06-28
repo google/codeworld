@@ -166,8 +166,8 @@ cwTranslate = DesignBlock "cwTranslate"
 cwScale = DesignBlock "cwScale"
           [Dummy [TextE "Scaled"] 
            ,Value "PICTURE" [Text "Picture"] typePicture 
-           ,Value "HORZ" [Text "horizontal"] typeNumber
-           ,Value "VERTZ" [Text "vertical"] typeNumber
+           ,Value "HORZ" [Text "Horizontal"] typeNumber
+           ,Value "VERTZ" [Text "Vertical"] typeNumber
           ] 
           inlineDef colorPicture typePicture 
           (Tooltip "Scale a picture")
@@ -175,7 +175,7 @@ cwScale = DesignBlock "cwScale"
 cwRotate = DesignBlock "cwRotate"
           [Dummy [TextE "Rotated"] 
            ,Value "PICTURE" [Text "Picture"] typePicture 
-           ,Value "ANGLE" [Text "angle"] typeNumber
+           ,Value "ANGLE" [Text "Angle"] typeNumber
           ] 
           inlineDef colorPicture typePicture 
           (Tooltip "Rotate")
@@ -494,8 +494,8 @@ cwTranslucent = DesignBlock "cwTranslucent"
 cwRGBA = DesignBlock "cwRGBA"
           [Dummy [TextE "RGBA"] 
            ,Value "RED"  [Text "Red"] typeNumber 
-           ,Value "BLUE"  [Text "Blue"] typeNumber 
            ,Value "GREEN"  [Text "Green"] typeNumber 
+           ,Value "BLUE"  [Text "Blue"] typeNumber 
            ,Value "ALPHA"  [Text "Alpha"] typeNumber] 
           inlineDef colorColor typeColor 
           (Tooltip "Makes a color with the given red, blue, green and alpha values")

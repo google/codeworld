@@ -34,6 +34,7 @@
     <script src="blockly/msg/js/en.js"></script>
     
     <!-- Initialization in JS -->
+    <script src="js/codeworld_shared.js"></script> 
     <script src="js/blockworld.js"></script> 
     <!-- JS Blockly Code Generation Initialization -->
     <script src="js/codegen.js"></script>
@@ -42,18 +43,18 @@
 
   <body>
     <div class="container-fluid">
-      <nav class="navbar navbar-default ">
+      <nav class="navbar navbar-default">
         <a class="navbar-brand" href="/blocks">CodeWorld Blocks</a>
         <ul class="nav navbar-nav">
           <li><a href="/">Code</a></li>
         </ul>
-      <button type="button" onclick="signout()" id="signout" style="margin-right: 40px;" class="btn btn-default navbar-btn navbar-right">Sign out</button>
+      <button type="button" onclick="signOut()" id="signout" style="margin-right: 40px;" class="btn btn-default navbar-btn navbar-right">Sign out</button>
       <p class="navbar-text navbar-right" style="margin-right: 40px;"
       id="navbarsignin">Signed in as <a id="username" class="navbar-link">Johny</a></p>
       <button type="button" onclick="signin()" id="signin" style="margin-right: 40px;" class="btn btn-default navbar-btn navbar-right">Sign in</button>
       </nav>
     </div>
-
+    
   <div class="container-fluid">
     <div class="row full">
         <div id="sidebar" class="col-md-2 collapsed">
@@ -618,8 +619,7 @@
             <span>Edit</span>
           </a> 
           </h4>
-          <pre id="genCode" class="cm-s-default CodeMirror" style="width:100%;
-          height:auto;padding:10px;">
+          <pre id="genCode" class="cm-s-default CodeMirror" style="width:100%; height:auto; padding:10px;">
           </pre> 
           
         </div> 

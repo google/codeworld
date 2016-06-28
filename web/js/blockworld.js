@@ -140,17 +140,7 @@ function getWorkspaceXMLText()
 function containsUnsavedChanges()
 {
   var blank = '<xml xmlns="http://www.w3.org/1999/xhtml"></xml>';
-  // Initialize if empty
-  if(!lastXML)
-  {
-    lastXML = getWorkspaceXMLText();
-    if(lastXML == blank)
-      return false;
-    else
-      return true;
-  }
-
-  return getWorkspaceXMLText() != lastXML;
+  return getWorkspaceXMLText() != (lastXML || blank);
 }
 
 function isEditorClean()

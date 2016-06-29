@@ -233,10 +233,6 @@ function updateUI()
         document.getElementById('editButton').style.display = 'none';
     }
 
-
-
-    
-
   var projects = document.getElementById('projects');
   projects.innerHTML = '';
   allProjectNames.forEach(function(projectName) {
@@ -316,33 +312,10 @@ function loadProject(name) {
     clearRunCode();
     loadWorkspace(project.source);
     updateUI();
+    Blockly.getMainWorkspace().clearUndo();
   }
   loadProject_(name,'blocklyXML',successFunc);
 
-    
-  warnIfUnsaved(function(){
-    if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
-        updateUI();
-        return;
-    }
-
-    var data = new FormData();
-    data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-    data.append('name', name);
-    data.append('mode', 'blocklyXML');
-
-    sendHttp('POST', 'loadProject', data, function(request) {
-        if (request.status == 200) {
-            var project = JSON.parse(request.responseText);
-            openProjectName = name;
-
-            clearRunCode();
-            loadWorkspace(project.source);
-            updateUI();
-        }
-    });
-  });
 }
 
 
@@ -365,6 +338,7 @@ function deleteProject() {
   {
     clearWorkspace();
     openProjectName = null;
+    Blockly.getMainWorkspace().clearUndo();
   }
   deleteProject_('blocklyXML', successFunc);
 
@@ -379,6 +353,7 @@ function newProject() {
     discoverProjects();
     updateUI();
     lastXML = getWorkspaceXMLText();
+    Blockly.getMainWorkspace().clearUndo();
   });
 }
 

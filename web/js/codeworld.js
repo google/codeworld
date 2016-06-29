@@ -517,7 +517,7 @@ function warnIfUnsaved(action) {
 }
 
 function loadSample(code) {
-    sweetAlert.close();
+    if (isEditorClean()) sweetAlert.close();
     warnIfUnsaved(function() {
         setCode(code);
     });

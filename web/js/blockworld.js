@@ -41,6 +41,7 @@ function init()
     allProjectNames = [];
     lastXML = null;
     showingResult = false;
+    window.buildMode = 'codeworld';
 
     var hash = location.hash.slice(1);
     if (hash.length > 0) {
@@ -64,7 +65,7 @@ function init()
 }
 
 function usingHaskellPrelude() {
-    return false;
+  return false;
 }
 
 // Sets the generated code
@@ -76,6 +77,11 @@ function updateEditor(code) {
         overrideKeywords: codeworldKeywords
       }
       ,editor);
+}
+
+function stop() {
+  console.log('how did you get so fly');
+  run('', '', '', false);
 }
 
 function run(xmlHash, codeHash, msg, error) {

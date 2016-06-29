@@ -175,8 +175,6 @@ function compile(src) {
             data.append('hash', codeHash);
             data.append('mode', window.buildMode);
 
-            lastXML = xml_text;
-
             sendHttp('POST', 'runMsg', data, function(request) {
                 var msg = '';
                 if (request.status == 200) {

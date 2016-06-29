@@ -889,19 +889,101 @@ Here are a few possibilities:
 * Red, green, or blue values in a color.
 
 The list goes on and on!  And you don't need to settle for just one of these.
-You can use `t` as many times in your animation as you like!
+You can use `t` as many times in your animation as you like!  This example
+combines rotation, translation, and a list range all depending on the time:
 
-TODO: Non-trivial example
+    main = animationOf(wheels)
+    wheels(t) = pictures([
+        translated(rotated(tire, -60 * t), t - 10, y)
+        | y <- [0, 2 .. t]])
+    tire = circle(1) & solidRectangle(0.1, 2)
 
 Top-down animation
 ------------------
 
-TODO: write this
+With drawings, soon after learning how to create a single drawing, you learned
+how to build more complicated drawings out of simpler building blocks.  The
+same idea applies to animation.  However, it's important to be aware of the
+difference between pictures and animations.
+
+As you build up complicated animations, it it crucial to keep in mind exactly
+which expressions mean what.  Let's examine a simple animation, such as:
+
+    ball(t) = thickCircle(t, 1)
+
+It is a common mistake to think that because you define the animation by
+writing this line, `ball(t)` is the name of the animation.  Actually, `ball`
+is the name of the entire animation.  The expression `ball(t)` describes
+just one frame of the animation.
+
+To be more complete, here are several expressions that occur in this line,
+and their complete types and meanings.
+
+| Expression          | Type                | Meaning                                          |
+| ------------------- | ------------------- | ------------------------------------------------ |
+| `t`                 | `Number`            | An instant in time.                              |
+| `ball`              | `Number -> Picture` | The entire animation.                            |
+| `ball(t)`           | `Picture`           | The single frame of `ball` at some point in time |
+| `thickCircle(t, 1)` | `Picture`           | The meaning is identical to `ball(t)`            |
+
+Notice that, as always, the equal sign tells you that the expressions on
+its left and right sides mean the same thing!  You may wonder, though, if
+`ball(t)` is *not* the name of the animation, why you define an animation
+by writing `ball(t) = `...  The reason is that to define an animation, you
+need to give the pattern that describes each of its frames.
+
+For an analogy, imagine this conversation between a student and a teacher:
+
+> *Teacher:* What does "cousin" mean?
+>
+> *Student:* Well, if Alice's parent and John's parent are siblings, that
+> makes Alice and John cousins.
+
+The student described what cousins are by giving a sentence about two
+people named Alice and John.  But the definition wasn't just about
+people with those two names.  The names were there because they helped
+the student to describe the pattern!  In the same way, when you define
+an animation `ball` by talking about a single frame `ball(t)`, your
+definition doesn't have anything do with a specific time `t`.  But
+having a name for the current time helps in describing the pattern.
+
+We'll refer back to this as we explore some examples of top-down design
+with animation.
+
+### Combining animations with `&` ###
+
+The `&` operator is used to combine pictures.  But what if you have two
+animations and want to show them at the same time?  You can't use `&` to
+combine the two animations.  But you can use `&` to combine two *pictures*,
+where those pictures are just one frame of the animation.
+
+So this won't work:
+
+    main = animationOf(a & b)
+    a(t) = rotated(solidRectangle(1, 1), 45 * t)
+    b(t) = circle(t)
+
+But this will work:
+
+    main = animationOf(c)
+    c(t) = a(t) & b(t)
+    a(t) = rotated(solidRectangle(1, 1), 45 * t)
+    b(t) = circle(t)
+
+The first example doesn't work because `a` and `b` are animations rather
+than pictures, so they can't be combined using `&`.  But in the second
+example, we've instead defined a new animation, `c`, and said that each
+frame of `c` is obtained by combining the frames from `a` and `b` at
+that time.
 
 Patterns of change
 ------------------
 
-TODO: write this
+You have seen how using the parameter, `t`, in an animation can create
+motion.  Different patterns or kinds of motion can be created by writing
+different kinds of math expressions involving `t`.  In this section, we'll
+look at some of these patterns, and what the expression looks like that
+creates them.
 
 ### Linear change ###
 
@@ -909,16 +991,57 @@ A linear change proceeds at one fixed speed.  A good example of linear change
 is a car that moves at a fixed speed across the screen.  Another example is
 the propellor above: although the ends of the blade move in a circle rather
 than a line, the fundamental change is to an angle, and that angle increases
-at a fixed speed.
+at a fixed speed.  In this example, the box rotates at a fixed speed of 45
+degrees per second, so the change of the angle is linear:
 
-TODO: write this
+    main = animationOf(box)
+    box(t) = rotated(solidRectangle(1, 1), 45 * t)
+
+When describing linear change, there are two questions to ask yourself:
+
+* What is the speed of change?
+* What is the starting value?
+
+You get the expression for linear change by *multiplying* `t` by the speed,
+and *adding* the starting value.  For example, a starting value of `7` and
+a speed of `-3` would give the expression `-3 * t + 7`.
 
 ### Periodic change ###
 
-Periodic change happens in a repeating cycle.  A good example is a swing,
-which moves back and forth in the same motion forever.
+Periodic change happens in a repeating cycle.  One example is a pendulum,
+which moves back and forth in the same motion forever.  We create this
+pattern of motion using a special function called a sine wave, and
+written as `sin`.  Here's a simple pendulum for an example:
 
-TODO: write this
+    main = animationOf(pendulum)
+    pendulum(t) = rotated(arm, 45 * sin(60 * t))
+    arm = translated(solidRectangle(1, 6), 0, -3)
+        & translated(solidCircle(1), 0, -6)
+
+Periodic change is a little more complicated than linear motion.  There are
+four questions you need to ask yourself to plan this motion.
+
+* How much does it change?  This is the *amplitude*.
+* What is the center, or *resting value*, of the change?
+* How quickly does the cycle repeat?  This is the *frequency*.
+* At what point in the cycle does it start?  This is the *phase*.
+
+The first two questions are answered with values.  If you want a value to
+change periodically between 0 and 10, then you would choose a resting value
+of `5`, which is the center of the range.  The amplitude would also be `5`,
+since that's the range of motion away from the center.
+
+The second two questions are answered with angles, in degrees.  A full cycle
+is 360 degrees.  With this in mind, the frequency is the degrees per second
+of progress through the cycle.  For example, if you want one cycle per second,
+then you need a frequency of 360 degrees per second.  The phase is the
+starting point.  In many cases, you won't care about the phase.
+
+Once you have these four values, you'll combine the `sin` function with
+*two* linear expressions.  The frequency and phase form a linear expression
+in the parameter to `sin`, and the amplitude and resting value make a linear
+pattern with its result.  Putting it all together, the expression looks like
+`amplitude * sin(frequency * t - phase) + restingValue`.
 
 ### Quadratic change ###
 
@@ -927,7 +1050,29 @@ rate at which it speeds up or slows down is called *acceleration*.  An example
 is a ball thrown in the air.  It will gradually slow down over time, until it
 stops and then falls back down, due to acceleration caused by gravity.
 
-TODO: write this
+Here's an example of a ball flying through the air using quadratic change:
+
+    main = animationOf(ball)
+    ball(t) = translated(solidCircle(1),
+                         10 * t - 10,
+                         -5 + 20 * t - 10 * t^2)
+
+Notice that the x coordinate is a linear expression, because the ball moves at
+a fixed speed in that direction.  But the y direction involves gravity.
+
+The three questions to ask where are:
+
+* What is the *acceleration*, or change in speed?
+* What is the *starting speed*?
+* What is the *starting value*?
+
+The starting value is the plain number in the expression.  The starting speed
+is multiplied by `t`.  Finally, half of the acceleration is multiplied by
+`t^2`.  You can modify these numbers in the example above to find out what
+happens if the starting speed is different, or even if you change the
+acceleration.  In this example, changing the acceleration is like adjusting
+the strength of gravity, so you can try out the ball on the moon... or on
+Jupiter, which has more gravity than the Earth!
 
 ### Piecewise motion ###
 

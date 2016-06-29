@@ -979,7 +979,11 @@ that time.
 Patterns of change
 ------------------
 
-TODO: write this
+You have seen how using the parameter, `t`, in an animation can create
+motion.  Different patterns or kinds of motion can be created by writing
+different kinds of math expressions involving `t`.  In this section, we'll
+look at some of these patterns, and what the expression looks like that
+creates them.
 
 ### Linear change ###
 
@@ -987,16 +991,57 @@ A linear change proceeds at one fixed speed.  A good example of linear change
 is a car that moves at a fixed speed across the screen.  Another example is
 the propellor above: although the ends of the blade move in a circle rather
 than a line, the fundamental change is to an angle, and that angle increases
-at a fixed speed.
+at a fixed speed.  In this example, the box rotates at a fixed speed of 45
+degrees per second, so the change of the angle is linear:
 
-TODO: write this
+    main = animationOf(box)
+    box(t) = rotated(solidRectangle(1, 1), 45 * t)
+
+When describing linear change, there are two questions to ask yourself:
+
+* What is the speed of change?
+* What is the starting value?
+
+You get the expression for linear change by *multiplying* `t` by the speed,
+and *adding* the starting value.  For example, a starting value of `7` and
+a speed of `-3` would give the expression `-3 * t + 7`.
 
 ### Periodic change ###
 
-Periodic change happens in a repeating cycle.  A good example is a swing,
-which moves back and forth in the same motion forever.
+Periodic change happens in a repeating cycle.  One example is a pendulum,
+which moves back and forth in the same motion forever.  We create this
+pattern of motion using a special function called a sine wave, and
+written as `sin`.  Here's a simple pendulum for an example:
 
-TODO: write this
+    main = animationOf(pendulum)
+    pendulum(t) = rotated(arm, 45 * sin(60 * t))
+    arm = translated(solidRectangle(1, 6), 0, -3)
+        & translated(solidCircle(1), 0, -6)
+
+Periodic change is a little more complicated than linear motion.  There are
+four questions you need to ask yourself to plan this motion.
+
+* How much does it change?  This is the *amplitude*.
+* What is the center, or *resting value*, of the change?
+* How quickly does the cycle repeat?  This is the *frequency*.
+* At what point in the cycle does it start?  This is the *phase*.
+
+The first two questions are answered with values.  If you want a value to
+change periodically between 0 and 10, then you would choose a resting value
+of `5`, which is the center of the range.  The amplitude would also be `5`,
+since that's the range of motion away from the center.
+
+The second two questions are answered with angles, in degrees.  A full cycle
+is 360 degrees.  With this in mind, the frequency is the degrees per second
+of progress through the cycle.  For example, if you want one cycle per second,
+then you need a frequency of 360 degrees per second.  The phase is the
+starting point.  In many cases, you won't care about the phase.
+
+Once you have these four values, you'll combine the `sin` function with
+*two* linear expressions.  The frequency and phase form a linear expression
+in the parameter to `sin`, and the amplitude and resting value make a linear
+pattern with its result.  Putting it all together, the expression looks like
+`amplitude * sin(frequency * t - phase) + restingValue`.
 
 ### Quadratic change ###
 
@@ -1005,7 +1050,29 @@ rate at which it speeds up or slows down is called *acceleration*.  An example
 is a ball thrown in the air.  It will gradually slow down over time, until it
 stops and then falls back down, due to acceleration caused by gravity.
 
-TODO: write this
+Here's an example of a ball flying through the air using quadratic change:
+
+    main = animationOf(ball)
+    ball(t) = translated(solidCircle(1),
+                         10 * t - 10,
+                         -5 + 20 * t - 10 * t^2)
+
+Notice that the x coordinate is a linear expression, because the ball moves at
+a fixed speed in that direction.  But the y direction involves gravity.
+
+The three questions to ask where are:
+
+* What is the *acceleration*, or change in speed?
+* What is the *starting speed*?
+* What is the *starting value*?
+
+The starting value is the plain number in the expression.  The starting speed
+is multiplied by `t`.  Finally, half of the acceleration is multiplied by
+`t^2`.  You can modify these numbers in the example above to find out what
+happens if the starting speed is different, or even if you change the
+acceleration.  In this example, changing the acceleration is like adjusting
+the strength of gravity, so you can try out the ball on the moon... or on
+Jupiter, which has more gravity than the Earth!
 
 ### Piecewise motion ###
 

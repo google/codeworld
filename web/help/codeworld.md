@@ -889,14 +889,92 @@ Here are a few possibilities:
 * Red, green, or blue values in a color.
 
 The list goes on and on!  And you don't need to settle for just one of these.
-You can use `t` as many times in your animation as you like!
+You can use `t` as many times in your animation as you like!  This example
+combines rotation, translation, and a list range all depending on the time:
 
-TODO: Non-trivial example
+    main = animationOf(wheels)
+    wheels(t) = pictures([
+        translated(rotated(tire, -60 * t), t - 10, y)
+        | y <- [0, 2 .. t]])
+    tire = circle(1) & solidRectangle(0.1, 2)
 
 Top-down animation
 ------------------
 
-TODO: write this
+With drawings, soon after learning how to create a single drawing, you learned
+how to build more complicated drawings out of simpler building blocks.  The
+same idea applies to animation.  However, it's important to be aware of the
+difference between pictures and animations.
+
+As you build up complicated animations, it it crucial to keep in mind exactly
+which expressions mean what.  Let's examine a simple animation, such as:
+
+    ball(t) = thickCircle(t, 1)
+
+It is a common mistake to think that because you define the animation by
+writing this line, `ball(t)` is the name of the animation.  Actually, `ball`
+is the name of the entire animation.  The expression `ball(t)` describes
+just one frame of the animation.
+
+To be more complete, here are several expressions that occur in this line,
+and their complete types and meanings.
+
+| Expression          | Type                | Meaning                                          |
+| ------------------- | ------------------- | ------------------------------------------------ |
+| `t`                 | `Number`            | An instant in time.                              |
+| `ball`              | `Number -> Picture` | The entire animation.                            |
+| `ball(t)`           | `Picture`           | The single frame of `ball` at some point in time |
+| `thickCircle(t, 1)` | `Picture`           | The meaning is identical to `ball(t)`            |
+
+Notice that, as always, the equal sign tells you that the expressions on
+its left and right sides mean the same thing!  You may wonder, though, if
+`ball(t)` is *not* the name of the animation, why you define an animation
+by writing `ball(t) = `...  The reason is that to define an animation, you
+need to give the pattern that describes each of its frames.
+
+For an analogy, imagine this conversation between a student and a teacher:
+
+> *Teacher:* What does "cousin" mean?
+>
+> *Student:* Well, if Alice's parent and John's parent are siblings, that
+> makes Alice and John cousins.
+
+The student described what cousins are by giving a sentence about two
+people named Alice and John.  But the definition wasn't just about
+people with those two names.  The names were there because they helped
+the student to describe the pattern!  In the same way, when you define
+an animation `ball` by talking about a single frame `ball(t)`, your
+definition doesn't have anything do with a specific time `t`.  But
+having a name for the current time helps in describing the pattern.
+
+We'll refer back to this as we explore some examples of top-down design
+with animation.
+
+### Combining animations with `&` ###
+
+The `&` operator is used to combine pictures.  But what if you have two
+animations and want to show them at the same time?  You can't use `&` to
+combine the two animations.  But you can use `&` to combine two *pictures*,
+where those pictures are just one frame of the animation.
+
+So this won't work:
+
+    main = animationOf(a & b)
+    a(t) = rotated(solidRectangle(1, 1), 45 * t)
+    b(t) = circle(t)
+
+But this will work:
+
+    main = animationOf(c)
+    c(t) = a(t) & b(t)
+    a(t) = rotated(solidRectangle(1, 1), 45 * t)
+    b(t) = circle(t)
+
+The first example doesn't work because `a` and `b` are animations rather
+than pictures, so they can't be combined using `&`.  But in the second
+example, we've instead defined a new animation, `c`, and said that each
+frame of `c` is obtained by combining the frames from `a` and `b` at
+that time.
 
 Patterns of change
 ------------------

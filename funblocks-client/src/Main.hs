@@ -63,28 +63,26 @@ setErrorMessage msg = do
 btnRunClick ws = do
   Just doc <- liftIO currentDocument
   code <- liftIO $ workspaceToCode ws
-  Just genCode <- getElementById doc "genCode"
   case code of
     "" -> setErrorMessage "Error: Disconnected Inputs"
     _ -> do
-          liftIO $ js_cwcompile (pack code)
-          liftIO js_cwrun
           liftIO $ js_updateEditor (pack code)
+          liftIO $ js_cwcompile (pack code)
+          -- liftIO js_cwrun
   return ()
 
 -- test whether all blocks have codegen
-allCodeGen = filter (\x -> not $ x `elem` getGenerationBlocks) getTypeBlocks 
+allCodeGen = filter (`notElem` getGenerationBlocks) getTypeBlocks 
 
 main = do 
       Just doc <- currentDocument 
       Just body <- getBody doc
-      liftIO $ putStrLn $ "Blocks that dont have codegen: " ++ (show allCodeGen)
+      -- liftIO $ putStrLn $ "Blocks that dont have codegen: " ++ show allCodeGen
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
       liftIO assignAll
       Just btnRun <- getElementById doc "btnRun" 
       on btnRun click (btnRunClick workspace)
       liftIO setBlockTypes -- assign layout and types of Blockly blocks
-      -- liftIO $ addChangeListener workspace (onVarConnect workspace)
       liftIO $ addChangeListener workspace (onGeneral workspace)
       return ()
 
@@ -97,29 +95,3 @@ onGeneral workspace event = case getType event of
                             _ -> setDisabled block False
           Nothing -> return ()
       _ -> return ()
-
--- change the color of a var block 
-onVarConnect workspace event = do
-  let eventtype = getType event
-  case eventtype of
-    -- ChangeEvent e -> putStrLn "testing change event" 
-    -- CreateEvent e -> putStrLn "testing create event" 
-    MoveEvent e -> do
-        let uuid = getBlockId e
-        let ablock = getBlockById workspace uuid 
-        let bbs = do
-                    block_ <- getBlockById workspace uuid
-                    outBlock_ <- getOutputBlock block_
-                    let tp = getBlockType outBlock_
-                    return (block_,outBlock_,tp)
-        case bbs of
-          Just (block, outBlock,"letVar") -> do
-                                      let col = getColour block
-                                      setColour outBlock col
-                                      --putStrLn tp
-                                      return ()
-          _ -> return ()
-        return ()
-    _ -> return ()
-  return ()
-

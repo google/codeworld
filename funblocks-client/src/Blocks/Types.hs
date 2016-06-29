@@ -455,9 +455,9 @@ cwPurple = DesignBlock "cwPurple"
           (Tooltip "The color purple")
 
 cwGray = DesignBlock "cwGray"
-          [Value "NUM" [TextE "Gray"] typeNumber] 
+          [Value "VALUE" [TextE "Gray"] typeNumber] 
           (Inline True) colorColor typeColor
-          (Tooltip "The color gray, varying by an amount")
+          (Tooltip "The color gray, varying by an amount. Lower value is closer to black")
 
 cwMixed = DesignBlock "cwMixed"
           [Dummy [TextE "Mixed"] 

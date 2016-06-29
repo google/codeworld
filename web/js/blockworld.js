@@ -80,7 +80,6 @@ function updateEditor(code) {
 }
 
 function stop() {
-  console.log('how did you get so fly');
   run('', '', '', false);
 }
 

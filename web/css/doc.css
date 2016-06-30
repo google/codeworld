@@ -30,7 +30,7 @@ pre {
   margin-left: 20px;
   margin-right: 10px;
   padding: 5px;
-  background-color: #eee;
+  background-color: #f8f8f8;
   border: dotted #888 1px;
   font-family: monospace;
   font-size: 1em;
@@ -38,11 +38,11 @@ pre {
 }
 
 pre.clickable {
-  background-color: #dfd;
+  background-color: #eff8ff;
 }
 
 pre.clickable:hover {
-  background-color: #efe;
+  background-color: #f5faff;
   cursor: pointer;
 }
 

@@ -16,25 +16,28 @@
 
 (function() {
     function linkCodeBlocks() {
+        codeworldKeywords = {};
+        registerStandardHints( function(){
         var pres = document.getElementsByTagName('pre');
-        for (var i = 0; i < pres.length; ++i) {
-            (function() {
-                var pre = pres[i];
-                var text = pre.textContent;
-                pre.innerHTML = '';
-                CodeMirror.runMode(text, 'codeworld', pre);
-                pre.classList.add('cm-s-default');
+            for (var i = 0; i < pres.length; ++i) {
+                (function() {
+                    var pre = pres[i];
+                    var text = pre.textContent;
+                    pre.innerHTML = '';
+                    CodeMirror.runMode(text, { name: 'codeworld', overrideKeywords: codeworldKeywords }, pre);
+                    pre.classList.add('cm-s-default');
 
-                if (text.indexOf('main ') != -1) {
-                    pre.classList.add('clickable');
-                    pre.onclick = function() {
-                        if (parent && parent.loadSample) {
-                            parent.loadSample(text);
+                    if (text.indexOf("main ") != -1) {
+                        pre.classList.add('clickable');
+                        pre.onclick = function() {
+                            if (parent && parent.loadSample) {
+                                parent.loadSample(text);
+                            }
                         }
                     }
-                }
-            })();
-        }
+                })();
+            }
+        });
     }
 
     function addTableOfContents() {

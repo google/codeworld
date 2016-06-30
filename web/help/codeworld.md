@@ -8,9 +8,7 @@ Tips for using this guide:
 
 * If you feel the urge to play around with something and try new things, please
   do!  It won't do much good to just read.  You have to try things to learn.
-* If you see a green box, you can click it to copy the code and try it out.
-* If you need space on the screen, try closing the Browse pane.  You won't need
-  it for this tutorial, and you can open it again any time.
+* If you see a blue box, you can click it to copy the code and try it out.
 
 Drawing With CodeWorld
 ======================

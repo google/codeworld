@@ -89,7 +89,7 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
 
     if (stream.match(RE_OPENBRACKET)) {
       state.brackets.push(stream.current());
-      return 'bracket-' + (state.brackets.length - 1) % 15;
+      return 'bracket-' + (state.brackets.length - 1) % 7;
     }
 
     if (stream.match(RE_CLOSEBRACKET)) {
@@ -98,7 +98,7 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
         return 'bracket';
       } else {
         while (state.brackets.length > i) state.brackets.pop();
-        return 'bracket-' + state.brackets.length % 15;
+        return 'bracket-' + state.brackets.length % 7;
       }
     }
 

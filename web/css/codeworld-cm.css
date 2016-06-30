@@ -20,7 +20,6 @@
 .CodeMirror span.cm-builtin-2 {color: #38c; font-weight: bold}
 .CodeMirror span.cm-keyword {color: #828; font-weight: bold}
 .CodeMirror span.cm-deprecated {color: #888; font-weight: bold; text-decoration: line-through}
-
 .CodeMirror span.cm-variable {color: black;}
 .CodeMirror span.cm-variable-2 {color: #38c;}
 .CodeMirror span.cm-comment {color: #161;}
@@ -29,15 +28,27 @@
 .CodeMirror span.cm-qualifier {color: #666;}
 .CodeMirror span.cm-number {color: #a10;}
 .CodeMirror span.cm-bracket {color: #000;}
-
+.CodeMirror span.cm-bracket-0  {font-weight: bold; color: hsl( 96, 60%, 50%);}
+.CodeMirror span.cm-bracket-1  {font-weight: bold; color: hsl(192, 60%, 50%);}
+.CodeMirror span.cm-bracket-2  {font-weight: bold; color: hsl(288, 60%, 50%);}
+.CodeMirror span.cm-bracket-3  {font-weight: bold; color: hsl( 24, 60%, 50%);}
+.CodeMirror span.cm-bracket-4  {font-weight: bold; color: hsl(120, 60%, 50%);}
+.CodeMirror span.cm-bracket-5  {font-weight: bold; color: hsl(216, 60%, 50%);}
+.CodeMirror span.cm-bracket-6  {font-weight: bold; color: hsl(312, 60%, 50%);}
+.CodeMirror span.cm-bracket-7  {font-weight: bold; color: hsl( 48, 60%, 50%);}
+.CodeMirror span.cm-bracket-8  {font-weight: bold; color: hsl(144, 60%, 50%);}
+.CodeMirror span.cm-bracket-9  {font-weight: bold; color: hsl(240, 60%, 50%);}
+.CodeMirror span.cm-bracket-10 {font-weight: bold; color: hsl(336, 60%, 50%);}
+.CodeMirror span.cm-bracket-11 {font-weight: bold; color: hsl( 72, 60%, 50%);}
+.CodeMirror span.cm-bracket-12 {font-weight: bold; color: hsl(168, 60%, 50%);}
+.CodeMirror span.cm-bracket-13 {font-weight: bold; color: hsl(264, 60%, 50%);}
+.CodeMirror span.cm-bracket-14 {font-weight: bold; color: hsl(  0, 60%, 50%);}
 .CodeMirror span.cm-error {color: #f00;}
 
 /* Make bracket matching look nicer. */
 
-.CodeMirror-matchingbracket    { color: inherit !important;
-                                 outline: solid rgba(0,0,0,0.15) 1px }
-.CodeMirror-nonmatchingbracket { color: inherit !important;
-                                 outline: solid rgba(255,0,0,0.5) 1px }
+.CodeMirror-matchingbracket    { color: #0DF !important; outline: solid rgba(0,0,0,0.15) 1px }
+.CodeMirror-nonmatchingbracket { color: #0DF !important; outline: solid rgba(255,0,0,0.5) 1px }
 
 /* Grayed-out style for the empty editor placeholder. */
 

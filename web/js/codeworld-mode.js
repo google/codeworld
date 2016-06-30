@@ -48,11 +48,11 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
   var RE_INCOMMENT    = /(?:[^{-]|-(?=[^}])|\{(?=[^-]))*/;
   var RE_ENDCOMMENT   = /-}/;
 
-  function closing(bracket) {
-    if (bracket == '(') return ')';
-    if (bracket == '[') return ']';
-    if (bracket == '{') return '}';
-    if (bracket == '`') return '`';
+  function opening(bracket) {
+    if (bracket == ')') return '(';
+    if (bracket == ']') return '[';
+    if (bracket == '}') return '{';
+    return bracket;
   }
 
   // The state has the following properties:
@@ -88,11 +88,18 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
     if (stream.match(RE_CHAR) || stream.match(RE_STRING)) return 'string';
 
     if (stream.match(RE_OPENBRACKET)) {
-      return 'bracket';
+      state.brackets.push(stream.current());
+      return 'bracket-' + (state.brackets.length - 1) % 15;
     }
 
     if (stream.match(RE_CLOSEBRACKET)) {
-      return 'bracket';
+      var i = state.brackets.lastIndexOf(opening(stream.current()));
+      if (i < 0) {
+        return 'bracket';
+      } else {
+        while (state.brackets.length > i) state.brackets.pop();
+        return 'bracket-' + state.brackets.length % 15;
+      }
     }
 
     stream.next();

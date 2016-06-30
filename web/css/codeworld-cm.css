@@ -28,6 +28,7 @@
 .CodeMirror span.cm-meta {color: #555;}
 .CodeMirror span.cm-qualifier {color: #666;}
 .CodeMirror span.cm-number {color: #a10;}
+.CodeMirror span.cm-bracket {color: #000;}
 
 .CodeMirror span.cm-error {color: #f00;}
 

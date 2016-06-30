@@ -60,16 +60,24 @@ setErrorMessage msg = do
   Just msgEl <- getElementById doc "message"
   setInnerHTML msgEl $ Just msg
 
+programBlocks = ["cwDrawingOf"]
+
 btnRunClick ws = do
   Just doc <- liftIO currentDocument
-  code <- liftIO $ workspaceToCode ws
-  case code of
-    "" -> setErrorMessage "Error: Disconnected Inputs"
-    _ -> do
-          liftIO $ js_updateEditor (pack code)
-          liftIO $ js_cwcompile (pack code)
-          -- liftIO js_cwrun
+  blocks <- liftIO $ getTopBlocks ws
+  if not $ containsProgramBlock blocks 
+    then setErrorMessage "Error: No Program on Workspace"
+    else do
+      code <- liftIO $ workspaceToCode ws
+      case code of
+        "" -> setErrorMessage "Error: Disconnected Inputs"
+        _ -> do
+              liftIO $ js_updateEditor (pack code)
+              liftIO $ js_cwcompile (pack code)
+              -- liftIO js_cwrun
   return ()
+  where
+    containsProgramBlock = any (\b -> getBlockType b `elem` programBlocks) 
 
 -- test whether all blocks have codegen
 allCodeGen = filter (`notElem` getGenerationBlocks) getTypeBlocks 

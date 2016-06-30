@@ -1,5 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE JavaScriptFFI #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 {-
   Copyright 2016 The CodeWorld Authors. All Rights Reserved.
@@ -22,7 +23,9 @@ module Blockly.Workspace ( Workspace(..)
                           ,workspaceToCode
                           ,isTopBlock
                           ,getById
+                          ,getTopBlocksLength
                           ,getBlockById
+                          ,getTopBlocks
                           )
   where
 
@@ -32,7 +35,8 @@ import GHCJS.Foreign
 import GHCJS.Marshal
 import Unsafe.Coerce
 import Blockly.General
-import Blockly.Block (Block)
+import Blockly.Block (Block(..))
+import qualified JavaScript.Array as JA
 
 newtype Workspace = Workspace JSVal
 
@@ -62,6 +66,14 @@ getBlockById workspace (UUID uuidstr) = if isNull val then Nothing
 isTopBlock :: Workspace -> Block -> Bool
 isTopBlock = js_isTopBlock
 
+getTopBlocksLength :: Workspace -> Int
+getTopBlocksLength = js_getTopBlocksLength
+
+getTopBlocks :: Workspace -> IO [Block]
+getTopBlocks ws = do
+  vals :: JA.JSArray <- js_getTopBlocks ws
+  let vs = JA.toList vals
+  return $ map Block vs
 --- FFI
 
 -- TODO Maybe use a list of properties ?
@@ -79,4 +91,10 @@ foreign import javascript unsafe "Blockly.Workspace.getById($1)"
 
 foreign import javascript unsafe "$1.getBlockById($2)"
   js_getBlockById :: Workspace -> JSString -> JSVal
+
+foreign import javascript unsafe "$1.getTopBlocks(false).length"
+  js_getTopBlocksLength :: Workspace -> Int
+
+foreign import javascript unsafe "$1.getTopBlocks(false)"
+  js_getTopBlocks :: Workspace -> IO JA.JSArray
 

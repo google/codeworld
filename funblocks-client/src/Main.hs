@@ -86,12 +86,17 @@ main = do
       liftIO $ addChangeListener workspace (onGeneral workspace)
       return ()
 
+-- Disable blocks that are not top level
 onGeneral workspace event = case getType event of
-      MoveEvent e -> do
+      MoveEvent e ->  disableForEvent e
+      CreateEvent e -> disableForEvent e
+      _ -> return ()
+  where
+    disableForEvent e = do
         let uuid = getBlockId e
         case getBlockById workspace uuid of
           Just block -> case (getOutputConnection block, isTopBlock workspace block) of
                             (Just _, True) -> setDisabled block True
                             _ -> setDisabled block False
           Nothing -> return ()
-      _ -> return ()
+

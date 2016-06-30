@@ -110,7 +110,7 @@ module Internal.Exports (
     MouseButton(..),
 
     -- * Debugging
-    trace,
+    traced,
 
     -- * Entry points
     Program,

@@ -28,7 +28,7 @@ module Internal.CodeWorld (
     animationOf,
     simulationOf,
     interactionOf,
-    trace
+    traced
     ) where
 
 import qualified "codeworld-api" CodeWorld as CW
@@ -36,12 +36,13 @@ import                           Data.Text (Text)
 import                           Internal.Num (Number, fromDouble, toDouble)
 import                           Internal.Picture
 import                           Internal.Event
+import qualified                 Internal.Text as CWT
 import           "base"          Prelude
 import                           System.IO.Unsafe
 import                           System.Random
 
-trace :: (a, Text) -> a
-trace (x, msg) = CW.trace msg x
+traced :: (a, CWT.Text) -> a
+traced (x, msg) = CW.trace (CWT.fromCWText msg) x
 
 type Program = IO ()
 

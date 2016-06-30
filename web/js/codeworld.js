@@ -115,6 +115,15 @@ function setMode(force) {
     }
 }
 
+function getCurrentProject() {
+  var doc = window.codeworldEditor.getDoc();
+  return {
+      'name': window.openProjectName || 'Untitled',
+      'source': doc.getValue(),
+      'history': doc.getHistory()
+  };
+}
+
 /*
  * Updates all UI components to reflect the current state.  The general pattern
  * is to modify the state stored in variables and such, and then call updateUI
@@ -401,6 +410,7 @@ function saveProjectBase(projectName) {
 
     function successFunc() {
             window.openProjectName = projectName;
+            var doc = window.codeworldEditor.getDoc();
             window.savedGeneration = doc.changeGeneration(true);
             updateUI();
 

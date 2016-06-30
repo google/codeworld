@@ -64,6 +64,14 @@ function init()
     }
 }
 
+function getCurrentProject() {
+  return {
+      'name': window.openProjectName || 'Untitled',
+      'source': getWorkspaceXMLText(),
+      'history': ''
+  };
+}
+
 function usingHaskellPrelude() {
   return false;
 }

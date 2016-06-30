@@ -422,11 +422,8 @@ function saveProjectBase_(projectName, mode, successFunc) {
 
     function go() {
         sweetAlert.close();
-        var project = {
-            'name': projectName,
-            'source': getWorkspaceXMLText(),
-            'history': ''
-        };
+        var project = getCurrentProject();
+        project['name'] = projectName;
 
         var data = new FormData();
         data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);

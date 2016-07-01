@@ -74,7 +74,6 @@ btnRunClick ws = do
         _ -> do
               liftIO $ js_updateEditor (pack code)
               liftIO $ js_cwcompile (pack code)
-              -- liftIO js_cwrun
   return ()
   where
     containsProgramBlock = any (\b -> getBlockType b `elem` programBlocks) 
@@ -87,24 +86,10 @@ main = do
       Just body <- getBody doc
       -- liftIO $ putStrLn $ "Blocks that dont have codegen: " ++ show allCodeGen
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
+      liftIO $ disableOrphans workspace -- Disable disconnected non-top level blocks
       liftIO assignAll
       Just btnRun <- getElementById doc "btnRun" 
       on btnRun click (btnRunClick workspace)
       liftIO setBlockTypes -- assign layout and types of Blockly blocks
-      liftIO $ addChangeListener workspace (onGeneral workspace)
       return ()
-
--- Disable blocks that are not top level
-onGeneral workspace event = case getType event of
-      MoveEvent e ->  disableForEvent e
-      CreateEvent e -> disableForEvent e
-      _ -> return ()
-  where
-    disableForEvent e = do
-        let uuid = getBlockId e
-        case getBlockById workspace uuid of
-          Just block -> case (getOutputConnection block, isTopBlock workspace block) of
-                            (Just _, True) -> setDisabled block True
-                            _ -> setDisabled block False
-          Nothing -> return ()
 

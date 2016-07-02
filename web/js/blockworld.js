@@ -79,10 +79,6 @@ function updateEditor(code) {
       ,editor);
 }
 
-function stop() {
-  run('', '', '', false);
-}
-
 function run(xmlHash, codeHash, msg, error) {
     var hash = codeHash;
     window.showingResult = hash || msg;

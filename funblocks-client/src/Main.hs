@@ -44,12 +44,17 @@ foreign import javascript unsafe "compile($1)"
   js_cwcompile :: JSString -> IO ()
 
 -- call blockworld.js run
+-- run (xmlHash, codeHash, msg, error)
 foreign import javascript unsafe "run()"
-  js_cwrun :: IO ()
+  js_cwrun :: JSString -> JSString -> JSString -> Bool -> IO ()
 
 -- call blockworld.js updateUI
 foreign import javascript unsafe "updateUI()"
   js_updateUI :: IO ()
+
+-- funnily enough, If I'm calling run "" "" "" False I get errors
+foreign import javascript unsafe "run('','','',false)"
+  js_stop :: IO ()
 
 foreign import javascript unsafe "updateEditor($1)"
   js_updateEditor :: JSString -> IO ()
@@ -61,6 +66,9 @@ setErrorMessage msg = do
   setInnerHTML msgEl $ Just msg
 
 programBlocks = ["cwDrawingOf"]
+
+btnStopClick = do 
+  liftIO js_stop
 
 btnRunClick ws = do
   Just doc <- liftIO currentDocument
@@ -81,6 +89,11 @@ btnRunClick ws = do
 -- test whether all blocks have codegen
 allCodeGen = filter (`notElem` getGenerationBlocks) getTypeBlocks 
 
+hookEvent elementName evType func = do
+  Just doc <- currentDocument
+  Just ele <- getElementById doc elementName
+  on ele evType func
+
 main = do 
       Just doc <- currentDocument 
       Just body <- getBody doc
@@ -88,8 +101,10 @@ main = do
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
       liftIO $ disableOrphans workspace -- Disable disconnected non-top level blocks
       liftIO assignAll
-      Just btnRun <- getElementById doc "btnRun" 
-      on btnRun click (btnRunClick workspace)
+      -- Just btnRun <- getElementById doc "btnRun" 
+      -- on btnRun click (btnRunClick workspace)
+      hookEvent "btnRun" click (btnRunClick workspace)
+      hookEvent "btnStop" click btnStopClick
       liftIO setBlockTypes -- assign layout and types of Blockly blocks
       return ()
 

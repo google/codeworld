@@ -23,6 +23,7 @@ module Blockly.Block ( Block(..)
                      , getOutputBlock
                      , getOutputConnection
                      , getColour
+                     , getItemCount
                      , setColour
                      , areAllInputsConnected
                      , select
@@ -105,7 +106,13 @@ setDisabled = js_setDisabled
 areAllInputsConnected :: Block -> Bool
 areAllInputsConnected = js_allInputsConnected
 
+getItemCount :: Block -> Int
+getItemCount = js_itemCount
+
 --- FFI
+
+foreign import javascript unsafe "$1.itemCount_"
+  js_itemCount :: Block -> Int
 
 foreign import javascript unsafe "$1.getFieldValue($2)"
   js_getFieldValue :: Block -> JSString -> JSString

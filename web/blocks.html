@@ -30,7 +30,6 @@
 
     <script src="blockly/blockly_compressed.js"></script>
     <script src="blockly/blocks_compressed.js"></script>
-    <script src="blockly/core/field_label_emph.js"></script>
     <script src="blockly/msg/js/en.js"></script>
     
     <!-- Initialization in JS -->
@@ -595,10 +594,13 @@
                             </value>
                           </block>
                       </category>
-                      <category name = "Tuples">
+                      <category name="Tuples">
                         <block type="pair_create_typed"> </block>
-                        <block type="pair_first_typed"> </block>
-                        <block type="pair_second_typed"> </block>
+                        <!-- <block type="pair_first_typed"> </block>
+                        <block type="pair_second_typed"> </block> -->
+                      </category>
+                      <category name="Lists">
+                        <block type="lists_create_with_typed"></block>
                       </category>
                       <category name="Definitions" custom="PROCEDURE">
                       </category>

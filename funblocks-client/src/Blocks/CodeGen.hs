@@ -29,6 +29,7 @@ import Data.Maybe (fromJust)
 import GHCJS.Marshal
 import qualified JavaScript.Array as JA
 import Unsafe.Coerce
+import Data.List (intercalate)
 
 -- Helper functions
 member :: Code -> (Code, OrderConstant)
@@ -497,6 +498,29 @@ blockLetCall block = do
 blockComment :: GeneratorFunction
 blockComment block = return $ none ""
 
+-- Tuples
+blockCreatePair :: GeneratorFunction
+blockCreatePair block = do 
+    first <- valueToCode block "FIRST" CNone
+    second <- valueToCode block "SECOND" CNone
+    return $ none $ "(" ++ first ++ "," ++ second ++ ")" 
+
+blockFst :: GeneratorFunction
+blockFst block = do 
+    pair <- valueToCode block "PAIR" CNone
+    return ("fst (" ++ pair ++ ")" , CNone)
+
+blockSnd :: GeneratorFunction
+blockSnd block = do 
+    pair <- valueToCode block "PAIR" CNone
+    return ("snd (" ++ pair ++ ")" , CNone)
+
+blockCreateList :: GeneratorFunction
+blockCreateList block = do
+  let c = getItemCount block
+  vals <- mapM (\t -> valueToCode block t CNone) ["ADD" ++ show i | i <- [0..c-1]]
+  return $ none $ "[" ++ intercalate "," vals ++ "]"
+
 getGenerationBlocks :: [String]
 getGenerationBlocks = map fst blockCodeMap
 
@@ -590,6 +614,12 @@ blockCodeMap = [ ("cwBlank",blockBlank)
                   ,("conOdd",blockOdd)
                   ,("conStartWith",blockStartWith)
                   ,("conEndWith",blockEndWith)
+                  -- Tuples
+                  ,("pair_create_typed", blockCreatePair)
+                  ,("pair_first_typed", blockFst)
+                  ,("pair_second_typed", blockSnd)
+                  -- Lists
+                  ,("lists_create_with_typed", blockCreateList)
                   -- PROGRAMS
                   ,("procedures_letVar",blockLetVar)
                   ,("procedures_callreturn",blockLetCall)

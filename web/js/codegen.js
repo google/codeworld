@@ -123,7 +123,7 @@ Blockly.FunBlocks.workspaceToCode = function(workspace) {
       code.push(line);
     }
   }
-  code = code.join(this.lineSeparator);  // Blank line between each section.
+  code = code.join('\n');  // Blank line between each section.
   code = this.finish(code);
   // Final scrubbing of whitespace.
   code = code.replace(/^\s+\n/, '');

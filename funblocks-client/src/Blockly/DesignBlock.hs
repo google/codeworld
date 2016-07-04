@@ -162,7 +162,7 @@ foreign import javascript unsafe "$1.appendValueInput($2)"
 foreign import javascript unsafe "$1.appendField($2)"
   js_appendTextField :: FieldInput -> JSString -> IO FieldInput
 
-foreign import javascript unsafe "$1.appendField(new Blockly.FieldLabelEmph($2))"
+foreign import javascript unsafe "$1.appendField(new Blockly.FieldLabel($2, 'blocklyTextEmph'))"
   js_appendTextFieldEmph :: FieldInput -> JSString -> IO FieldInput
 
 foreign import javascript unsafe "$1.appendField(new Blockly.FieldTextInput($2), $3)"

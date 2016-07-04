@@ -159,7 +159,7 @@
                           </block>
                           <block type="cwText">
                             <value name="TEXT">
-                              <shadow type="text">
+                              <shadow type="text_typed">
                                 <field name="TEXT"></field>
                               </shadow>
                             </value>
@@ -399,13 +399,13 @@
                           </block>
                       </category>
                       <category name="Text">
-                          <block type="text"></block>
+                          <block type="text_typed"></block>
                           <block type="txtConcat">
                             <value name="LEFT">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                             <value name="RIGHT">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                           </block>
                           <block type="txtPrinted">
@@ -415,12 +415,12 @@
                           </block>
                           <block type="txtLowercase">
                             <value name="TEXT">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                           </block>
                           <block type="txtUppercase">
                             <value name="TEXT">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                           </block>
                       </category>
@@ -580,18 +580,18 @@
                           </block>
                           <block type="conStartWith">
                             <value name="TEXTMAIN">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                             <value name="TEXTTEST">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                           </block>
                           <block type="conEndWith">
                             <value name="TEXTMAIN">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                             <value name="TEXTTEST">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                           </block>
                       </category>
@@ -666,13 +666,19 @@
     $("#toggle-sidebar").toggleClass("btn-primary btn-default");
 
     // Ugly hacks to force redraw
-    Blockly.fireUiEvent(window, 'resize');
+    // Blockly.fireUiEvent(window, 'resize');
+
     window.dispatchEvent(new Event('resize'));
-    Blockly.getMainWorkspace().resize();
     $(window).trigger('resize');
     $('.container-fluid').redraw();
     $('.container-fluid').css('display', 'none').height();
     $('.container-fluid').css('display', 'block');
+
+    Blockly.resizeSvgContents(Blockly.getMainWorkspace());
+    Blockly.getMainWorkspace().resize();
+
+    window.dispatchEvent(new Event('resize'));
+    $(window).trigger('resize');
 
   });
   </script>

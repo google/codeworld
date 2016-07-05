@@ -121,6 +121,10 @@ blockThickArc block = do
     linewidth <- valueToCode block "LINEWIDTH" CNone
     return $ none $ "thickArc(" ++ startangle ++ "," ++ endangle ++ "," ++ radius ++ "," ++ linewidth ++ ")"
 
+blockCurry :: GeneratorFunction
+blockCurry block = do
+    list <- valueToCode block "LST" CNone
+    return $ none $ "path (" ++ list ++ ")"
 
 -- TRANSFORMATIONS ------------------------------------------------------
 
@@ -538,6 +542,7 @@ blockCodeMap = [ ("cwBlank",blockBlank)
                   ,("cwArc",blockArc)
                   ,("cwSector",blockSector)
                   ,("cwThickArc",blockThickArc)
+
                   -- TRANSFORMATIONS
                   ,("cwColored",blockColored)
                   ,("cwTranslate",blockTranslate)
@@ -624,6 +629,9 @@ blockCodeMap = [ ("cwBlank",blockBlank)
                   ,("procedures_letVar",blockLetVar)
                   ,("procedures_callreturn",blockLetCall)
                   ,("comment",blockComment)
+
+
+                  ,("lists_path",blockCurry)
                     ]
                                 
 

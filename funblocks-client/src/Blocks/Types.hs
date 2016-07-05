@@ -146,6 +146,14 @@ cwThickArc = DesignBlock "cwThickArc"
           inlineDef colorPicture typePicture 
           (Tooltip "A arc with variable line width")
 
+-- cwPath = DesignBlock "cwPath"
+--           [Dummy [TextE "Path"] 
+--             ,Value "POINTS" [Text "Points"] typeNumber 
+--           inlineDef colorPicture typePicture 
+--           (Tooltip "A thin arc")
+-- 
+
+
 -- Transformations -----------------------------------------------
 cwColored = DesignBlock "cwColored"
           [Dummy [TextE "Colored"] 

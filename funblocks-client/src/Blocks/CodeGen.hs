@@ -121,8 +121,8 @@ blockThickArc block = do
     linewidth <- valueToCode block "LINEWIDTH" CNone
     return $ none $ "thickArc(" ++ startangle ++ "," ++ endangle ++ "," ++ radius ++ "," ++ linewidth ++ ")"
 
-blockCurry :: GeneratorFunction
-blockCurry block = do
+blockPath :: GeneratorFunction
+blockPath block = do
     list <- valueToCode block "LST" CNone
     return $ none $ "path (" ++ list ++ ")"
 
@@ -519,11 +519,21 @@ blockSnd block = do
     pair <- valueToCode block "PAIR" CNone
     return ("snd (" ++ pair ++ ")" , CNone)
 
+-- LISTS
+
 blockCreateList :: GeneratorFunction
 blockCreateList block = do
   let c = getItemCount block
   vals <- mapM (\t -> valueToCode block t CNone) ["ADD" ++ show i | i <- [0..c-1]]
   return $ none $ "[" ++ intercalate "," vals ++ "]"
+
+blockLength :: GeneratorFunction
+blockLength block = do 
+    lst <- valueToCode block "LST" CNone
+    return $ none $ "length(" ++ lst ++ ")"
+
+
+
 
 getGenerationBlocks :: [String]
 getGenerationBlocks = map fst blockCodeMap
@@ -625,13 +635,14 @@ blockCodeMap = [ ("cwBlank",blockBlank)
                   ,("pair_second_typed", blockSnd)
                   -- Lists
                   ,("lists_create_with_typed", blockCreateList)
+                  ,("lists_length", blockLength)
                   -- PROGRAMS
                   ,("procedures_letVar",blockLetVar)
                   ,("procedures_callreturn",blockLetCall)
                   ,("comment",blockComment)
 
 
-                  ,("lists_path",blockCurry)
+                  ,("lists_path",blockPath)
                     ]
                                 
 

@@ -532,8 +532,45 @@ blockLength block = do
     lst <- valueToCode block "LST" CNone
     return $ none $ "length(" ++ lst ++ ")"
 
+blockNumGen :: GeneratorFunction
+blockNumGen block = do 
+    left <- valueToCode block "LEFT" CNone
+    right <- valueToCode block "RIGHT" CNone
+    return $ none $ "[" ++ left ++ ".." ++ right ++ "]"
 
+blockListVar :: GeneratorFunction
+blockListVar block = do 
+    let arg = getFieldValue block "VAR"
+    if arg == "None"
+      then Left block
+      else return $ none arg
 
+-- LIST COMPREHENSION
+foreign import javascript unsafe "$1.varCount_"
+  js_blockVarCount :: Block -> Int
+
+foreign import javascript unsafe "$1.guardCount_"
+  js_blockGuardCount :: Block -> Int
+
+foreign import javascript unsafe "$1.vars_"
+  js_blockVars :: Block -> JA.JSArray
+
+blockListComp :: GeneratorFunction
+blockListComp block = do 
+    let varCount = js_blockVarCount block
+    let guardCount = js_blockGuardCount block
+    let vars = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
+                JA.toList $ js_blockVars block
+
+    varCodes <- mapM (\t -> valueToCode block t CNone) ["VAR" ++ show i | i <- [0..varCount-1]]
+    guards <- mapM (\t -> valueToCode block t CNone) ["GUARD" ++ show i | i <- [0..guardCount-1]]
+    doCode <- valueToCode block "DO" CNone
+
+    let varCode = intercalate "," $ zipWith (\var code -> var ++ " <- " ++ code) vars varCodes 
+    let guardCode = intercalate "," guards
+    let code = "[" ++ doCode ++ " | " ++ varCode ++ (if null guardCode then "" else "," ++ guardCode)
+                ++ "]"
+    return $ none code 
 
 getGenerationBlocks :: [String]
 getGenerationBlocks = map fst blockCodeMap
@@ -636,6 +673,9 @@ blockCodeMap = [ ("cwBlank",blockBlank)
                   -- Lists
                   ,("lists_create_with_typed", blockCreateList)
                   ,("lists_length", blockLength)
+                  ,("lists_numgen", blockNumGen)
+                  ,("lists_comprehension", blockListComp)
+                  ,("variables_get_lists", blockListVar)
                   -- PROGRAMS
                   ,("procedures_letVar",blockLetVar)
                   ,("procedures_callreturn",blockLetCall)

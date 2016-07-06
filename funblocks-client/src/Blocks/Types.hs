@@ -616,6 +616,18 @@ conEndWith = DesignBlock "conEndWith"
           inlineDef colorBool typeBool
           (Tooltip "Tells whether the given text ends with some other text")
 
+-- LISTS ----------------------------------------------
+lstGenNum = DesignBlock "lstGenNum"
+        [ Dummy [Text "["]
+         ,Value "LEFT"  [] typeNumber
+         ,Value "RIGHT" [TextE ".."] typeNumber
+         ,Dummy [Text "]"]
+         ]
+         (Inline True) colorBool typeBool
+         (Tooltip "Tells whether one number is greater than the other")
+
+
+
 comment = DesignBlock "comment" 
           [Dummy 
             [TextInput "" "TEXT",

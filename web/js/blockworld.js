@@ -21,7 +21,7 @@ function loadWorkspace(text)
   var workspace = Blockly.mainWorkspace;
   workspace.clear();
   var xmldom = Blockly.Xml.textToDom(text);
-  Blockly.Xml.domToWorkspace(workspace, xmldom);
+  Blockly.Xml.domToWorkspace(xmldom, workspace);
   lastXML = text;
 }
 

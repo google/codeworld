@@ -65,7 +65,7 @@ setErrorMessage msg = do
   Just msgEl <- getElementById doc "message"
   setInnerHTML msgEl $ Just msg
 
-programBlocks = ["cwDrawingOf"]
+programBlocks = ["cwDrawingOf","cwAnimationOf"]
 
 btnStopClick = do 
   liftIO js_stop

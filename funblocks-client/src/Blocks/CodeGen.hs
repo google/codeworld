@@ -531,6 +531,15 @@ blockFuncVar block = do
       then Left block
       else return $ none arg
 
+-- ANIMATION
+blockAnim :: GeneratorFunction
+blockAnim block =  
+    case getInputBlock block "FUNC" of
+      Just inpBlock -> do
+                       let funcName = getFieldValue inpBlock "NAME"
+                       return $ none $ "main = animationOf(" ++ funcName ++ ")"
+      Nothing -> Left block
+
 -- COMMENT
 blockComment :: GeneratorFunction
 blockComment block = return $ none ""
@@ -608,11 +617,14 @@ blockListComp block = do
 getGenerationBlocks :: [String]
 getGenerationBlocks = map fst blockCodeMap
 
-blockCodeMap = [ ("cwBlank",blockBlank)
+blockCodeMap = [  -- PROGRAMS 
+                   ("cwDrawingOf",blockDrawingOf)
+                  ,("cwAnimationOf",blockAnim)
+                  -- PICTURES
+                  ,("cwBlank",blockBlank)
                   ,("cwCoordinatePlane",blockCoordinatePlane)
                   ,("cwCodeWorldLogo",blockCodeWorldLogo)
                   ,("cwText",blockText)
-                  ,("cwDrawingOf",blockDrawingOf)
                   ,("cwCircle",blockCircle)
                   ,("cwThickCircle",blockThickCircle)
                   ,("cwSolidCircle",blockSolidCircle)

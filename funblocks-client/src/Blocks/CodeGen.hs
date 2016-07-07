@@ -488,17 +488,50 @@ blockRGBA block = do
     alpha <- valueToCode block "ALPHA" CNone
     return $ none $ "RGBA(" ++ red ++ "," ++ green ++ "," ++ blue ++ "," ++ alpha ++ ")" 
 
+-- Programs
 blockLetVar :: GeneratorFunction
 blockLetVar block = do 
     let varName = getFieldValue block "NAME" 
     expr <- valueToCode block "RETURN" CNone
     return $ none $ varName ++ " = " ++ expr 
 
+
+
+-- Let function block with parameters
+foreign import javascript unsafe "$1.arguments_"
+  js_funcargs :: Block -> JA.JSArray
+
+blockLetFunc :: GeneratorFunction
+blockLetFunc block = do 
+    let varName = getFieldValue block "NAME" 
+    let vars = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
+                JA.toList $ js_funcargs block
+    let varCode = if not $ null vars 
+              then "(" ++ intercalate "," vars ++ ")"
+              else ""
+    expr <- valueToCode block "RETURN" CNone
+    return $ none $ varName ++ varCode ++ " = " ++ expr 
+
 blockLetCall :: GeneratorFunction
 blockLetCall block = do 
     let varName = getFieldValue block "NAME" 
-    return $ none varName 
+    let args = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
+                JA.toList $ js_funcargs block
+    vals <- mapM (\t -> valueToCode block t CNone) ["ARG" ++ show i | i <- [0..length args - 1]]
+    let argCode = if null vals
+              then ""
+              else "(" ++ intercalate "," vals ++ ")"
 
+    return $ none $ varName ++ argCode 
+
+blockFuncVar :: GeneratorFunction
+blockFuncVar block = do 
+    let arg = getFieldValue block "VAR"
+    if arg == "None"
+      then Left block
+      else return $ none arg
+
+-- COMMENT
 blockComment :: GeneratorFunction
 blockComment block = return $ none ""
 
@@ -589,7 +622,6 @@ blockCodeMap = [ ("cwBlank",blockBlank)
                   ,("cwArc",blockArc)
                   ,("cwSector",blockSector)
                   ,("cwThickArc",blockThickArc)
-
                   -- TRANSFORMATIONS
                   ,("cwColored",blockColored)
                   ,("cwTranslate",blockTranslate)
@@ -676,12 +708,12 @@ blockCodeMap = [ ("cwBlank",blockBlank)
                   ,("lists_numgen", blockNumGen)
                   ,("lists_comprehension", blockListComp)
                   ,("variables_get_lists", blockListVar)
-                  -- PROGRAMS
+                  -- FUNCTIONS
                   ,("procedures_letVar",blockLetVar)
+                  ,("procedures_letFunc",blockLetFunc)
                   ,("procedures_callreturn",blockLetCall)
+                  ,("procedures_getVar",blockFuncVar)
                   ,("comment",blockComment)
-
-
                   ,("lists_path",blockPath)
                     ]
                                 

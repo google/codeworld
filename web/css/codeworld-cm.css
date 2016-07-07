@@ -16,27 +16,30 @@
 
 .CodeMirror { font-size: 9pt; }
 
-.CodeMirror span.cm-builtin {color: #30a; font-weight: bold}
-.CodeMirror span.cm-builtin-2 {color: #38c; font-weight: bold}
-.CodeMirror span.cm-keyword {color: #828; font-weight: bold}
-.CodeMirror span.cm-deprecated {color: #888; font-weight: bold; text-decoration: line-through}
-
-.CodeMirror span.cm-variable {color: black;}
-.CodeMirror span.cm-variable-2 {color: #38c;}
-.CodeMirror span.cm-comment {color: #161;}
-.CodeMirror span.cm-string {color: #660;}
-.CodeMirror span.cm-meta {color: #555;}
-.CodeMirror span.cm-qualifier {color: #666;}
-.CodeMirror span.cm-number {color: #a10;}
-
-.CodeMirror span.cm-error {color: #f00;}
+pre.cm-s-default span.cm-builtin,    div.CodeMirror span.cm-builtin    {color: #30a; font-weight: bold}
+pre.cm-s-default span.cm-builtin-2,  div.CodeMirror span.cm-builtin-2  {color: #38c; font-weight: bold}
+pre.cm-s-default span.cm-keyword,    div.CodeMirror span.cm-keyword    {color: #828; font-weight: bold}
+pre.cm-s-default span.cm-deprecated, div.CodeMirror span.cm-deprecated {color: #888; font-weight: bold; text-decoration: line-through}
+pre.cm-s-default span.cm-variable,   div.CodeMirror span.cm-variable   {color: black;}
+pre.cm-s-default span.cm-variable-2, div.CodeMirror span.cm-variable-2 {color: #38c;}
+pre.cm-s-default span.cm-comment,    div.CodeMirror span.cm-comment    {color: #161;}
+pre.cm-s-default span.cm-string,     div.CodeMirror span.cm-string     {color: #660;}
+pre.cm-s-default span.cm-meta,       div.CodeMirror span.cm-meta       {color: #555;}
+pre.cm-s-default span.cm-qualifier,  div.CodeMirror span.cm-qualifier  {color: #666;}
+pre.cm-s-default span.cm-number,     div.CodeMirror span.cm-number     {color: #a10;}
+pre.cm-s-default span.cm-bracket,    div.CodeMirror span.cm-bracket    {color: #000;}
+pre.cm-s-default span.cm-bracket-0,  div.CodeMirror span.cm-bracket-0  {font-weight: bold; color: hsl( 80, 80%, 40%);}
+pre.cm-s-default span.cm-bracket-1,  div.CodeMirror span.cm-bracket-1  {font-weight: bold; color: hsl(225, 60%, 60%);}
+pre.cm-s-default span.cm-bracket-2,  div.CodeMirror span.cm-bracket-2  {font-weight: bold; color: hsl(320, 60%, 50%);}
+pre.cm-s-default span.cm-bracket-3,  div.CodeMirror span.cm-bracket-3  {font-weight: bold; color: hsl( 60, 60%, 40%);}
+pre.cm-s-default span.cm-bracket-4,  div.CodeMirror span.cm-bracket-4  {font-weight: bold; color: hsl(175, 60%, 40%);}
+pre.cm-s-default span.cm-bracket-5,  div.CodeMirror span.cm-bracket-5  {font-weight: bold; color: hsl(265, 60%, 55%);}
+pre.cm-s-default span.cm-bracket-6,  div.CodeMirror span.cm-bracket-6  {font-weight: bold; color: hsl( 20, 60%, 50%);}
+pre.cm-s-default span.cm-bracket-7,  div.CodeMirror span.cm-error      {color: #f00;}
 
 /* Make bracket matching look nicer. */
-
-.CodeMirror-matchingbracket    { color: inherit !important;
-                                 outline: solid rgba(0,0,0,0.15) 1px }
-.CodeMirror-nonmatchingbracket { color: inherit !important;
-                                 outline: solid rgba(255,0,0,0.5) 1px }
+div.CodeMirror span.CodeMirror-matchingbracket { outline: solid rgba(0,0,0,0.15) 1px }
+div.CodeMirror span.CodeMirror-nonmatchingbracket { outline: solid rgba(255,0,0,0.5) 1px }
 
 /* Grayed-out style for the empty editor placeholder. */
 

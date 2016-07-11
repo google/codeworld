@@ -42,6 +42,7 @@ dotProduct (x1, y1) (x2, y2) = x1 * x2 + y1 * y2
 
 data Picture = Polygon [Point] !Bool
              | Path [Point] !Double !Bool !Bool
+             | Sector !Double !Double !Double
              | Arc !Double !Double !Double !Double
              | Text !TextStyle !Font !Text
              | Color !Color !Picture
@@ -132,10 +133,6 @@ thickRectangle lw w h = thickPolygon lw [
 circle :: Double -> Picture
 circle = arc 0 360
 
--- | A solid circle, with this radius
-solidCircle :: Double -> Picture
-solidCircle r = thickCircle r (r/2)
-
 -- | A thick circle, with this line width and radius
 thickCircle :: Double -> Double -> Picture
 thickCircle w = thickArc w 0 360
@@ -146,19 +143,23 @@ thickCircle w = thickArc w 0 360
 arc :: Double -> Double -> Double -> Picture
 arc b e r = Arc b e r 0
 
--- | A solid sector of a circle (i.e., a pie slice) starting and ending at these
--- angles, with this radius
---
--- Angles are in radians.
-sector :: Double -> Double -> Double -> Picture
-sector b e r = Arc b e (r/2) r
-
 -- | A thick arc with this line width, starting and ending at these angles,
 -- with this radius.
 --
 -- Angles are in radians.
 thickArc :: Double -> Double -> Double -> Double -> Picture
 thickArc w b e r = Arc b e r w
+
+-- | A solid circle, with this radius
+solidCircle :: Double -> Picture
+solidCircle = sector 0 360
+
+-- | A solid sector of a circle (i.e., a pie slice) starting and ending at these
+-- angles, with this radius
+--
+-- Angles are in radians.
+sector :: Double -> Double -> Double -> Picture
+sector = Sector
 
 -- | A piece of text
 text :: Text -> Picture

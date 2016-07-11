@@ -247,6 +247,11 @@ drawPicture ctx ds (Polygon ps smooth) = do
     Canvas.fill ctx
 drawPicture ctx ds (Path ps w closed smooth) = do
     drawFigure ctx ds w $ followPath ctx ps closed smooth
+drawPicture ctx ds (Sector b e r) = withDS ctx ds $ do
+    Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
+    Canvas.lineTo 0 0 ctx
+    applyColor ctx ds
+    Canvas.fill ctx
 drawPicture ctx ds (Arc b e r w) = do
     drawFigure ctx ds w $ do
         Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx

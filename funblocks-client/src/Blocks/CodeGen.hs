@@ -230,7 +230,7 @@ blockAbs block = do
 blockRound :: GeneratorFunction
 blockRound block = do 
     num <- valueToCode block "NUM" CNone
-    return $ none $ "round(" ++ num ++ ")"
+    return $ none $ "rounded(" ++ num ++ ")"
 
 blockReciprocal :: GeneratorFunction
 blockReciprocal block = do 

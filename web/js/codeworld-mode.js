@@ -102,8 +102,10 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
       }
     }
 
+    if (stream.eat(',')) return null;
+
     stream.next();
-    return null;
+    return 'error';
   }
 
   function blockComment(tokenType) {

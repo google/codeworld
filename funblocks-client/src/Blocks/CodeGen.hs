@@ -662,7 +662,7 @@ blockCodeMap = [  -- PROGRAMS
                   ,("numLCM",blockLCM)
                   -- TEXT
                   ,("txtConcat",blockConcat)
-                  ,("text",blockString)
+                  ,("text_typed",blockString)
                   ,("txtPrinted",blockPrinted)
                   ,("txtLowercase",blockLowercase)
                   ,("txtUppercase",blockUppercase)

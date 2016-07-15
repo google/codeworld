@@ -53,22 +53,28 @@
       <button type="button" onclick="signin()" id="signin" style="margin-right: 40px;" class="btn btn-default navbar-btn navbar-right">Sign in</button>
       </nav>
     </div>
-    </br>
-    </br>
-    </br>
-    </br>
+    </br></br></br></br>
     
   <div class="container-fluid">
     <div class="row full">
         <div id="sidebar" class="col-md-2 collapsed">
             <h4>Projects</h4>
-            <div class="btn-group-vertical" style="width:100%;" role="group">
-              <button type="button" class="btn btn-default" id="newButton"
-                onclick="newProject()">New</button>
-              <button type="button" class="btn btn-default" style="display:
-                none;" id="saveButton" onclick="saveProject()">Save</button>
-              <button type="button" class="btn btn-default" style="display:
-                none;" id="saveAsButton" onclick="saveProjectAs()">Save as</button>
+            <div class="btn-group" style="width:100%;" role="group">
+              <a title="New" type="button" class="btn btn-warning" id="newButton"
+                                                            onclick="newProject()"><span
+                                                              class="glyphicon
+                                                              glyphicon-plus"></span></a>
+              <a title="Save" type="button" class="btn btn-success" style="display:
+              none;" id="saveButton" onclick="saveProject()"><span
+                class="glyphicon glyphicon-ok"></span></a>
+              <a title="Save as" type="button" class="btn btn-primary" style="display:
+              none;" id="saveAsButton" onclick="saveProjectAs()"><span
+              class="glyphicon glyphicon-export"></span></a>
+              <a title="Delete" type="button" class="btn btn-danger"
+                                              id="deleteButton"
+                                              onclick="deleteProject()"><span
+              class="glyphicon glyphicon-remove"></span></a>
+
             </div>
             </br></br>
             <div class="btn-group-vertical" style="width: 100%;" id="projects">
@@ -687,7 +693,7 @@
 
     event.preventDefault();
     $("#sidebar").toggleClass("collapsed");
-    $("#main").toggleClass("col-md-8 col-md-6");
+    $("#main").toggleClass("col-md-9 col-md-7");
     $("#toggle-sidebar").toggleClass("btn-primary btn-default");
 
     // Ugly hacks to force redraw

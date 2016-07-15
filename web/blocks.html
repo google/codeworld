@@ -42,7 +42,7 @@
 
   <body>
     <div class="container-fluid">
-      <nav class="navbar navbar-default">
+      <nav class="navbar navbar-default navbar-fixed-top">
         <a class="navbar-brand" href="/blocks">CodeWorld Blocks</a>
         <ul class="nav navbar-nav">
           <li><a href="/">Code</a></li>
@@ -53,6 +53,10 @@
       <button type="button" onclick="signin()" id="signin" style="margin-right: 40px;" class="btn btn-default navbar-btn navbar-right">Sign in</button>
       </nav>
     </div>
+    </br>
+    </br>
+    </br>
+    </br>
     
   <div class="container-fluid">
     <div class="row full">
@@ -72,7 +76,7 @@
             
         </div>
 
-        <div id="main" class="col-md-8">
+        <div id="main" class="col-md-9">
             <div class="row">
                 <div class="col-md-12">
 
@@ -627,20 +631,20 @@
                    </xml>
                 
 
-                <div id="blocklyDiv" style="height: 85%; width:100%;"> </div>
+                <div id="blocklyDiv" style="height: 84%; width:100%;"> </div>
 
                 </br>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
           <div id="result">
             <iframe id="runner" class="dropbox" width="400px;" 
               height="400px;"></iframe>
             
           </div>
           <h4><span class="label label-info">Generated Code</span>
-          <a type="button" id="editButton" target="_blank" class="btn btn-primary btn-sm">
+          <a type="button" id="editButton" target="_blank" class="btn btn-primary btn-xs">
             <span class="glyphicon glyphicon-edit"></span>
             <span>Edit</span>
           </a> 

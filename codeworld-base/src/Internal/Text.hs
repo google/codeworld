@@ -37,7 +37,6 @@ module Internal.Text (
     joinedWith,
     lowercase,
     uppercase,
-    capitalized,
     startsWith,
     endsWith,
     substitution,
@@ -112,9 +111,6 @@ lowercase = T . J.toLower . unT
 
 uppercase :: Text -> Text
 uppercase = T . J.toUpper . unT
-
-capitalized :: Text -> Text
-capitalized = T . J.toTitle . unT
 
 startsWith :: (Text, Text) -> Truth
 startsWith (T a, T b) = J.isPrefixOf b a

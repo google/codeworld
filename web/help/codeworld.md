@@ -1,9 +1,3 @@
-Welcome to CodeWorld!
-=====================
-
-Using CodeWorld, you can create your own pictures, animations, and games.  This
-guide will help you get started.
-
 Tips for using this guide:
 
 * If you feel the urge to play around with something and try new things, please

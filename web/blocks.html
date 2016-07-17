@@ -29,7 +29,10 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
     <script src="blockly/blockly_compressed.js"></script>
-    <script src="blockly/blocks_compressed.js"></script>
+    <script src="blockly/blocks/typed-blocks.js"></script>
+
+    <script src="blockly/blocks/procedures.js"></script>
+    <script src="blockly/blocks/funblocks-procedures.js"></script>
     <script src="blockly/msg/js/en.js"></script>
     
     <!-- Initialization in JS -->
@@ -645,9 +648,10 @@
         </div>
         <div class="col-md-3">
           <div id="result">
-            <iframe id="runner" class="dropbox" width="400px;" 
-              height="400px;"></iframe>
-            
+            <div class="aspect-ratio">
+              <iframe id="runner" class="dropbox"
+              style="width:100%;" ></iframe>
+            </div>
           </div>
           <h4><span class="label label-info">Generated Code</span>
           <a type="button" id="editButton" target="_blank" class="btn btn-primary btn-xs">

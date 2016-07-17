@@ -1,4 +1,4 @@
-{-# LANGUAGE ForeignFunctionInterface, JavaScriptFFI #-}
+{-# LANGUAGE ForeignFunctionInterface, JavaScriptFFI, OverloadedStrings, ScopedTypeVariables #-}
 
 {-
   Copyright 2016 The CodeWorld Authors. All Rights Reserved.
@@ -24,11 +24,23 @@ import Blockly.Block
 import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
-import Data.JSString (pack, unpack)
+import Data.JSString.Text
 import Data.Maybe (fromJust)
 import GHCJS.Marshal
 import qualified JavaScript.Array as JA
 import Unsafe.Coerce
+import Data.List (intercalate)
+import qualified Data.Text as T
+import Prelude hiding ((++), show)
+import qualified Prelude as P
+
+-- Helpers for converting Text
+(++) :: T.Text -> T.Text -> T.Text
+a ++ b = a `T.append` b
+pack = textToJSString
+unpack = textFromJSString
+show :: Show a => a -> T.Text
+show = T.pack . P.show
 
 -- Helper functions
 member :: Code -> (Code, OrderConstant)
@@ -39,7 +51,7 @@ atomic :: Code ->(Code, OrderConstant)
 atomic code = (code, CAtomic)
 
 
-type Code = String
+type Code = T.Text
 type GeneratorFunction = Block -> Either Block (Code, OrderConstant)
 
 -- PROGRAMS --------------------------------------
@@ -120,6 +132,10 @@ blockThickArc block = do
     linewidth <- valueToCode block "LINEWIDTH" CNone
     return $ none $ "thickArc(" ++ startangle ++ "," ++ endangle ++ "," ++ radius ++ "," ++ linewidth ++ ")"
 
+blockPath :: GeneratorFunction
+blockPath block = do
+    list <- valueToCode block "LST" CNone
+    return $ none $ "path (" ++ list ++ ")"
 
 -- TRANSFORMATIONS ------------------------------------------------------
 
@@ -167,7 +183,7 @@ blockNumber block = do
 blockNumberPerc :: GeneratorFunction
 blockNumberPerc block = do 
     let arg = getFieldValue block "NUMBER"
-    let numb = (read arg :: Float) * 0.01
+    let numb = (read (T.unpack arg) :: Float) * 0.01
     return $ none (show numb)
 
 blockAdd :: GeneratorFunction
@@ -225,7 +241,7 @@ blockAbs block = do
 blockRound :: GeneratorFunction
 blockRound block = do 
     num <- valueToCode block "NUM" CNone
-    return $ none $ "round(" ++ num ++ ")"
+    return $ none $ "rounded(" ++ num ++ ")"
 
 blockReciprocal :: GeneratorFunction
 blockReciprocal block = do 
@@ -483,28 +499,143 @@ blockRGBA block = do
     alpha <- valueToCode block "ALPHA" CNone
     return $ none $ "RGBA(" ++ red ++ "," ++ green ++ "," ++ blue ++ "," ++ alpha ++ ")" 
 
+-- Programs
 blockLetVar :: GeneratorFunction
 blockLetVar block = do 
     let varName = getFieldValue block "NAME" 
     expr <- valueToCode block "RETURN" CNone
     return $ none $ varName ++ " = " ++ expr 
 
+
+
+-- Let function block with parameters
+foreign import javascript unsafe "$1.arguments_"
+  js_funcargs :: Block -> JA.JSArray
+
+blockLetFunc :: GeneratorFunction
+blockLetFunc block = do 
+    let varName = getFieldValue block "NAME" 
+    let vars = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
+                JA.toList $ js_funcargs block
+    let varCode = if not $ null vars 
+              then "(" ++ T.intercalate "," vars ++ ")"
+              else ""
+    expr <- valueToCode block "RETURN" CNone
+    return $ none $ varName ++ varCode ++ " = " ++ expr 
+
 blockLetCall :: GeneratorFunction
 blockLetCall block = do 
     let varName = getFieldValue block "NAME" 
-    return $ none varName 
+    let args = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
+                JA.toList $ js_funcargs block
+    vals <- mapM (\t -> valueToCode block t CNone) ["ARG" ++ show i | i <- [0..length args - 1]]
+    let argCode = if null vals
+              then ""
+              else "(" ++ T.intercalate "," vals ++ ")"
 
+    return $ none $ varName ++ argCode 
+
+blockFuncVar :: GeneratorFunction
+blockFuncVar block = do 
+    let arg = getFieldValue block "VAR"
+    if arg == "None"
+      then Left block
+      else return $ none arg
+
+-- ANIMATION
+blockAnim :: GeneratorFunction
+blockAnim block =  
+    case getInputBlock block "FUNC" of
+      Just inpBlock -> do
+                       let funcName = getFieldValue inpBlock "NAME"
+                       return $ none $ "main = animationOf(" ++ funcName ++ ")"
+      Nothing -> Left block
+
+-- COMMENT
 blockComment :: GeneratorFunction
 blockComment block = return $ none ""
 
-getGenerationBlocks :: [String]
+-- Tuples
+blockCreatePair :: GeneratorFunction
+blockCreatePair block = do 
+    first <- valueToCode block "FIRST" CNone
+    second <- valueToCode block "SECOND" CNone
+    return $ none $ "(" ++ first ++ "," ++ second ++ ")" 
+
+blockFst :: GeneratorFunction
+blockFst block = do 
+    pair <- valueToCode block "PAIR" CNone
+    return ("fst (" ++ pair ++ ")" , CNone)
+
+blockSnd :: GeneratorFunction
+blockSnd block = do 
+    pair <- valueToCode block "PAIR" CNone
+    return ("snd (" ++ pair ++ ")" , CNone)
+
+-- LISTS
+
+blockCreateList :: GeneratorFunction
+blockCreateList block = do
+  let c = getItemCount block
+  vals <- mapM (\t -> valueToCode block t CNone) ["ADD" ++ show i | i <- [0..c-1]]
+  return $ none $ "[" ++ T.intercalate "," vals ++ "]"
+
+blockLength :: GeneratorFunction
+blockLength block = do 
+    lst <- valueToCode block "LST" CNone
+    return $ none $ "length(" ++ lst ++ ")"
+
+blockNumGen :: GeneratorFunction
+blockNumGen block = do 
+    left <- valueToCode block "LEFT" CNone
+    right <- valueToCode block "RIGHT" CNone
+    return $ none $ "[" ++ left ++ ".." ++ right ++ "]"
+
+blockListVar :: GeneratorFunction
+blockListVar block = do 
+    let arg = getFieldValue block "VAR"
+    if arg == "None"
+      then Left block
+      else return $ none arg
+
+-- LIST COMPREHENSION
+foreign import javascript unsafe "$1.varCount_"
+  js_blockVarCount :: Block -> Int
+
+foreign import javascript unsafe "$1.guardCount_"
+  js_blockGuardCount :: Block -> Int
+
+foreign import javascript unsafe "$1.vars_"
+  js_blockVars :: Block -> JA.JSArray
+
+blockListComp :: GeneratorFunction
+blockListComp block = do 
+    let varCount = js_blockVarCount block
+    let guardCount = js_blockGuardCount block
+    let vars = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
+                JA.toList $ js_blockVars block
+
+    varCodes <- mapM (\t -> valueToCode block t CNone) ["VAR" ++ show i | i <- [0..varCount-1]]
+    guards <- mapM (\t -> valueToCode block t CNone) ["GUARD" ++ show i | i <- [0..guardCount-1]]
+    doCode <- valueToCode block "DO" CNone
+
+    let varCode = T.intercalate "," $ zipWith (\var code -> var ++ " <- " ++ code) vars varCodes 
+    let guardCode = T.intercalate "," guards
+    let code = "[" ++ doCode ++ " | " ++ varCode ++ (if T.null guardCode then "" else "," ++ guardCode)
+                ++ "]"
+    return $ none code 
+
+getGenerationBlocks :: [T.Text]
 getGenerationBlocks = map fst blockCodeMap
 
-blockCodeMap = [ ("cwBlank",blockBlank)
+blockCodeMap = [  -- PROGRAMS 
+                   ("cwDrawingOf",blockDrawingOf)
+                  ,("cwAnimationOf",blockAnim)
+                  -- PICTURES
+                  ,("cwBlank",blockBlank)
                   ,("cwCoordinatePlane",blockCoordinatePlane)
                   ,("cwCodeWorldLogo",blockCodeWorldLogo)
                   ,("cwText",blockText)
-                  ,("cwDrawingOf",blockDrawingOf)
                   ,("cwCircle",blockCircle)
                   ,("cwThickCircle",blockThickCircle)
                   ,("cwSolidCircle",blockSolidCircle)
@@ -542,7 +673,7 @@ blockCodeMap = [ ("cwBlank",blockBlank)
                   ,("numLCM",blockLCM)
                   -- TEXT
                   ,("txtConcat",blockConcat)
-                  ,("text",blockString)
+                  ,("text_typed",blockString)
                   ,("txtPrinted",blockPrinted)
                   ,("txtLowercase",blockLowercase)
                   ,("txtUppercase",blockUppercase)
@@ -590,14 +721,27 @@ blockCodeMap = [ ("cwBlank",blockBlank)
                   ,("conOdd",blockOdd)
                   ,("conStartWith",blockStartWith)
                   ,("conEndWith",blockEndWith)
-                  -- PROGRAMS
+                  -- Tuples
+                  ,("pair_create_typed", blockCreatePair)
+                  ,("pair_first_typed", blockFst)
+                  ,("pair_second_typed", blockSnd)
+                  -- Lists
+                  ,("lists_create_with_typed", blockCreateList)
+                  ,("lists_length", blockLength)
+                  ,("lists_numgen", blockNumGen)
+                  ,("lists_comprehension", blockListComp)
+                  ,("variables_get_lists", blockListVar)
+                  -- FUNCTIONS
                   ,("procedures_letVar",blockLetVar)
+                  ,("procedures_letFunc",blockLetFunc)
                   ,("procedures_callreturn",blockLetCall)
+                  ,("procedures_getVar",blockFuncVar)
                   ,("comment",blockComment)
+                  ,("lists_path",blockPath)
                     ]
                                 
 
-setCodeGen :: String -> (Block -> Either Block (String, OrderConstant) ) -> IO ()
+setCodeGen :: T.Text -> (Block -> Either Block (T.Text, OrderConstant) ) -> IO ()
 setCodeGen blockName func = do
   cb <- syncCallback1' (\x -> do Just b <- fromJSVal x 
                                  case func b of
@@ -619,7 +763,7 @@ setCodeGen blockName func = do
 assignAll :: IO ()
 assignAll = mapM_ (uncurry setCodeGen) blockCodeMap
 
-valueToCode :: Block -> String -> OrderConstant -> Either Block String
+valueToCode :: Block -> T.Text -> OrderConstant -> Either Block T.Text
 valueToCode block name ordr = do
     inputBlock <- aux $ getInputBlock block name
     let blockType = getBlockType inputBlock
@@ -642,10 +786,14 @@ valueToCode block name ordr = do
 -- Helper functions
 
 -- Escapes a string
-escape :: String -> String
-escape xs = "\"" ++ concatMap f xs ++ "\"" where
-    f '\\' = "\\\\"
-    f '\"' = "\\\""
+
+escape :: T.Text -> T.Text
+escape xs = T.pack $ escape' (T.unpack xs)
+escape' :: String -> String
+escape' xs = ("\""::String) P.++ (concatMap f xs :: String ) P.++ ("\""::String) where
+    f :: Char -> String
+    f ('\\'::Char) = "\\\\" :: String
+    f ('\"'::Char) = "\\\"" :: String
     f x    = [x]
 
 --- FFI
@@ -664,7 +812,7 @@ foreign import javascript unsafe "setTimeout(removeErrors,10000)"
   js_removeErrorsDelay :: IO ()
 
 -- TODO, remove, was used for testing
-alert :: String -> IO ()
+alert :: T.Text -> IO ()
 alert text = js_alert $ pack text
 foreign import javascript unsafe "alert($1)" js_alert :: JSString -> IO ()
 

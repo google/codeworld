@@ -26,6 +26,8 @@ module Blockly.Workspace ( Workspace(..)
                           ,getTopBlocksLength
                           ,getBlockById
                           ,getTopBlocks
+                          ,disableOrphans
+                          ,mainWorkspace
                           )
   where
 
@@ -74,6 +76,13 @@ getTopBlocks ws = do
   vals :: JA.JSArray <- js_getTopBlocks ws
   let vs = JA.toList vals
   return $ map Block vs
+
+mainWorkspace :: Workspace
+mainWorkspace = js_getMainWorkspace
+
+disableOrphans :: Workspace -> IO ()
+disableOrphans = js_addDisableOrphans
+
 --- FFI
 
 -- TODO Maybe use a list of properties ?
@@ -98,3 +107,8 @@ foreign import javascript unsafe "$1.getTopBlocks(false).length"
 foreign import javascript unsafe "$1.getTopBlocks(false)"
   js_getTopBlocks :: Workspace -> IO JA.JSArray
 
+foreign import javascript unsafe "$1.addChangeListener(Blockly.Events.disableOrphans)"
+  js_addDisableOrphans :: Workspace -> IO ()
+
+foreign import javascript unsafe "Blockly.getMainWorkspace()"
+  js_getMainWorkspace :: Workspace

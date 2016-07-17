@@ -113,10 +113,12 @@
   font-size: 11pt;
 }
 .blocklyTextEmph {
-  cursor: default;
+  /* cursor: default; */
   fill: #fff;
+  font-family: 'Roboto';
   font-size: 11pt;
-  font-weight: 600;
+  text-shadow: 0px 0px 1px rgba(0,0,0,0.5); 
+  font-weight: 600; 
 }
 .blocklyNonEditableText>text {
   pointer-events: none;

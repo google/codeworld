@@ -29,8 +29,10 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
     <script src="blockly/blockly_compressed.js"></script>
-    <script src="blockly/blocks_compressed.js"></script>
-    <script src="blockly/core/field_label_emph.js"></script>
+    <script src="blockly/blocks/lists.js"></script>
+    <script src="blockly/blocks/typed-blocks.js"></script>
+    <script src="blockly/blocks/procedures.js"></script>
+    <script src="blockly/blocks/funblocks-procedures.js"></script>
     <script src="blockly/msg/js/en.js"></script>
     
     <!-- Initialization in JS -->
@@ -43,7 +45,7 @@
 
   <body>
     <div class="container-fluid">
-      <nav class="navbar navbar-default">
+      <nav class="navbar navbar-default navbar-fixed-top">
         <a class="navbar-brand" href="/blocks">CodeWorld Blocks</a>
         <ul class="nav navbar-nav">
           <li><a href="/">Code</a></li>
@@ -54,26 +56,35 @@
       <button type="button" onclick="signin()" id="signin" style="margin-right: 40px;" class="btn btn-default navbar-btn navbar-right">Sign in</button>
       </nav>
     </div>
+    </br></br></br></br>
     
   <div class="container-fluid">
     <div class="row full">
         <div id="sidebar" class="col-md-2 collapsed">
-            <h4>Projects</h4>
-            <div class="btn-group-vertical" style="width:100%;" role="group">
-              <button type="button" class="btn btn-default" id="newButton"
-                onclick="newProject()">New</button>
-              <button type="button" class="btn btn-default" style="display:
-                none;" id="saveButton" onclick="saveProject()">Save</button>
-              <button type="button" class="btn btn-default" style="display:
-                none;" id="saveAsButton" onclick="saveProjectAs()">Save as</button>
+            <div class="btn-group btn-group-justified " style="width:100%;" role="group">
+              <a title="New" type="button" class="btn btn-warning" id="newButton"
+                                                            onclick="newProject()"><span
+                                                              class="glyphicon
+                                                              glyphicon-plus"></span></a>
+              <a title="Save" type="button" class="btn btn-success" style="display:
+              none;" id="saveButton" onclick="saveProject()"><span
+                class="glyphicon glyphicon-ok"></span></a>
+              <a title="Save as" type="button" class="btn btn-primary" style="display:
+              none;" id="saveAsButton" onclick="saveProjectAs()"><span
+              class="glyphicon glyphicon-export"></span></a>
+              <a title="Delete" type="button" class="btn btn-danger"
+                                              id="deleteButton"
+                                              onclick="deleteProject()"><span
+              class="glyphicon glyphicon-remove"></span></a>
+
             </div>
-            </br></br>
+            <h5>Projects</h5>
             <div class="btn-group-vertical" style="width: 100%;" id="projects">
             </div>
             
         </div>
 
-        <div id="main" class="col-md-8">
+        <div id="main" class="col-md-9">
             <div class="row">
                 <div class="col-md-12">
 
@@ -84,6 +95,9 @@
                               <shadow type="cwBlank"></shadow>
                             </value>
                           </block>
+                          <block type="cwAnimationOf">
+                          </block>
+
                           <block type="comment"></block>
                       </category>
                       <category name="Pictures">
@@ -159,7 +173,7 @@
                           </block>
                           <block type="cwText">
                             <value name="TEXT">
-                              <shadow type="text">
+                              <shadow type="text_typed">
                                 <field name="TEXT"></field>
                               </shadow>
                             </value>
@@ -220,6 +234,7 @@
                               </shadow>
                             </value>
                           </block>
+                          <block type="lists_path"></block>
                       </category>
                       <category name="Transformations">
                           <block type="cwCombine">
@@ -399,13 +414,13 @@
                           </block>
                       </category>
                       <category name="Text">
-                          <block type="text"></block>
+                          <block type="text_typed"></block>
                           <block type="txtConcat">
                             <value name="LEFT">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                             <value name="RIGHT">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                           </block>
                           <block type="txtPrinted">
@@ -415,12 +430,12 @@
                           </block>
                           <block type="txtLowercase">
                             <value name="TEXT">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                           </block>
                           <block type="txtUppercase">
                             <value name="TEXT">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                           </block>
                       </category>
@@ -580,20 +595,43 @@
                           </block>
                           <block type="conStartWith">
                             <value name="TEXTMAIN">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                             <value name="TEXTTEST">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                           </block>
                           <block type="conEndWith">
                             <value name="TEXTMAIN">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                             <value name="TEXTTEST">
-                              <shadow type="text"></shadow>
+                              <shadow type="text_typed"></shadow>
                             </value>
                           </block>
+                      </category>
+                      <category name="Tuples">
+                        <block type="pair_create_typed"> </block>
+                        <!-- <block type="pair_first_typed"> </block>
+                        <block type="pair_second_typed"> </block> -->
+                      </category>
+                      <category name="Lists">
+                        <block type="lists_create_with_typed"></block>
+                        <block type="lists_numgen">
+                        <value name="LEFT">
+                              <shadow type="numNumber">
+                                <field name="NUMBER">1</field>
+                              </shadow>
+                            </value>
+                        <value name="RIGHT">
+                              <shadow type="numNumber">
+                                <field name="NUMBER">10</field>
+                              </shadow>
+                        </value>
+                        </block>
+                        <block type="lists_comprehension"></block>
+                        <block type="variables_get_lists"></block>
+                        <block type="lists_length"></block>
                       </category>
                       <category name="Definitions" custom="PROCEDURE">
                       </category>
@@ -601,20 +639,21 @@
                    </xml>
                 
 
-                <div id="blocklyDiv" style="height: 85%; width:100%;"> </div>
+                <div id="blocklyDiv" style="height: 84%; width:100%;"> </div>
 
                 </br>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
           <div id="result">
-            <iframe id="runner" class="dropbox" width="400px;" 
-              height="400px;"></iframe>
-            
+            <div class="aspect-ratio">
+              <iframe id="runner" class="dropbox"
+              style="width:100%;" ></iframe>
+            </div>
           </div>
           <h4><span class="label label-info">Generated Code</span>
-          <a type="button" id="editButton" target="_blank" class="btn btn-primary btn-sm">
+          <a type="button" id="editButton" target="_blank" class="btn btn-primary btn-xs">
             <span class="glyphicon glyphicon-edit"></span>
             <span>Edit</span>
           </a> 
@@ -635,8 +674,7 @@
         <span class="glyphicon glyphicon-align-justify"></span>
         <span>Browse</span>
       </button> 
-      <button type="button" class="btn btn-danger navbar-btn" id="btnStop"
-        onclick="stop()">Stop</button>
+      <button type="button" class="btn btn-danger navbar-btn" id="btnStop">Stop</button>
       <button type="button" class="btn btn-success navbar-btn" id="btnRun">Run</button>
       <p class="navbar-text navbar-right" style="padding-right:
         30px;">Status:
@@ -658,17 +696,23 @@
 
     event.preventDefault();
     $("#sidebar").toggleClass("collapsed");
-    $("#main").toggleClass("col-md-8 col-md-6");
+    $("#main").toggleClass("col-md-9 col-md-7");
     $("#toggle-sidebar").toggleClass("btn-primary btn-default");
 
     // Ugly hacks to force redraw
-    Blockly.fireUiEvent(window, 'resize');
+    // Blockly.fireUiEvent(window, 'resize');
+
     window.dispatchEvent(new Event('resize'));
-    Blockly.getMainWorkspace().resize();
     $(window).trigger('resize');
     $('.container-fluid').redraw();
     $('.container-fluid').css('display', 'none').height();
     $('.container-fluid').css('display', 'block');
+
+    Blockly.resizeSvgContents(Blockly.getMainWorkspace());
+    Blockly.getMainWorkspace().resize();
+
+    window.dispatchEvent(new Event('resize'));
+    $(window).trigger('resize');
 
   });
   </script>

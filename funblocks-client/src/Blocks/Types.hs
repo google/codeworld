@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-
   Copyright 2016 The CodeWorld Authors. All Rights Reserved.
 
@@ -20,6 +21,7 @@ module Blocks.Types(setBlockTypes, getTypeBlocks)
 import Blockly.DesignBlock 
 import Blockly.General
 import Blockly.Event
+import qualified Data.Text as T
 
 colorPicture = Color 160
 colorNumber = Color 210
@@ -145,6 +147,14 @@ cwThickArc = DesignBlock "cwThickArc"
            ,Value "LINEWIDTH" [Text "Line width"] typeNumber] 
           inlineDef colorPicture typePicture 
           (Tooltip "A arc with variable line width")
+
+-- cwPath = DesignBlock "cwPath"
+--           [Dummy [TextE "Path"] 
+--             ,Value "POINTS" [Text "Points"] typeNumber 
+--           inlineDef colorPicture typePicture 
+--           (Tooltip "A thin arc")
+-- 
+
 
 -- Transformations -----------------------------------------------
 cwColored = DesignBlock "cwColored"
@@ -608,6 +618,18 @@ conEndWith = DesignBlock "conEndWith"
           inlineDef colorBool typeBool
           (Tooltip "Tells whether the given text ends with some other text")
 
+-- LISTS ----------------------------------------------
+lstGenNum = DesignBlock "lstGenNum"
+        [ Dummy [Text "["]
+         ,Value "LEFT"  [] typeNumber
+         ,Value "RIGHT" [TextE ".."] typeNumber
+         ,Dummy [Text "]"]
+         ]
+         (Inline True) colorBool typeBool
+         (Tooltip "Tells whether one number is greater than the other")
+
+
+
 comment = DesignBlock "comment" 
           [Dummy 
             [TextInput "" "TEXT",
@@ -616,7 +638,7 @@ comment = DesignBlock "comment"
           inlineDef (Color 260) typeNone
           (Tooltip "Enter a comment")
 
-getTypeBlocks :: [String]
+getTypeBlocks :: [T.Text]
 getTypeBlocks = map (\(DesignBlock name _ _ _ _ _) -> name) blockTypes
 
 blockTypes = [ 

@@ -31,6 +31,7 @@ import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Marshal
 import Data.JSString (pack)
+import qualified Data.Text as T
 import Control.Monad.Trans (liftIO)
 import Blockly.Workspace
 import Blocks.CodeGen
@@ -44,12 +45,17 @@ foreign import javascript unsafe "compile($1)"
   js_cwcompile :: JSString -> IO ()
 
 -- call blockworld.js run
+-- run (xmlHash, codeHash, msg, error)
 foreign import javascript unsafe "run()"
-  js_cwrun :: IO ()
+  js_cwrun :: JSString -> JSString -> JSString -> Bool -> IO ()
 
 -- call blockworld.js updateUI
 foreign import javascript unsafe "updateUI()"
   js_updateUI :: IO ()
+
+-- funnily enough, If I'm calling run "" "" "" False I get errors
+foreign import javascript unsafe "run('','','',false)"
+  js_stop :: IO ()
 
 foreign import javascript unsafe "updateEditor($1)"
   js_updateEditor :: JSString -> IO ()
@@ -60,7 +66,11 @@ setErrorMessage msg = do
   Just msgEl <- getElementById doc "message"
   setInnerHTML msgEl $ Just msg
 
-programBlocks = ["cwDrawingOf"]
+programBlocks :: [T.Text]
+programBlocks = map T.pack ["cwDrawingOf","cwAnimationOf"]
+
+btnStopClick = do 
+  liftIO js_stop
 
 btnRunClick ws = do
   Just doc <- liftIO currentDocument
@@ -74,7 +84,6 @@ btnRunClick ws = do
         _ -> do
               liftIO $ js_updateEditor (pack code)
               liftIO $ js_cwcompile (pack code)
-              -- liftIO js_cwrun
   return ()
   where
     containsProgramBlock = any (\b -> getBlockType b `elem` programBlocks) 
@@ -82,29 +91,22 @@ btnRunClick ws = do
 -- test whether all blocks have codegen
 allCodeGen = filter (`notElem` getGenerationBlocks) getTypeBlocks 
 
+hookEvent elementName evType func = do
+  Just doc <- currentDocument
+  Just ele <- getElementById doc elementName
+  on ele evType func
+
 main = do 
       Just doc <- currentDocument 
       Just body <- getBody doc
       -- liftIO $ putStrLn $ "Blocks that dont have codegen: " ++ show allCodeGen
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
+      liftIO $ disableOrphans workspace -- Disable disconnected non-top level blocks
       liftIO assignAll
-      Just btnRun <- getElementById doc "btnRun" 
-      on btnRun click (btnRunClick workspace)
+      -- Just btnRun <- getElementById doc "btnRun" 
+      -- on btnRun click (btnRunClick workspace)
+      hookEvent "btnRun" click (btnRunClick workspace)
+      hookEvent "btnStop" click btnStopClick
       liftIO setBlockTypes -- assign layout and types of Blockly blocks
-      liftIO $ addChangeListener workspace (onGeneral workspace)
       return ()
-
--- Disable blocks that are not top level
-onGeneral workspace event = case getType event of
-      MoveEvent e ->  disableForEvent e
-      CreateEvent e -> disableForEvent e
-      _ -> return ()
-  where
-    disableForEvent e = do
-        let uuid = getBlockId e
-        case getBlockById workspace uuid of
-          Just block -> case (getOutputConnection block, isTopBlock workspace block) of
-                            (Just _, True) -> setDisabled block True
-                            _ -> setDisabled block False
-          Nothing -> return ()
 

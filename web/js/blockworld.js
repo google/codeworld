@@ -21,7 +21,7 @@ function loadWorkspace(text)
   var workspace = Blockly.mainWorkspace;
   workspace.clear();
   var xmldom = Blockly.Xml.textToDom(text);
-  Blockly.Xml.domToWorkspace(workspace, xmldom);
+  Blockly.Xml.domToWorkspace(xmldom, workspace);
   lastXML = text;
 }
 
@@ -85,10 +85,6 @@ function updateEditor(code) {
         overrideKeywords: codeworldKeywords
       }
       ,editor);
-}
-
-function stop() {
-  run('', '', '', false);
 }
 
 function run(xmlHash, codeHash, msg, error) {
@@ -258,35 +254,21 @@ function updateUI()
             .replace('<', '&lt;')
             .replace('>', '&gt;');
 
-        var btngroup = document.createElement('div');
-        btngroup.setAttribute('role','group');
-        btngroup.setAttribute('class','btn-group-horizontal');
         var button = document.createElement('button');
         button.innerHTML = encodedName;
         if(projectName == openProjectName)
         {
           button.setAttribute('class', 'btn btn-primary');
-          button.setAttribute('style','height:32px; width: calc(100% - 48px);');
-
-          dltbutton = document.createElement('button');
-          dltbutton.setAttribute('class','btn btn-danger');
-          dltbutton.setAttribute('style','height:32px; width:48px; float:right;');
-          dltbutton.innerHTML = "<span class='glyphicon glyphicon-remove'></span>";
-          dltbutton.onclick=function() {deleteProject();};
-
-          btngroup.appendChild(button);
-          btngroup.appendChild(dltbutton);
+          button.setAttribute('style','height:32px; width:100%;');
         }
         else
         {
           button.setAttribute('class','btn btn-default');
           button.setAttribute('style','height:32px; width:100%;');
-          btngroup.appendChild(button);
         }
         button.onclick=function() {loadProject(projectName)};
         
-        
-        projects.appendChild(btngroup);
+        projects.appendChild(button);
 
     });
 
@@ -365,6 +347,7 @@ function newProject() {
     updateUI();
     lastXML = getWorkspaceXMLText();
     Blockly.getMainWorkspace().clearUndo();
+    window.location.hash = '';
   });
 }
 

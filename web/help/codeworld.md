@@ -1081,7 +1081,107 @@ because it have distinct pieces, which are different from each other.
 You can create piecewise motion in your programs using functions like `min` and
 `max` and `remainder`, or by using conditionals, like `if` or guards.
 
-TODO: write this
+The `min` and `max` functions take the minimum or maximum, respectively, of two
+numbers.  This allows you to create simple effects where something moves and
+then stops.  For example:
+
+    main    = animationOf(drop)
+    drop(t) = translated(ball, 0, max(-8, 10 - t))
+    ball    = solidCircle(1)
+
+The ball will be at a y position of `10 - t` as long as that's more than `-8`.
+But as soon as the ball reaches `-8`, it stops, because the first parameter to
+`max` is now larger.  You would use `min` for the opposite situation, to model
+a number that increases up to a limit.
+
+The `remainder` function causes a number to increase up to a limit, then drop
+back down to zero and start over.  For example:
+
+    main      = animationOf(twitch)
+    twitch(t) = rotated(solidRectangle(5, 1), remainder(45 * t, 90))
+
+The expression `45 * t` is linear, so it increases steadily at a rate of 45
+degrees per second.  But the remainder function ensures that when it reaches
+30, it jumps back to zero.  The result is a motion that increases for 30
+degrees, then falls back down.
+
+#### Using if, then, and else ####
+
+One more flexible way to define piecewise functions is using `if`, `then`, and
+`else`.  Here's an example:
+
+    main            = animationOf(trafficLight)
+    trafficLight(t) = colored(dot, if t < 5 then red else blue)
+
+The expression `if c then a else b` means to evaluate whether `c` (called the
+"condition") is true or false.  If it's true, then `a` is the result.
+Otherwise, `b` is the result.  In the example, the condition is `t < 5`.  If
+this is true, then the color is `red`, and if not, it's `blue`.
+
+#### Guards ####
+
+Another way to define a function piecewise is easier to use when there are
+more than a couple options.  Guards are used to give several different
+definitions for an entire function, each attached to some condition that
+days when it applies.
+
+Here's an example of an animation using guards.
+
+    main = animationOf(flight)
+
+    flight(t)
+      | t <  2    = translated(rocket, -5, 2 * t)
+      | t <  5    = translated(rotated(rocket, 60 - 30 * t), -5, 4)
+      | t < 10    = translated(rotated(rocket, -90), 2 * t - 15, 4)
+      | t < 13    = translated(rotated(rocket, 15 * t - 240), 5, 4)
+      | otherwise = translated(rotated(rocket, -45), 2 * t - 21, 2 * t - 22)
+
+    rocket = solidRectangle(1, 4)
+
+Instead of the equal sign and a right-hand side, this function has a number
+of cases.  Each case has a vertical line, the condition, an equal sign, and
+the definition that applies *only* if that condition is true.  The function
+always chooses the first case which matches the condition.  The last case,
+labeled as `otherwise`, applies when none of the earlier cases match.
+
+#### The multi-step animation pattern ####
+
+The example above with guards works, but it is very difficult to read or
+write.  Here's the problem: if `t` is 11, then the first case that will match
+is `t < 13`, which describes the motion between 10 and 13 seconds.  *But* `t`
+is still 11, which is the time relative to the beginning of the program.  So
+the "starting point" values in expressions with `t` have to be written in
+terms of the start of the entire program!
+
+In practice, you almost always want to think of each *step* of your program
+as starting from a time of zero.  One way you can do that is to write each
+step as a function, and give it the right value for its own time when it's
+used.
+
+Here, we've rewritten the rocket example in this way:
+
+    main = animationOf(flight)
+
+    flight(t)
+      | t <  2    = step1(t)
+      | t <  5    = step2(t - 2)
+      | t < 10    = step3(t - 5)
+      | t < 13    = step4(t - 10)
+      | otherwise = step5(t - 13)
+
+    step1(t) = translated(rocket, -5, 2 * t)
+    step2(t) = translated(rotated(rocket, -30 * t), -5, 4)
+    step3(t) = translated(rotated(rocket, -90), 2 * t - 5, 4)
+    step4(t) = translated(rotated(rocket, 15 * t - 90), 5, 4)
+    step5(t) = translated(rotated(rocket, -45), 2 * t + 5, 2 * t + 4)
+
+    rocket = solidRectangle(1, 4)
+
+This program does exactly the same thing as the earlier example.  But see
+how much easier it is to understand?  For example, in `step5`, the starting
+points for the translation are `5` and `4`, which are the same as the
+translations from the previous step.  Arranging for the animations to match
+was much easier this time.
 
 Simulations
 ===========

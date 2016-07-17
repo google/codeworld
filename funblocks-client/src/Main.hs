@@ -31,6 +31,7 @@ import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Marshal
 import Data.JSString (pack)
+import qualified Data.Text as T
 import Control.Monad.Trans (liftIO)
 import Blockly.Workspace
 import Blocks.CodeGen
@@ -65,7 +66,8 @@ setErrorMessage msg = do
   Just msgEl <- getElementById doc "message"
   setInnerHTML msgEl $ Just msg
 
-programBlocks = ["cwDrawingOf","cwAnimationOf"]
+programBlocks :: [T.Text]
+programBlocks = map T.pack ["cwDrawingOf","cwAnimationOf"]
 
 btnStopClick = do 
   liftIO js_stop

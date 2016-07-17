@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-
   Copyright 2016 The CodeWorld Authors. All Rights Reserved.
 
@@ -20,6 +21,7 @@ module Blocks.Types(setBlockTypes, getTypeBlocks)
 import Blockly.DesignBlock 
 import Blockly.General
 import Blockly.Event
+import qualified Data.Text as T
 
 colorPicture = Color 160
 colorNumber = Color 210
@@ -636,7 +638,7 @@ comment = DesignBlock "comment"
           inlineDef (Color 260) typeNone
           (Tooltip "Enter a comment")
 
-getTypeBlocks :: [String]
+getTypeBlocks :: [T.Text]
 getTypeBlocks = map (\(DesignBlock name _ _ _ _ _) -> name) blockTypes
 
 blockTypes = [ 

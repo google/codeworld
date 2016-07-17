@@ -30,41 +30,44 @@ module Blockly.DesignBlock (Type(..)
   where
 
 import GHCJS.Types
-import Data.JSString (pack, unpack)
+import Data.JSString.Text
 import GHCJS.Marshal
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
 import Control.Monad
 import Data.Ord (comparing)
 import Data.List (maximumBy)
+import qualified Data.Text as T
 
+pack = textToJSString
+unpack = textFromJSString
 
 -- Low level bindings to construction of various different type of Blockly
 -- blocks
 
-data Type = Type String
+data Type = Type T.Text
           | Poly Int
           | NoType
 
 data FieldType = LeftField | RightField | CentreField
 
-data Input = Value String [Field] Type
-            | Statement String [Field] Type
+data Input = Value T.Text [Field] Type
+            | Statement T.Text [Field] Type
             | Dummy [Field]
 
-data Field = Text String
-            | TextE String -- Text Emph
-            | TextInput String String -- displayname, value
+data Field = Text T.Text
+            | TextE T.Text -- Text Emph
+            | TextInput T.Text T.Text -- displayname, value
             
 data Connection = TopCon | BotCon | TopBotCon | LeftCon
 newtype Inline = Inline Bool
 
 -- Name inputs connectiontype color outputType tooltip
-data DesignBlock = DesignBlock String [Input] Inline Color Type Tooltip
+data DesignBlock = DesignBlock T.Text [Input] Inline Color Type Tooltip
 
 
 newtype Color = Color Int
-newtype Tooltip = Tooltip String
+newtype Tooltip = Tooltip T.Text
 
 fieldCode :: FieldInput -> Field -> IO FieldInput
 fieldCode field (Text str) = js_appendTextField field (pack str)

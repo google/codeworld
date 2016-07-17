@@ -1,4 +1,4 @@
-{-# LANGUAGE ForeignFunctionInterface, JavaScriptFFI #-}
+{-# LANGUAGE ForeignFunctionInterface, JavaScriptFFI, OverloadedStrings, ScopedTypeVariables #-}
 
 {-
   Copyright 2016 The CodeWorld Authors. All Rights Reserved.
@@ -24,12 +24,23 @@ import Blockly.Block
 import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
-import Data.JSString (pack, unpack)
+import Data.JSString.Text
 import Data.Maybe (fromJust)
 import GHCJS.Marshal
 import qualified JavaScript.Array as JA
 import Unsafe.Coerce
 import Data.List (intercalate)
+import qualified Data.Text as T
+import Prelude hiding ((++), show)
+import qualified Prelude as P
+
+-- Helpers for converting Text
+(++) :: T.Text -> T.Text -> T.Text
+a ++ b = a `T.append` b
+pack = textToJSString
+unpack = textFromJSString
+show :: Show a => a -> T.Text
+show = T.pack . P.show
 
 -- Helper functions
 member :: Code -> (Code, OrderConstant)
@@ -40,7 +51,7 @@ atomic :: Code ->(Code, OrderConstant)
 atomic code = (code, CAtomic)
 
 
-type Code = String
+type Code = T.Text
 type GeneratorFunction = Block -> Either Block (Code, OrderConstant)
 
 -- PROGRAMS --------------------------------------
@@ -172,7 +183,7 @@ blockNumber block = do
 blockNumberPerc :: GeneratorFunction
 blockNumberPerc block = do 
     let arg = getFieldValue block "NUMBER"
-    let numb = (read arg :: Float) * 0.01
+    let numb = (read (T.unpack arg) :: Float) * 0.01
     return $ none (show numb)
 
 blockAdd :: GeneratorFunction
@@ -507,7 +518,7 @@ blockLetFunc block = do
     let vars = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
                 JA.toList $ js_funcargs block
     let varCode = if not $ null vars 
-              then "(" ++ intercalate "," vars ++ ")"
+              then "(" ++ T.intercalate "," vars ++ ")"
               else ""
     expr <- valueToCode block "RETURN" CNone
     return $ none $ varName ++ varCode ++ " = " ++ expr 
@@ -520,7 +531,7 @@ blockLetCall block = do
     vals <- mapM (\t -> valueToCode block t CNone) ["ARG" ++ show i | i <- [0..length args - 1]]
     let argCode = if null vals
               then ""
-              else "(" ++ intercalate "," vals ++ ")"
+              else "(" ++ T.intercalate "," vals ++ ")"
 
     return $ none $ varName ++ argCode 
 
@@ -567,7 +578,7 @@ blockCreateList :: GeneratorFunction
 blockCreateList block = do
   let c = getItemCount block
   vals <- mapM (\t -> valueToCode block t CNone) ["ADD" ++ show i | i <- [0..c-1]]
-  return $ none $ "[" ++ intercalate "," vals ++ "]"
+  return $ none $ "[" ++ T.intercalate "," vals ++ "]"
 
 blockLength :: GeneratorFunction
 blockLength block = do 
@@ -608,13 +619,13 @@ blockListComp block = do
     guards <- mapM (\t -> valueToCode block t CNone) ["GUARD" ++ show i | i <- [0..guardCount-1]]
     doCode <- valueToCode block "DO" CNone
 
-    let varCode = intercalate "," $ zipWith (\var code -> var ++ " <- " ++ code) vars varCodes 
-    let guardCode = intercalate "," guards
-    let code = "[" ++ doCode ++ " | " ++ varCode ++ (if null guardCode then "" else "," ++ guardCode)
+    let varCode = T.intercalate "," $ zipWith (\var code -> var ++ " <- " ++ code) vars varCodes 
+    let guardCode = T.intercalate "," guards
+    let code = "[" ++ doCode ++ " | " ++ varCode ++ (if T.null guardCode then "" else "," ++ guardCode)
                 ++ "]"
     return $ none code 
 
-getGenerationBlocks :: [String]
+getGenerationBlocks :: [T.Text]
 getGenerationBlocks = map fst blockCodeMap
 
 blockCodeMap = [  -- PROGRAMS 
@@ -730,7 +741,7 @@ blockCodeMap = [  -- PROGRAMS
                     ]
                                 
 
-setCodeGen :: String -> (Block -> Either Block (String, OrderConstant) ) -> IO ()
+setCodeGen :: T.Text -> (Block -> Either Block (T.Text, OrderConstant) ) -> IO ()
 setCodeGen blockName func = do
   cb <- syncCallback1' (\x -> do Just b <- fromJSVal x 
                                  case func b of
@@ -752,7 +763,7 @@ setCodeGen blockName func = do
 assignAll :: IO ()
 assignAll = mapM_ (uncurry setCodeGen) blockCodeMap
 
-valueToCode :: Block -> String -> OrderConstant -> Either Block String
+valueToCode :: Block -> T.Text -> OrderConstant -> Either Block T.Text
 valueToCode block name ordr = do
     inputBlock <- aux $ getInputBlock block name
     let blockType = getBlockType inputBlock
@@ -775,10 +786,14 @@ valueToCode block name ordr = do
 -- Helper functions
 
 -- Escapes a string
-escape :: String -> String
-escape xs = "\"" ++ concatMap f xs ++ "\"" where
-    f '\\' = "\\\\"
-    f '\"' = "\\\""
+
+escape :: T.Text -> T.Text
+escape xs = T.pack $ escape' (T.unpack xs)
+escape' :: String -> String
+escape' xs = ("\""::String) P.++ (concatMap f xs :: String ) P.++ ("\""::String) where
+    f :: Char -> String
+    f ('\\'::Char) = "\\\\" :: String
+    f ('\"'::Char) = "\\\"" :: String
     f x    = [x]
 
 --- FFI
@@ -797,7 +812,7 @@ foreign import javascript unsafe "setTimeout(removeErrors,10000)"
   js_removeErrorsDelay :: IO ()
 
 -- TODO, remove, was used for testing
-alert :: String -> IO ()
+alert :: T.Text -> IO ()
 alert text = js_alert $ pack text
 foreign import javascript unsafe "alert($1)" js_alert :: JSString -> IO ()
 

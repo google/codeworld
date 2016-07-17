@@ -36,17 +36,21 @@ module Blockly.Block ( Block(..)
   where
 
 import GHCJS.Types
-import Data.JSString (pack, unpack)
+import Data.JSString.Text
 import GHCJS.Foreign
 import GHCJS.Marshal
 import Unsafe.Coerce
 import Blockly.Connection
+import qualified Data.Text as T
 
 newtype Block = Block JSVal
 
 instance IsJSVal Block
 
-getFieldValue :: Block -> String -> String
+pack = textToJSString
+unpack = textFromJSString
+
+getFieldValue :: Block -> T.Text -> T.Text
 getFieldValue block fieldName = unpack $ js_getFieldValue block (pack fieldName)
 
 instance ToJSVal Block where
@@ -55,7 +59,7 @@ instance ToJSVal Block where
 instance FromJSVal Block where
   fromJSVal v = return $ Just $ Block v
 
-getBlockType :: Block -> String
+getBlockType :: Block -> T.Text
 getBlockType = unpack . js_type
 
 getOutputBlock :: Block -> Maybe Block
@@ -80,7 +84,7 @@ setColour = js_setColour
 getColour :: Block -> Int
 getColour = js_getColour 
 
-getInputBlock :: Block -> String -> Maybe Block
+getInputBlock :: Block -> T.Text -> Maybe Block
 getInputBlock block name = if isNull val then Nothing
                            else Just $ Block val
   where val = js_getInputTargetBlock block (pack name)
@@ -94,7 +98,7 @@ addSelect = js_addSelect
 addErrorSelect :: Block -> IO ()
 addErrorSelect = js_addErrorSelect 
 
-setWarningText :: Block -> String -> IO ()
+setWarningText :: Block -> T.Text -> IO ()
 setWarningText block text = js_setWarningText block (pack text)
 
 disableWarningText :: Block ->  IO ()

@@ -535,6 +535,11 @@ blockLetCall block = do
 
     return $ none $ varName ++ argCode 
 
+blockLocalVar :: GeneratorFunction
+blockLocalVar block = do 
+    let varName = getFieldValue block "NAME" 
+    return $ none varName 
+
 blockFuncVar :: GeneratorFunction
 blockFuncVar block = do 
     let arg = getFieldValue block "VAR"
@@ -744,6 +749,7 @@ blockCodeMap = [  -- PROGRAMS
                   ,("procedures_letFunc",blockLetFunc)
                   ,("procedures_callreturn",blockLetCall)
                   ,("procedures_getVar",blockFuncVar)
+                  ,("vars_local",blockLocalVar)
                   ,("comment",blockComment)
                   ,("lists_path",blockPath)
                     ]

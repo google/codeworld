@@ -489,4 +489,20 @@
   margin: 4px 0;
   padding: 0;
 }
+.blocklyFieldVarInput>path{
+    fill: #FFF;
+    fill-opacity: .4;
+
+    stroke: #FFF;
+    stroke-width: 2;
+    stroke-opacity: 0.6
+}
+.blocklyFieldVarInput:hover>path {
+    stroke: #FFFF00;
+    stroke-width: 2;
+}
+.blocklyFieldVarInput>text {
+    fill: #000;
+}
+
 

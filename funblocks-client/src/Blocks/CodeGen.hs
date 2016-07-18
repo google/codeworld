@@ -580,6 +580,13 @@ blockCreateList block = do
   vals <- mapM (\t -> valueToCode block t CNone) ["ADD" ++ show i | i <- [0..c-1]]
   return $ none $ "[" ++ T.intercalate "," vals ++ "]"
 
+blockCons :: GeneratorFunction
+blockCons block = do 
+    item <- valueToCode block "ITEM" CNone
+    lst <- valueToCode block "LST" CNone
+    return $ none $ item ++ ":" ++ lst
+
+
 blockLength :: GeneratorFunction
 blockLength block = do 
     lst <- valueToCode block "LST" CNone
@@ -728,6 +735,7 @@ blockCodeMap = [  -- PROGRAMS
                   -- Lists
                   ,("lists_create_with_typed", blockCreateList)
                   ,("lists_length", blockLength)
+                  ,("lists_cons", blockCons)
                   ,("lists_numgen", blockNumGen)
                   ,("lists_comprehension", blockListComp)
                   ,("variables_get_lists", blockListVar)

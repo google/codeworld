@@ -62,8 +62,8 @@ data Field = Text T.Text
 data Connection = TopCon | BotCon | TopBotCon | LeftCon
 newtype Inline = Inline Bool
 
--- Name inputs connectiontype color outputType tooltip
-data DesignBlock = DesignBlock T.Text [Input] Inline Color Type Tooltip
+-- Name functionName inputs connectiontype color outputType tooltip
+data DesignBlock = DesignBlock T.Text T.Text [Input] Inline Color Type Tooltip
 
 
 newtype Color = Color Int
@@ -109,12 +109,12 @@ maxPolyCount inputs = case maxInp of
     auxComp (Value _ _ (Poly ind)) = ind
     auxComp _ = -1
 
- 
 -- set block
 setBlockType :: DesignBlock -> IO ()
-setBlockType (DesignBlock name inputs (Inline inline) (Color color) type_ (Tooltip tooltip) ) = do
+setBlockType (DesignBlock name funName inputs (Inline inline) (Color color) type_ (Tooltip tooltip) ) = do
   cb <- syncCallback1 ContinueAsync  (\this -> do 
-                                 let block = Block this 
+                                 let block = Block this
+                                 js_setFunctionName block (pack funName)
                                  js_setColor block color
                                  -- may error out if no type is set
                                  tvars <- replicateM (maxPolyCount inputs) js_getUnusedTypeVar
@@ -174,6 +174,9 @@ foreign import javascript unsafe "$1.appendField(new Blockly.FieldTextInput($2),
   --
 foreign import javascript unsafe "$1.setCheck($2)"
   js_setCheck :: FieldInput -> JSString -> IO ()
+
+foreign import javascript unsafe "$1.functionName = $2"
+  js_setFunctionName :: Block -> JSString -> IO ()
 
 foreign import javascript unsafe "Blockly.TypeVar.getUnusedTypeVar()"
   js_getUnusedTypeVar :: IO TypeVar

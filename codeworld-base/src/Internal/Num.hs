@@ -77,7 +77,7 @@ module Internal.Num (
 
 import qualified "base" Prelude as P
 import "base" Prelude (Bool(..), (.), (==), map)
-import Numeric
+import Numeric hiding (sqrt, pi, exp, log, logBase, sin, tan, cos, asin, atan, acos)
 
 import Internal.Truth hiding ((==))
 

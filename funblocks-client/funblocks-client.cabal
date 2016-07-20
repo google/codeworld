@@ -11,7 +11,7 @@ Build-type:          Simple
 Cabal-version:       >=1.10
 
 Executable funblocks-client
-  Build-depends:       base >=4.8 && <4.9
+  Build-depends:       base 
   Hs-source-dirs:      src
   Main-is:             Main.hs
   Default-language:    Haskell2010

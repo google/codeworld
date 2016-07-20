@@ -84,7 +84,7 @@ codeworldUploadPolicy = setMaximumFormInputSize (2^(22 :: Int)) defaultUploadPol
 -- Processes the body of a multipart request.
 processBody :: Snap ()
 processBody = do
-    handleMultipart codeworldUploadPolicy (const $ return ())
+    handleMultipart codeworldUploadPolicy (\x y -> return ())
     return ()
 
 getBuildMode :: Snap BuildMode

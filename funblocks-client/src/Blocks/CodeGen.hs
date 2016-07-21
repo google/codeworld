@@ -552,7 +552,7 @@ blockAnim :: GeneratorFunction
 blockAnim block =  
     case getInputBlock block "FUNC" of
       Just inpBlock -> do
-                       let funcName = getFieldValue inpBlock "NAME"
+                       let funcName = getFunctionName inpBlock 
                        return $ none $ "main = animationOf(" ++ funcName ++ ")"
       Nothing -> Left block
 

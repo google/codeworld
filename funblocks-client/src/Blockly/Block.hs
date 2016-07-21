@@ -23,6 +23,7 @@ module Blockly.Block ( Block(..)
                      , getOutputBlock
                      , getOutputConnection
                      , getColour
+                     , getFunctionName
                      , getItemCount
                      , setColour
                      , areAllInputsConnected
@@ -83,6 +84,9 @@ setColour = js_setColour
 
 getColour :: Block -> Int
 getColour = js_getColour 
+
+getFunctionName :: Block -> T.Text
+getFunctionName = unpack . js_getFunctionName 
 
 getInputBlock :: Block -> T.Text -> Maybe Block
 getInputBlock block name = if isNull val then Nothing
@@ -160,6 +164,9 @@ foreign import javascript unsafe "$1.addSelect()"
 
 foreign import javascript unsafe "$1.addErrorSelect()"
   js_addErrorSelect :: Block -> IO ()
+
+foreign import javascript unsafe "$1.getFunctionName()"
+  js_getFunctionName :: Block -> JSString
 
 foreign import javascript unsafe "$1.setWarningText($2)"
   js_setWarningText :: Block -> JSString -> IO ()

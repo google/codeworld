@@ -1,5 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE CPP #-}
 
 {-
   Copyright 2016 The CodeWorld Authors. All rights reserved.
@@ -82,10 +83,17 @@ codeworldUploadPolicy :: UploadPolicy
 codeworldUploadPolicy = setMaximumFormInputSize (2^(22 :: Int)) defaultUploadPolicy
 
 -- Processes the body of a multipart request.
+#if MIN_VERSION_snap_core(1,0,0)
 processBody :: Snap ()
 processBody = do
     handleMultipart codeworldUploadPolicy (\x y -> return ())
     return ()
+#else
+processBody :: Snap ()
+processBody = do
+    handleMultipart codeworldUploadPolicy (\x -> return ())
+    return ()
+#endif
 
 getBuildMode :: Snap BuildMode
 getBuildMode = getParam "mode" >>= \ case

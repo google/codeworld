@@ -31,12 +31,12 @@ colorPoly = Color 70
 colorBool = Color 100
 colorText = Color 45
 
-typePicture = Type "Picture"
-typeNumber = Type "Number"
+typePicture = Picture
+typeNumber = Number
 typeProgram = NoType
-typeColor = Type "Color"
-typeBool = Type "Bool"
-typeText = Type "Text"
+typeColor = Col
+typeBool = Bool
+typeText = Str
 typeSet = NoType
 typeNone = NoType
 
@@ -45,7 +45,7 @@ inlineDef = Inline False
 letVar = DesignBlock "letVar" ""
             [Dummy [TextInput "foo" "VARNAME"
             ,TextE "Let"]
-           ,Value "VARVALUE" [Text ""] (Poly 0)]
+           ,Value "VARVALUE" [Text ""] (Poly 'a')]
           inlineDef colorPoly typeSet
           (Tooltip "Enter name of the variable")
 
@@ -505,10 +505,10 @@ cwRGBA = DesignBlock "cwRGBA" "RGBA"
 -- LOGIC -------------------------------------------
 conIf = DesignBlock "conIf" ""
         [ Value "IF"  [TextE "If"] typeBool
-         ,Value "THEN" [Text "then"] (Poly 0)
-         ,Value "ELSE" [Text "else"] (Poly 0)
+         ,Value "THEN" [Text "then"] (Poly 'a')
+         ,Value "ELSE" [Text "else"] (Poly 'a')
          ]
-         inlineDef colorPoly (Poly 0)
+         inlineDef colorPoly (Poly 'a')
          (Tooltip "if condition is true then give a else b")
 
 conAnd = DesignBlock "conAnd" "&&"
@@ -531,15 +531,15 @@ conNot = DesignBlock "conNot" "not"
          (Tooltip "Negation of the logical value")
 
 conEq = DesignBlock "conEq" "==" 
-        [ Value "LEFT"  [] (Poly 0)
-         ,Value "RIGHT" [TextE "="] (Poly 0)
+        [ Value "LEFT"  [] (Poly 'a')
+         ,Value "RIGHT" [TextE "="] (Poly 'a')
          ]
          (Inline True) colorPoly typeBool
          (Tooltip "Are two items equal")
 
 conNeq = DesignBlock "conNeq" "/="
-        [ Value "LEFT"  [] (Poly 0)
-         ,Value "RIGHT" [TextE "\x2260"] (Poly 0)
+        [ Value "LEFT"  [] (Poly 'a')
+         ,Value "RIGHT" [TextE "\x2260"] (Poly 'a')
          ]
          (Inline True) colorPoly typeBool
          (Tooltip "Are two items not equal")

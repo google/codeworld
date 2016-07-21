@@ -32,12 +32,14 @@ module Blockly.DesignBlock (Type(..)
 import GHCJS.Types
 import Data.JSString.Text
 import GHCJS.Marshal
-import GHCJS.Foreign
+import GHCJS.Foreign hiding (Number, String)
 import GHCJS.Foreign.Callback
 import Control.Monad
 import Data.Ord (comparing)
 import Data.List (maximumBy)
 import qualified Data.Text as T
+import Data.Maybe (fromJust)
+import Data.List (intercalate)
 
 pack = textToJSString
 unpack = textFromJSString
@@ -45,9 +47,37 @@ unpack = textFromJSString
 -- Low level bindings to construction of various different type of Blockly
 -- blocks
 
-data Type = Type T.Text
-          | Poly Int
-          | NoType
+
+data ADT = Product String [Type]
+          | Sum [ADT]
+
+data User = User String ADT
+
+instance Show User where
+  show (User name adt) = name
+
+data Type = Arrow [Type]
+          | Number
+          | Str -- Actually Text
+          | Bool
+          | Picture
+          | Col -- Actually Color
+          | List Type -- Have to define kinded types
+          | Custom User
+          | Poly Char
+          | NoType -- For top level blocks
+
+instance Show Type where
+  show Number = "Number"
+  show Picture = "Picture"
+  show (Custom (User name adt)) = name
+  show (Poly c) = c:""
+  show (Str) = "Text"
+  show (Bool) = "Bool"
+  show (Col) = "Color"
+  show (Arrow tps) = intercalate " -> " $ map show tps
+
+
 
 data FieldType = LeftField | RightField | CentreField
 
@@ -56,7 +86,7 @@ data Input = Value T.Text [Field] Type
             | Dummy [Field]
 
 data Field = Text T.Text
-            | TextE T.Text -- Text Emph
+            | TextE T.Text -- Emphasized Text, for titles
             | TextInput T.Text T.Text -- displayname, value
             
 data Connection = TopCon | BotCon | TopBotCon | LeftCon
@@ -82,32 +112,41 @@ inputCode block _ (Dummy fields) = do
       fieldCode fi_ field) (return fieldInput) fields
   return ()
 
-inputCode block _ (Value name fields (Type type_) ) = do
+inputCode block pvars (Value name fields (Poly polyChar) ) = do
+    fieldInput <- js_appendValueInput block (pack name)
+    foldr (\ field fi -> do
+        fi_ <- fi
+        fieldCode fi_ field) (return fieldInput) fields
+    js_setTypeExprPoly fieldInput (pvars !! polyIndex)
+    return ()
+  where
+    table = zip (['a'..'z'] ++ ['A'..'Z']) [0..] -- Compatibility hack
+    polyIndex = fromJust $ lookup polyChar table
+
+-- TODO, change function later to express correct type
+-- For now we just show the string expression
+-- Later the TypeExpr will be properly set
+inputCode block _ (Value name fields (type_) ) = do
   fieldInput <- js_appendValueInput block (pack name)
-  js_setCheck fieldInput (pack type_)
+  js_setCheck fieldInput (pack $ T.pack $ show type_)
   foldr (\ field fi -> do
       fi_ <- fi
       fieldCode fi_ field) (return fieldInput) fields
-  js_setTypeExprConc fieldInput (pack type_)
+  js_setTypeExprConc fieldInput (pack $ T.pack $ show type_) -- TODO, this is a compatibility hack
   return ()
 
-inputCode block pvars (Value name fields (Poly polyIndex) ) = do
-  fieldInput <- js_appendValueInput block (pack name)
-  foldr (\ field fi -> do
-      fi_ <- fi
-      fieldCode fi_ field) (return fieldInput) fields
-  js_setTypeExprPoly fieldInput (pvars !! polyIndex)
-  return ()
 
 -- Gets the highest number of polymorphic inputs
 maxPolyCount :: [Input] -> Int
 maxPolyCount inputs = case maxInp of
-                        Value _ _ (Poly inp) -> inp+1
+                        Value _ _ (Poly c) -> (ind c)+1
                         _ -> 0
   where 
     maxInp = maximumBy (comparing auxComp) inputs 
     auxComp (Value _ _ (Poly ind)) = ind
-    auxComp _ = -1
+    auxComp _ = 'a'
+    table = zip (['a'..'z'] ++ ['A'..'Z']) [0..] -- Compatibility hack
+    ind c = fromJust $ lookup c table
 
 -- set block
 setBlockType :: DesignBlock -> IO ()
@@ -121,9 +160,13 @@ setBlockType (DesignBlock name funName inputs (Inline inline) (Color color) type
                                  mapM_ (inputCode block tvars) inputs
                                  js_enableOutput block
                                  case type_ of
-                                     Type tp -> js_setOutputTypeConc block (pack tp)
-                                     Poly ind -> js_setOutputTypePoly block (tvars !! ind)
-                                     _ -> js_disableOutput block 
+                                     Poly polyChar -> let 
+                                                      table = zip (['a'..'z'] ++ ['A'..'Z']) [0..] -- Compatibility hack
+                                                      ind = fromJust $ lookup polyChar table
+                                                  in
+                                        js_setOutputTypePoly block (tvars !! ind)
+                                     NoType -> js_disableOutput block 
+                                     tp -> js_setOutputTypeConc block (pack $ T.pack $ show tp)
                                  when inline $ js_setInputsInline block True
                                     -- else return ()
                                  return ()

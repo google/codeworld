@@ -556,6 +556,19 @@ blockAnim block =
                        return $ none $ "main = animationOf(" ++ funcName ++ ")"
       Nothing -> Left block
 
+blockSimulation :: GeneratorFunction
+blockSimulation block = do
+        initial <- aux "INITIAL"
+        step <- aux "STEP"
+        draw <- aux "DRAW"
+        return $ none $ "main = simulationOf(" ++ initial ++ "," ++ step ++ "," ++ draw ++ ")"
+  where
+    aux name = case getInputBlock block name of
+                      Just inpBlock -> return $ getFunctionName inpBlock 
+                      Nothing -> Left block
+
+
+
 -- COMMENT
 blockComment :: GeneratorFunction
 blockComment block = return $ none ""
@@ -596,6 +609,12 @@ blockLength :: GeneratorFunction
 blockLength block = do 
     lst <- valueToCode block "LST" CNone
     return $ none $ "length(" ++ lst ++ ")"
+
+blockAt :: GeneratorFunction
+blockAt block = do 
+    lst <- valueToCode block "LST" CNone
+    pos <- valueToCode block "POS" CNone
+    return $ none $ "at(" ++ lst ++ "," ++ pos ++ ")"
 
 blockNumGen :: GeneratorFunction
 blockNumGen block = do 
@@ -643,6 +662,7 @@ getGenerationBlocks = map fst blockCodeMap
 blockCodeMap = [  -- PROGRAMS 
                    ("cwDrawingOf",blockDrawingOf)
                   ,("cwAnimationOf",blockAnim)
+                  ,("cwSimulationOf",blockSimulation)
                   -- PICTURES
                   ,("cwBlank",blockBlank)
                   ,("cwCoordinatePlane",blockCoordinatePlane)
@@ -740,6 +760,7 @@ blockCodeMap = [  -- PROGRAMS
                   -- Lists
                   ,("lists_create_with_typed", blockCreateList)
                   ,("lists_length", blockLength)
+                  ,("lists_at", blockAt)
                   ,("lists_cons", blockCons)
                   ,("lists_numgen", blockNumGen)
                   ,("lists_comprehension", blockListComp)

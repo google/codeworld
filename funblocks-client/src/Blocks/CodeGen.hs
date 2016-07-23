@@ -656,6 +656,67 @@ blockListComp block = do
                 ++ "]"
     return $ none code 
 
+-- TYPES
+
+foreign import javascript unsafe "$1.itemCount_"
+  js_itemCount :: Block -> Int
+
+blockUserType :: GeneratorFunction
+blockUserType block = do 
+    let name = getFieldValue block "NAME"
+    return $ none name
+
+blockListType :: GeneratorFunction
+blockListType block = do 
+    tp <- valueToCode block "TP" CNone
+    return $ none $ "[" ++ tp ++ "]"
+
+blockConstructor :: GeneratorFunction
+blockConstructor block = do 
+    let name = getFieldValue block "NAME"
+    let itemCount = js_itemCount block
+    tps <- mapM (\n -> valueToCode block n CNone) ["TP" ++ show i | i <- [0..itemCount-1]] 
+    return $ none $ name ++ " " ++ (T.unwords tps)
+
+blockProduct :: GeneratorFunction
+blockProduct block = do 
+    let constructor = getFieldValue block "CONSTRUCTOR"
+    let itemCount = js_itemCount block
+    tps <- mapM (\n -> valueToCode block n CNone) ["TP" ++ show i | i <- [0..itemCount-1]] 
+    return $ none $ constructor ++ " " ++ (T.unwords tps)
+
+blockSum :: GeneratorFunction
+blockSum block = do 
+    let typeName = getFieldValue block "NAME"
+    let itemCount = js_itemCount block
+    tps <- mapM (\n -> valueToCode block n CNone) ["PROD" ++ show i | i <- [0..itemCount-1]] 
+    let format = zipWith (++) (" = ":(repeat "      | ")) tps
+    return $ none $ "data " ++ typeName ++ (T.intercalate "\n" format)
+
+-- CASE
+
+foreign import javascript unsafe "$1.getInputVars($2)"
+  js_getCaseInputVars :: Block -> Int -> JA.JSArray
+
+foreign import javascript unsafe "$1.getInputConstructor($2)"
+  js_getCaseInputConstructor :: Block -> Int -> JSString
+
+blockCase:: GeneratorFunction
+blockCase block = do 
+    let name = getFieldValue block "NAME"
+    let itemCount = js_itemCount block
+    inp <- valueToCode block "INPUT" CNone
+    outs <- mapM (\n -> valueToCode block n CNone) ["CS" ++ show i | i <- [0..itemCount-1]] 
+    let vars_ :: [T.Text] = map (T.unwords . vars) [0..itemCount-1]
+    let cons_ :: [T.Text] = map con [0..itemCount-1]
+    let entries :: [T.Text] = zipWith3 (\c v o -> c ++ " " ++ v ++ " -> " ++ o ++ "; ") cons_ vars_ outs
+    return $ none $ "case " ++ inp ++ " of " ++ T.concat entries
+  where
+    vars i = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
+                  JA.toList $ js_getCaseInputVars block i
+    con i = unpack $ js_getCaseInputConstructor block i
+
+
 getGenerationBlocks :: [T.Text]
 getGenerationBlocks = map fst blockCodeMap
 
@@ -773,6 +834,13 @@ blockCodeMap = [  -- PROGRAMS
                   ,("vars_local",blockLocalVar)
                   ,("comment",blockComment)
                   ,("lists_path",blockPath)
+                  -- TYPES
+                  ,("type_user", blockUserType)
+                  ,("type_list", blockListType)
+                  ,("expr_constructor", blockConstructor)
+                  ,("expr_case", blockCase)
+                  ,("type_product", blockProduct)
+                  ,("type_sum", blockSum)
                     ]
                                 
 

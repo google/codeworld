@@ -17,5 +17,6 @@ Executable funblocks-client
   Default-language:    Haskell2010
   Build-depends:       ghcjs-base,
                        text,
+                       containers,
                        ghcjs-dom,
                        mtl

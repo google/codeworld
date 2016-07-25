@@ -26,6 +26,7 @@ module Blockly.Workspace ( Workspace(..)
                           ,getTopBlocksLength
                           ,getBlockById
                           ,getTopBlocks
+                          ,getTopBlocksTrue
                           ,disableOrphans
                           ,mainWorkspace
                           )
@@ -77,6 +78,13 @@ getTopBlocks ws = do
   let vs = JA.toList vals
   return $ map Block vs
 
+getTopBlocksTrue :: Workspace -> IO [Block]
+getTopBlocksTrue ws = do
+  vals :: JA.JSArray <- js_getTopBlocks_ ws
+  let vs = JA.toList vals
+  return $ map Block vs
+
+
 mainWorkspace :: Workspace
 mainWorkspace = js_getMainWorkspace
 
@@ -106,6 +114,11 @@ foreign import javascript unsafe "$1.getTopBlocks(false).length"
 
 foreign import javascript unsafe "$1.getTopBlocks(false)"
   js_getTopBlocks :: Workspace -> IO JA.JSArray
+
+foreign import javascript unsafe "$1.getTopBlocks(true)"
+  js_getTopBlocks_ :: Workspace -> IO JA.JSArray
+
+
 
 foreign import javascript unsafe "$1.addChangeListener(Blockly.Events.disableOrphans)"
   js_addDisableOrphans :: Workspace -> IO ()

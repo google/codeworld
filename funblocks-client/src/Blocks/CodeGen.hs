@@ -16,11 +16,13 @@
   limitations under the License.
 -}
 
-module Blocks.CodeGen (assignAll
+module Blocks.CodeGen (workspaceToCode
+                      ,Error(..)
                       ,getGenerationBlocks)
   where
 
 import Blockly.Block
+import Blockly.Workspace hiding (workspaceToCode)
 import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
@@ -35,6 +37,7 @@ import Prelude hiding ((++), show)
 import qualified Prelude as P
 import Control.Monad
 import Control.Applicative
+import qualified Data.Map as M
 
 -- Helpers for converting Text
 (++) :: T.Text -> T.Text -> T.Text
@@ -744,9 +747,9 @@ blockCase block = do
 
 
 getGenerationBlocks :: [T.Text]
-getGenerationBlocks = map fst blockCodeMap
+getGenerationBlocks = M.keys blockCodeMap
 
-blockCodeMap = [  -- PROGRAMS 
+blockCodeMap = M.fromList [  -- PROGRAMS 
                    ("cwDrawingOf",blockDrawingOf)
                   ,("cwAnimationOf",blockAnim)
                   ,("cwSimulationOf",blockSimulation)
@@ -889,8 +892,8 @@ setCodeGen blockName func = do
 
 -- Assigns CodeGen functions defined here to the Blockly Javascript Code
 -- generator
-assignAll :: IO ()
-assignAll = mapM_ (uncurry setCodeGen) blockCodeMap
+-- assignAll :: IO ()
+-- assignAll = mapM_ (uncurry setCodeGen) blockCodeMap
 
 valueToCode :: Block -> T.Text -> OrderConstant -> SaveErr Code
 valueToCode block name ordr = do
@@ -903,7 +906,7 @@ valueToCode block name ordr = do
     helper = do
       inputBlock <- getInputBlock block name
       let blockType = getBlockType inputBlock
-      func <- lookup blockType blockCodeMap
+      func <- M.lookup blockType blockCodeMap
       return (func, inputBlock)
 
     handleOrder innerOrdr odrd code
@@ -927,6 +930,26 @@ escape' xs = ("\""::String) P.++ (concatMap f xs :: String ) P.++ ("\""::String)
     f ('\"'::Char) = "\\\"" :: String
     f x    = [x]
 
+
+
+workspaceToCode :: Workspace -> IO (Code,[Error])
+workspaceToCode workspace = do
+    topBlocks <- getTopBlocksTrue workspace >>= return . filter (not . isDisabled)
+    let codes = map blockToCode topBlocks
+    let errors = map (\(SE code (Just e)) -> e) $
+                 filter (\c -> case c of SE code Nothing -> False; _ -> True) codes
+    let code = T.intercalate "\n\n" $ map (\(SE code _) -> code) codes
+    return (code,errors)
+  where
+    blockToCode :: Block -> SaveErr Code
+    blockToCode block = do 
+      let blockType = getBlockType block 
+      case M.lookup blockType blockCodeMap of
+        Just func -> let (SE (code, oc) err) = func block
+                     in SE code err
+        Nothing -> errc "No such block in CodeGen" block
+
+
 --- FFI
 foreign import javascript unsafe "Blockly.FunBlocks[$1] = $2"
   js_setGenFunction :: JSString -> Callback a -> IO ()
@@ -938,15 +961,6 @@ foreign import javascript unsafe "Blockly.FunBlocks.valueToCode($1, $2, $3)"
 -- TODO, fix, Ugly hack incoming
 foreign import javascript unsafe "[$1,$2]"
   js_makeArray :: JSString -> Int -> JSVal
-
-foreign import javascript unsafe "setTimeout(removeErrors,10000)"
-  js_removeErrorsDelay :: IO ()
-
--- TODO, remove, was used for testing
-alert :: T.Text -> IO ()
-alert text = js_alert $ pack text
-foreign import javascript unsafe "alert($1)" js_alert :: JSString -> IO ()
-
 
 
 data OrderConstant =  CAtomic

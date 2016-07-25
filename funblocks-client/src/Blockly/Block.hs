@@ -26,6 +26,7 @@ module Blockly.Block ( Block(..)
                      , getFunctionName
                      , getItemCount
                      , setColour
+                     , isDisabled
                      , areAllInputsConnected
                      , select
                      , addSelect
@@ -111,6 +112,9 @@ disableWarningText = js_disableWarningText
 setDisabled :: Block -> Bool -> IO ()
 setDisabled = js_setDisabled 
 
+isDisabled :: Block -> Bool
+isDisabled = js_disabled 
+
 areAllInputsConnected :: Block -> Bool
 areAllInputsConnected = js_allInputsConnected
 
@@ -134,6 +138,9 @@ foreign import javascript unsafe "$1.outputConnection"
 
 foreign import javascript unsafe "$1.outputConnection"
   js_outputConnection :: Block -> Connection
+
+foreign import javascript unsafe "$1.disabled"
+  js_disabled :: Block -> Bool
 
 foreign import javascript unsafe "$1.allInputsConnected()"
   js_allInputsConnected :: Block -> Bool

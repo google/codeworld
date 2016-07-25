@@ -30,10 +30,10 @@ import GHCJS.DOM.EventM (on )
 import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Marshal
-import Data.JSString (pack)
+import Data.JSString.Text
 import qualified Data.Text as T
 import Control.Monad.Trans (liftIO)
-import Blockly.Workspace
+import Blockly.Workspace hiding (workspaceToCode)
 import Blocks.CodeGen
 import Blocks.Types
 import Blockly.Event
@@ -60,6 +60,11 @@ foreign import javascript unsafe "run('','','',false)"
 foreign import javascript unsafe "updateEditor($1)"
   js_updateEditor :: JSString -> IO ()
 
+foreign import javascript unsafe "setTimeout(removeErrors,10000)"
+  js_removeErrorsDelay :: IO ()
+
+pack = textToJSString
+unpack = textFromJSString
 
 setErrorMessage msg = do
   Just doc <- liftIO currentDocument
@@ -78,12 +83,17 @@ btnRunClick ws = do
   if not $ containsProgramBlock blocks 
     then setErrorMessage "Error: No Program on Workspace"
     else do
-      code <- liftIO $ workspaceToCode ws
-      case code of
-        "" -> setErrorMessage "Error: Disconnected Inputs"
-        _ -> do
-              liftIO $ js_updateEditor (pack code)
-              liftIO $ js_cwcompile (pack code)
+      (code,errors) <- liftIO $ workspaceToCode ws
+      case errors of
+        ((Error msg block):es) -> do 
+                                    setErrorMessage msg
+                                    liftIO $ setWarningText block msg
+                                    liftIO $ addErrorSelect block
+                                    liftIO $ js_removeErrorsDelay
+
+        [] -> do
+          liftIO $ js_updateEditor (pack code)
+          liftIO $ js_cwcompile (pack code)
   return ()
   where
     containsProgramBlock = any (\b -> getBlockType b `elem` programBlocks) 
@@ -102,9 +112,6 @@ main = do
       -- liftIO $ putStrLn $ "Blocks that dont have codegen: " ++ show allCodeGen
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
       liftIO $ disableOrphans workspace -- Disable disconnected non-top level blocks
-      liftIO assignAll
-      -- Just btnRun <- getElementById doc "btnRun" 
-      -- on btnRun click (btnRunClick workspace)
       hookEvent "btnRun" click (btnRunClick workspace)
       hookEvent "btnStop" click btnStopClick
       liftIO setBlockTypes -- assign layout and types of Blockly blocks
@@ -113,6 +120,7 @@ main = do
 
 -- Update code in real time
 onChange ws event = case getType event of
-    MoveEvent e -> do  code <- workspaceToCode ws
-                       js_updateEditor (pack code)
+    MoveEvent e -> do 
+                    (code, errs) <- workspaceToCode ws
+                    js_updateEditor (pack code)
     _ -> return () 

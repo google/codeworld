@@ -33,6 +33,8 @@ import Data.List (intercalate)
 import qualified Data.Text as T
 import Prelude hiding ((++), show)
 import qualified Prelude as P
+import Control.Monad
+import Control.Applicative
 
 -- Helpers for converting Text
 (++) :: T.Text -> T.Text -> T.Text
@@ -52,7 +54,33 @@ atomic code = (code, CAtomic)
 
 
 type Code = T.Text
-type GeneratorFunction = Block -> Either Block (Code, OrderConstant)
+data Error = Error T.Text Block -- errorMsg, block
+
+-- always return a, only return first error, monadic interface
+data SaveErr a = SE a (Maybe Error)
+
+instance Functor SaveErr where
+  fmap = liftM
+
+instance Applicative SaveErr where
+  pure = return
+  (<*>) = ap
+
+instance Monad SaveErr where
+    return a = SE a Nothing 
+    (SE code Nothing) >>= f = f code
+    (SE code err@(Just e)) >>= f = do
+        case f code of
+          (SE code_ Nothing) -> SE code_ err
+          (SE code_ a) -> SE code_ err
+
+push a = SE a Nothing
+errc :: T.Text -> Block -> SaveErr Code
+errc msg block = SE "" $ Just $ Error msg block
+errg :: T.Text -> Block -> SaveErr (Code, OrderConstant)
+errg msg block = SE ("",CNone) $ Just $ Error msg block
+
+type GeneratorFunction = Block -> SaveErr (Code, OrderConstant)
 
 -- PROGRAMS --------------------------------------
 blockDrawingOf :: GeneratorFunction
@@ -506,8 +534,6 @@ blockLetVar block = do
     expr <- valueToCode block "RETURN" CNone
     return $ none $ varName ++ " = " ++ expr 
 
-
-
 -- Let function block with parameters
 foreign import javascript unsafe "$1.arguments_"
   js_funcargs :: Block -> JA.JSArray
@@ -544,7 +570,7 @@ blockFuncVar :: GeneratorFunction
 blockFuncVar block = do 
     let arg = getFieldValue block "VAR"
     if arg == "None"
-      then Left block
+      then errg "No variable selected" block
       else return $ none arg
 
 -- ANIMATION
@@ -554,7 +580,7 @@ blockAnim block =
       Just inpBlock -> do
                        let funcName = getFunctionName inpBlock 
                        return $ none $ "main = animationOf(" ++ funcName ++ ")"
-      Nothing -> Left block
+      Nothing -> errg "No function inserted" block
 
 blockSimulation :: GeneratorFunction
 blockSimulation block = do
@@ -565,7 +591,7 @@ blockSimulation block = do
   where
     aux name = case getInputBlock block name of
                       Just inpBlock -> return $ getFunctionName inpBlock 
-                      Nothing -> Left block
+                      Nothing -> errc "No function inserted" block
 
 
 
@@ -626,7 +652,7 @@ blockListVar :: GeneratorFunction
 blockListVar block = do 
     let arg = getFieldValue block "VAR"
     if arg == "None"
-      then Left block
+      then errg "No variable selected" block
       else return $ none arg
 
 -- LIST COMPREHENSION
@@ -844,17 +870,17 @@ blockCodeMap = [  -- PROGRAMS
                     ]
                                 
 
-setCodeGen :: T.Text -> (Block -> Either Block (T.Text, OrderConstant) ) -> IO ()
+setCodeGen :: T.Text -> (Block -> SaveErr (Code, OrderConstant) ) -> IO ()
 setCodeGen blockName func = do
   cb <- syncCallback1' (\x -> do Just b <- fromJSVal x 
                                  case func b of
-                                    Right (code,ordr) -> do
+                                    SE (code,ordr) Nothing -> do
                                             return $ js_makeArray (pack code) (order ordr)
-                                    Left eblock -> do
-                                            setWarningText eblock "Block contains an input field that is disconnected"
-                                            addErrorSelect eblock
-                                            js_removeErrorsDelay
-                                            return $ js_makeArray (pack "") 0
+                                    SE (curcode,ordr) (Just (Error msg eblock)) -> do
+                                            -- setWarningText eblock "Block contains an input field that is disconnected"
+                                            -- addErrorSelect eblock
+                                            -- js_removeErrorsDelay
+                                            return $ js_makeArray (pack curcode) 0
                                  )
   js_setGenFunction (pack blockName) cb
 
@@ -866,17 +892,19 @@ setCodeGen blockName func = do
 assignAll :: IO ()
 assignAll = mapM_ (uncurry setCodeGen) blockCodeMap
 
-valueToCode :: Block -> T.Text -> OrderConstant -> Either Block T.Text
+valueToCode :: Block -> T.Text -> OrderConstant -> SaveErr Code
 valueToCode block name ordr = do
-    inputBlock <- aux $ getInputBlock block name
-    let blockType = getBlockType inputBlock
-    func <- aux $ lookup blockType blockCodeMap
-    (code,innerOrder) <- func inputBlock
-    Right $ handleOrder (order innerOrder) (order ordr) code
+    case helper of 
+      Just (func,inputBlock) -> do
+        (code,innerOrder) <- func inputBlock
+        push $ handleOrder (order innerOrder) (order ordr) code
+      Nothing -> errc "Disconnected Input" block
   where
-    aux m = case m of
-      Just v -> Right v
-      Nothing -> Left block
+    helper = do
+      inputBlock <- getInputBlock block name
+      let blockType = getBlockType inputBlock
+      func <- lookup blockType blockCodeMap
+      return (func, inputBlock)
 
     handleOrder innerOrdr odrd code
       | innerOrdr == 0 || innerOrdr == 99 = code

@@ -108,5 +108,11 @@ main = do
       hookEvent "btnRun" click (btnRunClick workspace)
       hookEvent "btnStop" click btnStopClick
       liftIO setBlockTypes -- assign layout and types of Blockly blocks
+      liftIO $ addChangeListener workspace (onChange workspace)
       return ()
 
+-- Update code in real time
+onChange ws event = case getType event of
+    MoveEvent e -> do  code <- workspaceToCode ws
+                       js_updateEditor (pack code)
+    _ -> return () 

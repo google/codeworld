@@ -597,7 +597,6 @@ blockSimulation block = do
                       Nothing -> errc "No function inserted" block
 
 
-
 -- COMMENT
 blockComment :: GeneratorFunction
 blockComment block = return $ none ""
@@ -745,7 +744,6 @@ blockCase block = do
                   JA.toList $ js_getCaseInputVars block i
     con i = unpack $ js_getCaseInputConstructor block i
 
-
 getGenerationBlocks :: [T.Text]
 getGenerationBlocks = M.keys blockCodeMap
 
@@ -872,28 +870,8 @@ blockCodeMap = M.fromList [  -- PROGRAMS
                   ,("type_sum", blockSum)
                     ]
                                 
-
-setCodeGen :: T.Text -> (Block -> SaveErr (Code, OrderConstant) ) -> IO ()
-setCodeGen blockName func = do
-  cb <- syncCallback1' (\x -> do Just b <- fromJSVal x 
-                                 case func b of
-                                    SE (code,ordr) Nothing -> do
-                                            return $ js_makeArray (pack code) (order ordr)
-                                    SE (curcode,ordr) (Just (Error msg eblock)) -> do
-                                            -- setWarningText eblock "Block contains an input field that is disconnected"
-                                            -- addErrorSelect eblock
-                                            -- js_removeErrorsDelay
-                                            return $ js_makeArray (pack curcode) 0
-                                 )
-  js_setGenFunction (pack blockName) cb
-
-
-
-
 -- Assigns CodeGen functions defined here to the Blockly Javascript Code
 -- generator
--- assignAll :: IO ()
--- assignAll = mapM_ (uncurry setCodeGen) blockCodeMap
 
 valueToCode :: Block -> T.Text -> OrderConstant -> SaveErr Code
 valueToCode block name ordr = do
@@ -951,16 +929,9 @@ workspaceToCode workspace = do
 
 
 --- FFI
-foreign import javascript unsafe "Blockly.FunBlocks[$1] = $2"
-  js_setGenFunction :: JSString -> Callback a -> IO ()
-
 
 foreign import javascript unsafe "Blockly.FunBlocks.valueToCode($1, $2, $3)"
   js_valueToCode :: Block -> JSString -> Int -> JSString
-
--- TODO, fix, Ugly hack incoming
-foreign import javascript unsafe "[$1,$2]"
-  js_makeArray :: JSString -> Int -> JSVal
 
 
 data OrderConstant =  CAtomic
@@ -997,7 +968,6 @@ data OrderConstant =  CAtomic
                     | CNone          
 
 
--- TODO, still JavaScript CodeGen stuff
 order :: OrderConstant -> Int
 order CAtomic         = 0;  -- 0 "" ...
 order CMember         = 1;  -- . []

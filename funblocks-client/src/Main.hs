@@ -21,7 +21,6 @@ module Main (
     main
 ) where
 
-import Control.Applicative ((<$>))
 import GHCJS.DOM
        (currentDocument, )
 import GHCJS.DOM.Document (getBody, getElementById, Document(..))
@@ -39,29 +38,6 @@ import Blocks.Types
 import Blockly.Event
 import Blockly.General
 import Blockly.Block 
-
--- call blockworld.js compile
-foreign import javascript unsafe "compile($1)"
-  js_cwcompile :: JSString -> IO ()
-
--- call blockworld.js run
--- run (xmlHash, codeHash, msg, error)
-foreign import javascript unsafe "run()"
-  js_cwrun :: JSString -> JSString -> JSString -> Bool -> IO ()
-
--- call blockworld.js updateUI
-foreign import javascript unsafe "updateUI()"
-  js_updateUI :: IO ()
-
--- funnily enough, If I'm calling run "" "" "" False I get errors
-foreign import javascript unsafe "run('','','',false)"
-  js_stop :: IO ()
-
-foreign import javascript unsafe "updateEditor($1)"
-  js_updateEditor :: JSString -> IO ()
-
-foreign import javascript unsafe "setTimeout(removeErrors,10000)"
-  js_removeErrorsDelay :: IO ()
 
 pack = textToJSString
 unpack = textFromJSString
@@ -98,9 +74,6 @@ btnRunClick ws = do
   where
     containsProgramBlock = any (\b -> getBlockType b `elem` programBlocks) 
 
--- test whether all blocks have codegen
-allCodeGen = filter (`notElem` getGenerationBlocks) getTypeBlocks 
-
 hookEvent elementName evType func = do
   Just doc <- currentDocument
   Just ele <- getElementById doc elementName
@@ -109,7 +82,6 @@ hookEvent elementName evType func = do
 main = do 
       Just doc <- currentDocument 
       Just body <- getBody doc
-      -- liftIO $ putStrLn $ "Blocks that dont have codegen: " ++ show allCodeGen
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
       liftIO $ disableOrphans workspace -- Disable disconnected non-top level blocks
       hookEvent "btnRun" click (btnRunClick workspace)
@@ -124,3 +96,31 @@ onChange ws event = case getType event of
                     (code, errs) <- workspaceToCode ws
                     js_updateEditor (pack code)
     _ -> return () 
+
+
+-- FFI
+
+-- call blockworld.js compile
+foreign import javascript unsafe "compile($1)"
+  js_cwcompile :: JSString -> IO ()
+
+-- call blockworld.js run
+-- run (xmlHash, codeHash, msg, error)
+foreign import javascript unsafe "run()"
+  js_cwrun :: JSString -> JSString -> JSString -> Bool -> IO ()
+
+-- call blockworld.js updateUI
+foreign import javascript unsafe "updateUI()"
+  js_updateUI :: IO ()
+
+-- funnily enough, If I'm calling run "" "" "" False I get errors
+foreign import javascript unsafe "run('','','',false)"
+  js_stop :: IO ()
+
+foreign import javascript unsafe "updateEditor($1)"
+  js_updateEditor :: JSString -> IO ()
+
+foreign import javascript unsafe "setTimeout(removeErrors,10000)"
+  js_removeErrorsDelay :: IO ()
+
+

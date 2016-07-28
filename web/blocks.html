@@ -38,8 +38,6 @@
     <!-- Initialization in JS -->
     <script src="js/codeworld_shared.js"></script> 
     <script src="js/blockworld.js"></script> 
-    <!-- JS Blockly Code Generation Initialization -->
-    <script src="js/codegen.js"></script>
   </head>
 
 
@@ -97,7 +95,8 @@
                           </block>
                           <block type="cwAnimationOf">
                           </block>
-
+                          <block type="cwSimulationOf">
+                          </block>
                           <block type="comment"></block>
                       </category>
                       <category name="Pictures">
@@ -617,6 +616,7 @@
                       </category>
                       <category name="Lists">
                         <block type="lists_create_with_typed"></block>
+                        <block type="lists_cons"></block>
                         <block type="lists_numgen">
                         <value name="LEFT">
                               <shadow type="numNumber">
@@ -630,9 +630,10 @@
                         </value>
                         </block>
                         <block type="lists_comprehension"></block>
-                        <block type="variables_get_lists"></block>
+                        <block type="lists_at"></block>
                         <block type="lists_length"></block>
                       </category>
+                      <category name="Types" custom="DATATYPE"></category>
                       <category name="Definitions" custom="PROCEDURE">
                       </category>
                       

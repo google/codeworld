@@ -16,11 +16,13 @@
   limitations under the License.
 -}
 
-module Blocks.CodeGen (assignAll
+module Blocks.CodeGen (workspaceToCode
+                      ,Error(..)
                       ,getGenerationBlocks)
   where
 
 import Blockly.Block
+import Blockly.Workspace hiding (workspaceToCode)
 import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
@@ -33,6 +35,9 @@ import Data.List (intercalate)
 import qualified Data.Text as T
 import Prelude hiding ((++), show)
 import qualified Prelude as P
+import Control.Monad
+import Control.Applicative
+import qualified Data.Map as M
 
 -- Helpers for converting Text
 (++) :: T.Text -> T.Text -> T.Text
@@ -52,7 +57,33 @@ atomic code = (code, CAtomic)
 
 
 type Code = T.Text
-type GeneratorFunction = Block -> Either Block (Code, OrderConstant)
+data Error = Error T.Text Block -- errorMsg, block
+
+-- always return a, only return first error, monadic interface
+data SaveErr a = SE a (Maybe Error)
+
+instance Functor SaveErr where
+  fmap = liftM
+
+instance Applicative SaveErr where
+  pure = return
+  (<*>) = ap
+
+instance Monad SaveErr where
+    return a = SE a Nothing 
+    (SE code Nothing) >>= f = f code
+    (SE code err@(Just e)) >>= f = do
+        case f code of
+          (SE code_ Nothing) -> SE code_ err
+          (SE code_ a) -> SE code_ err
+
+push a = SE a Nothing
+errc :: T.Text -> Block -> SaveErr Code
+errc msg block = SE "" $ Just $ Error msg block
+errg :: T.Text -> Block -> SaveErr (Code, OrderConstant)
+errg msg block = SE ("",CNone) $ Just $ Error msg block
+
+type GeneratorFunction = Block -> SaveErr (Code, OrderConstant)
 
 -- PROGRAMS --------------------------------------
 blockDrawingOf :: GeneratorFunction
@@ -506,8 +537,6 @@ blockLetVar block = do
     expr <- valueToCode block "RETURN" CNone
     return $ none $ varName ++ " = " ++ expr 
 
-
-
 -- Let function block with parameters
 foreign import javascript unsafe "$1.arguments_"
   js_funcargs :: Block -> JA.JSArray
@@ -535,11 +564,16 @@ blockLetCall block = do
 
     return $ none $ varName ++ argCode 
 
+blockLocalVar :: GeneratorFunction
+blockLocalVar block = do 
+    let varName = getFieldValue block "NAME" 
+    return $ none varName 
+
 blockFuncVar :: GeneratorFunction
 blockFuncVar block = do 
     let arg = getFieldValue block "VAR"
     if arg == "None"
-      then Left block
+      then errg "No variable selected" block
       else return $ none arg
 
 -- ANIMATION
@@ -547,9 +581,21 @@ blockAnim :: GeneratorFunction
 blockAnim block =  
     case getInputBlock block "FUNC" of
       Just inpBlock -> do
-                       let funcName = getFieldValue inpBlock "NAME"
+                       let funcName = getFunctionName inpBlock 
                        return $ none $ "main = animationOf(" ++ funcName ++ ")"
-      Nothing -> Left block
+      Nothing -> errg "No function inserted" block
+
+blockSimulation :: GeneratorFunction
+blockSimulation block = do
+        initial <- aux "INITIAL"
+        step <- aux "STEP"
+        draw <- aux "DRAW"
+        return $ none $ "main = simulationOf(" ++ initial ++ "," ++ step ++ "," ++ draw ++ ")"
+  where
+    aux name = case getInputBlock block name of
+                      Just inpBlock -> return $ getFunctionName inpBlock 
+                      Nothing -> errc "No function inserted" block
+
 
 -- COMMENT
 blockComment :: GeneratorFunction
@@ -580,10 +626,23 @@ blockCreateList block = do
   vals <- mapM (\t -> valueToCode block t CNone) ["ADD" ++ show i | i <- [0..c-1]]
   return $ none $ "[" ++ T.intercalate "," vals ++ "]"
 
+blockCons :: GeneratorFunction
+blockCons block = do 
+    item <- valueToCode block "ITEM" CNone
+    lst <- valueToCode block "LST" CNone
+    return $ none $ item ++ ":" ++ lst
+
+
 blockLength :: GeneratorFunction
 blockLength block = do 
     lst <- valueToCode block "LST" CNone
     return $ none $ "length(" ++ lst ++ ")"
+
+blockAt :: GeneratorFunction
+blockAt block = do 
+    lst <- valueToCode block "LST" CNone
+    pos <- valueToCode block "POS" CNone
+    return $ none $ "at(" ++ lst ++ "," ++ pos ++ ")"
 
 blockNumGen :: GeneratorFunction
 blockNumGen block = do 
@@ -595,7 +654,7 @@ blockListVar :: GeneratorFunction
 blockListVar block = do 
     let arg = getFieldValue block "VAR"
     if arg == "None"
-      then Left block
+      then errg "No variable selected" block
       else return $ none arg
 
 -- LIST COMPREHENSION
@@ -625,12 +684,73 @@ blockListComp block = do
                 ++ "]"
     return $ none code 
 
-getGenerationBlocks :: [T.Text]
-getGenerationBlocks = map fst blockCodeMap
+-- TYPES
 
-blockCodeMap = [  -- PROGRAMS 
+foreign import javascript unsafe "$1.itemCount_"
+  js_itemCount :: Block -> Int
+
+blockUserType :: GeneratorFunction
+blockUserType block = do 
+    let name = getFieldValue block "NAME"
+    return $ none name
+
+blockListType :: GeneratorFunction
+blockListType block = do 
+    tp <- valueToCode block "TP" CNone
+    return $ none $ "[" ++ tp ++ "]"
+
+blockConstructor :: GeneratorFunction
+blockConstructor block = do 
+    let name = getFieldValue block "NAME"
+    let itemCount = js_itemCount block
+    tps <- mapM (\n -> valueToCode block n CNone) ["TP" ++ show i | i <- [0..itemCount-1]] 
+    return $ none $ name ++ " " ++ (T.unwords tps)
+
+blockProduct :: GeneratorFunction
+blockProduct block = do 
+    let constructor = getFieldValue block "CONSTRUCTOR"
+    let itemCount = js_itemCount block
+    tps <- mapM (\n -> valueToCode block n CNone) ["TP" ++ show i | i <- [0..itemCount-1]] 
+    return $ none $ constructor ++ " " ++ (T.unwords tps)
+
+blockSum :: GeneratorFunction
+blockSum block = do 
+    let typeName = getFieldValue block "NAME"
+    let itemCount = js_itemCount block
+    tps <- mapM (\n -> valueToCode block n CNone) ["PROD" ++ show i | i <- [0..itemCount-1]] 
+    let format = zipWith (++) (" = ":(repeat "      | ")) tps
+    return $ none $ "data " ++ typeName ++ (T.intercalate "\n" format)
+
+-- CASE
+
+foreign import javascript unsafe "$1.getInputVars($2)"
+  js_getCaseInputVars :: Block -> Int -> JA.JSArray
+
+foreign import javascript unsafe "$1.getInputConstructor($2)"
+  js_getCaseInputConstructor :: Block -> Int -> JSString
+
+blockCase:: GeneratorFunction
+blockCase block = do 
+    let name = getFieldValue block "NAME"
+    let itemCount = js_itemCount block
+    inp <- valueToCode block "INPUT" CNone
+    outs <- mapM (\n -> valueToCode block n CNone) ["CS" ++ show i | i <- [0..itemCount-1]] 
+    let vars_ :: [T.Text] = map (T.unwords . vars) [0..itemCount-1]
+    let cons_ :: [T.Text] = map con [0..itemCount-1]
+    let entries :: [T.Text] = zipWith3 (\c v o -> c ++ " " ++ v ++ " -> " ++ o ++ "; ") cons_ vars_ outs
+    return $ none $ "case " ++ inp ++ " of " ++ T.concat entries
+  where
+    vars i = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
+                  JA.toList $ js_getCaseInputVars block i
+    con i = unpack $ js_getCaseInputConstructor block i
+
+getGenerationBlocks :: [T.Text]
+getGenerationBlocks = M.keys blockCodeMap
+
+blockCodeMap = M.fromList [  -- PROGRAMS 
                    ("cwDrawingOf",blockDrawingOf)
                   ,("cwAnimationOf",blockAnim)
+                  ,("cwSimulationOf",blockSimulation)
                   -- PICTURES
                   ,("cwBlank",blockBlank)
                   ,("cwCoordinatePlane",blockCoordinatePlane)
@@ -728,6 +848,8 @@ blockCodeMap = [  -- PROGRAMS
                   -- Lists
                   ,("lists_create_with_typed", blockCreateList)
                   ,("lists_length", blockLength)
+                  ,("lists_at", blockAt)
+                  ,("lists_cons", blockCons)
                   ,("lists_numgen", blockNumGen)
                   ,("lists_comprehension", blockListComp)
                   ,("variables_get_lists", blockListVar)
@@ -736,44 +858,34 @@ blockCodeMap = [  -- PROGRAMS
                   ,("procedures_letFunc",blockLetFunc)
                   ,("procedures_callreturn",blockLetCall)
                   ,("procedures_getVar",blockFuncVar)
+                  ,("vars_local",blockLocalVar)
                   ,("comment",blockComment)
                   ,("lists_path",blockPath)
+                  -- TYPES
+                  ,("type_user", blockUserType)
+                  ,("type_list", blockListType)
+                  ,("expr_constructor", blockConstructor)
+                  ,("expr_case", blockCase)
+                  ,("type_product", blockProduct)
+                  ,("type_sum", blockSum)
                     ]
                                 
-
-setCodeGen :: T.Text -> (Block -> Either Block (T.Text, OrderConstant) ) -> IO ()
-setCodeGen blockName func = do
-  cb <- syncCallback1' (\x -> do Just b <- fromJSVal x 
-                                 case func b of
-                                    Right (code,ordr) -> do
-                                            return $ js_makeArray (pack code) (order ordr)
-                                    Left eblock -> do
-                                            setWarningText eblock "Block contains an input field that is disconnected"
-                                            addErrorSelect eblock
-                                            js_removeErrorsDelay
-                                            return $ js_makeArray (pack "") 0
-                                 )
-  js_setGenFunction (pack blockName) cb
-
-
-
-
 -- Assigns CodeGen functions defined here to the Blockly Javascript Code
 -- generator
-assignAll :: IO ()
-assignAll = mapM_ (uncurry setCodeGen) blockCodeMap
 
-valueToCode :: Block -> T.Text -> OrderConstant -> Either Block T.Text
+valueToCode :: Block -> T.Text -> OrderConstant -> SaveErr Code
 valueToCode block name ordr = do
-    inputBlock <- aux $ getInputBlock block name
-    let blockType = getBlockType inputBlock
-    func <- aux $ lookup blockType blockCodeMap
-    (code,innerOrder) <- func inputBlock
-    Right $ handleOrder (order innerOrder) (order ordr) code
+    case helper of 
+      Just (func,inputBlock) -> do
+        (code,innerOrder) <- func inputBlock
+        push $ handleOrder (order innerOrder) (order ordr) code
+      Nothing -> errc "Disconnected Input" block
   where
-    aux m = case m of
-      Just v -> Right v
-      Nothing -> Left block
+    helper = do
+      inputBlock <- getInputBlock block name
+      let blockType = getBlockType inputBlock
+      func <- M.lookup blockType blockCodeMap
+      return (func, inputBlock)
 
     handleOrder innerOrdr odrd code
       | innerOrdr == 0 || innerOrdr == 99 = code
@@ -796,26 +908,30 @@ escape' xs = ("\""::String) P.++ (concatMap f xs :: String ) P.++ ("\""::String)
     f ('\"'::Char) = "\\\"" :: String
     f x    = [x]
 
---- FFI
-foreign import javascript unsafe "Blockly.FunBlocks[$1] = $2"
-  js_setGenFunction :: JSString -> Callback a -> IO ()
 
+
+workspaceToCode :: Workspace -> IO (Code,[Error])
+workspaceToCode workspace = do
+    topBlocks <- getTopBlocksTrue workspace >>= return . filter (not . isDisabled)
+    let codes = map blockToCode topBlocks
+    let errors = map (\(SE code (Just e)) -> e) $
+                 filter (\c -> case c of SE code Nothing -> False; _ -> True) codes
+    let code = T.intercalate "\n\n" $ map (\(SE code _) -> code) codes
+    return (code,errors)
+  where
+    blockToCode :: Block -> SaveErr Code
+    blockToCode block = do 
+      let blockType = getBlockType block 
+      case M.lookup blockType blockCodeMap of
+        Just func -> let (SE (code, oc) err) = func block
+                     in SE code err
+        Nothing -> errc "No such block in CodeGen" block
+
+
+--- FFI
 
 foreign import javascript unsafe "Blockly.FunBlocks.valueToCode($1, $2, $3)"
   js_valueToCode :: Block -> JSString -> Int -> JSString
-
--- TODO, fix, Ugly hack incoming
-foreign import javascript unsafe "[$1,$2]"
-  js_makeArray :: JSString -> Int -> JSVal
-
-foreign import javascript unsafe "setTimeout(removeErrors,10000)"
-  js_removeErrorsDelay :: IO ()
-
--- TODO, remove, was used for testing
-alert :: T.Text -> IO ()
-alert text = js_alert $ pack text
-foreign import javascript unsafe "alert($1)" js_alert :: JSString -> IO ()
-
 
 
 data OrderConstant =  CAtomic
@@ -852,7 +968,6 @@ data OrderConstant =  CAtomic
                     | CNone          
 
 
--- TODO, still JavaScript CodeGen stuff
 order :: OrderConstant -> Int
 order CAtomic         = 0;  -- 0 "" ...
 order CMember         = 1;  -- . []

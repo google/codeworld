@@ -91,12 +91,9 @@ main = do
       return ()
 
 -- Update code in real time
-onChange ws event = case getType event of
-    MoveEvent e -> do 
-                    (code, errs) <- workspaceToCode ws
-                    js_updateEditor (pack code)
-    _ -> return () 
-
+onChange ws event = do 
+                      (code, errs) <- workspaceToCode ws
+                      js_updateEditor (pack code)
 
 -- FFI
 

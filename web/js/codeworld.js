@@ -304,7 +304,7 @@ function share() {
 
         sweetAlert({
             html: true,
-            title: '<i class="fa fa-2x fa-share"></i>&nbsp; Share',
+            title: '<i class="mdi mdi-72px mdi-share"></i>&nbsp; Share',
             text: 'Copy and share this link with others!',
             type: 'input',
             inputValue: url,

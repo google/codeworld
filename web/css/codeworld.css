@@ -60,6 +60,7 @@ body {
   flex-direction: row;
   -webkit-flex-direction: row;
   -ms-flex-direction: row;
+  margin-bottom: 3px;
 }
 
 #nav {
@@ -76,9 +77,10 @@ body {
   -webkit-flex-direction: column;
   -ms-flex-direction: column;
   overflow-y: auto;
+  padding-bottom: 3px;
 }
 
-#nav_mine, #nav_ctrl {
+.nav_items {
   flex: 0 0 auto;
   -webkit-flex: 0 0 auto;
   -ms-flex: 0 0 auto;
@@ -169,7 +171,7 @@ body {
   vertical-align: middle;
   font-size:12px;
   font-family:arial, helvetica, sans-serif;
-  margin: 3px 3px 3px 3px;
+  margin: 3px 3px 0px 3px;
   padding: 6px 6px 6px 6px;
   text-decoration: none;
   display:inline-block;

@@ -387,7 +387,7 @@ function saveProjectAs() {
 
     sweetAlert({
         html: true,
-        title: '<i class="fa fa-2x fa-cloud-upload"></i>&nbsp; Save As',
+        title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
         text: 'Enter a name for your project:',
         type: 'input',
         inputValue: defaultName,

@@ -163,21 +163,24 @@ body {
 }
 
 .cw-button {
-  border:1px solid;
-  border-radius: 3px;
+  border-radius: 4px;
   cursor: pointer;
   text-align: center;
-  font-size:11px;
+  vertical-align: middle;
+  font-size:12px;
   font-family:arial, helvetica, sans-serif;
-  margin: 2px 2px 2px 2px;
-  padding: 7px 7px 7px 7px;
+  margin: 3px 3px 3px 3px;
+  padding: 6px 6px 6px 6px;
   text-decoration: none;
   display:inline-block;
-  text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
   font-weight:bold;
   color: white;
   white-space: nowrap;
   overflow: hidden;
+}
+
+.cw-button * {
+  vertical-align: middle;
 }
 
 .cw-button,.cw-button-left {
@@ -185,51 +188,35 @@ body {
 }
 
 .cw-button.green.project-active,.cw-button.green.project-active:hover:active {
-  border-color: #74740e;
   background-color: #a6a614;
-  background-image: linear-gradient(to bottom, #a6a614, #8c8c00);
 }
 
 .cw-button.green.project-active:hover {
-  border-color: #4b4b09;
   background-color: #78780f;
-  background-image: linear-gradient(to bottom, #78780f, #595900);
 }
 
 .cw-button.green,.cw-button.green:hover:active {
-  border-color: #34740e;
   background-color: #4ba614;
-  background-image: linear-gradient(to bottom, #4ba614, #008c00);
 }
 
 .cw-button.green:hover {
-  border-color: #224b09;
   background-color: #36780f;
-  background-image: linear-gradient(to bottom, #36780f, #005900);
 }
 
 .cw-button.blue,.cw-button.blue:hover:active {
-  border-color: #0e3474;
   background-color: #144ba6;
-  background-image: linear-gradient(to bottom, #144ba6, #00008c);
 }
 
 .cw-button.blue:hover {
-  border-color: #09224b;
   background-color: #0f3678;
-  background-image: linear-gradient(to bottom, #0f3678, #000059);
 }
 
 .cw-button.red,.cw-button.red:hover:active {
-  border-color: #74340e;
-  background-color: #a64b14;
-  background-image: linear-gradient(to bottom, #a64b14, #8c0000);
+  background-color: #a62b14;
 }
 
 .cw-button.red:hover {
-  border-color: #4b2209;
-  background-color: #78360f;
-  background-image: linear-gradient(to bottom, #78360f, #590000);
+  background-color: #78160f;
 }
 
 .cw-button:focus { outline: none; }

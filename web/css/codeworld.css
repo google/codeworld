@@ -225,8 +225,8 @@ body {
 .dropbox {
   background-color: white;
   border: solid #cccccc 1px;
-  box-shadow: 3px 3px 4px #000;
-  margin: 3px 5px 5px 3px;
+  box-shadow: 1px 1px 2px #000;
+  margin: 2px 4px 4px 2px;
 }
 
 .sweet-alert.helpdoc {

@@ -20,37 +20,10 @@ body {
   height: 100%;
   background-color: #e5eff9;
   margin: 0px;
-  display: flex;
-  display: -webkit-flex;
-  display: -ms-flex;
-  align-items: stretch;
-  -webkit-align-items: stretch;
-  -ms-align-items: stretch;
-  flex-direction: column;
-  -webkit-flex-direction: column;
-  -ms-flex-direction: column;
-  overflow-x: hidden;
-}
-
-#mainRow {
-  flex: 1 1 500px;
-  -webkit-flex: 1 1 500px;
-  -ms-flex: 1 1 500px;
-  display: flex;
-  display: -webkit-flex;
-  display: -ms-flex;
-  align-items: stretch;
-  -webkit-align-items: stretch;
-  -ms-align-items: stretch;
-  flex-direction: row;
-  -webkit-flex-direction: row;
-  -ms-flex-direction: row;
+  overflow: hidden;
 }
 
 #buttons {
-  flex: 0 0 auto;
-  -webkit-flex: 0 0 auto;
-  -ms-flex: 0 0 auto;
   display: flex;
   display: -webkit-flex;
   display: -ms-flex;
@@ -60,13 +33,9 @@ body {
   flex-direction: row;
   -webkit-flex-direction: row;
   -ms-flex-direction: row;
-  margin-bottom: 3px;
 }
 
 #nav {
-  flex: 0 1 150px;
-  -webkit-flex: 0 1 150px;
-  -ms-flex: 0 1 150px;
   display: flex;
   display: -webkit-flex;
   display: -ms-flex;
@@ -76,6 +45,7 @@ body {
   flex-direction: column;
   -webkit-flex-direction: column;
   -ms-flex-direction: column;
+
   overflow-y: auto;
   padding-bottom: 3px;
 }
@@ -93,22 +63,13 @@ body {
   flex-direction: column;
   -webkit-flex-direction: column;
   -ms-flex-direction: column;
+
   margin: 0px;
 }
 
 #source {
-  flex: 1 0 300px;
-  -webkit-flex: 1 0 300px;
-  -ms-flex: 1 0 300px;
   position: relative;
 }
-
-#doc {
-  flex: 1 0 200px;
-  -webkit-flex: 1 0 200px;
-  -ms-flex: 1 0 200px;
-}
-
 #source .CodeMirror {
   position:absolute;
   top: 0;
@@ -119,17 +80,7 @@ body {
   height: auto;
 }
 
-#examples {
-  flex: 0 0 auto;
-  -webkit-flex: 0 0 auto;
-  -ms-flex: 0 0 auto;
-  text-align: left;
-}
-
 #result {
-  flex: 0 0 508px;
-  -webkit-flex: 0 0 508px;
-  -ms-flex: 0 0 508px;
   display: flex;
   display: -webkit-flex;
   display: -ms-flex;
@@ -139,6 +90,7 @@ body {
   flex-direction: column;
   -webkit-flex-direction: column;
   -ms-flex-direction: column;
+
   margin: 0px;
 }
 
@@ -146,12 +98,15 @@ body {
   flex: 0 0 500px;
   -webkit-flex: 0 0 500px;
   -ms-flex: 0 0 500px;
+
+  position: relative;
 }
 
 #message {
   flex: 1 1 20px;
   -webkit-flex: 1 1 20px;
   -ms-flex: 1 1 20px;
+
   overflow: auto;
   font-size: 11px;
   padding: 5px;
@@ -167,26 +122,27 @@ body {
 .cw-button {
   border-radius: 4px;
   cursor: pointer;
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
-  font-size:12px;
-  font-family:arial, helvetica, sans-serif;
+  font-size: 12px;
+  font-family: arial, helvetica, sans-serif;
   margin: 3px 3px 0px 3px;
   padding: 6px 6px 6px 6px;
   text-decoration: none;
-  display:inline-block;
-  font-weight:bold;
+  display: inline-block;
+  font-weight: bold;
   color: white;
   white-space: nowrap;
   overflow: hidden;
 }
 
-.cw-button * {
-  vertical-align: middle;
+#buttons .cw-button {
+  margin-bottom: 3px;
+  margin-top: 0px;
 }
 
-.cw-button,.cw-button-left {
-  text-align: left;
+.cw-button * {
+  vertical-align: middle;
 }
 
 .cw-button.green.project-active,.cw-button.green.project-active:hover:active {
@@ -248,4 +204,20 @@ body {
   margin: 0px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
   height: 100%;
+}
+
+.ui-layout-resizer-west-dragging {
+  background-color: #444444;
+  cursor: ew-resize !important;
+}
+
+.ui-layout-resizer-west-open:hover {
+  cursor: ew-resize !important;
+}
+
+.ui-layout-toggler-east,
+.ui-layout-toggler-west {
+  background-color: #444444;
+  opacity: 1.0;
+  cursor: pointer !important;
 }

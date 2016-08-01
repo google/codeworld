@@ -19,8 +19,6 @@
  * entire document body and other JavaScript has loaded.
  */
 function init() {
-    showingBrowse = true;
-    showingResult = false;
     allProjectNames = [];
     openProjectName = null;
 
@@ -151,25 +149,6 @@ function updateUI() {
         document.getElementById('deleteButton').style.display = 'none';
     }
 
-    if (window.showingBrowse) {
-        document.getElementById('nav').style.display = '';
-    } else {
-        document.getElementById('nav').style.display = 'none';
-    }
-
-    if (window.showingResult) {
-        document.getElementById('result').style.display = '';
-
-        if (window.programRunning) {
-            document.getElementById('shareButton').style.display = '';
-        } else {
-            document.getElementById('shareButton').style.display = 'none';
-        }
-    } else {
-        document.getElementById('result').style.display = 'none';
-        document.getElementById('shareButton').style.display = 'none';
-    }
-
     var projects = document.getElementById('nav_mine');
     var newProject = document.getElementById('newButton');
 
@@ -222,11 +201,6 @@ function updateUI() {
     }
 
     document.title = title + " - CodeWorld"
-}
-
-function toggleBrowser() {
-    window.showingBrowse = !window.showingBrowse;
-    updateUI();
 }
 
 function help(doc) {
@@ -319,25 +293,29 @@ function stop() {
 }
 
 function run(hash, msg, error) {
-    window.showingResult = hash || msg;
-
     if (hash) {
         window.location.hash = '#' + hash;
+        document.getElementById('shareButton').style.display = '';
     } else {
         window.location.hash = '';
+        document.getElementById('shareButton').style.display = 'none';
     }
 
     var runner = document.getElementById('runner');
-    if (hash && !error) {
-        var loc = 'run.html?hash=' + hash + '&mode=' + window.buildMode;
-        runner.contentWindow.location.replace(loc);
-        document.getElementById('runner').style.display = '';
-        document.getElementById('runner').contentWindow.focus();
-        window.programRunning = true;
+    if (hash || msg) {
+        if (hash && !error) {
+            var loc = 'run.html?hash=' + hash + '&mode=' + window.buildMode;
+            runner.contentWindow.location.replace(loc);
+            document.getElementById('runner').style.display = '';
+            document.getElementById('runner').contentWindow.focus();
+        } else {
+            runner.contentWindow.location.replace('about:blank');
+            document.getElementById('runner').style.display = 'none';
+        }
+        window.mainLayout.show('east');
+        window.mainLayout.open('east');
     } else {
-        runner.contentWindow.location.replace('about:blank');
-        document.getElementById('runner').style.display = 'none';
-        window.programRunning = false;
+        window.mainLayout.hide('east');
     }
 
     var message = document.getElementById('message');

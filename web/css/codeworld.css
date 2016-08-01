@@ -23,7 +23,7 @@ body {
   overflow: hidden;
 }
 
-#buttons {
+#toolbar {
   display: flex;
   display: -webkit-flex;
   display: -ms-flex;
@@ -33,6 +33,27 @@ body {
   flex-direction: row;
   -webkit-flex-direction: row;
   -ms-flex-direction: row;
+}
+
+#toolbar div {
+  flex: 0 0 auto;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
+  flex-direction: row;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+}
+
+#toolbar span {
+  flex: 1 1 auto;
+  -webkit-flex: 1 1 auto;
+  -ms-flex: 1 1 auto;
 }
 
 #nav {
@@ -110,6 +131,7 @@ body {
   overflow: auto;
   font-size: 11px;
   padding: 5px;
+  margin-bottom: 0px;
 }
 #message.error {
   background-color: #fcc;
@@ -136,7 +158,7 @@ body {
   overflow: hidden;
 }
 
-#buttons .cw-button {
+#toolbar .cw-button {
   margin-bottom: 3px;
   margin-top: 0px;
 }
@@ -145,15 +167,20 @@ body {
   vertical-align: middle;
 }
 
-.cw-button.green.project-active,.cw-button.green.project-active:hover:active {
+.cw-button.yellow,
+.cw-button.yellow:hover:active,
+.cw-button.green.project-active,
+.cw-button.green.project-active:hover:active {
   background-color: #a6a614;
 }
 
+.cw-button.yellow:hover,
 .cw-button.green.project-active:hover {
   background-color: #78780f;
 }
 
-.cw-button.green,.cw-button.green:hover:active {
+.cw-button.green,
+.cw-button.green:hover:active {
   background-color: #4ba614;
 }
 

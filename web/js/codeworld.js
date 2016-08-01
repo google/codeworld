@@ -130,9 +130,13 @@ function getCurrentProject() {
 function updateUI() {
     var isSignedIn = signedIn();
     if (isSignedIn) {
-        document.getElementById('signin').style.display = 'none';
-        document.getElementById('signout').style.display = '';
-        document.getElementById('saveAsButton').style.display = '';
+        if (document.getElementById('signout').style.display == 'none') {
+            document.getElementById('signin').style.display = 'none';
+            document.getElementById('signout').style.display = '';
+            document.getElementById('navButton').style.display = '';
+            window.mainLayout.show('west');
+            window.mainLayout.open('west');
+        }
 
         if (window.openProjectName) {
             document.getElementById('saveButton').style.display = '';
@@ -142,10 +146,13 @@ function updateUI() {
             document.getElementById('deleteButton').style.display = 'none';
         }
     } else {
-        document.getElementById('signin').style.display = '';
-        document.getElementById('signout').style.display = 'none';
-        document.getElementById('saveButton').style.display = 'none';
-        document.getElementById('saveAsButton').style.display = 'none';
+        if (document.getElementById('signout').style.display == '') {
+            document.getElementById('signin').style.display = '';
+            document.getElementById('signout').style.display = 'none';
+            document.getElementById('saveButton').style.display = 'none';
+            window.mainLayout.hide('west');
+        }
+        document.getElementById('navButton').style.display = 'none';
         document.getElementById('deleteButton').style.display = 'none';
     }
 
@@ -267,25 +274,20 @@ function loadProject(name) {
 }
 
 function share() {
-    var runner = document.getElementById('runner');
-    if (runner.contentWindow.location.href == 'about:blank') {
-        sweetAlert('Oops!', 'You must run your program before sharing it.', 'error');
-    } else {
-        var url = window.location.href;
+    var url = window.location.href;
 
-        // Strip trailing equal-signs, since some social sites mangle them.
-        url = url.replace(/=*$/, '');
+    // Strip trailing equal-signs, since some social sites mangle them.
+    url = url.replace(/=*$/, '');
 
-        sweetAlert({
-            html: true,
-            title: '<i class="mdi mdi-72px mdi-share"></i>&nbsp; Share',
-            text: 'Copy and share this link with others!',
-            type: 'input',
-            inputValue: url,
-            confirmButtonText: 'Done',
-            animation: 'slide-from-bottom'
-        });
-    }
+    sweetAlert({
+        html: true,
+        title: '<i class="mdi mdi-72px mdi-share"></i>&nbsp; Share',
+        text: 'Copy and share this link with others!',
+        type: 'input',
+        inputValue: url,
+        confirmButtonText: 'Done',
+        animation: 'slide-from-bottom'
+    });
 }
 
 function stop() {

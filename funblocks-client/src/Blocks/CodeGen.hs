@@ -85,6 +85,63 @@ errg msg block = SE ("",CNone) $ Just $ Error msg block
 
 type GeneratorFunction = Block -> SaveErr (Code, OrderConstant)
 
+
+
+-- A simple AST that will be used to store the structure of the code
+-- We aren't too worried about types at this point (for now)
+
+data Expr = LiteralS T.Text
+          | LiteralN Double
+          | LocalVar T.Text
+          | CallFunc T.Text [Expr] -- name, arg1, arg2...
+          | CallFuncInfix T.Text Expr Expr -- left <> right
+          | FuncDef T.Text [T.Text] Expr -- let name x y z = expr
+          | If Expr Expr Expr -- if expr then expr else expr
+          | Case Expr [(T.Text,[T.Text],Expr)] -- case expr of consName vars expr
+          | UserType Type          
+
+data Type = Type T.Text
+     | Sum T.Text [Type]
+
+data Product = Product T.Text [Type] -- Constructor tp1*tp2*tp3
+
+
+class Pretty a where
+  pretty :: a -> T.Text
+
+instance Pretty Product where 
+  pretty (Product s tps) = s ++ " " ++ T.concat (map pretty tps)
+
+instance Pretty Type where
+  pretty (Type s) = s
+  pretty (Sum typeName ps) = let tps = map pretty ps 
+                                 format = zipWith (++) (" = ":(repeat "      | ")) tps
+                             in "data " ++ typeName ++ (T.intercalate "\n" format)
+
+instance Pretty Expr where
+  pretty (LiteralS s) = s
+  pretty (LiteralN d) = show d
+  pretty (LocalVar name) = name
+  pretty (CallFunc name vars_) = let vars = map pretty vars_
+                                     varCode = if not $ null vars
+                                               then "(" ++ T.intercalate "," vars ++ ")"
+                                               else ""
+                                in name ++ varCode
+  pretty (CallFuncInfix name left right) = pretty left ++ " " ++ name ++ pretty right
+  pretty (FuncDef name vars expr) = let varCode = if not $ null vars 
+                                                  then "(" ++ T.intercalate "," vars ++ ")"
+                                                  else ""
+                                    in name ++ varCode ++ " = " ++ (pretty expr) 
+  pretty (If cond th el) = "If " ++ pretty cond ++ " then " ++ pretty th ++ " else " ++ pretty el 
+  pretty (Case expr rows) = let entries = map (\(con, vars, expr) -> "let " ++ con ++ " " ++ T.unwords vars ++ pretty expr) rows
+                            in  "case " ++ pretty expr ++ " of " ++ T.concat entries 
+  pretty (UserType tp) = pretty tp
+
+
+ 
+
+
+
 -- PROGRAMS --------------------------------------
 blockDrawingOf :: GeneratorFunction
 blockDrawingOf block = do 

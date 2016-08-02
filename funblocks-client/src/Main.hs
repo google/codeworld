@@ -34,6 +34,7 @@ import qualified Data.Text as T
 import Control.Monad.Trans (liftIO)
 import Blockly.Workspace hiding (workspaceToCode)
 import Blocks.Parser
+import Blocks.CodeGen
 import Blocks.Types
 import Blockly.Event
 import Blockly.General

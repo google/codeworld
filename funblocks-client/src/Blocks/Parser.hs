@@ -16,13 +16,17 @@
   limitations under the License.
 -}
 
-module Blocks.Parser (workspaceToCode
-                      ,Error(..)
+-- Parse the Blockly structure into a Expr
+
+module Blocks.Parser ( Error(..)
+                      ,SaveErr(..)
+                      ,Expr(..)
+                      ,Type(..)
+                      ,blockCodeMap
                       ,getGenerationBlocks)
   where
 
 import Blockly.Block
-import Blockly.Workspace hiding (workspaceToCode)
 import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
@@ -56,7 +60,6 @@ atomic :: Expr ->(Expr, OrderConstant)
 atomic code = (code, CAtomic)
 
 
-type Code = T.Text
 data Error = Error T.Text Block -- errorMsg, block
 
 -- always return a, only return first error, monadic interface
@@ -85,7 +88,7 @@ errs msg block = SE "" $ Just $ Error msg block
 errg :: T.Text -> Block -> SaveErr (Expr, OrderConstant)
 errg msg block = SE (Comment,CNone) $ Just $ Error msg block
 
-type GeneratorFunction = Block -> SaveErr (Expr, OrderConstant)
+type ParserFunction = Block -> SaveErr (Expr, OrderConstant)
 
 
 
@@ -116,85 +119,40 @@ data Type = Type T.Text
 
 -- data Product = Product T.Text [Type] -- Constructor tp1*tp2*tp3
 
-
-class Pretty a where
-  pretty :: a -> T.Text
-
--- instance Pretty Product where 
---  pretty (Product s tps) = s ++ " " ++ T.concat (map pretty tps)
-
-instance Pretty Type where
-  pretty (Type s) = s
-  pretty (Sum typeName ps) = let tps = map pretty ps 
-                                 format = zipWith (++) (" = ":(repeat "      | ")) tps
-                             in "data " ++ typeName ++ (T.intercalate "\n" format)
-  pretty (Product s tps) = s ++ " " ++ T.unwords (map pretty tps)
-  pretty (ListType t) = "[" ++ pretty t ++ "]"
-
-instance Pretty Expr where
-  pretty (LiteralS s) = s
-  pretty (LiteralN d) = show d
-  pretty (LocalVar name) = name
-  pretty (CallFunc name vars_) = let vars = map pretty vars_
-                                     varCode = if not $ null vars
-                                               then "(" ++ T.intercalate "," vars ++ ")"
-                                               else ""
-                                in name ++ varCode
-  pretty (CallFuncInfix name left right) = pretty left ++ " " ++ name ++ " " ++ pretty right
-  pretty (FuncDef name vars expr) = let varCode = if not $ null vars 
-                                                  then "(" ++ T.intercalate "," vars ++ ")"
-                                                  else ""
-                                    in name ++ varCode ++ " = " ++ (pretty expr) 
-  pretty (If cond th el) = "If " ++ pretty cond ++ " then " ++ pretty th ++ " else " ++ pretty el 
-  pretty (Case expr rows) = let entries = map (\(con, vars, expr) -> "let " ++ con ++ " " ++ T.unwords vars ++ pretty expr) rows
-                            in  "case " ++ pretty expr ++ " of " ++ T.concat entries 
-  pretty (UserType tp) = pretty tp
-  pretty (Tuple exprs) = "(" ++ (T.intercalate "," $ map pretty exprs) ++ ")"
-  pretty (ListCreate exprs) = "(" ++ (T.intercalate "," $ map pretty exprs) ++ ")"
-  pretty (ListSpec left right) = "[" ++ (pretty left) ++ " .. " ++ (pretty right) ++ "]"
-  pretty (ListComp act vars_ guards) = 
-    let varCode = T.intercalate "," $ map (\(var,expr) -> var ++ " <- " ++ (pretty expr) ) vars_
-        guardCode = T.intercalate "," $ map pretty guards
-    in "[" ++ (pretty act) ++ " | " ++ varCode ++ (if T.null guardCode then "" else "," ++ guardCode)
-                ++ "]" 
-
-  pretty Comment = ""
-
-
 -- standard function block, automatically handles machinery for functions
 -- assumes inputs are in correct order
-sFuncBlock :: GeneratorFunction
+sFuncBlock :: ParserFunction
 sFuncBlock block = do
   let argNames = getValueInputNames block
   let funcName = getFunctionName block
-  args <- mapM (\arg -> valueToCode block arg CNone) argNames
+  args <- mapM (\arg -> valueToExpr block arg CNone) argNames
   return $ none $ CallFunc funcName args
 
-sInfixBlock :: OrderConstant -> GeneratorFunction
+sInfixBlock :: OrderConstant -> ParserFunction
 sInfixBlock ordr block = do
   let argNames = getValueInputNames block
   let funcName = getFunctionName block
   if length argNames /= 2 then
     errg "Infix functions must have 2 connected blocks" block
   else do
-    args@(left:right:xs) <- mapM (\arg -> valueToCode block arg ordr) argNames
+    args@(left:right:xs) <- mapM (\arg -> valueToExpr block arg ordr) argNames
     return (CallFuncInfix funcName left right, ordr)
 
 
 -- PROGRAMS --------------------------------------
-blockDrawingOf :: GeneratorFunction
+blockDrawingOf :: ParserFunction
 blockDrawingOf block = do 
-      expr <- valueToCode block "VALUE" CNone
+      expr <- valueToExpr block "VALUE" CNone
       return $ none $ FuncDef "main" [] $ CallFunc "drawingOf" [expr]
 
 -- NUMBERS -------------------------------------------------------
 
-blockNumber :: GeneratorFunction
+blockNumber :: ParserFunction
 blockNumber block = do 
     let arg = getFieldValue block "NUMBER"
     return $ none $ LiteralN (read $ T.unpack arg) 
 
-blockNumberPerc :: GeneratorFunction
+blockNumberPerc :: ParserFunction
 blockNumberPerc block = do 
     let arg = getFieldValue block "NUMBER"
     let numb = (read (T.unpack arg)) * 0.01
@@ -202,18 +160,18 @@ blockNumberPerc block = do
 
 -- TEXT --------------------------------------------------
 
-blockString :: GeneratorFunction
+blockString :: ParserFunction
 blockString block = do 
     let txt = getFieldValue block "TEXT" 
-    return $ none $ LiteralS $ escape txt 
+    return $ none $ LiteralS txt 
 
 -- LOGIC ------------------------------------------
 
-blockIf :: GeneratorFunction
+blockIf :: ParserFunction
 blockIf block = do 
-    ifexpr <- valueToCode block "IF" CNone
-    thenexpr <- valueToCode block "THEN" CNone
-    elseexpr <- valueToCode block "ELSE" CNone
+    ifexpr <- valueToExpr block "IF" CNone
+    thenexpr <- valueToExpr block "THEN" CNone
+    elseexpr <- valueToExpr block "ELSE" CNone
     return $ none $ If ifexpr thenexpr elseexpr
 
 
@@ -221,29 +179,29 @@ blockIf block = do
 foreign import javascript unsafe "$1.arguments_"
   js_funcargs :: Block -> JA.JSArray
 
-blockLetFunc :: GeneratorFunction
+blockLetFunc :: ParserFunction
 blockLetFunc block = do 
     let name = getFieldValue block "NAME" 
     let vars = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
                 JA.toList $ js_funcargs block
-    expr <- valueToCode block "RETURN" CNone
+    expr <- valueToExpr block "RETURN" CNone
     return $ none $ FuncDef name vars expr 
 
-blockLetCall :: GeneratorFunction
+blockLetCall :: ParserFunction
 blockLetCall block = do 
     let name = getFieldValue block "NAME" 
     let args = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
                 JA.toList $ js_funcargs block
-    vals <- mapM (\t -> valueToCode block t CNone) ["ARG" ++ show i | i <- [0..length args - 1]]
+    vals <- mapM (\t -> valueToExpr block t CNone) ["ARG" ++ show i | i <- [0..length args - 1]]
     return $ none $ CallFunc name vals
 
-blockLocalVar :: GeneratorFunction
+blockLocalVar :: ParserFunction
 blockLocalVar block = do 
     let name = getFieldValue block "NAME" 
     return $ none $ CallFunc name []
 
 -- ANIMATION
-blockAnim :: GeneratorFunction
+blockAnim :: ParserFunction
 blockAnim block =  
     case getInputBlock block "FUNC" of
       Just inpBlock -> do
@@ -251,7 +209,7 @@ blockAnim block =
                        return $ none $ FuncDef "main" [] $ CallFunc "animationOf" [CallFunc funcName []]
       Nothing -> errg "No function inserted" block
 
-blockSimulation :: GeneratorFunction
+blockSimulation :: ParserFunction
 blockSimulation block = do
         initial <- aux "INITIAL"
         step <- aux "STEP"
@@ -265,34 +223,34 @@ blockSimulation block = do
 
 
 -- COMMENT
-blockComment :: GeneratorFunction
+blockComment :: ParserFunction
 blockComment block = return $ none $ Comment
 
 -- Tuples
-blockCreatePair :: GeneratorFunction
+blockCreatePair :: ParserFunction
 blockCreatePair block = do 
-    first <- valueToCode block "FIRST" CNone
-    second <- valueToCode block "SECOND" CNone
+    first <- valueToExpr block "FIRST" CNone
+    second <- valueToExpr block "SECOND" CNone
     return $ none $ Tuple [first,second]
 
-blockFst :: GeneratorFunction
+blockFst :: ParserFunction
 blockFst = sFuncBlock
 
-blockSnd :: GeneratorFunction
+blockSnd :: ParserFunction
 blockSnd = sFuncBlock 
 
 -- LISTS
 
-blockCreateList :: GeneratorFunction
+blockCreateList :: ParserFunction
 blockCreateList block = do
   let c = getItemCount block
-  vals <- mapM (\t -> valueToCode block t CNone) ["ADD" ++ show i | i <- [0..c-1]]
+  vals <- mapM (\t -> valueToExpr block t CNone) ["ADD" ++ show i | i <- [0..c-1]]
   return $ none $ ListCreate vals
 
-blockNumGen :: GeneratorFunction
+blockNumGen :: ParserFunction
 blockNumGen block = do 
-    left <- valueToCode block "LEFT" CNone
-    right <- valueToCode block "RIGHT" CNone
+    left <- valueToExpr block "LEFT" CNone
+    right <- valueToExpr block "RIGHT" CNone
     return $ none $ ListSpec left right
 
 -- LIST COMPREHENSION
@@ -306,16 +264,16 @@ foreign import javascript unsafe "$1.vars_"
   js_blockVars :: Block -> JA.JSArray
 
 -- ListComp Expr [(T.Text,Expr)] [Expr] -- [action | var <- expr, var <- expr, guards]
-blockListComp :: GeneratorFunction
+blockListComp :: ParserFunction
 blockListComp block = do 
     let varCount = js_blockVarCount block
     let guardCount = js_blockGuardCount block
     let vars = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
                 JA.toList $ js_blockVars block
 
-    varCodes <- mapM (\t -> valueToCode block t CNone) ["VAR" ++ show i | i <- [0..varCount-1]]
-    guards <- mapM (\t -> valueToCode block t CNone) ["GUARD" ++ show i | i <- [0..guardCount-1]]
-    doCode <- valueToCode block "DO" CNone
+    varCodes <- mapM (\t -> valueToExpr block t CNone) ["VAR" ++ show i | i <- [0..varCount-1]]
+    guards <- mapM (\t -> valueToExpr block t CNone) ["GUARD" ++ show i | i <- [0..guardCount-1]]
+    doCode <- valueToExpr block "DO" CNone
 
     return $ none $ ListComp doCode (zip vars varCodes) guards
 
@@ -324,40 +282,40 @@ blockListComp block = do
 foreign import javascript unsafe "$1.itemCount_"
   js_itemCount :: Block -> Int
 
-blockUserType :: GeneratorFunction
+blockUserType :: ParserFunction
 blockUserType block = do 
     let name = getFieldValue block "NAME"
     return $ none $ UserType $ Type name
 
-blockListType :: GeneratorFunction
+blockListType :: ParserFunction
 blockListType block = do 
-    tp <- valueToCode block "TP" CNone
+    tp <- valueToExpr block "TP" CNone
     return $ none $ UserType $ ListType $ toType tp 
   where
     toType (UserType tp) = tp
 
-blockConstructor :: GeneratorFunction
+blockConstructor :: ParserFunction
 blockConstructor block = do 
     let name :: T.Text = getFieldValue block "NAME"
     let itemCount = js_itemCount block
-    tps :: [Expr] <- mapM (\n -> valueToCode block n CNone) ["TP" ++ show i | i <- [0..itemCount-1]] 
+    tps :: [Expr] <- mapM (\n -> valueToExpr block n CNone) ["TP" ++ show i | i <- [0..itemCount-1]] 
     let out :: Expr = CallConstr name tps
     return $ none out
 
-blockProduct :: GeneratorFunction
+blockProduct :: ParserFunction
 blockProduct block = do 
     let constructor = getFieldValue block "CONSTRUCTOR"
     let itemCount = js_itemCount block
-    tps :: [Expr] <- mapM (\n -> valueToCode block n CNone) ["TP" ++ show i | i <- [0..itemCount-1]] 
+    tps :: [Expr] <- mapM (\n -> valueToExpr block n CNone) ["TP" ++ show i | i <- [0..itemCount-1]] 
     return $ none $ UserType $ Product constructor $ map toType tps 
   where
     toType (UserType tp) = tp
 
-blockSum :: GeneratorFunction
+blockSum :: ParserFunction
 blockSum block = do 
     let typeName = getFieldValue block "NAME"
     let itemCount = js_itemCount block
-    tps <- mapM (\n -> valueToCode block n CNone) ["PROD" ++ show i | i <- [0..itemCount-1]] 
+    tps <- mapM (\n -> valueToExpr block n CNone) ["PROD" ++ show i | i <- [0..itemCount-1]] 
     return $ none $ UserType $ Sum typeName (map toType tps)
   where
     toType (UserType tp) = tp
@@ -370,12 +328,12 @@ foreign import javascript unsafe "$1.getInputVars($2)"
 foreign import javascript unsafe "$1.getInputConstructor($2)"
   js_getCaseInputConstructor :: Block -> Int -> JSString
 
-blockCase:: GeneratorFunction
+blockCase:: ParserFunction
 blockCase block = do 
     let name = getFieldValue block "NAME"
     let itemCount = js_itemCount block
-    inp :: Expr <- valueToCode block "INPUT" CNone
-    outs <- mapM (\n -> valueToCode block n CNone) ["CS" ++ show i | i <- [0..itemCount-1]] 
+    inp :: Expr <- valueToExpr block "INPUT" CNone
+    outs <- mapM (\n -> valueToExpr block n CNone) ["CS" ++ show i | i <- [0..itemCount-1]] 
     let vars_ :: [[T.Text]] = map vars [0..itemCount-1]
     let cons_ :: [T.Text] = map con [0..itemCount-1]
     return $ none $ Case inp (zip3 cons_ vars_ outs :: [(T.Text,[T.Text],Expr)] ) 
@@ -387,117 +345,133 @@ blockCase block = do
 getGenerationBlocks :: [T.Text]
 getGenerationBlocks = M.keys blockCodeMap
 
-blockCodeMap = M.fromList [  -- PROGRAMS 
-                   ("cwDrawingOf",blockDrawingOf)
-                  ,("cwAnimationOf",blockAnim)
-                  ,("cwSimulationOf",blockSimulation)
-                  -- PICTURES
-                  ,("cwBlank",sFuncBlock)
-                  ,("cwCoordinatePlane",sFuncBlock)
-                  ,("cwCodeWorldLogo",sFuncBlock)
-                  ,("cwText",sFuncBlock)
-                  ,("cwCircle",sFuncBlock)
-                  ,("cwThickCircle",sFuncBlock)
-                  ,("cwSolidCircle",sFuncBlock)
-                  ,("cwRectangle",sFuncBlock)
-                  ,("cwThickRectangle",sFuncBlock)
-                  ,("cwSolidRectangle",sFuncBlock)
-                  ,("cwArc",sFuncBlock)
-                  ,("cwSector",sFuncBlock)
-                  ,("cwThickArc",sFuncBlock)
+blockCodeMap = M.fromList $ concat [regularBlocks, specialBlocks, infixBlocks]
+
+regularBlockNames = 
+                  [  -- PROGRAMS 
+                  "cwBlank"
+                  ,"cwCoordinatePlane"
+                  ,"cwCodeWorldLogo"
+                  ,"cwText"
+                  ,"cwCircle"
+                  ,"cwThickCircle"
+                  ,"cwSolidCircle"
+                  ,"cwRectangle"
+                  ,"cwThickRectangle"
+                  ,"cwSolidRectangle"
+                  ,"cwArc"
+                  ,"cwSector"
+                  ,"cwThickArc"
                   -- TRANSFORMATIONS
-                  ,("cwColored",sFuncBlock)
-                  ,("cwTranslate",sFuncBlock)
-                  ,("cwCombine",sInfixBlock CCombine)
-                  ,("cwRotate",sFuncBlock)
-                  ,("cwScale",sFuncBlock)
+                  ,"cwColored"
+                  ,"cwTranslate"
+                  ,"cwRotate"
+                  ,"cwScale"
                   -- NUMBERS
-                  ,("numNumber",blockNumber)
-                  ,("numNumberPerc",blockNumberPerc)
+                  ,"numMax"
+                  ,"numMin"
+                  ,"numOpposite"
+                  ,"numAbs"
+                  ,"numRound"
+                  ,"numReciprocal"
+                  ,"numQuot"
+                  ,"numRem"
+                  ,"numPi"
+                  ,"numSqrt"
+                  ,"numGCD"
+                  ,"numLCM"
+                  -- TEXT
+                  ,"txtPrinted"
+                  ,"txtLowercase"
+                  ,"txtUppercase"
+                  ,"txtCapitalized"
+                  -- COLORS
+                  ,"cwBlue"
+                  ,"cwRed"
+                  ,"cwGreen"
+                  ,"cwBrown"
+                  ,"cwOrange"
+                  ,"cwBlack"
+                  ,"cwWhite"
+                  ,"cwCyan"
+                  ,"cwMagenta"
+                  ,"cwYellow"
+                  ,"cwAquamarine"
+                  ,"cwAzure"
+                  ,"cwViolet"
+                  ,"cwChartreuse"
+                  ,"cwRose"
+                  ,"cwPink"
+                  ,"cwPurple"
+                  ,"cwGray"
+                  ,"cwMixed"
+                  ,"cwLight"
+                  ,"cwDark"
+                  ,"cwBright"
+                  ,"cwDull"
+                  ,"cwTranslucent"
+                  ,"cwRGBA"
+                  -- LOGIC
+                  ,"conNot"
+                  ,"conTrue"
+                  ,"conFalse"
+                  ,"conEven"
+                  ,"conOdd"
+                  ,"conStartWith"
+                  ,"conEndWith"
+                  -- Tuples
+                  -- Lists
+                  ,"lists_length"
+                  ,"lists_at"
+                  -- FUNCTIONS
+                  ,"lists_path"
+                  -- TYPES
+                    ]
+
+regularBlocks :: [(T.Text,ParserFunction)]
+regularBlocks = zip regularBlockNames (repeat sFuncBlock)
+
+
+infixBlocks :: [(T.Text,ParserFunction)]
+infixBlocks =   [  -- PROGRAMS 
+                  ("cwCombine",sInfixBlock CCombine)
                   ,("numAdd",sInfixBlock CAddition)
                   ,("numSub",sInfixBlock CSubtraction)
                   ,("numMult",sInfixBlock CMultiplication)
                   ,("numDiv",sInfixBlock CDivision)
                   ,("numExp",sInfixBlock CMultiplication)
-                  ,("numMax",sFuncBlock)
-                  ,("numMin",sFuncBlock)
-                  ,("numOpposite",sFuncBlock)
-                  ,("numAbs",sFuncBlock)
-                  ,("numRound",sFuncBlock)
-                  ,("numReciprocal",sFuncBlock)
-                  ,("numQuot",sFuncBlock)
-                  ,("numRem",sFuncBlock)
-                  ,("numPi",sFuncBlock)
-                  ,("numSqrt",sFuncBlock)
-                  ,("numGCD",sFuncBlock)
-                  ,("numLCM",sFuncBlock)
-                  -- TEXT
                   ,("txtConcat",sInfixBlock CAtomic)
-                  ,("text_typed",blockString)
-                  ,("txtPrinted",sFuncBlock)
-                  ,("txtLowercase",sFuncBlock)
-                  ,("txtUppercase",sFuncBlock)
-                  ,("txtCapitalized",sFuncBlock)
-                  -- COLORS
-                  ,("cwBlue",sFuncBlock)
-                  ,("cwRed",sFuncBlock)
-                  ,("cwGreen",sFuncBlock)
-                  ,("cwBrown",sFuncBlock)
-                  ,("cwOrange",sFuncBlock)
-                  ,("cwBlack",sFuncBlock)
-                  ,("cwWhite",sFuncBlock)
-                  ,("cwCyan",sFuncBlock)
-                  ,("cwMagenta",sFuncBlock)
-                  ,("cwYellow",sFuncBlock)
-                  ,("cwAquamarine",sFuncBlock)
-                  ,("cwAzure",sFuncBlock)
-                  ,("cwViolet",sFuncBlock)
-                  ,("cwChartreuse",sFuncBlock)
-                  ,("cwRose",sFuncBlock)
-                  ,("cwPink",sFuncBlock)
-                  ,("cwPurple",sFuncBlock)
-                  ,("cwGray",sFuncBlock)
-                  ,("cwMixed",sFuncBlock)
-                  ,("cwLight",sFuncBlock)
-                  ,("cwDark",sFuncBlock)
-                  ,("cwBright",sFuncBlock)
-                  ,("cwDull",sFuncBlock)
-                  ,("cwTranslucent",sFuncBlock)
-                  ,("cwRGBA",sFuncBlock)
-                  -- LOGIC
-                  ,("conIf",blockIf)
                   ,("conAnd",sInfixBlock CAtomic)
                   ,("conOr",sInfixBlock CAtomic)
-                  ,("conNot",sFuncBlock)
                   ,("conEq",sInfixBlock CAtomic)
                   ,("conNeq",sInfixBlock CAtomic)
-                  ,("conTrue",sFuncBlock)
-                  ,("conFalse",sFuncBlock)
                   ,("conGreater",sInfixBlock CAtomic)
                   ,("conGeq",sInfixBlock CAtomic)
                   ,("conLess",sInfixBlock CAtomic)
                   ,("conLeq",sInfixBlock CAtomic)
-                  ,("conEven",sFuncBlock)
-                  ,("conOdd",sFuncBlock)
-                  ,("conStartWith",sFuncBlock)
-                  ,("conEndWith",sFuncBlock)
-                  -- Tuples
+                  ,("lists_cons", sInfixBlock CAtomic)
+                    ]
+
+specialBlocks :: [(T.Text,ParserFunction)]
+specialBlocks = [  -- PROGRAMS 
+                   ("cwDrawingOf",blockDrawingOf)
+                  ,("cwAnimationOf",blockAnim)
+                  ,("cwSimulationOf",blockSimulation)
+                  ,("numNumber",blockNumber)
+                  ,("numNumberPerc",blockNumberPerc)
+                  ,("text_typed",blockString)
+                  ,("conIf",blockIf)
                   ,("pair_create_typed", blockCreatePair)
                   ,("pair_first_typed", blockFst)
                   ,("pair_second_typed", blockSnd)
-                  -- Lists
                   ,("lists_create_with_typed", blockCreateList)
-                  ,("lists_length", sFuncBlock)
-                  ,("lists_at", sFuncBlock)
                   ,("lists_cons", sInfixBlock CAtomic)
                   ,("lists_numgen", blockNumGen)
                   ,("lists_comprehension", blockListComp)
-                  -- FUNCTIONS
                   ,("procedures_letFunc",blockLetFunc)
                   ,("procedures_callreturn",blockLetCall)
                   ,("vars_local",blockLocalVar)
                   ,("comment",blockComment)
-                  ,("lists_path",sFuncBlock)
                   -- TYPES
                   ,("type_user", blockUserType)
                   ,("type_list", blockListType)
@@ -506,12 +480,15 @@ blockCodeMap = M.fromList [  -- PROGRAMS
                   ,("type_product", blockProduct)
                   ,("type_sum", blockSum)
                     ]
+
+
+
                                 
 -- Assigns CodeGen functions defined here to the Blockly Javascript Code
 -- generator
 
-valueToCode :: Block -> T.Text -> OrderConstant -> SaveErr Expr
-valueToCode block name ordr = do
+valueToExpr :: Block -> T.Text -> OrderConstant -> SaveErr Expr
+valueToExpr block name ordr = do
     case helper of 
       Just (func,inputBlock) -> do
         (code,innerOrder) <- func inputBlock
@@ -533,43 +510,11 @@ valueToCode block name ordr = do
                                else "(" ++ code ++ ")"
                           else code
 
--- Helper functions
-
--- Escapes a string
-
-escape :: T.Text -> T.Text
-escape xs = T.pack $ escape' (T.unpack xs)
-escape' :: String -> String
-escape' xs = ("\""::String) P.++ (concatMap f xs :: String ) P.++ ("\""::String) where
-    f :: Char -> String
-    f ('\\'::Char) = "\\\\" :: String
-    f ('\"'::Char) = "\\\"" :: String
-    f x    = [x]
-
-
-
-workspaceToCode :: Workspace -> IO (Code,[Error])
-workspaceToCode workspace = do
-    topBlocks <- getTopBlocksTrue workspace >>= return . filter (not . isDisabled)
-    let exprs = map blockToCode topBlocks
-    let errors = map (\(SE code (Just e)) -> e) $
-                 filter (\c -> case c of SE code Nothing -> False; _ -> True) exprs
-    let code = T.intercalate "\n\n" $ map (\(SE expr _) -> pretty expr) exprs
-    return (code,errors)
-  where
-    blockToCode :: Block -> SaveErr Expr
-    blockToCode block = do 
-      let blockType = getBlockType block 
-      case M.lookup blockType blockCodeMap of
-        Just func -> let (SE (code, oc) err) = func block
-                     in SE code err
-        Nothing -> errc "No such block in CodeGen" block
-
 
 --- FFI
 
-foreign import javascript unsafe "Blockly.FunBlocks.valueToCode($1, $2, $3)"
-  js_valueToCode :: Block -> JSString -> Int -> JSString
+foreign import javascript unsafe "Blockly.FunBlocks.valueToExpr($1, $2, $3)"
+  js_valueToExpr :: Block -> JSString -> Int -> JSString
 
 
 data OrderConstant =  CAtomic

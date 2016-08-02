@@ -293,6 +293,7 @@ blockListType block = do
     return $ none $ UserType $ ListType $ toType tp 
   where
     toType (UserType tp) = tp
+    toType _ = Type ""
 
 blockConstructor :: ParserFunction
 blockConstructor block = do 
@@ -310,6 +311,7 @@ blockProduct block = do
     return $ none $ UserType $ Product constructor $ map toType tps 
   where
     toType (UserType tp) = tp
+    toType _ = Type ""
 
 blockSum :: ParserFunction
 blockSum block = do 
@@ -319,6 +321,7 @@ blockSum block = do
     return $ none $ UserType $ Sum typeName (map toType tps)
   where
     toType (UserType tp) = tp
+    toType _ = Type ""
 
 -- CASE
 

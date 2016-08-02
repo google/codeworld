@@ -93,7 +93,7 @@ type GeneratorFunction = Block -> SaveErr (Expr, OrderConstant)
 -- We aren't too worried about types at this point (for now)
 
 data Expr = LiteralS T.Text
-          | LiteralN Double
+          | LiteralN Float
           | LocalVar T.Text
           | CallFunc T.Text [Expr] -- name(arg1, arg2,...)
           | CallConstr T.Text [Expr] -- RGBA a b c
@@ -197,7 +197,7 @@ blockNumber block = do
 blockNumberPerc :: GeneratorFunction
 blockNumberPerc block = do 
     let arg = getFieldValue block "NUMBER"
-    let numb = (read (T.unpack arg) :: Double) * 0.01
+    let numb = (read (T.unpack arg)) * 0.01
     return $ none $ LiteralN numb
 
 -- TEXT --------------------------------------------------

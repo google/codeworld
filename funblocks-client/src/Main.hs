@@ -33,7 +33,7 @@ import Data.JSString.Text
 import qualified Data.Text as T
 import Control.Monad.Trans (liftIO)
 import Blockly.Workspace hiding (workspaceToCode)
-import Blocks.CodeGen
+import Blocks.Parser
 import Blocks.Types
 import Blockly.Event
 import Blockly.General

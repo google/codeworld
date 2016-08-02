@@ -16,7 +16,7 @@
   limitations under the License.
 -}
 
-module Blocks.CodeGen (workspaceToCode
+module Blocks.Parser (workspaceToCode
                       ,Error(..)
                       ,getGenerationBlocks)
   where

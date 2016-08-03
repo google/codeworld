@@ -101,7 +101,7 @@ instance Pretty Expr where
 
   pretty (If cond th el) = do
                              PR.push
-                             PR.write "If"
+                             PR.write "if"
                              pretty cond
                              PR.reset 
                              PR.write "then"

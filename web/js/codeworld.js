@@ -19,8 +19,6 @@
  * entire document body and other JavaScript has loaded.
  */
 function init() {
-    showingBrowse = true;
-    showingResult = false;
     allProjectNames = [];
     openProjectName = null;
 
@@ -132,9 +130,13 @@ function getCurrentProject() {
 function updateUI() {
     var isSignedIn = signedIn();
     if (isSignedIn) {
-        document.getElementById('signin').style.display = 'none';
-        document.getElementById('signout').style.display = '';
-        document.getElementById('saveAsButton').style.display = '';
+        if (document.getElementById('signout').style.display == 'none') {
+            document.getElementById('signin').style.display = 'none';
+            document.getElementById('signout').style.display = '';
+            document.getElementById('navButton').style.display = '';
+            window.mainLayout.show('west');
+            window.mainLayout.open('west');
+        }
 
         if (window.openProjectName) {
             document.getElementById('saveButton').style.display = '';
@@ -144,30 +146,14 @@ function updateUI() {
             document.getElementById('deleteButton').style.display = 'none';
         }
     } else {
-        document.getElementById('signin').style.display = '';
-        document.getElementById('signout').style.display = 'none';
-        document.getElementById('saveButton').style.display = 'none';
-        document.getElementById('saveAsButton').style.display = 'none';
-        document.getElementById('deleteButton').style.display = 'none';
-    }
-
-    if (window.showingBrowse) {
-        document.getElementById('nav').style.display = '';
-    } else {
-        document.getElementById('nav').style.display = 'none';
-    }
-
-    if (window.showingResult) {
-        document.getElementById('result').style.display = '';
-
-        if (window.programRunning) {
-            document.getElementById('shareButton').style.display = '';
-        } else {
-            document.getElementById('shareButton').style.display = 'none';
+        if (document.getElementById('signout').style.display == '') {
+            document.getElementById('signin').style.display = '';
+            document.getElementById('signout').style.display = 'none';
+            document.getElementById('saveButton').style.display = 'none';
+            window.mainLayout.hide('west');
         }
-    } else {
-        document.getElementById('result').style.display = 'none';
-        document.getElementById('shareButton').style.display = 'none';
+        document.getElementById('navButton').style.display = 'none';
+        document.getElementById('deleteButton').style.display = 'none';
     }
 
     var projects = document.getElementById('nav_mine');
@@ -222,11 +208,6 @@ function updateUI() {
     }
 
     document.title = title + " - CodeWorld"
-}
-
-function toggleBrowser() {
-    window.showingBrowse = !window.showingBrowse;
-    updateUI();
 }
 
 function help(doc) {
@@ -293,25 +274,20 @@ function loadProject(name) {
 }
 
 function share() {
-    var runner = document.getElementById('runner');
-    if (runner.contentWindow.location.href == 'about:blank') {
-        sweetAlert('Oops!', 'You must run your program before sharing it.', 'error');
-    } else {
-        var url = window.location.href;
+    var url = window.location.href;
 
-        // Strip trailing equal-signs, since some social sites mangle them.
-        url = url.replace(/=*$/, '');
+    // Strip trailing equal-signs, since some social sites mangle them.
+    url = url.replace(/=*$/, '');
 
-        sweetAlert({
-            html: true,
-            title: '<i class="mdi mdi-72px mdi-share"></i>&nbsp; Share',
-            text: 'Copy and share this link with others!',
-            type: 'input',
-            inputValue: url,
-            confirmButtonText: 'Done',
-            animation: 'slide-from-bottom'
-        });
-    }
+    sweetAlert({
+        html: true,
+        title: '<i class="mdi mdi-72px mdi-share"></i>&nbsp; Share',
+        text: 'Copy and share this link with others!',
+        type: 'input',
+        inputValue: url,
+        confirmButtonText: 'Done',
+        animation: 'slide-from-bottom'
+    });
 }
 
 function stop() {
@@ -319,25 +295,29 @@ function stop() {
 }
 
 function run(hash, msg, error) {
-    window.showingResult = hash || msg;
-
     if (hash) {
         window.location.hash = '#' + hash;
+        document.getElementById('shareButton').style.display = '';
     } else {
         window.location.hash = '';
+        document.getElementById('shareButton').style.display = 'none';
     }
 
     var runner = document.getElementById('runner');
-    if (hash && !error) {
-        var loc = 'run.html?hash=' + hash + '&mode=' + window.buildMode;
-        runner.contentWindow.location.replace(loc);
-        document.getElementById('runner').style.display = '';
-        document.getElementById('runner').contentWindow.focus();
-        window.programRunning = true;
+    if (hash || msg) {
+        if (hash && !error) {
+            var loc = 'run.html?hash=' + hash + '&mode=' + window.buildMode;
+            runner.contentWindow.location.replace(loc);
+            document.getElementById('runner').style.display = '';
+            document.getElementById('runner').contentWindow.focus();
+        } else {
+            runner.contentWindow.location.replace('about:blank');
+            document.getElementById('runner').style.display = 'none';
+        }
+        window.mainLayout.show('east');
+        window.mainLayout.open('east');
     } else {
-        runner.contentWindow.location.replace('about:blank');
-        document.getElementById('runner').style.display = 'none';
-        window.programRunning = false;
+        window.mainLayout.hide('east');
     }
 
     var message = document.getElementById('message');

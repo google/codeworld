@@ -45,7 +45,7 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
                                    MULTICHAR_ESCAPE_REGEX + ')*"');
   var RE_OPENBRACKET  = /[([{]/;
   var RE_CLOSEBRACKET  = /[)\]}]/;
-  var RE_INCOMMENT    = /(?:[^{-]|-(?=[^}])|\{(?=[^-]))*/;
+  var RE_INCOMMENT    = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/;
   var RE_ENDCOMMENT   = /-}/;
 
   function opening(bracket) {

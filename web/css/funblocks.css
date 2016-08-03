@@ -23,6 +23,14 @@
 
 Blockly.Blocks.lists.HUE = 260;
 
+.cw-button.blu,.cw-button.blu:hover:active {
+  background-color: #144ba6;
+}
+
+.cw-button.blu:hover {
+  background-color: #0f3678;
+}
+
 
 
 

@@ -303,7 +303,7 @@ function handleGAPILoad() {
             window.auth2 = gapi.auth2.init({
                 client_id: clientId,
                 scope: 'profile',
-                fetch_basic_profile: true
+                fetch_basic_profile: false
             });
 
             auth2.isSignedIn.listen(signinCallback);

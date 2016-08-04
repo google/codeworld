@@ -93,8 +93,6 @@ instance Pretty Expr where
           where
             getPrec (CallFuncInfix name _ _) = infixP name
             getPrec _ = 9
-            lp = getPrec left
-            rp = getPrec right
             cur = infixP name
             shouldParenth expr = let prec = getPrec expr in
                                  if prec < cur then parenthesize expr else pretty expr

@@ -85,11 +85,24 @@ instance Pretty Expr where
                                       [] -> return ()
                                       _ -> mapM_ (\v -> pretty v >> PR.makeSpace) vars_ 
 
-  pretty (CallFuncInfix name left right) = do pretty left 
+  pretty (CallFuncInfix name left right) = do shouldParenth left 
                                               PR.makeSpace
                                               PR.write name -- SPACES between?
                                               PR.makeSpace
-                                              pretty right
+                                              shouldParenth right
+          where
+            getPrec (CallFuncInfix name _ _) = infixP name
+            getPrec _ = 9
+            lp = getPrec left
+            rp = getPrec right
+            cur = infixP name
+            shouldParenth expr = let prec = getPrec expr in
+                                 if prec < cur then parenthesize expr else pretty expr
+            parenthesize expr = do
+                            PR.write_ "("
+                            pretty expr
+                            PR.write_ ")"
+
   pretty (FuncDef name vars expr) = do 
                                       let varCode = if not $ null vars 
                                                     then "(" ++ T.intercalate "," vars ++ ")"
@@ -148,6 +161,14 @@ instance Pretty Expr where
                           PR.write "]"
   pretty Comment = PR.write_ ""
 
+infixP "-" = 6
+infixP "+" = 6
+infixP "*" = 7
+infixP "/" = 7
+infixP "^" = 8
+infixP "&" = 8
+infixP "<>" = 8
+infixP _ = 9
 
 workspaceToCode :: Workspace -> IO (Code,[Error])
 workspaceToCode workspace = do
@@ -162,7 +183,7 @@ workspaceToCode workspace = do
     blockToCode block = do 
       let blockType = getBlockType block 
       case M.lookup blockType blockCodeMap of
-        Just func -> let (SE (code, oc) err) = func block
+        Just func -> let (SE code err) = func block
                      in SE code err
         Nothing -> errc "No such block in CodeGen" block
 

@@ -154,8 +154,8 @@ instance Pretty Expr where
                           PR.write_ "["
                           pretty act
                           PR.write_ " | "
-                          PR.intercalation "," vars_ (\(var,expr) -> PR.write_ var >> PR.write " <- " >> pretty expr) 
-                          PR.intercalation "," guards pretty
+                          PR.intercalation ", " vars_ (\(var,expr) -> PR.write_ var >> PR.write_ " <- " >> pretty expr) 
+                          PR.intercalation ", " guards pretty
                           PR.write_ "]"
   pretty Comment = PR.write_ ""
 

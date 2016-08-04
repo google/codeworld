@@ -78,7 +78,7 @@ instance Pretty Expr where
                                       _ -> do 
                                              PR.write_ "("
                                              PR.intercalation "," vars_ pretty 
-                                             PR.write ")"
+                                             PR.write_ ")"
   pretty (CallConstr name vars_) = do 
                                     PR.write name
                                     case vars_ of
@@ -141,24 +141,24 @@ instance Pretty Expr where
   pretty (Tuple exprs) = do 
                           PR.write_ "("
                           PR.intercalation "," exprs pretty
-                          PR.write ")"
+                          PR.write_ ")"
   pretty (ListCreate exprs) = do 
                           PR.write_ "("
                           PR.intercalation "," exprs pretty
-                          PR.write ")"
+                          PR.write_ ")"
   pretty (ListSpec left right) = do 
                           PR.write_ "["
                           pretty left
                           PR.write_ " .. "
                           pretty right
-                          PR.write "]"
+                          PR.write_ "]"
   pretty (ListComp act vars_ guards) =  do
                           PR.write_ "["
                           pretty act
                           PR.write_ " | "
                           PR.intercalation "," vars_ (\(var,expr) -> PR.write_ var >> PR.write " <- " >> pretty expr) 
                           PR.intercalation "," guards pretty
-                          PR.write "]"
+                          PR.write_ "]"
   pretty Comment = PR.write_ ""
 
 infixP "-" = 6

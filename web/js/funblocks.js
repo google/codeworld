@@ -89,16 +89,19 @@ function updateEditor(code) {
 
 function run(xmlHash, codeHash, msg, error) {
     var hash = codeHash;
+
+    if (hash) {
+        window.location.hash = '#' + xmlHash;
+        document.getElementById('shareButton').style.display = '';
+    } else {
+        window.location.hash = '';
+        document.getElementById('shareButton').style.display = 'none';
+    }
+
     window.showingResult = hash || msg;
 
     if (window.showingResult) {
         window.showingDoc = false;
-    }
-
-    if (hash) {
-        window.location.hash = '#' + xmlHash;
-    } else {
-        window.location.hash = '';
     }
 
     var runner = document.getElementById('runner');

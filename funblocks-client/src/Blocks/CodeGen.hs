@@ -122,14 +122,13 @@ instance Pretty Expr where
                              pretty el
                              PR.pop
   pretty (Case expr rows) = do 
+                              col <- PR.getCol
                               PR.write "case"
                               -- PR.push
                               pretty expr
                               PR.write "of"
-                              -- PR.pop
-                              PR.deindent
-                              PR.push
-                              mapM_ (\(con, vars, expr) -> do PR.reset
+                              mapM_ (\(con, vars, expr) -> do PR.setCol (col+4)
+                                                              PR.writeLine ""
                                                               PR.write con
                                                               PR.write $ T.unwords vars
                                                               PR.write "->"

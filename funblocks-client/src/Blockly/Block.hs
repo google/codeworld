@@ -23,6 +23,7 @@ module Blockly.Block ( Block(..)
                      , getOutputBlock
                      , getOutputConnection
                      , getColour
+                     , getValueInputNames
                      , getFunctionName
                      , getItemCount
                      , setColour
@@ -44,6 +45,7 @@ import GHCJS.Marshal
 import Unsafe.Coerce
 import Blockly.Connection
 import qualified Data.Text as T
+import qualified JavaScript.Array as JA
 
 newtype Block = Block JSVal
 
@@ -121,7 +123,15 @@ areAllInputsConnected = js_allInputsConnected
 getItemCount :: Block -> Int
 getItemCount = js_itemCount
 
+getValueInputNames :: Block -> [T.Text]
+getValueInputNames block = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
+                           JA.toList $ js_getValueInputNames block
+
 --- FFI
+
+
+foreign import javascript unsafe "$1.getValueInputNames()"
+  js_getValueInputNames :: Block -> JA.JSArray
 
 foreign import javascript unsafe "$1.itemCount_"
   js_itemCount :: Block -> Int

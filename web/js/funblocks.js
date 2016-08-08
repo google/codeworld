@@ -89,16 +89,19 @@ function updateEditor(code) {
 
 function run(xmlHash, codeHash, msg, error) {
     var hash = codeHash;
+
+    if (hash) {
+        window.location.hash = '#' + xmlHash;
+        document.getElementById('shareButton').style.display = '';
+    } else {
+        window.location.hash = '';
+        document.getElementById('shareButton').style.display = 'none';
+    }
+
     window.showingResult = hash || msg;
 
     if (window.showingResult) {
         window.showingDoc = false;
-    }
-
-    if (hash) {
-        window.location.hash = '#' + xmlHash;
-    } else {
-        window.location.hash = '';
     }
 
     var runner = document.getElementById('runner');
@@ -113,16 +116,19 @@ function run(xmlHash, codeHash, msg, error) {
         document.getElementById('runner').style.display = 'none';
         window.programRunning = false;
     }
+    window.mainLayout.show('east');
+    window.mainLayout.open('east');
 
     var message = document.getElementById('message');
     message.innerHTML = '';
     addToMessage(msg);
 
-    if (error) {
-        message.classList.add('error');
-    } else {
-        message.classList.remove('error');
-    }
+    //if (error) {
+    //    message.classList.add('error');
+    //} else {
+    //    message.classList.remove('error');
+    //}
+
     document.getElementById('editButton').setAttribute('href','/#' + codeHash);
     updateUI();
 }
@@ -202,84 +208,102 @@ function compile(src) {
     });
 }
 
-function updateUI()
-{
-
-  var isSignedIn = signedIn();
-  // Update the user interface
-
-  if (isSignedIn) {
-        document.getElementById('signin').style.display = 'none';
-        document.getElementById('navbarsignin').style.display = '';
-        document.getElementById('signout').style.display = '';
-        document.getElementById('saveAsButton').style.display = '';
+/*
+ * Updates all UI components to reflect the current state.  The general pattern
+ * is to modify the state stored in variables and such, and then call updateUI
+ * to get the visual presentation to match.
+ */
+function updateUI() {
+    var isSignedIn = signedIn();
+    if (isSignedIn) {
+        if (document.getElementById('signout').style.display == 'none') {
+            document.getElementById('signin').style.display = 'none';
+            document.getElementById('signout').style.display = '';
+            document.getElementById('navButton').style.display = '';
+            window.mainLayout.show('west');
+            window.mainLayout.open('west');
+        }
 
         if (window.openProjectName) {
             document.getElementById('saveButton').style.display = '';
+            document.getElementById('deleteButton').style.display = '';
         } else {
             document.getElementById('saveButton').style.display = 'none';
+            document.getElementById('deleteButton').style.display = 'none';
         }
     } else {
-        document.getElementById('navbarsignin').style.display = 'none';
-        document.getElementById('signin').style.display = '';
-        document.getElementById('signout').style.display = 'none';
-        document.getElementById('saveButton').style.display = 'none';
-        document.getElementById('saveAsButton').style.display = 'none';
-    }
-
-  if (window.showingResult) {
-        // document.getElementById('result').style.display = '';
-        
-        if (window.programRunning) {
-            document.getElementById('editButton').style.display = '';
-        } else {
-            document.getElementById('editButton').style.display = 'none';
+        if (document.getElementById('signout').style.display == '') {
+            document.getElementById('signin').style.display = '';
+            document.getElementById('signout').style.display = 'none';
+            document.getElementById('saveButton').style.display = 'none';
+            window.mainLayout.hide('west');
         }
-    } else {
-        // document.getElementById('result').style.display = 'none';
-        document.getElementById('editButton').style.display = 'none';
+        document.getElementById('navButton').style.display = 'none';
+        document.getElementById('deleteButton').style.display = 'none';
     }
 
-  var projects = document.getElementById('projects');
-  projects.innerHTML = '';
-  allProjectNames.forEach(function(projectName) {
+    var projects = document.getElementById('nav_mine');
+    var newProject = document.getElementById('newButton');
+
+    while (projects.lastChild && projects.lastChild != newProject) {
+        projects.removeChild(projects.lastChild);
+    }
+
+    allProjectNames.sort(function(a, b) {
+        return a.localeCompare(b);
+    });
+
+    allProjectNames.forEach(function(projectName) {
         var active = projectName == openProjectName;
         if (!isSignedIn && !active) {
             return;
         }
 
         var title = projectName;
+        if (active && !isEditorClean()) {
+            title = "* " + title;
+        }
 
         var encodedName = title.replace('&', '&amp;')
             .replace('<', '&lt;')
             .replace('>', '&gt;');
 
-        var button = document.createElement('button');
-        button.innerHTML = encodedName;
-        if(projectName == openProjectName)
-        {
-          button.setAttribute('class', 'btn btn-primary');
-          button.setAttribute('style','height:32px; width:100%;');
-        }
-        else
-        {
-          button.setAttribute('class','btn btn-default');
-          button.setAttribute('style','height:32px; width:100%;');
-        }
-        button.onclick=function() {loadProject(projectName)};
-        
-        projects.appendChild(button);
+        var template = document.getElementById('projectTemplate').innerHTML;
+        template = template.replace('{{label}}', encodedName);
+        template = template.replace(/{{ifactive ([^}]*)}}/, active ? "$1" : "");
 
+        var span = document.createElement('span');
+        span.innerHTML = template;
+        var elem = span.getElementsByTagName('a')[0];
+        elem.onclick = function() {
+            loadProject(projectName);
+        };
+
+        projects.appendChild(span.removeChild(elem));
     });
 
+    var title;
+    if (window.openProjectName) {
+        title = window.openProjectName;
+    } else {
+        title = "(new)";
+    }
+
+    if (!isEditorClean()) {
+        title = "* " + title;
+    }
+
+    document.title = title + " - CodeWorld"
 }
+
+
 
 function signinCallback(result) {
     discoverProjects();
     updateUI();
     if(result.wc)
     {
-      document.getElementById('username').innerHTML = result.wc.wc;
+      // document.getElementById('username').innerHTML = result.wc.wc;
     }
 
 }

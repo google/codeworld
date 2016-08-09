@@ -393,3 +393,22 @@ function deleteProject()
   }
   deleteProject_(window.buildMode, successFunc);
 }
+
+function downloadProject() {
+  var blob = new Blob(
+      [window.codeworldEditor.getDoc().getValue()],
+      { type: 'text/plain', endings: 'native' });
+  var filename = "untitled.hs";
+  if (window.openProjectName) filename = window.openProjectName + '.hs';
+
+  if (window.navigator.msSaveBlob) {
+    window.navigator.msSaveBlob(blob, filename);
+  } else {
+    var elem = window.document.createElement('a');
+    elem.href = window.URL.createObjectURL(blob);
+    elem.download = filename;
+    document.body.appendChild(elem);
+    elem.click();
+    document.body.removeChild(elem);
+  }
+}

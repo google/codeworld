@@ -35,19 +35,20 @@ import qualified Data.Text as T
 import           CodeWorld.Picture
 import           CodeWorld.Event
 
-#ifdef ghcjs_HOST_OS
-
 import           Control.Concurrent
 import           Control.Concurrent.MVar
 import           Control.Exception
 import           Control.Monad
 import           Control.Monad.Trans (liftIO)
 import           CodeWorld.Color
+import           Data.Monoid
+import           Data.List (zip4)
+
+#ifdef ghcjs_HOST_OS
+
 import           Data.Char (chr)
 import           Data.IORef
 import           Data.JSString.Text
-import           Data.List (zip4)
-import           Data.Monoid
 import           Data.Time.Clock
 import           Data.Word
 import           GHCJS.DOM
@@ -68,6 +69,18 @@ import           Numeric
 import           System.IO.Unsafe
 import           System.Random
 
+#else
+
+import qualified Graphics.Blank as Canvas
+import Graphics.Blank (Canvas)
+import System.IO
+import Text.Printf
+
+#endif
+
+#ifdef ghcjs_HOST_OS
+
+
 --------------------------------------------------------------------------------
 
 foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
@@ -81,6 +94,8 @@ canvasFromElement = Canvas.Canvas . unElement
 
 elementFromCanvas :: Canvas.Canvas -> Element
 elementFromCanvas = pFromJSVal . jsval
+
+#endif
 
 --------------------------------------------------------------------------------
 -- Draw state.  An affine transformation matrix, plus a Bool indicating whether
@@ -113,6 +128,8 @@ setColorDS _ (a,b,c,d,e,f,Just col) = (a,b,c,d,e,f,Just col)
 
 getColorDS :: DrawState -> Maybe Color
 getColorDS (a,b,c,d,e,f,col) = col
+
+#ifdef ghcjs_HOST_OS
 
 withDS :: Canvas.Context -> DrawState -> IO () -> IO ()
 withDS ctx (ta,tb,tc,td,te,tf,col) action = do
@@ -670,23 +687,183 @@ simulationOf simInitial simStep simDraw =
 trace :: Text -> a -> a
 trace = undefined
 
+withDS :: DrawState -> Canvas () -> Canvas ()
+withDS (ta,tb,tc,td,te,tf,col) action =
+    Canvas.saveRestore $ do
+        Canvas.transform (ta, tb, tc, td, te, tf)
+        Canvas.beginPath ()
+        action
+
+applyColor :: DrawState -> Canvas ()
+applyColor ds = case getColorDS ds of
+    Nothing -> do
+      Canvas.strokeStyle "black"
+      Canvas.fillStyle   "black"
+    Just (RGBA r g b a) -> do
+      let style = pack $ printf "rgba(%.0f,%.0f,%.0f,%f)" (r*255) (g*255) (b*255) a
+      Canvas.strokeStyle style
+      Canvas.fillStyle   style
+
+
+drawFigure :: DrawState -> Double -> Canvas () -> Canvas ()
+drawFigure ds w figure = do
+    withDS ds $ do
+        figure
+        when (w /= 0) $ do
+            Canvas.lineWidth (25 * w)
+            applyColor ds
+            Canvas.stroke ()
+    when (w == 0) $ do
+        Canvas.lineWidth 1
+        applyColor ds
+        Canvas.stroke ()
+
+followPath :: [Point] -> Bool -> Bool -> Canvas ()
+followPath [] closed _ = return ()
+followPath [p1] closed _ = return ()
+followPath ((sx,sy):ps) closed False = do
+    Canvas.moveTo (25 * sx, 25 * sy)
+    forM_ ps $ \(x,y) -> Canvas.lineTo (25 * x, 25 * y)
+    when closed $ Canvas.closePath ()
+followPath [p1, p2] False True = followPath [p1, p2] False False
+followPath ps False True = do
+    let [(x1,y1), (x2,y2), (x3,y3)] = take 3 ps
+        dprev = sqrt ((x2 - x1)^2 + (y2 - y1)^2)
+        dnext = sqrt ((x3 - x2)^2 + (y3 - y2)^2)
+        p     = dprev / (dprev + dnext)
+        cx    = x2 + p * (x1 - x3) / 2
+        cy    = y2 + p * (y1 - y3) / 2
+     in do Canvas.moveTo (25 * x1, 25 * y1)
+           Canvas.quadraticCurveTo (25 * cx, 25 * cy, 25 * x2, 25 * y2)
+    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $
+        \((x1,y1),(x2,y2),(x3,y3),(x4,y4)) ->
+            let dp  = sqrt ((x2 - x1)^2 + (y2 - y1)^2)
+                d1  = sqrt ((x3 - x2)^2 + (y3 - y2)^2)
+                d2  = sqrt ((x4 - x3)^2 + (y4 - y3)^2)
+                p   = d1 / (d1 + d2)
+                r   = d1 / (dp + d1)
+                cx1 = x2 + r * (x3 - x1) / 2
+                cy1 = y2 + r * (y3 - y1) / 2
+                cx2 = x3 + p * (x2 - x4) / 2
+                cy2 = y3 + p * (y2 - y4) / 2
+            in  Canvas.bezierCurveTo ( 25 * cx1, 25 * cy1, 25 * cx2, 25 * cy2
+                                     , 25 * x3,  25 * y3)
+    let [(x1,y1), (x2,y2), (x3,y3)] = reverse $ take 3 $ reverse ps
+        dp = sqrt ((x2 - x1)^2 + (y2 - y1)^2)
+        d1 = sqrt ((x3 - x2)^2 + (y3 - y2)^2)
+        r  = d1 / (dp + d1)
+        cx = x2 + r * (x3 - x1) / 2
+        cy = y2 + r * (y3 - y1) / 2
+     in Canvas.quadraticCurveTo (25 * cx, 25 * cy, 25 * x3, 25 * y3)
+followPath ps@(_:(sx,sy):_) True True = do
+    Canvas.moveTo (25 * sx, 25 * sy)
+    let rep = cycle ps
+    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $
+        \((x1,y1),(x2,y2),(x3,y3),(x4,y4)) ->
+            let dp  = sqrt ((x2 - x1)^2 + (y2 - y1)^2)
+                d1  = sqrt ((x3 - x2)^2 + (y3 - y2)^2)
+                d2  = sqrt ((x4 - x3)^2 + (y4 - y3)^2)
+                p   = d1 / (d1 + d2)
+                r   = d1 / (dp + d1)
+                cx1 = x2 + r * (x3 - x1) / 2
+                cy1 = y2 + r * (y3 - y1) / 2
+                cx2 = x3 + p * (x2 - x4) / 2
+                cy2 = y3 + p * (y2 - y4) / 2
+            in  Canvas.bezierCurveTo ( 25 * cx1, 25 * cy1, 25 * cx2, 25 * cy2
+                                     , 25 * x3, 25 * y3)
+    Canvas.closePath ()
+
+
+fontString :: TextStyle -> Font -> Text
+fontString style font = stylePrefix style <> "25px " <> fontName font
+  where stylePrefix Plain        = ""
+        stylePrefix Bold         = "bold "
+        stylePrefix Italic       = "italic "
+        fontName SansSerif       = "sans-serif"
+        fontName Serif           = "serif"
+        fontName Monospace       = "monospace"
+        fontName Handwriting     = "cursive"
+        fontName Fancy           = "fantasy"
+        fontName (NamedFont txt) = "\"" <> T.filter (/= '"') txt <> "\""
+
+drawPicture :: DrawState -> Picture -> Canvas ()
+drawPicture ds (Polygon ps smooth) = do
+    withDS ds $ followPath ps True smooth
+    applyColor ds
+    Canvas.fill ()
+drawPicture ds (Path ps w closed smooth) = do
+    drawFigure ds w $ followPath ps closed smooth
+drawPicture ds (Sector b e r) = withDS ds $ do
+    Canvas.arc (0, 0, 25 * abs r, b, e,  b > e)
+    Canvas.lineTo (0, 0)
+    applyColor ds
+    Canvas.fill ()
+drawPicture ds (Arc b e r w) = do
+    drawFigure ds w $ do
+        Canvas.arc (0, 0, 25 * abs r, b, e, b > e)
+drawPicture ds (Text sty fnt txt) = withDS ds $ do
+    Canvas.scale (1, -1)
+    applyColor ds
+    Canvas.font (fontString sty fnt)
+    Canvas.fillText (txt, 0, 0)
+{-
+drawPicture ds Logo = withDS ds $ do
+    Canvas.scale 1 (-1)
+    drawCodeWorldLogo ds (-225) (-50) 450 100
+-}
+drawPicture ds (Color col p)     = drawPicture (setColorDS col ds) p
+drawPicture ds (Translate x y p) = drawPicture (translateDS x y ds) p
+drawPicture ds (Scale x y p)     = drawPicture (scaleDS x y ds) p
+drawPicture ds (Rotate r p)      = drawPicture (rotateDS r ds) p
+drawPicture ds (Pictures ps)     = mapM_ (drawPicture ds) (reverse ps)
+
+
 pictureOf :: Picture -> IO ()
-pictureOf _ = putStrLn "<<picture>>"
+pictureOf = drawingOf
+{-# WARNING pictureOf "Please use drawingOf instead of pictureOf" #-}
 
 drawingOf :: Picture -> IO ()
-drawingOf _ = putStrLn "<<picture>>"
+drawingOf pic = display pic `catch` reportError
+
+drawFrame :: Picture -> Canvas ()
+drawFrame pic = do
+    Canvas.fillStyle "white"
+    Canvas.fillRect (-250, -250, 500, 500)
+    drawPicture initialDS pic
+
+setupScreenContext :: (Int, Int) -> Canvas ()
+setupScreenContext (cw, ch) = do
+    Canvas.translate (realToFrac cw / 2, realToFrac ch / 2)
+    let s = min (realToFrac cw / 500) (realToFrac ch / 500)
+    Canvas.scale (s, -s)
+    Canvas.lineWidth 0
+    Canvas.textAlign Canvas.CenterAnchor
+    Canvas.textBaseline Canvas.MiddleBaseline
+
+display :: Picture -> IO ()
+display pic = Canvas.blankCanvas 3000 $ \context -> do
+    Canvas.send context $ Canvas.saveRestore $ do
+        let rect = (Canvas.width context, Canvas.height context)
+        setupScreenContext rect
+        drawFrame pic
 
 animationOf :: (Double -> Picture) -> IO ()
-animationOf _ = putStrLn "<<animation>>"
+animationOf pic = putStrLn "<<animation>>"
 
-simulationOf :: world -> (Double -> world -> world) -> (world -> Picture) -> IO ()
-simulationOf (_, _, _) = putStrLn "<<simulation>>"
+simulationOf :: world
+             -> (Double -> world -> world)
+             -> (world -> Picture)
+             -> IO ()
+simulationOf _ _ _ = putStrLn "<<simulation>>"
 
 interactionOf :: world
               -> (Double -> world -> world)
               -> (Event -> world -> world)
               -> (world -> Picture)
               -> IO ()
-interactionOf (_, _, _, _) = putStrLn "<<interaction>>"
+interactionOf _ _ _ _ = putStrLn "<<interaction>>"
+
+reportError :: SomeException -> IO ()
+reportError e = hPrint stderr e
 
 #endif

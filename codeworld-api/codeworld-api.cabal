@@ -25,11 +25,15 @@ Library
                        CodeWorld.Event,
                        CodeWorld.Driver
   Build-depends:       base,
-                       ghcjs-base,
-                       ghcjs-dom,
                        mtl,
                        random,
                        text,
                        time
+  if flag(ghcjs)
+    Build-depends:
+                       ghcjs-base,
+                       ghcjs-dom
+  else
+    Build-depends:     blank-canvas
   Exposed:             True
   Ghc-options:         -O2

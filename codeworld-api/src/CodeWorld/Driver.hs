@@ -43,6 +43,7 @@ import           Control.Monad.Trans (liftIO)
 import           CodeWorld.Color
 import           Data.Monoid
 import           Data.List (zip4)
+import           Numeric
 
 #ifdef ghcjs_HOST_OS
 
@@ -65,7 +66,6 @@ import           GHCJS.Types
 import           JavaScript.Web.AnimationFrame
 import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
-import           Numeric
 import           System.IO.Unsafe
 import           System.Random
 
@@ -536,6 +536,8 @@ interactionOf initial step event draw = go `catch` reportError
 
 --------------------------------------------------------------------------------
 
+#endif
+
 data Wrapped a = Wrapped {
     state          :: a,
     paused         :: Bool,
@@ -682,7 +684,7 @@ simulationOf simInitial simStep simDraw =
             mouseMovedTime = 1000
         }
 
-#else
+#ifndef  ghcjs_HOST_OS
 
 trace :: Text -> a -> a
 trace = undefined
@@ -847,14 +849,6 @@ display pic = Canvas.blankCanvas 3000 $ \context -> do
         setupScreenContext rect
         drawFrame pic
 
-animationOf :: (Double -> Picture) -> IO ()
-animationOf pic = putStrLn "<<animation>>"
-
-simulationOf :: world
-             -> (Double -> world -> world)
-             -> (world -> Picture)
-             -> IO ()
-simulationOf _ _ _ = putStrLn "<<simulation>>"
 
 interactionOf :: world
               -> (Double -> world -> world)

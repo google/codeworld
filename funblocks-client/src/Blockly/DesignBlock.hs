@@ -40,6 +40,8 @@ import Data.List (maximumBy)
 import qualified Data.Text as T
 import Data.Maybe (fromJust)
 import Data.List (intercalate)
+import qualified Blockly.TypeExpr as TE
+import qualified JavaScript.Array as JA
 
 pack = textToJSString
 unpack = textFromJSString
@@ -65,7 +67,8 @@ data Type = Arrow [Type]
           | List Type -- Have to define kinded types
           | Custom User
           | Poly Char
-          | NoType -- For top level blocks
+          | Top -- For top level blocks
+          | Comment
 
 instance Show Type where
   show Number = "Number"
@@ -75,14 +78,16 @@ instance Show Type where
   show (Str) = "Text"
   show (Bool) = "Bool"
   show (Col) = "Color"
+  show (Comment) = ""
+  show (Top) = ""
   show (Arrow tps) = intercalate " -> " $ map show tps
 
 
 
 data FieldType = LeftField | RightField | CentreField
 
-data Input = Value T.Text [Field] Type
-            | Statement T.Text [Field] Type
+data Input = Value T.Text [Field] 
+--            | Statement T.Text [Field] Type
             | Dummy [Field]
 
 data Field = Text T.Text
@@ -93,7 +98,7 @@ data Connection = TopCon | BotCon | TopBotCon | LeftCon
 newtype Inline = Inline Bool
 
 -- Name functionName inputs connectiontype color outputType tooltip
-data DesignBlock = DesignBlock T.Text T.Text [Input] Inline Color Type Tooltip
+data DesignBlock = DesignBlock T.Text T.Text [Input] Inline Color [Type] Tooltip
 
 
 newtype Color = Color Int
@@ -104,71 +109,44 @@ fieldCode field (Text str) = js_appendTextField field (pack str)
 fieldCode field (TextE str) = js_appendTextFieldEmph field (pack str)
 fieldCode field (TextInput text name) = js_appendTextInputField field (pack text) (pack name)
 
-inputCode :: Block -> [TypeVar] -> Input -> IO ()
-inputCode block _ (Dummy fields) = do 
+inputCode :: Block -> Input -> IO ()
+inputCode block (Dummy fields) = do 
   fieldInput <- js_appendDummyInput block  
   foldr (\ field fi -> do
       fi_ <- fi
       fieldCode fi_ field) (return fieldInput) fields
   return ()
 
-inputCode block pvars (Value name fields (Poly polyChar) ) = do
-    fieldInput <- js_appendValueInput block (pack name)
-    foldr (\ field fi -> do
-        fi_ <- fi
-        fieldCode fi_ field) (return fieldInput) fields
-    js_setTypeExprPoly fieldInput (pvars !! polyIndex)
-    return ()
-  where
-    table = zip (['a'..'z'] ++ ['A'..'Z']) [0..] -- Compatibility hack
-    polyIndex = fromJust $ lookup polyChar table
-
--- TODO, change function later to express correct type
--- For now we just show the string expression
--- Later the TypeExpr will be properly set
-inputCode block _ (Value name fields (type_) ) = do
+inputCode block (Value name fields) = do
   fieldInput <- js_appendValueInput block (pack name)
-  js_setCheck fieldInput (pack $ T.pack $ show type_)
   foldr (\ field fi -> do
       fi_ <- fi
       fieldCode fi_ field) (return fieldInput) fields
-  js_setTypeExprConc fieldInput (pack $ T.pack $ show type_) -- TODO, this is a compatibility hack
   return ()
 
 
--- Gets the highest number of polymorphic inputs
-maxPolyCount :: [Input] -> Int
-maxPolyCount inputs = case maxInp of
-                        Value _ _ (Poly c) -> (ind c)+1
-                        _ -> 0
-  where 
-    maxInp = maximumBy (comparing auxComp) inputs 
-    auxComp (Value _ _ (Poly ind)) = ind
-    auxComp _ = 'a'
-    table = zip (['a'..'z'] ++ ['A'..'Z']) [0..] -- Compatibility hack
-    ind c = fromJust $ lookup c table
+typeToTypeExpr :: Type -> TE.TypeExpr
+typeToTypeExpr (Poly a) = TE.createTypeExpr (T.pack $ "_POLY_" ++ [a]) []
+typeToTypeExpr t = TE.createTypeExpr (T.pack $ show t) [] -- Currently still a hack
+
 
 -- set block
 setBlockType :: DesignBlock -> IO ()
-setBlockType (DesignBlock name funName inputs (Inline inline) (Color color) type_ (Tooltip tooltip) ) = do
+setBlockType (DesignBlock name funName inputs (Inline inline) (Color color) arrows (Tooltip tooltip) ) = do
   cb <- syncCallback1 ContinueAsync  (\this -> do 
                                  let block = Block this
                                  js_setFunctionName block (pack funName)
                                  js_setColor block color
-                                 -- may error out if no type is set
-                                 tvars <- replicateM (maxPolyCount inputs) js_getUnusedTypeVar
-                                 mapM_ (inputCode block tvars) inputs
-                                 js_enableOutput block
-                                 case type_ of
-                                     Poly polyChar -> let 
-                                                      table = zip (['a'..'z'] ++ ['A'..'Z']) [0..] -- Compatibility hack
-                                                      ind = fromJust $ lookup polyChar table
-                                                  in
-                                        js_setOutputTypePoly block (tvars !! ind)
-                                     NoType -> js_disableOutput block 
-                                     tp -> js_setOutputTypeConc block (pack $ T.pack $ show tp)
+                                 mapM_ (inputCode block) inputs
+                                 case last arrows of
+                                   Top -> js_disableOutput block
+                                   Comment -> js_disableOutput block
+                                   _ -> js_enableOutput block
+                                 case last arrows of
+                                   Comment -> return ()
+                                   Top -> setArrows block $ take (length arrows -1) arrows
+                                   _ -> setArrows block arrows
                                  when inline $ js_setInputsInline block True
-                                    -- else return ()
                                  return ()
                                  )
   js_setGenFunction (pack name) cb
@@ -176,7 +154,11 @@ setBlockType (DesignBlock name funName inputs (Inline inline) (Color color) type
 
 newtype Block = Block JSVal
 newtype FieldInput = FieldInput JSVal
-newtype TypeVar = TypeVar JSVal
+
+setArrows :: Block -> [Type] -> IO ()
+setArrows block tps = js_setArrows block typeExprs
+  where
+    typeExprs = TE.toJSArray $ map typeToTypeExpr tps
 
 foreign import javascript unsafe "Blockly.Blocks[$1] = { init: function() { $2(this); }}"
   js_setGenFunction :: JSString -> Callback a -> IO ()
@@ -194,13 +176,16 @@ foreign import javascript unsafe "$1.setOutputTypeExpr(new Blockly.TypeExpr($2))
   js_setOutputTypeConc :: Block -> JSString -> IO ()
 
 foreign import javascript unsafe "$1.setOutputTypeExpr($2)"
-  js_setOutputTypePoly :: Block -> TypeVar -> IO ()
+  js_setOutputTypePoly :: Block -> TE.TypeExpr -> IO ()
 
 foreign import javascript unsafe "$1.setTooltip($2)"
   js_setTooltip :: Block -> JSString -> IO ()
 
 foreign import javascript unsafe "$1.appendDummyInput()"
   js_appendDummyInput :: Block -> IO FieldInput
+
+foreign import javascript unsafe "$1.arrows = $2"
+  js_setArrows :: Block -> JA.JSArray -> IO ()
 
 foreign import javascript unsafe "$1.appendValueInput($2)"
   js_appendValueInput :: Block -> JSString -> IO FieldInput
@@ -222,10 +207,10 @@ foreign import javascript unsafe "$1.functionName = $2"
   js_setFunctionName :: Block -> JSString -> IO ()
 
 foreign import javascript unsafe "Blockly.TypeVar.getUnusedTypeVar()"
-  js_getUnusedTypeVar :: IO TypeVar
+  js_getUnusedTypeVar :: IO TE.TypeExpr
 
 foreign import javascript unsafe "$1.setTypeExpr($2)"
-  js_setTypeExprPoly :: FieldInput -> TypeVar -> IO ()
+  js_setTypeExprPoly :: FieldInput -> TE.TypeExpr -> IO ()
 
 foreign import javascript unsafe "$1.setTypeExpr(new Blockly.TypeExpr($2))"
   js_setTypeExprConc :: FieldInput -> JSString -> IO ()

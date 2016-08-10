@@ -19,6 +19,7 @@
 module Blockly.TypeExpr ( TypeExpr(..)
                          ,createTypeExpr
                          ,getName
+                         ,toJSArray
                          ,getChildren
                          )
   where
@@ -28,6 +29,7 @@ import GHCJS.Foreign
 import GHCJS.Marshal
 import qualified JavaScript.Array as JA
 import qualified Data.Text as T
+import Data.JSString.Text
 
 newtype TypeExpr = TypeExpr JSVal
 
@@ -43,14 +45,17 @@ instance FromJSVal TypeExpr where
   fromJSVal v = return $ Just $ TypeExpr v
 
 createTypeExpr :: T.Text -> [TypeExpr] -> TypeExpr
-createTypeExpr name children = js_createTypeExpr (pack name) children
-  where ch = JA.fromList $ map (\TypeExpr a -> a) children 
+createTypeExpr name children = TypeExpr $ js_createTypeExpr (pack name) ch
+  where ch = toJSArray children 
 
 getName :: TypeExpr -> T.Text
 getName = unpack . js_getName
 
 getChildren :: TypeExpr -> [TypeExpr]
-getChildren tp = map TypeExpr $ JA.fromList $ js_getChildren tp
+getChildren tp = map TypeExpr $ JA.toList $ js_getChildren tp
+
+toJSArray :: [TypeExpr] -> JA.JSArray
+toJSArray tps = JA.fromList $ map (\(TypeExpr a) -> a) tps 
 
 foreign import javascript unsafe "new Blockly.TypeExpr($1,$2)"
   js_createTypeExpr :: JSString -> JA.JSArray -> JSVal

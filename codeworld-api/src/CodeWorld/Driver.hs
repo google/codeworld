@@ -44,10 +44,10 @@ import           CodeWorld.Color
 import           Data.Monoid
 import           Data.List (zip4)
 import           Numeric
+import           Data.Char (chr)
 
 #ifdef ghcjs_HOST_OS
 
-import           Data.Char (chr)
 import           Data.IORef
 import           Data.JSString.Text
 import           Data.Time.Clock
@@ -74,7 +74,9 @@ import           System.Random
 import qualified Graphics.Blank as Canvas
 import Graphics.Blank (Canvas)
 import System.IO
+import Data.Time.Clock
 import Text.Printf
+
 
 #endif
 
@@ -355,6 +357,8 @@ display pic = do
         drawFrame ctx pic
         Canvas.restore ctx
 
+#endif
+
 --------------------------------------------------------------------------------
 -- Implementation of interactionOf
 
@@ -412,6 +416,8 @@ keyCodeToText n = case n of
   where fromAscii n = singleton (chr n)
         fromNum   n = pack (show (fromIntegral n))
 
+
+#ifdef ghcjs_HOST_OS
 getMousePos :: IsMouseEvent e => Element -> EventM w e Point
 getMousePos canvas = do
     (ix, iy) <- mouseClientXY
@@ -430,11 +436,25 @@ fromButtonNum 1 = Just MiddleButton
 fromButtonNum 2 = Just RightButton
 fromButtonNum _ = Nothing
 
+#endif
+
 data Activity = Activity {
     activityStep    :: Double -> Activity,
     activityEvent   :: Event -> Activity,
     activityDraw    :: Picture
     }
+
+handleEvent :: Event -> MVar Activity -> IO ()
+handleEvent event activity =
+    modifyMVar_ activity $ \a0 -> return (activityEvent a0 event)
+
+passTime :: Double -> MVar Activity -> IO Activity
+passTime dt activity = modifyMVar activity $ \a0 -> do
+    let a1 = activityStep a0 (realToFrac (min dt 0.25))
+    return (a1, a1)
+
+
+#ifdef ghcjs_HOST_OS
 
 setupEvents :: MVar Activity -> Element -> Element -> IO ()
 setupEvents currentActivity canvas offscreen = do
@@ -471,15 +491,6 @@ setupEvents currentActivity canvas offscreen = do
         pos <- getMousePos canvas
         liftIO $ handleEvent (MouseMovement pos) currentActivity
     return ()
-
-handleEvent :: Event -> MVar Activity -> IO ()
-handleEvent event activity =
-    modifyMVar_ activity $ \a0 -> return (activityEvent a0 event)
-
-passTime :: Double -> MVar Activity -> IO Activity
-passTime dt activity = modifyMVar activity $ \a0 -> do
-    let a1 = activityStep a0 (realToFrac (min dt 0.25))
-    return (a1, a1)
 
 run :: Activity -> IO ()
 run startActivity = do
@@ -519,6 +530,36 @@ run startActivity = do
     t0 <- waitForAnimationFrame
     go t0 startActivity `catch` reportError
 
+#else
+
+run :: Activity -> IO ()
+run startActivity = runBlankCanvas $ \context -> do
+    let w = Canvas.width context
+        h = Canvas.height context
+
+    offscreenCanvas <- Canvas.send context $ Canvas.newCanvas (w,h)
+
+    currentActivity <- newMVar startActivity
+
+    let go t0 a0 = do
+            Canvas.send context $
+                Canvas.with offscreenCanvas $
+                    Canvas.saveRestore $ do
+                        setupScreenContext (w,h)
+                        drawFrame (activityDraw a0)
+
+            threadDelay 50000
+            t1 <- getCurrentTime
+
+            Canvas.send context $ Canvas.drawImageAt (offscreenCanvas, 0, 0)
+            a1 <- passTime (realToFrac (t1 `diffUTCTime` t0)) currentActivity
+            go t1 a1
+
+    t0 <- getCurrentTime
+    go t0 startActivity `catch` reportError
+
+#endif
+
 -- | Runs an interactive event-driven CodeWorld program.  This is the most
 -- advanced CodeWorld entry point.
 interactionOf :: world
@@ -534,9 +575,6 @@ interactionOf initial step event draw = go `catch` reportError
                         activityDraw    = draw x
                     }
 
---------------------------------------------------------------------------------
-
-#endif
 
 data Wrapped a = Wrapped {
     state          :: a,
@@ -843,19 +881,23 @@ setupScreenContext (cw, ch) = do
     Canvas.textBaseline Canvas.MiddleBaseline
 
 display :: Picture -> IO ()
-display pic = Canvas.blankCanvas 3000 $ \context -> do
+display pic = runBlankCanvas $ \context ->
     Canvas.send context $ Canvas.saveRestore $ do
         let rect = (Canvas.width context, Canvas.height context)
         setupScreenContext rect
         drawFrame pic
 
+runBlankCanvas :: (Canvas.DeviceContext -> IO ()) -> IO ()
+runBlankCanvas act = do
+    putStrLn $ printf "Open me on http://127.0.0.1:%d/" (Canvas.port options)
+    Canvas.blankCanvas options $ \context -> do
+        putStrLn "Program is starting..."
+        act context
+  where
+    options = 3000 { Canvas.events =
+        [ "mousedown", "mouseenter", "mouseout", "mouseover", "mouseup", "resize"]
+    }
 
-interactionOf :: world
-              -> (Double -> world -> world)
-              -> (Event -> world -> world)
-              -> (world -> Picture)
-              -> IO ()
-interactionOf _ _ _ _ = putStrLn "<<interaction>>"
 
 reportError :: SomeException -> IO ()
 reportError e = hPrint stderr e

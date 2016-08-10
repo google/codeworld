@@ -67,6 +67,7 @@ btnRunClick ws = do
                                     liftIO $ setWarningText block msg
                                     liftIO $ addErrorSelect block
                                     liftIO $ js_removeErrorsDelay
+                                    liftIO $ js_stop
 
         [] -> do
           liftIO $ js_updateEditor (pack code)

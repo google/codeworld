@@ -90,6 +90,8 @@ main = do
       hookEvent "btnStop" click btnStopClick
       liftIO setBlockTypes -- assign layout and types of Blockly blocks
       liftIO $ addChangeListener workspace (onChange workspace)
+      liftIO $ js_showEast
+      liftIO $ js_openEast
       return ()
 
 -- Update code in real time
@@ -122,4 +124,8 @@ foreign import javascript unsafe "updateEditor($1)"
 foreign import javascript unsafe "setTimeout(removeErrors,10000)"
   js_removeErrorsDelay :: IO ()
 
+foreign import javascript unsafe "window.mainLayout.show('east')"
+  js_showEast :: IO ()
 
+foreign import javascript unsafe "window.mainLayout.open('east')"
+  js_openEast :: IO ()

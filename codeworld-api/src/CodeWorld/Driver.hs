@@ -4,6 +4,8 @@
 {-# LANGUAGE JavaScriptFFI            #-}
 {-# LANGUAGE KindSignatures           #-}
 {-# LANGUAGE OverloadedStrings        #-}
+{-# LANGUAGE RecordWildCards          #-}
+{-# LANGUAGE PatternGuards            #-}
 
 {-
   Copyright 2016 The CodeWorld Authors. All rights reserved.
@@ -43,6 +45,7 @@ import           Control.Monad.Trans (liftIO)
 import           CodeWorld.Color
 import           Data.Monoid
 import           Data.List (zip4)
+import           Data.Maybe (mapMaybe)
 import           Numeric
 import           Data.Char (chr)
 
@@ -436,6 +439,41 @@ fromButtonNum 1 = Just MiddleButton
 fromButtonNum 2 = Just RightButton
 fromButtonNum _ = Nothing
 
+#else
+
+fromButtonNum :: Int -> Maybe MouseButton
+fromButtonNum 1 = Just LeftButton
+fromButtonNum 2 = Just MiddleButton
+fromButtonNum 3 = Just RightButton
+fromButtonNum _ = Nothing
+
+getMousePos :: (Int, Int) -> (Double, Double) -> (Double, Double)
+getMousePos (w,h) (x,y) = ((x - fromIntegral w / 2)/s, -(y - fromIntegral h / 2)/s)
+  where
+   s = min (realToFrac w / 20) (realToFrac h / 20)
+
+toEvent :: (Int, Int) -> Canvas.Event -> Maybe Event
+toEvent rect Canvas.Event {..}
+    | eType == "keydown"
+    , Just code <- eWhich
+    = Just $ KeyPress (keyCodeToText code)
+    | eType == "keyup"
+    , Just code <- eWhich
+    = Just $ KeyRelease (keyCodeToText code)
+    | eType == "mousedown"
+    , Just button <- eWhich >>= fromButtonNum
+    , Just pos <- getMousePos rect <$> ePageXY
+    = Just $ MousePress button pos
+    | eType == "mouseup"
+    , Just button <- eWhich >>= fromButtonNum
+    , Just pos <- getMousePos rect <$> ePageXY
+    = Just $ MouseRelease button pos
+    | eType == "mousemove"
+    , Just pos <- getMousePos rect <$> ePageXY
+    = Just $ MouseMovement pos
+    | otherwise
+    = Nothing
+
 #endif
 
 data Activity = Activity {
@@ -534,10 +572,9 @@ run startActivity = do
 
 run :: Activity -> IO ()
 run startActivity = runBlankCanvas $ \context -> do
-    let w = Canvas.width context
-        h = Canvas.height context
+    let rect = (Canvas.width context, Canvas.height context)
 
-    offscreenCanvas <- Canvas.send context $ Canvas.newCanvas (w,h)
+    offscreenCanvas <- Canvas.send context $ Canvas.newCanvas rect
 
     currentActivity <- newMVar startActivity
 
@@ -545,14 +582,20 @@ run startActivity = runBlankCanvas $ \context -> do
             Canvas.send context $
                 Canvas.with offscreenCanvas $
                     Canvas.saveRestore $ do
-                        setupScreenContext (w,h)
+                        setupScreenContext rect
                         drawFrame (activityDraw a0)
+            tn <- getCurrentTime
 
-            threadDelay 50000
+            threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
             t1 <- getCurrentTime
 
             Canvas.send context $ Canvas.drawImageAt (offscreenCanvas, 0, 0)
             a1 <- passTime (realToFrac (t1 `diffUTCTime` t0)) currentActivity
+
+            -- Handle events now
+            events <- mapMaybe (toEvent rect) <$> Canvas.flush context
+            mapM_ (\e -> handleEvent e currentActivity) events
+
             go t1 a1
 
     t0 <- getCurrentTime
@@ -895,7 +938,7 @@ runBlankCanvas act = do
         act context
   where
     options = 3000 { Canvas.events =
-        [ "mousedown", "mouseenter", "mouseout", "mouseover", "mouseup", "resize"]
+        [ "mousedown", "mousemove", "mouseup", "keydown", "keyup"]
     }
 
 

@@ -679,13 +679,10 @@ drawingOf _ = putStrLn "<<picture>>"
 animationOf :: (Double -> Picture) -> IO ()
 animationOf _ = putStrLn "<<animation>>"
 
-simulationOf :: ([Double] -> world)
-             -> (Double -> world -> world)
-             -> (world -> Picture)
-             -> IO ()
+simulationOf :: world -> (Double -> world -> world) -> (world -> Picture) -> IO ()
 simulationOf (_, _, _) = putStrLn "<<simulation>>"
 
-interactionOf :: ([Double] -> world)
+interactionOf :: world
               -> (Double -> world -> world)
               -> (Event -> world -> world)
               -> (world -> Picture)

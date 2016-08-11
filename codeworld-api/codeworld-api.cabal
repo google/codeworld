@@ -1,6 +1,7 @@
 Name:                codeworld-api
-Version:             0.1.0.0
+Version:             0.1.0.1
 Synopsis:            Graphics library for CodeWorld
+License:             Apache
 License-file:        LICENSE
 Author:              The CodeWorld Authors
 Maintainer:          Chris Smith <cdsmith@gmail.com>

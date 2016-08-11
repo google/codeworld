@@ -496,14 +496,12 @@ drawPicture ds (Scale x y p)     = drawPicture (scaleDS x y ds) p
 drawPicture ds (Rotate r p)      = drawPicture (rotateDS r ds) p
 drawPicture ds (Pictures ps)     = mapM_ (drawPicture ds) (reverse ps)
 
-drawFrame :: Picture -> Canvas ()
-drawFrame pic = do
-    Canvas.fillStyle "white"
-    Canvas.fillRect (-250, -250, 500, 500)
-    drawPicture initialDS pic
-
 setupScreenContext :: (Int, Int) -> Canvas ()
 setupScreenContext (cw, ch) = do
+    -- blank before transformation (canvas might be non-sqare)
+    Canvas.fillStyle "white"
+    Canvas.fillRect (0,0,fromIntegral cw,fromIntegral ch)
+
     Canvas.translate (realToFrac cw / 2, realToFrac ch / 2)
     let s = min (realToFrac cw / 500) (realToFrac ch / 500)
     Canvas.scale (s, -s)
@@ -527,7 +525,7 @@ display pic = runBlankCanvas $ \context ->
     Canvas.send context $ Canvas.saveRestore $ do
         let rect = (Canvas.width context, Canvas.height context)
         setupScreenContext rect
-        drawFrame pic
+        drawPicture initialDS pic
 
 pictureOf = drawingOf
 
@@ -759,7 +757,7 @@ run startActivity = runBlankCanvas $ \context -> do
                 Canvas.with offscreenCanvas $
                     Canvas.saveRestore $ do
                         setupScreenContext rect
-                        drawFrame (activityDraw a0)
+                        drawPicture initialDS (activityDraw a0)
             tn <- getCurrentTime
 
             threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))

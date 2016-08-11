@@ -9,6 +9,9 @@ of Haskell.  It includes:
 - A simple mathematical model of computer games, inspired by gloss.
 - The ability for students to run and use their creations right in a web
   browser using GHCJS as a compiler.
+- The ability to run the same programs locally, using regular GHC, but still
+  accessing the result via the browser (on <http://localhost:3000/>).
+  This requires only the codeworld-api package (built with -f-ghcjs).
 
 Status
 ======

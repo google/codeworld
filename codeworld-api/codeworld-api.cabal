@@ -12,6 +12,11 @@ Description:
   This module provides the drawing code for CodeWorld.  It is heavily inspired by
   Gloss, but modified for consistency and pedagogical reasons and implemented via
   GHCJS for the web.
+  .
+  It comes with two backends. With the ghcjs flag on, it uses GHCJS. This is
+  want runs on <http://code.world/>. With the ghcjs flag off, it uses the blank-canvas
+  package to provide a webpage consisting of just a panel locally. This way, the same
+  program that runs in the CodeWorld API can also be run locally.
 
 Flag ghcjs
     Description: Tell cabal we are using ghcjs (work around until hackage supports impl(ghcjs))

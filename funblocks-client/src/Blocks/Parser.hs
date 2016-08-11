@@ -77,6 +77,12 @@ errc msg block = SE Comment $ Just $ Error msg block
 errs :: T.Text -> Block -> SaveErr T.Text
 errs msg block = SE "" $ Just $ Error msg block
 
+errDisc = errc "There's a block missing" -- error when searching for a connected block
+errInfix = errc "This block needs two blocks to be connected" -- error in missing inputs in infix block
+errMsgsFunc = "This block requires a function block to be connected" -- error for simulationOf, 
+errFunc = errc errMsgsFunc
+errFunc_ = errs errMsgsFunc
+
 type ParserFunction = Block -> SaveErr Expr 
 
 -- A simple AST that will be used to store the structure of the code
@@ -120,7 +126,7 @@ sInfixBlock block = do
   let argNames = getValueInputNames block
   let funcName = getFunctionName block
   if length argNames /= 2 then
-    errc "Infix functions must have 2 connected blocks" block
+    errInfix block
   else do
     args@(left:right:xs) <- mapM (\arg -> valueToExpr block arg) argNames
     return (CallFuncInfix funcName left right)
@@ -194,7 +200,7 @@ blockAnim block =
       Just inpBlock -> do
                        let funcName = getFunctionName inpBlock 
                        return $ FuncDef "main" [] $ CallFunc "animationOf" [CallFunc funcName []]
-      Nothing -> errc "No function inserted" block
+      Nothing -> errFunc block
 
 blockSimulation :: ParserFunction
 blockSimulation block = do
@@ -206,7 +212,7 @@ blockSimulation block = do
   where
     aux name = case getInputBlock block name of
                       Just inpBlock -> return $ getFunctionName inpBlock 
-                      Nothing -> errs "No function inserted" block
+                      Nothing -> errFunc_ block
 
 
 -- COMMENT
@@ -480,7 +486,7 @@ valueToExpr block name = do
       Just (func,inputBlock) -> do
         code <- func inputBlock
         push $ code 
-      Nothing -> errc "Disconnected Input" block
+      Nothing -> errDisc block
   where
     helper = do
       inputBlock <- getInputBlock block name

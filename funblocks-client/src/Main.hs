@@ -58,7 +58,7 @@ btnRunClick ws = do
   Just doc <- liftIO currentDocument
   blocks <- liftIO $ getTopBlocks ws
   if not $ containsProgramBlock blocks 
-    then setErrorMessage "Error: No Program on Workspace"
+    then setErrorMessage "No Program block on the workspace"
     else do
       (code,errors) <- liftIO $ workspaceToCode ws
       case errors of

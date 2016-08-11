@@ -651,7 +651,6 @@ blockTypes = [
               -- TRANSFORMATIONS
               ,cwColored
               ,cwTranslate
-              ,cwCombine
               ,cwRotate
               ,cwScale
               -- NUMBERS
@@ -674,7 +673,6 @@ blockTypes = [
               ,numGCD
               ,numLCM
               -- TEXT
-              ,txtConcat
               ,txtPrinted
               ,txtLowercase
               ,txtUppercase

@@ -63,7 +63,6 @@ btnRunClick ws = do
       (code,errors) <- liftIO $ workspaceToCode ws
       case errors of
         ((Error msg block):es) -> do 
-                                    liftIO $ putStrLn "yoh, error"
                                     liftIO $ putStrLn $ T.unpack msg
                                     liftIO $ setWarningText block msg
                                     liftIO $ addErrorSelect block

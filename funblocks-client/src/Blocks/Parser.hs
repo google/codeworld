@@ -42,6 +42,7 @@ import qualified Prelude as P
 import Control.Monad
 import Control.Applicative
 import qualified Data.Map as M
+import Debug.Trace
 
 -- Helpers for converting Text
 (++) :: T.Text -> T.Text -> T.Text
@@ -151,12 +152,28 @@ blockNumberPerc block = do
     let numb = (read (T.unpack arg)) * 0.01
     return $ LiteralN numb
 
+
+-- PICTURES ----------------------------------------------
+blockCombine :: ParserFunction
+blockCombine block = do
+  let c = getItemCount block
+  vals <- mapM (\t -> valueToExpr block t) ["PIC" ++ show i | i <- [0..c-1]]
+  return $ foldr1 (CallFuncInfix "&") vals
+
+
 -- TEXT --------------------------------------------------
 
 blockString :: ParserFunction
 blockString block = do 
     let txt = getFieldValue block "TEXT" 
     return $ LiteralS txt 
+
+blockConcat :: ParserFunction
+blockConcat block = do
+  let c = getItemCount block
+  vals <- mapM (\t -> valueToExpr block t) ["STR" ++ show i | i <- [0..c-1]]
+  return $ foldr1 (CallFuncInfix "<>") vals
+
 
 -- LOGIC ------------------------------------------
 
@@ -429,14 +446,12 @@ regularBlocks = zip regularBlockNames (repeat sFuncBlock)
 
 
 infixBlocks :: [(T.Text,ParserFunction)]
-infixBlocks =   [  -- PROGRAMS 
-                  ("cwCombine",sInfixBlock)
-                  ,("numAdd",sInfixBlock)
+infixBlocks =   [ 
+                   ("numAdd",sInfixBlock)
                   ,("numSub",sInfixBlock)
                   ,("numMult",sInfixBlock)
                   ,("numDiv",sInfixBlock)
                   ,("numExp",sInfixBlock)
-                  ,("txtConcat",sInfixBlock)
                   ,("conAnd",sInfixBlock)
                   ,("conOr",sInfixBlock)
                   ,("conEq",sInfixBlock)
@@ -453,9 +468,14 @@ specialBlocks = [  -- PROGRAMS
                    ("cwDrawingOf",blockDrawingOf)
                   ,("cwAnimationOf",blockAnim)
                   ,("cwSimulationOf",blockSimulation)
+                  -- PICTURES
+                  ,("cwCombine", blockCombine)
+                  -- NUMBERS
                   ,("numNumber",blockNumber)
                   ,("numNumberPerc",blockNumberPerc)
+                  -- TEXT
                   ,("text_typed",blockString)
+                  ,("txtConcat", blockConcat)
                   ,("conIf",blockIf)
                   ,("pair_create_typed", blockCreatePair)
                   ,("pair_first_typed", blockFst)

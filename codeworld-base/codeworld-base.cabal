@@ -40,8 +40,3 @@ Library
                        time
   Exposed:             False
   Ghc-options:         -O2
-
-  if flag(ghcjs)
-    Build-depends:     ghcjs-base,
-                       ghcjs-dom,
-                       ghcjs-canvas

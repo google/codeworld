@@ -32,22 +32,22 @@ module CodeWorld.Driver (
     trace
     ) where
 
-import           Data.Text (Text, singleton, pack)
-import qualified Data.Text as T
-import           CodeWorld.Picture
-import           CodeWorld.Event
 
+import           CodeWorld.Color
+import           CodeWorld.Event
+import           CodeWorld.Picture
 import           Control.Concurrent
 import           Control.Concurrent.MVar
 import           Control.Exception
 import           Control.Monad
 import           Control.Monad.Trans (liftIO)
-import           CodeWorld.Color
-import           Data.Monoid
+import           Data.Char (chr)
 import           Data.List (zip4)
 import           Data.Maybe (mapMaybe)
+import           Data.Monoid
+import qualified Data.Text as T
+import           Data.Text (Text, singleton, pack)
 import           Numeric
-import           Data.Char (chr)
 
 #ifdef ghcjs_HOST_OS
 
@@ -74,33 +74,47 @@ import           System.Random
 
 #else
 
+import           Data.Time.Clock
+import qualified Debug.Trace
 import qualified Graphics.Blank as Canvas
-import Graphics.Blank (Canvas)
-import System.IO
-import Data.Time.Clock
-import Text.Printf
-
+import           Graphics.Blank (Canvas)
+import           System.IO
+import           Text.Printf
 
 #endif
-
-#ifdef ghcjs_HOST_OS
 
 
 --------------------------------------------------------------------------------
+-- The common interface, provided by both implementations below.
 
-foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
-    js_canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
+-- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
+drawingOf :: Picture -> IO ()
 
-foreign import javascript unsafe "$1.getContext('2d', { alpha: false })"
-    js_getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
+-- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
+pictureOf :: Picture -> IO ()
+{-# WARNING pictureOf "Please use drawingOf instead of pictureOf" #-}
 
-canvasFromElement :: Element -> Canvas.Canvas
-canvasFromElement = Canvas.Canvas . unElement
+-- | Shows an animation, with a picture for each time given by the parameter.
+animationOf :: (Double -> Picture) -> IO ()
 
-elementFromCanvas :: Canvas.Canvas -> Element
-elementFromCanvas = pFromJSVal . jsval
+-- | Shows a simulation, which is essentially a continuous-time dynamical
+-- system described by an initial value and step function.
+simulationOf :: world -> (Double -> world -> world) -> (world -> Picture) -> IO ()
 
-#endif
+-- | Runs an interactive event-driven CodeWorld program.  This is the most
+-- advanced CodeWorld entry point.
+interactionOf :: world
+              -> (Double -> world -> world)
+              -> (Event -> world -> world)
+              -> (world -> Picture)
+              -> IO ()
+
+-- | Prints a debug message to the CodeWorld console when a value is forced.
+-- This is equivalent to the similarly named function in `Debug.Trace`, except
+-- that it uses the CodeWorld console instead of standard output.
+trace :: Text -> a -> a
+
+
 
 --------------------------------------------------------------------------------
 -- Draw state.  An affine transformation matrix, plus a Bool indicating whether
@@ -134,7 +148,23 @@ setColorDS _ (a,b,c,d,e,f,Just col) = (a,b,c,d,e,f,Just col)
 getColorDS :: DrawState -> Maybe Color
 getColorDS (a,b,c,d,e,f,col) = col
 
+--------------------------------------------------------------------------------
+-- GHCJS implementation of drawing
+
 #ifdef ghcjs_HOST_OS
+
+foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
+    js_canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
+
+foreign import javascript unsafe "$1.getContext('2d', { alpha: false })"
+    js_getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
+
+canvasFromElement :: Element -> Canvas.Canvas
+canvasFromElement = Canvas.Canvas . unElement
+
+elementFromCanvas :: Canvas.Canvas -> Element
+elementFromCanvas = pFromJSVal . jsval
+
 
 withDS :: Canvas.Context -> DrawState -> IO () -> IO ()
 withDS ctx (ta,tb,tc,td,te,tf,col) action = do
@@ -143,9 +173,6 @@ withDS ctx (ta,tb,tc,td,te,tf,col) action = do
     Canvas.beginPath ctx
     action
     Canvas.restore ctx
-
---------------------------------------------------------------------------------
--- Base drawing code for pictures.
 
 applyColor :: Canvas.Context -> DrawState -> IO ()
 applyColor ctx ds = case getColorDS ds of
@@ -318,33 +345,6 @@ setCanvasSize target canvas = do
     setAttribute target ("width" :: JSString) (show (round cx))
     setAttribute target ("height" :: JSString) (show (round cy))
 
---------------------------------------------------------------------------------
-
-foreign import javascript unsafe "window.reportRuntimeError($1, $2);"
-    js_reportRuntimeError :: Bool -> JSString -> IO ()
-
--- | Prints a debug message to the CodeWorld console when a value is forced.
--- This is equivalent to the similarly named function in `Debug.Trace`, except
--- that it uses the CodeWorld console instead of standard output.
-trace :: Text -> a -> a
-trace msg x = unsafePerformIO $ do
-    js_reportRuntimeError False (textToJSString msg)
-    return x
-
-reportError :: SomeException -> IO ()
-reportError e = js_reportRuntimeError True (textToJSString (pack (show e)))
-
---------------------------------------------------------------------------------
-
--- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
-drawingOf :: Picture -> IO ()
-drawingOf pic = display pic `catch` reportError
-
--- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
-pictureOf :: Picture -> IO ()
-pictureOf pic = display pic `catch` reportError
-{-# WARNING pictureOf "Please use drawingOf instead of pictureOf" #-}
-
 display :: Picture -> IO ()
 display pic = do
     Just window <- currentWindow
@@ -360,415 +360,15 @@ display pic = do
         drawFrame ctx pic
         Canvas.restore ctx
 
-#endif
+drawingOf pic = display pic `catch` reportError
+
+pictureOf pic = display pic `catch` reportError
+
 
 --------------------------------------------------------------------------------
--- Implementation of interactionOf
-
-keyCodeToText :: Int -> Text
-keyCodeToText n = case n of
-    _ | n >= 47  && n <= 90  -> fromAscii n
-    _ | n >= 96  && n <= 105 -> fromNum (n - 96)
-    _ | n >= 112 && n <= 135 -> "F" <> fromNum (n - 111)
-    3                        -> "Cancel"
-    6                        -> "Help"
-    8                        -> "Backspace"
-    9                        -> "Tab"
-    12                       -> "5"
-    13                       -> "Enter"
-    16                       -> "Shift"
-    17                       -> "Ctrl"
-    18                       -> "Alt"
-    19                       -> "Break"
-    20                       -> "CapsLock"
-    27                       -> "Esc"
-    32                       -> " "
-    33                       -> "PageUp"
-    34                       -> "PageDown"
-    35                       -> "End"
-    36                       -> "Home"
-    37                       -> "Left"
-    38                       -> "Up"
-    39                       -> "Right"
-    40                       -> "Down"
-    42                       -> "*"
-    43                       -> "+"
-    44                       -> "PrintScreen"
-    45                       -> "Insert"
-    46                       -> "Delete"
-    106                      -> "*"
-    107                      -> "+"
-    108                      -> "Separator"
-    109                      -> "-"
-    110                      -> "."
-    111                      -> "/"
-    144                      -> "NumLock"
-    145                      -> "ScrollLock"
-    186                      -> ";"
-    187                      -> "="
-    188                      -> ","
-    189                      -> "-"
-    190                      -> "."
-    191                      -> "/"
-    192                      -> "`"
-    219                      -> "["
-    220                      -> "\\"
-    221                      -> "]"
-    222                      -> "'"
-    _                        -> "Unknown:" <> fromNum n
-  where fromAscii n = singleton (chr n)
-        fromNum   n = pack (show (fromIntegral n))
-
-
-#ifdef ghcjs_HOST_OS
-getMousePos :: IsMouseEvent e => Element -> EventM w e Point
-getMousePos canvas = do
-    (ix, iy) <- mouseClientXY
-    liftIO $ do
-        Just rect <- getBoundingClientRect canvas
-        cx <- ClientRect.getLeft rect
-        cy <- ClientRect.getTop rect
-        cw <- ClientRect.getWidth rect
-        ch <- ClientRect.getHeight rect
-        return (20 * fromIntegral (ix - round cx) / realToFrac cw - 10,
-                20 * fromIntegral (round cy - iy) / realToFrac cw + 10)
-
-fromButtonNum :: Word -> Maybe MouseButton
-fromButtonNum 0 = Just LeftButton
-fromButtonNum 1 = Just MiddleButton
-fromButtonNum 2 = Just RightButton
-fromButtonNum _ = Nothing
+-- Stand-alone implementation of drawing
 
 #else
-
-fromButtonNum :: Int -> Maybe MouseButton
-fromButtonNum 1 = Just LeftButton
-fromButtonNum 2 = Just MiddleButton
-fromButtonNum 3 = Just RightButton
-fromButtonNum _ = Nothing
-
-getMousePos :: (Int, Int) -> (Double, Double) -> (Double, Double)
-getMousePos (w,h) (x,y) = ((x - fromIntegral w / 2)/s, -(y - fromIntegral h / 2)/s)
-  where
-   s = min (realToFrac w / 20) (realToFrac h / 20)
-
-toEvent :: (Int, Int) -> Canvas.Event -> Maybe Event
-toEvent rect Canvas.Event {..}
-    | eType == "keydown"
-    , Just code <- eWhich
-    = Just $ KeyPress (keyCodeToText code)
-    | eType == "keyup"
-    , Just code <- eWhich
-    = Just $ KeyRelease (keyCodeToText code)
-    | eType == "mousedown"
-    , Just button <- eWhich >>= fromButtonNum
-    , Just pos <- getMousePos rect <$> ePageXY
-    = Just $ MousePress button pos
-    | eType == "mouseup"
-    , Just button <- eWhich >>= fromButtonNum
-    , Just pos <- getMousePos rect <$> ePageXY
-    = Just $ MouseRelease button pos
-    | eType == "mousemove"
-    , Just pos <- getMousePos rect <$> ePageXY
-    = Just $ MouseMovement pos
-    | otherwise
-    = Nothing
-
-#endif
-
-data Activity = Activity {
-    activityStep    :: Double -> Activity,
-    activityEvent   :: Event -> Activity,
-    activityDraw    :: Picture
-    }
-
-handleEvent :: Event -> MVar Activity -> IO ()
-handleEvent event activity =
-    modifyMVar_ activity $ \a0 -> return (activityEvent a0 event)
-
-passTime :: Double -> MVar Activity -> IO Activity
-passTime dt activity = modifyMVar activity $ \a0 -> do
-    let a1 = activityStep a0 (realToFrac (min dt 0.25))
-    return (a1, a1)
-
-
-#ifdef ghcjs_HOST_OS
-
-setupEvents :: MVar Activity -> Element -> Element -> IO ()
-setupEvents currentActivity canvas offscreen = do
-    Just window <- currentWindow
-    on window Window.keyDown $ do
-        code <- uiKeyCode
-        let keyName = keyCodeToText code
-        when (keyName /= "") $ do
-            liftIO $ handleEvent (KeyPress keyName) currentActivity
-            preventDefault
-            stopPropagation
-    on window Window.keyUp $ do
-        code <- uiKeyCode
-        let keyName = keyCodeToText code
-        when (keyName /= "") $ do
-            liftIO $ handleEvent (KeyRelease keyName) currentActivity
-            preventDefault
-            stopPropagation
-    on window Window.mouseDown $ do
-        button <- mouseButton
-        case fromButtonNum button of
-            Nothing  -> return ()
-            Just btn -> do
-                pos <- getMousePos canvas
-                liftIO $ handleEvent (MousePress btn pos) currentActivity
-    on window Window.mouseUp $ do
-        button <- mouseButton
-        case fromButtonNum button of
-            Nothing  -> return ()
-            Just btn -> do
-                pos <- getMousePos canvas
-                liftIO $ handleEvent (MouseRelease btn pos) currentActivity
-    on window Window.mouseMove $ do
-        pos <- getMousePos canvas
-        liftIO $ handleEvent (MouseMovement pos) currentActivity
-    return ()
-
-run :: Activity -> IO ()
-run startActivity = do
-    Just window <- currentWindow
-    Just doc <- currentDocument
-    Just canvas <- getElementById doc ("screen" :: JSString)
-    offscreenCanvas <- Canvas.create 500 500
-
-    setCanvasSize canvas canvas
-    setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-    on window Window.resize $ do
-        liftIO $ setCanvasSize canvas canvas
-        liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-
-    currentActivity <- newMVar startActivity
-    setupEvents currentActivity canvas (elementFromCanvas offscreenCanvas)
-
-    screen <- js_getCodeWorldContext (canvasFromElement canvas)
-
-    let go t0 a0 = do
-            Just rect <- getBoundingClientRect canvas
-            buffer <- setupScreenContext (elementFromCanvas offscreenCanvas) rect
-            drawFrame buffer (activityDraw a0)
-            Canvas.restore buffer
-
-            t1 <- waitForAnimationFrame
-
-            Just rect <- getBoundingClientRect canvas
-            cw <- ClientRect.getWidth rect
-            ch <- ClientRect.getHeight rect
-
-            Canvas.clearRect 0 0 (realToFrac cw) (realToFrac ch) screen
-            js_canvasDrawImage screen (elementFromCanvas offscreenCanvas) 0 0 (round cw) (round ch)
-            a1 <- passTime ((t1 - t0) / 1000) currentActivity
-            go t1 a1
-
-    t0 <- waitForAnimationFrame
-    go t0 startActivity `catch` reportError
-
-#else
-
-run :: Activity -> IO ()
-run startActivity = runBlankCanvas $ \context -> do
-    let rect = (Canvas.width context, Canvas.height context)
-
-    offscreenCanvas <- Canvas.send context $ Canvas.newCanvas rect
-
-    currentActivity <- newMVar startActivity
-
-    let go t0 a0 = do
-            Canvas.send context $
-                Canvas.with offscreenCanvas $
-                    Canvas.saveRestore $ do
-                        setupScreenContext rect
-                        drawFrame (activityDraw a0)
-            tn <- getCurrentTime
-
-            threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
-            t1 <- getCurrentTime
-
-            Canvas.send context $ Canvas.drawImageAt (offscreenCanvas, 0, 0)
-            a1 <- passTime (realToFrac (t1 `diffUTCTime` t0)) currentActivity
-
-            -- Handle events now
-            events <- mapMaybe (toEvent rect) <$> Canvas.flush context
-            mapM_ (\e -> handleEvent e currentActivity) events
-
-            go t1 a1
-
-    t0 <- getCurrentTime
-    go t0 startActivity `catch` reportError
-
-#endif
-
--- | Runs an interactive event-driven CodeWorld program.  This is the most
--- advanced CodeWorld entry point.
-interactionOf :: world
-              -> (Double -> world -> world)
-              -> (Event -> world -> world)
-              -> (world -> Picture)
-              -> IO ()
-interactionOf initial step event draw = go `catch` reportError
-  where go = run (activity initial)
-        activity x = Activity {
-                        activityStep    = (\dt -> activity (step dt x)),
-                        activityEvent   = (\ev -> activity (event ev x)),
-                        activityDraw    = draw x
-                    }
-
-
-data Wrapped a = Wrapped {
-    state          :: a,
-    paused         :: Bool,
-    mouseMovedTime :: Double
-    }
-
-data Control :: * -> * where
-  PlayButton    :: Control a
-  PauseButton   :: Control a
-  StepButton    :: Control a
-  RestartButton :: Control Double
-  BackButton    :: Control Double
-  TimeLabel     :: Control Double
-
-wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
-wrappedStep f dt w = w {
-    state          = if paused w then state w else f dt (state w),
-    mouseMovedTime = mouseMovedTime w + dt
-    }
-
-wrappedEvent :: (Wrapped a -> [Control a])
-      -> (Double -> a -> a)
-      -> Event -> Wrapped a -> Wrapped a
-wrappedEvent _     _ (MouseMovement _)         w
-    = w { mouseMovedTime = 0 }
-wrappedEvent ctrls f (MousePress LeftButton p) w
-    = (foldr (handleControl f p) w (ctrls w)) { mouseMovedTime = 0 }
-wrappedEvent _     _ _                         w = w
-
-handleControl :: (Double -> a -> a)
-              -> Point
-              -> Control a
-              -> Wrapped a
-              -> Wrapped a
-handleControl _ (x,y) RestartButton w
-  | -9.4 < x && x < -8.6 && -9.4 < y && y < -8.6
-      = w { state = 0 }
-handleControl _ (x,y) PlayButton    w
-  | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6
-      = w { paused = False }
-handleControl _ (x,y) PauseButton   w
-  | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6
-      = w { paused = True }
-handleControl f (x,y) StepButton    w
-  | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6
-      = w { state = f 0.1 (state w) }
-handleControl _ (x,y) BackButton    w
-  | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6
-      = w { state = max 0 (state w - 0.1) }
-handleControl _ _     _             w = w
-
-wrappedDraw :: (Wrapped a -> [Control a])
-     -> (a -> Picture)
-     -> Wrapped a -> Picture
-wrappedDraw ctrls f w = drawControlPanel ctrls w <> f (state w)
-
-drawControlPanel :: (Wrapped a -> [Control a]) -> Wrapped a -> Picture
-drawControlPanel ctrls w = pictures [ drawControl w alpha c | c <- ctrls w ]
-  where alpha | mouseMovedTime w < 4.5  = 1
-              | mouseMovedTime w < 5.0  = 10 - 2 * mouseMovedTime w
-              | otherwise               = 0
-
-drawControl :: Wrapped a -> Double -> Control a -> Picture
-drawControl _ alpha RestartButton = translated (-9) (-9) p
-  where p = colored (RGBA 0   0   0   alpha)
-                    (thickArc 0.1 (pi / 6) (11 * pi / 6) 0.2 <>
-                     translated 0.173 (-0.1) (solidRectangle 0.17 0.17))
-         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
-         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
-
-drawControl _ alpha PlayButton = translated (-8) (-9) p
-  where p = colored (RGBA 0   0   0   alpha)
-                    (solidPolygon [ (-0.2, 0.25), (-0.2, -0.25), (0.2, 0) ])
-         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
-         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
-
-drawControl _ alpha PauseButton = translated (-8) (-9) p
-  where p = colored (RGBA 0   0   0   alpha)
-                    (translated (-0.15) 0 (solidRectangle 0.2 0.6) <>
-                     translated ( 0.15) 0 (solidRectangle 0.2 0.6))
-         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
-         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
-
-drawControl _ alpha StepButton = translated (-7) (-9) p
-  where p = colored (RGBA 0   0   0   alpha)
-                    (translated (-0.15) 0 (solidRectangle 0.2 0.5) <>
-                     solidPolygon [ (0.05, 0.25), (0.05, -0.25), (0.3, 0) ])
-         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
-         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
-
-drawControl _ alpha BackButton = translated (-6) (-9) p
-  where p = colored (RGBA 0   0   0   alpha)
-                    (translated 0.15 0 (solidRectangle 0.2 0.5) <>
-                     solidPolygon [ (-0.05, 0.25), (-0.05, -0.25), (-0.3, 0) ])
-         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
-         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
-
-drawControl w alpha TimeLabel = translated (8) (-9) p
-  where p = colored (RGBA 0   0   0   alpha)
-                    (scaled 0.5 0.5 $
-                        text (pack (showFFloatAlt (Just 4) (state w) "s")))
-         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      3.0 0.8)
-         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 3.0 0.8)
-
-animationControls :: Wrapped Double -> [Control Double]
-animationControls w
-  | mouseMovedTime w > 5    = []
-  | paused w && state w > 0 = [ RestartButton, PlayButton, StepButton,
-                                BackButton, TimeLabel ]
-  | paused w                = [ RestartButton, PlayButton, StepButton,
-                                TimeLabel ]
-  | otherwise               = [ RestartButton, PauseButton, TimeLabel ]
-
--- | Shows an animation, with a picture for each time given by the parameter.
-animationOf :: (Double -> Picture) -> IO ()
-animationOf f =
-    interactionOf initial
-                  (wrappedStep (+))
-                  (wrappedEvent animationControls (+))
-                  (wrappedDraw animationControls f)
-  where initial = Wrapped {
-            state          = 0,
-            paused         = False,
-            mouseMovedTime = 1000
-        }
-
-simulationControls :: Wrapped w -> [Control w]
-simulationControls w
-  | mouseMovedTime w > 5 = []
-  | paused w             = [ PlayButton, StepButton ]
-  | otherwise            = [ PauseButton ]
-
--- | Shows a simulation, which is essentially a continuous-time dynamical
--- system described by an initial value and step function.
-simulationOf :: world -> (Double -> world -> world) -> (world -> Picture) -> IO ()
-simulationOf simInitial simStep simDraw =
-    interactionOf initial
-                  (wrappedStep simStep)
-                  (wrappedEvent simulationControls simStep)
-                  (wrappedDraw simulationControls simDraw)
-  where initial = Wrapped {
-            state          = simInitial,
-            paused         = False,
-            mouseMovedTime = 1000
-        }
-
-#ifndef  ghcjs_HOST_OS
-
-trace :: Text -> a -> a
-trace = undefined
 
 withDS :: DrawState -> Canvas () -> Canvas ()
 withDS (ta,tb,tc,td,te,tf,col) action =
@@ -889,24 +489,12 @@ drawPicture ds (Text sty fnt txt) = withDS ds $ do
     applyColor ds
     Canvas.font (fontString sty fnt)
     Canvas.fillText (txt, 0, 0)
-{-
-drawPicture ds Logo = withDS ds $ do
-    Canvas.scale 1 (-1)
-    drawCodeWorldLogo ds (-225) (-50) 450 100
--}
+drawPicture ds Logo              = return () -- Unimplemented
 drawPicture ds (Color col p)     = drawPicture (setColorDS col ds) p
 drawPicture ds (Translate x y p) = drawPicture (translateDS x y ds) p
 drawPicture ds (Scale x y p)     = drawPicture (scaleDS x y ds) p
 drawPicture ds (Rotate r p)      = drawPicture (rotateDS r ds) p
 drawPicture ds (Pictures ps)     = mapM_ (drawPicture ds) (reverse ps)
-
-
-pictureOf :: Picture -> IO ()
-pictureOf = drawingOf
-{-# WARNING pictureOf "Please use drawingOf instead of pictureOf" #-}
-
-drawingOf :: Picture -> IO ()
-drawingOf pic = display pic `catch` reportError
 
 drawFrame :: Picture -> Canvas ()
 drawFrame pic = do
@@ -923,13 +511,6 @@ setupScreenContext (cw, ch) = do
     Canvas.textAlign Canvas.CenterAnchor
     Canvas.textBaseline Canvas.MiddleBaseline
 
-display :: Picture -> IO ()
-display pic = runBlankCanvas $ \context ->
-    Canvas.send context $ Canvas.saveRestore $ do
-        let rect = (Canvas.width context, Canvas.height context)
-        setupScreenContext rect
-        drawFrame pic
-
 runBlankCanvas :: (Canvas.DeviceContext -> IO ()) -> IO ()
 runBlankCanvas act = do
     putStrLn $ printf "Open me on http://127.0.0.1:%d/" (Canvas.port options)
@@ -938,9 +519,438 @@ runBlankCanvas act = do
         act context
   where
     options = 3000 { Canvas.events =
-        [ "mousedown", "mousemove", "mouseup", "keydown", "keyup"]
+        [ "mousedown", "mouseup", "mousemove", "keydown", "keyup"]
     }
 
+display :: Picture -> IO ()
+display pic = runBlankCanvas $ \context ->
+    Canvas.send context $ Canvas.saveRestore $ do
+        let rect = (Canvas.width context, Canvas.height context)
+        setupScreenContext rect
+        drawFrame pic
+
+pictureOf = drawingOf
+
+drawingOf pic = display pic `catch` reportError
+#endif
+
+--------------------------------------------------------------------------------
+-- Common activity managing code
+
+
+data Activity = Activity {
+    activityStep    :: Double -> Activity,
+    activityEvent   :: Event -> Activity,
+    activityDraw    :: Picture
+    }
+
+handleEvent :: Event -> MVar Activity -> IO ()
+handleEvent event activity =
+    modifyMVar_ activity $ \a0 -> return (activityEvent a0 event)
+
+passTime :: Double -> MVar Activity -> IO Activity
+passTime dt activity = modifyMVar activity $ \a0 -> do
+    let a1 = activityStep a0 (realToFrac (min dt 0.25))
+    return (a1, a1)
+
+--------------------------------------------------------------------------------
+-- Common event handling code
+
+keyCodeToText :: Int -> Text
+keyCodeToText n = case n of
+    _ | n >= 47  && n <= 90  -> fromAscii n
+    _ | n >= 96  && n <= 105 -> fromNum (n - 96)
+    _ | n >= 112 && n <= 135 -> "F" <> fromNum (n - 111)
+    3                        -> "Cancel"
+    6                        -> "Help"
+    8                        -> "Backspace"
+    9                        -> "Tab"
+    12                       -> "5"
+    13                       -> "Enter"
+    16                       -> "Shift"
+    17                       -> "Ctrl"
+    18                       -> "Alt"
+    19                       -> "Break"
+    20                       -> "CapsLock"
+    27                       -> "Esc"
+    32                       -> " "
+    33                       -> "PageUp"
+    34                       -> "PageDown"
+    35                       -> "End"
+    36                       -> "Home"
+    37                       -> "Left"
+    38                       -> "Up"
+    39                       -> "Right"
+    40                       -> "Down"
+    42                       -> "*"
+    43                       -> "+"
+    44                       -> "PrintScreen"
+    45                       -> "Insert"
+    46                       -> "Delete"
+    106                      -> "*"
+    107                      -> "+"
+    108                      -> "Separator"
+    109                      -> "-"
+    110                      -> "."
+    111                      -> "/"
+    144                      -> "NumLock"
+    145                      -> "ScrollLock"
+    186                      -> ";"
+    187                      -> "="
+    188                      -> ","
+    189                      -> "-"
+    190                      -> "."
+    191                      -> "/"
+    192                      -> "`"
+    219                      -> "["
+    220                      -> "\\"
+    221                      -> "]"
+    222                      -> "'"
+    _                        -> "Unknown:" <> fromNum n
+  where fromAscii n = singleton (chr n)
+        fromNum   n = pack (show (fromIntegral n))
+
+
+--------------------------------------------------------------------------------
+-- GHCJS event handling and core interaction code
+
+#ifdef ghcjs_HOST_OS
+
+getMousePos :: IsMouseEvent e => Element -> EventM w e Point
+getMousePos canvas = do
+    (ix, iy) <- mouseClientXY
+    liftIO $ do
+        Just rect <- getBoundingClientRect canvas
+        cx <- ClientRect.getLeft rect
+        cy <- ClientRect.getTop rect
+        cw <- ClientRect.getWidth rect
+        ch <- ClientRect.getHeight rect
+        return (20 * fromIntegral (ix - round cx) / realToFrac cw - 10,
+                20 * fromIntegral (round cy - iy) / realToFrac cw + 10)
+
+fromButtonNum :: Word -> Maybe MouseButton
+fromButtonNum 0 = Just LeftButton
+fromButtonNum 1 = Just MiddleButton
+fromButtonNum 2 = Just RightButton
+fromButtonNum _ = Nothing
+
+setupEvents :: MVar Activity -> Element -> Element -> IO ()
+setupEvents currentActivity canvas offscreen = do
+    Just window <- currentWindow
+    on window Window.keyDown $ do
+        code <- uiKeyCode
+        let keyName = keyCodeToText code
+        when (keyName /= "") $ do
+            liftIO $ handleEvent (KeyPress keyName) currentActivity
+            preventDefault
+            stopPropagation
+    on window Window.keyUp $ do
+        code <- uiKeyCode
+        let keyName = keyCodeToText code
+        when (keyName /= "") $ do
+            liftIO $ handleEvent (KeyRelease keyName) currentActivity
+            preventDefault
+            stopPropagation
+    on window Window.mouseDown $ do
+        button <- mouseButton
+        case fromButtonNum button of
+            Nothing  -> return ()
+            Just btn -> do
+                pos <- getMousePos canvas
+                liftIO $ handleEvent (MousePress btn pos) currentActivity
+    on window Window.mouseUp $ do
+        button <- mouseButton
+        case fromButtonNum button of
+            Nothing  -> return ()
+            Just btn -> do
+                pos <- getMousePos canvas
+                liftIO $ handleEvent (MouseRelease btn pos) currentActivity
+    on window Window.mouseMove $ do
+        pos <- getMousePos canvas
+        liftIO $ handleEvent (MouseMovement pos) currentActivity
+    return ()
+
+run :: Activity -> IO ()
+run startActivity = do
+    Just window <- currentWindow
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
+    offscreenCanvas <- Canvas.create 500 500
+
+    setCanvasSize canvas canvas
+    setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+    on window Window.resize $ do
+        liftIO $ setCanvasSize canvas canvas
+        liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+
+    currentActivity <- newMVar startActivity
+    setupEvents currentActivity canvas (elementFromCanvas offscreenCanvas)
+
+    screen <- js_getCodeWorldContext (canvasFromElement canvas)
+
+    let go t0 a0 = do
+            Just rect <- getBoundingClientRect canvas
+            buffer <- setupScreenContext (elementFromCanvas offscreenCanvas) rect
+            drawFrame buffer (activityDraw a0)
+            Canvas.restore buffer
+
+            t1 <- waitForAnimationFrame
+
+            Just rect <- getBoundingClientRect canvas
+            cw <- ClientRect.getWidth rect
+            ch <- ClientRect.getHeight rect
+
+            Canvas.clearRect 0 0 (realToFrac cw) (realToFrac ch) screen
+            js_canvasDrawImage screen (elementFromCanvas offscreenCanvas) 0 0 (round cw) (round ch)
+            a1 <- passTime ((t1 - t0) / 1000) currentActivity
+            go t1 a1
+
+    t0 <- waitForAnimationFrame
+    go t0 startActivity `catch` reportError
+
+--------------------------------------------------------------------------------
+-- Stand-Alone event handling and core interaction code
+
+#else
+
+fromButtonNum :: Int -> Maybe MouseButton
+fromButtonNum 1 = Just LeftButton
+fromButtonNum 2 = Just MiddleButton
+fromButtonNum 3 = Just RightButton
+fromButtonNum _ = Nothing
+
+getMousePos :: (Int, Int) -> (Double, Double) -> (Double, Double)
+getMousePos (w,h) (x,y) = ((x - fromIntegral w / 2)/s, -(y - fromIntegral h / 2)/s)
+  where
+   s = min (realToFrac w / 20) (realToFrac h / 20)
+
+toEvent :: (Int, Int) -> Canvas.Event -> Maybe Event
+toEvent rect Canvas.Event {..}
+    | eType == "keydown"
+    , Just code <- eWhich
+    = Just $ KeyPress (keyCodeToText code)
+    | eType == "keyup"
+    , Just code <- eWhich
+    = Just $ KeyRelease (keyCodeToText code)
+    | eType == "mousedown"
+    , Just button <- eWhich >>= fromButtonNum
+    , Just pos <- getMousePos rect <$> ePageXY
+    = Just $ MousePress button pos
+    | eType == "mouseup"
+    , Just button <- eWhich >>= fromButtonNum
+    , Just pos <- getMousePos rect <$> ePageXY
+    = Just $ MouseRelease button pos
+    | eType == "mousemove"
+    , Just pos <- getMousePos rect <$> ePageXY
+    = Just $ MouseMovement pos
+    | otherwise
+    = Nothing
+
+run :: Activity -> IO ()
+run startActivity = runBlankCanvas $ \context -> do
+    let rect = (Canvas.width context, Canvas.height context)
+
+    offscreenCanvas <- Canvas.send context $ Canvas.newCanvas rect
+
+    currentActivity <- newMVar startActivity
+
+    let go t0 a0 = do
+            Canvas.send context $
+                Canvas.with offscreenCanvas $
+                    Canvas.saveRestore $ do
+                        setupScreenContext rect
+                        drawFrame (activityDraw a0)
+            tn <- getCurrentTime
+
+            threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
+            t1 <- getCurrentTime
+
+            Canvas.send context $ Canvas.drawImageAt (offscreenCanvas, 0, 0)
+            a1 <- passTime (realToFrac (t1 `diffUTCTime` t0)) currentActivity
+
+            -- Handle events now
+            events <- mapMaybe (toEvent rect) <$> Canvas.flush context
+            mapM_ (\e -> handleEvent e currentActivity) events
+
+            go t1 a1
+
+    t0 <- getCurrentTime
+    go t0 startActivity `catch` reportError
+
+#endif
+
+--------------------------------------------------------------------------------
+-- Common code for interaction, animation and simulation interfaces
+
+interactionOf initial step event draw = go `catch` reportError
+  where go = run (activity initial)
+        activity x = Activity {
+                        activityStep    = (\dt -> activity (step dt x)),
+                        activityEvent   = (\ev -> activity (event ev x)),
+                        activityDraw    = draw x
+                    }
+
+data Wrapped a = Wrapped {
+    state          :: a,
+    paused         :: Bool,
+    mouseMovedTime :: Double
+    }
+
+data Control :: * -> * where
+  PlayButton    :: Control a
+  PauseButton   :: Control a
+  StepButton    :: Control a
+  RestartButton :: Control Double
+  BackButton    :: Control Double
+  TimeLabel     :: Control Double
+
+wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
+wrappedStep f dt w = w {
+    state          = if paused w then state w else f dt (state w),
+    mouseMovedTime = mouseMovedTime w + dt
+    }
+
+wrappedEvent :: (Wrapped a -> [Control a])
+      -> (Double -> a -> a)
+      -> Event -> Wrapped a -> Wrapped a
+wrappedEvent _     _ (MouseMovement _)         w
+    = w { mouseMovedTime = 0 }
+wrappedEvent ctrls f (MousePress LeftButton p) w
+    = (foldr (handleControl f p) w (ctrls w)) { mouseMovedTime = 0 }
+wrappedEvent _     _ _                         w = w
+
+handleControl :: (Double -> a -> a)
+              -> Point
+              -> Control a
+              -> Wrapped a
+              -> Wrapped a
+handleControl _ (x,y) RestartButton w
+  | -9.4 < x && x < -8.6 && -9.4 < y && y < -8.6
+      = w { state = 0 }
+handleControl _ (x,y) PlayButton    w
+  | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6
+      = w { paused = False }
+handleControl _ (x,y) PauseButton   w
+  | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6
+      = w { paused = True }
+handleControl f (x,y) StepButton    w
+  | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6
+      = w { state = f 0.1 (state w) }
+handleControl _ (x,y) BackButton    w
+  | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6
+      = w { state = max 0 (state w - 0.1) }
+handleControl _ _     _             w = w
+
+wrappedDraw :: (Wrapped a -> [Control a])
+     -> (a -> Picture)
+     -> Wrapped a -> Picture
+wrappedDraw ctrls f w = drawControlPanel ctrls w <> f (state w)
+
+drawControlPanel :: (Wrapped a -> [Control a]) -> Wrapped a -> Picture
+drawControlPanel ctrls w = pictures [ drawControl w alpha c | c <- ctrls w ]
+  where alpha | mouseMovedTime w < 4.5  = 1
+              | mouseMovedTime w < 5.0  = 10 - 2 * mouseMovedTime w
+              | otherwise               = 0
+
+drawControl :: Wrapped a -> Double -> Control a -> Picture
+drawControl _ alpha RestartButton = translated (-9) (-9) p
+  where p = colored (RGBA 0   0   0   alpha)
+                    (thickArc 0.1 (pi / 6) (11 * pi / 6) 0.2 <>
+                     translated 0.173 (-0.1) (solidRectangle 0.17 0.17))
+         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+
+drawControl _ alpha PlayButton = translated (-8) (-9) p
+  where p = colored (RGBA 0   0   0   alpha)
+                    (solidPolygon [ (-0.2, 0.25), (-0.2, -0.25), (0.2, 0) ])
+         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+
+drawControl _ alpha PauseButton = translated (-8) (-9) p
+  where p = colored (RGBA 0   0   0   alpha)
+                    (translated (-0.15) 0 (solidRectangle 0.2 0.6) <>
+                     translated ( 0.15) 0 (solidRectangle 0.2 0.6))
+         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+
+drawControl _ alpha StepButton = translated (-7) (-9) p
+  where p = colored (RGBA 0   0   0   alpha)
+                    (translated (-0.15) 0 (solidRectangle 0.2 0.5) <>
+                     solidPolygon [ (0.05, 0.25), (0.05, -0.25), (0.3, 0) ])
+         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+
+drawControl _ alpha BackButton = translated (-6) (-9) p
+  where p = colored (RGBA 0   0   0   alpha)
+                    (translated 0.15 0 (solidRectangle 0.2 0.5) <>
+                     solidPolygon [ (-0.05, 0.25), (-0.05, -0.25), (-0.3, 0) ])
+         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+
+drawControl w alpha TimeLabel = translated (8) (-9) p
+  where p = colored (RGBA 0   0   0   alpha)
+                    (scaled 0.5 0.5 $
+                        text (pack (showFFloatAlt (Just 4) (state w) "s")))
+         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      3.0 0.8)
+         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 3.0 0.8)
+
+animationControls :: Wrapped Double -> [Control Double]
+animationControls w
+  | mouseMovedTime w > 5    = []
+  | paused w && state w > 0 = [ RestartButton, PlayButton, StepButton,
+                                BackButton, TimeLabel ]
+  | paused w                = [ RestartButton, PlayButton, StepButton,
+                                TimeLabel ]
+  | otherwise               = [ RestartButton, PauseButton, TimeLabel ]
+
+animationOf f =
+    interactionOf initial
+                  (wrappedStep (+))
+                  (wrappedEvent animationControls (+))
+                  (wrappedDraw animationControls f)
+  where initial = Wrapped {
+            state          = 0,
+            paused         = False,
+            mouseMovedTime = 1000
+        }
+
+simulationControls :: Wrapped w -> [Control w]
+simulationControls w
+  | mouseMovedTime w > 5 = []
+  | paused w             = [ PlayButton, StepButton ]
+  | otherwise            = [ PauseButton ]
+
+simulationOf simInitial simStep simDraw =
+    interactionOf initial
+                  (wrappedStep simStep)
+                  (wrappedEvent simulationControls simStep)
+                  (wrappedDraw simulationControls simDraw)
+  where initial = Wrapped {
+            state          = simInitial,
+            paused         = False,
+            mouseMovedTime = 1000
+        }
+
+
+#ifdef ghcjs_HOST_OS
+--------------------------------------------------------------------------------
+--- GHCJS implementation of tracing and error handling
+
+foreign import javascript unsafe "window.reportRuntimeError($1, $2);"
+    js_reportRuntimeError :: Bool -> JSString -> IO ()
+
+trace msg x = unsafePerformIO $ do
+    js_reportRuntimeError False (textToJSString msg)
+    return x
+
+reportError :: SomeException -> IO ()
+reportError e = js_reportRuntimeError True (textToJSString (pack (show e)))
+
+--------------------------------------------------------------------------------
+--- Stand-alone implementation of tracing and error handling
+#else
+
+trace = Debug.Trace.trace . T.unpack
 
 reportError :: SomeException -> IO ()
 reportError e = hPrint stderr e

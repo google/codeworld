@@ -63,11 +63,13 @@ btnRunClick ws = do
       (code,errors) <- liftIO $ workspaceToCode ws
       case errors of
         ((Error msg block):es) -> do 
-                                    setErrorMessage msg
+                                    liftIO $ putStrLn "yoh, error"
+                                    liftIO $ putStrLn $ T.unpack msg
                                     liftIO $ setWarningText block msg
                                     liftIO $ addErrorSelect block
                                     liftIO $ js_removeErrorsDelay
                                     liftIO $ js_stop
+                                    setErrorMessage msg
 
         [] -> do
           liftIO $ js_updateEditor (pack code)

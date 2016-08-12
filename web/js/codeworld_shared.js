@@ -238,8 +238,7 @@ function registerStandardHints(successFunc)
 
 
 function addToMessage(msg) {
-    // usingHaskellPrelude must be defined
-    if (window.buildMode == 'codeworld' && !usingHaskellPrelude()) {
+    if (window.buildMode == 'codeworld') {
         msg = msg
             .replace(/\u2018/g, '')
             .replace(/\u2019/g, '')

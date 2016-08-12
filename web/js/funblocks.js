@@ -72,10 +72,6 @@ function getCurrentProject() {
   };
 }
 
-function usingHaskellPrelude() {
-  return false;
-}
-
 // Sets the generated code
 function updateEditor(code) {
     var editor = document.getElementById('genCode');

@@ -324,11 +324,6 @@ function goto(line, col) {
     codeworldEditor.focus();
 }
 
-function usingHaskellPrelude() {
-    var src = window.codeworldEditor.getValue();
-    return /HaskellPrelude/.test(src);
-}
-
 function compile() {
     run('', 'Building...', false);
 

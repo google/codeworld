@@ -243,12 +243,6 @@ blockCreatePair block = do
     second <- valueToExpr block "SECOND" 
     return $ Tuple [first,second]
 
-blockFst :: ParserFunction
-blockFst = sFuncBlock
-
-blockSnd :: ParserFunction
-blockSnd = sFuncBlock 
-
 -- LISTS
 
 blockCreateList :: ParserFunction
@@ -433,6 +427,8 @@ regularBlockNames =
                   ,"conStartWith"
                   ,"conEndWith"
                   -- Tuples
+                  ,"pair_first_typed"
+                  ,"pair_second_typed"
                   -- Lists
                   ,"lists_length"
                   ,"lists_at"
@@ -478,8 +474,6 @@ specialBlocks = [  -- PROGRAMS
                   ,("txtConcat", blockConcat)
                   ,("conIf",blockIf)
                   ,("pair_create_typed", blockCreatePair)
-                  ,("pair_first_typed", blockFst)
-                  ,("pair_second_typed", blockSnd)
                   ,("lists_create_with_typed", blockCreateList)
                   ,("lists_cons", sInfixBlock)
                   ,("lists_numgen", blockNumGen)

@@ -152,44 +152,38 @@ cwThickArc = DesignBlock "cwThickArc" "thickArc"
 
 -- Transformations -----------------------------------------------
 cwColored = DesignBlock "cwColored" "colored"
-          [Dummy [icon "format-color-fill.svg", TextE "colored"] 
-           ,Value "PICTURE" [Text "Picture"] 
-           ,Value "COLOR" [Text "Color"] ] 
-          inlineDef colorPicture [typePicture, typeColor, typePicture]
+          [Dummy [TextE "colored", icon "format-color-fill.svg"] 
+           ,Value "PICTURE" []
+           ,Value "COLOR" []
+           ]
+          (Inline True) colorPicture [typePicture, typeColor, typePicture]
           (Tooltip "Change the color of a picture")
 
 cwTranslate = DesignBlock "cwTranslate" "translated"
-          [Dummy [icon "cursor-move.svg", TextE "translated"] 
-           ,Value "PICTURE" [Text "Picture"] 
-           ,Value "X" [Text "x"] 
-           ,Value "Y" [Text "y"] 
+          [Dummy [TextE "translated", icon "cursor-move.svg"] 
+           ,Value "PICTURE" [] 
+           ,Value "X" []
+           ,Value "Y" []
           ] 
-          inlineDef colorPicture [typePicture, typeNumber, typeNumber, typePicture]
+          (Inline True) colorPicture [typePicture, typeNumber, typeNumber, typePicture]
           (Tooltip "Translate a picture")
 
 cwScale = DesignBlock "cwScale" "scaled"
-          [Dummy [icon "move-resize-variant.svg", TextE "scaled"] 
-           ,Value "PICTURE" [Text "Picture"] 
-           ,Value "HORZ" [Text "Horizontal"] 
-           ,Value "VERTZ" [Text "Vertical"] 
+          [Dummy [TextE "scaled" , icon "move-resize-variant.svg"] 
+           ,Value "PICTURE" [] 
+           ,Value "HORZ" []
+           ,Value "VERTZ" []
           ] 
-          inlineDef colorPicture [typePicture, typeNumber, typeNumber, typePicture]
+          (Inline True) colorPicture [typePicture, typeNumber, typeNumber, typePicture]
           (Tooltip "Scale a picture")
 
 cwRotate = DesignBlock "cwRotate" "rotated"
-          [Dummy [icon "rotate-3d.svg", TextE "rotated"] 
-           ,Value "PICTURE" [Text "Picture"] 
-           ,Value "ANGLE" [Text "Angle"] 
+          [Dummy [TextE "rotated", icon "rotate-3d.svg"] 
+           ,Value "PICTURE" []
+           ,Value "ANGLE" []
           ] 
-          inlineDef colorPicture [typePicture, typeNumber, typePicture ]
+          (Inline True) colorPicture [typePicture, typeNumber, typePicture ]
           (Tooltip "Rotate")
-
-cwCombine = DesignBlock "cwCombine" "&"
-          [ Value "PIC1" [] 
-           ,Value "PIC2" [TextE "&"] 
-          ]
-          inlineDef colorPicture [typePicture, typePicture, typePicture]
-          (Tooltip "Combines two pictures")
 
 -- NUMBERS ---------------------------------------------
 

@@ -93,6 +93,7 @@ data Input = Value T.Text [Field]
 data Field = Text T.Text
             | TextE T.Text -- Emphasized Text, for titles
             | TextInput T.Text T.Text -- displayname, value
+            | FieldImage T.Text Int Int -- src, width, height
             
 data Connection = TopCon | BotCon | TopBotCon | LeftCon
 newtype Inline = Inline Bool
@@ -108,6 +109,7 @@ fieldCode :: FieldInput -> Field -> IO FieldInput
 fieldCode field (Text str) = js_appendTextField field (pack str)
 fieldCode field (TextE str) = js_appendTextFieldEmph field (pack str)
 fieldCode field (TextInput text name) = js_appendTextInputField field (pack text) (pack name)
+fieldCode field (FieldImage src width height) = js_appendFieldImage field (pack src) width height
 
 inputCode :: Block -> Input -> IO ()
 inputCode block (Dummy fields) = do 
@@ -195,6 +197,9 @@ foreign import javascript unsafe "$1.appendField($2)"
 
 foreign import javascript unsafe "$1.appendField(new Blockly.FieldLabel($2, 'blocklyTextEmph'))"
   js_appendTextFieldEmph :: FieldInput -> JSString -> IO FieldInput
+
+foreign import javascript unsafe "$1.appendField(new Blockly.FieldImage($2, $3, $4))"
+  js_appendFieldImage:: FieldInput -> JSString -> Int -> Int -> IO FieldInput
 
 foreign import javascript unsafe "$1.appendField(new Blockly.FieldTextInput($2), $3)"
   js_appendTextInputField :: FieldInput -> JSString -> JSString -> IO FieldInput

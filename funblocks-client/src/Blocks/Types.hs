@@ -41,6 +41,9 @@ typeComment = Comment
 
 inlineDef = Inline False
 
+icon :: T.Text -> Field
+icon name = FieldImage ("ims/" `T.append` name) 20 20
+
 letVar = DesignBlock "letVar" ""
             [Dummy [TextInput "foo" "VARNAME"
             ,TextE "Let"]
@@ -149,14 +152,14 @@ cwThickArc = DesignBlock "cwThickArc" "thickArc"
 
 -- Transformations -----------------------------------------------
 cwColored = DesignBlock "cwColored" "colored"
-          [Dummy [TextE "colored"] 
+          [Dummy [icon "format-color-fill.svg", TextE "colored"] 
            ,Value "PICTURE" [Text "Picture"] 
            ,Value "COLOR" [Text "Color"] ] 
           inlineDef colorPicture [typePicture, typeColor, typePicture]
           (Tooltip "Change the color of a picture")
 
 cwTranslate = DesignBlock "cwTranslate" "translated"
-          [Dummy [TextE "translated"] 
+          [Dummy [icon "cursor-move.svg", TextE "translated"] 
            ,Value "PICTURE" [Text "Picture"] 
            ,Value "X" [Text "x"] 
            ,Value "Y" [Text "y"] 
@@ -165,7 +168,7 @@ cwTranslate = DesignBlock "cwTranslate" "translated"
           (Tooltip "Translate a picture")
 
 cwScale = DesignBlock "cwScale" "scaled"
-          [Dummy [TextE "scaled"] 
+          [Dummy [icon "move-resize-variant.svg", TextE "scaled"] 
            ,Value "PICTURE" [Text "Picture"] 
            ,Value "HORZ" [Text "Horizontal"] 
            ,Value "VERTZ" [Text "Vertical"] 
@@ -174,7 +177,7 @@ cwScale = DesignBlock "cwScale" "scaled"
           (Tooltip "Scale a picture")
 
 cwRotate = DesignBlock "cwRotate" "rotated"
-          [Dummy [TextE "rotated"] 
+          [Dummy [icon "rotate-3d.svg", TextE "rotated"] 
            ,Value "PICTURE" [Text "Picture"] 
            ,Value "ANGLE" [Text "Angle"] 
           ] 

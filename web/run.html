@@ -30,6 +30,8 @@
 
   <script type="text/javascript">
     var params = location.search.slice(1).split('&');
+    var hash = null;
+    var mode = null;
     for (var i = 0; i < params.length; i++) {
       var parts = params[i].split('=');
       if (parts[0] == 'hash') {
@@ -41,14 +43,16 @@
         if (hash.slice(-2) === '==') {
           hash = hash.slice(0, -2);
         }
-        var script = document.createElement('script');
-        script.setAttribute('type', 'text/javascript');
-        script.setAttribute('src', 'runJS?hash=' + hash + '&mode=' + window.parent.buildMode);
-
-        document.head.appendChild(script);
-
-        break;
+      } else if (parts[0] == 'mode') {
+        mode = parts[1];
       }
+    }
+    if (mode == null) mode = 'codeworld';
+    if (hash != null) {
+      var script = document.createElement('script');
+      script.setAttribute('type', 'text/javascript');
+      script.setAttribute('src', 'runJS?hash=' + hash + '&mode=' + mode);
+      document.head.appendChild(script);
     }
   </script>
 </html>

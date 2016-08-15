@@ -21,7 +21,8 @@ module Util where
 
 import           Control.Concurrent
 import           Control.Exception
-import qualified Crypto.Hash.MD5 as MD5
+import qualified Crypto.Hash as Crypto
+import           Data.ByteArray (convert)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Base64 as B64
@@ -71,10 +72,10 @@ projectFile :: ProjectId -> FilePath
 projectFile (ProjectId p) = let s = T.unpack p in s <.> "cw"
 
 sourceToProgramId :: ByteString -> ProgramId
-sourceToProgramId = ProgramId . ("P" <>) . T.decodeUtf8 . getHash
+sourceToProgramId = ProgramId . hashToId "P"
 
 nameToProjectId :: Text -> ProjectId
-nameToProjectId = ProjectId . ("S" <>) . T.decodeUtf8 . getHash . T.encodeUtf8
+nameToProjectId = ProjectId . hashToId "S" . T.encodeUtf8
 
 ensureProgramDir :: BuildMode -> ProgramId -> IO ()
 ensureProgramDir mode (ProgramId p) = createDirectoryIfMissing True dir
@@ -84,8 +85,14 @@ ensureUserProjectDir :: BuildMode -> Text -> IO ()
 ensureUserProjectDir mode userId =
     createDirectoryIfMissing True (userProjectDir mode userId)
 
-getHash :: ByteString -> ByteString
-getHash = BC.takeWhile (/= '=') . BC.map toWebSafe . B64.encode . MD5.hash
+hashToId :: Text -> ByteString -> Text
+hashToId pfx = (pfx <>)
+             . T.decodeUtf8
+             . BC.takeWhile (/= '=')
+             . BC.map toWebSafe
+             . B64.encode
+             . convert
+             . (Crypto.hash :: ByteString -> Crypto.Digest Crypto.MD5)
   where toWebSafe '/' = '_'
         toWebSafe '+' = '-'
         toWebSafe c   = c

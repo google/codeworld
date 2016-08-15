@@ -21,7 +21,7 @@ module Util where
 
 import           Control.Concurrent
 import           Control.Exception
-import qualified Crypto.Hash.MD5 as Crypto
+import qualified Crypto.Hash.MD5 as MD5
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Base64 as B64
@@ -77,7 +77,7 @@ ensureUserProjectDir mode userId = createDirectoryIfMissing True dir
   where dir = projectRootDir mode </> T.unpack userId
 
 getHash :: ByteString -> ByteString
-getHash = BC.takeWhile (/= '=') . BC.map toWebSafe . B64.encode . Crypto.hash
+getHash = BC.takeWhile (/= '=') . BC.map toWebSafe . B64.encode . MD5.hash
   where toWebSafe '/' = '_'
         toWebSafe '+' = '-'
         toWebSafe c   = c

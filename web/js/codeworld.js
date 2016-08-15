@@ -278,6 +278,8 @@ function stop() {
 }
 
 function run(hash, msg, error) {
+    var runner = document.getElementById('runner');
+
     if (hash) {
         window.location.hash = '#' + hash;
         document.getElementById('shareButton').style.display = '';
@@ -286,17 +288,17 @@ function run(hash, msg, error) {
         document.getElementById('shareButton').style.display = 'none';
     }
 
-    var runner = document.getElementById('runner');
+    if (hash && !error) {
+        var loc = 'run.html?hash=' + hash + '&mode=' + window.buildMode;
+        runner.contentWindow.location.replace(loc);
+        document.getElementById('runner').style.display = '';
+        document.getElementById('runner').contentWindow.focus();
+    } else {
+        runner.contentWindow.location.replace('about:blank');
+        document.getElementById('runner').style.display = 'none';
+    }
+
     if (hash || msg) {
-        if (hash && !error) {
-            var loc = 'run.html?hash=' + hash + '&mode=' + window.buildMode;
-            runner.contentWindow.location.replace(loc);
-            document.getElementById('runner').style.display = '';
-            document.getElementById('runner').contentWindow.focus();
-        } else {
-            runner.contentWindow.location.replace('about:blank');
-            document.getElementById('runner').style.display = 'none';
-        }
         window.mainLayout.show('east');
         window.mainLayout.open('east');
     } else {
@@ -322,13 +324,8 @@ function goto(line, col) {
     codeworldEditor.focus();
 }
 
-function usingHaskellPrelude() {
-    var src = window.codeworldEditor.getValue();
-    return /HaskellPrelude/.test(src);
-}
-
 function compile() {
-    run('', 'Building...', false);
+    run('', 'Compiling...', false);
 
     var src = window.codeworldEditor.getValue();
     var data = new FormData();

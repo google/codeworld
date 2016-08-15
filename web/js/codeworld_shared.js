@@ -238,8 +238,7 @@ function registerStandardHints(successFunc)
 
 
 function addToMessage(msg) {
-    // usingHaskellPrelude must be defined
-    if (window.buildMode == 'codeworld' && !usingHaskellPrelude()) {
+    if (window.buildMode == 'codeworld') {
         msg = msg
             .replace(/\u2018/g, '')
             .replace(/\u2019/g, '')
@@ -268,7 +267,8 @@ function addToMessage(msg) {
                 'This tuple is missing a value, or has an extra comma.')
             .replace(/in string\/character literal/, 'in text literal')
             .replace(/lexical error at character '\\822[01]'/,
-                     'Smart quotes are not allowed.');
+                     'Smart quotes are not allowed.')
+            .replace(/Use -v to see a list of the files searched for\./, '');
     }
 
     msg = msg

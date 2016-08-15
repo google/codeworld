@@ -11,10 +11,9 @@ Cabal-version:       >=1.8
 Description:
   This module replaces base when building CodeWorld apps. It simplifies the Haskell
   Prelude to remove the use of numeric type classes and unify some types.
-
-Flag ghcjs
-    Description: Tell cabal we are using ghcjs (work around until hackage supports impl(ghcjs))
-    Default: True
+  .
+  This package is intended to be installed for GHCJS as part of the CodeWorld
+  server.  It will not work with other Haskell implementations.
 
 Library
   Hs-source-dirs:      src
@@ -40,8 +39,3 @@ Library
                        time
   Exposed:             False
   Ghc-options:         -O2
-
-  if flag(ghcjs)
-    Build-depends:     ghcjs-base,
-                       ghcjs-dom,
-                       ghcjs-canvas

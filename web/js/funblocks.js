@@ -72,10 +72,6 @@ function getCurrentProject() {
   };
 }
 
-function usingHaskellPrelude() {
-  return false;
-}
-
 // Sets the generated code
 function updateEditor(code) {
     var editor = document.getElementById('genCode');
@@ -164,7 +160,7 @@ function isEditorClean()
 }
 
 function compile(src) {
-    run('', '', 'Building...', false);
+    run('', '', 'Compiling...', false);
 
     var xml_text = getWorkspaceXMLText();
     var data = new FormData();

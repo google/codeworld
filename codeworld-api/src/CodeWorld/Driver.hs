@@ -4,6 +4,8 @@
 {-# LANGUAGE JavaScriptFFI            #-}
 {-# LANGUAGE KindSignatures           #-}
 {-# LANGUAGE OverloadedStrings        #-}
+{-# LANGUAGE RecordWildCards          #-}
+{-# LANGUAGE PatternGuards            #-}
 
 {-
   Copyright 2016 The CodeWorld Authors. All rights reserved.
@@ -30,24 +32,27 @@ module CodeWorld.Driver (
     trace
     ) where
 
-import           Data.Text (Text, singleton, pack)
-import qualified Data.Text as T
-import           CodeWorld.Picture
+
+import           CodeWorld.Color
 import           CodeWorld.Event
-
-#ifdef ghcjs_HOST_OS
-
+import           CodeWorld.Picture
 import           Control.Concurrent
 import           Control.Concurrent.MVar
 import           Control.Exception
 import           Control.Monad
 import           Control.Monad.Trans (liftIO)
-import           CodeWorld.Color
 import           Data.Char (chr)
+import           Data.List (zip4)
+import           Data.Maybe (mapMaybe)
+import           Data.Monoid
+import qualified Data.Text as T
+import           Data.Text (Text, singleton, pack)
+import           Numeric
+
+#ifdef ghcjs_HOST_OS
+
 import           Data.IORef
 import           Data.JSString.Text
-import           Data.List (zip4)
-import           Data.Monoid
 import           Data.Time.Clock
 import           Data.Word
 import           GHCJS.DOM
@@ -64,23 +69,52 @@ import           GHCJS.Types
 import           JavaScript.Web.AnimationFrame
 import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
-import           Numeric
 import           System.IO.Unsafe
 import           System.Random
 
+#else
+
+import           Data.Time.Clock
+import qualified Debug.Trace
+import qualified Graphics.Blank as Canvas
+import           Graphics.Blank (Canvas)
+import           System.IO
+import           Text.Printf
+
+#endif
+
+
 --------------------------------------------------------------------------------
+-- The common interface, provided by both implementations below.
 
-foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
-    js_canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
+-- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
+drawingOf :: Picture -> IO ()
 
-foreign import javascript unsafe "$1.getContext('2d', { alpha: false })"
-    js_getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
+-- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
+pictureOf :: Picture -> IO ()
+{-# WARNING pictureOf "Please use drawingOf instead of pictureOf" #-}
 
-canvasFromElement :: Element -> Canvas.Canvas
-canvasFromElement = Canvas.Canvas . unElement
+-- | Shows an animation, with a picture for each time given by the parameter.
+animationOf :: (Double -> Picture) -> IO ()
 
-elementFromCanvas :: Canvas.Canvas -> Element
-elementFromCanvas = pFromJSVal . jsval
+-- | Shows a simulation, which is essentially a continuous-time dynamical
+-- system described by an initial value and step function.
+simulationOf :: world -> (Double -> world -> world) -> (world -> Picture) -> IO ()
+
+-- | Runs an interactive event-driven CodeWorld program.  This is the most
+-- advanced CodeWorld entry point.
+interactionOf :: world
+              -> (Double -> world -> world)
+              -> (Event -> world -> world)
+              -> (world -> Picture)
+              -> IO ()
+
+-- | Prints a debug message to the CodeWorld console when a value is forced.
+-- This is equivalent to the similarly named function in `Debug.Trace`, except
+-- that it uses the CodeWorld console instead of standard output.
+trace :: Text -> a -> a
+
+
 
 --------------------------------------------------------------------------------
 -- Draw state.  An affine transformation matrix, plus a Bool indicating whether
@@ -114,6 +148,24 @@ setColorDS _ (a,b,c,d,e,f,Just col) = (a,b,c,d,e,f,Just col)
 getColorDS :: DrawState -> Maybe Color
 getColorDS (a,b,c,d,e,f,col) = col
 
+--------------------------------------------------------------------------------
+-- GHCJS implementation of drawing
+
+#ifdef ghcjs_HOST_OS
+
+foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
+    js_canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
+
+foreign import javascript unsafe "$1.getContext('2d', { alpha: false })"
+    js_getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
+
+canvasFromElement :: Element -> Canvas.Canvas
+canvasFromElement = Canvas.Canvas . unElement
+
+elementFromCanvas :: Canvas.Canvas -> Element
+elementFromCanvas = pFromJSVal . jsval
+
+
 withDS :: Canvas.Context -> DrawState -> IO () -> IO ()
 withDS ctx (ta,tb,tc,td,te,tf,col) action = do
     Canvas.save ctx
@@ -121,9 +173,6 @@ withDS ctx (ta,tb,tc,td,te,tf,col) action = do
     Canvas.beginPath ctx
     action
     Canvas.restore ctx
-
---------------------------------------------------------------------------------
--- Base drawing code for pictures.
 
 applyColor :: Canvas.Context -> DrawState -> IO ()
 applyColor ctx ds = case getColorDS ds of
@@ -296,33 +345,6 @@ setCanvasSize target canvas = do
     setAttribute target ("width" :: JSString) (show (round cx))
     setAttribute target ("height" :: JSString) (show (round cy))
 
---------------------------------------------------------------------------------
-
-foreign import javascript unsafe "window.reportRuntimeError($1, $2);"
-    js_reportRuntimeError :: Bool -> JSString -> IO ()
-
--- | Prints a debug message to the CodeWorld console when a value is forced.
--- This is equivalent to the similarly named function in `Debug.Trace`, except
--- that it uses the CodeWorld console instead of standard output.
-trace :: Text -> a -> a
-trace msg x = unsafePerformIO $ do
-    js_reportRuntimeError False (textToJSString msg)
-    return x
-
-reportError :: SomeException -> IO ()
-reportError e = js_reportRuntimeError True (textToJSString (pack (show e)))
-
---------------------------------------------------------------------------------
-
--- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
-drawingOf :: Picture -> IO ()
-drawingOf pic = display pic `catch` reportError
-
--- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
-pictureOf :: Picture -> IO ()
-pictureOf pic = display pic `catch` reportError
-{-# WARNING pictureOf "Please use drawingOf instead of pictureOf" #-}
-
 display :: Picture -> IO ()
 display pic = do
     Just window <- currentWindow
@@ -338,8 +360,199 @@ display pic = do
         drawFrame ctx pic
         Canvas.restore ctx
 
+drawingOf pic = display pic `catch` reportError
+
+pictureOf pic = display pic `catch` reportError
+
+
 --------------------------------------------------------------------------------
--- Implementation of interactionOf
+-- Stand-alone implementation of drawing
+
+#else
+
+withDS :: DrawState -> Canvas () -> Canvas ()
+withDS (ta,tb,tc,td,te,tf,col) action =
+    Canvas.saveRestore $ do
+        Canvas.transform (ta, tb, tc, td, te, tf)
+        Canvas.beginPath ()
+        action
+
+applyColor :: DrawState -> Canvas ()
+applyColor ds = case getColorDS ds of
+    Nothing -> do
+      Canvas.strokeStyle "black"
+      Canvas.fillStyle   "black"
+    Just (RGBA r g b a) -> do
+      let style = pack $ printf "rgba(%.0f,%.0f,%.0f,%f)" (r*255) (g*255) (b*255) a
+      Canvas.strokeStyle style
+      Canvas.fillStyle   style
+
+
+drawFigure :: DrawState -> Double -> Canvas () -> Canvas ()
+drawFigure ds w figure = do
+    withDS ds $ do
+        figure
+        when (w /= 0) $ do
+            Canvas.lineWidth (25 * w)
+            applyColor ds
+            Canvas.stroke ()
+    when (w == 0) $ do
+        Canvas.lineWidth 1
+        applyColor ds
+        Canvas.stroke ()
+
+followPath :: [Point] -> Bool -> Bool -> Canvas ()
+followPath [] closed _ = return ()
+followPath [p1] closed _ = return ()
+followPath ((sx,sy):ps) closed False = do
+    Canvas.moveTo (25 * sx, 25 * sy)
+    forM_ ps $ \(x,y) -> Canvas.lineTo (25 * x, 25 * y)
+    when closed $ Canvas.closePath ()
+followPath [p1, p2] False True = followPath [p1, p2] False False
+followPath ps False True = do
+    let [(x1,y1), (x2,y2), (x3,y3)] = take 3 ps
+        dprev = sqrt ((x2 - x1)^2 + (y2 - y1)^2)
+        dnext = sqrt ((x3 - x2)^2 + (y3 - y2)^2)
+        p     = dprev / (dprev + dnext)
+        cx    = x2 + p * (x1 - x3) / 2
+        cy    = y2 + p * (y1 - y3) / 2
+     in do Canvas.moveTo (25 * x1, 25 * y1)
+           Canvas.quadraticCurveTo (25 * cx, 25 * cy, 25 * x2, 25 * y2)
+    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $
+        \((x1,y1),(x2,y2),(x3,y3),(x4,y4)) ->
+            let dp  = sqrt ((x2 - x1)^2 + (y2 - y1)^2)
+                d1  = sqrt ((x3 - x2)^2 + (y3 - y2)^2)
+                d2  = sqrt ((x4 - x3)^2 + (y4 - y3)^2)
+                p   = d1 / (d1 + d2)
+                r   = d1 / (dp + d1)
+                cx1 = x2 + r * (x3 - x1) / 2
+                cy1 = y2 + r * (y3 - y1) / 2
+                cx2 = x3 + p * (x2 - x4) / 2
+                cy2 = y3 + p * (y2 - y4) / 2
+            in  Canvas.bezierCurveTo ( 25 * cx1, 25 * cy1, 25 * cx2, 25 * cy2
+                                     , 25 * x3,  25 * y3)
+    let [(x1,y1), (x2,y2), (x3,y3)] = reverse $ take 3 $ reverse ps
+        dp = sqrt ((x2 - x1)^2 + (y2 - y1)^2)
+        d1 = sqrt ((x3 - x2)^2 + (y3 - y2)^2)
+        r  = d1 / (dp + d1)
+        cx = x2 + r * (x3 - x1) / 2
+        cy = y2 + r * (y3 - y1) / 2
+     in Canvas.quadraticCurveTo (25 * cx, 25 * cy, 25 * x3, 25 * y3)
+followPath ps@(_:(sx,sy):_) True True = do
+    Canvas.moveTo (25 * sx, 25 * sy)
+    let rep = cycle ps
+    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $
+        \((x1,y1),(x2,y2),(x3,y3),(x4,y4)) ->
+            let dp  = sqrt ((x2 - x1)^2 + (y2 - y1)^2)
+                d1  = sqrt ((x3 - x2)^2 + (y3 - y2)^2)
+                d2  = sqrt ((x4 - x3)^2 + (y4 - y3)^2)
+                p   = d1 / (d1 + d2)
+                r   = d1 / (dp + d1)
+                cx1 = x2 + r * (x3 - x1) / 2
+                cy1 = y2 + r * (y3 - y1) / 2
+                cx2 = x3 + p * (x2 - x4) / 2
+                cy2 = y3 + p * (y2 - y4) / 2
+            in  Canvas.bezierCurveTo ( 25 * cx1, 25 * cy1, 25 * cx2, 25 * cy2
+                                     , 25 * x3, 25 * y3)
+    Canvas.closePath ()
+
+
+fontString :: TextStyle -> Font -> Text
+fontString style font = stylePrefix style <> "25px " <> fontName font
+  where stylePrefix Plain        = ""
+        stylePrefix Bold         = "bold "
+        stylePrefix Italic       = "italic "
+        fontName SansSerif       = "sans-serif"
+        fontName Serif           = "serif"
+        fontName Monospace       = "monospace"
+        fontName Handwriting     = "cursive"
+        fontName Fancy           = "fantasy"
+        fontName (NamedFont txt) = "\"" <> T.filter (/= '"') txt <> "\""
+
+drawPicture :: DrawState -> Picture -> Canvas ()
+drawPicture ds (Polygon ps smooth) = do
+    withDS ds $ followPath ps True smooth
+    applyColor ds
+    Canvas.fill ()
+drawPicture ds (Path ps w closed smooth) = do
+    drawFigure ds w $ followPath ps closed smooth
+drawPicture ds (Sector b e r) = withDS ds $ do
+    Canvas.arc (0, 0, 25 * abs r, b, e,  b > e)
+    Canvas.lineTo (0, 0)
+    applyColor ds
+    Canvas.fill ()
+drawPicture ds (Arc b e r w) = do
+    drawFigure ds w $ do
+        Canvas.arc (0, 0, 25 * abs r, b, e, b > e)
+drawPicture ds (Text sty fnt txt) = withDS ds $ do
+    Canvas.scale (1, -1)
+    applyColor ds
+    Canvas.font (fontString sty fnt)
+    Canvas.fillText (txt, 0, 0)
+drawPicture ds Logo              = return () -- Unimplemented
+drawPicture ds (Color col p)     = drawPicture (setColorDS col ds) p
+drawPicture ds (Translate x y p) = drawPicture (translateDS x y ds) p
+drawPicture ds (Scale x y p)     = drawPicture (scaleDS x y ds) p
+drawPicture ds (Rotate r p)      = drawPicture (rotateDS r ds) p
+drawPicture ds (Pictures ps)     = mapM_ (drawPicture ds) (reverse ps)
+
+setupScreenContext :: (Int, Int) -> Canvas ()
+setupScreenContext (cw, ch) = do
+    -- blank before transformation (canvas might be non-sqare)
+    Canvas.fillStyle "white"
+    Canvas.fillRect (0,0,fromIntegral cw,fromIntegral ch)
+
+    Canvas.translate (realToFrac cw / 2, realToFrac ch / 2)
+    let s = min (realToFrac cw / 500) (realToFrac ch / 500)
+    Canvas.scale (s, -s)
+    Canvas.lineWidth 0
+    Canvas.textAlign Canvas.CenterAnchor
+    Canvas.textBaseline Canvas.MiddleBaseline
+
+runBlankCanvas :: (Canvas.DeviceContext -> IO ()) -> IO ()
+runBlankCanvas act = do
+    putStrLn $ printf "Open me on http://127.0.0.1:%d/" (Canvas.port options)
+    Canvas.blankCanvas options $ \context -> do
+        putStrLn "Program is starting..."
+        act context
+  where
+    options = 3000 { Canvas.events =
+        [ "mousedown", "mouseup", "mousemove", "keydown", "keyup"]
+    }
+
+display :: Picture -> IO ()
+display pic = runBlankCanvas $ \context ->
+    Canvas.send context $ Canvas.saveRestore $ do
+        let rect = (Canvas.width context, Canvas.height context)
+        setupScreenContext rect
+        drawPicture initialDS pic
+
+pictureOf = drawingOf
+
+drawingOf pic = display pic `catch` reportError
+#endif
+
+--------------------------------------------------------------------------------
+-- Common activity managing code
+
+
+data Activity = Activity {
+    activityStep    :: Double -> Activity,
+    activityEvent   :: Event -> Activity,
+    activityDraw    :: Picture
+    }
+
+handleEvent :: Event -> MVar Activity -> IO ()
+handleEvent event activity =
+    modifyMVar_ activity $ \a0 -> return (activityEvent a0 event)
+
+passTime :: Double -> MVar Activity -> IO Activity
+passTime dt activity = modifyMVar activity $ \a0 -> do
+    let a1 = activityStep a0 (realToFrac (min dt 0.25))
+    return (a1, a1)
+
+--------------------------------------------------------------------------------
+-- Common event handling code
 
 keyCodeToText :: Int -> Text
 keyCodeToText n = case n of
@@ -395,6 +608,12 @@ keyCodeToText n = case n of
   where fromAscii n = singleton (chr n)
         fromNum   n = pack (show (fromIntegral n))
 
+
+--------------------------------------------------------------------------------
+-- GHCJS event handling and core interaction code
+
+#ifdef ghcjs_HOST_OS
+
 getMousePos :: IsMouseEvent e => Element -> EventM w e Point
 getMousePos canvas = do
     (ix, iy) <- mouseClientXY
@@ -412,12 +631,6 @@ fromButtonNum 0 = Just LeftButton
 fromButtonNum 1 = Just MiddleButton
 fromButtonNum 2 = Just RightButton
 fromButtonNum _ = Nothing
-
-data Activity = Activity {
-    activityStep    :: Double -> Activity,
-    activityEvent   :: Event -> Activity,
-    activityDraw    :: Picture
-    }
 
 setupEvents :: MVar Activity -> Element -> Element -> IO ()
 setupEvents currentActivity canvas offscreen = do
@@ -454,15 +667,6 @@ setupEvents currentActivity canvas offscreen = do
         pos <- getMousePos canvas
         liftIO $ handleEvent (MouseMovement pos) currentActivity
     return ()
-
-handleEvent :: Event -> MVar Activity -> IO ()
-handleEvent event activity =
-    modifyMVar_ activity $ \a0 -> return (activityEvent a0 event)
-
-passTime :: Double -> MVar Activity -> IO Activity
-passTime dt activity = modifyMVar activity $ \a0 -> do
-    let a1 = activityStep a0 (realToFrac (min dt 0.25))
-    return (a1, a1)
 
 run :: Activity -> IO ()
 run startActivity = do
@@ -502,13 +706,80 @@ run startActivity = do
     t0 <- waitForAnimationFrame
     go t0 startActivity `catch` reportError
 
--- | Runs an interactive event-driven CodeWorld program.  This is the most
--- advanced CodeWorld entry point.
-interactionOf :: world
-              -> (Double -> world -> world)
-              -> (Event -> world -> world)
-              -> (world -> Picture)
-              -> IO ()
+--------------------------------------------------------------------------------
+-- Stand-Alone event handling and core interaction code
+
+#else
+
+fromButtonNum :: Int -> Maybe MouseButton
+fromButtonNum 1 = Just LeftButton
+fromButtonNum 2 = Just MiddleButton
+fromButtonNum 3 = Just RightButton
+fromButtonNum _ = Nothing
+
+getMousePos :: (Int, Int) -> (Double, Double) -> (Double, Double)
+getMousePos (w,h) (x,y) = ((x - fromIntegral w / 2)/s, -(y - fromIntegral h / 2)/s)
+  where
+   s = min (realToFrac w / 20) (realToFrac h / 20)
+
+toEvent :: (Int, Int) -> Canvas.Event -> Maybe Event
+toEvent rect Canvas.Event {..}
+    | eType == "keydown"
+    , Just code <- eWhich
+    = Just $ KeyPress (keyCodeToText code)
+    | eType == "keyup"
+    , Just code <- eWhich
+    = Just $ KeyRelease (keyCodeToText code)
+    | eType == "mousedown"
+    , Just button <- eWhich >>= fromButtonNum
+    , Just pos <- getMousePos rect <$> ePageXY
+    = Just $ MousePress button pos
+    | eType == "mouseup"
+    , Just button <- eWhich >>= fromButtonNum
+    , Just pos <- getMousePos rect <$> ePageXY
+    = Just $ MouseRelease button pos
+    | eType == "mousemove"
+    , Just pos <- getMousePos rect <$> ePageXY
+    = Just $ MouseMovement pos
+    | otherwise
+    = Nothing
+
+run :: Activity -> IO ()
+run startActivity = runBlankCanvas $ \context -> do
+    let rect = (Canvas.width context, Canvas.height context)
+
+    offscreenCanvas <- Canvas.send context $ Canvas.newCanvas rect
+
+    currentActivity <- newMVar startActivity
+
+    let go t0 a0 = do
+            Canvas.send context $
+                Canvas.with offscreenCanvas $
+                    Canvas.saveRestore $ do
+                        setupScreenContext rect
+                        drawPicture initialDS (activityDraw a0)
+            tn <- getCurrentTime
+
+            threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
+            t1 <- getCurrentTime
+
+            Canvas.send context $ Canvas.drawImageAt (offscreenCanvas, 0, 0)
+            a1 <- passTime (realToFrac (t1 `diffUTCTime` t0)) currentActivity
+
+            -- Handle events now
+            events <- mapMaybe (toEvent rect) <$> Canvas.flush context
+            mapM_ (\e -> handleEvent e currentActivity) events
+
+            go t1 a1
+
+    t0 <- getCurrentTime
+    go t0 startActivity `catch` reportError
+
+#endif
+
+--------------------------------------------------------------------------------
+-- Common code for interaction, animation and simulation interfaces
+
 interactionOf initial step event draw = go `catch` reportError
   where go = run (activity initial)
         activity x = Activity {
@@ -516,8 +787,6 @@ interactionOf initial step event draw = go `catch` reportError
                         activityEvent   = (\ev -> activity (event ev x)),
                         activityDraw    = draw x
                     }
-
---------------------------------------------------------------------------------
 
 data Wrapped a = Wrapped {
     state          :: a,
@@ -632,8 +901,6 @@ animationControls w
                                 TimeLabel ]
   | otherwise               = [ RestartButton, PauseButton, TimeLabel ]
 
--- | Shows an animation, with a picture for each time given by the parameter.
-animationOf :: (Double -> Picture) -> IO ()
 animationOf f =
     interactionOf initial
                   (wrappedStep (+))
@@ -651,9 +918,6 @@ simulationControls w
   | paused w             = [ PlayButton, StepButton ]
   | otherwise            = [ PauseButton ]
 
--- | Shows a simulation, which is essentially a continuous-time dynamical
--- system described by an initial value and step function.
-simulationOf :: world -> (Double -> world -> world) -> (world -> Picture) -> IO ()
 simulationOf simInitial simStep simDraw =
     interactionOf initial
                   (wrappedStep simStep)
@@ -665,28 +929,28 @@ simulationOf simInitial simStep simDraw =
             mouseMovedTime = 1000
         }
 
+
+#ifdef ghcjs_HOST_OS
+--------------------------------------------------------------------------------
+--- GHCJS implementation of tracing and error handling
+
+foreign import javascript unsafe "window.reportRuntimeError($1, $2);"
+    js_reportRuntimeError :: Bool -> JSString -> IO ()
+
+trace msg x = unsafePerformIO $ do
+    js_reportRuntimeError False (textToJSString msg)
+    return x
+
+reportError :: SomeException -> IO ()
+reportError e = js_reportRuntimeError True (textToJSString (pack (show e)))
+
+--------------------------------------------------------------------------------
+--- Stand-alone implementation of tracing and error handling
 #else
 
-trace :: Text -> a -> a
-trace = undefined
+trace = Debug.Trace.trace . T.unpack
 
-pictureOf :: Picture -> IO ()
-pictureOf _ = putStrLn "<<picture>>"
-
-drawingOf :: Picture -> IO ()
-drawingOf _ = putStrLn "<<picture>>"
-
-animationOf :: (Double -> Picture) -> IO ()
-animationOf _ = putStrLn "<<animation>>"
-
-simulationOf :: world -> (Double -> world -> world) -> (world -> Picture) -> IO ()
-simulationOf (_, _, _) = putStrLn "<<simulation>>"
-
-interactionOf :: world
-              -> (Double -> world -> world)
-              -> (Event -> world -> world)
-              -> (world -> Picture)
-              -> IO ()
-interactionOf (_, _, _, _) = putStrLn "<<interaction>>"
+reportError :: SomeException -> IO ()
+reportError e = hPrint stderr e
 
 #endif

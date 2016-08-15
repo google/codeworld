@@ -1,14 +1,20 @@
 CodeWorld
 =========
 
-CodeWorld is an educational web-based programming environment using a variant
-of Haskell.  It includes:
+CodeWorld is an educational environment using a variant of Haskell.  It
+provides a simple mathematical model for geometric figures, animations,
+and interactive games.  The web-based programming environment supports
+this educational mission with a zero-setup editor and compiler, easy
+sharing and cloud storage of projects, and the ability to run programs
+right in the web browser using GHCJS.
 
-- A set of web-based tools for students to easily create their own computer
-  drawings, animations, and games.
-- A simple mathematical model of computer games, inspired by gloss.
-- The ability for students to run and use their creations right in a web
-  browser using GHCJS as a compiler.
+Other options include:
+
+- The use of plain Haskell instead of the educational variant, to build
+  programs which can either be on the web site with GHCJS, or compiled
+  natively with the `codeworld-api` package and `blank-canvas`.
+- A block-based programming interface for drag and drop programming
+  following the same mathematical model.
 
 Status
 ======
@@ -76,10 +82,10 @@ See bug #4 for details.
 
 ### Google API Key ###
 
-CodeWorld allows users to authenticate using a Google account, and save
-their projects.  For this feature to work, you need to obtain a Google API key, and store
-it in codeworld-server/web/clientId.txt.  If you don't do this, the sign-in and save
-features will not function correctly, but the rest of the site will be usable.
+CodeWorld allows users to authenticate using a Google account, and save their
+projects.  For this feature to work, you need to obtain a Google API key, and store
+it in web/clientId.txt.  If you don't do this, the sign-in and save features will
+not function correctly, but the rest of the site will be usable.
 
 ### Swap Space ###
 

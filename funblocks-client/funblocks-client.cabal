@@ -1,6 +1,6 @@
 Name:                funblocks-client
 Version:             0.2.0.0
-Synopsis:            A functional block-based programming language for CodeWorld
+Synopsis:            Web client implementation for the CodeWorld blocks UI.
 
 License:             Apache-2.0
 License-file:        LICENSE
@@ -9,6 +9,14 @@ Maintainer:          Stefan Jacholke <stefanjacholke@gmail.com>
 Copyright:           (c) 2016, The CodeWorld Authors
 Build-type:          Simple
 Cabal-version:       >=1.10
+
+Description:
+  This is the implementation of the web client code for the CodeWorld
+  blocks UI.  It wraps the Blockly library to implement code generation
+  and UI interactions specific to CodeWorld.
+  .
+  This package is intended to be installed for GHCJS as part of the CodeWorld
+  server.  It will not work with other Haskell implementations.
 
 Executable funblocks-client
   Build-depends:       base 

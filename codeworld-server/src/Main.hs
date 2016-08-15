@@ -208,7 +208,7 @@ compileHandler = do
 getHashParam :: Snap B.ByteString
 getHashParam = do
     Just h <- getParam "hash"
-    if "Q" `B.isPrefixOf` h then return ("P" <> B.drop 1 h) else return h
+    return h
 
 loadXMLHandler :: Snap ()
 loadXMLHandler = do

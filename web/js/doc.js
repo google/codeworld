@@ -40,6 +40,30 @@
         });
     }
 
+    function linkFunBlocks() {
+        codeworldKeywords = {};
+        registerStandardHints( function(){
+        var pres = document.getElementsByTagName('pre');
+            for (var i = 0; i < pres.length; ++i) {
+                (function() {
+                    var pre = pres[i];
+                  
+                    var text = pre.textContent;
+                    
+                    pre.outerHTML = '<iframe frameborder="0" scrolling="no" id="frame' + i + '"></iframe>';
+
+                    var myIframe = document.getElementById('frame' + i);
+                    myIframe.addEventListener("load", function() {
+                        this.contentWindow.loadXml(text);
+                    });
+                    myIframe.src = 'help/blockframe.html';
+
+
+                })();
+            }
+        });
+    }
+
     function addTableOfContents() {
         var contents = document.createElement('div');
         contents.id = 'helpcontents';
@@ -92,6 +116,17 @@
     request.open('GET', path, true);
     request.onreadystatechange = function() {
         if (request.readyState == 4) {
+          if(path.includes('blocks')){
+            var text = request.responseText;
+            var converter = new Markdown.Converter();
+            var html = converter.makeHtml(text);
+            document.getElementById('help').innerHTML = html;
+
+            linkFunBlocks();
+            addTableOfContents();
+ 
+          }
+          else{
             var text = request.responseText;
             var converter = new Markdown.Converter();
             var html = converter.makeHtml(text);
@@ -99,6 +134,7 @@
 
             linkCodeBlocks();
             addTableOfContents();
+          }
         }
     };
     request.send(null);

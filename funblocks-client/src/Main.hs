@@ -30,6 +30,7 @@ import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Marshal
 import Data.JSString.Text
+import qualified Data.JSString as JStr
 import qualified Data.Text as T
 import Control.Monad.Trans (liftIO)
 import Blockly.Workspace hiding (workspaceToCode)
@@ -82,7 +83,12 @@ hookEvent elementName evType func = do
   Just ele <- getElementById doc elementName
   on ele evType func
 
-main = do 
+
+help = do
+      js_injectReadOnly (JStr.pack "blocklyDiv")
+      liftIO setBlockTypes 
+
+funblocks = do 
       Just doc <- currentDocument 
       Just body <- getBody doc
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
@@ -94,6 +100,14 @@ main = do
       liftIO $ js_showEast
       liftIO $ js_openEast
       return ()
+
+
+main = do
+  Just doc <- currentDocument 
+  mayTool <- getElementById doc "toolbox" 
+  case mayTool of
+    Just _ -> funblocks
+    Nothing -> help
 
 -- Update code in real time
 onChange ws event = do 
@@ -130,3 +144,7 @@ foreign import javascript unsafe "window.mainLayout.show('east')"
 
 foreign import javascript unsafe "window.mainLayout.open('east')"
   js_openEast :: IO ()
+
+
+foreign import javascript unsafe "Blockly.inject($1, {readOnly: true});"
+  js_injectReadOnly :: JSString -> IO Workspace

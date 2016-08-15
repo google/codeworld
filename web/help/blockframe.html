@@ -1,0 +1,48 @@
+<html>
+  <head>
+    <script language="javascript" src="../js/blocks_rts.js"></script>
+    <script language="javascript" src="../js/blocks_lib.js"></script>
+    <script language="javascript" src="../js/blocks_out.js"></script>
+
+    <script src="../blockly/blockly_compressed.js"></script>
+    <script src="../blockly/blocks/lists.js"></script>
+    <script src="../blockly/blocks/cw-text.js"></script>
+    <script src="../blockly/blocks/cw-pictures.js"></script>
+    <script src="../blockly/blocks/cw-math.js"></script>
+    <script src="../blockly/blocks/cw-lists.js"></script>
+    <script src="../blockly/blocks/cw-program.js"></script>
+    <script src="../blockly/blocks/cw-type.js"></script>
+    <script src="../blockly/blocks/procedures.js"></script>
+    <script src="../blockly/blocks/funblocks-procedures.js"></script>
+    <script src="../blockly/msg/js/en.js"></script>
+
+
+  </head>
+
+  <body>
+    <div id="blocklyDiv" style="height: 240; width: 480;"></div>
+
+  <script src="../js/blocks_runmain.js"></script> 
+  <script>
+       var data = `<xml><block type="cwDrawingOf" id="*NE*tEO)W*lv@[i#)hxy"><value
+         name="VALUE"><shadow type="cwBlank"
+         id="_ARU=s2*:-h}4yw7LorJ"></shadow><block
+         type="cwCodeWorldLogo"
+         id="KY]ScC,e*u!;(TXq-MlU"></block></value></block></xml>`
+
+    function loadXml(data){
+      var workspace = Blockly.getMainWorkspace();
+      if(!workspace){
+        setTimeout(function() { loadXml(data) }, 500);
+        return; // Try again a little later
+      }
+      var xml = Blockly.Xml.textToDom(data);
+      Blockly.Xml.domToWorkspace(xml, workspace);
+    }
+  </script>
+
+
+  </body>
+
+
+</html>

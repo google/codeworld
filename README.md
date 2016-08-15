@@ -82,10 +82,10 @@ See bug #4 for details.
 
 ### Google API Key ###
 
-CodeWorld allows users to authenticate using a Google account, and save
-their projects.  For this feature to work, you need to obtain a Google API key, and store
-it in codeworld-server/web/clientId.txt.  If you don't do this, the sign-in and save
-features will not function correctly, but the rest of the site will be usable.
+CodeWorld allows users to authenticate using a Google account, and save their
+projects.  For this feature to work, you need to obtain a Google API key, and store
+it in web/clientId.txt.  If you don't do this, the sign-in and save features will
+not function correctly, but the rest of the site will be usable.
 
 ### Swap Space ###
 

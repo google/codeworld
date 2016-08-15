@@ -160,7 +160,7 @@ function isEditorClean()
 }
 
 function compile(src) {
-    run('', '', 'Building...', false);
+    run('', '', 'Compiling...', false);
 
     var xml_text = getWorkspaceXMLText();
     var data = new FormData();

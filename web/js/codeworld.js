@@ -325,7 +325,7 @@ function goto(line, col) {
 }
 
 function compile() {
-    run('', 'Building...', false);
+    run('', 'Compiling...', false);
 
     var src = window.codeworldEditor.getValue();
     var data = new FormData();

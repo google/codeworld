@@ -34,6 +34,8 @@ import           System.IO.Error
 import           System.FilePath
 
 newtype BuildMode = BuildMode String deriving Eq
+newtype ProgramId = ProgramId { unProgramId :: Text } deriving Eq
+newtype ProjectId = ProjectId { unProjectId :: Text } deriving Eq
 
 autocompletePath :: FilePath
 autocompletePath = "web/codeworld-base.txt"
@@ -47,34 +49,40 @@ buildRootDir (BuildMode m) = "data" </> m </> "user"
 projectRootDir :: BuildMode -> FilePath
 projectRootDir (BuildMode m) = "data" </> m </> "projects"
 
-sourceBase :: Text -> FilePath
-sourceBase programId = let s = T.unpack programId in take 3 s </> s
+sourceBase :: ProgramId -> FilePath
+sourceBase (ProgramId p) = let s = T.unpack p in take 3 s </> s
 
-sourceFile :: Text -> FilePath
+sourceFile :: ProgramId -> FilePath
 sourceFile programId = sourceBase programId <.> "hs"
 
-sourceXML :: Text -> FilePath
+sourceXML :: ProgramId -> FilePath
 sourceXML programId = sourceBase programId <.> "xml"
 
-targetFile :: Text -> FilePath
+targetFile :: ProgramId -> FilePath
 targetFile programId = sourceBase programId <.> "jsexe" </> "all.js"
 
-resultFile :: Text -> FilePath
+resultFile :: ProgramId -> FilePath
 resultFile programId = sourceBase programId <.> "err.txt"
 
-sourceToProgramId :: ByteString -> Text
-sourceToProgramId = ("P" <>) . T.decodeUtf8 . getHash
+userProjectDir :: BuildMode -> Text -> FilePath
+userProjectDir mode userId = projectRootDir mode </> T.unpack userId
 
-nameToProjectId :: Text -> Text
-nameToProjectId = ("S" <>) . T.decodeUtf8 . getHash . T.encodeUtf8
+projectFile :: ProjectId -> FilePath
+projectFile (ProjectId p) = let s = T.unpack p in s <.> "cw"
 
-ensureProgramDir :: BuildMode -> Text -> IO ()
-ensureProgramDir mode programId = createDirectoryIfMissing True dir
-  where dir = buildRootDir mode </> take 3 (T.unpack programId)
+sourceToProgramId :: ByteString -> ProgramId
+sourceToProgramId = ProgramId . ("P" <>) . T.decodeUtf8 . getHash
+
+nameToProjectId :: Text -> ProjectId
+nameToProjectId = ProjectId . ("S" <>) . T.decodeUtf8 . getHash . T.encodeUtf8
+
+ensureProgramDir :: BuildMode -> ProgramId -> IO ()
+ensureProgramDir mode (ProgramId p) = createDirectoryIfMissing True dir
+  where dir = buildRootDir mode </> take 3 (T.unpack p)
 
 ensureUserProjectDir :: BuildMode -> Text -> IO ()
-ensureUserProjectDir mode userId = createDirectoryIfMissing True dir
-  where dir = projectRootDir mode </> T.unpack userId
+ensureUserProjectDir mode userId =
+    createDirectoryIfMissing True (userProjectDir mode userId)
 
 getHash :: ByteString -> ByteString
 getHash = BC.takeWhile (/= '=') . BC.map toWebSafe . B64.encode . MD5.hash

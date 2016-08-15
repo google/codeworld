@@ -21,12 +21,6 @@ module Build where
 
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as BC
-import           Data.Maybe
-import           Data.Monoid
-import           Data.Text (Text)
-import qualified Data.Text as T
-import qualified Data.Text.IO as T
 import           System.Directory
 import           System.FilePath
 import           System.IO
@@ -35,13 +29,13 @@ import           Text.Regex.TDFA
 
 import Util
 
-compileIfNeeded :: BuildMode -> Text -> IO Bool
+compileIfNeeded :: BuildMode -> ProgramId -> IO Bool
 compileIfNeeded mode programId = do
     hasResult <- doesFileExist (buildRootDir mode </> resultFile programId)
     hasTarget <- doesFileExist (buildRootDir mode </> targetFile programId)
     if hasResult then return hasTarget else compileExistingSource mode programId
 
-compileExistingSource :: BuildMode -> Text -> IO Bool
+compileExistingSource :: BuildMode -> ProgramId -> IO Bool
 compileExistingSource mode programId = checkDangerousSource mode programId >>= \case
     True -> do
         B.writeFile (buildRootDir mode </> resultFile programId) $
@@ -64,7 +58,7 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
 userCompileMicros :: Int
 userCompileMicros = 10 * 1000000
 
-checkDangerousSource :: BuildMode -> Text -> IO Bool
+checkDangerousSource :: BuildMode -> ProgramId -> IO Bool
 checkDangerousSource mode programId = do
     contents <- B.readFile (buildRootDir mode </> sourceFile programId)
     return $ matches contents ".*TemplateHaskell.*" ||

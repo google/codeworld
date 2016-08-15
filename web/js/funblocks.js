@@ -16,6 +16,13 @@
 
 // Helper functions /////////////////////////////////////////////////
 
+function loadSample(code) {
+    if (isEditorClean()) sweetAlert.close();
+    warnIfUnsaved(function() {
+        loadWorkspace(code);
+    });
+}
+
 function loadWorkspace(text)
 {
   var workspace = Blockly.mainWorkspace;

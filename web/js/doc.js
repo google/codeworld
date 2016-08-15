@@ -53,11 +53,18 @@
                     pre.outerHTML = '<iframe frameborder="0" scrolling="no" id="frame' + i + '"></iframe>';
 
                     var myIframe = document.getElementById('frame' + i);
+                    var thisDocument = document;
                     myIframe.addEventListener("load", function() {
                         this.contentWindow.loadXml(text);
+                        this.contentWindow.setParent(parent);
                     });
-                    myIframe.src = 'help/blockframe.html';
+                    myIframe.contentDocument.addEventListener("click", function() {
+                      console.log('click');
+                    });
 
+                    myIframe.src = 'help/blockframe.html';
+                    myIframe.classList.add('clickable');
+                    console.log('red');
 
                 })();
             }

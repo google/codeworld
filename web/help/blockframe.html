@@ -24,11 +24,6 @@
 
   <script src="../js/blocks_runmain.js"></script> 
   <script>
-       var data = `<xml><block type="cwDrawingOf" id="*NE*tEO)W*lv@[i#)hxy"><value
-         name="VALUE"><shadow type="cwBlank"
-         id="_ARU=s2*:-h}4yw7LorJ"></shadow><block
-         type="cwCodeWorldLogo"
-         id="KY]ScC,e*u!;(TXq-MlU"></block></value></block></xml>`
 
     function loadXml(data){
       var workspace = Blockly.getMainWorkspace();
@@ -39,6 +34,24 @@
       var xml = Blockly.Xml.textToDom(data);
       Blockly.Xml.domToWorkspace(xml, workspace);
     }
+
+    var upperParent = null;
+    function setParent(par){
+      upperParent = par;
+    }
+    
+    document.getElementById('blocklyDiv').addEventListener('click',  function(){
+      if(upperParent == null){}
+      else
+        var workspace = Blockly.getMainWorkspace();
+
+        var xml = Blockly.Xml.workspaceToDom(workspace);
+        var xml_text = Blockly.Xml.domToText(xml);
+
+        upperParent.loadSample(xml_text);
+      },false);
+
+
   </script>
 
 

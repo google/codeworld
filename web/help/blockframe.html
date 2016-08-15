@@ -28,7 +28,7 @@
     function loadXml(data){
       var workspace = Blockly.getMainWorkspace();
       if(!workspace){
-        setTimeout(function() { loadXml(data) }, 500);
+        setTimeout(function() { loadXml(data) }, 100);
         return; // Try again a little later
       }
       var xml = Blockly.Xml.textToDom(data);

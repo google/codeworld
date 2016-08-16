@@ -42,8 +42,6 @@
 
     function linkFunBlocks() {
         var pres = document.getElementsByTagName('xml');
-        console.log('red');
-        console.log(pres);
         var i = 0;
 
         while(pres != null && pres.length > 0){
@@ -57,11 +55,9 @@
           var myIframe = document.getElementById('frame' + i);
           var thisDocument = document;
           myIframe.addEventListener("load", function() {
-              console.log('in eventlistener');
               this.contentWindow.setParent(parent);
               this.contentWindow.setId(myIframe);
               this.contentWindow.loadXml.call(myIframe.contentWindow,text);
-              console.log('not in eventlistener');
           });
 
           myIframe.src = 'help/blockframe.html';
@@ -133,13 +129,6 @@
           document.getElementById('help').innerHTML = html;
 
           if(path.includes('blocks')){
-
-            var pres = document.getElementsByTagName('xml');
-//            console.log('red');
-//            console.log(pres.length);
-//            console.log(pres);
-
-
             linkFunBlocks();
             linkCodeBlocks(false);
           }

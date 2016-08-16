@@ -41,30 +41,35 @@
     }
 
     function linkFunBlocks() {
-        codeworldKeywords = {};
-        registerStandardHints( function(){
-        var pres = document.getElementsByTagName('blockly');
-            for (var i = 0; i < pres.length; ++i) {
-                (function() {
-                    var pre = pres[i];
-                  
-                    var text = pre.innerHTML;
-                    
-                    pre.outerHTML = '<iframe frameborder="0" scrolling="no" id="frame' + i + '"></iframe>';
+        var pres = document.getElementsByTagName('xml');
+        console.log('red');
+        console.log(pres);
+        var i = 0;
 
-                    var myIframe = document.getElementById('frame' + i);
-                    var thisDocument = document;
-                    myIframe.addEventListener("load", function() {
-                        this.contentWindow.loadXml(text);
-                        this.contentWindow.setParent(parent);
-                    });
+        while(pres != null && pres.length > 0){
+          (function() {
+          var pre = pres[0];
+          
+          var text = pre.outerHTML;
+          console.log(text);
+          
+          pre.outerHTML = '<iframe frameborder="0" scrolling="no" id="frame' + i + '"></iframe>';
 
-                    myIframe.src = 'help/blockframe.html';
-                    myIframe.classList.add('clickable');
+          var myIframe = document.getElementById('frame' + i);
+          var thisDocument = document;
+          myIframe.addEventListener("load", function() {
+              this.contentWindow.loadXml.call(myIframe.contentWindow,text);
+              this.contentWindow.setParent(myIframe.contentWindow,parent);
+          });
 
-                })();
-            }
-        });
+          myIframe.src = 'help/blockframe.html';
+          myIframe.classList.add('clickable');
+
+
+          pres = document.getElementsByTagName('xml');
+          i++;
+          })();
+        }
     }
 
     function addTableOfContents() {
@@ -126,6 +131,13 @@
           document.getElementById('help').innerHTML = html;
 
           if(path.includes('blocks')){
+
+            var pres = document.getElementsByTagName('xml');
+//            console.log('red');
+//            console.log(pres.length);
+//            console.log(pres);
+
+
             linkFunBlocks();
             linkCodeBlocks(false);
           }

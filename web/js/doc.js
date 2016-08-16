@@ -15,7 +15,7 @@
  */
 
 (function() {
-    function linkCodeBlocks() {
+    function linkCodeBlocks(linkable=true) {
         codeworldKeywords = {};
         registerStandardHints( function(){
         var pres = document.getElementsByTagName('pre');
@@ -27,7 +27,7 @@
                     CodeMirror.runMode(text, { name: 'codeworld', overrideKeywords: codeworldKeywords }, pre);
                     pre.classList.add('cm-s-default');
 
-                    if (text.indexOf("main ") != -1) {
+                    if (text.indexOf("main ") != -1 && linkable) {
                         pre.classList.add('clickable');
                         pre.onclick = function() {
                             if (parent && parent.loadSample) {
@@ -43,12 +43,12 @@
     function linkFunBlocks() {
         codeworldKeywords = {};
         registerStandardHints( function(){
-        var pres = document.getElementsByTagName('pre');
+        var pres = document.getElementsByTagName('blockly');
             for (var i = 0; i < pres.length; ++i) {
                 (function() {
                     var pre = pres[i];
                   
-                    var text = pre.textContent;
+                    var text = pre.innerHTML;
                     
                     pre.outerHTML = '<iframe frameborder="0" scrolling="no" id="frame' + i + '"></iframe>';
 
@@ -58,13 +58,9 @@
                         this.contentWindow.loadXml(text);
                         this.contentWindow.setParent(parent);
                     });
-                    myIframe.contentDocument.addEventListener("click", function() {
-                      console.log('click');
-                    });
 
                     myIframe.src = 'help/blockframe.html';
                     myIframe.classList.add('clickable');
-                    console.log('red');
 
                 })();
             }
@@ -123,25 +119,21 @@
     request.open('GET', path, true);
     request.onreadystatechange = function() {
         if (request.readyState == 4) {
-          if(path.includes('blocks')){
-            var text = request.responseText;
-            var converter = new Markdown.Converter();
-            var html = converter.makeHtml(text);
-            document.getElementById('help').innerHTML = html;
 
+          var text = request.responseText;
+          var converter = new Markdown.Converter();
+          var html = converter.makeHtml(text);
+          document.getElementById('help').innerHTML = html;
+
+          if(path.includes('blocks')){
             linkFunBlocks();
-            addTableOfContents();
- 
+            linkCodeBlocks(false);
           }
           else{
-            var text = request.responseText;
-            var converter = new Markdown.Converter();
-            var html = converter.makeHtml(text);
-            document.getElementById('help').innerHTML = html;
-
             linkCodeBlocks();
-            addTableOfContents();
           }
+
+          addTableOfContents();
         }
     };
     request.send(null);

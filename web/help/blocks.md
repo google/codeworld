@@ -11,9 +11,12 @@ searches for a program block, these can be one of:
 
 For a simple drawing a picture can be attached to drawingOf:
 
-    <xml><block type="cwDrawingOf" id="*NE*tEO)W*lv@[i#)hxy" x="10" y="10"><value
-    name="VALUE"><shadow type="cwBlank" id="_ARU=s2*:-h}4yw7LorJ"></shadow><block
-    type="cwCodeWorldLogo" id="KY]ScC,e*u!;(TXq-MlU"></block></value></block></xml>
+<blockly><xml><block type="cwDrawingOf" id="*NE*tEO)W*lv@[i#)hxy" x="10" y="10"><value
+name="VALUE"><shadow type="cwBlank" id="_ARU=s2*:-h}4yw7LorJ"></shadow><block
+type="cwCodeWorldLogo"
+id="KY]ScC,e*u!;(TXq-MlU"></block></value></block></xml></blockly>
+
+    main = drawingOf(text(printed(10)))
 
 Here we drag the codeWorldLogo picture block and connect it to the drawingOf
 block to form a program.

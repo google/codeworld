@@ -51,15 +51,17 @@
           var pre = pres[0];
           
           var text = pre.outerHTML;
-          console.log(text);
           
           pre.outerHTML = '<iframe frameborder="0" scrolling="no" id="frame' + i + '"></iframe>';
 
           var myIframe = document.getElementById('frame' + i);
           var thisDocument = document;
           myIframe.addEventListener("load", function() {
+              console.log('in eventlistener');
+              this.contentWindow.setParent(parent);
+              this.contentWindow.setId(myIframe);
               this.contentWindow.loadXml.call(myIframe.contentWindow,text);
-              this.contentWindow.setParent(myIframe.contentWindow,parent);
+              console.log('not in eventlistener');
           });
 
           myIframe.src = 'help/blockframe.html';

@@ -20,10 +20,13 @@
   </head>
 
   <body>
-    <div id="blocklyDiv" style="height: 240; width: 700;"></div>
+    <div id="blocklyDiv" style="height: 100%; width: 100%"></div>
 
   <script src="../js/blocks_runmain.js"></script> 
   <script>
+
+    var upperParent = null;
+    var frameId = null;
 
     function loadXml(data){
       var workspace = Blockly.getMainWorkspace();
@@ -33,9 +36,18 @@
       }
       var xml = Blockly.Xml.textToDom(data);
       Blockly.Xml.domToWorkspace(xml, workspace);
+      
+      var metrics = workspace.getMetrics();
+      var maxX = metrics.contentWidth + 50;
+      var maxY = metrics.contentHeight + 50;
+      frameId.setAttribute('width',maxX);
+      frameId.setAttribute('height',maxY);
     }
 
-    var upperParent = null;
+    function setId(j_id_param){
+      frameId = j_id_param;
+    }
+    
     function setParent(par){
       upperParent = par;
     }

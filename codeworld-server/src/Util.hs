@@ -92,7 +92,7 @@ hashToId pfx = (pfx <>)
              . BC.map toWebSafe
              . B64.encode
              . convert
-             . (Crypto.hash :: ByteString -> Crypto.Digest Crypto.MD5)
+             . Crypto.hashWith Crypto.MD5
   where toWebSafe '/' = '_'
         toWebSafe '+' = '-'
         toWebSafe c   = c

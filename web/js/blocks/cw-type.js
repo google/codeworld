@@ -544,20 +544,19 @@ Blockly.Blocks['pair_create_typed'] = {
   */
  init: function() {
    this.setColour(210);
-   var A = Blockly.TypeVar.getUnusedTypeVar();
-   var B = Blockly.TypeVar.getUnusedTypeVar();
    this.appendValueInput('FIRST')
-       .setTypeExpr(A)
        .appendField(new Blockly.FieldLabel('(', 'blocklyTextEmph') );
    this.appendValueInput('SECOND')
        .appendField(new Blockly.FieldLabel(',', 'blocklyTextEmph') )
-       .setTypeExpr(B);
    this.appendDummyInput()
        .appendField(new Blockly.FieldLabel(')','blocklyTextEmph') );
    this.setOutput(true);
-   this.setOutputTypeExpr(new Blockly.TypeExpr ("pair", [A, B]));
    this.setInputsInline(true);
    this.functionName = ",";
+   var a = new Blockly.TypeExpr('_POLY_A');
+   var b = new Blockly.TypeExpr('_POLY_B');
+   var out = new Blockly.TypeExpr('pair', [a,b]);
+   this.arrows = [a,b,out];
  }
 };
 
@@ -571,11 +570,16 @@ Blockly.Blocks['pair_first_typed'] = {
     var A = Blockly.TypeVar.getUnusedTypeVar();
     var B = Blockly.TypeVar.getUnusedTypeVar();
     this.appendValueInput('PAIR')
-        .setTypeExpr(new Blockly.TypeExpr ("pair", [A, B]))
         .appendField(new Blockly.FieldLabel("firstOfPair","blocklyTextEmph") );
     this.setOutput(true);
     this.setOutputTypeExpr(A);
     this.functionName = "firstOfPair";
+    this.arrows
+    var a = new Blockly.TypeExpr('_POLY_A');
+    var b = new Blockly.TypeExpr('_POLY_B');
+    var out = new Blockly.TypeExpr('pair', [a,b]);
+    this.arrows = [out,a];
+
   }
 };
 
@@ -589,11 +593,15 @@ Blockly.Blocks['pair_second_typed'] = {
     var A = Blockly.TypeVar.getUnusedTypeVar();
     var B = Blockly.TypeVar.getUnusedTypeVar();
     this.appendValueInput('PAIR')
-        .setTypeExpr(new Blockly.TypeExpr ("pair", [A, B]))
         .appendField(new Blockly.FieldLabel("secondOfPair","blocklyTextEmph") );
     this.setOutput(true);
     this.setOutputTypeExpr(B);
     this.functionName = "secondOfPair";
+
+    var a = new Blockly.TypeExpr('_POLY_A');
+    var b = new Blockly.TypeExpr('_POLY_B');
+    var out = new Blockly.TypeExpr('pair', [a,b]);
+    this.arrows = [out, b];
   }
 };
 

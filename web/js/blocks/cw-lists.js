@@ -487,6 +487,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
   init: function() {
     this.setColour(260);
     this.appendValueInput('ADD0')
+        .appendField(new Blockly.FieldImage("ims/format-list-bulleted.svg",20,20))
         .appendField(new Blockly.FieldLabel("list","blocklyTextEmph"));
     this.appendValueInput('ADD1');
     this.appendValueInput('ADD2');

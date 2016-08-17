@@ -74,12 +74,12 @@ cwCodeWorldLogo = DesignBlock "cwCodeWorldLogo" "codeWorldLogo"
           (Tooltip "Picture of CodeWorld logo")
 
 cwText = DesignBlock "cwText" "text"
-          [Value "TEXT" [TextE "Text" ] ]
+          [Value "TEXT" [TextE "text" ] ]
           inlineDef colorPicture [typeText, Picture] 
           (Tooltip "Enter some text")
 
 cwDrawingOf = DesignBlock "cwDrawingOf" ""
-          [Dummy [TextE "drawingOf"] 
+          [Dummy [TextE "drawingOf", icon "tooltip-image.svg"] 
            ,Value "VALUE" [] ] 
           inlineDef colorProgram [typePicture, typeProgram]
           (Tooltip "Displays a drawing of a picture")
@@ -458,7 +458,7 @@ cwGray = DesignBlock "cwGray" "gray"
           (Tooltip "The color gray, varying by an amount. Lower value is closer to black")
 
 cwMixed = DesignBlock "cwMixed" "mixed"
-          [Dummy [TextE "mixed"] 
+          [Dummy [TextE "mixed", icon "pot-mix.svg"] 
            ,Value "COL1"  [Text "Color"] 
            ,Value "COL2"  [Text "Color"] ] 
           inlineDef colorColor [typeColor, typeColor, typeColor]

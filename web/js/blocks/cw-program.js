@@ -29,6 +29,7 @@ Blockly.Blocks['cwSimulationOf'] = {
     this.setColour(0);
     this.setOutput(false);
     this.appendDummyInput()
+        .appendField(new Blockly.FieldImage('ims/car-wash.svg',20,20))
         .appendField(new Blockly.FieldLabel('simulationOf', 'blocklyTextEmph'));
     
     var world = Blockly.TypeVar.getUnusedTypeVar();
@@ -58,6 +59,7 @@ Blockly.Blocks['cwInteractionOf'] = {
     this.setColour(0);
     this.setOutput(false);
     this.appendDummyInput()
+        .appendField(new Blockly.FieldImage('ims/human-handsup.svg',20,20))
         .appendField(new Blockly.FieldLabel('interactionOf', 'blocklyTextEmph'));
     
     var world = Blockly.TypeVar.getUnusedTypeVar();
@@ -96,6 +98,7 @@ Blockly.Blocks['cwAnimationOf'] = {
     this.setOutput(false);
 
     this.appendDummyInput()
+        .appendField(new Blockly.FieldImage('ims/car.svg',20,20))
         .appendField(new Blockly.FieldLabel('animationOf', 'blocklyTextEmph'));
     this.appendValueInput('FUNC')
         .setTypeExpr(new Blockly.TypeExpr('Function_', 

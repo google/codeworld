@@ -32,18 +32,15 @@ Pictures
 `drawingOf` takes a single block as input. This input block should be a picture.
 You can make different types of pictures such as:
 
-* `circle(8)`: Play around with the *radius* to get a feel for how different sizes
+* `circle`: Play around with the *radius* to get a feel for how different sizes
   look on the screen.
-* `circle(0.5)`: You can even use fractions or decimals for your radius.
-* `solidCircle(5)`: Use `solidCircle` instead of `circle`, and your circle will be
+* `solidCircle`: Use `solidCircle` instead of `circle`, and your circle will be
   filled in.
-* `rectangle(4,8)`:  You can draw a rectangle by giving both a width and a height.
-* `rectangle(4,4)`:  A square is just a rectangle, where the width is the same as
-  the height.
-* `solidRectangle(8,4)`: Just like with circles, you can use `solidRectangle` to
+* `rectangle`:  You can draw a rectangle by giving both a width and a height.
+* `solidRectangle`: Just like with circles, you can use `solidRectangle` to
   fill in the shape.
 * `text("I Love Pandas!")`: You can write text (such as letters and words) to the
-  screen by using `text`.  You need quotes around the words.
+  screen by using `text`.  
 
 There are plenty more of these which can be found in the Pictures toolbox.
 
@@ -54,7 +51,8 @@ You might have noticed that blocks usually take other blocks as inputs. Some
 blocks have default inputs:
 
 
-<xml><block type="cwCircle" x="10" y="10"><value name="RADIUS"><shadow type="numNumber"><field name="NUMBER">5</field></shadow></value></block>
+<xml><block type="cwCircle" x="10" y="10"><value name="RADIUS"><shadow type="numNumber">
+     <field name="NUMBER">5</field></shadow></value></block>
 </xml>
 
 

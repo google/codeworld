@@ -488,7 +488,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
     this.setColour(260);
     this.appendValueInput('ADD0')
         .appendField(new Blockly.FieldImage("ims/format-list-bulleted.svg",20,20))
-        .appendField(new Blockly.FieldLabel("list","blocklyTextEmph"));
+        .appendField(new Blockly.FieldLabel("List","blocklyTextEmph"));
     this.appendValueInput('ADD1');
     this.appendValueInput('ADD2');
     this.setOutput(true);
@@ -528,6 +528,8 @@ Blockly.Blocks['lists_create_with_typed'] = {
       var input = this.appendValueInput('ADD' + x)
                       .setTypeExpr(this.getType());
       if (x == 0) {
+
+        input.appendField(new Blockly.FieldImage("ims/format-list-bulleted.svg",20,20));
         input.appendField("List");
       }
     }
@@ -581,6 +583,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
       var input = this.appendValueInput('ADD' + this.itemCount_)
                       .setTypeExpr(this.getType());
       if (this.itemCount_ == 0) {
+        input.appendField(new Blockly.FieldImage("ims/format-list-bulleted.svg",20,20));
         input.appendField("list");
       }
       // Reconnect any child blocks.

@@ -438,11 +438,10 @@ Blockly.Blocks['lists_length'] = {
     var a = Blockly.TypeVar.getUnusedTypeVar();
     this.setColour(210);
     this.appendValueInput('LST')
-        .setTypeExpr(new Blockly.TypeExpr('list',[a]))
         .appendField(new Blockly.FieldLabel("length","blocklyTextEmph") );
     this.setOutput(true);
-    this.setOutputTypeExpr(new Blockly.TypeExpr('Number'));
     this.functionName = "length";
+    this.arrows = [new Blockly.TypeExpr('list',[new Blockly.TypeExpr('_POLY_A')]), new Blockly.TypeExpr('Number')];
   }
 };
 
@@ -450,15 +449,16 @@ Blockly.Blocks['lists_at'] = {
   init: function() {
     var a = Blockly.TypeVar.getUnusedTypeVar();
     this.setColour(210);
-    this.appendValueInput('LST')
-        .setTypeExpr(new Blockly.TypeExpr('list',[a]));
+    this.appendValueInput('LST');
     this.appendValueInput('POS')
-        .setTypeExpr(new Blockly.TypeExpr('Number'))
         .appendField(new Blockly.FieldLabel("at","blocklyTextEmph") );
     this.setOutput(true);
     this.setInputsInline(true);
-    this.setOutputTypeExpr(a);
     this.functionName = "at";
+
+    this.arrows = [new Blockly.TypeExpr('list',[new Blockly.TypeExpr('_POLY_A')]),
+                   new Blockly.TypeExpr('Number'),
+                   new Blockly.TypeExpr('_POLY_A')];
   }
 };
 
@@ -466,15 +466,19 @@ Blockly.Blocks['lists_cons'] = {
   init: function() {
     var a = Blockly.TypeVar.getUnusedTypeVar();
     this.setColour(210);
-    this.appendValueInput('ITEM')
-        .setTypeExpr(a);
+    this.appendValueInput('ITEM');
     this.appendValueInput('LST')
-        .setTypeExpr(new Blockly.TypeExpr('list',[a]))
         .appendField(new Blockly.FieldLabel(":","blocklyTextEmph") );
     this.setOutput(true);
-    this.setOutputTypeExpr(new Blockly.TypeExpr('Number'));
     this.setInputsInline(true);
     this.functionName = ":";
+
+    this.arrows = [
+                   new Blockly.TypeExpr('_POLY_A'),
+                   new Blockly.TypeExpr('list',[new Blockly.TypeExpr('_POLY_A')]),
+                   new Blockly.TypeExpr('list',[new Blockly.TypeExpr('_POLY_A')])];
+
+
   }
 };
 

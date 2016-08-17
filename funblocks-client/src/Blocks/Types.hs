@@ -230,21 +230,21 @@ numExp = DesignBlock "numExp" "^"
          (Tooltip "Raise a number to a power")
 
 numMax = DesignBlock "numMax" "max"
-        [ Value "LEFT"  [TextE "max"] 
+        [ Value "LEFT"  [TextE "max", icon "arrow-up.svg"] 
          ,Value "RIGHT" [] 
          ]
          (Inline True) colorNumber [typeNumber, typeNumber, typeNumber]
          (Tooltip "Take the maximum of two numbers")
 
 numMin = DesignBlock "numMin" "min"
-        [ Value "LEFT"  [TextE "min"] 
+        [ Value "LEFT"  [TextE "min", icon "arrow-down.svg"] 
          ,Value "RIGHT" [] 
          ]
          (Inline True) colorNumber [typeNumber, typeNumber, typeNumber]
          (Tooltip "Take the minimum of two numbers")
 
 numOpposite = DesignBlock "numOpposite" "opposite"
-        [Value "NUM" [TextE "opposite"] ]
+        [Value "NUM" [TextE "opposite", icon "minus-box.svg"] ]
          (Inline True) colorNumber [typeNumber, typeNumber]
          (Tooltip "Gives the negative of a number")
 

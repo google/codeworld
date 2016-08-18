@@ -188,38 +188,45 @@ compileHandler = do
     mode <- getBuildMode
     Just source <- getParam "source"
     let programId = sourceToProgramId source
+        deployId = sourceToDeployId source
     success <- liftIO $ do
         ensureProgramDir mode programId
         B.writeFile (buildRootDir mode </> sourceFile programId) source
+        writeDeployLink mode deployId programId
         compileIfNeeded mode programId
     when (not success) $ modifyResponse $ setResponseCode 500
     modifyResponse $ setContentType "text/plain"
     writeBS (T.encodeUtf8 (unProgramId programId))
 
-getHashParam :: Snap ProgramId
-getHashParam = do
-    Just h <- getParam "hash"
-    return (ProgramId (T.decodeUtf8 h))
+getHashParam :: Bool -> BuildMode -> Snap ProgramId
+getHashParam allowDeploy mode = do
+    programId <- getParam "hash" >>= \case
+      Just h -> return (ProgramId (T.decodeUtf8 h))
+      Nothing | allowDeploy -> do
+        Just dh <- getParam "dhash"
+        let deployId = DeployId (T.decodeUtf8 dh)
+        liftIO $ resolveDeployId mode deployId
+    return programId
 
 loadXMLHandler :: Snap ()
 loadXMLHandler = do
     mode <- getBuildMode
     unless (mode==BuildMode "blocklyXML") $ modifyResponse $ setResponseCode 500
-    programId <- getHashParam
+    programId <- getHashParam False mode
     modifyResponse $ setContentType "text/plain"
     serveFile (buildRootDir mode </> sourceXML programId)
 
 loadSourceHandler :: Snap ()
 loadSourceHandler = do
     mode <- getBuildMode
-    programId <- getHashParam
+    programId <- getHashParam False mode
     modifyResponse $ setContentType "text/x-haskell"
     serveFile (buildRootDir mode </> sourceFile programId)
 
 runHandler :: Snap ()
 runHandler = do
     mode <- getBuildMode
-    programId <- getHashParam
+    programId <- getHashParam True mode
     liftIO $ compileIfNeeded mode programId
     modifyResponse $ setContentType "text/javascript"
     serveFile (buildRootDir mode </> targetFile programId)
@@ -227,7 +234,7 @@ runHandler = do
 runMessageHandler :: Snap ()
 runMessageHandler = do
     mode <- getBuildMode
-    programId <- getHashParam
+    programId <- getHashParam False mode
     liftIO $ compileIfNeeded mode programId
     modifyResponse $ setContentType "text/plain"
     serveFile (buildRootDir mode </> resultFile programId)

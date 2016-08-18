@@ -24,6 +24,7 @@ import           Control.Exception
 import qualified Crypto.Hash as Crypto
 import           Data.ByteArray (convert)
 import           Data.ByteString (ByteString)
+import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Base64 as B64
 import           Data.Monoid
@@ -37,6 +38,7 @@ import           System.FilePath
 newtype BuildMode = BuildMode String deriving Eq
 newtype ProgramId = ProgramId { unProgramId :: Text } deriving Eq
 newtype ProjectId = ProjectId { unProjectId :: Text } deriving Eq
+newtype DeployId  = DeployId  { unDeployId  :: Text } deriving Eq
 
 autocompletePath :: FilePath
 autocompletePath = "web/codeworld-base.txt"
@@ -49,6 +51,9 @@ buildRootDir (BuildMode m) = "data" </> m </> "user"
 
 projectRootDir :: BuildMode -> FilePath
 projectRootDir (BuildMode m) = "data" </> m </> "projects"
+
+deployRootDir :: BuildMode -> FilePath
+deployRootDir (BuildMode m) = "data" </> m </> "deploy"
 
 sourceBase :: ProgramId -> FilePath
 sourceBase (ProgramId p) = let s = T.unpack p in take 3 s </> s
@@ -65,6 +70,9 @@ targetFile programId = sourceBase programId <.> "jsexe" </> "all.js"
 resultFile :: ProgramId -> FilePath
 resultFile programId = sourceBase programId <.> "err.txt"
 
+deployLink :: DeployId -> FilePath
+deployLink (DeployId d) = let s = T.unpack d in take 3 s </> s
+
 userProjectDir :: BuildMode -> Text -> FilePath
 userProjectDir mode userId = projectRootDir mode </> T.unpack userId
 
@@ -73,6 +81,9 @@ projectFile (ProjectId p) = let s = T.unpack p in s <.> "cw"
 
 sourceToProgramId :: ByteString -> ProgramId
 sourceToProgramId = ProgramId . hashToId "P"
+
+sourceToDeployId :: ByteString -> DeployId
+sourceToDeployId = DeployId . hashToId "D" . ("DEPLOY_ID" <>)
 
 nameToProjectId :: Text -> ProjectId
 nameToProjectId = ProjectId . hashToId "S" . T.encodeUtf8
@@ -84,6 +95,16 @@ ensureProgramDir mode (ProgramId p) = createDirectoryIfMissing True dir
 ensureUserProjectDir :: BuildMode -> Text -> IO ()
 ensureUserProjectDir mode userId =
     createDirectoryIfMissing True (userProjectDir mode userId)
+
+writeDeployLink :: BuildMode -> DeployId -> ProgramId -> IO ()
+writeDeployLink mode deployId (ProgramId p) = do
+    createDirectoryIfMissing True (dropFileName f)
+    B.writeFile f (T.encodeUtf8 p)
+  where f = deployRootDir mode </> deployLink deployId
+
+resolveDeployId :: BuildMode -> DeployId -> IO ProgramId
+resolveDeployId mode deployId = ProgramId . T.decodeUtf8 <$> B.readFile f
+  where f = deployRootDir mode </> deployLink deployId
 
 hashToId :: Text -> ByteString -> Text
 hashToId pfx = (pfx <>)

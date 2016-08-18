@@ -29,30 +29,26 @@
   </script>
 
   <script type="text/javascript">
-    var params = location.search.slice(1).split('&');
-    var hash = null;
-    var mode = null;
-    for (var i = 0; i < params.length; i++) {
-      var parts = params[i].split('=');
-      if (parts[0] == 'hash') {
-        var hash = params[i].slice(5);
-        if (hash.indexOf('%3d%3d', hash.length - 6) !== -1 ||
-            hash.indexOf('%3D%3D', hash.length - 6) !== -1) {
-          hash = hash.slice(0, hash.length - 6);
-        }
-        if (hash.slice(-2) === '==') {
-          hash = hash.slice(0, -2);
-        }
-      } else if (parts[0] == 'mode') {
-        mode = parts[1];
-      }
+    var paramList = location.search.slice(1).split('&');
+    var params = {}
+    for (var i = 0; i < paramList.length; i++) {
+      var name = paramList[i].split('=')[0];
+      var value = paramList[i].slice(name.length + 1);
+      params[name] = value;
     }
-    if (mode == null) mode = 'codeworld';
-    if (hash != null) {
-      var script = document.createElement('script');
-      script.setAttribute('type', 'text/javascript');
-      script.setAttribute('src', 'runJS?hash=' + hash + '&mode=' + mode);
-      document.head.appendChild(script);
-    }
+
+    var hash = params['hash'];
+    var dhash = params['dhash'];
+    var mode = params['mode'];
+    if (!mode) mode = 'codeworld';
+
+    var uri = 'runJS?mode=' + mode;
+    if (hash) uri += '&hash=' + hash;
+    if (dhash) uri += '&dhash=' + dhash;
+
+    var script = document.createElement('script');
+    script.setAttribute('type', 'text/javascript');
+    script.setAttribute('src', uri);
+    document.head.appendChild(script);
   </script>
 </html>

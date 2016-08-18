@@ -578,7 +578,7 @@ comprehensions!
         (3, 1/8, brown), (4, 1/2, pink), (8, 2, yellow)
         ]
 
-    boxes :: [Picture]
+    boxes :: Picture
     boxes = pictures([ translated(colored(rectangle(s,s), c), x, 0)
                        | (x, s, c) <- boxDetails ])
 

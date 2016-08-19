@@ -212,12 +212,14 @@ blockLocalVar block = do
 
 -- ANIMATION
 blockAnim :: ParserFunction
-blockAnim block =  
-    case getInputBlock block "FUNC" of
-      Just inpBlock -> do
-                       let funcName = getFunctionName inpBlock 
-                       return $ FuncDef "main" [] $ CallFunc "animationOf" [CallFunc funcName []]
-      Nothing -> errFunc block
+blockAnim block = do
+        draw <- aux "FUNC"
+        return $ FuncDef "main" [] $ CallFunc "animationOf" 
+                                            [CallFunc draw []]
+  where
+    aux name = case getInputBlock block name of
+                      Just inpBlock -> return $ getFunctionName inpBlock 
+                      Nothing -> errFunc_ block
 
 blockSimulation :: ParserFunction
 blockSimulation block = do
@@ -230,6 +232,22 @@ blockSimulation block = do
     aux name = case getInputBlock block name of
                       Just inpBlock -> return $ getFunctionName inpBlock 
                       Nothing -> errFunc_ block
+
+blockInteraction :: ParserFunction
+blockInteraction block = do
+        initial <- aux "INITIAL"
+        step <- aux "STEP"
+        event <- aux "EVENT"
+        draw <- aux "DRAW"
+        return $ FuncDef "main" [] $ CallFunc "interactionOf" 
+                                            [CallFunc initial [],CallFunc step [],
+                                             CallFunc step [] ,CallFunc draw []]
+  where
+    aux name = case getInputBlock block name of
+                      Just inpBlock -> return $ getFunctionName inpBlock 
+                      Nothing -> errFunc_ block
+
+
 
 
 -- COMMENT
@@ -464,6 +482,7 @@ specialBlocks = [  -- PROGRAMS
                    ("cwDrawingOf",blockDrawingOf)
                   ,("cwAnimationOf",blockAnim)
                   ,("cwSimulationOf",blockSimulation)
+                  ,("cwInteractionOf",blockInteraction)
                   -- PICTURES
                   ,("cwCombine", blockCombine)
                   -- NUMBERS

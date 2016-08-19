@@ -83,7 +83,7 @@ function updateEditor(code) {
       ,editor);
 }
 
-function run(xmlHash, codeHash, msg, error) {
+function run(xmlHash, codeHash, msg, error, dhash) {
     var hash = codeHash;
 
     if (hash) {
@@ -126,6 +126,7 @@ function run(xmlHash, codeHash, msg, error) {
     //}
 
     document.getElementById('editButton').setAttribute('href','/#' + codeHash);
+    window.deployHash = dhash;
     updateUI();
 }
 
@@ -168,7 +169,6 @@ function compile(src) {
     data.append('mode', 'blocklyXML');
 
     sendHttp('POST', 'saveXMLhash', data, function(request) {
-
         // XML Hash
         var xmlHash = request.responseText;
 
@@ -180,10 +180,19 @@ function compile(src) {
             var success = request.status == 200;
 
             // Code hash
-            var codeHash = request.responseText;
+            var hash;
+            var dhash;
+            if (request.responseText.length == 23) {
+                hash = request.responseText;
+                dhash = null;
+            } else {
+                var obj = JSON.parse(request.responseText);
+                hash = obj.hash;
+                dhash = obj.dhash;
+            }
 
             var data = new FormData();
-            data.append('hash', codeHash);
+            data.append('hash', hash);
             data.append('mode', window.buildMode);
 
             sendHttp('POST', 'runMsg', data, function(request) {
@@ -195,9 +204,9 @@ function compile(src) {
                 }
 
                 if (success) {
-                    run(xmlHash, codeHash, 'Running...\n\n' + msg, false);
+                    run(xmlHash, hash, 'Running...\n\n' + msg, false, dhash);
                 } else {
-                    run(xmlHash, codeHash, msg, true);
+                    run(xmlHash, hash, msg, true);
                 }
             });
         });
@@ -394,18 +403,4 @@ function clearWorkspace()
 {
     var workspace = Blockly.mainWorkspace;
     workspace.clear();
-}
-
-function share() {
-    var url = window.location.href;
-
-    sweetAlert({
-        html: true,
-        title: '<i class="mdi mdi-72px mdi-share"></i>&nbsp; Share',
-        text: 'Copy and share this link with others!',
-        type: 'input',
-        inputValue: url,
-        confirmButtonText: 'Done',
-        animation: 'slide-from-bottom'
-    });
 }

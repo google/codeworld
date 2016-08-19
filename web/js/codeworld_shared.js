@@ -521,3 +521,55 @@ function loadProject_(name, buildMode, successFunc) {
     });
   });
 }
+
+function share() {
+  var offerSource = true;
+
+  function go() {
+    var url;
+    var msg;
+    var showConfirm;
+    var confirmText;
+
+    if (!window.deployHash) {
+      url = window.location.href;
+      msg = 'Copy this link to share your program and source code with others!';
+      showConfirm = false;
+    } else if (offerSource) {
+      url = window.location.href;
+      msg = 'Copy this link to share your program and source code with others!';
+      showConfirm = true;
+      confirmText = 'Remove Source Code';
+    } else {
+      var a = document.createElement('a');
+      a.href = window.location.href;
+      a.hash = '';
+      a.pathname = '/run.html'
+      a.search = '?mode=' + window.buildMode + '&dhash=' + window.deployHash;
+
+      url = a.href;
+      msg = 'Copy this link to share your program (not source code) with others!';
+      showConfirm = true;
+      confirmText = 'Share Source Code';
+    }
+
+    sweetAlert({
+        html: true,
+        title: '<i class="mdi mdi-72px mdi-share"></i>&nbsp; Share',
+        text: msg,
+        type: 'input',
+        inputValue: url,
+        showConfirmButton: showConfirm,
+        confirmButtonText: confirmText,
+        closeOnConfirm: false,
+        showCancelButton: true,
+        cancelButtonText: 'Done',
+        animation: 'slide-from-bottom'
+    }, function() {
+      offerSource = !offerSource;
+      go();
+    });
+  }
+
+  go();
+}

@@ -196,7 +196,8 @@ compileHandler = do
         compileIfNeeded mode programId
     when (not success) $ modifyResponse $ setResponseCode 500
     modifyResponse $ setContentType "text/plain"
-    writeBS (T.encodeUtf8 (unProgramId programId))
+    let result = CompileResult (unProgramId programId) (unDeployId deployId)
+    writeLBS (encode result)
 
 getHashParam :: Bool -> BuildMode -> Snap ProgramId
 getHashParam allowDeploy mode = do

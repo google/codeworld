@@ -277,7 +277,7 @@ function stop() {
     run('', '', false);
 }
 
-function run(hash, msg, error) {
+function run(hash, msg, error, dhash) {
     var runner = document.getElementById('runner');
 
     if (hash) {
@@ -315,6 +315,8 @@ function run(hash, msg, error) {
         message.classList.remove('error');
     }
 
+    window.deployHash = dhash;
+
     updateUI();
 }
 
@@ -333,8 +335,18 @@ function compile() {
     data.append('mode', window.buildMode);
 
     sendHttp('POST', 'compile', data, function(request) {
-        var hash = request.responseText;
         var success = request.status == 200;
+
+        var hash;
+        var dhash;
+        if (request.responseText.length == 23) {
+          hash = request.responseText;
+          dhash = null;
+        } else {
+          var obj = JSON.parse(request.responseText);
+          hash = obj.hash;
+          dhash = obj.dhash;
+        }
 
         var data = new FormData();
         data.append('hash', hash);
@@ -349,7 +361,7 @@ function compile() {
             }
 
             if (success) {
-                run(hash, 'Running...\n\n' + msg, false);
+                run(hash, 'Running...\n\n' + msg, false, dhash);
             } else {
                 run(hash, msg, true);
             }
@@ -408,4 +420,56 @@ function downloadProject() {
     elem.click();
     document.body.removeChild(elem);
   }
+}
+
+function share() {
+  var offerSource = true;
+
+  function go() {
+    var url;
+    var msg;
+    var showConfirm;
+    var confirmText;
+
+    if (!window.deployHash) {
+      url = window.location.href;
+      msg = 'Copy this link to share your program and source code with others!';
+      showConfirm = false;
+    } else if (offerSource) {
+      url = window.location.href;
+      msg = 'Copy this link to share your program and source code with others!';
+      showConfirm = true;
+      confirmText = 'Remove Source Code';
+    } else {
+      var a = document.createElement('a');
+      a.href = window.location.href;
+      a.hash = '';
+      a.pathname = '/run.html'
+      a.search = '?mode=' + window.buildMode + '&dhash=' + window.deployHash;
+
+      url = a.href;
+      msg = 'Copy this link to share your program (not source code) with others!';
+      showConfirm = true;
+      confirmText = 'Share Source Code';
+    }
+
+    sweetAlert({
+        html: true,
+        title: '<i class="mdi mdi-72px mdi-share"></i>&nbsp; Share',
+        text: msg,
+        type: 'input',
+        inputValue: url,
+        showConfirmButton: showConfirm,
+        confirmButtonText: confirmText,
+        closeOnConfirm: false,
+        showCancelButton: true,
+        cancelButtonText: 'Done',
+        animation: 'slide-from-bottom'
+    }, function() {
+      offerSource = !offerSource;
+      go();
+    });
+  }
+
+  go();
 }

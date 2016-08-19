@@ -521,22 +521,3 @@ function loadProject_(name, buildMode, successFunc) {
     });
   });
 }
-
-function share() {
-    var url = window.location.href;
-
-    // Strip trailing equal-signs, since some social sites mangle them.
-    url = url.replace(/=*$/, '');
-
-    sweetAlert({
-        html: true,
-        title: '<i class="mdi mdi-72px mdi-share"></i>&nbsp; Share',
-        text: 'Copy and share this link with others!',
-        type: 'input',
-        inputValue: url,
-        confirmButtonText: 'Done',
-        animation: 'slide-from-bottom'
-    });
-}
-
-

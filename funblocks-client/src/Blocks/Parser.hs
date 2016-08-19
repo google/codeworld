@@ -105,11 +105,13 @@ data Expr = LiteralS T.Text
           | ListSpec Expr Expr -- [left..right]
           | ListComp Expr [(T.Text,Expr)] [Expr] -- [action | var <- expr, var <- expr, guards]
           | Comment
+  deriving Show
 
 data Type = Type T.Text
      | ListType Type -- [type] -- unfortunately its separate for the special syntax
      | Product T.Text [Type] 
      | Sum T.Text [Type]
+  deriving Show
 
 -- data Product = Product T.Text [Type] -- Constructor tp1*tp2*tp3
 

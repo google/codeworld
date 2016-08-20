@@ -124,8 +124,9 @@ instance Pretty Expr where
   pretty (Case expr rows) = do 
                               col <- PR.getCol
                               PR.write "case"
-                              -- PR.push
+                              PR.makeSpace
                               pretty expr
+                              PR.makeSpace
                               PR.write "of"
                               mapM_ (\(con, vars, expr) -> do PR.setCol (col+4)
                                                               PR.writeLine ""

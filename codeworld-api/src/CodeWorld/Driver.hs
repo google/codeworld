@@ -25,7 +25,6 @@
 
 module CodeWorld.Driver (
     drawingOf,
-    pictureOf,
     animationOf,
     simulationOf,
     interactionOf,
@@ -89,10 +88,6 @@ import           Text.Printf
 
 -- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
 drawingOf :: Picture -> IO ()
-
--- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
-pictureOf :: Picture -> IO ()
-{-# WARNING pictureOf "Please use drawingOf instead of pictureOf" #-}
 
 -- | Shows an animation, with a picture for each time given by the parameter.
 animationOf :: (Double -> Picture) -> IO ()
@@ -362,8 +357,6 @@ display pic = do
 
 drawingOf pic = display pic `catch` reportError
 
-pictureOf pic = display pic `catch` reportError
-
 
 --------------------------------------------------------------------------------
 -- Stand-alone implementation of drawing
@@ -526,8 +519,6 @@ display pic = runBlankCanvas $ \context ->
         let rect = (Canvas.width context, Canvas.height context)
         setupScreenContext rect
         drawPicture initialDS pic
-
-pictureOf = drawingOf
 
 drawingOf pic = display pic `catch` reportError
 #endif

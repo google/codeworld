@@ -135,7 +135,7 @@ loadProjectHandler clientId = do
     Just name <- getParam "name"
     let projectName = T.decodeUtf8 name
     let projectId = nameToProjectId projectName
-    let file = projectRootDir mode </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
+    let file = userProjectDir mode (userId user) </> projectFile projectId
     serveFile file
 
 saveProjectHandler :: ClientId -> Snap ()
@@ -145,7 +145,7 @@ saveProjectHandler clientId = do
     liftIO $ ensureUserProjectDir mode (userId user)
     Just project <- decode . LB.fromStrict . fromJust <$> getParam "project"
     let projectId = nameToProjectId (projectName project)
-    let file = projectRootDir mode </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
+    let file = userProjectDir mode (userId user) </> projectFile projectId
     liftIO $ LB.writeFile file $ encode project
 
 deleteProjectHandler :: ClientId -> Snap ()
@@ -156,7 +156,7 @@ deleteProjectHandler clientId = do
     Just name <- getParam "name"
     let projectName = T.decodeUtf8 name
     let projectId = nameToProjectId projectName
-    let file = projectRootDir mode </> T.unpack (userId user) </> T.unpack projectId <.> "cw"
+    let file = userProjectDir mode (userId user) </> projectFile projectId
     liftIO $ removeFile file
 
 listProjectsHandler :: ClientId -> Snap ()
@@ -164,20 +164,11 @@ listProjectsHandler clientId = do
     mode <- getBuildMode
     user  <- getUser clientId
     liftIO $ ensureUserProjectDir mode (userId user)
-    let projectDir = projectRootDir mode </> T.unpack (userId user)
+    let projectDir = userProjectDir mode (userId user)
     projectFiles <- liftIO $ getDirectoryContents projectDir
     projects <- liftIO $ fmap catMaybes $ forM projectFiles $ \f -> do
-        let file = projectRootDir mode </> T.unpack (userId user) </> f
-        if takeExtension file == ".cw"
-            then do
-                decode <$> LB.readFile file >>= \ case
-                    Nothing -> return Nothing
-                    Just project -> do
-                        let projId = T.unpack (nameToProjectId (projectName project))
-                        if file == projectDir </> projId <.> "cw"
-                            then return (Just project)
-                            else return Nothing
-            else return Nothing
+        exists <- doesFileExist (projectDir </> f)
+        if exists then decode <$> LB.readFile (projectDir </> f) else return Nothing
     modifyResponse $ setContentType "application/json"
     writeLBS (encode (map projectName projects))
 
@@ -190,48 +181,53 @@ saveXMLHashHandler = do
     liftIO $ ensureProgramDir mode programId
     liftIO $ B.writeFile (buildRootDir mode </> sourceXML programId) source
     modifyResponse $ setContentType "text/plain"
-    writeBS (T.encodeUtf8 programId)
+    writeBS (T.encodeUtf8 (unProgramId programId))
 
 compileHandler :: Snap ()
 compileHandler = do
     mode <- getBuildMode
     Just source <- getParam "source"
     let programId = sourceToProgramId source
+        deployId = sourceToDeployId source
     success <- liftIO $ do
         ensureProgramDir mode programId
         B.writeFile (buildRootDir mode </> sourceFile programId) source
+        writeDeployLink mode deployId programId
         compileIfNeeded mode programId
     when (not success) $ modifyResponse $ setResponseCode 500
     modifyResponse $ setContentType "text/plain"
-    writeBS (T.encodeUtf8 programId)
+    let result = CompileResult (unProgramId programId) (unDeployId deployId)
+    writeLBS (encode result)
 
-getHashParam :: Snap B.ByteString
-getHashParam = do
-    Just h <- getParam "hash"
-    if "Q" `B.isPrefixOf` h then return ("P" <> B.drop 1 h) else return h
+getHashParam :: Bool -> BuildMode -> Snap ProgramId
+getHashParam allowDeploy mode = do
+    programId <- getParam "hash" >>= \case
+      Just h -> return (ProgramId (T.decodeUtf8 h))
+      Nothing | allowDeploy -> do
+        Just dh <- getParam "dhash"
+        let deployId = DeployId (T.decodeUtf8 dh)
+        liftIO $ resolveDeployId mode deployId
+    return programId
 
 loadXMLHandler :: Snap ()
 loadXMLHandler = do
     mode <- getBuildMode
     unless (mode==BuildMode "blocklyXML") $ modifyResponse $ setResponseCode 500
-    hash <- getHashParam
-    let programId = T.decodeUtf8 hash
+    programId <- getHashParam False mode
     modifyResponse $ setContentType "text/plain"
     serveFile (buildRootDir mode </> sourceXML programId)
 
 loadSourceHandler :: Snap ()
 loadSourceHandler = do
     mode <- getBuildMode
-    hash <- getHashParam
-    let programId = T.decodeUtf8 hash
+    programId <- getHashParam False mode
     modifyResponse $ setContentType "text/x-haskell"
     serveFile (buildRootDir mode </> sourceFile programId)
 
 runHandler :: Snap ()
 runHandler = do
     mode <- getBuildMode
-    hash <- getHashParam
-    let programId = T.decodeUtf8 hash
+    programId <- getHashParam True mode
     liftIO $ compileIfNeeded mode programId
     modifyResponse $ setContentType "text/javascript"
     serveFile (buildRootDir mode </> targetFile programId)
@@ -239,8 +235,7 @@ runHandler = do
 runMessageHandler :: Snap ()
 runMessageHandler = do
     mode <- getBuildMode
-    hash <- getHashParam
-    let programId = T.decodeUtf8 hash
+    programId <- getHashParam False mode
     liftIO $ compileIfNeeded mode programId
     modifyResponse $ setContentType "text/plain"
     serveFile (buildRootDir mode </> resultFile programId)

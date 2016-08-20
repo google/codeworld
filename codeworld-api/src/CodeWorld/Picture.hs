@@ -68,16 +68,6 @@ path ps = Path ps 0 False False
 thickPath :: Double -> [Point] -> Picture
 thickPath n ps = Path ps n False False
 
--- | A thin sequence of line segments, with these points as endpoints
-line :: [Point] -> Picture
-line ps = Path ps 0 False False
-{-# WARNING line "Please use path instead of line" #-}
-
--- | A thick sequence of line segments, with this line width and endpoints
-thickLine :: Double -> [Point] -> Picture
-thickLine n ps = Path ps n False False
-{-# WARNING thickLine "Please use thickPath instead of thickLine" #-}
-
 -- | A thin polygon with these points as vertices
 polygon :: [Point] -> Picture
 polygon ps = Path ps 0 True False
@@ -198,28 +188,22 @@ rotated = Rotate
 pictures :: [Picture] -> Picture
 pictures = Pictures
 
--- Binary composition of pictures.
-(&) :: Picture -> Picture -> Picture
-infixr 0 &
-a & Pictures bs = Pictures (a:bs)
-a & b           = Pictures [a, b]
-{-# WARNING (&) "Please use <> from Data.Monoid instead of &" #-}
-
 instance Monoid Picture where
-  mempty = blank
-  mappend = (&)
-  mconcat = pictures
+  mempty                  = blank
+  mappend a (Pictures bs) = Pictures (a:bs)
+  mappend a b             = Pictures [a, b]
+  mconcat                 = pictures
 
 -- | A coordinate plane.  Adding this to your pictures can help you measure distances
 -- more accurately.
 --
 -- Example:
 --
---    main = pictureOf(myPicture & coordinatePlane)
+--    main = pictureOf (myPicture <> coordinatePlane)
 --    myPicture = ...
 coordinatePlane :: Picture
-coordinatePlane = axes & numbers & guidelines
-  where xline y     = line [(-10, y), (10, y)]
+coordinatePlane = axes <> numbers <> guidelines
+  where xline y     = path [(-10, y), (10, y)]
         xaxis       = colored (RGBA 0 0 0 0.75) (xline 0)
         axes        = xaxis <> rotated (pi/2) xaxis
         xguidelines = pictures

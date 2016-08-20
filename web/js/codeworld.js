@@ -277,7 +277,7 @@ function stop() {
     run('', '', false);
 }
 
-function run(hash, msg, error) {
+function run(hash, msg, error, dhash) {
     var runner = document.getElementById('runner');
 
     if (hash) {
@@ -315,6 +315,8 @@ function run(hash, msg, error) {
         message.classList.remove('error');
     }
 
+    window.deployHash = dhash;
+
     updateUI();
 }
 
@@ -333,8 +335,18 @@ function compile() {
     data.append('mode', window.buildMode);
 
     sendHttp('POST', 'compile', data, function(request) {
-        var hash = request.responseText;
         var success = request.status == 200;
+
+        var hash;
+        var dhash;
+        if (request.responseText.length == 23) {
+          hash = request.responseText;
+          dhash = null;
+        } else {
+          var obj = JSON.parse(request.responseText);
+          hash = obj.hash;
+          dhash = obj.dhash;
+        }
 
         var data = new FormData();
         data.append('hash', hash);
@@ -349,7 +361,7 @@ function compile() {
             }
 
             if (success) {
-                run(hash, 'Running...\n\n' + msg, false);
+                run(hash, 'Running...\n\n' + msg, false, dhash);
             } else {
                 run(hash, msg, true);
             }

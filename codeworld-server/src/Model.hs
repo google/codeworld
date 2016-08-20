@@ -46,3 +46,12 @@ instance ToJSON Project where
     toJSON p = object [ "name"    .= projectName p,
                         "source"  .= projectSource p,
                         "history" .= projectHistory p ]
+
+data CompileResult = CompileResult {
+    compileHash :: Text,
+    compileDeployHash :: Text
+    }
+
+instance ToJSON CompileResult where
+    toJSON cr = object [ "hash"  .= compileHash cr,
+                         "dhash" .= compileDeployHash cr ]

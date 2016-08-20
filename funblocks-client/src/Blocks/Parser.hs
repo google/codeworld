@@ -243,7 +243,7 @@ blockInteraction block = do
         draw <- aux "DRAW"
         return $ FuncDef "main" [] $ CallFunc "interactionOf" 
                                             [CallFunc initial [],CallFunc step [],
-                                             CallFunc step [] ,CallFunc draw []]
+                                             CallFunc event [] ,CallFunc draw []]
   where
     aux name = case getInputBlock block name of
                       Just inpBlock -> return $ getFunctionName inpBlock 

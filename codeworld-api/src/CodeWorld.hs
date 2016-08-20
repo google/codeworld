@@ -17,7 +17,6 @@
 module CodeWorld (
     -- * Entry points
     drawingOf,
-    pictureOf,
     animationOf,
     simulationOf,
     interactionOf,
@@ -27,8 +26,6 @@ module CodeWorld (
     TextStyle(..),
     Font(..),
     blank,
-    line,
-    thickLine,
     path,
     thickPath,
     polygon,
@@ -57,7 +54,6 @@ module CodeWorld (
     dilated,
     rotated,
     pictures,
-    (&),
     (<>),
     coordinatePlane,
     codeWorldLogo,

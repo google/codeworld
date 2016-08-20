@@ -66,16 +66,6 @@ path = CWPic . CW.path . map toCWVect
 thickPath :: ([Point], Number) -> Picture
 thickPath (ps, n) = CWPic (CW.thickPath (toDouble n) (map toCWVect ps))
 
--- | A thin line with these points as endpoints
-line :: [Point] -> Picture
-line = CWPic . CW.line . map toCWVect
-{-# WARNING line "Please use path(...) instead of line(...)" #-}
-
--- | A thick line, with these endpoints, with this line width
-thickLine :: ([Point], Number) -> Picture
-thickLine (ps, n) = CWPic (CW.thickLine (toDouble n) (map toCWVect ps))
-{-# WARNING thickLine "Please use thickPath(...) instead of thickLine(...)" #-}
-
 -- | A thin polygon with these points as vertices
 polygon :: [Point] -> Picture
 polygon = CWPic . CW.polygon . map toCWVect
@@ -202,7 +192,7 @@ pictures = CWPic . CW.pictures . map toCWPic
 -- Binary composition of pictures.
 (&) :: Picture -> Picture -> Picture
 infixr 0 &
-a & b = CWPic (toCWPic a CW.& toCWPic b)
+a & b = CWPic (toCWPic a CW.<> toCWPic b)
 
 -- | A coordinate plane.  Adding this to your pictures can help you measure distances
 -- more accurately.

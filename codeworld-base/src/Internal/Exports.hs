@@ -73,8 +73,6 @@ module Internal.Exports (
     blank,
     path,
     thickPath,
-    line,
-    thickLine,
     polygon,
     thickPolygon,
     solidPolygon,
@@ -115,7 +113,6 @@ module Internal.Exports (
     -- * Entry points
     Program,
     drawingOf,
-    pictureOf,
     animationOf,
     simulationOf,
     interactionOf

@@ -50,7 +50,7 @@ setErrorMessage msg = do
   setInnerHTML msgEl $ Just msg
 
 programBlocks :: [T.Text]
-programBlocks = map T.pack ["cwDrawingOf","cwAnimationOf", "cwSimulationOf"]
+programBlocks = map T.pack ["cwDrawingOf","cwAnimationOf", "cwSimulationOf", "cwInteractionOf"]
 
 btnStopClick = do 
   liftIO js_stop

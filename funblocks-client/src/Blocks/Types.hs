@@ -33,161 +33,157 @@ colorText = Color 45
 
 typePicture = Picture
 typeNumber = Number
-typeProgram = NoType
+typeProgram = Top
 typeColor = Col
 typeBool = Bool
 typeText = Str
-typeSet = NoType
-typeNone = NoType
+typeComment = Comment
 
 inlineDef = Inline False
+
+icon :: T.Text -> Field
+icon name = FieldImage ("ims/" `T.append` name) 20 20
 
 letVar = DesignBlock "letVar" ""
             [Dummy [TextInput "foo" "VARNAME"
             ,TextE "Let"]
-           ,Value "VARVALUE" [Text ""] (Poly 'a')]
-          inlineDef colorPoly typeSet
+           ,Value "VARVALUE" [Text ""]]
+          inlineDef colorPoly [Poly 'a', Top]
           (Tooltip "Enter name of the variable")
 
 -- PICTURE ----------------------------------------------
 cwBlank = DesignBlock "cwBlank" "blank"
           [Dummy 
-            [TextE "Blank"]
+            [TextE "blank"]
           ]
-          inlineDef colorPicture typePicture 
+          inlineDef colorPicture [Picture] 
           (Tooltip "Blank picture")
 
 cwCoordinatePlane = DesignBlock "cwCoordinatePlane" "coordinatePlane" 
           [Dummy 
-            [TextE "Coordinate Plane"]
+            [TextE "coordinatePlane"]
           ]
-          inlineDef colorPicture typePicture 
+          inlineDef colorPicture [Picture] 
           (Tooltip "Picture of coordinate plane")
 
 cwCodeWorldLogo = DesignBlock "cwCodeWorldLogo" "codeWorldLogo"
           [Dummy 
-            [TextE "CodeWorld Logo"]
+            [TextE "codeWorldLogo"]
           ]
-          inlineDef colorPicture typePicture 
+          inlineDef colorPicture [Picture] 
           (Tooltip "Picture of CodeWorld logo")
 
 cwText = DesignBlock "cwText" "text"
-          [Value "TEXT" [TextE "Text" ] typeText]
-          inlineDef colorPicture typePicture 
+          [Value "TEXT" [TextE "text" ] ]
+          inlineDef colorPicture [typeText, Picture] 
           (Tooltip "Enter some text")
 
 cwDrawingOf = DesignBlock "cwDrawingOf" ""
-          [Dummy [TextE "Drawing Of"] 
-           ,Value "VALUE" [] typePicture] 
-          inlineDef colorProgram typeProgram 
+          [Dummy [TextE "drawingOf", icon "tooltip-image.svg"] 
+           ,Value "VALUE" [] ] 
+          inlineDef colorProgram [typePicture, typeProgram]
           (Tooltip "Displays a drawing of a picture")
 
 cwCircle = DesignBlock "cwCircle" "circle"
-          [Dummy [TextE "Circle"] 
-           ,Value "RADIUS" [Text "Radius"] typeNumber] 
-          inlineDef colorPicture typePicture
+          [Dummy [TextE "circle"] 
+           ,Value "RADIUS" [Text "Radius"]] 
+          inlineDef colorPicture [typeNumber, typePicture]
           (Tooltip "Picture of a circle")
 
 cwThickCircle = DesignBlock "cwThickCircle" "thickCircle"
-          [Dummy [TextE "Thick Circle"] 
-           ,Value "RADIUS" [Text "Radius"] typeNumber 
-           ,Value "LINEWIDTH" [Text "Line width"] typeNumber] 
-          inlineDef colorPicture typePicture
+          [Dummy [TextE "thickCircle"] 
+           ,Value "RADIUS" [Text "Radius"] 
+           ,Value "LINEWIDTH" [Text "Line width"] ] 
+          inlineDef colorPicture [typeNumber, typeNumber, typePicture]
           (Tooltip "Picture of a circle")
 
 cwSolidCircle = DesignBlock "cwSolidCircle" "solidCircle"
-          [Dummy [TextE "Solid Circle"] 
-           ,Value "RADIUS"  [Text "Radius"] typeNumber] 
-          inlineDef colorPicture typePicture
+          [Dummy [TextE "solidCircle"] 
+           ,Value "RADIUS"  [Text "Radius"] ] 
+          inlineDef colorPicture [typeNumber, typePicture]
           (Tooltip "Picture of a solid circle")
 
 cwRectangle = DesignBlock "cwRectangle" "rectangle"
-          [Dummy [TextE "Rectangle"] 
-           ,Value "WIDTH"  [Text "Width"] typeNumber 
-           ,Value "HEIGHT"  [Text "Height"] typeNumber] 
-          inlineDef colorPicture typePicture 
+          [Dummy [TextE "rectangle"] 
+           ,Value "WIDTH"  [Text "Width"] 
+           ,Value "HEIGHT"  [Text "Height"] ] 
+          inlineDef colorPicture [typeNumber, typeNumber, typePicture] 
           (Tooltip "Picture of a rectangle")
 
 cwThickRectangle = DesignBlock "cwThickRectangle" "thickRectangle"
-          [Dummy [TextE "Thick Rectangle"] 
-           ,Value "WIDTH" [Text "Width"] typeNumber 
-           ,Value "HEIGHT" [Text "Height"] typeNumber 
-           ,Value "LINEWIDTH" [Text "Line Width"] typeNumber] 
-          inlineDef colorPicture typePicture 
+          [Dummy [TextE "thickRectangle"] 
+           ,Value "WIDTH" [Text "Width"] 
+           ,Value "HEIGHT" [Text "Height"] 
+           ,Value "LINEWIDTH" [Text "Line Width"] ] 
+          inlineDef colorPicture [typeNumber, typeNumber, typePicture] 
           (Tooltip "Picture of a rectangle")
 
 cwSolidRectangle = DesignBlock "cwSolidRectangle" "solidRectangle"
-          [Dummy [TextE "Solid Rectangle"] 
-           ,Value "WIDTH" [Text "Width"] typeNumber 
-           ,Value "HEIGHT" [Text "Height"] typeNumber] 
-          inlineDef colorPicture typePicture 
+          [Dummy [TextE "solidRectangle"] 
+           ,Value "WIDTH" [Text "Width"] 
+           ,Value "HEIGHT" [Text "Height"] ] 
+          inlineDef colorPicture [typeNumber, typeNumber, typePicture]
           (Tooltip "Picture of a solid rectangle")
 
 cwArc = DesignBlock "cwArc" "arc"
-          [Dummy [TextE "Arc"] 
-            ,Value "STARTANGLE" [Text "Start Angle"] typeNumber 
-           ,Value "ENDANGLE" [Text "End Angle"] typeNumber 
-           ,Value "RADIUS" [Text "Radius"] typeNumber] 
-          inlineDef colorPicture typePicture 
+          [Dummy [TextE "arc"] 
+            ,Value "STARTANGLE" [Text "Start Angle"] 
+           ,Value "ENDANGLE" [Text "End Angle"] 
+           ,Value "RADIUS" [Text "Radius"] ] 
+          inlineDef colorPicture [typeNumber, typeNumber, typeNumber, typePicture] 
           (Tooltip "A thin arc")
 
 cwSector = DesignBlock "cwSector" "sector"
-          [Dummy [TextE "Sector"] 
-            ,Value "STARTANGLE" [Text "Start Angle"] typeNumber 
-           ,Value "ENDANGLE" [Text "End Angle"] typeNumber 
-           ,Value "RADIUS" [Text "Radius"] typeNumber] 
-          inlineDef colorPicture typePicture 
+          [Dummy [TextE "sector"] 
+            ,Value "STARTANGLE" [Text "Start Angle"] 
+           ,Value "ENDANGLE" [Text "End Angle"] 
+           ,Value "RADIUS" [Text "Radius"] ] 
+          inlineDef colorPicture [typeNumber, typeNumber, typeNumber, typePicture]
           (Tooltip "A solid sector of a circle")
 
 cwThickArc = DesignBlock "cwThickArc" "thickArc"
-          [Dummy [TextE "Thick Arc"] 
-            ,Value "STARTANGLE" [Text "Start Angle"] typeNumber 
-           ,Value "ENDANGLE" [Text "End Angle"] typeNumber 
-           ,Value "RADIUS" [Text "Radius"] typeNumber
-           ,Value "LINEWIDTH" [Text "Line width"] typeNumber] 
-          inlineDef colorPicture typePicture 
+          [Dummy [TextE "thickArc"] 
+            ,Value "STARTANGLE" [Text "Start Angle"] 
+           ,Value "ENDANGLE" [Text "End Angle"] 
+           ,Value "RADIUS" [Text "Radius"] 
+           ,Value "LINEWIDTH" [Text "Line width"] ] 
+          inlineDef colorPicture [typeNumber, typeNumber, typeNumber, typeNumber, typePicture] 
           (Tooltip "A arc with variable line width")
 
 -- Transformations -----------------------------------------------
 cwColored = DesignBlock "cwColored" "colored"
-          [Dummy [TextE "Colored"] 
-           ,Value "PICTURE" [Text "Picture"] typePicture 
-           ,Value "COLOR" [Text "Color"] typeColor] 
-          inlineDef colorPicture typePicture
+          [Dummy [TextE "colored", icon "format-color-fill.svg"] 
+           ,Value "PICTURE" []
+           ,Value "COLOR" []
+           ]
+          (Inline True) colorPicture [typePicture, typeColor, typePicture]
           (Tooltip "Change the color of a picture")
 
 cwTranslate = DesignBlock "cwTranslate" "translated"
-          [Dummy [TextE "Translated"] 
-           ,Value "PICTURE" [Text "Picture"] typePicture 
-           ,Value "X" [Text "x"] typeNumber
-           ,Value "Y" [Text "y"] typeNumber
+          [Dummy [TextE "translated", icon "cursor-move.svg"] 
+           ,Value "PICTURE" [] 
+           ,Value "X" []
+           ,Value "Y" []
           ] 
-          inlineDef colorPicture typePicture 
+          (Inline True) colorPicture [typePicture, typeNumber, typeNumber, typePicture]
           (Tooltip "Translate a picture")
 
 cwScale = DesignBlock "cwScale" "scaled"
-          [Dummy [TextE "Scaled"] 
-           ,Value "PICTURE" [Text "Picture"] typePicture 
-           ,Value "HORZ" [Text "Horizontal"] typeNumber
-           ,Value "VERTZ" [Text "Vertical"] typeNumber
+          [Dummy [TextE "scaled" , icon "move-resize-variant.svg"] 
+           ,Value "PICTURE" [] 
+           ,Value "HORZ" []
+           ,Value "VERTZ" []
           ] 
-          inlineDef colorPicture typePicture 
+          (Inline True) colorPicture [typePicture, typeNumber, typeNumber, typePicture]
           (Tooltip "Scale a picture")
 
 cwRotate = DesignBlock "cwRotate" "rotated"
-          [Dummy [TextE "Rotated"] 
-           ,Value "PICTURE" [Text "Picture"] typePicture 
-           ,Value "ANGLE" [Text "Angle"] typeNumber
+          [Dummy [TextE "rotated", icon "rotate-3d.svg"] 
+           ,Value "PICTURE" []
+           ,Value "ANGLE" []
           ] 
-          inlineDef colorPicture typePicture 
+          (Inline True) colorPicture [typePicture, typeNumber, typePicture ]
           (Tooltip "Rotate")
-
-cwCombine = DesignBlock "cwCombine" "&"
-          [ Value "PIC1" [] typePicture
-           ,Value "PIC2" [TextE "&"] typePicture
-          ]
-          inlineDef colorPicture typePicture
-          (Tooltip "Combines two pictures")
 
 -- NUMBERS ---------------------------------------------
 
@@ -195,429 +191,429 @@ numNumber = DesignBlock "numNumber" ""
           [Dummy 
             [TextInput "3" "NUMBER"]
           ]
-          inlineDef colorNumber typeNumber 
+          inlineDef colorNumber [typeNumber]
           (Tooltip "Enter a Number")
 
 numAdd = DesignBlock "numAdd" "+"
-        [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE "+"] typeNumber
+        [ Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE "+"] 
          ]
-         (Inline True) colorNumber typeNumber
+         (Inline True) colorNumber [typeNumber, typeNumber, typeNumber]
          (Tooltip "Add two numbers")
 
 numSub = DesignBlock "numSub" "-"
-        [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE "-"] typeNumber
+        [ Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE "-"] 
          ]
-         (Inline True) colorNumber typeNumber
+         (Inline True) colorNumber [typeNumber, typeNumber, typeNumber]
          (Tooltip "Subtract two numbers")
 
 numMult = DesignBlock "numMult" "*"
-        [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE "\xD7"] typeNumber
+        [ Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE "\xD7"] 
          ]
-         (Inline True) colorNumber typeNumber
+         (Inline True) colorNumber [typeNumber, typeNumber, typeNumber]
          (Tooltip "Multiply two numbers")
 
 numDiv = DesignBlock "numDiv" "/"
-        [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE "\xF7"] typeNumber
+        [ Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE "\xF7"] 
          ]
-         (Inline True) colorNumber typeNumber
+         (Inline True) colorNumber [typeNumber, typeNumber, typeNumber]
          (Tooltip "Divide two numbers")
 
 numExp = DesignBlock "numExp" "^"
-        [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE "^"] typeNumber
+        [ Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE "^"] 
          ]
-         (Inline True) colorNumber typeNumber
+         (Inline True) colorNumber [typeNumber, typeNumber, typeNumber]
          (Tooltip "Raise a number to a power")
 
 numMax = DesignBlock "numMax" "max"
-        [ Value "LEFT"  [TextE "Maximum"] typeNumber
-         ,Value "RIGHT" [] typeNumber
+        [ Value "LEFT"  [TextE "max", icon "arrow-up.svg"] 
+         ,Value "RIGHT" [] 
          ]
-         (Inline True) colorNumber typeNumber
+         (Inline True) colorNumber [typeNumber, typeNumber, typeNumber]
          (Tooltip "Take the maximum of two numbers")
 
 numMin = DesignBlock "numMin" "min"
-        [ Value "LEFT"  [TextE "Minimum"] typeNumber
-         ,Value "RIGHT" [] typeNumber
+        [ Value "LEFT"  [TextE "min", icon "arrow-down.svg"] 
+         ,Value "RIGHT" [] 
          ]
-         (Inline True) colorNumber typeNumber
+         (Inline True) colorNumber [typeNumber, typeNumber, typeNumber]
          (Tooltip "Take the minimum of two numbers")
 
 numOpposite = DesignBlock "numOpposite" "opposite"
-        [Value "NUM" [TextE "Opposite"] typeNumber ]
-         (Inline True) colorNumber typeNumber
+        [Value "NUM" [TextE "opposite", icon "minus-box.svg"] ]
+         (Inline True) colorNumber [typeNumber, typeNumber]
          (Tooltip "Gives the negative of a number")
 
 numAbs = DesignBlock "numAbs" "abs"
-        [Value "NUM" [TextE "Absolute Value"] typeNumber ]
-         (Inline True) colorNumber typeNumber
+        [Value "NUM" [TextE "abs"] ]
+         (Inline True) colorNumber [typeNumber, typeNumber]
          (Tooltip "Gives the absolute value of a number")
 
 numRound = DesignBlock "numRound" "round"
-        [Value "NUM" [TextE "Round"] typeNumber ]
-         (Inline True) colorNumber typeNumber
+        [Value "NUM" [TextE "round"] ]
+         (Inline True) colorNumber [typeNumber, typeNumber]
          (Tooltip "Gives the number rounded to the nearest integer")
 
 numReciprocal = DesignBlock "numReciprocal" "reciprocal"
-        [Value "NUM" [TextE "Reciprocal"] typeNumber ]
-         (Inline True) colorNumber typeNumber
+        [Value "NUM" [TextE "reciprocal"] ]
+         (Inline True) colorNumber [typeNumber, typeNumber]
          (Tooltip "Gives the reciprocal of a number")
 
 numQuot = DesignBlock "numQuot" "quotient"
-        [ Value "LEFT"  [TextE "Quotient"] typeNumber
-         ,Value "RIGHT" [] typeNumber
+        [ Value "LEFT"  [TextE "quotient"] 
+         ,Value "RIGHT" [] 
          ]
-         (Inline True) colorNumber typeNumber
+         (Inline True) colorNumber [typeNumber, typeNumber, typeNumber]
          (Tooltip "Gives the integer part of the result when dividing two numbers")
 
 numRem = DesignBlock "numRem" "remainder"
-        [ Value "LEFT"  [TextE "Remainder"] typeNumber
-         ,Value "RIGHT" [] typeNumber
+        [ Value "LEFT"  [TextE "remainder"] 
+         ,Value "RIGHT" [] 
          ]
-         (Inline True) colorNumber typeNumber
+         (Inline True) colorNumber [typeNumber, typeNumber, typeNumber]
          (Tooltip "Gives the remainder when dividing two numbers")
 
 numPi = DesignBlock "numPi" "pi"
           [Dummy 
             [TextE "\x3C0"]
           ]
-          inlineDef colorNumber typeNumber
+          inlineDef colorNumber [typeNumber]
           (Tooltip "The number pi, 3.1415..")
 
 numSqrt = DesignBlock "numSqrt" "sqrt"
-        [Value "NUM" [TextE "\x221A"] typeNumber ]
-         (Inline True) colorNumber typeNumber
+        [Value "NUM" [TextE "\x221A"] ]
+         (Inline True) colorNumber [typeNumber, typeNumber]
          (Tooltip "Gives the square root of a number")
 
 numGCD = DesignBlock "numGCD" "gcd"
-        [ Value "LEFT"  [TextE "GCD"] typeNumber
-         ,Value "RIGHT" [] typeNumber
+        [ Value "LEFT"  [TextE "gcd"] 
+         ,Value "RIGHT" [] 
          ]
-         (Inline True) colorNumber typeNumber
+         (Inline True) colorNumber [typeNumber, typeNumber, typeNumber]
          (Tooltip "Gives the greatest common demoninator between two numbers")
 
 numLCM = DesignBlock "numLCM" "lcm"
-        [ Value "LEFT"  [TextE "LCM"] typeNumber
-         ,Value "RIGHT" [] typeNumber
+        [ Value "LEFT"  [TextE "lcm"] 
+         ,Value "RIGHT" [] 
          ]
-         (Inline True) colorNumber typeNumber
+         (Inline True) colorNumber [typeNumber, typeNumber, typeNumber]
          (Tooltip "Gives the least common multiple between two numbers")
 
 -- TEXT ------------------------------------------------
 
 txtConcat = DesignBlock "txtConcat" "<>"
-        [ Value "LEFT"  [] typeText
-         ,Value "RIGHT" [TextE "<>"] typeText
+        [ Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE "<>"] 
          ]
-         (Inline True) colorText typeText
+         (Inline True) colorText [typeText, typeText, typeText]
          (Tooltip "Concatenates two pieces of text together")
 
 txtPrinted = DesignBlock "txtPrinted" "printed"
-        [ Value "TEXT"  [TextE "Printed"] typeNumber ]
-         (Inline True) colorText typeText
+        [ Value "TEXT"  [TextE "printed"] ]
+         (Inline True) colorText [typeNumber, typeText]
          (Tooltip "Gives the text value of a number")
 
 txtLowercase = DesignBlock "txtLowercase" "lowercase"
-        [ Value "TEXT"  [TextE "Lowercase"] typeText ]
-         (Inline True) colorText typeText
+        [ Value "TEXT"  [TextE "lowercase"] ]
+         (Inline True) colorText [typeText, typeText]
          (Tooltip "Gives the text all in lowercase")
 
 txtUppercase = DesignBlock "txtUppercase" "uppercase"
-        [ Value "TEXT"  [TextE "Uppercase"] typeText ]
-         (Inline True) colorText typeText
+        [ Value "TEXT"  [TextE "uppercase"] ]
+         (Inline True) colorText [typeText, typeText]
          (Tooltip "Gives the text all in uppercase")
 
 txtCapitalized = DesignBlock "txtCapitalized" "capitalized"
-        [ Value "TEXT"  [TextE "Capitalized"] typeText ]
-         (Inline True) colorText typeText
+        [ Value "TEXT"  [TextE "capitalized"] ]
+         (Inline True) colorText [typeText, typeText]
          (Tooltip "Gives the text with the first value capitalized")
 
 -- COLORS ----------------------------------------------
 cwBlue = DesignBlock "cwBlue" "blue"
           [Dummy 
-            [TextE "Blue"]
+            [TextE "blue"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor] 
           (Tooltip "The color blue")
 
 cwRed = DesignBlock "cwRed" "red"
           [Dummy 
-            [TextE "Red"]
+            [TextE "red"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor]
           (Tooltip "The color red")
 
 cwGreen = DesignBlock "cwGreen" "green"
           [Dummy 
-            [TextE "Green"]
+            [TextE "green"]
           ]
-          inlineDef colorColor typeColor
+          inlineDef colorColor [typeColor]
           (Tooltip "The color green")
 
 cwOrange = DesignBlock "cwOrange" "orange"
           [Dummy 
-            [TextE "Orange"]
+            [TextE "orange"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor]
           (Tooltip "The color orange")
 
 cwBrown = DesignBlock "cwBrown" "brown"
           [Dummy 
-            [TextE "Brown"]
+            [TextE "brown"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor]
           (Tooltip "The color brown")
 
 cwBlack = DesignBlock "cwBlack" "black"
           [Dummy 
-            [TextE "Black"]
+            [TextE "black"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor]
           (Tooltip "The color black")
 
 cwWhite = DesignBlock "cwWhite" "white"
           [Dummy 
-            [TextE "White"]
+            [TextE "white"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor]
           (Tooltip "The color white")
 
 cwCyan = DesignBlock "cwCyan" "cyan"
           [Dummy 
-            [TextE "Cyan"]
+            [TextE "cyan"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor]
           (Tooltip "The color cyan")
 
 cwMagenta = DesignBlock "cwMagenta" "magenta"
           [Dummy 
-            [TextE "Magenta"]
+            [TextE "magenta"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor]
           (Tooltip "The color magenta")
 
 cwYellow = DesignBlock "cwYellow" "yellow"
           [Dummy 
-            [TextE "Yellow"]
+            [TextE "yellow"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor]
           (Tooltip "The color yellow")
 
 cwAquamarine = DesignBlock "cwAquamarine" "aquamarine"
           [Dummy 
-            [TextE "Aquamarine"]
+            [TextE "aquamarine"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor]
           (Tooltip "The color aquamarine")
 
 cwAzure = DesignBlock "cwAzure" "azure"
           [Dummy 
-            [TextE "Azure"]
+            [TextE "azure"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor] 
           (Tooltip "The color azure")
 
 cwViolet = DesignBlock "cwViolet" "violet"
           [Dummy 
-            [TextE "Violet"]
+            [TextE "violet"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor]
           (Tooltip "The color violet")
 
 cwChartreuse = DesignBlock "cwChartreuse" "chartreuse"
           [Dummy 
-            [TextE "Chartreuse"]
+            [TextE "chartreuse"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor]
           (Tooltip "The color chartreuse")
 
 cwRose = DesignBlock "cwRose" "rose"
           [Dummy 
-            [TextE "Rose"]
+            [TextE "rose"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor] 
           (Tooltip "The color rose")
 
 cwPink = DesignBlock "cwPink" "pink"
           [Dummy 
-            [TextE "Pink"]
+            [TextE "pink"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor]
           (Tooltip "The color pink")
 
 cwPurple = DesignBlock "cwPurple" "purple"
           [Dummy 
-            [TextE "Purple"]
+            [TextE "purple"]
           ]
-          inlineDef colorColor typeColor 
+          inlineDef colorColor [typeColor] 
           (Tooltip "The color purple")
 
 cwGray = DesignBlock "cwGray" "gray"
-          [Value "VALUE" [TextE "Gray"] typeNumber] 
-          (Inline True) colorColor typeColor
+          [Value "VALUE" [TextE "gray"] ] 
+          (Inline True) colorColor [typeNumber, typeColor]
           (Tooltip "The color gray, varying by an amount. Lower value is closer to black")
 
 cwMixed = DesignBlock "cwMixed" "mixed"
-          [Dummy [TextE "Mixed"] 
-           ,Value "COL1"  [Text "Color"] typeColor 
-           ,Value "COL2"  [Text "Color"] typeColor] 
-          inlineDef colorColor typeColor
+          [Dummy [TextE "mixed", icon "pot-mix.svg"] 
+           ,Value "COL1"  [Text "Color"] 
+           ,Value "COL2"  [Text "Color"] ] 
+          inlineDef colorColor [typeColor, typeColor, typeColor]
           (Tooltip "Gives the mix of two colors")
 
 cwLight = DesignBlock "cwLight" "light"
-          [Value "COL" [TextE "Light"] typeColor] 
-          (Inline True) colorColor typeColor
+          [Value "COL" [TextE "light"] ] 
+          (Inline True) colorColor [typeColor, typeColor]
           (Tooltip "Makes a color lighter")
 
 cwDark = DesignBlock "cwDark" "dark"
-          [Value "COL" [TextE "Dark"] typeColor] 
-          (Inline True) colorColor typeColor
+          [Value "COL" [TextE "dark"] ] 
+          (Inline True) colorColor [typeColor, typeColor]
           (Tooltip "Makes a color darker")
 
 cwBright = DesignBlock "cwBright" "bright"
-          [Value "COL" [TextE "Bright"] typeColor] 
-          (Inline True) colorColor typeColor
+          [Value "COL" [TextE "bright"] ] 
+          (Inline True) colorColor [typeColor, typeColor]
           (Tooltip "Makes a color brighter")
 
 cwDull = DesignBlock "cwDull" "dull"
-          [Value "COL" [TextE "Dull"] typeColor] 
-          (Inline True) colorColor typeColor
+          [Value "COL" [TextE "dull"] ] 
+          (Inline True) colorColor [typeColor, typeColor]
           (Tooltip "Makes a color duller")
 
 cwTranslucent = DesignBlock "cwTranslucent" "translucent"
-          [Value "COL" [TextE "Translucent"] typeColor] 
-          (Inline True) colorColor typeColor
+          [Value "COL" [TextE "translucent"] ] 
+          (Inline True) colorColor [typeColor, typeColor]
           (Tooltip "Makes a color more translucent")
 
 cwRGBA = DesignBlock "cwRGBA" "RGBA"
           [Dummy [TextE "RGBA"] 
-           ,Value "RED"  [Text "Red"] typeNumber 
-           ,Value "GREEN"  [Text "Green"] typeNumber 
-           ,Value "BLUE"  [Text "Blue"] typeNumber 
-           ,Value "ALPHA"  [Text "Alpha"] typeNumber] 
-          inlineDef colorColor typeColor 
+           ,Value "RED"  [Text "Red"] 
+           ,Value "GREEN"  [Text "Green"] 
+           ,Value "BLUE"  [Text "Blue"] 
+           ,Value "ALPHA"  [Text "Alpha"] ] 
+          inlineDef colorColor [typeNumber, typeNumber, typeNumber, typeNumber, typeColor]
           (Tooltip "Makes a color with the given red, blue, green and alpha values")
 
 -- LOGIC -------------------------------------------
 conIf = DesignBlock "conIf" ""
-        [ Value "IF"  [TextE "If"] typeBool
-         ,Value "THEN" [Text "then"] (Poly 'a')
-         ,Value "ELSE" [Text "else"] (Poly 'a')
+        [ Value "IF"  [TextE "if"] 
+         ,Value "THEN" [Text "then"]
+         ,Value "ELSE" [Text "else"] 
          ]
-         inlineDef colorPoly (Poly 'a')
+         inlineDef colorPoly [typeBool, Poly 'a', Poly 'a', Poly 'a']
          (Tooltip "if condition is true then give a else b")
 
 conAnd = DesignBlock "conAnd" "&&"
-        [ Value "LEFT"  [] typeBool
-         ,Value "RIGHT" [TextE "and"] typeBool
+        [ Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE "and"] 
          ]
-         (Inline True) colorBool typeBool
+         (Inline True) colorBool [typeBool, typeBool, typeBool]
          (Tooltip "Logical AND operation")
 
 conOr = DesignBlock "conOr" "||"
-        [ Value "LEFT"  [] typeBool
-         ,Value "RIGHT" [TextE "or"] typeBool
+        [ Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE "or"] 
          ]
-         (Inline True) colorBool typeBool
+         (Inline True) colorBool [typeBool, typeBool, typeBool]
          (Tooltip "Logical OR operation")
 
 conNot = DesignBlock "conNot" "not"
-        [ Value "VALUE"  [TextE "Not"] typeBool ]
-         (Inline True) colorBool typeBool
+        [ Value "VALUE"  [TextE "not"] ]
+         (Inline True) colorBool [typeBool, typeBool]
          (Tooltip "Negation of the logical value")
 
 conEq = DesignBlock "conEq" "==" 
-        [ Value "LEFT"  [] (Poly 'a')
-         ,Value "RIGHT" [TextE "="] (Poly 'a')
+        [ Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE "="]
          ]
-         (Inline True) colorPoly typeBool
+         (Inline True) colorPoly [Poly 'a', Poly 'a', typeBool]
          (Tooltip "Are two items equal")
 
 conNeq = DesignBlock "conNeq" "/="
-        [ Value "LEFT"  [] (Poly 'a')
-         ,Value "RIGHT" [TextE "\x2260"] (Poly 'a')
+        [ Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE "\x2260"] 
          ]
-         (Inline True) colorPoly typeBool
+         (Inline True) colorPoly [Poly 'a', Poly 'a', typeBool]
          (Tooltip "Are two items not equal")
 
 conTrue = DesignBlock "conTrue" "True"
           [Dummy 
             [TextE "True"]
           ]
-          inlineDef colorBool typeBool
+          inlineDef colorBool [typeBool]
           (Tooltip "True logic value")
 
 conFalse = DesignBlock "conFalse" "False"
           [Dummy 
             [TextE "False"]
           ]
-          inlineDef colorBool typeBool
+          inlineDef colorBool [typeBool]
           (Tooltip "False logic value")
 
 conGreater = DesignBlock "conGreater" ">"
-        [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE ">"] typeNumber
+        [ Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE ">"] 
          ]
-         (Inline True) colorBool typeBool
+         (Inline True) colorBool [typeNumber, typeNumber, typeBool]
          (Tooltip "Tells whether one number is greater than the other")
 
 conGeq = DesignBlock "conGeq" ">="
-        [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE "\x2265"] typeNumber
+        [ Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE "\x2265"] 
          ]
-         (Inline True) colorBool typeBool
+         (Inline True) colorBool [typeNumber, typeNumber, typeBool]
          (Tooltip "Tells whether one number is greater than or equal to ther other")
 
 conLess = DesignBlock "conLess" "<"
-        [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE "<"] typeNumber
+        [ Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE "<"] 
          ]
-         (Inline True) colorBool typeBool
+         (Inline True) colorBool [typeNumber, typeNumber, typeBool]
          (Tooltip "Tells whether one number is less than the other")
 
 conLeq = DesignBlock "conLeq" "<="
-        [ Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE "\x2264"] typeNumber
+        [ Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE "\x2264"] 
          ]
-         (Inline True) colorBool typeBool
+         (Inline True) colorBool [typeNumber, typeNumber, typeBool]
          (Tooltip "Tells whether one number is less than or equal to ther other")
 
 conEven = DesignBlock "conEven" "even"
-        [ Value "VALUE"  [TextE "Is Even"] typeNumber ]
-         (Inline True) colorBool typeBool
+        [ Value "VALUE"  [TextE "even"] ]
+         (Inline True) colorBool [typeNumber, typeBool]
          (Tooltip "Tells whether the number is even")
 
 conOdd = DesignBlock "conOdd" "odd"
-        [ Value "VALUE"  [TextE "Is Odd"] typeNumber ]
-         (Inline True) colorBool typeBool
+        [ Value "VALUE"  [TextE "odd"] ]
+         (Inline True) colorBool [typeNumber, typeBool]
          (Tooltip "Tells whether the number is odd")
 
 conStartWith = DesignBlock "conStartWith" "startWith"
-          [Dummy [TextE "Starts With"] 
-           ,Value "TEXTMAIN"  [Text "Text"] typeText 
-           ,Value "TEXTTEST"  [Text "starts with"] typeText] 
-          inlineDef colorBool typeBool 
+          [Dummy [TextE "startsWith"] 
+           ,Value "TEXTMAIN"  [Text "Text"] 
+           ,Value "TEXTTEST"  [Text "starts with"] ] 
+          inlineDef colorBool [typeText, typeText, typeBool] 
           (Tooltip "Tells whether the given text starts with some other text")
 
 conEndWith = DesignBlock "conEndWith" "endWith"
-          [Dummy [TextE "Ends With"] 
-           ,Value "TEXTMAIN"  [Text "Text"] typeText 
-           ,Value "TEXTTEST"  [Text "ends with"] typeText]
-          inlineDef colorBool typeBool
+          [Dummy [TextE "endsWith"] 
+           ,Value "TEXTMAIN"  [Text "Text"] 
+           ,Value "TEXTTEST"  [Text "ends with"] ]
+          inlineDef colorBool [typeText, typeText, typeBool]
           (Tooltip "Tells whether the given text ends with some other text")
 
 -- LISTS ----------------------------------------------
 lstGenNum = DesignBlock "lstGenNum" ""
         [ Dummy [Text "["]
-         ,Value "LEFT"  [] typeNumber
-         ,Value "RIGHT" [TextE ".."] typeNumber
+         ,Value "LEFT"  [] 
+         ,Value "RIGHT" [TextE ".."] 
          ,Dummy [Text "]"]
          ]
-         (Inline True) colorBool typeBool
+         (Inline True) colorBool [typeNumber, typeNumber, typeBool]
          (Tooltip "Tells whether one number is greater than the other")
 
 
@@ -627,7 +623,7 @@ comment = DesignBlock "comment" ""
             [TextInput "" "TEXT",
             TextE "--"]
           ]
-          inlineDef (Color 260) typeNone
+          inlineDef (Color 260) [typeComment]
           (Tooltip "Enter a comment")
 
 getTypeBlocks :: [T.Text]
@@ -652,7 +648,6 @@ blockTypes = [
               -- TRANSFORMATIONS
               ,cwColored
               ,cwTranslate
-              ,cwCombine
               ,cwRotate
               ,cwScale
               -- NUMBERS
@@ -675,7 +670,6 @@ blockTypes = [
               ,numGCD
               ,numLCM
               -- TEXT
-              ,txtConcat
               ,txtPrinted
               ,txtLowercase
               ,txtUppercase

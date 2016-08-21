@@ -1,0 +1,91 @@
+<!doctype html>
+
+<!--
+  Copyright 2016 The CodeWorld Authors. All rights reserved.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<html>
+  <head>
+    <script language="javascript" src="../js/blocks_rts.js"></script>
+    <script language="javascript" src="../js/blocks_lib.js"></script>
+    <script language="javascript" src="../js/blocks_out.js"></script>
+
+    <script src="../blockly/blockly_compressed.js"></script>
+    <script src="../blockly/blocks/lists.js"></script>
+    <script src="../blockly/blocks/cw-text.js"></script>
+    <script src="../blockly/blocks/cw-pictures.js"></script>
+    <script src="../blockly/blocks/cw-math.js"></script>
+    <script src="../blockly/blocks/cw-lists.js"></script>
+    <script src="../blockly/blocks/cw-program.js"></script>
+    <script src="../blockly/blocks/cw-type.js"></script>
+    <script src="../blockly/blocks/procedures.js"></script>
+    <script src="../blockly/blocks/funblocks-procedures.js"></script>
+    <script src="../blockly/msg/js/en.js"></script>
+
+
+  </head>
+
+  <body>
+    <div id="blocklyDiv" style="height: 100%; width: 100%"></div>
+
+  <script src="../js/blocks_runmain.js"></script> 
+  <script>
+
+    var upperParent = null;
+    var frameId = null;
+
+    function loadXml(data){
+      var workspace = Blockly.getMainWorkspace();
+      if(!workspace){
+        setTimeout(function() { loadXml(data) }, 100);
+        return; // Try again a little later
+      }
+      var xml = Blockly.Xml.textToDom(data);
+      Blockly.Xml.domToWorkspace(xml, workspace);
+      
+      var metrics = workspace.getMetrics();
+      var maxX = metrics.contentWidth + 50;
+      var maxY = metrics.contentHeight + 50;
+      frameId.setAttribute('width',maxX);
+      frameId.setAttribute('height',maxY);
+    }
+
+    function setId(j_id_param){
+      frameId = j_id_param;
+    }
+    
+    function setParent(par){
+      upperParent = par;
+    }
+    
+    document.getElementById('blocklyDiv').addEventListener('click',  function(){
+      if(upperParent == null){}
+      else
+        var workspace = Blockly.getMainWorkspace();
+
+        var xml = Blockly.Xml.workspaceToDom(workspace);
+        var xml_text = Blockly.Xml.domToText(xml);
+
+        upperParent.loadSample(xml_text);
+      },false);
+
+
+  </script>
+
+
+  </body>
+
+
+</html>

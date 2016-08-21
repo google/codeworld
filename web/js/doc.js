@@ -15,7 +15,7 @@
  */
 
 (function() {
-    function linkCodeBlocks() {
+    function linkCodeBlocks(linkable=true) {
         codeworldKeywords = {};
         registerStandardHints( function(){
         var pres = document.getElementsByTagName('pre');
@@ -27,7 +27,7 @@
                     CodeMirror.runMode(text, { name: 'codeworld', overrideKeywords: codeworldKeywords }, pre);
                     pre.classList.add('cm-s-default');
 
-                    if (text.indexOf("main ") != -1) {
+                    if (text.indexOf("main ") != -1 && linkable) {
                         pre.classList.add('clickable');
                         pre.onclick = function() {
                             if (parent && parent.loadSample) {
@@ -38,6 +38,36 @@
                 })();
             }
         });
+    }
+
+    function linkFunBlocks() {
+        var pres = document.getElementsByTagName('xml');
+        var i = 0;
+
+        while(pres != null && pres.length > 0){
+          (function() {
+          var pre = pres[0];
+          
+          var text = pre.outerHTML;
+          
+          pre.outerHTML = '<iframe frameborder="0" scrolling="no" id="frame' + i + '"></iframe>';
+
+          var myIframe = document.getElementById('frame' + i);
+          var thisDocument = document;
+          myIframe.addEventListener("load", function() {
+              this.contentWindow.setParent(parent);
+              this.contentWindow.setId(myIframe);
+              this.contentWindow.loadXml.call(myIframe.contentWindow,text);
+          });
+
+          myIframe.src = 'help/blockframe.html';
+          myIframe.classList.add('clickable');
+
+
+          pres = document.getElementsByTagName('xml');
+          i++;
+          })();
+        }
     }
 
     function addTableOfContents() {
@@ -92,13 +122,21 @@
     request.open('GET', path, true);
     request.onreadystatechange = function() {
         if (request.readyState == 4) {
-            var text = request.responseText;
-            var converter = new Markdown.Converter();
-            var html = converter.makeHtml(text);
-            document.getElementById('help').innerHTML = html;
 
+          var text = request.responseText;
+          var converter = new Markdown.Converter();
+          var html = converter.makeHtml(text);
+          document.getElementById('help').innerHTML = html;
+
+          if(path.includes('blocks')){
+            linkFunBlocks();
+            linkCodeBlocks(false);
+          }
+          else{
             linkCodeBlocks();
-            addTableOfContents();
+          }
+
+          addTableOfContents();
         }
     };
     request.send(null);

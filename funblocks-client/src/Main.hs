@@ -30,6 +30,7 @@ import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Marshal
 import Data.JSString.Text
+import qualified Data.JSString as JStr
 import qualified Data.Text as T
 import Control.Monad.Trans (liftIO)
 import Blockly.Workspace hiding (workspaceToCode)
@@ -49,7 +50,7 @@ setErrorMessage msg = do
   setInnerHTML msgEl $ Just msg
 
 programBlocks :: [T.Text]
-programBlocks = map T.pack ["cwDrawingOf","cwAnimationOf", "cwSimulationOf"]
+programBlocks = map T.pack ["cwDrawingOf","cwAnimationOf", "cwSimulationOf", "cwInteractionOf"]
 
 btnStopClick = do 
   liftIO js_stop
@@ -58,15 +59,17 @@ btnRunClick ws = do
   Just doc <- liftIO currentDocument
   blocks <- liftIO $ getTopBlocks ws
   if not $ containsProgramBlock blocks 
-    then setErrorMessage "Error: No Program on Workspace"
+    then setErrorMessage "No Program block on the workspace"
     else do
       (code,errors) <- liftIO $ workspaceToCode ws
       case errors of
         ((Error msg block):es) -> do 
-                                    setErrorMessage msg
+                                    liftIO $ putStrLn $ T.unpack msg
                                     liftIO $ setWarningText block msg
                                     liftIO $ addErrorSelect block
                                     liftIO $ js_removeErrorsDelay
+                                    liftIO $ js_stop
+                                    setErrorMessage msg
 
         [] -> do
           liftIO $ js_updateEditor (pack code)
@@ -80,7 +83,12 @@ hookEvent elementName evType func = do
   Just ele <- getElementById doc elementName
   on ele evType func
 
-main = do 
+
+help = do
+      js_injectReadOnly (JStr.pack "blocklyDiv")
+      liftIO setBlockTypes 
+
+funblocks = do 
       Just doc <- currentDocument 
       Just body <- getBody doc
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
@@ -89,7 +97,17 @@ main = do
       hookEvent "btnStop" click btnStopClick
       liftIO setBlockTypes -- assign layout and types of Blockly blocks
       liftIO $ addChangeListener workspace (onChange workspace)
+      liftIO $ js_showEast
+      liftIO $ js_openEast
       return ()
+
+
+main = do
+  Just doc <- currentDocument 
+  mayTool <- getElementById doc "toolbox" 
+  case mayTool of
+    Just _ -> funblocks
+    Nothing -> help
 
 -- Update code in real time
 onChange ws event = do 
@@ -121,4 +139,12 @@ foreign import javascript unsafe "updateEditor($1)"
 foreign import javascript unsafe "setTimeout(removeErrors,10000)"
   js_removeErrorsDelay :: IO ()
 
+foreign import javascript unsafe "window.mainLayout.show('east')"
+  js_showEast :: IO ()
 
+foreign import javascript unsafe "window.mainLayout.open('east')"
+  js_openEast :: IO ()
+
+
+foreign import javascript unsafe "Blockly.inject($1, {readOnly: true});"
+  js_injectReadOnly :: JSString -> IO Workspace

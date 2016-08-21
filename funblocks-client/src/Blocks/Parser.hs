@@ -42,6 +42,7 @@ import qualified Prelude as P
 import Control.Monad
 import Control.Applicative
 import qualified Data.Map as M
+import Debug.Trace
 
 -- Helpers for converting Text
 (++) :: T.Text -> T.Text -> T.Text
@@ -77,6 +78,12 @@ errc msg block = SE Comment $ Just $ Error msg block
 errs :: T.Text -> Block -> SaveErr T.Text
 errs msg block = SE "" $ Just $ Error msg block
 
+errDisc = errc "There's a block missing" -- error when searching for a connected block
+errInfix = errc "This block needs two blocks to be connected" -- error in missing inputs in infix block
+errMsgsFunc = "This block requires a function block to be connected" -- error for simulationOf, 
+errFunc = errc errMsgsFunc
+errFunc_ = errs errMsgsFunc
+
 type ParserFunction = Block -> SaveErr Expr 
 
 -- A simple AST that will be used to store the structure of the code
@@ -98,11 +105,13 @@ data Expr = LiteralS T.Text
           | ListSpec Expr Expr -- [left..right]
           | ListComp Expr [(T.Text,Expr)] [Expr] -- [action | var <- expr, var <- expr, guards]
           | Comment
+  deriving Show
 
 data Type = Type T.Text
      | ListType Type -- [type] -- unfortunately its separate for the special syntax
      | Product T.Text [Type] 
      | Sum T.Text [Type]
+  deriving Show
 
 -- data Product = Product T.Text [Type] -- Constructor tp1*tp2*tp3
 
@@ -120,7 +129,7 @@ sInfixBlock block = do
   let argNames = getValueInputNames block
   let funcName = getFunctionName block
   if length argNames /= 2 then
-    errc "Infix functions must have 2 connected blocks" block
+    errInfix block
   else do
     args@(left:right:xs) <- mapM (\arg -> valueToExpr block arg) argNames
     return (CallFuncInfix funcName left right)
@@ -145,12 +154,28 @@ blockNumberPerc block = do
     let numb = (read (T.unpack arg)) * 0.01
     return $ LiteralN numb
 
+
+-- PICTURES ----------------------------------------------
+blockCombine :: ParserFunction
+blockCombine block = do
+  let c = getItemCount block
+  vals <- mapM (\t -> valueToExpr block t) ["PIC" ++ show i | i <- [0..c-1]]
+  return $ foldr1 (CallFuncInfix "&") vals
+
+
 -- TEXT --------------------------------------------------
 
 blockString :: ParserFunction
 blockString block = do 
     let txt = getFieldValue block "TEXT" 
     return $ LiteralS txt 
+
+blockConcat :: ParserFunction
+blockConcat block = do
+  let c = getItemCount block
+  vals <- mapM (\t -> valueToExpr block t) ["STR" ++ show i | i <- [0..c-1]]
+  return $ foldr1 (CallFuncInfix "<>") vals
+
 
 -- LOGIC ------------------------------------------
 
@@ -189,12 +214,14 @@ blockLocalVar block = do
 
 -- ANIMATION
 blockAnim :: ParserFunction
-blockAnim block =  
-    case getInputBlock block "FUNC" of
-      Just inpBlock -> do
-                       let funcName = getFunctionName inpBlock 
-                       return $ FuncDef "main" [] $ CallFunc "animationOf" [CallFunc funcName []]
-      Nothing -> errc "No function inserted" block
+blockAnim block = do
+        draw <- aux "FUNC"
+        return $ FuncDef "main" [] $ CallFunc "animationOf" 
+                                            [CallFunc draw []]
+  where
+    aux name = case getInputBlock block name of
+                      Just inpBlock -> return $ getFunctionName inpBlock 
+                      Nothing -> errFunc_ block
 
 blockSimulation :: ParserFunction
 blockSimulation block = do
@@ -206,7 +233,23 @@ blockSimulation block = do
   where
     aux name = case getInputBlock block name of
                       Just inpBlock -> return $ getFunctionName inpBlock 
-                      Nothing -> errs "No function inserted" block
+                      Nothing -> errFunc_ block
+
+blockInteraction :: ParserFunction
+blockInteraction block = do
+        initial <- aux "INITIAL"
+        step <- aux "STEP"
+        event <- aux "EVENT"
+        draw <- aux "DRAW"
+        return $ FuncDef "main" [] $ CallFunc "interactionOf" 
+                                            [CallFunc initial [],CallFunc step [],
+                                             CallFunc event [] ,CallFunc draw []]
+  where
+    aux name = case getInputBlock block name of
+                      Just inpBlock -> return $ getFunctionName inpBlock 
+                      Nothing -> errFunc_ block
+
+
 
 
 -- COMMENT
@@ -219,12 +262,6 @@ blockCreatePair block = do
     first <- valueToExpr block "FIRST" 
     second <- valueToExpr block "SECOND" 
     return $ Tuple [first,second]
-
-blockFst :: ParserFunction
-blockFst = sFuncBlock
-
-blockSnd :: ParserFunction
-blockSnd = sFuncBlock 
 
 -- LISTS
 
@@ -410,6 +447,8 @@ regularBlockNames =
                   ,"conStartWith"
                   ,"conEndWith"
                   -- Tuples
+                  ,"pair_first_typed"
+                  ,"pair_second_typed"
                   -- Lists
                   ,"lists_length"
                   ,"lists_at"
@@ -423,14 +462,12 @@ regularBlocks = zip regularBlockNames (repeat sFuncBlock)
 
 
 infixBlocks :: [(T.Text,ParserFunction)]
-infixBlocks =   [  -- PROGRAMS 
-                  ("cwCombine",sInfixBlock)
-                  ,("numAdd",sInfixBlock)
+infixBlocks =   [ 
+                   ("numAdd",sInfixBlock)
                   ,("numSub",sInfixBlock)
                   ,("numMult",sInfixBlock)
                   ,("numDiv",sInfixBlock)
                   ,("numExp",sInfixBlock)
-                  ,("txtConcat",sInfixBlock)
                   ,("conAnd",sInfixBlock)
                   ,("conOr",sInfixBlock)
                   ,("conEq",sInfixBlock)
@@ -447,13 +484,17 @@ specialBlocks = [  -- PROGRAMS
                    ("cwDrawingOf",blockDrawingOf)
                   ,("cwAnimationOf",blockAnim)
                   ,("cwSimulationOf",blockSimulation)
+                  ,("cwInteractionOf",blockInteraction)
+                  -- PICTURES
+                  ,("cwCombine", blockCombine)
+                  -- NUMBERS
                   ,("numNumber",blockNumber)
                   ,("numNumberPerc",blockNumberPerc)
+                  -- TEXT
                   ,("text_typed",blockString)
+                  ,("txtConcat", blockConcat)
                   ,("conIf",blockIf)
                   ,("pair_create_typed", blockCreatePair)
-                  ,("pair_first_typed", blockFst)
-                  ,("pair_second_typed", blockSnd)
                   ,("lists_create_with_typed", blockCreateList)
                   ,("lists_cons", sInfixBlock)
                   ,("lists_numgen", blockNumGen)
@@ -480,7 +521,7 @@ valueToExpr block name = do
       Just (func,inputBlock) -> do
         code <- func inputBlock
         push $ code 
-      Nothing -> errc "Disconnected Input" block
+      Nothing -> errDisc block
   where
     helper = do
       inputBlock <- getInputBlock block name

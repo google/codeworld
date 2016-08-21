@@ -23,6 +23,7 @@ module Blockly.Workspace ( Workspace(..)
                           ,workspaceToCode
                           ,isTopBlock
                           ,getById
+                          ,loadXml
                           ,getTopBlocksLength
                           ,getBlockById
                           ,getTopBlocks
@@ -91,6 +92,9 @@ mainWorkspace = js_getMainWorkspace
 disableOrphans :: Workspace -> IO ()
 disableOrphans = js_addDisableOrphans
 
+loadXml :: Workspace -> JSString -> IO ()
+loadXml workspace dat = js_loadXml workspace dat
+
 --- FFI
 
 -- TODO Maybe use a list of properties ?
@@ -118,7 +122,8 @@ foreign import javascript unsafe "$1.getTopBlocks(false)"
 foreign import javascript unsafe "$1.getTopBlocks(true)"
   js_getTopBlocks_ :: Workspace -> IO JA.JSArray
 
-
+foreign import javascript unsafe "Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom($2), $1)"
+  js_loadXml :: Workspace -> JSString -> IO ()
 
 foreign import javascript unsafe "$1.addChangeListener(Blockly.Events.disableOrphans)"
   js_addDisableOrphans :: Workspace -> IO ()

@@ -40,11 +40,16 @@
 
     <script src="blockly/blockly_compressed.js"></script>
     <script src="blockly/blocks/lists.js"></script>
-    <script src="blockly/blocks/cw-text.js"></script>
-    <script src="blockly/blocks/cw-math.js"></script>
-    <script src="blockly/blocks/cw-lists.js"></script>
-    <script src="blockly/blocks/cw-program.js"></script>
-    <script src="blockly/blocks/cw-type.js"></script>
+    <!-- CodeWorld blocks -->
+    <script src="js/blocks/cw-text.js"></script>
+    <script src="js/blocks/cw-pictures.js"></script>
+    <script src="js/blocks/cw-math.js"></script>
+    <script src="js/blocks/cw-lists.js"></script>
+    <script src="js/blocks/cw-program.js"></script>
+    <script src="js/blocks/cw-event.js"></script>
+    <script src="js/blocks/init.js"></script>
+    <!-- Blockly blocks -->
+    <script src="blockly/blocks/types.js"></script>
     <script src="blockly/blocks/procedures.js"></script>
     <script src="blockly/blocks/funblocks-procedures.js"></script>
     <script src="blockly/msg/js/en.js"></script>
@@ -153,10 +158,9 @@
                               <shadow type="cwBlank"></shadow>
                             </value>
                           </block>
-                          <block type="cwAnimationOf">
-                          </block>
-                          <block type="cwSimulationOf">
-                          </block>
+                          <block type="cwAnimationOf"></block>
+                          <block type="cwSimulationOf"></block>
+                          <block type="cwInteractionOf"></block>
                           <block type="comment"></block>
                       </category>
                       <category name="Pictures">
@@ -297,10 +301,10 @@
                       </category>
                       <category name="Transformations">
                           <block type="cwCombine">
-                            <value name="PIC1">
+                            <value name="PIC0">
                               <shadow type="cwBlank"></shadow>
                             </value>
-                            <value name="PIC2">
+                            <value name="PIC1">
                               <shadow type="cwBlank"></shadow>
                             </value>
                           </block>
@@ -475,10 +479,10 @@
                       <category name="Text">
                           <block type="text_typed"></block>
                           <block type="txtConcat">
-                            <value name="LEFT">
+                            <value name="STR0">
                               <shadow type="text_typed"></shadow>
                             </value>
-                            <value name="RIGHT">
+                            <value name="STR1">
                               <shadow type="text_typed"></shadow>
                             </value>
                           </block>
@@ -671,8 +675,8 @@
                       </category>
                       <category name="Tuples">
                         <block type="pair_create_typed"> </block>
-                        <!-- <block type="pair_first_typed"> </block>
-                        <block type="pair_second_typed"> </block> -->
+                        <block type="pair_first_typed"> </block>
+                        <block type="pair_second_typed"> </block> 
                       </category>
                       <category name="Lists">
                         <block type="lists_create_with_typed"></block>
@@ -694,6 +698,7 @@
                         <block type="lists_length"></block>
                       </category>
                       <category name="Types" custom="DATATYPE"></category>
+                      <category name="Events" custom="EVENT"></category>
                       <category name="Definitions" custom="PROCEDURE">
                       </category>
                       

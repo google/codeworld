@@ -33,21 +33,19 @@ Blockly.Blocks['cwSimulationOf'] = {
         .appendField(new Blockly.FieldImage('ims/car-wash.svg',20,20))
         .appendField(new Blockly.FieldLabel('simulationOf', 'blocklyTextEmph'));
     
-    var world = Blockly.TypeVar.getUnusedTypeVar();
-    var number = new Blockly.TypeExpr('Number');
-    var listNum = new Blockly.TypeExpr('list', [new Blockly.TypeExpr('Number')]);
-    this.appendValueInput('INITIAL')
-        .setTypeExpr(new Blockly.TypeExpr('Function_', 
-              [new Blockly.TypeExpr('list', [new Blockly.TypeExpr('Number') ] ), world ]  ));
-
-    this.appendValueInput('STEP')
-        .setTypeExpr(new Blockly.TypeExpr('Function_', 
-              [world, new Blockly.TypeExpr('Number'), world ]  ));
-    this.appendValueInput('DRAW')
-        .setTypeExpr(new Blockly.TypeExpr('Function_', 
-              [world, new Blockly.TypeExpr('Picture') ]  ));
+    this.appendValueInput('INITIAL');
+    this.appendValueInput('STEP');
+    this.appendValueInput('DRAW');
     this.setInputsInline(true);
-    this.functionName = "";
+
+    var worldTp = Type.Var("a");
+    var numTp = Type.Lit("Number");
+    var initTp = Type.fromList([Type.Lit("list", [numTp]), worldTp]);
+    var stepTp = Type.fromList([worldTp, numTp, worldTp]);
+    var drawTp = Type.fromList([worldTp, Type.Lit("Picture")]);
+
+    Blockly.TypeInf.defineFunction("simulationOf", Type.fromList([initTp, stepTp, drawTp, Type.Lit("Program")]));
+    this.setAsFunction("simulationOf");
   }
 };
 
@@ -63,30 +61,23 @@ Blockly.Blocks['cwInteractionOf'] = {
         .appendField(new Blockly.FieldImage('ims/human-handsup.svg',20,20))
         .appendField(new Blockly.FieldLabel('interactionOf', 'blocklyTextEmph'));
     
-    var world = Blockly.TypeVar.getUnusedTypeVar();
-    var number = new Blockly.TypeExpr('Number');
-    var listNum = new Blockly.TypeExpr('list', [new Blockly.TypeExpr('Number')]);
-    this.appendValueInput('INITIAL')
-        .setTypeExpr(new Blockly.TypeExpr('Function_', 
-              [new Blockly.TypeExpr('list', [new Blockly.TypeExpr('Number') ] ), world ]  ));
-
-    this.appendValueInput('STEP')
-        .setTypeExpr(new Blockly.TypeExpr('Function_', 
-              [world, new Blockly.TypeExpr('Number'), world ]  ));
-
-    this.appendValueInput('EVENT')
-        .setTypeExpr(new Blockly.TypeExpr('Function_', 
-              [world, new Blockly.TypeExpr('Event'), world ]  ));
-
-    this.appendValueInput('DRAW')
-        .setTypeExpr(new Blockly.TypeExpr('Function_', 
-              [world, new Blockly.TypeExpr('Picture') ]  ));
+    this.appendValueInput('INITIAL');
+    this.appendValueInput('STEP');
+    this.appendValueInput('EVENT');
+    this.appendValueInput('DRAW');
     this.setInputsInline(true);
-    this.functionName = "";
+
+    var worldTp = Type.Var("a");
+    var numTp = Type.Lit("Number");
+    var initTp = Type.fromList([Type.Lit("list", [numTp]), worldTp]);
+    var stepTp = Type.fromList([worldTp, numTp, worldTp]);
+    var eventTp = Type.fromList([worldTp, Type.Lit("Event"), worldTp]);
+    var drawTp = Type.fromList([worldTp, Type.Lit("Picture")]);
+
+    Blockly.TypeInf.defineFunction("interactionOf", Type.fromList([initTp, stepTp, eventTp, drawTp, Type.Lit("Program")]));
+    this.setAsFunction("interactionOf");
   }
 };
-
-
 
 
 Blockly.Blocks['cwAnimationOf'] = {
@@ -101,11 +92,13 @@ Blockly.Blocks['cwAnimationOf'] = {
     this.appendDummyInput()
         .appendField(new Blockly.FieldImage('ims/car.svg',20,20))
         .appendField(new Blockly.FieldLabel('animationOf', 'blocklyTextEmph'));
-    this.appendValueInput('FUNC')
-        .setTypeExpr(new Blockly.TypeExpr('Function_', 
-              [new Blockly.TypeExpr('Number'), new Blockly.TypeExpr('Picture') ]  ));
+    this.appendValueInput('FUNC');
     this.setInputsInline(true);
-    this.functionName = "";
+
+    var stepTp = Type.Func(Type.Lit("Number"), Type.Lit("Picture"));
+
+    Blockly.TypeInf.defineFunction("animationOf", Type.Func(stepTp, Type.Lit("Program")) );
+    this.setAsFunction("animationOf");
   }
 };
 

@@ -35,7 +35,9 @@ Blockly.Blocks['text_typed'] = {
         .appendField(this.newQuote_(true))
         .appendField(new Blockly.FieldTextInput(''), 'TEXT')
         .appendField(this.newQuote_(false));
+    this.setOutput(true);
     this.setTooltip("Gives the given text");
+    this.functionName = "";
     this.setAsLiteral("Text");
   },
   /**
@@ -64,8 +66,9 @@ Blockly.Blocks['txtConcat'] = {
     this.setMutator(new Blockly.Mutator(['text_combine_ele']));
     this.setTooltip('Concatenate multiple text');
     this.itemCount_ = 2;
-
-    this.type = Type.fromList([Type.Lit("Text"),Type.Lit("Text"),Type.Lit("Text")]);
+    this.functionName = "Literal";
+    this.setOutput(true);
+    this.arrows = Type.fromList([Type.Lit("Text"),Type.Lit("Text"),Type.Lit("Text")]);
   },
 
   decompose: function(workspace) {
@@ -110,7 +113,8 @@ Blockly.Blocks['txtConcat'] = {
     }
     this.renderMoveConnections_();
     tps.push(new Type.Lit("Text"));
-    this.arrows = tps;
+    this.arrows = Type.fromList(tps);
+    this.initArrows();
   },
 
   mutationToDom: function() {
@@ -132,7 +136,9 @@ Blockly.Blocks['txtConcat'] = {
       }
     };
     tps.push(new Type.Lit("Text"));
-    this.arrows = tps;
+
+    this.arrows = Type.fromList(tps);
+    this.initArrows();
   },
 };
 

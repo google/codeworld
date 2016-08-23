@@ -35,9 +35,8 @@ Blockly.Blocks['numNumber'] = {
     this.appendDummyInput()
         .appendField(field, 'NUMBER');
     this.setOutput(true);
-    this.setOutputTypeExpr(new Blockly.TypeExpr('Number'));
     this.setTooltip(Blockly.Msg.MATH_NUMBER_TOOLTIP);
-    this.functionName = "";
+    this.setAsLiteral('Number');
   }
 };
 

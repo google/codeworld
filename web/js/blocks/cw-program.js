@@ -99,7 +99,6 @@ Blockly.Blocks['cwAnimationOf'] = {
 
     Blockly.TypeInf.defineFunction("animationOf", Type.Func(stepTp, Type.Lit("Program")) );
     this.setAsFunction("animationOf");
-    console.log('animationOf : ' + Blockly.TypeInf.builtinTypes["animationOf"].toString() );
   }
 };
 

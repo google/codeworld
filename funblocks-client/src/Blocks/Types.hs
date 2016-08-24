@@ -103,7 +103,7 @@ cwRectangle = DesignBlock "cwRectangle" (Function "rectangle" [typeNumber, typeN
           inlineDef colorPicture 
           (Tooltip "Picture of a rectangle")
 
-cwThickRectangle = DesignBlock "cwThickRectangle" (Function "thickRectangle" [typeNumber, typeNumber, typePicture] )
+cwThickRectangle = DesignBlock "cwThickRectangle" (Function "thickRectangle" [typeNumber, typeNumber, typeNumber, typePicture] )
           [Dummy [TextE "thickRectangle"] 
            ,Value "WIDTH" [Text "Width"] 
            ,Value "HEIGHT" [Text "Height"] 
@@ -485,7 +485,7 @@ cwRGBA = DesignBlock "cwRGBA" (Function "RGBA" [typeNumber, typeNumber, typeNumb
           (Tooltip "Makes a color with the given red, blue, green and alpha values")
 
 -- LOGIC -------------------------------------------
-conIf = DesignBlock "conIf" (Function "" [typeBool, Poly "a", Poly "a", Poly "a"])
+conIf = DesignBlock "conIf" (Function "if" [typeBool, Poly "a", Poly "a", Poly "a"])
         [ Value "IF"  [TextE "if"] 
          ,Value "THEN" [Text "then"]
          ,Value "ELSE" [Text "else"] 

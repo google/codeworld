@@ -147,10 +147,10 @@ foreign import javascript unsafe "$1.itemCount_"
 foreign import javascript unsafe "$1.getFieldValue($2)"
   js_getFieldValue :: Block -> JSString -> JSString
 
-foreign import javascript unsafe "$1.setAsFunction($1)"
+foreign import javascript unsafe "$1.setAsFunction($2)"
   js_setAsFunction :: Block -> JSString ->  IO ()
 
-foreign import javascript unsafe "$1.setAsLiteral($1)"
+foreign import javascript unsafe "$1.setAsLiteral($2)"
   js_setAsLiteral :: Block -> JSString ->  IO ()
 
 foreign import javascript unsafe "$1.type"

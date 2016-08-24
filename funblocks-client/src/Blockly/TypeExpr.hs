@@ -37,6 +37,7 @@ newtype TypeExpr = TypeExpr JSVal
 data Type = Func Type Type
           | Lit Text [Type]
           | TypeVar Text
+  deriving (Show)
 
 
 newtype Type_ = Type_ JSVal

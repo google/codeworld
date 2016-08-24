@@ -221,7 +221,8 @@ Blockly.Blocks['lists_comprehension'] = {
     while (itemBlock) {
       if(itemBlock.type == 'lists_comp_var')
       {
-        this.varTypes_.push(Blockly.TypeVar.getUnusedTypeVar());
+        var chr = String.fromCharCode(97 + this.varCount_);
+        this.varTypes_.push(Type.Var(c));
 
         var name = itemBlock.getFieldValue('NAME');
         this.vars_[this.varCount_] = name;
@@ -316,7 +317,9 @@ Blockly.Blocks['lists_numgen'] = {
         .appendField("]");
     this.setInputsInline(true);
     this.setOutput(true);
-    this.setAsLiteralT(Type.Lit("lit", [Type.Lit("Number")]));
+
+    Blockly.TypeInf.defineFunction("[..]", Type.fromList([Type.Lit("Number"), Type.Lit("Number"), Type.Lit("list", [Type.Lit("Number")])]));
+    this.setAsFunction("[..]");
 
     this.setColour(listsHUE);
     this.setTooltip('Generates a list of numbers between the first and second inputs');
@@ -325,7 +328,6 @@ Blockly.Blocks['lists_numgen'] = {
 
 Blockly.Blocks['lists_length'] = {
   init: function() {
-    var a = Blockly.TypeVar.getUnusedTypeVar();
     this.setColour(210);
     this.appendValueInput('LST')
         .appendField(new Blockly.FieldLabel("length","blocklyTextEmph") );
@@ -337,7 +339,6 @@ Blockly.Blocks['lists_length'] = {
 
 Blockly.Blocks['lists_at'] = {
   init: function() {
-    var a = Blockly.TypeVar.getUnusedTypeVar();
     this.setColour(210);
     this.appendValueInput('LST');
     this.appendValueInput('POS')
@@ -353,7 +354,6 @@ Blockly.Blocks['lists_at'] = {
 
 Blockly.Blocks['lists_cons'] = {
   init: function() {
-    var a = Blockly.TypeVar.getUnusedTypeVar();
     this.setColour(210);
     this.appendValueInput('ITEM');
     this.appendValueInput('LST')
@@ -363,7 +363,7 @@ Blockly.Blocks['lists_cons'] = {
     
     var lst = Type.Lit("list", [Type.Var("a")]);
     Blockly.TypeInf.defineFunction(":", Type.fromList([Type.Var("a"), lst, lst ]));
-    this.setAsFunction(lst);
+    this.setAsFunction(":");
 
   }
 };

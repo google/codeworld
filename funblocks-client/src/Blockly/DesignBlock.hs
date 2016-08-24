@@ -165,7 +165,6 @@ assignBlockType :: Block -> BlockType -> IO ()
 assignBlockType block (Literal name) = B.setAsLiteral block name
 assignBlockType block (Function name tps) = do 
     js_defineFunction (pack name) (TE.fromList tp)
-    putStrLn $ "setting " <> (T.unpack name) <> " as function"
     B.setAsFunction block name
   where tp = map typeToType tps
 assignBlockType _ _ = return ()
@@ -194,9 +193,6 @@ foreign import javascript unsafe "$1.setTooltip($2)"
 
 foreign import javascript unsafe "$1.appendDummyInput()"
   js_appendDummyInput :: Block -> IO FieldInput
-
--- foreign import javascript unsafe "$1.arrows = Type.fromList($2)"
---  js_setArrows :: Block -> JA.JSArray -> IO ()
 
 foreign import javascript unsafe "Blockly.TypeInf.defineFunction($1, $2)"
   js_defineFunction :: JSString -> TE.Type_ -> IO ()

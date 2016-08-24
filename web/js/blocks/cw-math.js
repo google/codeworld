@@ -56,9 +56,8 @@ Blockly.Blocks['numNumberPerc'] = {
         .appendField(new Blockly.FieldLabel('%','blocklyTextEmph'));
     this.setOutput(true, 'Number');
     // Sorin
-    this.setOutputTypeExpr(new Blockly.TypeExpr('Number'));
+    this.setAsLiteral("Number");
     this.setTooltip(Blockly.Msg.MATH_NUMBER_TOOLTIP);
-    this.functionName = "";
   }
 };
 

@@ -16,11 +16,11 @@
   limitations under the License.
 -}
 
-module Blockly.TypeExpr ( TypeExpr(..)
-                         ,createTypeExpr
-                         ,getName
+module Blockly.TypeExpr ( Type(..)
+                         ,Type_
+                         ,createType
+                         ,fromList
                          ,toJSArray
-                         ,getChildren
                          )
   where
 
@@ -30,38 +30,50 @@ import GHCJS.Marshal
 import qualified JavaScript.Array as JA
 import qualified Data.Text as T
 import Data.JSString.Text
+import Data.Text (Text);
 
 newtype TypeExpr = TypeExpr JSVal
+
+data Type = Func Type Type
+          | Lit Text [Type]
+          | TypeVar Text
+
+
+newtype Type_ = Type_ JSVal
+
+createType :: Type -> Type_
+createType (TypeVar text) = js_createVar (pack text)
+createType (Lit text cs) = js_createLit (pack text) (toJSArray $ map createType cs)
+createType (Func fst snd) = js_createFunc (createType fst) (createType snd)
+
+fromList :: [Type] -> Type_
+fromList tps = js_fromList $ toJSArray $ map createType tps
 
 pack = textToJSString
 unpack = textFromJSString
 
-instance IsJSVal TypeExpr
+instance IsJSVal Type_
 
-instance ToJSVal TypeExpr where
-  toJSVal (TypeExpr v) = return v
+instance ToJSVal Type_ where
+  toJSVal (Type_ v) = return v
 
-instance FromJSVal TypeExpr where
-  fromJSVal v = return $ Just $ TypeExpr v
+instance FromJSVal Type_ where
+  fromJSVal v = return $ Just $ Type_ v
 
-createTypeExpr :: T.Text -> [TypeExpr] -> TypeExpr
-createTypeExpr name children = TypeExpr $ js_createTypeExpr (pack name) ch
-  where ch = toJSArray children 
-
-getName :: TypeExpr -> T.Text
-getName = unpack . js_getName
-
-getChildren :: TypeExpr -> [TypeExpr]
-getChildren tp = map TypeExpr $ JA.toList $ js_getChildren tp
-
-toJSArray :: [TypeExpr] -> JA.JSArray
-toJSArray tps = JA.fromList $ map (\(TypeExpr a) -> a) tps 
+toJSArray :: [Type_] -> JA.JSArray
+toJSArray tps = JA.fromList $ map (\(Type_ a) -> a) tps 
 
 foreign import javascript unsafe "new Blockly.TypeExpr($1,$2)"
   js_createTypeExpr :: JSString -> JA.JSArray -> JSVal
 
-foreign import javascript unsafe "$1.name"
-  js_getName :: TypeExpr -> JSString
+foreign import javascript unsafe "Type.Var($1)"
+  js_createVar :: JSString -> Type_
 
-foreign import javascript unsafe "$1.children"
-  js_getChildren :: TypeExpr -> JA.JSArray
+foreign import javascript unsafe "Type.Lit($1,$2)"
+  js_createLit :: JSString -> JA.JSArray -> Type_
+
+foreign import javascript unsafe "Type.Func($1,$2)"
+  js_createFunc :: Type_ -> Type_ -> Type_ 
+
+foreign import javascript unsafe "Type.fromList($1)"
+  js_fromList :: JA.JSArray -> Type_

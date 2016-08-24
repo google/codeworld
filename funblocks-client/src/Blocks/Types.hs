@@ -33,7 +33,7 @@ colorText = Color 45
 
 typePicture = Picture
 typeNumber = Number
-typeProgram = Top
+typeProgram = Program
 typeColor = Col
 typeBool = Bool
 typeText = Str
@@ -71,7 +71,7 @@ cwText = DesignBlock "cwText" (Function "text" [typeText, Picture] )
           inlineDef colorPicture 
           (Tooltip "Enter some text")
 
-cwDrawingOf = DesignBlock "cwDrawingOf" (Function "drawingOf" [typePicture, typeProgram])
+cwDrawingOf = DesignBlock "cwDrawingOf" (Top "drawingOf" [typePicture, typeProgram])
           [Dummy [TextE "drawingOf", icon "tooltip-image.svg"] 
            ,Value "VALUE" [] ] 
           inlineDef colorProgram 

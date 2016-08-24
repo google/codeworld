@@ -70,7 +70,7 @@ data Type = Arrow [Type]
           | List Type -- Have to define kinded types
           | Custom User
           | Poly T.Text
-          | Top -- For top level blocks
+          | Program -- For top level blocks
           | Comment
 
 instance Show Type where
@@ -82,7 +82,7 @@ instance Show Type where
   show (Bool) = "Bool"
   show (Col) = "Color"
   show (Comment) = ""
-  show (Top) = "Program"
+  show (Program) = "Program"
   show (Arrow tps) = intercalate " -> " $ map show tps
 
 
@@ -105,6 +105,7 @@ newtype Inline = Inline Bool
 -- name funcName
 data BlockType = Literal T.Text
                | Function T.Text [Type]
+               | Top T.Text [Type]
                | None -- do nothing !
 -- DesignBlock name type inputs isInline Color Tooltip
 data DesignBlock = DesignBlock T.Text BlockType [Input] Inline Color Tooltip
@@ -149,6 +150,7 @@ setBlockType (DesignBlock name blockType inputs (Inline inline) (Color color) (T
                                      mapM_ (inputCode block) inputs
                                      case blockType of
                                        None -> js_disableOutput block
+                                       Top _ _ -> js_disableOutput block
                                        _ -> js_enableOutput block
                                      assignBlockType block blockType
                                      when inline $ js_setInputsInline block True
@@ -167,6 +169,7 @@ assignBlockType block (Function name tps) = do
     js_defineFunction (pack name) (TE.fromList tp)
     B.setAsFunction block name
   where tp = map typeToType tps
+assignBlockType block (Top name tps) = assignBlockType block (Function name tps)
 assignBlockType _ _ = return ()
   
 newtype FieldInput = FieldInput JSVal

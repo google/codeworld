@@ -39,7 +39,7 @@ typeBool = Bool
 typeText = Str
 typeComment = Comment
 
-inlineDef = Inline False
+inlineDef = Inline True
 
 icon :: T.Text -> Field
 icon name = FieldImage ("ims/" `T.append` name) 20 20
@@ -85,61 +85,61 @@ cwCircle = DesignBlock "cwCircle" (Function "circle" [typeNumber, typePicture])
 
 cwThickCircle = DesignBlock "cwThickCircle" (Function "thickCircle"  [typeNumber, typeNumber, typePicture])
           [Dummy [TextE "thickCircle"] 
-           ,Value "RADIUS" [Text "Radius"] 
-           ,Value "LINEWIDTH" [Text "Line width"] ] 
+           ,Value "RADIUS" [] 
+           ,Value "LINEWIDTH" [] ] 
           inlineDef colorPicture 
           (Tooltip "Picture of a circle")
 
 cwSolidCircle = DesignBlock "cwSolidCircle" (Function "solidCircle" [typeNumber, typePicture] )
           [Dummy [TextE "solidCircle"] 
-           ,Value "RADIUS"  [Text "Radius"] ] 
+           ,Value "RADIUS"  [] ]
           inlineDef colorPicture 
           (Tooltip "Picture of a solid circle")
 
 cwRectangle = DesignBlock "cwRectangle" (Function "rectangle" [typeNumber, typeNumber, typePicture] )
           [Dummy [TextE "rectangle"] 
-           ,Value "WIDTH"  [Text "Width"] 
-           ,Value "HEIGHT"  [Text "Height"] ] 
+           ,Value "WIDTH"  []
+           ,Value "HEIGHT"  []]
           inlineDef colorPicture 
           (Tooltip "Picture of a rectangle")
 
 cwThickRectangle = DesignBlock "cwThickRectangle" (Function "thickRectangle" [typeNumber, typeNumber, typeNumber, typePicture] )
           [Dummy [TextE "thickRectangle"] 
-           ,Value "WIDTH" [Text "Width"] 
-           ,Value "HEIGHT" [Text "Height"] 
-           ,Value "LINEWIDTH" [Text "Line Width"] ] 
+           ,Value "WIDTH" []
+           ,Value "HEIGHT" [] 
+           ,Value "LINEWIDTH" [] ] 
           inlineDef colorPicture 
           (Tooltip "Picture of a rectangle")
 
 cwSolidRectangle = DesignBlock "cwSolidRectangle" (Function "solidRectangle" [typeNumber, typeNumber, typePicture])
           [Dummy [TextE "solidRectangle"] 
-           ,Value "WIDTH" [Text "Width"] 
-           ,Value "HEIGHT" [Text "Height"] ] 
+           ,Value "WIDTH" [] 
+           ,Value "HEIGHT" [] ] 
           inlineDef colorPicture 
           (Tooltip "Picture of a solid rectangle")
 
 cwArc = DesignBlock "cwArc" (Function "arc" [typeNumber, typeNumber, typeNumber, typePicture] )
           [Dummy [TextE "arc"] 
-            ,Value "STARTANGLE" [Text "Start Angle"] 
-           ,Value "ENDANGLE" [Text "End Angle"] 
-           ,Value "RADIUS" [Text "Radius"] ] 
+            ,Value "STARTANGLE" [] 
+           ,Value "ENDANGLE" [] 
+           ,Value "RADIUS" [] ] 
           inlineDef colorPicture 
           (Tooltip "A thin arc")
 
 cwSector = DesignBlock "cwSector" (Function "sector" [typeNumber, typeNumber, typeNumber, typePicture])
           [Dummy [TextE "sector"] 
-            ,Value "STARTANGLE" [Text "Start Angle"] 
-           ,Value "ENDANGLE" [Text "End Angle"] 
-           ,Value "RADIUS" [Text "Radius"] ] 
+            ,Value "STARTANGLE" [] 
+           ,Value "ENDANGLE" [] 
+           ,Value "RADIUS" [] ] 
           inlineDef colorPicture 
           (Tooltip "A solid sector of a circle")
 
 cwThickArc = DesignBlock "cwThickArc" (Function "thickArc" [typeNumber, typeNumber, typeNumber, typeNumber, typePicture])
           [Dummy [TextE "thickArc"] 
-            ,Value "STARTANGLE" [Text "Start Angle"] 
-           ,Value "ENDANGLE" [Text "End Angle"] 
-           ,Value "RADIUS" [Text "Radius"] 
-           ,Value "LINEWIDTH" [Text "Line width"] ] 
+            ,Value "STARTANGLE" [] 
+           ,Value "ENDANGLE" [] 
+           ,Value "RADIUS" [] 
+           ,Value "LINEWIDTH" [] ] 
           inlineDef colorPicture 
           (Tooltip "A arc with variable line width")
 
@@ -445,8 +445,8 @@ cwGray = DesignBlock "cwGray" (Function "gray" [typeNumber, typeColor])
 
 cwMixed = DesignBlock "cwMixed" (Function "mixed" [typeColor, typeColor, typeColor])
           [Dummy [TextE "mixed", icon "pot-mix.svg"] 
-           ,Value "COL1"  [Text "Color"] 
-           ,Value "COL2"  [Text "Color"] ] 
+           ,Value "COL1"  [] 
+           ,Value "COL2"  [] ] 
           inlineDef colorColor 
           (Tooltip "Gives the mix of two colors")
 
@@ -481,7 +481,7 @@ cwRGBA = DesignBlock "cwRGBA" (Function "RGBA" [typeNumber, typeNumber, typeNumb
            ,Value "GREEN"  [Text "Green"] 
            ,Value "BLUE"  [Text "Blue"] 
            ,Value "ALPHA"  [Text "Alpha"] ] 
-          inlineDef colorColor 
+          (Inline False) colorColor 
           (Tooltip "Makes a color with the given red, blue, green and alpha values")
 
 -- LOGIC -------------------------------------------
@@ -580,15 +580,15 @@ conOdd = DesignBlock "conOdd" (Function "odd" [typeNumber, typeBool])
 
 conStartWith = DesignBlock "conStartWith" (Function "startWith" [typeText, typeText, typeBool] )
           [Dummy [TextE "startsWith"] 
-           ,Value "TEXTMAIN"  [Text "Text"] 
-           ,Value "TEXTTEST"  [Text "starts with"] ] 
+           ,Value "TEXTMAIN"  [] 
+           ,Value "TEXTTEST"  [] ] 
           inlineDef colorBool 
           (Tooltip "Tells whether the given text starts with some other text")
 
 conEndWith = DesignBlock "conEndWith" (Function "endWith" [typeText, typeText, typeBool])
           [Dummy [TextE "endsWith"] 
-           ,Value "TEXTMAIN"  [Text "Text"] 
-           ,Value "TEXTTEST"  [Text "ends with"] ]
+           ,Value "TEXTMAIN"  [] 
+           ,Value "TEXTTEST"  [] ]
           inlineDef colorBool 
           (Tooltip "Tells whether the given text ends with some other text")
 

@@ -31,16 +31,16 @@ Blockly.Blocks['lists_comprehension'] = {
   init: function() {
     this.setColour(listsHUE);
     this.vars_ = ['i','j','k'];
-    this.varTypes_ = [Type.Var('a'), Type.Var('b'), Type.Var('c')];
+    this.varTypes_ = [Type.generateTypeVar('lc'), Type.generateTypeVar('lc'), Type.generateTypeVar('lc')];
     this.appendValueInput("DO")
         .appendField(new Blockly.FieldLabel("List Comprehension","blocklyTextEmph"))
     this.appendValueInput('VAR0')
           .setAlign(Blockly.ALIGN_RIGHT)
-          .appendField(new Blockly.FieldVarInput(this.vars_[0],this.getArgType, 0))
+          .appendField(new Blockly.FieldVarInput(this.vars_[0],this.getArgType(0)))
           .appendField('\u2190');
     this.appendValueInput('VAR1')
           .setAlign(Blockly.ALIGN_RIGHT)
-          .appendField(new Blockly.FieldVarInput(this.vars_[1],this.getArgType, 1 ))
+          .appendField(new Blockly.FieldVarInput(this.vars_[1],this.getArgType(1)))
           .appendField('\u2190');
     this.setOutput(true);
     this.setMutator(new Blockly.Mutator(['lists_comp_var', 'lists_comp_guard']));
@@ -67,31 +67,34 @@ Blockly.Blocks['lists_comprehension'] = {
     this.initArrows();
   },
 
-  resetVarTypes: function(){
+  assignVars: function(){
+    var i = 0;
+    var thisBlock = this;
     this.inputList.forEach(function(inp){
       if(inp.name.startsWith('VAR')){
-        for (var l = 0; l < inp.fieldRow.length; l++)
-        {
-          var f = inp.fieldRow[l];
-          if(f instanceof Blockly.FieldVarInput){
-            f.render_();
+        for(var f = 0; f < inp.fieldRow.length; f++){
+          var fieldvar = inp.fieldRow[f];
+          if(fieldvar instanceof Blockly.FieldVarInput){
+            var tp = thisBlock.varTypes_[i++];
+            fieldvar.type = tp;
+            break;
           }
         }
-      }
+      };
     });
   },
 
   onTypeChange: function(){
     // set variables to input types
-    var j = 0;
-    var thisBlock = this;
-    this.inputList.forEach(function(inp){
-      if(inp.name.startsWith('VAR')){
-        thisBlock.varTypes_[j] = inp.connection.typeExpr.children[0];
-        j++;
-      }
-    });
-    this.resetVarTypes();
+    // var j = 0;
+    // var thisBlock = this;
+    // this.inputList.forEach(function(inp){
+    //   if(inp.name.startsWith('VAR')){
+    //     thisBlock.varTypes_[j] = inp.connection.typeExpr.getLiteralChildren()[0];
+    //     j++;
+    //   }
+    // });
+    // this.resetVarTypes();
   },
 
   getArgType: function(localId){
@@ -151,12 +154,11 @@ Blockly.Blocks['lists_comprehension'] = {
       if (childNode.nodeName.toLowerCase() == 'var') {
         var name = childNode.getAttribute('name');
 
-        var chr = String.fromCharCode(97 + i); 
-        this.varTypes_.push(Type.Var(chr));
+        this.varTypes_.push(Type.generateTypeVar('lc'));
 
         var input = this.appendValueInput('VAR' + i)
             .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(new Blockly.FieldVarInput(name, this.getArgType, i))
+            .appendField(new Blockly.FieldVarInput(name, this.getArgType(i)))
             .appendField('\u2190');
         this.vars_.push(name);
       }
@@ -221,14 +223,13 @@ Blockly.Blocks['lists_comprehension'] = {
     while (itemBlock) {
       if(itemBlock.type == 'lists_comp_var')
       {
-        var chr = String.fromCharCode(97 + this.varCount_);
-        this.varTypes_.push(Type.Var(c));
+        this.varTypes_.push(Type.generateTypeVar('lc'));
 
         var name = itemBlock.getFieldValue('NAME');
         this.vars_[this.varCount_] = name;
         var input = this.appendValueInput('VAR' + this.varCount_)
             .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(new Blockly.FieldVarInput(name, this.getArgType, this.varCount_))
+            .appendField(new Blockly.FieldVarInput(name, this.getArgType(this.varCount_)))
             .appendField('\u2190');
 
         this.vars_.push(name);
@@ -426,7 +427,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
     }
     if (this.itemCount_ == 0) {
       this.appendDummyInput('EMPTY')
-          .appendField(Blockly.Msg.LISTS_CREATE_EMPTY_TITLE);
+          .appendField("[ ]");
     }
     var tps = [];
     for(var k = 0; k < this.itemCount_; k++){
@@ -488,7 +489,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
     }
     if (this.itemCount_ == 0) {
       this.appendDummyInput('EMPTY')
-          .appendField("[]");
+          .appendField("[ ]");
     }
 
     var tps = [];

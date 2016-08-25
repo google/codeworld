@@ -26,6 +26,8 @@ module Blockly.Block ( Block(..)
                      , getValueInputNames
                      , getFunctionName
                      , getItemCount
+                     , setAsFunction
+                     , setAsLiteral
                      , setColour
                      , isDisabled
                      , areAllInputsConnected
@@ -123,6 +125,12 @@ areAllInputsConnected = js_allInputsConnected
 getItemCount :: Block -> Int
 getItemCount = js_itemCount
 
+setAsFunction :: Block -> T.Text -> IO ()
+setAsFunction block name = js_setAsFunction block (pack name)
+
+setAsLiteral :: Block -> T.Text -> IO ()
+setAsLiteral block name = js_setAsLiteral block (pack name)
+
 getValueInputNames :: Block -> [T.Text]
 getValueInputNames block = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
                            JA.toList $ js_getValueInputNames block
@@ -138,6 +146,12 @@ foreign import javascript unsafe "$1.itemCount_"
 
 foreign import javascript unsafe "$1.getFieldValue($2)"
   js_getFieldValue :: Block -> JSString -> JSString
+
+foreign import javascript unsafe "$1.setAsFunction($2)"
+  js_setAsFunction :: Block -> JSString ->  IO ()
+
+foreign import javascript unsafe "$1.setAsLiteral($2)"
+  js_setAsLiteral :: Block -> JSString ->  IO ()
 
 foreign import javascript unsafe "$1.type"
   js_type :: Block -> JSString

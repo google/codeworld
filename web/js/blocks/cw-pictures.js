@@ -31,7 +31,7 @@ Blockly.Blocks['cwCombine'] = {
     this.setTooltip('Combine multiple pictures');
     this.itemCount_ = 2;
     this.setOutput(true);
-    this.setOutputTypeExpr(new Blockly.TypeExpr('Picture'));
+    this.arrows = Type.fromList([Type.Lit("Picture"), Type.Lit("Picture"), Type.Lit("Picture")]);
   },
 
   decompose: function(workspace) {
@@ -51,6 +51,7 @@ Blockly.Blocks['cwCombine'] = {
   },
 
   compose: function(containerBlock) {
+    var tps = [];
     
     for (var x = 0; x < this.itemCount_; x++) {
       this.removeInput('PIC' + x);
@@ -60,8 +61,8 @@ Blockly.Blocks['cwCombine'] = {
     // Rebuild the block's inputs.
     var itemBlock = containerBlock.getInputTargetBlock('STACK');
     while (itemBlock) {
-      var input = this.appendValueInput('PIC' + this.itemCount_)
-                      .setTypeExpr(new Blockly.TypeExpr('Picture'));
+      var input = this.appendValueInput('PIC' + this.itemCount_);
+      tps.push(Type.Lit("Picture"));
       if (this.itemCount_ > 0) {
         input.appendField(new Blockly.FieldLabel("&","blocklyTextEmph") );
       }
@@ -72,6 +73,9 @@ Blockly.Blocks['cwCombine'] = {
           itemBlock.nextConnection.targetBlock();
       this.itemCount_++;
     }
+    tps.push(Type.Lit("Picture"));
+    this.arrows = Type.fromList(tps);
+    this.initArrows();
     this.renderMoveConnections_();
   },
 
@@ -83,16 +87,20 @@ Blockly.Blocks['cwCombine'] = {
 
   domToMutation: function(xmlElement) {
     this.itemCount_ = parseInt(xmlElement.getAttribute('items'), 10);
-
+    var tps = [];
     this.inputList = [];
     for (var i = 0; i < this.itemCount_; i++){
-      var input = this.appendValueInput('PIC' + i)
-                      .setTypeExpr(new Blockly.TypeExpr('Picture'));
+      var input = this.appendValueInput('PIC' + i);
+      tps.push(Type.Lit("Picture"));
       if (i > 0) {
         input.appendField(new Blockly.FieldLabel("&","blocklyTextEmph") );
       }
     };
-  },
+    tps.push(Type.Lit("Picture"));
+    this.arrows = Type.fromList(tps);
+    this.initArrows();
+
+  }
 };
 
 Blockly.Blocks['pics_combine_ele'] = {
@@ -125,13 +133,12 @@ Blockly.Blocks['pics_combine_container'] = {
 Blockly.Blocks['lists_path'] = {
   init: function() {
     this.setColour(160);
-    var pair = new Blockly.TypeExpr('pair', [new Blockly.TypeExpr('Number'), new Blockly.TypeExpr('Number')]);
     this.appendValueInput('LST')
-        .setTypeExpr(new Blockly.TypeExpr('list',[pair]))
         .appendField(new Blockly.FieldLabel("path","blocklyTextEmph") );
+    var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
     this.setOutput(true);
-    this.setOutputTypeExpr(new Blockly.TypeExpr('Picture'));
-    this.functionName = "path";
+    Blockly.TypeInf.defineFunction("path", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
+    this.setAsFunction("path");
   }
 };
 

@@ -19,6 +19,7 @@
 
 module Blockly.DesignBlock (Type(..)
                           ,FieldType(..)
+                          ,BlockType(..)
                           ,Input(..)
                           ,Field(..)
                           ,Inline(..)
@@ -32,8 +33,9 @@ module Blockly.DesignBlock (Type(..)
 import GHCJS.Types
 import Data.JSString.Text
 import GHCJS.Marshal
-import GHCJS.Foreign hiding (Number, String)
+import GHCJS.Foreign hiding (Number, String, Function)
 import GHCJS.Foreign.Callback
+import Data.Monoid
 import Control.Monad
 import Data.Ord (comparing)
 import Data.List (maximumBy)
@@ -42,6 +44,7 @@ import Data.Maybe (fromJust)
 import Data.List (intercalate)
 import qualified Blockly.TypeExpr as TE
 import qualified JavaScript.Array as JA
+import Blockly.Block as B
 
 pack = textToJSString
 unpack = textFromJSString
@@ -66,20 +69,20 @@ data Type = Arrow [Type]
           | Col -- Actually Color
           | List Type -- Have to define kinded types
           | Custom User
-          | Poly Char
-          | Top -- For top level blocks
+          | Poly T.Text
+          | Program -- For top level blocks
           | Comment
 
 instance Show Type where
   show Number = "Number"
   show Picture = "Picture"
   show (Custom (User name adt)) = name
-  show (Poly c) = c:""
+  show (Poly c) = T.unpack c
   show (Str) = "Text"
   show (Bool) = "Bool"
   show (Col) = "Color"
   show (Comment) = ""
-  show (Top) = ""
+  show (Program) = "Program"
   show (Arrow tps) = intercalate " -> " $ map show tps
 
 
@@ -99,7 +102,13 @@ data Connection = TopCon | BotCon | TopBotCon | LeftCon
 newtype Inline = Inline Bool
 
 -- Name functionName inputs connectiontype color outputType tooltip
-data DesignBlock = DesignBlock T.Text T.Text [Input] Inline Color [Type] Tooltip
+-- name funcName
+data BlockType = Literal T.Text
+               | Function T.Text [Type]
+               | Top T.Text [Type]
+               | None -- do nothing !
+-- DesignBlock name type inputs isInline Color Tooltip
+data DesignBlock = DesignBlock T.Text BlockType [Input] Inline Color Tooltip
 
 
 newtype Color = Color Int
@@ -127,40 +136,48 @@ inputCode block (Value name fields) = do
   return ()
 
 
-typeToTypeExpr :: Type -> TE.TypeExpr
-typeToTypeExpr (Poly a) = TE.createTypeExpr (T.pack $ "_POLY_" ++ [a]) []
-typeToTypeExpr t = TE.createTypeExpr (T.pack $ show t) [] -- Currently still a hack
+typeToTypeExpr :: Type -> TE.Type_
+typeToTypeExpr (Poly a) = TE.createType $ TE.TypeVar a
+typeToTypeExpr t = TE.createType $ TE.Lit (T.pack $ show t ) [] -- Currently still a hack
 
 
 -- set block
 setBlockType :: DesignBlock -> IO ()
-setBlockType (DesignBlock name funName inputs (Inline inline) (Color color) arrows (Tooltip tooltip) ) = do
-  cb <- syncCallback1 ContinueAsync  (\this -> do 
-                                 let block = Block this
-                                 js_setFunctionName block (pack funName)
-                                 js_setColor block color
-                                 mapM_ (inputCode block) inputs
-                                 case last arrows of
-                                   Top -> js_disableOutput block
-                                   Comment -> js_disableOutput block
-                                   _ -> js_enableOutput block
-                                 case last arrows of
-                                   Comment -> return ()
-                                   Top -> setArrows block $ take (length arrows -1) arrows
-                                   _ -> setArrows block arrows
-                                 when inline $ js_setInputsInline block True
-                                 return ()
-                                 )
-  js_setGenFunction (pack name) cb
+setBlockType (DesignBlock name blockType inputs (Inline inline) (Color color) (Tooltip tooltip) ) = do
+      cb <- syncCallback1 ContinueAsync  (\this -> do 
+                                     let block = B.Block this
+                                     js_setColor block color
+                                     mapM_ (inputCode block) inputs
+                                     case blockType of
+                                       None -> js_disableOutput block
+                                       Top _ _ -> js_disableOutput block
+                                       _ -> js_enableOutput block
+                                     assignBlockType block blockType
+                                     when inline $ js_setInputsInline block True
+                                     return ()
+                                     )
+      js_setGenFunction (pack name) cb
 
 
-newtype Block = Block JSVal
+typeToType :: Type -> TE.Type
+typeToType (Poly a) = TE.TypeVar a
+typeToType lit = TE.Lit (T.pack $ show lit) []
+
+assignBlockType :: Block -> BlockType -> IO ()
+assignBlockType block (Literal name) = B.setAsLiteral block name
+assignBlockType block (Function name tps) = do 
+    js_defineFunction (pack name) (TE.fromList tp)
+    B.setAsFunction block name
+  where tp = map typeToType tps
+assignBlockType block (Top name tps) = assignBlockType block (Function name tps)
+assignBlockType _ _ = return ()
+  
 newtype FieldInput = FieldInput JSVal
 
-setArrows :: Block -> [Type] -> IO ()
-setArrows block tps = js_setArrows block typeExprs
-  where
-    typeExprs = TE.toJSArray $ map typeToTypeExpr tps
+-- setArrows :: Block -> [Type] -> IO ()
+-- setArrows block tps = js_setArrows block typeExprs
+--   where
+--     typeExprs = TE.toJSArray $ map typeToTypeExpr tps
 
 foreign import javascript unsafe "Blockly.Blocks[$1] = { init: function() { $2(this); }}"
   js_setGenFunction :: JSString -> Callback a -> IO ()
@@ -174,20 +191,14 @@ foreign import javascript unsafe "$1.setOutput(true)"
 foreign import javascript unsafe "$1.setOutput(false)"
   js_disableOutput:: Block -> IO ()
 
-foreign import javascript unsafe "$1.setOutputTypeExpr(new Blockly.TypeExpr($2))"
-  js_setOutputTypeConc :: Block -> JSString -> IO ()
-
-foreign import javascript unsafe "$1.setOutputTypeExpr($2)"
-  js_setOutputTypePoly :: Block -> TE.TypeExpr -> IO ()
-
 foreign import javascript unsafe "$1.setTooltip($2)"
   js_setTooltip :: Block -> JSString -> IO ()
 
 foreign import javascript unsafe "$1.appendDummyInput()"
   js_appendDummyInput :: Block -> IO FieldInput
 
-foreign import javascript unsafe "$1.arrows = $2"
-  js_setArrows :: Block -> JA.JSArray -> IO ()
+foreign import javascript unsafe "Blockly.TypeInf.defineFunction($1, $2)"
+  js_defineFunction :: JSString -> TE.Type_ -> IO ()
 
 foreign import javascript unsafe "$1.appendValueInput($2)"
   js_appendValueInput :: Block -> JSString -> IO FieldInput
@@ -207,18 +218,6 @@ foreign import javascript unsafe "$1.appendField(new Blockly.FieldTextInput($2),
   --
 foreign import javascript unsafe "$1.setCheck($2)"
   js_setCheck :: FieldInput -> JSString -> IO ()
-
-foreign import javascript unsafe "$1.functionName = $2"
-  js_setFunctionName :: Block -> JSString -> IO ()
-
-foreign import javascript unsafe "Blockly.TypeVar.getUnusedTypeVar()"
-  js_getUnusedTypeVar :: IO TE.TypeExpr
-
-foreign import javascript unsafe "$1.setTypeExpr($2)"
-  js_setTypeExprPoly :: FieldInput -> TE.TypeExpr -> IO ()
-
-foreign import javascript unsafe "$1.setTypeExpr(new Blockly.TypeExpr($2))"
-  js_setTypeExprConc :: FieldInput -> JSString -> IO ()
 
 foreign import javascript unsafe "$1.setInputsInline($2)"
   js_setInputsInline :: Block -> Bool -> IO ()

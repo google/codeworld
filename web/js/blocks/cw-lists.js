@@ -62,7 +62,7 @@ Blockly.Blocks['lists_comprehension'] = {
       tps.push(t);
     }
     i++;
-    tps.push(Type.Var("a"));
+    tps.push(Type.Lit("list",[Type.Var("a")]));
     this.arrows = Type.fromList(tps);
     this.initArrows();
   },

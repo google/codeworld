@@ -79,7 +79,7 @@ cwDrawingOf = DesignBlock "cwDrawingOf" (Top "drawingOf" [typePicture, typeProgr
 
 cwCircle = DesignBlock "cwCircle" (Function "circle" [typeNumber, typePicture])
           [Dummy [TextE "circle"] 
-           ,Value "RADIUS" [Text "Radius"]] 
+           ,Value "RADIUS" []] 
           inlineDef colorPicture 
           (Tooltip "Picture of a circle")
 

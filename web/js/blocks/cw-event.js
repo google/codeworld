@@ -32,8 +32,8 @@ Blockly.cwEvent.generateEventBuiltins = function(xmlList){
   var point = Type.Lit("pair",[ Type.Lit("Number"), Type.Lit("Number")]);
   var KeyPress = new Blockly.UserTypes.Product("KeyPress", [Type.Lit("Text") ]);
   var KeyRelease = new Blockly.UserTypes.Product("KeyRelease", [Type.Lit("Text") ]);
-  var MousePress = new Blockly.UserTypes.Product("MousePress", [Type.Lit("MouseButton") ]);
-  var MouseRelease = new Blockly.UserTypes.Product("MouseRelease", [ Type.Lit("MouseButton")]);
+  var MousePress = new Blockly.UserTypes.Product("MousePress", [Type.Lit("pair", [Type.Lit("MouseButton"), point]) ]);
+  var MouseRelease = new Blockly.UserTypes.Product("MouseRelease", [ Type.Lit("pair", [Type.Lit("MouseButton"), point]) ]);
   var MouseMovement = new Blockly.UserTypes.Product("MouseMovement", [point]);
   var Event = new Blockly.UserTypes.Sum("Event",[KeyPress, KeyRelease, MousePress, MouseRelease, MouseMovement]);
 

@@ -54,17 +54,21 @@ Blockly.Blocks['lists_comprehension'] = {
     this.arrows = null;
     var tps = [];
     var i = 0;
+    this.varTypes_ = [];
 
-    tps.push(Type.Var("a"));
+    var a = Type.generateTypeVar('a');
+
+    tps.push(a);
     for(; i < this.varCount_; i++){
-      var c = String.fromCharCode(66 + i);
-      var t = Type.Lit("list", [Type.Var(c)]);
+      var varTp = Type.generateTypeVar('lc');
+      this.varTypes_.push(varTp);
+      var t = Type.Lit("list", [varTp]);
       tps.push(t);
     }
     i++;
-    tps.push(Type.Lit("list",[Type.Var("a")]));
+    tps.push(Type.Lit("list",[a]));
     this.arrows = Type.fromList(tps);
-    this.initArrows();
+    this.initArrows(false);
   },
 
   assignVars: function(){
@@ -154,8 +158,6 @@ Blockly.Blocks['lists_comprehension'] = {
       if (childNode.nodeName.toLowerCase() == 'var') {
         var name = childNode.getAttribute('name');
 
-        this.varTypes_.push(Type.generateTypeVar('lc'));
-
         var input = this.appendValueInput('VAR' + i)
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField(new Blockly.FieldVarInput(name, this.getArgType(i)))
@@ -214,7 +216,6 @@ Blockly.Blocks['lists_comprehension'] = {
       this.removeInput('GUARD' + x);
     }
     this.vars_ = [];
-    this.varTypes_ = [];
 
     this.varCount_ = 0;
     this.guardCount_ = 0;
@@ -223,8 +224,6 @@ Blockly.Blocks['lists_comprehension'] = {
     while (itemBlock) {
       if(itemBlock.type == 'lists_comp_var')
       {
-        this.varTypes_.push(Type.generateTypeVar('lc'));
-
         var name = itemBlock.getFieldValue('NAME');
         this.vars_[this.varCount_] = name;
         var input = this.appendValueInput('VAR' + this.varCount_)

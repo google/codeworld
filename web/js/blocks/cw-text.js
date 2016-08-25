@@ -36,9 +36,9 @@ Blockly.Blocks['text_typed'] = {
         .appendField(new Blockly.FieldTextInput(''), 'TEXT')
         .appendField(this.newQuote_(false));
     this.setOutput(true);
-    this.setOutputTypeExpr(new Blockly.TypeExpr('Text'));
     this.setTooltip("Gives the given text");
     this.functionName = "";
+    this.setAsLiteral("Text");
   },
   /**
    * Create an image of an open or closed quote.
@@ -66,9 +66,9 @@ Blockly.Blocks['txtConcat'] = {
     this.setMutator(new Blockly.Mutator(['text_combine_ele']));
     this.setTooltip('Concatenate multiple text');
     this.itemCount_ = 2;
-
+    this.functionName = "Literal";
     this.setOutput(true);
-    this.setOutputTypeExpr(new Blockly.TypeExpr('Text'));
+    this.arrows = Type.fromList([Type.Lit("Text"),Type.Lit("Text"),Type.Lit("Text")]);
   },
 
   decompose: function(workspace) {
@@ -96,9 +96,11 @@ Blockly.Blocks['txtConcat'] = {
     this.itemCount_ = 0;
     // Rebuild the block's inputs.
     var itemBlock = containerBlock.getInputTargetBlock('STACK');
+    var tps = [];
     while (itemBlock) {
-      var input = this.appendValueInput('STR' + this.itemCount_)
-                      .setTypeExpr(new Blockly.TypeExpr('Text'));
+      var input = this.appendValueInput('STR' + this.itemCount_);
+      tps.push(new Type.Lit("Text"));
+                     
       if (this.itemCount_ > 0) {
         input.appendField(new Blockly.FieldLabel("<>","blocklyTextEmph") );
       }
@@ -110,6 +112,9 @@ Blockly.Blocks['txtConcat'] = {
           itemBlock.nextConnection.targetBlock();
     }
     this.renderMoveConnections_();
+    tps.push(new Type.Lit("Text"));
+    this.arrows = Type.fromList(tps);
+    this.initArrows();
   },
 
   mutationToDom: function() {
@@ -122,13 +127,18 @@ Blockly.Blocks['txtConcat'] = {
     this.itemCount_ = parseInt(xmlElement.getAttribute('items'), 10);
 
     this.inputList = [];
+    var tps = [];
     for (var i = 0; i < this.itemCount_; i++){
-      var input = this.appendValueInput('STR' + i)
-                      .setTypeExpr(new Blockly.TypeExpr('Text'));
+      var input = this.appendValueInput('STR' + i);
+      tps.push(new Type.Lit("Text"));
       if (i > 0) {
         input.appendField(new Blockly.FieldLabel("<>","blocklyTextEmph") );
       }
     };
+    tps.push(new Type.Lit("Text"));
+
+    this.arrows = Type.fromList(tps);
+    this.initArrows();
   },
 };
 

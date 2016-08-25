@@ -475,8 +475,8 @@ Blockly.Blocks['lists_create_with_typed'] = {
     while (itemBlock) {
       var input = this.appendValueInput('ADD' + this.itemCount_);
       if (this.itemCount_ == 0) {
-        input.appendField(new Blockly.FieldImage("ims/format-list-bulleted.svg",20,20));
-        input.appendField("list");
+        input.appendField(new Blockly.FieldImage("ims/format-list-bulleted.svg",20,20))
+        input.appendField(new Blockly.FieldLabel("List","blocklyTextEmph"));
       }
       // Reconnect any child blocks.
       if (itemBlock.valueConnection_) {
@@ -501,7 +501,8 @@ Blockly.Blocks['lists_create_with_typed'] = {
 
     this.renderMoveConnections_();
 
-
+    // Call unification
+    Blockly.TypeInf.UnifyComponent(this);
   },
   /**
    * Store pointers to any connected child blocks.

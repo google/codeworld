@@ -339,7 +339,7 @@ Blockly.Blocks['lists_length'] = {
 
 Blockly.Blocks['lists_at'] = {
   init: function() {
-    this.setColour(210);
+    this.setColour(180);
     this.appendValueInput('LST');
     this.appendValueInput('POS')
         .appendField(new Blockly.FieldLabel("at","blocklyTextEmph") );
@@ -354,7 +354,7 @@ Blockly.Blocks['lists_at'] = {
 
 Blockly.Blocks['lists_cons'] = {
   init: function() {
-    this.setColour(210);
+    this.setColour(listsHUE);
     this.appendValueInput('ITEM');
     this.appendValueInput('LST')
         .appendField(new Blockly.FieldLabel(":","blocklyTextEmph") );

@@ -113,24 +113,24 @@ function run(xmlHash, codeHash, msg, error, dhash) {
         runner.contentWindow.location.replace(loc);
         document.getElementById('runner').style.display = '';
         document.getElementById('runner').contentWindow.focus();
+        document.getElementById('message').style.display = 'none';
         window.programRunning = true;
     } else {
+        document.getElementById('message').style.display = '';
         runner.contentWindow.location.replace('about:blank');
         document.getElementById('runner').style.display = 'none';
         window.programRunning = false;
     }
-    window.mainLayout.show('east');
-    window.mainLayout.open('east');
 
     var message = document.getElementById('message');
     message.innerHTML = '';
     addToMessage(msg);
 
-    //if (error) {
-    //    message.classList.add('error');
-    //} else {
-    //    message.classList.remove('error');
-    //}
+    if (error) {
+        message.classList.add('error');
+    } else {
+        message.classList.remove('error');
+    }
 
     document.getElementById('editButton').setAttribute('href','/#' + codeHash);
     window.deployHash = dhash;

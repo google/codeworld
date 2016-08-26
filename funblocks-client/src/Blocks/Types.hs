@@ -27,7 +27,7 @@ colorPicture = Color 160
 colorNumber = Color 210
 colorProgram = Color 0
 colorColor = Color 290
-colorPoly = Color 70
+colorPoly = Color 180
 colorBool = Color 100
 colorText = Color 45
 
@@ -79,7 +79,7 @@ cwDrawingOf = DesignBlock "cwDrawingOf" (Top "drawingOf" [typePicture, typeProgr
 
 cwCircle = DesignBlock "cwCircle" (Function "circle" [typeNumber, typePicture])
           [Dummy [TextE "circle"] 
-           ,Value "RADIUS" [Text "Radius"]] 
+           ,Value "RADIUS" []] 
           inlineDef colorPicture 
           (Tooltip "Picture of a circle")
 
@@ -516,14 +516,14 @@ conEq = DesignBlock "conEq" (Function "==" [Poly "a", Poly "a", typeBool])
         [ Value "LEFT"  [] 
          ,Value "RIGHT" [TextE "="]
          ]
-         (Inline True) colorPoly 
+         (Inline True) colorBool 
          (Tooltip "Are two items equal")
 
 conNeq = DesignBlock "conNeq" (Function "/=" [Poly "a", Poly "a", typeBool])
         [ Value "LEFT"  [] 
          ,Value "RIGHT" [TextE "\x2260"] 
          ]
-         (Inline True) colorPoly 
+         (Inline True) colorBool 
          (Tooltip "Are two items not equal")
 
 conTrue = DesignBlock "conTrue" (Function "True" [typeBool])

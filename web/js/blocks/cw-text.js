@@ -37,7 +37,6 @@ Blockly.Blocks['text_typed'] = {
         .appendField(this.newQuote_(false));
     this.setOutput(true);
     this.setTooltip("Gives the given text");
-    this.functionName = "";
     this.setAsLiteral("Text");
   },
   /**
@@ -68,7 +67,29 @@ Blockly.Blocks['txtConcat'] = {
     this.itemCount_ = 2;
     this.functionName = "Literal";
     this.setOutput(true);
-    this.arrows = Type.fromList([Type.Lit("Text"),Type.Lit("Text"),Type.Lit("Text")]);
+    Blockly.TypeInf.defineFunction("<>", Type.fromList([Type.Lit("Text"),Type.Lit("Text"),Type.Lit("Text")]));
+    this.setAsFunction("<>");
+  },
+
+  foldr1 : function(fn, xs) {
+    var result = xs[xs.length - 1];
+      for (var i = xs.length - 2; i > -1; i--) {
+        result = fn(xs[i], result);
+      }
+    return result;
+  },
+
+  getExpr: function(){
+    var exps = [];
+    this.inputList.forEach(function(inp){
+      if(inp.connection.isConnected())
+        exps.push(inp.connection.targetBlock().getExpr());
+      else
+        exps.push(Exp.Var('undef'));
+    });
+    var func = (a,b) => Exp.AppFunc([a,b],Exp.Var("<>"));
+    var e = this.foldr1(func,exps);
+    return e;
   },
 
   decompose: function(workspace) {
@@ -155,7 +176,8 @@ Blockly.Blocks['text_combine_ele'] = {
     this.setColour(textHUE);
     this.setTooltip('Adds a text input');
     this.contextMenu = false;
-  }
+  },
+  getExpr: null
 };
 
 Blockly.Blocks['text_combine_container'] = {
@@ -166,7 +188,8 @@ Blockly.Blocks['text_combine_container'] = {
     this.appendStatementInput('STACK');
     this.setTooltip('A list of inputs that the combine block should have');
     this.contextMenu = false;
-  }
+  },
+  getExpr: null
 };
 
 

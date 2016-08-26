@@ -31,8 +31,32 @@ Blockly.Blocks['cwCombine'] = {
     this.setTooltip('Combine multiple pictures');
     this.itemCount_ = 2;
     this.setOutput(true);
-    this.arrows = Type.fromList([Type.Lit("Picture"), Type.Lit("Picture"), Type.Lit("Picture")]);
+
+    Blockly.TypeInf.defineFunction("&", Type.fromList([Type.Lit("Picture"),Type.Lit("Picture"),Type.Lit("Picture")]));
+    this.setAsFunction("&");
   },
+  
+  foldr1 : function(fn, xs) {
+    var result = xs[xs.length - 1];
+      for (var i = xs.length - 2; i > -1; i--) {
+        result = fn(xs[i], result);
+      }
+    return result;
+  },
+
+  getExpr: function(){
+    var exps = [];
+    this.inputList.forEach(function(inp){
+      if(inp.connection.isConnected())
+        exps.push(inp.connection.targetBlock().getExpr());
+      else
+        exps.push(Exp.Var('undef'));
+    });
+    var func = (a,b) => Exp.AppFunc([a,b],Exp.Var("&"));
+    var e = this.foldr1(func,exps);
+    return e;
+  },
+
 
   decompose: function(workspace) {
     var containerBlock =
@@ -116,7 +140,8 @@ Blockly.Blocks['pics_combine_ele'] = {
     this.setColour(picsHUE);
     this.setTooltip('Adds a picture input');
     this.contextMenu = false;
-  }
+  },
+  getExpr: null
 };
 
 Blockly.Blocks['pics_combine_container'] = {
@@ -127,7 +152,8 @@ Blockly.Blocks['pics_combine_container'] = {
     this.appendStatementInput('STACK');
     this.setTooltip('A list of inputs that the combine block should have');
     this.contextMenu = false;
-  }
+  },
+  getExpr: null
 };
 
 Blockly.Blocks['lists_path'] = {
@@ -139,7 +165,8 @@ Blockly.Blocks['lists_path'] = {
     this.setOutput(true);
     Blockly.TypeInf.defineFunction("path", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
     this.setAsFunction("path");
-  }
+  },
+  getExpr: null
 };
 
 

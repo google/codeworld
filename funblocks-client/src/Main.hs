@@ -46,8 +46,10 @@ unpack = textFromJSString
 
 setErrorMessage msg = do
   Just doc <- liftIO currentDocument
-  Just msgEl <- getElementById doc "message"
-  setInnerHTML msgEl $ Just msg
+  -- Just msgEl <- getElementById doc "message"
+  liftIO $ putStrLn msg
+  liftIO $ js_stopErr (JStr.pack msg)
+  -- setInnerHTML msgEl $ Just msg
 
 programBlocks :: [T.Text]
 programBlocks = map T.pack ["cwDrawingOf","cwAnimationOf", "cwSimulationOf", "cwInteractionOf"]
@@ -59,7 +61,8 @@ btnRunClick ws = do
   Just doc <- liftIO currentDocument
   blocks <- liftIO $ getTopBlocks ws
   if not $ containsProgramBlock blocks 
-    then setErrorMessage "No Program block on the workspace"
+    then do 
+      setErrorMessage "No Program block on the workspace"
     else do
       (code,errors) <- liftIO $ workspaceToCode ws
       case errors of
@@ -68,8 +71,7 @@ btnRunClick ws = do
                                     liftIO $ setWarningText block msg
                                     liftIO $ addErrorSelect block
                                     liftIO $ js_removeErrorsDelay
-                                    liftIO $ js_stop
-                                    setErrorMessage msg
+                                    setErrorMessage (T.unpack msg)
 
         [] -> do
           liftIO $ js_updateEditor (pack code)
@@ -132,6 +134,9 @@ foreign import javascript unsafe "updateUI()"
 -- funnily enough, If I'm calling run "" "" "" False I get errors
 foreign import javascript unsafe "run('','','',false)"
   js_stop :: IO ()
+
+foreign import javascript unsafe "run('','',$1,true)"
+  js_stopErr :: JSString -> IO ()
 
 foreign import javascript unsafe "updateEditor($1)"
   js_updateEditor :: JSString -> IO ()

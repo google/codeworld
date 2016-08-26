@@ -61,7 +61,10 @@ instance Pretty Type where
 
   pretty (Product s tps) = do 
                             PR.write $ s
-                            mapM_ (\t -> pretty t >> PR.makeSpace) tps
+                            PR.write_ "("
+                            PR.intercalation "," tps pretty 
+                            PR.write_ ")"
+
   pretty (ListType t) = do 
                           PR.write_ "[" 
                           pretty t 
@@ -83,7 +86,10 @@ instance Pretty Expr where
                                     PR.write name
                                     case vars_ of
                                       [] -> return ()
-                                      _ -> mapM_ (\v -> pretty v >> PR.makeSpace) vars_ 
+                                      _ -> do 
+                                        PR.write_ "("
+                                        PR.intercalation "," vars_ pretty 
+                                        PR.write_ ")"
 
   pretty (CallFuncInfix name left right) = do shouldParenth left 
                                               PR.makeSpace
@@ -131,7 +137,12 @@ instance Pretty Expr where
                               mapM_ (\(con, vars, expr) -> do PR.setCol (col+4)
                                                               PR.writeLine ""
                                                               PR.write con
-                                                              PR.write $ T.unwords vars
+                                                              PR.makeSpace
+                                                              if length vars > 1 then do
+                                                                PR.write_ "("
+                                                                PR.write_ $ T.intercalate "," vars 
+                                                                PR.write_ ")"
+                                                              else PR.write $ head vars
                                                               PR.write "->"
                                                               pretty expr) rows
                               PR.pop

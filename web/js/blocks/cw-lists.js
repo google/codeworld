@@ -48,24 +48,69 @@ Blockly.Blocks['lists_comprehension'] = {
     this.varCount_ = 2;
     this.guardCount_ = 0;
     this.resetArrows();
+    Blockly.TypeInf.defineFunction("<]", Type.fromList([Type.Lit("list", [Type.Var("a")]), Type.Var("a")  ]));
   },
+
+  getExpr: function(){
+
+    var mainExp = Exp.Var('undef');
+    if (this.getInput("DO").connection.isConnected())
+      mainExp = this.getInput("DO").connection.targetBlock().getExpr();
+    
+    var guardExps = [];
+    for(var i = 0; i < this.guardCount_; i++){
+      var inp = this.getInput("GUARD" + i);
+      if(inp.connection && inp.connection.isConnected())
+        guardExps.push(inp.connection.targetBlocks().getExpr());
+      else
+        guardExps.push(Exp.Var('undef'));
+    }
+ 
+
+    var func = (a,b) => Exp.Let(a,b,c);   //Exp.AppFunc([a,b],Exp.Var(":"));
+    var result = mainExp;
+    for(var i = this.varCount_ - 1; i !== -1; i--){
+      var varName = this.vars_[i];
+      var inp = this.getInput("VAR" + i);
+      if(inp.connection.isConnected()){
+        var exp = inp.connection.targetBlock().getExpr();
+        result = Exp.Let(varName, Exp.App(Exp.Var("<]"),exp) , result); 
+      }
+    }
+    console.log(result.toString());
+    // let i = <] exp1 in ...
+
+    return result;
+
+  },
+
+  foldr: function (fn, ult, xs) {
+    var result = ult;
+      for (var i = xs.length - 1; i !== -1; i--) {
+        result = fn(xs[i], result);
+      }
+    return result;
+  },
+
   
   resetArrows: function(){
     this.arrows = null;
     var tps = [];
-    var i = 0;
     this.varTypes_ = [];
 
     var a = Type.generateTypeVar('a');
 
     tps.push(a);
-    for(; i < this.varCount_; i++){
+    for(var i = 0; i < this.varCount_; i++){
       var varTp = Type.generateTypeVar('lc');
       this.varTypes_.push(varTp);
       var t = Type.Lit("list", [varTp]);
       tps.push(t);
     }
-    i++;
+    for(var i = 0; i < this.guardCount_; i++){
+      tps.push(Type.Lit("Bool"));
+    }
+
     tps.push(Type.Lit("list",[a]));
     this.arrows = Type.fromList(tps);
     this.initArrows(false);
@@ -392,10 +437,36 @@ Blockly.Blocks['lists_create_with_typed'] = {
     }
     tps.push(Type.Lit("list",[Type.Var("a")]));
     this.arrows = Type.fromList(tps);
+
+
+    Blockly.TypeInf.defineFunction(":", Type.fromList([Type.Var("a"),Type.Lit("list",[Type.Var('a')]),Type.Lit("list", [Type.Var('a')]) ]));
   },
   getType: function(){
     return this.outputConnection.typeExpr.children[0];
   },
+  
+  foldr: function (fn, ult, xs) {
+    var result = ult;
+      for (var i = xs.length - 1; i !== -1; i--) {
+        result = fn(xs[i], result);
+      }
+    return result;
+  },
+
+  getExpr: function(){
+    var exps = [];
+    this.inputList.forEach(function(inp){
+      if(inp.connection.isConnected())
+        exps.push(inp.connection.targetBlock().getExpr());
+      else
+        exps.push(Exp.Var('undef'));
+    });
+    var func = (a,b) => Exp.AppFunc([a,b],Exp.Var(":"));
+    var e = this.foldr(func,Exp.Var("[]"),exps);
+    console.log(e.toString());
+    return e;
+  },
+
   /**
    * Create XML to represent list inputs.
    * @return {Element} XML storage element.
@@ -502,7 +573,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
     this.renderMoveConnections_();
 
     // Call unification
-    Blockly.TypeInf.UnifyComponent(this);
+    Blockly.TypeInf.unifyComponent()(this);
   },
   /**
    * Store pointers to any connected child blocks.

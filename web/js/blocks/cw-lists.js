@@ -49,6 +49,7 @@ Blockly.Blocks['lists_comprehension'] = {
     this.guardCount_ = 0;
     this.resetArrows();
     Blockly.TypeInf.defineFunction("<]", Type.fromList([Type.Lit("list", [Type.Var("a")]), Type.Var("a")  ]));
+    Blockly.TypeInf.defineFunction("MK", Type.fromList([Type.Var("a"), Type.Lit("list", [Type.Var("a")]) ]));
   },
 
   getExpr: function(){
@@ -56,14 +57,22 @@ Blockly.Blocks['lists_comprehension'] = {
     var mainExp = Exp.Var('undef');
     if (this.getInput("DO").connection.isConnected())
       mainExp = this.getInput("DO").connection.targetBlock().getExpr();
+
+    mainExp.tag = this.getInput("DO").connection;
     
     var guardExps = [];
     for(var i = 0; i < this.guardCount_; i++){
       var inp = this.getInput("GUARD" + i);
-      if(inp.connection && inp.connection.isConnected())
-        guardExps.push(inp.connection.targetBlocks().getExpr());
-      else
-        guardExps.push(Exp.Var('undef'));
+      if(inp.connection && inp.connection.isConnected()){
+        var exp = inp.connection.targetBlocks().getExpr();
+        exp.tag = inp.connection;
+        guardExps.push(exp);
+      }
+      else{
+        var exp = Exp.Var('undef');
+        exp.tag = inp.connection;
+        guardExps.push(exp);
+      }
     }
  
 
@@ -74,12 +83,15 @@ Blockly.Blocks['lists_comprehension'] = {
       var inp = this.getInput("VAR" + i);
       if(inp.connection.isConnected()){
         var exp = inp.connection.targetBlock().getExpr();
+        exp.tag = inp.connection;
         result = Exp.Let(varName, Exp.App(Exp.Var("<]"),exp) , result); 
       }
     }
     console.log(result.toString());
     // let i = <] exp1 in ...
-
+   
+    result = Exp.App(Exp.Var("MK"), result);
+    result.tag = this.outputConnection;
     return result;
 
   },
@@ -456,13 +468,20 @@ Blockly.Blocks['lists_create_with_typed'] = {
   getExpr: function(){
     var exps = [];
     this.inputList.forEach(function(inp){
-      if(inp.connection.isConnected())
-        exps.push(inp.connection.targetBlock().getExpr());
-      else
-        exps.push(Exp.Var('undef'));
+      if(inp.connection.isConnected()){
+        var exp = inp.connection.targetBlock().getExpr();
+        exp.tag = inp.connection;
+        exps.push(exp);
+      }
+      else{
+        var exp = Exp.Var('undef');
+        exp.tag = inp.connection;
+        exps.push(exp);
+      }
     });
     var func = (a,b) => Exp.AppFunc([a,b],Exp.Var(":"));
     var e = this.foldr(func,Exp.Var("[]"),exps);
+    e.tag = this.outputConnection;
     console.log(e.toString());
     return e;
   },

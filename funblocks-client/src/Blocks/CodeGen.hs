@@ -152,9 +152,9 @@ instance Pretty Expr where
                           PR.intercalation "," exprs pretty
                           PR.write_ ")"
   pretty (ListCreate exprs) = do 
-                          PR.write_ "("
+                          PR.write_ "["
                           PR.intercalation "," exprs pretty
-                          PR.write_ ")"
+                          PR.write_ "]"
   pretty (ListSpec left right) = do 
                           PR.write_ "["
                           pretty left

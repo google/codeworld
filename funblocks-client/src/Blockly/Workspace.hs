@@ -30,6 +30,7 @@ module Blockly.Workspace ( Workspace(..)
                           ,getTopBlocksTrue
                           ,isWarning
                           ,disableOrphans
+                          ,warnOnInputs
                           ,mainWorkspace
                           )
   where
@@ -98,6 +99,9 @@ mainWorkspace = js_getMainWorkspace
 disableOrphans :: Workspace -> IO ()
 disableOrphans = js_addDisableOrphans
 
+warnOnInputs :: Workspace -> IO ()
+warnOnInputs = js_addWarnOnInputs
+
 loadXml :: Workspace -> JSString -> IO ()
 loadXml workspace dat = js_loadXml workspace dat
 
@@ -136,6 +140,9 @@ foreign import javascript unsafe "Blockly.Xml.domToWorkspace(Blockly.Xml.textToD
 
 foreign import javascript unsafe "$1.addChangeListener(Blockly.Events.disableOrphans)"
   js_addDisableOrphans :: Workspace -> IO ()
+
+foreign import javascript unsafe "$1.addChangeListener(Blockly.Events.warnOnDisconnectedInputs)"
+  js_addWarnOnInputs :: Workspace -> IO ()
 
 foreign import javascript unsafe "Blockly.getMainWorkspace()"
   js_getMainWorkspace :: Workspace

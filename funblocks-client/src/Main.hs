@@ -63,7 +63,7 @@ btnRunClick ws = do
   blocks <- liftIO $ getTopBlocks ws
   w <- liftIO $ isWarning ws
   if T.length w > 0 then do
-    setErrorMessage "A block on the workspace has arguments with the same name"
+    setErrorMessage (T.unpack w)
   else do
     if not $ containsProgramBlock blocks 
       then do 
@@ -100,6 +100,7 @@ funblocks = do
       Just body <- getBody doc
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
       liftIO $ disableOrphans workspace -- Disable disconnected non-top level blocks
+      liftIO $ warnOnInputs workspace -- Display warning if inputs are disconnected
       hookEvent "btnRun" click (btnRunClick workspace)
       hookEvent "btnStop" click btnStopClick
       liftIO setBlockTypes -- assign layout and types of Blockly blocks

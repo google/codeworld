@@ -72,9 +72,10 @@ instance Pretty Type where
 
 instance Pretty Expr where
   pretty (LiteralS s) = PR.write_ $ escape s
-  pretty (LiteralN d) = PR.write_ $ if (fromIntegral $ truncate d) == d
+  pretty (LiteralN d) = PR.write_ $ if d == fromInteger (truncate d)
                                     then show $ truncate d
                                     else show d
+              
   pretty (LocalVar name) = PR.write_ $ name
   pretty (CallFunc name vars_) = do 
                                     PR.write_ name

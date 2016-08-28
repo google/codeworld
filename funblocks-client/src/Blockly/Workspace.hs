@@ -73,8 +73,8 @@ getBlockById workspace (UUID uuidstr) = if isNull val then Nothing
 isTopBlock :: Workspace -> Block -> Bool
 isTopBlock = js_isTopBlock
 
-isWarning :: Workspace -> T.Text
-isWarning = textFromJSString . js_isWarning
+isWarning :: Workspace -> IO T.Text
+isWarning ws = js_isWarning ws >>= return . textFromJSString
 
 getTopBlocksLength :: Workspace -> Int
 getTopBlocksLength = js_getTopBlocksLength
@@ -114,7 +114,7 @@ foreign import javascript unsafe "$1.isTopBlock($2)"
   js_isTopBlock :: Workspace -> Block -> Bool 
 
 foreign import javascript unsafe "$1.isWarning()"
-  js_isWarning :: Workspace -> JSString 
+  js_isWarning :: Workspace -> IO JSString 
 
 foreign import javascript unsafe "Blockly.Workspace.getById($1)"
   js_getById :: JSString -> Workspace

@@ -40,6 +40,7 @@ import Blocks.Types
 import Blockly.Event
 import Blockly.General
 import Blockly.Block 
+import Data.Monoid 
 
 pack = textToJSString
 unpack = textFromJSString
@@ -60,8 +61,8 @@ btnStopClick = do
 btnRunClick ws = do
   Just doc <- liftIO currentDocument
   blocks <- liftIO $ getTopBlocks ws
-  let w = isWarning ws
-  if T.length w > 0 then
+  w <- liftIO $ isWarning ws
+  if T.length w > 0 then do
     setErrorMessage "A block on the workspace has arguments with the same name"
   else do
     if not $ containsProgramBlock blocks 

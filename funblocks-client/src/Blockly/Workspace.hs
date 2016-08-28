@@ -28,6 +28,7 @@ module Blockly.Workspace ( Workspace(..)
                           ,getBlockById
                           ,getTopBlocks
                           ,getTopBlocksTrue
+                          ,isWarning
                           ,disableOrphans
                           ,mainWorkspace
                           )
@@ -38,9 +39,11 @@ import Data.JSString (pack, unpack)
 import GHCJS.Foreign
 import GHCJS.Marshal
 import Unsafe.Coerce
+import qualified Data.Text as T
 import Blockly.General
 import Blockly.Block (Block(..))
 import qualified JavaScript.Array as JA
+import Data.JSString.Text 
 
 newtype Workspace = Workspace JSVal
 
@@ -69,6 +72,9 @@ getBlockById workspace (UUID uuidstr) = if isNull val then Nothing
 
 isTopBlock :: Workspace -> Block -> Bool
 isTopBlock = js_isTopBlock
+
+isWarning :: Workspace -> T.Text
+isWarning = textFromJSString . js_isWarning
 
 getTopBlocksLength :: Workspace -> Int
 getTopBlocksLength = js_getTopBlocksLength
@@ -106,6 +112,9 @@ foreign import javascript unsafe "Blockly.FunBlocks.workspaceToCode($1)"
 
 foreign import javascript unsafe "$1.isTopBlock($2)"
   js_isTopBlock :: Workspace -> Block -> Bool 
+
+foreign import javascript unsafe "$1.isWarning()"
+  js_isWarning :: Workspace -> JSString 
 
 foreign import javascript unsafe "Blockly.Workspace.getById($1)"
   js_getById :: JSString -> Workspace

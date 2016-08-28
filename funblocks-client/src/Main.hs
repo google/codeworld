@@ -60,23 +60,27 @@ btnStopClick = do
 btnRunClick ws = do
   Just doc <- liftIO currentDocument
   blocks <- liftIO $ getTopBlocks ws
-  if not $ containsProgramBlock blocks 
-    then do 
-      setErrorMessage "No Program block on the workspace"
-    else do
-      (code,errors) <- liftIO $ workspaceToCode ws
-      case errors of
-        ((Error msg block):es) -> do 
-                                    liftIO $ putStrLn $ T.unpack msg
-                                    liftIO $ setWarningText block msg
-                                    liftIO $ addErrorSelect block
-                                    liftIO $ js_removeErrorsDelay
-                                    setErrorMessage (T.unpack msg)
+  let w = isWarning ws
+  if T.length w > 0 then
+    setErrorMessage "A block on the workspace has arguments with the same name"
+  else do
+    if not $ containsProgramBlock blocks 
+      then do 
+        setErrorMessage "No Program block on the workspace"
+      else do
+        (code,errors) <- liftIO $ workspaceToCode ws
+        case errors of
+          ((Error msg block):es) -> do 
+                                      liftIO $ putStrLn $ T.unpack msg
+                                      liftIO $ setWarningText block msg
+                                      liftIO $ addErrorSelect block
+                                      liftIO $ js_removeErrorsDelay
+                                      setErrorMessage (T.unpack msg)
 
-        [] -> do
-          liftIO $ js_updateEditor (pack code)
-          liftIO $ js_cwcompile (pack code)
-  return ()
+          [] -> do
+            liftIO $ js_updateEditor (pack code)
+            liftIO $ js_cwcompile (pack code)
+    return ()
   where
     containsProgramBlock = any (\b -> getBlockType b `elem` programBlocks) 
 

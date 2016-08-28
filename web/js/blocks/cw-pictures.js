@@ -161,12 +161,11 @@ Blockly.Blocks['lists_path'] = {
     this.setColour(160);
     this.appendValueInput('LST')
         .appendField(new Blockly.FieldLabel("path","blocklyTextEmph") );
-    var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
     this.setOutput(true);
+    var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
     Blockly.TypeInf.defineFunction("path", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
     this.setAsFunction("path");
-  },
-  getExpr: null
+  }
 };
 
 

@@ -74,6 +74,7 @@ Blockly.Blocks['lists_comprehension'] = {
         guardExps.push(exp);
       }
     }
+    // TODO add guards
  
 
     var func = (a,b) => Exp.Let(a,b,c);   //Exp.AppFunc([a,b],Exp.Var(":"));
@@ -84,7 +85,14 @@ Blockly.Blocks['lists_comprehension'] = {
       if(inp.connection.isConnected()){
         var exp = inp.connection.targetBlock().getExpr();
         exp.tag = inp.connection;
-        result = Exp.Let(varName, Exp.App(Exp.Var("<]"),exp) , result); 
+        
+        var letExp = Exp.App(Exp.Var("<]"),exp);
+        var field = inp.fieldRow[0];
+        if(!field.typeExpr)
+          throw "Wrong field !";
+        letExp.tag = field;
+
+        result = Exp.Let(varName, letExp, result); 
       }
       else{
         result = Exp.Let(varName, Exp.Var('undef') , result); 
@@ -157,9 +165,10 @@ Blockly.Blocks['lists_comprehension'] = {
       if(this.getInput('DO').connection == connection)
         return this.vars_;
 
-      available = available.concat(this.vars_[i]);
       if(this.getInput('VAR' + i).connection == connection)
         return available;
+
+      available = available.concat(this.vars_[i]);
       
     }
     return [];

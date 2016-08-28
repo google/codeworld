@@ -86,9 +86,10 @@ Blockly.Blocks['lists_comprehension'] = {
         exp.tag = inp.connection;
         result = Exp.Let(varName, Exp.App(Exp.Var("<]"),exp) , result); 
       }
+      else{
+        result = Exp.Let(varName, Exp.Var('undef') , result); 
+      }
     }
-    console.log(result.toString());
-    // let i = <] exp1 in ...
    
     result = Exp.App(Exp.Var("MK"), result);
     result.tag = this.outputConnection;
@@ -164,11 +165,14 @@ Blockly.Blocks['lists_comprehension'] = {
 
   getVars: function(connection){
     var i = 0;
+    var available = [];
     for(i = 0; i < this.varCount_; i++){
       if(this.getInput('DO').connection == connection)
         return this.vars_;
+
+      available = available.concat(this.vars_[i]);
       if(this.getInput('VAR' + i).connection == connection)
-        return [this.vars_[i]];
+        return available;
       
     }
     return [];
@@ -482,7 +486,6 @@ Blockly.Blocks['lists_create_with_typed'] = {
     var func = (a,b) => Exp.AppFunc([a,b],Exp.Var(":"));
     var e = this.foldr(func,Exp.Var("[]"),exps);
     e.tag = this.outputConnection;
-    console.log(e.toString());
     return e;
   },
 

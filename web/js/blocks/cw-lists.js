@@ -48,23 +48,35 @@ Blockly.Blocks['lists_comprehension'] = {
     this.varCount_ = 2;
     this.guardCount_ = 0;
     this.resetArrows();
+    Blockly.TypeInf.defineFunction("&&&", Type.fromList([Type.Lit("Bool"),Type.Lit("Bool"),Type.Lit("Bool")]));
+    Blockly.TypeInf.defineFunction("filtB", Type.fromList([Type.Var('a'), Type.Lit("Bool"), Type.Var('a')  ]));
     Blockly.TypeInf.defineFunction("<]", Type.fromList([Type.Lit("list", [Type.Var("a")]), Type.Var("a")  ]));
     Blockly.TypeInf.defineFunction("MK", Type.fromList([Type.Var("a"), Type.Lit("list", [Type.Var("a")]) ]));
   },
 
+  foldr1 : function(fn, xs) {
+    var result = xs[xs.length - 1];
+      for (var i = xs.length - 2; i > -1; i--) {
+        result = fn(xs[i], result);
+      }
+    return result;
+  },
+
   getExpr: function(){
 
+    // Do main exp
     var mainExp = Exp.Var('undef');
     if (this.getInput("DO").connection.isConnected())
       mainExp = this.getInput("DO").connection.targetBlock().getExpr();
 
     mainExp.tag = this.getInput("DO").connection;
     
+    // Do Guards
     var guardExps = [];
     for(var i = 0; i < this.guardCount_; i++){
       var inp = this.getInput("GUARD" + i);
       if(inp.connection && inp.connection.isConnected()){
-        var exp = inp.connection.targetBlocks().getExpr();
+        var exp = inp.connection.targetBlock().getExpr();
         exp.tag = inp.connection;
         guardExps.push(exp);
       }
@@ -74,11 +86,30 @@ Blockly.Blocks['lists_comprehension'] = {
         guardExps.push(exp);
       }
     }
-    // TODO add guards
- 
 
+    var boolComb = (a,b) => Exp.AppFunc([a,b],Exp.Var("&&&"));
+    var guardExp;
+    if(guardExps.length == 0){
+      guardExp = Exp.Lit('Bool');
+    }
+    else if(guardExps.length == 1){
+      var inp = this.getInput("GUARD0");
+      if(inp.connection.isConnected()){
+        guardExp = inp.connection.targetBlock().getExpr();
+        guardExp.tag = inp.connection;
+      }
+      else{
+        guardExp = Exp.Lit('Bool');
+        guardExp.tag = inp.connection;
+      }
+    }
+    else{
+      guardExp = this.foldr1(boolComb,guardExps);
+    }
+    
+    // Do variables
     var func = (a,b) => Exp.Let(a,b,c);   //Exp.AppFunc([a,b],Exp.Var(":"));
-    var result = mainExp;
+    var result = Exp.AppFunc([mainExp, guardExp], Exp.Var('filtB'));
     for(var i = this.varCount_ - 1; i !== -1; i--){
       var varName = this.vars_[i];
       var inp = this.getInput("VAR" + i);
@@ -98,8 +129,9 @@ Blockly.Blocks['lists_comprehension'] = {
         result = Exp.Let(varName, Exp.Var('undef') , result); 
       }
     }
-   
-    result = Exp.App(Exp.Var("MK"), result);
+  
+    // Do result
+    result = Exp.AppFunc( [result], Exp.Var("MK"));
     result.tag = this.outputConnection;
     return result;
 
@@ -167,6 +199,9 @@ Blockly.Blocks['lists_comprehension'] = {
 
       if(this.getInput('VAR' + i).connection == connection)
         return available;
+
+      if(this.getInput('GUARD' +i).connection == connection)
+        return this.vars_;
 
       available = available.concat(this.vars_[i]);
       

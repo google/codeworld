@@ -352,42 +352,26 @@ cwPurple = DesignBlock "cwPurple" (Function "purple" [typeColor])
           inlineDef colorColor 
           (Tooltip "The color purple")
 
-cwGray = DesignBlock "cwGray" (Function "gray" [typeNumber, typeColor])
-          [Value "VALUE" [TextE "gray"] ] 
-          (Inline True) colorColor 
-          (Tooltip "The color gray, varying by an amount. Lower value is closer to black")
+cwGray = standardFunction "cwGray" "gray" Nothing [typeNumber, typeColor]
+          ["VALUE"] colorColor "The color gray, varying by an amount. Lower value is closer to black"
 
-cwMixed = DesignBlock "cwMixed" (Function "mixed" [typeColor, typeColor, typeColor])
-          [Dummy [TextE "mixed", icon "pot-mix.svg"] 
-           ,Value "COL1"  [] 
-           ,Value "COL2"  [] ] 
-          inlineDef colorColor 
-          (Tooltip "Gives the mix of two colors")
+cwMixed = standardFunction "cwMixed" "mixed" (Just "pot-mix.svg")  [typeColor, typeColor, typeColor]
+            ["COL1", "COL2"] colorColor "Two mix of two colors"
 
-cwLight = DesignBlock "cwLight" (Function "light" [typeColor, typeColor])
-          [Value "COL" [TextE "light"] ] 
-          (Inline True) colorColor 
-          (Tooltip "Makes a color lighter")
+cwLight = standardFunction "cwLight" "light" Nothing [typeColor, typeColor]
+            ["COL"] colorColor "A lighter color"
 
-cwDark = DesignBlock "cwDark" (Function "dark" [typeColor, typeColor])
-          [Value "COL" [TextE "dark"] ] 
-          (Inline True) colorColor 
-          (Tooltip "Makes a color darker")
+cwDark = standardFunction "cwDark" "dark" Nothing [typeColor, typeColor]
+            ["COL"] colorColor "A darker color"
 
-cwBright = DesignBlock "cwBright" (Function "bright" [typeColor, typeColor])
-          [Value "COL" [TextE "bright"] ] 
-          (Inline True) colorColor 
-          (Tooltip "Makes a color brighter")
+cwBright = standardFunction "cwBright" "bright" Nothing [typeColor, typeColor]
+            ["COL"] colorColor "A brighter color"
 
-cwDull = DesignBlock "cwDull" (Function "dull" [typeColor, typeColor])
-          [Value "COL" [TextE "dull"] ] 
-          (Inline True) colorColor 
-          (Tooltip "Makes a color duller")
+cwDull = standardFunction "cwDull" "dull" Nothing [typeColor, typeColor]
+            ["COL"] colorColor "A more dull color"
 
-cwTranslucent = DesignBlock "cwTranslucent" (Function "translucent" [typeColor, typeColor])
-          [Value "COL" [TextE "translucent"] ] 
-          (Inline True) colorColor 
-          (Tooltip "Makes a color more translucent")
+cwTranslucent = standardFunction "cwTranslucent" "translucent" Nothing [typeColor, typeColor]
+                  ["COL"] colorColor "A more translucent color"
 
 cwRGBA = DesignBlock "cwRGBA" (Function "RGBA" [typeNumber, typeNumber, typeNumber, typeNumber, typeColor])
           [Dummy [TextE "RGBA"] 

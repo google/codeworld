@@ -86,7 +86,7 @@ cwText = DesignBlock "cwText" (Function "text" [typeText, Picture] )
           (Tooltip "Enter some text")
 
 cwDrawingOf = DesignBlock "cwDrawingOf" (Top "drawingOf" [typePicture, typeProgram])
-          [Dummy [Text "(", TextE "drawingOf", icon "tooltip-image.svg"] 
+          [Dummy [Text "(", TextE "drawingOf", icon "shape-plus.svg"] 
             ,Value "VALUE" []
             ,Dummy [Text ")"]] 
           inlineDef colorProgram 

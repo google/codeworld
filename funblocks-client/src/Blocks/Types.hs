@@ -171,53 +171,29 @@ numExp = DesignBlock "numExp" (Function "^" [typeNumber, typeNumber, typeNumber]
          (Inline True) colorNumber 
          (Tooltip "Raise a number to a power")
 
-numMax = DesignBlock "numMax" (Function "max" [typeNumber, typeNumber, typeNumber])
-        [ Value "LEFT"  [TextE "max", icon "arrow-up.svg"] 
-         ,Value "RIGHT" [] 
-         ]
-         (Inline True) colorNumber 
-         (Tooltip "Take the maximum of two numbers")
+numMax = standardFunction "numMax" "max" (Just "arrow-up.svg") [typeNumber, typeNumber, typeNumber]
+            ["LEFT", "RIGHT"] colorNumber "The maximum of two numbers"
 
-numMin = DesignBlock "numMin" (Function "min" [typeNumber, typeNumber, typeNumber])
-        [ Value "LEFT"  [TextE "min", icon "arrow-down.svg"] 
-         ,Value "RIGHT" [] 
-         ]
-         (Inline True) colorNumber 
-         (Tooltip "Take the minimum of two numbers")
+numMin = standardFunction "numMin" "min" (Just "arrow-down.svg") [typeNumber, typeNumber, typeNumber]
+            ["LEFT", "RIGHT"] colorNumber "Take the minimum of two numbers"
 
-numOpposite = DesignBlock "numOpposite" (Function "opposite" [typeNumber, typeNumber])
-        [Value "NUM" [TextE "opposite", icon "minus-box.svg"] ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the negative of a number")
+numOpposite = standardFunction "numOpposite" "opposite" (Just "minus-box.svg") [typeNumber, typeNumber]
+                ["NUM"] colorNumber "The opposite of a number"
 
-numAbs = DesignBlock "numAbs" (Function "abs" [typeNumber, typeNumber])
-        [Value "NUM" [TextE "abs"] ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the absolute value of a number")
+numAbs = standardFunction "numAbs" "abs" Nothing [typeNumber, typeNumber]
+            ["NUM"] colorNumber "The absolute value of a number"
 
-numRound = DesignBlock "numRound" (Function "round" [typeNumber, typeNumber])
-        [Value "NUM" [TextE "round"] ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the number rounded to the nearest integer")
+numRound = standardFunction "numRound" "round" Nothing [typeNumber, typeNumber]
+            ["NUM"] colorNumber "The rounded value of a number"
 
-numReciprocal = DesignBlock "numReciprocal" (Function "reciprocal" [typeNumber, typeNumber])
-        [Value "NUM" [TextE "reciprocal"] ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the reciprocal of a number")
+numReciprocal = standardFunction "numReciprocal" "reciprocal" Nothing [typeNumber, typeNumber]
+                  ["NUM"] colorNumber "The reciprocal of a number"
 
-numQuot = DesignBlock "numQuot" (Function "quotient" [typeNumber, typeNumber, typeNumber])
-        [ Value "LEFT"  [TextE "quotient"] 
-         ,Value "RIGHT" [] 
-         ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the integer part of the result when dividing two numbers")
+numQuot = standardFunction "numQuot" "quotient" Nothing [typeNumber, typeNumber, typeNumber]
+              ["LEFT", "RIGHT"] colorNumber "The integer part when dividing two numbers"
 
-numRem = DesignBlock "numRem" (Function "remainder" [typeNumber, typeNumber, typeNumber])
-        [ Value "LEFT"  [TextE "remainder"] 
-         ,Value "RIGHT" [] 
-         ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the remainder when dividing two numbers")
+numRem = standardFunction "numRem" "remainder" Nothing [typeNumber, typeNumber, typeNumber]
+            ["LEFT", "RIGHT"] colorNumber "The remainder when dividing two numbers"
 
 numPi = DesignBlock "numPi" (Function "pi" [typeNumber])
           [Dummy 
@@ -231,19 +207,12 @@ numSqrt = DesignBlock "numSqrt" (Function "sqrt" [typeNumber, typeNumber])
          (Inline True) colorNumber 
          (Tooltip "Gives the square root of a number")
 
-numGCD = DesignBlock "numGCD" (Function "gcd" [typeNumber, typeNumber, typeNumber])
-        [ Value "LEFT"  [TextE "gcd"] 
-         ,Value "RIGHT" [] 
-         ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the greatest common demoninator between two numbers")
+numGCD = standardFunction "numGCD" "gcd" Nothing [typeNumber, typeNumber, typeNumber]
+            ["LEFT", "RIGHT"] colorNumber "The greatest common demonitator between two numbers"
 
-numLCM = DesignBlock "numLCM" (Function "lcm" [typeNumber, typeNumber, typeNumber])
-        [ Value "LEFT"  [TextE "lcm"] 
-         ,Value "RIGHT" [] 
-         ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the least common multiple between two numbers")
+numLCM = standardFunction "numLCM" "lcm" Nothing [typeNumber, typeNumber, typeNumber]
+          ["LEFT", "RIGHT"] colorNumber "The least common multiple between two numbers"
+
 
 -- TEXT ------------------------------------------------
 

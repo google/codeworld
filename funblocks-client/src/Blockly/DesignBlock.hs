@@ -64,7 +64,7 @@ instance Show User where
 data Type = Arrow [Type]
           | Number
           | Str -- Actually Text
-          | Bool
+          | Truth
           | Picture
           | Col -- Actually Color
           | List Type -- Have to define kinded types
@@ -79,7 +79,7 @@ instance Show Type where
   show (Custom (User name adt)) = name
   show (Poly c) = T.unpack c
   show (Str) = "Text"
-  show (Bool) = "Bool"
+  show (Truth) = "Truth"
   show (Col) = "Color"
   show (Comment) = ""
   show (Program) = "Program"

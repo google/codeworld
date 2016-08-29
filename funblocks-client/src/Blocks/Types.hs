@@ -21,6 +21,7 @@ module Blocks.Types(setBlockTypes, getTypeBlocks)
 import Blockly.DesignBlock 
 import Blockly.General
 import Blockly.Event
+import Data.List(intersperse)
 import qualified Data.Text as T
 
 colorPicture = Color 160
@@ -43,6 +44,19 @@ inlineDef = Inline True
 
 icon :: T.Text -> Field
 icon name = FieldImage ("ims/" `T.append` name) 20 20
+
+
+standardFunction cwName funcName ico types inputNames color tooltip = 
+    DesignBlock cwName (Function funcName types)
+      (header : (Dummy [Text "("])  : (argInputs ++ [ Dummy [Text ")"]] ) ) 
+      inlineDef
+      color
+      (Tooltip tooltip)
+  where
+    header = case ico of
+                Just i -> Dummy [TextE funcName, icon i] 
+                Nothing -> Dummy [TextE funcName]
+    argInputs = intersperse (Dummy [Text ","]) $ map (\name -> Value name []) inputNames
 
 -- PICTURE ----------------------------------------------
 cwBlank = DesignBlock "cwBlank" (Function "blank" [Picture])
@@ -71,79 +85,36 @@ cwText = DesignBlock "cwText" (Function "text" [typeText, Picture] )
           inlineDef colorPicture 
           (Tooltip "Enter some text")
 
-cwDrawingOf = DesignBlock "cwDrawingOf" (Top "drawingOf" [typePicture, typeProgram])
-          [Dummy [Text "(", TextE "drawingOf", icon "tooltip-image.svg"] 
-           ,Value "VALUE" [] 
-           ,Dummy [Text ")"]
-           ] 
-          inlineDef colorProgram 
-          (Tooltip "Displays a drawing of a picture")
+cwDrawingOf = standardFunction "cwDrawingOf" "drawingOf" (Just "tooltip-image.svg") [typePicture, typeProgram] ["VALUE"] 
+                colorProgram "drawingOf a picture"
 
-cwCircle = DesignBlock "cwCircle" (Function "circle" [typeNumber, typePicture])
-          [Dummy [TextE "circle"] 
-           ,Value "RADIUS" []] 
-          inlineDef colorPicture 
-          (Tooltip "Picture of a circle")
+cwCircle = standardFunction "cwCircle" "circle" Nothing [typeNumber, typePicture] ["RADIUS"] colorPicture "Picture of a circle"
 
-cwThickCircle = DesignBlock "cwThickCircle" (Function "thickCircle"  [typeNumber, typeNumber, typePicture])
-          [Dummy [TextE "thickCircle"] 
-           ,Value "RADIUS" [] 
-           ,Value "LINEWIDTH" [] ] 
-          inlineDef colorPicture 
-          (Tooltip "Picture of a circle")
+cwThickCircle = standardFunction "cwThickCircle" "thickCircle" Nothing [typeNumber, typeNumber, typePicture] ["RADIUS", "LINEWIDTH"] 
+                  colorPicture "Picture of a circle with a border"
 
-cwSolidCircle = DesignBlock "cwSolidCircle" (Function "solidCircle" [typeNumber, typePicture] )
-          [Dummy [TextE "solidCircle"] 
-           ,Value "RADIUS"  [] ]
-          inlineDef colorPicture 
-          (Tooltip "Picture of a solid circle")
+cwSolidCircle = standardFunction "cwSolidCircle" "solidCircle" Nothing [typeNumber, typePicture] ["RADIUS"] 
+                  colorPicture "Picture of a solid circle"
 
-cwRectangle = DesignBlock "cwRectangle" (Function "rectangle" [typeNumber, typeNumber, typePicture] )
-          [Dummy [TextE "rectangle"] 
-           ,Value "WIDTH"  []
-           ,Value "HEIGHT"  []]
-          inlineDef colorPicture 
-          (Tooltip "Picture of a rectangle")
+cwRectangle = standardFunction "cwRectangle" "rectangle" Nothing [typeNumber, typeNumber, typePicture] ["WIDTH", "HEIGHT"]
+                colorPicture "Picture of a rectangle"
 
-cwThickRectangle = DesignBlock "cwThickRectangle" (Function "thickRectangle" [typeNumber, typeNumber, typeNumber, typePicture] )
-          [Dummy [TextE "thickRectangle"] 
-           ,Value "WIDTH" []
-           ,Value "HEIGHT" [] 
-           ,Value "LINEWIDTH" [] ] 
-          inlineDef colorPicture 
-          (Tooltip "Picture of a rectangle")
+cwThickRectangle = standardFunction "cwThickRectangle" "thickRectangle" Nothing 
+                    [typeNumber, typeNumber, typeNumber, typePicture] ["WIDTH", "HEIGHT", "LINEWIDTH"]
+                    colorPicture "Picture of a rectangle with a border"
 
-cwSolidRectangle = DesignBlock "cwSolidRectangle" (Function "solidRectangle" [typeNumber, typeNumber, typePicture])
-          [Dummy [TextE "solidRectangle"] 
-           ,Value "WIDTH" [] 
-           ,Value "HEIGHT" [] ] 
-          inlineDef colorPicture 
-          (Tooltip "Picture of a solid rectangle")
+cwSolidRectangle = standardFunction "cwSolidRectangle" "solidRectangle" Nothing [typeNumber, typeNumber, typePicture] ["WIDTH", "HEIGHT"]
+                      colorPicture "Picture of a solid rectangle"
 
-cwArc = DesignBlock "cwArc" (Function "arc" [typeNumber, typeNumber, typeNumber, typePicture] )
-          [Dummy [TextE "arc"] 
-            ,Value "STARTANGLE" [] 
-           ,Value "ENDANGLE" [] 
-           ,Value "RADIUS" [] ] 
-          inlineDef colorPicture 
-          (Tooltip "A thin arc")
+cwArc = standardFunction "cwArc" "arc" Nothing [typeNumber, typeNumber, typeNumber, typePicture] ["STARTANGLE", "ENDANGLE", "RADIUS"]
+          colorPicture "A thin arc"
 
-cwSector = DesignBlock "cwSector" (Function "sector" [typeNumber, typeNumber, typeNumber, typePicture])
-          [Dummy [TextE "sector"] 
-            ,Value "STARTANGLE" [] 
-           ,Value "ENDANGLE" [] 
-           ,Value "RADIUS" [] ] 
-          inlineDef colorPicture 
-          (Tooltip "A solid sector of a circle")
+cwSector = standardFunction "cwSector" "sector" Nothing [typeNumber, typeNumber, typeNumber, typePicture] ["STARTANGLE", "ENDANGLE", "RADIUS"]
+              colorPicture "A solid sector of a circle"
 
-cwThickArc = DesignBlock "cwThickArc" (Function "thickArc" [typeNumber, typeNumber, typeNumber, typeNumber, typePicture])
-          [Dummy [TextE "thickArc"] 
-            ,Value "STARTANGLE" [] 
-           ,Value "ENDANGLE" [] 
-           ,Value "RADIUS" [] 
-           ,Value "LINEWIDTH" [] ] 
-          inlineDef colorPicture 
-          (Tooltip "A arc with variable line width")
+cwThickArc = standardFunction "cwThickArc" "thickArc" Nothing [typeNumber, typeNumber, typeNumber, typeNumber, typePicture]
+                ["STARTANGLE", "ENDANGLE", "RADIUS", "LINEWIDTH"]
+                colorPicture "An arc with variable line width"
 
 -- Transformations -----------------------------------------------
 cwColored = DesignBlock "cwColored" (Function "colored" [typePicture, typeColor, typePicture])

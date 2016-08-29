@@ -403,10 +403,8 @@ conOr = DesignBlock "conOr" (Function "||" [typeBool, typeBool, typeBool])
          (Inline True) colorBool 
          (Tooltip "Logical OR operation")
 
-conNot = DesignBlock "conNot" (Function "not" [typeBool, typeBool])
-        [ Value "VALUE"  [TextE "not"] ]
-         (Inline True) colorBool 
-         (Tooltip "Negation of the logical value")
+conNot = standardFunction "conNot" "not" Nothing [typeBool, typeBool]
+            ["VALUE"] colorBool "Negation of logical value"
 
 conEq = DesignBlock "conEq" (Function "==" [Poly "a", Poly "a", typeBool]) 
         [ Value "LEFT"  [] 
@@ -464,15 +462,11 @@ conLeq = DesignBlock "conLeq" (Function "<=" [typeNumber, typeNumber, typeBool])
          (Inline True) colorBool 
          (Tooltip "Tells whether one number is less than or equal to ther other")
 
-conEven = DesignBlock "conEven" (Function "even" [typeNumber, typeBool])
-        [ Value "VALUE"  [TextE "even"] ]
-         (Inline True) colorBool 
-         (Tooltip "Tells whether the number is even")
+conEven = standardFunction "conEven" "even" Nothing [typeNumber, typeBool]
+            ["VALUE"] colorBool "True if the number is even"
 
-conOdd = DesignBlock "conOdd" (Function "odd" [typeNumber, typeBool])
-        [ Value "VALUE"  [TextE "odd"] ]
-         (Inline True) colorBool 
-         (Tooltip "Tells whether the number is odd")
+conOdd = standardFunction "conOdd" "odd" Nothing [typeNumber, typeBool]
+            ["VALUE"] colorBool "True if the number is odd"
 
 conStartWith = standardFunction "conStartWith" "startsWith" Nothing [typeText, typeText, typeBool]
                 ["TEXTMAIN", "TEXTTEST"] colorBool "Test whether the text starts with the characters of the other text"

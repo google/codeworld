@@ -85,8 +85,13 @@ cwText = DesignBlock "cwText" (Function "text" [typeText, Picture] )
           inlineDef colorPicture 
           (Tooltip "Enter some text")
 
-cwDrawingOf = standardFunction "cwDrawingOf" "drawingOf" (Just "tooltip-image.svg") [typePicture, typeProgram] ["VALUE"] 
-                colorProgram "drawingOf a picture"
+cwDrawingOf = DesignBlock "cwDrawingOf" (Top "drawingOf" [typePicture, typeProgram])
+          [Dummy [Text "(", TextE "drawingOf", icon "tooltip-image.svg"] 
+            ,Value "VALUE" []
+            ,Dummy [Text ")"]] 
+          inlineDef colorProgram 
+          (Tooltip "Displays a drawing of a picture")
+
 
 cwCircle = standardFunction "cwCircle" "circle" Nothing [typeNumber, typePicture] ["RADIUS"] colorPicture "Picture of a circle"
 
@@ -117,39 +122,17 @@ cwThickArc = standardFunction "cwThickArc" "thickArc" Nothing [typeNumber, typeN
                 colorPicture "An arc with variable line width"
 
 -- Transformations -----------------------------------------------
-cwColored = DesignBlock "cwColored" (Function "colored" [typePicture, typeColor, typePicture])
-          [Dummy [TextE "colored", icon "format-color-fill.svg"] 
-           ,Value "PICTURE" []
-           ,Value "COLOR" []
-           ]
-          (Inline True) colorPicture 
-          (Tooltip "Change the color of a picture")
+cwColored = standardFunction "cwColored" "colored" (Just "format-color-fill.svg") [typePicture, typeColor, typePicture]
+              ["PICTURE", "COLOR"] colorPicture "A colored picture"
 
-cwTranslate = DesignBlock "cwTranslate" (Function "translated" [typePicture, typeNumber, typeNumber, typePicture])
-          [Dummy [TextE "translated", icon "cursor-move.svg"] 
-           ,Value "PICTURE" [] 
-           ,Value "X" []
-           ,Value "Y" []
-          ] 
-          (Inline True) colorPicture 
-          (Tooltip "Translate a picture")
+cwTranslate = standardFunction "cwTranslate" "translated" (Just "cursor-move.svg") [typePicture, typeNumber, typeNumber, typePicture]
+                ["PICTURE", "X", "Y"] colorPicture "A translated picture"
 
-cwScale = DesignBlock "cwScale" (Function "scaled" [typePicture, typeNumber, typeNumber, typePicture])
-          [Dummy [TextE "scaled" , icon "move-resize-variant.svg"] 
-           ,Value "PICTURE" [] 
-           ,Value "HORZ" []
-           ,Value "VERTZ" []
-          ] 
-          (Inline True) colorPicture 
-          (Tooltip "Scale a picture")
+cwScale = standardFunction "cwScale" "scaled" (Just "move-resize-variant.svg") [typePicture, typeNumber, typeNumber, typePicture]
+            ["PICTURE", "HORZ", "VERTZ"] colorPicture "A scaled picture"
 
-cwRotate = DesignBlock "cwRotate" (Function "rotated" [typePicture, typeNumber, typePicture ])
-          [Dummy [TextE "rotated", icon "rotate-3d.svg"] 
-           ,Value "PICTURE" []
-           ,Value "ANGLE" []
-          ] 
-          (Inline True) colorPicture 
-          (Tooltip "Rotate")
+cwRotate = standardFunction "cwRotate" "rotated" (Just "rotate-3d.svg") [typePicture, typeNumber, typePicture ]
+              ["PICTURE", "ANGLE"] colorPicture "A rotated picture"
 
 -- NUMBERS ---------------------------------------------
 

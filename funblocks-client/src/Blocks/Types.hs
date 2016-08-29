@@ -80,10 +80,8 @@ cwCodeWorldLogo = DesignBlock "cwCodeWorldLogo" (Function "codeWorldLogo" [Pictu
           inlineDef colorPicture 
           (Tooltip "Picture of CodeWorld logo")
 
-cwText = DesignBlock "cwText" (Function "text" [typeText, Picture] )
-          [Value "TEXT" [TextE "text" ] ]
-          inlineDef colorPicture 
-          (Tooltip "Enter some text")
+cwText = standardFunction "cwText" "text" Nothing [typeText, Picture]
+            ["TEXT"] colorPicture "Picture of text"
 
 cwDrawingOf = DesignBlock "cwDrawingOf" (Top "drawingOf" [typePicture, typeProgram])
           [Dummy [Text "(", TextE "drawingOf", icon "shape-plus.svg"] 

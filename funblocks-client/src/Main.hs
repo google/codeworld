@@ -28,11 +28,12 @@ import GHCJS.DOM.Element (setInnerHTML, click, Element)
 import GHCJS.DOM.EventM (on )
 import GHCJS.Types
 import GHCJS.Foreign
+import GHCJS.Foreign.Callback
 import GHCJS.Marshal
 import Data.JSString.Text
 import qualified Data.JSString as JStr
 import qualified Data.Text as T
-import Control.Monad.Trans (liftIO)
+import Control.Monad.Trans (liftIO, lift)
 import Blockly.Workspace hiding (workspaceToCode)
 import Blocks.Parser
 import Blocks.CodeGen
@@ -41,6 +42,7 @@ import Blockly.Event
 import Blockly.General
 import Blockly.Block 
 import Data.Monoid 
+import Control.Monad
 
 pack = textToJSString
 unpack = textFromJSString
@@ -58,6 +60,23 @@ programBlocks = map T.pack ["cwDrawingOf","cwAnimationOf", "cwSimulationOf", "cw
 btnStopClick = do 
   liftIO js_stop
 
+
+runOrError :: Workspace -> IO ()
+runOrError ws = do
+        (code,errors) <- workspaceToCode ws
+        case errors of
+          ((Error msg block):es) -> do 
+                                      putStrLn $ T.unpack msg
+                                      setWarningText block msg
+                                      addErrorSelect block
+                                      js_removeErrorsDelay
+                                      setErrorMessage (T.unpack msg)
+
+          [] -> do
+            liftIO $ js_updateEditor (pack code)
+            liftIO $ js_cwcompile (pack code)
+
+
 btnRunClick ws = do
   Just doc <- liftIO currentDocument
   blocks <- liftIO $ getTopBlocks ws
@@ -69,18 +88,7 @@ btnRunClick ws = do
       then do 
         setErrorMessage "No Program block on the workspace"
       else do
-        (code,errors) <- liftIO $ workspaceToCode ws
-        case errors of
-          ((Error msg block):es) -> do 
-                                      liftIO $ putStrLn $ T.unpack msg
-                                      liftIO $ setWarningText block msg
-                                      liftIO $ addErrorSelect block
-                                      liftIO $ js_removeErrorsDelay
-                                      setErrorMessage (T.unpack msg)
-
-          [] -> do
-            liftIO $ js_updateEditor (pack code)
-            liftIO $ js_cwcompile (pack code)
+        liftIO $ runOrError ws
     return ()
   where
     containsProgramBlock = any (\b -> getBlockType b `elem` programBlocks) 
@@ -105,8 +113,10 @@ funblocks = do
       hookEvent "btnStop" click btnStopClick
       liftIO setBlockTypes -- assign layout and types of Blockly blocks
       liftIO $ addChangeListener workspace (onChange workspace)
-      liftIO $ js_showEast
-      liftIO $ js_openEast
+      liftIO js_showEast
+      liftIO js_openEast
+      -- Auto start
+      liftIO $ setRunFunc workspace
       return ()
 
 
@@ -121,6 +131,14 @@ main = do
 onChange ws event = do 
                       (code, errs) <- workspaceToCode ws
                       js_updateEditor (pack code)
+
+
+
+setRunFunc :: Workspace -> IO ()
+setRunFunc ws = do
+      cb <- syncCallback ContinueAsync (do 
+                                        runOrError ws) 
+      js_setRunFunc cb
 
 -- FFI
 
@@ -156,6 +174,8 @@ foreign import javascript unsafe "window.mainLayout.show('east')"
 foreign import javascript unsafe "window.mainLayout.open('east')"
   js_openEast :: IO ()
 
-
 foreign import javascript unsafe "Blockly.inject($1, {readOnly: true});"
   js_injectReadOnly :: JSString -> IO Workspace
+
+foreign import javascript unsafe "runFunc = $1"
+  js_setRunFunc :: Callback a -> IO ()

@@ -137,7 +137,7 @@ function run(xmlHash, codeHash, msg, error, dhash) {
         document.getElementById('runner').style.display = 'none';
         window.programRunning = false;
     }
-    if(!hash){ // We stopped, don't show message window
+    if(!hash && !error){ // We stopped, don't show message window
       document.getElementById('message').style.display = 'none';
     }
 
@@ -164,7 +164,6 @@ function removeErrors()
 
     blocks.forEach(function(block){
       block.removeErrorSelect();
-      block.setWarningText(null);
     });
 }
 

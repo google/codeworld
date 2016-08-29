@@ -80,9 +80,11 @@ runOrError ws = do
 btnRunClick ws = do
   Just doc <- liftIO currentDocument
   blocks <- liftIO $ getTopBlocks ws
-  w <- liftIO $ isWarning ws
+  (block, w) <- liftIO $ isWarning ws
   if T.length w > 0 then do
     setErrorMessage (T.unpack w)
+    liftIO $ addErrorSelect block
+    liftIO $ js_removeErrorsDelay
   else do
     if not $ containsProgramBlock blocks 
       then do 
@@ -117,6 +119,7 @@ funblocks = do
       liftIO js_openEast
       -- Auto start
       liftIO $ setRunFunc workspace
+      -- when (T.length hash > 0) $ liftIO $ runOrError workspace
       return ()
 
 

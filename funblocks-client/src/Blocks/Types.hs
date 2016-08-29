@@ -21,6 +21,7 @@ module Blocks.Types(setBlockTypes, getTypeBlocks)
 import Blockly.DesignBlock 
 import Blockly.General
 import Blockly.Event
+import Data.List(intersperse)
 import qualified Data.Text as T
 
 colorPicture = Color 160
@@ -44,6 +45,19 @@ inlineDef = Inline True
 icon :: T.Text -> Field
 icon name = FieldImage ("ims/" `T.append` name) 20 20
 
+
+standardFunction cwName funcName ico types inputNames color tooltip = 
+    DesignBlock cwName (Function funcName types)
+      (header : (Dummy [Text "("])  : (argInputs ++ [ Dummy [Text ")"]] ) ) 
+      inlineDef
+      color
+      (Tooltip tooltip)
+  where
+    header = case ico of
+                Just i -> Dummy [TextE funcName, icon i] 
+                Nothing -> Dummy [TextE funcName]
+    argInputs = intersperse (Dummy [Text ","]) $ map (\name -> Value name []) inputNames
+
 -- PICTURE ----------------------------------------------
 cwBlank = DesignBlock "cwBlank" (Function "blank" [Picture])
           [Dummy 
@@ -66,117 +80,57 @@ cwCodeWorldLogo = DesignBlock "cwCodeWorldLogo" (Function "codeWorldLogo" [Pictu
           inlineDef colorPicture 
           (Tooltip "Picture of CodeWorld logo")
 
-cwText = DesignBlock "cwText" (Function "text" [typeText, Picture] )
-          [Value "TEXT" [TextE "text" ] ]
-          inlineDef colorPicture 
-          (Tooltip "Enter some text")
+cwText = standardFunction "cwText" "text" Nothing [typeText, Picture]
+            ["TEXT"] colorPicture "Picture of text"
 
 cwDrawingOf = DesignBlock "cwDrawingOf" (Top "drawingOf" [typePicture, typeProgram])
-          [Dummy [TextE "drawingOf", icon "tooltip-image.svg"] 
-           ,Value "VALUE" [] ] 
+          [Dummy [Text "(", TextE "drawingOf", icon "shape-plus.svg"] 
+            ,Value "VALUE" []
+            ,Dummy [Text ")"]] 
           inlineDef colorProgram 
           (Tooltip "Displays a drawing of a picture")
 
-cwCircle = DesignBlock "cwCircle" (Function "circle" [typeNumber, typePicture])
-          [Dummy [TextE "circle"] 
-           ,Value "RADIUS" []] 
-          inlineDef colorPicture 
-          (Tooltip "Picture of a circle")
 
-cwThickCircle = DesignBlock "cwThickCircle" (Function "thickCircle"  [typeNumber, typeNumber, typePicture])
-          [Dummy [TextE "thickCircle"] 
-           ,Value "RADIUS" [] 
-           ,Value "LINEWIDTH" [] ] 
-          inlineDef colorPicture 
-          (Tooltip "Picture of a circle")
+cwCircle = standardFunction "cwCircle" "circle" Nothing [typeNumber, typePicture] ["RADIUS"] colorPicture "Picture of a circle"
 
-cwSolidCircle = DesignBlock "cwSolidCircle" (Function "solidCircle" [typeNumber, typePicture] )
-          [Dummy [TextE "solidCircle"] 
-           ,Value "RADIUS"  [] ]
-          inlineDef colorPicture 
-          (Tooltip "Picture of a solid circle")
+cwThickCircle = standardFunction "cwThickCircle" "thickCircle" Nothing [typeNumber, typeNumber, typePicture] ["RADIUS", "LINEWIDTH"] 
+                  colorPicture "Picture of a circle with a border"
 
-cwRectangle = DesignBlock "cwRectangle" (Function "rectangle" [typeNumber, typeNumber, typePicture] )
-          [Dummy [TextE "rectangle"] 
-           ,Value "WIDTH"  []
-           ,Value "HEIGHT"  []]
-          inlineDef colorPicture 
-          (Tooltip "Picture of a rectangle")
+cwSolidCircle = standardFunction "cwSolidCircle" "solidCircle" Nothing [typeNumber, typePicture] ["RADIUS"] 
+                  colorPicture "Picture of a solid circle"
 
-cwThickRectangle = DesignBlock "cwThickRectangle" (Function "thickRectangle" [typeNumber, typeNumber, typeNumber, typePicture] )
-          [Dummy [TextE "thickRectangle"] 
-           ,Value "WIDTH" []
-           ,Value "HEIGHT" [] 
-           ,Value "LINEWIDTH" [] ] 
-          inlineDef colorPicture 
-          (Tooltip "Picture of a rectangle")
+cwRectangle = standardFunction "cwRectangle" "rectangle" Nothing [typeNumber, typeNumber, typePicture] ["WIDTH", "HEIGHT"]
+                colorPicture "Picture of a rectangle"
 
-cwSolidRectangle = DesignBlock "cwSolidRectangle" (Function "solidRectangle" [typeNumber, typeNumber, typePicture])
-          [Dummy [TextE "solidRectangle"] 
-           ,Value "WIDTH" [] 
-           ,Value "HEIGHT" [] ] 
-          inlineDef colorPicture 
-          (Tooltip "Picture of a solid rectangle")
+cwThickRectangle = standardFunction "cwThickRectangle" "thickRectangle" Nothing 
+                    [typeNumber, typeNumber, typeNumber, typePicture] ["WIDTH", "HEIGHT", "LINEWIDTH"]
+                    colorPicture "Picture of a rectangle with a border"
 
-cwArc = DesignBlock "cwArc" (Function "arc" [typeNumber, typeNumber, typeNumber, typePicture] )
-          [Dummy [TextE "arc"] 
-            ,Value "STARTANGLE" [] 
-           ,Value "ENDANGLE" [] 
-           ,Value "RADIUS" [] ] 
-          inlineDef colorPicture 
-          (Tooltip "A thin arc")
+cwSolidRectangle = standardFunction "cwSolidRectangle" "solidRectangle" Nothing [typeNumber, typeNumber, typePicture] ["WIDTH", "HEIGHT"]
+                      colorPicture "Picture of a solid rectangle"
 
-cwSector = DesignBlock "cwSector" (Function "sector" [typeNumber, typeNumber, typeNumber, typePicture])
-          [Dummy [TextE "sector"] 
-            ,Value "STARTANGLE" [] 
-           ,Value "ENDANGLE" [] 
-           ,Value "RADIUS" [] ] 
-          inlineDef colorPicture 
-          (Tooltip "A solid sector of a circle")
+cwArc = standardFunction "cwArc" "arc" Nothing [typeNumber, typeNumber, typeNumber, typePicture] ["STARTANGLE", "ENDANGLE", "RADIUS"]
+          colorPicture "A thin arc"
 
-cwThickArc = DesignBlock "cwThickArc" (Function "thickArc" [typeNumber, typeNumber, typeNumber, typeNumber, typePicture])
-          [Dummy [TextE "thickArc"] 
-            ,Value "STARTANGLE" [] 
-           ,Value "ENDANGLE" [] 
-           ,Value "RADIUS" [] 
-           ,Value "LINEWIDTH" [] ] 
-          inlineDef colorPicture 
-          (Tooltip "A arc with variable line width")
+cwSector = standardFunction "cwSector" "sector" Nothing [typeNumber, typeNumber, typeNumber, typePicture] ["STARTANGLE", "ENDANGLE", "RADIUS"]
+              colorPicture "A solid sector of a circle"
+
+cwThickArc = standardFunction "cwThickArc" "thickArc" Nothing [typeNumber, typeNumber, typeNumber, typeNumber, typePicture]
+                ["STARTANGLE", "ENDANGLE", "RADIUS", "LINEWIDTH"]
+                colorPicture "An arc with variable line width"
 
 -- Transformations -----------------------------------------------
-cwColored = DesignBlock "cwColored" (Function "colored" [typePicture, typeColor, typePicture])
-          [Dummy [TextE "colored", icon "format-color-fill.svg"] 
-           ,Value "PICTURE" []
-           ,Value "COLOR" []
-           ]
-          (Inline True) colorPicture 
-          (Tooltip "Change the color of a picture")
+cwColored = standardFunction "cwColored" "colored" (Just "format-color-fill.svg") [typePicture, typeColor, typePicture]
+              ["PICTURE", "COLOR"] colorPicture "A colored picture"
 
-cwTranslate = DesignBlock "cwTranslate" (Function "translated" [typePicture, typeNumber, typeNumber, typePicture])
-          [Dummy [TextE "translated", icon "cursor-move.svg"] 
-           ,Value "PICTURE" [] 
-           ,Value "X" []
-           ,Value "Y" []
-          ] 
-          (Inline True) colorPicture 
-          (Tooltip "Translate a picture")
+cwTranslate = standardFunction "cwTranslate" "translated" (Just "cursor-move.svg") [typePicture, typeNumber, typeNumber, typePicture]
+                ["PICTURE", "X", "Y"] colorPicture "A translated picture"
 
-cwScale = DesignBlock "cwScale" (Function "scaled" [typePicture, typeNumber, typeNumber, typePicture])
-          [Dummy [TextE "scaled" , icon "move-resize-variant.svg"] 
-           ,Value "PICTURE" [] 
-           ,Value "HORZ" []
-           ,Value "VERTZ" []
-          ] 
-          (Inline True) colorPicture 
-          (Tooltip "Scale a picture")
+cwScale = standardFunction "cwScale" "scaled" (Just "move-resize-variant.svg") [typePicture, typeNumber, typeNumber, typePicture]
+            ["PICTURE", "HORZ", "VERTZ"] colorPicture "A scaled picture"
 
-cwRotate = DesignBlock "cwRotate" (Function "rotated" [typePicture, typeNumber, typePicture ])
-          [Dummy [TextE "rotated", icon "rotate-3d.svg"] 
-           ,Value "PICTURE" []
-           ,Value "ANGLE" []
-          ] 
-          (Inline True) colorPicture 
-          (Tooltip "Rotate")
+cwRotate = standardFunction "cwRotate" "rotated" (Just "rotate-3d.svg") [typePicture, typeNumber, typePicture ]
+              ["PICTURE", "ANGLE"] colorPicture "A rotated picture"
 
 -- NUMBERS ---------------------------------------------
 
@@ -215,53 +169,29 @@ numExp = DesignBlock "numExp" (Function "^" [typeNumber, typeNumber, typeNumber]
          (Inline True) colorNumber 
          (Tooltip "Raise a number to a power")
 
-numMax = DesignBlock "numMax" (Function "max" [typeNumber, typeNumber, typeNumber])
-        [ Value "LEFT"  [TextE "max", icon "arrow-up.svg"] 
-         ,Value "RIGHT" [] 
-         ]
-         (Inline True) colorNumber 
-         (Tooltip "Take the maximum of two numbers")
+numMax = standardFunction "numMax" "max" (Just "arrow-up.svg") [typeNumber, typeNumber, typeNumber]
+            ["LEFT", "RIGHT"] colorNumber "The maximum of two numbers"
 
-numMin = DesignBlock "numMin" (Function "min" [typeNumber, typeNumber, typeNumber])
-        [ Value "LEFT"  [TextE "min", icon "arrow-down.svg"] 
-         ,Value "RIGHT" [] 
-         ]
-         (Inline True) colorNumber 
-         (Tooltip "Take the minimum of two numbers")
+numMin = standardFunction "numMin" "min" (Just "arrow-down.svg") [typeNumber, typeNumber, typeNumber]
+            ["LEFT", "RIGHT"] colorNumber "Take the minimum of two numbers"
 
-numOpposite = DesignBlock "numOpposite" (Function "opposite" [typeNumber, typeNumber])
-        [Value "NUM" [TextE "opposite", icon "minus-box.svg"] ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the negative of a number")
+numOpposite = standardFunction "numOpposite" "opposite" (Just "minus-box.svg") [typeNumber, typeNumber]
+                ["NUM"] colorNumber "The opposite of a number"
 
-numAbs = DesignBlock "numAbs" (Function "abs" [typeNumber, typeNumber])
-        [Value "NUM" [TextE "abs"] ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the absolute value of a number")
+numAbs = standardFunction "numAbs" "abs" Nothing [typeNumber, typeNumber]
+            ["NUM"] colorNumber "The absolute value of a number"
 
-numRound = DesignBlock "numRound" (Function "round" [typeNumber, typeNumber])
-        [Value "NUM" [TextE "round"] ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the number rounded to the nearest integer")
+numRound = standardFunction "numRound" "round" Nothing [typeNumber, typeNumber]
+            ["NUM"] colorNumber "The rounded value of a number"
 
-numReciprocal = DesignBlock "numReciprocal" (Function "reciprocal" [typeNumber, typeNumber])
-        [Value "NUM" [TextE "reciprocal"] ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the reciprocal of a number")
+numReciprocal = standardFunction "numReciprocal" "reciprocal" Nothing [typeNumber, typeNumber]
+                  ["NUM"] colorNumber "The reciprocal of a number"
 
-numQuot = DesignBlock "numQuot" (Function "quotient" [typeNumber, typeNumber, typeNumber])
-        [ Value "LEFT"  [TextE "quotient"] 
-         ,Value "RIGHT" [] 
-         ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the integer part of the result when dividing two numbers")
+numQuot = standardFunction "numQuot" "quotient" Nothing [typeNumber, typeNumber, typeNumber]
+              ["LEFT", "RIGHT"] colorNumber "The integer part when dividing two numbers"
 
-numRem = DesignBlock "numRem" (Function "remainder" [typeNumber, typeNumber, typeNumber])
-        [ Value "LEFT"  [TextE "remainder"] 
-         ,Value "RIGHT" [] 
-         ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the remainder when dividing two numbers")
+numRem = standardFunction "numRem" "remainder" Nothing [typeNumber, typeNumber, typeNumber]
+            ["LEFT", "RIGHT"] colorNumber "The remainder when dividing two numbers"
 
 numPi = DesignBlock "numPi" (Function "pi" [typeNumber])
           [Dummy 
@@ -275,44 +205,26 @@ numSqrt = DesignBlock "numSqrt" (Function "sqrt" [typeNumber, typeNumber])
          (Inline True) colorNumber 
          (Tooltip "Gives the square root of a number")
 
-numGCD = DesignBlock "numGCD" (Function "gcd" [typeNumber, typeNumber, typeNumber])
-        [ Value "LEFT"  [TextE "gcd"] 
-         ,Value "RIGHT" [] 
-         ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the greatest common demoninator between two numbers")
+numGCD = standardFunction "numGCD" "gcd" Nothing [typeNumber, typeNumber, typeNumber]
+            ["LEFT", "RIGHT"] colorNumber "The greatest common demonitator between two numbers"
 
-numLCM = DesignBlock "numLCM" (Function "lcm" [typeNumber, typeNumber, typeNumber])
-        [ Value "LEFT"  [TextE "lcm"] 
-         ,Value "RIGHT" [] 
-         ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the least common multiple between two numbers")
+numLCM = standardFunction "numLCM" "lcm" Nothing [typeNumber, typeNumber, typeNumber]
+          ["LEFT", "RIGHT"] colorNumber "The least common multiple between two numbers"
+
 
 -- TEXT ------------------------------------------------
 
-txtConcat = DesignBlock "txtConcat" (Function "<>" [typeText, typeText, typeText])
-        [ Value "LEFT"  [] 
-         ,Value "RIGHT" [TextE "<>"] 
-         ]
-         (Inline True) colorText 
-         (Tooltip "Concatenates two pieces of text together")
+txtPrinted = standardFunction "txtPrinted" "printed" Nothing [typeNumber, typeText]
+              ["TEXT"] colorText "The text value of a number"
 
-txtPrinted = DesignBlock "txtPrinted" (Function "printed" [typeNumber, typeText])
-        [ Value "TEXT"  [TextE "printed"] ]
-         (Inline True) colorText 
-         (Tooltip "Gives the text value of a number")
+txtLowercase = standardFunction "txtLowercase" "lowercase" Nothing [typeText, typeText]
+                ["TEXT"] colorText "The text in lowercase"
 
-txtLowercase = DesignBlock "txtLowercase" (Function "lowercase" [typeText, typeText])
-        [ Value "TEXT"  [TextE "lowercase"] ]
-         (Inline True) colorText 
-         (Tooltip "Gives the text all in lowercase")
+txtUppercase = standardFunction "txtUppercase" "uppercase" Nothing [typeText, typeText]
+                ["TEXT"] colorText "The text in uppercase"
 
-txtUppercase = DesignBlock "txtUppercase" (Function "uppercase" [typeText, typeText])
-        [ Value "TEXT"  [TextE "uppercase"] ]
-         (Inline True) colorText 
-         (Tooltip "Gives the text all in uppercase")
-
+-- A note to future readers, capitalized in GHJCS crashes, so this isn't used.
+-- Issue #159
 txtCapitalized = DesignBlock "txtCapitalized" (Function "capitalized" [typeText, typeText])
         [ Value "TEXT"  [TextE "capitalized"] ]
          (Inline True) colorText 
@@ -438,42 +350,26 @@ cwPurple = DesignBlock "cwPurple" (Function "purple" [typeColor])
           inlineDef colorColor 
           (Tooltip "The color purple")
 
-cwGray = DesignBlock "cwGray" (Function "gray" [typeNumber, typeColor])
-          [Value "VALUE" [TextE "gray"] ] 
-          (Inline True) colorColor 
-          (Tooltip "The color gray, varying by an amount. Lower value is closer to black")
+cwGray = standardFunction "cwGray" "gray" Nothing [typeNumber, typeColor]
+          ["VALUE"] colorColor "The color gray, varying by an amount. Lower value is closer to black"
 
-cwMixed = DesignBlock "cwMixed" (Function "mixed" [typeColor, typeColor, typeColor])
-          [Dummy [TextE "mixed", icon "pot-mix.svg"] 
-           ,Value "COL1"  [] 
-           ,Value "COL2"  [] ] 
-          inlineDef colorColor 
-          (Tooltip "Gives the mix of two colors")
+cwMixed = standardFunction "cwMixed" "mixed" (Just "pot-mix.svg")  [typeColor, typeColor, typeColor]
+            ["COL1", "COL2"] colorColor "Two mix of two colors"
 
-cwLight = DesignBlock "cwLight" (Function "light" [typeColor, typeColor])
-          [Value "COL" [TextE "light"] ] 
-          (Inline True) colorColor 
-          (Tooltip "Makes a color lighter")
+cwLight = standardFunction "cwLight" "light" Nothing [typeColor, typeColor]
+            ["COL"] colorColor "A lighter color"
 
-cwDark = DesignBlock "cwDark" (Function "dark" [typeColor, typeColor])
-          [Value "COL" [TextE "dark"] ] 
-          (Inline True) colorColor 
-          (Tooltip "Makes a color darker")
+cwDark = standardFunction "cwDark" "dark" Nothing [typeColor, typeColor]
+            ["COL"] colorColor "A darker color"
 
-cwBright = DesignBlock "cwBright" (Function "bright" [typeColor, typeColor])
-          [Value "COL" [TextE "bright"] ] 
-          (Inline True) colorColor 
-          (Tooltip "Makes a color brighter")
+cwBright = standardFunction "cwBright" "bright" Nothing [typeColor, typeColor]
+            ["COL"] colorColor "A brighter color"
 
-cwDull = DesignBlock "cwDull" (Function "dull" [typeColor, typeColor])
-          [Value "COL" [TextE "dull"] ] 
-          (Inline True) colorColor 
-          (Tooltip "Makes a color duller")
+cwDull = standardFunction "cwDull" "dull" Nothing [typeColor, typeColor]
+            ["COL"] colorColor "A more dull color"
 
-cwTranslucent = DesignBlock "cwTranslucent" (Function "translucent" [typeColor, typeColor])
-          [Value "COL" [TextE "translucent"] ] 
-          (Inline True) colorColor 
-          (Tooltip "Makes a color more translucent")
+cwTranslucent = standardFunction "cwTranslucent" "translucent" Nothing [typeColor, typeColor]
+                  ["COL"] colorColor "A more translucent color"
 
 cwRGBA = DesignBlock "cwRGBA" (Function "RGBA" [typeNumber, typeNumber, typeNumber, typeNumber, typeColor])
           [Dummy [TextE "RGBA"] 
@@ -507,10 +403,8 @@ conOr = DesignBlock "conOr" (Function "||" [typeBool, typeBool, typeBool])
          (Inline True) colorBool 
          (Tooltip "Logical OR operation")
 
-conNot = DesignBlock "conNot" (Function "not" [typeBool, typeBool])
-        [ Value "VALUE"  [TextE "not"] ]
-         (Inline True) colorBool 
-         (Tooltip "Negation of the logical value")
+conNot = standardFunction "conNot" "not" Nothing [typeBool, typeBool]
+            ["VALUE"] colorBool "Negation of logical value"
 
 conEq = DesignBlock "conEq" (Function "==" [Poly "a", Poly "a", typeBool]) 
         [ Value "LEFT"  [] 
@@ -568,29 +462,17 @@ conLeq = DesignBlock "conLeq" (Function "<=" [typeNumber, typeNumber, typeBool])
          (Inline True) colorBool 
          (Tooltip "Tells whether one number is less than or equal to ther other")
 
-conEven = DesignBlock "conEven" (Function "even" [typeNumber, typeBool])
-        [ Value "VALUE"  [TextE "even"] ]
-         (Inline True) colorBool 
-         (Tooltip "Tells whether the number is even")
+conEven = standardFunction "conEven" "even" Nothing [typeNumber, typeBool]
+            ["VALUE"] colorBool "True if the number is even"
 
-conOdd = DesignBlock "conOdd" (Function "odd" [typeNumber, typeBool])
-        [ Value "VALUE"  [TextE "odd"] ]
-         (Inline True) colorBool 
-         (Tooltip "Tells whether the number is odd")
+conOdd = standardFunction "conOdd" "odd" Nothing [typeNumber, typeBool]
+            ["VALUE"] colorBool "True if the number is odd"
 
-conStartWith = DesignBlock "conStartWith" (Function "startWith" [typeText, typeText, typeBool] )
-          [Dummy [TextE "startsWith"] 
-           ,Value "TEXTMAIN"  [] 
-           ,Value "TEXTTEST"  [] ] 
-          inlineDef colorBool 
-          (Tooltip "Tells whether the given text starts with some other text")
+conStartWith = standardFunction "conStartWith" "startsWith" Nothing [typeText, typeText, typeBool]
+                ["TEXTMAIN", "TEXTTEST"] colorBool "Test whether the text starts with the characters of the other text"
 
-conEndWith = DesignBlock "conEndWith" (Function "endWith" [typeText, typeText, typeBool])
-          [Dummy [TextE "endsWith"] 
-           ,Value "TEXTMAIN"  [] 
-           ,Value "TEXTTEST"  [] ]
-          inlineDef colorBool 
-          (Tooltip "Tells whether the given text ends with some other text")
+conEndWith = standardFunction "conEndWith" "endsWith" Nothing [typeText, typeText, typeBool]
+              ["TEXTMAIN", "TEXTTEST"] colorBool "Test whether the text ends with the characters of the other text"
 
 -- LISTS ----------------------------------------------
 lstGenNum = DesignBlock "lstGenNum" (Function ".." [typeNumber, typeNumber, typeNumber])
@@ -659,7 +541,7 @@ blockTypes = [
               ,txtPrinted
               ,txtLowercase
               ,txtUppercase
-              ,txtCapitalized
+              ,txtCapitalized -- Added, but not in the toolbox. It crashed GHCJS, #159
               -- COLORS
               ,cwBlue
               ,cwRed

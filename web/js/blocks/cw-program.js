@@ -33,9 +33,14 @@ Blockly.Blocks['cwSimulationOf'] = {
         .appendField(new Blockly.FieldImage('ims/car-wash.svg',20,20))
         .appendField(new Blockly.FieldLabel('simulationOf', 'blocklyTextEmph'));
     
-    this.appendValueInput('INITIAL');
-    this.appendValueInput('STEP');
-    this.appendValueInput('DRAW');
+    this.appendValueInput('INITIAL')
+        .appendField('(');
+    this.appendValueInput('STEP')
+        .appendField(',');
+    this.appendValueInput('DRAW')
+        .appendField(',');
+    this.appendDummyInput()
+        .appendField(')');
     this.setInputsInline(true);
 
     var worldTp = Type.Var("a");
@@ -61,10 +66,16 @@ Blockly.Blocks['cwInteractionOf'] = {
         .appendField(new Blockly.FieldImage('ims/human-handsup.svg',20,20))
         .appendField(new Blockly.FieldLabel('interactionOf', 'blocklyTextEmph'));
     
-    this.appendValueInput('INITIAL');
-    this.appendValueInput('STEP');
-    this.appendValueInput('EVENT');
-    this.appendValueInput('DRAW');
+    this.appendValueInput('INITIAL')
+        .appendField('(');
+    this.appendValueInput('STEP')
+        .appendField(',');
+    this.appendValueInput('EVENT')
+        .appendField(',');
+    this.appendValueInput('DRAW')
+        .appendField(',');
+    this.appendDummyInput()
+        .appendField(')');
     this.setInputsInline(true);
 
     var worldTp = Type.Var("a");
@@ -91,8 +102,11 @@ Blockly.Blocks['cwAnimationOf'] = {
 
     this.appendDummyInput()
         .appendField(new Blockly.FieldImage('ims/car.svg',20,20))
-        .appendField(new Blockly.FieldLabel('animationOf', 'blocklyTextEmph'));
+        .appendField(new Blockly.FieldLabel('animationOf', 'blocklyTextEmph'))
+        .appendField('(');
     this.appendValueInput('FUNC');
+    this.appendDummyInput()
+        .appendField(')');
     this.setInputsInline(true);
 
     var stepTp = Type.Func(Type.Lit("Number"), Type.Lit("Picture"));

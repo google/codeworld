@@ -30,6 +30,7 @@ module Blockly.Workspace ( Workspace(..)
                           ,getTopBlocksTrue
                           ,isWarning
                           ,disableOrphans
+                          ,warnOnInputs
                           ,mainWorkspace
                           )
   where
@@ -73,8 +74,11 @@ getBlockById workspace (UUID uuidstr) = if isNull val then Nothing
 isTopBlock :: Workspace -> Block -> Bool
 isTopBlock = js_isTopBlock
 
-isWarning :: Workspace -> T.Text
-isWarning = textFromJSString . js_isWarning
+isWarning :: Workspace -> IO (Block, T.Text)
+isWarning ws = do
+  vals <- js_isWarning ws
+  let ls = JA.toList vals
+  return (Block (ls !! 0), textFromJSString $ (unsafeCoerce (ls !! 1) :: JSString))
 
 getTopBlocksLength :: Workspace -> Int
 getTopBlocksLength = js_getTopBlocksLength
@@ -98,6 +102,9 @@ mainWorkspace = js_getMainWorkspace
 disableOrphans :: Workspace -> IO ()
 disableOrphans = js_addDisableOrphans
 
+warnOnInputs :: Workspace -> IO ()
+warnOnInputs = js_addWarnOnInputs
+
 loadXml :: Workspace -> JSString -> IO ()
 loadXml workspace dat = js_loadXml workspace dat
 
@@ -114,7 +121,7 @@ foreign import javascript unsafe "$1.isTopBlock($2)"
   js_isTopBlock :: Workspace -> Block -> Bool 
 
 foreign import javascript unsafe "$1.isWarning()"
-  js_isWarning :: Workspace -> JSString 
+  js_isWarning :: Workspace -> IO JA.JSArray 
 
 foreign import javascript unsafe "Blockly.Workspace.getById($1)"
   js_getById :: JSString -> Workspace
@@ -136,6 +143,9 @@ foreign import javascript unsafe "Blockly.Xml.domToWorkspace(Blockly.Xml.textToD
 
 foreign import javascript unsafe "$1.addChangeListener(Blockly.Events.disableOrphans)"
   js_addDisableOrphans :: Workspace -> IO ()
+
+foreign import javascript unsafe "$1.addChangeListener(Blockly.Events.warnOnDisconnectedInputs)"
+  js_addWarnOnInputs :: Workspace -> IO ()
 
 foreign import javascript unsafe "Blockly.getMainWorkspace()"
   js_getMainWorkspace :: Workspace

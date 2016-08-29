@@ -32,13 +32,30 @@ function loadWorkspace(text)
   lastXML = text;
 }
 
-function loadXmlHash(hash)
+function loadXmlHash(hash, autostart)
 {
    sendHttp('GET', 'loadXML?hash=' + hash + '&mode=blocklyXML', null, function(request) {
      if (request.status == 200) {
           loadWorkspace(request.responseText);
+          if(autostart){
+            if(runFunc) runFunc();
+          }
      }
     });
+}
+
+// This will get bound in Haskell to a function that runs the program
+runFunc = null;
+
+function getHash(){
+  var hash = location.hash.slice(1);
+  if (hash.length > 0) {
+    if (hash.slice(-2) == '==') {
+        hash = hash.slice(0, -2);
+    }
+    return hash;
+  }
+  else return '';
 }
 
 openProjectName = '';
@@ -55,8 +72,7 @@ function init()
         if (hash.slice(-2) == '==') {
             hash = hash.slice(0, -2);
         }
-        loadXmlHash(hash);
-
+        loadXmlHash(hash,true);
     } 
     
     codeworldKeywords = {};
@@ -121,6 +137,10 @@ function run(xmlHash, codeHash, msg, error, dhash) {
         document.getElementById('runner').style.display = 'none';
         window.programRunning = false;
     }
+    if(!hash && !error){ // We stopped, don't show message window
+      document.getElementById('message').style.display = 'none';
+    }
+
 
     var message = document.getElementById('message');
     message.innerHTML = '';
@@ -144,7 +164,6 @@ function removeErrors()
 
     blocks.forEach(function(block){
       block.removeErrorSelect();
-      block.setWarningText(null);
     });
 }
 

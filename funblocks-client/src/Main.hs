@@ -28,11 +28,12 @@ import GHCJS.DOM.Element (setInnerHTML, click, Element)
 import GHCJS.DOM.EventM (on )
 import GHCJS.Types
 import GHCJS.Foreign
+import GHCJS.Foreign.Callback
 import GHCJS.Marshal
 import Data.JSString.Text
 import qualified Data.JSString as JStr
 import qualified Data.Text as T
-import Control.Monad.Trans (liftIO)
+import Control.Monad.Trans (liftIO, lift)
 import Blockly.Workspace hiding (workspaceToCode)
 import Blocks.Parser
 import Blocks.CodeGen
@@ -40,6 +41,8 @@ import Blocks.Types
 import Blockly.Event
 import Blockly.General
 import Blockly.Block 
+import Data.Monoid 
+import Control.Monad
 
 pack = textToJSString
 unpack = textFromJSString
@@ -57,29 +60,37 @@ programBlocks = map T.pack ["cwDrawingOf","cwAnimationOf", "cwSimulationOf", "cw
 btnStopClick = do 
   liftIO js_stop
 
-btnRunClick ws = do
-  Just doc <- liftIO currentDocument
-  blocks <- liftIO $ getTopBlocks ws
-  let w = isWarning ws
-  if T.length w > 0 then
-    setErrorMessage "A block on the workspace has arguments with the same name"
-  else do
-    if not $ containsProgramBlock blocks 
-      then do 
-        setErrorMessage "No Program block on the workspace"
-      else do
-        (code,errors) <- liftIO $ workspaceToCode ws
+
+runOrError :: Workspace -> IO ()
+runOrError ws = do
+        (code,errors) <- workspaceToCode ws
         case errors of
           ((Error msg block):es) -> do 
-                                      liftIO $ putStrLn $ T.unpack msg
-                                      liftIO $ setWarningText block msg
-                                      liftIO $ addErrorSelect block
-                                      liftIO $ js_removeErrorsDelay
+                                      putStrLn $ T.unpack msg
+                                      setWarningText block msg
+                                      addErrorSelect block
+                                      js_removeErrorsDelay
                                       setErrorMessage (T.unpack msg)
 
           [] -> do
             liftIO $ js_updateEditor (pack code)
             liftIO $ js_cwcompile (pack code)
+
+
+btnRunClick ws = do
+  Just doc <- liftIO currentDocument
+  blocks <- liftIO $ getTopBlocks ws
+  (block, w) <- liftIO $ isWarning ws
+  if T.length w > 0 then do
+    setErrorMessage (T.unpack w)
+    liftIO $ addErrorSelect block
+    liftIO $ js_removeErrorsDelay
+  else do
+    if not $ containsProgramBlock blocks 
+      then do 
+        setErrorMessage "No Program block on the workspace"
+      else do
+        liftIO $ runOrError ws
     return ()
   where
     containsProgramBlock = any (\b -> getBlockType b `elem` programBlocks) 
@@ -99,12 +110,16 @@ funblocks = do
       Just body <- getBody doc
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
       liftIO $ disableOrphans workspace -- Disable disconnected non-top level blocks
+      liftIO $ warnOnInputs workspace -- Display warning if inputs are disconnected
       hookEvent "btnRun" click (btnRunClick workspace)
       hookEvent "btnStop" click btnStopClick
       liftIO setBlockTypes -- assign layout and types of Blockly blocks
       liftIO $ addChangeListener workspace (onChange workspace)
-      liftIO $ js_showEast
-      liftIO $ js_openEast
+      liftIO js_showEast
+      liftIO js_openEast
+      -- Auto start
+      liftIO $ setRunFunc workspace
+      -- when (T.length hash > 0) $ liftIO $ runOrError workspace
       return ()
 
 
@@ -119,6 +134,14 @@ main = do
 onChange ws event = do 
                       (code, errs) <- workspaceToCode ws
                       js_updateEditor (pack code)
+
+
+
+setRunFunc :: Workspace -> IO ()
+setRunFunc ws = do
+      cb <- syncCallback ContinueAsync (do 
+                                        runOrError ws) 
+      js_setRunFunc cb
 
 -- FFI
 
@@ -145,7 +168,7 @@ foreign import javascript unsafe "run('','',$1,true)"
 foreign import javascript unsafe "updateEditor($1)"
   js_updateEditor :: JSString -> IO ()
 
-foreign import javascript unsafe "setTimeout(removeErrors,10000)"
+foreign import javascript unsafe "setTimeout(removeErrors,5000)"
   js_removeErrorsDelay :: IO ()
 
 foreign import javascript unsafe "window.mainLayout.show('east')"
@@ -154,6 +177,8 @@ foreign import javascript unsafe "window.mainLayout.show('east')"
 foreign import javascript unsafe "window.mainLayout.open('east')"
   js_openEast :: IO ()
 
-
 foreign import javascript unsafe "Blockly.inject($1, {readOnly: true});"
   js_injectReadOnly :: JSString -> IO Workspace
+
+foreign import javascript unsafe "runFunc = $1"
+  js_setRunFunc :: Callback a -> IO ()

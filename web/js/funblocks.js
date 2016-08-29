@@ -137,6 +137,10 @@ function run(xmlHash, codeHash, msg, error, dhash) {
         document.getElementById('runner').style.display = 'none';
         window.programRunning = false;
     }
+    if(!hash){ // We stopped, don't show message window
+      document.getElementById('message').style.display = 'none';
+    }
+
 
     var message = document.getElementById('message');
     message.innerHTML = '';

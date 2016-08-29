@@ -113,7 +113,7 @@ Blockly.Blocks['lists_comprehension'] = {
     for(var i = this.varCount_ - 1; i !== -1; i--){
       var varName = this.vars_[i];
       var inp = this.getInput("VAR" + i);
-      if(inp.connection.isConnected()){
+      if(inp && inp.connection.isConnected()){
         var exp = inp.connection.targetBlock().getExpr();
         exp.tag = inp.connection;
         
@@ -346,6 +346,8 @@ Blockly.Blocks['lists_comprehension'] = {
     }
     this.renderMoveConnections_();
     this.resetArrows();
+
+    Blockly.TypeInf.unifyComponent()(this);
   },
   /**
    * Store pointers to any connected child blocks.

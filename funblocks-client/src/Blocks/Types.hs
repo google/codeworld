@@ -216,28 +216,17 @@ numLCM = standardFunction "numLCM" "lcm" Nothing [typeNumber, typeNumber, typeNu
 
 -- TEXT ------------------------------------------------
 
-txtConcat = DesignBlock "txtConcat" (Function "<>" [typeText, typeText, typeText])
-        [ Value "LEFT"  [] 
-         ,Value "RIGHT" [TextE "<>"] 
-         ]
-         (Inline True) colorText 
-         (Tooltip "Concatenates two pieces of text together")
+txtPrinted = standardFunction "txtPrinted" "printed" Nothing [typeNumber, typeText]
+              ["TEXT"] colorText "The text value of a number"
 
-txtPrinted = DesignBlock "txtPrinted" (Function "printed" [typeNumber, typeText])
-        [ Value "TEXT"  [TextE "printed"] ]
-         (Inline True) colorText 
-         (Tooltip "Gives the text value of a number")
+txtLowercase = standardFunction "txtLowercase" "lowercase" Nothing [typeText, typeText]
+                ["TEXT"] colorText "The text in lowercase"
 
-txtLowercase = DesignBlock "txtLowercase" (Function "lowercase" [typeText, typeText])
-        [ Value "TEXT"  [TextE "lowercase"] ]
-         (Inline True) colorText 
-         (Tooltip "Gives the text all in lowercase")
+txtUppercase = standardFunction "txtUppercase" "uppercase" Nothing [typeText, typeText]
+                ["TEXT"] colorText "The text in uppercase"
 
-txtUppercase = DesignBlock "txtUppercase" (Function "uppercase" [typeText, typeText])
-        [ Value "TEXT"  [TextE "uppercase"] ]
-         (Inline True) colorText 
-         (Tooltip "Gives the text all in uppercase")
-
+-- A note to future readers, capitalized in GHJCS crashes, so this isn't used.
+-- Issue #159
 txtCapitalized = DesignBlock "txtCapitalized" (Function "capitalized" [typeText, typeText])
         [ Value "TEXT"  [TextE "capitalized"] ]
          (Inline True) colorText 
@@ -584,7 +573,7 @@ blockTypes = [
               ,txtPrinted
               ,txtLowercase
               ,txtUppercase
-              ,txtCapitalized
+              ,txtCapitalized -- Added, but not in the toolbox. It crashed GHCJS, #159
               -- COLORS
               ,cwBlue
               ,cwRed

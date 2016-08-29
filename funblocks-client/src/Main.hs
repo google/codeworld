@@ -168,7 +168,7 @@ foreign import javascript unsafe "run('','',$1,true)"
 foreign import javascript unsafe "updateEditor($1)"
   js_updateEditor :: JSString -> IO ()
 
-foreign import javascript unsafe "setTimeout(removeErrors,10000)"
+foreign import javascript unsafe "setTimeout(removeErrors,5000)"
   js_removeErrorsDelay :: IO ()
 
 foreign import javascript unsafe "window.mainLayout.show('east')"

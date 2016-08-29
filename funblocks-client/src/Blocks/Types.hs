@@ -476,19 +476,11 @@ conOdd = DesignBlock "conOdd" (Function "odd" [typeNumber, typeBool])
          (Inline True) colorBool 
          (Tooltip "Tells whether the number is odd")
 
-conStartWith = DesignBlock "conStartWith" (Function "startWith" [typeText, typeText, typeBool] )
-          [Dummy [TextE "startsWith"] 
-           ,Value "TEXTMAIN"  [] 
-           ,Value "TEXTTEST"  [] ] 
-          inlineDef colorBool 
-          (Tooltip "Tells whether the given text starts with some other text")
+conStartWith = standardFunction "conStartWith" "startsWith" Nothing [typeText, typeText, typeBool]
+                ["TEXTMAIN", "TEXTTEST"] colorBool "Test whether the text starts with the characters of the other text"
 
-conEndWith = DesignBlock "conEndWith" (Function "endWith" [typeText, typeText, typeBool])
-          [Dummy [TextE "endsWith"] 
-           ,Value "TEXTMAIN"  [] 
-           ,Value "TEXTTEST"  [] ]
-          inlineDef colorBool 
-          (Tooltip "Tells whether the given text ends with some other text")
+conEndWith = standardFunction "conEndWith" "endsWith" Nothing [typeText, typeText, typeBool]
+              ["TEXTMAIN", "TEXTTEST"] colorBool "Test whether the text ends with the characters of the other text"
 
 -- LISTS ----------------------------------------------
 lstGenNum = DesignBlock "lstGenNum" (Function ".." [typeNumber, typeNumber, typeNumber])

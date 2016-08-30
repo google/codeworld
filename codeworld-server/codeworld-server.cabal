@@ -24,6 +24,7 @@ Executable codeworld-server
     data-default,
     directory,
     filepath,
+    hindent >= 5,
     http-conduit,
     memory,
     MonadCatchIO-transformers,

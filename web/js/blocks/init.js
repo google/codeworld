@@ -32,3 +32,7 @@ Blockly.UserTypes.builtinsStatic = ["Truth", "Number", "Color", "Picture", "Text
 Blockly.UserTypes.builtinsDynamic = ["type_list"];
 // Enable the Event drawer
 Blockly.Flyout.customDrawers["EVENT"] = Blockly.cwEvent.eventFlyoutCategory;
+
+Blockly.Events.orphanWarning = "This block is disabled because it is isolated from the main program.";
+Blockly.Events.disconnectedWarning = "There's a block missing";
+

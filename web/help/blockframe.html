@@ -76,16 +76,18 @@
       upperParent = par;
     }
     
-    document.getElementById('blocklyDiv').addEventListener('click',  function(){
-      if(upperParent == null){}
-      else
-        var workspace = Blockly.getMainWorkspace();
+    document.getElementById('blocklyDiv').addEventListener('click',  
+        function(){
+          if (upperParent){
+            var workspace = Blockly.getMainWorkspace();
 
-        var xml = Blockly.Xml.workspaceToDom(workspace);
-        var xml_text = Blockly.Xml.domToText(xml);
+            var xml = Blockly.Xml.workspaceToDom(workspace);
+            var xml_text = Blockly.Xml.domToText(xml);
 
-        upperParent.loadSample(xml_text);
-      },false);
+            upperParent.loadSample(xml_text);
+          }
+        }
+      ,false);
 
 
   </script>

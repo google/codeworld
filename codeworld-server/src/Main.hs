@@ -250,7 +250,6 @@ indentHandler = do
     Just source <- getParam "source"
     case reformat defaultConfig Nothing source of
       Left err -> do
-        hPutStrLn stderr err
         modifyResponse $ setResponseCode 500 . setContentType "text/plain"
         writeLBS $ LB.fromStrict $ BC.pack err
       Right res -> do

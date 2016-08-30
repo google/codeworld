@@ -198,7 +198,6 @@ instance Monoid Picture where
 (&) :: Picture -> Picture -> Picture
 infixr 0 &
 (&) = mappend
-{-# WARNING (&) "Please use <> from Data.Monoid instead of &" #-}
 
 -- | A coordinate plane.  Adding this to your pictures can help you measure distances
 -- more accurately.

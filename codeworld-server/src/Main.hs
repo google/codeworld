@@ -25,13 +25,16 @@ import           Control.Monad
 import           Control.Monad.Trans
 import           Data.Aeson
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy as LB
+import           Data.ByteString.Builder (toLazyByteString)
 import qualified Data.ByteString.Char8 as BC
+import qualified Data.ByteString.Lazy as LB
 import           Data.Maybe
 import           Data.Monoid
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Encoding as T
+import           HIndent (reformat)
+import           HIndent.Types (defaultConfig)
 import           Network.HTTP.Conduit
 import           Snap.Core
 import           Snap.Http.Server (quickHttpServe)
@@ -117,7 +120,8 @@ site clientId =
       ("runMsg",        runMessageHandler),
       ("haskell",       serveFile "web/env.html"),
       ("blocks",        serveFile "web/blocks.html"),
-      ("funblocks",     serveFile "web/blocks.html")
+      ("funblocks",     serveFile "web/blocks.html"),
+      ("indent",        indentHandler)
     ] <|>
     serveDirectory "web"
 
@@ -239,3 +243,15 @@ runMessageHandler = do
     liftIO $ compileIfNeeded mode programId
     modifyResponse $ setContentType "text/plain"
     serveFile (buildRootDir mode </> resultFile programId)
+
+indentHandler :: Snap ()
+indentHandler = do
+    mode <- getBuildMode
+    Just source <- getParam "source"
+    case reformat defaultConfig Nothing source of
+      Left err -> do
+        modifyResponse $ setResponseCode 500 . setContentType "text/plain"
+        writeLBS $ LB.fromStrict $ BC.pack err
+      Right res -> do
+        modifyResponse $ setContentType "text/x-haskell"
+        writeLBS $ toLazyByteString res

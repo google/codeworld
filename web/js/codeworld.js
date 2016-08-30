@@ -62,8 +62,12 @@ function init() {
         saveProject();
     }
     document.onkeydown = function(e) {
-        if (e.ctrlKey && e.keyCode === 83) {
+        if (e.ctrlKey && e.keyCode === 83) { // Ctrl+S
             saveProject();
+            return false;
+        }
+        if (e.ctrlKey && e.keyCode === 73) { // Ctrl+I
+            formatSource();
             return false;
         }
     };
@@ -271,6 +275,24 @@ function loadProject(name) {
     setCode(project.source, project.history, name);
   }
   loadProject_(name, window.buildMode, successFunc);
+}
+
+function formatSource() {
+    if (window.buildMode == 'codeworld') {
+      // Unfortunately, there isn't an acceptable style for CodeWorld yet.
+      return;
+    }
+
+    var src = window.codeworldEditor.getValue();
+    var data = new FormData();
+    data.append('source', src);
+    data.append('mode', window.buildMode);
+
+    sendHttp('POST', 'indent', data, function(request) {
+        if (request.status == 200) {
+          codeworldEditor.getDoc().setValue(request.responseText);
+        }
+    });
 }
 
 function stop() {

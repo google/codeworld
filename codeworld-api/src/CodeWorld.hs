@@ -55,6 +55,7 @@ module CodeWorld (
     rotated,
     pictures,
     (<>),
+    (&),
     coordinatePlane,
     codeWorldLogo,
     Point,

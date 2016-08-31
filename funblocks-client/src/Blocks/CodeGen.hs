@@ -63,9 +63,9 @@ instance Pretty Type where
 
   pretty (Product s tps) = do 
                             PR.write $ s
-                            PR.write_ "("
-                            PR.intercalation "," tps pretty 
-                            PR.write_ ")"
+                            when (length tps > 0) $ do PR.write_ "("
+                                                       PR.intercalation "," tps pretty 
+                                                       PR.write_ ")"
 
   pretty (ListType t) = do 
                           PR.write_ "[" 

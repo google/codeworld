@@ -53,6 +53,7 @@ class Pretty a where
 
 instance Pretty Type where
   pretty (Type s) = PR.write_ s
+  pretty (Sum typeName [] ) = PR.write_ $ "data " ++ typeName -- Empty data declaration
   pretty (Sum typeName (tp:tps) ) = do 
                                       PR.write_ $ "data " ++ typeName ++ " ="
                                       c <- PR.getCol

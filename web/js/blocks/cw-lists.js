@@ -126,7 +126,16 @@ Blockly.Blocks['lists_comprehension'] = {
         result = Exp.Let(varName, letExp, result); 
       }
       else{
-        result = Exp.Let(varName, Exp.Var('undef') , result); 
+        var exp = Exp.Var('undef');
+        exp.tag = inp.connection;
+        
+        var letExp = Exp.App(Exp.Var("<]"),exp);
+        var field = inp.fieldRow[0];
+        if(!field.typeExpr)
+          throw "Wrong field !";
+        letExp.tag = field;
+
+        result = Exp.Let(varName, letExp, result); 
       }
     }
   
@@ -197,10 +206,10 @@ Blockly.Blocks['lists_comprehension'] = {
       if(this.getInput('DO').connection == connection)
         return this.vars_;
 
-      if(this.getInput('VAR' + i).connection == connection)
+      if(this.getInput('VAR' + i) && this.getInput('VAR' + i).connection == connection)
         return available;
 
-      if(this.getInput('GUARD' +i).connection == connection)
+      if(this.getInput('GUARD' + i) && this.getInput('GUARD' + i).connection == connection)
         return this.vars_;
 
       available = available.concat(this.vars_[i]);
@@ -347,7 +356,7 @@ Blockly.Blocks['lists_comprehension'] = {
     this.renderMoveConnections_();
     this.resetArrows();
 
-    Blockly.TypeInf.unifyComponent()(this);
+    Blockly.TypeInf.inferWorkspace(this.workspace);
   },
   /**
    * Store pointers to any connected child blocks.

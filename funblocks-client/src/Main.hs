@@ -177,7 +177,7 @@ foreign import javascript unsafe "window.mainLayout.show('east')"
 foreign import javascript unsafe "window.mainLayout.open('east')"
   js_openEast :: IO ()
 
-foreign import javascript unsafe "Blockly.inject($1, {readOnly: true});"
+foreign import javascript unsafe "Blockly.inject($1, {});"
   js_injectReadOnly :: JSString -> IO Workspace
 
 foreign import javascript unsafe "runFunc = $1"

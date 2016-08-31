@@ -30,6 +30,7 @@ import Data.JSString.Text
 import Control.Monad.State.Lazy (get,put)
 import qualified Control.Monad.State.Lazy as S
 import qualified Blocks.Printer as PR
+import Control.Monad
 
 (++) :: T.Text -> T.Text -> T.Text
 a ++ b = a `T.append` b
@@ -169,9 +170,9 @@ instance Pretty Expr where
                           pretty act
                           PR.write_ " | "
                           PR.intercalation ", " vars_ (\(var,expr) -> PR.write_ var >> PR.write_ " <- " >> pretty expr) 
-                          PR.write_ ","
-                          PR.makeSpace
-                          PR.intercalation ", " guards pretty
+                          when (length guards > 0) $ do PR.write_ ","
+                                                        PR.makeSpace
+                                                        PR.intercalation ", " guards pretty
                           PR.write_ "]"
   pretty Comment = PR.write_ ""
 

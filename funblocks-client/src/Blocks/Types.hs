@@ -36,7 +36,7 @@ typePicture = Picture
 typeNumber = Number
 typeProgram = Program
 typeColor = Col
-typeBool = Bool
+typeBool = Truth
 typeText = Str
 typeComment = Comment
 

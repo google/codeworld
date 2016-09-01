@@ -143,7 +143,7 @@ instance Pretty Expr where
                                                               PR.writeLine ""
                                                               PR.write con
                                                               PR.makeSpace
-                                                              when (length vars > 1) $ do
+                                                              when (length vars > 0) $ do
                                                                 PR.write_ "("
                                                                 PR.write_ $ T.intercalate "," vars 
                                                                 PR.write_ ")"

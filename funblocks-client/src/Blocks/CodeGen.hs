@@ -73,7 +73,7 @@ instance Pretty Type where
                           PR.write_ "]"
 
 instance Pretty Expr where
-  pretty (LiteralS s) = PR.write_ $ escape s
+  pretty (LiteralS s) = PR.write_ s
   pretty (LiteralN d) = PR.write_ $ if d == fromInteger (truncate d)
                                     then show $ truncate d
                                     else show d
@@ -201,20 +201,6 @@ workspaceToCode workspace = do
         Just func -> let (SE code err) = func block
                      in SE code err
         Nothing -> errc "No such block in CodeGen" block
-
-
--- Helper functions
-
--- Escapes a string
-
-escape :: T.Text -> T.Text
-escape xs = T.pack $ escape' (T.unpack xs)
-escape' :: String -> String
-escape' xs = ("\""::String) P.++ (concatMap f xs :: String ) P.++ ("\""::String) where
-    f :: Char -> String
-    f ('\\'::Char) = "\\\\" :: String
-    f ('\"'::Char) = "\\\"" :: String
-    f x    = [x]
 
 
 

@@ -165,17 +165,27 @@ blockCombine block = do
 
 -- TEXT --------------------------------------------------
 
+-- Escapes a string
+
+escape :: T.Text -> T.Text
+escape xs = T.pack $ escape' (T.unpack xs)
+escape' :: String -> String
+escape' xs = ("\""::String) P.++ (concatMap f xs :: String ) P.++ ("\""::String) where
+    f :: Char -> String
+    f ('\\'::Char) = "\\\\" :: String
+    f ('\"'::Char) = "\\\"" :: String
+    f x    = [x]
+
 blockString :: ParserFunction
 blockString block = do 
     let txt = getFieldValue block "TEXT" 
-    return $ LiteralS txt 
+    return $ LiteralS $ escape txt 
 
 blockConcat :: ParserFunction
 blockConcat block = do
   let c = getItemCount block
   vals <- mapM (\t -> valueToExpr block t) ["STR" ++ show i | i <- [0..c-1]]
   return $ foldr1 (CallFuncInfix "<>") vals
-
 
 -- LOGIC ------------------------------------------
 

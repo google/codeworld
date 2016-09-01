@@ -53,6 +53,7 @@ class Pretty a where
 
 instance Pretty Type where
   pretty (Type s) = PR.write_ s
+  pretty (Sum typeName [] ) = PR.write_ $ "data " ++ typeName -- Empty data declaration
   pretty (Sum typeName (tp:tps) ) = do 
                                       PR.write_ $ "data " ++ typeName ++ " ="
                                       c <- PR.getCol
@@ -62,9 +63,9 @@ instance Pretty Type where
 
   pretty (Product s tps) = do 
                             PR.write $ s
-                            PR.write_ "("
-                            PR.intercalation "," tps pretty 
-                            PR.write_ ")"
+                            when (length tps > 0) $ do PR.write_ "("
+                                                       PR.intercalation "," tps pretty 
+                                                       PR.write_ ")"
 
   pretty (ListType t) = do 
                           PR.write_ "[" 
@@ -142,11 +143,10 @@ instance Pretty Expr where
                                                               PR.writeLine ""
                                                               PR.write con
                                                               PR.makeSpace
-                                                              if length vars > 1 then do
+                                                              when (length vars > 1) $ do
                                                                 PR.write_ "("
                                                                 PR.write_ $ T.intercalate "," vars 
                                                                 PR.write_ ")"
-                                                              else PR.write $ head vars
                                                               PR.write "->"
                                                               pretty expr) rows
                               PR.pop

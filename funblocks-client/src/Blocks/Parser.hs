@@ -170,11 +170,7 @@ blockCombine block = do
 escape :: T.Text -> T.Text
 escape xs = T.pack $ escape' (T.unpack xs)
 escape' :: String -> String
-escape' xs = ("\""::String) P.++ (concatMap f xs :: String ) P.++ ("\""::String) where
-    f :: Char -> String
-    f ('\\'::Char) = "\\\\" :: String
-    f ('\"'::Char) = "\\\"" :: String
-    f x    = [x]
+escape' = P.show 
 
 blockString :: ParserFunction
 blockString block = do 

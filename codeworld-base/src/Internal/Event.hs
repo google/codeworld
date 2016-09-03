@@ -20,9 +20,10 @@
 module Internal.Event (Event(..), CW.MouseButton(..), fromCWEvent) where
 
 import qualified "codeworld-api" CodeWorld as CW
-import           "base"          Prelude
+import qualified "base"          Prelude as P
 import                           Internal.Num
 import                           Internal.Text
+import                           Internal.Truth
 import                           Internal.Picture
 
 {-| An event initiated by the user.
@@ -65,6 +66,9 @@ data Event = KeyPress !Text
            | MousePress !(CW.MouseButton, Point)
            | MouseRelease !(CW.MouseButton, Point)
            | MouseMovement !Point
+  deriving P.Eq
+
+{-# RULES "equality/event" forall (x :: Event). (==) x = (P.==) x #-}
 
 fromCWEvent :: CW.Event -> Event
 fromCWEvent (CW.KeyPress      key)   = KeyPress      (toCWText key)

@@ -22,10 +22,14 @@ module Internal.Color where
 
 import qualified "codeworld-api" CodeWorld as CW
 import                           Internal.Num
+import                           Internal.Truth
+import qualified "base"          Prelude as P
 import           "base"          Prelude ((.))
 
-newtype Color = RGBA(Number, Number, Number, Number)
+newtype Color = RGBA(Number, Number, Number, Number) deriving P.Eq
 type Colour = Color
+
+{-# RULES "equality/color" forall (x :: Color). (==) x = (P.==) x #-}
 
 toCWColor :: Color -> CW.Color
 toCWColor (RGBA (r,g,b,a)) =

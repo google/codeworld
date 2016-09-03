@@ -79,7 +79,8 @@ import qualified "base" Prelude as P
 import "base" Prelude (Bool(..), (.), (==), map)
 import Numeric (showFFloatAlt)
 
-import Internal.Truth hiding ((==))
+import qualified Internal.Truth
+import           Internal.Truth (Truth, otherwise, (&&))
 
 {-|The type for numbers.
 
@@ -87,7 +88,10 @@ import Internal.Truth hiding ((==))
   3.2, and -10 are all values of the type Number.
 -}
 newtype Number = Number P.Double
-    deriving (P.RealFrac, P.Real, P.Floating, P.RealFloat)
+    deriving (P.RealFrac, P.Real, P.Floating, P.RealFloat, P.Eq)
+
+{-# RULES "equality/num" forall (x :: Number). (Internal.Truth.==) x = (P.==) x #-}
+{-# RULES "equality/point" forall (x :: (Number, Number)). (Internal.Truth.==) x = (P.==) x #-}
 
 fromDouble :: P.Double -> Number
 fromDouble x | P.isNaN x      = P.error "result is undefined"
@@ -116,9 +120,6 @@ instance P.Show Number where
                        . P.dropWhile (== '.')
                        . P.dropWhile (== '0')
                        . P.reverse
-
-instance P.Eq Number where
-    Number a == Number b = a == b
 
 instance P.Num Number where
     fromInteger = fromInteger

@@ -30,6 +30,7 @@ Library
                        Internal.Truth
   Build-depends:       base,
                        codeworld-api,
+                       ghc-prim,
                        ghcjs-base,
                        ghcjs-dom,
                        mtl,

@@ -43,19 +43,22 @@ module Internal.Text (
     substitutions
     ) where
 
-import "base" Prelude (String, Bool, (.), map, length, show)
-import "base" Data.Maybe
-import "base" Data.List (foldl')
-import "base" Numeric
+import qualified "base" Prelude as P
+import           "base" Prelude (String, Bool, (.), map, length, show)
+import                  Data.Maybe
+import                  Data.List (foldl')
+import                  Numeric
 
-import qualified Data.JSString as J
-import qualified Data.JSString.Text as J
-import qualified Data.Text as T
+import qualified        Data.JSString as J
+import qualified        Data.JSString.Text as J
+import qualified        Data.Text as T
 
-import Internal.Num
-import Internal.Truth
+import                  Internal.Num
+import                  Internal.Truth
 
-newtype Text = T { unT :: J.JSString }
+newtype Text = T { unT :: J.JSString } deriving P.Eq
+
+{-# RULES "equality/text" forall (x :: Text). (==) x = (P.==) x #-}
 
 fromString :: String -> Text
 fromString = T . J.pack

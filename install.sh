@@ -149,7 +149,8 @@ run .  cabal_install happy-1.19.5 alex-3.1.6
 
 # Install GHCJS itself (https://github.com/ghcjs/ghcjs) and cabal install.
 
-run $BUILD  cabal_install http://ghcjs.luite.com/master.tar.gz
+run $BUILD  git clone --branch master --single-branch https://github.com/ghcjs/ghcjs
+run $BUILD  cabal_install ./ghcjs
 run $BUILD  rm -rf ghcjs
 
 # install node (necessary for ghcjs-boot)
@@ -165,7 +166,7 @@ run $BUILD                       rm -rf node-$NODEJS_VERSION
 
 # Bootstrap ghcjs
 
-run . ghcjs-boot --no-prof --no-haddock
+run . ghcjs-boot --dev --no-prof --no-haddock
 
 # Install ghcjs-dom from hackage.
 

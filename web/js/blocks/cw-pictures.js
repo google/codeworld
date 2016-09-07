@@ -156,6 +156,18 @@ Blockly.Blocks['pics_combine_container'] = {
   getExpr: null
 };
 
+Blockly.Blocks['lists_pictures'] = {
+  init: function() {
+    this.setColour(160);
+    this.appendValueInput('LST')
+        .appendField(new Blockly.FieldLabel("pictures","blocklyTextEmph") );
+    this.setOutput(true);
+    var pic = Type.Lit("Picture");
+    Blockly.TypeInf.defineFunction("pictures", Type.fromList([Type.Lit("list", [pic]), pic]));
+    this.setAsFunction("pictures");
+  }
+};
+
 Blockly.Blocks['lists_path'] = {
   init: function() {
     this.setColour(160);
@@ -168,4 +180,154 @@ Blockly.Blocks['lists_path'] = {
   }
 };
 
+Blockly.Blocks['lists_thickPath'] = {
+  init: function() {
+    this.setColour(160);
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldLabel("thickPath","blocklyTextEmph") );
 
+    this.appendValueInput('LST')
+        .appendField('(');
+    this.appendValueInput('THICKNESS')
+        .appendField(',');
+    this.appendDummyInput()
+        .appendField(')');
+    this.setInputsInline(true);
+    this.setOutput(true);
+
+    var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+    var pts = Type.Lit("list", [pair]);
+    var num = Type.Lit("Number");
+    Blockly.TypeInf.defineFunction("thickPath", Type.fromList([pts, num, Type.Lit("Picture")]));
+    this.setAsFunction("thickPath");
+  }
+};
+
+Blockly.Blocks['lists_polygon'] = {
+  init: function() {
+    this.setColour(160);
+    this.appendValueInput('LST')
+        .appendField(new Blockly.FieldLabel("polygon","blocklyTextEmph") );
+    this.setOutput(true);
+    var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+    Blockly.TypeInf.defineFunction("polygon", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
+    this.setAsFunction("polygon");
+  }
+};
+
+Blockly.Blocks['lists_solidPolygon'] = {
+  init: function() {
+    this.setColour(160);
+    this.appendValueInput('LST')
+        .appendField(new Blockly.FieldLabel("solidPolygon","blocklyTextEmph") );
+    this.setOutput(true);
+    var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+    Blockly.TypeInf.defineFunction("solidPolygon", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
+    this.setAsFunction("solidPolygon");
+  }
+};
+
+Blockly.Blocks['lists_thickPolygon'] = {
+  init: function() {
+    this.setColour(160);
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldLabel("thickPolygon","blocklyTextEmph") );
+
+    this.appendValueInput('LST')
+        .appendField('(');
+    this.appendValueInput('THICKNESS')
+        .appendField(',');
+    this.appendDummyInput()
+        .appendField(')');
+    this.setInputsInline(true);
+    this.setOutput(true);
+
+    var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+    var pts = Type.Lit("list", [pair]);
+    var num = Type.Lit("Number");
+    Blockly.TypeInf.defineFunction("thickPolygon", Type.fromList([pts, num, Type.Lit("Picture")]));
+    this.setAsFunction("thickPolygon");
+  }
+};
+
+Blockly.Blocks['lists_curve'] = {
+  init: function() {
+    this.setColour(160);
+    this.appendValueInput('LST')
+        .appendField(new Blockly.FieldLabel("curve","blocklyTextEmph") );
+    this.setOutput(true);
+    var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+    Blockly.TypeInf.defineFunction("curve", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
+    this.setAsFunction("curve");
+  }
+};
+
+Blockly.Blocks['lists_thickCurve'] = {
+  init: function() {
+    this.setColour(160);
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldLabel("thickCurve","blocklyTextEmph") );
+
+    this.appendValueInput('LST')
+        .appendField('(');
+    this.appendValueInput('THICKNESS')
+        .appendField(',');
+    this.appendDummyInput()
+        .appendField(')');
+    this.setInputsInline(true);
+    this.setOutput(true);
+
+    var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+    var pts = Type.Lit("list", [pair]);
+    var num = Type.Lit("Number");
+    Blockly.TypeInf.defineFunction("thickCurve", Type.fromList([pts, num, Type.Lit("Picture")]));
+    this.setAsFunction("thickCurve");
+  }
+};
+
+Blockly.Blocks['lists_loop'] = {
+  init: function() {
+    this.setColour(160);
+    this.appendValueInput('LST')
+        .appendField(new Blockly.FieldLabel("loop","blocklyTextEmph") );
+    this.setOutput(true);
+    var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+    Blockly.TypeInf.defineFunction("loop", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
+    this.setAsFunction("loop");
+  }
+};
+
+Blockly.Blocks['lists_solidLoop'] = {
+  init: function() {
+    this.setColour(160);
+    this.appendValueInput('LST')
+        .appendField(new Blockly.FieldLabel("solidLoop","blocklyTextEmph") );
+    this.setOutput(true);
+    var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+    Blockly.TypeInf.defineFunction("solidLoop", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
+    this.setAsFunction("solidLoop");
+  }
+};
+
+Blockly.Blocks['lists_thickLoop'] = {
+  init: function() {
+    this.setColour(160);
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldLabel("thickLoop","blocklyTextEmph") );
+
+    this.appendValueInput('LST')
+        .appendField('(');
+    this.appendValueInput('THICKNESS')
+        .appendField(',');
+    this.appendDummyInput()
+        .appendField(')');
+    this.setInputsInline(true);
+    this.setOutput(true);
+
+    var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+    var pts = Type.Lit("list", [pair]);
+    var num = Type.Lit("Number");
+    Blockly.TypeInf.defineFunction("thickLoop", Type.fromList([pts, num, Type.Lit("Picture")]));
+    this.setAsFunction("thickLoop");
+  }
+};

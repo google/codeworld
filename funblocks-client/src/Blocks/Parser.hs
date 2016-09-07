@@ -396,6 +396,7 @@ regularBlockNames =
                   ,"cwSector"
                   ,"cwThickArc"
                   -- TRANSFORMATIONS
+                  ,"lists_pictures"
                   ,"cwColored"
                   ,"cwTranslate"
                   ,"cwRotate"
@@ -460,6 +461,15 @@ regularBlockNames =
                   ,"lists_at"
                   -- FUNCTIONS
                   ,"lists_path"
+                  ,"lists_thickPath"
+                  ,"lists_polygon"
+                  ,"lists_solidPolygon"
+                  ,"lists_thickPolygon"
+                  ,"lists_curve"
+                  ,"lists_thickcurve"
+                  ,"lists_loop"
+                  ,"lists_solidLoop"
+                  ,"lists_thickLoop"
                   -- TYPES
                     ]
 

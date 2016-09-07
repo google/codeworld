@@ -635,9 +635,6 @@ Blockly.Blocks['lists_create_with_typed'] = {
     this.initArrows();
 
     this.renderMoveConnections_();
-
-    // Call unification
-    Blockly.TypeInf.unifyComponent()(this);
   },
   /**
    * Store pointers to any connected child blocks.

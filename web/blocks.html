@@ -168,7 +168,6 @@
                       </category>
                       <category name="Pictures">
                           <block type="cwBlank"></block>
-                          <block type="cwCoordinatePlane"></block>
                           <block type="cwCodeWorldLogo"></block>
                           <block type="cwCircle">
                             <value name="RADIUS">
@@ -208,6 +207,18 @@
                               </shadow>
                             </value>
                           </block>
+                          <block type="cwSolidRectangle">
+                            <value name="WIDTH">
+                              <shadow type="numNumber">
+                                <field name="NUMBER">5</field>
+                              </shadow>
+                            </value>
+                            <value name="HEIGHT">
+                              <shadow type="numNumber">
+                                <field name="NUMBER">5</field>
+                              </shadow>
+                            </value>
+                          </block>
                           <block type="cwThickRectangle">
                             <value name="WIDTH">
                               <shadow type="numNumber">
@@ -222,25 +233,6 @@
                             <value name="LINEWIDTH">
                               <shadow type="numNumber">
                                 <field name="NUMBER">1</field>
-                              </shadow>
-                            </value>
-                          </block> 
-                          <block type="cwSolidRectangle">
-                            <value name="WIDTH">
-                              <shadow type="numNumber">
-                                <field name="NUMBER">5</field>
-                              </shadow>
-                            </value>
-                            <value name="HEIGHT">
-                              <shadow type="numNumber">
-                                <field name="NUMBER">5</field>
-                              </shadow>
-                            </value>
-                          </block>
-                          <block type="cwText">
-                            <value name="TEXT">
-                              <shadow type="text_typed">
-                                <field name="TEXT"></field>
                               </shadow>
                             </value>
                           </block>
@@ -300,7 +292,13 @@
                               </shadow>
                             </value>
                           </block>
-                          <block type="lists_path"></block>
+                          <block type="cwText">
+                            <value name="TEXT">
+                              <shadow type="text_typed">
+                                <field name="TEXT"></field>
+                              </shadow>
+                            </value>
+                          </block>
                       </category>
                       <category name="Transformations">
                           <block type="cwCombine">
@@ -356,6 +354,44 @@
                             <value name="VERTZ">
                               <shadow type="numNumberPerc">
                                 <field name="NUMBER">100</field>
+                              </shadow>
+                            </value>
+                          </block>
+                          <block type="lists_pictures"></block>
+                      </category>
+                      <category name="Coordinates">
+                          <block type="cwCoordinatePlane"></block>
+                          <block type="lists_path"></block>
+                          <block type="lists_thickPath">
+                            <value name="THICKNESS">
+                              <shadow type="numNumber">
+                                <field name="NUMBER">0</field>
+                              </shadow>
+                            </value>
+                          </block>
+                          <block type="lists_polygon"></block>
+                          <block type="lists_solidPolygon"></block>
+                          <block type="lists_thickPolygon">
+                            <value name="THICKNESS">
+                              <shadow type="numNumber">
+                                <field name="NUMBER">0</field>
+                              </shadow>
+                            </value>
+                          </block>
+                          <block type="lists_curve"></block>
+                          <block type="lists_thickCurve">
+                            <value name="THICKNESS">
+                              <shadow type="numNumber">
+                                <field name="NUMBER">0</field>
+                              </shadow>
+                            </value>
+                          </block>
+                          <block type="lists_loop"></block>
+                          <block type="lists_solidLoop"></block>
+                          <block type="lists_thickLoop">
+                            <value name="THICKNESS">
+                              <shadow type="numNumber">
+                                <field name="NUMBER">0</field>
                               </shadow>
                             </value>
                           </block>
@@ -685,19 +721,25 @@
                         <block type="lists_create_with_typed"></block>
                         <block type="lists_cons"></block>
                         <block type="lists_numgen">
-                        <value name="LEFT">
-                              <shadow type="numNumber">
-                                <field name="NUMBER">1</field>
-                              </shadow>
-                            </value>
-                        <value name="RIGHT">
-                              <shadow type="numNumber">
-                                <field name="NUMBER">10</field>
-                              </shadow>
-                        </value>
+                          <value name="LEFT">
+                            <shadow type="numNumber">
+                              <field name="NUMBER">1</field>
+                            </shadow>
+                          </value>
+                          <value name="RIGHT">
+                            <shadow type="numNumber">
+                              <field name="NUMBER">10</field>
+                            </shadow>
+                          </value>
                         </block>
                         <block type="lists_comprehension"></block>
-                        <block type="lists_at"></block>
+                        <block type="lists_at">
+                          <value name="POS">
+                            <shadow type="numNumber">
+                              <field name="NUMBER">0</field>
+                            </shadow>
+                          </value>
+                        </block>
                         <block type="lists_length"></block>
                       </category>
                       <category name="Types" custom="DATATYPE"></category>

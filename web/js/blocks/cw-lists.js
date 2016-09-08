@@ -429,6 +429,28 @@ Blockly.Blocks['lists_numgen'] = {
   }
 };
 
+Blockly.Blocks['lists_numgenstep'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField("[");
+    this.appendValueInput("LEFT");
+    this.appendValueInput("NEXT")
+        .appendField(",");
+    this.appendValueInput("RIGHT")
+        .appendField("...")
+    this.appendDummyInput()
+        .appendField("]");
+    this.setInputsInline(true);
+    this.setOutput(true);
+
+    Blockly.TypeInf.defineFunction("[,..]", Type.fromList([Type.Lit("Number"), Type.Lit("Number"), Type.Lit("Number"), Type.Lit("list", [Type.Lit("Number")])]));
+    this.setAsFunction("[,..]");
+
+    this.setColour(listsHUE);
+    this.setTooltip('Generates a list of numbers between the first and second inputs, with a step');
+  }
+};
+
 Blockly.Blocks['lists_length'] = {
   init: function() {
     this.setColour(210);

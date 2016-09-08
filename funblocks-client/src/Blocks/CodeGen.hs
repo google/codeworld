@@ -165,6 +165,14 @@ instance Pretty Expr where
                           PR.write_ " .. "
                           pretty right
                           PR.write_ "]"
+  pretty (ListSpecStep left next right) = do 
+                          PR.write_ "["
+                          pretty left
+                          PR.write_ ", "
+                          pretty next
+                          PR.write_ " .. "
+                          pretty right
+                          PR.write_ "]"
   pretty (ListComp act vars_ guards) =  do
                           PR.write_ "["
                           pretty act

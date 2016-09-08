@@ -103,6 +103,7 @@ data Expr = LiteralS T.Text
           | TypeName T.Text
           | ListCreate [Expr] -- [1,2,3]
           | ListSpec Expr Expr -- [left..right]
+          | ListSpecStep Expr Expr Expr -- [left,mid..right]
           | ListComp Expr [(T.Text,Expr)] [Expr] -- [action | var <- expr, var <- expr, guards]
           | Comment
   deriving Show
@@ -282,6 +283,13 @@ blockNumGen block = do
     left <- valueToExpr block "LEFT" 
     right <- valueToExpr block "RIGHT" 
     return $ ListSpec left right
+
+blockNumGenStep :: ParserFunction
+blockNumGenStep block = do
+    left <- valueToExpr block "LEFT" 
+    next <- valueToExpr block "NEXT"
+    right <- valueToExpr block "RIGHT" 
+    return $ ListSpecStep left next right
 
 -- LIST COMPREHENSION
 foreign import javascript unsafe "$1.varCount_"
@@ -514,6 +522,7 @@ specialBlocks = [  -- PROGRAMS
                   ,("lists_create_with_typed", blockCreateList)
                   ,("lists_cons", sInfixBlock)
                   ,("lists_numgen", blockNumGen)
+                  ,("lists_numgenstep", blockNumGenStep)
                   ,("lists_comprehension", blockListComp)
                   ,("procedures_letFunc",blockLetFunc)
                   ,("procedures_callreturn",blockLetCall)

@@ -822,12 +822,12 @@ handleControl _ (x,y) PlayButton    w
 handleControl _ (x,y) PauseButton   w
   | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6
       = w { paused = True }
-handleControl f (x,y) StepButton    w
-  | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6
-      = w { state = f 0.1 (state w) }
 handleControl _ (x,y) BackButton    w
-  | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6
+  | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6
       = w { state = max 0 (state w - 0.1) }
+handleControl f (x,y) StepButton    w
+  | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6
+      = w { state = f 0.1 (state w) }
 handleControl _ _     _             w = w
 
 wrappedDraw :: (Wrapped a -> [Control a])
@@ -862,17 +862,17 @@ drawControl _ alpha PauseButton = translated (-8) (-9) p
          <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
          <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
 
-drawControl _ alpha StepButton = translated (-7) (-9) p
-  where p = colored (RGBA 0   0   0   alpha)
-                    (translated (-0.15) 0 (solidRectangle 0.2 0.5) <>
-                     solidPolygon [ (0.05, 0.25), (0.05, -0.25), (0.3, 0) ])
-         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
-         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
-
-drawControl _ alpha BackButton = translated (-6) (-9) p
+drawControl _ alpha BackButton = translated (-7) (-9) p
   where p = colored (RGBA 0   0   0   alpha)
                     (translated 0.15 0 (solidRectangle 0.2 0.5) <>
                      solidPolygon [ (-0.05, 0.25), (-0.05, -0.25), (-0.3, 0) ])
+         <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
+         <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+
+drawControl _ alpha StepButton = translated (-6) (-9) p
+  where p = colored (RGBA 0   0   0   alpha)
+                    (translated (-0.15) 0 (solidRectangle 0.2 0.5) <>
+                     solidPolygon [ (0.05, 0.25), (0.05, -0.25), (0.3, 0) ])
          <> colored (RGBA 0.2 0.2 0.2 alpha) (rectangle      0.8 0.8)
          <> colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
 

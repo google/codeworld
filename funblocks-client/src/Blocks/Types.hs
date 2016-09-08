@@ -181,7 +181,7 @@ numOpposite = standardFunction "numOpposite" "opposite" (Just "minus-box.svg") [
 numAbs = standardFunction "numAbs" "abs" Nothing [typeNumber, typeNumber]
             ["NUM"] colorNumber "The absolute value of a number"
 
-numRound = standardFunction "numRound" "round" Nothing [typeNumber, typeNumber]
+numRound = standardFunction "numRound" "rounded" Nothing [typeNumber, typeNumber]
             ["NUM"] colorNumber "The rounded value of a number"
 
 numReciprocal = standardFunction "numReciprocal" "reciprocal" Nothing [typeNumber, typeNumber]

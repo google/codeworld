@@ -465,6 +465,11 @@ regularBlockNames =
                   ,"pair_first_typed"
                   ,"pair_second_typed"
                   -- Lists
+                  ,"lists_repeating"
+                  ,"lists_shuffled"
+                  ,"lists_sorted"
+                  ,"lists_reversed"
+                  ,"lists_first"
                   ,"lists_length"
                   ,"lists_at"
                   -- FUNCTIONS

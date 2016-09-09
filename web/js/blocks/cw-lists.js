@@ -154,7 +154,6 @@ Blockly.Blocks['lists_comprehension'] = {
     return result;
   },
 
-  
   resetArrows: function(){
     this.arrows = null;
     var tps = [];
@@ -242,7 +241,6 @@ Blockly.Blocks['lists_comprehension'] = {
    * @this Blockly.Block
    */
   domToMutation: function(xmlElement) {
-
     for (var x = 0; x < this.varCount_; x++) {
       this.removeInput('VAR' + x);
     }
@@ -273,8 +271,8 @@ Blockly.Blocks['lists_comprehension'] = {
                       .appendField('If');
     }
     this.resetArrows();
-
   },
+
   /**
    * Populate the mutator's dialog with this block's components.
    * @param {!Blockly.Workspace} workspace Mutator's workspace.
@@ -303,6 +301,7 @@ Blockly.Blocks['lists_comprehension'] = {
 
     return containerBlock;
   },
+
   /**
    * Reconfigure this block based on the mutator dialog's components.
    * @param {!Blockly.Block} containerBlock Root block in mutator.
@@ -358,6 +357,7 @@ Blockly.Blocks['lists_comprehension'] = {
 
     Blockly.TypeInf.inferWorkspace(this.workspace);
   },
+
   /**
    * Store pointers to any connected child blocks.
    * @param {!Blockly.Block} containerBlock Root block in mutator.
@@ -459,6 +459,90 @@ Blockly.Blocks['lists_length'] = {
     this.setOutput(true);
     Blockly.TypeInf.defineFunction("length", Type.fromList([Type.Lit("list", [Type.Var("a")]), Type.Lit("Number") ]));
     this.setAsFunction("length");
+  }
+};
+
+Blockly.Blocks['lists_repeating'] = {
+  init: function() {
+    this.setColour(listsHUE);
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldLabel("repeating","blocklyTextEmph"));
+    this.appendValueInput('LST')
+        .appendField("(");
+    this.appendDummyInput()
+        .appendField(")");
+    this.setOutput(true);
+    var lstType = Type.Lit("list", [Type.Var("a")]);
+    Blockly.TypeInf.defineFunction("repeating", Type.fromList([lstType, lstType]));
+    this.setAsFunction("repeating");
+  }
+};
+
+Blockly.Blocks['lists_shuffled'] = {
+  init: function() {
+    this.setColour(listsHUE);
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldLabel("shuffled","blocklyTextEmph"));
+    this.appendValueInput('LST')
+        .appendField("(");
+    this.appendValueInput('SEED')
+        .appendField(",");
+    this.appendDummyInput()
+        .appendField(")");
+    this.setOutput(true);
+    var lstType = Type.Lit("list", [Type.Var("a")]);
+    Blockly.TypeInf.defineFunction("shuffled", Type.fromList([lstType, Type.Lit("Number"), lstType]));
+    this.setAsFunction("shuffled");
+  }
+};
+
+Blockly.Blocks['lists_sorted'] = {
+  init: function() {
+    this.setColour(listsHUE);
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldLabel("sorted","blocklyTextEmph"));
+    this.appendValueInput('LST')
+        .appendField("(");
+    this.appendDummyInput()
+        .appendField(")");
+    this.setOutput(true);
+    var lstType = Type.Lit("list", [Type.Lit("Number")]);
+    Blockly.TypeInf.defineFunction("sorted", Type.fromList([lstType, lstType]));
+    this.setAsFunction("sorted");
+  }
+};
+
+Blockly.Blocks['lists_reversed'] = {
+  init: function() {
+    this.setColour(listsHUE);
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldLabel("reversed","blocklyTextEmph"));
+    this.appendValueInput('LST')
+        .appendField("(");
+    this.appendDummyInput()
+        .appendField(")");
+    this.setOutput(true);
+    var lstType = Type.Lit("list", [Type.Var("a")]);
+    Blockly.TypeInf.defineFunction("reversed", Type.fromList([lstType, lstType]));
+    this.setAsFunction("reversed");
+  }
+};
+
+Blockly.Blocks['lists_first'] = {
+  init: function() {
+    this.setColour(listsHUE);
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldLabel("first","blocklyTextEmph"));
+    this.appendValueInput('LST')
+        .appendField("(");
+    this.appendValueInput('COUNT')
+        .appendField(",");
+    this.appendDummyInput()
+        .appendField(")");
+    this.setOutput(true);
+    var lstType = Type.Lit("list", [Type.Var("a")]);
+    Blockly.TypeInf.defineFunction("first", Type.fromList([lstType, Type.Lit("Number"), lstType]));
+    this.setAsFunction("first");
   }
 };
 

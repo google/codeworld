@@ -45,6 +45,13 @@ inlineDef = Inline True
 icon :: T.Text -> Field
 icon name = FieldImage ("ims/" `T.append` name) 20 20
 
+standardFunction cwName funcName ico types [] color tooltip =
+    DesignBlock cwName (Function funcName types) [header] inlineDef color (Tooltip tooltip)
+  where
+    header = case ico of
+                Just i -> Dummy [TextE funcName, icon i]
+                Nothing -> Dummy [TextE funcName]
+
 standardFunction cwName funcName ico types inputNames color tooltip =
     DesignBlock cwName (Function funcName types)
       (header : (argInputs ++ [Dummy [Text ")"]]))
@@ -58,37 +65,19 @@ standardFunction cwName funcName ico types inputNames color tooltip =
     argInputs = map (\name -> Value name [Text ","]) (tail inputNames)
 
 -- PICTURE ----------------------------------------------
-cwBlank = DesignBlock "cwBlank" (Function "blank" [Picture])
-          [Dummy 
-            [TextE "blank"]
-          ]
-          inlineDef colorPicture 
-          (Tooltip "Blank picture")
+cwBlank = standardFunction "cwBlank" "blank" Nothing [Picture] [] colorPicture "Blank picture"
 
-cwCoordinatePlane = DesignBlock "cwCoordinatePlane" (Function "coordinatePlane" [Picture] )
-          [Dummy 
-            [TextE "coordinatePlane"]
-          ]
-          inlineDef colorPicture 
-          (Tooltip "Picture of coordinate plane")
+cwCoordinatePlane = standardFunction "cwCoordinatePlane" "coordinatePlane" Nothing [Picture] [] colorPicture "Picture of coordinate plane"
 
-cwCodeWorldLogo = DesignBlock "cwCodeWorldLogo" (Function "codeWorldLogo" [Picture])
-          [Dummy 
-            [TextE "codeWorldLogo"]
-          ]
-          inlineDef colorPicture 
-          (Tooltip "Picture of CodeWorld logo")
+cwCodeWorldLogo = standardFunction "cwCodeWorldLogo" "codeWorldLogo" Nothing [Picture] [] colorPicture "Picture of CodeWorld logo"
 
 cwText = standardFunction "cwText" "text" Nothing [typeText, Picture]
             ["TEXT"] colorPicture "Picture of text"
 
 cwDrawingOf = DesignBlock "cwDrawingOf" (Top "drawingOf" [typePicture, typeProgram])
-          [Dummy [Text "(", TextE "drawingOf", icon "shape-plus.svg"] 
-            ,Value "VALUE" []
-            ,Dummy [Text ")"]] 
-          inlineDef colorProgram 
+          [Value "VALUE" [Text "(", TextE "drawingOf", icon "shape-plus.svg"], Dummy [Text ")"]]
+          inlineDef colorProgram
           (Tooltip "Displays a drawing of a picture")
-
 
 cwCircle = standardFunction "cwCircle" "circle" Nothing [typeNumber, typePicture] ["RADIUS"] colorPicture "Picture of a circle"
 
@@ -222,132 +211,24 @@ txtLowercase = standardFunction "txtLowercase" "lowercase" Nothing [typeText, ty
 txtUppercase = standardFunction "txtUppercase" "uppercase" Nothing [typeText, typeText]
                 ["TEXT"] colorText "The text in uppercase"
 
--- A note to future readers, capitalized in GHJCS crashes, so this isn't used.
--- Issue #159
-txtCapitalized = DesignBlock "txtCapitalized" (Function "capitalized" [typeText, typeText])
-        [ Value "TEXT"  [TextE "capitalized"] ]
-         (Inline True) colorText 
-         (Tooltip "Gives the text with the first value capitalized")
-
 -- COLORS ----------------------------------------------
-cwBlue = DesignBlock "cwBlue" (Function "blue" [typeColor])
-          [Dummy 
-            [TextE "blue"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color blue")
-
-cwRed = DesignBlock "cwRed" (Function "red" [typeColor])
-          [Dummy 
-            [TextE "red"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color red")
-
-cwGreen = DesignBlock "cwGreen" (Function "green" [typeColor])
-          [Dummy 
-            [TextE "green"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color green")
-
-cwOrange = DesignBlock "cwOrange" (Function "orange" [typeColor])
-          [Dummy 
-            [TextE "orange"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color orange")
-
-cwBrown = DesignBlock "cwBrown" (Function "brown" [typeColor])
-          [Dummy 
-            [TextE "brown"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color brown")
-
-cwBlack = DesignBlock "cwBlack" (Function "black" [typeColor])
-          [Dummy 
-            [TextE "black"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color black")
-
-cwWhite = DesignBlock "cwWhite" (Function "white" [typeColor])
-          [Dummy 
-            [TextE "white"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color white")
-
-cwCyan = DesignBlock "cwCyan" (Function "cyan" [typeColor])
-          [Dummy 
-            [TextE "cyan"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color cyan")
-
-cwMagenta = DesignBlock "cwMagenta" (Function "magenta" [typeColor])
-          [Dummy 
-            [TextE "magenta"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color magenta")
-
-cwYellow = DesignBlock "cwYellow" (Function "yellow" [typeColor])
-          [Dummy 
-            [TextE "yellow"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color yellow")
-
-cwAquamarine = DesignBlock "cwAquamarine" (Function "aquamarine" [typeColor])
-          [Dummy 
-            [TextE "aquamarine"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color aquamarine")
-
-cwAzure = DesignBlock "cwAzure" (Function "azure" [typeColor])
-          [Dummy 
-            [TextE "azure"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color azure")
-
-cwViolet = DesignBlock "cwViolet" (Function "violet" [typeColor])
-          [Dummy 
-            [TextE "violet"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color violet")
-
-cwChartreuse = DesignBlock "cwChartreuse" (Function "chartreuse" [typeColor])
-          [Dummy 
-            [TextE "chartreuse"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color chartreuse")
-
-cwRose = DesignBlock "cwRose" (Function "rose" [typeColor])
-          [Dummy 
-            [TextE "rose"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color rose")
-
-cwPink = DesignBlock "cwPink" (Function "pink" [typeColor])
-          [Dummy 
-            [TextE "pink"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color pink")
-
-cwPurple = DesignBlock "cwPurple" (Function "purple" [typeColor])
-          [Dummy 
-            [TextE "purple"]
-          ]
-          inlineDef colorColor 
-          (Tooltip "The color purple")
+cwBlue = standardFunction "cwBlue" "blue" Nothing [typeColor] [] colorColor "The color blue"
+cwRed = standardFunction "cwRed" "red" Nothing [typeColor] [] colorColor "The color red"
+cwGreen = standardFunction "cwGreen" "green" Nothing [typeColor] [] colorColor "The color green"
+cwOrange = standardFunction "cwOrange" "orange" Nothing [typeColor] [] colorColor "The color orange"
+cwBrown = standardFunction "cwBrown" "brown" Nothing [typeColor] [] colorColor "The color brown"
+cwBlack = standardFunction "cwBlack" "black" Nothing [typeColor] [] colorColor "The color black"
+cwWhite = standardFunction "cwWhite" "white" Nothing [typeColor] [] colorColor "The color white"
+cwCyan = standardFunction "cwCyan" "cyan" Nothing [typeColor] [] colorColor "The color cyan"
+cwMagenta = standardFunction "cwMagenta" "magenta" Nothing [typeColor] [] colorColor "The color magenta"
+cwYellow = standardFunction "cwYellow" "yellow" Nothing [typeColor] [] colorColor "The color yellow"
+cwAquamarine = standardFunction "cwAquamarine" "aquamarine" Nothing [typeColor] [] colorColor "The color aquamarine"
+cwAzure = standardFunction "cwAzure" "azure" Nothing [typeColor] [] colorColor "The color azure"
+cwViolet = standardFunction "cwViolet" "violet" Nothing [typeColor] [] colorColor "The color violet"
+cwChartreuse = standardFunction "cwChartreuse" "chartreuse" Nothing [typeColor] [] colorColor "The color chartreuse"
+cwRose = standardFunction "cwRose" "rose" Nothing [typeColor] [] colorColor "The color rose"
+cwPink = standardFunction "cwPink" "pink" Nothing [typeColor] [] colorColor "The color pink"
+cwPurple = standardFunction "cwPurple" "purple" Nothing [typeColor] [] colorColor "The color purple"
 
 cwGray = standardFunction "cwGray" "gray" Nothing [typeNumber, typeColor]
           ["VALUE"] colorColor "The color gray, varying by an amount. Lower value is closer to black"
@@ -370,14 +251,9 @@ cwDull = standardFunction "cwDull" "dull" Nothing [typeColor, typeColor]
 cwTranslucent = standardFunction "cwTranslucent" "translucent" Nothing [typeColor, typeColor]
                   ["COL"] colorColor "A more translucent color"
 
-cwRGBA = DesignBlock "cwRGBA" (Function "RGBA" [typeNumber, typeNumber, typeNumber, typeNumber, typeColor])
-          [Dummy [TextE "RGBA"] 
-           ,Value "RED"  [Text "Red"] 
-           ,Value "GREEN"  [Text "Green"] 
-           ,Value "BLUE"  [Text "Blue"] 
-           ,Value "ALPHA"  [Text "Alpha"] ] 
-          (Inline False) colorColor 
-          (Tooltip "Makes a color with the given red, blue, green and alpha values")
+cwRGBA = standardFunction "cwRGBA" "RGBA" Nothing [typeNumber, typeNumber, typeNumber, typeNumber, typeColor]
+             ["RED", "GREEN", "BLUE", "ALPHA"] colorColor
+             "Makes a color with the given red, green, blue and alpha portions"
 
 -- LOGIC -------------------------------------------
 conIf = DesignBlock "conIf" (Function "if" [typeBool, Poly "a", Poly "a", Poly "a"])
@@ -419,19 +295,8 @@ conNeq = DesignBlock "conNeq" (Function "/=" [Poly "a", Poly "a", typeBool])
          (Inline True) colorBool 
          (Tooltip "Are two items not equal")
 
-conTrue = DesignBlock "conTrue" (Function "True" [typeBool])
-          [Dummy 
-            [TextE "True"]
-          ]
-          inlineDef colorBool 
-          (Tooltip "True logic value")
-
-conFalse = DesignBlock "conFalse" (Function "False" [typeBool])
-          [Dummy 
-            [TextE "False"]
-          ]
-          inlineDef colorBool 
-          (Tooltip "False logic value")
+conTrue = standardFunction "conTrue" "True" Nothing [typeBool] [] colorBool "True logic value"
+conFalse = standardFunction "conFalse" "False" Nothing [typeBool] [] colorBool "False logic value"
 
 conGreater = DesignBlock "conGreater" (Function ">" [typeNumber, typeNumber, typeBool])
         [ Value "LEFT"  [] 
@@ -475,23 +340,16 @@ conEndWith = standardFunction "conEndWith" "endsWith" Nothing [typeText, typeTex
 
 -- LISTS ----------------------------------------------
 lstGenNum = DesignBlock "lstGenNum" (Function ".." [typeNumber, typeNumber, typeNumber])
-        [ Dummy [Text "["]
-         ,Value "LEFT"  [] 
+        [ Value "LEFT" [Text "["]
          ,Value "RIGHT" [TextE ".."] 
          ,Dummy [Text "]"]
          ]
          (Inline True) colorBool 
          (Tooltip "Tells whether one number is greater than the other")
 
-
-
 comment = DesignBlock "comment" None
-          [Dummy 
-            [TextInput "" "TEXT",
-            TextE "--"]
-          ]
-          inlineDef (Color 260) 
-          (Tooltip "Enter a comment")
+          [Dummy [TextInput "" "TEXT", TextE "--"]]
+          inlineDef (Color 260) (Tooltip "Enter a comment")
 
 getTypeBlocks :: [T.Text]
 getTypeBlocks = map (\(DesignBlock name _  _ _ _ _) -> name) blockTypes
@@ -540,7 +398,6 @@ blockTypes = [
               ,txtPrinted
               ,txtLowercase
               ,txtUppercase
-              ,txtCapitalized -- Added, but not in the toolbox. It crashed GHCJS, #159
               -- COLORS
               ,cwBlue
               ,cwRed

@@ -45,18 +45,17 @@ inlineDef = Inline True
 icon :: T.Text -> Field
 icon name = FieldImage ("ims/" `T.append` name) 20 20
 
-
-standardFunction cwName funcName ico types inputNames color tooltip = 
+standardFunction cwName funcName ico types inputNames color tooltip =
     DesignBlock cwName (Function funcName types)
-      (header : (Dummy [Text "("])  : (argInputs ++ [ Dummy [Text ")"]] ) ) 
+      (header : (argInputs ++ [Dummy [Text ")"]]))
       inlineDef
       color
       (Tooltip tooltip)
   where
     header = case ico of
-                Just i -> Dummy [TextE funcName, icon i] 
-                Nothing -> Dummy [TextE funcName]
-    argInputs = intersperse (Dummy [Text ","]) $ map (\name -> Value name []) inputNames
+                Just i -> Value (head inputNames) [Text "(", TextE funcName, icon i]
+                Nothing -> Value (head inputNames) [Text "(", TextE funcName]
+    argInputs = map (\name -> Value name [Text ","]) (tail inputNames)
 
 -- PICTURE ----------------------------------------------
 cwBlank = DesignBlock "cwBlank" (Function "blank" [Picture])

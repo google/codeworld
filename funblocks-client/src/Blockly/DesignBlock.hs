@@ -120,21 +120,21 @@ fieldCode field (TextE str) = js_appendTextFieldEmph field (pack str)
 fieldCode field (TextInput text name) = js_appendTextInputField field (pack text) (pack name)
 fieldCode field (FieldImage src width height) = js_appendFieldImage field (pack src) width height
 
-inputCode :: Block -> Input -> IO ()
-inputCode block (Dummy fields) = do 
-  fieldInput <- js_appendDummyInput block  
+inputCode :: Bool -> Block -> Input -> IO ()
+inputCode rightAlign block (Dummy fields) = do 
+  fieldInput <- js_appendDummyInput block
+  when rightAlign $ js_setAlignRight fieldInput
   foldr (\ field fi -> do
       fi_ <- fi
       fieldCode fi_ field) (return fieldInput) fields
   return ()
-
-inputCode block (Value name fields) = do
+inputCode rightAlign block (Value name fields) = do
   fieldInput <- js_appendValueInput block (pack name)
+  when rightAlign $ js_setAlignRight fieldInput
   foldr (\ field fi -> do
       fi_ <- fi
       fieldCode fi_ field) (return fieldInput) fields
   return ()
-
 
 typeToTypeExpr :: Type -> TE.Type_
 typeToTypeExpr (Poly a) = TE.createType $ TE.TypeVar a
@@ -147,7 +147,8 @@ setBlockType (DesignBlock name blockType inputs (Inline inline) (Color color) (T
       cb <- syncCallback1 ContinueAsync  (\this -> do 
                                      let block = B.Block this
                                      js_setColor block color
-                                     mapM_ (inputCode block) inputs
+                                     forM_ (zip inputs (False : repeat True)) $ \(inp, rightAlign) -> do
+                                       inputCode rightAlign block inp
                                      case blockType of
                                        None -> js_disableOutput block
                                        Top _ _ -> js_disableOutput block
@@ -157,7 +158,6 @@ setBlockType (DesignBlock name blockType inputs (Inline inline) (Color color) (T
                                      return ()
                                      )
       js_setGenFunction (pack name) cb
-
 
 typeToType :: Type -> TE.Type
 typeToType (Poly a) = TE.TypeVar a
@@ -214,10 +214,12 @@ foreign import javascript unsafe "$1.appendField(new Blockly.FieldImage($2, $3, 
 
 foreign import javascript unsafe "$1.appendField(new Blockly.FieldTextInput($2), $3)"
   js_appendTextInputField :: FieldInput -> JSString -> JSString -> IO FieldInput
-  -- field, text of field, name ref
-  --
+
 foreign import javascript unsafe "$1.setCheck($2)"
   js_setCheck :: FieldInput -> JSString -> IO ()
+
+foreign import javascript unsafe "$1.setAlign(Blockly.ALIGN_RIGHT)"
+  js_setAlignRight :: FieldInput -> IO ()
 
 foreign import javascript unsafe "$1.setInputsInline($2)"
   js_setInputsInline :: Block -> Bool -> IO ()

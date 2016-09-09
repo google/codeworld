@@ -24,38 +24,36 @@ goog.require('Blockly.Blocks');
 * Pairs
 */
 Blockly.Blocks['pair_create_typed'] = {
- /**
-  * Block for ternary operator.
-  * @this Blockly.Block
-  */
- init: function() {
-   this.setColour(210);
-   this.appendValueInput('FIRST')
-       .appendField(new Blockly.FieldLabel('(', 'blocklyTextEmph') );
-   this.appendValueInput('SECOND')
-       .appendField(new Blockly.FieldLabel(',', 'blocklyTextEmph') )
-   this.appendDummyInput()
-       .appendField(new Blockly.FieldLabel(')','blocklyTextEmph') );
-   this.setOutput(true);
-   this.setInputsInline(true);
+  init: function() {
+    this.setColour(210);
+    this.appendValueInput('FIRST')
+        .appendField(new Blockly.FieldLabel('(', 'blocklyTextEmph'));
+    this.appendValueInput('SECOND')
+        .setAlign(Blockly.ALIGN_RIGHT)
+        .appendField(new Blockly.FieldLabel(',', 'blocklyTextEmph'))
+    this.appendDummyInput()
+        .setAlign(Blockly.ALIGN_RIGHT)
+        .appendField(new Blockly.FieldLabel(')','blocklyTextEmph'));
+    this.setOutput(true);
+    this.setInputsInline(true);
 
-   var a = Type.Var("a");
-   var b = Type.Var("b");
-   var res = Type.Lit("pair", [a,b]);
-   Blockly.TypeInf.defineFunction(",", Type.fromList( [a,b,res] ));
-   this.setAsFunction(",");
- }
+    var a = Type.Var("a");
+    var b = Type.Var("b");
+    var res = Type.Lit("pair", [a,b]);
+    Blockly.TypeInf.defineFunction(",", Type.fromList( [a,b,res] ));
+    this.setAsFunction(",");
+  }
 };
 
 Blockly.Blocks['pair_first_typed'] = {
-  /**
-   * Block for ternary operator.
-   * @this Blockly.Block
-   */
   init: function() {
     this.setColour(180);
     this.appendValueInput('PAIR')
-        .appendField(new Blockly.FieldLabel("firstOfPair","blocklyTextEmph") );
+        .appendField(new Blockly.FieldLabel("firstOfPair","blocklyTextEmph"))
+        .appendField("(");
+    this.appendDummyInput()
+       .setAlign(Blockly.ALIGN_RIGHT)
+       .appendField(")");
     this.setOutput(true);
 
     Blockly.TypeInf.defineFunction("firstOfPair", Type.fromList([Type.Lit("pair", [Type.Var("a"), Type.Var("b")]), Type.Var("a")]));
@@ -64,19 +62,17 @@ Blockly.Blocks['pair_first_typed'] = {
 };
 
 Blockly.Blocks['pair_second_typed'] = {
-  /**
-   * Block for ternary operator.
-   * @this Blockly.Block
-   */
   init: function() {
     this.setColour(180);
     this.appendValueInput('PAIR')
-        .appendField(new Blockly.FieldLabel("secondOfPair","blocklyTextEmph") );
+        .appendField(new Blockly.FieldLabel("secondOfPair","blocklyTextEmph"))
+        .appendField("(");
+    this.appendDummyInput()
+       .setAlign(Blockly.ALIGN_RIGHT)
+       .appendField(")");
     this.setOutput(true);
 
     Blockly.TypeInf.defineFunction("secondOfPair", Type.fromList([Type.Lit("pair", [Type.Var("a"), Type.Var("b")]), Type.Var("b")]));
     this.setAsFunction("secondOfPair");
   }
 };
-
-

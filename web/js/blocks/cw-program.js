@@ -29,17 +29,18 @@ Blockly.Blocks['cwSimulationOf'] = {
   init: function() {
     this.setColour(0);
     this.setOutput(false);
-    this.appendDummyInput()
-        .appendField(new Blockly.FieldImage('ims/car-wash.svg',20,20))
-        .appendField(new Blockly.FieldLabel('simulationOf', 'blocklyTextEmph'));
-    
     this.appendValueInput('INITIAL')
+        .appendField(new Blockly.FieldImage('ims/car-wash.svg',20,20))
+        .appendField(new Blockly.FieldLabel('simulationOf', 'blocklyTextEmph'))
         .appendField('(');
     this.appendValueInput('STEP')
+        .setAlign(Blockly.ALIGN_RIGHT)
         .appendField(',');
     this.appendValueInput('DRAW')
+        .setAlign(Blockly.ALIGN_RIGHT)
         .appendField(',');
     this.appendDummyInput()
+        .setAlign(Blockly.ALIGN_RIGHT)
         .appendField(')');
     this.setInputsInline(true);
 
@@ -62,19 +63,21 @@ Blockly.Blocks['cwInteractionOf'] = {
   init: function() {
     this.setColour(0);
     this.setOutput(false);
-    this.appendDummyInput()
-        .appendField(new Blockly.FieldImage('ims/human-handsup.svg',20,20))
-        .appendField(new Blockly.FieldLabel('interactionOf', 'blocklyTextEmph'));
-    
     this.appendValueInput('INITIAL')
+        .appendField(new Blockly.FieldImage('ims/human-handsup.svg',20,20))
+        .appendField(new Blockly.FieldLabel('interactionOf', 'blocklyTextEmph'))
         .appendField('(');
     this.appendValueInput('STEP')
+        .setAlign(Blockly.ALIGN_RIGHT)
         .appendField(',');
     this.appendValueInput('EVENT')
+        .setAlign(Blockly.ALIGN_RIGHT)
         .appendField(',');
     this.appendValueInput('DRAW')
+        .setAlign(Blockly.ALIGN_RIGHT)
         .appendField(',');
     this.appendDummyInput()
+        .setAlign(Blockly.ALIGN_RIGHT)
         .appendField(')');
     this.setInputsInline(true);
 
@@ -99,13 +102,12 @@ Blockly.Blocks['cwAnimationOf'] = {
   init: function() {
     this.setColour(0);
     this.setOutput(false);
-
-    this.appendDummyInput()
+    this.appendValueInput('FUNC')
         .appendField(new Blockly.FieldImage('ims/car.svg',20,20))
         .appendField(new Blockly.FieldLabel('animationOf', 'blocklyTextEmph'))
         .appendField('(');
-    this.appendValueInput('FUNC');
     this.appendDummyInput()
+        .setAlign(Blockly.ALIGN_RIGHT)
         .appendField(')');
     this.setInputsInline(true);
 
@@ -115,5 +117,3 @@ Blockly.Blocks['cwAnimationOf'] = {
     this.setAsFunction("animationOf");
   }
 };
-
-

@@ -60,5 +60,3 @@ Blockly.Blocks['numNumberPerc'] = {
     this.setTooltip(Blockly.Msg.MATH_NUMBER_TOOLTIP);
   }
 };
-
-

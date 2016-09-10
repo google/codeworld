@@ -189,9 +189,9 @@ numPi = DesignBlock "numPi" (Function "pi" [typeNumber])
           (Tooltip "The number pi, 3.1415..")
 
 numSqrt = DesignBlock "numSqrt" (Function "sqrt" [typeNumber, typeNumber])
-        [Value "NUM" [TextE "\x221A"] ]
-         (Inline True) colorNumber 
-         (Tooltip "Gives the square root of a number")
+              [Value "NUM" [TextE "\x221A"], Dummy []]
+              (Inline True) colorNumber 
+              (Tooltip "Gives the square root of a number")
 
 numGCD = standardFunction "numGCD" "gcd" Nothing [typeNumber, typeNumber, typeNumber]
             ["LEFT", "RIGHT"] colorNumber "The greatest common demonitator between two numbers"

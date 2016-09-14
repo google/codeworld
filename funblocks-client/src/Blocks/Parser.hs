@@ -422,6 +422,8 @@ regularBlockNames =
                   ,"numSqrt"
                   ,"numGCD"
                   ,"numLCM"
+                  ,"numSin"
+                  ,"numCos"
                   -- TEXT
                   ,"txtPrinted"
                   ,"txtLowercase"
@@ -470,6 +472,7 @@ regularBlockNames =
                   ,"lists_sorted"
                   ,"lists_reversed"
                   ,"lists_first"
+                  ,"lists_rest"
                   ,"lists_length"
                   ,"lists_at"
                   -- FUNCTIONS

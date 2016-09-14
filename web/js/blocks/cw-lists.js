@@ -555,6 +555,25 @@ Blockly.Blocks['lists_first'] = {
   }
 };
 
+Blockly.Blocks['lists_rest'] = {
+  init: function() {
+    this.setColour(listsHUE);
+    this.appendValueInput('LST')
+        .appendField(new Blockly.FieldLabel("rest","blocklyTextEmph"))
+        .appendField("(");
+    this.appendValueInput('COUNT')
+        .setAlign(Blockly.ALIGN_RIGHT)
+        .appendField(",");
+    this.appendDummyInput()
+        .setAlign(Blockly.ALIGN_RIGHT)
+        .appendField(")");
+    this.setOutput(true);
+    var lstType = Type.Lit("list", [Type.Var("a")]);
+    Blockly.TypeInf.defineFunction("rest", Type.fromList([lstType, Type.Lit("Number"), lstType]));
+    this.setAsFunction("rest");
+  }
+};
+
 Blockly.Blocks['lists_at'] = {
   init: function() {
     this.setColour(180);

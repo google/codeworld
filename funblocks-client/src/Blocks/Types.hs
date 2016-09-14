@@ -199,6 +199,11 @@ numGCD = standardFunction "numGCD" "gcd" Nothing [typeNumber, typeNumber, typeNu
 numLCM = standardFunction "numLCM" "lcm" Nothing [typeNumber, typeNumber, typeNumber]
           ["LEFT", "RIGHT"] colorNumber "The least common multiple between two numbers"
 
+numSin = standardFunction "numSin" "sin" Nothing [typeNumber, typeNumber]
+           ["VAL"] colorNumber "The sine of an angle"
+
+numCos = standardFunction "numCos" "cos" Nothing [typeNumber, typeNumber]
+           ["VAL"] colorNumber "The cosine of an angle"
 
 -- TEXT ------------------------------------------------
 
@@ -394,6 +399,8 @@ blockTypes = [
               ,numSqrt
               ,numGCD
               ,numLCM
+              ,numSin
+              ,numCos
               -- TEXT
               ,txtPrinted
               ,txtLowercase

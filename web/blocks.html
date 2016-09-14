@@ -295,6 +295,43 @@
           </value>
         </block>
       </category>
+      <category name="Coordinates">
+        <block type="cwCoordinatePlane"></block>
+        <block type="lists_path"></block>
+        <block type="lists_thickPath">
+          <value name="THICKNESS">
+            <shadow type="numNumber">
+              <field name="NUMBER">0</field>
+            </shadow>
+          </value>
+        </block>
+        <block type="lists_polygon"></block>
+        <block type="lists_solidPolygon"></block>
+        <block type="lists_thickPolygon">
+          <value name="THICKNESS">
+            <shadow type="numNumber">
+              <field name="NUMBER">0</field>
+            </shadow>
+          </value>
+        </block>
+        <block type="lists_curve"></block>
+        <block type="lists_thickCurve">
+          <value name="THICKNESS">
+            <shadow type="numNumber">
+              <field name="NUMBER">0</field>
+            </shadow>
+          </value>
+        </block>
+        <block type="lists_loop"></block>
+        <block type="lists_solidLoop"></block>
+        <block type="lists_thickLoop">
+          <value name="THICKNESS">
+            <shadow type="numNumber">
+              <field name="NUMBER">0</field>
+            </shadow>
+          </value>
+        </block>
+      </category>
       <category name="Transformations">
         <block type="cwCombine">
           <value name="PIC0">
@@ -354,39 +391,83 @@
         </block>
         <block type="lists_pictures"></block>
       </category>
-      <category name="Coordinates">
-        <block type="cwCoordinatePlane"></block>
-        <block type="lists_path"></block>
-        <block type="lists_thickPath">
-          <value name="THICKNESS">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
+      <category name="Colors">
+        <block type="cwRed"></block>
+        <block type="cwBlue"></block>
+        <block type="cwGreen"></block>
+        <block type="cwBrown"></block>
+        <block type="cwOrange"></block>
+        <block type="cwBlack"></block>
+        <block type="cwWhite"></block>
+        <block type="cwCyan"></block>
+        <block type="cwMagenta"></block>
+        <block type="cwYellow"></block>
+        <block type="cwAquamarine"></block>
+        <block type="cwAzure"></block>
+        <block type="cwViolet"></block>
+        <block type="cwChartreuse"></block>
+        <block type="cwRose"></block>
+        <block type="cwPink"></block>
+        <block type="cwPurple"></block>
+        <block type="cwGray">
+          <value name="VALUE">
+            <shadow type="numNumberPerc">
+              <field name="NUMBER">50</field>
             </shadow>
           </value>
         </block>
-        <block type="lists_polygon"></block>
-        <block type="lists_solidPolygon"></block>
-        <block type="lists_thickPolygon">
-          <value name="THICKNESS">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
-            </shadow>
+        <block type="cwMixed">
+          <value name="COL1">
+            <shadow type="cwRed"></shadow>
+          </value>
+          <value name="COL2">
+            <shadow type="cwOrange"></shadow>
           </value>
         </block>
-        <block type="lists_curve"></block>
-        <block type="lists_thickCurve">
-          <value name="THICKNESS">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
-            </shadow>
+        <block type="cwLight">
+          <value name="COL">
+            <shadow type="cwRed"></shadow>
           </value>
         </block>
-        <block type="lists_loop"></block>
-        <block type="lists_solidLoop"></block>
-        <block type="lists_thickLoop">
-          <value name="THICKNESS">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
+        <block type="cwDark">
+          <value name="COL">
+            <shadow type="cwRed"></shadow>
+          </value>
+        </block>
+        <block type="cwBright">
+          <value name="COL">
+            <shadow type="cwRed"></shadow>
+          </value>
+        </block>
+        <block type="cwDull">
+          <value name="COL">
+            <shadow type="cwRed"></shadow>
+          </value>
+        </block>
+        <block type="cwTranslucent">
+          <value name="COL">
+            <shadow type="cwRed"></shadow>
+          </value>
+        </block>
+        <block type="cwRGBA">
+          <value name="RED">
+            <shadow type="numNumberPerc">
+              <field name="NUMBER">50</field>
+            </shadow>
+          </value>
+          <value name="BLUE">
+            <shadow type="numNumberPerc">
+              <field name="NUMBER">50</field>
+            </shadow>
+          </value>
+          <value name="GREEN">
+            <shadow type="numNumberPerc">
+              <field name="NUMBER">50</field>
+            </shadow>
+          </value>
+          <value name="ALPHA">
+            <shadow type="numNumberPerc">
+              <field name="NUMBER">100</field>
             </shadow>
           </value>
         </block>
@@ -537,87 +618,6 @@
         <block type="txtUppercase">
           <value name="TEXT">
             <shadow type="text_typed"></shadow>
-          </value>
-        </block>
-      </category>
-      <category name="Colors">
-        <block type="cwRed"></block>
-        <block type="cwBlue"></block>
-        <block type="cwGreen"></block>
-        <block type="cwBrown"></block>
-        <block type="cwOrange"></block>
-        <block type="cwBlack"></block>
-        <block type="cwWhite"></block>
-        <block type="cwCyan"></block>
-        <block type="cwMagenta"></block>
-        <block type="cwYellow"></block>
-        <block type="cwAquamarine"></block>
-        <block type="cwAzure"></block>
-        <block type="cwViolet"></block>
-        <block type="cwChartreuse"></block>
-        <block type="cwRose"></block>
-        <block type="cwPink"></block>
-        <block type="cwPurple"></block>
-        <block type="cwGray">
-          <value name="VALUE">
-            <shadow type="numNumberPerc">
-              <field name="NUMBER">50</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="cwMixed">
-          <value name="COL1">
-            <shadow type="cwRed"></shadow>
-          </value>
-          <value name="COL2">
-            <shadow type="cwOrange"></shadow>
-          </value>
-        </block>
-        <block type="cwLight">
-          <value name="COL">
-            <shadow type="cwRed"></shadow>
-          </value>
-        </block>
-        <block type="cwDark">
-          <value name="COL">
-            <shadow type="cwRed"></shadow>
-          </value>
-        </block>
-        <block type="cwBright">
-          <value name="COL">
-            <shadow type="cwRed"></shadow>
-          </value>
-        </block>
-        <block type="cwDull">
-          <value name="COL">
-            <shadow type="cwRed"></shadow>
-          </value>
-        </block>
-        <block type="cwTranslucent">
-          <value name="COL">
-            <shadow type="cwRed"></shadow>
-          </value>
-        </block>
-        <block type="cwRGBA">
-          <value name="RED">
-            <shadow type="numNumberPerc">
-              <field name="NUMBER">50</field>
-            </shadow>
-          </value>
-          <value name="BLUE">
-            <shadow type="numNumberPerc">
-              <field name="NUMBER">50</field>
-            </shadow>
-          </value>
-          <value name="GREEN">
-            <shadow type="numNumberPerc">
-              <field name="NUMBER">50</field>
-            </shadow>
-          </value>
-          <value name="ALPHA">
-            <shadow type="numNumberPerc">
-              <field name="NUMBER">100</field>
-            </shadow>
           </value>
         </block>
       </category>

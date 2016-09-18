@@ -42,11 +42,13 @@ import           Control.Monad
 import           Control.Monad.Trans (liftIO)
 import           Data.Char (chr)
 import           Data.List (zip4)
-import           Data.Maybe (mapMaybe)
+import           Data.Maybe (fromMaybe, mapMaybe)
 import           Data.Monoid
 import qualified Data.Text as T
 import           Data.Text (Text, singleton, pack)
 import           Numeric
+import           System.Environment
+import           Text.Read
 
 #ifdef ghcjs_HOST_OS
 
@@ -502,16 +504,23 @@ setupScreenContext (cw, ch) = do
     Canvas.textAlign Canvas.CenterAnchor
     Canvas.textBaseline Canvas.MiddleBaseline
 
+type Port = Int
+
+readPortFromEnv :: String -> Port -> IO Port
+readPortFromEnv envName defaultPort = do
+    ms <- lookupEnv envName
+    return (fromMaybe defaultPort (ms >>= readMaybe))
+
 runBlankCanvas :: (Canvas.DeviceContext -> IO ()) -> IO ()
 runBlankCanvas act = do
+    port <- readPortFromEnv "CODEWORLD_API_PORT" 3000
+    let options = (fromIntegral port) { Canvas.events =
+            [ "mousedown", "mouseup", "mousemove", "keydown", "keyup"]
+        }
     putStrLn $ printf "Open me on http://127.0.0.1:%d/" (Canvas.port options)
     Canvas.blankCanvas options $ \context -> do
         putStrLn "Program is starting..."
         act context
-  where
-    options = 3000 { Canvas.events =
-        [ "mousedown", "mouseup", "mousemove", "keydown", "keyup"]
-    }
 
 display :: Picture -> IO ()
 display pic = runBlankCanvas $ \context ->

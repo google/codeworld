@@ -161,6 +161,18 @@ Blockly.Blocks['txtConcat'] = {
     this.arrows = Type.fromList(tps);
     this.initArrows();
   },
+
+  saveConnections: function(containerBlock) {
+    var itemBlock = containerBlock.getInputTargetBlock('STACK');
+    var x = 0;
+    while (itemBlock) {
+      var input = this.getInput('STR' + x);
+      itemBlock.valueConnection_ = input && input.connection.targetConnection;
+      x++;
+      itemBlock = itemBlock.nextConnection &&
+          itemBlock.nextConnection.targetBlock();
+    }
+  }
 };
 
 Blockly.Blocks['text_combine_ele'] = {

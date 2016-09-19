@@ -129,6 +129,14 @@ Blockly.Blocks['cwCombine'] = {
     var x = 0;
     while (itemBlock) {
       var input = this.getInput('PIC' + x);
+      if(input && input.connection.targetConnection){
+        if(input.connection.targetBlock().isShadow_){
+          x++;
+          itemBlock = itemBlock.nextConnection &&
+          itemBlock.nextConnection.targetBlock();
+          continue;
+        }
+      }
       itemBlock.valueConnection_ = input && input.connection.targetConnection;
       x++;
       itemBlock = itemBlock.nextConnection &&

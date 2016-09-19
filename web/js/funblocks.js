@@ -141,15 +141,17 @@ function run(xmlHash, codeHash, msg, error, dhash) {
       document.getElementById('message').style.display = 'none';
     }
 
+    
+    if(msg){
+      var message = document.getElementById('message');
+      message.innerHTML = '';
+      addToMessage(msg);
 
-    var message = document.getElementById('message');
-    message.innerHTML = '';
-    addToMessage(msg);
-
-    if (error) {
-        message.classList.add('error');
-    } else {
-        message.classList.remove('error');
+      if (error) {
+          message.classList.add('error');
+      } else {
+          message.classList.remove('error');
+      }
     }
 
     document.getElementById('editButton').setAttribute('href','/#' + codeHash);
@@ -186,7 +188,7 @@ function isEditorClean()
   return !containsUnsavedChanges();
 }
 
-function compile(src) {
+function compile(src,silent) {
     run('', '', 'Compiling...', false);
 
     var xml_text = getWorkspaceXMLText();
@@ -228,6 +230,7 @@ function compile(src) {
                 } else if (request.status == 404) {
                     msg = "Sorry!  Your program couldn't be run right now.  Please try again.";
                 }
+                if(silent) msg = null;
 
                 if (success) {
                     run(xmlHash, hash, 'Running...\n\n' + msg, false, dhash);

@@ -432,7 +432,7 @@ blockTypes = [
               ,cwTranslucent
               ,cwRGBA
               -- LOGIC
-              ,conIf
+              -- ,conIf
               ,conAnd
               ,conOr
               ,conNot

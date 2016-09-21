@@ -77,8 +77,18 @@ runOrError ws = do
             liftIO $ js_cwcompile (pack code)
 
 
+-- Update the hash on the workspace
+-- Mainly so that broken programs can be shared
+updateCode :: Workspace -> IO ()
+updateCode ws = do
+        (code,errors) <- workspaceToCode ws
+        liftIO $ js_updateEditor (pack code)
+        liftIO $ js_cwcompilesilent (pack code)
+
+
 btnRunClick ws = do
   Just doc <- liftIO currentDocument
+  liftIO $ updateCode ws
   blocks <- liftIO $ getTopBlocks ws
   (block, w) <- liftIO $ isWarning ws
   if T.length w > 0 then do
@@ -148,6 +158,9 @@ setRunFunc ws = do
 -- call blockworld.js compile
 foreign import javascript unsafe "compile($1)"
   js_cwcompile :: JSString -> IO ()
+
+foreign import javascript unsafe "compile($1,true)"
+  js_cwcompilesilent :: JSString -> IO ()
 
 -- call blockworld.js run
 -- run (xmlHash, codeHash, msg, error)

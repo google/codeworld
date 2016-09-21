@@ -28,6 +28,9 @@ goog.require('Blockly.Blocks.cwEvent');
 Blockly.Flyout.programBlockList = ["cwAnimationOf", "cwDrawingOf", "cwSimulationOf","cwInteractionOf" ];
 // Automatically generate a type block for each of these
 Blockly.UserTypes.builtinsStatic = ["Truth", "Number", "Color", "Picture", "Text"];
+
+Blockly.UserTypes.userReservedNames = ['do','let','in','if','then','else','data','type','newtype','import','qualified']
+
 // Add a these blockTypes to the toolbox
 Blockly.UserTypes.builtinsDynamic = ["type_list"];
 // Enable the Event drawer

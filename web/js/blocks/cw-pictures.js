@@ -123,7 +123,25 @@ Blockly.Blocks['cwCombine'] = {
     tps.push(Type.Lit("Picture"));
     this.arrows = Type.fromList(tps);
     this.initArrows();
-
+  },
+  saveConnections: function(containerBlock) {
+    var itemBlock = containerBlock.getInputTargetBlock('STACK');
+    var x = 0;
+    while (itemBlock) {
+      var input = this.getInput('PIC' + x);
+      if(input && input.connection.targetConnection){
+        if(input.connection.targetBlock().isShadow_){
+          x++;
+          itemBlock = itemBlock.nextConnection &&
+          itemBlock.nextConnection.targetBlock();
+          continue;
+        }
+      }
+      itemBlock.valueConnection_ = input && input.connection.targetConnection;
+      x++;
+      itemBlock = itemBlock.nextConnection &&
+          itemBlock.nextConnection.targetBlock();
+    }
   }
 };
 

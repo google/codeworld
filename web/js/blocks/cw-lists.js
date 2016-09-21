@@ -50,8 +50,15 @@ Blockly.Blocks['lists_comprehension'] = {
     this.resetArrows();
     Blockly.TypeInf.defineFunction("&&&", Type.fromList([Type.Lit("Truth"),Type.Lit("Truth"),Type.Lit("Truth")]));
     Blockly.TypeInf.defineFunction("filtB", Type.fromList([Type.Var('a'), Type.Lit("Truth"), Type.Var('a')  ]));
-    Blockly.TypeInf.defineFunction("<]", Type.fromList([Type.Lit("list", [Type.Var("a")]), Type.Var("a")  ]));
-    Blockly.TypeInf.defineFunction("MK", Type.fromList([Type.Var("a"), Type.Lit("list", [Type.Var("a")]) ]));
+    Blockly.TypeInf.defineFunction("returnl", Type.fromList([Type.Var("a"), Type.Lit("list", [Type.Var("a")]) ]));
+    Blockly.TypeInf.defineFunction("froml", Type.fromList([ Type.Lit("list", [Type.Var("a")]),  Type.Var("a") ]));
+    Blockly.TypeInf.defineFunction("bindl", Type.fromList(
+                                              [Type.Lit("list", [Type.Var("a")])
+                                              ,Type.fromList([Type.Var("a"), Type.Lit("list", [Type.Var("b")])])
+                                              ,Type.Lit("list", [Type.Var("b")])
+                                              ])
+                                  );
+
   },
 
   foldr1 : function(fn, xs) {
@@ -70,6 +77,7 @@ Blockly.Blocks['lists_comprehension'] = {
       mainExp = this.getInput("DO").connection.targetBlock().getExpr();
 
     mainExp.tag = this.getInput("DO").connection;
+    mainExp = Exp.App(Exp.Var('returnl'), mainExp);
     
     // Do Guards
     var guardExps = [];
@@ -113,34 +121,31 @@ Blockly.Blocks['lists_comprehension'] = {
     for(var i = this.varCount_ - 1; i !== -1; i--){
       var varName = this.vars_[i];
       var inp = this.getInput("VAR" + i);
+      var exp;
       if(inp && inp.connection.isConnected()){
-        var exp = inp.connection.targetBlock().getExpr();
-        exp.tag = inp.connection;
-        
-        var letExp = Exp.App(Exp.Var("<]"),exp);
-        var field = inp.fieldRow[0];
-        if(!field.typeExpr)
-          throw "Wrong field !";
-        letExp.tag = field;
-
-        result = Exp.Let(varName, letExp, result); 
+        exp = inp.connection.targetBlock().getExpr();
       }
       else{
         var exp = Exp.Var('undef');
-        exp.tag = inp.connection;
-        
-        var letExp = Exp.App(Exp.Var("<]"),exp);
-        var field = inp.fieldRow[0];
-        if(!field.typeExpr)
-          throw "Wrong field !";
-        letExp.tag = field;
-
-        result = Exp.Let(varName, letExp, result); 
       }
+
+      exp.tag = inp.connection;
+
+        
+      var field = inp.fieldRow[0];
+      if(!field.typeExpr)
+        throw "Wrong field !";
+
+      exp = Exp.App(Exp.Var('froml'), exp);
+      exp.tag = field;
+      exp = Exp.App(Exp.Var('returnl'), exp);
+
+
+      var letExp = Exp.App(Exp.Var("bindl"),exp);
+
+      result = Exp.App(letExp, Exp.Abs(varName, result))
     }
   
-    // Do result
-    result = Exp.AppFunc( [result], Exp.Var("MK"));
     result.tag = this.outputConnection;
     return result;
 

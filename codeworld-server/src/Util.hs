@@ -70,6 +70,19 @@ targetFile programId = sourceBase programId <.> "jsexe" </> "all.js"
 resultFile :: ProgramId -> FilePath
 resultFile programId = sourceBase programId <.> "err.txt"
 
+auxiliaryFiles :: ProgramId -> [FilePath]
+auxiliaryFiles programId = [
+    sourceBase programId <.> "js_hi",
+    sourceBase programId <.> "js_o",
+    sourceBase programId <.> "jsexe" </> "index.html",
+    sourceBase programId <.> "jsexe" </> "lib.js",
+    sourceBase programId <.> "jsexe" </> "manifest.webapp",
+    sourceBase programId <.> "jsexe" </> "out.js",
+    sourceBase programId <.> "jsexe" </> "out.stats",
+    sourceBase programId <.> "jsexe" </> "rts.js",
+    sourceBase programId <.> "jsexe" </> "runmain.js"
+    ]
+
 deployLink :: DeployId -> FilePath
 deployLink (DeployId d) = let s = T.unpack d in take 3 s </> s
 

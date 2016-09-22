@@ -46,7 +46,7 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
                 BuildMode "haskell"   -> haskellCompatibleBuildArgs
                 _                     -> standardBuildArgs
             ghcjsArgs = baseArgs ++ [ sourceFile programId ]
-        runCompiler mode userCompileMicros ghcjsArgs >>= \case
+        success <- runCompiler mode userCompileMicros ghcjsArgs >>= \case
             Nothing -> do
                 removeFileIfExists (buildRootDir mode </> resultFile programId)
                 removeFileIfExists (buildRootDir mode </> targetFile programId)
@@ -54,6 +54,8 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
             Just output -> do
                 B.writeFile (buildRootDir mode </> resultFile programId) output
                 doesFileExist (buildRootDir mode </> targetFile programId)
+        mapM_ (removeFileIfExists . (buildRootDir mode </>)) (auxiliaryFiles programId)
+        return success
 
 userCompileMicros :: Int
 userCompileMicros = 10 * 1000000

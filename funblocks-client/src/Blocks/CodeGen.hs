@@ -61,11 +61,12 @@ instance Pretty Type where
                                       pretty tp
                                       mapM_ (\t -> PR.setCol (c-1) >> PR.writeLine "" >> PR.write "|" >> pretty t) tps
 
-  pretty (Product s tps) = do 
-                            PR.write $ s
-                            when (length tps > 0) $ do PR.write_ "("
-                                                       PR.intercalation "," tps pretty 
-                                                       PR.write_ ")"
+  pretty (Product s tps) = do PR.write_ s
+                              when (length tps > 0) $ do
+                                  PR.write_ "("
+                                  PR.intercalation "," tps pretty 
+                                  PR.write_ ")"
+                              PR.write_ " "
 
   pretty (ListType t) = do 
                           PR.write_ "[" 

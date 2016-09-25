@@ -17,9 +17,7 @@
 source base.sh
 
 fuser -k -n tcp 8080
-rm -rf data/*/user/???/*.jsexe
-rm -rf data/*/user/???/*.js_hi
-rm -rf data/*/user/???/*.js_o
+rm -rf data/*/user/???/*.js
 rm -rf data/*/user/???/*.err.txt
 
 mkdir -p log

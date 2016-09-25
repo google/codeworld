@@ -65,7 +65,7 @@ sourceXML :: ProgramId -> FilePath
 sourceXML programId = sourceBase programId <.> "xml"
 
 targetFile :: ProgramId -> FilePath
-targetFile programId = sourceBase programId <.> "jsexe" </> "all.js"
+targetFile programId = sourceBase programId <.> "js"
 
 resultFile :: ProgramId -> FilePath
 resultFile programId = sourceBase programId <.> "err.txt"

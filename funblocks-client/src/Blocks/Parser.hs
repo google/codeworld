@@ -161,7 +161,7 @@ blockCombine :: ParserFunction
 blockCombine block = do
   let c = getItemCount block
   vals <- mapM (\t -> valueToExpr block t) ["PIC" ++ show i | i <- [0..c-1]]
-  return $ foldr1 (CallFuncInfix "&") vals
+  return $ if null vals then CallFunc "blank" [] else foldr1 (CallFuncInfix "&") vals
 
 
 -- TEXT --------------------------------------------------
@@ -182,7 +182,7 @@ blockConcat :: ParserFunction
 blockConcat block = do
   let c = getItemCount block
   vals <- mapM (\t -> valueToExpr block t) ["STR" ++ show i | i <- [0..c-1]]
-  return $ foldr1 (CallFuncInfix "<>") vals
+  return $ if null vals then LiteralS "" else foldr1 (CallFuncInfix "<>") vals
 
 -- LOGIC ------------------------------------------
 

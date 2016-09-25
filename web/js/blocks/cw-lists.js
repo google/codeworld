@@ -655,7 +655,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
   getExpr: function(){
     var exps = [];
     this.inputList.forEach(function(inp){
-      if(inp.connection.isConnected()){
+      if(inp.connection && inp.connection.isConnected()){
         var exp = inp.connection.targetBlock().getExpr();
         exp.tag = inp.connection;
         exps.push(exp);

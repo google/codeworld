@@ -23,7 +23,7 @@ import Blocks.Parser
 import Blockly.Workspace hiding (workspaceToCode)
 import qualified Data.Map as M
 import qualified Data.Text as T
-import Prelude hiding ((++), show)
+import Prelude hiding ((<>), show)
 import qualified Prelude as P
 import Blockly.Block
 import Data.JSString.Text
@@ -31,9 +31,8 @@ import Control.Monad.State.Lazy (get,put)
 import qualified Control.Monad.State.Lazy as S
 import qualified Blocks.Printer as PR
 import Control.Monad
+import Data.Monoid ((<>))
 
-(++) :: T.Text -> T.Text -> T.Text
-a ++ b = a `T.append` b
 pack = textToJSString
 unpack = textFromJSString
 show :: Show a => a -> T.Text
@@ -49,13 +48,13 @@ class Pretty a where
   pretty :: a -> PR.Printer
 
 -- instance Pretty Product where 
---  pretty (Product s tps) = s ++ " " ++ T.concat (map pretty tps)
+--  pretty (Product s tps) = s <> " " <> T.concat (map pretty tps)
 
 instance Pretty Type where
   pretty (Type s) = PR.write_ s
-  pretty (Sum typeName [] ) = PR.write_ $ "data " ++ typeName -- Empty data declaration
+  pretty (Sum typeName [] ) = PR.write_ $ "data " <> typeName -- Empty data declaration
   pretty (Sum typeName (tp:tps) ) = do 
-                                      PR.write_ $ "data " ++ typeName ++ " ="
+                                      PR.write_ $ "data " <> typeName <> " ="
                                       c <- PR.getCol
                                       PR.write_ " "
                                       pretty tp
@@ -115,7 +114,7 @@ instance Pretty Expr where
 
   pretty (FuncDef name vars expr) = do 
                                       let varCode = if not $ null vars 
-                                                    then "(" ++ T.intercalate "," vars ++ ")"
+                                                    then "(" <> T.intercalate "," vars <> ")"
                                                     else ""
                                       PR.write_ name
                                       if null vars then return () else PR.write_ varCode

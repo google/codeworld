@@ -37,16 +37,15 @@ import qualified JavaScript.Array as JA
 import Unsafe.Coerce
 import Data.List (intercalate)
 import qualified Data.Text as T
-import Prelude hiding ((++), show)
+import Prelude hiding ((<>), show)
 import qualified Prelude as P
 import Control.Monad
 import Control.Applicative
 import qualified Data.Map as M
 import Debug.Trace
+import Data.Monoid ((<>))
 
 -- Helpers for converting Text
-(++) :: T.Text -> T.Text -> T.Text
-a ++ b = a `T.append` b
 pack = textToJSString
 unpack = textFromJSString
 show :: Show a => a -> T.Text
@@ -160,7 +159,7 @@ blockNumberPerc block = do
 blockCombine :: ParserFunction
 blockCombine block = do
   let c = getItemCount block
-  vals <- mapM (\t -> valueToExpr block t) ["PIC" ++ show i | i <- [0..c-1]]
+  vals <- mapM (\t -> valueToExpr block t) ["PIC" <> show i | i <- [0..c-1]]
   return $ case vals of
             [] -> CallFuncInfix "&" (CallFunc "blank" []) (CallFunc "blank" [])
             [x] -> CallFuncInfix "&" x (CallFunc "blank" [])
@@ -183,7 +182,7 @@ blockString block = do
 blockConcat :: ParserFunction
 blockConcat block = do
   let c = getItemCount block
-  vals <- mapM (\t -> valueToExpr block t) ["STR" ++ show i | i <- [0..c-1]]
+  vals <- mapM (\t -> valueToExpr block t) ["STR" <> show i | i <- [0..c-1]]
   return $ case vals of
             [] -> CallFuncInfix "<>" (LiteralS "") (LiteralS "")
             [x] -> CallFuncInfix "<>" x (LiteralS "")
@@ -216,7 +215,7 @@ blockLetCall block = do
     let name = getFieldValue block "NAME" 
     let args = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
                 JA.toList $ js_funcargs block
-    vals <- mapM (\t -> valueToExpr block t) ["ARG" ++ show i | i <- [0..length args - 1]]
+    vals <- mapM (\t -> valueToExpr block t) ["ARG" <> show i | i <- [0..length args - 1]]
     return $ CallFunc name vals
 
 blockLocalVar :: ParserFunction
@@ -280,7 +279,7 @@ blockCreatePair block = do
 blockCreateList :: ParserFunction
 blockCreateList block = do
   let c = getItemCount block
-  vals <- mapM (\t -> valueToExpr block t) ["ADD" ++ show i | i <- [0..c-1]]
+  vals <- mapM (\t -> valueToExpr block t) ["ADD" <> show i | i <- [0..c-1]]
   return $ ListCreate vals
 
 blockNumGen :: ParserFunction
@@ -314,8 +313,8 @@ blockListComp block = do
     let vars = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
                 JA.toList $ js_blockVars block
 
-    varCodes <- mapM (\t -> valueToExpr block t) ["VAR" ++ show i | i <- [0..varCount-1]]
-    guards <- mapM (\t -> valueToExpr block t) ["GUARD" ++ show i | i <- [0..guardCount-1]]
+    varCodes <- mapM (\t -> valueToExpr block t) ["VAR" <> show i | i <- [0..varCount-1]]
+    guards <- mapM (\t -> valueToExpr block t) ["GUARD" <> show i | i <- [0..guardCount-1]]
     doCode <- valueToExpr block "DO" 
 
     return $ ListComp doCode (zip vars varCodes) guards
@@ -342,7 +341,7 @@ blockConstructor :: ParserFunction
 blockConstructor block = do 
     let name :: T.Text = getFieldValue block "NAME"
     let itemCount = js_itemCount block
-    tps :: [Expr] <- mapM (\n -> valueToExpr block n) ["TP" ++ show i | i <- [0..itemCount-1]] 
+    tps :: [Expr] <- mapM (\n -> valueToExpr block n) ["TP" <> show i | i <- [0..itemCount-1]] 
     let out :: Expr = CallConstr name tps
     return $ out
 
@@ -350,7 +349,7 @@ blockProduct :: ParserFunction
 blockProduct block = do 
     let constructor = getFieldValue block "CONSTRUCTOR"
     let itemCount = js_itemCount block
-    tps :: [Expr] <- mapM (\n -> valueToExpr block n) ["TP" ++ show i | i <- [0..itemCount-1]] 
+    tps :: [Expr] <- mapM (\n -> valueToExpr block n) ["TP" <> show i | i <- [0..itemCount-1]] 
     return $ UserType $ Product constructor $ map toType tps 
   where
     toType (UserType tp) = tp
@@ -360,7 +359,7 @@ blockSum :: ParserFunction
 blockSum block = do 
     let typeName = getFieldValue block "NAME"
     let itemCount = js_itemCount block
-    tps <- mapM (\n -> valueToExpr block n) ["PROD" ++ show i | i <- [0..itemCount-1]] 
+    tps <- mapM (\n -> valueToExpr block n) ["PROD" <> show i | i <- [0..itemCount-1]] 
     return $ UserType $ Sum typeName (map toType tps)
   where
     toType (UserType tp) = tp
@@ -379,7 +378,7 @@ blockCase block = do
     let name = getFieldValue block "NAME"
     let itemCount = js_itemCount block
     inp :: Expr <- valueToExpr block "INPUT" 
-    outs <- mapM (\n -> valueToExpr block n) ["CS" ++ show i | i <- [0..itemCount-1]] 
+    outs <- mapM (\n -> valueToExpr block n) ["CS" <> show i | i <- [0..itemCount-1]] 
     let vars_ :: [[T.Text]] = map vars [0..itemCount-1]
     let cons_ :: [T.Text] = map con [0..itemCount-1]
     return $ Case inp (zip3 cons_ vars_ outs :: [(T.Text,[T.Text],Expr)] ) 

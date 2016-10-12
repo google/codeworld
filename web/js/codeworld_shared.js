@@ -275,10 +275,10 @@ function addToMessage(msg) {
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/(user\/)?([PQ]..\/)?[PQ][A-Za-z0-9_=\-]*\.hs:(\d+):((\d+)(-\d+)?)/g,
-            '<a href="#" onclick="goto($3, $5);">Line $3, Column $4</a>')
-        .replace(/(user\/)?([PQ]..\/)?[PQ][A-Za-z0-9_=\-]*\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
-            '<a href="#" onclick="goto($3, $4);">Line $3-$5, Column $4-$6</a>');
+        .replace(/program\.hs:(\d+):((\d+)(-\d+)?)/g,
+            '<a href="#" onclick="goto($1, $3);">Line $1, Column $2</a>')
+        .replace(/program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
+            '<a href="#" onclick="goto($1, $2);">Line $1-$3, Column $2-$4</a>');
 
     var message = document.getElementById('message');
     message.innerHTML += msg

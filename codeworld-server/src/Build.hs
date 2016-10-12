@@ -19,11 +19,13 @@
 
 module Build where
 
+import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import           System.Directory
 import           System.FilePath
 import           System.IO
+import           System.IO.Temp (withSystemTempDirectory)
 import           System.Process
 import           Text.Regex.TDFA
 
@@ -41,19 +43,22 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
         B.writeFile (buildRootDir mode </> resultFile programId) $
             "Sorry, but your program refers to forbidden language features."
         return False
-    False -> do
+    False -> withSystemTempDirectory "codeworld" $ \tmpdir -> do
+        copyFile (buildRootDir mode </> sourceFile programId) (tmpdir </> "program.hs")
         let baseArgs = case mode of
                 BuildMode "haskell"   -> haskellCompatibleBuildArgs
                 _                     -> standardBuildArgs
-            ghcjsArgs = baseArgs ++ [ sourceFile programId ]
-        runCompiler mode userCompileMicros ghcjsArgs >>= \case
-            Nothing -> do
-                removeFileIfExists (buildRootDir mode </> resultFile programId)
-                removeFileIfExists (buildRootDir mode </> targetFile programId)
-                return False
+            ghcjsArgs = baseArgs ++ [ "program.hs" ]
+        success <- runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
+            Nothing -> return False
             Just output -> do
                 B.writeFile (buildRootDir mode </> resultFile programId) output
-                doesFileExist (buildRootDir mode </> targetFile programId)
+                let target = tmpdir </> "program.jsexe" </> "all.js"
+                hasTarget <- doesFileExist target
+                when hasTarget $
+                    copyFile target (buildRootDir mode </> targetFile programId)
+                return hasTarget
+        return success
 
 userCompileMicros :: Int
 userCompileMicros = 10 * 1000000
@@ -68,11 +73,11 @@ checkDangerousSource mode programId = do
     matches :: ByteString -> ByteString -> Bool
     matches txt pat = txt =~ pat
 
-runCompiler :: BuildMode -> Int -> [String] -> IO (Maybe ByteString)
-runCompiler mode micros args = do
+runCompiler :: FilePath -> Int -> [String] -> IO (Maybe ByteString)
+runCompiler dir micros args = do
     (Just inh, Just outh, Just errh, pid) <-
         createProcess (proc "ghcjs" args) {
-            cwd       = Just (buildRootDir mode),
+            cwd       = Just dir,
             std_in    = CreatePipe,
             std_out   = CreatePipe,
             std_err   = CreatePipe,

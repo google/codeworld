@@ -162,10 +162,9 @@ blockCombine block = do
   let c = getItemCount block
   vals <- mapM (\t -> valueToExpr block t) ["PIC" ++ show i | i <- [0..c-1]]
   return $ case vals of
-            [] -> CallFuncInfix "&" Comment Comment
-            [x] -> CallFuncInfix "&" x Comment
+            [] -> CallFuncInfix "&" (CallFunc "blank" []) (CallFunc "blank" [])
+            [x] -> CallFuncInfix "&" x (CallFunc "blank" [])
             _ -> foldr1 (CallFuncInfix "&") vals
-
 
 -- TEXT --------------------------------------------------
 
@@ -186,8 +185,8 @@ blockConcat block = do
   let c = getItemCount block
   vals <- mapM (\t -> valueToExpr block t) ["STR" ++ show i | i <- [0..c-1]]
   return $ case vals of
-            [] -> CallFuncInfix "<>" Comment Comment
-            [x] -> CallFuncInfix "<>" x Comment
+            [] -> CallFuncInfix "<>" (LiteralS "") (LiteralS "")
+            [x] -> CallFuncInfix "<>" x (LiteralS "")
             _ -> foldr1 (CallFuncInfix "<>") vals
 
 -- LOGIC ------------------------------------------

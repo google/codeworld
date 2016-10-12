@@ -52,6 +52,11 @@ Blockly.Blocks['cwCombine'] = {
       else
         exps.push(Exp.Var('undef'));
     });
+    if(exps.length < 2){ // If the block has less than 2 inputs, warn the user
+      exps = [];
+      exps.push(Exp.Var('undef'));
+      exps.push(Exp.Var('undef'));
+    } 
     var func = (a,b) => Exp.AppFunc([a,b],Exp.Var("&"));
     var e = this.foldr1(func,exps);
     return e;
@@ -101,6 +106,13 @@ Blockly.Blocks['cwCombine'] = {
     this.arrows = Type.fromList(tps);
     this.initArrows();
     this.renderMoveConnections_();
+
+    if(this.itemCount_ < 2){
+      this.setWarningText('This block requires at least 2 inputs');
+    }
+    else{
+      this.setWarningText(null)
+    }
   },
 
   mutationToDom: function() {

@@ -160,39 +160,52 @@ styledText = Text
 
 -- | A picture drawn entirely in this color.
 colored :: Color -> Picture -> Picture
-colored = Color
+colored c (Pictures [])  = Pictures []
+colored c (Color d a)    = colored c a
+colored c a              = Color c a
 
--- | A picture drawn entirely in this color.
+-- | A picture drawn entirely in this colour.
 coloured :: Color -> Picture -> Picture
-coloured = Color
+coloured = colored
 
 -- | A picture drawn translated in these directions.
 translated :: Double -> Double -> Picture -> Picture
-translated = Translate
+translated x y (Pictures [])       = Pictures []
+translated 0 0 a                   = a
+translated x y (Translate x1 y1 a) = translated (x + x1) (y + y1) a
+translated x y a                   = Translate x y a
 
 -- | A picture scaled by these factors.
 scaled :: Double -> Double -> Picture -> Picture
-scaled = Scale
+scaled x y (Pictures [])   = Pictures []
+scaled 1 1 a               = a
+scaled x y (Scale x1 y1 a) = scaled (x * x1) (y * y1) a
+scaled x y a               = Scale x y a
 
 -- | A picture scaled by these factors.
 dilated :: Double -> Double -> Picture -> Picture
-dilated = Scale
+dilated = scaled
 
 -- | A picture rotated by this angle.
 --
 -- Angles are in radians.
 rotated :: Double -> Picture -> Picture
-rotated = Rotate
+rotated x (Pictures [])  = Pictures []
+rotated 0 a              = a
+rotated x (Rotate y a)   = rotated (x + y) a
+rotated x a              = Rotate x a
 
 -- A picture made by drawing these pictures, ordered from top to bottom.
 pictures :: [Picture] -> Picture
-pictures = Pictures
+pictures [a] = a
+pictures as  = Pictures as
 
 instance Monoid Picture where
-  mempty                  = blank
-  mappend a (Pictures bs) = Pictures (a:bs)
-  mappend a b             = Pictures [a, b]
-  mconcat                 = pictures
+  mempty                   = blank
+  mappend (Pictures []) b  = b
+  mappend a (Pictures bs)  = Pictures (a:bs)
+  mappend a b              = Pictures [a, b]
+  mconcat                  = pictures
 
 -- | Binary composition of pictures.
 (&) :: Picture -> Picture -> Picture

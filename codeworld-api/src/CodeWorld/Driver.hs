@@ -48,6 +48,7 @@ import qualified Data.Text as T
 import           Data.Text (Text, singleton, pack)
 import           Numeric
 import           System.Environment
+import           System.Mem.StableName
 import           Text.Read
 
 #ifdef ghcjs_HOST_OS
@@ -84,7 +85,6 @@ import           Text.Printf
 
 #endif
 
-
 --------------------------------------------------------------------------------
 -- The common interface, provided by both implementations below.
 
@@ -110,8 +110,6 @@ interactionOf :: world
 -- This is equivalent to the similarly named function in `Debug.Trace`, except
 -- that it uses the CodeWorld console instead of standard output.
 trace :: Text -> a -> a
-
-
 
 --------------------------------------------------------------------------------
 -- Draw state.  An affine transformation matrix, plus a Bool indicating whether
@@ -536,19 +534,23 @@ drawingOf pic = display pic `catch` reportError
 -- Common activity managing code
 
 
-data Activity = Activity {
-    activityStep    :: Double -> Activity,
-    activityEvent   :: Event -> Activity,
-    activityDraw    :: Picture
+data Activity s = Activity {
+    activityState     :: s,
+    activityStep      :: Double -> s -> s,
+    activityEvent     :: Event -> s -> s,
+    activityDraw      :: s -> Picture,
+    activityLastFrame :: StableName Picture
     }
 
-handleEvent :: Event -> MVar Activity -> IO ()
-handleEvent event activity =
-    modifyMVar_ activity $ \a0 -> return (activityEvent a0 event)
+handleEvent :: Event -> MVar (Activity s) -> IO (Activity s)
+handleEvent event activity = modifyMVar activity $ \a0 -> do
+    let a1 = a0 { activityState = activityEvent a0 event (activityState a0) }
+    return (a1, a1)
 
-passTime :: Double -> MVar Activity -> IO Activity
+passTime :: Double -> MVar (Activity s) -> IO (Activity s)
 passTime dt activity = modifyMVar activity $ \a0 -> do
-    let a1 = activityStep a0 (realToFrac (min dt 0.25))
+    let rdt = realToFrac (min dt 0.25)
+    let a1 = a0 { activityState = activityStep a0 rdt (activityState a0) }
     return (a1, a1)
 
 --------------------------------------------------------------------------------
@@ -632,7 +634,7 @@ fromButtonNum 1 = Just MiddleButton
 fromButtonNum 2 = Just RightButton
 fromButtonNum _ = Nothing
 
-setupEvents :: MVar Activity -> Element -> Element -> IO ()
+setupEvents :: MVar (Activity s) -> Element -> Element -> IO ()
 setupEvents currentActivity canvas offscreen = do
     Just window <- currentWindow
     on window Window.keyDown $ do
@@ -656,6 +658,7 @@ setupEvents currentActivity canvas offscreen = do
             Just btn -> do
                 pos <- getMousePos canvas
                 liftIO $ handleEvent (MousePress btn pos) currentActivity
+                return ()
     on window Window.mouseUp $ do
         button <- mouseButton
         case fromButtonNum button of
@@ -663,12 +666,14 @@ setupEvents currentActivity canvas offscreen = do
             Just btn -> do
                 pos <- getMousePos canvas
                 liftIO $ handleEvent (MouseRelease btn pos) currentActivity
+                return ()
     on window Window.mouseMove $ do
         pos <- getMousePos canvas
         liftIO $ handleEvent (MouseMovement pos) currentActivity
+        return ()
     return ()
 
-run :: Activity -> IO ()
+run :: Activity s -> IO ()
 run startActivity = do
     Just window <- currentWindow
     Just doc <- currentDocument
@@ -687,10 +692,15 @@ run startActivity = do
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
     let go t0 a0 = do
-            Just rect <- getBoundingClientRect canvas
-            buffer <- setupScreenContext (elementFromCanvas offscreenCanvas) rect
-            drawFrame buffer (activityDraw a0)
-            Canvas.restore buffer
+            let pic = activityDraw a0 (activityState a0)
+            picName <- makeStableName $! pic
+            when (picName /= activityLastFrame a0) $ do
+                Just rect <- getBoundingClientRect canvas
+                buffer <- setupScreenContext (elementFromCanvas offscreenCanvas) rect
+                drawFrame buffer pic
+                Canvas.restore buffer
+                swapMVar currentActivity $ a0 { activityLastFrame = picName }
+                return ()
 
             t1 <- waitForAnimationFrame
 
@@ -744,7 +754,7 @@ toEvent rect Canvas.Event {..}
     | otherwise
     = Nothing
 
-run :: Activity -> IO ()
+run :: Activity s -> IO ()
 run startActivity = runBlankCanvas $ \context -> do
     let rect = (Canvas.width context, Canvas.height context)
 
@@ -753,11 +763,16 @@ run startActivity = runBlankCanvas $ \context -> do
     currentActivity <- newMVar startActivity
 
     let go t0 a0 = do
-            Canvas.send context $
-                Canvas.with offscreenCanvas $
-                    Canvas.saveRestore $ do
-                        setupScreenContext rect
-                        drawPicture initialDS (activityDraw a0)
+            let pic = activityDraw a0 (activityState a0)
+            picName <- makeStableName $! pic
+            when (picName /= activityLastFrame a0) $ do
+                Canvas.send context $
+                    Canvas.with offscreenCanvas $
+                        Canvas.saveRestore $ do
+                            setupScreenContext rect
+                            drawPicture initialDS pic
+                swapMVar currentActivity $ a0 { activityLastFrame = picName }
+                return ()
             tn <- getCurrentTime
 
             threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
@@ -781,11 +796,13 @@ run startActivity = runBlankCanvas $ \context -> do
 -- Common code for interaction, animation and simulation interfaces
 
 interactionOf initial step event draw = go `catch` reportError
-  where go = run (activity initial)
-        activity x = Activity {
-                        activityStep    = (\dt -> activity (step dt x)),
-                        activityEvent   = (\ev -> activity (event ev x)),
-                        activityDraw    = draw x
+  where go = do nullPic <- makeStableName undefined
+                run $ Activity {
+                        activityState     = initial,
+                        activityStep      = step,
+                        activityEvent     = event,
+                        activityDraw      = draw,
+                        activityLastFrame = nullPic
                     }
 
 data Wrapped a = Wrapped {
@@ -845,7 +862,9 @@ wrappedDraw :: (Wrapped a -> [Control a])
 wrappedDraw ctrls f w = drawControlPanel ctrls w <> f (state w)
 
 drawControlPanel :: (Wrapped a -> [Control a]) -> Wrapped a -> Picture
-drawControlPanel ctrls w = pictures [ drawControl w alpha c | c <- ctrls w ]
+drawControlPanel ctrls w
+  | alpha > 0 = pictures [ drawControl w alpha c | c <- ctrls w ]
+  | otherwise = blank
   where alpha | mouseMovedTime w < 4.5  = 1
               | mouseMovedTime w < 5.0  = 10 - 2 * mouseMovedTime w
               | otherwise               = 0

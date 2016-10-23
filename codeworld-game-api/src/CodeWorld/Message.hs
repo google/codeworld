@@ -8,6 +8,34 @@ import GHC.Generics
 import Data.UUID.Types
 import Data.Scientific
 
+{-
+Protocol:
+
+Create a new game, join it as player 0 and waits for n players in total.
+Returns an id for the new game.
+→ newgame <m>
+← gameid <gid>
+
+Joins an existing game. Returns the player id, the number of players.
+→ joingame <gid>
+← joined <i>
+
+Server tells the clients about the number of connected players and number of expected players
+← players <n> <m>
+
+Server tells the clients that the game has started
+← started
+
+Client sends an input event
+→ event <e>
+
+Server sends input event to all players, with a player id and timestamp (seconds)
+← event <i> <timestamp> <e>
+
+Server indicates to the client that some other player dropped. Closes the connection.
+← aborted
+-}
+
 type GameId = UUID
 type PlayerId = Int
 

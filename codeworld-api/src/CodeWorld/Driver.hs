@@ -123,7 +123,7 @@ interactionOf :: Show world => world
 
 -- | Runs an interactive event-driven multiplayer game.
 gameOf :: Show world => Int
-       -> (Int -> world)
+       -> world
        -> (Double -> world -> world)
        -> (Int -> Event -> world -> world)
        -> (Int -> world -> Picture)
@@ -748,19 +748,18 @@ gameDraw draw (Waiting _ n m) = text $
     "Waiting for " <> pack (show (m - n)) <> " more players."
 gameDraw draw Disconnected = text "Disconnected"
 
--- Needs to be in IO to trigger share link
 gameHandle ::
-    (Int -> s) -> (Int -> Event -> s -> s) ->
+    s -> (Int -> Event -> s -> s) ->
     ServerMessage ->
     GameState s -> GameState s
-gameHandle s h sm gs =
+gameHandle s0 h sm gs =
     trace (pack ("Got message " ++ show sm)) $
     case (sm, gs) of
         (GameAborted,         _)                  -> Disconnected
         (GameCreated gid,     Connecting)         -> Waiting 0 0 0
         (JoinedAs pid,        Connecting)         -> Waiting pid 0 0
         (PlayersWaiting n m,  Waiting pid _ _)    -> Waiting pid n m
-        (Started ts,          Waiting pid _ m)    -> Running ts pid (s m)
+        (Started ts,          Waiting pid _ _)    -> Running ts pid s
         (OutEvent ts' pid eo, Running ts mypid s) ->
             case Aeson.parseMaybe Aeson.parseJSON eo of
                 Just event -> Running ts mypid (h pid event s)
@@ -773,7 +772,7 @@ inviteDialogHandle (Started _)       = js_hide_invite
 inviteDialogHandle GameAborted       = js_hide_invite
 inviteDialogHandle _                 = return ()
 
-runGame :: Int -> (Int -> s) -> (Double -> s -> s) -> (Int -> Event -> s -> s) -> (Int -> s -> Picture) -> IO ()
+runGame :: Int -> s -> (Double -> s -> s) -> (Int -> Event -> s -> s) -> (Int -> s -> Picture) -> IO ()
 runGame numPlayers initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
@@ -873,7 +872,6 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
     nullFrame <- makeStableName undefined
     initialStateName <- makeStableName $! Connecting
     go t0 nullFrame initialStateName True
-
 
 run :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
 run initial stepHandler eventHandler drawHandler = do

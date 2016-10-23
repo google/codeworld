@@ -3,9 +3,11 @@
 {-# LANGUAGE GADTs                    #-}
 {-# LANGUAGE JavaScriptFFI            #-}
 {-# LANGUAGE KindSignatures           #-}
+{-# LANGUAGE MultiWayIf               #-}
 {-# LANGUAGE OverloadedStrings        #-}
-{-# LANGUAGE RecordWildCards          #-}
 {-# LANGUAGE PatternGuards            #-}
+{-# LANGUAGE RecordWildCards          #-}
+{-# LANGUAGE ScopedTypeVariables      #-}
 
 {-
   Copyright 2016 The CodeWorld Authors. All rights reserved.
@@ -174,6 +176,9 @@ foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
 
 foreign import javascript unsafe "$1.getContext('2d', { alpha: false })"
     js_getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
+
+foreign import javascript unsafe "performance.now()"
+    js_getHighResTimestamp :: IO Double
 
 canvasFromElement :: Element -> Canvas.Canvas
 canvasFromElement = Canvas.Canvas . unElement
@@ -551,20 +556,8 @@ display pic = runBlankCanvas $ \context ->
 drawingOf pic = display pic `catch` reportError
 #endif
 
---------------------------------------------------------------------------------
--- Common activity managing code
 
-
-data GenActivity e s = Activity {
-    activityState     :: s,
-    activityStep      :: Double -> s -> s,
-    activityEvent     :: e -> s -> s,
-    activityDraw      :: s -> Picture,
-    activityLastFrame :: StableName Picture
-    }
-
-type Activity s = GenActivity Event s
-type GameActivity s = GenActivity ServerMessage (GameState s)
+{-
 
 handleEvent :: Show s => e -> MVar (GenActivity e s) -> IO ()
 handleEvent event activity = do
@@ -586,6 +579,8 @@ passTime dt activity = do
     let a1 = a0 { activityState = activityStep a0 rdt (activityState a0) }
     return (a1, a1)
     -}
+
+-}
 
 --------------------------------------------------------------------------------
 -- Common event handling code
@@ -742,15 +737,11 @@ isRunning :: GameState s -> Bool
 isRunning (Running {}) = True
 isRunning _ = False
 
-gameStep ::
-    (Double -> s -> s) ->
-    Double -> GameState s -> GameState s
+gameStep :: (Double -> s -> s) -> (Double -> GameState s -> GameState s)
 gameStep step d (Running ts mypid s) = Running ts mypid (step d s)
 gameStep _ _ s = s
 
-gameDraw ::
-    (Int -> s -> Picture) ->
-    GameState s -> Picture
+gameDraw :: (Int -> s -> Picture) -> (GameState s -> Picture)
 gameDraw draw (Running ts mypid s) = draw mypid s
 gameDraw draw Connecting = text "Connecting"
 gameDraw draw (Waiting _ n m) = text $
@@ -779,11 +770,11 @@ gameHandle s h sm gs =
 inviteDialogHandle :: ServerMessage -> IO ()
 inviteDialogHandle (GameCreated pid) = js_show_invite (textToJSString (UUID.toText pid))
 inviteDialogHandle (Started _)       = js_hide_invite
+inviteDialogHandle GameAborted       = js_hide_invite
 inviteDialogHandle _                 = return ()
 
-
-runGame :: Show s => Int -> GameActivity s -> IO ()
-runGame numPlayers startActivity = do
+runGame :: Int -> (Int -> s) -> (Double -> s -> s) -> (Int -> Event -> s -> s) -> (Int -> s -> Picture) -> IO ()
+runGame numPlayers initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -795,24 +786,30 @@ runGame numPlayers startActivity = do
         liftIO $ setCanvasSize canvas canvas
         liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
 
-    currentActivity <- newMVar startActivity
+
+    currentState <- newMVar Connecting
+    eventHappened <- newMVar ()
+
+    let handleServerMessage sm = do
+        js_reportRuntimeError False (textToJSString (pack ("Handling " ++ show sm)))
+        modifyMVar_ currentState $ return . gameHandle initial eventHandler sm
+        inviteDialogHandle sm
+        tryPutMVar eventHappened ()
+        return ()
 
     let handleWSRequest m = do
         js_reportRuntimeError False ((\(WS.StringData s) -> s) $ WS.getData m)
         maybeSM <- decodeServerMessage m
         case maybeSM of
-            Nothing ->
-                js_reportRuntimeError False "Unparseable server message"
-            Just sm -> do
-                js_reportRuntimeError False (textToJSString (pack ("Handling " ++ show sm)))
-                handleEvent sm currentActivity
-                inviteDialogHandle sm
+            Nothing -> js_reportRuntimeError False "Unparseable server message"
+            Just sm -> handleServerMessage sm
+
         js_reportRuntimeError False "Done with message"
 
     let req = WS.WebSocketRequest
             { url = "ws://127.0.0.1:9160"
             , protocols = []
-            , onClose = Just $ \_ -> handleEvent GameAborted currentActivity
+            , onClose = Just $ \_ -> handleServerMessage GameAborted
             , onMessage = Just handleWSRequest
             }
 
@@ -820,7 +817,7 @@ runGame numPlayers startActivity = do
 
     let handle e = do
         -- check if game is running
-        running <- isRunning . activityState <$> readMVar currentActivity
+        running <- isRunning <$> readMVar currentState
         when running $ sendClientEvent ws (InEvent (Aeson.toJSON e))
 
     setupEvents handle canvas (elementFromCanvas offscreenCanvas)
@@ -835,33 +832,51 @@ runGame numPlayers startActivity = do
         -- Join an existing game
         Just gid -> sendClientEvent ws (JoinGame gid)
 
-    let go t0 a0 = do
-            let pic = activityDraw a0 (activityState a0)
-            picName <- makeStableName $! pic
-            when (picName /= activityLastFrame a0) $ do
+    let go t0 lastFrame lastStateName needsTime = do
+            pic <- gameDraw drawHandler <$> readMVar currentState
+            picFrame <- makeStableName $! pic
+            when (picFrame /= lastFrame) $ do
                 Just rect <- getBoundingClientRect canvas
-                buffer <- setupScreenContext (elementFromCanvas offscreenCanvas) rect
+                buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
+                                             rect
                 drawFrame buffer pic
                 Canvas.restore buffer
-                -- swapMVar currentActivity $ a0 { activityLastFrame = picName }
                 return ()
-
-            t1 <- waitForAnimationFrame
 
             Just rect <- getBoundingClientRect canvas
             cw <- ClientRect.getWidth rect
             ch <- ClientRect.getHeight rect
-
             Canvas.clearRect 0 0 (realToFrac cw) (realToFrac ch) screen
-            js_canvasDrawImage screen (elementFromCanvas offscreenCanvas) 0 0 (round cw) (round ch)
-            a1 <- passTime ((t1 - t0) / 1000) currentActivity
-            go t1 a1
+            js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
+                               0 0 (round cw) (round ch)
+
+            t1 <- if
+              | needsTime -> do
+                  t1 <- waitForAnimationFrame
+                  modifyMVar_ currentState $ return . gameStep stepHandler ((t1 - t0) / 1000)
+                  return t1
+              | otherwise -> do
+                  takeMVar eventHappened
+                  js_getHighResTimestamp
+
+            nextState <- readMVar currentState
+            nextStateName <- makeStableName $! nextState
+            nextNeedsTime <- if
+              | nextStateName == lastStateName ->
+                  ((/= nextStateName) <$> (makeStableName $! (gameStep stepHandler undefined nextState)))
+                  `catch` \(e :: SomeException) -> return True
+              | otherwise -> return True
+
+            go t1 picFrame nextStateName nextNeedsTime
 
     t0 <- waitForAnimationFrame
-    go t0 startActivity `catch` reportError
+    nullFrame <- makeStableName undefined
+    initialStateName <- makeStableName $! Connecting
+    go t0 nullFrame initialStateName True
 
-run :: Show s => Activity s -> IO ()
-run startActivity = do
+
+run :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
+run initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -873,38 +888,60 @@ run startActivity = do
         liftIO $ setCanvasSize canvas canvas
         liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
 
-    currentActivity <- newMVar startActivity
 
-    let handle e = handleEvent e currentActivity
+    currentState <- newMVar initial
+    eventHappened <- newMVar ()
+
+    let handle e = do
+            modifyMVar_ currentState (return . eventHandler e)
+            tryPutMVar eventHappened ()
+            return ()
 
     setupEvents handle canvas (elementFromCanvas offscreenCanvas)
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
-    let go t0 a0 = do
-            let pic = activityDraw a0 (activityState a0)
-            picName <- makeStableName $! pic
-            when (picName /= activityLastFrame a0) $ do
+    let go t0 lastFrame lastStateName needsTime = do
+            pic <- drawHandler <$> readMVar currentState
+            picFrame <- makeStableName $! pic
+            when (picFrame /= lastFrame) $ do
                 Just rect <- getBoundingClientRect canvas
-                buffer <- setupScreenContext (elementFromCanvas offscreenCanvas) rect
+                buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
+                                             rect
                 drawFrame buffer pic
                 Canvas.restore buffer
-                swapMVar currentActivity $ a0 { activityLastFrame = picName }
                 return ()
-
-            t1 <- waitForAnimationFrame
 
             Just rect <- getBoundingClientRect canvas
             cw <- ClientRect.getWidth rect
             ch <- ClientRect.getHeight rect
-
             Canvas.clearRect 0 0 (realToFrac cw) (realToFrac ch) screen
-            js_canvasDrawImage screen (elementFromCanvas offscreenCanvas) 0 0 (round cw) (round ch)
-            a1 <- passTime ((t1 - t0) / 1000) currentActivity
-            go t1 a1
+            js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
+                               0 0 (round cw) (round ch)
+
+            t1 <- if
+              | needsTime -> do
+                  t1 <- waitForAnimationFrame
+                  modifyMVar_ currentState $ return . stepHandler ((t1 - t0) / 1000)
+                  return t1
+              | otherwise -> do
+                  takeMVar eventHappened
+                  js_getHighResTimestamp
+
+            nextState <- readMVar currentState
+            nextStateName <- makeStableName $! nextState
+            nextNeedsTime <- if
+              | nextStateName == lastStateName ->
+                  ((/= nextStateName) <$> (makeStableName $! (stepHandler undefined nextState)))
+                  `catch` \(e :: SomeException) -> return True
+              | otherwise -> return True
+
+            go t1 picFrame nextStateName nextNeedsTime
 
     t0 <- waitForAnimationFrame
-    go t0 startActivity `catch` reportError
+    nullFrame <- makeStableName undefined
+    initialStateName <- makeStableName $! initial
+    go t0 nullFrame initialStateName True
 
 --------------------------------------------------------------------------------
 -- Stand-Alone event handling and core interaction code
@@ -944,41 +981,44 @@ toEvent rect Canvas.Event {..}
     | otherwise
     = Nothing
 
-run :: Activity s -> IO ()
-run startActivity = runBlankCanvas $ \context -> do
+run :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
+run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> do
     let rect = (Canvas.width context, Canvas.height context)
-
     offscreenCanvas <- Canvas.send context $ Canvas.newCanvas rect
 
-    currentActivity <- newMVar startActivity
+    currentState <- newMVar initial
+    eventHappened <- newMVar ()
 
-    let go t0 a0 = do
-            let pic = activityDraw a0 (activityState a0)
-            picName <- makeStableName $! pic
-            when (picName /= activityLastFrame a0) $ do
+    let go t0 lastFrame = do
+            pic <- drawHandler <$> readMVar currentState
+            picFrame <- makeStableName $! pic
+            when (picFrame /= lastFrame) $ do
                 Canvas.send context $
                     Canvas.with offscreenCanvas $
                         Canvas.saveRestore $ do
                             setupScreenContext rect
                             drawPicture initialDS pic
-                swapMVar currentActivity $ a0 { activityLastFrame = picName }
                 return ()
-            tn <- getCurrentTime
-
-            threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
-            t1 <- getCurrentTime
 
             Canvas.send context $ Canvas.drawImageAt (offscreenCanvas, 0, 0)
-            a1 <- passTime (realToFrac (t1 `diffUTCTime` t0)) currentActivity
+
+            tn <- getCurrentTime
+            threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
+            t1 <- getCurrentTime
+            modifyMVar_ currentState $ return . stepHandler (realToFrac (t1 `diffUTCTime` t0))
 
             -- Handle events now
             events <- mapMaybe (toEvent rect) <$> Canvas.flush context
-            mapM_ (\e -> handleEvent e currentActivity) events
+            when (not (null events)) $ do
+                tryPutMVar eventHappened ()
+                return ()
+            mapM_ (\e -> modifyMVar_ currentState $ return . eventHandler e) events
 
-            go t1 a1
+            go t1 picFrame
 
     t0 <- getCurrentTime
-    go t0 startActivity `catch` reportError
+    nullFrame <- makeStableName undefined
+    go t0 nullFrame
 
 #endif
 
@@ -986,28 +1026,14 @@ run startActivity = runBlankCanvas $ \context -> do
 --------------------------------------------------------------------------------
 -- Common code for game interface
 
-gameOf numPlayers initial step event draw = go `catch` reportError
-  where go = do nullPic <- makeStableName undefined
-                runGame numPlayers $ Activity {
-                        activityState     = Connecting,
-                        activityStep      = gameStep step,
-                        activityEvent     = gameHandle initial event,
-                        activityDraw      = gameDraw draw,
-                        activityLastFrame = nullPic
-                    }
+gameOf numPlayers initial step event draw =
+    runGame numPlayers initial step event draw `catch` reportError
 
 --------------------------------------------------------------------------------
 -- Common code for interaction, animation and simulation interfaces
 
-interactionOf initial step event draw = go `catch` reportError
-  where go = do nullPic <- makeStableName undefined
-                run $ Activity {
-                        activityState     = initial,
-                        activityStep      = step,
-                        activityEvent     = event,
-                        activityDraw      = draw,
-                        activityLastFrame = nullPic
-                    }
+interactionOf initial step event draw =
+    run initial step event draw `catch` reportError
 
 data Wrapped a = Wrapped {
     state          :: a,

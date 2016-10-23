@@ -557,31 +557,6 @@ drawingOf pic = display pic `catch` reportError
 #endif
 
 
-{-
-
-handleEvent :: Show s => e -> MVar (GenActivity e s) -> IO ()
-handleEvent event activity = do
-    -- js_reportRuntimeError False "Trying to change the mvar"
-    modifyMVar_ activity $ \a0 -> do
-        -- js_reportRuntimeError False "Changing the MVar"
-        js_reportRuntimeError False (textToJSString (pack ("Before: " ++ show (activityState a0))))
-        let a1 = a0 { activityState = activityEvent a0 event (activityState a0) }
-        js_reportRuntimeError False (textToJSString (pack ("After:  " ++ show (activityState a1))))
-        return a1
-
-passTime :: Show s => Double -> MVar (GenActivity e s) -> IO (GenActivity e s)
-passTime dt activity = do
-    a <- readMVar activity
-    -- js_reportRuntimeError False (textToJSString (pack ("Now:    " ++ show (activityState a))))
-    return a
-{- modifyMVar activity $ \a0 -> do
-    let rdt = realToFrac (min dt 0.25)
-    let a1 = a0 { activityState = activityStep a0 rdt (activityState a0) }
-    return (a1, a1)
-    -}
-
--}
-
 --------------------------------------------------------------------------------
 -- Common event handling code
 
@@ -752,7 +727,7 @@ gameHandle ::
     ServerMessage ->
     GameState s -> GameState s
 gameHandle s0 h sm gs =
-    trace (pack ("Got message " ++ show sm)) $
+    -- trace (pack ("Got message " ++ show sm)) $
     case (sm, gs) of
         (GameAborted,         _)                  -> Disconnected
         (GameCreated gid,     Connecting)         -> Waiting 0 0 0
@@ -789,20 +764,20 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
     eventHappened <- newMVar ()
 
     let handleServerMessage sm = do
-        js_reportRuntimeError False (textToJSString (pack ("Handling " ++ show sm)))
+        -- js_reportRuntimeError False (textToJSString (pack ("Handling " ++ show sm)))
         modifyMVar_ currentState $ return . gameHandle initial eventHandler sm
         inviteDialogHandle sm
         tryPutMVar eventHappened ()
         return ()
 
     let handleWSRequest m = do
-        js_reportRuntimeError False ((\(WS.StringData s) -> s) $ WS.getData m)
+        -- js_reportRuntimeError False ((\(WS.StringData s) -> s) $ WS.getData m)
         maybeSM <- decodeServerMessage m
         case maybeSM of
-            Nothing -> js_reportRuntimeError False "Unparseable server message"
+            Nothing -> return () -- js_reportRuntimeError False "Unparseable server message"
             Just sm -> handleServerMessage sm
 
-        js_reportRuntimeError False "Done with message"
+        -- js_reportRuntimeError False "Done with message"
 
     let req = WS.WebSocketRequest
             { url = "ws://127.0.0.1:9160"

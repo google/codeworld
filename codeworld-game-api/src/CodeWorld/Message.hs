@@ -18,17 +18,17 @@ type TimeStamp = Scientific
 data ClientMessage
     = NewGame Int
     | JoinGame GameId
-    | InEvent Object
-    deriving Generic
+    | InEvent Value
+    deriving (Show, Generic)
 
 data ServerMessage
     = GameCreated GameId
     | JoinedAs PlayerId
-    | PlayersWaiting Int
+    | PlayersWaiting Int Int
     | Started TimeStamp
-    | OutEvent TimeStamp PlayerId Object
+    | OutEvent TimeStamp PlayerId Value
     | GameAborted
-    deriving Generic
+    deriving (Show, Generic)
 
 instance FromJSON UUID where
     parseJSON x = do
@@ -39,6 +39,10 @@ instance ToJSON   UUID where
     toJSON = toJSON . toText
 
 instance FromJSON ClientMessage where
+    parseJSON = genericParseJSON defaultOptions
+instance ToJSON   ClientMessage where
+    toJSON = genericToJSON defaultOptions
+instance FromJSON ServerMessage where
     parseJSON = genericParseJSON defaultOptions
 instance ToJSON   ServerMessage where
     toJSON = genericToJSON defaultOptions

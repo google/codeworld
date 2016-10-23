@@ -26,10 +26,14 @@ Library
                        CodeWorld.Event,
                        CodeWorld.Driver
   Build-depends:       base < 5,
+                       aeson,
                        mtl,
                        random,
                        text,
-                       time
+                       time,
+                       uuid-types,
+                       scientific,
+                       codeworld-game-api
   if impl(ghcjs)
     Build-depends:
                        ghcjs-base,

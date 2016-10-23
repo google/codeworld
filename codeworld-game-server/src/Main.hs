@@ -30,15 +30,15 @@ Protocol:
 
 Create a new game, join it as player 0 and waits for n players in total.
 Returns an id for the new game.
-→ newgame <username> <n>
-← gameid <id>
+→ newgame <username> <m>
+← gameid <gid>
 
-Joins an existing game. Returns the player id.
-→ joingame <id>
-← joined <n>
+Joins an existing game. Returns the player id, the number of players.
+→ joingame <gid>
+← joined <i>
 
-Server tells the clients about the number of connected players
-← players <n>
+Server tells the clients about the number of connected players and number of expected players
+← players <n> <m>
 
 Server tells the clients that the game has started
 ← started
@@ -47,7 +47,7 @@ Client sends an input event
 → event <e>
 
 Server sends input event to all players, with a player id and timestamp (seconds)
-← event <n> <timestamp> <e>
+← event <i> <timestamp> <e>
 
 Server indicates to the client that some other player dropped. Closes the connection.
 ← aborted
@@ -97,6 +97,13 @@ getPlayers gameid games =
         Just game -> players game
         Nothing   -> []
 
+getStats :: GameId -> ServerState -> (Int, Int)
+getStats gameid games =
+    case HM.lookup gameid games of
+        Just (Waiting pc plys) -> (length plys, pc)
+        Just (Running plys)    -> (length plys, length plys)
+        Nothing   -> (0,0)
+
 dropGame :: GameId -> ServerState -> ServerState
 dropGame gameid games = HM.delete gameid games
 
@@ -109,26 +116,14 @@ getTimeStamp = do
     return $ realToFrac $ diff
 
 broadcast :: ServerMessage -> GameId -> ServerState -> IO ()
-broadcast msg = broadcastBS (encode msg)
+broadcast msg gid games = do
+    print msg
+    forM_ (getPlayers gid games) $ \conn -> WS.sendTextData conn (encode msg)
 
-broadcastBS :: BS.ByteString -> GameId -> ServerState -> IO ()
-broadcastBS message gameid games = do
-    forM_ (getPlayers gameid games) $ \conn -> WS.sendTextData conn message
-
-{-
-broadcast :: BS.ByteString -> ServerState -> IO ()
-broadcast message (id, clients) = do
-    case decode message of
-        Just val -> do
-            time <- getTimeStamp
-            let val' = HM.insert "timestamp" (toJSON time) $
-                       HM.insert "player" (toJSON id) $
-                       val
-            T.putStrLn $ "Sending a message from client " <> T.pack (show id) <> ": " <> T.pack (show (val'::Object))
-            forM_ clients $ \(_, conn) -> WS.sendTextData conn (encode val')
-        Nothing ->
-            T.putStrLn $ "Ignoring unparsable message."
--}
+sendServerMessage :: ServerMessage -> WS.Connection ->  IO ()
+sendServerMessage msg conn = do
+    print msg
+    WS.sendTextData conn (encode msg)
 
 main :: IO ()
 main = do
@@ -145,7 +140,9 @@ getClientMessage :: WS.Connection -> IO ClientMessage
 getClientMessage conn = do
     msg <- WS.receiveData conn
     case decode msg of
-        Just msg -> return msg
+        Just msg -> do
+            print msg
+            return msg
         Nothing -> fail "Invalid client message"
 
 welcome :: WS.Connection -> MVar ServerState -> IO ()
@@ -158,6 +155,7 @@ welcomeNew :: WS.Connection -> MVar ServerState -> Int -> IO ()
 welcomeNew conn state n = do
     gid <- nextRandom
     modifyMVar_ state (return . newGame conn gid n)
+    sendServerMessage (GameCreated gid) conn
     announcePlayers gid state
     talk 0 conn gid state
 
@@ -168,8 +166,8 @@ welcomeJoin conn state gid = do
     talk pid conn gid state
 
 announcePlayers gid state = do
-    n <- length . getPlayers gid  <$> readMVar state
-    readMVar state >>= broadcast (PlayersWaiting n) gid
+    (n,m) <- getStats gid  <$> readMVar state
+    readMVar state >>= broadcast (PlayersWaiting n m) gid
 
     started <- modifyMVar state (return . tryStartGame gid)
     when started $ do

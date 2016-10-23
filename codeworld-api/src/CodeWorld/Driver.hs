@@ -28,6 +28,7 @@ module CodeWorld.Driver (
     animationOf,
     simulationOf,
     interactionOf,
+    gameOf,
     trace
     ) where
 
@@ -35,6 +36,7 @@ module CodeWorld.Driver (
 import           CodeWorld.Color
 import           CodeWorld.Event
 import           CodeWorld.Picture
+import           CodeWorld.Message
 import           Control.Concurrent
 import           Control.Concurrent.MVar
 import           Control.Exception
@@ -46,6 +48,7 @@ import           Data.Maybe (fromMaybe, mapMaybe)
 import           Data.Monoid
 import qualified Data.Text as T
 import           Data.Text (Text, singleton, pack)
+import           Data.Scientific
 import           Numeric
 import           System.Environment
 import           System.Mem.StableName
@@ -66,11 +69,18 @@ import           GHCJS.DOM.EventM
 import           GHCJS.DOM.MouseEvent
 import           GHCJS.DOM.Types (Element, unElement)
 import           GHCJS.Foreign
+import           GHCJS.Marshal
 import           GHCJS.Marshal.Pure
 import           GHCJS.Types
 import           JavaScript.Web.AnimationFrame
 import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
+import qualified JavaScript.Web.MessageEvent as WS
+import qualified JavaScript.Web.WebSocket as WS
+import qualified JavaScript.JSON.Types as JSON
+import qualified JavaScript.JSON.Types.Internal as JSON
+import qualified Data.Aeson.Types as Aeson
+import qualified Data.Aeson as Aeson
 import           System.IO.Unsafe
 import           System.Random
 
@@ -105,6 +115,13 @@ interactionOf :: world
               -> (Event -> world -> world)
               -> (world -> Picture)
               -> IO ()
+
+-- | Runs an interactive event-driven multiplayer game.
+gameOf :: (Int -> world)
+       -> (Double -> world -> world)
+       -> (Int -> Event -> world -> world)
+       -> (Int -> world -> Picture)
+       -> IO ()
 
 -- | Prints a debug message to the CodeWorld console when a value is forced.
 -- This is equivalent to the similarly named function in `Debug.Trace`, except
@@ -534,20 +551,22 @@ drawingOf pic = display pic `catch` reportError
 -- Common activity managing code
 
 
-data Activity s = Activity {
+data GenActivity e s = Activity {
     activityState     :: s,
     activityStep      :: Double -> s -> s,
-    activityEvent     :: Event -> s -> s,
+    activityEvent     :: e -> s -> s,
     activityDraw      :: s -> Picture,
     activityLastFrame :: StableName Picture
     }
 
-handleEvent :: Event -> MVar (Activity s) -> IO (Activity s)
-handleEvent event activity = modifyMVar activity $ \a0 -> do
-    let a1 = a0 { activityState = activityEvent a0 event (activityState a0) }
-    return (a1, a1)
+type Activity s = GenActivity Event s
+type GameActivity s = GenActivity ServerMessage (GameState s)
 
-passTime :: Double -> MVar (Activity s) -> IO (Activity s)
+handleEvent :: e -> MVar (GenActivity e s) -> IO ()
+handleEvent event activity = modifyMVar_ activity $ \a0 -> do
+    return $ a0 { activityState = activityEvent a0 event (activityState a0) }
+
+passTime :: Double -> MVar (GenActivity e s) -> IO (GenActivity e s)
 passTime dt activity = modifyMVar activity $ \a0 -> do
     let rdt = realToFrac (min dt 0.25)
     let a1 = a0 { activityState = activityStep a0 rdt (activityState a0) }
@@ -634,21 +653,21 @@ fromButtonNum 1 = Just MiddleButton
 fromButtonNum 2 = Just RightButton
 fromButtonNum _ = Nothing
 
-setupEvents :: MVar (Activity s) -> Element -> Element -> IO ()
-setupEvents currentActivity canvas offscreen = do
+setupEvents :: (Event -> IO ()) -> Element -> Element -> IO ()
+setupEvents handle canvas offscreen = do
     Just window <- currentWindow
     on window Window.keyDown $ do
         code <- uiKeyCode
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
-            liftIO $ handleEvent (KeyPress keyName) currentActivity
+            liftIO $ handle (KeyPress keyName)
             preventDefault
             stopPropagation
     on window Window.keyUp $ do
         code <- uiKeyCode
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
-            liftIO $ handleEvent (KeyRelease keyName) currentActivity
+            liftIO $ handle (KeyRelease keyName)
             preventDefault
             stopPropagation
     on window Window.mouseDown $ do
@@ -657,7 +676,7 @@ setupEvents currentActivity canvas offscreen = do
             Nothing  -> return ()
             Just btn -> do
                 pos <- getMousePos canvas
-                liftIO $ handleEvent (MousePress btn pos) currentActivity
+                liftIO $ handle (MousePress btn pos)
                 return ()
     on window Window.mouseUp $ do
         button <- mouseButton
@@ -665,13 +684,130 @@ setupEvents currentActivity canvas offscreen = do
             Nothing  -> return ()
             Just btn -> do
                 pos <- getMousePos canvas
-                liftIO $ handleEvent (MouseRelease btn pos) currentActivity
+                liftIO $ handle (MouseRelease btn pos)
                 return ()
     on window Window.mouseMove $ do
         pos <- getMousePos canvas
-        liftIO $ handleEvent (MouseMovement pos) currentActivity
+        liftIO $ handle (MouseMovement pos)
         return ()
     return ()
+
+
+sendClientEvent :: WS.WebSocket -> ClientMessage -> IO ()
+sendClientEvent conn msg = do
+    let aeVal = Aeson.toJSON msg
+    jsVal <- toJSVal aeVal
+    WS.send (js_encode jsVal) conn
+
+decodeServerMessage :: WS.MessageEvent -> IO (Maybe ServerMessage)
+decodeServerMessage m = case WS.getData m of
+    WS.StringData str -> do
+        aeValMB <- fromJSVal (js_decode str)
+        return $ aeValMB >>= Aeson.parseMaybe Aeson.parseJSON
+    _ -> return Nothing
+
+data GameState s
+    = Connecting
+    | Waiting Int Int Int
+    | Running Scientific Int s
+    | Disconnected
+
+isRunning :: GameState s -> Bool
+isRunning (Running {}) = True
+isRunning _ = False
+
+gameStep ::
+    (Double -> s -> s) ->
+    Double -> GameState s -> GameState s
+gameStep step d (Running ts mypid s) = Running ts mypid (step d s)
+gameStep _ _ s = s
+
+gameDraw ::
+    (Int -> s -> Picture) ->
+    GameState s -> Picture
+gameDraw draw (Running ts mypid s) = draw mypid s
+gameDraw draw Connecting = text "Connecting"
+gameDraw draw (Waiting _ n m) = text "Waiting for players"
+gameDraw draw Disconnected = text "Disconnected"
+
+gameHandle ::
+    (Int -> s) -> (Int -> Event -> s -> s) ->
+    ServerMessage ->
+    GameState s -> GameState s
+gameHandle _ _ (GameCreated gid)    Connecting = Waiting 0 0 0
+gameHandle _ _ (JoinedAs pid)       Connecting = Waiting pid 0 0
+gameHandle _ _ (PlayersWaiting n m) (Waiting pid _ _) = Waiting pid n m
+gameHandle s _ (Started ts)         (Waiting pid _ m) = Running ts pid (s m)
+gameHandle _ h (OutEvent ts' pid eventObject) (Running ts mypid s) =
+    case Aeson.parseMaybe Aeson.parseJSON eventObject of
+        Just event -> Running ts mypid (h pid event s)
+        Nothing ->    Running ts mypid s
+gameHandle _ _ GameAborted _ = Disconnected
+gameHande _ _ _ s = s
+
+
+runGame :: GameActivity s -> IO ()
+runGame startActivity = do
+    Just window <- currentWindow
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
+    offscreenCanvas <- Canvas.create 500 500
+
+    setCanvasSize canvas canvas
+    setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+    on window Window.resize $ do
+        liftIO $ setCanvasSize canvas canvas
+        liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+
+    currentActivity <- newMVar startActivity
+
+    let req = WS.WebSocketRequest
+            { url = "ws://127.0.0.1:9160"
+            , protocols = []
+            , onClose = Just $ \_ -> handleEvent GameAborted currentActivity
+            , onMessage = Just $ \m -> do
+                maybeSM <- decodeServerMessage m
+                case maybeSM of
+                    Nothing -> Prelude.putStrLn "Unparseable server message"
+                    Just sm -> handleEvent sm currentActivity
+            }
+
+    ws <- WS.connect req
+
+    let handle e = do
+        -- check if game is running
+        running <- isRunning . activityState <$> readMVar currentActivity
+        when running $ sendClientEvent ws (InEvent (Aeson.toJSON e))
+
+    setupEvents handle canvas (elementFromCanvas offscreenCanvas)
+
+    screen <- js_getCodeWorldContext (canvasFromElement canvas)
+    sendClientEvent ws (NewGame 1)
+
+    let go t0 a0 = do
+            let pic = activityDraw a0 (activityState a0)
+            picName <- makeStableName $! pic
+            when (picName /= activityLastFrame a0) $ do
+                Just rect <- getBoundingClientRect canvas
+                buffer <- setupScreenContext (elementFromCanvas offscreenCanvas) rect
+                drawFrame buffer pic
+                Canvas.restore buffer
+                swapMVar currentActivity $ a0 { activityLastFrame = picName }
+                return ()
+
+            t1 <- waitForAnimationFrame
+
+            Just rect <- getBoundingClientRect canvas
+            cw <- ClientRect.getWidth rect
+            ch <- ClientRect.getHeight rect
+
+            Canvas.clearRect 0 0 (realToFrac cw) (realToFrac ch) screen
+            js_canvasDrawImage screen (elementFromCanvas offscreenCanvas) 0 0 (round cw) (round ch)
+            a1 <- passTime ((t1 - t0) / 1000) currentActivity
+            go t1 a1
+
+    t0 <- waitForAnimationFrame
+    go t0 startActivity `catch` reportError
 
 run :: Activity s -> IO ()
 run startActivity = do
@@ -687,7 +823,10 @@ run startActivity = do
         liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
 
     currentActivity <- newMVar startActivity
-    setupEvents currentActivity canvas (elementFromCanvas offscreenCanvas)
+
+    let handle e = handleEvent e currentActivity
+
+    setupEvents handle canvas (elementFromCanvas offscreenCanvas)
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
@@ -791,6 +930,20 @@ run startActivity = runBlankCanvas $ \context -> do
     go t0 startActivity `catch` reportError
 
 #endif
+
+
+--------------------------------------------------------------------------------
+-- Common code for game interface
+
+gameOf initial step event draw = go `catch` reportError
+  where go = do nullPic <- makeStableName undefined
+                runGame $ Activity {
+                        activityState     = Connecting,
+                        activityStep      = gameStep step,
+                        activityEvent     = gameHandle initial event,
+                        activityDraw      = gameDraw draw,
+                        activityLastFrame = nullPic
+                    }
 
 --------------------------------------------------------------------------------
 -- Common code for interaction, animation and simulation interfaces
@@ -962,6 +1115,15 @@ trace msg x = unsafePerformIO $ do
 
 reportError :: SomeException -> IO ()
 reportError e = js_reportRuntimeError True (textToJSString (pack (show e)))
+
+-- Do we really have to do this? This is horrible!
+-- Also, the conversion from JSVal and Aeson is annoying.
+
+foreign import javascript unsafe "JSON.parse($1)"
+  js_decode :: JSString -> JSVal
+
+foreign import javascript unsafe "JSON.stringify($1)"
+  js_encode :: JSVal -> JSString
 
 --------------------------------------------------------------------------------
 --- Stand-alone implementation of tracing and error handling

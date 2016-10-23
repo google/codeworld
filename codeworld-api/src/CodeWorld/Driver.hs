@@ -702,7 +702,6 @@ setupEvents handle canvas offscreen = do
         return ()
     return ()
 
-
 sendClientEvent :: WS.WebSocket -> ClientMessage -> IO ()
 sendClientEvent conn msg = do
     {-
@@ -873,6 +872,13 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
     initialStateName <- makeStableName $! Connecting
     go t0 nullFrame initialStateName True
 
+isUniversallyConstant :: (a -> s -> s) -> s -> IO Bool
+isUniversallyConstant f old = falseOr $ do
+    oldName <- makeStableName old
+    genName <- makeStableName $! (f undefined old)
+    return (genName == oldName)
+  where falseOr x = x `catch` \(e :: SomeException) -> return False
+
 run :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
 run initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
@@ -900,6 +906,7 @@ run initial stepHandler eventHandler drawHandler = do
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
     let go t0 lastFrame lastStateName needsTime = do
+            putStrLn "Another loop..."
             pic <- drawHandler <$> readMVar currentState
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
@@ -928,11 +935,9 @@ run initial stepHandler eventHandler drawHandler = do
 
             nextState <- readMVar currentState
             nextStateName <- makeStableName $! nextState
-            nextNeedsTime <- if
-              | nextStateName == lastStateName ->
-                  ((/= nextStateName) <$> (makeStableName $! (stepHandler undefined nextState)))
-                  `catch` \(e :: SomeException) -> return True
-              | otherwise -> return True
+            nextNeedsTime <- if nextStateName == lastStateName
+                then not <$> isUniversallyConstant stepHandler nextState
+                else return True
 
             go t1 picFrame nextStateName nextNeedsTime
 

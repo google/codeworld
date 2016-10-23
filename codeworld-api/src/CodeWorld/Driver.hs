@@ -536,7 +536,7 @@ drawingOf pic = display pic `catch` reportError
 #endif
 
 --------------------------------------------------------------------------------
--- Common event handling code
+-- Common event handling and core interaction code
 
 keyCodeToText :: Int -> Text
 keyCodeToText n = case n of
@@ -592,6 +592,12 @@ keyCodeToText n = case n of
   where fromAscii n = singleton (chr n)
         fromNum   n = pack (show (fromIntegral n))
 
+isUniversallyConstant :: (a -> s -> s) -> s -> IO Bool
+isUniversallyConstant f old = falseOr $ do
+    oldName <- makeStableName old
+    genName <- makeStableName $! (f undefined old)
+    return (genName == oldName)
+  where falseOr x = x `catch` \(e :: SomeException) -> return False
 
 --------------------------------------------------------------------------------
 -- GHCJS event handling and core interaction code
@@ -616,23 +622,21 @@ fromButtonNum 1 = Just MiddleButton
 fromButtonNum 2 = Just RightButton
 fromButtonNum _ = Nothing
 
-setupEvents :: (Event -> s -> s) -> MVar s -> MVar () -> Element -> Element -> IO ()
-setupEvents eventHandler currentState eventHappened canvas offscreen = do
+onEvents :: Element -> (Event -> IO ()) -> IO ()
+onEvents canvas handler = do
     Just window <- currentWindow
     on window Window.keyDown $ do
         code <- uiKeyCode
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
-            liftIO $ modifyMVar_ currentState (return . eventHandler (KeyPress keyName))
-            liftIO $ tryPutMVar eventHappened ()
+            liftIO $ handler (KeyPress keyName)
             preventDefault
             stopPropagation
     on window Window.keyUp $ do
         code <- uiKeyCode
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
-            liftIO $ modifyMVar_ currentState (return . eventHandler (KeyRelease keyName))
-            liftIO $ tryPutMVar eventHappened ()
+            liftIO $ handler (KeyRelease keyName)
             preventDefault
             stopPropagation
     on window Window.mouseDown $ do
@@ -641,31 +645,18 @@ setupEvents eventHandler currentState eventHappened canvas offscreen = do
             Nothing  -> return ()
             Just btn -> do
                 pos <- getMousePos canvas
-                liftIO $ modifyMVar_ currentState (return . eventHandler (MousePress btn pos))
-                liftIO $ tryPutMVar eventHappened ()
-                return ()
+                liftIO $ handler (MousePress btn pos)
     on window Window.mouseUp $ do
         button <- mouseButton
         case fromButtonNum button of
             Nothing  -> return ()
             Just btn -> do
                 pos <- getMousePos canvas
-                liftIO $ modifyMVar_ currentState (return . eventHandler (MouseRelease btn pos))
-                liftIO $ tryPutMVar eventHappened ()
-                return ()
+                liftIO $ handler (MouseRelease btn pos)
     on window Window.mouseMove $ do
         pos <- getMousePos canvas
-        liftIO $ modifyMVar_ currentState (return . eventHandler (MouseMovement pos))
-        liftIO $ tryPutMVar eventHappened ()
-        return ()
+        liftIO $ handler (MouseMovement pos)
     return ()
-
-isUniversallyConstant :: (a -> s -> s) -> s -> IO Bool
-isUniversallyConstant f old = falseOr $ do
-    oldName <- makeStableName old
-    genName <- makeStableName $! (f undefined old)
-    return (genName == oldName)
-  where falseOr x = x `catch` \(e :: SomeException) -> return False
 
 run :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
 run initial stepHandler eventHandler drawHandler = do
@@ -682,13 +673,15 @@ run initial stepHandler eventHandler drawHandler = do
 
     currentState <- newMVar initial
     eventHappened <- newMVar ()
-    setupEvents eventHandler currentState eventHappened canvas
-                (elementFromCanvas offscreenCanvas)
+
+    onEvents canvas $ \event -> do
+        modifyMVar_ currentState (return . eventHandler event)
+        tryPutMVar eventHappened ()
+        return ()
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
     let go t0 lastFrame lastStateName needsTime = do
-            putStrLn "Another loop..."
             pic <- drawHandler <$> readMVar currentState
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
@@ -697,19 +690,18 @@ run initial stepHandler eventHandler drawHandler = do
                                              rect
                 drawFrame buffer pic
                 Canvas.restore buffer
-                return ()
 
-            Just rect <- getBoundingClientRect canvas
-            cw <- ClientRect.getWidth rect
-            ch <- ClientRect.getHeight rect
-            Canvas.clearRect 0 0 (realToFrac cw) (realToFrac ch) screen
-            js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
-                               0 0 (round cw) (round ch)
+                Just rect <- getBoundingClientRect canvas
+                cw <- ClientRect.getWidth rect
+                ch <- ClientRect.getHeight rect
+                Canvas.clearRect 0 0 (realToFrac cw) (realToFrac ch) screen
+                js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
+                                   0 0 (round cw) (round ch)
 
             t1 <- if
               | needsTime -> do
                   t1 <- waitForAnimationFrame
-                  modifyMVar_ currentState $ return . stepHandler ((t1 - t0) / 1000)
+                  modifyMVar_ currentState (return . stepHandler ((t1 - t0) / 1000))
                   return t1
               | otherwise -> do
                   takeMVar eventHappened
@@ -766,6 +758,13 @@ toEvent rect Canvas.Event {..}
     | otherwise
     = Nothing
 
+onEvents :: Canvas.DeviceContext -> (Int, Int) -> (Event -> IO ()) -> IO ()
+onEvents context rect handler = void $ forkIO $ forever $ do
+    maybeEvent <- toEvent rect <$> Canvas.wait context
+    case maybeEvent of
+        Nothing -> return ()
+        Just event -> handler event
+
 run :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
 run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> do
     let rect = (Canvas.width context, Canvas.height context)
@@ -774,36 +773,45 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
     currentState <- newMVar initial
     eventHappened <- newMVar ()
 
-    let go t0 lastFrame = do
+    onEvents context rect $ \event -> do
+        modifyMVar_ currentState (return . eventHandler event)
+        tryPutMVar eventHappened ()
+        return ()
+
+    let go t0 lastFrame lastStateName needsTime = do
             pic <- drawHandler <$> readMVar currentState
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
-                Canvas.send context $
+                Canvas.send context $ do
                     Canvas.with offscreenCanvas $
                         Canvas.saveRestore $ do
                             setupScreenContext rect
                             drawPicture initialDS pic
-                return ()
+                    Canvas.drawImageAt (offscreenCanvas, 0, 0)
 
-            Canvas.send context $ Canvas.drawImageAt (offscreenCanvas, 0, 0)
+            t1 <- if
+              | needsTime -> do
+                  tn <- getCurrentTime
+                  threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
+                  t1 <- getCurrentTime
+                  modifyMVar_ currentState (return . stepHandler (realToFrac (t1 `diffUTCTime` t0)))
+                  return t1
+              | otherwise -> do
+                  takeMVar eventHappened
+                  getCurrentTime
 
-            tn <- getCurrentTime
-            threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
-            t1 <- getCurrentTime
-            modifyMVar_ currentState $ return . stepHandler (realToFrac (t1 `diffUTCTime` t0))
+            nextState <- readMVar currentState
+            nextStateName <- makeStableName $! nextState
+            nextNeedsTime <- if nextStateName == lastStateName
+                then not <$> isUniversallyConstant stepHandler nextState
+                else return True
 
-            -- Handle events now
-            events <- mapMaybe (toEvent rect) <$> Canvas.flush context
-            when (not (null events)) $ do
-                tryPutMVar eventHappened ()
-                return ()
-            mapM_ (\e -> modifyMVar_ currentState $ return . eventHandler e) events
-
-            go t1 picFrame
+            go t1 picFrame nextStateName nextNeedsTime
 
     t0 <- getCurrentTime
     nullFrame <- makeStableName undefined
-    go t0 nullFrame
+    initialStateName <- makeStableName $! initial
+    go t0 nullFrame initialStateName True
 
 #endif
 

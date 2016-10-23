@@ -758,7 +758,7 @@ gameHandle s0 h sm gs =
         (GameCreated gid,     Connecting)         -> Waiting 0 0 0
         (JoinedAs pid,        Connecting)         -> Waiting pid 0 0
         (PlayersWaiting n m,  Waiting pid _ _)    -> Waiting pid n m
-        (Started ts,          Waiting pid _ _)    -> Running ts pid s
+        (Started ts,          Waiting pid _ _)    -> Running ts pid s0
         (OutEvent ts' pid eo, Running ts mypid s) ->
             case Aeson.parseMaybe Aeson.parseJSON eo of
                 Just event -> Running ts mypid (h pid event s)

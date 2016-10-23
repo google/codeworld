@@ -6,7 +6,7 @@ import CodeWorld.Message
 import Data.Char (isPunctuation, isSpace)
 import Data.Monoid ((<>), mappend)
 import Data.Text (Text)
-import Control.Exception (finally)
+import Control.Exception (finally, catch, SomeException)
 import Control.Monad (forM_, forever, when)
 import Control.Concurrent (MVar, newMVar, modifyMVar_, modifyMVar, readMVar)
 import Data.Time.Clock
@@ -19,6 +19,7 @@ import qualified Data.Text.IO as T
 import qualified Network.WebSockets as WS
 import qualified Data.ByteString.Lazy as BS
 import GHC.Generics
+import Text.Read
 
 import Data.Aeson
 import Data.Aeson.Types
@@ -115,15 +116,19 @@ getTimeStamp = do
     let diff = now `diffUTCTime` UTCTime (ModifiedJulianDay 0) 0
     return $ realToFrac $ diff
 
+
+
 broadcast :: ServerMessage -> GameId -> ServerState -> IO ()
 broadcast msg gid games = do
     print msg
-    forM_ (getPlayers gid games) $ \conn -> WS.sendTextData conn (encode msg)
+    forM_ (getPlayers gid games) $ \conn -> WS.sendTextData conn (T.pack (show msg))
+    -- forM_ (getPlayers gid games) $ \conn -> WS.sendTextData conn (encode msg)
 
 sendServerMessage :: ServerMessage -> WS.Connection ->  IO ()
 sendServerMessage msg conn = do
     print msg
-    WS.sendTextData conn (encode msg)
+    -- WS.sendTextData conn (encode msg)
+    WS.sendTextData conn (T.pack (show msg))
 
 main :: IO ()
 main = do
@@ -134,12 +139,13 @@ application :: MVar ServerState -> WS.ServerApp
 application state pending = do
     conn <- WS.acceptRequest pending
     WS.forkPingThread conn 30
-    welcome conn state
+    welcome conn state `catch` (\e -> print (e :: SomeException))
 
 getClientMessage :: WS.Connection -> IO ClientMessage
 getClientMessage conn = do
     msg <- WS.receiveData conn
-    case decode msg of
+    -- case decode msg of
+    case readMaybe (T.unpack msg) of
         Just msg -> do
             print msg
             return msg
@@ -162,6 +168,7 @@ welcomeNew conn state n = do
 welcomeJoin :: WS.Connection -> MVar ServerState -> GameId -> IO ()
 welcomeJoin conn state gid = do
     Just pid <- modifyMVar state (return . joinGame conn gid)
+    sendServerMessage (JoinedAs pid) conn
     announcePlayers gid state
     talk pid conn gid state
 

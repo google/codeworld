@@ -19,7 +19,7 @@ data ClientMessage
     = NewGame Int
     | JoinGame GameId
     | InEvent Value
-    deriving (Show, Generic)
+    deriving (Show, Read, Generic)
 
 data ServerMessage
     = GameCreated GameId
@@ -28,7 +28,7 @@ data ServerMessage
     | Started TimeStamp
     | OutEvent TimeStamp PlayerId Value
     | GameAborted
-    deriving (Show, Generic)
+    deriving (Show, Read, Generic)
 
 instance FromJSON UUID where
     parseJSON x = do

@@ -39,6 +39,7 @@ import           CodeWorld.Picture
 import           CodeWorld.Message
 import           Control.Concurrent
 import           Control.Concurrent.MVar
+import           Control.Concurrent.Chan
 import           Control.Exception
 import           Control.Monad
 import           Control.Monad.Trans (liftIO)
@@ -58,6 +59,7 @@ import           Text.Read
 
 import           Data.IORef
 import           Data.JSString.Text
+import qualified Data.JSString
 import           Data.Time.Clock
 import           Data.Word
 import           GHCJS.DOM
@@ -83,6 +85,7 @@ import qualified Data.Aeson.Types as Aeson
 import qualified Data.Aeson as Aeson
 import           System.IO.Unsafe
 import           System.Random
+import qualified Data.UUID.Types as UUID
 
 #else
 
@@ -106,18 +109,19 @@ animationOf :: (Double -> Picture) -> IO ()
 
 -- | Shows a simulation, which is essentially a continuous-time dynamical
 -- system described by an initial value and step function.
-simulationOf :: world -> (Double -> world -> world) -> (world -> Picture) -> IO ()
+simulationOf :: Show world => world -> (Double -> world -> world) -> (world -> Picture) -> IO ()
 
 -- | Runs an interactive event-driven CodeWorld program.  This is the most
 -- advanced CodeWorld entry point.
-interactionOf :: world
+interactionOf :: Show world => world
               -> (Double -> world -> world)
               -> (Event -> world -> world)
               -> (world -> Picture)
               -> IO ()
 
 -- | Runs an interactive event-driven multiplayer game.
-gameOf :: (Int -> world)
+gameOf :: Show world => Int
+       -> (Int -> world)
        -> (Double -> world -> world)
        -> (Int -> Event -> world -> world)
        -> (Int -> world -> Picture)
@@ -562,15 +566,26 @@ data GenActivity e s = Activity {
 type Activity s = GenActivity Event s
 type GameActivity s = GenActivity ServerMessage (GameState s)
 
-handleEvent :: e -> MVar (GenActivity e s) -> IO ()
-handleEvent event activity = modifyMVar_ activity $ \a0 -> do
-    return $ a0 { activityState = activityEvent a0 event (activityState a0) }
+handleEvent :: Show s => e -> MVar (GenActivity e s) -> IO ()
+handleEvent event activity = do
+    -- js_reportRuntimeError False "Trying to change the mvar"
+    modifyMVar_ activity $ \a0 -> do
+        -- js_reportRuntimeError False "Changing the MVar"
+        js_reportRuntimeError False (textToJSString (pack ("Before: " ++ show (activityState a0))))
+        let a1 = a0 { activityState = activityEvent a0 event (activityState a0) }
+        js_reportRuntimeError False (textToJSString (pack ("After:  " ++ show (activityState a1))))
+        return a1
 
-passTime :: Double -> MVar (GenActivity e s) -> IO (GenActivity e s)
-passTime dt activity = modifyMVar activity $ \a0 -> do
+passTime :: Show s => Double -> MVar (GenActivity e s) -> IO (GenActivity e s)
+passTime dt activity = do
+    a <- readMVar activity
+    -- js_reportRuntimeError False (textToJSString (pack ("Now:    " ++ show (activityState a))))
+    return a
+{- modifyMVar activity $ \a0 -> do
     let rdt = realToFrac (min dt 0.25)
     let a1 = a0 { activityState = activityStep a0 rdt (activityState a0) }
     return (a1, a1)
+    -}
 
 --------------------------------------------------------------------------------
 -- Common event handling code
@@ -695,15 +710,25 @@ setupEvents handle canvas offscreen = do
 
 sendClientEvent :: WS.WebSocket -> ClientMessage -> IO ()
 sendClientEvent conn msg = do
+    {-
     let aeVal = Aeson.toJSON msg
     jsVal <- toJSVal aeVal
     WS.send (js_encode jsVal) conn
+    -}
+    WS.send (Data.JSString.pack (show msg)) conn
 
 decodeServerMessage :: WS.MessageEvent -> IO (Maybe ServerMessage)
 decodeServerMessage m = case WS.getData m of
     WS.StringData str -> do
-        aeValMB <- fromJSVal (js_decode str)
+        return $ readMaybe (Data.JSString.unpack str)
+        {-
+        js_reportRuntimeError False $ "Decode1"
+        jsVal <- js_decode str
+        js_reportRuntimeError False $ "Decode2"
+        aeValMB <- fromJSVal jsVal
+        js_reportRuntimeError False "Decode3"
         return $ aeValMB >>= Aeson.parseMaybe Aeson.parseJSON
+        -}
     _ -> return Nothing
 
 data GameState s
@@ -711,6 +736,7 @@ data GameState s
     | Waiting Int Int Int
     | Running Scientific Int s
     | Disconnected
+    deriving Show
 
 isRunning :: GameState s -> Bool
 isRunning (Running {}) = True
@@ -727,27 +753,37 @@ gameDraw ::
     GameState s -> Picture
 gameDraw draw (Running ts mypid s) = draw mypid s
 gameDraw draw Connecting = text "Connecting"
-gameDraw draw (Waiting _ n m) = text "Waiting for players"
+gameDraw draw (Waiting _ n m) = text $
+    "Waiting for " <> pack (show (m - n)) <> " more players."
 gameDraw draw Disconnected = text "Disconnected"
 
+-- Needs to be in IO to trigger share link
 gameHandle ::
     (Int -> s) -> (Int -> Event -> s -> s) ->
     ServerMessage ->
     GameState s -> GameState s
-gameHandle _ _ (GameCreated gid)    Connecting = Waiting 0 0 0
-gameHandle _ _ (JoinedAs pid)       Connecting = Waiting pid 0 0
-gameHandle _ _ (PlayersWaiting n m) (Waiting pid _ _) = Waiting pid n m
-gameHandle s _ (Started ts)         (Waiting pid _ m) = Running ts pid (s m)
-gameHandle _ h (OutEvent ts' pid eventObject) (Running ts mypid s) =
-    case Aeson.parseMaybe Aeson.parseJSON eventObject of
-        Just event -> Running ts mypid (h pid event s)
-        Nothing ->    Running ts mypid s
-gameHandle _ _ GameAborted _ = Disconnected
-gameHande _ _ _ s = s
+gameHandle s h sm gs =
+    trace (pack ("Got message " ++ show sm)) $
+    case (sm, gs) of
+        (GameAborted,         _)                  -> Disconnected
+        (GameCreated gid,     Connecting)         -> Waiting 0 0 0
+        (JoinedAs pid,        Connecting)         -> Waiting pid 0 0
+        (PlayersWaiting n m,  Waiting pid _ _)    -> Waiting pid n m
+        (Started ts,          Waiting pid _ m)    -> Running ts pid (s m)
+        (OutEvent ts' pid eo, Running ts mypid s) ->
+            case Aeson.parseMaybe Aeson.parseJSON eo of
+                Just event -> Running ts mypid (h pid event s)
+                Nothing ->    Running ts mypid s
+        _ -> trace (pack ("Ignored message: " ++ show sm)) gs
+
+inviteDialogHandle :: ServerMessage -> IO ()
+inviteDialogHandle (GameCreated pid) = js_show_invite (textToJSString (UUID.toText pid))
+inviteDialogHandle (Started _)       = js_hide_invite
+inviteDialogHandle _                 = return ()
 
 
-runGame :: GameActivity s -> IO ()
-runGame startActivity = do
+runGame :: Show s => Int -> GameActivity s -> IO ()
+runGame numPlayers startActivity = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -761,15 +797,23 @@ runGame startActivity = do
 
     currentActivity <- newMVar startActivity
 
+    let handleWSRequest m = do
+        js_reportRuntimeError False ((\(WS.StringData s) -> s) $ WS.getData m)
+        maybeSM <- decodeServerMessage m
+        case maybeSM of
+            Nothing ->
+                js_reportRuntimeError False "Unparseable server message"
+            Just sm -> do
+                js_reportRuntimeError False (textToJSString (pack ("Handling " ++ show sm)))
+                handleEvent sm currentActivity
+                inviteDialogHandle sm
+        js_reportRuntimeError False "Done with message"
+
     let req = WS.WebSocketRequest
             { url = "ws://127.0.0.1:9160"
             , protocols = []
             , onClose = Just $ \_ -> handleEvent GameAborted currentActivity
-            , onMessage = Just $ \m -> do
-                maybeSM <- decodeServerMessage m
-                case maybeSM of
-                    Nothing -> Prelude.putStrLn "Unparseable server message"
-                    Just sm -> handleEvent sm currentActivity
+            , onMessage = Just handleWSRequest
             }
 
     ws <- WS.connect req
@@ -782,7 +826,14 @@ runGame startActivity = do
     setupEvents handle canvas (elementFromCanvas offscreenCanvas)
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
-    sendClientEvent ws (NewGame 1)
+
+    -- Initiate game
+    gidMB <- getGid
+    case gidMB of
+        -- Start a new game
+        Nothing ->  sendClientEvent ws (NewGame numPlayers)
+        -- Join an existing game
+        Just gid -> sendClientEvent ws (JoinGame gid)
 
     let go t0 a0 = do
             let pic = activityDraw a0 (activityState a0)
@@ -792,7 +843,7 @@ runGame startActivity = do
                 buffer <- setupScreenContext (elementFromCanvas offscreenCanvas) rect
                 drawFrame buffer pic
                 Canvas.restore buffer
-                swapMVar currentActivity $ a0 { activityLastFrame = picName }
+                -- swapMVar currentActivity $ a0 { activityLastFrame = picName }
                 return ()
 
             t1 <- waitForAnimationFrame
@@ -809,7 +860,7 @@ runGame startActivity = do
     t0 <- waitForAnimationFrame
     go t0 startActivity `catch` reportError
 
-run :: Activity s -> IO ()
+run :: Show s => Activity s -> IO ()
 run startActivity = do
     Just window <- currentWindow
     Just doc <- currentDocument
@@ -935,9 +986,9 @@ run startActivity = runBlankCanvas $ \context -> do
 --------------------------------------------------------------------------------
 -- Common code for game interface
 
-gameOf initial step event draw = go `catch` reportError
+gameOf numPlayers initial step event draw = go `catch` reportError
   where go = do nullPic <- makeStableName undefined
-                runGame $ Activity {
+                runGame numPlayers $ Activity {
                         activityState     = Connecting,
                         activityStep      = gameStep step,
                         activityEvent     = gameHandle initial event,
@@ -962,7 +1013,7 @@ data Wrapped a = Wrapped {
     state          :: a,
     paused         :: Bool,
     mouseMovedTime :: Double
-    }
+    } deriving Show
 
 data Control :: * -> * where
   PlayButton    :: Control a
@@ -1116,11 +1167,26 @@ trace msg x = unsafePerformIO $ do
 reportError :: SomeException -> IO ()
 reportError e = js_reportRuntimeError True (textToJSString (pack (show e)))
 
+foreign import javascript "window.pinvite($1);"
+    js_show_invite :: JSString -> IO ()
+foreign import javascript "window.pdone_inviting();"
+    js_hide_invite :: IO ()
+
+foreign import javascript "window.gid"
+    js_gid :: IO JSVal
+
+getGid :: IO (Maybe UUID.UUID)
+getGid = do
+    gidVal <- js_gid
+    case pFromJSVal gidVal of
+        Just t ->  return (UUID.fromText t)
+        Nothing -> return Nothing
+
 -- Do we really have to do this? This is horrible!
 -- Also, the conversion from JSVal and Aeson is annoying.
 
-foreign import javascript unsafe "JSON.parse($1)"
-  js_decode :: JSString -> JSVal
+foreign import javascript "JSON.parse($1)"
+  js_decode :: JSString -> IO JSVal
 
 foreign import javascript unsafe "JSON.stringify($1)"
   js_encode :: JSVal -> JSString

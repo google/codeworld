@@ -37,7 +37,8 @@ Library
   if impl(ghcjs)
     Build-depends:
                        ghcjs-base,
-                       ghcjs-dom
+                       ghcjs-dom,
+                       ghcjs-prim
   else
     Build-depends:     blank-canvas
 

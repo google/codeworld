@@ -7,7 +7,7 @@ CodeWorld is used in many classrooms, for a variety of purposes.  Here's a list 
 ## 2011
 
 * Little School on Vermijo
-  * LSV piloted an introductory programming class for 6 to 8 students grades 6 through 8.  This was the original CodeWorld class.  It began in the 2011-2012 school year, ran again in abbreviated form in the Spring of 2015, and then for the 2015-2016 school year.  Classes were co-taught by Chris Smith and Sue Spengler.
+  * During the 2011-2012 school year, LSV piloted an introductory programming class for 6 students, grades 6 through 8.  This was the original CodeWorld class.  The teachers were Chris Smith and Sue Spengler.
 
 ## 2014
 
@@ -15,9 +15,12 @@ CodeWorld is used in many classrooms, for a variety of purposes.  Here's a list 
   * Luke Palmer used CodeWorld for the introductory section of a computer science class at Hillview Middle School.
 * Robertson Intermediate School
   * From October 2014 through March 2015, a group of students, mostly 7th - 8th grades, met twice per week for an after-school club taught by Chris Smith.
+* Little School on Vermijo
 
 ## 2015
 
+* Little School on Vermijo
+  * CodeWorld returned to LSV in the Spring of 2015, and for the entire 2015-2016 school year.  Classes were co-taught by Chris Smith and Sue Spengler.
 * [CATALYST Conference](http://www.sccs.swarthmore.edu/org/catalyst/)
   * CATALYST is a conference for 7th and 8th grade girls at Swarthmore.  Stephanie Weirich led two one-hour sessions with about 10 girls each in the Spring of 2015, and introduced them to programming using CodeWorld.
 

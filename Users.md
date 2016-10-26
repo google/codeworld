@@ -32,5 +32,7 @@ CodeWorld is used in many classrooms, for a variety of purposes.  Here's a list 
   * A graduate seminar by Fernando Alegre at Luisiana State University for math and science teachers with no previous programming experience.  CodeWorld [was used](http://magnet.phys.lsu.edu/code/6893/) for building simulations and animations.
 * Portola Elementary School
   * A class of 4th and 5th grade students met at Portola Elementary in San Bruno, CA in the Fall of 2016.  This class used the [CodeWorld Blocks UI](http://code.world/blocks).  They were taught by Chris Smith, Adrian Matteis, and Han Wang from Google, and by Brooklyn Cook from Serendipity School.
+* Parkside Intermediate School
   * A class of about 30 middle school students met at Parkside Intermediate School in San Bruno, CA in the Fall of 2016.  The class was taught by Chris Smith, Tyler Morse, Kim Martin, and Pierre Kreitmann from Google.
+* University of Pennsylvania
   * [CIS 194](http://www.seas.upenn.edu/~cis194/fall16/index.html), a class at the University of Pennsylvania, used CodeWorld for its introductory lessons.  It was taught by Joachim Breitner.

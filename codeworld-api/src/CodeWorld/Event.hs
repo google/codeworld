@@ -14,10 +14,14 @@
   limitations under the License.
 -}
 
+{-# LANGUAGE DeriveGeneric #-}
 module CodeWorld.Event where
 
 import CodeWorld.Picture (Point)
 import Data.Text (Text)
+import Data.Aeson
+import Data.Aeson.Types
+import GHC.Generics
 
 {-| An event initiated by the user.
 
@@ -59,6 +63,15 @@ data Event = KeyPress !Text
            | MousePress !MouseButton !Point
            | MouseRelease !MouseButton Point
            | MouseMovement !Point
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
 
-data MouseButton = LeftButton | MiddleButton | RightButton deriving (Eq, Show)
+data MouseButton = LeftButton | MiddleButton | RightButton deriving (Eq, Show, Generic)
+
+instance ToJSON   MouseButton where
+    toJSON = genericToJSON defaultOptions
+instance FromJSON MouseButton where
+    parseJSON = genericParseJSON defaultOptions
+instance ToJSON   Event where
+    toJSON = genericToJSON defaultOptions
+instance FromJSON Event where
+    parseJSON = genericParseJSON defaultOptions

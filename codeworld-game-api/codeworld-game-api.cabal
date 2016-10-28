@@ -1,0 +1,24 @@
+Name:                codeworld-game-api
+Version:             0.2.0.0
+Synopsis:            Network protocolfor CodeWorld
+License:             Apache
+License-file:        LICENSE
+Author:              The CodeWorld Authors
+Maintainer:          Chris Smith <cdsmith@gmail.com>
+Copyright:           (c) 2016, The CodeWorld Authors
+Build-type:          Simple
+Cabal-version:       >=1.8
+
+
+Library
+  Hs-source-dirs:      src
+  Exposed-modules:     CodeWorld.Message
+  Build-depends:       base < 5,
+                       aeson,
+                       text,
+                       time,
+                       uuid-types,
+                       scientific
+
+  Exposed:             True
+  Ghc-options:         -O2

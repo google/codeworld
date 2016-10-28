@@ -20,6 +20,7 @@ module CodeWorld (
     animationOf,
     simulationOf,
     interactionOf,
+    gameOf,
 
     -- * Pictures
     Picture,

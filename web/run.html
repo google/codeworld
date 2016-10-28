@@ -19,18 +19,40 @@
   </body>
   <script type="text/javascript">
     function reportRuntimeError(err, str) {
-      var message = window.parent.addToMessage('\n\n' + str);
+      if (window.parent.addToMessage) {
+        var message = window.parent.addToMessage('\n' + str);
 
-      if (err) {
-        var message = window.parent.document.getElementById('message');
-        message.classList.add('error');
+        if (err) {
+          var message = window.parent.document.getElementById('message');
+          message.classList.add('error');
+        }
+      } else {
+        console.log(str);
+      }
+    }
+    function pinvite(gid) {
+      if (window.parent.invite) {
+        window.parent.invite(gid);
+      }
+    }
+    function pdone_inviting(gid) {
+      if (window.parent.done_inviting) {
+        window.parent.done_inviting();
       }
     }
   </script>
 
   <script type="text/javascript">
+    // params from the URL
     var paramList = location.search.slice(1).split('&');
     var params = {}
+    for (var i = 0; i < paramList.length; i++) {
+      var name = paramList[i].split('=')[0];
+      var value = paramList[i].slice(name.length + 1);
+      params[name] = value;
+    }
+    // params from the hash
+    paramList = location.hash.slice(1).split('&');
     for (var i = 0; i < paramList.length; i++) {
       var name = paramList[i].split('=')[0];
       var value = paramList[i].slice(name.length + 1);
@@ -40,6 +62,8 @@
     var hash = params['hash'];
     var dhash = params['dhash'];
     var mode = params['mode'];
+    // Game id is just dumped in the global JS namespace and read there by gameOf
+    var gid = params['gid']
     if (!mode) mode = 'codeworld';
 
     var uri = 'runJS?mode=' + mode;

@@ -129,6 +129,7 @@ gameOf :: Show world => Int
        -> (Int -> Event -> world -> world)
        -> (Int -> world -> Picture)
        -> IO ()
+{-# WARNING gameOf "gameOf is an unstable, experimental API." #-}
 
 -- | Prints a debug message to the CodeWorld console when a value is forced.
 -- This is equivalent to the similarly named function in `Debug.Trace`, except

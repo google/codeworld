@@ -25,12 +25,9 @@ import Data.Aeson
 import Data.Aeson.Types
 import qualified Data.HashMap.Strict as HM
 
-
 -- Server state
 
-data Game = Waiting { numPlayers :: Int
-                    , players :: [WS.Connection]
-                    }
+data Game = Waiting { numPlayers :: Int, players :: [WS.Connection] }
           | Running { players :: [WS.Connection] }
 
 type ServerState = HM.HashMap GameId Game
@@ -52,7 +49,6 @@ joinGame conn gameid games =
                     games' = HM.insert gameid game' games
                 in (games', Just pid)
         _ -> (games, Nothing)
-
 
 tryStartGame :: GameId -> ServerState -> (ServerState, Bool)
 tryStartGame gameid games =
@@ -87,17 +83,13 @@ getTimeStamp = do
     let diff = now `diffUTCTime` UTCTime (ModifiedJulianDay 0) 0
     return $ realToFrac $ diff
 
-
-
 broadcast :: ServerMessage -> GameId -> ServerState -> IO ()
 broadcast msg gid games = do
-    print msg
     forM_ (getPlayers gid games) $ \conn -> WS.sendTextData conn (T.pack (show msg))
     -- forM_ (getPlayers gid games) $ \conn -> WS.sendTextData conn (encode msg)
 
 sendServerMessage :: ServerMessage -> WS.Connection ->  IO ()
 sendServerMessage msg conn = do
-    print msg
     -- WS.sendTextData conn (encode msg)
     WS.sendTextData conn (T.pack (show msg))
 
@@ -117,9 +109,7 @@ getClientMessage conn = do
     msg <- WS.receiveData conn
     -- case decode msg of
     case readMaybe (T.unpack msg) of
-        Just msg -> do
-            print msg
-            return msg
+        Just msg -> return msg
         Nothing -> fail "Invalid client message"
 
 welcome :: WS.Connection -> MVar ServerState -> IO ()

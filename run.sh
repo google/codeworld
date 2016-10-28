@@ -17,8 +17,11 @@
 source base.sh
 
 fuser -k -n tcp 8080
+fuser -k -n tcp 9160
 rm -rf data/*/user/???/*.js
 rm -rf data/*/user/???/*.err.txt
 
 mkdir -p log
+
+codeworld-game-server &
 run .  codeworld-server -p 8080

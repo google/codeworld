@@ -24,6 +24,7 @@ Library
   Other-modules:       CodeWorld.Color,
                        CodeWorld.Picture,
                        CodeWorld.Event,
+                       CodeWorld.Prediction,
                        CodeWorld.Driver
   Build-depends:       base < 5,
                        aeson,

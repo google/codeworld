@@ -27,6 +27,7 @@ Library
                        CodeWorld.Prediction,
                        CodeWorld.Driver
   Build-depends:       base < 5,
+                       containers,
                        aeson,
                        mtl,
                        random,

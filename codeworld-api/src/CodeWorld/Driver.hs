@@ -38,6 +38,7 @@ module CodeWorld.Driver (
 import           CodeWorld.Color
 import           CodeWorld.Event
 import           CodeWorld.Picture
+import           CodeWorld.Prediction
 import           CodeWorld.Message
 import           Control.Concurrent
 import           Control.Concurrent.MVar
@@ -51,7 +52,6 @@ import           Data.Maybe (fromMaybe, mapMaybe)
 import           Data.Monoid
 import qualified Data.Text as T
 import           Data.Text (Text, singleton, pack)
-import           Data.Scientific
 import           Numeric
 import           System.Environment
 import           System.Mem.StableName
@@ -82,10 +82,6 @@ import qualified JavaScript.Web.Canvas.Internal as Canvas
 import qualified JavaScript.Web.Location as Loc
 import qualified JavaScript.Web.MessageEvent as WS
 import qualified JavaScript.Web.WebSocket as WS
-import qualified JavaScript.JSON.Types as JSON
-import qualified JavaScript.JSON.Types.Internal as JSON
-import qualified Data.Aeson.Types as Aeson
-import qualified Data.Aeson as Aeson
 import           System.IO.Unsafe
 import           System.Random
 import qualified Data.UUID.Types as UUID
@@ -123,7 +119,7 @@ interactionOf :: world
               -> IO ()
 
 -- | Runs an interactive event-driven multiplayer game.
-gameOf :: Show world => Int
+gameOf :: Int
        -> world
        -> (Double -> world -> world)
        -> (Int -> Event -> world -> world)
@@ -684,66 +680,77 @@ onEvents canvas handler = do
 
 sendClientEvent :: WS.WebSocket -> ClientMessage -> IO ()
 sendClientEvent conn msg = do
-    {-
-    let aeVal = Aeson.toJSON msg
-    jsVal <- toJSVal aeVal
-    WS.send (js_encode jsVal) conn
-    -}
     WS.send (Data.JSString.pack (show msg)) conn
 
 decodeServerMessage :: WS.MessageEvent -> IO (Maybe ServerMessage)
 decodeServerMessage m = case WS.getData m of
     WS.StringData str -> do
         return $ readMaybe (Data.JSString.unpack str)
-        {-
-        js_reportRuntimeError False $ "Decode1"
-        jsVal <- js_decode str
-        js_reportRuntimeError False $ "Decode2"
-        aeValMB <- fromJSVal jsVal
-        js_reportRuntimeError False "Decode3"
-        return $ aeValMB >>= Aeson.parseMaybe Aeson.parseJSON
-        -}
     _ -> return Nothing
+
+type PlayerID = Int
 
 data GameState s
     = Connecting
-    | Waiting Int Int Int
-    | Running Scientific Int s
+    | Waiting PlayerID Int Int
+    | Running Timestamp PlayerID (Future s)
     | Disconnected
-    deriving Show
 
 isRunning :: GameState s -> Bool
 isRunning (Running {}) = True
 isRunning _ = False
 
+-- It's worth trying to keep the canonical animation rate exactly representable
+-- as a float, to minimize the chance of divergence due to rounding error.
+gameRate :: Double
+gameRate = 1/16
+
 gameStep :: (Double -> s -> s) -> (Double -> GameState s -> GameState s)
-gameStep step d (Running ts mypid s) = Running ts mypid (step d s)
+gameStep step dt (Running t pid s) =
+    let t' = t + dt in Running t' pid (timePasses step gameRate t' s)
 gameStep _ _ s = s
 
-gameDraw :: (Int -> s -> Picture) -> (GameState s -> Picture)
-gameDraw draw (Running ts mypid s) = draw mypid s
-gameDraw draw Connecting = text "Connecting"
-gameDraw draw (Waiting _ n m) = text $
+gameDraw :: (Double -> s -> s)
+         -> (PlayerID -> s -> Picture)
+         -> GameState s
+         -> Picture
+gameDraw step draw (Running t pid s) = draw pid (currentState step t s)
+gameDraw step draw Connecting = text "Connecting"
+gameDraw step draw (Waiting _ n m) = text $
     "Waiting for " <> pack (show (m - n)) <> " more players."
-gameDraw draw Disconnected = text "Disconnected"
+gameDraw step draw Disconnected = text "Disconnected"
 
-gameHandle ::
-    s -> (Int -> Event -> s -> s) ->
-    ServerMessage ->
-    GameState s -> GameState s
-gameHandle s0 h sm gs =
-    -- trace (pack ("Got message " ++ show sm)) $
+gameHandle :: s
+           -> (Double -> s -> s)
+           -> (PlayerID -> Event -> s -> s)
+           -> ServerMessage
+           -> GameState s
+           -> GameState s
+gameHandle s0 step handler sm gs =
     case (sm, gs) of
-        (GameAborted,         _)                  -> Disconnected
-        (GameCreated gid,     Connecting)         -> Waiting 0 0 0
-        (JoinedAs pid,        Connecting)         -> Waiting pid 0 0
-        (PlayersWaiting n m,  Waiting pid _ _)    -> Waiting pid n m
-        (Started ts,          Waiting pid _ _)    -> Running ts pid s0
-        (OutEvent ts' pid eo, Running ts mypid s) ->
-            case Aeson.parseMaybe Aeson.parseJSON eo of
-                Just event -> Running ts mypid (h pid event s)
-                Nothing ->    Running ts mypid s
-        _ -> trace (pack ("Ignored message: " ++ show sm)) gs
+        (GameAborted,        _)                    -> Disconnected
+        (GameCreated gid,    Connecting)           -> Waiting 0 0 0
+        (JoinedAs pid,       Connecting)           -> Waiting pid 0 0
+        (PlayersWaiting n m, Waiting pid _ _)      -> Waiting pid n m
+        (Started t,          Waiting pid _ _)      -> Running t pid (initFuture s0 t)
+        (OutEvent t' pid eo, Running t mypid s) ->
+            case readMaybe eo of
+                Just event -> let ours   = pid == mypid
+                                  func   = handler pid event
+                                  result = serverEvent step gameRate ours t' func s
+                              in  Running t mypid result
+                Nothing ->    Running t mypid s
+        _ -> gs
+
+localHandle :: (Double -> s -> s)
+            -> (PlayerID -> Event -> s -> s)
+            -> Event
+            -> GameState s
+            -> GameState s
+localHandle step handler event (Running t pid s)
+    = Running t pid (localEvent step gameRate t (handler pid event) s)
+localHandle step handler event other
+    = other
 
 inviteDialogHandle :: ServerMessage -> IO ()
 inviteDialogHandle (GameCreated pid) = js_show_invite (textToJSString (UUID.toText pid))
@@ -763,7 +770,12 @@ getWebSocketURL = do
 
     return url
 
-runGame :: Int -> s -> (Double -> s -> s) -> (Int -> Event -> s -> s) -> (Int -> s -> Picture) -> IO ()
+runGame :: Int
+        -> s
+        -> (Double -> s -> s)
+        -> (Int -> Event -> s -> s)
+        -> (Int -> s -> Picture)
+        -> IO ()
 runGame numPlayers initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
@@ -776,24 +788,20 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
         liftIO $ setCanvasSize canvas canvas
         liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
 
-    currentState <- newMVar Connecting
+    currentGameState <- newMVar Connecting
     eventHappened <- newMVar ()
 
     let handleServerMessage sm = do
-        -- js_reportRuntimeError False (textToJSString (pack ("Handling " ++ show sm)))
-        modifyMVar_ currentState $ return . gameHandle initial eventHandler sm
+        modifyMVar_ currentGameState $ return . gameHandle initial stepHandler eventHandler sm
         inviteDialogHandle sm
         tryPutMVar eventHappened ()
         return ()
 
     let handleWSRequest m = do
-        -- js_reportRuntimeError False ((\(WS.StringData s) -> s) $ WS.getData m)
         maybeSM <- decodeServerMessage m
         case maybeSM of
-            Nothing -> return () -- js_reportRuntimeError False "Unparseable server message"
+            Nothing -> return ()
             Just sm -> handleServerMessage sm
-
-        -- js_reportRuntimeError False "Done with message"
 
     wsURL <- getWebSocketURL
     let req = WS.WebSocketRequest
@@ -806,8 +814,12 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
 
     onEvents canvas $ \event -> do
         -- check if game is running
-        running <- isRunning <$> readMVar currentState
-        when running $ sendClientEvent ws (InEvent (Aeson.toJSON event))
+        running <- isRunning <$> readMVar currentGameState
+        when running $ do
+            sendClientEvent ws (InEvent (show event))
+            modifyMVar_ currentGameState $ return . localHandle stepHandler eventHandler event
+            tryPutMVar eventHappened ()
+            return ()
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
@@ -820,7 +832,7 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
         Just gid -> sendClientEvent ws (JoinGame gid)
 
     let go t0 lastFrame lastStateName needsTime = do
-            pic <- gameDraw drawHandler <$> readMVar currentState
+            pic <- gameDraw stepHandler drawHandler <$> readMVar currentGameState
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
                 Just rect <- getBoundingClientRect canvas
@@ -840,18 +852,19 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
             t1 <- if
               | needsTime -> do
                   t1 <- waitForAnimationFrame
-                  modifyMVar_ currentState $ return . gameStep stepHandler ((t1 - t0) / 1000)
+                  modifyMVar_ currentGameState $ return . gameStep stepHandler ((t1 - t0) / 1000)
                   return t1
               | otherwise -> do
                   takeMVar eventHappened
                   js_getHighResTimestamp
 
-            nextState <- readMVar currentState
+            nextState <- readMVar currentGameState
             nextStateName <- makeStableName $! nextState
             nextNeedsTime <- if
               | nextStateName == lastStateName ->
-                  ((/= nextStateName) <$> (makeStableName $! (gameStep stepHandler undefined nextState)))
-                  `catch` \(e :: SomeException) -> return True
+                  let answer = gameStep stepHandler undefined nextState
+                  in  ((/= nextStateName) <$> (makeStableName $! answer))
+                      `catch` \(e :: SomeException) -> return True
               | otherwise -> return True
 
             go t1 picFrame nextStateName nextNeedsTime
@@ -998,7 +1011,8 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
                   tn <- getCurrentTime
                   threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
                   t1 <- getCurrentTime
-                  modifyMVar_ currentState (return . stepHandler (realToFrac (t1 `diffUTCTime` t0)))
+                  let dt = realToFrac (t1 `diffUTCTime` t0)
+                  modifyMVar_ currentState (return . stepHandler dt)
                   return t1
               | otherwise -> do
                   takeMVar eventHappened
@@ -1204,15 +1218,6 @@ getGid = do
     case pFromJSVal gidVal of
         Just t ->  return (UUID.fromText t)
         Nothing -> return Nothing
-
--- Do we really have to do this? This is horrible!
--- Also, the conversion from JSVal and Aeson is annoying.
-
-foreign import javascript "JSON.parse($1)"
-  js_decode :: JSString -> IO JSVal
-
-foreign import javascript unsafe "JSON.stringify($1)"
-  js_encode :: JSVal -> JSString
 
 --------------------------------------------------------------------------------
 --- Stand-alone implementation of tracing and error handling

@@ -14,11 +14,9 @@ Library
   Hs-source-dirs:      src
   Exposed-modules:     CodeWorld.Message
   Build-depends:       base < 5,
-                       aeson,
                        text,
                        time,
-                       uuid-types,
-                       scientific
+                       uuid-types
 
   Exposed:             True
   Ghc-options:         -O2

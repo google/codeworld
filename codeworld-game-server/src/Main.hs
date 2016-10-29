@@ -1,5 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 {-
   Copyright 2016 The CodeWorld Authors. All rights reserved.
@@ -27,24 +28,20 @@ import Control.Monad (forM_, forever, when)
 import Control.Concurrent (MVar, newMVar, modifyMVar_, modifyMVar, readMVar)
 import Data.Time.Clock
 import Data.Time.Calendar
-import Data.Scientific
 import Data.UUID
 import Data.UUID.V4
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Network.WebSockets as WS
 import qualified Data.ByteString.Lazy as BS
-import GHC.Generics
 import Text.Read
 
-import Data.Aeson
-import Data.Aeson.Types
 import qualified Data.HashMap.Strict as HM
 
 -- Server state
 
 data Game = Waiting { numPlayers :: Int, players :: [WS.Connection] }
-          | Running { players :: [WS.Connection] }
+          | Running { startTime :: UTCTime, players :: [WS.Connection] }
 
 type ServerState = HM.HashMap GameId Game
 
@@ -66,14 +63,13 @@ joinGame conn gameid games =
                 in (games', Just pid)
         _ -> (games, Nothing)
 
-tryStartGame :: GameId -> ServerState -> (ServerState, Bool)
+tryStartGame :: GameId -> ServerState -> IO (ServerState, Bool)
 tryStartGame gameid games =
     case HM.lookup gameid games of
-        Just (Waiting pc plys) | length plys == pc ->
-                let game' = Running plys
-                    games' = HM.insert gameid game' games
-                in (games', True)
-        _ -> (games, False)
+        Just (Waiting pc plys) | length plys == pc -> do
+                time <- getCurrentTime
+                return (HM.insert gameid (Running time plys) games, True)
+        _ -> return (games, False)
 
 getPlayers :: GameId -> ServerState -> [WS.Connection]
 getPlayers gameid games =
@@ -85,7 +81,7 @@ getStats :: GameId -> ServerState -> (Int, Int)
 getStats gameid games =
     case HM.lookup gameid games of
         Just (Waiting pc plys) -> (length plys, pc)
-        Just (Running plys)    -> (length plys, length plys)
+        Just (Running t plys)  -> (length plys, length plys)
         Nothing   -> (0,0)
 
 dropGame :: GameId -> ServerState -> ServerState
@@ -93,20 +89,12 @@ dropGame gameid games = HM.delete gameid games
 
 -- Communication
 
-getTimeStamp :: IO Scientific
-getTimeStamp = do
-    now <- getCurrentTime
-    let diff = now `diffUTCTime` UTCTime (ModifiedJulianDay 0) 0
-    return $ realToFrac $ diff
-
 broadcast :: ServerMessage -> GameId -> ServerState -> IO ()
 broadcast msg gid games = do
     forM_ (getPlayers gid games) $ \conn -> WS.sendTextData conn (T.pack (show msg))
-    -- forM_ (getPlayers gid games) $ \conn -> WS.sendTextData conn (encode msg)
 
 sendServerMessage :: ServerMessage -> WS.Connection ->  IO ()
 sendServerMessage msg conn = do
-    -- WS.sendTextData conn (encode msg)
     WS.sendTextData conn (T.pack (show msg))
 
 main :: IO ()
@@ -123,7 +111,6 @@ application state pending = do
 getClientMessage :: WS.Connection -> IO ClientMessage
 getClientMessage conn = do
     msg <- WS.receiveData conn
-    -- case decode msg of
     case readMaybe (T.unpack msg) of
         Just msg -> return msg
         Nothing -> fail "Invalid client message"
@@ -153,13 +140,15 @@ announcePlayers gid state = do
     (n,m) <- getStats gid  <$> readMVar state
     readMVar state >>= broadcast (PlayersWaiting n m) gid
 
-    started <- modifyMVar state (return . tryStartGame gid)
-    when started $ do
-        time <- getTimeStamp
-        readMVar state >>= broadcast (Started time) gid
+    started <- modifyMVar state (tryStartGame gid)
+    when started $ readMVar state >>= broadcast (Started 0) gid
 
 talk ::  PlayerId -> WS.Connection -> GameId -> MVar ServerState ->  IO ()
 talk pid conn gid state = forever $ do
     InEvent e <- getClientMessage conn
-    time <- getTimeStamp
-    readMVar state >>= broadcast (OutEvent time pid e) gid
+    currentTime <- getCurrentTime
+    games <- readMVar state
+    case HM.lookup gid games of
+        Just Running{..} -> let time = realToFrac (diffUTCTime currentTime startTime)
+                            in  readMVar state >>= broadcast (OutEvent time pid e) gid
+        _           -> return ()

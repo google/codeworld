@@ -15,10 +15,8 @@ executable codeworld-game-server
                        text,
                        websockets == 0.9.*,
                        bytestring,
-                       aeson,
                        unordered-containers,
                        time,
-                       scientific,
                        uuid,
                        codeworld-game-api
   hs-source-dirs:      src

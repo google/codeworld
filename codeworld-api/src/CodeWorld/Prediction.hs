@@ -34,7 +34,7 @@ import Data.Foldable (toList)
 type Timestamp = Double     -- in seconds, relative to some arbitrary starting point
 type AnimationRate = Double -- in seconds, e.g. 0.1
 
--- All we do with events is to apply them to the state. So let’s just store the
+-- All we do with events is to apply them to the state. So let's just store the
 -- function that does that.
 type Event s = s -> s
 

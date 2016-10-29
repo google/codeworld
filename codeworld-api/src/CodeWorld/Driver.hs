@@ -751,6 +751,18 @@ inviteDialogHandle (Started _)       = js_hide_invite
 inviteDialogHandle GameAborted       = js_hide_invite
 inviteDialogHandle _                 = return ()
 
+getWebSocketURL :: IO JSString
+getWebSocketURL = do
+    loc      <- Loc.getWindowLocation
+    proto    <- Loc.getProtocol loc
+    hostname <- Loc.getHostname loc
+
+    let url = case proto of
+            "http:"  -> "ws://" <> hostname <> ":9160"
+            "https:" -> "wss://" <> hostname <> "/gameserver"
+
+    return url
+
 runGame :: Int -> s -> (Double -> s -> s) -> (Int -> Event -> s -> s) -> (Int -> s -> Picture) -> IO ()
 runGame numPlayers initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
@@ -783,15 +795,13 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
 
         -- js_reportRuntimeError False "Done with message"
 
-    hostname <- Loc.getHostname =<< Loc.getWindowLocation
-
+    wsURL <- getWebSocketURL
     let req = WS.WebSocketRequest
-            { url = "ws://" <> hostname <> ":9160"
+            { url = wsURL
             , protocols = []
             , onClose = Just $ \_ -> handleServerMessage GameAborted
             , onMessage = Just handleWSRequest
             }
-
     ws <- WS.connect req
 
     onEvents canvas $ \event -> do

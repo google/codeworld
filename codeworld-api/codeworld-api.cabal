@@ -27,13 +27,14 @@ Library
                        CodeWorld.Prediction,
                        CodeWorld.Driver
   Build-depends:       base < 5,
+                       codeworld-game-api,
                        containers,
+                       hashable,
                        mtl,
                        random,
                        text,
                        time,
-                       uuid-types,
-                       codeworld-game-api
+                       uuid-types
   if impl(ghcjs)
     Build-depends:
                        ghcjs-base,

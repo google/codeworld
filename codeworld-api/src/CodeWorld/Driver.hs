@@ -59,10 +59,12 @@ import           Text.Read
 
 #ifdef ghcjs_HOST_OS
 
+import           Data.Hashable
 import           Data.IORef
 import           Data.JSString.Text
 import qualified Data.JSString
 import           Data.Time.Clock
+import qualified Data.UUID.Types as UUID
 import           Data.Word
 import           GHCJS.DOM
 import           GHCJS.DOM.Window as Window
@@ -84,7 +86,6 @@ import qualified JavaScript.Web.MessageEvent as WS
 import qualified JavaScript.Web.WebSocket as WS
 import           System.IO.Unsafe
 import           System.Random
-import qualified Data.UUID.Types as UUID
 
 #else
 
@@ -120,7 +121,7 @@ interactionOf :: world
 
 -- | Runs an interactive event-driven multiplayer game.
 gameOf :: Int
-       -> world
+       -> (StdGen -> world)
        -> (Double -> world -> world)
        -> (Int -> Event -> world -> world)
        -> (Int -> world -> Picture)
@@ -678,6 +679,9 @@ onEvents canvas handler = do
         liftIO $ handler (MouseMovement pos)
     return ()
 
+uuidToStdGen :: UUID.UUID -> StdGen
+uuidToStdGen uuid = mkStdGen (hash uuid)
+
 sendClientEvent :: WS.WebSocket -> ClientMessage -> IO ()
 sendClientEvent conn msg = do
     WS.send (Data.JSString.pack (show msg)) conn
@@ -692,7 +696,7 @@ type PlayerID = Int
 
 data GameState s
     = Connecting
-    | Waiting PlayerID Int Int
+    | Waiting UUID.UUID PlayerID Int Int
     | Running Timestamp PlayerID (Future s)
     | Disconnected
 
@@ -715,25 +719,27 @@ gameDraw :: (Double -> s -> s)
          -> GameState s
          -> Picture
 gameDraw step draw (Running t pid s) = draw pid (currentState step t s)
-gameDraw step draw Connecting = text "Connecting"
-gameDraw step draw (Waiting _ n m) = text $
+gameDraw step draw Connecting        = text "Connecting"
+gameDraw step draw (Waiting _ _ n m) = text $
     "Waiting for " <> pack (show (m - n)) <> " more players."
-gameDraw step draw Disconnected = text "Disconnected"
+gameDraw step draw Disconnected      = text "Disconnected"
 
-gameHandle :: s
+gameHandle :: Maybe UUID.UUID
+           -> (StdGen -> s)
            -> (Double -> s -> s)
            -> (PlayerID -> Event -> s -> s)
            -> ServerMessage
            -> GameState s
            -> GameState s
-gameHandle s0 step handler sm gs =
-    case (sm, gs) of
-        (GameAborted,        _)                    -> Disconnected
-        (GameCreated gid,    Connecting)           -> Waiting 0 0 0
-        (JoinedAs pid,       Connecting)           -> Waiting pid 0 0
-        (PlayersWaiting n m, Waiting pid _ _)      -> Waiting pid n m
-        (Started t,          Waiting pid _ _)      -> Running t pid (initFuture s0 t)
-        (OutEvent t' pid eo, Running t mypid s) ->
+gameHandle mgid initial step handler sm gs =
+    case (mgid, sm, gs) of
+        (_, GameAborted,         _)                   -> Disconnected
+        (_, GameCreated gid,     Connecting)          -> Waiting gid 0 0 0
+        (Just gid, JoinedAs pid, Connecting)          -> Waiting gid pid 0 0
+        (_, PlayersWaiting n m,  Waiting gid pid _ _) -> Waiting gid pid n m
+        (_, Started t,           Waiting gid pid _ _) ->
+            Running t pid (initFuture (initial (mkStdGen (hash gid))) t)
+        (_, OutEvent t' pid eo,  Running t mypid s)   ->
             case readMaybe eo of
                 Just event -> let ours   = pid == mypid
                                   func   = handler pid event
@@ -771,7 +777,7 @@ getWebSocketURL = do
     return url
 
 runGame :: Int
-        -> s
+        -> (StdGen -> s)
         -> (Double -> s -> s)
         -> (Int -> Event -> s -> s)
         -> (Int -> s -> Picture)
@@ -791,8 +797,10 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
     currentGameState <- newMVar Connecting
     eventHappened <- newMVar ()
 
+    gidMB <- getGid
+
     let handleServerMessage sm = do
-        modifyMVar_ currentGameState $ return . gameHandle initial stepHandler eventHandler sm
+        modifyMVar_ currentGameState $ return . gameHandle gidMB initial stepHandler eventHandler sm
         inviteDialogHandle sm
         tryPutMVar eventHappened ()
         return ()
@@ -824,7 +832,6 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
     -- Initiate game
-    gidMB <- getGid
     case gidMB of
         -- Start a new game
         Nothing ->  sendClientEvent ws (NewGame numPlayers)

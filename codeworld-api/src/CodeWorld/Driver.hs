@@ -31,6 +31,7 @@ module CodeWorld.Driver (
     simulationOf,
     interactionOf,
     gameOf,
+    unsafeGameOf,
     trace
     ) where
 
@@ -52,6 +53,7 @@ import           Data.Maybe (fromMaybe, mapMaybe)
 import           Data.Monoid
 import qualified Data.Text as T
 import           Data.Text (Text, singleton, pack)
+import           GHC.StaticPtr
 import           Numeric
 import           System.Environment
 import           System.Mem.StableName
@@ -120,13 +122,21 @@ interactionOf :: world
               -> IO ()
 
 -- | Runs an interactive event-driven multiplayer game.
+unsafeGameOf :: Int
+             -> (StdGen -> world)
+             -> (Double -> world -> world)
+             -> (Int -> Event -> world -> world)
+             -> (Int -> world -> Picture)
+             -> IO ()
+{-# WARNING unsafeGameOf "gameOf/unsafeGameOf are unstable experimental APIs." #-}
+
 gameOf :: Int
-       -> (StdGen -> world)
-       -> (Double -> world -> world)
-       -> (Int -> Event -> world -> world)
+       -> StaticPtr (StdGen -> world)
+       -> StaticPtr (Double -> world -> world)
+       -> StaticPtr (Int -> Event -> world -> world)
        -> (Int -> world -> Picture)
        -> IO ()
-{-# WARNING gameOf "gameOf is an unstable, experimental API." #-}
+{-# WARNING gameOf "gameOf/unsafeGameOf are unstable experimental APIs." #-}
 
 -- | Prints a debug message to the CodeWorld console when a value is forced.
 -- This is equivalent to the similarly named function in `Debug.Trace`, except
@@ -1044,8 +1054,12 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
 --------------------------------------------------------------------------------
 -- Common code for game interface
 
-gameOf numPlayers initial step event draw =
+unsafeGameOf numPlayers initial step event draw =
     runGame numPlayers initial step event draw `catch` reportError
+
+gameOf numPlayers initial step event draw =
+    unsafeGameOf numPlayers (deRefStaticPtr initial) (deRefStaticPtr step)
+                 (deRefStaticPtr event) draw
 
 --------------------------------------------------------------------------------
 -- Common code for interaction, animation and simulation interfaces

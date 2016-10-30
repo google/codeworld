@@ -21,6 +21,7 @@ module CodeWorld (
     simulationOf,
     interactionOf,
     gameOf,
+    unsafeGameOf,
 
     -- * Pictures
     Picture,

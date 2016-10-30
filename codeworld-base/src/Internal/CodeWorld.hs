@@ -32,7 +32,8 @@ module Internal.CodeWorld (
 
 import qualified "codeworld-api" CodeWorld as CW
 import                           Data.Text (Text)
-import                           Internal.Num (Number, fromDouble, toDouble)
+import                           Internal.Num (Number, fromDouble, toDouble, fromInt, toInt)
+import                           Internal.Prelude (randomsFrom)
 import                           Internal.Picture
 import                           Internal.Event
 import qualified                 Internal.Text as CWT
@@ -72,6 +73,22 @@ interactionOf (initial, step, event, draw) = do
                      (\dt w -> step (w, fromDouble dt))
                      (\ev w -> event (w, fromCWEvent ev))
                      (toCWPic . draw)
+
+gameOf :: (Number,
+           [Number] -> state,
+           (state, Number) -> state,
+           (state, Event, Number) -> state,
+           (state, Number) -> Picture)
+       -> Program
+gameOf (players, initial, step, event, picture) =
+    -- This is safe ONLY because codeworld-base does not export the
+    -- IO combinators that allow for choosing divergent clients.
+    CW.unsafeGameOf (toInt players)
+                    (\stdgen -> initial (randomsFrom stdgen))
+                    (\dt state -> step (state, fromDouble dt))
+                    (\player ev state -> event (state, fromCWEvent ev, fromInt player))
+                    (\player state -> toCWPic (picture (state, fromInt player)))
+{-# WARNING gameOf "gameOf is an unstable, experimental API." #-}
 
 chooseRandoms :: IO [Number]
 chooseRandoms = do

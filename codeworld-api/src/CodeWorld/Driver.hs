@@ -731,10 +731,21 @@ gameDraw :: (Double -> s -> s)
          -> GameState s
          -> Picture
 gameDraw step draw (Running _ t pid s) = draw pid (currentState step t s)
-gameDraw step draw (Connecting t)      = text "Connecting"
-gameDraw step draw (Waiting _ t _ n m) = text $
-    "Waiting for " <> pack (show (m - n)) <> " more players."
-gameDraw step draw Disconnected        = text "Disconnected"
+gameDraw step draw (Connecting t)      = text "Connecting" & connectScreen t
+gameDraw step draw (Waiting _ t _ n m) = text s & connectScreen t
+    where s = "Waiting for " <> pack (show (m - n)) <> " more players."
+gameDraw step draw Disconnected        = text "Disconnected" & connectScreen 0
+
+connectScreen :: Double -> Picture
+connectScreen t = translated 0 7 connectBox
+        & translated 0 (-7) codeWorldLogo
+        & colored (gray 0.9) (solidRectangle 20 20)
+  where
+    connectBox = scaled 2 2 (text "Connecting...")
+               & rectangle 14 4
+               & colored connectColor (solidRectangle 14 4)
+    connectColor = let k = (1 + sin (3 * t)) / 5
+                   in  fromHSL (k + 0.5) 0.8 0.7
 
 gameHandle :: Maybe UUID.UUID
            -> (StdGen -> s)

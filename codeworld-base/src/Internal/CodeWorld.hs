@@ -27,6 +27,7 @@ module Internal.CodeWorld (
     animationOf,
     simulationOf,
     interactionOf,
+    gameOf,
     traced
     ) where
 

@@ -164,6 +164,9 @@ function registerStandardHints(successFunc)
         "thickLine",
         "toDouble",
         "toInt",
+
+        // Experimental feature that shouldn't be discoverable yet.
+        "gameOf",
     ];
 
     lines.forEach(function(line) {

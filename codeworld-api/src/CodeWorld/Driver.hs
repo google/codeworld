@@ -705,14 +705,14 @@ decodeServerMessage m = case WS.getData m of
 type PlayerID = Int
 
 data GameState s
-    = Connecting
-    | Waiting UUID.UUID PlayerID Int Int
-    | Running Timestamp PlayerID (Future s)
+    = Connecting Timestamp
+    | Waiting UUID.UUID Timestamp PlayerID Int Int
+    | Running UUID.UUID Timestamp PlayerID (Future s)
     | Disconnected
 
 isRunning :: GameState s -> Bool
-isRunning (Running {}) = True
-isRunning _ = False
+isRunning Running{} = True
+isRunning _         = False
 
 -- It's worth trying to keep the canonical animation rate exactly representable
 -- as a float, to minimize the chance of divergence due to rounding error.
@@ -720,19 +720,21 @@ gameRate :: Double
 gameRate = 1/16
 
 gameStep :: (Double -> s -> s) -> (Double -> GameState s -> GameState s)
-gameStep step dt (Running t pid s) =
-    let t' = t + dt in Running t' pid (timePasses step gameRate t' s)
-gameStep _ _ s = s
+gameStep step dt (Connecting t)          = Connecting (t + dt)
+gameStep step dt (Waiting gid t pid m n) = Waiting gid (t + dt) pid m n
+gameStep step dt (Running gid t pid s)       =
+    let t' = t + dt in Running gid t' pid (timePasses step gameRate t' s)
+gameStep _    _  s                       = s
 
 gameDraw :: (Double -> s -> s)
          -> (PlayerID -> s -> Picture)
          -> GameState s
          -> Picture
-gameDraw step draw (Running t pid s) = draw pid (currentState step t s)
-gameDraw step draw Connecting        = text "Connecting"
-gameDraw step draw (Waiting _ _ n m) = text $
+gameDraw step draw (Running _ t pid s) = draw pid (currentState step t s)
+gameDraw step draw (Connecting t)      = text "Connecting"
+gameDraw step draw (Waiting _ t _ n m) = text $
     "Waiting for " <> pack (show (m - n)) <> " more players."
-gameDraw step draw Disconnected      = text "Disconnected"
+gameDraw step draw Disconnected        = text "Disconnected"
 
 gameHandle :: Maybe UUID.UUID
            -> (StdGen -> s)
@@ -743,19 +745,19 @@ gameHandle :: Maybe UUID.UUID
            -> GameState s
 gameHandle mgid initial step handler sm gs =
     case (mgid, sm, gs) of
-        (_, GameAborted,         _)                   -> Disconnected
-        (_, GameCreated gid,     Connecting)          -> Waiting gid 0 0 0
-        (Just gid, JoinedAs pid, Connecting)          -> Waiting gid pid 0 0
-        (_, PlayersWaiting n m,  Waiting gid pid _ _) -> Waiting gid pid n m
-        (_, Started t,           Waiting gid pid _ _) ->
-            Running t pid (initFuture (initial (mkStdGen (hash gid))) t)
-        (_, OutEvent t' pid eo,  Running t mypid s)   ->
+        (_, GameAborted,         _)                     -> Disconnected
+        (_, GameCreated gid,     Connecting t)          -> Waiting gid t 0 0 0
+        (Just gid, JoinedAs pid, Connecting t)          -> Waiting gid t pid 0 0
+        (_, PlayersWaiting n m,  Waiting gid t pid _ _) -> Waiting gid t pid n m
+        (_, Started t,           Waiting gid _ pid _ _) ->
+            Running gid t pid (initFuture (initial (mkStdGen (hash gid))) t)
+        (_, OutEvent t' pid eo,  Running gid t mypid s)   ->
             case readMaybe eo of
                 Just event -> let ours   = pid == mypid
                                   func   = handler pid event
                                   result = serverEvent step gameRate ours t' func s
-                              in  Running t mypid result
-                Nothing ->    Running t mypid s
+                              in  Running gid t mypid result
+                Nothing ->    Running gid t mypid s
         _ -> gs
 
 localHandle :: (Double -> s -> s)
@@ -763,8 +765,8 @@ localHandle :: (Double -> s -> s)
             -> Event
             -> GameState s
             -> GameState s
-localHandle step handler event (Running t pid s)
-    = Running t pid (localEvent step gameRate t (handler pid event) s)
+localHandle step handler event (Running gid t pid s)
+    = Running gid t pid (localEvent step gameRate t (handler pid event) s)
 localHandle step handler event other
     = other
 
@@ -804,7 +806,8 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
         liftIO $ setCanvasSize canvas canvas
         liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
 
-    currentGameState <- newMVar Connecting
+    let initialGameState = Connecting 0
+    currentGameState <- newMVar initialGameState
     eventHappened <- newMVar ()
 
     gidMB <- getGid
@@ -888,7 +891,7 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
 
     t0 <- waitForAnimationFrame
     nullFrame <- makeStableName undefined
-    initialStateName <- makeStableName $! Connecting
+    initialStateName <- makeStableName $! initialGameState
     go t0 nullFrame initialStateName True
 
 run :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()

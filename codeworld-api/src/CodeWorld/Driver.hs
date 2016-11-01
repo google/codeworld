@@ -630,6 +630,13 @@ isUniversallyConstant f old = falseOr $ do
     return (genName == oldName)
   where falseOr x = x `catch` \(e :: SomeException) -> return False
 
+modifyMVarIfNeeded :: MVar s -> (s -> s) -> IO Bool
+modifyMVarIfNeeded var f = modifyMVar var $ \s -> do
+    oldName <- makeStableName $! s
+    let s' = f s
+    newName <- makeStableName $! s'
+    return (s', newName /= oldName)
+
 --------------------------------------------------------------------------------
 -- GHCJS event handling and core interaction code
 
@@ -776,10 +783,14 @@ localHandle :: (Double -> s -> s)
             -> Event
             -> GameState s
             -> GameState s
-localHandle step handler event (Running gid t pid s)
-    = Running gid t pid (localEvent step gameRate t (handler pid event) s)
-localHandle step handler event other
-    = other
+localHandle step handler event gs@(Running gid t pid s) = unsafePerformIO $ do
+    let state0 = currentState step t s
+    name0 <- makeStableName $! state0
+    let state1 = handler pid event state0
+    name1 <- makeStableName $! state1
+    let gs' = Running gid t pid (localEvent step gameRate t (handler pid event) s)
+    if name0 == name1 then return gs else return gs'
+localHandle step handler event other = other
 
 inviteDialogHandle :: ServerMessage -> IO ()
 inviteDialogHandle (GameCreated pid) = js_show_invite (textToJSString (UUID.toText pid))
@@ -849,9 +860,9 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
         running <- isRunning <$> readMVar currentGameState
         when running $ do
             sendClientEvent ws (InEvent (show event))
-            modifyMVar_ currentGameState $ return . localHandle stepHandler eventHandler event
-            tryPutMVar eventHappened ()
-            return ()
+            changed <- modifyMVarIfNeeded currentGameState $
+                localHandle stepHandler eventHandler event
+            when changed $ void $ tryPutMVar eventHappened ()
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
@@ -921,9 +932,8 @@ run initial stepHandler eventHandler drawHandler = do
     eventHappened <- newMVar ()
 
     onEvents canvas $ \event -> do
-        modifyMVar_ currentState (return . eventHandler event)
-        tryPutMVar eventHappened ()
-        return ()
+        changed <- modifyMVarIfNeeded currentState (eventHandler event)
+        when changed $ void $ tryPutMVar eventHappened ()
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 

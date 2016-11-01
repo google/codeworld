@@ -892,11 +892,9 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
             nextState <- readMVar currentGameState
             nextStateName <- makeStableName $! nextState
             nextNeedsTime <- if
-              | nextStateName == lastStateName ->
-                  let answer = gameStep stepHandler undefined nextState
-                  in  ((/= nextStateName) <$> (makeStableName $! answer))
-                      `catch` \(e :: SomeException) -> return True
-              | otherwise -> return True
+              | nextStateName /= lastStateName -> return True
+              | not needsTime -> return False
+              | otherwise     -> not <$> isUniversallyConstant (gameStep stepHandler) nextState
 
             go t1 picFrame nextStateName nextNeedsTime
 
@@ -957,9 +955,10 @@ run initial stepHandler eventHandler drawHandler = do
 
             nextState <- readMVar currentState
             nextStateName <- makeStableName $! nextState
-            nextNeedsTime <- if nextStateName == lastStateName
-                then not <$> isUniversallyConstant stepHandler nextState
-                else return True
+            nextNeedsTime <- if
+                | nextStateName /= lastStateName -> return True
+                | not needsTime -> return False
+                | otherwise     -> not <$> isUniversallyConstant stepHandler nextState
 
             go t1 picFrame nextStateName nextNeedsTime
 

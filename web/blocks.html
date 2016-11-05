@@ -298,7 +298,20 @@
       </category>
       <category name="Coordinates">
         <block type="cwCoordinatePlane"></block>
-        <block type="lists_path"></block>
+        <block type="pair_create_typed">
+          <value name="FIRST">
+            <shadow type="numNumber">
+              <field name="NUMBER">0</field>
+            </shadow>
+          </value>
+          <value name="SECOND">
+            <shadow type="numNumber">
+              <field name="NUMBER">0</field>
+            </shadow>
+          </value>
+        </block>
+        <block type="lists_path">
+        </block>
         <block type="lists_thickPath">
           <value name="THICKNESS">
             <shadow type="numNumber">
@@ -306,8 +319,10 @@
             </shadow>
           </value>
         </block>
-        <block type="lists_polygon"></block>
-        <block type="lists_solidPolygon"></block>
+        <block type="lists_polygon">
+        </block>
+        <block type="lists_solidPolygon">
+        </block>
         <block type="lists_thickPolygon">
           <value name="THICKNESS">
             <shadow type="numNumber">
@@ -315,7 +330,8 @@
             </shadow>
           </value>
         </block>
-        <block type="lists_curve"></block>
+        <block type="lists_curve">
+        </block>
         <block type="lists_thickCurve">
           <value name="THICKNESS">
             <shadow type="numNumber">
@@ -323,8 +339,10 @@
             </shadow>
           </value>
         </block>
-        <block type="lists_loop"></block>
-        <block type="lists_solidLoop"></block>
+        <block type="lists_loop">
+        </block>
+        <block type="lists_solidLoop">
+        </block>
         <block type="lists_thickLoop">
           <value name="THICKNESS">
             <shadow type="numNumber">

@@ -69,6 +69,7 @@ data ClientMessage
 
 data ServerMessage
     = GameCreated GameId
+    | Ping Double
     | JoinedAs PlayerId
     | PlayersWaiting Int Int
     | Started Double

@@ -769,13 +769,15 @@ gameHandle mgid initial step handler sm gs =
         (_, PlayersWaiting n m,  Waiting gid t pid _ _) -> Waiting gid t pid n m
         (_, Started t,           Waiting gid _ pid _ _) ->
             Running gid t pid (initFuture (initial (mkStdGen (hash gid))) t)
-        (_, OutEvent t' pid eo,  Running gid t mypid s)   ->
+        (_, OutEvent t' pid eo,  Running gid t mypid s) ->
             case readMaybe eo of
                 Just event -> let ours   = pid == mypid
                                   func   = handler pid event
                                   result = serverEvent step gameRate ours t' func s
                               in  Running gid t mypid result
                 Nothing ->    Running gid t mypid s
+        (_, Ping t',             Running gid t pid s) ->
+            Running gid t pid (serverEvent step gameRate False t' id s)
         _ -> gs
 
 localHandle :: (Double -> s -> s)

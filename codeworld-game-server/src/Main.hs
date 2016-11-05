@@ -24,8 +24,8 @@ import Data.Char (isPunctuation, isSpace)
 import Data.Monoid ((<>), mappend)
 import Data.Text (Text)
 import Control.Exception (finally, catch, SomeException)
-import Control.Monad (forM_, forever, when)
-import Control.Concurrent (MVar, newMVar, modifyMVar_, modifyMVar, readMVar)
+import Control.Monad
+import Control.Concurrent
 import Data.Time.Clock
 import Data.Time.Calendar
 import Data.UUID
@@ -143,15 +143,31 @@ welcomeJoin conn state gid = do
 announcePlayers gid state = do
     (n, m)  <- getStats gid <$> readMVar state
     started <- modifyMVar state (tryStartGame gid)
+    when started $ void $ forkIO (pingThread gid state)
     readMVar state >>=
         broadcast (if started then Started 0 else PlayersWaiting n m) gid
+
+pingInterval :: Int
+pingInterval = 1000000  -- one second
+
+pingThread :: GameId -> MVar ServerState -> IO ()
+pingThread gid state = do
+    threadDelay pingInterval
+    games <- readMVar state
+    currentTime <- getCurrentTime
+    case HM.lookup gid games of
+        Just Running{..} -> do
+            let time = realToFrac (diffUTCTime currentTime startTime)
+            broadcast (Ping time) gid games
+            when (length (getPlayers gid games) > 0) $ pingThread gid state
+        _ -> return ()
 
 talk ::  PlayerId -> WS.Connection -> GameId -> MVar ServerState ->  IO ()
 talk pid conn gid state = forever $ do
     InEvent e   <- getClientMessage conn
+    games <- readMVar state
     currentTime <- getCurrentTime
-    game        <- HM.lookup gid <$> readMVar state
-    case game of
+    case HM.lookup gid games of
         Just Running{..} -> let time = realToFrac (diffUTCTime currentTime startTime)
                             in  readMVar state >>= broadcast (OutEvent time pid e) gid
         _           -> return ()

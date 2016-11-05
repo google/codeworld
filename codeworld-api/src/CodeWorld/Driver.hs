@@ -882,14 +882,12 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
                                              rect
                 drawFrame buffer pic
                 Canvas.restore buffer
-                return ()
 
-            Just rect <- getBoundingClientRect canvas
-            cw <- ClientRect.getWidth rect
-            ch <- ClientRect.getHeight rect
-            Canvas.clearRect 0 0 (realToFrac cw) (realToFrac ch) screen
-            js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
-                               0 0 (round cw) (round ch)
+                Just rect <- getBoundingClientRect canvas
+                cw <- ClientRect.getWidth rect
+                ch <- ClientRect.getHeight rect
+                js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
+                                   0 0 (round cw) (round ch)
 
             t1 <- if
               | needsTime -> do
@@ -950,7 +948,6 @@ run initial stepHandler eventHandler drawHandler = do
                 Just rect <- getBoundingClientRect canvas
                 cw <- ClientRect.getWidth rect
                 ch <- ClientRect.getHeight rect
-                Canvas.clearRect 0 0 (realToFrac cw) (realToFrac ch) screen
                 js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
                                    0 0 (round cw) (round ch)
 

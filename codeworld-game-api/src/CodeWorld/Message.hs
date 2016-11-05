@@ -19,7 +19,6 @@
 module CodeWorld.Message where
 
 import Data.Text (Text)
-import Data.UUID.Types
 
 {-
   Protocol:
@@ -56,7 +55,7 @@ import Data.UUID.Types
       <- aborted
 -}
 
-type GameId = UUID
+type GameId = Text
 type PlayerId = Int
 
 -- Message representation

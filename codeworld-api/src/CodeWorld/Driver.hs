@@ -35,7 +35,6 @@ module CodeWorld.Driver (
     trace
     ) where
 
-
 import           CodeWorld.Color
 import           CodeWorld.Event
 import           CodeWorld.Picture
@@ -66,7 +65,6 @@ import           Data.IORef
 import           Data.JSString.Text
 import qualified Data.JSString
 import           Data.Time.Clock
-import qualified Data.UUID.Types as UUID
 import           Data.Word
 import           GHCJS.DOM
 import           GHCJS.DOM.Window as Window
@@ -696,8 +694,8 @@ onEvents canvas handler = do
         liftIO $ handler (MouseMovement pos)
     return ()
 
-uuidToStdGen :: UUID.UUID -> StdGen
-uuidToStdGen uuid = mkStdGen (hash uuid)
+gameIdToStdGen :: GameId -> StdGen
+gameIdToStdGen gid = mkStdGen (hash gid)
 
 sendClientEvent :: WS.WebSocket -> ClientMessage -> IO ()
 sendClientEvent conn msg = do
@@ -713,8 +711,8 @@ type PlayerID = Int
 
 data GameState s
     = Connecting Timestamp
-    | Waiting UUID.UUID Timestamp PlayerID Int Int
-    | Running UUID.UUID Timestamp PlayerID (Future s)
+    | Waiting GameId Timestamp PlayerID Int Int
+    | Running GameId Timestamp PlayerID (Future s)
     | Disconnected
 
 isRunning :: GameState s -> Bool
@@ -754,7 +752,7 @@ connectScreen t = translated 0 7 connectBox
     connectColor = let k = (1 + sin (3 * t)) / 5
                    in  fromHSL (k + 0.5) 0.8 0.7
 
-gameHandle :: Maybe UUID.UUID
+gameHandle :: Maybe GameId
            -> (StdGen -> s)
            -> (Double -> s -> s)
            -> (PlayerID -> Event -> s -> s)
@@ -795,7 +793,7 @@ localHandle step handler event gs@(Running gid t pid s) = unsafePerformIO $ do
 localHandle step handler event other = other
 
 inviteDialogHandle :: ServerMessage -> IO ()
-inviteDialogHandle (GameCreated pid) = js_show_invite (textToJSString (UUID.toText pid))
+inviteDialogHandle (GameCreated gid) = js_show_invite (textToJSString gid)
 inviteDialogHandle (Started _)       = js_hide_invite
 inviteDialogHandle GameAborted       = js_hide_invite
 inviteDialogHandle _                 = return ()
@@ -1255,11 +1253,11 @@ foreign import javascript "window.pdone_inviting();"
 foreign import javascript "window.gid"
     js_gid :: IO JSVal
 
-getGid :: IO (Maybe UUID.UUID)
+getGid :: IO (Maybe GameId)
 getGid = do
     gidVal <- js_gid
     case pFromJSVal gidVal of
-        Just t ->  return (UUID.fromText t)
+        Just t ->  return t
         Nothing -> return Nothing
 
 --------------------------------------------------------------------------------

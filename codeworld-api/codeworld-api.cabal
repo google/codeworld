@@ -33,8 +33,7 @@ Library
                        mtl,
                        random,
                        text,
-                       time,
-                       uuid-types
+                       time
   if impl(ghcjs)
     Build-depends:
                        ghcjs-base,

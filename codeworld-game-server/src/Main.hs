@@ -28,12 +28,11 @@ import Control.Monad
 import Control.Concurrent
 import Data.Time.Clock
 import Data.Time.Calendar
-import Data.UUID
-import Data.UUID.V4
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Network.WebSockets as WS
 import qualified Data.ByteString.Lazy as BS
+import System.Random
 import Text.Read
 
 import qualified Data.HashMap.Strict as HM
@@ -49,6 +48,17 @@ type ServerState = HM.HashMap GameId Game
 
 newServerState :: ServerState
 newServerState = HM.empty
+
+randomGameId :: IO GameId
+randomGameId = T.pack <$> replicateM 4 (randomRIO ('A', 'Z'))
+
+freshGame :: MVar ServerState -> Int -> IO GameId
+freshGame state playerCount = modifyMVar state go
+  where game = Waiting playerCount []
+        go games = do gid <- randomGameId
+                      if gid `HM.member` games
+                         then go games
+                         else return (HM.insert gid game games, gid)
 
 newGame :: WS.Connection -> GameId -> Int -> ServerState -> ServerState
 newGame conn gid playerCount = HM.insert gid (Waiting playerCount [(0, conn)])
@@ -126,9 +136,8 @@ welcome conn state = do
 
 welcomeNew :: WS.Connection -> MVar ServerState -> Int -> IO ()
 welcomeNew conn state n = do
-    gid <- nextRandom
-    modifyMVar_ state (return . newGame conn gid n)
-    let pid = 0
+    gid <- freshGame state n
+    Just pid <- modifyMVar state (return . joinGame conn gid)
     sendServerMessage (GameCreated gid) conn
     announcePlayers gid state
     talk pid conn gid state `finally` modifyMVar_ state (return . cleanup gid pid)

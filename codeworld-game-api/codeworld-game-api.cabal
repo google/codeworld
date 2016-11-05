@@ -14,9 +14,7 @@ Library
   Hs-source-dirs:      src
   Exposed-modules:     CodeWorld.Message
   Build-depends:       base < 5,
-                       text,
-                       time,
-                       uuid-types
+                       text
 
   Exposed:             True
   Ghc-options:         -O2

@@ -719,6 +719,10 @@ isRunning :: GameState s -> Bool
 isRunning Running{} = True
 isRunning _         = False
 
+gameTime :: GameState s -> Double
+gameTime (Running _ t _ _) = t
+gameTime _                 = 0
+
 -- It's worth trying to keep the canonical animation rate exactly representable
 -- as a float, to minimize the chance of divergence due to rounding error.
 gameRate :: Double
@@ -857,9 +861,9 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
 
     onEvents canvas $ \event -> do
         -- check if game is running
-        running <- isRunning <$> readMVar currentGameState
-        when running $ do
-            sendClientEvent ws (InEvent (show event))
+        gs <- readMVar currentGameState
+        when (isRunning gs) $ do
+            sendClientEvent ws (InEvent (gameTime gs) (show event))
             changed <- modifyMVarIfNeeded currentGameState $
                 localHandle stepHandler eventHandler event
             when changed $ void $ tryPutMVar eventHappened ()

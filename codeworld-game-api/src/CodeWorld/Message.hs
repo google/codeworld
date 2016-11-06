@@ -63,7 +63,7 @@ type PlayerId = Int
 data ClientMessage
     = NewGame Int
     | JoinGame GameId
-    | InEvent String
+    | InEvent Double String
     deriving (Show, Read)
 
 data ServerMessage

@@ -60,9 +60,6 @@ freshGame state playerCount = modifyMVar state go
                          then go games
                          else return (HM.insert gid game games, gid)
 
-newGame :: WS.Connection -> GameId -> Int -> ServerState -> ServerState
-newGame conn gid playerCount = HM.insert gid (Waiting playerCount [(0, conn)])
-
 joinGame :: WS.Connection -> GameId -> ServerState -> (ServerState, Maybe PlayerId)
 joinGame conn gameid games =
     case HM.lookup gameid games of
@@ -173,8 +170,8 @@ pingThread gid state = do
 
 talk ::  PlayerId -> WS.Connection -> GameId -> MVar ServerState ->  IO ()
 talk pid conn gid state = forever $ do
-    InEvent e   <- getClientMessage conn
-    games <- readMVar state
+    InEvent _ e <- getClientMessage conn
+    games       <- readMVar state
     currentTime <- getCurrentTime
     case HM.lookup gid games of
         Just Running{..} -> let time = realToFrac (diffUTCTime currentTime startTime)

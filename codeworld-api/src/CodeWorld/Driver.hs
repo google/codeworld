@@ -184,7 +184,7 @@ foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
 foreign import javascript unsafe "$1.getContext('2d', { alpha: false })"
     js_getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
 
-foreign import javascript unsafe "performance.now()"
+foreign import javascript unsafe "performance.now() / 1000"
     js_getHighResTimestamp :: IO Double
 
 canvasFromElement :: Element -> Canvas.Canvas
@@ -710,8 +710,8 @@ decodeServerMessage m = case WS.getData m of
 type PlayerID = Int
 
 data GameState s
-    = Connecting Timestamp
-    | Waiting GameId Timestamp PlayerID Int Int
+    = Connecting
+    | Waiting GameId PlayerID Int Int
     | Running GameId Timestamp PlayerID (Future s)
     | Disconnected
 
@@ -719,31 +719,30 @@ isRunning :: GameState s -> Bool
 isRunning Running{} = True
 isRunning _         = False
 
-gameTime :: GameState s -> Double
-gameTime (Running _ t _ _) = t
-gameTime _                 = 0
+gameTime :: GameState s -> Timestamp -> Double
+gameTime (Running _ tstart _ _) t = t - tstart
+gameTime _ _                      = 0
 
 -- It's worth trying to keep the canonical animation rate exactly representable
 -- as a float, to minimize the chance of divergence due to rounding error.
 gameRate :: Double
 gameRate = 1/16
 
-gameStep :: (Double -> s -> s) -> (Double -> GameState s -> GameState s)
-gameStep step dt (Connecting t)          = Connecting (t + dt)
-gameStep step dt (Waiting gid t pid m n) = Waiting gid (t + dt) pid m n
-gameStep step dt (Running gid t pid s)       =
-    let t' = t + dt in Running gid t' pid (timePasses step gameRate t' s)
-gameStep _    _  s                       = s
+gameStep :: (Double -> s -> s) -> Double -> (GameState s -> GameState s)
+gameStep step t (Running gid tstart pid s) =
+    Running gid tstart pid (timePasses step gameRate (t - tstart) s)
+gameStep _ _ s = s
 
 gameDraw :: (Double -> s -> s)
          -> (PlayerID -> s -> Picture)
          -> GameState s
+         -> Timestamp
          -> Picture
-gameDraw step draw (Running _ t pid s) = draw pid (currentState step t s)
-gameDraw step draw (Connecting t)      = text "Connecting" & connectScreen t
-gameDraw step draw (Waiting _ t _ n m) = text s & connectScreen t
+gameDraw step draw (Running _ tstart pid s) t = draw pid (currentState step (t - tstart) s)
+gameDraw step draw Connecting t             = text "Connecting" & connectScreen t
+gameDraw step draw (Waiting _ _ n m) t      = text s & connectScreen t
     where s = "Waiting for " <> pack (show (m - n)) <> " more players."
-gameDraw step draw Disconnected        = text "Disconnected" & connectScreen 0
+gameDraw step draw Disconnected t           = text "Disconnected" & connectScreen 0
 
 connectScreen :: Double -> Picture
 connectScreen t = translated 0 7 connectBox
@@ -757,44 +756,46 @@ connectScreen t = translated 0 7 connectBox
                    in  fromHSL (k + 0.5) 0.8 0.7
 
 gameHandle :: Maybe GameId
+           -> Double
            -> (StdGen -> s)
            -> (Double -> s -> s)
            -> (PlayerID -> Event -> s -> s)
            -> ServerMessage
            -> GameState s
            -> GameState s
-gameHandle mgid initial step handler sm gs =
+gameHandle mgid t initial step handler sm gs =
     case (mgid, sm, gs) of
-        (_, GameAborted,         _)                     -> Disconnected
-        (_, GameCreated gid,     Connecting t)          -> Waiting gid t 0 0 0
-        (Just gid, JoinedAs pid, Connecting t)          -> Waiting gid t pid 0 0
-        (_, PlayersWaiting n m,  Waiting gid t pid _ _) -> Waiting gid t pid n m
-        (_, Started t,           Waiting gid _ pid _ _) ->
-            Running gid t pid (initFuture (initial (mkStdGen (hash gid))) t)
-        (_, OutEvent t' pid eo,  Running gid t mypid s) ->
+        (_, GameAborted,         _)                   -> Disconnected
+        (_, GameCreated gid,     Connecting)          -> Waiting gid 0 0 0
+        (Just gid, JoinedAs pid, Connecting)          -> Waiting gid pid 0 0
+        (_, PlayersWaiting n m,  Waiting gid pid _ _) -> Waiting gid pid n m
+        (_, Started _,           Waiting gid pid _ _) ->
+            Running gid t pid (initFuture (initial (mkStdGen (hash gid))) 0)
+        (_, OutEvent t' pid eo,  Running gid tstart mypid s) ->
             case readMaybe eo of
                 Just event -> let ours   = pid == mypid
                                   func   = handler pid event
                                   result = serverEvent step gameRate ours t' func s
-                              in  Running gid t mypid result
-                Nothing ->    Running gid t mypid s
-        (_, Ping t',             Running gid t pid s) ->
-            Running gid t pid (serverEvent step gameRate False t' id s)
+                              in  Running gid tstart mypid result
+                Nothing    -> Running gid tstart mypid s
+        (_, Ping t',             Running gid tstart pid s) ->
+            Running gid tstart pid (serverEvent step gameRate False t' id s)
         _ -> gs
 
 localHandle :: (Double -> s -> s)
             -> (PlayerID -> Event -> s -> s)
+            -> Timestamp
             -> Event
             -> GameState s
             -> GameState s
-localHandle step handler event gs@(Running gid t pid s) = unsafePerformIO $ do
+localHandle step handler t event gs@(Running gid tstart pid s) = unsafePerformIO $ do
     let state0 = currentState step t s
     name0 <- makeStableName $! state0
     let state1 = handler pid event state0
     name1 <- makeStableName $! state1
-    let gs' = Running gid t pid (localEvent step gameRate t (handler pid event) s)
+    let gs' = Running gid tstart pid (localEvent step gameRate (t - tstart) (handler pid event) s)
     if name0 == name1 then return gs else return gs'
-localHandle step handler event other = other
+localHandle step handler t event other = other
 
 inviteDialogHandle :: ServerMessage -> IO ()
 inviteDialogHandle (GameCreated gid) = js_show_invite (textToJSString gid)
@@ -832,16 +833,16 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
         liftIO $ setCanvasSize canvas canvas
         liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
 
-    let initialGameState = Connecting 0
+    let initialGameState = Connecting
     currentGameState <- newMVar initialGameState
-    eventHappened <- newMVar ()
 
     gidMB <- getGid
 
     let handleServerMessage sm = do
-        modifyMVar_ currentGameState $ return . gameHandle gidMB initial stepHandler eventHandler sm
+        modifyMVar_ currentGameState $ \gs -> do
+            t <- js_getHighResTimestamp
+            return (gameHandle gidMB t initial stepHandler eventHandler sm gs)
         inviteDialogHandle sm
-        tryPutMVar eventHappened ()
         return ()
 
     let handleWSRequest m = do
@@ -860,13 +861,13 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
     ws <- WS.connect req
 
     onEvents canvas $ \event -> do
-        -- check if game is running
         gs <- readMVar currentGameState
         when (isRunning gs) $ do
-            sendClientEvent ws (InEvent (gameTime gs) (show event))
-            changed <- modifyMVarIfNeeded currentGameState $
-                localHandle stepHandler eventHandler event
-            when changed $ void $ tryPutMVar eventHappened ()
+            t <- js_getHighResTimestamp
+            sendClientEvent ws (InEvent (gameTime gs t) (show event))
+            modifyMVarIfNeeded currentGameState $
+                localHandle stepHandler eventHandler t event
+            return ()
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
@@ -877,8 +878,9 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
         -- Join an existing game
         Just gid -> sendClientEvent ws (JoinGame gid)
 
-    let go t0 lastFrame lastStateName needsTime = do
-            pic <- gameDraw stepHandler drawHandler <$> readMVar currentGameState
+    let go t0 lastFrame = do
+            gs  <- readMVar currentGameState
+            let pic = gameDraw stepHandler drawHandler gs t0
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
                 Just rect <- getBoundingClientRect canvas
@@ -893,28 +895,14 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
                 js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
                                    0 0 (round cw) (round ch)
 
-            t1 <- if
-              | needsTime -> do
-                  t1 <- waitForAnimationFrame
-                  modifyMVar_ currentGameState $ return . gameStep stepHandler ((t1 - t0) / 1000)
-                  return t1
-              | otherwise -> do
-                  takeMVar eventHappened
-                  js_getHighResTimestamp
+            t1 <- (/ 1000) <$> waitForAnimationFrame
+            modifyMVar_ currentGameState $ return . gameStep stepHandler t1
+            go t1 picFrame
 
-            nextState <- readMVar currentGameState
-            nextStateName <- makeStableName $! nextState
-            nextNeedsTime <- if
-              | nextStateName /= lastStateName -> return True
-              | not needsTime -> return False
-              | otherwise     -> not <$> isUniversallyConstant (gameStep stepHandler) nextState
-
-            go t1 picFrame nextStateName nextNeedsTime
-
-    t0 <- waitForAnimationFrame
+    t0 <- js_getHighResTimestamp
     nullFrame <- makeStableName undefined
     initialStateName <- makeStableName $! initialGameState
-    go t0 nullFrame initialStateName True
+    go t0 nullFrame
 
 run :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
 run initial stepHandler eventHandler drawHandler = do

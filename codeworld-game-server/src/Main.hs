@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -169,11 +170,13 @@ pingThread gid state = do
         _ -> return ()
 
 talk ::  PlayerId -> WS.Connection -> GameId -> MVar ServerState ->  IO ()
-talk pid conn gid state = forever $ do
-    InEvent _ e <- getClientMessage conn
-    games       <- readMVar state
-    currentTime <- getCurrentTime
-    case HM.lookup gid games of
-        Just Running{..} -> let time = realToFrac (diffUTCTime currentTime startTime)
-                            in  readMVar state >>= broadcast (OutEvent time pid e) gid
-        _           -> return ()
+talk pid conn gid state = forever $ getClientMessage conn >>= \case
+    InEvent _ e -> do
+        games       <- readMVar state
+        currentTime <- getCurrentTime
+        case HM.lookup gid games of
+            Just Running{..} -> let time = realToFrac (diffUTCTime currentTime startTime)
+                                in  readMVar state >>= broadcast (OutEvent time pid e) gid
+            _           -> return ()
+    InPing time -> do
+        readMVar state >>= broadcast (OutPing time pid) gid

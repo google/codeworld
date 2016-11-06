@@ -26,33 +26,42 @@ import Data.Text (Text)
   Create a new game, join it as player 0 and waits for n players in total.
   Returns an id for the new game.
 
-      -> newgame <m>
-      <- gameid <gid>
+      -> NewGame <m>
+      <- GameCreated <gid>
 
   Joins an existing game. Returns the player id, the number of players.
 
-      -> joingame <gid>
-      <- joined <i>
+      -> JoinGame <gid>
+      <- JoinedAs <i>
 
   Server tells the clients about the number of connected players and number of expected players
 
-      -> players <n> <m>
+      <- PlayersWaiting <n> <m>
 
   Server tells the clients that the game has started
 
-      <- started
+      <- Started <timestamp>
 
-  Client sends an input event
+  Server sends periodic pings to let clients know an updated committed timestamp.
 
-      -> event <e>
+      <- Ping <timestamp>
 
-  Server sends input event to all players, with a player id and timestamp (seconds)
+  Client sends an input event.  The server sends input event to all players, with a player id
+  and timestamp (seconds).  Currently, the client timestamp is ignored, and the server attaches
+  a new server timestamp to all messages.
 
-      <- event <i> <timestamp> <e>
+      -> InEvent <timestamp> <e>
+      <- OutEvent <timestamp> <i> <e>
 
-  Server indicates to the client that some other player dropped. Closes the connection.
+  Clients can send periodic pings to update with their time.  The server repeats them.
+  Currently, other clients ignore these pings.
 
-      <- aborted
+      -> InPing <timestamp>
+      -> OutPing <timestamp> <i>
+
+  Server indicates to the client that they have been disconnected. Closes the connection.
+
+      <- GameAborted
 -}
 
 type GameId = Text
@@ -64,6 +73,7 @@ data ClientMessage
     = NewGame Int
     | JoinGame GameId
     | InEvent Double String
+    | InPing Double
     deriving (Show, Read)
 
 data ServerMessage
@@ -73,5 +83,6 @@ data ServerMessage
     | PlayersWaiting Int Int
     | Started Double
     | OutEvent Double PlayerId String
+    | OutPing Double PlayerId
     | GameAborted
     deriving (Show, Read)

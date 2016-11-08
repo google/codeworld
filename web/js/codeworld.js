@@ -296,10 +296,10 @@ function formatSource() {
 }
 
 function stop() {
-    run('', '', false);
+    run('', '', '', false);
 }
 
-function run(hash, msg, error, dhash) {
+function run(hash, dhash, msg, error) {
     var runner = document.getElementById('runner');
 
     if (hash) {
@@ -310,8 +310,8 @@ function run(hash, msg, error, dhash) {
         document.getElementById('shareButton').style.display = 'none';
     }
 
-    if (hash && !error) {
-        var loc = 'run.html?hash=' + hash + '&mode=' + window.buildMode;
+    if (dhash) {
+        var loc = 'run.html?dhash=' + dhash + '&mode=' + window.buildMode;
         runner.contentWindow.location.replace(loc);
         document.getElementById('runner').style.display = '';
         document.getElementById('runner').contentWindow.focus();
@@ -349,7 +349,7 @@ function goto(line, col) {
 }
 
 function compile() {
-    run('', 'Compiling...', false);
+    run('', '', 'Compiling...', false);
 
     var src = window.codeworldEditor.getValue();
     var data = new FormData();
@@ -383,9 +383,9 @@ function compile() {
             }
 
             if (success) {
-                run(hash, 'Running...\n\n' + msg, false, dhash);
+                run(hash, dhash, 'Running...\n\n' + msg, false);
             } else {
-                run(hash, msg, true);
+                run(hash, '', msg, true);
             }
         });
     });

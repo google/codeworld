@@ -136,14 +136,14 @@ welcomeNew :: WS.Connection -> MVar ServerState -> Int -> IO ()
 welcomeNew conn state n = do
     gid <- freshGame state n
     Just pid <- modifyMVar state (return . joinGame conn gid)
-    sendServerMessage (GameCreated gid) conn
+    sendServerMessage (JoinedAs pid gid) conn
     announcePlayers gid state
     talk pid conn gid state `finally` modifyMVar_ state (return . cleanup gid pid)
 
 welcomeJoin :: WS.Connection -> MVar ServerState -> GameId -> IO ()
 welcomeJoin conn state gid = do
     Just pid <- modifyMVar state (return . joinGame conn gid)
-    sendServerMessage (JoinedAs pid) conn
+    sendServerMessage (JoinedAs pid gid) conn
     announcePlayers gid state
     talk pid conn gid state `finally` modifyMVar_ state (return . cleanup gid pid)
 

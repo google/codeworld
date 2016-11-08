@@ -3,6 +3,7 @@
 {-# LANGUAGE GADTs                    #-}
 {-# LANGUAGE JavaScriptFFI            #-}
 {-# LANGUAGE KindSignatures           #-}
+{-# LANGUAGE LambdaCase               #-}
 {-# LANGUAGE MultiWayIf               #-}
 {-# LANGUAGE OverloadedStrings        #-}
 {-# LANGUAGE PatternGuards            #-}
@@ -755,30 +756,28 @@ connectScreen t = translated 0 7 connectBox
     connectColor = let k = (1 + sin (3 * t)) / 5
                    in  fromHSL (k + 0.5) 0.8 0.7
 
-gameHandle :: Maybe GameId
-           -> Double
+gameHandle :: Double
            -> (StdGen -> s)
            -> (Double -> s -> s)
            -> (PlayerID -> Event -> s -> s)
            -> ServerMessage
            -> GameState s
            -> GameState s
-gameHandle mgid t initial step handler sm gs =
-    case (mgid, sm, gs) of
-        (_, GameAborted,         _)                   -> Disconnected
-        (_, GameCreated gid,     Connecting)          -> Waiting gid 0 0 0
-        (Just gid, JoinedAs pid, Connecting)          -> Waiting gid pid 0 0
-        (_, PlayersWaiting n m,  Waiting gid pid _ _) -> Waiting gid pid n m
-        (_, Started _,           Waiting gid pid _ _) ->
+gameHandle t initial step handler sm gs =
+    case (sm, gs) of
+        (GameAborted,         _)                   -> Disconnected
+        (JoinedAs pid gid,    Connecting)          -> Waiting gid pid 0 0
+        (PlayersWaiting n m,  Waiting gid pid _ _) -> Waiting gid pid n m
+        (Started _,           Waiting gid pid _ _) ->
             Running gid t pid (initFuture (initial (mkStdGen (hash gid))) 0)
-        (_, OutEvent t' pid eo,  Running gid tstart mypid s) ->
+        (OutEvent t' pid eo,  Running gid tstart mypid s) ->
             case readMaybe eo of
                 Just event -> let ours   = pid == mypid
                                   func   = handler pid event
                                   result = serverEvent step gameRate ours t' func s
                               in  Running gid tstart mypid result
                 Nothing    -> Running gid tstart mypid s
-        (_, Ping t',             Running gid tstart pid s) ->
+        (Ping t',             Running gid tstart pid s) ->
             Running gid tstart pid (serverEvent step gameRate False t' id s)
         _ -> gs
 
@@ -798,10 +797,10 @@ localHandle step handler t event gs@(Running gid tstart pid s) = unsafePerformIO
 localHandle step handler t event other = other
 
 inviteDialogHandle :: ServerMessage -> IO ()
-inviteDialogHandle (GameCreated gid) = js_show_invite (textToJSString gid)
-inviteDialogHandle (Started _)       = js_hide_invite
-inviteDialogHandle GameAborted       = js_hide_invite
-inviteDialogHandle _                 = return ()
+inviteDialogHandle (JoinedAs _ gid) = js_show_invite (textToJSString gid)
+inviteDialogHandle (Started _)      = js_hide_invite
+inviteDialogHandle GameAborted      = js_hide_invite
+inviteDialogHandle _                = return ()
 
 getWebSocketURL :: IO JSString
 getWebSocketURL = do
@@ -836,12 +835,10 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
     let initialGameState = Connecting
     currentGameState <- newMVar initialGameState
 
-    gidMB <- getGid
-
     let handleServerMessage sm = do
         modifyMVar_ currentGameState $ \gs -> do
             t <- js_getHighResTimestamp
-            return (gameHandle gidMB t initial stepHandler eventHandler sm gs)
+            return (gameHandle t initial stepHandler eventHandler sm gs)
         inviteDialogHandle sm
         return ()
 
@@ -872,10 +869,8 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
     -- Initiate game
-    case gidMB of
-        -- Start a new game
+    getGid >>= \case
         Nothing ->  sendClientEvent ws (NewGame numPlayers)
-        -- Join an existing game
         Just gid -> sendClientEvent ws (JoinGame gid)
 
     let go t0 lastFrame = do

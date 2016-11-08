@@ -77,9 +77,8 @@ data ClientMessage
     deriving (Show, Read)
 
 data ServerMessage
-    = GameCreated GameId
-    | Ping Double
-    | JoinedAs PlayerId
+    = Ping Double
+    | JoinedAs PlayerId GameId
     | PlayersWaiting Int Int
     | Started Double
     | OutEvent Double PlayerId String

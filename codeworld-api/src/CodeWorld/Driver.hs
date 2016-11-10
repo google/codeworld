@@ -205,7 +205,7 @@ getTime :: IO Double
 getTime = (/ 1000) <$> js_getHighResTimestamp
 
 nextFrame :: IO Double
-nextFrame = (/ 1000) <$> waitForAnimationFrame
+nextFrame = waitForAnimationFrame >> getTime
 
 withDS :: Canvas.Context -> DrawState -> IO () -> IO ()
 withDS ctx (ta,tb,tc,td,te,tf,col) action = do
@@ -972,7 +972,8 @@ run initial stepHandler eventHandler drawHandler = do
             t1 <- if
               | needsTime -> do
                   t1 <- nextFrame
-                  modifyMVar_ currentState (return . stepHandler (t1 - t0))
+                  let dt = min (t1 - t0) 0.25
+                  modifyMVar_ currentState (return . stepHandler dt)
                   return t1
               | otherwise -> do
                   takeMVar eventHappened

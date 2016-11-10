@@ -27,6 +27,8 @@ Library
                        CodeWorld.Prediction,
                        CodeWorld.Driver
   Build-depends:       base < 5,
+                       cereal,
+                       cereal-text,
                        codeworld-game-api,
                        containers,
                        hashable,

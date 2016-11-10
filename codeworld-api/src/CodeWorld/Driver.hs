@@ -1,4 +1,6 @@
 {-# LANGUAGE CPP                      #-}
+{-# LANGUAGE DefaultSignatures        #-}
+{-# LANGUAGE DeriveGeneric            #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE GADTs                    #-}
 {-# LANGUAGE JavaScriptFFI            #-}
@@ -9,6 +11,7 @@
 {-# LANGUAGE PatternGuards            #-}
 {-# LANGUAGE RecordWildCards          #-}
 {-# LANGUAGE ScopedTypeVariables      #-}
+{-# LANGUAGE StandaloneDeriving       #-}
 
 {-
   Copyright 2016 The CodeWorld Authors. All rights reserved.
@@ -51,8 +54,12 @@ import           Data.Char (chr)
 import           Data.List (zip4)
 import           Data.Maybe (fromMaybe, mapMaybe)
 import           Data.Monoid
+import           Data.Serialize
+import           Data.Serialize.Text
 import qualified Data.Text as T
 import           Data.Text (Text, singleton, pack)
+import           GHC.Fingerprint.Type
+import           GHC.Generics
 import           GHC.StaticPtr
 import           Numeric
 import           System.Environment
@@ -709,6 +716,25 @@ decodeServerMessage m = case WS.getData m of
     _ -> return Nothing
 
 type PlayerID = Int
+
+deriving instance Generic Fingerprint
+
+data GameToken
+    = FullToken {
+          tokenDeployHash :: Text,
+          tokenNumPlayers :: Int,
+          tokenInitial :: StaticKey,
+          tokenStep :: StaticKey,
+          tokenEvent :: StaticKey
+      }
+    | PartialToken {
+          tokenDeployHash :: Text
+      }
+    | NoToken
+    deriving Generic
+
+instance Serialize Fingerprint
+instance Serialize GameToken
 
 data GameState s
     = Connecting

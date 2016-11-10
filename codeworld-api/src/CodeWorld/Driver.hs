@@ -192,7 +192,7 @@ foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
 foreign import javascript unsafe "$1.getContext('2d', { alpha: false })"
     js_getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
 
-foreign import javascript unsafe "performance.now() / 1000"
+foreign import javascript unsafe "performance.now()"
     js_getHighResTimestamp :: IO Double
 
 canvasFromElement :: Element -> Canvas.Canvas
@@ -201,6 +201,11 @@ canvasFromElement = Canvas.Canvas . unElement
 elementFromCanvas :: Canvas.Canvas -> Element
 elementFromCanvas = pFromJSVal . jsval
 
+getTime :: IO Double
+getTime = (/ 1000) <$> js_getHighResTimestamp
+
+nextFrame :: IO Double
+nextFrame = (/ 1000) <$> waitForAnimationFrame
 
 withDS :: Canvas.Context -> DrawState -> IO () -> IO ()
 withDS ctx (ta,tb,tc,td,te,tf,col) action = do
@@ -863,7 +868,7 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
 
     let handleServerMessage sm = do
         modifyMVar_ currentGameState $ \gs -> do
-            t <- js_getHighResTimestamp
+            t <- getTime
             return (gameHandle t initial stepHandler eventHandler sm gs)
         inviteDialogHandle sm
         return ()
@@ -886,7 +891,7 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
     onEvents canvas $ \event -> do
         gs <- readMVar currentGameState
         when (isRunning gs) $ do
-            t <- js_getHighResTimestamp
+            t <- getTime
             sendClientEvent ws (InEvent (gameTime gs t) (show event))
             modifyMVarIfNeeded currentGameState $
                 localHandle stepHandler eventHandler t event
@@ -916,11 +921,11 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
                 js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
                                    0 0 (round cw) (round ch)
 
-            t1 <- (/ 1000) <$> waitForAnimationFrame
+            t1 <- nextFrame
             modifyMVar_ currentGameState $ return . gameStep stepHandler t1
             go t1 picFrame
 
-    t0 <- js_getHighResTimestamp
+    t0 <- getTime
     nullFrame <- makeStableName undefined
     initialStateName <- makeStableName $! initialGameState
     go t0 nullFrame
@@ -966,12 +971,12 @@ run initial stepHandler eventHandler drawHandler = do
 
             t1 <- if
               | needsTime -> do
-                  t1 <- waitForAnimationFrame
-                  modifyMVar_ currentState (return . stepHandler ((t1 - t0) / 1000))
+                  t1 <- nextFrame
+                  modifyMVar_ currentState (return . stepHandler (t1 - t0))
                   return t1
               | otherwise -> do
                   takeMVar eventHappened
-                  js_getHighResTimestamp
+                  getTime
 
             nextState <- readMVar currentState
             nextStateName <- makeStableName $! nextState
@@ -982,7 +987,7 @@ run initial stepHandler eventHandler drawHandler = do
 
             go t1 picFrame nextStateName nextNeedsTime
 
-    t0 <- waitForAnimationFrame
+    t0 <- getTime
     nullFrame <- makeStableName undefined
     initialStateName <- makeStableName $! initial
     go t0 nullFrame initialStateName True

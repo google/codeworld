@@ -18,25 +18,28 @@
 
 module CodeWorld.Message where
 
+import Data.ByteString (ByteString)
 import Data.Text (Text)
 
 {-
   Protocol:
 
-  Create a new game, join it as player 0 and waits for n players in total.
-  Returns an id for the new game.
+  Create a new game with some number n of expected players, with a given signature.
+  Join it automatically, and wait for other players.  Returns a player id and game id for
+  the new game.
 
-      -> NewGame <m>
-      <- GameCreated <gid>
+      -> NewGame <n> <sig>
+      <- JoinedAs 0 <gid>
 
-  Joins an existing game. Returns the player id, the number of players.
+  OR join an existing game. Returns the player id and game id.  The server verifies the
+  signature, and responds GameAborted if it doesn't match the signature from NewGame.
 
-      -> JoinGame <gid>
-      <- JoinedAs <i>
+      -> JoinGame <gid> <sig>
+      <- JoinedAs <i> <gid>
 
   Server tells the clients about the number of connected players and number of expected players
 
-      <- PlayersWaiting <n> <m>
+      <- PlayersWaiting <m> <n>
 
   Server tells the clients that the game has started
 
@@ -66,21 +69,22 @@ import Data.Text (Text)
 
 type GameId = Text
 type PlayerId = Int
+type Signature = ByteString
 
 -- Message representation
 
 data ClientMessage
-    = NewGame Int
-    | JoinGame GameId
+    = NewGame Int Signature
+    | JoinGame GameId Signature
     | InEvent Double String
     | InPing Double
     deriving (Show, Read)
 
 data ServerMessage
-    = Ping Double
-    | JoinedAs PlayerId GameId
+    = JoinedAs PlayerId GameId
     | PlayersWaiting Int Int
     | Started Double
+    | Ping Double
     | OutEvent Double PlayerId String
     | OutPing Double PlayerId
     | GameAborted

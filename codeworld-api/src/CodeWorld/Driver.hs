@@ -845,13 +845,14 @@ getWebSocketURL = do
 
     return url
 
-runGame :: Int
+runGame :: GameToken
+        -> Int
         -> (StdGen -> s)
         -> (Double -> s -> s)
         -> (Int -> Event -> s -> s)
         -> (Int -> s -> Picture)
         -> IO ()
-runGame numPlayers initial stepHandler eventHandler drawHandler = do
+runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -901,8 +902,8 @@ runGame numPlayers initial stepHandler eventHandler drawHandler = do
 
     -- Initiate game
     getGid >>= \case
-        Nothing ->  sendClientEvent ws (NewGame numPlayers)
-        Just gid -> sendClientEvent ws (JoinGame gid)
+        Nothing ->  sendClientEvent ws (NewGame numPlayers (encode token))
+        Just gid -> sendClientEvent ws (JoinGame gid (encode token))
 
     let go t0 lastFrame = do
             gs  <- readMVar currentGameState
@@ -1093,12 +1094,23 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
 --------------------------------------------------------------------------------
 -- Common code for game interface
 
-unsafeGameOf numPlayers initial step event draw =
-    runGame numPlayers initial step event draw `catch` reportError
+unsafeGameOf numPlayers initial step event draw = do
+    dhash <- getDeployHash
+    let token = PartialToken dhash
+    runGame token numPlayers initial step event draw `catch` reportError
+  where token = NoToken
 
-gameOf numPlayers initial step event draw =
-    unsafeGameOf numPlayers (deRefStaticPtr initial) (deRefStaticPtr step)
-                 (deRefStaticPtr event) draw
+gameOf numPlayers initial step event draw = do
+    dhash <- getDeployHash
+    let token = FullToken {
+                    tokenDeployHash = dhash,
+                    tokenNumPlayers = numPlayers,
+                    tokenInitial = staticKey initial,
+                    tokenStep = staticKey step,
+                    tokenEvent = staticKey event
+                }
+    runGame token numPlayers (deRefStaticPtr initial) (deRefStaticPtr step)
+            (deRefStaticPtr event) draw
 
 --------------------------------------------------------------------------------
 -- Common code for interaction, animation and simulation interfaces
@@ -1278,6 +1290,12 @@ getGid = do
     case pFromJSVal gidVal of
         Just t ->  return t
         Nothing -> return Nothing
+
+foreign import javascript "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
+    js_deployHash :: IO JSVal
+
+getDeployHash :: IO Text
+getDeployHash = pFromJSVal <$> js_deployHash
 
 --------------------------------------------------------------------------------
 --- Stand-alone implementation of tracing and error handling

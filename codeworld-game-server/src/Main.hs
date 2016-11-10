@@ -40,7 +40,7 @@ import qualified Data.HashMap.Strict as HM
 
 -- Server state
 
-data Game = Waiting { numPlayers :: Int, players :: [(PlayerId, WS.Connection)] }
+data Game = Waiting { numPlayers :: Int, signature :: Signature, players :: [(PlayerId, WS.Connection)] }
           | Running { startTime :: UTCTime, players :: [(PlayerId, WS.Connection)] }
 
 type ServerState = HM.HashMap GameId Game
@@ -53,20 +53,20 @@ newServerState = HM.empty
 randomGameId :: IO GameId
 randomGameId = T.pack <$> replicateM 4 (randomRIO ('A', 'Z'))
 
-freshGame :: MVar ServerState -> Int -> IO GameId
-freshGame state playerCount = modifyMVar state go
-  where game = Waiting playerCount []
+freshGame :: MVar ServerState -> Int -> Signature -> IO GameId
+freshGame state playerCount sig = modifyMVar state go
+  where game = Waiting playerCount sig []
         go games = do gid <- randomGameId
                       if gid `HM.member` games
                          then go games
                          else return (HM.insert gid game games, gid)
 
-joinGame :: WS.Connection -> GameId -> ServerState -> (ServerState, Maybe PlayerId)
-joinGame conn gameid games =
+joinGame :: WS.Connection -> GameId -> Signature -> ServerState -> (ServerState, Maybe PlayerId)
+joinGame conn gameid sig games =
     case HM.lookup gameid games of
-        Just (Waiting pc plys) | length plys < pc ->
+        Just (Waiting pc nsig plys) | sig == nsig && length plys < pc ->
                 let pid = length plys
-                    game' = Waiting pc ((pid, conn) : plys)
+                    game' = Waiting pc nsig ((pid, conn) : plys)
                     games' = HM.insert gameid game' games
                 in (games', Just pid)
         _ -> (games, Nothing)
@@ -74,7 +74,7 @@ joinGame conn gameid games =
 tryStartGame :: GameId -> ServerState -> IO (ServerState, Bool)
 tryStartGame gameid games =
     case HM.lookup gameid games of
-        Just (Waiting pc plys) | length plys == pc -> do
+        Just (Waiting pc _ plys) | length plys == pc -> do
                 time <- getCurrentTime
                 return (HM.insert gameid (Running time plys) games, True)
         _ -> return (games, False)
@@ -88,7 +88,7 @@ getPlayers gameid games =
 getStats :: GameId -> ServerState -> (Int, Int)
 getStats gameid games =
     case HM.lookup gameid games of
-        Just (Waiting pc plys) -> (length plys, pc)
+        Just (Waiting pc _ plys) -> (length plys, pc)
         Just (Running t plys)  -> (length plys, length plys)
         Nothing   -> (0,0)
 
@@ -129,20 +129,20 @@ application state pending = do
 welcome :: WS.Connection -> MVar ServerState -> IO ()
 welcome conn state = do
     msg <- getClientMessage conn
-    case msg of NewGame n    -> welcomeNew conn state n
-                JoinGame gid -> welcomeJoin conn state gid
+    case msg of NewGame n sig    -> welcomeNew conn state n sig
+                JoinGame gid sig -> welcomeJoin conn state gid sig
 
-welcomeNew :: WS.Connection -> MVar ServerState -> Int -> IO ()
-welcomeNew conn state n = do
-    gid <- freshGame state n
-    Just pid <- modifyMVar state (return . joinGame conn gid)
+welcomeNew :: WS.Connection -> MVar ServerState -> Int -> Signature -> IO ()
+welcomeNew conn state n sig = do
+    gid <- freshGame state n sig
+    Just pid <- modifyMVar state (return . joinGame conn gid sig)
     sendServerMessage (JoinedAs pid gid) conn
     announcePlayers gid state
     talk pid conn gid state `finally` modifyMVar_ state (return . cleanup gid pid)
 
-welcomeJoin :: WS.Connection -> MVar ServerState -> GameId -> IO ()
-welcomeJoin conn state gid = do
-    Just pid <- modifyMVar state (return . joinGame conn gid)
+welcomeJoin :: WS.Connection -> MVar ServerState -> GameId -> Signature -> IO ()
+welcomeJoin conn state gid sig = do
+    Just pid <- modifyMVar state (return . joinGame conn gid sig)
     sendServerMessage (JoinedAs pid gid) conn
     announcePlayers gid state
     talk pid conn gid state `finally` modifyMVar_ state (return . cleanup gid pid)

@@ -707,9 +707,6 @@ onEvents canvas handler = do
         liftIO $ handler (MouseMovement pos)
     return ()
 
-gameIdToStdGen :: GameId -> StdGen
-gameIdToStdGen gid = mkStdGen (hash gid)
-
 sendClientEvent :: WS.WebSocket -> ClientMessage -> IO ()
 sendClientEvent conn msg = do
     WS.send (Data.JSString.pack (show msg)) conn
@@ -719,8 +716,6 @@ decodeServerMessage m = case WS.getData m of
     WS.StringData str -> do
         return $ readMaybe (Data.JSString.unpack str)
     _ -> return Nothing
-
-type PlayerID = Int
 
 deriving instance Generic Fingerprint
 
@@ -743,8 +738,8 @@ instance Serialize GameToken
 
 data GameState s
     = Connecting
-    | Waiting GameId PlayerID Int Int
-    | Running GameId Timestamp PlayerID (Future s)
+    | Waiting GameId PlayerId Int Int
+    | Running GameId Timestamp PlayerId (Future s)
     | Disconnected
 
 isRunning :: GameState s -> Bool
@@ -766,7 +761,7 @@ gameStep step t (Running gid tstart pid s) =
 gameStep _ _ s = s
 
 gameDraw :: (Double -> s -> s)
-         -> (PlayerID -> s -> Picture)
+         -> (PlayerId -> s -> Picture)
          -> GameState s
          -> Timestamp
          -> Picture
@@ -790,7 +785,7 @@ connectScreen t = translated 0 7 connectBox
 gameHandle :: Double
            -> (StdGen -> s)
            -> (Double -> s -> s)
-           -> (PlayerID -> Event -> s -> s)
+           -> (PlayerId -> Event -> s -> s)
            -> ServerMessage
            -> GameState s
            -> GameState s
@@ -813,7 +808,7 @@ gameHandle t initial step handler sm gs =
         _ -> gs
 
 localHandle :: (Double -> s -> s)
-            -> (PlayerID -> Event -> s -> s)
+            -> (PlayerId -> Event -> s -> s)
             -> Timestamp
             -> Event
             -> GameState s

@@ -221,11 +221,10 @@ infixr 0 &
 --    myPicture = ...
 coordinatePlane :: Picture
 coordinatePlane = axes <> numbers <> guidelines
-  where xline y     = path [(-10, y), (10, y)]
-        xaxis       = colored (RGBA 0 0 0 0.75) (xline 0)
+  where xline y     = thickPath 0.01 [(-10, y), (10, y)]
+        xaxis       = thickPath 0.03 [(-10, 0), (10, 0)]
         axes        = xaxis <> rotated (pi/2) xaxis
-        xguidelines = pictures
-            [colored (RGBA 0 0 0 0.25) (xline k) | k <- [-10, -9 .. 10]]
+        xguidelines = pictures [ xline k | k <- [-10, -9 .. 10] ]
         guidelines  = xguidelines <> rotated (pi/2) xguidelines
         numbers = xnumbers <> ynumbers
         xnumbers = pictures

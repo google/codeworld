@@ -641,12 +641,12 @@ isUniversallyConstant f old = falseOr $ do
     return (genName == oldName)
   where falseOr x = x `catch` \(e :: SomeException) -> return False
 
-modifyMVarIfNeeded :: MVar s -> (s -> s) -> IO Bool
-modifyMVarIfNeeded var f = modifyMVar var $ \s -> do
-    oldName <- makeStableName $! s
-    let s' = f s
-    newName <- makeStableName $! s'
-    return (s', newName /= oldName)
+modifyMVarIfNeeded :: MVar s -> (s -> IO s) -> IO Bool
+modifyMVarIfNeeded var f = modifyMVar var $ \s0 -> do
+    oldName <- makeStableName $! s0
+    s1      <- f s0
+    newName <- makeStableName $! s1
+    return (s1, newName /= oldName)
 
 --------------------------------------------------------------------------------
 -- GHCJS event handling and core interaction code
@@ -755,7 +755,7 @@ gameTime _ _                      = 0
 gameRate :: Double
 gameRate = 1/16
 
-gameStep :: (Double -> s -> s) -> Double -> (GameState s -> GameState s)
+gameStep :: (Double -> s -> s) -> Double -> GameState s -> GameState s
 gameStep step t (Running gid tstart pid s) =
     Running gid tstart pid (timePasses step gameRate (t - tstart) s)
 gameStep _ _ s = s
@@ -788,39 +788,39 @@ gameHandle :: Double
            -> (PlayerId -> Event -> s -> s)
            -> ServerMessage
            -> GameState s
-           -> GameState s
+           -> IO (GameState s)
 gameHandle t initial step handler sm gs =
     case (sm, gs) of
-        (GameAborted,         _)                   -> Disconnected
-        (JoinedAs pid gid,    Connecting)          -> Waiting gid pid 0 0
-        (PlayersWaiting n m,  Waiting gid pid _ _) -> Waiting gid pid n m
+        (GameAborted,         _)                   -> return Disconnected
+        (JoinedAs pid gid,    Connecting)          -> return (Waiting gid pid 0 0)
+        (PlayersWaiting n m,  Waiting gid pid _ _) -> return (Waiting gid pid n m)
         (Started _,           Waiting gid pid _ _) ->
-            Running gid t pid (initFuture (initial (mkStdGen (hash gid))) 0)
+            return (Running gid t pid (initFuture (initial (mkStdGen (hash gid))) 0))
         (OutEvent t' pid eo,  Running gid tstart mypid s) ->
             case readMaybe eo of
                 Just event -> let ours   = pid == mypid
                                   func   = handler pid event
                                   result = serverEvent step gameRate ours t' func s
-                              in  Running gid tstart mypid result
-                Nothing    -> Running gid tstart mypid s
+                              in  return (Running gid tstart mypid result)
+                Nothing    -> return (Running gid tstart mypid s)
         (Ping t',             Running gid tstart pid s) ->
-            Running gid tstart pid (serverEvent step gameRate False t' id s)
-        _ -> gs
+            return (Running gid tstart pid (serverEvent step gameRate False t' id s))
+        _ -> return gs
 
 localHandle :: (Double -> s -> s)
             -> (PlayerId -> Event -> s -> s)
             -> Timestamp
             -> Event
             -> GameState s
-            -> GameState s
-localHandle step handler t event gs@(Running gid tstart pid s) = unsafePerformIO $ do
+            -> IO (GameState s)
+localHandle step handler t event gs@(Running gid tstart pid s) = do
     let state0 = currentState step t s
     name0 <- makeStableName $! state0
     let state1 = handler pid event state0
     name1 <- makeStableName $! state1
     let gs' = Running gid tstart pid (localEvent step gameRate (t - tstart) (handler pid event) s)
     if name0 == name1 then return gs else return gs'
-localHandle step handler t event other = other
+localHandle step handler t event other = return other
 
 inviteDialogHandle :: ServerMessage -> IO ()
 inviteDialogHandle (JoinedAs _ gid) = js_show_invite (textToJSString gid)
@@ -865,7 +865,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     let handleServerMessage sm = do
         modifyMVar_ currentGameState $ \gs -> do
             t <- getTime
-            return (gameHandle t initial stepHandler eventHandler sm gs)
+            gameHandle t initial stepHandler eventHandler sm gs
         inviteDialogHandle sm
         return ()
 
@@ -887,11 +887,10 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     onEvents canvas $ \event -> do
         gs <- readMVar currentGameState
         when (isRunning gs) $ do
-            t <- getTime
-            sendClientEvent ws (InEvent (gameTime gs t) (show event))
-            modifyMVarIfNeeded currentGameState $
+            t       <- getTime
+            changed <- modifyMVarIfNeeded currentGameState $
                 localHandle stepHandler eventHandler t event
-            return ()
+            when changed $ sendClientEvent ws (InEvent (gameTime gs t) (show event))
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
@@ -939,12 +938,11 @@ run initial stepHandler eventHandler drawHandler = do
         liftIO $ setCanvasSize canvas canvas
         liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
 
-
     currentState <- newMVar initial
     eventHappened <- newMVar ()
 
     onEvents canvas $ \event -> do
-        changed <- modifyMVarIfNeeded currentState (eventHandler event)
+        changed <- modifyMVarIfNeeded currentState (return . eventHandler event)
         when changed $ void $ tryPutMVar eventHappened ()
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)

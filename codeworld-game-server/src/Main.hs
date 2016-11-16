@@ -20,6 +20,7 @@
 -}
 
 import CodeWorld.GameServer
+
 import Snap.Core
 import Snap.Http.Server
 import Control.Applicative
@@ -33,6 +34,7 @@ main = do
         setAccessLog (ConfigFileLog "log/game-access.log") $
         mempty
     httpServe config $
-        ifTop (writeBS "This is the CodeWord game message broker. Nothing to see here.") <|>
+        ifTop (gameStats state) <|>
         route [ ("gameserver", gameServer state) ]
+
 

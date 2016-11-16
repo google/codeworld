@@ -21,8 +21,10 @@
 
 module CodeWorld.GameServer
     ( ServerState
+    , ServerStats(..)
     , initGameServer
     , gameServer
+    , gameStats
     ) where
 
 import CodeWorld.Message
@@ -35,15 +37,19 @@ import Control.Monad
 import Control.Concurrent
 import Data.Time.Clock
 import Data.Time.Calendar
+import GHC.Generics
+import Data.Aeson
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Network.WebSockets as WS
-import Snap.Core (MonadSnap)
+import Snap.Core (MonadSnap, writeLBS, modifyResponse, setHeader)
 import Network.WebSockets.Snap
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.HashMap.Strict as HM
 import System.Random
 import Text.Read
+import Control.Monad.IO.Class
+import Control.Applicative
 
 
 -- Server state
@@ -52,6 +58,7 @@ data Game = Waiting { numPlayers :: Int, signature :: Signature, players :: [(Pl
           | Running { startTime :: UTCTime, players :: [(PlayerId, WS.Connection)] }
 
 type ServerState = HM.HashMap GameId Game
+
 
 -- Server state manipulation
 
@@ -120,6 +127,33 @@ getClientMessage conn = do
 
 broadcast :: ServerMessage -> GameId -> ServerState -> IO ()
 broadcast msg gid games = forM_ (getPlayers gid games) (sendServerMessage msg)
+
+
+-- Statistics
+
+data ServerStats = ServerStats
+    { waitingGames :: Int
+    , runningGames :: Int
+    , connections  :: Int
+    } deriving (Show, Generic)
+
+instance ToJSON ServerStats
+
+getServerStats :: MVar ServerState -> IO ServerStats 
+getServerStats state = tally <$> readMVar state
+
+tally games = ServerStats {..}
+  where
+    waitingGames = length [ () | Waiting {} <- HM.elems games ]
+    runningGames = length [ () | Running {} <- HM.elems games ]
+    connections  = sum [ length (players g) | g <- HM.elems games ]
+
+gameStats :: MonadSnap m => MVar ServerState -> m ()
+gameStats state = do
+    stats <- tally <$> liftIO (readMVar state)
+    modifyResponse $ setHeader "Content-Type" "application/json"
+    writeLBS (encode stats)
+
 
 -- Handling logic
 

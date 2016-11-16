@@ -11,12 +11,15 @@ cabal-version:       >=1.10
 
 executable codeworld-game-server
   main-is:             Main.hs
+  other-modules:       CodeWorld.GameServer
   build-depends:       base >=4.8 && <4.9,
+                       aeson,
                        text,
                        websockets == 0.9.*,
                        websockets-snap == 0.10.*,
                        snap-core == 1.0.*,
                        snap-server == 1.0.*,
+                       transformers,
                        bytestring,
                        random,
                        unordered-containers,

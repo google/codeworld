@@ -197,7 +197,7 @@ initGameServer = do
     return $ ServerState {..}
 
 
--- | A snapp handler
+-- | A snap handler
 gameServer :: MonadSnap m => ServerState -> m ()
 gameServer state = runWebSocketsSnap (wsApp state)
 

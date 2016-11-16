@@ -32,7 +32,7 @@ import CodeWorld.Message
 import Data.Char (isPunctuation, isSpace)
 import Data.Monoid ((<>), mappend)
 import Data.Text (Text)
-import Control.Exception (finally, catch, SomeException)
+import Control.Exception (finally)
 import Control.Monad
 import Control.Concurrent
 import Data.Time.Clock
@@ -236,7 +236,7 @@ wsApp :: ServerState -> WS.ServerApp
 wsApp state pending = do
     conn <- WS.acceptRequest pending
     WS.forkPingThread conn 30
-    welcome conn state `catch` \e -> print (e :: SomeException)
+    welcome conn state
 
 welcome :: WS.Connection -> ServerState -> IO ()
 welcome conn state = do

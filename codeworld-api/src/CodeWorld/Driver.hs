@@ -835,7 +835,7 @@ getWebSocketURL = do
     hostname <- Loc.getHostname loc
 
     let url = case proto of
-            "http:"  -> "ws://" <> hostname <> ":9160"
+            "http:"  -> "ws://" <> hostname <> ":9160/gameserver"
             "https:" -> "wss://" <> hostname <> "/gameserver"
 
     return url

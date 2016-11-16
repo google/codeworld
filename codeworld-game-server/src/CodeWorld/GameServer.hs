@@ -2,6 +2,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE BangPatterns #-}
 
 {-
   Copyright 2016 The CodeWorld Authors. All rights reserved.
@@ -39,11 +40,13 @@ import Data.Time.Calendar
 import GHC.Generics
 import Data.Aeson
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
 import qualified Network.WebSockets as WS
-import Snap.Core (MonadSnap, writeLBS, modifyResponse, setHeader)
+import Snap.Core (MonadSnap, writeLBS, modifyResponse, setHeader, extendTimeout)
 import Network.WebSockets.Snap
-import qualified Data.ByteString.Lazy as BS
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as LBS
 import qualified Data.HashMap.Strict as HM
 import System.Random
 import Text.Read
@@ -55,8 +58,16 @@ import Control.Applicative
 
 type Key = (Signature, GameId)
 
-data Game = Waiting { numPlayers :: Int, gameKey :: Key, players :: [(PlayerId, WS.Connection)] }
-          | Running { startTime :: UTCTime, gameKey :: Key,  players :: [(PlayerId, WS.Connection)] }
+data Game = Game
+        { numPlayers     :: Int
+        , gameKey        :: Key
+        , gameState      :: GameState
+        , players        :: [(PlayerId, WS.Connection)]
+        , gameEventCount :: !Int -- ^ counts only broadcasted game message
+        , gameEventSize  :: !Int
+        }
+
+data GameState = Waiting | Running { startTime :: UTCTime }
 
 type Games = HM.HashMap Key (MVar Game)
 
@@ -80,24 +91,31 @@ freshGame state playerCount sig = modifyMVar (games state) go
         if (sig, gid) `HM.member` games
           then go games
           else do
-            let game = Waiting playerCount (sig, gid) []
+            let game = Game
+                    { numPlayers     = playerCount
+                    , gameKey        = (sig, gid)
+                    , gameState      = Waiting
+                    , players        = []
+                    , gameEventCount = 0
+                    , gameEventSize  = 0
+                    }
             gameMV <- newMVar game
             return (HM.insert (sig, gid) gameMV games, (gid, gameMV))
 
 
 joinGame :: WS.Connection -> MVar Game -> IO (Maybe PlayerId)
 joinGame conn gameMV = modifyMVar gameMV $ \game -> case game of
-        Waiting pc key plys | length plys < pc ->
-                let pid = length plys
-                    game' = Waiting pc key ((pid, conn) : plys)
+        Game { gameState = Waiting } | length (players game) < numPlayers game ->
+                let pid = length (players game)
+                    game' = game { players = (pid, conn) : players game }
                 in return (game', Just pid)
         _ -> return (game, Nothing)
 
 tryStartGame :: MVar Game -> IO Bool
 tryStartGame gameMV = modifyMVar gameMV $ \game -> case game of
-        Waiting pc key plys | length plys == pc -> do
+        Game { gameState = Waiting } | length (players game) == numPlayers game -> do
                 time <- getCurrentTime
-                return (Running time key plys, True)
+                return (game { gameState = Running time} , True)
         _ -> return (game, False)
 
 getPlayers :: MVar Game -> IO [WS.Connection]
@@ -105,15 +123,19 @@ getPlayers gameMVar = map snd . players <$> readMVar gameMVar
 
 getStats :: MVar Game -> IO (Int, Int)
 getStats gameMVar = go <$> readMVar gameMVar
-  where go (Waiting pc _ plys) = (length plys, pc)
-        go (Running t  _ plys) = (length plys, length plys)
+  where go game = (length (players game), numPlayers game)
 
 cleanup :: MVar Game -> PlayerId -> ServerState -> IO ()
 cleanup gameMV mypid state = do
     done <- modifyMVar gameMV go
     when done $ do
-        key <- gameKey <$> readMVar gameMV
-        modifyMVar_ (games state) (return . HM.delete key)
+        game <- readMVar gameMV
+        let key = gameKey game
+        modifyMVar_ (games state) $ return . HM.delete key
+        modifyMVar_ (totalStats state) $ \ts -> return $!
+            ts { totalEventCount = totalEventCount ts + gameEventCount game
+               , totalEventSize  = totalEventSize ts  + gameEventSize game
+               }
   where
     go g = let players' = filter ((/= mypid) . fst) (players g)
            in return $ (g { players = players' }, null players')
@@ -131,8 +153,14 @@ getClientMessage conn = do
         Nothing -> fail "Invalid client message"
 
 broadcast :: ServerMessage -> MVar Game -> IO ()
-broadcast msg gameMV = withMVar gameMV $ \game ->
-    forM_ (players game) (sendServerMessage msg . snd)
+broadcast msg gameMV = do
+    let !msg_txt = T.encodeUtf8 (T.pack (show msg))
+    withMVar gameMV $ \game ->
+        forM_ (players game) (\(_,conn) -> WS.sendTextData conn msg_txt)
+    modifyMVar_ gameMV $ \game -> return $!
+        game { gameEventCount = gameEventCount game + 1
+             , gameEventSize = gameEventSize game + BS.length msg_txt
+             }
 
 
 -- Statistics
@@ -147,6 +175,8 @@ instance ToJSON CurrentStats
 data TotalStats = TotalStats
     { totalConnections :: !Int
     , totalGames       :: !Int
+    , totalEventCount  :: !Int
+    , totalEventSize   :: !Int
     } deriving (Show, Generic)
 instance ToJSON TotalStats
 
@@ -173,8 +203,8 @@ allGames state = do
 tally :: [Game]  -> CurrentStats
 tally games = CurrentStats {..}
   where
-    waitingGames = length [ () | Waiting {} <- games ]
-    runningGames = length [ () | Running {} <- games ]
+    waitingGames = length [ () | Game { gameState = Waiting {}} <- games ]
+    runningGames = length [ () | Game { gameState = Running {}} <- games ]
     connections  = sum [ length (players g) | g <- games ]
 
 gameStats :: MonadSnap m => ServerState -> m ()
@@ -185,21 +215,22 @@ gameStats state = do
     modifyResponse $ setHeader "Content-Type" "application/json"
     writeLBS (encode stats)
 
-
 -- Handling logic
 
 -- | Initializes the mutable state of the game server
 initGameServer :: IO ServerState
 initGameServer = do
     started <- getCurrentTime
-    totalStats <- newMVar (TotalStats 0 0)
+    totalStats <- newMVar (TotalStats 0 0 0 0)
     games <- newMVar HM.empty
     return $ ServerState {..}
 
 
 -- | A snap handler
 gameServer :: MonadSnap m => ServerState -> m ()
-gameServer state = runWebSocketsSnap (wsApp state)
+gameServer state = do
+    -- extendTimeout 36000
+    runWebSocketsSnap (wsApp state)
 
 wsApp :: ServerState -> WS.ServerApp
 wsApp state pending = do
@@ -247,7 +278,7 @@ pingThread gameMV = do
     game <- readMVar gameMV
     currentTime <- getCurrentTime
     case game of
-        Running{..} -> do
+        Game { gameState = Running{..}, ..} -> do
             let time = realToFrac (diffUTCTime currentTime startTime)
             broadcast (Ping time) gameMV
             unless (null players) $ pingThread gameMV
@@ -259,7 +290,7 @@ talk pid conn gameMV = forever $ getClientMessage conn >>= \case
         g           <- readMVar gameMV
         currentTime <- getCurrentTime
         case g of
-            Running{..} -> do
+            Game { gameState = Running{..}, ..} -> do
                 let time = realToFrac (diffUTCTime currentTime startTime)
                 broadcast (OutEvent time pid e) gameMV
             _           -> return ()

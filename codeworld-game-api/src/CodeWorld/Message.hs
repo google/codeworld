@@ -88,4 +88,4 @@ data ServerMessage
     | OutEvent Double PlayerId String
     | OutPing Double PlayerId
     | GameAborted
-    deriving (Show, Read)
+    deriving (Show, Read, Eq) -- Eq is only for testing

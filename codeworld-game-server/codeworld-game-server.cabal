@@ -28,3 +28,17 @@ executable codeworld-game-server
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -threaded -rtsopts "-with-rtsopts=-N"
+
+executable codeworld-game-stresstest
+  main-is:             Stresstest.hs
+  build-depends:       base >=4.8 && <4.9,
+                       bytestring,
+                       text,
+                       websockets == 0.9.*,
+                       codeworld-game-api,
+                       async,
+                       clock,
+                       optparse-applicative
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  ghc-options:         -threaded -rtsopts "-with-rtsopts=-N"

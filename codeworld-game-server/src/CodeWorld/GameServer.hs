@@ -1,8 +1,9 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE LambdaCase         #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE RecordWildCards    #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 {-
   Copyright 2016 The CodeWorld Authors. All rights reserved.
@@ -38,6 +39,7 @@ import Control.Concurrent
 import Data.Time.Clock
 import Data.Time.Calendar
 import GHC.Generics
+import GHC.Stats
 import Data.Aeson
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -188,12 +190,17 @@ tickGame :: ServerState -> IO ()
 tickGame state = modifyMVar_ (totalStats state) $ \ts ->
     return $! ts { totalGames = totalGames ts + 1}
 
-data ServerStats = ServerStats CurrentStats TotalStats
+deriving instance Generic GCStats
+instance ToJSON GCStats
+
+data ServerStats = ServerStats CurrentStats TotalStats GCStats
+
 -- | merge the fields of 'CurrentStats' and 'TotalStats'
 instance ToJSON ServerStats where
-    toJSON (ServerStats cs ts) = Object (o1 <> o2)
+    toJSON (ServerStats cs ts gs) = Object (o1 <> o2 <> o3)
       where Object o1 = toJSON cs
             Object o2 = toJSON ts
+            Object o3 = object [ "mem" .= toJSON gs ]
 
 allGames :: ServerState -> IO [Game]
 allGames state = do
@@ -211,7 +218,8 @@ gameStats :: MonadSnap m => ServerState -> m ()
 gameStats state = do
     cs <- tally <$> liftIO (allGames state)
     ts <- liftIO $ readMVar (totalStats state)
-    let stats = ServerStats cs ts
+    gs <- liftIO $ getGCStats
+    let stats = ServerStats cs ts gs
     modifyResponse $ setHeader "Content-Type" "application/json"
     writeLBS (encode stats)
 

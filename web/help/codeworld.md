@@ -551,7 +551,7 @@ It actually works just fine to say the type is `Point`:
     end :: Point
     end = (2, -4)
 
-When the compiler talks about points, though, it sometimes calls
+When the computer talks about points, though, it sometimes calls
 their type something different: `(Number, Number)`.  This is just a
 way to say what we already know: a point is an ordered pair, with each
 part being a number!  It turns out `Point` is just shorthand for

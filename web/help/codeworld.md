@@ -1204,19 +1204,19 @@ a picture.  For animations, it was a function mapping numbers to pictures.  But
 a simulation is actually built out of *three* separate (but related) parts.
 Here they are:
 
-### Part 1: Initial State ###
+### Part 1: Initial state ###
 
 The first part of a simulation is often called `initial`, and it tells you how
 the simulation is when it starts.
 
-### Part 2: Step Function ###
+### Part 2: Step function ###
 
 The next part of a simulation is often called `step`, and it tells you how the
 simulation changes when time passes.
 
-### Part 3: Draw Function ###
+### Part 3: Picture function ###
 
-The final part of a simulation is often called `draw`, and it tells you how the
+The final part of a simulation is often called `picture`, and it tells you how the
 simulation should be presented on the screen as a `Picture`.
 
 All three of these parts share some data called the "world", which records
@@ -1227,10 +1227,10 @@ Your First Simulation
 
 It may sound complicated, but let's jump in and look at an example:
 
-    main            = simulationOf(initial, step, draw)
-    initial(rs)     = (5,0)
-    step((x,y), dt) = (x - y*dt, y + x*dt)
-    draw(x,y)       = translated(rectangle(1,1), x, y)
+    main             = simulationOf(initial, step, picture)
+    initial(rs)      = (5, 0)
+    step((x, y), dt) = (x - y * dt, y + x * dt)
+    picture(x, y)    = translated(rectangle(1, 1), x, y)
 
 In this case, the "world" is a point: the location of an object.  The step
 function is the heart of any simulation.  Here, it changes the `x` and `y`
@@ -1242,8 +1242,8 @@ number, it's pushed up.  When `x` is negative on the left side, it's pushed
 down.
 
 This still leaves `initial`, which tells us that the object starts at (5,0), and
-`draw`, which says the object looks like a square, and appears at the position
-in the world.
+`picture`, which says the object looks like a square, and appears at the
+position in the world.
 
 Can you guess what this will look like?  Try it and find out!
 
@@ -1255,9 +1255,9 @@ Choosing a World
 ----------------
 
 The world type is the first big choice you make when building a simulation.  In
-the simulation above, the world was a point.  That doesn't mean that all your
-simulations will be the same.  You should ask yourself: what do you need to
-*remember* for the simulation to continue.
+the simulation above, the world was a point.  When you write your own simulations,
+though, the world type can be whatever you choose.  The world type is your answer
+to this question:  What do I need to *remember* for the simulation to continue.
 
 Think of these possibilities:
 * Do you need to remember the *locations* of things?
@@ -1265,14 +1265,89 @@ Think of these possibilities:
 * Do you need to remember the *direction* things are moving?
 * Do you need to remember the *angle* of something that turns?
 
-Anything you need to remember will go into your world type.
+Anything you need to remember will go into your world type.  Let's look at some
+examples.
 
-### Defining New Types ###
+### Simulations With one number
 
-TODO: Write this section.
+The simplest kind of state is a single number.  Let's build a simulation to move
+a box across the screen.  You could have done this with an animation, but this
+makes a good starting point to learn how things work with simulations.
 
-Simulation Tricks
------------------
+    main = simulationOf(initial, step, picture)
+    initial(rs) = -10
+    step(x, dt) = x + dt
+    picture(x) = translated(solidRectangle(1, 1), x, 0)
+
+The world, in thic coordinate, is the x coordinate of the box.  That's the only
+thing you need to remember!  Why not the y coordinate?  Because it is always
+zero, so it doesn't change.
+
+Now that we know what the world looks like, let's examine the three parts of
+this simulation.  The initial x coordinate is -10, meaning the box starts on the
+left edge of the screen.  When time passes, the amount of time passed is added to
+the x coordinate, to produce a new x coordinate.  So the x coordinate will
+increase at a rate of one unit for every one second.  The program looks like a
+box, translated by the x coordinate, and 0 in the y direction.
+
+Try this out, and verify that it does what you expect.
+
+* Can you modify the program to move the box up?  What about left or down?
+* Can you modify the program to use rotation instead of translation?
+* Can you change the speed at which the box moves?  (Hint: use multiplication.)
+
+### Simulations With multiple numbers
+
+Adding a second number to the state lets you describe different kinds of change
+at the same time.  Let's try to make a rolling wheel, which will need to move
+(translation) and turn (rotation) at the same time.  In the state, we'll need
+both an x coordinate, and an angle of rotation.
+
+    main = simulationOf(initial, step, picture)
+    initial(rs) = (-10, 0)
+    step((x, angle), dt) = (x + dt, angle - 60 * dt)
+    picture(x, angle) = translated(rotated(wheel, angle), x, 0)
+    wheel = circle(1) & solidRectangle(2, 1/4) & solidRectangle(1/4, 2)
+
+The initial world has an x coordinate of -10, and an angle of zero.  As time
+passes, the x coordinate increases by one unit per second, but the angle of
+rotation decreases by 60 degrees per second.  The screen looks like a wheel,
+rotated by the angle, and translated by the current x coordinate.
+
+* What happens if you add `60 * dt` instead of subtracting?
+* What goes wrong if you use a different number for degrees per second?
+
+If you were wondering, the angle of 60 was chosen by experimenting!  The right
+speed for rotation depends on how fast the wheel is moving in the x direction
+and the size of the wheel.  Here, a little math would tell you that the right
+answer is 180 divided by pi, or about 57.3 degrees.  But 60 is close enough!
+
+### Invisible state ###
+
+So far, everything that has been part of the world has been visible in the
+picture.  That's not always true, though!  In fact, it's rarely true for more
+advanced animations.  Some things need to be remembered to draw to the screen,
+but other things - like speeds, time remaining, etc. - need to be remembered
+only because they affect how other things change in the future.
+
+This simple animation shows a baseball flying through the air.  While only
+the x position and y position are needed to *draw* the simulation, the y
+speed also changes, and needs to be remembered.
+
+    main = simulationOf(initial, step, picture)
+    initial(rs) = (-9, -9, 15)
+    step((x, y, vy), dt) = (x + 6 * dt, y + vy * dt, vy - 10 * dt)
+    picture(x, y, vy) = translated(solidCircle(1/2), x, y)
+
+As you can see, the velocity in the y direction, `vy`, starts at 15 units per
+second upward.  But as time passes, it decreases, until eventually it becomes
+negative, and the ball falls back down again.
+
+* What would happen if the ball started at a different position?
+* How would you change the effect of gravity to simulate a ball on the moon?
+
+Simulating Physics
+------------------
 
 ### Linear Change ###
 
@@ -1282,7 +1357,25 @@ TODO: Write this section.
 
 TODO: Write this section.
 
-### Constant Acceleration ###
+### Gravity and Constant Acceleration ###
+
+TODO: Write this section.
+
+Designing With Simulation
+-------------------------
+
+TODO: Write this section.
+
+### Horizontal Composition
+
+TODO: Write this section.
+
+### Vertical Composition
+
+TODO: Write this section.
+
+Defining Types
+--------------------
 
 TODO: Write this section.
 

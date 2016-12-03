@@ -15,7 +15,7 @@ CodeWorld is used in many classrooms, for a variety of purposes.  Here's a list 
 * University of Pennsylvania
   * [CIS 194](http://www.seas.upenn.edu/~cis194/fall16/index.html), a class at the University of Pennsylvania, used CodeWorld for its introductory lessons.  It was taught by Joachim Breitner.
 * CodeDay Seattle
-  * Brendan Murphy used CodeWorld to teach a one-hour class on Haskell to beginning student programmers, at a [CodeDay](https://codeday.org/) event in Seattle.  This is a hackathon-style event run by [StudentRND](https://srnd.org/).
+  * Brendan Murphy used CodeWorld to teach a one-hour seminar on Haskell to beginning student programmers, at a [CodeDay](https://codeday.org/) event in Seattle.  This is a hackathon-style event run by [StudentRND](https://srnd.org/).
 
 ## 2015-2016
 

@@ -288,7 +288,7 @@ function addToMessage(msg) {
 }
 
 function signin() {
-    if (window.auth2) auth2.signIn();
+    if (window.auth2) auth2.signIn({prompt: 'login'});
 }
 
 function signout() {

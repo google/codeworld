@@ -152,6 +152,7 @@ function registerStandardHints(successFunc)
         // built-in Haskell types.
         "Bool",
         "IO",
+        "fail",
         "fromDouble",
         "fromInt",
         "fromInteger",
@@ -245,6 +246,7 @@ function addToMessage(msg) {
         msg = msg
             .replace(/\u2018/g, '')
             .replace(/\u2019/g, '')
+            .replace(/ \[-W[a-z-]*\]/g, '')
             .replace(/IO action main/g, 'variable main')
             .replace(/module Main/g, 'the program')
             .replace(/\[GHC\.Types\.Char\] -> /g, '')

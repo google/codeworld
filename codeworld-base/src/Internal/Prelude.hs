@@ -19,6 +19,7 @@
 
 module Internal.Prelude (
     ifThenElse, -- For RebindableSyntax
+    fail, -- for RebindableSyntax
 
     -- Comparison
     (==),
@@ -138,6 +139,11 @@ secondOfPair (a, b) = b
 -- | Fails with an error message.
 error :: Text -> a
 error = P.error . toString
+
+-- | Fails with an error message.  This is required (though apparently unused)
+-- by the desugaring for pattern binds in list comprehensions.
+fail :: P.String -> a
+fail = P.error
 
 -- | Determines whether a list is empty or not.
 empty :: [a] -> Truth

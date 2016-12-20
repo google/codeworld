@@ -126,8 +126,8 @@ fi
 
 # Install GHC, since it's required for GHCJS.
 
-GHC_DIR=7.10.3
-GHC_VERSION=7.10.3
+GHC_DIR=8.0.1
+GHC_VERSION=8.0.1
 
 run $DOWNLOADS               wget http://downloads.haskell.org/~ghc/$GHC_DIR/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
 run $BUILD                   tar xf $DOWNLOADS/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
@@ -137,19 +137,19 @@ run $BUILD                   rm -rf ghc-$GHC_VERSION
 
 # Install all the dependencies for cabal
 
-run $DOWNLOADS                     wget https://www.haskell.org/cabal/release/cabal-install-1.22.6.0/cabal-install-1.22.6.0.tar.gz
-run $BUILD                         tar xf $DOWNLOADS/cabal-install-1.22.6.0.tar.gz
-run $BUILD/cabal-install-1.22.6.0  ./bootstrap.sh
+run $DOWNLOADS                     wget https://www.haskell.org/cabal/release/cabal-install-1.24.0.0/cabal-install-1.24.0.0.tar.gz
+run $BUILD                         tar xf $DOWNLOADS/cabal-install-1.24.0.0.tar.gz
+run $BUILD/cabal-install-1.24.0.0  ./bootstrap.sh
 run .                              cabal update
-run $BUILD                         rm -rf cabal-install-1.22.6.0
+run $BUILD                         rm -rf cabal-install-1.24.0.0
 
 # Fetch the prerequisites for GHCJS.
 
-run .  cabal_install happy-1.19.5 alex-3.1.6
+run .  cabal_install happy alex
 
 # Install GHCJS itself (https://github.com/ghcjs/ghcjs) and cabal install.
 
-run $BUILD  git clone --branch master --single-branch https://github.com/ghcjs/ghcjs
+run $BUILD  git clone --branch ghc-8.0 --single-branch https://github.com/ghcjs/ghcjs
 run $BUILD  cabal_install ./ghcjs
 run $BUILD  rm -rf ghcjs
 
@@ -166,12 +166,12 @@ run $BUILD                       rm -rf node-$NODEJS_VERSION
 
 # Bootstrap ghcjs
 
-run . ghcjs-boot --dev --no-prof --no-haddock
+run . ghcjs-boot --dev --ghcjs-boot-dev-branch ghc-8.0 --shims-dev-branch ghc-8.0 --no-prof --no-haddock
 
 # Install ghcjs-dom from hackage.
 
-run $BUILD  git clone --branch 0.2 --single-branch https://github.com/ghcjs/ghcjs-dom
-run $BUILD  cabal_install --ghcjs  ./ghcjs-dom
+run $BUILD  git clone --single-branch https://github.com/ghcjs/ghcjs-dom
+run $BUILD  cabal_install --ghcjs ./ghcjs-dom/ghcjs-dom ./ghcjs-dom/ghcjs-dom-jsffi
 run $BUILD  rm -rf ghcjs-dom
 
 run $BUILD  rm -rf downloads

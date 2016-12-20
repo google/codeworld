@@ -36,5 +36,5 @@ function run {
 }
 
 function cabal_install {
-  cabal install --global --prefix=$BUILD --reorder-goals --max-backjumps=-1 $@
+  cabal install --global --prefix=$BUILD $@
 }

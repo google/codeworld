@@ -27,7 +27,6 @@ Executable codeworld-server
     hindent >= 5,
     http-conduit,
     memory,
-    MonadCatchIO-transformers,
     mtl,
     process,
     regex-tdfa,

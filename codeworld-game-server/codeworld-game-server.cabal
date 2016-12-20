@@ -12,7 +12,7 @@ cabal-version:       >=1.10
 executable codeworld-game-server
   main-is:             Main.hs
   other-modules:       CodeWorld.GameServer
-  build-depends:       base >=4.8 && <4.9,
+  build-depends:       base >=4.8 && <4.10,
                        aeson,
                        text,
                        websockets == 0.9.*,
@@ -31,7 +31,7 @@ executable codeworld-game-server
 
 executable codeworld-game-stresstest
   main-is:             Stresstest.hs
-  build-depends:       base >=4.8 && <4.9,
+  build-depends:       base >=4.8 && <4.10,
                        bytestring,
                        text,
                        websockets == 0.9.*,

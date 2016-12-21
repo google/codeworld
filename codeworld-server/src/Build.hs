@@ -61,7 +61,7 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
         return success
 
 userCompileMicros :: Int
-userCompileMicros = 10 * 1000000
+userCompileMicros = 15 * 1000000
 
 checkDangerousSource :: BuildMode -> ProgramId -> IO Bool
 checkDangerousSource mode programId = do

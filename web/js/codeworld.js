@@ -378,7 +378,7 @@ function compile() {
             var msg = '';
             if (request.status == 200) {
                 msg = request.responseText;
-            } else if (request.status == 404) {
+            } else if (request.status >= 400) {
                 msg = "Sorry!  Your program couldn't be run right now.  Please try again.";
             }
 

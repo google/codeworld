@@ -240,7 +240,6 @@ runMessageHandler :: Snap ()
 runMessageHandler = do
     mode <- getBuildMode
     programId <- getHashParam False mode
-    liftIO $ compileIfNeeded mode programId
     modifyResponse $ setContentType "text/plain"
     serveFile (buildRootDir mode </> resultFile programId)
 

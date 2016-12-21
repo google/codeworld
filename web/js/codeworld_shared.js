@@ -153,6 +153,7 @@ function registerStandardHints(successFunc)
         "Bool",
         "IO",
         "fail",
+        "fromCWText",
         "fromDouble",
         "fromInt",
         "fromInteger",
@@ -163,6 +164,7 @@ function registerStandardHints(successFunc)
         "negate",
         "pictureOf",
         "thickLine",
+        "toCWText",
         "toDouble",
         "toInt",
 
@@ -259,21 +261,22 @@ function addToMessage(msg) {
             .replace(/\bBool\b/g, 'Truth')
             .replace(/IO \(\)/g, 'Program')
             .replace(/IO [a-z][a-zA-Z0-9_]*/g, 'Program')
-            .replace(/[ ]*Perhaps you intended to use TemplateHaskell\n/, '')
+            .replace(/[ ]*Perhaps you intended to use TemplateHaskell\n/g, '')
             .replace(/imported from [^)\n]*/g, 'defined in the standard library')
             .replace(/\(and originally defined in [^)]*\)/g, '')
             .replace(/the first argument/g, 'the parameter(s)')
-            .replace(/[ ]*The function [a-zA-Z0-9_]* is applied to [a-z0-9]* arguments,\n/, '')
-            .replace(/[ ]*but its type .* has only .*\n/, '')
-            .replace(/A data constructor of that name is in scope; did you mean DataKinds\?/,
+            .replace(/[ ]*The function [a-zA-Z0-9_]* is applied to [a-z0-9]* arguments,\n/g, '')
+            .replace(/[ ]*but its type .* has only .*\n/g, '')
+            .replace(/A data constructor of that name is in scope; did you mean DataKinds\?/g,
                 'That name refers to a value, not a type.')
             .replace(/type constructor or class/g, 'type constructor')
-            .replace(/Illegal tuple section: use TupleSections/,
+            .replace(/Illegal tuple section: use TupleSections/g,
                 'This tuple is missing a value, or has an extra comma.')
-            .replace(/in string\/character literal/, 'in text literal')
-            .replace(/lexical error at character '\\822[01]'/,
+            .replace(/in string\/character literal/g, 'in text literal')
+            .replace(/lexical error at character '\\822[01]'/g,
                      'Smart quotes are not allowed.')
-            .replace(/Use -v to see a list of the files searched for\./, '');
+            .replace(/Use -v to see a list of the files searched for\./g, '')
+            .replace(/\n\s+\n/g, '\n');
     }
 
     msg = msg

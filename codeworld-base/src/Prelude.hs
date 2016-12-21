@@ -42,7 +42,7 @@ import Internal.Exports
 
 import Internal.Num
 import Internal.Prelude
-import Internal.Text
+import Internal.Text hiding (fromCWText, toCWText)
 
 import Internal.Color
 import Internal.Picture

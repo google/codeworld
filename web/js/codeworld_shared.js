@@ -51,16 +51,16 @@ function sendHttp(method, url, body, callback) {
 
 function registerStandardHints(successFunc)
 {
-  function createHint(line, wordStart, wordEnd) {
+    function createHint(line, wordStart, wordEnd, cname) {
         var word = line.slice(wordStart, wordEnd);
+        if (!cname) cname = 'hint-word';
 
         function renderer(elem, data, cur) {
             if (wordStart > 0) {
                 elem.appendChild(document.createTextNode(line.slice(0, wordStart)));
             }
-
             var wordElem = document.createElement("span");
-            wordElem.className = 'hint-word';
+            wordElem.className = cname;
             wordElem.appendChild(document.createTextNode(word));
             elem.appendChild(wordElem);
             if (wordEnd < line.length) {
@@ -77,23 +77,23 @@ function registerStandardHints(successFunc)
     // Add hint highlighting
     var hints = [
         createHint("main :: Program", 0, 4),
-        createHint("--  single line comment", 0, 2),
-        createHint("{-  start a multi-line comment", 0, 2),
-        createHint("-}  end a multi-line comment", 0, 2),
-        createHint("::  write a type annotation", 0, 2),
-        createHint("->  declare a function type or case branch", 0, 2),
-        createHint("<-  list comprehension index", 0, 2),
-        createHint("..  list range", 0, 2),
-        createHint("case  decide between many options", 0, 4),
-        createHint("of  finish a case statement", 0, 2),
-        createHint("if  decide between two choices", 0, 2),
-        createHint("then  1st choice of an if statement", 0, 4),
-        createHint("else  2nd choice of an if statement", 0, 4),
-        createHint("data  define a new data type", 0, 4),
-        createHint("let  define local variables", 0, 3),
-        createHint("in  finish a let statement", 0, 2),
-        createHint("where  define local variables", 0, 5),
-        createHint("type  define a type synonym", 0, 4),
+        createHint("--  single line comment", 0, 2, 'hint-keyword'),
+        createHint("{-  start a multi-line comment", 0, 2, 'hint-keyword'),
+        createHint("-}  end a multi-line comment", 0, 2, 'hint-keyword'),
+        createHint("::  write a type annotation", 0, 2, 'hint-keyword'),
+        createHint("->  declare a function type or case branch", 0, 2, 'hint-keyword'),
+        createHint("<-  list comprehension index", 0, 2, 'hint-keyword'),
+        createHint("..  list range", 0, 2, 'hint-keyword'),
+        createHint("case  decide between many options", 0, 4, 'hint-keyword'),
+        createHint("of  finish a case statement", 0, 2, 'hint-keyword'),
+        createHint("if  decide between two choices", 0, 2, 'hint-keyword'),
+        createHint("then  1st choice of an if statement", 0, 4, 'hint-keyword'),
+        createHint("else  2nd choice of an if statement", 0, 4, 'hint-keyword'),
+        createHint("data  define a new data type", 0, 4, 'hint-keyword'),
+        createHint("let  define local variables", 0, 3, 'hint-keyword'),
+        createHint("in  finish a let statement", 0, 2, 'hint-keyword'),
+        createHint("where  define local variables", 0, 5, 'hint-keyword'),
+        createHint("type  define a type synonym", 0, 4, 'hint-keyword'),
         createHint("(:) :: a -> [a] -> [a]", 1, 2)
     ];
 
@@ -191,13 +191,19 @@ function registerStandardHints(successFunc)
             return;
         } else if (line.startsWith("-- ")) {
             return;
+        } else if (line.startsWith("infix ")) {
+            return;
+        } else if (line.startsWith("infixl ")) {
+            return;
+        } else if (line.startsWith("infixr ")) {
+            return;
         }
 
         // Filter out strictness annotations.
         line = line.replace(/(\s)!([A-Za-z\(\[])/g, '$1$2');
 
         var wordStart = 0;
-        if (line.startsWith("type ") || line.startsWith("data")) {
+        if (line.startsWith("type ") || line.startsWith("data ")) {
             wordStart += 5;
 
             // Hide kind annotations.

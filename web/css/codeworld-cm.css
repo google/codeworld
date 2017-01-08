@@ -63,6 +63,11 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket { outline: solid rgba(255,0,0,
   color: #30a;
 }
 
+.CodeMirror-hint .hint-keyword {
+  font-weight: bold;
+  color: #828;
+}
+
 /* Styles needed for the dialog add-on, used for search. */
 
 .CodeMirror-dialog {

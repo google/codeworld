@@ -160,9 +160,7 @@ styledText = Text
 
 -- | A picture drawn entirely in this color.
 colored :: Color -> Picture -> Picture
-colored c (Pictures [])  = Pictures []
-colored c (Color d a)    = colored c a
-colored c a              = Color c a
+colored = Color
 
 -- | A picture drawn entirely in this colour.
 coloured :: Color -> Picture -> Picture
@@ -170,17 +168,11 @@ coloured = colored
 
 -- | A picture drawn translated in these directions.
 translated :: Double -> Double -> Picture -> Picture
-translated x y (Pictures [])       = Pictures []
-translated 0 0 a                   = a
-translated x y (Translate x1 y1 a) = translated (x + x1) (y + y1) a
-translated x y a                   = Translate x y a
+translated = Translate
 
 -- | A picture scaled by these factors.
 scaled :: Double -> Double -> Picture -> Picture
-scaled x y (Pictures [])   = Pictures []
-scaled 1 1 a               = a
-scaled x y (Scale x1 y1 a) = scaled (x * x1) (y * y1) a
-scaled x y a               = Scale x y a
+scaled = Scale
 
 -- | A picture scaled by these factors.
 dilated :: Double -> Double -> Picture -> Picture
@@ -190,19 +182,14 @@ dilated = scaled
 --
 -- Angles are in radians.
 rotated :: Double -> Picture -> Picture
-rotated x (Pictures [])  = Pictures []
-rotated 0 a              = a
-rotated x (Rotate y a)   = rotated (x + y) a
-rotated x a              = Rotate x a
+rotated = Rotate
 
 -- A picture made by drawing these pictures, ordered from top to bottom.
 pictures :: [Picture] -> Picture
-pictures [a] = a
-pictures as  = Pictures as
+pictures = Pictures
 
 instance Monoid Picture where
   mempty                   = blank
-  mappend (Pictures []) b  = b
   mappend a (Pictures bs)  = Pictures (a:bs)
   mappend a b              = Pictures [a, b]
   mconcat                  = pictures

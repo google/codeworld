@@ -202,6 +202,9 @@ function registerStandardHints(successFunc)
         // Filter out strictness annotations.
         line = line.replace(/(\s)!([A-Za-z\(\[])/g, '$1$2');
 
+        // Filter out CallStack constraints.
+        line = line.replace(/:: HasCallStack =>/g, '::');
+
         var wordStart = 0;
         if (line.startsWith("type ") || line.startsWith("data ")) {
             wordStart += 5;
@@ -256,11 +259,14 @@ function addToMessage(msg) {
             .replace(/\u2019/g, '')
             .replace(/ \[-W[a-z-]*\]/g, '')
             .replace(/IO action main/g, 'variable main')
-            .replace(/module Main/g, 'the program')
+            .replace(/module Main/g, 'your program')
+            .replace(/main\:Main/g, 'your program')
             .replace(/\[GHC\.Types\.Char\] -> /g, '')
             .replace(/base(-[0-9.]*)?\:(.|\n)*?->( |\n)*/g, '')
             .replace(/integer-gmp(-[0-9\.]*)?:(.|\n)*?->( |\n)*/g, '')
             .replace(/GHC\.[A-Za-z.]*(\s|\n)*->( |\n)*/g, '')
+            .replace(/at src\/[A-Za-z0-9/.:]* /g, '')
+            .replace(/codeworld-base[-.:_A-Za-z0-9]*/g, 'the standard library')
             .replace(/Main\./g, '')
             .replace(/main :: t/g, 'main :: Program')
             .replace(/Prelude\./g, '')
@@ -282,6 +288,7 @@ function addToMessage(msg) {
             .replace(/lexical error at character '\\822[01]'/g,
                      'Smart quotes are not allowed.')
             .replace(/Use -v to see a list of the files searched for\./g, '')
+            .replace(/CallStack \(from HasCallStack\)\:/g, 'When evaluating:')
             .replace(/\n\s+\n/g, '\n');
     }
 

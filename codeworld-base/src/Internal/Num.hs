@@ -82,6 +82,8 @@ import Numeric (showFFloatAlt)
 import qualified Internal.Truth
 import           Internal.Truth (Truth, otherwise, (&&))
 
+import GHC.Stack (HasCallStack, withFrozenCallStack)
+
 {-|The type for numbers.
 
   Numbers can be positive or negative, whole or fractional.  For example, 5,
@@ -93,9 +95,9 @@ newtype Number = Number P.Double
 {-# RULES "equality/num" forall (x :: Number). (Internal.Truth.==) x = (P.==) x #-}
 {-# RULES "equality/point" forall (x :: (Number, Number)). (Internal.Truth.==) x = (P.==) x #-}
 
-fromDouble :: P.Double -> Number
-fromDouble x | P.isNaN x      = P.error "result is undefined"
-             | P.isInfinite x = P.error "result is too large"
+fromDouble :: HasCallStack => P.Double -> Number
+fromDouble x | P.isNaN x      = P.error "Number is undefined."
+             | P.isInfinite x = P.error "Number is too large."
              | otherwise      = Number x
 
 toDouble :: Number -> P.Double
@@ -110,9 +112,9 @@ fromRational = fromDouble . P.fromRational
 fromInt :: P.Int -> Number
 fromInt = fromDouble . P.fromIntegral
 
-toInt :: Number -> P.Int
+toInt :: HasCallStack => Number -> P.Int
 toInt n | isInteger n = P.truncate (toDouble n)
-        | otherwise   = P.error "a whole number is required"
+        | otherwise   = P.error "Whole number is required."
 
 instance P.Show Number where
     show (Number x) = stripZeros (showFFloatAlt (P.Just 4) x "")
@@ -404,25 +406,16 @@ odd n | isInteger n = P.odd (toInt n)
   This is the largest number that divides each of the two parameters.
   Both parameters must be integers.
 -}
-
-gcd :: (Number, Number) -> Number
-gcd (a, b)
-    | isInteger a && isInteger b = fromInteger (P.gcd ia ib)
-    | otherwise                  = P.error "gcd requires whole numbers"
-    where ia = P.truncate (toDouble a)
-          ib = P.truncate (toDouble b)
+gcd :: HasCallStack => (Number, Number) -> Number
+gcd (a, b) = withFrozenCallStack (fromInt (P.gcd (toInt a) (toInt b)))
 
 {-| Gives the least common multiple of two numbers.
 
   This is the smallest number that is divisible by both of the two
   parameters.  Both parameters must be integers.
 -}
-lcm :: (Number, Number) -> Number
-lcm (a, b)
-    | isInteger a && isInteger b = fromInteger (P.lcm ia ib)
-    | otherwise                  = P.error "lcm requires whole numbers"
-    where ia = P.truncate (toDouble a)
-          ib = P.truncate (toDouble b)
+lcm :: HasCallStack => (Number, Number) -> Number
+lcm (a, b) = withFrozenCallStack (fromInt (P.lcm (toInt a) (toInt b)))
 
 {-| Gives the sum of a list of numbers. -}
 sum :: [Number] -> Number

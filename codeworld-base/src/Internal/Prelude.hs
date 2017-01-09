@@ -103,6 +103,8 @@ import Internal.Truth
 import System.Random hiding (split)
 import System.Random.Shuffle (shuffle')
 
+import GHC.Stack (HasCallStack, withFrozenCallStack)
+
 -- | Converts a function to an operator.
 --
 -- Example use:
@@ -137,13 +139,13 @@ secondOfPair :: (a, b) -> b
 secondOfPair (a, b) = b
 
 -- | Fails with an error message.
-error :: Text -> a
-error = P.error . toString
+error :: HasCallStack => Text -> a
+error msg = withFrozenCallStack (P.error (toString msg))
 
 -- | Fails with an error message.  This is required (though apparently unused)
 -- by the desugaring for pattern binds in list comprehensions.
-fail :: P.String -> a
-fail = P.error
+fail :: HasCallStack => P.String -> a
+fail msg = withFrozenCallStack (P.error msg)
 
 -- | Determines whether a list is empty or not.
 empty :: [a] -> Truth
@@ -158,15 +160,24 @@ contains (xs, x) = P.any (== x) xs
 length :: [a] -> Number
 length = fromInt . P.length
 
--- | Gives the member of a list at a given index.
--- Indices start at 0.
-at :: ([a], Number) -> a
-at (xs, n) = xs P.!! toInt n
+internalAt :: HasCallStack => [a] -> Number -> a
+internalAt xs n
+  | n < 0     = tooSmall
+  | otherwise = P.foldr index tooLarge xs n
+  where index x r 0 = x
+        index x r k = r (k-1)
+        tooSmall = P.error "Negative list index is not allowed."
+        tooLarge = P.error "List index is too large."
 
 -- | Gives the member of a list at a given index.
 -- Indices start at 0.
-(#) :: [a] -> Number -> a
-(#) = toOperator(at)
+at :: HasCallStack => ([a], Number) -> a
+at (xs, n) = withFrozenCallStack (internalAt xs n)
+
+-- | Gives the member of a list at a given index.
+-- Indices start at 0.
+(#) :: HasCallStack => [a] -> Number -> a
+lst # n = withFrozenCallStack (internalAt lst n)
 infixl 9 #
 
 -- | Determines if any proposition in a list is true.
@@ -197,18 +208,18 @@ repeating :: [a] -> [a]
 repeating = P.cycle
 
 -- | Gives the first members of a list, up to the given number.
-first :: ([a], Number) -> [a]
-first (xs, n) = P.take (toInt n) xs
+first :: HasCallStack => ([a], Number) -> [a]
+first (xs, n) = withFrozenCallStack (P.take (toInt n) xs)
 
 -- | Gives the last members of a list, up to the given number.
-last :: ([a], Number) -> [a]
-last (xs, n) = P.drop (P.length xs P.- toInt n) xs
+last :: HasCallStack => ([a], Number) -> [a]
+last (xs, n) = withFrozenCallStack (P.drop (P.length xs P.- toInt n) xs)
 
 -- | Gives all members of a list after the given number.
 --
 -- In general, `xs = first(xs, n) ++ rest(xs, n)`.
-rest :: ([a], Number) -> [a]
-rest (xs, n) = P.drop (toInt n) xs
+rest :: HasCallStack => ([a], Number) -> [a]
+rest (xs, n) = withFrozenCallStack (P.drop (toInt n) xs)
 
 -- | Gives the longest prefix of a list for which a condition is true.
 --
@@ -254,8 +265,8 @@ transposed = L.transpose
 -- list should be non-empty.
 --
 -- For example, `combined(fromOperator(+), [1, 3, 5])` is equal to `9`.
-combined :: ((a, a) -> a, [a]) -> a
-combined (f, [])   = P.error "combined was applied to an empty list."
+combined :: HasCallStack => ((a, a) -> a, [a]) -> a
+combined (f, [])   = withFrozenCallStack (P.error "Empty list is not allowed.")
 combined (f, [x])  = x
 combined (f, x:xs) = f(x, combined(f, xs))
 
@@ -289,9 +300,10 @@ hasValue (P.Just _) = P.True
 
 -- | Extracts the value from a Maybe, and crashes the program if there
 -- is no such value.
-definitely :: P.Maybe a -> a
+definitely :: HasCallStack => P.Maybe a -> a
 definitely (P.Just a) = a
-definitely P.Nothing = P.error "Used definitely on a value of Nothing."
+definitely P.Nothing = withFrozenCallStack (
+    P.error "Expected a value; found Nothing.")
 
 fromRandomSeed :: Number -> [Number]
 fromRandomSeed = randomsFrom . numToStdGen

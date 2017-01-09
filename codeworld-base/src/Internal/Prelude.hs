@@ -47,7 +47,7 @@ module Internal.Prelude (
 
     -- Failures
     error, -- Text version
-    P.undefined,
+    undefined,
 
     -- List functions
     (P.++),
@@ -141,6 +141,11 @@ secondOfPair (a, b) = b
 -- | Fails with an error message.
 error :: HasCallStack => Text -> a
 error msg = withFrozenCallStack (P.error (toString msg))
+
+-- | Represents an undefined value.  This lets you compile programs with unfinished
+-- values.  If the value is needed, the program will crash.
+undefined :: HasCallStack => a
+undefined = withFrozenCallStack (P.error "Value is not defined.")
 
 -- | Fails with an error message.  This is required (though apparently unused)
 -- by the desugaring for pattern binds in list comprehensions.

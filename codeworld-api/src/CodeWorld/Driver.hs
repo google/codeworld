@@ -717,6 +717,12 @@ decodeServerMessage m = case WS.getData m of
         return $ readMaybe (Data.JSString.unpack str)
     _ -> return Nothing
 
+encodeEvent :: (Timestamp, Event) -> String
+encodeEvent = show
+
+decodeEvent :: String -> Maybe (Timestamp, Event)
+decodeEvent = readMaybe
+
 deriving instance Generic Fingerprint
 
 data GameToken
@@ -794,17 +800,16 @@ gameHandle t initial step handler sm gs =
         (GameAborted,         _)                   -> return Disconnected
         (JoinedAs pid gid,    Connecting)          -> return (Waiting gid pid 0 0)
         (PlayersWaiting n m,  Waiting gid pid _ _) -> return (Waiting gid pid n m)
-        (Started _,           Waiting gid pid _ _) ->
+        (Started,             Waiting gid pid _ _) ->
             return (Running gid t pid (initFuture (initial (mkStdGen (hash gid))) 0))
-        (OutEvent t' pid eo,  Running gid tstart mypid s) ->
-            case readMaybe eo of
-                Just event -> let ours   = pid == mypid
-                                  func   = handler pid event
-                                  result = serverEvent step gameRate ours t' func s
-                              in  return (Running gid tstart mypid result)
+        (OutEvent pid eo,  Running gid tstart mypid s) ->
+            case decodeEvent eo of
+                Just (t',event) ->
+                    let ours   = pid == mypid
+                        func   = handler pid event
+                        result = serverEvent step gameRate ours t' func s
+                    in  return (Running gid tstart mypid result)
                 Nothing    -> return (Running gid tstart mypid s)
-        (Ping t',             Running gid tstart pid s) ->
-            return (Running gid tstart pid (serverEvent step gameRate False t' id s))
         _ -> return gs
 
 localHandle :: (Double -> s -> s)
@@ -824,7 +829,7 @@ localHandle step handler t event other = return other
 
 inviteDialogHandle :: ServerMessage -> IO ()
 inviteDialogHandle (JoinedAs _ gid) = js_show_invite (textToJSString gid)
-inviteDialogHandle (Started _)      = js_hide_invite
+inviteDialogHandle (Started)        = js_hide_invite
 inviteDialogHandle GameAborted      = js_hide_invite
 inviteDialogHandle _                = return ()
 
@@ -890,7 +895,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
             t       <- getTime
             changed <- modifyMVarIfNeeded currentGameState $
                 localHandle stepHandler eventHandler t event
-            when changed $ sendClientEvent ws (InEvent (gameTime gs t) (show event))
+            when changed $ sendClientEvent ws (InEvent (encodeEvent (gameTime gs t, event)))
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 

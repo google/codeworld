@@ -23,14 +23,18 @@ multi-player setup.
 module CodeWorld.Prediction
     ( Timestamp, AnimationRate, StepFun
     , Future
-    , initFuture, timePasses, currentState
-    , localEvent, serverEvent
+    , initFuture, currentTimePasses, currentState
+    , addEvent
     )
     where
 
-import Data.Sequence (empty, Seq, (|>), drop)
 import Data.Foldable (toList)
+import qualified Data.IntMap as IM
+import qualified Data.Map as M
+import Data.Bifunctor (second)
+import Data.List (foldl')
 
+type PlayerId = Int
 type Timestamp = Double     -- in seconds, relative to some arbitrary starting point
 type AnimationRate = Double -- in seconds, e.g. 0.1
 
@@ -38,92 +42,90 @@ type AnimationRate = Double -- in seconds, e.g. 0.1
 -- function that does that.
 type Event s = s -> s
 
+-- A state and an event only make sense together with a time.
+type TState s = (Timestamp, s)
+type TEvent s = (Timestamp, Event s)
+
 type StepFun s = Double -> s -> s
-type PendingEvents s = Seq (Timestamp, Event s)
+type PendingEvents s = M.Map Timestamp (Event s)
+
 
 data Future s = Future
-        { committed :: s
-        , commitTime :: Timestamp
-        , pending :: PendingEvents s
-        , current :: s
-        , currentTime :: Timestamp
+        { committed  :: TState s
+        , lastEvents :: IM.IntMap Timestamp
+        , pending    :: PendingEvents s
+        , current    :: TState s
         }
 
-initFuture :: s -> Timestamp -> Future s
-initFuture s now = Future
-    { committed   = s
-    , commitTime  = now
-    , pending     = empty
-    , current     = s
-    , currentTime = now
+initFuture :: s -> Int -> Future s
+initFuture s numPlayers = Future
+    { committed   = (0, s)
+    , lastEvents  = IM.fromList [ (n,0) | n <-[0..numPlayers-1]]
+    , pending     = M.empty
+    , current     = (0, s)
     }
 
--- Time handling. Move forward in fixed animation rate steps, and get
--- currentTime close to the given time stamp (but possibly stop short)
-timePasses :: StepFun s -> AnimationRate -> Timestamp -> Future s -> Future s
-timePasses step rate now f@(Future {..})
-    | now - currentTime > rate
-    = timePasses step rate now (rateStep step rate f)
+-- Time handling.
+--
+-- Move state forward in fixed animation rate steps, and get
+-- the timestamp as close to the given target as possible (but possibly stop short)
+timePassesBigStep :: StepFun s -> AnimationRate -> Timestamp -> TState s -> TState s
+timePassesBigStep step rate target (now, s)
+    | now + rate < target
+    = timePasses step rate target (stepBy step rate (now, s))
     | otherwise
-    = f
+    = (now, s)
 
+-- Move state forward in fixed animation rate steps, and get
+-- the timestamp as close to the given target as possible, and then do a final small step
+timePasses :: StepFun s -> AnimationRate -> Timestamp -> TState s -> TState s
+timePasses step rate target
+    = stepTo step target . timePassesBigStep step rate target
 
-rateStep :: StepFun s -> AnimationRate -> Future s -> Future s
-rateStep step rate (Future {..})
-    = Future { current = step rate current
-             , currentTime = currentTime + rate
-             , ..  }
+stepBy :: StepFun s -> Double -> TState s -> TState s
+stepBy step diff (now,s) = (now + diff, step diff s)
 
-commitedRateStep :: StepFun s -> AnimationRate -> Future s -> Future s
-commitedRateStep step rate (Future {..})
-    = Future { committed = step rate (committed)
-             , commitTime = commitTime + rate
-             , ..  }
+stepTo :: StepFun s -> Timestamp -> TState s -> TState s
+stepTo step target (now, s)
+    = (target, step (target - now) s)
 
--- this should be called after a call to timePasses, to avoid large steps
-currentState :: StepFun s -> Timestamp -> Future s -> s
-currentState step now (Future {..})
-    = step (now - currentTime) current
+handleNextEvent :: StepFun s -> AnimationRate -> TEvent s -> TState s -> TState s
+handleNextEvent step rate (target, event)
+    = second event . timePasses step rate target
 
-localEvent :: StepFun s -> AnimationRate -> Timestamp -> Event s -> Future s -> Future s
-localEvent step rate now event f@(Future {..})
-    | now - currentTime > rate
-    = localEvent step rate now event (rateStep step rate f)
-    | otherwise
-    = Future { pending = pending |> (now, event)
-             , current = event . step (now - currentTime) $ current
-             , currentTime = now
-             , ..  }
+handleNextEvents :: StepFun s -> AnimationRate -> [TEvent s] -> TState s -> TState s
+handleNextEvents step rate tevs ts
+  = foldl' (flip (handleNextEvent step rate)) ts tevs
 
-serverEvent :: StepFun s -> AnimationRate -> Bool -> Timestamp -> Event s -> Future s -> Future s
-serverEvent step rate ours now event f@(Future {..})
-    | now - commitTime > rate
-    = serverEvent step rate ours now event (commitedRateStep step rate f)
-    | otherwise
-    = let committed' = event . step (now - commitTime) $ committed
-          commitTime' = now
-          pending' = if ours then Data.Sequence.drop 1 pending else pending
-          current' = replayPending step rate commitTime' (toList pending') currentTime committed'
-      in Future { committed = committed'
-                , commitTime = commitTime'
-                , pending = pending'
-                , current = current'
-                , currentTime = currentTime }
+currentState :: StepFun s -> AnimationRate -> Timestamp -> Future s -> s
+currentState step rate target f = snd $ timePasses step rate target (current f)
 
-replayPending :: StepFun s -> AnimationRate ->
-    Timestamp -> [(Timestamp, Event s)] -> Timestamp ->
-    s -> s
-replayPending step rate from events@((ts,e):events') to
-    | ts - from > rate
-    = replayPending step rate (from + rate) events to . step rate
-    | ts - from > 0
-    = replayPending step rate ts events' to . e . step (ts - from)
-    | otherwise -- event timestamp might be off, and might be in the past
-    = replayPending step rate ts events' to . e
-replayPending step rate from [] to
-    | to - from > rate
-    = replayPending step rate (from + rate) [] to . step rate
-    | to - from > 0
-    = step (to - from)
-    | otherwise
-    = id
+currentTimePasses :: StepFun s -> AnimationRate -> Timestamp -> Future s -> Future s
+currentTimePasses step rate target f
+ = f { current = timePassesBigStep step rate target $ current f }
+
+addEvent :: StepFun s -> AnimationRate ->
+    PlayerId -> Timestamp -> Event s ->
+    Future s -> Future s
+addEvent step rate player now event f
+  = advancePending step rate $
+    advanceCommitted step rate $
+    f { lastEvents = IM.insert player now $ lastEvents f
+      , pending    = M.insert now event $ pending f
+      }
+
+advanceCommitted :: StepFun s -> AnimationRate -> Future s -> Future s
+advanceCommitted step rate f
+    | null eventsToCommit = f -- do not bother
+    | otherwise = f { committed = committed', pending = pending' }
+  where
+    commitTime' = minimum $ IM.elems $ lastEvents f
+    canCommit (t,_e) = t <= commitTime'
+    (eventsToCommit, uncommitedEvents) = span canCommit $ M.toList (pending f)
+
+    pending' = M.fromAscList uncommitedEvents
+    committed' = handleNextEvents step rate eventsToCommit $ committed f
+
+advancePending :: StepFun s -> AnimationRate -> Future s -> Future s
+advancePending step rate f
+    = f { current = handleNextEvents step rate (M.toList (pending f)) $ committed f }

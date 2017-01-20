@@ -763,7 +763,7 @@ gameRate = 1/16
 
 gameStep :: (Double -> s -> s) -> Double -> GameState s -> GameState s
 gameStep step t (Running gid tstart pid s) =
-    Running gid tstart pid (timePasses step gameRate (t - tstart) s)
+    Running gid tstart pid (currentTimePasses step gameRate (t - tstart) s)
 gameStep _ _ s = s
 
 gameDraw :: (Double -> s -> s)
@@ -771,7 +771,7 @@ gameDraw :: (Double -> s -> s)
          -> GameState s
          -> Timestamp
          -> Picture
-gameDraw step draw (Running _ tstart pid s) t = draw pid (currentState step (t - tstart) s)
+gameDraw step draw (Running _ tstart pid s) t = draw pid (currentState step gameRate (t - tstart) s)
 gameDraw step draw Connecting t             = text "Connecting" & connectScreen t
 gameDraw step draw (Waiting _ _ n m) t      = text s & connectScreen t
     where s = "Waiting for " <> pack (show (m - n)) <> " more players."
@@ -807,7 +807,8 @@ gameHandle t initial step handler sm gs =
                 Just (t',event) ->
                     let ours   = pid == mypid
                         func   = handler pid event
-                        result = serverEvent step gameRate ours t' func s
+                        result | ours      = s -- we already took care of our events
+                               | otherwise = addEvent step gameRate mypid t' func s
                     in  return (Running gid tstart mypid result)
                 Nothing    -> return (Running gid tstart mypid s)
         _ -> return gs
@@ -819,11 +820,11 @@ localHandle :: (Double -> s -> s)
             -> GameState s
             -> IO (GameState s)
 localHandle step handler t event gs@(Running gid tstart pid s) = do
-    let state0 = currentState step t s
+    let state0 = currentState step gameRate (t - tstart) s
     name0 <- makeStableName $! state0
     let state1 = handler pid event state0
     name1 <- makeStableName $! state1
-    let gs' = Running gid tstart pid (localEvent step gameRate (t - tstart) (handler pid event) s)
+    let gs' = Running gid tstart pid (addEvent step gameRate pid (t - tstart) (handler pid event) s)
     if name0 == name1 then return gs else return gs'
 localHandle step handler t event other = return other
 

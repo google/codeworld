@@ -37,7 +37,6 @@ import Control.Exception (finally)
 import Control.Monad
 import Control.Concurrent
 import Data.Time.Clock
-import Data.Time.Calendar
 import GHC.Generics
 import GHC.Stats
 import Data.Aeson
@@ -69,7 +68,7 @@ data Game = Game
         , gameEventSize  :: !Int
         }
 
-data GameState = Waiting | Running { startTime :: UTCTime }
+data GameState = Waiting | Running
 
 type Games = HM.HashMap Key (MVar Game)
 
@@ -115,9 +114,8 @@ joinGame conn gameMV = modifyMVar gameMV $ \game -> case game of
 
 tryStartGame :: MVar Game -> IO Bool
 tryStartGame gameMV = modifyMVar gameMV $ \game -> case game of
-        Game { gameState = Waiting } | length (players game) == numPlayers game -> do
-                time <- getCurrentTime
-                return (game { gameState = Running time} , True)
+        Game { gameState = Waiting } | length (players game) == numPlayers game ->
+             return (game { gameState = Running } , True)
         _ -> return (game, False)
 
 getPlayers :: MVar Game -> IO [WS.Connection]
@@ -163,7 +161,6 @@ broadcast msg gameMV = do
         game { gameEventCount = gameEventCount game + 1
              , gameEventSize = gameEventSize game + BS.length msg_txt
              }
-
 
 -- Statistics
 
@@ -274,33 +271,12 @@ announcePlayers :: MVar Game -> IO ()
 announcePlayers gameMV = do
     (n, m)  <- getStats gameMV
     started <- tryStartGame gameMV
-    when started $ void $ forkIO (pingThread gameMV)
-    broadcast (if started then Started 0 else PlayersWaiting n m) gameMV
-
-pingInterval :: Int
-pingInterval = 1000000  -- one second
-
-pingThread :: MVar Game -> IO ()
-pingThread gameMV = do
-    threadDelay pingInterval
-    game <- readMVar gameMV
-    currentTime <- getCurrentTime
-    case game of
-        Game { gameState = Running{..}, ..} -> do
-            let time = realToFrac (diffUTCTime currentTime startTime)
-            broadcast (Ping time) gameMV
-            unless (null players) $ pingThread gameMV
-        _ -> return ()
+    broadcast (if started then Started else PlayersWaiting n m) gameMV
 
 talk ::  PlayerId -> WS.Connection -> MVar Game ->  IO ()
 talk pid conn gameMV = forever $ getClientMessage conn >>= \case
-    InEvent _ e -> do
+    InEvent e -> do
         g           <- readMVar gameMV
-        currentTime <- getCurrentTime
         case g of
-            Game { gameState = Running{..}, ..} -> do
-                let time = realToFrac (diffUTCTime currentTime startTime)
-                broadcast (OutEvent time pid e) gameMV
-            _           -> return ()
-    InPing time -> do
-        broadcast (OutPing time pid) gameMV
+          Game { gameState = Running, ..} -> broadcast (OutEvent pid e) gameMV
+          _                               -> return ()

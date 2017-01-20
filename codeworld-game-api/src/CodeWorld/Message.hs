@@ -43,24 +43,12 @@ import Data.Text (Text)
 
   Server tells the clients that the game has started
 
-      <- Started <timestamp>
+      <- Started
 
-  Server sends periodic pings to let clients know an updated committed timestamp.
+  Client sends an input event.  The server sends input event to all players, with a player id.
 
-      <- Ping <timestamp>
-
-  Client sends an input event.  The server sends input event to all players, with a player id
-  and timestamp (seconds).  Currently, the client timestamp is ignored, and the server attaches
-  a new server timestamp to all messages.
-
-      -> InEvent <timestamp> <e>
-      <- OutEvent <timestamp> <i> <e>
-
-  Clients can send periodic pings to update with their time.  The server repeats them.
-  Currently, other clients ignore these pings.
-
-      -> InPing <timestamp>
-      -> OutPing <timestamp> <i>
+      -> InEvent <e>
+      <- OutEvent <i> <e>
 
   Server indicates to the client that they have been disconnected. Closes the connection.
 
@@ -76,16 +64,13 @@ type Signature = ByteString
 data ClientMessage
     = NewGame Int Signature
     | JoinGame GameId Signature
-    | InEvent Double String
-    | InPing Double
+    | InEvent String
     deriving (Show, Read)
 
 data ServerMessage
     = JoinedAs PlayerId GameId
     | PlayersWaiting Int Int
-    | Started Double
-    | Ping Double
-    | OutEvent Double PlayerId String
-    | OutPing Double PlayerId
+    | Started
+    | OutEvent PlayerId String
     | GameAborted
     deriving (Show, Read, Eq) -- Eq is only for testing

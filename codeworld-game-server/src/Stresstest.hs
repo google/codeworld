@@ -37,8 +37,6 @@ connect Config {..} = WS.runClient hostname port path
 sendClientMessage :: ClientMessage -> WS.Connection ->  IO ()
 sendClientMessage msg conn = WS.sendTextData conn (T.pack (show msg))
 
-
-
 getServerMessage :: WS.Connection -> IO ServerMessage
 getServerMessage conn = do
     msg <- WS.receiveData conn
@@ -70,7 +68,7 @@ playGame config conn = do
 sendMessages :: Config -> WS.Connection -> IO ()
 sendMessages config conn = do
     forM_ [1..events config] $ \n -> do
-        sendClientMessage (InEvent 5 (show n)) conn
+        sendClientMessage (InEvent (show n)) conn
 
 getAllMessages :: Config -> WS.Connection -> IO [ServerMessage]
 getAllMessages config conn =

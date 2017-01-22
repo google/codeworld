@@ -717,10 +717,10 @@ decodeServerMessage m = case WS.getData m of
         return $ readMaybe (Data.JSString.unpack str)
     _ -> return Nothing
 
-encodeEvent :: (Timestamp, Event) -> String
+encodeEvent :: (Timestamp, Maybe Event) -> String
 encodeEvent = show
 
-decodeEvent :: String -> Maybe (Timestamp, Event)
+decodeEvent :: String -> Maybe (Timestamp, Maybe Event)
 decodeEvent = readMaybe
 
 deriving instance Generic Fingerprint
@@ -806,9 +806,9 @@ gameHandle t initial step handler sm gs =
             case decodeEvent eo of
                 Just (t',event) ->
                     let ours   = pid == mypid
-                        func   = handler pid event
+                        func   = handler pid <$> event -- might be a ping (“Nothing”)
                         result | ours      = s -- we already took care of our events
-                               | otherwise = addEvent step gameRate mypid t' (Just func) s
+                               | otherwise = addEvent step gameRate mypid t' func s
                     in  return (Running gid tstart mypid result)
                 Nothing    -> return (Running gid tstart mypid s)
         _ -> return gs
@@ -898,7 +898,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
             t       <- getTime
             changed <- modifyMVarIfNeeded currentGameState $
                 localHandle stepHandler eventHandler t event
-            when changed $ sendClientEvent ws (InEvent (encodeEvent (gameTime gs t, event)))
+            when changed $ sendClientEvent ws (InEvent (encodeEvent (gameTime gs t, Just event)))
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 

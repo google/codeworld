@@ -808,7 +808,7 @@ gameHandle t initial step handler sm gs =
                     let ours   = pid == mypid
                         func   = handler pid event
                         result | ours      = s -- we already took care of our events
-                               | otherwise = addEvent step gameRate mypid t' func s
+                               | otherwise = addEvent step gameRate mypid t' (Just func) s
                     in  return (Running gid tstart mypid result)
                 Nothing    -> return (Running gid tstart mypid s)
         _ -> return gs
@@ -824,8 +824,10 @@ localHandle step handler t event gs@(Running gid tstart pid s) = do
     name0 <- makeStableName $! state0
     let state1 = handler pid event state0
     name1 <- makeStableName $! state1
-    let gs' = Running gid tstart pid (addEvent step gameRate pid (t - tstart) (handler pid event) s)
-    if name0 == name1 then return gs else return gs'
+    if name0 == name1
+        then return gs
+        else return $ let s' = addEvent step gameRate pid (t - tstart) (Just (handler pid event)) s
+                      in Running gid tstart pid s'
 localHandle step handler t event other = return other
 
 inviteDialogHandle :: ServerMessage -> IO ()

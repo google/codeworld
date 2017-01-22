@@ -21,10 +21,8 @@ multi-player setup.
 
 {-# LANGUAGE RecordWildCards, ViewPatterns #-}
 module CodeWorld.Prediction
-    ( Timestamp, AnimationRate, StepFun
-    , Future
-    , initFuture, currentTimePasses, currentState
-    , addEvent
+    ( Timestamp, AnimationRate, StepFun, Future
+    , initFuture, currentTimePasses, currentState, addEvent
     )
     where
 
@@ -47,13 +45,16 @@ type TState s = (Timestamp, s)
 type TEvent s = (Timestamp, Event s)
 
 type StepFun s = Double -> s -> s
-type PendingEvents s = M.Map Timestamp (Event s)
+type EventQueue s = M.Map Timestamp (Event s)
 
 
+-- | Invariants about the time stamps in this data type:
+-- * committed < pending <= current < future
 data Future s = Future
         { committed  :: TState s
         , lastEvents :: IM.IntMap Timestamp
-        , pending    :: PendingEvents s
+        , pending    :: EventQueue s
+        , future     :: EventQueue s
         , current    :: TState s
         }
 
@@ -62,6 +63,7 @@ initFuture s numPlayers = Future
     { committed   = (0, s)
     , lastEvents  = IM.fromList [ (n,0) | n <-[0..numPlayers-1]]
     , pending     = M.empty
+    , future      = M.empty
     , current     = (0, s)
     }
 
@@ -95,24 +97,38 @@ handleNextEvent step rate (target, event)
 
 handleNextEvents :: StepFun s -> AnimationRate -> [TEvent s] -> TState s -> TState s
 handleNextEvents step rate tevs ts
-  = foldl' (flip (handleNextEvent step rate)) ts tevs
+    = foldl' (flip (handleNextEvent step rate)) ts tevs
 
+-- | This should be called shortly following 'currentTimePasses'
 currentState :: StepFun s -> AnimationRate -> Timestamp -> Future s -> s
 currentState step rate target f = snd $ timePasses step rate target (current f)
 
+-- | This should be called regularly, to keep the current state up to date,
+-- and to incorporate future events in it.
 currentTimePasses :: StepFun s -> AnimationRate -> Timestamp -> Future s -> Future s
-currentTimePasses step rate target f
- = f { current = timePassesBigStep step rate target $ current f }
+currentTimePasses step rate target
+    = advanceCurrentTime step rate target . advanceFuture step rate target
 
+-- | Take a new event into account, local or remote.
+-- Invariant:
+--  * The timestamp of the event is larger than the timestamp
+--    of any event added for this player (which is the timestamp for the player
+--    in `lastEvents`)
 addEvent :: StepFun s -> AnimationRate ->
-    PlayerId -> Timestamp -> Event s ->
+    PlayerId -> Timestamp -> Maybe (Event s) ->
     Future s -> Future s
-addEvent step rate player now event f
-  = advancePending step rate $
-    advanceCommitted step rate $
-    f { lastEvents = IM.insert player now $ lastEvents f
-      , pending    = M.insert now event $ pending f
-      }
+  -- A future event.
+addEvent _ _ player now mbEvent f | now > fst (current f)
+    = f { lastEvents = IM.insert player now            $ lastEvents f
+        , future     = maybe id (M.insert now) mbEvent $ future f
+        }
+  -- A past event. Need to update committed and pending state.
+addEvent step rate player now mbEvent f
+    = advancePending step rate $
+      advanceCommitted step rate $
+      f { lastEvents = IM.insert player now            $ lastEvents f
+        , pending    = maybe id (M.insert now) mbEvent $ pending f
+        }
 
 advanceCommitted :: StepFun s -> AnimationRate -> Future s -> Future s
 advanceCommitted step rate f
@@ -127,5 +143,22 @@ advanceCommitted step rate f
     committed' = handleNextEvents step rate eventsToCommit $ committed f
 
 advancePending :: StepFun s -> AnimationRate -> Future s -> Future s
-advancePending step rate f
-    = f { current = handleNextEvents step rate (M.toList (pending f)) $ committed f }
+advancePending step rate f = f { current = current' }
+  where
+    toPerform = M.toList (pending f)
+    current' = handleNextEvents step rate toPerform $ committed f
+
+advanceFuture :: StepFun s -> AnimationRate -> Timestamp -> Future s -> Future s
+advanceFuture step rate target f
+    | null toPerform = f
+    | otherwise = f { current = current', pending = pending', future = future' }
+  where
+    hasHappened (t,_e) = t <= target
+    (toPerform, futureEvents) = span hasHappened $ M.toList (future f)
+    pending' = pending f `M.union` M.fromAscList toPerform
+    future'  = M.fromAscList futureEvents
+    current' = handleNextEvents step rate toPerform $ current f
+
+advanceCurrentTime :: StepFun s -> AnimationRate -> Timestamp -> Future s -> Future s
+advanceCurrentTime step rate target f
+    = f { current = timePassesBigStep step rate target $ current f }

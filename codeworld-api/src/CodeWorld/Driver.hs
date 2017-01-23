@@ -65,6 +65,7 @@ import           Numeric
 import           System.Environment
 import           System.Mem.StableName
 import           Text.Read
+import           System.Random
 
 #ifdef ghcjs_HOST_OS
 
@@ -93,7 +94,6 @@ import qualified JavaScript.Web.Location as Loc
 import qualified JavaScript.Web.MessageEvent as WS
 import qualified JavaScript.Web.WebSocket as WS
 import           System.IO.Unsafe
-import           System.Random
 
 #else
 
@@ -648,6 +648,24 @@ modifyMVarIfNeeded var f = modifyMVar var $ \s0 -> do
     newName <- makeStableName $! s1
     return (s1, newName /= oldName)
 
+data GameToken
+    = FullToken {
+          tokenDeployHash :: Text,
+          tokenNumPlayers :: Int,
+          tokenInitial :: StaticKey,
+          tokenStep :: StaticKey,
+          tokenEvent :: StaticKey
+      }
+    | PartialToken {
+          tokenDeployHash :: Text
+      }
+    | NoToken
+    deriving Generic
+
+deriving instance Generic Fingerprint
+instance Serialize Fingerprint
+instance Serialize GameToken
+
 --------------------------------------------------------------------------------
 -- GHCJS event handling and core interaction code
 
@@ -707,8 +725,8 @@ onEvents canvas handler = do
         liftIO $ handler (MouseMovement pos)
     return ()
 
-sendClientEvent :: WS.WebSocket -> ClientMessage -> IO ()
-sendClientEvent conn msg = do
+sendClientMessage :: WS.WebSocket -> ClientMessage -> IO ()
+sendClientMessage conn msg = do
     WS.send (Data.JSString.pack (show msg)) conn
 
 decodeServerMessage :: WS.MessageEvent -> IO (Maybe ServerMessage)
@@ -723,24 +741,6 @@ encodeEvent = show
 decodeEvent :: String -> Maybe (Timestamp, Maybe Event)
 decodeEvent = readMaybe
 
-deriving instance Generic Fingerprint
-
-data GameToken
-    = FullToken {
-          tokenDeployHash :: Text,
-          tokenNumPlayers :: Int,
-          tokenInitial :: StaticKey,
-          tokenStep :: StaticKey,
-          tokenEvent :: StaticKey
-      }
-    | PartialToken {
-          tokenDeployHash :: Text
-      }
-    | NoToken
-    deriving Generic
-
-instance Serialize Fingerprint
-instance Serialize GameToken
 
 data GameState s
     = Connecting
@@ -898,14 +898,14 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
             t       <- getTime
             changed <- modifyMVarIfNeeded currentGameState $
                 localHandle stepHandler eventHandler t event
-            when changed $ sendClientEvent ws (InEvent (encodeEvent (gameTime gs t, Just event)))
+            when changed $ sendClientMessage ws (InEvent (encodeEvent (gameTime gs t, Just event)))
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
     -- Initiate game
     getGid >>= \case
-        Nothing ->  sendClientEvent ws (NewGame numPlayers (encode token))
-        Just gid -> sendClientEvent ws (JoinGame gid (encode token))
+        Nothing ->  sendClientMessage ws (NewGame numPlayers (encode token))
+        Just gid -> sendClientMessage ws (JoinGame gid (encode token))
 
     let go t0 lastFrame = do
             gs  <- readMVar currentGameState
@@ -1089,6 +1089,17 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
     initialStateName <- makeStableName $! initial
     go t0 nullFrame initialStateName True
 
+getDeployHash :: IO Text
+getDeployHash = error "game API unimplemented in stand-alone interface mode"
+
+runGame :: GameToken
+        -> Int
+        -> (StdGen -> s)
+        -> (Double -> s -> s)
+        -> (Int -> Event -> s -> s)
+        -> (Int -> s -> Picture)
+        -> IO ()
+runGame = error "game API unimplemented in stand-alone interface mode"
 #endif
 
 

@@ -259,9 +259,18 @@ welcomeNew conn state n sig = do
     announcePlayers gameMV
     talk pid conn gameMV `finally` cleanup gameMV pid state
 
+findGame :: ServerState -> GameId -> Signature -> IO (MVar Game)
+findGame state gid "BOT" = do
+    games <- readMVar (games state)
+    (gameMV:_) <- return $ [ gameMV | ((_, gid), gameMV) <- HM.toList games ]
+    return gameMV
+findGame state gid sig = do
+    Just gameMV <- HM.lookup (sig, gid) <$> readMVar (games state)
+    return gameMV
+
 welcomeJoin :: WS.Connection -> ServerState -> GameId -> Signature -> IO ()
 welcomeJoin conn state gid sig = do
-    Just gameMV <- HM.lookup (sig, gid) <$> readMVar (games state)
+    gameMV <- findGame state gid sig
     Just pid <- joinGame conn gameMV
     sendServerMessage (JoinedAs pid gid) conn
     announcePlayers gameMV

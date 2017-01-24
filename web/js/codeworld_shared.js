@@ -15,16 +15,6 @@
  */
 
 /*
- * Polyfill for String.startsWith, which isn't available in all browsers.
- */
-if (!String.prototype.startsWith) {
-    String.prototype.startsWith = function(searchString, position){
-      position = position || 0;
-      return this.substr(position, searchString.length) === searchString;
-  };
-}
-
-/*
  * Utility function for sending an HTTP request to fetch a resource.
  *
  * Args:

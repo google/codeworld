@@ -74,7 +74,7 @@ initFuture s numPlayers = Future
 timePassesBigStep :: StepFun s -> AnimationRate -> Timestamp -> TState s -> TState s
 timePassesBigStep step rate target (now, s)
     | now + rate < target
-    = timePasses step rate target (stepBy step rate (now, s))
+    = timePassesBigStep step rate target (stepBy step rate (now, s))
     | otherwise
     = (now, s)
 

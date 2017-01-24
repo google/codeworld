@@ -46,3 +46,12 @@ Library
 
   Exposed:             True
   Ghc-options:         -O2
+
+Test-Suite test-prediction
+    Hs-source-dirs:    src
+    type:              exitcode-stdio-1.0
+    main-is:           test-prediction.hs
+    other-modules:     CodeWorld.Prediction
+    build-depends:     base,
+                       containers
+

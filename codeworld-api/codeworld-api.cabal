@@ -48,10 +48,9 @@ Library
   Ghc-options:         -O2
 
 Test-Suite test-prediction
-    Hs-source-dirs:    src
-    type:              exitcode-stdio-1.0
-    main-is:           test-prediction.hs
-    other-modules:     CodeWorld.Prediction
-    build-depends:     base,
+    Hs-source-dirs:    tests, src
+    Main-is:           prediction.hs
+    Type:              exitcode-stdio-1.0
+    Other-modules:     CodeWorld.Prediction
+    Build-depends:     base,
                        containers
-

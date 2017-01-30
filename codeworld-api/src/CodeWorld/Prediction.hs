@@ -52,10 +52,13 @@ type EventQueue s = M.Map Timestamp (Event s)
 
 -- | Invariants about the time stamps in this data type:
 -- * committed < pending <= current < future
+-- * The time is advanced with strictly ascending timestamps
+-- * For each player, events come in with strictly ascending timestamps
 -- * For each player, all events in pending or future are before the
 --   corresponding lastEvents entry.
 data Future s = Future
         { committed  :: TState s
+        , lastQuery  :: Timestamp
         , lastEvents :: IM.IntMap Timestamp
         , pending    :: EventQueue s
         , future     :: EventQueue s
@@ -65,6 +68,7 @@ data Future s = Future
 initFuture :: s -> Int -> Future s
 initFuture s numPlayers = Future
     { committed   = (0, s)
+    , lastQuery   = 0
     , lastEvents  = IM.fromList [ (n,0) | n <-[0..numPlayers-1]]
     , pending     = M.empty
     , future      = M.empty
@@ -123,7 +127,7 @@ addEvent :: StepFun s -> AnimationRate ->
     PlayerId -> Timestamp -> Maybe (Event s) ->
     Future s -> Future s
   -- A future event.
-addEvent step rate player now mbEvent f | now > fst (current f)
+addEvent step rate player now mbEvent f | now > lastQuery f
     = recordActivity step rate player now $
       f { future     = maybe id (M.insert now) mbEvent $ future f }
   -- A past event, goes to pending events. Pending events need to be replayed.
@@ -160,7 +164,10 @@ replayPending :: StepFun s -> AnimationRate -> Future s -> Future s
 replayPending step rate f = f { current = current' }
   where
     toPerform = M.toList (pending f)
-    current' = handleNextEvents step rate toPerform $ committed f
+    current' =
+        timePassesBigStep step rate (lastQuery f) $
+        handleNextEvents step rate toPerform $
+        committed f
 
 -- | Takes into account all future event that happen before the given 'Timestamp'
 --   Does not have to call 'replayPending', as we only append to the 'pending' queue.
@@ -183,7 +190,8 @@ advanceFuture step rate target f
 -- | Advances the current time (by big steps)
 advanceCurrentTime :: StepFun s -> AnimationRate -> Timestamp -> Future s -> Future s
 advanceCurrentTime step rate target f
-    = f { current = timePassesBigStep step rate target $ current f }
+    = f { current = timePassesBigStep step rate target $ current f
+        , lastQuery = target }
 
 -- | Only for testing.
 currentStateDirect :: Future s -> (Timestamp, s)

@@ -22,16 +22,22 @@ import Data.Bifunctor
 import Data.List
 import Text.Printf
 import System.Exit
+import Test.QuickCheck
 
 type Event = Int
 type TimeStamp = Double
 type TEvent = (TimeStamp, Maybe Event)
 
-type EventsTodo = IM.IntMap [TEvent]
-type EventsDone = IM.IntMap [TEvent]
+type EventsTodo = ([TimeStamp], IM.IntMap [TEvent])
+type EventsDone = ([TimeStamp], IM.IntMap [TEvent])
 
 type LogEntry = Either Double Event
 type Log = [LogEntry]
+
+type Check = (EventsDone, Either Double (Int, TEvent))
+type CheckReport = (Check, Future Log, Future Log, Future Log)
+
+-- Fake state and handle functions
 
 step :: Double -> Log -> Log
 step dt = (Left dt :)
@@ -39,76 +45,121 @@ step dt = (Left dt :)
 handle :: Event -> Log -> Log
 handle dt = (Right dt :)
 
+-- Global constant
 rate :: Double
-rate = 1/4 -- nicer decimal display
+rate = 1/4 -- decimal display
 
-genEvents :: Int -> [TEvent]
-genEvents player = map (first (fromIntegral player/8 +)) $
-    [ (1, Nothing)
-    , (2, Just player)
-    , (3, Nothing)
-    , (4, Just player)
-    , (5, Just player)
-    ]
 
-schedule :: EventsTodo
-schedule = IM.fromList [(0,genEvents 0), (1, genEvents 1)]
+-- Generation of random schedules
 
-allDone :: [EventsDone]
-allDone = traverse inits schedule -- wow!
+newtype GenEventsTodo = GenEventsTodo EventsTodo
 
-type Check = (EventsDone, (Int, TEvent))
-allChecks :: [Check]
-allChecks = allDone >>= prevs
+instance Arbitrary GenEventsTodo where
+    arbitrary = do
+        -- get ascending positive timestamps
+        tss  <- map getPositive . getOrdered <$> arbitrary
+        p1ts <- map getPositive . getOrdered <$> arbitrary
+        p2ts <- map getPositive . getOrdered <$> arbitrary
+        -- some are just pings, some are real events
+        p1 <- traverse (addEvent 0) p1ts
+        p2 <- traverse (addEvent 1) p2ts
+        return $ GenEventsTodo (tss, IM.fromList [(0,p1), (1,p2)])
+      where addEvent i ts = do
+               coin <- arbitrary
+               if coin then return $ (ts, Nothing)
+                       else return $ (ts, Just i)
 
-prevs :: EventsDone -> [Check]
-prevs m = [ (IM.adjust init i m, (i, last done))
-          | i <- IM.keys m
-          , let done = m IM.! i
-          , not (null done)
-          ]
+    -- shrinking removes poitns of the list, and
+    -- further reduces singleton lists mildly
+    -- (the original shrink would get us too close to epsilon)
+    shrink (GenEventsTodo (tss,m)) = map GenEventsTodo $ unShrinkOne $
+        ((,) <$> listShrinkOne' mildlySmaller tss
+             <*> traverse (listShrinkOne' (firstA mildlySmaller)) m)
+      where mildlySmaller x | x > 1     = [x - 1]
+                            | otherwise = []
 
-memo :: M.Map EventsDone (Future Log)
-memo = M.fromList [ (eventsDone, recreate eventsDone) | eventsDone <- allDone ]
+-- The actual check:
+-- Exhaustively search the order in which these events could happen
+-- Memoize every initial segment
+-- Ensure that all possible ways reach the same conclusion.
 
-recreate :: EventsDone -> Future Log
-recreate m = case prevs m of
-    [] -> initFuture [] (IM.size m)
-    (c:_) -> checkActual c
+failedChecks :: EventsTodo -> [CheckReport]
+failedChecks schedule = map mkReport $ filter (not . check) allChecks
+  where
+    allDone :: [EventsDone]
+    allDone = do
+        let (tss,em) = schedule
+        tss' <- inits tss
+        em' <- traverse inits em -- wow!
+        return (tss', em')
 
-check :: Check -> Bool
-check c = checkActual c `eqFuture` checkExpected c
+    allChecks :: [Check]
+    allChecks = allDone >>= prevs
 
-checkActual (prev, (p,(t,e))) =
-        currentTimePasses step rate t' $
-        addEvent step rate p t (handle <$> e) $
-        memo M.! prev
- where t' = max (fst (currentStateDirect (memo M.! prev))) t
+    prevs :: EventsDone -> [Check]
+    prevs (tss,m) =
+        [ ((init tss, m), Left (last tss))
+        | not (null tss)
+        ] ++
+        [ ((tss, IM.adjust init i m), Right (i, last done))
+        | i <- IM.keys m
+        , let done = m IM.! i
+        , not (null done)
+        ]
 
-checkExpected (prev, (p,(t,e))) = memo M.! IM.adjust (++[(t,e)]) p prev
+    memo :: M.Map EventsDone (Future Log)
+    memo = M.fromList [ (eventsDone, recreate eventsDone) | eventsDone <- allDone ]
 
-failedChecks :: [Check]
-failedChecks = filter (not . check) allChecks
+    recreate :: EventsDone -> Future Log
+    recreate m = case prevs m of
+        [] -> initFuture [] (IM.size (snd m))
+        (c:_) -> checkActual c
 
-reportFailedCheck :: Check -> IO ()
-reportFailedCheck c = do
+    check :: Check -> Bool
+    check c = checkActual c `eqFuture` checkExpected c
+
+    checkExpected :: Check -> Future Log
+    checkExpected (prev, Left t)          = memo M.! first (++[t]) prev
+    checkExpected (prev, Right (p,(t,e))) = memo M.! second (IM.adjust (++[(t,e)]) p) prev
+
+    checkActual :: Check -> Future Log
+    checkActual (prev, Left t) =
+            currentTimePasses step rate t $
+            memo M.! prev
+    checkActual (prev, Right (p,(t,e))) =
+            addEvent step rate p t (handle <$> e) $
+            memo M.! prev
+
+    mkReport :: Check -> CheckReport
+    mkReport c = (c, memo M.! fst c, checkExpected c, checkActual c)
+
+-- The quickcheck test, with reporting
+
+testPrediction :: Blind GenEventsTodo -> Property
+testPrediction (Blind (GenEventsTodo schedule)) = do
+   reportFailedCheck (head failed) `whenFail` null failed
+  where failed = failedChecks schedule
+
+reportFailedCheck :: CheckReport -> IO ()
+reportFailedCheck (c, before, expected, actual) = do
     putStrLn "Failed Check"
     putStrLn "History:"
-    reportHistory (fst c)
+    putStr $ showHistory (fst c)
     putStrLn "Event:"
     print (snd c)
     putStrLn "Before:"
-    printInternalState showLog (memo M.! fst c)
+    printInternalState showLog before
     putStrLn "Expected:"
-    printInternalState showLog (checkExpected c)
+    printInternalState showLog expected
     putStrLn "Actual:"
-    printInternalState showLog (checkActual c)
+    printInternalState showLog actual
     putStrLn ""
 
-reportHistory :: EventsDone -> IO ()
-reportHistory m = mapM_ go $ IM.toList m
+showHistory :: EventsDone -> String
+showHistory (tss,m) = unlines $
+    ("Queried at: " ++ intercalate " " (map show tss)) : map go (IM.toList m)
   where
-    go (p, tes) = putStrLn $ show p ++ ": " ++ intercalate " " (map ste tes)
+    go (p, tes) = "Player " ++ show p ++ ": " ++ intercalate " " (map ste tes)
     ste (t, Nothing) = show t
     ste (t, Just e) = show e ++ "@" ++ show t
 
@@ -118,6 +169,51 @@ showLog l = intercalate " " (map sle (reverse l))
     sle (Left x)  = show x
     sle (Right x) = "["++show x++"]"
 
+-- The main entry point.
+-- Set the exit code to please Cabal.
 main = do
-    mapM_ reportFailedCheck failedChecks
-    if null failedChecks then exitSuccess else exitFailure
+    res <- quickCheckWithResult args testPrediction
+    case res of
+        Success {} -> exitSuccess
+        _          -> exitFailure
+  where
+    args = stdArgs { maxSize = 30 } -- more gets too large
+
+-- QuickCheck utilities
+
+firstA :: Applicative f => (t -> f a1) -> (t, a) -> f (a1, a)
+firstA f (a,b) = (,) <$> f a <*> pure b
+
+-- An applicative functor that shrinks exactly one element
+-- Also see http://stackoverflow.com/a/41944525/946226
+data ShrinkOne a = ShrinkOne a [a]
+
+instance Functor ShrinkOne where
+    fmap f (ShrinkOne o s) = ShrinkOne (f o) (map f s)
+
+instance Applicative ShrinkOne where
+    pure x = ShrinkOne x []
+    ShrinkOne f fs <*> ShrinkOne x xs = ShrinkOne (f x) (map ($x) fs ++ map f xs)
+
+shrinkOne :: Arbitrary a => a -> ShrinkOne a
+shrinkOne x = ShrinkOne x (shrink x)
+
+unShrinkOne :: ShrinkOne t -> [t]
+unShrinkOne (ShrinkOne _ xs) = xs
+
+-- Remove one element of the list
+listShrinkOne :: [a] -> ShrinkOne [a]
+listShrinkOne xs = ShrinkOne xs (listShrink xs)
+  where
+    listShrink []     = []
+    listShrink (x:xs) = [ xs ] ++ [ x:xs' | xs' <- listShrink xs ]
+
+-- Remove one element of the list, or reduce a singleton with
+-- the given function.
+listShrinkOne' :: (a -> [a]) -> [a] -> ShrinkOne [a]
+listShrinkOne' _ []  = ShrinkOne [] []
+listShrinkOne' f [x] = ShrinkOne [x] (map (:[]) (f x))
+listShrinkOne' _ xs  = listShrinkOne xs
+
+
+

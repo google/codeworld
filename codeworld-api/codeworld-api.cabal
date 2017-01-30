@@ -53,4 +53,5 @@ Test-Suite test-prediction
     Type:              exitcode-stdio-1.0
     Other-modules:     CodeWorld.Prediction
     Build-depends:     base,
-                       containers
+                       containers,
+                       QuickCheck

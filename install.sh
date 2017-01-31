@@ -80,6 +80,9 @@ then
   # Needed for nodejs
   run . sudo apt-get install -y g++
   run . sudo apt-get install -y openssl
+
+  # Needed for PhantomJS
+  run . sudo apt-get install -y bzip2
 elif type zypper > /dev/null 2> /dev/null
 then
   echo Detected 'zypper': Installing packages from there.
@@ -179,7 +182,7 @@ run $BUILD  rm -rf downloads
 # Install and build CodeMirror editor.
 
 run $BUILD            git clone https://github.com/codemirror/CodeMirror.git
-run $BUILD/CodeMirror git checkout tag/5.23.0
+run $BUILD/CodeMirror git checkout tags/5.23.0
 run $BUILD/CodeMirror npm install
 run $BUILD/CodeMirror npm run build
 run $BUILD/CodeMirror npm install -s uglify-js

@@ -175,3 +175,20 @@ run $BUILD  cabal_install --ghcjs ./ghcjs-dom/ghcjs-dom ./ghcjs-dom/ghcjs-dom-js
 run $BUILD  rm -rf ghcjs-dom
 
 run $BUILD  rm -rf downloads
+
+# Install and build CodeMirror editor.
+
+run $BUILD            git clone https://github.com/codemirror/CodeMirror.git
+run $BUILD/CodeMirror git checkout tag/5.23.0
+run $BUILD/CodeMirror npm install
+run $BUILD/CodeMirror npm run build
+run $BUILD/CodeMirror npm install -s uglify-js
+
+function build_codemirror {
+  bin/compress codemirror haskell active-line dialog matchbrackets \
+    placeholder rulers runmode search searchcursor show-hint \
+    --local $BUILD/CodeMirror/node_modules/uglify-js/bin/uglifyjs \
+    > codemirror-compressed.js
+}
+
+run $BUILD/CodeMirror build_codemirror

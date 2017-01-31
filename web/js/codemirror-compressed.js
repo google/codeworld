@@ -1,1 +1,1 @@
-../../third_party/codemirror/codemirror-compressed.js
+../../build/CodeMirror/codemirror-compressed.js

@@ -36,3 +36,10 @@ run .  cabal_install ./codeworld-server ./codeworld-game-api ./codeworld-api ./c
 
 # Build the JavaScript client code for FunBlocks, the block-based UI.
 run .  cabal_install --ghcjs ./funblocks-client
+
+run $BUILD            git clone https://github.com/codemirror/CodeMirror.git
+run $BUILD/CodeMirror npm install
+run $BUILD/CodeMirror npm run build
+
+run $BUILD/CodeMirror npm install -s uglify-js
+run $BUILD/CodeMirror bin/compress codemirror haskell activeline --local $BUILD/CodeMirror/node_modules/uglify-js/bin/uglifyjs

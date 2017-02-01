@@ -184,13 +184,12 @@ run $BUILD  rm -rf downloads
 run $BUILD            git clone https://github.com/codemirror/CodeMirror.git
 run $BUILD/CodeMirror git checkout tags/5.23.0
 run $BUILD/CodeMirror npm install
-run $BUILD/CodeMirror npm run build
 run $BUILD/CodeMirror npm install -s uglify-js
 
 function build_codemirror {
   bin/compress codemirror haskell active-line dialog matchbrackets \
     placeholder rulers runmode search searchcursor show-hint \
-    --local $BUILD/CodeMirror/node_modules/uglify-js/bin/uglifyjs \
+    --local node_modules/uglify-js/bin/uglifyjs \
     > codemirror-compressed.js
 }
 

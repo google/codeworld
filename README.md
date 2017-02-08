@@ -3,10 +3,10 @@ CodeWorld
 
 CodeWorld is an educational environment using a variant of Haskell.  It
 provides a simple mathematical model for geometric figures, animations,
-and interactive games.  The web-based programming environment supports
-this educational mission with a zero-setup editor and compiler, easy
-sharing and cloud storage of projects, and the ability to run programs
-right in the web browser using GHCJS.
+and interactive and multi-player games.  The web-based programming
+environment supports this educational mission with a zero-setup editor
+and compiler, easy sharing and cloud storage of projects, and the ability
+to run programs right in the web browser using GHCJS.
 
 Other options include:
 
@@ -19,8 +19,17 @@ Other options include:
 Status
 ======
 
+CodeWorld is stable and has been used in schools for years!  We're
+constantly improving the environment, though.  Breaking changes, when
+necessary, are scheduled to occur between typical (U.S.) K-12 school
+semesters, to minimize disruption of existing classes.
+
 Google is distributing the code for CodeWorld, but CodeWorld is not an
-official Google project, and Google provides no support for it.
+official Google project, and Google provides no support for it.  Instead,
+questions about the project or code should be asked to the
+[codeworld-discuss mailing list](https://groups.google.com/forum/#!members/codeworld-discuss).
+A student-friendly question and answer forum is also available at
+http://help.code.world.
 
 Getting Started
 ===============

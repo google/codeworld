@@ -20,7 +20,6 @@ import qualified Data.IntMap as IM
 import qualified Data.Map as M
 import Data.Bifunctor
 import Data.List
-import Text.Printf
 import System.Exit
 import Test.QuickCheck
 
@@ -70,10 +69,10 @@ instance Arbitrary GenEventsTodo where
         p1ts  <- sublistOf tss
         p2ts  <- sublistOf tss
         -- some are just pings, some are real events
-        p1 <- traverse (addEvent 0) p1ts
-        p2 <- traverse (addEvent 1) p2ts
+        p1 <- traverse (makePingOrEvent 0) p1ts
+        p2 <- traverse (makePingOrEvent 1) p2ts
         return $ GenEventsTodo (qts, IM.fromList [(0,p1), (1,p2)])
-      where addEvent i ts = do
+      where makePingOrEvent i ts = do
                coin <- arbitrary
                if coin then return $ (ts, Nothing)
                        else return $ (ts, Just i)
@@ -180,6 +179,7 @@ showLog l = intercalate " " (map sle (reverse l))
 
 -- The main entry point.
 -- Set the exit code to please Cabal.
+main :: IO ()
 main = do
     res <- quickCheckWithResult args testPrediction
     case res of
@@ -215,7 +215,7 @@ listShrinkOne :: [a] -> ShrinkOne [a]
 listShrinkOne xs = ShrinkOne xs (listShrink xs)
   where
     listShrink []     = []
-    listShrink (x:xs) = [ xs ] ++ [ x:xs' | xs' <- listShrink xs ]
+    listShrink (y:ys) = [ ys ] ++ [ y:ys' | ys' <- listShrink ys ]
 
 -- Remove one element of the list, or reduce a singleton with
 -- the given function.

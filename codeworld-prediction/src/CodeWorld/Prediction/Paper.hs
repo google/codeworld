@@ -44,9 +44,6 @@ instance Eq world => Eq (Log world) where
        sort (latest l1) == sort (latest l2)
 deriving instance Show world => Show (Log world)
 
-addPing :: Game world => (Timestamp, Player) -> Log world -> Log world
-addPing (t,p) log = recordActivity t p log
-
 -- Code from figure below
 
 type TState world = (Timestamp, world)
@@ -57,14 +54,17 @@ data Log world = Log  {  committed  ::  TState world,
 initLog :: Game world => [Player] -> Log world
 initLog ps = Log (0, start) [] ([ (p,0) | p <- ps ])
 
+addPing :: Game world => (Timestamp, Player) -> Log world -> Log world
+addPing (t,p) log = recordActivity t p log
+
 addEvent :: Game world => (Timestamp, Player, Event) -> Log world -> Log world
 addEvent (t,p,e) log = recordActivity t p (log { events = events log ++ [(t,p,e)] })
 
 recordActivity :: Game world => Timestamp -> Player -> Log world -> Log world
-recordActivity t p log  | t <  previous  = error "Messages out of order"
+recordActivity t p log  | t <  t_old  = error "Messages out of order"
                         | otherwise      = advanceCommitted (log { latest = latest' })
-  where  latest' = (p,t) : filter (\(p',_) -> p' /= p) (latest log)
-         Just previous = lookup p (latest log)
+  where  latest' = (p,t) : delete (p,t_old) (latest log)
+         Just t_old = lookup p (latest log)
 
 advanceCommitted :: Game world => Log world -> Log world
 advanceCommitted log = log  {  events     = to_keep,

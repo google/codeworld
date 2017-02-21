@@ -1,0 +1,32 @@
+{
+  "items": [{
+    "name": "Fading dots",
+    "url": "https://code.world/run.html?mode=haskell&dhash=DrUle40kFQrYlLH9mcrBHaw",
+    "code": "https://code.world/haskell#PqJAuOQqy7wEXu2pnVtNTJQ"
+  }, {
+    "name": "Snake",
+    "url": "http://code.world:8080/run.html?mode=haskell&dhash=DSpPnDhuiPbYBJGvH1Xh9wA",
+    "code": "http://code.world:8080/haskell#PfEg7YgQyWL94u8YJ7XCaMw"
+  }, {
+    "name": "Tanks",
+    "url": "https://code.world/run.html?mode=haskell&dhash=DPpedORSsbfJHo_4nQCP0sA",
+    "code": "https://code.world/haskell#PdfQ8zSCWt3HrgUK1QI4jlw"
+  }, {
+    "name": "Double pendulum, with Prelude sinus",
+    "url": "https://code.world/run.html?mode=haskell&dhash=DMyQ2HwM1aV2iBiKNqbWZXg",
+    "code": "https://code.world/haskell#PLeqQsMKUtZrrKMqYegdj-g"
+  }, {
+    "name": "Double pendulum, with Prelude sinus, single player",
+    "url": "https://code.world/run.html?mode=haskell&dhash=D8gNEUelesQH9fUsLdfRO9Q",
+    "code": "https://code.world/haskell#PESuHCyNJuINITuvz1zZN8A"
+  }, {
+    "name": "Double pendulum, with sinus approximation",
+    "url": "https://code.world/run.html?mode=haskell&dhash=DJf__2Ssi7msLOFlsBFVKHQ",
+    "code": "https://code.world/haskell#PxM0BDVufRTA_8GImOMYHsw"
+  }, {
+    "name": "Double pendulum, with sinus approximation, single player",
+    "url": "https://code.world/run.html?mode=haskell&dhash=DU43w_PpLAiuCPbWrILhSPA",
+    "code": "https://code.world/haskell#Pxl2U57OGJ5B6jlVWRObaVw"
+  }
+  ]
+}

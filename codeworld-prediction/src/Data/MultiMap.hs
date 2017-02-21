@@ -13,11 +13,12 @@
 -- Also only supports the operations required by CodeWorld for now.
 
 {-# LANGUAGE TupleSections #-}
-module Data.MultiMap where
+module Data.MultiMap (MultiMap, empty, null, insertL, insertR, toList, spanAntitone, union, keys) where
 
+import Prelude hiding (null)
 import qualified Data.Sequence as S
 import qualified Data.Map as M
-import Data.Foldable
+import qualified Data.Foldable (toList)
 import Data.Bifunctor
 
 newtype MultiMap k v = MM (M.Map k (S.Seq v)) deriving (Show, Eq)

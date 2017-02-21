@@ -24,12 +24,12 @@ Library
   Other-modules:       CodeWorld.Color,
                        CodeWorld.Picture,
                        CodeWorld.Event,
-                       CodeWorld.Prediction,
                        CodeWorld.Driver
   Build-depends:       base < 5,
                        cereal,
                        cereal-text,
                        codeworld-game-api,
+                       codeworld-prediction,
                        containers,
                        hashable,
                        mtl,
@@ -46,12 +46,3 @@ Library
 
   Exposed:             True
   Ghc-options:         -O2
-
-Test-Suite test-prediction
-    Hs-source-dirs:    tests, src
-    Main-is:           prediction.hs
-    Type:              exitcode-stdio-1.0
-    Other-modules:     CodeWorld.Prediction
-    Build-depends:     base,
-                       containers,
-                       QuickCheck

@@ -27,7 +27,6 @@ module CodeWorld.Prediction
     )
     where
 
-import Data.Foldable (toList)
 import qualified Data.IntMap as IM
 import qualified Data.MultiMap as M
 import Data.Bifunctor (second)

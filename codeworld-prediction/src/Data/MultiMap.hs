@@ -38,6 +38,7 @@ toList :: MultiMap k v -> [(k,v)]
 toList (MM m) = concatMap (\(k,vs) -> map (k,) (Data.Foldable.toList vs)) (M.toList m)
 
 -- TODO: replace with M.spanAntitone once containers is updated
+mapSpanAntitone :: (k -> Bool) -> M.Map k a -> (M.Map k a, M.Map k a)
 mapSpanAntitone p = bimap M.fromDistinctAscList M.fromDistinctAscList . span (p.fst) . M.toList
 
 spanAntitone :: (k -> Bool) -> MultiMap k v -> (MultiMap k v, MultiMap k v)

@@ -52,18 +52,27 @@ rate = 1/4 -- decimal display
 
 -- Generation of random schedules
 
-newtype GenEventsTodo = GenEventsTodo EventsTodo
+newtype GenEventsTodo = GenEventsTodo EventsTodo deriving Show
+
+genTimeStamps :: Gen [Double]
+genTimeStamps = fmap (drop 1 . scanl (+) 0) $
+    sized $ \n -> do
+        k <- choose (0,n)
+        sequence [ genOne | _ <- [1..k] ]
+  where
+    genOne = frequency [(5, getPositive <$> arbitrary), (1, return 0)]
 
 instance Arbitrary GenEventsTodo where
     arbitrary = do
         -- get ascending positive timestamps
-        tss  <- map getPositive . getOrdered <$> arbitrary
-        p1ts <- map getPositive . getOrdered <$> arbitrary
-        p2ts <- map getPositive . getOrdered <$> arbitrary
+        tss <- genTimeStamps
+        qts <- sublistOf tss
+        p1ts  <- sublistOf tss
+        p2ts  <- sublistOf tss
         -- some are just pings, some are real events
         p1 <- traverse (addEvent 0) p1ts
         p2 <- traverse (addEvent 1) p2ts
-        return $ GenEventsTodo (tss, IM.fromList [(0,p1), (1,p2)])
+        return $ GenEventsTodo (qts, IM.fromList [(0,p1), (1,p2)])
       where addEvent i ts = do
                coin <- arbitrary
                if coin then return $ (ts, Nothing)

@@ -12,6 +12,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     CodeWorld.Prediction
   other-modules:       Data.MultiMap
+                       CodeWorld.Prediction.Paper
   build-depends:       base >=4.8 && <4.10,
                        containers
   default-language:    Haskell2010
@@ -19,6 +20,15 @@ library
 Test-Suite test-prediction
     Hs-source-dirs:    tests, src
     Main-is:           prediction.hs
+    Type:              exitcode-stdio-1.0
+    Other-modules:     CodeWorld.Prediction
+    Build-depends:     base,
+                       containers,
+                       QuickCheck
+
+Test-Suite test-prediction-paper
+    Hs-source-dirs:    tests, src
+    Main-is:           prediction-paper.hs
     Type:              exitcode-stdio-1.0
     Other-modules:     CodeWorld.Prediction
     Build-depends:     base,

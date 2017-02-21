@@ -1,5 +1,5 @@
 {-
-  Copyright 2016 The CodeWorld Authors. All rights reserved.
+  Copyright 2016-2017 The CodeWorld Authors. All rights reserved.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ module CodeWorld.Prediction
 
 import Data.Foldable (toList)
 import qualified Data.IntMap as IM
-import qualified Data.Map as M
+import qualified Data.MultiMap as M
 import Data.Bifunctor (second)
 import Data.List (foldl', intercalate)
 import Text.Printf
@@ -47,7 +47,7 @@ type TState s = (Timestamp, s)
 type TEvent s = (Timestamp, Event s)
 
 type StepFun s = Double -> s -> s
-type EventQueue s = M.Map Timestamp (Event s)
+type EventQueue s = M.MultiMap (Timestamp, PlayerId) (Event s)
 
 
 -- | Invariants about the time stamps in this data type:
@@ -103,9 +103,11 @@ handleNextEvent :: StepFun s -> AnimationRate -> TEvent s -> TState s -> TState 
 handleNextEvent step rate (target, event)
     = second event . timePasses step rate target
 
-handleNextEvents :: StepFun s -> AnimationRate -> [TEvent s] -> TState s -> TState s
-handleNextEvents step rate tevs ts
-    = foldl' (flip (handleNextEvent step rate)) ts tevs
+handleNextEvents :: StepFun s -> AnimationRate -> EventQueue s -> TState s -> TState s
+handleNextEvents step rate eq ts
+    = foldl' (flip (handleNextEvent step rate)) ts $
+      map (\((t,_p),h) -> (t,h)) $
+      M.toList eq
 
 -- | This should be called shortly following 'currentTimePasses'
 currentState :: StepFun s -> AnimationRate -> Timestamp -> Future s -> s
@@ -129,12 +131,12 @@ addEvent :: StepFun s -> AnimationRate ->
   -- A future event.
 addEvent step rate player now mbEvent f | now > lastQuery f
     = recordActivity step rate player now $
-      f { future     = maybe id (M.insert now) mbEvent $ future f }
+      f { future     = maybe id (M.insertR (now, player)) mbEvent $ future f }
   -- A past event, goes to pending events. Pending events need to be replayed.
 addEvent step rate player now mbEvent f
     = replayPending step rate $
       recordActivity step rate player now $
-      f { pending    = maybe id (M.insert now) mbEvent $ pending f }
+      f { pending    = maybe id (M.insertR (now, player)) mbEvent $ pending f }
 
 -- | Updates the 'lastEvents' field, and possibly updates the commmitted state
 recordActivity :: StepFun s -> AnimationRate ->
@@ -147,26 +149,23 @@ recordActivity step rate player now f
 -- | Commits events from the pending queue that are past the commitTime
 advanceCommitted :: StepFun s -> AnimationRate -> Future s -> Future s
 advanceCommitted step rate f
-    | null eventsToCommit = f -- do not bother
-    | otherwise = f { committed = committed', pending = pending' }
+    | M.null eventsToCommit = f -- do not bother
+    | otherwise = f { committed = committed', pending = uncommited' }
   where
     commitTime' = minimum $ IM.elems $ lastEvents f
-    canCommit (t,_e) = t <= commitTime'
-    (eventsToCommit, uncommitedEvents) = span canCommit $ M.toList (pending f)
+    canCommit t = t < commitTime'
+    (eventsToCommit, uncommited') = M.spanAntitone (canCommit . fst) (pending f)
 
-    pending' = M.fromAscList uncommitedEvents
-    committed' =
-        handleNextEvents step rate eventsToCommit $ committed f
+    committed' = handleNextEvents step rate eventsToCommit $ committed f
 
 -- | Throws away the current state, and recreates it from
 --   pending events. To be used when inserting a pending event.
 replayPending :: StepFun s -> AnimationRate -> Future s -> Future s
 replayPending step rate f = f { current = current' }
   where
-    toPerform = M.toList (pending f)
     current' =
         timePassesBigStep step rate (lastQuery f) $
-        handleNextEvents step rate toPerform $
+        handleNextEvents step rate (pending f) $
         committed f
 
 -- | Takes into account all future event that happen before the given 'Timestamp'
@@ -175,16 +174,15 @@ replayPending step rate f = f { current = current' }
 --   go directly to the committed state.
 advanceFuture :: StepFun s -> AnimationRate -> Timestamp -> Future s -> Future s
 advanceFuture step rate target f
-    | null toPerform = f
+    | M.null toPerform = f
     | otherwise =
         advanceCommitted step rate $
         f { current = current', pending = pending', future = future' }
   where
-    hasHappened (t,_e) = t <= target
-    (toPerform, futureEvents) = span hasHappened $ M.toList (future f)
+    hasHappened t = t <= target
+    (toPerform, future') = M.spanAntitone (hasHappened . fst) (future f)
 
-    pending'  = pending f `M.union` M.fromAscList toPerform
-    future'   = M.fromAscList futureEvents
+    pending'  = pending f `M.union` toPerform
     current'  = handleNextEvents step rate toPerform $ current f
 
 -- | Advances the current time (by big steps)

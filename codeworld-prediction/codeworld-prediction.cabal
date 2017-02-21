@@ -1,0 +1,26 @@
+name:                codeworld-prediction
+version:             0.1
+synopsis:            Functional lock-step simulation with client prediction
+license:             Apache-2.0
+license-file:        LICENSE
+author:              Joachim Breitner
+maintainer:          mail@joachim-breitner.de
+build-type:          Simple
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     CodeWorld.Prediction
+  other-modules:       Data.MultiMap
+  build-depends:       base >=4.8 && <4.10,
+                       containers
+  default-language:    Haskell2010
+
+Test-Suite test-prediction
+    Hs-source-dirs:    tests, src
+    Main-is:           prediction.hs
+    Type:              exitcode-stdio-1.0
+    Other-modules:     CodeWorld.Prediction
+    Build-depends:     base,
+                       containers,
+                       QuickCheck

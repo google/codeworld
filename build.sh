@@ -22,7 +22,11 @@ run .  cabal update
 
 # Install the codeworld-base and codeworld-api packages
 
-run .  cabal_install --ghcjs ./codeworld-api ./codeworld-base ./codeworld-game-api
+run .  cabal_install --ghcjs ./codeworld-prediction \
+                             ./codeworld-api \
+                             ./codeworld-base \
+                             ./codeworld-game-api
+
 run codeworld-base  cabal configure --ghcjs
 run codeworld-base  cabal haddock --html
 run codeworld-base  cabal haddock --hoogle
@@ -32,7 +36,11 @@ run codeworld-api   cabal haddock --hoogle
 
 # Build codeworld-server from this project.
 
-run .  cabal_install ./codeworld-server ./codeworld-game-api ./codeworld-api ./codeworld-game-server
+run .  cabal_install ./codeworld-server \
+                     ./codeworld-game-api \
+                     ./codeworld-prediction \
+                     ./codeworld-api \
+                     ./codeworld-game-server
 
 # Build the JavaScript client code for FunBlocks, the block-based UI.
 run .  cabal_install --ghcjs ./funblocks-client

@@ -40,7 +40,7 @@
       .choice {
           flex: 0 0 auto;
           margin: 0;
-          padding: 1vh 1vw;
+          padding: 0vh 0vw;
           cursor: pointer;
           font-size: 11pt;
           background-color: #dddddd;
@@ -52,17 +52,26 @@
       .choice.sel {
           background-color: #cccccc;
       }
+      .choice a {
+          display:block;
+          margin: 0;
+          padding: 1vh 1vw;
+      }
     </style>
     <script>
+    var fileName = location.href.split("/").pop().replace(/\.html$/, '.json');
     $(function() {
-      $.getJSON('gallery.json', function(data) {
-        console.log(data);
+      $.getJSON(fileName, function(data) {
         $.each(data.items, function(i, item) {
           var btn = document.createElement('li');
           var a = document.createElement('a');
           btn.setAttribute('class', 'choice');
           btn.append(a);
           a.innerText = item.name;
+	  if (item.code) {
+		$(btn).append(' ');
+		$(btn).append($('<a>(view and edit code)</a>').attr('href',item.code));
+	  }
           var clickHandler = function(event) {
             $('.choice').removeClass('sel');
             $(btn).addClass('sel');
@@ -70,7 +79,7 @@
             event.preventDefault();
           }
           $(a).click(clickHandler);
-          $(btn).click(clickHandler);
+          // $(btn).click(clickHandler);
           $('#choices').append(btn);
         });
       });

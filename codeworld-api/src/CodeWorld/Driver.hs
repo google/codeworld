@@ -34,8 +34,8 @@ module CodeWorld.Driver (
     animationOf,
     simulationOf,
     interactionOf,
-    gameOf,
-    unsafeGameOf,
+    collaborationOf,
+    unsafeCollaborationOf,
     trace
     ) where
 
@@ -109,7 +109,7 @@ import           Text.Printf
 --------------------------------------------------------------------------------
 -- The common interface, provided by both implementations below.
 
--- | Draws a `Picture`.  This is the simplest CodeWorld entry point.
+-- | Draws a 'Picture'.  This is the simplest CodeWorld entry point.
 drawingOf :: Picture -> IO ()
 
 -- | Shows an animation, with a picture for each time given by the parameter.
@@ -119,30 +119,32 @@ animationOf :: (Double -> Picture) -> IO ()
 -- system described by an initial value and step function.
 simulationOf :: world -> (Double -> world -> world) -> (world -> Picture) -> IO ()
 
--- | Runs an interactive event-driven CodeWorld program.  This is the most
--- advanced CodeWorld entry point.
+-- | Runs an interactive event-driven CodeWorld program.  This is a
+-- generalization of simulations that can respond to events like key presses
+-- and mouse movement.
 interactionOf :: world
               -> (Double -> world -> world)
               -> (Event -> world -> world)
               -> (world -> Picture)
               -> IO ()
 
--- | Runs an interactive event-driven multiplayer game.
-unsafeGameOf :: Int
-             -> (StdGen -> world)
-             -> (Double -> world -> world)
-             -> (Int -> Event -> world -> world)
-             -> (Int -> world -> Picture)
-             -> IO ()
-{-# WARNING unsafeGameOf "gameOf/unsafeGameOf are unstable experimental APIs." #-}
+-- | Runs an interactive multi-user CodeWorld program, involving multiple
+-- participants over the internet.
+collaborationOf :: Int
+                -> StaticPtr (StdGen -> world)
+                -> StaticPtr (Double -> world -> world)
+                -> StaticPtr (Int -> Event -> world -> world)
+                -> StaticPtr (Int -> world -> Picture)
+                -> IO ()
 
-gameOf :: Int
-       -> StaticPtr (StdGen -> world)
-       -> StaticPtr (Double -> world -> world)
-       -> StaticPtr (Int -> Event -> world -> world)
-       -> (Int -> world -> Picture)
-       -> IO ()
-{-# WARNING gameOf "gameOf/unsafeGameOf are unstable experimental APIs." #-}
+-- | A version of 'collaborationOf' that avoids static pointers, and does not
+-- check for consistent parameters.
+unsafeCollaborationOf :: Int
+                      -> (StdGen -> world)
+                      -> (Double -> world -> world)
+                      -> (Int -> Event -> world -> world)
+                      -> (Int -> world -> Picture)
+                      -> IO ()
 
 -- | Prints a debug message to the CodeWorld console when a value is forced.
 -- This is equivalent to the similarly named function in `Debug.Trace`, except
@@ -654,7 +656,8 @@ data GameToken
           tokenNumPlayers :: Int,
           tokenInitial :: StaticKey,
           tokenStep :: StaticKey,
-          tokenEvent :: StaticKey
+          tokenEvent :: StaticKey,
+          tokenDraw :: StaticKey
       }
     | PartialToken {
           tokenDeployHash :: Text
@@ -1106,23 +1109,24 @@ runGame = error "game API unimplemented in stand-alone interface mode"
 --------------------------------------------------------------------------------
 -- Common code for game interface
 
-unsafeGameOf numPlayers initial step event draw = do
+unsafeCollaborationOf numPlayers initial step event draw = do
     dhash <- getDeployHash
     let token = PartialToken dhash
     runGame token numPlayers initial step event draw `catch` reportError
   where token = NoToken
 
-gameOf numPlayers initial step event draw = do
+collaborationOf numPlayers initial step event draw = do
     dhash <- getDeployHash
     let token = FullToken {
                     tokenDeployHash = dhash,
                     tokenNumPlayers = numPlayers,
                     tokenInitial = staticKey initial,
                     tokenStep = staticKey step,
-                    tokenEvent = staticKey event
+                    tokenEvent = staticKey event,
+                    tokenDraw = staticKey draw
                 }
     runGame token numPlayers (deRefStaticPtr initial) (deRefStaticPtr step)
-            (deRefStaticPtr event) draw
+            (deRefStaticPtr event) (deRefStaticPtr draw)
 
 --------------------------------------------------------------------------------
 -- Common code for interaction, animation and simulation interfaces

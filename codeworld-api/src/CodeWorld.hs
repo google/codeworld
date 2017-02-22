@@ -20,8 +20,8 @@ module CodeWorld (
     animationOf,
     simulationOf,
     interactionOf,
-    gameOf,
-    unsafeGameOf,
+    collaborationOf,
+    unsafeCollaborationOf,
 
     -- * Pictures
     Picture,

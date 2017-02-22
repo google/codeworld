@@ -27,7 +27,7 @@ module Internal.CodeWorld (
     animationOf,
     simulationOf,
     interactionOf,
-    gameOf,
+    collaborationOf,
     traced
     ) where
 
@@ -75,21 +75,21 @@ interactionOf (initial, step, event, draw) = do
                      (\ev w -> event (w, fromCWEvent ev))
                      (toCWPic . draw)
 
-gameOf :: (Number,
-           [Number] -> state,
-           (state, Number) -> state,
-           (state, Event, Number) -> state,
-           (state, Number) -> Picture)
-       -> Program
-gameOf (players, initial, step, event, picture) =
+collaborationOf :: (Number,
+                    [Number] -> state,
+                    (state, Number) -> state,
+                    (state, Event, Number) -> state,
+                    (state, Number) -> Picture)
+                -> Program
+collaborationOf (players, initial, step, event, picture) =
     -- This is safe ONLY because codeworld-base does not export the
     -- IO combinators that allow for choosing divergent clients.
-    CW.unsafeGameOf (toInt players)
-                    (\stdgen -> initial (randomsFrom stdgen))
-                    (\dt state -> step (state, fromDouble dt))
-                    (\player ev state -> event (state, fromCWEvent ev, fromInt player))
-                    (\player state -> toCWPic (picture (state, fromInt player)))
-{-# WARNING gameOf "gameOf is an unstable, experimental API." #-}
+    CW.unsafeCollaborationOf
+        (toInt players)
+        (\stdgen -> initial (randomsFrom stdgen))
+        (\dt state -> step (state, fromDouble dt))
+        (\player ev state -> event (state, fromCWEvent ev, fromInt player))
+        (\player state -> toCWPic (picture (state, fromInt player)))
 
 chooseRandoms :: IO [Number]
 chooseRandoms = do

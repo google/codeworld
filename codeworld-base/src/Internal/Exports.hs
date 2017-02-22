@@ -116,7 +116,7 @@ module Internal.Exports (
     animationOf,
     simulationOf,
     interactionOf,
-    gameOf
+    collaborationOf
     ) where
 
 import "base" Prelude (IO)

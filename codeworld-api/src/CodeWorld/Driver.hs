@@ -777,7 +777,9 @@ gameDraw :: (Double -> s -> s)
 gameDraw step draw (Running _ tstart pid s) t = draw pid (currentState step gameRate (t - tstart) s)
 gameDraw step draw Connecting t             = text "Connecting" & connectScreen t
 gameDraw step draw (Waiting _ _ n m) t      = text s & connectScreen t
-    where s = "Waiting for " <> pack (show (m - n)) <> " more players."
+    where k = m - n
+          s | k == 1    = "Waiting for one more player."
+            | otherwise = "Waiting for " <> pack (show k) <> " more players."
 gameDraw step draw Disconnected t           = text "Disconnected" & connectScreen 0
 
 connectScreen :: Double -> Picture

@@ -744,9 +744,8 @@ decodeEvent = readMaybe
 
 
 data GameState s
-    = Setup (ClientMessage -> IO ()) GameId PlayerId CUI.State
-    | Running (ClientMessage -> IO ()) GameId Timestamp PlayerId (Future s)
-    | Disconnected
+    = Setup WS.WebSocket GameId PlayerId CUI.State
+    | Running WS.WebSocket GameId Timestamp PlayerId (Future s)
 
 isRunning :: GameState s -> Bool
 isRunning Running{} = True
@@ -762,12 +761,10 @@ gameRate :: Double
 gameRate = 1/16
 
 gameStep :: (Double -> s -> s) -> Double -> GameState s -> GameState s
-gameStep _    t (Setup scm gid pid s)
-    = Setup scm gid pid (CUI.step t s)
-gameStep step t (Running scm gid tstart pid s)
-    = Running scm gid tstart pid (currentTimePasses step gameRate (t - tstart) s)
-gameStep step t Disconnected
-    = Disconnected
+gameStep _    t (Setup ws gid pid s)
+    = Setup ws gid pid (CUI.step t s)
+gameStep step t (Running ws gid tstart pid s)
+    = Running ws gid tstart pid (currentTimePasses step gameRate (t - tstart) s)
 
 gameDraw :: (Double -> s -> s)
          -> (PlayerId -> s -> Picture)
@@ -776,7 +773,6 @@ gameDraw :: (Double -> s -> s)
          -> Picture
 gameDraw step draw (Running _ _ tstart pid s) t = draw pid (currentState step gameRate (t - tstart) s)
 gameDraw _    _    (Setup _ _ _ s)            _ = CUI.picture s
-gameDraw _    _    Disconnected               _ = text "Disconnected"
 
 handleServerMessage :: (StdGen -> s)
                     -> (Double -> s -> s)
@@ -789,22 +785,22 @@ handleServerMessage initial stepHandler eventHandler gsm sm = do
         t <- getTime
         case (sm, gs) of
             (GameAborted,         _) ->
-                return Disconnected
-            (JoinedAs pid gid,    Setup scm _ _  s) ->
-                return (Setup scm gid pid (CUI.waiting 0 0 gid s))
-            (PlayersWaiting m n,  Setup scm gid pid s) ->
-                return (Setup scm gid pid (CUI.waiting n m gid s))
-            (Started,             Setup scm gid pid _) ->
-                return (Running scm gid t pid (initFuture (initial (mkStdGen (hash gid))) 0))
-            (OutEvent pid eo,     Running scm gid tstart mypid s) ->
+                return initialGameState
+            (JoinedAs pid gid,    Setup ws _ _  s) ->
+                return (Setup ws gid pid (CUI.waiting 0 0 gid s))
+            (PlayersWaiting m n,  Setup ws gid pid s) ->
+                return (Setup ws gid pid (CUI.waiting n m gid s))
+            (Started,             Setup ws gid pid _) ->
+                return (Running ws gid t pid (initFuture (initial (mkStdGen (hash gid))) 0))
+            (OutEvent pid eo,     Running ws gid tstart mypid s) ->
                 case decodeEvent eo of
                     Just (t',event) ->
                         let ours   = pid == mypid
                             func   = eventHandler pid <$> event -- might be a ping (“Nothing”)
                             result | ours      = s -- we already took care of our events
                                    | otherwise = addEvent stepHandler gameRate mypid t' func s
-                        in  return (Running scm gid tstart mypid result)
-                    Nothing -> return (Running scm gid tstart mypid s)
+                        in  return (Running ws gid tstart mypid result)
+                    Nothing -> return (Running ws gid tstart mypid s)
             _ -> return gs
     return ()
 
@@ -819,21 +815,24 @@ gameHandle :: Int
 gameHandle numPlayers initial stepHandler eventHandler token gsm event = do
     gs <- takeMVar gsm
     case gs of
-        Setup scm gid pid s -> do
+        Setup ws gid pid s -> do
             let (s', ma) = CUI.event event s
             case ma of
                 Just CUI.Create -> do
-                    scm <- connectToGameServer (handleServerMessage initial stepHandler eventHandler gsm)
-                    scm (NewGame numPlayers (encode token))
-                    putMVar gsm (Setup scm gid pid s')
+                    ws <- connectToGameServer (handleServerMessage initial stepHandler eventHandler gsm)
+                    sendClientMessage ws (NewGame numPlayers (encode token))
+                    putMVar gsm (Setup ws gid pid s')
                 Just (CUI.Join gid) -> do
-                    scm <- connectToGameServer (handleServerMessage initial stepHandler eventHandler gsm)
-                    scm (JoinGame gid (encode token))
-                    putMVar gsm (Setup scm gid pid s')
+                    ws <- connectToGameServer (handleServerMessage initial stepHandler eventHandler gsm)
+                    sendClientMessage ws (JoinGame gid (encode token))
+                    putMVar gsm (Setup ws gid pid s')
+                Just CUI.Cancel -> do
+                    WS.close Nothing Nothing ws
+                    putMVar gsm initialGameState
                 Nothing -> do
-                    putMVar gsm (Setup scm gid pid s')
+                    putMVar gsm (Setup ws gid pid s')
 
-        Running scm gid tstart pid f -> do
+        Running ws gid tstart pid f -> do
             t   <- getTime
             let gameState0 = currentState stepHandler gameRate (t - tstart) f
             let eventFun = eventHandler pid event
@@ -842,12 +841,9 @@ gameHandle numPlayers initial stepHandler eventHandler token gsm event = do
                 Nothing -> do
                     putMVar gsm gs
                 Just s1 -> do
-                    scm (InEvent (encodeEvent (gameTime gs t, Just event)))
+                    sendClientMessage ws (InEvent (encodeEvent (gameTime gs t, Just event)))
                     let f1 = addEvent stepHandler gameRate pid (t - tstart) (Just eventFun) f
-                    putMVar gsm (Running scm gid tstart pid f1)
-
-        Disconnected -> do
-            putMVar gsm gs
+                    putMVar gsm (Running ws gid tstart pid f1)
 
 getWebSocketURL :: IO JSString
 getWebSocketURL = do
@@ -861,7 +857,7 @@ getWebSocketURL = do
 
     return url
 
-connectToGameServer :: (ServerMessage -> IO ()) -> IO (ClientMessage -> IO ())
+connectToGameServer :: (ServerMessage -> IO ()) -> IO WS.WebSocket
 connectToGameServer handleServerMessage = do
     let handleWSRequest m = do
         maybeSM <- decodeServerMessage m
@@ -876,8 +872,7 @@ connectToGameServer handleServerMessage = do
             , onClose = Just $ \_ -> handleServerMessage GameAborted
             , onMessage = Just handleWSRequest
             }
-    ws <- WS.connect req
-    return (\msg -> WS.send (encodeClientMessage msg) ws)
+    WS.connect req
   where
     decodeServerMessage :: WS.MessageEvent -> IO (Maybe ServerMessage)
     decodeServerMessage m = case WS.getData m of
@@ -888,6 +883,14 @@ connectToGameServer handleServerMessage = do
     encodeClientMessage :: ClientMessage -> JSString
     encodeClientMessage m = Data.JSString.pack (show m)
 
+sendClientMessage :: WS.WebSocket -> ClientMessage -> IO ()
+sendClientMessage ws msg = WS.send (encodeClientMessage msg) ws
+  where
+    encodeClientMessage :: ClientMessage -> JSString
+    encodeClientMessage m = Data.JSString.pack (show m)
+
+initialGameState :: GameState s
+initialGameState = Setup (Prelude.error "Not connected yet") "" 0 CUI.initial
 
 runGame :: GameToken
         -> Int
@@ -908,7 +911,6 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
         liftIO $ setCanvasSize canvas canvas
         liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
 
-    let initialGameState = Setup (\_ -> return ()) "" 0 CUI.initial
     currentGameState <- newMVar initialGameState
 
     onEvents canvas $ gameHandle numPlayers initial stepHandler eventHandler token currentGameState

@@ -66,7 +66,7 @@ data State
       }
 -}
 
-data Action = Create | Join Text
+data Action = Create | Join Text | Cancel
 
 initial :: State
 initial = MainMenu { time = 0, mousePos = (0, 0) }
@@ -94,10 +94,10 @@ event (MousePress LeftButton p) Joining{..}
   | inButton 0 (-3) 8 2 p
   , T.length code == 4    = (Connecting {..}, Just (Join code))
   | inButton 0 (-3) 8 2 p = (MainMenu {..}, Nothing)
-{- TODO: Cancel making a connection
 event (MousePress LeftButton p) Connecting{..}
-  | inButton 0 (-3) 8 2 p = (MainMenu {..}, Nothing)
--}
+  | inButton 0 (-3) 8 2 p = (MainMenu {..}, Just Cancel)
+event (MousePress LeftButton p) Waiting{..}
+  | inButton 0 (-3) 8 2 p = (MainMenu {..}, Just Cancel)
 event (KeyPress k) s@Joining{..}
   | T.length k == 1, T.length code < 4, isLetter (T.head k)
   = (s { code = code <> T.toUpper k }, Nothing)
@@ -105,10 +105,10 @@ event (KeyPress k) s@Joining{..}
   = (s { code = T.init code }, Nothing)
 event (KeyPress "Esc") Joining{..}
   = (MainMenu { .. }, Nothing)
-{- TODO: Cancel making a connection
 event (KeyPress "Esc") Connecting{..}
-  = (MainMenu { .. }, Nothing)
-  -}
+  = (MainMenu { .. }, Just Cancel)
+event (KeyPress "Esc") Waiting{..}
+  = (MainMenu { .. }, Just Cancel)
 event _ s = (s, Nothing)
 
 picture :: State -> Picture

@@ -44,6 +44,7 @@ import           CodeWorld.Event
 import           CodeWorld.Picture
 import           CodeWorld.Prediction
 import           CodeWorld.Message
+import qualified CodeWorld.CollaborationUI as CUI
 import           Control.Concurrent
 import           Control.Concurrent.MVar
 import           Control.Concurrent.Chan
@@ -643,12 +644,19 @@ isUniversallyConstant f old = falseOr $ do
     return (genName == oldName)
   where falseOr x = x `catch` \(e :: SomeException) -> return False
 
-modifyMVarIfNeeded :: MVar s -> (s -> IO s) -> IO Bool
-modifyMVarIfNeeded var f = modifyMVar var $ \s0 -> do
+applyIfModifying :: (s -> IO s) -> s -> IO (Maybe s)
+applyIfModifying f s0 = do
     oldName <- makeStableName $! s0
     s1      <- f s0
     newName <- makeStableName $! s1
-    return (s1, newName /= oldName)
+    if newName /= oldName then return (Just s1)
+                          else return Nothing
+
+modifyMVarIfNeeded :: MVar s -> (s -> IO s) -> IO Bool
+modifyMVarIfNeeded var f = modifyMVar var $ \s0 -> do
+    ms1 <- applyIfModifying f s0
+    case ms1 of Nothing -> return (s0, False)
+                Just s1 -> return (s1, False)
 
 data GameToken
     = FullToken {
@@ -728,16 +736,6 @@ onEvents canvas handler = do
         liftIO $ handler (MouseMovement pos)
     return ()
 
-sendClientMessage :: WS.WebSocket -> ClientMessage -> IO ()
-sendClientMessage conn msg = do
-    WS.send (Data.JSString.pack (show msg)) conn
-
-decodeServerMessage :: WS.MessageEvent -> IO (Maybe ServerMessage)
-decodeServerMessage m = case WS.getData m of
-    WS.StringData str -> do
-        return $ readMaybe (Data.JSString.unpack str)
-    _ -> return Nothing
-
 encodeEvent :: (Timestamp, Maybe Event) -> String
 encodeEvent = show
 
@@ -746,9 +744,8 @@ decodeEvent = readMaybe
 
 
 data GameState s
-    = Connecting
-    | Waiting GameId PlayerId Int Int
-    | Running GameId Timestamp PlayerId (Future s)
+    = Setup (ClientMessage -> IO ()) GameId PlayerId CUI.State
+    | Running (ClientMessage -> IO ()) GameId Timestamp PlayerId (Future s)
     | Disconnected
 
 isRunning :: GameState s -> Bool
@@ -756,8 +753,8 @@ isRunning Running{} = True
 isRunning _         = False
 
 gameTime :: GameState s -> Timestamp -> Double
-gameTime (Running _ tstart _ _) t = t - tstart
-gameTime _ _                      = 0
+gameTime (Running _ _ tstart _ _) t = t - tstart
+gameTime _ _                        = 0
 
 -- It's worth trying to keep the canonical animation rate exactly representable
 -- as a float, to minimize the chance of divergence due to rounding error.
@@ -765,81 +762,92 @@ gameRate :: Double
 gameRate = 1/16
 
 gameStep :: (Double -> s -> s) -> Double -> GameState s -> GameState s
-gameStep step t (Running gid tstart pid s) =
-    Running gid tstart pid (currentTimePasses step gameRate (t - tstart) s)
-gameStep _ _ s = s
+gameStep _    t (Setup scm gid pid s)
+    = Setup scm gid pid (CUI.step t s)
+gameStep step t (Running scm gid tstart pid s)
+    = Running scm gid tstart pid (currentTimePasses step gameRate (t - tstart) s)
+gameStep step t Disconnected
+    = Disconnected
 
 gameDraw :: (Double -> s -> s)
          -> (PlayerId -> s -> Picture)
          -> GameState s
          -> Timestamp
          -> Picture
-gameDraw step draw (Running _ tstart pid s) t = draw pid (currentState step gameRate (t - tstart) s)
-gameDraw step draw Connecting t             = text "Connecting" & connectScreen t
-gameDraw step draw (Waiting _ _ n m) t      = text s & connectScreen t
-    where k = m - n
-          s | k == 1    = "Waiting for one more player."
-            | otherwise = "Waiting for " <> pack (show k) <> " more players."
-gameDraw step draw Disconnected t           = text "Disconnected" & connectScreen 0
+gameDraw step draw (Running _ _ tstart pid s) t = draw pid (currentState step gameRate (t - tstart) s)
+gameDraw _    _    (Setup _ _ _ s)            _ = CUI.picture s
+gameDraw _    _    Disconnected               _ = text "Disconnected"
 
-connectScreen :: Double -> Picture
-connectScreen t = translated 0 7 connectBox
-        & translated 0 (-7) codeWorldLogo
-        & colored (gray 0.9) (solidRectangle 20 20)
-  where
-    connectBox = scaled 2 2 (text "Connecting...")
-               & rectangle 14 4
-               & colored connectColor (solidRectangle 14 4)
-    connectColor = let k = (1 + sin (3 * t)) / 5
-                   in  fromHSL (k + 0.5) 0.8 0.7
+handleServerMessage :: (StdGen -> s)
+                    -> (Double -> s -> s)
+                    -> (PlayerId -> Event -> s -> s)
+                    -> MVar (GameState s)
+                    -> ServerMessage
+                    -> IO ()
+handleServerMessage initial stepHandler eventHandler gsm sm = do
+    modifyMVar_ gsm $ \gs -> do
+        t <- getTime
+        case (sm, gs) of
+            (GameAborted,         _) ->
+                return Disconnected
+            (JoinedAs pid gid,    Setup scm _ _  s) ->
+                return (Setup scm gid pid (CUI.waiting 0 0 gid s))
+            (PlayersWaiting m n,  Setup scm gid pid s) ->
+                return (Setup scm gid pid (CUI.waiting n m gid s))
+            (Started,             Setup scm gid pid _) ->
+                return (Running scm gid t pid (initFuture (initial (mkStdGen (hash gid))) 0))
+            (OutEvent pid eo,     Running scm gid tstart mypid s) ->
+                case decodeEvent eo of
+                    Just (t',event) ->
+                        let ours   = pid == mypid
+                            func   = eventHandler pid <$> event -- might be a ping (“Nothing”)
+                            result | ours      = s -- we already took care of our events
+                                   | otherwise = addEvent stepHandler gameRate mypid t' func s
+                        in  return (Running scm gid tstart mypid result)
+                    Nothing -> return (Running scm gid tstart mypid s)
+            _ -> return gs
+    return ()
 
-gameHandle :: Double
-           -> (StdGen -> s)
-           -> (Double -> s -> s)
-           -> (PlayerId -> Event -> s -> s)
-           -> ServerMessage
-           -> GameState s
-           -> IO (GameState s)
-gameHandle t initial step handler sm gs =
-    case (sm, gs) of
-        (GameAborted,         _)                   -> return Disconnected
-        (JoinedAs pid gid,    Connecting)          -> return (Waiting gid pid 0 0)
-        (PlayersWaiting n m,  Waiting gid pid _ _) -> return (Waiting gid pid n m)
-        (Started,             Waiting gid pid _ _) ->
-            return (Running gid t pid (initFuture (initial (mkStdGen (hash gid))) 0))
-        (OutEvent pid eo,  Running gid tstart mypid s) ->
-            case decodeEvent eo of
-                Just (t',event) ->
-                    let ours   = pid == mypid
-                        func   = handler pid <$> event -- might be a ping (“Nothing”)
-                        result | ours      = s -- we already took care of our events
-                               | otherwise = addEvent step gameRate mypid t' func s
-                    in  return (Running gid tstart mypid result)
-                Nothing    -> return (Running gid tstart mypid s)
-        _ -> return gs
-
-localHandle :: (Double -> s -> s)
+gameHandle :: Int
+            -> (StdGen -> s)
+            -> (Double -> s -> s)
             -> (PlayerId -> Event -> s -> s)
-            -> Timestamp
+            -> GameToken
+            -> MVar (GameState s)
             -> Event
-            -> GameState s
-            -> IO (GameState s)
-localHandle step handler t event gs@(Running gid tstart pid s) = do
-    let state0 = currentState step gameRate (t - tstart) s
-    name0 <- makeStableName $! state0
-    let state1 = handler pid event state0
-    name1 <- makeStableName $! state1
-    if name0 == name1
-        then return gs
-        else return $ let s' = addEvent step gameRate pid (t - tstart) (Just (handler pid event)) s
-                      in Running gid tstart pid s'
-localHandle step handler t event other = return other
+            -> IO ()
+gameHandle numPlayers initial stepHandler eventHandler token gsm event = do
+    gs <- takeMVar gsm
+    case gs of
+        Setup scm gid pid s -> do
+            let (s', ma) = CUI.event event s
+            case ma of
+                Just CUI.Create -> do
+                    scm <- connectToGameServer (handleServerMessage initial stepHandler eventHandler gsm)
+                    scm (NewGame numPlayers (encode token))
+                    putMVar gsm (Setup scm gid pid s')
+                Just (CUI.Join gid) -> do
+                    scm <- connectToGameServer (handleServerMessage initial stepHandler eventHandler gsm)
+                    scm (JoinGame gid (encode token))
+                    putMVar gsm (Setup scm gid pid s')
+                Nothing -> do
+                    putMVar gsm (Setup scm gid pid s')
 
-inviteDialogHandle :: ServerMessage -> IO ()
-inviteDialogHandle (JoinedAs _ gid) = js_show_invite (textToJSString gid)
-inviteDialogHandle (Started)        = js_hide_invite
-inviteDialogHandle GameAborted      = js_hide_invite
-inviteDialogHandle _                = return ()
+        Running scm gid tstart pid f -> do
+            t   <- getTime
+            let gameState0 = currentState stepHandler gameRate (t - tstart) f
+            let eventFun = eventHandler pid event
+            ms1 <- (return . eventFun) `applyIfModifying` gameState0
+            case ms1 of
+                Nothing -> do
+                    putMVar gsm gs
+                Just s1 -> do
+                    scm (InEvent (encodeEvent (gameTime gs t, Just event)))
+                    let f1 = addEvent stepHandler gameRate pid (t - tstart) (Just eventFun) f
+                    putMVar gsm (Running scm gid tstart pid f1)
+
+        Disconnected -> do
+            putMVar gsm gs
 
 getWebSocketURL :: IO JSString
 getWebSocketURL = do
@@ -852,6 +860,34 @@ getWebSocketURL = do
             "https:" -> "wss://" <> hostname <> "/gameserver"
 
     return url
+
+connectToGameServer :: (ServerMessage -> IO ()) -> IO (ClientMessage -> IO ())
+connectToGameServer handleServerMessage = do
+    let handleWSRequest m = do
+        maybeSM <- decodeServerMessage m
+        case maybeSM of
+            Nothing -> return ()
+            Just sm -> handleServerMessage sm
+
+    wsURL <- getWebSocketURL
+    let req = WS.WebSocketRequest
+            { url = wsURL
+            , protocols = []
+            , onClose = Just $ \_ -> handleServerMessage GameAborted
+            , onMessage = Just handleWSRequest
+            }
+    ws <- WS.connect req
+    return (\msg -> WS.send (encodeClientMessage msg) ws)
+  where
+    decodeServerMessage :: WS.MessageEvent -> IO (Maybe ServerMessage)
+    decodeServerMessage m = case WS.getData m of
+        WS.StringData str -> do
+            return $ readMaybe (Data.JSString.unpack str)
+        _ -> return Nothing
+
+    encodeClientMessage :: ClientMessage -> JSString
+    encodeClientMessage m = Data.JSString.pack (show m)
+
 
 runGame :: GameToken
         -> Int
@@ -872,45 +908,12 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
         liftIO $ setCanvasSize canvas canvas
         liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
 
-    let initialGameState = Connecting
+    let initialGameState = Setup (\_ -> return ()) "" 0 CUI.initial
     currentGameState <- newMVar initialGameState
 
-    let handleServerMessage sm = do
-        modifyMVar_ currentGameState $ \gs -> do
-            t <- getTime
-            gameHandle t initial stepHandler eventHandler sm gs
-        inviteDialogHandle sm
-        return ()
-
-    let handleWSRequest m = do
-        maybeSM <- decodeServerMessage m
-        case maybeSM of
-            Nothing -> return ()
-            Just sm -> handleServerMessage sm
-
-    wsURL <- getWebSocketURL
-    let req = WS.WebSocketRequest
-            { url = wsURL
-            , protocols = []
-            , onClose = Just $ \_ -> handleServerMessage GameAborted
-            , onMessage = Just handleWSRequest
-            }
-    ws <- WS.connect req
-
-    onEvents canvas $ \event -> do
-        gs <- readMVar currentGameState
-        when (isRunning gs) $ do
-            t       <- getTime
-            changed <- modifyMVarIfNeeded currentGameState $
-                localHandle stepHandler eventHandler t event
-            when changed $ sendClientMessage ws (InEvent (encodeEvent (gameTime gs t, Just event)))
+    onEvents canvas $ gameHandle numPlayers initial stepHandler eventHandler token currentGameState
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
-
-    -- Initiate game
-    getGid >>= \case
-        Nothing ->  sendClientMessage ws (NewGame numPlayers (encode token))
-        Just gid -> sendClientMessage ws (JoinGame gid (encode token))
 
     let go t0 lastFrame = do
             gs  <- readMVar currentGameState
@@ -1293,21 +1296,6 @@ trace msg x = unsafePerformIO $ do
 
 reportError :: SomeException -> IO ()
 reportError e = js_reportRuntimeError True (textToJSString (pack (show e)))
-
-foreign import javascript "window.pinvite($1);"
-    js_show_invite :: JSString -> IO ()
-foreign import javascript "window.pdone_inviting();"
-    js_hide_invite :: IO ()
-
-foreign import javascript "window.gid"
-    js_gid :: IO JSVal
-
-getGid :: IO (Maybe GameId)
-getGid = do
-    gidVal <- js_gid
-    case pFromJSVal gidVal of
-        Just t ->  return t
-        Nothing -> return Nothing
 
 foreign import javascript "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
     js_deployHash :: IO JSVal

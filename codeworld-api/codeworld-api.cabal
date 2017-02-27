@@ -25,6 +25,7 @@ Library
                        CodeWorld.Picture,
                        CodeWorld.Event,
                        CodeWorld.Driver
+                       CodeWorld.CollaborationUI
   Build-depends:       base < 5,
                        cereal,
                        cereal-text,

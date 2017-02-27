@@ -589,39 +589,3 @@ function share() {
 
   go();
 }
-
-function invite(gid) {
-  function go() {
-    var url;
-    var msg;
-
-    var a = document.createElement('a');
-    a.href = window.location.href;
-    a.hash = 'gid=' + gid;
-    a.pathname = '/run.html';
-    a.search = '?mode=' + window.buildMode + '&dhash=' + window.deployHash;
-    url = a.href;
-    msg = 'Share this link to invite players!';
-
-    sweetAlert({
-        html: true,
-        title: '<i class="mdi mdi-72px mdi-share"></i>&nbsp; Invite',
-        text: msg,
-        type: 'input',
-        inputValue: url,
-        showConfirmButton: false,
-        showCancelButton: true,
-        cancelButtonText: 'Done',
-        animation: 'slide-from-bottom'
-    }, function() {
-      offerSource = !offerSource;
-      go();
-    });
-  }
-
-  go();
-}
-
-function done_inviting() {
-  sweetAlert.close();
-}

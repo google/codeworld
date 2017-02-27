@@ -25,6 +25,13 @@
           width: 30em;
           height: 100vh;
       }
+      #info_container {
+          flex: 0 0 auto;
+          width: 20em;
+          min-width: 20em;
+          height: 100vh;
+          overflow: auto;
+      }
       #screen {
           cursor: default;
           border: 0px;
@@ -57,6 +64,11 @@
           margin: 0;
           padding: 1vh 1vw;
       }
+      #info_container > div {
+          background-color: #dddddd;
+          padding: 1vh;
+          margin: 0px;
+      }
     </style>
     <script>
     var fileName = location.href.split("/").pop().replace(/\.html$/, '.json');
@@ -68,14 +80,17 @@
           btn.setAttribute('class', 'choice');
           btn.append(a);
           a.innerText = item.name;
-	  if (item.code) {
-		$(btn).append(' ');
-		$(btn).append($('<a>(view and edit code)</a>').attr('href',item.code));
-	  }
           var clickHandler = function(event) {
             $('.choice').removeClass('sel');
             $(btn).addClass('sel');
             $('#screen').attr('src', item.url).focus();
+	    $('#info-title').text(item.name);
+	    $('#info-text').text(item.desc||'');
+	    if (item.code) {
+	      $('#info-link').show().attr('href',item.code);
+	    } else {
+	      $('#info-link').hide();
+	    }
             event.preventDefault();
           }
           $(a).click(clickHandler);
@@ -98,6 +113,13 @@
     </div>
     <div id="screen_container">
       <iframe id="screen" src="https://code.world/run.html?mode=codeworld&dhash=D9o-bnPVKRuooLU4T7s9YoQ"></iframe>
-    <div>
+    </div>
+    <div id="info_container">
+      <div>
+        <h3 id='info-title'>CodeWorl Gallery</h3>
+        <p id='info-text'>Select CodeWorld works on the left.</p>
+        <a id='info-link' style='display:none'>View and edit this code</a>
+      </div>
+    </div>
   </body>
 </html>

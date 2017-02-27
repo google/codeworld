@@ -33,6 +33,7 @@ import CodeWorld.Message
 import Data.Char (isPunctuation, isSpace)
 import Data.Monoid ((<>), mappend)
 import Data.Text (Text)
+import Data.List (find)
 import Control.Exception (finally)
 import Control.Monad
 import Control.Concurrent
@@ -107,7 +108,7 @@ freshGame state playerCount sig = modifyMVar (games state) go
 joinGame :: WS.Connection -> MVar Game -> IO (Maybe PlayerId)
 joinGame conn gameMV = modifyMVar gameMV $ \game -> case game of
         Game { gameState = Waiting } | length (players game) < numPlayers game ->
-                let pid = length (players game)
+                let Just pid = find (`notElem` map fst (players game)) [0..] -- fill holes
                     game' = game { players = (pid, conn) : players game }
                 in return (game', Just pid)
         _ -> return (game, Nothing)
@@ -128,7 +129,8 @@ getStats gameMVar = go <$> readMVar gameMVar
 cleanup :: MVar Game -> PlayerId -> ServerState -> IO ()
 cleanup gameMV mypid state = do
     done <- modifyMVar gameMV go
-    when done $ do
+    if done
+      then do
         game <- readMVar gameMV
         let key = gameKey game
         modifyMVar_ (games state) $ return . HM.delete key
@@ -136,6 +138,8 @@ cleanup gameMV mypid state = do
             ts { totalEventCount = totalEventCount ts + gameEventCount game
                , totalEventSize  = totalEventSize ts  + gameEventSize game
                }
+      else do
+        announcePlayers gameMV
   where
     go g = let players' = filter ((/= mypid) . fst) (players g)
            in return $ (g { players = players' }, null players')

@@ -11,6 +11,7 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     CodeWorld.Prediction
+                       CodeWorld.Prediction.Trivial
   other-modules:       Data.MultiMap
                        CodeWorld.Prediction.Paper
   build-depends:       base >=4.8 && <4.10,

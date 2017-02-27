@@ -36,6 +36,7 @@ import qualified Data.Sequence as S
 import qualified Data.Map as M
 import qualified Data.Foldable (toList)
 import Data.Bifunctor
+import Data.Coerce
 
 newtype MultiMap k v = MM (M.Map k (S.Seq v)) deriving (Show, Eq)
 
@@ -52,14 +53,14 @@ insertR :: Ord k => k -> v -> MultiMap k v -> MultiMap k v
 insertR k v (MM m) = MM (M.alter (Just . maybe (S.singleton v) (S.|> v)) k m)
 
 toList :: MultiMap k v -> [(k,v)]
-toList (MM m) = concatMap (\(k,vs) -> map (k,) (Data.Foldable.toList vs)) (M.toList m)
+toList (MM m) = [ (k,v) | (k,vs) <- M.toList m , v <- Data.Foldable.toList vs ]
 
 -- TODO: replace with M.spanAntitone once containers is updated
 mapSpanAntitone :: (k -> Bool) -> M.Map k a -> (M.Map k a, M.Map k a)
 mapSpanAntitone p = bimap M.fromDistinctAscList M.fromDistinctAscList . span (p.fst) . M.toList
 
 spanAntitone :: (k -> Bool) -> MultiMap k v -> (MultiMap k v, MultiMap k v)
-spanAntitone p (MM m) = bimap MM MM (mapSpanAntitone p m)
+spanAntitone p (MM m) = coerce (mapSpanAntitone p m)
 
 union :: Ord k => MultiMap k v -> MultiMap k v -> MultiMap k v
 union (MM m1) (MM m2) = MM (M.unionWith (S.><) m1 m2)

@@ -16,14 +16,14 @@
 
 {- |
 This module encapsulates the logics behind the prediction code in the
-multi-player setup.
+multi-player setup. It is the “trivially correct” version.
 -}
 
 {-# LANGUAGE RecordWildCards, ViewPatterns #-}
-module CodeWorld.Prediction
+module CodeWorld.Prediction.Trivial
     ( Timestamp, AnimationRate, StepFun, Future
     , initFuture, currentTimePasses, currentState, addEvent
-    , currentStateDirect, eqFuture, printInternalState
+    , eqFuture, printInternalState
     )
     where
 
@@ -56,22 +56,14 @@ type EventQueue s = M.MultiMap (Timestamp, PlayerId) (Event s)
 -- * For each player, all events in pending or future are before the
 --   corresponding lastEvents entry.
 data Future s = Future
-        { committed  :: TState s
-        , lastQuery  :: Timestamp
-        , lastEvents :: IM.IntMap Timestamp
-        , pending    :: EventQueue s
-        , future     :: EventQueue s
-        , current    :: TState s
-        }
+    { initial :: s
+    , events :: EventQueue s
+    }
 
 initFuture :: s -> Int -> Future s
-initFuture s numPlayers = Future
-    { committed   = (0, s)
-    , lastQuery   = 0
-    , lastEvents  = IM.fromList [ (n,0) | n <-[0..numPlayers-1]]
-    , pending     = M.empty
-    , future      = M.empty
-    , current     = (0, s)
+initFuture s _numPlayers = Future
+    { initial     = s
+    , events      = M.empty
     }
 
 -- Time handling.
@@ -111,14 +103,17 @@ handleNextEvents step rate eq ts
 
 -- | This should be called shortly following 'currentTimePasses'
 currentState :: StepFun s -> AnimationRate -> Timestamp -> Future s -> s
-currentState step rate target f = snd $ timePasses step rate target (current f)
+currentState step rate target f =
+    snd $
+    timePasses step rate target $
+    handleNextEvents step rate to_apply (0, initial f)
+  where
+    (to_apply, _) = M.spanAntitone (\(t,p) -> t <= target) (events f)
 
 -- | This should be called regularly, to keep the current state up to date,
 -- and to incorporate future events in it.
 currentTimePasses :: StepFun s -> AnimationRate -> Timestamp -> Future s -> Future s
-currentTimePasses step rate target
-    = advanceCurrentTime step rate target
-    . advanceFuture step rate target
+currentTimePasses step rate target = id
 
 -- | Take a new event into account, local or remote.
 -- Invariant:
@@ -129,81 +124,17 @@ addEvent :: StepFun s -> AnimationRate ->
     PlayerId -> Timestamp -> Maybe (Event s) ->
     Future s -> Future s
   -- A future event.
-addEvent step rate player now mbEvent f | now > lastQuery f
-    = recordActivity step rate player now $
-      f { future     = maybe id (M.insertR (now, player)) mbEvent $ future f }
-  -- A past event, goes to pending events. Pending events need to be replayed.
 addEvent step rate player now mbEvent f
-    = replayPending step rate $
-      recordActivity step rate player now $
-      f { pending    = maybe id (M.insertR (now, player)) mbEvent $ pending f }
-
--- | Updates the 'lastEvents' field, and possibly updates the commmitted state
-recordActivity :: StepFun s -> AnimationRate ->
-    PlayerId -> Timestamp ->
-    Future s -> Future s
-recordActivity step rate player now f
-    = advanceCommitted step rate $
-      f { lastEvents = IM.insert player now $ lastEvents f }
-
--- | Commits events from the pending queue that are past the commitTime
-advanceCommitted :: StepFun s -> AnimationRate -> Future s -> Future s
-advanceCommitted step rate f
-    | M.null eventsToCommit = f -- do not bother
-    | otherwise = f { committed = committed', pending = uncommited' }
-  where
-    commitTime' = minimum $ IM.elems $ lastEvents f
-    canCommit t = t < commitTime'
-    (eventsToCommit, uncommited') = M.spanAntitone (canCommit . fst) (pending f)
-
-    committed' = handleNextEvents step rate eventsToCommit $ committed f
-
--- | Throws away the current state, and recreates it from
---   pending events. To be used when inserting a pending event.
-replayPending :: StepFun s -> AnimationRate -> Future s -> Future s
-replayPending step rate f = f { current = current' }
-  where
-    current' =
-        timePassesBigStep step rate (lastQuery f) $
-        handleNextEvents step rate (pending f) $
-        committed f
-
--- | Takes into account all future event that happen before the given 'Timestamp'
---   Does not have to call 'replayPending', as we only append to the 'pending' queue.
---   But does have to call 'advanceCommitted', as the newly added events might
---   go directly to the committed state.
-advanceFuture :: StepFun s -> AnimationRate -> Timestamp -> Future s -> Future s
-advanceFuture step rate target f
-    | M.null toPerform = f
-    | otherwise =
-        advanceCommitted step rate $
-        f { current = current', pending = pending', future = future' }
-  where
-    hasHappened t = t <= target
-    (toPerform, future') = M.spanAntitone (hasHappened . fst) (future f)
-
-    pending'  = pending f `M.union` toPerform
-    current'  = handleNextEvents step rate toPerform $ current f
+    = f { events = maybe id (M.insertR (now, player)) mbEvent $ events f }
 
 -- | Advances the current time (by big steps)
 advanceCurrentTime :: StepFun s -> AnimationRate -> Timestamp -> Future s -> Future s
-advanceCurrentTime step rate target f
-    = f { current = timePassesBigStep step rate target $ current f
-        , lastQuery = target }
+advanceCurrentTime step rate target = id
 
--- | Only for testing.
-currentStateDirect :: Future s -> (Timestamp, s)
-currentStateDirect = current
-
--- | Only for testing.
 eqFuture :: Eq s => Future s -> Future s -> Bool
-eqFuture f1 f2 =
-    (current f1, lastEvents f1, M.keys (pending f1), M.keys (future f1), committed f1) ==
-    (current f2, lastEvents f2, M.keys (pending f2), M.keys (future f2), committed f2)
+eqFuture f1 f2 = M.keys (events f1) == M.keys (events f2)
 
--- | Only for testing.
 printInternalState :: (s -> String) -> Future s -> IO ()
 printInternalState showState f = do
-    printf "   Current: (%6.3f) %s\n" (fst (current f))   $ showState (snd (current f))
-    printf "    Latest: %s\n" $ intercalate " " [ printf "%d:%.3f" p t | (p,t) <- IM.toList (lastEvents f)]
-    printf " Committed: (%6.3f) %s\n" (fst (committed f)) $ showState (snd (committed f))
+    printf "    Event keys: %s\n" (show (M.keys (events f)))
+

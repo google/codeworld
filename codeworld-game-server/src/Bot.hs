@@ -38,9 +38,6 @@ import Text.Regex
 connect :: Config -> WS.ClientApp a -> IO a
 connect Config {..} = WS.runClient hostname port path
 
-sendClientMessage :: WS.Connection -> ClientMessage -> IO ()
-sendClientMessage conn msg = WS.sendTextData conn (T.pack (show msg))
-
 type Timestamp = Double
 
 encodeEvent :: (Timestamp, Maybe Event) -> String
@@ -49,27 +46,34 @@ encodeEvent = show
 decodeEvent :: String -> Maybe (Timestamp, Maybe Event)
 decodeEvent = readMaybe
 
+sendClientMessage :: Config -> WS.Connection -> ClientMessage -> IO ()
+sendClientMessage config conn msg = do
+    when (debug config) $
+        putStrLn $ "→ " ++ show msg
+    WS.sendTextData conn (T.pack (show msg))
 
-
-getServerMessage :: WS.Connection -> IO ServerMessage
-getServerMessage conn = do
+getServerMessage :: Config -> WS.Connection -> IO ServerMessage
+getServerMessage config conn = do
     msg <- WS.receiveData conn
     case readMaybe (T.unpack msg) of
-        Just msg -> return msg
+        Just msg -> do
+            when (debug config) $
+                putStrLn $ "← " ++ show msg
+            return msg
         Nothing -> fail "Invalid server message"
 
 joinGame :: Config -> IO [ServerMessage]
 joinGame config = do
     connect config $ \conn -> do
-        sendClientMessage conn (JoinGame (gameId config) "BOT")
-        JoinedAs _ _ <- getServerMessage conn
+        sendClientMessage config conn (JoinGame (gameId config) "BOT")
+        JoinedAs _ _ <- getServerMessage config conn
         waitForStart config conn
 
 waitForStart :: Config -> WS.Connection -> IO [ServerMessage]
 waitForStart config conn = go
   where
     go = do
-        m <- getServerMessage conn
+        m <- getServerMessage config conn
         case m of
             Started {} -> playGame config conn
             _ -> go
@@ -78,7 +82,7 @@ playGame :: Config -> WS.Connection -> IO [ServerMessage]
 playGame config conn = do
     startTime <- getTime Monotonic
     forever $ do
-        OutEvent pid eo <- getServerMessage conn
+        OutEvent pid eo <- getServerMessage config conn
         when (pid == 0) $ do
             case decodeEvent eo of
                 Just (t,mbEvent) -> do
@@ -86,7 +90,7 @@ playGame config conn = do
                     currentTime <- getTime Monotonic
                     let t' | Just ms <- delay config = max 0 (t + ms/1000)
                            | otherwise               = timeSpecToS (currentTime - startTime)
-                    sendClientMessage conn (InEvent (show (t',mbEvent')))
+                    sendClientMessage config conn (InEvent (show (t',mbEvent')))
                 Nothing -> putStrLn $ "Could not parse event: " ++ eo
   where
     modify e | not (invert config) = e
@@ -98,6 +102,7 @@ playGame config conn = do
     inv "Down"  = "Up"
     inv "Left"  = "Right"
     inv "Right" = "Left"
+    inv c       = c
 
 timeSpecToS ts = fromIntegral (sec ts) + fromIntegral (nsec ts) * 1E-9
 
@@ -109,6 +114,7 @@ data Config = Config
     , port     :: Int
     , path     :: String
     , gameId   :: GameId
+    , debug    :: Bool
     }
 
 opts = info (helper <*> config)
@@ -157,6 +163,10 @@ opts = info (helper <*> config)
          <> showDefault
          <> metavar "ID"
          <> help "The ID of the game to join (4 letters)"))
+      <*> switch
+          ( long "debug"
+         <> showDefault
+         <> help "Show debugging output" )
 
 main = do
   config <- execParser opts

@@ -656,7 +656,7 @@ modifyMVarIfNeeded :: MVar s -> (s -> IO s) -> IO Bool
 modifyMVarIfNeeded var f = modifyMVar var $ \s0 -> do
     ms1 <- applyIfModifying f s0
     case ms1 of Nothing -> return (s0, False)
-                Just s1 -> return (s1, False)
+                Just s1 -> return (s1, True)
 
 data GameToken
     = FullToken {

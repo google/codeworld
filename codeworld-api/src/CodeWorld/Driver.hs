@@ -796,7 +796,7 @@ handleServerMessage initial stepHandler eventHandler gsm sm = do
                 case decodeEvent eo of
                     Just (t',event) ->
                         let ours   = pid == mypid
-                            func   = eventHandler pid <$> event -- might be a ping (“Nothing”)
+                            func   = eventHandler pid <$> event -- might be a ping (Nothing)
                             result | ours      = s -- we already took care of our events
                                    | otherwise = addEvent stepHandler gameRate mypid t' func s
                         in  return (Running ws gid tstart mypid result)

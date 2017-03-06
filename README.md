@@ -19,8 +19,8 @@ Other options include:
 Status
 ======
 
-CodeWorld is stable and has been used in schools for years!  We're
-constantly improving the environment, though.  Breaking changes, when
+CodeWorld is stable and has been used in schools for years!  See [the users page](https://github.com/google/codeworld/blob/master/Users.md) for a partial list.
+We're constantly improving the environment, though.  Breaking changes, when
 necessary, are scheduled to occur between typical (U.S.) K-12 school
 semesters, to minimize disruption of existing classes.
 

@@ -774,13 +774,14 @@ gameDraw :: (Double -> s -> s)
 gameDraw step draw (Running _ _ tstart pid s) t = draw pid (currentState step gameRate (t - tstart) s)
 gameDraw _    _    (Setup _ _ _ s)            _ = CUI.picture s
 
-handleServerMessage :: (StdGen -> s)
+handleServerMessage :: Int
+                    -> (StdGen -> s)
                     -> (Double -> s -> s)
                     -> (PlayerId -> Event -> s -> s)
                     -> MVar (GameState s)
                     -> ServerMessage
                     -> IO ()
-handleServerMessage initial stepHandler eventHandler gsm sm = do
+handleServerMessage numPlayers initial stepHandler eventHandler gsm sm = do
     modifyMVar_ gsm $ \gs -> do
         t <- getTime
         case (sm, gs) of
@@ -791,7 +792,7 @@ handleServerMessage initial stepHandler eventHandler gsm sm = do
             (PlayersWaiting m n,  Setup ws gid pid s) ->
                 return (Setup ws gid pid (CUI.waiting n m gid s))
             (Started,             Setup ws gid pid _) ->
-                return (Running ws gid t pid (initFuture (initial (mkStdGen (hash gid))) 0))
+                return (Running ws gid t pid (initFuture (initial (mkStdGen (hash gid))) numPlayers))
             (OutEvent pid eo,     Running ws gid tstart mypid s) ->
                 case decodeEvent eo of
                     Just (t',event) ->
@@ -819,11 +820,11 @@ gameHandle numPlayers initial stepHandler eventHandler token gsm event = do
             let (s', ma) = CUI.event event s
             case ma of
                 Just CUI.Create -> do
-                    ws <- connectToGameServer (handleServerMessage initial stepHandler eventHandler gsm)
+                    ws <- connectToGameServer (handleServerMessage numPlayers initial stepHandler eventHandler gsm)
                     sendClientMessage ws (NewGame numPlayers (encode token))
                     putMVar gsm (Setup ws gid pid s')
                 Just (CUI.Join gid) -> do
-                    ws <- connectToGameServer (handleServerMessage initial stepHandler eventHandler gsm)
+                    ws <- connectToGameServer (handleServerMessage numPlayers initial stepHandler eventHandler gsm)
                     sendClientMessage ws (JoinGame gid (encode token))
                     putMVar gsm (Setup ws gid pid s')
                 Just CUI.Cancel -> do

@@ -1,7 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ParallelListComp  #-}
 {-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE PatternGuards   #-}
+{-# LANGUAGE PatternGuards     #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE GADTs             #-}
 
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
@@ -20,13 +23,15 @@
 -}
 
 module CodeWorld.CollaborationUI
-  ( State
-  , Action(..)
+  ( UIState
+  , SetupPhase(..)
+  , Step(..)
   , initial
   , step
   , event
   , picture
-  , waiting
+  , startWaiting
+  , updatePlayers
   ) where
 
 import CodeWorld.Color
@@ -38,100 +43,148 @@ import qualified Data.Text as T
 import Data.Text (Text)
 import Data.Monoid
 
-data State
-    = MainMenu {
-        time :: Double,
-        mousePos :: Point
-      }
-    | Joining {
-        time :: Double,
-        mousePos :: Point,
-        code :: Text
-      }
-    | Connecting {
-        time :: Double,
-        mousePos :: Point
-      }
-    | Waiting {
-        time :: Double,
-        mousePos :: Point,
-        code :: Text,
-        numPlayers :: Int,
-        present :: Int
-      }
-{-
-    | Disconnected {
-        time :: Double,
-        mousePos :: Point
-      }
--}
+-- | The enumeration type contains all the high-level states that the game UI
+-- can be in. It is used as a type-index to 'UIState' to ensure that the UI
+-- state matches the abstract state.
+--
+-- The possible UI-triggered transitions of this state are described by
+-- 'Step'.
+data SetupPhase = SMain | SConnect | SWait
 
-data Action = Create | Join Text | Cancel
 
-initial :: State
-initial = MainMenu { time = 0, mousePos = (0, 0) }
+-- | Possible steps taken from a given setup phase
+data family Step :: (SetupPhase -> *) -> SetupPhase -> *
+data instance Step f SMain
+    = ContinueMain    (f SMain)
+    | Create          (f SConnect)
+    | Join Text       (f SConnect)
+data instance Step f SConnect
+    = ContinueConnect (f SConnect)
+    | CancelConnect   (f SMain)
+data instance Step f SWait
+    = ContinueWait    (f SWait)
+    | CancelWait      (f SMain)
+
+-- | The UI state, indexed by the 'SetupPhase'
+data UIState (s :: SetupPhase) where
+    MainMenu    :: Double -> Point
+                -> UIState SMain
+    Joining     :: Double -> Point
+                -> Text
+                -> UIState SMain
+    Connecting  :: Double
+                -> Point
+                -> UIState SConnect
+    Waiting     :: Double -> Point
+                -> Text -> {- numPlayers :: -} Int  -> {- present -} Int
+                -> UIState SWait
+
+continueUIState :: UIState s -> Step UIState s
+continueUIState s@(MainMenu   {}) = ContinueMain s
+continueUIState s@(Joining    {}) = ContinueMain s
+continueUIState s@(Connecting {}) = ContinueConnect s
+continueUIState s@(Waiting    {}) = ContinueWait s
+
+
+time :: UIState s -> Double
+time (MainMenu   t _)       = t
+time (Joining    t _ _)     = t
+time (Connecting t _)       = t
+time (Waiting    t _ _ _ _) = t
+
+mousePos :: UIState s -> Point
+mousePos (MainMenu   _ p)       = p
+mousePos (Joining    _ p _)     = p
+mousePos (Connecting _ p)       = p
+mousePos (Waiting    _ p _ _ _) = p
 
 -- Takes an absolute time, not a delta. A bit easier.
-step :: Double -> State -> State
-step t s = s { time = t }
+step :: Double -> UIState s -> UIState s
+step t (MainMenu   _ p)       = MainMenu   t p
+step t (Joining    _ p c)     = Joining    t p c
+step t (Connecting _ p)       = Connecting t p
+step t (Waiting    _ p c n m) = Waiting    t p c n m
 
-waiting :: Int -> Int -> Text ->  State -> State
-waiting n m code s
-  = Waiting { time = time s
-            , mousePos = mousePos s
-            , code = code
-            , numPlayers = n
-            , present = m
-            }
+setMousePos :: Point -> UIState s -> UIState s
+setMousePos p (MainMenu   t _)       = MainMenu   t p
+setMousePos p (Joining    t _ c)     = Joining    t p c
+setMousePos p (Connecting t _)       = Connecting t p
+setMousePos p (Waiting    t _ c n m) = Waiting    t p c n m
 
 
-event :: Event -> State -> (State, Maybe Action)
-event (MouseMovement p) s = (s { mousePos = p }, Nothing)
-event (MousePress LeftButton p) MainMenu{..}
-  | inButton 0 ( 1.5) 8 2 p = (Connecting { .. }, Just Create)
-  | inButton 0 (-1.5) 8 2 p = (Joining { code = "", .. }, Nothing)
-event (MousePress LeftButton p) Joining{..}
-  | inButton 0 (-3) 8 2 p
-  , T.length code == 4    = (Connecting {..}, Just (Join code))
-  | inButton 0 (-3) 8 2 p = (MainMenu {..}, Nothing)
-event (MousePress LeftButton p) Connecting{..}
-  | inButton 0 (-3) 8 2 p = (MainMenu {..}, Just Cancel)
-event (MousePress LeftButton p) Waiting{..}
-  | inButton 0 (-3) 8 2 p = (MainMenu {..}, Just Cancel)
-event (KeyPress k) s@Joining{..}
-  | T.length k == 1, T.length code < 4, isLetter (T.head k)
-  = (s { code = code <> T.toUpper k }, Nothing)
-  | k == "Backspace" && T.length code > 0
-  = (s { code = T.init code }, Nothing)
-event (KeyPress "Esc") Joining{..}
-  = (MainMenu { .. }, Nothing)
-event (KeyPress "Esc") Connecting{..}
-  = (MainMenu { .. }, Just Cancel)
-event (KeyPress "Esc") Waiting{..}
-  = (MainMenu { .. }, Just Cancel)
-event _ s = (s, Nothing)
+initial :: UIState SMain
+initial = MainMenu 0 (0,0)
 
-picture :: State -> Picture
-picture MainMenu{..} = button "New" (dull green) 0 ( 1.5) 8 2 mousePos
-                     & button "Join" (dull green) 0 (-1.5) 8 2 mousePos
-                     & connectScreen "Main Menu" time
+startWaiting :: Text -> UIState a -> UIState SWait
+startWaiting code s = Waiting (time s) (mousePos s) code 0 0
 
-picture Joining{..} = translated 0 2 (text "Enter the game key:")
-                 & letterBoxes white code
-                 & (if T.length code < 4
-                    then button "Cancel" (dull yellow) 0 (-3) 8 2 mousePos
-                    else button "Join" (dull green) 0 (-3) 8 2 mousePos)
-                 & connectScreen "Join Game" time
+updatePlayers :: Int -> Int -> UIState SWait -> UIState SWait
+updatePlayers n m (Waiting time mousePos code _ _)
+                 = Waiting time mousePos code n m
 
-picture Connecting{..} =
-                    --  button "Cancel" (dull yellow) 0 (-3) 8 2 mousePos
-                    connectScreen "Connecting..." time
+-- | Handling a UI event. Can possibly take a step.
+event :: Event -> UIState s -> Step UIState s
+event (MouseMovement p) s = continueUIState (setMousePos p s)
+event e (MainMenu t p)
+  | isCreateClick e       = Create (Connecting t p)
+  | isJoinClick e         = ContinueMain (Joining t p "")
+event (KeyPress k) (Joining t p code)
+  | T.length k == 1 , isLetter (T.head k)
+  , T.length code < 4     = ContinueMain  (Joining t p (code <> T.toUpper k))
+  | k == "Backspace"
+  , T.length code > 0     = ContinueMain  (Joining t p (T.init code))
+event e (Joining t p code)
+  | isConnectClick e
+  , T.length code == 4    = Join code (Connecting t p)
+  | isCancelClick e       = ContinueMain (MainMenu t p)
+event e (Connecting t p)
+  | isCancelClick e       = CancelConnect (MainMenu t p)
+event e (Waiting t p c n m)
+  | isCancelClick e       = CancelWait    (MainMenu t p)
+event _ s                 = continueUIState s
 
-picture Waiting{..} = translated 0 2 (text "Share this key with other players:")
-                    & translated 0 4 (playerDots numPlayers present)
-                    & letterBoxes (gray 0.8) code
-                    & button "Cancel" (dull yellow) 0 (-3) 8 2 mousePos
-                    & connectScreen "Waiting" time
+-- These would make nice pattern synonyms...
+isCreateClick :: Event -> Bool
+isCreateClick (MousePress LeftButton point) = inButton 0 ( 1.5) 8 2 point
+isCreateClick _ = False
+
+isJoinClick :: Event -> Bool
+isJoinClick (MousePress LeftButton point) = inButton 0 (-1.5) 8 2 point
+isJoinClick _ = False
+
+isCancelClick :: Event -> Bool
+isCancelClick (KeyPress "Esc") = True
+isCancelClick (MousePress LeftButton point) = inButton 0 (-3) 8 2 point
+isCancelClick _ = False
+
+isConnectClick :: Event -> Bool
+isConnectClick (MousePress LeftButton point) = inButton 0 (-3) 8 2 point
+isConnectClick _ = False
+
+picture :: UIState s -> Picture
+picture (MainMenu time mousePos)
+    = button "New" (dull green) 0 ( 1.5) 8 2 mousePos
+    & button "Join" (dull green) 0 (-1.5) 8 2 mousePos
+    & connectScreen "Main Menu" time
+
+picture (Joining time mousePos code)
+    = translated 0 2 (text "Enter the game key:")
+    & letterBoxes white code
+    & (if T.length code < 4
+       then button "Cancel" (dull yellow) 0 (-3) 8 2 mousePos
+       else button "Join" (dull green) 0 (-3) 8 2 mousePos)
+    & connectScreen "Join Game" time
+
+picture (Connecting time mousePos)
+    = button "Cancel" (dull yellow) 0 (-3) 8 2 mousePos
+    & connectScreen "Connecting..." time
+
+picture (Waiting time mousePos code numPlayers present)
+    = translated 0 2 (text "Share this key with other players:")
+    & translated 0 4 (playerDots numPlayers present)
+    & letterBoxes (gray 0.8) code
+    & button "Cancel" (dull yellow) 0 (-3) 8 2 mousePos
+    & connectScreen "Waiting" time
 
 letterBoxes :: Color -> Text -> Picture
 letterBoxes color txt = pictures

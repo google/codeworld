@@ -12,6 +12,7 @@
 {-# LANGUAGE RecordWildCards          #-}
 {-# LANGUAGE ScopedTypeVariables      #-}
 {-# LANGUAGE StandaloneDeriving       #-}
+{-# LANGUAGE DataKinds                #-}
 
 {-
   Copyright 2016 The CodeWorld Authors. All rights reserved.
@@ -44,6 +45,7 @@ import           CodeWorld.Event
 import           CodeWorld.Picture
 import           CodeWorld.Prediction
 import           CodeWorld.Message
+import           CodeWorld.CollaborationUI (SetupPhase(..), Step(..), UIState)
 import qualified CodeWorld.CollaborationUI as CUI
 import           Control.Concurrent
 import           Control.Concurrent.MVar
@@ -742,10 +744,11 @@ encodeEvent = show
 decodeEvent :: String -> Maybe (Timestamp, Maybe Event)
 decodeEvent = readMaybe
 
-
 data GameState s
-    = Setup WS.WebSocket GameId PlayerId CUI.State
-    | Running WS.WebSocket GameId Timestamp PlayerId (Future s)
+    = Main       (UIState SMain)
+    | Connecting WS.WebSocket (UIState SConnect)
+    | Waiting    WS.WebSocket GameId PlayerId (UIState SWait)
+    | Running    WS.WebSocket GameId Timestamp PlayerId (Future s)
 
 isRunning :: GameState s -> Bool
 isRunning Running{} = True
@@ -761,8 +764,12 @@ gameRate :: Double
 gameRate = 1/16
 
 gameStep :: (Double -> s -> s) -> Double -> GameState s -> GameState s
-gameStep _    t (Setup ws gid pid s)
-    = Setup ws gid pid (CUI.step t s)
+gameStep _    t (Main s)
+    = Main (CUI.step t s)
+gameStep _    t (Connecting ws s)
+    = Connecting ws (CUI.step t s)
+gameStep _    t (Waiting ws gid pid s)
+    = Waiting ws gid pid (CUI.step t s)
 gameStep step t (Running ws gid tstart pid s)
     = Running ws gid tstart pid (currentTimePasses step gameRate (t - tstart) s)
 
@@ -771,8 +778,10 @@ gameDraw :: (Double -> s -> s)
          -> GameState s
          -> Timestamp
          -> Picture
+gameDraw _    _    (Main s)                   _ = CUI.picture s
+gameDraw _    _    (Connecting _ s)           _ = CUI.picture s
+gameDraw _    _    (Waiting _ _ _ s)          _ = CUI.picture s
 gameDraw step draw (Running _ _ tstart pid s) t = draw pid (currentState step gameRate (t - tstart) s)
-gameDraw _    _    (Setup _ _ _ s)            _ = CUI.picture s
 
 handleServerMessage :: Int
                     -> (StdGen -> s)
@@ -787,11 +796,11 @@ handleServerMessage numPlayers initial stepHandler eventHandler gsm sm = do
         case (sm, gs) of
             (GameAborted,         _) ->
                 return initialGameState
-            (JoinedAs pid gid,    Setup ws _ _  s) ->
-                return (Setup ws gid pid (CUI.waiting 0 0 gid s))
-            (PlayersWaiting m n,  Setup ws gid pid s) ->
-                return (Setup ws gid pid (CUI.waiting n m gid s))
-            (Started,             Setup ws gid pid _) ->
+            (JoinedAs pid gid,    Connecting ws s) ->
+                return (Waiting ws gid pid (CUI.startWaiting gid s))
+            (PlayersWaiting m n,  Waiting ws gid pid s) ->
+                return (Waiting ws gid pid (CUI.updatePlayers n m s))
+            (Started,             Waiting ws gid pid _) ->
                 return (Running ws gid t pid (initFuture (initial (mkStdGen (hash gid))) numPlayers))
             (OutEvent pid eo,     Running ws gid tstart mypid s) ->
                 case decodeEvent eo of
@@ -816,22 +825,29 @@ gameHandle :: Int
 gameHandle numPlayers initial stepHandler eventHandler token gsm event = do
     gs <- takeMVar gsm
     case gs of
-        Setup ws gid pid s -> do
-            let (s', ma) = CUI.event event s
-            case ma of
-                Just CUI.Create -> do
-                    ws <- connectToGameServer (handleServerMessage numPlayers initial stepHandler eventHandler gsm)
-                    sendClientMessage ws (NewGame numPlayers (encode token))
-                    putMVar gsm (Setup ws gid pid s')
-                Just (CUI.Join gid) -> do
-                    ws <- connectToGameServer (handleServerMessage numPlayers initial stepHandler eventHandler gsm)
-                    sendClientMessage ws (JoinGame gid (encode token))
-                    putMVar gsm (Setup ws gid pid s')
-                Just CUI.Cancel -> do
-                    WS.close Nothing Nothing ws
-                    putMVar gsm initialGameState
-                Nothing -> do
-                    putMVar gsm (Setup ws gid pid s')
+        Main s -> case CUI.event event s of
+            ContinueMain s' -> do
+                putMVar gsm (Main s')
+            Create s' -> do
+                ws <- connectToGameServer (handleServerMessage numPlayers initial stepHandler eventHandler gsm)
+                sendClientMessage ws (NewGame numPlayers (encode token))
+                putMVar gsm (Connecting ws s')
+            Join gid s' -> do
+                ws <- connectToGameServer (handleServerMessage numPlayers initial stepHandler eventHandler gsm)
+                sendClientMessage ws (JoinGame gid (encode token))
+                putMVar gsm (Connecting ws s')
+        Connecting ws s -> case CUI.event event s of
+            ContinueConnect s' -> do
+                putMVar gsm (Connecting ws s')
+            CancelConnect s' -> do
+                WS.close Nothing Nothing ws
+                putMVar gsm (Main s')
+        Waiting ws gid pid s -> case CUI.event event s of
+            ContinueWait s' -> do
+                putMVar gsm (Waiting ws gid pid s')
+            CancelWait s' -> do
+                WS.close Nothing Nothing ws
+                putMVar gsm (Main s')
 
         Running ws gid tstart pid f -> do
             t   <- getTime
@@ -891,7 +907,7 @@ sendClientMessage ws msg = WS.send (encodeClientMessage msg) ws
     encodeClientMessage m = Data.JSString.pack (show m)
 
 initialGameState :: GameState s
-initialGameState = Setup (Prelude.error "Not connected yet") "" 0 CUI.initial
+initialGameState = Main CUI.initial
 
 runGame :: GameToken
         -> Int

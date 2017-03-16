@@ -5,6 +5,8 @@
 {-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE TypeFamilies      #-}
 {-# LANGUAGE GADTs             #-}
+{-# LANGUAGE PatternSynonyms   #-}
+{-# LANGUAGE ViewPatterns      #-}
 
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
@@ -122,44 +124,35 @@ updatePlayers :: Int -> Int -> UIState SWait -> UIState SWait
 updatePlayers n m (Waiting time mousePos code _ _)
                  = Waiting time mousePos code n m
 
--- | Handling a UI event. Can possibly take a step.
+-- | Handling a UI event. May change the phase.
 event :: Event -> UIState s -> Step UIState s
 event (MouseMovement p) s = continueUIState (setMousePos p s)
-event e (MainMenu t p)
-  | isCreateClick e       = Create (Connecting t p)
-  | isJoinClick e         = ContinueMain (Joining t p "")
-event (KeyPress k) (Joining t p code)
-  | T.length k == 1 , isLetter (T.head k)
-  , T.length code < 4     = ContinueMain  (Joining t p (code <> T.toUpper k))
-  | k == "Backspace"
-  , T.length code > 0     = ContinueMain  (Joining t p (T.init code))
-event e (Joining t p code)
-  | isConnectClick e
-  , T.length code == 4    = Join code (Connecting t p)
-  | isCancelClick e       = ContinueMain (MainMenu t p)
-event e (Connecting t p)
-  | isCancelClick e       = CancelConnect (MainMenu t p)
-event e (Waiting t p c n m)
-  | isCancelClick e       = CancelWait    (MainMenu t p)
-event _ s                 = continueUIState s
+event CreateClick     (MainMenu t p)                          = Create        (Connecting t p)
+event JoinClick       (MainMenu t p)                          = ContinueMain  (Joining t p "")
+event (LetterPress k) (Joining t p code) | T.length code < 4  = ContinueMain  (Joining t p (code <> k))
+event BackSpace       (Joining t p code) | T.length code > 0  = ContinueMain  (Joining t p (T.init code))
+event ConnectClick    (Joining t p code) | T.length code == 4 = Join code     (Connecting t p)
+event CancelClick     (Joining t p code)                      = ContinueMain  (MainMenu t p)
+event CancelClick     (Connecting t p)                        = CancelConnect (MainMenu t p)
+event CancelClick     (Waiting t p c n m)                     = CancelWait    (MainMenu t p)
+event _               s                                       = continueUIState s
 
--- These would make nice pattern synonyms...
-isCreateClick :: Event -> Bool
-isCreateClick (MousePress LeftButton point) = inButton 0 ( 1.5) 8 2 point
-isCreateClick _ = False
+pattern CreateClick   <- MousePress LeftButton (inButton 0 ( 1.5) 8 2 -> True)
+pattern JoinClick     <- MousePress LeftButton (inButton 0 (-1.5) 8 2 -> True)
+pattern ConnectClick  <- MousePress LeftButton (inButton 0 (-  3) 8 2 -> True)
+pattern LetterPress c <- (isLetterPress -> Just c)
+pattern BackSpace     <- KeyPress "Backspace"
+pattern CancelClick   <- (isCancelClick -> True)
 
-isJoinClick :: Event -> Bool
-isJoinClick (MousePress LeftButton point) = inButton 0 (-1.5) 8 2 point
-isJoinClick _ = False
+isLetterPress :: Event -> Maybe Text
+isLetterPress (KeyPress k) | T.length k == 1, isLetter (T.head k) = Just (T.toUpper k)
+isLetterPress _ = Nothing
 
 isCancelClick :: Event -> Bool
 isCancelClick (KeyPress "Esc") = True
 isCancelClick (MousePress LeftButton point) = inButton 0 (-3) 8 2 point
 isCancelClick _ = False
 
-isConnectClick :: Event -> Bool
-isConnectClick (MousePress LeftButton point) = inButton 0 (-3) 8 2 point
-isConnectClick _ = False
 
 picture :: UIState s -> Picture
 picture (MainMenu time mousePos)

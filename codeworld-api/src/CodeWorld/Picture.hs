@@ -121,11 +121,11 @@ thickRectangle lw w h = thickPolygon lw [
 
 -- | A thin circle, with this radius
 circle :: Double -> Picture
-circle = arc 0 360
+circle = arc 0 (2*pi)
 
 -- | A thick circle, with this line width and radius
 thickCircle :: Double -> Double -> Picture
-thickCircle w = thickArc w 0 360
+thickCircle w = thickArc w 0 (2*pi)
 
 -- | A thin arc, starting and ending at these angles, with this radius
 --
@@ -142,7 +142,7 @@ thickArc w b e r = Arc b e r w
 
 -- | A solid circle, with this radius
 solidCircle :: Double -> Picture
-solidCircle = sector 0 360
+solidCircle = sector 0 (2*pi)
 
 -- | A solid sector of a circle (i.e., a pie slice) starting and ending at these
 -- angles, with this radius

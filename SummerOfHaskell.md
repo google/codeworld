@@ -32,13 +32,13 @@ Idea: Better debugging and editor tooling
 -|
 The editor tooling for CodeWorld could use improvement.  Smaller tasks include expanding auto-complete to include symbols defined in the current program, continuously highlighting syntax errors, adding documentation on hover, and navigation from definitions to uses.  Possible debugging features include better controls for playing animations or simulations in slow-motion or reverse, rewind and replay, pause on event, or breakpoints.  Another promising idea is to use GHC 8 stack trace information to let students click parts of the drawing and jump to the line of code responsible for the shape.
 
-Idea: Better collaboration features in CodeWorld
+Idea: Better collaborative coding features in CodeWorld
 -|
 Students in CodeWorld often share bits of code or work together on projects.  One possible direction is to build features that make this easier.  Parts of the task might be as easy as integrating Mozilla's together.js library to allow collaborative editing.  Letting students build up libraries of functions that are available across students and projects would be interesting.  Creating galleries for groups of students to share and comment on each other's work is also an exciting possibility.
 
-Idea: Improvements to collaborations
+Idea: Improvements to multi-user APIs
 -|
-The newest feature of CodeWorld is the API and relay system for collaborations: multi-user networked programs that on a shared state.  This feature works, and is already being incorporated into curriculum and classes!  But there is room for improvement: switching from WebSockets to WebRTC, more features for the "lobby" that connects players together, a spectator option to let others observe games, better state interpolation, desync detection, and more.  A catalog of projects is at https://github.com/google/codeworld/projects/1
+The newest feature of CodeWorld is the API and relay system for collaborations: multi-user networked programs that work on a shared state.  This feature works, and is already being incorporated into curriculum and classes!  But there is room for improvement: switching from WebSockets to WebRTC, more features for the "lobby" that connects players together, a spectator option to let others observe games, better state interpolation, desync detection, and more.  A catalog of projects is at https://github.com/google/codeworld/projects/1
 
 Idea: CodeWorld web site features to help students and teachers
 -|

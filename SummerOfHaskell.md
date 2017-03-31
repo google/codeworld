@@ -1,9 +1,9 @@
 ## Help CodeWorld by participating in Summer of Haskell 2017
 
 CodeWorld will be participating in Summer of Haskell again 2017!  Please spread the word to college
-students you know.  This is an opportunity to earn money over the summer, while contributing to a
+students you know.  This is an opportunity to earn a stipend over the summer, while contributing to a
 project that is open source, working to improve educational opportunities for children, and involves
-some cool technology like Haskell, GHCJS, and the possibility for a lot more.
+some cool technology like Haskell, GHCJS, and more.
 
 ## Writing a Proposal
 
@@ -50,8 +50,11 @@ Error messages remain a mystery to most CodeWorld students.  There is already a 
 
 Idea: Providing for customized CodeWorld libraries.
 -|
-CodeWorld is a great stand-alone environment, but in some cases, teachers may want to integrate it into other curricula.  A physics class might want to use a graphical version of [BeamStack](https://hackage.haskell.org/package/learn-physics-0.6.0.2/docs/Physics-Learn-BeamStack.html), or let students experiment with a port of [hamilton](https://hackage.haskell.org/package/hamilton).  A biology class might start with a library for population simulations.  A student could propose a system for allowing teachers or designers to create customized CodeWorld configurations with a different set of base libraries.  Supporting project-based education integrated into other classes would be very useful.
+CodeWorld is a great stand-alone environment, but in some cases, teachers may want to integrate it into other curricula.  A physics class might want to use a graphical version of [BeamStack](https://hackage.haskell.org/package/learn-physics-0.6.0.2/docs/Physics-Learn-BeamStack.html), or let students experiment with a port of [hamilton](https://hackage.haskell.org/package/hamilton).  A biology class might start with a library for population simulations.  A good proposal here would be to build a framework for teachers or designers to create customized CodeWorld configurations, with different sets of base libraries, language features, etc.
 
 Idea: Finishing the CodeWorld Blocks UI
 -|
 There are a large number of outstanding bugs and feature requests in CodeWorld Blocks. A student could propose reviving this project with a new approach, or just a solid summer of big fixes, design changes, and new features.  However, note that this would be a high risk project, which may not yield benefits unless it's done extremely well.  A catalog of outstanding work is at https://github.com/google/codeworld/projects/2
+
+Your proposal doesn't necessarily have to be chosen from this list!  However, it helps if you are
+proposing something consistent with the community's needs and goals.

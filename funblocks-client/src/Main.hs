@@ -23,9 +23,13 @@ module Main (
 
 import GHCJS.DOM
        (currentDocument, )
-import GHCJS.DOM.Document (getBody, getElementById, Document(..))
-import GHCJS.DOM.Element (setInnerHTML, click, Element)
-import GHCJS.DOM.EventM (on )
+import GHCJS.DOM.NonElementParentNode
+import GHCJS.DOM.GlobalEventHandlers
+import GHCJS.DOM.Document (getBody, Document(..))
+import GHCJS.DOM.Element (setInnerHTML, Element)
+import GHCJS.DOM.HTMLButtonElement
+import GHCJS.DOM.EventM (on)
+import GHCJS.DOM.Types
 import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
@@ -107,9 +111,8 @@ btnRunClick ws = do
 
 hookEvent elementName evType func = do
   Just doc <- currentDocument
-  Just ele <- getElementById doc elementName
-  on ele evType func
-
+  Just btn <- getElementById doc elementName
+  on (uncheckedCastTo HTMLButtonElement btn) evType func
 
 help = do
       js_injectReadOnly (JStr.pack "blocklyDiv")

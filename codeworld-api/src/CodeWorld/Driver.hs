@@ -79,6 +79,8 @@ import qualified Data.JSString
 import           Data.Time.Clock
 import           Data.Word
 import           GHCJS.DOM
+import           GHCJS.DOM.NonElementParentNode
+import           GHCJS.DOM.GlobalEventHandlers
 import           GHCJS.DOM.Window as Window
 import           GHCJS.DOM.Document
 import qualified GHCJS.DOM.ClientRect as ClientRect
@@ -385,7 +387,7 @@ setupScreenContext canvas rect = do
 
 setCanvasSize :: Element -> Element -> IO ()
 setCanvasSize target canvas = do
-    Just rect <- getBoundingClientRect canvas
+    rect <- getBoundingClientRect canvas
     cx <- ClientRect.getWidth rect
     cy <- ClientRect.getHeight rect
     setAttribute target ("width" :: JSString) (show (round cx))
@@ -396,12 +398,12 @@ display pic = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    on window Window.resize $ liftIO (draw canvas)
+    on window resize $ liftIO (draw canvas)
     draw canvas
   where
     draw canvas = do
         setCanvasSize canvas canvas
-        Just rect <- getBoundingClientRect canvas
+        rect <- getBoundingClientRect canvas
         ctx <- setupScreenContext canvas rect
         drawFrame ctx pic
         Canvas.restore ctx
@@ -585,7 +587,7 @@ drawingOf pic = display pic `catch` reportError
 --------------------------------------------------------------------------------
 -- Common event handling and core interaction code
 
-keyCodeToText :: Int -> Text
+keyCodeToText :: Word -> Text
 keyCodeToText n = case n of
     _ | n >= 47  && n <= 90  -> fromAscii n
     _ | n >= 96  && n <= 105 -> fromNum (n - 96)
@@ -636,7 +638,7 @@ keyCodeToText n = case n of
     221                      -> "]"
     222                      -> "'"
     _                        -> "Unknown:" <> fromNum n
-  where fromAscii n = singleton (chr n)
+  where fromAscii n = singleton (chr (fromIntegral n))
         fromNum   n = pack (show (fromIntegral n))
 
 isUniversallyConstant :: (a -> s -> s) -> s -> IO Bool
@@ -688,7 +690,7 @@ getMousePos :: IsMouseEvent e => Element -> EventM w e Point
 getMousePos canvas = do
     (ix, iy) <- mouseClientXY
     liftIO $ do
-        Just rect <- getBoundingClientRect canvas
+        rect <- getBoundingClientRect canvas
         cx <- ClientRect.getLeft rect
         cy <- ClientRect.getTop rect
         cw <- ClientRect.getWidth rect
@@ -705,35 +707,35 @@ fromButtonNum _ = Nothing
 onEvents :: Element -> (Event -> IO ()) -> IO ()
 onEvents canvas handler = do
     Just window <- currentWindow
-    on window Window.keyDown $ do
+    on window keyDown $ do
         code <- uiKeyCode
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
             liftIO $ handler (KeyPress keyName)
             preventDefault
             stopPropagation
-    on window Window.keyUp $ do
+    on window keyUp $ do
         code <- uiKeyCode
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
             liftIO $ handler (KeyRelease keyName)
             preventDefault
             stopPropagation
-    on window Window.mouseDown $ do
+    on window mouseDown $ do
         button <- mouseButton
         case fromButtonNum button of
             Nothing  -> return ()
             Just btn -> do
                 pos <- getMousePos canvas
                 liftIO $ handler (MousePress btn pos)
-    on window Window.mouseUp $ do
+    on window mouseUp $ do
         button <- mouseButton
         case fromButtonNum button of
             Nothing  -> return ()
             Just btn -> do
                 pos <- getMousePos canvas
                 liftIO $ handler (MouseRelease btn pos)
-    on window Window.mouseMove $ do
+    on window mouseMove $ do
         pos <- getMousePos canvas
         liftIO $ handler (MouseMovement pos)
     return ()
@@ -924,7 +926,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
 
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-    on window Window.resize $ do
+    on window resize $ do
         liftIO $ setCanvasSize canvas canvas
         liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
 
@@ -939,13 +941,13 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
             let pic = gameDraw stepHandler drawHandler gs t0
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
-                Just rect <- getBoundingClientRect canvas
+                rect <- getBoundingClientRect canvas
                 buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
                                              rect
                 drawFrame buffer pic
                 Canvas.restore buffer
 
-                Just rect <- getBoundingClientRect canvas
+                rect <- getBoundingClientRect canvas
                 cw <- ClientRect.getWidth rect
                 ch <- ClientRect.getHeight rect
                 js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
@@ -969,7 +971,7 @@ run initial stepHandler eventHandler drawHandler = do
 
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-    on window Window.resize $ do
+    on window resize $ do
         liftIO $ setCanvasSize canvas canvas
         liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
 
@@ -986,13 +988,13 @@ run initial stepHandler eventHandler drawHandler = do
             pic <- drawHandler <$> readMVar currentState
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
-                Just rect <- getBoundingClientRect canvas
+                rect <- getBoundingClientRect canvas
                 buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
                                              rect
                 drawFrame buffer pic
                 Canvas.restore buffer
 
-                Just rect <- getBoundingClientRect canvas
+                rect <- getBoundingClientRect canvas
                 cw <- ClientRect.getWidth rect
                 ch <- ClientRect.getHeight rect
                 js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
@@ -1042,10 +1044,10 @@ toEvent :: (Int, Int) -> Canvas.Event -> Maybe Event
 toEvent rect Canvas.Event {..}
     | eType == "keydown"
     , Just code <- eWhich
-    = Just $ KeyPress (keyCodeToText code)
+    = Just $ KeyPress (keyCodeToText (fromIntegral code))
     | eType == "keyup"
     , Just code <- eWhich
-    = Just $ KeyRelease (keyCodeToText code)
+    = Just $ KeyRelease (keyCodeToText (fromIntegral code))
     | eType == "mousedown"
     , Just button <- eWhich >>= fromButtonNum
     , Just pos <- getMousePos rect <$> ePageXY

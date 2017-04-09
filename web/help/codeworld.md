@@ -518,7 +518,7 @@ and the computer can always figure that out on its own.  But if you do
 say what your types are, two things happen:
 
 * Other people reading your program can understand what's going on.
-* When you make a mistakem the computer can be more helpful explaining
+* When you make a mistake the computer can be more helpful explaining
   what's wrong.
 
 ### List Types ###

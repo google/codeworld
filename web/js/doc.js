@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+window.env = parent;
 (function() {
     function linkCodeBlocks(linkable=true) {
         codeworldKeywords = {};
@@ -30,8 +31,8 @@
                     if (text.indexOf("main ") != -1 && linkable) {
                         pre.classList.add('clickable');
                         pre.onclick = function() {
-                            if (parent && parent.loadSample) {
-                                parent.loadSample(text);
+                            if (env && env.loadSample) {
+                                env.loadSample(text);
                             }
                         }
                     }
@@ -122,11 +123,32 @@
     request.open('GET', path, true);
     request.onreadystatechange = function() {
         if (request.readyState == 4) {
+          var help = document.getElementById('help');
 
+          var popout = document.createElement('a');
+          popout.innerHTML = '(Open the Help in a New Tab)';
+          popout.target = '_blank';
+          popout.href = document.location.href;
+          popout.onclick = function (e) {
+              var tab = open(this.href);
+              tab.addEventListener("load", function () {
+                  tab.env = parent;
+                  if (parent.sweetAlert) {
+                      parent.sweetAlert.close();
+                  }
+              });
+              e.preventDefault();
+          }
+          if (parent && parent !== window) {
+              help.appendChild(popout);
+          }
+
+          var content = document.createElement('div');
           var text = request.responseText;
           var converter = new Markdown.Converter();
           var html = converter.makeHtml(text);
-          document.getElementById('help').innerHTML = html;
+          content.innerHTML = html;
+          help.appendChild(content);
 
           if(path.includes('blocks')){
             linkFunBlocks();

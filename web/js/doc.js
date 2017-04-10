@@ -118,6 +118,28 @@ window.env = parent;
             document.body.insertBefore(contents, document.body.firstChild);
         }
     }
+
+    function addPopout(help) {
+      var popdiv = document.createElement('div');
+      popdiv.style = 'text-align: right';
+      var popout = document.createElement('a');
+      popout.innerHTML = '<i class="mdi mdi-18px mdi-open-in-new"></i>&nbsp;Open the Help in a New Tab';
+      popout.target = '_blank';
+      popout.href = document.location.href;
+      popout.onclick = function (e) {
+        var tab = open(this.href);
+        tab.addEventListener("load", function () {
+          tab.env = parent;
+          if (parent.sweetAlert) {
+            parent.sweetAlert.close();
+          }
+        });
+        e.preventDefault();
+      }
+      popdiv.appendChild(popout);
+      help.appendChild(popdiv);
+    }
+
     var path = window.location.search.slice(1);
     var request = new XMLHttpRequest();
     request.open('GET', path, true);
@@ -125,22 +147,8 @@ window.env = parent;
         if (request.readyState == 4) {
           var help = document.getElementById('help');
 
-          var popout = document.createElement('a');
-          popout.innerHTML = '(Open the Help in a New Tab)';
-          popout.target = '_blank';
-          popout.href = document.location.href;
-          popout.onclick = function (e) {
-              var tab = open(this.href);
-              tab.addEventListener("load", function () {
-                  tab.env = parent;
-                  if (parent.sweetAlert) {
-                      parent.sweetAlert.close();
-                  }
-              });
-              e.preventDefault();
-          }
           if (parent && parent !== window) {
-              help.appendChild(popout);
+            addPopout(help);
           }
 
           var content = document.createElement('div');

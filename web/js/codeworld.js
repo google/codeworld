@@ -54,9 +54,14 @@ function init() {
             "Shift-Space": "autocomplete",
             "Tab": "indentMore",
             "Shift-Tab": "indentLess",
-            "Ctrl-Enter": compile
+            "Ctrl-Enter": compile,
+            "Ctrl-Up": changeFontSize(1),
+            "Ctrl-Down": changeFontSize(-1)
         }
     });
+    window.codeworldEditor.getWrapperElement().style.fontWeight = "normal";
+    window.codeworldEditor.getWrapperElement().style.fontSize = "14px";
+    window.codeworldEditor.refresh();
 
     CodeMirror.commands.save = function(cm) {
         saveProject();
@@ -212,6 +217,16 @@ function updateUI() {
     }
 
     document.title = title + " - CodeWorld"
+}
+
+function changeFontSize(incr) {
+    return function() {
+        var editorFontSize = parseInt(window.codeworldEditor.getWrapperElement().style.fontSize);
+        editorFontSize += incr;
+        if(editorFontSize < 8) editorFontSize = 8;
+        window.codeworldEditor.getWrapperElement().style.fontSize = editorFontSize + "px";
+        window.codeworldEditor.refresh();
+    }
 }
 
 function help(doc) {

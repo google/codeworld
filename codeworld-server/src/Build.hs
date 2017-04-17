@@ -96,6 +96,7 @@ runCompiler dir micros args = do
 
 standardBuildArgs :: [String]
 standardBuildArgs = [
+    "-dedupe",
     "-Wall",
     "-O2",
     "-fno-warn-deprecated-flags",
@@ -133,6 +134,7 @@ standardBuildArgs = [
 
 haskellCompatibleBuildArgs :: [String]
 haskellCompatibleBuildArgs = [
+    "-dedupe",
     "-Wall",
     "-O2",
     "-package", "codeworld-api"

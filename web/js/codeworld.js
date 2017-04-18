@@ -59,8 +59,6 @@ function init() {
             "Ctrl-Down": changeFontSize(-1)
         }
     });
-    window.codeworldEditor.getWrapperElement().style.fontWeight = "normal";
-    window.codeworldEditor.getWrapperElement().style.fontSize = "14px";
     window.codeworldEditor.refresh();
 
     CodeMirror.commands.save = function(cm) {
@@ -221,10 +219,17 @@ function updateUI() {
 
 function changeFontSize(incr) {
     return function() {
-        var editorFontSize = parseInt(window.codeworldEditor.getWrapperElement().style.fontSize);
-        editorFontSize += incr;
-        if(editorFontSize < 8) editorFontSize = 8;
-        window.codeworldEditor.getWrapperElement().style.fontSize = editorFontSize + "px";
+        var elem = window.codeworldEditor.getWrapperElement();
+        var fontParts = window.getComputedStyle(elem)['font-size'].match(/^([0-9]+)(.*)$/);
+        var fontSize = 12;
+        var fontUnit = 'px';
+        if (fontParts.length >= 3) {
+          fontSize = parseInt(fontParts[1]);
+          fontUnit = fontParts[2];
+        }
+        fontSize += incr;
+        if(fontSize < 8) fontSize = 8;
+        elem.style.fontSize = fontSize + fontUnit;
         window.codeworldEditor.refresh();
     }
 }

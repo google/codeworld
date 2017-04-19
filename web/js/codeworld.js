@@ -248,6 +248,23 @@ function help(doc) {
     });
 }
 
+function editorHelp(doc) {
+    var helpText = "<h3>Editor Shortcuts</h3>" +
+        "<div id='keyboard-shortcuts'><table><tbody>" +
+        "<tr><td>Ctrl + Space </td><td> Autocomplete</td></tr>" +
+        "<tr><td>Ctrl + Up </td><td> Zoom In </td></tr>" +
+        "<tr><td>Ctrl + Down </td><td>  Zoom Out </td></tr>" +
+        "</tbody></table></div>";
+    sweetAlert({
+        title: '',
+        text: helpText,
+        html: true,
+        allowEscapeKey: true,
+        allowOutsideClick: true,
+        showConfirmButton: false,
+    });
+}
+
 function isEditorClean() {
     var doc = window.codeworldEditor.getDoc();
 

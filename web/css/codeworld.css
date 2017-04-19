@@ -88,6 +88,20 @@ body {
   margin: 0px;
 }
 
+#keyboard-shortcuts {
+  text-align: center;
+}
+
+#keyboard-shortcuts table {
+  border-collapse: collapse;
+  display: inline-block;
+}
+
+#keyboard-shortcuts table tbody tr td {
+  border: 1px solid black;
+  padding: 4px;
+}
+
 #source {
   position: relative;
 }

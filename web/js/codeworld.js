@@ -251,9 +251,32 @@ function help(doc) {
 function editorHelp(doc) {
     var helpText = "<h3>Editor Shortcuts</h3>" +
         "<div id='keyboard-shortcuts'><table><tbody>" +
-        "<tr><td>Ctrl + Space </td><td> Autocomplete</td></tr>" +
+        "<tr><td>Ctrl + Space / Shift + Space </td><td> Autocomplete</td></tr>" +
         "<tr><td>Ctrl + Up </td><td> Zoom In </td></tr>" +
         "<tr><td>Ctrl + Down </td><td>  Zoom Out </td></tr>" +
+        "<tr><td>Ctrl + A </td><td>  Select All </td></tr>" +
+        "<tr><td>Ctrl + Home </td><td>  Go to Start</td></tr>" +
+        "<tr><td>Ctrl + End </td><td>  Go to End </td></tr>" +
+        "<tr><td>Alt + Left </td><td>  Go to start of line</td></tr>" +
+        "<tr><td>Alt + Right </td><td>  Go to end of line</td></tr>" +
+        "<tr><td>Ctrl + D </td><td>  Delete Line </td></tr>" +
+        "<tr><td>Ctrl + Left </td><td>  Go one word Left</td></tr>" +
+        "<tr><td>Ctrl + Right </td><td>  Go one word Right </td></tr>" +
+        "<tr><td>Ctrl + Backspace </td><td>  Delete previous word</td></tr>" +
+        "<tr><td>Ctrl + Delete </td><td>  Delete next word</td></tr>" +
+        "<tr><td>Ctrl + F </td><td>  Search </td></tr>" +
+        "<tr><td>Ctrl + G </td><td>  Find next occurence </td></tr>" +
+        "<tr><td>Ctrl + Shift + G </td><td>  Find previous occurence </td></tr>" +
+        "<tr><td>Ctrl + Shift + F </td><td>  Replace </td></tr>" +
+        "<tr><td>Ctrl + Shift + R </td><td>  Replace All </td></tr>" +
+        "<tr><td>Ctrl + S </td><td> Save </td></tr>" +
+        "<tr><td>Ctrl + Z </td><td> Undo </td></tr>" +
+        "<tr><td>Ctrl + Shift + Z / Ctrl + Y </td><td> Redo </td></tr>" +
+        "<tr><td>Ctrl + U </td><td> Undo Selection </td></tr>" +
+        "<tr><td>Ctrl + Shift +  U / Alt + U </td><td> Redo Selection </td></tr>" +
+        "<tr><td>Tab / Ctrl + ] </td><td> Indent </td></tr>" +
+        "<tr><td>Shift + Tab / Ctrl + [ </td><td> Un-indent </td></tr>" +
+        "<tr><td>Ctrl + I </td><td> Reformat (Haskell Mode Only) </td></tr>" +
         "</tbody></table></div>";
     sweetAlert({
         title: '',

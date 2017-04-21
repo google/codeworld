@@ -43,8 +43,6 @@ module CodeWorld.Driver (
 import           CodeWorld.Color
 import           CodeWorld.Event
 import           CodeWorld.Picture
-import           CodeWorld.Prediction
-import           CodeWorld.Message
 import           CodeWorld.CollaborationUI (SetupPhase(..), Step(..), UIState)
 import qualified CodeWorld.CollaborationUI as CUI
 import           Control.Concurrent
@@ -72,6 +70,8 @@ import           System.Random
 
 #ifdef ghcjs_HOST_OS
 
+import           CodeWorld.Prediction
+import           CodeWorld.Message
 import           Data.Hashable
 import           Data.IORef
 import           Data.JSString.Text

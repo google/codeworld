@@ -18,9 +18,12 @@ Some hallmarks of a strong proposal are:
 * A well-thought-out clearly described goal that offers benefits for existing CodeWorld users.
 * A project plan, with enough detail to set reasonable standards of success throughout the summer.
 
+A good introduction to CodeWorld, to get you started, is in the BayHac talk at
+https://www.youtube.com/watch?v=7CGuI9HcfqQ
+
 A typical proposal is in the neighborhood of a couple pages.  A paragraph is definitely too short.
-There is no such thing as too much information; however, if you take ten pages to get to the good
-part, it's possible reviewers will give up before reading that far.
+There is no such thing as too much information; however, if you write ten pages, it's likely
+reviewers will give up before reading that far.
 
 ## Project Ideas
 

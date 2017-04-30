@@ -41,7 +41,7 @@ import "base" Prelude (IO)
 import Internal.Exports
 
 import Internal.Num
-import Internal.Prelude
+import Internal.Prelude hiding (randomsFrom)
 import Internal.Text hiding (fromCWText, toCWText)
 
 import Internal.Color

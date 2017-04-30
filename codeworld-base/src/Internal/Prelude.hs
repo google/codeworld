@@ -84,8 +84,8 @@ module Internal.Prelude (
 
     -- Random numbers
     fromRandomSeed,
-    shuffled,
-    randomsFrom
+    randomsFrom,
+    shuffled
     ) where
 
 import qualified "base" Prelude as P

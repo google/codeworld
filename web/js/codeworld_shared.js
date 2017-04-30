@@ -153,13 +153,11 @@ function registerStandardHints(successFunc)
         "line",
         "negate",
         "pictureOf",
+        "randomsFrom",
         "thickLine",
         "toCWText",
         "toDouble",
         "toInt",
-
-        // Experimental feature that shouldn't be discoverable yet.
-        "gameOf",
     ];
 
     lines.forEach(function(line) {

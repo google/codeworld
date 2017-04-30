@@ -129,8 +129,8 @@ fi
 
 # Install GHC, since it's required for GHCJS.
 
-GHC_DIR=8.0.1
-GHC_VERSION=8.0.1
+GHC_DIR=8.0.2
+GHC_VERSION=8.0.2
 
 run $DOWNLOADS               wget http://downloads.haskell.org/~ghc/$GHC_DIR/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
 run $BUILD                   tar xf $DOWNLOADS/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
@@ -140,11 +140,11 @@ run $BUILD                   rm -rf ghc-$GHC_VERSION
 
 # Install all the dependencies for cabal
 
-run $DOWNLOADS                     wget https://www.haskell.org/cabal/release/cabal-install-1.24.0.0/cabal-install-1.24.0.0.tar.gz
-run $BUILD                         tar xf $DOWNLOADS/cabal-install-1.24.0.0.tar.gz
-run $BUILD/cabal-install-1.24.0.0  ./bootstrap.sh
+run $DOWNLOADS                     wget https://www.haskell.org/cabal/release/cabal-install-1.24.0.2/cabal-install-1.24.0.2.tar.gz
+run $BUILD                         tar xf $DOWNLOADS/cabal-install-1.24.0.2.tar.gz
+run $BUILD/cabal-install-1.24.0.2  ./bootstrap.sh
 run .                              cabal update
-run $BUILD                         rm -rf cabal-install-1.24.0.0
+run $BUILD                         rm -rf cabal-install-1.24.0.2
 
 # Fetch the prerequisites for GHCJS.
 
@@ -158,7 +158,7 @@ run $BUILD  rm -rf ghcjs
 
 # install node (necessary for ghcjs-boot)
 
-NODEJS_VERSION=v4.2.3
+NODEJS_VERSION=v7.9.0
 
 run $DOWNLOADS                   wget https://nodejs.org/dist/$NODEJS_VERSION/node-$NODEJS_VERSION.tar.gz
 run $BUILD                       tar xzf $DOWNLOADS/node-$NODEJS_VERSION.tar.gz
@@ -182,7 +182,7 @@ run $BUILD  rm -rf downloads
 # Install and build CodeMirror editor.
 
 run $BUILD            git clone https://github.com/codemirror/CodeMirror.git
-run $BUILD/CodeMirror git checkout tags/5.23.0
+run $BUILD/CodeMirror git checkout tags/5.25.2
 run $BUILD/CodeMirror npm install
 run $BUILD/CodeMirror npm install -s uglify-js
 

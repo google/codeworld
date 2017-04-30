@@ -1,4 +1,23 @@
-Tips for using this guide:
+![](/codeworld.png)
+
+Welcome to CodeWorld!  CodeWorld is an educational computer programming environment.
+By using a simple mathematical model for geometric shapes and transformations, you
+can create drawings, animations, and even single-player and multi-player video games!
+The programming language used is a variation of [Haskell](http://haskell.org), but
+you can think of it as just talking to the computer using mathematics.
+
+This is the CodeWorld Guide, which will get you started.  Click outside the guide
+to start programming.  The *Guide* button at the bottom of the screen will get you
+back here.
+
+Overview
+========
+
+To get an idea what you can do in CodeWorld, you might want to check out the
+[CodeWorld Gallery](/gallery.html), with examples of projects built by students.
+
+Tips for using this guide
+-------------------------
 
 * If you feel the urge to play around with something and try new things, please
   do!  It won't do much good to just read.  You have to try things to learn.

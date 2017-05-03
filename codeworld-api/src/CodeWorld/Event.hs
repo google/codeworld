@@ -27,7 +27,7 @@ import Data.Text (Text)
 
     Key events describe the key as 'Text'.  Most keys are represented
     by a single character text string, with the capital letter or other
-    symbol from the key.  Keys that don't correspond to a single
+    symbol from the key.  Keys that don't correspond to a single 
     character use longer names from the following list.  Keep in mind
     that not all of these keys appear on all keyboards.
 

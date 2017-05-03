@@ -39,7 +39,8 @@ function init() {
         },
         lineNumbers: true,
         autofocus: true,
-        matchBrackets: true,
+        matchBrackets: false,
+        highlightParams: true,
         styleActiveLine: true,
         showTrailingSpace: true,
         indentWithTabs: false,
@@ -101,7 +102,6 @@ function init() {
         });
     } else {
         setCode('');
-        if (!signedIn()) help();
     }
 }
 
@@ -455,9 +455,6 @@ function compile() {
 function signinCallback(result) {
     discoverProjects();
     updateUI();
-    if (signedIn()) {
-        sweetAlert.close();
-    }
 }
 
 function discoverProjects(){

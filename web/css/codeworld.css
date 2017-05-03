@@ -264,3 +264,19 @@ body {
   opacity: 1.0;
   cursor: pointer !important;
 }
+
+.matching-bracket {
+  font-weight: bolder;
+}
+
+.non-matching-bracket {
+}
+
+.function-highlight {
+  border-bottom: solid ; border-color: #888888;
+}
+
+.function-name-highlight {
+  border-bottom: solid ; border-color: #888888;
+  font-style: italic;
+}

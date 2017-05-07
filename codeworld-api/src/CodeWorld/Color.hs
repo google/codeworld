@@ -16,6 +16,8 @@
 
 module CodeWorld.Color where
 
+import Data.Functor (fmap)
+
 data Color = RGBA !Double !Double !Double !Double deriving (Show, Eq)
 type Colour = Color
 
@@ -92,6 +94,18 @@ translucent (RGBA r g b a) = RGBA r g b (a/2)
 gray, grey :: Double -> Color
 gray = grey
 grey k = RGBA k k k 1
+
+-- Produce an infinite list of colors:
+-- https://github.com/google/codeworld/issues/436
+-- The list loops through the HSL spectrum with fixed
+-- saturation and lightness:
+-- https://www.w3schools.com/colors/colors_hsl.asp
+-- A 'speed' parameter allows the user to loop through the colors
+-- in fewer indices.
+rainbow :: Double -> [Color]
+rainbow speed = let
+  coefficients = fmap (\i -> speed * i * pi / 50.0) [0..]
+  in fmap (\h -> fromHSL h 0.75 0.5) coefficients
 
 hue :: Color -> Double
 hue (RGBA r g b a)

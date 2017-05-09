@@ -101,8 +101,8 @@ gray, grey :: Number -> Color
 gray = fromCWColor . CW.gray . toDouble
 grey = gray
 
-rainbow :: Number -> [Color]
-rainbow speed = fmap fromCWColor (CW.rainbow (toDouble speed))
+colors :: [Color]
+colors = fmap fromCWColor CW.colors
 
 hue, saturation, luminosity :: Color -> Number
 hue = (180 *) . (/ pi) . fromDouble . CW.hue . toCWColor

@@ -54,7 +54,7 @@ module Internal.Exports (
     duller,
     dull,
     translucent,
-    rainbow,
+    colors,
     hue,
     saturation,
     luminosity,

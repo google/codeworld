@@ -91,6 +91,16 @@ function registerStandardHints(successFunc)
         var cur = cm.getCursor();
         var token = cm.getTokenAt(cur);
         var to = CodeMirror.Pos(cur.line, token.end);
+
+	//To check for the case of insertion in between two parameters
+        r = new RegExp("^\\s+$");
+	// If string is completely made of spaces
+        if (r.test(token.string)) {
+            token.string = token.string.substr(0, cur.ch - token.start);
+            token.end = cur.ch;
+            to = CodeMirror.Pos(cur.line, token.end);
+        }
+
         if (token.string && /\w/.test(token.string[token.string.length - 1])) {
             var term = token.string,
                 from = CodeMirror.Pos(cur.line, token.start);

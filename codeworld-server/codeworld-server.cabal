@@ -24,7 +24,7 @@ Executable codeworld-server
     data-default,
     directory,
     filepath,
-    hindent >= 5,
+    hindent >= 5 && < 5.2.3,
     http-conduit,
     memory,
     mtl,

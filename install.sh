@@ -42,14 +42,14 @@ then
   run . sudo yum install -y gcc
   run . sudo yum install -y gmp-devel
 
+  # Needed for GHCJS
+  run . curl --silent --location https://rpm.nodesource.com/setup_7.x | run . sudo bash -
+  run . sudo yum install -y nodejs
+
   # Needed for ghcjs-boot --dev
   run . sudo yum install -y patch
   run . sudo yum install -y autoconf
   run . sudo yum install -y automake
-
-  # Needed for nodejs
-  run . sudo yum install -y gcc-c++
-  run . sudo yum install -y openssl-devel
 elif type apt-get > /dev/null 2> /dev/null
 then
   echo Detected 'apt-get': Installing packages from there.
@@ -71,17 +71,17 @@ then
   run . sudo apt-get install -y gcc
   run . sudo apt-get install -y libgmp-dev
 
+  # Needed for GHCJS
+  run . curl -sL https://deb.nodesource.com/setup_7.x | run . sudo -E bash -
+  run . sudo apt-get install -y nodejs
+
   # Needed for ghcjs-boot --dev
   run . sudo apt-get install -y patch
   run . sudo apt-get install -y autoconf
   run . sudo apt-get install -y automake
   run . sudo apt-get install -y libtinfo-dev
 
-  # Needed for nodejs
-  run . sudo apt-get install -y g++
-  run . sudo apt-get install -y openssl
-
-  # Needed for PhantomJS
+  # Needed for PhantomJS, which is needed for CodeMirror
   run . sudo apt-get install -y bzip2
 elif type zypper > /dev/null 2> /dev/null
 then
@@ -104,14 +104,13 @@ then
   run . sudo zypper -n install gcc
   run . sudo zypper -n install gmp-devel
 
+  # Needed for GHCJS
+  run . sudo zypper -n install nodejs6
+
   # Needed for ghcjs-boot --dev
   run . sudo zypper -n install patch
   run . sudo zypper -n install autoconf
   run . sudo zypper -n install automake
-
-  # Needed for nodejs
-  run . sudo zypper -n install gcc-c++
-  run . sudo zypper -n install openssl
 else
   echo "WARNING: Could not find package manager."
   echo "Make sure necessary packages are installed."
@@ -156,26 +155,9 @@ run $BUILD  git clone --branch ghc-8.0 --single-branch https://github.com/ghcjs/
 run $BUILD  cabal_install ./ghcjs
 run $BUILD  rm -rf ghcjs
 
-# install node (necessary for ghcjs-boot)
-
-NODEJS_VERSION=v7.9.0
-
-run $DOWNLOADS                   wget https://nodejs.org/dist/$NODEJS_VERSION/node-$NODEJS_VERSION.tar.gz
-run $BUILD                       tar xzf $DOWNLOADS/node-$NODEJS_VERSION.tar.gz
-run $BUILD/node-$NODEJS_VERSION  ./configure --prefix=$BUILD
-run $BUILD/node-$NODEJS_VERSION  make
-run $BUILD/node-$NODEJS_VERSION  make install
-run $BUILD                       rm -rf node-$NODEJS_VERSION
-
 # Bootstrap ghcjs
 
 run . ghcjs-boot --dev --ghcjs-boot-dev-branch ghc-8.0 --shims-dev-branch ghc-8.0 --no-prof --no-haddock
-
-# Install ghcjs-dom from hackage.
-
-run $BUILD  git clone --single-branch https://github.com/ghcjs/ghcjs-dom
-run $BUILD  cabal_install --ghcjs ./ghcjs-dom/ghcjs-dom ./ghcjs-dom/ghcjs-dom-jsffi
-run $BUILD  rm -rf ghcjs-dom
 
 run $BUILD  rm -rf downloads
 

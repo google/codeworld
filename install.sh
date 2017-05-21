@@ -156,9 +156,6 @@ run .  cabal_install happy alex
 run $BUILD  git clone --branch ghc-8.0 --single-branch https://github.com/ghcjs/ghcjs
 run $BUILD  cabal_install ./ghcjs
 run $BUILD  rm -rf ghcjs
-
-# Bootstrap ghcjs
-
 run . ghcjs-boot --dev --ghcjs-boot-dev-branch ghc-8.0 --shims-dev-branch ghc-8.0 --no-prof --no-haddock
 
 run $BUILD  rm -rf downloads
@@ -178,3 +175,6 @@ function build_codemirror {
 }
 
 run $BUILD/CodeMirror build_codemirror
+
+# Go ahead and run a first build, which installs more local packages.
+./build.sh

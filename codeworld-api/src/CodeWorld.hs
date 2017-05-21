@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 {-
   Copyright 2016 The CodeWorld Authors. All rights reserved.
 
@@ -23,6 +25,10 @@ module CodeWorld (
     collaborationOf,
     unsafeCollaborationOf,
 
+#ifdef REFLEX
+    ReactiveInteraction,
+    reactiveOf,
+#endif
     -- * Pictures
     Picture,
     TextStyle(..),

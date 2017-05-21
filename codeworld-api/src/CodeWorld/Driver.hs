@@ -13,6 +13,7 @@
 {-# LANGUAGE ScopedTypeVariables      #-}
 {-# LANGUAGE StandaloneDeriving       #-}
 {-# LANGUAGE DataKinds                #-}
+{-# LANGUAGE RankNTypes               #-}
 
 {-
   Copyright 2016 The CodeWorld Authors. All rights reserved.
@@ -37,6 +38,10 @@ module CodeWorld.Driver (
     interactionOf,
     collaborationOf,
     unsafeCollaborationOf,
+#ifdef REFLEX
+    ReactiveInteraction,
+    reactiveOf,
+#endif
     trace
     ) where
 
@@ -67,6 +72,17 @@ import           System.Environment
 import           System.Mem.StableName
 import           Text.Read
 import           System.Random
+
+#ifdef REFLEX
+
+import Data.IORef
+import Control.Monad.Fix
+import qualified Reflex as R
+import qualified Reflex.Host.Class as R (newEventWithTriggerRef, runHostFrame, fireEvents)
+import Data.Dependent.Sum (DSum ((:=>)))
+import Data.Functor.Identity
+
+#endif
 
 #ifdef ghcjs_HOST_OS
 
@@ -150,6 +166,21 @@ unsafeCollaborationOf :: Int
                       -> (Int -> Event -> world -> world)
                       -> (Int -> world -> Picture)
                       -> IO ()
+
+#ifdef REFLEX
+-- | Alternatively, interactions can be specified in the form of a functional
+-- reactive program, which reacts on UI and time events, and provides a
+-- continuous 'Picture'.
+type ReactiveInteraction t m =
+      (R.Reflex t, R.MonadHold t m, MonadFix m)
+      => R.Event t Event
+      -> R.Event t Double
+      -> m (R.Behavior t Picture)
+
+-- | Any such FRP program can be rendered using 'reactiveOf'
+reactiveOf :: (forall t m. ReactiveInteraction t m) -> IO ()
+#endif
+
 
 -- | Prints a debug message to the CodeWorld console when a value is forced.
 -- This is equivalent to the similarly named function in `Debug.Trace`, except
@@ -1033,10 +1064,64 @@ run initial stepHandler eventHandler drawHandler = do
     initialStateName <- makeStableName $! initial
     go t0 nullFrame initialStateName True
 
---------------------------------------------------------------------------------
--- Stand-Alone event handling and core interaction code
+
+#ifdef REFLEX
+reactiveOf guest = do
+    Just window <- currentWindow
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
+    offscreenCanvas <- Canvas.create 500 500
+
+    setCanvasSize canvas canvas
+    setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+    on window resize $ do
+        liftIO $ setCanvasSize canvas canvas
+        liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+
+    (eEvent, eEventTriggerRef) <- R.runSpiderHost $ R.newEventWithTriggerRef
+    (eTime,  eTimeTriggerRef) <- R.runSpiderHost $ R.newEventWithTriggerRef
+
+    b <- R.runSpiderHost $ R.runHostFrame (guest eEvent eTime)
+
+    onEvents canvas $ \event -> do
+        readIORef eEventTriggerRef >>= mapM_ (\trig ->
+            R.runSpiderHost $ R.fireEvents [trig :=> Identity event])
+
+    screen <- js_getCodeWorldContext (canvasFromElement canvas)
+
+
+    let go t0 lastFrame = do
+            pic <- R.runSpiderHost (R.runHostFrame (R.sample b))
+            picFrame <- makeStableName $! pic
+            when (picFrame /= lastFrame) $ do
+                rect <- getBoundingClientRect canvas
+                buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
+                                             rect
+                drawFrame buffer pic
+                Canvas.restore buffer
+
+                rect <- getBoundingClientRect canvas
+                cw <- ClientRect.getWidth rect
+                ch <- ClientRect.getHeight rect
+                js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
+                                   0 0 (round cw) (round ch)
+
+            t1 <- nextFrame
+            let dt = min (t1 - t0) 0.25
+            readIORef eTimeTriggerRef >>= mapM_ (\trig ->
+                    R.runSpiderHost $ R.fireEvents [trig :=> Identity dt])
+
+            go t1 picFrame
+
+    t0 <- getTime
+    nullFrame <- makeStableName undefined
+    go t0 nullFrame
+#endif
 
 #else
+
+--------------------------------------------------------------------------------
+-- Stand-Alone event handling and core interaction code
 
 fromButtonNum :: Int -> Maybe MouseButton
 fromButtonNum 1 = Just LeftButton
@@ -1129,6 +1214,47 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
 
 getDeployHash :: IO Text
 getDeployHash = error "game API unimplemented in stand-alone interface mode"
+
+
+#ifdef REFLEX
+reactiveOf guest = runBlankCanvas $ \context -> do
+    (eEvent, eEventTriggerRef) <- R.runSpiderHost $ R.newEventWithTriggerRef
+    (eTime,  eTimeTriggerRef) <- R.runSpiderHost $ R.newEventWithTriggerRef
+
+    let rect = (Canvas.width context, Canvas.height context)
+    offscreenCanvas <- Canvas.send context $ Canvas.newCanvas rect
+
+    b <- R.runSpiderHost $ R.runHostFrame (guest eEvent eTime)
+
+    onEvents context rect $ \event -> do
+        readIORef eEventTriggerRef >>= mapM_ (\trig ->
+            R.runSpiderHost $ R.fireEvents [trig :=> Identity event])
+        return ()
+
+    let go t0 lastFrame = do
+            pic <- R.runSpiderHost $ R.runHostFrame (R.sample b)
+            picFrame <- makeStableName $! pic
+            when (picFrame /= lastFrame) $
+                Canvas.send context $ do
+                    Canvas.with offscreenCanvas $
+                        Canvas.saveRestore $ do
+                            setupScreenContext rect
+                            drawPicture initialDS pic
+                    Canvas.drawImageAt (offscreenCanvas, 0, 0)
+
+            tn <- getCurrentTime
+            threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
+            t1 <- getCurrentTime
+            let dt = realToFrac (t1 `diffUTCTime` t0)
+            readIORef eTimeTriggerRef >>= mapM_ (\trig ->
+              R.runSpiderHost $ R.fireEvents [trig :=> Identity dt])
+
+            go t1 picFrame
+
+    t0 <- getCurrentTime
+    nullFrame <- makeStableName undefined
+    go t0 nullFrame
+#endif
 
 runGame :: GameToken
         -> Int

@@ -35,6 +35,8 @@ then
   run . sudo yum update -y
 
   run . sudo yum install -y git
+  run . sudo yum install -y wget
+  run . sudo yum install -y bzip2
   run . sudo yum install -y zlib-devel
   run . sudo yum install -y ncurses-devel
 
@@ -60,6 +62,8 @@ then
   run . sudo apt-get update -y
 
   run . sudo apt-get install -y git
+  run . sudo apt-get install -y wget
+  run . sudo apt-get install -y bzip2
   run . sudo apt-get install -y xz-utils
   run . sudo apt-get install -y psmisc
 
@@ -80,9 +84,6 @@ then
   run . sudo apt-get install -y autoconf
   run . sudo apt-get install -y automake
   run . sudo apt-get install -y libtinfo-dev
-
-  # Needed for PhantomJS, which is needed for CodeMirror
-  run . sudo apt-get install -y bzip2
 elif type zypper > /dev/null 2> /dev/null
 then
   echo Detected 'zypper': Installing packages from there.
@@ -93,6 +94,7 @@ then
   run . sudo zypper -n refresh
 
   run . sudo zypper -n install git
+  run . sudo zypper -n install wget
   run . sudo zypper -n install bzip2
   run . sudo zypper -n install psmisc
 

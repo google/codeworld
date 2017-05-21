@@ -143,7 +143,7 @@ run $BUILD                   rm -rf ghc-$GHC_VERSION
 
 run $DOWNLOADS                     wget https://www.haskell.org/cabal/release/cabal-install-1.24.0.2/cabal-install-1.24.0.2.tar.gz
 run $BUILD                         tar xf $DOWNLOADS/cabal-install-1.24.0.2.tar.gz
-run $BUILD/cabal-install-1.24.0.2  ./bootstrap.sh
+EXTRA_CONFIGURE_OPTS="" run $BUILD/cabal-install-1.24.0.2 ./bootstrap.sh
 run .                              cabal update
 run $BUILD                         rm -rf cabal-install-1.24.0.2
 

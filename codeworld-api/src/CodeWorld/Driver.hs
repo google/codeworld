@@ -38,10 +38,8 @@ module CodeWorld.Driver (
     interactionOf,
     collaborationOf,
     unsafeCollaborationOf,
-#ifdef REFLEX
     ReactiveInteraction,
     reactiveOf,
-#endif
     trace
     ) where
 
@@ -73,16 +71,13 @@ import           System.Mem.StableName
 import           Text.Read
 import           System.Random
 
-#ifdef REFLEX
-
-import Data.IORef
-import Control.Monad.Fix
+-- Stuff for reflex
+import           Data.IORef
+import           Control.Monad.Fix
+import           Data.Functor.Identity
+import           Data.Dependent.Sum (DSum ((:=>)))
 import qualified Reflex as R
 import qualified Reflex.Host.Class as R (newEventWithTriggerRef, runHostFrame, fireEvents)
-import Data.Dependent.Sum (DSum ((:=>)))
-import Data.Functor.Identity
-
-#endif
 
 #ifdef ghcjs_HOST_OS
 
@@ -167,7 +162,6 @@ unsafeCollaborationOf :: Int
                       -> (Int -> world -> Picture)
                       -> IO ()
 
-#ifdef REFLEX
 -- | Alternatively, interactions can be specified in the form of a functional
 -- reactive program, which reacts on UI and time events, and provides a
 -- continuous 'Picture'.
@@ -179,8 +173,6 @@ type ReactiveInteraction t m =
 
 -- | Any such FRP program can be rendered using 'reactiveOf'
 reactiveOf :: (forall t m. ReactiveInteraction t m) -> IO ()
-#endif
-
 
 -- | Prints a debug message to the CodeWorld console when a value is forced.
 -- This is equivalent to the similarly named function in `Debug.Trace`, except
@@ -1065,7 +1057,6 @@ run initial stepHandler eventHandler drawHandler = do
     go t0 nullFrame initialStateName True
 
 
-#ifdef REFLEX
 reactiveOf guest = do
     Just window <- currentWindow
     Just doc <- currentDocument
@@ -1116,7 +1107,6 @@ reactiveOf guest = do
     t0 <- getTime
     nullFrame <- makeStableName undefined
     go t0 nullFrame
-#endif
 
 #else
 
@@ -1216,7 +1206,6 @@ getDeployHash :: IO Text
 getDeployHash = error "game API unimplemented in stand-alone interface mode"
 
 
-#ifdef REFLEX
 reactiveOf guest = runBlankCanvas $ \context -> do
     (eEvent, eEventTriggerRef) <- R.runSpiderHost $ R.newEventWithTriggerRef
     (eTime,  eTimeTriggerRef) <- R.runSpiderHost $ R.newEventWithTriggerRef
@@ -1254,7 +1243,6 @@ reactiveOf guest = runBlankCanvas $ \context -> do
     t0 <- getCurrentTime
     nullFrame <- makeStableName undefined
     go t0 nullFrame
-#endif
 
 runGame :: GameToken
         -> Int

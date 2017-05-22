@@ -18,10 +18,6 @@ Description:
   package to provide a webpage consisting of just a panel locally. This way, the same
   program that runs on the CodeWorld server can also be run locally.
 
-flag reflex
-    description: Include reactiveOf, the interface to the FRP library reflex
-    default: True
-
 Library
   Hs-source-dirs:      src
   Exposed-modules:     CodeWorld
@@ -38,13 +34,9 @@ Library
                        time                  >= 1.6.0 && < 1.7,
                        random                >= 1.1 && < 1.2,
                        cereal                >= 0.5.4 && < 0.6,
-                       cereal-text           >= 0.1.0 && < 0.2
-
-  if flag(reflex)
-    Build-depends:
-                       reflex,
-                       dependent-sum
-    cpp-options:       -DREFLEX
+                       cereal-text           >= 0.1.0 && < 0.2,
+                       reflex                >= 0.5   && < 0.6,
+                       dependent-sum         >= 0.3   && < 0.4
 
   if impl(ghcjs)
     Build-depends:

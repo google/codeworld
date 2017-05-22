@@ -71,9 +71,8 @@ Debian, Ubuntu, RedHat, and CentOS.  The step by step instructions are as follow
 
 0. Read the caveats, explained below.
 1. Change to the root directory of the project.
-2. Run `./install.sh` to install GHC, GHCJS, and required libraries.
-3. Run `./build.sh` to build CodeWorld itself.
-4. Run `./run.sh` to start the server.
+2. Run `./install.sh` to install GHC, GHCJS, and required libraries.`./build.sh` is called from here to build CodeWorld itself.
+3. Run `./run.sh` to start the server.
 
 You can now access the CodeWorld system at http://localhost:8080.
 

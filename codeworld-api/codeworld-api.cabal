@@ -26,6 +26,7 @@ Library
                        CodeWorld.Event,
                        CodeWorld.Driver
                        CodeWorld.CollaborationUI
+                       Reflex.SimpleHost
   Build-depends:       base                  >= 4.8 && < 5,
                        containers            >= 0.5.7 && < 0.6,
                        hashable              >= 1.2.4 && < 1.3,

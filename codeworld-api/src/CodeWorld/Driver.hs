@@ -54,6 +54,7 @@ import           Control.Concurrent.Chan
 import           Control.Exception
 import           Control.Monad
 import           Control.Monad.Trans (liftIO)
+import           Control.Monad.Fix (MonadFix)
 import           Data.Char (chr)
 import           Data.List (zip4)
 import           Data.Maybe (fromMaybe, mapMaybe)
@@ -71,13 +72,8 @@ import           System.Mem.StableName
 import           Text.Read
 import           System.Random
 
--- Stuff for reflex
-import           Data.IORef
-import           Control.Monad.Fix
-import           Data.Functor.Identity
-import           Data.Dependent.Sum (DSum ((:=>)))
 import qualified Reflex as R
-import qualified Reflex.Host.Class as R (newEventWithTriggerRef, runHostFrame, fireEvents)
+import           Reflex.SimpleHost
 
 #ifdef ghcjs_HOST_OS
 
@@ -1069,20 +1065,15 @@ reactiveOf guest = do
         liftIO $ setCanvasSize canvas canvas
         liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
 
-    (eEvent, eEventTriggerRef) <- R.runSpiderHost $ R.newEventWithTriggerRef
-    (eTime,  eTimeTriggerRef) <- R.runSpiderHost $ R.newEventWithTriggerRef
+    (eEvent, eTime, bPicture) <- simpleReflexHost (uncurry guest)
 
-    b <- R.runSpiderHost $ R.runHostFrame (guest eEvent eTime)
-
-    onEvents canvas $ \event -> do
-        readIORef eEventTriggerRef >>= mapM_ (\trig ->
-            R.runSpiderHost $ R.fireEvents [trig :=> Identity event])
+    onEvents canvas eEvent
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
 
     let go t0 lastFrame = do
-            pic <- R.runSpiderHost (R.runHostFrame (R.sample b))
+            pic <- bPicture
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
                 rect <- getBoundingClientRect canvas
@@ -1099,9 +1090,7 @@ reactiveOf guest = do
 
             t1 <- nextFrame
             let dt = min (t1 - t0) 0.25
-            readIORef eTimeTriggerRef >>= mapM_ (\trig ->
-                    R.runSpiderHost $ R.fireEvents [trig :=> Identity dt])
-
+            eTime dt
             go t1 picFrame
 
     t0 <- getTime
@@ -1207,21 +1196,15 @@ getDeployHash = error "game API unimplemented in stand-alone interface mode"
 
 
 reactiveOf guest = runBlankCanvas $ \context -> do
-    (eEvent, eEventTriggerRef) <- R.runSpiderHost $ R.newEventWithTriggerRef
-    (eTime,  eTimeTriggerRef) <- R.runSpiderHost $ R.newEventWithTriggerRef
-
     let rect = (Canvas.width context, Canvas.height context)
     offscreenCanvas <- Canvas.send context $ Canvas.newCanvas rect
 
-    b <- R.runSpiderHost $ R.runHostFrame (guest eEvent eTime)
+    (eEvent, eTime, bPicture) <- simpleReflexHost (uncurry guest)
 
-    onEvents context rect $ \event -> do
-        readIORef eEventTriggerRef >>= mapM_ (\trig ->
-            R.runSpiderHost $ R.fireEvents [trig :=> Identity event])
-        return ()
+    onEvents context rect eEvent
 
     let go t0 lastFrame = do
-            pic <- R.runSpiderHost $ R.runHostFrame (R.sample b)
+            pic <- bPicture
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $
                 Canvas.send context $ do
@@ -1235,9 +1218,7 @@ reactiveOf guest = runBlankCanvas $ \context -> do
             threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
             t1 <- getCurrentTime
             let dt = realToFrac (t1 `diffUTCTime` t0)
-            readIORef eTimeTriggerRef >>= mapM_ (\trig ->
-              R.runSpiderHost $ R.fireEvents [trig :=> Identity dt])
-
+            eTime dt
             go t1 picFrame
 
     t0 <- getCurrentTime

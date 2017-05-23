@@ -25,7 +25,6 @@ import                           Internal.Num
 import                           Internal.Truth
 import qualified "base"          Prelude as P
 import           "base"          Prelude ((.))
-import Data.Functor (fmap)
 
 newtype Color = RGBA(Number, Number, Number, Number) deriving P.Eq
 type Colour = Color
@@ -101,8 +100,8 @@ gray, grey :: Number -> Color
 gray = fromCWColor . CW.gray . toDouble
 grey = gray
 
-colors :: [Color]
-colors = fmap fromCWColor CW.colors
+assortedColors :: [Color]
+assortedColors = P.map fromCWColor CW.assortedColors
 
 hue, saturation, luminosity :: Color -> Number
 hue = (180 *) . (/ pi) . fromDouble . CW.hue . toCWColor

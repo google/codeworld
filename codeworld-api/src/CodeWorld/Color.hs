@@ -16,9 +16,11 @@
 
 module CodeWorld.Color where
 
-import Data.Functor (fmap)
 import Data.List (unfoldr)
 import Data.Fixed (mod')
+
+import System.Random (mkStdGen)
+import System.Random.Shuffle (shuffle')
 
 data Color = RGBA !Double !Double !Double !Double deriving (Show, Eq)
 type Colour = Color
@@ -97,29 +99,17 @@ gray, grey :: Double -> Color
 gray = grey
 grey k = RGBA k k k 1
 
+-- | An infinite list of colors.
 
--- Produce an infinite list of colors:
--- https://github.com/google/codeworld/issues/436
--- The list loops through the HSL spectrum with fixed
--- saturation and lightness:
--- https://www.w3schools.com/colors/colors_hsl.asp
--- http://stackoverflow.com/a/7728626/1007926
+assortedColors :: [Color]
+assortedColors = red : green : blue : more
+  where more = [ fromHSL hue 0.75 0.5
+                 | denom <- doublesOf 6
+                 , numer <- shuffleSeed denom [ 1, 3 .. denom ]
+                 , let hue = fromIntegral numer * 2 * pi / fromIntegral denom ]
+        doublesOf n = n : doublesOf (2 * n)
+        shuffleSeed k xs = shuffle' xs (length xs) (mkStdGen k)
 
-colorHues :: [Double]
-colorHues = let
-  start = 0.0
-  end = 2*pi
-  foldF :: (Double, Double) -> Maybe (Double, (Double, Double))
-  foldF (level, index) = let
-    pow2 = 2.0 ** (level - 1.0)
-    result = (end - start) * index / pow2
-    index' = mod' (index + pi/8) pow2
-    level' = if (index' == 1.0) then (level+1) else level
-    in Just (result, (level', index'))
-  in unfoldr foldF (1.0, 1.0)
-
-colors :: [Color]
-colors = fmap (\h -> fromHSL h 0.75 0.5) colorHues
 
 hue :: Color -> Double
 hue (RGBA r g b a)

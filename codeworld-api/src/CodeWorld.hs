@@ -102,6 +102,7 @@ module CodeWorld (
     duller,
     dull,
     translucent,
+    assortedColors,
     hue,
     saturation,
     luminosity,

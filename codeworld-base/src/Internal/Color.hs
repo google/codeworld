@@ -100,6 +100,9 @@ gray, grey :: Number -> Color
 gray = fromCWColor . CW.gray . toDouble
 grey = gray
 
+assortedColors :: [Color]
+assortedColors = P.map fromCWColor CW.assortedColors
+
 hue, saturation, luminosity :: Color -> Number
 hue = (180 *) . (/ pi) . fromDouble . CW.hue . toCWColor
 saturation = fromDouble . CW.saturation . toCWColor

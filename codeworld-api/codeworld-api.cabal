@@ -34,6 +34,7 @@ Library
                        mtl                   >= 2.2.1 && < 2.3,
                        time                  >= 1.6.0 && < 1.7,
                        random                >= 1.1 && < 1.2,
+                       random-shuffle        >= 0.0.4 && < 0.1,
                        cereal                >= 0.5.4 && < 0.6,
                        cereal-text           >= 0.1.0 && < 0.2,
                        reflex                >= 0.5   && < 0.6,

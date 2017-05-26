@@ -167,12 +167,14 @@ length = fromInt . P.length
 
 internalAt :: HasCallStack => [a] -> Number -> a
 internalAt xs n
-  | n < 0     = tooSmall
-  | otherwise = P.foldr index tooLarge xs n
+  | not (isInteger n) = nonInt
+  | n < 0             = tooSmall
+  | otherwise         = P.foldr index tooLarge xs n
   where index x r 0 = x
         index x r k = r (k-1)
         tooSmall = P.error "Negative list index is not allowed."
         tooLarge = P.error "List index is too large."
+        nonInt   = P.error "Non-integer list index is not allowed."
 
 -- | Gives the member of a list at a given index.
 -- Indices start at 0.

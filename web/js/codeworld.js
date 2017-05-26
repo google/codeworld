@@ -41,7 +41,7 @@ function init() {
         autofocus: true,
         matchBrackets: window.buildMode !== 'codeworld',
         highlightParams: window.buildMode === 'codeworld',
-        styleActiveLine: true,
+        styleActiveLine: !WURFL || !WURFL.is_mobile,
         showTrailingSpace: true,
         indentWithTabs: false,
         autoClearEmptyLines: true,

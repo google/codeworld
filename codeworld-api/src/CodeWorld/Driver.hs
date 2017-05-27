@@ -76,7 +76,6 @@ import           Data.Hashable
 import           Data.IORef
 import           Data.JSString.Text
 import qualified Data.JSString
-import           Data.Time.Clock
 import           Data.Word
 import           GHCJS.DOM
 import           GHCJS.DOM.NonElementParentNode

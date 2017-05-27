@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The CodeWorld Authors. All rights reserved.
+ * Copyright 2017 The CodeWorld Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ function init() {
         autofocus: true,
         matchBrackets: window.buildMode !== 'codeworld',
         highlightParams: window.buildMode === 'codeworld',
-        styleActiveLine: true,
+        styleActiveLine: !WURFL || !WURFL.is_mobile,
         showTrailingSpace: true,
         indentWithTabs: false,
         autoClearEmptyLines: true,

@@ -111,6 +111,7 @@ standardBuildArgs = [
     "-XEmptyDataDecls",
     "-XExistentialQuantification",
     "-XForeignFunctionInterface",
+    "-XGADTs",
     "-XJavaScriptFFI",
     "-XKindSignatures",
     "-XLiberalTypeSynonyms",

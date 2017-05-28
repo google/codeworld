@@ -36,5 +36,5 @@ function run {
 }
 
 function cabal_install {
-  cabal install --global --prefix=$BUILD $@
+  cabal install --force-reinstalls --global --prefix=$BUILD $@
 }

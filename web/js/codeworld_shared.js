@@ -284,7 +284,7 @@ function addToMessage(msg) {
             .replace(/[ ]*but its type .* has only .*\n/g, '')
             .replace(/A data constructor of that name is in scope; did you mean DataKinds\?/g,
                 'That name refers to a value, not a type.')
-            .replace(/type constructor or class/g, 'type constructor')
+            .replace(/type constructor or class/g, 'type')
             .replace(/Illegal tuple section: use TupleSections/g,
                 'This tuple is missing a value, or has an extra comma.')
             .replace(/in string\/character literal/g, 'in text literal')

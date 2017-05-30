@@ -67,7 +67,6 @@ function registerStandardHints(successFunc)
     // Add hint highlighting
     var hints = [
         createHint("main :: Program", 0, 4),
-        createHint("program :: Program", 0, 7),
         createHint("--  single line comment", 0, 2, 'hint-keyword'),
         createHint("{-  start a multi-line comment", 0, 2, 'hint-keyword'),
         createHint("-}  end a multi-line comment", 0, 2, 'hint-keyword'),
@@ -141,10 +140,8 @@ function registerStandardHints(successFunc)
     }
     lines = lines.slice(startLine, endLine);
 
-    // Special case for "main" and "program", since they are morally
-    // built-in names.
+    // Special case for main, since it's morally a built-in name.
     codeworldKeywords['main'] = 'builtin';
-    codeworldKeywords['program'] = 'builtin';
 
     lines = lines.sort().filter(function(item, pos, array) {
         return !pos || item != array[pos - 1];

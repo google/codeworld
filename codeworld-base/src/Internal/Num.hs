@@ -409,7 +409,7 @@ atan2 (Number a, Number b) = fromRadians (fromDouble (P.atan2 a b))
 acos :: HasCallStack => Number -> Number
 acos (Number x)
   | x P.< -1 P.|| x P.> 1 = withFrozenCallStack
-      (P.error "The asin function is only defined for numbers from -1 to 1.")
+      (P.error "The acos function is only defined for numbers from -1 to 1.")
   | otherwise = fromRadians (fromDouble (P.acos x))
 
 {-| Separates a number into its whole and fractional parts.

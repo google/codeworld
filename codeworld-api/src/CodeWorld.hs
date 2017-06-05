@@ -62,6 +62,8 @@ module CodeWorld (
     codeWorldLogo,
     Point,
     Vector,
+    vectorLength,
+    vectorDirection,
     vectorSum,
     vectorDifference,
     scaledVector,

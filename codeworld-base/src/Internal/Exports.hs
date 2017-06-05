@@ -63,6 +63,8 @@ module Internal.Exports (
     -- * Pictures
     Point,
     Vector,
+    vectorLength,
+    vectorDirection,
     vectorSum,
     vectorDifference,
     scaledVector,

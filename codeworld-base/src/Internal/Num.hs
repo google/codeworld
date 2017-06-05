@@ -402,6 +402,8 @@ atan = fromRadians . fromDouble . P.atan . toDouble
 atan2 :: (Number, Number) -> Number
 atan2 (Number a, Number b) = fromRadians (fromDouble (P.atan2 a b))
 
+{-# WARNING atan2 "Please use vectorDirection instead of atan2." #-}
+
 {-| Gives the inverse cosine of a value, in degrees.
 
   This is the unique angle between 0 and 180 that has the input as its cosine.

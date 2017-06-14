@@ -22,6 +22,7 @@ module Build where
 import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as C
 import           System.Directory
 import           System.FilePath
 import           System.IO
@@ -64,7 +65,8 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
 
 filterOutput :: ByteString -> IO (Maybe ByteString)
 filterOutput output = do 
-    return  (Just output)    
+    let asd = subRegex (mkRegex "'") (C.unpack output) ""
+    return  (Just $ C.pack asd)    
 
 userCompileMicros :: Int
 userCompileMicros = 15 * 1000000

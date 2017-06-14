@@ -52,13 +52,18 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
         success <- runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
-                B.writeFile (buildRootDir mode </> resultFile programId) output
+                Just filteredOutput <- filterOutput output
+                B.writeFile (buildRootDir mode </> resultFile programId) ( filteredOutput)
                 let target = tmpdir </> "program.jsexe" </> "all.js"
                 hasTarget <- doesFileExist target
                 when hasTarget $
                     copyFile target (buildRootDir mode </> targetFile programId)
                 return hasTarget
         return success
+
+filterOutput :: ByteString -> IO (Maybe ByteString)
+filterOutput output = do 
+    return  (Just "Hello")    
 
 userCompileMicros :: Int
 userCompileMicros = 15 * 1000000

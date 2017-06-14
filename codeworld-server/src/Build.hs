@@ -32,6 +32,7 @@ import           Text.Regex.TDFA
 import           Text.Regex
 
 import Util
+import Regex
 
 compileIfNeeded :: BuildMode -> ProgramId -> IO Bool
 compileIfNeeded mode programId = do
@@ -63,12 +64,6 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
                 return hasTarget
         return success
 
-filterOutput :: ByteString -> IO (Maybe ByteString)
-filterOutput output = do 
-    let asd  = subRegex (mkRegex "\226\8364\162")   (C.unpack output) "asd"
-    let asd1 = subRegex (mkRegex "\226\8364\732")   asd  "asd"
-    let asd2 = subRegex (mkRegex "\226\8364\8482")  asd1 "asd"
-    return  (Just $ C.pack asd2)    
 
 userCompileMicros :: Int
 userCompileMicros = 15 * 1000000

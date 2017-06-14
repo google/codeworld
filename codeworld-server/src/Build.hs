@@ -28,6 +28,7 @@ import           System.IO
 import           System.IO.Temp (withSystemTempDirectory)
 import           System.Process
 import           Text.Regex.TDFA
+import           Text.Regex
 
 import Util
 
@@ -53,7 +54,7 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
             Nothing -> return False
             Just output -> do
                 Just filteredOutput <- filterOutput output
-                B.writeFile (buildRootDir mode </> resultFile programId) ( filteredOutput)
+                B.writeFile (buildRootDir mode </> resultFile programId) filteredOutput
                 let target = tmpdir </> "program.jsexe" </> "all.js"
                 hasTarget <- doesFileExist target
                 when hasTarget $
@@ -63,7 +64,7 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
 
 filterOutput :: ByteString -> IO (Maybe ByteString)
 filterOutput output = do 
-    return  (Just "Hello")    
+    return  (Just output)    
 
 userCompileMicros :: Int
 userCompileMicros = 15 * 1000000

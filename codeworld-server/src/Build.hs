@@ -55,7 +55,7 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
         success <- runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
-                Just filteredOutput <- filterOutput output
+                let Just filteredOutput = filterOutput output
                 B.writeFile (buildRootDir mode </> resultFile programId) filteredOutput
                 let target = tmpdir </> "program.jsexe" </> "all.js"
                 hasTarget <- doesFileExist target

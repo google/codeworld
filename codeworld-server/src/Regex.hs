@@ -37,8 +37,38 @@ import Util
 
 filterOutput :: ByteString -> Maybe ByteString
 filterOutput output =  
-    let out  = subRegex (mkRegex "\226\8364\162")   (C.unpack output) ""
-        out1 = subRegex (mkRegex "\226\8364\732")   out               ""
-        out2 = subRegex (mkRegex "\226\8364\8482")  out1              ""
-        out3 = subRegex (mkRegex "'")               out2              ""
-    in  (Just  (C.pack out3))    
+    let out   = subRegex (mkRegex "\226\8364\162")   (C.unpack output) ""
+        out1  = subRegex (mkRegex "\226\8364\732")   out               ""
+        out2  = subRegex (mkRegex "\226\8364\8482")  out1              ""
+        out3  = subRegex (mkRegex "'")               out2              ""
+        out4  = subRegex (mkRegex "IO action main")  out3              "variable main"
+        out5  = subRegex (mkRegex "module Main")     out4              "your program"
+        out6  = subRegex (mkRegex "main:Main")       out5              "your program"
+        out7  = subRegex (mkRegex "Couldn't match expected type Text\\s*with actual type GHC.Types.Char") 
+                out6 "Text requires double quotes, rather than single."
+        out8  = subRegex (mkRegex "base-[0-9.]*:GHC\\.Stack\\.Types\\.HasCallStack => ") 
+                out7 ""
+        out9  = subRegex (mkRegex "GHC\\.Types\\.Char") out8 ""
+        out10 = subRegex (mkRegex "codeworld-base[-.:_A-Za-z0-9]*") out9 "the standard library"
+        out11 = subRegex (mkRegex "Main\\.")         out10             ""
+        out12 = subRegex (mkRegex "main :: t")       out11             "main program"
+        out13 = subRegex (mkRegex "Prelude\\.")      out12             ""
+        out14 = subRegex (mkRegex "\\bBool\\b")      out13             "Truth"
+        out15 = subRegex (mkRegex "IO \\(\\)")       out14             "Program"
+        out16 = subRegex (mkRegex "IO [a-z][a-zA-Z0-9_]*") out15       "Program"
+        out17 = subRegex (mkRegex "\\bBool\\b")      out16             "Truth"
+        out18 = subRegex (mkRegex "[ ]*Perhaps you intended to use TemplateHaskell\n") out17 ""
+        out19 = subRegex (mkRegex "imported from [^)\n]*") out18       "defined in the standard library"
+        out20 = subRegex (mkRegex "the first argument")    out19       "the parameter(s)"
+        out21 = subRegex (mkRegex "[ ]*The function [a-zA-Z0-9_]* is applied to [a-z0-9]* arguments,\n") 
+                out20 ""
+        out22 = subRegex (mkRegex "[ ]*but its type .* has only .*\n") out21 ""
+        out23 = subRegex (mkRegex "A data constructor of that name is in scope; did you mean DataKinds\\?") 
+                out22 "That name refers to a value, not a type."
+        out24 = subRegex (mkRegex "type constructor or class") out23   "type"
+        out25 = subRegex (mkRegex "Illegal tuple section: use TupleSections") 
+                out24 "This tuple is missing a value, or has an extra comma."
+        out26 = subRegex (mkRegex "Use -v to see a list of the files searched for\\.") out25 ""
+        out27 = subRegex (mkRegex "\n\\s+\n")        out26             "\n"
+     
+    in  (Just  (C.pack out27))    

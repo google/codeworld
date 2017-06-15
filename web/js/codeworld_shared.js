@@ -253,46 +253,46 @@ function registerStandardHints(successFunc)
 function addToMessage(msg) {
     if (window.buildMode == 'codeworld') {
         msg = msg
-            .replace(/\u2018/g, '')
-            .replace(/\u2019/g, '')
-            .replace(/ \[-W[a-z-]*\]/g, '')
-            .replace(/IO action main/g, 'variable main')
-            .replace(/module Main/g, 'your program')
-            .replace(/main\:Main/g, 'your program')
+            .replace(/\u2018/g, '') //Done
+            .replace(/\u2019/g, '') //Done
+            .replace(/ \[-W[a-z-]*\]/g, '') //Have to check
+            .replace(/IO action main/g, 'variable main') //Done
+            .replace(/module Main/g, 'your program') // Done
+            .replace(/main\:Main/g, 'your program') //Done
             .replace(/Couldn't match expected type Text\s*with actual type GHC.Types.Char/g,
-                     'Text requires double quotes, rather than single.')
-            .replace(/base-[0-9.]*:GHC\.Stack\.Types\.HasCallStack => /g, '')
-            .replace(/When checking that:\s*[^\n]*\s*is more polymorphic than:\s*[^\n]*(\n\s*)?/g, '')
-            .replace(/\[GHC\.Types\.Char\] -> /g, '')
-            .replace(/base(-[0-9.]*)?\:(.|\n)*?->( |\n)*/g, '')
-            .replace(/integer-gmp(-[0-9\.]*)?:(.|\n)*?->( |\n)*/g, '')
-            .replace(/GHC\.[A-Za-z.]*(\s|\n)*->( |\n)*/g, '')
-            .replace(/at src\/[A-Za-z0-9/.:]* /g, '')
-            .replace(/GHC\.Types\.Char/g, '')
-            .replace(/codeworld-base[-.:_A-Za-z0-9]*/g, 'the standard library')
-            .replace(/Main\./g, '')
-            .replace(/main :: t/g, 'main :: Program')
-            .replace(/Prelude\./g, '')
-            .replace(/\bBool\b/g, 'Truth')
-            .replace(/IO \(\)/g, 'Program')
-            .replace(/IO [a-z][a-zA-Z0-9_]*/g, 'Program')
-            .replace(/[ ]*Perhaps you intended to use TemplateHaskell\n/g, '')
-            .replace(/imported from [^)\n]*/g, 'defined in the standard library')
-            .replace(/\(and originally defined in [^)]*\)/g, '')
-            .replace(/the first argument/g, 'the parameter(s)')
-            .replace(/[ ]*The function [a-zA-Z0-9_]* is applied to [a-z0-9]* arguments,\n/g, '')
-            .replace(/[ ]*but its type .* has only .*\n/g, '')
+                     'Text requires double quotes, rather than single.')//Done
+            .replace(/base-[0-9.]*:GHC\.Stack\.Types\.HasCallStack => /g, '')//Done
+            .replace(/When checking that:\s*[^\n]*\s*is more polymorphic than:\s*[^\n]*(\n\s*)?/g, '')//Have to Check
+            .replace(/\[GHC\.Types\.Char\] -> /g, '')//Have to Check
+            .replace(/base(-[0-9.]*)?\:(.|\n)*?->( |\n)*/g, '')//Have to Check
+            .replace(/integer-gmp(-[0-9\.]*)?:(.|\n)*?->( |\n)*/g, '')// Have to Check
+            .replace(/GHC\.[A-Za-z.]*(\s|\n)*->( |\n)*/g, '')//Have to Check
+            .replace(/at src\/[A-Za-z0-9/.:]* /g, '') 
+            .replace(/GHC\.Types\.Char/g, '') //Done
+            .replace(/codeworld-base[-.:_A-Za-z0-9]*/g, 'the standard library')//Done
+            .replace(/Main\./g, '')//Done
+            .replace(/main :: t/g, 'main :: Program')//Done
+            .replace(/Prelude\./g, '')//Done
+            .replace(/\bBool\b/g, 'Truth')//Done
+            .replace(/IO \(\)/g, 'Program')//Done
+            .replace(/IO [a-z][a-zA-Z0-9_]*/g, 'Program')//Done
+            .replace(/[ ]*Perhaps you intended to use TemplateHaskell\n/g, '')//Done
+            .replace(/imported from [^)\n]*/g, 'defined in the standard library')//Done
+            .replace(/\(and originally defined in [^)]*\)/g, '')//Have to Check
+            .replace(/the first argument/g, 'the parameter(s)')//Done
+            .replace(/[ ]*The function [a-zA-Z0-9_]* is applied to [a-z0-9]* arguments,\n/g, '')//Done
+            .replace(/[ ]*but its type .* has only .*\n/g, '')//Done
             .replace(/A data constructor of that name is in scope; did you mean DataKinds\?/g,
-                'That name refers to a value, not a type.')
-            .replace(/type constructor or class/g, 'type')
+                'That name refers to a value, not a type.')//Done
+            .replace(/type constructor or class/g, 'type')//Done
             .replace(/Illegal tuple section: use TupleSections/g,
-                'This tuple is missing a value, or has an extra comma.')
-            .replace(/in string\/character literal/g, 'in text literal')
+                'This tuple is missing a value, or has an extra comma.')//Done
+            .replace(/in string\/character literal/g, 'in text literal')//Have to ask
             .replace(/lexical error at character '\\822[01]'/g,
                      'Smart quotes are not allowed.')
-            .replace(/Use -v to see a list of the files searched for\./g, '')
-            .replace(/CallStack \(from HasCallStack\)\:/g, 'When evaluating:')
-            .replace(/\n\s+\n/g, '\n');
+            .replace(/Use -v to see a list of the files searched for\./g, '')//Done
+            .replace(/CallStack \(from HasCallStack\)\:/g, 'When evaluating:')//Have to ask
+            .replace(/\n\s+\n/g, '\n');//Done
     }
 
     msg = msg

@@ -1,5 +1,5 @@
 {-
-  Copyright 2016 The CodeWorld Authors. All rights reserved.
+  Copyright 2017 The CodeWorld Authors. All rights reserved.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -15,6 +15,12 @@
 -}
 
 module CodeWorld.Color where
+
+import Data.List (unfoldr)
+import Data.Fixed (mod')
+
+import System.Random (mkStdGen)
+import System.Random.Shuffle (shuffle')
 
 data Color = RGBA !Double !Double !Double !Double deriving (Show, Eq)
 type Colour = Color
@@ -92,6 +98,18 @@ translucent (RGBA r g b a) = RGBA r g b (a/2)
 gray, grey :: Double -> Color
 gray = grey
 grey k = RGBA k k k 1
+
+-- | An infinite list of colors.
+
+assortedColors :: [Color]
+assortedColors = red : green : blue : more
+  where more = [ fromHSL hue 0.75 0.5
+                 | denom <- doublesOf 6
+                 , numer <- shuffleSeed denom [ 1, 3 .. denom ]
+                 , let hue = fromIntegral numer * 2 * pi / fromIntegral denom ]
+        doublesOf n = n : doublesOf (2 * n)
+        shuffleSeed k xs = shuffle' xs (length xs) (mkStdGen k)
+
 
 hue :: Color -> Double
 hue (RGBA r g b a)

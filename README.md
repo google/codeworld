@@ -29,7 +29,8 @@ official Google project, and Google provides no support for it.  Instead,
 questions about the project or code should be asked to the
 [codeworld-discuss mailing list](https://groups.google.com/forum/#!members/codeworld-discuss).
 A student-friendly question and answer forum is also available at
-http://help.code.world.
+http://help.code.world for questions about programs written *using* CodeWorld,
+rather than questions about building or modifying CodeWorld itself.
 
 Getting Started
 ===============
@@ -71,11 +72,16 @@ Debian, Ubuntu, RedHat, and CentOS.  The step by step instructions are as follow
 
 0. Read the caveats, explained below.
 1. Change to the root directory of the project.
-2. Run `./install.sh` to install GHC, GHCJS, and required libraries.
-3. Run `./build.sh` to build CodeWorld itself.
-4. Run `./run.sh` to start the server.
+2. Run `./install.sh` to set up the project.
+3. Run `./run.sh` to start the server.
 
 You can now access the CodeWorld system at http://localhost:8080.
+
+If you make changes to CodeWorld, you can rebuild it without rebuilding the dependencies:
+
+1. Change to the root directory of the project.
+2. Run `./build.sh` to recompile just CodeWorld itself, using previously installed tools and libraries.
+3. Run `./run.sh` to start the server.
 
 Caveats
 -------

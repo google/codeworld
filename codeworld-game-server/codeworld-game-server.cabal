@@ -1,18 +1,19 @@
-name:                codeworld-game-server
-version:             0.1
-synopsis:            A simple and hopefully fast message broker
-license:             Apache-2.0
-license-file:        LICENSE
-author:              Joachim Breitner
-maintainer:          mail@joachim-breitner.de
-build-type:          Simple
-extra-source-files:  ChangeLog.md
-cabal-version:       >=1.10
+Name:                codeworld-game-server
+Version:             0.1
+Synopsis:            A simple and hopefully fast message broker
+License:             Apache-2.0
+License-file:        LICENSE
+Author:              The CodeWorld Authors
+Maintainer:          Joachim Breitner <mail@joachim-breitner.de>
+Copyright:           (c) 2017, The CodeWorld Authors
+Build-type:          Simple
+Extra-source-files:  ChangeLog.md
+Cabal-version:       >=1.10
 
-executable codeworld-game-server
-  main-is:             Main.hs
-  other-modules:       CodeWorld.GameServer
-  build-depends:       base >=4.8 && <4.10,
+Executable codeworld-game-server
+  Main-is:             Main.hs
+  Other-modules:       CodeWorld.GameServer
+  Build-depends:       base >=4.8 && <4.10,
                        aeson,
                        text,
                        websockets == 0.9.*,
@@ -25,13 +26,13 @@ executable codeworld-game-server
                        unordered-containers,
                        time,
                        codeworld-game-api
-  hs-source-dirs:      src
-  default-language:    Haskell2010
-  ghc-options:         -threaded -rtsopts "-with-rtsopts=-N"
+  Hs-source-dirs:      src
+  Default-language:    Haskell2010
+  Ghc-options:         -threaded -rtsopts "-with-rtsopts=-N"
 
-executable codeworld-game-stresstest
-  main-is:             Stresstest.hs
-  build-depends:       base >=4.8 && <4.10,
+Executable codeworld-game-stresstest
+  Main-is:             Stresstest.hs
+  Build-depends:       base >=4.8 && <4.10,
                        bytestring,
                        text,
                        websockets == 0.9.*,
@@ -39,13 +40,13 @@ executable codeworld-game-stresstest
                        async,
                        clock,
                        optparse-applicative
-  hs-source-dirs:      src
-  default-language:    Haskell2010
-  ghc-options:         -threaded -rtsopts "-with-rtsopts=-N"
+  Hs-source-dirs:      src
+  Default-language:    Haskell2010
+  Ghc-options:         -threaded -rtsopts "-with-rtsopts=-N"
 
-executable codeworld-game-bot
-  main-is:             Bot.hs
-  build-depends:       base >=4.8 && <4.10,
+Executable codeworld-game-bot
+  Main-is:             Bot.hs
+  Build-depends:       base >=4.8 && <4.10,
                        bytestring,
                        text,
                        websockets == 0.9.*,
@@ -55,6 +56,6 @@ executable codeworld-game-bot
                        clock,
                        optparse-applicative,
                        regex-compat
-  hs-source-dirs:      src
-  default-language:    Haskell2010
-  ghc-options:         -threaded -rtsopts "-with-rtsopts=-N"
+  Hs-source-dirs:      src
+  Default-language:    Haskell2010
+  Ghc-options:         -threaded -rtsopts "-with-rtsopts=-N"

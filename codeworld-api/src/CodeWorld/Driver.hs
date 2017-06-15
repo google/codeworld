@@ -15,7 +15,7 @@
 {-# LANGUAGE DataKinds                #-}
 
 {-
-  Copyright 2016 The CodeWorld Authors. All rights reserved.
+  Copyright 2017 The CodeWorld Authors. All rights reserved.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -76,7 +76,6 @@ import           Data.Hashable
 import           Data.IORef
 import           Data.JSString.Text
 import qualified Data.JSString
-import           Data.Time.Clock
 import           Data.Word
 import           GHCJS.DOM
 import           GHCJS.DOM.NonElementParentNode
@@ -618,14 +617,19 @@ keyCodeToText n = case n of
     44                       -> "PrintScreen"
     45                       -> "Insert"
     46                       -> "Delete"
+    47                       -> "Help"
+    91                       -> "OS"
+    92                       -> "OS"
+    93                       -> "ContextMenu"
     106                      -> "*"
     107                      -> "+"
-    108                      -> "Separator"
+    108                      -> ","
     109                      -> "-"
     110                      -> "."
     111                      -> "/"
     144                      -> "NumLock"
     145                      -> "ScrollLock"
+    173                      -> "-"
     186                      -> ";"
     187                      -> "="
     188                      -> ","
@@ -633,10 +637,14 @@ keyCodeToText n = case n of
     190                      -> "."
     191                      -> "/"
     192                      -> "`"
+    193                      -> "IntlRo"
+    194                      -> ","
     219                      -> "["
     220                      -> "\\"
     221                      -> "]"
     222                      -> "'"
+    225                      -> "AltGraph"
+    255                      -> "IntlYen"
     _                        -> "Unknown:" <> fromNum n
   where fromAscii n = singleton (chr (fromIntegral n))
         fromNum   n = pack (show (fromIntegral n))

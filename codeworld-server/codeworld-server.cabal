@@ -4,7 +4,7 @@ Synopsis:            Web server for CodeWorld
 License-file:        LICENSE
 Author:              The CodeWorld Authors
 Maintainer:          Chris Smith <cdsmith@gmail.com>
-Copyright:           (c) 2016, The CodeWorld Authors
+Copyright:           (c) 2017, The CodeWorld Authors
 Build-type:          Simple
 Cabal-version:       >=1.2
 
@@ -24,7 +24,7 @@ Executable codeworld-server
     data-default,
     directory,
     filepath,
-    hindent >= 5,
+    hindent >= 5 && < 5.2.3,
     http-conduit,
     memory,
     mtl,

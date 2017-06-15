@@ -1,4 +1,4 @@
-![](/codeworld.png)
+<img src="/codeworld.png" style="max-width: 100%;">
 
 Welcome to CodeWorld!  CodeWorld is an educational computer programming environment.
 By using a simple mathematical model for geometric shapes and transformations, you

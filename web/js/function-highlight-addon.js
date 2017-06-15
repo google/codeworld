@@ -1,0 +1,1 @@
+../../third_party/CodeMirror/function-highlight-addon.js

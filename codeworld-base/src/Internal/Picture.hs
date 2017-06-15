@@ -3,7 +3,7 @@
 {-# LANGUAGE PackageImports    #-}
 
 {-
-  Copyright 2016 The CodeWorld Authors. All rights reserved.
+  Copyright 2017 The CodeWorld Authors. All rights reserved.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -34,6 +34,12 @@ toCWVect (x, y) = (toDouble x, toDouble y)
 
 fromCWVect :: CW.Vector -> Vector
 fromCWVect (x, y) = (fromDouble x, fromDouble y)
+
+vectorLength :: Vector -> Number
+vectorLength v = fromDouble (CW.vectorLength (toCWVect v))
+
+vectorDirection :: Vector -> Number
+vectorDirection v = 180 / pi * fromDouble (CW.vectorDirection (toCWVect v))
 
 vectorSum :: (Vector, Vector) -> Vector
 vectorSum (v, w) = fromCWVect (CW.vectorSum (toCWVect v) (toCWVect w))

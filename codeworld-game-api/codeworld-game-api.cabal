@@ -1,11 +1,11 @@
 Name:                codeworld-game-api
 Version:             0.2.0.0
-Synopsis:            Network protocolfor CodeWorld
+Synopsis:            Network protocol for CodeWorld
 License:             Apache
 License-file:        LICENSE
 Author:              The CodeWorld Authors
 Maintainer:          Chris Smith <cdsmith@gmail.com>
-Copyright:           (c) 2016, The CodeWorld Authors
+Copyright:           (c) 2017, The CodeWorld Authors
 Build-type:          Simple
 Cabal-version:       >=1.8
 

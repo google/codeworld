@@ -1,5 +1,5 @@
 {-
-  Copyright 2016 The CodeWorld Authors. All rights reserved.
+  Copyright 2017 The CodeWorld Authors. All rights reserved.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -22,6 +22,12 @@ import Data.Text (Text, pack)
 
 type Point = (Double, Double)
 type Vector = (Double, Double)
+
+vectorLength :: Vector -> Double
+vectorLength (x,y) = sqrt (x^2 + y^2)
+
+vectorDirection :: Vector -> Double
+vectorDirection (x,y) = atan2 y x
 
 vectorSum :: Vector -> Vector -> Vector
 vectorSum (x1,y1) (x2,y2) = (x1 + x2, y1 + y2)

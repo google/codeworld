@@ -4,7 +4,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 {-
-  Copyright 2016 The CodeWorld Authors. All rights reserved.
+  Copyright 2017 The CodeWorld Authors. All rights reserved.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -175,12 +175,19 @@ Number a - Number b = fromDouble (a P.- b)
 Number a * Number b = fromDouble (a P.* b)
 
 {-| Divides two numbers.  The second number should not be zero. -}
-(/) :: Number -> Number -> Number
-Number a / Number b = fromDouble (a P./ b)
+(/) :: HasCallStack => Number -> Number -> Number
+Number a / Number b
+  | b == 0    = withFrozenCallStack (P.error "Cannot divide by zero.")
+  | otherwise = fromDouble (a P./ b)
 
 {-| Raises a number to a power. -}
-(^) :: Number -> Number -> Number
-Number a ^ Number b = fromDouble (a P.** b)
+(^) :: HasCallStack => Number -> Number -> Number
+Number a ^ Number b
+  | a P.< 0 && P.not (isInteger (Number b)) = withFrozenCallStack
+      (P.error "Negative numbers cannot be raised to fractional powers.")
+  | a P.== 0 && b P.< 0 = withFrozenCallStack
+      (P.error "Zero cannot be raised to negative powers.")
+  | otherwise = fromDouble (a P.** b)
 
 {-| Tells whether one number is less than the other. -}
 (<) :: Number -> Number -> Truth
@@ -269,7 +276,8 @@ floor = fromInteger . P.floor . toDouble
   For example, 3/2 is 1.5, but quotient(3, 2) is 1, which is the integer
   part.
 -}
-quotient :: (Number, Number) -> Number
+quotient :: HasCallStack => (Number, Number) -> Number
+quotient (_, 0) = withFrozenCallStack (P.error "Cannot divide by zero.")
 quotient (a, b) = truncation (a / b)
 
 {-| Gives the remainder when dividing two numbers.
@@ -277,15 +285,17 @@ quotient (a, b) = truncation (a / b)
   For example, remainder(3,2) is 1, which is the remainder when dividing
   3 by 2.
 -}
-remainder :: (Number, Number) -> Number
+remainder :: HasCallStack => (Number, Number) -> Number
+remainder (a, 0) = withFrozenCallStack (P.error "Cannot divide by zero.")
 remainder (a, b) = a - b * quotient (a, b)
 
 {-| Gives the repicrocal of a number.
 
   For example, reciprocal(5) is 1/5 (also written as 0.2).
 -}
-reciprocal :: Number -> Number
-reciprocal = fromDouble . P.recip . toDouble
+reciprocal :: HasCallStack => Number -> Number
+reciprocal 0 = withFrozenCallStack (P.error "Zero has no reciprocal.")
+reciprocal x = fromDouble (P.recip (toDouble x))
 
 {-| The constant pi, which is equal to the ration between the circumference
     and diameter of a circle.
@@ -312,10 +322,13 @@ exp = fromDouble . P.exp . toDouble
   current time, sqrt(t) will reach 5 in 25 seconds.  But it will take 100
   seconds to reach 10, and 225 seconds (almost 4 minutes) to reach 15.
 -}
-sqrt :: Number -> Number
-sqrt = fromDouble . P.sqrt . toDouble
+sqrt :: HasCallStack => Number -> Number
+sqrt (Number x)
+  | x P.< 0   = withFrozenCallStack
+      (P.error "Negative numbers have no square root.")
+  | otherwise = fromDouble (P.sqrt x)
 
-squareRoot :: Number -> Number
+squareRoot :: HasCallStack => Number -> Number
 squareRoot = sqrt
 
 {-| Gives the natural log of a number.  This is the opposite of the exp
@@ -326,14 +339,24 @@ squareRoot = sqrt
   in seconds, it takes more than 2 minutes for log(t) to reach 5, and more
   than 6 hours to reach 10!
 -}
-log :: Number -> Number
-log = fromDouble . P.log . toDouble
+log :: HasCallStack => Number -> Number
+log (Number x)
+  | x P.<= 0  = withFrozenCallStack
+      (P.error "Only positive numbers have logarithms.")
+  | otherwise = fromDouble (P.log x)
 
 {-| Gives the logarithm of the first number, using the base of the second
     number.
 -}
-logBase :: (Number, Number) -> Number
-logBase (Number x, Number b) = fromDouble (P.logBase b x)
+logBase :: HasCallStack => (Number, Number) -> Number
+logBase (Number x, Number b)
+  | x P.<= 0  = withFrozenCallStack
+      (P.error "Only positive numbers have logarithms.")
+  | b P.<= 0  = withFrozenCallStack
+      (P.error "The base of a logarithm must be a positive number.")
+  | b P.== 1  = withFrozenCallStack
+      (P.error "A logarithm cannot have a base of 1.")
+  | otherwise = fromDouble (P.logBase b x)
 
 {-| Converts an angle from degrees to radians. -}
 toRadians :: Number -> Number
@@ -362,8 +385,11 @@ cos = fromDouble . P.cos . toDouble . toRadians
 
   This is the unique angle between -90 and 90 that has the input as its sine.
 -}
-asin :: Number -> Number
-asin = fromRadians . fromDouble . P.asin . toDouble
+asin :: HasCallStack => Number -> Number
+asin (Number x)
+  | x P.< -1 P.|| x P.> 1 = withFrozenCallStack
+      (P.error "The asin function is only defined for numbers from -1 to 1.")
+  | otherwise = fromRadians (fromDouble (P.asin x))
 
 {-| Gives the inverse tangent of a value, in degrees.
 
@@ -376,12 +402,17 @@ atan = fromRadians . fromDouble . P.atan . toDouble
 atan2 :: (Number, Number) -> Number
 atan2 (Number a, Number b) = fromRadians (fromDouble (P.atan2 a b))
 
+{-# WARNING atan2 "Please use vectorDirection instead of atan2." #-}
+
 {-| Gives the inverse cosine of a value, in degrees.
 
   This is the unique angle between 0 and 180 that has the input as its cosine.
 -}
-acos :: Number -> Number
-acos = fromRadians . fromDouble . P.acos . toDouble
+acos :: HasCallStack => Number -> Number
+acos (Number x)
+  | x P.< -1 P.|| x P.> 1 = withFrozenCallStack
+      (P.error "The acos function is only defined for numbers from -1 to 1.")
+  | otherwise = fromRadians (fromDouble (P.acos x))
 
 {-| Separates a number into its whole and fractional parts.
 

@@ -3,7 +3,7 @@
 {-# LANGUAGE PackageImports    #-}
 
 {-
-  Copyright 2016 The CodeWorld Authors. All rights reserved.
+  Copyright 2017 The CodeWorld Authors. All rights reserved.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -99,6 +99,9 @@ translucent = fromCWColor . CW.translucent . toCWColor
 gray, grey :: Number -> Color
 gray = fromCWColor . CW.gray . toDouble
 grey = gray
+
+assortedColors :: [Color]
+assortedColors = P.map fromCWColor CW.assortedColors
 
 hue, saturation, luminosity :: Color -> Number
 hue = (180 *) . (/ pi) . fromDouble . CW.hue . toCWColor

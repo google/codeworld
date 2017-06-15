@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The CodeWorld Authors. All rights reserved.
+ * Copyright 2017 The CodeWorld Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,16 @@ function registerStandardHints(successFunc)
         var cur = cm.getCursor();
         var token = cm.getTokenAt(cur);
         var to = CodeMirror.Pos(cur.line, token.end);
+
+	//To check for the case of insertion in between two parameters
+        r = new RegExp("^\\s+$");
+	// If string is completely made of spaces
+        if (r.test(token.string)) {
+            token.string = token.string.substr(0, cur.ch - token.start);
+            token.end = cur.ch;
+            to = CodeMirror.Pos(cur.line, token.end);
+        }
+
         if (token.string && /\w/.test(token.string[token.string.length - 1])) {
             var term = token.string,
                 from = CodeMirror.Pos(cur.line, token.start);
@@ -274,7 +284,7 @@ function addToMessage(msg) {
             .replace(/[ ]*but its type .* has only .*\n/g, '')
             .replace(/A data constructor of that name is in scope; did you mean DataKinds\?/g,
                 'That name refers to a value, not a type.')
-            .replace(/type constructor or class/g, 'type constructor')
+            .replace(/type constructor or class/g, 'type')
             .replace(/Illegal tuple section: use TupleSections/g,
                 'This tuple is missing a value, or has an extra comma.')
             .replace(/in string\/character literal/g, 'in text literal')

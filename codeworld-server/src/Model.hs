@@ -22,6 +22,7 @@ import           Control.Applicative
 import           Control.Monad
 import           Data.Aeson
 import           Data.Text (Text)
+import           System.FilePath (FilePath)
 
 data User = User { userId :: Text, audience :: Text }
 
@@ -46,6 +47,15 @@ instance ToJSON Project where
     toJSON p = object [ "name"    .= projectName p,
                         "source"  .= projectSource p,
                         "history" .= projectHistory p ]
+
+data Directory = Directory {
+    files :: [Text],
+    dirs :: [Text]
+    } deriving Show
+
+instance ToJSON Directory where
+    toJSON dir = object [ "files" .= files dir,
+                          "dirs"  .= dirs dir ]
 
 data CompileResult = CompileResult {
     compileHash :: Text,

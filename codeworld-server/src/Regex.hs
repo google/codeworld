@@ -23,6 +23,7 @@ import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C
+import 		 Data.Char
 import           System.Directory
 import           System.FilePath
 import           System.IO
@@ -33,10 +34,11 @@ import           Text.Regex
 
 import Util
 
-filterOutput :: ByteString -> IO (Maybe ByteString)
-filterOutput output = do 
+
+filterOutput :: ByteString -> Maybe ByteString
+filterOutput output =  
     let out  = subRegex (mkRegex "\226\8364\162")   (C.unpack output) ""
-    let out1 = subRegex (mkRegex "\226\8364\732")   out               ""
-    let out2 = subRegex (mkRegex "\226\8364\8482")  out1              ""
-    let out3 = subRegex (mkRegex "'")               out2              ""
-    return  (Just $ C.pack out3)    
+        out1 = subRegex (mkRegex "\226\8364\732")   out               ""
+        out2 = subRegex (mkRegex "\226\8364\8482")  out1              ""
+        out3 = subRegex (mkRegex "'")               out2              ""
+    in  (Just  (C.pack out3))    

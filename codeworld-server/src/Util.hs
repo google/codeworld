@@ -70,6 +70,9 @@ targetFile programId = sourceBase programId <.> "js"
 resultFile :: ProgramId -> FilePath
 resultFile programId = sourceBase programId <.> "err.txt"
 
+rawResultFile :: ProgramId -> FilePath
+rawResultFile programId = sourceBase programId <.> "rawerr.txt"
+
 auxiliaryFiles :: ProgramId -> [FilePath]
 auxiliaryFiles programId = [
     sourceBase programId <.> "js_hi",

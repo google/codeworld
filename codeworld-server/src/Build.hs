@@ -22,14 +22,17 @@ module Build where
 import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as C
 import           System.Directory
 import           System.FilePath
 import           System.IO
 import           System.IO.Temp (withSystemTempDirectory)
 import           System.Process
 import           Text.Regex.TDFA
+import           Text.Regex
 
 import Util
+import Regex
 
 compileIfNeeded :: BuildMode -> ProgramId -> IO Bool
 compileIfNeeded mode programId = do
@@ -52,13 +55,16 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
         success <- runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
-                B.writeFile (buildRootDir mode </> resultFile programId) output
+                B.writeFile (buildRootDir mode </> rawResultFile programId) output
+                let Just filteredOutput = filterOutput output
+                B.writeFile (buildRootDir mode </> resultFile programId) filteredOutput
                 let target = tmpdir </> "program.jsexe" </> "all.js"
                 hasTarget <- doesFileExist target
                 when hasTarget $
                     copyFile target (buildRootDir mode </> targetFile programId)
                 return hasTarget
         return success
+
 
 userCompileMicros :: Int
 userCompileMicros = 15 * 1000000

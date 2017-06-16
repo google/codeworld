@@ -251,11 +251,6 @@ function registerStandardHints(successFunc)
 
 
 function addToMessage(msg) {
-    if (window.buildMode == 'codeworld') {
-        msg = msg
-            .replace(/lexical error at character '\\822[01]'/g,
-                     'Smart quotes are not allowed.')
-    }
 
     msg = msg
         .replace(/&/g, '&amp;')

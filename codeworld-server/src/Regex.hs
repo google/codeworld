@@ -40,11 +40,11 @@ filterOutput output =
     let out   = subRegex (mkRegex "\226\8364\162")   (C.unpack output) ""
         out1  = subRegex (mkRegex "\226\8364\732")   out               ""
         out2  = subRegex (mkRegex "\226\8364\8482")  out1              ""
-        out3  = subRegex (mkRegex "'")               out2              ""
+        out3  = subRegex (mkRegex "\\’")             out2              ""
         out4  = subRegex (mkRegex "IO action main")  out3              "variable main"
         out5  = subRegex (mkRegex "module Main")     out4              "your program"
         out6  = subRegex (mkRegex "main:Main")       out5              "your program"
-        out7  = subRegex (mkRegex "Couldn't match expected type Text\\s*with actual type GHC.Types.Char") 
+        out7  = subRegex (mkRegex "Couldn't match expected type Text\\s*with actual type GHC.Types.Char")
                 out6 "Text requires double quotes, rather than single."
         out8  = subRegex (mkRegex "base-[0-9.]*:GHC\\.Stack\\.Types\\.HasCallStack => ") 
                 out7 ""
@@ -70,5 +70,16 @@ filterOutput output =
                 out24 "This tuple is missing a value, or has an extra comma."
         out26 = subRegex (mkRegex "Use -v to see a list of the files searched for\\.") out25 ""
         out27 = subRegex (mkRegex "\n\\s+\n")        out26             "\n"
-     
-    in  (Just  (C.pack out27))    
+        out28 = subRegex (mkRegex "When checking that:\\s*[^\n]*\\s*is more polymorphic than:\\s*[^\n]*(\n\\s*)?")
+                out27 ""
+        out29 = subRegex (mkRegex "\\[GHC\\.Types\\.Char\\] -> ") out28 "\n"
+        out30 = subRegex (mkRegex "\\(and originally defined in [^)]*\\)") out29 "\n"
+        out31 = subRegex (mkRegex "in string\\/character literal") out30 "in text literal"
+        out32 = subRegex (mkRegex "CallStack \\(from HasCallStack\\):") out31  "When Evaluating:" 
+        out33 = subRegex (mkRegex "at src\\/[A-Za-z0-9\\/.:]*") out32 ""
+        out34 = subRegex (mkRegex "GHC\\.[A-Za-z.]*(\\s|\n)*->( |\n)*") out33 ""
+        out35 = subRegex (mkRegex "integer-gmp(-[0-9\\.]*)?:(.|\n)*?->( |\n)*") out34 ""
+        out36 = subRegex (mkRegex "base(-[0-9.]*)?\\:(.|\n)*?->( |\n)*")        out35 "\n"
+        out37 = subRegex (mkRegex "lexical error at character '\822[01]'") 
+                out36 "Smart quotes are not allowed."
+    in  (Just  (C.pack out37))    

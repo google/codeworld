@@ -40,7 +40,7 @@ filterOutput output =
     let out   = subRegex (mkRegex "\226\8364\162")   (C.unpack output) ""
         out1  = subRegex (mkRegex "\226\8364\732")   out               ""
         out2  = subRegex (mkRegex "\226\8364\8482")  out1              ""
-        out3  = subRegex (mkRegex "'")               out2              ""
+        out3  = subRegex (mkRegex "\\’")             out2              ""
         out4  = subRegex (mkRegex "IO action main")  out3              "variable main"
         out5  = subRegex (mkRegex "module Main")     out4              "your program"
         out6  = subRegex (mkRegex "main:Main")       out5              "your program"
@@ -79,5 +79,7 @@ filterOutput output =
         out33 = subRegex (mkRegex "at src\\/[A-Za-z0-9\\/.:]*") out32 ""
         out34 = subRegex (mkRegex "GHC\\.[A-Za-z.]*(\\s|\n)*->( |\n)*") out33 ""
         out35 = subRegex (mkRegex "integer-gmp(-[0-9\\.]*)?:(.|\n)*?->( |\n)*") out34 ""
-        out36 = subRegex (mkRegex "base(-[0-9.]*)?\\:(.|\n)*?->( |\n)*")        out35             "\n"
-    in  (Just  (C.pack out36))    
+        out36 = subRegex (mkRegex "base(-[0-9.]*)?\\:(.|\n)*?->( |\n)*")        out35 "\n"
+        out37 = subRegex (mkRegex "lexical error at character '\822[01]'") 
+                out36 "Smart quotes are not allowed."
+    in  (Just  (C.pack out37))    

@@ -17,7 +17,7 @@
   limitations under the License.
 -}
 
-module Regex where
+module ErrorSanitizer where
 
 import           Control.Monad
 import           Data.ByteString (ByteString)

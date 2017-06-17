@@ -32,7 +32,7 @@ import           Text.Regex.TDFA
 import           Text.Regex
 
 import Util
-import Regex
+import ErrorSanitizer
 
 compileIfNeeded :: BuildMode -> ProgramId -> IO Bool
 compileIfNeeded mode programId = do

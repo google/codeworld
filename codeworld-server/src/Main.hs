@@ -137,12 +137,12 @@ createFolderHandler :: ClientId -> Snap ()
 createFolderHandler clientId = do
     mode <- getBuildMode
     user <- getUser clientId
-    liftIO $ ensureUserProjectDir mode (userId user)
     Just path <- fmap (fmap $ splitDirectories . BC.unpack) $ getParam "path"
     let dirIds = map (nameToDirId . T.pack) path
     let finalDir = joinPath $ map dirBase dirIds
+    liftIO $ ensureUserBaseDir mode (userId user) finalDir
     liftIO $ createDirectory $ userProjectDir mode (userId user) </> finalDir
-    liftIO $ B.writeFile (finalDir </> "dir.info") $ BC.pack $ last path
+    liftIO $ B.writeFile (userProjectDir mode (userId user) </> finalDir </> "dir.info") $ BC.pack $ last path
 
 deleteFolderHandler :: ClientId -> Snap ()
 deleteFolderHandler clientId = do
@@ -152,7 +152,9 @@ deleteFolderHandler clientId = do
     let dirIds = map (nameToDirId . T.pack) path
     let finalDir = joinPath $ map dirBase dirIds
     liftIO $ ensureUserDir mode (userId user) finalDir
-    liftIO $ removeDirectoryIfExists finalDir
+    let dir = userProjectDir mode (userId user) </> finalDir
+    empty <- liftIO $ getDirectoryContents (takeDirectory dir) >>= return . (== [".", ".."])
+    liftIO $ removeDirectoryIfExists $ if empty then (takeDirectory dir) else dir
 
 loadProjectHandler :: ClientId -> Snap ()
 loadProjectHandler clientId = do
@@ -193,29 +195,9 @@ deleteProjectHandler clientId = do
     let finalDir = joinPath $ map dirBase dirIds
     liftIO $ ensureProjectDir mode (userId user) finalDir projectId
     let file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
-    liftIO $ removeFileIfExists file
-{-
-listProjectsHandler :: ClientId -> Snap ()
-listProjectsHandler clientId = do
-    mode <- getBuildMode
-    user <- getUser clientId
-    liftIO $ ensureUserProjectDir mode (userId user)
-    let projectDir = userProjectDir mode (userId user)
-    hashedDirs <- liftIO $ getDirectoryContentsWithPrefix projectDir
-    projectFiles <- liftIO $ fmap concat $ forM hashedDirs getDirectoryContentsWithPrefix
-    projects <- liftIO $ fmap catMaybes $ forM projectFiles $ \f -> do
-        exists <- doesFileExist f
-        if exists then decode <$> LB.readFile f else return Nothing
-    modifyResponse $ setContentType "application/json"
-    writeLBS (encode (map projectName projects))
--}
-{-
-getDirectoryContentsWithPrefix :: FilePath -> IO [FilePath]
-getDirectoryContentsWithPrefix filePath = do
-    withoutPrefix <- getDirectoryContents filePath
-    let withPrefix = map (\x -> filePath </> x) $ filter (\x -> not $ x `elem` [".", ".."]) withoutPrefix
-    return withPrefix
--}
+    empty <- liftIO $ getDirectoryContents (dropFileName file) >>= return . (== [".", ".."])
+    liftIO $ if empty then removeDirectoryIfExists (dropFileName file)
+             else removeFileIfExists file
 
 listFolderHandler :: ClientId -> Snap ()
 listFolderHandler clientId = do
@@ -224,6 +206,7 @@ listFolderHandler clientId = do
     Just path <- fmap (fmap $ splitDirectories . BC.unpack) $ getParam "path"
     let dirIds = map (nameToDirId . T.pack) path
     let finalDir = joinPath $ map dirBase dirIds
+    liftIO $ ensureUserBaseDir mode (userId user) finalDir
     liftIO $ ensureUserDir mode (userId user) finalDir
     let projectDir = userProjectDir mode (userId user)
     subHashedDirs <- liftIO $ listDirectoryWithPrefix $ projectDir </> finalDir

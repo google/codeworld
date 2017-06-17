@@ -125,6 +125,9 @@ ensureUserProjectDir :: BuildMode -> Text -> IO ()
 ensureUserProjectDir mode userId =
     createDirectoryIfMissing True (userProjectDir mode userId)
 
+ensureUserBaseDir :: BuildMode -> Text -> FilePath -> IO ()
+ensureUserBaseDir mode userId path = ensureUserProjectDir mode userId >> createDirectoryIfMissing False (userProjectDir mode userId </> (takeDirectory path))
+
 ensureUserDir :: BuildMode -> Text -> FilePath -> IO ()
 ensureUserDir mode userId path = ensureUserProjectDir mode userId >> createDirectoryIfMissing False (userProjectDir mode userId </> path)
 
@@ -181,7 +184,7 @@ removeFileIfExists fileName = removeFile fileName `catch` handleExists
           | otherwise = throwIO e
 
 removeDirectoryIfExists :: FilePath -> IO ()
-removeDirectoryIfExists dirName = removeDirectory dirName `catch` handleExists
+removeDirectoryIfExists dirName = removeDirectoryRecursive dirName `catch` handleExists
   where handleExists e
           | isDoesNotExistError e = return ()
           | otherwise = throwIO e

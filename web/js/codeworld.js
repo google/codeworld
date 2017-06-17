@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     http://w...content-available-to-author-only...e.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,8 +19,10 @@
  * entire document body and other JavaScript has loaded.
  */
 function init() {
-    allProjectNames = [];
+    allProjectNames = [[]];
+    allFolderNames = [[]];
     openProjectName = null;
+    nestedDirs = [""];
 
     if (window.location.pathname == '/haskell') {
         window.buildMode = 'haskell'
@@ -131,6 +133,22 @@ function getCurrentProject() {
   };
 }
 
+function folderHandler(folderName, index, state) {
+    warnIfUnsaved(function() {
+        window.nestedDirs = nestedDirs.slice(0, index + 1);
+        window.allProjectNames = allProjectNames.slice(0, index + 1);
+        window.allFolderNames = allFolderNames.slice(0, index + 1);
+        if (!state) {
+            nestedDirs.push(folderName);
+            allProjectNames.push([]);
+            allFolderNames.push([]);
+            discoverProjects(nestedDirs.slice(1).join('/'), index + 1);
+        }
+        setCode('');
+        updateUI();
+    }, false);
+}
+
 /*
  * Updates all UI components to reflect the current state.  The general pattern
  * is to modify the state stored in variables and such, and then call updateUI
@@ -152,7 +170,11 @@ function updateUI() {
             document.getElementById('deleteButton').style.display = '';
         } else {
             document.getElementById('saveButton').style.display = 'none';
-            document.getElementById('deleteButton').style.display = 'none';
+            if (window.nestedDirs != "") {
+                document.getElementById('deleteButton').style.display = '';
+            } else {
+                document.getElementById('deleteButton').style.display = 'none';
+            }
         }
     } else {
         if (document.getElementById('signout').style.display == '') {
@@ -166,44 +188,101 @@ function updateUI() {
     }
 
     var projects = document.getElementById('nav_mine');
-    var newProject = document.getElementById('newButton');
 
-    while (projects.lastChild && projects.lastChild != newProject) {
+    while (projects.lastChild) {
         projects.removeChild(projects.lastChild);
     }
 
-    allProjectNames.sort(function(a, b) {
-        return a.localeCompare(b);
+    allProjectNames.forEach(function(projectNames) {
+        projectNames.sort(function(a, b) {
+            return a.localeCompare(b);
+        });
     });
 
-    allProjectNames.forEach(function(projectName) {
-        var active = projectName == openProjectName;
-        if (!isSignedIn && !active) {
-            return;
-        }
-
-        var title = projectName;
-        if (active && !isEditorClean()) {
-            title = "* " + title;
-        }
-
-        var encodedName = title.replace('&', '&amp;')
-            .replace('<', '&lt;')
-            .replace('>', '&gt;');
-
-        var template = document.getElementById('projectTemplate').innerHTML;
-        template = template.replace('{{label}}', encodedName);
-        template = template.replace(/{{ifactive ([^}]*)}}/, active ? "$1" : "");
-
-        var span = document.createElement('span');
-        span.innerHTML = template;
-        var elem = span.getElementsByTagName('a')[0];
-        elem.onclick = function() {
-            loadProject(projectName);
-        };
-
-        projects.appendChild(span.removeChild(elem));
+    allFolderNames.forEach(function(folderNames) {
+        folderNames.sort(function(a, b) {
+            return a.localeCompare(b);
+        });
     });
+
+    var NDlength = nestedDirs.length;
+    for(let i = 0; i < NDlength; i++) {
+        var tempProjects;
+        if (i != 0) {
+            var encodedName = nestedDirs[i].replace('&', '&amp;')
+                .replace('<', '&lt;')
+                .replace('>', '&gt;');
+            var template = document.getElementById('openFolderTemplate').innerHTML;
+            template = template.replace('{{label}}', encodedName);
+            var span = document.createElement('span');
+            span.innerHTML = template;
+            var elem = span.getElementsByTagName('a')[0];
+            elem.onclick = function() {
+                folderHandler(nestedDirs[i], i - 1, true);
+            };
+            var temp = document.createElement('span');
+            temp.innerHTML = "&nbsp;".repeat(4*i-4);
+            span.insertBefore(temp, elem);
+            span.style.display = "block";
+            projects.parentNode.insertBefore(span, projects);
+            projects.parentNode.removeChild(projects);
+            projects = span.appendChild(document.createElement('div'));
+        }
+        allFolderNames[i].forEach(function(folderName) {
+            var encodedName = folderName.replace('&', '&amp;')
+                .replace('<', '&lt;')
+                .replace('>', '&gt;');
+            var template = document.getElementById('folderTemplate').innerHTML;
+            template = template.replace('{{label}}', encodedName);
+            var span = document.createElement('span');
+            span.innerHTML = template;
+            var elem = span.getElementsByTagName('a')[0];
+            elem.onclick = function() {
+                folderHandler(folderName, i, false);
+            };
+            var temp = document.createElement('span');
+            temp.innerHTML = "&nbsp;".repeat(4*i);
+            span.insertBefore(temp, elem);
+            span.style.display = "block";
+            projects.appendChild(span);
+            if (i < NDlength - 1) {
+                if (folderName == nestedDirs[i + 1]) {
+                    tempProjects = projects.lastChild;
+                }
+            }
+        });
+        allProjectNames[i].forEach(function(projectName) {
+            var active = (window.openProjectName == projectName) && (i == NDlength - 1);
+            if(!isSignedIn && !active) {
+                return;
+            }
+
+            var title = projectName;
+            if(active && !isEditorClean()) {
+                title = "* " + title;
+            }
+            var encodedName = title.replace('&', '&amp;')
+                .replace('<', '&lt;')
+                .replace('>', '&gt;');
+            var template = document.getElementById('projectTemplate').innerHTML;
+            template = template.replace('{{label}}', encodedName);
+            template = template.replace(/{{ifactive ([^}]*)}}/, active ? "$1" : "");
+            var span = document.createElement('span');
+            span.innerHTML = template;
+            var elem = span.getElementsByTagName('a')[0];
+            elem.onclick = function() {
+                loadProject(projectName, i);
+            };
+            var temp = document.createElement('span');
+            temp.innerHTML = "&nbsp;".repeat(4*i);
+            span.insertBefore(temp, elem);
+            span.style.display = "block";
+            projects.appendChild(span);
+        });
+        if ( i + 1 < NDlength ) {
+            projects = tempProjects;
+        }
+    }
 
     var title;
     if (window.openProjectName) {
@@ -323,20 +402,24 @@ function loadSample(code) {
     if (isEditorClean()) sweetAlert.close();
     warnIfUnsaved(function() {
         setCode(code);
-    });
+    }, false);
 }
 
 function newProject() {
     warnIfUnsaved(function() {
         setCode('');
-    });
+    }, false);
 }
 
-function loadProject(name) {
-  function successFunc(project){
-    setCode(project.source, project.history, name);
-  }
-  loadProject_(name, window.buildMode, successFunc);
+function newFolder() {
+    createFolder(nestedDirs.slice(1).join('/'), window.buildMode);
+}
+
+function loadProject(name, index) {
+    function successFunc(project){
+        setCode(project.source, project.history, name);
+    }
+    loadProject_(index, name, window.buildMode, successFunc);
 }
 
 function formatSource() {
@@ -454,57 +537,67 @@ function compile() {
 }
 
 function signinCallback(result) {
-    discoverProjects();
+    discoverProjects("", 0);
     updateUI();
     if (signedIn()) {
         sweetAlert.close();
     }
 }
 
-function discoverProjects(){
-  discoverProjects_(window.buildMode);
+function discoverProjects(path, index){
+    discoverProjects_(path, window.buildMode, index);
 }
 
-function saveProjectBase(projectName) {
-
+function saveProjectBase(path, projectName) {
     function successFunc() {
-            window.openProjectName = projectName;
-            var doc = window.codeworldEditor.getDoc();
-            window.savedGeneration = doc.changeGeneration(true);
-            updateUI();
-
-            if (allProjectNames.indexOf(projectName) == -1) {
-                discoverProjects();
-            }
+        window.openProjectName = projectName;
+        var doc = window.codeworldEditor.getDoc();
+        window.savedGeneration = doc.changeGeneration(true);
     }
 
-    saveProjectBase_(projectName, window.buildMode, successFunc);
+    saveProjectBase_(path, projectName, window.buildMode, successFunc);
 }
 
-function deleteProject()
-{
-  function successFunc(){
-    savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
-    setCode('');
-  }
-  deleteProject_(window.buildMode, successFunc);
+function deleteFolder() {
+    var path = nestedDirs.slice(1).join('/')
+    if (path == "" || window.openProjectName != null) {
+        return;
+    }
+    function successFunc() {
+        savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
+        setCode('');
+    }
+    deleteFolder_(path, window.buildMode, successFunc);
+}
+
+function deleteProject() {
+    if (!window.openProjectName) {
+        deleteFolder();
+        return;
+    }
+    function successFunc(){
+        savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
+        setCode('');
+    }
+    var path = nestedDirs.slice(1).join('/');
+    deleteProject_(path, window.buildMode, successFunc);
 }
 
 function downloadProject() {
-  var blob = new Blob(
-      [window.codeworldEditor.getDoc().getValue()],
-      { type: 'text/plain', endings: 'native' });
-  var filename = "untitled.hs";
-  if (window.openProjectName) filename = window.openProjectName + '.hs';
+    var blob = new Blob(
+        [window.codeworldEditor.getDoc().getValue()],
+        { type: 'text/plain', endings: 'native' });
+    var filename = "untitled.hs";
+    if (window.openProjectName) filename = window.openProjectName + '.hs';
 
-  if (window.navigator.msSaveBlob) {
-    window.navigator.msSaveBlob(blob, filename);
-  } else {
-    var elem = window.document.createElement('a');
-    elem.href = window.URL.createObjectURL(blob);
-    elem.download = filename;
-    document.body.appendChild(elem);
-    elem.click();
-    document.body.removeChild(elem);
-  }
+    if (window.navigator.msSaveBlob) {
+        window.navigator.msSaveBlob(blob, filename);
+    } else {
+        var elem = window.document.createElement('a');
+        elem.href = window.URL.createObjectURL(blob);
+        elem.download = filename;
+        document.body.appendChild(elem);
+        elem.click();
+        document.body.removeChild(elem);
+    }
 }

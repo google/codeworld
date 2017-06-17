@@ -55,7 +55,6 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
         success <- runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
-                B.writeFile (buildRootDir mode </> rawResultFile programId) output
                 let Just filteredOutput = case mode of  
                         BuildMode "codeworld"  -> filterOutput output
                         BuildMode "haskell" -> Just output

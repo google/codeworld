@@ -24,6 +24,7 @@ import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C
 import 		 Data.Char
+import 		 Data.List
 import           Data.Tuple
 import           System.Directory
 import           System.FilePath
@@ -80,13 +81,10 @@ filterStages = [
         (mkRegex "lexical error at character '\822[01]'", "Smart quotes are not allowed.")
     ]
 
-foldrec :: [Char] -> [(Regex, String)] -> String
-foldrec z [] = z
-foldrec z (x:xs) = subRegex (fst x) (foldrec z xs) (snd x)
+{-
 
 filterOutput :: ByteString -> Maybe ByteString
 filterOutput output = 
-    let outp  = C.unpack output 
-        out   = foldrec outp filterStages
-    in  (Just  (C.pack out))    
-
+    let out = foldl' applyStage (C.unpack output) filterStages
+    in (Just (C.pack out))
+    where applyStage s (pattern, sub) = subRegex pattern s sub

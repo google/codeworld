@@ -81,8 +81,6 @@ filterStages = [
         (mkRegex "lexical error at character '\822[01]'", "Smart quotes are not allowed.")
     ]
 
-{-
-
 filterOutput :: ByteString -> Maybe ByteString
 filterOutput output = 
     let out = foldl' applyStage (C.unpack output) filterStages

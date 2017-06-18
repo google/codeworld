@@ -1,6 +1,8 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE PackageImports #-}
+
 
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
@@ -20,6 +22,7 @@
 
 module Main where
 
+import qualified "codeworld-compiler" Main as M
 import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.Trans

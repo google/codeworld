@@ -16,9 +16,12 @@ extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 
 library
-  -- exposed-modules:     
+  exposed-modules: Main 
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base
   hs-source-dirs:      src
-  default-language:    Haskell98
+  
+  exposed: True
+
+  ghc-options: -O2 -XPackageImports 

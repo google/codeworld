@@ -23,8 +23,8 @@ import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C
-import 		 Data.Char
-import 		 Data.List
+import           Data.Char
+import 	         Data.List
 import           Data.Tuple
 import           System.Directory
 import           System.FilePath
@@ -46,7 +46,7 @@ filterStages = [
         (mkRegex "module Main", "your program"),
         (mkRegex "main:Main", "your program"),
         (mkRegex "Couldn't match expected type Text\\s*with actual type GHC.Types.Char",
-        	"Text requires double quotes, rather than single."),
+                "Text requires double quotes, rather than single."),
         (mkRegex "base-[0-9.]*:GHC\\.Stack\\.Types\\.HasCallStack => ", ""),
         (mkRegex "GHC\\.Types\\.Char" ,""),
         (mkRegex "codeworld-base[-.:_A-Za-z0-9]*", "the standard library"),
@@ -62,14 +62,14 @@ filterStages = [
         (mkRegex "[ ]*The function [a-zA-Z0-9_]* is applied to [a-z0-9]* arguments,\n", ""),
         (mkRegex "[ ]*but its type .* has only .*\n", ""),
         (mkRegex "A data constructor of that name is in scope; did you mean DataKinds\\?",
-        	"That name refers to a value, not a type."),
+                "That name refers to a value, not a type."),
         (mkRegex "type constructor or class", "type"),
         (mkRegex "Illegal tuple section: use TupleSections",
-        	"This tuple is missing a value, or has an extra comma."),
+                "This tuple is missing a value, or has an extra comma."),
         (mkRegex "Use -v to see a list of the files searched for\\.", ""),
         (mkRegex "\n\\s+\n", "\n"),
         (mkRegex "When checking that:\\s*[^\n]*\\s*is more polymorphic than:\\s*[^\n]*(\n\\s*)?",
-        	""),
+                ""),
         (mkRegex "\\[GHC\\.Types\\.Char\\] -> ", "\n"),
         (mkRegex "\\(and originally defined in [^)]*\\)", "\n"),
         (mkRegex "in string\\/character literal", "in text literal"),
@@ -81,8 +81,8 @@ filterStages = [
         (mkRegex "lexical error at character '\822[01]'", "Smart quotes are not allowed.")
     ]
 
-filterOutput :: ByteString -> Maybe ByteString
+filterOutput :: ByteString -> ByteString
 filterOutput output = 
     let out = foldl' applyStage (C.unpack output) filterStages
-    in (Just (C.pack out))
+    in (C.pack out)
     where applyStage s (pattern, sub) = subRegex pattern s sub

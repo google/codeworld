@@ -22,14 +22,12 @@ module Build where
 import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as C
 import           System.Directory
 import           System.FilePath
 import           System.IO
 import           System.IO.Temp (withSystemTempDirectory)
 import           System.Process
 import           Text.Regex.TDFA
-import           Text.Regex
 
 import Util
 import ErrorSanitizer
@@ -55,9 +53,9 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
         success <- runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
-                let Just filteredOutput = case mode of  
+                let filteredOutput = case mode of  
                         BuildMode "codeworld"  -> filterOutput output
-                        BuildMode "haskell" -> Just output
+                        BuildMode "haskell" -> output
                 B.writeFile (buildRootDir mode </> resultFile programId) filteredOutput
                 let target = tmpdir </> "program.jsexe" </> "all.js"
                 hasTarget <- doesFileExist target
@@ -65,7 +63,6 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
                     copyFile target (buildRootDir mode </> targetFile programId)
                 return hasTarget
         return success
-
 
 userCompileMicros :: Int
 userCompileMicros = 15 * 1000000

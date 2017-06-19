@@ -20,7 +20,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules: Main 
-  -- other-modules:       
+  other-modules: ErrorSanitizer     
   -- other-extensions:    
   build-depends:       
     aeson,
@@ -36,6 +36,7 @@ library
     mtl,
     process,
     regex-tdfa,
+    regex-compat,
     temporary,
     text
 

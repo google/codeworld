@@ -18,7 +18,6 @@
 -}
 
 module Main (
-printer,
 compileSource
 )
 where
@@ -34,7 +33,7 @@ import           System.IO.Temp (withSystemTempDirectory)
 import           System.Process
 import           Text.Regex.TDFA
 
-printer = 3
+import ErrorSanitizer
 
 compileSource :: FilePath -> FilePath -> FilePath -> String -> IO Bool
 compileSource dir outDir errDir mode = checkDangerousSource dir >>= \case
@@ -51,7 +50,10 @@ compileSource dir outDir errDir mode = checkDangerousSource dir >>= \case
         success <- runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
-                B.writeFile (errDir) output
+                let filteredOutput = case mode of 
+                        "haskell" -> output
+                        "codeworld" -> filterOutput output   
+                B.writeFile (errDir) filteredOutput
                 let target = tmpdir </> "program.jsexe" </> "all.js"
                 hasTarget <- doesFileExist target
                 when hasTarget $

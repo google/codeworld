@@ -34,8 +34,6 @@ import           System.Process
 import           Text.Regex.TDFA hiding (Regex)
 import           Text.Regex
 
-import Util
-
 filterStages :: [(Regex, String)]
 filterStages = [
         (mkRegex "\226\8364\162", ""),

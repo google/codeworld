@@ -24,7 +24,7 @@ import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C
 import           Data.Char
-import 	         Data.List
+import           Data.List
 import           Data.Tuple
 import           System.Directory
 import           System.FilePath

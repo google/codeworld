@@ -251,49 +251,6 @@ function registerStandardHints(successFunc)
 
 
 function addToMessage(msg) {
-    if (window.buildMode == 'codeworld') {
-        msg = msg
-            .replace(/\u2018/g, '')
-            .replace(/\u2019/g, '')
-            .replace(/ \[-W[a-z-]*\]/g, '')
-            .replace(/IO action main/g, 'variable main')
-            .replace(/module Main/g, 'your program')
-            .replace(/main\:Main/g, 'your program')
-            .replace(/Couldn't match expected type Text\s*with actual type GHC.Types.Char/g,
-                     'Text requires double quotes, rather than single.')
-            .replace(/base-[0-9.]*:GHC\.Stack\.Types\.HasCallStack => /g, '')
-            .replace(/When checking that:\s*[^\n]*\s*is more polymorphic than:\s*[^\n]*(\n\s*)?/g, '')
-            .replace(/\[GHC\.Types\.Char\] -> /g, '')
-            .replace(/base(-[0-9.]*)?\:(.|\n)*?->( |\n)*/g, '')
-            .replace(/integer-gmp(-[0-9\.]*)?:(.|\n)*?->( |\n)*/g, '')
-            .replace(/GHC\.[A-Za-z.]*(\s|\n)*->( |\n)*/g, '')
-            .replace(/at src\/[A-Za-z0-9/.:]* /g, '')
-            .replace(/GHC\.Types\.Char/g, '')
-            .replace(/codeworld-base[-.:_A-Za-z0-9]*/g, 'the standard library')
-            .replace(/Main\./g, '')
-            .replace(/main :: t/g, 'main :: Program')
-            .replace(/Prelude\./g, '')
-            .replace(/\bBool\b/g, 'Truth')
-            .replace(/IO \(\)/g, 'Program')
-            .replace(/IO [a-z][a-zA-Z0-9_]*/g, 'Program')
-            .replace(/[ ]*Perhaps you intended to use TemplateHaskell\n/g, '')
-            .replace(/imported from [^)\n]*/g, 'defined in the standard library')
-            .replace(/\(and originally defined in [^)]*\)/g, '')
-            .replace(/the first argument/g, 'the parameter(s)')
-            .replace(/[ ]*The function [a-zA-Z0-9_]* is applied to [a-z0-9]* arguments,\n/g, '')
-            .replace(/[ ]*but its type .* has only .*\n/g, '')
-            .replace(/A data constructor of that name is in scope; did you mean DataKinds\?/g,
-                'That name refers to a value, not a type.')
-            .replace(/type constructor or class/g, 'type')
-            .replace(/Illegal tuple section: use TupleSections/g,
-                'This tuple is missing a value, or has an extra comma.')
-            .replace(/in string\/character literal/g, 'in text literal')
-            .replace(/lexical error at character '\\822[01]'/g,
-                     'Smart quotes are not allowed.')
-            .replace(/Use -v to see a list of the files searched for\./g, '')
-            .replace(/CallStack \(from HasCallStack\)\:/g, 'When evaluating:')
-            .replace(/\n\s+\n/g, '\n');
-    }
 
     msg = msg
         .replace(/&/g, '&amp;')

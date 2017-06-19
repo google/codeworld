@@ -29,6 +29,7 @@ Executable codeworld-server
     memory,
     mtl,
     process,
+    regex-compat,
     regex-tdfa,
     snap-core,
     snap-server,

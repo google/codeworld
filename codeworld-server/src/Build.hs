@@ -31,6 +31,7 @@ import           System.IO.Temp (withSystemTempDirectory)
 import           System.Process
 import           Text.Regex.TDFA
 
+import ErrorSanitizer
 import Util
 
 compileIfNeeded :: BuildMode -> ProgramId -> IO Bool
@@ -54,7 +55,10 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
         success <- runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
-                B.writeFile (buildRootDir mode </> resultFile programId) output
+                let filteredOutput = case mode of 
+                        BuildMode "haskell"   -> output
+                        _                     -> filterOutput output
+                B.writeFile (buildRootDir mode </> resultFile programId) filteredOutput
                 let target = tmpdir </> "program.jsexe" </> "all.js"
                 hasTarget <- doesFileExist target
                 when hasTarget $

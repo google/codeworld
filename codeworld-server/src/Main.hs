@@ -22,7 +22,6 @@
 
 module Main where
 
-import qualified "codeworld-compiler" Main as M
 import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.Trans

@@ -18,7 +18,8 @@
 -}
 
 module Main (
-printer
+printer,
+compileSource
 )
 where
 
@@ -32,10 +33,11 @@ import           System.IO
 import           System.IO.Temp (withSystemTempDirectory)
 import           System.Process
 import           Text.Regex.TDFA
+
 printer = 3
 
-compileSource :: FilePath -> FilePath -> String -> IO Bool
-compileSource dir outDir mode = checkDangerousSource dir >>= \case
+compileSource :: FilePath -> FilePath -> FilePath -> String -> IO Bool
+compileSource dir outDir errDir mode = checkDangerousSource dir >>= \case
     True -> do
         B.writeFile (outDir) $
             "Sorry, but your program refers to forbidden language features."
@@ -49,7 +51,7 @@ compileSource dir outDir mode = checkDangerousSource dir >>= \case
         success <- runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
-                B.writeFile (outDir) output
+                B.writeFile (errDir) output
                 let target = tmpdir </> "program.jsexe" </> "all.js"
                 hasTarget <- doesFileExist target
                 when hasTarget $

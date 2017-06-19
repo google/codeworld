@@ -1,5 +1,6 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PackageImports #-}
 
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
@@ -19,6 +20,7 @@
 
 module Build where
 
+import qualified "codeworld-compiler" Main as M
 import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -35,7 +37,7 @@ compileIfNeeded :: BuildMode -> ProgramId -> IO Bool
 compileIfNeeded mode programId = do
     hasResult <- doesFileExist (buildRootDir mode </> resultFile programId)
     hasTarget <- doesFileExist (buildRootDir mode </> targetFile programId)
-    if hasResult then return hasTarget else compileExistingSource mode programId
+    if hasResult then return hasTarget else M.compileSource (buildRootDir mode </> sourceFile programId) (buildRootDir mode </> targetFile programId) (buildRootDir mode </> resultFile programId) "codeworld"
 
 compileExistingSource :: BuildMode -> ProgramId -> IO Bool
 compileExistingSource mode programId = checkDangerousSource mode programId >>= \case

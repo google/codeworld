@@ -4,12 +4,15 @@
 name:                codeworld-compiler
 version:             0.1.0.0
 synopsis:            ghcjs based standalone compiler for codeworld
+
 -- description:         
 license:             Apache-2.0
 license-file:        LICENSE
 author:              The CodeWorld Authors
 maintainer:          pranjaltale16@gmail.com
+
 -- copyright:           
+
 -- category:            
 build-type:          Simple
 extra-source-files:  ChangeLog.md
@@ -19,9 +22,25 @@ library
   exposed-modules: Main 
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base
+  build-depends:       
+    aeson,
+    base,
+    base64-bytestring,
+    bytestring,
+    cryptonite,
+    data-default,
+    directory,
+    filepath,
+    hindent >= 5 && < 5.2.3,
+    memory,
+    mtl,
+    process,
+    regex-tdfa,
+    temporary,
+    text
+
   hs-source-dirs:      src
   
   exposed: True
 
-  ghc-options: -O2 -XPackageImports 
+  ghc-options: -O2 

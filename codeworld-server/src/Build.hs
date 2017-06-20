@@ -37,5 +37,22 @@ compileIfNeeded :: BuildMode -> ProgramId -> IO Bool
 compileIfNeeded mode programId = do
     hasResult <- doesFileExist (buildRootDir mode </> resultFile programId)
     hasTarget <- doesFileExist (buildRootDir mode </> targetFile programId)
-    if hasResult then return hasTarget else M.compileSource (buildRootDir mode </> sourceFile programId) (buildRootDir mode </> targetFile programId) (buildRootDir mode </> resultFile programId) "codeworld"
+    if hasResult 
+        then return hasTarget 
+        else M.compileSource 
+                 (sourceAddr mode programId) 
+                 (compiledAddr mode programId) 
+                 (errorAddr mode programId) 
+                 (getMode mode) 
 
+sourceAddr :: BuildMode -> ProgramId -> FilePath
+sourceAddr mode programId = (buildRootDir mode </> sourceFile programId)
+
+compiledAddr :: BuildMode -> ProgramId -> FilePath
+compiledAddr mode programId = (buildRootDir mode </> targetFile programId)
+
+errorAddr :: BuildMode -> ProgramId -> FilePath
+errorAddr mode programId = (buildRootDir mode </> resultFile programId)
+
+getMode :: BuildMode -> String
+getMode (BuildMode m) = m

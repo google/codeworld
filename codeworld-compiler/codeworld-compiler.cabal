@@ -19,7 +19,7 @@ extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 
 library
-  exposed-modules: Main 
+  exposed-modules: Compile 
   other-modules: ErrorSanitizer     
   -- other-extensions:    
   build-depends:       

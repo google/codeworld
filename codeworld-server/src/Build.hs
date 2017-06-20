@@ -20,7 +20,7 @@
 
 module Build where
 
-import qualified "codeworld-compiler" Main as M
+import qualified "codeworld-compiler" Compile as C
 import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -39,7 +39,7 @@ compileIfNeeded mode programId = do
     hasTarget <- doesFileExist (buildRootDir mode </> targetFile programId)
     if hasResult 
         then return hasTarget 
-        else M.compileSource 
+        else C.compileSource 
                  (sourceAddr mode programId) 
                  (compiledAddr mode programId) 
                  (errorAddr mode programId) 

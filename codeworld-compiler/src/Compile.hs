@@ -17,7 +17,7 @@
   limitations under the License.
 -}
 
-module Main (
+module Compile (
 compileSource
 )
 where

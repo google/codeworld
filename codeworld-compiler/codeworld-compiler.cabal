@@ -18,10 +18,20 @@ build-type:          Simple
 extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 
+executable codeworld-compiler
+  Hs-source-dirs: exec
+  Main-is: Main.hs
+
+  build-depends:
+    base,       
+    codeworld-compiler,
+    directory
+
 library
   exposed-modules: Compile 
   other-modules: ErrorSanitizer     
   -- other-extensions:    
+
   build-depends:       
     aeson,
     base,
@@ -40,7 +50,7 @@ library
     temporary,
     text
 
-  hs-source-dirs:      src
+  hs-source-dirs: src
   
   exposed: True
 

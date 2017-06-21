@@ -54,5 +54,5 @@ compiledAddr mode programId = (buildRootDir mode </> targetFile programId)
 errorAddr :: BuildMode -> ProgramId -> FilePath
 errorAddr mode programId = (buildRootDir mode </> resultFile programId)
 
-getMode :: BuildMode -> String
-getMode (BuildMode m) = m
+getMode :: BuildMode -> [String]
+getMode (BuildMode m) = [m]

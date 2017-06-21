@@ -18,7 +18,9 @@
 -}
 
 module Compile (
-compileSource
+
+    compileSource
+
 )
 where
 
@@ -35,29 +37,31 @@ import           Text.Regex.TDFA
 
 import ErrorSanitizer
 
-compileSource :: FilePath -> FilePath -> FilePath -> String -> IO Bool
+compileSource :: FilePath -> FilePath -> FilePath -> [String] -> IO Bool
 compileSource dir outDir errDir mode = checkDangerousSource dir >>= \case
     True -> do
-        B.writeFile (outDir) $
+        B.writeFile outDir $
             "Sorry, but your program refers to forbidden language features."
         return False
     False -> withSystemTempDirectory "buildSource" $ \tmpdir -> do
-        copyFile (dir) (tmpdir </> "program.hs")
+        copyFile dir (tmpdir </> "program.hs")
         let baseArgs = case mode of
-                "haskell"   -> haskellCompatibleBuildArgs
-                "codeworld" -> standardBuildArgs
+                ["haskell"]   -> haskellCompatibleBuildArgs
+                ["codeworld"] -> standardBuildArgs
+                _           -> mode
             ghcjsArgs = baseArgs ++ [ "program.hs" ]
         success <- runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
                 let filteredOutput = case mode of 
-                        "haskell" -> output
-                        "codeworld" -> filterOutput output   
-                B.writeFile (errDir) filteredOutput
+                        ["haskell"]   -> output
+                        ["codeworld"] -> filterOutput output
+                        _             -> output 
+                B.writeFile errDir filteredOutput
                 let target = tmpdir </> "program.jsexe" </> "all.js"
                 hasTarget <- doesFileExist target
                 when hasTarget $
-                    copyFile target (outDir)
+                    copyFile target outDir
                 return hasTarget
         return success
 
@@ -66,7 +70,7 @@ userCompileMicros = 15 * 1000000
 
 checkDangerousSource :: FilePath -> IO Bool
 checkDangerousSource dir = do
-    contents <- B.readFile (dir)
+    contents <- B.readFile dir
     return $ matches contents ".*TemplateHaskell.*" ||
              matches contents ".*QuasiQuotes.*" ||
              matches contents ".*glasgow-exts.*"

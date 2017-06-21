@@ -19,7 +19,6 @@
 
 module Util where
 
-import           Control.Concurrent
 import           Control.Exception
 import qualified Crypto.Hash as Crypto
 import           Data.ByteArray (convert)
@@ -136,13 +135,3 @@ removeFileIfExists fileName = removeFile fileName `catch` handleExists
   where handleExists e
           | isDoesNotExistError e = return ()
           | otherwise = throwIO e
-
-withTimeout :: Int -> IO a -> IO (Maybe a)
-withTimeout micros action = do
-    result <- newEmptyMVar
-    killer <- forkIO $ threadDelay micros >> putMVar result Nothing
-    runner <- forkIO $ action >>= putMVar result . Just
-    r <- takeMVar result
-    killThread killer
-    killThread runner
-    return r

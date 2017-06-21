@@ -181,8 +181,8 @@ scaled :: Double -> Double -> Picture -> Picture
 scaled = Scale
 
 -- | A picture scaled by these factors.
-dilated :: Double -> Double -> Picture -> Picture
-dilated = scaled
+dilated :: Double -> Picture -> Picture
+dilated k = scaled k k
 
 -- | A picture rotated by this angle.
 --

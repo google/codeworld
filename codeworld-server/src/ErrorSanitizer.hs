@@ -47,12 +47,12 @@ filterStages = [
         (mkRegex "Couldn't match expected type Text\\s*with actual type GHC.Types.Char",
                 "Text requires double quotes, rather than single."),
         (mkRegex "base-[0-9.]*:GHC\\.Stack\\.Types\\.HasCallStack => ", ""),
-        (mkRegex "When checking that:\\s*[^\\n]*\\s*is more polymorphic than:\\s*[^\\n]*(\\n\\s*)?",
+        (mkRegex "When checking that:\\s*[^\n]*\\s*is more polymorphic than:\\s*[^\n]*(\n\\s*)?",
                 ""),
         (mkRegex "\\[GHC\\.Types\\.Char\\] -> ", "\n"),
-        (mkRegex "base(-[0-9.]*)?\\:(.|\\n)*?->( |\\n)*", "\n"),
-        (mkRegex "integer-gmp(-[0-9\\.]*)?:(.|\\n)*?->( |\\n)*", ""),
-        (mkRegex "GHC\\.[A-Za-z.]*(\\s|\\n)*->( |\\n)*", ""),
+        (mkRegex "base(-[0-9.]*)?\\:(.|\n)*?->( |\n)*", "\n"),
+        (mkRegex "integer-gmp(-[0-9\\.]*)?:(.|\n)*?->( |\n)*", ""),
+        (mkRegex "GHC\\.[A-Za-z.]*(\\s|\n)*->( |\n)*", ""),
         (mkRegex "at src/[A-Za-z0-9\\/.:]*", ""),
         (mkRegex "\\[GHC\\.Types\\.Char\\]" ,""),
         (mkRegex "codeworld-base[-.:_A-Za-z0-9]*", "the standard library"),
@@ -62,12 +62,12 @@ filterStages = [
         (mkRegex "\\bBool\\b", "Truth"),
         (mkRegex "IO \\(\\)", "Program"),
         (mkRegex "IO [a-z][a-zA-Z0-9_]*", "Program"),
-        (mkRegex "[ ]*Perhaps you intended to use TemplateHaskell\\n", ""),
-        (mkRegex "imported from [^)\\n]*", "defined in the standard library"),
+        (mkRegex "[ ]*Perhaps you intended to use TemplateHaskell\n", ""),
+        (mkRegex "imported from [^)\n]*", "defined in the standard library"),
         (mkRegex "\\(and originally defined in [^)]*\\)", "\n"),
         (mkRegex "the first argument", "the parameter(s)"),
-        (mkRegex "[ ]*The function [a-zA-Z0-9_]* is applied to [a-z0-9]* arguments,\\n", ""),
-        (mkRegex "[ ]*but its type .* has only .*\\n", ""),
+        (mkRegex "[ ]*The function [a-zA-Z0-9_]* is applied to [a-z0-9]* arguments,\n", ""),
+        (mkRegex "[ ]*but its type .* has only .*\n", ""),
         (mkRegex "A data constructor of that name is in scope; did you mean DataKinds\\?",
                 "That name refers to a value, not a type."),
         (mkRegex "type constructor or class", "type"),
@@ -77,7 +77,7 @@ filterStages = [
         (mkRegex "lexical error at character '\\\\822[01]'", "Smart quotes are not allowed."),
         (mkRegex "Use -v to see a list of the files searched for\\.", ""),
         (mkRegex "CallStack \\(from HasCallStack\\):", "When Evaluating:"),
-        (mkRegex "\\n\\s+\\n", "\n")
+        (mkRegex "\n\\s+\n", "\n")
     ]
 
 filterOutput :: ByteString -> ByteString

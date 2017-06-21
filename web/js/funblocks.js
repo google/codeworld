@@ -20,7 +20,7 @@ function loadSample(code) {
     if (isEditorClean()) sweetAlert.close();
     warnIfUnsaved(function() {
         loadWorkspace(code);
-    });
+    }, false);
 }
 
 function loadWorkspace(text)
@@ -47,22 +47,13 @@ function loadXmlHash(hash, autostart)
 // This will get bound in Haskell to a function that runs the program
 runFunc = null;
 
-function getHash(){
-  var hash = location.hash.slice(1);
-  if (hash.length > 0) {
-    if (hash.slice(-2) == '==') {
-        hash = hash.slice(0, -2);
-    }
-    return hash;
-  }
-  else return '';
-}
-
 openProjectName = '';
 lastXML = '';
 function init()
 {
-    allProjectNames = [];
+    nestedDirs = [""];
+    allProjectNames = [[]];
+    allFolderNames = [[]];
     lastXML = null;
     showingResult = false;
     window.buildMode = 'codeworld';
@@ -242,6 +233,23 @@ function compile(src,silent) {
     });
 }
 
+function folderHandler(folderName, index, state) {
+    warnIfUnsaved(function() {
+        window.nestedDirs = nestedDirs.slice(0, index + 1);
+        window.allProjectNames = allProjectNames.slice(0, index + 1);
+        window.allFolderNames = allFolderNames.slice(0, index + 1);
+        if (!state) {
+            nestedDirs.push(folderName);
+            allProjectNames.push([]);
+            allFolderNames.push([]);
+            discoverProjects(nestedDirs.slice(1).join('/'), index + 1);
+        }
+        clearWorkspace();
+        openProjectName = null;
+        updateUI();
+    }, false);
+}
+
 /*
  * Updates all UI components to reflect the current state.  The general pattern
  * is to modify the state stored in variables and such, and then call updateUI
@@ -263,7 +271,11 @@ function updateUI() {
             document.getElementById('deleteButton').style.display = '';
         } else {
             document.getElementById('saveButton').style.display = 'none';
-            document.getElementById('deleteButton').style.display = 'none';
+            if (window.nestedDirs != "") {
+                document.getElementById('deleteButton').style.display = '';
+            } else {
+                document.getElementById('deleteButton').style.display = 'none';
+            }
         }
     } else {
         if (document.getElementById('signout').style.display == '') {
@@ -277,44 +289,101 @@ function updateUI() {
     }
 
     var projects = document.getElementById('nav_mine');
-    var newProject = document.getElementById('newButton');
 
-    while (projects.lastChild && projects.lastChild != newProject) {
+    while (projects.lastChild) {
         projects.removeChild(projects.lastChild);
     }
 
-    allProjectNames.sort(function(a, b) {
-        return a.localeCompare(b);
+    allProjectNames.forEach(function(projectNames) {
+        projectNames.sort(function(a, b) {
+            a.localeCompare(b);
+        });
     });
 
-    allProjectNames.forEach(function(projectName) {
-        var active = projectName == openProjectName;
-        if (!isSignedIn && !active) {
-            return;
-        }
-
-        var title = projectName;
-        if (active && !isEditorClean()) {
-            title = "* " + title;
-        }
-
-        var encodedName = title.replace('&', '&amp;')
-            .replace('<', '&lt;')
-            .replace('>', '&gt;');
-
-        var template = document.getElementById('projectTemplate').innerHTML;
-        template = template.replace('{{label}}', encodedName);
-        template = template.replace(/{{ifactive ([^}]*)}}/, active ? "$1" : "");
-
-        var span = document.createElement('span');
-        span.innerHTML = template;
-        var elem = span.getElementsByTagName('a')[0];
-        elem.onclick = function() {
-            loadProject(projectName);
-        };
-
-        projects.appendChild(span.removeChild(elem));
+    allFolderNames.forEach(function(folderNames) {
+        folderNames.sort(function(a, b) {
+            a.localeCompare(b);
+        });
     });
+
+    var NDlength =  nestedDirs.length;
+    for(let i = 0; i < NDlength; i++) {
+        var tempProjects;
+        if (i != 0) {
+            var encodedName = nestedDirs[i].replace('&', '&amp;')
+                .replace('<', '&lt;')
+                .replace('>', '&gt;');
+            var template = document.getElementById('openFolderTemplate').innerHTML;
+            template = template.replace('{{label}}', encodedName);
+            var span = document.createElement('span');
+            span.innerHTML = template;
+            var elem = span.getElementsByTagName('a')[0];
+            elem.onclick = function() {
+                folderHandler(nestedDirs[i], i - 1, true);
+            };
+            var temp = document.createElement('span');
+            temp.innerHTML = "&nbsp;".repeat(4*i-4);
+            span.insertBefore(temp, elem);
+            span.style.display = "block";
+            projects.parentNode.insertBefore(span, projects);
+            projects.parentNode.removeChild(projects);
+            projects = span.appendChild(document.createElement('div'));
+        }
+        allFolderNames[i].forEach(function(folderName) {
+            var encodedName = folderName.replace('&', '&amp;')
+                .replace('<', '&lt;')
+                .replace('>', '&gt;');
+            var template = document.getElementById('folderTemplate').innerHTML;
+            template = template.replace('{{label}}', encodedName);
+            var span = document.createElement('span');
+            span.innerHTML = template;
+            var elem = span.getElementsByTagName('a')[0];
+            elem.onclick = function() {
+                folderHandler(folderName, i, false);
+            };
+            var temp = document.createElement('span');
+            temp.innerHTML = "&nbsp;".repeat(4*i);
+            span.insertBefore(temp, elem);
+            span.style.display = "block";
+            projects.appendChild(span);
+            if (i < NDlength - 1) {
+                if (folderName == nestedDirs[i + 1]) {
+                    tempProjects = projects.lastChild;
+                }
+            }
+        });
+        allProjectNames[i].forEach(function(projectName) {
+            var active = (window.openProjectName == projectName) && (i == NDlength - 1);
+            if(!isSignedIn && !active) {
+                return;
+            }
+
+            var title = projectName;
+            if (active && !isEditorClean()) {
+                title = "* " + title;
+            }
+            var encodedName = title.replace('&', '&amp;')
+                .replace('<', '&lt;')
+                .replace('>', '&gt;');
+            var template = document.getElementById('projectTemplate').innerHTML;
+            template = template.replace('{{label}}', encodedName);
+            template = template.replace(/{{ifactive ([^}]*)}}/, active ? "$1" : "");
+            var span = document.createElement('span');
+            span.innerHTML = template;
+            var elem = span.getElementsByTagName('a')[0];
+            elem.onclick = function() {
+                loadProject(projectName, i);
+            }
+            var temp = document.createElement('span');
+            temp.innerHTML = "&nbsp;".repeat(4*i);
+            span.insertBefore(temp, elem);
+            span.style.display = "block";
+            projects.appendChild(span);
+        });
+        if ( i + 1 < NDlength ) {
+            projects = tempProjects;
+        }
+    }
 
     var title;
     if (window.openProjectName) {
@@ -344,7 +413,7 @@ function help(doc) {
 }
 
 function signinCallback(result) {
-    discoverProjects();
+    discoverProjects("", 0);
     updateUI();
     if(result.wc)
     {
@@ -363,11 +432,11 @@ function signOut() {
   updateUI();
 }
 
-function discoverProjects(){
-  discoverProjects_('blocklyXML');
+function discoverProjects(path, index){
+  discoverProjects_(path, 'blocklyXML', index);
 }
 
-function loadProject(name) {
+function loadProject(name, index) {
 
   function successFunc(project){
     openProjectName = name;
@@ -376,34 +445,62 @@ function loadProject(name) {
     updateUI();
     Blockly.getMainWorkspace().clearUndo();
   }
-  loadProject_(name,'blocklyXML',successFunc);
+  loadProject_(index, name,'blocklyXML',successFunc);
 
 }
 
 
-function saveProjectBase(projectName) {
+function saveProjectBase(path, projectName) {
     function successFunc() {
       lastXML = getWorkspaceXMLText();
       window.openProjectName = projectName;
       updateUI();
 
-      if (allProjectNames.indexOf(projectName) == -1) {
-        discoverProjects();
+      if (allProjectNames[allProjectNames.length -1].indexOf(projectName) == -1) {
+        discoverProjects(path, allProjectNames.length - 1);
       }
     }
-    saveProjectBase_(projectName, 'blocklyXML', successFunc);
+    saveProjectBase_(path, projectName, 'blocklyXML', successFunc);
+}
+
+function deleteFolder() {
+    var path = nestedDirs.slice(1).join('/');
+    if (path == "" || window.openProjectName != null) {
+        return;
+    }
+    function successFunc() {
+        clearWorkspace();
+        openProjectName = null;
+        Blockly.getMainWorkspace().clearUndo();
+    }
+    deleteFolder_(path, 'blocklyXML', successFunc);
 }
 
 function deleteProject() {
+    if(!window.openProjectName) {
+        deleteFolder();
+        return;
+    }
+    function successFunc() {
+        clearWorkspace();
+        openProjectName = null;
+        Blockly.getMainWorkspace().clearUndo();
+    }
+    var path = nestedDirs.slice(1).join('/');
+    deleteProject_(path, 'blocklyXML', successFunc);
 
-  function successFunc()
-  {
-    clearWorkspace();
-    openProjectName = null;
-    Blockly.getMainWorkspace().clearUndo();
-  }
-  deleteProject_('blocklyXML', successFunc);
+}
 
+function newFolder() {
+    function successFunc() {
+        clearWorkspace();
+        openProjectName = null;
+        clearRunCode();
+        lastXML = getWorkspaceXMLText();
+        Blockly.getMainWorkspace().clearUndo();
+        window.location.hash = '';
+    }
+    createFolder(nestedDirs.slice(1).join('/'), 'blocklyXML', successFunc);
 }
 
 function newProject() {
@@ -412,12 +509,11 @@ function newProject() {
     clearRunCode();
     clearWorkspace();
     openProjectName = null;
-    discoverProjects();
     updateUI();
     lastXML = getWorkspaceXMLText();
     Blockly.getMainWorkspace().clearUndo();
     window.location.hash = '';
-  });
+  }, false);
 }
 
 // Clear the running iframe and generated code

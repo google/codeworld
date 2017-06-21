@@ -525,7 +525,7 @@ function deleteFolder_(path, buildMode, successFunc) {
     }, go);
 }
 
-function createFolder(path, buildMode) {
+function createFolder(path, buildMode, successFunc) {
     warnIfUnsaved(function() {
         if(!signedIn()) {
             sweetAlert('Oops!', 'You must sign in to create a folder.', 'error');
@@ -554,7 +554,7 @@ function createFolder(path, buildMode) {
                 }
 
                 allFolderNames[allFolderNames.length - 1].push(folderName);
-                setCode('');
+                successFunc();
                 updateUI();
             });
         }

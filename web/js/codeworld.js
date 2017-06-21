@@ -412,7 +412,10 @@ function newProject() {
 }
 
 function newFolder() {
-    createFolder(nestedDirs.slice(1).join('/'), window.buildMode);
+    function successFunc() {
+        setCode('');
+    }
+    createFolder(nestedDirs.slice(1).join('/'), window.buildMode, successFunc);
 }
 
 function loadProject(name, index) {

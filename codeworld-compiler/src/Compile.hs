@@ -40,7 +40,7 @@ import ErrorSanitizer
 compileSource :: FilePath -> FilePath -> FilePath -> [String] -> IO Bool
 compileSource dir outDir errDir mode = checkDangerousSource dir >>= \case
     True -> do
-        B.writeFile errDir $
+        B.writeFile errDir
             "Sorry, but your program refers to forbidden language features."
         return False
     False -> withSystemTempDirectory "buildSource" $ \tmpdir -> do
@@ -50,20 +50,20 @@ compileSource dir outDir errDir mode = checkDangerousSource dir >>= \case
                 ["codeworld"] -> standardBuildArgs
                 _           -> mode
             ghcjsArgs = baseArgs ++ [ "program.hs" ]
-        success <- runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
-            Nothing -> return False
-            Just output -> do
-                let filteredOutput = case mode of 
-                        ["haskell"]   -> output
-                        ["codeworld"] -> filterOutput output
-                        _             -> output 
-                B.writeFile errDir filteredOutput
-                let target = tmpdir </> "program.jsexe" </> "all.js"
-                hasTarget <- doesFileExist target
-                when hasTarget $
-                    copyFile target outDir
-                return hasTarget
-        return success
+        runCompiler tmpdir userCompileMicros ghcjsArgs >>=
+          \case
+              Nothing -> return False
+              Just output -> do
+                  let filteredOutput = case mode of
+                          ["haskell"]   -> output
+                          ["codeworld"] -> filterOutput output
+                          _             -> output
+                  B.writeFile errDir filteredOutput
+                  let target = tmpdir </> "program.jsexe" </> "all.js"
+                  hasTarget <- doesFileExist target
+                  when hasTarget $
+                      copyFile target outDir
+                  return hasTarget
 
 userCompileMicros :: Int
 userCompileMicros = 15 * 1000000
@@ -89,9 +89,7 @@ runCompiler dir micros args = do
             close_fds = True }
 
     hClose inh
-    result <- withTimeout micros $ do
-        err <- B.hGetContents errh
-        return err
+    result <- withTimeout micros $ B.hGetContents errh
     hClose outh
 
     terminateProcess pid

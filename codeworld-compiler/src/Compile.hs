@@ -40,7 +40,7 @@ import ErrorSanitizer
 compileSource :: FilePath -> FilePath -> FilePath -> [String] -> IO Bool
 compileSource dir outDir errDir mode = checkDangerousSource dir >>= \case
     True -> do
-        B.writeFile outDir $
+        B.writeFile errDir $
             "Sorry, but your program refers to forbidden language features."
         return False
     False -> withSystemTempDirectory "buildSource" $ \tmpdir -> do

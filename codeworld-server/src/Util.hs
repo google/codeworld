@@ -38,6 +38,8 @@ import qualified Data.Text.Encoding as T
 import           System.Directory
 import           System.IO.Error
 import           System.FilePath
+import           System.File.Tree (getDirectory, copyTo_)
+import           System.Posix.Files
 
 import Model
 
@@ -46,6 +48,7 @@ newtype ProgramId = ProgramId { unProgramId :: Text } deriving Eq
 newtype ProjectId = ProjectId { unProjectId :: Text } deriving Eq
 newtype DeployId  = DeployId  { unDeployId  :: Text } deriving Eq
 newtype DirId     = DirId     { unDirId     :: Text}  deriving Eq
+newtype ShareId   = ShareId   { unShareId   :: Text } deriving Eq
 
 autocompletePath :: FilePath
 autocompletePath = "web/codeworld-base.txt"
@@ -55,6 +58,9 @@ clientIdPath = "web/clientId.txt"
 
 buildRootDir :: BuildMode -> FilePath
 buildRootDir (BuildMode m) = "data" </> m </> "user"
+
+shareRootDir :: BuildMode -> FilePath
+shareRootDir (BuildMode m) = "data" </> m </> "share"
 
 projectRootDir :: BuildMode -> FilePath
 projectRootDir (BuildMode m) = "data" </> m </> "projects"
@@ -93,6 +99,9 @@ auxiliaryFiles programId = [
 deployLink :: DeployId -> FilePath
 deployLink (DeployId d) = let s = T.unpack d in take 3 s </> s
 
+shareLink :: ShareId -> FilePath
+shareLink (ShareId sh) = let s = T.unpack sh in take 3 s </> s
+
 userProjectDir :: BuildMode -> Text -> FilePath
 userProjectDir mode userId = projectRootDir mode </> T.unpack userId
 
@@ -120,6 +129,10 @@ nameToDirId = DirId . hashToId "D" . T.encodeUtf8
 ensureProgramDir :: BuildMode -> ProgramId -> IO ()
 ensureProgramDir mode (ProgramId p) = createDirectoryIfMissing True dir
   where dir = buildRootDir mode </> take 3 (T.unpack p)
+
+ensureShareDir :: BuildMode -> ShareId -> IO ()
+ensureShareDir mode (ShareId s) = createDirectoryIfMissing True dir
+  where dir = shareRootDir mode </> take 3 (T.unpack s)
 
 ensureUserProjectDir :: BuildMode -> Text -> IO ()
 ensureUserProjectDir mode userId =
@@ -165,6 +178,37 @@ resolveDeployId :: BuildMode -> DeployId -> IO ProgramId
 resolveDeployId mode deployId = ProgramId . T.decodeUtf8 <$> B.readFile f
   where f = deployRootDir mode </> deployLink deployId
 
+isDir :: FilePath -> IO Bool
+isDir path = do
+    status <- getFileStatus path
+    return $ isDirectory status
+
+getFilesRecursive :: FilePath -> IO [FilePath]
+getFilesRecursive path = do
+    dirBool <- isDir path
+    case dirBool of
+      True -> do
+        contents <- listDirectory path
+        concat <$> (mapM getFilesRecursive $ map (\x -> path </> x) contents)
+      False -> return [path]
+
+dirToCheckSum :: FilePath -> IO Text
+dirToCheckSum path = do
+    files <- getFilesRecursive path
+    fileContents <- mapM B.readFile files
+    let cryptoContext = Crypto.hashInitWith Crypto.MD5
+    return $ ((T.pack "F") <>)
+           . T.decodeUtf8
+           . BC.takeWhile (/= '=')
+           . BC.map toWebSafe
+           . B64.encode
+           . convert
+           . Crypto.hashFinalize
+           . Crypto.hashUpdates cryptoContext $ fileContents
+    where toWebSafe '/' = '_'
+          toWebSafe '+' = '-'
+          toWebSafe c   = c
+
 hashToId :: Text -> ByteString -> Text
 hashToId pfx = (pfx <>)
              . T.decodeUtf8
@@ -176,6 +220,9 @@ hashToId pfx = (pfx <>)
   where toWebSafe '/' = '_'
         toWebSafe '+' = '-'
         toWebSafe c   = c
+
+copyDirIfExists :: FilePath -> FilePath -> IO ()
+copyDirIfExists folder1 folder2 = getDirectory folder1 >>= copyTo_ folder2
 
 removeFileIfExists :: FilePath -> IO ()
 removeFileIfExists fileName = removeFile fileName `catch` handleExists

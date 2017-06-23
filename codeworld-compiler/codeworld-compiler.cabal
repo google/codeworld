@@ -55,3 +55,14 @@ library
   exposed: True
 
   ghc-options: -O2 
+
+Test-Suite codeworld-compiler 
+  type:               exitcode-stdio-1.0
+  main-is:            Main.hs
+  hs-source-dirs:     test
+  build-depends:      base >=4.6 && <4.7,
+                      test-framework,
+                      test-framework-hunit,
+                      HUnit,
+                      containers == 0.5.*
+

@@ -56,7 +56,7 @@ library
 
   ghc-options: -O2 
 
-Test-Suite codeworld-compiler 
+Test-Suite codeworld-compiler-test
   type:               exitcode-stdio-1.0
   main-is:            Main.hs
   hs-source-dirs:     test

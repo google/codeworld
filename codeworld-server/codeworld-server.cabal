@@ -24,6 +24,7 @@ Executable codeworld-server
     data-default,
     directory,
     filepath,
+    filesystem-trees,
     hindent >= 5 && < 5.2.3,
     http-conduit,
     memory,
@@ -33,7 +34,8 @@ Executable codeworld-server
     snap-core,
     snap-server,
     temporary,
-    text
+    text,
+    unix
 
   Ghc-options: -threaded -Wall -funbox-strict-fields -O2
                -fno-warn-unused-do-bind

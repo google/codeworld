@@ -696,3 +696,53 @@ function share() {
 
   go();
 }
+
+function shareFolder() {
+    if(!signedIn()) {
+        sweetAlert('Oops!', 'You must sign in to share your folder.', 'error');
+        updateUI();
+        return;
+    }
+    if(nestedDirs.length == 1 || (openProjectName != null && openProjectName != '')) {
+        sweetAlert('Oops!', 'YOu must select a folder to share!', 'error');
+        updateUI();
+        return;
+    }
+    var path = nestedDirs.slice(1).join('/');
+
+    function go() {
+        var msg = 'Copy this link to share your folder with others!';
+
+        var id_token = auth2.currentUser.get().getAuthResponse().id_token;
+        var data = new FormData();
+        data.append('id_token', id_token);
+        data.append('mode', window.buildMode);
+        data.append('path', path);
+ 
+        sendHttp('POST', 'shareFolder', data, function(request) {
+            if(request.status != 200) {
+                sweetAlert('Oops!', 'Could not share your folder! Please try again.', 'error');
+                return;
+            }
+
+            var shareHash = request.responseText;
+            var a = document.createElement('a');
+            a.href = window.location.href;
+            a.hash = '#' + shareHash;
+            var url = a.href;
+            sweetAlert({
+                html: true,
+                title: '<i class="mdi mdi-72px mdi-folder-outline"></i>&nbsp; Share Folder',
+                text: msg,
+                type: 'input',
+                inputValue: url,
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: 'Done',
+                animation: 'slide-from-bottom'
+            });
+        });
+    }
+
+    go();
+}

@@ -30,6 +30,75 @@ function init() {
         window.buildMode = 'codeworld';
     }
 
+    var hash = location.hash.slice(1);
+    if (hash.length > 0) {
+        if (hash.slice(-2) == '==') {
+            hash = hash.slice(0, -2);
+        }
+        if(hash[0] == 'F') {
+            function go(folderName) {
+                var id_token = auth2.currentUser.get().getAuthResponse().id_token;
+                var data = new FormData();
+                data.append('id_token', id_token);
+                data.append('mode', window.buildMode);
+                data.append('shash', hash);
+                data.append('name', folderName);
+
+                sendHttp('POST', 'shareContent', data, function(request) {
+                    window.location.hash = '';
+                    if (request.status == 200) {
+                        sweetAlert('Success!', 'The shared folder is moved into your root directory.', 'success');
+                    } else {
+                        sweetAlert('Oops!', 'Could not load the shared directory. Please try again.', 'error');
+                    }
+                    initCodeworld();
+                    registerStandardHints(function(){setMode(true);});
+                    discoverProjects("", 0);
+                    updateUI();
+                });
+            }
+
+            sweetAlert({
+                html: true,
+                title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
+                text: 'Enter a name for the shared folder:',
+                type: 'input',
+                confirmButtonText: 'Save',
+                showCancelButton: false,
+                closeOnConfirm: false
+            }, go);
+        } else {
+            initCodeworld();
+            registerStandardHints(function(){setMode(true);});
+            updateUI();
+        }
+    } else {
+        initCodeworld();
+        registerStandardHints(function(){setMode(true);});
+        updateUI();
+    }
+ 
+    if (hash.length > 0) {
+        if (hash.slice(-2) == '==') {
+            hash = hash.slice(0, -2);
+        }
+        if (hash[0] == 'P') {
+            sendHttp('GET', 'loadSource?hash=' + hash + '&mode=' + window.buildMode, null, function(request) {
+                if (request.status == 200) {
+                    setCode(request.responseText, null, null, true);
+                }
+            });
+        } else if (hash[0] != 'F') {
+            setCode('');
+            if (!signedIn()) help();
+        }
+    } else {
+        setCode('');
+        if (!signedIn()) help();
+    }
+}
+
+function initCodeworld() {
     var editor = document.getElementById('editor');
 
     codeworldKeywords = {};
@@ -80,31 +149,12 @@ function init() {
 
     window.codeworldEditor.on('changes', window.updateUI);
 
-    registerStandardHints(function(){setMode(true);});
-
-    updateUI();
-
     window.onbeforeunload = function(event) {
         if (!isEditorClean()) {
             var msg = 'There are unsaved changes to your project. ' + 'If you continue, they will be lost!';
             if (event) event.returnValue = msg;
             return msg;
         }
-    }
-
-    var hash = location.hash.slice(1);
-    if (hash.length > 0) {
-        if (hash.slice(-2) == '==') {
-            hash = hash.slice(0, -2);
-        }
-        sendHttp('GET', 'loadSource?hash=' + hash + '&mode=' + window.buildMode, null, function(request) {
-            if (request.status == 200) {
-                setCode(request.responseText, null, null, true);
-            }
-        });
-    } else {
-        setCode('');
-        if (!signedIn()) help();
     }
 }
 
@@ -282,6 +332,12 @@ function updateUI() {
         if ( i + 1 < NDlength ) {
             projects = tempProjects;
         }
+    }
+
+    if (NDlength != 1 && (openProjectName == null || openProjectName == '')) {
+        document.getElementById('shareFolderButton').style.display = '';
+    } else {
+        document.getElementById('shareFolderButton').style.display = 'none';
     }
 
     var title;
@@ -471,7 +527,9 @@ function run(hash, dhash, msg, error) {
     if (hash || msg) {
         window.mainLayout.show('east');
         window.mainLayout.open('east');
+        document.getElementById('shareFolderButton').style.display = 'none';
     } else {
+        document.getElementById('shareFolderButton').style.display = '';
         window.mainLayout.hide('east');
     }
 

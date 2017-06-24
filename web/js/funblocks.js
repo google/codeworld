@@ -63,9 +63,46 @@ function init()
         if (hash.slice(-2) == '==') {
             hash = hash.slice(0, -2);
         }
-        loadXmlHash(hash,true);
-    } 
-    
+        if (hash[0] == 'F') {
+            function go(folderName) {
+                var id_token = auth2.currentUser.get().getAuthResponse().id_token;
+                var data = new FormData();
+                data.append('id_token', id_token);
+                data.append('mode', 'blocklyXML');
+                data.append('shash', hash);
+                data.append('name', folderName);
+
+                sendHttp('POST', 'shareContent', data, function(request) {
+                    window.location.hash = '';
+                    if (request.status == 200) {
+                        sweetAlert('Success!', 'The shared folder is moved into your root directory.', 'success');
+                    } else {
+                        sweetAlert('Oops!', 'Could not load the shared directory. Please try again.', 'error');
+                    }
+                    initCodeworld();
+                    discoverProjects("", 0);
+                    updateUI();
+                });
+            }
+
+            sweetAlert({
+                html: true,
+                title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
+                text: 'Enter a name for the shared folder:',
+                type: 'input',
+                confirmButtonText: 'Save',
+                showCancelButton: false,
+                closeOnConfirm: false
+            }, go);
+        } else {
+            loadXmlHash(hash,true);
+        }
+    } else {
+        initCodeworld();
+    }
+}
+
+function initCodeworld() {
     codeworldKeywords = {};
     registerStandardHints( function(){} );
     
@@ -103,9 +140,11 @@ function run(xmlHash, codeHash, msg, error, dhash) {
     if (hash) {
         window.location.hash = '#' + xmlHash;
         document.getElementById('shareButton').style.display = '';
+        document.getElementById('shareFolderButton').style.display = 'none';
     } else {
         window.location.hash = '';
         document.getElementById('shareButton').style.display = 'none';
+        document.getElementById('shareFolderButton').style.display = '';
     }
 
     window.showingResult = hash || msg;
@@ -385,6 +424,12 @@ function updateUI() {
         }
     }
 
+    if (NDlength != 1 && (openProjectName == null || openProjectName == '')) {
+        document.getElementById('shareFolderButton').style.display = '';
+    } else {
+        document.getElementById('shareFolderButton').style.display = 'none';
+    }
+
     var title;
     if (window.openProjectName) {
         title = window.openProjectName;
@@ -501,6 +546,10 @@ function newFolder() {
         window.location.hash = '';
     }
     createFolder(nestedDirs.slice(1).join('/'), 'blocklyXML', successFunc);
+}
+
+function shareFolder() {
+    shareFolder_('blocklyXML');
 }
 
 function newProject() {

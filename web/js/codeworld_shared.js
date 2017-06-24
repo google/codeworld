@@ -653,7 +653,7 @@ function share() {
   go();
 }
 
-function shareFolder() {
+function shareFolder_(mode) {
     if(!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to share your folder.', 'error');
         updateUI();
@@ -672,7 +672,7 @@ function shareFolder() {
         var id_token = auth2.currentUser.get().getAuthResponse().id_token;
         var data = new FormData();
         data.append('id_token', id_token);
-        data.append('mode', window.buildMode);
+        data.append('mode', mode);
         data.append('path', path);
  
         sendHttp('POST', 'shareFolder', data, function(request) {

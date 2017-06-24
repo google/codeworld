@@ -32,7 +32,7 @@ import           Text.Regex.TDFA
 
 import ErrorSanitizer
 
-compileSource :: FilePath -> FilePath -> FilePath -> [String] -> IO Bool
+compileSource :: FilePath -> FilePath -> FilePath -> String -> IO Bool
 compileSource src out err mode = checkDangerousSource src >>= \case
     True -> do
         B.writeFile err
@@ -41,16 +41,15 @@ compileSource src out err mode = checkDangerousSource src >>= \case
     False -> withSystemTempDirectory "buildSource" $ \tmpdir -> do
         copyFile src (tmpdir </> "program.hs")
         let baseArgs = case mode of
-                ["haskell"]   -> haskellCompatibleBuildArgs
-                ["codeworld"] -> standardBuildArgs
-                _           -> mode
+                "haskell"   -> haskellCompatibleBuildArgs
+                "codeworld" -> standardBuildArgs
             ghcjsArgs = baseArgs ++ [ "program.hs" ]
         success <-runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
                 let filteredOutput = case mode of
-                        ["haskell"]   -> output
-                        ["codeworld"] -> filterOutput output
+                        "haskell"   -> output
+                        "codeworld" -> filterOutput output
                         _             -> output
                 B.writeFile err filteredOutput
                 let target = tmpdir </> "program.jsexe" </> "all.js"

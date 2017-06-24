@@ -26,24 +26,17 @@ import System.IO
 import "codeworld-compiler" Compile as C
 
 main = do
-    a <- getArgs
-    if length a <= 3
-        then print "Insufficient args, atleast 4 required(source, output, error, buildargs)"
-        else do
-            fileExists <- doesFileExist (head a)
-            if fileExists then do
-                let src = head a
-                    out = a !! 1 
-                    err = a !! 2
-                    arg = drop 3 a
-                compileOutput <- extractSource src out err arg
-                case compileOutput of
-                    True -> return () 
-                    False -> putStrLn "Some error occoured while compiling please check the error file"
-                else putStrLn "File not found:"
+    [src, out, err, mode] <- getArgs
+    fileExists <- doesFileExist src
+    if fileExists then do
+        compileOutput <- extractSource src out err mode
+        case compileOutput of
+            True -> return () 
+            False -> putStrLn "Some error occoured while compiling please check the error file"
+        else putStrLn "File not found:"
 
-extractSource :: String -> String -> String -> [String] -> IO Bool
-extractSource  source out err arg = do 
-    res <- C.compileSource source out err arg
+extractSource :: String -> String -> String -> String -> IO Bool
+extractSource  source out err mode = do 
+    res <- C.compileSource source out err mode
     return res
 

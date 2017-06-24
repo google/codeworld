@@ -269,5 +269,5 @@ compileIfNeeded mode programId = do
                  (buildRootDir mode </> resultFile programId)
                  (getMode mode) 
 
-getMode :: BuildMode -> [String]
-getMode (BuildMode m) = [m]
+getMode :: BuildMode -> String
+getMode (BuildMode m) = m

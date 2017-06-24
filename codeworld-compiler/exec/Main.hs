@@ -21,6 +21,7 @@
 
 import System.Environment
 import System.Directory
+import System.IO
 
 import "codeworld-compiler" Compile as C
 
@@ -37,14 +38,12 @@ main = do
                     arg = drop 3 a
                 compileOutput <- extractSource src out err arg
                 case compileOutput of
-                    True -> putStrLn "Done please check your output file"
+                    True -> return () 
                     False -> putStrLn "Some error occoured while compiling please check the error file"
-                else print "Wrong source file address please check it once again"
+                else putStrLn "File not found:"
 
 extractSource :: String -> String -> String -> [String] -> IO Bool
-extractSource  source out err arg = doesFileExist source >>= \a ->
-    if a then do
-        res <- C.compileSource source out err arg
-        return res
-    else return False
+extractSource  source out err arg = do 
+    res <- C.compileSource source out err arg
+    return res
 

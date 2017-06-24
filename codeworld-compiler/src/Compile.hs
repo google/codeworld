@@ -17,12 +17,7 @@
   limitations under the License.
 -}
 
-module Compile (
-
-    compileSource
-
-)
-where
+module Compile ( compileSource ) where
 
 import           Control.Concurrent
 import           Control.Monad
@@ -38,32 +33,32 @@ import           Text.Regex.TDFA
 import ErrorSanitizer
 
 compileSource :: FilePath -> FilePath -> FilePath -> [String] -> IO Bool
-compileSource dir outDir errDir mode = checkDangerousSource dir >>= \case
+compileSource src out err mode = checkDangerousSource src >>= \case
     True -> do
-        B.writeFile errDir
+        B.writeFile err
             "Sorry, but your program refers to forbidden language features."
         return False
     False -> withSystemTempDirectory "buildSource" $ \tmpdir -> do
-        copyFile dir (tmpdir </> "program.hs")
+        copyFile src (tmpdir </> "program.hs")
         let baseArgs = case mode of
                 ["haskell"]   -> haskellCompatibleBuildArgs
                 ["codeworld"] -> standardBuildArgs
                 _           -> mode
             ghcjsArgs = baseArgs ++ [ "program.hs" ]
-        runCompiler tmpdir userCompileMicros ghcjsArgs >>=
-          \case
-              Nothing -> return False
-              Just output -> do
-                  let filteredOutput = case mode of
-                          ["haskell"]   -> output
-                          ["codeworld"] -> filterOutput output
-                          _             -> output
-                  B.writeFile errDir filteredOutput
-                  let target = tmpdir </> "program.jsexe" </> "all.js"
-                  hasTarget <- doesFileExist target
-                  when hasTarget $
-                      copyFile target outDir
-                  return hasTarget
+        success <-runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
+            Nothing -> return False
+            Just output -> do
+                let filteredOutput = case mode of
+                        ["haskell"]   -> output
+                        ["codeworld"] -> filterOutput output
+                        _             -> output
+                B.writeFile err filteredOutput
+                let target = tmpdir </> "program.jsexe" </> "all.js"
+                hasTarget <- doesFileExist target
+                when hasTarget $
+                    copyFile target out
+                return hasTarget
+        return success
 
 userCompileMicros :: Int
 userCompileMicros = 15 * 1000000

@@ -644,6 +644,10 @@ function deleteProject() {
     deleteProject_(path, window.buildMode, successFunc);
 }
 
+function shareFolder() {
+    shareFolder_('codeworld');
+}
+
 function downloadProject() {
     var blob = new Blob(
         [window.codeworldEditor.getDoc().getValue()],

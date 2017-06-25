@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PackageImports    #-}
 
-
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
 
@@ -18,7 +17,6 @@
   limitations under the License.
 -}
 
-
 import Options.Applicative
 import Control.Monad (join)
 import Data.Monoid ((<>))
@@ -29,16 +27,10 @@ import System.IO
 import "codeworld-compiler" Compile as C
 
 data Options = Options { source :: String, 
-                         error :: String, 
+                         err :: String, 
                          output :: String, 
                          mode :: String
                        }
-
-data MyApp = MyApp { appGreet :: String }
-
-runWithOptions :: MyApp -> IO ()
-runWithOptions opts =
-    putStrLn ("Merry Christmas, " ++ appGreet opts ++ "!")
 
 main = execParser opts >>= runWithOptions
     where
@@ -48,17 +40,16 @@ main = execParser opts >>= runWithOptions
                          <*> argument str (metavar "Mode"  )
         opts = info parser mempty
 
-{-
-main = do
-    [src, out, err, mode] <- getArgs
-    fileExists <- doesFileExist src
+runWithOptions :: Options -> IO ()
+runWithOptions opts = do
+    fileExists <- doesFileExist (source opts)
     if fileExists then do
-        compileOutput <- extractSource src out err mode
+        compileOutput <- extractSource (source opts) (output opts) (err opts) (mode opts)
         case compileOutput of
             True -> return () 
             False -> putStrLn "Some error occoured while compiling please check the error file"
         else putStrLn "File not found:"
--}
+
 extractSource :: String -> String -> String -> String -> IO Bool
 extractSource  source out err mode = do 
     res <- C.compileSource source out err mode

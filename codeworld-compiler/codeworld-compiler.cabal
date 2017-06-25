@@ -19,7 +19,8 @@ Executable codeworld-compiler
   Build-depends:
     base,       
     codeworld-compiler,
-    directory
+    directory,
+    optparse-applicative
 
 Library
   Exposed-modules: Compile 

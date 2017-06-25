@@ -19,12 +19,36 @@
 -}
 
 
+import Options.Applicative
+import Control.Monad (join)
+import Data.Monoid ((<>))
 import System.Environment
 import System.Directory
 import System.IO
 
 import "codeworld-compiler" Compile as C
 
+data Options = Options { source :: String, 
+                         error :: String, 
+                         output :: String, 
+                         mode :: String
+                       }
+
+data MyApp = MyApp { appGreet :: String }
+
+runWithOptions :: MyApp -> IO ()
+runWithOptions opts =
+    putStrLn ("Merry Christmas, " ++ appGreet opts ++ "!")
+
+main = execParser opts >>= runWithOptions
+    where
+        parser = Options <$> argument str (metavar "Source")
+                         <*> argument str (metavar "Output")
+                         <*> argument str (metavar "Error" )
+                         <*> argument str (metavar "Mode"  )
+        opts = info parser mempty
+
+{-
 main = do
     [src, out, err, mode] <- getArgs
     fileExists <- doesFileExist src
@@ -34,7 +58,7 @@ main = do
             True -> return () 
             False -> putStrLn "Some error occoured while compiling please check the error file"
         else putStrLn "File not found:"
-
+-}
 extractSource :: String -> String -> String -> String -> IO Bool
 extractSource  source out err mode = do 
     res <- C.compileSource source out err mode

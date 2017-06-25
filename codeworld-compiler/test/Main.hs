@@ -1,3 +1,6 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PackageImports    #-}
+
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
 
@@ -15,10 +18,14 @@
 -}
 
 
-import Data.Char
-import Control.Monad
-import System.Directory
-import Test.HUnit             -- only import needed, others are optional
+import qualified "codeworld-compiler" Compile as C
+import           Data.Char
+import           Control.Monad
+import           System.Directory
+import           Test.HUnit             -- only import needed, others are optional
+
+testcaseDir :: FilePath
+testcaseDir = "codeworld-compiler/test/testcase"
 
 test1 = TestCase $ assertEqual "test upCase" "FOO" (map toUpper "foo")
 

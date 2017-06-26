@@ -183,6 +183,12 @@ isDir path = do
     status <- getFileStatus path
     return $ isDirectory status
 
+migrateUser :: FilePath -> IO ()
+migrateUser userRoot = do
+    prevContent <- filter (\x -> (take 3 $ reverse x) == "wc.") <$> listDirectory userRoot
+    mapM_ (\x -> createDirectoryIfMissing False $ userRoot </> (take 3 x)) prevContent
+    mapM_ (\x -> renameFile (userRoot </> x) $ userRoot </> (take 3 x) </> x) prevContent
+
 getFilesRecursive :: FilePath -> IO [FilePath]
 getFilesRecursive path = do
     dirBool <- isDir path

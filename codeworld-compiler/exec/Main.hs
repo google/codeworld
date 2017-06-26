@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PackageImports    #-}
+{-# LANGUAGE RecordWildCards #-}
 
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
@@ -17,18 +17,17 @@
   limitations under the License.
 -}
 
-import Options.Applicative
-import Control.Monad (join)
-import Data.Monoid ((<>))
-import System.Environment
-import System.Directory
-import System.IO
-
-import "codeworld-compiler" Compile as C
+import           Compile
+import           Control.Monad (join)
+import           Data.Monoid ((<>))
+import           Options.Applicative
+import           System.Environment
+import           System.Directory
+import           System.IO
 
 data Options = Options { source :: String, 
-                         err :: String, 
                          output :: String, 
+                         err :: String, 
                          mode :: String
                        } deriving (Show)
 
@@ -51,19 +50,21 @@ main = execParser opts >>= runWithOptions
         opts = info parser mempty
 
 runWithOptions :: Options -> IO ()
-runWithOptions opts = do
-    fileExists <- doesFileExist (source opts)
-    if fileExists then do
-        compileOutput <- extractSource (source opts) (output opts) (err opts) (mode opts)
+runWithOptions Options{..} = do
+    fileExists <- doesFileExist source
+    if fileExists 
+      then do
+        compileOutput <- extractSource source output err mode
         return ()
-        else putStrLn $ "File not found:" ++ (show (source opts))
+      else 
+        putStrLn $ "File not found:" ++ (show source)
 
 extractSource :: String -> String -> String -> String -> IO Bool
 extractSource  source out err mode = do 
-    res <- C.compileSource source out err mode
+    res <- compileSource source out err mode
     case res of 
         True -> return True
         False -> do
-            errFile <- readFile err
-            hPutStrLn stderr (show errFile)
+            errMsg <- readFile err
+            hPutStrLn stderr (show errMsg)
             return False

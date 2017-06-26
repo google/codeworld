@@ -1,7 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE PackageImports #-}
 
 
 {-
@@ -22,7 +21,7 @@
 
 module Main where
 
-import qualified "codeworld-compiler" Compile as C
+import           Compile
 import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.Trans
@@ -263,7 +262,7 @@ compileIfNeeded mode programId = do
     hasTarget <- doesFileExist (buildRootDir mode </> targetFile programId)
     if hasResult 
         then return hasTarget 
-        else C.compileSource 
+        else compileSource 
                  (buildRootDir mode </> sourceFile programId)
                  (buildRootDir mode </> targetFile programId)
                  (buildRootDir mode </> resultFile programId)

@@ -44,13 +44,13 @@ compileSource src out err mode = checkDangerousSource src >>= \case
                 "haskell"   -> haskellCompatibleBuildArgs
                 "codeworld" -> standardBuildArgs
             ghcjsArgs = baseArgs ++ [ "program.hs" ]
-        success <-runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
+        success <- runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
                 let filteredOutput = case mode of
                         "haskell"   -> output
                         "codeworld" -> filterOutput output
-                        _             -> output
+                        _           -> output
                 B.writeFile err filteredOutput
                 let target = tmpdir </> "program.jsexe" </> "all.js"
                 hasTarget <- doesFileExist target

@@ -1,16 +1,16 @@
 Name:                codeworld-compiler
 Version:             0.1.0.0
-Synopsis:            ghcjs based standalone compiler for codeworld
+Synopsis:            GHCJS based standalone compiler for CodeWorld
 License:             Apache-2.0
 License-file:        LICENSE
 Author:              The CodeWorld Authors
-Maintainer:          pranjaltale16@gmail.com
+Maintainer:          Chris Smith <cdsmith@gmail.com>
 Copyright:           (c) 2017, The CodeWorld Authors
 Build-type:          Simple
 Cabal-version:       >=1.10
 
 Description:
-  The ghcjs based standalone compiler for Codeworld programming environment.   
+  The GHCJS based standalone compiler for CodeWorld programming environment.   
  
 Executable codeworld-compiler
   Hs-source-dirs: exec

@@ -30,14 +30,24 @@ data Options = Options { source :: String,
                          err :: String, 
                          output :: String, 
                          mode :: String
-                       }
+                       } deriving (Show)
 
 main = execParser opts >>= runWithOptions
     where
-        parser = Options <$> argument str (metavar "Source")
-                         <*> argument str (metavar "Output")
-                         <*> argument str (metavar "Error" )
-                         <*> argument str (metavar "Mode"  )
+        parser = Options <$> argument str (  metavar "SourceFile" 
+                                          <> help "Location of source file" )
+                         <*> strOption    (  long "output" 
+                                          <> short 'o' 
+                                          <> metavar "OutputFile" 
+                                          <> help "Location of output file" )
+                         <*> strOption    (  long "error" 
+                                          <> short 'e' 
+                                          <> metavar "ErrorFile"  
+                                          <> help "Location of error file" )
+                         <*> strOption    (  long "mode" 
+                                          <> short 'm' 
+                                          <> metavar "BuildMode"  
+                                          <> help "Enter the mode of compilation" )
         opts = info parser mempty
 
 runWithOptions :: Options -> IO ()
@@ -45,13 +55,15 @@ runWithOptions opts = do
     fileExists <- doesFileExist (source opts)
     if fileExists then do
         compileOutput <- extractSource (source opts) (output opts) (err opts) (mode opts)
-        case compileOutput of
-            True -> return () 
-            False -> putStrLn "Some error occoured while compiling please check the error file"
-        else putStrLn "File not found:"
+        return ()
+        else putStrLn $ "File not found:" ++ (show (source opts))
 
 extractSource :: String -> String -> String -> String -> IO Bool
 extractSource  source out err mode = do 
     res <- C.compileSource source out err mode
-    return res
-
+    case res of 
+        True -> return True
+        False -> do
+            errFile <- readFile err
+            hPutStrLn stderr (show errFile)
+            return False

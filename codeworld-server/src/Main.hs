@@ -212,6 +212,7 @@ listFolderHandler clientId = do
     let finalDir = joinPath $ map dirBase dirIds
     liftIO $ ensureUserBaseDir mode (userId user) finalDir
     liftIO $ ensureUserDir mode (userId user) finalDir
+    liftIO $ migrateUser $ userProjectDir mode (userId user)
     let projectDir = userProjectDir mode (userId user)
     subHashedDirs <- liftIO $ listDirectoryWithPrefix $ projectDir </> finalDir
     files <- liftIO $ projectFileNames subHashedDirs

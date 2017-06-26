@@ -60,7 +60,7 @@ compileSource src out err mode = checkDangerousSource src >>= \case
         return success
 
 userCompileMicros :: Int
-userCompileMicros = 15 * 1000000
+userCompileMicros = 45 * 1000000
 
 checkDangerousSource :: FilePath -> IO Bool
 checkDangerousSource dir = do

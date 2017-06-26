@@ -184,8 +184,8 @@ scaled :: (Picture, Number, Number) -> Picture
 scaled (p, x, y) = CWPic (CW.scaled (toDouble x) (toDouble y) (toCWPic p))
 
 -- | A picture scaled by these factors.
-dilated :: (Picture, Number, Number) -> Picture
-dilated = scaled
+dilated :: (Picture, Number) -> Picture
+dilated (p, k) = CWPic (CW.dilated (toDouble k) (toCWPic p))
 
 -- | A picture rotated by this angle.
 rotated :: (Picture, Number) -> Picture

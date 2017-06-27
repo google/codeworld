@@ -240,7 +240,7 @@ function updateUI() {
         document.getElementById('navButton').style.display = 'none';
         document.getElementById('deleteButton').style.display = 'none';
     }
-    
+
     window.move = undefined;
     document.getElementById('newButton').style.display = '';
     document.getElementById('saveAsButton').style.display = '';

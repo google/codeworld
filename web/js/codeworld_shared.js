@@ -346,7 +346,7 @@ function moveHere_(path, buildMode, successFunc) {
         cancelMove();
         return;
     }
-    
+
     if (window.move == undefined) {
         sweetAlert('Oops!', 'You must first select something to move.', 'error');
         cancelMove();

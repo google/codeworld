@@ -194,8 +194,12 @@ function folderHandler(folderName, index, state) {
             allFolderNames.push([]);
             discoverProjects(nestedDirs.slice(1).join('/'), index + 1);
         }
-        setCode('');
-        updateUI();
+        if (window.move == undefined) {
+            setCode('');
+            updateUI();
+        } else {
+            updateNavBar();
+        }
     }, false);
 }
 
@@ -236,7 +240,46 @@ function updateUI() {
         document.getElementById('navButton').style.display = 'none';
         document.getElementById('deleteButton').style.display = 'none';
     }
+    
+    window.move = undefined;
+    document.getElementById('newButton').style.display = '';
+    document.getElementById('saveAsButton').style.display = '';
+    document.getElementById('downloadButton').style.display = '';
+    document.getElementById('runButtons').style.display = '';
 
+
+    updateNavBar();
+    var NDlength = nestedDirs.length;
+
+    if (NDlength != 1 && (openProjectName == null || openProjectName == '')) {
+        document.getElementById('shareFolderButton').style.display = '';
+    } else {
+        document.getElementById('shareFolderButton').style.display = 'none';
+    }
+
+    document.getElementById('moveHereButton').style.display = 'none';
+    document.getElementById('cancelMoveButton').style.display = 'none';
+    if((openProjectName != null && openProjectName != '') || NDlength != 1) {
+        document.getElementById('moveButton').style.display = '';
+    } else {
+        document.getElementById('moveButton').style.display = 'none';
+    }
+
+    var title;
+    if (window.openProjectName) {
+        title = window.openProjectName;
+    } else {
+        title = "(new)";
+    }
+
+    if (!isEditorClean()) {
+        title = "* " + title;
+    }
+
+    document.title = title + " - CodeWorld"
+}
+
+function updateNavBar() {
     var projects = document.getElementById('nav_mine');
 
     while (projects.lastChild) {
@@ -301,7 +344,7 @@ function updateUI() {
         });
         allProjectNames[i].forEach(function(projectName) {
             var active = (window.openProjectName == projectName) && (i == NDlength - 1);
-            if(!isSignedIn && !active) {
+            if(!signedIn() && !active) {
                 return;
             }
 
@@ -330,25 +373,57 @@ function updateUI() {
             projects = tempProjects;
         }
     }
+}
 
-    if (NDlength != 1 && (openProjectName == null || openProjectName == '')) {
-        document.getElementById('shareFolderButton').style.display = '';
-    } else {
-        document.getElementById('shareFolderButton').style.display = 'none';
+function moveProject() {
+    warnIfUnsaved(function() {
+        if (!signedIn()) {
+            sweetAlert('Oops!', 'You must sign in to move this project or folder.', 'error');
+            updateUI();
+            return;
+        }
+
+        if ((openProjectName == null || openProjectName == '') && nestedDirs.length == 1) {
+            sweetAlert('Oops!', 'You must select a project or folder to move.', 'error');
+            updateUI();
+            return;
+        }
+
+        var tempOpen = openProjectName;
+        var tempPath = nestedDirs.slice(1).join('/');
+        setCode('');
+        nestedDirs = [""];
+        allProjectNames = [[]];
+        allFolderNames = [[]];
+        discoverProjects("", 0);
+        document.getElementById('newFolderButton').style.display = '';
+        document.getElementById('newButton').style.display = 'none';
+        document.getElementById('saveButton').style.display = 'none';
+        document.getElementById('saveAsButton').style.display = 'none';
+        document.getElementById('deleteButton').style.display = 'none';
+        document.getElementById('downloadButton').style.display = 'none';
+        document.getElementById('moveButton').style.display = 'none';
+        document.getElementById('moveHereButton').style.display = '';
+        document.getElementById('cancelMoveButton').style.display = '';
+        document.getElementById('runButtons').style.display = 'none';
+
+        window.move = Object();
+        window.move.path = tempPath;
+        if (tempOpen != null && tempOpen != '') {
+            window.move.file = tempOpen;
+        }
+    }, false);
+}
+
+function moveHere() {
+    function successFunc() {
+        nestedDirs = [""];
+        allProjectNames = [[]];
+        allFolderNames = [[]];
+        discoverProjects("", 0);
+        updateUI();
     }
-
-    var title;
-    if (window.openProjectName) {
-        title = window.openProjectName;
-    } else {
-        title = "(new)";
-    }
-
-    if (!isEditorClean()) {
-        title = "* " + title;
-    }
-
-    document.title = title + " - CodeWorld"
+    moveHere_(nestedDirs.slice(1).join('/'), window.buildMode, successFunc);
 }
 
 function changeFontSize(incr) {
@@ -466,12 +541,16 @@ function newProject() {
 
 function newFolder() {
     function successFunc() {
-        setCode('');
+        if (window.move == undefined)
+            setCode('');
     }
     createFolder(nestedDirs.slice(1).join('/'), window.buildMode, successFunc);
 }
 
 function loadProject(name, index) {
+    if(window.move != undefined) {
+        return;
+    }
     function successFunc(project){
         setCode(project.source, project.history, name);
     }

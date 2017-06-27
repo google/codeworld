@@ -117,6 +117,7 @@ site clientId =
       ("deleteFolder",  deleteFolderHandler clientId),
       ("shareFolder",   shareFolderHandler clientId),
       ("shareContent",  shareContentHandler clientId),
+      ("moveProject",   moveProjectHandler clientId),
       ("compile",       compileHandler),
       ("saveXMLhash",   saveXMLHashHandler),
       ("loadXML",       loadXMLHandler),
@@ -244,6 +245,34 @@ shareContentHandler clientId = do
     liftIO $ ensureUserBaseDir mode (userId user) dirPath
     liftIO $ copyDirIfExists (BC.unpack sharingFolder) $ userProjectDir mode (userId user) </> dirPath
     liftIO $ B.writeFile (userProjectDir mode (userId user) </> dirPath </> "dir.info") name
+
+moveProjectHandler :: ClientId -> Snap ()
+moveProjectHandler clientId = do
+    mode <- getBuildMode
+    user <- getUser clientId
+    Just moveTo <- fmap (fmap $ splitDirectories . BC.unpack) $ getParam "moveTo"
+    let moveToDir = joinPath $ map dirBase $ map (nameToDirId . T.pack) moveTo
+    Just moveFrom <- fmap (fmap $ splitDirectories . BC.unpack) $ getParam "moveFrom"
+    let projectDir = userProjectDir mode (userId user)
+    let moveFromDir = projectDir </> (joinPath $ map dirBase $ map (nameToDirId . T.pack) moveFrom)
+    Just isFile <- getParam "isFile"
+    case isFile of
+      "true" -> do
+        Just name <- getParam "name"
+        let projectId = nameToProjectId $ T.decodeUtf8 name
+        liftIO $ ensureProjectDir mode (userId user) moveToDir projectId
+        liftIO $ copyDirIfExists (dropFileName $ moveFromDir </> projectFile projectId) $ dropFileName $ projectDir </> moveToDir </> projectFile projectId
+        empty <- liftIO $ getDirectoryContents (dropFileName $ moveFromDir </> projectFile projectId) >>= 
+                          return . (\l1 -> length l1 == 3 && sort l1 == sort [".", "..", takeFileName $ projectFile projectId])
+        liftIO $ if empty then removeDirectoryIfExists (dropFileName $ moveFromDir </> projectFile projectId)
+                 else removeFileIfExists $ moveFromDir </> projectFile projectId
+      "false" -> do
+        let dirName = last $ splitDirectories moveFromDir
+        let dir = moveToDir </> (take 3 dirName) </> dirName
+        liftIO $ ensureUserBaseDir mode (userId user) $ dir
+        liftIO $ copyDirIfExists moveFromDir $ projectDir </> dir
+        empty <- liftIO $ getDirectoryContents (takeDirectory $ moveFromDir) >>= return . (\l1 -> length l1 == 3 && sort l1 == sort [".", "..", takeFileName moveFromDir])
+        liftIO $ removeDirectoryIfExists $ if empty then (takeDirectory $ moveFromDir) else moveFromDir
 
 saveXMLHashHandler :: Snap ()
 saveXMLHashHandler = do

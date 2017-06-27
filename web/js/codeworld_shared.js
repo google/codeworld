@@ -332,7 +332,46 @@ function discoverProjects_(path, buildMode, index) {
         var allContents = JSON.parse(request.responseText);
         allProjectNames[index] = allContents['files'];
         allFolderNames[index] = allContents['dirs'];
-        updateUI();
+        updateNavBar();
+    });
+}
+
+function cancelMove() {
+    updateUI();
+}
+
+function moveHere_(path, buildMode, successFunc) {
+    if (!signedIn()) {
+        sweetAlert('Oops!', 'You must sign in before moving.', 'error');
+        cancelMove();
+        return;
+    }
+    
+    if (window.move == undefined) {
+        sweetAlert('Oops!', 'You must first select something to move.', 'error');
+        cancelMove();
+        return;
+    }
+
+    var data = new FormData();
+    data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
+    data.append('mode', buildMode);
+    data.append('moveTo', path);
+    data.append('moveFrom', window.move.path);
+    if (window.move.file != undefined) {
+        data.append('isFile', "true");
+        data.append('name', window.move.file);
+    } else {
+        data.append('isFile', "false");
+    }
+
+    sendHttp('POST', 'moveProject', data, function(request) {
+        if (request.status != 200) {
+            sweetAlert('Oops', 'Could not move your project! Please try again.', 'error');
+            cancelMove();
+            return;
+        }
+        successFunc();
     });
 }
 
@@ -555,7 +594,7 @@ function createFolder(path, buildMode, successFunc) {
 
                 allFolderNames[allFolderNames.length - 1].push(folderName);
                 successFunc();
-                updateUI();
+                updateNavBar();
             });
         }
 

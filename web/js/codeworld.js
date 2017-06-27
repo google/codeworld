@@ -267,7 +267,7 @@ function updateUI() {
             var span = document.createElement('span');
             span.innerHTML = template;
             var elem = span.getElementsByTagName('a')[0];
-            elem.style.marginLeft = (16 * (i - 1)) + 'px';
+            elem.style.marginLeft = (3 + 16 * (i - 1)) + 'px';
             elem.onclick = function() {
                 folderHandler(nestedDirs[i], i - 1, true);
             };
@@ -286,7 +286,7 @@ function updateUI() {
             var span = document.createElement('span');
             span.innerHTML = template;
             var elem = span.getElementsByTagName('a')[0];
-            elem.style.marginLeft = (16 * i) + 'px';
+            elem.style.marginLeft = (3 + 16 * i) + 'px';
             elem.onclick = function() {
                 folderHandler(folderName, i, false);
             };
@@ -318,7 +318,7 @@ function updateUI() {
             var span = document.createElement('span');
             span.innerHTML = template;
             var elem = span.getElementsByTagName('a')[0];
-            elem.style.marginLeft = (16 * i) + 'px';
+            elem.style.marginLeft = (3 + 16 * i) + 'px';
             elem.onclick = function() {
                 loadProject(projectName, i);
             };

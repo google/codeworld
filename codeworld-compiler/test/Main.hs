@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PackageImports    #-}
 
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
@@ -17,8 +16,7 @@
   limitations under the License.
 -}
 
-
-import qualified "codeworld-compiler" Compile as C
+import           Compile
 import           Data.Char
 import           Control.Monad
 import           System.Directory
@@ -27,5 +25,34 @@ import           Test.HUnit             -- only import needed, others are option
 testcaseDir :: FilePath
 testcaseDir = "codeworld-compiler/test/testcase"
 
-test1 = TestCase $ assertEqual "test upCase" "FOO" (map toUpper "foo")
+testSourceFile :: String -> FilePath
+testSourceFile testName = testcaseDir </> testName </> "source.hs"  
 
+testErrorFile :: String -> FilePath
+testErrorFile testName = testcaseDir </> testName </> "error.txt"
+
+testSavedErrorFile :: String -> FilePath
+testSavedErrorFile  testName = testcaseDir </> testName </> "saved_error.txt"
+
+testOutputFile :: String -> FilePath
+testOutputFile testName = testcaseDir </> testName </> "output.js"
+
+savedErrorOutput :: String -> IO String
+savedErrorOutput testName = do
+    savedErrMsg <- readFile (testSavedErrorFile testName)
+    return savedErrMsg
+
+compileErrorOutput :: String -> IO String
+compileErrorOutput testName = do 
+    sourceFile <- readFile (testSourceFile testName)
+    out <- compileSource 
+        (testSourceFile testName)
+        (testOutputFile testName)
+        (testErrorFile  testName)
+        "codeworld"
+    errMsg <- readFile (testErrorFile testName)
+    return errMsg
+
+test1 = TestCase (do err1 <- (compileErrorOutput "test1")
+                     err2 <- (compileErrorOutput "test2") 
+                     assertEqual "Test case 1" err1 err2)

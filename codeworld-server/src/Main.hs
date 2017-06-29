@@ -30,6 +30,8 @@ import qualified Data.ByteString as B
 import           Data.ByteString.Builder (toLazyByteString)
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as LB
+import           Data.Char (isSpace)
+import           Data.List
 import           Data.Maybe
 import           Data.Monoid
 import qualified Data.Text as T
@@ -111,7 +113,12 @@ site clientId =
       ("loadProject",   loadProjectHandler clientId),
       ("saveProject",   saveProjectHandler clientId),
       ("deleteProject", deleteProjectHandler clientId),
-      ("listProjects",  listProjectsHandler clientId),
+      ("listFolder",    listFolderHandler clientId),
+      ("createFolder",  createFolderHandler clientId),
+      ("deleteFolder",  deleteFolderHandler clientId),
+      ("shareFolder",   shareFolderHandler clientId),
+      ("shareContent",  shareContentHandler clientId),
+      ("moveProject",   moveProjectHandler clientId),
       ("compile",       compileHandler),
       ("saveXMLhash",   saveXMLHashHandler),
       ("loadXML",       loadXMLHandler),
@@ -132,50 +139,141 @@ dirConfig :: DirectoryConfig Snap
 dirConfig = defaultDirectoryConfig { preServeHook = disableCache }
   where disableCache _ = modifyRequest (addHeader "Cache-control" "no-cache")
 
+createFolderHandler :: ClientId -> Snap ()
+createFolderHandler clientId = do
+    mode <- getBuildMode
+    user <- getUser clientId
+    Just path <- fmap (fmap $ splitDirectories . BC.unpack) $ getParam "path"
+    let dirIds = map (nameToDirId . T.pack) path
+    let finalDir = joinPath $ map dirBase dirIds
+    liftIO $ ensureUserBaseDir mode (userId user) finalDir
+    liftIO $ createDirectory $ userProjectDir mode (userId user) </> finalDir
+    liftIO $ B.writeFile (userProjectDir mode (userId user) </> finalDir </> "dir.info") $ BC.pack $ last path
+
+deleteFolderHandler :: ClientId -> Snap ()
+deleteFolderHandler clientId = do
+    mode <- getBuildMode
+    user <- getUser clientId
+    Just path <- fmap (fmap $ splitDirectories . BC.unpack) $ getParam "path"
+    let dirIds = map (nameToDirId . T.pack) path
+    let finalDir = joinPath $ map dirBase dirIds
+    liftIO $ ensureUserDir mode (userId user) finalDir
+    let dir = userProjectDir mode (userId user) </> finalDir
+    empty <- liftIO $ getDirectoryContents (takeDirectory dir) >>= return . (\l1 -> length l1 == 3 && sort l1 == sort [".", "..", takeFileName dir])
+    liftIO $ removeDirectoryIfExists $ if empty then (takeDirectory dir) else dir
+
 loadProjectHandler :: ClientId -> Snap ()
 loadProjectHandler clientId = do
     mode      <- getBuildMode
     user      <- getUser clientId
-    liftIO $ ensureUserProjectDir mode (userId user)
     Just name <- getParam "name"
     let projectName = T.decodeUtf8 name
     let projectId = nameToProjectId projectName
-    let file = userProjectDir mode (userId user) </> projectFile projectId
+    Just path <- fmap (fmap $ splitDirectories . BC.unpack) $ getParam "path"
+    let dirIds = map (nameToDirId . T.pack) path
+    let finalDir = joinPath $ map dirBase dirIds
+    liftIO $ ensureProjectDir mode (userId user) finalDir projectId
+    let file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
     serveFile file
 
 saveProjectHandler :: ClientId -> Snap ()
 saveProjectHandler clientId = do
     mode <- getBuildMode
     user <- getUser clientId
-    liftIO $ ensureUserProjectDir mode (userId user)
+    Just path <- fmap (fmap $ splitDirectories . BC.unpack) $ getParam "path"
+    let dirIds = map (nameToDirId . T.pack) path
+    let finalDir = joinPath $ map dirBase dirIds
     Just project <- decode . LB.fromStrict . fromJust <$> getParam "project"
     let projectId = nameToProjectId (projectName project)
-    let file = userProjectDir mode (userId user) </> projectFile projectId
+    liftIO $ ensureProjectDir mode (userId user) finalDir projectId
+    let file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
     liftIO $ LB.writeFile file $ encode project
 
 deleteProjectHandler :: ClientId -> Snap ()
 deleteProjectHandler clientId = do
-    mode <- getBuildMode
+    mode      <- getBuildMode
     user      <- getUser clientId
-    liftIO $ ensureUserProjectDir mode (userId user)
     Just name <- getParam "name"
     let projectName = T.decodeUtf8 name
     let projectId = nameToProjectId projectName
-    let file = userProjectDir mode (userId user) </> projectFile projectId
-    liftIO $ removeFile file
+    Just path <- fmap (fmap $ splitDirectories . BC.unpack) $ getParam "path"
+    let dirIds = map (nameToDirId . T.pack) path
+    let finalDir = joinPath $ map dirBase dirIds
+    liftIO $ ensureProjectDir mode (userId user) finalDir projectId
+    let file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
+    empty <- liftIO $ getDirectoryContents (dropFileName file) >>= return . (\l1 -> length l1 == 3 && sort l1 == sort [".", "..", takeFileName file])
+    liftIO $ if empty then removeDirectoryIfExists (dropFileName file)
+             else removeFileIfExists file
 
-listProjectsHandler :: ClientId -> Snap ()
-listProjectsHandler clientId = do
+listFolderHandler :: ClientId -> Snap ()
+listFolderHandler clientId = do
     mode <- getBuildMode
-    user  <- getUser clientId
-    liftIO $ ensureUserProjectDir mode (userId user)
+    user <- getUser clientId
+    Just path <- fmap (fmap $ splitDirectories . BC.unpack) $ getParam "path"
+    let dirIds = map (nameToDirId . T.pack) path
+    let finalDir = joinPath $ map dirBase dirIds
+    liftIO $ ensureUserBaseDir mode (userId user) finalDir
+    liftIO $ ensureUserDir mode (userId user) finalDir
+    liftIO $ migrateUser $ userProjectDir mode (userId user)
     let projectDir = userProjectDir mode (userId user)
-    projectFiles <- liftIO $ getDirectoryContents projectDir
-    projects <- liftIO $ fmap catMaybes $ forM projectFiles $ \f -> do
-        exists <- doesFileExist (projectDir </> f)
-        if exists then decode <$> LB.readFile (projectDir </> f) else return Nothing
-    modifyResponse $ setContentType "application/json"
-    writeLBS (encode (map projectName projects))
+    subHashedDirs <- liftIO $ listDirectoryWithPrefix $ projectDir </> finalDir
+    files <- liftIO $ projectFileNames subHashedDirs
+    dirs <- liftIO $ projectDirNames subHashedDirs 
+    writeLBS (encode (Directory files dirs))
+
+shareFolderHandler :: ClientId -> Snap ()
+shareFolderHandler clientId = do
+    mode <- getBuildMode
+    user <- getUser clientId
+    Just path <- fmap (fmap $ splitDirectories . BC.unpack) $ getParam "path"
+    let dirIds = map (nameToDirId . T.pack) path
+    let finalDir = joinPath $ map dirBase dirIds
+    checkSum <- liftIO $ dirToCheckSum $ userProjectDir mode (userId user) </> finalDir
+    liftIO $ ensureShareDir mode $ ShareId checkSum
+    liftIO $ B.writeFile (shareRootDir mode </> (shareLink $ ShareId checkSum)) $ BC.pack (userProjectDir mode (userId user) </> finalDir)
+    modifyResponse $ setContentType "text/plain"
+    writeBS $ T.encodeUtf8 checkSum
+
+shareContentHandler :: ClientId -> Snap ()
+shareContentHandler clientId = do
+    mode <- getBuildMode
+    Just shash <- getParam "shash"
+    sharingFolder <- liftIO $ B.readFile (shareRootDir mode </> (shareLink $ ShareId $ T.decodeUtf8 shash))
+    let sharingUserRoot = joinPath $ take 3 $ splitDirectories $ BC.unpack sharingFolder
+    user <- getUser clientId
+    Just name <- getParam "name"
+    let dirPath = dirBase $ nameToDirId $ T.decodeUtf8 name
+    liftIO $ ensureUserBaseDir mode (userId user) dirPath
+    liftIO $ copyDirIfExists (BC.unpack sharingFolder) $ userProjectDir mode (userId user) </> dirPath
+    liftIO $ B.writeFile (userProjectDir mode (userId user) </> dirPath </> "dir.info") name
+
+moveProjectHandler :: ClientId -> Snap ()
+moveProjectHandler clientId = do
+    mode <- getBuildMode
+    user <- getUser clientId
+    Just moveTo <- fmap (fmap $ splitDirectories . BC.unpack) $ getParam "moveTo"
+    let moveToDir = joinPath $ map dirBase $ map (nameToDirId . T.pack) moveTo
+    Just moveFrom <- fmap (fmap $ splitDirectories . BC.unpack) $ getParam "moveFrom"
+    let projectDir = userProjectDir mode (userId user)
+    let moveFromDir = projectDir </> (joinPath $ map dirBase $ map (nameToDirId . T.pack) moveFrom)
+    Just isFile <- getParam "isFile"
+    case isFile of
+      "true" -> do
+        Just name <- getParam "name"
+        let projectId = nameToProjectId $ T.decodeUtf8 name
+        liftIO $ ensureProjectDir mode (userId user) moveToDir projectId
+        liftIO $ copyDirIfExists (dropFileName $ moveFromDir </> projectFile projectId) $ dropFileName $ projectDir </> moveToDir </> projectFile projectId
+        empty <- liftIO $ getDirectoryContents (dropFileName $ moveFromDir </> projectFile projectId) >>= 
+                          return . (\l1 -> length l1 == 3 && sort l1 == sort [".", "..", takeFileName $ projectFile projectId])
+        liftIO $ if empty then removeDirectoryIfExists (dropFileName $ moveFromDir </> projectFile projectId)
+                 else removeFileIfExists $ moveFromDir </> projectFile projectId
+      "false" -> do
+        let dirName = last $ splitDirectories moveFromDir
+        let dir = moveToDir </> (take 3 dirName) </> dirName
+        liftIO $ ensureUserBaseDir mode (userId user) $ dir
+        liftIO $ copyDirIfExists moveFromDir $ projectDir </> dir
+        empty <- liftIO $ getDirectoryContents (takeDirectory $ moveFromDir) >>= return . (\l1 -> length l1 == 3 && sort l1 == sort [".", "..", takeFileName moveFromDir])
+        liftIO $ removeDirectoryIfExists $ if empty then (takeDirectory $ moveFromDir) else moveFromDir
 
 saveXMLHashHandler :: Snap ()
 saveXMLHashHandler = do

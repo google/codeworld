@@ -20,12 +20,16 @@
 module Util where
 
 import           Control.Exception
+import           Control.Monad
 import qualified Crypto.Hash as Crypto
+import           Data.Aeson
 import           Data.ByteArray (convert)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Base64 as B64
+import qualified Data.ByteString.Lazy as LB
+import           Data.Maybe
 import           Data.Monoid
 import           Data.Text (Text)
 import qualified Data.Text as T
@@ -33,11 +37,17 @@ import qualified Data.Text.Encoding as T
 import           System.Directory
 import           System.IO.Error
 import           System.FilePath
+import           System.File.Tree (getDirectory, copyTo_)
+import           System.Posix.Files
+
+import Model
 
 newtype BuildMode = BuildMode String deriving Eq
 newtype ProgramId = ProgramId { unProgramId :: Text } deriving Eq
 newtype ProjectId = ProjectId { unProjectId :: Text } deriving Eq
 newtype DeployId  = DeployId  { unDeployId  :: Text } deriving Eq
+newtype DirId     = DirId     { unDirId     :: Text}  deriving Eq
+newtype ShareId   = ShareId   { unShareId   :: Text } deriving Eq
 
 autocompletePath :: FilePath
 autocompletePath = "web/codeworld-base.txt"
@@ -47,6 +57,9 @@ clientIdPath = "web/clientId.txt"
 
 buildRootDir :: BuildMode -> FilePath
 buildRootDir (BuildMode m) = "data" </> m </> "user"
+
+shareRootDir :: BuildMode -> FilePath
+shareRootDir (BuildMode m) = "data" </> m </> "share"
 
 projectRootDir :: BuildMode -> FilePath
 projectRootDir (BuildMode m) = "data" </> m </> "projects"
@@ -85,11 +98,17 @@ auxiliaryFiles programId = [
 deployLink :: DeployId -> FilePath
 deployLink (DeployId d) = let s = T.unpack d in take 3 s </> s
 
+shareLink :: ShareId -> FilePath
+shareLink (ShareId sh) = let s = T.unpack sh in take 3 s </> s
+
 userProjectDir :: BuildMode -> Text -> FilePath
 userProjectDir mode userId = projectRootDir mode </> T.unpack userId
 
+projectBase :: ProjectId -> FilePath
+projectBase (ProjectId p) = let s = T.unpack p in take 3 s </> s
+
 projectFile :: ProjectId -> FilePath
-projectFile (ProjectId p) = let s = T.unpack p in s <.> "cw"
+projectFile projectId = projectBase projectId <.> "cw"
 
 sourceToProgramId :: ByteString -> ProgramId
 sourceToProgramId = ProgramId . hashToId "P"
@@ -100,13 +119,53 @@ sourceToDeployId = DeployId . hashToId "D" . ("DEPLOY_ID" <>)
 nameToProjectId :: Text -> ProjectId
 nameToProjectId = ProjectId . hashToId "S" . T.encodeUtf8
 
+dirBase :: DirId -> FilePath
+dirBase (DirId d) = let s = T.unpack d in take 3 s </> s
+
+nameToDirId :: Text -> DirId
+nameToDirId = DirId . hashToId "D" . T.encodeUtf8
+
 ensureProgramDir :: BuildMode -> ProgramId -> IO ()
 ensureProgramDir mode (ProgramId p) = createDirectoryIfMissing True dir
   where dir = buildRootDir mode </> take 3 (T.unpack p)
 
+ensureShareDir :: BuildMode -> ShareId -> IO ()
+ensureShareDir mode (ShareId s) = createDirectoryIfMissing True dir
+  where dir = shareRootDir mode </> take 3 (T.unpack s)
+
 ensureUserProjectDir :: BuildMode -> Text -> IO ()
 ensureUserProjectDir mode userId =
     createDirectoryIfMissing True (userProjectDir mode userId)
+
+ensureUserBaseDir :: BuildMode -> Text -> FilePath -> IO ()
+ensureUserBaseDir mode userId path = ensureUserProjectDir mode userId >> createDirectoryIfMissing False (userProjectDir mode userId </> (takeDirectory path))
+
+ensureUserDir :: BuildMode -> Text -> FilePath -> IO ()
+ensureUserDir mode userId path = ensureUserProjectDir mode userId >> createDirectoryIfMissing False (userProjectDir mode userId </> path)
+
+ensureProjectDir :: BuildMode -> Text -> FilePath -> ProjectId -> IO ()
+ensureProjectDir mode userId path projectId = ensureUserProjectDir mode userId >> createDirectoryIfMissing False (dropFileName f)
+  where f = userProjectDir mode userId </> path </> projectFile projectId
+
+listDirectoryWithPrefix :: FilePath -> IO [FilePath]
+listDirectoryWithPrefix filePath = fmap (map (\x -> filePath </> x)) $ listDirectory filePath
+
+dirFilter :: [FilePath] -> Char -> IO [FilePath]
+dirFilter dirs char = fmap concat $ mapM listDirectoryWithPrefix $ filter (\x -> head (takeBaseName x) == char) dirs
+
+projectFileNames :: [FilePath] -> IO [Text]
+projectFileNames subHashedDirs = do
+    hashedFiles <- dirFilter subHashedDirs 'S'
+    projects <- fmap catMaybes $ forM hashedFiles $ \f -> do
+        exists <- doesFileExist f
+        if exists then decode <$> LB.readFile f else return Nothing
+    return $ map projectName projects
+
+projectDirNames :: [FilePath] -> IO [Text]
+projectDirNames subHashedDirs = do
+    hashedDirs <- dirFilter subHashedDirs 'D'
+    dirs <- mapM (\x -> B.readFile $ x </> "dir.info") hashedDirs
+    return $ map T.decodeUtf8 dirs
 
 writeDeployLink :: BuildMode -> DeployId -> ProgramId -> IO ()
 writeDeployLink mode deployId (ProgramId p) = do
@@ -117,6 +176,43 @@ writeDeployLink mode deployId (ProgramId p) = do
 resolveDeployId :: BuildMode -> DeployId -> IO ProgramId
 resolveDeployId mode deployId = ProgramId . T.decodeUtf8 <$> B.readFile f
   where f = deployRootDir mode </> deployLink deployId
+
+isDir :: FilePath -> IO Bool
+isDir path = do
+    status <- getFileStatus path
+    return $ isDirectory status
+
+migrateUser :: FilePath -> IO ()
+migrateUser userRoot = do
+    prevContent <- filter (\x -> (take 3 $ reverse x) == "wc.") <$> listDirectory userRoot
+    mapM_ (\x -> createDirectoryIfMissing False $ userRoot </> (take 3 x)) prevContent
+    mapM_ (\x -> renameFile (userRoot </> x) $ userRoot </> (take 3 x) </> x) prevContent
+
+getFilesRecursive :: FilePath -> IO [FilePath]
+getFilesRecursive path = do
+    dirBool <- isDir path
+    case dirBool of
+      True -> do
+        contents <- listDirectory path
+        concat <$> (mapM getFilesRecursive $ map (\x -> path </> x) contents)
+      False -> return [path]
+
+dirToCheckSum :: FilePath -> IO Text
+dirToCheckSum path = do
+    files <- getFilesRecursive path
+    fileContents <- mapM B.readFile files
+    let cryptoContext = Crypto.hashInitWith Crypto.MD5
+    return $ ((T.pack "F") <>)
+           . T.decodeUtf8
+           . BC.takeWhile (/= '=')
+           . BC.map toWebSafe
+           . B64.encode
+           . convert
+           . Crypto.hashFinalize
+           . Crypto.hashUpdates cryptoContext $ fileContents
+    where toWebSafe '/' = '_'
+          toWebSafe '+' = '-'
+          toWebSafe c   = c
 
 hashToId :: Text -> ByteString -> Text
 hashToId pfx = (pfx <>)
@@ -130,8 +226,27 @@ hashToId pfx = (pfx <>)
         toWebSafe '+' = '-'
         toWebSafe c   = c
 
+copyDirIfExists :: FilePath -> FilePath -> IO ()
+copyDirIfExists folder1 folder2 = getDirectory folder1 >>= copyTo_ folder2
+
 removeFileIfExists :: FilePath -> IO ()
 removeFileIfExists fileName = removeFile fileName `catch` handleExists
   where handleExists e
           | isDoesNotExistError e = return ()
           | otherwise = throwIO e
+
+removeDirectoryIfExists :: FilePath -> IO ()
+removeDirectoryIfExists dirName = removeDirectoryRecursive dirName `catch` handleExists
+  where handleExists e
+          | isDoesNotExistError e = return ()
+          | otherwise = throwIO e
+
+withTimeout :: Int -> IO a -> IO (Maybe a)
+withTimeout micros action = do
+    result <- newEmptyMVar
+    killer <- forkIO $ threadDelay micros >> putMVar result Nothing
+    runner <- forkIO $ action >>= putMVar result . Just
+    r <- takeMVar result
+    killThread killer
+    killThread runner
+    return r

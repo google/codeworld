@@ -57,20 +57,18 @@ compileErrorOutput testName = do
     return errMsg
 
 genTestCases :: [t] -> [Test]
-genTestCases []  = error "Empty directory please add testcase"
-genTestCases [x] =    [ x ~: do  err1 <- (compileErrorOutput x)
-                                 err2 <- (savedErrorOutput   x) 
-                                 assertEqual x err1 err2
-                      ]
-genTestCases (x:xs) = [ x ~: do  err1 <- (compileErrorOutput x)
-                                 err2 <- (savedErrorOutput   x) 
-                                 assertEqual x err1 err2
-                      ] ++ genTestCases xs
+genTestCases []  = ["Empty directory testcase"   ~: "FOo" ~=? (map toUpper "foo")] 
+genTestCases (x) = map toTestCase x 
+
+toTestCase x = x ~: do
+    err1 <- compileErrorOutput x
+    err2 <- savesErrorOutput x
+    assertEqual x err1 err2
 
 getTestCases :: FilePath -> IO Counts
 getTestCases path = do
     dirContent <- getDirectoryContents path
-    let filtered = [ x | x <- dirContent, x `notElem` ["..","."]]
+    let filtered = filter (`notElem` ["..", "."]) dirContents
         cases =  genTestCases filtered
         testOutput = runTestTT (TestList cases)
     testOutput

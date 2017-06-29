@@ -25,17 +25,20 @@ import           Test.HUnit             -- only import needed, others are option
 testcaseDir :: FilePath
 testcaseDir = "codeworld-compiler/test/testcase"
 
+testcaseOutputDir :: FilePath
+testcaseOutputDir = "testcase-output"
+
 testSourceFile :: String -> FilePath
 testSourceFile testName = testcaseDir </> testName </> "source.hs"  
 
 testErrorFile :: String -> FilePath
-testErrorFile testName = testcaseDir </> testName </> "error.txt"
+testErrorFile testName = testcaseOutputDir </> testName </> "error.txt"
 
 testSavedErrorFile :: String -> FilePath
 testSavedErrorFile  testName = testcaseDir </> testName </> "saved_error.txt"
 
 testOutputFile :: String -> FilePath
-testOutputFile testName = testcaseDir </> testName </> "output.js"
+testOutputFile testName = testcaseOutputDir </> testName </> "output.js"
 
 savedErrorOutput :: String -> IO String
 savedErrorOutput testName = do
@@ -44,7 +47,7 @@ savedErrorOutput testName = do
 
 compileErrorOutput :: String -> IO String
 compileErrorOutput testName = do 
-    sourceFile <- readFile (testSourceFile testName)
+    createDir <- createDirectoryIfMissing True ("testcase-output" </> testName)
     out <- compileSource 
         (testSourceFile testName)
         (testOutputFile testName)
@@ -53,6 +56,24 @@ compileErrorOutput testName = do
     errMsg <- readFile (testErrorFile testName)
     return errMsg
 
-test1 = TestCase (do err1 <- (compileErrorOutput "test1")
-                     err2 <- (compileErrorOutput "test2") 
-                     assertEqual "Test case 1" err1 err2)
+genTestCases :: [t] -> [Test]
+genTestCases []  = error "Empty directory please add testcase"
+genTestCases [x] =    [ x ~: do  err1 <- (compileErrorOutput x)
+                                 err2 <- (savedErrorOutput   x) 
+                                 assertEqual x err1 err2
+                      ]
+genTestCases (x:xs) = [ x ~: do  err1 <- (compileErrorOutput x)
+                                 err2 <- (savedErrorOutput   x) 
+                                 assertEqual x err1 err2
+                      ] ++ genTestCases xs
+
+getTestCases :: FilePath -> IO Counts
+getTestCases path = do
+    dirContent <- getDirectoryContents path
+    let filtered = [ x | x <- dirContent, x `notElem` ["..","."]]
+        cases =  genTestCases filtered
+        testOutput = runTestTT (TestList cases)
+    testOutput
+
+main :: IO Counts
+main = getTestCases testCaseDir

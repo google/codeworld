@@ -398,13 +398,12 @@ function updateNavBar() {
             var span = document.createElement('span');
             span.innerHTML = template;
             var elem = span.getElementsByTagName('a')[0];
+            elem.style.marginLeft = (3 + 16 * (i - 1)) + 'px';
             elem.onclick = function() {
                 folderHandler(nestedDirs[i], i - 1, true);
             };
-            var temp = document.createElement('span');
-            temp.innerHTML = "&nbsp;".repeat(4*i-4);
-            span.insertBefore(temp, elem);
-            span.style.display = "block";
+            span.style.display = 'flex';
+            span.style.flexDirection = 'column';
             projects.parentNode.insertBefore(span, projects);
             projects.parentNode.removeChild(projects);
             projects = span.appendChild(document.createElement('div'));
@@ -418,13 +417,12 @@ function updateNavBar() {
             var span = document.createElement('span');
             span.innerHTML = template;
             var elem = span.getElementsByTagName('a')[0];
+            elem.style.marginLeft = (3 + 16 * i) + 'px';
             elem.onclick = function() {
                 folderHandler(folderName, i, false);
             };
-            var temp = document.createElement('span');
-            temp.innerHTML = "&nbsp;".repeat(4*i);
-            span.insertBefore(temp, elem);
-            span.style.display = "block";
+            span.style.display = 'flex';
+            span.style.flexDirection = 'column';
             projects.appendChild(span);
             if (i < NDlength - 1) {
                 if (folderName == nestedDirs[i + 1]) {
@@ -451,13 +449,12 @@ function updateNavBar() {
             var span = document.createElement('span');
             span.innerHTML = template;
             var elem = span.getElementsByTagName('a')[0];
+            elem.style.marginLeft = (3 + 16 * i) + 'px';
             elem.onclick = function() {
                 loadProject(projectName, i);
             }
-            var temp = document.createElement('span');
-            temp.innerHTML = "&nbsp;".repeat(4*i);
-            span.insertBefore(temp, elem);
-            span.style.display = "block";
+            span.style.display = 'flex';
+            span.style.flexDirection = 'column';
             projects.appendChild(span);
         });
         if ( i + 1 < NDlength ) {

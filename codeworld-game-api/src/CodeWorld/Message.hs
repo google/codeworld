@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveGeneric #-}
-
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
 

@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 {-
@@ -139,20 +138,27 @@ ensureUserProjectDir mode userId =
     createDirectoryIfMissing True (userProjectDir mode userId)
 
 ensureUserBaseDir :: BuildMode -> Text -> FilePath -> IO ()
-ensureUserBaseDir mode userId path = ensureUserProjectDir mode userId >> createDirectoryIfMissing False (userProjectDir mode userId </> (takeDirectory path))
+ensureUserBaseDir mode userId path = do
+    ensureUserProjectDir mode userId
+    createDirectoryIfMissing False (userProjectDir mode userId </> takeDirectory path)
 
 ensureUserDir :: BuildMode -> Text -> FilePath -> IO ()
-ensureUserDir mode userId path = ensureUserProjectDir mode userId >> createDirectoryIfMissing False (userProjectDir mode userId </> path)
+ensureUserDir mode userId path = do
+    ensureUserProjectDir mode userId
+    createDirectoryIfMissing False (userProjectDir mode userId </> path)
 
 ensureProjectDir :: BuildMode -> Text -> FilePath -> ProjectId -> IO ()
-ensureProjectDir mode userId path projectId = ensureUserProjectDir mode userId >> createDirectoryIfMissing False (dropFileName f)
+ensureProjectDir mode userId path projectId = do
+    ensureUserProjectDir mode userId
+    createDirectoryIfMissing False (dropFileName f)
   where f = userProjectDir mode userId </> path </> projectFile projectId
 
 listDirectoryWithPrefix :: FilePath -> IO [FilePath]
-listDirectoryWithPrefix filePath = fmap (map (\x -> filePath </> x)) $ listDirectory filePath
+listDirectoryWithPrefix filePath = map (filePath </>) <$> listDirectory filePath
 
 dirFilter :: [FilePath] -> Char -> IO [FilePath]
-dirFilter dirs char = fmap concat $ mapM listDirectoryWithPrefix $ filter (\x -> head (takeBaseName x) == char) dirs
+dirFilter dirs char = fmap concat $ mapM listDirectoryWithPrefix $
+    filter (\x -> head (takeBaseName x) == char) dirs
 
 projectFileNames :: [FilePath] -> IO [Text]
 projectFileNames subHashedDirs = do
@@ -185,9 +191,9 @@ isDir path = do
 
 migrateUser :: FilePath -> IO ()
 migrateUser userRoot = do
-    prevContent <- filter (\x -> (take 3 $ reverse x) == "wc.") <$> listDirectory userRoot
-    mapM_ (\x -> createDirectoryIfMissing False $ userRoot </> (take 3 x)) prevContent
-    mapM_ (\x -> renameFile (userRoot </> x) $ userRoot </> (take 3 x) </> x) prevContent
+    prevContent <- filter (\x -> take 3 (reverse x) == "wc.") <$> listDirectory userRoot
+    mapM_ (\x -> createDirectoryIfMissing False $ userRoot </> take 3 x) prevContent
+    mapM_ (\x -> renameFile (userRoot </> x) $ userRoot </> take 3 x </> x) prevContent
 
 getFilesRecursive :: FilePath -> IO [FilePath]
 getFilesRecursive path = do
@@ -195,7 +201,7 @@ getFilesRecursive path = do
     case dirBool of
       True -> do
         contents <- listDirectory path
-        concat <$> (mapM getFilesRecursive $ map (\x -> path </> x) contents)
+        concat <$> mapM (getFilesRecursive . (path </>)) contents
       False -> return [path]
 
 dirToCheckSum :: FilePath -> IO Text
@@ -203,7 +209,7 @@ dirToCheckSum path = do
     files <- getFilesRecursive path
     fileContents <- mapM B.readFile files
     let cryptoContext = Crypto.hashInitWith Crypto.MD5
-    return $ ((T.pack "F") <>)
+    return $ (T.pack "F" <>)
            . T.decodeUtf8
            . BC.takeWhile (/= '=')
            . BC.map toWebSafe

@@ -41,7 +41,7 @@ compileIfNeeded mode programId = do
 compileExistingSource :: BuildMode -> ProgramId -> IO Bool
 compileExistingSource mode programId = checkDangerousSource mode programId >>= \case
     True -> do
-        B.writeFile (buildRootDir mode </> resultFile programId) $
+        B.writeFile (buildRootDir mode </> resultFile programId)
             "Sorry, but your program refers to forbidden language features."
         return False
     False -> withSystemTempDirectory "codeworld" $ \tmpdir -> do
@@ -50,7 +50,7 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
                 BuildMode "haskell"   -> haskellCompatibleBuildArgs
                 _                     -> standardBuildArgs
             ghcjsArgs = baseArgs ++ [ "program.hs" ]
-        success <- runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
+        runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
                 let filteredOutput = case mode of 
@@ -62,7 +62,6 @@ compileExistingSource mode programId = checkDangerousSource mode programId >>= \
                 when hasTarget $
                     copyFile target (buildRootDir mode </> targetFile programId)
                 return hasTarget
-        return success
 
 userCompileMicros :: Int
 userCompileMicros = 45 * 1000000
@@ -88,9 +87,7 @@ runCompiler dir micros args = do
             close_fds = True }
 
     hClose inh
-    result <- withTimeout micros $ do
-        err <- B.hGetContents errh
-        return err
+    result <- withTimeout micros (B.hGetContents errh)
     hClose outh
 
     terminateProcess pid

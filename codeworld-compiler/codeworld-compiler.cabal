@@ -54,9 +54,11 @@ Test-Suite codeworld-compiler-test
   Type:               exitcode-stdio-1.0
   Main-is:            Main.hs
   Hs-source-dirs:     test
-  Build-depends:      base >=4.6 && <4.7,
-                      test-framework,
-                      test-framework-hunit,
-                      HUnit,
-                      containers == 0.5.*
+  Build-depends:      
+    base >=4.6 && <4.7,
+    test-framework,
+    test-framework-hunit,
+    filepath,
+    HUnit,
+    containers == 0.5.*
 

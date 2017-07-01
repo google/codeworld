@@ -20,10 +20,12 @@ import           Compile
 import           Data.Char
 import           Control.Monad
 import           System.Directory
+import           System.FilePath.Posix
 import           Test.HUnit             -- only import needed, others are optional
 
+
 testcaseDir :: FilePath
-testcaseDir = "codeworld-compiler/test/testcase"
+testcaseDir = "../test/testcase"
 
 testcaseOutputDir :: FilePath
 testcaseOutputDir = "testcase-output"
@@ -56,22 +58,22 @@ compileErrorOutput testName = do
     errMsg <- readFile (testErrorFile testName)
     return errMsg
 
-genTestCases :: [t] -> [Test]
+genTestCases :: [String] -> [Test]
 genTestCases []  = ["Empty directory testcase"   ~: "FOo" ~=? (map toUpper "foo")] 
 genTestCases (x) = map toTestCase x 
 
 toTestCase x = x ~: do
     err1 <- compileErrorOutput x
-    err2 <- savesErrorOutput x
+    err2 <- savedErrorOutput x
     assertEqual x err1 err2
 
 getTestCases :: FilePath -> IO Counts
 getTestCases path = do
     dirContent <- getDirectoryContents path
-    let filtered = filter (`notElem` ["..", "."]) dirContents
+    let filtered = filter (`notElem` ["..", "."]) dirContent
         cases =  genTestCases filtered
         testOutput = runTestTT (TestList cases)
     testOutput
 
 main :: IO Counts
-main = getTestCases testCaseDir
+main = getTestCases testcaseDir

@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ParallelListComp  #-}
-{-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE PatternGuards     #-}
 {-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE TypeFamilies      #-}
@@ -82,10 +81,10 @@ data UIState (s :: SetupPhase) where
                 -> UIState SWait
 
 continueUIState :: UIState s -> Step UIState s
-continueUIState s@(MainMenu   {}) = ContinueMain s
-continueUIState s@(Joining    {}) = ContinueMain s
-continueUIState s@(Connecting {}) = ContinueConnect s
-continueUIState s@(Waiting    {}) = ContinueWait s
+continueUIState s@MainMenu{}   = ContinueMain s
+continueUIState s@Joining{}    = ContinueMain s
+continueUIState s@Connecting{} = ContinueConnect s
+continueUIState s@Waiting{}    = ContinueWait s
 
 
 time :: UIState s -> Double
@@ -137,9 +136,9 @@ event CancelClick     (Connecting t p)                        = CancelConnect (M
 event CancelClick     (Waiting t p c n m)                     = CancelWait    (MainMenu t p)
 event _               s                                       = continueUIState s
 
-pattern CreateClick   <- MousePress LeftButton (inButton 0 ( 1.5) 8 2 -> True)
+pattern CreateClick   <- MousePress LeftButton (inButton 0   1.5  8 2 -> True)
 pattern JoinClick     <- MousePress LeftButton (inButton 0 (-1.5) 8 2 -> True)
-pattern ConnectClick  <- MousePress LeftButton (inButton 0 (-  3) 8 2 -> True)
+pattern ConnectClick  <- MousePress LeftButton (inButton 0 (-3.0) 8 2 -> True)
 pattern LetterPress c <- (isLetterPress -> Just c)
 pattern BackSpace     <- KeyPress "Backspace"
 pattern CancelClick   <- (isCancelClick -> True)
@@ -156,7 +155,7 @@ isCancelClick _ = False
 
 picture :: UIState s -> Picture
 picture (MainMenu time mousePos)
-    = button "New" (dull green) 0 ( 1.5) 8 2 mousePos
+    = button "New"  (dull green) 0   1.5  8 2 mousePos
     & button "Join" (dull green) 0 (-1.5) 8 2 mousePos
     & connectScreen "Main Menu" time
 

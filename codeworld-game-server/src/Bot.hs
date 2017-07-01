@@ -63,11 +63,10 @@ getServerMessage config conn = do
         Nothing -> fail "Invalid server message"
 
 joinGame :: Config -> IO [ServerMessage]
-joinGame config = do
-    connect config $ \conn -> do
-        sendClientMessage config conn (JoinGame (gameId config) "BOT")
-        JoinedAs _ _ <- getServerMessage config conn
-        waitForStart config conn
+joinGame config = connect config $ \conn -> do
+    sendClientMessage config conn (JoinGame (gameId config) "BOT")
+    JoinedAs _ _ <- getServerMessage config conn
+    waitForStart config conn
 
 waitForStart :: Config -> WS.Connection -> IO [ServerMessage]
 waitForStart config conn = go
@@ -83,7 +82,7 @@ playGame config conn = do
     startTime <- getTime Monotonic
     forever $ do
         OutEvent pid eo <- getServerMessage config conn
-        when (pid == 0) $ do
+        when (pid == 0) $
             case decodeEvent eo of
                 Just (t,mbEvent) -> do
                     let mbEvent' = modify <$> mbEvent

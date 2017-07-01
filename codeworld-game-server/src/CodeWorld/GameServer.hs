@@ -142,7 +142,7 @@ cleanup gameMV mypid state = do
         announcePlayers gameMV
   where
     go g = let players' = filter ((/= mypid) . fst) (players g)
-           in return $ (g { players = players' }, null players')
+           in return (g { players = players' }, null players')
 
 -- Communication
 
@@ -232,7 +232,7 @@ initGameServer = do
     started <- getCurrentTime
     totalStats <- newMVar (TotalStats 0 0 0 0)
     games <- newMVar HM.empty
-    return $ ServerState {..}
+    return ServerState{..}
 
 
 -- | A snap handler
@@ -266,7 +266,7 @@ welcomeNew conn state n sig = do
 findGame :: ServerState -> GameId -> Signature -> IO (MVar Game)
 findGame state gid "BOT" = do
     games <- readMVar (games state)
-    (gameMV:_) <- return $ [ gameMV | ((_, gid), gameMV) <- HM.toList games ]
+    let (gameMV:_) = [ gameMV | ((_, gid), gameMV) <- HM.toList games ]
     return gameMV
 findGame state gid sig = do
     Just gameMV <- HM.lookup (sig, gid) <$> readMVar (games state)

@@ -1,7 +1,4 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
 
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.

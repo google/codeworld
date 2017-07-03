@@ -1,9 +1,5 @@
-{-# LANGUAGE CPP                      #-}
-{-# LANGUAGE OverloadedStrings        #-}
 {-# LANGUAGE NoImplicitPrelude        #-}
 {-# LANGUAGE PackageImports           #-}
-{-# LANGUAGE ForeignFunctionInterface #-}
-{-# LANGUAGE JavaScriptFFI            #-}
 
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
@@ -86,7 +82,7 @@ collaborationOf (players, initial, step, event, picture) =
     -- IO combinators that allow for choosing divergent clients.
     CW.unsafeCollaborationOf
         (toInt players)
-        (\stdgen -> initial (randomsFrom stdgen))
+        (initial . randomsFrom)
         (\dt state -> step (state, fromDouble dt))
         (\player ev state -> event (state, fromCWEvent ev, fromInt player))
         (\player state -> toCWPic (picture (state, fromInt player)))

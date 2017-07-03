@@ -14,7 +14,6 @@
   limitations under the License.
 -}
 
-{-# LANGUAGE DeriveGeneric #-}
 module CodeWorld.Event where
 
 import CodeWorld.Picture (Point)

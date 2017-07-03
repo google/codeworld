@@ -44,7 +44,7 @@ compileSource src out err mode = checkDangerousSource src >>= \case
                 "haskell"   -> haskellCompatibleBuildArgs
                 "codeworld" -> standardBuildArgs
             ghcjsArgs = baseArgs ++ [ "program.hs" ]
-        success <- runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
+        runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
                 let filteredOutput = case mode of
@@ -57,7 +57,6 @@ compileSource src out err mode = checkDangerousSource src >>= \case
                 when hasTarget $
                     copyFile target out
                 return hasTarget
-        return success
 
 userCompileMicros :: Int
 userCompileMicros = 45 * 1000000
@@ -83,7 +82,11 @@ runCompiler dir micros args = do
             close_fds = True }
 
     hClose inh
+<<<<<<< HEAD:codeworld-compiler/src/Compile.hs
     result <- withTimeout micros $ B.hGetContents errh
+=======
+    result <- withTimeout micros (B.hGetContents errh)
+>>>>>>> c1338066808b905757dbf482f001de1d58f0d181:codeworld-server/src/Build.hs
     hClose outh
 
     terminateProcess pid

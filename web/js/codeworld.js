@@ -241,6 +241,13 @@ function updateUI() {
         document.getElementById('deleteButton').style.display = 'none';
     }
 
+    var debugMode = document.getElementById('runner').contentWindow.debugMode;
+    if (debugMode) {
+        document.getElementById('inspectButton').style.color = 'black';
+    } else {
+        document.getElementById('inspectButton').style.color = '';
+    }
+
     window.move = undefined;
     document.getElementById('newButton').style.display = '';
     document.getElementById('saveAsButton').style.display = '';
@@ -585,9 +592,11 @@ function run(hash, dhash, msg, error) {
     if (hash) {
         window.location.hash = '#' + hash;
         document.getElementById('shareButton').style.display = '';
+        document.getElementById('inspectButton').style.display = '';
     } else {
         window.location.hash = '';
         document.getElementById('shareButton').style.display = 'none';
+        document.getElementById('inspectButton').style.display = 'none';
     }
 
     if (dhash) {

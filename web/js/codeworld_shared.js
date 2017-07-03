@@ -692,6 +692,15 @@ function share() {
   go();
 }
 
+function inspect() {
+    try {
+        document.getElementById('runner').contentWindow.toggleDebugMode();
+    } catch (e) {
+        sweetAlert('Sorry!','Inspect is only available in drawingOf.','error');
+    }
+    updateUI();
+}
+
 function shareFolder_(mode) {
     if(!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to share your folder.', 'error');

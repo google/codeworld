@@ -20,15 +20,16 @@ import           Compile
 import           Data.Char
 import           Control.Monad
 import           System.Directory
+import           System.Exit
 import           System.FilePath.Posix
 import           Test.HUnit             -- only import needed, others are optional
 
 
 testcaseDir :: FilePath
-testcaseDir = "../test/testcase"
+testcaseDir = "test/testcase"
 
 testcaseOutputDir :: FilePath
-testcaseOutputDir = "testcase-output"
+testcaseOutputDir = "../testcase-output"
 
 testSourceFile :: String -> FilePath
 testSourceFile testName = testcaseDir </> testName </> "source.hs"  
@@ -49,7 +50,7 @@ savedErrorOutput testName = do
 
 compileErrorOutput :: String -> IO String
 compileErrorOutput testName = do 
-    createDir <- createDirectoryIfMissing True ("testcase-output" </> testName)
+    createDir <- createDirectoryIfMissing True (testcaseOutputDir </> testName)
     out <- compileSource 
         (testSourceFile testName)
         (testOutputFile testName)
@@ -76,4 +77,9 @@ getTestCases path = do
     testOutput
 
 main :: IO Counts
-main = getTestCases testcaseDir
+main = do
+    cs@(Counts _ _ errs fails) <- getTestCases testcaseDir
+    putStrLn (showCounts cs)
+    if (errs > 0 || fails > 0) 
+        then exitFailure
+        else exitSuccess 

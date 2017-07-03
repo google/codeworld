@@ -55,7 +55,9 @@ Test-Suite codeworld-compiler-test
   Main-is:            Main.hs
   Hs-source-dirs:     test
   Build-depends:      
-    base >=4.6 && <4.7,
+    base,
+    codeworld-compiler, 
+    directory,
     test-framework,
     test-framework-hunit,
     filepath,

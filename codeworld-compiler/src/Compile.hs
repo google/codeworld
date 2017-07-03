@@ -82,11 +82,7 @@ runCompiler dir micros args = do
             close_fds = True }
 
     hClose inh
-<<<<<<< HEAD:codeworld-compiler/src/Compile.hs
     result <- withTimeout micros $ B.hGetContents errh
-=======
-    result <- withTimeout micros (B.hGetContents errh)
->>>>>>> c1338066808b905757dbf482f001de1d58f0d181:codeworld-server/src/Build.hs
     hClose outh
 
     terminateProcess pid

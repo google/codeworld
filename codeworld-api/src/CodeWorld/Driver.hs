@@ -50,7 +50,7 @@ import           Control.Exception
 import           Control.Monad
 import           Control.Monad.Trans (liftIO)
 import           Data.Char (chr)
-import           Data.List (zip4)
+import           Data.List (zip4,find)
 import           Data.Maybe (fromMaybe, mapMaybe)
 import           Data.Monoid
 import           Data.Serialize
@@ -59,6 +59,7 @@ import qualified Data.Text as T
 import           Data.Text (Text, singleton, pack)
 import           GHC.Fingerprint.Type
 import           GHC.Generics
+import           GHC.Stack
 import           GHC.StaticPtr
 import           Numeric
 import           System.Environment
@@ -86,9 +87,12 @@ import           GHCJS.DOM.EventM
 import           GHCJS.DOM.MouseEvent
 import           GHCJS.DOM.Types (Element, unElement)
 import           GHCJS.Foreign
+import           GHCJS.Foreign.Callback
 import           GHCJS.Marshal
 import           GHCJS.Marshal.Pure
 import           GHCJS.Types
+import qualified JavaScript.Array as Array
+import           JavaScript.Object
 import           JavaScript.Web.AnimationFrame
 import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
@@ -96,6 +100,7 @@ import qualified JavaScript.Web.Location as Loc
 import qualified JavaScript.Web.MessageEvent as WS
 import qualified JavaScript.Web.WebSocket as WS
 import           System.IO.Unsafe
+import           Unsafe.Coerce
 
 #else
 
@@ -254,6 +259,131 @@ drawCodeWorldLogo ctx ds x y w h = do
             js_canvasDrawImage bufctx canvas 0 0 w h
             js_canvasDrawImage ctx (elementFromCanvas buf) x y w h
 
+-- Debug Mode logic
+
+-- | Register callback with initDebugMode allowing users to
+-- | inspect picture.
+inspect :: Picture -> IO ()
+inspect pic = do
+    callback <- syncCallback2 ContinueAsync (handlePointRequest pic)
+    js_initDebugMode callback
+
+handlePointRequest :: Picture -> JSVal -> JSVal -> IO ()
+handlePointRequest pic argsJS retJS = do
+    x <- fmap pFromJSVal $ getProp "x" args
+    y <- fmap pFromJSVal $ getProp "y" args
+    stack <- findTopStackFromPoint (x,y) pic
+    pics <- case stack of
+        Nothing -> return nullRef
+        Just s  -> fmap unsafeCoerce $ picsToArr s
+    setProp "stack" pics ret
+    where
+        -- https://github.com/ghcjs/ghcjs-base/issues/53
+        args = unsafeCoerce argsJS :: Object
+        ret  = unsafeCoerce retJS :: Object
+
+picsToArr :: [Picture] -> IO Array.JSArray
+picsToArr = fmap Array.fromList . sequence . fmap picToObj
+
+picToObj :: Picture -> IO JSVal
+picToObj pic = case getPictureSrc pic of
+        Just (name, src) -> do
+            obj <- create
+            srcLoc <- srcToObj src
+            setProp "srcLoc" srcLoc obj
+            setProp "name"   (pToJSVal name)   obj
+            return $ unsafeCoerce obj
+        Nothing -> return nullRef
+
+srcToObj :: SrcLoc -> IO JSVal
+srcToObj src = do
+    obj <- create
+    setProp "package"   package   obj
+    setProp "module"    module'   obj
+    setProp "file"      file      obj
+    setProp "startLine" startLine obj
+    setProp "startCol"  startCol  obj
+    setProp "endLine"   endLine   obj
+    setProp "endCol"    endCol    obj
+    return $ unsafeCoerce obj
+    where
+        package   = pToJSVal $ srcLocPackage src
+        module'   = pToJSVal $ srcLocModule src
+        file      = pToJSVal $ srcLocFile src
+        startLine = pToJSVal $ srcLocStartLine src
+        startCol  = pToJSVal $ srcLocStartCol src
+        endLine   = pToJSVal $ srcLocEndLine src
+        endCol    = pToJSVal $ srcLocEndCol src
+
+
+findCSMain :: CallStack -> Maybe (String,SrcLoc)
+findCSMain cs = Data.List.find ((=="main") . srcLocPackage . snd) (getCallStack cs)
+
+getPictureCS :: Picture -> CallStack
+getPictureCS (Polygon cs _ _)     = cs
+getPictureCS (Path cs _ _ _ _)    = cs
+getPictureCS (Sector cs _ _ _)    = cs
+getPictureCS (Arc cs _ _ _ _)     = cs
+getPictureCS (Text cs _ _ _)      = cs
+getPictureCS (Color cs _ _)       = cs
+getPictureCS (Translate cs _ _ _) = cs
+getPictureCS (Scale cs _ _ _)     = cs
+getPictureCS (Rotate cs _ _)      = cs
+getPictureCS (Pictures cs _)      = cs
+getPictureCS (Logo cs)            = cs
+
+getPictureSrc :: Picture -> Maybe (String,SrcLoc)
+getPictureSrc = findCSMain . getPictureCS
+
+findTopStackFromPoint :: Point -> Picture -> IO (Maybe [Picture])
+findTopStackFromPoint (x,y) pic = do
+    offscreen <- Canvas.create 500 500
+    context <- Canvas.getContext offscreen
+    findTopStack context (translateDS (10-x/25) (y/25-10) initialDS) pic
+
+findTopStack :: Canvas.Context -> DrawState -> Picture -> IO (Maybe [Picture])
+findTopStack ctx ds pic = case pic of
+    Color _ col p      -> map2 (pic:) $ findTopStack ctx (setColorDS col ds) p
+    Translate _ x y p  -> map2 (pic:) $ findTopStack ctx (translateDS x y ds) p
+    Scale _ x y p      -> map2 (pic:) $ findTopStack ctx (scaleDS x y ds) p
+    Rotate _ r p       -> map2 (pic:) $ findTopStack ctx (rotateDS r ds) p
+    Pictures _ []      -> return Nothing
+    Pictures _ (p:ps)  -> do
+        stack <- findTopStack ctx ds p
+        case stack of
+            Just x  -> return (Just x)
+            Nothing -> findTopStack ctx ds (Pictures undefined ps)
+    Text _ sty fnt txt -> do
+        Canvas.font (fontString sty fnt) ctx
+        width <- Canvas.measureText (textToJSString txt) ctx
+        let height = 25 -- height is constant, defined in fontString
+        withDS ctx ds $ Canvas.rect ((-0.5)*width) (0.5*height) width height ctx
+        contained <- js_isPointInPath 0 0 ctx
+        if contained
+            then return (Just [pic])
+            else return Nothing
+    Logo _             -> do
+        withDS ctx ds $ Canvas.rect (-225) (-50) 450 100 ctx
+        contained <- js_isPointInPath 0 0 ctx
+        if contained
+            then return (Just [pic])
+            else return Nothing
+    _                  -> do
+        drawPicture ctx ds pic
+        contained <- js_isPointInPath 0 0 ctx
+        if contained
+            then return (Just [pic])
+            else return Nothing
+    where map2 = fmap . fmap
+
+-- Canvas.isPointInPath does not provide a way to get the return value
+-- https://github.com/ghcjs/ghcjs-base/blob/master/JavaScript/Web/Canvas.hs#L212
+foreign import javascript unsafe "$3.isPointInPath($1,$2)"
+    js_isPointInPath :: Double -> Double -> Canvas.Context -> IO Bool
+
+foreign import javascript unsafe "initDebugMode($1)"
+    js_initDebugMode :: Callback (JSVal -> JSVal -> IO ()) -> IO ()
+
 followPath :: Canvas.Context -> [Point] -> Bool -> Bool -> IO ()
 followPath ctx [] closed _ = return ()
 followPath ctx [p1] closed _ = return ()
@@ -335,33 +465,33 @@ fontString style font = stylePrefix style <> "25px " <> fontName font
         fontName (NamedFont txt) = "\"" <> textToJSString (T.filter (/= '"') txt) <> "\""
 
 drawPicture :: Canvas.Context -> DrawState -> Picture -> IO ()
-drawPicture ctx ds (Polygon ps smooth) = do
+drawPicture ctx ds (Polygon _ ps smooth) = do
     withDS ctx ds $ followPath ctx ps True smooth
     applyColor ctx ds
     Canvas.fill ctx
-drawPicture ctx ds (Path ps w closed smooth) = do
+drawPicture ctx ds (Path _ ps w closed smooth) = do
     drawFigure ctx ds w $ followPath ctx ps closed smooth
-drawPicture ctx ds (Sector b e r) = withDS ctx ds $ do
+drawPicture ctx ds (Sector _ b e r) = withDS ctx ds $ do
     Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
     Canvas.lineTo 0 0 ctx
     applyColor ctx ds
     Canvas.fill ctx
-drawPicture ctx ds (Arc b e r w) = do
+drawPicture ctx ds (Arc _ b e r w) = do
     drawFigure ctx ds w $ do
         Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
-drawPicture ctx ds (Text sty fnt txt) = withDS ctx ds $ do
+drawPicture ctx ds (Text _ sty fnt txt) = withDS ctx ds $ do
     Canvas.scale 1 (-1) ctx
     applyColor ctx ds
     Canvas.font (fontString sty fnt) ctx
     Canvas.fillText (textToJSString txt) 0 0 ctx
-drawPicture ctx ds Logo = withDS ctx ds $ do
+drawPicture ctx ds (Logo _) = withDS ctx ds $ do
     Canvas.scale 1 (-1) ctx
     drawCodeWorldLogo ctx ds (-225) (-50) 450 100
-drawPicture ctx ds (Color col p)     = drawPicture ctx (setColorDS col ds) p
-drawPicture ctx ds (Translate x y p) = drawPicture ctx (translateDS x y ds) p
-drawPicture ctx ds (Scale x y p)     = drawPicture ctx (scaleDS x y ds) p
-drawPicture ctx ds (Rotate r p)      = drawPicture ctx (rotateDS r ds) p
-drawPicture ctx ds (Pictures ps)     = mapM_ (drawPicture ctx ds) (reverse ps)
+drawPicture ctx ds (Color _ col p)     = drawPicture ctx (setColorDS col ds) p
+drawPicture ctx ds (Translate _ x y p) = drawPicture ctx (translateDS x y ds) p
+drawPicture ctx ds (Scale _ x y p)     = drawPicture ctx (scaleDS x y ds) p
+drawPicture ctx ds (Rotate _ r p)      = drawPicture ctx (rotateDS r ds) p
+drawPicture ctx ds (Pictures _ ps)     = mapM_ (drawPicture ctx ds) (reverse ps)
 
 drawFrame :: Canvas.Context -> Picture -> IO ()
 drawFrame ctx pic = do
@@ -405,7 +535,9 @@ display pic = do
         drawFrame ctx pic
         Canvas.restore ctx
 
-drawingOf pic = display pic `catch` reportError
+drawingOf pic = do
+    display pic `catch` reportError
+    inspect pic
 
 
 --------------------------------------------------------------------------------
@@ -513,30 +645,30 @@ fontString style font = stylePrefix style <> "25px " <> fontName font
         fontName (NamedFont txt) = "\"" <> T.filter (/= '"') txt <> "\""
 
 drawPicture :: DrawState -> Picture -> Canvas ()
-drawPicture ds (Polygon ps smooth) = do
+drawPicture ds (Polygon _ ps smooth) = do
     withDS ds $ followPath ps True smooth
     applyColor ds
     Canvas.fill ()
-drawPicture ds (Path ps w closed smooth) =
+drawPicture ds (Path _ ps w closed smooth) =
     drawFigure ds w $ followPath ps closed smooth
-drawPicture ds (Sector b e r) = withDS ds $ do
+drawPicture ds (Sector _ b e r) = withDS ds $ do
     Canvas.arc (0, 0, 25 * abs r, b, e,  b > e)
     Canvas.lineTo (0, 0)
     applyColor ds
     Canvas.fill ()
-drawPicture ds (Arc b e r w) =
+drawPicture ds (Arc _ b e r w) =
     drawFigure ds w $ Canvas.arc (0, 0, 25 * abs r, b, e, b > e)
-drawPicture ds (Text sty fnt txt) = withDS ds $ do
+drawPicture ds (Text _ sty fnt txt) = withDS ds $ do
     Canvas.scale (1, -1)
     applyColor ds
     Canvas.font (fontString sty fnt)
     Canvas.fillText (txt, 0, 0)
-drawPicture ds Logo              = return () -- Unimplemented
-drawPicture ds (Color col p)     = drawPicture (setColorDS col ds) p
-drawPicture ds (Translate x y p) = drawPicture (translateDS x y ds) p
-drawPicture ds (Scale x y p)     = drawPicture (scaleDS x y ds) p
-drawPicture ds (Rotate r p)      = drawPicture (rotateDS r ds) p
-drawPicture ds (Pictures ps)     = mapM_ (drawPicture ds) (reverse ps)
+drawPicture ds (Logo _)            = return () -- Unimplemented
+drawPicture ds (Color _ col p)     = drawPicture (setColorDS col ds) p
+drawPicture ds (Translate _ x y p) = drawPicture (translateDS x y ds) p
+drawPicture ds (Scale _ x y p)     = drawPicture (scaleDS x y ds) p
+drawPicture ds (Rotate _ r p)      = drawPicture (rotateDS r ds) p
+drawPicture ds (Pictures _ ps)     = mapM_ (drawPicture ds) (reverse ps)
 
 setupScreenContext :: (Int, Int) -> Canvas ()
 setupScreenContext (cw, ch) = do

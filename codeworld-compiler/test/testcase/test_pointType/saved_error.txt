@@ -1,0 +1,8 @@
+
+program.hs:7:7: error:
+    â€¢ Couldn't match type [Number] with (Number, Number)
+      Expected type: Point
+        Actual type: [Number]
+    â€¢ In the expression: [2, - 4]
+      In an equation for end: end = [2, - 4]
+

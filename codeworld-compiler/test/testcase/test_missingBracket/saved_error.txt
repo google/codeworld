@@ -1,0 +1,4 @@
+
+program.hs:1:27: error:
+    parse error (possibly incorrect indentation or mismatched brackets)
+

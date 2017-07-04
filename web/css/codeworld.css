@@ -280,3 +280,13 @@ body {
   border-bottom: solid ; border-color: #888888;
   font-style: italic;
 }
+
+#recordIcon {
+  color: #B30000;
+  animation: record-blink 1s cubic-bezier(.5, 0, 1, 1) infinite alternate;
+}
+
+@keyframes record-blink {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}

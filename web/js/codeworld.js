@@ -96,6 +96,7 @@ function init() {
         setCode('');
         if (!signedIn()) help();
     }
+
 }
 
 function initCodeworld() {
@@ -156,6 +157,63 @@ function initCodeworld() {
             return msg;
         }
     }
+}
+
+var cStream;
+var recorder;
+var chunks = [];
+
+function captureStart() {
+    var iframe = document.querySelector('#runner');
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+    var canvas = innerDoc.querySelector('#screen');
+    var context = canvas.getContext('2d');
+
+    // Recording Framerate
+    var cStream = canvas.captureStream(30);
+
+    recorder = new MediaRecorder(cStream);
+    recorder.start();
+
+    document.querySelector('#recordIcon').style.display = '';
+    document.querySelector('#startRecButton').style.display = 'none';
+    document.querySelector('#stopRecButton').style.display = '';
+
+    recorder.ondataavailable = (function(e) { chunks.push(e.data); });
+
+    recorder.onstop = (function() { exportStream(chunks); });
+};
+
+function stopRecording() {
+    recorder.stop();
+    document.querySelector('#recordIcon').style.display = 'none';
+    document.querySelector('#startRecButton').style.display = '';
+    document.querySelector('#stopRecButton').style.display = 'none';
+}
+
+function exportStream(e) {
+    var blob = new Blob(chunks);
+    chunks = [];
+
+    var d = new Date();
+    var videoFileName = 'codeworld_recording_'
+                        + d.toDateString().split(' ').join('_') + '_'
+                        + d.getHours() +':'+ d.getMinutes() +':'+ d.getSeconds()
+                        +'.webm';
+    downloadFile(blob, videoFileName);
+}
+
+function downloadFile(blob, filename) {
+    var a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
+
+    url = window.URL.createObjectURL(blob);
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
 }
 
 function setMode(force) {
@@ -585,9 +643,13 @@ function run(hash, dhash, msg, error) {
     if (hash) {
         window.location.hash = '#' + hash;
         document.getElementById('shareButton').style.display = '';
+        if (!!navigator.mediaDevices.getUserMedia) {
+            document.getElementById('startRecButton').style.display = '';
+        }
     } else {
         window.location.hash = '';
         document.getElementById('shareButton').style.display = 'none';
+        document.getElementById('startRecButton').style.display = 'none';
     }
 
     if (dhash) {

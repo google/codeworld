@@ -272,7 +272,7 @@ handlePointRequest :: Picture -> JSVal -> JSVal -> IO ()
 handlePointRequest pic argsJS retJS = do
     x <- fmap pFromJSVal $ getProp "x" args
     y <- fmap pFromJSVal $ getProp "y" args
-    stack <- findTopStackFromPoint (x,y) pic
+    stack <- findTopPictureFromPoint (x,y) pic
     pics <- case stack of
         Nothing -> return nullRef
         Just s  -> fmap unsafeCoerce $ picsToArr s
@@ -335,24 +335,26 @@ getPictureCS (Logo cs)            = cs
 getPictureSrc :: Picture -> Maybe (String,SrcLoc)
 getPictureSrc = findCSMain . getPictureCS
 
-findTopStackFromPoint :: Point -> Picture -> IO (Maybe [Picture])
-findTopStackFromPoint (x,y) pic = do
+-- If a picture is found, the result will include an array of the base picture
+-- and all transformations.
+findTopPictureFromPoint :: Point -> Picture -> IO (Maybe [Picture])
+findTopPictureFromPoint (x,y) pic = do
     offscreen <- Canvas.create 500 500
     context <- Canvas.getContext offscreen
-    findTopStack context (translateDS (10-x/25) (y/25-10) initialDS) pic
+    findTopPicture context (translateDS (10-x/25) (y/25-10) initialDS) pic
 
-findTopStack :: Canvas.Context -> DrawState -> Picture -> IO (Maybe [Picture])
-findTopStack ctx ds pic = case pic of
-    Color _ col p      -> map2 (pic:) $ findTopStack ctx (setColorDS col ds) p
-    Translate _ x y p  -> map2 (pic:) $ findTopStack ctx (translateDS x y ds) p
-    Scale _ x y p      -> map2 (pic:) $ findTopStack ctx (scaleDS x y ds) p
-    Rotate _ r p       -> map2 (pic:) $ findTopStack ctx (rotateDS r ds) p
+findTopPicture :: Canvas.Context -> DrawState -> Picture -> IO (Maybe [Picture])
+findTopPicture ctx ds pic = case pic of
+    Color _ col p      -> map2 (pic:) $ findTopPicture ctx (setColorDS col ds) p
+    Translate _ x y p  -> map2 (pic:) $ findTopPicture ctx (translateDS x y ds) p
+    Scale _ x y p      -> map2 (pic:) $ findTopPicture ctx (scaleDS x y ds) p
+    Rotate _ r p       -> map2 (pic:) $ findTopPicture ctx (rotateDS r ds) p
     Pictures _ []      -> return Nothing
     Pictures _ (p:ps)  -> do
-        stack <- findTopStack ctx ds p
+        stack <- findTopPicture ctx ds p
         case stack of
             Just x  -> return (Just x)
-            Nothing -> findTopStack ctx ds (Pictures undefined ps)
+            Nothing -> findTopPicture ctx ds (Pictures undefined ps)
     Text _ sty fnt txt -> do
         Canvas.font (fontString sty fnt) ctx
         width <- Canvas.measureText (textToJSString txt) ctx

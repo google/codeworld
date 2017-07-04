@@ -1,0 +1,8 @@
+
+program.hs:1:28: error:
+    â€¢ Couldn't match expected type Number -> Picture
+                  with actual type Picture
+    â€¢ In the parameter(s) of animationOf, namely (propellor)
+      In the expression: animationOf (propellor)
+      In an equation for main: main = animationOf (propellor)
+

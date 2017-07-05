@@ -50,7 +50,7 @@ import           Control.Exception
 import           Control.Monad
 import           Control.Monad.Trans (liftIO)
 import           Data.Char (chr)
-import           Data.List (zip4,find)
+import           Data.List (zip4, find)
 import           Data.Maybe (fromMaybe, mapMaybe)
 import           Data.Monoid
 import           Data.Serialize

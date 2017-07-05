@@ -96,7 +96,6 @@ function init() {
         setCode('');
         if (!signedIn()) help();
     }
-
 }
 
 function initCodeworld() {
@@ -168,7 +167,6 @@ function captureStart() {
     var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
 
     var canvas = innerDoc.querySelector('#screen');
-    var context = canvas.getContext('2d');
 
     // Recording Framerate
     var cStream = canvas.captureStream(30);
@@ -209,11 +207,12 @@ function downloadFile(blob, filename) {
     document.body.appendChild(a);
     a.style = "display: none";
 
-    url = window.URL.createObjectURL(blob);
+    var url = window.URL.createObjectURL(blob);
     a.href = url;
     a.download = filename;
     a.click();
     window.URL.revokeObjectURL(url);
+    a.remove();
 }
 
 function setMode(force) {
@@ -656,10 +655,14 @@ function run(hash, dhash, msg, error) {
         var loc = 'run.html?dhash=' + dhash + '&mode=' + window.buildMode;
         runner.contentWindow.location.replace(loc);
         document.getElementById('runner').style.display = '';
+        if (!!navigator.mediaDevices.getUserMedia) {
+            document.getElementById('startRecButton').style.display = '';
+        }
         document.getElementById('runner').contentWindow.focus();
     } else {
         runner.contentWindow.location.replace('about:blank');
         document.getElementById('runner').style.display = 'none';
+        document.getElementById('startRecButton').style.display = 'none';
     }
 
     if (hash || msg) {

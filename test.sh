@@ -16,7 +16,9 @@
 
 source base.sh
 
-#Test for codeworld-compiler
-run codeworld-compiler cabal configure --enable-tests
-run codeworld-compiler cabal build 
-run codeworld-compiler cabal test
+for i in $(grep -l -i Test-Suite */*.cabal); do
+    TARGET=$(dirname $i)
+    run $TARGET cabal configure --enable-tests
+    run $TARGET cabal build
+    run $TARGET cabal test
+done

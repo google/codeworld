@@ -1,0 +1,5 @@
+
+program.hs:1:18: error:
+    â€¢ Variable not in scope: diamond :: Picture
+    â€¢ Perhaps you meant diamonds (line 2)
+

@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE CPP #-}
 
+
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
 
@@ -20,6 +21,7 @@
 
 module Main where
 
+import           Compile
 import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.Trans
@@ -45,7 +47,6 @@ import           Snap.Util.FileUploads
 import           System.Directory
 import           System.FilePath
 
-import Build
 import Model
 import Util
 
@@ -365,3 +366,18 @@ indentHandler = do
       Right res -> do
         modifyResponse $ setContentType "text/x-haskell"
         writeLBS $ toLazyByteString res
+
+compileIfNeeded :: BuildMode -> ProgramId -> IO Bool
+compileIfNeeded mode programId = do
+    hasResult <- doesFileExist (buildRootDir mode </> resultFile programId)
+    hasTarget <- doesFileExist (buildRootDir mode </> targetFile programId)
+    if hasResult 
+        then return hasTarget 
+        else compileSource 
+                 (buildRootDir mode </> sourceFile programId)
+                 (buildRootDir mode </> targetFile programId)
+                 (buildRootDir mode </> resultFile programId)
+                 (getMode mode) 
+
+getMode :: BuildMode -> String
+getMode (BuildMode m) = m

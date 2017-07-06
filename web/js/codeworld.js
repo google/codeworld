@@ -158,6 +158,79 @@ function initCodeworld() {
     }
 }
 
+class CanvasRecorder {
+    constructor(canvas, framerate) {
+        var cStream = canvas.captureStream(framerate);
+
+        this.chunks = [];
+        this.recorder = new MediaRecorder(cStream);
+        this.recorder.ondataavailable = this.addChunk(this.chunks);
+        this.recorder.onstop = this.exportStream(this.chunks);
+    }
+
+    addChunk(chunks) {
+        return function(e) {
+            chunks.push(e.data);
+        }
+    }
+
+    exportStream(chunks) {
+        return function() {
+            var blob = new Blob(this.chunks);
+
+            // Reset data
+            chunks = [];
+
+            // Set file name
+            var d = new Date();
+            var videoFileName = 'codeworld_recording_'
+                                + d.toDateString().split(' ').join('_') + '_'
+                                + d.getHours() +':'+ d.getMinutes() +':'+ d.getSeconds()
+                                +'.webm';
+
+            // Create a new video link
+            var a = document.createElement("a");
+            document.body.appendChild(a);
+            a.style = "display: none";
+
+            // Save the video
+            var url = window.URL.createObjectURL(blob);
+            a.href = url;
+            a.download = videoFileName;
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            // Remove the video link
+            a.remove();
+        }
+    }
+}
+
+var canvasRecorder;
+
+function captureStart() {
+    var iframe = document.querySelector('#runner');
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+    var canvas = innerDoc.querySelector('#screen');
+
+    canvasRecorder = new CanvasRecorder(canvas, 30);
+
+    document.querySelector('#recordIcon').style.display = '';
+    document.querySelector('#startRecButton').style.display = 'none';
+    document.querySelector('#stopRecButton').style.display = '';
+
+    canvasRecorder.recorder.start();
+}
+
+function stopRecording() {
+    canvasRecorder.recorder.stop();
+
+    document.querySelector('#recordIcon').style.display = 'none';
+    document.querySelector('#startRecButton').style.display = '';
+    document.querySelector('#stopRecButton').style.display = 'none';
+}
+
 function setMode(force) {
     if (window.buildMode == 'haskell') {
         if (force || window.codeworldEditor.getMode().name == 'codeworld') {
@@ -589,6 +662,11 @@ function stop() {
 function run(hash, dhash, msg, error) {
     var runner = document.getElementById('runner');
 
+    // Stop canvas recording if the recorder is active
+    if (canvasRecorder && canvasRecorder.recorder.state === "recording") {
+        stopRecording();
+    }
+
     if (hash) {
         window.location.hash = '#' + hash;
         document.getElementById('shareButton').style.display = '';
@@ -603,10 +681,14 @@ function run(hash, dhash, msg, error) {
         var loc = 'run.html?dhash=' + dhash + '&mode=' + window.buildMode;
         runner.contentWindow.location.replace(loc);
         document.getElementById('runner').style.display = '';
+        if (!!navigator.mediaDevices.getUserMedia) {
+            document.getElementById('startRecButton').style.display = '';
+        }
         document.getElementById('runner').contentWindow.focus();
     } else {
         runner.contentWindow.location.replace('about:blank');
         document.getElementById('runner').style.display = 'none';
+        document.getElementById('startRecButton').style.display = 'none';
     }
 
     if (hash || msg) {

@@ -17,8 +17,9 @@
   limitations under the License.
 -}
 
-module Build where
+module Compile ( compileSource ) where
 
+import           Control.Concurrent
 import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -30,45 +31,39 @@ import           System.Process
 import           Text.Regex.TDFA
 
 import ErrorSanitizer
-import Util
 
-compileIfNeeded :: BuildMode -> ProgramId -> IO Bool
-compileIfNeeded mode programId = do
-    hasResult <- doesFileExist (buildRootDir mode </> resultFile programId)
-    hasTarget <- doesFileExist (buildRootDir mode </> targetFile programId)
-    if hasResult then return hasTarget else compileExistingSource mode programId
-
-compileExistingSource :: BuildMode -> ProgramId -> IO Bool
-compileExistingSource mode programId = checkDangerousSource mode programId >>= \case
+compileSource :: FilePath -> FilePath -> FilePath -> String -> IO Bool
+compileSource src out err mode = checkDangerousSource src >>= \case
     True -> do
-        B.writeFile (buildRootDir mode </> resultFile programId)
+        B.writeFile err
             "Sorry, but your program refers to forbidden language features."
         return False
-    False -> withSystemTempDirectory "codeworld" $ \tmpdir -> do
-        copyFile (buildRootDir mode </> sourceFile programId) (tmpdir </> "program.hs")
+    False -> withSystemTempDirectory "buildSource" $ \tmpdir -> do
+        copyFile src (tmpdir </> "program.hs")
         let baseArgs = case mode of
-                BuildMode "haskell"   -> haskellCompatibleBuildArgs
-                _                     -> standardBuildArgs
+                "haskell"   -> haskellCompatibleBuildArgs
+                "codeworld" -> standardBuildArgs
             ghcjsArgs = baseArgs ++ [ "program.hs" ]
         runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
-                let filteredOutput = case mode of 
-                        BuildMode "haskell"   -> output
-                        _                     -> filterOutput output
-                B.writeFile (buildRootDir mode </> resultFile programId) filteredOutput
+                let filteredOutput = case mode of
+                        "haskell"   -> output
+                        "codeworld" -> filterOutput output
+                        _           -> output
+                B.writeFile err filteredOutput
                 let target = tmpdir </> "program.jsexe" </> "all.js"
                 hasTarget <- doesFileExist target
                 when hasTarget $
-                    copyFile target (buildRootDir mode </> targetFile programId)
+                    copyFile target out
                 return hasTarget
 
 userCompileMicros :: Int
 userCompileMicros = 45 * 1000000
 
-checkDangerousSource :: BuildMode -> ProgramId -> IO Bool
-checkDangerousSource mode programId = do
-    contents <- B.readFile (buildRootDir mode </> sourceFile programId)
+checkDangerousSource :: FilePath -> IO Bool
+checkDangerousSource dir = do
+    contents <- B.readFile dir
     return $ matches contents ".*TemplateHaskell.*" ||
              matches contents ".*QuasiQuotes.*" ||
              matches contents ".*glasgow-exts.*"
@@ -87,7 +82,7 @@ runCompiler dir micros args = do
             close_fds = True }
 
     hClose inh
-    result <- withTimeout micros (B.hGetContents errh)
+    result <- withTimeout micros $ B.hGetContents errh
     hClose outh
 
     terminateProcess pid
@@ -141,3 +136,14 @@ haskellCompatibleBuildArgs = [
     "-O2",
     "-package", "codeworld-api"
     ]
+
+withTimeout :: Int -> IO a -> IO (Maybe a)
+withTimeout micros action = do
+    result <- newEmptyMVar
+    killer <- forkIO $ threadDelay micros >> putMVar result Nothing
+    runner <- forkIO $ action >>= putMVar result . Just
+    r <- takeMVar result
+    killThread killer
+    killThread runner
+    return r
+

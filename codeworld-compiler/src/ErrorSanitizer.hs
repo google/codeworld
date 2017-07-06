@@ -34,8 +34,6 @@ import           System.Process
 import           Text.Regex.TDFA hiding (Regex)
 import           Text.Regex
 
-import Util
-
 filterStages :: [(Regex, String)]
 filterStages = [
         (mkRegex "\xe2\x80\x98", ""),

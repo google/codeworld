@@ -1,0 +1,9 @@
+
+program.hs:1:27: error:
+    â€¢ Couldn't match expected type (Number, Number)
+                  with actual type (Number, Number, Number, Number)
+    â€¢ In the parameter(s) of rectangle, namely (2, 2, 2, 2)
+      In the parameter(s) of drawingOf, namely
+        (rectangle (2, 2, 2, 2))
+      In the expression: drawingOf (rectangle (2, 2, 2, 2))
+

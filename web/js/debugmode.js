@@ -92,6 +92,14 @@ function initDebugMode(getStackAtPoint) {
                 infobox.style.top  = evt.clientY + "px";
 
                 infobox.style.display = "block";
+
+                if (evt.clientX + infobox.offsetWidth > 500) {
+                    infobox.style.left = (evt.clientX - infobox.offsetWidth) + "px";
+                }
+
+                if (evt.clientY + infobox.offsetHeight > 500) {
+                    infobox.style.top = (evt.clientY - infobox.offsetHeight) + "px";
+                }
             } else {
                 // If user clicks on a coordinatePlane, stack may contain
                 // only null

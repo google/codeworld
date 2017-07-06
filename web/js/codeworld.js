@@ -176,7 +176,7 @@ class CanvasRecorder {
 
     exportStream(chunks) {
         return function() {
-            var blob = new Blob(this.chunks);
+            var blob = new Blob(chunks);
 
             // Reset data
             chunks = [];

@@ -416,7 +416,7 @@ function saveProjectAs() {
     sweetAlert({
         html: true,
         title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
-        text: 'Enter a name for your project:',
+        text: 'Enter a name for your project to created at /' + nestedDirs.slice(1).join('/') + ':',
         type: 'input',
         inputValue: defaultName,
         confirmButtonText: 'Save',
@@ -439,11 +439,11 @@ function saveProject() {
     }
 }
 
-function saveProjectBase_(path, projectName, mode, successFunc) {
+function saveProjectBase_(path, projectName, mode, successFunc, type) {
     if (projectName == null || projectName == '') return;
 
     if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in to save files.', 'error');
+        sweetAlert('Oops!', 'You must sign in to ' + type + ' files.', 'error');
         updateUI();
         return;
     }
@@ -461,7 +461,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
 
         sendHttp('POST', 'saveProject', data, function(request) {
             if (request.status != 200) {
-                sweetAlert('Oops!', 'Could not save your project!!!  Please try again.', 'error');
+                sweetAlert('Oops!', 'Could not ' + type + ' your project!!!  Please try again.', 'error');
                 return;
             }
 
@@ -478,7 +478,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
     if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) == -1 || projectName == openProjectName) {
         go();
     } else {
-        var msg = 'Are you sure you want to save over another project?\n\n' +
+        var msg = 'Are you sure you want to ' + type + ' over another project?\n\n' +
             'The previous contents of ' + projectName + ' will be permanently destroyed!';
         sweetAlert({
             title: 'Warning',
@@ -601,7 +601,37 @@ function createFolder(path, buildMode, successFunc) {
         sweetAlert({
             html: true,
             title: '<i class="mdi mdi72px mdi-folder-plus"></i>&nbsp; Create Folder',
-            text: 'Enter a name for your folder:',
+            text: 'Enter a name for your folder to be created at /' + path + ':',
+            type: 'input',
+            inputValue: '',
+            confirmButtonText: 'Create',
+            showCancelButton: true,
+            closeOnConfirm: false
+        }, go);
+    }, true);
+}
+
+function newProject_(path) {
+    warnIfUnsaved(function () {
+        if (!signedIn()) {
+            sweetAlert('Oops!', 'You must sign in to create a new project.', 'error');
+            updateUI();
+            return;
+        }
+
+        function go(fileName) {
+            if (fileName == null || fileName == '') {
+                return;
+            }
+
+            sweetAlert.close();
+            saveProjectBase(path, fileName, 'create');
+        }
+
+        sweetAlert({
+            html: true,
+            title: '<i class="mdi mdi-72px mdi-note-plus"></i>&nbsp; Create File',
+            text: 'Enter a name for your file to be created at /' + path + ':',
             type: 'input',
             inputValue: '',
             confirmButtonText: 'Create',

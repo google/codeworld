@@ -243,10 +243,7 @@ function updateUI() {
 
     window.move = undefined;
     document.getElementById('newButton').style.display = '';
-    document.getElementById('saveAsButton').style.display = '';
-    document.getElementById('downloadButton').style.display = '';
     document.getElementById('runButtons').style.display = '';
-
 
     updateNavBar();
     var NDlength = nestedDirs.length;
@@ -372,6 +369,19 @@ function updateNavBar() {
         if ( i + 1 < NDlength ) {
             projects = tempProjects;
         }
+    }
+    if (window.openProjectName == null || window.openProjectName == '') {
+        window.codeworldEditor.setOption('readOnly', true);
+        document.getElementById('saveAsButton').style.display = 'none';
+        document.getElementById('downloadButton').style.display = 'none';
+        document.getElementById('compileButton').style.display = 'none';
+        document.getElementById('stopButton').style.display = 'none';
+    } else {
+        window.codeworldEditor.setOption('readOnly', false);
+        document.getElementById('saveAsButton').style.display = '';
+        document.getElementById('downloadButton').style.display = '';
+        document.getElementById('compileButton').style.display = '';
+        document.getElementById('stopButton').style.display = '';
     }
 }
 
@@ -534,9 +544,7 @@ function loadSample(code) {
 }
 
 function newProject() {
-    warnIfUnsaved(function() {
-        setCode('');
-    }, false);
+    newProject_(nestedDirs.slice(1).join('/'));
 }
 
 function newFolder() {
@@ -685,14 +693,14 @@ function discoverProjects(path, index){
     discoverProjects_(path, window.buildMode, index);
 }
 
-function saveProjectBase(path, projectName) {
+function saveProjectBase(path, projectName, type = 'save') {
     function successFunc() {
         window.openProjectName = projectName;
         var doc = window.codeworldEditor.getDoc();
         window.savedGeneration = doc.changeGeneration(true);
     }
 
-    saveProjectBase_(path, projectName, window.buildMode, successFunc);
+    saveProjectBase_(path, projectName, window.buildMode, successFunc, type);
 }
 
 function deleteFolder() {

@@ -103,3 +103,7 @@ li.CodeMirror-hint-active {
 .CodeMirror-dialog button {
   font-size: 70%;
 }
+
+.marked {
+    background: #FFFF00;
+}

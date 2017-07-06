@@ -220,6 +220,14 @@ body {
   background-color: #78160f;
 }
 
+.cw-button.cyan,.cw-button.cyan:hover:active {
+    background-color: #00A0A0;
+}
+
+.cw-button.cyan:hover {
+    background-color: #007070;
+}
+
 .cw-button:focus { outline: none; }
 ::-moz-focus-inner { border:0; }
 

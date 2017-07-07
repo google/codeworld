@@ -681,7 +681,7 @@ function run(hash, dhash, msg, error) {
         var loc = 'run.html?dhash=' + dhash + '&mode=' + window.buildMode;
         runner.contentWindow.location.replace(loc);
         document.getElementById('runner').style.display = '';
-        if (!!navigator.mediaDevices.getUserMedia) {
+        if (!!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia) {
             document.getElementById('startRecButton').style.display = '';
         }
         document.getElementById('runner').contentWindow.focus();

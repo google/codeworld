@@ -6,4 +6,3 @@ wheel = solidCircle(size)
 
 size :: Picture
 size = 4
-

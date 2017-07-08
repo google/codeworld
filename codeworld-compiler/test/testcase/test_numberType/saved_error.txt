@@ -1,12 +1,11 @@
 
 program.hs:5:21: error:
-    â€¢ Couldn't match expected type Number with actual type Picture
-    â€¢ In the parameter(s) of solidCircle, namely (size)
+    \8226 Couldn't match expected type Number with actual type Picture
+    \8226 In the parameter(s) of solidCircle, namely (size)
       In the expression: solidCircle (size)
       In an equation for wheel: wheel = solidCircle (size)
 
 program.hs:8:8: error:
-    â€¢ Couldn't match expected type Picture with actual type Number
-    â€¢ In the expression: 4
+    \8226 Couldn't match expected type Picture with actual type Number
+    \8226 In the expression: 4
       In an equation for size: size = 4
-

@@ -1,10 +1,9 @@
 
 program.hs:1:32: error:
-    â€¢ Couldn't match expected type ([Number] -> world0,
+    \8226 Couldn't match expected type ([Number] -> world0,
                                      (world0, Number) -> world0, world0 -> Picture)
                   with actual type (((Number, Number), Number) -> (Number, Number),
                                      (Number, Number) -> Picture)
-    â€¢ In the parameter(s) of simulationOf, namely (step, picture)
+    \8226 In the parameter(s) of simulationOf, namely (step, picture)
       In the expression: simulationOf (step, picture)
       In an equation for main: main = simulationOf (step, picture)
-

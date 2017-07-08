@@ -264,23 +264,32 @@ drawCodeWorldLogo ctx ds x y w h = do
 -- | Register callback with initDebugMode allowing users to
 -- | inspect picture.
 inspect :: Picture -> IO ()
-inspect pic = do
-    callback <- syncCallback2 ContinueAsync (handlePointRequest pic)
-    js_initDebugMode callback
+inspect = initDebugMode (\_ -> return ()) . handlePointRequest . return
 
-handlePointRequest :: Picture -> JSVal -> JSVal -> IO ()
-handlePointRequest pic argsJS retJS = do
+inspectFromIO :: (Bool -> IO ()) -> IO Picture -> IO ()
+inspectFromIO activeHandler = initDebugMode activeHandler . handlePointRequest
+
+handlePointRequest :: IO Picture -> JSVal -> IO JSVal
+handlePointRequest getPic argsJS = do
+    pic <- getPic
     x <- fmap pFromJSVal $ getProp "x" args
     y <- fmap pFromJSVal $ getProp "y" args
     stack <- findTopPictureFromPoint (x,y) pic
     pics <- case stack of
         Nothing -> return nullRef
         Just s  -> fmap unsafeCoerce $ picsToArr s
+    ret <- create
     setProp "stack" pics ret
+    return $ unsafeCoerce ret
     where
         -- https://github.com/ghcjs/ghcjs-base/issues/53
         args = unsafeCoerce argsJS :: Object
-        ret  = unsafeCoerce retJS :: Object
+
+initDebugMode :: (Bool -> IO ()) -> (JSVal -> IO JSVal) -> IO ()
+initDebugMode activeHandler ptHandler = do
+    activeCallback <- syncCallback1 ContinueAsync (activeHandler . pFromJSVal)
+    ptCallback <- syncCallback1' ptHandler
+    js_initDebugMode ptCallback activeCallback
 
 picsToArr :: [Picture] -> IO Array.JSArray
 picsToArr = fmap Array.fromList . sequence . fmap picToObj
@@ -383,8 +392,8 @@ findTopPicture ctx ds pic = case pic of
 foreign import javascript unsafe "$3.isPointInPath($1,$2)"
     js_isPointInPath :: Double -> Double -> Canvas.Context -> IO Bool
 
-foreign import javascript unsafe "initDebugMode($1)"
-    js_initDebugMode :: Callback (JSVal -> JSVal -> IO ()) -> IO ()
+foreign import javascript unsafe "initDebugMode($1,$2)"
+    js_initDebugMode :: Callback (JSVal -> IO JSVal) -> Callback (JSVal -> IO ()) -> IO ()
 
 followPath :: Canvas.Context -> [Point] -> Bool -> Bool -> IO ()
 followPath ctx [] closed _ = return ()
@@ -1116,52 +1125,73 @@ run initial stepHandler eventHandler drawHandler = do
 
     currentState <- newMVar initial
     eventHappened <- newMVar ()
+    pausedVar <- newMVar False
+
+    let handleActiveChange active = do
+        void $ tryTakeMVar pausedVar
+        putMVar pausedVar active
+    inspectFromIO handleActiveChange $ drawHandler <$> readMVar currentState
 
     onEvents canvas $ \event -> do
-        changed <- modifyMVarIfNeeded currentState (return . eventHandler event)
-        when changed $ void $ tryPutMVar eventHappened ()
+        paused <- fromMaybe True <$> tryReadMVar pausedVar
+        when (not paused) $ do
+            changed <- modifyMVarIfNeeded currentState (return . eventHandler event)
+            when changed $ void $ tryPutMVar eventHappened ()
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
     let go t0 lastFrame lastStateName needsTime = do
-            pic <- drawHandler <$> readMVar currentState
-            picFrame <- makeStableName $! pic
-            when (picFrame /= lastFrame) $ do
-                rect <- getBoundingClientRect canvas
-                buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
-                                             rect
-                drawFrame buffer pic
-                Canvas.restore buffer
+            paused <- readMVar pausedVar
+            if paused
+                then do
+                    continueUntil (not <$> takeMVar pausedVar)
+                    t <- getTime
+                    go t lastFrame lastStateName True
+                else do
+                    pic <- drawHandler <$> readMVar currentState
+                    picFrame <- makeStableName $! pic
+                    when (picFrame /= lastFrame) $ do
+                        rect <- getBoundingClientRect canvas
+                        buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
+                                                     rect
+                        drawFrame buffer pic
+                        Canvas.restore buffer
 
-                rect <- getBoundingClientRect canvas
-                cw <- ClientRect.getWidth rect
-                ch <- ClientRect.getHeight rect
-                js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
-                                   0 0 (round cw) (round ch)
+                        rect <- getBoundingClientRect canvas
+                        cw <- ClientRect.getWidth rect
+                        ch <- ClientRect.getHeight rect
+                        js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
+                                           0 0 (round cw) (round ch)
 
-            t1 <- if
-              | needsTime -> do
-                  t1 <- nextFrame
-                  let dt = min (t1 - t0) 0.25
-                  modifyMVar_ currentState (return . stepHandler dt)
-                  return t1
-              | otherwise -> do
-                  takeMVar eventHappened
-                  getTime
+                    t1 <- if
+                      | needsTime -> do
+                          t1 <- nextFrame
+                          let dt = min (t1 - t0) 0.25
+                          modifyMVar_ currentState (return . stepHandler dt)
+                          return t1
+                      | otherwise -> do
+                          takeMVar eventHappened
+                          getTime
 
-            nextState <- readMVar currentState
-            nextStateName <- makeStableName $! nextState
-            nextNeedsTime <- if
-                | nextStateName /= lastStateName -> return True
-                | not needsTime -> return False
-                | otherwise     -> not <$> isUniversallyConstant stepHandler nextState
+                    nextState <- readMVar currentState
+                    nextStateName <- makeStableName $! nextState
+                    nextNeedsTime <- if
+                        | nextStateName /= lastStateName -> return True
+                        | not needsTime -> return False
+                        | otherwise     -> not <$> isUniversallyConstant stepHandler nextState
 
-            go t1 picFrame nextStateName nextNeedsTime
+                    go t1 picFrame nextStateName nextNeedsTime
 
     t0 <- getTime
     nullFrame <- makeStableName undefined
     initialStateName <- makeStableName $! initial
     go t0 nullFrame initialStateName True
+
+continueUntil :: Monad m => m Bool -> m ()
+continueUntil x = x >>= \c ->
+    if c
+        then continueUntil x
+        else return ()
 
 --------------------------------------------------------------------------------
 -- Stand-Alone event handling and core interaction code

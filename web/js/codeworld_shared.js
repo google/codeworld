@@ -697,7 +697,7 @@ function inspect() {
     try {
         document.getElementById('runner').contentWindow.toggleDebugMode();
     } catch (e) {
-        sweetAlert('Sorry!','Inspect is only available in drawingOf.','error');
+        sweetAlert('Sorry!','Unable to inspect. Inspect is not available in collaborationOf.','error');
     }
     updateUI();
 }

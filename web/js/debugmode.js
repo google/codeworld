@@ -18,10 +18,11 @@
 
 window.debugMode = false;
 window.debugMarkers = [];
+window.debugActiveCB = null;
 
 window.infobox = null;
 
-function initDebugMode(getStackAtPoint) {
+function initDebugMode(getStackAtPoint, active) {
     var canvas = document.getElementById("screen");
 
     infobox = document.createElement("div");
@@ -34,14 +35,15 @@ function initDebugMode(getStackAtPoint) {
     infobox.id = "infobox";
     document.body.appendChild(infobox);
 
+    window.debugActiveCB = active;
+
     canvas.addEventListener("click", function (evt) {
         if (!debugMode) return;
 
-        var ret = {};
-        getStackAtPoint({
+        var ret = getStackAtPoint({
             x: evt.clientX,
             y: evt.clientY,
-        }, ret);
+        });
 
         clearMarkers();
 
@@ -130,6 +132,7 @@ function startDebugMode() {
         throw new Error("Can't start debugMode: isPointInPath not registered via initDebugMode!");
     }
     window.debugMode = true;
+    window.debugActiveCB(true);
 }
 
 function stopDebugMode() {
@@ -138,6 +141,7 @@ function stopDebugMode() {
     }
     window.debugMode = false;
     clearMarkers();
+    window.debugActiveCB(false);
 }
 
 function toggleDebugMode() {

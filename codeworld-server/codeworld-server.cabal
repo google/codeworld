@@ -36,6 +36,7 @@ Executable codeworld-server
     snap-server,
     temporary,
     text,
+    time,
     unix
 
   Ghc-options: -threaded -Wall -funbox-strict-fields -O2

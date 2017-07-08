@@ -1,6 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
@@ -35,6 +36,7 @@ import           Data.Monoid
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Encoding as T
+import           Data.Time.Clock (UTCTime)
 import           HIndent (reformat)
 import           HIndent.Types (defaultConfig)
 import           Network.HTTP.Conduit
@@ -48,6 +50,7 @@ import           System.FilePath
 import Build
 import Model
 import Util
+import CommentUtil
 
 newtype ClientId = ClientId (Maybe T.Text) deriving (Eq)
 
@@ -109,26 +112,37 @@ getBuildMode = getParam "mode" >>= \ case
 site :: ClientId -> Snap ()
 site clientId =
     route [
-      ("loadProject",   loadProjectHandler clientId),
-      ("saveProject",   saveProjectHandler clientId),
-      ("deleteProject", deleteProjectHandler clientId),
-      ("listFolder",    listFolderHandler clientId),
-      ("createFolder",  createFolderHandler clientId),
-      ("deleteFolder",  deleteFolderHandler clientId),
-      ("shareFolder",   shareFolderHandler clientId),
-      ("shareContent",  shareContentHandler clientId),
-      ("moveProject",   moveProjectHandler clientId),
-      ("compile",       compileHandler),
-      ("saveXMLhash",   saveXMLHashHandler),
-      ("loadXML",       loadXMLHandler),
-      ("loadSource",    loadSourceHandler),
-      ("run",           runHandler),
-      ("runJS",         runHandler),
-      ("runMsg",        runMessageHandler),
-      ("haskell",       serveFile "web/env.html"),
-      ("blocks",        serveFile "web/blocks.html"),
-      ("funblocks",     serveFile "web/blocks.html"),
-      ("indent",        indentHandler)
+      ("loadProject",        loadProjectHandler clientId),
+      ("saveProject",        saveProjectHandler clientId),
+      ("deleteProject",      deleteProjectHandler clientId),
+      ("listFolder",         listFolderHandler clientId),
+      ("createFolder",       createFolderHandler clientId),
+      ("deleteFolder",       deleteFolderHandler clientId),
+      ("shareFolder",        shareFolderHandler clientId),
+      ("shareContent",       shareContentHandler clientId),
+      ("moveProject",        moveProjectHandler clientId),
+      ("commentShare",       commentShareHandler clientId),
+      ("writeComment",       writeCommentHandler clientId),
+      ("writeReply",         writeReplyHandler clientId),
+      ("deleteComment",      deleteCommentHandler clientId),
+      ("deleteReply",        deleteReplyHandler clientId),
+      ("writeOwnerComment",  writeOwnerCommentHandler clientId),
+      ("writeOwnerReply",    writeOwnerReplyHandler clientId),
+      ("deleteOwnerComment", deleteOwnerCommentHandler clientId),
+      ("deleteOwnerReply",   deleteOwnerReplyHandler clientId),
+      ("readComment",        readCommentHandler),
+      ("viewCommentSource",  viewCommentSourceHandler),
+      ("compile",            compileHandler),
+      ("saveXMLhash",        saveXMLHashHandler),
+      ("loadXML",            loadXMLHandler),
+      ("loadSource",         loadSourceHandler),
+      ("run",                runHandler),
+      ("runJS",              runHandler),
+      ("runMsg",             runMessageHandler),
+      ("haskell",            serveFile "web/env.html"),
+      ("blocks",             serveFile "web/blocks.html"),
+      ("funblocks",          serveFile "web/blocks.html"),
+      ("indent",             indentHandler)
     ] <|>
     serveDirectory "web"
 
@@ -251,6 +265,150 @@ shareContentHandler clientId = do
     liftIO $ ensureUserBaseDir mode (userId user) dirPath
     liftIO $ copyDirIfExists (BC.unpack sharingFolder) $ userProjectDir mode (userId user) </> dirPath
     liftIO $ B.writeFile (userProjectDir mode (userId user) </> dirPath </> "dir.info") name
+
+commentShareHandler :: ClientId -> Snap ()
+commentShareHandler clientId = do
+    mode <- getBuildMode
+    user <- getUser clientId
+    Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
+    let dirIds = map (nameToDirId . T.pack) path
+    let finalDir = joinPath $ map dirBase dirIds
+    Just name <- getParam "name"
+    let projectId = nameToProjectId $ T.decodeUtf8 name
+    let commentFolder = commentRootDir mode (userId user) finalDir projectId
+    liftIO $ createDirectoryIfMissing False commentFolder
+    let commentHash = nameToCommentHash commentFolder
+    liftIO $ ensureCommentHashDir mode commentHash
+    liftIO $ B.writeFile (commentHashRootDir mode </> commentHashLink commentHash) $ BC.pack commentFolder
+    writeBS $ T.encodeUtf8 $ unCommentId commentHash
+
+writeCommentHandler :: ClientId -> Snap ()
+writeCommentHandler clientId = do
+    mode <- getBuildMode
+    user <- getUser clientId
+    Just commentHash <- fmap (CommentId . T.decodeUtf8) <$> getParam "chash"
+    commentFolder <- liftIO $ BC.unpack <$> B.readFile (commentHashRootDir mode </> commentHashLink commentHash)
+    Just (lineNo :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
+    Just (comment :: CommentDesc) <- (decodeStrict =<<) <$> getParam "comment"
+    liftIO $ addCommentToFile commentFolder lineNo comment
+
+writeReplyHandler :: ClientId -> Snap ()
+writeReplyHandler clientId = do
+    mode <- getBuildMode
+    user <- getUser clientId
+    Just commentHash <- fmap (CommentId . T.decodeUtf8) <$> getParam "chash"
+    commentFolder <- liftIO $ BC.unpack <$> B.readFile (commentHashRootDir mode </> commentHashLink commentHash)
+    Just (lineNo :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
+    Just (comment :: CommentDesc) <- (decodeStrict =<<) <$> getParam "comment"
+    Just (reply :: ReplyDesc) <- (decodeStrict =<<) <$> getParam "reply"
+    liftIO $ addReplyToComment commentFolder lineNo comment reply
+
+writeOwnerCommentHandler :: ClientId -> Snap ()
+writeOwnerCommentHandler clientId = do
+    user <- getUser clientId
+    mode <- getBuildMode
+    Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
+    let finalDir = joinPath $ map (dirBase . nameToDirId . T.pack) path
+    Just name <- getParam "name"
+    let projectId = nameToProjectId $ T.decodeUtf8 name
+    let commentFolder = commentRootDir mode (userId user) finalDir projectId
+    liftIO $ createDirectoryIfMissing False commentFolder
+    Just (lineNo :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
+    Just (comment :: CommentDesc) <- (decodeStrict =<<) <$> getParam "comment"
+    liftIO $ addCommentToFile commentFolder lineNo comment
+
+writeOwnerReplyHandler :: ClientId -> Snap ()
+writeOwnerReplyHandler clientId = do
+    user <- getUser clientId
+    mode <- getBuildMode
+    Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
+    let finalDir = joinPath $ map (dirBase . nameToDirId . T.pack) path
+    Just name <- getParam "name"
+    let projectId = nameToProjectId $ T.decodeUtf8 name
+    let commentFolder = commentRootDir mode (userId user) finalDir projectId
+    Just (lineNo :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
+    Just (comment :: CommentDesc) <- (decodeStrict =<<) <$> getParam "comment"
+    Just (reply :: ReplyDesc) <- (decodeStrict =<<) <$> getParam "reply"
+    liftIO $ addReplyToComment commentFolder lineNo comment reply
+
+deleteCommentHandler :: ClientId -> Snap ()
+deleteCommentHandler clientId = do
+    mode <- getBuildMode
+    user <- getUser clientId
+    Just commentHash <- fmap (CommentId . T.decodeUtf8) <$> getParam "chash"
+    commentFolder <- liftIO $ BC.unpack <$> B.readFile (commentHashRootDir mode </> commentHashLink commentHash)
+    Just (lineNo :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
+    Just (comment :: CommentDesc) <- (decodeStrict =<<) <$> getParam "comment"
+    liftIO $ deleteCommentFromFile commentFolder lineNo comment
+
+deleteReplyHandler :: ClientId -> Snap ()
+deleteReplyHandler clientId = do
+    mode <- getBuildMode
+    user <- getUser clientId
+    Just commentHash <- fmap (CommentId . T.decodeUtf8) <$> getParam "chash"
+    commentFolder <- liftIO $ BC.unpack <$> B.readFile (commentHashRootDir mode </> commentHashLink commentHash)
+    Just (lineNo :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
+    Just (comment :: CommentDesc) <- (decodeStrict =<<) <$> getParam "comment"
+    Just (reply :: ReplyDesc) <- (decodeStrict =<<) <$> getParam "reply"
+    liftIO $ deleteReplyFromComment commentFolder lineNo comment reply
+
+deleteOwnerCommentHandler :: ClientId -> Snap ()
+deleteOwnerCommentHandler clientId = do
+    user <- getUser clientId
+    mode <- getBuildMode
+    Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
+    let finalDir = joinPath $ map (dirBase . nameToDirId . T.pack) path
+    Just name <- getParam "name"
+    let projectId = nameToProjectId $ T.decodeUtf8 name
+    let commentFolder = commentRootDir mode (userId user) finalDir projectId
+    Just (lineNo :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
+    Just (comment :: CommentDesc) <- (decodeStrict =<<) <$> getParam "comment"
+    liftIO $ deleteCommentFromFile commentFolder lineNo comment
+
+deleteOwnerReplyHandler :: ClientId -> Snap ()
+deleteOwnerReplyHandler clientId = do
+    user <- getUser clientId
+    mode <- getBuildMode
+    Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
+    let finalDir = joinPath $ map (dirBase . nameToDirId . T.pack) path
+    Just name <- getParam "name"
+    let projectId = nameToProjectId $ T.decodeUtf8 name
+    let commentFolder = commentRootDir mode (userId user) finalDir projectId
+    Just (lineNo :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
+    Just (comment :: CommentDesc) <- (decodeStrict =<<) <$> getParam "comment"
+    Just (reply :: ReplyDesc) <- (decodeStrict =<<) <$> getParam "reply"
+    liftIO $ deleteReplyFromComment commentFolder lineNo comment reply 
+
+readCommentHandler :: Snap ()
+readCommentHandler = do
+    mode <- getBuildMode
+    Just commentHash <- fmap (CommentId . T.decodeUtf8) <$> getParam "chash"
+    commentFolder <- liftIO $ BC.unpack <$> B.readFile (commentHashRootDir mode </> commentHashLink commentHash)
+    Just (lineNo :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
+    Just comments <- liftIO $ getLineComment commentFolder lineNo
+    writeLBS (encode comments)
+
+readOwnerCommentHandler :: ClientId -> Snap ()
+readOwnerCommentHandler clientId = do
+    user <- getUser clientId
+    mode <- getBuildMode
+    Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
+    let finalDir = joinPath $ map (dirBase . nameToDirId . T.pack) path
+    Just name <- getParam "name"
+    let projectId = nameToProjectId $ T.decodeUtf8 name
+    let commentFolder = commentRootDir mode (userId user) finalDir projectId
+    liftIO $ createDirectoryIfMissing False commentFolder
+    Just (lineNo :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
+    Just comments <- liftIO $ getLineComment commentFolder lineNo
+    writeLBS (encode comments)
+
+viewCommentSourceHandler :: Snap ()
+viewCommentSourceHandler = do
+    mode <- getBuildMode
+    Just commentHash <- fmap (CommentId . T.decodeUtf8) <$> getParam "chash"
+    commentFolder <- liftIO $ BC.unpack <$> B.readFile (commentHashRootDir mode </> commentHashLink commentHash)
+    modifyResponse $ setContentType "text/x-haskell"
+    serveFile $ take (length commentFolder - 9) commentFolder
 
 moveProjectHandler :: ClientId -> Snap ()
 moveProjectHandler clientId = do

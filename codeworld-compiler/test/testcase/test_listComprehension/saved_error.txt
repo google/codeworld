@@ -3,4 +3,3 @@ program.hs:2:35: error:
     parse error on input =
     Perhaps you need a 'let' in a 'do' block?
     e.g. 'let x = 5' instead of 'x = 5'
-

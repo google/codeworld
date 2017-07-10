@@ -1,5 +1,5 @@
 
 program.hs:1:18: error:
-    â€¢ Variable not in scope: circl :: Picture
-    â€¢ Perhaps you meant one of these:
+    \8226 Variable not in scope: circl :: Picture
+    \8226 Perhaps you meant one of these:
         circ (line 2), circle (defined in the standard library)

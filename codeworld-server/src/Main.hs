@@ -22,6 +22,7 @@
 module Main where
 
 import           Compile
+import           AndroidExport
 import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.Trans
@@ -120,6 +121,7 @@ site clientId =
       ("shareContent",  shareContentHandler clientId),
       ("moveProject",   moveProjectHandler clientId),
       ("compile",       compileHandler),
+      ("exportAndroid", exportAndroidHandler),
       ("saveXMLhash",   saveXMLHashHandler),
       ("loadXML",       loadXMLHandler),
       ("loadSource",    loadSourceHandler),
@@ -353,6 +355,21 @@ runHandler = do
     liftIO $ compileIfNeeded mode programId
     modifyResponse $ setContentType "text/javascript"
     serveFile (buildRootDir mode </> targetFile programId)
+
+exportAndroidHandler :: Snap()
+exportAndroidHandler = do
+  mode <- getBuildMode
+  Just source <- getParam "source"
+  let programId = sourceToProgramId source
+      deployId = sourceToDeployId source
+  success <- liftIO $ do
+      ensureProgramDir mode programId
+      B.writeFile (buildRootDir mode </> sourceFile programId) source
+      writeDeployLink mode deployId programId
+      compileIfNeeded mode programId
+  unless success $ modifyResponse $ setResponseCode 500
+  modifyResponse $ setContentType "text/plain"
+  liftIO $ initCordovaProject mode programId
 
 runMessageHandler :: Snap ()
 runMessageHandler = do

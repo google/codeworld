@@ -41,8 +41,8 @@ import           System.Posix.Files
 
 import Model
 
-newtype BuildMode = BuildMode String deriving Eq
 newtype ProgramId = ProgramId { unProgramId :: Text } deriving Eq
+newtype BuildMode = BuildMode String deriving Eq
 newtype ProjectId = ProjectId { unProjectId :: Text } deriving Eq
 newtype DeployId  = DeployId  { unDeployId  :: Text } deriving Eq
 newtype DirId     = DirId     { unDirId     :: Text}  deriving Eq
@@ -57,6 +57,9 @@ clientIdPath = "web/clientId.txt"
 buildRootDir :: BuildMode -> FilePath
 buildRootDir (BuildMode m) = "data" </> m </> "user"
 
+androidRootDir :: BuildMode -> FilePath
+androidRootDir (BuildMode m) = "data" </> m </> "android"
+
 shareRootDir :: BuildMode -> FilePath
 shareRootDir (BuildMode m) = "data" </> m </> "share"
 
@@ -65,6 +68,9 @@ projectRootDir (BuildMode m) = "data" </> m </> "projects"
 
 deployRootDir :: BuildMode -> FilePath
 deployRootDir (BuildMode m) = "data" </> m </> "deploy"
+
+sourceBaseDir :: ProgramId -> FilePath
+sourceBaseDir (ProgramId p) = let s = T.unpack p in take 3 s
 
 sourceBase :: ProgramId -> FilePath
 sourceBase (ProgramId p) = let s = T.unpack p in take 3 s </> s

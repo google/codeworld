@@ -96,9 +96,11 @@ import           JavaScript.Object
 import           JavaScript.Web.AnimationFrame
 import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
+import qualified JavaScript.Web.Canvas.ImageData as ImageData
 import qualified JavaScript.Web.Location as Loc
 import qualified JavaScript.Web.MessageEvent as WS
 import qualified JavaScript.Web.WebSocket as WS
+import qualified JavaScript.TypedArray as TypedArray
 import           System.IO.Unsafe
 import           Unsafe.Coerce
 
@@ -379,6 +381,16 @@ findTopPicture ctx ds pic = case pic of
         if contained
             then return (Just [pic])
             else return Nothing
+    Arc _ _ _ _ _      -> do
+        contained <- colorDetection
+        if contained
+            then return (Just [pic])
+            else return Nothing
+    Path _ _ _ _ _     -> do
+        contained <- colorDetection
+        if contained
+            then return (Just [pic])
+            else return Nothing
     _                  -> do
         drawPicture ctx ds pic
         contained <- js_isPointInPath 0 0 ctx
@@ -386,11 +398,23 @@ findTopPicture ctx ds pic = case pic of
             then return (Just [pic])
             else return Nothing
     where map2 = fmap . fmap
+          colorDetection = do -- Draws picture in black, uses color to determine if contains mouse
+            Canvas.clearRect 0 0 500 500 ctx
+            drawPicture ctx (blackDS ds) pic
+            imageDataContains <$> js_getImageData 0 0 1 1 ctx
+          blackDS (a,b,c,d,e,f,_) = (a,b,c,d,e,f,Just $ RGBA 1 1 1 1)
+          imageDataContains = (/=0) . js_unsafeIndexUint8ClampedArray 0 . ImageData.getData
 
 -- Canvas.isPointInPath does not provide a way to get the return value
 -- https://github.com/ghcjs/ghcjs-base/blob/master/JavaScript/Web/Canvas.hs#L212
 foreign import javascript unsafe "$3.isPointInPath($1,$2)"
     js_isPointInPath :: Double -> Double -> Canvas.Context -> IO Bool
+
+foreign import javascript unsafe "$5.getImageData($1,$2,$3,$4)"
+    js_getImageData :: Double -> Double -> Double -> Double -> Canvas.Context -> IO Canvas.ImageData
+
+foreign import javascript unsafe "$2[$1]"
+    js_unsafeIndexUint8ClampedArray :: Int -> TypedArray.Uint8ClampedArray -> Int
 
 foreign import javascript unsafe "initDebugMode($1,$2)"
     js_initDebugMode :: Callback (JSVal -> IO JSVal) -> Callback (JSVal -> IO ()) -> IO ()

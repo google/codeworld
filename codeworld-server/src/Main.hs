@@ -131,6 +131,7 @@ site clientId =
       ("deleteOwnerComment", deleteOwnerCommentHandler clientId),
       ("deleteOwnerReply",   deleteOwnerReplyHandler clientId),
       ("readComment",        readCommentHandler),
+      ("readOwnerComment",   readOwnerCommentHandler clientId),
       ("viewCommentSource",  viewCommentSourceHandler),
       ("compile",            compileHandler),
       ("saveXMLhash",        saveXMLHashHandler),
@@ -408,7 +409,8 @@ viewCommentSourceHandler = do
     Just commentHash <- fmap (CommentId . T.decodeUtf8) <$> getParam "chash"
     commentFolder <- liftIO $ BC.unpack <$> B.readFile (commentHashRootDir mode </> commentHashLink commentHash)
     modifyResponse $ setContentType "text/x-haskell"
-    serveFile $ take (length commentFolder - 9) commentFolder
+    Just (project :: Project) <- liftIO $ decode <$> (LB.readFile $ take (length commentFolder - 9) commentFolder)
+    writeBS (T.encodeUtf8 $ projectSource project)
 
 moveProjectHandler :: ClientId -> Snap ()
 moveProjectHandler clientId = do

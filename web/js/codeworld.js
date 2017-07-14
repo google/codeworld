@@ -88,6 +88,15 @@ function init() {
                     setCode(request.responseText, null, null, true);
                 }
             });
+        } else if (hash[0] == 'C') {
+            sendHttp('GET', 'viewCommentSource?chash=' + hash + '&mode=' + window.buildMode, null, function(request) {
+                if(request.status == 200) {
+                    setCode(request.responseText, null, null, false);
+                    window.location.hash = '#' + hash;
+                    checkForCommentHash();
+                    window.chash = hash;
+                }
+            });
         } else if (hash[0] != 'F') {
             setCode('');
             if (!signedIn()) help();
@@ -148,6 +157,7 @@ function initCodeworld() {
     };
 
     window.codeworldEditor.on('changes', window.updateUI);
+    window.codeworldEditor.on('gutterClick', window.toggleUserComments);
 
     window.onbeforeunload = function(event) {
         if (!isEditorClean()) {
@@ -245,7 +255,6 @@ function updateUI() {
     document.getElementById('newButton').style.display = '';
     document.getElementById('runButtons').style.display = '';
 
-    updateNavBar();
     var NDlength = nestedDirs.length;
 
     if (NDlength != 1 && (openProjectName == null || openProjectName == '')) {
@@ -253,7 +262,13 @@ function updateUI() {
     } else {
         document.getElementById('shareFolderButton').style.display = 'none';
     }
+    if (openProjectName == null || openProjectName == '') {
+        document.getElementById('askFeedbackButton').style.display = 'none';
+    } else {
+        document.getElementById('askFeedbackButton').style.display = '';
+    }
 
+    updateNavBar();
     document.getElementById('moveHereButton').style.display = 'none';
     document.getElementById('cancelMoveButton').style.display = 'none';
     if((openProjectName != null && openProjectName != '') || NDlength != 1) {
@@ -383,6 +398,7 @@ function updateNavBar() {
         document.getElementById('compileButton').style.display = '';
         document.getElementById('stopButton').style.display = '';
     }
+    checkForCommentHash();
 }
 
 function moveProject() {

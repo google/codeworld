@@ -729,7 +729,7 @@ function shareFolder_(mode) {
         return;
     }
     if(nestedDirs.length == 1 || (openProjectName != null && openProjectName != '')) {
-        sweetAlert('Oops!', 'YOu must select a folder to share!', 'error');
+        sweetAlert('Oops!', 'You must select a folder to share!', 'error');
         updateUI();
         return;
     }

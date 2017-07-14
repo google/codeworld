@@ -1,0 +1,7 @@
+
+program.hs:7:7: error:
+    \8226 Couldn't match type [Number] with (Number, Number)
+      Expected type: Point
+        Actual type: [Number]
+    \8226 In the expression: [2, - 4]
+      In an equation for end: end = [2, - 4]

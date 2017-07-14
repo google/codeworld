@@ -1,0 +1,7 @@
+
+program.hs:1:28: error:
+    \8226 Couldn't match expected type Number -> Picture
+                  with actual type Picture
+    \8226 In the parameter(s) of animationOf, namely (propellor)
+      In the expression: animationOf (propellor)
+      In an equation for main: main = animationOf (propellor)

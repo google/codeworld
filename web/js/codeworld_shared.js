@@ -148,8 +148,8 @@ function registerStandardHints(successFunc)
     });
 
     var hintBlacklist = [
-        // Symbols that only exist to implement RebindableSyntax or map to
-        // built-in Haskell types.
+        // Symbols that only exist to implement RebindableSyntax, map to
+        // built-in Haskell types, or maintain backward compatibility.
         "Bool",
         "IO",
         "fail",
@@ -157,6 +157,7 @@ function registerStandardHints(successFunc)
         "fromDouble",
         "fromInt",
         "fromInteger",
+        "fromRandomSeed",
         "fromRational",
         "fromString",
         "ifThenElse",
@@ -720,6 +721,15 @@ function share() {
   }
 
   go();
+}
+
+function inspect() {
+    try {
+        document.getElementById('runner').contentWindow.toggleDebugMode();
+    } catch (e) {
+        sweetAlert('Sorry!','Inspect is only available in drawingOf.','error');
+    }
+    updateUI();
 }
 
 function shareFolder_(mode) {

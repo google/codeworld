@@ -85,6 +85,7 @@ module Internal.Prelude (
     -- Random numbers
     fromRandomSeed,
     randomsFrom,
+    randomNumbers,
     shuffled
     ) where
 
@@ -168,24 +169,26 @@ length = fromInt . P.length
 internalAt :: HasCallStack => [a] -> Number -> a
 internalAt xs n
   | not (isInteger n) = nonInt
-  | n < 0             = tooSmall
+  | n <= 0            = tooSmall
   | otherwise         = P.foldr index tooLarge xs n
-  where index x r 0 = x
+  where index x r 1 = x
         index x r k = r (k-1)
-        tooSmall = P.error "Negative list index is not allowed."
+        tooSmall = P.error "List index must be positive. Numbering starts at 1."
         tooLarge = P.error "List index is too large."
         nonInt   = P.error "Non-integer list index is not allowed."
 
 -- | Gives the member of a list at a given index.
--- Indices start at 0.
+-- Indices start at 1.
 at :: HasCallStack => ([a], Number) -> a
 at (xs, n) = withFrozenCallStack (internalAt xs n)
+{-# WARNING at "Indexing has changed.  Numbering is now one-based." #-}
 
 -- | Gives the member of a list at a given index.
--- Indices start at 0.
+-- Indices start at 1.
 (#) :: HasCallStack => [a] -> Number -> a
 lst # n = withFrozenCallStack (internalAt lst n)
 infixl 9 #
+{-# WARNING (#) "Indexing has changed.  Numbering is now one-based." #-}
 
 -- | Determines if any proposition in a list is true.
 --
@@ -313,4 +316,8 @@ definitely P.Nothing = withFrozenCallStack (
     P.error "Expected a value; found Nothing.")
 
 fromRandomSeed :: Number -> [Number]
-fromRandomSeed = randomsFrom . numToStdGen
+fromRandomSeed = randomNumbers
+{-# WARNING fromRandomSeed "Please use randomNumbers instead of fromRandomSeed." #-}
+
+randomNumbers :: Number -> [Number]
+randomNumbers = randomsFrom . numToStdGen

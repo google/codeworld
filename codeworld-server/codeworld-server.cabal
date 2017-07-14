@@ -20,6 +20,7 @@ Executable codeworld-server
     base,
     base64-bytestring,
     bytestring,
+    codeworld-compiler,
     cryptonite,
     data-default,
     directory,

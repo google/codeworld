@@ -1,0 +1,8 @@
+
+program.hs:1:27: error:
+    \8226 Couldn't match expected type (Number, Number)
+                  with actual type (Number, Number, Number, Number)
+    \8226 In the parameter(s) of rectangle, namely (2, 2, 2, 2)
+      In the parameter(s) of drawingOf, namely
+        (rectangle (2, 2, 2, 2))
+      In the expression: drawingOf (rectangle (2, 2, 2, 2))

@@ -1,0 +1,66 @@
+Name:                codeworld-compiler
+Version:             0.1.0.0
+Synopsis:            GHCJS based standalone compiler for CodeWorld
+License:             Apache-2.0
+License-file:        LICENSE
+Author:              The CodeWorld Authors
+Maintainer:          Chris Smith <cdsmith@gmail.com>
+Copyright:           (c) 2017, The CodeWorld Authors
+Build-type:          Simple
+Cabal-version:       >=1.10
+
+Description:
+  The GHCJS based standalone compiler for CodeWorld programming environment.   
+ 
+Executable codeworld-compiler
+  Hs-source-dirs: exec
+  Main-is: Main.hs
+
+  Build-depends:
+    base,       
+    codeworld-compiler,
+    directory,
+    optparse-applicative
+
+Library
+  Exposed-modules: Compile 
+  Other-modules: ErrorSanitizer     
+
+  Build-depends:       
+    aeson,
+    base,
+    base64-bytestring,
+    bytestring,
+    cryptonite,
+    data-default,
+    directory,
+    filepath,
+    hindent >= 5 && < 5.2.3,
+    memory,
+    mtl,
+    process,
+    regex-tdfa,
+    regex-compat,
+    temporary,
+    text
+
+  Hs-source-dirs: src
+  
+  Exposed: True
+
+  Ghc-options: -O2 
+
+Test-Suite codeworld-compiler-test
+  Type:               exitcode-stdio-1.0
+  Main-is:            Main.hs
+  Hs-source-dirs:     test
+  Build-depends:      
+    base,
+    codeworld-compiler, 
+    directory,
+    test-framework,
+    test-framework-hunit,
+    filepath,
+    HUnit,
+    containers == 0.5.*
+

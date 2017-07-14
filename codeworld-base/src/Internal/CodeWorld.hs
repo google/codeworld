@@ -84,8 +84,9 @@ collaborationOf (players, initial, step, event, picture) =
         (toInt players)
         (initial . randomsFrom)
         (\dt state -> step (state, fromDouble dt))
-        (\player ev state -> event (state, fromCWEvent ev, fromInt player))
-        (\player state -> toCWPic (picture (state, fromInt player)))
+        (\player ev state -> event (state, fromCWEvent ev, fromInt player + 1))
+        (\player state -> toCWPic (picture (state, fromInt player + 1)))
+{-# WARNING collaborationOf "Player numbers have changed.  The first player is now player 1." #-}
 
 chooseRandoms :: IO [Number]
 chooseRandoms = do

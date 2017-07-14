@@ -308,6 +308,14 @@ time {
   background-color: #78160f;
 }
 
+.cw-button.cyan,.cw-button.cyan:hover:active {
+    background-color: #00A0A0;
+}
+
+.cw-button.cyan:hover {
+    background-color: #007070;
+}
+
 .cw-button:focus { outline: none; }
 ::-moz-focus-inner { border:0; }
 
@@ -372,4 +380,14 @@ time {
 .function-name-highlight {
   border-bottom: solid ; border-color: #888888;
   font-style: italic;
+}
+
+#recordIcon {
+  color: #B30000;
+  animation: record-blink 1s cubic-bezier(.5, 0, 1, 1) infinite alternate;
+}
+
+@keyframes record-blink {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }

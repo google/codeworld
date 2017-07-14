@@ -1,0 +1,4 @@
+
+program.hs:2:27: error:
+    \8226 Variable not in scope: reds :: Color
+    \8226 Perhaps you meant red (defined in the standard library)

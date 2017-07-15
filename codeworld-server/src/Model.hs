@@ -18,12 +18,10 @@
 
 module Model where
 
-import           Control.Applicative
 import           Control.Monad
 import           Data.Aeson
 import           Data.Text (Text)
 import           Data.Time.Clock (UTCTime)
-import           System.FilePath (FilePath)
 
 data User = User { userId :: Text, audience :: Text }
 

@@ -77,7 +77,7 @@ function init() {
         registerStandardHints(function(){setMode(true);});
         updateUI();
     }
- 
+
     if (hash.length > 0) {
         if (hash.slice(-2) == '==') {
             hash = hash.slice(0, -2);

@@ -16,7 +16,7 @@
   limitations under the License.
 -}
 
-module Util where
+module DataUtil where
 
 import           Control.Exception
 import           Control.Monad
@@ -101,7 +101,7 @@ shareLink :: ShareId -> FilePath
 shareLink (ShareId sh) = let s = T.unpack sh in take 3 s </> s
 
 userProjectDir :: BuildMode -> Text -> FilePath
-userProjectDir mode userId = projectRootDir mode </> T.unpack userId
+userProjectDir mode userId' = projectRootDir mode </> T.unpack userId'
 
 projectBase :: ProjectId -> FilePath
 projectBase (ProjectId p) = let s = T.unpack p in take 3 s </> s
@@ -133,31 +133,31 @@ ensureShareDir mode (ShareId s) = createDirectoryIfMissing True dir
   where dir = shareRootDir mode </> take 3 (T.unpack s)
 
 ensureUserProjectDir :: BuildMode -> Text -> IO ()
-ensureUserProjectDir mode userId =
-    createDirectoryIfMissing True (userProjectDir mode userId)
+ensureUserProjectDir mode userId' =
+    createDirectoryIfMissing True (userProjectDir mode userId')
 
 ensureUserBaseDir :: BuildMode -> Text -> FilePath -> IO ()
-ensureUserBaseDir mode userId path = do
-    ensureUserProjectDir mode userId
-    createDirectoryIfMissing False (userProjectDir mode userId </> takeDirectory path)
+ensureUserBaseDir mode userId' path = do
+    ensureUserProjectDir mode userId'
+    createDirectoryIfMissing False (userProjectDir mode userId' </> takeDirectory path)
 
 ensureUserDir :: BuildMode -> Text -> FilePath -> IO ()
-ensureUserDir mode userId path = do
-    ensureUserProjectDir mode userId
-    createDirectoryIfMissing False (userProjectDir mode userId </> path)
+ensureUserDir mode userId' path = do
+    ensureUserProjectDir mode userId'
+    createDirectoryIfMissing False (userProjectDir mode userId' </> path)
 
 ensureProjectDir :: BuildMode -> Text -> FilePath -> ProjectId -> IO ()
-ensureProjectDir mode userId path projectId = do
-    ensureUserProjectDir mode userId
+ensureProjectDir mode userId' path projectId = do
+    ensureUserProjectDir mode userId'
     createDirectoryIfMissing False (dropFileName f)
-  where f = userProjectDir mode userId </> path </> projectFile projectId
+  where f = userProjectDir mode userId' </> path </> projectFile projectId
 
 listDirectoryWithPrefix :: FilePath -> IO [FilePath]
 listDirectoryWithPrefix filePath = map (filePath </>) <$> listDirectory filePath
 
 dirFilter :: [FilePath] -> Char -> IO [FilePath]
-dirFilter dirs char = fmap concat $ mapM listDirectoryWithPrefix $
-    filter (\x -> head (takeBaseName x) == char) dirs
+dirFilter dirs' char = fmap concat $ mapM listDirectoryWithPrefix $
+    filter (\x -> head (takeBaseName x) == char) dirs'
 
 projectFileNames :: [FilePath] -> IO [Text]
 projectFileNames subHashedDirs = do
@@ -170,8 +170,8 @@ projectFileNames subHashedDirs = do
 projectDirNames :: [FilePath] -> IO [Text]
 projectDirNames subHashedDirs = do
     hashedDirs <- dirFilter subHashedDirs 'D'
-    dirs <- mapM (\x -> B.readFile $ x </> "dir.info") hashedDirs
-    return $ map T.decodeUtf8 dirs
+    dirs' <- mapM (\x -> B.readFile $ x </> "dir.info") hashedDirs
+    return $ map T.decodeUtf8 dirs'
 
 writeDeployLink :: BuildMode -> DeployId -> ProgramId -> IO ()
 writeDeployLink mode deployId (ProgramId p) = do
@@ -205,8 +205,8 @@ getFilesRecursive path = do
 
 dirToCheckSum :: FilePath -> IO Text
 dirToCheckSum path = do
-    files <- getFilesRecursive path
-    fileContents <- mapM B.readFile files
+    files' <- getFilesRecursive path
+    fileContents <- mapM B.readFile files'
     let cryptoContext = Crypto.hashInitWith Crypto.MD5
     return $ (T.pack "F" <>)
            . T.decodeUtf8

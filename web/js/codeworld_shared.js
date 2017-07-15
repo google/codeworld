@@ -293,7 +293,7 @@ function handleGAPILoad() {
             if (auth2.isSignedIn.get() == true) auth2.signIn();
         });
     });
-    
+
     discoverProjects("", 0);
     updateUI();
 }
@@ -626,6 +626,7 @@ function newProject_(path) {
             }
 
             sweetAlert.close();
+            setCode('');
             saveProjectBase(path, fileName, 'create');
         }
 
@@ -643,7 +644,7 @@ function newProject_(path) {
 }
 
 function loadProject_(index, name, buildMode, successFunc) {
-    
+
   warnIfUnsaved(function(){
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
@@ -753,7 +754,7 @@ function shareFolder_(mode) {
         data.append('id_token', id_token);
         data.append('mode', mode);
         data.append('path', path);
- 
+
         sendHttp('POST', 'shareFolder', data, function(request) {
             if(request.status != 200) {
                 sweetAlert('Oops!', 'Could not share your folder! Please try again.', 'error');

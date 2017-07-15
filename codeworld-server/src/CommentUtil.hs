@@ -18,10 +18,7 @@
 
 module CommentUtil where
 
-import           Control.Monad
 import           Data.Aeson
-import           Data.ByteString (ByteString)
-import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as LB
 import           Data.List (elemIndex, splitAt)
@@ -29,10 +26,9 @@ import           Data.Text (Text)
 import qualified Data.Text as T
 import           System.Directory
 import           System.FilePath
-import           System.IO
 
 import Model
-import Util
+import DataUtil
 
 newtype CommentId = CommentId { unCommentId :: Text } deriving Eq
 
@@ -40,7 +36,8 @@ commentHashRootDir :: BuildMode -> FilePath
 commentHashRootDir (BuildMode m) = "data" </> m </> "commentHash"
 
 commentRootDir :: BuildMode -> Text -> FilePath -> ProjectId -> FilePath
-commentRootDir mode userId path projectId = userProjectDir mode userId </> path </> projectFile projectId <.> "comments"
+commentRootDir mode userId' path projectId =
+    userProjectDir mode userId' </> path </> projectFile projectId <.> "comments"
 
 commentHashLink :: CommentId -> FilePath
 commentHashLink (CommentId c) = let s = T.unpack c in take 3 s </> s
@@ -53,49 +50,51 @@ ensureCommentHashDir mode (CommentId c) = createDirectoryIfMissing True dir
   where dir = commentHashRootDir mode </> take 3 (T.unpack c)
 
 getLineComment :: FilePath -> Int -> IO (Maybe LineComment)
-getLineComment commentFolder lineNo = do
-    fileBool <- doesFileExist (commentFolder </> show lineNo)
+getLineComment commentFolder lineNo' = do
+    fileBool <- doesFileExist (commentFolder </> show lineNo')
     case fileBool of
-      True  -> decode <$> LB.readFile (commentFolder </> show lineNo)
-      False -> return (Just $ LineComment lineNo [])
+      True  -> decode <$> LB.readFile (commentFolder </> show lineNo')
+      False -> return (Just $ LineComment lineNo' [])
 
 addCommentToFile :: FilePath -> Int -> CommentDesc -> IO ()
-addCommentToFile commentFolder lineNo comment = do
-    fileBool <- doesFileExist (commentFolder </> show lineNo)
+addCommentToFile commentFolder lineNo' comment' = do
+    fileBool <- doesFileExist (commentFolder </> show lineNo')
     lc <- case fileBool of
       True  -> do
-        Just (lc :: LineComment) <- decode <$> LB.readFile (commentFolder </> show lineNo)
+        Just (lc :: LineComment) <- decode <$> LB.readFile (commentFolder </> show lineNo')
         return lc
-      False -> return (LineComment lineNo [])
-    LB.writeFile (commentFolder </> show lineNo) $ encode (LineComment lineNo $ comments lc ++ [comment])
+      False -> return (LineComment lineNo' [])
+    LB.writeFile (commentFolder </> show lineNo') $ encode (LineComment lineNo' $
+      comments lc ++ [comment'])
 
 addReplyToComment :: FilePath -> Int -> CommentDesc -> ReplyDesc -> IO ()
-addReplyToComment commentFolder lineNo cd rd = do
-    Just (lc :: LineComment) <- decode <$> LB.readFile (commentFolder </> show lineNo)
+addReplyToComment commentFolder lineNo' cd rd = do
+    Just (lc :: LineComment) <- decode <$> LB.readFile (commentFolder </> show lineNo')
     let Just ind = elemIndex cd (comments lc)
         newcd = CommentDesc (userIdent cd) (dateTime cd) (comment cd) (replies cd ++ [rd])
         splc = splitAt ind $ comments lc
-        newlc = LineComment lineNo $ (fst splc) ++ (newcd : (tail $ snd splc))
-    LB.writeFile (commentFolder </> show lineNo) $ encode newlc
+        newlc = LineComment lineNo' $ (fst splc) ++ (newcd : (tail $ snd splc))
+    LB.writeFile (commentFolder </> show lineNo') $ encode newlc
 
 deleteCommentFromFile :: FilePath -> Int -> CommentDesc -> IO ()
-deleteCommentFromFile commentFolder lineNo cd = do
-    Just (lc :: LineComment) <- decode <$> LB.readFile (commentFolder </> show lineNo)
+deleteCommentFromFile commentFolder lineNo' cd = do
+    Just (lc :: LineComment) <- decode <$> LB.readFile (commentFolder </> show lineNo')
     let Just ind = elemIndex cd (comments lc)
         newcd = CommentDesc "none" (dateTime cd) "deleted" (replies cd)
         splc = splitAt ind $ comments lc
-        newlc = LineComment lineNo $ (fst splc) ++ (if (length $ replies cd) /= 0 
+        newlc = LineComment lineNo' $ (fst splc) ++ (if (length $ replies cd) /= 0
                                                     then newcd : (tail $ snd splc)
                                                     else tail $ snd splc)
-    LB.writeFile (commentFolder </> show lineNo) $ encode newlc
+    LB.writeFile (commentFolder </> show lineNo') $ encode newlc
 
 deleteReplyFromComment :: FilePath -> Int -> CommentDesc -> ReplyDesc -> IO ()
-deleteReplyFromComment commentFolder lineNo cd rd = do
-    Just (lc :: LineComment) <- decode <$> LB.readFile (commentFolder </> show lineNo)
+deleteReplyFromComment commentFolder lineNo' cd rd = do
+    Just (lc :: LineComment) <- decode <$> LB.readFile (commentFolder </> show lineNo')
     let Just cdInd = elemIndex cd (comments lc)
         Just rdInd = elemIndex rd (replies cd)
         splc = splitAt cdInd $ comments lc
         spcd = splitAt rdInd $ replies cd
-        newcd = CommentDesc (userIdent cd) (dateTime cd) (comment cd) $ (fst spcd) ++ (tail $ snd spcd)
-        newlc = LineComment lineNo $ (fst splc) ++ (newcd : (tail $ snd splc))
-    LB.writeFile (commentFolder </> show lineNo) $ encode newlc
+        newcd = CommentDesc (userIdent cd) (dateTime cd) (comment cd) $
+          (fst spcd) ++ (tail $ snd spcd)
+        newlc = LineComment lineNo' $ (fst splc) ++ (newcd : (tail $ snd splc))
+    LB.writeFile (commentFolder </> show lineNo') $ encode newlc

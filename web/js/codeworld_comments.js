@@ -113,10 +113,14 @@ function toggleUserComments(cm, line, gutter) {
         window.openComments = new Object();
     }
     if (window.openCommentLines[line + 1] != undefined) {
-        window.openCommentLines[line + 1].clear();
-        window.openCommentLines[line + 1] = undefined;
-        window.openComments[line + 1] = undefined;
-        return;
+        if (window.openProjectName == window.openCommentLines[line + 1].currentProject) {
+            if (window.nestedDirs.join('/') == window.openCommentLines[line + 1].currentDir) {
+                window.openCommentLines[line + 1].clear();
+                window.openCommentLines[line + 1] = undefined;
+                window.openComments[line + 1] = undefined;
+                return;
+            }
+        }
     }
     generateComments(line + 1);
 }
@@ -150,6 +154,8 @@ function generateComments(line) {
         window.openCommentLines[line] = doc.addLineWidget(line - 1, comments, {
             coverGutter: true
         });
+        window.openCommentLines[line].currentProject = window.openProjectName;
+        window.openCommentLines[line].currentDir = window.nestedDirs.join('/');
     }
 
     var data = new FormData();

@@ -75,7 +75,6 @@ createFolderHandler clientId = do
 deleteFolderHandler :: ClientId -> Snap ()
 deleteFolderHandler clientId = do
     (user, mode, finalDir, _) <- getFrequentParams False clientId
-    liftIO $ ensureUserDir mode (userId user) finalDir
     let dir' = userProjectDir mode (userId user) </> finalDir
     empty <- liftIO $ fmap
         (\ l1 ->
@@ -86,20 +85,19 @@ deleteFolderHandler clientId = do
 deleteProjectHandler :: ClientId -> Snap ()
 deleteProjectHandler clientId = do
     (user, mode, finalDir, Just projectId) <- getFrequentParams True clientId
-    liftIO $ ensureProjectDir mode (userId user) finalDir projectId
     let file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
+    liftIO $ removeFileIfExists file
+    liftIO $ removeDirectoryIfExists $ file <.> "comments"
     empty <- liftIO $ fmap
         (\ l1 ->
-           length l1 == 3 && sort l1 == sort [".", "..", takeFileName file])
+           length l1 == 2 && sort l1 == sort [".", ".."])
         (getDirectoryContents (dropFileName file))
     liftIO $ if empty then removeDirectoryIfExists (dropFileName file)
-             else removeFileIfExists file
+             else return ()
 
 listFolderHandler :: ClientId -> Snap ()
 listFolderHandler clientId = do
     (user, mode, finalDir, _) <- getFrequentParams False clientId
-    liftIO $ ensureUserBaseDir mode (userId user) finalDir
-    liftIO $ ensureUserDir mode (userId user) finalDir
     liftIO $ migrateUser $ userProjectDir mode (userId user)
     let projectDir = userProjectDir mode (userId user)
     subHashedDirs <- liftIO $ listDirectoryWithPrefix $ projectDir </> finalDir
@@ -111,7 +109,6 @@ listFolderHandler clientId = do
 loadProjectHandler :: ClientId -> Snap ()
 loadProjectHandler clientId = do
     (user, mode, finalDir, Just projectId) <- getFrequentParams True clientId
-    liftIO $ ensureProjectDir mode (userId user) finalDir projectId
     let file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
     modifyResponse $ setContentType "application/json"
     serveFile file
@@ -133,14 +130,17 @@ moveProjectHandler clientId = do
         liftIO $ ensureProjectDir mode (userId user) moveToDir projectId
         liftIO $ copyDirIfExists (dropFileName $ moveFromDir </> projectFile projectId)
                                  (dropFileName $ projectDir </> moveToDir </> projectFile projectId)
+        let file = moveFromDir </> projectFile projectId
+        liftIO $ removeFileIfExists file
+        liftIO $ removeDirectoryIfExists $ file <.> "comments"
         empty <- liftIO $ fmap
             (\ l1 ->
-               length l1 == 3 &&
-                 sort l1 == sort [".", "..", takeFileName $ projectFile projectId])
+               length l1 == 2 &&
+                 sort l1 == sort [".", ".."])
             (getDirectoryContents
-               (dropFileName $ moveFromDir </> projectFile projectId))
-        liftIO $ if empty then removeDirectoryIfExists (dropFileName $ moveFromDir </> projectFile projectId)
-                 else removeFileIfExists $ moveFromDir </> projectFile projectId
+               (dropFileName file))
+        liftIO $ if empty then removeDirectoryIfExists (dropFileName file)
+                 else return ()
       (False, "false") -> do
         let dirName = last $ splitDirectories moveFromDir
         let dir' = moveToDir </> take 3 dirName </> dirName

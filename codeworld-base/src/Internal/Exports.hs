@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE PackageImports    #-}
+{-# LANGUAGE PatternSynonyms   #-}
 
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
@@ -109,6 +110,9 @@ module Internal.Exports (
     -- * Events
     Event(..),
     MouseButton(..),
+    pattern PointerPress,
+    pattern PointerRelease,
+    pattern PointerMovement,
 
     -- * Debugging
     traced,

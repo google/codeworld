@@ -1,3 +1,5 @@
+{-# LANGUAGE PatternSynonyms #-}
+
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
 
@@ -111,6 +113,9 @@ module CodeWorld (
     -- * Events
     Event(..),
     MouseButton(..),
+    pattern PointerPress,
+    pattern PointerRelease,
+    pattern PointerMovement,
 
     -- * Debugging
     trace

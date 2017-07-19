@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE PackageImports    #-}
+{-# LANGUAGE PatternSynonyms   #-}
 
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
@@ -17,7 +18,14 @@
   limitations under the License.
 -}
 
-module Internal.Event (Event(..), CW.MouseButton(..), fromCWEvent) where
+module Internal.Event (
+    Event(..),
+    CW.MouseButton(..),
+    pattern PointerPress,
+    pattern PointerRelease,
+    pattern PointerMovement,
+    fromCWEvent
+    ) where
 
 import qualified "codeworld-api" CodeWorld as CW
 import qualified "base"          Prelude as P
@@ -67,6 +75,15 @@ data Event = KeyPress !Text
            | MouseRelease !(CW.MouseButton, Point)
            | MouseMovement !Point
   deriving P.Eq
+
+pattern PointerPress :: Point -> Event
+pattern PointerPress p = MousePress (CW.LeftButton, p)
+
+pattern PointerRelease :: Point -> Event
+pattern PointerRelease p = MouseRelease (CW.LeftButton, p)
+
+pattern PointerMovement :: Point -> Event
+pattern PointerMovement p = MouseMovement p
 
 {-# RULES "equality/event" forall (x :: Event). (==) x = (P.==) x #-}
 

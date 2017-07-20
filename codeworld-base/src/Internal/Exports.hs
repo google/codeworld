@@ -26,6 +26,8 @@ module Internal.Exports (
     -- * Colors
     Color(..),
     Colour,
+    pattern RGB,
+    pattern HSL,
     black,
     white,
     red,
@@ -59,6 +61,7 @@ module Internal.Exports (
     hue,
     saturation,
     luminosity,
+    alpha,
     fromHSL,
 
     -- * Pictures

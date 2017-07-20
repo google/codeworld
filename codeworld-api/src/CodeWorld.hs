@@ -75,6 +75,8 @@ module CodeWorld (
     -- * Colors
     Color(..),
     Colour,
+    pattern RGB,
+    pattern HSL,
     black,
     white,
     red,
@@ -108,6 +110,7 @@ module CodeWorld (
     hue,
     saturation,
     luminosity,
+    alpha,
     fromHSL,
 
     -- * Events

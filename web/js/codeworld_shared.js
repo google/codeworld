@@ -155,6 +155,7 @@ function registerStandardHints(successFunc)
         "fail",
         "fromCWText",
         "fromDouble",
+        "fromHSL",
         "fromInt",
         "fromInteger",
         "fromRandomSeed",

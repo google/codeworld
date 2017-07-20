@@ -1,3 +1,6 @@
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE ViewPatterns    #-}
+
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
 
@@ -24,6 +27,38 @@ import System.Random.Shuffle (shuffle')
 
 data Color = RGBA !Double !Double !Double !Double deriving (Show, Eq)
 type Colour = Color
+
+pattern RGB :: Double -> Double -> Double -> Color
+pattern RGB r g b = RGBA r g b 1
+
+pattern HSL :: Double -> Double -> Double -> Color
+pattern HSL h s l <- (toHSL -> Just (h, s, l))
+  where HSL h s l = fromHSL h s l
+
+-- Utility functions for HSL pattern synonym.
+
+-- Based on the algorithm from the CSS3 specification.
+fromHSL :: Double -> Double -> Double -> Color
+fromHSL h s l = RGBA r g b 1
+  where m1             = l * 2 - m2
+        m2 | l <= 0.5  = l * (s + 1)
+           | otherwise = l + s - l * s
+        r              = convert m1 m2 (h / 2 / pi + 1/3)
+        g              = convert m1 m2 (h / 2 / pi      )
+        b              = convert m1 m2 (h / 2 / pi - 1/3)
+        convert m1 m2 h
+          | h < 0     = convert m1 m2 (h + 1)
+          | h > 1     = convert m1 m2 (h - 1)
+          | h * 6 < 1 = m1 + (m2 - m1) * h * 6
+          | h * 2 < 1 = m2
+          | h * 3 < 2 = m1 + (m2 - m1) * (2/3 - h) * 6
+          | otherwise = m1
+
+{-# WARNING fromHSL "Please use HSL instead of fromHSL." #-}
+
+toHSL :: Color -> Maybe (Double, Double, Double)
+toHSL c@(RGBA _ _ _ 1) = Just (hue c, saturation c, luminosity c)
+toHSL _                = Nothing
 
 white, black :: Color
 white = RGBA 1 1 1 1
@@ -110,7 +145,6 @@ assortedColors = red : green : blue : more
         doublesOf n = n : doublesOf (2 * n)
         shuffleSeed k xs = shuffle' xs (length xs) (mkStdGen k)
 
-
 hue :: Color -> Double
 hue (RGBA r g b a)
   | hi == lo           = 0
@@ -133,19 +167,5 @@ luminosity (RGBA r g b a) = (lo + hi) / 2
   where hi = max r (max g b)
         lo = min r (min g b)
 
--- Based on the algorithm from the CSS3 specification.
-fromHSL :: Double -> Double -> Double -> Color
-fromHSL h s l = RGBA r g b 1
-  where m1             = l * 2 - m2
-        m2 | l <= 0.5  = l * (s + 1)
-           | otherwise = l + s - l * s
-        r              = convert m1 m2 (h / 2 / pi + 1/3)
-        g              = convert m1 m2 (h / 2 / pi      )
-        b              = convert m1 m2 (h / 2 / pi - 1/3)
-        convert m1 m2 h
-          | h < 0     = convert m1 m2 (h + 1)
-          | h > 1     = convert m1 m2 (h - 1)
-          | h * 6 < 1 = m1 + (m2 - m1) * h * 6
-          | h * 2 < 1 = m2
-          | h * 3 < 2 = m1 + (m2 - m1) * (2/3 - h) * 6
-          | otherwise = m1
+alpha :: Color -> Double
+alpha (RGBA r g b a) = a

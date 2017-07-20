@@ -6,3 +6,22 @@
     max-height: 100vh;
     max-width: 100vh;
 }
+
+.stack-list {
+    list-style-type: none;
+    padding: 0px;
+}
+
+.stack-list a {
+    color: black;
+    text-decoration: none;
+}
+
+.shape-name {
+    float: left;
+}
+
+.shape-loc {
+    float: right;
+    margin-left: 10px;
+}

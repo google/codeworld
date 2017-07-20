@@ -51,6 +51,9 @@ function initDebugMode(getStackAtPoint, active) {
         if (stack) {
             var pic, i, marker;
             var printable = false;
+            var ul = document.createElement("ul");
+
+            ul.classList.add("stack-list");
 
             infobox.innerHTML = "";
             for (i=stack.length-1;i>=0;i--) {
@@ -71,35 +74,23 @@ function initDebugMode(getStackAtPoint, active) {
                 });
                 debugMarkers.push(marker);
 
-                var link = document.createElement("a");
-                var text = document.createTextNode(
-                        pic.name + "@" + pic.srcLoc.startLine + ":" + stack[i].srcLoc.startCol);
-                var br = document.createElement("br");
-
-                link.href = "#";
-                link.addEventListener("click", (function (pic) {
-                    parent.codeworldEditor.setCursor({
-                        line: pic.srcLoc.startLine-1,
-                        ch: pic.srcLoc.startCol-1
-                    });
-                }).bind(null,pic) );
-
-                link.appendChild(text);
-                infobox.appendChild(link);
-                infobox.appendChild(br);
+                var li = createSrcLink(pic);
+                ul.appendChild(li);
             }
 
             if (printable) {
+                infobox.appendChild(ul);
+
                 infobox.style.left = evt.clientX + "px";
                 infobox.style.top  = evt.clientY + "px";
 
                 infobox.style.display = "block";
 
-                if (evt.clientX + infobox.offsetWidth > 500) {
+                if (evt.clientX + infobox.offsetWidth >= 500) {
                     infobox.style.left = (evt.clientX - infobox.offsetWidth) + "px";
                 }
 
-                if (evt.clientY + infobox.offsetHeight > 500) {
+                if (evt.clientY + infobox.offsetHeight >= 500) {
                     infobox.style.top = (evt.clientY - infobox.offsetHeight) + "px";
                 }
             } else {
@@ -119,6 +110,38 @@ function initDebugMode(getStackAtPoint, active) {
     canvas.onblur = (function (evt) {
         infobox.style.display = "none";
     });
+}
+
+function createSrcLink(pic) {
+    var li = document.createElement("li");
+
+    var preludeLink = "/doc/Prelude.html#v:" + pic.name;
+
+    var shapeName = document.createElement("a");
+    shapeName.classList.add("shape-name");
+    if (parent.buildMode == "codeworld")
+        shapeName.href = preludeLink;
+    shapeName.target = "_blank";
+    var nameText = document.createTextNode(pic.name);
+    shapeName.appendChild(nameText);
+
+    var shapeLoc  = document.createElement("a");
+    shapeLoc.classList.add("shape-loc");
+    shapeLoc.href = "#";
+    var locText = document.createTextNode("@" + pic.srcLoc.startLine + ":" + pic.srcLoc.startCol);
+    shapeLoc.appendChild(locText);
+    shapeLoc.addEventListener("click", function () {
+        parent.codeworldEditor.setCursor({
+            line: pic.srcLoc.startLine - 1,
+            ch: pic.srcLoc.startCol - 1
+        });
+    });
+
+
+    li.appendChild(shapeName);
+    li.appendChild(shapeLoc);
+
+    return li;
 }
 
 function clearMarkers() {

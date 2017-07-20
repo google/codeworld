@@ -381,13 +381,17 @@ findTopPicture ctx ds pic = case pic of
         if contained
             then return (Just [pic])
             else return Nothing
-    Arc _ _ _ _ _      -> do
+    Arc _ _ _ _ w      -> do
+        let width = if w==0 then 1 else 25*w
+        Canvas.lineWidth width ctx
         drawPicture ctx ds pic
         contained <- js_isPointInStroke 0 0 ctx
         if contained
             then return (Just [pic])
             else return Nothing
-    Path _ _ _ _ _     -> do
+    Path _ _ w _ _     -> do
+        let width = if w==0 then 1 else 25*w
+        Canvas.lineWidth width ctx
         drawPicture ctx ds pic
         contained <- js_isPointInStroke 0 0 ctx
         if contained

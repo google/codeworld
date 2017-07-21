@@ -1164,44 +1164,46 @@ run initial stepHandler eventHandler drawHandler = do
     let go t0 lastFrame lastStateName needsTime = do
             paused <- readMVar pausedVar
             if paused
-                then do
-                    continueUntil (not <$> takeMVar pausedVar)
-                    t <- getTime
-                    go t lastFrame lastStateName True
-                else do
-                    pic <- drawHandler <$> readMVar currentState
-                    picFrame <- makeStableName $! pic
-                    when (picFrame /= lastFrame) $ do
-                        rect <- getBoundingClientRect canvas
-                        buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
-                                                     rect
-                        drawFrame buffer pic
-                        Canvas.restore buffer
+                then goPause lastFrame lastStateName
+                else goPlay t0 lastFrame lastStateName needsTime
+        goPause lastFrame lastStateName = do
+            continueUntil (not <$> takeMVar pausedVar)
+            t <- getTime
+            go t lastFrame lastStateName True
+        goPlay t0 lastFrame lastStateName needsTime = do
+            pic <- drawHandler <$> readMVar currentState
+            picFrame <- makeStableName $! pic
+            when (picFrame /= lastFrame) $ do
+                rect <- getBoundingClientRect canvas
+                buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
+                                             rect
+                drawFrame buffer pic
+                Canvas.restore buffer
 
-                        rect <- getBoundingClientRect canvas
-                        cw <- ClientRect.getWidth rect
-                        ch <- ClientRect.getHeight rect
-                        js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
-                                           0 0 (round cw) (round ch)
+                rect <- getBoundingClientRect canvas
+                cw <- ClientRect.getWidth rect
+                ch <- ClientRect.getHeight rect
+                js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
+                                   0 0 (round cw) (round ch)
 
-                    t1 <- if
-                      | needsTime -> do
-                          t1 <- nextFrame
-                          let dt = min (t1 - t0) 0.25
-                          modifyMVar_ currentState (return . stepHandler dt)
-                          return t1
-                      | otherwise -> do
-                          takeMVar eventHappened
-                          getTime
+            t1 <- if
+              | needsTime -> do
+                  t1 <- nextFrame
+                  let dt = min (t1 - t0) 0.25
+                  modifyMVar_ currentState (return . stepHandler dt)
+                  return t1
+              | otherwise -> do
+                  takeMVar eventHappened
+                  getTime
 
-                    nextState <- readMVar currentState
-                    nextStateName <- makeStableName $! nextState
-                    nextNeedsTime <- if
-                        | nextStateName /= lastStateName -> return True
-                        | not needsTime -> return False
-                        | otherwise     -> not <$> isUniversallyConstant stepHandler nextState
+            nextState <- readMVar currentState
+            nextStateName <- makeStableName $! nextState
+            nextNeedsTime <- if
+                | nextStateName /= lastStateName -> return True
+                | not needsTime -> return False
+                | otherwise     -> not <$> isUniversallyConstant stepHandler nextState
 
-                    go t1 picFrame nextStateName nextNeedsTime
+            go t1 picFrame nextStateName nextNeedsTime
 
     t0 <- getTime
     nullFrame <- makeStableName undefined

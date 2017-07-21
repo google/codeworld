@@ -95,6 +95,44 @@ function shareForFeedback() {
     });
 }
 
+function addPresentCommentInd() {
+   /* if (!signedIn()) {
+        sweelAlert('Oops!', 'You must sign in to see and write comments!', 'error');
+        return;
+    }
+
+    function go(request) {
+        if (request.status != 200) {
+            sweetAlert('Oops!', 'Sorry! Could not load an indicator of where comments are present.', 'error');
+            return;
+        }
+        window.lineSet = new Set(JSON.parse(request.responseText));
+        for (i of lineSet) {
+            document.getElementsByClassName('CodeMirror-gutter-elt')[Number(i) + 1].innerHTML = '<i style="color: #8642f4;">c</i>&nbsp;' + i;
+        }
+        if (window.lineSet.size !== 0) {
+            var w = document.getElementsByClassName('CodeMirror-gutter')[0].style.width.slice(0, -2);
+            document.getElementsByClassName('CodeMirror-gutter')[0].style.width = (Number(w) + 2) + 'px';
+        }
+    }
+
+    var data = new FormData();
+    data.append('mode', window.buildMode);
+    data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
+    if (window.chash != undefined){
+        data.append('chash', window.chash);
+        sendHttp('POST', 'listComments', data, function(request) {
+            go(request);
+        });
+    } else {
+        data.append('path', nestedDirs.slice(1).join('/'));
+        data.append('name', openProjectName);
+        sendHttp('POST', 'listOwnerComments', data, function(request) {
+            go(request);
+        });
+    }*/
+}
+
 function toggleUserComments(cm, line, gutter) {
     var hash = window.location.hash.slice(1);
     if (hash.length > 0) {
@@ -483,6 +521,75 @@ function deleteReply(ind, commentIdx, line) {
         });
     }
 }
+/*
+function shiftLineByX(lineNo, x) {
+    if (!signedIn()) {
+        sweetAlert('Oops!', 'Please sign in to continue, otherwise the comments in the file will be misplaced.', 'error');
+        return;
+    }
+    if (openProjectName == null || openProjectName == '') {
+        return;
+    }
+    if (window.openCommentLines != undefined) {
+        return;
+    }
+    console.log(lineNo)
+    if (window.currentShift != undefined) {
+        if (window.pendingShifts == undefined) {
+            window.pendingShifts = [[],[]];
+        }
+        if (openProjectName != window.currentShiftFile || nestedDirs.slice(1).join('/') != window.currentShiftDir) {
+            return;
+        }
+        window.pendingShifts[0].push(lineNo);
+        window.pendingShifts[1].push(x);
+    } else {
+        window.currentShift = [[lineNo], [x]];
+        window.currentShiftFile = openProjectName;
+        window.currentShiftDir = nestedDirs.slice(1).join('/');
+        var data = new FormData();
+        data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
+        data.append('mode', window.buildMode);
+        data.append('path', window.currentShiftDir);
+        data.append('name', window.currentShiftFile);
+        data.append('shifts', JSON.stringify([[lineNo], [x]]));
+        sendHttp('POST', 'shiftLinesByXs', data, function(request) {
+            if (request.status != 200) {
+                sweetAlert('Oops!', 'Could not update comments according to the new line changes! Reverting back to previous version.', 'error');
+                revertBack();
+                return;
+            }
+            if (window.pendingShifts != undefined) {
+                var data = new FormData();
+                data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
+                data.append('mode', window.buildMode);
+                data.append('path', window.currentShiftDir);
+                data.append('name', window.currentShiftFile);
+                data.append('shifts', JSON.stringify(window.pendingShifts));
+                window.currentShift = window.pendingShifts;
+                window.pendingShifts = undefined;
+                sendHttp('POST', 'shiftLinesByXs', data, function(request) {
+                    if (request.status != 200) {
+                        sweetAlert('Oops!', 'Could not update comments according to the new line changes!', 'error');
+                        return;
+                    }
+                    window.currentShift = undefined;
+                    window.currentShiftFile = undefined;
+                    window.currentShiftDir = undefined;
+                });
+
+            } else {
+                window.currentShift = undefined;
+                window.currentShiftFile = undefined;
+                window.currentShiftDir = undefined;
+            }
+        });
+    }
+}
+
+function revertBack() {
+
+}*/
 
 function randomString(length = 32, chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') {
     var result = '';

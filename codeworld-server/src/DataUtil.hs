@@ -28,6 +28,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Lazy as LB
+import           Data.List
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Text (Text)
@@ -164,8 +165,14 @@ projectFileNames subHashedDirs = do
     hashedFiles <- dirFilter subHashedDirs 'S'
     projects <- fmap catMaybes $ forM hashedFiles $ \f -> do
         exists <- doesFileExist f
-        if exists then decode <$> LB.readFile f else return Nothing
-    return $ map projectName projects
+        case reverse f  of
+          x | take 3 x == "wc." && length x == 26 ->
+               if exists then (fmap projectName) <$> (decode <$> LB.readFile f)
+                         else return Nothing
+          x | take 5 x == "ofni." && length x == 28 ->
+               if exists then Just . T.decodeUtf8 <$> B.readFile f else return Nothing
+          _ -> return Nothing
+    return projects
 
 projectDirNames :: [FilePath] -> IO [Text]
 projectDirNames subHashedDirs = do
@@ -190,7 +197,8 @@ isDir path = do
 
 migrateUser :: FilePath -> IO ()
 migrateUser userRoot = do
-    prevContent <- filter (\x -> take 3 (reverse x) == "wc.") <$> listDirectory userRoot
+    prevContent <- filter (\x -> (take 3 (reverse x) == "wc.") && (length x == 26)) <$>
+      listDirectory userRoot
     mapM_ (\x -> createDirectoryIfMissing False $ userRoot </> take 3 x) prevContent
     mapM_ (\x -> renameFile (userRoot </> x) $ userRoot </> take 3 x </> x) prevContent
 
@@ -199,9 +207,17 @@ getFilesRecursive path = do
     dirBool <- isDir path
     case dirBool of
       True -> do
-        contents <- listDirectory path
-        concat <$> mapM (getFilesRecursive . (path </>)) contents
-      False -> return [path]
+        case path of
+          x | isSuffixOf ".comments" (drop 23 x) -> return []
+            | isSuffixOf ".comments.users" (drop 23 x) -> return []
+            | isSuffixOf ".comments.versions" (drop 23 x) -> return []
+            | otherwise -> do
+               contents <- listDirectory path
+               concat <$> mapM (getFilesRecursive . (path </>)) contents
+      False -> case reverse path of
+                 x | isSuffixOf ".info" (drop 23 x) -> return []
+                   | x == "dir.info" -> return []
+                   | otherwise -> return [path]
 
 dirToCheckSum :: FilePath -> IO Text
 dirToCheckSum path = do
@@ -233,7 +249,10 @@ hashToId pfx = (pfx <>)
         toWebSafe c   = c
 
 copyDirIfExists :: FilePath -> FilePath -> IO ()
-copyDirIfExists folder1 folder2 = getDirectory folder1 >>= copyTo_ folder2
+copyDirIfExists folder1 folder2 = (getDirectory folder1 >>= copyTo_ folder2) `catch` handleExists
+  where handleExists e
+          | isDoesNotExistError e = return ()
+          | otherwise = throwIO e
 
 removeFileIfExists :: FilePath -> IO ()
 removeFileIfExists fileName = removeFile fileName `catch` handleExists

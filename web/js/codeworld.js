@@ -357,6 +357,20 @@ function updateUI() {
         document.getElementById('moveButton').style.display = 'none';
     }
 
+   /* if (window.lineSet != undefined) {
+        for (i of lineSet) {
+            document.getElementsByClassName('CodeMirror-gutter-elt')[Number(i) + 1].innerHTML = '<i style="color: #8642f4;">c</i> ' + i;
+        }
+    }
+    //change that from elt to wrapper then find elt
+    var doc = window.codeworldEditor.getDoc();
+    doc.eachLine(function(f) {
+        let line = f.lineNo()
+        f.on('delete', function() {
+            shiftLineByX(line, -1);
+        });
+    });*/
+
     var title;
     if (window.openProjectName) {
         title = window.openProjectName;
@@ -498,9 +512,12 @@ function moveProject() {
         var tempOpen = openProjectName;
         var tempPath = nestedDirs.slice(1).join('/');
         setCode('');
-        nestedDirs = [""];
-        allProjectNames = [[]];
-        allFolderNames = [[]];
+        if (tempOpen == null || tempOpen == '') {
+            nestedDirs.splice(-1);
+            allProjectNames.splice(-1);
+            allFolderNames.splice(-1);
+        }
+        updateNavBar();
         discoverProjects("", 0);
         document.getElementById('newFolderButton').style.display = '';
         document.getElementById('newButton').style.display = 'none';
@@ -657,6 +674,13 @@ function loadProject(name, index) {
     }
     function successFunc(project){
         setCode(project.source, project.history, name);
+        addPresentCommentInd();
+        /*var doc = window.codeworldEditor.getDoc();
+        doc.eachLine(function(f) {
+            f.on('delete', function() {
+                shiftLineByX(f.lineNo(), -1);
+            });
+        });*/
     }
     loadProject_(index, name, window.buildMode, successFunc);
 }

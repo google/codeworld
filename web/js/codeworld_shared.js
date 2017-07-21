@@ -594,6 +594,9 @@ function createFolder(path, buildMode, successFunc) {
                 }
 
                 allFolderNames[allFolderNames.length - 1].push(folderName);
+                nestedDirs.push(folderName);
+                allFolderNames.push([]);
+                allProjectNames.push([]);
                 successFunc();
                 updateNavBar();
             });
@@ -625,7 +628,6 @@ function newProject_(path) {
                 return;
             }
 
-            sweetAlert.close();
             setCode('');
             saveProjectBase(path, fileName, 'create');
         }
@@ -644,7 +646,6 @@ function newProject_(path) {
 }
 
 function loadProject_(index, name, buildMode, successFunc) {
-
   warnIfUnsaved(function(){
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
@@ -662,11 +663,11 @@ function loadProject_(index, name, buildMode, successFunc) {
         if (request.status == 200) {
             var project = JSON.parse(request.responseText);
 
-            successFunc(project);
             window.nestedDirs = nestedDirs.slice(0, index + 1);
             window.allProjectNames = allProjectNames.slice(0, index + 1);
             window.allFolderNames = allFolderNames.slice(0, index + 1);
             updateUI();
+            successFunc(project);
         }
     });
   }, false);

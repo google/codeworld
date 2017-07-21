@@ -38,7 +38,8 @@ Executable codeworld-server
     temporary,
     text,
     time,
-    unix
+    unix,
+    unordered-containers
 
   Ghc-options: -threaded -Wall -funbox-strict-fields -O2
                -fno-warn-unused-do-bind

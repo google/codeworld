@@ -155,6 +155,7 @@ function registerStandardHints(successFunc)
         "fail",
         "fromCWText",
         "fromDouble",
+        "fromHSL",
         "fromInt",
         "fromInteger",
         "fromRandomSeed",
@@ -184,6 +185,9 @@ function registerStandardHints(successFunc)
         } else if (line.startsWith("newtype ")) {
             // Hide the distinction between newtype and data.
             line = "data " + line.substr(8);
+        } else if (line.startsWith("pattern ")) {
+            // Hide the distinction between patterns and constructors.
+            line = line.substr(8);
         } else if (line.startsWith("class ")) {
             return;
         } else if (line.startsWith("instance ")) {

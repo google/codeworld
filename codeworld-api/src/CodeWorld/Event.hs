@@ -1,3 +1,5 @@
+{-# LANGUAGE PatternSynonyms #-}
+
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
 
@@ -57,8 +59,17 @@ import Data.Text (Text)
 data Event = KeyPress !Text
            | KeyRelease !Text
            | MousePress !MouseButton !Point
-           | MouseRelease !MouseButton Point
+           | MouseRelease !MouseButton !Point
            | MouseMovement !Point
   deriving (Eq, Show, Read)
 
 data MouseButton = LeftButton | MiddleButton | RightButton deriving (Eq, Show, Read)
+
+pattern PointerPress :: Point -> Event
+pattern PointerPress p = MousePress LeftButton p
+
+pattern PointerRelease :: Point -> Event
+pattern PointerRelease p = MouseRelease LeftButton p
+
+pattern PointerMovement :: Point -> Event
+pattern PointerMovement p = MouseMovement p

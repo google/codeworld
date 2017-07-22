@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE PackageImports    #-}
+{-# LANGUAGE PatternSynonyms   #-}
 
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
@@ -25,6 +26,8 @@ module Internal.Exports (
     -- * Colors
     Color(..),
     Colour,
+    pattern RGB,
+    pattern HSL,
     black,
     white,
     red,
@@ -58,6 +61,7 @@ module Internal.Exports (
     hue,
     saturation,
     luminosity,
+    alpha,
     fromHSL,
 
     -- * Pictures
@@ -109,6 +113,9 @@ module Internal.Exports (
     -- * Events
     Event(..),
     MouseButton(..),
+    pattern PointerPress,
+    pattern PointerRelease,
+    pattern PointerMovement,
 
     -- * Debugging
     traced,

@@ -40,6 +40,7 @@ import           System.FilePath
 import           System.File.Tree (getDirectory, copyTo_)
 import           System.Posix.Files
 
+import CommentUtil (addSelf)
 import Model
 
 newtype BuildMode = BuildMode String deriving Eq
@@ -153,6 +154,12 @@ ensureProjectDir mode userId' path projectId = do
     createDirectoryIfMissing False (dropFileName f)
   where f = userProjectDir mode userId' </> path </> projectFile projectId
 
+createNewFolder :: BuildMode -> Text -> FilePath -> FilePath -> IO ()
+createNewFolder mode userId' finalDir name = do
+    ensureUserBaseDir mode userId' finalDir
+    ensureUserDir mode userId' finalDir
+    B.writeFile (userProjectDir mode userId' </> finalDir </> "dir.info") $ BC.pack name
+
 listDirectoryWithPrefix :: FilePath -> IO [FilePath]
 listDirectoryWithPrefix filePath = map (filePath </>) <$> listDirectory filePath
 
@@ -250,9 +257,9 @@ hashToId pfx = (pfx <>)
 
 copyDirIfExists :: FilePath -> FilePath -> IO ()
 copyDirIfExists folder1 folder2 = (getDirectory folder1 >>= copyTo_ folder2) `catch` handleExists
-  where handleExists e
-          | isDoesNotExistError e = return ()
-          | otherwise = throwIO e
+    where handlerExists e
+            | isDoesNotExistError e = return ()
+            | otherwise = throwIO e
 
 removeFileIfExists :: FilePath -> IO ()
 removeFileIfExists fileName = removeFile fileName `catch` handleExists

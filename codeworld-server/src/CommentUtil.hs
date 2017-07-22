@@ -151,7 +151,6 @@ removeUserFromComments mode userId' userPath = do
 
 copyDirFromCommentables :: BuildMode -> Text -> FilePath -> FilePath -> Value -> IO ()
 copyDirFromCommentables mode userId' toDir fromDir emptyPH = do
-    let projectId = userProjectDir mode userId'
     dirList <- listDirectoryWithPrefix fromDir
     dirFiles <- dirFilter dirList 'S'
     forM_ dirFiles $ \ f -> do
@@ -164,14 +163,35 @@ copyDirFromCommentables mode userId' toDir fromDir emptyPH = do
             Just (project :: Project) <- decode <$>
               (LB.readFile $ take (length commentFolder - 9) commentFolder)
             fileName <- T.decodeUtf8 <$> B.readFile (f <.> "info")
-            createDirectoryIfMissing $ takeDirectory toDir
-            createDirectory $ toDir
-            B.writeFile ()
             LB.writeFile (toDir </> file) $ encode
               (Project fileName (projectSource project) emptyPH)
             addSelf mode userId' "Anonynous Owner" (toDir </> file <.> "comments")
     dirDirs <- dirFilter dirList 'D'
-    
+    forM_ dirDirs $ \ d -> do
+        dirName <- BC.unpack <$> B.readFile (d </> "dir.info")
+        let newToDir = toDir </> (dirBase $ takeFileName d)
+        createNewFolder mode userId' newToDir dirName
+        copyDirFromCommentables mode userId' newToDir d emptyPH
+
+copyDirFromSelf :: BuildMode -> Text -> FilePath -> FilePath -> IO ()
+copyDirFromSelf mode userId' toDir fromDir = do
+    dirList <- listDirectoryWithPrefix fromDir
+    dirFiles <- dirFilter dirList 'S'
+    forM_ dirFiles $ \f -> do
+        let file = takeFileName f
+        fileBool <- doesFileExist f
+        case (fileBool, isSuffixOf ".cw" (drop 23 file)) of
+          (True, True) -> do
+            Just (project :: Project) <- decode <$> LB.readFile f
+            LB.writeFile (toDir </> file) $ encode project
+            addSelf mode userId' "Anonymous Owner" (toDir </> file <.> "comments")
+          (_, _) -> return ()
+    dirDirs <- dirFilter dirList 'D'
+    forM_ dirDirs $ \ d -> do
+        dirName <- BC.unpack <$> B.readFile (d </> "dir.info")
+        let newToDir = toDir </> (dirBase $ takeFileName d)
+        createNewFolder mode userId' newToDir dirName
+        copyDirFromSelf mode userId' newToDir d
 
 createNewVersionIfReq :: Text -> FilePath -> IO ()
 createNewVersionIfReq latestSource commentFolder = do

@@ -40,7 +40,7 @@ import SnapUtil
 
 folderRoutes :: ClientId -> [(B.ByteString, Snap ())]
 folderRoutes clientId =
---    [ ("copyProject",   copyProjectHandler clientId)
+    [ ("copyProject",   copyProjectHandler clientId)
     , ("createFolder",  createFolderHandler clientId)
     , ("deleteFolder",  deleteFolderHandler clientId)
     , ("deleteProject", deleteProjectHandler clientId)
@@ -107,24 +107,26 @@ copyProjectHandler clientId = do
                Just name <- fmap (BC.unpack) <$> getParam "name"
                Just (emptyPH :: Value) <- decode . LB.fromStrict . fromJust <$> getParam "empty"
                let toDir = joinPath $ map (dirBase . nameToDirId . T.pack) (copyTo ++ [name])
+                   projectDir = userProjectDir mode (userId user)
+               dirBool <- liftIO $ doesDirectroyExist (projectDir </> toDir)
+               case dirBool of
+                 True -> do
+                    res <- liftIO $ deleteFolderWithComments mode (userId user) toDir
+                    case res of
+                      Left err -> do
+                        modifyResponse $ setContentType "text/plain"
+                        modifyResponse $ setResponseCode 500
+                        writeBS . BC.pack $ err
+                      Right _ -> return ()
+                 False -> return ()
+               liftIO $ createNewFolder mode (userId user) toDir name
                case length copyFrom of
-                 x | (x > 0) && copyFrom !! 0 == "commentables" -> do
-                      let projectDir = userProjectDir mode (userId user)
-                      dirBool <- doesDirectoryExist (projectDir </> toDir)
-                      case dirBool of
-                        True -> do
-                          res <- liftIO $ deleteFolderWithComments mode (userId user) toDir
-                          case res of
-                            Left err -> do
-                              modifyResponse $ setContentType "text/plain"
-                              modifyResponse $ setResponseCode 500
-                              writeBS . BC.pack $ err
-                            Right _ -> return ()
-                        False -> return ()
-                      liftIO $ copyDirFromCommentables mode (userId user)
+                 x | (x > 0) && copyFrom !! 0 == "commentables" -> liftIO $ do
+                      copyDirFromCommentables mode (userId user)
                         (projectDir </> toDir) (projectDir </> copyFrom) emptyPH
-                   | otherwise -> do
-                      
+                   | otherwise -> liftIO $ do
+                      copyDirFromSelf mode (userId user)
+                        (projectDir </> toDir) (projectDir </> fromDir)
              (_, _) -> return ()
 
 createFolderHandler :: ClientId -> Snap ()
@@ -138,22 +140,19 @@ createFolderHandler clientId = do
           "`commentables` Hash Directory Is Forbidden In Root Folder For User Use"
       False -> do
         Just path' <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
-        liftIO $ do
-            dirBool <- liftIO $ doesDirectoryExist finalDir
-            case dirBool of
-              True -> do
-                res <- liftIO $ deleteFolderWithComments mode (userId user) finalDir
-                case res of
-                  Left err -> do
-                    modifyResponse $ setContentType "text/plain"
-                    modifyResponse $ setResponseCode 500
-                    writeBS . BC.pack $ err
-                  Right _ -> return ()
-              False -> return ()
-            ensureUserBaseDir mode (userId user) finalDir
-            createDirectory $ userProjectDir mode (userId user) </> finalDir
-            B.writeFile (userProjectDir mode (userId user) </> finalDir </> "dir.info") $
-              BC.pack $ last path'
+        dirBool <- liftIO $ doesDirectoryExist finalDir
+        case dirBool of
+          True -> do
+            res <- liftIO $ deleteFolderWithComments mode (userId user) finalDir
+            case res of
+              Left err -> do
+                modifyResponse $ setContentType "text/plain"
+                modifyResponse $ setResponseCode 500
+                writeBS . BC.pack $ err
+              Right _ -> do
+                createNewFolder mode (userId user) finaDir (last path')
+          False -> do
+            createNewFolder mode (userId user) finaDir (last path')
 
 deleteFolderHandler :: ClientId -> Snap ()
 deleteFolderHandler clientId = do

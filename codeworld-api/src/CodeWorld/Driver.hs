@@ -1210,6 +1210,73 @@ run initial stepHandler eventHandler drawHandler = do
     initialStateName <- makeStableName $! initial
     go t0 nullFrame initialStateName True
 
+runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> IO ()
+runPauseable initial stepHandler eventHandler drawHandler shouldInspect = do
+    Just window <- currentWindow
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
+    offscreenCanvas <- Canvas.create 500 500
+
+    setCanvasSize canvas canvas
+    setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+    on window resize $ do
+        liftIO $ setCanvasSize canvas canvas
+        liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+
+    currentState <- newMVar initial
+    eventHappened <- newMVar ()
+
+    let drawInspect state
+            | shouldInspect state = drawHandler state
+            | otherwise = pictures []
+    inspectFromIO (\_ -> return ()) $ drawInspect <$> readMVar currentState
+
+    onEvents canvas $ \event -> do
+        changed <- modifyMVarIfNeeded currentState (return . eventHandler event)
+        when changed $ void $ tryPutMVar eventHappened ()
+
+    screen <- js_getCodeWorldContext (canvasFromElement canvas)
+
+    let go t0 lastFrame lastStateName needsTime = do
+            pic <- drawHandler <$> readMVar currentState
+            picFrame <- makeStableName $! pic
+            when (picFrame /= lastFrame) $ do
+                rect <- getBoundingClientRect canvas
+                buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
+                                             rect
+                drawFrame buffer pic
+                Canvas.restore buffer
+
+                rect <- getBoundingClientRect canvas
+                cw <- ClientRect.getWidth rect
+                ch <- ClientRect.getHeight rect
+                js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
+                                   0 0 (round cw) (round ch)
+
+            t1 <- if
+              | needsTime -> do
+                  t1 <- nextFrame
+                  let dt = min (t1 - t0) 0.25
+                  modifyMVar_ currentState (return . stepHandler dt)
+                  return t1
+              | otherwise -> do
+                  takeMVar eventHappened
+                  getTime
+
+            nextState <- readMVar currentState
+            nextStateName <- makeStableName $! nextState
+            nextNeedsTime <- if
+                | nextStateName /= lastStateName -> return True
+                | not needsTime -> return False
+                | otherwise     -> not <$> isUniversallyConstant stepHandler nextState
+
+            go t1 picFrame nextStateName nextNeedsTime
+
+    t0 <- getTime
+    nullFrame <- makeStableName undefined
+    initialStateName <- makeStableName $! initial
+    go t0 nullFrame initialStateName True
+
 continueUntil :: Monad m => m Bool -> m ()
 continueUntil x = x >>= \c ->
     if c
@@ -1306,6 +1373,9 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
     nullFrame <- makeStableName undefined
     initialStateName <- makeStableName $! initial
     go t0 nullFrame initialStateName True
+
+runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> IO ()
+runPauseable initial stepHandler eventHandler drawHandler _ = run initial stepHandler eventHandler drawHandler
 
 getDeployHash :: IO Text
 getDeployHash = error "game API unimplemented in stand-alone interface mode"
@@ -1465,10 +1535,11 @@ animationControls w
   | otherwise               = [ RestartButton, PauseButton, TimeLabel ]
 
 animationOf f =
-    interactionOf initial
+    runPauseable  initial
                   (wrappedStep (+))
                   (wrappedEvent animationControls (+))
                   (wrappedDraw animationControls f)
+                  paused
   where initial = Wrapped {
             state          = 0,
             paused         = False,
@@ -1482,10 +1553,11 @@ simulationControls w
   | otherwise            = [ PauseButton ]
 
 simulationOf simInitial simStep simDraw =
-    interactionOf initial
+    runPauseable  initial
                   (wrappedStep simStep)
                   (wrappedEvent simulationControls simStep)
                   (wrappedDraw simulationControls simDraw)
+                  paused
   where initial = Wrapped {
             state          = simInitial,
             paused         = False,

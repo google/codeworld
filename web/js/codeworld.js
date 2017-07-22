@@ -472,9 +472,12 @@ function moveProject() {
         var tempOpen = openProjectName;
         var tempPath = nestedDirs.slice(1).join('/');
         setCode('');
-        nestedDirs = [""];
-        allProjectNames = [[]];
-        allFolderNames = [[]];
+        if (tempOpen == null || tempOpen == '') {
+            nestedDirs.splice(-1);
+            allProjectNames.splice(-1);
+            allFolderNames.splice(-1);
+        }
+        updateNavBar();
         discoverProjects("", 0);
         document.getElementById('newFolderButton').style.display = '';
         document.getElementById('newButton').style.display = 'none';

@@ -226,7 +226,7 @@ listFolderHandler clientId = do
     let projectDir = userProjectDir mode (userId user)
     subHashedDirs <- liftIO $ listDirectoryWithPrefix $ projectDir </> finalDir
     files <- liftIO $ projectFileNames subHashedDirs
-    dirs <- liftIO $ projectDirNames subHashedDirs 
+    dirs <- liftIO $ projectDirNames subHashedDirs
     modifyResponse $ setContentType "application/json"
     writeLBS (encode (Directory files dirs))
 
@@ -248,7 +248,6 @@ shareContentHandler clientId = do
     mode <- getBuildMode
     Just shash <- getParam "shash"
     sharingFolder <- liftIO $ B.readFile (shareRootDir mode </> shareLink (ShareId $ T.decodeUtf8 shash))
-    let sharingUserRoot = joinPath $ take 3 $ splitDirectories $ BC.unpack sharingFolder
     user <- getUser clientId
     Just name <- getParam "name"
     let dirPath = dirBase $ nameToDirId $ T.decodeUtf8 name
@@ -265,14 +264,16 @@ moveProjectHandler clientId = do
     Just moveFrom <- fmap (splitDirectories . BC.unpack) <$> getParam "moveFrom"
     let projectDir = userProjectDir mode (userId user)
     let moveFromDir = projectDir </> joinPath (map (dirBase . nameToDirId . T.pack) moveFrom)
+    let parentFrom = if moveFrom == [] then [] else init moveFrom
     Just isFile <- getParam "isFile"
-    case (moveTo == moveFrom, isFile) of
-      (False, "true") -> do
+    case (moveTo == moveFrom, moveTo == parentFrom, isFile) of
+      (False, _, "true") -> do
         Just name <- getParam "name"
         let projectId = nameToProjectId $ T.decodeUtf8 name
+            file = moveFromDir </> projectFile projectId
+            toFile = projectDir </> moveToDir </> projectFile projectId
         liftIO $ ensureProjectDir mode (userId user) moveToDir projectId
-        liftIO $ copyDirIfExists (dropFileName $ moveFromDir </> projectFile projectId)
-                                 (dropFileName $ projectDir </> moveToDir </> projectFile projectId)
+        liftIO $ copyFile file toFile
         empty <- liftIO $ fmap
             (\ l1 ->
                length l1 == 3 &&
@@ -281,19 +282,19 @@ moveProjectHandler clientId = do
                (dropFileName $ moveFromDir </> projectFile projectId))
         liftIO $ if empty then removeDirectoryIfExists (dropFileName $ moveFromDir </> projectFile projectId)
                  else removeFileIfExists $ moveFromDir </> projectFile projectId
-      (False, "false") -> do
+      (_, False, "false") -> do
         let dirName = last $ splitDirectories moveFromDir
         let dir = moveToDir </> take 3 dirName </> dirName
         liftIO $ ensureUserBaseDir mode (userId user) dir
         liftIO $ copyDirIfExists moveFromDir $ projectDir </> dir
-        empty <- liftIO $ 
+        empty <- liftIO $
           fmap
             (\ l1 ->
                length l1 == 3 &&
                  sort l1 == sort [".", "..", takeFileName moveFromDir])
             (getDirectoryContents (takeDirectory moveFromDir))
         liftIO $ removeDirectoryIfExists $ if empty then takeDirectory moveFromDir else moveFromDir
-      (True, _) -> return ()
+      (_, _, _) -> return ()
 
 saveXMLHashHandler :: Snap ()
 saveXMLHashHandler = do
@@ -376,13 +377,13 @@ compileIfNeeded :: BuildMode -> ProgramId -> IO Bool
 compileIfNeeded mode programId = do
     hasResult <- doesFileExist (buildRootDir mode </> resultFile programId)
     hasTarget <- doesFileExist (buildRootDir mode </> targetFile programId)
-    if hasResult 
-        then return hasTarget 
-        else compileSource 
+    if hasResult
+        then return hasTarget
+        else compileSource
                  (buildRootDir mode </> sourceFile programId)
                  (buildRootDir mode </> targetFile programId)
                  (buildRootDir mode </> resultFile programId)
-                 (getMode mode) 
+                 (getMode mode)
 
 getMode :: BuildMode -> String
 getMode (BuildMode m) = m

@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
@@ -26,7 +27,7 @@ import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import           Data.List (sort)
+import           Data.List
 import           Data.Maybe (fromJust)
 import           Snap.Core
 import           Snap.Util.FileServe
@@ -80,17 +81,17 @@ copyProjectHandler clientId = do
         projectDir = userProjectDir mode (userId user)
         copyFromDir = case length copyFrom of
                         0 -> ""
-                        _ -> | copyFrom !! 0 == "commentables" ->
+                        _ | copyFrom !! 0 == "commentables" ->
                                 "commentables" </> (joinPath $
                                   map (dirBase . nameToDirId . T.pack) $ tail copyFrom)
-                             | otherwise ->
+                          | otherwise ->
                                 joinPath $ map (dirBase . nameToDirId . T.pack) copyFrom
     Just isFile <- getParam "isFile"
     case length copyTo of
       x | (x > 0) && copyTo !! 0 == "commentables" -> do
            modifyResponse $ setContentType "text/plain"
            modifyResponse $ setResponseCode 500
-           writeBS . BC.pack "Cannot Copy Something Into `commentables` Directory"
+           writeBS . BC.pack $ "Cannot Copy Something Into `commentables` Directory"
         | otherwise -> do
            case (copyTo == copyFrom, isFile) of
              (False, "true") -> do
@@ -98,17 +99,17 @@ copyProjectHandler clientId = do
                Just (project :: Project) <- decodeStrict . fromJust <$> getParam "project"
                let projectId = nameToProjectId $ T.decodeUtf8 name
                    toFile = projectDir </> copyToDir </> projectFile projectId
-               cleanCommentPaths mode $ toFile <.> "comments"
-               ensureProjectDir mode (userId user) copyToDir projectId
-               LB.writeFile toFile $ encode $
-                 Project (T.decodeUtf8 name) (projectSource project) (projectHistory project)
-               addSelf mode (userId user) "Anonymous Owner" $ toFile <.> "comments"
+               liftIO $ do
+                   cleanCommentPaths mode $ toFile <.> "comments"
+                   ensureProjectDir mode (userId user) copyToDir projectId
+                   LB.writeFile toFile $ encode $
+                     Project (T.decodeUtf8 name) (projectSource project) (projectHistory project)
+                   addSelf mode (userId user) "Anonymous Owner" $ toFile <.> "comments"
              (False, "false") -> do
                Just name <- fmap (BC.unpack) <$> getParam "name"
                Just (emptyPH :: Value) <- decode . LB.fromStrict . fromJust <$> getParam "empty"
                let toDir = joinPath $ map (dirBase . nameToDirId . T.pack) (copyTo ++ [name])
-                   projectDir = userProjectDir mode (userId user)
-               dirBool <- liftIO $ doesDirectroyExist (projectDir </> toDir)
+               dirBool <- liftIO $ doesDirectoryExist (projectDir </> toDir)
                case dirBool of
                  True -> do
                     res <- liftIO $ deleteFolderWithComments mode (userId user) toDir
@@ -121,12 +122,12 @@ copyProjectHandler clientId = do
                  False -> return ()
                liftIO $ createNewFolder mode (userId user) toDir name
                case length copyFrom of
-                 x | (x > 0) && copyFrom !! 0 == "commentables" -> liftIO $ do
+                 y | (y > 0) && copyFrom !! 0 == "commentables" -> liftIO $ do
                       copyDirFromCommentables mode (userId user)
-                        (projectDir </> toDir) (projectDir </> copyFrom) emptyPH
+                        (projectDir </> toDir) (projectDir </> copyFromDir) emptyPH
                    | otherwise -> liftIO $ do
                       copyDirFromSelf mode (userId user)
-                        (projectDir </> toDir) (projectDir </> fromDir)
+                        (projectDir </> toDir) (projectDir </> copyFromDir)
              (_, _) -> return ()
 
 createFolderHandler :: ClientId -> Snap ()
@@ -149,10 +150,10 @@ createFolderHandler clientId = do
                 modifyResponse $ setContentType "text/plain"
                 modifyResponse $ setResponseCode 500
                 writeBS . BC.pack $ err
-              Right _ -> do
-                createNewFolder mode (userId user) finaDir (last path')
-          False -> do
-            createNewFolder mode (userId user) finaDir (last path')
+              Right _ -> liftIO $ do
+                createNewFolder mode (userId user) finalDir (last path')
+          False -> liftIO $ do
+            createNewFolder mode (userId user) finalDir (last path')
 
 deleteFolderHandler :: ClientId -> Snap ()
 deleteFolderHandler clientId = do
@@ -171,8 +172,8 @@ deleteProjectHandler clientId = do
     case length (splitDirectories finalDir) of
       x | (x /= 0) && ((splitDirectories finalDir) !! 0 == "commentables") -> do
            let file = userProjectDir mode (userId user) </>
-             finalDir </> commentProjectLink projectId
-           removeUserFromComments mode (userId user) file
+                        finalDir </> commentProjectLink projectId
+           liftIO $ removeUserFromComments (userId user) file
         | otherwise -> do
            let file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
            liftIO $ cleanCommentPaths mode (file <.> "comments")
@@ -268,7 +269,7 @@ newProjectHandler clientId = do
                file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
            liftIO $ do
                ensureProjectDir mode (userId user) finalDir projectId
-	           cleanCommentPaths mode $ file <.> "comments"
+               cleanCommentPaths mode $ file <.> "comments"
                LB.writeFile file $ encode project
                addSelf mode (userId user) "Anonymous Owner" $ file <.> "comments"
 

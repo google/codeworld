@@ -77,20 +77,20 @@ cleanCommentPaths mode commentFolder = do
         removeDirectoryIfExists commentFolder
         removeDirectoryIfExists $ commentFolder <.> "users"
         removeDirectoryIfExists $ commentFolder <.> "versions"
-        let commentHash = nameToCommentHash commentFodler
+        let commentHash = nameToCommentHash commentFolder
             commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
         removeFileIfExists commentHashPath
         Just (currentUsers :: [UserDump]) <- decode <$>
           LB.readFile (commentHashPath <.> "users")
         forM_ currentUsers $ \u -> do
-            removeFileIfExists $ upath u
-            removeFileIfExists $ upath u <.> "info"
+            removeFileIfExists $ T.unpack (upath u)
+            removeFileIfExists $ T.unpack (upath u) <.> "info"
             empty <- fmap
                 (\ l ->
                     length l == 2 &&
                     sort l == sort [".", ".."])
-                (getDirectoryContents (dropFileName $ upath u))
-            if empty then removeDirectroyIfExists (dropFileName $ upath u)
+                (getDirectoryContents (dropFileName $ T.unpack (upath u)))
+            if empty then removeDirectoryIfExists (dropFileName $ T.unpack (upath u))
                      else return ()
         removeFileIfExists $ commentHashPath <.> "users"
         empty <- fmap
@@ -102,7 +102,7 @@ cleanCommentPaths mode commentFolder = do
                  else return ()
       False -> return ()
 
-deleteFolderWithComments :: Buildmode -> Text -> FilePath -> IO (Either String ())
+deleteFolderWithComments :: BuildMode -> Text -> FilePath -> IO (Either String ())
 deleteFolderWithComments mode userId' finalDir = do
   case finalDir == "commentables" of
     True -> return $ Left "`commentables` Directory Cannot Be Deleted"
@@ -112,7 +112,7 @@ deleteFolderWithComments mode userId' finalDir = do
       case length (splitDirectories finalDir) of
         x | x == 0 -> return $ Left "Root Directory Cannot Be Deleted"
           | (x /= 0) && ((splitDirectories finalDir) !! 0 == "commentables") -> do
-             mapM_ (removeUserFromComments mode userId') allFilePaths
+             mapM_ (removeUserFromComments userId') allFilePaths
              empty <- fmap (\ l ->
                 length l == 3 &&
                 sort l == sort [".", "..", takeFileName dir'])
@@ -120,7 +120,7 @@ deleteFolderWithComments mode userId' finalDir = do
              removeDirectoryIfExists $ if empty then takeDirectory dir' else dir'
              return $ Right ()
           | otherwise -> do
-             mapM_ (\x -> cleanCommentPaths mode $ x <.> "comments") allFilePaths
+             mapM_ (\t -> cleanCommentPaths mode $ t <.> "comments") allFilePaths
              empty <- fmap (\ l ->
                 length l == 3 &&
                 sort l == sort [".", "..", takeFileName dir'])
@@ -128,19 +128,19 @@ deleteFolderWithComments mode userId' finalDir = do
              removeDirectoryIfExists $ if empty then takeDirectory dir' else dir'
              return $ Right ()
 
-removeUserFromComments :: BuildMode -> Text -> FilePath -> IO ()
-removeUserFromComments mode userId' userPath = do
+removeUserFromComments :: Text -> FilePath -> IO ()
+removeUserFromComments userId' userPath = do
     commentHashFile <- BC.unpack <$> B.readFile userPath
     commentFolder <- BC.unpack <$> B.readFile commentHashFile
     Just (currentUsers :: [UserDump]) <- decode <$>
-      LB.readFile (commentHashPath <.> "users")
+      LB.readFile (commentHashFile <.> "users")
     let currentUserIds = map uuserId currentUsers
         currentUser = currentUsers !! (fromJust $ userId' `elemIndex` currentUserIds)
-    removeFileIfExists commentFolder <.> "users" </> uuserIdent currentUser
-    LB.writeFile (commentHashPath <.> "users") $
+    removeFileIfExists $ commentFolder <.> "users" </> T.unpack (uuserIdent currentUser)
+    LB.writeFile (commentHashFile <.> "users") $
       encode (delete currentUser currentUsers)
     removeFileIfExists userPath
-    removeFileIfExists userPath <.> "info"
+    removeFileIfExists $ userPath <.> "info"
     empty <- fmap
         (\ l ->
             length l ==2 &&
@@ -158,8 +158,8 @@ copyDirFromCommentables mode userId' toDir fromDir emptyPH = do
         case isSuffixOf ".info" (drop 23 file) of
           True -> return ()
           False -> do
-            commentHashLink <- BC.unpack <$> B.readFile f
-            commentFolder <- BC.unpack <$> B.readFile f
+            commentHashFile <- BC.unpack <$> B.readFile f
+            commentFolder <- BC.unpack <$> B.readFile commentHashFile
             Just (project :: Project) <- decode <$>
               (LB.readFile $ take (length commentFolder - 9) commentFolder)
             fileName <- T.decodeUtf8 <$> B.readFile (f <.> "info")
@@ -169,7 +169,7 @@ copyDirFromCommentables mode userId' toDir fromDir emptyPH = do
     dirDirs <- dirFilter dirList 'D'
     forM_ dirDirs $ \ d -> do
         dirName <- BC.unpack <$> B.readFile (d </> "dir.info")
-        let newToDir = toDir </> (dirBase $ takeFileName d)
+        let newToDir = toDir </> (dirBase . nameToDirId $ T.pack dirName)
         createNewFolder mode userId' newToDir dirName
         copyDirFromCommentables mode userId' newToDir d emptyPH
 
@@ -189,7 +189,7 @@ copyDirFromSelf mode userId' toDir fromDir = do
     dirDirs <- dirFilter dirList 'D'
     forM_ dirDirs $ \ d -> do
         dirName <- BC.unpack <$> B.readFile (d </> "dir.info")
-        let newToDir = toDir </> (dirBase $ takeFileName d)
+        let newToDir = toDir </> (dirBase . nameToDirId $ T.pack dirName)
         createNewFolder mode userId' newToDir dirName
         copyDirFromSelf mode userId' newToDir d
 
@@ -197,20 +197,20 @@ createNewVersionIfReq :: Text -> FilePath -> IO ()
 createNewVersionIfReq latestSource commentFolder = do
     currentVersions :: [Int] <- reverse . sort . map read <$>
       listDirectory (commentFolder <.> "versions")
-    let currentVersion = currentVersion !! 0
+    let currentVersion = currentVersions !! 0
     currentSource <- T.decodeUtf8 <$>
       B.readFile (commentFolder <.> "versions" </> show currentVersion)
     case currentSource == latestSource of
       True -> return ()
       False -> do
-        currentlines :: [Int] <- delete 0 . fmap read <$> listDirectory commentFolder
+        currentLines :: [Int] <- delete 0 . fmap read <$> listDirectory commentFolder
         commentVersionLists :: [[[CommentDesc]]] <- mapM (\x -> versions . fromJust . decode <$>
           LB.readFile (commentFolder </> show x)) currentLines
         let hasComments = foldr (\l acc ->
-          case length l of
-            x | (x <= currentVersion) && (l !! currentVersion /= []) -> True
-              | otherwise -> acc
-          ) False commentVersionLists
+                            case length l of
+                              x | (x <= currentVersion) && (l !! currentVersion /= []) -> True
+                                | otherwise -> acc
+                            ) False commentVersionLists
         case hasComments of
           True -> do
             B.writeFile (commentFolder <.> "versions" </> show (currentVersion + 1)) $
@@ -240,7 +240,7 @@ ensureVersionLines versionNo' commentFolder = do
     totalLines <- (length . lines . BC.unpack) <$>
       (B.readFile $ commentFolder <.> "versions" </> show versionNo')
     currentLines :: [Int] <- delete 0 . fmap read <$> listDirectory commentFolder
-    let currentCount = 
+    let currentCount = 1
     mapM_ (\x -> do
       fileBool <- doesFileExist $ commentFolder </> show x
       newLC <- case fileBool of
@@ -249,12 +249,12 @@ ensureVersionLines versionNo' commentFolder = do
             LB.readFile (commentFolder </> show x)
           return $ LineComment x (versions currentLC ++ [[]])
         False -> return $ LineComment x [[]]
-      LB.writeFile (commentFolder </> show x) $ encode newLC) [1..totalLines `max` currentLines]
+      LB.writeFile (commentFolder </> show x) $ encode newLC) [1..totalLines `max` currentCount]
 
 addNewUser :: Text -> Text -> FilePath -> FilePath -> FilePath -> IO (Either String ())
 addNewUser userId' userIdent' name userPath commentHashPath = do
     let identAllowed = foldl (\acc l -> if l `elem` (T.unpack userIdent') then False
-                                                                         else acc
+                                                                          else acc
                              ) True ['/', '.', '+']
     case identAllowed of
       True -> return $ Left "User Identifier Has Unallowed Char(/+.)"

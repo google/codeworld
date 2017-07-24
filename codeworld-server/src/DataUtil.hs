@@ -40,7 +40,6 @@ import           System.FilePath
 import           System.File.Tree (getDirectory, copyTo_)
 import           System.Posix.Files
 
-import CommentUtil (addSelf)
 import Model
 
 newtype BuildMode = BuildMode String deriving Eq
@@ -257,7 +256,7 @@ hashToId pfx = (pfx <>)
 
 copyDirIfExists :: FilePath -> FilePath -> IO ()
 copyDirIfExists folder1 folder2 = (getDirectory folder1 >>= copyTo_ folder2) `catch` handleExists
-    where handlerExists e
+    where handleExists e
             | isDoesNotExistError e = return ()
             | otherwise = throwIO e
 

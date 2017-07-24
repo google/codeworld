@@ -108,7 +108,7 @@ addSharedCommentHandler clientId = do
             finalDir = sharedCommentsDir mode (userId user) </> pathDir
             commentHash = nameToCommentHash commentFolder
         res <- liftIO $ do
-            addNewUser (userId user) userIdent' (T.unpack name)
+            addNewUser (userId user) userIdent' (BC.unpack name)
               (finalDir </> commentProjectLink projectId)
               (commentHashRootDir mode </> commentHashLink commentHash)
         case res of
@@ -315,7 +315,7 @@ viewCommentSourceHandler :: ClientId -> Snap ()
 viewCommentSourceHandler clientId = do
     (_, _, commentFolder) <- getFrequentParams 3 clientId
     Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
-    currentSource <- B.readFile (commentFolder <.> "versions" </> show versionNo')
+    currentSource <- liftIO $ B.readFile (commentFolder <.> "versions" </> show versionNo')
     modifyResponse $ setContentType "text/x-haskell"
     writeBS currentSource
 

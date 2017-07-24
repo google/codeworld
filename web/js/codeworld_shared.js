@@ -698,11 +698,7 @@ function share() {
 }
 
 function inspect() {
-    try {
-        document.getElementById('runner').contentWindow.toggleDebugMode();
-    } catch (e) {
-        sweetAlert('Sorry!','Unable to inspect. Inspect is not available in collaborationOf.','error');
-    }
+    document.getElementById('runner').contentWindow.toggleDebugMode();
     updateUI();
 }
 

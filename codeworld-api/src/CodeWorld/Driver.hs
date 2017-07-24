@@ -370,7 +370,7 @@ findTopPicture ctx ds pic = case pic of
         Canvas.font (fontString sty fnt) ctx
         width <- Canvas.measureText (textToJSString txt) ctx
         let height = 25 -- height is constant, defined in fontString
-        withDS ctx ds $ Canvas.rect ((-0.5)*width) (0.5*height) width height ctx
+        withDS ctx ds $ Canvas.rect ((-0.5)*width) ((-0.5)*height) width height ctx
         contained <- js_isPointInPath 0 0 ctx
         if contained
             then return (Just [pic])

@@ -598,6 +598,9 @@ function createFolder(path, buildMode, successFunc) {
                 }
 
                 allFolderNames[allFolderNames.length - 1].push(folderName);
+                nestedDirs.push(folderName);
+                allFolderNames.push([]);
+                allProjectNames.push([]);
                 successFunc();
                 updateNavBar();
             });

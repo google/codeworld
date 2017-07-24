@@ -405,6 +405,16 @@ findTopPicture ctx ds pic = case pic of
             else return Nothing
     where map2 = fmap . fmap
 
+isDebugModeActive :: IO Bool
+isDebugModeActive = js_isDebugModeActive
+
+setDebugModeActive :: Bool -> IO ()
+setDebugModeActive = js_setDebugModeActive
+
+sweetAlert :: Text -> Text -> Text -> IO ()
+sweetAlert style title msg = js_sweetAlert (textToJSString style) (textToJSString title)
+                                           (textToJSString msg)
+
 -- Canvas.isPointInPath does not provide a way to get the return value
 -- https://github.com/ghcjs/ghcjs-base/blob/master/JavaScript/Web/Canvas.hs#L212
 foreign import javascript unsafe "$3.isPointInPath($1,$2)"
@@ -415,6 +425,15 @@ foreign import javascript unsafe "$3.isPointInStroke($1,$2)"
 
 foreign import javascript unsafe "initDebugMode($1,$2)"
     js_initDebugMode :: Callback (JSVal -> IO JSVal) -> Callback (JSVal -> IO ()) -> IO ()
+
+foreign import javascript unsafe "window.debugMode"
+    js_isDebugModeActive :: IO Bool
+
+foreign import javascript unsafe "window.debugMode = $1;parent.updateUI();"
+    js_setDebugModeActive :: Bool -> IO ()
+
+foreign import javascript unsafe "parent.sweetAlert($2,$3,$1);"
+    js_sweetAlert :: JSString -> JSString -> JSString -> IO ()
 
 followPath :: Canvas.Context -> [Point] -> Bool -> Bool -> IO ()
 followPath ctx [] closed _ = return ()
@@ -1233,13 +1252,23 @@ runPauseable initial stepHandler eventHandler drawHandler isPaused = do
 
     (sendEvent, getState) <- run initial stepHandler eventHandler drawHandler
 
-    onEvents canvas sendEvent
+    onEvents canvas $ \event -> do
+        debugActive <- isDebugModeActive
+        when debugActive $ do
+            nextStatePaused <- isPaused <$> eventHandler event <$> getState
+            when (not nextStatePaused) $ setDebugModeActive False
+        sendEvent event
 
     let picIfUnpaused state = case isPaused state of
             True  -> drawHandler state
             False -> pictures []
+        checkPaused = do
+            paused <- isPaused <$> getState
+            when (not paused) $ do
+                setDebugModeActive False
+                sweetAlert "error" "Sorry!" "Please pause before inspecting."
 
-    inspectFromIO (\_ -> return ()) $ picIfUnpaused <$> getState
+    inspectFromIO (flip when checkPaused) $ picIfUnpaused <$> getState
 
 --------------------------------------------------------------------------------
 -- Stand-Alone event handling and core interaction code

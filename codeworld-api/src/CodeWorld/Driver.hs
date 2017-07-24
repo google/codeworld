@@ -1131,7 +1131,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     initialStateName <- makeStableName $! initialGameState
     go t0 nullFrame
 
-run :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
+run :: s -> (Double -> s -> s) -> (e -> s -> s) -> (s -> Picture) -> IO (e -> IO (), IO s)
 run initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
@@ -1146,31 +1146,15 @@ run initial stepHandler eventHandler drawHandler = do
 
     currentState <- newMVar initial
     eventHappened <- newMVar ()
-    pausedVar <- newMVar False
 
-    let handleActiveChange active = do
-        void $ tryTakeMVar pausedVar
-        putMVar pausedVar active
-    inspectFromIO handleActiveChange $ drawHandler <$> readMVar currentState
-
-    onEvents canvas $ \event -> do
-        paused <- fromMaybe True <$> tryReadMVar pausedVar
-        when (not paused) $ do
+    let sendEvent event = do
             changed <- modifyMVarIfNeeded currentState (return . eventHandler event)
             when changed $ void $ tryPutMVar eventHappened ()
+        getState = readMVar currentState
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
     let go t0 lastFrame lastStateName needsTime = do
-            paused <- readMVar pausedVar
-            if paused
-                then goPause lastFrame lastStateName
-                else goPlay t0 lastFrame lastStateName needsTime
-        goPause lastFrame lastStateName = do
-            continueUntil (not <$> takeMVar pausedVar)
-            t <- getTime
-            go t lastFrame lastStateName True
-        goPlay t0 lastFrame lastStateName needsTime = do
             pic <- drawHandler <$> readMVar currentState
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
@@ -1208,80 +1192,54 @@ run initial stepHandler eventHandler drawHandler = do
     t0 <- getTime
     nullFrame <- makeStableName undefined
     initialStateName <- makeStableName $! initial
-    go t0 nullFrame initialStateName True
 
-runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> IO ()
-runPauseable initial stepHandler eventHandler drawHandler shouldInspect = do
+    forkIO $ go t0 nullFrame initialStateName True
+    return (sendEvent, getState)
+
+data StateWrapper s = StateWrapper Bool s
+data EventWrapper = NormalEvent Event | PauseEvent Bool
+
+-- Wraps the event and state from run so they can be paused by pressing the Inspect
+-- button.
+runInspect :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
+runInspect initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    offscreenCanvas <- Canvas.create 500 500
 
-    setCanvasSize canvas canvas
-    setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-    on window resize $ do
-        liftIO $ setCanvasSize canvas canvas
-        liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+    let initialWrapper = StateWrapper False initial
+        stepHandlerWrapper dt (StateWrapper paused state) = case paused of
+            True  -> StateWrapper True state
+            False -> StateWrapper False (stepHandler dt state)
+        eventHandlerWrapper e (StateWrapper p s) = case e of
+            NormalEvent event -> case p of
+                True  -> StateWrapper True s
+                False -> StateWrapper False (eventHandler event s)
+            PauseEvent paused -> StateWrapper paused s
+        drawHandlerWrapper (StateWrapper _ s) = drawHandler s
 
-    currentState <- newMVar initial
-    eventHappened <- newMVar ()
+    (sendEvent, getState) <-
+        run initialWrapper stepHandlerWrapper eventHandlerWrapper drawHandlerWrapper
 
-    let drawInspect state
-            | shouldInspect state = drawHandler state
-            | otherwise = pictures []
-    inspectFromIO (\_ -> return ()) $ drawInspect <$> readMVar currentState
+    onEvents canvas (sendEvent . NormalEvent)
+    inspectFromIO (sendEvent . PauseEvent) $ drawHandlerWrapper <$> getState
 
-    onEvents canvas $ \event -> do
-        changed <- modifyMVarIfNeeded currentState (return . eventHandler event)
-        when changed $ void $ tryPutMVar eventHappened ()
+-- Allows pictures to be inspected using a built-in pause button
+runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> IO ()
+runPauseable initial stepHandler eventHandler drawHandler isPaused = do
+    Just window <- currentWindow
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
 
-    screen <- js_getCodeWorldContext (canvasFromElement canvas)
+    (sendEvent, getState) <- run initial stepHandler eventHandler drawHandler
 
-    let go t0 lastFrame lastStateName needsTime = do
-            pic <- drawHandler <$> readMVar currentState
-            picFrame <- makeStableName $! pic
-            when (picFrame /= lastFrame) $ do
-                rect <- getBoundingClientRect canvas
-                buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
-                                             rect
-                drawFrame buffer pic
-                Canvas.restore buffer
+    onEvents canvas sendEvent
 
-                rect <- getBoundingClientRect canvas
-                cw <- ClientRect.getWidth rect
-                ch <- ClientRect.getHeight rect
-                js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
-                                   0 0 (round cw) (round ch)
+    let picIfUnpaused state = case isPaused state of
+            True  -> drawHandler state
+            False -> pictures []
 
-            t1 <- if
-              | needsTime -> do
-                  t1 <- nextFrame
-                  let dt = min (t1 - t0) 0.25
-                  modifyMVar_ currentState (return . stepHandler dt)
-                  return t1
-              | otherwise -> do
-                  takeMVar eventHappened
-                  getTime
-
-            nextState <- readMVar currentState
-            nextStateName <- makeStableName $! nextState
-            nextNeedsTime <- if
-                | nextStateName /= lastStateName -> return True
-                | not needsTime -> return False
-                | otherwise     -> not <$> isUniversallyConstant stepHandler nextState
-
-            go t1 picFrame nextStateName nextNeedsTime
-
-    t0 <- getTime
-    nullFrame <- makeStableName undefined
-    initialStateName <- makeStableName $! initial
-    go t0 nullFrame initialStateName True
-
-continueUntil :: Monad m => m Bool -> m ()
-continueUntil x = x >>= \c ->
-    if c
-        then continueUntil x
-        else return ()
+    inspectFromIO (\_ -> return ()) $ picIfUnpaused <$> getState
 
 --------------------------------------------------------------------------------
 -- Stand-Alone event handling and core interaction code
@@ -1374,6 +1332,10 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
     initialStateName <- makeStableName $! initial
     go t0 nullFrame initialStateName True
 
+
+runInspect :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
+runInspect = run
+
 runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> IO ()
 runPauseable initial stepHandler eventHandler drawHandler _ = run initial stepHandler eventHandler drawHandler
 
@@ -1417,7 +1379,7 @@ collaborationOf numPlayers initial step event draw = do
 -- Common code for interaction, animation and simulation interfaces
 
 interactionOf initial step event draw =
-    run initial step event draw `catch` reportError
+    runInspect initial step event draw `catch` reportError
 
 data Wrapped a = Wrapped {
     state          :: a,

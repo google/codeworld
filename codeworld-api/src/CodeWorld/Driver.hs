@@ -96,11 +96,9 @@ import           JavaScript.Object
 import           JavaScript.Web.AnimationFrame
 import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
-import qualified JavaScript.Web.Canvas.ImageData as ImageData
 import qualified JavaScript.Web.Location as Loc
 import qualified JavaScript.Web.MessageEvent as WS
 import qualified JavaScript.Web.WebSocket as WS
-import qualified JavaScript.TypedArray as TypedArray
 import           System.IO.Unsafe
 import           Unsafe.Coerce
 

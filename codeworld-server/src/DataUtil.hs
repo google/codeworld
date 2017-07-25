@@ -208,6 +208,13 @@ migrateUser userRoot = do
     mapM_ (\x -> createDirectoryIfMissing False $ userRoot </> take 3 x) prevContent
     mapM_ (\x -> renameFile (userRoot </> x) $ userRoot </> take 3 x </> x) prevContent
 
+cleanBaseDirectory :: FilePath -> IO ()
+cleanBaseDirectory dir' = do
+    empty <- fmap (\ l -> length l == 2 && sort l == sort [".", ".."])
+      (getDirectoryContents (takeDirectory dir'))
+    if empty then removeDirectoryIfExists (takeDirectory dir')
+             else return ()
+
 getFilesRecursive :: FilePath -> IO [FilePath]
 getFilesRecursive path = do
     dirBool <- isDir path

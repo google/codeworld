@@ -119,6 +119,7 @@ addSharedCommentHandler clientId = do
           Right _ -> return ()
       _ -> do
         modifyResponse $ setContentType "text/plain"
+        modifyResponse $ setResponseCode 500
         writeBS . BC.pack $ "Shared Comments Should Be In `commentables` Directory"
 
 commentShareHandler :: ClientId -> Snap ()

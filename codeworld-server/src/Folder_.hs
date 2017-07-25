@@ -25,6 +25,7 @@ import           Data.Aeson
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as LB
+import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import           Data.List
@@ -47,7 +48,7 @@ folderRoutes clientId =
     , ("deleteProject", deleteProjectHandler clientId)
     , ("listFolder",    listFolderHandler clientId)
     , ("loadProject",   loadProjectHandler clientId)
---    , ("moveProject",   moveProjectHandler clientId)
+    , ("moveProject",   moveProjectHandler clientId)
     , ("newProject",    newProjectHandler clientId)
     , ("shareContent",  shareContentHandler clientId)
     , ("shareFolder",   shareFolderHandler clientId)
@@ -77,58 +78,54 @@ copyProjectHandler clientId = do
     user <- getUser clientId
     Just copyTo <- fmap (splitDirectories . BC.unpack) <$> getParam "copyTo"
     Just copyFrom <- fmap (splitDirectories . BC.unpack) <$> getParam "copyFrom"
-    let copyToDir = joinPath $ map (dirBase . nameToDirId . T.pack) copyTo
-        projectDir = userProjectDir mode (userId user)
-        copyFromDir = case length copyFrom of
-                        0 -> ""
-                        _ | copyFrom !! 0 == "commentables" ->
-                                "commentables" </> (joinPath $
+    let projectDir = userProjectDir mode (userId user)
+        toType = (length copyTo > 0) && copyTo !! 0 == "commentables"
+        fromType = (length copyFrom > 0) && copyFrom !! 0 == "commentables"
+        copyToDir = case toType of
+                      True -> "commentables" </> (joinPath $
+                                map (dirBase . nameToDirId . T.pack) $ tail copyTo)
+                      False -> joinPath $ map (dirBase . nameToDirId . T.pack) copyTo
+        copyFromDir = case fromType of
+                        True -> "commentables" </> (joinPath $
                                   map (dirBase . nameToDirId . T.pack) $ tail copyFrom)
-                          | otherwise ->
-                                joinPath $ map (dirBase . nameToDirId . T.pack) copyFrom
-    Just isFile <- getParam "isFile"
-    case length copyTo of
-      x | (x > 0) && copyTo !! 0 == "commentables" -> do
-           modifyResponse $ setContentType "text/plain"
-           modifyResponse $ setResponseCode 500
-           writeBS . BC.pack $ "Cannot Copy Something Into `commentables` Directory"
-        | otherwise -> do
-           case (copyTo == copyFrom, isFile) of
-             (False, "true") -> do
-               Just name <- getParam "name"
-               Just (project :: Project) <- decodeStrict . fromJust <$> getParam "project"
-               let projectId = nameToProjectId $ T.decodeUtf8 name
-                   toFile = projectDir </> copyToDir </> projectFile projectId
-               liftIO $ do
-                   cleanCommentPaths mode $ toFile <.> "comments"
-                   ensureProjectDir mode (userId user) copyToDir projectId
-                   LB.writeFile toFile $ encode $
-                     Project (T.decodeUtf8 name) (projectSource project) (projectHistory project)
-                   addSelf mode (userId user) "Anonymous Owner" $ toFile <.> "comments"
-             (False, "false") -> do
-               Just name <- fmap (BC.unpack) <$> getParam "name"
-               Just (emptyPH :: Value) <- decode . LB.fromStrict . fromJust <$> getParam "empty"
-               let toDir = joinPath $ map (dirBase . nameToDirId . T.pack) (copyTo ++ [name])
-               dirBool <- liftIO $ doesDirectoryExist (projectDir </> toDir)
-               case dirBool of
-                 True -> do
-                    res <- liftIO $ deleteFolderWithComments mode (userId user) toDir
-                    case res of
-                      Left err -> do
-                        modifyResponse $ setContentType "text/plain"
-                        modifyResponse $ setResponseCode 500
-                        writeBS . BC.pack $ err
-                      Right _ -> return ()
-                 False -> return ()
-               liftIO $ createNewFolder mode (userId user) toDir name
-               case length copyFrom of
-                 y | (y > 0) && copyFrom !! 0 == "commentables" -> liftIO $ do
-                      copyDirFromCommentables mode (userId user)
-                        (projectDir </> toDir) (projectDir </> copyFromDir) emptyPH
-                   | otherwise -> liftIO $ do
-                      copyDirFromSelf mode (userId user)
-                        (projectDir </> toDir) (projectDir </> copyFromDir)
-             (_, _) -> return ()
+                        False -> joinPath $ map (dirBase . nameToDirId . T.pack) copyFrom
+    case toType of
+      True -> do
+        modifyResponse $ setContentType "text/plain"
+        modifyResponse $ setResponseCode 500
+        writeBS . BC.pack $ "Cannot Copy Something Into `commentables` Directory"
+      False -> do
+        Just isFile <- getParam "isFile"
+        Just name <- fmap BC.unpack <$> getParam "name"
+        Just fromName <- fmap BC.unpack <$> getParam "fromName"
+        Just (emptyPH :: Value) <- decode . LB.fromStrict . fromJust <$> getParam "empty"
+        let name' = if name == "commentables" then "commentables'" else name
+            fromName' = if fromName == "commentables" then "commentables'" else fromName
+        case (copyTo == copyFrom && fromName' == name', isFile) of
+          (False, "true") -> do
+            let projectId = nameToProjectId . T.pack $ name'
+                fromProjectId = nameToProjectId . T.pack $ fromName'
+                toFile = projectDir </> copyToDir </> projectFile projectId
+            case fromType of
+              True -> liftIO $ do
+                let fromFile = projectDir </> copyFromDir </> commentProjectLink fromProjectId
+                copyFileFromCommentables mode (userId user)
+                  fromFile toFile (T.pack name') emptyPH
+              False -> liftIO $ do
+                let fromFile = projectDir </> copyFromDir </> projectFile projectId
+                copyFileFromSelf mode (userId user) fromFile toFile $ T.pack name'
+          (False, "false") -> do
+            let toDir = copyToDir </> (dirBase . nameToDirId . T.pack $ name')
+                fromDir = copyFromDir </> (dirBase . nameToDirId . T.pack $ fromName')
+            _ <- liftIO $ deleteFolderWithComments mode (userId user) toDir
+            case fromType of
+              True -> liftIO $ do
+                copyFolderFromCommentables mode (userId user) (projectDir </> fromDir)
+                  (projectDir </> toDir) (T.pack name') emptyPH
+              False -> liftIO $ do
+                copyFolderFromSelf mode (userId user) (projectDir </> fromDir)
+                  (projectDir </> toDir) $ T.pack name'
+          (_, _) -> return ()
 
 createFolderHandler :: ClientId -> Snap ()
 createFolderHandler clientId = do
@@ -214,46 +211,53 @@ moveProjectHandler clientId = do
     user <- getUser clientId
     Just moveTo <- fmap (splitDirectories . BC.unpack) <$> getParam "moveTo"
     Just moveFrom <- fmap (splitDirectories . BC.unpack) <$> getParam "moveFrom"
-    let moveToDir = joinPath $ map (dirBase . nameToDirId . T.pack) moveTo
-        moveFromDir = projectDir </> joinPath (map (dirBase . nameToDirId . T.pack) moveFrom)
-        projectDir = userProjectDir mode (userId user)
-    Just isFile <- getParam "isFile"
-    case (moveTo == moveFrom, isFile) of
-      (False, "true") -> do
-        Just name <- getParam "name"
-        let projectId = nameToProjectId $ T.decodeUtf8 name
-            file = moveFromDir </> projectFile projectId
-            toFile = projectDir </> moveToDir </> projectFile projectId
-        liftIO $ do
-            removeFileIfExists toFile
-            removeDirectoryIfExists $ toFile <.> "comments"
-            ensureProjectDir mode (userId user) moveToDir projectId
-            copyFile file toFile
-            copyDirIfExists (file <.> "comments") (toFile <.> "comments")
-            removeFileIfExists file
-            removeDirectoryIfExists $ file <.> "comments"
-            removeCommentHash mode $ file <.> "comments"
-            empty <- fmap
-                (\ l1 ->
-                    length l1 == 2 &&
-                    sort l1 == sort [".", ".."])
-                (getDirectoryContents (dropFileName file))
-            if empty then removeDirectoryIfExists (dropFileName file)
-                     else return ()
-      (False, "false") -> do
-        let dirName = last $ splitDirectories moveFromDir
-            dir' = moveToDir </> take 3 dirName </> dirName
-        liftIO $ do
-            ensureUserBaseDir mode (userId user) dir'
-            copyDirIfExists moveFromDir $ projectDir </> dir'
-            empty <- fmap
-                (\ l1 ->
-                    length l1 == 3 &&
-                    sort l1 == sort [".", "..", takeFileName moveFromDir])
-                (getDirectoryContents (takeDirectory moveFromDir))
-            removeDirectoryIfExists $
-              if empty then takeDirectory moveFromDir else moveFromDir
-      (_, _) -> return ()
+    let projectDir = userProjectDir mode (userId user)
+        toType = (length moveTo > 0) && moveTo !! 0 == "commentables"
+        fromType = (length moveFrom > 0) && moveFrom !! 0 == "commentables"
+        moveToDir = case toType of
+                      True -> "commentables" </> (joinPath $
+                                map (dirBase . nameToDirId . T.pack) $ tail moveTo)
+                      False -> joinPath $ map (dirBase . nameToDirId . T.pack) moveTo
+        moveFromDir = case fromType of
+                        True -> "commentables" </> (joinPath $
+                                  map (dirBase . nameToDirId . T.pack) $ tail moveFrom)
+                        False -> joinPath $ map (dirBase . nameToDirId . T.pack) moveFrom
+    case (toType && fromType) || (not $ toType || fromType) of
+      True -> do
+        Just isFile <- getParam "isFile"
+        Just name <- fmap BC.unpack <$> getParam "name"
+        Just fromName <- fmap BC.unpack <$> getParam "fromName"
+        let name' = if name == "commentables" then "commentables'" else name
+            fromName' = if fromName == "commentables"  then "commentables'" else fromName
+        case (moveTo == moveFrom && fromName' == name', isFile) of
+          (False, "true") -> do
+            let projectId = nameToProjectId . T.pack $ name'
+                fromProjectId = nameToProjectId . T.pack $ fromName'
+            case toType of
+              True -> liftIO $ do
+                let fromFile = projectDir </> moveFromDir </> commentProjectLink fromProjectId
+                    toFile = projectDir </> moveToDir </> commentProjectLink projectId
+                moveFileFromCommentables (userId user) fromFile toFile $ T.pack name'
+              False -> liftIO $ do
+                let fromFile = projectDir </> moveFromDir </> projectFile fromProjectId
+                    toFile = projectDir </> moveToDir </> projectFile projectId
+                moveFileFromSelf mode (userId user) fromFile toFile $ T.pack name'
+          (False, "false") -> do
+            let toDir = moveToDir </> (dirBase . nameToDirId . T.pack $ name')
+                fromDir = moveFromDir </> (dirBase . nameToDirId . T.pack $ fromName')
+            _ <- liftIO $ deleteFolderWithComments mode (userId user) toDir
+            case toType of
+              True -> liftIO $ do
+                moveFolderFromCommentables mode (userId user) (projectDir </> fromDir)
+                  (projectDir </> toDir) $ T.pack name'
+              False -> liftIO $ do
+                moveFolderFromSelf mode (userId user) (projectDir </> fromDir)
+                  (projectDir </> toDir) $ T.pack name'
+          (_, _) -> return ()
+      False -> do
+        modifyResponse $ setContentType "text/plain"
+        modifyResponse $ setResponseCode 500
+        writeBS . BC.pack $ "Cannot Move From `commentables` to Normal and vice-versa"
 
 newProjectHandler :: ClientId -> Snap ()
 newProjectHandler clientId = do
@@ -268,8 +272,8 @@ newProjectHandler clientId = do
            let projectId = nameToProjectId (projectName project)
                file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
            liftIO $ do
-               ensureProjectDir mode (userId user) finalDir projectId
                cleanCommentPaths mode $ file <.> "comments"
+               ensureProjectDir mode (userId user) finalDir projectId
                LB.writeFile file $ encode project
                addSelf mode (userId user) "Anonymous Owner" $ file <.> "comments"
 

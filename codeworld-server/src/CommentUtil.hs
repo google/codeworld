@@ -74,9 +74,9 @@ cleanCommentPaths mode commentFolder = do
     dirBool <- doesDirectoryExist commentFolder
     case dirBool of
       True -> do
-        removeDirectoryIfExists commentFolder
-        removeDirectoryIfExists $ commentFolder <.> "users"
-        removeDirectoryIfExists $ commentFolder <.> "versions"
+        mapM_ (\x -> removeDirectoryIfExists $ commentFolder <.> x) ["", "users", "versions"]
+        removeFileIfExists $ take (length commentFolder - 9) commentFolder
+        cleanBaseDirectory commentFolder
         let commentHash = nameToCommentHash commentFolder
             commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
         removeFileIfExists commentHashPath
@@ -85,72 +85,85 @@ cleanCommentPaths mode commentFolder = do
         forM_ currentUsers $ \u -> do
             removeFileIfExists $ T.unpack (upath u)
             removeFileIfExists $ T.unpack (upath u) <.> "info"
-            empty <- fmap
-                (\ l ->
-                    length l == 2 &&
-                    sort l == sort [".", ".."])
-                (getDirectoryContents (dropFileName $ T.unpack (upath u)))
-            if empty then removeDirectoryIfExists (dropFileName $ T.unpack (upath u))
-                     else return ()
+            cleanBaseDirectory $ T.unpack (upath u)
         removeFileIfExists $ commentHashPath <.> "users"
-        empty <- fmap
-            (\ l ->
-                length l == 2 &&
-                sort l == sort [".", ".."])
-            (getDirectoryContents (dropFileName commentHashPath))
-        if empty then removeDirectoryIfExists (dropFileName commentHashPath)
-                 else return ()
+        cleanBaseDirectory commentHashPath
       False -> return ()
 
 deleteFolderWithComments :: BuildMode -> Text -> FilePath -> IO (Either String ())
 deleteFolderWithComments mode userId' finalDir = do
-  case finalDir == "commentables" of
-    True -> return $ Left "`commentables` Directory Cannot Be Deleted"
-    False -> do
-      let dir' = userProjectDir mode userId' </> finalDir
-      allFilePaths <- getFilesRecursive dir'
-      case length (splitDirectories finalDir) of
-        x | x == 0 -> return $ Left "Root Directory Cannot Be Deleted"
-          | (x /= 0) && ((splitDirectories finalDir) !! 0 == "commentables") -> do
-             mapM_ (removeUserFromComments userId') allFilePaths
-             empty <- fmap (\ l ->
-                length l == 3 &&
-                sort l == sort [".", "..", takeFileName dir'])
-                (getDirectoryContents (takeDirectory dir'))
-             removeDirectoryIfExists $ if empty then takeDirectory dir' else dir'
-             return $ Right ()
-          | otherwise -> do
-             mapM_ (\t -> cleanCommentPaths mode $ t <.> "comments") allFilePaths
-             empty <- fmap (\ l ->
-                length l == 3 &&
-                sort l == sort [".", "..", takeFileName dir'])
-                (getDirectoryContents (takeDirectory dir'))
-             removeDirectoryIfExists $ if empty then takeDirectory dir' else dir'
-             return $ Right ()
+    dirBool <- doesDirectoryExist finalDir
+    case dirBool of
+      True -> do
+        case finalDir == "commentables" of
+          True -> return $ Left "`commentables` Directory Cannot Be Deleted"
+          False -> do
+            let dir' = userProjectDir mode userId' </> finalDir
+            allFilePaths <- getFilesRecursive dir'
+            case length (splitDirectories finalDir) of
+              x | x == 0 -> return $ Left "Root Directory Cannot Be Deleted"
+                | (x /= 0) && ((splitDirectories finalDir) !! 0 == "commentables") -> do
+                   mapM_ (removeUserFromComments userId') allFilePaths
+                   removeDirectoryIfExists dir'
+                   cleanBaseDirectory dir'
+                   return $ Right ()
+                | otherwise -> do
+                   mapM_ (\t -> cleanCommentPaths mode $ t <.> "comments") allFilePaths
+                   removeDirectoryIfExists dir'
+                   cleanBaseDirectory dir'
+                   return $ Right ()
+      False -> return $ Left "Directory Does Not Exists"
+
 
 removeUserFromComments :: Text -> FilePath -> IO ()
 removeUserFromComments userId' userPath = do
-    commentHashFile <- BC.unpack <$> B.readFile userPath
-    commentFolder <- BC.unpack <$> B.readFile commentHashFile
-    Just (currentUsers :: [UserDump]) <- decode <$>
-      LB.readFile (commentHashFile <.> "users")
-    let currentUserIds = map uuserId currentUsers
-        currentUser = currentUsers !! (fromJust $ userId' `elemIndex` currentUserIds)
-    removeFileIfExists $ commentFolder <.> "users" </> T.unpack (uuserIdent currentUser)
-    LB.writeFile (commentHashFile <.> "users") $
-      encode (delete currentUser currentUsers)
-    removeFileIfExists userPath
-    removeFileIfExists $ userPath <.> "info"
-    empty <- fmap
-        (\ l ->
-            length l ==2 &&
-            sort l == sort [".", ".."])
-        (getDirectoryContents (dropFileName userPath))
-    if empty then removeDirectoryIfExists (dropFileName userPath)
-             else return ()
+    fileBool <- doesFileExist userPath
+    case fileBool of
+      True -> do
+        commentHashFile <- BC.unpack <$> B.readFile userPath
+        commentFolder <- BC.unpack <$> B.readFile commentHashFile
+        Just (currentUsers :: [UserDump]) <- decode <$>
+          LB.readFile (commentHashFile <.> "users")
+        let currentUserIds = map uuserId currentUsers
+            currentUser = currentUsers !! (fromJust $ userId' `elemIndex` currentUserIds)
+        removeFileIfExists $ commentFolder <.> "users" </> T.unpack (uuserIdent currentUser)
+        LB.writeFile (commentHashFile <.> "users") $
+          encode (delete currentUser currentUsers)
+        removeFileIfExists userPath
+        removeFileIfExists $ userPath <.> "info"
+        cleanBaseDirectory userPath
+      False -> return ()
 
-copyDirFromCommentables :: BuildMode -> Text -> FilePath -> FilePath -> Value -> IO ()
-copyDirFromCommentables mode userId' toDir fromDir emptyPH = do
+correctUserPathInComments :: Text -> FilePath -> IO ()
+correctUserPathInComments userId' userPath = do
+    fileBool <- doesFileExist userPath
+    case fileBool of
+      True -> do
+        commentHashFile <- BC.unpack <$> B.readFile userPath
+        Just (currentUsers :: [UserDump]) <- decode <$>
+          LB.readFile (commentHashFile <.> "users")
+        let newUsr usr = UserDump userId' (uuserIdent usr) $ T.pack userPath
+            newUsers = map (\usr -> if uuserId usr /= userId' then usr
+                                                              else newUsr usr) currentUsers
+        LB.writeFile (commentHashFile <.> "users") $
+          encode newUsers
+      False -> return ()
+
+copyFileFromCommentables :: BuildMode -> Text -> FilePath -> FilePath -> Text -> Value -> IO ()
+copyFileFromCommentables mode userId' fromFile toFile name emptyPH = do
+    cleanCommentPaths mode $ toFile <.> "comments"
+    createDirectoryIfMissing False $ takeDirectory toFile
+    commentHashFile <- BC.unpack <$> B.readFile fromFile
+    commentFolder <- BC.unpack <$> B.readFile commentHashFile
+    Just (project :: Project) <- decode <$>
+      LB.readFile (take (length commentFolder - 9) commentFolder)
+    LB.writeFile toFile $ encode
+      (Project name (projectSource project) emptyPH)
+    addSelf mode userId' "Anonymous Owner" $ toFile <.> "comments"
+
+copyFolderFromCommentables :: BuildMode -> Text -> FilePath -> FilePath -> Text -> Value -> IO ()
+copyFolderFromCommentables mode userId' fromDir toDir name emptyPH = do
+    createNewFolder mode userId' toDir $ T.unpack name
     dirList <- listDirectoryWithPrefix fromDir
     dirFiles <- dirFilter dirList 'S'
     forM_ dirFiles $ \ f -> do
@@ -158,23 +171,27 @@ copyDirFromCommentables mode userId' toDir fromDir emptyPH = do
         case isSuffixOf ".info" (drop 23 file) of
           True -> return ()
           False -> do
-            commentHashFile <- BC.unpack <$> B.readFile f
-            commentFolder <- BC.unpack <$> B.readFile commentHashFile
-            Just (project :: Project) <- decode <$>
-              (LB.readFile $ take (length commentFolder - 9) commentFolder)
+            let toFile = toDir </> take 3 file </> file
             fileName <- T.decodeUtf8 <$> B.readFile (f <.> "info")
-            LB.writeFile (toDir </> file) $ encode
-              (Project fileName (projectSource project) emptyPH)
-            addSelf mode userId' "Anonynous Owner" (toDir </> file <.> "comments")
+            copyFileFromCommentables mode userId' f toFile fileName emptyPH
     dirDirs <- dirFilter dirList 'D'
     forM_ dirDirs $ \ d -> do
-        dirName <- BC.unpack <$> B.readFile (d </> "dir.info")
-        let newToDir = toDir </> (dirBase . nameToDirId $ T.pack dirName)
-        createNewFolder mode userId' newToDir dirName
-        copyDirFromCommentables mode userId' newToDir d emptyPH
+        dirName <- T.decodeUtf8 <$> B.readFile (d </> "dir.info")
+        let newToDir = toDir </> (dirBase . nameToDirId $ dirName)
+        copyFolderFromCommentables mode userId' d newToDir dirName emptyPH
 
-copyDirFromSelf :: BuildMode -> Text -> FilePath -> FilePath -> IO ()
-copyDirFromSelf mode userId' toDir fromDir = do
+copyFileFromSelf :: BuildMode -> Text -> FilePath -> FilePath -> Text -> IO ()
+copyFileFromSelf mode userId' fromFile toFile name = do
+    cleanCommentPaths mode $ toFile <.> "comments"
+    createDirectoryIfMissing False $ takeDirectory toFile
+    Just (project :: Project) <- decode <$> LB.readFile fromFile
+    LB.writeFile toFile $ encode
+      (Project name (projectSource project) (projectHistory project))
+    addSelf mode userId' "Anonymous Owner" $ toFile <.> "comments"
+
+copyFolderFromSelf :: BuildMode -> Text -> FilePath -> FilePath -> Text -> IO ()
+copyFolderFromSelf mode userId' fromDir toDir name = do
+    createNewFolder mode userId' toDir $ T.unpack name
     dirList <- listDirectoryWithPrefix fromDir
     dirFiles <- dirFilter dirList 'S'
     forM_ dirFiles $ \f -> do
@@ -182,16 +199,94 @@ copyDirFromSelf mode userId' toDir fromDir = do
         fileBool <- doesFileExist f
         case (fileBool, isSuffixOf ".cw" (drop 23 file)) of
           (True, True) -> do
+            let toFile = toDir </> take 3 file </> file
             Just (project :: Project) <- decode <$> LB.readFile f
-            LB.writeFile (toDir </> file) $ encode project
-            addSelf mode userId' "Anonymous Owner" (toDir </> file <.> "comments")
+            copyFileFromSelf mode userId' f toFile $ projectName project
           (_, _) -> return ()
     dirDirs <- dirFilter dirList 'D'
     forM_ dirDirs $ \ d -> do
-        dirName <- BC.unpack <$> B.readFile (d </> "dir.info")
-        let newToDir = toDir </> (dirBase . nameToDirId $ T.pack dirName)
-        createNewFolder mode userId' newToDir dirName
-        copyDirFromSelf mode userId' newToDir d
+        dirName <- T.decodeUtf8 <$> B.readFile (d </> "dir.info")
+        let newToDir = toDir </> (dirBase . nameToDirId $ dirName)
+        copyFolderFromSelf mode userId' d newToDir dirName
+
+moveFileFromCommentables :: Text -> FilePath -> FilePath -> Text -> IO ()
+moveFileFromCommentables userId' fromFile toFile name = do
+    removeUserFromComments userId' toFile
+    createDirectoryIfMissing False $ takeDirectory toFile
+    mapM_ (\x -> renameFile (fromFile <.> x) (toFile <.> x)) ["", "info"]
+    cleanBaseDirectory fromFile
+    correctUserPathInComments userId' toFile
+    B.writeFile (toFile <.> "info") $ T.encodeUtf8 name
+
+moveFolderFromCommentables :: BuildMode -> Text -> FilePath -> FilePath -> Text -> IO ()
+moveFolderFromCommentables mode userId' fromDir toDir name = do
+    createNewFolder mode userId' toDir $ T.unpack name
+    dirList <- listDirectoryWithPrefix fromDir
+    dirFiles <- dirFilter dirList 'S'
+    forM_ dirFiles $ \ f -> do
+        let file = takeFileName f
+        case isSuffixOf ".info" (drop 23 file) of
+          True -> return ()
+          False -> do
+            let toFile = toDir </> take 3 file </> file
+            fileName <- T.decodeUtf8 <$> B.readFile (f <.> "info")
+            moveFileFromCommentables userId' f toFile fileName
+    dirDirs <- dirFilter dirList 'D'
+    forM_ dirDirs $ \ d -> do
+        dirName <- T.decodeUtf8 <$> B.readFile (d </> "dir.info")
+        let newToDir = toDir </> (dirBase . nameToDirId $ dirName)
+        moveFolderFromCommentables mode userId' d newToDir dirName
+    removeDirectoryIfExists fromDir
+    cleanBaseDirectory fromDir
+
+moveFileFromSelf :: BuildMode -> Text -> FilePath -> FilePath -> Text -> IO ()
+moveFileFromSelf mode userId' fromFile toFile name = do
+    cleanCommentPaths mode $ toFile <.> "comments"
+    createDirectoryIfMissing False $ takeDirectory toFile
+    mapM_ (\x -> renameDirectory (fromFile <.> x) (toFile <.> x)) $
+      map ("comments" <.>) ["", "users", "versions"]
+    renameFile fromFile toFile
+    cleanBaseDirectory fromFile
+    Just (project :: Project) <- decode <$> LB.readFile toFile
+    LB.writeFile toFile $ encode
+      (Project name (projectSource project) (projectHistory project))
+    let fromCommentHash = nameToCommentHash $ fromFile <.> "comments"
+        toCommentHash = nameToCommentHash $ toFile <.> "comments"
+        fromCommentHashPath = commentHashRootDir mode </> commentHashLink fromCommentHash
+        toCommentHashPath = commentHashRootDir mode </> commentHashLink toCommentHash
+    ensureCommentHashDir mode toCommentHash
+    renameFile fromCommentHashPath toCommentHashPath
+    renameFile (fromCommentHashPath <.> "users") (toCommentHashPath <.> "users")
+    cleanBaseDirectory fromCommentHashPath
+    -- change user paths to toCommentHashPath
+    Just (currentUsers :: [UserDump]) <- decode <$>
+      LB.readFile (toCommentHashPath <.> "users")
+    mapM_ (\u ->
+      if (uuserId u /= userId') then B.writeFile (T.unpack $ upath u) $ BC.pack toCommentHashPath
+                                else return ()
+      ) currentUsers
+
+moveFolderFromSelf :: BuildMode -> Text -> FilePath -> FilePath -> Text -> IO ()
+moveFolderFromSelf mode userId' fromDir toDir name = do
+    createNewFolder mode userId' toDir $ T.unpack name
+    dirList <- listDirectoryWithPrefix fromDir
+    dirFiles <- dirFilter dirList 'S'
+    forM_ dirFiles $ \ f -> do
+        let file = takeFileName f
+        fileBool <- doesFileExist f
+        case (fileBool, isSuffixOf ".cw" (drop 23 file)) of
+          (True, True) -> do
+            let toFile = toDir </> take 3 file </> file
+            Just (project :: Project) <- decode <$> LB.readFile f
+            moveFileFromSelf mode userId' f toFile $ projectName project
+          (_, _) -> return ()
+    dirDirs <- dirFilter dirList 'D'
+    forM_ dirDirs $ \ d -> do
+        dirName <- T.decodeUtf8 <$> B.readFile (d </> "dir.info")
+        let newToDir = toDir </> (dirBase . nameToDirId $ dirName)
+        moveFolderFromSelf mode userId' d newToDir dirName
+    removeDirectoryIfExists fromDir
+    cleanBaseDirectory fromDir
 
 createNewVersionIfReq :: Text -> FilePath -> IO ()
 createNewVersionIfReq latestSource commentFolder = do
@@ -267,6 +362,7 @@ addNewUser userId' userIdent' name userPath commentHashPath = do
             let currentIdents = map uuserIdent currentUsers
             case userIdent' `elem` currentIdents of
               False -> do
+                createDirectoryIfMissing False $ takeDirectory userPath
                 B.writeFile userPath $ BC.pack commentHashPath
                 B.writeFile (userPath <.> "info") $ BC.pack name
                 LB.writeFile (commentHashPath <.> "users") $ encode (UserDump

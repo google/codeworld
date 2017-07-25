@@ -407,7 +407,8 @@ isDebugModeActive :: IO Bool
 isDebugModeActive = js_isDebugModeActive
 
 setDebugModeActive :: Bool -> IO ()
-setDebugModeActive = js_setDebugModeActive
+setDebugModeActive True  = js_startDebugMode
+setDebugModeActive False = js_stopDebugMode
 
 sweetAlert :: Text -> Text -> Text -> IO ()
 sweetAlert style title msg = js_sweetAlert (textToJSString style) (textToJSString title)
@@ -427,8 +428,11 @@ foreign import javascript unsafe "initDebugMode($1,$2)"
 foreign import javascript unsafe "window.debugMode"
     js_isDebugModeActive :: IO Bool
 
-foreign import javascript unsafe "window.debugMode = $1;parent.updateUI();"
-    js_setDebugModeActive :: Bool -> IO ()
+foreign import javascript unsafe "startDebugMode()"
+    js_startDebugMode :: IO ()
+
+foreign import javascript unsafe "stopDebugMode()"
+    js_stopDebugMode :: IO ()
 
 foreign import javascript unsafe "parent.sweetAlert($2,$3,$1);"
     js_sweetAlert :: JSString -> JSString -> JSString -> IO ()

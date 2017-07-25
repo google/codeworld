@@ -156,6 +156,7 @@ function startDebugMode() {
     }
     window.debugMode = true;
     window.debugActiveCB(true);
+    parent.updateUI();
 }
 
 function stopDebugMode() {
@@ -165,6 +166,7 @@ function stopDebugMode() {
     window.debugMode = false;
     clearMarkers();
     window.debugActiveCB(false);
+    parent.updateUI();
 }
 
 function toggleDebugMode() {

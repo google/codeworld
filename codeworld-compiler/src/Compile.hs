@@ -23,6 +23,9 @@ import           Control.Concurrent
 import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import           Data.ByteString.Char8 (pack)
+import           Data.List.Split (splitOn)
+import           Language.Haskell.Exts
 import           System.Directory
 import           System.FilePath
 import           System.IO
@@ -39,24 +42,27 @@ compileSource src out err mode = checkDangerousSource src >>= \case
             "Sorry, but your program refers to forbidden language features."
         return False
     False -> withSystemTempDirectory "buildSource" $ \tmpdir -> do
-        copyFile src (tmpdir </> "program.hs")
-        let baseArgs = case mode of
-                "haskell"   -> haskellCompatibleBuildArgs
-                "codeworld" -> standardBuildArgs
-            ghcjsArgs = baseArgs ++ [ "program.hs" ]
-        runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
-            Nothing -> return False
-            Just output -> do
-                let filteredOutput = case mode of
-                        "haskell"   -> output
-                        "codeworld" -> filterOutput output
-                        _           -> output
-                B.writeFile err filteredOutput
-                let target = tmpdir </> "program.jsexe" </> "all.js"
-                hasTarget <- doesFileExist target
-                when hasTarget $
-                    copyFile target out
-                return hasTarget
+        checkParsedCode src err >>= \case
+            False -> return False
+            True  -> do
+                copyFile src (tmpdir </> "program.hs")
+                let baseArgs = case mode of
+                        "haskell"   -> haskellCompatibleBuildArgs
+                        "codeworld" -> standardBuildArgs
+                    ghcjsArgs = baseArgs ++ [ "program.hs" ]
+                runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
+                    Nothing -> return False
+                    Just output -> do
+                        let filteredOutput = case mode of
+                                "haskell"   -> output
+                                "codeworld" -> filterOutput output
+                                _           -> output
+                        B.writeFile err filteredOutput
+                        let target = tmpdir </> "program.jsexe" </> "all.js"
+                        hasTarget <- doesFileExist target
+                        when hasTarget $
+                            copyFile target out
+                        return hasTarget
 
 userCompileMicros :: Int
 userCompileMicros = 45 * 1000000
@@ -70,6 +76,24 @@ checkDangerousSource dir = do
   where
     matches :: ByteString -> ByteString -> Bool
     matches txt pat = txt =~ pat
+
+checkParsedCode :: FilePath -> FilePath -> IO Bool
+checkParsedCode src err = do
+    result <- parseFile src
+    let parseList = words $ show result
+        parseresult = head parseList
+    if parseresult == "ParseFailed" then do
+        source <- readFile src
+        let sourceSplitList = splitOn "\n" source
+            errLin = errLineLocation parseList
+            errCol = errColumnLocation parseList
+        B.writeFile err (pack ("ParseError"
+                ++ ", Error at: program.hs:"
+                ++ (show $ errLin + 1)
+                ++ ":" ++ (show errCol)
+                ++ "\n>  " ++ (sourceSplitList !! errLin)))
+        return False
+        else return True
 
 runCompiler :: FilePath -> Int -> [String] -> IO (Maybe ByteString)
 runCompiler dir micros args = do
@@ -89,6 +113,28 @@ runCompiler dir micros args = do
     _ <- waitForProcess pid
 
     return result
+
+withTimeout :: Int -> IO a -> IO (Maybe a)
+withTimeout micros action = do
+    result <- newEmptyMVar
+    killer <- forkIO $ threadDelay micros >> putMVar result Nothing
+    runner <- forkIO $ action >>= putMVar result . Just
+    r <- takeMVar result
+    killThread killer
+    killThread runner
+    return r
+
+errLineLocation :: [String] -> Int
+errLineLocation parseList = errLin
+    where errLinChar = parseList !! 3
+          errLinM = read errLinChar :: Int
+          errLin = errLinM - 1
+
+errColumnLocation :: [String] -> Int
+errColumnLocation parseList = errCol
+    where errColChar = parseList !! 4
+          errColM = take 1 errColChar
+          errCol = read errColM :: Int
 
 standardBuildArgs :: [String]
 standardBuildArgs = [
@@ -136,14 +182,3 @@ haskellCompatibleBuildArgs = [
     "-O2",
     "-package", "codeworld-api"
     ]
-
-withTimeout :: Int -> IO a -> IO (Maybe a)
-withTimeout micros action = do
-    result <- newEmptyMVar
-    killer <- forkIO $ threadDelay micros >> putMVar result Nothing
-    runner <- forkIO $ action >>= putMVar result . Just
-    r <- takeMVar result
-    killThread killer
-    killThread runner
-    return r
-

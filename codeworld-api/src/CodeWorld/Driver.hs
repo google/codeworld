@@ -411,10 +411,6 @@ setDebugModeActive :: Bool -> IO ()
 setDebugModeActive True  = js_startDebugMode
 setDebugModeActive False = js_stopDebugMode
 
-sweetAlert :: Text -> Text -> Text -> IO ()
-sweetAlert style title msg = js_sweetAlert (textToJSString style) (textToJSString title)
-                                           (textToJSString msg)
-
 -- Canvas.isPointInPath does not provide a way to get the return value
 -- https://github.com/ghcjs/ghcjs-base/blob/master/JavaScript/Web/Canvas.hs#L212
 foreign import javascript unsafe "$3.isPointInPath($1,$2)"
@@ -434,9 +430,6 @@ foreign import javascript unsafe "startDebugMode()"
 
 foreign import javascript unsafe "stopDebugMode()"
     js_stopDebugMode :: IO ()
-
-foreign import javascript unsafe "parent.sweetAlert($2,$3,$1);"
-    js_sweetAlert :: JSString -> JSString -> JSString -> IO ()
 
 followPath :: Canvas.Context -> [Point] -> Bool -> Bool -> IO ()
 followPath ctx [] closed _ = return ()
@@ -1247,31 +1240,31 @@ runInspect initial stepHandler eventHandler drawHandler = do
     inspectFromIO (sendEvent . PauseEvent) $ drawHandlerWrapper <$> getState
 
 -- Allows pictures to be inspected using a built-in pause button
-runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> IO ()
-runPauseable initial stepHandler eventHandler drawHandler isPaused = do
+runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
+runPauseable initial stepHandler eventHandler drawHandler isPaused setPaused = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
 
-    (sendEvent, getState) <- run initial stepHandler eventHandler drawHandler
+    let eventHandlerWrapper e s = case e of
+            NormalEvent event -> eventHandler event s
+            PauseEvent paused -> setPaused paused s
+
+    (sendEvent, getState) <- run initial stepHandler eventHandlerWrapper drawHandler
 
     onEvents canvas $ \event -> do
         debugActive <- isDebugModeActive
         when debugActive $ do
             nextStatePaused <- isPaused <$> eventHandler event <$> getState
             when (not nextStatePaused) $ setDebugModeActive False
-        sendEvent event
+        sendEvent $ NormalEvent event
 
     let picIfUnpaused state = case isPaused state of
             True  -> drawHandler state
             False -> pictures []
-        checkPaused = do
-            paused <- isPaused <$> getState
-            when (not paused) $ do
-                setDebugModeActive False
-                sweetAlert "error" "Sorry!" "Please pause before inspecting."
+        sendPause = sendEvent $ PauseEvent True
 
-    inspectFromIO (flip when checkPaused) $ picIfUnpaused <$> getState
+    inspectFromIO (flip when sendPause) $ picIfUnpaused <$> getState
 
 --------------------------------------------------------------------------------
 -- Stand-Alone event handling and core interaction code
@@ -1368,8 +1361,8 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
 runInspect :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
 runInspect = run
 
-runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> IO ()
-runPauseable initial stepHandler eventHandler drawHandler _ = run initial stepHandler eventHandler drawHandler
+runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
+runPauseable initial stepHandler eventHandler drawHandler _ _ = run initial stepHandler eventHandler drawHandler
 
 getDeployHash :: IO Text
 getDeployHash = error "game API unimplemented in stand-alone interface mode"
@@ -1534,6 +1527,7 @@ animationOf f =
                   (wrappedEvent animationControls (+))
                   (wrappedDraw animationControls f)
                   paused
+                  (\p s -> s { paused = p })
   where initial = Wrapped {
             state          = 0,
             paused         = False,
@@ -1552,6 +1546,7 @@ simulationOf simInitial simStep simDraw =
                   (wrappedEvent simulationControls simStep)
                   (wrappedDraw simulationControls simDraw)
                   paused
+                  (\p s -> s { paused = p })
   where initial = Wrapped {
             state          = simInitial,
             paused         = False,

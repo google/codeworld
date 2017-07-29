@@ -115,13 +115,8 @@ function initDebugMode(getStackAtPoint, active) {
 function createSrcLink(pic) {
     var li = document.createElement("li");
 
-    var preludeLink = "/doc/Prelude.html#v:" + pic.name;
-
-    var shapeName = document.createElement("a");
+    var shapeName = document.createElement("span");
     shapeName.classList.add("shape-name");
-    if (parent.buildMode == "codeworld")
-        shapeName.href = preludeLink;
-    shapeName.target = "_blank";
     var nameText = document.createTextNode(pic.name);
     shapeName.appendChild(nameText);
 

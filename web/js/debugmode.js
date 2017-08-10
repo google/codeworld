@@ -17,7 +17,6 @@
 "use strict";
 
 window.debugMode = false;
-window.debugMarkers = [];
 window.debugActiveCB = null;
 
 window.infobox = null;
@@ -26,12 +25,6 @@ function initDebugMode(getStackAtPoint, active) {
     var canvas = document.getElementById("screen");
 
     infobox = document.createElement("div");
-    infobox.style.position = "absolute";
-    infobox.style.border = "1px solid black";
-    infobox.style.background = "white";
-    infobox.style.minWidth = "60px";
-    infobox.style.padding = "10px";
-    infobox.style.display = "none";
     infobox.id = "infobox";
     document.body.appendChild(infobox);
 
@@ -45,41 +38,29 @@ function initDebugMode(getStackAtPoint, active) {
             y: evt.clientY,
         });
 
-        clearMarkers();
-
         var stack = ret.stack;
         if (stack) {
-            var pic, i, marker;
+            var pic, i;
             var printable = false;
-            var ul = document.createElement("ul");
 
-            ul.classList.add("stack-list");
+            var table = document.createElement("table");
+            table.classList.add("stack-list");
 
             infobox.innerHTML = "";
             for (i=stack.length-1;i>=0;i--) {
                 pic = stack[i];
-                if (!pic)
-                    continue;
+                if (!pic) {
+                  continue;
+                }
 
                 printable = true;
 
-                marker = parent.codeworldEditor.markText({
-                    line: pic.srcLoc.startLine-1,
-                    ch: pic.srcLoc.startCol-1
-                }, {
-                    line: pic.srcLoc.endLine-1,
-                    ch: pic.srcLoc.endCol-1
-                },{
-                    className: "marked"
-                });
-                debugMarkers.push(marker);
-
-                var li = createSrcLink(pic);
-                ul.appendChild(li);
+                var row = createSrcLink(pic);
+                table.appendChild(row);
             }
 
             if (printable) {
-                infobox.appendChild(ul);
+                infobox.appendChild(table);
 
                 infobox.style.left = evt.clientX + "px";
                 infobox.style.top  = evt.clientY + "px";
@@ -87,11 +68,11 @@ function initDebugMode(getStackAtPoint, active) {
                 infobox.style.display = "block";
 
                 if (evt.clientX + infobox.offsetWidth >= 500) {
-                    infobox.style.left = (evt.clientX - infobox.offsetWidth) + "px";
+                    infobox.style.left = (500 - infobox.offsetWidth) + "px";
                 }
 
                 if (evt.clientY + infobox.offsetHeight >= 500) {
-                    infobox.style.top = (evt.clientY - infobox.offsetHeight) + "px";
+                    infobox.style.top = (500 - infobox.offsetHeight) + "px";
                 }
             } else {
                 // If user clicks on a coordinatePlane, stack may contain
@@ -103,46 +84,37 @@ function initDebugMode(getStackAtPoint, active) {
         }
     });
 
-    window.addEventListener("unload", function () {
-        clearMarkers();
-    });
-
     canvas.onblur = (function (evt) {
         infobox.style.display = "none";
     });
 }
 
 function createSrcLink(pic) {
-    var li = document.createElement("li");
-
-    var shapeName = document.createElement("span");
-    shapeName.classList.add("shape-name");
-    var nameText = document.createTextNode(pic.name);
-    shapeName.appendChild(nameText);
-
-    var shapeLoc  = document.createElement("a");
-    shapeLoc.classList.add("shape-loc");
-    shapeLoc.href = "#";
-    var locText = document.createTextNode("@" + pic.srcLoc.startLine + ":" + pic.srcLoc.startCol);
-    shapeLoc.appendChild(locText);
-    shapeLoc.addEventListener("click", function () {
-        parent.codeworldEditor.setCursor({
-            line: pic.srcLoc.startLine - 1,
-            ch: pic.srcLoc.startCol - 1
-        });
+    var tr = document.createElement("tr");
+    tr.classList.add("stack-item");
+    tr.addEventListener("click", function () {
+        parent.codeworldEditor.setSelection(
+            { line: pic.srcLoc.startLine - 1, ch: pic.srcLoc.startCol - 1 },
+            { line: pic.srcLoc.endLine - 1, ch: pic.srcLoc.endCol - 1 },
+            { origin: "+debug" });
     });
 
+    var shapeName = document.createElement("td");
+    shapeName.classList.add("shape-name");
+    shapeName.appendChild(document.createTextNode(pic.name));
+    tr.appendChild(shapeName);
 
-    li.appendChild(shapeName);
-    li.appendChild(shapeLoc);
+    var shapeLine = document.createElement("td");
+    shapeLine.classList.add("shape-loc");
+    shapeLine.appendChild(document.createTextNode("Line " + pic.srcLoc.startLine));
+    tr.appendChild(shapeLine);
 
-    return li;
-}
+    var shapeCol = document.createElement("td");
+    shapeCol.classList.add("shape-loc");
+    shapeCol.appendChild(document.createTextNode("Column " + pic.srcLoc.startCol));
+    tr.appendChild(shapeCol);
 
-function clearMarkers() {
-    while (debugMarkers.length > 0) {
-        debugMarkers.pop().clear();
-    }
+    return tr;
 }
 
 function startDebugMode() {
@@ -159,7 +131,6 @@ function stopDebugMode() {
         infobox.style.display = "none";
     }
     window.debugMode = false;
-    clearMarkers();
     window.debugActiveCB(false);
     parent.updateUI();
 }

@@ -11,7 +11,7 @@ tricks and capabilities of picture mode.
 The program
 -----------
 
-    main = drawingOf(logo)
+    program = drawingOf(logo)
 
     logo = pictures([
       translated(top,                      0,  6),

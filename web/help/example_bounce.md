@@ -15,7 +15,7 @@ instead, the program simulates the movement of the ball in small steps.
 The program
 -----------
 
-    main = simulationOf(initial, step, draw)
+    program = simulationOf(initial, step, draw)
 
     data World = Ball(Point, Vector)
 

@@ -24,7 +24,8 @@ Executable codeworld-compiler
 
 Library
   Exposed-modules: Compile
-  Other-modules: ErrorSanitizer
+  Other-modules: ErrorSanitizer,
+                 ParseCode
 
   Build-depends:
     aeson,
@@ -43,6 +44,7 @@ Library
     regex-tdfa,
     regex-compat,
     split,
+    syb,
     temporary,
     text
 

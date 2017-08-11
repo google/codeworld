@@ -24,7 +24,6 @@ import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import           Data.ByteString.Char8 (pack)
-import           Data.List.Split (splitOn)
 import           Language.Haskell.Exts
 import           System.Directory
 import           System.FilePath
@@ -34,6 +33,7 @@ import           System.Process
 import           Text.Regex.TDFA
 
 import ErrorSanitizer
+import ParseCode
 
 compileSource :: FilePath -> FilePath -> FilePath -> String -> IO Bool
 compileSource src out err mode = checkDangerousSource src >>= \case
@@ -77,24 +77,6 @@ checkDangerousSource dir = do
     matches :: ByteString -> ByteString -> Bool
     matches txt pat = txt =~ pat
 
-checkParsedCode :: FilePath -> FilePath -> IO Bool
-checkParsedCode src err = do
-    result <- parseFile src
-    let parseList = words $ show result
-        parseresult = head parseList
-    if parseresult == "ParseFailed" then do
-        source <- readFile src
-        let sourceSplitList = splitOn "\n" source
-            errLin = errLineLocation parseList
-            errCol = errColumnLocation parseList
-        B.writeFile err (pack ("ParseError"
-                ++ ", Error at: program.hs:"
-                ++ (show $ errLin + 1)
-                ++ ":" ++ (show errCol)
-                ++ "\n>  " ++ (sourceSplitList !! errLin)))
-        return False
-        else return True
-
 runCompiler :: FilePath -> Int -> [String] -> IO (Maybe ByteString)
 runCompiler dir micros args = do
     (Just inh, Just outh, Just errh, pid) <-
@@ -123,18 +105,6 @@ withTimeout micros action = do
     killThread killer
     killThread runner
     return r
-
-errLineLocation :: [String] -> Int
-errLineLocation parseList = errLin
-    where errLinChar = parseList !! 3
-          errLinM = read errLinChar :: Int
-          errLin = errLinM - 1
-
-errColumnLocation :: [String] -> Int
-errColumnLocation parseList = errCol
-    where errColChar = parseList !! 4
-          errColM = take 1 errColChar
-          errCol = read errColM :: Int
 
 standardBuildArgs :: [String]
 standardBuildArgs = [

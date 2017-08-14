@@ -25,7 +25,6 @@ import           Data.Aeson
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as LB
-import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import           Data.List
@@ -52,7 +51,7 @@ folderRoutes clientId =
     , ("newProject",    newProjectHandler clientId)
     , ("shareContent",  shareContentHandler clientId)
     , ("shareFolder",   shareFolderHandler clientId)
---    , ("saveProject",   saveProjectHandler clientId)
+    , ("saveProject",   saveProjectHandler clientId)
     ]
 
 getFrequentParams :: Bool -> ClientId -> Snap (User, BuildMode, FilePath, Maybe ProjectId)
@@ -321,6 +320,7 @@ saveProjectHandler clientId = do
            let projectId = nameToProjectId (projectName project)
                file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
            liftIO $ do
-               ensureProjectDir mode (userId user) finalDir projectId
+            -- no need to ensure a project file as
+            -- constrained to create a new project before editing.
                LB.writeFile file $ encode project
                createNewVersionIfReq (projectSource project) $ file <.> "comments"

@@ -302,9 +302,7 @@ createNewVersionIfReq latestSource commentFolder = do
         commentVersionLists :: [[[CommentDesc]]] <- mapM (\x -> versions . fromJust . decode <$>
           LB.readFile (commentFolder </> show x)) currentLines
         let hasComments = foldr (\l acc ->
-                            case length l of
-                              x | (x <= currentVersion) && (l !! currentVersion /= []) -> True
-                                | otherwise -> acc
+                            if (l !! currentVersion /= [])  then True else acc
                             ) False commentVersionLists
         case hasComments of
           True -> do
@@ -313,18 +311,16 @@ createNewVersionIfReq latestSource commentFolder = do
             ensureVersionLines (currentVersion + 1) commentFolder
           False -> return ()
 
-addUserVersionLS :: Text -> FilePath -> IO ()
-addUserVersionLS userIdent' commentFolder = do
+updateUserVersionLS :: Text -> FilePath -> IO ()
+updateUserVersionLS userIdent' commentFolder = do
     currentLines :: [Int] <- delete 0 . fmap read <$> listDirectory commentFolder
     currentVersions :: [Int] <- fmap read <$> (listDirectory $ commentFolder <.> "versions")
     commentVersionLists :: [[[CommentDesc]]] <- mapM (\x -> versions . fromJust . decode <$>
       LB.readFile (commentFolder </> show x)) currentLines
     let versionLS = map (\v -> VersionLS v . LineStatuses $ foldr (\l acc ->
-                      case length l of
-                        x | (x <= v) && (l !! v /= []) ->
-                             (LineStatus (currentLines !! (fromJust $
-                               l `elemIndex` commentVersionLists)) "unread") : acc
-                          | otherwise -> acc
+                      LineStatus (currentLines !! (fromJust $
+                        l `elemIndex` commentVersionLists))
+                        (if (l !! v /= []) then "unread" else "read") : acc
                       ) [] commentVersionLists
                     ) currentVersions
     LB.writeFile (commentFolder <.> "users" </> T.unpack userIdent') $
@@ -335,7 +331,6 @@ ensureVersionLines versionNo' commentFolder = do
     totalLines <- (length . lines . BC.unpack) <$>
       (B.readFile $ commentFolder <.> "versions" </> show versionNo')
     currentLines :: [Int] <- delete 0 . fmap read <$> listDirectory commentFolder
-    let currentCount = 1
     mapM_ (\x -> do
       fileBool <- doesFileExist $ commentFolder </> show x
       newLC <- case fileBool of
@@ -344,13 +339,17 @@ ensureVersionLines versionNo' commentFolder = do
             LB.readFile (commentFolder </> show x)
           return $ LineComment x (versions currentLC ++ [[]])
         False -> return $ LineComment x [[]]
-      LB.writeFile (commentFolder </> show x) $ encode newLC) [1..totalLines `max` currentCount]
+      LB.writeFile (commentFolder </> show x) $ encode newLC)
+        [1..totalLines `max` length currentLines]
+    currentUsers <- map T.pack <$> listDirectory (commentFolder <.> "users")
+    forM_ currentUsers (\u -> updateUserVersionLS u commentFolder)
+
 
 addNewUser :: Text -> Text -> FilePath -> FilePath -> FilePath -> IO (Either String ())
 addNewUser userId' userIdent' name userPath commentHashPath = do
-    let identAllowed = foldl (\acc l -> if l `elem` (T.unpack userIdent') then False
-                                                                          else acc
-                             ) True ['/', '.', '+']
+    let identAllowed = foldl (\acc l ->
+                         if l `elem` (T.unpack userIdent') then False else acc
+                       ) True ['/', '.', '+']
     case identAllowed of
       True -> return $ Left "User Identifier Has Unallowed Char(/+.)"
       False -> do
@@ -368,7 +367,7 @@ addNewUser userId' userIdent' name userPath commentHashPath = do
                 LB.writeFile (commentHashPath <.> "users") $ encode (UserDump
                   userId' userIdent' (T.pack userPath) : currentUsers)
                 commentFolder <- BC.unpack <$> B.readFile commentHashPath
-                addUserVersionLS userIdent' commentFolder
+                updateUserVersionLS userIdent' commentFolder
                 return $ Right ()
               True -> return $ Left "User Identifier Already Exists"
           False -> return $ Left "File Does Not Exists"
@@ -388,7 +387,7 @@ addSelf mode userId' userIdent' commentFolder = do
       (LB.readFile $ take (length commentFolder - 9) commentFolder)
     B.writeFile (commentFolder <.> "versions" </> "0") $ T.encodeUtf8 . projectSource $ project
     ensureVersionLines 0 commentFolder
-    addUserVersionLS userIdent' $ commentFolder
+    updateUserVersionLS userIdent' $ commentFolder
 
 listUnreadComments :: Text -> FilePath -> Int -> IO [Int]
 listUnreadComments userIdent' commentFolder versionNo' = do

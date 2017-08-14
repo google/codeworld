@@ -28,11 +28,13 @@ window.env = parent;
                     CodeMirror.runMode(text, { name: 'codeworld', overrideKeywords: codeworldKeywords }, pre);
                     pre.classList.add('cm-s-default');
 
-                    if (text.indexOf("main ") != -1 && linkable) {
-                        pre.classList.add('clickable');
-                        pre.onclick = function() {
-                            if (env && env.loadSample) {
-                                env.loadSample(text);
+                    if (linkable) {
+                        if (text.indexOf("main ") != -1 || text.indexOf("program ") != -1) {
+                            pre.classList.add('clickable');
+                            pre.onclick = function() {
+                                if (env && env.loadSample) {
+                                    env.loadSample(text);
+                                }
                             }
                         }
                     }

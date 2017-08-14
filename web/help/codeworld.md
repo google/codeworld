@@ -29,7 +29,7 @@ Drawing With CodeWorld
 Definitions
 -----------
 
-Writing a program in CodeWorld is like writing a dictionary or glossary.  Your
+Writing code in CodeWorld is like writing a dictionary or glossary.  Your
 project is a bunch of *definitions*.  You write a definition to say what
 something means.  For example, you might write:
 
@@ -42,14 +42,15 @@ In CodeWorld, you do absolutely everything by naming things.  We call the names 
 "wheel" in that example) *variables*.  So, earlier we defined a *variable* called
 "wheel". You will define a lot of variables in CodeWorld.
 
-### Defining main ###
+### Defining program ###
 
-Sooner or later, you need to say where to start.  You do that by defining a special
-variable called *main*.  Every CodeWorld project needs *exactly* *one* definition for
-*main*.  A complete program might look something like this:
+Sooner or later, you need to say what program you want.  You do that by defining a
+special variable called *program*.  Every CodeWorld project needs *exactly* *one*
+definition for the *program* variable.  Finished code might look something like
+this:
 
-    main  = drawingOf(wheel)
-    wheel = circle(2)
+    program = drawingOf(wheel)
+    wheel   = circle(2)
 
 That's a complete project, so try it out!
 
@@ -82,10 +83,10 @@ Pictures would be pretty boring if they could only have one shape.  Luckily, you
 can combine more than one shape in the same picture using `&` (which means *and*).
 For example:
 
-    main   = drawingOf(design)
-    design = solidRectangle(4, 0.4)
-             & solidCircle(1.2)
-             & circle(2)
+    program = drawingOf(design)
+    design  = solidRectangle(4, 0.4)
+              & solidCircle(1.2)
+              & circle(2)
 
 Try that out, and see what it looks like!  See how the definition of design takes
 more than one line?  That's okay: you can start a new line any time you want to.
@@ -94,9 +95,9 @@ start a new line inside of a definition, you have to *indent* it by leaving a fe
 spaces.  We often like to use those spaces to line things up, too.
 
 When combining pictures, it helps if you remember to name things!  Another way of
-writing the same program we just looked at is:
+describing the same program we just looked at is:
 
-    main    = drawingOf(design)
+    program = drawingOf(design)
     design  = slot & middle & outside
     slot    = solidRectangle(4, 0.4)
     middle  = solidCircle(1.2)
@@ -110,16 +111,16 @@ good names to the pieces.
 Pictures don't need to be black and white.  You can use `colored` to change the color
 of your pictures.  Here's a simple example:
 
-    main     = drawingOf(redWheel)
+    program  = drawingOf(redWheel)
     redWheel = colored(wheel, red)
     wheel    = solidCircle(4)
 
 You can also mix colors in the same picture:
 
-    main   = drawingOf(tree)
-    tree   = colored(leaves, green) & colored(trunk, brown)
-    leaves = sector(0, 180, 4)
-    trunk  = solidRectangle(1, 4)
+    program = drawingOf(tree)
+    tree    = colored(leaves, green) & colored(trunk, brown)
+    leaves  = sector(0, 180, 4)
+    trunk   = solidRectangle(1, 4)
 
 You can also modify the colors!  Here are a few ways to do that:
 
@@ -129,9 +130,9 @@ You can also modify the colors!  Here are a few ways to do that:
 * `translucent(blue)` means blue, but see-through.  The word "translucent" means
   partially transparent or see-through.
 
-Let's try an example program:
+Let's try some example code:
 
-    main    = drawingOf(overlap)
+    program = drawingOf(overlap)
     overlap = colored(square,  translucent(blue))
             & colored(disk, translucent(green))
     square  = solidRectangle(5, 5)
@@ -158,13 +159,13 @@ To use `translated`, you give it three things:
 
 Ready for an example?
 
-    main   = drawingOf(forest)
-    forest =   translated(tree, -5, 5)
-             & translated(tree,  0, 0)
-             & translated(tree,  5,-5)
-    tree   = colored(leaves, green) & colored(trunk, brown)
-    leaves = sector(0, 180, 4)
-    trunk  = solidRectangle(1, 4)
+    program = drawingOf(forest)
+    forest  = translated(tree, -5, 5)
+            & translated(tree,  0, 0)
+            & translated(tree,  5,-5)
+    tree    = colored(leaves, green) & colored(trunk, brown)
+    leaves  = sector(0, 180, 4)
+    trunk   = solidRectangle(1, 4)
 
 What does `translated(..., 0, 0)` mean?  Well, it means don't move the picture at
 all!  We wrote the `translated` there just to make things line up nicely.
@@ -180,7 +181,7 @@ To use `rotated`, you give it two things:
 
 Here's an example:
 
-    main    = drawingOf(diamond)
+    program = drawingOf(diamond)
     diamond = rotated(square, 45)
     square  = solidRectangle(4, 4)
 
@@ -201,9 +202,9 @@ horizontally or vertically.  To use `scaled`, you'll give:
 
 Here's an example of `scaled`:
 
-    main = drawingOf(oval)
-    oval = scaled(base, 2, 0.5)
-    base = solidCircle(4)
+    program = drawingOf(oval)
+    oval    = scaled(base, 2, 0.5)
+    base    = solidCircle(4)
 
 You should try to get a good feeling for the meaning of those scaling
 factors.  Try changing the numbers in the example, and see if you can
@@ -250,7 +251,7 @@ in parentheses after it, with commas between them.
 
 Remember how we used `rotated`?  Here's a quick reminder:
 
-    main    = drawingOf(diamond)
+    program = drawingOf(diamond)
     diamond = rotated(square, 45)
     square  = rectangle(2, 2)
 
@@ -261,12 +262,12 @@ the name would go.
 
 Try it:
 
-    main = drawingOf(diamond)
+    program = drawingOf(diamond)
     diamond = rotated(rectangle(2, 2), 45)
 
 Or even:
 
-    main = drawingOf(rotated(rectangle(2, 2), 45))
+    program = drawingOf(rotated(rectangle(2, 2), 45))
 
 Careful, though!  You can avoid avoid naming simple things, but if you
 nest too much, you get parentheses inside of parentheses inside of
@@ -287,14 +288,14 @@ math for you on numbers, too.  When you write math expressions, you can
 use `+` and `-` the way you normally would.  To multiply, use `*`.  To
 divide, use `/`.
 
-Check out this program:
+Check out this code:
 
-    main   = drawingOf(design)
-    design = rotated(rectangle(4, 0.2), 1 * 180 / 5)
-           & rotated(rectangle(4, 0.2), 2 * 180 / 5)
-           & rotated(rectangle(4, 0.2), 3 * 180 / 5)
-           & rotated(rectangle(4, 0.2), 4 * 180 / 5)
-           & rotated(rectangle(4, 0.2), 5 * 180 / 5)
+    program = drawingOf(design)
+    design  = rotated(rectangle(4, 0.2), 1 * 180 / 5)
+            & rotated(rectangle(4, 0.2), 2 * 180 / 5)
+            & rotated(rectangle(4, 0.2), 3 * 180 / 5)
+            & rotated(rectangle(4, 0.2), 4 * 180 / 5)
+            & rotated(rectangle(4, 0.2), 5 * 180 / 5)
 
 We could have written `36`, '72', '108', '144', and `180` (the answers to
 those math problems).  But this way, it's very clear what we are doing:
@@ -318,7 +319,7 @@ things in it.  For example:
 You can use the function called `pictures` to combine a list of pictures
 together into one picture.  For example:
 
-    main = drawingOf(allThePictures)
+    program = drawingOf(allThePictures)
     allThePictures = pictures([
         solidRectangle(4, 0.4),
         solidCircle(1.2),
@@ -334,8 +335,8 @@ simpler list, and copying something once for each thing in it.  So if you
 have a list of numbers, you can turn it into a list of *circles*, each
 with a different radius.  That looks like this:
 
-    main = drawingOf(target)
-    target = pictures([ circle(r) | r <- [1, 2, 3, 4, 5] ])
+    program = drawingOf(target)
+    target  = pictures([ circle(r) | r <- [1, 2, 3, 4, 5] ])
 
 The list comprehension was `[ circle(r) | r <- [1, 2, 3, 4, 5] ]`, and it
 has a few parts:
@@ -371,9 +372,9 @@ have to give the first two numbers, then use `..` to continue from there.
 
 Here's another example:
 
-    main = drawingOf(star)
-    star = pictures([ rotated(rectangle(10, 1/10), angle)
-                      | angle <- [10, 20 .. 360] ])
+    program = drawingOf(star)
+    star    = pictures([ rotated(rectangle(10, 1/10), angle)
+                         | angle <- [10, 20 .. 360] ])
 
 So we start with a list of number counting by 10s from 10 to 360.  Then we
 call each of those numbers the variable "angle", and get a list of pictures
@@ -389,8 +390,8 @@ First, you can filter out certain members of the list you start with.
 Suppose you want to draw those circles, like in the `target` example, but
 you don't want to draw the middle one.  One way to say that is:
 
-    main = drawingOf(target)
-    target = pictures([ circle(r) | r <- [1 .. 5], r /= 3 ])
+    program = drawingOf(target)
+    target  = pictures([ circle(r) | r <- [1 .. 5], r /= 3 ])
 
 Notice that `/=` means "not equal to".  So this says to make a picture out
 of circles built from each radius from 1 to 5, *except* for 3.
@@ -398,9 +399,9 @@ of circles built from each radius from 1 to 5, *except* for 3.
 Second, you can include base your list comprehension on several lists.
 This will draw a grid of circles:
 
-    main = drawingOf(grid)
-    grid = pictures([ translated(circle(1/2), x, y)
-                      | x <- [-9 .. 9], y <- [-9 .. 9] ])
+    program = drawingOf(grid)
+    grid    = pictures([ translated(circle(1/2), x, y)
+                         | x <- [-9 .. 9], y <- [-9 .. 9] ])
 
 Because there are two base lists separated by commas, this will draw a
 circle for *every* *possible* *combination* of x and y from those lists.
@@ -411,7 +412,7 @@ of including a result for all possible combinations, this will only match
 the first element of each list, then the second from each list, and so on.
 Here's an example, using a list of number, and a list of colors!
 
-    main    = drawingOf(circles)
+    program = drawingOf(circles)
     circles = pictures([ colored(circle(r), c) | r <- sizes
                                                | c <- colors ])
     sizes   = [ 1, 2, 3, 4, 5 ]
@@ -426,9 +427,9 @@ so on.
 ### Points, Lines and Polygons ###
 
 To draw more precise shapes, we can use points on a "coordinate plane".  You
-can see a coordinate plane right now, just by running this program:
+can see a coordinate plane right now, just by running this code:
 
-    main = drawingOf(coordinatePlane)
+    program = drawingOf(coordinatePlane)
 
 The coordinate plane is made up of two directions: *horizontal* (also
 called x) and *vertical* (also called y).  The very center of the screen
@@ -445,7 +446,7 @@ the other uses *negative* numbers.  Once you have these numbers, you can
 write a point by listing them in parentheses with a comma: the x coordinate
 *always* comes first, and the y coordinate *always* comes second.
 
-Run the program above, and then try finding these points on the coordinate
+Run the code above, and then try finding these points on the coordinate
 plane:
 
 * `(5, 5)`: This is in the top right part of the coordinate plane.
@@ -457,36 +458,36 @@ plane:
 Got it?  Great!  Now you can draw things like paths by giving a list of
 points in the coordinate plane to a function called `path`:
 
-    main = drawingOf(zigzag)
-    zigzag = path([(-2, 0), (-1, 1), (0, -1), (1, 1), (2, 0)])
+    program = drawingOf(zigzag)
+    zigzag  = path([(-2, 0), (-1, 1), (0, -1), (1, 1), (2, 0)])
 
 To draw a closed shape, use `polygon` instead.  Can you figure out the
-mystery picture before you run the program?
+mystery picture before you click Run?
 
-    main = drawingOf(mystery)
+    program = drawingOf(mystery)
     mystery = polygon(
         [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
 
 If you prefer to fill in your shape, you can use `solidPolygon` instead of
 `polygon` and you'll get a solid version:
 
-    main = drawingOf(mystery)
+    program = drawingOf(mystery)
     mystery = solidPolygon(
         [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
 
 There are also `thickPolygon` and `thickPath` which use an extra parameter
 for thickness:
 
-    main = drawingOf(mystery)
+    program = drawingOf(mystery)
     mystery = thickPolygon(
         [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)], 1)
 
 #### Using the coordinate plane to draw ####
 
-A neat trick is to use the coordinate plane as you write your program.  Say
+A neat trick is to use the coordinate plane as you write your code.  Say
 you want to draw a butterfly.  You might start by writing:
 
-    main = drawingOf(butterfly & coordinatePlane)
+    program   = drawingOf(butterfly & coordinatePlane)
     butterfly = blank
 
 Now run your program, and you have a coordinate plane to measure what
@@ -497,23 +498,23 @@ Types
 -----
 
 We've seen many different kinds of things so far that show up in your
-programs: pictures, numbers, text, points, colors, lists of all of
+code: pictures, numbers, text, points, colors, lists of all of
 these... maybe you're wondering how to keep them all straight!  CodeWorld
 calls these kinds of things *types*.  You'll mostly see types in two
 places:
 
 * When you make a mistake, you'll often see types mentioned in *error*
   *messages* that tell you about the problem.
-* If you want to, you can say things about types in your program.
+* If you want to, you can say things about types in your code.
   If you do, the computer then knows more about what you meant, and
-  can sometimes explain the problems in your program better.
+  can sometimes explain the problems in your code better.
 
 ### Simple Types ###
 
-Hear are some of the types that you've used in your programs:
+Hear are some of the types that you've used in your code:
 
-* `Program` is the type of the variable `main` that you define in all
-  programs.
+* `Program` is the type of the variable `program` that you define in all
+  your code.
 * `Picture` is the type for pictures.
 * `Number` is the type for numbers.
 * `Color` is the type for colors.
@@ -521,10 +522,7 @@ Hear are some of the types that you've used in your programs:
 Notice that while variables start with a lower-case letter, types are
 capitalized.
 
-To declare types in your programs, you can use `::`, like this:
-
-    main :: Program
-    main = drawingOf(wheel)
+To declare types in your code, you can use `::`, like this:
 
     wheel :: Picture
     wheel = solidCircle(size)
@@ -536,7 +534,7 @@ You don't *have* to say what type things are.  It's completely optional,
 and the computer can always figure that out on its own.  But if you do
 say what your types are, two things happen:
 
-* Other people reading your program can understand what's going on.
+* Other people reading your code can understand what's going on.
 * When you make a mistake the computer can be more helpful explaining
   what's wrong.
 
@@ -547,7 +545,7 @@ are many types of lists: lists of numbers, lists of pictures, lists of
 colors, and so on.  To write the type of a list, we just write the type
 of the things *inside* the list, and surround it with square brackets.
 
-    main = drawingOf(circles)
+    program = drawingOf(circles)
     circles = pictures[ circle(r) | r <- sizes ]
 
     sizes :: [Number]
@@ -562,7 +560,7 @@ as you want about types!
 What about a point, like the ones we used to make paths and polygons?
 It actually works just fine to say the type is `Point`:
 
-    main = drawingOf(path[start, end])
+    program = drawingOf(path[start, end])
 
     start :: Point
     start = (0, 0)
@@ -589,7 +587,7 @@ different types for the different things inside!
 Why would you use these?  Well, they can be useful for list
 comprehensions!
 
-    main = drawingOf(boxes)
+    program = drawingOf(boxes)
 
     boxDetails :: [(Number, Number, Color)]
     boxDetails = [
@@ -644,8 +642,8 @@ can write your own functions that need their own parameters.
 Here's how you would define a house as a function that's waiting on a color
 for the roof, and apply it to draw a house with a red roof.
 
-    main = drawingOf(scene)
-    scene = house(red)
+    program = drawingOf(scene)
+    scene   = house(red)
 
     house :: Color -> Picture
     house(roofColor) = colored(roof, roofColor) & solidRectangle(6, 7)
@@ -660,12 +658,12 @@ to provide parentheses with specific values for those arguments.
 Parameters to functions can be of any type.  The next example defines a
 function with a picture as a parameter.
 
-    main = drawingOf(ringOf(rectangle(1,1)))
+    program = drawingOf(ringOf(rectangle(1,1)))
     ringOf(p) = pictures([
         rotated(translated(p, 5, 0), a) | a <- [45, 90 .. 360] ])
 
 The name `p` is given to the parameter to `ringOf`.  When `ringOf` is used in
-the definition of `main`, it must be given a parameter, with a specific picture
+the definition of `program`, it must be given a parameter, with a specific picture
 to substitute for occurrences of the parameter `p`.
 
 The idea of *substitution* is fundamental in how you define functions in
@@ -682,10 +680,10 @@ form depending on the parameters.  In this case, you need a conditional.
 The simplest kind of conditional uses `if`, `then`, and `else`.  Here's an
 example:
 
-    main = drawingOf(thing(1) & thing(2))
+    program  = drawingOf(thing(1) & thing(2))
     thing(n) = if n > 1 then rectangle(n, n) else circle(n)
 
-This program will draw one square, and one circle.  You can use `if`, `then`,
+This program displays one square, and one circle.  You can use `if`, `then`,
 and `else` any place you can write an expression.  In your condition, you can
 use any inequality (`<`, `>`, `<=`, or `>=`), or you can check whether two things
 are equal using `==`.  Note the *two* equal signs: think of two equal signs as
@@ -694,7 +692,7 @@ is a statement (these things are equal!).
 
 If you have more than two possibilities, you may want to use guards instead:
 
-    main = drawingOf(thing(1) & thing(2) & thing(3))
+    program       = drawingOf(thing(1) & thing(2) & thing(3))
     thing(n)
       | n > 2     = rectangle(n, 2)
       | n > 1     = rectangle(n, n)
@@ -807,7 +805,7 @@ A more exciting use of recursive functions is building so-called "fractal"
 pictures.  These are pictures that are made up of smaller copies of
 themselves.  Here's a simple fractal:
 
-    main = drawingOf(fractal(10))
+    program = drawingOf(fractal(10))
 
     fractal :: Number -> Picture
     fractal(0) = stem
@@ -849,7 +847,7 @@ Computers make this job much easier!  All you need to do is describe a pattern o
 motion.  The computer does the hard work of drawing many similar pictures.  The
 way you do this is with a function.
 
-    main         = animationOf(propellor)
+    program         = animationOf(propellor)
     propellor(t) = rotated(solidRectangle(10, 1), 60 * t)
 
 See if you can explain to yourself or someone else what is happening here.
@@ -903,11 +901,11 @@ The list goes on and on!  And you don't need to settle for just one of these.
 You can use `t` as many times in your animation as you like!  This example
 combines rotation, translation, and a list range all depending on the time:
 
-    main = animationOf(wheels)
+    program   = animationOf(wheels)
     wheels(t) = pictures([
         translated(rotated(tire, -60 * t), t - 10, y)
         | y <- [0, 2 .. t]])
-    tire = circle(1) & solidRectangle(0.1, 2)
+    tire      = circle(1) & solidRectangle(0.1, 2)
 
 Top-down animation
 ------------------
@@ -970,16 +968,16 @@ where those pictures are just one frame of the animation.
 
 So this won't work:
 
-    main = animationOf(a & b)
-    a(t) = rotated(solidRectangle(1, 1), 45 * t)
-    b(t) = circle(t)
+    program = animationOf(a & b)
+    a(t)    = rotated(solidRectangle(1, 1), 45 * t)
+    b(t)    = circle(t)
 
 But this will work:
 
-    main = animationOf(c)
-    c(t) = a(t) & b(t)
-    a(t) = rotated(solidRectangle(1, 1), 45 * t)
-    b(t) = circle(t)
+    program = animationOf(c)
+    c(t)    = a(t) & b(t)
+    a(t)    = rotated(solidRectangle(1, 1), 45 * t)
+    b(t)    = circle(t)
 
 The first example doesn't work because `a` and `b` are animations rather
 than pictures, so they can't be combined using `&`.  But in the second
@@ -1005,8 +1003,8 @@ than a line, the fundamental change is to an angle, and that angle increases
 at a fixed speed.  In this example, the box rotates at a fixed speed of 45
 degrees per second, so the change of the angle is linear:
 
-    main = animationOf(box)
-    box(t) = rotated(solidRectangle(1, 1), 45 * t)
+    program = animationOf(box)
+    box(t)  = rotated(solidRectangle(1, 1), 45 * t)
 
 When describing linear change, there are two questions to ask yourself:
 
@@ -1024,10 +1022,10 @@ which moves back and forth in the same motion forever.  We create this
 pattern of motion using a special function called a sine wave, and
 written as `sin`.  Here's a simple pendulum for an example:
 
-    main = animationOf(pendulum)
+    program     = animationOf(pendulum)
     pendulum(t) = rotated(arm, 45 * sin(60 * t))
-    arm = translated(solidRectangle(1, 6), 0, -3)
-        & translated(solidCircle(1), 0, -6)
+    arm         = translated(solidRectangle(1, 6), 0, -3)
+                & translated(solidCircle(1), 0, -6)
 
 Periodic change is a little more complicated than linear motion.  There are
 four questions you need to ask yourself to plan this motion.
@@ -1063,7 +1061,7 @@ stops and then falls back down, due to acceleration caused by gravity.
 
 Here's an example of a ball flying through the air using quadratic change:
 
-    main = animationOf(ball)
+    program = animationOf(ball)
     ball(t) = translated(solidCircle(1),
                          10 * t - 10,
                          -5 + 20 * t - 10 * t^2)
@@ -1091,14 +1089,14 @@ Still more motion follows different patterns at different times.  When there
 are several distinct steps to the change in an animation, we call it "piecewise"
 because it have distinct pieces, which are different from each other.
 
-You can create piecewise motion in your programs using functions like `min` and
+You can describe piecewise motion in your programs using functions like `min` and
 `max` and `remainder`, or by using conditionals, like `if` or guards.
 
 The `min` and `max` functions take the minimum or maximum, respectively, of two
 numbers.  This allows you to create simple effects where something moves and
 then stops.  For example:
 
-    main    = animationOf(drop)
+    program = animationOf(drop)
     drop(t) = translated(ball, 0, max(-8, 10 - t))
     ball    = solidCircle(1)
 
@@ -1110,7 +1108,7 @@ a number that increases up to a limit.
 The `remainder` function causes a number to increase up to a limit, then drop
 back down to zero and start over.  For example:
 
-    main      = animationOf(twitch)
+    program   = animationOf(twitch)
     twitch(t) = rotated(solidRectangle(5, 1), remainder(45 * t, 90))
 
 The expression `45 * t` is linear, so it increases steadily at a rate of 45
@@ -1123,7 +1121,7 @@ degrees, then falls back down.
 One more flexible way to define piecewise functions is using `if`, `then`, and
 `else`.  Here's an example:
 
-    main            = animationOf(trafficLight)
+    program         = animationOf(trafficLight)
     trafficLight(t) = colored(dot, if t < 5 then red else blue)
 
 The expression `if c then a else b` means to evaluate whether `c` (called the
@@ -1140,7 +1138,7 @@ days when it applies.
 
 Here's an example of an animation using guards.
 
-    main = animationOf(flight)
+    program       = animationOf(flight)
 
     flight(t)
       | t <  2    = translated(rocket, -5, 2 * t)
@@ -1164,7 +1162,7 @@ write.  Here's the problem: if `t` is 11, then the first case that will match
 is `t < 13`, which describes the motion between 10 and 13 seconds.  *But* `t`
 is still 11, which is the time relative to the beginning of the program.  So
 the "starting point" values in expressions with `t` have to be written in
-terms of the start of the entire program!
+terms of the start time of the entire program!
 
 In practice, you almost always want to think of each *step* of your program
 as starting from a time of zero.  One way you can do that is to write each
@@ -1173,7 +1171,7 @@ used.
 
 Here, we've rewritten the rocket example in this way:
 
-    main = animationOf(flight)
+    program       = animationOf(flight)
 
     flight(t)
       | t <  2    = step1(t)
@@ -1190,7 +1188,7 @@ Here, we've rewritten the rocket example in this way:
 
     rocket = solidRectangle(1, 4)
 
-This program does exactly the same thing as the earlier example.  But see
+This code does exactly the same thing as the earlier example.  But see
 how much easier it is to understand?  For example, in `step5`, the starting
 points for the translation are `5` and `4`, which are the same as the
 translations from the previous step.  Arranging for the animations to match
@@ -1246,7 +1244,7 @@ Your First Simulation
 
 It may sound complicated, but let's jump in and look at an example:
 
-    main             = simulationOf(initial, step, picture)
+    program          = simulationOf(initial, step, picture)
     initial(rs)      = (5, 0)
     step((x, y), dt) = (x - y * dt, y + x * dt)
     picture(x, y)    = translated(rectangle(1, 1), x, y)
@@ -1293,10 +1291,10 @@ The simplest kind of state is a single number.  Let's build a simulation to move
 a box across the screen.  You could have done this with an animation, but this
 makes a good starting point to learn how things work with simulations.
 
-    main = simulationOf(initial, step, picture)
+    program     = simulationOf(initial, step, picture)
     initial(rs) = -10
     step(x, dt) = x + dt
-    picture(x) = translated(solidRectangle(1, 1), x, 0)
+    picture(x)  = translated(solidRectangle(1, 1), x, 0)
 
 The world, in thic coordinate, is the x coordinate of the box.  That's the only
 thing you need to remember!  Why not the y coordinate?  Because it is always
@@ -1311,8 +1309,8 @@ box, translated by the x coordinate, and 0 in the y direction.
 
 Try this out, and verify that it does what you expect.
 
-* Can you modify the program to move the box up?  What about left or down?
-* Can you modify the program to use rotation instead of translation?
+* Can you modify the code to move the box up?  What about left or down?
+* Can you modify the code to use rotation instead of translation?
 * Can you change the speed at which the box moves?  (Hint: use multiplication.)
 
 ### Simulations With multiple numbers
@@ -1322,7 +1320,7 @@ at the same time.  Let's try to make a rolling wheel, which will need to move
 (translation) and turn (rotation) at the same time.  In the state, we'll need
 both an x coordinate, and an angle of rotation.
 
-    main = simulationOf(initial, step, picture)
+    program = simulationOf(initial, step, picture)
     initial(rs) = (-10, 0)
     step((x, angle), dt) = (x + dt, angle - 60 * dt)
     picture(x, angle) = translated(rotated(wheel, angle), x, 0)
@@ -1353,7 +1351,7 @@ This simple animation shows a baseball flying through the air.  While only
 the x position and y position are needed to *draw* the simulation, the y
 speed also changes, and needs to be remembered.
 
-    main = simulationOf(initial, step, picture)
+    program = simulationOf(initial, step, picture)
     initial(rs) = (-9, -9, 15)
     step((x, y, vy), dt) = (x + 6 * dt, y + vy * dt, vy - 10 * dt)
     picture(x, y, vy) = translated(solidCircle(1/2), x, y)

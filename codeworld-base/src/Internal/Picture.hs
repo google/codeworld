@@ -206,7 +206,7 @@ a & b = CWPic (toCWPic a CW.<> toCWPic b)
 --
 -- Example:
 --
---    main = pictureOf(myPicture & coordinatePlane)
+--    program = drawingOf(myPicture & coordinatePlane)
 --    myPicture = ...
 coordinatePlane :: HasCallStack => Picture
 coordinatePlane = CWPic CW.coordinatePlane

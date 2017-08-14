@@ -55,18 +55,18 @@ import Internal.CodeWorld
 -- by defining variables and functions.  There are four kinds of CodeWorld
 -- programs:
 --
--- * Pictures.  To create a picture, you'll define the variable called @main@
---   using 'pictureOf'.  The parameter to 'pictureOf' should be a 'Picture'.
+-- * Pictures.  To create a picture, you'll define the variable called @program@
+--   using 'drawingOf'.  The parameter to 'drawingOf' should be a 'Picture'.
 --   Example:
 --
--- > main = pictureOf(tree)
+-- > program = drawingOf(tree)
 --
 -- * Animations.  To create an animation, you'll define the variable called
---   @main@ using 'animationOf'.  The parameter to 'animationOf' should be a
+--   @program@ using 'animationOf'.  The parameter to 'animationOf' should be a
 --   function, mapping each time in seconds (a 'Number') to a 'Picture' that is
 --   shown at that time.  Example:
 --
--- > main = animationOf(spinningWheel)
+-- > program = animationOf(spinningWheel)
 --
 -- * Simulations.  A simulation is like an animation, in that it changes over
 --   time.  But while an animation changes in a simple regular way over time, a
@@ -75,10 +75,10 @@ import Internal.CodeWorld
 --   type to describe the state of things (called the "world" type), and
 --   describe the simulation in terms of the starting state, the step that
 --   says how things change over time, and and a draw function that can build
---   a picture from a state.  Then you'll use 'simulationOf' to define main.
+--   a picture from a state.  Then you'll use 'simulationOf' to define @program@.
 --   Example:
 --
--- > main = simulationOf(start, step, draw)
+-- > program = simulationOf(start, step, draw)
 --
 -- * Interactions.  Finally, you can build an interactive simulation, such as
 --   a game.  This is very like a simulation, except that it also has an event
@@ -86,4 +86,4 @@ import Internal.CodeWorld
 --   keys being pressed or the mouse moving) happen.  You'll use
 --   'interactionOf' to define these.  Example:
 --
--- > main = interactionOf(start, step, event, draw)
+-- > program = interactionOf(start, step, event, draw)

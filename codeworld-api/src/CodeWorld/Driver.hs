@@ -261,69 +261,135 @@ drawCodeWorldLogo ctx ds x y w h = do
 
 -- Debug Mode logic
 
--- | Register callback with initDebugMode allowing users to
--- | inspect picture.
-inspect :: Picture -> IO ()
-inspect = initDebugMode (\_ -> return ()) . handlePointRequest . return
+-- Nodes of a picture are communicated between the Haskell and Javascript
+-- componenets of Debug mode via the order they appear in DFS.
+type PicNode = Int
 
-inspectFromIO :: (Bool -> IO ()) -> IO Picture -> IO ()
-inspectFromIO activeHandler = initDebugMode activeHandler . handlePointRequest
+inspectStatic :: Picture -> IO ()
+inspectStatic pic = inspect (return pic) (\_ -> return ()) (\_ -> return ()) (\_ -> return ())
 
-handlePointRequest :: IO Picture -> JSVal -> IO JSVal
-handlePointRequest getPic argsJS = do
+inspect :: IO Picture -> (Bool -> IO ()) -> (Int -> IO ()) -> (Int -> IO ()) -> IO ()
+inspect getPic handleActive highlight select =
+    initDebugMode (handlePointRequest getPic) handleActive getPic highlight select
+
+handlePointRequest :: IO Picture -> Point -> IO (Maybe PicNode)
+handlePointRequest getPic pt = do
     pic <- getPic
-    x <- fmap pFromJSVal $ getProp "x" args
-    y <- fmap pFromJSVal $ getProp "y" args
-    stack <- findTopPictureFromPoint (x,y) pic
-    pics <- case stack of
-        Nothing -> return nullRef
-        Just s  -> fmap unsafeCoerce $ picsToArr s
-    ret <- create
-    setProp "stack" pics ret
-    return $ unsafeCoerce ret
-    where
-        -- https://github.com/ghcjs/ghcjs-base/issues/53
-        args = unsafeCoerce argsJS :: Object
+    findTopPictureFromPoint pt pic
 
-initDebugMode :: (Bool -> IO ()) -> (JSVal -> IO JSVal) -> IO ()
-initDebugMode activeHandler ptHandler = do
-    activeCallback <- syncCallback1 ContinueAsync (activeHandler . pFromJSVal)
-    ptCallback <- syncCallback1' ptHandler
-    js_initDebugMode ptCallback activeCallback
+initDebugMode :: (Point -> IO (Maybe PicNode)) ->
+                 (Bool -> IO ()) ->
+                 IO Picture ->
+                 (PicNode -> IO ()) ->
+                 (PicNode -> IO ()) ->
+                 IO ()
+initDebugMode getnode setactive getpicture highlight select = do
+    getnodeCB <- syncCallback1' $ \pointJS -> do
+        let obj = unsafeCoerce pointJS
+        x <- pFromJSVal <$> getProp "x" obj
+        y <- pFromJSVal <$> getProp "y" obj
+        pToJSVal . fromMaybe (-1) <$> getnode (x,y)
+    setactiveCB <- syncCallback1 ContinueAsync $ setactive . pFromJSVal
+    getpictureCB <- syncCallback' $ getpicture >>= picToObj
+    highlightCB <- syncCallback1 ContinueAsync $ highlight . pFromJSVal
+    selectCB <- syncCallback1 ContinueAsync $ select . pFromJSVal
 
-picsToArr :: [Picture] -> IO Array.JSArray
-picsToArr = fmap Array.fromList . sequence . fmap picToObj
+    js_initDebugMode getnodeCB setactiveCB getpictureCB highlightCB selectCB
 
 picToObj :: Picture -> IO JSVal
-picToObj pic = case getPictureSrc pic of
-        Just (name, src) -> do
-            obj <- create
-            srcLoc <- srcToObj src
-            setProp "srcLoc" srcLoc obj
-            setProp "name"   (pToJSVal name)   obj
-            return $ unsafeCoerce obj
-        Nothing -> return nullRef
+picToObj = fmap fst . unsafeCoerce . picToObj' 0
 
-srcToObj :: SrcLoc -> IO JSVal
-srcToObj src = do
-    obj <- create
-    setProp "package"   package   obj
-    setProp "module"    module'   obj
-    setProp "file"      file      obj
-    setProp "startLine" startLine obj
-    setProp "startCol"  startCol  obj
-    setProp "endLine"   endLine   obj
-    setProp "endCol"    endCol    obj
-    return $ unsafeCoerce obj
+picToObj' :: Int -> Picture -> IO (Object,Int)
+picToObj' id pic = case pic of
+    Polygon cs pts smooth -> mkPicObj "polygon" $ \obj -> do
+        ptsJS <- pointsToArr pts
+        setProp "points" ptsJS obj
+        setProp "smooth" (pToJSVal smooth) obj
+        return id
+    Path cs pts w closed smooth -> mkPicObj "path" $ \obj -> do
+        ptsJS <- pointsToArr pts
+        setProp "points" ptsJS obj
+        setProp "width"  (pToJSVal w) obj
+        setProp "closed" (pToJSVal closed) obj
+        setProp "smooth" (pToJSVal smooth) obj
+        return id
+    Sector cs b e r -> mkPicObj "sector" $ \obj -> do
+        setProp "startAngle" (pToJSVal b) obj
+        setProp "endAngle" (pToJSVal e) obj
+        setProp "radius" (pToJSVal r) obj
+        return id
+    Arc cs b e r w -> mkPicObj "arc" $ \obj -> do
+        setProp "startAngle" (pToJSVal b) obj
+        setProp "endAngle" (pToJSVal e) obj
+        setProp "radius" (pToJSVal r) obj
+        setProp "width" (pToJSVal w) obj
+        return id
+    Text cs style font txt -> mkPicObj "text" $ \obj -> do
+        setProp "font" (pToJSVal $ fontString style font) obj
+        return id
+    Color cs (RGBA r g b a) p -> mkPicObj "color" $ \obj -> do
+        (picJS, n) <- picToObj' (id+1) p
+        setProp "picture" (unsafeCoerce picJS) obj
+        setProp "red" (pToJSVal r) obj
+        setProp "green" (pToJSVal g) obj
+        setProp "blue" (pToJSVal b) obj
+        setProp "alpha" (pToJSVal a) obj
+        return (n-1)
+    Translate cs x y p -> mkPicObj "translate" $ \obj -> do
+        (picJS, n) <- picToObj' (id+1) p
+        setProp "picture" (unsafeCoerce picJS) obj
+        setProp "x" (pToJSVal x) obj
+        setProp "y" (pToJSVal y) obj
+        return (n-1)
+    Scale cs x y p -> mkPicObj "scale" $ \obj -> do
+        (picJS, n) <- picToObj' (id+1) p
+        setProp "picture" (unsafeCoerce picJS) obj
+        setProp "x" (pToJSVal x) obj
+        setProp "y" (pToJSVal y) obj
+        return (n-1)
+    Rotate cs angle p -> mkPicObj "rotate" $ \obj -> do
+        (picJS, n) <- picToObj' (id+1) p
+        setProp "picture" (unsafeCoerce picJS) obj
+        setProp "angle" (pToJSVal angle) obj
+        return (n-1)
+    Pictures cs ps -> mkPicObj "pictures" $ \obj -> do
+        arr <- Array.create
+        let go n [] = return n
+            go n (x:xs) = do
+                (picJS, m) <- picToObj' n x
+                Array.push (unsafeCoerce picJS) arr
+                go m xs
+        nextId <- go (id+1) ps
+        setProp "pictures" (unsafeCoerce arr) obj
+        return (nextId-1)
+    Logo cs -> mkPicObj "logo" $ \obj -> return id
     where
-        package   = pToJSVal $ srcLocPackage src
-        module'   = pToJSVal $ srcLocModule src
-        file      = pToJSVal $ srcLocFile src
-        startLine = pToJSVal $ srcLocStartLine src
-        startCol  = pToJSVal $ srcLocStartCol src
-        endLine   = pToJSVal $ srcLocEndLine src
-        endCol    = pToJSVal $ srcLocEndCol src
+        mkPicObj (tp::JSString) addSpecifics = do
+            obj <- create
+            setProp "type" (pToJSVal tp) obj
+            setProp "id" (pToJSVal id) obj
+            setCallInfo pic obj
+            n <- addSpecifics obj
+            return (obj,n+1)
+        pointsToArr pts = do
+            let go [] _ = return ()
+                go ((x,y):pts) arr = do
+                    Array.push (pToJSVal x) arr
+                    Array.push (pToJSVal y) arr
+                    go pts arr
+            arr <- Array.create
+            go pts arr
+            return $ (unsafeCoerce arr :: JSVal)
 
+setCallInfo :: Picture -> Object -> IO ()
+setCallInfo pic obj = case findCSMain (getPictureCS pic) of
+    Just (callName, src) -> do
+        setProp "name"      (pToJSVal $ callName)            obj
+        setProp "startLine" (pToJSVal $ srcLocStartLine src) obj
+        setProp "startCol"  (pToJSVal $ srcLocStartCol  src) obj
+        setProp "endLine"   (pToJSVal $ srcLocEndLine   src) obj
+        setProp "endCol"    (pToJSVal $ srcLocEndCol    src) obj
+    Nothing -> return ()
 
 findCSMain :: CallStack -> Maybe (String,SrcLoc)
 findCSMain cs = Data.List.find ((=="main") . srcLocPackage . snd) (getCallStack cs)
@@ -341,29 +407,29 @@ getPictureCS (Rotate cs _ _)      = cs
 getPictureCS (Pictures cs _)      = cs
 getPictureCS (Logo cs)            = cs
 
-getPictureSrc :: Picture -> Maybe (String,SrcLoc)
-getPictureSrc = findCSMain . getPictureCS
-
 -- If a picture is found, the result will include an array of the base picture
 -- and all transformations.
-findTopPictureFromPoint :: Point -> Picture -> IO (Maybe [Picture])
+findTopPictureFromPoint :: Point -> Picture -> IO (Maybe PicNode)
 findTopPictureFromPoint (x,y) pic = do
     offscreen <- Canvas.create 500 500
     context <- Canvas.getContext offscreen
-    findTopPicture context (translateDS (10-x/25) (y/25-10) initialDS) pic
+    (found, node) <- findTopPicture context (translateDS (10-x/25) (y/25-10) initialDS) pic
+    case found of
+        True  -> return $ Just node
+        False -> return Nothing
 
-findTopPicture :: Canvas.Context -> DrawState -> Picture -> IO (Maybe [Picture])
+findTopPicture :: Canvas.Context -> DrawState -> Picture -> IO (Bool,Int)
 findTopPicture ctx ds pic = case pic of
-    Color _ col p      -> map2 (pic:) $ findTopPicture ctx (setColorDS col ds) p
-    Translate _ x y p  -> map2 (pic:) $ findTopPicture ctx (translateDS x y ds) p
-    Scale _ x y p      -> map2 (pic:) $ findTopPicture ctx (scaleDS x y ds) p
-    Rotate _ r p       -> map2 (pic:) $ findTopPicture ctx (rotateDS r ds) p
-    Pictures _ []      -> return Nothing
+    Color _ col p      -> map2 (+1) $ findTopPicture ctx (setColorDS col ds) p
+    Translate _ x y p  -> map2 (+1) $ findTopPicture ctx (translateDS x y ds) p
+    Scale _ x y p      -> map2 (+1) $ findTopPicture ctx (scaleDS x y ds) p
+    Rotate _ r p       -> map2 (+1) $ findTopPicture ctx (rotateDS r ds) p
+    Pictures _ []      -> return (False,1)
     Pictures _ (p:ps)  -> do
-        stack <- findTopPicture ctx ds p
-        case stack of
-            Just x  -> return (Just x)
-            Nothing -> findTopPicture ctx ds (Pictures undefined ps)
+        (found, count) <- findTopPicture ctx ds p
+        case found of
+            True  -> return (True,count+1)
+            False -> map2 (+count) $ findTopPicture ctx ds (Pictures undefined ps)
     Text _ sty fnt txt -> do
         Canvas.font (fontString sty fnt) ctx
         width <- Canvas.measureText (textToJSString txt) ctx
@@ -371,14 +437,14 @@ findTopPicture ctx ds pic = case pic of
         withDS ctx ds $ Canvas.rect ((-0.5)*width) ((-0.5)*height) width height ctx
         contained <- js_isPointInPath 0 0 ctx
         if contained
-            then return (Just [pic])
-            else return Nothing
+            then return (True,0)
+            else return (False,1)
     Logo _             -> do
         withDS ctx ds $ Canvas.rect (-225) (-50) 450 100 ctx
         contained <- js_isPointInPath 0 0 ctx
         if contained
-            then return (Just [pic])
-            else return Nothing
+            then return (True,0)
+            else return (False,1)
     Arc cs b e r w      -> do
         -- Thin arcs and paths are drawn bigger to make clicking easier
         let width = if w==0 then 0.3 else w
@@ -386,22 +452,22 @@ findTopPicture ctx ds pic = case pic of
         drawPicture ctx ds (Arc cs b e r width)
         contained <- js_isPointInStroke 0 0 ctx
         if contained
-            then return (Just [pic])
-            else return Nothing
+            then return (True,0)
+            else return (False,1)
     Path cs ps w c s     -> do
         let width = if w==0 then 0.3 else w
         Canvas.lineWidth (width * 25) ctx
         drawPicture ctx ds (Path cs ps width c s)
         contained <- js_isPointInStroke 0 0 ctx
         if contained
-            then return (Just [pic])
-            else return Nothing
+            then return (True,0)
+            else return (False,1)
     _                  -> do
         drawPicture ctx ds pic
         contained <- js_isPointInPath 0 0 ctx
         if contained
-            then return (Just [pic])
-            else return Nothing
+            then return (True,0)
+            else return (False,1)
     where map2 = fmap . fmap
 
 isDebugModeActive :: IO Bool
@@ -419,8 +485,13 @@ foreign import javascript unsafe "$3.isPointInPath($1,$2)"
 foreign import javascript unsafe "$3.isPointInStroke($1,$2)"
     js_isPointInStroke :: Double -> Double -> Canvas.Context -> IO Bool
 
-foreign import javascript unsafe "initDebugMode($1,$2)"
-    js_initDebugMode :: Callback (JSVal -> IO JSVal) -> Callback (JSVal -> IO ()) -> IO ()
+foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
+    js_initDebugMode :: Callback (JSVal -> IO JSVal) -> -- getNode
+                        Callback (JSVal -> IO ()) ->    -- setActive
+                        Callback (IO JSVal) ->          -- getPicture
+                        Callback (JSVal -> IO ()) ->    -- highlightShape
+                        Callback (JSVal -> IO ()) ->    -- selectShape
+                        IO ()
 
 foreign import javascript unsafe "window.debugMode"
     js_isDebugModeActive :: IO Bool
@@ -584,7 +655,7 @@ display pic = do
 
 drawingOf pic = do
     display pic `catch` reportError
-    inspect pic
+    inspectStatic pic
 
 
 --------------------------------------------------------------------------------
@@ -1237,7 +1308,7 @@ runInspect initial stepHandler eventHandler drawHandler = do
         run initialWrapper stepHandlerWrapper eventHandlerWrapper drawHandlerWrapper
 
     onEvents canvas (sendEvent . NormalEvent)
-    inspectFromIO (sendEvent . PauseEvent) $ drawHandlerWrapper <$> getState
+    inspect (drawHandlerWrapper <$> getState) (sendEvent . PauseEvent) (\_ -> return ()) (\_ -> return ())
 
 -- Allows pictures to be inspected using a built-in pause button
 runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
@@ -1264,7 +1335,7 @@ runPauseable initial stepHandler eventHandler drawHandler isPaused setPaused = d
             False -> pictures []
         sendPause = sendEvent $ PauseEvent True
 
-    inspectFromIO (flip when sendPause) $ picIfUnpaused <$> getState
+    inspect (picIfUnpaused <$> getState) (flip when sendPause) (\_ -> return ()) (\_ -> return ())
 
 --------------------------------------------------------------------------------
 -- Stand-Alone event handling and core interaction code

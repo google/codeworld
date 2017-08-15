@@ -91,7 +91,7 @@ copyProjectHandler clientId = do
     case toType of
       True -> do
         modifyResponse $ setContentType "text/plain"
-        modifyResponse $ setResponseCode 500
+        modifyResponse $ setResponseCode 404
         writeBS . BC.pack $ "Cannot Copy Something Into `commentables` Directory"
       False -> do
         Just isFile <- getParam "isFile"
@@ -111,7 +111,7 @@ copyProjectHandler clientId = do
                 copyFileFromCommentables mode (userId user)
                   fromFile toFile (T.pack name') emptyPH
               False -> liftIO $ do
-                let fromFile = projectDir </> copyFromDir </> projectFile projectId
+                let fromFile = projectDir </> copyFromDir </> projectFile fromProjectId
                 copyFileFromSelf mode (userId user) fromFile toFile $ T.pack name'
           (False, "false") -> do
             let toDir = copyToDir </> (dirBase . nameToDirId . T.pack $ name')
@@ -177,8 +177,10 @@ deleteProjectHandler clientId = do
 listFolderHandler :: ClientId -> Snap ()
 listFolderHandler clientId = do
     (user, mode, finalDir, _) <- getFrequentParams False clientId
-    liftIO $ migrateUser $ userProjectDir mode (userId user)
-    liftIO $ ensureSharedCommentsDir mode (userId user)
+    liftIO $ do
+        ensureUserProjectDir mode (userId user)
+        migrateUser $ userProjectDir mode (userId user)
+        ensureSharedCommentsDir mode (userId user)
     let projectDir = userProjectDir mode (userId user)
     subHashedDirs <- liftIO $ listDirectoryWithPrefix $ projectDir </> finalDir
     let subHashedDirs' = case finalDir == "" of
@@ -264,7 +266,7 @@ newProjectHandler clientId = do
     case length (splitDirectories finalDir) of
       x | (x /= 0) && ((splitDirectories finalDir) !! 0 == "commentables") -> do
            modifyResponse $ setContentType "text/plain"
-           modifyResponse $ setResponseCode 500
+           modifyResponse $ setResponseCode 404
            writeBS . BC.pack $ "`commentables` Directory Does Not Allows New Projects"
         | otherwise -> do
            Just (project :: Project) <- decode . LB.fromStrict . fromJust <$> getParam "project"

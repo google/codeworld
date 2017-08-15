@@ -171,11 +171,12 @@ projectFileNames subHashedDirs = do
     hashedFiles <- dirFilter subHashedDirs 'S'
     projects <- fmap catMaybes $ forM hashedFiles $ \f -> do
         exists <- doesFileExist f
+        let fileName = takeFileName f
         case reverse f  of
-          x | take 3 x == "wc." && length x == 26 ->
+          x | take 3 x == "wc." && length fileName == 26 ->
                if exists then (fmap projectName) <$> (decode <$> LB.readFile f)
                          else return Nothing
-          x | take 5 x == "ofni." && length x == 28 ->
+          x | take 5 x == "ofni." && length fileName == 28 ->
                if exists then Just . T.decodeUtf8 <$> B.readFile f else return Nothing
           _ -> return Nothing
     return projects

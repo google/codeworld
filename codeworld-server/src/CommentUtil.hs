@@ -380,7 +380,7 @@ addSelf mode userId' userIdent' commentFolder = do
     ensureCommentHashDir mode commentHash
     B.writeFile commentHashPath $ BC.pack commentFolder
     LB.writeFile (commentHashPath <.> "users") $ encode . UserDump
-      userId' userIdent' $ T.pack $ drop (length commentFolder - 9) commentFolder
+      userId' userIdent' $ T.pack $ take (length commentFolder - 9) commentFolder
     createDirectoryIfMissing False $ commentFolder <.> "users"
     createDirectoryIfMissing False $ commentFolder <.> "versions"
     Just (project :: Project) <- decode <$>

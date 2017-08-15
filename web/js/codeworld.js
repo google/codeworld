@@ -277,7 +277,7 @@ function folderHandler(folderName, index, state) {
             allFolderNames.push([]);
             discoverProjects(nestedDirs.slice(1).join('/'), index + 1);
         }
-        if (window.move == undefined) {
+        if (window.move == undefined && window.copy == undefined) {
             setCode('');
             updateUI();
         } else {
@@ -332,6 +332,7 @@ function updateUI() {
     }
 
     window.move = undefined;
+    window.copy = undefined;
     document.getElementById('newButton').style.display = '';
     document.getElementById('runButtons').style.display = '';
 
@@ -350,26 +351,16 @@ function updateUI() {
 
     updateNavBar();
     document.getElementById('moveHereButton').style.display = 'none';
+    document.getElementById('copyHereButton').style.display = 'none';
     document.getElementById('cancelMoveButton').style.display = 'none';
+    document.getElementById('cancelCopyButton').style.display = 'none';
     if((openProjectName != null && openProjectName != '') || NDlength != 1) {
         document.getElementById('moveButton').style.display = '';
+        document.getElementById('copyButton').style.display = '';
     } else {
         document.getElementById('moveButton').style.display = 'none';
+        document.getElementById('copyButton').style.display = 'none';
     }
-
-   /* if (window.lineSet != undefined) {
-        for (i of lineSet) {
-            document.getElementsByClassName('CodeMirror-gutter-elt')[Number(i) + 1].innerHTML = '<i style="color: #8642f4;">c</i> ' + i;
-        }
-    }
-    //change that from elt to wrapper then find elt
-    var doc = window.codeworldEditor.getDoc();
-    doc.eachLine(function(f) {
-        let line = f.lineNo()
-        f.on('delete', function() {
-            shiftLineByX(line, -1);
-        });
-    });*/
 
     var title;
     if (window.openProjectName) {
@@ -528,12 +519,61 @@ function moveProject() {
         document.getElementById('moveButton').style.display = 'none';
         document.getElementById('moveHereButton').style.display = '';
         document.getElementById('cancelMoveButton').style.display = '';
+        document.getElementById('copyButton').style.display = 'none';
+        document.getElementById('copyHereButton').style.display = 'none';
+        document.getElementById('cancelCopyButton').style.display = 'none';
         document.getElementById('runButtons').style.display = 'none';
 
         window.move = Object();
         window.move.path = tempPath;
         if (tempOpen != null && tempOpen != '') {
             window.move.file = tempOpen;
+        }
+    }, false);
+}
+
+function copyProject() {
+    warnIfUnsaved(function() {
+        if (!signedIn()) {
+            sweetAlert('Oops!', 'You must sign in to copy this project or folder.', 'error');
+            updateUI();
+            return;
+        }
+
+        if ((openProjectName == null || openProjectName == '') && nestedDirs.length == 1) {
+            sweetAlert('Oops!', 'You must select a project or folder to copy.', 'error');
+            updateUI();
+            return;
+        }
+
+        var tempOpen = openProjectName;
+        var tempPath = nestedDirs.slice(1).join('/');
+        setCode('');
+        if (tempOpen == null || tempOpen == '') {
+            nestedDirs.splice(-1);
+            allProjectNames.splice(-1);
+            allFolderNames.splice(-1);
+        }
+        updateNavBar();
+        discoverProjects("", 0);
+        document.getElementById('newFolderButton').style.display = '';
+        document.getElementById('newButton').style.display = 'none';
+        document.getElementById('saveButton').style.display = 'none';
+        document.getElementById('saveAsButton').style.display = 'none';
+        document.getElementById('deleteButton').style.display = 'none';
+        document.getElementById('downloadButton').style.display = 'none';
+        document.getElementById('copyButton').style.display = 'none';
+        document.getElementById('copyHereButton').style.display = '';
+        document.getElementById('cancelCopyButton').style.display = '';
+        document.getElementById('moveButton').style.display = 'none';
+        document.getElementById('moveHereButton').style.display = 'none';
+        document.getElementById('cancelMoveButton').style.display = 'none';
+        document.getElementById('runButtons').style.display = 'none';
+
+        window.copy = Object();
+        window.copy.path = tempPath;
+        if (tempOpen != null && tempOpen != '') {
+            window.copy.file = tempOpen;
         }
     }, false);
 }
@@ -547,6 +587,17 @@ function moveHere() {
         updateUI();
     }
     moveHere_(nestedDirs.slice(1).join('/'), window.buildMode, successFunc);
+}
+
+function copyHere() {
+    function successFunc() {
+        nestedDirs = [""];
+        allProjectNames = [[]];
+        allFolderNames = [[]];
+        discoverProjects("", 0);
+        updateUI();
+    }
+    copyHere_(nestedDirs.slice(1).join('/'), window.buildMode, successFunc);
 }
 
 function changeFontSize(incr) {
@@ -662,14 +713,14 @@ function newProject() {
 
 function newFolder() {
     function successFunc() {
-        if (window.move == undefined)
+        if (window.move == undefined && window.copy == undefined)
             setCode('');
     }
     createFolder(nestedDirs.slice(1).join('/'), window.buildMode, successFunc);
 }
 
 function loadProject(name, index) {
-    if(window.move != undefined) {
+    if(window.move != undefined || window.copy != undefined) {
         return;
     }
     function successFunc(project){

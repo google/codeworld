@@ -341,6 +341,10 @@ function cancelMove() {
     updateUI();
 }
 
+function cancelCopy() {
+    updateUI();
+}
+
 function moveHere_(path, buildMode, successFunc) {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in before moving.', 'error');
@@ -360,20 +364,81 @@ function moveHere_(path, buildMode, successFunc) {
     data.append('moveTo', path);
     data.append('moveFrom', window.move.path);
     if (window.move.file != undefined) {
-        data.append('isFile', "true");
+        data.append('isFile', 'true');
         data.append('name', window.move.file);
     } else {
-        data.append('isFile', "false");
+        data.append('isFile', 'false');
     }
 
     sendHttp('POST', 'moveProject', data, function(request) {
         if (request.status != 200) {
-            sweetAlert('Oops', 'Could not move your project! Please try again.', 'error');
+            if (request.status == 404) {
+                sweetAlert('Oops!', request.responseText, 'error');
+            } else {
+                sweetAlert('Oops', 'Could not move your project! Please try again.', 'error');
+            }
             cancelMove();
             return;
         }
         successFunc();
     });
+}
+
+function copyHere_(path, buildMode, successFunc) {
+    if (!signedIn()) {
+        sweetAlert('Oops!', 'You must sign in before moving.', 'error');
+        cancelCopy();
+        return;
+    }
+
+    if (window.copy == undefined) {
+        sweetAlert('Oops!', 'You must first select something to copy.', 'error');
+        cancelCopy();
+        return;
+    }
+    function go() {
+        sendHttp('POST', 'copyProject', data, function(request) {
+            if (request.status != 200) {
+                if (request.status == 404) {
+                    sweetAlert('Oops!', request.responseText, 'error');
+                } else {
+                    sweetAlert('Oops!', 'Could not copy your project! Please try again.', 'error');
+                }
+                cancelCopy();
+                return;
+            }
+            successFunc();
+        });
+    }
+
+    var data = new FormData();
+    data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
+    data.append('mode', buildMode);
+    data.append('copyTo', path);
+    data.append('copyFrom', window.copy.path);
+    if (window.copy.file != undefined) {
+        data.append('isFile', 'true');
+        data.append('empty', JSON.stringify(getCurrentProject()['history']));
+        data.append('fromName', window.copy.file);
+        sweetAlert({
+            html: true,
+            title: '<i class="mdi mdi-72px mdi-content-copy"></i>&nbsp; Copy File',
+            text: 'Enter a name for your file to be created at /' + path + ':',
+            type: 'input',
+            inputValue: '',
+            confirmButtonText: 'Copy',
+            showCancelButton: true,
+            closeOnConfirm: false
+        }, function (name) {
+            sweetAlert.close();
+            data.append('name', name);
+            go();
+        });
+    } else {
+        data.append('isFile', 'false');
+        go();
+    }
+
 }
 
 function warnIfUnsaved(action, showAnother) {
@@ -627,9 +692,54 @@ function newProject_(path) {
             if (fileName == null || fileName == '') {
                 return;
             }
-
+            sweetAlert.close();
             setCode('');
-            saveProjectBase(path, fileName, 'create');
+
+            function go_() {
+                sweetAlert.close();
+                var project = getCurrentProject();
+                project['name'] = fileName;
+
+                var data = new FormData();
+                data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
+                data.append('project', JSON.stringify(project));
+                data.append('mode', window.buildMode);
+                data.append('path', path);
+
+                sendHttp('POST', 'newProject', data, function (request) {
+                    if (request.status != 200) {
+                        if (request.status != 404) {
+                            sweetAlert('Oops!', 'Could not create your project!!! Please try, again', 'error');
+                        } else {
+                            sweetAlert('Oops!', request.responseText, 'error');
+                        }
+                        return;
+                    }
+
+                    window.openProjectName = fileName;
+                    var doc = window.codeworldEditor.getDoc();
+                    window.savedGeneration = doc.changeGeneration(true);
+                    updateUI();
+
+                    if (allProjectNames[allProjectNames.length - 1].indexOf(fileName) == -1) {
+                        discoverProjects(path, allProjectNames.length - 1);
+                    }
+                });
+            }
+
+            if (allProjectNames[allProjectNames.length - 1].indexOf(fileName) == -1) {
+                go_();
+            } else {
+                var msg = 'Are you sure you want to create new project over another one?\n\n' +
+                    'The previous contents of ' + fileName + ' will be permanently destroyed!';
+                sweetAlert({
+                    title: 'warning',
+                    text: msg,
+                    showCancelButton: true,
+                    confirmButtonColor: '#DD6B55',
+                    confirmButtonText: 'Yes, overwrite it!'
+                }, go_);
+            }
         }
 
         sweetAlert({

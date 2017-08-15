@@ -493,7 +493,7 @@ foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
                         Callback (JSVal -> IO ()) ->    -- selectShape
                         IO ()
 
-foreign import javascript unsafe "window.debugMode"
+foreign import javascript unsafe "window.debugActive"
     js_isDebugModeActive :: IO Bool
 
 foreign import javascript unsafe "startDebugMode()"
@@ -1311,7 +1311,7 @@ runInspect initial stepHandler eventHandler drawHandler = do
     inspect (drawHandlerWrapper <$> getState) (sendEvent . PauseEvent) (\_ -> return ()) (\_ -> return ())
 
 -- Allows pictures to be inspected using a built-in pause button
-runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
+runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (Bool -> s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
 runPauseable initial stepHandler eventHandler drawHandler isPaused setPaused = do
     Just window <- currentWindow
     Just doc <- currentDocument
@@ -1321,17 +1321,20 @@ runPauseable initial stepHandler eventHandler drawHandler isPaused setPaused = d
             NormalEvent event -> eventHandler event s
             PauseEvent paused -> setPaused paused s
 
-    (sendEvent, getState) <- run initial stepHandler eventHandlerWrapper drawHandler
+    (sendEvent, getState) <- run initial stepHandler eventHandlerWrapper $ drawHandler True
 
     onEvents canvas $ \event -> do
         debugActive <- isDebugModeActive
-        when debugActive $ do
-            nextStatePaused <- isPaused <$> eventHandler event <$> getState
-            when (not nextStatePaused) $ setDebugModeActive False
         sendEvent $ NormalEvent event
+        when debugActive $ do
+            stillPaused <- isPaused <$> getState
+            -- Even if Debug Mode remains active after the event,
+            -- startDebugMode still needs to be called to ensure
+            -- debugmode.js has an up-to-date copy of the Picture.
+            setDebugModeActive stillPaused
 
     let picIfUnpaused state = case isPaused state of
-            True  -> drawHandler state
+            True  -> drawHandler False state
             False -> pictures []
         sendPause = sendEvent $ PauseEvent True
 
@@ -1432,8 +1435,8 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
 runInspect :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
 runInspect = run
 
-runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
-runPauseable initial stepHandler eventHandler drawHandler _ _ = run initial stepHandler eventHandler drawHandler
+runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (Bool -> s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
+runPauseable initial stepHandler eventHandler drawHandler _ _ = run initial stepHandler eventHandler $ drawHandler True
 
 getDeployHash :: IO Text
 getDeployHash = error "game API unimplemented in stand-alone interface mode"
@@ -1530,8 +1533,10 @@ handleControl _ _     _             w = w
 
 wrappedDraw :: (Wrapped a -> [Control a])
      -> (a -> Picture)
-     -> Wrapped a -> Picture
-wrappedDraw ctrls f w = drawControlPanel ctrls w <> f (state w)
+     -> Bool -> Wrapped a -> Picture
+wrappedDraw ctrls f c w
+    | c = drawControlPanel ctrls w <> f (state w)
+    | otherwise = f (state w)
 
 drawControlPanel :: (Wrapped a -> [Control a]) -> Wrapped a -> Picture
 drawControlPanel ctrls w

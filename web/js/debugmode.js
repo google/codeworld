@@ -82,9 +82,9 @@ function startDebugMode() {
     if (!window.debugAvailable) {
         throw new Error("Debug mode is not available.");
     }
-    window.debugCurrentPic = debugGetPicture();
     window.debugActive = true;
     window.debugSetActive(true);
+    window.debugCurrentPic = debugGetPicture();
     parent.updateUI();
 }
 
@@ -94,6 +94,7 @@ function stopDebugMode() {
     }
     window.debugActive = false;
     window.debugSetActive(false);
+    window.debugCurrentPic = null;
     parent.updateUI();
 }
 

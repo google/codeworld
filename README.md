@@ -10,10 +10,10 @@ to run programs right in the web browser using GHCJS.
 
 Other options include:
 
-- The use of plain Haskell instead of the educational variant, to build
+- The use of [plain Haskell](https://code.world/haskell) instead of the educational variant, to build
   programs which can either be on the web site with GHCJS, or compiled
   natively with the `codeworld-api` package and `blank-canvas`.
-- A block-based programming interface for drag and drop programming
+- A [block-based programming interface](https://code.world/blocks) for drag and drop programming
   following the same mathematical model.
 
 Status

@@ -357,6 +357,20 @@ function moveHere_(path, buildMode, successFunc) {
         cancelMove();
         return;
     }
+    function go() {
+        sendHttp('POST', 'moveProject', data, function(request) {
+            if (request.status != 200) {
+                if (request.status == 404) {
+                    sweetAlert('Oops!', request.responseText, 'error');
+                } else {
+                    sweetAlert('Oops!', 'Could not move your project! Please try again.', 'error');
+                }
+                cancelMove();
+                return;
+            }
+            successFunc();
+        });
+    }
 
     var data = new FormData();
     data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
@@ -365,28 +379,30 @@ function moveHere_(path, buildMode, successFunc) {
     data.append('moveFrom', window.move.path);
     if (window.move.file != undefined) {
         data.append('isFile', 'true');
-        data.append('name', window.move.file);
+        data.append('fromName', window.move.file);
+        sweetAlert({
+            html: true,
+            title: '<i class="mdi mdi-72px mdi-folder-move"></i>&nbsp; Move File',
+            text: 'Enter a name for your file to be created at /' + path + ':',
+            type: 'input',
+            inputValue: '',
+            confirmButtonText: 'Move',
+            showCancelButton: true,
+            closeOnConfirm: false
+        }, function (name) {
+            sweetAlert.close();
+            data.append('name', name);
+            go();
+        });
     } else {
         data.append('isFile', 'false');
+        go();
     }
-
-    sendHttp('POST', 'moveProject', data, function(request) {
-        if (request.status != 200) {
-            if (request.status == 404) {
-                sweetAlert('Oops!', request.responseText, 'error');
-            } else {
-                sweetAlert('Oops', 'Could not move your project! Please try again.', 'error');
-            }
-            cancelMove();
-            return;
-        }
-        successFunc();
-    });
 }
 
 function copyHere_(path, buildMode, successFunc) {
     if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in before moving.', 'error');
+        sweetAlert('Oops!', 'You must sign in before copying.', 'error');
         cancelCopy();
         return;
     }
@@ -438,7 +454,6 @@ function copyHere_(path, buildMode, successFunc) {
         data.append('isFile', 'false');
         go();
     }
-
 }
 
 function warnIfUnsaved(action, showAnother) {
@@ -527,7 +542,12 @@ function saveProjectBase_(path, projectName, mode, successFunc, type) {
 
         sendHttp('POST', 'saveProject', data, function(request) {
             if (request.status != 200) {
-                sweetAlert('Oops!', 'Could not ' + type + ' your project!!!  Please try again.', 'error');
+                if (request.status == 404) {
+                    sweetAlert('Oops!', request.responseText, 'error');
+                } else {
+                    sweetAlert('Oops!', 'Could not ' + type + ' your project!!!  Please try again.', 'error');
+                }
+                updateUI();
                 return;
             }
 
@@ -577,6 +597,14 @@ function deleteProject_(path, buildMode, successFunc) {
             if (request.status == 200) {
                 successFunc();
                 discoverProjects(path, allProjectNames.length - 1);
+            } else {
+                if (request.status == 404) {
+                    sweetAlert('Oops!', request.responseText, 'error');
+                } else {
+                    sweetAlert('Oops!', 'Unable to delete the file. Please, try again!', 'error');
+                }
+                updateUI();
+                return;
             }
         });
     }
@@ -615,6 +643,14 @@ function deleteFolder_(path, buildMode, successFunc) {
                 allProjectNames.pop();
                 allFolderNames.pop();
                 discoverProjects(nestedDirs.slice(1).join('/'), allProjectNames.length - 1);
+            } else {
+                if (request.status == 404) {
+                    sweetAlert('Oops!', request.responseText, 'error');
+                } else {
+                    sweetAlert('Oops!', 'Unable to delete the folder. Please, try again!', 'error');
+                }
+                updateUI();
+                return;
             }
         });
     }
@@ -654,7 +690,12 @@ function createFolder(path, buildMode, successFunc) {
 
             sendHttp('POST', 'createFolder', data, function(request) {
                 if (request.status != 200) {
-                    sweetAlert('Oops', 'Could not create your directory! Please try again.', 'error');
+                    if (request.status == 404) {
+                        sweetAlert('Oops!', request.responseText, 'error');
+                    } else {
+                        sweetAlert('Oops', 'Could not create your directory! Please try again.', 'error');
+                    }
+                    updateUI();
                     return;
                 }
 
@@ -778,6 +819,14 @@ function loadProject_(index, name, buildMode, successFunc) {
             window.allFolderNames = allFolderNames.slice(0, index + 1);
             updateUI();
             successFunc(project);
+        } else {
+            if (request.status == 404) {
+                sweetAlert('Oops!', request.responseText, 'error');
+            } else {
+                sweetAlert('Oops!', 'Could not load the project. Please try again!', 'error');
+            }
+            updateUI();
+            return;
         }
     });
   }, false);

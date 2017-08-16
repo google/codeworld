@@ -73,9 +73,10 @@ getFrequentParams getType clientId = do
         let projectId = nameToProjectId $ T.decodeUtf8 name
             finalDir = joinPath $ map (dirBase . nameToDirId . T.pack) path'
             commentFolder = commentRootDir mode (userId user) finalDir projectId
-        case path' !! 0 of
-          x | x /= "commentables" -> do
-            return (user, mode, commentFolder)
+        case length path' of
+          0 -> return (user, mode, commentFolder)
+          _ -> case path' !! 0 of
+            x | x /= "commentables" -> return (user, mode, commentFolder)
       2 -> do
         Just commentHash <- fmap (CommentId . T.decodeUtf8) <$> getParam "chash"
         commentFolder <- liftIO $
@@ -114,12 +115,12 @@ addSharedCommentHandler clientId = do
         case res of
           Left err -> do
             modifyResponse $ setContentType "text/plain"
-            modifyResponse $ setResponseCode 500
+            modifyResponse $ setResponseCode 404
             writeBS . BC.pack $ err
           Right _ -> return ()
       _ -> do
         modifyResponse $ setContentType "text/plain"
-        modifyResponse $ setResponseCode 500
+        modifyResponse $ setResponseCode 404
         writeBS . BC.pack $ "Shared Comments Should Be In `commentables` Directory"
 
 commentShareHandler :: ClientId -> Snap ()

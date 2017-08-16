@@ -132,7 +132,7 @@ createFolderHandler clientId = do
     case finalDir == "commentables" of
       True -> do
         modifyResponse $ setContentType "text/plain"
-        modifyResponse $ setResponseCode 500
+        modifyResponse $ setResponseCode 404
         writeBS . BC.pack $
           "`commentables` Hash Directory Is Forbidden In Root Folder For User Use"
       False -> do
@@ -144,7 +144,7 @@ createFolderHandler clientId = do
             case res of
               Left err -> do
                 modifyResponse $ setContentType "text/plain"
-                modifyResponse $ setResponseCode 500
+                modifyResponse $ setResponseCode 404
                 writeBS . BC.pack $ err
               Right _ -> liftIO $ do
                 createNewFolder mode (userId user) finalDir (last path')
@@ -158,7 +158,7 @@ deleteFolderHandler clientId = do
     case res of
       Left err -> do
         modifyResponse $ setContentType "text/plain"
-        modifyResponse $ setResponseCode 500
+        modifyResponse $ setResponseCode 404
         writeBS . BC.pack $ err
       Right _ -> return ()
 
@@ -199,7 +199,7 @@ loadProjectHandler clientId = do
     case length (splitDirectories finalDir) of
       x | (x /= 0) && ((splitDirectories finalDir) !! 0 == "commentables") -> do
            modifyResponse $ setContentType "text/plain"
-           modifyResponse $ setResponseCode 500
+           modifyResponse $ setResponseCode 404
            writeBS . BC.pack $ "Wrong Route To View A Source In `commentables` Directory"
         | otherwise -> do
            let file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
@@ -257,7 +257,7 @@ moveProjectHandler clientId = do
           (_, _) -> return ()
       False -> do
         modifyResponse $ setContentType "text/plain"
-        modifyResponse $ setResponseCode 500
+        modifyResponse $ setResponseCode 404
         writeBS . BC.pack $ "Cannot Move From `commentables` to Normal and vice-versa"
 
 newProjectHandler :: ClientId -> Snap ()
@@ -315,7 +315,7 @@ saveProjectHandler clientId = do
     case length (splitDirectories finalDir) of
       x | (x /= 0) && ((splitDirectories finalDir) !! 0 == "commentables") -> do
            modifyResponse $ setContentType "text/plain"
-           modifyResponse $ setResponseCode 500
+           modifyResponse $ setResponseCode 404
            writeBS . BC.pack $ "`commentables` Directory Does Not Allows Editing Projects"
         | otherwise -> do
            Just (project :: Project) <- decode . LB.fromStrict . fromJust <$> getParam "project"

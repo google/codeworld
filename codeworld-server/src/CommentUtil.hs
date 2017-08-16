@@ -83,22 +83,25 @@ cleanCommentPaths mode commentFolder = do
         Just (currentUsers :: [UserDump]) <- decode <$>
           LB.readFile (commentHashPath <.> "users")
         forM_ currentUsers $ \u -> do
-            removeFileIfExists $ T.unpack (upath u)
-            removeFileIfExists $ T.unpack (upath u) <.> "info"
-            cleanBaseDirectory $ T.unpack (upath u)
+            case uuserIdent u of
+              "Anonymous Owner" -> return ()
+              _ -> do
+                removeFileIfExists $ T.unpack (upath u)
+                removeFileIfExists $ T.unpack (upath u) <.> "info"
+                cleanBaseDirectory $ T.unpack (upath u)
         removeFileIfExists $ commentHashPath <.> "users"
         cleanBaseDirectory commentHashPath
       False -> return ()
 
 deleteFolderWithComments :: BuildMode -> Text -> FilePath -> IO (Either String ())
 deleteFolderWithComments mode userId' finalDir = do
-    dirBool <- doesDirectoryExist finalDir
+    let dir' = userProjectDir mode userId' </> finalDir
+    dirBool <- doesDirectoryExist dir'
     case dirBool of
       True -> do
         case finalDir == "commentables" of
           True -> return $ Left "`commentables` Directory Cannot Be Deleted"
           False -> do
-            let dir' = userProjectDir mode userId' </> finalDir
             allFilePaths <- getFilesRecursive dir'
             case length (splitDirectories finalDir) of
               x | x == 0 -> return $ Left "Root Directory Cannot Be Deleted"
@@ -379,8 +382,8 @@ addSelf mode userId' userIdent' commentFolder = do
     createDirectoryIfMissing False commentFolder
     ensureCommentHashDir mode commentHash
     B.writeFile commentHashPath $ BC.pack commentFolder
-    LB.writeFile (commentHashPath <.> "users") $ encode . UserDump
-      userId' userIdent' $ T.pack $ take (length commentFolder - 9) commentFolder
+    LB.writeFile (commentHashPath <.> "users") $ encode (UserDump
+      userId' userIdent' (T.pack $ take (length commentFolder - 9) commentFolder) : [])
     createDirectoryIfMissing False $ commentFolder <.> "users"
     createDirectoryIfMissing False $ commentFolder <.> "versions"
     Just (project :: Project) <- decode <$>

@@ -89,14 +89,7 @@ function init() {
                 }
             });
         } else if (hash[0] == 'C') {
-            sendHttp('GET', 'viewCommentSource?chash=' + hash + '&mode=' + window.buildMode, null, function(request) {
-                if(request.status == 200) {
-                    setCode(request.responseText, null, null, false);
-                    window.location.hash = '#' + hash;
-                    checkForCommentHash();
-                    window.chash = hash;
-                }
-            });
+            addSharedComment();
         } else if (hash[0] != 'F') {
             setCode('');
             if (!signedIn()) help();
@@ -143,11 +136,19 @@ function initCodeworld() {
     window.codeworldEditor.refresh();
 
     CodeMirror.commands.save = function(cm) {
-        saveProject();
+        if (window.openProjectName == '' || window.openProjectName == undefined) {
+            newProject();
+        } else {
+            saveProject();
+        }
     }
     document.onkeydown = function(e) {
         if (e.ctrlKey && e.keyCode === 83) { // Ctrl+S
-            saveProject();
+            if (window.openProjectName == '' || window.openProjectName == undefined) {
+                newProject();
+            } else {
+                saveProject();
+            }
             return false;
         }
         if (e.ctrlKey && e.keyCode === 73) { // Ctrl+I
@@ -483,7 +484,6 @@ function updateNavBar() {
         document.getElementById('compileButton').style.display = '';
         document.getElementById('stopButton').style.display = '';
     }
-    checkForCommentHash();
 }
 
 function moveProject() {
@@ -726,12 +726,6 @@ function loadProject(name, index) {
     function successFunc(project){
         setCode(project.source, project.history, name);
         addPresentCommentInd();
-        /*var doc = window.codeworldEditor.getDoc();
-        doc.eachLine(function(f) {
-            f.on('delete', function() {
-                shiftLineByX(f.lineNo(), -1);
-            });
-        });*/
     }
     loadProject_(index, name, window.buildMode, successFunc);
 }

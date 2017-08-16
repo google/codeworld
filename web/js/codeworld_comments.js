@@ -14,19 +14,90 @@
  * limitations under the License.
  */
 
-function checkForCommentHash() {
-    var hash = window.location.hash.slice(1);
-    if (hash.length > 0) {
-        if (hash.slice(-2) == '==') {
-            hash = hash.slice(0, -2);
-        }
-        if (hash[0] == 'C') {
-            document.getElementById('askFeedbackButton').style.display = '';
-            document.getElementById('stopButton').style.display = '';
-            document.getElementById('compileButton').style.display = '';
-        }
+function addSharedComment() {
+    if (!signedIn()) {
+        sweetAlert('Oops!', 'You must sign in to view this!', 'error');
+        updateUI();
+        return;
     }
-    return;
+    var id_token = auth2.currentUser.get().getAuthResponse().id_token;
+    var data = new FormData();
+    data.append('id_token', id_token);
+    data.append('mode', window.buildMode);
+    data.append('chash', hash);
+
+    function go() {
+        sendHttp('POST', 'addSharedComment', data, function(request) {
+            if(request.status == 200) {
+                setCode('');
+                nestedDirs = [""];
+                allProjectNames = [[]];
+                allFolderNames = [[]];
+                discoverProjects("", 0);
+                updateUI();
+                sweetAlert('Success!', 'The shared folder is moved into the specifed directory.', 'success');
+                return;
+            } else {
+                if (request.status == 404) {
+                    sweetAlert('Oops!', request.responseText, 'error');
+                } else {
+                    sweetAlert('Oops!', 'Could not add you to the file. Please try again!', 'error');
+                }
+                updateUI();
+                return;
+            }
+        });
+    }
+
+    // improve upon this UI
+    sweetAlert({
+        title: 'Path to store to(relative with respect to commentables):',
+        type: 'input',
+        showCancelButton: true,
+        showConfirmButton: true,
+        comfirmButtonText: 'Next',
+        inputValue: '/commentables/',
+        closeOnConfirm: false
+    }, function (path) {
+        if (path == undefined || path == '') {
+            return;
+        }
+        if (!(path.startsWith('/commentables/') || path.startsWith('commentables/') || path == '/commentables' || path == 'commentables')) {
+            if (path[0] == '/') {
+                path = 'commentables' + path;
+            } else {
+                path = 'commentables/' + path;
+            }
+        }
+        data.append('path', path);
+        sweetAlert({
+            title: 'Name of the file',
+            type: 'input',
+            showCancelButton: true,
+            showConfirmButton: true,
+            confirmButtonText: 'Next',
+            closeOnConfirm: false
+        }, function (name) {
+            if (name == undefined || name == '') {
+                return;
+            }
+            data.append('name', name);
+            sweetAlert({
+                title: 'Choose a user name for this file:',
+                type: 'input',
+                showCancelButton: true,
+                showConfirmButton: true,
+                confirmButtonText: 'Add',
+                closeOnConfirm: true
+            }, function (userIdent) {
+                if (userIdent == '' || userIdent == undefined) {
+                    return;
+                }
+                data.append('userIdent', userIdent);
+                    go();
+            });
+        });
+    });
 }
 
 function shareForFeedback() {
@@ -36,31 +107,8 @@ function shareForFeedback() {
         return;
     }
     if (openProjectName == '' || openProjectName == null) {
-        var hash = window.location.hash.slice(1);
-        if (hash.length > 0) {
-            if (hash.slice(-2) == '==') {
-                hash = hash.slice(0, -2);
-            }
-            if (hash[0] == 'C') {
-                sweetAlert({
-                    html: true,
-                    title: '<i class="mdi mdi-72px mdi-comment-text-outline">&nbsp; Ask Feedback</i>',
-                    text: msg,
-                    type: 'input',
-                    inputValue: window.location.href,
-                    showConfirmButton: false,
-                    showCancelButton: true,
-                    cancelButtonText: 'Done',
-                    animation: 'slide-from-bottom'
-                });
-            } else {
-                sweetAlert('Oops!', 'You must select your project for feedback!', 'error');
-                updateUI();
-            }
-        } else {
-            sweetAlert('Oops!', 'You must select a project for feedback!', 'error');
-            updateUI();
-        }
+        sweetAlert('Oops!', 'You must select a project for feedback!', 'error');
+        updateUI();
         return;
     }
     var path = nestedDirs.slice(1).join('/');
@@ -134,15 +182,7 @@ function addPresentCommentInd() {
 }
 
 function toggleUserComments(cm, line, gutter) {
-    var hash = window.location.hash.slice(1);
-    if (hash.length > 0) {
-        if (hash.slice(-2) == '==') {
-            hash = hash.slice(0, -2);
-        }
-        if (hash.length > 0 && hash[0] != 'C') {
-            return;
-        }
-    } else if (openProjectName == null || openProjectName == '') {
+    if (openProjectName == null || openProjectName == '') {
         return;
     }
     doc = codeworldEditor.getDoc();
@@ -520,81 +560,4 @@ function deleteReply(ind, commentIdx, line) {
             go(request);
         });
     }
-}
-/*
-function shiftLineByX(lineNo, x) {
-    if (!signedIn()) {
-        sweetAlert('Oops!', 'Please sign in to continue, otherwise the comments in the file will be misplaced.', 'error');
-        return;
-    }
-    if (openProjectName == null || openProjectName == '') {
-        return;
-    }
-    if (window.openCommentLines != undefined) {
-        return;
-    }
-    console.log(lineNo)
-    if (window.currentShift != undefined) {
-        if (window.pendingShifts == undefined) {
-            window.pendingShifts = [[],[]];
-        }
-        if (openProjectName != window.currentShiftFile || nestedDirs.slice(1).join('/') != window.currentShiftDir) {
-            return;
-        }
-        window.pendingShifts[0].push(lineNo);
-        window.pendingShifts[1].push(x);
-    } else {
-        window.currentShift = [[lineNo], [x]];
-        window.currentShiftFile = openProjectName;
-        window.currentShiftDir = nestedDirs.slice(1).join('/');
-        var data = new FormData();
-        data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-        data.append('mode', window.buildMode);
-        data.append('path', window.currentShiftDir);
-        data.append('name', window.currentShiftFile);
-        data.append('shifts', JSON.stringify([[lineNo], [x]]));
-        sendHttp('POST', 'shiftLinesByXs', data, function(request) {
-            if (request.status != 200) {
-                sweetAlert('Oops!', 'Could not update comments according to the new line changes! Reverting back to previous version.', 'error');
-                revertBack();
-                return;
-            }
-            if (window.pendingShifts != undefined) {
-                var data = new FormData();
-                data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-                data.append('mode', window.buildMode);
-                data.append('path', window.currentShiftDir);
-                data.append('name', window.currentShiftFile);
-                data.append('shifts', JSON.stringify(window.pendingShifts));
-                window.currentShift = window.pendingShifts;
-                window.pendingShifts = undefined;
-                sendHttp('POST', 'shiftLinesByXs', data, function(request) {
-                    if (request.status != 200) {
-                        sweetAlert('Oops!', 'Could not update comments according to the new line changes!', 'error');
-                        return;
-                    }
-                    window.currentShift = undefined;
-                    window.currentShiftFile = undefined;
-                    window.currentShiftDir = undefined;
-                });
-
-            } else {
-                window.currentShift = undefined;
-                window.currentShiftFile = undefined;
-                window.currentShiftDir = undefined;
-            }
-        });
-    }
-}
-
-function revertBack() {
-
-}*/
-
-function randomString(length = 32, chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') {
-    var result = '';
-    for (var i = length; i > 0; i--) {
-        result += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return result;
 }

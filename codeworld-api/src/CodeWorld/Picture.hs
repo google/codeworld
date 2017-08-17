@@ -47,6 +47,12 @@ rotatedVector angle (x,y) = (x * cos angle - y * sin angle,
 dotProduct :: Vector -> Vector -> Double
 dotProduct (x1, y1) (x2, y2) = x1 * x2 + y1 * y2
 
+-- TODO (Eric): This is a temporary solution to the problem of creating a
+--              picture from a drawstate (Picture shouldn't know about
+--              DrawState). This can possibly be fixed by having another
+--              structure for pictures in Driver?
+type DS = (Double, Double, Double, Double, Double, Double, Maybe Color)
+
 data Picture = Polygon CallStack [Point] !Bool
              | Path CallStack [Point] !Double !Bool !Bool
              | Sector CallStack !Double !Double !Double
@@ -56,6 +62,7 @@ data Picture = Polygon CallStack [Point] !Bool
              | Translate CallStack !Double !Double !Picture
              | Scale CallStack !Double !Double !Picture
              | Rotate CallStack !Double !Picture
+             | Transform CallStack (DS -> DS) !Picture
              | Pictures CallStack [Picture]
              | Logo CallStack
 

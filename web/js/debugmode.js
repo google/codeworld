@@ -180,7 +180,14 @@ window.addEventListener("blur", function (evt) {
 });
 
 window.addEventListener("mousemove", function (evt) {
-    if (!window.debugMode) return;
+    if (!window.debugActive) return;
 
-    // TODO
+    var nodeId = window.debugGetNode({
+        x: evt.clientX,
+        y: evt.clientY
+    });
+
+    console.log("Node: ", nodeId);
+
+    window.debugHighlightShape(false,nodeId);
 });

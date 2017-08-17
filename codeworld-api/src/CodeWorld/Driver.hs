@@ -266,11 +266,11 @@ drawCodeWorldLogo ctx ds x y w h = do
 type PicNode = Int
 
 inspectStatic :: Picture -> IO ()
-inspectStatic pic = inspect (return pic) (\_ -> return ()) (\_ -> return ()) (\_ -> return ())
+inspectStatic pic = inspect (return pic) (\_ -> return ()) (\_ _ -> return ())
 
-inspect :: IO Picture -> (Bool -> IO ()) -> (Int -> IO ()) -> (Int -> IO ()) -> IO ()
-inspect getPic handleActive highlight select =
-    initDebugMode (handlePointRequest getPic) handleActive getPic highlight select
+inspect :: IO Picture -> (Bool -> IO ()) -> (Bool -> Maybe PicNode -> IO ()) -> IO ()
+inspect getPic handleActive highlight =
+    initDebugMode (handlePointRequest getPic) handleActive getPic highlight
 
 handlePointRequest :: IO Picture -> Point -> IO (Maybe PicNode)
 handlePointRequest getPic pt = do
@@ -280,10 +280,9 @@ handlePointRequest getPic pt = do
 initDebugMode :: (Point -> IO (Maybe PicNode)) ->
                  (Bool -> IO ()) ->
                  IO Picture ->
-                 (PicNode -> IO ()) ->
-                 (PicNode -> IO ()) ->
+                 (Bool -> Maybe PicNode -> IO ()) ->
                  IO ()
-initDebugMode getnode setactive getpicture highlight select = do
+initDebugMode getnode setactive getpicture highlight = do
     getnodeCB <- syncCallback1' $ \pointJS -> do
         let obj = unsafeCoerce pointJS
         x <- pFromJSVal <$> getProp "x" obj
@@ -291,10 +290,14 @@ initDebugMode getnode setactive getpicture highlight select = do
         pToJSVal . fromMaybe (-1) <$> getnode (x,y)
     setactiveCB <- syncCallback1 ContinueAsync $ setactive . pFromJSVal
     getpictureCB <- syncCallback' $ getpicture >>= picToObj
-    highlightCB <- syncCallback1 ContinueAsync $ highlight . pFromJSVal
-    selectCB <- syncCallback1 ContinueAsync $ select . pFromJSVal
+    highlightCB <- syncCallback2 ContinueAsync $ \t n ->
+        let select = pFromJSVal t
+            node = case ((pFromJSVal n)::Int)<0 of
+                True  -> Nothing
+                False -> Just $ pFromJSVal n
+        in highlight select node
 
-    js_initDebugMode getnodeCB setactiveCB getpictureCB highlightCB selectCB
+    js_initDebugMode getnodeCB setactiveCB getpictureCB highlightCB
 
 picToObj :: Picture -> IO JSVal
 picToObj = fmap fst . unsafeCoerce . picToObj' 0
@@ -363,6 +366,7 @@ picToObj' id pic = case pic of
         setProp "pictures" (unsafeCoerce arr) obj
         return (nextId-1)
     Logo cs -> mkPicObj "logo" $ \obj -> return id
+    _ -> mkPicObj "unknown" $ \obj -> return id
     where
         mkPicObj (tp::JSString) addSpecifics = do
             obj <- create
@@ -404,6 +408,7 @@ getPictureCS (Color cs _ _)       = cs
 getPictureCS (Translate cs _ _ _) = cs
 getPictureCS (Scale cs _ _ _)     = cs
 getPictureCS (Rotate cs _ _)      = cs
+getPictureCS (Transform cs _ _)   = cs
 getPictureCS (Pictures cs _)      = cs
 getPictureCS (Logo cs)            = cs
 
@@ -424,6 +429,7 @@ findTopPicture ctx ds pic = case pic of
     Translate _ x y p  -> map2 (+1) $ findTopPicture ctx (translateDS x y ds) p
     Scale _ x y p      -> map2 (+1) $ findTopPicture ctx (scaleDS x y ds) p
     Rotate _ r p       -> map2 (+1) $ findTopPicture ctx (rotateDS r ds) p
+    Transform _ f p    -> map2 (+1) $ findTopPicture ctx (f ds) p
     Pictures _ []      -> return (False,1)
     Pictures _ (p:ps)  -> do
         (found, count) <- findTopPicture ctx ds p
@@ -485,12 +491,11 @@ foreign import javascript unsafe "$3.isPointInPath($1,$2)"
 foreign import javascript unsafe "$3.isPointInStroke($1,$2)"
     js_isPointInStroke :: Double -> Double -> Canvas.Context -> IO Bool
 
-foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
+foreign import javascript unsafe "initDebugMode($1,$2,$3,$4)"
     js_initDebugMode :: Callback (JSVal -> IO JSVal) -> -- getNode
                         Callback (JSVal -> IO ()) ->    -- setActive
                         Callback (IO JSVal) ->          -- getPicture
-                        Callback (JSVal -> IO ()) ->    -- highlightShape
-                        Callback (JSVal -> IO ()) ->    -- selectShape
+                        Callback (JSVal -> JSVal -> IO ()) ->    -- highlightShape
                         IO ()
 
 foreign import javascript unsafe "window.debugActive"
@@ -609,6 +614,7 @@ drawPicture ctx ds (Color _ col p)     = drawPicture ctx (setColorDS col ds) p
 drawPicture ctx ds (Translate _ x y p) = drawPicture ctx (translateDS x y ds) p
 drawPicture ctx ds (Scale _ x y p)     = drawPicture ctx (scaleDS x y ds) p
 drawPicture ctx ds (Rotate _ r p)      = drawPicture ctx (rotateDS r ds) p
+drawPicture ctx ds (Transform _ f p)   = drawPicture ctx (f ds) p
 drawPicture ctx ds (Pictures _ ps)     = mapM_ (drawPicture ctx ds) (reverse ps)
 
 drawFrame :: Canvas.Context -> Picture -> IO ()
@@ -786,6 +792,7 @@ drawPicture ds (Color _ col p)     = drawPicture (setColorDS col ds) p
 drawPicture ds (Translate _ x y p) = drawPicture (translateDS x y ds) p
 drawPicture ds (Scale _ x y p)     = drawPicture (scaleDS x y ds) p
 drawPicture ds (Rotate _ r p)      = drawPicture (rotateDS r ds) p
+drawPicture ds (Transform _ f p)   = drawPicture (f ds) p
 drawPicture ds (Pictures _ ps)     = mapM_ (drawPicture ds) (reverse ps)
 
 setupScreenContext :: (Int, Int) -> Canvas ()
@@ -1282,8 +1289,8 @@ run initial stepHandler eventHandler drawHandler = do
     forkIO $ go t0 nullFrame initialStateName True
     return (sendEvent, getState)
 
-data StateWrapper s = StateWrapper Bool s
-data EventWrapper = NormalEvent Event | PauseEvent Bool
+data StateWrapper s = StateRunning s | StatePaused s | StateHighlight PicNode s
+data EventWrapper = NormalEvent Event | PauseEvent Bool | HighlightEvent PicNode
 
 -- Wraps the event and state from run so they can be paused by pressing the Inspect
 -- button.
@@ -1293,22 +1300,44 @@ runInspect initial stepHandler eventHandler drawHandler = do
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
 
-    let initialWrapper = StateWrapper False initial
-        stepHandlerWrapper dt (StateWrapper paused state) = case paused of
-            True  -> StateWrapper True state
-            False -> StateWrapper False (stepHandler dt state)
-        eventHandlerWrapper e (StateWrapper p s) = case e of
-            NormalEvent event -> case p of
-                True  -> StateWrapper True s
-                False -> StateWrapper False (eventHandler event s)
-            PauseEvent paused -> StateWrapper paused s
-        drawHandlerWrapper (StateWrapper _ s) = drawHandler s
+    let initialWrapper = StateRunning initial
+
+        stepHandlerWrapper dt (StateRunning s) = StateRunning (stepHandler dt s)
+        stepHandlerWrapper dt (StatePaused s) = StatePaused s
+        stepHandlerWrapper dt (StateHighlight n s) = StateHighlight n s
+
+        eventHandlerWrapper e (StateRunning s) = case e of
+            NormalEvent event -> StateRunning (eventHandler event s)
+            PauseEvent True -> StatePaused s
+            PauseEvent False -> StateRunning s
+            HighlightEvent n -> StateRunning s
+        eventHandlerWrapper e (StatePaused s) = case e of
+            NormalEvent event -> StatePaused s
+            PauseEvent True -> StatePaused s
+            PauseEvent False -> StateRunning s
+            HighlightEvent n -> StateHighlight n s
+        eventHandlerWrapper e (StateHighlight n s) = case e of
+            NormalEvent event -> StateHighlight n s
+            PauseEvent True -> StatePaused s
+            PauseEvent False -> StateRunning s
+            HighlightEvent n' -> StateHighlight n' s
+
+        drawHandlerWrapper (StateRunning s) = drawHandler s
+        drawHandlerWrapper (StatePaused s) = drawHandler s
+        drawHandlerWrapper (StateHighlight n s) = highlightShape n (drawHandler s)
+
+        debugDrawHandler (StateRunning s) = drawHandler s
+        debugDrawHandler (StatePaused s) = drawHandler s
+        debugDrawHandler (StateHighlight n s) = drawHandler s
 
     (sendEvent, getState) <-
         run initialWrapper stepHandlerWrapper eventHandlerWrapper drawHandlerWrapper
 
+    let sendHighlight _ (Just n) = sendEvent $ HighlightEvent n
+        sendHighlight _ Nothing = sendEvent $ PauseEvent True
+
     onEvents canvas (sendEvent . NormalEvent)
-    inspect (drawHandlerWrapper <$> getState) (sendEvent . PauseEvent) (\_ -> return ()) (\_ -> return ())
+    inspect (debugDrawHandler <$> getState) (sendEvent . PauseEvent) sendHighlight
 
 -- Allows pictures to be inspected using a built-in pause button
 runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (Bool -> s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
@@ -1336,9 +1365,53 @@ runPauseable initial stepHandler eventHandler drawHandler isPaused setPaused = d
     let picIfUnpaused state = case isPaused state of
             True  -> drawHandler False state
             False -> pictures []
+        getPic = picIfUnpaused <$> getState
         sendPause = sendEvent $ PauseEvent True
+        sendHighlight _ _ = return ()
 
-    inspect (picIfUnpaused <$> getState) (flip when sendPause) (\_ -> return ()) (\_ -> return ())
+    inspect getPic (flip when sendPause) sendHighlight
+
+highlightShape :: PicNode -> Picture -> Picture
+highlightShape nodeId pic = fromMaybe pic $ do
+    (node,(a,b,c,d,e,f,_)) <- getNode nodeId pic
+    replaced <- replaceNode nodeId (Pictures undefined []) pic
+    return $
+        Transform undefined (\_ -> (a,b,c,d,e,f,Just $ RGBA 1 1 0 1)) node <> replaced
+
+getNode :: PicNode -> Picture -> Maybe (Picture,DrawState)
+getNode n _ | n<0 = Nothing
+getNode n pic = either Just (const Nothing) $ go initialDS n pic
+    where
+        go :: DrawState -> Int -> Picture -> Either (Picture,DrawState) Int
+        go ds 0 p = Left (p,ds)
+        go ds n (Color _ col p) = go (setColorDS col ds) (n-1) p
+        go ds n (Translate _ x y p) = go (translateDS x y ds) (n-1) p
+        go ds n (Scale _ x y p) = go (scaleDS x y ds) (n-1) p
+        go ds n (Rotate _ r p) = go (rotateDS r ds) (n-1) p
+        go ds n (Transform _ f p) = go (f ds) (n-1) p
+        go ds n (Pictures _ (p:ps)) = case go ds (n-1) p of
+            Left x -> Left x
+            Right n -> go ds (n+1) $ Pictures undefined ps
+        go ds n _ = Right (n-1)
+        mapDS tf (Left (p,ds)) = Left (p,tf ds)
+        mapDS _ r = r
+
+replaceNode :: PicNode -> Picture -> Picture -> Maybe Picture
+replaceNode n _ _ | n<0 = Nothing
+replaceNode n with pic = either Just (const Nothing) $ go n with pic
+    where
+        go :: Int -> Picture -> Picture -> Either Picture Int
+        go 0 w _ = Left w
+        go n w (Color cs col p) = mapLeft (Color cs col) $ go (n-1) w p
+        go n w (Translate cs x y p) = mapLeft (Translate cs x y) $ go (n-1) w p
+        go n w (Scale cs x y p) = mapLeft (Scale cs x y) $ go (n-1) w p
+        go n w (Rotate cs r p) = mapLeft (Rotate cs r) $ go (n-1) w p
+        go n w (Transform cs f p) = mapLeft (Transform cs f) $ go (n-1) w p
+        go n w (Pictures cs (p:ps)) = case go (n-1) w p of
+            Left q -> Left $ Pictures cs (q:ps)
+            Right m -> mapLeft (\(Pictures _ qs) -> Pictures cs (p:qs)) $ go (m+1) w $ Pictures cs ps
+        go n w _ = Right (n-1)
+        mapLeft f = either (Left . f) Right
 
 --------------------------------------------------------------------------------
 -- Stand-Alone event handling and core interaction code

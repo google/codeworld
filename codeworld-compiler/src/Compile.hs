@@ -23,14 +23,13 @@ import           Control.Concurrent
 import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import           ErrorSanitizer
 import           System.Directory
 import           System.FilePath
 import           System.IO
 import           System.IO.Temp (withSystemTempDirectory)
 import           System.Process
 import           Text.Regex.TDFA
-
-import ErrorSanitizer
 
 compileSource :: FilePath -> FilePath -> FilePath -> String -> IO Bool
 compileSource src out err mode = checkDangerousSource src >>= \case

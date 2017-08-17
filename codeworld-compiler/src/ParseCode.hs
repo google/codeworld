@@ -66,7 +66,6 @@ getCode src = do
     fileLoc <- parseFile src
     return (getErrors (getSrcSpanInfo fileLoc))
 
-
 getSrcSpanInfo :: ParseResult (Module SrcSpanInfo) -> Module SrcSpanInfo
 getSrcSpanInfo (ParseOk x) = x
 
@@ -75,7 +74,7 @@ getErrors m = everything (++) (mkQ [] badExps) m ++
               everything (++) (mkQ [] badMatches) m
 
 badExps :: Exp SrcSpanInfo -> [String]
-badExps (App _ _ e) | not (isGoodExpRhs e) = ["bad app!"]
+badExps (App x _ e) | not (isGoodExpRhs e) = ["Error on line"] ++ [show $ parseSrcSpanLine x] ++ ["\n paranthesis missing"]
 badExps _                                  = []
 
 badMatches :: Match SrcSpanInfo -> [String]
@@ -83,11 +82,22 @@ badMatches (Match _ _ pats _ _) = [ "bad pat!" | p <- pats, not (isGoodPatRhs p)
 badMatches _                    = []
 
 isGoodExpRhs :: Exp l -> Bool
+isGoodExpRhs (Paren _ (InfixApp a b c d)) = isGoodInfixExpRhs c
 isGoodExpRhs (Paren _ _)   = True
 isGoodExpRhs (Tuple _ _ _) = True
 isGoodExpRhs _             = False
+
+isGoodInfixExpRhs :: QOp l -> Bool
+isGoodInfixExpRhs (QVarOp _ _) = True
+isGoodInfixExpRhs _            = False
 
 isGoodPatRhs :: Pat l -> Bool
 isGoodPatRhs (PParen _ _)   = True
 isGoodPatRhs (PTuple _ _ _) = True
 isGoodPatRhs _              = False
+
+parseSrcSpanLine :: SrcSpanInfo -> Int
+parseSrcSpanLine (SrcSpanInfo x _) = srcSpanStartLine x
+
+parseSrcSpanColumn :: SrcSpanInfo -> Int
+parseSrcSpanColumn (SrcSpanInfo x _) = srcSpanStartColumn x

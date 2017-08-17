@@ -61,20 +61,48 @@ errColumnLocation parseList = errCol
           errColM = take 1 errColChar
           errCol = read errColM :: Int
 
-getCode :: FilePath -> IO ([String])
-getCode src = do
-    fileLoc <- parseFile src
-    return (getErrors (getSrcSpanInfo fileLoc))
-
 getSrcSpanInfo :: ParseResult (Module SrcSpanInfo) -> Module SrcSpanInfo
 getSrcSpanInfo (ParseOk x) = x
 
 getErrors :: Module SrcSpanInfo -> [String]
 getErrors m = everything (++) (mkQ [] badExps) m ++
-              everything (++) (mkQ [] badMatches) m
+              everything (++) (mkQ [] badMatches) m ++
+              everything (++) (mkQ [] badInfixExps) m
+
+
+badInfixExps :: Exp SrcSpanInfo -> [String]
+badInfixExps (InfixApp a (App l _ _) c d) = ["Error at InfixApp: Missing &"
+        ++ "program.hs:"
+        ++ (show $ parseSrcSpanStartLine a)
+        ++ ":"
+        ++ (show $ parseSrcSpanStartColumn a)]
+badInfixExps (InfixApp a b c (App l _ _)) = ["Error at InfixApp: Missing &"
+        ++ "program.hs:"
+        ++ (show $ parseSrcSpanStartLine l)
+        ++ ":"
+        ++ (show $ parseSrcSpanStartColumn l)]
+badInfixExps (InfixApp a b c d) | not (isGoodInfixExpRhs c) = ["Error at InfixApp: program.hs:"
+        ++ (show $ parseSrcSpanStartLine a)
+        ++ ":"
+        ++ (show $ parseSrcSpanStartColumn a)]
+badInfixExps _                                              = []
+
 
 badExps :: Exp SrcSpanInfo -> [String]
-badExps (App x _ e) | not (isGoodExpRhs e) = ["Error on line"] ++ [show $ parseSrcSpanLine x] ++ ["\n paranthesis missing"]
+badExps (App x (Var l _) (Lit m _))  = ["Error Missing () or , or &"
+        ++ " program.hs:"
+        ++ (show $ parseSrcSpanEndLine l)
+        ++ ":"
+        ++ (show $ parseSrcSpanEndColumn l)]
+badExps (App x (Var l _) (Var m _))  = ["Error Missing () or , or &"
+        ++ " program.hs:"
+        ++ (show $ parseSrcSpanEndLine l)
+        ++ ":"
+        ++ (show $ parseSrcSpanEndColumn l)]
+badExps (App x (Var l _) e) | not (isGoodExpRhs e) = ["Error at: program.hs:"
+        ++ (show $ parseSrcSpanEndLine l)
+        ++ ":"
+        ++ (show $ parseSrcSpanEndColumn l)]
 badExps _                                  = []
 
 badMatches :: Match SrcSpanInfo -> [String]
@@ -82,7 +110,6 @@ badMatches (Match _ _ pats _ _) = [ "bad pat!" | p <- pats, not (isGoodPatRhs p)
 badMatches _                    = []
 
 isGoodExpRhs :: Exp l -> Bool
-isGoodExpRhs (Paren _ (InfixApp a b c d)) = isGoodInfixExpRhs c
 isGoodExpRhs (Paren _ _)   = True
 isGoodExpRhs (Tuple _ _ _) = True
 isGoodExpRhs _             = False
@@ -96,8 +123,14 @@ isGoodPatRhs (PParen _ _)   = True
 isGoodPatRhs (PTuple _ _ _) = True
 isGoodPatRhs _              = False
 
-parseSrcSpanLine :: SrcSpanInfo -> Int
-parseSrcSpanLine (SrcSpanInfo x _) = srcSpanStartLine x
+parseSrcSpanEndLine :: SrcSpanInfo -> Int
+parseSrcSpanEndLine (SrcSpanInfo x _) = srcSpanEndLine x
 
-parseSrcSpanColumn :: SrcSpanInfo -> Int
-parseSrcSpanColumn (SrcSpanInfo x _) = srcSpanStartColumn x
+parseSrcSpanEndColumn :: SrcSpanInfo -> Int
+parseSrcSpanEndColumn (SrcSpanInfo x _) = srcSpanEndColumn x
+
+parseSrcSpanStartLine :: SrcSpanInfo -> Int
+parseSrcSpanStartLine (SrcSpanInfo x _) = srcSpanStartLine x
+
+parseSrcSpanStartColumn :: SrcSpanInfo -> Int
+parseSrcSpanStartColumn (SrcSpanInfo x _) = srcSpanStartColumn x

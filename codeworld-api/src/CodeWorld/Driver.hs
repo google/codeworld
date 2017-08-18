@@ -549,7 +549,7 @@ arcDrawer b e r w ctx ds = (draw, detect)
             isPointInStroke ctx
 
 textDrawer sty fnt txt ctx ds = (draw, detect)
-    where draw = withDS ctx ds $ $ do
+    where draw = withDS ctx ds $ do
             Canvas.scale 1 (-1) ctx
             applyColor ctx ds
             Canvas.font (fontString sty fnt) ctx

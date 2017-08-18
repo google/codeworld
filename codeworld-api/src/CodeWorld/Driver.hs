@@ -697,9 +697,7 @@ display pic = do
         drawFrame ctx pic
         Canvas.restore ctx
 
-drawingOf pic = do
-    display (pictureToDrawing pic) `catch` reportError
-    inspectStatic pic
+drawingOf pic = runStatic pic `catch` reportError
 
 
 --------------------------------------------------------------------------------
@@ -1331,6 +1329,63 @@ run initial stepHandler eventHandler drawHandler = do
 
     forkIO $ go t0 nullFrame initialStateName True
     return (sendEvent, getState)
+
+data StaticState = StateNormal Picture | StateHighlightStatic PicNode Picture
+
+getStaticPic :: StaticState -> Picture
+getStaticPic (StateNormal p) = p
+getStaticPic (StateHighlightStatic _ p) = p
+
+runStatic :: Picture -> IO ()
+runStatic pic = do
+    Just window <- currentWindow
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
+    screen <- js_getCodeWorldContext (canvasFromElement canvas)
+    offscreenCanvas <- Canvas.create 500 500
+
+    setCanvasSize canvas canvas
+    setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+    on window resize $ do
+        liftIO $ setCanvasSize canvas canvas
+        liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+
+    currentState <- newMVar $ StateNormal pic
+
+    let draw (StateNormal p) = pictureToDrawing p
+        draw (StateHighlightStatic n p) = highlightShape n $ pictureToDrawing p
+
+        drawToScreen = do
+            drawing <- draw <$> readMVar currentState
+            rect <- getBoundingClientRect canvas
+            buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
+                                         rect
+            drawFrame buffer drawing
+            Canvas.restore buffer
+
+            rect <- getBoundingClientRect canvas
+            cw <- ClientRect.getWidth rect
+            ch <- ClientRect.getHeight rect
+            js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
+                               0 0 (round cw) (round ch)
+
+        handlePause True = return ()
+        handlePause False = do
+            takeMVar currentState >>=
+                putMVar currentState . StateNormal . getStaticPic
+            drawToScreen
+
+        handleHighlight t node = do
+            case node of
+                Nothing -> takeMVar currentState >>=
+                    putMVar currentState . StateNormal . getStaticPic
+                Just n -> takeMVar currentState >>=
+                    putMVar currentState . StateHighlightStatic n . getStaticPic
+            drawToScreen
+
+    drawToScreen
+
+    inspect (getStaticPic <$> readMVar currentState) handlePause handleHighlight
 
 data StateWrapper s = StateRunning s | StatePaused s | StateHighlight PicNode s
 data EventWrapper = NormalEvent Event | PauseEvent Bool | HighlightEvent PicNode

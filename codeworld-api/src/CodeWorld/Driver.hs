@@ -159,10 +159,41 @@ unsafeCollaborationOf :: Int
 trace :: Text -> a -> a
 
 --------------------------------------------------------------------------------
--- Draw state.  An affine transformation matrix, plus a Bool indicating whether
--- a color has been chosen yet.
+-- A Drawing is an intermediate and simpler representation of a Picture, suitable
+-- for drawing. A drawing does not contain unnecessary metadata like CallStacks.
+-- The drawer is specific to the platform.
 
+data Drawing = Shape Drawer
+             | Transformation (DrawState -> DrawState) Drawing
+             | Drawings [Drawing]
+
+instance Monoid Drawing where
+    mempty                  = Drawings []
+    mappend a (Drawings bs) = Drawings (a:bs)
+    mappend a b             = Drawings [a,b]
+    mconcat                 = Drawings
+
+-- A DrawState is an affine transformation matrix, plus a Bool indicating whether
+-- a color has been chosen yet.
 type DrawState = (Double, Double, Double, Double, Double, Double, Maybe Color)
+
+-- A PicNode a unique id for each node in a Picture of Drawing, chosen by the order
+-- the node appears in DFS. When a Picture is converted to a drawing the PicNode's of
+-- corresponding nodes are shared.
+type PicNode = Int
+
+pictureToDrawing :: Picture -> Drawing
+pictureToDrawing (Polygon _ pts s)    = Shape $ polygonDrawer pts s
+pictureToDrawing (Path _ pts w c s)   = Shape $ pathDrawer pts w c s
+pictureToDrawing (Sector _ b e r)     = Shape $ sectorDrawer b e r
+pictureToDrawing (Arc _ b e r w)      = Shape $ arcDrawer b e r w
+pictureToDrawing (Text _ sty fnt txt) = Shape $ textDrawer sty fnt txt
+pictureToDrawing (Logo  _)            = Shape $ logoDrawer
+pictureToDrawing (Color _ col p)      = Transformation (setColorDS col) $ pictureToDrawing p
+pictureToDrawing (Translate _ x y p)  = Transformation (translateDS x y) $ pictureToDrawing p
+pictureToDrawing (Scale _ x y p)      = Transformation (scaleDS x y) $ pictureToDrawing p
+pictureToDrawing (Rotate _ r p)       = Transformation (rotateDS r) $ pictureToDrawing p
+pictureToDrawing (Pictures _ ps)      = Drawings $ pictureToDrawing <$> ps
 
 initialDS :: DrawState
 initialDS = (1, 0, 0, 1, 0, 0, Nothing)
@@ -189,6 +220,14 @@ setColorDS _ (a,b,c,d,e,f,Just col) = (a,b,c,d,e,f,Just col)
 
 getColorDS :: DrawState -> Maybe Color
 getColorDS (a,b,c,d,e,f,col) = col
+
+
+polygonDrawer :: [Point] -> Bool -> Drawer
+pathDrawer :: [Point] -> Double -> Bool -> Bool -> Drawer
+sectorDrawer :: Double -> Double -> Double -> Drawer
+arcDrawer :: Double -> Double -> Double -> Double -> Drawer
+textDrawer :: TextStyle -> Font -> Text -> Drawer
+logoDrawer :: Drawer
 
 --------------------------------------------------------------------------------
 -- GHCJS implementation of drawing
@@ -261,10 +300,6 @@ drawCodeWorldLogo ctx ds x y w h = do
 
 -- Debug Mode logic
 
--- Nodes of a picture are communicated between the Haskell and Javascript
--- componenets of Debug mode via the order they appear in DFS.
-type PicNode = Int
-
 inspectStatic :: Picture -> IO ()
 inspectStatic pic = inspect (return pic) (\_ -> return ()) (\_ _ -> return ())
 
@@ -274,8 +309,8 @@ inspect getPic handleActive highlight =
 
 handlePointRequest :: IO Picture -> Point -> IO (Maybe PicNode)
 handlePointRequest getPic pt = do
-    pic <- getPic
-    findTopPictureFromPoint pt pic
+    drawing <- pictureToDrawing <$> getPic
+    findTopShapeFromPoint pt drawing
 
 initDebugMode :: (Point -> IO (Maybe PicNode)) ->
                  (Bool -> IO ()) ->
@@ -408,73 +443,37 @@ getPictureCS (Color cs _ _)       = cs
 getPictureCS (Translate cs _ _ _) = cs
 getPictureCS (Scale cs _ _ _)     = cs
 getPictureCS (Rotate cs _ _)      = cs
-getPictureCS (Transform cs _ _)   = cs
 getPictureCS (Pictures cs _)      = cs
 getPictureCS (Logo cs)            = cs
 
 -- If a picture is found, the result will include an array of the base picture
 -- and all transformations.
-findTopPictureFromPoint :: Point -> Picture -> IO (Maybe PicNode)
-findTopPictureFromPoint (x,y) pic = do
+findTopShapeFromPoint :: Point -> Drawing -> IO (Maybe PicNode)
+findTopShapeFromPoint (x,y) pic = do
     offscreen <- Canvas.create 500 500
     context <- Canvas.getContext offscreen
-    (found, node) <- findTopPicture context (translateDS (10-x/25) (y/25-10) initialDS) pic
+    (found, node) <- findTopShape context (translateDS (10-x/25) (y/25-10) initialDS) pic
     case found of
         True  -> return $ Just node
         False -> return Nothing
 
-findTopPicture :: Canvas.Context -> DrawState -> Picture -> IO (Bool,Int)
-findTopPicture ctx ds pic = case pic of
-    Color _ col p      -> map2 (+1) $ findTopPicture ctx (setColorDS col ds) p
-    Translate _ x y p  -> map2 (+1) $ findTopPicture ctx (translateDS x y ds) p
-    Scale _ x y p      -> map2 (+1) $ findTopPicture ctx (scaleDS x y ds) p
-    Rotate _ r p       -> map2 (+1) $ findTopPicture ctx (rotateDS r ds) p
-    Transform _ f p    -> map2 (+1) $ findTopPicture ctx (f ds) p
-    Pictures _ []      -> return (False,1)
-    Pictures _ (p:ps)  -> do
-        (found, count) <- findTopPicture ctx ds p
-        case found of
-            True  -> return (True,count+1)
-            False -> map2 (+count) $ findTopPicture ctx ds (Pictures undefined ps)
-    Text _ sty fnt txt -> do
-        Canvas.font (fontString sty fnt) ctx
-        width <- Canvas.measureText (textToJSString txt) ctx
-        let height = 25 -- height is constant, defined in fontString
-        withDS ctx ds $ Canvas.rect ((-0.5)*width) ((-0.5)*height) width height ctx
-        contained <- js_isPointInPath 0 0 ctx
-        if contained
-            then return (True,0)
-            else return (False,1)
-    Logo _             -> do
-        withDS ctx ds $ Canvas.rect (-225) (-50) 450 100 ctx
-        contained <- js_isPointInPath 0 0 ctx
-        if contained
-            then return (True,0)
-            else return (False,1)
-    Arc cs b e r w      -> do
-        -- Thin arcs and paths are drawn bigger to make clicking easier
-        let width = if w==0 then 0.3 else w
-        Canvas.lineWidth (width * 25) ctx
-        drawPicture ctx ds (Arc cs b e r width)
-        contained <- js_isPointInStroke 0 0 ctx
-        if contained
-            then return (True,0)
-            else return (False,1)
-    Path cs ps w c s     -> do
-        let width = if w==0 then 0.3 else w
-        Canvas.lineWidth (width * 25) ctx
-        drawPicture ctx ds (Path cs ps width c s)
-        contained <- js_isPointInStroke 0 0 ctx
-        if contained
-            then return (True,0)
-            else return (False,1)
-    _                  -> do
-        drawPicture ctx ds pic
-        contained <- js_isPointInPath 0 0 ctx
-        if contained
-            then return (True,0)
-            else return (False,1)
-    where map2 = fmap . fmap
+findTopShape :: Canvas.Context -> DrawState -> Drawing -> IO (Bool,Int)
+findTopShape ctx ds (Shape drawer) = do
+    contained <- snd $ drawer ctx ds
+    case contained of
+        True  -> return (True,0)
+        False -> return (False,1)
+findTopShape ctx ds (Transformation f d) =
+    map2 (+1) $ findTopShape ctx (f ds) d
+findTopShape ctx ds (Drawings []) = return (False,1)
+findTopShape ctx ds (Drawings (dr:drs)) = do
+    (found, count) <- findTopShape ctx ds dr
+    case found of
+        True  -> return (True,count+1)
+        False -> map2 (+count) $ findTopShape ctx ds (Drawings drs)
+
+map2 :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
+map2 = fmap . fmap
 
 isDebugModeActive :: IO Bool
 isDebugModeActive = js_isDebugModeActive
@@ -482,6 +481,12 @@ isDebugModeActive = js_isDebugModeActive
 setDebugModeActive :: Bool -> IO ()
 setDebugModeActive True  = js_startDebugMode
 setDebugModeActive False = js_stopDebugMode
+
+isPointInPath :: Canvas.Context -> IO Bool
+isPointInPath = js_isPointInPath 0 0
+
+isPointInStroke :: Canvas.Context -> IO Bool
+isPointInStroke = js_isPointInStroke 0 0
 
 -- Canvas.isPointInPath does not provide a way to get the return value
 -- https://github.com/ghcjs/ghcjs-base/blob/master/JavaScript/Web/Canvas.hs#L212
@@ -506,6 +511,63 @@ foreign import javascript unsafe "startDebugMode()"
 
 foreign import javascript unsafe "stopDebugMode()"
     js_stopDebugMode :: IO ()
+
+-----------------------------------------------------------------------------------
+-- GHCJS Drawing
+
+type Drawer = Canvas.Context -> DrawState -> (IO (), IO Bool)
+
+polygonDrawer ps smooth ctx ds =
+    (trace >> applyColor ctx ds >> Canvas.fill ctx,
+     trace >> isPointInPath ctx)
+    where trace = withDS ctx ds $ followPath ctx ps True smooth
+
+pathDrawer ps w closed smooth ctx ds = (draw, detect)
+    where draw = drawFigure ctx ds w $ followPath ctx ps closed smooth
+          detect = do
+            let width = if w==0 then 0.3 else w
+            drawFigure ctx ds width $
+                followPath ctx ps closed smooth
+            isPointInStroke ctx
+
+sectorDrawer b e r ctx ds =
+    (trace >> applyColor ctx ds >> Canvas.fill ctx,
+     trace >> isPointInPath ctx)
+    where trace = withDS ctx ds $ do
+            Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
+            Canvas.lineTo 0 0 ctx
+
+arcDrawer b e r w ctx ds = (draw, detect)
+    where draw =
+            drawFigure ctx ds w $
+                Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
+          detect = do
+            let width = if w==0 then 0.3 else w
+            Canvas.lineWidth (width * 25) ctx
+            drawFigure ctx ds width $
+                Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
+            isPointInStroke ctx
+
+textDrawer sty fnt txt ctx ds = (draw, detect)
+    where draw = withDS ctx ds $ $ do
+            Canvas.scale 1 (-1) ctx
+            applyColor ctx ds
+            Canvas.font (fontString sty fnt) ctx
+            Canvas.fillText (textToJSString txt) 0 0 ctx
+          detect = do
+            Canvas.font (fontString sty fnt) ctx
+            width <- Canvas.measureText (textToJSString txt) ctx
+            let height = 25 -- constant, defined in fontString
+            withDS ctx ds $ Canvas.rect ((-0.5)*width) ((-0.5)*height) width height ctx
+            isPointInPath ctx
+
+logoDrawer ctx ds = (draw, detect)
+    where draw = withDS ctx ds $ do
+            Canvas.scale 1 (-1) ctx
+            drawCodeWorldLogo ctx ds (-255) (-50) 450 100
+          detect = do
+            withDS ctx ds $ Canvas.rect (-255) (-50) 450 100 ctx
+            isPointInPath ctx
 
 followPath :: Canvas.Context -> [Point] -> Bool -> Bool -> IO ()
 followPath ctx [] closed _ = return ()
@@ -575,6 +637,7 @@ drawFigure ctx ds w figure = do
         applyColor ctx ds
         Canvas.stroke ctx
 
+
 fontString :: TextStyle -> Font -> JSString
 fontString style font = stylePrefix style <> "25px " <> fontName font
   where stylePrefix Plain        = ""
@@ -587,41 +650,16 @@ fontString style font = stylePrefix style <> "25px " <> fontName font
         fontName Fancy           = "fantasy"
         fontName (NamedFont txt) = "\"" <> textToJSString (T.filter (/= '"') txt) <> "\""
 
-drawPicture :: Canvas.Context -> DrawState -> Picture -> IO ()
-drawPicture ctx ds (Polygon _ ps smooth) = do
-    withDS ctx ds $ followPath ctx ps True smooth
-    applyColor ctx ds
-    Canvas.fill ctx
-drawPicture ctx ds (Path _ ps w closed smooth) = do
-    drawFigure ctx ds w $ followPath ctx ps closed smooth
-drawPicture ctx ds (Sector _ b e r) = withDS ctx ds $ do
-    Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
-    Canvas.lineTo 0 0 ctx
-    applyColor ctx ds
-    Canvas.fill ctx
-drawPicture ctx ds (Arc _ b e r w) = do
-    drawFigure ctx ds w $ do
-        Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
-drawPicture ctx ds (Text _ sty fnt txt) = withDS ctx ds $ do
-    Canvas.scale 1 (-1) ctx
-    applyColor ctx ds
-    Canvas.font (fontString sty fnt) ctx
-    Canvas.fillText (textToJSString txt) 0 0 ctx
-drawPicture ctx ds (Logo _) = withDS ctx ds $ do
-    Canvas.scale 1 (-1) ctx
-    drawCodeWorldLogo ctx ds (-225) (-50) 450 100
-drawPicture ctx ds (Color _ col p)     = drawPicture ctx (setColorDS col ds) p
-drawPicture ctx ds (Translate _ x y p) = drawPicture ctx (translateDS x y ds) p
-drawPicture ctx ds (Scale _ x y p)     = drawPicture ctx (scaleDS x y ds) p
-drawPicture ctx ds (Rotate _ r p)      = drawPicture ctx (rotateDS r ds) p
-drawPicture ctx ds (Transform _ f p)   = drawPicture ctx (f ds) p
-drawPicture ctx ds (Pictures _ ps)     = mapM_ (drawPicture ctx ds) (reverse ps)
+drawDrawing :: Canvas.Context -> DrawState -> Drawing -> IO ()
+drawDrawing ctx ds (Shape shape) = fst $ shape ctx ds
+drawDrawing ctx ds (Transformation f d) = drawDrawing ctx (f ds) d
+drawDrawing ctx ds (Drawings drs) = mapM_ (drawDrawing ctx ds) (reverse drs)
 
-drawFrame :: Canvas.Context -> Picture -> IO ()
-drawFrame ctx pic = do
+drawFrame :: Canvas.Context -> Drawing -> IO ()
+drawFrame ctx drawing = do
     Canvas.fillStyle 255 255 255 1 ctx
     Canvas.fillRect (-250) (-250) 500 500 ctx
-    drawPicture ctx initialDS pic
+    drawDrawing ctx initialDS drawing
 
 setupScreenContext :: Element -> ClientRect.ClientRect -> IO Canvas.Context
 setupScreenContext canvas rect = do
@@ -644,7 +682,7 @@ setCanvasSize target canvas = do
     setAttribute target ("width" :: JSString) (show (round cx))
     setAttribute target ("height" :: JSString) (show (round cy))
 
-display :: Picture -> IO ()
+display :: Drawing -> IO ()
 display pic = do
     Just window <- currentWindow
     Just doc <- currentDocument
@@ -660,7 +698,7 @@ display pic = do
         Canvas.restore ctx
 
 drawingOf pic = do
-    display pic `catch` reportError
+    display (pictureToDrawing pic) `catch` reportError
     inspectStatic pic
 
 
@@ -768,32 +806,37 @@ fontString style font = stylePrefix style <> "25px " <> fontName font
         fontName Fancy           = "fantasy"
         fontName (NamedFont txt) = "\"" <> T.filter (/= '"') txt <> "\""
 
-drawPicture :: DrawState -> Picture -> Canvas ()
-drawPicture ds (Polygon _ ps smooth) = do
+type Drawer = DrawState -> Canvas ()
+
+polygonDrawer ps smooth ds = do
     withDS ds $ followPath ps True smooth
     applyColor ds
     Canvas.fill ()
-drawPicture ds (Path _ ps w closed smooth) =
+
+pathDrawer ps w closed smooth ds =
     drawFigure ds w $ followPath ps closed smooth
-drawPicture ds (Sector _ b e r) = withDS ds $ do
-    Canvas.arc (0, 0, 25 * abs r, b, e,  b > e)
+
+sectorDrawer b e r ds = withDS ds $ do
+    Canvas.arc (0, 0, 25 * abs r, b, e, b > e)
     Canvas.lineTo (0, 0)
     applyColor ds
     Canvas.fill ()
-drawPicture ds (Arc _ b e r w) =
+
+arcDrawer b e r w ds = withDS ds $
     drawFigure ds w $ Canvas.arc (0, 0, 25 * abs r, b, e, b > e)
-drawPicture ds (Text _ sty fnt txt) = withDS ds $ do
+
+textDrawer sty fnt txt ds = withDS ds $ do
     Canvas.scale (1, -1)
     applyColor ds
     Canvas.font (fontString sty fnt)
     Canvas.fillText (txt, 0, 0)
-drawPicture ds (Logo _)            = return () -- Unimplemented
-drawPicture ds (Color _ col p)     = drawPicture (setColorDS col ds) p
-drawPicture ds (Translate _ x y p) = drawPicture (translateDS x y ds) p
-drawPicture ds (Scale _ x y p)     = drawPicture (scaleDS x y ds) p
-drawPicture ds (Rotate _ r p)      = drawPicture (rotateDS r ds) p
-drawPicture ds (Transform _ f p)   = drawPicture (f ds) p
-drawPicture ds (Pictures _ ps)     = mapM_ (drawPicture ds) (reverse ps)
+
+logoDrawer ds = return ()
+
+drawDrawing :: DrawState -> Drawing -> Canvas ()
+drawDrawing ds (Shape drawer) = drawer ds
+drawDrawing ds (Transformation f d) = drawDrawing (f ds) d
+drawDrawing ds (Drawings (dr:drs)) = mapM_ (drawDrawing ds) (reverse drs)
 
 setupScreenContext :: (Int, Int) -> Canvas ()
 setupScreenContext (cw, ch) = do
@@ -826,14 +869,14 @@ runBlankCanvas act = do
         putStrLn "Program is starting..."
         act context
 
-display :: Picture -> IO ()
-display pic = runBlankCanvas $ \context ->
+display :: Drawing -> IO ()
+display drawing = runBlankCanvas $ \context ->
     Canvas.send context $ Canvas.saveRestore $ do
         let rect = (Canvas.width context, Canvas.height context)
         setupScreenContext rect
-        drawPicture initialDS pic
+        drawDrawing initialDS drawing
 
-drawingOf pic = display pic `catch` reportError
+drawingOf pic = display (pictureToDrawing pic) `catch` reportError
 #endif
 
 
@@ -1206,7 +1249,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
                 rect <- getBoundingClientRect canvas
                 buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
                                              rect
-                drawFrame buffer pic
+                drawFrame buffer (pictureToDrawing pic)
                 Canvas.restore buffer
 
                 rect <- getBoundingClientRect canvas
@@ -1224,7 +1267,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     initialStateName <- makeStableName $! initialGameState
     go t0 nullFrame
 
-run :: s -> (Double -> s -> s) -> (e -> s -> s) -> (s -> Picture) -> IO (e -> IO (), IO s)
+run :: s -> (Double -> s -> s) -> (e -> s -> s) -> (s -> Drawing) -> IO (e -> IO (), IO s)
 run initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
@@ -1322,13 +1365,13 @@ runInspect initial stepHandler eventHandler drawHandler = do
             PauseEvent False -> StateRunning s
             HighlightEvent n' -> StateHighlight n' s
 
-        drawHandlerWrapper (StateRunning s) = drawHandler s
-        drawHandlerWrapper (StatePaused s) = drawHandler s
-        drawHandlerWrapper (StateHighlight n s) = highlightShape n (drawHandler s)
+        drawHandlerWrapper (StateRunning s) = pictureToDrawing $ drawHandler s
+        drawHandlerWrapper (StatePaused s) = pictureToDrawing $ drawHandler s
+        drawHandlerWrapper (StateHighlight n s) = highlightShape n $ pictureToDrawing $ drawHandler s
 
-        debugDrawHandler (StateRunning s) = drawHandler s
-        debugDrawHandler (StatePaused s) = drawHandler s
-        debugDrawHandler (StateHighlight n s) = drawHandler s
+        drawPicHandler (StateRunning s) = drawHandler s
+        drawPicHandler (StatePaused s) = drawHandler s
+        drawPicHandler (StateHighlight n s) = drawHandler s
 
     (sendEvent, getState) <-
         run initialWrapper stepHandlerWrapper eventHandlerWrapper drawHandlerWrapper
@@ -1337,7 +1380,7 @@ runInspect initial stepHandler eventHandler drawHandler = do
         sendHighlight _ Nothing = sendEvent $ PauseEvent True
 
     onEvents canvas (sendEvent . NormalEvent)
-    inspect (debugDrawHandler <$> getState) (sendEvent . PauseEvent) sendHighlight
+    inspect (drawPicHandler <$> getState) (sendEvent . PauseEvent) sendHighlight
 
 -- Allows pictures to be inspected using a built-in pause button
 runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (Bool -> s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
@@ -1350,7 +1393,7 @@ runPauseable initial stepHandler eventHandler drawHandler isPaused setPaused = d
             NormalEvent event -> eventHandler event s
             PauseEvent paused -> setPaused paused s
 
-    (sendEvent, getState) <- run initial stepHandler eventHandlerWrapper $ drawHandler True
+    (sendEvent, getState) <- run initial stepHandler eventHandlerWrapper $ pictureToDrawing . (drawHandler True)
 
     onEvents canvas $ \event -> do
         debugActive <- isDebugModeActive
@@ -1371,46 +1414,38 @@ runPauseable initial stepHandler eventHandler drawHandler isPaused setPaused = d
 
     inspect getPic (flip when sendPause) sendHighlight
 
-highlightShape :: PicNode -> Picture -> Picture
-highlightShape nodeId pic = fromMaybe pic $ do
-    (node,(a,b,c,d,e,f,_)) <- getNode nodeId pic
-    replaced <- replaceNode nodeId (Pictures undefined []) pic
+highlightShape :: PicNode -> Drawing -> Drawing
+highlightShape nodeId drawing = fromMaybe drawing $ do
+    (node,(a,b,c,d,e,f,_)) <- getDrawNode nodeId drawing
+    replaced <- replaceDrawNode nodeId (Drawings []) drawing
     return $
-        Transform undefined (\_ -> (a,b,c,d,e,f,Just $ RGBA 1 1 0 1)) node <> replaced
+        Transformation (\_ -> (a,b,c,d,e,f,Just $ RGBA 1 1 0 1)) node <> replaced
 
-getNode :: PicNode -> Picture -> Maybe (Picture,DrawState)
-getNode n _ | n<0 = Nothing
-getNode n pic = either Just (const Nothing) $ go initialDS n pic
+getDrawNode :: PicNode -> Drawing -> Maybe (Drawing, DrawState)
+getDrawNode n _ | n<0 = Nothing
+getDrawNode n drawing = either Just (const Nothing) $ go initialDS n drawing
     where
-        go :: DrawState -> Int -> Picture -> Either (Picture,DrawState) Int
-        go ds 0 p = Left (p,ds)
-        go ds n (Color _ col p) = go (setColorDS col ds) (n-1) p
-        go ds n (Translate _ x y p) = go (translateDS x y ds) (n-1) p
-        go ds n (Scale _ x y p) = go (scaleDS x y ds) (n-1) p
-        go ds n (Rotate _ r p) = go (rotateDS r ds) (n-1) p
-        go ds n (Transform _ f p) = go (f ds) (n-1) p
-        go ds n (Pictures _ (p:ps)) = case go ds (n-1) p of
-            Left x -> Left x
-            Right n -> go ds (n+1) $ Pictures undefined ps
-        go ds n _ = Right (n-1)
-        mapDS tf (Left (p,ds)) = Left (p,tf ds)
-        mapDS _ r = r
+        go ds 0 d = Left (d,ds)
+        go ds n (Shape _) = Right (n-1)
+        go ds n (Transformation f dr) = go (f ds) (n-1) dr
+        go ds n (Drawings []) = Right (n-1)
+        go ds n (Drawings (dr:drs)) = case go ds (n-1) dr of
+            Left d -> Left d
+            Right n -> go ds (n+1) $ Drawings drs
 
-replaceNode :: PicNode -> Picture -> Picture -> Maybe Picture
-replaceNode n _ _ | n<0 = Nothing
-replaceNode n with pic = either Just (const Nothing) $ go n with pic
+replaceDrawNode :: PicNode -> Drawing -> Drawing -> Maybe Drawing
+replaceDrawNode n _ _ | n<0 = Nothing
+replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
     where
-        go :: Int -> Picture -> Picture -> Either Picture Int
-        go 0 w _ = Left w
-        go n w (Color cs col p) = mapLeft (Color cs col) $ go (n-1) w p
-        go n w (Translate cs x y p) = mapLeft (Translate cs x y) $ go (n-1) w p
-        go n w (Scale cs x y p) = mapLeft (Scale cs x y) $ go (n-1) w p
-        go n w (Rotate cs r p) = mapLeft (Rotate cs r) $ go (n-1) w p
-        go n w (Transform cs f p) = mapLeft (Transform cs f) $ go (n-1) w p
-        go n w (Pictures cs (p:ps)) = case go (n-1) w p of
-            Left q -> Left $ Pictures cs (q:ps)
-            Right m -> mapLeft (\(Pictures _ qs) -> Pictures cs (p:qs)) $ go (m+1) w $ Pictures cs ps
-        go n w _ = Right (n-1)
+        go :: Int -> Drawing -> Either Drawing Int
+        go 0 _ = Left with
+        go n (Shape _) = Right (n-1)
+        go n (Transformation f d) = mapLeft (Transformation f) $ go (n-1) d
+        go n (Drawings []) = Right (n-1)
+        go n (Drawings (dr:drs)) = case go (n-1) dr of
+            Left d -> Left $ Drawings (d:drs)
+            Right m -> mapLeft (\(Drawings qs) -> Drawings (dr:qs)) $ go (m+1) $ Drawings drs
+        mapLeft :: (a -> b) -> Either a c -> Either b c
         mapLeft f = either (Left . f) Right
 
 --------------------------------------------------------------------------------
@@ -1476,7 +1511,7 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
                 Canvas.with offscreenCanvas $
                     Canvas.saveRestore $ do
                         setupScreenContext rect
-                        drawPicture initialDS pic
+                        drawDrawing initialDS (pictureToDrawing pic)
                 Canvas.drawImageAt (offscreenCanvas, 0, 0)
 
             t1 <- if

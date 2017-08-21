@@ -291,16 +291,17 @@ moveFolderFromSelf mode userId' fromDir toDir name = do
     removeDirectoryIfExists fromDir
     cleanBaseDirectory fromDir
 
-createNewVersionIfReq :: Text -> FilePath -> IO ()
-createNewVersionIfReq latestSource commentFolder = do
+createNewVersionIfReq :: Text -> Int -> FilePath -> IO (Either String ())
+createNewVersionIfReq latestSource versionNo' commentFolder = do
     currentVersions :: [Int] <- reverse . sort . map read <$>
       listDirectory (commentFolder <.> "versions")
     let currentVersion = currentVersions !! 0
     currentSource <- T.decodeUtf8 <$>
       B.readFile (commentFolder <.> "versions" </> show currentVersion)
-    case currentSource == latestSource of
-      True -> return ()
-      False -> do
+    case (currentSource == latestSource, currentVersion == versionNo') of
+      (_, False) -> return $ Left "Cannot Edit A Previous Version."
+      (True, _) -> return $ Right ()
+      (False, _) -> do
         currentLines :: [Int] <- delete 0 . fmap read <$> listDirectory commentFolder
         commentVersionLists :: [[[CommentDesc]]] <- mapM (\x -> versions . fromJust . decode <$>
           LB.readFile (commentFolder </> show x)) currentLines
@@ -312,7 +313,8 @@ createNewVersionIfReq latestSource commentFolder = do
             B.writeFile (commentFolder <.> "versions" </> show (currentVersion + 1)) $
               T.encodeUtf8 latestSource
             ensureVersionLines (currentVersion + 1) commentFolder
-          False -> return ()
+            return $ Right ()
+          False -> return $ Right ()
 
 updateUserVersionLS :: Text -> FilePath -> IO ()
 updateUserVersionLS userIdent' commentFolder = do
@@ -346,7 +348,6 @@ ensureVersionLines versionNo' commentFolder = do
         [1..totalLines `max` length currentLines]
     currentUsers <- map T.pack <$> listDirectory (commentFolder <.> "users")
     forM_ currentUsers (\u -> updateUserVersionLS u commentFolder)
-
 
 addNewUser :: Text -> Text -> FilePath -> FilePath -> FilePath -> IO (Either String ())
 addNewUser userId' userIdent' name userPath commentHashPath = do

@@ -319,10 +319,17 @@ saveProjectHandler clientId = do
            writeBS . BC.pack $ "`commentables` Directory Does Not Allows Editing Projects"
         | otherwise -> do
            Just (project :: Project) <- decode . LB.fromStrict . fromJust <$> getParam "project"
+           Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
            let projectId = nameToProjectId (projectName project)
                file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
-           liftIO $ do
-            -- no need to ensure a project file as
-            -- constrained to create a new project before editing.
-               LB.writeFile file $ encode project
-               createNewVersionIfReq (projectSource project) $ file <.> "comments"
+           -- no need to ensure a project file as
+           -- constrained to create a new project before editing.
+           liftIO $ LB.writeFile file $ encode project
+           res <- liftIO $ createNewVersionIfReq (projectSource project) versionNo' $
+             file <.> "comments"
+           case res of
+             Left err -> do
+               modifyResponse $ setContentType "text/plain"
+               modifyResponse $ setResponseCode 404
+               writeBS . BC.pack $ err
+             Right _ -> return ()

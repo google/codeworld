@@ -346,7 +346,7 @@ function updateUI() {
     }
 
     document.getElementById('moveHereButton').style.display = 'none';
-    document.getElementById('cancelMoveButton').style.display = 'none';
+    document.getElementById('cancelButton').style.display = 'none';
     if ((openProjectName != null && openProjectName != '') || NDlength != 1) {
         document.getElementById('moveButton').style.display = '';
     } else {
@@ -491,7 +491,7 @@ function moveProject() {
         document.getElementById('deleteButton').style.display = 'none';
         document.getElementById('moveButton').style.display = 'none';
         document.getElementById('moveHereButton').style.display = '';
-        document.getElementById('cancelMoveButton').style.display = '';
+        document.getElementById('cancelButton').style.display = '';
         document.getElementById('runButtons').style.display = 'none';
 
         window.move = Object();

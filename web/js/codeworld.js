@@ -293,7 +293,13 @@ function folderHandler(folderName, index, state) {
  * to get the visual presentation to match.
  */
 function updateUI() {
+    if (window.testEnv != undefined) {
+        return;
+    }
     var isSignedIn = signedIn();
+    window.inCommentables = window.nestedDirs != undefined &&
+                            window.nestedDirs.length > 0 &&
+                            window.nestedDirs[1] == 'commentables';
     if (isSignedIn) {
         if (document.getElementById('signout').style.display == 'none') {
             document.getElementById('signin').style.display = 'none';
@@ -304,7 +310,11 @@ function updateUI() {
         }
 
         if (window.openProjectName) {
-            document.getElementById('saveButton').style.display = '';
+            if (window.inCommentables == true) {
+                document.getElementById('saveButton').style.display = 'none';
+            } else {
+                document.getElementById('saveButton').style.display = '';
+            }
             document.getElementById('deleteButton').style.display = '';
         } else {
             document.getElementById('saveButton').style.display = 'none';
@@ -334,7 +344,13 @@ function updateUI() {
 
     window.move = undefined;
     window.copy = undefined;
-    document.getElementById('newButton').style.display = '';
+
+    if (window.inCommentables == true) {
+        document.getElementById('newButton').style.display = 'none';
+    } else {
+        document.getElementById('newButton').style.display = '';
+    }
+    document.getElementById('newFolderButton').style.display = '';
     document.getElementById('runButtons').style.display = '';
 
     var NDlength = nestedDirs.length;
@@ -345,16 +361,20 @@ function updateUI() {
         document.getElementById('shareFolderButton').style.display = 'none';
     }
     if (openProjectName == null || openProjectName == '') {
+        document.getElementById('viewCommentVersions').style.display = 'none';
+        window.currentVersion = undefined;
+        window.maxVersion = undefined;
+        window.project = undefined;
         document.getElementById('askFeedbackButton').style.display = 'none';
     } else {
+        document.getElementById('viewCommentVersions').style.display = '';
         document.getElementById('askFeedbackButton').style.display = '';
     }
 
     updateNavBar();
     document.getElementById('moveHereButton').style.display = 'none';
     document.getElementById('copyHereButton').style.display = 'none';
-    document.getElementById('cancelMoveButton').style.display = 'none';
-    document.getElementById('cancelCopyButton').style.display = 'none';
+    document.getElementById('cancelButton').style.display = 'none';
     if((openProjectName != null && openProjectName != '') || NDlength != 1) {
         document.getElementById('moveButton').style.display = '';
         document.getElementById('copyButton').style.display = '';
@@ -378,24 +398,23 @@ function updateUI() {
 }
 
 function updateNavBar() {
+    window.inCommentables = window.nestedDirs != undefined &&
+                            window.nestedDirs.length > 0 &&
+                            window.nestedDirs[1] == 'commentables';
     var projects = document.getElementById('nav_mine');
-
     while (projects.lastChild) {
         projects.removeChild(projects.lastChild);
     }
-
     allProjectNames.forEach(function(projectNames) {
         projectNames.sort(function(a, b) {
             return a.localeCompare(b);
         });
     });
-
     allFolderNames.forEach(function(folderNames) {
         folderNames.sort(function(a, b) {
             return a.localeCompare(b);
         });
     });
-
     var NDlength = nestedDirs.length;
     for(let i = 0; i < NDlength; i++) {
         var tempProjects;
@@ -478,8 +497,13 @@ function updateNavBar() {
         document.getElementById('compileButton').style.display = 'none';
         document.getElementById('stopButton').style.display = 'none';
     } else {
-        window.codeworldEditor.setOption('readOnly', false);
-        document.getElementById('saveAsButton').style.display = '';
+        if (window.isCommentables == true) {
+            window.codeWorldEditor.setOption('readOnly', true);
+            document.getElementById('saveAsButton').style.display = 'none';
+        } else {
+            window.codeworldEditor.setOption('readOnly', false);
+            document.getElementById('saveAsButton').style.display = '';
+        }
         document.getElementById('downloadButton').style.display = '';
         document.getElementById('compileButton').style.display = '';
         document.getElementById('stopButton').style.display = '';
@@ -518,10 +542,9 @@ function moveProject() {
         document.getElementById('downloadButton').style.display = 'none';
         document.getElementById('moveButton').style.display = 'none';
         document.getElementById('moveHereButton').style.display = '';
-        document.getElementById('cancelMoveButton').style.display = '';
+        document.getElementById('cancelButton').style.display = '';
         document.getElementById('copyButton').style.display = 'none';
         document.getElementById('copyHereButton').style.display = 'none';
-        document.getElementById('cancelCopyButton').style.display = 'none';
         document.getElementById('runButtons').style.display = 'none';
 
         window.move = Object();
@@ -564,10 +587,9 @@ function copyProject() {
         document.getElementById('downloadButton').style.display = 'none';
         document.getElementById('copyButton').style.display = 'none';
         document.getElementById('copyHereButton').style.display = '';
-        document.getElementById('cancelCopyButton').style.display = '';
+        document.getElementById('cancelButton').style.display = '';
         document.getElementById('moveButton').style.display = 'none';
         document.getElementById('moveHereButton').style.display = 'none';
-        document.getElementById('cancelMoveButton').style.display = 'none';
         document.getElementById('runButtons').style.display = 'none';
 
         window.copy = Object();
@@ -712,19 +734,17 @@ function newProject() {
 }
 
 function newFolder() {
-    function successFunc() {
-        if (window.move == undefined && window.copy == undefined)
-            setCode('');
-    }
-    createFolder(nestedDirs.slice(1).join('/'), window.buildMode, successFunc);
+    createFolder(nestedDirs.slice(1).join('/'), window.buildMode);
 }
 
 function loadProject(name, index) {
     if(window.move != undefined || window.copy != undefined) {
         return;
     }
-    function successFunc(project){
+    function successFunc(project) {
+        window.project = project
         setCode(project.source, project.history, name);
+        getCommentVersions();
         addPresentCommentInd();
     }
     loadProject_(index, name, window.buildMode, successFunc);

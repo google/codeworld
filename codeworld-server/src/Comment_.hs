@@ -56,6 +56,7 @@ commentRoutes clientId =
     , ("readComment",             readCommentHandler clientId)
     , ("readOwnerComment",        readOwnerCommentHandler clientId)
     , ("viewCommentSource",       viewCommentSourceHandler clientId)
+    , ("viewOwnerCommentSource",  viewOwnerCommentSourceHandler clientId)
     , ("writeComment",            writeCommentHandler clientId)
     , ("writeOwnerComment",       writeOwnerCommentHandler clientId)
     , ("writeOwnerReply",         writeOwnerReplyHandler clientId)
@@ -316,6 +317,14 @@ readOwnerCommentHandler clientId = do
 viewCommentSourceHandler :: ClientId -> Snap ()
 viewCommentSourceHandler clientId = do
     (_, _, commentFolder) <- getFrequentParams 3 clientId
+    Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
+    currentSource <- liftIO $ B.readFile (commentFolder <.> "versions" </> show versionNo')
+    modifyResponse $ setContentType "text/x-haskell"
+    writeBS currentSource
+
+viewOwnerCommentSourceHandler :: ClientId -> Snap()
+viewOwnerCommentSourceHandler clientId = do
+    (_, _, commentFolder) <- getFrequentParams 1 clientId
     Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
     currentSource <- liftIO $ B.readFile (commentFolder <.> "versions" </> show versionNo')
     modifyResponse $ setContentType "text/x-haskell"

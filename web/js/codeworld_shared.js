@@ -337,24 +337,20 @@ function discoverProjects_(path, buildMode, index) {
     });
 }
 
-function cancelMove() {
-    updateUI();
-}
-
-function cancelCopy() {
+function cancel() {
     updateUI();
 }
 
 function moveHere_(path, buildMode, successFunc) {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in before moving.', 'error');
-        cancelMove();
+        cancel();
         return;
     }
 
     if (window.move == undefined) {
         sweetAlert('Oops!', 'You must first select something to move.', 'error');
-        cancelMove();
+        cancel();
         return;
     }
     function go() {
@@ -365,7 +361,7 @@ function moveHere_(path, buildMode, successFunc) {
                 } else {
                     sweetAlert('Oops!', 'Could not move your project! Please try again.', 'error');
                 }
-                cancelMove();
+                cancel();
                 return;
             }
             successFunc();
@@ -403,13 +399,13 @@ function moveHere_(path, buildMode, successFunc) {
 function copyHere_(path, buildMode, successFunc) {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in before copying.', 'error');
-        cancelCopy();
+        cancel();
         return;
     }
 
     if (window.copy == undefined) {
         sweetAlert('Oops!', 'You must first select something to copy.', 'error');
-        cancelCopy();
+        cancel();
         return;
     }
     function go() {
@@ -420,7 +416,7 @@ function copyHere_(path, buildMode, successFunc) {
                 } else {
                     sweetAlert('Oops!', 'Could not copy your project! Please try again.', 'error');
                 }
-                cancelCopy();
+                cancel();
                 return;
             }
             successFunc();
@@ -666,7 +662,7 @@ function deleteFolder_(path, buildMode, successFunc) {
     }, go);
 }
 
-function createFolder(path, buildMode, successFunc) {
+function createFolder(path, buildMode) {
     warnIfUnsaved(function() {
         if(!signedIn()) {
             sweetAlert('Oops!', 'You must sign in to create a folder.', 'error');
@@ -678,7 +674,6 @@ function createFolder(path, buildMode, successFunc) {
             if(folderName == null || folderName == '') {
                 return;
             }
-
             sweetAlert.close();
             var data = new FormData();
             data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
@@ -687,7 +682,6 @@ function createFolder(path, buildMode, successFunc) {
                 data.append('path', folderName);
             else
                 data.append('path', path + '/' + folderName);
-
             sendHttp('POST', 'createFolder', data, function(request) {
                 if (request.status != 200) {
                     if (request.status == 404) {
@@ -698,12 +692,13 @@ function createFolder(path, buildMode, successFunc) {
                     updateUI();
                     return;
                 }
-
                 allFolderNames[allFolderNames.length - 1].push(folderName);
                 nestedDirs.push(folderName);
                 allFolderNames.push([]);
                 allProjectNames.push([]);
-                successFunc();
+                if (window.move == undefined && window.copy == undefined) {
+                    setCode('');
+                }
                 updateNavBar();
             });
         }
@@ -728,6 +723,11 @@ function newProject_(path) {
             updateUI();
             return;
         }
+        if (path.length > 1 && path[1] == 'commentables') {
+            sweetAlert('error', 'Cannot create a project in commentables directory!', 'error');
+            updateUI();
+            return;
+        }
 
         function go(fileName) {
             if (fileName == null || fileName == '') {
@@ -740,7 +740,6 @@ function newProject_(path) {
                 sweetAlert.close();
                 var project = getCurrentProject();
                 project['name'] = fileName;
-
                 var data = new FormData();
                 data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
                 data.append('project', JSON.stringify(project));
@@ -797,39 +796,46 @@ function newProject_(path) {
 }
 
 function loadProject_(index, name, buildMode, successFunc) {
-  warnIfUnsaved(function(){
-    if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
-        updateUI();
-        return;
-    }
-
-    var data = new FormData();
-    data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-    data.append('name', name);
-    data.append('mode', buildMode);
-    data.append('path', nestedDirs.slice(1, index + 1).join('/'));
-
-    sendHttp('POST', 'loadProject', data, function(request) {
-        if (request.status == 200) {
-            var project = JSON.parse(request.responseText);
-
-            window.nestedDirs = nestedDirs.slice(0, index + 1);
-            window.allProjectNames = allProjectNames.slice(0, index + 1);
-            window.allFolderNames = allFolderNames.slice(0, index + 1);
-            updateUI();
-            successFunc(project);
-        } else {
-            if (request.status == 404) {
-                sweetAlert('Oops!', request.responseText, 'error');
-            } else {
-                sweetAlert('Oops!', 'Could not load the project. Please try again!', 'error');
-            }
+    warnIfUnsaved(function(){
+        if (!signedIn()) {
+            sweetAlert('Oops!', 'You must sign in to open or close projects.', 'error');
             updateUI();
             return;
         }
-    });
-  }, false);
+        if (window.openProjectName != '' && window.openProjectName != null) {
+            setCode('');
+            updateUI();
+            return;
+        }
+        if (window.nestedDirs.length > 1 && window.nestedDirs[0] == 'commentables') {
+            loadProjectForComments(index, name, buildMode, successFunc);
+            return;
+        }
+        var data = new FormData();
+        data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
+        data.append('name', name);
+        data.append('mode', buildMode);
+        data.append('path', nestedDirs.slice(1, index + 1).join('/'));
+
+        sendHttp('POST', 'loadProject', data, function(request) {
+            if (request.status == 200) {
+                var project = JSON.parse(request.responseText);
+                window.nestedDirs = nestedDirs.slice(0, index + 1);
+                window.allProjectNames = allProjectNames.slice(0, index + 1);
+                window.allFolderNames = allFolderNames.slice(0, index + 1);
+                updateUI();
+                successFunc(project);
+            } else {
+                if (request.status == 404) {
+                    sweetAlert('Oops!', request.responseText, 'error');
+                } else {
+                    sweetAlert('Oops!', 'Could not load the project. Please try again!', 'error');
+                }
+                updateUI();
+                return;
+            }
+        });
+    }, false);
 }
 
 function share() {

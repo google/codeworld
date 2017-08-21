@@ -14,6 +14,114 @@
  * limitations under the License.
  */
 
+function getCommentVersions() {
+    if (!signedIn()) {
+        sweetAlert('Oops!', 'Could not load previous comment versions.', 'error');
+        updateUI();
+        return;
+    }
+    var id_token = auth2.currentUser.get().getAuthResponse().id_token;
+    var data = new FormData();
+    data.append('id_token', id_token);
+    data.append('mode', window.buildMode);
+    data.append('path', window.nestedDirs.slice(1).join('/'));
+    data.append('name', window.openProjectName);
+    var handler = (window.nestedDirs.length > 1 && window.nestedDirs[1] == "commentables") ? 'listVersions' : 'listOwnerVersions';
+
+    sendHttp('POST', handler, data, function(request) {
+        if (request.status != 200) {
+            sweetAlert('Oops!', 'Could not load previous comment versions', 'error');
+            return;
+        }
+        var versions = JSON.parse(request.responseText);
+        function sortNumber(a, b) {
+            return parseInt(b) - parseInt(a);
+        }
+        addCommentVersions(versions.sort(sortNumber));
+    });
+}
+
+function addCommentVersions(versions) {
+    document.getElementById('viewCommentVersions').style.display = '';
+    window.maxVersion = parseInt(versions[0]);
+    window.currentVersion = parseInt(versions[0]);
+    return;
+}
+
+function viewCommentVersions() {
+    if (window.openProjectName == '' || window.openProjectName == null) {
+        updateUI();
+        return;
+    }
+    if (window.currentVersion == undefined || window.maxVersion == undefined) {
+        updateUI();
+        return;
+    }
+    document.getElementById('newFolderButton').style.display = 'none';
+    document.getElementById('newButton').style.display = 'none';
+    document.getElementById('saveButton').style.display = 'none';
+    document.getElementById('saveAsButton').style.display = 'none';
+    document.getElementById('deleteButton').style.display = 'none';
+    document.getElementById('downloadButton').style.display = 'none';
+    document.getElementById('moveButton').style.display = 'none';
+    document.getElementById('moveHereButton').style.display = 'none';
+    document.getElementById('cancelButton').style.display = '';
+    document.getElementById('copyButton').style.display = 'none';
+    document.getElementById('copyHereButton').style.display = 'none';
+    document.getElementById('runButtons').style.display = 'none';
+    document.getElementById('viewCommentVersions').style.display = 'none';
+
+    var projects = document.getElementById('nav_mine');
+    while (projects.lastChild) {
+        projects.removeChild(projects.lastChild);
+    }
+
+    for(let i = 0; i <= window.maxVersion; i++) {
+        var template = document.getElementById('projectTemplate').innerHTML;
+        template = template.replace('{{label}}', 'Version ' + i + ((i != window.maxVersion) ? ' (ReadOnly)' : ''));
+        template = template.replace(/{{ifactive ([^}]*)}}/, (i == window.currentVersion ? "$1" : ""));
+        var span = document.createElement('span');
+        span.innerHTML = template;
+        var elem = span.getElementsByTagName('a')[0];
+        elem.onclick = function() {
+            loadCommentVersionSource(i);
+        };
+        projects.appendChild(span);
+    }
+}
+
+function loadCommentVersionSource(idx) {
+    warnIfUnsaved(function () {
+        if (!signedIn()) {
+            sweetALert('Oops!', 'You must sign in to see the source!', 'error');
+            updateUI();
+            return;
+        }
+        var data = new FormData();
+        var id_token = auth2.currentUser.get().getAuthResponse().id_token;
+        data.append('id_token', id_token);
+        data.append('mode', window.buildMode);
+        data.append('name', window.openProjectName);
+        data.append('path', window.nestedDirs.slice(1).join('/'));
+        data.append('versionNo', idx);
+        var handler = (window.nestedDirs.length > 1 && window.nestedDirs[1] == "commentables") ? 'viewCommentSource' : 'viewOwnerCommentSource';
+        sendHttp('POST', handler, data, function (request) {
+            if (request.status != 200) {
+                sweetAlert('Oops!', 'Could not load the source of this version. Please try again!', 'error');
+                updateUI();
+                return;
+            }
+            var doc = codeworldEditor.getDoc();
+            doc.setValue(code);
+           // if ()
+
+            window.version 
+            updateUI();
+        });
+        return;
+    }, false);
+}
+
 function addSharedComment() {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to view this!', 'error');
@@ -560,4 +668,53 @@ function deleteReply(ind, commentIdx, line) {
             go(request);
         });
     }
+}
+
+function generateTestEnv() {
+    warnIfUnsaved(function() {
+        if (!signedIn()) {
+            sweetAlert('Oops!', 'You need to login to test the code.', 'error');
+            updateUI();
+            return;
+        }
+        if (!(window.nestedDirs.length > 1 && window.nestedDir[1] == 'commentables')) {
+            updateUI();
+            return;
+        }
+        if (openProjectName == '' || openProjectName == null) {
+            updateUI();
+            return;
+        }
+        window.testEnv = new Object();
+        window.testEnv.project = window.project.source;
+        window.testEnv.prevName = window.openProjectName;
+        window.openProjectName = null;
+        document.getElementById('newFolderButton').style.display = 'none';
+        document.getElementById('newButton').style.display = 'none';
+        document.getElementById('saveButton').style.display = 'none';
+        document.getElementById('saveAsButton').style.display = 'none';
+        document.getElementById('testButton').style.display = 'none';
+        document.getElementById('deleteButton').style.display = 'none';
+        document.getElementById('downloadButton').style.display = '';
+        document.getElementById('copyButton').style.display = 'none';
+        document.getElementById('copyHereButton').style.display = 'none';
+        document.getElementById('moveButton').style.display = 'none';
+        document.getElementById('moveHereButton').style.display = 'none';
+        document.getElementById('cancelButton').style.display = '';
+        document.getElementById('viewCommentVersions').style.display = 'none';
+        var projects = document.getElementById('nav_mine');
+        while (project.lastChild) {
+            projects.removeChild(projects.lastChild);
+        }
+        document.getElementById('viewCommentVersions').onclick = function() {
+            window.openProjectName = window.testEnv.prevName;
+            var doc = window.codeworldEditor.getDoc();
+            doc.setValue(window.testEnv.project);
+            window.testEnv = undefined;
+            updateUI();
+        };
+        var doc = window.codeworldEditor.getDoc();
+        doc.setValue(window.testEnv.project);
+        doc.clearHistory();
+    }, false);
 }

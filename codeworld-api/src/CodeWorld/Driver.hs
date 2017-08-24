@@ -71,6 +71,7 @@ import           System.Random
 
 import           CodeWorld.Prediction
 import           CodeWorld.Message
+import qualified Control.Monad.Trans.State as State
 import           Data.Hashable
 import           Data.IORef
 import           Data.JSString.Text
@@ -335,82 +336,99 @@ initDebugMode getnode setactive getpicture highlight = do
     js_initDebugMode getnodeCB setactiveCB getpictureCB highlightCB
 
 picToObj :: Picture -> IO JSVal
-picToObj = fmap fst . unsafeCoerce . picToObj' 0
+picToObj = fmap fst . flip State.runStateT 0 . picToObj'
 
-picToObj' :: Int -> Picture -> IO (Object,Int)
-picToObj' id pic = case pic of
-    Polygon cs pts smooth -> mkPicObj "polygon" $ \obj -> do
+picToObj' :: Picture -> State.StateT Int IO JSVal
+picToObj' pic = case pic of
+    Polygon cs pts smooth -> do
+        obj <- init "polygon"
         ptsJS <- pointsToArr pts
-        setProp "points" ptsJS obj
-        setProp "smooth" (pToJSVal smooth) obj
-        return id
-    Path cs pts w closed smooth -> mkPicObj "path" $ \obj -> do
+        setProps [("points", ptsJS),
+                  ("smooth", pToJSVal smooth)] obj
+        retVal obj
+    Path cs pts w closed smooth -> do
+        obj <- init "path"
         ptsJS <- pointsToArr pts
-        setProp "points" ptsJS obj
-        setProp "width"  (pToJSVal w) obj
-        setProp "closed" (pToJSVal closed) obj
-        setProp "smooth" (pToJSVal smooth) obj
-        return id
-    Sector cs b e r -> mkPicObj "sector" $ \obj -> do
-        setProp "startAngle" (pToJSVal b) obj
-        setProp "endAngle" (pToJSVal e) obj
-        setProp "radius" (pToJSVal r) obj
-        return id
-    Arc cs b e r w -> mkPicObj "arc" $ \obj -> do
-        setProp "startAngle" (pToJSVal b) obj
-        setProp "endAngle" (pToJSVal e) obj
-        setProp "radius" (pToJSVal r) obj
-        setProp "width" (pToJSVal w) obj
-        return id
-    Text cs style font txt -> mkPicObj "text" $ \obj -> do
-        setProp "font" (pToJSVal $ fontString style font) obj
-        return id
-    Color cs (RGBA r g b a) p -> mkPicObj "color" $ \obj -> do
-        (picJS, n) <- picToObj' (id+1) p
-        setProp "picture" (unsafeCoerce picJS) obj
-        setProp "red" (pToJSVal r) obj
-        setProp "green" (pToJSVal g) obj
-        setProp "blue" (pToJSVal b) obj
-        setProp "alpha" (pToJSVal a) obj
-        return (n-1)
-    Translate cs x y p -> mkPicObj "translate" $ \obj -> do
-        (picJS, n) <- picToObj' (id+1) p
-        setProp "picture" (unsafeCoerce picJS) obj
-        setProp "x" (pToJSVal x) obj
-        setProp "y" (pToJSVal y) obj
-        return (n-1)
-    Scale cs x y p -> mkPicObj "scale" $ \obj -> do
-        (picJS, n) <- picToObj' (id+1) p
-        setProp "picture" (unsafeCoerce picJS) obj
-        setProp "x" (pToJSVal x) obj
-        setProp "y" (pToJSVal y) obj
-        return (n-1)
-    Rotate cs angle p -> mkPicObj "rotate" $ \obj -> do
-        (picJS, n) <- picToObj' (id+1) p
-        setProp "picture" (unsafeCoerce picJS) obj
-        setProp "angle" (pToJSVal angle) obj
-        return (n-1)
-    Pictures cs ps -> mkPicObj "pictures" $ \obj -> do
-        arr <- Array.create
-        let go n [] = return n
-            go n (x:xs) = do
-                (picJS, m) <- picToObj' n x
-                Array.push (unsafeCoerce picJS) arr
-                go m xs
-        nextId <- go (id+1) ps
-        setProp "pictures" (unsafeCoerce arr) obj
-        return (nextId-1)
-    Logo cs -> mkPicObj "logo" $ \obj -> return id
-    _ -> mkPicObj "unknown" $ \obj -> return id
+        setProps [("points", ptsJS),
+                  ("width", pToJSVal w),
+                  ("closed", pToJSVal closed),
+                  ("smooth", pToJSVal smooth)] obj
+        retVal obj
+    Sector cs b e r -> do
+        obj <- init "sector"
+        setProps [("startAngle", pToJSVal b),
+                  ("endAngle", pToJSVal e),
+                  ("radius", pToJSVal r)] obj
+        retVal obj
+    Arc cs b e r w -> do
+        obj <- init "arc"
+        setProps [("startAngle", pToJSVal b),
+                  ("endAngle", pToJSVal e),
+                  ("radius", pToJSVal r),
+                  ("width", pToJSVal w)] obj
+        retVal obj
+    Text cs style font txt -> do
+        obj <- init "text"
+        setProps [("font", pToJSVal $ fontString style font),
+                  ("text", pToJSVal txt)] obj
+        retVal obj
+    Color cs (RGBA r g b a) p -> do
+        obj <- init "color"
+        picJS <- picToObj' p
+        setProps [("picture", picJS),
+                  ("red", pToJSVal r),
+                  ("green", pToJSVal g),
+                  ("blue", pToJSVal b),
+                  ("alpha", pToJSVal a)] obj
+        retVal obj
+    Translate cs x y p -> do
+        obj <- init "translate"
+        picJS <- picToObj' p
+        setProps [("picture", picJS),
+                  ("x", pToJSVal x),
+                  ("y", pToJSVal y)] obj
+        retVal obj
+    Scale cs x y p -> do
+        obj <- init "scale"
+        picJS <- picToObj' p
+        setProps [("picture", picJS),
+                  ("x", pToJSVal x),
+                  ("y", pToJSVal y)] obj
+        retVal obj
+    Rotate cs angle p -> do
+        obj <- init "rotate"
+        picJS <- picToObj' p
+        setProps [("picture", picJS),
+                  ("angle", pToJSVal angle)] obj
+        retVal obj
+    Pictures cs ps -> do
+        obj <- init "pictures"
+        arr <- liftIO $ Array.create
+        let push = liftIO . flip Array.push arr
+        mapM (\p -> picToObj' p >>= push) ps
+        setProps [("pictures", unsafeCoerce arr)] obj
+        retVal obj
+    Logo cs -> init "logo" >>= retVal
+    _ -> init "unknown" >>= retVal
     where
-        mkPicObj (tp::JSString) addSpecifics = do
-            obj <- create
-            setProp "type" (pToJSVal tp) obj
-            setProp "id" (pToJSVal id) obj
-            setCallInfo pic obj
-            n <- addSpecifics obj
-            return (obj,n+1)
-        pointsToArr pts = do
+        incId :: State.StateT Int IO Int
+        incId = do
+            currentId <- State.get
+            State.put (currentId + 1)
+            return currentId
+        init :: JSString -> State.StateT Int IO Object
+        init tp = do
+            obj <- liftIO create
+            liftIO $ setProp "type" (pToJSVal tp) obj
+            id <- incId
+            liftIO $ setProp "id" (pToJSVal id) obj
+            liftIO $ setCallInfo pic obj
+            return obj
+        objToJSVal = unsafeCoerce :: Object -> JSVal
+        retVal :: Object -> State.StateT Int IO JSVal
+        retVal = return . objToJSVal
+        pointsToArr :: [Point] -> State.StateT Int IO JSVal
+        pointsToArr pts = liftIO $ do
             let go [] _ = return ()
                 go ((x,y):pts) arr = do
                     Array.push (pToJSVal x) arr
@@ -419,6 +437,8 @@ picToObj' id pic = case pic of
             arr <- Array.create
             go pts arr
             return $ (unsafeCoerce arr :: JSVal)
+        setProps xs obj = liftIO $
+            void $ mapM (\(s,v) -> setProp s v obj) xs
 
 setCallInfo :: Picture -> Object -> IO ()
 setCallInfo pic obj = case findCSMain (getPictureCS pic) of

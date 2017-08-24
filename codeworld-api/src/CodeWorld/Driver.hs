@@ -1471,10 +1471,18 @@ runPauseable initial stepHandler eventHandler drawHandler isPaused setPaused = d
 
 highlightShape :: PicNode -> Drawing -> Drawing
 highlightShape nodeId drawing = fromMaybe drawing $ do
-    (node,(a,b,c,d,e,f,_)) <- getDrawNode nodeId drawing
+    (node,(a,b,c,d,e,f,col)) <- getDrawNode nodeId drawing
+    let col' = fromMaybe (RGBA 0 0 0 1) col
     replaced <- replaceDrawNode nodeId (Drawings []) drawing
     return $
-        Transformation (\_ -> (a,b,c,d,e,f,Just $ RGBA 1 1 0 1)) node <> replaced
+        Transformation (\_ -> (a,b,c,d,e,f,Just $ highlightColor col')) node <> replaced
+
+highlightColor :: Color -> Color
+highlightColor (RGBA r g b _) = case (r+g+b)<2.5 of
+    True  -> RGBA (darker r)  (darker g)  (darker b)  1
+    False -> RGBA (lighter r) (lighter g) (lighter b) 1
+    where darker  v = 0.2 + 0.8*v
+          lighter v = v*0.8
 
 getDrawNode :: PicNode -> Drawing -> Maybe (Drawing, DrawState)
 getDrawNode n _ | n<0 = Nothing

@@ -1437,37 +1437,47 @@ runInspect initial stepHandler eventHandler drawHandler = do
     onEvents canvas (sendEvent . NormalEvent)
     inspect (drawPicHandler <$> getState) (sendEvent . PauseEvent) sendHighlight
 
--- Allows pictures to be inspected using a built-in pause button
-runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (Bool -> s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
-runPauseable initial stepHandler eventHandler drawHandler isPaused setPaused = do
+data StatePauseable s = RunningPauseable (Wrapped s)
+                      | DebugPauseable s (Maybe PicNode)
+
+runPauseable :: Wrapped s -> (Double -> s -> s) -> (Wrapped s -> [Control s]) -> (s -> Picture) -> IO ()
+runPauseable initial stepHandler controls drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
 
-    let eventHandlerWrapper e s = case e of
-            NormalEvent event -> eventHandler event s
-            PauseEvent paused -> setPaused paused s
+    let initialWrapper = RunningPauseable initial
 
-    (sendEvent, getState) <- run initial stepHandler eventHandlerWrapper $ pictureToDrawing . (drawHandler True)
+        stepHandlerWrapper dt (RunningPauseable w) = RunningPauseable $ wrappedStep stepHandler dt w
+        stepHandlerWrapper dt (DebugPauseable s p) = DebugPauseable s p
 
-    onEvents canvas $ \event -> do
-        debugActive <- isDebugModeActive
-        sendEvent $ NormalEvent event
-        when debugActive $ do
-            stillPaused <- isPaused <$> getState
-            -- Even if Debug Mode remains active after the event,
-            -- startDebugMode still needs to be called to ensure
-            -- debugmode.js has an up-to-date copy of the Picture.
-            setDebugModeActive stillPaused
+        eventHandlerWrapper e (RunningPauseable w) = case e of
+            NormalEvent event -> RunningPauseable (wrappedEvent controls stepHandler event w)
+            PauseEvent True -> DebugPauseable (state w) Nothing
+            PauseEvent False -> RunningPauseable w
+            HighlightEvent n -> RunningPauseable w
+        eventHandlerWrapper e (DebugPauseable s p) = case e of
+            NormalEvent event -> DebugPauseable s p
+            PauseEvent True -> DebugPauseable s Nothing
+            PauseEvent False -> RunningPauseable $ Wrapped s True 1000
+            HighlightEvent n -> DebugPauseable s (Just n)
 
-    let picIfUnpaused state = case isPaused state of
-            True  -> drawHandler False state
-            False -> pictures []
-        getPic = picIfUnpaused <$> getState
-        sendPause = sendEvent $ PauseEvent True
-        sendHighlight _ _ = return ()
+        drawHandlerWrapper (RunningPauseable w) = pictureToDrawing $ wrappedDraw controls drawHandler w
+        drawHandlerWrapper (DebugPauseable s p) = case p of
+            Just n -> highlightShape n $ pictureToDrawing $ drawHandler s
+            Nothing -> pictureToDrawing $ drawHandler s
 
-    inspect getPic (flip when sendPause) sendHighlight
+        drawPicHandler (RunningPauseable w) = drawHandler $ state w
+        drawPicHandler (DebugPauseable s _) = drawHandler s
+
+    (sendEvent, getState) <-
+        run initialWrapper stepHandlerWrapper eventHandlerWrapper drawHandlerWrapper
+
+    let sendHighlight _ (Just n) = sendEvent $ HighlightEvent n
+        sendHighlight _ Nothing = sendEvent $ PauseEvent True
+
+    onEvents canvas (sendEvent . NormalEvent)
+    inspect (drawPicHandler <$> getState) (sendEvent . PauseEvent) sendHighlight
 
 highlightShape :: PicNode -> Drawing -> Drawing
 highlightShape nodeId drawing = fromMaybe drawing $ do
@@ -1606,8 +1616,9 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
 runInspect :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
 runInspect = run
 
-runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (Bool -> s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
-runPauseable initial stepHandler eventHandler drawHandler _ _ = run initial stepHandler eventHandler $ drawHandler True
+runPauseable :: Wrapped s -> (Double -> s -> s) -> (Wrapped s -> [Control s]) -> (s -> Picture) -> IO ()
+runPauseable initial stepHandler controls drawHandler =
+    run initial (wrappedStep stepHandler) (wrappedEvent controls stepHandler) (wrappedDraw controls drawHandler)
 
 getDeployHash :: IO Text
 getDeployHash = error "game API unimplemented in stand-alone interface mode"
@@ -1704,10 +1715,8 @@ handleControl _ _     _             w = w
 
 wrappedDraw :: (Wrapped a -> [Control a])
      -> (a -> Picture)
-     -> Bool -> Wrapped a -> Picture
-wrappedDraw ctrls f c w
-    | c = drawControlPanel ctrls w <> f (state w)
-    | otherwise = f (state w)
+     -> Wrapped a -> Picture
+wrappedDraw ctrls f w = drawControlPanel ctrls w <> f (state w)
 
 drawControlPanel :: (Wrapped a -> [Control a]) -> Wrapped a -> Picture
 drawControlPanel ctrls w
@@ -1768,13 +1777,7 @@ animationControls w
                                 TimeLabel ]
   | otherwise               = [ RestartButton, PauseButton, TimeLabel ]
 
-animationOf f =
-    runPauseable  initial
-                  (wrappedStep (+))
-                  (wrappedEvent animationControls (+))
-                  (wrappedDraw animationControls f)
-                  paused
-                  (\p s -> s { paused = p })
+animationOf f = runPauseable initial (+) animationControls f
   where initial = Wrapped {
             state          = 0,
             paused         = False,
@@ -1787,13 +1790,7 @@ simulationControls w
   | paused w             = [ PlayButton, StepButton ]
   | otherwise            = [ PauseButton ]
 
-simulationOf simInitial simStep simDraw =
-    runPauseable  initial
-                  (wrappedStep simStep)
-                  (wrappedEvent simulationControls simStep)
-                  (wrappedDraw simulationControls simDraw)
-                  paused
-                  (\p s -> s { paused = p })
+simulationOf simInitial simStep simDraw = runPauseable initial simStep simulationControls simDraw
   where initial = Wrapped {
             state          = simInitial,
             paused         = False,

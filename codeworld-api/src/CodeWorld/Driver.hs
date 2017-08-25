@@ -178,10 +178,10 @@ instance Monoid Drawing where
 -- a color has been chosen yet.
 type DrawState = (Double, Double, Double, Double, Double, Double, Maybe Color)
 
--- A PicNode a unique id for each node in a Picture of Drawing, chosen by the order
--- the node appears in DFS. When a Picture is converted to a drawing the PicNode's of
--- corresponding nodes are shared.
-type PicNode = Int
+-- A NodeId a unique id for each node in a Picture of Drawing, chosen by the order
+-- the node appears in DFS. When a Picture is converted to a drawing the NodeId's of
+-- corresponding nodes are shared. Always >=0.
+type NodeId = Int
 
 pictureToDrawing :: Picture -> Drawing
 pictureToDrawing (Polygon _ pts s)    = Shape $ polygonDrawer pts s
@@ -304,19 +304,19 @@ drawCodeWorldLogo ctx ds x y w h = do
 inspectStatic :: Picture -> IO ()
 inspectStatic pic = inspect (return pic) (\_ -> return ()) (\_ _ -> return ())
 
-inspect :: IO Picture -> (Bool -> IO ()) -> (Bool -> Maybe PicNode -> IO ()) -> IO ()
+inspect :: IO Picture -> (Bool -> IO ()) -> (Bool -> Maybe NodeId -> IO ()) -> IO ()
 inspect getPic handleActive highlight =
     initDebugMode (handlePointRequest getPic) handleActive getPic highlight
 
-handlePointRequest :: IO Picture -> Point -> IO (Maybe PicNode)
+handlePointRequest :: IO Picture -> Point -> IO (Maybe NodeId)
 handlePointRequest getPic pt = do
     drawing <- pictureToDrawing <$> getPic
     findTopShapeFromPoint pt drawing
 
-initDebugMode :: (Point -> IO (Maybe PicNode)) ->
+initDebugMode :: (Point -> IO (Maybe NodeId)) ->
                  (Bool -> IO ()) ->
                  IO Picture ->
-                 (Bool -> Maybe PicNode -> IO ()) ->
+                 (Bool -> Maybe NodeId -> IO ()) ->
                  IO ()
 initDebugMode getnode setactive getpicture highlight = do
     getnodeCB <- syncCallback1' $ \pointJS -> do
@@ -468,7 +468,7 @@ getPictureCS (Logo cs)            = cs
 
 -- If a picture is found, the result will include an array of the base picture
 -- and all transformations.
-findTopShapeFromPoint :: Point -> Drawing -> IO (Maybe PicNode)
+findTopShapeFromPoint :: Point -> Drawing -> IO (Maybe NodeId)
 findTopShapeFromPoint (x,y) pic = do
     offscreen <- Canvas.create 500 500
     context <- Canvas.getContext offscreen
@@ -1361,7 +1361,7 @@ run initial stepHandler eventHandler drawHandler = do
     forkIO $ go t0 nullFrame initialStateName True
     return (sendEvent, getState)
 
-data StaticState = StateNormal Picture | StateHighlightStatic PicNode Picture
+data StaticState = StateNormal Picture | StateHighlightStatic NodeId Picture
 
 getStaticPic :: StaticState -> Picture
 getStaticPic (StateNormal p) = p
@@ -1418,8 +1418,8 @@ runStatic pic = do
 
     inspect (getStaticPic <$> readMVar currentState) handlePause handleHighlight
 
-data StateWrapper s = StateRunning s | StatePaused s | StateHighlight PicNode s
-data EventWrapper = NormalEvent Event | PauseEvent Bool | HighlightEvent PicNode
+data StateWrapper s = StateRunning s | StatePaused s | StateHighlight NodeId s
+data EventWrapper = NormalEvent Event | PauseEvent Bool | HighlightEvent NodeId
 
 -- Wraps the event and state from run so they can be paused by pressing the Inspect
 -- button.
@@ -1469,7 +1469,7 @@ runInspect initial stepHandler eventHandler drawHandler = do
     inspect (drawPicHandler <$> getState) (sendEvent . PauseEvent) sendHighlight
 
 data StatePauseable s = RunningPauseable (Wrapped s)
-                      | DebugPauseable s (Maybe PicNode)
+                      | DebugPauseable s (Maybe NodeId)
 
 runPauseable :: Wrapped s -> (Double -> s -> s) -> (Wrapped s -> [Control s]) -> (s -> Picture) -> IO ()
 runPauseable initial stepHandler controls drawHandler = do
@@ -1510,7 +1510,7 @@ runPauseable initial stepHandler controls drawHandler = do
     onEvents canvas (sendEvent . NormalEvent)
     inspect (drawPicHandler <$> getState) (sendEvent . PauseEvent) sendHighlight
 
-highlightShape :: PicNode -> Drawing -> Drawing
+highlightShape :: NodeId -> Drawing -> Drawing
 highlightShape nodeId drawing = fromMaybe drawing $ do
     (node,(a,b,c,d,e,f,col)) <- getDrawNode nodeId drawing
     let col' = fromMaybe (RGBA 0 0 0 1) col
@@ -1525,7 +1525,7 @@ highlightColor (RGBA r g b _) = case (r+g+b)<2.5 of
     where darker  v = 0.2 + 0.8*v
           lighter v = v*0.8
 
-getDrawNode :: PicNode -> Drawing -> Maybe (Drawing, DrawState)
+getDrawNode :: NodeId -> Drawing -> Maybe (Drawing, DrawState)
 getDrawNode n _ | n<0 = Nothing
 getDrawNode n drawing = either Just (const Nothing) $ go initialDS n drawing
     where
@@ -1537,7 +1537,7 @@ getDrawNode n drawing = either Just (const Nothing) $ go initialDS n drawing
             Left d -> Left d
             Right n -> go ds (n+1) $ Drawings drs
 
-replaceDrawNode :: PicNode -> Drawing -> Drawing -> Maybe Drawing
+replaceDrawNode :: NodeId -> Drawing -> Drawing -> Maybe Drawing
 replaceDrawNode n _ _ | n<0 = Nothing
 replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
     where

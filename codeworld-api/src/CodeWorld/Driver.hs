@@ -479,7 +479,7 @@ findTopShapeFromPoint (x,y) pic = do
 
 findTopShape :: Canvas.Context -> DrawState -> Drawing -> IO (Bool,Int)
 findTopShape ctx ds (Shape drawer) = do
-    contained <- snd $ drawer ctx ds
+    contained <- shapeContains $ drawer ctx ds
     case contained of
         True  -> return (True,0)
         False -> return (False,1)
@@ -535,59 +535,70 @@ foreign import javascript unsafe "stopDebugMode()"
 -----------------------------------------------------------------------------------
 -- GHCJS Drawing
 
-type Drawer = Canvas.Context -> DrawState -> (IO (), IO Bool)
+type Drawer = Canvas.Context -> DrawState -> DrawMethods
 
-polygonDrawer ps smooth ctx ds =
-    (trace >> applyColor ctx ds >> Canvas.fill ctx,
-     trace >> isPointInPath ctx)
+data DrawMethods = DrawMethods {
+    drawShape :: IO (),
+    shapeContains :: IO Bool
+}
+
+polygonDrawer ps smooth ctx ds = DrawMethods {
+    drawShape     = trace >> applyColor ctx ds >> Canvas.fill ctx,
+    shapeContains = trace >> isPointInPath ctx
+    }
     where trace = withDS ctx ds $ followPath ctx ps True smooth
 
-pathDrawer ps w closed smooth ctx ds = (draw, detect)
-    where draw = drawFigure ctx ds w $ followPath ctx ps closed smooth
-          detect = do
+pathDrawer ps w closed smooth ctx ds = DrawMethods {
+    drawShape = drawFigure ctx ds w $ followPath ctx ps closed smooth,
+    shapeContains = do
             let width = if w==0 then 0.3 else w
             drawFigure ctx ds width $
                 followPath ctx ps closed smooth
             isPointInStroke ctx
+    }
 
-sectorDrawer b e r ctx ds =
-    (trace >> applyColor ctx ds >> Canvas.fill ctx,
-     trace >> isPointInPath ctx)
+sectorDrawer b e r ctx ds = DrawMethods {
+    drawShape     = trace >> applyColor ctx ds >> Canvas.fill ctx,
+    shapeContains = trace >> isPointInPath ctx
+    }
     where trace = withDS ctx ds $ do
             Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
             Canvas.lineTo 0 0 ctx
 
-arcDrawer b e r w ctx ds = (draw, detect)
-    where draw =
-            drawFigure ctx ds w $
-                Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
-          detect = do
-            let width = if w==0 then 0.3 else w
-            Canvas.lineWidth (width * 25) ctx
-            drawFigure ctx ds width $
-                Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
-            isPointInStroke ctx
+arcDrawer b e r w ctx ds = DrawMethods {
+    drawShape = drawFigure ctx ds w $
+        Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx,
+    shapeContains = do
+        let width = if w==0 then 0.3 else w
+        Canvas.lineWidth (width * 25) ctx
+        drawFigure ctx ds width $
+            Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
+        isPointInStroke ctx
 
-textDrawer sty fnt txt ctx ds = (draw, detect)
-    where draw = withDS ctx ds $ do
-            Canvas.scale 1 (-1) ctx
-            applyColor ctx ds
-            Canvas.font (fontString sty fnt) ctx
-            Canvas.fillText (textToJSString txt) 0 0 ctx
-          detect = do
-            Canvas.font (fontString sty fnt) ctx
-            width <- Canvas.measureText (textToJSString txt) ctx
-            let height = 25 -- constant, defined in fontString
-            withDS ctx ds $ Canvas.rect ((-0.5)*width) ((-0.5)*height) width height ctx
-            isPointInPath ctx
+    }
 
-logoDrawer ctx ds = (draw, detect)
-    where draw = withDS ctx ds $ do
-            Canvas.scale 1 (-1) ctx
-            drawCodeWorldLogo ctx ds (-255) (-50) 450 100
-          detect = do
-            withDS ctx ds $ Canvas.rect (-255) (-50) 450 100 ctx
-            isPointInPath ctx
+textDrawer sty fnt txt ctx ds = DrawMethods {
+    drawShape = withDS ctx ds $ do
+        Canvas.scale 1 (-1) ctx
+        applyColor ctx ds
+        Canvas.font (fontString sty fnt) ctx
+        Canvas.fillText (textToJSString txt) 0 0 ctx,
+    shapeContains = do
+        Canvas.font (fontString sty fnt) ctx
+        width <- Canvas.measureText (textToJSString txt) ctx
+        let height = 25 -- constant, defined in fontString
+        withDS ctx ds $ Canvas.rect ((-0.5)*width) ((-0.5)*height) width height ctx
+        isPointInPath ctx
+    }
+
+logoDrawer ctx ds = DrawMethods {
+    drawShape = withDS ctx ds $ do
+        Canvas.scale 1 (-1) ctx
+        drawCodeWorldLogo ctx ds (-255) (-50) 450 100,
+    shapeContains = do
+        withDS ctx ds $ Canvas.rect (-255) (-50) 450 100 ctx
+        isPointInPath ctx
+    }
 
 followPath :: Canvas.Context -> [Point] -> Bool -> Bool -> IO ()
 followPath ctx [] closed _ = return ()
@@ -671,7 +682,7 @@ fontString style font = stylePrefix style <> "25px " <> fontName font
         fontName (NamedFont txt) = "\"" <> textToJSString (T.filter (/= '"') txt) <> "\""
 
 drawDrawing :: Canvas.Context -> DrawState -> Drawing -> IO ()
-drawDrawing ctx ds (Shape shape) = fst $ shape ctx ds
+drawDrawing ctx ds (Shape shape) = drawShape $ shape ctx ds
 drawDrawing ctx ds (Transformation f d) = drawDrawing ctx (f ds) d
 drawDrawing ctx ds (Drawings drs) = mapM_ (drawDrawing ctx ds) (reverse drs)
 

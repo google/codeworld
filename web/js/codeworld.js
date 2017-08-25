@@ -368,7 +368,17 @@ function updateUI() {
         document.getElementById('askFeedbackButton').style.display = 'none';
     } else {
         document.getElementById('viewCommentVersions').style.display = '';
-        document.getElementById('askFeedbackButton').style.display = '';
+        if (window.inCommentables == true) {
+            document.getElementById('askFeedbackButton').style.display = 'none';
+            document.getElementById('testButton').style.display = '';
+        } else {
+            document.getElementById('askFeedbackButton').style.display = '';
+            if (window.currentVersion != window.maxVersion) {
+                document.getElementById('testButton').style.display = '';
+            } else {
+                document.getElementById('testButton').style.display = 'none';
+            }
+        }
     }
 
     updateNavBar();
@@ -492,17 +502,14 @@ function updateNavBar() {
     }
     if (window.openProjectName == null || window.openProjectName == '') {
         window.codeworldEditor.setOption('readOnly', true);
-        document.getElementById('saveAsButton').style.display = 'none';
         document.getElementById('downloadButton').style.display = 'none';
         document.getElementById('compileButton').style.display = 'none';
         document.getElementById('stopButton').style.display = 'none';
     } else {
         if (window.isCommentables == true) {
             window.codeWorldEditor.setOption('readOnly', true);
-            document.getElementById('saveAsButton').style.display = 'none';
         } else {
             window.codeworldEditor.setOption('readOnly', false);
-            document.getElementById('saveAsButton').style.display = '';
         }
         document.getElementById('downloadButton').style.display = '';
         document.getElementById('compileButton').style.display = '';
@@ -537,7 +544,6 @@ function moveProject() {
         document.getElementById('newFolderButton').style.display = '';
         document.getElementById('newButton').style.display = 'none';
         document.getElementById('saveButton').style.display = 'none';
-        document.getElementById('saveAsButton').style.display = 'none';
         document.getElementById('deleteButton').style.display = 'none';
         document.getElementById('downloadButton').style.display = 'none';
         document.getElementById('moveButton').style.display = 'none';
@@ -582,7 +588,6 @@ function copyProject() {
         document.getElementById('newFolderButton').style.display = '';
         document.getElementById('newButton').style.display = 'none';
         document.getElementById('saveButton').style.display = 'none';
-        document.getElementById('saveAsButton').style.display = 'none';
         document.getElementById('deleteButton').style.display = 'none';
         document.getElementById('downloadButton').style.display = 'none';
         document.getElementById('copyButton').style.display = 'none';

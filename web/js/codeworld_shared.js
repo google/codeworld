@@ -469,39 +469,6 @@ function warnIfUnsaved(action, showAnother) {
     }
 }
 
-function saveProjectAs() {
-    if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in to save files.', 'error');
-        updateUI();
-        return;
-    }
-
-    // window.codeworldEditor.focus();
-    var text = 'Save Project As: <input type="text" style="width: 10em"/>';
-
-    var defaultName;
-    if (window.openProjectName) {
-        defaultName = window.openProjectName;
-    } else {
-        defaultName = '';
-    }
-
-    function go(projectName) {
-        saveProjectBase(nestedDirs.slice(1).join('/'), projectName);
-    }
-
-    sweetAlert({
-        html: true,
-        title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
-        text: 'Enter a name for your project to created at /' + nestedDirs.slice(1).join('/') + ':',
-        type: 'input',
-        inputValue: defaultName,
-        confirmButtonText: 'Save',
-        showCancelButton: true,
-        closeOnConfirm: false
-    }, go);
-}
-
 function saveProject() {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to save files.', 'error');
@@ -512,7 +479,7 @@ function saveProject() {
     if (window.openProjectName) {
         saveProjectBase(nestedDirs.slice(1).join('/'), openProjectName);
     } else {
-        saveProjectAs();
+        sweetAlert('Oops!', 'You need to create a project to save it!', 'error');
     }
 }
 
@@ -524,7 +491,16 @@ function saveProjectBase_(path, projectName, mode, successFunc, type) {
         updateUI();
         return;
     }
-
+    if (window.currentVersion == undefined || window.maxVersion == undefined) {
+        sweetAlert('Oops!', 'Something went wrong. Please try again!', 'error');
+        updateUI();
+        return;
+    }
+    if (window.currentVersion != window.maxVersion) {
+        sweetAlert('Oops!', 'Not allowed to save into a previous version! Sorry for the inconvenience!', 'error');
+        updateUI();
+        return;
+    }
     function go() {
         sweetAlert.close();
         var project = getCurrentProject();
@@ -535,7 +511,7 @@ function saveProjectBase_(path, projectName, mode, successFunc, type) {
         data.append('project', JSON.stringify(project));
         data.append('mode', mode);
         data.append('path', path);
-
+        data.append('versionNo', window.currentVersion);
         sendHttp('POST', 'saveProject', data, function(request) {
             if (request.status != 200) {
                 if (request.status == 404) {
@@ -546,11 +522,9 @@ function saveProjectBase_(path, projectName, mode, successFunc, type) {
                 updateUI();
                 return;
             }
-
+            window.project['source'] = project['source'];
+            getCommentVersions();
             successFunc();
-
-            updateUI();
-
             if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) == -1) {
                 discoverProjects(path, allProjectNames.length - 1);
             }
@@ -803,9 +777,11 @@ function loadProject_(index, name, buildMode, successFunc) {
             return;
         }
         if (window.openProjectName != '' && window.openProjectName != null) {
-            setCode('');
-            updateUI();
-            return;
+            if (window.openProjectName == name && index == window.nestedDirs.length - 1) {
+                setCode('');
+                updateUI();
+                return;
+            }
         }
         if (window.nestedDirs.length > 1 && window.nestedDirs[0] == 'commentables') {
             loadProjectForComments(index, name, buildMode, successFunc);

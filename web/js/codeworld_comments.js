@@ -38,6 +38,7 @@ function getCommentVersions() {
             return parseInt(b) - parseInt(a);
         }
         addCommentVersions(versions.sort(sortNumber));
+        updateUI();
     });
 }
 
@@ -60,7 +61,6 @@ function viewCommentVersions() {
     document.getElementById('newFolderButton').style.display = 'none';
     document.getElementById('newButton').style.display = 'none';
     document.getElementById('saveButton').style.display = 'none';
-    document.getElementById('saveAsButton').style.display = 'none';
     document.getElementById('deleteButton').style.display = 'none';
     document.getElementById('downloadButton').style.display = 'none';
     document.getElementById('moveButton').style.display = 'none';
@@ -97,6 +97,9 @@ function loadCommentVersionSource(idx) {
             updateUI();
             return;
         }
+        if (window.currentVersion == undefined) {
+            return;
+        }
         var data = new FormData();
         var id_token = auth2.currentUser.get().getAuthResponse().id_token;
         data.append('id_token', id_token);
@@ -104,6 +107,7 @@ function loadCommentVersionSource(idx) {
         data.append('name', window.openProjectName);
         data.append('path', window.nestedDirs.slice(1).join('/'));
         data.append('versionNo', idx);
+        console.log(idx);
         var handler = (window.nestedDirs.length > 1 && window.nestedDirs[1] == "commentables") ? 'viewCommentSource' : 'viewOwnerCommentSource';
         sendHttp('POST', handler, data, function (request) {
             if (request.status != 200) {
@@ -112,10 +116,12 @@ function loadCommentVersionSource(idx) {
                 return;
             }
             var doc = codeworldEditor.getDoc();
-            doc.setValue(code);
-           // if ()
-
-            window.version 
+            window.currentVersion  = idx;
+            if (window.currentVersion == window.maxVersion) {
+                window.codeworldEditor.setOption('readOnly', false);
+            } else {
+                window.codeworldEditor.setOption('readOnly', true);
+            }
             updateUI();
         });
         return;
@@ -692,7 +698,6 @@ function generateTestEnv() {
         document.getElementById('newFolderButton').style.display = 'none';
         document.getElementById('newButton').style.display = 'none';
         document.getElementById('saveButton').style.display = 'none';
-        document.getElementById('saveAsButton').style.display = 'none';
         document.getElementById('testButton').style.display = 'none';
         document.getElementById('deleteButton').style.display = 'none';
         document.getElementById('downloadButton').style.display = '';
@@ -703,14 +708,18 @@ function generateTestEnv() {
         document.getElementById('cancelButton').style.display = '';
         document.getElementById('viewCommentVersions').style.display = 'none';
         var projects = document.getElementById('nav_mine');
-        while (project.lastChild) {
+        while (projects.lastChild) {
             projects.removeChild(projects.lastChild);
         }
-        document.getElementById('viewCommentVersions').onclick = function() {
+        document.getElementById('cancelButton').onclick = function() {
+            document.getElementById('cancelButton').onclick = function() {
+                updateUI();
+            };
             window.openProjectName = window.testEnv.prevName;
             var doc = window.codeworldEditor.getDoc();
             doc.setValue(window.testEnv.project);
             window.testEnv = undefined;
+            window.location.hash = '#';
             updateUI();
         };
         var doc = window.codeworldEditor.getDoc();

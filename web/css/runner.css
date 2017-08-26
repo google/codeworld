@@ -12,10 +12,14 @@
     position: absolute;
     border: 1px solid #777;
     background: white;
-    minWidth: 60px;
+    min-width: 60px;
     padding: 0px;
     box-shadow: 1px 1px 2px #000;
     display: none;
+}
+
+#infobox ul {
+    text-align: left;
 }
 
 .stack-list {

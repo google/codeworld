@@ -106,7 +106,7 @@ function toggleDebugMode() {
     }
 }
 
-window.addEventListener("click", function (evt) {
+document.getElementById("screen").addEventListener("click", function (evt) {
     if (!window.debugActive) return;
 
     var nodeId = window.debugGetNode({
@@ -154,6 +154,15 @@ window.addEventListener("click", function (evt) {
     if (printable) {
         infobox.appendChild(table);
 
+        var showFullTree = document.createElement("a");
+        showFullTree.innerHTML = "Show full tree.";
+        showFullTree.href = "#";
+
+        infobox.appendChild(document.createElement("br"));
+        infobox.appendChild(showFullTree);
+
+        showFullTree.addEventListener("click", fullTreeMode);
+
         infobox.style.left = evt.clientX + "px";
         infobox.style.top  = evt.clientY + "px";
 
@@ -173,13 +182,45 @@ window.addEventListener("click", function (evt) {
     }
 });
 
+function fullTreeMode() {
+    infobox.innerHTML = "";
+
+    var ul = document.createElement("ul");
+    appendPicTree(debugCurrentPic, ul);
+    infobox.appendChild(ul);
+}
+
+function appendPicTree(tree,to) {
+    var li = document.createElement("li");
+    var ul, i;
+
+
+    if (tree.pictures) {
+        li.appendChild(document.createTextNode("Pictures\n"));
+        ul = document.createElement("ul");
+        for (i=0;i<tree.pictures.length;i++) {
+            console.log(i, tree.pictures[i]);
+            appendPicTree(tree.pictures[i], ul);
+        }
+        li.appendChild(ul);
+    } else if (tree.picture) {
+        li.appendChild(document.createTextNode(tree.name+"\n"));
+        ul = document.createElement("ul");
+        appendPicTree(tree.picture, ul);
+        li.appendChild(ul);
+    } else {
+        li.appendChild(document.createTextNode(tree.name+"\n"));
+    }
+
+    to.appendChild(li);
+}
+
 window.addEventListener("blur", function (evt) {
     if (!window.debugMode) return;
 
     window.infobox.style.display = "none";
 });
-
-window.addEventListener("mousemove", function (evt) {
+document.getElementById("screen").addEventListener("mousemove", function (evt) {
     if (!window.debugActive) return;
 
     var nodeId = window.debugGetNode({
@@ -187,7 +228,12 @@ window.addEventListener("mousemove", function (evt) {
         y: evt.clientY
     });
 
-    console.log("Node: ", nodeId);
-
     window.debugHighlightShape(false,nodeId);
+});
+
+document.getElementById("screen").addEventListener("mouseout", function (evt) {
+    if (!window.debugActive) return;
+
+    window.debugHighlightShape(false,-1);
+    window.debugHighlightShape(true,-1);
 });

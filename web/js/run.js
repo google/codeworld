@@ -1,5 +1,5 @@
 function reportRuntimeError(err, str) {
-  if (window.parent.addToMessage) {
+  if (window.parent && window.parent.addToMessage) {
     var message = window.parent.addToMessage('\n' + str);
 
     if (err) {
@@ -9,6 +9,21 @@ function reportRuntimeError(err, str) {
   } else {
     console.log(str);
   }
+}
+
+function showCanvas() {
+  if (!window.parent) {
+    return;
+  }
+
+  var runner = window.parent.document.getElementById('runner');
+  if (!runner) {
+    return;
+  }
+
+  runner.style.display = '';
+  runner.focus();
+  runner.contentWindow.focus();
 }
 
 function start() {

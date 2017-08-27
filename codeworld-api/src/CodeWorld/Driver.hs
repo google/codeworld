@@ -431,6 +431,9 @@ foreign import javascript unsafe "startDebugMode()"
 foreign import javascript unsafe "stopDebugMode()"
     js_stopDebugMode :: IO ()
 
+foreign import javascript unsafe "showCanvas()"
+    js_showCanvas :: IO ()
+
 followPath :: Canvas.Context -> [Point] -> Bool -> Bool -> IO ()
 followPath ctx [] closed _ = return ()
 followPath ctx [p1] closed _ = return ()
@@ -569,6 +572,7 @@ setCanvasSize target canvas = do
 
 display :: Picture -> IO ()
 display pic = do
+    js_showCanvas
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -1109,6 +1113,8 @@ runGame :: GameToken
         -> (Int -> s -> Picture)
         -> IO ()
 runGame token numPlayers initial stepHandler eventHandler drawHandler = do
+    js_showCanvas
+
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -1154,6 +1160,8 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
 
 run :: s -> (Double -> s -> s) -> (e -> s -> s) -> (s -> Picture) -> IO (e -> IO (), IO s)
 run initial stepHandler eventHandler drawHandler = do
+    js_showCanvas
+
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)

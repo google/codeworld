@@ -23,6 +23,7 @@ import           Control.Concurrent
 import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import           Data.Monoid
 import           System.Directory
 import           System.FilePath
 import           System.IO
@@ -52,10 +53,16 @@ compileSource src out err mode = checkDangerousSource src >>= \case
                         "codeworld" -> filterOutput output
                         _           -> output
                 B.writeFile err filteredOutput
-                let target = tmpdir </> "program.jsexe" </> "all.js"
-                hasTarget <- doesFileExist target
-                when hasTarget $
-                    copyFile target out
+
+                let target = tmpdir </> "program.jsexe"
+                hasTarget <- doesFileExist (target </> "rts.js")
+                when hasTarget $ do
+                    rtsCode <- B.readFile $ target </> "rts.js"
+                    libCode <- B.readFile $ target </> "lib.js"
+                    outCode <- B.readFile $ target </> "out.js"
+                    B.writeFile out (rtsCode <> libCode <> outCode)
+                    return ()
+
                 return hasTarget
 
 userCompileMicros :: Int

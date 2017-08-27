@@ -69,6 +69,7 @@ function viewCommentVersions() {
     document.getElementById('copyButton').style.display = 'none';
     document.getElementById('copyHereButton').style.display = 'none';
     document.getElementById('runButtons').style.display = 'none';
+    document.getElementById('testButton').style.display = 'none';
     document.getElementById('viewCommentVersions').style.display = 'none';
 
     var projects = document.getElementById('nav_mine');
@@ -107,7 +108,6 @@ function loadCommentVersionSource(idx) {
         data.append('name', window.openProjectName);
         data.append('path', window.nestedDirs.slice(1).join('/'));
         data.append('versionNo', idx);
-        console.log(idx);
         var handler = (window.nestedDirs.length > 1 && window.nestedDirs[1] == "commentables") ? 'viewCommentSource' : 'viewOwnerCommentSource';
         sendHttp('POST', handler, data, function (request) {
             if (request.status != 200) {
@@ -122,27 +122,61 @@ function loadCommentVersionSource(idx) {
             } else {
                 window.codeworldEditor.setOption('readOnly', true);
             }
+            doc.setValue(request.responseText);
             updateUI();
         });
         return;
     }, false);
 }
 
-function addSharedComment() {
-    if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in to view this!', 'error');
-        updateUI();
-        return;
-    }
-    var id_token = auth2.currentUser.get().getAuthResponse().id_token;
+function loadProjectForComments(index, name, buildMode, successFunc) {
     var data = new FormData();
-    data.append('id_token', id_token);
+    data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
+    data.append('name', name);
+    data.append('mode', buildMode);
+    data.append('path', window.nestedDirs.slice(1, index + 1).join('/'));
+    sendHttp('POST', 'listVersions', data, function(request) {
+        if (request.status != 200) {
+            sweetAlert('Oops!', 'Something went wrong. Please try again!', 'error');
+            return;
+        }
+        var versions = JSON.parse(request.responseText);
+        function sortNumber(a,b) {
+            return parseInt(b) - parseInt(a);
+        }
+        versions.sort(sortNumber);
+        data.append('versionNo', versions[0]);
+        sendHttp('POST', 'viewCommentSource', data, function(request) {
+            if (request.status != 200) {
+                sweetAlert('Oops!', 'Something went wrong. Please try again!', 'error');
+                return;
+            }
+            window.project = {
+                'source': request.responseText,
+                'name': name
+            };
+            window.nestedDirs = window.nestedDirs.slice(0, index + 1);
+            window.allProjectNames = window.allProjectNames.slice(0, index + 1);
+            window.allFolderNames = window.allFolderNames.slice(0, index + 1);
+            setCode(project.source, project.history, name);
+            updateUI();
+            addCommentVersions(versions);
+        });
+    });
+}
+
+function addSharedComment(hash) {
+    var data = new FormData();
     data.append('mode', window.buildMode);
     data.append('chash', hash);
 
     function go() {
+        var id_token = auth2.currentUser.get().getAuthResponse().id_token;
+        data.append('id_token', id_token);
         sendHttp('POST', 'addSharedComment', data, function(request) {
             if(request.status == 200) {
+                initCodeworld();
+                registerStandardHints(function(){setMode(true);});
                 setCode('');
                 nestedDirs = [""];
                 allProjectNames = [[]];
@@ -157,8 +191,10 @@ function addSharedComment() {
                 } else {
                     sweetAlert('Oops!', 'Could not add you to the file. Please try again!', 'error');
                 }
+                initCodeworld();
+                registerStandardHints(function(){setMode(true);});
+                discoverProjects("", 0);
                 updateUI();
-                return;
             }
         });
     }
@@ -182,6 +218,9 @@ function addSharedComment() {
             } else {
                 path = 'commentables/' + path;
             }
+        }
+        if (path[0] == '/') {
+            path = path.slice(1);
         }
         data.append('path', path);
         sweetAlert({
@@ -296,10 +335,10 @@ function addPresentCommentInd() {
 }
 
 function toggleUserComments(cm, line, gutter) {
-    if (openProjectName == null || openProjectName == '') {
+    if (window.openProjectName == null || window.openProjectName == '') {
         return;
     }
-    doc = codeworldEditor.getDoc();
+    doc = window.codeworldEditor.getDoc();
     if (window.openCommentLines == undefined) {
         window.openCommentLines = new Object();
         window.openComments = new Object();
@@ -320,6 +359,12 @@ function toggleUserComments(cm, line, gutter) {
 function generateComments(line) {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to see comments.', 'error');
+        updateUI();
+        return;
+    }
+    if (window.currentVersion == undefined) {
+        sweetAlert('Oops!', 'Something went wrong. Please try again!', 'error');
+        updateUI();
         return;
     }
     let comments = document.createElement('div');
@@ -330,15 +375,17 @@ function generateComments(line) {
 
     function go(request) {
         if (request.status != 200) {
+            if (request.status == 404) {
+                sweetAlert('Oops!', request.responseText, 'error');
+            } else {
+                sweetAlert('Oops!', 'Something went wrong. Please try again!', 'error');
+            }
             return;
         }
         var commentData = JSON.parse(request.responseText);
-        if (commentData['lineNo'] !== line) {
-            return;
-        }
         window.openComments[line] = new Array();
-        for (i in commentData['comments']) {
-            window.openComments[line].push(commentData['comments'][i]);
+        for (i in commentData) {
+            window.openComments[line].push(commentData[i]);
             comments.appendChild(generateCommentBlock(i, line));
         }
         comments.appendChild(generateCommentArea(line));
@@ -351,17 +398,14 @@ function generateComments(line) {
     }
 
     var data = new FormData();
+    data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
     data.append('mode', window.buildMode);
     data.append('lineNo', line);
-    if (window.chash != undefined) {
-        data.append('chash', window.chash);
-        sendHttp('POST', 'readComment', data, go);
-    } else {
-        data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-        data.append('path', nestedDirs.slice(1).join('/'));
-        data.append('name', openProjectName);
-        sendHttp('POST', 'readOwnerComment', data, go);
-    }
+    data.append('versionNo', window.currentVersion);
+    data.append('path', nestedDirs.slice(1).join('/'));
+    data.append('name', openProjectName);
+    var handler = (window.nestedDirs.length > 1 && window.nestedDirs[1] == 'commentables') ? 'readComment' : 'readOwnerComment';
+    sendHttp('POST', handler, data, go);
 }
 
 function toggleReplies(ind, line) {
@@ -479,101 +523,170 @@ function generateReplyArea(commentIdx, line) {
 function writeComment(line) {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to write a comment.', 'error');
+        updateUI();
+        return;
+    }
+    if (window.currentVersion == undefined || window.maxVersion == undefined) {
+        updateUI();
         return;
     }
 
-    function go(request, commentDesc) {
+    function go(request, comment, dateTime) {
         if (request.status != 200) {
-            sweetAlert('Oops!', 'Could not comment. Please try again!', 'error');
+            if (request.status == 404) {
+                sweetAlert('Oops!', request.responseText, 'error');
+            } else {
+                sweetAlert('Oops!', 'Could not comment. Please try again!', 'error');
+            }
             return;
         }
-        var comments = window.openCommentLines[line].node;
-        comments.getElementsByClassName('commentField')[0].value = '';
-        window.openComments[line].push(commentDesc);
-        comments.insertBefore(generateCommentBlock(comments.getElementsByClassName('commentBlock').length, line), comments.lastChild);
+        function goAgain(userIdent) {
+            var comments = window.openCommentLines[line].node;
+            comments.getElementsByClassName('commentField')[0].value = '';
+            window.openComments[line].push({
+                'comment': comment,
+                'replies': [],
+                'userIdent': userIdent,
+                'dateTime': dateTime,
+                'status': 'present'
+            });
+            comments.insertBefore(generateCommentBlock(comments.getElementsByClassName('commentBlock').length, line), comments.lastChild);
+        }
+        if (window.nestedDirs.length > 1 && window.nestedDirs[1] == 'commentables') {
+            var data = new FormData();
+            data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
+            data.append('mode', window.buildMode);
+            data.append('path', window.nestedDirs.slice(1).join('/'));
+            data.append('name', window.openProjectName);
+            sendHttp('POST', 'getUserIdent', data, function(request) {
+                if (request.status != 200) {
+                    if (request.status == 404) {
+                        sweetAlert('Oops!', request.responseText, 'error');
+                    } else {
+                        sweetAlert('Oops!', 'Something went wrong. Please reload the project!', 'error');
+                    }
+                    return;
+                }
+                goAgain(request.responseText);
+            });
+        } else {
+            goAgain('Anonymous Owner');
+        }
     }
 
     var data = new FormData();
     data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-    data.append('lineNo', line);
     data.append('mode', window.buildMode);
-    var commentDesc = new Object();
-    commentDesc.comment = window.openCommentLines[line].node.getElementsByClassName('commentField')[0].value;
-    if (commentDesc.comment == '') {
+    data.append('path', window.nestedDirs.slice(1).join('/'));
+    data.append('name', window.openProjectName);
+    data.append('lineNo', line);
+    data.append('versionNo', window.currentVersion);
+    var comment = window.openCommentLines[line].node.getElementsByClassName('commentField')[0].value;
+    var dateTime = (new Date()).toJSON();
+    if (comment == '') {
         return;
     }
-    commentDesc.replies = [];
-    commentDesc.userIdent = randomString();
-    commentDesc.dateTime = (new Date()).toJSON();
-    data.append('comment', JSON.stringify(commentDesc));
-    if (window.chash != undefined){
-        data.append('chash', window.chash);
-        sendHttp('POST', 'writeComment', data, function(request) {
-            go(request, commentDesc);
-        });
-    } else {
-        data.append('path', nestedDirs.slice(1).join('/'));
-        data.append('name', openProjectName);
-        sendHttp('POST', 'writeOwnerComment', data, function(request) {
-            go(request, commentDesc);
-        });
-    }
+    data.append('comment', comment);
+    data.append('dateTime', JSON.stringify(dateTime));
+    var handler = (window.nestedDirs.length > 1 && window.nestedDirs[1] == 'commentables') ? 'writeComment' : 'writeOwnerComment';
+    sendHttp('POST', handler, data, function(request) {
+        go(request, comment, dateTime);
+    });
 }
 
 function writeReply(commentIdx, line) {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to write a reply.', 'error');
+        updateUI();
+        return;
+    }
+    if (window.currentVersion == undefined || window.maxVersion == undefined) {
+        updateUI();
         return;
     }
 
-    function go(request, replyDesc) {
+    function go(request, reply, dateTime) {
         if (request.status != 200) {
-            sweetAlert('Oops!', 'Could not reply. Please try again!', 'error');
+            if (request.status == 404) {
+                sweetAlert('Oops!', request.responseText, 'error');
+            } else {
+                sweetAlert('Oops!', 'Could not reply. Please try again!', 'error');
+            }
             return;
         }
-        var commentBlock = window.openCommentLines[line].node.getElementsByClassName('commentBlock')[commentIdx];
-        commentBlock.getElementsByClassName('replyField')[0].value = '';
-        window.openComments[line][commentIdx]['replies'].push(replyDesc);
-        var replies = commentBlock.getElementsByClassName('replies')[0];
-        replies.insertBefore(generateReplyBlock(replies.getElementsByClassName('replyBlock').length, commentIdx, line), replies.lastChild);
+        function goAgain(userIdent) {
+            var commentBlock = window.openCommentLines[line].node.getElementsByClassName('commentBlock')[commentIdx];
+            commentBlock.getElementsByClassName('replyField')[0].value = '';
+            window.openComments[line][commentIdx]['replies'].push({
+                'reply': reply,
+                'dateTime': dateTime,
+                'userIdent': userIdent,
+                'status': 'present'
+            });
+            var replies = commentBlock.getElementsByClassName('replies')[0];
+            replies.insertBefore(generateReplyBlock(replies.getElementsByClassName('replyBlock').length, commentIdx, line), replies.lastChild);
+        }
+        if (window.nestedDirs.length > 1 && window.nestedDirs[1] == 'commentables') {
+            var data = new FormData();
+            data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
+            data.append('mode', window.buildMode);
+            data.append('path', window.nestedDirs.slice(1).join('/'));
+            data.append('name', window.openProjectName);
+            sendHttp('POST', 'getUserIdent', data, function(request) {
+                if (request.status != 200) {
+                    if (request.status == 404) {
+                        sweetAlert('Oops!', request.responseText, 'error');
+                    } else {
+                        sweetAlert('Oops!', 'Something went wrong. Please reload the project!', 'error');
+                    }
+                    return;
+                }
+                goAgain(request.responseText);
+            });
+        } else {
+            goAgain('Anonymous Owner');
+        }
     }
 
     var data = new FormData();
     data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-    data.append('lineNo', line);
     data.append('mode', window.buildMode);
+    data.append('lineNo', line);
+    data.append('versionNo', window.currentVersion);
+    data.append('path', window.nestedDirs.slice(1).join('/'));
+    data.append('name', window.openProjectName);
     data.append('comment', JSON.stringify(window.openComments[line][commentIdx]));
-    var replyDesc = new Object();
-    replyDesc.reply = window.openCommentLines[line].node.getElementsByClassName('commentBlock')[commentIdx].getElementsByClassName('replyField')[0].value;
-    if (replyDesc.reply == '') {
+    var reply = window.openCommentLines[line].node.getElementsByClassName('commentBlock')[commentIdx].getElementsByClassName('replyField')[0].value;
+    var dateTime = (new Date()).toJSON();
+    if (reply == '') {
         return;
     }
-    replyDesc.userIdent = randomString();
-    replyDesc.dateTime = (new Date()).toJSON();
-    data.append('reply', JSON.stringify(replyDesc));
-    if (window.chash != undefined){
-        data.append('chash', window.chash);
-        sendHttp('POST', 'writeReply', data, function(request) {
-            go(request, replyDesc);
-        });
-    } else {
-        data.append('path', nestedDirs.slice(1).join('/'));
-        data.append('name', openProjectName);
-        sendHttp('POST', 'writeOwnerReply', data, function(request) {
-            go(request, replyDesc);
-        });
-    }
+    data.append('reply', reply);
+    data.append('dateTime', JSON.stringify(dateTime));
+    var handler = (window.nestedDirs.length > 1 && window.nestedDirs[1] == 'commentables') ? 'writeReply' : 'writeOwnerReply';
+    sendHttp('POST', handler, data, function(request) {
+        go(request, reply, dateTime);
+    });
 }
 
 function deleteComment(ind, line) {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to delete a comment.', 'error');
+        updateUI();
+        return;
+    }
+    if (window.currentVersion == undefined || window.maxVersion == undefined) {
+        updateUI();
         return;
     }
 
     function go(request) {
         if (request.status != 200) {
-            sweetAlert('Oops!', 'Could not delete the comment. Please try again!', 'error');
+            if (request.status == 404) {
+                sweetAlert('Oops!', request.responseText, 'error');
+            }else {
+                sweetAlert('Oops!', 'Could not delete the comment. Please try again!', 'error');
+            }
             return;
         }
         var comments = window.openCommentLines[line].node;
@@ -595,37 +708,42 @@ function deleteComment(ind, line) {
             commentBlocks[ind].getElementsByClassName('comment')[0].innerHTML = '&nbsp;&nbsp;deleted';
             window.openComments[line][ind]['userIdent'] = 'none';
             window.openComments[line][ind]['comment'] = 'deleted';
+            window.openComments[line][ind]['status'] = 'deleted';
         }
     }
 
     var data = new FormData();
     data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-    data.append('lineNo', line);
     data.append('mode', window.buildMode);
+    data.append('lineNo', line);
+    data.append('versionNo', window.currentVersion);
+    data.append('path', window.nestedDirs.slice(1).join('/'));
+    data.append('name', window.openProjectName);
     data.append('comment', JSON.stringify(window.openComments[line][ind]));
-    if (window.chash != undefined){
-        data.append('chash', window.chash);
-        sendHttp('POST', 'deleteComment', data, function(request) {
-            go(request);
-        });
-    } else {
-        data.append('path', nestedDirs.slice(1).join('/'));
-        data.append('name', openProjectName);
-        sendHttp('POST', 'deleteOwnerComment', data, function(request) {
-            go(request);
-        });
-    }
+    var handler = (window.nestedDirs.length > 1 && window.nestedDirs[1] == 'commentables') ? 'deleteComment' : 'deleteOwnerComment';
+    sendHttp('POST', handler, data, function(request) {
+        go(request);
+    });
 }
 
 function deleteReply(ind, commentIdx, line) {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to delete a reply.', 'error');
+        updateUI();
+        return;
+    }
+    if (window.currentVersion == undefined || window.maxVersion == undefined) {
+        updateUI();
         return;
     }
 
     function go(request) {
         if (request.status != 200) {
-            sweetAlert('Oops!', 'Could not delete the reply. Please try again!', 'error');
+            if (request.status == 404) {
+                sweetAlert('Oops!', request.responseText, 'error');
+            } else {
+                sweetAlert('Oops!', 'Could not delete the reply. Please try again!', 'error');
+            }
             return;
         }
         var comments = window.openCommentLines[line].node;
@@ -635,6 +753,7 @@ function deleteReply(ind, commentIdx, line) {
         for (let i = l - 1; i >= ind; i--) {
             replies.removeChild(replies.getElementsByClassName('replyBlock')[i]);
         }
+        window.openComments[line][commentIdx]['replies'][ind]['status'] = 'deleted';
         window.openComments[line][commentIdx]['replies'].splice(ind, 1);
         for (let i = ind; i < l; i++) {
             if (i != ind)
@@ -658,22 +777,17 @@ function deleteReply(ind, commentIdx, line) {
 
     var data = new FormData();
     data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-    data.append('lineNo', line);
     data.append('mode', window.buildMode);
+    data.append('lineNo', line);
+    data.append('versioNo', window.currentVersion);
     data.append('comment', JSON.stringify(window.openComments[line][commentIdx]));
     data.append('reply', JSON.stringify(window.openComments[line][commentIdx]['replies'][ind]));
-    if (window.chash != undefined){
-        data.append('chash', window.chash);
-        sendHttp('POST', 'deleteReply', data, function(request) {
-            go(request);
-        });
-    } else {
-        data.append('path', nestedDirs.slice(1).join('/'));
-        data.append('name', openProjectName);
-        sendHttp('POST', 'deleteOwnerReply', data, function(request) {
-            go(request);
-        });
-    }
+    data.append('path', nestedDirs.slice(1).join('/'));
+    data.append('name', openProjectName);
+    var handler = (window.nestedDirs.length > 1 && window.nestedDirs[1] == 'commentables') ? 'deleteReply' : 'deleteOwnerReply';
+    sendHttp('POST', handler, data, function(request) {
+        go(request);
+    });
 }
 
 function generateTestEnv() {
@@ -683,16 +797,22 @@ function generateTestEnv() {
             updateUI();
             return;
         }
-        if (!(window.nestedDirs.length > 1 && window.nestedDir[1] == 'commentables')) {
+        if (window.currentVersion == undefined || window.maxVersion == undefined) {
             updateUI();
             return;
+        }
+        if (!(window.nestedDirs.length > 1 && window.nestedDirs[1] == 'commentables')) {
+            if (window.currentVersion == window.maxVersion) {
+                updateUI();
+                return;
+            }
         }
         if (openProjectName == '' || openProjectName == null) {
             updateUI();
             return;
         }
         window.testEnv = new Object();
-        window.testEnv.project = window.project.source;
+        window.testEnv.project = getCurrentProject()['source'];
         window.testEnv.prevName = window.openProjectName;
         window.openProjectName = null;
         document.getElementById('newFolderButton').style.display = 'none';
@@ -724,6 +844,7 @@ function generateTestEnv() {
         };
         var doc = window.codeworldEditor.getDoc();
         doc.setValue(window.testEnv.project);
+        window.codeworldEditor.setOption('readOnly', false);
         doc.clearHistory();
     }, false);
 }

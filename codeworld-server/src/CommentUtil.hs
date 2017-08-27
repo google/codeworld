@@ -298,8 +298,8 @@ createNewVersionIfReq latestSource versionNo' commentFolder = do
     let currentVersion = currentVersions !! 0
     currentSource <- T.decodeUtf8 <$>
       B.readFile (commentFolder <.> "versions" </> show currentVersion)
-    case (currentSource == latestSource, currentVersion == versionNo') of
-      (_, False) -> return $ Left "Cannot Edit A Previous Version."
+    case (currentSource == latestSource, currentVersion > versionNo') of
+      (_, True) -> return $ Left "Cannot Edit A Previous Version."
       (True, _) -> return $ Right ()
       (False, _) -> do
         currentLines :: [Int] <- delete 0 . fmap read <$> listDirectory commentFolder
@@ -314,7 +314,11 @@ createNewVersionIfReq latestSource versionNo' commentFolder = do
               T.encodeUtf8 latestSource
             ensureVersionLines (currentVersion + 1) commentFolder
             return $ Right ()
-          False -> return $ Right ()
+          False -> do
+            B.writeFile (commentFolder <.> "versions" </> show currentVersion) $
+              T.encodeUtf8 latestSource
+            ensureVersionLines currentVersion commentFolder
+            return $ Right ()
 
 updateUserVersionLS :: Text -> FilePath -> IO ()
 updateUserVersionLS userIdent' commentFolder = do
@@ -338,16 +342,26 @@ ensureVersionLines versionNo' commentFolder = do
     currentLines :: [Int] <- delete 0 . fmap read <$> listDirectory commentFolder
     mapM_ (\x -> do
       fileBool <- doesFileExist $ commentFolder </> show x
-      newLC <- case fileBool of
+      case fileBool of
         True -> do
           Just (currentLC :: LineComment) <- decode <$>
             LB.readFile (commentFolder </> show x)
-          return $ LineComment x (versions currentLC ++ [[]])
-        False -> return $ LineComment x [[]]
-      LB.writeFile (commentFolder </> show x) $ encode newLC)
-        [1..totalLines `max` length currentLines]
+          let currLength = length . versions $ currentLC
+          let newLC = LineComment x (versions currentLC ++
+                        replicate (versionNo' - currLength + 1) [])
+          LB.writeFile (commentFolder </> show x) $ encode newLC
+        False -> do
+          let newLC = LineComment x (replicate (versionNo' + 1) [])
+          LB.writeFile (commentFolder </> show x) $ encode newLC
+      )[1..totalLines `max` length currentLines]
     currentUsers <- map T.pack <$> listDirectory (commentFolder <.> "users")
-    forM_ currentUsers (\u -> updateUserVersionLS u commentFolder)
+    forM_ currentUsers $ \u -> do
+      Just (versionLS :: [VersionLS]) <- fmap getVersionLS <$> decode <$>
+        LB.readFile (commentFolder <.> "users" </> T.unpack u)
+      let newVersionLS = versionLS ++ if (length versionLS == versionNo' + 1) then []
+                                      else [VersionLS versionNo' (LineStatuses [])]
+      LB.writeFile (commentFolder <.> "users" </> T.unpack u) $
+        encode . VersionLS_ $ newVersionLS
 
 addNewUser :: Text -> Text -> FilePath -> FilePath -> FilePath -> IO (Either String ())
 addNewUser userId' userIdent' name userPath commentHashPath = do
@@ -355,8 +369,8 @@ addNewUser userId' userIdent' name userPath commentHashPath = do
                          if l `elem` (T.unpack userIdent') then False else acc
                        ) True ['/', '.', '+']
     case identAllowed of
-      True -> return $ Left "User Identifier Has Unallowed Char(/+.)"
-      False -> do
+      False -> return $ Left "User Identifier Has Unallowed Char(/+.)"
+      True -> do
         fileBool <- doesFileExist commentHashPath
         case fileBool of
           True -> do

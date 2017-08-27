@@ -453,7 +453,7 @@ function copyHere_(path, buildMode, successFunc) {
 }
 
 function warnIfUnsaved(action, showAnother) {
-    if (isEditorClean()) {
+    if (isEditorClean() || window.currentVersion != window.maxVersion) {
         action();
     } else {
         var msg = 'There are unsaved changes to your project. ' + 'Continue and throw away your changes?';
@@ -738,6 +738,13 @@ function newProject_(path) {
                     if (allProjectNames[allProjectNames.length - 1].indexOf(fileName) == -1) {
                         discoverProjects(path, allProjectNames.length - 1);
                     }
+
+                    window.project = {
+                        'name': fileName,
+                        'source': ''
+                    };
+                    window.currentVersion = 0;
+                    window.maxVersion = 0;
                 });
             }
 
@@ -783,7 +790,7 @@ function loadProject_(index, name, buildMode, successFunc) {
                 return;
             }
         }
-        if (window.nestedDirs.length > 1 && window.nestedDirs[0] == 'commentables') {
+        if (index != 0 && window.nestedDirs.length > 1 && window.nestedDirs[1] == 'commentables') {
             loadProjectForComments(index, name, buildMode, successFunc);
             return;
         }

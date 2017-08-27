@@ -67,6 +67,8 @@ function init() {
                 showCancelButton: false,
                 closeOnConfirm: false
             }, go);
+        } else if (hash[0] == 'C') {
+            addSharedComment(hash);
         } else {
             initCodeworld();
             registerStandardHints(function(){setMode(true);});
@@ -88,9 +90,7 @@ function init() {
                     setCode(request.responseText, null, null, true);
                 }
             });
-        } else if (hash[0] == 'C') {
-            addSharedComment();
-        } else if (hash[0] != 'F') {
+        } else if (hash[0] != 'F' && hash[0] !='C') {
             setCode('');
             if (!signedIn()) help();
         }
@@ -143,14 +143,6 @@ function initCodeworld() {
         }
     }
     document.onkeydown = function(e) {
-        if (e.ctrlKey && e.keyCode === 83) { // Ctrl+S
-            if (window.openProjectName == '' || window.openProjectName == undefined) {
-                newProject();
-            } else {
-                saveProject();
-            }
-            return false;
-        }
         if (e.ctrlKey && e.keyCode === 73) { // Ctrl+I
             formatSource();
             return false;
@@ -365,6 +357,7 @@ function updateUI() {
         window.currentVersion = undefined;
         window.maxVersion = undefined;
         window.project = undefined;
+        document.getElementById('testButton').style.display = 'none';
         document.getElementById('askFeedbackButton').style.display = 'none';
     } else {
         document.getElementById('viewCommentVersions').style.display = '';
@@ -506,10 +499,14 @@ function updateNavBar() {
         document.getElementById('compileButton').style.display = 'none';
         document.getElementById('stopButton').style.display = 'none';
     } else {
-        if (window.isCommentables == true) {
-            window.codeWorldEditor.setOption('readOnly', true);
+        if (window.inCommentables == true) {
+            window.codeworldEditor.setOption('readOnly', true);
         } else {
-            window.codeworldEditor.setOption('readOnly', false);
+            if (window.currentVersion == window.maxVersion) {
+                window.codeworldEditor.setOption('readOnly', false);
+            } else {
+                window.codeworldEditor.setOption('readOnly', true);
+            }
         }
         document.getElementById('downloadButton').style.display = '';
         document.getElementById('compileButton').style.display = '';
@@ -900,7 +897,6 @@ function saveProjectBase(path, projectName, type = 'save') {
         var doc = window.codeworldEditor.getDoc();
         window.savedGeneration = doc.changeGeneration(true);
     }
-
     saveProjectBase_(path, projectName, window.buildMode, successFunc, type);
 }
 

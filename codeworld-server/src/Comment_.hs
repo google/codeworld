@@ -46,7 +46,7 @@ commentRoutes clientId =
     , ("deleteOwnerComment",      deleteOwnerCommentHandler clientId)
     , ("deleteOwnerReply",        deleteOwnerReplyHandler clientId)
     , ("deleteReply",             deleteReplyHandler clientId)
-    , ("getUserIdent",            getUserIdent clientId)
+    , ("getUserIdent",            getUserIdentHandler clientId)
     , ("listComments",            listCommentsHandler clientId)
     , ("listOwnerComments",       listOwnerCommentsHandler clientId)
     , ("listOwnerVersions",       listOwnerVersionsHandler clientId)
@@ -149,11 +149,11 @@ deleteCommentHandler clientId = do
             deleteCommentFromFile commentFolder lineNo' versionNo' comment'
           False -> do
             modifyResponse $ setContentType "text/plain"
-            modifyResponse $ setResponseCode 500
+            modifyResponse $ setResponseCode 404
             writeBS . BC.pack $ "User Identifier Not Allowed To Delete This Comment"
       Nothing -> do
         modifyResponse $ setContentType "text/plain"
-        modifyResponse $ setResponseCode 500
+        modifyResponse $ setResponseCode 404
         writeBS . BC.pack $ "User Identifier Not Found"
 
 deleteOwnerCommentHandler :: ClientId -> Snap ()
@@ -167,7 +167,7 @@ deleteOwnerCommentHandler clientId = do
         deleteCommentFromFile commentFolder lineNo' versionNo' comment'
       False -> do
         modifyResponse $ setContentType "text/plain"
-        modifyResponse $ setResponseCode 500
+        modifyResponse $ setResponseCode 404
         writeBS . BC.pack $ "User Identifier Not Allowed To Delete This Comment"
 
 deleteOwnerReplyHandler :: ClientId -> Snap ()
@@ -182,7 +182,7 @@ deleteOwnerReplyHandler clientId = do
         deleteReplyFromComment commentFolder lineNo' versionNo' comment' reply'
       False -> do
         modifyResponse $ setContentType "text/plain"
-        modifyResponse $ setResponseCode 500
+        modifyResponse $ setResponseCode 404
         writeBS . BC.pack $ "User Identifier Not Allowed To Delete This Reply"
 
 deleteReplyHandler :: ClientId -> Snap ()
@@ -205,15 +205,15 @@ deleteReplyHandler clientId = do
             deleteReplyFromComment commentFolder lineNo' versionNo' comment' reply'
           False -> do
             modifyResponse $ setContentType "text/plain"
-            modifyResponse $ setResponseCode 500
+            modifyResponse $ setResponseCode 404
             writeBS . BC.pack $ "User Identifier Not Allowed To Delete This Reply"
       Nothing -> do
         modifyResponse $ setContentType "text/plain"
-        modifyResponse $ setResponseCode 500
+        modifyResponse $ setResponseCode 404
         writeBS . BC.pack $ "User Identifier Not Found"
 
-getUserIdent :: ClientId -> Snap ()
-getUserIdent clientId = do
+getUserIdentHandler :: ClientId -> Snap ()
+getUserIdentHandler clientId = do
     (user, mode, commentFolder) <- getFrequentParams 3 clientId
     let commentHash = nameToCommentHash commentFolder
         commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
@@ -223,11 +223,10 @@ getUserIdent clientId = do
     case (userId user) `elemIndex` currentUserIds of
       Just ind -> do
         modifyResponse $ setContentType "text/plain"
-        modifyResponse $ setResponseCode 500
         writeBS . T.encodeUtf8 . uuserIdent $ currentUsers !! ind
       Nothing -> do
         modifyResponse $ setContentType "text/plain"
-        modifyResponse $ setResponseCode 500
+        modifyResponse $ setResponseCode 404
         writeBS . BC.pack $ "User Identifier Not Found"
 
 listCommentsHandler :: ClientId -> Snap ()
@@ -301,14 +300,14 @@ readCommentHandler clientId = do
         writeLBS (encode comments')
       Nothing -> do
         modifyResponse $ setContentType "text/plain"
-        modifyResponse $ setResponseCode 500
+        modifyResponse $ setResponseCode 404
         writeBS . BC.pack $ "User Identifier Not Found"
 
 readOwnerCommentHandler :: ClientId -> Snap ()
 readOwnerCommentHandler clientId = do
     (_, _, commentFolder) <- getFrequentParams 1 clientId
-    Just (lineNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
     Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
+    Just (lineNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
     comments' <- liftIO $ getLineComment commentFolder lineNo' versionNo'
     liftIO $ markReadComments "Anonymous Owner" commentFolder lineNo' versionNo'
     modifyResponse $ setContentType "application/json"
@@ -350,8 +349,8 @@ writeCommentHandler clientId = do
         markUnreadComments userIdent' commentFolder lineNo' versionNo'
       Nothing -> do
         modifyResponse $ setContentType "text/plain"
-        modifyResponse $ setResponseCode 500
-        writeBS . BC.pack $ "User Identifier Not Found"
+        modifyResponse $ setResponseCode 404
+        writeBS . BC.pack $ "User Does Not Exists"
 
 writeOwnerCommentHandler :: ClientId -> Snap ()
 writeOwnerCommentHandler clientId = do
@@ -397,5 +396,5 @@ writeReplyHandler clientId = do
         addReplyToComment commentFolder lineNo' versionNo' comment' replyDesc
       Nothing -> do
         modifyResponse $ setContentType "text/plain"
-        modifyResponse $ setResponseCode 500
+        modifyResponse $ setResponseCode 404
         writeBS . BC.pack $ "User Identifier Not Found"

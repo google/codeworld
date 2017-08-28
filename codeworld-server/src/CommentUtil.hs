@@ -19,6 +19,7 @@
 module CommentUtil where
 
 import           Control.Monad
+import           Control.Exception
 import           Data.Aeson
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
@@ -80,8 +81,8 @@ cleanCommentPaths mode commentFolder = do
         let commentHash = nameToCommentHash commentFolder
             commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
         removeFileIfExists commentHashPath
-        Just (currentUsers :: [UserDump]) <- decode <$>
-          LB.readFile (commentHashPath <.> "users")
+        Just (currentUsers :: [UserDump]) <- decodeStrict <$>
+          B.readFile (commentHashPath <.> "users")
         forM_ currentUsers $ \u -> do
             case uuserIdent u of
               "Anonymous Owner" -> return ()
@@ -125,13 +126,13 @@ removeUserFromComments userId' userPath = do
       True -> do
         commentHashFile <- BC.unpack <$> B.readFile userPath
         commentFolder <- BC.unpack <$> B.readFile commentHashFile
-        Just (currentUsers :: [UserDump]) <- decode <$>
-          LB.readFile (commentHashFile <.> "users")
+        Just (currentUsers :: [UserDump]) <- decodeStrict <$>
+          B.readFile (commentHashFile <.> "users")
         let currentUserIds = map uuserId currentUsers
             currentUser = currentUsers !! (fromJust $ userId' `elemIndex` currentUserIds)
         removeFileIfExists $ commentFolder <.> "users" </> T.unpack (uuserIdent currentUser)
-        LB.writeFile (commentHashFile <.> "users") $
-          encode (delete currentUser currentUsers)
+        B.writeFile (commentHashFile <.> "users") $
+          LB.toStrict $ encode (delete currentUser currentUsers)
         removeFileIfExists userPath
         removeFileIfExists $ userPath <.> "info"
         cleanBaseDirectory userPath
@@ -143,13 +144,13 @@ correctUserPathInComments userId' userPath = do
     case fileBool of
       True -> do
         commentHashFile <- BC.unpack <$> B.readFile userPath
-        Just (currentUsers :: [UserDump]) <- decode <$>
-          LB.readFile (commentHashFile <.> "users")
+        Just (currentUsers :: [UserDump]) <- decodeStrict <$>
+          B.readFile (commentHashFile <.> "users")
         let newUsr usr = UserDump userId' (uuserIdent usr) $ T.pack userPath
             newUsers = map (\usr -> if uuserId usr /= userId' then usr
                                                               else newUsr usr) currentUsers
-        LB.writeFile (commentHashFile <.> "users") $
-          encode newUsers
+        B.writeFile (commentHashFile <.> "users") $
+          LB.toStrict . encode $ newUsers
       False -> return ()
 
 copyFileFromCommentables :: BuildMode -> Text -> FilePath -> FilePath -> Text -> Value -> IO ()
@@ -158,10 +159,10 @@ copyFileFromCommentables mode userId' fromFile toFile name emptyPH = do
     createDirectoryIfMissing False $ takeDirectory toFile
     commentHashFile <- BC.unpack <$> B.readFile fromFile
     commentFolder <- BC.unpack <$> B.readFile commentHashFile
-    Just (project :: Project) <- decode <$>
-      LB.readFile (take (length commentFolder - 9) commentFolder)
-    LB.writeFile toFile $ encode
-      (Project name (projectSource project) emptyPH)
+    Just (project :: Project) <- decodeStrict <$>
+      B.readFile (take (length commentFolder - 9) commentFolder)
+    B.writeFile toFile $ LB.toStrict . encode $
+      Project name (projectSource project) emptyPH
     addSelf mode userId' "Anonymous Owner" $ toFile <.> "comments"
 
 copyFolderFromCommentables :: BuildMode -> Text -> FilePath -> FilePath -> Text -> Value -> IO ()
@@ -187,9 +188,9 @@ copyFileFromSelf :: BuildMode -> Text -> FilePath -> FilePath -> Text -> IO ()
 copyFileFromSelf mode userId' fromFile toFile name = do
     cleanCommentPaths mode $ toFile <.> "comments"
     createDirectoryIfMissing False $ takeDirectory toFile
-    Just (project :: Project) <- decode <$> LB.readFile fromFile
-    LB.writeFile toFile $ encode
-      (Project name (projectSource project) (projectHistory project))
+    Just (project :: Project) <- decodeStrict <$> B.readFile fromFile
+    B.writeFile toFile $ LB.toStrict . encode $
+      Project name (projectSource project) (projectHistory project)
     addSelf mode userId' "Anonymous Owner" $ toFile <.> "comments"
 
 copyFolderFromSelf :: BuildMode -> Text -> FilePath -> FilePath -> Text -> IO ()
@@ -203,7 +204,7 @@ copyFolderFromSelf mode userId' fromDir toDir name = do
         case (fileBool, isSuffixOf ".cw" (drop 23 file)) of
           (True, True) -> do
             let toFile = toDir </> take 3 file </> file
-            Just (project :: Project) <- decode <$> LB.readFile f
+            Just (project :: Project) <- decodeStrict <$> B.readFile f
             copyFileFromSelf mode userId' f toFile $ projectName project
           (_, _) -> return ()
     dirDirs <- dirFilter dirList 'D'
@@ -250,9 +251,9 @@ moveFileFromSelf mode userId' fromFile toFile name = do
       map ("comments" <.>) ["", "users", "versions"]
     renameFile fromFile toFile
     cleanBaseDirectory fromFile
-    Just (project :: Project) <- decode <$> LB.readFile toFile
-    LB.writeFile toFile $ encode
-      (Project name (projectSource project) (projectHistory project))
+    Just (project :: Project) <- decodeStrict <$> B.readFile toFile
+    B.writeFile toFile $ LB.toStrict . encode $
+      Project name (projectSource project) (projectHistory project)
     let fromCommentHash = nameToCommentHash $ fromFile <.> "comments"
         toCommentHash = nameToCommentHash $ toFile <.> "comments"
         fromCommentHashPath = commentHashRootDir mode </> commentHashLink fromCommentHash
@@ -262,8 +263,8 @@ moveFileFromSelf mode userId' fromFile toFile name = do
     renameFile (fromCommentHashPath <.> "users") (toCommentHashPath <.> "users")
     cleanBaseDirectory fromCommentHashPath
     -- change user paths to toCommentHashPath
-    Just (currentUsers :: [UserDump]) <- decode <$>
-      LB.readFile (toCommentHashPath <.> "users")
+    Just (currentUsers :: [UserDump]) <- decodeStrict <$>
+      B.readFile (toCommentHashPath <.> "users")
     mapM_ (\u ->
       if (uuserId u /= userId') then B.writeFile (T.unpack $ upath u) $ BC.pack toCommentHashPath
                                 else return ()
@@ -280,7 +281,7 @@ moveFolderFromSelf mode userId' fromDir toDir name = do
         case (fileBool, isSuffixOf ".cw" (drop 23 file)) of
           (True, True) -> do
             let toFile = toDir </> take 3 file </> file
-            Just (project :: Project) <- decode <$> LB.readFile f
+            Just (project :: Project) <- decodeStrict <$> B.readFile f
             moveFileFromSelf mode userId' f toFile $ projectName project
           (_, _) -> return ()
     dirDirs <- dirFilter dirList 'D'
@@ -303,8 +304,8 @@ createNewVersionIfReq latestSource versionNo' commentFolder = do
       (True, _) -> return $ Right ()
       (False, _) -> do
         currentLines :: [Int] <- delete 0 . fmap read <$> listDirectory commentFolder
-        commentVersionLists :: [[[CommentDesc]]] <- mapM (\x -> versions . fromJust . decode <$>
-          LB.readFile (commentFolder </> show x)) currentLines
+        commentVersionLists :: [[[CommentDesc]]] <- mapM (\x -> versions . fromJust . decodeStrict <$>
+          B.readFile (commentFolder </> show x)) currentLines
         let hasComments = foldr (\l acc ->
                             if (l !! currentVersion /= [])  then True else acc
                             ) False commentVersionLists
@@ -324,16 +325,16 @@ updateUserVersionLS :: Text -> FilePath -> IO ()
 updateUserVersionLS userIdent' commentFolder = do
     currentLines :: [Int] <- delete 0 . fmap read <$> listDirectory commentFolder
     currentVersions :: [Int] <- fmap read <$> (listDirectory $ commentFolder <.> "versions")
-    commentVersionLists :: [[[CommentDesc]]] <- mapM (\x -> versions . fromJust . decode <$>
-      LB.readFile (commentFolder </> show x)) currentLines
+    commentVersionLists :: [[[CommentDesc]]] <- mapM (\x -> versions . fromJust . decodeStrict <$>
+      B.readFile (commentFolder </> show x)) currentLines
     let versionLS = map (\v -> VersionLS v . LineStatuses $ foldr (\l acc ->
                       LineStatus (currentLines !! (fromJust $
                         l `elemIndex` commentVersionLists))
                         (if (l !! v /= []) then "unread" else "read") : acc
                       ) [] commentVersionLists
                     ) currentVersions
-    LB.writeFile (commentFolder <.> "users" </> T.unpack userIdent') $
-      encode $ VersionLS_ versionLS
+    B.writeFile (commentFolder <.> "users" </> T.unpack userIdent') $
+      LB.toStrict . encode $ VersionLS_ versionLS
 
 ensureVersionLines :: Int -> FilePath -> IO ()
 ensureVersionLines versionNo' commentFolder = do
@@ -344,24 +345,24 @@ ensureVersionLines versionNo' commentFolder = do
       fileBool <- doesFileExist $ commentFolder </> show x
       case fileBool of
         True -> do
-          Just (currentLC :: LineComment) <- decode <$>
-            LB.readFile (commentFolder </> show x)
+          Just (currentLC :: LineComment) <- decodeStrict <$>
+            B.readFile (commentFolder </> show x)
           let currLength = length . versions $ currentLC
           let newLC = LineComment x (versions currentLC ++
                         replicate (versionNo' - currLength + 1) [])
-          LB.writeFile (commentFolder </> show x) $ encode newLC
+          B.writeFile (commentFolder </> show x) $ LB.toStrict . encode $ newLC
         False -> do
           let newLC = LineComment x (replicate (versionNo' + 1) [])
-          LB.writeFile (commentFolder </> show x) $ encode newLC
+          B.writeFile (commentFolder </> show x) $ LB.toStrict . encode $ newLC
       )[1..totalLines `max` length currentLines]
     currentUsers <- map T.pack <$> listDirectory (commentFolder <.> "users")
     forM_ currentUsers $ \u -> do
-      Just (versionLS :: [VersionLS]) <- fmap getVersionLS <$> decode <$>
-        LB.readFile (commentFolder <.> "users" </> T.unpack u)
+      Just (versionLS :: [VersionLS]) <- fmap getVersionLS <$> decodeStrict <$>
+        B.readFile (commentFolder <.> "users" </> T.unpack u)
       let newVersionLS = versionLS ++ if (length versionLS == versionNo' + 1) then []
                                       else [VersionLS versionNo' (LineStatuses [])]
-      LB.writeFile (commentFolder <.> "users" </> T.unpack u) $
-        encode . VersionLS_ $ newVersionLS
+      B.writeFile (commentFolder <.> "users" </> T.unpack u) $
+        LB.toStrict . encode . VersionLS_ $ newVersionLS
 
 addNewUser :: Text -> Text -> FilePath -> FilePath -> FilePath -> IO (Either String ())
 addNewUser userId' userIdent' name userPath commentHashPath = do
@@ -374,16 +375,16 @@ addNewUser userId' userIdent' name userPath commentHashPath = do
         fileBool <- doesFileExist commentHashPath
         case fileBool of
           True -> do
-            Just (currentUsers :: [UserDump]) <- decode <$>
-              LB.readFile (commentHashPath <.> "users")
+            Just (currentUsers :: [UserDump]) <- decodeStrict <$>
+              B.readFile (commentHashPath <.> "users")
             let currentIdents = map uuserIdent currentUsers
             case userIdent' `elem` currentIdents of
               False -> do
                 createDirectoryIfMissing False $ takeDirectory userPath
                 B.writeFile userPath $ BC.pack commentHashPath
                 B.writeFile (userPath <.> "info") $ BC.pack name
-                LB.writeFile (commentHashPath <.> "users") $ encode (UserDump
-                  userId' userIdent' (T.pack userPath) : currentUsers)
+                B.writeFile (commentHashPath <.> "users") $ LB.toStrict . encode $ UserDump
+                  userId' userIdent' (T.pack userPath) : currentUsers
                 commentFolder <- BC.unpack <$> B.readFile commentHashPath
                 updateUserVersionLS userIdent' commentFolder
                 return $ Right ()
@@ -397,20 +398,20 @@ addSelf mode userId' userIdent' commentFolder = do
     createDirectoryIfMissing False commentFolder
     ensureCommentHashDir mode commentHash
     B.writeFile commentHashPath $ BC.pack commentFolder
-    LB.writeFile (commentHashPath <.> "users") $ encode (UserDump
-      userId' userIdent' (T.pack $ take (length commentFolder - 9) commentFolder) : [])
+    B.writeFile (commentHashPath <.> "users") $ LB.toStrict . encode $ UserDump
+      userId' userIdent' (T.pack $ take (length commentFolder - 9) commentFolder) : []
     createDirectoryIfMissing False $ commentFolder <.> "users"
     createDirectoryIfMissing False $ commentFolder <.> "versions"
-    Just (project :: Project) <- decode <$>
-      (LB.readFile $ take (length commentFolder - 9) commentFolder)
+    Just (project :: Project) <- decodeStrict <$>
+      (B.readFile $ take (length commentFolder - 9) commentFolder)
     B.writeFile (commentFolder <.> "versions" </> "0") $ T.encodeUtf8 . projectSource $ project
     ensureVersionLines 0 commentFolder
     updateUserVersionLS userIdent' $ commentFolder
 
 listUnreadComments :: Text -> FilePath -> Int -> IO [Int]
 listUnreadComments userIdent' commentFolder versionNo' = do
-    Just (versionLS :: VersionLS_) <- decode <$>
-      LB.readFile (commentFolder <.> "users" </> T.unpack userIdent')
+    Just (versionLS :: VersionLS_) <- decodeStrict <$>
+      B.readFile (commentFolder <.> "users" </> T.unpack userIdent')
     let currentLineList = listStatuses . versionStatus $ (getVersionLS versionLS) !! versionNo'
         unreadLineList = foldr (\l acc ->
                            if ((T.unpack . lstatus $ l) == "unread") then (llineNo l) : acc
@@ -420,47 +421,47 @@ listUnreadComments userIdent' commentFolder versionNo' = do
 
 getLineComment :: FilePath -> Int -> Int -> IO [CommentDesc]
 getLineComment commentFolder lineNo' versionNo' = do
-    Just (lc :: LineComment) <- decode <$> LB.readFile (commentFolder </> show lineNo')
+    Just (lc :: LineComment) <- decodeStrict <$> B.readFile (commentFolder </> show lineNo')
     return $ (versions lc) !! versionNo'
 
 markReadComments :: Text -> FilePath -> Int -> Int -> IO ()
 markReadComments userIdent' commentFolder lineNo' versionNo' = do
-    Just (versionLS :: VersionLS_) <- decode <$>
-      LB.readFile (commentFolder <.> "users" </> T.unpack userIdent')
+    Just (versionLS :: VersionLS_) <- decodeStrict <$>
+      B.readFile (commentFolder <.> "users" </> T.unpack userIdent')
     let currentLineList = listStatuses . versionStatus $ (getVersionLS versionLS) !! versionNo'
         newLineList = VersionLS versionNo' . LineStatuses . map (\x ->
                         if llineNo x == lineNo' then LineStatus lineNo' "read"
                                                 else x) $ currentLineList
         spnll = splitAt versionNo' (getVersionLS versionLS)
-    LB.writeFile (commentFolder <.> "users" </> T.unpack userIdent') $
-      encode . VersionLS_ $ fst spnll ++ (newLineList : (tail $ snd spnll))
+    B.writeFile (commentFolder <.> "users" </> T.unpack userIdent') $
+      LB.toStrict . encode . VersionLS_ $ fst spnll ++ (newLineList : (tail $ snd spnll))
 
 addCommentToFile :: FilePath -> Int -> Int -> CommentDesc -> IO ()
 addCommentToFile commentFolder lineNo' versionNo' comment' = do
-    Just (lc :: LineComment) <- decode <$> LB.readFile (commentFolder </> show lineNo')
+    Just (lc :: LineComment) <- decodeStrict <$> B.readFile (commentFolder </> show lineNo')
     let newComments = ((versions lc) !! versionNo') ++ [comment']
         spvn = splitAt versionNo' (versions lc)
-    LB.writeFile (commentFolder </> show lineNo') $ encode (LineComment lineNo' $
-      fst spvn ++ (newComments : (tail $ snd spvn)))
+    B.writeFile (commentFolder </> show lineNo') $ LB.toStrict . encode $ LineComment lineNo' $
+      fst spvn ++ (newComments : (tail $ snd spvn))
 
 markUnreadComments :: Text -> FilePath -> Int -> Int -> IO ()
 markUnreadComments userIdent' commentFolder lineNo' versionNo' = do
     currentUsers <- delete (T.unpack userIdent') <$> listDirectory (commentFolder <.> "users")
     forM_ currentUsers $ \u -> do
-        Just (versionLS :: VersionLS_) <- decode <$>
-          LB.readFile (commentFolder <.> "users" </> u)
+        Just (versionLS :: VersionLS_) <- decodeStrict <$>
+          B.readFile (commentFolder <.> "users" </> u)
         let currentLineList = listStatuses . versionStatus $
                                 (getVersionLS versionLS) !! versionNo'
             newLineList = VersionLS versionNo' . LineStatuses . map (\x ->
                             if llineNo x == lineNo' then LineStatus lineNo' "unread"
                                                     else x) $ currentLineList
             spnll = splitAt versionNo' (getVersionLS versionLS)
-        LB.writeFile (commentFolder <.> "users" </> T.unpack userIdent') $
-          encode . VersionLS_ $ fst spnll ++ (newLineList : (tail $ snd spnll))
+        B.writeFile (commentFolder <.> "users" </> T.unpack userIdent') $
+          LB.toStrict . encode . VersionLS_ $ fst spnll ++ (newLineList : (tail $ snd spnll))
 
 addReplyToComment :: FilePath -> Int -> Int -> CommentDesc -> ReplyDesc -> IO ()
 addReplyToComment commentFolder lineNo' versionNo' cd rd = do
-    Just (lc :: LineComment) <- decode <$> LB.readFile (commentFolder </> show lineNo')
+    Just (lc :: LineComment) <- decodeStrict <$> B.readFile (commentFolder </> show lineNo')
     let Just ind = elemIndex cd ((versions lc) !! versionNo')
         newcd = CommentDesc (cuserIdent cd) (cdateTime cd) (cstatus cd)
                   (comment cd) (replies cd ++ [rd])
@@ -468,11 +469,11 @@ addReplyToComment commentFolder lineNo' versionNo' cd rd = do
         spvn = splitAt ind ((versions lc) !! versionNo')
         newvn = fst spvn ++ (newcd : (tail $ snd spvn))
         newlc = LineComment lineNo' $ fst splc ++ (newvn : (tail $ snd splc))
-    LB.writeFile (commentFolder </> show lineNo') $ encode newlc
+    B.writeFile (commentFolder </> show lineNo') $ LB.toStrict . encode $ newlc
 
 deleteCommentFromFile :: FilePath -> Int -> Int -> CommentDesc -> IO ()
 deleteCommentFromFile commentFolder lineNo' versionNo' cd = do
-    Just (lc :: LineComment) <- decode <$> LB.readFile (commentFolder </> show lineNo')
+    Just (lc :: LineComment) <- decodeStrict <$> B.readFile (commentFolder </> show lineNo')
     let Just ind = elemIndex cd ((versions lc) !! versionNo')
         newcd = CommentDesc "none" (cdateTime cd) "deleted" "none" (replies cd)
         splc = splitAt versionNo' $ versions lc
@@ -481,11 +482,11 @@ deleteCommentFromFile commentFolder lineNo' versionNo' cd = do
                             then newcd : (tail $ snd spvn)
                             else tail $ snd spvn)
         newlc = LineComment lineNo' $ fst splc ++ (newvn : (tail $ snd splc))
-    LB.writeFile (commentFolder </> show lineNo') $ encode newlc
+    B.writeFile (commentFolder </> show lineNo') $ LB.toStrict . encode $ newlc
 
 deleteReplyFromComment :: FilePath -> Int -> Int -> CommentDesc -> ReplyDesc -> IO ()
 deleteReplyFromComment commentFolder lineNo' versionNo' cd rd = do
-    Just (lc :: LineComment) <- decode <$> LB.readFile (commentFolder </> show lineNo')
+    Just (lc :: LineComment) <- decodeStrict <$> B.readFile (commentFolder </> show lineNo')
     let Just cdInd = elemIndex cd ((versions lc) !! versionNo')
         Just rdInd = elemIndex rd (replies cd)
         spvn = splitAt cdInd $ (versions lc) !! versionNo'
@@ -499,4 +500,4 @@ deleteReplyFromComment commentFolder lineNo' versionNo' cd rd = do
                                  then (tail $ snd spvn)
                                  else newcd : (tail $ snd spvn))
         newlc = LineComment lineNo' $ fst splc ++ (newvn : (tail $ snd splc))
-    LB.writeFile (commentFolder </> show lineNo') $ encode newlc
+    B.writeFile (commentFolder </> show lineNo') $ LB.toStrict . encode $ newlc

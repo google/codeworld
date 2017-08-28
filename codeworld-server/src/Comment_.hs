@@ -139,7 +139,7 @@ deleteCommentHandler clientId = do
     let commentHash = nameToCommentHash commentFolder
         commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
     Just (currentUsers :: [UserDump]) <- liftIO $
-      decode <$> LB.readFile (commentHashPath <.> "users")
+      decodeStrict <$> B.readFile (commentHashPath <.> "users")
     let currentUserIds = map uuserId currentUsers
     case (userId user) `elemIndex` currentUserIds of
       Just ind -> do
@@ -195,7 +195,7 @@ deleteReplyHandler clientId = do
     let commentHash = nameToCommentHash commentFolder
         commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
     Just (currentUsers :: [UserDump]) <- liftIO $
-      decode <$> LB.readFile (commentHashPath <.> "users")
+      decodeStrict <$> B.readFile (commentHashPath <.> "users")
     let currentUserIds = map uuserId currentUsers
     case (userId user) `elemIndex` currentUserIds of
       Just ind -> do
@@ -218,7 +218,7 @@ getUserIdentHandler clientId = do
     let commentHash = nameToCommentHash commentFolder
         commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
     Just (currentUsers :: [UserDump]) <- liftIO $
-      decode <$> LB.readFile (commentHashPath <.> "users")
+      decodeStrict <$> B.readFile (commentHashPath <.> "users")
     let currentUserIds = map uuserId currentUsers
     case (userId user) `elemIndex` currentUserIds of
       Just ind -> do
@@ -254,7 +254,7 @@ listUnreadCommentsHandler clientId = do
     let commentHash = nameToCommentHash commentFolder
         commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
     Just (currentUsers :: [UserDump]) <- liftIO $
-      decode <$> LB.readFile (commentHashPath <.> "users")
+      decodeStrict <$> B.readFile (commentHashPath <.> "users")
     let currentUserIds = map uuserId currentUsers
     case (userId user) `elemIndex` currentUserIds of
       Just ind -> do
@@ -289,7 +289,7 @@ readCommentHandler clientId = do
     let commentHash = nameToCommentHash commentFolder
         commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
     Just (currentUsers :: [UserDump]) <- liftIO $
-      decode <$> LB.readFile (commentHashPath <.> "users")
+      decodeStrict <$> B.readFile (commentHashPath <.> "users")
     let currentUserIds = map uuserId currentUsers
     case (userId user) `elemIndex` currentUserIds of
       Just ind -> do
@@ -339,7 +339,7 @@ writeCommentHandler clientId = do
     let commentHash = nameToCommentHash commentFolder
         commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
     Just (currentUsers :: [UserDump]) <- liftIO $
-      decode <$> LB.readFile (commentHashPath <.> "users")
+      decodeStrict <$> B.readFile (commentHashPath <.> "users")
     let currentUserIds = map uuserId currentUsers
     case (userId user) `elemIndex` currentUserIds of
       Just ind -> liftIO $ do
@@ -387,7 +387,7 @@ writeReplyHandler clientId = do
     let commentHash = nameToCommentHash commentFolder
         commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
     Just (currentUsers :: [UserDump]) <- liftIO $
-      decode <$> LB.readFile (commentHashPath <.> "users")
+      decodeStrict <$> B.readFile (commentHashPath <.> "users")
     let currentUserIds = map uuserId currentUsers
     case (userId user) `elemIndex` currentUserIds of
       Just ind -> liftIO $ do

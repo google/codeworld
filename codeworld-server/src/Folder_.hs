@@ -324,7 +324,7 @@ saveProjectHandler clientId = do
                file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
            -- no need to ensure a project file as
            -- constrained to create a new project before editing.
-           liftIO $ LB.writeFile file $ encode project
+           liftIO $ B.writeFile file $ LB.toStrict . encode $ project
            res <- liftIO $ createNewVersionIfReq (projectSource project) versionNo' $
              file <.> "comments"
            case res of

@@ -1,20 +1,24 @@
 CodeWorld
 =========
 
-CodeWorld is an educational environment using a variant of Haskell.  It
-provides a simple mathematical model for geometric figures, animations,
-and interactive and multi-player games.  The web-based programming
-environment supports this educational mission with a zero-setup editor
-and compiler, easy sharing and cloud storage of projects, and the ability
-to run programs right in the web browser using GHCJS.
+CodeWorld is an educational environment using Haskell.  It provides a simple
+mathematical model for geometric figures, animations, and interactive and
+multi-player games.  The web-based programming environment supports this
+educational mission with a zero-setup editor and compiler, easy sharing and
+cloud storage of projects, and the ability to run programs right in the web
+browser using GHCJS.
 
-Other options include:
+There are several variants of CodeWorld available:
 
-- The use of [plain Haskell](https://code.world/haskell) instead of the educational variant, to build
-  programs which can either be on the web site with GHCJS, or compiled
-  natively with the `codeworld-api` package and `blank-canvas`.
-- A [block-based programming interface](https://code.world/blocks) for drag and drop programming
-  following the same mathematical model.
+- [CodeWorld](https://code.world/) uses an educational variant of the Haskell
+  language and libraries, designed to support mathematics instruction.
+- [CodeWorld Haskell](https://code.world/haskell) is built against standard
+  Haskell instead of the educational variant, to build programs which can either
+  be on the web site with GHCJS, or compiled natively with the `codeworld-api`
+  package and `blank-canvas`.
+- [CodeWorld Blocks](https://code.world/blocks) provides a drag-and-drop
+  programming user interface for younger students to build programs with
+  CodeWorld.
 
 Status
 ======

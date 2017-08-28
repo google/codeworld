@@ -57,6 +57,7 @@ import           Data.Serialize
 import           Data.Serialize.Text
 import qualified Data.Text as T
 import           Data.Text (Text, singleton, pack)
+import qualified Debug.Trace
 import           GHC.Fingerprint.Type
 import           GHC.Generics
 import           GHC.Stack
@@ -105,7 +106,6 @@ import           Unsafe.Coerce
 #else
 
 import           Data.Time.Clock
-import qualified Debug.Trace
 import qualified Graphics.Blank as Canvas
 import           Graphics.Blank (Canvas)
 import           System.IO
@@ -431,6 +431,9 @@ foreign import javascript unsafe "startDebugMode()"
 foreign import javascript unsafe "stopDebugMode()"
     js_stopDebugMode :: IO ()
 
+foreign import javascript unsafe "showCanvas()"
+    js_showCanvas :: IO ()
+
 followPath :: Canvas.Context -> [Point] -> Bool -> Bool -> IO ()
 followPath ctx [] closed _ = return ()
 followPath ctx [p1] closed _ = return ()
@@ -569,6 +572,7 @@ setCanvasSize target canvas = do
 
 display :: Picture -> IO ()
 display pic = do
+    js_showCanvas
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -583,7 +587,7 @@ display pic = do
         Canvas.restore ctx
 
 drawingOf pic = do
-    display pic `catch` reportError
+    display pic
     inspect pic
 
 
@@ -755,7 +759,7 @@ display pic = runBlankCanvas $ \context ->
         setupScreenContext rect
         drawPicture initialDS pic
 
-drawingOf pic = display pic `catch` reportError
+drawingOf pic = display pic
 #endif
 
 
@@ -1095,6 +1099,12 @@ sendClientMessage ws msg = WS.send (encodeClientMessage msg) ws
 initialGameState :: GameState s
 initialGameState = Main CUI.initial
 
+foreign import javascript "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
+    js_deployHash :: IO JSVal
+
+getDeployHash :: IO Text
+getDeployHash = pFromJSVal <$> js_deployHash
+
 runGame :: GameToken
         -> Int
         -> (StdGen -> s)
@@ -1103,6 +1113,8 @@ runGame :: GameToken
         -> (Int -> s -> Picture)
         -> IO ()
 runGame token numPlayers initial stepHandler eventHandler drawHandler = do
+    js_showCanvas
+
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -1148,6 +1160,8 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
 
 run :: s -> (Double -> s -> s) -> (e -> s -> s) -> (s -> Picture) -> IO (e -> IO (), IO s)
 run initial stepHandler eventHandler drawHandler = do
+    js_showCanvas
+
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -1384,7 +1398,7 @@ runGame = error "game API unimplemented in stand-alone interface mode"
 unsafeCollaborationOf numPlayers initial step event draw = do
     dhash <- getDeployHash
     let token = PartialToken dhash
-    runGame token numPlayers initial step event draw `catch` reportError
+    runGame token numPlayers initial step event draw
   where token = NoToken
 
 collaborationOf numPlayers initial step event draw = do
@@ -1404,7 +1418,7 @@ collaborationOf numPlayers initial step event draw = do
 -- Common code for interaction, animation and simulation interfaces
 
 interactionOf initial step event draw =
-    runInspect initial step event draw `catch` reportError
+    runInspect initial step event draw
 
 data Wrapped a = Wrapped {
     state          :: a,
@@ -1553,34 +1567,10 @@ simulationOf simInitial simStep simDraw =
             mouseMovedTime = 1000
         }
 
+trace = Debug.Trace.trace . T.unpack
 
 #ifdef ghcjs_HOST_OS
 --------------------------------------------------------------------------------
 --- GHCJS implementation of tracing and error handling
-
-foreign import javascript unsafe "window.reportRuntimeError($1, $2);"
-    js_reportRuntimeError :: Bool -> JSString -> IO ()
-
-trace msg x = unsafePerformIO $ do
-    js_reportRuntimeError False (textToJSString msg)
-    return x
-
-reportError :: SomeException -> IO ()
-reportError e = js_reportRuntimeError True (textToJSString (pack (show e)))
-
-foreign import javascript "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
-    js_deployHash :: IO JSVal
-
-getDeployHash :: IO Text
-getDeployHash = pFromJSVal <$> js_deployHash
-
---------------------------------------------------------------------------------
---- Stand-alone implementation of tracing and error handling
-#else
-
-trace = Debug.Trace.trace . T.unpack
-
-reportError :: SomeException -> IO ()
-reportError = hPrint stderr
 
 #endif

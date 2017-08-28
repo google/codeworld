@@ -29,6 +29,7 @@ module Internal.CodeWorld (
 
 import qualified "codeworld-api" CodeWorld as CW
 import                           Data.Text (Text)
+import                           ErrorSanitizer
 import                           Internal.Num (Number, fromDouble, toDouble, fromInt, toInt)
 import                           Internal.Prelude (randomsFrom)
 import                           Internal.Picture

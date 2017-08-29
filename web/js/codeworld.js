@@ -688,11 +688,9 @@ function run(hash, dhash, msg, error) {
     if (dhash) {
         var loc = 'run.html?dhash=' + dhash + '&mode=' + window.buildMode;
         runner.contentWindow.location.replace(loc);
-        document.getElementById('runner').style.display = '';
         if (!!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia) {
             document.getElementById('startRecButton').style.display = '';
         }
-        document.getElementById('runner').contentWindow.focus();
     } else {
         runner.contentWindow.location.replace('about:blank');
         document.getElementById('runner').style.display = 'none';

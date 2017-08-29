@@ -9,21 +9,7 @@
     <canvas id="screen"></canvas>
     <img id="cwlogo" style="display: none" src="codeworld.png" width=900 height=200>
   </body>
-  <script type="text/javascript">
-    function reportRuntimeError(err, str) {
-      if (window.parent.addToMessage) {
-        var message = window.parent.addToMessage('\n' + str);
-
-        if (err) {
-          var message = window.parent.document.getElementById('message');
-          message.classList.add('error');
-        }
-      } else {
-        console.log(str);
-      }
-    }
-  </script>
-
+  <script type="text/javascript" src="js/run.js"></script>
   <script type="text/javascript">
     // params from the URL
     var paramList = location.search.slice(1).split('&');
@@ -52,11 +38,13 @@
     if (hash) uri += '&hash=' + hash;
     if (dhash) uri += '&dhash=' + dhash;
 
-    var script = document.createElement('script');
-    script.setAttribute('type', 'text/javascript');
-    script.setAttribute('src', uri);
-    document.head.appendChild(script);
+    var loadScript = document.createElement('script');
+    loadScript.setAttribute('type', 'text/javascript');
+    loadScript.setAttribute('src', uri);
+    loadScript.onload = function() {
+      start();
+    };
+    document.head.appendChild(loadScript);
   </script>
-
   <script type="text/javascript" src="js/debugmode.js"></script>
 </html>

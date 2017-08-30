@@ -175,6 +175,8 @@ document.getElementById("screen").addEventListener("click", function (evt) {
         if (evt.clientY + infobox.offsetHeight >= 500) {
             infobox.style.top = (500 - infobox.offsetHeight) + "px";
         }
+
+        window.debugHighlightShape(false,nodeId);
     } else {
         // If user clicks on a coordinatePlane, stack may contain
         // only null
@@ -228,12 +230,11 @@ document.getElementById("screen").addEventListener("mousemove", function (evt) {
         y: evt.clientY
     });
 
-    window.debugHighlightShape(false,nodeId);
+    window.debugHighlightShape(true,nodeId);
 });
 
 document.getElementById("screen").addEventListener("mouseout", function (evt) {
     if (!window.debugActive) return;
 
-    window.debugHighlightShape(false,-1);
     window.debugHighlightShape(true,-1);
 });

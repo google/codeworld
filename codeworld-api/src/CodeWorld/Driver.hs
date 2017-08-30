@@ -51,7 +51,7 @@ import           Control.Monad
 import           Control.Monad.Trans (liftIO)
 import           Data.Char (chr)
 import           Data.List (zip4, find)
-import           Data.Maybe (fromMaybe, mapMaybe)
+import           Data.Maybe (fromMaybe, mapMaybe, isNothing)
 import           Data.Monoid
 import           Data.Serialize
 import           Data.Serialize.Text
@@ -1359,11 +1359,34 @@ run initial stepHandler eventHandler drawHandler = do
     forkIO $ go t0 nullFrame initialStateName True
     return (sendEvent, getState)
 
-data StaticState = StateNormal Picture | StateHighlightStatic NodeId Picture
+data DebugState = DebugState {
+    debugStateActive :: Bool,
+    shapeHighlighted :: Maybe NodeId,
+    shapeSelected    :: Maybe NodeId
+    }
 
-getStaticPic :: StaticState -> Picture
-getStaticPic (StateNormal p) = p
-getStaticPic (StateHighlightStatic _ p) = p
+data DebugEvent = DebugStart
+                | DebugStop
+                | HighlightEvent (Maybe NodeId)
+                | SelectEvent (Maybe NodeId)
+
+debugStateInit :: DebugState
+debugStateInit = DebugState False Nothing Nothing
+
+updateDebugState :: DebugEvent -> DebugState -> DebugState
+updateDebugState DebugStart prev = DebugState True Nothing Nothing
+updateDebugState DebugStop prev = DebugState False Nothing Nothing
+updateDebugState (HighlightEvent n) prev = case debugStateActive prev of
+    True  -> prev { shapeHighlighted = n }
+    False -> DebugState False Nothing Nothing
+updateDebugState (SelectEvent n) prev = case debugStateActive prev of
+    True  -> prev { shapeSelected    = n }
+    False -> DebugState False Nothing Nothing
+
+drawDebugState :: DebugState -> Drawing -> Drawing
+drawDebugState state drawing = case debugStateActive state of
+    True  -> highlightSelectShape (shapeHighlighted state) (shapeSelected state) drawing
+    False -> drawing
 
 runStatic :: Picture -> IO ()
 runStatic pic = do
@@ -1377,15 +1400,14 @@ runStatic pic = do
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
 
-    currentState <- newMVar $ StateNormal pic
-
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
-    let draw (StateNormal p) = pictureToDrawing p
-        draw (StateHighlightStatic n p) = highlightShape n $ pictureToDrawing p
+    debugState <- newMVar debugStateInit
+
+    let draw = flip drawDebugState (pictureToDrawing pic) <$> readMVar debugState
 
         drawToScreen = do
-            drawing <- draw <$> readMVar currentState
+            drawing <- draw
             rect <- getBoundingClientRect canvas
             buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
                                          rect
@@ -1398,31 +1420,24 @@ runStatic pic = do
             js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
                                0 0 (round cw) (round ch)
 
-        handlePause True = return ()
-        handlePause False = do
-            takeMVar currentState >>=
-                putMVar currentState . StateNormal . getStaticPic
+        sendEvent evt = do
+            takeMVar debugState >>= putMVar debugState . updateDebugState evt
             drawToScreen
 
-        handleHighlight t node = do
-            case node of
-                Nothing -> takeMVar currentState >>=
-                    putMVar currentState . StateNormal . getStaticPic
-                Just n -> takeMVar currentState >>=
-                    putMVar currentState . StateHighlightStatic n . getStaticPic
-            drawToScreen
+        handlePause True  = sendEvent DebugStart
+        handlePause False = sendEvent DebugStop
+
+        handleHighlight True  node = sendEvent $ HighlightEvent node
+        handleHighlight False node = sendEvent $ SelectEvent node
 
     on window resize $ liftIO $ do
         setCanvasSize canvas canvas
         setCanvasSize (elementFromCanvas offscreenCanvas) canvas
         drawToScreen
 
-    inspect (getStaticPic <$> readMVar currentState) handlePause handleHighlight
+    inspect (return pic) handlePause handleHighlight
     
     drawToScreen
-
-data StateWrapper s = StateRunning s | StatePaused s | StateHighlight NodeId s
-data EventWrapper = NormalEvent Event | PauseEvent Bool | HighlightEvent NodeId
 
 -- Wraps the event and state from run so they can be paused by pressing the Inspect
 -- button.
@@ -1432,47 +1447,32 @@ runInspect initial stepHandler eventHandler drawHandler = do
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
 
-    let initialWrapper = StateRunning initial
+    let initialWrapper = (debugStateInit, initial)
+        
+        stepHandlerWrapper dt (debugState, state) = case debugStateActive debugState of
+            True  -> (debugState, state)
+            False -> (debugState, stepHandler dt state)
 
-        stepHandlerWrapper dt (StateRunning s) = StateRunning (stepHandler dt s)
-        stepHandlerWrapper dt (StatePaused s) = StatePaused s
-        stepHandlerWrapper dt (StateHighlight n s) = StateHighlight n s
+        eventHandlerWrapper evt (debugState, state) = case evt of
+            Left  debugEvent  -> (updateDebugState debugEvent debugState, state)
+            Right normalEvent -> (debugState, eventHandler normalEvent state)
 
-        eventHandlerWrapper e (StateRunning s) = case e of
-            NormalEvent event -> StateRunning (eventHandler event s)
-            PauseEvent True -> StatePaused s
-            PauseEvent False -> StateRunning s
-            HighlightEvent n -> StateRunning s
-        eventHandlerWrapper e (StatePaused s) = case e of
-            NormalEvent event -> StatePaused s
-            PauseEvent True -> StatePaused s
-            PauseEvent False -> StateRunning s
-            HighlightEvent n -> StateHighlight n s
-        eventHandlerWrapper e (StateHighlight n s) = case e of
-            NormalEvent event -> StateHighlight n s
-            PauseEvent True -> StatePaused s
-            PauseEvent False -> StateRunning s
-            HighlightEvent n' -> StateHighlight n' s
+        drawHandlerWrapper (debugState, state) =
+            drawDebugState debugState (pictureToDrawing $ drawHandler state)
 
-        drawHandlerWrapper (StateRunning s) = pictureToDrawing $ drawHandler s
-        drawHandlerWrapper (StatePaused s) = pictureToDrawing $ drawHandler s
-        drawHandlerWrapper (StateHighlight n s) = highlightShape n $ pictureToDrawing $ drawHandler s
-
-        drawPicHandler (StateRunning s) = drawHandler s
-        drawPicHandler (StatePaused s) = drawHandler s
-        drawPicHandler (StateHighlight n s) = drawHandler s
+        drawPicHandler (debugState, state) = drawHandler state
 
     (sendEvent, getState) <-
         run initialWrapper stepHandlerWrapper eventHandlerWrapper drawHandlerWrapper
 
-    let sendHighlight _ (Just n) = sendEvent $ HighlightEvent n
-        sendHighlight _ Nothing = sendEvent $ PauseEvent True
+    let pauseEvent True  = sendEvent $ Left DebugStart
+        pauseEvent False = sendEvent $ Left DebugStop
 
-    onEvents canvas (sendEvent . NormalEvent)
-    inspect (drawPicHandler <$> getState) (sendEvent . PauseEvent) sendHighlight
+        highlightSelectEvent True  n = sendEvent $ Left (HighlightEvent n)
+        highlightSelectEvent False n = sendEvent $ Left (SelectEvent n)
 
-data StatePauseable s = RunningPauseable (Wrapped s)
-                      | DebugPauseable s (Maybe NodeId)
+    onEvents canvas (sendEvent . Right)
+    inspect (drawPicHandler <$> getState) pauseEvent highlightSelectEvent
 
 runPauseable :: Wrapped s -> (Double -> s -> s) -> (Wrapped s -> [Control s]) -> (s -> Picture) -> IO ()
 runPauseable initial stepHandler controls drawHandler = do
@@ -1480,46 +1480,61 @@ runPauseable initial stepHandler controls drawHandler = do
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
 
-    let initialWrapper = RunningPauseable initial
+    let initialWrapper = (debugStateInit, initial)
+        
+        stepHandlerWrapper dt (debugState, wrappedState) = case debugStateActive debugState of
+            True  -> (debugState, wrappedState)
+            False -> (debugState, wrappedStep stepHandler dt wrappedState)
 
-        stepHandlerWrapper dt (RunningPauseable w) = RunningPauseable $ wrappedStep stepHandler dt w
-        stepHandlerWrapper dt (DebugPauseable s p) = DebugPauseable s p
+        eventHandlerWrapper evt (debugState, wrappedState) = case evt of
+            Left debugEvent   -> (updateDebugState debugEvent debugState, wrappedState)
+            Right normalEvent -> (debugState, wrappedEvent controls stepHandler normalEvent wrappedState)
 
-        eventHandlerWrapper e (RunningPauseable w) = case e of
-            NormalEvent event -> RunningPauseable (wrappedEvent controls stepHandler event w)
-            PauseEvent True -> DebugPauseable (state w) Nothing
-            PauseEvent False -> RunningPauseable w
-            HighlightEvent n -> RunningPauseable w
-        eventHandlerWrapper e (DebugPauseable s p) = case e of
-            NormalEvent event -> DebugPauseable s p
-            PauseEvent True -> DebugPauseable s Nothing
-            PauseEvent False -> RunningPauseable $ Wrapped s True 1000
-            HighlightEvent n -> DebugPauseable s (Just n)
+        drawHandlerWrapper (debugState, wrappedState) = case debugStateActive debugState of
+            True  -> drawDebugState debugState plainDrawing
+            False -> pictureToDrawing $ wrappedDraw controls drawHandler wrappedState
+            where plainDrawing = pictureToDrawing $ drawHandler (state wrappedState)
 
-        drawHandlerWrapper (RunningPauseable w) = pictureToDrawing $ wrappedDraw controls drawHandler w
-        drawHandlerWrapper (DebugPauseable s p) = case p of
-            Just n -> highlightShape n $ pictureToDrawing $ drawHandler s
-            Nothing -> pictureToDrawing $ drawHandler s
-
-        drawPicHandler (RunningPauseable w) = drawHandler $ state w
-        drawPicHandler (DebugPauseable s _) = drawHandler s
+        drawPicHandler (debugState, wrappedState) = drawHandler $ state wrappedState
 
     (sendEvent, getState) <-
         run initialWrapper stepHandlerWrapper eventHandlerWrapper drawHandlerWrapper
 
-    let sendHighlight _ (Just n) = sendEvent $ HighlightEvent n
-        sendHighlight _ Nothing = sendEvent $ PauseEvent True
+    let pauseEvent True  = sendEvent $ Left DebugStart
+        pauseEvent False = sendEvent $ Left DebugStop
 
-    onEvents canvas (sendEvent . NormalEvent)
-    inspect (drawPicHandler <$> getState) (sendEvent . PauseEvent) sendHighlight
+        highlightSelectEvent True  n = sendEvent $ Left (HighlightEvent n)
+        highlightSelectEvent False n = sendEvent $ Left (SelectEvent n)
 
-highlightShape :: NodeId -> Drawing -> Drawing
-highlightShape nodeId drawing = fromMaybe drawing $ do
-    (node,(a,b,c,d,e,f,col)) <- getDrawNode nodeId drawing
-    let col' = fromMaybe (RGBA 0 0 0 1) col
-    replaced <- replaceDrawNode nodeId (Drawings []) drawing
-    return $
-        Transformation (\_ -> (a,b,c,d,e,f,Just $ highlightColor col')) node <> replaced
+    onEvents canvas (sendEvent . Right)
+    inspect (drawPicHandler <$> getState) pauseEvent highlightSelectEvent
+
+-- Given a drawing, highlight the first node and select second node. Both recolor
+-- the nodes, but highlight also brings the node to the top.
+highlightSelectShape :: Maybe NodeId -> Maybe NodeId -> Drawing -> Drawing
+highlightSelectShape h s drawing
+    | isNothing s = fromMaybe drawing $ do
+        h' <- h
+        hp <- piece h'
+        removed <- replaceDrawNode h' (Drawings []) drawing
+        return $ hp <> removed
+    | isNothing h = fromMaybe drawing $ do
+        s' <- s
+        sp <- piece s'
+        replaceDrawNode s' sp drawing
+    | otherwise = fromMaybe drawing $ do
+        h' <- h
+        s' <- s
+        hp <- piece h'
+        sp <- piece s'
+        removed <- replaceDrawNode h' (Drawings []) drawing
+        replaced <- replaceDrawNode s' sp drawing
+        return $ hp <> replaced
+    where piece n = (\(node,ds) -> highlightDrawing ds node) <$> getDrawNode n drawing
+
+highlightDrawing :: DrawState -> Drawing -> Drawing
+highlightDrawing (a,b,c,d,e,f,col) drawing = Transformation (\_ -> (a,b,c,d,e,f,Just col')) drawing
+    where col' = highlightColor $ fromMaybe (RGBA 0 0 0 1) col
 
 highlightColor :: Color -> Color
 highlightColor (RGBA r g b _) = case (r+g+b)<2.5 of
@@ -1527,6 +1542,7 @@ highlightColor (RGBA r g b _) = case (r+g+b)<2.5 of
     False -> RGBA (lighter r) (lighter g) (lighter b) 1
     where darker  v = 0.2 + 0.8*v
           lighter v = v*0.8
+
 
 getDrawNode :: NodeId -> Drawing -> Maybe (Drawing, DrawState)
 getDrawNode n _ | n<0 = Nothing

@@ -17,20 +17,12 @@
   limitations under the License.
 -}
 
-module ErrorSanitizer where
+module ErrorSanitizer ( filterOutput ) where
 
-import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C
-import           Data.Char
 import           Data.List
-import           Data.Tuple
-import           System.Directory
-import           System.FilePath
-import           System.IO
-import           System.IO.Temp (withSystemTempDirectory)
-import           System.Process
 import           Text.Regex.TDFA hiding (Regex)
 import           Text.Regex
 

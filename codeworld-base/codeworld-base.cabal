@@ -29,6 +29,8 @@ Library
                        Internal.CodeWorld,
                        Internal.Truth
   Build-depends:       base,
+                       bytestring,
+                       codeworld-error-sanitizer,
                        codeworld-api,
                        ghc-prim,
                        ghcjs-base,

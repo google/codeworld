@@ -23,6 +23,7 @@ run .  cabal update
 # Install the codeworld-base and codeworld-api packages
 
 run .  cabal_install --ghcjs ./codeworld-prediction \
+                             ./codeworld-error-sanitizer \
                              ./codeworld-api \
                              ./codeworld-base \
                              ./codeworld-game-api

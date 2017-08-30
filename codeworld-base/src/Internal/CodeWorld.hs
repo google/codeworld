@@ -68,7 +68,8 @@ simulationOf (initial, step, draw) = do
     rs <- chooseRandoms
     CW.simulationOf (initial rs)
                     (\dt w -> step (w, fromDouble dt))
-                    (toCWPic . draw) `catch` reportError
+                    (toCWPic . draw)
+    `catch` reportError
 
 interactionOf :: ([Number] -> world,
                   (world, Number) -> world,
@@ -80,7 +81,8 @@ interactionOf (initial, step, event, draw) = do
     CW.interactionOf (initial rs)
                      (\dt w -> step (w, fromDouble dt))
                      (\ev w -> event (w, fromCWEvent ev))
-                     (toCWPic . draw) `catch` reportError
+                     (toCWPic . draw)
+    `catch` reportError
 
 collaborationOf :: (Number,
                     [Number] -> state,
@@ -96,7 +98,8 @@ collaborationOf (players, initial, step, event, picture) =
         (initial . randomsFrom)
         (\dt state -> step (state, fromDouble dt))
         (\player ev state -> event (state, fromCWEvent ev, fromInt player + 1))
-        (\player state -> toCWPic (picture (state, fromInt player + 1))) `catch` reportError
+        (\player state -> toCWPic (picture (state, fromInt player + 1)))
+    `catch` reportError
 {-# WARNING collaborationOf "Player numbers have changed.  The first player is now player 1." #-}
 
 chooseRandoms :: IO [Number]

@@ -12,7 +12,7 @@ Cabal-version:       >=1.10
 Description:
   Regex based error filter library for CodeWorld compiler 
 
-library
+Library
   Exposed-modules: ErrorSanitizer     
 
   Build-depends:

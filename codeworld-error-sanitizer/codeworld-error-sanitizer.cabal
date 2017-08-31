@@ -1,0 +1,29 @@
+Name:                codeworld-error-sanitizer
+Version:             0.1.0.0
+Synopsis:            Error Sanitizer for CodeWorld Compiler  
+License:             Apache-2.0
+License-file:        LICENSE
+Author:              Chris Smith
+Maintainer:          cdsmith@gmail.com
+Copyright:           (c) 2017, The CodeWorld Authors
+Build-type:          Simple
+Cabal-version:       >=1.10
+
+Description:
+  Regex based error filter library for CodeWorld compiler 
+
+Library
+  Exposed-modules: ErrorSanitizer     
+
+  Build-depends:
+    array,
+    base,
+    bytestring,
+    regex-base,
+    regex-tdfa
+
+  Hs-source-dirs:      src
+
+  Exposed: True
+
+  Ghc-options: -O2 

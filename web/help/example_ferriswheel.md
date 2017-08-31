@@ -11,7 +11,7 @@ in seconds.
 The program
 -----------
 
-    main = animationOf(scene)
+    program = animationOf(scene)
 
     scene(t) = ferrisWheel(t) & backdrop(t)
 

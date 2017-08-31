@@ -57,6 +57,7 @@ import           Data.Serialize
 import           Data.Serialize.Text
 import qualified Data.Text as T
 import           Data.Text (Text, singleton, pack)
+import qualified Debug.Trace
 import           GHC.Fingerprint.Type
 import           GHC.Generics
 import           GHC.Stack
@@ -105,7 +106,6 @@ import           Unsafe.Coerce
 #else
 
 import           Data.Time.Clock
-import qualified Debug.Trace
 import qualified Graphics.Blank as Canvas
 import           Graphics.Blank (Canvas)
 import           System.IO
@@ -264,23 +264,32 @@ drawCodeWorldLogo ctx ds x y w h = do
 -- | Register callback with initDebugMode allowing users to
 -- | inspect picture.
 inspect :: Picture -> IO ()
-inspect pic = do
-    callback <- syncCallback2 ContinueAsync (handlePointRequest pic)
-    js_initDebugMode callback
+inspect = initDebugMode (\_ -> return ()) . handlePointRequest . return
 
-handlePointRequest :: Picture -> JSVal -> JSVal -> IO ()
-handlePointRequest pic argsJS retJS = do
+inspectFromIO :: (Bool -> IO ()) -> IO Picture -> IO ()
+inspectFromIO activeHandler = initDebugMode activeHandler . handlePointRequest
+
+handlePointRequest :: IO Picture -> JSVal -> IO JSVal
+handlePointRequest getPic argsJS = do
+    pic <- getPic
     x <- fmap pFromJSVal $ getProp "x" args
     y <- fmap pFromJSVal $ getProp "y" args
     stack <- findTopPictureFromPoint (x,y) pic
     pics <- case stack of
         Nothing -> return nullRef
         Just s  -> fmap unsafeCoerce $ picsToArr s
+    ret <- create
     setProp "stack" pics ret
+    return $ unsafeCoerce ret
     where
         -- https://github.com/ghcjs/ghcjs-base/issues/53
         args = unsafeCoerce argsJS :: Object
-        ret  = unsafeCoerce retJS :: Object
+
+initDebugMode :: (Bool -> IO ()) -> (JSVal -> IO JSVal) -> IO ()
+initDebugMode activeHandler ptHandler = do
+    activeCallback <- syncCallback1 ContinueAsync (activeHandler . pFromJSVal)
+    ptCallback <- syncCallback1' ptHandler
+    js_initDebugMode ptCallback activeCallback
 
 picsToArr :: [Picture] -> IO Array.JSArray
 picsToArr = fmap Array.fromList . sequence . fmap picToObj
@@ -359,7 +368,7 @@ findTopPicture ctx ds pic = case pic of
         Canvas.font (fontString sty fnt) ctx
         width <- Canvas.measureText (textToJSString txt) ctx
         let height = 25 -- height is constant, defined in fontString
-        withDS ctx ds $ Canvas.rect ((-0.5)*width) (0.5*height) width height ctx
+        withDS ctx ds $ Canvas.rect ((-0.5)*width) ((-0.5)*height) width height ctx
         contained <- js_isPointInPath 0 0 ctx
         if contained
             then return (Just [pic])
@@ -367,6 +376,23 @@ findTopPicture ctx ds pic = case pic of
     Logo _             -> do
         withDS ctx ds $ Canvas.rect (-225) (-50) 450 100 ctx
         contained <- js_isPointInPath 0 0 ctx
+        if contained
+            then return (Just [pic])
+            else return Nothing
+    Arc cs b e r w      -> do
+        -- Thin arcs and paths are drawn bigger to make clicking easier
+        let width = if w==0 then 0.3 else w
+        Canvas.lineWidth (width * 25) ctx
+        drawPicture ctx ds (Arc cs b e r width)
+        contained <- js_isPointInStroke 0 0 ctx
+        if contained
+            then return (Just [pic])
+            else return Nothing
+    Path cs ps w c s     -> do
+        let width = if w==0 then 0.3 else w
+        Canvas.lineWidth (width * 25) ctx
+        drawPicture ctx ds (Path cs ps width c s)
+        contained <- js_isPointInStroke 0 0 ctx
         if contained
             then return (Just [pic])
             else return Nothing
@@ -378,13 +404,35 @@ findTopPicture ctx ds pic = case pic of
             else return Nothing
     where map2 = fmap . fmap
 
+isDebugModeActive :: IO Bool
+isDebugModeActive = js_isDebugModeActive
+
+setDebugModeActive :: Bool -> IO ()
+setDebugModeActive True  = js_startDebugMode
+setDebugModeActive False = js_stopDebugMode
+
 -- Canvas.isPointInPath does not provide a way to get the return value
 -- https://github.com/ghcjs/ghcjs-base/blob/master/JavaScript/Web/Canvas.hs#L212
 foreign import javascript unsafe "$3.isPointInPath($1,$2)"
     js_isPointInPath :: Double -> Double -> Canvas.Context -> IO Bool
 
-foreign import javascript unsafe "initDebugMode($1)"
-    js_initDebugMode :: Callback (JSVal -> JSVal -> IO ()) -> IO ()
+foreign import javascript unsafe "$3.isPointInStroke($1,$2)"
+    js_isPointInStroke :: Double -> Double -> Canvas.Context -> IO Bool
+
+foreign import javascript unsafe "initDebugMode($1,$2)"
+    js_initDebugMode :: Callback (JSVal -> IO JSVal) -> Callback (JSVal -> IO ()) -> IO ()
+
+foreign import javascript unsafe "window.debugMode"
+    js_isDebugModeActive :: IO Bool
+
+foreign import javascript unsafe "startDebugMode()"
+    js_startDebugMode :: IO ()
+
+foreign import javascript unsafe "stopDebugMode()"
+    js_stopDebugMode :: IO ()
+
+foreign import javascript unsafe "showCanvas()"
+    js_showCanvas :: IO ()
 
 followPath :: Canvas.Context -> [Point] -> Bool -> Bool -> IO ()
 followPath ctx [] closed _ = return ()
@@ -524,6 +572,7 @@ setCanvasSize target canvas = do
 
 display :: Picture -> IO ()
 display pic = do
+    js_showCanvas
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -538,7 +587,7 @@ display pic = do
         Canvas.restore ctx
 
 drawingOf pic = do
-    display pic `catch` reportError
+    display pic
     inspect pic
 
 
@@ -710,7 +759,7 @@ display pic = runBlankCanvas $ \context ->
         setupScreenContext rect
         drawPicture initialDS pic
 
-drawingOf pic = display pic `catch` reportError
+drawingOf pic = display pic
 #endif
 
 
@@ -1050,6 +1099,12 @@ sendClientMessage ws msg = WS.send (encodeClientMessage msg) ws
 initialGameState :: GameState s
 initialGameState = Main CUI.initial
 
+foreign import javascript "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
+    js_deployHash :: IO JSVal
+
+getDeployHash :: IO Text
+getDeployHash = pFromJSVal <$> js_deployHash
+
 runGame :: GameToken
         -> Int
         -> (StdGen -> s)
@@ -1058,6 +1113,8 @@ runGame :: GameToken
         -> (Int -> s -> Picture)
         -> IO ()
 runGame token numPlayers initial stepHandler eventHandler drawHandler = do
+    js_showCanvas
+
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -1101,8 +1158,10 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     initialStateName <- makeStableName $! initialGameState
     go t0 nullFrame
 
-run :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
+run :: s -> (Double -> s -> s) -> (e -> s -> s) -> (s -> Picture) -> IO (e -> IO (), IO s)
 run initial stepHandler eventHandler drawHandler = do
+    js_showCanvas
+
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -1117,9 +1176,10 @@ run initial stepHandler eventHandler drawHandler = do
     currentState <- newMVar initial
     eventHappened <- newMVar ()
 
-    onEvents canvas $ \event -> do
-        changed <- modifyMVarIfNeeded currentState (return . eventHandler event)
-        when changed $ void $ tryPutMVar eventHappened ()
+    let sendEvent event = do
+            changed <- modifyMVarIfNeeded currentState (return . eventHandler event)
+            when changed $ void $ tryPutMVar eventHappened ()
+        getState = readMVar currentState
 
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
 
@@ -1161,7 +1221,64 @@ run initial stepHandler eventHandler drawHandler = do
     t0 <- getTime
     nullFrame <- makeStableName undefined
     initialStateName <- makeStableName $! initial
-    go t0 nullFrame initialStateName True
+
+    forkIO $ go t0 nullFrame initialStateName True
+    return (sendEvent, getState)
+
+data StateWrapper s = StateWrapper Bool s
+data EventWrapper = NormalEvent Event | PauseEvent Bool
+
+-- Wraps the event and state from run so they can be paused by pressing the Inspect
+-- button.
+runInspect :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
+runInspect initial stepHandler eventHandler drawHandler = do
+    Just window <- currentWindow
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
+
+    let initialWrapper = StateWrapper False initial
+        stepHandlerWrapper dt (StateWrapper paused state) = case paused of
+            True  -> StateWrapper True state
+            False -> StateWrapper False (stepHandler dt state)
+        eventHandlerWrapper e (StateWrapper p s) = case e of
+            NormalEvent event -> case p of
+                True  -> StateWrapper True s
+                False -> StateWrapper False (eventHandler event s)
+            PauseEvent paused -> StateWrapper paused s
+        drawHandlerWrapper (StateWrapper _ s) = drawHandler s
+
+    (sendEvent, getState) <-
+        run initialWrapper stepHandlerWrapper eventHandlerWrapper drawHandlerWrapper
+
+    onEvents canvas (sendEvent . NormalEvent)
+    inspectFromIO (sendEvent . PauseEvent) $ drawHandlerWrapper <$> getState
+
+-- Allows pictures to be inspected using a built-in pause button
+runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
+runPauseable initial stepHandler eventHandler drawHandler isPaused setPaused = do
+    Just window <- currentWindow
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
+
+    let eventHandlerWrapper e s = case e of
+            NormalEvent event -> eventHandler event s
+            PauseEvent paused -> setPaused paused s
+
+    (sendEvent, getState) <- run initial stepHandler eventHandlerWrapper drawHandler
+
+    onEvents canvas $ \event -> do
+        debugActive <- isDebugModeActive
+        when debugActive $ do
+            nextStatePaused <- isPaused <$> eventHandler event <$> getState
+            when (not nextStatePaused) $ setDebugModeActive False
+        sendEvent $ NormalEvent event
+
+    let picIfUnpaused state = case isPaused state of
+            True  -> drawHandler state
+            False -> pictures []
+        sendPause = sendEvent $ PauseEvent True
+
+    inspectFromIO (flip when sendPause) $ picIfUnpaused <$> getState
 
 --------------------------------------------------------------------------------
 -- Stand-Alone event handling and core interaction code
@@ -1254,6 +1371,13 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
     initialStateName <- makeStableName $! initial
     go t0 nullFrame initialStateName True
 
+
+runInspect :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
+runInspect = run
+
+runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
+runPauseable initial stepHandler eventHandler drawHandler _ _ = run initial stepHandler eventHandler drawHandler
+
 getDeployHash :: IO Text
 getDeployHash = error "game API unimplemented in stand-alone interface mode"
 
@@ -1274,7 +1398,7 @@ runGame = error "game API unimplemented in stand-alone interface mode"
 unsafeCollaborationOf numPlayers initial step event draw = do
     dhash <- getDeployHash
     let token = PartialToken dhash
-    runGame token numPlayers initial step event draw `catch` reportError
+    runGame token numPlayers initial step event draw
   where token = NoToken
 
 collaborationOf numPlayers initial step event draw = do
@@ -1294,7 +1418,7 @@ collaborationOf numPlayers initial step event draw = do
 -- Common code for interaction, animation and simulation interfaces
 
 interactionOf initial step event draw =
-    run initial step event draw `catch` reportError
+    runInspect initial step event draw
 
 data Wrapped a = Wrapped {
     state          :: a,
@@ -1412,10 +1536,12 @@ animationControls w
   | otherwise               = [ RestartButton, PauseButton, TimeLabel ]
 
 animationOf f =
-    interactionOf initial
+    runPauseable  initial
                   (wrappedStep (+))
                   (wrappedEvent animationControls (+))
                   (wrappedDraw animationControls f)
+                  paused
+                  (\p s -> s { paused = p })
   where initial = Wrapped {
             state          = 0,
             paused         = False,
@@ -1429,44 +1555,22 @@ simulationControls w
   | otherwise            = [ PauseButton ]
 
 simulationOf simInitial simStep simDraw =
-    interactionOf initial
+    runPauseable  initial
                   (wrappedStep simStep)
                   (wrappedEvent simulationControls simStep)
                   (wrappedDraw simulationControls simDraw)
+                  paused
+                  (\p s -> s { paused = p })
   where initial = Wrapped {
             state          = simInitial,
             paused         = False,
             mouseMovedTime = 1000
         }
 
+trace = Debug.Trace.trace . T.unpack
 
 #ifdef ghcjs_HOST_OS
 --------------------------------------------------------------------------------
 --- GHCJS implementation of tracing and error handling
-
-foreign import javascript unsafe "window.reportRuntimeError($1, $2);"
-    js_reportRuntimeError :: Bool -> JSString -> IO ()
-
-trace msg x = unsafePerformIO $ do
-    js_reportRuntimeError False (textToJSString msg)
-    return x
-
-reportError :: SomeException -> IO ()
-reportError e = js_reportRuntimeError True (textToJSString (pack (show e)))
-
-foreign import javascript "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
-    js_deployHash :: IO JSVal
-
-getDeployHash :: IO Text
-getDeployHash = pFromJSVal <$> js_deployHash
-
---------------------------------------------------------------------------------
---- Stand-alone implementation of tracing and error handling
-#else
-
-trace = Debug.Trace.trace . T.unpack
-
-reportError :: SomeException -> IO ()
-reportError = hPrint stderr
 
 #endif

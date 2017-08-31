@@ -13,7 +13,7 @@ random numbers to make each game unique.  There's quite a lot there!
 The program
 -----------
 
-    main = interactionOf(initial, step, event, draw)
+    program = interactionOf(initial, step, event, draw)
 
     data World = World {
         stars        :: [(Point, Number)],

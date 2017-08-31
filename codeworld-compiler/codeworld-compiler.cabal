@@ -24,14 +24,14 @@ Executable codeworld-compiler
 
 Library
   Exposed-modules: Compile
-  Other-modules: ErrorSanitizer,
-                 ParseCode
+  Other-modules: ParseCode
 
   Build-depends:
     aeson,
     base,
     base64-bytestring,
     bytestring,
+    codeworld-error-sanitizer,
     cryptonite,
     data-default,
     directory,

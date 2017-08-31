@@ -24,7 +24,8 @@ import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import           Data.ByteString.Char8 (pack)
-import           Language.Haskell.Exts
+import           Data.Monoid
+import           ErrorSanitizer
 import           System.Directory
 import           System.FilePath
 import           System.IO
@@ -32,7 +33,6 @@ import           System.IO.Temp (withSystemTempDirectory)
 import           System.Process
 import           Text.Regex.TDFA
 
-import ErrorSanitizer
 import ParseCode
 
 compileSource :: FilePath -> FilePath -> FilePath -> String -> IO Bool
@@ -46,10 +46,10 @@ compileSource src out err mode = checkDangerousSource src >>= \case
             False -> return False
             True  -> do
                 copyFile src (tmpdir </> "program.hs")
-                let baseArgs = case mode of
-                        "haskell"   -> haskellCompatibleBuildArgs
-                        "codeworld" -> standardBuildArgs
-                    ghcjsArgs = baseArgs ++ [ "program.hs" ]
+                baseArgs <- case mode of
+                        "haskell"   -> return haskellCompatibleBuildArgs
+                        "codeworld" -> standardBuildArgs <$> hasOldStyleMain src
+                let ghcjsArgs = baseArgs ++ [ "program.hs" ]
                 runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
                     Nothing -> return False
                     Just output -> do
@@ -58,10 +58,16 @@ compileSource src out err mode = checkDangerousSource src >>= \case
                                 "codeworld" -> filterOutput output
                                 _           -> output
                         B.writeFile err filteredOutput
-                        let target = tmpdir </> "program.jsexe" </> "all.js"
-                        hasTarget <- doesFileExist target
-                        when hasTarget $
-                            copyFile target out
+                        
+                        let target = tmpdir </> "program.jsexe"
+                        hasTarget <- doesFileExist (target </> "rts.js")
+                        when hasTarget $ do
+                            rtsCode <- B.readFile $ target </> "rts.js"
+                            libCode <- B.readFile $ target </> "lib.js"
+                            outCode <- B.readFile $ target </> "out.js"
+                            B.writeFile out (rtsCode <> libCode <> outCode)
+                            return ()
+
                         return hasTarget
 
 userCompileMicros :: Int
@@ -73,9 +79,14 @@ checkDangerousSource dir = do
     return $ matches contents ".*TemplateHaskell.*" ||
              matches contents ".*QuasiQuotes.*" ||
              matches contents ".*glasgow-exts.*"
-  where
-    matches :: ByteString -> ByteString -> Bool
-    matches txt pat = txt =~ pat
+
+hasOldStyleMain :: FilePath -> IO Bool
+hasOldStyleMain fname = do
+    contents <- B.readFile fname
+    return (matches contents "(^|\\n)main[ \\t]*=")
+
+matches :: ByteString -> ByteString -> Bool
+matches txt pat = txt =~ pat
 
 runCompiler :: FilePath -> Int -> [String] -> IO (Maybe ByteString)
 runCompiler dir micros args = do
@@ -106,8 +117,8 @@ withTimeout micros action = do
     killThread runner
     return r
 
-standardBuildArgs :: [String]
-standardBuildArgs = [
+standardBuildArgs :: Bool -> [String]
+standardBuildArgs True = [
     "-dedupe",
     "-Wall",
     "-O2",
@@ -143,6 +154,9 @@ standardBuildArgs = [
     "-XTypeOperators",
     "-XViewPatterns",
     "-XImplicitPrelude"  -- MUST come after RebindableSyntax.
+    ]
+standardBuildArgs False = standardBuildArgs True ++ [
+    "-main-is", "Main.program"
     ]
 
 haskellCompatibleBuildArgs :: [String]

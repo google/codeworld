@@ -314,11 +314,18 @@ function updateUI() {
         document.getElementById('deleteButton').style.display = 'none';
     }
 
-    var debugMode = document.getElementById('runner').contentWindow.debugMode;
-    if (debugMode) {
-        document.getElementById('inspectButton').style.color = 'black';
+    var debugAvailable = !!document.getElementById('runner').contentWindow.debugActiveCB;
+    var debugActive = document.getElementById('runner').contentWindow.debugMode;
+    if (debugAvailable) {
+        document.getElementById('inspectButton').style.display = '';
+
+        if (debugActive) {
+            document.getElementById('inspectButton').style.color = 'black';
+        } else {
+            document.getElementById('inspectButton').style.color = '';
+        }
     } else {
-        document.getElementById('inspectButton').style.color = '';
+        document.getElementById('inspectButton').style.display = 'none';
     }
 
     window.move = undefined;
@@ -472,9 +479,12 @@ function moveProject() {
         var tempOpen = openProjectName;
         var tempPath = nestedDirs.slice(1).join('/');
         setCode('');
-        nestedDirs = [""];
-        allProjectNames = [[]];
-        allFolderNames = [[]];
+        if (tempOpen == null || tempOpen == '') {
+            nestedDirs.splice(-1);
+            allProjectNames.splice(-1);
+            allFolderNames.splice(-1);
+        }
+        updateNavBar();
         discoverProjects("", 0);
         document.getElementById('newFolderButton').style.display = '';
         document.getElementById('newButton').style.display = 'none';
@@ -670,21 +680,17 @@ function run(hash, dhash, msg, error) {
     if (hash) {
         window.location.hash = '#' + hash;
         document.getElementById('shareButton').style.display = '';
-        document.getElementById('inspectButton').style.display = '';
     } else {
         window.location.hash = '';
         document.getElementById('shareButton').style.display = 'none';
-        document.getElementById('inspectButton').style.display = 'none';
     }
 
     if (dhash) {
         var loc = 'run.html?dhash=' + dhash + '&mode=' + window.buildMode;
         runner.contentWindow.location.replace(loc);
-        document.getElementById('runner').style.display = '';
         if (!!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia) {
             document.getElementById('startRecButton').style.display = '';
         }
-        document.getElementById('runner').contentWindow.focus();
     } else {
         runner.contentWindow.location.replace('about:blank');
         document.getElementById('runner').style.display = 'none';
@@ -713,6 +719,10 @@ function run(hash, dhash, msg, error) {
     window.deployHash = dhash;
 
     updateUI();
+
+    document.getElementById('runner').addEventListener('load', function () {
+        updateUI();
+    });
 }
 
 function goto(line, col) {

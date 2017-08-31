@@ -59,8 +59,7 @@ The program
             spot(x, y, m) = translated(shade(solidRectangle(width, width), m), x, y)
             shade(p, m)   = colored(p, gray((1 - 1/m)^5))
 
-    main :: Program
-    main = drawingOf(mandelbrot(500, 25))
+    program = drawingOf(mandelbrot(500, 25))
 
 License
 -------

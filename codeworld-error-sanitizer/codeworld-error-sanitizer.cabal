@@ -16,15 +16,14 @@ Library
   Exposed-modules: ErrorSanitizer     
 
   Build-depends:
+    array,
     base,
-    base64-bytestring,
     bytestring,
-    data-default,
-    regex-tdfa,
-    regex-compat
-  
+    regex-base,
+    regex-tdfa
+
   Hs-source-dirs:      src
-  
+
   Exposed: True
 
   Ghc-options: -O2 

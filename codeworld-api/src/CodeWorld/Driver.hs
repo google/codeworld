@@ -190,11 +190,12 @@ pictureToDrawing (Sector _ b e r)     = Shape $ sectorDrawer b e r
 pictureToDrawing (Arc _ b e r w)      = Shape $ arcDrawer b e r w
 pictureToDrawing (Text _ sty fnt txt) = Shape $ textDrawer sty fnt txt
 pictureToDrawing (Logo  _)            = Shape $ logoDrawer
+pictureToDrawing (CoordinatePlane _)  = Shape $ coordinatePlaneDrawer
 pictureToDrawing (Color _ col p)      = Transformation (setColorDS col) $ pictureToDrawing p
 pictureToDrawing (Translate _ x y p)  = Transformation (translateDS x y) $ pictureToDrawing p
 pictureToDrawing (Scale _ x y p)      = Transformation (scaleDS x y) $ pictureToDrawing p
 pictureToDrawing (Rotate _ r p)       = Transformation (rotateDS r) $ pictureToDrawing p
-pictureToDrawing (Pictures _ ps)      = Drawings $ pictureToDrawing <$> ps
+pictureToDrawing (Pictures ps)        = Drawings $ pictureToDrawing <$> ps
 
 initialDS :: DrawState
 initialDS = (1, 0, 0, 1, 0, 0, Nothing)
@@ -229,6 +230,23 @@ sectorDrawer :: Double -> Double -> Double -> Drawer
 arcDrawer :: Double -> Double -> Double -> Double -> Drawer
 textDrawer :: TextStyle -> Font -> Text -> Drawer
 logoDrawer :: Drawer
+coordinatePlaneDrawer :: Drawer
+
+coordinatePlaneDrawing :: Drawing
+coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
+    where
+        xline y     = thickPath 0.01 [(-10, y), (10, y)]
+        xaxis       = thickPath 0.03 [(-10, 0), (10, 0)]
+        axes        = xaxis <> rotated (pi/2) xaxis
+        xguidelines = pictures [ xline k | k <- [-10, -9 .. 10] ]
+        guidelines  = xguidelines <> rotated (pi/2) xguidelines
+        numbers = xnumbers <> ynumbers
+        xnumbers = pictures
+            [ translated (fromIntegral k) 0.3 (scaled 0.5 0.5 (text (pack (show k))))
+              | k <- [-9, -8 .. 9], k /= 0 ]
+        ynumbers = pictures
+            [ translated 0.3 (fromIntegral k) (scaled 0.5 0.5 (text (pack (show k))))
+              | k <- [-9, -8 .. 9], k /= 0 ]
 
 --------------------------------------------------------------------------------
 -- GHCJS implementation of drawing
@@ -401,7 +419,7 @@ picToObj' pic = case pic of
         setProps [("picture", picJS),
                   ("angle", pToJSVal angle)] obj
         retVal obj
-    Pictures cs ps -> do
+    Pictures ps -> do
         obj <- init "pictures"
         arr <- liftIO $ Array.create
         let push = liftIO . flip Array.push arr
@@ -409,7 +427,7 @@ picToObj' pic = case pic of
         setProps [("pictures", unsafeCoerce arr)] obj
         retVal obj
     Logo cs -> init "logo" >>= retVal
-    _ -> init "unknown" >>= retVal
+    CoordinatePlane cs -> init "coordinatePlane" >>= retVal
     where
         incId :: State.StateT Int IO Int
         incId = do
@@ -463,8 +481,9 @@ getPictureCS (Color cs _ _)       = cs
 getPictureCS (Translate cs _ _ _) = cs
 getPictureCS (Scale cs _ _ _)     = cs
 getPictureCS (Rotate cs _ _)      = cs
-getPictureCS (Pictures cs _)      = cs
 getPictureCS (Logo cs)            = cs
+getPictureCS (CoordinatePlane cs) = cs
+getPictureCS (Pictures _)         = emptyCallStack
 
 -- If a picture is found, the result will include an array of the base picture
 -- and all transformations.
@@ -495,13 +514,6 @@ findTopShape ctx ds (Drawings (dr:drs)) = do
 map2 :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
 map2 = fmap . fmap
 
-isDebugModeActive :: IO Bool
-isDebugModeActive = js_isDebugModeActive
-
-setDebugModeActive :: Bool -> IO ()
-setDebugModeActive True  = js_startDebugMode
-setDebugModeActive False = js_stopDebugMode
-
 isPointInPath :: Canvas.Context -> IO Bool
 isPointInPath = js_isPointInPath 0 0
 
@@ -522,15 +534,6 @@ foreign import javascript unsafe "initDebugMode($1,$2,$3,$4)"
                         Callback (IO JSVal) ->          -- getPicture
                         Callback (JSVal -> JSVal -> IO ()) ->    -- highlightShape
                         IO ()
-
-foreign import javascript unsafe "window.debugActive"
-    js_isDebugModeActive :: IO Bool
-
-foreign import javascript unsafe "startDebugMode()"
-    js_startDebugMode :: IO ()
-
-foreign import javascript unsafe "stopDebugMode()"
-    js_stopDebugMode :: IO ()
 
 -----------------------------------------------------------------------------------
 -- GHCJS Drawing
@@ -598,6 +601,11 @@ logoDrawer ctx ds = DrawMethods {
     shapeContains = do
         withDS ctx ds $ Canvas.rect (-255) (-50) 450 100 ctx
         isPointInPath ctx
+    }
+
+coordinatePlaneDrawer ctx ds = DrawMethods {
+    drawShape = drawDrawing ctx ds coordinatePlaneDrawing,
+    shapeContains = fst <$> findTopShape ctx ds coordinatePlaneDrawing
     }
 
 foreign import javascript unsafe "showCanvas()"
@@ -848,6 +856,8 @@ textDrawer sty fnt txt ds = withDS ds $ do
     Canvas.fillText (txt, 0, 0)
 
 logoDrawer ds = return ()
+
+coordinatePlaneDrawer ds = drawDrawing ds coordinatePlaneDrawing
 
 drawDrawing :: DrawState -> Drawing -> Canvas ()
 drawDrawing ds (Shape drawer) = drawer ds

@@ -56,16 +56,17 @@ data Picture = Polygon CallStack [Point] !Bool
              | Translate CallStack !Double !Double !Picture
              | Scale CallStack !Double !Double !Picture
              | Rotate CallStack !Double !Picture
-             | Pictures CallStack [Picture]
+             | CoordinatePlane CallStack
              | Logo CallStack
+             | Pictures [Picture]
 
 data TextStyle = Plain | Bold | Italic
 
 data Font = SansSerif | Serif | Monospace | Handwriting | Fancy | NamedFont !Text
 
 -- | A blank picture
-blank :: HasCallStack => Picture
-blank = Pictures callStack []
+blank :: Picture
+blank = Pictures []
 
 -- | A thin sequence of line segments, with these points as endpoints
 path :: HasCallStack => [Point] -> Picture
@@ -192,13 +193,13 @@ rotated :: HasCallStack => Double -> Picture -> Picture
 rotated = Rotate callStack
 
 -- A picture made by drawing these pictures, ordered from top to bottom.
-pictures :: HasCallStack => [Picture] -> Picture
-pictures = Pictures callStack
+pictures :: [Picture] -> Picture
+pictures = Pictures
 
 instance Monoid Picture where
   mempty                   = blank
-  mappend a (Pictures _ bs)  = Pictures callStack (a:bs)
-  mappend a b              = Pictures callStack [a, b]
+  mappend a (Pictures bs)  = Pictures (a:bs)
+  mappend a b              = Pictures [a, b]
   mconcat                  = pictures
 
 -- | Binary composition of pictures.
@@ -213,20 +214,8 @@ infixr 0 &
 --
 --    main = drawingOf (myPicture <> coordinatePlane)
 --    myPicture = ...
-coordinatePlane :: Picture
-coordinatePlane = axes <> numbers <> guidelines
-  where xline y     = thickPath 0.01 [(-10, y), (10, y)]
-        xaxis       = thickPath 0.03 [(-10, 0), (10, 0)]
-        axes        = xaxis <> rotated (pi/2) xaxis
-        xguidelines = pictures [ xline k | k <- [-10, -9 .. 10] ]
-        guidelines  = xguidelines <> rotated (pi/2) xguidelines
-        numbers = xnumbers <> ynumbers
-        xnumbers = pictures
-            [ translated (fromIntegral k) 0.3 (scaled 0.5 0.5 (text (pack (show k))))
-              | k <- [-9, -8 .. 9], k /= 0 ]
-        ynumbers = pictures
-            [ translated 0.3 (fromIntegral k) (scaled 0.5 0.5 (text (pack (show k))))
-              | k <- [-9, -8 .. 9], k /= 0 ]
+coordinatePlane :: HasCallStack => Picture
+coordinatePlane = CoordinatePlane callStack
 
 -- | The CodeWorld logo.
 codeWorldLogo :: HasCallStack => Picture

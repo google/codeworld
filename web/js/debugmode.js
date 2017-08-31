@@ -16,225 +16,254 @@
  */
 "use strict";
 
-window.debugActive = false;
-window.debugAvailable = false;
+(function () {
+    let available = false;
+    let active = false;
 
-// These functions are provided by a debugmode-supported entrypoint when
-// calling initDebugMode
-window.debugGetNode = null;
-window.debugSetActive = null;
-window.debugGetPicture = null;
-window.debugHighlightShape = null;
-window.debugSelectShape = null;
-
-window.infobox = null;
-window.debugPic = null;
-
-function initDebugMode(getNode, setActive, getPicture, highlightShape, selectShape) {
-    window.debugGetNode = getNode;
-    window.debugSetActive = setActive;
-    window.debugGetPicture = getPicture;
-    window.debugHighlightShape = highlightShape;
-    window.debugSelectShape = selectShape;
-
-    var canvas = document.getElementById("screen");
-
-    infobox = document.createElement("div");
-    infobox.id = "infobox";
-    document.body.appendChild(infobox);
-
-    canvas.onblur = (function (evt) {
-        infobox.style.display = "none";
-    });
-
-    window.debugAvailable = true;
-}
-
-function createSrcLink(pic) {
-    var tr = document.createElement("tr");
-    tr.classList.add("stack-item");
-    tr.addEventListener("click", function () {
-        parent.codeworldEditor.setSelection(
-            { line: pic.startLine - 1, ch: pic.startCol - 1 },
-            { line: pic.endLine - 1, ch: pic.endCol - 1 },
-            { origin: "+debug" });
-    });
-
-    var shapeName = document.createElement("td");
-    shapeName.classList.add("shape-name");
-    shapeName.appendChild(document.createTextNode(pic.name));
-    tr.appendChild(shapeName);
-
-    var shapeLine = document.createElement("td");
-    shapeLine.classList.add("shape-loc");
-    shapeLine.appendChild(document.createTextNode("Line " + pic.startLine));
-    tr.appendChild(shapeLine);
-
-    var shapeCol = document.createElement("td");
-    shapeCol.classList.add("shape-loc");
-    shapeCol.appendChild(document.createTextNode("Column " + pic.startCol));
-    tr.appendChild(shapeCol);
-
-    return tr;
-}
-
-function startDebugMode() {
-    if (!window.debugAvailable) {
-        throw new Error("Debug mode is not available.");
-    }
-    window.debugActive = true;
-    window.debugSetActive(true);
-    window.debugCurrentPic = debugGetPicture();
-    parent.updateUI();
-}
-
-function stopDebugMode() {
-    if (infobox) {
-        infobox.style.display = "none";
-    }
+    // Checked by parent.updateUI
+    window.debugAvailable = false;
     window.debugActive = false;
-    window.debugSetActive(false);
-    window.debugCurrentPic = null;
-    parent.updateUI();
-}
 
-function toggleDebugMode() {
-    if (window.debugActive) {
-        stopDebugMode();
-    } else {
-        startDebugMode();
-    }
-}
+    // These functions are provided by a debugmode-supported entrypoint when
+    // calling initDebugMode
+    //  dGetNode :: { x :: Double, y :: Double } -> Int
+    //   Returns the nodeId of the shape at the coordinate (x,y) of the canvas.
+    //   Negative return indicates no shape at that point.
+    let dGetNode = null;
+    //  dSetActive :: Bool -> ()
+    //   Indicates to the entry point when debugmode has been turned off and on
+    let dSetActive = null;
+    //  dGetPicture :: () -> Object
+    //   Gets an object showing the current state of the Picture being drawn. Is
+    //   only called directly after dSetActive(true).
+    let dGetPicture = null;
+    //  dHighlightShape :: (Bool, Int) -> ()
+    //   Indicates to the entry point should highlight or select a shape or tree
+    //   of shapes. A true value indicates highlight (change color and bring to
+    //   front) and false indicates select (change color and do not change
+    //   position). A negative value indicates to stop highlighting or selecting.
+    //   At most one shape may be highlighted and one shape selected at a time.
+    let dHighlightShape = null;
 
-document.getElementById("screen").addEventListener("click", function (evt) {
-    if (!window.debugActive) return;
+    let infobox = null;
+    let cachedPic = null;
+    let canvas = null;
 
-    var nodeId = window.debugGetNode({
-        x: evt.clientX,
-        y: evt.clientY
-    });
+    function showInfobox(x, y) {
+        let nodeId = dGetNode({x,y});
 
-    if (nodeId<0) {
-        infobox.style.display = "none";
-        return;
-    }
-
-    var pic, i;
-    var printable = false;
-
-    var table = document.createElement("table");
-    table.classList.add("stack-list");
-
-    infobox.innerHTML = "";
-
-    var currentNode = debugCurrentPic;
-    while (true) {
-        if (currentNode.type == "pictures") {
-            for (i=currentNode.pictures.length-1;nodeId<currentNode.pictures[i].id;i--);
-            currentNode = currentNode.pictures[i];
-            continue;
+        if (nodeId < 0) {
+            infobox.style.display = "none";
+            dHighlightShape(false, -1);
+            return;
         }
 
-        printable = true;
+        let stack = getPictureStack(cachedPic, nodeId);
+        if ( !stack ) throw new Error("Got nonexistent nodeId");
 
-        var row = createSrcLink(currentNode);
-        table.appendChild(row);
-
-        if ( currentNode.type == "color" || currentNode.type == "translate" ||
-             currentNode.type == "scale" || currentNode.type == "rotate" ) {
-            currentNode = currentNode.picture;
-        } else if (currentNode.id == nodeId) {
-            break;
-        } else {
-            console.log(debugCurrentPic, currentNode);
-            throw new Error("Unable to find node " + nodeId + ".");
-        }
-    }
-
-    if (printable) {
-        infobox.appendChild(table);
-
-        var showFullTree = document.createElement("a");
-        showFullTree.innerHTML = "Show full tree.";
-        showFullTree.href = "#";
-
-        infobox.appendChild(document.createElement("br"));
-        infobox.appendChild(showFullTree);
-
-        showFullTree.addEventListener("click", fullTreeMode);
-
-        infobox.style.left = evt.clientX + "px";
-        infobox.style.top  = evt.clientY + "px";
+        let stackInterface = getStackTable(stack);
+        infobox.appendChild(stackInterface);
 
         infobox.style.display = "block";
+        infobox.style.left = x + "px";
+        infobox.style.top  = y + "px";
 
-        if (evt.clientX + infobox.offsetWidth >= 500) {
-            infobox.style.left = (500 - infobox.offsetWidth) + "px";
+        let infoboxWidth  = infobox.offsetWidth,
+            infoboxHeight = infobox.offsetHeight;
+
+        if ( x + infoboxWidth >= 500) {
+            infobox.style.left = (500 - infoboxWidth) + "px";
         }
 
-        if (evt.clientY + infobox.offsetHeight >= 500) {
-            infobox.style.top = (500 - infobox.offsetHeight) + "px";
+        if ( y + infoboxHeight >= 500) {
+            infobox.style.top = (500 - infoboxHeight) + "px";
         }
 
-        window.debugHighlightShape(false,nodeId);
-    } else {
-        // If user clicks on a coordinatePlane, stack may contain
-        // only null
-        infobox.style.display = "none";
-    }
-});
-
-function fullTreeMode() {
-    infobox.innerHTML = "";
-
-    var ul = document.createElement("ul");
-    appendPicTree(debugCurrentPic, ul);
-    infobox.appendChild(ul);
-}
-
-function appendPicTree(tree,to) {
-    var li = document.createElement("li");
-    var ul, i;
-
-
-    if (tree.pictures) {
-        li.appendChild(document.createTextNode("Pictures\n"));
-        ul = document.createElement("ul");
-        for (i=0;i<tree.pictures.length;i++) {
-            console.log(i, tree.pictures[i]);
-            appendPicTree(tree.pictures[i], ul);
-        }
-        li.appendChild(ul);
-    } else if (tree.picture) {
-        li.appendChild(document.createTextNode(tree.name+"\n"));
-        ul = document.createElement("ul");
-        appendPicTree(tree.picture, ul);
-        li.appendChild(ul);
-    } else {
-        li.appendChild(document.createTextNode(tree.name+"\n"));
+        dHighlightShape(false, nodeId);
     }
 
-    to.appendChild(li);
-}
+    function getPictureStack(pic, toId) {
+        let stack = [];
 
-window.addEventListener("blur", function (evt) {
-    if (!window.debugMode) return;
+        let current = pic;
+        while ( current.id <= toId ) {
+            if ( current.id == toId ) {
+                stack.push(current);
+                return stack;
+            } else if ( current.picture ) {
+                stack.push(current);
+                current = current.picture;
+            } else if ( current.pictures ) {
+                // Deliberately leave out entries for Pictures
+                let i = current.pictures.length - 1;
+                while ( toId < current.pictures[i].id ) i--;
+                current = current.pictures[i];
+            } else {
+                return null;
+            }
+        }
 
-    window.infobox.style.display = "none";
-});
-document.getElementById("screen").addEventListener("mousemove", function (evt) {
-    if (!window.debugActive) return;
+        return null;
+    }
 
-    var nodeId = window.debugGetNode({
-        x: evt.clientX,
-        y: evt.clientY
-    });
+    function getStackTable(stack) {
+        let table = document.createElement("table");
+        table.classList.add("stack-list");
 
-    window.debugHighlightShape(true,nodeId);
-});
+        infobox.innerHTML = "";
 
-document.getElementById("screen").addEventListener("mouseout", function (evt) {
-    if (!window.debugActive) return;
+        stack.forEach(function (pic) {
+            table.appendChild( createStackRow(pic) );
+        });
 
-    window.debugHighlightShape(true,-1);
-});
+        return table;
+    }
+
+    function createStackRow(pic) {
+        let tr = document.createElement("tr");
+        tr.classList.add("stack-item");
+        tr.addEventListener("click", function () {
+            parent.codeworldEditor.setSelection(
+                { line: pic.startLine - 1, ch: pic.startCol - 1 },
+                { line: pic.endLine - 1, ch: pic.endCol - 1 },
+                { origin: "+debug" });
+        });
+
+        let shapeName = document.createElement("td");
+        shapeName.classList.add("shape-name");
+        shapeName.appendChild(document.createTextNode(pic.name));
+        tr.appendChild(shapeName);
+
+        let shapeLine = document.createElement("td");
+        shapeLine.classList.add("shape-loc");
+        shapeLine.appendChild(document.createTextNode("Line " + pic.startLine));
+        tr.appendChild(shapeLine);
+
+        let shapeCol = document.createElement("td");
+        shapeCol.classList.add("shape-loc");
+        shapeCol.appendChild(document.createTextNode("Column " + pic.startCol));
+        tr.appendChild(shapeCol);
+
+        return tr;
+    }
+
+    function fullTreeMode() {
+        infobox.innerHTML = "";
+
+        var ul = document.createElement("ul");
+        appendPicTree(debugCurrentPic, ul);
+        infobox.appendChild(ul);
+    }
+
+    function appendPicTree(tree,to) {
+        var li = document.createElement("li");
+        var ul, i;
+
+
+        if (tree.pictures) {
+            li.appendChild(document.createTextNode("Pictures\n"));
+            ul = document.createElement("ul");
+            for (i=0;i<tree.pictures.length;i++) {
+                appendPicTree(tree.pictures[i], ul);
+            }
+            li.appendChild(ul);
+        } else if (tree.picture) {
+            li.appendChild(document.createTextNode(tree.name+"\n"));
+            ul = document.createElement("ul");
+            appendPicTree(tree.picture, ul);
+            li.appendChild(ul);
+        } else {
+            li.appendChild(document.createTextNode(tree.name+"\n"));
+        }
+
+        to.appendChild(li);
+    }
+
+    // Globals
+
+    function initDebugMode(getNode, setActive, getPicture, highlightShape) {
+        dGetNode = getNode;
+        dSetActive = setActive;
+        dGetPicture = getPicture;
+        dHighlightShape = highlightShape;
+
+        if (available) {
+            infobox.style.display = "none";
+        } else {
+            canvas = document.getElementById("screen");
+
+            infobox = document.createElement("div");
+            infobox.id = "infobox";
+            document.body.appendChild(infobox);
+
+            canvas.addEventListener("blur", function (evt) {
+                infobox.style.display = "none";
+            });
+
+            canvas.addEventListener("mousemove", function (evt) {
+                if (active) {
+                    let nodeId = dGetNode({
+                        x: evt.clientX,
+                        y: evt.clientY
+                    });
+
+                    dHighlightShape(true, nodeId);
+                }
+            });
+
+            canvas.addEventListener("mouseout", function (evt) {
+                if (active) {
+                    dHighlightShape(true, -1);
+                }
+            });
+            
+            canvas.addEventListener("click", function (evt) {
+                if (active) {
+                    showInfobox(evt.clientX, evt.clientY);
+                }
+            });
+
+            available = true;
+            window.debugAvailable = true;
+        }
+
+    }
+    window.initDebugMode = initDebugMode;
+
+    function startDebugMode() {
+        if (!available) {
+            throw new Error("Debug mode is not available.");
+        }
+
+        active = true;
+        dSetActive(true);
+        cachedPic = dGetPicture();
+
+        window.debugActive = true;
+        parent.updateUI()
+    }
+    window.startDebugMode = startDebugMode;
+
+    function stopDebugMode() {
+        if (active) {
+            infobox.style.display = "none";
+        }
+
+        active = false;
+        dSetActive(false);
+        cachedPic = null;
+
+        window.debugActive = false;
+        parent.updateUI();
+    }
+    window.stopDebugMode = stopDebugMode;
+
+    function toggleDebugMode() {
+        if (active) {
+            stopDebugMode();
+        } else {
+            startDebugMode();
+        }
+    }
+    window.toggleDebugMode = toggleDebugMode;
+})();

@@ -43,7 +43,8 @@ checkParsedCode src err = do
             let outp = getErrors (getSrcSpanInfo result)
             if outp == [] then return True
                 else do
-                    B.writeFile err (pack (show outp))
+                    let outpString = tail $ tail $ init $ init (show outp)
+                    B.writeFile err (pack outpString)
                     return False
 
 getSrcSpanInfo :: ParseResult (Module SrcSpanInfo) -> Module SrcSpanInfo

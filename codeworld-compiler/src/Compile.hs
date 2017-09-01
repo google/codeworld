@@ -103,6 +103,7 @@ runCompiler dir micros args = do
 
 standardBuildArgs :: Bool -> [String]
 standardBuildArgs True = [
+    "-DGHCJS_BROWSER",
     "-dedupe",
     "-Wall",
     "-O2",
@@ -145,6 +146,7 @@ standardBuildArgs False = standardBuildArgs True ++ [
 
 haskellCompatibleBuildArgs :: [String]
 haskellCompatibleBuildArgs = [
+    "-DGHCJS_BROWSER",
     "-dedupe",
     "-Wall",
     "-O2",
@@ -160,4 +162,3 @@ withTimeout micros action = do
     killThread killer
     killThread runner
     return r
-

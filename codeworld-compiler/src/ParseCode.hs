@@ -37,16 +37,27 @@ checkParsedCode src err = do
 
 getErrors :: Module SrcSpanInfo -> [String]
 getErrors m = everything (++) (mkQ [] badExps) m ++
-              everything (++) (mkQ [] badMatches) m
+              everything (++) (mkQ [] badMatches) m ++
+              everything (++) (mkQ [] badPatterns) m
+
 
 badExps :: Exp SrcSpanInfo -> [String]
-badExps (App x (Var l _) e) | not (isGoodExpRhs e) = [
-    formatLocation l ++ "error: Missing parentheses in function application"]
-badExps _                                          = []
+badExps (App x _ e) | not (isGoodExpRhs e) =
+    [ formatLocation x ++ errorMsg]
+    where errorMsg = "error: Missing parentheses in function application"
+badExps _                                  = []
 
 badMatches :: Match SrcSpanInfo -> [String]
-badMatches (Match l _ pats _ _) = [ formatLocation l ++ "error: Missing parentheses in constructor application" | p <- pats, not (isGoodPatRhs p) ]
+badMatches (Match l _ pats _ _) =
+    [ formatLocation l ++ errorMsg | p <- pats, not (isGoodPatRhs p) ]
+    where errorMsg = "error: Missing parentheses in function application"
 badMatches _                    = []
+
+badPatterns :: Pat SrcSpanInfo -> [String]
+badPatterns (PApp l _ pats) =
+    [ formatLocation l ++ errorMsg | p <- pats, not (isGoodPatRhs p) ]
+    where errorMsg = "error: Missing parentheses in constructor application"
+badPatterns _               = []
 
 isGoodExpRhs :: Exp l -> Bool
 isGoodExpRhs (Paren _ _)   = True

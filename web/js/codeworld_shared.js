@@ -265,8 +265,11 @@ function registerStandardHints(successFunc)
   });
 }
 
-
 function addToMessage(msg) {
+    while (msg.match(/(\r\n|[^\x08]|)\x08/)) {
+        msg = msg.replace(/(\r\n|[^\x08])\x08/g, "");
+    }
+
     msg = msg
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')

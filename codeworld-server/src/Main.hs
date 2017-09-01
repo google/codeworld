@@ -380,6 +380,7 @@ compileIfNeeded mode programId = do
     if hasResult
         then return hasTarget
         else compileSource
+                 FullBuild
                  (buildRootDir mode </> sourceFile programId)
                  (buildRootDir mode </> targetFile programId)
                  (buildRootDir mode </> resultFile programId)

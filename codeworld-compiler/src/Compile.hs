@@ -17,12 +17,13 @@
   limitations under the License.
 -}
 
-module Compile ( compileSource ) where
+module Compile ( compileSource, Stage(..) ) where
 
 import           Control.Concurrent
 import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import           Data.ByteString.Char8 (pack)
 import           Data.Monoid
 import           ErrorSanitizer
 import           System.Directory
@@ -32,26 +33,40 @@ import           System.IO.Temp (withSystemTempDirectory)
 import           System.Process
 import           Text.Regex.TDFA
 
-compileSource :: FilePath -> FilePath -> FilePath -> String -> IO Bool
-compileSource src out err mode = checkDangerousSource src >>= \case
+import ParseCode
+
+data Stage = FullBuild
+           | GenBase String FilePath
+           | UseBase FilePath
+
+compileSource :: Stage -> FilePath -> FilePath -> FilePath -> String -> IO Bool
+compileSource stage src out err mode = checkDangerousSource src >>= \case
     True -> do
         B.writeFile err
             "Sorry, but your program refers to forbidden language features."
         return False
     False -> withSystemTempDirectory "buildSource" $ \tmpdir -> do
+        parenProblem <- case mode of
+            "codeworld" -> not <$> checkParsedCode src err
+            _           -> return False
         copyFile src (tmpdir </> "program.hs")
         baseArgs <- case mode of
-                "haskell"   -> return haskellCompatibleBuildArgs
-                "codeworld" -> standardBuildArgs <$> hasOldStyleMain src
-        let ghcjsArgs = baseArgs ++ [ "program.hs" ]
+            "haskell"   -> return haskellCompatibleBuildArgs
+            "codeworld" -> standardBuildArgs <$> hasOldStyleMain src
+        let linkArgs = case stage of
+                FullBuild      -> []
+                GenBase name _ -> ["-generate-base", name]
+                UseBase path   -> ["-use-base", path]
+        let ghcjsArgs = baseArgs ++ linkArgs ++ [ "program.hs" ]
         runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
                 let filteredOutput = case mode of
-                        "haskell"   -> output
                         "codeworld" -> filterOutput output
                         _           -> output
-                B.writeFile err filteredOutput
+
+                when (not parenProblem) $ B.writeFile err ""
+                B.appendFile err filteredOutput
 
                 let target = tmpdir </> "program.jsexe"
                 hasTarget <- doesFileExist (target </> "rts.js")
@@ -60,8 +75,10 @@ compileSource src out err mode = checkDangerousSource src >>= \case
                     libCode <- B.readFile $ target </> "lib.js"
                     outCode <- B.readFile $ target </> "out.js"
                     B.writeFile out (rtsCode <> libCode <> outCode)
-                    return ()
-
+                    case stage of
+                        GenBase _ sympath ->
+                            copyFile (target </> "out.base.symbs") sympath
+                        _ -> return ()
                 return hasTarget
 
 userCompileMicros :: Int
@@ -103,6 +120,7 @@ runCompiler dir micros args = do
 
 standardBuildArgs :: Bool -> [String]
 standardBuildArgs True = [
+    "-DGHCJS_BROWSER",
     "-dedupe",
     "-Wall",
     "-O2",
@@ -145,10 +163,12 @@ standardBuildArgs False = standardBuildArgs True ++ [
 
 haskellCompatibleBuildArgs :: [String]
 haskellCompatibleBuildArgs = [
+    "-DGHCJS_BROWSER",
     "-dedupe",
     "-Wall",
     "-O2",
-    "-package", "codeworld-api"
+    "-package", "codeworld-api",
+    "-package", "QuickCheck"
     ]
 
 withTimeout :: Int -> IO a -> IO (Maybe a)
@@ -160,4 +180,3 @@ withTimeout micros action = do
     killThread killer
     killThread runner
     return r
-

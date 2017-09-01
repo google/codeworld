@@ -18,6 +18,7 @@
 -}
 
 import           Compile
+import           Control.Applicative (optional)
 import           Control.Monad (join)
 import           Data.Monoid ((<>))
 import           Options.Applicative
@@ -25,44 +26,61 @@ import           System.Environment
 import           System.Directory
 import           System.IO
 
-data Options = Options { source :: String, 
-                         output :: String, 
-                         err :: String, 
-                         mode :: String
+data Options = Options { source      :: String,
+                         output      :: String,
+                         err         :: String,
+                         mode        :: String,
+                         baseModule  :: Maybe String,
+                         baseSymbols :: Maybe String
                        } deriving (Show)
 
 main = execParser opts >>= runWithOptions
     where
-        parser = Options <$> argument str (  metavar "SourceFile" 
-                                          <> help "Location of source file" )
-                         <*> strOption    (  long "output" 
-                                          <> short 'o' 
-                                          <> metavar "OutputFile" 
-                                          <> help "Location of output file" )
-                         <*> strOption    (  long "error" 
-                                          <> short 'e' 
-                                          <> metavar "ErrorFile"  
-                                          <> help "Location of error file" )
-                         <*> strOption    (  long "mode" 
-                                          <> short 'm' 
-                                          <> metavar "BuildMode"  
-                                          <> help "Enter the mode of compilation" )
+        parser = Options <$> argument str        (  metavar "SourceFile"
+                                                 <> help "Location of source file" )
+                         <*> strOption           (  long "output"
+                                                 <> short 'o'
+                                                 <> metavar "OutputFile"
+                                                 <> help "Location of output file" )
+                         <*> strOption           (  long "error"
+                                                 <> short 'e'
+                                                 <> metavar "ErrorFile"
+                                                 <> help "Location of error file" )
+                         <*> strOption           (  long "mode"
+                                                 <> short 'm'
+                                                 <> metavar "BuildMode"
+                                                 <> help "Enter the mode of compilation" )
+                         <*> optional (strOption (  long "base-module"
+                                                 <> short 'b'
+                                                 <> metavar "BaseModule"
+                                                 <> help "Base module to build dependencies" ))
+                         <*> optional (strOption (  long "base-syms"
+                                                 <> short 's'
+                                                 <> metavar "BaseSyms"
+                                                 <> help "Location of base symbol file" ))
         opts = info parser mempty
 
+optionsToStage :: Options -> Stage
+optionsToStage Options{..} = case (baseModule, baseSymbols) of
+    (Just mod, Just syms) -> GenBase mod syms
+    (Nothing, Just syms)  -> UseBase syms
+    (Nothing, Nothing)    -> FullBuild
+    _                     -> error "--base-module must be used with --base-syms"
+
 runWithOptions :: Options -> IO ()
-runWithOptions Options{..} = do
+runWithOptions opts@Options{..} = do
     fileExists <- doesFileExist source
     if fileExists 
       then do
-        compileOutput <- extractSource source output err mode
+        compileOutput <- extractSource (optionsToStage opts) source output err mode
         return ()
       else 
         putStrLn $ "File not found:" ++ (show source)
 
-extractSource :: String -> String -> String -> String -> IO Bool
-extractSource  source out err mode = do 
-    res <- compileSource source out err mode
-    case res of 
+extractSource :: Stage -> String -> String -> String -> String -> IO Bool
+extractSource stage source out err mode = do
+    res <- compileSource stage source out err mode
+    case res of
         True -> return True
         False -> do
             errMsg <- readFile err

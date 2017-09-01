@@ -23,6 +23,7 @@ import           Control.Concurrent
 import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import           Data.ByteString.Char8 (pack)
 import           Data.Monoid
 import           ErrorSanitizer
 import           System.Directory
@@ -32,6 +33,8 @@ import           System.IO.Temp (withSystemTempDirectory)
 import           System.Process
 import           Text.Regex.TDFA
 
+import ParseCode
+
 compileSource :: FilePath -> FilePath -> FilePath -> String -> IO Bool
 compileSource src out err mode = checkDangerousSource src >>= \case
     True -> do
@@ -39,30 +42,33 @@ compileSource src out err mode = checkDangerousSource src >>= \case
             "Sorry, but your program refers to forbidden language features."
         return False
     False -> withSystemTempDirectory "buildSource" $ \tmpdir -> do
-        copyFile src (tmpdir </> "program.hs")
-        baseArgs <- case mode of
-                "haskell"   -> return haskellCompatibleBuildArgs
-                "codeworld" -> standardBuildArgs <$> hasOldStyleMain src
-        let ghcjsArgs = baseArgs ++ [ "program.hs" ]
-        runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
-            Nothing -> return False
-            Just output -> do
-                let filteredOutput = case mode of
-                        "haskell"   -> output
-                        "codeworld" -> filterOutput output
-                        _           -> output
-                B.writeFile err filteredOutput
+        checkParsedCode src err >>= \case
+            False -> return False
+            True  -> do
+                copyFile src (tmpdir </> "program.hs")
+                baseArgs <- case mode of
+                        "haskell"   -> return haskellCompatibleBuildArgs
+                        "codeworld" -> standardBuildArgs <$> hasOldStyleMain src
+                let ghcjsArgs = baseArgs ++ [ "program.hs" ]
+                runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
+                    Nothing -> return False
+                    Just output -> do
+                        let filteredOutput = case mode of
+                                "haskell"   -> output
+                                "codeworld" -> filterOutput output
+                                _           -> output
+                        B.writeFile err filteredOutput
+                        
+                        let target = tmpdir </> "program.jsexe"
+                        hasTarget <- doesFileExist (target </> "rts.js")
+                        when hasTarget $ do
+                            rtsCode <- B.readFile $ target </> "rts.js"
+                            libCode <- B.readFile $ target </> "lib.js"
+                            outCode <- B.readFile $ target </> "out.js"
+                            B.writeFile out (rtsCode <> libCode <> outCode)
+                            return ()
 
-                let target = tmpdir </> "program.jsexe"
-                hasTarget <- doesFileExist (target </> "rts.js")
-                when hasTarget $ do
-                    rtsCode <- B.readFile $ target </> "rts.js"
-                    libCode <- B.readFile $ target </> "lib.js"
-                    outCode <- B.readFile $ target </> "out.js"
-                    B.writeFile out (rtsCode <> libCode <> outCode)
-                    return ()
-
-                return hasTarget
+                        return hasTarget
 
 userCompileMicros :: Int
 userCompileMicros = 45 * 1000000

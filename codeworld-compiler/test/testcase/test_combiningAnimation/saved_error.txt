@@ -1,24 +1,24 @@
 
 program.hs:1:20: error:
-    \8226 Couldn't match expected type Picture
+    • Couldn't match expected type Picture
                   with actual type Number -> Picture
-    \8226 Probable cause: a is applied to too few arguments
-      In the parameter(s) of (&), namely a
-      In the parameter(s) of animationOf, namely (a & b)
+    • Probable cause: a is missing arguments
+      In the argument(s) of (&), namely a
+      In the argument(s) of animationOf, namely (a & b)
       In the expression: animationOf (a & b)
 
 program.hs:1:20: error:
-    \8226 Couldn't match expected type Number -> Picture
+    • Couldn't match expected type Number -> Picture
                   with actual type Picture
-    \8226 Possible cause: (&) is applied to too many arguments
-      In the parameter(s) of animationOf, namely (a & b)
+    • Possible cause: (&) is applied to too many arguments
+      In the argument(s) of animationOf, namely (a & b)
       In the expression: animationOf (a & b)
-      In an equation for main: main = animationOf (a & b)
+      In an equation for program: program = animationOf (a & b)
 
 program.hs:1:24: error:
-    \8226 Couldn't match expected type Picture
+    • Couldn't match expected type Picture
                   with actual type Number -> Picture
-    \8226 Probable cause: b is applied to too few arguments
+    • Probable cause: b is missing arguments
       In the second argument of (&), namely b
-      In the parameter(s) of animationOf, namely (a & b)
+      In the argument(s) of animationOf, namely (a & b)
       In the expression: animationOf (a & b)

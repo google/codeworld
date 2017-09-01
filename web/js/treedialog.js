@@ -39,22 +39,48 @@
     }
 
     function buildNestedList(id) {
-        let go = function (p, to) {
+        let go = function (p, to, c) {
             let ul = document.createElement("ul"),
-                span = document.createElement("span");
+                span = document.createElement("span"),
+                collapsed = false,
+                collapse = document.createElement("span");
+
+            if ( p.picture || p.pictures ) {
+                collapse.classList.add("collapse-button");
+                collapse.innerHTML = "&#x25BC;";
+                collapse.addEventListener("click", function (evt) {
+                    if (collapsed) {
+                        ul.style.display = "";
+                        collapse.innerHTML = "&#x25BC;";
+                        collapsed = false;
+                    } else {
+                        ul.style.display = "none";
+                        collapse.innerHTML = "&#x25b6;";
+                        collapsed = true;
+                    }
+                });
+                if ( c ) {
+                    ul.style.display = "none";
+                    collapse.innerHTML = "&#x25b6;";
+                    collapsed = true;
+                }
+            } else {
+                collapse.classList.add("collapse-spacer");
+            }
+            span.appendChild(collapse);
 
             span.appendChild( createPicLink(p) );
             to.appendChild(span);
 
             if (p.picture) {
                 let li = document.createElement("li");
-                go(p.picture, li);
+                go(p.picture, li, false);
                 ul.appendChild(li);
                 to.appendChild(ul);
             } else if (p.pictures) {
                 for (let i=0;i<p.pictures.length;i++) {
                     let li = document.createElement("li");
-                    go(p.pictures[i], li);
+                    go(p.pictures[i], li, false);
                     ul.appendChild(li);
                 }
                 to.appendChild(ul);
@@ -62,9 +88,11 @@
         }
 
         let pic = getPicNode(id),
-            ul = document.createElement("ul");
+            ul = document.createElement("ul"),
+            li = document.createElement("li");
 
-        go(pic, ul);
+        go(pic, li, true);
+        ul.appendChild(li);
         return ul;
     }
 
@@ -248,9 +276,9 @@
             txt("This is a ");
             opt("scaled");
             txt(" picture of ");
-            opt(pic.x);
+            opt(num2str(pic.x));
             txt(" units on the x-axis and ");
-            opt(pic.y);
+            opt(num2str(pic.y));
             txt(" units on the y-axis. The picture being scaled is a ");
             piclink(pic.picture);
             txt(".");
@@ -259,7 +287,7 @@
             opt("rotated");
             txt(" picture of ");
             opt(num2str(180*pic.angle/Math.PI) + "\u00B0");
-            txt(". The picture being scaled is a ");
+            txt(". The picture being rotated is a ");
             piclink(pic.picture);
             txt(".");
         } else if ( pic.type == "pictures" ) {

@@ -93,3 +93,33 @@
 .treedialog .ui-dialog-content {
     overflow: auto;
 }
+
+.treedialog ul {
+    list-style-type: none;
+    padding-left: 15px;
+}
+
+.treedialog .collapse-button {
+    cursor: pointer;
+    margin-right: 8px;
+    display: table-cell;
+    width: 14px;
+    vertical-align: center;
+    font-size: 10px;
+}
+
+.treedialog .collapse-spacer {
+    margin-right: 8px;
+    display: table-cell;
+    width: 14px;
+    vertical-align: center;
+    font-size: 10px;
+}
+
+.treedialog li a {
+    display: table-cell;
+}
+
+.treedialog .tree-opt {
+    font-family: "Courier New", Courier, monospace;
+}

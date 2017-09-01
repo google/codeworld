@@ -1,0 +1,95 @@
+.treedialog {
+    border: 1px solid #000;
+    background: #FFF;
+    z-index: 90;
+}
+
+.treedialog .ui-dialog-titlebar-close {
+    display: none;
+}
+
+.treedialog .ui-resizable-handle {
+    position: absolute;
+    font-size: 0.1px;
+    display: block;
+}
+
+.treedialog .ui-resizable-n {
+    cursor: n-resize;
+    width: 100%;
+    height: 4px;
+    left: 0px;
+    top: 0px;
+}
+
+.treedialog .ui-resizable-s {
+    cursor: s-resize;
+    width: 100%;
+    height: 4px;
+    left: 0px;
+    bottom: 0px;
+}
+
+.treedialog .ui-resizable-e {
+    cursor: e-resize;
+    width: 4px;
+    height: 100%;
+    right: 0px;
+    top: 0px;
+}
+
+.treedialog .ui-resizable-w {
+    cursor: w-resize;
+    width: 4px;
+    height: 100%;
+    left: 0px;
+    top: 0px;
+}
+
+.treedialog .ui-resizable-se {
+    cursor: se-resize;
+    width: 7px;
+    height: 7px;
+    right: 0px;
+    bottom: 0px;
+}
+
+.treedialog .ui-resizable-sw {
+    cursor: sw-resize;
+    width: 7px;
+    height: 7px;
+    left: 0px;
+    bottom: 0px;
+}
+
+.treedialog .ui-resizable-ne {
+    cursor: ne-resize;
+    width: 7px;
+    height: 7px;
+    right: 0px;
+    top: 0px;
+}
+
+.treedialog .ui-resizable-nw {
+    cursor: nw-resize;
+    width: 7px;
+    height: 7px;
+    left: 0px;
+    top: 0px;
+}
+
+.treedialog .ui-dialog-titlebar {
+    border-bottom: 1px solid black;
+    text-align: center;
+    cursor: move;
+}
+
+.treedialog .ui-dialog-title {
+    font-size: 30px;
+    font-weight: 700;
+    padding: 10px;
+}
+
+.treedialog .ui-dialog-content {
+    overflow: auto;
+}

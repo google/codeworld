@@ -47,10 +47,19 @@
     text-decoration: none;
 }
 
+.shape-info {
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+.shape-info:hover {
+    background-color: #aaa;
+}
+
 .shape-name {
     padding: 4px;
     padding-left: 8px;
-    padding-right: 10px;
+    padding-right: 4px;
     text-align: left;
     white-space: nowrap;
 }

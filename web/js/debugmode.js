@@ -129,6 +129,15 @@
                 { origin: "+debug" });
         });
 
+        let shapeInfo = document.createElement("td");
+        shapeInfo.classList.add("shape-info");
+        shapeInfo.innerHTML = "&#x24d8;";
+        tr.appendChild(shapeInfo);
+
+        shapeInfo.addEventListener("click", function () {
+            openTreeDialog(pic.id);
+        });
+
         let shapeName = document.createElement("td");
         shapeName.classList.add("shape-name");
         shapeName.appendChild(document.createTextNode(pic.name));
@@ -177,6 +186,13 @@
         }
 
         to.appendChild(li);
+    }
+
+    function openTreeDialog(id) {
+        parent.initTreeDialog(cachedPic, function (n) {
+            dHighlightShape(true, n);
+        });
+        parent.openTreeDialog(id);
     }
 
     // Globals

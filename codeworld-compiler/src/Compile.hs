@@ -42,33 +42,32 @@ compileSource src out err mode = checkDangerousSource src >>= \case
             "Sorry, but your program refers to forbidden language features."
         return False
     False -> withSystemTempDirectory "buildSource" $ \tmpdir -> do
-        checkParsedCode src err >>= \case
-            False -> return False
-            True  -> do
-                copyFile src (tmpdir </> "program.hs")
-                baseArgs <- case mode of
-                        "haskell"   -> return haskellCompatibleBuildArgs
-                        "codeworld" -> standardBuildArgs <$> hasOldStyleMain src
-                let ghcjsArgs = baseArgs ++ [ "program.hs" ]
-                runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
-                    Nothing -> return False
-                    Just output -> do
-                        let filteredOutput = case mode of
-                                "haskell"   -> output
-                                "codeworld" -> filterOutput output
-                                _           -> output
-                        B.writeFile err filteredOutput
-                        
-                        let target = tmpdir </> "program.jsexe"
-                        hasTarget <- doesFileExist (target </> "rts.js")
-                        when hasTarget $ do
-                            rtsCode <- B.readFile $ target </> "rts.js"
-                            libCode <- B.readFile $ target </> "lib.js"
-                            outCode <- B.readFile $ target </> "out.js"
-                            B.writeFile out (rtsCode <> libCode <> outCode)
-                            return ()
+        parenProblem <- not <$> checkParsedCode src err
+        copyFile src (tmpdir </> "program.hs")
+        baseArgs <- case mode of
+            "haskell"   -> return haskellCompatibleBuildArgs
+            "codeworld" -> standardBuildArgs <$> hasOldStyleMain src
+        let ghcjsArgs = baseArgs ++ [ "program.hs" ]
+        runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
+            Nothing -> return False
+            Just output -> do
+                let filteredOutput = case mode of
+                        "codeworld" -> filterOutput output
+                        _           -> output
 
-                        return hasTarget
+                if parenProblem
+                    then when (not (B.null filteredOutput)) (B.appendFile err "\n\n")
+                    else B.writeFile err ""
+                B.appendFile err filteredOutput
+
+                let target = tmpdir </> "program.jsexe"
+                hasTarget <- doesFileExist (target </> "rts.js")
+                when hasTarget $ do
+                    rtsCode <- B.readFile $ target </> "rts.js"
+                    libCode <- B.readFile $ target </> "lib.js"
+                    outCode <- B.readFile $ target </> "out.js"
+                    B.writeFile out (rtsCode <> libCode <> outCode)
+                return hasTarget
 
 userCompileMicros :: Int
 userCompileMicros = 45 * 1000000

@@ -17,6 +17,7 @@
 
 (function () {
     let dialog = null,
+        content = null,
         fullPic = null,
         highlight = null,
         open = false;
@@ -28,13 +29,16 @@
             title: "Picture Browser"
         });
 
-        console.log(dialog);
+        content = document.createElement("div");
+        content.classList.add("treedialog-content");
+        dialog.append(content);
 
         open = true;
     }
 
     function closeDialog() {
-        dialog.close();
+        dialog.dialog("close");
+        dialog.remove();
         open = false;
     }
 
@@ -127,16 +131,32 @@
 
     function createPicLink(pic) {
         let a = document.createElement("a");
+        let marker = null;
+
         a.appendChild( document.createTextNode( getSimpleName(pic) ) );
         a.href = "javascript: void(0);";
+        a.classList.add("treedialog-piclink");
         a.addEventListener("click", function (evt) {
             openTreeDialog(pic.id);
         });
         a.addEventListener("mouseover", function (evt) {
             highlight(pic.id);
+
+            if (pic.type != "pictures") {
+                if (marker) marker.clear();
+                marker = parent.codeworldEditor.markText(
+                    { line: pic.startLine - 1, ch: pic.startCol - 1 },
+                    { line: pic.endLine - 1, ch: pic.endCol - 1 },
+                    { origin: "+treedialog", className: "marked" })
+            }
         });
         a.addEventListener("mouseout", function (evt) {
             highlight(-1);
+
+            if (marker) {
+                marker.clear();
+                marker = null;
+            }
         });
         return a;
     }
@@ -214,11 +234,13 @@
             txt("This is a ");
             opt("path");
             txt(" of width ");
-            opt(pic.width);
+            opt(num2str(pic.width));
             txt(" which is ");
             opt(pic.closed?"closed":"not closed");
             txt(" and ");
             opt(pic.smooth?"smooth":"not smooth");
+            txt(" and contains the points ");
+            pts(pic.points);
             txt(".");
         } else if ( pic.type == "sector" ) {
             txt("This is a ");
@@ -234,9 +256,9 @@
             txt("This is an ");
             opt("arc");
             txt(" of width ");
-            opt(pic.width);
+            opt(num2str(pic.width));
             txt(" and of radius ");
-            opt(pic.radius);
+            opt(num2str(pic.radius));
             txt(" starting at ");
             opt(num2str(180*pic.startAngle/Math.PI) + "\u00B0");
             txt(" and ending at ");
@@ -330,7 +352,7 @@
             openDialog();
         }
 
-        dialog.html("");
+        content.innerHTML = "";
 
         let picture = getPicNode(id);
 
@@ -341,33 +363,36 @@
         path.appendChild(pathtitle);
         path.appendChild( buildPicPath(id) );
         path.classList.add("tree-fullpath");
-        dialog.append(path);
+        content.appendChild(path);
 
         let header = document.createElement("div"),
             headertitle = document.createElement("h2");
         headertitle.appendChild( document.createTextNode(getSimpleName(picture)) );
         header.appendChild(headertitle);
         header.appendChild(buildFullDescription(picture));
-        dialog.append(header);
+        content.appendChild(header);
 
         let tree = document.createElement("div"),
             treetitle = document.createElement("h3");
         treetitle.appendChild( document.createTextNode("Tree") );
         tree.appendChild(treetitle);
         tree.appendChild(buildNestedList(id));
-        dialog.append(tree);
+        content.appendChild(tree);
     }
     window.openTreeDialog = openTreeDialog;
 
     function closeTreeDialog() {
-        console.log("closeTreeDialog: NYI");
-        console.log(id);
+        closeDialog();
     }
     window.closeTreeDialog = closeTreeDialog;
 
     function destroyTreeDialog() {
-        console.log("destroyTreeDialog: NYI");
-        console.log(id);
+        if (open) {
+            closeDialog();
+        }
+        dialog = null;
+        content = null;
+        highlight = null;
     }
     window.destroyTreeDialog = destroyTreeDialog;
 })();

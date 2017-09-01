@@ -195,6 +195,10 @@
         parent.openTreeDialog(id);
     }
 
+    function closeTreeDialog() {
+        parent.destroyTreeDialog();
+    }
+
     // Globals
 
     function initDebugMode(getNode, setActive, getPicture, highlightShape) {
@@ -268,6 +272,8 @@
         active = false;
         dSetActive(false);
         cachedPic = null;
+
+        closeTreeDialog();
 
         window.debugActive = false;
         parent.updateUI();

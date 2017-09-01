@@ -123,3 +123,11 @@
 .treedialog .tree-opt {
     font-family: "Courier New", Courier, monospace;
 }
+
+.treedialog-content {
+    padding: 15px;
+}
+
+.treedialog-piclink {
+    color: black;
+}

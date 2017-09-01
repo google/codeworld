@@ -150,7 +150,8 @@ haskellCompatibleBuildArgs = [
     "-dedupe",
     "-Wall",
     "-O2",
-    "-package", "codeworld-api"
+    "-package", "codeworld-api",
+    "-package", "QuickCheck"
     ]
 
 withTimeout :: Int -> IO a -> IO (Maybe a)

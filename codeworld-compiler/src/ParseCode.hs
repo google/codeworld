@@ -1,6 +1,3 @@
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
 
@@ -19,10 +16,6 @@
 
 module ParseCode (checkParsedCode) where
 
-import qualified Data.ByteString as B
-import           Data.ByteString.Char8 (pack)
-import           Data.List (intercalate)
-import           Data.List.Split (splitOn)
 import           Data.Generics
 import           Language.Haskell.Exts
 
@@ -32,7 +25,7 @@ checkParsedCode src err = do
     case result of
         ParseOk mod -> case getErrors mod of
             [] -> return True
-            errors -> writeFile err (intercalate "\n\n" errors) >> return False
+            errors -> writeFile err (concatMap (++ "\n\n") errors) >> return False
         ParseFailed _ _ -> return True
 
 getErrors :: Module SrcSpanInfo -> [String]
@@ -70,6 +63,7 @@ isGoodPatRhs (PTuple _ _ _) = True
 isGoodPatRhs _              = False
 
 formatLocation :: SrcSpanInfo -> String
-formatLocation (SrcSpanInfo s _) = "program.hs" ++ ":" ++ show line ++ ":" ++ show col ++ ": "
+formatLocation (SrcSpanInfo s _) =
+        "program.hs" ++ ":" ++ show line ++ ":" ++ show col ++ ": "
     where line = srcSpanStartLine s
           col = srcSpanStartColumn s

@@ -42,7 +42,9 @@ compileSource src out err mode = checkDangerousSource src >>= \case
             "Sorry, but your program refers to forbidden language features."
         return False
     False -> withSystemTempDirectory "buildSource" $ \tmpdir -> do
-        parenProblem <- not <$> checkParsedCode src err
+        parenProblem <- case mode of
+            "codeworld" -> not <$> checkParsedCode src err
+            _           -> return False
         copyFile src (tmpdir </> "program.hs")
         baseArgs <- case mode of
             "haskell"   -> return haskellCompatibleBuildArgs
@@ -55,9 +57,7 @@ compileSource src out err mode = checkDangerousSource src >>= \case
                         "codeworld" -> filterOutput output
                         _           -> output
 
-                if parenProblem
-                    then when (not (B.null filteredOutput)) (B.appendFile err "\n\n")
-                    else B.writeFile err ""
+                when (not parenProblem) $ B.writeFile err ""
                 B.appendFile err filteredOutput
 
                 let target = tmpdir </> "program.jsexe"

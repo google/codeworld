@@ -107,18 +107,9 @@ runCompiler dir micros args = do
 
     return result
 
-withTimeout :: Int -> IO a -> IO (Maybe a)
-withTimeout micros action = do
-    result <- newEmptyMVar
-    killer <- forkIO $ threadDelay micros >> putMVar result Nothing
-    runner <- forkIO $ action >>= putMVar result . Just
-    r <- takeMVar result
-    killThread killer
-    killThread runner
-    return r
-
 standardBuildArgs :: Bool -> [String]
 standardBuildArgs True = [
+    "-DGHCJS_BROWSER",
     "-dedupe",
     "-Wall",
     "-O2",
@@ -161,8 +152,20 @@ standardBuildArgs False = standardBuildArgs True ++ [
 
 haskellCompatibleBuildArgs :: [String]
 haskellCompatibleBuildArgs = [
+    "-DGHCJS_BROWSER",
     "-dedupe",
     "-Wall",
     "-O2",
-    "-package", "codeworld-api"
+    "-package", "codeworld-api",
+    "-package", "QuickCheck"
     ]
+
+withTimeout :: Int -> IO a -> IO (Maybe a)
+withTimeout micros action = do
+    result <- newEmptyMVar
+    killer <- forkIO $ threadDelay micros >> putMVar result Nothing
+    runner <- forkIO $ action >>= putMVar result . Just
+    r <- takeMVar result
+    killThread killer
+    killThread runner
+    return r

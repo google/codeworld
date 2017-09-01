@@ -26,7 +26,8 @@ run .  cabal_install --ghcjs ./codeworld-prediction \
                              ./codeworld-error-sanitizer \
                              ./codeworld-api \
                              ./codeworld-base \
-                             ./codeworld-game-api
+                             ./codeworld-game-api \
+                             QuickCheck
 
 run codeworld-base  cabal configure --ghcjs
 run codeworld-base  cabal haddock --html

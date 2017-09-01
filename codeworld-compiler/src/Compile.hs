@@ -17,7 +17,7 @@
   limitations under the License.
 -}
 
-module Compile ( compileSource ) where
+module Compile ( compileSource, Stage(..) ) where
 
 import           Control.Concurrent
 import           Control.Monad
@@ -35,8 +35,12 @@ import           Text.Regex.TDFA
 
 import ParseCode
 
-compileSource :: FilePath -> FilePath -> FilePath -> String -> IO Bool
-compileSource src out err mode = checkDangerousSource src >>= \case
+data Stage = FullBuild
+           | GenBase String FilePath
+           | UseBase FilePath
+
+compileSource :: Stage -> FilePath -> FilePath -> FilePath -> String -> IO Bool
+compileSource stage src out err mode = checkDangerousSource src >>= \case
     True -> do
         B.writeFile err
             "Sorry, but your program refers to forbidden language features."
@@ -49,7 +53,11 @@ compileSource src out err mode = checkDangerousSource src >>= \case
         baseArgs <- case mode of
             "haskell"   -> return haskellCompatibleBuildArgs
             "codeworld" -> standardBuildArgs <$> hasOldStyleMain src
-        let ghcjsArgs = baseArgs ++ [ "program.hs" ]
+        let linkArgs = case stage of
+                FullBuild      -> []
+                GenBase name _ -> ["-generate-base", name]
+                UseBase path   -> ["-use-base", path]
+        let ghcjsArgs = baseArgs ++ linkArgs ++ [ "program.hs" ]
         runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
@@ -67,6 +75,10 @@ compileSource src out err mode = checkDangerousSource src >>= \case
                     libCode <- B.readFile $ target </> "lib.js"
                     outCode <- B.readFile $ target </> "out.js"
                     B.writeFile out (rtsCode <> libCode <> outCode)
+                    case stage of
+                        GenBase _ sympath ->
+                            copyFile (target </> "out.base.symbs") sympath
+                        _ -> return ()
                 return hasTarget
 
 userCompileMicros :: Int

@@ -24,7 +24,6 @@ import           System.Exit
 import           System.FilePath.Posix
 import           Test.HUnit             -- only import needed, others are optional
 
-
 testcaseDir :: FilePath
 testcaseDir = "test/testcase"
 
@@ -32,7 +31,7 @@ testcaseOutputDir :: FilePath
 testcaseOutputDir = "../testcase-output"
 
 testSourceFile :: String -> FilePath
-testSourceFile testName = testcaseDir </> testName </> "source.hs"  
+testSourceFile testName = testcaseDir </> testName </> "source.hs"
 
 testErrorFile :: String -> FilePath
 testErrorFile testName = testcaseOutputDir </> testName </> "error.txt"
@@ -49,9 +48,10 @@ savedErrorOutput testName = do
     return savedErrMsg
 
 compileErrorOutput :: String -> IO String
-compileErrorOutput testName = do 
+compileErrorOutput testName = do
     createDir <- createDirectoryIfMissing True (testcaseOutputDir </> testName)
-    out <- compileSource 
+    out <- compileSource
+        FullBuild
         (testSourceFile testName)
         (testOutputFile testName)
         (testErrorFile  testName)
@@ -60,8 +60,8 @@ compileErrorOutput testName = do
     return errMsg
 
 genTestCases :: [String] -> [Test]
-genTestCases []  = ["Empty directory testcase"   ~: "FOo" ~=? (map toUpper "foo")] 
-genTestCases (x) = map toTestCase x 
+genTestCases []  = ["Empty directory testcase"   ~: "FOo" ~=? (map toUpper "foo")]
+genTestCases (x) = map toTestCase x
 
 toTestCase x = x ~: do
     err1 <- compileErrorOutput x
@@ -80,6 +80,6 @@ main :: IO Counts
 main = do
     cs@(Counts _ _ errs fails) <- getTestCases testcaseDir
     putStrLn (showCounts cs)
-    if (errs > 0 || fails > 0) 
+    if (errs > 0 || fails > 0)
         then exitFailure
-        else exitSuccess 
+        else exitSuccess

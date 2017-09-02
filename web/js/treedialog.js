@@ -20,6 +20,7 @@
         content = null,
         fullPic = null,
         highlight = null,
+        marker = null,
         open = false;
 
     function openDialog() {
@@ -132,13 +133,13 @@
 
     function createPicLink(pic) {
         let a = document.createElement("a");
-        let marker = null;
 
         a.appendChild( document.createTextNode( getSimpleName(pic) ) );
         a.href = "javascript: void(0);";
         a.classList.add("treedialog-piclink");
         a.addEventListener("click", function (evt) {
             openTreeDialog(pic.id);
+            if (marker) marker.clear();
         });
         a.addEventListener("mouseover", function (evt) {
             highlight(pic.id);

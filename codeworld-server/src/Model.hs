@@ -33,20 +33,17 @@ instance FromJSON User where
     parseJSON _          = mzero
 
 data Project = Project {
-    projectName :: Text,
     projectSource :: Text,
     projectHistory :: Value
     }
 
 instance FromJSON Project where
-    parseJSON (Object v) = Project <$> v .: "name"
-                                   <*> v .: "source"
+    parseJSON (Object v) = Project <$> v .: "source"
                                    <*> v .: "history"
     parseJSON _          = mzero
 
 instance ToJSON Project where
-    toJSON p = object [ "name"    .= projectName p,
-                        "source"  .= projectSource p,
+    toJSON p = object [ "source"  .= projectSource p,
                         "history" .= projectHistory p ]
 
 data Directory = Directory {
@@ -145,18 +142,21 @@ data UserDump = UserDump {
     uuserId :: Text,
     uuserIdent :: Text,
     upath :: Text
+    utype :: Text
     } deriving (Eq)
 
 instance FromJSON UserDump where
     parseJSON (Object o) = UserDump <$> o .: "userId"
                                     <*> o .: "userIdent"
                                     <*> o .: "path"
+                                    <*> o .: "type"
     parseJSON _ = mzero
 
 instance ToJSON UserDump where
     toJSON ud = object [ "userId"    .= uuserId ud,
                          "userIdent" .= uuserIdent ud,
-                         "path"      .= upath ud ]
+                         "path"      .= upath ud,
+                         "type"      .= utype ud ]
 
 data VersionLS = VersionLS {
     versionNo :: Int,

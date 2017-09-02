@@ -173,12 +173,9 @@ projectFileNames subHashedDirs = do
         exists <- doesFileExist f
         let fileName = takeFileName f
         case reverse f  of
-          x | take 3 x == "wc." && length fileName == 26 ->
-               if exists then (fmap projectName) <$> (decode <$> LB.readFile f)
-                         else return Nothing
-          x | take 5 x == "ofni." && length fileName == 28 ->
-               if exists then Just . T.decodeUtf8 <$> B.readFile f else return Nothing
-          _ -> return Nothing
+            x | take 5 x == "ofni." && length fileName == 28 ->
+                if exists then Just . T.decodeUtf8 <$> B.readFile f else return Nothing
+            _ -> return Nothing
     return projects
 
 projectDirNames :: [FilePath] -> IO [Text]
@@ -220,18 +217,13 @@ getFilesRecursive :: FilePath -> IO [FilePath]
 getFilesRecursive path = do
     dirBool <- isDir path
     case dirBool of
-      True -> do
-        case path of
-          x | isSuffixOf ".comments" (drop 23 x) -> return []
-            | isSuffixOf ".comments.users" (drop 23 x) -> return []
-            | isSuffixOf ".comments.versions" (drop 23 x) -> return []
-            | otherwise -> do
-               contents <- listDirectory path
-               concat <$> mapM (getFilesRecursive . (path </>)) contents
-      False -> case reverse path of
-                 x | isSuffixOf ".info" (drop 23 x) -> return []
-                   | x == "dir.info" -> return []
-                   | otherwise -> return [path]
+        True -> do
+            contents <- listDirectory path
+            concat <$> mapM (getFilesRecursive . (path </>)) contents
+        False -> case reverse path of
+                     x | isSuffixOf ".info" (drop 23 x) -> return []
+                       | x == "dir.info" -> return []
+                       | otherwise -> return [path]
 
 dirToCheckSum :: FilePath -> IO Text
 dirToCheckSum path = do
@@ -267,6 +259,12 @@ copyDirIfExists folder1 folder2 = (getDirectory folder1 >>= copyTo_ folder2) `ca
     where handleExists e
             | isDoesNotExistError e = return ()
             | otherwise = throwIO e
+
+moveDirIfExists :: FilePath -> FilePath -> IO ()
+moveDirIfExists folder1 foldeer2 = do
+    removeDirectoryIfExists folder2
+    copyDirIfExists folder1 folder2
+    removeDirectoryIfExists folder1
 
 removeFileIfExists :: FilePath -> IO ()
 removeFileIfExists fileName = removeFile fileName `catch` handleExists

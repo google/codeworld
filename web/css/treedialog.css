@@ -5,7 +5,22 @@
 }
 
 .treedialog .ui-dialog-titlebar-close {
-    display: none;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font: normal normal normal 24px/1 "Material Design Icons";
+    cursor: pointer;
+
+    background: #FFF;
+    border: none;
+}
+
+.treedialog .ui-dialog-titlebar-close .ui-icon:before {
+    content: "\F158";
+}
+
+.treedialog .ui-dialog-titlebar-close .ui-icon:hover:before {
+    content: "\F157";
 }
 
 .treedialog .ui-resizable-handle {

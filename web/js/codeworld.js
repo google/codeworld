@@ -734,6 +734,9 @@ function goto(line, col) {
 function compile() {
     run('', '', 'Compiling...', false);
 
+    if (document.getElementById("runner").contentWindow.debugActive)
+        document.getElementById("runner").contentWindow.stopDebugMode();
+
     var src = window.codeworldEditor.getValue();
     var data = new FormData();
     data.append('source', src);

@@ -26,7 +26,8 @@
         let div = document.createElement("div");
         dialog = $(div).dialog({
             dialogClass: "treedialog",
-            title: "Picture Browser"
+            title: "Picture Browser",
+            closeText: ""
         });
 
         content = document.createElement("div");

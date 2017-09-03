@@ -26,35 +26,35 @@
 
     // These functions are provided by a debugmode-supported entrypoint when
     // calling initDebugMode
-    //  dGetNode :: { x :: Double, y :: Double } -> Int
+    //  debugGetNode :: { x :: Double, y :: Double } -> Int
     //   Returns the nodeId of the shape at the coordinate (x,y) of the canvas.
     //   Negative return indicates no shape at that point.
-    let dGetNode = null;
-    //  dSetActive :: Bool -> ()
+    let debugGetNode = null;
+    //  debugSetActive :: Bool -> ()
     //   Indicates to the entry point when debugmode has been turned off and on
-    let dSetActive = null;
-    //  dGetPicture :: () -> Object
+    let debugSetActive = null;
+    //  debugGetPicture :: () -> Object
     //   Gets an object showing the current state of the Picture being drawn. Is
-    //   only called directly after dSetActive(true).
-    let dGetPicture = null;
-    //  dHighlightShape :: (Bool, Int) -> ()
+    //   only called directly after debugSetActive(true).
+    let debugGetPicture = null;
+    //  debugHighlightShape :: (Bool, Int) -> ()
     //   Indicates to the entry point should highlight or select a shape or tree
     //   of shapes. A true value indicates highlight (change color and bring to
     //   front) and false indicates select (change color and do not change
     //   position). A negative value indicates to stop highlighting or selecting.
     //   At most one shape may be highlighted and one shape selected at a time.
-    let dHighlightShape = null;
+    let debugHighlightShape = null;
 
     let infobox = null;
     let cachedPic = null;
     let canvas = null;
 
     function showInfobox(x, y) {
-        let nodeId = dGetNode({x,y});
+        let nodeId = debugGetNode({x,y});
 
         if (nodeId < 0) {
             infobox.style.display = "none";
-            dHighlightShape(false, -1);
+            debugHighlightShape(false, -1);
             return;
         }
 
@@ -79,7 +79,7 @@
             infobox.style.top = (500 - infoboxHeight) + "px";
         }
 
-        dHighlightShape(false, nodeId);
+        debugHighlightShape(false, nodeId);
     }
 
     function getPictureStack(pic, toId) {
@@ -190,7 +190,7 @@
 
     function openTreeDialog(id) {
         parent.initTreeDialog(cachedPic, function (n) {
-            dHighlightShape(true, n);
+            debugHighlightShape(true, n);
         });
         parent.openTreeDialog(id);
     }
@@ -202,10 +202,10 @@
     // Globals
 
     function initDebugMode(getNode, setActive, getPicture, highlightShape) {
-        dGetNode = getNode;
-        dSetActive = setActive;
-        dGetPicture = getPicture;
-        dHighlightShape = highlightShape;
+        debugGetNode = getNode;
+        debugSetActive = setActive;
+        debugGetPicture = getPicture;
+        debugHighlightShape = highlightShape;
 
         if (available) {
             infobox.style.display = "none";
@@ -222,18 +222,18 @@
 
             canvas.addEventListener("mousemove", function (evt) {
                 if (active) {
-                    let nodeId = dGetNode({
+                    let nodeId = debugGetNode({
                         x: evt.clientX,
                         y: evt.clientY
                     });
 
-                    dHighlightShape(true, nodeId);
+                    debugHighlightShape(true, nodeId);
                 }
             });
 
             canvas.addEventListener("mouseout", function (evt) {
                 if (active) {
-                    dHighlightShape(true, -1);
+                    debugHighlightShape(true, -1);
                 }
             });
             
@@ -256,8 +256,8 @@
         }
 
         active = true;
-        dSetActive(true);
-        cachedPic = dGetPicture();
+        debugSetActive(true);
+        cachedPic = debugGetPicture();
 
         window.debugActive = true;
         parent.updateUI()
@@ -270,7 +270,7 @@
         }
 
         active = false;
-        dSetActive(false);
+        debugSetActive(false);
         cachedPic = null;
 
         closeTreeDialog();

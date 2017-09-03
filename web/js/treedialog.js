@@ -354,7 +354,8 @@
             openDialog();
         }
 
-        highlight(false, id);
+        // Select should probably look better before this is enabled
+        // highlight(false, id);
 
         content.innerHTML = "";
 

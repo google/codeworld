@@ -341,7 +341,11 @@
             dialogClass: "treedialog",
             title: "Picture Browser",
             closeText: "",
-            autoOpen: false
+            autoOpen: false,
+            close: function () {
+                open = false;
+                highlight(true,-1);
+            }
         });
 
         content = document.createElement("div");

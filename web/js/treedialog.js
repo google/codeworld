@@ -340,7 +340,8 @@
         dialog = $(div).dialog({
             dialogClass: "treedialog",
             title: "Picture Browser",
-            closeText: ""
+            closeText: "",
+            autoOpen: false
         });
 
         content = document.createElement("div");

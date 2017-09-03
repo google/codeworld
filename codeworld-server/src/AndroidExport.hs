@@ -24,14 +24,36 @@ import System.FilePath
 
 import Util
 
-initCordovaProject :: BuildMode -> ProgramId ->IO ()
+buildAndroid :: BuildMode -> ProgramId -> IO()
+buildAndroid mode programId = do
+  initCordovaProject mode programId
+  copySource mode programId
+  buildApk mode programId
+  return ()
+
+
+initCordovaProject :: BuildMode -> ProgramId -> IO ()
 initCordovaProject mode programId = do
-  putStrLn $ androidRootDir mode
-  checkIfBuildExists <- doesDirectoryExist $ androidRootDir mode </> sourceBase programId
+  let buildDir = androidBuildDir mode programId
+  checkIfBuildExists <- doesDirectoryExist buildDir
   case checkIfBuildExists of
-    True  -> do
-      putStrLn "Build Exists"
+    True  -> return ()
     False -> do
-      createDirectory $ androidRootDir mode </> sourceBaseDir programId
-      readProcess "cordova" ["create", (androidRootDir mode </> sourceBase programId)] ""
-      putStrLn "Build Doesn't Exist"
+      checkIfParentExists <- doesDirectoryExist $ androidRootDir mode </> sourceParent programId
+      case checkIfParentExists of
+        True  -> return ()
+        False -> do
+          createDirectory $ androidRootDir mode </> sourceParent programId
+          copyDirIfExists "android-template" (androidRootDir mode </> sourceBase programId)
+      return ()
+
+copySource :: BuildMode -> ProgramId -> IO ()
+copySource mode programId = do
+  copyFile (buildRootDir mode </> targetFile programId) (androidBuildDir mode programId </> "www" </> "js" </> "runjs.js")
+
+buildApk :: BuildMode -> ProgramId -> IO ()
+buildApk mode programId = do
+  currwd <- getCurrentDirectory
+  setCurrentDirectory $ androidBuildDir mode programId
+  readProcess "cordova" ["build", "android"] ""
+  setCurrentDirectory currwd

@@ -122,6 +122,7 @@ site clientId =
       ("moveProject",   moveProjectHandler clientId),
       ("compile",       compileHandler),
       ("exportAndroid", exportAndroidHandler),
+      ("getAndroid",    getAndroidHandler),
       ("saveXMLhash",   saveXMLHashHandler),
       ("loadXML",       loadXMLHandler),
       ("loadSource",    loadSourceHandler),
@@ -321,7 +322,7 @@ compileHandler = do
         writeDeployLink mode deployId programId
         compileIfNeeded mode programId
     unless success $ modifyResponse $ setResponseCode 500
-    modifyResponse $ setContentType "text/plain"
+    modifyResponse $ setContentType "application/json"
     let result = CompileResult (unProgramId programId) (unDeployId deployId)
     writeLBS (encode result)
 
@@ -358,18 +359,25 @@ runHandler = do
 
 exportAndroidHandler :: Snap()
 exportAndroidHandler = do
-  mode <- getBuildMode
-  Just source <- getParam "source"
-  let programId = sourceToProgramId source
-      deployId = sourceToDeployId source
-  success <- liftIO $ do
-      ensureProgramDir mode programId
-      B.writeFile (buildRootDir mode </> sourceFile programId) source
-      writeDeployLink mode deployId programId
-      compileIfNeeded mode programId
-  unless success $ modifyResponse $ setResponseCode 500
-  modifyResponse $ setContentType "text/plain"
-  liftIO $ initCordovaProject mode programId
+    mode <- getBuildMode
+    Just source <- getParam "source"
+    let programId = sourceToProgramId source
+        deployId = sourceToDeployId source
+    success <- liftIO $ do
+        ensureProgramDir mode programId
+        B.writeFile (buildRootDir mode </> sourceFile programId) source
+        writeDeployLink mode deployId programId
+        compileIfNeeded mode programId
+    unless success $ modifyResponse $ setResponseCode 500
+    liftIO $ buildAndroid mode programId
+    let result = CompileResult (unProgramId programId) (unDeployId deployId)
+    writeLBS (encode result)
+
+getAndroidHandler :: Snap()
+getAndroidHandler = do
+    mode <- getBuildMode
+    programId <- getHashParam True mode
+    serveFileAs "application/vnd.android.package-archive" (apkFile mode programId)
 
 runMessageHandler :: Snap ()
 runMessageHandler = do

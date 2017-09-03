@@ -60,6 +60,16 @@ buildRootDir (BuildMode m) = "data" </> m </> "user"
 androidRootDir :: BuildMode -> FilePath
 androidRootDir (BuildMode m) = "data" </> m </> "android"
 
+androidBuildDir :: BuildMode -> ProgramId -> FilePath
+androidBuildDir mode programId = androidRootDir mode </> sourceBase programId
+
+apkFile :: BuildMode -> ProgramId -> FilePath
+apkFile mode programId =
+  androidRootDir mode
+  </> sourceBase programId
+  </> "platforms" </> "android" </> "build" </> "outputs" </> "apk"
+  </> "android-debug" <.> "apk"
+
 shareRootDir :: BuildMode -> FilePath
 shareRootDir (BuildMode m) = "data" </> m </> "share"
 
@@ -69,8 +79,8 @@ projectRootDir (BuildMode m) = "data" </> m </> "projects"
 deployRootDir :: BuildMode -> FilePath
 deployRootDir (BuildMode m) = "data" </> m </> "deploy"
 
-sourceBaseDir :: ProgramId -> FilePath
-sourceBaseDir (ProgramId p) = let s = T.unpack p in take 3 s
+sourceParent :: ProgramId -> FilePath
+sourceParent (ProgramId p) = let s = T.unpack p in take 3 s
 
 sourceBase :: ProgramId -> FilePath
 sourceBase (ProgramId p) = let s = T.unpack p in take 3 s </> s

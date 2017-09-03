@@ -39,6 +39,23 @@ function sendHttp(method, url, body, callback) {
     request.send(body);
 }
 
+function sendHttpWithProps(method, url, body, properties, callback) {
+    var request = new XMLHttpRequest();
+
+    if (callback) {
+        request.onreadystatechange = function() {
+            if (request.readyState == 4) callback(request);
+        };
+    }
+
+    request.open(method, url, true);
+    for(var prop in properties) {
+        request[prop] = properties[prop];
+    }
+
+    request.send(body);
+}
+
 function registerStandardHints(successFunc)
 {
     function createHint(line, wordStart, wordEnd, cname) {

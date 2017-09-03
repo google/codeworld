@@ -731,6 +731,54 @@ function goto(line, col) {
     codeworldEditor.focus();
 }
 
+function exportAndroid() {
+    var src = window.codeworldEditor.getValue();
+    var data = new FormData();
+    data.append('source', src);
+    data.append('mode', window.buildMode);
+
+    sendHttp('POST', 'exportAndroid', data, function(request) {
+        if(request.status != 200) {
+            alert("Android build FAILED");
+            return;
+        }
+        var response = JSON.parse(request.response);
+        var hash = response.hash;
+
+        var data = new FormData();
+        data.append('hash', hash);
+        data.append('mode', window.buildMode);
+        var props = {};
+        props.responseType = "blob";
+
+        sendHttpWithProps('POST', 'getAndroid', data, props, function(request) {
+            if(request.status != 200) {
+                alert("Android fetch FAILED");
+                return;
+            }
+            console.log("Success");
+            var blob = request.response;
+             var d = new Date();
+            var filename = 'codeworld_app_'
+                         + d.toDateString().split(' ').join('_') + '_'
+                         + d.getHours() +':'+ d.getMinutes() +':'+ d.getSeconds()
+                         +'.apk';
+            var a = document.createElement("a");
+            document.body.appendChild(a);
+            a.style = "display: none";
+
+            var url = window.URL.createObjectURL(blob);
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            a.remove();
+        });
+
+    });
+}
+
 function compile() {
     run('', '', 'Compiling...', false);
 

@@ -52,6 +52,11 @@ then
   run . sudo yum install -y patch
   run . sudo yum install -y autoconf
   run . sudo yum install -y automake
+
+  # Needed for Cordova
+  run . sudo yum install -y java-1.8.0-openjdk
+  # TODO: Gradle for yum
+
 elif type apt-get > /dev/null 2> /dev/null
 then
   echo Detected 'apt-get': Installing packages from there.
@@ -84,6 +89,11 @@ then
   run . sudo apt-get install -y autoconf
   run . sudo apt-get install -y automake
   run . sudo apt-get install -y libtinfo-dev
+
+  # Needed for Cordova
+  run . sudo apt-get install -y default-jdk
+  run . sudo apt-get install -y gradle
+
 elif type zypper > /dev/null 2> /dev/null
 then
   echo Detected 'zypper': Installing packages from there.
@@ -113,9 +123,13 @@ then
   run . sudo zypper -n install patch
   run . sudo zypper -n install autoconf
   run . sudo zypper -n install automake
+
+  # Needed for Cordova
+  # TODO: OpenJDK, JRE and Gradle for Zypper
 else
   echo "WARNING: Could not find package manager."
   echo "Make sure necessary packages are installed."
+
 fi
 
 # Choose the right GHC download
@@ -169,7 +183,6 @@ run $BUILD  cabal_install ./ghcjs
 run $BUILD  rm -rf ghcjs
 run . ghcjs-boot --dev --ghcjs-boot-dev-branch ghc-8.0 --shims-dev-branch ghc-8.0 --no-prof --no-haddock
 
-run $BUILD  rm -rf downloads
 
 # Install and build CodeMirror editor.
 
@@ -187,5 +200,30 @@ function build_codemirror {
 
 run $BUILD/CodeMirror build_codemirror
 
+# Install Android SDK
+
+run $DOWNLOADS        wget https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip
+run $BUILD            unzip $DOWNLOADS/sdk-tools-linux-3859397.zip
+run $BUILD            mkdir -p Android/Sdk
+run $BUILD            mv tools Android/Sdk/
+run $BUILD            yes | ./Android/Sdk/tools/android update
+
+# Install Apache Cordova
+run $BUILD            mkdir Cordova
+run $BUILD/Cordova    npm install -s cordova
+
+# Create a fresh template project and copy in files
+run .                 cordova create android-template
+run android-template  cordova platform add android
+run .                 rm -rf android-template/www android-template/res
+run .                 cp android-resources/* android-template/ -rf
+
+# Install the Android SDK
+run $BUILD            sdkmanager "build-tools;26.0.0"
+
+## Remove downloads directory
+run $BUILD  rm -rf downloads
+
 # Go ahead and run a first build, which installs more local packages.
 ./build.sh
+

@@ -24,23 +24,12 @@
         open = false;
 
     function openDialog() {
-        let div = document.createElement("div");
-        dialog = $(div).dialog({
-            dialogClass: "treedialog",
-            title: "Picture Browser",
-            closeText: ""
-        });
-
-        content = document.createElement("div");
-        content.classList.add("treedialog-content");
-        dialog.append(content);
-
+        dialog.dialog("open");
         open = true;
     }
 
     function closeDialog() {
         dialog.dialog("close");
-        dialog.remove();
         open = false;
     }
 
@@ -346,6 +335,17 @@
     function initTreeDialog(pic, highlt) {
         fullPic = pic;
         highlight = highlt;
+
+        let div = document.createElement("div");
+        dialog = $(div).dialog({
+            dialogClass: "treedialog",
+            title: "Picture Browser",
+            closeText: ""
+        });
+
+        content = document.createElement("div");
+        content.classList.add("treedialog-content");
+        dialog.append(content);
     }
     window.initTreeDialog = initTreeDialog;
 
@@ -383,6 +383,8 @@
         tree.appendChild(treetitle);
         tree.appendChild(buildNestedList(id));
         content.appendChild(tree);
+
+        content.focus();
     }
     window.openTreeDialog = openTreeDialog;
 
@@ -395,6 +397,7 @@
         if (open) {
             closeDialog();
         }
+        dialog.remove();
         highlight(false,-1);
         dialog = null;
         content = null;

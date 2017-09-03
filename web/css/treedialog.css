@@ -2,6 +2,7 @@
     border: 1px solid #000;
     background: #FFF;
     z-index: 90;
+    font-family: sans-serif;
 }
 
 .treedialog .ui-dialog-titlebar-close {
@@ -135,8 +136,8 @@
     display: table-cell;
 }
 
-.treedialog .tree-opt {
-    font-family: "Courier New", Courier, monospace;
+.treedialog .tree-emph {
+    font-style: italic;
 }
 
 .treedialog-content {

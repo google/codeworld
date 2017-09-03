@@ -49,149 +49,7 @@
     let cachedPic = null;
     let canvas = null;
 
-    function showInfobox(x, y) {
-        let nodeId = debugGetNode({x,y});
-
-        if (nodeId < 0) {
-            infobox.style.display = "none";
-            debugHighlightShape(false, -1);
-            return;
-        }
-
-        let stack = getPictureStack(cachedPic, nodeId);
-        if ( !stack ) throw new Error("Got nonexistent nodeId");
-
-        let stackInterface = getStackTable(stack);
-        infobox.appendChild(stackInterface);
-
-        infobox.style.display = "block";
-        infobox.style.left = x + "px";
-        infobox.style.top  = y + "px";
-
-        let infoboxWidth  = infobox.offsetWidth,
-            infoboxHeight = infobox.offsetHeight;
-
-        if ( x + infoboxWidth >= 500) {
-            infobox.style.left = (500 - infoboxWidth) + "px";
-        }
-
-        if ( y + infoboxHeight >= 500) {
-            infobox.style.top = (500 - infoboxHeight) + "px";
-        }
-
-        debugHighlightShape(false, nodeId);
-    }
-
-    function getPictureStack(pic, toId) {
-        let stack = [];
-
-        let current = pic;
-        while ( current.id <= toId ) {
-            if ( current.id == toId ) {
-                stack.push(current);
-                return stack;
-            } else if ( current.picture ) {
-                stack.push(current);
-                current = current.picture;
-            } else if ( current.pictures ) {
-                // Deliberately leave out entries for Pictures
-                let i = current.pictures.length - 1;
-                while ( toId < current.pictures[i].id ) i--;
-                current = current.pictures[i];
-            } else {
-                return null;
-            }
-        }
-
-        return null;
-    }
-
-    function getStackTable(stack) {
-        let table = document.createElement("table");
-        table.classList.add("stack-list");
-
-        infobox.innerHTML = "";
-
-        stack.forEach(function (pic) {
-            table.appendChild( createStackRow(pic) );
-        });
-
-        return table;
-    }
-
-    function createStackRow(pic) {
-        let tr = document.createElement("tr");
-        tr.classList.add("stack-item");
-        tr.addEventListener("click", function () {
-            parent.codeworldEditor.setSelection(
-                { line: pic.startLine - 1, ch: pic.startCol - 1 },
-                { line: pic.endLine - 1, ch: pic.endCol - 1 },
-                { origin: "+debug" });
-        });
-
-        let shapeInfo = document.createElement("td");
-        shapeInfo.classList.add("shape-info");
-        shapeInfo.innerHTML = "&#x24d8;";
-        tr.appendChild(shapeInfo);
-
-        shapeInfo.addEventListener("click", function () {
-            openTreeDialog(pic.id);
-        });
-
-        let shapeName = document.createElement("td");
-        shapeName.classList.add("shape-name");
-        shapeName.appendChild(document.createTextNode(pic.name));
-        tr.appendChild(shapeName);
-
-        let shapeLine = document.createElement("td");
-        shapeLine.classList.add("shape-loc");
-        shapeLine.appendChild(document.createTextNode("Line " + pic.startLine));
-        tr.appendChild(shapeLine);
-
-        let shapeCol = document.createElement("td");
-        shapeCol.classList.add("shape-loc");
-        shapeCol.appendChild(document.createTextNode("Column " + pic.startCol));
-        tr.appendChild(shapeCol);
-
-        return tr;
-    }
-
-    function fullTreeMode() {
-        infobox.innerHTML = "";
-
-        var ul = document.createElement("ul");
-        appendPicTree(debugCurrentPic, ul);
-        infobox.appendChild(ul);
-    }
-
-    function appendPicTree(tree,to) {
-        var li = document.createElement("li");
-        var ul, i;
-
-
-        if (tree.pictures) {
-            li.appendChild(document.createTextNode("Pictures\n"));
-            ul = document.createElement("ul");
-            for (i=0;i<tree.pictures.length;i++) {
-                appendPicTree(tree.pictures[i], ul);
-            }
-            li.appendChild(ul);
-        } else if (tree.picture) {
-            li.appendChild(document.createTextNode(tree.name+"\n"));
-            ul = document.createElement("ul");
-            appendPicTree(tree.picture, ul);
-            li.appendChild(ul);
-        } else {
-            li.appendChild(document.createTextNode(tree.name+"\n"));
-        }
-
-        to.appendChild(li);
-    }
-
     function openTreeDialog(id) {
-        parent.initTreeDialog(cachedPic, function (n) {
-            debugHighlightShape(true, n);
-        });
         parent.openTreeDialog(id);
     }
 
@@ -207,18 +65,8 @@
         debugGetPicture = getPicture;
         debugHighlightShape = highlightShape;
 
-        if (available) {
-            infobox.style.display = "none";
-        } else {
+        if (!available) {
             canvas = document.getElementById("screen");
-
-            infobox = document.createElement("div");
-            infobox.id = "infobox";
-            document.body.appendChild(infobox);
-
-            canvas.addEventListener("blur", function (evt) {
-                infobox.style.display = "none";
-            });
 
             canvas.addEventListener("mousemove", function (evt) {
                 if (active) {
@@ -239,7 +87,14 @@
             
             canvas.addEventListener("click", function (evt) {
                 if (active) {
-                    showInfobox(evt.clientX, evt.clientY);
+                    let nodeId = debugGetNode({
+                        x: evt.clientX,
+                        y: evt.clientY
+                    });
+
+                    if (nodeId >= 0) {
+                        parent.openTreeDialog();
+                    }
                 }
             });
 
@@ -259,6 +114,8 @@
         debugSetActive(true);
         cachedPic = debugGetPicture();
 
+        parent.initTreeDialog(cachedPic, debugHighlightShape);
+
         window.debugActive = true;
         parent.updateUI()
     }
@@ -273,7 +130,7 @@
         debugSetActive(false);
         cachedPic = null;
 
-        closeTreeDialog();
+        parent.destroyTreeDialog();
 
         window.debugActive = false;
         parent.updateUI();

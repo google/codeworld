@@ -142,7 +142,7 @@
             if (marker) marker.clear();
         });
         a.addEventListener("mouseover", function (evt) {
-            highlight(pic.id);
+            highlight(true, pic.id);
 
             if (pic.type != "pictures") {
                 if (marker) marker.clear();
@@ -153,7 +153,7 @@
             }
         });
         a.addEventListener("mouseout", function (evt) {
-            highlight(-1);
+            highlight(true, -1);
 
             if (marker) {
                 marker.clear();
@@ -196,7 +196,7 @@
     function optTxt(txt) {
         let span = document.createElement("span");
         span.appendChild( document.createTextNode( txt ) );
-        span.classList.add("tree-opt");
+        span.classList.add("tree-emph");
         return span;
     }
 
@@ -354,6 +354,8 @@
             openDialog();
         }
 
+        highlight(false, id);
+
         content.innerHTML = "";
 
         let picture = getPicNode(id);
@@ -392,6 +394,7 @@
         if (open) {
             closeDialog();
         }
+        highlight(false,-1);
         dialog = null;
         content = null;
         highlight = null;

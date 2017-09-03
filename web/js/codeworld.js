@@ -690,11 +690,13 @@ function run(hash, dhash, msg, error) {
         runner.contentWindow.location.replace(loc);
         if (!!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia) {
             document.getElementById('startRecButton').style.display = '';
+            document.getElementById('exportAndroidButton').style.display = '';
         }
     } else {
         runner.contentWindow.location.replace('about:blank');
         document.getElementById('runner').style.display = 'none';
         document.getElementById('startRecButton').style.display = 'none';
+        document.getElementById('exportAndroidButton').style.display = 'none';
     }
 
     if (hash || msg) {
@@ -732,14 +734,51 @@ function goto(line, col) {
 }
 
 function exportAndroid() {
+    sweetAlert({
+        title: "App Information",
+        text: "App Name",
+        type: "input",
+        showCancelButton: true,
+        confirmButtonText: "Build App",
+        closeOnConfirm: false,
+        inputPlaceholder: "CodeWorld App"
+    },
+    function(inputValue){
+        if (inputValue === false) {
+            return false;
+        }
+        if (inputValue === "") {
+            swal.showInputError("Please enter a name for your app");
+            return false;
+        }
+        compileAndExportAndroid({
+            appName: inputValue,
+        });
+        sweetAlert({
+            title: "Please Wait",
+            text: "Your app is being built",
+            imageUrl: "https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif",
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        });
+    });
+}
+
+function compileAndExportAndroid(appProps) {
     var src = window.codeworldEditor.getValue();
     var data = new FormData();
     data.append('source', src);
     data.append('mode', window.buildMode);
+    for(var prop in appProps) {
+        data.append(prop, appProps[prop]);
+    }
+    document.getElementById('exportAndroidButton').disabled = true;
 
     sendHttp('POST', 'exportAndroid', data, function(request) {
         if(request.status != 200) {
-            alert("Android build FAILED");
+            sweetAlert("Android Build Failed", "Something went wrong!", "error");
+            document.getElementById('exportAndroidButton').disabled = false;
             return;
         }
         var response = JSON.parse(request.response);
@@ -748,17 +787,19 @@ function exportAndroid() {
         var data = new FormData();
         data.append('hash', hash);
         data.append('mode', window.buildMode);
-        var props = {};
+         var props = {};
         props.responseType = "blob";
 
         sendHttpWithProps('POST', 'getAndroid', data, props, function(request) {
             if(request.status != 200) {
-                alert("Android fetch FAILED");
+                sweetAlert("Android Fetch Failed", "Something went wrong!", "error");
+                document.getElementById('exportAndroidButton').disabled = false;
                 return;
             }
-            console.log("Success");
+            swal("App Built!", "Your CodeWorld app will now be downloaded", "success");
+
             var blob = request.response;
-             var d = new Date();
+            var d = new Date();
             var filename = 'codeworld_app_'
                          + d.toDateString().split(' ').join('_') + '_'
                          + d.getHours() +':'+ d.getMinutes() +':'+ d.getSeconds()
@@ -774,6 +815,7 @@ function exportAndroid() {
             window.URL.revokeObjectURL(url);
 
             a.remove();
+            document.getElementById('exportAndroidButton').disabled = false;
         });
 
     });

@@ -157,6 +157,15 @@ body {
   cursor: pointer;
 }
 
+button {
+  border: none;
+}
+
+button:disabled,
+button[disabled] {
+  background-color: #cccccc !important;
+}
+
 .cw-button {
   border-radius: 4px;
   cursor: pointer;

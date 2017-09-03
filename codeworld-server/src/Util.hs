@@ -30,6 +30,7 @@ import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Lazy as LB
 import           Data.Maybe
 import           Data.Monoid
+import qualified Data.Map.Strict as M
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -47,6 +48,8 @@ newtype ProjectId = ProjectId { unProjectId :: Text } deriving Eq
 newtype DeployId  = DeployId  { unDeployId  :: Text } deriving Eq
 newtype DirId     = DirId     { unDirId     :: Text}  deriving Eq
 newtype ShareId   = ShareId   { unShareId   :: Text } deriving Eq
+
+type AppProps = M.Map String String
 
 autocompletePath :: FilePath
 autocompletePath = "web/codeworld-base.txt"

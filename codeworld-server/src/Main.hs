@@ -34,6 +34,7 @@ import qualified Data.ByteString.Lazy as LB
 import           Data.Char (isSpace)
 import           Data.List
 import           Data.Maybe
+import qualified Data.Map.Strict as M
 import           Data.Monoid
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -361,6 +362,8 @@ exportAndroidHandler :: Snap()
 exportAndroidHandler = do
     mode <- getBuildMode
     Just source <- getParam "source"
+    maybeAppName <- getParam "appName"
+    let appName = BC.unpack $ fromMaybe (BC.pack "CodeWorld App") maybeAppName 
     let programId = sourceToProgramId source
         deployId = sourceToDeployId source
     success <- liftIO $ do
@@ -369,7 +372,8 @@ exportAndroidHandler = do
         writeDeployLink mode deployId programId
         compileIfNeeded mode programId
     unless success $ modifyResponse $ setResponseCode 500
-    liftIO $ buildAndroid mode programId
+    let appProps = M.fromList [("appName", appName)]
+    liftIO $ buildAndroid mode programId appProps
     let result = CompileResult (unProgramId programId) (unDeployId deployId)
     writeLBS (encode result)
 

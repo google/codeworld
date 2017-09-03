@@ -93,7 +93,7 @@
                     });
 
                     if (nodeId >= 0) {
-                        parent.openTreeDialog();
+                        parent.openTreeDialog(nodeId);
                     }
                 }
             });
@@ -122,13 +122,12 @@
     window.startDebugMode = startDebugMode;
 
     function stopDebugMode() {
-        if (active) {
-            infobox.style.display = "none";
-        }
-
         active = false;
         debugSetActive(false);
         cachedPic = null;
+
+        debugHighlightShape(true,-1);
+        debugHighlightShape(false,-1);
 
         parent.destroyTreeDialog();
 

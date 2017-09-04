@@ -42,6 +42,33 @@ function getCommentVersions() {
     });
 }
 
+function getUserIdent() {
+    if (!signedIn()) {
+        sweetAlert('Oops!', 'Could not get user identifier.', 'error');
+        updateUI();
+        return;
+    }
+    var id_token = auth2.currentUser.get().getAuthResponse().id_token;
+    var data = new FormData();
+    data.append('id_token', id_token);
+    data.append('mode', window.buildMode);
+    data.append('path', window.nestedDirs.slice(1).join('/'));
+    data.append('name', window.openProjectName);
+    var handler = (window.nestedDirs.length > 1 && window.nestedDirs[1] == "commentables") ? 'getUserIdent' : 'getOwnerUserIdent';
+    sendHttp('POST', handler, data, function (request) {
+        if (request.status != 200) {
+            if (request.status == 404) {
+                sweetAlert("Oops!", request.responseText, 'error');
+            } else {
+                sweetAlert('Oops!', 'Could not get user identifier.', 'error');
+            }
+            updateUI();
+            return;
+        }
+        window.userIdent = request.responseText;
+    });
+}
+
 function addCommentVersions(versions) {
     document.getElementById('viewCommentVersions').style.display = '';
     window.maxVersion = parseInt(versions[0]);
@@ -161,6 +188,7 @@ function loadProjectForComments(index, name, buildMode, successFunc) {
             setCode(project.source, project.history, name);
             updateUI();
             addCommentVersions(versions);
+            getUserIdent();
         });
     });
 }
@@ -530,6 +558,9 @@ function writeComment(line) {
         updateUI();
         return;
     }
+    if (window.userIdent == undefined) {
+        return;
+    }
 
     function go(request, comment, dateTime) {
         if (request.status != 200) {
@@ -552,26 +583,7 @@ function writeComment(line) {
             });
             comments.insertBefore(generateCommentBlock(comments.getElementsByClassName('commentBlock').length, line), comments.lastChild);
         }
-        if (window.nestedDirs.length > 1 && window.nestedDirs[1] == 'commentables') {
-            var data = new FormData();
-            data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-            data.append('mode', window.buildMode);
-            data.append('path', window.nestedDirs.slice(1).join('/'));
-            data.append('name', window.openProjectName);
-            sendHttp('POST', 'getUserIdent', data, function(request) {
-                if (request.status != 200) {
-                    if (request.status == 404) {
-                        sweetAlert('Oops!', request.responseText, 'error');
-                    } else {
-                        sweetAlert('Oops!', 'Something went wrong. Please reload the project!', 'error');
-                    }
-                    return;
-                }
-                goAgain(request.responseText);
-            });
-        } else {
-            goAgain('Anonymous Owner');
-        }
+        goAgain(window.userIdent);
     }
 
     var data = new FormData();
@@ -626,26 +638,7 @@ function writeReply(commentIdx, line) {
             var replies = commentBlock.getElementsByClassName('replies')[0];
             replies.insertBefore(generateReplyBlock(replies.getElementsByClassName('replyBlock').length, commentIdx, line), replies.lastChild);
         }
-        if (window.nestedDirs.length > 1 && window.nestedDirs[1] == 'commentables') {
-            var data = new FormData();
-            data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-            data.append('mode', window.buildMode);
-            data.append('path', window.nestedDirs.slice(1).join('/'));
-            data.append('name', window.openProjectName);
-            sendHttp('POST', 'getUserIdent', data, function(request) {
-                if (request.status != 200) {
-                    if (request.status == 404) {
-                        sweetAlert('Oops!', request.responseText, 'error');
-                    } else {
-                        sweetAlert('Oops!', 'Something went wrong. Please reload the project!', 'error');
-                    }
-                    return;
-                }
-                goAgain(request.responseText);
-            });
-        } else {
-            goAgain('Anonymous Owner');
-        }
+        goAgain(window.userIdent);
     }
 
     var data = new FormData();

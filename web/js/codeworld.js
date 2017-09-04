@@ -36,13 +36,14 @@ function init() {
             hash = hash.slice(0, -2);
         }
         if(hash[0] == 'F') {
-            function go(folderName) {
+            function go(folderName, userIdent) {
                 var id_token = auth2.currentUser.get().getAuthResponse().id_token;
                 var data = new FormData();
                 data.append('id_token', id_token);
                 data.append('mode', window.buildMode);
                 data.append('shash', hash);
                 data.append('name', folderName);
+                data.append('userIdent', userIdent);
 
                 sendHttp('POST', 'shareContent', data, function(request) {
                     window.location.hash = '';
@@ -66,7 +67,25 @@ function init() {
                 confirmButtonText: 'Save',
                 showCancelButton: false,
                 closeOnConfirm: false
-            }, go);
+            }, function(folderName) {
+                if (folderName == '' || folderName == null) {
+                    return;
+                }
+                sweetAlert({
+                    html: true,
+                    title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
+                    text: 'Enter an identifier for the shared folder:',
+                    type: 'input',
+                    confirmButtonText: 'Save',
+                    showCancelButton: false,
+                    closeOnConfirm: false
+                }, function(userIdent) {
+                    if (userIdent == '' || userIdent == null) {
+                        return;
+                    }
+                    go(folderName, userIdent);
+                });
+            });
         } else if (hash[0] == 'C') {
             addSharedComment(hash);
         } else {
@@ -356,6 +375,7 @@ function updateUI() {
         document.getElementById('viewCommentVersions').style.display = 'none';
         window.currentVersion = undefined;
         window.maxVersion = undefined;
+        window.userIdent = undefined;
         window.project = undefined;
         document.getElementById('testButton').style.display = 'none';
         document.getElementById('askFeedbackButton').style.display = 'none';
@@ -747,6 +767,7 @@ function loadProject(name, index) {
         window.project = project
         setCode(project.source, project.history, name);
         getCommentVersions();
+        getUserIdent();
         addPresentCommentInd();
     }
     loadProject_(index, name, window.buildMode, successFunc);

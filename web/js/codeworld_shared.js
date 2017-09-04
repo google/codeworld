@@ -372,28 +372,47 @@ function moveHere_(path, buildMode, successFunc) {
     data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
     data.append('mode', buildMode);
     data.append('moveTo', path);
-    data.append('moveFrom', window.move.path);
     if (window.move.file != undefined) {
-        data.append('isFile', 'true');
+        data.append('moveFrom', window.move.path);
         data.append('fromName', window.move.file);
+        data.append('isFile', 'true');
+    } else {
+        data.append('moveFrom', window.move.path.split('/').slice(0,-1).join('/'));
+        data.append('fromName', window.move.path.split('/').slice(-1)[0]);
+        data.append('isFile', 'false');
+    }
+    sweetAlert({
+        html: true,
+        title: '<i class="mdi mdi-72px mdi-folder-move"></i>&nbsp; Move File',
+        text: 'Enter a name for your file/folder to be created at /' + path + ':',
+        type: 'input',
+        inputValue: '',
+        confirmButtonText: 'Next',
+        showCancelButton: true,
+        closeOnConfirm: false
+    }, function (name) {
+        if (name == '' || name == null) {
+            return;
+        }
+        data.append('name', name);
         sweetAlert({
             html: true,
             title: '<i class="mdi mdi-72px mdi-folder-move"></i>&nbsp; Move File',
-            text: 'Enter a name for your file to be created at /' + path + ':',
+            text: 'Enter a user name to be associated with your file/s:',
             type: 'input',
             inputValue: '',
-            confirmButtonText: 'Move',
+            confirmButton: 'Move',
             showCancelButton: true,
             closeOnConfirm: false
-        }, function (name) {
+        }, function(userIdent) {
+            if (userIdent == '' || userIdent == null) {
+                return;
+            }
+            data.append('userIdent', userIdent);
             sweetAlert.close();
-            data.append('name', name);
             go();
         });
-    } else {
-        data.append('isFile', 'false');
-        go();
-    }
+    });
 }
 
 function copyHere_(path, buildMode, successFunc) {
@@ -427,29 +446,48 @@ function copyHere_(path, buildMode, successFunc) {
     data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
     data.append('mode', buildMode);
     data.append('copyTo', path);
-    data.append('copyFrom', window.copy.path);
+    data.append('empty', JSON.stringify(getCurrentProject()['history']));
     if (window.copy.file != undefined) {
-        data.append('isFile', 'true');
-        data.append('empty', JSON.stringify(getCurrentProject()['history']));
+        data.append('copyFrom', window.copy.path)
         data.append('fromName', window.copy.file);
+        data.append('isFile', 'true');
+    } else {
+        data.append('copyFrom', window.copy.path.split('/').slice(0,-1).join('/'));
+        data.append('fromName', window.copy.path.split('/').slice(-1)[0]);
+        data.append('isFile', 'false');
+    }
+    sweetAlert({
+        html: true,
+        title: '<i class="mdi mdi-72px mdi-content-copy"></i>&nbsp; Copy File',
+        text: 'Enter a name for your file/folder to be created at /' + path + ':',
+        type: 'input',
+        inputValue: '',
+        confirmButtonText: 'Next',
+        showCancelButton: true,
+        closeOnConfirm: false
+    }, function (name) {
+        if (name == '' || name == null) {
+            return;
+        }
+        data.append('name', name);
         sweetAlert({
             html: true,
             title: '<i class="mdi mdi-72px mdi-content-copy"></i>&nbsp; Copy File',
-            text: 'Enter a name for your file to be created at /' + path + ':',
+            text: 'Enter a user name to be associated with your file/s:',
             type: 'input',
             inputValue: '',
-            confirmButtonText: 'Copy',
+            confirmButton: 'Copy',
             showCancelButton: true,
             closeOnConfirm: false
-        }, function (name) {
+        }, function(userIdent) {
+            if (userIdent == '' || userIdent == null) {
+                return;
+            }
+            data.append('userIdent', userIdent);
             sweetAlert.close();
-            data.append('name', name);
             go();
         });
-    } else {
-        data.append('isFile', 'false');
-        go();
-    }
+    });
 }
 
 function warnIfUnsaved(action, showAnother) {
@@ -504,13 +542,16 @@ function saveProjectBase_(path, projectName, mode, successFunc, type) {
     function go() {
         sweetAlert.close();
         var project = getCurrentProject();
-        project['name'] = projectName;
 
         var data = new FormData();
         data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-        data.append('project', JSON.stringify(project));
+        data.append('project', JSON.stringify({
+            source: project['source'],
+            history: project['history']
+        }));
         data.append('mode', mode);
         data.append('path', path);
+        data.append('name', projectName);
         data.append('versionNo', window.currentVersion);
         sendHttp('POST', 'saveProject', data, function(request) {
             if (request.status != 200) {
@@ -703,8 +744,11 @@ function newProject_(path) {
             return;
         }
 
-        function go(fileName) {
+        function go(fileName, userIdent) {
             if (fileName == null || fileName == '') {
+                return;
+            }
+            if (userIdent == null || userIdent == '') {
                 return;
             }
             sweetAlert.close();
@@ -713,12 +757,16 @@ function newProject_(path) {
             function go_() {
                 sweetAlert.close();
                 var project = getCurrentProject();
-                project['name'] = fileName;
                 var data = new FormData();
                 data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-                data.append('project', JSON.stringify(project));
+                data.append('project', JSON.stringify({
+                    source: project['source'],
+                    history: project['history']
+                }));
                 data.append('mode', window.buildMode);
                 data.append('path', path);
+                data.append('name', fileName);
+                data.append('userIdent', userIdent);
 
                 sendHttp('POST', 'newProject', data, function (request) {
                     if (request.status != 200) {
@@ -739,6 +787,7 @@ function newProject_(path) {
                         discoverProjects(path, allProjectNames.length - 1);
                     }
 
+                    window.userIdent = userIdent;
                     window.project = {
                         'name': fileName,
                         'source': ''
@@ -769,10 +818,23 @@ function newProject_(path) {
             text: 'Enter a name for your file to be created at /' + path + ':',
             type: 'input',
             inputValue: '',
-            confirmButtonText: 'Create',
+            confirmButtonText: 'Next',
             showCancelButton: true,
             closeOnConfirm: false
-        }, go);
+        }, function(fileName) {
+            sweetAlert({
+                html: true,
+                title: '<i class="mdi mdi-72px mdi-note-plus"></i>&nbsp; Create File',
+                text: 'Enter a user name to be associated with your file:',
+                type: 'input',
+                inputValue: '',
+                confirmButton: 'Create',
+                showCancelButton: true,
+                closeOnConfirm: false
+            }, function(userIdent) {
+                go(fileName, userIdent);
+            });
+        });
     }, true);
 }
 

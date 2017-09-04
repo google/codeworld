@@ -98,6 +98,8 @@ removeProjectIfExists mode userId' userPath = do
     projectContentPath <- BC.unpack <$> B.readFile userPath
     _ <- removeUserFromCollaboration mode userId' projectContentPath
     removeFileIfExists userPath
+    removeFileIfExists $ userPath <.> "info"
+    cleanBaseDirectory userPath
 
 removeUserFromCollaboration :: BuildMode -> Text -> FilePath -> IO (Either String ())
 removeUserFromCollaboration mode userId' projectContentPath = do
@@ -130,7 +132,11 @@ modifyCollabPath mode projectContentPath = do
         newCollabHashPath = collabHashRootDir mode </> collabHashLink newCollabHash <.> "cw"
     forM_ currentUsers $ \u -> do
         B.writeFile (T.unpack $ upath u) $ BC.pack newCollabHashPath
-    moveDirIfExists (takeDirectory projectContentPath) $ takeDirectory newCollabHashPath
+    createDirectoryIfMissing False $ takeDirectory newCollabHashPath
+    mapM_ (\x -> renameDirectory (projectContentPath <.> x) $ newCollabHashPath <.> x)
+      ["comments", "comments" <.> "users", "comments" <.> "versions"]
+    mapM_ (\x -> renameFile (projectContentPath <.> x) $ newCollabHashPath <.> x)
+      ["", "users"]
     cleanBaseDirectory projectContentPath
     updateSharedCommentPath mode (projectContentPath <.> "comments") $ newCollabHashPath <.> "comments"
 
@@ -138,7 +144,7 @@ modifyCollabPathIfReq :: BuildMode -> Text -> FilePath -> FilePath -> IO ()
 modifyCollabPathIfReq mode userId' fromFile toFile = do
     let collabHash = nameToCollabHash fromFile
         collabHashPath = collabHashRootDir mode </> collabHashLink collabHash <.> "cw"
-    projectContentPath <- BC.unpack <$> B.readFile fromFile
+    projectContentPath <- BC.unpack <$> B.readFile toFile
     Just (currentUsers :: [UserDump]) <- decodeStrict <$>
       B.readFile (projectContentPath <.> "users")
     B.writeFile (projectContentPath <.> "users") $

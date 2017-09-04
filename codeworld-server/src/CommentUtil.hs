@@ -112,7 +112,10 @@ updateSharedCommentPath mode oldCommentFolder commentFolder = do
         oldCommentHashPath = commentHashRootDir mode </> commentHashLink oldCommentHash
         commentHash = nameToCommentHash commentFolder
         commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
-    moveDirIfExists (takeDirectory oldCommentHashPath) $ takeDirectory commentHashPath
+    createDirectoryIfMissing False $ takeDirectory commentHashPath
+    mapM_ (\x -> renameFile (oldCommentHashPath <.> x) $ commentHashPath <.> x)
+      ["", "users"]
+    cleanBaseDirectory oldCommentHashPath
     B.writeFile commentHashPath $ BC.pack commentFolder
     Just (currentUsers :: [UserDump]) <- decodeStrict <$>
       B.readFile (commentHashPath <.> "users")

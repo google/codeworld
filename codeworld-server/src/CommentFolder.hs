@@ -37,7 +37,10 @@ import Model
 
 cleanCommentPaths :: BuildMode -> Text -> FilePath -> IO ()
 cleanCommentPaths mode userId' file = do
-    removeProjectIfExists mode userId' file
+    fileBool <- doesFileExist file
+    case fileBool of
+        True -> removeProjectIfExists mode userId' file
+        False -> return ()
 
 deleteFolderWithComments :: BuildMode -> Text -> FilePath -> IO (Either String ())
 deleteFolderWithComments mode userId' finalDir = do

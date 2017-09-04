@@ -167,9 +167,8 @@ projectFileNames subHashedDirs = do
     hashedFiles <- dirFilter subHashedDirs 'S'
     projects <- fmap catMaybes $ forM hashedFiles $ \f -> do
         exists <- doesFileExist f
-        let fileName = takeFileName f
         case reverse f  of
-            x | take 5 x == "ofni." && length fileName == 28 ->
+            x | take 5 x == "ofni." ->
                 if exists then Just . T.decodeUtf8 <$> B.readFile f else return Nothing
             _ -> return Nothing
     return projects
@@ -216,7 +215,7 @@ getFilesRecursive path = do
         True -> do
             contents <- listDirectory path
             concat <$> mapM (getFilesRecursive . (path </>)) contents
-        False -> case reverse path of
+        False -> case takeFileName path of
                      x | isSuffixOf ".info" (drop 23 x) -> return []
                        | x == "dir.info" -> return []
                        | otherwise -> return [path]

@@ -48,11 +48,11 @@ commentRoutes clientId =
     , ("deleteReply",             deleteReplyHandler clientId)
     , ("getUserIdent",            getUserIdentHandler clientId)
     , ("getOwnerUserIdent",       getOwnerUserIdentHandler clientId)
-    , ("listComments",            listCommentsHandler clientId)
-    , ("listOwnerComments",       listOwnerCommentsHandler clientId)
+    , ("listComments",            listCommentsHandler clientId)            -- to be integrated
+    , ("listOwnerComments",       listOwnerCommentsHandler clientId)       -- to be integrated
     , ("listOwnerVersions",       listOwnerVersionsHandler clientId)
-    , ("listUnreadComments",      listUnreadCommentsHandler clientId)
-    , ("listUnreadOwnerComments", listUnreadOwnerCommentsHandler clientId)
+    , ("listUnreadComments",      listUnreadCommentsHandler clientId)      -- to be integrated
+    , ("listUnreadOwnerComments", listUnreadOwnerCommentsHandler clientId) -- to be integrated
     , ("listVersions",            listVersionsHandler clientId)
     , ("readComment",             readCommentHandler clientId)
     , ("readOwnerComment",        readOwnerCommentHandler clientId)
@@ -265,9 +265,8 @@ getUserIdentHandler clientId = do
 
 getOwnerUserIdentHandler :: ClientId -> Snap ()
 getOwnerUserIdentHandler clientId = do
-    (user, _, commentFolder) <- getFrequentParams 3 clientId
-    let userPath = take (length commentFolder - 9) commentFolder
-    projectPath <- liftIO $ BC.unpack <$> B.readFile userPath
+    (user, _, commentFolder) <- getFrequentParams 1 clientId
+    let projectPath = take (length commentFolder - 9) commentFolder
     Just (currentUsers :: [UserDump]) <- liftIO $
       decodeStrict <$> B.readFile (projectPath <.> "users")
     let currentUserIds = map uuserId currentUsers
@@ -321,8 +320,7 @@ listUnreadCommentsHandler clientId = do
 listUnreadOwnerCommentsHandler :: ClientId -> Snap ()
 listUnreadOwnerCommentsHandler clientId = do
     (user, _, commentFolder) <- getFrequentParams 1 clientId
-    let userPath = take (length commentFolder - 9) commentFolder
-    projectPath <- liftIO $ BC.unpack <$> B.readFile userPath
+    let projectPath = take (length commentFolder - 9) commentFolder
     Just (currentUsers :: [UserDump]) <- liftIO $
       decodeStrict <$> B.readFile (projectPath <.> "users")
     let currentUserIds = map uuserId currentUsers
@@ -369,8 +367,7 @@ readCommentHandler clientId = do
 readOwnerCommentHandler :: ClientId -> Snap ()
 readOwnerCommentHandler clientId = do
     (user, _, commentFolder) <- getFrequentParams 1 clientId
-    let userPath = take (length commentFolder - 9) commentFolder
-    projectPath <- liftIO $ BC.unpack <$> B.readFile userPath
+    let projectPath = take (length commentFolder - 9) commentFolder
     Just (currentUsers :: [UserDump]) <- liftIO $
       decodeStrict <$> B.readFile (projectPath <.> "users")
     let currentUserIds = map uuserId currentUsers
@@ -430,8 +427,7 @@ writeCommentHandler clientId = do
 writeOwnerCommentHandler :: ClientId -> Snap ()
 writeOwnerCommentHandler clientId = do
     (user, _, commentFolder) <- getFrequentParams 1 clientId
-    let userPath = take (length commentFolder - 9) commentFolder
-    projectPath <- liftIO $ BC.unpack <$> B.readFile userPath
+    let projectPath = take (length commentFolder - 9) commentFolder
     Just (currentUsers :: [UserDump]) <- liftIO $
       decodeStrict <$> B.readFile (projectPath <.> "users")
     let currentUserIds = map uuserId currentUsers
@@ -454,8 +450,7 @@ writeOwnerCommentHandler clientId = do
 writeOwnerReplyHandler :: ClientId -> Snap ()
 writeOwnerReplyHandler clientId = do
     (user, _, commentFolder) <- getFrequentParams 1 clientId
-    let userPath = take (length commentFolder - 9) commentFolder
-    projectPath <- liftIO $ BC.unpack <$> B.readFile userPath
+    let projectPath = take (length commentFolder - 9) commentFolder
     Just (currentUsers :: [UserDump]) <- liftIO $
       decodeStrict <$> B.readFile (projectPath <.> "users")
     let currentUserIds = map uuserId currentUsers

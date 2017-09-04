@@ -34,6 +34,8 @@ import           Snap.Util.FileServe
 import           System.Directory
 import           System.FilePath
 
+import Collaboration
+import CommentFolder
 import CommentUtil
 import DataUtil
 import Model
@@ -204,7 +206,7 @@ loadProjectHandler clientId = do
             writeBS . BC.pack $ "Wrong Route To View A Source In `commentables` Directory"
           | otherwise -> do
             let file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
-                collabHash = nameToCommentHash file
+                collabHash = nameToCollabHash file
                 collabHashPath = collabHashRootDir mode </> collabHashLink collabHash <.> "cw"
             modifyResponse $ setContentType "application/json"
             serveFile collabHashPath
@@ -231,7 +233,6 @@ moveProjectHandler clientId = do
             Just isFile <- getParam "isFile"
             Just name <- fmap BC.unpack <$> getParam "name"
             Just fromName <- fmap BC.unpack <$> getParam "fromName"
-            Just userIdent' <- fmap T.decodeUtf8 <$> getParam "userIdent"
             let name' = if name == "commentables" then "commentables'" else name
                 fromName' = if fromName == "commentables"  then "commentables'" else fromName
             case (moveTo == moveFrom && fromName' == name', isFile) of
@@ -242,21 +243,21 @@ moveProjectHandler clientId = do
                         True -> liftIO $ do
                             let fromFile = projectDir </> moveFromDir </> commentProjectLink fromProjectId
                                 toFile = projectDir </> moveToDir </> commentProjectLink projectId
-                            moveFileFromCommentables (userId user) userIdent' fromFile toFile $ T.pack name'
+                            moveFileFromCommentables (userId user) fromFile toFile $ T.pack name'
                         False -> liftIO $ do
                             let fromFile = projectDir </> moveFromDir </> projectFile fromProjectId
                                 toFile = projectDir </> moveToDir </> projectFile projectId
-                            moveFileFromSelf mode (userId user) userIdent' fromFile toFile $ T.pack name'
+                            moveFileFromSelf mode (userId user) fromFile toFile $ T.pack name'
                 (False, "false") -> do
                     let toDir = moveToDir </> (dirBase . nameToDirId . T.pack $ name')
                         fromDir = moveFromDir </> (dirBase . nameToDirId . T.pack $ fromName')
                     _ <- liftIO $ deleteFolderWithComments mode (userId user) toDir
                     case toType of
                         True -> liftIO $ do
-                            moveFolderFromCommentables mode (userId user) userIdent' (projectDir </> fromDir)
+                            moveFolderFromCommentables mode (userId user) (projectDir </> fromDir)
                               (projectDir </> toDir) $ T.pack name'
                         False -> liftIO $ do
-                            moveFolderFromSelf mode (userId user) userIdent' (projectDir </> fromDir)
+                            moveFolderFromSelf mode (userId user) (projectDir </> fromDir)
                               (projectDir </> toDir) $ T.pack name'
                 (_, _) -> return ()
         False -> do
@@ -276,17 +277,18 @@ newProjectHandler clientId = do
             Just (project :: Project) <- decode . LB.fromStrict . fromJust <$> getParam "project"
             Just userIdent' <- getParam "userIdent"
             Just name <- getParam "name"
-            let projectId = nameToProjectId (projectName project)
+            let projectId = nameToProjectId $ T.decodeUtf8 name
                 file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
             liftIO $ do
                 cleanCommentPaths mode (userId user) file
                 ensureProjectDir mode (userId user) finalDir projectId
-                newCollaboratedProject mode (userId user) (T.decodeUtf8 userIdent')
+                _ <- newCollaboratedProject mode (userId user) (T.decodeUtf8 userIdent')
                   name file project
+                return ()
 
 shareContentHandler :: ClientId -> Snap ()
 shareContentHandler clientId = do
-    (user, mode. finalDir, _) <- getFrequentParams False clientId
+    (user, mode, finalDir, _) <- getFrequentParams False clientId
     case length (splitDirectories finalDir) of
         x | (x /= 0) && ((splitDirectories finalDir) !! 0 == "commentables") -> do
             modifyResponse $ setContentType "text/plain"
@@ -297,13 +299,13 @@ shareContentHandler clientId = do
             sharingFolder <- liftIO $ BC.unpack <$>
               B.readFile (shareRootDir mode </> shareLink (ShareId $ T.decodeUtf8 shash))
             Just name <- fmap T.decodeUtf8 <$> getParam "name"
-            Just userIdent' <- T.decodeUtf8 <$> getParam "userIdent"
+            Just userIdent' <- fmap T.decodeUtf8 <$> getParam "userIdent"
             let toDir = finalDir </> (dirBase . nameToDirId $ name)
                 projectDir = userProjectDir mode $ userId user
             liftIO $ do
-                _ <- liftIO $ deleteFolderWithComments mode (userId user) todir
+                _ <- liftIO $ deleteFolderWithComments mode (userId user) toDir
                 copyFolderFromSelf mode (userId user) userIdent' sharingFolder (projectDir </> toDir) name
-                B.writeFile (userProjectDir mode (userId user) </> dirPath </> "dir.info") name
+                B.writeFile (userProjectDir mode (userId user) </> toDir </> "dir.info") $ T.encodeUtf8 name
 
 shareFolderHandler :: ClientId -> Snap ()
 shareFolderHandler clientId = do
@@ -333,9 +335,9 @@ saveProjectHandler clientId = do
             Just (project :: Project) <- decodeStrict . fromJust <$> getParam "project"
             Just name <- getParam "name"
             Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
-            let projectId = nameToProjectId (projectName project)
+            let projectId = nameToProjectId $ T.decodeUtf8 name
                 file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
-            checkName <- B.readFile $ file <.> "info"
+            checkName <- liftIO $ B.readFile $ file <.> "info"
             case checkName == name of
                 False -> do
                     modifyResponse $ setContentType "text/plain"
@@ -344,7 +346,7 @@ saveProjectHandler clientId = do
                 True -> do
                     -- no need to ensure a project file as
                     -- constrained to create a new project before editing.
-                    projectContentPath <- B.readFile file
+                    projectContentPath <- liftIO $ BC.unpack <$> B.readFile file
                     liftIO $ B.writeFile projectContentPath $ LB.toStrict . encode $ project
                     res <- liftIO $ createNewVersionIfReq (projectSource project) versionNo' $
                       projectContentPath <.> "comments"

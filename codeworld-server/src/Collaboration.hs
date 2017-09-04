@@ -18,6 +18,7 @@
 
 module Collaboration where
 
+import           Control.Monad
 import           Data.Aeson
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -25,17 +26,17 @@ import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as LB
 import           Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
 import           System.Directory
 import           System.FilePath
 
+import CommentUtil
 import DataUtil
 import Model
 
 newtype CollabId = CollabId { unCollabId :: Text } deriving Eq
 
 collabHashRootDir :: BuildMode -> FilePath
-collabHashRootDir mode = "data" </> m </> "projectContents"
+collabHashRootDir (BuildMode m) = "data" </> m </> "projectContents"
 
 nameToCollabHash :: FilePath -> CollabId
 nameToCollabHash = CollabId . hashToId "H" . BC.pack
@@ -51,7 +52,7 @@ newCollaboratedProject :: BuildMode -> Text -> Text -> ByteString -> FilePath ->
 newCollaboratedProject mode userId' userIdent' name projectFilePath project = do
     let collabHash = nameToCollabHash projectFilePath
         collabHashPath = collabHashRootDir mode </> collabHashLink collabHash <.> "cw"
-        userDump = UserDump userId' userIdent' projectFilePath "owner"
+        userDump = UserDump userId' userIdent' (T.pack projectFilePath) "owner"
         identAllowed = foldl (\acc l -> if l `elem` (T.unpack userIdent')
                                         then False else acc) True ['/', '.', '+']
     case identAllowed of
@@ -64,10 +65,11 @@ newCollaboratedProject mode userId' userIdent' name projectFilePath project = do
             B.writeFile projectFilePath $ BC.pack collabHashPath
             B.writeFile (projectFilePath <.> "info") name
             addCommentFunc mode userDump project $ collabHashPath <.> "comments"
+            return $ Right ()
 
-addForCollaboration :: Text -> Text -> ByteString -> FilePath -> FilePath -> IO (Either String ())
-addForCollaboration userId' userIdent' name projectFilePath collabFilePath = do
-    let userDump = UserDump userId' userIdent' projectFilePath "owner"
+addForCollaboration :: BuildMode -> Text -> Text -> ByteString -> FilePath -> FilePath -> IO (Either String ())
+addForCollaboration mode userId' userIdent' name projectFilePath collabFilePath = do
+    let userDump = UserDump userId' userIdent' (T.pack projectFilePath) "owner"
         identAllowed = foldl (\acc l -> if l `elem` (T.unpack userIdent')
                                         then False else acc) True ['/', '.', '+']
     case identAllowed of
@@ -75,24 +77,27 @@ addForCollaboration userId' userIdent' name projectFilePath collabFilePath = do
         True -> do
             Just (currentUsers :: [UserDump]) <- decodeStrict <$>
               B.readFile (collabFilePath <.> "users")
-            case userId' `elem` (map uuserId currentUsers) of
-                True -> return $ Left "User already exists maybe with a different identifier"
-                False -> do
-                    res <- addNewOwner userDump $ collabFilePath <.> "comments"
+            let currentIdents = map uuserIdent currentUsers
+                currentIds = map uuserId currentUsers
+            case (userId' `elem` currentIds, userIdent' `elem` currentIdents) of
+                (True, _) -> return $ Left "User already exists maybe with a different identifier"
+                (False, True) -> return $ Left "User Identifier already exists"
+                (False, False) -> do
+                    res <- addNewOwner mode userDump $ collabFilePath <.> "comments"
                     case res of
-                        Left err -> return err
+                        Left err -> return $ Left err
                         Right _ -> do
                             B.writeFile (collabFilePath <.> "users") $
                               LB.toStrict . encode $ userDump : currentUsers
                             B.writeFile projectFilePath $ BC.pack collabFilePath
                             B.writeFile (projectFilePath <.> "info") name
-                            return Right ()
+                            return $ Right ()
 
 removeProjectIfExists :: BuildMode -> Text -> FilePath -> IO ()
-removeProjectIfExists mode userId' projectFile = do
-    projectContentPath <- B.readFile projectFile
+removeProjectIfExists mode userId' userPath = do
+    projectContentPath <- BC.unpack <$> B.readFile userPath
     _ <- removeUserFromCollaboration mode userId' projectContentPath
-    removeFileIfExists projectFile
+    removeFileIfExists userPath
 
 removeUserFromCollaboration :: BuildMode -> Text -> FilePath -> IO (Either String ())
 removeUserFromCollaboration mode userId' projectContentPath = do
@@ -108,11 +113,11 @@ removeUserFromCollaboration mode userId' projectContentPath = do
                     removeCollaboratedProject projectContentPath
                     removeCommentUtils $ projectContentPath <.> "comments"
                     cleanBaseDirectory projectContentPath
-                    cleanCommentHashPath userId' $ projectContentPath <.> "comments"
+                    cleanCommentHashPath mode userId' $ projectContentPath <.> "comments"
                 _ -> do
                 -- update hash path to one of existing users path since this users filepath may contain different project
                     B.writeFile (projectContentPath <.> "users") $
-                      LB.toStrict . encode . newUsers
+                      LB.toStrict . encode $ newUsers
                     removeOwnerPathInComments mode userId' $ projectContentPath <.> "comments"
                     modifyCollabPath mode projectContentPath
             return $ Right ()
@@ -121,13 +126,13 @@ modifyCollabPath :: BuildMode -> FilePath -> IO ()
 modifyCollabPath mode projectContentPath = do
     Just (currentUsers :: [UserDump]) <- decodeStrict <$>
       B.readFile (projectContentPath <.> "users")
-    let newCollabHash = nameToCollabHash . upath $ currentUsers !! 0
+    let newCollabHash = nameToCollabHash . T.unpack . upath $ currentUsers !! 0
         newCollabHashPath = collabHashRootDir mode </> collabHashLink newCollabHash <.> "cw"
     forM_ currentUsers $ \u -> do
-        B.writeFile (upath u) newCollabHashPath
+        B.writeFile (T.unpack $ upath u) $ BC.pack newCollabHashPath
     moveDirIfExists (takeDirectory projectContentPath) $ takeDirectory newCollabHashPath
     cleanBaseDirectory projectContentPath
-    updateSharedCommentPath (projectContentPath <.> "comments") $ newCollabHashPath <.> "comments"
+    updateSharedCommentPath mode (projectContentPath <.> "comments") $ newCollabHashPath <.> "comments"
 
 modifyCollabPathIfReq :: BuildMode -> Text -> FilePath -> FilePath -> IO ()
 modifyCollabPathIfReq mode userId' fromFile toFile = do
@@ -138,15 +143,15 @@ modifyCollabPathIfReq mode userId' fromFile toFile = do
       B.readFile (projectContentPath <.> "users")
     B.writeFile (projectContentPath <.> "users") $
       LB.toStrict . encode $ map (\x -> if userId' == uuserId x
-                                            then x { upath = fromFile }
+                                            then x { upath = T.pack toFile }
                                             else x) currentUsers
-    correctOwnerPathInComments mode userId' fromFile $ projectContentPath <.> "comments"
+    correctOwnerPathInComments mode userId' toFile $ projectContentPath <.> "comments"
     case projectContentPath == collabHashPath of
-        True -> modifyCollab mode projectContentPath
+        True -> modifyCollabPath mode projectContentPath
         False -> return ()
 
 removeCommentUtils :: FilePath -> IO ()
-removeCommentUtils commentFolder = do  
+removeCommentUtils commentFolder = do
     mapM_ (\x -> removeDirectoryIfExists $ commentFolder <.> x) ["", "users", "versions"]
 
 removeCollaboratedProject :: FilePath -> IO ()

@@ -141,7 +141,7 @@ instance ToJSON LineStatuses where
 data UserDump = UserDump {
     uuserId :: Text,
     uuserIdent :: Text,
-    upath :: Text
+    upath :: Text,
     utype :: Text
     } deriving (Eq)
 

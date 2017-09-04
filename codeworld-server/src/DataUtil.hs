@@ -21,13 +21,11 @@ module DataUtil where
 import           Control.Exception
 import           Control.Monad
 import qualified Crypto.Hash as Crypto
-import           Data.Aeson
 import           Data.ByteArray (convert)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Base64 as B64
-import qualified Data.ByteString.Lazy as LB
 import           Data.List
 import           Data.Maybe
 import           Data.Monoid
@@ -39,8 +37,6 @@ import           System.IO.Error
 import           System.FilePath
 import           System.File.Tree (getDirectory, copyTo_)
 import           System.Posix.Files
-
-import Model
 
 newtype BuildMode = BuildMode String deriving Eq
 newtype ProgramId = ProgramId { unProgramId :: Text } deriving Eq
@@ -261,7 +257,7 @@ copyDirIfExists folder1 folder2 = (getDirectory folder1 >>= copyTo_ folder2) `ca
             | otherwise = throwIO e
 
 moveDirIfExists :: FilePath -> FilePath -> IO ()
-moveDirIfExists folder1 foldeer2 = do
+moveDirIfExists folder1 folder2 = do
     removeDirectoryIfExists folder2
     copyDirIfExists folder1 folder2
     removeDirectoryIfExists folder1

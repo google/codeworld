@@ -31,7 +31,7 @@ import qualified Data.Text.Encoding as T
 import           System.Directory
 import           System.FilePath
 
-import Collaboration
+import CollaborationUtil
 import DataUtil
 import Model
 

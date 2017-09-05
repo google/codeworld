@@ -794,6 +794,7 @@ function newProject_(path) {
                     };
                     window.currentVersion = 0;
                     window.maxVersion = 0;
+                    initializeCollaboration();
                 });
             }
 

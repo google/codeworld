@@ -34,7 +34,7 @@ import           Snap.Util.FileServe
 import           System.Directory
 import           System.FilePath
 
-import Collaboration
+import CollaborationUtil
 import CommentFolder
 import CommentUtil
 import DataUtil
@@ -206,8 +206,7 @@ loadProjectHandler clientId = do
             writeBS . BC.pack $ "Wrong Route To View A Source In `commentables` Directory"
           | otherwise -> do
             let file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
-                collabHash = nameToCollabHash file
-                collabHashPath = collabHashRootDir mode </> collabHashLink collabHash <.> "cw"
+            collabHashPath <- liftIO $ BC.unpack <$> B.readFile file
             modifyResponse $ setContentType "application/json"
             serveFile collabHashPath
 

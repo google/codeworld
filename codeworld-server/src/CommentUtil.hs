@@ -230,9 +230,12 @@ addNewOwner mode userDump commentFolder = do
         commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
     Just (currentUsers :: [UserDump]) <- decodeStrict <$>
       B.readFile (commentHashPath <.> "users")
-    case (uuserIdent userDump) `elem` (map uuserIdent currentUsers) of
-        True -> return $ Left "User Identifier Already Exists"
-        False -> do
+    let currentIdents = map uuserIdent currentUsers
+        currentIds = map uuserId currentUsers
+    case (uuserId userDump `elem` currentIds, uuserIdent userDump `elem` currentIdents) of
+        (True, _) -> return $ Left "User already exists for commenting maybe with a different identifier."
+        (False, True) -> return $ Left "User Identifier Already Exists"
+        (False, False) -> do
             B.writeFile (commentHashPath <.> "users") $
               LB.toStrict . encode $ userDump : currentUsers
             updateUserVersionLS (uuserIdent userDump) commentFolder

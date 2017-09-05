@@ -48,8 +48,8 @@ commentRoutes clientId =
     , ("deleteReply",             deleteReplyHandler clientId)
     , ("getUserIdent",            getUserIdentHandler clientId)
     , ("getOwnerUserIdent",       getOwnerUserIdentHandler clientId)
-    , ("listComments",            listCommentsHandler clientId)            -- to be integrated
-    , ("listOwnerComments",       listOwnerCommentsHandler clientId)       -- to be integrated
+    , ("listComments",            listCommentsHandler clientId)
+    , ("listOwnerComments",       listOwnerCommentsHandler clientId)
     , ("listOwnerVersions",       listOwnerVersionsHandler clientId)
     , ("listUnreadComments",      listUnreadCommentsHandler clientId)      -- to be integrated
     , ("listUnreadOwnerComments", listUnreadOwnerCommentsHandler clientId) -- to be integrated

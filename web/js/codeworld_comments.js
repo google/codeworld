@@ -39,6 +39,7 @@ function getCommentVersions() {
         }
         addCommentVersions(versions.sort(sortNumber));
         updateUI();
+        addPresentCommentInd();
     });
 }
 
@@ -98,6 +99,7 @@ function viewCommentVersions() {
     document.getElementById('runButtons').style.display = 'none';
     document.getElementById('testButton').style.display = 'none';
     document.getElementById('viewCommentVersions').style.display = 'none';
+    document.getElementById('listCurrentOwners').style.display = 'none';
 
     var projects = document.getElementById('nav_mine');
     while (projects.lastChild) {
@@ -189,6 +191,7 @@ function loadProjectForComments(index, name, buildMode, successFunc) {
             updateUI();
             addCommentVersions(versions);
             getUserIdent();
+            addPresentCommentInd();
         });
     });
 }
@@ -211,7 +214,7 @@ function addSharedComment(hash) {
                 allFolderNames = [[]];
                 discoverProjects("", 0);
                 updateUI();
-                sweetAlert('Success!', 'The shared folder is moved into the specifed directory.', 'success');
+                sweetAlert('Success!', 'The commentable folder is moved into the specifed directory.', 'success');
                 return;
             } else {
                 if (request.status == 404) {
@@ -312,7 +315,7 @@ function shareForFeedback() {
         a.hash = '#' + request.responseText;
         sweetAlert({
             html: true,
-            title: '<i class="mdi mdi-72px mdi-comment-text-outline">&nbsp; Ask Feedback</i>',
+            title: '<i class="mdi mdi-72px mdi-comment-text-outline"></i>&nbsp; Ask Feedback',
             text: msg,
             type: 'input',
             inputValue: a.href,
@@ -325,41 +328,47 @@ function shareForFeedback() {
 }
 
 function addPresentCommentInd() {
-   /* if (!signedIn()) {
+    if (!signedIn()) {
         sweelAlert('Oops!', 'You must sign in to see and write comments!', 'error');
         return;
     }
-
-    function go(request) {
-        if (request.status != 200) {
-            sweetAlert('Oops!', 'Sorry! Could not load an indicator of where comments are present.', 'error');
-            return;
-        }
-        window.lineSet = new Set(JSON.parse(request.responseText));
-        for (i of lineSet) {
-            document.getElementsByClassName('CodeMirror-gutter-elt')[Number(i) + 1].innerHTML = '<i style="color: #8642f4;">c</i>&nbsp;' + i;
-        }
-        if (window.lineSet.size !== 0) {
-            var w = document.getElementsByClassName('CodeMirror-gutter')[0].style.width.slice(0, -2);
-            document.getElementsByClassName('CodeMirror-gutter')[0].style.width = (Number(w) + 2) + 'px';
-        }
+    if (window.openProjectName == '' || window.openProjectName == null) {
+        sweetAlert('Oops!', 'You must select a project to continue!', 'error');
+        updateUI();
+        return;
+    }
+    if (window.currentVersion == undefined || window.maxVersion == undefined) {
+        sweetAlert('Oops!', 'Something went wrong! Please reload to fix it.', 'error');
+        updateUI();
+        return;
     }
 
     var data = new FormData();
     data.append('mode', window.buildMode);
     data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-    if (window.chash != undefined){
-        data.append('chash', window.chash);
-        sendHttp('POST', 'listComments', data, function(request) {
-            go(request);
-        });
-    } else {
-        data.append('path', nestedDirs.slice(1).join('/'));
-        data.append('name', openProjectName);
-        sendHttp('POST', 'listOwnerComments', data, function(request) {
-            go(request);
-        });
-    }*/
+    data.append('path', nestedDirs.slice(1).join('/'));
+    data.append('name', openProjectName);
+    data.append('versionNo', currentVersion);
+    var handler = (window.nestedDirs.length > 1 && window.nestedDirs[1] == "commentables") ? 'listUnreadComments' : 'listUnreadOwnerComments';
+    sendHttp('POST', handler, data, function(request) {
+        if (request.status != 200) {
+            if (request.status == 404) {
+                sweetAlert('Oops!', request.responseText, 'error');
+            } else {
+                sweetAlert('Oops!', 'Sorry! Could not load an indicator of where comments are present.', 'error');
+            }
+            updateUI();
+            return;
+        }
+        window.lineSet = new Set(JSON.parse(request.responseText));
+        for (i of lineSet) {
+            document.getElementsByClassName('CodeMirror-gutter-elt')[Number(i)].innerHTML = '<i style="color: #8642f4;"><b>!</b></i>&nbsp;' + i;
+        }
+        if (window.lineSet.size !== 0) {
+            var w = document.getElementsByClassName('CodeMirror-gutter')[0].style.width.slice(0, -2);
+            document.getElementsByClassName('CodeMirror-gutter')[0].style.width = (Number(w) + 2) + 'px';
+        }
+    });
 }
 
 function toggleUserComments(cm, line, gutter) {

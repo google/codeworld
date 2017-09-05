@@ -88,6 +88,8 @@ function init() {
             });
         } else if (hash[0] == 'C') {
             addSharedComment(hash);
+        } else if (hash[0] == 'H') {
+            addToCollaborate(hash);
         } else {
             initCodeworld();
             registerStandardHints(function(){setMode(true);});
@@ -109,7 +111,7 @@ function init() {
                     setCode(request.responseText, null, null, true);
                 }
             });
-        } else if (hash[0] != 'F' && hash[0] !='C') {
+        } else if (hash[0] != 'F' && hash[0] !='C' && hash[0] != 'H') {
             setCode('');
             if (!signedIn()) help();
         }
@@ -373,19 +375,39 @@ function updateUI() {
     }
     if (openProjectName == null || openProjectName == '') {
         document.getElementById('viewCommentVersions').style.display = 'none';
+        document.getElementById('listCurrentOwners').style.display = 'none';
         window.currentVersion = undefined;
         window.maxVersion = undefined;
         window.userIdent = undefined;
         window.project = undefined;
+        if (window.socket != undefined) {
+            window.socket.disconnect(true);
+            window.socket = undefined;
+            window.cmClient = undefined;
+        }
+        window.owners = undefined;
+        window.activeOwner = undefined;
         document.getElementById('testButton').style.display = 'none';
         document.getElementById('askFeedbackButton').style.display = 'none';
+        document.getElementById('collaborateButton').style.display = 'none';
     } else {
         document.getElementById('viewCommentVersions').style.display = '';
         if (window.inCommentables == true) {
+            if (window.socket != undefined) {
+                window.socket.disconnect(true);
+                window.socket = undefined;
+                window.cmClient = undefined;
+            }
+            window.owners = undefined;
+            window.activeOwner = undefined;
+            document.getElementById('listCurrentOwners').style.display = 'none';
             document.getElementById('askFeedbackButton').style.display = 'none';
+            document.getElementById('collaborateButton').style.display = 'none';
             document.getElementById('testButton').style.display = '';
         } else {
+            document.getElementById('listCurrentOwners').style.display = '';
             document.getElementById('askFeedbackButton').style.display = '';
+            document.getElementById('collaborateButton').style.display = '';
             if (window.currentVersion != window.maxVersion) {
                 document.getElementById('testButton').style.display = '';
             } else {
@@ -523,7 +545,11 @@ function updateNavBar() {
             window.codeworldEditor.setOption('readOnly', true);
         } else {
             if (window.currentVersion == window.maxVersion) {
-                window.codeworldEditor.setOption('readOnly', false);
+                if (window.socket != undefined) {
+                    window.codeworldEditor.setOption('readOnly', false);
+                } else {
+                    window.codeworldEditor.setOption('readOnly', true);
+                }
             } else {
                 window.codeworldEditor.setOption('readOnly', true);
             }
@@ -768,7 +794,7 @@ function loadProject(name, index) {
         setCode(project.source, project.history, name);
         getCommentVersions();
         getUserIdent();
-        addPresentCommentInd();
+        initializeCollaboration();
     }
     loadProject_(index, name, window.buildMode, successFunc);
 }

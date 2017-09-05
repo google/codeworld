@@ -33,12 +33,15 @@ import qualified Data.Text.IO as T
 import qualified Data.Text.Encoding as T
 import           HIndent (reformat)
 import           HIndent.Types (defaultConfig)
+import qualified Network.SocketIO as SIO
+import           Network.EngineIO.Snap (snapAPI)
 import           Snap.Core
-import           Snap.Http.Server (quickHttpServe)
+import qualified Snap.Http.Server as Snap
 import           Snap.Util.FileServe
 import           System.Directory
 import           System.FilePath
 
+import Collaboration
 import Comment
 import DataUtil
 import Folder
@@ -58,10 +61,16 @@ main = do
             return (ClientId (Just (T.strip txt)))
         False -> return (ClientId Nothing)
 
-    quickHttpServe $ (processBody >> site clientId) <|> site clientId
+    state <- initCollabServer
+    socketIOHandler <- SIO.initialize snapAPI (collabServer state clientId)
+    config <- Snap.commandLineConfig $
+        Snap.setErrorLog  (Snap.ConfigFileLog "log/collab-error.log") $
+        Snap.setAccessLog (Snap.ConfigFileLog "log/collab-access.log") $
+        mempty
+    Snap.httpServe config $ (processBody >> site socketIOHandler clientId) <|> site socketIOHandler clientId
 
-site :: ClientId -> Snap ()
-site clientId =
+site :: Snap () -> ClientId -> Snap ()
+site socketIOHandler clientId =
     route ([
         ("compile",     compileHandler),
         ("saveXMLhash", saveXMLHashHandler),
@@ -75,6 +84,7 @@ site clientId =
         ("funblocks",   serveFile "web/blocks.html"),
         ("indent",      indentHandler)
       ] ++
+        (collabRoutes socketIOHandler clientId) ++
         (commentRoutes clientId) ++
         (folderRoutes clientId)) <|>
         serveDirectory "web"

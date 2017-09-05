@@ -1,0 +1,52 @@
+Name:                ot
+Version:             0.2.1.0
+Synopsis:            Real-time collaborative editing with Operational Transformation
+Description:         OT is a technique to handle changes to a document in a setting where users are editing concurrently. This package implements operational transformation for simple plain text documents as well as server and client modules.
+Homepage:            https://github.com/operational-transformation/ot.hs
+License:             MIT
+License-file:        LICENSE
+Author:              Tim Baumann
+Maintainer:          tim@timbaumann.info
+
+Category:            Text
+Build-type:          Simple
+
+-- Constraint on the version of Cabal needed to build this package.
+Cabal-version:         >= 1.8
+
+source-repository head
+  type:     git
+  location: https://github.com/Operational-Transformation/ot.hs.git
+
+Library
+  Ghc-options:         -Wall
+  Hs-source-dirs:      src
+  Exposed-modules:     Control.OperationalTransformation, Control.OperationalTransformation.List, Control.OperationalTransformation.Text, Control.OperationalTransformation.Selection, Control.OperationalTransformation.Properties, Control.OperationalTransformation.Client, Control.OperationalTransformation.Server
+  Build-depends:       base,
+                       text,
+                       aeson,
+                       attoparsec,
+                       QuickCheck,
+                       binary,
+                       either,
+                       mtl,
+                       ghc
+
+  -- Modules not exported by this package.
+  -- Other-modules:       
+
+Test-suite tests
+  Ghc-options:         -Wall -rtsopts
+  Hs-source-dirs:      test
+  type:                exitcode-stdio-1.0
+  main-is:             Main.hs
+  Build-depends:       ot,
+                       QuickCheck,
+                       HUnit,
+                       base,
+                       text,
+                       aeson,
+                       test-framework >= 0.6 && < 0.9,
+                       test-framework-quickcheck2 >= 0.3.0 && < 0.4,
+                       test-framework-hunit >= 0.3.0 && < 0.4,
+                       binary >= 0.5.1.0

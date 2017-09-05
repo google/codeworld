@@ -1,0 +1,4 @@
+:set -fwarn-unused-binds -fwarn-unused-imports
+:set -XOverloadedStrings
+:set -isrc
+:set -itest

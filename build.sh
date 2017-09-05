@@ -36,7 +36,8 @@ run codeworld-api   cabal haddock --hoogle
 
 # Build codeworld-server from this project.
 
-run .  cabal_install ./codeworld-server \
+run .  cabal_install ./third_party/ot.hs \
+                     ./codeworld-server \
                      ./codeworld-compiler \
                      ./codeworld-game-api \
                      ./codeworld-prediction \

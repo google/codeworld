@@ -31,7 +31,6 @@ import qualified "codeworld-api" CodeWorld as CW
 import                           Control.Exception
 import qualified                 Data.ByteString.Char8 as C
 import                           Data.Text (Text)
-import                           ErrorSanitizer
 import                           Internal.Num (Number, fromDouble, toDouble, fromInt, toInt)
 import                           Internal.Prelude (randomsFrom)
 import                           Internal.Picture
@@ -42,12 +41,14 @@ import                           System.IO.Unsafe
 import                           System.IO
 import                           System.Random
 
-data LiteralException =
-    LiteralException String
+-- NOTE: ErrorSanitizer is currently disabled due to performance problems.  
 
-instance Exception LiteralException
-instance Show LiteralException where
-  show (LiteralException msg) = msg
+-- import                           ErrorSanitizer
+-- data LiteralException =
+--     LiteralException String
+-- instance Exception LiteralException
+-- instance Show LiteralException where
+--   show (LiteralException msg) = msg
 
 traced :: (a, CWT.Text) -> a
 traced (x, msg) = CW.trace (CWT.fromCWText msg) x
@@ -109,4 +110,5 @@ chooseRandoms = do
     return (fromDouble n : ns)
 
 reportError :: SomeException -> IO ()
-reportError ex = throwIO (LiteralException (C.unpack (filterOutput (C.pack (show ex)))))
+-- reportError ex = throwIO (LiteralException (C.unpack (filterOutput (C.pack (show ex)))))
+reportError ex = throwIO ex

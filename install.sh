@@ -42,6 +42,7 @@ then
 
   # Needed for GHC 7.8
   run . sudo yum install -y gcc
+  run . sudo yum install -y gcc-c++
   run . sudo yum install -y gmp-devel
 
   # Needed for GHCJS
@@ -73,6 +74,7 @@ then
   # Needed for GHC 7.8
   run . sudo apt-get install -y make
   run . sudo apt-get install -y gcc
+  run . sudo apt-get install -y g++
   run . sudo apt-get install -y libgmp-dev
 
   # Needed for GHCJS

@@ -603,7 +603,7 @@ function moveProject() {
         document.getElementById('copyHereButton').style.display = 'none';
         document.getElementById('runButtons').style.display = 'none';
 
-        window.move = Object();
+        window.move = new Object();
         window.move.path = tempPath;
         if (tempOpen != null && tempOpen != '') {
             window.move.file = tempOpen;

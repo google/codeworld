@@ -336,7 +336,7 @@ function discoverProjects_(path, buildMode, index) {
     data.append('mode', buildMode);
     data.append('path', path);
 
-    sendHttp('POST', 'listFolder', data, function(request) {
+    sendHttp('POST', 'flistFolder', data, function(request) {
         if (request.status != 200) {
             return;
         }
@@ -347,161 +347,47 @@ function discoverProjects_(path, buildMode, index) {
     });
 }
 
-function cancel() {
+function cancelMove() {
     updateUI();
 }
 
 function moveHere_(path, buildMode, successFunc) {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in before moving.', 'error');
-        cancel();
+        cancelMove();
         return;
     }
 
     if (window.move == undefined) {
         sweetAlert('Oops!', 'You must first select something to move.', 'error');
-        cancel();
+        cancelMove();
         return;
-    }
-    function go() {
-        sendHttp('POST', 'moveProject', data, function(request) {
-            if (request.status != 200) {
-                if (request.status == 404) {
-                    sweetAlert('Oops!', request.responseText, 'error');
-                } else {
-                    sweetAlert('Oops!', 'Could not move your project! Please try again.', 'error');
-                }
-                cancel();
-                return;
-            }
-            successFunc();
-        });
     }
 
     var data = new FormData();
     data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
     data.append('mode', buildMode);
     data.append('moveTo', path);
+    data.append('moveFrom', window.move.path);
     if (window.move.file != undefined) {
-        data.append('moveFrom', window.move.path);
-        data.append('fromName', window.move.file);
-        data.append('isFile', 'true');
+        data.append('isFile', "true");
+        data.append('name', window.move.file);
     } else {
-        data.append('moveFrom', window.move.path.split('/').slice(0,-1).join('/'));
-        data.append('fromName', window.move.path.split('/').slice(-1)[0]);
-        data.append('isFile', 'false');
+        data.append('isFile', "false");
     }
-    sweetAlert({
-        html: true,
-        title: '<i class="mdi mdi-72px mdi-folder-move"></i>&nbsp; Move File',
-        text: 'Enter a name for your file/folder to be created at /' + path + ':',
-        type: 'input',
-        inputValue: '',
-        confirmButtonText: 'Next',
-        showCancelButton: true,
-        closeOnConfirm: false
-    }, function (name) {
-        if (name == '' || name == null) {
+
+    sendHttp('POST', 'fmoveProject', data, function(request) {
+        if (request.status != 200) {
+            sweetAlert('Oops', 'Could not move your project! Please try again.', 'error');
+            cancelMove();
             return;
         }
-        data.append('name', name);
-        sweetAlert({
-            html: true,
-            title: '<i class="mdi mdi-72px mdi-folder-move"></i>&nbsp; Move File',
-            text: 'Enter a user name to be associated with your file/s:',
-            type: 'input',
-            inputValue: '',
-            confirmButton: 'Move',
-            showCancelButton: true,
-            closeOnConfirm: false
-        }, function(userIdent) {
-            if (userIdent == '' || userIdent == null) {
-                return;
-            }
-            data.append('userIdent', userIdent);
-            sweetAlert.close();
-            go();
-        });
-    });
-}
-
-function copyHere_(path, buildMode, successFunc) {
-    if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in before copying.', 'error');
-        cancel();
-        return;
-    }
-
-    if (window.copy == undefined) {
-        sweetAlert('Oops!', 'You must first select something to copy.', 'error');
-        cancel();
-        return;
-    }
-    function go() {
-        sendHttp('POST', 'copyProject', data, function(request) {
-            if (request.status != 200) {
-                if (request.status == 404) {
-                    sweetAlert('Oops!', request.responseText, 'error');
-                } else {
-                    sweetAlert('Oops!', 'Could not copy your project! Please try again.', 'error');
-                }
-                cancel();
-                return;
-            }
-            successFunc();
-        });
-    }
-
-    var data = new FormData();
-    data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-    data.append('mode', buildMode);
-    data.append('copyTo', path);
-    data.append('empty', JSON.stringify(getCurrentProject()['history']));
-    if (window.copy.file != undefined) {
-        data.append('copyFrom', window.copy.path)
-        data.append('fromName', window.copy.file);
-        data.append('isFile', 'true');
-    } else {
-        data.append('copyFrom', window.copy.path.split('/').slice(0,-1).join('/'));
-        data.append('fromName', window.copy.path.split('/').slice(-1)[0]);
-        data.append('isFile', 'false');
-    }
-    sweetAlert({
-        html: true,
-        title: '<i class="mdi mdi-72px mdi-content-copy"></i>&nbsp; Copy File',
-        text: 'Enter a name for your file/folder to be created at /' + path + ':',
-        type: 'input',
-        inputValue: '',
-        confirmButtonText: 'Next',
-        showCancelButton: true,
-        closeOnConfirm: false
-    }, function (name) {
-        if (name == '' || name == null) {
-            return;
-        }
-        data.append('name', name);
-        sweetAlert({
-            html: true,
-            title: '<i class="mdi mdi-72px mdi-content-copy"></i>&nbsp; Copy File',
-            text: 'Enter a user name to be associated with your file/s:',
-            type: 'input',
-            inputValue: '',
-            confirmButton: 'Copy',
-            showCancelButton: true,
-            closeOnConfirm: false
-        }, function(userIdent) {
-            if (userIdent == '' || userIdent == null) {
-                return;
-            }
-            data.append('userIdent', userIdent);
-            sweetAlert.close();
-            go();
-        });
+        successFunc();
     });
 }
 
 function warnIfUnsaved(action, showAnother) {
-    if (isEditorClean() || window.currentVersion != window.maxVersion) {
+    if (isEditorClean()) {
         action();
     } else {
         var msg = 'There are unsaved changes to your project. ' + 'Continue and throw away your changes?';
@@ -517,6 +403,39 @@ function warnIfUnsaved(action, showAnother) {
     }
 }
 
+function saveProjectAs() {
+    if (!signedIn()) {
+        sweetAlert('Oops!', 'You must sign in to save files.', 'error');
+        updateUI();
+        return;
+    }
+
+    // window.codeworldEditor.focus();
+    var text = 'Save Project As: <input type="text" style="width: 10em"/>';
+
+    var defaultName;
+    if (window.openProjectName) {
+        defaultName = window.openProjectName;
+    } else {
+        defaultName = '';
+    }
+
+    function go(projectName) {
+        saveProjectBase(nestedDirs.slice(1).join('/'), projectName);
+    }
+
+    sweetAlert({
+        html: true,
+        title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
+        text: 'Enter a name for your project:',
+        type: 'input',
+        inputValue: defaultName,
+        confirmButtonText: 'Save',
+        showCancelButton: true,
+        closeOnConfirm: false
+    }, go);
+}
+
 function saveProject() {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to save files.', 'error');
@@ -527,55 +446,40 @@ function saveProject() {
     if (window.openProjectName) {
         saveProjectBase(nestedDirs.slice(1).join('/'), openProjectName);
     } else {
-        sweetAlert('Oops!', 'You need to create a project to save it!', 'error');
+        saveProjectAs();
     }
 }
 
-function saveProjectBase_(path, projectName, mode, successFunc, type) {
+function saveProjectBase_(path, projectName, mode, successFunc) {
     if (projectName == null || projectName == '') return;
 
     if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in to ' + type + ' files.', 'error');
+        sweetAlert('Oops!', 'You must sign in to save files.', 'error');
         updateUI();
         return;
     }
-    if (window.currentVersion == undefined || window.maxVersion == undefined) {
-        sweetAlert('Oops!', 'Something went wrong. Please try again!', 'error');
-        updateUI();
-        return;
-    }
-    if (window.currentVersion != window.maxVersion) {
-        sweetAlert('Oops!', 'Not allowed to save into a previous version! Sorry for the inconvenience!', 'error');
-        updateUI();
-        return;
-    }
+
     function go() {
         sweetAlert.close();
         var project = getCurrentProject();
+        project['name'] = projectName;
 
         var data = new FormData();
         data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-        data.append('project', JSON.stringify({
-            source: project['source'],
-            history: project['history']
-        }));
+        data.append('project', JSON.stringify(project));
         data.append('mode', mode);
         data.append('path', path);
-        data.append('name', projectName);
-        data.append('versionNo', window.currentVersion);
-        sendHttp('POST', 'saveProject', data, function(request) {
+
+        sendHttp('POST', 'fsaveProject', data, function(request) {
             if (request.status != 200) {
-                if (request.status == 404) {
-                    sweetAlert('Oops!', request.responseText, 'error');
-                } else {
-                    sweetAlert('Oops!', 'Could not ' + type + ' your project!!!  Please try again.', 'error');
-                }
-                updateUI();
+                sweetAlert('Oops!', 'Could not save your project!!!  Please try again.', 'error');
                 return;
             }
-            window.project['source'] = project['source'];
-            getCommentVersions();
+
             successFunc();
+
+            updateUI();
+
             if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) == -1) {
                 discoverProjects(path, allProjectNames.length - 1);
             }
@@ -585,7 +489,7 @@ function saveProjectBase_(path, projectName, mode, successFunc, type) {
     if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) == -1 || projectName == openProjectName) {
         go();
     } else {
-        var msg = 'Are you sure you want to ' + type + ' over another project?\n\n' +
+        var msg = 'Are you sure you want to save over another project?\n\n' +
             'The previous contents of ' + projectName + ' will be permanently destroyed!';
         sweetAlert({
             title: 'Warning',
@@ -614,18 +518,10 @@ function deleteProject_(path, buildMode, successFunc) {
         data.append('mode', buildMode);
         data.append('path', path);
 
-        sendHttp('POST', 'deleteProject', data, function(request) {
+        sendHttp('POST', 'fdeleteProject', data, function(request) {
             if (request.status == 200) {
                 successFunc();
                 discoverProjects(path, allProjectNames.length - 1);
-            } else {
-                if (request.status == 404) {
-                    sweetAlert('Oops!', request.responseText, 'error');
-                } else {
-                    sweetAlert('Oops!', 'Unable to delete the file. Please, try again!', 'error');
-                }
-                updateUI();
-                return;
             }
         });
     }
@@ -657,21 +553,13 @@ function deleteFolder_(path, buildMode, successFunc) {
         data.append('mode', buildMode);
         data.append('path', path);
 
-        sendHttp('POST', 'deleteFolder', data, function(request) {
+        sendHttp('POST', 'fdeleteFolder', data, function(request) {
             if (request.status == 200) {
                 successFunc();
                 nestedDirs.pop();
                 allProjectNames.pop();
                 allFolderNames.pop();
                 discoverProjects(nestedDirs.slice(1).join('/'), allProjectNames.length - 1);
-            } else {
-                if (request.status == 404) {
-                    sweetAlert('Oops!', request.responseText, 'error');
-                } else {
-                    sweetAlert('Oops!', 'Unable to delete the folder. Please, try again!', 'error');
-                }
-                updateUI();
-                return;
             }
         });
     }
@@ -687,7 +575,7 @@ function deleteFolder_(path, buildMode, successFunc) {
     }, go);
 }
 
-function createFolder(path, buildMode) {
+function createFolder(path, buildMode, successFunc) {
     warnIfUnsaved(function() {
         if(!signedIn()) {
             sweetAlert('Oops!', 'You must sign in to create a folder.', 'error');
@@ -699,6 +587,7 @@ function createFolder(path, buildMode) {
             if(folderName == null || folderName == '') {
                 return;
             }
+
             sweetAlert.close();
             var data = new FormData();
             data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
@@ -707,23 +596,18 @@ function createFolder(path, buildMode) {
                 data.append('path', folderName);
             else
                 data.append('path', path + '/' + folderName);
-            sendHttp('POST', 'createFolder', data, function(request) {
+
+            sendHttp('POST', 'fcreateFolder', data, function(request) {
                 if (request.status != 200) {
-                    if (request.status == 404) {
-                        sweetAlert('Oops!', request.responseText, 'error');
-                    } else {
-                        sweetAlert('Oops', 'Could not create your directory! Please try again.', 'error');
-                    }
-                    updateUI();
+                    sweetAlert('Oops', 'Could not create your directory! Please try again.', 'error');
                     return;
                 }
+
                 allFolderNames[allFolderNames.length - 1].push(folderName);
                 nestedDirs.push(folderName);
                 allFolderNames.push([]);
                 allProjectNames.push([]);
-                if (window.move == undefined && window.copy == undefined) {
-                    setCode('');
-                }
+                successFunc();
                 updateNavBar();
             });
         }
@@ -731,7 +615,7 @@ function createFolder(path, buildMode) {
         sweetAlert({
             html: true,
             title: '<i class="mdi mdi72px mdi-folder-plus"></i>&nbsp; Create Folder',
-            text: 'Enter a name for your folder to be created at /' + path + ':',
+            text: 'Enter a name for your folder:',
             type: 'input',
             inputValue: '',
             confirmButtonText: 'Create',
@@ -741,157 +625,33 @@ function createFolder(path, buildMode) {
     }, true);
 }
 
-function newProject_(path) {
-    warnIfUnsaved(function () {
-        if (!signedIn()) {
-            sweetAlert('Oops!', 'You must sign in to create a new project.', 'error');
-            updateUI();
-            return;
-        }
-        if (path.length > 1 && path[1] == 'commentables') {
-            sweetAlert('error', 'Cannot create a project in commentables directory!', 'error');
-            updateUI();
-            return;
-        }
-
-        function go(fileName, userIdent) {
-            if (fileName == null || fileName == '') {
-                return;
-            }
-            if (userIdent == null || userIdent == '') {
-                return;
-            }
-            sweetAlert.close();
-            setCode('');
-
-            function go_() {
-                sweetAlert.close();
-                var project = getCurrentProject();
-                var data = new FormData();
-                data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-                data.append('project', JSON.stringify({
-                    source: project['source'],
-                    history: project['history']
-                }));
-                data.append('mode', window.buildMode);
-                data.append('path', path);
-                data.append('name', fileName);
-                data.append('userIdent', userIdent);
-
-                sendHttp('POST', 'newProject', data, function (request) {
-                    if (request.status != 200) {
-                        if (request.status != 404) {
-                            sweetAlert('Oops!', 'Could not create your project!!! Please try, again', 'error');
-                        } else {
-                            sweetAlert('Oops!', request.responseText, 'error');
-                        }
-                        return;
-                    }
-
-                    window.openProjectName = fileName;
-                    var doc = window.codeworldEditor.getDoc();
-                    window.savedGeneration = doc.changeGeneration(true);
-                    updateUI();
-
-                    if (allProjectNames[allProjectNames.length - 1].indexOf(fileName) == -1) {
-                        discoverProjects(path, allProjectNames.length - 1);
-                    }
-
-                    window.userIdent = userIdent;
-                    window.project = {
-                        'name': fileName,
-                        'source': ''
-                    };
-                    window.currentVersion = 0;
-                    window.maxVersion = 0;
-                    initializeCollaboration();
-                });
-            }
-
-            if (allProjectNames[allProjectNames.length - 1].indexOf(fileName) == -1) {
-                go_();
-            } else {
-                var msg = 'Are you sure you want to create new project over another one?\n\n' +
-                    'The previous contents of ' + fileName + ' will be permanently destroyed!';
-                sweetAlert({
-                    title: 'warning',
-                    text: msg,
-                    showCancelButton: true,
-                    confirmButtonColor: '#DD6B55',
-                    confirmButtonText: 'Yes, overwrite it!'
-                }, go_);
-            }
-        }
-
-        sweetAlert({
-            html: true,
-            title: '<i class="mdi mdi-72px mdi-note-plus"></i>&nbsp; Create File',
-            text: 'Enter a name for your file to be created at /' + path + ':',
-            type: 'input',
-            inputValue: '',
-            confirmButtonText: 'Next',
-            showCancelButton: true,
-            closeOnConfirm: false
-        }, function(fileName) {
-            sweetAlert({
-                html: true,
-                title: '<i class="mdi mdi-72px mdi-note-plus"></i>&nbsp; Create File',
-                text: 'Enter a user name to be associated with your file:',
-                type: 'input',
-                inputValue: '',
-                confirmButton: 'Create',
-                showCancelButton: true,
-                closeOnConfirm: false
-            }, function(userIdent) {
-                go(fileName, userIdent);
-            });
-        });
-    }, true);
-}
-
 function loadProject_(index, name, buildMode, successFunc) {
-    warnIfUnsaved(function(){
-        if (!signedIn()) {
-            sweetAlert('Oops!', 'You must sign in to open or close projects.', 'error');
-            updateUI();
-            return;
-        }
-        if (window.openProjectName != '' && window.openProjectName != null) {
-            if (window.openProjectName == name && index == window.nestedDirs.length - 1) {
-                setCode('');
-                updateUI();
-                return;
-            }
-        }
-        if (index != 0 && window.nestedDirs.length > 1 && window.nestedDirs[1] == 'commentables') {
-            loadProjectForComments(index, name, buildMode, successFunc);
-            return;
-        }
-        var data = new FormData();
-        data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
-        data.append('name', name);
-        data.append('mode', buildMode);
-        data.append('path', nestedDirs.slice(1, index + 1).join('/'));
 
-        sendHttp('POST', 'loadProject', data, function(request) {
-            if (request.status == 200) {
-                var project = JSON.parse(request.responseText);
-                window.nestedDirs = nestedDirs.slice(0, index + 1);
-                window.allProjectNames = allProjectNames.slice(0, index + 1);
-                window.allFolderNames = allFolderNames.slice(0, index + 1);
-                updateUI();
-                successFunc(project);
-            } else {
-                if (request.status == 404) {
-                    sweetAlert('Oops!', request.responseText, 'error');
-                } else {
-                    sweetAlert('Oops!', 'Could not load the project. Please try again!', 'error');
-                }
-                updateUI();
-                return;
-            }
-        });
-    }, false);
+  warnIfUnsaved(function(){
+    if (!signedIn()) {
+        sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
+        updateUI();
+        return;
+    }
+
+    var data = new FormData();
+    data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
+    data.append('name', name);
+    data.append('mode', buildMode);
+    data.append('path', nestedDirs.slice(1, index + 1).join('/'));
+
+    sendHttp('POST', 'floadProject', data, function(request) {
+        if (request.status == 200) {
+            var project = JSON.parse(request.responseText);
+
+            successFunc(project);
+            window.nestedDirs = nestedDirs.slice(0, index + 1);
+            window.allProjectNames = allProjectNames.slice(0, index + 1);
+            window.allFolderNames = allFolderNames.slice(0, index + 1);
+            updateUI();
+        }
+    });
+  }, false);
 }
 
 function share() {
@@ -958,7 +718,7 @@ function shareFolder_(mode) {
         return;
     }
     if(nestedDirs.length == 1 || (openProjectName != null && openProjectName != '')) {
-        sweetAlert('Oops!', 'You must select a folder to share!', 'error');
+        sweetAlert('Oops!', 'YOu must select a folder to share!', 'error');
         updateUI();
         return;
     }
@@ -973,7 +733,7 @@ function shareFolder_(mode) {
         data.append('mode', mode);
         data.append('path', path);
 
-        sendHttp('POST', 'shareFolder', data, function(request) {
+        sendHttp('POST', 'fshareFolder', data, function(request) {
             if(request.status != 200) {
                 sweetAlert('Oops!', 'Could not share your folder! Please try again.', 'error');
                 return;

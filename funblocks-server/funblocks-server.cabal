@@ -1,6 +1,6 @@
-Name:                codeworld-server
+Name:                funblocks-server
 Version:             0.1
-Synopsis:            Web server for CodeWorld
+Synopsis:            Web framework for Funblocks in CodeWorld
 License-file:        LICENSE
 Author:              The CodeWorld Authors
 Maintainer:          Chris Smith <cdsmith@gmail.com>
@@ -9,45 +9,37 @@ Build-type:          Simple
 Cabal-version:       >=1.2
 
 Description:
-  The web server for the CodeWorld programming environment.
+  The web framework for the CodeWorld's funblock programming environment.
 
-Executable codeworld-server
-  Hs-source-dirs: src
-  Main-is: Main.hs
+Library
+  Exposed-modules: Funblocks
+  Other-modules: Model, Util
 
   Build-depends:
     aeson,
     base,
     base64-bytestring,
     bytestring,
-    codeworld-compiler,
     cryptonite,
     data-default,
     directory,
-    engine-io,
-    engine-io-snap,
     filepath,
     filesystem-trees,
-    funblocks-server,
-    hashable,
     hindent >= 5 && < 5.2.3,
     http-conduit,
     memory,
     mtl,
-    ot,
     process,
     regex-compat,
     regex-tdfa,
     snap-core,
     snap-server,
-    socket-io,
-    stm,
     temporary,
     text,
-    time,
-    transformers,
-    unix,
-    unordered-containers
+    unix
+
+  Hs-source-dirs: src
+  Exposed: True
 
   Ghc-options: -threaded -Wall -funbox-strict-fields -O2
                -fno-warn-unused-do-bind

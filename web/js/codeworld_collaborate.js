@@ -169,7 +169,6 @@ function listCurrentOwners() {
             return;
         }
         window.owners = JSON.parse(request.responseText);
-        document.getElementById('listCurrentOwners').style.display = 'none';
 
         document.getElementById('newFolderButton').style.display = 'none';
         document.getElementById('newButton').style.display = 'none';

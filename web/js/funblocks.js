@@ -34,7 +34,7 @@ function loadWorkspace(text)
 
 function loadXmlHash(hash, autostart)
 {
-   sendHttp('GET', 'loadXML?hash=' + hash + '&mode=blocklyXML', null, function(request) {
+   sendHttp('GET', 'floadXML?hash=' + hash + '&mode=blocklyXML', null, function(request) {
      if (request.status == 200) {
           loadWorkspace(request.responseText);
           if(autostart){
@@ -71,8 +71,9 @@ function init()
                 data.append('mode', 'blocklyXML');
                 data.append('shash', hash);
                 data.append('name', folderName);
+                data.append('userIdent', 'none');
 
-                sendHttp('POST', 'shareContent', data, function(request) {
+                sendHttp('POST', 'fshareContent', data, function(request) {
                     window.location.hash = '';
                     if (request.status == 200) {
                         sweetAlert('Success!', 'The shared folder is moved into your root directory.', 'success');
@@ -105,7 +106,7 @@ function init()
 function initCodeworld() {
     codeworldKeywords = {};
     registerStandardHints( function(){} );
-    
+
     window.onbeforeunload = function(event) {
         if (containsUnsavedChanges()) {
             var msg = 'There are unsaved changes to your project. ' + 'If you continue, they will be lost!';
@@ -226,7 +227,7 @@ function compile(src,silent) {
     data.append('source', xml_text);
     data.append('mode', 'blocklyXML');
 
-    sendHttp('POST', 'saveXMLhash', data, function(request) {
+    sendHttp('POST', 'fsaveXMLhash', data, function(request) {
         // XML Hash
         var xmlHash = request.responseText;
 

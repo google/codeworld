@@ -43,10 +43,11 @@ import           System.FilePath
 
 import Collaboration
 import Comment
-import DataUtil
-import Folder
-import Model
-import SnapUtil
+import           DataUtil
+import           Folder
+import qualified Funblocks as FB
+import           Model
+import           SnapUtil
 
 main :: IO ()
 main = do
@@ -73,32 +74,21 @@ site :: Snap () -> ClientId -> Snap ()
 site socketIOHandler clientId =
     route ([
         ("compile",     compileHandler),
-        ("saveXMLhash", saveXMLHashHandler),
-        ("loadXML",     loadXMLHandler),
         ("loadSource",  loadSourceHandler),
         ("run",         runHandler),
         ("runJS",       runHandler),
         ("runMsg",      runMessageHandler),
         ("haskell",     serveFile "web/env.html"),
-        ("blocks",      serveFile "web/blocks.html"),
-        ("funblocks",   serveFile "web/blocks.html"),
         ("indent",      indentHandler)
       ] ++
         (collabRoutes socketIOHandler clientId) ++
         (commentRoutes clientId) ++
-        (folderRoutes clientId)) <|>
+        (folderRoutes clientId) ++
+        (FB.funblockRoutes $ currToFB clientId)) <|>
         serveDirectory "web"
-
-saveXMLHashHandler :: Snap ()
-saveXMLHashHandler = do
-    mode <- getBuildMode
-    unless (mode==BuildMode "blocklyXML") $ modifyResponse $ setResponseCode 500
-    Just source <- getParam "source"
-    let programId = sourceToProgramId source
-    liftIO $ ensureProgramDir mode programId
-    liftIO $ B.writeFile (buildRootDir mode </> sourceXML programId) source
-    modifyResponse $ setContentType "text/plain"
-    writeBS (T.encodeUtf8 (unProgramId programId))
+  where
+    currToFB clientId = case clientId of
+        ClientId a -> FB.ClientId a
 
 compileHandler :: Snap ()
 compileHandler = do
@@ -115,14 +105,6 @@ compileHandler = do
     modifyResponse $ setContentType "text/plain"
     let result = CompileResult (unProgramId programId) (unDeployId deployId)
     writeLBS (encode result)
-
-loadXMLHandler :: Snap ()
-loadXMLHandler = do
-    mode <- getBuildMode
-    unless (mode == BuildMode "blocklyXML") $ modifyResponse $ setResponseCode 500
-    programId <- getHashParam False mode
-    modifyResponse $ setContentType "text/plain"
-    serveFile (buildRootDir mode </> sourceXML programId)
 
 loadSourceHandler :: Snap ()
 loadSourceHandler = do

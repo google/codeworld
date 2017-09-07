@@ -18,53 +18,86 @@
 -}
 
 import           Compile
-import           Control.Monad (join)
-import           Data.Monoid ((<>))
-import           Options.Applicative
-import           System.Environment
-import           System.Directory
-import           System.IO
+import           GenBase
 
-data Options = Options { source :: String, 
-                         output :: String, 
-                         err :: String, 
-                         mode :: String
+import           Control.Applicative
+import           Control.Monad
+import           Data.Maybe
+import           Data.Monoid
+import qualified Data.Text as T
+import           Options.Applicative
+import           System.Directory
+import           System.Environment
+import           System.Exit
+import           System.FilePath
+import           System.IO
+import           System.IO.Temp (withSystemTempDirectory)
+
+data Options = Options { source      :: FilePath,
+                         output      :: FilePath,
+                         err         :: FilePath,
+                         mode        :: String,
+                         baseSymbols :: Maybe String,
+                         genBase     :: Bool,
+                         baseIgnore  :: [String]
                        } deriving (Show)
 
-main = execParser opts >>= runWithOptions
+main = execParser opts >>= \opts -> checkOptions opts >> runWithOptions opts
     where
-        parser = Options <$> argument str (  metavar "SourceFile" 
-                                          <> help "Location of source file" )
-                         <*> strOption    (  long "output" 
-                                          <> short 'o' 
-                                          <> metavar "OutputFile" 
-                                          <> help "Location of output file" )
-                         <*> strOption    (  long "error" 
-                                          <> short 'e' 
-                                          <> metavar "ErrorFile"  
-                                          <> help "Location of error file" )
-                         <*> strOption    (  long "mode" 
-                                          <> short 'm' 
-                                          <> metavar "BuildMode"  
-                                          <> help "Enter the mode of compilation" )
+        parser = Options <$> argument str        (  metavar "SourceFile"
+                                                 <> help "Location of input file")
+                         <*> strOption           (  long "output"
+                                                 <> short 'o'
+                                                 <> metavar "OutputFile"
+                                                 <> help "Location of output file")
+                         <*> strOption           (  long "error"
+                                                 <> short 'e'
+                                                 <> metavar "ErrorFile"
+                                                 <> help "Location of error file")
+                         <*> strOption           (  long "mode"
+                                                 <> short 'm'
+                                                 <> metavar "BuildMode"
+                                                 <> help "Enter the mode of compilation")
+                         <*> optional (strOption (  long "base-syms"
+                                                 <> short 's'
+                                                 <> metavar "BaseSyms"
+                                                 <> help "Location of base symbol file"))
+                         <*> switch              (  long "gen-base"
+                                                 <> short 'b'
+                                                 <> help "Generate a base bundle.")
+                         <*> many (strOption     (  long "ignore-in-base"
+                                                 <> metavar "ModOrSymbol"
+                                                 <> help "Ignore this module or symbol in base."))
         opts = info parser mempty
 
-runWithOptions :: Options -> IO ()
-runWithOptions Options{..} = do
-    fileExists <- doesFileExist source
-    if fileExists 
-      then do
-        compileOutput <- extractSource source output err mode
-        return ()
-      else 
-        putStrLn $ "File not found:" ++ (show source)
+checkOptions :: Options -> IO ()
+checkOptions Options{..} = do
+    when (genBase && baseSymbols == Nothing) $ do
+        hPutStrLn stderr ("Flag --gen-base requires --base-symbols")
+        exitFailure
+    exists <- doesFileExist source
+    when (not exists) $ do
+        hPutStrLn stderr ("File not found: " ++ source)
+        exitFailure
 
-extractSource :: String -> String -> String -> String -> IO Bool
-extractSource  source out err mode = do 
-    res <- compileSource source out err mode
-    case res of 
-        True -> return True
-        False -> do
-            errMsg <- readFile err
-            hPutStrLn stderr (show errMsg)
-            return False
+runWithOptions :: Options -> IO ()
+runWithOptions opts@Options{..} = do
+    success <- if genBase then compileBase opts else compile opts
+    readFile err >>= hPutStrLn stderr
+    if success then exitSuccess else exitFailure
+
+compileBase :: Options -> IO Bool
+compileBase Options{..} = do
+    withSystemTempDirectory "genbase" $ \tmpdir -> do
+        let linkMain = tmpdir </> "LinkMain.hs"
+        let linkBase = tmpdir </> "LinkBase.hs"
+        generateBaseBundle source (map T.pack baseIgnore) mode linkMain linkBase
+        let stage = GenBase "LinkBase" linkBase (fromJust baseSymbols)
+        compileSource stage linkMain output err mode
+
+compile :: Options -> IO Bool
+compile opts@Options{..} = do
+    let stage = case baseSymbols of
+            Nothing   -> FullBuild
+            Just syms -> UseBase syms
+    compileSource stage source output err mode

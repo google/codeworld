@@ -67,6 +67,7 @@ function registerStandardHints(successFunc)
     // Add hint highlighting
     var hints = [
         createHint("main :: Program", 0, 4),
+        createHint("program :: Program", 0, 7),
         createHint("--  single line comment", 0, 2, 'hint-keyword'),
         createHint("{-  start a multi-line comment", 0, 2, 'hint-keyword'),
         createHint("-}  end a multi-line comment", 0, 2, 'hint-keyword'),
@@ -140,8 +141,10 @@ function registerStandardHints(successFunc)
     }
     lines = lines.slice(startLine, endLine);
 
-    // Special case for main, since it's morally a built-in name.
+    // Special case for "main" and "program", since they are morally
+    // built-in names.
     codeworldKeywords['main'] = 'builtin';
+    codeworldKeywords['program'] = 'builtin';
 
     lines = lines.sort().filter(function(item, pos, array) {
         return !pos || item != array[pos - 1];
@@ -155,6 +158,7 @@ function registerStandardHints(successFunc)
         "fail",
         "fromCWText",
         "fromDouble",
+        "fromHSL",
         "fromInt",
         "fromInteger",
         "fromRandomSeed",
@@ -184,6 +188,9 @@ function registerStandardHints(successFunc)
         } else if (line.startsWith("newtype ")) {
             // Hide the distinction between newtype and data.
             line = "data " + line.substr(8);
+        } else if (line.startsWith("pattern ")) {
+            // Hide the distinction between patterns and constructors.
+            line = line.substr(8);
         } else if (line.startsWith("class ")) {
             return;
         } else if (line.startsWith("instance ")) {
@@ -250,8 +257,11 @@ function registerStandardHints(successFunc)
   });
 }
 
-
 function addToMessage(msg) {
+    while (msg.match(/(\r\n|[^\x08]|)\x08/)) {
+        msg = msg.replace(/(\r\n|[^\x08])\x08/g, "");
+    }
+
     msg = msg
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -937,11 +947,7 @@ function share() {
 }
 
 function inspect() {
-    try {
-        document.getElementById('runner').contentWindow.toggleDebugMode();
-    } catch (e) {
-        sweetAlert('Sorry!','Inspect is only available in drawingOf.','error');
-    }
+    document.getElementById('runner').contentWindow.toggleDebugMode();
     updateUI();
 }
 

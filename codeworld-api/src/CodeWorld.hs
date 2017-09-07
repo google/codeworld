@@ -1,3 +1,5 @@
+{-# LANGUAGE PatternSynonyms #-}
+
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
 
@@ -73,6 +75,8 @@ module CodeWorld (
     -- * Colors
     Color(..),
     Colour,
+    pattern RGB,
+    pattern HSL,
     black,
     white,
     red,
@@ -106,11 +110,15 @@ module CodeWorld (
     hue,
     saturation,
     luminosity,
+    alpha,
     fromHSL,
 
     -- * Events
     Event(..),
     MouseButton(..),
+    pattern PointerPress,
+    pattern PointerRelease,
+    pattern PointerMovement,
 
     -- * Debugging
     trace

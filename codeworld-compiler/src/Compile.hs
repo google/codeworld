@@ -17,12 +17,15 @@
   limitations under the License.
 -}
 
-module Compile ( compileSource ) where
+module Compile ( compileSource, Stage(..) ) where
 
 import           Control.Concurrent
 import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import           Data.ByteString.Char8 (pack)
+import           Data.Monoid
+import           ErrorSanitizer
 import           System.Directory
 import           System.FilePath
 import           System.IO
@@ -30,33 +33,82 @@ import           System.IO.Temp (withSystemTempDirectory)
 import           System.Process
 import           Text.Regex.TDFA
 
-import ErrorSanitizer
+import ParseCode
 
-compileSource :: FilePath -> FilePath -> FilePath -> String -> IO Bool
-compileSource src out err mode = checkDangerousSource src >>= \case
+data Stage = FullBuild
+           | GenBase String FilePath FilePath
+           | UseBase FilePath
+
+compileSource :: Stage -> FilePath -> FilePath -> FilePath -> String -> IO Bool
+compileSource stage src out err mode = checkDangerousSource src >>= \case
     True -> do
         B.writeFile err
             "Sorry, but your program refers to forbidden language features."
         return False
-    False -> withSystemTempDirectory "buildSource" $ \tmpdir -> do
+    False -> withSystemTempDirectory "build" $ \tmpdir -> do
+        parenProblem <- case mode of
+            "codeworld" -> not <$> checkParsedCode src err
+            _           -> return False
         copyFile src (tmpdir </> "program.hs")
-        let baseArgs = case mode of
-                "haskell"   -> haskellCompatibleBuildArgs
-                "codeworld" -> standardBuildArgs
-            ghcjsArgs = baseArgs ++ [ "program.hs" ]
+        baseArgs <- case mode of
+            "haskell"   -> return haskellCompatibleBuildArgs
+            "codeworld" -> standardBuildArgs <$> hasOldStyleMain src
+        linkArgs <- case stage of
+                FullBuild          -> return []
+                GenBase mod base _ -> do copyFile base (tmpdir </> mod <.> "hs")
+                                         return ["-generate-base", mod]
+                UseBase syms       -> do copyFile syms (tmpdir </> "out.base.symbs")
+                                         return ["-use-base", "out.base.symbs"]
+        let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
         runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
             Nothing -> return False
             Just output -> do
                 let filteredOutput = case mode of
-                        "haskell"   -> output
                         "codeworld" -> filterOutput output
                         _           -> output
-                B.writeFile err filteredOutput
-                let target = tmpdir </> "program.jsexe" </> "all.js"
-                hasTarget <- doesFileExist target
-                when hasTarget $
-                    copyFile target out
-                return hasTarget
+
+                when (not parenProblem) $ B.writeFile err ""
+                B.appendFile err filteredOutput
+
+                let target = tmpdir </> "program.jsexe"
+                case stage of
+                    GenBase _ _ syms -> do
+                        hasTarget <- and <$> mapM doesFileExist [
+                            target </> "rts.js",
+                            target </> "lib.base.js",
+                            target </> "out.base.js",
+                            target </> "out.base.symbs"
+                            ]
+                        when hasTarget $ do
+                            rtsCode <- B.readFile $ target </> "rts.js"
+                            libCode <- B.readFile $ target </> "lib.base.js"
+                            outCode <- B.readFile $ target </> "out.base.js"
+                            B.writeFile out (rtsCode <> libCode <> outCode)
+                            copyFile (target </> "out.base.symbs") syms
+                        return hasTarget
+                    UseBase _ -> do
+                        hasTarget <- and <$> mapM doesFileExist [
+                            target </> "lib.js",
+                            target </> "out.js"
+                            ]
+                        when hasTarget $ do
+                            libCode <- B.readFile $ target </> "lib.js"
+                            outCode <- B.readFile $ target </> "out.js"
+                            B.writeFile out (libCode <> outCode)
+                        return hasTarget
+                    FullBuild -> do
+                        hasTarget <- and <$> mapM doesFileExist [
+                            target </> "rts.js",
+                            target </> "lib.js",
+                            target </> "out.js"
+                            ]
+                        hasTarget <- doesFileExist (target </> "out.js")
+                        when hasTarget $ do
+                            rtsCode <- B.readFile $ target </> "rts.js"
+                            libCode <- B.readFile $ target </> "lib.js"
+                            outCode <- B.readFile $ target </> "out.js"
+                            B.writeFile out (rtsCode <> libCode <> outCode)
+                        return hasTarget
 
 userCompileMicros :: Int
 userCompileMicros = 45 * 1000000
@@ -67,9 +119,14 @@ checkDangerousSource dir = do
     return $ matches contents ".*TemplateHaskell.*" ||
              matches contents ".*QuasiQuotes.*" ||
              matches contents ".*glasgow-exts.*"
-  where
-    matches :: ByteString -> ByteString -> Bool
-    matches txt pat = txt =~ pat
+
+hasOldStyleMain :: FilePath -> IO Bool
+hasOldStyleMain fname = do
+    contents <- B.readFile fname
+    return (matches contents "(^|\\n)main[ \\t]*=")
+
+matches :: ByteString -> ByteString -> Bool
+matches txt pat = txt =~ pat
 
 runCompiler :: FilePath -> Int -> [String] -> IO (Maybe ByteString)
 runCompiler dir micros args = do
@@ -90,8 +147,9 @@ runCompiler dir micros args = do
 
     return result
 
-standardBuildArgs :: [String]
-standardBuildArgs = [
+standardBuildArgs :: Bool -> [String]
+standardBuildArgs True = [
+    "-DGHCJS_BROWSER",
     "-dedupe",
     "-Wall",
     "-O2",
@@ -128,13 +186,18 @@ standardBuildArgs = [
     "-XViewPatterns",
     "-XImplicitPrelude"  -- MUST come after RebindableSyntax.
     ]
+standardBuildArgs False = standardBuildArgs True ++ [
+    "-main-is", "Main.program"
+    ]
 
 haskellCompatibleBuildArgs :: [String]
 haskellCompatibleBuildArgs = [
+    "-DGHCJS_BROWSER",
     "-dedupe",
     "-Wall",
     "-O2",
-    "-package", "codeworld-api"
+    "-package", "codeworld-api",
+    "-package", "QuickCheck"
     ]
 
 withTimeout :: Int -> IO a -> IO (Maybe a)
@@ -146,4 +209,3 @@ withTimeout micros action = do
     killThread killer
     killThread runner
     return r
-

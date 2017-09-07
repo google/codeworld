@@ -211,7 +211,7 @@ infixr 0 &
 --
 -- Example:
 --
---    main = pictureOf (myPicture <> coordinatePlane)
+--    main = drawingOf (myPicture <> coordinatePlane)
 --    myPicture = ...
 coordinatePlane :: Picture
 coordinatePlane = axes <> numbers <> guidelines

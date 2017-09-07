@@ -23,13 +23,20 @@ run .  cabal update
 # Install the codeworld-base and codeworld-api packages
 
 run .  cabal_install --ghcjs ./codeworld-prediction \
+                             ./codeworld-error-sanitizer \
                              ./codeworld-api \
                              ./codeworld-base \
-                             ./codeworld-game-api
+                             ./codeworld-game-api \
+                             QuickCheck
 
 run codeworld-base  cabal configure --ghcjs
 run codeworld-base  cabal haddock --html
 run codeworld-base  cabal haddock --hoogle
+
+# Work-around for haddock dropping pattern synonyms in hoogle output.
+grep -r -s -h 'pattern\s*[A-Za-z_0-9]*\s*::.*' codeworld-base/ \
+    >> web/codeworld-base.txt
+
 run codeworld-api   cabal configure --ghcjs
 run codeworld-api   cabal haddock --html
 run codeworld-api   cabal haddock --hoogle
@@ -38,6 +45,7 @@ run codeworld-api   cabal haddock --hoogle
 
 run .  cabal_install ./third_party/ot.hs \
                      ./codeworld-server \
+                     ./codeworld-error-sanitizer \
                      ./codeworld-compiler \
                      ./codeworld-game-api \
                      ./codeworld-prediction \

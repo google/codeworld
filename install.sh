@@ -42,6 +42,7 @@ then
 
   # Needed for GHC 7.8
   run . sudo yum install -y gcc
+  run . sudo yum install -y gcc-c++
   run . sudo yum install -y gmp-devel
 
   # Needed for GHCJS
@@ -73,6 +74,7 @@ then
   # Needed for GHC 7.8
   run . sudo apt-get install -y make
   run . sudo apt-get install -y gcc
+  run . sudo apt-get install -y g++
   run . sudo apt-get install -y libgmp-dev
 
   # Needed for GHCJS
@@ -128,7 +130,7 @@ else
   exit 1
 fi
 
-# Install GHC, since it's required for GHCJS.
+# Install a precompiled GHC to bootstrap itself.
 
 GHC_DIR=8.0.2
 GHC_VERSION=8.0.2
@@ -136,6 +138,17 @@ GHC_VERSION=8.0.2
 run $DOWNLOADS               wget http://downloads.haskell.org/~ghc/$GHC_DIR/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
 run $BUILD                   tar xf $DOWNLOADS/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
 run $BUILD/ghc-$GHC_VERSION  ./configure --prefix=$BUILD
+run $BUILD/ghc-$GHC_VERSION  make install
+run $BUILD                   rm -rf ghc-$GHC_VERSION
+
+# Now install the patched GHC, built from source.
+
+run $DOWNLOADS               wget https://downloads.haskell.org/~ghc/$GHC_DIR/ghc-$GHC_VERSION-src.tar.xz
+run $BUILD                   tar xf $DOWNLOADS/ghc-$GHC_VERSION-src.tar.xz
+run .                        patch -p0 -u -d $BUILD < ghc-artifacts/ghc-$GHC_VERSION-default-main.patch
+run .                        cp ghc-artifacts/build.mk $BUILD/ghc-$GHC_VERSION/mk/build.mk
+run $BUILD/ghc-$GHC_VERSION  ./configure --prefix=$BUILD
+run $BUILD/ghc-$GHC_VERSION  make
 run $BUILD/ghc-$GHC_VERSION  make install
 run $BUILD                   rm -rf ghc-$GHC_VERSION
 

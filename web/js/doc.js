@@ -28,11 +28,13 @@ window.env = parent;
                     CodeMirror.runMode(text, { name: 'codeworld', overrideKeywords: codeworldKeywords }, pre);
                     pre.classList.add('cm-s-default');
 
-                    if (text.indexOf("main ") != -1 && linkable) {
-                        pre.classList.add('clickable');
-                        pre.onclick = function() {
-                            if (env && env.loadSample) {
-                                env.loadSample(text);
+                    if (linkable) {
+                        if (text.indexOf("main ") != -1 || text.indexOf("program ") != -1) {
+                            pre.classList.add('clickable');
+                            pre.onclick = function() {
+                                if (env && env.loadSample) {
+                                    env.loadSample(text);
+                                }
                             }
                         }
                     }
@@ -153,8 +155,8 @@ window.env = parent;
 
           var content = document.createElement('div');
           var text = request.responseText;
-          var converter = new Markdown.Converter();
-          var html = converter.makeHtml(text);
+          var converter = new Remarkable({ html: true });
+          var html = converter.render(text);
           content.innerHTML = html;
           help.appendChild(content);
 

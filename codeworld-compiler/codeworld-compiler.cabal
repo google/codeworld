@@ -10,57 +10,66 @@ Build-type:          Simple
 Cabal-version:       >=1.10
 
 Description:
-  The GHCJS based standalone compiler for CodeWorld programming environment.   
- 
+  The GHCJS based standalone compiler for CodeWorld programming environment.
+
 Executable codeworld-compiler
   Hs-source-dirs: exec
   Main-is: Main.hs
 
+  Other-modules: GenBase
+
   Build-depends:
-    base,       
+    base,
     codeworld-compiler,
     directory,
-    optparse-applicative
+    filepath,
+    optparse-applicative,
+    regex-tdfa,
+    regex-tdfa-text,
+    temporary,
+    text
 
 Library
-  Exposed-modules: Compile 
-  Other-modules: ErrorSanitizer     
+  Exposed-modules: Compile
+  Other-modules: ParseCode
 
-  Build-depends:       
+  Build-depends:
     aeson,
     base,
     base64-bytestring,
     bytestring,
+    codeworld-error-sanitizer,
     cryptonite,
     data-default,
     directory,
     filepath,
+    haskell-src-exts,
     hindent >= 5 && < 5.2.3,
     memory,
     mtl,
     process,
     regex-tdfa,
-    regex-compat,
+    split,
+    syb,
     temporary,
     text
 
   Hs-source-dirs: src
-  
+
   Exposed: True
 
-  Ghc-options: -O2 
+  Ghc-options: -O2
 
 Test-Suite codeworld-compiler-test
   Type:               exitcode-stdio-1.0
   Main-is:            Main.hs
   Hs-source-dirs:     test
-  Build-depends:      
+  Build-depends:
     base,
-    codeworld-compiler, 
+    codeworld-compiler,
     directory,
     test-framework,
     test-framework-hunit,
     filepath,
     HUnit,
     containers == 0.5.*
-

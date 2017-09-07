@@ -1,6 +1,8 @@
 {-# LANGUAGE RebindableSyntax  #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE PackageImports    #-}
+{-# LANGUAGE PatternSynonyms   #-}
+{-# LANGUAGE ViewPatterns      #-}
 
 {-
   Copyright 2017 The CodeWorld Authors. All rights reserved.
@@ -30,6 +32,29 @@ newtype Color = RGBA(Number, Number, Number, Number) deriving P.Eq
 type Colour = Color
 
 {-# RULES "equality/color" forall (x :: Color). (==) x = (P.==) x #-}
+
+pattern RGB :: (Number, Number, Number) -> Color
+pattern RGB components <- (toRGB -> P.Just components)
+  where RGB components = let (r, g, b) = components in RGBA (r, g, b, 1)
+
+-- Utility function for RGB pattern synonym.
+toRGB :: Color -> P.Maybe (Number, Number, Number)
+toRGB (RGBA (r, g, b, 1)) = P.Just (r, g, b)
+toRGB _                   = P.Nothing
+
+pattern HSL :: (Number, Number, Number) -> Color
+pattern HSL components <- (toHSL -> P.Just components)
+  where HSL components = fromHSL components
+
+-- Utility functions for HSL pattern synonym.
+toHSL :: Color -> P.Maybe (Number, Number, Number)
+toHSL c@(RGBA (_, _, _, 1)) = P.Just (hue c, saturation c, luminosity c)
+toHSL _                     = P.Nothing
+
+fromHSL :: (Number, Number, Number) -> Color
+fromHSL (h, s, l) = fromCWColor (CW.HSL (toDouble (pi * h / 180)) (toDouble s) (toDouble l))
+
+{-# WARNING fromHSL "Please use HSL instead of fromHSL." #-}
 
 toCWColor :: Color -> CW.Color
 toCWColor (RGBA (r,g,b,a)) =
@@ -103,10 +128,8 @@ grey = gray
 assortedColors :: [Color]
 assortedColors = P.map fromCWColor CW.assortedColors
 
-hue, saturation, luminosity :: Color -> Number
+hue, saturation, luminosity, alpha :: Color -> Number
 hue = (180 *) . (/ pi) . fromDouble . CW.hue . toCWColor
 saturation = fromDouble . CW.saturation . toCWColor
 luminosity = fromDouble . CW.luminosity . toCWColor
-
-fromHSL :: (Number, Number, Number) -> Color
-fromHSL (h, s, l) = fromCWColor (CW.fromHSL (toDouble (pi * h / 180)) (toDouble s) (toDouble l))
+alpha = fromDouble . CW.alpha . toCWColor

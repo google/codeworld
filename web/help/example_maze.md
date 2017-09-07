@@ -13,7 +13,7 @@ in response to actions from the user.
 The program
 -----------
 
-    main = interactionOf(createWorld, firstOfPair, event, drawWorld)
+    program = interactionOf(createWorld, firstOfPair, event, drawWorld)
 
     {- A World contains
         * the location of the player in the maze
@@ -86,7 +86,7 @@ The program
     unvisitedNeighbors(g, p) =
       [ n | n <- neighbors(g, p), not(isVisitedAt(g,n)) ]
 
-    {- The main function for building a random maze -}
+    {- The function for building a random maze -}
     buildMaze :: (Number, Number, RandomNumbers) -> Maze
     buildMaze(w, h, randoms) = go((w-1, h-1), startMaze, randoms) where
       startMaze = (Maze w h [] (entranceDoor : exitDoor : [])) where

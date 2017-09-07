@@ -1,0 +1,57 @@
+* { margin: 0; overflow: hidden }
+
+#screen {
+    cursor: default;
+    width: 100vw;
+    height: 100vw;
+    max-height: 100vh;
+    max-width: 100vh;
+}
+
+#infobox {
+    position: absolute;
+    border: 1px solid #777;
+    background: white;
+    minWidth: 60px;
+    padding: 0px;
+    box-shadow: 1px 1px 2px #000;
+    display: none;
+}
+
+.stack-list {
+    list-style-type: none;
+    padding: 0px;
+    border-spacing: 0px;
+}
+
+.stack-item {
+    background-color: #eee;
+    margin: 1px;
+
+    cursor: pointer;
+    font-family: sans-serif;
+}
+
+.stack-item:hover {
+    background-color: #ccc;
+}
+
+.stack-list a {
+    color: black;
+    text-decoration: none;
+}
+
+.shape-name {
+    padding: 4px;
+    padding-left: 8px;
+    padding-right: 10px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.shape-loc {
+    padding: 4px;
+    padding-left: 0px;
+    padding-right: 8px;
+    white-space: nowrap;
+}

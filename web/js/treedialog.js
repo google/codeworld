@@ -153,16 +153,23 @@
     }
 
     function num2str(d) {
-        let n = Math.floor(d).toString(),
-            p = (d - n).toString().slice(2,5);
+        let sign = Math.sign(d)<0?"-":"",
+            digits = Math.round(Math.abs(d*1000)).toString(),
+            high = digits.slice(0, -3),
+            low = digits.slice(-3);
 
-        while ( p.length>0 && p[p.length-1] == "0" ) p = p.slice(0,p.length-1);
+        while ( low.length < 3 )
+            low = "0"+low;
+        while ( low.length > 0 && low[low.length-1] == "0" )
+            low = low.slice(0, -1);
 
-        if (p.length == 0) {
-            return n;
-        } else {
-            return n + "." + p;
-        }
+        if ( high.length == 0 )
+            high = "0";
+
+        if ( low.length > 0 )
+            return sign + high + "." + low;
+        else
+            return sign + high;
     }
 
     function buildPicPath(id) {

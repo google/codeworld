@@ -1526,8 +1526,7 @@ highlightSelectShape h s drawing
     | isNothing s = fromMaybe drawing $ do
         h' <- h
         hp <- piece h'
-        removed <- replaceDrawNode h' (Drawings []) drawing
-        return $ hp <> removed
+        return $ hp <> drawing
     | isNothing h = fromMaybe drawing $ do
         s' <- s
         sp <- piece s'
@@ -1537,22 +1536,13 @@ highlightSelectShape h s drawing
         s' <- s
         hp <- piece h'
         sp <- piece s'
-        removed <- replaceDrawNode h' (Drawings []) drawing
         replaced <- replaceDrawNode s' sp drawing
         return $ hp <> replaced
     where piece n = (\(node,ds) -> highlightDrawing ds node) <$> getDrawNode n drawing
 
 highlightDrawing :: DrawState -> Drawing -> Drawing
-highlightDrawing (a,b,c,d,e,f,col) drawing = Transformation (\_ -> (a,b,c,d,e,f,Just col')) drawing
-    where col' = highlightColor $ fromMaybe (RGBA 0 0 0 1) col
-
-highlightColor :: Color -> Color
-highlightColor (RGBA r g b _) = case (r+g+b)<2.5 of
-    True  -> RGBA (darker r)  (darker g)  (darker b)  1
-    False -> RGBA (lighter r) (lighter g) (lighter b) 1
-    where darker  v = 0.2 + 0.8*v
-          lighter v = v*0.8
-
+highlightDrawing (a,b,c,d,e,f,_) drawing = Transformation (\_ -> (a,b,c,d,e,f,Just col')) drawing
+    where col' = RGBA 0 0 0 0.25
 
 getDrawNode :: NodeId -> Drawing -> Maybe (Drawing, DrawState)
 getDrawNode n _ | n<0 = Nothing

@@ -65,12 +65,14 @@ collabRoutes socketIOHandler clientId =
     , ("socket.io", socketIOHandler)
     ]
 
-getFrequentParams :: Int -> ClientId -> Snap (User, BuildMode, FilePath)
+data ParamsGetType = GetFromHash | NotInCommentables deriving (Eq)
+
+getFrequentParams :: ParamsGetType -> ClientId -> Snap (User, BuildMode, FilePath)
 getFrequentParams getType clientId = do
     user <- getUser clientId
     mode <- getBuildMode
     case getType of
-        1 -> do
+        NotInCommentables -> do
             Just path' <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
             Just name <- getParam "name"
             let projectId = nameToProjectId $ T.decodeUtf8 name
@@ -79,14 +81,14 @@ getFrequentParams getType clientId = do
             case (length path', path' !! 0) of
                 (0, _) -> return (user, mode, file)
                 (_, x) | x /= "commentables" -> return (user, mode, file)
-        _ -> do
+        GetFromHash -> do
             Just collabHash <- fmap (CollabId . T.decodeUtf8) <$> getParam "collabHash"
             let collabHashPath = collabHashRootDir mode </> collabHashLink collabHash <.> "cw"
             return (user, mode, collabHashPath)
 
 addToCollaborateHandler :: ClientId -> Snap ()
 addToCollaborateHandler clientId = do
-    (user, mode, collabHashPath) <- getFrequentParams 2 clientId
+    (user, mode, collabHashPath) <- getFrequentParams GetFromHash clientId
     Just path' <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
     case length path' of
         x | x /= 0 && path' !! 0 == "commentables" -> do
@@ -109,14 +111,14 @@ addToCollaborateHandler clientId = do
 
 collabShareHandler :: ClientId -> Snap ()
 collabShareHandler clientId = do
-    (_, _, filePath) <- getFrequentParams 1 clientId
+    (_, _, filePath) <- getFrequentParams NotInCommentables clientId
     collabHashFile <- liftIO $ takeFileName . BC.unpack <$> B.readFile filePath
     modifyResponse $ setContentType "text/plain"
     writeBS . BC.pack . take (length collabHashFile - 3) $ collabHashFile
 
 listCurrentOwnersHandler :: ClientId -> Snap ()
 listCurrentOwnersHandler clientId = do
-    (_, _, filePath) <- getFrequentParams 1 clientId
+    (_, _, filePath) <- getFrequentParams NotInCommentables clientId
     collabHashPath <- liftIO $ BC.unpack <$> B.readFile filePath
     Just (currentUsers :: [UserDump]) <- liftIO $ decodeStrict <$>
       B.readFile (collabHashPath <.> "users")
@@ -134,7 +136,7 @@ initCollabServer = do
 
 initCollaborationHandler :: CollabServerState -> ClientId -> Snap (Text, Text, CollabId)
 initCollaborationHandler state clientId = do
-    (user, _, filePath) <- getFrequentParams 1 clientId
+    (user, _, filePath) <- getFrequentParams NotInCommentables clientId
     collabHashPath <- liftIO $ BC.unpack <$> B.readFile filePath
     let collabHash = take (length collabHashPath - 3) . takeFileName $ collabHashPath
     Just (currentUsers :: [UserDump]) <- liftIO $ decodeStrict <$>

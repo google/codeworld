@@ -67,27 +67,19 @@ commentRoutes clientId =
     , ("writeReply",              writeReplyHandler clientId)
     ]
 
-getFrequentParams :: Int -> ClientId -> Snap (User, BuildMode, FilePath)
+data ParamsGetType = GetFromHash | InCommentables | NotInCommentables Bool deriving (Eq)
+
+getFrequentParams :: ParamsGetType -> ClientId -> Snap (User, BuildMode, FilePath)
 getFrequentParams getType clientId = do
     user <- getUser clientId
     mode <- getBuildMode
     case getType of
-        1 -> do
-            Just path' <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
-            Just name <- getParam "name"
-            let projectId = nameToProjectId $ T.decodeUtf8 name
-                finalDir = joinPath $ map (dirBase . nameToDirId . T.pack) path'
-                file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
-            commentFolder <- liftIO $ (<.> "comments") . BC.unpack <$> B.readFile file
-            case (length path', path' !! 0) of
-                (0, _) -> return (user, mode, commentFolder)
-                (_, x) | x /= "commentables" -> return (user, mode, commentFolder)
-        2 -> do
+        GetFromHash -> do
             Just commentHash <- fmap (CommentId . T.decodeUtf8) <$> getParam "chash"
             commentFolder <- liftIO $
               BC.unpack <$> B.readFile (commentHashRootDir mode </> commentHashLink commentHash)
             return (user, mode, commentFolder)
-        3 -> do
+        InCommentables -> do
             Just path' <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
             Just name <- getParam "name"
             let projectId = nameToProjectId $ T.decodeUtf8 name
@@ -98,19 +90,25 @@ getFrequentParams getType clientId = do
                       (sharedCommentsDir mode (userId user) </> cDir </> commentProjectLink projectId)
                     commentFolder <- BC.unpack <$> B.readFile commentHashFile
                     return (user, mode, commentFolder)
-        _ -> do
+        NotInCommentables x -> do
             Just path' <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
             Just name <- getParam "name"
             let projectId = nameToProjectId $ T.decodeUtf8 name
                 finalDir = joinPath $ map (dirBase . nameToDirId . T.pack) path'
                 file = userProjectDir mode (userId user) </> finalDir </> projectFile projectId
-            case (length path', path' !! 0) of
-                (0, _) -> return (user, mode, file)
-                (_, x) | x /= "commentables" -> return (user, mode, file)
+            case (length path', path' !! 0, x) of
+                (0, _, True) -> do
+                    commentFolder <- liftIO $ (<.> "comments") . BC.unpack <$> B.readFile file
+                    return (user, mode, commentFolder)
+                (0, _, False) -> return (user, mode, file)
+                (_, x', True) | x' /= "commentables" -> do
+                    commentFolder <- liftIO $ (<.> "comments") . BC.unpack <$> B.readFile file
+                    return (user, mode, commentFolder)
+                (_, x', False) | x' /= "commentables" -> return (user, mode, file)
 
 addSharedCommentHandler :: ClientId -> Snap ()
 addSharedCommentHandler clientId = do
-    (user, mode, commentFolder) <- getFrequentParams 2 clientId
+    (user, mode, commentFolder) <- getFrequentParams GetFromHash clientId
     Just path' <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
     case path' !! 0 of
         "commentables" -> do
@@ -139,13 +137,13 @@ addSharedCommentHandler clientId = do
 
 commentShareHandler :: ClientId -> Snap ()
 commentShareHandler clientId = do
-    (_, _, commentFolder) <- getFrequentParams 1 clientId
+    (_, _, commentFolder) <- getFrequentParams (NotInCommentables True) clientId
     modifyResponse $ setContentType "text/plain"
     writeBS . T.encodeUtf8 . unCommentId . nameToCommentHash $ commentFolder
 
 deleteCommentHandler :: ClientId -> Snap ()
 deleteCommentHandler clientId = do
-    (user, mode, commentFolder) <- getFrequentParams 3 clientId
+    (user, mode, commentFolder) <- getFrequentParams InCommentables clientId
     Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
     Just (lineNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
     Just (comment' :: CommentDesc) <- (decodeStrict =<<) <$> getParam "comment"
@@ -171,7 +169,7 @@ deleteCommentHandler clientId = do
 
 deleteOwnerCommentHandler :: ClientId -> Snap ()
 deleteOwnerCommentHandler clientId = do
-    (user, mode, commentFolder) <- getFrequentParams 1 clientId
+    (user, mode, commentFolder) <- getFrequentParams (NotInCommentables True) clientId
     Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
     Just (lineNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
     Just (comment' :: CommentDesc) <- (decodeStrict =<<) <$> getParam "comment"
@@ -196,7 +194,7 @@ deleteOwnerCommentHandler clientId = do
 
 deleteOwnerReplyHandler :: ClientId -> Snap ()
 deleteOwnerReplyHandler clientId = do
-    (user, mode, commentFolder) <- getFrequentParams 1 clientId
+    (user, mode, commentFolder) <- getFrequentParams (NotInCommentables True) clientId
     Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
     Just (lineNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
     Just (comment' :: CommentDesc) <- (decodeStrict =<<) <$> getParam "comment"
@@ -222,7 +220,7 @@ deleteOwnerReplyHandler clientId = do
 
 deleteReplyHandler :: ClientId -> Snap ()
 deleteReplyHandler clientId = do
-    (user, mode, commentFolder) <- getFrequentParams 3 clientId
+    (user, mode, commentFolder) <- getFrequentParams InCommentables clientId
     Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
     Just (lineNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
     Just (comment' :: CommentDesc) <- (decodeStrict =<<) <$> getParam "comment"
@@ -249,7 +247,7 @@ deleteReplyHandler clientId = do
 
 getUserIdentHandler :: ClientId -> Snap ()
 getUserIdentHandler clientId = do
-    (user, mode, commentFolder) <- getFrequentParams 3 clientId
+    (user, mode, commentFolder) <- getFrequentParams InCommentables clientId
     let commentHash = nameToCommentHash commentFolder
         commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
     Just (currentUsers :: [UserDump]) <- liftIO $
@@ -266,7 +264,7 @@ getUserIdentHandler clientId = do
 
 getOwnerUserIdentHandler :: ClientId -> Snap ()
 getOwnerUserIdentHandler clientId = do
-    (user, _, commentFolder) <- getFrequentParams 1 clientId
+    (user, _, commentFolder) <- getFrequentParams (NotInCommentables True) clientId
     let projectPath = take (length commentFolder - 9) commentFolder
     Just (currentUsers :: [UserDump]) <- liftIO $
       decodeStrict <$> B.readFile (projectPath <.> "users")
@@ -282,25 +280,25 @@ getOwnerUserIdentHandler clientId = do
 
 listCommentsHandler :: ClientId -> Snap ()
 listCommentsHandler clientId = do
-    (_, _, commentFolder) <- getFrequentParams 3 clientId
+    (_, _, commentFolder) <- getFrequentParams InCommentables clientId
     modifyResponse $ setContentType "application/json"
     writeLBS =<< (liftIO $ encode <$> listDirectory commentFolder)
 
 listOwnerCommentsHandler :: ClientId -> Snap ()
 listOwnerCommentsHandler clientId = do
-    (_, _, commentFolder) <- getFrequentParams 1 clientId
+    (_, _, commentFolder) <- getFrequentParams (NotInCommentables True) clientId
     modifyResponse $ setContentType "application/json"
     writeLBS =<< (liftIO $ encode <$> listDirectory commentFolder)
 
 listOwnerVersionsHandler :: ClientId -> Snap ()
 listOwnerVersionsHandler clientId = do
-    (_, _, commentFolder) <- getFrequentParams 1 clientId
+    (_, _, commentFolder) <- getFrequentParams (NotInCommentables True) clientId
     modifyResponse $ setContentType "application/json"
     writeLBS =<< (liftIO $ encode <$> listDirectory (commentFolder <.> "versions"))
 
 listUnreadCommentsHandler :: ClientId -> Snap ()
 listUnreadCommentsHandler clientId = do
-    (user, mode, commentFolder) <- getFrequentParams 3 clientId
+    (user, mode, commentFolder) <- getFrequentParams InCommentables clientId
     Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
     let commentHash = nameToCommentHash commentFolder
         commentHashPath = commentHashRootDir mode </> commentHashLink commentHash
@@ -320,7 +318,7 @@ listUnreadCommentsHandler clientId = do
 
 listUnreadOwnerCommentsHandler :: ClientId -> Snap ()
 listUnreadOwnerCommentsHandler clientId = do
-    (user, _, commentFolder) <- getFrequentParams 1 clientId
+    (user, _, commentFolder) <- getFrequentParams (NotInCommentables True) clientId
     let projectPath = take (length commentFolder - 9) commentFolder
     Just (currentUsers :: [UserDump]) <- liftIO $
       decodeStrict <$> B.readFile (projectPath <.> "users")
@@ -339,13 +337,13 @@ listUnreadOwnerCommentsHandler clientId = do
 
 listVersionsHandler :: ClientId -> Snap ()
 listVersionsHandler clientId = do
-    (_, _, commentFolder) <- getFrequentParams 3 clientId
+    (_, _, commentFolder) <- getFrequentParams InCommentables clientId
     modifyResponse $ setContentType "application/json"
     writeLBS =<< (liftIO $ encode <$> listDirectory (commentFolder <.> "versions"))
 
 readCommentHandler :: ClientId -> Snap ()
 readCommentHandler clientId = do
-    (user, mode, commentFolder) <- getFrequentParams 3  clientId
+    (user, mode, commentFolder) <- getFrequentParams InCommentables  clientId
     Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
     Just (lineNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
     let commentHash = nameToCommentHash commentFolder
@@ -367,7 +365,7 @@ readCommentHandler clientId = do
 
 readOwnerCommentHandler :: ClientId -> Snap ()
 readOwnerCommentHandler clientId = do
-    (user, _, commentFolder) <- getFrequentParams 1 clientId
+    (user, _, commentFolder) <- getFrequentParams (NotInCommentables True) clientId
     let projectPath = take (length commentFolder - 9) commentFolder
     Just (currentUsers :: [UserDump]) <- liftIO $
       decodeStrict <$> B.readFile (projectPath <.> "users")
@@ -388,7 +386,7 @@ readOwnerCommentHandler clientId = do
 
 viewCommentSourceHandler :: ClientId -> Snap ()
 viewCommentSourceHandler clientId = do
-    (_, _, commentFolder) <- getFrequentParams 3 clientId
+    (_, _, commentFolder) <- getFrequentParams InCommentables clientId
     Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
     currentSource <- liftIO $ B.readFile (commentFolder <.> "versions" </> show versionNo')
     modifyResponse $ setContentType "text/x-haskell"
@@ -396,7 +394,7 @@ viewCommentSourceHandler clientId = do
 
 viewOwnerCommentSourceHandler :: ClientId -> Snap()
 viewOwnerCommentSourceHandler clientId = do
-    (_, _, commentFolder) <- getFrequentParams 1 clientId
+    (_, _, commentFolder) <- getFrequentParams (NotInCommentables True) clientId
     Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
     currentSource <- liftIO $ B.readFile (commentFolder <.> "versions" </> show versionNo')
     modifyResponse $ setContentType "text/x-haskell"
@@ -404,7 +402,7 @@ viewOwnerCommentSourceHandler clientId = do
 
 writeCommentHandler :: ClientId -> Snap ()
 writeCommentHandler clientId = do
-    (user, mode, commentFolder) <- getFrequentParams 3 clientId
+    (user, mode, commentFolder) <- getFrequentParams InCommentables clientId
     Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
     Just (lineNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
     Just (comment' :: Text) <- fmap (T.decodeUtf8) <$> getParam "comment"
@@ -427,7 +425,7 @@ writeCommentHandler clientId = do
 
 writeOwnerCommentHandler :: ClientId -> Snap ()
 writeOwnerCommentHandler clientId = do
-    (user, _, commentFolder) <- getFrequentParams 1 clientId
+    (user, _, commentFolder) <- getFrequentParams (NotInCommentables True) clientId
     let projectPath = take (length commentFolder - 9) commentFolder
     Just (currentUsers :: [UserDump]) <- liftIO $
       decodeStrict <$> B.readFile (projectPath <.> "users")
@@ -450,7 +448,7 @@ writeOwnerCommentHandler clientId = do
 
 writeOwnerReplyHandler :: ClientId -> Snap ()
 writeOwnerReplyHandler clientId = do
-    (user, _, commentFolder) <- getFrequentParams 1 clientId
+    (user, _, commentFolder) <- getFrequentParams (NotInCommentables True) clientId
     let projectPath = take (length commentFolder - 9) commentFolder
     Just (currentUsers :: [UserDump]) <- liftIO $
       decodeStrict <$> B.readFile (projectPath <.> "users")
@@ -473,7 +471,7 @@ writeOwnerReplyHandler clientId = do
 
 writeReplyHandler :: ClientId -> Snap ()
 writeReplyHandler clientId = do
-    (user, mode, commentFolder) <- getFrequentParams 3 clientId
+    (user, mode, commentFolder) <- getFrequentParams InCommentables clientId
     Just (versionNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "versionNo"
     Just (lineNo' :: Int) <- fmap (read . BC.unpack) <$> getParam "lineNo"
     Just (comment' :: CommentDesc) <- (decodeStrict =<<) <$> getParam "comment"

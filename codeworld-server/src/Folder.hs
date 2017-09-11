@@ -59,8 +59,10 @@ folderRoutes clientId =
     , ("saveProject",   saveProjectHandler clientId)
     ]
 
-getFrequentParams :: Bool -> ClientId -> Snap (User, BuildMode, FilePath, Maybe ProjectId)
-getFrequentParams file clientId = do
+data ParamsGetType = IsFile | IsDirectory deriving (Eq)
+
+getFrequentParams :: ParamsGetType -> ClientId -> Snap (User, BuildMode, FilePath, Maybe ProjectId)
+getFrequentParams getType clientId = do
     user <- getUser clientId
     mode <- getBuildMode
     Just path' <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
@@ -69,12 +71,12 @@ getFrequentParams file clientId = do
                        (_, "commentables") -> "commentables" </> (joinPath $
                            map (dirBase . nameToDirId . T.pack) $ tail path')
                        (_, _) -> joinPath $ map (dirBase . nameToDirId . T.pack) path'
-    case file of
-        True -> do
+    case getType of
+        IsFile -> do
             Just name <- getParam "name"
             let projectId = nameToProjectId $ T.decodeUtf8 name
             return (user, mode, finalDir, Just projectId)
-        False -> return (user, mode, finalDir, Nothing)
+        IsDirectory -> return (user, mode, finalDir, Nothing)
 
 copyProjectHandler :: ClientId -> Snap ()
 copyProjectHandler clientId = do
@@ -134,7 +136,7 @@ copyProjectHandler clientId = do
 
 createFolderHandler :: ClientId -> Snap ()
 createFolderHandler clientId = do
-    (user, mode, finalDir, _) <- getFrequentParams False clientId
+    (user, mode, finalDir, _) <- getFrequentParams IsDirectory clientId
     case finalDir == "commentables" of
         True -> do
             modifyResponse $ setContentType "text/plain"
@@ -159,7 +161,7 @@ createFolderHandler clientId = do
 
 deleteFolderHandler :: ClientId -> Snap ()
 deleteFolderHandler clientId = do
-    (user, mode, finalDir, _) <- getFrequentParams False clientId
+    (user, mode, finalDir, _) <- getFrequentParams IsDirectory clientId
     res <- liftIO $ deleteFolderWithComments mode (userId user) finalDir
     case res of
         Left err -> do
@@ -170,7 +172,7 @@ deleteFolderHandler clientId = do
 
 deleteProjectHandler :: ClientId -> Snap ()
 deleteProjectHandler clientId = do
-    (user, mode, finalDir, Just projectId) <- getFrequentParams True clientId
+    (user, mode, finalDir, Just projectId) <- getFrequentParams IsFile clientId
     case length (splitDirectories finalDir) of
         x | (x /= 0) && ((splitDirectories finalDir) !! 0 == "commentables") -> do
             let file = userProjectDir mode (userId user) </>
@@ -182,7 +184,7 @@ deleteProjectHandler clientId = do
 
 listFolderHandler :: ClientId -> Snap ()
 listFolderHandler clientId = do
-    (user, mode, finalDir, _) <- getFrequentParams False clientId
+    (user, mode, finalDir, _) <- getFrequentParams IsDirectory clientId
     liftIO $ do
         ensureUserProjectDir mode (userId user)
 --       migrateUser $ userProjectDir mode (userId user)
@@ -202,7 +204,7 @@ listFolderHandler clientId = do
 
 loadProjectHandler :: ClientId -> Snap ()
 loadProjectHandler clientId = do
-    (user, mode, finalDir, Just projectId) <- getFrequentParams True clientId
+    (user, mode, finalDir, Just projectId) <- getFrequentParams IsFile clientId
     case length (splitDirectories finalDir) of
         x | (x /= 0) && ((splitDirectories finalDir) !! 0 == "commentables") -> do
             modifyResponse $ setContentType "text/plain"
@@ -270,7 +272,7 @@ moveProjectHandler clientId = do
 
 newProjectHandler :: ClientId -> Snap ()
 newProjectHandler clientId = do
-    (user, mode, finalDir, _) <- getFrequentParams False clientId
+    (user, mode, finalDir, _) <- getFrequentParams IsDirectory clientId
     case length (splitDirectories finalDir) of
         x | (x /= 0) && ((splitDirectories finalDir) !! 0 == "commentables") -> do
             modifyResponse $ setContentType "text/plain"
@@ -291,7 +293,7 @@ newProjectHandler clientId = do
 
 shareContentHandler :: ClientId -> Snap ()
 shareContentHandler clientId = do
-    (user, mode, finalDir, _) <- getFrequentParams False clientId
+    (user, mode, finalDir, _) <- getFrequentParams IsDirectory clientId
     case length (splitDirectories finalDir) of
         x | (x /= 0) && ((splitDirectories finalDir) !! 0 == "commentables") -> do
             modifyResponse $ setContentType "text/plain"
@@ -312,7 +314,7 @@ shareContentHandler clientId = do
 
 shareFolderHandler :: ClientId -> Snap ()
 shareFolderHandler clientId = do
-    (user, mode, finalDir, _) <- getFrequentParams False clientId
+    (user, mode, finalDir, _) <- getFrequentParams IsDirectory clientId
     case length (splitDirectories finalDir) of
         x | (x /= 0) && ((splitDirectories finalDir) !! 0 == "commentables") -> do
             modifyResponse $ setContentType "text/plain"
@@ -328,7 +330,7 @@ shareFolderHandler clientId = do
 
 saveProjectHandler :: ClientId -> Snap ()
 saveProjectHandler clientId = do
-    (user, mode, finalDir, _) <- getFrequentParams False clientId
+    (user, mode, finalDir, _) <- getFrequentParams IsDirectory clientId
     case length (splitDirectories finalDir) of
         x | (x /= 0) && ((splitDirectories finalDir) !! 0 == "commentables") -> do
             modifyResponse $ setContentType "text/plain"

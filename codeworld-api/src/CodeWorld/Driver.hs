@@ -350,8 +350,27 @@ initDebugMode getnode setactive getpicture highlight = do
                 True  -> Nothing
                 False -> Just $ pFromJSVal n
         in highlight select node
+    drawCB <- syncCallback2 ContinueAsync $ \c n -> do
+        let canvas = unsafeCoerce c :: Element
+            nodeId = pFromJSVal n
+        drawing <- pictureToDrawing <$> getpicture
+        let node = fromMaybe (Drawings []) $
+                fst <$> getDrawNode nodeId drawing
 
-    js_initDebugMode getnodeCB setactiveCB getpictureCB highlightCB
+        offscreenCanvas <- Canvas.create 500 500
+        setCanvasSize canvas canvas
+        setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+        screen <- js_getCodeWorldContext (canvasFromElement canvas)
+        rect <- getBoundingClientRect canvas
+        buffer <- setupScreenContext (elementFromCanvas offscreenCanvas) rect
+        drawFrame buffer (node <> coordinatePlaneDrawing)
+        Canvas.restore buffer
+        rect <- getBoundingClientRect canvas
+        cw <- ClientRect.getWidth rect
+        ch <- ClientRect.getHeight rect
+        js_canvasDrawImage screen (elementFromCanvas offscreenCanvas) 0 0 (round cw) (round ch)
+
+    js_initDebugMode getnodeCB setactiveCB getpictureCB highlightCB drawCB
 
 picToObj :: Picture -> IO JSVal
 picToObj = fmap fst . flip State.runStateT 0 . picToObj'
@@ -528,11 +547,12 @@ foreign import javascript unsafe "$3.isPointInPath($1,$2)"
 foreign import javascript unsafe "$3.isPointInStroke($1,$2)"
     js_isPointInStroke :: Double -> Double -> Canvas.Context -> IO Bool
 
-foreign import javascript unsafe "initDebugMode($1,$2,$3,$4)"
+foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
     js_initDebugMode :: Callback (JSVal -> IO JSVal) -> -- getNode
                         Callback (JSVal -> IO ()) ->    -- setActive
                         Callback (IO JSVal) ->          -- getPicture
                         Callback (JSVal -> JSVal -> IO ()) ->    -- highlightShape
+                        Callback (JSVal -> JSVal -> IO ()) -> -- drawNode
                         IO ()
 
 -----------------------------------------------------------------------------------

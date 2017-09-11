@@ -44,6 +44,9 @@
     //   position). A negative value indicates to stop highlighting or selecting.
     //   At most one shape may be highlighted and one shape selected at a time.
     let debugHighlightShape = null;
+    // debugDrawShape :: (Canvas, Int) -> ()
+    //  Draws the node with a coordinate plane in the background.
+    let debugDrawShape = null;
 
     let infobox = null;
     let cachedPic = null;
@@ -59,11 +62,12 @@
 
     // Globals
 
-    function initDebugMode(getNode, setActive, getPicture, highlightShape) {
+    function initDebugMode(getNode, setActive, getPicture, highlightShape, drawShape) {
         debugGetNode = getNode;
         debugSetActive = setActive;
         debugGetPicture = getPicture;
         debugHighlightShape = highlightShape;
+        debugDrawShape = drawShape;
 
         if (!available) {
             canvas = document.getElementById("screen");
@@ -114,7 +118,7 @@
         debugSetActive(true);
         cachedPic = debugGetPicture();
 
-        parent.initTreeDialog(cachedPic, debugHighlightShape);
+        parent.initTreeDialog(cachedPic, debugHighlightShape, debugDrawShape);
 
         window.debugActive = true;
         parent.updateUI()

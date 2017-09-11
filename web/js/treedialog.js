@@ -19,6 +19,7 @@
     let dialog = null,
         content = null,
         fullPic = null,
+        drawShape = null,
         highlight = null,
         marker = null,
         open = false;
@@ -337,11 +338,25 @@
         return span;
     }
 
+    function buildDrawingPreview(pic) {
+        let canvas = document.createElement("canvas");
+
+        canvas.width = 250;
+        canvas.height = 250;
+
+        window.requestAnimationFrame(function () {
+            drawShape(canvas, pic.id);
+        });
+
+        return canvas;
+    }
+
     // Globals
     
-    function initTreeDialog(pic, highlt) {
+    function initTreeDialog(pic, highlt, draw) {
         fullPic = pic;
         highlight = highlt;
+        drawShape = draw;
 
         let div = document.createElement("div");
         dialog = $(div).dialog({
@@ -388,6 +403,13 @@
         header.appendChild(headertitle);
         header.appendChild(buildFullDescription(picture));
         content.appendChild(header);
+
+        let drawing = document.createElement("div"),
+            drawingtitle = document.createElement("h2");
+        drawingtitle.appendChild( document.createTextNode("Preview") );
+        drawing.appendChild(drawingtitle);
+        drawing.appendChild(buildDrawingPreview(picture));
+        content.appendChild(drawing);
 
         let tree = document.createElement("div"),
             treetitle = document.createElement("h3");

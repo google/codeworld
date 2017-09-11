@@ -15,6 +15,7 @@
   limitations under the License.
 -}
 
+-- this separate module was required because of cyclic dependency between CommentUtil and CollaborationUtil
 module CommentFolder where
 
 import           Control.Monad

@@ -30,7 +30,6 @@ import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import qualified Data.Text.Encoding as T
 import           HIndent (reformat)
 import           HIndent.Types (defaultConfig)
 import qualified Network.SocketIO as SIO
@@ -87,7 +86,7 @@ site socketIOHandler clientId =
         (FB.funblockRoutes $ currToFB clientId)) <|>
         serveDirectory "web"
   where
-    currToFB clientId = case clientId of
+    currToFB clientId' = case clientId' of
         ClientId a -> FB.ClientId a
 
 compileHandler :: Snap ()

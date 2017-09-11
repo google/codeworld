@@ -1,1 +1,1 @@
-../../third_party/ot.js/ot-min.js
+../../build/ot.js/dist/ot-min.js

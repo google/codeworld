@@ -43,8 +43,7 @@ run codeworld-api   cabal haddock --hoogle
 
 # Build codeworld-server from this project.
 
-run .  cabal_install ./third_party/ot.hs \
-                     ./funblocks-server \
+run .  cabal_install ./funblocks-server \
                      ./codeworld-error-sanitizer \
                      ./codeworld-compiler \
                      ./codeworld-server \

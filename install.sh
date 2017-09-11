@@ -173,6 +173,16 @@ run . ghcjs-boot --dev --ghcjs-boot-dev-branch ghc-8.0 --shims-dev-branch ghc-8.
 
 run $BUILD  rm -rf downloads
 
+# Install ot.hs
+
+run $BUILD  git clone https://github.com/Operational-Transformation/ot.hs
+run $BUILD  cabal install --force-reinstalls --global --prefix=$BUILD --allow-newer ./ot.hs
+run $BUILD  rm -rf ot.hs
+
+# Install ot.js
+
+run $BUILD  git clone https://github.com/Operational-Transformation/ot.js
+
 # Install and build CodeMirror editor.
 
 run $BUILD            git clone https://github.com/codemirror/CodeMirror.git

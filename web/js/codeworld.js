@@ -737,6 +737,8 @@ function compile() {
     if (document.getElementById("runner").contentWindow.debugActive)
         document.getElementById("runner").contentWindow.stopDebugMode();
 
+    destroyTreeDialog();
+
     var src = window.codeworldEditor.getValue();
     var data = new FormData();
     data.append('source', src);

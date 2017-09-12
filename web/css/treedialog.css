@@ -44,3 +44,7 @@
 .treedialog-piclink {
     color: black;
 }
+
+.treedialog .piclink-selected {
+    background: yellow;
+}

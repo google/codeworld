@@ -23,6 +23,7 @@ import qualified Data.Text.IO as T
 import qualified Network.SocketIO as SIO
 import           Network.EngineIO.Snap (snapAPI)
 import           Snap.Core
+import qualified Snap.CORS as CORS
 import           Snap.Http.Server
 import           System.Directory
 
@@ -52,7 +53,7 @@ main = do
         setErrorLog  (ConfigFileLog "log/collab-error.log") $
         setAccessLog (ConfigFileLog "log/collab-access.log") $
         mempty
-    httpServe config $
+    httpServe config $ CORS.applyCORS CORS.defaultOptions $
         ifTop (gameStats gameServerState) <|>
         route [ ("gameserver", gameServer gameServerState)
               , ("socket.io" , socketIOHandler)

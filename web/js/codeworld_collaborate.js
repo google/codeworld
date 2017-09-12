@@ -229,7 +229,7 @@ function initializeCollaboration() {
     }
     var id_token = auth2.currentUser.get().getAuthResponse().id_token;
     var url = window.location.hostname +
-              ((window.location.port == '') ? '' : (':' + 9160)) +
+              ((window.location.port == '') ? ':9160' : (':9160')) +
               window.location.pathname +
               '?id_token=' + id_token +
               '&mode=' + window.buildMode +

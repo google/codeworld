@@ -27,6 +27,7 @@ Executable codeworld-collab-server
                        websockets == 0.9.*,
                        websockets-snap == 0.10.*,
                        snap-core == 1.0.*,
+                       snap-cors,
                        snap-server == 1.0.*,
                        socket-io,
                        stm,

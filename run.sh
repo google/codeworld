@@ -23,5 +23,5 @@ rm -rf data/*/user/???/*.err.txt
 
 mkdir -p log
 
-codeworld-game-server +RTS -T &
+codeworld-collab-server +RTS -T &
 run .  codeworld-server -p 8080

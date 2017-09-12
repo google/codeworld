@@ -1,9 +1,4 @@
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 {-
@@ -25,30 +20,14 @@
 module Collaboration (
     -- routes for simultaneous editing and adding user for collaboration into the project
     collabRoutes,
-
-    -- initial collaborative server
-    initCollabServer,
-
-    -- handler to handle socket connections and requests over sockets
-    collabServer
     ) where
 
-import qualified Control.Concurrent.STM as STM
-import           Control.Monad.State.Strict (StateT)
 import           Control.Monad.Trans
-import           Control.Monad.Trans.Reader (ReaderT)
-import qualified Control.OperationalTransformation.Selection as Sel
-import qualified Control.OperationalTransformation.Server as OTS
 import           Data.Aeson
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
-import qualified Data.HashMap.Strict as HM
-import           Data.Maybe (fromJust)
-import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import           Data.Time.Clock
-import qualified Network.SocketIO as SIO
 import           Snap.Core
 import           System.FilePath
 
@@ -57,12 +36,11 @@ import DataUtil
 import Model
 import SnapUtil
 
-collabRoutes :: Snap () -> ClientId -> [(B.ByteString, Snap ())]
-collabRoutes socketIOHandler clientId =
+collabRoutes :: ClientId -> [(B.ByteString, Snap ())]
+collabRoutes clientId =
     [ ("addToCollaborate",  addToCollaborateHandler clientId)
     , ("collabShare",       collabShareHandler clientId)
     , ("listCurrentOwners", listCurrentOwnersHandler clientId)
-    , ("socket.io", socketIOHandler)
     ]
 
 data ParamsGetType = GetFromHash | NotInCommentables deriving (Eq)
@@ -125,132 +103,3 @@ listCurrentOwnersHandler clientId = do
     let currentOwners = map (T.unpack . uuserIdent) $ filter (\u -> utype u == "owner") currentUsers
     modifyResponse $ setContentType "application/json"
     writeLBS . encode $ currentOwners
-
--- Simultaneous Coding Handlers
-
-initCollabServer :: IO CollabServerState
-initCollabServer = do
-    started <- getCurrentTime
-    collabProjects <- STM.newTVarIO HM.empty
-    return CollabServerState{..}
-
-initCollaborationHandler :: CollabServerState -> ClientId -> Snap (Text, Text, CollabId)
-initCollaborationHandler state clientId = do
-    (user, _, filePath) <- getFrequentParams NotInCommentables clientId
-    collabHashPath <- liftIO $ BC.unpack <$> B.readFile filePath
-    let collabHash = take (length collabHashPath - 3) . takeFileName $ collabHashPath
-    Just (currentUsers :: [UserDump]) <- liftIO $ decodeStrict <$>
-      B.readFile (collabHashPath <.> "users")
-    let userIdent' = uuserIdent $ (filter (\x -> uuserId x == userId user) currentUsers) !! 0
-    Just (project :: Project) <- liftIO $ decodeStrict <$>
-      B.readFile collabHashPath
-    liftIO $ addNewCollaborator state (userId user) userIdent' project $ CollabId . T.pack $ collabHash
-    return ((userId user), userIdent', CollabId . T.pack $ collabHash)
-
-addNewCollaborator :: CollabServerState -> Text -> Text -> Project -> CollabId -> IO ()
-addNewCollaborator state userId' userIdent' project collabHash = do
-    let collabUser = CollabUserState userId' userIdent' mempty
-    STM.atomically $ do
-        hm <- STM.readTVar $ collabProjects state
-        case HM.lookup collabHash hm of
-            Just collabProjectTV -> do
-                collabProject <- STM.readTVar collabProjectTV
-                case userId' `elem` (map suserId $ users collabProject) of
-                    True -> do
-                        let collabProject' = collabProject
-                                        { users = map (\x -> if suserId x == userId'
-                                                                 then collabUser
-                                                                 else x) $ users collabProject
-                                        }
-                        collabProjectTV' <- STM.newTVar collabProject'
-                        STM.modifyTVar (collabProjects state) $ \x -> HM.adjust (\_ -> collabProjectTV') collabHash x
-                    False -> do
-                        let collabProject' = collabProject
-                                        { totalUsers = totalUsers collabProject + 1
-                                        , users      = collabUser : users collabProject
-                                        }
-                        collabProjectTV' <- STM.newTVar collabProject'
-                        STM.modifyTVar (collabProjects state) $ \x -> HM.adjust (\_ -> collabProjectTV') collabHash x
-            Nothing -> do
-                let collabProject = CollabProject
-                                { totalUsers  = 1
-                                , collabKey   = collabHash
-                                , collabState = OTS.initialServerState (projectSource project)
-                                , users       = [collabUser]
-                                }
-                collabProjectTV <- STM.newTVar collabProject
-                STM.modifyTVar (collabProjects state) $ \x -> HM.insert collabHash collabProjectTV x
-
-cleanUp :: CollabServerState -> Text -> STM.TVar CollabProject -> STM.STM ()
-cleanUp state userId' collabProjectTV = do
-    collabProject <- STM.readTVar collabProjectTV
-    case null (filter ((/= userId') . suserId) $ users collabProject) of
-        True -> do
-            STM.modifyTVar collabProjectTV (\collabProject' -> collabProject'
-                                                        { totalUsers = 0
-                                                        , users = []
-                                                        })
-            let collabHash = collabKey collabProject
-            STM.modifyTVar (collabProjects state) $ HM.delete collabHash
-        False -> do
-            STM.modifyTVar collabProjectTV (\collabProject' -> collabProject'
-                                                        { totalUsers = totalUsers collabProject' - 1
-                                                        , users = filter ((/= userId') . suserId) $ users collabProject'
-                                                        })
-
-getCollabProject :: CollabServerState -> CollabId -> STM.STM (STM.TVar CollabProject)
-getCollabProject state collabHash = do
-    hm <- STM.readTVar $ collabProjects state
-    return $ fromJust . HM.lookup collabHash $ hm
-
-collabServer :: CollabServerState -> ClientId -> StateT SIO.RoutingTable (ReaderT SIO.Socket Snap) ()
-collabServer state clientId = do
-    (userId', userIdent', collabHash) <- liftSnap $ initCollaborationHandler state clientId
-    let userHash = hashToId "U" . BC.pack $ (show userId') ++ (show . unCollabId $ collabHash)
-    SIO.broadcastJSON "set_name" [toJSON userHash, toJSON userIdent']
-    SIO.broadcast "add_user" userIdent'
-    SIO.emitJSON "logged_in" []
-    currentUsers' <- liftIO . STM.atomically $ do
-        collabProjectTV <- getCollabProject state collabHash
-        (\x -> map suserIdent $ users x) <$> STM.readTVar collabProjectTV
-    collabProjectTV' <- liftIO . STM.atomically $ getCollabProject state collabHash
-    OTS.ServerState rev' doc _ <- liftIO $ collabState <$> STM.readTVarIO collabProjectTV'
-    SIO.emit "doc" $ object
-        [ "str"      .= doc
-        , "revision" .= rev'
-        , "clients"  .= currentUsers'
-        ]
-
-    SIO.on "operation" $ \rev op (sel :: Sel.Selection) -> do
-        res <- liftIO . STM.atomically $ do
-            collabProjectTV <- getCollabProject state collabHash
-            serverState <- collabState <$> STM.readTVar collabProjectTV
-            case OTS.applyOperation serverState rev op sel of
-                Left err -> return $ Left err
-                Right (op', sel', serverState') -> do
-                    STM.modifyTVar collabProjectTV (\collabProject -> collabProject { collabState = serverState' })
-                    STM.modifyTVar (collabProjects state) $ \x -> HM.adjust (\_ -> collabProjectTV) collabHash x
-                    return $ Right (op', sel')
-        case res of
-            Left _ -> return ()
-            Right (op', sel') -> do
-                SIO.emitJSON "ack" []
-                SIO.broadcastJSON "operation" [toJSON userHash, toJSON op', toJSON sel']
-
-    SIO.on "selection" $ \sel -> do
-        liftIO . STM.atomically $ do
-            collabProjectTV <- getCollabProject state collabHash
-            currentUsers <- users <$> STM.readTVar collabProjectTV
-            let currentUsers'' = map (\x -> if ((/= userId') . suserId) x
-                                               then x
-                                               else x{ userSelection = sel }) currentUsers
-            STM.modifyTVar collabProjectTV (\collabProject -> collabProject { users = currentUsers'' })
-            STM.modifyTVar (collabProjects state) $ \x -> HM.adjust (\_ -> collabProjectTV) collabHash x
-        SIO.broadcastJSON "selection" [toJSON userHash, toJSON sel]
-
-    SIO.appendDisconnectHandler $ do
-        liftIO . STM.atomically $ do
-            collabProjectTV <- getCollabProject state collabHash
-            cleanUp state userId' collabProjectTV
-        SIO.broadcast "client_left" userHash
-        SIO.broadcast "remove_user" userIdent'

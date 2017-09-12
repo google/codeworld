@@ -1,5 +1,3 @@
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-
@@ -20,22 +18,14 @@
 
 module CollaborationUtil where
 
-import qualified Control.Concurrent.STM as STM
 import           Control.Monad
-import           Control.OperationalTransformation.Selection (Selection)
-import           Control.OperationalTransformation.Server (ServerState)
-import           Control.OperationalTransformation.Text (TextOperation)
 import           Data.Aeson
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as LB
-import           Data.Hashable (Hashable)
-import qualified Data.HashMap.Strict as HM
 import           Data.Text (Text)
 import qualified Data.Text as T
-import           Data.Time.Clock
-import           GHC.Generics (Generic)
 import           System.Directory
 import           System.FilePath
 
@@ -43,33 +33,7 @@ import CommentUtil
 import DataUtil
 import Model
 
-data CollabServerState = CollabServerState
-    { collabProjects :: STM.TVar CollabProjects
-    , started        :: UTCTime
-    }
-
-type CollabProjects = HM.HashMap CollabId (STM.TVar CollabProject)
-
-data CollabProject = CollabProject
-    { totalUsers  :: !Int
-    , collabKey   :: CollabId
-    , collabState :: ServerState Text TextOperation
-    , users       :: [CollabUserState]
-    }
-
-data CollabUserState = CollabUserState
-    { suserId       :: !Text
-    , suserIdent    :: !Text
-    , userSelection :: !Selection
-    }
-
-instance ToJSON CollabUserState where
-    toJSON (CollabUserState _ userIdent' sel) =
-      object $ [ "name" .= userIdent' ] ++ (if sel == mempty then [] else [ "selection" .= sel ])
-
-newtype CollabId = CollabId { unCollabId :: Text } deriving (Eq, Generic)
-
-instance Hashable CollabId
+newtype CollabId = CollabId { unCollabId :: Text } deriving (Eq)
 
 collabHashRootDir :: BuildMode -> FilePath
 collabHashRootDir (BuildMode m) = "data" </> m </> "projectContents"

@@ -32,16 +32,14 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import           HIndent (reformat)
 import           HIndent.Types (defaultConfig)
-import qualified Network.SocketIO as SIO
-import           Network.EngineIO.Snap (snapAPI)
 import           Snap.Core
-import qualified Snap.Http.Server as Snap
+import           Snap.Http.Server (quickHttpServe)
 import           Snap.Util.FileServe
 import           System.Directory
 import           System.FilePath
 
-import Collaboration
-import Comment
+import           Collaboration
+import           Comment
 import           DataUtil
 import           Folder
 import qualified Funblocks as FB
@@ -61,16 +59,10 @@ main = do
             return (ClientId (Just (T.strip txt)))
         False -> return (ClientId Nothing)
 
-    state <- initCollabServer
-    socketIOHandler <- SIO.initialize snapAPI (collabServer state clientId)
-    config <- Snap.commandLineConfig $
-        Snap.setErrorLog  (Snap.ConfigFileLog "log/collab-error.log") $
-        Snap.setAccessLog (Snap.ConfigFileLog "log/collab-access.log") $
-        mempty
-    Snap.httpServe config $ (processBody >> site socketIOHandler clientId) <|> site socketIOHandler clientId
+    quickHttpServe $ (processBody >> site clientId) <|> site clientId
 
-site :: Snap () -> ClientId -> Snap ()
-site socketIOHandler clientId =
+site :: ClientId -> Snap ()
+site clientId =
     route ([
         ("compile",     compileHandler),
         ("loadSource",  loadSourceHandler),
@@ -80,7 +72,7 @@ site socketIOHandler clientId =
         ("haskell",     serveFile "web/env.html"),
         ("indent",      indentHandler)
       ] ++
-        (collabRoutes socketIOHandler clientId) ++
+        (collabRoutes clientId) ++
         (commentRoutes clientId) ++
         (folderRoutes clientId) ++
         (FB.funblockRoutes $ currToFB clientId)) <|>

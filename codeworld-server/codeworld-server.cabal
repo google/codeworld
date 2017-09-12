@@ -24,24 +24,18 @@ Executable codeworld-server
     cryptonite,
     data-default,
     directory,
-    engine-io,
-    engine-io-snap,
     filepath,
     filesystem-trees,
     funblocks-server,
-    hashable,
     hindent >= 5 && < 5.2.3,
     http-conduit,
     memory,
     mtl,
-    ot,
     process,
     regex-compat,
     regex-tdfa,
     snap-core,
     snap-server,
-    socket-io,
-    stm,
     temporary,
     text,
     time,
@@ -51,3 +45,26 @@ Executable codeworld-server
 
   Ghc-options: -threaded -Wall -funbox-strict-fields -O2
                -fno-warn-unused-do-bind
+
+Library
+  Hs-source-dirs:  src
+  Exposed-modules: DataUtil,
+                   Model,
+                   SnapUtil
+  Build-Depends:   aeson,
+                   base,
+                   base64-bytestring,
+                   bytestring,
+                   cryptonite,
+                   data-default,
+                   directory,
+                   http-conduit,
+                   filesystem-trees,
+                   filepath,
+                   mtl,
+                   snap-core,
+                   unix,
+                   text
+
+  Exposed:         True
+  Ghc-options:     -O2

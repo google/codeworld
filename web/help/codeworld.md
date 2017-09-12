@@ -6,7 +6,7 @@ can create drawings, animations, and even single-player and multi-player video g
 The programming language used is a variation of [Haskell](http://haskell.org), but
 you can think of it as just talking to the computer using mathematics.
 
-This is the CodeWorld Guide, which will get you started.  Click outside the guide
+This is the CodeWorld Guide; it will get you started.  Click outside the guide
 to start programming.  The *Guide* button at the bottom of the screen will get you
 back here.
 

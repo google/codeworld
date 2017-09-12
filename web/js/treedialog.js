@@ -207,6 +207,8 @@
             title: "Picture Browser",
             closeText: "",
             autoOpen: false,
+            height: 650,
+            width: 650,
             close: function () {
                 open = false;
                 highlight(true,-1);

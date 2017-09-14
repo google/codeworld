@@ -15,31 +15,41 @@
  */
 
 function addMessage(err, str) {
-  if (window.parent && window.parent.addToMessage) {
-    var message = window.parent.addToMessage(str);
+  // Catch exceptions to protect against cross-domain access errors.
+  try {
+    if (window.parent && window.parent.addToMessage) {
+      var message = window.parent.addToMessage(str);
 
-    if (err) {
-      var message = window.parent.document.getElementById('message');
-      message.classList.add('error');
+      if (err) {
+        var message = window.parent.document.getElementById('message');
+        message.classList.add('error');
+      }
+
+      return;
     }
-  } else {
-    console.log(str);
-  }
+  } catch (e) {}
+
+  console.log(str);
 }
 
 function showCanvas() {
-  if (!window.parent) {
-    return;
-  }
+  // Catch exceptions to protect against cross-domain access errors.
+  // If the frame is cross-domain, then it's embedded, in which case
+  // there is no need to show it.
+  try {
+    if (!window.parent) {
+      return;
+    }
 
-  var runner = window.parent.document.getElementById('runner');
-  if (!runner) {
-    return;
-  }
+    var runner = window.parent.document.getElementById('runner');
+    if (!runner) {
+      return;
+    }
 
-  runner.style.display = '';
-  runner.focus();
-  runner.contentWindow.focus();
+    runner.style.display = '';
+    runner.focus();
+    runner.contentWindow.focus();
+  } catch (e) {}
 }
 
 function start() {

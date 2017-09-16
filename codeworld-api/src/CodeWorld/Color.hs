@@ -84,8 +84,8 @@ rose       = fromHSL (11/6 * pi) 0.75 0.5
 
 -- Other common colors and color names
 brown      = fromHSL (1/6   * pi) 0.5  0.5
-purple     = fromHSL (1.556 * pi) 0.75 0.5
-pink       = fromHSL (23/12 * pi) 0.75 0.75
+purple     = violet
+pink       = lighter 0.25 rose
 
 mixed :: Color -> Color -> Color
 mixed (RGBA r1 g1 b1 a1) (RGBA r2 g2 b2 a2)

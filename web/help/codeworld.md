@@ -6,7 +6,7 @@ can create drawings, animations, and even single-player and multi-player video g
 The programming language used is a variation of [Haskell](http://haskell.org), but
 you can think of it as just talking to the computer using mathematics.
 
-This is the CodeWorld Guide; it will get you started.  Click outside the guide
+This is the CodeWorld Guide, which will help get you started.  Click outside the guide
 to start programming.  The *Guide* button at the bottom of the screen will get you
 back here.
 
@@ -19,9 +19,10 @@ To get an idea what you can do in CodeWorld, you might want to check out the
 Tips for using this guide
 -------------------------
 
-* If you feel the urge to play around with something and try new things, please
-  do!  It won't do much good to just read.  You have to try things to learn.
-* If you see a blue box, you can click it to copy the code and try it out.
+* This guide works best if you try things; it won't do much good to just read. If you
+  feel the urge to play around with something, please do! You can always come back after.
+* Many of the exampes in this guide can be copied into the CodeWorld editor and run as
+  is! If you see a blue box, you can click it to copy the code and try it out.
 
 Drawing With CodeWorld
 ======================
@@ -39,7 +40,7 @@ This is a definition of "wheel": it says that "wheel" means a circle with a radi
 2.  *Radius* just means the distance from the center of the circle to the edge.
 
 In CodeWorld, you do absolutely everything by naming things.  We call the names (like
-"wheel" in that example) *variables*.  So, earlier we defined a *variable* called
+"wheel") *variables*.  So in this example, we defined a *variable* called
 "wheel". You will define a lot of variables in CodeWorld.
 
 ### Defining program ###

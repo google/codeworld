@@ -42,7 +42,8 @@ Library
                        ghcjs-prim,
                        codeworld-game-api,
                        codeworld-prediction,
-                       ghcjs-dom             >= 0.8 && < 0.9
+                       ghcjs-dom             >= 0.8 && < 0.9,
+                       transformers
   else
     Build-depends:     blank-canvas          >= 0.6 && < 0.7,
                        time                  >= 1.6.0 && < 1.9

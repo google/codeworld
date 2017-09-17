@@ -51,7 +51,7 @@ import           Control.Monad
 import           Control.Monad.Trans (liftIO)
 import           Data.Char (chr)
 import           Data.List (zip4, find)
-import           Data.Maybe (fromMaybe, mapMaybe)
+import           Data.Maybe (fromMaybe, mapMaybe, isNothing)
 import           Data.Monoid
 import           Data.Serialize
 import           Data.Serialize.Text
@@ -72,6 +72,7 @@ import           System.Random
 
 import           CodeWorld.Prediction
 import           CodeWorld.Message
+import qualified Control.Monad.Trans.State as State
 import           Data.Hashable
 import           Data.IORef
 import           Data.JSString.Text
@@ -159,10 +160,42 @@ unsafeCollaborationOf :: Int
 trace :: Text -> a -> a
 
 --------------------------------------------------------------------------------
--- Draw state.  An affine transformation matrix, plus a Bool indicating whether
--- a color has been chosen yet.
+-- A Drawing is an intermediate and simpler representation of a Picture, suitable
+-- for drawing. A drawing does not contain unnecessary metadata like CallStacks.
+-- The drawer is specific to the platform.
 
+data Drawing = Shape Drawer
+             | Transformation (DrawState -> DrawState) Drawing
+             | Drawings [Drawing]
+
+instance Monoid Drawing where
+    mempty                  = Drawings []
+    mappend a (Drawings bs) = Drawings (a:bs)
+    mappend a b             = Drawings [a,b]
+    mconcat                 = Drawings
+
+-- A DrawState is an affine transformation matrix, plus a Bool indicating whether
+-- a color has been chosen yet.
 type DrawState = (Double, Double, Double, Double, Double, Double, Maybe Color)
+
+-- A NodeId a unique id for each node in a Picture of Drawing, chosen by the order
+-- the node appears in DFS. When a Picture is converted to a drawing the NodeId's of
+-- corresponding nodes are shared. Always >=0.
+type NodeId = Int
+
+pictureToDrawing :: Picture -> Drawing
+pictureToDrawing (Polygon _ pts s)    = Shape $ polygonDrawer pts s
+pictureToDrawing (Path _ pts w c s)   = Shape $ pathDrawer pts w c s
+pictureToDrawing (Sector _ b e r)     = Shape $ sectorDrawer b e r
+pictureToDrawing (Arc _ b e r w)      = Shape $ arcDrawer b e r w
+pictureToDrawing (Text _ sty fnt txt) = Shape $ textDrawer sty fnt txt
+pictureToDrawing (Logo  _)            = Shape $ logoDrawer
+pictureToDrawing (CoordinatePlane _)  = Shape $ coordinatePlaneDrawer
+pictureToDrawing (Color _ col p)      = Transformation (setColorDS col) $ pictureToDrawing p
+pictureToDrawing (Translate _ x y p)  = Transformation (translateDS x y) $ pictureToDrawing p
+pictureToDrawing (Scale _ x y p)      = Transformation (scaleDS x y) $ pictureToDrawing p
+pictureToDrawing (Rotate _ r p)       = Transformation (rotateDS r) $ pictureToDrawing p
+pictureToDrawing (Pictures ps)        = Drawings $ pictureToDrawing <$> ps
 
 initialDS :: DrawState
 initialDS = (1, 0, 0, 1, 0, 0, Nothing)
@@ -189,6 +222,31 @@ setColorDS _ (a,b,c,d,e,f,Just col) = (a,b,c,d,e,f,Just col)
 
 getColorDS :: DrawState -> Maybe Color
 getColorDS (a,b,c,d,e,f,col) = col
+
+
+polygonDrawer :: [Point] -> Bool -> Drawer
+pathDrawer :: [Point] -> Double -> Bool -> Bool -> Drawer
+sectorDrawer :: Double -> Double -> Double -> Drawer
+arcDrawer :: Double -> Double -> Double -> Double -> Drawer
+textDrawer :: TextStyle -> Font -> Text -> Drawer
+logoDrawer :: Drawer
+coordinatePlaneDrawer :: Drawer
+
+coordinatePlaneDrawing :: Drawing
+coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
+    where
+        xline y     = thickPath 0.01 [(-10, y), (10, y)]
+        xaxis       = thickPath 0.03 [(-10, 0), (10, 0)]
+        axes        = xaxis <> rotated (pi/2) xaxis
+        xguidelines = pictures [ xline k | k <- [-10, -9 .. 10] ]
+        guidelines  = xguidelines <> rotated (pi/2) xguidelines
+        numbers = xnumbers <> ynumbers
+        xnumbers = pictures
+            [ translated (fromIntegral k) 0.3 (scaled 0.5 0.5 (text (pack (show k))))
+              | k <- [-9, -8 .. 9], k /= 0 ]
+        ynumbers = pictures
+            [ translated 0.3 (fromIntegral k) (scaled 0.5 0.5 (text (pack (show k))))
+              | k <- [-9, -8 .. 9], k /= 0 ]
 
 --------------------------------------------------------------------------------
 -- GHCJS implementation of drawing
@@ -261,69 +319,173 @@ drawCodeWorldLogo ctx ds x y w h = do
 
 -- Debug Mode logic
 
--- | Register callback with initDebugMode allowing users to
--- | inspect picture.
-inspect :: Picture -> IO ()
-inspect = initDebugMode (\_ -> return ()) . handlePointRequest . return
+inspectStatic :: Picture -> IO ()
+inspectStatic pic = inspect (return pic) (\_ -> return ()) (\_ _ -> return ())
 
-inspectFromIO :: (Bool -> IO ()) -> IO Picture -> IO ()
-inspectFromIO activeHandler = initDebugMode activeHandler . handlePointRequest
+inspect :: IO Picture -> (Bool -> IO ()) -> (Bool -> Maybe NodeId -> IO ()) -> IO ()
+inspect getPic handleActive highlight =
+    initDebugMode (handlePointRequest getPic) handleActive getPic highlight
 
-handlePointRequest :: IO Picture -> JSVal -> IO JSVal
-handlePointRequest getPic argsJS = do
-    pic <- getPic
-    x <- fmap pFromJSVal $ getProp "x" args
-    y <- fmap pFromJSVal $ getProp "y" args
-    stack <- findTopPictureFromPoint (x,y) pic
-    pics <- case stack of
-        Nothing -> return nullRef
-        Just s  -> fmap unsafeCoerce $ picsToArr s
-    ret <- create
-    setProp "stack" pics ret
-    return $ unsafeCoerce ret
-    where
-        -- https://github.com/ghcjs/ghcjs-base/issues/53
-        args = unsafeCoerce argsJS :: Object
+handlePointRequest :: IO Picture -> Point -> IO (Maybe NodeId)
+handlePointRequest getPic pt = do
+    drawing <- pictureToDrawing <$> getPic
+    findTopShapeFromPoint pt drawing
 
-initDebugMode :: (Bool -> IO ()) -> (JSVal -> IO JSVal) -> IO ()
-initDebugMode activeHandler ptHandler = do
-    activeCallback <- syncCallback1 ContinueAsync (activeHandler . pFromJSVal)
-    ptCallback <- syncCallback1' ptHandler
-    js_initDebugMode ptCallback activeCallback
+initDebugMode :: (Point -> IO (Maybe NodeId)) ->
+                 (Bool -> IO ()) ->
+                 IO Picture ->
+                 (Bool -> Maybe NodeId -> IO ()) ->
+                 IO ()
+initDebugMode getnode setactive getpicture highlight = do
+    getnodeCB <- syncCallback1' $ \pointJS -> do
+        let obj = unsafeCoerce pointJS
+        x <- pFromJSVal <$> getProp "x" obj
+        y <- pFromJSVal <$> getProp "y" obj
+        pToJSVal . fromMaybe (-1) <$> getnode (x,y)
+    setactiveCB <- syncCallback1 ContinueAsync $ setactive . pFromJSVal
+    getpictureCB <- syncCallback' $ getpicture >>= picToObj
+    highlightCB <- syncCallback2 ContinueAsync $ \t n ->
+        let select = pFromJSVal t
+            node = case ((pFromJSVal n)::Int)<0 of
+                True  -> Nothing
+                False -> Just $ pFromJSVal n
+        in highlight select node
+    drawCB <- syncCallback2 ContinueAsync $ \c n -> do
+        let canvas = unsafeCoerce c :: Element
+            nodeId = pFromJSVal n
+        drawing <- pictureToDrawing <$> getpicture
+        let node = fromMaybe (Drawings []) $
+                fst <$> getDrawNode nodeId drawing
 
-picsToArr :: [Picture] -> IO Array.JSArray
-picsToArr = fmap Array.fromList . sequence . fmap picToObj
+        offscreenCanvas <- Canvas.create 500 500
+        setCanvasSize canvas canvas
+        setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+        screen <- js_getCodeWorldContext (canvasFromElement canvas)
+        rect <- getBoundingClientRect canvas
+        buffer <- setupScreenContext (elementFromCanvas offscreenCanvas) rect
+        drawFrame buffer (node <> coordinatePlaneDrawing)
+        Canvas.restore buffer
+        rect <- getBoundingClientRect canvas
+        cw <- ClientRect.getWidth rect
+        ch <- ClientRect.getHeight rect
+        js_canvasDrawImage screen (elementFromCanvas offscreenCanvas) 0 0 (round cw) (round ch)
+
+    js_initDebugMode getnodeCB setactiveCB getpictureCB highlightCB drawCB
 
 picToObj :: Picture -> IO JSVal
-picToObj pic = case getPictureSrc pic of
-        Just (name, src) -> do
-            obj <- create
-            srcLoc <- srcToObj src
-            setProp "srcLoc" srcLoc obj
-            setProp "name"   (pToJSVal name)   obj
-            return $ unsafeCoerce obj
-        Nothing -> return nullRef
+picToObj = fmap fst . flip State.runStateT 0 . picToObj'
 
-srcToObj :: SrcLoc -> IO JSVal
-srcToObj src = do
-    obj <- create
-    setProp "package"   package   obj
-    setProp "module"    module'   obj
-    setProp "file"      file      obj
-    setProp "startLine" startLine obj
-    setProp "startCol"  startCol  obj
-    setProp "endLine"   endLine   obj
-    setProp "endCol"    endCol    obj
-    return $ unsafeCoerce obj
+picToObj' :: Picture -> State.StateT Int IO JSVal
+picToObj' pic = case pic of
+    Polygon cs pts smooth -> do
+        obj <- init "polygon"
+        ptsJS <- pointsToArr pts
+        setProps [("points", ptsJS),
+                  ("smooth", pToJSVal smooth)] obj
+        retVal obj
+    Path cs pts w closed smooth -> do
+        obj <- init "path"
+        ptsJS <- pointsToArr pts
+        setProps [("points", ptsJS),
+                  ("width", pToJSVal w),
+                  ("closed", pToJSVal closed),
+                  ("smooth", pToJSVal smooth)] obj
+        retVal obj
+    Sector cs b e r -> do
+        obj <- init "sector"
+        setProps [("startAngle", pToJSVal b),
+                  ("endAngle", pToJSVal e),
+                  ("radius", pToJSVal r)] obj
+        retVal obj
+    Arc cs b e r w -> do
+        obj <- init "arc"
+        setProps [("startAngle", pToJSVal b),
+                  ("endAngle", pToJSVal e),
+                  ("radius", pToJSVal r),
+                  ("width", pToJSVal w)] obj
+        retVal obj
+    Text cs style font txt -> do
+        obj <- init "text"
+        setProps [("font", pToJSVal $ fontString style font),
+                  ("text", pToJSVal txt)] obj
+        retVal obj
+    Color cs (RGBA r g b a) p -> do
+        obj <- init "color"
+        picJS <- picToObj' p
+        setProps [("picture", picJS),
+                  ("red", pToJSVal r),
+                  ("green", pToJSVal g),
+                  ("blue", pToJSVal b),
+                  ("alpha", pToJSVal a)] obj
+        retVal obj
+    Translate cs x y p -> do
+        obj <- init "translate"
+        picJS <- picToObj' p
+        setProps [("picture", picJS),
+                  ("x", pToJSVal x),
+                  ("y", pToJSVal y)] obj
+        retVal obj
+    Scale cs x y p -> do
+        obj <- init "scale"
+        picJS <- picToObj' p
+        setProps [("picture", picJS),
+                  ("x", pToJSVal x),
+                  ("y", pToJSVal y)] obj
+        retVal obj
+    Rotate cs angle p -> do
+        obj <- init "rotate"
+        picJS <- picToObj' p
+        setProps [("picture", picJS),
+                  ("angle", pToJSVal angle)] obj
+        retVal obj
+    Pictures ps -> do
+        obj <- init "pictures"
+        arr <- liftIO $ Array.create
+        let push = liftIO . flip Array.push arr
+        mapM (\p -> picToObj' p >>= push) ps
+        setProps [("pictures", unsafeCoerce arr)] obj
+        retVal obj
+    Logo cs -> init "logo" >>= retVal
+    CoordinatePlane cs -> init "coordinatePlane" >>= retVal
     where
-        package   = pToJSVal $ srcLocPackage src
-        module'   = pToJSVal $ srcLocModule src
-        file      = pToJSVal $ srcLocFile src
-        startLine = pToJSVal $ srcLocStartLine src
-        startCol  = pToJSVal $ srcLocStartCol src
-        endLine   = pToJSVal $ srcLocEndLine src
-        endCol    = pToJSVal $ srcLocEndCol src
+        incId :: State.StateT Int IO Int
+        incId = do
+            currentId <- State.get
+            State.put (currentId + 1)
+            return currentId
+        init :: JSString -> State.StateT Int IO Object
+        init tp = do
+            obj <- liftIO create
+            liftIO $ setProp "type" (pToJSVal tp) obj
+            id <- incId
+            liftIO $ setProp "id" (pToJSVal id) obj
+            liftIO $ setCallInfo pic obj
+            return obj
+        objToJSVal = unsafeCoerce :: Object -> JSVal
+        retVal :: Object -> State.StateT Int IO JSVal
+        retVal = return . objToJSVal
+        pointsToArr :: [Point] -> State.StateT Int IO JSVal
+        pointsToArr pts = liftIO $ do
+            let go [] _ = return ()
+                go ((x,y):pts) arr = do
+                    Array.push (pToJSVal x) arr
+                    Array.push (pToJSVal y) arr
+                    go pts arr
+            arr <- Array.create
+            go pts arr
+            return $ (unsafeCoerce arr :: JSVal)
+        setProps xs obj = liftIO $
+            void $ mapM (\(s,v) -> setProp s v obj) xs
 
+setCallInfo :: Picture -> Object -> IO ()
+setCallInfo pic obj = case findCSMain (getPictureCS pic) of
+    Just (callName, src) -> do
+        setProp "name"      (pToJSVal $ callName)            obj
+        setProp "startLine" (pToJSVal $ srcLocStartLine src) obj
+        setProp "startCol"  (pToJSVal $ srcLocStartCol  src) obj
+        setProp "endLine"   (pToJSVal $ srcLocEndLine   src) obj
+        setProp "endCol"    (pToJSVal $ srcLocEndCol    src) obj
+    Nothing -> return ()
 
 findCSMain :: CallStack -> Maybe (String,SrcLoc)
 findCSMain cs = Data.List.find ((=="main") . srcLocPackage . snd) (getCallStack cs)
@@ -338,78 +500,44 @@ getPictureCS (Color cs _ _)       = cs
 getPictureCS (Translate cs _ _ _) = cs
 getPictureCS (Scale cs _ _ _)     = cs
 getPictureCS (Rotate cs _ _)      = cs
-getPictureCS (Pictures cs _)      = cs
 getPictureCS (Logo cs)            = cs
-
-getPictureSrc :: Picture -> Maybe (String,SrcLoc)
-getPictureSrc = findCSMain . getPictureCS
+getPictureCS (CoordinatePlane cs) = cs
+getPictureCS (Pictures _)         = emptyCallStack
 
 -- If a picture is found, the result will include an array of the base picture
 -- and all transformations.
-findTopPictureFromPoint :: Point -> Picture -> IO (Maybe [Picture])
-findTopPictureFromPoint (x,y) pic = do
+findTopShapeFromPoint :: Point -> Drawing -> IO (Maybe NodeId)
+findTopShapeFromPoint (x,y) pic = do
     offscreen <- Canvas.create 500 500
     context <- Canvas.getContext offscreen
-    findTopPicture context (translateDS (10-x/25) (y/25-10) initialDS) pic
+    (found, node) <- findTopShape context (translateDS (10-x/25) (y/25-10) initialDS) pic
+    case found of
+        True  -> return $ Just node
+        False -> return Nothing
 
-findTopPicture :: Canvas.Context -> DrawState -> Picture -> IO (Maybe [Picture])
-findTopPicture ctx ds pic = case pic of
-    Color _ col p      -> map2 (pic:) $ findTopPicture ctx (setColorDS col ds) p
-    Translate _ x y p  -> map2 (pic:) $ findTopPicture ctx (translateDS x y ds) p
-    Scale _ x y p      -> map2 (pic:) $ findTopPicture ctx (scaleDS x y ds) p
-    Rotate _ r p       -> map2 (pic:) $ findTopPicture ctx (rotateDS r ds) p
-    Pictures _ []      -> return Nothing
-    Pictures _ (p:ps)  -> do
-        stack <- findTopPicture ctx ds p
-        case stack of
-            Just x  -> return (Just x)
-            Nothing -> findTopPicture ctx ds (Pictures undefined ps)
-    Text _ sty fnt txt -> do
-        Canvas.font (fontString sty fnt) ctx
-        width <- Canvas.measureText (textToJSString txt) ctx
-        let height = 25 -- height is constant, defined in fontString
-        withDS ctx ds $ Canvas.rect ((-0.5)*width) ((-0.5)*height) width height ctx
-        contained <- js_isPointInPath 0 0 ctx
-        if contained
-            then return (Just [pic])
-            else return Nothing
-    Logo _             -> do
-        withDS ctx ds $ Canvas.rect (-225) (-50) 450 100 ctx
-        contained <- js_isPointInPath 0 0 ctx
-        if contained
-            then return (Just [pic])
-            else return Nothing
-    Arc cs b e r w      -> do
-        -- Thin arcs and paths are drawn bigger to make clicking easier
-        let width = if w==0 then 0.3 else w
-        Canvas.lineWidth (width * 25) ctx
-        drawPicture ctx ds (Arc cs b e r width)
-        contained <- js_isPointInStroke 0 0 ctx
-        if contained
-            then return (Just [pic])
-            else return Nothing
-    Path cs ps w c s     -> do
-        let width = if w==0 then 0.3 else w
-        Canvas.lineWidth (width * 25) ctx
-        drawPicture ctx ds (Path cs ps width c s)
-        contained <- js_isPointInStroke 0 0 ctx
-        if contained
-            then return (Just [pic])
-            else return Nothing
-    _                  -> do
-        drawPicture ctx ds pic
-        contained <- js_isPointInPath 0 0 ctx
-        if contained
-            then return (Just [pic])
-            else return Nothing
-    where map2 = fmap . fmap
+findTopShape :: Canvas.Context -> DrawState -> Drawing -> IO (Bool,Int)
+findTopShape ctx ds (Shape drawer) = do
+    contained <- shapeContains $ drawer ctx ds
+    case contained of
+        True  -> return (True,0)
+        False -> return (False,1)
+findTopShape ctx ds (Transformation f d) =
+    map2 (+1) $ findTopShape ctx (f ds) d
+findTopShape ctx ds (Drawings []) = return (False,1)
+findTopShape ctx ds (Drawings (dr:drs)) = do
+    (found, count) <- findTopShape ctx ds dr
+    case found of
+        True  -> return (True,count+1)
+        False -> map2 (+count) $ findTopShape ctx ds (Drawings drs)
 
-isDebugModeActive :: IO Bool
-isDebugModeActive = js_isDebugModeActive
+map2 :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
+map2 = fmap . fmap
 
-setDebugModeActive :: Bool -> IO ()
-setDebugModeActive True  = js_startDebugMode
-setDebugModeActive False = js_stopDebugMode
+isPointInPath :: Canvas.Context -> IO Bool
+isPointInPath = js_isPointInPath 0 0
+
+isPointInStroke :: Canvas.Context -> IO Bool
+isPointInStroke = js_isPointInStroke 0 0
 
 -- Canvas.isPointInPath does not provide a way to get the return value
 -- https://github.com/ghcjs/ghcjs-base/blob/master/JavaScript/Web/Canvas.hs#L212
@@ -419,17 +547,86 @@ foreign import javascript unsafe "$3.isPointInPath($1,$2)"
 foreign import javascript unsafe "$3.isPointInStroke($1,$2)"
     js_isPointInStroke :: Double -> Double -> Canvas.Context -> IO Bool
 
-foreign import javascript unsafe "initDebugMode($1,$2)"
-    js_initDebugMode :: Callback (JSVal -> IO JSVal) -> Callback (JSVal -> IO ()) -> IO ()
+foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
+    js_initDebugMode :: Callback (JSVal -> IO JSVal) -> -- getNode
+                        Callback (JSVal -> IO ()) ->    -- setActive
+                        Callback (IO JSVal) ->          -- getPicture
+                        Callback (JSVal -> JSVal -> IO ()) ->    -- highlightShape
+                        Callback (JSVal -> JSVal -> IO ()) -> -- drawNode
+                        IO ()
 
-foreign import javascript unsafe "window.debugMode"
-    js_isDebugModeActive :: IO Bool
+-----------------------------------------------------------------------------------
+-- GHCJS Drawing
 
-foreign import javascript unsafe "startDebugMode()"
-    js_startDebugMode :: IO ()
+type Drawer = Canvas.Context -> DrawState -> DrawMethods
 
-foreign import javascript unsafe "stopDebugMode()"
-    js_stopDebugMode :: IO ()
+data DrawMethods = DrawMethods {
+    drawShape :: IO (),
+    shapeContains :: IO Bool
+}
+
+polygonDrawer ps smooth ctx ds = DrawMethods {
+    drawShape     = trace >> applyColor ctx ds >> Canvas.fill ctx,
+    shapeContains = trace >> isPointInPath ctx
+    }
+    where trace = withDS ctx ds $ followPath ctx ps True smooth
+
+pathDrawer ps w closed smooth ctx ds = DrawMethods {
+    drawShape = drawFigure ctx ds w $ followPath ctx ps closed smooth,
+    shapeContains = do
+            let width = if w==0 then 0.3 else w
+            drawFigure ctx ds width $
+                followPath ctx ps closed smooth
+            isPointInStroke ctx
+    }
+
+sectorDrawer b e r ctx ds = DrawMethods {
+    drawShape     = trace >> applyColor ctx ds >> Canvas.fill ctx,
+    shapeContains = trace >> isPointInPath ctx
+    }
+    where trace = withDS ctx ds $ do
+            Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
+            Canvas.lineTo 0 0 ctx
+
+arcDrawer b e r w ctx ds = DrawMethods {
+    drawShape = drawFigure ctx ds w $
+        Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx,
+    shapeContains = do
+        let width = if w==0 then 0.3 else w
+        Canvas.lineWidth (width * 25) ctx
+        drawFigure ctx ds width $
+            Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
+        isPointInStroke ctx
+
+    }
+
+textDrawer sty fnt txt ctx ds = DrawMethods {
+    drawShape = withDS ctx ds $ do
+        Canvas.scale 1 (-1) ctx
+        applyColor ctx ds
+        Canvas.font (fontString sty fnt) ctx
+        Canvas.fillText (textToJSString txt) 0 0 ctx,
+    shapeContains = do
+        Canvas.font (fontString sty fnt) ctx
+        width <- Canvas.measureText (textToJSString txt) ctx
+        let height = 25 -- constant, defined in fontString
+        withDS ctx ds $ Canvas.rect ((-0.5)*width) ((-0.5)*height) width height ctx
+        isPointInPath ctx
+    }
+
+logoDrawer ctx ds = DrawMethods {
+    drawShape = withDS ctx ds $ do
+        Canvas.scale 1 (-1) ctx
+        drawCodeWorldLogo ctx ds (-255) (-50) 450 100,
+    shapeContains = do
+        withDS ctx ds $ Canvas.rect (-255) (-50) 450 100 ctx
+        isPointInPath ctx
+    }
+
+coordinatePlaneDrawer ctx ds = DrawMethods {
+    drawShape = drawDrawing ctx ds coordinatePlaneDrawing,
+    shapeContains = fst <$> findTopShape ctx ds coordinatePlaneDrawing
+    }
 
 foreign import javascript unsafe "showCanvas()"
     js_showCanvas :: IO ()
@@ -502,6 +699,7 @@ drawFigure ctx ds w figure = do
         applyColor ctx ds
         Canvas.stroke ctx
 
+
 fontString :: TextStyle -> Font -> JSString
 fontString style font = stylePrefix style <> "25px " <> fontName font
   where stylePrefix Plain        = ""
@@ -514,40 +712,16 @@ fontString style font = stylePrefix style <> "25px " <> fontName font
         fontName Fancy           = "fantasy"
         fontName (NamedFont txt) = "\"" <> textToJSString (T.filter (/= '"') txt) <> "\""
 
-drawPicture :: Canvas.Context -> DrawState -> Picture -> IO ()
-drawPicture ctx ds (Polygon _ ps smooth) = do
-    withDS ctx ds $ followPath ctx ps True smooth
-    applyColor ctx ds
-    Canvas.fill ctx
-drawPicture ctx ds (Path _ ps w closed smooth) = do
-    drawFigure ctx ds w $ followPath ctx ps closed smooth
-drawPicture ctx ds (Sector _ b e r) = withDS ctx ds $ do
-    Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
-    Canvas.lineTo 0 0 ctx
-    applyColor ctx ds
-    Canvas.fill ctx
-drawPicture ctx ds (Arc _ b e r w) = do
-    drawFigure ctx ds w $ do
-        Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
-drawPicture ctx ds (Text _ sty fnt txt) = withDS ctx ds $ do
-    Canvas.scale 1 (-1) ctx
-    applyColor ctx ds
-    Canvas.font (fontString sty fnt) ctx
-    Canvas.fillText (textToJSString txt) 0 0 ctx
-drawPicture ctx ds (Logo _) = withDS ctx ds $ do
-    Canvas.scale 1 (-1) ctx
-    drawCodeWorldLogo ctx ds (-225) (-50) 450 100
-drawPicture ctx ds (Color _ col p)     = drawPicture ctx (setColorDS col ds) p
-drawPicture ctx ds (Translate _ x y p) = drawPicture ctx (translateDS x y ds) p
-drawPicture ctx ds (Scale _ x y p)     = drawPicture ctx (scaleDS x y ds) p
-drawPicture ctx ds (Rotate _ r p)      = drawPicture ctx (rotateDS r ds) p
-drawPicture ctx ds (Pictures _ ps)     = mapM_ (drawPicture ctx ds) (reverse ps)
+drawDrawing :: Canvas.Context -> DrawState -> Drawing -> IO ()
+drawDrawing ctx ds (Shape shape) = drawShape $ shape ctx ds
+drawDrawing ctx ds (Transformation f d) = drawDrawing ctx (f ds) d
+drawDrawing ctx ds (Drawings drs) = mapM_ (drawDrawing ctx ds) (reverse drs)
 
-drawFrame :: Canvas.Context -> Picture -> IO ()
-drawFrame ctx pic = do
+drawFrame :: Canvas.Context -> Drawing -> IO ()
+drawFrame ctx drawing = do
     Canvas.fillStyle 255 255 255 1 ctx
     Canvas.fillRect (-250) (-250) 500 500 ctx
-    drawPicture ctx initialDS pic
+    drawDrawing ctx initialDS drawing
 
 setupScreenContext :: Element -> ClientRect.ClientRect -> IO Canvas.Context
 setupScreenContext canvas rect = do
@@ -570,26 +744,7 @@ setCanvasSize target canvas = do
     setAttribute target ("width" :: JSString) (show (round cx))
     setAttribute target ("height" :: JSString) (show (round cy))
 
-display :: Picture -> IO ()
-display pic = do
-    js_showCanvas
-    Just window <- currentWindow
-    Just doc <- currentDocument
-    Just canvas <- getElementById doc ("screen" :: JSString)
-    on window resize $ liftIO (draw canvas)
-    draw canvas
-  where
-    draw canvas = do
-        setCanvasSize canvas canvas
-        rect <- getBoundingClientRect canvas
-        ctx <- setupScreenContext canvas rect
-        drawFrame ctx pic
-        Canvas.restore ctx
-
-drawingOf pic = do
-    display pic
-    inspect pic
-
+drawingOf pic = runStatic pic
 
 --------------------------------------------------------------------------------
 -- Stand-alone implementation of drawing
@@ -695,31 +850,39 @@ fontString style font = stylePrefix style <> "25px " <> fontName font
         fontName Fancy           = "fantasy"
         fontName (NamedFont txt) = "\"" <> T.filter (/= '"') txt <> "\""
 
-drawPicture :: DrawState -> Picture -> Canvas ()
-drawPicture ds (Polygon _ ps smooth) = do
+type Drawer = DrawState -> Canvas ()
+
+polygonDrawer ps smooth ds = do
     withDS ds $ followPath ps True smooth
     applyColor ds
     Canvas.fill ()
-drawPicture ds (Path _ ps w closed smooth) =
+
+pathDrawer ps w closed smooth ds =
     drawFigure ds w $ followPath ps closed smooth
-drawPicture ds (Sector _ b e r) = withDS ds $ do
-    Canvas.arc (0, 0, 25 * abs r, b, e,  b > e)
+
+sectorDrawer b e r ds = withDS ds $ do
+    Canvas.arc (0, 0, 25 * abs r, b, e, b > e)
     Canvas.lineTo (0, 0)
     applyColor ds
     Canvas.fill ()
-drawPicture ds (Arc _ b e r w) =
+
+arcDrawer b e r w ds = withDS ds $
     drawFigure ds w $ Canvas.arc (0, 0, 25 * abs r, b, e, b > e)
-drawPicture ds (Text _ sty fnt txt) = withDS ds $ do
+
+textDrawer sty fnt txt ds = withDS ds $ do
     Canvas.scale (1, -1)
     applyColor ds
     Canvas.font (fontString sty fnt)
     Canvas.fillText (txt, 0, 0)
-drawPicture ds (Logo _)            = return () -- Unimplemented
-drawPicture ds (Color _ col p)     = drawPicture (setColorDS col ds) p
-drawPicture ds (Translate _ x y p) = drawPicture (translateDS x y ds) p
-drawPicture ds (Scale _ x y p)     = drawPicture (scaleDS x y ds) p
-drawPicture ds (Rotate _ r p)      = drawPicture (rotateDS r ds) p
-drawPicture ds (Pictures _ ps)     = mapM_ (drawPicture ds) (reverse ps)
+
+logoDrawer ds = return ()
+
+coordinatePlaneDrawer ds = drawDrawing ds coordinatePlaneDrawing
+
+drawDrawing :: DrawState -> Drawing -> Canvas ()
+drawDrawing ds (Shape drawer) = drawer ds
+drawDrawing ds (Transformation f d) = drawDrawing (f ds) d
+drawDrawing ds (Drawings (dr:drs)) = mapM_ (drawDrawing ds) (reverse drs)
 
 setupScreenContext :: (Int, Int) -> Canvas ()
 setupScreenContext (cw, ch) = do
@@ -752,14 +915,15 @@ runBlankCanvas act = do
         putStrLn "Program is starting..."
         act context
 
-display :: Picture -> IO ()
-display pic = runBlankCanvas $ \context ->
+display :: Drawing -> IO ()
+display drawing = runBlankCanvas $ \context ->
     Canvas.send context $ Canvas.saveRestore $ do
         let rect = (Canvas.width context, Canvas.height context)
         setupScreenContext rect
-        drawPicture initialDS pic
+        drawDrawing initialDS drawing
 
-drawingOf pic = display pic
+drawingOf pic = display (pictureToDrawing pic)
+
 #endif
 
 
@@ -1140,7 +1304,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
                 rect <- getBoundingClientRect canvas
                 buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
                                              rect
-                drawFrame buffer pic
+                drawFrame buffer (pictureToDrawing pic)
                 Canvas.restore buffer
 
                 rect <- getBoundingClientRect canvas
@@ -1158,7 +1322,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     initialStateName <- makeStableName $! initialGameState
     go t0 nullFrame
 
-run :: s -> (Double -> s -> s) -> (e -> s -> s) -> (s -> Picture) -> IO (e -> IO (), IO s)
+run :: s -> (Double -> s -> s) -> (e -> s -> s) -> (s -> Drawing) -> IO (e -> IO (), IO s)
 run initial stepHandler eventHandler drawHandler = do
     js_showCanvas
 
@@ -1225,8 +1389,85 @@ run initial stepHandler eventHandler drawHandler = do
     forkIO $ go t0 nullFrame initialStateName True
     return (sendEvent, getState)
 
-data StateWrapper s = StateWrapper Bool s
-data EventWrapper = NormalEvent Event | PauseEvent Bool
+data DebugState = DebugState {
+    debugStateActive :: Bool,
+    shapeHighlighted :: Maybe NodeId,
+    shapeSelected    :: Maybe NodeId
+    }
+
+data DebugEvent = DebugStart
+                | DebugStop
+                | HighlightEvent (Maybe NodeId)
+                | SelectEvent (Maybe NodeId)
+
+debugStateInit :: DebugState
+debugStateInit = DebugState False Nothing Nothing
+
+updateDebugState :: DebugEvent -> DebugState -> DebugState
+updateDebugState DebugStart prev = DebugState True Nothing Nothing
+updateDebugState DebugStop prev = DebugState False Nothing Nothing
+updateDebugState (HighlightEvent n) prev = case debugStateActive prev of
+    True  -> prev { shapeHighlighted = n }
+    False -> DebugState False Nothing Nothing
+updateDebugState (SelectEvent n) prev = case debugStateActive prev of
+    True  -> prev { shapeSelected    = n }
+    False -> DebugState False Nothing Nothing
+
+drawDebugState :: DebugState -> Drawing -> Drawing
+drawDebugState state drawing = case debugStateActive state of
+    True  -> highlightSelectShape (shapeHighlighted state) (shapeSelected state) drawing
+    False -> drawing
+
+runStatic :: Picture -> IO ()
+runStatic pic = do
+    js_showCanvas
+
+    Just window <- currentWindow
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
+    offscreenCanvas <- Canvas.create 500 500
+
+    setCanvasSize canvas canvas
+    setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+
+    screen <- js_getCodeWorldContext (canvasFromElement canvas)
+
+    debugState <- newMVar debugStateInit
+
+    let draw = flip drawDebugState (pictureToDrawing pic) <$> readMVar debugState
+
+        drawToScreen = do
+            drawing <- draw
+            rect <- getBoundingClientRect canvas
+            buffer <- setupScreenContext (elementFromCanvas offscreenCanvas)
+                                         rect
+            drawFrame buffer drawing
+            Canvas.restore buffer
+
+            rect <- getBoundingClientRect canvas
+            cw <- ClientRect.getWidth rect
+            ch <- ClientRect.getHeight rect
+            js_canvasDrawImage screen (elementFromCanvas offscreenCanvas)
+                               0 0 (round cw) (round ch)
+
+        sendEvent evt = do
+            takeMVar debugState >>= putMVar debugState . updateDebugState evt
+            drawToScreen
+
+        handlePause True  = sendEvent DebugStart
+        handlePause False = sendEvent DebugStop
+
+        handleHighlight True  node = sendEvent $ HighlightEvent node
+        handleHighlight False node = sendEvent $ SelectEvent node
+
+    on window resize $ liftIO $ do
+        setCanvasSize canvas canvas
+        setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+        drawToScreen
+
+    inspect (return pic) handlePause handleHighlight
+    
+    drawToScreen
 
 -- Wraps the event and state from run so they can be paused by pressing the Inspect
 -- button.
@@ -1236,49 +1477,119 @@ runInspect initial stepHandler eventHandler drawHandler = do
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
 
-    let initialWrapper = StateWrapper False initial
-        stepHandlerWrapper dt (StateWrapper paused state) = case paused of
-            True  -> StateWrapper True state
-            False -> StateWrapper False (stepHandler dt state)
-        eventHandlerWrapper e (StateWrapper p s) = case e of
-            NormalEvent event -> case p of
-                True  -> StateWrapper True s
-                False -> StateWrapper False (eventHandler event s)
-            PauseEvent paused -> StateWrapper paused s
-        drawHandlerWrapper (StateWrapper _ s) = drawHandler s
+    let initialWrapper = (debugStateInit, initial)
+        
+        stepHandlerWrapper dt (debugState, state) = case debugStateActive debugState of
+            True  -> (debugState, state)
+            False -> (debugState, stepHandler dt state)
+
+        eventHandlerWrapper evt (debugState, state) = case evt of
+            Left  debugEvent  -> (updateDebugState debugEvent debugState, state)
+            Right normalEvent -> (debugState, eventHandler normalEvent state)
+
+        drawHandlerWrapper (debugState, state) =
+            drawDebugState debugState (pictureToDrawing $ drawHandler state)
+
+        drawPicHandler (debugState, state) = drawHandler state
 
     (sendEvent, getState) <-
         run initialWrapper stepHandlerWrapper eventHandlerWrapper drawHandlerWrapper
 
-    onEvents canvas (sendEvent . NormalEvent)
-    inspectFromIO (sendEvent . PauseEvent) $ drawHandlerWrapper <$> getState
+    let pauseEvent True  = sendEvent $ Left DebugStart
+        pauseEvent False = sendEvent $ Left DebugStop
 
--- Allows pictures to be inspected using a built-in pause button
-runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
-runPauseable initial stepHandler eventHandler drawHandler isPaused setPaused = do
+        highlightSelectEvent True  n = sendEvent $ Left (HighlightEvent n)
+        highlightSelectEvent False n = sendEvent $ Left (SelectEvent n)
+
+    onEvents canvas (sendEvent . Right)
+    inspect (drawPicHandler <$> getState) pauseEvent highlightSelectEvent
+
+runPauseable :: Wrapped s -> (Double -> s -> s) -> (Wrapped s -> [Control s]) -> (s -> Picture) -> IO ()
+runPauseable initial stepHandler controls drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
 
-    let eventHandlerWrapper e s = case e of
-            NormalEvent event -> eventHandler event s
-            PauseEvent paused -> setPaused paused s
+    let initialWrapper = (debugStateInit, initial)
+        
+        stepHandlerWrapper dt (debugState, wrappedState) = case debugStateActive debugState of
+            True  -> (debugState, wrappedState)
+            False -> (debugState, wrappedStep stepHandler dt wrappedState)
 
-    (sendEvent, getState) <- run initial stepHandler eventHandlerWrapper drawHandler
+        eventHandlerWrapper evt (debugState, wrappedState) = case evt of
+            Left debugEvent   -> (updateDebugState debugEvent debugState, wrappedState)
+            Right normalEvent -> (debugState, wrappedEvent controls stepHandler normalEvent wrappedState)
 
-    onEvents canvas $ \event -> do
-        debugActive <- isDebugModeActive
-        when debugActive $ do
-            nextStatePaused <- isPaused <$> eventHandler event <$> getState
-            when (not nextStatePaused) $ setDebugModeActive False
-        sendEvent $ NormalEvent event
+        drawHandlerWrapper (debugState, wrappedState) = case debugStateActive debugState of
+            True  -> drawDebugState debugState plainDrawing
+            False -> pictureToDrawing $ wrappedDraw controls drawHandler wrappedState
+            where plainDrawing = pictureToDrawing $ drawHandler (state wrappedState)
 
-    let picIfUnpaused state = case isPaused state of
-            True  -> drawHandler state
-            False -> pictures []
-        sendPause = sendEvent $ PauseEvent True
+        drawPicHandler (debugState, wrappedState) = drawHandler $ state wrappedState
 
-    inspectFromIO (flip when sendPause) $ picIfUnpaused <$> getState
+    (sendEvent, getState) <-
+        run initialWrapper stepHandlerWrapper eventHandlerWrapper drawHandlerWrapper
+
+    let pauseEvent True  = sendEvent $ Left DebugStart
+        pauseEvent False = sendEvent $ Left DebugStop
+
+        highlightSelectEvent True  n = sendEvent $ Left (HighlightEvent n)
+        highlightSelectEvent False n = sendEvent $ Left (SelectEvent n)
+
+    onEvents canvas (sendEvent . Right)
+    inspect (drawPicHandler <$> getState) pauseEvent highlightSelectEvent
+
+-- Given a drawing, highlight the first node and select second node. Both recolor
+-- the nodes, but highlight also brings the node to the top.
+highlightSelectShape :: Maybe NodeId -> Maybe NodeId -> Drawing -> Drawing
+highlightSelectShape h s drawing
+    | isNothing s = fromMaybe drawing $ do
+        h' <- h
+        hp <- piece h'
+        return $ hp <> drawing
+    | isNothing h = fromMaybe drawing $ do
+        s' <- s
+        sp <- piece s'
+        replaceDrawNode s' sp drawing
+    | otherwise = fromMaybe drawing $ do
+        h' <- h
+        s' <- s
+        hp <- piece h'
+        sp <- piece s'
+        replaced <- replaceDrawNode s' sp drawing
+        return $ hp <> replaced
+    where piece n = (\(node,ds) -> highlightDrawing ds node) <$> getDrawNode n drawing
+
+highlightDrawing :: DrawState -> Drawing -> Drawing
+highlightDrawing (a,b,c,d,e,f,_) drawing = Transformation (\_ -> (a,b,c,d,e,f,Just col')) drawing
+    where col' = RGBA 0 0 0 0.25
+
+getDrawNode :: NodeId -> Drawing -> Maybe (Drawing, DrawState)
+getDrawNode n _ | n<0 = Nothing
+getDrawNode n drawing = either Just (const Nothing) $ go initialDS n drawing
+    where
+        go ds 0 d = Left (d,ds)
+        go ds n (Shape _) = Right (n-1)
+        go ds n (Transformation f dr) = go (f ds) (n-1) dr
+        go ds n (Drawings []) = Right (n-1)
+        go ds n (Drawings (dr:drs)) = case go ds (n-1) dr of
+            Left d -> Left d
+            Right n -> go ds (n+1) $ Drawings drs
+
+replaceDrawNode :: NodeId -> Drawing -> Drawing -> Maybe Drawing
+replaceDrawNode n _ _ | n<0 = Nothing
+replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
+    where
+        go :: Int -> Drawing -> Either Drawing Int
+        go 0 _ = Left with
+        go n (Shape _) = Right (n-1)
+        go n (Transformation f d) = mapLeft (Transformation f) $ go (n-1) d
+        go n (Drawings []) = Right (n-1)
+        go n (Drawings (dr:drs)) = case go (n-1) dr of
+            Left d -> Left $ Drawings (d:drs)
+            Right m -> mapLeft (\(Drawings qs) -> Drawings (dr:qs)) $ go (m+1) $ Drawings drs
+        mapLeft :: (a -> b) -> Either a c -> Either b c
+        mapLeft f = either (Left . f) Right
 
 --------------------------------------------------------------------------------
 -- Stand-Alone event handling and core interaction code
@@ -1343,7 +1654,7 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
                 Canvas.with offscreenCanvas $
                     Canvas.saveRestore $ do
                         setupScreenContext rect
-                        drawPicture initialDS pic
+                        drawDrawing initialDS (pictureToDrawing pic)
                 Canvas.drawImageAt (offscreenCanvas, 0, 0)
 
             t1 <- if
@@ -1375,8 +1686,9 @@ run initial stepHandler eventHandler drawHandler = runBlankCanvas $ \context -> 
 runInspect :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
 runInspect = run
 
-runPauseable :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> (s -> Bool) -> (Bool -> s -> s) -> IO ()
-runPauseable initial stepHandler eventHandler drawHandler _ _ = run initial stepHandler eventHandler drawHandler
+runPauseable :: Wrapped s -> (Double -> s -> s) -> (Wrapped s -> [Control s]) -> (s -> Picture) -> IO ()
+runPauseable initial stepHandler controls drawHandler =
+    run initial (wrappedStep stepHandler) (wrappedEvent controls stepHandler) (wrappedDraw controls drawHandler)
 
 getDeployHash :: IO Text
 getDeployHash = error "game API unimplemented in stand-alone interface mode"
@@ -1535,13 +1847,7 @@ animationControls w
                                 TimeLabel ]
   | otherwise               = [ RestartButton, PauseButton, TimeLabel ]
 
-animationOf f =
-    runPauseable  initial
-                  (wrappedStep (+))
-                  (wrappedEvent animationControls (+))
-                  (wrappedDraw animationControls f)
-                  paused
-                  (\p s -> s { paused = p })
+animationOf f = runPauseable initial (+) animationControls f
   where initial = Wrapped {
             state          = 0,
             paused         = False,
@@ -1554,13 +1860,7 @@ simulationControls w
   | paused w             = [ PlayButton, StepButton ]
   | otherwise            = [ PauseButton ]
 
-simulationOf simInitial simStep simDraw =
-    runPauseable  initial
-                  (wrappedStep simStep)
-                  (wrappedEvent simulationControls simStep)
-                  (wrappedDraw simulationControls simDraw)
-                  paused
-                  (\p s -> s { paused = p })
+simulationOf simInitial simStep simDraw = runPauseable initial simStep simulationControls simDraw
   where initial = Wrapped {
             state          = simInitial,
             paused         = False,

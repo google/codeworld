@@ -16,129 +16,136 @@
  */
 "use strict";
 
-window.debugMode = false;
-window.debugActiveCB = null;
+(function () {
+    let available = false;
+    let active = false;
 
-window.infobox = null;
+    // Checked by parent.updateUI
+    window.debugAvailable = false;
+    window.debugActive = false;
 
-function initDebugMode(getStackAtPoint, active) {
-    var canvas = document.getElementById("screen");
+    // These functions are provided by a debugmode-supported entrypoint when
+    // calling initDebugMode
+    //  debugGetNode :: { x :: Double, y :: Double } -> Int
+    //   Returns the nodeId of the shape at the coordinate (x,y) of the canvas.
+    //   Negative return indicates no shape at that point.
+    let debugGetNode = null;
+    //  debugSetActive :: Bool -> ()
+    //   Indicates to the entry point when debugmode has been turned off and on
+    let debugSetActive = null;
+    //  debugGetPicture :: () -> Object
+    //   Gets an object showing the current state of the Picture being drawn. Is
+    //   only called directly after debugSetActive(true).
+    let debugGetPicture = null;
+    //  debugHighlightShape :: (Bool, Int) -> ()
+    //   Indicates to the entry point should highlight or select a shape or tree
+    //   of shapes. A true value indicates highlight (change color and bring to
+    //   front) and false indicates select (change color and do not change
+    //   position). A negative value indicates to stop highlighting or selecting.
+    //   At most one shape may be highlighted and one shape selected at a time.
+    let debugHighlightShape = null;
+    // debugDrawShape :: (Canvas, Int) -> ()
+    //  Draws the node with a coordinate plane in the background.
+    let debugDrawShape = null;
 
-    infobox = document.createElement("div");
-    infobox.id = "infobox";
-    document.body.appendChild(infobox);
+    let infobox = null;
+    let cachedPic = null;
+    let canvas = null;
 
-    window.debugActiveCB = active;
+    function openTreeDialog(id) {
+        parent.openTreeDialog(id);
+    }
 
-    canvas.addEventListener("click", function (evt) {
-        if (!debugMode) return;
+    function closeTreeDialog() {
+        parent.destroyTreeDialog();
+    }
 
-        var ret = getStackAtPoint({
-            x: evt.clientX,
-            y: evt.clientY,
-        });
+    // Globals
 
-        var stack = ret.stack;
-        if (stack) {
-            var pic, i;
-            var printable = false;
+    function initDebugMode(getNode, setActive, getPicture, highlightShape, drawShape) {
+        debugGetNode = getNode;
+        debugSetActive = setActive;
+        debugGetPicture = getPicture;
+        debugHighlightShape = highlightShape;
+        debugDrawShape = drawShape;
 
-            var table = document.createElement("table");
-            table.classList.add("stack-list");
+        if (!available) {
+            canvas = document.getElementById("screen");
 
-            infobox.innerHTML = "";
-            for (i=stack.length-1;i>=0;i--) {
-                pic = stack[i];
-                if (!pic) {
-                  continue;
+            canvas.addEventListener("mousemove", function (evt) {
+                if (active) {
+                    let nodeId = debugGetNode({
+                        x: evt.clientX,
+                        y: evt.clientY
+                    });
+
+                    debugHighlightShape(true, nodeId);
                 }
+            });
 
-                printable = true;
-
-                var row = createSrcLink(pic);
-                table.appendChild(row);
-            }
-
-            if (printable) {
-                infobox.appendChild(table);
-
-                infobox.style.left = evt.clientX + "px";
-                infobox.style.top  = evt.clientY + "px";
-
-                infobox.style.display = "block";
-
-                if (evt.clientX + infobox.offsetWidth >= 500) {
-                    infobox.style.left = (500 - infobox.offsetWidth) + "px";
+            canvas.addEventListener("mouseout", function (evt) {
+                if (active) {
+                    debugHighlightShape(true, -1);
                 }
+            });
+            
+            canvas.addEventListener("click", function (evt) {
+                if (active) {
+                    let nodeId = debugGetNode({
+                        x: evt.clientX,
+                        y: evt.clientY
+                    });
 
-                if (evt.clientY + infobox.offsetHeight >= 500) {
-                    infobox.style.top = (500 - infobox.offsetHeight) + "px";
+                    if (nodeId >= 0) {
+                        parent.openTreeDialog(nodeId);
+                    }
                 }
-            } else {
-                // If user clicks on a coordinatePlane, stack may contain
-                // only null
-                infobox.style.display = "none";
-            }
-        } else {
-            infobox.style.display = "none";
+            });
+
+            available = true;
+            window.debugAvailable = true;
         }
-    });
 
-    canvas.onblur = (function (evt) {
-        infobox.style.display = "none";
-    });
-}
-
-function createSrcLink(pic) {
-    var tr = document.createElement("tr");
-    tr.classList.add("stack-item");
-    tr.addEventListener("click", function () {
-        parent.codeworldEditor.setSelection(
-            { line: pic.srcLoc.startLine - 1, ch: pic.srcLoc.startCol - 1 },
-            { line: pic.srcLoc.endLine - 1, ch: pic.srcLoc.endCol - 1 },
-            { origin: "+debug" });
-    });
-
-    var shapeName = document.createElement("td");
-    shapeName.classList.add("shape-name");
-    shapeName.appendChild(document.createTextNode(pic.name));
-    tr.appendChild(shapeName);
-
-    var shapeLine = document.createElement("td");
-    shapeLine.classList.add("shape-loc");
-    shapeLine.appendChild(document.createTextNode("Line " + pic.srcLoc.startLine));
-    tr.appendChild(shapeLine);
-
-    var shapeCol = document.createElement("td");
-    shapeCol.classList.add("shape-loc");
-    shapeCol.appendChild(document.createTextNode("Column " + pic.srcLoc.startCol));
-    tr.appendChild(shapeCol);
-
-    return tr;
-}
-
-function startDebugMode() {
-    if (!infobox) {
-        throw new Error("Can't start debugMode: isPointInPath not registered via initDebugMode!");
     }
-    window.debugMode = true;
-    window.debugActiveCB(true);
-    parent.updateUI();
-}
+    window.initDebugMode = initDebugMode;
 
-function stopDebugMode() {
-    if (infobox) {
-        infobox.style.display = "none";
-    }
-    window.debugMode = false;
-    window.debugActiveCB(false);
-    parent.updateUI();
-}
+    function startDebugMode() {
+        if (!available) {
+            throw new Error("Debug mode is not available.");
+        }
 
-function toggleDebugMode() {
-    if (window.debugMode) {
-        stopDebugMode();
-    } else {
-        startDebugMode();
+        active = true;
+        debugSetActive(true);
+        cachedPic = debugGetPicture();
+
+        parent.initTreeDialog(cachedPic, debugHighlightShape, debugDrawShape);
+
+        window.debugActive = true;
+        parent.updateUI()
     }
-}
+    window.startDebugMode = startDebugMode;
+
+    function stopDebugMode() {
+        active = false;
+        debugSetActive(false);
+        cachedPic = null;
+
+        debugHighlightShape(true,-1);
+        debugHighlightShape(false,-1);
+
+        parent.destroyTreeDialog();
+
+        window.debugActive = false;
+        parent.updateUI();
+    }
+    window.stopDebugMode = stopDebugMode;
+
+    function toggleDebugMode() {
+        if (active) {
+            stopDebugMode();
+        } else {
+            startDebugMode();
+        }
+    }
+    window.toggleDebugMode = toggleDebugMode;
+})();

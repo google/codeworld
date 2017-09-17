@@ -12,10 +12,16 @@
     position: absolute;
     border: 1px solid #777;
     background: white;
-    minWidth: 60px;
+    min-width: 60px;
+    max-height: 450px;
+    overflow-y: auto;
     padding: 0px;
     box-shadow: 1px 1px 2px #000;
     display: none;
+}
+
+#infobox ul {
+    text-align: left;
 }
 
 .stack-list {
@@ -41,10 +47,19 @@
     text-decoration: none;
 }
 
+.shape-info {
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+.shape-info:hover {
+    background-color: #aaa;
+}
+
 .shape-name {
     padding: 4px;
     padding-left: 8px;
-    padding-right: 10px;
+    padding-right: 4px;
     text-align: left;
     white-space: nowrap;
 }

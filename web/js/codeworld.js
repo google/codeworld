@@ -314,8 +314,8 @@ function updateUI() {
         document.getElementById('deleteButton').style.display = 'none';
     }
 
-    var debugAvailable = !!document.getElementById('runner').contentWindow.debugActiveCB;
-    var debugActive = document.getElementById('runner').contentWindow.debugMode;
+    var debugAvailable = document.getElementById('runner').contentWindow.debugAvailable;
+    var debugActive = document.getElementById('runner').contentWindow.debugActive;
     if (debugAvailable) {
         document.getElementById('inspectButton').style.display = '';
 
@@ -733,6 +733,11 @@ function goto(line, col) {
 
 function compile() {
     run('', '', 'Compiling...', false);
+
+    if (document.getElementById("runner").contentWindow.debugActive)
+        document.getElementById("runner").contentWindow.stopDebugMode();
+
+    destroyTreeDialog();
 
     var src = window.codeworldEditor.getValue();
     var data = new FormData();

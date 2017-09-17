@@ -116,6 +116,14 @@ function registerStandardHints(successFunc)
                 found.push(hint);
         }
 
+        var lines = cm.getValue().split("\n");
+        for (var i=0; i < lines.length; i++) {
+            if (/^\S*\s*::[^:]*$/.test(lines[i]) &&
+                lines[i].split(" ::")[0].startsWith(token.string)) {
+                found.push(createHint(lines[i],0,lines[i].split(" ::")[0].length));
+            }
+        }
+
         if (found.length) return {
             list: found,
             from: from,

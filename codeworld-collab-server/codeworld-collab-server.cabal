@@ -10,22 +10,34 @@ Build-type:          Simple
 Extra-source-files:  ChangeLog.md
 Cabal-version:       >=1.10
 
-Executable codeworld-game-server
+Executable codeworld-collab-server
   Main-is:             Main.hs
   Other-modules:       CodeWorld.GameServer
   Build-depends:       base >=4.8 && <4.10,
                        aeson,
+                       directory,
+                       engine-io,
+                       engine-io-snap,
+                       filepath,
+                       hashable,
+                       http-conduit,
+                       mtl,
+                       ot,
                        text,
                        websockets == 0.9.*,
                        websockets-snap == 0.10.*,
                        snap-core == 1.0.*,
+                       snap-cors,
                        snap-server == 1.0.*,
+                       socket-io,
+                       stm,
                        transformers,
                        bytestring,
                        random,
                        unordered-containers,
                        time,
-                       codeworld-game-api
+                       codeworld-game-api,
+                       codeworld-server
   Hs-source-dirs:      src
   Default-language:    Haskell2010
   Ghc-options:         -threaded -rtsopts "-with-rtsopts=-N"

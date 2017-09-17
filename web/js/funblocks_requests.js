@@ -303,7 +303,7 @@ function handleGAPILoad() {
             if (auth2.isSignedIn.get() == true) auth2.signIn();
         });
     });
-    
+
     discoverProjects("", 0);
     updateUI();
 }
@@ -336,7 +336,7 @@ function discoverProjects_(path, buildMode, index) {
     data.append('mode', buildMode);
     data.append('path', path);
 
-    sendHttp('POST', 'listFolder', data, function(request) {
+    sendHttp('POST', 'flistFolder', data, function(request) {
         if (request.status != 200) {
             return;
         }
@@ -376,7 +376,7 @@ function moveHere_(path, buildMode, successFunc) {
         data.append('isFile', "false");
     }
 
-    sendHttp('POST', 'moveProject', data, function(request) {
+    sendHttp('POST', 'fmoveProject', data, function(request) {
         if (request.status != 200) {
             sweetAlert('Oops', 'Could not move your project! Please try again.', 'error');
             cancelMove();
@@ -470,7 +470,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
         data.append('mode', mode);
         data.append('path', path);
 
-        sendHttp('POST', 'saveProject', data, function(request) {
+        sendHttp('POST', 'fsaveProject', data, function(request) {
             if (request.status != 200) {
                 sweetAlert('Oops!', 'Could not save your project!!!  Please try again.', 'error');
                 return;
@@ -518,7 +518,7 @@ function deleteProject_(path, buildMode, successFunc) {
         data.append('mode', buildMode);
         data.append('path', path);
 
-        sendHttp('POST', 'deleteProject', data, function(request) {
+        sendHttp('POST', 'fdeleteProject', data, function(request) {
             if (request.status == 200) {
                 successFunc();
                 discoverProjects(path, allProjectNames.length - 1);
@@ -553,7 +553,7 @@ function deleteFolder_(path, buildMode, successFunc) {
         data.append('mode', buildMode);
         data.append('path', path);
 
-        sendHttp('POST', 'deleteFolder', data, function(request) {
+        sendHttp('POST', 'fdeleteFolder', data, function(request) {
             if (request.status == 200) {
                 successFunc();
                 nestedDirs.pop();
@@ -597,7 +597,7 @@ function createFolder(path, buildMode, successFunc) {
             else
                 data.append('path', path + '/' + folderName);
 
-            sendHttp('POST', 'createFolder', data, function(request) {
+            sendHttp('POST', 'fcreateFolder', data, function(request) {
                 if (request.status != 200) {
                     sweetAlert('Oops', 'Could not create your directory! Please try again.', 'error');
                     return;
@@ -626,7 +626,7 @@ function createFolder(path, buildMode, successFunc) {
 }
 
 function loadProject_(index, name, buildMode, successFunc) {
-    
+
   warnIfUnsaved(function(){
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
@@ -640,7 +640,7 @@ function loadProject_(index, name, buildMode, successFunc) {
     data.append('mode', buildMode);
     data.append('path', nestedDirs.slice(1, index + 1).join('/'));
 
-    sendHttp('POST', 'loadProject', data, function(request) {
+    sendHttp('POST', 'floadProject', data, function(request) {
         if (request.status == 200) {
             var project = JSON.parse(request.responseText);
 
@@ -732,8 +732,8 @@ function shareFolder_(mode) {
         data.append('id_token', id_token);
         data.append('mode', mode);
         data.append('path', path);
- 
-        sendHttp('POST', 'shareFolder', data, function(request) {
+
+        sendHttp('POST', 'fshareFolder', data, function(request) {
             if(request.status != 200) {
                 sweetAlert('Oops!', 'Could not share your folder! Please try again.', 'error');
                 return;

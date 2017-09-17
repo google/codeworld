@@ -88,6 +88,94 @@ body {
   margin: 0px;
 }
 
+.comments h2 {
+    margin-top: 1px;
+    margin-left: 5px;
+    color: #535456;
+}
+
+.replies div {
+    margin-left: 10px;
+}
+
+.replies {
+    border-style: solid;
+    border-width: 0px;
+    border-left-width: 2px;
+    border-left-color: #6495ed;
+}
+
+.commentBlock, .replyBlock {
+    margin-left: 10px;
+    background: #f7f7f7;
+    display: flex;
+    display: -webkit-flex;
+    display: -ms-flex;
+    flex-direction: column;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    margin-bottom: 2px;
+    border-radius : 5px;
+}
+
+.comment, .reply {
+    word-wrap: break-word;
+    margin-left:5px;
+    margin-bottom: 3px;
+    color: #2a2a2b;
+    font-weight: 700;
+}
+
+.user {
+    font-weight: 900;
+    color: #22334f;
+    margin-left: 5px;
+}
+
+.commentInfo, .replyInfo {
+    margin-top: 4px;
+}
+
+time {
+    font-style: italic;
+    font-weight: 300;
+    color: #000000;
+}
+
+.commentField, .replyField {
+    width: 90%;
+    height: 90px;
+    margin-left: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+    border: 1px solid #aaaaaa;
+    padding: 8px;
+    font-weight: 400;
+    box-shadow: 1px 1px 5px #cccccc;
+}
+
+.deleteTheComment, .deleteTheReply {
+    margin-right: 10px;
+    float: right;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.deleteTheComment:hover, .deleteTheReply:hover {
+    color: darkred;
+}
+
+.showTheReplies {
+    margin-left: 10px;
+    margin-bottom: 5px;
+    color: #004d90;
+    cursor: pointer;
+}
+
+.showTheReplies:hover {
+    color: #000000;
+}
+
 #keyboard-shortcuts {
   text-align: center;
   height: 50vh;
@@ -230,6 +318,11 @@ body {
 
 .cw-button:focus { outline: none; }
 ::-moz-focus-inner { border:0; }
+
+.writeTheComment, .writeTheReply {
+    margin-left: 10px;
+    margin-bottom: 10px;
+}
 
 .dropbox {
   background-color: white;

@@ -36,13 +36,14 @@ function init() {
             hash = hash.slice(0, -2);
         }
         if(hash[0] == 'F') {
-            function go(folderName) {
+            function go(folderName, userIdent) {
                 var id_token = auth2.currentUser.get().getAuthResponse().id_token;
                 var data = new FormData();
                 data.append('id_token', id_token);
                 data.append('mode', window.buildMode);
                 data.append('shash', hash);
                 data.append('name', folderName);
+                data.append('userIdent', userIdent);
 
                 sendHttp('POST', 'shareContent', data, function(request) {
                     window.location.hash = '';
@@ -66,7 +67,29 @@ function init() {
                 confirmButtonText: 'Save',
                 showCancelButton: false,
                 closeOnConfirm: false
-            }, go);
+            }, function(folderName) {
+                if (folderName == '' || folderName == null) {
+                    return;
+                }
+                sweetAlert({
+                    html: true,
+                    title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
+                    text: 'Enter an identifier for the shared folder:',
+                    type: 'input',
+                    confirmButtonText: 'Save',
+                    showCancelButton: false,
+                    closeOnConfirm: false
+                }, function(userIdent) {
+                    if (userIdent == '' || userIdent == null) {
+                        return;
+                    }
+                    go(folderName, userIdent);
+                });
+            });
+        } else if (hash[0] == 'C') {
+            addSharedComment(hash);
+        } else if (hash[0] == 'H') {
+            addToCollaborate(hash);
         } else {
             initCodeworld();
             registerStandardHints(function(){setMode(true);});
@@ -77,7 +100,7 @@ function init() {
         registerStandardHints(function(){setMode(true);});
         updateUI();
     }
- 
+
     if (hash.length > 0) {
         if (hash.slice(-2) == '==') {
             hash = hash.slice(0, -2);
@@ -88,7 +111,7 @@ function init() {
                     setCode(request.responseText, null, null, true);
                 }
             });
-        } else if (hash[0] != 'F') {
+        } else if (hash[0] != 'F' && hash[0] !='C' && hash[0] != 'H') {
             setCode('');
             if (!signedIn()) help();
         }
@@ -134,13 +157,13 @@ function initCodeworld() {
     window.codeworldEditor.refresh();
 
     CodeMirror.commands.save = function(cm) {
-        saveProject();
+        if (window.openProjectName == '' || window.openProjectName == undefined) {
+            newProject();
+        } else {
+            saveProject();
+        }
     }
     document.onkeydown = function(e) {
-        if (e.ctrlKey && e.keyCode === 83) { // Ctrl+S
-            saveProject();
-            return false;
-        }
         if (e.ctrlKey && e.keyCode === 73) { // Ctrl+I
             formatSource();
             return false;
@@ -148,6 +171,7 @@ function initCodeworld() {
     };
 
     window.codeworldEditor.on('changes', window.updateUI);
+    window.codeworldEditor.on('gutterClick', window.toggleUserComments);
 
     window.onbeforeunload = function(event) {
         if (!isEditorClean()) {
@@ -267,7 +291,7 @@ function folderHandler(folderName, index, state) {
             allFolderNames.push([]);
             discoverProjects(nestedDirs.slice(1).join('/'), index + 1);
         }
-        if (window.move == undefined) {
+        if (window.move == undefined && window.copy == undefined) {
             setCode('');
             updateUI();
         } else {
@@ -282,7 +306,13 @@ function folderHandler(folderName, index, state) {
  * to get the visual presentation to match.
  */
 function updateUI() {
+    if (window.testEnv != undefined) {
+        return;
+    }
     var isSignedIn = signedIn();
+    window.inCommentables = window.nestedDirs != undefined &&
+                            window.nestedDirs.length > 0 &&
+                            window.nestedDirs[1] == 'commentables';
     if (isSignedIn) {
         if (document.getElementById('signout').style.display == 'none') {
             document.getElementById('signin').style.display = 'none';
@@ -293,7 +323,11 @@ function updateUI() {
         }
 
         if (window.openProjectName) {
-            document.getElementById('saveButton').style.display = '';
+            if (window.inCommentables == true) {
+                document.getElementById('saveButton').style.display = 'none';
+            } else {
+                document.getElementById('saveButton').style.display = '';
+            }
             document.getElementById('deleteButton').style.display = '';
         } else {
             document.getElementById('saveButton').style.display = 'none';
@@ -329,13 +363,16 @@ function updateUI() {
     }
 
     window.move = undefined;
-    document.getElementById('newButton').style.display = '';
-    document.getElementById('saveAsButton').style.display = '';
-    document.getElementById('downloadButton').style.display = '';
+    window.copy = undefined;
+
+    if (window.inCommentables == true) {
+        document.getElementById('newButton').style.display = 'none';
+    } else {
+        document.getElementById('newButton').style.display = '';
+    }
+    document.getElementById('newFolderButton').style.display = '';
     document.getElementById('runButtons').style.display = '';
 
-
-    updateNavBar();
     var NDlength = nestedDirs.length;
 
     if (NDlength != 1 && (openProjectName == null || openProjectName == '')) {
@@ -343,13 +380,59 @@ function updateUI() {
     } else {
         document.getElementById('shareFolderButton').style.display = 'none';
     }
+    if (openProjectName == null || openProjectName == '') {
+        document.getElementById('viewCommentVersions').style.display = 'none';
+        document.getElementById('listCurrentOwners').style.display = 'none';
+        window.currentVersion = undefined;
+        window.maxVersion = undefined;
+        window.userIdent = undefined;
+        window.project = undefined;
+        if (window.socket != undefined) {
+            window.socket.disconnect(true);
+            window.socket = undefined;
+            window.cmClient = undefined;
+        }
+        window.owners = undefined;
+        window.activeOwner = undefined;
+        document.getElementById('testButton').style.display = 'none';
+        document.getElementById('askFeedbackButton').style.display = 'none';
+        document.getElementById('collaborateButton').style.display = 'none';
+    } else {
+        document.getElementById('viewCommentVersions').style.display = '';
+        if (window.inCommentables == true) {
+            if (window.socket != undefined) {
+                window.socket.disconnect(true);
+                window.socket = undefined;
+                window.cmClient = undefined;
+            }
+            window.owners = undefined;
+            window.activeOwner = undefined;
+            document.getElementById('listCurrentOwners').style.display = 'none';
+            document.getElementById('askFeedbackButton').style.display = 'none';
+            document.getElementById('collaborateButton').style.display = 'none';
+            document.getElementById('testButton').style.display = '';
+        } else {
+            document.getElementById('listCurrentOwners').style.display = '';
+            document.getElementById('askFeedbackButton').style.display = '';
+            document.getElementById('collaborateButton').style.display = '';
+            if (window.currentVersion != window.maxVersion) {
+                document.getElementById('testButton').style.display = '';
+            } else {
+                document.getElementById('testButton').style.display = 'none';
+            }
+        }
+    }
 
+    updateNavBar();
     document.getElementById('moveHereButton').style.display = 'none';
-    document.getElementById('cancelMoveButton').style.display = 'none';
+    document.getElementById('copyHereButton').style.display = 'none';
+    document.getElementById('cancelButton').style.display = 'none';
     if((openProjectName != null && openProjectName != '') || NDlength != 1) {
         document.getElementById('moveButton').style.display = '';
+        document.getElementById('copyButton').style.display = '';
     } else {
         document.getElementById('moveButton').style.display = 'none';
+        document.getElementById('copyButton').style.display = 'none';
     }
 
     var title;
@@ -367,24 +450,23 @@ function updateUI() {
 }
 
 function updateNavBar() {
+    window.inCommentables = window.nestedDirs != undefined &&
+                            window.nestedDirs.length > 0 &&
+                            window.nestedDirs[1] == 'commentables';
     var projects = document.getElementById('nav_mine');
-
     while (projects.lastChild) {
         projects.removeChild(projects.lastChild);
     }
-
     allProjectNames.forEach(function(projectNames) {
         projectNames.sort(function(a, b) {
             return a.localeCompare(b);
         });
     });
-
     allFolderNames.forEach(function(folderNames) {
         folderNames.sort(function(a, b) {
             return a.localeCompare(b);
         });
     });
-
     var NDlength = nestedDirs.length;
     for(let i = 0; i < NDlength; i++) {
         var tempProjects;
@@ -460,6 +542,29 @@ function updateNavBar() {
             projects = tempProjects;
         }
     }
+    if (window.openProjectName == null || window.openProjectName == '') {
+        window.codeworldEditor.setOption('readOnly', true);
+        document.getElementById('downloadButton').style.display = 'none';
+        document.getElementById('compileButton').style.display = 'none';
+        document.getElementById('stopButton').style.display = 'none';
+    } else {
+        if (window.inCommentables == true) {
+            window.codeworldEditor.setOption('readOnly', true);
+        } else {
+            if (window.currentVersion == window.maxVersion) {
+                if (window.socket != undefined) {
+                    window.codeworldEditor.setOption('readOnly', false);
+                } else {
+                    window.codeworldEditor.setOption('readOnly', true);
+                }
+            } else {
+                window.codeworldEditor.setOption('readOnly', true);
+            }
+        }
+        document.getElementById('downloadButton').style.display = '';
+        document.getElementById('compileButton').style.display = '';
+        document.getElementById('stopButton').style.display = '';
+    }
 }
 
 function moveProject() {
@@ -489,18 +594,63 @@ function moveProject() {
         document.getElementById('newFolderButton').style.display = '';
         document.getElementById('newButton').style.display = 'none';
         document.getElementById('saveButton').style.display = 'none';
-        document.getElementById('saveAsButton').style.display = 'none';
         document.getElementById('deleteButton').style.display = 'none';
         document.getElementById('downloadButton').style.display = 'none';
         document.getElementById('moveButton').style.display = 'none';
         document.getElementById('moveHereButton').style.display = '';
-        document.getElementById('cancelMoveButton').style.display = '';
+        document.getElementById('cancelButton').style.display = '';
+        document.getElementById('copyButton').style.display = 'none';
+        document.getElementById('copyHereButton').style.display = 'none';
         document.getElementById('runButtons').style.display = 'none';
 
-        window.move = Object();
+        window.move = new Object();
         window.move.path = tempPath;
         if (tempOpen != null && tempOpen != '') {
             window.move.file = tempOpen;
+        }
+    }, false);
+}
+
+function copyProject() {
+    warnIfUnsaved(function() {
+        if (!signedIn()) {
+            sweetAlert('Oops!', 'You must sign in to copy this project or folder.', 'error');
+            updateUI();
+            return;
+        }
+
+        if ((openProjectName == null || openProjectName == '') && nestedDirs.length == 1) {
+            sweetAlert('Oops!', 'You must select a project or folder to copy.', 'error');
+            updateUI();
+            return;
+        }
+
+        var tempOpen = openProjectName;
+        var tempPath = nestedDirs.slice(1).join('/');
+        setCode('');
+        if (tempOpen == null || tempOpen == '') {
+            nestedDirs.splice(-1);
+            allProjectNames.splice(-1);
+            allFolderNames.splice(-1);
+        }
+        updateNavBar();
+        discoverProjects("", 0);
+        document.getElementById('newFolderButton').style.display = '';
+        document.getElementById('newButton').style.display = 'none';
+        document.getElementById('saveButton').style.display = 'none';
+        document.getElementById('deleteButton').style.display = 'none';
+        document.getElementById('downloadButton').style.display = 'none';
+        document.getElementById('copyButton').style.display = 'none';
+        document.getElementById('copyHereButton').style.display = '';
+        document.getElementById('cancelButton').style.display = '';
+        document.getElementById('moveButton').style.display = 'none';
+        document.getElementById('moveHereButton').style.display = 'none';
+        document.getElementById('runButtons').style.display = 'none';
+
+        window.copy = Object();
+        window.copy.path = tempPath;
+        if (tempOpen != null && tempOpen != '') {
+            window.copy.file = tempOpen;
         }
     }, false);
 }
@@ -514,6 +664,17 @@ function moveHere() {
         updateUI();
     }
     moveHere_(nestedDirs.slice(1).join('/'), window.buildMode, successFunc);
+}
+
+function copyHere() {
+    function successFunc() {
+        nestedDirs = [""];
+        allProjectNames = [[]];
+        allFolderNames = [[]];
+        discoverProjects("", 0);
+        updateUI();
+    }
+    copyHere_(nestedDirs.slice(1).join('/'), window.buildMode, successFunc);
 }
 
 function changeFontSize(incr) {
@@ -624,25 +785,23 @@ function loadSample(code) {
 }
 
 function newProject() {
-    warnIfUnsaved(function() {
-        setCode('');
-    }, false);
+    newProject_(nestedDirs.slice(1).join('/'));
 }
 
 function newFolder() {
-    function successFunc() {
-        if (window.move == undefined)
-            setCode('');
-    }
-    createFolder(nestedDirs.slice(1).join('/'), window.buildMode, successFunc);
+    createFolder(nestedDirs.slice(1).join('/'), window.buildMode);
 }
 
 function loadProject(name, index) {
-    if(window.move != undefined) {
+    if(window.move != undefined || window.copy != undefined) {
         return;
     }
-    function successFunc(project){
+    function successFunc(project) {
+        window.project = project
         setCode(project.source, project.history, name);
+        getCommentVersions();
+        getUserIdent();
+        initializeCollaboration();
     }
     loadProject_(index, name, window.buildMode, successFunc);
 }
@@ -786,14 +945,13 @@ function discoverProjects(path, index){
     discoverProjects_(path, window.buildMode, index);
 }
 
-function saveProjectBase(path, projectName) {
+function saveProjectBase(path, projectName, type = 'save') {
     function successFunc() {
         window.openProjectName = projectName;
         var doc = window.codeworldEditor.getDoc();
         window.savedGeneration = doc.changeGeneration(true);
     }
-
-    saveProjectBase_(path, projectName, window.buildMode, successFunc);
+    saveProjectBase_(path, projectName, window.buildMode, successFunc, type);
 }
 
 function deleteFolder() {

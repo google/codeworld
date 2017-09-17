@@ -43,13 +43,14 @@ run codeworld-api   cabal haddock --hoogle
 
 # Build codeworld-server from this project.
 
-run .  cabal_install ./codeworld-server \
+run .  cabal_install ./funblocks-server \
                      ./codeworld-error-sanitizer \
                      ./codeworld-compiler \
+                     ./codeworld-server \
                      ./codeworld-game-api \
                      ./codeworld-prediction \
                      ./codeworld-api \
-                     ./codeworld-game-server
+                     ./codeworld-collab-server
 
 # Build the JavaScript client code for FunBlocks, the block-based UI.
 run .  cabal_install --ghcjs ./funblocks-client

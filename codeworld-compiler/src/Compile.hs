@@ -102,7 +102,6 @@ compileSource stage src out err mode = checkDangerousSource src >>= \case
                             target </> "lib.js",
                             target </> "out.js"
                             ]
-                        hasTarget <- doesFileExist (target </> "out.js")
                         when hasTarget $ do
                             rtsCode <- B.readFile $ target </> "rts.js"
                             libCode <- B.readFile $ target </> "lib.js"

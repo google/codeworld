@@ -195,7 +195,7 @@ horizontally or vertically.  To use `scaled`, you'll give:
 
 * A picture to stretch.
 * A factor by which to stretch the picture horizontally.  1 means leave it
-  alone.  Numbers bigger than stretch it out, and numbers smaller than 1
+  alone.  Numbers bigger 1 than stretch it out, and numbers smaller than 1
   (like 0.5) squish it together to make it smaller.  Negative numbers flip
   the picture over, like looking at it in a mirror.
 * A factor by which to stretch the picture vertically.  The meaning of

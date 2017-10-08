@@ -33,7 +33,7 @@ official Google project, and Google provides no support for it.  Instead,
 questions about the project or code should be asked to the
 [codeworld-discuss mailing list](https://groups.google.com/forum/#!members/codeworld-discuss).
 A student-friendly question and answer forum is also available at
-http://help.code.world for questions about programs written *using* CodeWorld,
+https://www.allanswered.com/community/215/codeworld/ for questions about programs written *using* CodeWorld,
 rather than questions about building or modifying CodeWorld itself.
 
 Getting Started
@@ -65,14 +65,14 @@ Contributing
 ============
 
 There is a slight bit of paperwork involved in contributing to CodeWorld.  You'll need to
-agree to a Contributor License Agreement.  See CONTRIBUTING.md for details.
+agree to a Contributor License Agreement. See CONTRIBUTING.md for details.
 
 Build and Deployment
 ====================
 
 Building and running CodeWorld can be a lengthy process, but is automated using the
 installation scripts in the root directory, which work on most forms of Linux, including
-Debian, Ubuntu, RedHat, and CentOS.  The step by step instructions are as follows:
+Debian, Ubuntu, RedHat, and CentOS. The step by step instructions are as follows:
 
 0. Read the caveats, explained below.
 1. Change to the root directory of the project.
@@ -103,7 +103,7 @@ See bug #4 for details.
 
 CodeWorld allows users to authenticate using a Google account, and save their
 projects.  For this feature to work, you need to obtain a Google API key, and store
-it in web/clientId.txt.  If you don't do this, the sign-in and save features will
+it in `web/clientId.txt`.  If you don't do this, the sign-in and save features will
 not function correctly, but the rest of the site will be usable.
 
 ### Swap Space ###

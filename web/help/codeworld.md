@@ -6,7 +6,7 @@ can create drawings, animations, and even single-player and multi-player video g
 The programming language used is a variation of [Haskell](http://haskell.org), but
 you can think of it as just talking to the computer using mathematics.
 
-This is the CodeWorld Guide; it will get you started.  Click outside the guide
+This is the CodeWorld Guide, which will help get you started.  Click outside the guide
 to start programming.  The *Guide* button at the bottom of the screen will get you
 back here.
 
@@ -19,9 +19,10 @@ To get an idea what you can do in CodeWorld, you might want to check out the
 Tips for using this guide
 -------------------------
 
-* If you feel the urge to play around with something and try new things, please
-  do!  It won't do much good to just read.  You have to try things to learn.
-* If you see a blue box, you can click it to copy the code and try it out.
+* This guide works best if you try things; it won't do much good to just read. If you
+  feel the urge to play around with something, please do! You can always come back after.
+* Many of the examples in this guide can be copied into the CodeWorld editor and run as
+  is! If you see a blue box, you can click it to copy the code and try it out.
 
 Drawing With CodeWorld
 ======================
@@ -39,7 +40,7 @@ This is a definition of "wheel": it says that "wheel" means a circle with a radi
 2.  *Radius* just means the distance from the center of the circle to the edge.
 
 In CodeWorld, you do absolutely everything by naming things.  We call the names (like
-"wheel" in that example) *variables*.  So, earlier we defined a *variable* called
+"wheel") *variables*.  So in this example, we defined a *variable* called
 "wheel". You will define a lot of variables in CodeWorld.
 
 ### Defining program ###
@@ -73,8 +74,10 @@ shapes:
 * `text("I Love Pandas!")`: You can write text (such as letters and words) to the
   screen by using `text`.  You need quotes around the words.
 
-There are plenty more: `path`, `polygon`, `thickCircle`, `thickRectangle`, `arc`,
-`sector`... the list goes on and on!  Don't worry; you will be able to play with
+There are plenty more: `path`, which draws a line; `polygon`, which draws a polygon;
+`thickCircle`, which draws a circle with a thicker line; `thickRectangle`, which is
+the same as `thickCircle` but for rectangles; `arc`, which draws an arc; `sector`, 
+which draws a filled in portion of a circle... the list goes on and on!  Don't worry; you will be able to play with
 all of them.
 
 ### Combining Shapes ###
@@ -194,7 +197,7 @@ horizontally or vertically.  To use `scaled`, you'll give:
 
 * A picture to stretch.
 * A factor by which to stretch the picture horizontally.  1 means leave it
-  alone.  Numbers bigger than stretch it out, and numbers smaller than 1
+  alone.  Numbers bigger than 1 stretch it out, and numbers smaller than 1
   (like 0.5) squish it together to make it smaller.  Negative numbers flip
   the picture over, like looking at it in a mirror.
 * A factor by which to stretch the picture vertically.  The meaning of
@@ -1405,6 +1408,17 @@ Interactions
 ============
 
 TODO: Write this section.
+
+This section will discuss using the `interactionOf` function in place of the simulationOf function,
+which allows user input into the program.
+
+Collaborations
+============
+
+TODO: Write this section.
+
+This section will discuss using the `collaborationOf` function in place of the `interactionOf` function,
+which allows the creation of programs which accept input from multiple users.
 
 Advanced Examples
 =================

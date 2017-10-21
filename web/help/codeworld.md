@@ -21,7 +21,7 @@ Tips for using this guide
 
 * This guide works best if you try things; it won't do much good to just read. If you
   feel the urge to play around with something, please do! You can always come back after.
-* Many of the exampes in this guide can be copied into the CodeWorld editor and run as
+* Many of the examples in this guide can be copied into the CodeWorld editor and run as
   is! If you see a blue box, you can click it to copy the code and try it out.
 
 Drawing With CodeWorld
@@ -75,9 +75,9 @@ shapes:
   screen by using `text`.  You need quotes around the words.
 
 There are plenty more: `path`, which draws a line; `polygon`, which draws a polygon;
-`thickCircle`, which draws a cirlce with a thinker line; `thickRectangle`, which is
+`thickCircle`, which draws a circle with a thicker line; `thickRectangle`, which is
 the same as `thickCircle` but for rectangles; `arc`, which draws an arc; `sector`, 
-which draws a half circle... the list goes on and on!  Don't worry; you will be able to play with
+which draws a filled in portion of a circle... the list goes on and on!  Don't worry; you will be able to play with
 all of them.
 
 ### Combining Shapes ###
@@ -197,7 +197,7 @@ horizontally or vertically.  To use `scaled`, you'll give:
 
 * A picture to stretch.
 * A factor by which to stretch the picture horizontally.  1 means leave it
-  alone.  Numbers bigger 1 than stretch it out, and numbers smaller than 1
+  alone.  Numbers bigger than 1 stretch it out, and numbers smaller than 1
   (like 0.5) squish it together to make it smaller.  Negative numbers flip
   the picture over, like looking at it in a mirror.
 * A factor by which to stretch the picture vertically.  The meaning of
@@ -1409,7 +1409,7 @@ Interactions
 
 TODO: Write this section.
 
-This section will discuss using the interactionOf function in place of the simulationOf function,
+This section will discuss using the `interactionOf` function in place of the simulationOf function,
 which allows user input into the program.
 
 Collaborations
@@ -1417,8 +1417,8 @@ Collaborations
 
 TODO: Write this section.
 
-This section will discuss using the collaborationOf function in place of the simulationOf function,
-which allows the creation of programs which accepts input from multiple users.
+This section will discuss using the `collaborationOf` function in place of the `interactionOf` function,
+which allows the creation of programs which accept input from multiple users.
 
 Advanced Examples
 =================

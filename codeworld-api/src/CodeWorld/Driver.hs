@@ -617,9 +617,9 @@ textDrawer sty fnt txt ctx ds = DrawMethods {
 logoDrawer ctx ds = DrawMethods {
     drawShape = withDS ctx ds $ do
         Canvas.scale 1 (-1) ctx
-        drawCodeWorldLogo ctx ds (-255) (-50) 450 100,
+        drawCodeWorldLogo ctx ds (-225) (-50) 450 100,
     shapeContains = do
-        withDS ctx ds $ Canvas.rect (-255) (-50) 450 100 ctx
+        withDS ctx ds $ Canvas.rect (-225) (-50) 450 100 ctx
         isPointInPath ctx
     }
 

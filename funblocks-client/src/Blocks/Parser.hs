@@ -139,7 +139,7 @@ sInfixBlock block = do
 blockDrawingOf :: ParserFunction
 blockDrawingOf block = do 
       expr <- valueToExpr block "VALUE" 
-      return $ FuncDef "main" [] $ CallFunc "drawingOf" [expr]
+      return $ FuncDef "program" [] $ CallFunc "drawingOf" [expr]
 
 -- NUMBERS -------------------------------------------------------
 
@@ -227,7 +227,7 @@ blockLocalVar block = do
 blockAnim :: ParserFunction
 blockAnim block = do
         draw <- aux "FUNC"
-        return $ FuncDef "main" [] $ CallFunc "animationOf" 
+        return $ FuncDef "program" [] $ CallFunc "animationOf" 
                                             [CallFunc draw []]
   where
     aux name = case getInputBlock block name of
@@ -239,7 +239,7 @@ blockSimulation block = do
         initial <- aux "INITIAL"
         step <- aux "STEP"
         draw <- aux "DRAW"
-        return $ FuncDef "main" [] $ CallFunc "simulationOf" 
+        return $ FuncDef "program" [] $ CallFunc "simulationOf" 
                                             [CallFunc initial [],CallFunc step [],CallFunc draw []]
   where
     aux name = case getInputBlock block name of
@@ -252,7 +252,7 @@ blockInteraction block = do
         step <- aux "STEP"
         event <- aux "EVENT"
         draw <- aux "DRAW"
-        return $ FuncDef "main" [] $ CallFunc "interactionOf" 
+        return $ FuncDef "program" [] $ CallFunc "interactionOf" 
                                             [CallFunc initial [],CallFunc step [],
                                              CallFunc event [] ,CallFunc draw []]
   where

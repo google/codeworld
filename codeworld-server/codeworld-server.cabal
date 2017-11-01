@@ -25,7 +25,7 @@ Executable codeworld-server
     data-default,
     directory,
     filepath,
-    filesystem-trees,
+    filesystem-trees >= 0.1.0.6 && < 0.2,
     hindent >= 5 && < 5.2.3,
     http-conduit,
     memory,

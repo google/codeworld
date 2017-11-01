@@ -154,11 +154,11 @@ run $BUILD                   rm -rf ghc-$GHC_VERSION
 
 # Install all the dependencies for cabal
 
-run $DOWNLOADS                     wget https://www.haskell.org/cabal/release/cabal-install-1.24.0.2/cabal-install-1.24.0.2.tar.gz
-run $BUILD                         tar xf $DOWNLOADS/cabal-install-1.24.0.2.tar.gz
-EXTRA_CONFIGURE_OPTS="" run $BUILD/cabal-install-1.24.0.2 ./bootstrap.sh
+run $DOWNLOADS                     wget https://www.haskell.org/cabal/release/cabal-install-2.0.0.0/cabal-install-2.0.0.0.tar.gz
+run $BUILD                         tar xf $DOWNLOADS/cabal-install-2.0.0.0.tar.gz
+EXTRA_CONFIGURE_OPTS="" run $BUILD/cabal-install-2.0.0.0 ./bootstrap.sh
 run .                              cabal update
-run $BUILD                         rm -rf cabal-install-1.24.0.2
+run $BUILD                         rm -rf cabal-install-2.0.0.0
 
 # Fetch the prerequisites for GHCJS.
 

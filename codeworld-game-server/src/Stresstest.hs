@@ -21,6 +21,7 @@ import CodeWorld.Message
 
 import System.Clock
 import Data.List
+import Data.Monoid
 import Text.Read
 import Control.Monad
 import qualified Data.Text as T

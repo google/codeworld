@@ -673,13 +673,13 @@ function share() {
 
     if (!window.deployHash) {
       url = window.location.href;
-      msg = 'Copy this link to share your program and source code with others!';
+      msg = 'Copy this link to share your program and code with others!';
       showConfirm = false;
     } else if (offerSource) {
       url = window.location.href;
-      msg = 'Copy this link to share your program and source code with others!';
+      msg = 'Copy this link to share your program and code with others!';
       showConfirm = true;
-      confirmText = 'Remove Source Code';
+      confirmText = 'Share Without Code';
     } else {
       var a = document.createElement('a');
       a.href = window.location.href;
@@ -688,9 +688,9 @@ function share() {
       a.search = '?mode=' + window.buildMode + '&dhash=' + window.deployHash;
 
       url = a.href;
-      msg = 'Copy this link to share your program (not source code) with others!';
+      msg = 'Copy this link to share your program (but not code) with others!';
       showConfirm = true;
-      confirmText = 'Share Source Code';
+      confirmText = 'Share With Code';
     }
 
     sweetAlert({

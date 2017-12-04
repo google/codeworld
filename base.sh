@@ -19,6 +19,14 @@ export PATH=$BUILD/bin:$PATH
 export LANG=${LANG:-C.UTF-8}
 export PREFIX=$BUILD
 
+export ANDROID_HOME=$BUILD/Android/Sdk
+export PATH=$BUILD/Android/Sdk/tools:$PATH
+export PATH=$BUILD/Android/Sdk/platform-tools:$PATH
+export PATH=$BUILD/Android/Sdk/tools/bin:$PATH
+export PATH=$BUILD/Android/Sdk/tools/lib:$PATH
+
+export PATH=$BUILD/Cordova/node_modules/cordova/bin:$PATH
+
 function run {
   OLD_PWD=$PWD
   cd $1
@@ -38,3 +46,4 @@ function run {
 function cabal_install {
   cabal install --force-reinstalls --global --prefix=$BUILD $@
 }
+

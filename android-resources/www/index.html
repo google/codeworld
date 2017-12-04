@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+  <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=default,Array.prototype.find,Number.isFinite,Number.isInteger,console,console.log,document.head,performance.now"></script>
+  <head>
+    <title>CodeWorld</title>
+    <style type="text/css">
+      * { margin: 0; overflow: hidden }
+      #screen {
+          cursor: default;
+          width: 100vw;
+          height: 100vw;
+          max-height: 100vh;
+          max-width: 100vh;
+      }
+    </style>
+  </head>
+  <body style="text-align: center">
+    <canvas id="screen"></canvas>
+  </body>
+  <script type="text/javascript">
+    function addMessage(err, str) {
+      if (window.parent && window.parent.addToMessage) {
+        var message = window.parent.addToMessage(str);
+
+        if (err) {
+          var message = window.parent.document.getElementById('message');
+          message.classList.add('error');
+        }
+      } else {
+        console.log(str);
+      }
+    }
+
+    function showCanvas() {
+      if (!window.parent) {
+        return;
+      }
+
+      var runner = window.parent.document.getElementById('runner');
+      if (!runner) {
+        return;
+      }
+
+      runner.style.display = '';
+      runner.focus();
+      runner.contentWindow.focus();
+    }
+
+    function start() {
+      h$base_writeStdout = function(fd, fdo, buf, buf_offset, n, c) {
+        addMessage(false, h$decodeUtf8(buf, n, buf_offset));
+        c(n);
+      };
+      h$base_writeStderr = function(fd, fdo, buf, buf_offset, n, c) {
+        addMessage(false, h$decodeUtf8(buf, n, buf_offset));
+        c(n);
+      };
+      h$log = function() {
+        var s = '';
+        for(var i=0;i<arguments.length;i++) { s = s + arguments[i]; }
+        addMessage(false, s+'\n');
+      };
+      h$errorMsg = function(str) {
+        for(var i=1;i<arguments.length;i++) {
+          str = str.replace(/%s/, arguments[i]);
+        }
+        addMessage(true, '\n' + str);
+      };
+      h$base_stdout_fd.write = h$base_writeStdout;
+      h$base_stderr_fd.write = h$base_writeStderr;
+
+      h$run(h$mainZCZCMainzimain);
+    }
+
+    function reportRuntimeError(err, str) {
+      if (window.parent.addToMessage) {
+        var message = window.parent.addToMessage('\n' + str);
+
+        if (err) {
+          var message = window.parent.document.getElementById('message');
+          message.classList.add('error');
+        }
+      } else {
+        console.log(str);
+      }
+    }
+
+    var loadScript = document.createElement('script');
+    loadScript.setAttribute('type', 'text/javascript');
+    loadScript.setAttribute('src', 'js/runjs.js');
+    loadScript.onload = function() {
+      start();
+    };
+    document.head.appendChild(loadScript);
+  </script>
+
+</html>
+
+

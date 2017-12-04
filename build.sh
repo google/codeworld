@@ -18,6 +18,9 @@ cwd=$(pwd)
 
 source base.sh
 
+# Create Cordova template
+run ./android-template cordova build android
+
 run .  cabal update
 
 # Install the codeworld-base and codeworld-api packages
@@ -53,3 +56,4 @@ run .  cabal_install ./codeworld-server \
 
 # Build the JavaScript client code for FunBlocks, the block-based UI.
 run .  cabal_install --ghcjs ./funblocks-client
+

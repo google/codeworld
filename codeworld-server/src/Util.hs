@@ -30,6 +30,7 @@ import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Lazy as LB
 import           Data.Maybe
 import           Data.Monoid
+import qualified Data.Map.Strict as M
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -41,12 +42,14 @@ import           System.Posix.Files
 
 import Model
 
-newtype BuildMode = BuildMode String deriving Eq
 newtype ProgramId = ProgramId { unProgramId :: Text } deriving Eq
+newtype BuildMode = BuildMode String deriving Eq
 newtype ProjectId = ProjectId { unProjectId :: Text } deriving Eq
 newtype DeployId  = DeployId  { unDeployId  :: Text } deriving Eq
 newtype DirId     = DirId     { unDirId     :: Text}  deriving Eq
 newtype ShareId   = ShareId   { unShareId   :: Text } deriving Eq
+
+type AppProps = M.Map String String
 
 autocompletePath :: FilePath
 autocompletePath = "web/codeworld-base.txt"
@@ -57,6 +60,19 @@ clientIdPath = "web/clientId.txt"
 buildRootDir :: BuildMode -> FilePath
 buildRootDir (BuildMode m) = "data" </> m </> "user"
 
+androidRootDir :: BuildMode -> FilePath
+androidRootDir (BuildMode m) = "data" </> m </> "android"
+
+androidBuildDir :: BuildMode -> ProgramId -> FilePath
+androidBuildDir mode programId = androidRootDir mode </> sourceBase programId
+
+apkFile :: BuildMode -> ProgramId -> FilePath
+apkFile mode programId =
+  androidRootDir mode
+  </> sourceBase programId
+  </> "platforms" </> "android" </> "build" </> "outputs" </> "apk"
+  </> "android-debug" <.> "apk"
+
 shareRootDir :: BuildMode -> FilePath
 shareRootDir (BuildMode m) = "data" </> m </> "share"
 
@@ -65,6 +81,9 @@ projectRootDir (BuildMode m) = "data" </> m </> "projects"
 
 deployRootDir :: BuildMode -> FilePath
 deployRootDir (BuildMode m) = "data" </> m </> "deploy"
+
+sourceParent :: ProgramId -> FilePath
+sourceParent (ProgramId p) = let s = T.unpack p in take 3 s
 
 sourceBase :: ProgramId -> FilePath
 sourceBase (ProgramId p) = let s = T.unpack p in take 3 s </> s

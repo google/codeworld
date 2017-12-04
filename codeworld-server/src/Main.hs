@@ -22,6 +22,7 @@
 module Main where
 
 import           Compile
+import           AndroidExport
 import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.Trans
@@ -33,6 +34,7 @@ import qualified Data.ByteString.Lazy as LB
 import           Data.Char (isSpace)
 import           Data.List
 import           Data.Maybe
+import qualified Data.Map.Strict as M
 import           Data.Monoid
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -120,6 +122,8 @@ site clientId =
       ("shareContent",  shareContentHandler clientId),
       ("moveProject",   moveProjectHandler clientId),
       ("compile",       compileHandler),
+      ("exportAndroid", exportAndroidHandler),
+      ("getAndroid",    getAndroidHandler),
       ("saveXMLhash",   saveXMLHashHandler),
       ("loadXML",       loadXMLHandler),
       ("loadSource",    loadSourceHandler),
@@ -319,7 +323,7 @@ compileHandler = do
         writeDeployLink mode deployId programId
         compileIfNeeded mode programId
     unless success $ modifyResponse $ setResponseCode 500
-    modifyResponse $ setContentType "text/plain"
+    modifyResponse $ setContentType "application/json"
     let result = CompileResult (unProgramId programId) (unDeployId deployId)
     writeLBS (encode result)
 
@@ -353,6 +357,31 @@ runHandler = do
     liftIO $ compileIfNeeded mode programId
     modifyResponse $ setContentType "text/javascript"
     serveFile (buildRootDir mode </> targetFile programId)
+
+exportAndroidHandler :: Snap()
+exportAndroidHandler = do
+    mode <- getBuildMode
+    Just source <- getParam "source"
+    maybeAppName <- getParam "appName"
+    let appName = BC.unpack $ fromMaybe (BC.pack "CodeWorld App") maybeAppName 
+    let programId = sourceToProgramId source
+        deployId = sourceToDeployId source
+    success <- liftIO $ do
+        ensureProgramDir mode programId
+        B.writeFile (buildRootDir mode </> sourceFile programId) source
+        writeDeployLink mode deployId programId
+        compileIfNeeded mode programId
+    unless success $ modifyResponse $ setResponseCode 500
+    let appProps = M.fromList [("appName", appName)]
+    liftIO $ buildAndroid mode programId appProps
+    let result = CompileResult (unProgramId programId) (unDeployId deployId)
+    writeLBS (encode result)
+
+getAndroidHandler :: Snap()
+getAndroidHandler = do
+    mode <- getBuildMode
+    programId <- getHashParam True mode
+    serveFileAs "application/vnd.android.package-archive" (apkFile mode programId)
 
 runMessageHandler :: Snap ()
 runMessageHandler = do

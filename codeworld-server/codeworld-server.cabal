@@ -21,6 +21,7 @@ Executable codeworld-server
     base64-bytestring,
     bytestring,
     codeworld-compiler,
+    containers,
     cryptonite,
     data-default,
     directory,
@@ -35,6 +36,8 @@ Executable codeworld-server
     regex-tdfa,
     snap-core,
     snap-server,
+    strict,
+    tagsoup,
     temporary,
     text,
     unix

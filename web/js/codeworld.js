@@ -116,6 +116,10 @@ function initCodeworld() {
         showTrailingSpace: true,
         indentWithTabs: false,
         autoClearEmptyLines: true,
+        highlightSelectionMatches: {
+            showToken: /\w/,
+            annotateScrollbar: true
+        },
         rulers: [{
             column: 80,
             color: "#bbb",

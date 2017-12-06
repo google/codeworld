@@ -173,21 +173,12 @@ run . ghcjs-boot --dev --ghcjs-boot-dev-branch ghc-8.0 --shims-dev-branch ghc-8.
 
 run $BUILD  rm -rf downloads
 
-# Install and build CodeMirror editor.
+# Install tools to build CodeMirror editor.
 
 run $BUILD            git clone https://github.com/codemirror/CodeMirror.git
 run $BUILD/CodeMirror git checkout tags/5.25.2
 run $BUILD/CodeMirror npm install
 run $BUILD/CodeMirror npm install -s uglify-js
-
-function build_codemirror {
-  bin/compress codemirror haskell active-line dialog matchbrackets \
-    placeholder rulers runmode search searchcursor show-hint \
-    --local node_modules/uglify-js/bin/uglifyjs \
-    > codemirror-compressed.js
-}
-
-run $BUILD/CodeMirror build_codemirror
 
 # Go ahead and run a first build, which installs more local packages.
 ./build.sh

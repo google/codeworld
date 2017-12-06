@@ -53,3 +53,25 @@ run .  cabal_install ./codeworld-server \
 
 # Build the JavaScript client code for FunBlocks, the block-based UI.
 run .  cabal_install --ghcjs ./funblocks-client
+
+# Build the CodeMirror JavaScript bundle.
+function build_codemirror {
+  bin/compress codemirror \
+               haskell \
+               active-line \
+               annotatescrollbar \
+               dialog \
+               match-highlighter \
+               matchbrackets \
+               matchesonscrollbar \
+               placeholder \
+               rulers \
+               runmode \
+               search \
+               searchcursor \
+               show-hint \
+    --local node_modules/uglify-js/bin/uglifyjs \
+    > codemirror-compressed.js
+}
+
+run $BUILD/CodeMirror build_codemirror

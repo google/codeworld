@@ -41,8 +41,11 @@ pre.cm-s-default span.cm-bracket-7,  div.CodeMirror span.cm-error      {color: #
 div.CodeMirror span.CodeMirror-matchingbracket { outline: solid rgba(0,0,0,0.15) 1px }
 div.CodeMirror span.CodeMirror-nonmatchingbracket { outline: solid rgba(255,0,0,0.5) 1px }
 
-/* Grayed-out style for the empty editor placeholder. */
+/* Highlighting for matches to the selected word. */
+div.CodeMirror span.cm-matchhighlight { background-color: rgba(170, 255, 170, 1) }
+.CodeMirror-selection-highlight-scrollbar { background-color: rgba(95, 255, 95, 0.8) }
 
+/* Grayed-out style for the empty editor placeholder. */
 .CodeMirror pre.CodeMirror-placeholder {
   color: #999;
 }

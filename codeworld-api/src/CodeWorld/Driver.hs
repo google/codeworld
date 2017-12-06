@@ -217,8 +217,9 @@ rotateDS r (a,b,c,d,e,f,hc) =
      e, f, hc)
 
 setColorDS :: Color -> DrawState -> DrawState
-setColorDS col (a,b,c,d,e,f,Nothing) = (a,b,c,d,e,f,Just col)
-setColorDS _ (a,b,c,d,e,f,Just col) = (a,b,c,d,e,f,Just col)
+setColorDS col                (a,b,c,d,e,f,Nothing)  = (a,b,c,d,e,f,Just col)
+setColorDS col@(RGBA _ _ _ 0) (a,b,c,d,e,f,_)        = (a,b,c,d,e,f,Just col)
+setColorDS _                  (a,b,c,d,e,f,Just col) = (a,b,c,d,e,f,Just col)
 
 getColorDS :: DrawState -> Maybe Color
 getColorDS (a,b,c,d,e,f,col) = col

@@ -4,6 +4,13 @@
 
 CodeWorld is used in many classrooms, for a variety of purposes.  Here's a list of known users, organized by school year.  If you use CodeWorld and are not in this list, send a pull request, or just introduce yourself at [codeworld-discuss](https://groups.google.com/forum/#!forum/codeworld-discuss) and ask to be added.
 
+## 2017-2018
+
+* Parkside Intermediate School
+  * Two classes, totaling about 40 students, are studying CodeWorld for a year.  The class is taught by Chris Smith is other Google employees.
+* Louisiana High Schools
+  * 300 high school students in Louisiana took a class called Computational Thinking for STEM, across 6 different classes.  This is part of an LSU-sponsored graduation pathway in Pre-engineering.
+
 ## 2016-2017
 
 * Math 6893 at LSU

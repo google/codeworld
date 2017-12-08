@@ -37,18 +37,19 @@ pattern HSL h s l <- (toHSL -> Just (h, s, l))
 
 -- Utility functions for pattern synonyms.
 
-fenceNum :: Double -> Double -> Double -> Double
-fenceNum lo hi = max lo . min hi
+fence :: Double -> Double
+fence = max 0 . min 1
+
+wrapNum :: Double -> Double -> Double
+wrapNum lim x = x - fromInteger (floor (x / lim)) * lim
 
 fenceColor :: Color -> Color
-fenceColor (RGBA r g b a) = RGBA (fenceNum 0 1 r) (fenceNum 0 1 g)
-                                 (fenceNum 0 1 b) (fenceNum 0 1 a)
+fenceColor (RGBA r g b a) = RGBA (fence r) (fence g)
+                                 (fence b) (fence a)
 
 -- Based on the algorithm from the CSS3 specification.
 fromHSL :: Double -> Double -> Double -> Color
-fromHSL (fenceNum 0 (2*pi) -> h)
-        (fenceNum 0 1      -> s)
-        (fenceNum 0 1      -> l)
+fromHSL (wrapNum (2*pi) -> h) (fence -> s) (fence -> l)
     = RGBA r g b 1
   where m1             = l * 2 - m2
         m2 | l <= 0.5  = l * (s + 1)
@@ -114,7 +115,7 @@ sameAlpha (fenceColor -> RGBA r1 g1 b1 a1) (fenceColor -> RGBA r2 g2 b2 a2) =
 
 lighter :: Double -> Color -> Color
 lighter d c = sameAlpha c $
-    fromHSL (hue c) (saturation c) (fenceNum 0 1 (luminosity c + d))
+    fromHSL (hue c) (saturation c) (fence (luminosity c + d))
 
 light :: Color -> Color
 light = lighter 0.15
@@ -127,7 +128,7 @@ dark = darker 0.15
 
 brighter :: Double -> Color -> Color
 brighter d c = sameAlpha c $
-    fromHSL (hue c) (fenceNum 0 1 (saturation c + d)) (luminosity c)
+    fromHSL (hue c) (fence (saturation c + d)) (luminosity c)
 
 bright :: Color -> Color
 bright = brighter 0.25
@@ -143,7 +144,7 @@ translucent (fenceColor -> RGBA r g b a) = RGBA r g b (a/2)
 
 gray, grey :: Double -> Color
 gray = grey
-grey (fenceNum 0 1 -> k) = RGBA k k k 1
+grey (fence -> k) = RGBA k k k 1
 
 -- | An infinite list of colors.
 
@@ -181,4 +182,4 @@ luminosity (fenceColor -> RGBA r g b a) = (lo + hi) / 2
         lo = min r (min g b)
 
 alpha :: Color -> Double
-alpha (RGBA r g b a) = fenceNum 0 1 a
+alpha (RGBA r g b a) = fence a

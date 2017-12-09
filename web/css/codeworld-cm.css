@@ -42,7 +42,7 @@ div.CodeMirror span.CodeMirror-matchingbracket { outline: solid rgba(0,0,0,0.15)
 div.CodeMirror span.CodeMirror-nonmatchingbracket { outline: solid rgba(255,0,0,0.5) 1px }
 
 /* Highlighting for matches to the selected word. */
-div.CodeMirror span.cm-matchhighlight { background-color: rgba(170, 255, 170, 1) }
+div.CodeMirror span.cm-matchhighlight { background-color: rgba(128, 255, 128, 0.3) }
 .CodeMirror-selection-highlight-scrollbar { background-color: rgba(95, 255, 95, 0.8) }
 
 /* Grayed-out style for the empty editor placeholder. */

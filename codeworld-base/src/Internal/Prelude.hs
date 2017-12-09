@@ -181,14 +181,12 @@ internalAt xs n
 -- Indices start at 1.
 at :: HasCallStack => ([a], Number) -> a
 at (xs, n) = withFrozenCallStack (internalAt xs n)
-{-# WARNING at "Indexing has changed.  Numbering is now one-based." #-}
 
 -- | Gives the member of a list at a given index.
 -- Indices start at 1.
 (#) :: HasCallStack => [a] -> Number -> a
 lst # n = withFrozenCallStack (internalAt lst n)
 infixl 9 #
-{-# WARNING (#) "Indexing has changed.  Numbering is now one-based." #-}
 
 -- | Determines if any proposition in a list is true.
 --

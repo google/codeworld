@@ -101,7 +101,6 @@ collaborationOf (players, initial, step, event, picture) =
         (\player ev state -> event (state, fromCWEvent ev, fromInt player + 1))
         (\player state -> toCWPic (picture (state, fromInt player + 1)))
     `catch` reportError
-{-# WARNING collaborationOf "Player numbers have changed.  The first player is now player 1." #-}
 
 chooseRandoms :: IO [Number]
 chooseRandoms = do

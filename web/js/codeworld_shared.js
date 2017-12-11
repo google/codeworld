@@ -161,8 +161,14 @@ function registerStandardHints(successFunc)
     var hintBlacklist = [
         // Symbols that only exist to implement RebindableSyntax, map to
         // built-in Haskell types, or maintain backward compatibility.
+        ".",
         "Bool",
         "IO",
+        "Just",
+        "Maybe",
+        "Nothing",
+        "combined",
+        "definitely",
         "fail",
         "fromCWText",
         "fromDouble",
@@ -172,15 +178,20 @@ function registerStandardHints(successFunc)
         "fromRandomSeed",
         "fromRational",
         "fromString",
+        "hasValue",
+        "id",
         "ifThenElse",
         "line",
         "negate",
+        "opposite",
         "pictureOf",
         "randomsFrom",
+        "reciprocal",
         "thickLine",
         "toCWText",
         "toDouble",
         "toInt",
+        "withDefault",
     ];
 
     lines.forEach(function(line) {

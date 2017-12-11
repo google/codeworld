@@ -216,6 +216,7 @@ min (Number a, Number b) = fromDouble (P.min a b)
 {-| Gives the opposite (that is, the negative) of a number. -}
 opposite :: Number -> Number
 opposite = fromDouble . P.negate . toDouble
+{-# WARNING opposite "Please use -x instead of opposite(x)." #-}
 
 negate :: Number -> Number
 negate = opposite
@@ -296,6 +297,7 @@ remainder (a, b) = a - b * quotient (a, b)
 reciprocal :: HasCallStack => Number -> Number
 reciprocal 0 = withFrozenCallStack (P.error "Zero has no reciprocal.")
 reciprocal x = fromDouble (P.recip (toDouble x))
+{-# WARNING reciprocal "Please use 1/x or x^(-1) instead of reciprocal(x)." #-}
 
 {-| The constant pi, which is equal to the ration between the circumference
     and diameter of a circle.
@@ -401,7 +403,6 @@ atan = fromRadians . fromDouble . P.atan . toDouble
 {-| Gives the angle between the positive x axis and a given point, in degrees. -}
 atan2 :: (Number, Number) -> Number
 atan2 (Number a, Number b) = fromRadians (fromDouble (P.atan2 a b))
-
 {-# WARNING atan2 "Please use vectorDirection instead of atan2." #-}
 
 {-| Gives the inverse cosine of a value, in degrees.

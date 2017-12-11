@@ -1,3 +1,4 @@
+{-# LANGUAGE GADTSyntax #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE PackageImports    #-}
 
@@ -38,7 +39,7 @@ module Internal.Prelude (
     fromOperator,
 
     -- Basic functions
-    P.id,
+    id,
     (.),
 
     -- Tuples
@@ -77,7 +78,7 @@ module Internal.Prelude (
     combined,
 
     -- Maybe
-    P.Maybe(..),
+    Maybe(..),
     withDefault,
     hasValue,
     definitely,
@@ -91,7 +92,7 @@ module Internal.Prelude (
 
 import qualified "base" Prelude as P
 import qualified "base" Data.Maybe as P
-import "base" Prelude (Bool, (.), ($))
+import "base" Prelude (Bool, ($))
 
 import Data.Bits (xor)
 import Data.Function (on)
@@ -105,6 +106,14 @@ import System.Random hiding (split)
 import System.Random.Shuffle (shuffle')
 
 import GHC.Stack (HasCallStack, withFrozenCallStack)
+
+id :: a -> a
+id x = x
+{-# WARNING id "Please define your own identity function." #-}
+
+(.) :: (b -> c) -> (a -> b) -> a -> c
+(.) = (P..)
+{-# WARNING (.) "Please implement function composition with arguments." #-}
 
 -- | Converts a function to an operator.
 --
@@ -277,6 +286,7 @@ combined :: HasCallStack => ((a, a) -> a, [a]) -> a
 combined (f, [])   = withFrozenCallStack (P.error "Empty list is not allowed.")
 combined (f, [x])  = x
 combined (f, x:xs) = f(x, combined(f, xs))
+{-# WARNING combined "Pleased use recursion instead of combined(...)." #-}
 
 -- For some reason, randoms numbers seem to give conspicuously similar
 -- results early in the sequence, so we throw away a few to get better
@@ -294,24 +304,33 @@ shuffled :: ([a], Number) -> [a]
 shuffled ([], r) = []
 shuffled (xs, r) = shuffle' xs (P.length xs) (numToStdGen r)
 
+data Maybe a = Nothing | Just a
+
+{-# WARNING Maybe   "Please use your own data type instead of Maybe and friends." #-}
+{-# WARNING Just    "Please use your own data type instead of Maybe and friends." #-}
+{-# WARNING Nothing "Please use your own data type instead of Maybe and friends." #-}
+
 -- | Converts a Maybe value to a plain value, by using a default.
 --
 -- For example, `withDefault(Nothing, 5)` is equal to 5, while
 -- `withDefault(Just(3), 5)` is equal to 3.
-withDefault :: (P.Maybe a, a) -> a
-withDefault (m, d) = P.fromMaybe d m
+withDefault :: (Maybe a, a) -> a
+withDefault (Nothing, d) = d
+withDefault (Just a, _)  = a
+{-# WARNING withDefault "Please use your own data type instead of Maybe and friends." #-}
 
 -- | Determines if a Maybe has a value.
-hasValue :: P.Maybe a -> Truth
-hasValue P.Nothing = P.False
-hasValue (P.Just _) = P.True
+hasValue :: Maybe a -> Truth
+hasValue Nothing = P.False
+hasValue (Just _) = P.True
+{-# WARNING hasValue "Please use your own data type instead of Maybe and friends." #-}
 
 -- | Extracts the value from a Maybe, and crashes the program if there
 -- is no such value.
-definitely :: HasCallStack => P.Maybe a -> a
-definitely (P.Just a) = a
-definitely P.Nothing = withFrozenCallStack (
-    P.error "Expected a value; found Nothing.")
+definitely :: HasCallStack => Maybe a -> a
+definitely (Just a) = a
+definitely Nothing = withFrozenCallStack (P.error "Expected a value; found Nothing.")
+{-# WARNING definitely "Please use your own data type instead of Maybe and friends." #-}
 
 fromRandomSeed :: Number -> [Number]
 fromRandomSeed = randomNumbers

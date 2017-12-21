@@ -186,6 +186,7 @@ function run(xmlHash, codeHash, msg, error, dhash) {
 
     document.getElementById('editButton').setAttribute('href','/#' + codeHash);
     window.deployHash = dhash;
+    cancelMove();
     updateUI();
 }
 
@@ -283,7 +284,7 @@ function folderHandler(folderName, index, state) {
             allFolderNames.push([]);
             discoverProjects(nestedDirs.slice(1).join('/'), index + 1);
         }
-        if (window.move == undefined) {
+        if (!window.move) {
             clearWorkspace();
             openProjectName = null;
             updateUI();
@@ -331,8 +332,7 @@ function updateUI() {
         document.getElementById('deleteButton').style.display = 'none';
     }
 
-	window.move = undefined;
-	document.getElementById('newButton').style.display = '';
+    document.getElementById('newButton').style.display = '';
     document.getElementById('saveAsButton').style.display = '';
     document.getElementById('runButtons').style.display = '';
 
@@ -508,6 +508,7 @@ function moveHere() {
         allProjectNames = [[]];
         allFolderNames = [[]];
         discoverProjects("", 0);
+        cancelMove();
         updateUI();
     }
 
@@ -529,6 +530,7 @@ function help(doc) {
 
 function signinCallback(result) {
     discoverProjects("", 0);
+    cancelMove();
     updateUI();
     if(result.wc)
     {
@@ -544,6 +546,7 @@ function signOut() {
 
   document.getElementById('projects').innerHTML = '';
   openProjectName = null;
+  cancelMove();
   updateUI();
 }
 
@@ -552,13 +555,14 @@ function discoverProjects(path, index){
 }
 
 function loadProject(name, index) {
-  if (window.move != undefined) {
+  if (window.move) {
     return;
   }
   function successFunc(project){
     openProjectName = name;
     clearRunCode();
     loadWorkspace(project.source);
+    cancelMove();
     updateUI();
     Blockly.getMainWorkspace().clearUndo();
   }
@@ -571,6 +575,7 @@ function saveProjectBase(path, projectName) {
     function successFunc() {
       lastXML = getWorkspaceXMLText();
       window.openProjectName = projectName;
+      cancelMove();
       updateUI();
 
       if (allProjectNames[allProjectNames.length -1].indexOf(projectName) == -1) {
@@ -610,7 +615,7 @@ function deleteProject() {
 
 function newFolder() {
     function successFunc() {
-        if (window.move == undefined) {
+        if (!window.move) {
             clearWorkspace();
             openProjectName = null;
             clearRunCode();
@@ -632,6 +637,7 @@ function newProject() {
     clearRunCode();
     clearWorkspace();
     openProjectName = null;
+    cancelMove();
     updateUI();
     lastXML = getWorkspaceXMLText();
     Blockly.getMainWorkspace().clearUndo();

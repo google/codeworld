@@ -271,7 +271,7 @@ function folderHandler(folderName, index, state) {
             allFolderNames.push([]);
             discoverProjects(nestedDirs.slice(1).join('/'), index + 1);
         }
-        if (window.move == undefined) {
+        if (!window.move) {
             setCode('');
             updateUI();
         } else {
@@ -332,29 +332,40 @@ function updateUI() {
         document.getElementById('inspectButton').style.display = 'none';
     }
 
-    window.move = undefined;
-    document.getElementById('newButton').style.display = '';
-    document.getElementById('saveAsButton').style.display = '';
-    document.getElementById('downloadButton').style.display = '';
-    document.getElementById('runButtons').style.display = '';
+    if (window.move) {
+      document.getElementById('newButton').style.display = 'none';
+      document.getElementById('saveButton').style.display = 'none';
+      document.getElementById('saveAsButton').style.display = 'none';
+      document.getElementById('deleteButton').style.display = 'none';
+      document.getElementById('downloadButton').style.display = 'none';
+      document.getElementById('moveButton').style.display = 'none';
+      document.getElementById('moveHereButton').style.display = '';
+      document.getElementById('cancelMoveButton').style.display = '';
+      document.getElementById('runButtons').style.display = 'none';
+      document.getElementById('shareFolderButton').style.display = 'none';
+    } else {
+      document.getElementById('newButton').style.display = '';
+      document.getElementById('saveAsButton').style.display = '';
+      document.getElementById('downloadButton').style.display = '';
+      document.getElementById('runButtons').style.display = '';
+      document.getElementById('moveHereButton').style.display = 'none';
+      document.getElementById('cancelMoveButton').style.display = 'none';
 
+      var NDlength = nestedDirs.length;
+      if (NDlength != 1 && (openProjectName == null || openProjectName == '')) {
+          document.getElementById('shareFolderButton').style.display = '';
+      } else {
+          document.getElementById('shareFolderButton').style.display = 'none';
+      }
+
+      if((openProjectName != null && openProjectName != '') || NDlength != 1) {
+        document.getElementById('moveButton').style.display = '';
+      } else {
+        document.getElementById('moveButton').style.display = 'none';
+      }
+    }
 
     updateNavBar();
-    var NDlength = nestedDirs.length;
-
-    if (NDlength != 1 && (openProjectName == null || openProjectName == '')) {
-        document.getElementById('shareFolderButton').style.display = '';
-    } else {
-        document.getElementById('shareFolderButton').style.display = 'none';
-    }
-
-    document.getElementById('moveHereButton').style.display = 'none';
-    document.getElementById('cancelMoveButton').style.display = 'none';
-    if((openProjectName != null && openProjectName != '') || NDlength != 1) {
-        document.getElementById('moveButton').style.display = '';
-    } else {
-        document.getElementById('moveButton').style.display = 'none';
-    }
 
     var title;
     if (window.openProjectName) {
@@ -489,23 +500,14 @@ function moveProject() {
             allFolderNames.splice(-1);
         }
         updateNavBar();
-        discoverProjects("", 0);
-        document.getElementById('newFolderButton').style.display = '';
-        document.getElementById('newButton').style.display = 'none';
-        document.getElementById('saveButton').style.display = 'none';
-        document.getElementById('saveAsButton').style.display = 'none';
-        document.getElementById('deleteButton').style.display = 'none';
-        document.getElementById('downloadButton').style.display = 'none';
-        document.getElementById('moveButton').style.display = 'none';
-        document.getElementById('moveHereButton').style.display = '';
-        document.getElementById('cancelMoveButton').style.display = '';
-        document.getElementById('runButtons').style.display = 'none';
 
         window.move = Object();
         window.move.path = tempPath;
         if (tempOpen != null && tempOpen != '') {
             window.move.file = tempOpen;
         }
+
+        discoverProjects("", 0);
     }, false);
 }
 
@@ -515,6 +517,7 @@ function moveHere() {
         allProjectNames = [[]];
         allFolderNames = [[]];
         discoverProjects("", 0);
+        cancelMove();
         updateUI();
     }
     moveHere_(nestedDirs.slice(1).join('/'), window.buildMode, successFunc);
@@ -635,14 +638,14 @@ function newProject() {
 
 function newFolder() {
     function successFunc() {
-        if (window.move == undefined)
+        if (!window.move)
             setCode('');
     }
     createFolder(nestedDirs.slice(1).join('/'), window.buildMode, successFunc);
 }
 
 function loadProject(name, index) {
-    if(window.move != undefined) {
+    if (window.move) {
         return;
     }
     function successFunc(project){
@@ -702,6 +705,7 @@ function run(hash, dhash, msg, error) {
     }
 
     if (hash || msg) {
+        cancelMove();
         window.mainLayout.show('east');
         window.mainLayout.open('east');
         document.getElementById('shareFolderButton').style.display = 'none';
@@ -785,6 +789,7 @@ function compile() {
 
 function signinCallback(result) {
     discoverProjects("", 0);
+    cancelMove();
     updateUI();
     if (signedIn()) {
         sweetAlert.close();

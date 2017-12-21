@@ -346,6 +346,7 @@ function discoverProjects_(path, buildMode, index) {
         allProjectNames = window.openProjectName ? [[window.openProjectName]] : [[]];
         allFolderNames = [[]];
         nestedDirs = [""];
+        cancelMove();
         updateUI();
         return;
     }
@@ -366,10 +367,6 @@ function discoverProjects_(path, buildMode, index) {
     });
 }
 
-function cancelMove() {
-    updateUI();
-}
-
 function moveHere_(path, buildMode, successFunc) {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in before moving.', 'error');
@@ -377,7 +374,7 @@ function moveHere_(path, buildMode, successFunc) {
         return;
     }
 
-    if (window.move == undefined) {
+    if (!window.move) {
         sweetAlert('Oops!', 'You must first select something to move.', 'error');
         cancelMove();
         return;
@@ -388,7 +385,7 @@ function moveHere_(path, buildMode, successFunc) {
     data.append('mode', buildMode);
     data.append('moveTo', path);
     data.append('moveFrom', window.move.path);
-    if (window.move.file != undefined) {
+    if (window.move.file) {
         data.append('isFile', "true");
         data.append('name', window.move.file);
     } else {
@@ -403,6 +400,11 @@ function moveHere_(path, buildMode, successFunc) {
         }
         successFunc();
     });
+}
+
+function cancelMove() {
+  window.move = null;
+  updateUI();
 }
 
 function warnIfUnsaved(action, showAnother) {
@@ -496,7 +498,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
             }
 
             successFunc();
-
+            cancelMove();
             updateUI();
 
             if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) == -1) {
@@ -667,6 +669,7 @@ function loadProject_(index, name, buildMode, successFunc) {
             window.nestedDirs = nestedDirs.slice(0, index + 1);
             window.allProjectNames = allProjectNames.slice(0, index + 1);
             window.allFolderNames = allFolderNames.slice(0, index + 1);
+            cancelMove();
             updateUI();
         }
     });
@@ -727,6 +730,7 @@ function share() {
 
 function inspect() {
     document.getElementById('runner').contentWindow.toggleDebugMode();
+    cancelMove();
     updateUI();
 }
 

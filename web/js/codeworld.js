@@ -351,14 +351,13 @@ function updateUI() {
       document.getElementById('moveHereButton').style.display = 'none';
       document.getElementById('cancelMoveButton').style.display = 'none';
 
-      var NDlength = nestedDirs.length;
-      if (NDlength != 1 && (openProjectName == null || openProjectName == '')) {
+      if (nestedDirs.length != 1 && (openProjectName == null || openProjectName == '')) {
           document.getElementById('shareFolderButton').style.display = '';
       } else {
           document.getElementById('shareFolderButton').style.display = 'none';
       }
 
-      if((openProjectName != null && openProjectName != '') || NDlength != 1) {
+      if((openProjectName != null && openProjectName != '') || nestedDirs.length != 1) {
         document.getElementById('moveButton').style.display = '';
       } else {
         document.getElementById('moveButton').style.display = 'none';
@@ -382,12 +381,6 @@ function updateUI() {
 }
 
 function updateNavBar() {
-    var projects = document.getElementById('nav_mine');
-
-    while (projects.lastChild) {
-        projects.removeChild(projects.lastChild);
-    }
-
     allProjectNames.forEach(function(projectNames) {
         projectNames.sort(function(a, b) {
             return a.localeCompare(b);
@@ -400,80 +393,79 @@ function updateNavBar() {
         });
     });
 
-    var NDlength = nestedDirs.length;
-    for(let i = 0; i < NDlength; i++) {
-        var tempProjects;
-        if (i != 0) {
-            var encodedName = nestedDirs[i].replace('&', '&amp;')
-                .replace('<', '&lt;')
-                .replace('>', '&gt;');
-            var template = document.getElementById('openFolderTemplate').innerHTML;
-            template = template.replace('{{label}}', encodedName);
-            var span = document.createElement('span');
-            span.innerHTML = template;
-            var elem = span.getElementsByTagName('a')[0];
-            elem.style.marginLeft = (3 + 16 * (i - 1)) + 'px';
-            elem.onclick = function() {
-                folderHandler(nestedDirs[i], i - 1, true);
-            };
-            span.style.display = 'flex';
-            span.style.flexDirection = 'column';
-            projects.parentNode.insertBefore(span, projects);
-            projects.parentNode.removeChild(projects);
-            projects = span.appendChild(document.createElement('div'));
+    var makeDirNode = function(name, isOpen, level) {
+        var encodedName = name
+            .replace('&', '&amp;')
+            .replace('<', '&lt;')
+            .replace('>', '&gt;');
+        var templateName = isOpen ? 'openFolderTemplate' : 'folderTemplate';
+        var template = document.getElementById(templateName).innerHTML;
+        template = template.replace('{{label}}', encodedName);
+        var span = document.createElement('span');
+        span.innerHTML = template;
+        var elem = span.getElementsByTagName('a')[0];
+        elem.style.marginLeft = (3 + 16 * level) + 'px';
+        elem.onclick = function() {
+            folderHandler(name, level, isOpen);
+        };
+        span.style.display = 'flex';
+        span.style.flexDirection = 'column';
+
+        return span;
+    };
+
+    var makeProjectNode = function(name, level, active) {
+        var title = name;
+        if(active && !isEditorClean()) {
+            title = "* " + title;
         }
+        var encodedName = title
+            .replace('&', '&amp;')
+            .replace('<', '&lt;')
+            .replace('>', '&gt;');
+        var template = document.getElementById('projectTemplate').innerHTML;
+        template = template.replace('{{label}}', encodedName);
+        template = template.replace(/{{ifactive ([^}]*)}}/, active ? "$1" : "");
+        var span = document.createElement('span');
+        span.innerHTML = template;
+        var elem = span.getElementsByTagName('a')[0];
+        elem.style.marginLeft = (3 + 16 * level) + 'px';
+        elem.onclick = function() {
+            loadProject(name, level);
+        };
+        span.style.display = 'flex';
+        span.style.flexDirection = 'column';
+        return span;
+    };
+
+    var projects = document.getElementById('nav_mine');
+
+    while (projects.lastChild) {
+        projects.removeChild(projects.lastChild);
+    }
+
+    for (let i = 0; i < nestedDirs.length; i++) {
+        var nextProjects;
         allFolderNames[i].forEach(function(folderName) {
-            var encodedName = folderName.replace('&', '&amp;')
-                .replace('<', '&lt;')
-                .replace('>', '&gt;');
-            var template = document.getElementById('folderTemplate').innerHTML;
-            template = template.replace('{{label}}', encodedName);
-            var span = document.createElement('span');
-            span.innerHTML = template;
-            var elem = span.getElementsByTagName('a')[0];
-            elem.style.marginLeft = (3 + 16 * i) + 'px';
-            elem.onclick = function() {
-                folderHandler(folderName, i, false);
-            };
-            span.style.display = 'flex';
-            span.style.flexDirection = 'column';
+            var active = i + 1 < nestedDirs.length && nestedDirs[i + 1] == folderName;
+            if (!signedIn() && !active) {
+                return;
+            }
+            var span = makeDirNode(folderName, active, i);
             projects.appendChild(span);
-            if (i < NDlength - 1) {
-                if (folderName == nestedDirs[i + 1]) {
-                    tempProjects = projects.lastChild;
-                }
+            if (active) {
+                nextProjects = span.appendChild(document.createElement('div'));
             }
         });
         allProjectNames[i].forEach(function(projectName) {
-            var active = (window.openProjectName == projectName) && (i == NDlength - 1);
-            if(!signedIn() && !active) {
+            var active = i + 1 == nestedDirs.length && window.openProjectName == projectName;
+            if (!signedIn() && !active) {
                 return;
             }
-
-            var title = projectName;
-            if(active && !isEditorClean()) {
-                title = "* " + title;
-            }
-            var encodedName = title.replace('&', '&amp;')
-                .replace('<', '&lt;')
-                .replace('>', '&gt;');
-            var template = document.getElementById('projectTemplate').innerHTML;
-            template = template.replace('{{label}}', encodedName);
-            template = template.replace(/{{ifactive ([^}]*)}}/, active ? "$1" : "");
-            var span = document.createElement('span');
-            span.innerHTML = template;
-            var elem = span.getElementsByTagName('a')[0];
-            elem.style.marginLeft = (3 + 16 * i) + 'px';
-            elem.onclick = function() {
-                loadProject(projectName, i);
-            };
-            span.style.display = 'flex';
-            span.style.flexDirection = 'column';
+            var span = makeProjectNode(projectName, i, active);
             projects.appendChild(span);
         });
-        if ( i + 1 < NDlength ) {
-            projects = tempProjects;
-        }
+        projects = nextProjects;
     }
 }
 
@@ -499,7 +491,6 @@ function moveProject() {
             allProjectNames.splice(-1);
             allFolderNames.splice(-1);
         }
-        updateNavBar();
 
         window.move = Object();
         window.move.path = tempPath;
@@ -507,6 +498,7 @@ function moveProject() {
             window.move.file = tempOpen;
         }
 
+        updateNavBar();
         discoverProjects("", 0);
     }, false);
 }
@@ -514,8 +506,6 @@ function moveProject() {
 function moveHere() {
     function successFunc() {
         nestedDirs = [""];
-        allProjectNames = [[]];
-        allFolderNames = [[]];
         discoverProjects("", 0);
         cancelMove();
         updateUI();

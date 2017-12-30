@@ -365,7 +365,7 @@ indentHandler :: Snap ()
 indentHandler = do
     mode <- getBuildMode
     Just source <- getParam "source"
-    case reformat defaultConfig Nothing source of
+    case reformat defaultConfig Nothing Nothing source of
       Left err -> do
         modifyResponse $ setResponseCode 500 . setContentType "text/plain"
         writeLBS $ LB.fromStrict $ BC.pack err

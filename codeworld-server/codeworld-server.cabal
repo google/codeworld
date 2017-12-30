@@ -27,7 +27,7 @@ Executable codeworld-server
     filepath,
     filesystem-trees >= 0.1.0.6 && < 0.2,
     haskell-src-exts < 1.20,
-    hindent >= 5 && < 5.2.3,
+    hindent >= 5.2.3,
     http-conduit,
     memory,
     mtl,

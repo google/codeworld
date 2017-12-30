@@ -44,7 +44,6 @@ Library
     directory,
     filepath,
     haskell-src-exts,
-    hindent >= 5 && < 5.2.3,
     memory,
     mtl,
     process,

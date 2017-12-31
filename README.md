@@ -33,7 +33,7 @@ official Google project, and Google provides no support for it.  Instead,
 questions about the project or code should be asked to the
 [codeworld-discuss mailing list](https://groups.google.com/forum/#!members/codeworld-discuss).
 A student-friendly question and answer forum is also available at
-http://help.code.world for questions about programs written *using* CodeWorld,
+https://www.allanswered.com/community/215/codeworld/ for questions about programs written *using* CodeWorld,
 rather than questions about building or modifying CodeWorld itself.
 
 Getting Started
@@ -103,7 +103,7 @@ See bug #4 for details.
 
 CodeWorld allows users to authenticate using a Google account, and save their
 projects.  For this feature to work, you need to obtain a Google API key, and store
-it in web/clientId.txt.  If you don't do this, the sign-in and save features will
+it in `web/clientId.txt`.  If you don't do this, the sign-in and save features will
 not function correctly, but the rest of the site will be usable.
 
 ### Swap Space ###

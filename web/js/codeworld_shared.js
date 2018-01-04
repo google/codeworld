@@ -380,12 +380,6 @@ function moveHere_(path, buildMode, successFunc) {
         return;
     }
 
-    if (path.startsWith(window.move.path)) {
-        sweetAlert('Oops!', 'You cannot move a path to a location inside itself.', 'error');
-        cancelMove();
-        return;
-    }
-
     var data = new FormData();
     data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
     data.append('mode', buildMode);
@@ -395,6 +389,11 @@ function moveHere_(path, buildMode, successFunc) {
         data.append('isFile', "true");
         data.append('name', window.move.file);
     } else {
+        if (path.startsWith(window.move.path)) {
+            sweetAlert('Oops!', 'You cannot move a path to a location inside itself.', 'error');
+            cancelMove();
+            return;
+        }
         data.append('isFile', "false");
     }
 

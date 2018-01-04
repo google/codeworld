@@ -67,7 +67,7 @@ a == b =
 {-# RULES "equality/bool" forall (x :: P.Bool). (==) x = (P.==) x #-}
 
 -- | Compares values to see if they are not equal.
--- Note that `a /= b` is the same as `not (a == b)`.
+-- Note that @a /= b@ is the same as @not (a == b)@.
 (/=) :: a -> a -> Truth
 a /= b = not (a == b)
 

@@ -210,19 +210,19 @@ idxErrorTooLarge idx = P.error "List index is too large."
 
 -- | Determines if any proposition in a list is true.
 --
--- For example, `any([even(n) | n <- [1,2,3]])` is `True`, because 2 is even.
+-- For example, @any([even(n) | n <- [1,2,3]])@ is 'True', because 2 is even.
 any :: [Truth] -> Truth
 any = P.or
 
 -- | Determines if all propositions in a list are true.
 --
--- For example, `all([even(n) | n <- [2,3,4]])` is `False`, because 3 is not even.
+-- For example, @all([even(n) | n <- [2,3,4]])@ is 'False', because 3 is not even.
 all :: [Truth] -> Truth
 all = P.and
 
 -- | Determines if all propositions in a list are false.
 --
--- For example, `none([odd(n) | n <- [2,3,4]])` is `False`, because 3 is odd.
+-- For example, @none([odd(n) | n <- [2,3,4]])@ is 'False', because 3 is odd.
 none :: [Truth] -> Truth
 none = P.not . any
 
@@ -245,26 +245,26 @@ last (xs, n) = withFrozenCallStack (P.drop (P.length xs P.- toInt n) xs)
 
 -- | Gives all members of a list after the given number.
 --
--- In general, `xs = first(xs, n) ++ rest(xs, n)`.
+-- In general, @xs = first(xs, n) ++ rest(xs, n)@.
 rest :: HasCallStack => ([a], Number) -> [a]
 rest (xs, n) = withFrozenCallStack (P.drop (toInt n) xs)
 
 -- | Gives the longest prefix of a list for which a condition is true.
 --
--- For example, `while([2,4,5,6], even) = [2,4]`.
+-- For example, @while([2,4,5,6], even) = [2,4]@.
 while :: ([a], a -> Truth) -> [a]
 while (xs, p) = P.takeWhile p xs
 
 -- | Gives the longest prefix of a list for which a condition is false.
 --
--- For example, `until([2,4,5,6], odd) = [2,4]`.
+-- For example, @until([2,4,5,6], odd) = [2,4]@.
 until :: ([a], a -> Truth) -> [a]
 until (xs, p) = P.takeWhile (P.not . p) xs
 
 -- | Gives the remaining portion of a list after the longest prefix
 -- for which a condition is true.
 --
--- In general, `xs = while(xs, cond) ++ after(xs, cond)
+-- In general, @xs = while(xs, cond) ++ after(xs, cond)@.
 after :: ([a], a -> Truth) -> [a]
 after (xs, p) = P.dropWhile p xs
 
@@ -289,10 +289,10 @@ transposed = L.transpose
 
 -- | Combines a list of values into a single value, by merging
 -- members with a function.  The function should take two parameters,
--- and should be associative (so `f(x,f(y,z)) = f(f(x,y),z)`).  The
+-- and should be associative (so @f(x,f(y,z)) = f(f(x,y),z)@).  The
 -- list should be non-empty.
 --
--- For example, `combined(fromOperator(+), [1, 3, 5])` is equal to `9`.
+-- For example, @combined(fromOperator(+), [1, 3, 5])@ is equal to 9.
 combined :: HasCallStack => ((a, a) -> a, [a]) -> a
 combined (f, [])   = withFrozenCallStack (P.error "Empty list is not allowed.")
 combined (f, [x])  = x
@@ -323,8 +323,8 @@ data Maybe a = Nothing | Just a
 
 -- | Converts a Maybe value to a plain value, by using a default.
 --
--- For example, `withDefault(Nothing, 5)` is equal to 5, while
--- `withDefault(Just(3), 5)` is equal to 3.
+-- For example, @withDefault(Nothing, 5)@ is equal to 5, while
+-- @withDefault(Just(3), 5)@ is equal to 3.
 withDefault :: (Maybe a, a) -> a
 withDefault (Nothing, d) = d
 withDefault (Just a, _)  = a

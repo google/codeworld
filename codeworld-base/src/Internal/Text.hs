@@ -123,8 +123,8 @@ endsWith (T a, T b) = J.isSuffixOf b a
 
 -- | Gives the result of replacing one piece of text with another.
 --
--- For example, `substitution("How do you do?", "do", "be")` is equal to
--- `"How be you be?"`.
+-- For example, @substitution("How do you do?", "do", "be")@ is equal to
+-- @"How be you be?"@.
 substitution :: (Text, Text, Text) -> Text
 substitution (T text, T from, T to) = T (J.replace from to text)
 

@@ -95,7 +95,7 @@ The program
       go :: (Point, Maze, RandomNumbers) -> Maze
       go(current, g, rs) = foldl f newMaze nbors where
         newMaze = markVisitedAt(g, current)
-        nbors = shuffled(unvisitedNeighbors(newMaze, current), at(rs, 0))
+        nbors = shuffled(unvisitedNeighbors(newMaze, current), rs # 1)
         f gacc n = if isVisitedAt(gacc, n) then gacc else recur where
           newG  = addDoor(gacc, (current, n))
           recur = go(n, newG, rest(rs, 1))

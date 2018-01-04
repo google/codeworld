@@ -119,15 +119,15 @@ id x = x
 --
 -- Example use:
 --
---    f(x,y) = 2*x + y
---    (%) = toOperator(f)
---
---    eight = 3 % 2
+-- >  f(x,y) = 2*x + y
+-- >  (%) = toOperator(f)
+-- >
+-- >  eight = 3 % 2
 --
 -- This has the same effect as defining % as:
 --
---    x % y = 2*x + y
---    eight = 3 % 2
+-- >  x % y = 2*x + y
+-- >  eight = 3 % 2
 toOperator :: ((a, b) -> c) -> (a -> b -> c)
 toOperator = P.curry
 
@@ -135,8 +135,8 @@ toOperator = P.curry
 --
 -- Example use:
 --
---    divide = fromOperator(/)
---    four = divide(16, 4)
+-- >  divide = fromOperator(/)
+-- >  four = divide(16, 4)
 fromOperator :: (a -> b -> c) -> ((a, b) -> c)
 fromOperator = P.uncurry
 
@@ -175,27 +175,38 @@ contains (xs, x) = P.any (== x) xs
 length :: [a] -> Number
 length = fromInt . P.length
 
-internalAt :: HasCallStack => [a] -> Number -> a
-internalAt xs n
-  | not (isInteger n) = nonInt
-  | n <= 0            = tooSmall
-  | otherwise         = P.foldr index tooLarge xs n
-  where index x r 1 = x
-        index x r k = r (k-1)
-        tooSmall = P.error "List index must be positive. Numbering starts at 1."
-        tooLarge = P.error "List index is too large."
-        nonInt   = P.error "Non-integer list index is not allowed."
-
--- | Gives the member of a list at a given index.
+-- | Gives a list with a replaced element at an index.
 -- Indices start at 1.
-at :: HasCallStack => ([a], Number) -> a
-at (xs, n) = withFrozenCallStack (internalAt xs n)
+at :: HasCallStack => ([a], a, Number) -> [a]
+at (list, val, idx)
+  | not(isInteger(idx)) = withFrozenCallStack $ idxErrorNonInt idx
+  | idx <= 0            = withFrozenCallStack $ idxErrorNonPos idx
+  | otherwise           = withFrozenCallStack $ go idx list
+  where go _ []     = idxErrorTooLarge idx
+        go 1 (x:xs) = val : xs
+        go n (x:xs) = x : go (n - 1) xs
 
 -- | Gives the member of a list at a given index.
 -- Indices start at 1.
 (#) :: HasCallStack => [a] -> Number -> a
-lst # n = withFrozenCallStack (internalAt lst n)
+list # idx
+  | not(isInteger(idx)) = withFrozenCallStack $ idxErrorNonInt idx
+  | idx <= 0            = withFrozenCallStack $ idxErrorNonPos idx
+  | otherwise           = withFrozenCallStack $ go idx list
+  where go _ []     = idxErrorTooLarge idx
+        go 1 (x:xs) = x
+        go n (x:xs) = go (n - 1) xs
+
 infixl 9 #
+
+idxErrorNonInt :: HasCallStack => Number -> a
+idxErrorNonInt idx   = P.error "Non-integer list index is not allowed."
+
+idxErrorNonPos :: HasCallStack => Number -> a
+idxErrorNonPos idx   = P.error "List index must be positive. Numbering starts at 1."
+
+idxErrorTooLarge :: HasCallStack => Number -> a
+idxErrorTooLarge idx = P.error "List index is too large."
 
 -- | Determines if any proposition in a list is true.
 --

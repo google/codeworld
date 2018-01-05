@@ -33,7 +33,7 @@ official Google project, and Google provides no support for it.  Instead,
 questions about the project or code should be asked to the
 [codeworld-discuss mailing list](https://groups.google.com/forum/#!members/codeworld-discuss).
 A student-friendly question and answer forum is also available at
-http://help.code.world for questions about programs written *using* CodeWorld,
+https://www.allanswered.com/community/215/codeworld/ for questions about programs written *using* CodeWorld,
 rather than questions about building or modifying CodeWorld itself.
 
 Getting Started

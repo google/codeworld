@@ -5,7 +5,7 @@ License:             Apache-2.0
 License-file:        LICENSE
 Author:              The CodeWorld Authors
 Maintainer:          Joachim Breitner <mail@joachim-breitner.de>
-Copyright:           (c) 2017, The CodeWorld Authors
+Copyright:           (c) 2018, The CodeWorld Authors
 Build-type:          Simple
 Extra-source-files:  ChangeLog.md
 Cabal-version:       >=1.10

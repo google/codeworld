@@ -515,8 +515,8 @@ function moveHere() {
     moveHere_(nestedDirs.slice(1).join('/'), 'blocklyXML', successFunc);
 }
 
-function help(doc) {
-    var url = 'doc.html?help/blocks.md';
+function help() {
+    var url = 'doc.html?shelf=help/blocks.shelf';
     sweetAlert({
         title: '',
         text: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' + url + '"></iframe>',

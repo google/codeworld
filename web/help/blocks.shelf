@@ -1,0 +1,7 @@
+{
+  "default": "help/blocks.md",
+  "blocks": true,
+  "named": {
+    "Guide":    "help/blocks.md"
+  }
+}

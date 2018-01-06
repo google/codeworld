@@ -1,0 +1,8 @@
+{
+  "default": "help/codeworld.md",
+  "blocks": false,
+  "named": {
+    "Guide":    "help/codeworld.md",
+    "Examples": "help/examples.md"
+  }
+}

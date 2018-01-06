@@ -1,0 +1,7 @@
+{
+  "default": "help/haskell.md",
+  "blocks": false,
+  "named": {
+    "Intro":    "help/haskell.md"
+  }
+}

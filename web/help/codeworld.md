@@ -1420,11 +1420,6 @@ TODO: Write this section.
 This section will discuss using the `collaborationOf` function in place of the `interactionOf` function,
 which allows the creation of programs which accept input from multiple users.
 
-Advanced Examples
-=================
-
-More examples of CodeWorld can be found on the example page [here!](?help/examples.md).
-
 More Information
 ================
 

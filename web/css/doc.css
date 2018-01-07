@@ -65,23 +65,6 @@ a[href]:hover {
   margin: 0px;
 }
 
-div.contents {
-  border-right: solid #ccc 1px;
-  background-color: #ffb;
-  margin: 0px 0px 0px 0px;
-  padding: 0px 0px 0px 0px;
-}
-
-div.contents:before {
-  display: block;
-  content: "Table of Contents:";
-  font-size: 16px;
-  font-weight: bold;
-  border-bottom: dotted #ccc 2px;
-  padding: 5px 10px 5px 10px;
-  width: 280px;
-}
-
 #helpacc {
   position: fixed;
   overflow: auto;
@@ -89,6 +72,7 @@ div.contents:before {
   height: 100%;
   margin: 0px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
+  border-right: solid #ccc 3px;
 }
 
 #helpacc .accentry {

@@ -54,17 +54,23 @@ window.env = parent;
         while (pres != null && pres.length > 0) {
             let pre = pres[0];
             let text = pre.outerHTML;
-            pre.outerHTML = '<iframe frameborder="0" scrolling="no" id="frame' + i + '"></iframe>';
 
-            let myIframe = elem.getElementById('frame' + i);
-            myIframe.addEventListener("load", function() {
+            var iframe = document.createElement('iframe');
+            iframe.setAttribute('frameborder', '0');
+            iframe.setAttribute('scrolling', 'no');
+
+            iframe.addEventListener("load", function() {
                 this.contentWindow.setParent(parent);
-                this.contentWindow.setId(myIframe);
-                this.contentWindow.loadXml.call(myIframe.contentWindow,text);
+                this.contentWindow.setId(iframe);
+                this.contentWindow.loadXml.call(iframe.contentWindow, text);
             });
 
-            myIframe.src = 'blockframe.html';
-            myIframe.classList.add('clickable');
+            iframe.src = 'blockframe.html';
+            iframe.classList.add('clickable');
+
+            var parent = pre.parentNode;
+            parent.insertBefore(iframe, pre);
+            parent.removeChild(pre);
 
             pres = elem.getElementsByTagName('xml');
             i++;

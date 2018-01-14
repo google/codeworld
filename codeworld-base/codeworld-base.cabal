@@ -30,7 +30,7 @@ Library
                        Internal.Truth
   Build-depends:       base,
                        bytestring,
-                       -- codeworld-error-sanitizer,
+                       codeworld-error-sanitizer,
                        codeworld-api,
                        ghc-prim,
                        ghcjs-base,

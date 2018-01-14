@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 {-
@@ -19,25 +18,9 @@
 
 module ErrorSanitizer ( filterOutput ) where
 
-import           Data.Array (elems)
 import           Data.ByteString (ByteString)
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as C
 import           Data.List
-import           Data.Monoid
-import           Text.Regex.Base
-import           Text.Regex.TDFA
-import           Text.Regex.TDFA.ByteString
-
-replace :: ByteString -> ByteString -> ByteString -> ByteString
-replace regex replacement str =
-    let parts = concatMap elems $ (str =~ regex :: [MatchArray])
-    in foldl replaceOne str (reverse parts)
-  where
-     replaceOne :: ByteString -> (Int, Int) -> ByteString
-     replaceOne str (start, len) = pre <> replacement <> post
-       where pre  = B.take start str
-             post = B.drop (start + len) str
+import           RegexShim (replace)
 
 filterStages :: [(ByteString, ByteString)]
 filterStages = [

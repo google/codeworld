@@ -10,20 +10,22 @@ Build-type:          Simple
 Cabal-version:       >=1.10
 
 Description:
-  Regex based error filter library for CodeWorld compiler 
+  Regex based error filter library for CodeWorld compiler.
 
 Library
-  Exposed-modules: ErrorSanitizer     
-
-  Build-depends:
-    array,
-    base,
-    bytestring,
-    regex-base,
-    regex-tdfa
-
   Hs-source-dirs:      src
+  Exposed-modules:     ErrorSanitizer
+  Other-modules:       RegexShim
+  Build-depends:       base,
+                       bytestring
+
+  if impl(ghcjs)
+    Build-depends:     ghcjs-base,
+                       ghcjs-prim
+  else
+    Build-depends:     array,
+                       regex-base,
+                       regex-tdfa
 
   Exposed: True
-
-  Ghc-options: -O2 
+  Ghc-options: -O2

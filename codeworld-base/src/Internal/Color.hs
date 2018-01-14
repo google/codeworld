@@ -1,8 +1,8 @@
-{-# LANGUAGE RebindableSyntax  #-}
+{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE PackageImports    #-}
-{-# LANGUAGE PatternSynonyms   #-}
-{-# LANGUAGE ViewPatterns      #-}
+{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE ViewPatterns #-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.
@@ -19,45 +19,55 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
 module Internal.Color where
 
 import qualified "codeworld-api" CodeWorld as CW
-import                           Internal.Num
-import                           Internal.Truth
-import qualified "base"          Prelude as P
-import           "base"          Prelude ((.))
+import Internal.Num
+import Internal.Truth
+import qualified "base" Prelude as P
+import "base" Prelude ((.))
 
-newtype Color = RGBA(Number, Number, Number, Number) deriving P.Eq
+newtype Color =
+    RGBA (Number, Number, Number, Number)
+    deriving (P.Eq)
+
 type Colour = Color
 
-{-# RULES "equality/color" forall (x :: Color). (==) x = (P.==) x #-}
+{-# RULES
+"equality/color" forall (x :: Color) . (==) x = (P.==) x
+ #-}
 
 pattern RGB :: (Number, Number, Number) -> Color
+
 pattern RGB components <- (toRGB -> P.Just components)
-  where RGB components = let (r, g, b) = components in RGBA (r, g, b, 1)
+  where RGB components
+          = let (r, g, b) = components in RGBA (r, g, b, 1)
 
 -- Utility function for RGB pattern synonym.
 toRGB :: Color -> P.Maybe (Number, Number, Number)
 toRGB (RGBA (r, g, b, 1)) = P.Just (r, g, b)
-toRGB _                   = P.Nothing
+toRGB _ = P.Nothing
 
 pattern HSL :: (Number, Number, Number) -> Color
+
 pattern HSL components <- (toHSL -> P.Just components)
   where HSL components = fromHSL components
 
 -- Utility functions for HSL pattern synonym.
 toHSL :: Color -> P.Maybe (Number, Number, Number)
 toHSL c@(RGBA (_, _, _, 1)) = P.Just (hue c, saturation c, luminosity c)
-toHSL _                     = P.Nothing
+toHSL _ = P.Nothing
 
 fromHSL :: (Number, Number, Number) -> Color
-fromHSL (h, s, l) = fromCWColor (CW.HSL (toDouble (pi * h / 180)) (toDouble s) (toDouble l))
+fromHSL (h, s, l) =
+    fromCWColor (CW.HSL (toDouble (pi * h / 180)) (toDouble s) (toDouble l))
 
-{-# WARNING fromHSL "Please use HSL instead of fromHSL." #-}
+{-# WARNING
+fromHSL "Please use HSL instead of fromHSL."
+ #-}
 
 toCWColor :: Color -> CW.Color
-toCWColor (RGBA (r,g,b,a)) =
+toCWColor (RGBA (r, g, b, a)) =
     CW.RGBA (toDouble r) (toDouble g) (toDouble b) (toDouble a)
 
 fromCWColor :: CW.Color -> Color
@@ -66,30 +76,43 @@ fromCWColor (CW.RGBA r g b a) =
 
 white, black :: Color
 white = fromCWColor CW.white
+
 black = fromCWColor CW.black
 
 -- Primary and secondary colors
 red, green, blue, cyan, magenta, yellow :: Color
-red        = fromCWColor CW.red
-yellow     = fromCWColor CW.yellow
-green      = fromCWColor CW.green
-cyan       = fromCWColor CW.cyan
-blue       = fromCWColor CW.blue
-magenta    = fromCWColor CW.magenta
+red = fromCWColor CW.red
+
+yellow = fromCWColor CW.yellow
+
+green = fromCWColor CW.green
+
+cyan = fromCWColor CW.cyan
+
+blue = fromCWColor CW.blue
+
+magenta = fromCWColor CW.magenta
 
 -- Tertiary colors
 orange, rose, chartreuse, aquamarine, violet, azure :: Color
-orange     = fromCWColor CW.orange
+orange = fromCWColor CW.orange
+
 chartreuse = fromCWColor CW.chartreuse
+
 aquamarine = fromCWColor CW.aquamarine
-azure      = fromCWColor CW.azure
-violet     = fromCWColor CW.violet
-rose       = fromCWColor CW.rose
+
+azure = fromCWColor CW.azure
+
+violet = fromCWColor CW.violet
+
+rose = fromCWColor CW.rose
 
 -- Other common colors and color names
-brown      = fromCWColor CW.brown
-purple     = fromCWColor CW.purple
-pink       = fromCWColor CW.pink
+brown = fromCWColor CW.brown
+
+purple = fromCWColor CW.purple
+
+pink = fromCWColor CW.pink
 
 mixed :: (Color, Color) -> Color
 mixed (a, b) = fromCWColor (CW.mixed (toCWColor a) (toCWColor b))
@@ -123,6 +146,7 @@ translucent = fromCWColor . CW.translucent . toCWColor
 
 gray, grey :: Number -> Color
 gray = fromCWColor . CW.gray . toDouble
+
 grey = gray
 
 assortedColors :: [Color]
@@ -130,6 +154,9 @@ assortedColors = P.map fromCWColor CW.assortedColors
 
 hue, saturation, luminosity, alpha :: Color -> Number
 hue = (180 *) . (/ pi) . fromDouble . CW.hue . toCWColor
+
 saturation = fromDouble . CW.saturation . toCWColor
+
 luminosity = fromDouble . CW.luminosity . toCWColor
+
 alpha = fromDouble . CW.alpha . toCWColor

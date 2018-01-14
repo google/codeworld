@@ -1,6 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE PackageImports    #-}
-{-# LANGUAGE PatternSynonyms   #-}
+{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE PatternSynonyms #-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.
@@ -17,22 +17,21 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
-module Internal.Event (
-    Event(..),
-    CW.MouseButton(..),
-    pattern PointerPress,
-    pattern PointerRelease,
-    pattern PointerMovement,
-    fromCWEvent
+module Internal.Event
+    ( Event(..)
+    , CW.MouseButton(..)
+    , pattern PointerPress
+    , pattern PointerRelease
+    , pattern PointerMovement
+    , fromCWEvent
     ) where
 
 import qualified "codeworld-api" CodeWorld as CW
-import qualified "base"          Prelude as P
-import                           Internal.Num
-import                           Internal.Text
-import                           Internal.Truth
-import                           Internal.Picture
+import Internal.Num
+import Internal.Picture
+import Internal.Text
+import Internal.Truth
+import qualified "base" Prelude as P
 
 {-| An event initiated by the user.
 
@@ -69,27 +68,33 @@ import                           Internal.Picture
     * Cancel
     * Help
 -}
-data Event = KeyPress !Text
-           | KeyRelease !Text
-           | MousePress !(CW.MouseButton, Point)
-           | MouseRelease !(CW.MouseButton, Point)
-           | MouseMovement !Point
-  deriving P.Eq
+data Event
+    = KeyPress !Text
+    | KeyRelease !Text
+    | MousePress !(CW.MouseButton, Point)
+    | MouseRelease !(CW.MouseButton, Point)
+    | MouseMovement !Point
+    deriving (P.Eq)
 
 pattern PointerPress :: Point -> Event
+
 pattern PointerPress p = MousePress (CW.LeftButton, p)
 
 pattern PointerRelease :: Point -> Event
+
 pattern PointerRelease p = MouseRelease (CW.LeftButton, p)
 
 pattern PointerMovement :: Point -> Event
+
 pattern PointerMovement p = MouseMovement p
 
-{-# RULES "equality/event" forall (x :: Event). (==) x = (P.==) x #-}
+{-# RULES
+"equality/event" forall (x :: Event) . (==) x = (P.==) x
+ #-}
 
 fromCWEvent :: CW.Event -> Event
-fromCWEvent (CW.KeyPress      key)   = KeyPress      (toCWText key)
-fromCWEvent (CW.KeyRelease    key)   = KeyRelease    (toCWText key)
-fromCWEvent (CW.MousePress    btn p) = MousePress    (btn, fromCWVect p)
-fromCWEvent (CW.MouseRelease  btn p) = MouseRelease  (btn, fromCWVect p)
-fromCWEvent (CW.MouseMovement p)     = MouseMovement (fromCWVect p)
+fromCWEvent (CW.KeyPress key) = KeyPress (toCWText key)
+fromCWEvent (CW.KeyRelease key) = KeyRelease (toCWText key)
+fromCWEvent (CW.MousePress btn p) = MousePress (btn, fromCWVect p)
+fromCWEvent (CW.MouseRelease btn p) = MouseRelease (btn, fromCWVect p)
+fromCWEvent (CW.MouseMovement p) = MouseMovement (fromCWVect p)

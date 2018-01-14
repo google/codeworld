@@ -1,6 +1,6 @@
 {-# LANGUAGE GADTSyntax #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE PackageImports    #-}
+{-# LANGUAGE PackageImports #-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.
@@ -17,81 +17,71 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
-module Internal.Prelude (
-    ifThenElse, -- For RebindableSyntax
-    fail, -- for RebindableSyntax
-
+module Internal.Prelude
+    ( ifThenElse -- For RebindableSyntax
+    , fail -- for RebindableSyntax
     -- Comparison
-    (==),
-    (/=),
-
+    , (==)
+    , (/=)
     -- Truth
-    Truth,
-    Bool(..),
-    (&&),
-    (||),
-    not,
-    otherwise,
-
+    , Truth
+    , Bool(..)
+    , (&&)
+    , (||)
+    , not
+    , otherwise
     -- Currying and uncurrying
-    toOperator,
-    fromOperator,
-
+    , toOperator
+    , fromOperator
     -- Basic functions
-    id,
-    (.),
-
+    , id
+    , (.)
     -- Tuples
-    firstOfPair,
-    secondOfPair,
-
+    , firstOfPair
+    , secondOfPair
     -- Failures
-    error, -- Text version
-    undefined,
-
+    , error -- Text version
+    , undefined
     -- List functions
-    (P.++),
-    empty,
-    contains,
-    length,
-    at,
-    (#),
-    any,
-    all,
-    none,
-    repeated,
-    repeating,
-    first,
-    last,
-    rest,
-    while,
-    until,
-    after,
-    concatenation,
-    L.subsequences,
-    L.permutations,
-    sorted,
-    reversed,
-    unique,
-    transposed,
-    combined,
-
+    , (P.++)
+    , empty
+    , contains
+    , length
+    , at
+    , ( # )
+    , any
+    , all
+    , none
+    , repeated
+    , repeating
+    , first
+    , last
+    , rest
+    , while
+    , until
+    , after
+    , concatenation
+    , L.subsequences
+    , L.permutations
+    , sorted
+    , reversed
+    , unique
+    , transposed
+    , combined
     -- Maybe
-    Maybe(..),
-    withDefault,
-    hasValue,
-    definitely,
-
+    , Maybe(..)
+    , withDefault
+    , hasValue
+    , definitely
     -- Random numbers
-    fromRandomSeed,
-    randomsFrom,
-    randomNumbers,
-    shuffled
+    , fromRandomSeed
+    , randomsFrom
+    , randomNumbers
+    , shuffled
     ) where
 
-import qualified "base" Prelude as P
 import qualified "base" Data.Maybe as P
+import qualified "base" Prelude as P
 import "base" Prelude (Bool, ($))
 
 import Data.Bits (xor)
@@ -109,11 +99,17 @@ import GHC.Stack (HasCallStack, withFrozenCallStack)
 
 id :: a -> a
 id x = x
-{-# WARNING id "Please define your own identity function." #-}
+
+{-# WARNING
+id "Please define your own identity function."
+ #-}
 
 (.) :: (b -> c) -> (a -> b) -> a -> c
 (.) = (P..)
-{-# WARNING (.) "Please implement function composition with arguments." #-}
+
+{-# WARNING
+(.) "Please implement function composition with arguments."
+ #-}
 
 -- | Converts a function to an operator.
 --
@@ -179,31 +175,34 @@ length = fromInt . P.length
 -- Indices start at 1.
 at :: HasCallStack => ([a], a, Number) -> [a]
 at (list, val, idx)
-  | not(isInteger(idx)) = withFrozenCallStack $ idxErrorNonInt idx
-  | idx <= 0            = withFrozenCallStack $ idxErrorNonPos idx
-  | otherwise           = withFrozenCallStack $ go idx list
-  where go _ []     = idxErrorTooLarge idx
-        go 1 (x:xs) = val : xs
-        go n (x:xs) = x : go (n - 1) xs
+    | not (isInteger (idx)) = withFrozenCallStack $ idxErrorNonInt idx
+    | idx <= 0 = withFrozenCallStack $ idxErrorNonPos idx
+    | otherwise = withFrozenCallStack $ go idx list
+  where
+    go _ [] = idxErrorTooLarge idx
+    go 1 (x:xs) = val : xs
+    go n (x:xs) = x : go (n - 1) xs
 
 -- | Gives the member of a list at a given index.
 -- Indices start at 1.
 (#) :: HasCallStack => [a] -> Number -> a
 list # idx
-  | not(isInteger(idx)) = withFrozenCallStack $ idxErrorNonInt idx
-  | idx <= 0            = withFrozenCallStack $ idxErrorNonPos idx
-  | otherwise           = withFrozenCallStack $ go idx list
-  where go _ []     = idxErrorTooLarge idx
-        go 1 (x:xs) = x
-        go n (x:xs) = go (n - 1) xs
+    | not (isInteger (idx)) = withFrozenCallStack $ idxErrorNonInt idx
+    | idx <= 0 = withFrozenCallStack $ idxErrorNonPos idx
+    | otherwise = withFrozenCallStack $ go idx list
+  where
+    go _ [] = idxErrorTooLarge idx
+    go 1 (x:xs) = x
+    go n (x:xs) = go (n - 1) xs
 
 infixl 9 #
 
 idxErrorNonInt :: HasCallStack => Number -> a
-idxErrorNonInt idx   = P.error "Non-integer list index is not allowed."
+idxErrorNonInt idx = P.error "Non-integer list index is not allowed."
 
 idxErrorNonPos :: HasCallStack => Number -> a
-idxErrorNonPos idx   = P.error "List index must be positive. Numbering starts at 1."
+idxErrorNonPos idx =
+    P.error "List index must be positive. Numbering starts at 1."
 
 idxErrorTooLarge :: HasCallStack => Number -> a
 idxErrorTooLarge idx = P.error "List index is too large."
@@ -229,7 +228,7 @@ none = P.not . any
 -- | Forms a list by repeating a source list some number of times.
 repeated :: ([a], Number) -> [a]
 repeated (xs, 0) = []
-repeated (xs, n) = xs P.++ repeated(xs, n-1)
+repeated (xs, n) = xs P.++ repeated (xs, n - 1)
 
 -- | Forms a list by repeating a source list forever.
 repeating :: [a] -> [a]
@@ -294,32 +293,47 @@ transposed = L.transpose
 --
 -- For example, @combined(fromOperator(+), [1, 3, 5])@ is equal to 9.
 combined :: HasCallStack => ((a, a) -> a, [a]) -> a
-combined (f, [])   = withFrozenCallStack (P.error "Empty list is not allowed.")
-combined (f, [x])  = x
-combined (f, x:xs) = f(x, combined(f, xs))
-{-# WARNING combined "Pleased use recursion instead of combined(...)." #-}
+combined (f, []) = withFrozenCallStack (P.error "Empty list is not allowed.")
+combined (f, [x]) = x
+combined (f, x:xs) = f (x, combined (f, xs))
+
+{-# WARNING
+combined "Pleased use recursion instead of combined(...)."
+ #-}
 
 -- For some reason, randoms numbers seem to give conspicuously similar
 -- results early in the sequence, so we throw away a few to get better
 -- mixing.
 numToStdGen :: Number -> StdGen
 numToStdGen r = mkStdGen (a `xor` P.fromIntegral b `xor` P.fromIntegral c)
-  where (sig, a) = P.decodeFloat (P.realToFrac r)
-        (b,   c) = sig `P.divMod` (2 P.^ 31)
+  where
+    (sig, a) = P.decodeFloat (P.realToFrac r)
+    (b, c) = sig `P.divMod` (2 P.^ 31)
 
 randomsFrom :: StdGen -> [Number]
 randomsFrom g = fromDouble a : randomsFrom g2
-  where (a, g2) = random g
+  where
+    (a, g2) = random g
 
 shuffled :: ([a], Number) -> [a]
 shuffled ([], r) = []
 shuffled (xs, r) = shuffle' xs (P.length xs) (numToStdGen r)
 
-data Maybe a = Nothing | Just a
+data Maybe a
+    = Nothing
+    | Just a
 
-{-# WARNING Maybe   "Please use your own data type instead of Maybe and friends." #-}
-{-# WARNING Just    "Please use your own data type instead of Maybe and friends." #-}
-{-# WARNING Nothing "Please use your own data type instead of Maybe and friends." #-}
+{-# WARNING
+Maybe "Please use your own data type instead of Maybe and friends."
+ #-}
+
+{-# WARNING
+Just "Please use your own data type instead of Maybe and friends."
+ #-}
+
+{-# WARNING
+Nothing "Please use your own data type instead of Maybe and friends."
+ #-}
 
 -- | Converts a Maybe value to a plain value, by using a default.
 --
@@ -327,25 +341,38 @@ data Maybe a = Nothing | Just a
 -- @withDefault(Just(3), 5)@ is equal to 3.
 withDefault :: (Maybe a, a) -> a
 withDefault (Nothing, d) = d
-withDefault (Just a, _)  = a
-{-# WARNING withDefault "Please use your own data type instead of Maybe and friends." #-}
+withDefault (Just a, _) = a
+
+{-# WARNING
+withDefault "Please use your own data type instead of Maybe and friends."
+ #-}
 
 -- | Determines if a Maybe has a value.
 hasValue :: Maybe a -> Truth
 hasValue Nothing = P.False
 hasValue (Just _) = P.True
-{-# WARNING hasValue "Please use your own data type instead of Maybe and friends." #-}
+
+{-# WARNING
+hasValue "Please use your own data type instead of Maybe and friends."
+ #-}
 
 -- | Extracts the value from a Maybe, and crashes the program if there
 -- is no such value.
 definitely :: HasCallStack => Maybe a -> a
 definitely (Just a) = a
-definitely Nothing = withFrozenCallStack (P.error "Expected a value; found Nothing.")
-{-# WARNING definitely "Please use your own data type instead of Maybe and friends." #-}
+definitely Nothing =
+    withFrozenCallStack (P.error "Expected a value; found Nothing.")
+
+{-# WARNING
+definitely "Please use your own data type instead of Maybe and friends."
+ #-}
 
 fromRandomSeed :: Number -> [Number]
 fromRandomSeed = randomNumbers
-{-# WARNING fromRandomSeed "Please use randomNumbers instead of fromRandomSeed." #-}
+
+{-# WARNING
+fromRandomSeed "Please use randomNumbers instead of fromRandomSeed."
+ #-}
 
 randomNumbers :: Number -> [Number]
 randomNumbers = randomsFrom . numToStdGen

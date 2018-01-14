@@ -1,6 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE PackageImports    #-}
-{-# LANGUAGE PatternSynonyms   #-}
+{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE PatternSynonyms #-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.
@@ -17,116 +17,110 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
-module Internal.Exports (
+module Internal.Exports
     -- Miscellaneous types and functions
-    Number,
-    Text,
-
+    ( Number
+    , Text
     -- * Colors
-    Color(..),
-    Colour,
-    pattern RGB,
-    pattern HSL,
-    black,
-    white,
-    red,
-    green,
-    blue,
-    cyan,
-    magenta,
-    yellow,
-    aquamarine,
-    orange,
-    azure,
-    violet,
-    chartreuse,
-    rose,
-    brown,
-    pink,
-    purple,
-    gray,
-    grey,
-    mixed,
-    lighter,
-    light,
-    darker,
-    dark,
-    brighter,
-    bright,
-    duller,
-    dull,
-    translucent,
-    assortedColors,
-    hue,
-    saturation,
-    luminosity,
-    alpha,
-    fromHSL,
-
+    , Color(..)
+    , Colour
+    , pattern RGB
+    , pattern HSL
+    , black
+    , white
+    , red
+    , green
+    , blue
+    , cyan
+    , magenta
+    , yellow
+    , aquamarine
+    , orange
+    , azure
+    , violet
+    , chartreuse
+    , rose
+    , brown
+    , pink
+    , purple
+    , gray
+    , grey
+    , mixed
+    , lighter
+    , light
+    , darker
+    , dark
+    , brighter
+    , bright
+    , duller
+    , dull
+    , translucent
+    , assortedColors
+    , hue
+    , saturation
+    , luminosity
+    , alpha
+    , fromHSL
     -- * Pictures
-    Point,
-    Vector,
-    vectorLength,
-    vectorDirection,
-    vectorSum,
-    vectorDifference,
-    scaledVector,
-    rotatedVector,
-    dotProduct,
-    Picture,
-    Font(..),
-    TextStyle(..),
-    blank,
-    path,
-    thickPath,
-    polygon,
-    thickPolygon,
-    solidPolygon,
-    curve,
-    thickCurve,
-    loop,
-    thickLoop,
-    solidLoop,
-    rectangle,
-    solidRectangle,
-    thickRectangle,
-    circle,
-    solidCircle,
-    thickCircle,
-    arc,
-    sector,
-    thickArc,
-    text,
-    styledText,
-    colored,
-    coloured,
-    translated,
-    scaled,
-    dilated,
-    rotated,
-    pictures,
-    (&),
-    coordinatePlane,
-    codeWorldLogo,
-
+    , Point
+    , Vector
+    , vectorLength
+    , vectorDirection
+    , vectorSum
+    , vectorDifference
+    , scaledVector
+    , rotatedVector
+    , dotProduct
+    , Picture
+    , Font(..)
+    , TextStyle(..)
+    , blank
+    , path
+    , thickPath
+    , polygon
+    , thickPolygon
+    , solidPolygon
+    , curve
+    , thickCurve
+    , loop
+    , thickLoop
+    , solidLoop
+    , rectangle
+    , solidRectangle
+    , thickRectangle
+    , circle
+    , solidCircle
+    , thickCircle
+    , arc
+    , sector
+    , thickArc
+    , text
+    , styledText
+    , colored
+    , coloured
+    , translated
+    , scaled
+    , dilated
+    , rotated
+    , pictures
+    , (&)
+    , coordinatePlane
+    , codeWorldLogo
     -- * Events
-    Event(..),
-    MouseButton(..),
-    pattern PointerPress,
-    pattern PointerRelease,
-    pattern PointerMovement,
-
+    , Event(..)
+    , MouseButton(..)
+    , pattern PointerPress
+    , pattern PointerRelease
+    , pattern PointerMovement
     -- * Debugging
-    traced,
-
+    , traced
     -- * Entry points
-    Program,
-    drawingOf,
-    animationOf,
-    simulationOf,
-    interactionOf,
-    collaborationOf
+    , Program
+    , drawingOf
+    , animationOf
+    , simulationOf
+    , interactionOf
+    , collaborationOf
     ) where
 
 import "base" Prelude (IO)
@@ -135,7 +129,7 @@ import Internal.Num
 import Internal.Prelude
 import Internal.Text
 
-import Internal.Color
-import Internal.Picture
-import Internal.Event
 import Internal.CodeWorld
+import Internal.Color
+import Internal.Event
+import Internal.Picture

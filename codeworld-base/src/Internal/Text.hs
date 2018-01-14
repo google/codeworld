@@ -1,5 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE PackageImports    #-}
+{-# LANGUAGE PackageImports #-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.
@@ -16,49 +16,52 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
-module Internal.Text (
-    Text,
-    fromString,
-    toString,
-    fromCWText,
-    toCWText,
-    (<>),
-    numberOfCharacters,
-    numberOfWords,
-    numberOfLines,
-    lines,
-    unlines,
-    words,
-    unwords,
-    characters,
-    printed,
-    joined,
-    joinedWith,
-    lowercase,
-    uppercase,
-    startsWith,
-    endsWith,
-    substitution,
-    substitutions
+module Internal.Text
+    ( Text
+    , fromString
+    , toString
+    , fromCWText
+    , toCWText
+    , (<>)
+    , numberOfCharacters
+    , numberOfWords
+    , numberOfLines
+    , lines
+    , unlines
+    , words
+    , unwords
+    , characters
+    , printed
+    , joined
+    , joinedWith
+    , lowercase
+    , uppercase
+    , startsWith
+    , endsWith
+    , substitution
+    , substitutions
     ) where
 
+import Data.List (foldl')
+import Data.Maybe
+import Numeric
 import qualified "base" Prelude as P
-import           "base" Prelude (String, Bool, (.), map, length, show)
-import                  Data.Maybe
-import                  Data.List (foldl')
-import                  Numeric
+import "base" Prelude (Bool, String, (.), length, map, show)
 
-import qualified        Data.JSString as J
-import qualified        Data.JSString.Text as J
-import qualified        Data.Text as T
+import qualified Data.JSString as J
+import qualified Data.JSString.Text as J
+import qualified Data.Text as T
 
-import                  Internal.Num
-import                  Internal.Truth
+import Internal.Num
+import Internal.Truth
 
-newtype Text = T { unT :: J.JSString } deriving P.Eq
+newtype Text = T
+    { unT :: J.JSString
+    } deriving (P.Eq)
 
-{-# RULES "equality/text" forall (x :: Text). (==) x = (P.==) x #-}
+{-# RULES
+"equality/text" forall (x :: Text) . (==) x = (P.==) x
+ #-}
 
 fromString :: String -> Text
 fromString = T . J.pack
@@ -73,6 +76,7 @@ toCWText :: T.Text -> Text
 toCWText = T . J.textToJSString
 
 infixr 6 <>
+
 (<>) :: Text -> Text -> Text
 T a <> T b = T (J.append a b)
 
@@ -137,4 +141,4 @@ substitution (T text, T from, T to) = T (J.replace from to text)
 --                   ("[score]", printed(score))])
 substitutions :: (Text, [(Text, Text)]) -> Text
 substitutions (T text, replacements) =
-    T (foldl' (\ a (T b, T c) -> J.replace b c a) text replacements)
+    T (foldl' (\a (T b, T c) -> J.replace b c a) text replacements)

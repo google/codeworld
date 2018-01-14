@@ -15,23 +15,19 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
 import CodeWorld.GameServer
 
+import Control.Applicative
 import Snap.Core
 import Snap.Http.Server
-import Control.Applicative
 
 main :: IO ()
 main = do
     state <- initGameServer
-    config <- commandLineConfig $
+    config <-
+        commandLineConfig $
         setPort 9160 $
-        setErrorLog  (ConfigFileLog "log/game-error.log") $
-        setAccessLog (ConfigFileLog "log/game-access.log") $
-        mempty
+        setErrorLog (ConfigFileLog "log/game-error.log") $
+        setAccessLog (ConfigFileLog "log/game-access.log") $ mempty
     httpServe config $
-        ifTop (gameStats state) <|>
-        route [ ("gameserver", gameServer state) ]
-
-
+        ifTop (gameStats state) <|> route [("gameserver", gameServer state)]

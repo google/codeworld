@@ -13,7 +13,6 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
 module CodeWorld.Message where
 
 import Data.ByteString (ByteString)
@@ -52,23 +51,28 @@ import Data.Text (Text)
 
       <- GameAborted
 -}
-
 type GameId = Text
+
 type PlayerId = Int
+
 type Signature = ByteString
 
 -- Message representation
-
 data ClientMessage
-    = NewGame Int Signature
-    | JoinGame GameId Signature
+    = NewGame Int
+              Signature
+    | JoinGame GameId
+               Signature
     | InEvent String
     deriving (Show, Read)
 
 data ServerMessage
-    = JoinedAs PlayerId GameId
-    | PlayersWaiting Int Int
+    = JoinedAs PlayerId
+               GameId
+    | PlayersWaiting Int
+                     Int
     | Started
-    | OutEvent PlayerId String
+    | OutEvent PlayerId
+               String
     | GameAborted
     deriving (Show, Read, Eq) -- Eq is only for testing

@@ -16,62 +16,59 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
+import Compile
+import GenBase
 
-import           Compile
-import           GenBase
-
-import           Control.Applicative
-import           Control.Monad
-import           Data.Maybe
-import           Data.Monoid
+import Control.Applicative
+import Control.Monad
+import Data.Maybe
+import Data.Monoid
 import qualified Data.Text as T
-import           Options.Applicative
-import           System.Directory
-import           System.Environment
-import           System.Exit
-import           System.FilePath
-import           System.IO
-import           System.IO.Temp (withSystemTempDirectory)
+import Options.Applicative
+import System.Directory
+import System.Environment
+import System.Exit
+import System.FilePath
+import System.IO
+import System.IO.Temp (withSystemTempDirectory)
 
-data Options = Options { source      :: FilePath,
-                         output      :: FilePath,
-                         err         :: FilePath,
-                         mode        :: String,
-                         baseSymbols :: Maybe String,
-                         genBase     :: Bool,
-                         baseIgnore  :: [String]
-                       } deriving (Show)
+data Options = Options
+    { source :: FilePath
+    , output :: FilePath
+    , err :: FilePath
+    , mode :: String
+    , baseSymbols :: Maybe String
+    , genBase :: Bool
+    , baseIgnore :: [String]
+    } deriving (Show)
 
 main = execParser opts >>= \opts -> checkOptions opts >> runWithOptions opts
-    where
-        parser = Options <$> argument str        (  metavar "SourceFile"
-                                                 <> help "Location of input file")
-                         <*> strOption           (  long "output"
-                                                 <> short 'o'
-                                                 <> metavar "OutputFile"
-                                                 <> help "Location of output file")
-                         <*> strOption           (  long "error"
-                                                 <> short 'e'
-                                                 <> metavar "ErrorFile"
-                                                 <> help "Location of error file")
-                         <*> strOption           (  long "mode"
-                                                 <> short 'm'
-                                                 <> metavar "BuildMode"
-                                                 <> help "Enter the mode of compilation")
-                         <*> optional (strOption (  long "base-syms"
-                                                 <> short 's'
-                                                 <> metavar "BaseSyms"
-                                                 <> help "Location of base symbol file"))
-                         <*> switch              (  long "gen-base"
-                                                 <> short 'b'
-                                                 <> help "Generate a base bundle.")
-                         <*> many (strOption     (  long "ignore-in-base"
-                                                 <> metavar "ModOrSymbol"
-                                                 <> help "Ignore this module or symbol in base."))
-        opts = info parser mempty
+  where
+    parser =
+        Options <$>
+        argument str (metavar "SourceFile" <> help "Location of input file") <*>
+        strOption
+            (long "output" <> short 'o' <> metavar "OutputFile" <>
+             help "Location of output file") <*>
+        strOption
+            (long "error" <> short 'e' <> metavar "ErrorFile" <>
+             help "Location of error file") <*>
+        strOption
+            (long "mode" <> short 'm' <> metavar "BuildMode" <>
+             help "Enter the mode of compilation") <*>
+        optional
+            (strOption
+                 (long "base-syms" <> short 's' <> metavar "BaseSyms" <>
+                  help "Location of base symbol file")) <*>
+        switch (long "gen-base" <> short 'b' <> help "Generate a base bundle.") <*>
+        many
+            (strOption
+                 (long "ignore-in-base" <> metavar "ModOrSymbol" <>
+                  help "Ignore this module or symbol in base."))
+    opts = info parser mempty
 
 checkOptions :: Options -> IO ()
-checkOptions Options{..} = do
+checkOptions Options {..} = do
     when (genBase && baseSymbols == Nothing) $ do
         hPutStrLn stderr ("Flag --gen-base requires --base-symbols")
         exitFailure
@@ -81,13 +78,18 @@ checkOptions Options{..} = do
         exitFailure
 
 runWithOptions :: Options -> IO ()
-runWithOptions opts@Options{..} = do
-    success <- if genBase then compileBase opts else compile opts
+runWithOptions opts@Options {..} = do
+    success <-
+        if genBase
+            then compileBase opts
+            else compile opts
     readFile err >>= hPutStrLn stderr
-    if success then exitSuccess else exitFailure
+    if success
+        then exitSuccess
+        else exitFailure
 
 compileBase :: Options -> IO Bool
-compileBase Options{..} = do
+compileBase Options {..} = do
     withSystemTempDirectory "genbase" $ \tmpdir -> do
         let linkMain = tmpdir </> "LinkMain.hs"
         let linkBase = tmpdir </> "LinkBase.hs"
@@ -96,8 +98,9 @@ compileBase Options{..} = do
         compileSource stage linkMain output err mode
 
 compile :: Options -> IO Bool
-compile opts@Options{..} = do
-    let stage = case baseSymbols of
-            Nothing   -> FullBuild
-            Just syms -> UseBase syms
+compile opts@Options {..} = do
+    let stage =
+            case baseSymbols of
+                Nothing -> FullBuild
+                Just syms -> UseBase syms
     compileSource stage source output err mode

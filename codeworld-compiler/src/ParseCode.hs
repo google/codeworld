@@ -13,57 +13,64 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
+module ParseCode
+    ( checkParsedCode
+    ) where
 
-module ParseCode (checkParsedCode) where
-
-import           Data.Generics
-import           Language.Haskell.Exts
+import Data.Generics
+import Language.Haskell.Exts
 
 checkParsedCode :: FilePath -> FilePath -> IO Bool
 checkParsedCode src err = do
     result <- parseFile src
     case result of
-        ParseOk mod -> case getErrors mod of
-            [] -> return True
-            errors -> writeFile err (concatMap (++ "\n\n") errors) >> return False
+        ParseOk mod ->
+            case getErrors mod of
+                [] -> return True
+                errors ->
+                    writeFile err (concatMap (++ "\n\n") errors) >> return False
         ParseFailed _ _ -> return True
 
 getErrors :: Module SrcSpanInfo -> [String]
-getErrors m = everything (++) (mkQ [] badExps) m ++
-              everything (++) (mkQ [] badMatches) m ++
-              everything (++) (mkQ [] badPatterns) m
-
+getErrors m =
+    everything (++) (mkQ [] badExps) m ++
+    everything (++) (mkQ [] badMatches) m ++
+    everything (++) (mkQ [] badPatterns) m
 
 badExps :: Exp SrcSpanInfo -> [String]
-badExps (App x _ e) | not (isGoodExpRhs e) =
-    [ formatLocation x ++ errorMsg]
-    where errorMsg = "error: Missing parentheses in function application"
-badExps _                                  = []
+badExps (App x _ e)
+    | not (isGoodExpRhs e) = [formatLocation x ++ errorMsg]
+  where
+    errorMsg = "error: Missing parentheses in function application"
+badExps _ = []
 
 badMatches :: Match SrcSpanInfo -> [String]
 badMatches (Match l _ pats _ _) =
-    [ formatLocation l ++ errorMsg | p <- pats, not (isGoodPatRhs p) ]
-    where errorMsg = "error: Missing parentheses in function application"
-badMatches _                    = []
+    [formatLocation l ++ errorMsg | p <- pats, not (isGoodPatRhs p)]
+  where
+    errorMsg = "error: Missing parentheses in function application"
+badMatches _ = []
 
 badPatterns :: Pat SrcSpanInfo -> [String]
 badPatterns (PApp l _ pats) =
-    [ formatLocation l ++ errorMsg | p <- pats, not (isGoodPatRhs p) ]
-    where errorMsg = "error: Missing parentheses in constructor application"
-badPatterns _               = []
+    [formatLocation l ++ errorMsg | p <- pats, not (isGoodPatRhs p)]
+  where
+    errorMsg = "error: Missing parentheses in constructor application"
+badPatterns _ = []
 
 isGoodExpRhs :: Exp l -> Bool
-isGoodExpRhs (Paren _ _)   = True
+isGoodExpRhs (Paren _ _) = True
 isGoodExpRhs (Tuple _ _ _) = True
-isGoodExpRhs _             = False
+isGoodExpRhs _ = False
 
 isGoodPatRhs :: Pat l -> Bool
-isGoodPatRhs (PParen _ _)   = True
+isGoodPatRhs (PParen _ _) = True
 isGoodPatRhs (PTuple _ _ _) = True
-isGoodPatRhs _              = False
+isGoodPatRhs _ = False
 
 formatLocation :: SrcSpanInfo -> String
 formatLocation (SrcSpanInfo s _) =
-        "program.hs" ++ ":" ++ show line ++ ":" ++ show col ++ ": "
-    where line = srcSpanStartLine s
-          col = srcSpanStartColumn s
+    "program.hs" ++ ":" ++ show line ++ ":" ++ show col ++ ": "
+  where
+    line = srcSpanStartLine s
+    col = srcSpanStartColumn s

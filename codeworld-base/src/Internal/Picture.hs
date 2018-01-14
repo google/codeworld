@@ -1,6 +1,6 @@
-{-# LANGUAGE RebindableSyntax  #-}
+{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE PackageImports    #-}
+{-# LANGUAGE PackageImports #-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.
@@ -17,20 +17,20 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
 module Internal.Picture where
 
 import qualified "codeworld-api" CodeWorld as CW
-import                           Internal.Num
-import                           Internal.Text
-import                           Internal.Color
-import           "base"          Prelude (map, (.))
-import                           GHC.Stack
+import GHC.Stack
+import Internal.Color
+import Internal.Num
+import Internal.Text
+import "base" Prelude ((.), map)
 
 type Point = (Number, Number)
+
 type Vector = (Number, Number)
 
-toCWVect   :: Vector -> CW.Vector
+toCWVect :: Vector -> CW.Vector
 toCWVect (x, y) = (toDouble x, toDouble y)
 
 fromCWVect :: CW.Vector -> Vector
@@ -46,20 +46,35 @@ vectorSum :: (Vector, Vector) -> Vector
 vectorSum (v, w) = fromCWVect (CW.vectorSum (toCWVect v) (toCWVect w))
 
 vectorDifference :: (Vector, Vector) -> Vector
-vectorDifference (v, w) = fromCWVect (CW.vectorDifference (toCWVect v) (toCWVect w))
+vectorDifference (v, w) =
+    fromCWVect (CW.vectorDifference (toCWVect v) (toCWVect w))
 
 scaledVector :: (Vector, Number) -> Vector
 scaledVector (v, k) = fromCWVect (CW.scaledVector (toDouble k) (toCWVect v))
 
 rotatedVector :: (Vector, Number) -> Vector
-rotatedVector (v, k) = fromCWVect (CW.rotatedVector (toDouble (pi * k / 180)) (toCWVect v))
+rotatedVector (v, k) =
+    fromCWVect (CW.rotatedVector (toDouble (pi * k / 180)) (toCWVect v))
 
 dotProduct :: (Vector, Vector) -> Number
 dotProduct (v, w) = fromDouble (CW.dotProduct (toCWVect v) (toCWVect w))
 
-newtype Picture = CWPic { toCWPic :: CW.Picture }
-data Font = Serif | SansSerif | Monospace | Handwriting | Fancy | NamedFont !Text
-data TextStyle = Plain | Italic | Bold
+newtype Picture = CWPic
+    { toCWPic :: CW.Picture
+    }
+
+data Font
+    = Serif
+    | SansSerif
+    | Monospace
+    | Handwriting
+    | Fancy
+    | NamedFont !Text
+
+data TextStyle
+    = Plain
+    | Italic
+    | Bold
 
 -- | A blank picture
 blank :: HasCallStack => Picture
@@ -115,8 +130,8 @@ solidRectangle (w, h) = CWPic (CW.solidRectangle (toDouble w) (toDouble h))
 
 -- | A thick rectangle, with this width and height and line width
 thickRectangle :: HasCallStack => (Number, Number, Number) -> Picture
-thickRectangle (w, h, lw) = CWPic
-    (CW.thickRectangle (toDouble lw) (toDouble w) (toDouble h))
+thickRectangle (w, h, lw) =
+    CWPic (CW.thickRectangle (toDouble lw) (toDouble w) (toDouble h))
 
 -- | A thin circle, with this radius
 circle :: HasCallStack => Number -> Picture
@@ -132,23 +147,30 @@ thickCircle (r, w) = CWPic (CW.thickCircle (toDouble w) (toDouble r))
 
 -- | A thin arc, starting and ending at these angles, with this radius
 arc :: HasCallStack => (Number, Number, Number) -> Picture
-arc (b, e, r) = CWPic
-    (CW.arc (toDouble (pi * b / 180)) (toDouble (pi * e / 180)) (toDouble r))
+arc (b, e, r) =
+    CWPic
+        (CW.arc (toDouble (pi * b / 180)) (toDouble (pi * e / 180)) (toDouble r))
 
 -- | A solid sector of a circle (i.e., a pie slice) starting and ending at these
 -- angles, with this radius
 sector :: HasCallStack => (Number, Number, Number) -> Picture
-sector (b, e, r) = CWPic
-    (CW.sector (toDouble (pi * b / 180)) (toDouble (pi * e / 180)) (toDouble r))
+sector (b, e, r) =
+    CWPic
+        (CW.sector
+             (toDouble (pi * b / 180))
+             (toDouble (pi * e / 180))
+             (toDouble r))
 
 -- | A thick arc, starting and ending at these angles, with this radius and
 -- line width
 thickArc :: HasCallStack => (Number, Number, Number, Number) -> Picture
-thickArc (b, e, r, w) = CWPic
-    (CW.thickArc (toDouble w)
-                 (toDouble (pi * b / 180))
-                 (toDouble (pi * e / 180))
-                 (toDouble r))
+thickArc (b, e, r, w) =
+    CWPic
+        (CW.thickArc
+             (toDouble w)
+             (toDouble (pi * b / 180))
+             (toDouble (pi * e / 180))
+             (toDouble r))
 
 -- | A piece of text
 text :: HasCallStack => Text -> Picture
@@ -156,17 +178,18 @@ text = CWPic . CW.text . fromCWText
 
 -- | A styled piece of text
 styledText :: HasCallStack => (Text, Font, TextStyle) -> Picture
-styledText (t, f, s) = CWPic
-    (CW.styledText (fromCWStyle s) (fromCWFont f) (fromCWText t))
-  where fromCWStyle Plain           = CW.Plain
-        fromCWStyle Bold            = CW.Bold
-        fromCWStyle Italic          = CW.Italic
-        fromCWFont  Serif           = CW.Serif
-        fromCWFont  SansSerif       = CW.SansSerif
-        fromCWFont  Monospace       = CW.Monospace
-        fromCWFont  Handwriting     = CW.Handwriting
-        fromCWFont  Fancy           = CW.Fancy
-        fromCWFont  (NamedFont fnt) = CW.NamedFont (fromCWText fnt)
+styledText (t, f, s) =
+    CWPic (CW.styledText (fromCWStyle s) (fromCWFont f) (fromCWText t))
+  where
+    fromCWStyle Plain = CW.Plain
+    fromCWStyle Bold = CW.Bold
+    fromCWStyle Italic = CW.Italic
+    fromCWFont Serif = CW.Serif
+    fromCWFont SansSerif = CW.SansSerif
+    fromCWFont Monospace = CW.Monospace
+    fromCWFont Handwriting = CW.Handwriting
+    fromCWFont Fancy = CW.Fancy
+    fromCWFont (NamedFont fnt) = CW.NamedFont (fromCWText fnt)
 
 -- | A picture drawn entirely in this color.
 colored :: HasCallStack => (Picture, Color) -> Picture
@@ -178,7 +201,8 @@ coloured = colored
 
 -- | A picture drawn translated in these directions.
 translated :: HasCallStack => (Picture, Number, Number) -> Picture
-translated (p, x, y) = CWPic (CW.translated (toDouble x) (toDouble y) (toCWPic p))
+translated (p, x, y) =
+    CWPic (CW.translated (toDouble x) (toDouble y) (toCWPic p))
 
 -- | A picture scaled by these factors.
 scaled :: HasCallStack => (Picture, Number, Number) -> Picture
@@ -199,6 +223,7 @@ pictures = CWPic . CW.pictures . map toCWPic
 -- Binary composition of pictures.
 (&) :: HasCallStack => Picture -> Picture -> Picture
 infixr 0 &
+
 a & b = CWPic (toCWPic a CW.<> toCWPic b)
 
 -- | A coordinate plane.  Adding this to your pictures can help you measure distances

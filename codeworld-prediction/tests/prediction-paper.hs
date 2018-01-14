@@ -13,61 +13,55 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, InstanceSigs #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, InstanceSigs
+  #-}
 
 import CodeWorld.Prediction.Paper
 
-import qualified Data.IntMap as IM
-import qualified Data.Map as M
 import Data.Bifunctor
+import qualified Data.IntMap as IM
 import Data.List
+import qualified Data.Map as M
 import System.Exit
 import Test.QuickCheck
 
 import Common hiding (Event)
 
-
 type EventsTodo = (IM.IntMap [TEvent])
+
 type EventsDone = (IM.IntMap [TEvent])
 
 type LogEntry = Either Double Event
+
 type Book = [LogEntry]
 
 type Check = (EventsDone, (Int, TEvent))
+
 type CheckReport = (Check, Log Book, Log Book, Log Book)
 
 -- Fake state and handle functions
-
 instance Game Book where
     start = []
-
     step :: Double -> Book -> Book
     step dt = (Left dt :)
-
     handle :: Player -> Event -> Book -> Book
     handle _ dt = (Right dt :)
 
-
 -- Global constant
 rate :: Double
-rate = 1/4 -- decimal display
-
+rate = 1 / 4 -- decimal display
 
 -- The actual check:
 -- Exhaustively search the order in which these events could happen
 -- Memoize every initial segment
 -- Ensure that all possible ways reach the same conclusion.
-
 failedChecks :: EventsTodo -> [CheckReport]
 failedChecks schedule = map mkReport $ filter (not . check) allChecks
   where
     allDone :: [EventsDone]
     allDone = traverse inits schedule -- wow!
-
     allChecks :: [Check]
     allChecks = allDone >>= prevs
-
     prevs :: EventsDone -> [Check]
     prevs m =
         [ (IM.adjust init i m, (i, last done))
@@ -75,36 +69,30 @@ failedChecks schedule = map mkReport $ filter (not . check) allChecks
         , let done = m IM.! i
         , not (null done)
         ]
-
     memo :: M.Map EventsDone (Log Book)
-    memo = M.fromList [ (eventsDone, recreate eventsDone) | eventsDone <- allDone ]
-
+    memo =
+        M.fromList [(eventsDone, recreate eventsDone) | eventsDone <- allDone]
     recreate :: EventsDone -> Log Book
-    recreate m = case prevs m of
-        [] -> initLog (IM.keys m)
-        (c:_) -> checkActual c
-
+    recreate m =
+        case prevs m of
+            [] -> initLog (IM.keys m)
+            (c:_) -> checkActual c
     check :: Check -> Bool
     check c = checkActual c == checkExpected c
-
     checkExpected :: Check -> Log Book
-    checkExpected (prev, (p,(t,e))) = memo M.! IM.adjust (++[(t,e)]) p prev
-
+    checkExpected (prev, (p, (t, e))) = memo M.! IM.adjust (++ [(t, e)]) p prev
     checkActual :: Check -> Log Book
-    checkActual (prev, (p,(t,Nothing))) = addPing (t, p) $ memo M.! prev
-    checkActual (prev, (p,(t,Just e))) = addEvent (t, p, e) $ memo M.! prev
-
+    checkActual (prev, (p, (t, Nothing))) = addPing (t, p) $ memo M.! prev
+    checkActual (prev, (p, (t, Just e))) = addEvent (t, p, e) $ memo M.! prev
     mkReport :: Check -> CheckReport
     mkReport c = (c, memo M.! fst c, checkExpected c, checkActual c)
 
 -- The quickcheck test, with reporting
-
 testPrediction :: Property
-testPrediction = forAllSchedules $ \(_, schedule) ->
-    let failed = failedChecks schedule
-    in reportFailedCheck (head failed) `whenFail` null failed
-
-
+testPrediction =
+    forAllSchedules $ \(_, schedule) ->
+        let failed = failedChecks schedule
+        in reportFailedCheck (head failed) `whenFail` null failed
 
 reportFailedCheck :: CheckReport -> IO ()
 reportFailedCheck (c, before, expected, actual) = do
@@ -135,6 +123,6 @@ main = do
     res <- quickCheckWithResult args testPrediction
     case res of
         Success {} -> exitSuccess
-        _          -> exitFailure
+        _ -> exitFailure
   where
-    args = stdArgs { maxSize = 30 } -- more gets too large
+    args = stdArgs {maxSize = 30} -- more gets too large

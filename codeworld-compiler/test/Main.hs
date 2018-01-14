@@ -15,14 +15,13 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
-import           Compile
-import           Data.Char
-import           Control.Monad
-import           System.Directory
-import           System.Exit
-import           System.FilePath.Posix
-import           Test.HUnit             -- only import needed, others are optional
+import Compile
+import Control.Monad
+import Data.Char
+import System.Directory
+import System.Exit
+import System.FilePath.Posix
+import Test.HUnit -- only import needed, others are optional
 
 testcaseDir :: FilePath
 testcaseDir = "test/testcase"
@@ -37,7 +36,7 @@ testErrorFile :: String -> FilePath
 testErrorFile testName = testcaseOutputDir </> testName </> "error.txt"
 
 testSavedErrorFile :: String -> FilePath
-testSavedErrorFile  testName = testcaseDir </> testName </> "saved_error.txt"
+testSavedErrorFile testName = testcaseDir </> testName </> "saved_error.txt"
 
 testOutputFile :: String -> FilePath
 testOutputFile testName = testcaseOutputDir </> testName </> "output.js"
@@ -50,29 +49,31 @@ savedErrorOutput testName = do
 compileErrorOutput :: String -> IO String
 compileErrorOutput testName = do
     createDir <- createDirectoryIfMissing True (testcaseOutputDir </> testName)
-    out <- compileSource
-        FullBuild
-        (testSourceFile testName)
-        (testOutputFile testName)
-        (testErrorFile  testName)
-        "codeworld"
+    out <-
+        compileSource
+            FullBuild
+            (testSourceFile testName)
+            (testOutputFile testName)
+            (testErrorFile testName)
+            "codeworld"
     errMsg <- readFile (testErrorFile testName)
     return errMsg
 
 genTestCases :: [String] -> [Test]
-genTestCases []  = ["Empty directory testcase"   ~: "FOo" ~=? (map toUpper "foo")]
+genTestCases [] = ["Empty directory testcase" ~: "FOo" ~=? (map toUpper "foo")]
 genTestCases (x) = map toTestCase x
 
-toTestCase x = x ~: do
-    err1 <- compileErrorOutput x
-    err2 <- savedErrorOutput x
-    assertEqual x err1 err2
+toTestCase x =
+    x ~: do
+        err1 <- compileErrorOutput x
+        err2 <- savedErrorOutput x
+        assertEqual x err1 err2
 
 getTestCases :: FilePath -> IO Counts
 getTestCases path = do
     dirContent <- getDirectoryContents path
     let filtered = filter (`notElem` ["..", "."]) dirContent
-        cases =  genTestCases filtered
+        cases = genTestCases filtered
         testOutput = runTestTT (TestList cases)
     testOutput
 

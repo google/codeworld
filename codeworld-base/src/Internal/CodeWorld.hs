@@ -1,5 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude        #-}
-{-# LANGUAGE PackageImports           #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE PackageImports #-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.
@@ -16,33 +16,33 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
-module Internal.CodeWorld (
-    Program,
-    drawingOf,
-    animationOf,
-    simulationOf,
-    interactionOf,
-    collaborationOf,
-    traced
+module Internal.CodeWorld
+    ( Program
+    , drawingOf
+    , animationOf
+    , simulationOf
+    , interactionOf
+    , collaborationOf
+    , traced
     ) where
 
 import qualified "codeworld-api" CodeWorld as CW
-import                           Control.Exception
-import qualified                 Data.ByteString.Char8 as C
-import                           Data.Text (Text)
-import                           ErrorSanitizer
-import                           Internal.Num (Number, fromDouble, toDouble, fromInt, toInt)
-import                           Internal.Prelude (randomsFrom)
-import                           Internal.Picture
-import                           Internal.Event
-import qualified                 Internal.Text as CWT
-import           "base"          Prelude
-import                           System.IO.Unsafe
-import                           System.IO
-import                           System.Random
+import Control.Exception
+import qualified Data.ByteString.Char8 as C
+import Data.Text (Text)
+import ErrorSanitizer
+import Internal.Event
+import Internal.Num (Number, fromDouble, fromInt, toDouble, toInt)
+import Internal.Picture
+import Internal.Prelude (randomsFrom)
+import qualified Internal.Text as CWT
+import "base" Prelude
+import System.IO
+import System.IO.Unsafe
+import System.Random
 
-data LiteralException = LiteralException String
+data LiteralException =
+    LiteralException String
 
 instance Exception LiteralException
 
@@ -60,52 +60,57 @@ drawingOf pic = CW.drawingOf (toCWPic pic) `catch` reportError
 animationOf :: (Number -> Picture) -> Program
 animationOf f = CW.animationOf (toCWPic . f . fromDouble) `catch` reportError
 
-simulationOf :: ([Number] -> world,
-                 (world, Number) -> world,
-                 world -> Picture)
-             -> Program
-simulationOf (initial, step, draw) = do
-    rs <- chooseRandoms
-    CW.simulationOf (initial rs)
-                    (\dt w -> step (w, fromDouble dt))
-                    (toCWPic . draw)
-    `catch` reportError
+simulationOf ::
+       ([Number] -> world, (world, Number) -> world, world -> Picture)
+    -> Program
+simulationOf (initial, step, draw) =
+    do rs <- chooseRandoms
+       CW.simulationOf
+           (initial rs)
+           (\dt w -> step (w, fromDouble dt))
+           (toCWPic . draw)
+       `catch` reportError
 
-interactionOf :: ([Number] -> world,
-                  (world, Number) -> world,
-                  (world, Event) -> world,
-                  world -> Picture)
-              -> Program
-interactionOf (initial, step, event, draw) = do
-    rs <- chooseRandoms
-    CW.interactionOf (initial rs)
-                     (\dt w -> step (w, fromDouble dt))
-                     (\ev w -> event (w, fromCWEvent ev))
-                     (toCWPic . draw)
-    `catch` reportError
+interactionOf ::
+       ( [Number] -> world
+       , (world, Number) -> world
+       , (world, Event) -> world
+       , world -> Picture)
+    -> Program
+interactionOf (initial, step, event, draw) =
+    do rs <- chooseRandoms
+       CW.interactionOf
+           (initial rs)
+           (\dt w -> step (w, fromDouble dt))
+           (\ev w -> event (w, fromCWEvent ev))
+           (toCWPic . draw)
+       `catch` reportError
 
-collaborationOf :: (Number,
-                    [Number] -> state,
-                    (state, Number) -> state,
-                    (state, Event, Number) -> state,
-                    (state, Number) -> Picture)
-                -> Program
-collaborationOf (players, initial, step, event, picture) =
+collaborationOf ::
+       ( Number
+       , [Number] -> state
+       , (state, Number) -> state
+       , (state, Event, Number) -> state
+       , (state, Number) -> Picture)
+    -> Program
+collaborationOf (players, initial, step, event, picture)
     -- This is safe ONLY because codeworld-base does not export the
     -- IO combinators that allow for choosing divergent clients.
+ =
     CW.unsafeCollaborationOf
         (toInt players)
         (initial . randomsFrom)
         (\dt state -> step (state, fromDouble dt))
         (\player ev state -> event (state, fromCWEvent ev, fromInt player + 1))
-        (\player state -> toCWPic (picture (state, fromInt player + 1)))
-    `catch` reportError
+        (\player state -> toCWPic (picture (state, fromInt player + 1))) `catch`
+    reportError
 
 chooseRandoms :: IO [Number]
 chooseRandoms = do
-    n  <- randomRIO (0,1)
+    n <- randomRIO (0, 1)
     ns <- unsafeInterleaveIO chooseRandoms
     return (fromDouble n : ns)
 
 reportError :: SomeException -> IO ()
-reportError ex = throwIO (LiteralException (C.unpack (filterOutput (C.pack (show ex)))))
+reportError ex =
+    throwIO (LiteralException (C.unpack (filterOutput (C.pack (show ex)))))

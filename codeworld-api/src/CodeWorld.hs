@@ -15,117 +15,112 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
 module CodeWorld (
     -- * Entry points
-    drawingOf,
-    animationOf,
-    simulationOf,
-    interactionOf,
-    collaborationOf,
-    unsafeCollaborationOf,
-
+      drawingOf
+    , animationOf
+    , simulationOf
+    , interactionOf
+    , collaborationOf
+    , unsafeCollaborationOf
     -- * Pictures
-    Picture,
-    TextStyle(..),
-    Font(..),
-    blank,
-    path,
-    thickPath,
-    polygon,
-    thickPolygon,
-    solidPolygon,
-    curve,
-    thickCurve,
-    loop,
-    thickLoop,
-    solidLoop,
-    rectangle,
-    solidRectangle,
-    thickRectangle,
-    circle,
-    solidCircle,
-    thickCircle,
-    arc,
-    sector,
-    thickArc,
-    text,
-    styledText,
-    colored,
-    coloured,
-    translated,
-    scaled,
-    dilated,
-    rotated,
-    pictures,
-    (<>),
-    (&),
-    coordinatePlane,
-    codeWorldLogo,
-    Point,
-    Vector,
-    vectorLength,
-    vectorDirection,
-    vectorSum,
-    vectorDifference,
-    scaledVector,
-    rotatedVector,
-    dotProduct,
-
+    , Picture
+    , TextStyle(..)
+    , Font(..)
+    , blank
+    , path
+    , thickPath
+    , polygon
+    , thickPolygon
+    , solidPolygon
+    , curve
+    , thickCurve
+    , loop
+    , thickLoop
+    , solidLoop
+    , rectangle
+    , solidRectangle
+    , thickRectangle
+    , circle
+    , solidCircle
+    , thickCircle
+    , arc
+    , sector
+    , thickArc
+    , text
+    , styledText
+    , colored
+    , coloured
+    , translated
+    , scaled
+    , dilated
+    , rotated
+    , pictures
+    , (<>)
+    , (&)
+    , coordinatePlane
+    , codeWorldLogo
+    , Point
+    , Vector
+    , vectorLength
+    , vectorDirection
+    , vectorSum
+    , vectorDifference
+    , scaledVector
+    , rotatedVector
+    , dotProduct
     -- * Colors
-    Color(..),
-    Colour,
-    pattern RGB,
-    pattern HSL,
-    black,
-    white,
-    red,
-    green,
-    blue,
-    cyan,
-    magenta,
-    yellow,
-    aquamarine,
-    orange,
-    azure,
-    violet,
-    chartreuse,
-    rose,
-    brown,
-    pink,
-    purple,
-    gray,
-    grey,
-    mixed,
-    lighter,
-    light,
-    darker,
-    dark,
-    brighter,
-    bright,
-    duller,
-    dull,
-    translucent,
-    assortedColors,
-    hue,
-    saturation,
-    luminosity,
-    alpha,
-    fromHSL,
-
+    , Color(..)
+    , Colour
+    , pattern RGB
+    , pattern HSL
+    , black
+    , white
+    , red
+    , green
+    , blue
+    , cyan
+    , magenta
+    , yellow
+    , aquamarine
+    , orange
+    , azure
+    , violet
+    , chartreuse
+    , rose
+    , brown
+    , pink
+    , purple
+    , gray
+    , grey
+    , mixed
+    , lighter
+    , light
+    , darker
+    , dark
+    , brighter
+    , bright
+    , duller
+    , dull
+    , translucent
+    , assortedColors
+    , hue
+    , saturation
+    , luminosity
+    , alpha
+    , fromHSL
     -- * Events
-    Event(..),
-    MouseButton(..),
-    pattern PointerPress,
-    pattern PointerRelease,
-    pattern PointerMovement,
-
+    , Event(..)
+    , MouseButton(..)
+    , pattern PointerPress
+    , pattern PointerRelease
+    , pattern PointerMovement
     -- * Debugging
-    trace
+    , trace
     ) where
 
 import CodeWorld.Color
-import CodeWorld.Picture
-import CodeWorld.Event
 import CodeWorld.Driver
+import CodeWorld.Event
+import CodeWorld.Picture
 import Data.Monoid

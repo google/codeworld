@@ -13,7 +13,6 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
 module CodeWorld.Picture where
 
 import CodeWorld.Color
@@ -22,47 +21,84 @@ import Data.Text (Text, pack)
 import GHC.Stack
 
 type Point = (Double, Double)
+
 type Vector = (Double, Double)
 
 vectorLength :: Vector -> Double
-vectorLength (x,y) = sqrt (x^2 + y^2)
+vectorLength (x, y) = sqrt (x ^ 2 + y ^ 2)
 
 vectorDirection :: Vector -> Double
-vectorDirection (x,y) = atan2 y x
+vectorDirection (x, y) = atan2 y x
 
 vectorSum :: Vector -> Vector -> Vector
-vectorSum (x1,y1) (x2,y2) = (x1 + x2, y1 + y2)
+vectorSum (x1, y1) (x2, y2) = (x1 + x2, y1 + y2)
 
 vectorDifference :: Vector -> Vector -> Vector
-vectorDifference (x1,y1) (x2,y2) = (x1 - x2, y1 - y2)
+vectorDifference (x1, y1) (x2, y2) = (x1 - x2, y1 - y2)
 
 scaledVector :: Double -> Vector -> Vector
-scaledVector k (x,y) = (k*x, k*y)
+scaledVector k (x, y) = (k * x, k * y)
 
 {-| Angle is in radians -}
 rotatedVector :: Double -> Vector -> Vector
-rotatedVector angle (x,y) = (x * cos angle - y * sin angle,
-                             x * sin angle + y * cos angle)
+rotatedVector angle (x, y) =
+    (x * cos angle - y * sin angle, x * sin angle + y * cos angle)
 
 dotProduct :: Vector -> Vector -> Double
 dotProduct (x1, y1) (x2, y2) = x1 * x2 + y1 * y2
 
-data Picture = Polygon CallStack [Point] !Bool
-             | Path CallStack [Point] !Double !Bool !Bool
-             | Sector CallStack !Double !Double !Double
-             | Arc CallStack !Double !Double !Double !Double
-             | Text CallStack !TextStyle !Font !Text
-             | Color CallStack !Color !Picture
-             | Translate CallStack !Double !Double !Picture
-             | Scale CallStack !Double !Double !Picture
-             | Rotate CallStack !Double !Picture
-             | CoordinatePlane CallStack
-             | Logo CallStack
-             | Pictures [Picture]
+data Picture
+    = Polygon CallStack
+              [Point]
+              !Bool
+    | Path CallStack
+           [Point]
+           !Double
+           !Bool
+           !Bool
+    | Sector CallStack
+             !Double
+             !Double
+             !Double
+    | Arc CallStack
+          !Double
+          !Double
+          !Double
+          !Double
+    | Text CallStack
+           !TextStyle
+           !Font
+           !Text
+    | Color CallStack
+            !Color
+            !Picture
+    | Translate CallStack
+                !Double
+                !Double
+                !Picture
+    | Scale CallStack
+            !Double
+            !Double
+            !Picture
+    | Rotate CallStack
+             !Double
+             !Picture
+    | CoordinatePlane CallStack
+    | Logo CallStack
+    | Pictures [Picture]
 
-data TextStyle = Plain | Bold | Italic
+data TextStyle
+    = Plain
+    | Bold
+    | Italic
 
-data Font = SansSerif | Serif | Monospace | Handwriting | Fancy | NamedFont !Text
+data Font
+    = SansSerif
+    | Serif
+    | Monospace
+    | Handwriting
+    | Fancy
+    | NamedFont !Text
 
 -- | A blank picture
 blank :: Picture
@@ -111,29 +147,29 @@ solidLoop ps = Polygon callStack ps True
 
 -- | A thin rectangle, with this width and height
 rectangle :: HasCallStack => Double -> Double -> Picture
-rectangle w h = polygon [
-    (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)
-    ]
+rectangle w h =
+    polygon [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)]
 
 -- | A solid rectangle, with this width and height
 solidRectangle :: HasCallStack => Double -> Double -> Picture
-solidRectangle w h = solidPolygon [
-    (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)
-    ]
+solidRectangle w h =
+    solidPolygon
+        [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)]
 
 -- | A thick rectangle, with this line width, and width and height
 thickRectangle :: HasCallStack => Double -> Double -> Double -> Picture
-thickRectangle lw w h = thickPolygon lw [
-    (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)
-    ]
+thickRectangle lw w h =
+    thickPolygon
+        lw
+        [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)]
 
 -- | A thin circle, with this radius
 circle :: HasCallStack => Double -> Picture
-circle = arc 0 (2*pi)
+circle = arc 0 (2 * pi)
 
 -- | A thick circle, with this line width and radius
 thickCircle :: HasCallStack => Double -> Double -> Picture
-thickCircle w = thickArc w 0 (2*pi)
+thickCircle w = thickArc w 0 (2 * pi)
 
 -- | A thin arc, starting and ending at these angles, with this radius
 --
@@ -150,7 +186,7 @@ thickArc w b e r = Arc callStack b e r w
 
 -- | A solid circle, with this radius
 solidCircle :: HasCallStack => Double -> Picture
-solidCircle = sector 0 (2*pi)
+solidCircle = sector 0 (2 * pi)
 
 -- | A solid sector of a circle (i.e., a pie slice) starting and ending at these
 -- angles, with this radius
@@ -197,14 +233,15 @@ pictures :: [Picture] -> Picture
 pictures = Pictures
 
 instance Monoid Picture where
-  mempty                   = blank
-  mappend a (Pictures bs)  = Pictures (a:bs)
-  mappend a b              = Pictures [a, b]
-  mconcat                  = pictures
+    mempty = blank
+    mappend a (Pictures bs) = Pictures (a : bs)
+    mappend a b = Pictures [a, b]
+    mconcat = pictures
 
 -- | Binary composition of pictures.
 (&) :: Picture -> Picture -> Picture
 infixr 0 &
+
 (&) = mappend
 
 -- | A coordinate plane.  Adding this to your pictures can help you measure distances

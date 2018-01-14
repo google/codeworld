@@ -15,53 +15,55 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
 module Model where
 
-import           Control.Applicative
-import           Control.Monad
-import           Data.Aeson
-import           Data.Text (Text)
-import           System.FilePath (FilePath)
+import Control.Applicative
+import Control.Monad
+import Data.Aeson
+import Data.Text (Text)
+import System.FilePath (FilePath)
 
-data User = User { userId :: Text, audience :: Text }
+data User = User
+    { userId :: Text
+    , audience :: Text
+    }
 
 instance FromJSON User where
-    parseJSON (Object v) = User <$> v .: "user_id"
-                                <*> v .: "audience"
-    parseJSON _          = mzero
+    parseJSON (Object v) = User <$> v .: "user_id" <*> v .: "audience"
+    parseJSON _ = mzero
 
-data Project = Project {
-    projectName :: Text,
-    projectSource :: Text,
-    projectHistory :: Value
+data Project = Project
+    { projectName :: Text
+    , projectSource :: Text
+    , projectHistory :: Value
     }
 
 instance FromJSON Project where
-    parseJSON (Object v) = Project <$> v .: "name"
-                                   <*> v .: "source"
-                                   <*> v .: "history"
-    parseJSON _          = mzero
+    parseJSON (Object v) =
+        Project <$> v .: "name" <*> v .: "source" <*> v .: "history"
+    parseJSON _ = mzero
 
 instance ToJSON Project where
-    toJSON p = object [ "name"    .= projectName p,
-                        "source"  .= projectSource p,
-                        "history" .= projectHistory p ]
+    toJSON p =
+        object
+            [ "name" .= projectName p
+            , "source" .= projectSource p
+            , "history" .= projectHistory p
+            ]
 
-data Directory = Directory {
-    files :: [Text],
-    dirs :: [Text]
-    } deriving Show
+data Directory = Directory
+    { files :: [Text]
+    , dirs :: [Text]
+    } deriving (Show)
 
 instance ToJSON Directory where
-    toJSON dir = object [ "files" .= files dir,
-                          "dirs"  .= dirs dir ]
+    toJSON dir = object ["files" .= files dir, "dirs" .= dirs dir]
 
-data CompileResult = CompileResult {
-    compileHash :: Text,
-    compileDeployHash :: Text
+data CompileResult = CompileResult
+    { compileHash :: Text
+    , compileDeployHash :: Text
     }
 
 instance ToJSON CompileResult where
-    toJSON cr = object [ "hash"  .= compileHash cr,
-                         "dhash" .= compileDeployHash cr ]
+    toJSON cr =
+        object ["hash" .= compileHash cr, "dhash" .= compileDeployHash cr]

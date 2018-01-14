@@ -1,6 +1,6 @@
-{-# LANGUAGE CPP                      #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
-{-# LANGUAGE JavaScriptFFI            #-}
+{-# LANGUAGE JavaScriptFFI #-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.
@@ -17,44 +17,43 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
-module RegexShim (replace) where
-
+module RegexShim
+    ( replace
+    ) where
 #ifdef ghcjs_HOST_OS
-
-import           Data.ByteString (ByteString)
+import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as C
-import           Data.JSString (JSString)
+import Data.JSString (JSString)
 import qualified Data.JSString as J
 
-foreign import javascript unsafe "$3.replace(new RegExp($1, \"g\"), $2)"
-    js_replace :: JSString -> JSString -> JSString -> JSString
+foreign import javascript unsafe
+               "$3.replace(new RegExp($1, \"g\"), $2)" js_replace ::
+               JSString -> JSString -> JSString -> JSString
 
 replace :: ByteString -> ByteString -> ByteString -> ByteString
 replace regex replacement str =
     j_to_b (js_replace (b_to_j regex) (b_to_j replacement) (b_to_j str))
-  where j_to_b = C.pack . J.unpack
-        b_to_j = J.pack . C.unpack
-
+  where
+    j_to_b = C.pack . J.unpack
+    b_to_j = J.pack . C.unpack
 #else
-
-import           Data.Array (elems)
-import           Data.ByteString (ByteString)
+import Data.Array (elems)
+import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
-import           Data.List
-import           Data.Monoid
-import           Text.Regex.Base
-import           Text.Regex.TDFA
-import           Text.Regex.TDFA.ByteString
+import Data.List
+import Data.Monoid
+import Text.Regex.Base
+import Text.Regex.TDFA
+import Text.Regex.TDFA.ByteString
 
 replace :: ByteString -> ByteString -> ByteString -> ByteString
 replace regex replacement str =
     let parts = concatMap elems $ (str =~ regex :: [MatchArray])
     in foldl replaceOne str (reverse parts)
   where
-     replaceOne :: ByteString -> (Int, Int) -> ByteString
-     replaceOne str (start, len) = pre <> replacement <> post
-       where pre  = B.take start str
-             post = B.drop (start + len) str
-
+    replaceOne :: ByteString -> (Int, Int) -> ByteString
+    replaceOne str (start, len) = pre <> replacement <> post
+      where
+        pre = B.take start str
+        post = B.drop (start + len) str
 #endif

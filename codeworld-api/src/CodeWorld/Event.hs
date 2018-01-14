@@ -15,7 +15,6 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
 module CodeWorld.Event where
 
 import CodeWorld.Picture (Point)
@@ -56,20 +55,30 @@ import Data.Text (Text)
     * Cancel
     * Help
 -}
-data Event = KeyPress !Text
-           | KeyRelease !Text
-           | MousePress !MouseButton !Point
-           | MouseRelease !MouseButton !Point
-           | MouseMovement !Point
-  deriving (Eq, Show, Read)
+data Event
+    = KeyPress !Text
+    | KeyRelease !Text
+    | MousePress !MouseButton
+                 !Point
+    | MouseRelease !MouseButton
+                   !Point
+    | MouseMovement !Point
+    deriving (Eq, Show, Read)
 
-data MouseButton = LeftButton | MiddleButton | RightButton deriving (Eq, Show, Read)
+data MouseButton
+    = LeftButton
+    | MiddleButton
+    | RightButton
+    deriving (Eq, Show, Read)
 
 pattern PointerPress :: Point -> Event
+
 pattern PointerPress p = MousePress LeftButton p
 
 pattern PointerRelease :: Point -> Event
+
 pattern PointerRelease p = MouseRelease LeftButton p
 
 pattern PointerMovement :: Point -> Event
+
 pattern PointerMovement p = MouseMovement p

@@ -1,6 +1,6 @@
-{-# LANGUAGE CPP                        #-}
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE PackageImports             #-}
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 {-
@@ -18,69 +18,68 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
-module Internal.Num (
-    Number,
-    (+),
-    (-),
-    (*),
-    (/),
-    (^),
-    (>),
-    (>=),
-    (<),
-    (<=),
-    max,
-    min,
-    opposite,
-    negate,
-    abs,
-    absoluteValue,
-    signum,
-    truncation,
-    rounded,
-    ceiling,
-    floor,
-    quotient,
-    remainder,
-    reciprocal,
-    pi,
-    exp,
-    sqrt,
-    squareRoot,
-    log,
-    logBase,
-    sin,
-    tan,
-    cos,
-    asin,
-    atan,
-    atan2,
-    acos,
-    properFraction,
-    even,
-    odd,
-    gcd,
-    lcm,
-    sum,
-    product,
-    maximum,
-    minimum,
-    isInteger,
-    fromInteger,
-    fromRational,
-    fromInt,
-    toInt,
-    fromDouble,
-    toDouble
+module Internal.Num
+    ( Number
+    , (+)
+    , (-)
+    , (*)
+    , (/)
+    , (^)
+    , (>)
+    , (>=)
+    , (<)
+    , (<=)
+    , max
+    , min
+    , opposite
+    , negate
+    , abs
+    , absoluteValue
+    , signum
+    , truncation
+    , rounded
+    , ceiling
+    , floor
+    , quotient
+    , remainder
+    , reciprocal
+    , pi
+    , exp
+    , sqrt
+    , squareRoot
+    , log
+    , logBase
+    , sin
+    , tan
+    , cos
+    , asin
+    , atan
+    , atan2
+    , acos
+    , properFraction
+    , even
+    , odd
+    , gcd
+    , lcm
+    , sum
+    , product
+    , maximum
+    , minimum
+    , isInteger
+    , fromInteger
+    , fromRational
+    , fromInt
+    , toInt
+    , fromDouble
+    , toDouble
     ) where
 
+import Numeric (showFFloatAlt)
 import qualified "base" Prelude as P
 import "base" Prelude (Bool(..), (.), (==), map)
-import Numeric (showFFloatAlt)
 
 import qualified Internal.Truth
-import           Internal.Truth (Truth, otherwise, (&&))
+import Internal.Truth (Truth, (&&), otherwise)
 
 import GHC.Stack (HasCallStack, withFrozenCallStack)
 
@@ -89,16 +88,25 @@ import GHC.Stack (HasCallStack, withFrozenCallStack)
   Numbers can be positive or negative, whole or fractional.  For example, 5,
   3.2, and -10 are all values of the type Number.
 -}
-newtype Number = Number P.Double
+newtype Number =
+    Number P.Double
     deriving (P.RealFrac, P.Real, P.Floating, P.RealFloat, P.Eq)
 
-{-# RULES "equality/num" forall (x :: Number). (Internal.Truth.==) x = (P.==) x #-}
-{-# RULES "equality/point" forall (x :: (Number, Number)). (Internal.Truth.==) x = (P.==) x #-}
+{-# RULES
+"equality/num" forall (x :: Number) . (Internal.Truth.==) x =
+               (P.==) x
+ #-}
+
+{-# RULES
+"equality/point" forall (x :: (Number, Number)) .
+                 (Internal.Truth.==) x = (P.==) x
+ #-}
 
 fromDouble :: HasCallStack => P.Double -> Number
-fromDouble x | P.isNaN x      = P.error "Number is undefined."
-             | P.isInfinite x = P.error "Number is too large."
-             | otherwise      = Number x
+fromDouble x
+    | P.isNaN x = P.error "Number is undefined."
+    | P.isInfinite x = P.error "Number is too large."
+    | otherwise = Number x
 
 toDouble :: Number -> P.Double
 toDouble (Number x) = x
@@ -113,15 +121,15 @@ fromInt :: P.Int -> Number
 fromInt = fromDouble . P.fromIntegral
 
 toInt :: HasCallStack => Number -> P.Int
-toInt n | isInteger n = P.truncate (toDouble n)
-        | otherwise   = P.error "Whole number is required."
+toInt n
+    | isInteger n = P.truncate (toDouble n)
+    | otherwise = P.error "Whole number is required."
 
 instance P.Show Number where
     show (Number x) = stripZeros (showFFloatAlt (P.Just 4) x "")
-      where stripZeros = P.reverse
-                       . P.dropWhile (== '.')
-                       . P.dropWhile (== '0')
-                       . P.reverse
+      where
+        stripZeros =
+            P.reverse . P.dropWhile (== '.') . P.dropWhile (== '0') . P.reverse
 
 instance P.Num Number where
     fromInteger = fromInteger
@@ -144,7 +152,8 @@ instance P.Enum Number where
     enumFrom = map fromDouble . P.enumFrom . toDouble
     enumFromThen (Number a) (Number b) = map fromDouble (P.enumFromThen a b)
     enumFromTo (Number a) (Number b) = map fromDouble (P.enumFromTo a b)
-    enumFromThenTo (Number a) (Number b) (Number c) = map fromDouble (P.enumFromThenTo a b c)
+    enumFromThenTo (Number a) (Number b) (Number c) =
+        map fromDouble (P.enumFromThenTo a b c)
 
 instance P.Ord Number where
     compare (Number a) (Number b) = P.compare a b
@@ -157,10 +166,13 @@ instance P.Ord Number where
 isInteger :: Number -> Truth
 isInteger (Number x) = x == P.fromIntegral (P.truncate x)
 
-infixr 8  ^
-infixl 7  *, /
-infixl 6  +, -
-infix  4  <, <=, >=, >
+infixr 8 ^
+
+infixl 7 *, /
+
+infixl 6 +, -
+
+infix 4 <, <=, >=, >
 
 {-| Adds two numbers. -}
 (+) :: Number -> Number -> Number
@@ -177,17 +189,19 @@ Number a * Number b = fromDouble (a P.* b)
 {-| Divides two numbers.  The second number should not be zero. -}
 (/) :: HasCallStack => Number -> Number -> Number
 Number a / Number b
-  | b == 0    = withFrozenCallStack (P.error "Cannot divide by zero.")
-  | otherwise = fromDouble (a P./ b)
+    | b == 0 = withFrozenCallStack (P.error "Cannot divide by zero.")
+    | otherwise = fromDouble (a P./ b)
 
 {-| Raises a number to a power. -}
 (^) :: HasCallStack => Number -> Number -> Number
 Number a ^ Number b
-  | a P.< 0 && P.not (isInteger (Number b)) = withFrozenCallStack
-      (P.error "Negative numbers cannot be raised to fractional powers.")
-  | a P.== 0 && b P.< 0 = withFrozenCallStack
-      (P.error "Zero cannot be raised to negative powers.")
-  | otherwise = fromDouble (a P.** b)
+    | a P.< 0 && P.not (isInteger (Number b)) =
+        withFrozenCallStack
+            (P.error "Negative numbers cannot be raised to fractional powers.")
+    | a P.== 0 && b P.< 0 =
+        withFrozenCallStack
+            (P.error "Zero cannot be raised to negative powers.")
+    | otherwise = fromDouble (a P.** b)
 
 {-| Tells whether one number is less than the other. -}
 (<) :: Number -> Number -> Truth
@@ -216,7 +230,10 @@ min (Number a, Number b) = fromDouble (P.min a b)
 {-| Gives the opposite (that is, the negative) of a number. -}
 opposite :: Number -> Number
 opposite = fromDouble . P.negate . toDouble
-{-# WARNING opposite "Please use -x instead of opposite(x)." #-}
+
+{-# WARNING
+opposite "Please use -x instead of opposite(x)."
+ #-}
 
 negate :: Number -> Number
 negate = opposite
@@ -297,7 +314,10 @@ remainder (a, b) = a - b * quotient (a, b)
 reciprocal :: HasCallStack => Number -> Number
 reciprocal 0 = withFrozenCallStack (P.error "Zero has no reciprocal.")
 reciprocal x = fromDouble (P.recip (toDouble x))
-{-# WARNING reciprocal "Please use 1/x or x^(-1) instead of reciprocal(x)." #-}
+
+{-# WARNING
+reciprocal "Please use 1/x or x^(-1) instead of reciprocal(x)."
+ #-}
 
 {-| The constant pi, which is equal to the ration between the circumference
     and diameter of a circle.
@@ -326,9 +346,9 @@ exp = fromDouble . P.exp . toDouble
 -}
 sqrt :: HasCallStack => Number -> Number
 sqrt (Number x)
-  | x P.< 0   = withFrozenCallStack
-      (P.error "Negative numbers have no square root.")
-  | otherwise = fromDouble (P.sqrt x)
+    | x P.< 0 =
+        withFrozenCallStack (P.error "Negative numbers have no square root.")
+    | otherwise = fromDouble (P.sqrt x)
 
 squareRoot :: HasCallStack => Number -> Number
 squareRoot = sqrt
@@ -343,22 +363,23 @@ squareRoot = sqrt
 -}
 log :: HasCallStack => Number -> Number
 log (Number x)
-  | x P.<= 0  = withFrozenCallStack
-      (P.error "Only positive numbers have logarithms.")
-  | otherwise = fromDouble (P.log x)
+    | x P.<= 0 =
+        withFrozenCallStack (P.error "Only positive numbers have logarithms.")
+    | otherwise = fromDouble (P.log x)
 
 {-| Gives the logarithm of the first number, using the base of the second
     number.
 -}
 logBase :: HasCallStack => (Number, Number) -> Number
 logBase (Number x, Number b)
-  | x P.<= 0  = withFrozenCallStack
-      (P.error "Only positive numbers have logarithms.")
-  | b P.<= 0  = withFrozenCallStack
-      (P.error "The base of a logarithm must be a positive number.")
-  | b P.== 1  = withFrozenCallStack
-      (P.error "A logarithm cannot have a base of 1.")
-  | otherwise = fromDouble (P.logBase b x)
+    | x P.<= 0 =
+        withFrozenCallStack (P.error "Only positive numbers have logarithms.")
+    | b P.<= 0 =
+        withFrozenCallStack
+            (P.error "The base of a logarithm must be a positive number.")
+    | b P.== 1 =
+        withFrozenCallStack (P.error "A logarithm cannot have a base of 1.")
+    | otherwise = fromDouble (P.logBase b x)
 
 {-| Converts an angle from degrees to radians. -}
 toRadians :: Number -> Number
@@ -370,7 +391,7 @@ fromRadians r = r / pi * 180
 
 {-| Gives the sine of an angle, where the angle is measured in degrees. -}
 sin :: Number -> Number
-sin = fromDouble . P.sin  . toDouble . toRadians
+sin = fromDouble . P.sin . toDouble . toRadians
 
 {-| Gives the tangent of an angle, where the angle is measured in degrees.
 
@@ -389,9 +410,11 @@ cos = fromDouble . P.cos . toDouble . toRadians
 -}
 asin :: HasCallStack => Number -> Number
 asin (Number x)
-  | x P.< -1 P.|| x P.> 1 = withFrozenCallStack
-      (P.error "The asin function is only defined for numbers from -1 to 1.")
-  | otherwise = fromRadians (fromDouble (P.asin x))
+    | x P.< -1 P.|| x P.> 1 =
+        withFrozenCallStack
+            (P.error
+                 "The asin function is only defined for numbers from -1 to 1.")
+    | otherwise = fromRadians (fromDouble (P.asin x))
 
 {-| Gives the inverse tangent of a value, in degrees.
 
@@ -403,7 +426,10 @@ atan = fromRadians . fromDouble . P.atan . toDouble
 {-| Gives the angle between the positive x axis and a given point, in degrees. -}
 atan2 :: (Number, Number) -> Number
 atan2 (Number a, Number b) = fromRadians (fromDouble (P.atan2 a b))
-{-# WARNING atan2 "Please use vectorDirection instead of atan2." #-}
+
+{-# WARNING
+atan2 "Please use vectorDirection instead of atan2."
+ #-}
 
 {-| Gives the inverse cosine of a value, in degrees.
 
@@ -411,9 +437,11 @@ atan2 (Number a, Number b) = fromRadians (fromDouble (P.atan2 a b))
 -}
 acos :: HasCallStack => Number -> Number
 acos (Number x)
-  | x P.< -1 P.|| x P.> 1 = withFrozenCallStack
-      (P.error "The acos function is only defined for numbers from -1 to 1.")
-  | otherwise = fromRadians (fromDouble (P.acos x))
+    | x P.< -1 P.|| x P.> 1 =
+        withFrozenCallStack
+            (P.error
+                 "The acos function is only defined for numbers from -1 to 1.")
+    | otherwise = fromRadians (fromDouble (P.acos x))
 
 {-| Separates a number into its whole and fractional parts.
 
@@ -421,17 +449,20 @@ acos (Number x)
 -}
 properFraction :: Number -> (Number, Number)
 properFraction (Number x) = (fromInteger w, fromDouble p)
-    where (w,p) = P.properFraction x
+  where
+    (w, p) = P.properFraction x
 
 {-| Tells if a number is even. -}
 even :: Number -> Truth
-even n | isInteger n = P.even (toInt n)
-       | otherwise   = False
+even n
+    | isInteger n = P.even (toInt n)
+    | otherwise = False
 
 {-| Tells if a number is odd. -}
 odd :: Number -> Truth
-odd n | isInteger n = P.odd (toInt n)
-      | otherwise   = False
+odd n
+    | isInteger n = P.odd (toInt n)
+    | otherwise = False
 
 {-| Gives the greatest common divisor of two numbers.
 

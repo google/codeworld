@@ -1,5 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE PackageImports    #-}
+{-# LANGUAGE PackageImports #-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.
@@ -16,38 +16,33 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
 --------------------------------------------------------------------------------
 -- |The standard set of functions and variables available to all programs.
 --
 -- You may use any of these functions and variables without defining them.
 module Prelude (
     -- $intro
-
     -- * Numbers
-    module Internal.Num,
-
+      module Internal.Num
     -- * Text
-    module Internal.Text,
-
+    , module Internal.Text
     -- * General purpose functions
-    module Internal.Prelude,
-    IO,
-
-    module Internal.Exports
+    , module Internal.Prelude
+    , IO
+    , module Internal.Exports
     ) where
 
-import "base" Prelude (IO)
 import Internal.Exports
+import "base" Prelude (IO)
 
 import Internal.Num
 import Internal.Prelude hiding (randomsFrom)
 import Internal.Text hiding (fromCWText, toCWText)
 
-import Internal.Color
-import Internal.Picture
-import Internal.Event
 import Internal.CodeWorld
+import Internal.Color
+import Internal.Event
+import Internal.Picture
 
 --------------------------------------------------------------------------------
 -- $intro

@@ -2,6 +2,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+import CodeWorld
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.
 
@@ -17,22 +18,20 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
 import CodeWorld.Message
-import CodeWorld
 
-import System.Clock
-import Data.List
-import Data.Maybe
-import Text.Read
-import Control.Monad
-import qualified Data.Text as T
-import qualified Data.ByteString.Char8 as BS
-import qualified Network.WebSockets as WS
 import Control.Concurrent
 import Control.Concurrent.Async
 import Control.Exception
+import Control.Monad
+import qualified Data.ByteString.Char8 as BS
+import Data.List
+import Data.Maybe
+import qualified Data.Text as T
+import qualified Network.WebSockets as WS
 import Options.Applicative
+import System.Clock
+import Text.Read
 import Text.Regex
 
 connect :: Config -> WS.ClientApp a -> IO a
@@ -48,8 +47,7 @@ decodeEvent = readMaybe
 
 sendClientMessage :: Config -> WS.Connection -> ClientMessage -> IO ()
 sendClientMessage config conn msg = do
-    when (debug config) $
-        putStrLn $ "→ " ++ show msg
+    when (debug config) $ putStrLn $ "→ " ++ show msg
     WS.sendTextData conn (T.pack (show msg))
 
 getServerMessage :: Config -> WS.Connection -> IO ServerMessage
@@ -57,16 +55,16 @@ getServerMessage config conn = do
     msg <- WS.receiveData conn
     case readMaybe (T.unpack msg) of
         Just msg -> do
-            when (debug config) $
-                putStrLn $ "← " ++ show msg
+            when (debug config) $ putStrLn $ "← " ++ show msg
             return msg
         Nothing -> fail "Invalid server message"
 
 joinGame :: Config -> IO [ServerMessage]
-joinGame config = connect config $ \conn -> do
-    sendClientMessage config conn (JoinGame (gameId config) "BOT")
-    JoinedAs _ _ <- getServerMessage config conn
-    waitForStart config conn
+joinGame config =
+    connect config $ \conn -> do
+        sendClientMessage config conn (JoinGame (gameId config) "BOT")
+        JoinedAs _ _ <- getServerMessage config conn
+        waitForStart config conn
 
 waitForStart :: Config -> WS.Connection -> IO [ServerMessage]
 waitForStart config conn = go
@@ -84,90 +82,83 @@ playGame config conn = do
         OutEvent pid eo <- getServerMessage config conn
         when (pid == 0) $
             case decodeEvent eo of
-                Just (t,mbEvent) -> do
+                Just (t, mbEvent) -> do
                     let mbEvent' = modify <$> mbEvent
                     currentTime <- getTime Monotonic
-                    let t' | Just ms <- delay config = max 0 (t + ms/1000)
-                           | otherwise               = timeSpecToS (currentTime - startTime)
-                    sendClientMessage config conn (InEvent (show (t',mbEvent')))
+                    let t'
+                            | Just ms <- delay config = max 0 (t + ms / 1000)
+                            | otherwise = timeSpecToS (currentTime - startTime)
+                    sendClientMessage
+                        config
+                        conn
+                        (InEvent (show (t', mbEvent')))
                 Nothing -> putStrLn $ "Could not parse event: " ++ eo
   where
-    modify e | not (invert config) = e
+    modify e
+        | not (invert config) = e
     modify (KeyPress d) = KeyPress (inv d)
     modify (KeyRelease d) = KeyRelease (inv d)
     modify e = e
-
-    inv "Up"    = "Down"
-    inv "Down"  = "Up"
-    inv "Left"  = "Right"
+    inv "Up" = "Down"
+    inv "Down" = "Up"
+    inv "Left" = "Right"
     inv "Right" = "Left"
-    inv c       = c
+    inv c = c
 
 timeSpecToS ts = fromIntegral (sec ts) + fromIntegral (nsec ts) * 1E-9
 
 data Config = Config
-    { clients  :: Int
-    , invert   :: Bool
-    , delay    :: Maybe Double
+    { clients :: Int
+    , invert :: Bool
+    , delay :: Maybe Double
     , hostname :: String
-    , port     :: Int
-    , path     :: String
-    , gameId   :: GameId
-    , debug    :: Bool
+    , port :: Int
+    , path :: String
+    , gameId :: GameId
+    , debug :: Bool
     }
 
-opts = info (helper <*> config)
-      ( fullDesc
-     <> progDesc "CodeWorld simple bot"
-     <> header "codeword-game-bot - a simple mirroring bot for codeworld-gameserver")
+opts =
+    info
+        (helper <*> config)
+        (fullDesc <> progDesc "CodeWorld simple bot" <>
+         header
+             "codeword-game-bot - a simple mirroring bot for codeworld-gameserver")
   where
     config :: Parser Config
-    config = Config
-      <$> option auto
-          ( long "clients"
-         <> short 'c'
-         <> showDefault
-         <> metavar "N"
-         <> value 1
-         <> help "Number of clients to simulate (>=1)" )
-      <*> switch
-          ( long "invert"
-         <> showDefault
-         <> help "Return opposite direction" )
-      <*> optional (option auto
-          ( long "delay"
-         <> showDefault
-         <> metavar "ms"
-         <> help "Use remote timestamp and adjust with this many milli seconds. Default is to use local time stamps. Can be negative."))
-      <*> strOption
-          ( long "hostname"
-         <> showDefault
-         <> value "0.0.0.0"
-         <> metavar "HOSTNAME"
-         <> help "Hostname" )
-      <*> option auto
-          ( long "port"
-         <> showDefault
-         <> metavar "PORT"
-         <> value 9160
-         <> help "Port" )
-      <*> strOption
-          ( long "path"
-         <> showDefault
-         <> metavar "PATH"
-         <> value "gameserver"
-         <> help "Path")
-      <*> (T.pack <$> strOption
-          ( long "gameid"
-         <> showDefault
-         <> metavar "ID"
-         <> help "The ID of the game to join (4 letters)"))
-      <*> switch
-          ( long "debug"
-         <> showDefault
-         <> help "Show debugging output" )
+    config =
+        Config <$>
+        option
+            auto
+            (long "clients" <> short 'c' <> showDefault <> metavar "N" <>
+             value 1 <>
+             help "Number of clients to simulate (>=1)") <*>
+        switch
+            (long "invert" <> showDefault <> help "Return opposite direction") <*>
+        optional
+            (option
+                 auto
+                 (long "delay" <> showDefault <> metavar "ms" <>
+                  help
+                      "Use remote timestamp and adjust with this many milli seconds. Default is to use local time stamps. Can be negative.")) <*>
+        strOption
+            (long "hostname" <> showDefault <> value "0.0.0.0" <>
+             metavar "HOSTNAME" <>
+             help "Hostname") <*>
+        option
+            auto
+            (long "port" <> showDefault <> metavar "PORT" <> value 9160 <>
+             help "Port") <*>
+        strOption
+            (long "path" <> showDefault <> metavar "PATH" <> value "gameserver" <>
+             help "Path") <*>
+        (T.pack <$>
+         strOption
+             (long "gameid" <> showDefault <> metavar "ID" <>
+              help "The ID of the game to join (4 letters)")) <*>
+        switch (long "debug" <> showDefault <> help "Show debugging output")
 
 main = do
-  config <- execParser opts
-  start <- getTime Monotonic
-  mapConcurrently id $ replicate (clients config) (joinGame config)
+    config <- execParser opts
+    start <- getTime Monotonic
+    mapConcurrently id $ replicate (clients config) (joinGame config)

@@ -21,7 +21,8 @@ Description:
 Library
   Hs-source-dirs:      src
   Exposed-modules:     CodeWorld
-  Other-modules:       CodeWorld.Color,
+  Other-modules:       CodeWorld.CanvasM,
+                       CodeWorld.Color,
                        CodeWorld.Picture,
                        CodeWorld.Event,
                        CodeWorld.Driver

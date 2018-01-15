@@ -63,6 +63,8 @@ import GHC.Stack
 import GHC.StaticPtr
 import Numeric
 import System.Environment
+import System.IO
+import System.IO.Unsafe
 import System.Mem.StableName
 import System.Random
 import Text.Read
@@ -98,13 +100,11 @@ import qualified JavaScript.Web.Canvas.Internal as Canvas
 import qualified JavaScript.Web.Location as Loc
 import qualified JavaScript.Web.MessageEvent as WS
 import qualified JavaScript.Web.WebSocket as WS
-import System.IO.Unsafe
 import Unsafe.Coerce
 #else
 import Data.Time.Clock
 import qualified Graphics.Blank as Canvas
 import Graphics.Blank (Canvas)
-import System.IO
 import Text.Printf
 #endif
 --------------------------------------------------------------------------------
@@ -2036,7 +2036,10 @@ simulationOf simInitial simStep simDraw =
     initial =
         Wrapped {state = simInitial, paused = False, mouseMovedTime = 1000}
 
-trace = Debug.Trace.trace . T.unpack
+trace msg x = unsafePerformIO $ do
+    hPutStrLn stderr (T.unpack msg)
+    return x
+
 #ifdef ghcjs_HOST_OS
 
 --- GHCJS implementation of tracing and error handling

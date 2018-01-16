@@ -204,3 +204,81 @@ definition.  Can you tell the difference?  Expressions describe
 something, but don't give it a name.  But every definition has an
 expression inside, after the equal sign.  So expressions are pretty
 important.
+
+### Functions ###
+
+One special kind of expression that you use a lot in CodeWorld is
+applying a *function*.  A function is like a variable that still needs
+more information.  You've already used a lot of functions:
+
+* `rectangle` is a function.  It needs a width and a height, and makes a
+  picture.
+* `light` is a function.  It needs a color, and makes another color that's
+  about the same, but lighter.
+* `drawingOf` is a function.  It needs a picture, and makes a program to
+  draw that picture.
+* `scaled` is a function.  It needs a picture and two scaling factors, and
+  makes a modified picture.
+
+As you've already seen, to apply a function, you can write the function
+name, then the extra information it needs (these are called *parameters*)
+in parentheses after it, with commas between them.
+
+### Nesting ###
+
+Remember how we used `rotated`?  Here's a quick reminder:
+
+    program = drawingOf(diamond)
+    diamond = rotated(square, 45)
+    square  = rectangle(2, 2)
+
+Nice!  However, naming everything like that can get tedious.  If you
+have a simple shape, such as `rectangle(2, 2)`, you may not want
+to bother giving it a name.  You can just describe the shape right where
+the name would go.
+
+Try it:
+
+    program = drawingOf(diamond)
+    diamond = rotated(rectangle(2, 2), 45)
+
+Or even:
+
+    program = drawingOf(rotated(rectangle(2, 2), 45))
+
+Careful, though!  You can avoid avoid naming simple things, but if you
+nest too much, you get parentheses inside of parentheses inside of
+parentheses,  and pretty soon it's hard to tell what's going on!
+
+You can also nest other things besides pictures.  Remember that `dark`,
+`light`, and `transparent` were functions that modify colors.  But since
+`dark(red)` and `light(green)` are colors themselves, so you can use the
+same functions on them!  Check out some of these colors:
+
+* `dark(dark(green))`
+* `translucent(light(blue))`
+
+### Numbers ###
+
+Nesting can be used for numbers, too.  You can let the computer work out
+math for you on numbers, too.  When you write math expressions, you can
+use `+` and `-` the way you normally would.  To multiply, use `*`.  To
+divide, use `/`.
+
+Check out this code:
+
+    program = drawingOf(design)
+    design  = rotated(rectangle(4, 0.2), 1 * 180 / 5)
+            & rotated(rectangle(4, 0.2), 2 * 180 / 5)
+            & rotated(rectangle(4, 0.2), 3 * 180 / 5)
+            & rotated(rectangle(4, 0.2), 4 * 180 / 5)
+            & rotated(rectangle(4, 0.2), 5 * 180 / 5)
+
+We could have written `36`, '72', '108', '144', and `180` (the answers to
+those math problems).  But this way, it's very clear what we are doing:
+dividing 180 degrees into fifths, and then rotating a rectangle by each
+amount.  And we don't have to worry about getting one of the answers
+wrong!
+
+Just like in math, you can use parentheses to group expressions, so
+`3 * (6 - 2)` is `3 * 4`, which is `12`.

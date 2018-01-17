@@ -1,4 +1,4 @@
-Drawing With CodeWorld
+Unit 1: Drawing With CodeWorld
 ======================
 
 Definitions

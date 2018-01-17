@@ -1,1 +1,5 @@
-### Unit 9: Modeling ###
+What is Modeling?
+=================
+
+Randomness
+==========

@@ -1,8 +1,5 @@
-Unit 1: Drawing With CodeWorld
-======================
-
 Definitions
------------
+===========
 
 Writing code in CodeWorld is like writing a dictionary or glossary.  Your
 project is a bunch of *definitions*.  You write a definition to say what
@@ -17,7 +14,8 @@ In CodeWorld, you do absolutely everything by naming things.  We call the names 
 "wheel") *variables*.  So in this example, we defined a *variable* called
 "wheel". You will define a lot of variables in CodeWorld.
 
-### Defining program ###
+Defining program
+----------------
 
 Sooner or later, you need to say what program you want.  You do that by defining a
 special variable called *program*.  Every CodeWorld project needs *exactly* *one*
@@ -30,7 +28,7 @@ this:
 That's a complete project, so try it out!
 
 Pictures
---------
+========
 
 You know how to draw a circle.  Now let's play around with some different basic
 shapes:
@@ -54,7 +52,8 @@ the same as `thickCircle` but for rectangles; `arc`, which draws an arc; `sector
 which draws a filled in portion of a circle... the list goes on and on!  Don't worry; you will be able to play with
 all of them.
 
-### Combining Shapes ###
+Combining Shapes
+----------------
 
 Pictures would be pretty boring if they could only have one shape.  Luckily, you
 can combine more than one shape in the same picture using `&` (which means *and*).
@@ -83,7 +82,8 @@ describing the same program we just looked at is:
 You will learn that it helps to think about more complicated pictures if you give
 good names to the pieces.
 
-### Colors ###
+Colors
+------
 
 Pictures don't need to be black and white.  You can use `colored` to change the color
 of your pictures.  Here's a simple example:
@@ -115,7 +115,8 @@ Let's try some example code:
     square  = solidRectangle(5, 5)
     disk    = solidCircle(3)
 
-### Transformations ###
+Transformations
+---------------
 
 So far, all the pictures we've drawn have been at the middle of the screen.  That's
 no fun.  But never fear, *transformations* are here!
@@ -123,7 +124,7 @@ no fun.  But never fear, *transformations* are here!
 Transformations are ways to change a picture.  There are three kinds of
 transformations you can use in CodeWorld:
 
-#### Translation: Moving Your Pictures ####
+### Translation: Moving Your Pictures ###
 
 You can *translate* a picture to move it up, down, left, or right on the screen.
 To use `translated`, you give it three things:
@@ -147,7 +148,7 @@ Ready for an example?
 What does `translated(..., 0, 0)` mean?  Well, it means don't move the picture at
 all!  We wrote the `translated` there just to make things line up nicely.
 
-#### Rotation: Turning Your Pictures ####
+### Rotation: Turning Your Pictures ###
 
 You can *rotate* a picture to turn it, either clockwise or counter-clockwise.
 To use `rotated`, you give it two things:
@@ -164,7 +165,7 @@ Here's an example:
 
 A diamond is just a square, turned so it's diagonal.
 
-#### Scaling: Stretching Your Pictures ####
+### Scaling: Stretching Your Pictures ###
 
 Finally, you can *scale* a picture to stretch it or flip it over, either
 horizontally or vertically.  To use `scaled`, you'll give:
@@ -188,7 +189,7 @@ factors.  Try changing the numbers in the example, and see if you can
 guess what will happen before you press run.
 
 Expressions
------------
+===========
 
 Now that you've spent some time trying out pictures, let's learn a few
 more tricks you can use.  Anything you can write after the equal sign
@@ -205,7 +206,8 @@ something, but don't give it a name.  But every definition has an
 expression inside, after the equal sign.  So expressions are pretty
 important.
 
-### Functions ###
+Functions
+---------
 
 One special kind of expression that you use a lot in CodeWorld is
 applying a *function*.  A function is like a variable that still needs
@@ -224,7 +226,8 @@ As you've already seen, to apply a function, you can write the function
 name, then the extra information it needs (these are called *parameters*)
 in parentheses after it, with commas between them.
 
-### Nesting ###
+Nesting
+-------
 
 Remember how we used `rotated`?  Here's a quick reminder:
 
@@ -258,7 +261,8 @@ same functions on them!  Check out some of these colors:
 * `dark(dark(green))`
 * `translucent(light(blue))`
 
-### Numbers ###
+Numbers
+-------
 
 Nesting can be used for numbers, too.  You can let the computer work out
 math for you on numbers, too.  When you write math expressions, you can

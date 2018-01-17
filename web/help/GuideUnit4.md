@@ -1,6 +1,5 @@
-### Unit 4: Repetition ###
-
-### Lists ###
+Lists
+=====
 
 As we explore new kinds of things, we've already seen pictures and numbers.
 Now let's look at lists.  A list is, well, just a list of things.  To write
@@ -20,7 +19,8 @@ together into one picture.  For example:
         circle(2)
         ])
 
-#### List comprehensions ####
+List comprehensions
+-------------------
 
 Lists are a little bit interesting when you use them with `pictures`, but
 they get a lot *more* interesting if you write list *comprehensions*.  A
@@ -51,7 +51,8 @@ put `circle(r)` in the resulting list.  The resulting list is `[ circle(1),
 circle(2), circle(3), circle(4), circle(5) ]`.  But you didn't have to
 type that over and over.
 
-#### List ranges ####
+List ranges
+-----------
 
 With list comprehensions, it's now useful to have lists of numbers, because
 you can turn them into lists of pictures.  But writing `[1, 2, 3, 4, 5]` was
@@ -75,7 +76,8 @@ call each of those numbers the variable "angle", and get a list of pictures
 that rotate something by each of those angles.  Finally, we combine all of
 this pictures using the `pictures` function, and draw the result.
 
-#### Advanced list comprehensions ####
+Advanced list comprehensions
+----------------------------
 
 There are a few other things you can do with list comprehensions.  You
 might find them useful.

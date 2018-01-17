@@ -105,12 +105,24 @@ blank :: Picture
 blank = Pictures []
 
 -- | A thin sequence of line segments, with these points as endpoints
+polyline :: HasCallStack => [Point] -> Picture
+polyline ps = Path callStack ps 0 False False
+
+-- | A thin sequence of line segments, with these points as endpoints
 path :: HasCallStack => [Point] -> Picture
 path ps = Path callStack ps 0 False False
+
+{-# WARNING path "Please use polyline instead of path." #-}
+
+-- | A thick sequence of line segments, with given line width and endpoints
+thickPolyline :: HasCallStack => Double -> [Point] -> Picture
+thickPolyline n ps = Path callStack ps n False False
 
 -- | A thick sequence of line segments, with given line width and endpoints
 thickPath :: HasCallStack => Double -> [Point] -> Picture
 thickPath n ps = Path callStack ps n False False
+
+{-# WARNING thickPath "Please used thickPolyline instead of thickPath." #-}
 
 -- | A thin polygon with these points as vertices
 polygon :: HasCallStack => [Point] -> Picture
@@ -133,17 +145,35 @@ curve ps = Path callStack ps 0 False True
 thickCurve :: HasCallStack => Double -> [Point] -> Picture
 thickCurve n ps = Path callStack ps n False True
 
--- | A smooth closed loop passing through these points.
+-- | A smooth closed curve passing through these points.
+closedCurve :: HasCallStack => [Point] -> Picture
+closedCurve ps = Path callStack ps 0 True True
+
+-- | A smooth closed curve passing through these points.
 loop :: HasCallStack => [Point] -> Picture
 loop ps = Path callStack ps 0 True True
 
--- | A thick smooth closed loop with this line width, passing through these points.
+{-# WARNING loop "Please use closedCurve instead of loop." #-}
+
+-- | A thick smooth closed curve with this line width, passing through these points.
+thickClosedCurve :: HasCallStack => Double -> [Point] -> Picture
+thickClosedCurve n ps = Path callStack ps n True True
+
+-- | A thick smooth closed curve with this line width, passing through these points.
 thickLoop :: HasCallStack => Double -> [Point] -> Picture
 thickLoop n ps = Path callStack ps n True True
 
--- | A solid smooth closed loop passing through these points.
+{-# WARNING thickLoop "Please use thickClosedCurve instead of thickLoop." #-}
+
+-- | A solid smooth closed curve passing through these points.
+solidClosedCurve :: HasCallStack => [Point] -> Picture
+solidClosedCurve ps = Polygon callStack ps True
+
+-- | A solid smooth closed curve passing through these points.
 solidLoop :: HasCallStack => [Point] -> Picture
 solidLoop ps = Polygon callStack ps True
+
+{-# WARNING solidLoop "Please use solidClosedCurve instead of solidLoop." #-}
 
 -- | A thin rectangle, with this width and height
 rectangle :: HasCallStack => Double -> Double -> Picture

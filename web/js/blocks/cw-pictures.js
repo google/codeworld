@@ -203,11 +203,11 @@ Blockly.Blocks['lists_pictures'] = {
   }
 };
 
-Blockly.Blocks['lists_path'] = {
+Blockly.Blocks['lists_polyline'] = {
   init: function() {
     this.setColour(160);
     this.appendValueInput('LST')
-        .appendField(new Blockly.FieldLabel("path","blocklyTextEmph"))
+        .appendField(new Blockly.FieldLabel("polyline","blocklyTextEmph"))
         .appendField('(');
     this.appendDummyInput()
         .setAlign(Blockly.ALIGN_RIGHT)
@@ -215,16 +215,16 @@ Blockly.Blocks['lists_path'] = {
     this.setInputsInline(false);
     this.setOutput(true);
     var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
-    Blockly.TypeInf.defineFunction("path", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
-    this.setAsFunction("path");
+    Blockly.TypeInf.defineFunction("polyline", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
+    this.setAsFunction("polyline");
   }
 };
 
-Blockly.Blocks['lists_thickPath'] = {
+Blockly.Blocks['lists_thickPolyline'] = {
   init: function() {
     this.setColour(160);
     this.appendValueInput('LST')
-        .appendField(new Blockly.FieldLabel("thickPath","blocklyTextEmph"))
+        .appendField(new Blockly.FieldLabel("thickPolyline","blocklyTextEmph"))
         .appendField('(');
     this.appendValueInput('THICKNESS')
         .setAlign(Blockly.ALIGN_RIGHT)
@@ -238,8 +238,8 @@ Blockly.Blocks['lists_thickPath'] = {
     var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
     var pts = Type.Lit("list", [pair]);
     var num = Type.Lit("Number");
-    Blockly.TypeInf.defineFunction("thickPath", Type.fromList([pts, num, Type.Lit("Picture")]));
-    this.setAsFunction("thickPath");
+    Blockly.TypeInf.defineFunction("thickPolyline", Type.fromList([pts, num, Type.Lit("Picture")]));
+    this.setAsFunction("thickPolyline");
   }
 };
 
@@ -340,11 +340,11 @@ Blockly.Blocks['lists_thickCurve'] = {
   }
 };
 
-Blockly.Blocks['lists_loop'] = {
+Blockly.Blocks['lists_closedCurve'] = {
   init: function() {
     this.setColour(160);
     this.appendValueInput('LST')
-        .appendField(new Blockly.FieldLabel("loop","blocklyTextEmph"))
+        .appendField(new Blockly.FieldLabel("closedCurve","blocklyTextEmph"))
         .appendField('(');
     this.appendDummyInput()
         .setAlign(Blockly.ALIGN_RIGHT)
@@ -352,16 +352,16 @@ Blockly.Blocks['lists_loop'] = {
     this.setInputsInline(false);
     this.setOutput(true);
     var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
-    Blockly.TypeInf.defineFunction("loop", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
-    this.setAsFunction("loop");
+    Blockly.TypeInf.defineFunction("closedCurve", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
+    this.setAsFunction("closedCurve");
   }
 };
 
-Blockly.Blocks['lists_solidLoop'] = {
+Blockly.Blocks['lists_solidClosedCurve'] = {
   init: function() {
     this.setColour(160);
     this.appendValueInput('LST')
-        .appendField(new Blockly.FieldLabel("solidLoop","blocklyTextEmph"))
+        .appendField(new Blockly.FieldLabel("solidClosedCurve","blocklyTextEmph"))
         .appendField('(');
     this.appendDummyInput()
         .setAlign(Blockly.ALIGN_RIGHT)
@@ -369,16 +369,16 @@ Blockly.Blocks['lists_solidLoop'] = {
     this.setInputsInline(false);
     this.setOutput(true);
     var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
-    Blockly.TypeInf.defineFunction("solidLoop", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
-    this.setAsFunction("solidLoop");
+    Blockly.TypeInf.defineFunction("solidClosedCurve", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
+    this.setAsFunction("solidClosedCurve");
   }
 };
 
-Blockly.Blocks['lists_thickLoop'] = {
+Blockly.Blocks['lists_thickClosedCurve'] = {
   init: function() {
     this.setColour(160);
     this.appendValueInput('LST')
-        .appendField(new Blockly.FieldLabel("thickLoop","blocklyTextEmph"))
+        .appendField(new Blockly.FieldLabel("thickClosedCurve","blocklyTextEmph"))
         .appendField('(');
     this.appendValueInput('THICKNESS')
         .setAlign(Blockly.ALIGN_RIGHT)
@@ -392,7 +392,7 @@ Blockly.Blocks['lists_thickLoop'] = {
     var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
     var pts = Type.Lit("list", [pair]);
     var num = Type.Lit("Number");
-    Blockly.TypeInf.defineFunction("thickLoop", Type.fromList([pts, num, Type.Lit("Picture")]));
-    this.setAsFunction("thickLoop");
+    Blockly.TypeInf.defineFunction("thickClosedCurve", Type.fromList([pts, num, Type.Lit("Picture")]));
+    this.setAsFunction("thickClosedCurve");
   }
 };

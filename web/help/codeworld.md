@@ -74,7 +74,7 @@ shapes:
 * `text("I Love Pandas!")`: You can write text (such as letters and words) to the
   screen by using `text`.  You need quotes around the words.
 
-There are plenty more: `path`, which draws a line; `polygon`, which draws a polygon;
+There are plenty more: `polyline`, which draws a line; `polygon`, which draws a polygon;
 `thickCircle`, which draws a circle with a thicker line; `thickRectangle`, which is
 the same as `thickCircle` but for rectangles; `arc`, which draws an arc; `sector`, 
 which draws a filled in portion of a circle... the list goes on and on!  Don't worry; you will be able to play with
@@ -458,11 +458,11 @@ plane:
   (the second number) is positive, and left because the x coordinate (the
   first number) is negative.
 
-Got it?  Great!  Now you can draw things like paths by giving a list of
-points in the coordinate plane to a function called `path`:
+Got it?  Great!  Now you can draw things like sequences of lines by giving
+a list of points in the coordinate plane to a function called `polyline`:
 
     program = drawingOf(zigzag)
-    zigzag  = path([(-2, 0), (-1, 1), (0, -1), (1, 1), (2, 0)])
+    zigzag  = polyline([(-2, 0), (-1, 1), (0, -1), (1, 1), (2, 0)])
 
 To draw a closed shape, use `polygon` instead.  Can you figure out the
 mystery picture before you click Run?
@@ -478,8 +478,8 @@ If you prefer to fill in your shape, you can use `solidPolygon` instead of
     mystery = solidPolygon(
         [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
 
-There are also `thickPolygon` and `thickPath` which use an extra parameter
-for thickness:
+There are also `thickPolygon` and `thickPolyline` which use an extra
+parameter for thickness:
 
     program = drawingOf(mystery)
     mystery = thickPolygon(
@@ -560,10 +560,10 @@ as you want about types!
 
 ### Points and Tuples ###
 
-What about a point, like the ones we used to make paths and polygons?
+What about a point, like the ones we used to make polylines and polygons?
 It actually works just fine to say the type is `Point`:
 
-    program = drawingOf(path[start, end])
+    program = drawingOf(polyline([start, end]))
 
     start :: Point
     start = (0, 0)
@@ -817,7 +817,7 @@ themselves.  Here's a simple fractal:
                & translated(part, 0, -5)
       where part = rotated(scaled(fractal(n-1), 2/3, 2/3), 90)
 
-    stem = path([(0, -10), (0, 10)])
+    stem = polyline([(0, -10), (0, 10)])
 
 There are plenty more kinds of fractals you can build from this same pattern.
 The parameter to the function is a level of detail.  Start with a simple
@@ -896,7 +896,7 @@ Here are a few possibilities:
 * The width or height of a rectangle.
 * The distance by which a shape is translated, scaled, or rotated.
 * The angles of an arc or sector.
-* The x or y coordinates of points in a path or polygon.
+* The x or y coordinates of points in a polyline or polygon.
 * The bounds of the range used for a list comprehension.
 * Red, green, or blue values in a color.
 

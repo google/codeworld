@@ -75,15 +75,20 @@ module Internal.Exports
     , Font(..)
     , TextStyle(..)
     , blank
+    , polyline
     , path
+    , thickPolyline
     , thickPath
     , polygon
     , thickPolygon
     , solidPolygon
     , curve
     , thickCurve
+    , closedCurve
     , loop
+    , thickClosedCurve
     , thickLoop
+    , solidClosedCurve
     , solidLoop
     , rectangle
     , solidRectangle

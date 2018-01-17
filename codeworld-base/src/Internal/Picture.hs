@@ -81,12 +81,24 @@ blank :: HasCallStack => Picture
 blank = CWPic CW.blank
 
 -- | A thin sequence of line segments with these endpoints
+polyline :: HasCallStack => [Point] -> Picture
+polyline = CWPic . CW.polyline . map toCWVect
+
+-- | A thin sequence of line segments with these endpoints
 path :: HasCallStack => [Point] -> Picture
 path = CWPic . CW.path . map toCWVect
+
+{-# WARNING path "Please use polyline(...) instead of path(...)." #-}
+
+-- | A thin sequence of line segments, with these endpoints and line width
+thickPolyline :: HasCallStack => ([Point], Number) -> Picture
+thickPolyline (ps, n) = CWPic (CW.thickPolyline (toDouble n) (map toCWVect ps))
 
 -- | A thin sequence of line segments, with these endpoints and line width
 thickPath :: HasCallStack => ([Point], Number) -> Picture
 thickPath (ps, n) = CWPic (CW.thickPath (toDouble n) (map toCWVect ps))
+
+{-# WARNING thickPath "Please use thickPolyline(...) instead of thickPath(...)." #-}
 
 -- | A thin polygon with these points as vertices
 polygon :: HasCallStack => [Point] -> Picture
@@ -108,17 +120,35 @@ curve = CWPic . CW.curve . map toCWVect
 thickCurve :: HasCallStack => ([Point], Number) -> Picture
 thickCurve (ps, n) = CWPic (CW.thickCurve (toDouble n) (map toCWVect ps))
 
--- | A thin closed loop passing through these points.
+-- | A thin closed curve passing through these points.
+closedCurve :: HasCallStack => [Point] -> Picture
+closedCurve = CWPic . CW.closedCurve . map toCWVect
+
+-- | A thin closed curve passing through these points.
 loop :: HasCallStack => [Point] -> Picture
 loop = CWPic . CW.loop . map toCWVect
 
--- | A thick closed loop passing through these points, with this line width.
+{-# WARNING loop "Please use closedCurve(...) instead of loop(...)." #-}
+
+-- | A thick closed curve passing through these points, with this line width.
+thickClosedCurve :: HasCallStack => ([Point], Number) -> Picture
+thickClosedCurve (ps, n) = CWPic (CW.thickClosedCurve (toDouble n) (map toCWVect ps))
+
+-- | A thick closed curve passing through these points, with this line width.
 thickLoop :: HasCallStack => ([Point], Number) -> Picture
 thickLoop (ps, n) = CWPic (CW.thickLoop (toDouble n) (map toCWVect ps))
 
--- | A solid closed loop passing through these points.
+{-# WARNING thickLoop "Please use thickClosedCurve(...) instead of thickLoop(...)." #-}
+
+-- | A solid closed curve passing through these points.
+solidClosedCurve :: HasCallStack => [Point] -> Picture
+solidClosedCurve = CWPic . CW.solidClosedCurve . map toCWVect
+
+-- | A solid closed curve passing through these points.
 solidLoop :: HasCallStack => [Point] -> Picture
 solidLoop = CWPic . CW.solidLoop . map toCWVect
+
+{-# WARNING solidLoop "Please use solidClosedCurve(...) instead of solidLoop(...)." #-}
 
 -- | A thin rectangle, with this width and height
 rectangle :: HasCallStack => (Number, Number) -> Picture

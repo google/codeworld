@@ -27,14 +27,14 @@ The program
       translated(bottom,                   0, -6)
       ])
 
-    c = pictures([ rotated(path([(1.6, 0),(0,1.6)]), th) | th <- [45, 55 .. 235]])
+    c = pictures([ rotated(polyline([(1.6, 0),(0,1.6)]), th) | th <- [45, 55 .. 235]])
       & arc(60, 300, 1.6)
 
     o = pictures([ rotated(scaled(circle(1.6), 0.3, 1), th) | th <- [0, 15 .. 165] ])
 
     d = translated(scaled(parts, 1.5, 1), -1.2, 0)
       where parts = pictures([ arc(-90, 90, r) | r <- [0.2, 0.4 .. 1.6] ]) &
-                    pictures([ rotated(path([ (0, 0), (1.6, 0) ]), th) | th <- [-90, -80 .. 90] ])
+                    pictures([ rotated(polyline([ (0, 0), (1.6, 0) ]), th) | th <- [-90, -80 .. 90] ])
 
     e = go(8)
       where go(1) = blank
@@ -48,14 +48,14 @@ The program
                        translated(rotated(corner, 45), -2, -1.4),
                        translated(rotated(corner, 45),  2, -1.4)
                        ])
-            corner = pictures([ path([ (x,0), (0,4-x) ]) | x <- [ 0, 0.4 .. 4 ] ])
+            corner = pictures([ polyline([ (x,0), (0,4-x) ]) | x <- [ 0, 0.4 .. 4 ] ])
 
     r = scaled(design, 1.5, 1)
       where design = pictures([
                        translated(pictures[ leg(2,   k) | k <- [0,   5 ..  35] ], -0.6, 0.32),
                        translated(pictures[ leg(1.2, k) | k <- [40, 45 .. 180] ], -0.6, 0.32)
                        ])
-            leg(r, k) = rotated(path([ (0,0), (0,-r) ]), k)
+            leg(r, k) = rotated(polyline([ (0,0), (0,-r) ]), k)
 
     l = go(5)
       where go(1) = blank
@@ -66,7 +66,7 @@ The program
                       ])
 
     top = go(5)
-      where go(1) = path([(-4, 0), (4, 0)])
+      where go(1) = polyline([(-4, 0), (4, 0)])
             go(n) = let sub = scaled(go (n-1), 1/3, 1/3)
                    in pictures([ translated(sub, -8/3, 0),
                                  translated(sub,  8/3, 0),

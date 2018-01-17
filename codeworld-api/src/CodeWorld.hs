@@ -28,15 +28,20 @@ module CodeWorld (
     , TextStyle(..)
     , Font(..)
     , blank
+    , polyline
     , path
+    , thickPolyline
     , thickPath
     , polygon
     , thickPolygon
     , solidPolygon
     , curve
     , thickCurve
+    , closedCurve
     , loop
+    , thickClosedCurve
     , thickLoop
+    , solidClosedCurve
     , solidLoop
     , rectangle
     , solidRectangle

@@ -8,7 +8,7 @@ you can think of it as just talking to the computer using mathematics.
 
 This is the CodeWorld Guide, which will help get you started.  Click outside the guide
 to start programming.  The *Guide* button at the bottom of the screen will get you
-back here.
+back here.  The outline to the left will allow you to jump between sections of this guide.
 
 Overview
 ========

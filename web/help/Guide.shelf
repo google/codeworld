@@ -2,6 +2,7 @@
   "default": "help/GuideUnit1.md",
   "blocks": false,
   "named": {
+    "Introduction":        "help/GuideIntro.md",
     "Part 1: Expressions": "help/GuideUnit1.md",
     "Part 2: Functions":   "help/GuideUnit2.md",
     "Part 3: Change":      "help/GuideUnit3.md",

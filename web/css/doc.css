@@ -35,6 +35,7 @@ pre {
   font-family: monospace;
   font-size: 1em;
   overflow-x: auto;
+  overflow-y: hidden;
 }
 
 pre.clickable {
@@ -83,4 +84,5 @@ a[href]:hover {
   position: relative;
   overflow: auto;
   margin-left: 320px;
+  max-width: 45em;
 }

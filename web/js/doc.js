@@ -176,7 +176,7 @@ window.env = parent;
                 content.innerHTML = html;
 
                 var spacerDiv = document.createElement('div');
-                spacerDiv.style = 'height: 100vh'
+                spacerDiv.style = 'height: 90vh'
                 content.appendChild(spacerDiv);
 
                 if (shelf.blocks) {

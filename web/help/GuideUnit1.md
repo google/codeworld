@@ -286,3 +286,117 @@ wrong!
 
 Just like in math, you can use parentheses to group expressions, so
 `3 * (6 - 2)` is `3 * 4`, which is `12`.
+### Points, Lines and Polygons ###
+
+To draw more precise shapes, we can use points on a "coordinate plane".  You
+can see a coordinate plane right now, just by running this code:
+
+    program = drawingOf(coordinatePlane)
+
+The coordinate plane is made up of two directions: *horizontal* (also
+called x) and *vertical* (also called y).  The very center of the screen
+is at position zero in both x and y, and can be written as `(0, 0)`.  In
+general, points can be described by listing two numbers:
+
+* Which number they are above or below on the horizontal line.  This is
+  called the *x* *coordinate*.
+* Which number they are beside on the vertical line.  This is called the
+  *y* *coordinate*.
+
+Since zero is in the middle, one direction uses *positive* numbers, and
+the other uses *negative* numbers.  Once you have these numbers, you can
+write a point by listing them in parentheses with a comma: the x coordinate
+*always* comes first, and the y coordinate *always* comes second.
+
+Run the code above, and then try finding these points on the coordinate
+plane:
+
+* `(5, 5)`: This is in the top right part of the coordinate plane.
+* `(5, 0)`: This is on the middle right.
+* `(-5, 5)`: This one is on the top left.  Top because the y coordinate
+  (the second number) is positive, and left because the x coordinate (the
+  first number) is negative.
+
+Got it?  Great!  Now you can draw things like sequences of lines by giving
+a list of points in the coordinate plane to a function called `polyline`:
+
+    program = drawingOf(zigzag)
+    zigzag  = polyline([(-2, 0), (-1, 1), (0, -1), (1, 1), (2, 0)])
+
+To draw a closed shape, use `polygon` instead.  Can you figure out the
+mystery picture before you click Run?
+
+    program = drawingOf(mystery)
+    mystery = polygon(
+        [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
+
+If you prefer to fill in your shape, you can use `solidPolygon` instead of
+`polygon` and you'll get a solid version:
+
+    program = drawingOf(mystery)
+    mystery = solidPolygon(
+        [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
+
+There are also `thickPolygon` and `thickPolyline` which use an extra
+parameter for thickness:
+
+    program = drawingOf(mystery)
+    mystery = thickPolygon(
+        [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)], 1)
+
+#### Using the coordinate plane to draw ####
+
+A neat trick is to use the coordinate plane as you write your code.  Say
+you want to draw a butterfly.  You might start by writing:
+
+    program   = drawingOf(butterfly & coordinatePlane)
+    butterfly = blank
+
+Now run your program, and you have a coordinate plane to measure what
+points to use in your shapes.  When you're done, just remove the
+`& coordinatePlane` to get rid of the guidelines.
+
+Types
+-----
+
+We've seen many different kinds of things so far that show up in your
+code: pictures, numbers, text, points, colors, lists of all of
+these... maybe you're wondering how to keep them all straight!  CodeWorld
+calls these kinds of things *types*.  You'll mostly see types in two
+places:
+
+* When you make a mistake, you'll often see types mentioned in *error*
+  *messages* that tell you about the problem.
+* If you want to, you can say things about types in your code.
+  If you do, the computer then knows more about what you meant, and
+  can sometimes explain the problems in your code better.
+
+### Simple Types ###
+
+Hear are some of the types that you've used in your code:
+
+* `Program` is the type of the variable `program` that you define in all
+  your code.
+* `Picture` is the type for pictures.
+* `Number` is the type for numbers.
+* `Color` is the type for colors.
+
+Notice that while variables start with a lower-case letter, types are
+capitalized.
+
+To declare types in your code, you can use `::`, like this:
+
+    wheel :: Picture
+    wheel = solidCircle(size)
+
+    size :: Number
+    size = 4
+
+You don't *have* to say what type things are.  It's completely optional,
+and the computer can always figure that out on its own.  But if you do
+say what your types are, two things happen:
+
+* Other people reading your code can understand what's going on.
+* When you make a mistake the computer can be more helpful explaining
+  what's wrong.
+  

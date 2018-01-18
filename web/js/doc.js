@@ -175,6 +175,10 @@ window.env = parent;
                 var html = converter.render(text);
                 content.innerHTML = html;
 
+                var spacerDiv = document.createElement('div');
+                spacerDiv.style = 'height: 100vh'
+                content.appendChild(spacerDiv);
+
                 if (shelf.blocks) {
                     linkFunBlocks(content);
                     linkCodeBlocks(content, false);
@@ -193,6 +197,7 @@ window.env = parent;
                     addPopout(help);
                 }
                 help.appendChild(content);
+                document.body.scrollTop = 0;
             }
             request.send(null);
         };

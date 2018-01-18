@@ -119,3 +119,68 @@ green, blue, yellow, *and* purple circles at *each* of the sizes, and that
 isn't what you want.  By using a parallel list comprehension, you make
 sure only the smallest circle is red, then the next smallest is blue, and
 so on.
+
+### List Types ###
+
+What about lists?  Would you guess their type is `List`?  Not quite!  There
+are many types of lists: lists of numbers, lists of pictures, lists of
+colors, and so on.  To write the type of a list, we just write the type
+of the things *inside* the list, and surround it with square brackets.
+
+    program = drawingOf(circles)
+    circles = pictures[ circle(r) | r <- sizes ]
+
+    sizes :: [Number]
+    sizes = [ 1, 2, 3, 4 ]
+
+Notice that I can choose to say the type for `sizes`, even if I don't
+give types for anything else.  Again, you can say as little or as much
+as you want about types!
+
+### Points and Tuples ###
+
+What about a point, like the ones we used to make polylines and polygons?
+It actually works just fine to say the type is `Point`:
+
+    program = drawingOf(polyline([start, end]))
+
+    start :: Point
+    start = (0, 0)
+
+    end :: Point
+    end = (2, -4)
+
+When the computer talks about points, though, it sometimes calls
+their type something different: `(Number, Number)`.  This is just a
+way to say what we already know: a point is an ordered pair, with each
+part being a number!  It turns out `Point` is just shorthand for
+`(Number, Number)`, so they both mean the same thing.
+
+Types like that, with parentheses and commas, are sometimes called
+*tuples*.  So a `Point` is a specific kind of tuple.  Other tuples
+might use different types, different numbers of things, and even
+different types for the different things inside!
+
+* `(Number, Color)` is a tuple.  Some possible values are the pairs
+  `(4, red)` or `(-3, dark(green))`.
+* `(Number, Text, Number, Color)` is a tuple with four things in it.
+  A possible value is `(3, "train", 10, blue)`.
+
+Why would you use these?  Well, they can be useful for list
+comprehensions!
+
+    program = drawingOf(boxes)
+
+    boxDetails :: [(Number, Number, Color)]
+    boxDetails = [
+        (-8, 1, blue),   (-6, 1/2, red), (-1, 3, purple),
+        (3, 1/8, brown), (4, 1/2, pink), (8, 2, yellow)
+        ]
+
+    boxes :: Picture
+    boxes = pictures([ translated(colored(rectangle(s,s), c), x, 0)
+                       | (x, s, c) <- boxDetails ])
+
+You can describe the important characteristics of your picture
+in a concise list, and then give the details of how to build the
+complete picture later.

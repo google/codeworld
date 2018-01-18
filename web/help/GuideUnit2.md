@@ -3,8 +3,7 @@ Defining Functions
 
 ### Functions ###
 
-There are also types for functions.  Remember those?  Here are some
-examples:
+Functions have their own types. Here are some examples:
 
 * `light` is a function that needs a color and makes another color.  It
   has the type `Color -> Color`.

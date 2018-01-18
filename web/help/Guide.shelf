@@ -1,5 +1,5 @@
 {
-  "default": "help/GuideUnit1.md",
+  "default": "help/GuideIntro.md",
   "blocks": false,
   "named": {
     "Introduction":        "help/GuideIntro.md",

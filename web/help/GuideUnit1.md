@@ -249,7 +249,7 @@ Or even:
 
     program = drawingOf(rotated(rectangle(2, 2), 45))
 
-Careful, though!  You can avoid avoid naming simple things, but if you
+Careful, though!  You can avoid naming simple things, but if you
 nest too much, you get parentheses inside of parentheses inside of
 parentheses,  and pretty soon it's hard to tell what's going on!
 
@@ -286,6 +286,7 @@ wrong!
 
 Just like in math, you can use parentheses to group expressions, so
 `3 * (6 - 2)` is `3 * 4`, which is `12`.
+
 ### Points, Lines and Polygons ###
 
 To draw more precise shapes, we can use points on a "coordinate plane".  You
@@ -360,9 +361,8 @@ Types
 -----
 
 We've seen many different kinds of things so far that show up in your
-code: pictures, numbers, text, points, colors, lists of all of
-these... maybe you're wondering how to keep them all straight!  CodeWorld
-calls these kinds of things *types*.  You'll mostly see types in two
+code: pictures, numbers, text, points, colors... maybe you're wondering how to keep them
+all straight!  CodeWorld calls these kinds of things *types*.  You'll mostly see types in two
 places:
 
 * When you make a mistake, you'll often see types mentioned in *error*

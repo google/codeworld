@@ -20,7 +20,7 @@ In general, function types have arrows (`->`).  On the left of the arrow
 is the type of things that the function needs.  On the right side of the
 arrow is the type of things that the function makes.
 
-Defining Functions
+Writing Your Own Functions
 ------------------
 
 You already know how to define variables, so that you can refer to a
@@ -33,7 +33,7 @@ you want to write a new function.
 A function is like a variable, but it is incomplete.  It is waiting for more
 information, which needs to be provided when it is used.  Think of some of
 the functions that we've already used.  `circle` is an incomplete shape: it
-needs on a radius.  `rectangle` needs a width and a height.  Similarly, you
+needs a radius.  `rectangle` needs a width and a height.  Similarly, you
 can write your own functions that need their own parameters.
 
 Here's how you would define a house as a function that's waiting on a color

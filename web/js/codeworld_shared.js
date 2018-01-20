@@ -54,7 +54,12 @@ function registerStandardHints(successFunc)
             wordElem.appendChild(document.createTextNode(word));
             elem.appendChild(wordElem);
             if (wordEnd < line.length) {
-                elem.appendChild(document.createTextNode(line.slice(wordEnd)));
+                var leftover = line.slice(wordEnd);
+                if (line.length > 60 && leftover.length > 3) {
+                  leftover = leftover.slice(0, 60 - wordEnd) + '...';
+                }
+                elem.appendChild(document.createTextNode(leftover));
+                elem.title = line;
             }
         }
         return {

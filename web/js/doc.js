@@ -149,14 +149,13 @@ window.env = parent;
     }
 
     function loadPath(path) {
-        var help = document.getElementById('help');
-        while (help.firstChild) {
-            help.removeChild(help.firstChild);
-        }
-
-        if (!path) path = shelf.default;
+        if (!path && shelf) path = shelf.default || shelf.named[0][1];
 
         if (contents[path] && contents[path].elem) {
+            var help = document.getElementById('help');
+            while (help.firstChild) {
+                help.removeChild(help.firstChild);
+            }
             if (parent && parent !== window) {
                 addPopout(help);
             }
@@ -179,7 +178,7 @@ window.env = parent;
                 spacerDiv.style = 'height: 90vh'
                 content.appendChild(spacerDiv);
 
-                if (shelf.blocks) {
+                if (shelf && shelf.blocks) {
                     linkFunBlocks(content);
                     linkCodeBlocks(content, false);
                 } else {
@@ -193,6 +192,10 @@ window.env = parent;
                     addTableOfContents(content, contents[path].outline);
                 }
 
+                var help = document.getElementById('help');
+                while (help.firstChild) {
+                    help.removeChild(help.firstChild);
+                }
                 if (parent && parent !== window) {
                     addPopout(help);
                 }
@@ -248,16 +251,21 @@ window.env = parent;
         });
     }
 
-    var request = new XMLHttpRequest();
-    request.open('GET', params.get('shelf'), true);
-    request.onreadystatechange = function() {
-        if (request.readyState != 4) {
-            return;
-        }
+    if (params.get('shelf')) {
+        var request = new XMLHttpRequest();
+        request.open('GET', params.get('shelf'), true);
+        request.onreadystatechange = function() {
+            if (request.readyState != 4) {
+                return;
+            }
 
-        shelf = JSON.parse(request.responseText);
-        loadSidebar();
+            shelf = JSON.parse(request.responseText);
+            loadSidebar();
+            loadPath(params.get('path'));
+        };
+        request.send(null);
+    } else {
+        shelf = null;
         loadPath(params.get('path'));
-    };
-    request.send(null);
+    }
 })();

@@ -56,7 +56,7 @@ function registerStandardHints(successFunc)
             if (wordEnd < line.length) {
                 var leftover = line.slice(wordEnd);
                 if (line.length > 60 && leftover.length > 3) {
-                  leftover = leftover.slice(0, 60 - wordEnd) + '...';
+                  leftover = leftover.slice(0, 57 - wordEnd) + '...';
                 }
                 elem.appendChild(document.createTextNode(leftover));
                 elem.title = line;

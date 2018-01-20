@@ -83,6 +83,9 @@ a[href]:hover {
 #help {
   position: relative;
   overflow: auto;
-  margin-left: 320px;
   max-width: 45em;
+}
+
+#helpacc + #help {
+  margin-left: 320px;
 }

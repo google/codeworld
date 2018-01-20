@@ -531,7 +531,13 @@ function changeFontSize(incr) {
 }
 
 function help() {
-    var url = 'doc.html?shelf=help/' + window.buildMode + '.shelf';
+    var url;
+    if (window.buildMode == 'haskell') {
+        url = 'doc-haskell/CodeWorld.html';
+    } else {
+        url = 'doc.html?shelf=help/' + window.buildMode + '.shelf';
+    }
+
     sweetAlert({
         title: '',
         text: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' + url + '"></iframe>',

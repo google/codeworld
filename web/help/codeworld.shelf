@@ -1,8 +1,18 @@
 {
-  "default": "help/codeworld.md",
+  "default": "help/GuideIntro.md",
   "blocks": false,
   "named": {
-    "Guide":    "help/codeworld.md",
-    "Examples": "help/examples.md"
+    "Introduction":        "help/GuideIntro.md",
+    "Part 1: Expressions": "help/GuideUnit1.md",
+    "Part 2: Functions":   "help/GuideUnit2.md",
+    "Part 3: Change":      "help/GuideUnit3.md",
+    "Part 4: Repetition":  "help/GuideUnit4.md",
+    "Part 5: Computation": "help/GuideUnit5.md",
+    "Part 6: State":       "help/GuideUnit6.md",
+    "Part 7: Data":        "help/GuideUnit7.md",
+    "Part 8: Interaction": "help/GuideUnit8.md",
+    "Part 9: Modeling":    "help/GuideUnit9.md",
+    "Appendix: Examples":  "help/examples.md",
+    "Appendix: Reference": "doc/Prelude.html"
   }
 }

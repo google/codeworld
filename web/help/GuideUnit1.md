@@ -362,7 +362,8 @@ with endpoints, and `closedCurve`, `solidClosedCurve`, and `thickClosedCurve`
 for curves that join back to their starting point in a loop.  These functions
 work exactly like `polyline` and `polygon`, but just draw smooth curves instead.
 
-### Using the coordinate plane to draw ####
+Drawing with the Coordinate Plane
+---------------------------------
 
 A neat trick is to use the coordinate plane as you write your code.  Say
 you want to draw a butterfly.  You might start by writing:

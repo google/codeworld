@@ -209,8 +209,8 @@ important.
 Functions
 ---------
 
-One special kind of expression that you use a lot in CodeWorld is
-applying a *function*.  A function is like a variable that still needs
+A special kind of expression is when you apply a *function*, which you
+will do a lot in CodeWorld.  A function is like a variable that still needs
 more information.  You've already used a lot of functions:
 
 * `rectangle` is a function.  It needs a width and a height, and makes a

@@ -1,10 +1,11 @@
 Lists
 =====
 
-As we explore new kinds of things, we've already seen pictures and numbers.
-Now let's look at lists.  A list is, well, just a list of things.  To write
-a list, use square brackets around the whole list, and commas between the
-things in it.  For example:
+As we explore new kinds of things, we've already seen pictures and numbers,
+and we've learned about defining functions and creating animations. Now let's
+look at lists.  A list is, well, just a list of things.  To write a list, use
+square brackets around the whole list, and commas between the things in it.
+For example:
 
 * `[ 1, 2, 3, 4 ]` is a list of numbers.
 * `[ circle(2), rectangle(3,5), blank ]` is a list of pictures.
@@ -71,7 +72,7 @@ Here's another example:
     star    = pictures([ rotated(rectangle(10, 1/10), angle)
                          | angle <- [10, 20 .. 360] ])
 
-So we start with a list of number counting by 10s from 10 to 360.  Then we
+So we start with a list of numbers counting by 10s from 10 to 360.  Then we
 call each of those numbers the variable "angle", and get a list of pictures
 that rotate something by each of those angles.  Finally, we combine all of
 this pictures using the `pictures` function, and draw the result.
@@ -92,7 +93,7 @@ you don't want to draw the middle one.  One way to say that is:
 Notice that `/=` means "not equal to".  So this says to make a picture out
 of circles built from each radius from 1 to 5, *except* for 3.
 
-Second, you can include base your list comprehension on several lists.
+Second, you can base your list comprehension on several lists.
 This will draw a grid of circles:
 
     program = drawingOf(grid)
@@ -106,7 +107,7 @@ Another way to use a list comprehension with two lists is to use two
 vertical lines.  This is called a *parallel* list comprehension.  Instead
 of including a result for all possible combinations, this will only match
 the first element of each list, then the second from each list, and so on.
-Here's an example, using a list of number, and a list of colors!
+Here's an example, using a list of numbers, and a list of colors!
 
     program = drawingOf(circles)
     circles = pictures([ colored(circle(r), c) | r <- sizes
@@ -122,10 +123,11 @@ so on.
 
 ### List Types ###
 
-What about lists?  Would you guess their type is `List`?  Not quite!  There
-are many types of lists: lists of numbers, lists of pictures, lists of
-colors, and so on.  To write the type of a list, we just write the type
-of the things *inside* the list, and surround it with square brackets.
+We talked about types of values in Part 1; what about lists?  Would you
+guess their type is `List`?  Not quite!  There are many types of lists:
+lists of numbers, lists of pictures, lists of colors, and so on.  To write
+the type of a list, we just write the type of the things *inside* the list,
+and surround it with square brackets.
 
     program = drawingOf(circles)
     circles = pictures[ circle(r) | r <- sizes ]

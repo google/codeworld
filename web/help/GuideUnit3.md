@@ -295,7 +295,6 @@ degrees, then falls back down.
 
 #### Guards ####
 
---------------------------------------------------------------------------------
 A more flexible way to define a piecewise function is to use *guards*.  You saw
 guards in the previous section.  Guards are used to give several different
 definitions for an entire function, each attached to some condition that days

@@ -1,3 +1,5 @@
+<img src="/codeworld.png" style="max-width: 100%;">
+
 Welcome to CodeWorld!
 =====================
 CodeWorld is an educational computer programming environment.

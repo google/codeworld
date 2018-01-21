@@ -82,13 +82,14 @@ computations is called recursion.
 Adding numbers
 --------------
 
-To see this, let's look at a story about Carl Gauss.  Carl Gauss is a good
-candidate for the greatest mathematician in history, but this story is about his
-experience in elementary school!  According to legend, one of his teachers
-assigned him the task of adding up all the numbers from 1 to 100.  Carl Gauss
-found a clever way to solve the problem by dividing the numbers into pairs that
-each add to 101 (1 and 100, 2 and 99, 3 and 98, etc.), and quickly realized that
-the answer was just 50 times 101, or 5050.
+To see this, let's look at a story about Carl Gauss.  Carl Gauss would
+eventually be one of the greatest mathematicians in history, but this story is
+about his experience in elementary school!  According to legend, one of his
+teachers assigned him the task of adding up all the numbers from 1 to 100,
+expecting to keep him busy for some time.  Carl Gauss, though, found a clever
+way to solve the problem by dividing the numbers into pairs that each add to 101
+(1 and 100, 2 and 99, 3 and 98, etc.), and quickly realized that the answer was
+just 50 times 101, or 5050.
 
 Alas our computer is not so clever.  But it can do math very fast!  It could try
 to beat Gauss in this computation race, by doing more work but doing it much
@@ -123,9 +124,13 @@ function:
     sumFromOneTo(n) = ???
 
 But how would you write this function?  The trick is to write *two* equations.
-The first equation answers the question when it's /small/ enough to be obvious.
-The other answers the question when it's bigger, by /reducing/ it to smaller
-questions.  It looks like this:
+
+* The first equation is the **base case**.  It answers the question when it's
+  *small* enough to be obvious.
+* The second equation is the **general case**.  It answers the question when
+  it's bigger, by *reducing* it to a smaller question of the same type.
+
+Here's what this looks like for Gauss's problem:
 
     program = drawingOf(text(printed(answer)))
     answer  = sumFromOneTo(100)
@@ -135,12 +140,14 @@ questions.  It looks like this:
 
 To add the numbers from 1 to 1 is easy: there is only one number, so there's
 nothing to add.  To add the numbers from 1 to `n`, where `n` is bigger than 1,
-you can sum all the numbers up to `n - 1`, and then add `n` to the end.
+you can sum all the numbers up to `n - 1` (a smaller problem), and then add
+`n` to the end.
 
 By the way, the numbers you can get by adding everything from 1 to some bigger
 number are called *triangle* *numbers*.
 
-### Factorials ###
+Factorials
+----------
 
 We can one-up Carl Gauss even further.  His clever trick worked fine for adding
 numbers, but what about multiplying them?  There doesn't seem to be any such
@@ -150,7 +157,7 @@ quickly, though.
 Multiplying all the numbers from 1 to n gives you the so-called *factorial* of
 n, and it comes up in a lot of useful mathematics.  Most importantly, if you
 have some items, and want to know how many different orders you could arrange
-them in, the answer is the /factorial/ of the number of items.  So if you have
+them in, the answer is the *factorial* of the number of items.  So if you have
 three different items, you can put them into six orders, because
 `1 * 2 * 3 = 6`.
 
@@ -167,7 +174,7 @@ If you play with this, you might notice that the factorial gets very large, very
 quickly!  Think about this: a deck of cards has 52 cards in it.  That means if
 you shuffle cards, there are `factorial(52)` different orders you could end up
 with.  That might seem like a lot, but it's more than the total number of
-/atoms/ in a /billion/ stars!
+*atoms* in a *billion* stars!
 
 Now you can try to work out exactly *how* big factorials can get.
 
@@ -176,13 +183,13 @@ Recursion Mistakes
 
 There are two mistakes that are common when using recursion.
 
-The first mistake is to forget a base case.  A /base/ /case/ is the equation
+The first mistake is to forget a base case.  A *base* *case* is the equation
 that solves small versions of the question.  You need to handle enough base
 cases that eventually, any problem will be reduced to a base case.
 
-The second mistake is not to reduce the problem to a /smaller/ version of the
+The second mistake is not to reduce the problem to a *smaller* version of the
 problem.  For example, it wouldn't do any good to assert that
-`someFromOneTo(n) = sumFromOneTo(n + 1) - (n + 1)`, because that /increases/ the
+`someFromOneTo(n) = sumFromOneTo(n + 1) - (n + 1)`, because that *increases* the
 size of the question!  Remember, the problem needs to keep getting smaller, and
 eventually reach the base case.
 
@@ -190,17 +197,22 @@ Fractals
 --------
 
 Recursion helps you solve some problems with arithmetic, but it's also useful
-for other types.  When you apply recursion to a picture, you can construct more
-and more complicated pictures from smaller versions of the same picture.
+for other types, such as pictures.  When you apply recursion to a picture, you
+can construct very detailed pictures quickly by following the same pattern at
+different scales.
 
-Think of a tree with branches.  There's a single trunk, which is connected to
-smaller branches off to the sides.  But each of these branches is shaped a lot
-like a smaller tree.  So we can sort of define a tree from a smaller tree.
-Pictures that are made up of smaller copies of themselves are strange: in some
-sense, they are infinitely complicated!  These are examples of *fractals*.
+Think of a tree with its branches.  There's a single trunk, which is connected
+to smaller branches off to the sides.  But each of these branches is shaped a
+lot like a smaller tree.  You can build a tree from smaller trees, just like
+you could build a larger sum from smaller sums.
 
-You can build fractals with recursive functions.  Here's an example of a fractal
-that draws a tree:
+Pictures that are made up of smaller copies of themselves in this way are called
+*fractals*.  In a sense, they are infinitely complicated!  So the computer can't
+draw them in full detail, because it would never finish.  Remember, recursion
+needs a *base case* to stop at!  For that reason, when drawing a fractal, you'll
+always need to choose a *depth*, which should decrease for every smaller piece.
+
+Here's an example of a fractal that draws a tree:
 
     program = drawingOf(tree)
 
@@ -214,12 +226,61 @@ that draws a tree:
         translated(rotated(smallBranch, -30), 0, 2.5)
       where smallBranch = scaled(branch(n-1), 0.5, 0.5)
 
-Notice how there's still a /base/ /case/, where a simple `branch` is just a
-line.  After this, the general case describes whan a branch looks like in terms
-of simpler branches.  It's important that each branch has a parameter indicating
-how much detail to put in it, so that the general case can describe a branch in
-terms of *simpler* branches.  Otherwise, the computer would never finish drawing
-all of the detail!
+Notice how there's still a *base case*, where a `branch` with depth 0 is just
+a line.  The *general case* describes what a branch looks like, in terms of
+simpler branches with lower depth.
+
+### Other fractals ###
+
+There are lots of pictures besides the tree shown here that can be drawn using
+fractals!  Here are some more well-known fractals:
+
+#### The Koch curve ####
+
+This is a curve made up of four copies of itself.  Arranging three of these in
+a triangular pattern can make a nice snowflake pattern.
+
+    program = drawingOf(kochCurve(5))
+
+    kochCurve(0) = polyline([(-6, 0), (6, 0)])
+    kochCurve(n) = translated(sub, -4, 0) &
+                   translated(sub,  4, 0) &
+                   translated(rotated(sub,  60), -1, sqrt(3)) &
+                   translated(rotated(sub, 300),  1, sqrt(3))
+      where sub  = scaled(kochCurve(n-1), 1/3, 1/3)
+
+#### Sierpinski's triangle ####
+
+This pattern starts with a triangle, and then repeatedly removes the center to
+leave three smaller triangles.
+
+    program = drawingOf(sierpinski(8))
+
+    sierpinski(0) = solidPolygon([(0, 8), (7, -4), (-7, -4)])
+    sierpinski(n) = translated(sub, -3.5, -2) &
+                    translated(sub,  3.5, -2) &
+                    translated(sub,  0.0,  4)
+      where sub  = scaled(sierpinski(n-1), 1/2, 1/2)
+
+### General pattern ###
+
+When you explore your own fractals, it can be useful to use this pattern, with
+blanks filled in using pictures or numbers of your choice.
+
+    fractal(0) = leaf
+    fractal(n) = joint
+               & _______________ branch _______________
+               & _______________ branch _______________
+      where branch = dilated(fractal(n-1), ____)
+
+    leaf  = ___________________________________________
+    joint = ___________________________________________
+
+Usually only one of `leaf` or `joint` will be filled in.  The blanks around
+the branch variables can be filled in with translations and rotations that
+arrange the parts into the larger whole.  You may choose to have any number
+of branches in your fractal.  All of the fractals in this section can be made
+by following this pattern.
 
 Computing with Lists
 ====================

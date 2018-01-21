@@ -148,6 +148,21 @@ window.env = parent;
         help.appendChild(popdiv);
     }
 
+    function relativizeLinks(base, root, tag, attr) {
+        var elems = root.getElementsByTagName(tag);
+        for (let elem of elems) {
+            if (elem.hasAttribute(attr)) {
+                var url = new URL(elem.getAttribute(attr), base);
+                if (base.origin == url.origin && base.pathname == url.pathname) {
+                    url = url.hash;
+                } else {
+                    url = url.href;
+                }
+                elem.setAttribute(attr, url);
+            }
+        }
+    }
+
     function loadPath(path) {
         if (!path && shelf) path = shelf.default || shelf.named[0][1];
 
@@ -169,21 +184,26 @@ window.env = parent;
                 }
 
                 var content = document.createElement('div');
-                var text = request.responseText;
-                var converter = new Remarkable({ html: true });
-                var html = converter.render(text);
-                content.innerHTML = html;
+                var raw = request.responseText;
+                if (path.endsWith('.md')) {
+                    content.innerHTML = new Remarkable({ html: true }).render(raw);
+                    if (shelf && shelf.blocks) {
+                        linkFunBlocks(content);
+                        linkCodeBlocks(content, false);
+                    } else {
+                        linkCodeBlocks(content);
+                    }
+                } else {
+                    content.innerHTML = raw;
+                    var source = new URL(path, location.href);
+                    relativizeLinks(source, content, 'script', 'src');
+                    relativizeLinks(source, content, 'link', 'href');
+                    relativizeLinks(source, content, 'a', 'href');
+                }
 
                 var spacerDiv = document.createElement('div');
                 spacerDiv.style = 'height: 90vh'
                 content.appendChild(spacerDiv);
-
-                if (shelf && shelf.blocks) {
-                    linkFunBlocks(content);
-                    linkCodeBlocks(content, false);
-                } else {
-                    linkCodeBlocks(content);
-                }
 
                 if (!contents[path]) contents[path] = {};
                 contents[path].elem = content;

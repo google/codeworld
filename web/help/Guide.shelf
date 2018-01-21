@@ -12,6 +12,7 @@
     "Part 7: Data":        "help/GuideUnit7.md",
     "Part 8: Interaction": "help/GuideUnit8.md",
     "Part 9: Modeling":    "help/GuideUnit9.md",
-    "Appendix: Examples":  "help/examples.md"
+    "Appendix: Examples":  "help/examples.md",
+    "Appendix: Reference": "doc/Prelude.html"
   }
 }

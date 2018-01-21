@@ -1,27 +1,5 @@
-Defining Functions
-==================
-
-### Functions ###
-
-Functions have their own types. Here are some examples:
-
-* `light` is a function that needs a color and makes another color.  It
-  has the type `Color -> Color`.
-* `circle` is a function that needs a number (the radius), and makes a
-  picture (a circle with that radius).  It has the type
-  `Number -> Picture`.
-* `rectangle` is a function that needs two numbers, and makes a picture.
-  It has the type `(Number, Number) -> Picture`.
-* `translated` is a function that needs a picture and two numbers (the x
-  and y distances), and makes a new picture.  It has the type
-  `(Picture, Number, Number) -> Picture`.
-
-In general, function types have arrows (`->`).  On the left of the arrow
-is the type of things that the function needs.  On the right side of the
-arrow is the type of things that the function makes.
-
 Writing Your Own Functions
-------------------
+==================
 
 You already know how to define variables, so that you can refer to a
 shape by a simple name, and use it several times.  But sometimes, you don't
@@ -35,6 +13,9 @@ information, which needs to be provided when it is used.  Think of some of
 the functions that we've already used.  `circle` is an incomplete shape: it
 needs a radius.  `rectangle` needs a width and a height.  Similarly, you
 can write your own functions that need their own parameters.
+
+Function Definitions
+--------------------
 
 Here's how you would define a house as a function that's waiting on a color
 for the roof, and apply it to draw a house with a red roof.
@@ -68,26 +49,17 @@ CodeWorld.  When you use a function, the body of the function is adapted by
 finding all parameter names, and substituting the corresponding actual
 parameters from where the function is used.
 
-### Conditionals: Choosing what to do ###
+Conditional Functions and Guards
+--------------------------------
 
 All of the functions defined so far have basically the same form regardless of
 their parameters.  Sometimes, you may want the definition to follow a different
-form depending on the parameters.  In this case, you need a conditional.
+form depending on the parameters.  In this case, you need a conditional
+function.
 
-The simplest kind of conditional uses `if`, `then`, and `else`.  Here's an
-example:
-
-    program  = drawingOf(thing(1) & thing(2))
-    thing(n) = if n > 1 then rectangle(n, n) else circle(n)
-
-This program displays one square, and one circle.  You can use `if`, `then`,
-and `else` any place you can write an expression.  In your condition, you can
-use any inequality (`<`, `>`, `<=`, or `>=`), or you can check whether two things
-are equal using `==`.  Note the *two* equal signs: think of two equal signs as
-a question (are these equal?), while the single equal sign used in a definition
-is a statement (these things are equal!).
-
-If you have more than two possibilities, you may want to use guards instead:
+To write a conditional function, instead of one equal sign and a right-hand
+side, you'll right several of these, preceded by *guards*.  A guard gives a
+statement that must be true for this right-hand side of the equation to apply.
 
     program       = drawingOf(thing(1) & thing(2) & thing(3))
     thing(n)
@@ -95,10 +67,14 @@ If you have more than two possibilities, you may want to use guards instead:
       | n > 1     = rectangle(n, n)
       | otherwise = circle(n)
 
-This will draw a rectangle, a square, and a circle.  Each guard has a condition,
-and if the condition matches, that choice is made for the definition.  Guards
-are evaluated from the top down, so later guards only match if an earlier guard
-hasn't matched already.
+This will draw a rectangle, a square, and a circle.  When each guard matches,
+that choice is made for the definition.  Guards are evaluated from the top down,
+so later guards only match if an earlier guard hasn't matched already.
+
+In the guards, you can use any inequality (`<`, `>`, `<=`, or `>=`), or you can
+check whether two things are equal using `==`.  Note the *two* equal signs:
+think of two equal signs as a question ("Are these values equal?"), while the
+single equal sign used in a definition is a statement ("These values are equal!").
 
 Finally, a special guard `otherwise` matches anything that reaches it.  Since
 your program will crash if no guards match a function, it's usually a good idea
@@ -129,8 +105,8 @@ The way you handle more cases is by writing multiple equations.  For example,
 you might write:
 
     f :: [Number] -> Number
-    f([]   ) = 42
-    f([a]  ) = a + 1
+    f([])    = 42
+    f([a])   = a + 1
     f(other) = sum(other)
 
 This function is defined for more lists.  The first equation contains a pattern
@@ -155,7 +131,7 @@ will only match itself.  So this does exactly what you might guess:
 
 But this doesn't do what you think:
 
-    f(pi   ) = 1
+    f(pi)    = 1
     f(other) = 2
 
 You might think that function maps `pi` to the value `1` but everything else to

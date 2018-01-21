@@ -64,36 +64,35 @@ They are as follows:
    other, they are grouped toward the left.  (This only matters for
    subtraction, since addition is associative.)
 
-Notice that this is the priority order for which operators hold most
-tightly to the expressions around them.  When decomposing an expression
-into its subexpressions, the *opposite* order applies.  In other words,
-in the example earler, `36 * (3 + 7) - 24 + 5^2` is an *addition*: it adds
-the subexpression `36 * (3 + 7) - 24` to the subexpression `5^2`.  Do you
-see why?  Expressions break into subexpressions in the opposite order as
-above, so expressions break apart first at addition or subtraction points,
-from right to left.
+Notice that this is the priority order for which operators hold most tightly to
+the expressions around them.  When decomposing an expression into its
+subexpressions, the *opposite* order applies.  In other words, in the example
+earler, `36 * (3 + 7) - 24 + 5^2` is an *addition*: it adds the subexpression
+`36 * (3 + 7) - 24` to the subexpression `5^2`.  Do you see why?  Expressions
+break into subexpressions in the opposite order as above, so expressions break
+apart first at addition or subtraction points, from right to left.
 
 Recursion
 =========
 
 Finding the values of arithmetic expressions is definitely a kind of
-computation, but it's a limited kind.  An important tool for doing more
-powerful computations is called recursion.
+computation, but it's a limited kind.  An important tool for doing more powerful
+computations is called recursion.
 
-### Adding numbers ###
+Adding numbers
+--------------
 
-To see this, let's look at a story about Carl Gauss.  Carl Gauss is a
-good candidate for the greatest mathematician in history, but this story
-is about his experience in elementary school!  According to legend, one
-of his teachers assigned him the task of adding up all the numbers from
-1 to 100.  Carl Gauss found a clever way to solve the problem by dividing
-the numbers into pairs that each add to 101 (1 and 100, 2 and 99, 3 and
-98, etc.), and quickly realized that the answer was just 50 times 101,
-or 5050.
+To see this, let's look at a story about Carl Gauss.  Carl Gauss is a good
+candidate for the greatest mathematician in history, but this story is about his
+experience in elementary school!  According to legend, one of his teachers
+assigned him the task of adding up all the numbers from 1 to 100.  Carl Gauss
+found a clever way to solve the problem by dividing the numbers into pairs that
+each add to 101 (1 and 100, 2 and 99, 3 and 98, etc.), and quickly realized that
+the answer was just 50 times 101, or 5050.
 
-Alas our computer is not so clever.  But it can do math very fast!  It
-could try to beat Gauss in this computation race, by doing more work but
-doing it much faster!
+Alas our computer is not so clever.  But it can do math very fast!  It could try
+to beat Gauss in this computation race, by doing more work but doing it much
+faster!
 
 Here's our first attempt:
 
@@ -109,25 +108,24 @@ Here's our first attempt:
               81 + 82 + 83 + 84 + 85 + 86 + 87 + 88 + 89 +  90 +
               91 + 92 + 93 + 94 + 95 + 96 + 97 + 98 + 99 + 100
 
-If you try this, you get the right answer: 5050.  But although the
-computer itself did the computation in the blink of an eye, Gauss would
-have been before we could even write all that code!  And it gets worse:
-if you want to know the numbers up to 1000, Gauss can use his same
-trick to find 500 pairs, each adding to 1001, and get 500500.  But
-we'd have to write a program 10 times as long!
+If you try this, you get the right answer: 5050.  But although the computer
+itself did the computation in the blink of an eye, Gauss would have been before
+we could even write all that code!  And it gets worse: if you want to know the
+numbers up to 1000, Gauss can use his same trick to find 500 pairs, each adding
+to 1001, and get 500500.  But we'd have to write a program 10 times as long!
 
-Is there a better way?  Indeed, there is!  The first thing we need to
-do is *generalize* the question into one that has easy examples, and
-hard examples.  For this question, we can ask: "What is the sum of all
-the numbers from 1 up to some bigger number?"  The answer *depends* on
-the bigger number, so it's a function:
+Is there a better way?  Indeed, there is!  The first thing we need to do is
+*generalize* the question into one that has easy examples, and hard examples.
+For this question, we can ask: "What is the sum of all the numbers from 1 up to
+some bigger number?"  The answer *depends* on the bigger number, so it's a
+function:
 
     sumFromOneTo(n) = ???
 
-But how would you write this function?  The trick is to write *two*
-equations.  The first equation answers the question when it's /small/
-enough to be obvious.  The other answers the question when it's bigger,
-by /reducing/ it to smaller questions.  It looks like this:
+But how would you write this function?  The trick is to write *two* equations.
+The first equation answers the question when it's /small/ enough to be obvious.
+The other answers the question when it's bigger, by /reducing/ it to smaller
+questions.  It looks like this:
 
     program = drawingOf(text(printed(answer)))
     answer  = sumFromOneTo(100)
@@ -135,52 +133,93 @@ by /reducing/ it to smaller questions.  It looks like this:
     sumFromOneTo(1) = 1
     sumFromOneTo(n) = sumFromOneTo(n - 1) + n
 
-To add the numbers from 1 to 1 is easy: there is only one number, so
-there's nothing to add.  To add the numbers from 1 to `n`, where `n`
-is bigger than 1, you can sum all the numbers up to `n - 1`, and then
-add `n` to the end.
+To add the numbers from 1 to 1 is easy: there is only one number, so there's
+nothing to add.  To add the numbers from 1 to `n`, where `n` is bigger than 1,
+you can sum all the numbers up to `n - 1`, and then add `n` to the end.
 
-By the way, the numbers you can get by adding everything from 1 to
-some bigger number are called *triangle* *numbers*.
+By the way, the numbers you can get by adding everything from 1 to some bigger
+number are called *triangle* *numbers*.
 
 ### Factorials ###
 
-We can one-up Carl Gauss even further.  His clever trick worked fine
-for adding numbers, but what about multiplying them?  There doesn't
-seem to be any such trick for multiplying the numbers from 1 to n.
-Our computer can still do it quickly, though.
+We can one-up Carl Gauss even further.  His clever trick worked fine for adding
+numbers, but what about multiplying them?  There doesn't seem to be any such
+trick for multiplying the numbers from 1 to n.  Our computer can still do it
+quickly, though.
 
-Multiplying all the numbers from 1 to n gives you the so-called
-*factorial* of n, and it comes up in a lot of useful mathematics.
-Most importantly, if you have some items, and want to know how many
-different orders you could arrange them in, the answer is the
-/factorial/ of the number of items.  So if you have three different
-items, you can put them into six orders, because `1 * 2 * 3 = 6`.
+Multiplying all the numbers from 1 to n gives you the so-called *factorial* of
+n, and it comes up in a lot of useful mathematics.  Most importantly, if you
+have some items, and want to know how many different orders you could arrange
+them in, the answer is the /factorial/ of the number of items.  So if you have
+three different items, you can put them into six orders, because
+`1 * 2 * 3 = 6`.
 
-(Can you pick three things, and find all the orders?  After playing
-with the possibilities, do you see why the factorial gives the
-number of ways?)
+(Can you pick three things, and find all the orders?  After playing with the
+possibilities, do you see why the factorial gives the number of ways?)
 
-It's easy to use the same technique as we used for triangle numbers,
-and multiply instead to find the factorial.  We get something like
-this:
+It's easy to use the same technique as we used for triangle numbers, and
+multiply instead to find the factorial.  We get something like this:
 
     factorial(1) = 1
     factorial(n) = factorial(n - 1) * n
 
-If you play with this, you might notice that the factorial gets
-very large, very quickly!  Think about this: a deck of cards has
-52 cards in it.  That means if you shuffle cards, there are
-`factorial(52)` different orders you could end up with.  That
-might seem like a lot, but it's more than the total number of
+If you play with this, you might notice that the factorial gets very large, very
+quickly!  Think about this: a deck of cards has 52 cards in it.  That means if
+you shuffle cards, there are `factorial(52)` different orders you could end up
+with.  That might seem like a lot, but it's more than the total number of
 /atoms/ in a /billion/ stars!
 
 Now you can try to work out exactly *how* big factorials can get.
 
+Recursion Mistakes
+------------------
+
+There are two mistakes that are common when using recursion.
+
+The first mistake is to forget a base case.  A /base/ /case/ is the equation
+that solves small versions of the question.  You need to handle enough base
+cases that eventually, any problem will be reduced to a base case.
+
+The second mistake is not to reduce the problem to a /smaller/ version of the
+problem.  For example, it wouldn't do any good to assert that
+`someFromOneTo(n) = sumFromOneTo(n + 1) - (n + 1)`, because that /increases/ the
+size of the question!  Remember, the problem needs to keep getting smaller, and
+eventually reach the base case.
+
 Fractals
 --------
 
-TODO: Write this section
+Recursion helps you solve some problems with arithmetic, but it's also useful
+for other types.  When you apply recursion to a picture, you can construct more
+and more complicated pictures from smaller versions of the same picture.
+
+Think of a tree with branches.  There's a single trunk, which is connected to
+smaller branches off to the sides.  But each of these branches is shaped a lot
+like a smaller tree.  So we can sort of define a tree from a smaller tree.
+Pictures that are made up of smaller copies of themselves are strange: in some
+sense, they are infinitely complicated!  These are examples of *fractals*.
+
+You can build fractals with recursive functions.  Here's an example of a fractal
+that draws a tree:
+
+    program = drawingOf(tree)
+
+    tree = branch(6)
+
+    branch(0) = polyline([(0,0), (0,5)])
+    branch(n) =
+        polyline([(0,0), (0, 5)]) &
+        translated(smallBranch, 0, 5) &
+        translated(rotated(smallBranch,  30), 0, 2.5) &
+        translated(rotated(smallBranch, -30), 0, 2.5)
+      where smallBranch = scaled(branch(n-1), 0.5, 0.5)
+
+Notice how there's still a /base/ /case/, where a simple `branch` is just a
+line.  After this, the general case describes whan a branch looks like in terms
+of simpler branches.  It's important that each branch has a parameter indicating
+how much detail to put in it, so that the general case can describe a branch in
+terms of *simpler* branches.  Otherwise, the computer would never finish drawing
+all of the detail!
 
 Computing with Lists
 ====================

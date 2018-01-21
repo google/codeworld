@@ -90,8 +90,7 @@ Think of these possibilities:
 Anything you need to remember will go into your world type.  Let's look at some
 examples.
 
-Simulations With one number
----------------------------
+### Simulations with one number ###
 
 The simplest kind of state is a single number.  Let's build a simulation to move
 a box across the screen.  You could have done this with an animation, but this
@@ -119,8 +118,7 @@ Try this out, and verify that it does what you expect.
 * Can you modify the code to use rotation instead of translation?
 * Can you change the speed at which the box moves?  (Hint: use multiplication.)
 
-Simulations With multiple numbers
----------------------------------
+### Simulations with multiple numbers ###
 
 Adding a second number to the state lets you describe different kinds of change
 at the same time.  Let's try to make a rolling wheel, which will need to move
@@ -146,8 +144,7 @@ speed for rotation depends on how fast the wheel is moving in the x direction
 and the size of the wheel.  Here, a little math would tell you that the right
 answer is 180 divided by pi, or about 57.3 degrees.  But 60 is close enough!
 
-Invisible state
----------------
+### Invisible state ###
 
 So far, everything that has been part of the world has been visible in the
 picture.  That's not always true, though!  In fact, it's rarely true for more
@@ -171,21 +168,53 @@ negative, and the ball falls back down again.
 * What would happen if the ball started at a different position?
 * How would you change the effect of gravity to simulate a ball on the moon?
 
-Linear Change
--------------
-
-TODO: Write this section.
-
 Simulating Physics
 ==================
+
+One of the most common things to do with simulations is simulate physics.
+To do this, we'll want to make some observations about the physical world.
 
 Position and Velocity
 ---------------------
 
+The first of these observations was made by Isaac Newton, who first described
+many of the foundations of physics as we understand them today.
+
+> *Newton's First Law of Motion*: Every object persists in its state of rest
+> or uniform motion in a straight line unless it is compelled to change that
+> state by forces impressed on it.
+
+Another way of putting this is that the *state* of an object consists of both
+its position, and its velocity.  You can make this observation yourself: when
+you throw a ball, your hand is pushing the ball; but when you let go, you are
+no longer pushing the ball forward.  Does it stop right away?  No!  The ball
+keeps its current velocity, and keeps on moving until something else happens
+to stop it.
+
+What this means is that any time you have an object moving with physics in a
+simulation, you should start out thinking about both *position* and *velocity*
+of that object as part of the state.
+
+The last example above already did for this for movement in the y direction.
+But we could rewrite it to keep track of velocity in the x direction, as well.
+
+    program = simulationOf(initial, step, picture)
+    initial(rs) = (-9, -9, 6, 15)
+    step((x, y, vx, vy), dt) = (x + vx * dt, y + vy * dt, vy - 10 * dt)
+    picture(x, y, vx, vy) = translated(solidCircle(1/2), x, y)
+
+This simulation does the same thing as the one before it, but notice how we've
+taken the constant `6`, and moved it from the code for the `step` function to a
+part of the state.  That is an acknowledgement that although the velocity in x
+is always 6 at the moment, there's no reason it couldn't be something different!
+
+Gravity
+-------
+
 TODO: Write this section.
 
-Gravity and Constant Acceleration
----------------------------------
+Other Forces
+------------
 
 TODO: Write this section.
 

@@ -293,25 +293,13 @@ degrees per second.  But the remainder function ensures that when it reaches
 30, it jumps back to zero.  The result is a motion that increases for 30
 degrees, then falls back down.
 
-#### Using if, then, and else ####
-
-One more flexible way to define piecewise functions is using `if`, `then`, and
-`else`.  Here's an example:
-
-    program         = animationOf(trafficLight)
-    trafficLight(t) = colored(dot, if t < 5 then red else blue)
-
-The expression `if c then a else b` means to evaluate whether `c` (called the
-"condition") is true or false.  If it's true, then `a` is the result.
-Otherwise, `b` is the result.  In the example, the condition is `t < 5`.  If
-this is true, then the color is `red`, and if not, it's `blue`.
-
 #### Guards ####
 
-Another way to define a function piecewise is easier to use when there are
-more than a couple options.  Guards are used to give several different
-definitions for an entire function, each attached to some condition that
-days when it applies.
+--------------------------------------------------------------------------------
+A more flexible way to define a piecewise function is to use *guards*.  You saw
+guards in the previous section.  Guards are used to give several different
+definitions for an entire function, each attached to some condition that days
+when it applies.
 
 Here's an example of an animation using guards.
 
@@ -325,12 +313,6 @@ Here's an example of an animation using guards.
       | otherwise = translated(rotated(rocket, -45), 2 * t - 21, 2 * t - 22)
 
     rocket = solidRectangle(1, 4)
-
-Instead of the equal sign and a right-hand side, this function has a number
-of cases.  Each case has a vertical line, the condition, an equal sign, and
-the definition that applies *only* if that condition is true.  The function
-always chooses the first case which matches the condition.  The last case,
-labeled as `otherwise`, applies when none of the earlier cases match.
 
 #### The multi-step animation pattern ####
 

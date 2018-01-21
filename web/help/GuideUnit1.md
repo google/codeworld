@@ -287,7 +287,8 @@ wrong!
 Just like in math, you can use parentheses to group expressions, so
 `3 * (6 - 2)` is `3 * 4`, which is `12`.
 
-### Points, Lines and Polygons ###
+The Coordinate Plane
+====================
 
 To draw more precise shapes, we can use points on a "coordinate plane".  You
 can see a coordinate plane right now, just by running this code:
@@ -318,11 +319,21 @@ plane:
   (the second number) is positive, and left because the x coordinate (the
   first number) is negative.
 
-Got it?  Great!  Now you can draw things like sequences of lines by giving
-a list of points in the coordinate plane to a function called `polyline`:
+Got it?  Great!
+
+Points, Lines and Polygons
+--------------------------
+
+Now you can draw things like sequences of lines by giving a list of points in
+the coordinate plane to a function called `polyline`:
 
     program = drawingOf(zigzag)
     zigzag  = polyline([(-2, 0), (-1, 1), (0, -1), (1, 1), (2, 0)])
+
+The square brackets form something called a *list*.  You haven't seen lists
+before, but they are just what they sound like: collections of multiple
+things in order.  You need to place your points in a list (in square brackets)
+before giving them to the `polyline` function.
 
 To draw a closed shape, use `polygon` instead.  Can you figure out the
 mystery picture before you click Run?
@@ -345,7 +356,13 @@ parameter for thickness:
     mystery = thickPolygon(
         [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)], 1)
 
-#### Using the coordinate plane to draw ####
+Finally, if you'd like to connect points with a curved line instead of straight
+line segments, there are functions called `curve` and `thickCurve` for curves
+with endpoints, and `closedCurve`, `solidClosedCurve`, and `thickClosedCurve`
+for curves that join back to their starting point in a loop.  These functions
+work exactly like `polyline` and `polygon`, but just draw smooth curves instead.
+
+### Using the coordinate plane to draw ####
 
 A neat trick is to use the coordinate plane as you write your code.  Say
 you want to draw a butterfly.  You might start by writing:
@@ -358,7 +375,7 @@ points to use in your shapes.  When you're done, just remove the
 `& coordinatePlane` to get rid of the guidelines.
 
 Types
------
+=====
 
 We've seen many different kinds of things so far that show up in your
 code: pictures, numbers, text, points, colors... maybe you're wondering how to keep them
@@ -371,7 +388,8 @@ places:
   If you do, the computer then knows more about what you meant, and
   can sometimes explain the problems in your code better.
 
-### Simple Types ###
+Simple Types
+------------
 
 Hear are some of the types that you've used in your code:
 
@@ -380,9 +398,13 @@ Hear are some of the types that you've used in your code:
 * `Picture` is the type for pictures.
 * `Number` is the type for numbers.
 * `Color` is the type for colors.
+* `Text` is the type for pieces of text, usually written in quotes.
 
 Notice that while variables start with a lower-case letter, types are
 capitalized.
+
+Type Annotations
+----------------
 
 To declare types in your code, you can use `::`, like this:
 
@@ -399,4 +421,62 @@ say what your types are, two things happen:
 * Other people reading your code can understand what's going on.
 * When you make a mistake the computer can be more helpful explaining
   what's wrong.
-  
+
+List Types
+----------
+
+What about lists?  Would you guess their type is `List`?  Not quite!  There are
+many types of lists: lists of numbers, lists of pictures, lists of colors, and
+so on.  To write the type of a list, we first write the type of the things
+*inside* the list, then surround it with square brackets.
+
+    numbers :: [Number]
+    numbers = [ 1, 2, 3, 4 ]
+
+Points and Tuples
+-----------------
+
+What about a point, like the ones we used to make polylines and polygons?  It
+actually works just fine to say the type is `Point`:
+
+    start :: Point
+    start = (0, 5)
+
+When the computer talks about points, though, it sometimes calls their type
+something different: `(Number, Number)`.  This is just a way to say what we
+already know: a point is an ordered pair, with each part being a number!  It
+turns out `Point` is just shorthand for `(Number, Number)`, and they both mean
+the same thing.
+
+Types like that, with parentheses and commas, are sometimes called *tuples*.  So
+a `Point` is a specific kind of tuple.  Other tuples might use different types,
+different numbers of things, and even different types for the different values
+inside!
+
+* `(Number, Color)` is a tuple type.  Some possible values are the pairs
+  `(4, red)` or `(-3, dark(green))`.
+* `(Number, Text, Number, Color)` is a tuple type with four values inside.  A
+  possible value is `(3, "train", 10, blue)`.
+
+Tuples will be used a lot more later on, when we're dealing with memory and
+state.  For now, you'll mostly use them for points on the coordinate plane.
+
+Functions
+---------
+
+Functions have their own types. Here are some examples:
+
+* `light` is a function that needs a color and makes another color.  It
+  has the type `Color -> Color`.
+* `circle` is a function that needs a number (the radius), and makes a
+  picture (a circle with that radius).  It has the type
+  `Number -> Picture`.
+* `rectangle` is a function that needs two numbers, and makes a picture.
+  It has the type `(Number, Number) -> Picture`.
+* `translated` is a function that needs a picture and two numbers (the x
+  and y distances), and makes a new picture.  It has the type
+  `(Picture, Number, Number) -> Picture`.
+
+In general, function types have arrows (`->`) in them.  On the left of the arrow
+is the type of things that the function needs: its *domain*.  On the right side
+of the arrow is the type of things that the function makes: its *range*.

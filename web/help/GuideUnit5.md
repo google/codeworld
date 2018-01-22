@@ -110,7 +110,7 @@ Here's our first attempt:
               91 + 92 + 93 + 94 + 95 + 96 + 97 + 98 + 99 + 100
 
 If you try this, you get the right answer: 5050.  But although the computer
-itself did the computation in the blink of an eye, Gauss would have been before
+itself did the computation in the blink of an eye, Gauss would have been done before
 we could even write all that code!  And it gets worse: if you want to know the
 numbers up to 1000, Gauss can use his same trick to find 500 pairs, each adding
 to 1001, and get 500500.  But we'd have to write a program 10 times as long!
@@ -189,7 +189,7 @@ cases that eventually, any problem will be reduced to a base case.
 
 The second mistake is not to reduce the problem to a *smaller* version of the
 problem.  For example, it wouldn't do any good to assert that
-`someFromOneTo(n) = sumFromOneTo(n + 1) - (n + 1)`, because that *increases* the
+`sumFromOneTo(n) = sumFromOneTo(n + 1) - (n + 1)`, because that *increases* the
 size of the question!  Remember, the problem needs to keep getting smaller, and
 eventually reach the base case.
 

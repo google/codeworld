@@ -69,7 +69,7 @@ a[href]:hover {
 #helpacc {
   position: fixed;
   overflow: auto;
-  width: 300px;
+  width: 19em;
   height: 100%;
   margin: 0px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
@@ -87,7 +87,7 @@ a[href]:hover {
 }
 
 #helpacc + #help {
-  margin-left: 320px;
+  margin-left: 20em;
 }
 
 #help #package-header {

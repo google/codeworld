@@ -204,3 +204,42 @@ would need to write:
 Pattern matching, therefore, isn't the best way to match specific values,
 because you can't use variables at all!  It is, however, a great way to write
 functions that depend on the *structure* of a parameter.
+
+Using Equivalent Expressions
+================================
+
+Sometimes you want to write a function to do something, but the simplest way to
+write what you want done doesn't look like a place where functions will be useful.
+Think about this program, which we talked about in Part 1 while discussing translation:
+
+    program = drawingOf(forest)
+    forest  = translated(tree, -5, 5)
+            & translated(tree,  0, 0)
+            & translated(tree,  5,-5)
+    tree    = colored(leaves, green) & colored(trunk, brown)
+    leaves  = sector(0, 180, 4)
+    trunk   = solidRectangle(1, 4)
+
+We said that the second tree in the definition of forest, `translated(tree, 0, 0)`, was
+written this way so that our lines would line up nicely and the code would be easier
+to read. This is true, but what we didn't say is that this is a use of an equivalent
+expression. That sounds pretty fancy, but all it means is that writing `translated(tree, 0, 0)`
+is the same as writing `tree`. This doesn't look like a terribly exciting use of equivalent
+expressions, but think about if you wanted twenty trees, all in various places!  We've
+just talked about ways to use a function to write that program without writing a separate
+expression for each tree. But what if we'd written this program instead:
+
+    program = drawingOf(forest)
+    forest  = tree
+            & translated(tree, -5, 5)
+            & translated(tree,  5,-5)
+    tree    = colored(leaves, green) & colored(trunk, brown)
+    leaves  = sector(0, 180, 4)
+    trunk   = solidRectangle(1, 4)
+
+In this case it is less obvious that a function can be used to write this program.
+
+This is a very simple example of equivalent expressions, of course. There are many more
+complicated situations where finding a different way to express the same value can be
+helpful.
+

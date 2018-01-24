@@ -53,6 +53,45 @@ CodeWorld.  When you use a function, the body of the function is adapted by
 finding all parameter names, and substituting the corresponding actual
 parameters from where the function is used.
 
+Domain and Range
+-----
+
+When we talked about function types, we mentioned the domain and range of a function.
+Let's talk a little more about those concepts now.  One common definition of domain
+and range is given in terms of the coordinate plane.  This definition says that the
+domain of a function is the list of possible values for the x coordinate and the range
+of a function is the list of possible values for the y coordinate. There's a problem
+with this definition, though: Our functions can't always be represented on a coordinate
+plane!  Even though this definition isn't complete, it can still give us some useful
+information. It tells us, for example, that the domain and range of a function are lists
+of possible values for within the function. Let's take a look at our explanation of function
+types from Part 1 and discuss what that means.
+
+We said that in general, function types are written with arrows (->) in them. On the left
+of the arrow is the type of things that the function needs: its domain. On the right side
+of the arrow is the type of things that the function makes: its range.
+
+If we combine these two explanations for domain and range, we realize that, in general,
+the domain of a function is the list of things that can be used in the function to make
+a valid result.  Similarly, the range of a function is the list of things that a particular
+function can make.  For example:
+
+* We discussed that the function `light` takes a color and returns a color. This means the
+domain of the function `light` is a list of all possible colors, and the range of the function
+`light` is a list of colors that are lighter than another color
+* When we discussed the function `rectangle`, we said it took a pair of numbers, or a tuple
+of two numbers, and returned a picture. That means that the domain of the function `rectangle`
+is a list of all tuples of two numbers, and the range of `rectangle` is a list of all pictures
+that can be drawn using those two numbers for the width and height, respectively
+
+This may all sound a little technical, and it might not make sense why you need to understand
+the domain and range of a function.  Think of it like this.  Because the result of a function
+depends heavily on the input to a function, it's important to understand what can be an input
+and what can't.  Also, it's important to understand what a function can do (as in, what it can
+create) and what it can't, so you don't try to use a function for something it can't do.
+Knowing the domain and range of a function can help you understand the relationship between
+the values you input and the values you get out.
+
 Scope
 -----
 

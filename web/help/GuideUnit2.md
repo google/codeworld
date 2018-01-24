@@ -37,8 +37,12 @@ Parameters to functions can be of any type.  The next example defines a
 function with a picture as a parameter.
 
     program = drawingOf(ringOf(rectangle(1,1)))
-    ringOf(p) = pictures([
-        rotated(translated(p, 5, 0), a) | a <- [45, 90 .. 360] ])
+    ringOf(p) = rotated(translated(p, 5, 0),  60) &
+                rotated(translated(p, 5, 0), 120) &
+                rotated(translated(p, 5, 0), 180) &
+                rotated(translated(p, 5, 0), 240) &
+                rotated(translated(p, 5, 0), 300) &
+                rotated(translated(p, 5, 0), 360)
 
 The name `p` is given to the parameter to `ringOf`.  When `ringOf` is used in
 the definition of `program`, it must be given a parameter, with a specific picture
@@ -49,8 +53,61 @@ CodeWorld.  When you use a function, the body of the function is adapted by
 finding all parameter names, and substituting the corresponding actual
 parameters from where the function is used.
 
+Scope
+-----
+
+When you defined variables in the previous section, those variables could be
+used anywhere in the code.  The variables that stand for arguments in functions
+are different.  They only make sense inside of the definition of that function.
+Remember, they stand for whatever expression is used for that argument when that
+specific function is *used*.  There are words for these ideas.
+
+* A **global variable** is a variable that can be used anywhere in your code.
+* A **local variable** is a variable that can only be used in part of the code.
+
+The *scope* of a variable is the part of code where it makes sense to use that
+variable.  This sheds a new light on everyone's favorite error message:
+"Variable not in scope"!  The message really means that you are using a name
+that might be defined somewhere, but it doesn't make sense *here*.
+
+### The `where` clause ###
+
+You can actually add your own variables in *local scope*, as well.  Even if the
+variable doesn't represent a function argument, you might want to limit how much
+of your code sees that variable name just because it makes it easier to name
+things!  For example, suppose your drawing includes a cat and a mouse.  You
+might define variables called `head`, `tail`, and `body`, while you are working
+on the cat.  When you start on the mouse, these names are already used for the
+cat, and you have to pick something else.  (You could go back and rename them to
+`catHead`, `catTail`, and `catBody`, but what a pain!)
+
+One solution is to turn these into *local* variables, so the names don't cause
+problems.  To do this, you can use the `where` clause.  This goes at the end of
+the definition, and lets you define local variables that are only used inside of
+that definition.  It looks like this:
+
+    program = drawingOf(mouse)
+    mouse = head & body & tail
+      where head = translated(solidCircle(1), 2, 2) &
+                   translated(solidCircle(1/4), 3, 2)
+            body = solidCircle(2)
+            tail = translated(solidRectangle(2, 1/4), -2, -1)
+
+The formatting matters here!  The word `where` must be indented.  It cannot
+start at the beginning of a new line, because it is still part of the definition
+of `mouse`.  The three variables after `where` - `head`, `body`, and `tail`,
+need to be indented as well, but they *also* need to line up in the same column
+with each other.  If one of those definitions wraps to the next line (as `head`
+does), it needs to be indented even *further* than the point where these
+definitions begin.
+
+Another nice thing about `where` is that because the definitions are local, you
+*can* use the function's arguments in the `where` clause.  That makes it easier
+to define parts of your pictures as simple old variables, even when they depend
+on arguments.
+
 Conditional Functions and Guards
---------------------------------
+================================
 
 All of the functions defined so far have basically the same form regardless of
 their parameters.  Sometimes, you may want the definition to follow a different
@@ -81,7 +138,8 @@ your program will crash if no guards match a function, it's usually a good idea
 to include an `otherwise` guard just to make sure something matches no matter
 what the parameters are.
 
-### Pattern matching ###
+Pattern matching
+----------------
 
 So far, all of your functions have used variables to just name their parameters.
 Sometimes, though, you want to dig inside of a parameters, and match its pieces.

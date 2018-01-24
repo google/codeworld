@@ -480,4 +480,5 @@ Functions have their own types. Here are some examples:
 
 In general, function types have arrows (`->`) in them.  On the left of the arrow
 is the type of things that the function needs: its *domain*.  On the right side
-of the arrow is the type of things that the function makes: its *range*.
+of the arrow is the type of things that the function makes: its *range*.  We'll
+talk more about the domain and range of functions in Part 2.

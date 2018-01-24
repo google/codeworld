@@ -24,11 +24,6 @@ the first line of an interaction looks like this:
 Here's how the `event` function of an interaction fits in with the parts we are
 familiar with from simulations.
 
-User Interface Events
-=====================
-
-To get any further, you'll need to understand user interface events.
-
 The `event` Function
 --------------------
 
@@ -152,7 +147,51 @@ like this:
 Collaborations
 ==============
 
-TODO: Write this section.
+Interactions are pretty cool.  You can use them to write useful applications...
+and games, too, of course!  But we can take things one step further.  A
+collaboration is the name CodeWorld gives to multi-user shared programs.  In
+other words, you can create multi-player games!
 
-This section will discuss using the `collaborationOf` function in place of the `interactionOf` function,
-which allows the creation of programs which accept input from multiple users.
+Creating a collaboration isn't much different from an interaction.  Only a few
+things change.  Instead of `interactionOf`, you'll use `collaborationOf` to
+define your program.  The first argument to `collaborationOf` is a number: the
+number of players that you expect.  The first player is player #1, the second is
+player #2, and so on up to the number you give here.
+
+The next arguments are `initial` and `step`, and they don't change at all from
+their meaning for interactions.  The final two arguments are `event` and
+`picture`.  They each receive one extra argument, which is the player number.
+This way, when a key is pressed, you will find out *which* player pressed the
+key.  When you build the picture to show on a player's screen, you will know
+which player you are building it for.
+
+A Simple Collaboration
+----------------------
+
+For a simple collaboration, we can let both players draw on the screen with the
+pointer.  A player's own dots will appear in black, while the other player's
+dots will appear in green.  This collaboration looks like this:
+
+    program = collaborationOf(2, initial, step, event, picture)
+
+    initial(rs) = ([], [])
+
+    step(state, dt) = state
+
+    event((ps, qs), MouseMovement(x, y), 1) = ([(x, y)] ++ ps, qs)
+    event((ps, qs), MouseMovement(x, y), 2) = (ps, [(x, y)] ++ qs)
+    event(state, other, n)                  = state
+
+    picture((ps, qs), 1) = dots(ps) & colored(dots(qs), red)
+    picture((ps, qs), 2) = dots(qs) & colored(dots(ps), red)
+
+    dots(ps) = pictures([
+        translated(solidCircle(1/4), x, y) | (x, y) <- ps ])
+
+When you run this program, instead of seeing your own game right away, you start
+out in a *lobby*, which allows you to create a new game for people to join and
+get in invitation code to give out, or join someone else's game by entering a
+code.  To join a game together, you need to share *both* the program's URL *and*
+the invitation code.  This program's URL can be saved and reused.  Invitation
+codes are good for one use only; after you've finished the game, you'll need to
+create a share a new code.

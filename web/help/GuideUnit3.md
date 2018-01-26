@@ -342,3 +342,17 @@ how much easier it is to understand?  For example, in `step5`, the starting
 points for the translation are `5` and `4`, which are the same as the
 translations from the previous step.  Arranging for the animations to match
 was much easier this time.
+
+Graphing Functions
+==================
+
+We've now seen a lot of examples of functions that can be used to get
+specific effects in animation: linear, periodic, quadratic, min/max,
+remainder, and more!  How can you keep these straight?
+
+There's a convenient visual way to understand what a function does, called a
+graph.  Graphs can only be used for functions between *numbers*, not colors
+or pictures.  But when you do have a function between numbers, the graph is
+an easy way to understand the function at a glance.
+
+TODO: Finish this section.

@@ -35,10 +35,10 @@ The first line asks for an animation, by using the `animationOf` function.  The
 parameter is a *function* that can be used to produce the frames of the
 animation.  In our example, this function is called `propellor`.
 
-The second line defines the `propellor` function.  The parameter to this function,
-which we will usually call `t`, is the time in seconds since the program was
-started.  The result of the function should be a picture, which is the frame to
-display at that time.  Unlike movies and television shows, which only have a
+The second line defines the `propellor` function.  The argument to this function,
+which we will usually call `t`, stands for the time in seconds since the program
+was started.  The result of the function should be a picture, which is the frame
+to display at that time.  Unlike movies and television shows, which only have a
 fixed sequence of frames, computers can work as fast as possible to draw as many
 frames as they can, by following the same pattern.
 
@@ -48,11 +48,12 @@ capable of drawing in one second.  Slower computers can't draw as many frames,
 which can make motion appear jerky and uneven.  Faster computers can draw more
 frames, which makes the motion appear smooth and natural.)
 
-The result of the `propellor` function is just an ordinary picture, which one
-change.  Instead of a specific angle of rotation, an expression `60 * t` is
-used.  Just as with any function, this is evaluated by substitution.  So the
-frame that is drawn 4.5 seconds in is rotated by an angle of `60 * 4.5`, which
-is 270 degrees.
+We write the *result* of the `propellor` function as `propellor(t)`, and it's
+just an ordinary picture - one frame of the animation.  But what exactly this
+frame looks like depends on `t`.  Instead of a specific angle of rotation, an
+expression `60 * t` is used.  Just as with any function, this is evaluated by
+substitution.  So the frame that is drawn 4.5 seconds in is rotated by an angle
+of `60 * 4.5`, which is 270 degrees.
 
 Try making a table of angles of rotation at each point in time.  How fast (in
 degrees per second) is the propellor rotating?
@@ -60,29 +61,26 @@ degrees per second) is the propellor rotating?
 Kinds of motion
 ---------------
 
-Animations can be built from several kinds of motion.  Anywhere you have used
+Animations can be built from many kinds of motion.  Anywhere you have used
 a number in the description of a picture, you could achieve change over time
-by using an expression of `t` instead!
+by using an expression in terms of `t` instead!
 
 Here are a few possibilities:
 
 * The radius of a circle.
 * The width or height of a rectangle.
-* The distance by which a shape is translated, scaled, or rotated.
+* The amount by which a shape is translated, scaled, or rotated.
 * The angles of an arc or sector.
 * The x or y coordinates of points in a polyline or polygon.
-* The bounds of the range used for a list comprehension.
-* Red, green, or blue values in a color.
+* RGB or HSL values in a color.
 
 The list goes on and on!  And you don't need to settle for just one of these.
 You can use `t` as many times in your animation as you like!  This example
-combines rotation, translation, and a list range all depending on the time:
+combines change in rotation and translation at the same time:
 
-    program   = animationOf(wheels)
-    wheels(t) = pictures([
-        translated(rotated(tire, -60 * t), t - 10, y)
-        | y <- [0, 2 .. t]])
-    tire      = circle(1) & solidRectangle(0.1, 2)
+    program  = animationOf(wheel)
+    wheel(t) = translated(rotated(tire, -60 * t), t - 10, y)
+    tire     = circle(1) & solidRectangle(0.1, 2)
 
 Top-down animation
 ------------------
@@ -116,22 +114,14 @@ Notice that, as always, the equal sign tells you that the expressions on
 its left and right sides mean the same thing!  You may wonder, though, if
 `ball(t)` is *not* the name of the animation, why you define an animation
 by writing `ball(t) = `...  The reason is that to define an animation, you
-need to give the pattern that describes each of its frames.
+need to give a pattern that can describe any of its frames.
 
-For an analogy, imagine this conversation between a student and a teacher:
-
-> *Teacher:* What does "cousin" mean?
->
-> *Student:* Well, if Alice's parent and John's parent are siblings, that
-> makes Alice and John cousins.
-
-The student described what cousins are by giving a sentence about two
-people named Alice and John.  But the definition wasn't just about
-people with those two names.  The names were there because they helped
-the student to describe the pattern!  In the same way, when you define
-an animation `ball` by talking about a single frame `ball(t)`, your
-definition doesn't have anything do with a specific time `t`.  But
-having a name for the current time helps in describing the pattern.
+When you define an animation `ball` by talking about a single frame
+`ball(t)`, your definition is establishing a pattern.  Now you can find the
+specific frame `ball(0)` by substituting `0` for `t`.  You can find the
+specific frame `ball(1.735)` by substituting `1.735` for `t`.  And so on.
+Having a name, `t`, that stands for the current time is a tool you use to
+describe the pattern.
 
 We'll refer back to this as we explore some examples of top-down design
 with animation.
@@ -140,27 +130,28 @@ with animation.
 
 The `&` operator is used to combine pictures.  But what if you have two
 animations and want to show them at the same time?  You can't use `&` to
-combine the two animations.  But you can use `&` to combine two *pictures*,
-where those pictures are just one frame of the animation.
-
-So this won't work:
+combine the two animations.  So this won't work:
 
     program = animationOf(a & b)
     a(t)    = rotated(solidRectangle(1, 1), 45 * t)
     b(t)    = circle(t)
 
-But this will work:
+The problem is that `a` and `b` are animations rather than pictures, so
+they can't be combined using `&`.  If you try, you'll see an error message
+complaining that the types don't match.  The `&` needs pictures to combine,
+but you've given it animations (which are functions), instead.
+
+But you can use `&` to combine two *pictures*, in the pattern that
+describes one frame of the animation.  This will work:
 
     program = animationOf(c)
     c(t)    = a(t) & b(t)
     a(t)    = rotated(solidRectangle(1, 1), 45 * t)
     b(t)    = circle(t)
 
-The first example doesn't work because `a` and `b` are animations rather
-than pictures, so they can't be combined using `&`.  But in the second
-example, we've instead defined a new animation, `c`, and said that each
-frame of `c` is obtained by combining the frames from `a` and `b` at
-that time.
+We've instead defined a new animation, `c`, and established the pattern
+that each frame of `c` is obtained by combining the frames from `a` and
+`b` at that moment in time.
 
 Patterns of change
 ------------------
@@ -260,14 +251,15 @@ acceleration.  In this example, changing the acceleration is like adjusting
 the strength of gravity, so you can try out the ball on the moon... or on
 Jupiter, which has more gravity than the Earth!
 
-### Piecewise motion ###
+Piecewise motion
+----------------
 
 Still more motion follows different patterns at different times.  When there
 are several distinct steps to the change in an animation, we call it "piecewise"
 because it have distinct pieces, which are different from each other.
 
 You can describe piecewise motion in your programs using functions like `min` and
-`max` and `remainder`, or by using conditionals, like `if` or guards.
+`max` and `remainder`, or by using conditionals, like guards.
 
 The `min` and `max` functions take the minimum or maximum, respectively, of two
 numbers.  This allows you to create simple effects where something moves and
@@ -290,15 +282,14 @@ back down to zero and start over.  For example:
 
 The expression `45 * t` is linear, so it increases steadily at a rate of 45
 degrees per second.  But the remainder function ensures that when it reaches
-30, it jumps back to zero.  The result is a motion that increases for 30
+90, it jumps back to zero.  The result is a motion that increases for 90
 degrees, then falls back down.
 
-#### Guards ####
+### Guards ###
 
-A more flexible way to define a piecewise function is to use *guards*.  You saw
-guards in the previous section.  Guards are used to give several different
-definitions for an entire function, each attached to some condition that days
-when it applies.
+The way to define a piecewise function is to use *guards*.  You saw guards in
+the previous part.  Guards are used to give several different definitions for
+an entire function, each attached to some condition that says when it applies.
 
 Here's an example of an animation using guards.
 
@@ -313,7 +304,7 @@ Here's an example of an animation using guards.
 
     rocket = solidRectangle(1, 4)
 
-#### The multi-step animation pattern ####
+### The multi-step animation pattern ###
 
 The example above with guards works, but it is very difficult to read or
 write.  Here's the problem: if `t` is 11, then the first case that will match

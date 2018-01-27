@@ -24,7 +24,7 @@ Computers make this job much easier!  All you need to do is describe a pattern o
 motion.  The computer does the hard work of drawing many similar pictures.  The
 way you do this is with a function.
 
-    program         = animationOf(propellor)
+    program      = animationOf(propellor)
     propellor(t) = rotated(solidRectangle(10, 1), 60 * t)
 
 See if you can explain to yourself or someone else what is happening here.
@@ -42,11 +42,11 @@ to display at that time.  Unlike movies and television shows, which only have a
 fixed sequence of frames, computers can work as fast as possible to draw as many
 frames as they can, by following the same pattern.
 
-(Have you ever heard of the graphics in video games described in "frames per
-second"?  This is, literally, the number of different frames the computer is
-capable of drawing in one second.  Slower computers can't draw as many frames,
-which can make motion appear jerky and uneven.  Faster computers can draw more
-frames, which makes the motion appear smooth and natural.)
+> (Have you ever heard of the graphics in video games described in "frames per
+> second"?  This is, literally, the number of different frames the computer is
+> capable of drawing in one second.  Slower computers can't draw as many frames,
+> which can make motion appear jerky and uneven.  Faster computers can draw more
+> frames, which makes the motion appear smooth and natural.)
 
 We write the *result* of the `propellor` function as `propellor(t)`, and it's
 just an ordinary picture - one frame of the animation.  But what exactly this
@@ -55,8 +55,46 @@ expression `60 * t` is used.  Just as with any function, this is evaluated by
 substitution.  So the frame that is drawn 4.5 seconds in is rotated by an angle
 of `60 * 4.5`, which is 270 degrees.
 
-Try making a table of angles of rotation at each point in time.  How fast (in
-degrees per second) is the propellor rotating?
+It might help to make a table, like this:
+
+| Time (`t`)  | Frame (`propellor(t)`)               |
+| ----------- | ------------------------------------ |
+|    `0.0`    | `rotated(solidRectangle(10, 1),  0)` |
+|    `0.1`    | `rotated(solidRectangle(10, 1),  6)` |
+|    `0.2`    | `rotated(solidRectangle(10, 1), 12)` |
+|    `0.3`    | `rotated(solidRectangle(10, 1), 18)` |
+|    `0.4`    | `rotated(solidRectangle(10, 1), 24)` |
+|    `0.5`    | `rotated(solidRectangle(10, 1), 30)` |
+
+See how each frame draws a picture that's similar to the previous one, but just
+a few degrees different in rotation?  It makes a flipbook, but in one easy
+expression.
+
+How fast (in degrees per second) is the propellor rotating?
+
+### Continuity ###
+
+The program above shows a propellor that appears to be moving.  But not all
+animations look like motion!  Try this one:
+
+    program = animationOf(f)
+    f(t) = translated(solidCircle(1), x, 0)
+      where x = 10 * randomNumbers(t) # 1
+
+Why did the propellor look fine, but this animation was flickering more than
+moving?  The problem is that `f` here is not *continuous*.  When a function is
+continuous, that means that if its inputs are close enough, the outputs should
+be close, as well.  In other words:
+
+* You don't want your animation function to always give exactly the *same*
+  picture. The animation wouldn't move.
+* But you do want your animation function to give *similar* pictures.  It's the
+  small, slight changes from one frame to the next that create a smooth
+  animation.
+
+Lucky for you, most of the simple math expressions you can write with `t` in
+them are continuous!  But keep this in mind, because in more complex animations
+later, you'll have to think harder to make sure your animation is continuous.
 
 Kinds of motion
 ---------------
@@ -354,5 +392,34 @@ There's a convenient visual way to understand what a function does, called a
 graph.  Graphs can only be used for functions between *numbers*, not colors
 or pictures.  But when you do have a function between numbers, the graph is
 an easy way to understand the function at a glance.
+
+To draw the graph of a function, first draw a horizontal axis to represent `t`,
+the time in seconds.  Then for a lot of possible values of `t`, find the result
+of the function on the vertical axis.  Plot those points on the coordinate plane
+and connect them with a smooth line.
+
+You can practice graphing on paper, but it's also not too hard to draw the
+graph of a function using CodeWorld.  Here's a program that draws the graph of a
+sine (periodic) function.
+
+    program = drawingOf(graph & coordinatePlane)
+    graph = curve([ (x, f(x)) | x <- [0, 0.1 .. 10] ])
+
+    f(t) = 3 * sin(90 * t)
+
+See how the back-and-forth pattern of the sine function is visible on the
+screen?  You can easily see that this function will start at 0, and as time
+increases, it will change up to 3, then down to -3, then back up again, and so
+on.  (The graphs we are drawing here start 0 on the horizontal axis, because the
+input to an animation is never zero.)
+
+You can replace the definition of `f` by any other function to see its graph
+instead.  Try some of these, and see if you can describe to yourself where that
+function starts and how it changes over time:
+
+* `f(t) = 3 * t - 7`
+* `f(t) = 5 - 4 / (t + 1)`
+* `f(t) = remainder(t, 2)`
+* `f(t) = quotient(t, 2)`
 
 TODO: Finish this section.

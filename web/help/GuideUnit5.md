@@ -216,9 +216,9 @@ Here's an example of a fractal that draws a tree:
 
     program = drawingOf(tree)
 
-    tree = branch(6)
+    tree = branch(7)
 
-    branch(0) = polyline([(0,0), (0,5)])
+    branch(0) = blank
     branch(n) =
         polyline([(0,0), (0, 5)]) &
         translated(smallBranch, 0, 5) &
@@ -227,8 +227,8 @@ Here's an example of a fractal that draws a tree:
       where smallBranch = scaled(branch(n-1), 0.5, 0.5)
 
 Notice how there's still a *base case*, where a `branch` with depth 0 is just
-a line.  The *general case* describes what a branch looks like, in terms of
-simpler branches with lower depth.
+a blank picture.  The *general case* describes what a branch looks like, in
+terms of simpler branches with lower depth.
 
 ### Other fractals ###
 
@@ -247,7 +247,7 @@ a triangular pattern can make a nice snowflake pattern.
                    translated(sub,  4, 0) &
                    translated(rotated(sub,  60), -1, sqrt(3)) &
                    translated(rotated(sub, 300),  1, sqrt(3))
-      where sub  = scaled(kochCurve(n-1), 1/3, 1/3)
+      where sub  = dilated(kochCurve(n-1), 1/3)
 
 #### Sierpinski's triangle ####
 
@@ -260,7 +260,7 @@ leave three smaller triangles.
     sierpinski(n) = translated(sub, -3.5, -2) &
                     translated(sub,  3.5, -2) &
                     translated(sub,  0.0,  4)
-      where sub  = scaled(sierpinski(n-1), 1/2, 1/2)
+      where sub  = dilated(sierpinski(n-1), 1/2)
 
 ### General pattern ###
 
@@ -279,56 +279,140 @@ blanks filled in using pictures or numbers of your choice.
 Usually only one of `leaf` or `joint` will be filled in.  The blanks around
 the branch variables can be filled in with translations and rotations that
 arrange the parts into the larger whole.  You may choose to have any number
-of branches in your fractal.  All of the fractals in this section can be made
-by following this pattern.
+of branches in your fractal with different translations and rotations.
+
+All of the fractals in this section can be made by following this pattern.  For
+example, the tree had `blank` as the leaf, and a line segment as the joint.  On
+the other hand, Sierpinski's triangle had triangles as the leaves, and blank
+pictures for the joints.
 
 Computing with Lists
 ====================
 
-TODO: Write this section
+Recursion is a very flexible and useful technique for computation.  But it isn't
+always the easiest or clearest way to say what you want.  Another useful
+technique is to first make a list of the parts of your computation, and then
+operate on the list.
+
+For example, CodeWorld already provides a function to add up the numbers in a
+list, using a function called `sum`.  Here's another way to solve the problem we
+investigated earlier, adding the numbers from one to one hundred.
+
+    total = sum([1 .. 100])
+
+That almost feels like cheating!  But it's always better to write in a clear and
+easy to read manner, and use the capabilities the computer already has.
 
 Reducing a List
 ---------------
 
-TODO: Write this section
+There are a number of functions that are provided by CodeWorld to combine the
+elements of a list.  We will call these list *reducers*.  The `sum` function
+mentioned above is one example of these.  Here's a longer list of options.
+
+* `product` and `sum` can be used to multiply or add a list of numbers.
+* `maximum` and `minimum` will find the largest or smallest number from a list.
+* `joined` and `joinedWith` combine pieces of text, sometimes with a separate
+  (like `","`) between parts.
+* `concatenation` combines a list of lists into just one list with all the same
+  elements.
+* `pictures`, which you learned in the previous part, combines a list of
+  pictures by overlaying them with `&`.
+
+You can even invent your own reducers, and we'll look at how to do that later.
+For now, this will be enough to get started.
+
+Can you rewrite the `factorial` function from above, but use a list reducer
+instead of recursion?
 
 Using List Comprehensions
 -------------------------
 
-TODO: Write this section
+The next step in computing with lists is to perform computations with the
+elements of a list separately.  The tool you'll use for this is one you already
+have seen: *list comprehensions*.  In the previous part, though, you wrote list
+comprehensions only to generate pictures.  You can also use list comprehensions
+on numbers and other types, as well.
 
-### Maps ###
+Here's an example of using a list comprehension together with a reducer to
+answer a question.
 
-TODO: Write this section
+Suppose you want to arrange 25 toothpicks to form an I shape on the table, like
+this:
+
+<img src="U5_toothpicks.png" style="max-width: 80%;">
+
+If you like, try playing with this problem yourself before proceeding.
+
+### Mapping and reducing ###
+
+What is the largest area you can fit inside the I, so that it's bounded on three
+sides.  First, if you think about it, you can make the width any number of
+toothpicks up to 12.  If you tried more than 12, you would run out of toothpicks
+before even starting the vertical line.  If `w` is the number of toothpicks wide
+you choose, then it takes `2 * w` toothpicks to  create both the top and bottom
+lines.  Whatever is left over is the height.  The area is the width times the
+height.
+
+One way to solve this problem is to just try all these possibilities, and then
+take the largest area you get.  That's easy with a list comprehension.
+
+    program = drawingOf(text(printed(answer)))
+    answer = maximum([ w * (25 - 2 * w) | w <- [1 .. 12] ])
+
+If you run this program, the answer is 78 square toothpicks.  (That comes from an
+I shape that is 6 toothpicks wide, and 13 tall.)
+
+Let's summarize what we did.
+
+* First, we analyzed the problem to decide what the parts are.
+* Second, we constructed a list out of each of those parts, and used a list
+  comprehension to compute each part separately.
+* Finally, we used a list reducer, `maximum`, to combine those parts into a
+  final answer.
+
+In this case, the parts were possibilities, and we chose the maximum from those
+possibilities.  But that won't always be the case.  Other times, you might break
+down a problem into parts that need to be added, or multiplied, or combined in
+some other way.
+
+This pattern is very useful for a lot of computations!  It's not just used for
+computations inside a program, but also to perform massive computations across
+tens of thousands of computers to run big web sites like Google and Facebook!
+Definitely worth remembering.
 
 ### Filters ###
 
 TODO: Write this section
 
-The Map-Reduce Pattern
-----------------------
-
-TODO: Write this section
+Example: Toothpick problem with three vertical lines.
 
 Quantifiers
 -----------
 
 TODO: Write this section
 
+Example: computing primes
+
+Dealing With Text
+-----------------
+
+TODO: Write this section
+
+Basic idea: to analyze text, use `characters` to break up into characters, then
+`joined` to put them back together again.
+
 Combining Recursion and Lists
 =============================
 
-TODO: Write this section
+TODO: Write this intro section
 
 Pattern Matching and Recursion
 ------------------------------
 
 TODO: Write this section
 
-Dealing With Text
------------------
-
-TODO: Write this section
+Example: Building a custom list reducer.
 
 Sorting
 -------

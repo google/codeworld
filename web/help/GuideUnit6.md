@@ -211,24 +211,24 @@ is always 6 at the moment, there's no reason it couldn't be something different!
 Gravity
 -------
 
-TODO: Write this section.
+This section is still in progress.
 
 Other Forces
 ------------
 
-TODO: Write this section.
+This section is still in progress.
 
 Designing With Simulation
 =========================
 
-TODO: Write this section.
+This section is still in progress.
 
 Horizontal Composition
 ----------------------
 
-TODO: Write this section.
+This section is still in progress.
 
 Vertical Composition
 --------------------
 
-TODO: Write this section.
+This section is still in progress.

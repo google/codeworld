@@ -383,21 +383,21 @@ Definitely worth remembering.
 
 ### Filters ###
 
-TODO: Write this section
+This section is still in progress.
 
 Example: Toothpick problem with three vertical lines.
 
 Quantifiers
 -----------
 
-TODO: Write this section
+This section is still in progress.
 
 Example: computing primes
 
 Dealing With Text
 -----------------
 
-TODO: Write this section
+This section is still in progress.
 
 Basic idea: to analyze text, use `characters` to break up into characters, then
 `joined` to put them back together again.
@@ -405,16 +405,16 @@ Basic idea: to analyze text, use `characters` to break up into characters, then
 Combining Recursion and Lists
 =============================
 
-TODO: Write this intro section
+This section is still in progress.
 
 Pattern Matching and Recursion
 ------------------------------
 
-TODO: Write this section
+This section is still in progress.
 
 Example: Building a custom list reducer.
 
 Sorting
 -------
 
-TODO: Write this section
+This section is still in progress.

@@ -117,17 +117,17 @@ use to get the effect you want from them.
 
 ### Rescaling random numbers ###
 
-TODO: Write this section.
+This section is still in progress.
 
 ### Making a decision based on probability ###
 
-TODO: Write this section.
+This section is still in progress.
 
 ### Timing random events based on frequency ###
 
-TODO: Write this section.
+This section is still in progress.
 
 Decomposition with Random Numbers
 ---------------------------------
 
-TODO: Write this section.
+This section is still in progress.

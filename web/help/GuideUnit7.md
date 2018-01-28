@@ -13,54 +13,54 @@ its own structure.
 Type Abstraction
 ================
 
-TODO: Write this section.
+This section is still in progress.
 
 Vectors
 -------
 
-TODO: Write this section.
+This section is still in progress.
 
 Synonyms
 --------
 
-TODO: Write this section.
+This section is still in progress.
 
 Defining Data Types
 ===================
 
-TODO: Write this section.
+This section is still in progress.
 
 Constructors
 ------------
 
-TODO: Write this section.
+This section is still in progress.
 
 Pattern Matching
 ----------------
 
-TODO: Write this section.
+This section is still in progress.
 
 Horizontal and Vertical Composition
 -----------------------------------
 
-TODO: Write this section.
+This section is still in progress.
 
 Algebraic Data Types
 ====================
 
-TODO: Write this section.
+This section is still in progress.
 
 Enumerations
 ------------
 
-TODO: Write this section.
+This section is still in progress.
 
 Multiple Constructors
 ---------------------
 
-TODO: Write this section.
+This section is still in progress.
 
 Simulating with Lists
 =====================
 
-TODO: Write this section.
+This section is still in progress.

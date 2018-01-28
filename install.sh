@@ -35,6 +35,7 @@ then
   run . sudo yum update -y
 
   run . sudo yum install -y git
+  run . sudo yum install -y curl
   run . sudo yum install -y wget
   run . sudo yum install -y bzip2
   run . sudo yum install -y zlib-devel
@@ -63,6 +64,7 @@ then
   run . sudo apt-get update -y
 
   run . sudo apt-get install -y git
+  run . sudo apt-get install -y curl
   run . sudo apt-get install -y wget
   run . sudo apt-get install -y bzip2
   run . sudo apt-get install -y xz-utils
@@ -96,6 +98,7 @@ then
   run . sudo zypper -n refresh
 
   run . sudo zypper -n install git
+  run . sudo zypper -n install curl
   run . sudo zypper -n install wget
   run . sudo zypper -n install bzip2
   run . sudo zypper -n install psmisc

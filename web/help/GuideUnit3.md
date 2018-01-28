@@ -289,6 +289,24 @@ acceleration.  In this example, changing the acceleration is like adjusting
 the strength of gravity, so you can try out the ball on the moon... or on
 Jupiter, which has more gravity than the Earth!
 
+### Inverse: Approaching a point ###
+
+When you want a function that keeps getting closer to a point, but doesn't ever
+quite get there, the inverse function is your tool of choice.  Here's an
+example:
+
+    program = animationOf(scene)
+    scene(t) = translated(solidCircle(1/4), 0, 5 - 3 / (t + 1))
+
+The two questions to ask are:
+
+* What *limiting value* should the motion approach (but never reach)?
+* At what *starting offset* from the limiting value should the motion begin?
+
+The expression is then `limit + start / (t + 1)`.  Notice that we divide by
+`t + 1` instead of `t`?  That's to avoid division by zero!  Time is never
+negative, but it can and will be zero.
+
 Piecewise motion
 ----------------
 
@@ -422,4 +440,20 @@ function starts and how it changes over time:
 * `f(t) = remainder(t, 2)`
 * `f(t) = quotient(t, 2)`
 
-TODO: Finish this section.
+Choosing Functions By Graph
+---------------------------
+
+You should take the time to familiarize yourself with the graphs of different
+functions.  When you want a certain pattern of change, one way to start is to
+first sketch a rough graph of the function you want, and then work backwards to
+identify the type of expression.
+
+* If the graph is a straight line, you want a linear expression:
+  `speed * t + start`
+* If the graph follows a wave, you want a periodic expression:
+  `amplitude * sin(frequency * t + phase) + rest`
+* If the graph follows a constant arc like the path of a baseball hit high into
+  the air, then you want a quadratic expression:
+  `accel / 2 * t^2 + speed * t + start`.
+
+and so on.  Remembering this table will be very useful to you.  Happy animating!

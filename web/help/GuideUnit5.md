@@ -337,8 +337,8 @@ on numbers and other types, as well.
 Here's an example of using a list comprehension together with a reducer to
 answer a question.
 
-Suppose you want to arrange 25 toothpicks to form an I shape on the table, like
-this:
+Suppose you want to arrange 25 toothpicks to form an `I` shape on the table,
+like this:
 
 <img src="U5_toothpicks.png" style="max-width: 80%;">
 
@@ -346,8 +346,8 @@ If you like, try playing with this problem yourself before proceeding.
 
 ### Mapping and reducing ###
 
-What is the largest area you can fit inside the I, so that it's bounded on three
-sides.  First, if you think about it, you can make the width any number of
+What is the largest area you can fit inside the `I`, so that it's bounded on
+three sides.  First, if you think about it, you can make the width any number of
 toothpicks up to 12.  If you tried more than 12, you would run out of toothpicks
 before even starting the vertical line.  If `w` is the number of toothpicks wide
 you choose, then it takes `2 * w` toothpicks to  create both the top and bottom
@@ -361,7 +361,7 @@ take the largest area you get.  That's easy with a list comprehension.
     answer = maximum([ w * (25 - 2 * w) | w <- [1 .. 12] ])
 
 If you run this program, the answer is 78 square toothpicks.  (That comes from an
-I shape that is 6 toothpicks wide, and 13 tall.)
+`I` shape that is 6 toothpicks wide, and 13 tall.)
 
 Let's summarize what we did.
 

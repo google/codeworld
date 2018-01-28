@@ -189,10 +189,13 @@ window.env = parent;
                     return;
                 }
 
+                var source = new URL(path, location.href);
                 var content = document.createElement('div');
                 var raw = request.responseText;
+
                 if (path.endsWith('.md')) {
                     content.innerHTML = new Remarkable({ html: true }).render(raw);
+                    relativizeLinks(source, content, 'img', 'src');
                     if (shelf && shelf.blocks) {
                         linkFunBlocks(content);
                         linkCodeBlocks(content, false);
@@ -201,10 +204,10 @@ window.env = parent;
                     }
                 } else {
                     content.innerHTML = raw;
-                    var source = new URL(path, location.href);
                     relativizeLinks(source, content, 'script', 'src');
                     relativizeLinks(source, content, 'link', 'href');
                     relativizeLinks(source, content, 'a', 'href');
+                    relativizeLinks(source, content, 'img', 'src');
                 }
 
                 var spacerDiv = document.createElement('div');

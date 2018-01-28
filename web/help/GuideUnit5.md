@@ -337,20 +337,21 @@ on numbers and other types, as well.
 Here's an example of using a list comprehension together with a reducer to
 answer a question.
 
-Suppose you want to arrange 25 toothpicks to form an `I` shape on the table,
+Suppose you want to arrange toothpicks to form an `I` shape on the table,
 like this:
 
 <img src="U5_toothpicks.png" style="max-width: 80%;">
 
-If you like, try playing with this problem yourself before proceeding.
+With 25 toothpicks, what is the largest area you can fit inside the `I`, so that
+it's bounded on three sides?  If you like, try playing with this problem
+yourself before proceeding.
 
 ### Mapping and reducing ###
 
-What is the largest area you can fit inside the `I`, so that it's bounded on
-three sides.  First, if you think about it, you can make the width any number of
-toothpicks up to 12.  If you tried more than 12, you would run out of toothpicks
-before even starting the vertical line.  If `w` is the number of toothpicks wide
-you choose, then it takes `2 * w` toothpicks to  create both the top and bottom
+If you experiment, you will find you can make the width any number of toothpicks
+up to 12.  If you tried more than 12, you would run out of toothpicks before
+even starting the vertical line.  If `w` is the number of toothpicks wide you
+choose, then it takes `2 * w` toothpicks to  create both the top and bottom
 lines.  Whatever is left over is the height.  The area is the width times the
 height.
 

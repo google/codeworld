@@ -94,7 +94,6 @@ function init() {
         }
     } else {
         setCode('');
-        if (!signedIn()) help();
     }
 }
 
@@ -782,13 +781,16 @@ function compile() {
     });
 }
 
+var isFirstSignin = true;
+
 function signinCallback(result) {
     discoverProjects("", 0);
     cancelMove();
     updateUI();
-    if (signedIn()) {
-        sweetAlert.close();
+    if (isFirstSignin && !signedIn()) {
+        help();
     }
+    isFirstSignin = false;
 }
 
 function discoverProjects(path, index){

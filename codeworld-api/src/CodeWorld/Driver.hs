@@ -132,7 +132,7 @@ simulationOf
 -- | Runs an interactive event-driven CodeWorld program.  This is a
 -- generalization of simulations that can respond to events like key presses
 -- and mouse movement.
-interactionOf ::
+interactionOf
   :: world                       -- ^ The initial state of the interaction.
   -> (Double -> world -> world)  -- ^ The time step function, which advances
                                  --   the state given the time difference.
@@ -144,7 +144,7 @@ interactionOf ::
 
 -- | Runs an interactive multi-user CodeWorld program, involving multiple
 -- participants over the internet.
-collaborationOf ::
+collaborationOf
   :: Int  -- ^ The number of participants to expect.  The participants will be
           -- ^ numbered starting at 0.
   -> StaticPtr (StdGen -> world)
@@ -162,7 +162,7 @@ collaborationOf ::
 
 -- | A version of 'collaborationOf' that avoids static pointers, and does not
 -- check for consistent parameters.
-unsafeCollaborationOf ::
+unsafeCollaborationOf
   :: Int  -- ^ The number of participants to expect.  The participants will be
           -- ^ numbered starting at 0.
   -> (StdGen -> world)

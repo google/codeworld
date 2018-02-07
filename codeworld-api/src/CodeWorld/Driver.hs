@@ -265,8 +265,8 @@ coordinatePlaneDrawer :: Drawer
 coordinatePlaneDrawing :: Drawing
 coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
   where
-    xline y = thickPath 0.01 [(-10, y), (10, y)]
-    xaxis = thickPath 0.03 [(-10, 0), (10, 0)]
+    xline y = thickPolyline 0.01 [(-10, y), (10, y)]
+    xaxis = thickPolyline 0.03 [(-10, 0), (10, 0)]
     axes = xaxis <> rotated (pi / 2) xaxis
     xguidelines = pictures [xline k | k <- [-10,-9 .. 10]]
     guidelines = xguidelines <> rotated (pi / 2) xguidelines

@@ -107,47 +107,82 @@ import qualified Graphics.Blank as Canvas
 import Graphics.Blank (Canvas)
 import Text.Printf
 #endif
+
 --------------------------------------------------------------------------------
 -- The common interface, provided by both implementations below.
 -- | Draws a 'Picture'.  This is the simplest CodeWorld entry point.
-drawingOf :: Picture -> IO ()
+drawingOf :: Picture  -- ^ The picture to show on the screen.
+          -> IO ()
+
 -- | Shows an animation, with a picture for each time given by the parameter.
-animationOf :: (Double -> Picture) -> IO ()
+animationOf :: (Double -> Picture)  -- ^ A function that produces animation
+                                    --   frames, given the time in seconds.
+            -> IO ()
+
 -- | Shows a simulation, which is essentially a continuous-time dynamical
 -- system described by an initial value and step function.
-simulationOf ::
-       world -> (Double -> world -> world) -> (world -> Picture) -> IO ()
+simulationOf
+  :: world                       -- ^ The initial state of the simulation.
+  -> (Double -> world -> world)  -- ^ The time step function, which advances
+                                 --   the state given the time difference.
+  -> (world -> Picture)          -- ^ The visualization function, which converts
+                                 --   the state into a picture to display.
+  -> IO ()
+
 -- | Runs an interactive event-driven CodeWorld program.  This is a
 -- generalization of simulations that can respond to events like key presses
 -- and mouse movement.
 interactionOf ::
-       world
-    -> (Double -> world -> world)
-    -> (Event -> world -> world)
-    -> (world -> Picture)
-    -> IO ()
+  :: world                       -- ^ The initial state of the interaction.
+  -> (Double -> world -> world)  -- ^ The time step function, which advances
+                                 --   the state given the time difference.
+  -> (Event -> world -> world)   -- ^ The event handling function, which updates
+                                 --   the state given a user interface event.
+  -> (world -> Picture)          -- ^ The visualization function, which converts
+                                 --   the state into a picture to display.
+  -> IO ()
+
 -- | Runs an interactive multi-user CodeWorld program, involving multiple
 -- participants over the internet.
 collaborationOf ::
-       Int
-    -> StaticPtr (StdGen -> world)
-    -> StaticPtr (Double -> world -> world)
-    -> StaticPtr (Int -> Event -> world -> world)
-    -> StaticPtr (Int -> world -> Picture)
-    -> IO ()
+  :: Int  -- ^ The number of participants to expect.  The participants will be
+          -- ^ numbered starting at 0.
+  -> StaticPtr (StdGen -> world)
+          -- ^ The initial state of the collaboration.
+  -> StaticPtr (Double -> world -> world)
+          -- ^ The time step function, which advances the state given the time
+          --   difference.
+  -> StaticPtr (Int -> Event -> world -> world)
+          -- ^ The event handling function, which updates the state given a
+          --   participant number and user interface event.
+  -> StaticPtr (Int -> world -> Picture)
+          -- ^ The visualization function, which converts a participant number
+          --   and the state into a picture to display.
+  -> IO ()
+
 -- | A version of 'collaborationOf' that avoids static pointers, and does not
 -- check for consistent parameters.
 unsafeCollaborationOf ::
-       Int
-    -> (StdGen -> world)
-    -> (Double -> world -> world)
-    -> (Int -> Event -> world -> world)
-    -> (Int -> world -> Picture)
-    -> IO ()
+  :: Int  -- ^ The number of participants to expect.  The participants will be
+          -- ^ numbered starting at 0.
+  -> (StdGen -> world)
+          -- ^ The initial state of the collaboration.
+  -> (Double -> world -> world)
+          -- ^ The time step function, which advances the state given the time
+          --   difference.
+  -> (Int -> Event -> world -> world)
+          -- ^ The event handling function, which updates the state given a
+          --   participant number and user interface event.
+  -> (Int -> world -> Picture)
+          -- ^ The visualization function, which converts a participant number
+          --   and the state into a picture to display.
+  -> IO ()
+
 -- | Prints a debug message to the CodeWorld console when a value is forced.
 -- This is equivalent to the similarly named function in `Debug.Trace`, except
 -- that it uses the CodeWorld console instead of standard output.
 trace :: Text -> a -> a
+
 --------------------------------------------------------------------------------
 -- A Drawing is an intermediate and simpler representation of a Picture, suitable
 -- for drawing. A drawing does not contain unnecessary metadata like CallStacks.

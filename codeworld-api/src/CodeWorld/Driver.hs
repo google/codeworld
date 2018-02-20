@@ -991,7 +991,7 @@ coordinatePlaneDrawer ds = drawDrawing ds coordinatePlaneDrawing
 drawDrawing :: DrawState -> Drawing -> Canvas ()
 drawDrawing ds (Shape drawer) = drawer ds
 drawDrawing ds (Transformation f d) = drawDrawing (f ds) d
-drawDrawing ds (Drawings (dr:drs)) = mapM_ (drawDrawing ds) (reverse drs)
+drawDrawing ds (Drawings drs) = mapM_ (drawDrawing ds) (reverse drs)
 
 setupScreenContext :: (Int, Int) -> Canvas ()
 setupScreenContext (cw, ch)

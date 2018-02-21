@@ -975,7 +975,7 @@ sectorDrawer b e r ds =
         Canvas.fill ()
 
 arcDrawer b e r w ds =
-    withDS ds $ drawFigure ds w $ Canvas.arc (0, 0, 25 * abs r, b, e, b > e)
+    drawFigure ds w $ Canvas.arc (0, 0, 25 * abs r, b, e, b > e)
 
 textDrawer sty fnt txt ds =
     withDS ds $ do

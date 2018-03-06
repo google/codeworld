@@ -200,7 +200,7 @@ But we could rewrite it to keep track of velocity in the x direction, as well.
 
     program = simulationOf(initial, step, picture)
     initial(rs) = (-9, -9, 6, 15)
-    step((x, y, vx, vy), dt) = (x + vx * dt, y + vy * dt, vy - 10 * dt)
+    step((x, y, vx, vy), dt) = (x + vx * dt, y + vy * dt, vx, vy - 10 * dt)
     picture(x, y, vx, vy) = translated(solidCircle(1/2), x, y)
 
 This simulation does the same thing as the one before it, but notice how we've

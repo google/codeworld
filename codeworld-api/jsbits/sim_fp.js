@@ -102,21 +102,25 @@ function cw$deterministic_math() {
     return atan + Math.PI;
   }
 
-  // Math.asinh = function(x) {
-  // }
+  Math.asinh = function(x) {
+    return Math.log(x + Math.sqrt(x * x + 1));
+  }
 
-  // Math.acosh = function(x) {
-  // }
+  Math.acosh = function(x) {
+    return Math.log(x + Math.sqrt(x * x - 1));
+  }
 
-  // Math.atanh = function(x) {
-  // }
+  Math.atanh = function(x) {
+    return Math.log((1 + x) / (1 - x)) / 2;
+  }
 
   Math.cos = function(x) {
     return Math.sin(x + Math.PI / 2);
   }
 
-  // Math.cosh = function(x) {
-  // }
+  Math.cosh = function(x) {
+    return (Math.exp(z) + Math.exp(-z)) / 2;
+  }
 
   Math.hypot = function() {
     var sumsq = 0;
@@ -191,13 +195,15 @@ function cw$deterministic_math() {
     return 0.225 * t * (Math.abs(t) - 1) + t;
   }
 
-  // Math.sinh = function(x) {
-  // }
+  Math.sinh = function(x) {
+    return (Math.exp(z) - Math.exp(-z)) / 2;
+  }
 
   Math.tan = function(x) {
     return Math.sin(x) / Math.cos(x);
   }
 
-  // Math.tanh = function(x) {
-  // }
+  Math.tanh = function(x) {
+    return Math.sinh(x) / Math.cosh(x);
+  }
 }

@@ -118,6 +118,45 @@ then
   run . sudo zypper -n install patch
   run . sudo zypper -n install autoconf
   run . sudo zypper -n install automake
+elif type brew > /dev/null 2> /dev/null
+then
+  echo Detected 'brew': Installing packages from there.
+  echo
+
+  # install missing packages -- don't try to upgrade already installed packages
+  function brew_install {
+    if ! brew ls $1 > /dev/null 2> /dev/null
+    then
+      run . brew install $1
+    fi
+  }
+
+  # Update and install basic dependencies
+  xcode-select --install
+
+  brew_install git
+  brew_install curl
+  brew_install wget
+  brew_install bzip2
+# No psmisc in homebrew
+  #brew_install psmisc
+
+#  brew_install ncurses-devel
+
+  # Needed for GHC 7.8
+  brew_install make
+  brew_install gcc
+  #brew_install gmp-devel
+
+  # Needed for GHCJS
+  # The cool kidz just call it node...
+  brew_install node@6
+
+  # Needed for ghcjs-boot --dev
+  # already present on OS X
+  #brew_install patch
+  brew_install autoconf
+  brew_install automake
 else
   echo "WARNING: Could not find package manager."
   echo "Make sure necessary packages are installed."
@@ -128,6 +167,8 @@ if /sbin/ldconfig -p | grep -q libgmp.so.10; then
   GHC_ARCH=`uname -m`-deb8-linux
 elif /sbin/ldconfig -p | grep -q libgmp.so.3; then
   GHC_ARCH=`uname -m`-centos67-linux
+elif uname | grep -q Darwin; then
+  GHC_ARCH=`uname -m`-apple-darwin
 else
   echo Sorry, but no supported libgmp is installed.
   exit 1

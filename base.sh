@@ -36,5 +36,5 @@ function run {
 }
 
 function cabal_install {
-  cabal install --force-reinstalls --global --prefix=$BUILD $@
+  cabal install --disable-library-profiling --force-reinstalls --global --prefix=$BUILD $@
 }

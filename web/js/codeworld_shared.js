@@ -446,8 +446,14 @@ function saveProjectAs() {
         return;
     }
 
-    // window.codeworldEditor.focus();
-    var text = 'Save Project As: <input type="text" style="width: 10em"/>';
+    var text;
+    if (nestedDirs.length > 1) {
+      text = 'Enter a name for your project in folder <b>' +
+          $('<div>').text(nestedDirs.slice(1).join('/')).html().replace(/ /g, '&nbsp;') +
+          ':';
+    } else {
+      text = 'Enter a name for your project:';
+    }
 
     var defaultName;
     if (window.openProjectName) {
@@ -463,7 +469,7 @@ function saveProjectAs() {
     sweetAlert({
         html: true,
         title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
-        text: 'Enter a name for your project:',
+        text: text,
         type: 'input',
         inputValue: defaultName,
         confirmButtonText: 'Save',

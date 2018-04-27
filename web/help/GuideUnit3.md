@@ -117,7 +117,7 @@ You can use `t` as many times in your animation as you like!  This example
 combines change in rotation and translation at the same time:
 
     program  = animationOf(wheel)
-    wheel(t) = translated(rotated(tire, -60 * t), t - 10, y)
+    wheel(t) = translated(rotated(tire, -60 * t), t - 10, 3)
     tire     = circle(1) & solidRectangle(0.1, 2)
 
 Top-down animation

@@ -106,6 +106,15 @@ projects.  For this feature to work, you need to obtain a Google API key, and st
 it in `web/clientId.txt`.  If you don't do this, the sign-in and save features will
 not function correctly, but the rest of the site will be usable.
 
+To get a Google API key for your CodeWorld installation, please consult the
+following resources:
+
+* [Creating a project](https://cloud.google.com/resource-manager/docs/creating-managing-projects)
+* [Creating an OAuth client ID](https://support.google.com/cloud/answer/6158849?hl=en)
+
+Once you have a Google API key, copy and paste it into `web/clientId.txt`. A running
+CodeWorld instance will immediately pick up changes to this file.
+
 ### Swap Space ###
 
 If you are installing CodeWorld on a virtual server, be aware that the default

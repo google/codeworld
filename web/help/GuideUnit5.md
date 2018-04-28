@@ -50,7 +50,7 @@ They are as follows:
    expressions to their immediate sides.  For example `5 * 2 ^ 2` means
    the same thing as `5 * (2 ^ 2)`, and does *not* mean the same as
    `(5 * 2) ^ 2`.  The `^` operator holds onto the `2`s first, and the
-   entire subexpression `2 ^ 2` is multiplied by 5.  If there are more than
+   entire subexpression `2 ^ 2` is multiplied by 5.  If there is more than
    one `^` operator in a row, they are grouped toward the right, so `3^3^3`
    means the same thing as `3^(3^3)`, and has a value of `3^27`, or about
    seven and a half trillion!

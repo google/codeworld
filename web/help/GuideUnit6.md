@@ -158,7 +158,7 @@ speed also changes, and needs to be remembered.
 
     program = simulationOf(initial, step, picture)
     initial(rs) = (-9, -9, 15)
-    step((x, y, vy), dt) = (x + 6 * dt, y + vy * dt, vx, vy - 10 * dt)
+    step((x, y, vy), dt) = (x + 6 * dt, y + vy * dt, vy - 10 * dt)
     picture(x, y, vy) = translated(solidCircle(1/2), x, y)
 
 As you can see, the velocity in the y direction, `vy`, starts at 15 units per

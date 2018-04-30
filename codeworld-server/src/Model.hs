@@ -1,4 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC
+    -fno-warn-unused-imports
+#-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.

@@ -1,4 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC
+    -fno-warn-name-shadowing
+#-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.

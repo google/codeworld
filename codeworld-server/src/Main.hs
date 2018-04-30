@@ -1,6 +1,12 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE CPP #-}
+{-# OPTIONS_GHC
+    -fno-warn-incomplete-patterns
+    -fno-warn-name-shadowing
+    -fno-warn-unused-imports
+    -fno-warn-unused-matches
+#-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.

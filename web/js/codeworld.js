@@ -90,7 +90,6 @@ function init() {
             });
         } else if (hash[0] != 'F') {
             setCode('');
-            if (!signedIn()) help();
         }
     } else {
         setCode('');
@@ -787,7 +786,7 @@ function signinCallback(result) {
     discoverProjects("", 0);
     cancelMove();
     updateUI();
-    if (isFirstSignin && !signedIn()) {
+    if (isFirstSignin && !signedIn() && location.hash.length <= 2) {
         help();
     }
     isFirstSignin = false;

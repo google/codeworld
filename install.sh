@@ -162,6 +162,7 @@ else
 fi
 
 # Choose the right GHC download
+MACHINE="$(uname -m)"
 case `uname -m` in
   i386)   GHC_CPU=i386;;
   i686)   GHC_CPU=i386;;

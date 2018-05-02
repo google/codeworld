@@ -163,7 +163,7 @@ fi
 
 # Choose the right GHC download
 MACHINE="$(uname -m)"
-case `uname -m` in
+case "${MACHINE}" in
   i386)   GHC_CPU=i386;;
   i686)   GHC_CPU=i386;;
   x86_64) GHC_CPU=x86_64;;
@@ -171,7 +171,6 @@ case `uname -m` in
   *) >&2 echo "Unrecognized machine: ${MACHINE}"; exit 1;;
 esac
 
-## then
 if /sbin/ldconfig -p | grep -q libgmp.so.10; then
   GHC_ARCH="${GHC_CPU}-deb8-linux"
 elif /sbin/ldconfig -p | grep -q libgmp.so.3; then

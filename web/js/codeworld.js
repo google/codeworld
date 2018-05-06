@@ -766,13 +766,14 @@ function compile() {
         sendHttp('POST', 'runMsg', data, function(request) {
             var msg = '';
             if (request.status == 200) {
-                msg = request.responseText;
+                msg = request.responseText.trim();
             } else if (request.status >= 400) {
                 msg = "Sorry!  Your program couldn't be run right now.  Please try again.";
             }
+            if (msg != '') msg += '\n\n';
 
             if (success) {
-                run(hash, dhash, 'Running...\n\n' + msg, false);
+                run(hash, dhash, msg, false);
             } else {
                 run(hash, '', msg, true);
             }

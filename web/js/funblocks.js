@@ -257,14 +257,15 @@ function compile(src,silent) {
             sendHttp('POST', 'runMsg', data, function(request) {
                 var msg = '';
                 if (request.status == 200) {
-                    msg = request.responseText;
+                    msg = request.responseText.trim();
                 } else if (request.status == 404) {
                     msg = "Sorry!  Your program couldn't be run right now.  Please try again.";
                 }
+                if (msg != '') msg += '\n\n';
                 if(silent) msg = null;
 
                 if (success) {
-                    run(xmlHash, hash, 'Running...\n\n' + msg, false, dhash);
+                    run(xmlHash, hash, msg, false, dhash);
                 } else {
                     run(xmlHash, hash, msg, true);
                 }

@@ -77,6 +77,7 @@ import Data.IORef
 import qualified Data.JSString
 import Data.JSString.Text
 import Data.Word
+import GHCJS.Concurrent (withoutPreemption)
 import GHCJS.DOM
 import qualified GHCJS.DOM.ClientRect as ClientRect
 import GHCJS.DOM.Document
@@ -1604,7 +1605,7 @@ runStatic pic = do
     debugState <- newMVar debugStateInit
     let draw =
             flip drawDebugState (pictureToDrawing pic) <$> readMVar debugState
-        drawToScreen = do
+        drawToScreen = withoutPreemption $ do
             drawing <- draw
             rect <- getBoundingClientRect canvas
             buffer <-

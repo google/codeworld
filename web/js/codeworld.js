@@ -106,6 +106,7 @@ function initCodeworld() {
             name: 'codeworld',
             overrideKeywords: codeworldKeywords
         },
+        undoDepth: 50,
         lineNumbers: true,
         autofocus: true,
         matchBrackets: window.buildMode !== 'codeworld',

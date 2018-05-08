@@ -90,6 +90,7 @@ getUser clientId =
 codeworldUploadPolicy :: UploadPolicy
 codeworldUploadPolicy =
     setMaximumFormInputSize (2 ^ (22 :: Int)) defaultUploadPolicy
+
 -- Processes the body of a multipart request.
 #if MIN_VERSION_snap_core(1,0,0)
 processBody :: Snap ()
@@ -102,6 +103,7 @@ processBody = do
     handleMultipart codeworldUploadPolicy (\x -> return ())
     return ()
 #endif
+
 getBuildMode :: Snap BuildMode
 getBuildMode =
     getParam "mode" >>= \case

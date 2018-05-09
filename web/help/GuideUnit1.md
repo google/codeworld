@@ -7,8 +7,8 @@ something means.  For example, you might write:
 
     wheel = circle(2)
 
-This is a definition of "wheel": it says that "wheel" means a circle with a radius of
-2.  *Radius* just means the distance from the center of the circle to the edge.
+This is a definition of "wheel": it says that "wheel" means a circle with a radius of 2.
+*Radius* just means the distance from the center of the circle to the edge.
 
 In CodeWorld, you do absolutely everything by naming things.  We call the names (like
 "wheel") *variables*.  So in this example, we defined a *variable* called

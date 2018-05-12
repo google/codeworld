@@ -84,12 +84,12 @@ getUser clientId =
                     when (clientId /= ClientId (Just (audience user))) pass
                     return user
 
--- A revised upload policy that allows up to 4 MB of uploaded data in a
+-- A revised upload policy that allows up to 8 MB of uploaded data in a
 -- request.  This is needed to handle uploads of projects including editor
 -- history.
 codeworldUploadPolicy :: UploadPolicy
 codeworldUploadPolicy =
-    setMaximumFormInputSize (2 ^ (22 :: Int)) defaultUploadPolicy
+    setMaximumFormInputSize (2 ^ (23 :: Int)) defaultUploadPolicy
 
 -- Processes the body of a multipart request.
 #if MIN_VERSION_snap_core(1,0,0)

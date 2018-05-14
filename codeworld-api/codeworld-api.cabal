@@ -20,7 +20,8 @@ Description:
 
 Library
   Hs-source-dirs:      src
-  Exposed-modules:     CodeWorld
+  Exposed-modules:     CodeWorld,
+                       CodeWorld.App
   Other-modules:       CodeWorld.CanvasM,
                        CodeWorld.Color,
                        CodeWorld.Picture,

@@ -251,4 +251,4 @@ connectScreen hdr t =
         colored connectColor (solidRectangle 14 3)
     connectColor =
         let k = (1 + sin (3 * t)) / 5
-        in fromHSL (k + 0.5) 0.8 0.7
+        in HSL (k + 0.5) 0.8 0.7

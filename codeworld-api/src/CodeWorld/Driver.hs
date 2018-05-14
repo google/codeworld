@@ -82,7 +82,7 @@ import qualified GHCJS.DOM.ClientRect as ClientRect
 import GHCJS.DOM.Document
 import GHCJS.DOM.Element
 import GHCJS.DOM.EventM
-import GHCJS.DOM.GlobalEventHandlers
+import GHCJS.DOM.GlobalEventHandlers hiding (error)
 import GHCJS.DOM.MouseEvent
 import GHCJS.DOM.NonElementParentNode
 import GHCJS.DOM.Types (Element, unElement)
@@ -1387,6 +1387,7 @@ getWebSocketURL = do
             case proto of
                 "http:" -> "ws://" <> hostname <> ":9160/gameserver"
                 "https:" -> "wss://" <> hostname <> "/gameserver"
+                _-> error "Unrecognized protocol"
     return url
 
 connectToGameServer :: (ServerMessage -> IO ()) -> IO WS.WebSocket

@@ -26,15 +26,6 @@ import Data.Aeson
 import Data.Text (Text)
 import System.FilePath (FilePath)
 
-data User = User
-    { userId :: Text
-    , audience :: Text
-    }
-
-instance FromJSON User where
-    parseJSON (Object v) = User <$> v .: "user_id" <*> v .: "audience"
-    parseJSON _ = mzero
-
 data Project = Project
     { projectName :: Text
     , projectSource :: Text

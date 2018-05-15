@@ -27,6 +27,11 @@
  * it can inspect the response code and headers as well as the contents.
  */
 function sendHttp(method, url, body, callback) {
+    const sendHttpFunc = signedIn() ? window.auth2.sendHttpAuth : sendHttpRaw;
+    return sendHttpFunc(method, url, body, callback);
+}
+
+function sendHttpRaw(method, url, body, callback) {
     var request = new XMLHttpRequest();
 
     if (callback) {
@@ -38,6 +43,32 @@ function sendHttp(method, url, body, callback) {
     request.open(method, url, true);
     request.send(body);
 }
+
+var Html = (() => {
+  const mine = {};
+
+  mine.encode = str => $("<div/>").text(str).html();
+
+  return mine;
+})();
+
+var Alert = (() => {
+  const mine = {};
+
+  // Load SweetAlert2 and SweetAlert in correct order
+  mine.init = () =>
+    Promise.resolve($.getScript("https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js"))
+      .then(() => {
+        window.sweetAlert2 = window.sweetAlert;
+        return $.getScript("https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.0/sweetalert.min.js");
+      })
+      .catch(e => console.log("Alert.init failed"));
+
+  // Build SweetAlert title HTML
+  mine.title = (text, iconClass) => `<i class="mdi mdi-72px ${iconClass}"></i>&nbsp; ${Html.encode(text)}`;
+
+  return mine;
+})();
 
 function registerStandardHints(successFunc)
 {
@@ -305,7 +336,7 @@ function addToMessage(msg) {
 }
 
 function signin() {
-    if (window.auth2) auth2.signIn({prompt: 'login'});
+    if (window.auth2) auth2.signIn();
 }
 
 function signout() {
@@ -316,26 +347,81 @@ function signedIn() {
     return window.auth2 && auth2.isSignedIn.get();
 }
 
-//signinCallback must be defined
-function handleGAPILoad() {
-    gapi.load('auth2', function() {
-        withClientId(function(clientId) {
-            window.auth2 = gapi.auth2.init({
-                client_id: clientId,
-                scope: 'profile',
-                fetch_basic_profile: false
-            });
+var Auth = (() => {
+  const mine = {};
 
-            auth2.isSignedIn.listen(signinCallback);
-            auth2.currentUser.listen(signinCallback);
+  function initLocalAuth() {
+    Promise.resolve($.getScript("/js/codeworld_local_auth.js"))
+      .then(() => onAuthInitialized(LocalAuth.init()))
+      .catch(e => console.log("initLocalAuth failed"));
+  }
 
-            if (auth2.isSignedIn.get() == true) auth2.signIn();
-        });
-    });
-    
+  function initGoogleAuth() {
+    Promise.resolve($.getScript("https://apis.google.com/js/platform.js"))
+      .then(() => gapi.load("auth2", () =>
+        withClientId(clientId => {
+          function sendHttpAuth(method, url, body, callback) {
+            if (body != null && signedIn()) {
+              const idToken = window.auth2.currentUser.get().getAuthResponse().id_token;
+              body.append("id_token", idToken);
+            }
+
+            const request = new XMLHttpRequest();
+
+            if (callback) {
+              request.onreadystatechange = () => {
+                if (request.readyState == 4) {
+                  callback(request);
+                }
+              };
+            }
+
+            request.open(method, url, true);
+            request.send(body);
+          }
+
+          const auth2 = Object.assign({ sendHttpAuth: sendHttpAuth }, gapi.auth2.init({
+            client_id: clientId,
+            scope: 'profile',
+            fetch_basic_profile: false
+          }));
+
+          onAuthInitialized(auth2);
+        })
+      ))
+      .catch(e => console.log("initGoogleAuth failed"));
+  }
+
+  function onAuthInitialized(auth) {
+    window.auth2 = auth;
+    auth2.isSignedIn.listen(signinCallback);
+    auth2.currentUser.listen(signinCallback);
+
+    if (auth2.isSignedIn.get()) {
+      auth2.signIn();
+    }
+
     discoverProjects("", 0);
     updateUI();
-}
+  }
+
+  mine.init = () =>
+    sendHttp("GET", "authMethod", null, resp => {
+      if (resp.status == 200) {
+        const obj = JSON.parse(resp.responseText);
+        switch (obj.authMethod) {
+          case "Local":
+            initLocalAuth();
+            break;
+          case "Google":
+            initGoogleAuth();
+            break;
+        }
+      }
+    });
+
+  return mine;
+})();
 
 function withClientId(f) {
     if (window.clientId) return f(window.clientId);
@@ -362,7 +448,6 @@ function discoverProjects_(path, buildMode, index) {
     }
 
     var data = new FormData();
-    data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
     data.append('mode', buildMode);
     data.append('path', path);
 
@@ -391,7 +476,6 @@ function moveHere_(path, buildMode, successFunc) {
     }
 
     var data = new FormData();
-    data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
     data.append('mode', buildMode);
     data.append('moveTo', path);
     data.append('moveFrom', window.move.path);
@@ -507,7 +591,6 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
         project['name'] = projectName;
 
         var data = new FormData();
-        data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
         data.append('project', JSON.stringify(project));
         data.append('mode', mode);
         data.append('path', path);
@@ -555,7 +638,6 @@ function deleteProject_(path, buildMode, successFunc) {
 
     function go() {
         var data = new FormData();
-        data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
         data.append('name', window.openProjectName);
         data.append('mode', buildMode);
         data.append('path', path);
@@ -591,7 +673,6 @@ function deleteFolder_(path, buildMode, successFunc) {
 
     function go() {
         var data = new FormData();
-        data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
         data.append('mode', buildMode);
         data.append('path', path);
 
@@ -632,7 +713,6 @@ function createFolder(path, buildMode, successFunc) {
 
             sweetAlert.close();
             var data = new FormData();
-            data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
             data.append('mode', buildMode);
             if (path == "")
                 data.append('path', folderName);
@@ -677,7 +757,6 @@ function loadProject_(index, name, buildMode, successFunc) {
     }
 
     var data = new FormData();
-    data.append('id_token', auth2.currentUser.get().getAuthResponse().id_token);
     data.append('name', name);
     data.append('mode', buildMode);
     data.append('path', nestedDirs.slice(1, index + 1).join('/'));
@@ -771,9 +850,7 @@ function shareFolder_(mode) {
     function go() {
         var msg = 'Copy this link to share your folder with others!';
 
-        var id_token = auth2.currentUser.get().getAuthResponse().id_token;
         var data = new FormData();
-        data.append('id_token', id_token);
         data.append('mode', mode);
         data.append('path', path);
  

@@ -20,6 +20,7 @@
 -}
 module Util where
 
+import CodeWorld.Account (UserId(..))
 import Control.Exception
 import Control.Monad
 import qualified Crypto.Hash as Crypto
@@ -125,8 +126,8 @@ shareLink (ShareId sh) =
     let s = T.unpack sh
     in take 3 s </> s
 
-userProjectDir :: BuildMode -> Text -> FilePath
-userProjectDir mode userId = projectRootDir mode </> T.unpack userId
+userProjectDir :: BuildMode -> UserId -> FilePath
+userProjectDir mode (UserId userIdRaw) = projectRootDir mode </> userIdRaw
 
 projectBase :: ProjectId -> FilePath
 projectBase (ProjectId p) =
@@ -163,23 +164,23 @@ ensureShareDir mode (ShareId s) = createDirectoryIfMissing True dir
   where
     dir = shareRootDir mode </> take 3 (T.unpack s)
 
-ensureUserProjectDir :: BuildMode -> Text -> IO ()
+ensureUserProjectDir :: BuildMode -> UserId -> IO ()
 ensureUserProjectDir mode userId =
     createDirectoryIfMissing True (userProjectDir mode userId)
 
-ensureUserBaseDir :: BuildMode -> Text -> FilePath -> IO ()
+ensureUserBaseDir :: BuildMode -> UserId -> FilePath -> IO ()
 ensureUserBaseDir mode userId path = do
     ensureUserProjectDir mode userId
     createDirectoryIfMissing
         False
         (userProjectDir mode userId </> takeDirectory path)
 
-ensureUserDir :: BuildMode -> Text -> FilePath -> IO ()
+ensureUserDir :: BuildMode -> UserId -> FilePath -> IO ()
 ensureUserDir mode userId path = do
     ensureUserProjectDir mode userId
     createDirectoryIfMissing False (userProjectDir mode userId </> path)
 
-ensureProjectDir :: BuildMode -> Text -> FilePath -> ProjectId -> IO ()
+ensureProjectDir :: BuildMode -> UserId -> FilePath -> ProjectId -> IO ()
 ensureProjectDir mode userId path projectId = do
     ensureUserProjectDir mode userId
     createDirectoryIfMissing False (dropFileName f)

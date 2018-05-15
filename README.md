@@ -99,12 +99,29 @@ don't, note that you will lose your user package database.
 
 See bug #4 for details.
 
-### Google API Key ###
+### Authentication
 
-CodeWorld allows users to authenticate using a Google account, and save their
-projects.  For this feature to work, you need to obtain a Google API key, and store
-it in `web/clientId.txt`.  If you don't do this, the sign-in and save features will
-not function correctly, but the rest of the site will be usable.
+CodeWorld offers two modes of authentication or the ability to run with
+authentication disabled with reduced functionality. The two methods provided
+are as follows:
+
+* [Google authentication](#google-auth): this method uses the Google API and
+  Google accounts and is the mode of authentication enabled in the live
+CodeWorld site; this allows CodeWorld to offload account and credential
+management to a third party
+* [Local authentication](#local-auth): this method uses a simple local database
+  of account information and JWT-based stateless authentication in the browser;
+this is useful for applications where minimal external dependencies is required
+
+Running CodeWorld in one of these two modes allows users to save and manage
+their projects and folders. With no authentication enabled, users are able to
+write, build and run code but lose the ability to save and manage projects and
+folders.
+
+#### <a name="google-auth"></a> Google authentication
+
+For Google authentication to work, you will need to obtain a Google API key and
+store it in `web/clientId.txt`.
 
 To get a Google API key for your CodeWorld installation, please consult the
 following resources:
@@ -114,6 +131,73 @@ following resources:
 
 Once you have a Google API key, copy and paste it into `web/clientId.txt`. A running
 CodeWorld instance will immediately pick up changes to this file.
+
+In general, the Google authentication system will be the easiest system to
+maintain since no local password stores are required. This is the mechanism
+used by the official, live version of CodeWorld.
+
+#### <a name="local-auth"></a> Local authentication
+
+For applications in which external dependencies, such as Google accounts, are
+not acceptable, we provide a simple local authentication system:
+
+* Uses a SQLite3 database
+* Uses good security practices by storing only BCrypt hashes of passwords
+* Uses JWT-based stateless authentication
+
+This provides a local authentication system with very similar workflows to
+Google authentication (i.e. stateless client-side sessions). Currently, no
+web-based administrative interface is provided. Instead, you can use the
+`codeworld-account` and `codeworld-auth` CLI tools to manage accounts.
+
+The local authentication system may be useful for situations where an
+instructor cannot reasonably expect all students to have a valid Google account
+and in which the instructor is willing to deploy a local CodeWorld stack.
+
+##### Create account database
+
+Local authentication will be enabled if a `local-auth.db` file is present in
+the application's root directory. To create this database, run the following
+from the root of the Git repository:
+
+```
+build/bin/codeworld-account -d local-auth.db init
+```
+
+This will create an empty account database with no accounts.
+
+##### Create one or more user accounts
+
+Assuming you have already created an account database as described above, you
+can create a new account as follows:
+
+```
+build/bin/codeworld-account -d local-auth.db create johndoe expired
+```
+
+This will create a new account with user ID `johndoe` with a randomly generated
+password. The account will be set to "expired" which means the user will be
+prompted to enter a new password at next sign-in time.
+
+Other subcommands are provided for updating and deleting accounts etc. For
+help:
+
+```
+build/bin/codeworld-account --help
+```
+
+##### Create a JWT secret
+
+To use local authentication, you will also need to generate a JWT secret. This
+is used to sign JWT tokens passed back and forth between the server and the
+browser. From the Git repository's root directory, run the following command:
+
+```
+build/bin/codeworld-auth generate-secret local-auth-secret.txt
+```
+
+This will generate a new random JWT signing key. The server should not expose
+this secret to external users.
 
 ### Swap Space ###
 

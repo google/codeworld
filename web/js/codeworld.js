@@ -19,6 +19,8 @@
  * entire document body and other JavaScript has loaded.
  */
 function init() {
+    Alert.init().then(Auth.init);
+
     allProjectNames = [[]];
     allFolderNames = [[]];
     openProjectName = null;
@@ -37,9 +39,7 @@ function init() {
         }
         if(hash[0] == 'F') {
             function go(folderName) {
-                var id_token = auth2.currentUser.get().getAuthResponse().id_token;
                 var data = new FormData();
-                data.append('id_token', id_token);
                 data.append('mode', window.buildMode);
                 data.append('shash', hash);
                 data.append('name', folderName);

@@ -565,8 +565,8 @@ function editorHelp(doc) {
         "<tr><td>Ctrl + Backspace </td><td>  Delete previous word</td></tr>" +
         "<tr><td>Ctrl + Delete </td><td>  Delete next word</td></tr>" +
         "<tr><td>Ctrl + F </td><td>  Search </td></tr>" +
-        "<tr><td>Ctrl + G </td><td>  Find next occurence </td></tr>" +
-        "<tr><td>Ctrl + Shift + G </td><td>  Find previous occurence </td></tr>" +
+        "<tr><td>Ctrl + G </td><td>  Find next occurrence </td></tr>" +
+        "<tr><td>Ctrl + Shift + G </td><td>  Find previous occurrence </td></tr>" +
         "<tr><td>Ctrl + Shift + F </td><td>  Replace </td></tr>" +
         "<tr><td>Ctrl + Shift + R </td><td>  Replace All </td></tr>" +
         "<tr><td>Ctrl + S </td><td> Save </td></tr>" +
@@ -575,7 +575,7 @@ function editorHelp(doc) {
         "<tr><td>Ctrl + U </td><td> Undo Selection </td></tr>" +
         "<tr><td>Ctrl + Shift +  U / Alt + U </td><td> Redo Selection </td></tr>" +
         "<tr><td>Tab / Ctrl + ] </td><td> Indent </td></tr>" +
-        "<tr><td>Shift + Tab / Ctrl + [ </td><td> Un-indent </td></tr>" +
+        "<tr><td>Shift + Tab / Ctrl + [ </td><td> Unindent </td></tr>" +
         "<tr><td>Ctrl + I </td><td> Reformat (Haskell Mode Only) </td></tr>" +
         "</tbody></table></div>";
     sweetAlert({

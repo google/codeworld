@@ -211,7 +211,6 @@ type NodeId = Int
 
 pictureToDrawing :: Picture -> Drawing
 pictureToDrawing (SolidPolygon _ pts s) = Shape $ polygonDrawer pts s
-pictureToDrawing (Polygon _ pts s) = Shape $ polygonDrawer pts s
 pictureToDrawing (Path _ pts w c s) = Shape $ pathDrawer pts w c s
 pictureToDrawing (Sector _ b e r) = Shape $ sectorDrawer b e r
 pictureToDrawing (Arc _ b e r w) = Shape $ arcDrawer b e r w
@@ -440,12 +439,7 @@ picToObj' :: Picture -> State.StateT Int IO JSVal
 picToObj' pic =
     case pic of
         SolidPolygon cs pts smooth -> do
-            obj <- init "solidpolygon"
-            ptsJS <- pointsToArr pts
-            setProps [("points", ptsJS), ("smooth", pToJSVal smooth)] obj
-            retVal obj
-        Polygon cs pts smooth -> do
-            obj <- init "polygon"
+            obj <- init "solidPolygon"
             ptsJS <- pointsToArr pts
             setProps [("points", ptsJS), ("smooth", pToJSVal smooth)] obj
             retVal obj
@@ -574,7 +568,6 @@ findCSMain cs =
 
 getPictureCS :: Picture -> CallStack
 getPictureCS (SolidPolygon cs _ _) = cs
-getPictureCS (Polygon cs _ _) = cs
 getPictureCS (Path cs _ _ _ _) = cs
 getPictureCS (Sector cs _ _ _) = cs
 getPictureCS (Arc cs _ _ _ _) = cs

@@ -51,9 +51,6 @@ data Picture
     = SolidPolygon CallStack
               [Point]
               !Bool
-    | Polygon CallStack
-              [Point]
-              !Bool
     | Path CallStack
            [Point]
            !Double
@@ -170,11 +167,11 @@ thickLoop n ps = Path callStack ps n True True
 
 -- | A solid smooth closed curve passing through these points.
 solidClosedCurve :: HasCallStack => [Point] -> Picture
-solidClosedCurve ps = Polygon callStack ps True
+solidClosedCurve ps = SolidPolygon callStack ps True
 
 -- | A solid smooth closed curve passing through these points.
 solidLoop :: HasCallStack => [Point] -> Picture
-solidLoop ps = Polygon callStack ps True
+solidLoop ps = SolidPolygon callStack ps True
 
 {-# WARNING solidLoop "Please use solidClosedCurve instead of solidLoop." #-}
 

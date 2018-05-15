@@ -1387,7 +1387,7 @@ getWebSocketURL = do
             case proto of
                 "http:" -> "ws://" <> hostname <> ":9160/gameserver"
                 "https:" -> "wss://" <> hostname <> "/gameserver"
-                _-> error "Unrecognized protocol"
+                _- > error "Unrecognized protocol"
     return url
 
 connectToGameServer :: (ServerMessage -> IO ()) -> IO WS.WebSocket

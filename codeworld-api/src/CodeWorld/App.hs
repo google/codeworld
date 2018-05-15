@@ -36,36 +36,31 @@ import System.Random (StdGen)
 
 data Rule :: * -> * where
     TimeRule :: (Double -> state -> state) -> Rule state
-    EventRule :: (Event -> state -> state) -> Rule state
-    PictureRule :: (state -> Picture) -> Rule state
-    MultiEventRule :: (Int -> Event -> state -> state) -> Rule state
-    MultiPictureRule :: (Int -> state -> Picture) -> Rule state
+    EventRule :: (Int -> Event -> state -> state) -> Rule state
+    PictureRule :: (Int -> state -> Picture) -> Rule state
     Rules :: [Rule state] -> Rule state
 
 timeRule :: (Double -> state -> state) -> Rule state
 timeRule = TimeRule
 
 eventRule :: (Event -> state -> state) -> Rule state
-eventRule = EventRule
+eventRule = EventRule . const
 
 pictureRule :: (state -> Picture) -> Rule state
-pictureRule = PictureRule
+pictureRule = PictureRule . const
 
 multiEventRule :: (Int -> Event -> state -> state) -> Rule state
-multiEventRule = MultiEventRule
+multiEventRule = EventRule
 
 multiPictureRule :: (Int -> state -> Picture) -> Rule state
-multiPictureRule = MultiPictureRule
+multiPictureRule = PictureRule
 
 subrule :: (a -> b) -> (b -> a -> a) -> Rule b -> Rule a
 subrule getter setter (TimeRule step_b) = TimeRule step_a
   where step_a dt a = setter (step_b dt (getter a)) a
 subrule getter setter (EventRule event_b) = EventRule event_a
-  where event_a ev a = setter (event_b ev (getter a)) a
-subrule getter setter (PictureRule pic) = PictureRule (pic . getter)
-subrule getter setter (MultiEventRule event_b) = MultiEventRule event_a
   where event_a k ev a = setter (event_b k ev (getter a)) a
-subrule getter setter (MultiPictureRule pic_b) = MultiPictureRule pic_a
+subrule getter setter (PictureRule pic_b) = PictureRule pic_a
   where pic_a n = pic_b n . getter
 subrule getter setter (Rules rules) = Rules (map (subrule getter setter) rules)
 
@@ -78,19 +73,17 @@ applicationOf w rules = interactionOf w step event picture
         event ev  = foldl' (.) id [ f ev | f <- concatMap eventHandlers rules ]
         picture w = pictures [ pic w | pic <- concatMap pictureHandlers rules ]
 
-        stepHandlers (TimeRule f)            = [f]
-        stepHandlers (Rules rs)              = concatMap stepHandlers rs
-        stepHandlers _                       = []
+        stepHandlers (TimeRule f)       = [f]
+        stepHandlers (Rules rs)         = concatMap stepHandlers rs
+        stepHandlers _                  = []
 
-        eventHandlers (EventRule f)          = [f]
-        eventHandlers (MultiEventRule f)     = [f 0]
-        eventHandlers (Rules rs)             = concatMap eventHandlers rs
-        eventHandlers _                      = []
+        eventHandlers (EventRule f)     = [f 0]
+        eventHandlers (Rules rs)        = concatMap eventHandlers rs
+        eventHandlers _                 = []
 
-        pictureHandlers (PictureRule f)      = [f]
-        pictureHandlers (MultiPictureRule f) = [f 0]
-        pictureHandlers (Rules rs)           = concatMap pictureHandlers rs
-        pictureHandlers _                    = []
+        pictureHandlers (PictureRule f) = [f 0]
+        pictureHandlers (Rules rs)      = concatMap pictureHandlers rs
+        pictureHandlers _               = []
 
 unsafeMultiApplicationOf :: Int -> (StdGen -> state) -> [Rule state] -> IO ()
 unsafeMultiApplicationOf n initial rules =
@@ -99,16 +92,14 @@ unsafeMultiApplicationOf n initial rules =
         event k ev  = foldl' (.) id [ f k ev | f <- concatMap eventHandlers rules ]
         picture k w = pictures [ pic k w | pic <- concatMap pictureHandlers rules ]
 
-        stepHandlers (TimeRule f)            = [f]
-        stepHandlers (Rules rs)              = concatMap stepHandlers rs
-        stepHandlers _                       = []
+        stepHandlers (TimeRule f)       = [f]
+        stepHandlers (Rules rs)         = concatMap stepHandlers rs
+        stepHandlers _                  = []
 
-        eventHandlers (EventRule f)          = [const f]
-        eventHandlers (MultiEventRule f)     = [f]
-        eventHandlers (Rules rs)             = concatMap eventHandlers rs
-        eventHandlers _                      = []
+        eventHandlers (EventRule f)     = [f]
+        eventHandlers (Rules rs)        = concatMap eventHandlers rs
+        eventHandlers _                 = []
 
-        pictureHandlers (PictureRule f)      = [const f]
-        pictureHandlers (MultiPictureRule f) = [f]
-        pictureHandlers (Rules rs)           = concatMap pictureHandlers rs
-        pictureHandlers _                    = []
+        pictureHandlers (PictureRule f) = [f]
+        pictureHandlers (Rules rs)      = concatMap pictureHandlers rs
+        pictureHandlers _               = []

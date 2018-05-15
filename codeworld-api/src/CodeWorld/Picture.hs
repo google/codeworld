@@ -48,7 +48,10 @@ dotProduct :: Vector -> Vector -> Double
 dotProduct (x1, y1) (x2, y2) = x1 * x2 + y1 * y2
 
 data Picture
-    = Polygon CallStack
+    = SolidPolygon CallStack
+              [Point]
+              !Bool
+    | Polygon CallStack
               [Point]
               !Bool
     | Path CallStack
@@ -135,7 +138,7 @@ thickPolygon n ps = Path callStack ps n True False
 
 -- | A solid polygon with these points as vertices
 solidPolygon :: HasCallStack => [Point] -> Picture
-solidPolygon ps = Polygon callStack ps False
+solidPolygon ps = SolidPolygon callStack ps False
 
 -- | A smooth curve passing through these points.
 curve :: HasCallStack => [Point] -> Picture

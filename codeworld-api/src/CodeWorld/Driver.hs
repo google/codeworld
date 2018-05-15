@@ -210,6 +210,7 @@ type DrawState = (Double, Double, Double, Double, Double, Double, Maybe Color)
 type NodeId = Int
 
 pictureToDrawing :: Picture -> Drawing
+pictureToDrawing (SolidPolygon _ pts s) = Shape $ polygonDrawer pts s
 pictureToDrawing (Polygon _ pts s) = Shape $ polygonDrawer pts s
 pictureToDrawing (Path _ pts w c s) = Shape $ pathDrawer pts w c s
 pictureToDrawing (Sector _ b e r) = Shape $ sectorDrawer b e r
@@ -438,6 +439,11 @@ picToObj = fmap fst . flip State.runStateT 0 . picToObj'
 picToObj' :: Picture -> State.StateT Int IO JSVal
 picToObj' pic =
     case pic of
+        SolidPolygon cs pts smooth -> do
+            obj <- init "solidpolygon"
+            ptsJS <- pointsToArr pts
+            setProps [("points", ptsJS), ("smooth", pToJSVal smooth)] obj
+            retVal obj
         Polygon cs pts smooth -> do
             obj <- init "polygon"
             ptsJS <- pointsToArr pts
@@ -567,6 +573,7 @@ findCSMain cs =
     Data.List.find ((== "main") . srcLocPackage . snd) (getCallStack cs)
 
 getPictureCS :: Picture -> CallStack
+getPictureCS (SolidPolygon cs _ _) = cs
 getPictureCS (Polygon cs _ _) = cs
 getPictureCS (Path cs _ _ _ _) = cs
 getPictureCS (Sector cs _ _ _) = cs

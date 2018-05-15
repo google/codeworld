@@ -24,6 +24,7 @@ module CodeWorld.App (
     pictureRule,
     multiEventRule,
     multiPictureRule,
+    subrule,
     rules,
     applicationOf,
     unsafeMultiApplicationOf
@@ -55,6 +56,18 @@ multiEventRule = MultiEventRule
 
 multiPictureRule :: (Int -> state -> Picture) -> Rule state
 multiPictureRule = MultiPictureRule
+
+subrule :: (a -> b) -> (b -> a -> a) -> Rule b -> Rule a
+subrule getter setter (TimeRule step_b) = TimeRule step_a
+  where step_a dt a = setter (step_b dt (getter a)) a
+subrule getter setter (EventRule event_b) = EventRule event_a
+  where event_a ev a = setter (event_b ev (getter a)) a
+subrule getter setter (PictureRule pic) = PictureRule (pic . getter)
+subrule getter setter (MultiEventRule event_b) = MultiEventRule event_a
+  where event_a k ev a = setter (event_b k ev (getter a)) a
+subrule getter setter (MultiPictureRule pic_b) = MultiPictureRule pic_a
+  where pic_a n = pic_b n . getter
+subrule getter setter (Rules rules) = Rules (map (subrule getter setter) rules)
 
 rules :: [Rule state] -> Rule state
 rules = Rules

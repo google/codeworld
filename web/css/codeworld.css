@@ -300,3 +300,7 @@ body {
   from { opacity: 1; }
   to { opacity: 0; }
 }
+
+.swal2-popup {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+}

@@ -12,3 +12,5 @@ nohup.out
 web/closure-library
 third_party/closure-library
 testcase-output
+/codeworld-auth.txt
+/codeworld-auth.db

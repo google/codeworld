@@ -49,7 +49,9 @@ run .  cabal_install ./codeworld-server \
                      ./codeworld-game-api \
                      ./codeworld-prediction \
                      ./codeworld-api \
-                     ./codeworld-game-server
+                     ./codeworld-game-server \
+                     ./codeworld-account \
+                     ./codeworld-auth
 
 # Build the JavaScript client code for FunBlocks, the block-based UI.
 run .  cabal_install --ghcjs ./funblocks-client

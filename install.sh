@@ -56,6 +56,9 @@ then
   run . sudo yum install -y patch
   run . sudo yum install -y autoconf
   run . sudo yum install -y automake
+
+  # Needed for codeworld-auth
+  run . sudo yum install -y openssl-devel
 elif type apt-get > /dev/null 2> /dev/null
 then
   echo Detected 'apt-get': Installing packages from there.
@@ -90,6 +93,9 @@ then
   run . sudo apt-get install -y autoconf
   run . sudo apt-get install -y automake
   run . sudo apt-get install -y libtinfo-dev
+
+  # Needed for codeworld-auth
+  run . sudo apt-get install -y libssl-dev
 elif type zypper > /dev/null 2> /dev/null
 then
   echo Detected 'zypper': Installing packages from there.
@@ -120,6 +126,9 @@ then
   run . sudo zypper -n install patch
   run . sudo zypper -n install autoconf
   run . sudo zypper -n install automake
+
+  # Needed for codeworld-auth
+  run . sudo zypper -n install libopenssl-devel
 elif type brew > /dev/null 2> /dev/null
 then
   echo Detected 'brew': Installing packages from there.
@@ -158,6 +167,9 @@ then
   #brew_install patch
   brew_install autoconf
   brew_install automake
+
+  # Needed for codeworld-auth
+  brew_install openssl
 else
   echo "WARNING: Could not find package manager."
   echo "Make sure necessary packages are installed."

@@ -210,6 +210,7 @@ type DrawState = (Double, Double, Double, Double, Double, Double, Maybe Color)
 type NodeId = Int
 
 pictureToDrawing :: Picture -> Drawing
+pictureToDrawing (SolidClosedCurve _ pts s) = Shape $ polygonDrawer pts s
 pictureToDrawing (SolidPolygon _ pts s) = Shape $ polygonDrawer pts s
 pictureToDrawing (Path _ pts w c s) = Shape $ pathDrawer pts w c s
 pictureToDrawing (Sector _ b e r) = Shape $ sectorDrawer b e r
@@ -443,6 +444,11 @@ picToObj' pic =
             ptsJS <- pointsToArr pts
             setProps [("points", ptsJS), ("smooth", pToJSVal smooth)] obj
             retVal obj
+        SolidClosedCurve cs pts smooth -> do
+            obj <- init "SolidClosedCurve"
+            ptsJS <- pointsToArr pts
+            setProps [("points", ptsJS), ("smooth", pToJSVal smooth)] obj
+            retVal obj
         Path cs pts w closed smooth -> do
             obj <- init "path"
             ptsJS <- pointsToArr pts
@@ -568,6 +574,7 @@ findCSMain cs =
 
 getPictureCS :: Picture -> CallStack
 getPictureCS (SolidPolygon cs _ _) = cs
+getPictureCS (SolidClosedCurve cs _ _) = cs
 getPictureCS (Path cs _ _ _ _) = cs
 getPictureCS (Sector cs _ _ _) = cs
 getPictureCS (Arc cs _ _ _ _) = cs

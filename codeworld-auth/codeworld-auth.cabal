@@ -1,0 +1,66 @@
+name:                                       codeworld-auth
+version:                                    0.1
+synopsis:                                   Google and local authentication for CodeWorld
+homepage:                                   https://github.com/google/codeworld#readme
+license:                                    Apache
+license-file:                               LICENSE
+author:                                     Richard Cook
+maintainer:                                 rcook@rcook.org
+copyright:                                  (c) 2018, The CodeWorld Authors
+category:                                   Command Line
+build-type:                                 Simple
+cabal-version:                              >= 1.10
+extra-source-files:                         README.md
+
+source-repository head
+  type:                                     git
+  location:                                 https://github.com/google/codeworld.git
+
+library
+  default-language:                         Haskell2010
+  hs-source-dirs:                           lib
+  ghc-options:                              -W
+                                            -Wall
+--                                            -Werror=incomplete-patterns
+--                                            -Werror=missing-methods
+                                            -fwarn-unused-imports
+  build-depends:                            aeson
+                                          , base >= 4.7 && < 5
+                                          , base64-bytestring
+                                          , bytestring
+                                          , codeworld-account
+                                          , cryptonite
+                                          , directory
+                                          , filepath
+                                          , http-conduit
+                                          , jwt
+                                          , snap-core
+                                          , split
+                                          , text
+                                          , time
+                                          , transformers
+                                          , unordered-containers
+  exposed-modules:                          CodeWorld.Auth
+                                          , CodeWorld.Auth.GoogleAuth
+                                          , CodeWorld.Auth.Http
+                                          , CodeWorld.Auth.LocalAuth
+                                          , CodeWorld.Auth.Secret
+                                          , CodeWorld.Auth.Time
+                                          , CodeWorld.Auth.Types
+                                          , CodeWorld.Auth.Util
+
+executable codeworld-auth
+  default-language:                         Haskell2010
+  hs-source-dirs:                           app
+  main-is:                                  Main.hs
+  ghc-options:                              -threaded
+                                            -rtsopts
+                                            -with-rtsopts=-N
+                                            -W
+                                            -Wall
+--                                            -Werror=incomplete-patterns
+--                                            -Werror=missing-methods
+                                            -fwarn-unused-imports
+  build-depends:                            base >= 4.7 && < 5
+                                          , codeworld-auth
+                                          , optparse-applicative

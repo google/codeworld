@@ -445,7 +445,7 @@ picToObj' pic =
             setProps [("points", ptsJS), ("smooth", pToJSVal smooth)] obj
             retVal obj
         SolidClosedCurve cs pts smooth -> do
-            obj <- init "SolidClosedCurve"
+            obj <- init "solidClosedCurve"
             ptsJS <- pointsToArr pts
             setProps [("points", ptsJS), ("smooth", pToJSVal smooth)] obj
             retVal obj

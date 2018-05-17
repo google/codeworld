@@ -50,10 +50,8 @@ dotProduct (x1, y1) (x2, y2) = x1 * x2 + y1 * y2
 data Picture
     = SolidPolygon CallStack
               [Point]
-              !Bool
     | SolidClosedCurve CallStack
               [Point]
-              !Bool
     | Path CallStack
            [Point]
            !Double
@@ -138,7 +136,7 @@ thickPolygon n ps = Path callStack ps n True False
 
 -- | A solid polygon with these points as vertices
 solidPolygon :: HasCallStack => [Point] -> Picture
-solidPolygon ps = SolidPolygon callStack ps False
+solidPolygon ps = SolidPolygon callStack ps
 
 -- | A smooth curve passing through these points.
 curve :: HasCallStack => [Point] -> Picture
@@ -170,11 +168,11 @@ thickLoop n ps = Path callStack ps n True True
 
 -- | A solid smooth closed curve passing through these points.
 solidClosedCurve :: HasCallStack => [Point] -> Picture
-solidClosedCurve ps = SolidClosedCurve callStack ps True
+solidClosedCurve ps = SolidClosedCurve callStack ps
 
 -- | A solid smooth closed curve passing through these points.
 solidLoop :: HasCallStack => [Point] -> Picture
-solidLoop ps = SolidPolygon callStack ps True
+solidLoop ps = SolidPolygon callStack ps
 
 {-# WARNING solidLoop "Please use solidClosedCurve instead of solidLoop." #-}
 

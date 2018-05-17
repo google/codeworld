@@ -210,8 +210,8 @@ type DrawState = (Double, Double, Double, Double, Double, Double, Maybe Color)
 type NodeId = Int
 
 pictureToDrawing :: Picture -> Drawing
-pictureToDrawing (SolidClosedCurve _ pts s) = Shape $ polygonDrawer pts True
-pictureToDrawing (SolidPolygon _ pts s) = Shape $ polygonDrawer pts False
+pictureToDrawing (SolidClosedCurve _ pts ) = Shape $ polygonDrawer pts True
+pictureToDrawing (SolidPolygon _ pts ) = Shape $ polygonDrawer pts False
 pictureToDrawing (Path _ pts w c s) = Shape $ pathDrawer pts w c s
 pictureToDrawing (Sector _ b e r) = Shape $ sectorDrawer b e r
 pictureToDrawing (Arc _ b e r w) = Shape $ arcDrawer b e r w
@@ -439,15 +439,15 @@ picToObj = fmap fst . flip State.runStateT 0 . picToObj'
 picToObj' :: Picture -> State.StateT Int IO JSVal
 picToObj' pic =
     case pic of
-        SolidPolygon cs pts smooth -> do
+        SolidPolygon cs pts -> do
             obj <- init "solidPolygon"
             ptsJS <- pointsToArr pts
-            setProps [("points", ptsJS), ("smooth", pToJSVal smooth)] obj
+            setProps [("points", ptsJS), ("smooth", pToJSVal True)] obj
             retVal obj
-        SolidClosedCurve cs pts smooth -> do
+        SolidClosedCurve cs pts -> do
             obj <- init "solidClosedCurve"
             ptsJS <- pointsToArr pts
-            setProps [("points", ptsJS), ("smooth", pToJSVal smooth)] obj
+            setProps [("points", ptsJS), ("smooth", pToJSVal False)] obj
             retVal obj
         Path cs pts w closed smooth -> do
             obj <- init "path"
@@ -573,8 +573,8 @@ findCSMain cs =
     Data.List.find ((== "main") . srcLocPackage . snd) (getCallStack cs)
 
 getPictureCS :: Picture -> CallStack
-getPictureCS (SolidPolygon cs _ _) = cs
-getPictureCS (SolidClosedCurve cs _ _) = cs
+getPictureCS (SolidPolygon cs _ ) = cs
+getPictureCS (SolidClosedCurve cs _ ) = cs
 getPictureCS (Path cs _ _ _ _) = cs
 getPictureCS (Sector cs _ _ _) = cs
 getPictureCS (Arc cs _ _ _ _) = cs

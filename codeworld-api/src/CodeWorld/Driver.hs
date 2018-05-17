@@ -210,8 +210,8 @@ type DrawState = (Double, Double, Double, Double, Double, Double, Maybe Color)
 type NodeId = Int
 
 pictureToDrawing :: Picture -> Drawing
-pictureToDrawing (SolidClosedCurve _ pts s) = Shape $ polygonDrawer pts s
-pictureToDrawing (SolidPolygon _ pts s) = Shape $ polygonDrawer pts s
+pictureToDrawing (SolidClosedCurve _ pts s) = Shape $ polygonDrawer pts True
+pictureToDrawing (SolidPolygon _ pts s) = Shape $ polygonDrawer pts False
 pictureToDrawing (Path _ pts w c s) = Shape $ pathDrawer pts w c s
 pictureToDrawing (Sector _ b e r) = Shape $ sectorDrawer b e r
 pictureToDrawing (Arc _ b e r w) = Shape $ arcDrawer b e r w

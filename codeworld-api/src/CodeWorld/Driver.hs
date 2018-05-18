@@ -442,12 +442,12 @@ picToObj' pic =
         SolidPolygon cs pts -> do
             obj <- init "solidPolygon"
             ptsJS <- pointsToArr pts
-            setProps [("points", ptsJS), ("smooth", pToJSVal True)] obj
+            setProps [("points", ptsJS), ("smooth", pToJSVal False)] obj
             retVal obj
         SolidClosedCurve cs pts -> do
             obj <- init "solidClosedCurve"
             ptsJS <- pointsToArr pts
-            setProps [("points", ptsJS), ("smooth", pToJSVal False)] obj
+            setProps [("points", ptsJS), ("smooth", pToJSVal True)] obj
             retVal obj
         Path cs pts w closed smooth -> do
             obj <- init "path"

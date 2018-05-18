@@ -573,8 +573,8 @@ findCSMain cs =
     Data.List.find ((== "main") . srcLocPackage . snd) (getCallStack cs)
 
 getPictureCS :: Picture -> CallStack
-getPictureCS (SolidPolygon cs _ ) = cs
-getPictureCS (SolidClosedCurve cs _ ) = cs
+getPictureCS (SolidPolygon cs _) = cs
+getPictureCS (SolidClosedCurve cs _) = cs
 getPictureCS (Path cs _ _ _ _) = cs
 getPictureCS (Sector cs _ _ _) = cs
 getPictureCS (Arc cs _ _ _ _) = cs

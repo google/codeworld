@@ -172,7 +172,7 @@ solidClosedCurve ps = SolidClosedCurve callStack ps
 
 -- | A solid smooth closed curve passing through these points.
 solidLoop :: HasCallStack => [Point] -> Picture
-solidLoop ps = SolidPolygon callStack ps
+solidLoop ps = SolidClosedCurve callStack ps
 
 {-# WARNING solidLoop "Please use solidClosedCurve instead of solidLoop." #-}
 

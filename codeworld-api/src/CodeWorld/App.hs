@@ -17,7 +17,9 @@
   limitations under the License.
 -}
 
-module CodeWorld.App (
+module CodeWorld.App
+    {-# WARNING "This is an experimental API.  It can change at any time." #-}
+    (
     Rule,
     timeRule,
     eventRule,

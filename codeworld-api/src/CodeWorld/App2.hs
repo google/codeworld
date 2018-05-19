@@ -17,7 +17,9 @@
   limitations under the License.
 -}
 
-module CodeWorld.App2 (
+module CodeWorld.App2
+    {-# WARNING "This is an experimental API.  It can change at any time." #-}
+    (
     Application,
     defaultApplication,
     withTimeStep,

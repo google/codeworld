@@ -6,6 +6,7 @@ License-file:        LICENSE
 Author:              The CodeWorld Authors
 Maintainer:          Chris Smith <cdsmith@gmail.com>
 Copyright:           (c) 2018, The CodeWorld Authors
+Bug-reports:         https://github.com/google/codeworld/issues
 Build-type:          Simple
 Cabal-version:       >=1.8
 

@@ -469,7 +469,7 @@ picToObj' pic =
                 obj
             retVal obj
         Polygon cs pts w closed smooth -> do
-            obj <- init "path"
+            obj <- init "polygon"
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
@@ -480,7 +480,7 @@ picToObj' pic =
                 obj
             retVal obj
         ThickPolygon cs pts w closed smooth -> do
-            obj <- init "path"
+            obj <- init "thickPolygon"
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
@@ -491,7 +491,7 @@ picToObj' pic =
                 obj
             retVal obj
         ClosedCurve cs pts w closed smooth -> do
-            obj <- init "path"
+            obj <- init "closedCurve"
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
@@ -502,7 +502,7 @@ picToObj' pic =
                 obj
             retVal obj
         ThickClosedCurve cs pts w closed smooth -> do
-            obj <- init "path"
+            obj <- init "thickClosedCurve"
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
@@ -513,7 +513,7 @@ picToObj' pic =
                 obj
             retVal obj
         Polyline cs pts w closed smooth -> do
-            obj <- init "path"
+            obj <- init "polyline"
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
@@ -524,7 +524,7 @@ picToObj' pic =
                 obj
             retVal obj
         ThickPolyline cs pts w closed smooth -> do
-            obj <- init "path"
+            obj <- init "thickPolyline"
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
@@ -535,7 +535,7 @@ picToObj' pic =
                 obj
             retVal obj
         Curve cs pts w closed smooth -> do
-            obj <- init "path"
+            obj <- init "Curve"
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
@@ -546,7 +546,7 @@ picToObj' pic =
                 obj
             retVal obj
         ThickCurve cs pts w closed smooth -> do
-            obj <- init "path"
+            obj <- init "thickCurve"
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)

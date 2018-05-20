@@ -213,13 +213,13 @@ pictureToDrawing :: Picture -> Drawing
 pictureToDrawing (SolidClosedCurve _ pts) = Shape $ polygonDrawer pts True
 pictureToDrawing (SolidPolygon _ pts) = Shape $ polygonDrawer pts False
 pictureToDrawing (Polygon _ pts) = Shape $ pathDrawer pts 0 True False
-pictureToDrawing (ThickPolygon _ pts) = Shape $ pathDrawer pts w True False
+pictureToDrawing (ThickPolygon _ pts w) = Shape $ pathDrawer pts w True False
 pictureToDrawing (ClosedCurve _ pts) = Shape $ pathDrawer pts 0 True True
-pictureToDrawing (ThickClosedCurve _ pts) = Shape $ pathDrawer pts w True True
+pictureToDrawing (ThickClosedCurve _ pts w) = Shape $ pathDrawer pts w True True
 pictureToDrawing (Polyline _ pts) = Shape $ pathDrawer pts 0 False False
-pictureToDrawing (ThickPolyline _ pts) = Shape $ pathDrawer pts w False False
+pictureToDrawing (ThickPolyline _ pts w) = Shape $ pathDrawer pts w False False
 pictureToDrawing (Curve _ pts) = Shape $ pathDrawer pts 0 False True
-pictureToDrawing (ThickCurve _ pts) = Shape $ pathDrawer pts w False True
+pictureToDrawing (ThickCurve _ pts w) = Shape $ pathDrawer pts w False True
 pictureToDrawing (Sector _ b e r) = Shape $ sectorDrawer b e r
 pictureToDrawing (Arc _ b e r w) = Shape $ arcDrawer b e r w
 pictureToDrawing (Text _ sty fnt txt) = Shape $ textDrawer sty fnt txt
@@ -467,7 +467,7 @@ picToObj' pic =
                 ]
                 obj
             retVal obj
-        ThickPolygon cs pts -> do
+        ThickPolygon cs pts w -> do
             obj <- init "thickPolygon"
             ptsJS <- pointsToArr pts
             setProps
@@ -489,7 +489,7 @@ picToObj' pic =
                 ]
                 obj
             retVal obj
-        ThickClosedCurve cs pts -> do
+        ThickClosedCurve cs pts w -> do
             obj <- init "thickClosedCurve"
             ptsJS <- pointsToArr pts
             setProps
@@ -500,7 +500,7 @@ picToObj' pic =
                 ]
                 obj
             retVal obj
-        Polyline cs pts-> do
+        Polyline cs pts -> do
             obj <- init "polyline"
             ptsJS <- pointsToArr pts
             setProps
@@ -511,7 +511,7 @@ picToObj' pic =
                 ]
                 obj
             retVal obj
-        ThickPolyline cs pts -> do
+        ThickPolyline cs pts w -> do
             obj <- init "thickPolyline"
             ptsJS <- pointsToArr pts
             setProps
@@ -533,7 +533,7 @@ picToObj' pic =
                 ]
                 obj
             retVal obj
-        ThickCurve cs pts -> do
+        ThickCurve cs pts w -> do
             obj <- init "thickCurve"
             ptsJS <- pointsToArr pts
             setProps
@@ -660,13 +660,13 @@ getPictureCS :: Picture -> CallStack
 getPictureCS (SolidPolygon cs _) = cs
 getPictureCS (SolidClosedCurve cs _) = cs
 getPictureCS (Polygon cs _) = cs
-getPictureCS (ThickPolygon cs _) = cs
+getPictureCS (ThickPolygon cs _ w) = cs
 getPictureCS (ClosedCurve cs _) = cs
-getPictureCS (ThickClosedCurve cs _) = cs
+getPictureCS (ThickClosedCurve cs _ w) = cs
 getPictureCS (Polyline cs _) = cs
-getPictureCS (ThickPolyline cs _) = cs
+getPictureCS (ThickPolyline cs _ w) = cs
 getPictureCS (Curve cs _) = cs
-getPictureCS (ThickCurve cs _) = cs
+getPictureCS (ThickCurve cs _ w) = cs
 getPictureCS (Sector cs _ _ _) = cs
 getPictureCS (Arc cs _ _ _ _) = cs
 getPictureCS (Text cs _ _ _) = cs

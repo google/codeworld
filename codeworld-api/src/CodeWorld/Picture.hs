@@ -58,18 +58,22 @@ data Picture
            [Point]
     | ThickPolygon CallStack
            [Point]
+           !Double
     | ClosedCurve CallStack
            [Point]
     | ThickClosedCurve CallStack
            [Point]
+           !Double
     | Polyline CallStack
            [Point]
     | ThickPolyline CallStack
            [Point]
+           !Double
     | Curve CallStack
            [Point]
     | ThickCurve CallStack
            [Point]
+           !Double
     | Sector CallStack
              !Double
              !Double
@@ -130,11 +134,11 @@ path ps = Polyline callStack ps
 
 -- | A thick sequence of line segments, with given line width and endpoints
 thickPolyline :: HasCallStack => Double -> [Point] -> Picture
-thickPolyline n ps = ThickPolygon callStack ps
+thickPolyline n ps = ThickPolygon callStack ps n
 
 -- | A thick sequence of line segments, with given line width and endpoints
 thickPath :: HasCallStack => Double -> [Point] -> Picture
-thickPath n ps = ThickPolyline callStack ps
+thickPath n ps = ThickPolyline callStack ps n
 
 {-# WARNING thickPath "Please used thickPolyline instead of thickPath." #-}
 
@@ -145,7 +149,7 @@ polygon ps = Polygon callStack ps
 -- | A thick polygon with this line width and these points as
 -- vertices
 thickPolygon :: HasCallStack => Double -> [Point] -> Picture
-thickPolygon n ps = ThickPolygon callStack ps
+thickPolygon n ps = ThickPolygon callStack ps n
 
 -- | A solid polygon with these points as vertices
 solidPolygon :: HasCallStack => [Point] -> Picture
@@ -157,7 +161,7 @@ curve ps = Curve callStack ps
 
 -- | A thick smooth curve with this line width, passing through these points.
 thickCurve :: HasCallStack => Double -> [Point] -> Picture
-thickCurve n ps = ThickCurve callStack ps
+thickCurve n ps = ThickCurve callStack ps n
 
 -- | A smooth closed curve passing through these points.
 closedCurve :: HasCallStack => [Point] -> Picture
@@ -171,11 +175,11 @@ loop ps = ClosedCurve callStack ps
 
 -- | A thick smooth closed curve with this line width, passing through these points.
 thickClosedCurve :: HasCallStack => Double -> [Point] -> Picture
-thickClosedCurve n ps = ThickClosedCurve callStack ps
+thickClosedCurve n ps = ThickClosedCurve callStack ps n
 
 -- | A thick smooth closed curve with this line width, passing through these points.
 thickLoop :: HasCallStack => Double -> [Point] -> Picture
-thickLoop n ps = ThickClosedCurve callStack ps
+thickLoop n ps = ThickClosedCurve callStack ps n
 
 {-# WARNING thickLoop "Please use thickClosedCurve instead of thickLoop." #-}
 

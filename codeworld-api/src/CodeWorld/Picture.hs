@@ -52,8 +52,6 @@ data Picture
               [Point]
     | SolidClosedCurve CallStack
               [Point]
-    | Path CallStack
-              [Point]
     | Polygon CallStack
            [Point]
     | ThickPolygon CallStack

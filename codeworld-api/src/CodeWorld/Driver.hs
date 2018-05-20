@@ -660,13 +660,13 @@ getPictureCS :: Picture -> CallStack
 getPictureCS (SolidPolygon cs _) = cs
 getPictureCS (SolidClosedCurve cs _) = cs
 getPictureCS (Polygon cs _) = cs
-getPictureCS (ThickPolygon cs _ w) = cs
+getPictureCS (ThickPolygon cs _ _) = cs
 getPictureCS (ClosedCurve cs _) = cs
-getPictureCS (ThickClosedCurve cs _ w) = cs
+getPictureCS (ThickClosedCurve cs _ _) = cs
 getPictureCS (Polyline cs _) = cs
-getPictureCS (ThickPolyline cs _ w) = cs
+getPictureCS (ThickPolyline cs _ _) = cs
 getPictureCS (Curve cs _) = cs
-getPictureCS (ThickCurve cs _ w) = cs
+getPictureCS (ThickCurve cs _ _) = cs
 getPictureCS (Sector cs _ _ _) = cs
 getPictureCS (Arc cs _ _ _ _) = cs
 getPictureCS (Text cs _ _ _) = cs

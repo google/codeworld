@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-.CodeMirror { font-size: 9pt; }
+.CodeMirror {
+  font-family: "Source Code Pro", monospace;
+  font-size: 9pt;
+}
 
 pre.cm-s-default span.cm-builtin,    div.CodeMirror span.cm-builtin    {color: #30a; font-weight: bold}
 pre.cm-s-default span.cm-builtin-2,  div.CodeMirror span.cm-builtin-2  {color: #38c; font-weight: bold}
@@ -100,7 +103,7 @@ li.CodeMirror-hint-active {
   background: transparent;
   width: 20em;
   color: inherit;
-  font-family: monospace;
+  font-family: "Source Code Pro", monospace;
 }
 
 .CodeMirror-dialog button {
@@ -109,4 +112,18 @@ li.CodeMirror-hint-active {
 
 .marked {
     background: #FFFF00;
+}
+
+/* source-code-pro-regular - latin */
+@font-face {
+  font-family: "Source Code Pro";
+  font-style: normal;
+  font-weight: 400;
+  src: url('../SourceCodePro/source-code-pro-v7-latin-regular.eot'); /* IE9 Compat Modes */
+  src: local('Source Code Pro'), local('SourceCodePro-Regular'),
+       url('../SourceCodePro/source-code-pro-v7-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('../SourceCodePro/source-code-pro-v7-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+       url('../SourceCodePro/source-code-pro-v7-latin-regular.woff') format('woff'), /* Modern Browsers */
+       url('../SourceCodePro/source-code-pro-v7-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('../SourceCodePro/source-code-pro-v7-latin-regular.svg#SourceCodePro') format('svg'); /* Legacy iOS */
 }

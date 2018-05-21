@@ -212,7 +212,14 @@ type NodeId = Int
 pictureToDrawing :: Picture -> Drawing
 pictureToDrawing (SolidClosedCurve _ pts) = Shape $ polygonDrawer pts True
 pictureToDrawing (SolidPolygon _ pts) = Shape $ polygonDrawer pts False
-pictureToDrawing (Path _ pts w c s) = Shape $ pathDrawer pts w c s
+pictureToDrawing (Polygon _ pts) = Shape $ pathDrawer pts 0 True False
+pictureToDrawing (ThickPolygon _ pts w) = Shape $ pathDrawer pts w True False
+pictureToDrawing (ClosedCurve _ pts) = Shape $ pathDrawer pts 0 True True
+pictureToDrawing (ThickClosedCurve _ pts w) = Shape $ pathDrawer pts w True True
+pictureToDrawing (Polyline _ pts) = Shape $ pathDrawer pts 0 False False
+pictureToDrawing (ThickPolyline _ pts w) = Shape $ pathDrawer pts w False False
+pictureToDrawing (Curve _ pts) = Shape $ pathDrawer pts 0 False True
+pictureToDrawing (ThickCurve _ pts w) = Shape $ pathDrawer pts w False True
 pictureToDrawing (Sector _ b e r) = Shape $ sectorDrawer b e r
 pictureToDrawing (Arc _ b e r w) = Shape $ arcDrawer b e r w
 pictureToDrawing (Text _ sty fnt txt) = Shape $ textDrawer sty fnt txt
@@ -449,14 +456,91 @@ picToObj' pic =
             ptsJS <- pointsToArr pts
             setProps [("points", ptsJS), ("smooth", pToJSVal True)] obj
             retVal obj
-        Path cs pts w closed smooth -> do
-            obj <- init "path"
+        Polygon cs pts -> do
+            obj <- init "polygon"
+            ptsJS <- pointsToArr pts
+            setProps
+                [ ("points", ptsJS)
+                , ("width", pToJSVal (0 :: Double))
+                , ("closed", pToJSVal True)
+                , ("smooth", pToJSVal False)
+                ]
+                obj
+            retVal obj
+        ThickPolygon cs pts w -> do
+            obj <- init "thickPolygon"
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
                 , ("width", pToJSVal w)
-                , ("closed", pToJSVal closed)
-                , ("smooth", pToJSVal smooth)
+                , ("closed", pToJSVal True)
+                , ("smooth", pToJSVal False)
+                ]
+                obj
+            retVal obj
+        ClosedCurve cs pts -> do
+            obj <- init "closedCurve"
+            ptsJS <- pointsToArr pts
+            setProps
+                [ ("points", ptsJS)
+                , ("width", pToJSVal (0 :: Double))
+                , ("closed", pToJSVal True)
+                , ("smooth", pToJSVal True)
+                ]
+                obj
+            retVal obj
+        ThickClosedCurve cs pts w -> do
+            obj <- init "thickClosedCurve"
+            ptsJS <- pointsToArr pts
+            setProps
+                [ ("points", ptsJS)
+                , ("width", pToJSVal w)
+                , ("closed", pToJSVal True)
+                , ("smooth", pToJSVal True)
+                ]
+                obj
+            retVal obj
+        Polyline cs pts -> do
+            obj <- init "polyline"
+            ptsJS <- pointsToArr pts
+            setProps
+                [ ("points", ptsJS)
+                , ("width", pToJSVal (0 :: Double))
+                , ("closed", pToJSVal False)
+                , ("smooth", pToJSVal False)
+                ]
+                obj
+            retVal obj
+        ThickPolyline cs pts w -> do
+            obj <- init "thickPolyline"
+            ptsJS <- pointsToArr pts
+            setProps
+                [ ("points", ptsJS)
+                , ("width", pToJSVal w)
+                , ("closed", pToJSVal False)
+                , ("smooth", pToJSVal False)
+                ]
+                obj
+            retVal obj
+        Curve cs pts -> do
+            obj <- init "curve"
+            ptsJS <- pointsToArr pts
+            setProps
+                [ ("points", ptsJS)
+                , ("width", pToJSVal (0 :: Double))
+                , ("closed", pToJSVal False)
+                , ("smooth", pToJSVal True)
+                ]
+                obj
+            retVal obj
+        ThickCurve cs pts w -> do
+            obj <- init "thickCurve"
+            ptsJS <- pointsToArr pts
+            setProps
+                [ ("points", ptsJS)
+                , ("width", pToJSVal w)
+                , ("closed", pToJSVal False)
+                , ("smooth", pToJSVal True)
                 ]
                 obj
             retVal obj
@@ -575,7 +659,14 @@ findCSMain cs =
 getPictureCS :: Picture -> CallStack
 getPictureCS (SolidPolygon cs _) = cs
 getPictureCS (SolidClosedCurve cs _) = cs
-getPictureCS (Path cs _ _ _ _) = cs
+getPictureCS (Polygon cs _) = cs
+getPictureCS (ThickPolygon cs _ _) = cs
+getPictureCS (ClosedCurve cs _) = cs
+getPictureCS (ThickClosedCurve cs _ _) = cs
+getPictureCS (Polyline cs _) = cs
+getPictureCS (ThickPolyline cs _ _) = cs
+getPictureCS (Curve cs _) = cs
+getPictureCS (ThickCurve cs _ _) = cs
 getPictureCS (Sector cs _ _ _) = cs
 getPictureCS (Arc cs _ _ _ _) = cs
 getPictureCS (Text cs _ _ _) = cs

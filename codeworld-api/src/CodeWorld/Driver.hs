@@ -461,7 +461,7 @@ picToObj' pic =
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
-                , ("width", pToJSVal True)
+                , ("width", pToJSVal (0::Double))
                 , ("closed", pToJSVal True)
                 , ("smooth", pToJSVal False)
                 ]
@@ -483,7 +483,7 @@ picToObj' pic =
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
-                , ("width", pToJSVal True)
+                , ("width", pToJSVal (0::Double))
                 , ("closed", pToJSVal True)
                 , ("smooth", pToJSVal True)
                 ]
@@ -505,7 +505,7 @@ picToObj' pic =
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
-                , ("width", pToJSVal True)
+                , ("width", pToJSVal (0::Double))
                 , ("closed", pToJSVal False)
                 , ("smooth", pToJSVal False)
                 ]
@@ -527,7 +527,7 @@ picToObj' pic =
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
-                , ("width", pToJSVal True)
+                , ("width", pToJSVal (0::Double))
                 , ("closed", pToJSVal False)
                 , ("smooth", pToJSVal True)
                 ]

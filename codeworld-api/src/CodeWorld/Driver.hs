@@ -461,7 +461,7 @@ picToObj' pic =
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
-                , ("width", pToJSVal (0::Double))
+                , ("width", pToJSVal (0 :: Double))
                 , ("closed", pToJSVal True)
                 , ("smooth", pToJSVal False)
                 ]
@@ -483,7 +483,7 @@ picToObj' pic =
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
-                , ("width", pToJSVal (0::Double))
+                , ("width", pToJSVal (0 :: Double))
                 , ("closed", pToJSVal True)
                 , ("smooth", pToJSVal True)
                 ]
@@ -505,7 +505,7 @@ picToObj' pic =
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
-                , ("width", pToJSVal (0::Double))
+                , ("width", pToJSVal (0 :: Double))
                 , ("closed", pToJSVal False)
                 , ("smooth", pToJSVal False)
                 ]
@@ -523,11 +523,11 @@ picToObj' pic =
                 obj
             retVal obj
         Curve cs pts -> do
-            obj <- init "Curve"
+            obj <- init "curve"
             ptsJS <- pointsToArr pts
             setProps
                 [ ("points", ptsJS)
-                , ("width", pToJSVal (0::Double))
+                , ("width", pToJSVal (0 :: Double))
                 , ("closed", pToJSVal False)
                 , ("smooth", pToJSVal True)
                 ]

@@ -81,9 +81,11 @@ data Picture
           !Double
           !Double
           !Double
-    | Text CallStack
+    | StyledText CallStack
            !TextStyle
            !Font
+           !Text
+    | Text CallStack
            !Text
     | Color CallStack
             !Color
@@ -243,10 +245,10 @@ sector = Sector callStack
 
 -- | A piece of text
 text :: HasCallStack => Text -> Picture
-text = Text callStack Plain Serif
+text = Text callStack
 
 styledText :: HasCallStack => TextStyle -> Font -> Text -> Picture
-styledText = Text callStack
+styledText = StyledText callStack Plain Serif
 
 -- | A picture drawn entirely in this color.
 colored :: HasCallStack => Color -> Picture -> Picture

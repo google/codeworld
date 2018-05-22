@@ -81,6 +81,11 @@ data Picture
           !Double
           !Double
           !Double
+    | ThickArc CallStack
+          !Double
+          !Double
+          !Double
+          !Double
     | Text CallStack
            !TextStyle
            !Font
@@ -228,7 +233,7 @@ arc b e r = Arc callStack b e r 0
 --
 -- Angles are in radians.
 thickArc :: HasCallStack => Double -> Double -> Double -> Double -> Picture
-thickArc w b e r = Arc callStack b e r w
+thickArc w b e r = ThickArc callStack b e r w
 
 -- | A solid circle, with this radius
 solidCircle :: HasCallStack => Double -> Picture

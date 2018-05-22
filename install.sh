@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -euo pipefail
+
 source base.sh
 
 rm -rf $BUILD ~/.ghc ~/.ghcjs
@@ -47,7 +49,7 @@ then
   run . sudo yum install -y gmp-devel
 
   # Needed for GHCJS
-  run . curl --silent --location https://rpm.nodesource.com/setup_7.x | run . sudo bash -
+  run --quiet . curl --silent --location https://rpm.nodesource.com/setup_8.x | run . sudo bash -
   run . sudo yum install -y nodejs
 
   # Needed for ghcjs-boot --dev
@@ -80,7 +82,7 @@ then
   run . sudo apt-get install -y libgmp-dev
 
   # Needed for GHCJS
-  run . curl -sL https://deb.nodesource.com/setup_7.x | run . sudo -E bash -
+  run --quiet . curl -sL https://deb.nodesource.com/setup_8.x | run . sudo -E bash -
   run . sudo apt-get install -y nodejs
 
   # Needed for ghcjs-boot --dev
@@ -171,15 +173,23 @@ case "${MACHINE}" in
   *) >&2 echo "Unrecognized machine: ${MACHINE}"; exit 1;;
 esac
 
-if /sbin/ldconfig -p | grep -q libgmp.so.10; then
+set +e
+result=$(/sbin/ldconfig -p 2> /dev/null)
+set -e
+if [[ $result = *libgmp.so.10* ]]; then
   GHC_ARCH="${GHC_CPU}-deb8-linux"
-elif /sbin/ldconfig -p | grep -q libgmp.so.3; then
+elif [[ $result = *libgmp.so.3* ]]; then
   GHC_ARCH="${GHC_CPU}-centos67-linux"
-elif uname | grep -q Darwin; then
-  GHC_ARCH="${GHC_CPU}-apple-darwin"
 else
-  echo Sorry, but no supported libgmp is installed.
-  exit 1
+  set +e
+  result=$(uname 2> /dev/null)
+  set -e
+  if [[ $result = *Darwin* ]]; then
+    GHC_ARCH="${GHC_CPU}-apple-darwin"
+  else
+    echo Sorry, but no supported libgmp is installed.
+    exit 1
+  fi
 fi
 
 # Install a precompiled GHC to bootstrap itself.

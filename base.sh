@@ -20,10 +20,23 @@ export LANG=${LANG:-C.UTF-8}
 export PREFIX=$BUILD
 
 function run {
-  OLD_PWD=$PWD
-  cd $1
+  local old_pwd=$PWD
+  local temp_pwd
+  local quiet=0
+
+  if [ "$1" = "--quiet" ]; then
+    quiet=1
+    shift
+  fi
+
+  temp_pwd=$1
   shift
-  echo RUNNING: $@
+
+  if [ $quiet -eq 0 ]; then
+    echo RUNNING: $@
+  fi
+
+  cd $temp_pwd
   $@
   if [ $? -ne 0 ]; then
     echo ============================
@@ -32,7 +45,7 @@ function run {
 
     exit 1
   fi
-  cd $OLD_PWD
+  cd $old_pwd
 }
 
 function cabal_install {

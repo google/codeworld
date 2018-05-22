@@ -80,7 +80,6 @@ data Picture
           !Double
           !Double
           !Double
-          !Double
     | ThickArc CallStack
           !Double
           !Double
@@ -226,7 +225,7 @@ thickCircle w = thickArc w 0 (2 * pi)
 --
 -- Angles are in radians.
 arc :: HasCallStack => Double -> Double -> Double -> Picture
-arc b e r = Arc callStack b e r 0
+arc b e r = Arc callStack b e r
 
 -- | A thick arc with this line width, starting and ending at these angles,
 -- with this radius.

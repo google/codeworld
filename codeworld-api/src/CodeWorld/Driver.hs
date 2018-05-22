@@ -221,7 +221,7 @@ pictureToDrawing (ThickPolyline _ pts w) = Shape $ pathDrawer pts w False False
 pictureToDrawing (Curve _ pts) = Shape $ pathDrawer pts 0 False True
 pictureToDrawing (ThickCurve _ pts w) = Shape $ pathDrawer pts w False True
 pictureToDrawing (Sector _ b e r) = Shape $ sectorDrawer b e r
-pictureToDrawing (Arc _ b e r w) = Shape $ arcDrawer b e r 0
+pictureToDrawing (Arc _ b e r) = Shape $ arcDrawer b e r 0
 pictureToDrawing (ThickArc _ b e r w) = Shape $ arcDrawer b e r w
 pictureToDrawing (Text _ sty fnt txt) = Shape $ textDrawer sty fnt txt
 pictureToDrawing (Logo _) = Shape $ logoDrawer
@@ -554,7 +554,7 @@ picToObj' pic =
                 ]
                 obj
             retVal obj
-        Arc cs b e r w -> do
+        Arc cs b e r -> do
             obj <- init "arc"
             setProps
                 [ ("startAngle", pToJSVal b)
@@ -679,7 +679,7 @@ getPictureCS (ThickPolyline cs _ _) = cs
 getPictureCS (Curve cs _) = cs
 getPictureCS (ThickCurve cs _ _) = cs
 getPictureCS (Sector cs _ _ _) = cs
-getPictureCS (Arc cs _ _ _ _) = cs
+getPictureCS (Arc cs _ _ _) = cs
 getPictureCS (ThickArc cs _ _ _ _) = cs
 getPictureCS (Text cs _ _ _) = cs
 getPictureCS (Color cs _ _) = cs

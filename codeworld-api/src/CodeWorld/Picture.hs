@@ -248,7 +248,7 @@ text :: HasCallStack => Text -> Picture
 text = Text callStack
 
 styledText :: HasCallStack => TextStyle -> Font -> Text -> Picture
-styledText = StyledText callStack Plain Serif
+styledText = StyledText callStack
 
 -- | A picture drawn entirely in this color.
 colored :: HasCallStack => Color -> Picture -> Picture

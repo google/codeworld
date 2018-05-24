@@ -586,7 +586,7 @@ picToObj' pic =
         StyledText cs style font txt -> do
             obj <- init "styledText"
             setProps
-                [ ("font", pToJSVal $ fontString Plain Serif)
+                [ ("font", pToJSVal $ fontString style font)
                 , ("text", pToJSVal txt)
                 ]
                 obj

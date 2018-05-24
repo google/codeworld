@@ -223,7 +223,8 @@ pictureToDrawing (ThickCurve _ pts w) = Shape $ pathDrawer pts w False True
 pictureToDrawing (Sector _ b e r) = Shape $ sectorDrawer b e r
 pictureToDrawing (Arc _ b e r) = Shape $ arcDrawer b e r 0
 pictureToDrawing (ThickArc _ b e r w) = Shape $ arcDrawer b e r w
-pictureToDrawing (Text _ sty fnt txt) = Shape $ textDrawer sty fnt txt
+pictureToDrawing (Text _ txt) = Shape $ textDrawer Plain Serif txt
+pictureToDrawing (StyledText _ sty fnt txt) = Shape $ textDrawer sty fnt txt
 pictureToDrawing (Logo _) = Shape $ logoDrawer
 pictureToDrawing (CoordinatePlane _) = Shape $ coordinatePlaneDrawer
 pictureToDrawing (Color _ col p) =
@@ -574,8 +575,16 @@ picToObj' pic =
                 ]
                 obj
             retVal obj
-        Text cs style font txt -> do
+        Text cs txt -> do
             obj <- init "text"
+            setProps
+                [ ("font", pToJSVal $ fontString Plain Serif)
+                , ("text", pToJSVal txt)
+                ]
+                obj
+            retVal obj
+        StyledText cs style font txt -> do
+            obj <- init "styledText"
             setProps
                 [ ("font", pToJSVal $ fontString style font)
                 , ("text", pToJSVal txt)
@@ -681,7 +690,8 @@ getPictureCS (ThickCurve cs _ _) = cs
 getPictureCS (Sector cs _ _ _) = cs
 getPictureCS (Arc cs _ _ _) = cs
 getPictureCS (ThickArc cs _ _ _ _) = cs
-getPictureCS (Text cs _ _ _) = cs
+getPictureCS (Text cs _) = cs
+getPictureCS (StyledText cs _ _ _) = cs
 getPictureCS (Color cs _ _) = cs
 getPictureCS (Translate cs _ _ _) = cs
 getPictureCS (Scale cs _ _ _) = cs

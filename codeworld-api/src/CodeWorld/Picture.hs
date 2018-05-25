@@ -108,7 +108,7 @@ data Picture
     | CoordinatePlane CallStack
     | Logo CallStack
     | Pictures [Picture]
-    | Blank Picture
+    | Blank CallStack
 
 
 data TextStyle
@@ -125,8 +125,8 @@ data Font
     | NamedFont !Text
 
 -- | A blank picture
-blank :: Picture
-blank = Pictures []
+blank :: HasCallStack => Picture
+blank = Blank callStack
 
 -- | A thin sequence of line segments, with these points as endpoints
 polyline :: HasCallStack => [Point] -> Picture

@@ -108,6 +108,8 @@ data Picture
     | CoordinatePlane CallStack
     | Logo CallStack
     | Pictures [Picture]
+    | Blank Picture
+
 
 data TextStyle
     = Plain

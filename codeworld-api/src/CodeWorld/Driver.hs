@@ -224,6 +224,7 @@ pictureToDrawing (Sector _ b e r) = Shape $ sectorDrawer b e r
 pictureToDrawing (Arc _ b e r) = Shape $ arcDrawer b e r 0
 pictureToDrawing (ThickArc _ b e r w) = Shape $ arcDrawer b e r w
 pictureToDrawing (Text _ txt) = Shape $ textDrawer Plain Serif txt
+pictureToDrawing (Blank _) = Drawings $ []
 pictureToDrawing (StyledText _ sty fnt txt) = Shape $ textDrawer sty fnt txt
 pictureToDrawing (Logo _) = Shape $ logoDrawer
 pictureToDrawing (CoordinatePlane _) = Shape $ coordinatePlaneDrawer
@@ -630,6 +631,7 @@ picToObj' pic =
             setProps [("pictures", unsafeCoerce arr)] obj
             retVal obj
         Logo cs -> init "logo" >>= retVal
+        Blank cs -> init "blank" >>= retVal
         CoordinatePlane cs -> init "coordinatePlane" >>= retVal
   where
     incId :: State.StateT Int IO Int
@@ -691,6 +693,7 @@ getPictureCS (Sector cs _ _ _) = cs
 getPictureCS (Arc cs _ _ _) = cs
 getPictureCS (ThickArc cs _ _ _ _) = cs
 getPictureCS (Text cs _) = cs
+getPictureCS (Blank _) = emptyCallStack
 getPictureCS (StyledText cs _ _ _) = cs
 getPictureCS (Color cs _ _) = cs
 getPictureCS (Translate cs _ _ _) = cs

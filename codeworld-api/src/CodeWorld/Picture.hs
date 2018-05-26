@@ -110,7 +110,6 @@ data Picture
     | Pictures [Picture]
     | Blank CallStack
 
-
 data TextStyle
     = Plain
     | Bold

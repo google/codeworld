@@ -54,6 +54,9 @@ data Picture
               [Point]
     | Polygon CallStack
            [Point]
+    | Rectangle CallStack
+           !Double
+           !Double
     | ThickPolygon CallStack
            [Point]
            !Double
@@ -200,8 +203,8 @@ solidLoop ps = SolidClosedCurve callStack ps
 
 -- | A thin rectangle, with this width and height
 rectangle :: HasCallStack => Double -> Double -> Picture
-rectangle w h =
-    polygon [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)]
+rectangle = Rectangle callStack --[(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)]
+    --polygon [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)]
 
 -- | A solid rectangle, with this width and height
 solidRectangle :: HasCallStack => Double -> Double -> Picture

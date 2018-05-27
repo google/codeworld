@@ -197,6 +197,8 @@ solidLoop :: HasCallStack => [Point] -> Picture
 solidLoop ps = SolidClosedCurve callStack ps
 
 {-# WARNING solidLoop "Please use solidClosedCurve instead of solidLoop." #-}
+rectangleToPolygon :: CallStack -> Double -> Double -> Picture
+rectangleToPolygon cs w h = Polygon cs [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)]
 
 -- | A thin rectangle, with this width and height
 rectangle :: HasCallStack => Double -> Double -> Picture

@@ -61,8 +61,6 @@ data Picture
            [Point]
     | SolidRectangle CallStack
            [Point]
-           !Double
-           !Double
     | ThickRectangle CallStack
            [Point]
            !Double
@@ -215,12 +213,9 @@ rectangleToPolygon cs w h = Polygon cs [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 
 rectangle :: HasCallStack => Double -> Double -> Picture
 rectangle ps = rectangleToPolygon callStack ps
 
--- rectangle w h = Rectangle callStack [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)] w h
-
 -- | A solid rectangle, with this width and height
 solidRectangle :: HasCallStack => Double -> Double -> Picture
-solidRectangle w h =
-    SolidRectangle callStack [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)] w h
+solidRectangle ps = rectangleToPolygon callStack ps
 
 -- | A thick rectangle, with this line width, and width and height
 thickRectangle :: HasCallStack => Double -> Double -> Double -> Picture

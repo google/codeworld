@@ -214,7 +214,7 @@ pictureToDrawing (SolidClosedCurve _ pts) = Shape $ polygonDrawer pts True
 pictureToDrawing (SolidPolygon _ pts) = Shape $ polygonDrawer pts False
 pictureToDrawing (Polygon _ pts) = Shape $ pathDrawer pts 0 True False
 pictureToDrawing (ThickPolygon _ pts w) = Shape $ pathDrawer pts w True False
-pictureToDrawing (Rectangle _ pts w h) = Shape $ pathDrawer pts 0 True False
+pictureToDrawing (Rectangle _ pts) = Shape $ pathDrawer pts 0 True False
 pictureToDrawing (SolidRectangle _ pts w h) = Shape $ polygonDrawer pts False
 pictureToDrawing (ThickRectangle _ pts lw w h) = Shape $ pathDrawer pts lw True False
 pictureToDrawing (ClosedCurve _ pts) = Shape $ pathDrawer pts 0 True True
@@ -484,7 +484,7 @@ picToObj' pic =
                 ]
                 obj
             retVal obj
-        Rectangle cs pts w h -> do
+        Rectangle cs pts -> do
             obj <- init "rectangle"
             ptsJS <- pointsToArr pts
             setProps
@@ -713,7 +713,7 @@ getPictureCS (SolidPolygon cs _) = cs
 getPictureCS (SolidClosedCurve cs _) = cs
 getPictureCS (Polygon cs _) = cs
 getPictureCS (ThickPolygon cs _ _) = cs
-getPictureCS (Rectangle cs _ _ _) = cs
+getPictureCS (Rectangle cs _) = cs
 getPictureCS (SolidRectangle cs _ _ _) = cs
 getPictureCS (ThickRectangle cs _ _ _ _) = cs
 getPictureCS (ClosedCurve cs _) = cs

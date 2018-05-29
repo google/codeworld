@@ -59,8 +59,6 @@ data Picture
            !Double
     | Rectangle CallStack
            [Point]
-           !Double
-           !Double
     | SolidRectangle CallStack
            [Point]
            !Double
@@ -215,8 +213,9 @@ rectangleToPolygon cs w h = Polygon cs [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 
 
 -- | A thin rectangle, with this width and height
 rectangle :: HasCallStack => Double -> Double -> Picture
-rectangle w h = 
-    Rectangle callStack [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)] w h
+rectangle ps = rectangleToPolygon callStack ps
+
+-- rectangle w h = Rectangle callStack [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)] w h
 
 -- | A solid rectangle, with this width and height
 solidRectangle :: HasCallStack => Double -> Double -> Picture

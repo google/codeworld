@@ -214,9 +214,9 @@ pictureToDrawing (SolidClosedCurve _ pts) = Shape $ polygonDrawer pts True
 pictureToDrawing (SolidPolygon _ pts) = Shape $ polygonDrawer pts False
 pictureToDrawing (Polygon _ pts) = Shape $ pathDrawer pts 0 True False
 pictureToDrawing (ThickPolygon _ pts w) = Shape $ pathDrawer pts w True False
-pictureToDrawing (Rectangle _ pts) = Shape $ pathDrawer pts 0 True False
-pictureToDrawing (SolidRectangle _ pts) = Shape $ polygonDrawer pts False
-pictureToDrawing (ThickRectangle _ pts lw w h) = Shape $ pathDrawer pts lw True False
+pictureToDrawing (Rectangle _ w h) = Shape $ pathDrawer (rectangleVertices w h) 0 True False
+pictureToDrawing (SolidRectangle _ w h) = Shape $ polygonDrawer (rectangleVertices w h) False
+pictureToDrawing (ThickRectangle _ lw w h) = Shape $ pathDrawer (rectangleVertices w h) lw True False
 pictureToDrawing (ClosedCurve _ pts) = Shape $ pathDrawer pts 0 True True
 pictureToDrawing (ThickClosedCurve _ pts w) = Shape $ pathDrawer pts w True True
 pictureToDrawing (Polyline _ pts) = Shape $ pathDrawer pts 0 False False
@@ -484,7 +484,7 @@ picToObj' pic =
                 ]
                 obj
             retVal obj
-        Rectangle cs pts -> do
+        Rectangle _ w h -> do
             obj <- init "rectangle"
             ptsJS <- pointsToArr pts
             setProps
@@ -495,12 +495,12 @@ picToObj' pic =
                 ]
                 obj
             retVal obj
-        SolidRectangle cs pts -> do
+        SolidRectangle _ w h -> do
             obj <- init "solidRectangle"
             ptsJS <- pointsToArr pts
             setProps [("points", ptsJS), ("smooth", pToJSVal False)] obj
             retVal obj
-        ThickRectangle cs pts lw w h-> do
+        ThickRectangle _ lw w h-> do
             obj <- init "thickRectangle"
             ptsJS <- pointsToArr pts
             setProps
@@ -713,9 +713,9 @@ getPictureCS (SolidPolygon cs _) = cs
 getPictureCS (SolidClosedCurve cs _) = cs
 getPictureCS (Polygon cs _) = cs
 getPictureCS (ThickPolygon cs _ _) = cs
-getPictureCS (Rectangle cs _) = cs
-getPictureCS (SolidRectangle cs _) = cs
-getPictureCS (ThickRectangle cs _ _ _ _) = cs
+getPictureCS (Rectangle cs _ _) = cs
+getPictureCS (SolidRectangle cs _ _) = cs
+getPictureCS (ThickRectangle cs _ _ _) = cs
 getPictureCS (ClosedCurve cs _) = cs
 getPictureCS (ThickClosedCurve cs _ _) = cs
 getPictureCS (Polyline cs _) = cs

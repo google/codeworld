@@ -213,16 +213,15 @@ rectangleVertices w h = [ (w / 2, h / 2), (w / 2, -h / 2), (-w / 2, -h / 2), (-w
 
 -- | A thin rectangle, with this width and height
 rectangle :: HasCallStack => Double -> Double -> Picture
-rectangle ps = rectangleToPolygon callStack ps
+rectangle w h = Rectangle callStack w h
 
 -- | A solid rectangle, with this width and height
 solidRectangle :: HasCallStack => Double -> Double -> Picture
-solidRectangle ps = rectangleToPolygon callStack ps
+solidRectangle w h = SolidRectangle callStack w h
 
 -- | A thick rectangle, with this line width, and width and height
 thickRectangle :: HasCallStack => Double -> Double -> Double -> Picture
-thickRectangle lw w h =
-    ThickRectangle callStack [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)] lw w h
+thickRectangle lw w h = ThickRectangle callStack lw w h
 
 -- | A thin circle, with this radius
 circle :: HasCallStack => Double -> Picture

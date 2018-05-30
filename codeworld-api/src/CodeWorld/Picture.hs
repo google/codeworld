@@ -88,6 +88,7 @@ data Picture
            !Double
     | ThickCircle CallStack
            !Double
+           !Double
     | Sector CallStack
              !Double
              !Double
@@ -236,7 +237,7 @@ circle r = Circle callStack r
 
 -- | A thick circle, with this line width and radius
 thickCircle :: HasCallStack => Double -> Double -> Picture
-thickCircle r w = ThickCircle callStack r w
+thickCircle r lw = ThickCircle callStack r lw
 --thickCircle w = thickArc w 0 (2 * pi)
 
 -- | A thin arc, starting and ending at these angles, with this radius

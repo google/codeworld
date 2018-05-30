@@ -487,8 +487,8 @@ picToObj' pic =
         Rectangle _ w h -> do
             obj <- init "rectangle"
             setProps
-                [ ("width",  pToJSVal (0 :: Double))
-                , ("height", pToJSVal (0 :: Double))
+                [ ("width",  pToJSVal w)
+                , ("height", pToJSVal h)
                 , ("closed", pToJSVal True)
                 , ("smooth", pToJSVal False)
                 ]
@@ -497,8 +497,8 @@ picToObj' pic =
         SolidRectangle _ w h -> do
             obj <- init "solidRectangle"
             setProps 
-                [ ("width",  pToJSVal (0 :: Double))
-                , ("height", pToJSVal (0 :: Double))
+                [ ("width",  pToJSVal w)
+                , ("height", pToJSVal h)
                 , ("closed", pToJSVal True)
                 , ("smooth", pToJSVal False)
                 ]
@@ -509,8 +509,8 @@ picToObj' pic =
             setProps
                 [
                   ("linewidth", pToJSVal lw)
-                , ("width",  pToJSVal (0 :: Double))
-                , ("height", pToJSVal (0 :: Double))
+                , ("width",  pToJSVal w)
+                , ("height", pToJSVal h)
                 , ("closed", pToJSVal True)
                 , ("smooth", pToJSVal False)
                 ]

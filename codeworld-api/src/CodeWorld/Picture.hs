@@ -231,12 +231,12 @@ thickRectangle lw w h = ThickRectangle callStack lw w h
 
 -- | A thin circle, with this radius
 circle :: HasCallStack => Double -> Picture
-circle r = Circle r 
+circle r = Circle callStack r 
 -- circle = arc 0 (2 * pi)
 
 -- | A thick circle, with this line width and radius
 thickCircle :: HasCallStack => Double -> Double -> Picture
-thickCircle r w = ThickCircle r w
+thickCircle r w = ThickCircle callStack r w
 --thickCircle w = thickArc w 0 (2 * pi)
 
 -- | A thin arc, starting and ending at these angles, with this radius
@@ -254,7 +254,7 @@ thickArc w b e r = ThickArc callStack b e r w
 
 -- | A solid circle, with this radius
 solidCircle :: HasCallStack => Double -> Picture
-solidCircle r = SolidCircle r
+solidCircle r = SolidCircle callStack r
 
 --solidCircle = sector 0 (2 * pi)
 

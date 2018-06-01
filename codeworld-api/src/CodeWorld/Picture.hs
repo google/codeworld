@@ -82,6 +82,13 @@ data Picture
     | ThickCurve CallStack
            [Point]
            !Double
+    | Circle CallStack
+           !Double
+    | SolidCircle CallStack
+           !Double
+    | ThickCircle CallStack
+           !Double
+           !Double
     | Sector CallStack
              !Double
              !Double
@@ -225,11 +232,11 @@ thickRectangle lw w h = ThickRectangle callStack lw w h
 
 -- | A thin circle, with this radius
 circle :: HasCallStack => Double -> Picture
-circle = arc 0 (2 * pi)
+circle = Circle callStack 
 
 -- | A thick circle, with this line width and radius
 thickCircle :: HasCallStack => Double -> Double -> Picture
-thickCircle w = thickArc w 0 (2 * pi)
+thickCircle = ThickCircle callStack
 
 -- | A thin arc, starting and ending at these angles, with this radius
 --
@@ -246,7 +253,7 @@ thickArc w b e r = ThickArc callStack b e r w
 
 -- | A solid circle, with this radius
 solidCircle :: HasCallStack => Double -> Picture
-solidCircle = sector 0 (2 * pi)
+solidCircle = SolidCircle callStack 
 
 -- | A solid sector of a circle (i.e., a pie slice) starting and ending at these
 -- angles, with this radius

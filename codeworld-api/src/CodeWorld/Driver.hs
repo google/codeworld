@@ -219,6 +219,9 @@ pictureToDrawing (SolidRectangle _ w h) = Shape $ polygonDrawer (rectangleVertic
 pictureToDrawing (ThickRectangle _ lw w h) = Shape $ pathDrawer (rectangleVertices w h) lw True False
 pictureToDrawing (ClosedCurve _ pts) = Shape $ pathDrawer pts 0 True True
 pictureToDrawing (ThickClosedCurve _ pts w) = Shape $ pathDrawer pts w True True
+pictureToDrawing (Circle _ r) = Shape $ arcDrawer 0 (2 * pi) r 0
+pictureToDrawing (SolidCircle _ r) = Shape $ sectorDrawer 0 (2 * pi) r 
+pictureToDrawing (ThickCircle _ r lw) = Shape $ arcDrawer 0 (2 * pi) r lw
 pictureToDrawing (Polyline _ pts) = Shape $ pathDrawer pts 0 False False
 pictureToDrawing (ThickPolyline _ pts w) = Shape $ pathDrawer pts w False False
 pictureToDrawing (Curve _ pts) = Shape $ pathDrawer pts 0 False True
@@ -538,6 +541,33 @@ picToObj' pic =
                 ]
                 obj
             retVal obj
+        Circle cs r -> do
+            obj <- init "circle"
+            setProps
+                [ ("radius", pToJSVal r)
+                , ("closed", pToJSVal True)
+                , ("smooth", pToJSVal False)
+                ]
+                obj
+            retVal obj
+        SolidCircle cs r -> do
+            obj <- init "solidCircle"
+            setProps
+                [ ("radius", pToJSVal r)
+                , ("closed", pToJSVal True)
+                ]
+                obj
+            retVal obj
+        ThickCircle cs r lw -> do
+            obj <- init "thickCircle"
+            setProps
+                [ ("radius", pToJSVal r)
+                , ("linewidth", pToJSVal lw)
+                , ("endAngle", pToJSVal True)
+                , ("radius", pToJSVal False)
+                ]
+                obj
+            retVal obj
         Polyline cs pts -> do
             obj <- init "polyline"
             ptsJS <- pointsToArr pts
@@ -723,6 +753,9 @@ getPictureCS (SolidRectangle cs _ _) = cs
 getPictureCS (ThickRectangle cs _ _ _) = cs
 getPictureCS (ClosedCurve cs _) = cs
 getPictureCS (ThickClosedCurve cs _ _) = cs
+getPictureCS (Circle cs _) = cs
+getPictureCS (SolidCircle cs _) = cs
+getPictureCS (ThickCircle cs _ _) = cs
 getPictureCS (Polyline cs _) = cs
 getPictureCS (ThickPolyline cs _ _) = cs
 getPictureCS (Curve cs _) = cs

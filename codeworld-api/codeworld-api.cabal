@@ -54,5 +54,4 @@ Library
 
   Exposed:             True
   Ghc-options:         -O2
-                       -Werror
-                       -fwarn-incomplete-patterns
+                       -Werror=incomplete-patterns

@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.
 
@@ -298,6 +300,14 @@ rotated = Rotate callStack
 -- A picture made by drawing these pictures, ordered from top to bottom.
 pictures :: [Picture] -> Picture
 pictures = Pictures
+
+#if MIN_VERSION_base(4,11,0)
+
+instance Semigroup Picture where
+    a <> (Pictures bs) = Pictures (a : bs)
+    a <> b             = Pictures [a, b]
+
+#endif
 
 instance Monoid Picture where
     mempty = blank

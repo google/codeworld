@@ -221,7 +221,7 @@ pictureToDrawing (ClosedCurve _ pts) = Shape $ pathDrawer pts 0 True True
 pictureToDrawing (ThickClosedCurve _ pts w) = Shape $ pathDrawer pts w True True
 pictureToDrawing (Circle _ r) = Shape $ arcDrawer 0 (2 * pi) r 0
 pictureToDrawing (SolidCircle _ r) = Shape $ sectorDrawer 0 (2 * pi) r 
-pictureToDrawing (ThickCircle _ r lw) = Shape $ arcDrawer 0 (2 * pi) r lw
+pictureToDrawing (ThickCircle _ lw r) = Shape $ arcDrawer 0 (2 * pi) r lw
 pictureToDrawing (Polyline _ pts) = Shape $ pathDrawer pts 0 False False
 pictureToDrawing (ThickPolyline _ pts w) = Shape $ pathDrawer pts w False False
 pictureToDrawing (Curve _ pts) = Shape $ pathDrawer pts 0 False True
@@ -558,7 +558,7 @@ picToObj' pic =
                 ]
                 obj
             retVal obj
-        ThickCircle cs r lw -> do
+        ThickCircle cs lw r -> do
             obj <- init "thickCircle"
             setProps
                 [ ("radius", pToJSVal r)

@@ -57,6 +57,7 @@ module Internal.Prelude
     , first
     , last
     , rest
+    , groups
     , while
     , until
     , after
@@ -247,6 +248,15 @@ last (xs, n) = withFrozenCallStack (P.drop (P.length xs P.- toInt n) xs)
 -- In general, @xs = first(xs, n) ++ rest(xs, n)@.
 rest :: HasCallStack => ([a], Number) -> [a]
 rest (xs, n) = withFrozenCallStack (P.drop (toInt n) xs)
+
+-- | Converts a list of elements into a list of smaller lists, each of the
+-- given length.
+--
+-- For example, @[ (x, y) | [x, y] <- groups(randomNumbers(42), 2) ]@.
+groups :: ([a], Number) -> [[a]]
+groups ([], n) = []
+groups (xs, n) = withFrozenCallStack $
+    P.take (toInt n) xs : groups (P.drop (toInt n) xs, n)
 
 -- | Gives the longest prefix of a list for which a condition is true.
 --

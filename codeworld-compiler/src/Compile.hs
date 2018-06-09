@@ -63,6 +63,10 @@ compileSource stage src out err mode =
                     case mode of
                         "haskell" -> return haskellCompatibleBuildArgs
                         "codeworld" -> standardBuildArgs <$> hasOldStyleMain src
+                let timeout =
+                      case stage of
+                          GenBase _ _ _ -> maxBound :: Int
+                          _             -> userCompileMicros
                 linkArgs <-
                     case stage of
                         FullBuild -> return []
@@ -73,7 +77,7 @@ compileSource stage src out err mode =
                             copyFile syms (tmpdir </> "out.base.symbs")
                             return ["-use-base", "out.base.symbs"]
                 let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
-                runCompiler tmpdir userCompileMicros ghcjsArgs >>= \case
+                runCompiler tmpdir timeout ghcjsArgs >>= \case
                     Nothing -> return False
                     Just output -> do
                         let filteredOutput =
@@ -157,28 +161,34 @@ matches txt pat = txt =~ pat
 
 runCompiler :: FilePath -> Int -> [String] -> IO (Maybe ByteString)
 runCompiler dir micros args = do
-    (Just inh, Just outh, Just errh, pid) <-
-        createProcess
-            (proc "ghcjs" args)
-            { cwd = Just dir
-            , std_in = CreatePipe
-            , std_out = CreatePipe
-            , std_err = CreatePipe
-            , close_fds = True
-            }
-    hClose inh
-    result <- withTimeout micros $ B.hGetContents errh
-    hClose outh
-    terminateProcess pid
-    _ <- waitForProcess pid
-    return result
+    result <- tryCompile ("-O2" : args)
+    case result of
+        Just _  -> return result
+        Nothing -> tryCompile args
+  where
+    tryCompile :: [String] -> IO (Maybe ByteString)
+    tryCompile currentArgs = do
+        (Just inh, Just outh, Just errh, pid) <-
+            createProcess
+                (proc "ghcjs" args)
+                { cwd = Just dir
+                , std_in = CreatePipe
+                , std_out = CreatePipe
+                , std_err = CreatePipe
+                , close_fds = True
+                }
+        hClose inh
+        result <- withTimeout micros $ B.hGetContents errh
+        hClose outh
+        terminateProcess pid
+        _ <- waitForProcess pid
+        return result
 
 standardBuildArgs :: Bool -> [String]
 standardBuildArgs True =
     [ "-DGHCJS_BROWSER"
     , "-dedupe"
     , "-Wall"
-    , "-O2"
     , "-fno-warn-deprecated-flags"
     , "-fno-warn-amp"
     , "-fno-warn-missing-signatures"
@@ -221,7 +231,6 @@ haskellCompatibleBuildArgs =
     [ "-DGHCJS_BROWSER"
     , "-dedupe"
     , "-Wall"
-    , "-O2"
     , "-package"
     , "codeworld-api"
     , "-package"

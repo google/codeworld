@@ -906,9 +906,9 @@ logoDrawer ctx ds =
     { drawShape =
           withDS ctx ds $ do
               Canvas.scale 1 (-1) ctx
-              drawCodeWorldLogo ctx ds (-225) (-50) 450 100
+              drawCodeWorldLogo ctx ds (-221) (-91) 442 182
     , shapeContains =
-          do withDS ctx ds $ Canvas.rect (-225) (-50) 450 100 ctx
+          do withDS ctx ds $ Canvas.rect (-221) (-91) 442 182 ctx
              isPointInPath ctx
     }
 

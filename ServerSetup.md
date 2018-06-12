@@ -4,7 +4,7 @@ These steps *only* apply to the main production server, and should not be used f
 
 1. `sudo apt-get install git`
 2. `git clone git@github.com:google/codeworld.git`
-3. `./install.sh'
+3. `./install.sh`
 4. `echo 94846197422-jnkt1qd737993e7llrfa5pb1bqc72nog.apps.googleusercontent.com > web/clientId.txt`
 5. `sudo apt-get install nginx`
 6. Copy the SSL certificates into `/etc/nginx/ssl`, as follows:

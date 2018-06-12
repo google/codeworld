@@ -123,6 +123,8 @@ module Internal.Exports
     , Program
     , drawingOf
     , animationOf
+    , activityOf
+    , groupActivityOf
     , simulationOf
     , interactionOf
     , collaborationOf

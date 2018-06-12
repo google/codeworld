@@ -36,7 +36,7 @@ import qualified "base" Prelude as P
 {-| An event initiated by the user.
 
     Values of this type represent events that the user triggers when
-    using an interaction, defined with 'interactionOf'.
+    using an interactive program.
 
     Key events describe the key as 'Text'.  Most keys are represented
     by a single character text string, with the capital letter or other
@@ -74,18 +74,16 @@ data Event
     | MousePress !(CW.MouseButton, Point)
     | MouseRelease !(CW.MouseButton, Point)
     | MouseMovement !Point
+    | TimePassing !Number
     deriving (P.Eq)
 
 pattern PointerPress :: Point -> Event
-
 pattern PointerPress p = MousePress (CW.LeftButton, p)
 
 pattern PointerRelease :: Point -> Event
-
 pattern PointerRelease p = MouseRelease (CW.LeftButton, p)
 
 pattern PointerMovement :: Point -> Event
-
 pattern PointerMovement p = MouseMovement p
 
 {-# RULES
@@ -98,3 +96,4 @@ fromCWEvent (CW.KeyRelease key) = KeyRelease (toCWText key)
 fromCWEvent (CW.MousePress btn p) = MousePress (btn, fromCWVect p)
 fromCWEvent (CW.MouseRelease btn p) = MouseRelease (btn, fromCWVect p)
 fromCWEvent (CW.MouseMovement p) = MouseMovement (fromCWVect p)
+fromCWEvent (CW.TimePassing dt) = TimePassing (fromDouble dt)

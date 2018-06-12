@@ -19,6 +19,9 @@ module CodeWorld (
     -- * Entry points
       drawingOf
     , animationOf
+    , activityOf
+    , groupActivityOf
+    , unsafeGroupActivityOf
     , simulationOf
     , interactionOf
     , collaborationOf

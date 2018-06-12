@@ -20,6 +20,8 @@ module Internal.CodeWorld
     ( Program
     , drawingOf
     , animationOf
+    , activityOf
+    , groupActivityOf
     , simulationOf
     , interactionOf
     , collaborationOf
@@ -59,6 +61,22 @@ drawingOf pic = CW.drawingOf (toCWPic pic) `catch` reportError
 
 animationOf :: (Number -> Picture) -> Program
 animationOf f = CW.animationOf (toCWPic . f . fromDouble) `catch` reportError
+
+activityOf ::
+       ( [Number] -> world
+       , (world, Event) -> world
+       , world -> Picture)
+    -> Program
+activityOf (initial, event, draw) = interactionOf (initial, fst, event, draw)
+
+groupActivityOf ::
+       ( Number
+       , [Number] -> state
+       , (state, Event, Number) -> state
+       , (state, Number) -> Picture)
+    -> Program
+groupActivityOf (players, initial, event, picture) =
+    collaborationOf (players, initial, fst, event, picture)
 
 simulationOf ::
        ([Number] -> world, (world, Number) -> world, world -> Picture)

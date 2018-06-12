@@ -728,11 +728,16 @@ picToObj' pic =
             return $ (unsafeCoerce arr :: JSVal)
     setProps xs obj = liftIO $ void $ mapM (\(s, v) -> setProp s v obj) xs
 
+-- describePicture 
+describePicture :: Picture -> String
+describePicture (Circle cs _) = "Circle"
+
+
 setCallInfo :: Picture -> Object -> IO ()
 setCallInfo pic obj =
     case findCSMain (getPictureCS pic) of
         Just (_, src) -> do
-            setProp "name" (pToJSVal $ show pic) obj
+            setProp "name" (pToJSVal $ describePicture pic) obj
             setProp "startLine" (pToJSVal $ srcLocStartLine src) obj
             setProp "startCol" (pToJSVal $ srcLocStartCol src) obj
             setProp "endLine" (pToJSVal $ srcLocEndLine src) obj

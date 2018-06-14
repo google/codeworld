@@ -67,6 +67,7 @@ import System.IO
 import System.IO.Unsafe
 import System.Mem.StableName
 import System.Random
+import Text.Printf
 import Text.Read
 #ifdef ghcjs_HOST_OS
 import CodeWorld.Message
@@ -730,11 +731,16 @@ picToObj' pic =
 
 -- describePicture 
 describePicture :: Picture -> String
-describePicture (Circle cs _) = "Circle::(Double)"
-describePicture (Rectangle cs _ _) = "Rectangle::(Double, Double)"
+describePicture (Circle _ r) = printf "circle { radius = %.4f }" r
+describePicture (Rectangle _ w h) = printf "rectangle { width = %.4f } { height = %.4f }" w h
 describePicture (SolidPolygon cs _) = "SolidPolygon::(Point)"
 
 {- 
+
+import Text.Printf
+...
+describePicture (Circle _ r) = printf "circle { radius = %.4f }" r
+
 --haven't tested these yet
 describePicture (SolidPolygon cs _) = cs
 describePicture (SolidClosedCurve cs _) = cs

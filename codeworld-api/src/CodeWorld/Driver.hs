@@ -742,7 +742,7 @@ describePicture (ThickRectangle _ lw w h) = printf "thickRectangle { linewidth =
 --describePicture(ThickClosedCurve cs _ _) = cs
 describePicture (Circle _ r) = printf "circle { radius = %4f }" r
 --describePicture (SolidCircle cs _) = cs
---describePicture (ThickCircle cs _ _) = cs
+describePicture (ThickCircle _ lw r) = printf "circle { llinewidth = %4f , radius = %4f }" lw r
 --describePicture (Polyline cs _) = cs
 --describePicture (ThickPolyline cs _ _) = cs
 --describePicture (Curve cs _) = cs

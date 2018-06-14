@@ -158,7 +158,7 @@ path ps = Polyline callStack ps
 
 -- | A thick sequence of line segments, with given line width and endpoints
 thickPolyline :: HasCallStack => Double -> [Point] -> Picture
-thickPolyline n ps = ThickPolygon callStack ps n
+thickPolyline n ps = ThickPolyline callStack ps n
 
 -- | A thick sequence of line segments, with given line width and endpoints
 thickPath :: HasCallStack => Double -> [Point] -> Picture

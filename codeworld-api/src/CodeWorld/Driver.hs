@@ -731,8 +731,8 @@ picToObj' pic =
 
 -- describePicture 
 describePicture :: Picture -> String
-describePicture (Circle _ r) = printf "circle { radius = %.4f }" r
-describePicture (Rectangle _ w h) = printf "rectangle { width = %.4f } { height = %.4f }" w h
+describePicture (Circle _ r) = printf "circle { radius = %4f }" r
+describePicture (Rectangle _ w h) = printf "rectangle { width = %4f , height = %4f }" w h
 describePicture (SolidPolygon cs _) = "SolidPolygon::(Point)"
 
 {- 

@@ -69,6 +69,10 @@ module CodeWorld (
     , coordinatePlane
     , codeWorldLogo
     , Point
+    , translatedPoint
+    , rotatedPoint
+    , scaledPoint
+    , dilatedPoint
     , Vector
     , vectorLength
     , vectorDirection

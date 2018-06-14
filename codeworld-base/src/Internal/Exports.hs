@@ -63,6 +63,10 @@ module Internal.Exports
     , fromHSL
     -- * Pictures
     , Point
+    , translatedPoint
+    , rotatedPoint
+    , scaledPoint
+    , dilatedPoint
     , Vector
     , vectorLength
     , vectorDirection

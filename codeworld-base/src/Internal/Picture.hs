@@ -28,13 +28,35 @@ import "base" Prelude ((.), map)
 
 type Point = (Number, Number)
 
+toCWPoint :: Point -> CW.Point
+toCWPoint (x, y) = (toDouble x, toDouble y)
+
+fromCWPoint :: CW.Point -> Point
+fromCWPoint (x, y) = (fromDouble x, fromDouble y)
+
+translatedPoint :: (Point, Number, Number) -> Point
+translatedPoint (p, x, y) =
+    fromCWPoint (CW.translatedPoint (toDouble x) (toDouble y) (toCWPoint p))
+
+rotatedPoint :: (Point, Number) -> Point
+rotatedPoint (p, a) =
+    fromCWPoint (CW.rotatedPoint (toDouble (pi * a / 180)) (toCWPoint p))
+
+scaledPoint :: (Point, Number, Number) -> Point
+scaledPoint (p, x, y) =
+    fromCWPoint (CW.scaledPoint (toDouble x) (toDouble y) (toCWPoint p))
+
+dilatedPoint :: (Point, Number) -> Point
+dilatedPoint (p, k) =
+    fromCWPoint (CW.dilatedPoint (toDouble k) (toCWPoint p))
+
 type Vector = (Number, Number)
 
 toCWVect :: Vector -> CW.Vector
-toCWVect (x, y) = (toDouble x, toDouble y)
+toCWVect = toCWPoint
 
 fromCWVect :: CW.Vector -> Vector
-fromCWVect (x, y) = (fromDouble x, fromDouble y)
+fromCWVect = fromCWPoint
 
 vectorLength :: Vector -> Number
 vectorLength v = fromDouble (CW.vectorLength (toCWVect v))

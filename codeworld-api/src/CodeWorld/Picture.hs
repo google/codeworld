@@ -24,6 +24,18 @@ import GHC.Stack
 
 type Point = (Double, Double)
 
+translatedPoint :: Double -> Double -> Point -> Point
+translatedPoint tx ty (x, y) = (x + tx, y + ty)
+
+rotatedPoint :: Double -> Point -> Point
+rotatedPoint = rotatedVector
+
+scaledPoint :: Double -> Double -> Point -> Point
+scaledPoint kx ky (x, y) = (kx * x, ky * y)
+
+dilatedPoint :: Double -> Point -> Point
+dilatedPoint k (x, y) = (k * x, k * y)
+
 type Vector = (Double, Double)
 
 vectorLength :: Vector -> Double

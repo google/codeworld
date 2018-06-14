@@ -285,6 +285,8 @@ pictureToDrawing (Translate _ x y p) =
     Transformation (translateDS x y) $ pictureToDrawing p
 pictureToDrawing (Scale _ x y p) =
     Transformation (scaleDS x y) $ pictureToDrawing p
+pictureToDrawing (Dilate _ k p) =
+    Transformation (scaleDS k k) $ pictureToDrawing p
 pictureToDrawing (Rotate _ r p) =
     Transformation (rotateDS r) $ pictureToDrawing p
 pictureToDrawing (Pictures ps) = Drawings $ pictureToDrawing <$> ps
@@ -728,6 +730,13 @@ picToObj' pic =
                 [("picture", picJS), ("x", pToJSVal x), ("y", pToJSVal y)]
                 obj
             retVal obj
+        Dilate cs k p -> do
+            obj <- init "scale"
+            picJS <- picToObj' p
+            setProps
+                [("picture", picJS), ("k", pToJSVal k)]
+                obj
+            retVal obj
         Rotate cs angle p -> do
             obj <- init "rotate"
             picJS <- picToObj' p
@@ -814,6 +823,7 @@ getPictureCS (StyledText cs _ _ _) = cs
 getPictureCS (Color cs _ _) = cs
 getPictureCS (Translate cs _ _ _) = cs
 getPictureCS (Scale cs _ _ _) = cs
+getPictureCS (Dilate cs _ _) = cs
 getPictureCS (Rotate cs _ _) = cs
 getPictureCS (Logo cs) = cs
 getPictureCS (CoordinatePlane cs) = cs

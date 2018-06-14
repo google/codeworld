@@ -55,7 +55,7 @@ import Data.Monoid
 import Data.Serialize
 import Data.Serialize.Text
 import qualified Data.Text as T
-import Data.Text (Text, pack, singleton)
+import Data.Text (Text, pack, singleton, intercalate)
 import qualified Debug.Trace
 import GHC.Fingerprint.Type
 import GHC.Generics
@@ -731,47 +731,36 @@ picToObj' pic =
 
 -- describePicture 
 describePicture :: Picture -> String
-describePicture (Circle _ r) = printf "circle { radius = %4f }" r
 describePicture (Rectangle _ w h) = printf "rectangle { width = %4f , height = %4f }" w h
-describePicture (SolidPolygon cs _) = "SolidPolygon::(Point)"
+--describePicture (SolidPolygon _ pts) = printf "points { }" pts
+--describePicture (SolidClosedCurve cs _) = cs
+--describePicture (Polygon cs _) = cs
+--describePicture (ThickPolygon cs _ _) = cs
+--describePicture (SolidRectangle cs _ _) = cs
+describePicture (ThickRectangle _ lw w h) = printf "thickRectangle { linewidth = %4f , width = %4f , height = %4f }" lw w h
+--describePicture (ClosedCurve cs _) = cs
+--describePicture(ThickClosedCurve cs _ _) = cs
+describePicture (Circle _ r) = printf "circle { radius = %4f }" r
+--describePicture (SolidCircle cs _) = cs
+--describePicture (ThickCircle cs _ _) = cs
+--describePicture (Polyline cs _) = cs
+--describePicture (ThickPolyline cs _ _) = cs
+--describePicture (Curve cs _) = cs
+--describePicture (ThickCurve cs _ _) = cs
+--describePicture (Sector cs _ _ _) = cs
+--describePicture (Arc cs _ _ _) = cs
+--describePicture (ThickArc cs _ _ _ _) = cs
+--describePicture (Text cs _) = cs
+--describePicture (Blank cs) = cs
+--describePicture (StyledText cs _ _ _) = cs
+--describePicture (Color cs _ _) = cs
+--describePicture (Translate cs _ _ _) = cs
+--describePicture (Scale cs _ _ _) = cs
+--describePicture (Rotate cs _ _) = cs
+--describePicture (Logo cs) = cs
+--describePicture (CoordinatePlane cs) = cs
+--describePicture (Pictures _) = emptyCallStack
 
-{- 
-
-import Text.Printf
-...
-describePicture (Circle _ r) = printf "circle { radius = %.4f }" r
-
---haven't tested these yet
-describePicture (SolidPolygon cs _) = cs
-describePicture (SolidClosedCurve cs _) = cs
-describePicture (Polygon cs _) = cs
-describePicture (ThickPolygon cs _ _) = cs
-describePicture (Rectangle cs _ _) = cs
-describePicture (SolidRectangle cs _ _) = cs
-describePicture (ThickRectangle cs _ _ _) = cs
-describePicture (ClosedCurve cs _) = cs
-describePicture(ThickClosedCurve cs _ _) = cs
-describePicture (Circle cs _) = cs
-describePicture (SolidCircle cs _) = cs
-describePicture (ThickCircle cs _ _) = cs
-describePicture (Polyline cs _) = cs
-describePicture (ThickPolyline cs _ _) = cs
-describePicture (Curve cs _) = cs
-describePicture (ThickCurve cs _ _) = cs
-describePicture (Sector cs _ _ _) = cs
-describePicture (Arc cs _ _ _) = cs
-describePicture (ThickArc cs _ _ _ _) = cs
-describePicture (Text cs _) = cs
-describePicture (Blank cs) = cs
-describePicture (StyledText cs _ _ _) = cs
-describePicture (Color cs _ _) = cs
-describePicture (Translate cs _ _ _) = cs
-describePicture (Scale cs _ _ _) = cs
-describePicture (Rotate cs _ _) = cs
-describePicture (Logo cs) = cs
-describePicture (CoordinatePlane cs) = cs
-describePicture (Pictures _) = emptyCallStack
--}
 
 setCallInfo :: Picture -> Object -> IO ()
 setCallInfo pic obj =

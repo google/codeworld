@@ -750,7 +750,7 @@ describePicture (ThickCircle _ lw r) = printf "thickCircle { linewidth = %4f , r
 --describePicture (Sector cs _ _ _) = cs
 describePicture (Arc _ b e r) = printf "arc { startAngle = %4f , endAngle = %4f , radius = %4f}" b e r
 describePicture (ThickArc _ b e r w) = printf "thickArc { startAngle = %4f , endAngle = %4f , radius = %4f , width = %4f}" b e r w
---describePicture (Text cs _) = cs
+describePicture (Text _ txt) = printf "Text { text = %s }" txt
 --describePicture (Blank cs) = cs
 --describePicture (StyledText cs _ _ _) = cs
 --describePicture (Color cs _ _) = cs

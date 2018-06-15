@@ -49,7 +49,7 @@ import Control.Exception
 import Control.Monad
 import Control.Monad.Trans (liftIO)
 import Data.Char (chr)
-import Data.List (find, zip4)
+import Data.List (find, zip4, intercalate)
 import Data.Maybe (fromMaybe, isNothing, mapMaybe)
 import Data.Monoid
 import Data.Serialize
@@ -743,7 +743,7 @@ describePicture (ThickRectangle _ lw w h) = printf "thickRectangle { linewidth =
 describePicture (Circle _ r) = printf "circle { radius = %4f }" r
 describePicture (SolidCircle _ r) = printf "solidCircle { radius = %4f }" r
 describePicture (ThickCircle _ lw r) = printf "thickCircle { linewidth = %4f , radius = %4f }" lw r
-describePicture (Polyline _ pts) = intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
+describePicture (Polyline _ pts) = Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
 --describePicture (ThickPolyline cs _ _) = cs
 --describePicture (Curve cs _) = cs
 --describePicture (ThickCurve cs _ _) = cs

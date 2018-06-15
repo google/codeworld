@@ -734,7 +734,7 @@ describePicture :: Picture -> String
 describePicture (Rectangle _ w h) = printf "rectangle { width = %4f , height = %4f }" w h
 --describePicture (SolidPolygon _ pts) = printf "points { }" pts
 --describePicture (SolidClosedCurve cs _) = cs
---describePicture (Polygon cs _) = cs
+--describePicture (Polygon _ pts) = pts
 --describePicture (ThickPolygon cs _ _) = cs
 describePicture (SolidRectangle _ w h) = printf "solidRectangle { width = %4f , height = %4f }" w h
 describePicture (ThickRectangle _ lw w h) = printf "thickRectangle { linewidth = %4f , width = %4f , height = %4f }" lw w h
@@ -743,7 +743,7 @@ describePicture (ThickRectangle _ lw w h) = printf "thickRectangle { linewidth =
 describePicture (Circle _ r) = printf "circle { radius = %4f }" r
 describePicture (SolidCircle _ r) = printf "solidCircle { radius = %4f }" r
 describePicture (ThickCircle _ lw r) = printf "thickCircle { linewidth = %4f , radius = %4f }" lw r
---describePicture (Polyline cs _) = cs
+describePicture (Polyline _ pts) = intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
 --describePicture (ThickPolyline cs _ _) = cs
 --describePicture (Curve cs _) = cs
 --describePicture (ThickCurve cs _ _) = cs
@@ -752,7 +752,7 @@ describePicture (Arc _ b e r) = printf "arc { startAngle = %4f , endAngle = %4f 
 describePicture (ThickArc _ b e r w) = printf "thickArc { startAngle = %4f , endAngle = %4f , radius = %4f , width = %4f}" b e r w
 describePicture (Text _ txt) = printf "Text { text = %s }" txt
 --describePicture (Blank cs) = cs
---describePicture (StyledText cs _ _ _) = cs
+--describePicture (StyledText _ style font txt) = style font txt
 --describePicture (Color cs _ _) = cs
 --describePicture (Translate cs _ _ _) = cs
 --describePicture (Scale cs _ _ _) = cs

@@ -734,7 +734,7 @@ describePicture :: Picture -> String
 describePicture (Rectangle _ w h) = printf "rectangle { width = %4f , height = %4f }" w h
 --describePicture (SolidPolygon _ pts) = printf "points { }" pts
 --describePicture (SolidClosedCurve cs _) = cs
---describePicture (Polygon _ pts) = pts
+describePicture (Polygon _ pts) = Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
 --describePicture (ThickPolygon cs _ _) = cs
 describePicture (SolidRectangle _ w h) = printf "solidRectangle { width = %4f , height = %4f }" w h
 describePicture (ThickRectangle _ lw w h) = printf "thickRectangle { linewidth = %4f , width = %4f , height = %4f }" lw w h

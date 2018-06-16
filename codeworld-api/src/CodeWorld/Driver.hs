@@ -744,7 +744,7 @@ describePicture (Circle _ r) = printf "circle { radius = %4f }" r
 describePicture (SolidCircle _ r) = printf "solidCircle { radius = %4f }" r
 describePicture (ThickCircle _ lw r) = printf "thickCircle { linewidth = %4f , radius = %4f }" lw r
 describePicture (Polyline _ pts) = Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
---describePicture (ThickPolyline cs _ _) = cs
+describePicture (ThickPolyline _ pts w) = Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts] ++ printf ", {width = %4f}" w
 describePicture (Curve _ pts) = Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
 --describePicture (ThickCurve cs _ _) = cs
 describePicture (Sector _ b e r) = printf "sector { startAngle = %4f , endAngle = %4f , radius = %4f}" b e r

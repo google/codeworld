@@ -732,25 +732,25 @@ picToObj' pic =
 -- describePicture 
 describePicture :: Picture -> String
 describePicture (Rectangle _ w h) = printf "rectangle { width = %4f , height = %4f }" w h
-describePicture (SolidPolygon _ pts) = printf "Solidpolygon " ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
---describePicture (SolidClosedCurve cs _) = cs
+describePicture (SolidPolygon _ pts) = printf "solidPolygon " ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
+describePicture (SolidClosedCurve _ pts) = printf "solidClosedCurve " ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
 describePicture (Polygon _ pts) = printf "polygon " ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
 describePicture (ThickPolygon _ pts w) = printf "thickPolygon " ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts] ++ printf ", {width = %4f}" w
 describePicture (SolidRectangle _ w h) = printf "solidRectangle { width = %4f , height = %4f }" w h
 describePicture (ThickRectangle _ lw w h) = printf "thickRectangle { linewidth = %4f , width = %4f , height = %4f }" lw w h
 describePicture (ClosedCurve _ pts) = printf "closedCurve" ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
---describePicture(ThickClosedCurve cs _ _) = cs
+describePicture(ThickClosedCurve _ pts w) = printf "thickClosedCurve " ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts] ++ printf ", {width = %4f}" w
 describePicture (Circle _ r) = printf "circle { radius = %4f }" r
 describePicture (SolidCircle _ r) = printf "solidCircle { radius = %4f }" r
 describePicture (ThickCircle _ lw r) = printf "thickCircle { linewidth = %4f , radius = %4f }" lw r
 describePicture (Polyline _ pts) = printf "polyline " ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
 describePicture (ThickPolyline _ pts w) = printf "thickPolyline" ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts] ++ printf ", {width = %4f}" w
 describePicture (Curve _ pts) = printf "thickCurve" ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
---describePicture (ThickCurve cs _ _) = cs
+describePicture (ThickCurve _ pts w) = printf "thickCurve " ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts] ++ printf ", {width = %4f}" w
 describePicture (Sector _ b e r) = printf "sector { startAngle = %4f , endAngle = %4f , radius = %4f}" b e r
 describePicture (Arc _ b e r) = printf "arc { startAngle = %4f , endAngle = %4f , radius = %4f}" b e r
 describePicture (ThickArc _ b e r w) = printf "thickArc { startAngle = %4f , endAngle = %4f , radius = %4f , width = %4f}" b e r w
-describePicture (Text _ txt) = printf "Text { text = %s }" txt
+describePicture (Text _ txt) = printf "text { text = %s }" txt
 --describePicture (Blank cs) = cs
 --describePicture (StyledText _ style font txt) = style font txt
 --describePicture (Color cs _ _) = cs

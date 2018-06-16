@@ -755,10 +755,10 @@ describePicture (Blank _) = printf "blank "
 --describePicture (StyledText _ style font txt) = style font txt
 --describePicture (Color cs _ _) = cs
 --describePicture (Translate cs _ _ _) = cs
---describePicture (Scale cs _ _ _) = cs
+--describePicture (Scale _ x y p) = show "scale { x = %s , y = %s , p = %s }" x y p
 --describePicture (Rotate cs _ _) = cs
 describePicture (Logo _) = printf "logo "
---describePicture (CoordinatePlane cs) = cs
+describePicture (CoordinatePlane _) = printf "coordinatePlane "
 --describePicture (Pictures _) = emptyCallStack
 
 

@@ -734,7 +734,7 @@ describePicture :: Picture -> String
 describePicture (Rectangle _ w h) = printf "rectangle { width = %4f , height = %4f }" w h
 --describePicture (SolidPolygon _ pts) = printf "points { }" pts
 --describePicture (SolidClosedCurve cs _) = cs
-describePicture (Polygon _ pts) = Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
+describePicture (Polygon _ pts) = printf "polygon " ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
 --describePicture (ThickPolygon cs _ _) = cs
 describePicture (SolidRectangle _ w h) = printf "solidRectangle { width = %4f , height = %4f }" w h
 describePicture (ThickRectangle _ lw w h) = printf "thickRectangle { linewidth = %4f , width = %4f , height = %4f }" lw w h
@@ -743,9 +743,9 @@ describePicture (ThickRectangle _ lw w h) = printf "thickRectangle { linewidth =
 describePicture (Circle _ r) = printf "circle { radius = %4f }" r
 describePicture (SolidCircle _ r) = printf "solidCircle { radius = %4f }" r
 describePicture (ThickCircle _ lw r) = printf "thickCircle { linewidth = %4f , radius = %4f }" lw r
-describePicture (Polyline _ pts) = Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
-describePicture (ThickPolyline _ pts w) = Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts] ++ printf ", {width = %4f}" w
-describePicture (Curve _ pts) = Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
+describePicture (Polyline _ pts) = printf "polyline " ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
+describePicture (ThickPolyline _ pts w) = printf "thickPolyline" ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts] ++ printf ", {width = %4f}" w
+describePicture (Curve _ pts) = printf "thickCurve" ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
 --describePicture (ThickCurve cs _ _) = cs
 describePicture (Sector _ b e r) = printf "sector { startAngle = %4f , endAngle = %4f , radius = %4f}" b e r
 describePicture (Arc _ b e r) = printf "arc { startAngle = %4f , endAngle = %4f , radius = %4f}" b e r

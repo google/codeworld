@@ -735,7 +735,7 @@ describePicture (Rectangle _ w h) = printf "rectangle { width = %4f , height = %
 describePicture (SolidPolygon _ pts) = printf "Solidpolygon " ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
 --describePicture (SolidClosedCurve cs _) = cs
 describePicture (Polygon _ pts) = printf "polygon " ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
---describePicture (ThickPolygon cs _ _) = cs
+describePicture (ThickPolygon _ pts w) = printf "thickPolygon " ++ Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts] ++ printf ", {width = %4f}" w
 describePicture (SolidRectangle _ w h) = printf "solidRectangle { width = %4f , height = %4f }" w h
 describePicture (ThickRectangle _ lw w h) = printf "thickRectangle { linewidth = %4f , width = %4f , height = %4f }" lw w h
 --describePicture (ClosedCurve cs _) = cs

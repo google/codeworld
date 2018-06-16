@@ -169,7 +169,7 @@ polyline ps = Polyline callStack ps
 path :: HasCallStack => [Point] -> Picture
 path ps = Polyline callStack ps
 
-{-# WARNING path "Please use polyline instead of path." #-}
+{-# WARNING path "Please use polyline instead of path; path will be removed July 2019." #-}
 
 -- | A thick sequence of line segments, with given line width and endpoints
 thickPolyline :: HasCallStack => Double -> [Point] -> Picture
@@ -179,7 +179,7 @@ thickPolyline n ps = ThickPolyline callStack ps n
 thickPath :: HasCallStack => Double -> [Point] -> Picture
 thickPath n ps = ThickPolyline callStack ps n
 
-{-# WARNING thickPath "Please used thickPolyline instead of thickPath." #-}
+{-# WARNING thickPath "Please used thickPolyline instead of thickPath; thickPath will be removed July 2019." #-}
 
 -- | A thin polygon with these points as vertices
 polygon :: HasCallStack => [Point] -> Picture
@@ -206,31 +206,13 @@ thickCurve n ps = ThickCurve callStack ps n
 closedCurve :: HasCallStack => [Point] -> Picture
 closedCurve ps = ClosedCurve callStack ps
 
--- | A smooth closed curve passing through these points.
-loop :: HasCallStack => [Point] -> Picture
-loop ps = ClosedCurve callStack ps
-
-{-# WARNING loop "Please use closedCurve instead of loop." #-}
-
 -- | A thick smooth closed curve with this line width, passing through these points.
 thickClosedCurve :: HasCallStack => Double -> [Point] -> Picture
 thickClosedCurve n ps = ThickClosedCurve callStack ps n
 
--- | A thick smooth closed curve with this line width, passing through these points.
-thickLoop :: HasCallStack => Double -> [Point] -> Picture
-thickLoop n ps = ThickClosedCurve callStack ps n
-
-{-# WARNING thickLoop "Please use thickClosedCurve instead of thickLoop." #-}
-
 -- | A solid smooth closed curve passing through these points.
 solidClosedCurve :: HasCallStack => [Point] -> Picture
 solidClosedCurve ps = SolidClosedCurve callStack ps
-
--- | A solid smooth closed curve passing through these points.
-solidLoop :: HasCallStack => [Point] -> Picture
-solidLoop ps = SolidClosedCurve callStack ps
-
-{-# WARNING solidLoop "Please use solidClosedCurve instead of solidLoop." #-}
 
 rectangleVertices :: Double -> Double -> [Point]
 rectangleVertices w h = [ (w / 2, h / 2), (w / 2, -h / 2), (-w / 2, -h / 2), (-w / 2, h / 2) ]

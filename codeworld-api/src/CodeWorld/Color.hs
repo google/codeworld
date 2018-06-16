@@ -71,10 +71,6 @@ fromHSL (wrapNum (2 * pi) -> h) (fence -> s) (fence -> l) = RGBA r g b 1
         | h * 3 < 2 = m1 + (m2 - m1) * (2 / 3 - h) * 6
         | otherwise = m1
 
-{-# WARNING
-fromHSL "Please use HSL instead of fromHSL."
- #-}
-
 toHSL :: Color -> Maybe (Double, Double, Double)
 toHSL c@(RGBA _ _ _ 1) = Just (hue c, saturation c, luminosity c)
 toHSL _ = Nothing
@@ -86,34 +82,34 @@ black = RGBA 0 0 0 1
 
 -- Primary and secondary colors
 red, green, blue, cyan, magenta, yellow :: Color
-red = fromHSL (0 / 3 * pi) 0.75 0.5
+red = HSL (0 / 3 * pi) 0.75 0.5
 
-yellow = fromHSL (1 / 3 * pi) 0.75 0.5
+yellow = HSL (1 / 3 * pi) 0.75 0.5
 
-green = fromHSL (2 / 3 * pi) 0.75 0.5
+green = HSL (2 / 3 * pi) 0.75 0.5
 
-cyan = fromHSL (3 / 3 * pi) 0.75 0.5
+cyan = HSL (3 / 3 * pi) 0.75 0.5
 
-blue = fromHSL (4 / 3 * pi) 0.75 0.5
+blue = HSL (4 / 3 * pi) 0.75 0.5
 
-magenta = fromHSL (5 / 3 * pi) 0.75 0.5
+magenta = HSL (5 / 3 * pi) 0.75 0.5
 
 -- Tertiary colors
 orange, rose, chartreuse, aquamarine, violet, azure :: Color
-orange = fromHSL (1 / 6 * pi) 0.75 0.5
+orange = HSL (1 / 6 * pi) 0.75 0.5
 
-chartreuse = fromHSL (3 / 6 * pi) 0.75 0.5
+chartreuse = HSL (3 / 6 * pi) 0.75 0.5
 
-aquamarine = fromHSL (5 / 6 * pi) 0.75 0.5
+aquamarine = HSL (5 / 6 * pi) 0.75 0.5
 
-azure = fromHSL (7 / 6 * pi) 0.75 0.5
+azure = HSL (7 / 6 * pi) 0.75 0.5
 
-violet = fromHSL (9 / 6 * pi) 0.75 0.5
+violet = HSL (9 / 6 * pi) 0.75 0.5
 
-rose = fromHSL (11 / 6 * pi) 0.75 0.5
+rose = HSL (11 / 6 * pi) 0.75 0.5
 
 -- Other common colors and color names
-brown = fromHSL (1 / 6 * pi) 0.5 0.5
+brown = HSL (1 / 6 * pi) 0.5 0.5
 
 purple = violet
 
@@ -137,7 +133,7 @@ sameAlpha (fenceColor -> RGBA r1 g1 b1 a1) (fenceColor -> RGBA r2 g2 b2 a2) =
 
 lighter :: Double -> Color -> Color
 lighter d c =
-    sameAlpha c $ fromHSL (hue c) (saturation c) (fence (luminosity c + d))
+    sameAlpha c $ HSL (hue c) (saturation c) (fence (luminosity c + d))
 
 light :: Color -> Color
 light = lighter 0.15
@@ -150,7 +146,7 @@ dark = darker 0.15
 
 brighter :: Double -> Color -> Color
 brighter d c =
-    sameAlpha c $ fromHSL (hue c) (fence (saturation c + d)) (luminosity c)
+    sameAlpha c $ HSL (hue c) (fence (saturation c + d)) (luminosity c)
 
 bright :: Color -> Color
 bright = brighter 0.25
@@ -174,7 +170,7 @@ assortedColors :: [Color]
 assortedColors = red : green : blue : more
   where
     more =
-        [ fromHSL hue 0.75 0.5
+        [ HSL hue 0.75 0.5
         | denom <- doublesOf 6
         , numer <- shuffleSeed denom [1,3 .. denom]
         , let hue = fromIntegral numer * 2 * pi / fromIntegral denom

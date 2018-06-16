@@ -60,7 +60,6 @@ module Internal.Exports
     , saturation
     , luminosity
     , alpha
-    , fromHSL
     -- * Pictures
     , Point
     , translatedPoint
@@ -89,11 +88,8 @@ module Internal.Exports
     , curve
     , thickCurve
     , closedCurve
-    , loop
     , thickClosedCurve
-    , thickLoop
     , solidClosedCurve
-    , solidLoop
     , rectangle
     , solidRectangle
     , thickRectangle

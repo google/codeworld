@@ -41,11 +41,8 @@ module CodeWorld (
     , curve
     , thickCurve
     , closedCurve
-    , loop
     , thickClosedCurve
-    , thickLoop
     , solidClosedCurve
-    , solidLoop
     , rectangle
     , solidRectangle
     , thickRectangle
@@ -120,7 +117,6 @@ module CodeWorld (
     , saturation
     , luminosity
     , alpha
-    , fromHSL
     -- * Events
     , Event(..)
     , MouseButton(..)

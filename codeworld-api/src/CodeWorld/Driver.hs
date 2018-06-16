@@ -747,7 +747,7 @@ describePicture (Polyline _ pts) = Data.List.intercalate "," [printf "(%4f, %4f)
 --describePicture (ThickPolyline cs _ _) = cs
 describePicture (Curve _ pts) = Data.List.intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
 --describePicture (ThickCurve cs _ _) = cs
---describePicture (Sector cs _ _ _) = cs
+describePicture (Sector _ b e r) = printf "sector { startAngle = %4f , endAngle = %4f , radius = %4f}" b e r
 describePicture (Arc _ b e r) = printf "arc { startAngle = %4f , endAngle = %4f , radius = %4f}" b e r
 describePicture (ThickArc _ b e r w) = printf "thickArc { startAngle = %4f , endAngle = %4f , radius = %4f , width = %4f}" b e r w
 describePicture (Text _ txt) = printf "Text { text = %s }" txt

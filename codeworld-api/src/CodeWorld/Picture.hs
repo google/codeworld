@@ -139,9 +139,6 @@ data Picture
     | Rotate CallStack
              !Double
              !Picture
-    | Dilate CallStack
-             !Double
-             !Picture
     | CoordinatePlane CallStack
     | Logo CallStack
     | Pictures [Picture]

@@ -290,8 +290,6 @@ pictureToDrawing (Dilate _ k p) =
     Transformation (scaleDS k k) $ pictureToDrawing p
 pictureToDrawing (Rotate _ r p) =
     Transformation (rotateDS r) $ pictureToDrawing p
-pictureToDrawing (Dilate _ k p) =
-    Transformation (rotateDS k) $ pictureToDrawing p
 pictureToDrawing (Pictures ps) = Drawings $ pictureToDrawing <$> ps
 
 initialDS :: DrawState
@@ -745,11 +743,6 @@ picToObj' pic =
             picJS <- picToObj' p
             setProps [("picture", picJS), ("angle", pToJSVal angle)] obj
             retVal obj
-        Dilate cs k p -> do
-            obj <- init "dilated"
-            picJS <- picToObj' p
-            setProps [("picture", picJS), ("angle", pToJSVal k)] obj
-            retVal obj
         Pictures ps -> do
             obj <- init "pictures"
             arr <- liftIO $ Array.create
@@ -822,7 +815,6 @@ describePicture (Logo _) = printf "logo"
 describePicture (CoordinatePlane _) = printf "coordinatePlane"
 describePicture (Pictures _) = printf "pictures"
 
-
 setCallInfo :: Picture -> Object -> IO ()
 setCallInfo pic obj =
     case findCSMain (getPictureCS pic) of
@@ -866,7 +858,6 @@ getPictureCS (Translate cs _ _ _) = cs
 getPictureCS (Scale cs _ _ _) = cs
 getPictureCS (Dilate cs _ _) = cs
 getPictureCS (Rotate cs _ _) = cs
-getPictureCS (Dilate cs _ _) = cs
 getPictureCS (Logo cs) = cs
 getPictureCS (CoordinatePlane cs) = cs
 getPictureCS (Pictures _) = emptyCallStack

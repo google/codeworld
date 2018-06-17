@@ -86,6 +86,10 @@ pattern PointerRelease p = MouseRelease (CW.LeftButton, p)
 pattern PointerMovement :: Point -> Event
 pattern PointerMovement p = MouseMovement p
 
+{-# WARNING MousePress "Please use PointerPress instead of MousePress; MousePress will be removed July 2019." #-}
+{-# WARNING MouseRelease "Please use PointerRelease instead of MouseRelease; MouseRelease will be removed July 2019." #-}
+{-# WARNING MouseMovement "Please use PointerMovement instead of MouseMovement; MouseMovement will be removed July 2019." #-}
+
 {-# RULES
 "equality/event" forall (x :: Event) . (==) x = (P.==) x
  #-}

@@ -810,8 +810,8 @@ describePicture (Color _ (RGBA r g b a) _) = printf "colored { color = RGBA(%4f,
 describePicture (Translate _ x y _) = printf "translated { x = %4f , y = %4f }" x y
 describePicture (Scale _ x y _) = printf "scaled { x = %4f , y = %4f }" x y
 describePicture (Rotate _ angle _) = printf "rotated { angle = %4f }" angle
-describePicture (Dilate _ k _) = printf "dilated { number = %4f }" k
-describePicture (Logo _) = printf "logo"
+describePicture (Dilate _ k _) = printf "dilated { factor = %4f }" k
+describePicture (Logo _) = printf "codeWorldLogo"
 describePicture (CoordinatePlane _) = printf "coordinatePlane"
 describePicture (Pictures _) = printf "pictures"
 

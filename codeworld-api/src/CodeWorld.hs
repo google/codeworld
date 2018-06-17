@@ -19,6 +19,9 @@ module CodeWorld (
     -- * Entry points
       drawingOf
     , animationOf
+    , activityOf
+    , groupActivityOf
+    , unsafeGroupActivityOf
     , simulationOf
     , interactionOf
     , collaborationOf
@@ -38,11 +41,8 @@ module CodeWorld (
     , curve
     , thickCurve
     , closedCurve
-    , loop
     , thickClosedCurve
-    , thickLoop
     , solidClosedCurve
-    , solidLoop
     , rectangle
     , solidRectangle
     , thickRectangle
@@ -66,6 +66,10 @@ module CodeWorld (
     , coordinatePlane
     , codeWorldLogo
     , Point
+    , translatedPoint
+    , rotatedPoint
+    , scaledPoint
+    , dilatedPoint
     , Vector
     , vectorLength
     , vectorDirection
@@ -113,7 +117,6 @@ module CodeWorld (
     , saturation
     , luminosity
     , alpha
-    , fromHSL
     -- * Events
     , Event(..)
     , MouseButton(..)

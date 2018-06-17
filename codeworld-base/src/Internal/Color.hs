@@ -62,10 +62,6 @@ fromHSL :: (Number, Number, Number) -> Color
 fromHSL (h, s, l) =
     fromCWColor (CW.HSL (toDouble (pi * h / 180)) (toDouble s) (toDouble l))
 
-{-# WARNING
-fromHSL "Please use HSL instead of fromHSL."
- #-}
-
 toCWColor :: Color -> CW.Color
 toCWColor (RGBA (r, g, b, a)) =
     CW.RGBA (toDouble r) (toDouble g) (toDouble b) (toDouble a)

@@ -242,13 +242,14 @@ playerDots n m =
     size = 1
 
 connectScreen :: Text -> Double -> Picture
-connectScreen hdr t =
-    translated 0 7 connectBox & translated 0 (-7) codeWorldLogo &
-    colored (RGBA 0.85 0.86 0.9 1) (solidRectangle 20 20)
+connectScreen hdr t = translated 0 (-7) connectBox
+        & translated 0 2.5 (colored background (solidRectangle 20 3.5))
+        & translated 0 5 codeWorldLogo
+        & colored background (solidRectangle 20 20)
   where
-    connectBox =
-        scaled 2 2 (text hdr) & rectangle 14 3 &
-        colored connectColor (solidRectangle 14 3)
-    connectColor =
-        let k = (1 + sin (3 * t)) / 5
-        in HSL (k + 0.5) 0.8 0.7
+    connectBox = scaled 2 2 (text hdr)
+               & rectangle 14 3
+               & colored connectColor (solidRectangle 14 3)
+    connectColor = let k = (1 + sin (3 * t)) / 5
+                   in  HSL (k + 0.5) 0.8 0.7
+    background = RGBA 0.85 0.86 0.9 1

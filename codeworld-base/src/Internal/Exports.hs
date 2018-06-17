@@ -60,9 +60,12 @@ module Internal.Exports
     , saturation
     , luminosity
     , alpha
-    , fromHSL
     -- * Pictures
     , Point
+    , translatedPoint
+    , rotatedPoint
+    , scaledPoint
+    , dilatedPoint
     , Vector
     , vectorLength
     , vectorDirection
@@ -85,11 +88,8 @@ module Internal.Exports
     , curve
     , thickCurve
     , closedCurve
-    , loop
     , thickClosedCurve
-    , thickLoop
     , solidClosedCurve
-    , solidLoop
     , rectangle
     , solidRectangle
     , thickRectangle
@@ -123,6 +123,8 @@ module Internal.Exports
     , Program
     , drawingOf
     , animationOf
+    , activityOf
+    , groupActivityOf
     , simulationOf
     , interactionOf
     , collaborationOf

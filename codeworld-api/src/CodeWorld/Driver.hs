@@ -10,6 +10,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE StaticPointers #-}
 {-# LANGUAGE DataKinds #-}
 
 {-
@@ -30,6 +31,9 @@
 module CodeWorld.Driver
     ( drawingOf
     , animationOf
+    , activityOf
+    , groupActivityOf
+    , unsafeGroupActivityOf
     , simulationOf
     , interactionOf
     , collaborationOf
@@ -120,6 +124,47 @@ drawingOf :: Picture  -- ^ The picture to show on the screen.
 animationOf :: (Double -> Picture)  -- ^ A function that produces animation
                                     --   frames, given the time in seconds.
             -> IO ()
+
+-- | Runs an interactive CodeWorld program that responds to events.  Activities
+-- can interact with the user, change over time, and remember information about
+-- the past.
+activityOf
+  :: world                       -- ^ The initial state of the interaction.
+  -> (Event -> world -> world)   -- ^ The event handling function, which updates
+                                 --   the state given an event.
+  -> (world -> Picture)          -- ^ The visualization function, which converts
+                                 --   the state into a picture to display.
+  -> IO ()
+
+-- | Runs an interactive multi-user CodeWorld program that is joined by several
+-- participants over the internet.
+groupActivityOf
+  :: Int  -- ^ The number of participants to expect.  The participants will be
+          -- ^ numbered starting at 0.
+  -> StaticPtr (StdGen -> world)
+          -- ^ The initial state of the activity.
+  -> StaticPtr (Int -> Event -> world -> world)
+          -- ^ The event handling function, which updates the state given a
+          --   participant number and user interface event.
+  -> StaticPtr (Int -> world -> Picture)
+          -- ^ The visualization function, which converts a participant number
+          --   and the state into a picture to display.
+  -> IO ()
+
+-- | A version of 'groupActivityOf' that avoids static pointers, and does not
+-- check for consistency.
+unsafeGroupActivityOf
+  :: Int  -- ^ The number of participants to expect.  The participants will be
+          -- ^ numbered starting at 0.
+  -> (StdGen -> world)
+          -- ^ The initial state of the activity.
+  -> (Int -> Event -> world -> world)
+          -- ^ The event handling function, which updates the state given a
+          --   participant number and user interface event.
+  -> (Int -> world -> Picture)
+          -- ^ The visualization function, which converts a participant number
+          --   and the state into a picture to display.
+  -> IO ()
 
 -- | Shows a simulation, which is essentially a continuous-time dynamical
 -- system described by an initial value and step function.
@@ -241,6 +286,8 @@ pictureToDrawing (Translate _ x y p) =
     Transformation (translateDS x y) $ pictureToDrawing p
 pictureToDrawing (Scale _ x y p) =
     Transformation (scaleDS x y) $ pictureToDrawing p
+pictureToDrawing (Dilate _ k p) =
+    Transformation (scaleDS k k) $ pictureToDrawing p
 pictureToDrawing (Rotate _ r p) =
     Transformation (rotateDS r) $ pictureToDrawing p
 pictureToDrawing (Dilated _ k p) =
@@ -686,6 +733,13 @@ picToObj' pic =
                 [("picture", picJS), ("x", pToJSVal x), ("y", pToJSVal y)]
                 obj
             retVal obj
+        Dilate cs k p -> do
+            obj <- init "scale"
+            picJS <- picToObj' p
+            setProps
+                [("picture", picJS), ("k", pToJSVal k)]
+                obj
+            retVal obj
         Rotate cs angle p -> do
             obj <- init "rotate"
             picJS <- picToObj' p
@@ -810,6 +864,7 @@ getPictureCS (StyledText cs _ _ _) = cs
 getPictureCS (Color cs _ _) = cs
 getPictureCS (Translate cs _ _ _) = cs
 getPictureCS (Scale cs _ _ _) = cs
+getPictureCS (Dilate cs _ _) = cs
 getPictureCS (Rotate cs _ _) = cs
 getPictureCS (Dilated cs _ _) = cs
 getPictureCS (Logo cs) = cs
@@ -1377,6 +1432,11 @@ data GameToken
                 , tokenStep :: StaticKey
                 , tokenEvent :: StaticKey
                 , tokenDraw :: StaticKey }
+    | SteplessToken { tokenDeployHash :: Text
+                    , tokenNumPlayers :: Int
+                    , tokenInitial :: StaticKey
+                    , tokenEvent :: StaticKey
+                    , tokenDraw :: StaticKey }
     | PartialToken { tokenDeployHash :: Text }
     | NoToken
     deriving (Generic)
@@ -1678,6 +1738,7 @@ runGame ::
     -> (Int -> s -> Picture)
     -> IO ()
 runGame token numPlayers initial stepHandler eventHandler drawHandler = do
+    let fullStepHandler dt = stepHandler dt . eventHandler (-1) (TimePassing dt)
     js_showCanvas
     Just window <- currentWindow
     Just doc <- currentDocument
@@ -1693,14 +1754,14 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
         gameHandle
             numPlayers
             initial
-            stepHandler
+            fullStepHandler
             eventHandler
             token
             currentGameState
     screen <- js_getCodeWorldContext (canvasFromElement canvas)
     let go t0 lastFrame = do
             gs <- readMVar currentGameState
-            let pic = gameDraw stepHandler drawHandler gs t0
+            let pic = gameDraw fullStepHandler drawHandler gs t0
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
                 rect <- getBoundingClientRect canvas
@@ -1719,7 +1780,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
                     (round cw)
                     (round ch)
             t1 <- nextFrame
-            modifyMVar_ currentGameState $ return . gameStep stepHandler t1
+            modifyMVar_ currentGameState $ return . gameStep fullStepHandler t1
             go t1 picFrame
     t0 <- getTime
     nullFrame <- makeStableName undefined
@@ -1730,8 +1791,10 @@ run :: s
     -> (Double -> s -> s)
     -> (e -> s -> s)
     -> (s -> Drawing)
+    -> (Double -> e)
     -> IO (e -> IO (), IO s)
-run initial stepHandler eventHandler drawHandler = do
+run initial stepHandler eventHandler drawHandler injectTime = do
+    let fullStepHandler dt = stepHandler dt . eventHandler (injectTime dt)
     js_showCanvas
     Just window <- currentWindow
     Just doc <- currentDocument
@@ -1773,7 +1836,7 @@ run initial stepHandler eventHandler drawHandler = do
                 if | needsTime ->
                        do t1 <- nextFrame
                           let dt = min (t1 - t0) 0.25
-                          modifyMVar_ currentState (return . stepHandler dt)
+                          modifyMVar_ currentState (return . fullStepHandler dt)
                           return t1
                    | otherwise ->
                        do takeMVar eventHappened
@@ -1784,7 +1847,7 @@ run initial stepHandler eventHandler drawHandler = do
                 if | nextStateName /= lastStateName -> return True
                    | not needsTime -> return False
                    | otherwise ->
-                       not <$> isUniversallyConstant stepHandler nextState
+                       not <$> isUniversallyConstant fullStepHandler nextState
             go t1 picFrame nextStateName nextNeedsTime
     t0 <- getTime
     nullFrame <- makeStableName undefined
@@ -1902,6 +1965,7 @@ runInspect initial stepHandler eventHandler drawHandler = do
             stepHandlerWrapper
             eventHandlerWrapper
             drawHandlerWrapper
+            (Right . TimePassing)
     let pauseEvent True = sendEvent $ Left DebugStart
         pauseEvent False = sendEvent $ Left DebugStop
         highlightSelectEvent True n = sendEvent $ Left (HighlightEvent n)
@@ -1947,6 +2011,7 @@ runPauseable initial stepHandler controls drawHandler = do
             stepHandlerWrapper
             eventHandlerWrapper
             drawHandlerWrapper
+            (Right . TimePassing)
     let pauseEvent True = sendEvent $ Left DebugStart
         pauseEvent False = sendEvent $ Left DebugStop
         highlightSelectEvent True n = sendEvent $ Left (HighlightEvent n)
@@ -2061,6 +2126,7 @@ onEvents context rect handler =
 run :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
 run initial stepHandler eventHandler drawHandler =
     runBlankCanvas $ \context -> do
+        let fullStepHandler dt = stepHandler dt . eventHandler (TimePassing dt)
         let rect = (Canvas.width context, Canvas.height context)
         offscreenCanvas <- Canvas.send context $ Canvas.newCanvas rect
         currentState <- newMVar initial
@@ -2089,7 +2155,7 @@ run initial stepHandler eventHandler drawHandler =
                                        round ((tn `diffUTCTime` t0) * 1000000))
                               t1 <- getCurrentTime
                               let dt = realToFrac (t1 `diffUTCTime` t0)
-                              modifyMVar_ currentState (return . stepHandler dt)
+                              modifyMVar_ currentState (return . fullStepHandler dt)
                               return t1
                        | otherwise ->
                            do takeMVar eventHappened
@@ -2098,7 +2164,7 @@ run initial stepHandler eventHandler drawHandler =
                 nextStateName <- makeStableName $! nextState
                 nextNeedsTime <-
                     if nextStateName == lastStateName
-                        then not <$> isUniversallyConstant stepHandler nextState
+                        then not <$> isUniversallyConstant fullStepHandler nextState
                         else return True
                 go t1 picFrame nextStateName nextNeedsTime
         t0 <- getCurrentTime
@@ -2135,8 +2201,31 @@ runGame ::
     -> IO ()
 runGame = error "game API unimplemented in stand-alone interface mode"
 #endif
+
 --------------------------------------------------------------------------------
 -- Common code for game interface
+
+groupActivityOf numPlayers initial event draw = do
+    dhash <- getDeployHash
+    let token =
+            SteplessToken
+            { tokenDeployHash = dhash
+            , tokenNumPlayers = numPlayers
+            , tokenInitial = staticKey initial
+            , tokenEvent = staticKey event
+            , tokenDraw = staticKey draw
+            }
+    runGame
+        token
+        numPlayers
+        (deRefStaticPtr initial)
+        (const id)
+        (deRefStaticPtr event)
+        (deRefStaticPtr draw)
+
+unsafeGroupActivityOf numPlayers initial event draw =
+    unsafeCollaborationOf numPlayers initial (const id) event draw
+
 unsafeCollaborationOf numPlayers initial step event draw = do
     dhash <- getDeployHash
     let token = PartialToken dhash
@@ -2164,7 +2253,9 @@ collaborationOf numPlayers initial step event draw = do
         (deRefStaticPtr draw)
 
 --------------------------------------------------------------------------------
--- Common code for interaction, animation and simulation interfaces
+-- Common code for activity, interaction, animation and simulation interfaces
+activityOf initial event draw = interactionOf initial (const id) event draw
+
 interactionOf initial step event draw = runInspect initial step event draw
 
 data Wrapped a = Wrapped
@@ -2312,8 +2403,3 @@ simulationOf simInitial simStep simDraw =
 trace msg x = unsafePerformIO $ do
     hPutStrLn stderr (T.unpack msg)
     return x
-
-#ifdef ghcjs_HOST_OS
-
---- GHCJS implementation of tracing and error handling
-#endif

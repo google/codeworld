@@ -243,7 +243,7 @@ pictureToDrawing (Scale _ x y p) =
     Transformation (scaleDS x y) $ pictureToDrawing p
 pictureToDrawing (Rotate _ r p) =
     Transformation (rotateDS r) $ pictureToDrawing p
-pictureToDrawing (Dilated _ k p) =
+pictureToDrawing (Dilate _ k p) =
     Transformation (rotateDS k) $ pictureToDrawing p
 pictureToDrawing (Pictures ps) = Drawings $ pictureToDrawing <$> ps
 
@@ -691,7 +691,7 @@ picToObj' pic =
             picJS <- picToObj' p
             setProps [("picture", picJS), ("angle", pToJSVal angle)] obj
             retVal obj
-        Dilated cs k p -> do
+        Dilate cs k p -> do
             obj <- init "dilated"
             picJS <- picToObj' p
             setProps [("picture", picJS), ("angle", pToJSVal k)] obj
@@ -763,7 +763,7 @@ describePicture (Color _ (RGBA r g b a) _) = printf "colored { color = RGBA(%4f,
 describePicture (Translate _ x y _) = printf "translate { x = %4f , y = %4f }" x y
 describePicture (Scale _ x y _) = printf "scale { x = %4f , y = %4f }" x y
 describePicture (Rotate _ angle _) = printf "rotate { angle = %4f }" angle
-describePicture (Dilated _ k _) = printf "dilated { number = %4f }" k
+describePicture (Dilate _ k _) = printf "dilated { number = %4f }" k
 describePicture (Logo _) = printf "logo"
 describePicture (CoordinatePlane _) = printf "coordinatePlane"
 describePicture (Pictures _) = printf "pictures"
@@ -811,7 +811,7 @@ getPictureCS (Color cs _ _) = cs
 getPictureCS (Translate cs _ _ _) = cs
 getPictureCS (Scale cs _ _ _) = cs
 getPictureCS (Rotate cs _ _) = cs
-getPictureCS (Dilated cs _ _) = cs
+getPictureCS (Dilate cs _ _) = cs
 getPictureCS (Logo cs) = cs
 getPictureCS (CoordinatePlane cs) = cs
 getPictureCS (Pictures _) = emptyCallStack

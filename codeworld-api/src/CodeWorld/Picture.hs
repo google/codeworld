@@ -124,7 +124,7 @@ data Picture
     | Rotate CallStack
              !Double
              !Picture
-    | Dilated CallStack
+    | Dilate CallStack
              !Double
              !Picture
     | CoordinatePlane CallStack
@@ -292,8 +292,7 @@ scaled = Scale callStack
 
 -- | A picture scaled by these factors.
 dilated :: HasCallStack => Double -> Picture -> Picture
-dilated = Dilated callStack
---dilated k = scaled k k
+dilated = Dilate callStack
 
 -- | A picture rotated by this angle.
 --

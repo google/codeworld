@@ -749,17 +749,17 @@ describePicture (ThickCurve _ pts w) = printf "thickCurve { points = %s, width =
 describePicture (Sector _ b e r) = printf "sector { startAngle = %4f , endAngle = %4f , radius = %4f}" b e r
 describePicture (Arc _ b e r) = printf "arc { startAngle = %4f , endAngle = %4f , radius = %4f}" b e r
 describePicture (ThickArc _ b e r w) = printf "thickArc { startAngle = %4f , endAngle = %4f , radius = %4f , width = %4f}" b e r w
-describePicture (Text _ txt) = printf "text { text = %s }" txt
-describePicture (Blank _) = printf "blank "
-describePicture (StyledText _ style font txt) = printf " styledText { style = %s , font = %s , txt = %s }" (show style) (show font) txt
+describePicture (Text _ txt) = printf "text { text = '%s' }" txt
+describePicture (Blank _) = printf "blank"
+describePicture (StyledText _ style font txt) = printf " styledText { style = %s , font = %s , txt = '%s' }" (show style) (show font) txt
 describePicture (Color _ (RGBA r g b a) _) = printf "colored { color = RGBA(%4f, %4f, %4f, %4f) }" r g b a
 describePicture (Translate _ x y _) = printf "translate { x = %4f , y = %4f }" x y
 describePicture (Scale _ x y _) = printf "scale { x = %4f , y = %4f }" x y
 describePicture (Rotate _ angle _) = printf "rotate { angle = %4f }" angle
 --describePicture (Dilated _ n _) = printf "dilated { number = %4f }" n
-describePicture (Logo _) = printf "logo "
-describePicture (CoordinatePlane _) = printf "coordinatePlane "
-describePicture (Pictures _) = printf "pictures "
+describePicture (Logo _) = printf "logo"
+describePicture (CoordinatePlane _) = printf "coordinatePlane"
+describePicture (Pictures _) = printf "pictures"
 
 
 setCallInfo :: Picture -> Object -> IO ()

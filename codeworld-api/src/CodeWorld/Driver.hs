@@ -760,7 +760,7 @@ describePicture (StyledText _ style font txt) = printf " { style = %s , font = %
 --describePicture (Dilated cs _ _) = cs --doublecheck args
 describePicture (Logo _) = printf "logo "
 describePicture (CoordinatePlane _) = printf "coordinatePlane "
---describePicture (Pictures _) = emptyCallStack
+describePicture (Pictures _) = printf "pictures "
 
 
 setCallInfo :: Picture -> Object -> IO ()

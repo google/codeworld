@@ -33,9 +33,6 @@ module Internal.Prelude
     -- Currying and uncurrying
     , toOperator
     , fromOperator
-    -- Basic functions
-    , id
-    , (.)
     -- Tuples
     , firstOfPair
     , secondOfPair
@@ -68,14 +65,12 @@ module Internal.Prelude
     , reversed
     , unique
     , transposed
-    , combined
     -- Maybe
     , Maybe(..)
     , withDefault
     , hasValue
     , definitely
     -- Random numbers
-    , fromRandomSeed
     , randomsFrom
     , randomNumbers
     , shuffled
@@ -83,7 +78,7 @@ module Internal.Prelude
 
 import qualified "base" Data.Maybe as P
 import qualified "base" Prelude as P
-import "base" Prelude (Bool, ($))
+import "base" Prelude (Bool, ($), (.))
 
 import Data.Bits (xor)
 import Data.Function (on)
@@ -97,20 +92,6 @@ import System.Random hiding (split)
 import System.Random.Shuffle (shuffle')
 
 import GHC.Stack (HasCallStack, withFrozenCallStack)
-
-id :: a -> a
-id x = x
-
-{-# WARNING
-id "Please define your own identity function."
- #-}
-
-(.) :: (b -> c) -> (a -> b) -> a -> c
-(.) = (P..)
-
-{-# WARNING
-(.) "Please implement function composition with arguments."
- #-}
 
 -- | Converts a function to an operator.
 --
@@ -296,21 +277,6 @@ unique = L.nubBy deepEq
 transposed :: [[a]] -> [[a]]
 transposed = L.transpose
 
--- | Combines a list of values into a single value, by merging
--- members with a function.  The function should take two parameters,
--- and should be associative (so @f(x,f(y,z)) = f(f(x,y),z)@).  The
--- list should be non-empty.
---
--- For example, @combined(fromOperator(+), [1, 3, 5])@ is equal to 9.
-combined :: HasCallStack => ((a, a) -> a, [a]) -> a
-combined (f, []) = withFrozenCallStack (P.error "Empty list is not allowed.")
-combined (f, [x]) = x
-combined (f, x:xs) = f (x, combined (f, xs))
-
-{-# WARNING
-combined "Pleased use recursion instead of combined(...)."
- #-}
-
 -- For some reason, randoms numbers seem to give conspicuously similar
 -- results early in the sequence, so we throw away a few to get better
 -- mixing.
@@ -333,17 +299,11 @@ data Maybe a
     = Nothing
     | Just a
 
-{-# WARNING
-Maybe "Please use your own data type instead of Maybe and friends."
- #-}
+{-# WARNING Maybe "Please use your own data type instead of Maybe and friends; Maybe will be removed July 2018." #-}
 
-{-# WARNING
-Just "Please use your own data type instead of Maybe and friends."
- #-}
+{-# WARNING Just "Please use your own data type instead of Maybe and friends; Maybe will be removed July 2018." #-}
 
-{-# WARNING
-Nothing "Please use your own data type instead of Maybe and friends."
- #-}
+{-# WARNING Nothing "Please use your own data type instead of Maybe and friends; Maybe will be removed July 2018." #-}
 
 -- | Converts a Maybe value to a plain value, by using a default.
 --
@@ -353,18 +313,14 @@ withDefault :: (Maybe a, a) -> a
 withDefault (Nothing, d) = d
 withDefault (Just a, _) = a
 
-{-# WARNING
-withDefault "Please use your own data type instead of Maybe and friends."
- #-}
+{-# WARNING withDefault "Please use your own data type instead of Maybe and friends; Maybe will be removed July 2018." #-}
 
 -- | Determines if a Maybe has a value.
 hasValue :: Maybe a -> Truth
 hasValue Nothing = P.False
 hasValue (Just _) = P.True
 
-{-# WARNING
-hasValue "Please use your own data type instead of Maybe and friends."
- #-}
+{-# WARNING hasValue "Please use your own data type instead of Maybe and friends; Maybe will be removed July 2018." #-}
 
 -- | Extracts the value from a Maybe, and crashes the program if there
 -- is no such value.
@@ -373,16 +329,7 @@ definitely (Just a) = a
 definitely Nothing =
     withFrozenCallStack (P.error "Expected a value; found Nothing.")
 
-{-# WARNING
-definitely "Please use your own data type instead of Maybe and friends."
- #-}
-
-fromRandomSeed :: Number -> [Number]
-fromRandomSeed = randomNumbers
-
-{-# WARNING
-fromRandomSeed "Please use randomNumbers instead of fromRandomSeed."
- #-}
+{-# WARNING definitely "Please use your own data type instead of Maybe and friends; Maybe will be removed July 2018." #-}
 
 randomNumbers :: Number -> [Number]
 randomNumbers = randomsFrom . numToStdGen

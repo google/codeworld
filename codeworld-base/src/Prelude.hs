@@ -63,22 +63,23 @@ import Internal.Picture
 --
 -- > program = animationOf(spinningWheel)
 --
--- * Simulations.  A simulation is like an animation, in that it changes over
---   time.  But while an animation changes in a simple regular way over time, a
---   simulation can change in different ways depending on the state of things
---   at any moment.  To create a simulation, you should first decide on the
---   type to describe the state of things (called the "world" type), and
---   describe the simulation in terms of the starting state, the step that
---   says how things change over time, and and a draw function that can build
---   a picture from a state.  Then you'll use 'simulationOf' to define @program@.
+-- * Activities.  An activity is a program that can interact with the user by
+--   responding to pointer and keyboard events.  It also has a persistent state
+--   that can be used to remember information about the past.  To create an
+--   activity, you should first decide on the type to describe the state of
+--   things (called the "world" type).  You will then describe the activity with:
+--   an initial world, a change function that describes how the world changes
+--   when various things happen, and a picture function that converts the world
+--   into a picture to display.  You will then use 'activityOf' to define
+--   @program@.  Example:
+--
+-- > program = activityOf(initial, change, picture)
+--
+-- * Group activities.  Finally, you can build a multi-user activity that others
+--   can join over the internet.  The process is similar to activities, except
+--   that you'll specify a number of participants, and your change and picture
+--   functions receive extra arguments describing which participant an event or
+--   picture applies to.  You'll use 'groupActivityOf' to define these.
 --   Example:
 --
--- > program = simulationOf(start, step, draw)
---
--- * Interactions.  Finally, you can build an interactive simulation, such as
---   a game.  This is very like a simulation, except that it also has an event
---   function, which says how the state of things changes when events (like
---   keys being pressed or the mouse moving) happen.  You'll use
---   'interactionOf' to define these.  Example:
---
--- > program = interactionOf(start, step, event, draw)
+-- > program = groupActivityOf(n, initial, change, picture)

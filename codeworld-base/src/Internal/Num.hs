@@ -31,7 +31,6 @@ module Internal.Num
     , (<=)
     , max
     , min
-    , opposite
     , negate
     , abs
     , absoluteValue
@@ -42,7 +41,6 @@ module Internal.Num
     , floor
     , quotient
     , remainder
-    , reciprocal
     , pi
     , exp
     , sqrt
@@ -54,7 +52,6 @@ module Internal.Num
     , cos
     , asin
     , atan
-    , atan2
     , acos
     , properFraction
     , even
@@ -136,7 +133,7 @@ instance P.Num Number where
     (+) = (+)
     (-) = (-)
     (*) = (*)
-    negate = opposite
+    negate (Number n) = Number (P.negate n)
     abs = abs
     signum = signum
 
@@ -227,16 +224,8 @@ max (Number a, Number b) = fromDouble (P.max a b)
 min :: (Number, Number) -> Number
 min (Number a, Number b) = fromDouble (P.min a b)
 
-{-| Gives the opposite (that is, the negative) of a number. -}
-opposite :: Number -> Number
-opposite = fromDouble . P.negate . toDouble
-
-{-# WARNING
-opposite "Please use -x instead of opposite(x)."
- #-}
-
 negate :: Number -> Number
-negate = opposite
+negate = P.negate
 
 {-| Gives the absolute value of a number.
 
@@ -306,18 +295,6 @@ quotient (a, b) = truncation (a / b)
 remainder :: HasCallStack => (Number, Number) -> Number
 remainder (a, 0) = withFrozenCallStack (P.error "Cannot divide by zero.")
 remainder (a, b) = a - b * quotient (a, b)
-
-{-| Gives the repicrocal of a number.
-
-  For example, reciprocal(5) is 1/5 (also written as 0.2).
--}
-reciprocal :: HasCallStack => Number -> Number
-reciprocal 0 = withFrozenCallStack (P.error "Zero has no reciprocal.")
-reciprocal x = fromDouble (P.recip (toDouble x))
-
-{-# WARNING
-reciprocal "Please use 1/x or x^(-1) instead of reciprocal(x)."
- #-}
 
 {-| The constant pi, which is equal to the ration between the circumference
     and diameter of a circle.
@@ -416,21 +393,6 @@ asin (Number x)
                  "The asin function is only defined for numbers from -1 to 1.")
     | otherwise = fromRadians (fromDouble (P.asin x))
 
-{-| Gives the inverse tangent of a value, in degrees.
-
-  This is the unique angle between -90 and 90 that has the input as its tangent.
--}
-atan :: Number -> Number
-atan = fromRadians . fromDouble . P.atan . toDouble
-
-{-| Gives the angle between the positive x axis and a given point, in degrees. -}
-atan2 :: (Number, Number) -> Number
-atan2 (Number a, Number b) = fromRadians (fromDouble (P.atan2 a b))
-
-{-# WARNING
-atan2 "Please use vectorDirection instead of atan2."
- #-}
-
 {-| Gives the inverse cosine of a value, in degrees.
 
   This is the unique angle between 0 and 180 that has the input as its cosine.
@@ -442,6 +404,13 @@ acos (Number x)
             (P.error
                  "The acos function is only defined for numbers from -1 to 1.")
     | otherwise = fromRadians (fromDouble (P.acos x))
+
+{-| Gives the inverse tangent of a value, in degrees.
+
+  This is the unique angle between -90 and 90 that has the input as its tangent.
+-}
+atan :: Number -> Number
+atan = fromRadians . fromDouble . P.atan . toDouble
 
 {-| Separates a number into its whole and fractional parts.
 

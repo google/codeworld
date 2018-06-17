@@ -163,6 +163,14 @@ window.env = parent;
         }
     }
 
+    function removeCallStacks(node) {
+        if (node.nodeType == Node.TEXT_NODE) {
+            node.nodeValue = node.nodeValue.replace(/HasCallStack => /, '');
+        } else {
+            for (let child of node.childNodes) removeCallStacks(child);
+        }
+    }
+
     function setContent(elem) {
         var help = document.getElementById('help');
         while (help.firstChild) {
@@ -208,6 +216,7 @@ window.env = parent;
                     relativizeLinks(source, content, 'link', 'href');
                     relativizeLinks(source, content, 'a', 'href');
                     relativizeLinks(source, content, 'img', 'src');
+                    removeCallStacks(content);
                 }
 
                 var spacerDiv = document.createElement('div');

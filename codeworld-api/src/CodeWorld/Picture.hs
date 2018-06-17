@@ -127,7 +127,7 @@ data Picture
     | CoordinatePlane CallStack
     | Logo CallStack
     | Pictures [Picture]
-    | Blank CallStack deriving (Show)
+    | Blank CallStack
 
 data TextStyle
     = Plain

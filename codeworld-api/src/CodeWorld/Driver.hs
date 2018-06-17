@@ -729,30 +729,29 @@ picToObj' pic =
             return $ (unsafeCoerce arr :: JSVal)
     setProps xs obj = liftIO $ void $ mapM (\(s, v) -> setProp s v obj) xs
 
--- describePicture 
 describePicture :: Picture -> String
 describePicture (Rectangle _ w h) = printf "rectangle { width = %4f , height = %4f }" w h
-describePicture (SolidPolygon _ pts) = printf "solidPolygon " ++ intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
-describePicture (SolidClosedCurve _ pts) = printf "solidClosedCurve " ++ intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
-describePicture (Polygon _ pts) = printf "polygon " ++ intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
-describePicture (ThickPolygon _ pts w) = printf "thickPolygon " ++ intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts] ++ printf ", {width = %4f}" w
+describePicture (SolidPolygon _ pts) = printf "solidPolygon { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
+describePicture (SolidClosedCurve _ pts) = printf "solidClosedCurve { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
+describePicture (Polygon _ pts) = printf "polygon { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
+describePicture (ThickPolygon _ pts w) = printf "thickPolygon { points = %s , width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
 describePicture (SolidRectangle _ w h) = printf "solidRectangle { width = %4f , height = %4f }" w h
 describePicture (ThickRectangle _ lw w h) = printf "thickRectangle { linewidth = %4f , width = %4f , height = %4f }" lw w h
-describePicture (ClosedCurve _ pts) = printf "closedCurve" ++ intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
-describePicture(ThickClosedCurve _ pts w) = printf "thickClosedCurve " ++ intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts] ++ printf ", {width = %4f}" w
+describePicture (ClosedCurve _ pts) = printf "closedCurve { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
+describePicture(ThickClosedCurve _ pts w) = printf "thickClosedCurve { points = %s, width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
 describePicture (Circle _ r) = printf "circle { radius = %4f }" r
 describePicture (SolidCircle _ r) = printf "solidCircle { radius = %4f }" r
 describePicture (ThickCircle _ lw r) = printf "thickCircle { linewidth = %4f , radius = %4f }" lw r
-describePicture (Polyline _ pts) = printf "polyline " ++ intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
-describePicture (ThickPolyline _ pts w) = printf "thickPolyline" ++ intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts] ++ printf ", {width = %4f}" w
-describePicture (Curve _ pts) = printf "thickCurve" ++ intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts]
-describePicture (ThickCurve _ pts w) = printf "thickCurve " ++ intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts] ++ printf ", {width = %4f}" w
+describePicture (Polyline _ pts) = printf "polyline { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
+describePicture (ThickPolyline _ pts w) = printf "thickPolyline { points = %s, width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
+describePicture (Curve _ pts) = printf "curve { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
+describePicture (ThickCurve _ pts w) = printf "thickCurve { points = %s, width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
 describePicture (Sector _ b e r) = printf "sector { startAngle = %4f , endAngle = %4f , radius = %4f}" b e r
 describePicture (Arc _ b e r) = printf "arc { startAngle = %4f , endAngle = %4f , radius = %4f}" b e r
 describePicture (ThickArc _ b e r w) = printf "thickArc { startAngle = %4f , endAngle = %4f , radius = %4f , width = %4f}" b e r w
 describePicture (Text _ txt) = printf "text { text = %s }" txt
 describePicture (Blank _) = printf "blank "
-describePicture (StyledText _ style font txt) = printf " { style = %s , font = %s , txt = %s }" (show style) (show font) txt
+describePicture (StyledText _ style font txt) = printf " styledText { style = %s , font = %s , txt = %s }" (show style) (show font) txt
 describePicture (Color _ (RGBA r g b a) _) = printf "colored { color = RGBA(%4f, %4f, %4f, %4f) }" r g b a
 describePicture (Translate _ x y _) = printf "translate { x = %4f , y = %4f }" x y
 describePicture (Scale _ x y _) = printf "scale { x = %4f , y = %4f }" x y

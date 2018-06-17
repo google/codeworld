@@ -752,11 +752,12 @@ describePicture (Arc _ b e r) = printf "arc { startAngle = %4f , endAngle = %4f 
 describePicture (ThickArc _ b e r w) = printf "thickArc { startAngle = %4f , endAngle = %4f , radius = %4f , width = %4f}" b e r w
 describePicture (Text _ txt) = printf "text { text = %s }" txt
 describePicture (Blank _) = printf "blank "
---describePicture (StyledText _ style font txt) = show " { style = %s , font = %s , txt = %s }" style font txt
---describePicture (Color cs _ _) = cs
+describePicture (StyledText _ style font txt) = printf " { style = %s , font = %s , txt = %s }" (show style) (show font) txt
+--describePicture (Color _ (RGBA(r g b a)) _) = "colored { color = RGBA(1, 1, 1, 1) }" RGBA(r g b a)
 --describePicture (Translate cs _ _ _) = cs
 --describePicture (Scale _ x y p) = show "scale { x = %s , y = %s , p = %s }" x y p
 --describePicture (Rotate cs _ _) = cs
+--describePicture (Dilated cs _ _) = cs --doublecheck args
 describePicture (Logo _) = printf "logo "
 describePicture (CoordinatePlane _) = printf "coordinatePlane "
 --describePicture (Pictures _) = emptyCallStack

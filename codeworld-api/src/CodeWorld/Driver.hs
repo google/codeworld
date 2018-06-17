@@ -753,11 +753,11 @@ describePicture (ThickArc _ b e r w) = printf "thickArc { startAngle = %4f , end
 describePicture (Text _ txt) = printf "text { text = %s }" txt
 describePicture (Blank _) = printf "blank "
 describePicture (StyledText _ style font txt) = printf " { style = %s , font = %s , txt = %s }" (show style) (show font) txt
---describePicture (Color _ (RGBA(r g b a)) _) = "colored { color = RGBA(1, 1, 1, 1) }" RGBA(r g b a)
+describePicture (Color _ (RGBA r g b a) _) = printf "colored { color = RGBA(%4f, %4f, %4f, %4f) }" r g b a
 describePicture (Translate _ x y _) = printf "translate { x = %4f , y = %4f }" x y
 describePicture (Scale _ x y _) = printf "scale { x = %4f , y = %4f }" x y
 describePicture (Rotate _ angle _) = printf "rotate { angle = %4f }" angle
---describePicture (Dilated cs _ _) = cs --doublecheck args
+--describePicture (Dilated _ n _) = printf "dilated { number = %4f }" n
 describePicture (Logo _) = printf "logo "
 describePicture (CoordinatePlane _) = printf "coordinatePlane "
 describePicture (Pictures _) = printf "pictures "

@@ -756,7 +756,7 @@ describePicture (StyledText _ style font txt) = printf " { style = %s , font = %
 --describePicture (Color _ (RGBA(r g b a)) _) = "colored { color = RGBA(1, 1, 1, 1) }" RGBA(r g b a)
 describePicture (Translate _ x y _) = printf "translate { x = %4f , y = %4f }" x y
 describePicture (Scale _ x y _) = printf "scale { x = %4f , y = %4f }" x y
---describePicture (Rotate cs _ _) = cs
+describePicture (Rotate _ angle _) = printf "rotate { angle = %4f }" angle
 --describePicture (Dilated cs _ _) = cs --doublecheck args
 describePicture (Logo _) = printf "logo "
 describePicture (CoordinatePlane _) = printf "coordinatePlane "

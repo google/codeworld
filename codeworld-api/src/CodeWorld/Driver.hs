@@ -783,6 +783,16 @@ picToObj' pic =
             return $ (unsafeCoerce arr :: JSVal)
     setProps xs obj = liftIO $ void $ mapM (\(s, v) -> setProp s v obj) xs
 
+-- x is the maximum display length (Int)
+-- y is the input string we want to trim
+-- if string (y) is less than x, then we return y
+-- otherwise, replace the interior of string with ...
+
+trim :: Int -> String -> String
+trim x y = case (x > (length y)) of
+      True -> y
+      False -> "..."
+
 describePicture :: Picture -> String
 describePicture (Rectangle _ w h) = printf "rectangle { width = %4f , height = %4f }" w h
 describePicture (SolidPolygon _ pts) = printf "solidPolygon { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])

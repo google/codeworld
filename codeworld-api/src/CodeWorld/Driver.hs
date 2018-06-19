@@ -825,7 +825,7 @@ setCallInfo :: Picture -> Object -> IO ()
 setCallInfo pic obj =
     case findCSMain (getPictureCS pic) of
         Just (_, src) -> do
-            setProp "name" (pToJSVal $ (trim 30 . describePicture) pic) obj
+            setProp "name" (pToJSVal $ (trim 80 . describePicture) pic) obj
             setProp "startLine" (pToJSVal $ srcLocStartLine src) obj
             setProp "startCol" (pToJSVal $ srcLocStartCol src) obj
             setProp "endLine" (pToJSVal $ srcLocEndLine src) obj

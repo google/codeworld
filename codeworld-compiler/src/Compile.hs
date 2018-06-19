@@ -26,6 +26,7 @@ import Control.Monad
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import Data.ByteString.Char8 (pack)
+import Data.List (intercalate)
 import Data.Monoid
 import ErrorSanitizer
 import System.Directory
@@ -54,10 +55,10 @@ compileSource stage src out err mode =
             return False
         False ->
             withSystemTempDirectory "build" $ \tmpdir -> do
-                parenProblem <-
+                extraWarnings <-
                     case mode of
-                        "codeworld" -> not <$> checkParsedCode src err
-                        _ -> return False
+                        "codeworld" -> checkParsedCode src
+                        _ -> return []
                 copyFile src (tmpdir </> "program.hs")
                 baseArgs <-
                     case mode of
@@ -84,8 +85,8 @@ compileSource stage src out err mode =
                                 case mode of
                                     "codeworld" -> filterOutput output
                                     _ -> output
-                        when (not parenProblem) $ B.writeFile err ""
-                        B.appendFile err filteredOutput
+                        B.writeFile err $
+                            B.intercalate "\n\n" (filteredOutput : map pack extraWarnings)
                         let target = tmpdir </> "program.jsexe"
                         case stage of
                             GenBase _ _ syms -> do

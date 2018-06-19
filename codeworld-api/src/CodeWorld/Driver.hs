@@ -788,10 +788,16 @@ picToObj' pic =
 -- if string (y) is less than x, then we return y
 -- otherwise, replace the interior of string with ...
 
+--trim :: Int -> String -> String
+--trim x y = case (x > (length y)) of
+      --True -> y
+      --False -> "..."
+
 trim :: Int -> String -> String
-trim x y = case (x > (length y)) of
-      True -> y
-      False -> "..."
+trim x y = let mid = ((x - 2)`div` 2)
+    in case (x >= (length y)) of
+                True -> (y :: String)
+                False ->(take mid y ++ ".." ++ (reverse $ take mid $ reverse y))
 
 describePicture :: Picture -> String
 describePicture (Rectangle _ w h) = printf "rectangle { width = %4f , height = %4f }" w h

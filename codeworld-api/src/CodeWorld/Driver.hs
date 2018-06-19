@@ -783,16 +783,6 @@ picToObj' pic =
             return $ (unsafeCoerce arr :: JSVal)
     setProps xs obj = liftIO $ void $ mapM (\(s, v) -> setProp s v obj) xs
 
--- x is the maximum display length (Int)
--- y is the input string we want to trim
--- if string (y) is less than x, then we return y
--- otherwise, replace the interior of string with ...
-
---trim :: Int -> String -> String
---trim x y = case (x > (length y)) of
-      --True -> y
-      --False -> "..."
-
 trim :: Int -> String -> String
 trim x y = let mid = ((x - 2)`div` 2)
     in case (x >= (length y)) of

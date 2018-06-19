@@ -784,10 +784,10 @@ picToObj' pic =
     setProps xs obj = liftIO $ void $ mapM (\(s, v) -> setProp s v obj) xs
 
 trim :: Int -> String -> String
-trim x y = let mid = ((x - 2)`div` 2)
-    in case (x >= (length y)) of
-                True -> (y :: String)
-                False ->(take mid y ++ ".." ++ (reverse $ take mid $ reverse y))
+trim x y = let mid = (x - 2) `div` 2
+    in case x >= (length y) of
+                True -> y :: String
+                False -> take mid y ++ ".." ++ (reverse $ take mid $ reverse y)
 
 describePicture :: Picture -> String
 describePicture (Rectangle _ w h) = printf "rectangle { width = %4f , height = %4f }" w h

@@ -81,7 +81,11 @@ pattern PointerRelease p = MouseRelease LeftButton p
 pattern PointerMovement :: Point -> Event
 pattern PointerMovement p = MouseMovement p
 
-{-# WARNING MousePress "Please use PointerPress instead of MousePress; MousePress will be removed July 2019." #-}
-{-# WARNING MouseRelease "Please use PointerRelease instead of MouseRelease; MouseRelease will be removed July 2019." #-}
-{-# WARNING MouseMovement "Please use PointerMovement instead of MouseMovement; MouseMovement will be removed July 2019." #-}
-{-# WARNING MouseButton "Please use pointer events, which don't have buttons; MouseButton will be removed July 2019." #-}
+{-# WARNING MousePress    ["Please use PointerPress instead of MousePress.",
+                           "MousePress may be removed July 2019." ] #-}
+{-# WARNING MouseRelease  ["Please use PointerRelease instead of MouseRelease.",
+                           "MouseRelease may be removed July 2019."] #-}
+{-# WARNING MouseMovement ["Please use PointerMovement instead of MouseMovement.",
+                           "MouseMovement may be removed July 2019."] #-}
+{-# WARNING MouseButton   ["Please use pointer events, which don't have buttons.",
+                           "MouseButton may be removed July 2019."] #-}

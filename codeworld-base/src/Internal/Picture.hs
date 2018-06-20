@@ -208,11 +208,15 @@ thickArc (b, e, r, w) =
              (toDouble (pi * e / 180))
              (toDouble r))
 
--- | A piece of text
+-- | A rendering of text characters.
 text :: HasCallStack => Text -> Picture
 text = CWPic . CW.text . fromCWText
 
--- | A styled piece of text
+-- | A rendering of text characters.
+lettering :: HasCallStack => Text -> Picture
+lettering = CWPic . CW.lettering . fromCWText
+
+-- | A rendering of text characters, with a specific choice of font and style.
 styledText :: HasCallStack => (Text, Font, TextStyle) -> Picture
 styledText (t, f, s) =
     CWPic (CW.styledText (fromCWStyle s) (fromCWFont f) (fromCWText t))
@@ -226,6 +230,10 @@ styledText (t, f, s) =
     fromCWFont Handwriting = CW.Handwriting
     fromCWFont Fancy = CW.Fancy
     fromCWFont (NamedFont fnt) = CW.NamedFont (fromCWText fnt)
+
+-- | A rendering of text characters, with a specific choice of font and style.
+styledLettering :: HasCallStack => (Text, Font, TextStyle) -> Picture
+styledLettering = styledText
 
 -- | A picture drawn entirely in this color.
 colored :: HasCallStack => (Picture, Color) -> Picture

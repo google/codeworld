@@ -100,7 +100,9 @@ module Internal.Exports
     , sector
     , thickArc
     , text
+    , lettering
     , styledText
+    , styledLettering
     , colored
     , coloured
     , translated

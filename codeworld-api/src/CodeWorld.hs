@@ -53,7 +53,9 @@ module CodeWorld (
     , sector
     , thickArc
     , text
+    , lettering
     , styledText
+    , styledLettering
     , colored
     , coloured
     , translated

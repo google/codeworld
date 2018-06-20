@@ -30,14 +30,14 @@ tricks and capabilities of picture mode.
     o = pictures([ rotated(scaled(circle(1.6), 0.3, 1), th) | th <- [0, 15 .. 165] ])
 
     d = translated(scaled(parts, 1.5, 1), -1.2, 0)
-      where parts = pictures([ arc(-90, 90, r) | r <- [0.2, 0.4 .. 1.6] ]) &
+      where parts = pictures([ arc(-90, 90, rad) | rad <- [0.2, 0.4 .. 1.6] ]) &
                     pictures([ rotated(polyline([ (0, 0), (1.6, 0) ]), th) | th <- [-90, -80 .. 90] ])
 
     e = go(8)
       where go(1) = blank
             go(n) = translated(arc(180, 270, 2), 1, 2 - phi)
                   & translated(rotated(scaled(go (n-1), 1/phi, 1/phi), 270), 0, 1)
-                  & colored(rectangle(2, 2 * phi), gray 0.5)
+                  & colored(rectangle(2, 2 * phi), gray(0.5))
             phi = (1 + sqrt(5)) / 2
 
     w = scaled(design, 0.4, 1)
@@ -49,10 +49,10 @@ tricks and capabilities of picture mode.
 
     r = scaled(design, 1.5, 1)
       where design = pictures([
-                       translated(pictures[ leg(2,   k) | k <- [0,   5 ..  35] ], -0.6, 0.32),
-                       translated(pictures[ leg(1.2, k) | k <- [40, 45 .. 180] ], -0.6, 0.32)
+                       translated(pictures([ leg(2,   k) | k <- [0,   5 ..  35] ]), -0.6, 0.32),
+                       translated(pictures([ leg(1.2, k) | k <- [40, 45 .. 180] ]), -0.6, 0.32)
                        ])
-            leg(r, k) = rotated(polyline([ (0,0), (0,-r) ]), k)
+            leg(rad, k) = rotated(polyline([ (0,0), (0,-rad) ]), k)
 
     l = go(5)
       where go(1) = blank
@@ -150,9 +150,14 @@ addition and multiplication.
     diverged :: Complex -> Truth
     diverged(C(x, y)) = abs(x) > 2 || abs(y) > 2
 
-    depth :: (Number, Complex, Complex, Number) -> Maybe Number
-    depth(_, _, _, 0) = Nothing
-    depth(m, z, c, k) | diverged(z) = Just(m)
+    -- A depth can be a finite number, or infinite.
+    data Depth where
+      Finite   :: Number -> Depth
+      Infinite :: Depth
+
+    depth :: (Number, Complex, Complex, Number) -> Depth
+    depth(_, _, _, 0) = Infinite
+    depth(m, z, c, k) | diverged(z) = Finite(m)
                       | otherwise   = depth(m + 1, z <*> z <+> c, c, k - 1)
 
     {-
@@ -165,7 +170,7 @@ addition and multiplication.
       where pic = pictures([ spot(x, y, m)
                              | x <- [-2, -2 + width .. 2]
                              , y <- [-2, -2 + width .. 2]
-                             , Just(m) <- [depth(0, C(0, 0), C(x, y), k)] ])
+                             , Finite(m) <- [depth(0, C(0, 0), C(x, y), k)] ])
             width         = 4 / n
             spot(x, y, m) = translated(shade(solidRectangle(width, width), m), x, y)
             shade(p, m)   = colored(p, gray((1 - 1/m)^5))
@@ -183,7 +188,7 @@ This is an example of simulation mode.  The position of the ball is
 difficult to describe as an immediate function of the current time, so
 instead, the program simulates the movement of the ball in small steps.
 
-    program = simulationOf(initial, step, draw)
+    program = activityOf(initial, change, picture)
 
     data World where
         Ball :: (Point, Vector) -> World
@@ -194,7 +199,8 @@ instead, the program simulates the movement of the ball in small steps.
     initial(x:y:vx:vy:_) = Ball((16*x  - 8, 16*y  - 8),
                                 (16*vx - 8, 16*vy - 8))
 
-    step(world, dt) = bounce(move(world, dt))
+    change(world, TimePassing(dt)) = bounce(move(world, dt))
+    change(world, other)           = world
 
     move(Ball((x,y), (vx,vy)), dt) = Ball((new_x, new_y), (new_vx, new_vy))
       where new_x  = x + new_vx * dt
@@ -210,7 +216,7 @@ instead, the program simulates the movement of the ball in small steps.
 
     fence(lo, hi, x) = max(lo, min(hi, x))
 
-    draw(Ball((x,y),_)) = translated(solidCircle(radius), x, y)
+    picture(Ball((x,y),_)) = translated(solidCircle(radius), x, y)
 
 Example: Maze
 =============
@@ -221,83 +227,82 @@ interaction mode.  Unlike the Asteroids example, this game doesn't use
 the step function at all!  Instead, all changes in the state are made
 in response to actions from the user.
 
-    program = interactionOf(createWorld, firstOfPair, event, drawWorld)
+    program = activityOf(createWorld, event, drawWorld)
 
     {- A World contains
         * the location of the player in the maze
         * the maze itself, which is a Maze
     -}
-    data World = World { loc :: Point, maze :: Maze }
+    data World where
+      WorldOf :: (Point, Maze) -> World
+
+    data Maze where
+      MazeOf :: (Number, Number, [Point], [Door]) -> Maze
+
+    type Door = (Point, Point)
 
     {- Create the initial maze, using the random number supply -}
     createWorld :: RandomNumbers -> World
-    createWorld(rs) = World { loc = (0, 0), maze = buildMaze(20, 20, rs) }
+    createWorld(rs) = WorldOf((0, 0), buildMaze(20, 20, rs))
 
     {- Event handling: Move the player in the maze. -}
-    event(w, KeyPress "Up")    = move(up,    w)
-    event(w, KeyPress "Down")  = move(down,  w)
-    event(w, KeyPress "Left")  = move(left,  w)
-    event(w, KeyPress "Right") = move(right, w)
+    event(w, KeyPress("Up"))    = move(up,    w)
+    event(w, KeyPress("Down"))  = move(down,  w)
+    event(w, KeyPress("Left"))  = move(left,  w)
+    event(w, KeyPress("Right")) = move(right, w)
     event(w, _) = w
 
-    move :: (Direction, World) -> World
-    move(d, w@(World p@(x, y) (Maze _ _ _ ds))) =
-      w { loc = if (containsDoor(ds, (p, p'))) then p' else p }
+    move :: (Vector, World) -> World
+    move(d, WorldOf(p, MazeOf(w, h, vis, ds)))
+      | containsDoor(ds, (p, p')) = WorldOf(p', MazeOf(w, h, vis, ds))
+      | otherwise                 = WorldOf(p,  MazeOf(w, h, vis, ds))
       where p' = addDirToPoint(p, d)
 
     {- Draw the maze and the player in it. -}
     drawWorld :: World -> Picture
-    drawWorld w = scaled(translated(
-        drawBall(loc(w)) & drawMaze(maze(w)), -10, -10), 0.98, 0.98)
+    drawWorld(WorldOf(loc, maze)) = scaled(translated(
+        drawBall(loc) & drawMaze(maze), -10, -10), 0.98, 0.98)
       where
         drawBall(x, y) = translated(ball, x, y)
         ball = translated(colored(solidCircle(0.5), blue), 0.5, 0.5)
 
-    {- Maze generation code -}
-    type Direction = Vector
-
     directions = [up, down, right, left]
     up = (0,1); down = (0,-1); right = (1,0); left = (-1, 0)
 
-    addDirToPoint :: (Point, Direction) -> Point
+    addDirToPoint :: (Point, Vector) -> Point
     addDirToPoint(p, d) = vectorSum(p, d)
-
-    type Door = (Point, Point)
 
     reverseDoor :: Door -> Door
     reverseDoor((fx, fy), (tx, ty)) = ((tx, ty), (fx, fy))
 
-    data Maze = Maze {
-      width   :: Number,    height :: Number,
-      visited :: Set Point, doors  :: Set Door }
-
     addDoor :: (Maze, Door) -> Maze
-    addDoor(g, d) = g { doors = addToSet(doors g, d) }
+    addDoor(MazeOf(w, h, vis, ds), d) = MazeOf(w, h, vis, addIfMissing(ds, d))
 
     containsDoor(ds, d) = contains(ds, d) || contains(ds, reverseDoor(d))
 
     markVisitedAt :: (Maze, Point) -> Maze
-    markVisitedAt(g, p) = g { visited = addToSet(visited(g), p) }
+    markVisitedAt(MazeOf(w, h, vis, ds), p) =
+        MazeOf(w, h, addIfMissing(vis, p), ds)
 
     isVisitedAt :: (Maze, Point) -> Truth
-    isVisitedAt(g, p) = contains(visited(g), p)
+    isVisitedAt(MazeOf(_, _, vis, ds), p) = contains(vis, p)
 
     {- Find all the neighbors of a particular point in a grid -}
-    neighbors :: (Maze, Point) -> Set Point
-    neighbors(g, p) =
+    neighbors :: (Maze, Point) -> [Point]
+    neighbors(MazeOf(w, h, _, _), p) =
         [np | d <- directions, let np = addDirToPoint(p,d), inbounds(np)]
       where
-        inbounds(x, y) = x >= 0 && x < width g && y >= 0 && y < height g
+        inbounds(x, y) = x >= 0 && x < w && y >= 0 && y < h
 
     {- Find all the unvisited neighbors of a point in a grid -}
-    unvisitedNeighbors :: (Maze, Point) -> Set Point
+    unvisitedNeighbors :: (Maze, Point) -> [Point]
     unvisitedNeighbors(g, p) =
       [ n | n <- neighbors(g, p), not(isVisitedAt(g,n)) ]
 
     {- The function for building a random maze -}
     buildMaze :: (Number, Number, RandomNumbers) -> Maze
     buildMaze(w, h, randoms) = go((w-1, h-1), startMaze, randoms) where
-      startMaze = (Maze w h [] (entranceDoor : exitDoor : [])) where
+      startMaze = MazeOf(w, h, [], [entranceDoor, exitDoor]) where
         entranceDoor = ((-1, 0), (0, 0))
         exitDoor     = ((w-1, h-1), (w, h-1))
       go :: (Point, Maze, RandomNumbers) -> Maze
@@ -309,7 +314,7 @@ in response to actions from the user.
           recur = go(n, newG, rest(rs, 1))
 
     {- Maze painting code -}
-    drawMaze(Maze w h _ ds) = doorsPic & allGridLines
+    drawMaze(MazeOf(w, h, _, ds)) = doorsPic & allGridLines
       where
         doorsPic = pictures [drawDoor(d) | d <- ds]
         allGridLines = colored(horizontalLines & verticalLines, black)
@@ -328,9 +333,8 @@ in response to actions from the user.
 
     {- Helper Functions -}
     type RandomNumbers = [Number]
-    type Set a = [a]
-    addToSet :: (Set a, a) -> Set a
-    addToSet(as, a) = if contains(as, a) then as else a : as
+    addIfMissing :: ([a], a) -> [a]
+    addIfMissing(as, a) = if contains(as, a) then as else a : as
 
     foldl :: (b -> a -> b) -> b -> [a] -> b
     foldl f z0 xs0 = lgo z0 xs0 where
@@ -339,7 +343,6 @@ in response to actions from the user.
 
 Example: Asteroids
 ==================
-
 
 Asteroids is an example of an elaborate game built with CodeWorld.  Using the
 interaction mode, Asteroids keeps track of a detailed world state, and

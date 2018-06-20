@@ -147,7 +147,7 @@ data Picture
 data TextStyle
     = Plain
     | Bold
-    | Italic
+    | Italic deriving (Show)
 
 data Font
     = SansSerif
@@ -155,7 +155,7 @@ data Font
     | Monospace
     | Handwriting
     | Fancy
-    | NamedFont !Text
+    | NamedFont !Text deriving (Show)
 
 -- | A blank picture
 blank :: HasCallStack => Picture

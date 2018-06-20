@@ -110,7 +110,8 @@ polyline = CWPic . CW.polyline . map toCWVect
 path :: HasCallStack => [Point] -> Picture
 path = CWPic . CW.path . map toCWVect
 
-{-# WARNING path "Please use polyline(...) instead of path(...); path will be removed July 2019." #-}
+{-# WARNING path ["Please use polyline(...) instead of path(...).",
+                  "path may be removed July 2019."] #-}
 
 -- | A thin sequence of line segments, with these endpoints and line width
 thickPolyline :: HasCallStack => ([Point], Number) -> Picture
@@ -120,7 +121,8 @@ thickPolyline (ps, n) = CWPic (CW.thickPolyline (toDouble n) (map toCWVect ps))
 thickPath :: HasCallStack => ([Point], Number) -> Picture
 thickPath (ps, n) = CWPic (CW.thickPath (toDouble n) (map toCWVect ps))
 
-{-# WARNING thickPath "Please use thickPolyline(...) instead of thickPath(...); thickPath will be removed July 2019." #-}
+{-# WARNING thickPath ["Please use thickPolyline(...) instead of thickPath(...).",
+                       "thickPath may be removed July 2019."] #-}
 
 -- | A thin polygon with these points as vertices
 polygon :: HasCallStack => [Point] -> Picture

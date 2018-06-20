@@ -124,7 +124,7 @@ updatePlayers n m (Waiting time mousePos code _ _) =
 
 -- | Handling a UI event. May change the phase.
 event :: Event -> UIState s -> Step UIState s
-event (MouseMovement p) s = continueUIState (setMousePos p s)
+event (PointerMovement p) s = continueUIState (setMousePos p s)
 event CreateClick (MainMenu t p) = Create (Connecting t p)
 event JoinClick (MainMenu t p) = ContinueMain (Joining t p "")
 event (LetterPress k) (Joining t p code)
@@ -139,13 +139,13 @@ event CancelClick (Waiting t p c n m) = CancelWait (MainMenu t p)
 event _ s = continueUIState s
 
 pattern CreateClick <-
-        MousePress LeftButton (inButton 0 1.5 8 2 -> True)
+        PointerPress (inButton 0 1.5 8 2 -> True)
 
 pattern JoinClick <-
-        MousePress LeftButton (inButton 0 (-1.5) 8 2 -> True)
+        PointerPress (inButton 0 (-1.5) 8 2 -> True)
 
 pattern ConnectClick <-
-        MousePress LeftButton (inButton 0 (-3.0) 8 2 -> True)
+        PointerPress (inButton 0 (-3.0) 8 2 -> True)
 
 pattern LetterPress c <- (isLetterPress -> Just c)
 
@@ -161,7 +161,7 @@ isLetterPress _ = Nothing
 
 isCancelClick :: Event -> Bool
 isCancelClick (KeyPress "Esc") = True
-isCancelClick (MousePress LeftButton point) = inButton 0 (-3) 8 2 point
+isCancelClick (PointerPress point) = inButton 0 (-3) 8 2 point
 isCancelClick _ = False
 
 picture :: UIState s -> Picture

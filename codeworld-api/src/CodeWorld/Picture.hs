@@ -169,7 +169,8 @@ polyline ps = Polyline callStack ps
 path :: HasCallStack => [Point] -> Picture
 path ps = Polyline callStack ps
 
-{-# WARNING path "Please use polyline instead of path; path will be removed July 2019." #-}
+{-# WARNING path ["Please use polyline instead of path.",
+                  "path may be removed July 2019."] #-}
 
 -- | A thick sequence of line segments, with given line width and endpoints
 thickPolyline :: HasCallStack => Double -> [Point] -> Picture
@@ -179,7 +180,8 @@ thickPolyline n ps = ThickPolyline callStack ps n
 thickPath :: HasCallStack => Double -> [Point] -> Picture
 thickPath n ps = ThickPolyline callStack ps n
 
-{-# WARNING thickPath "Please used thickPolyline instead of thickPath; thickPath will be removed July 2019." #-}
+{-# WARNING thickPath ["Please used thickPolyline instead of thickPath.",
+                       "thickPath may be removed July 2019."] #-}
 
 -- | A thin polygon with these points as vertices
 polygon :: HasCallStack => [Point] -> Picture

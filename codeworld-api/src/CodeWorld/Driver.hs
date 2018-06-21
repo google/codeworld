@@ -804,8 +804,8 @@ describePicture (ThickRectangle _ lw w h) = printf "thickRectangle { linewidth =
 describePicture (ClosedCurve _ pts) = printf "closedCurve { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
 describePicture(ThickClosedCurve _ pts w) = printf "thickClosedCurve { points = %s, width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
 describePicture (Circle _ r) = "circle { radius = " ++ showShortFloat r ++ " }"
-describePicture (SolidCircle _ r) = printf "solidCircle { radius = " ++ showShortFloat r ++ " }"
-describePicture (ThickCircle _ lw r) = printf "thickCircle { linewidth = %4f , radius = %4f }" lw r
+describePicture (SolidCircle _ r) = "solidCircle { radius = " ++ showShortFloat r ++ " }"
+describePicture (ThickCircle _ lw r) =  "thickCircle { linewidth = " ++ showShortFloat lw ++ " , radius = " ++ showShortFloat r ++ " }"
 describePicture (Polyline _ pts) = printf "polyline { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
 describePicture (ThickPolyline _ pts w) = printf "thickPolyline { points = %s, width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
 describePicture (Curve _ pts) = printf "curve { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])

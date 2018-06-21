@@ -22,7 +22,7 @@ code, and build programs to show the answer.
 The trick is to use the `printed` function, which turns a number into
 `Text`.  Here's an example:
 
-    program = drawingOf(text(printed(answer)))
+    program = drawingOf(lettering(printed(answer)))
     answer  = 7 * 8
 
 If you run this program, you'll see "56" on the screen.
@@ -32,7 +32,7 @@ Precedence
 
 The same technique can be used for more complex expressions, such as:
 
-    program = drawingOf(text(printed(answer)))
+    program = drawingOf(lettering(printed(answer)))
     answer  = 36 * (3 + 7) - 24 + 5^2
 
 When evaluating expressions, it's important to be careful about how the
@@ -97,7 +97,7 @@ faster!
 
 Here's our first attempt:
 
-    program = drawingOf(text(printed(answer)))
+    program = drawingOf(lettering(printed(answer)))
     answer  =  1 +  2 +  3 +  4 +  5 +  6 +  7 +  8 +  9 +  10 +
               11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 19 +  20 +
               21 + 22 + 23 + 24 + 25 + 26 + 27 + 28 + 29 +  30 +
@@ -132,7 +132,7 @@ But how would you write this function?  The trick is to write *two* equations.
 
 Here's what this looks like for Gauss's problem:
 
-    program = drawingOf(text(printed(answer)))
+    program = drawingOf(lettering(printed(answer)))
     answer  = sumFromOneTo(100)
 
     sumFromOneTo(1) = 1
@@ -358,7 +358,7 @@ height.
 One way to solve this problem is to just try all these possibilities, and then
 take the largest area you get.  That's easy with a list comprehension.
 
-    program = drawingOf(text(printed(answer)))
+    program = drawingOf(lettering(printed(answer)))
     answer = maximum([ w * (25 - 2 * w) | w <- [1 .. 12] ])
 
 If you run this program, the answer is 78 square toothpicks.  (That comes from an

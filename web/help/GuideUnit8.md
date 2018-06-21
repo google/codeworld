@@ -111,14 +111,15 @@ recognize it.  These are some common keys used in interactions.
 You can't memorize them all, though!  Instead, here's a program that will help
 you find the name of any key on the keyboard:
 
-    program = interactionOf(initial, step, event, text)
+    program = interactionOf(initial, step, event, lettering)
     initial(rs)              = ""
     step(s, dt)              = s
     event(s, KeyPress(name)) = name
     event(s,  other)         = s
 
 (Notice that this program doesn't define its own `picture` function.  The
-built-in function called `text` already does that job, so we can just use it!)
+built-in function called `lettering` already does that job, so we can just use
+it!)
 
 Pointer Events
 ----------------

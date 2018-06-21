@@ -476,9 +476,9 @@ random numbers to make each game unique.  There's quite a lot there!
     drawEnergyBar(e) = colored(translated(solidRectangle(16*e, 0.6), 0, -9.2), yellow)
 
     drawScoreBar(s, l, m) = pictures [
-      colored(translated(scaled(text("Score: " <> fmtScore(s)), 0.7, 0.5), -8, 9), white),
-      colored(translated(scaled(text("Last: "  <> fmtScore(l)), 0.7, 0.5), -1, 9), white),
-      colored(translated(scaled(text("Max: "   <> fmtScore(m)), 0.7, 0.5),  6, 9), white),
+      colored(translated(scaled(lettering("Score: " <> fmtScore(s)), 0.7, 0.5), -8, 9), white),
+      colored(translated(scaled(lettering("Last: "  <> fmtScore(l)), 0.7, 0.5), -1, 9), white),
+      colored(translated(scaled(lettering("Max: "   <> fmtScore(m)), 0.7, 0.5),  6, 9), white),
       colored(translated(solidRectangle(20, 0.6), 0, 9.2), blue)
       ]
 

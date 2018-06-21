@@ -43,8 +43,8 @@ shapes:
   the height.
 * `solidRectangle(8,4)`: Just like with circles, you can use `solidRectangle` to
   fill in the shape.
-* `text("I Love Pandas!")`: You can write text (such as letters and words) to the
-  screen by using `text`.  You need quotes around the words.
+* `lettering("I Love Pandas!")`: You can write text (such as letters and words) to
+  the screen by using `lettering`.  You need quotes around the words.
 
 There are plenty more: `path`, which draws a line; `polygon`, which draws a polygon;
 `thickCircle`, which draws a circle with a thicker line; `thickRectangle`, which is
@@ -196,7 +196,7 @@ more tricks you can use.  Anything you can write after the equal sign
 is called an *expression*.  For example:
 
 * `circle(4)` is an expression.
-* `colored(text("Help"), red)` is also an expression.
+* `colored(lettering("Help"), red)` is also an expression.
 * `rectangle(1, 4) & circle(2)` is an expression.
 * `leaves & trunk` is an expression.
 

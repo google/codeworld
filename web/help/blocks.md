@@ -39,8 +39,8 @@ You can make different types of pictures such as:
 * `rectangle`:  You can draw a rectangle by giving both a width and a height.
 * `solidRectangle`: Just like with circles, you can use `solidRectangle` to
   fill in the shape.
-* `text("I Love Pandas!")`: You can write text (such as letters and words) to the
-  screen by using `text`.  
+* `lettering("I Love Pandas!")`: You can write text (such as letters and words)
+  to the screen by using `lettering`.
 
 There are plenty more of these which can be found in the Pictures toolbox.
 

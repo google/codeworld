@@ -128,12 +128,6 @@ instance P.Show Number where
         stripZeros =
             P.reverse . P.dropWhile (== '.') . P.dropWhile (== '0') . P.reverse
 
-instance P.ShowShortFloat x where
-    show (x) = stripZeros (showFFloatAlt (P.Just 4) x "")
-      where
-        stripZeros =
-            P.reverse . P.dropWhile (== '.') . P.dropWhile (== '0') . P.reverse
-
 instance P.Num Number where
     fromInteger = fromInteger
     (+) = (+)

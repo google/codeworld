@@ -789,8 +789,12 @@ trim x y = let mid = (x - 2) `div` 2
                 True -> y :: String
                 False -> take mid y ++ ".." ++ (reverse $ take mid $ reverse y)
 
+showShortFloat :: Double -> String
+showShortFloat x = stripZeros (showFFloatAlt (Just 4) x "")
+  where stripZeros = reverse . dropWhile (== '.') . dropWhile (== '0') . reverse
+
 describePicture :: Picture -> String
-describePicture (Rectangle _ w h) = printf "rectangle { width = %4f , height = %4f }" w h
+describePicture (Rectangle _ w h) = printf "rectangle { width = " ++ showShortFloat w ++ " , height = " ++ showShortFloat h ++ "}"
 describePicture (SolidPolygon _ pts) = printf "solidPolygon { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
 describePicture (SolidClosedCurve _ pts) = printf "solidClosedCurve { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
 describePicture (Polygon _ pts) = printf "polygon { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])

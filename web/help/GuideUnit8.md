@@ -179,9 +179,9 @@ dots will appear in green.  This collaboration looks like this:
 
     step(state, dt) = state
 
-    event((ps, qs), MouseMovement(x, y), 1) = ([(x, y)] ++ ps, qs)
-    event((ps, qs), MouseMovement(x, y), 2) = (ps, [(x, y)] ++ qs)
-    event(state, other, n)                  = state
+    event((ps, qs), PointerMovement(x, y), 1) = ([(x, y)] ++ ps, qs)
+    event((ps, qs), PointerMovement(x, y), 2) = (ps, [(x, y)] ++ qs)
+    event(state, other, n)                    = state
 
     picture((ps, qs), 1) = dots(ps) & colored(dots(qs), red)
     picture((ps, qs), 2) = dots(qs) & colored(dots(ps), red)

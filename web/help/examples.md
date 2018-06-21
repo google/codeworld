@@ -129,36 +129,35 @@ The example starts by teaching CodeWorld how to do arithmetic with complex
 numbers.  The new operators `<+>` and `<*>` are chosen to represent complex
 addition and multiplication.
 
-    data Complex = C(Number, Number)
+    -- Complex arithmetic
+    data Complex where
+        C :: (Number, Number) -> Complex
+
     C(x1, y1) <+> C(x2, y2) = C(x1    + x2   , y1    + y2   )
     C(x1, y1) <*> C(x2, y2) = C(x1*x2 - y1*y2, x1*y2 + y1*x2)
-
-    {-
-        Now, define the test for whether a point belongs to the set.  A
-        point belongs to the Mandelbrot set if iterating the polynomial
-        z -> z^2 + c, starting with z = 0, diverges.
-
-        As a quick test for divergence, we check whether either coordinate
-        exceeds 2.
-
-        To get a better image, for points that do not belong to the set, we
-        measure how many iterations were needed to detect divergence.  This
-        number will be large for points close to the set.  Return Nothing for
-        points in the set, and Just k for points that leave the target box in
-        k iterations.
-    -}
-    diverged :: Complex -> Truth
-    diverged(C(x, y)) = abs(x) > 2 || abs(y) > 2
 
     -- A depth can be a finite number, or infinite.
     data Depth where
       Finite   :: Number -> Depth
       Infinite :: Depth
 
+    {-
+        A point belongs to the Mandelbrot set if iterating the polynomial
+        z -> z^2 + c, starting with z = 0, diverges.  As a quick test for
+        divergence, we check whether either coordinate exceeds 2.
+
+        To get a better image, for points that do not belong to the set, we
+        measure how many iterations were needed to detect divergence.  This
+        number will be large for points close to the set.  Returns Infinite for
+        points in the set, and Finite k for points that leave the target box in
+        k iterations.
+    -}
     depth :: (Number, Complex, Complex, Number) -> Depth
     depth(_, _, _, 0) = Infinite
     depth(m, z, c, k) | diverged(z) = Finite(m)
                       | otherwise   = depth(m + 1, z <*> z <+> c, c, k - 1)
+      where diverged :: Complex -> Truth
+            diverged(C(x, y)) = abs(x) > 2 || abs(y) > 2
 
     {-
         Finally, render the set on a 500 by 500 pixel grid.  The source
@@ -350,7 +349,7 @@ simulates simple physics (vector acceleration and velocity) over time, as
 well as responding to the user.  It tracks scores between games, and it uses
 random numbers to make each game unique.  There's quite a lot there!
 
-    program = interactionOf(initial, step, event, draw)
+    program = activityOf(initial, change, picture)
 
     data World = World {
         stars        :: [(Point, Number)],
@@ -404,94 +403,93 @@ random numbers to make each game unique.  There's quite a lot there!
             ast = ((x,y), (vx,vy))
             (asts, rs2) = makeAsts(n-1, rs)
 
-    effective(w, f) | energy w > 0 = f(w)
-                    | otherwise    = 0
+    effective(w, f) | energy(w) > 0 = f(w)
+                    | otherwise     = 0
 
     lost(w) = any([collision(ast) | ast <- asts(w)])
         where ((shipx, shipy),_) = ship(w)
               collision((x,y),_) = (x-shipx)^2 + (y-shipy)^2 < 1.68^2
 
-    step(w, dt) =
-        if lost(w)
-        then initialWith(maxScore(w),
-                         if score(w) < 1 then lastScore(w) else score(w),
-                         savedRandoms(w))
-        else w {
+    change(w, TimePassing(dt))     = step(w, dt)
+    change(w, KeyPress("Up"))      = w { thrust = 1 }
+    change(w, KeyRelease("Up"))    = w { thrust = 0 }
+    change(w, KeyPress("Left"))    = w { left   = 1 }
+    change(w, KeyRelease("Left"))  = w { left   = 0 }
+    change(w, KeyPress("Right"))   = w { right  = 1 }
+    change(w, KeyRelease("Right")) = w { right  = 0 }
+    change(w, other)               = w
+
+    step(w, dt)
+      | lost(w) = initialWith(maxScore(w),
+                              if score(w) < 1 then lastScore(w) else score(w),
+                              savedRandoms(w))
+      | otherwise = w {
             asts      = [ stepBody(ast, dt) | ast <- asts(w) ],
             ship      = stepThrust(stepBody(ship(w), dt), effective(w, thrust), direction(w), dt),
             direction = stepDir(direction(w), left(w), right(w), dt),
-            energy    = fence(energy w + dt * (0.5 * (1 - thrust w) - 1.0 * thrust w), 0, 1),
-            score     = score w + dt,
-            maxScore  = max(maxScore w, score w)
+            energy    = fence(energy(w) + dt * (0.5 * (1 - thrust(w)) - 1.0 * thrust(w)), 0, 1),
+            score     = score(w) + dt,
+            maxScore  = max(maxScore(w), score(w))
             }
 
     fence(v, lo, hi) = max(lo, min(hi, v))
 
     stepThrust(((x,y), (vx,vy)), th, dir, dt) = ((x,y), (vx2, vy2))
-        where vx2 = vx - 2 * th * sin dir * dt
-              vy2 = vy + 2 * th * cos dir * dt
+        where vx2 = vx - 2 * th * sin(dir) * dt
+              vy2 = vy + 2 * th * cos(dir) * dt
 
     stepDir(dir, l, r, dt) = dir + l * 90 * dt - r * 90 * dt
 
-    stepBody(((x,y),(sx,sy)), dt) = ((wrap (x + sx * dt), wrap (y + sy * dt)), (sx, sy))
-      where wrap k | k <= (-12) = k + 24
-                   | k >=   12  = k - 24
-                   | otherwise  = k
+    stepBody(((x,y),(sx,sy)), dt) = ((wrap(x + sx * dt), wrap(y + sy * dt)), (sx, sy))
+      where wrap(k) | k <= (-12) = k + 24
+                    | k >=   12  = k - 24
+                    | otherwise  = k
 
-    draw(w) = pictures[
-        drawScoreBar(score(w), lastScore(w), maxScore(w)),
-        drawEnergyBar(energy(w)),
-        drawShip(ship(w), direction(w), effective(w, thrust)),
-        drawAsts(asts(w)),
-        drawStars(stars(w)),
-        solidRectangle(20, 20)
-        ]
+    picture(w) = scoreBar(score(w), lastScore(w), maxScore(w))
+               & energyBar(energy(w))
+               & shipPic(ship(w), direction(w), effective(w, thrust))
+               & astsPic(asts(w))
+               & starsPic(stars(w))
+               & solidRectangle(20, 20)
 
-    drawStars(ss) = pictures[
+    starsPic(ss) = pictures([
         colored(translated(solidCircle(r), x, y), gray(0.5)) | ((x,y),r) <- ss
-        ]
+        ])
 
-    drawAsts(as) = pictures[
+    astsPic(as) = pictures([
         colored(translated(solidCircle(1.2), x, y), light(red)) | ((x,y),_) <- as
-        ]
+        ])
 
-    drawShip(((x,y),_), dir, th) = translated(rotated(ship, dir), x, y)
-      where ship = pictures[
-                     if th > 0 then colored(fire, orange) else blank,
-                     colored(body, cyan),
-                     colored(circle 0.48, gray 0.2)
-                   ]
-            fire = solidPolygon[
-                (-0.32, -0.32),
-                (-0.4,  -0.44),
-                ( 0.4,  -0.44),
-                ( 0.32, -0.32)
-                ]
-            body = solidPolygon[
-                (-0.36, -0.32),
-                ( 0.36, -0.32),
-                ( 0,     0.48)
-                ]
+    shipPic(((x,y),_), dir, th) = translated(rotated(ship, dir), x, y)
+      where ship = fire & body & colored(circle(0.48), gray(0.2))
+            fire | th > 0 = colored(solidPolygon([
+                              (-0.32, -0.32),
+                              (-0.4,  -0.44),
+                              ( 0.4,  -0.44),
+                              ( 0.32, -0.32)
+                            ]), orange)
+                 | otherwise = blank
+            body = colored(solidPolygon([
+                      (-0.36, -0.32),
+                      ( 0.36, -0.32),
+                      ( 0,     0.48)
+                   ]), cyan)
 
-    drawEnergyBar(e) = colored(translated(solidRectangle(16*e, 0.6), 0, -9.2), yellow)
+    energyBar(e) = colored(translated(solidRectangle(16*e, 0.6), 0, -9.2), yellow)
 
-    drawScoreBar(s, l, m) = pictures [
-      colored(translated(scaled(lettering("Score: " <> fmtScore(s)), 0.7, 0.5), -8, 9), white),
-      colored(translated(scaled(lettering("Last: "  <> fmtScore(l)), 0.7, 0.5), -1, 9), white),
-      colored(translated(scaled(lettering("Max: "   <> fmtScore(m)), 0.7, 0.5),  6, 9), white),
-      colored(translated(solidRectangle(20, 0.6), 0, 9.2), blue)
-      ]
+    scoreBar(s, l, m)
+        = translated(label("Score", s), -8, 9)
+        & translated(label("Last",  l), -1, 9)
+        & translated(label("Max",   m),  6, 9)
+        & colored(translated(solidRectangle(20, 0.6), 0, 9), blue)
+      where
+        label :: (Text, Number) -> Picture
+        label(txt, n) = colored(scaled(lettering(txt <> ": " <> fmtScore(n)),
+                                       0.7, 0.5),
+                                white)
 
-    fmtScore :: Number -> Text
-    fmtScore(s) = printed(floor(10 * s))
-
-    event(w, KeyPress   "Up") = w { thrust = 1 }
-    event(w, KeyRelease "Up") = w { thrust = 0 }
-    event(w, KeyPress   "Left") = w { left   = 1 }
-    event(w, KeyRelease "Left") = w { left   = 0 }
-    event(w, KeyPress   "Right") = w { right  = 1 }
-    event(w, KeyRelease "Right") = w { right  = 0 }
-    event(w, _) = w
+        fmtScore :: Number -> Text
+        fmtScore(n) = printed(floor(10 * n))
 
 License
 =======

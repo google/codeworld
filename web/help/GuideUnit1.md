@@ -46,11 +46,11 @@ shapes:
 * `lettering("I Love Pandas!")`: You can write text (such as letters and words) to
   the screen by using `lettering`.  You need quotes around the words.
 
-There are plenty more: `path`, which draws a line; `polygon`, which draws a polygon;
-`thickCircle`, which draws a circle with a thicker line; `thickRectangle`, which is
-the same as `thickCircle` but for rectangles; `arc`, which draws an arc; `sector`, 
-which draws a filled in portion of a circle... the list goes on and on!  Don't worry; you will be able to play with
-all of them.
+There are plenty more: `polyline`, which draws a sequence of line segments; `polygon`,
+which draws a polygon; `thickCircle`, which draws a circle with a thicker line;
+`thickRectangle`, which is the same as `thickCircle` but for rectangles; `arc`, which
+draws an arc; `sector`, which draws a filled in portion of a circle (like a pie slice);
+the list goes on and on!  Don't worry; you will be able to play with all of them.
 
 Combining Shapes
 ----------------

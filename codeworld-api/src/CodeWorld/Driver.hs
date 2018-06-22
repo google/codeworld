@@ -817,7 +817,7 @@ describePicture (Text _ txt) = printf "text { text = '%s' }" txt
 describePicture (Blank _) = printf "blank"
 describePicture (StyledText _ style font txt) = printf " styledText { style = %s , font = %s , txt = '%s' }" (show style) (show font) txt
 describePicture (Color _ (RGBA r g b a) _) = "colored { color = RGBA( " ++ showShortFloat r ++ showShortFloat g ++ showShortFloat b ++ showShortFloat a ++ ") }"
-describePicture (Scale _ x y _) = printf "scaled { x = %4f , y = %4f }" x y
+describePicture (Scale _ x y _) =  "scaled { x = " ++ showShortFloat x ++ " , y = " ++ showShortFloat y ++ "}"
 describePicture (Rotate _ angle _) = printf "rotated { angle = %4f }" angle
 describePicture (Dilate _ k _) = printf "dilated { factor = %4f }" k
 describePicture (Logo _) = printf "codeWorldLogo"

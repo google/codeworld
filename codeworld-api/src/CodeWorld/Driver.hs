@@ -816,8 +816,7 @@ describePicture (ThickArc _ b e r w) = printf "thickArc { startAngle = %.2g° ( 
 describePicture (Text _ txt) = printf "text { text = '%s' }" txt
 describePicture (Blank _) = printf "blank"
 describePicture (StyledText _ style font txt) = printf " styledText { style = %s , font = %s , txt = '%s' }" (show style) (show font) txt
-describePicture (Color _ (RGBA r g b a) _) = printf "colored { color = RGBA(%4f, %4f, %4f, %4f) }" r g b a
-describePicture (Translate _ x y _) = printf "translated { x = %4f , y = %4f }" x y
+describePicture (Color _ (RGBA r g b a) _) = "colored { color = RGBA( " ++ showShortFloat r ++ showShortFloat g ++ showShortFloat b ++ showShortFloat a ++ ") }"
 describePicture (Scale _ x y _) = printf "scaled { x = %4f , y = %4f }" x y
 describePicture (Rotate _ angle _) = printf "rotated { angle = %4f }" angle
 describePicture (Dilate _ k _) = printf "dilated { factor = %4f }" k

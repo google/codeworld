@@ -810,9 +810,9 @@ describePicture (Polyline _ pts) = printf "polyline { points = %s }" (intercalat
 describePicture (ThickPolyline _ pts w) = printf "thickPolyline { points = %s, width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
 describePicture (Curve _ pts) = printf "curve { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
 describePicture (ThickCurve _ pts w) = printf "thickCurve { points = %s, width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
-describePicture (Sector _ b e r) = printf "sector { startAngle = %.2g° ( %.2g radians) , endAngle = %.2g° ( %.2g radians), radius = %4f}" (180 * b / pi) b (180 * e / pi) e r
+describePicture (Sector _ b e r) =  "sector { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ " , endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radians ) ," ++ " radius = " ++ showShortFloat r ++ " }"
 describePicture (Arc _ b e r) = printf "arc { startAngle = %.2g° ( %.2g radians) , endAngle = %.2g° ( %.2g radians), radius = %4f}" (180 * b / pi) b (180 * e / pi) e r
-describePicture (ThickArc _ b e r w) = printf "thickArc { startAngle = %.2g° ( %.2g radians), endAngle = %.2g° ( %.2g radians), radius = %4f , width = %4f}" (180 * b / pi) b (180 * e / pi) e r w
+describePicture (ThickArc _ b e r w) =  printf "thickArc { startAngle = %.2g° ( %.2g radians), endAngle = %.2g° ( %.2g radians), radius = %4f , width = %4f}" (180 * b / pi) b (180 * e / pi) e r w
 describePicture (Text _ txt) = printf "text { text = '%s' }" txt
 describePicture (Blank _) = printf "blank"
 describePicture (StyledText _ style font txt) = printf " styledText { style = %s , font = %s , txt = '%s' }" (show style) (show font) txt

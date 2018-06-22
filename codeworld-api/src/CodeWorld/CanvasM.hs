@@ -22,7 +22,7 @@ module CodeWorld.CanvasM where
 
 import Control.Monad
 import Control.Monad.Reader
-import Control.Monad.Trans (liftIO)
+import Control.Monad.Trans (MonadIO)
 import Data.Text (Text, pack)
 
 #ifdef ghcjs_HOST_OS
@@ -50,7 +50,7 @@ class Monad m => MonadCanvas m where
            Double -> Double -> Double -> Double -> Double -> Double -> m ()
     translate :: Double -> Double -> m ()
     scale :: Double -> Double -> m ()
-    newImage :: Int -> Int -> m () -> m (Image m)
+    newImage :: Int -> Int -> m a -> m (Image m, a)
     drawImage :: Image m -> Int -> Int -> Int -> Int -> m ()
     globalCompositeOperation :: Text -> m ()
     lineWidth :: Double -> m ()
@@ -89,6 +89,9 @@ data CanvasM a = CanvasM
     { unCanvasM :: Canvas.Context -> IO a
     } deriving (Functor)
 
+runCanvasM :: Canvas.Context -> CanvasM a -> IO a
+runCanvasM = flip unCanvasM
+
 instance Applicative CanvasM where
     pure x = CanvasM (const (return x))
     f <*> x = CanvasM (\ctx -> unCanvasM f ctx <*> unCanvasM x ctx)
@@ -106,6 +109,9 @@ foreign import javascript "$r = $3.isPointInPath($1, $2);"
 foreign import javascript "$r = $3.isPointInStroke($1, $2);"
                js_isPointInStroke :: Double -> Double -> Canvas.Context -> IO Bool
 
+instance MonadIO CanvasM where
+    liftIO = CanvasM . const
+
 instance MonadCanvas CanvasM where
     type Image CanvasM = Canvas.Canvas
     save = CanvasM Canvas.save
@@ -118,8 +124,8 @@ instance MonadCanvas CanvasM where
         const $ do
             buf <- Canvas.create w h
             ctx <- Canvas.getContext buf
-            unCanvasM m ctx
-            return buf
+            a <- unCanvasM m ctx
+            return (buf, a)
     drawImage (Canvas.Canvas c) x y w h =
         CanvasM (Canvas.drawImage (Canvas.Image c) x y w h)
     globalCompositeOperation op =
@@ -159,8 +165,8 @@ instance MonadCanvas Canvas where
     scale x y = Canvas.scale (x, y)
     newImage w h m = do
         ctx <- Canvas.newCanvas (w, h)
-        Canvas.with ctx m
-        return ctx
+        a <- Canvas.with ctx m
+        return (ctx, a)
     drawImage img x y w h =
         Canvas.drawImageSize
             ( img

@@ -43,6 +43,8 @@ module CodeWorld.Driver
 
 import CodeWorld.CollaborationUI (SetupPhase(..), Step(..), UIState)
 import qualified CodeWorld.CollaborationUI as CUI
+import qualified CodeWorld.CanvasM as CM
+import CodeWorld.CanvasM (CanvasM, runCanvasM)
 import CodeWorld.Color
 import CodeWorld.Event
 import CodeWorld.Picture
@@ -355,6 +357,7 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
             | k <- [-9,-8 .. 9]
             , k /= 0
             ]
+
 --------------------------------------------------------------------------------
 -- GHCJS implementation of drawing
 #ifdef ghcjs_HOST_OS
@@ -381,56 +384,47 @@ getTime = (/ 1000) <$> js_getHighResTimestamp
 nextFrame :: IO Double
 nextFrame = waitForAnimationFrame >> getTime
 
-withDS :: Canvas.Context -> DrawState -> IO () -> IO ()
-withDS ctx (ta, tb, tc, td, te, tf, col) action = do
-    Canvas.save ctx
-    Canvas.transform ta tb tc td te tf ctx
-    Canvas.beginPath ctx
+withDS :: DrawState -> CanvasM a -> CanvasM a
+withDS (ta, tb, tc, td, te, tf, col) action = CM.saveRestore $ do
+    CM.transform ta tb tc td te tf
+    CM.beginPath
     action
-    Canvas.restore ctx
 
-applyColor :: Canvas.Context -> DrawState -> IO ()
-applyColor ctx ds =
+applyColor :: DrawState -> CanvasM ()
+applyColor ds =
     case getColorDS ds of
         Nothing -> do
-            Canvas.strokeStyle 0 0 0 1 ctx
-            Canvas.fillStyle 0 0 0 1 ctx
+            CM.strokeColor 0 0 0 1
+            CM.fillColor 0 0 0 1
         Just (RGBA r g b a) -> do
-            Canvas.strokeStyle
+            CM.strokeColor
                 (round $ r * 255)
                 (round $ g * 255)
                 (round $ b * 255)
                 a
-                ctx
-            Canvas.fillStyle
+            CM.fillColor
                 (round $ r * 255)
                 (round $ g * 255)
                 (round $ b * 255)
                 a
-                ctx
-
-foreign import javascript unsafe "$1.globalCompositeOperation = $2"
-               js_setGlobalCompositeOperation ::
-               Canvas.Context -> JSString -> IO ()
 
 drawCodeWorldLogo ::
-       Canvas.Context -> DrawState -> Int -> Int -> Int -> Int -> IO ()
-drawCodeWorldLogo ctx ds x y w h = do
-    Just doc <- currentDocument
-    Just canvas <- getElementById doc ("cwlogo" :: JSString)
+       DrawState -> Int -> Int -> Int -> Int -> CanvasM ()
+drawCodeWorldLogo ds x y w h = do
+    Just doc <- liftIO $ currentDocument
+    Just canvas <- liftIO $ getElementById doc ("cwlogo" :: JSString)
     case getColorDS ds of
-        Nothing -> js_canvasDrawImage ctx canvas x y w h
+        Nothing -> CM.drawImage (canvasFromElement canvas) x y w h
         Just (RGBA r g b a)
             -- This is a tough case.  The best we can do is to allocate an
             -- offscreen buffer as a temporary.
          -> do
-            buf <- Canvas.create w h
-            bufctx <- js_getCodeWorldContext buf
-            applyColor bufctx ds
-            Canvas.fillRect 0 0 (fromIntegral w) (fromIntegral h) bufctx
-            js_setGlobalCompositeOperation bufctx "destination-in"
-            js_canvasDrawImage bufctx canvas 0 0 w h
-            js_canvasDrawImage ctx (elementFromCanvas buf) x y w h
+            (img, _) <- CM.newImage w h $ do
+                applyColor ds
+                CM.fillRect 0 0 (fromIntegral w) (fromIntegral h)
+                CM.globalCompositeOperation "destination-in"
+                CM.drawImage (canvasFromElement canvas) 0 0 w h
+            CM.drawImage img x y w h
 
 -- Debug Mode logic
 inspectStatic :: Picture -> IO ()
@@ -474,17 +468,14 @@ initDebugMode getnode setactive getpicture highlight = do
             let canvas = unsafeCoerce c :: Element
                 nodeId = pFromJSVal n
             drawing <- pictureToDrawing <$> getpicture
-            let node =
-                    fromMaybe (Drawings []) $ fst <$> getDrawNode nodeId drawing
+            let node = fromMaybe (Drawings []) $ fst <$> getDrawNode nodeId drawing
             offscreenCanvas <- Canvas.create 500 500
             setCanvasSize canvas canvas
             setCanvasSize (elementFromCanvas offscreenCanvas) canvas
             screen <- js_getCodeWorldContext (canvasFromElement canvas)
             rect <- getBoundingClientRect canvas
-            buffer <-
-                setupScreenContext (elementFromCanvas offscreenCanvas) rect
-            drawFrame buffer (node <> coordinatePlaneDrawing)
-            Canvas.restore buffer
+            withScreen (elementFromCanvas offscreenCanvas) rect $
+                drawFrame (node <> coordinatePlaneDrawing)
             rect <- getBoundingClientRect canvas
             cw <- ClientRect.getWidth rect
             ch <- ClientRect.getHeight rect
@@ -872,167 +863,162 @@ getPictureCS (Pictures _) = emptyCallStack
 -- and all transformations.
 findTopShapeFromPoint :: Point -> Drawing -> IO (Maybe NodeId)
 findTopShapeFromPoint (x, y) pic = do
-    offscreen <- Canvas.create 500 500
-    context <- Canvas.getContext offscreen
-    (found, node) <-
-        findTopShape
-            context
-            (translateDS (10 - x / 25) (y / 25 - 10) initialDS)
-            pic
+    buf <- Canvas.create 500 500
+    ctx <- Canvas.getContext buf
+    (found, node) <- runCanvasM ctx $
+        findTopShape (translateDS (10 - x / 25) (y / 25 - 10) initialDS)
+                     pic
     case found of
         True -> return $ Just node
         False -> return Nothing
 
-findTopShape :: Canvas.Context -> DrawState -> Drawing -> IO (Bool, Int)
-findTopShape ctx ds (Shape drawer) = do
-    contained <- shapeContains $ drawer ctx ds
+findTopShape :: DrawState -> Drawing -> CanvasM (Bool, Int)
+findTopShape ds (Shape drawer) = do
+    contained <- shapeContains $ drawer ds
     case contained of
         True -> return (True, 0)
         False -> return (False, 1)
-findTopShape ctx ds (Transformation f d) =
-    map2 (+ 1) $ findTopShape ctx (f ds) d
-findTopShape ctx ds (Drawings []) = return (False, 1)
-findTopShape ctx ds (Drawings (dr:drs)) = do
-    (found, count) <- findTopShape ctx ds dr
+findTopShape ds (Transformation f d) =
+    map2 (+ 1) $ findTopShape (f ds) d
+findTopShape ds (Drawings []) = return (False, 1)
+findTopShape ds (Drawings (dr:drs)) = do
+    (found, count) <- findTopShape ds dr
     case found of
         True -> return (True, count + 1)
-        False -> map2 (+ count) $ findTopShape ctx ds (Drawings drs)
+        False -> map2 (+ count) $ findTopShape ds (Drawings drs)
 
 map2 :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
 map2 = fmap . fmap
 
-isPointInPath :: Canvas.Context -> IO Bool
-isPointInPath = js_isPointInPath 0 0
-
-isPointInStroke :: Canvas.Context -> IO Bool
-isPointInStroke = js_isPointInStroke 0 0
-
--- Canvas.isPointInPath does not provide a way to get the return value
--- https://github.com/ghcjs/ghcjs-base/blob/master/JavaScript/Web/Canvas.hs#L212
-foreign import javascript unsafe "$3.isPointInPath($1,$2)"
-               js_isPointInPath :: Double -> Double -> Canvas.Context -> IO Bool
-
-foreign import javascript unsafe "$3.isPointInStroke($1,$2)"
-               js_isPointInStroke :: Double -> Double -> Canvas.Context -> IO Bool
-
 foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
-               js_initDebugMode ::
-               Callback (JSVal -> IO JSVal) ->
-                 Callback (JSVal -> IO ()) ->
-                   Callback (IO JSVal) ->
-                     Callback (JSVal -> JSVal -> IO ()) ->
-                       Callback (JSVal -> JSVal -> IO ()) -> IO ()
+               js_initDebugMode :: Callback (JSVal -> IO JSVal)
+                                -> Callback (JSVal -> IO ())
+                                -> Callback (IO JSVal)
+                                -> Callback (JSVal -> JSVal -> IO ())
+                                -> Callback (JSVal -> JSVal -> IO ())
+                                -> IO ()
 
 -----------------------------------------------------------------------------------
 -- GHCJS Drawing
-type Drawer = Canvas.Context -> DrawState -> DrawMethods
+type Drawer = DrawState -> DrawMethods
 
 data DrawMethods = DrawMethods
-    { drawShape :: IO ()
-    , shapeContains :: IO Bool
+    { drawShape :: CanvasM ()
+    , shapeContains :: CanvasM Bool
     }
 
-polygonDrawer ps smooth ctx ds =
+polygonDrawer ps smooth ds =
     DrawMethods
-    { drawShape = trace >> applyColor ctx ds >> Canvas.fill ctx
-    , shapeContains = trace >> isPointInPath ctx
+    { drawShape = do
+          trace
+          applyColor ds
+          CM.fill
+    , shapeContains = do
+          trace
+          CM.isPointInPath (0, 0)
     }
   where
-    trace = withDS ctx ds $ followPath ctx ps True smooth
+    trace = withDS ds $ followPath ps True smooth
 
-pathDrawer ps w closed smooth ctx ds =
+pathDrawer ps w closed smooth ds =
     DrawMethods
-    { drawShape = drawFigure ctx ds w $ followPath ctx ps closed smooth
+    { drawShape = drawFigure ds w $ followPath ps closed smooth
     , shapeContains =
           do let width =
                      if w == 0
                          then 0.3
                          else w
-             drawFigure ctx ds width $ followPath ctx ps closed smooth
-             isPointInStroke ctx
+             drawFigure ds width $ followPath ps closed smooth
+             CM.isPointInStroke (0, 0)
     }
 
-sectorDrawer b e r ctx ds =
+sectorDrawer b e r ds =
     DrawMethods
-    { drawShape = trace >> applyColor ctx ds >> Canvas.fill ctx
-    , shapeContains = trace >> isPointInPath ctx
+    { drawShape = do
+          trace
+          applyColor ds
+          CM.fill
+    , shapeContains = do
+          trace
+          CM.isPointInPath (0, 0)
     }
   where
     trace =
-        withDS ctx ds $ do
-            Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
-            Canvas.lineTo 0 0 ctx
+        withDS ds $ do
+            CM.arc 0 0 (25 * abs r) b e (b > e)
+            CM.lineTo (0, 0)
 
-arcDrawer b e r w ctx ds =
+arcDrawer b e r w ds =
     DrawMethods
     { drawShape =
-          drawFigure ctx ds w $ Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
+          drawFigure ds w $ CM.arc 0 0 (25 * abs r) b e (b > e)
     , shapeContains =
           do let width =
                      if w == 0
                          then 0.3
                          else w
-             Canvas.lineWidth (width * 25) ctx
-             drawFigure ctx ds width $
-                 Canvas.arc 0 0 (25 * abs r) b e (b > e) ctx
-             isPointInStroke ctx
+             CM.lineWidth (width * 25)
+             drawFigure ds width $
+                 CM.arc 0 0 (25 * abs r) b e (b > e)
+             CM.isPointInStroke (0, 0)
     }
 
-textDrawer sty fnt txt ctx ds =
+textDrawer sty fnt txt ds =
     DrawMethods
     { drawShape =
-          withDS ctx ds $ do
-              Canvas.scale 1 (-1) ctx
-              applyColor ctx ds
-              Canvas.font (fontString sty fnt) ctx
-              Canvas.fillText (textToJSString txt) 0 0 ctx
+          withDS ds $ do
+              CM.scale 1 (-1)
+              applyColor ds
+              CM.font (fontString sty fnt)
+              CM.fillText txt (0, 0)
     , shapeContains =
-          do Canvas.font (fontString sty fnt) ctx
-             width <- Canvas.measureText (textToJSString txt) ctx
+          do CM.font (fontString sty fnt)
+             width <- CM.measureText txt
              let height = 25 -- constant, defined in fontString
-             withDS ctx ds $
-                 Canvas.rect ((-0.5) * width) ((-0.5) * height) width height ctx
-             isPointInPath ctx
+             withDS ds $
+                 CM.rect ((-0.5) * width) ((-0.5) * height) width height
+             CM.isPointInPath (0, 0)
     }
 
-logoDrawer ctx ds =
+logoDrawer ds =
     DrawMethods
     { drawShape =
-          withDS ctx ds $ do
-              Canvas.scale 1 (-1) ctx
-              drawCodeWorldLogo ctx ds (-221) (-91) 442 182
+          withDS ds $ do
+              CM.scale 1 (-1)
+              drawCodeWorldLogo ds (-221) (-91) 442 182
     , shapeContains =
-          do withDS ctx ds $ Canvas.rect (-221) (-91) 442 182 ctx
-             isPointInPath ctx
+          withDS ds $ do
+              CM.rect (-221) (-91) 442 182
+              CM.isPointInPath (0, 0)
     }
 
-coordinatePlaneDrawer ctx ds =
+coordinatePlaneDrawer ds =
     DrawMethods
-    { drawShape = drawDrawing ctx ds coordinatePlaneDrawing
-    , shapeContains = fst <$> findTopShape ctx ds coordinatePlaneDrawing
+    { drawShape = drawDrawing ds coordinatePlaneDrawing
+    , shapeContains = fst <$> findTopShape ds coordinatePlaneDrawing
     }
 
 foreign import javascript unsafe "showCanvas()" js_showCanvas ::
                IO ()
 
-followPath :: Canvas.Context -> [Point] -> Bool -> Bool -> IO ()
-followPath ctx [] closed _ = return ()
-followPath ctx [p1] closed _ = return ()
-followPath ctx ((sx, sy):ps) closed False = do
-    Canvas.moveTo (25 * sx) (25 * sy) ctx
-    forM_ ps $ \(x, y) -> Canvas.lineTo (25 * x) (25 * y) ctx
-    when closed $ Canvas.closePath ctx
-followPath ctx [p1, p2] False True = followPath ctx [p1, p2] False False
-followPath ctx ps False True = do
+followPath :: [Point] -> Bool -> Bool -> CanvasM ()
+followPath [] closed _ = return ()
+followPath [p1] closed _ = return ()
+followPath ((sx, sy):ps) closed False = do
+    CM.moveTo (25 * sx, 25 * sy)
+    forM_ ps $ \(x, y) -> CM.lineTo (25 * x, 25 * y)
+    when closed $ CM.closePath
+followPath [p1, p2] False True = followPath [p1, p2] False False
+followPath ps False True = do
     let [(x1, y1), (x2, y2), (x3, y3)] = take 3 ps
         dprev = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
         dnext = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
         p = dprev / (dprev + dnext)
         cx = x2 + p * (x1 - x3) / 2
         cy = y2 + p * (y1 - y3) / 2
-    Canvas.moveTo (25 * x1) (25 * y1) ctx
-    Canvas.quadraticCurveTo (25 * cx) (25 * cy) (25 * x2) (25 * y2) ctx
-    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $ \((x1, y1), (x2, y2), (x3, y3), (x4, y4)) ->
+    CM.moveTo (25 * x1, 25 * y1)
+    CM.quadraticCurveTo (25 * cx, 25 * cy) (25 * x2, 25 * y2)
+    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $ \((x1, y1), (x2, y2), (x3, y3), (x4, y4)) -> do
         let dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
             d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
             d2 = sqrt ((x4 - x3) ^ 2 + (y4 - y3) ^ 2)
@@ -1042,25 +1028,21 @@ followPath ctx ps False True = do
             cy1 = y2 + r * (y3 - y1) / 2
             cx2 = x3 + p * (x2 - x4) / 2
             cy2 = y3 + p * (y2 - y4) / 2
-        in Canvas.bezierCurveTo
-               (25 * cx1)
-               (25 * cy1)
-               (25 * cx2)
-               (25 * cy2)
-               (25 * x3)
-               (25 * y3)
-               ctx
+        CM.bezierCurveTo
+            (25 * cx1, 25 * cy1)
+            (25 * cx2, 25 * cy2)
+            (25 * x3,  25 * y3)
     let [(x1, y1), (x2, y2), (x3, y3)] = reverse $ take 3 $ reverse ps
         dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
         d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
         r = d1 / (dp + d1)
         cx = x2 + r * (x3 - x1) / 2
         cy = y2 + r * (y3 - y1) / 2
-    Canvas.quadraticCurveTo (25 * cx) (25 * cy) (25 * x3) (25 * y3) ctx
-followPath ctx ps@(_:(sx, sy):_) True True = do
-    Canvas.moveTo (25 * sx) (25 * sy) ctx
+    CM.quadraticCurveTo (25 * cx, 25 * cy) (25 * x3, 25 * y3)
+followPath ps@(_:(sx, sy):_) True True = do
+    CM.moveTo (25 * sx, 25 * sy)
     let rep = cycle ps
-    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $ \((x1, y1), (x2, y2), (x3, y3), (x4, y4)) ->
+    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $ \((x1, y1), (x2, y2), (x3, y3), (x4, y4)) -> do
         let dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
             d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
             d2 = sqrt ((x4 - x3) ^ 2 + (y4 - y3) ^ 2)
@@ -1070,30 +1052,26 @@ followPath ctx ps@(_:(sx, sy):_) True True = do
             cy1 = y2 + r * (y3 - y1) / 2
             cx2 = x3 + p * (x2 - x4) / 2
             cy2 = y3 + p * (y2 - y4) / 2
-        in Canvas.bezierCurveTo
-               (25 * cx1)
-               (25 * cy1)
-               (25 * cx2)
-               (25 * cy2)
-               (25 * x3)
-               (25 * y3)
-               ctx
-    Canvas.closePath ctx
+        CM.bezierCurveTo
+            (25 * cx1, 25 * cy1)
+            (25 * cx2, 25 * cy2)
+            (25 * x3,  25 * y3)
+    CM.closePath
 
-drawFigure :: Canvas.Context -> DrawState -> Double -> IO () -> IO ()
-drawFigure ctx ds w figure = do
-    withDS ctx ds $ do
+drawFigure :: DrawState -> Double -> CanvasM () -> CanvasM ()
+drawFigure ds w figure = do
+    withDS ds $ do
         figure
         when (w /= 0) $ do
-            Canvas.lineWidth (25 * w) ctx
-            applyColor ctx ds
-            Canvas.stroke ctx
+            CM.lineWidth (25 * w)
+            applyColor ds
+            CM.stroke
     when (w == 0) $ do
-        Canvas.lineWidth 1 ctx
-        applyColor ctx ds
-        Canvas.stroke ctx
+        CM.lineWidth 1
+        applyColor ds
+        CM.stroke
 
-fontString :: TextStyle -> Font -> JSString
+fontString :: TextStyle -> Font -> Text
 fontString style font = stylePrefix style <> "25px " <> fontName font
   where
     stylePrefix Plain = ""
@@ -1105,31 +1083,31 @@ fontString style font = stylePrefix style <> "25px " <> fontName font
     fontName Handwriting = "cursive"
     fontName Fancy = "fantasy"
     fontName (NamedFont txt) =
-        "\"" <> textToJSString (T.filter (/= '"') txt) <> "\""
+        "\"" <> T.filter (/= '"') txt <> "\""
 
-drawDrawing :: Canvas.Context -> DrawState -> Drawing -> IO ()
-drawDrawing ctx ds (Shape shape) = drawShape $ shape ctx ds
-drawDrawing ctx ds (Transformation f d) = drawDrawing ctx (f ds) d
-drawDrawing ctx ds (Drawings drs) = mapM_ (drawDrawing ctx ds) (reverse drs)
+drawDrawing :: DrawState -> Drawing -> CanvasM ()
+drawDrawing ds (Shape shape) = drawShape $ shape ds
+drawDrawing ds (Transformation f d) = drawDrawing (f ds) d
+drawDrawing ds (Drawings drs) = mapM_ (drawDrawing ds) (reverse drs)
 
-drawFrame :: Canvas.Context -> Drawing -> IO ()
-drawFrame ctx drawing = do
-    Canvas.fillStyle 255 255 255 1 ctx
-    Canvas.fillRect (-250) (-250) 500 500 ctx
-    drawDrawing ctx initialDS drawing
+drawFrame :: Drawing -> CanvasM ()
+drawFrame drawing = do
+    CM.fillColor 255 255 255 1
+    CM.fillRect (-250) (-250) 500 500
+    drawDrawing initialDS drawing
 
-setupScreenContext :: Element -> ClientRect.ClientRect -> IO Canvas.Context
-setupScreenContext canvas rect = do
+withScreen :: Element -> ClientRect.ClientRect -> CanvasM a -> IO a
+withScreen canvas rect action = do
     cw <- ClientRect.getWidth rect
     ch <- ClientRect.getHeight rect
     ctx <- js_getCodeWorldContext (canvasFromElement canvas)
-    Canvas.save ctx
-    Canvas.translate (realToFrac cw / 2) (realToFrac ch / 2) ctx
-    Canvas.scale (realToFrac cw / 500) (-realToFrac ch / 500) ctx
-    Canvas.lineWidth 0 ctx
-    Canvas.textAlign Canvas.Center ctx
-    Canvas.textBaseline Canvas.Middle ctx
-    return ctx
+    runCanvasM ctx $ CM.saveRestore $ do
+        CM.translate (realToFrac cw / 2) (realToFrac ch / 2)
+        CM.scale (realToFrac cw / 500) (-realToFrac ch / 500)
+        CM.lineWidth 0
+        CM.textCenter
+        CM.textMiddle
+        action
 
 setCanvasSize :: Element -> Element -> IO ()
 setCanvasSize target canvas = do
@@ -1762,10 +1740,8 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
                 rect <- getBoundingClientRect canvas
-                buffer <-
-                    setupScreenContext (elementFromCanvas offscreenCanvas) rect
-                drawFrame buffer (pictureToDrawing pic)
-                Canvas.restore buffer
+                withScreen (elementFromCanvas offscreenCanvas) rect $
+                    drawFrame (pictureToDrawing pic)
                 rect <- getBoundingClientRect canvas
                 cw <- ClientRect.getWidth rect
                 ch <- ClientRect.getHeight rect
@@ -1815,10 +1791,8 @@ run initial stepHandler eventHandler drawHandler injectTime = do
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
                 rect <- getBoundingClientRect canvas
-                buffer <-
-                    setupScreenContext (elementFromCanvas offscreenCanvas) rect
-                drawFrame buffer pic
-                Canvas.restore buffer
+                withScreen (elementFromCanvas offscreenCanvas) rect $
+                    drawFrame pic
                 rect <- getBoundingClientRect canvas
                 cw <- ClientRect.getWidth rect
                 ch <- ClientRect.getHeight rect
@@ -1905,10 +1879,8 @@ runStatic pic = do
         drawToScreen = withoutPreemption $ do
             drawing <- draw
             rect <- getBoundingClientRect canvas
-            buffer <-
-                setupScreenContext (elementFromCanvas offscreenCanvas) rect
-            drawFrame buffer drawing
-            Canvas.restore buffer
+            withScreen (elementFromCanvas offscreenCanvas) rect $
+                drawFrame drawing
             rect <- getBoundingClientRect canvas
             cw <- ClientRect.getWidth rect
             ch <- ClientRect.getHeight rect

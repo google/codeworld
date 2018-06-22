@@ -796,7 +796,7 @@ showShortFloat x = stripZeros (showFFloatAlt (Just 4) x "")
 describePicture :: Picture -> String
 describePicture (Rectangle _ w h) = "rectangle { width = " ++ showShortFloat w ++ " , height = " ++ showShortFloat h ++ "}"
 describePicture (SolidPolygon _ pts) = "solidPolygon { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
-describePicture (SolidClosedCurve _ pts) = printf "solidClosedCurve { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
+describePicture (SolidClosedCurve _ pts) = "solidClosedCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
 describePicture (Polygon _ pts) = printf "polygon { points = %s }" (intercalate "," [printf "(%4f, %4f)" x y | (x,y) <- pts])
 describePicture (ThickPolygon _ pts w) = printf "thickPolygon { points = %s , width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
 describePicture (SolidRectangle _ w h) = "solidRectangle { width = " ++ showShortFloat w ++ " , height = " ++ showShortFloat h ++ "}"

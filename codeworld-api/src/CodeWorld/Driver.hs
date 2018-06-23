@@ -814,11 +814,11 @@ describePicture (Sector _ b e r) =  "sector { startAngle = " ++ showShortFloat (
 describePicture (Arc _ b e r) = "arc { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radians )," ++ " radius = " ++ showShortFloat r ++ " }"
 describePicture (ThickArc _ b e r w) =  "thickArc { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radians )," ++ " radius = " ++ showShortFloat r ++ ", width = " ++ showShortFloat w ++ " }"
 describePicture (Text _ txt) = printf "text { text = '%s' }" txt
-describePicture (Blank _) = printf "blank"
+describePicture (Blank _) = "blank"
 describePicture (StyledText _ style font txt) = printf " styledText { style = %s , font = %s, txt = '%s' }" (show style) (show font) txt
 describePicture (Color _ (RGBA r g b a) _) = "colored { color = RGBA( " ++ showShortFloat r ++ showShortFloat g ++ showShortFloat b ++ showShortFloat a ++ ") }"
 describePicture (Scale _ x y _) = "scaled { x = " ++ showShortFloat x ++ ", y = " ++ showShortFloat y ++ " }"
-describePicture (Rotate _ angle _) = "rotated { " ++ showShortFloat angle ++ " }"
+describePicture (Rotate _ angle _) = "rotated { angle = " ++ showShortFloat angle ++ "° }"
 describePicture (Dilate _ k _) = "dilated { factor = " ++ showShortFloat k ++  " }"
 describePicture (Logo _) = "codeWorldLogo"
 describePicture (CoordinatePlane _) = printf "coordinatePlane"

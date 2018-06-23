@@ -798,18 +798,18 @@ describePicture (Rectangle _ w h) = "rectangle { width = " ++ showShortFloat w +
 describePicture (SolidPolygon _ pts) = "solidPolygon { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
 describePicture (SolidClosedCurve _ pts) = "solidClosedCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
 describePicture (Polygon _ pts) = "polygon { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
-describePicture (ThickPolygon _ pts w) = "polygon { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ ", width = " ++ showShortFloat w ++ " }"
+describePicture (ThickPolygon _ pts w) = "thickPolygon { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ ", width = " ++ showShortFloat w ++ " }"
 describePicture (SolidRectangle _ w h) = "solidRectangle { width = " ++ showShortFloat w ++ " , height = " ++ showShortFloat h ++ "}"
 describePicture (ThickRectangle _ lw w h) = "thickRectangle { linewidth = " ++ showShortFloat lw ++ " , width = " ++ showShortFloat w ++ ", height = " ++ showShortFloat h ++ " }"
-describePicture (ClosedCurve _ pts) = printf "closedCurve { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
-describePicture(ThickClosedCurve _ pts w) = printf "thickClosedCurve { points = %s, width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
+describePicture (ClosedCurve _ pts) = "closedCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
+describePicture(ThickClosedCurve _ pts w) = "thickClosedCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ ", width = " ++ showShortFloat w ++ " }"
 describePicture (Circle _ r) = "circle { radius = " ++ showShortFloat r ++ "}"
 describePicture (SolidCircle _ r) = "solidCircle { radius = " ++ showShortFloat r ++ "}"
 describePicture (ThickCircle _ lw r) =  "thickCircle { linewidth = " ++ showShortFloat lw ++ " , radius = " ++ showShortFloat r ++ "}"
-describePicture (Polyline _ pts) = printf "polyline { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
-describePicture (ThickPolyline _ pts w) = printf "thickPolyline { points = %s, width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
-describePicture (Curve _ pts) = printf "curve { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
-describePicture (ThickCurve _ pts w) = printf "thickCurve { points = %s, width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
+describePicture (Polyline _ pts) = "polyline { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
+describePicture (ThickPolyline _ pts w) = "thickPolyline { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ ", width = " ++ showShortFloat w ++ " }"
+describePicture (Curve _ pts) = "curve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
+describePicture (ThickCurve _ pts w) = "thickCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ ", width = " ++ showShortFloat w ++ " }"
 describePicture (Sector _ b e r) =  "sector { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ " , endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radians ) ," ++ " radius = " ++ showShortFloat r ++ " }"
 describePicture (Arc _ b e r) = "arc { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ " , endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radians ) ," ++ " radius = " ++ showShortFloat r ++ " }"
 describePicture (ThickArc _ b e r w) =  "thickArc { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ " , endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radians ) ," ++ " radius = " ++ showShortFloat r ++ " , width = " ++ showShortFloat w ++ " }"

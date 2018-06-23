@@ -820,7 +820,7 @@ describePicture (Color _ (RGBA r g b a) _) = "colored { color = RGBA( " ++ showS
 describePicture (Scale _ x y _) = "scaled { x = " ++ showShortFloat x ++ " , y = " ++ showShortFloat y ++ "}"
 describePicture (Rotate _ angle _) = "rotated { " ++ showShortFloat angle ++ "}"
 describePicture (Dilate _ k _) = "dilated { factor = " ++ showShortFloat k ++  "}"
-describePicture (Logo _) = printf "codeWorldLogo"
+describePicture (Logo _) = "codeWorldLogo"
 describePicture (CoordinatePlane _) = printf "coordinatePlane"
 describePicture (Pictures _) = printf "pictures"
 

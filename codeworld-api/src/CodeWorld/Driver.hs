@@ -798,7 +798,7 @@ describePicture (Rectangle _ w h) = "rectangle { width = " ++ showShortFloat w +
 describePicture (SolidPolygon _ pts) = "solidPolygon { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
 describePicture (SolidClosedCurve _ pts) = "solidClosedCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
 describePicture (Polygon _ pts) = "polygon { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
-describePicture (ThickPolygon _ pts w) = printf "thickPolygon { points = %s , width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
+describePicture (ThickPolygon _ pts w) = "polygon { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ ", width = " ++ showShortFloat w ++ " }"
 describePicture (SolidRectangle _ w h) = "solidRectangle { width = " ++ showShortFloat w ++ " , height = " ++ showShortFloat h ++ "}"
 describePicture (ThickRectangle _ lw w h) = "thickRectangle { linewidth = " ++ showShortFloat lw ++ " , width = " ++ showShortFloat w ++ ", height = " ++ showShortFloat h ++ " }"
 describePicture (ClosedCurve _ pts) = printf "closedCurve { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])

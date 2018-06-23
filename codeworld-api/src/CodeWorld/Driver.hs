@@ -781,33 +781,33 @@ trim x y = let mid = (x - 2) `div` 2
                 False -> take mid y ++ ".." ++ (reverse $ take mid $ reverse y)
 
 describePicture :: Picture -> String
-describePicture (Rectangle _ w h) = printf "rectangle { width = %4f , height = %4f }" w h
-describePicture (SolidPolygon _ pts) = printf "solidPolygon { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
-describePicture (SolidClosedCurve _ pts) = printf "solidClosedCurve { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
-describePicture (Polygon _ pts) = printf "polygon { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
-describePicture (ThickPolygon _ pts w) = printf "thickPolygon { points = %s , width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
-describePicture (SolidRectangle _ w h) = printf "solidRectangle { width = %4f , height = %4f }" w h
-describePicture (ThickRectangle _ lw w h) = printf "thickRectangle { linewidth = %4f , width = %4f , height = %4f }" lw w h
-describePicture (ClosedCurve _ pts) = printf "closedCurve { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
-describePicture(ThickClosedCurve _ pts w) = printf "thickClosedCurve { points = %s, width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
-describePicture (Circle _ r) = printf "circle { radius = %4f }" r
-describePicture (SolidCircle _ r) = printf "solidCircle { radius = %4f }" r
-describePicture (ThickCircle _ lw r) = printf "thickCircle { linewidth = %4f , radius = %4f }" lw r
-describePicture (Polyline _ pts) = printf "polyline { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
-describePicture (ThickPolyline _ pts w) = printf "thickPolyline { points = %s, width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
-describePicture (Curve _ pts) = printf "curve { points = %s }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts])
-describePicture (ThickCurve _ pts w) = printf "thickCurve { points = %s, width = %4f }" (intercalate ", " [printf "(%4f, %4f)" x y | (x,y) <- pts]) w
-describePicture (Sector _ b e r) = printf "sector { startAngle = %.2g° ( %.2g radians) , endAngle = %.2g° ( %.2g radians), radius = %4f}" (180 * b / pi) b (180 * e / pi) e r
-describePicture (Arc _ b e r) = printf "arc { startAngle = %.2g° ( %.2g radians) , endAngle = %.2g° ( %.2g radians), radius = %4f}" (180 * b / pi) b (180 * e / pi) e r
-describePicture (ThickArc _ b e r w) = printf "thickArc { startAngle = %.2g° ( %.2g radians), endAngle = %.2g° ( %.2g radians), radius = %4f , width = %4f}" (180 * b / pi) b (180 * e / pi) e r w
+describePicture (Rectangle _ w h) = printf "rectangle { width = %.2g , height = %.2g }" w h
+describePicture (SolidPolygon _ pts) = printf "solidPolygon { points = %s }" (intercalate ", " [printf "(%.2g, %.2g)" x y | (x,y) <- pts])
+describePicture (SolidClosedCurve _ pts) = printf "solidClosedCurve { points = %s }" (intercalate ", " [printf "(%.2g, %.2g)" x y | (x,y) <- pts])
+describePicture (Polygon _ pts) = printf "polygon { points = %s }" (intercalate ", " [printf "(%.2g, %.2g)" x y | (x,y) <- pts])
+describePicture (ThickPolygon _ pts w) = printf "thickPolygon { points = %s , width = %.2g }" (intercalate ", " [printf "(%.2g, %.2g)" x y | (x,y) <- pts]) w
+describePicture (SolidRectangle _ w h) = printf "solidRectangle { width = %.2g , height = %.2g }" w h
+describePicture (ThickRectangle _ lw w h) = printf "thickRectangle { linewidth = %.2g , width = %.2g , height = %.2g }" lw w h
+describePicture (ClosedCurve _ pts) = printf "closedCurve { points = %s }" (intercalate ", " [printf "(%.2g, %.2g)" x y | (x,y) <- pts])
+describePicture(ThickClosedCurve _ pts w) = printf "thickClosedCurve { points = %s, width = %.2g }" (intercalate ", " [printf "(%.2g, %.2g)" x y | (x,y) <- pts]) w
+describePicture (Circle _ r) = printf "circle { radius = %.2g }" r
+describePicture (SolidCircle _ r) = printf "solidCircle { radius = %.2g }" r
+describePicture (ThickCircle _ lw r) = printf "thickCircle { linewidth = %.2g , radius = %.2g }" lw r
+describePicture (Polyline _ pts) = printf "polyline { points = %s }" (intercalate ", " [printf "(%.2g, %.2g)" x y | (x,y) <- pts])
+describePicture (ThickPolyline _ pts w) = printf "thickPolyline { points = %s, width = %.2g }" (intercalate ", " [printf "(%.2g, %.2g)" x y | (x,y) <- pts]) w
+describePicture (Curve _ pts) = printf "curve { points = %s }" (intercalate ", " [printf "(%.2g, %.2g)" x y | (x,y) <- pts])
+describePicture (ThickCurve _ pts w) = printf "thickCurve { points = %s, width = %.2g }" (intercalate ", " [printf "(%.2g, %.2g)" x y | (x,y) <- pts]) w
+describePicture (Sector _ b e r) = printf "sector { startAngle = %.2g° ( %.2g radians) , endAngle = %.2g° ( %.2g radians), radius = %.2g}" (180 * b / pi) b (180 * e / pi) e r
+describePicture (Arc _ b e r) = printf "arc { startAngle = %.2g° ( %.2g radians) , endAngle = %.2g° ( %.2g radians), radius = %.2g}" (180 * b / pi) b (180 * e / pi) e r
+describePicture (ThickArc _ b e r w) = printf "thickArc { startAngle = %.2g° ( %.2g radians), endAngle = %.2g° ( %.2g radians), radius = %.2g , width = %.2g}" (180 * b / pi) b (180 * e / pi) e r w
 describePicture (Text _ txt) = printf "text { text = '%s' }" txt
 describePicture (Blank _) = printf "blank"
 describePicture (StyledText _ style font txt) = printf " styledText { style = %s , font = %s , txt = '%s' }" (show style) (show font) txt
-describePicture (Color _ (RGBA r g b a) _) = printf "colored { color = RGBA(%4f, %4f, %4f, %4f) }" r g b a
-describePicture (Translate _ x y _) = printf "translated { x = %4f , y = %4f }" x y
-describePicture (Scale _ x y _) = printf "scaled { x = %4f , y = %4f }" x y
-describePicture (Rotate _ angle _) = printf "rotated { angle = %4f }" angle
-describePicture (Dilate _ k _) = printf "dilated { factor = %4f }" k
+describePicture (Color _ (RGBA r g b a) _) = printf "colored { color = RGBA(%.2g, %.2g, %.2g, %.2g) }" r g b a
+describePicture (Translate _ x y _) = printf "translated { x = %.2g , y = %.2g }" x y
+describePicture (Scale _ x y _) = printf "scaled { x = %.2g , y = %.2g }" x y
+describePicture (Rotate _ angle _) = printf "rotated { angle = %.2g }" angle
+describePicture (Dilate _ k _) = printf "dilated { factor = %.2g }" k
 describePicture (Logo _) = printf "codeWorldLogo"
 describePicture (CoordinatePlane _) = printf "coordinatePlane"
 describePicture (Pictures _) = printf "pictures"

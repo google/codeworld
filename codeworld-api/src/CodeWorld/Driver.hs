@@ -821,8 +821,8 @@ describePicture (Scale _ x y _) = "scaled { x = " ++ showShortFloat x ++ ", y = 
 describePicture (Rotate _ angle _) = "rotated { angle = " ++ showShortFloat angle ++ "° }"
 describePicture (Dilate _ k _) = "dilated { factor = " ++ showShortFloat k ++  " }"
 describePicture (Logo _) = "codeWorldLogo"
-describePicture (CoordinatePlane _) = printf "coordinatePlane"
-describePicture (Pictures _) = printf "pictures"
+describePicture (CoordinatePlane _) = "coordinatePlane"
+describePicture (Pictures _) = "pictures"
 
 setCallInfo :: Picture -> Object -> IO ()
 setCallInfo pic obj =

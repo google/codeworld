@@ -24,7 +24,7 @@ import GHC.Stack
 import Internal.Color
 import Internal.Num
 import Internal.Text
-import "base" Prelude ((.), map)
+import "base" Prelude ((.), ($), map)
 
 type Point = (Number, Number)
 
@@ -100,126 +100,123 @@ data TextStyle
 
 -- | A blank picture
 blank :: HasCallStack => Picture
-blank = CWPic CW.blank
+blank = withFrozenCallStack $ CWPic CW.blank
 
 -- | A thin sequence of line segments with these endpoints
 polyline :: HasCallStack => [Point] -> Picture
-polyline = CWPic . CW.polyline . map toCWVect
+polyline ps = withFrozenCallStack $ CWPic (CW.polyline (map toCWVect ps))
 
 -- | A thin sequence of line segments with these endpoints
 path :: HasCallStack => [Point] -> Picture
-path = CWPic . CW.path . map toCWVect
+path ps = withFrozenCallStack $ CWPic (CW.path (map toCWVect ps))
 
 {-# WARNING path ["Please use polyline(...) instead of path(...).",
                   "path may be removed July 2019."] #-}
 
 -- | A thin sequence of line segments, with these endpoints and line width
 thickPolyline :: HasCallStack => ([Point], Number) -> Picture
-thickPolyline (ps, n) = CWPic (CW.thickPolyline (toDouble n) (map toCWVect ps))
+thickPolyline (ps, n) = withFrozenCallStack $ CWPic (CW.thickPolyline (toDouble n) (map toCWVect ps))
 
 -- | A thin sequence of line segments, with these endpoints and line width
 thickPath :: HasCallStack => ([Point], Number) -> Picture
-thickPath (ps, n) = CWPic (CW.thickPath (toDouble n) (map toCWVect ps))
+thickPath (ps, n) = withFrozenCallStack $ CWPic (CW.thickPath (toDouble n) (map toCWVect ps))
 
 {-# WARNING thickPath ["Please use thickPolyline(...) instead of thickPath(...).",
                        "thickPath may be removed July 2019."] #-}
 
 -- | A thin polygon with these points as vertices
 polygon :: HasCallStack => [Point] -> Picture
-polygon = CWPic . CW.polygon . map toCWVect
+polygon ps = withFrozenCallStack $ CWPic (CW.polygon (map toCWVect ps))
 
 -- | A thin polygon with these points as vertices
 thickPolygon :: HasCallStack => ([Point], Number) -> Picture
-thickPolygon (ps, n) = CWPic (CW.thickPolygon (toDouble n) (map toCWVect ps))
+thickPolygon (ps, n) = withFrozenCallStack $ CWPic (CW.thickPolygon (toDouble n) (map toCWVect ps))
 
 -- | A solid polygon with these points as vertices
 solidPolygon :: HasCallStack => [Point] -> Picture
-solidPolygon = CWPic . CW.solidPolygon . map toCWVect
+solidPolygon ps = withFrozenCallStack $ CWPic (CW.solidPolygon (map toCWVect ps))
 
 -- | A thin curve passing through these points.
 curve :: HasCallStack => [Point] -> Picture
-curve = CWPic . CW.curve . map toCWVect
+curve ps = withFrozenCallStack $ CWPic (CW.curve (map toCWVect ps))
 
 -- | A thick curve passing through these points, with this line width
 thickCurve :: HasCallStack => ([Point], Number) -> Picture
-thickCurve (ps, n) = CWPic (CW.thickCurve (toDouble n) (map toCWVect ps))
+thickCurve (ps, n) = withFrozenCallStack $ CWPic (CW.thickCurve (toDouble n) (map toCWVect ps))
 
 -- | A thin closed curve passing through these points.
 closedCurve :: HasCallStack => [Point] -> Picture
-closedCurve = CWPic . CW.closedCurve . map toCWVect
+closedCurve ps = withFrozenCallStack $ CWPic (CW.closedCurve (map toCWVect ps))
 
 -- | A thick closed curve passing through these points, with this line width.
 thickClosedCurve :: HasCallStack => ([Point], Number) -> Picture
-thickClosedCurve (ps, n) = CWPic (CW.thickClosedCurve (toDouble n) (map toCWVect ps))
+thickClosedCurve (ps, n) = withFrozenCallStack $ CWPic (CW.thickClosedCurve (toDouble n) (map toCWVect ps))
 
 -- | A solid closed curve passing through these points.
 solidClosedCurve :: HasCallStack => [Point] -> Picture
-solidClosedCurve = CWPic . CW.solidClosedCurve . map toCWVect
+solidClosedCurve ps = CWPic (CW.solidClosedCurve (map toCWVect ps))
 
 -- | A thin rectangle, with this width and height
 rectangle :: HasCallStack => (Number, Number) -> Picture
-rectangle (w, h) = CWPic (CW.rectangle (toDouble w) (toDouble h))
+rectangle (w, h) = withFrozenCallStack $ CWPic (CW.rectangle (toDouble w) (toDouble h))
 
 -- | A solid rectangle, with this width and height
 solidRectangle :: HasCallStack => (Number, Number) -> Picture
-solidRectangle (w, h) = CWPic (CW.solidRectangle (toDouble w) (toDouble h))
+solidRectangle (w, h) = withFrozenCallStack $ CWPic (CW.solidRectangle (toDouble w) (toDouble h))
 
 -- | A thick rectangle, with this width and height and line width
 thickRectangle :: HasCallStack => (Number, Number, Number) -> Picture
 thickRectangle (w, h, lw) =
-    CWPic (CW.thickRectangle (toDouble lw) (toDouble w) (toDouble h))
+    withFrozenCallStack $ CWPic (CW.thickRectangle (toDouble lw) (toDouble w) (toDouble h))
 
 -- | A thin circle, with this radius
 circle :: HasCallStack => Number -> Picture
-circle = CWPic . CW.circle . toDouble
+circle r = withFrozenCallStack $ CWPic (CW.circle (toDouble r))
 
 -- | A solid circle, with this radius
 solidCircle :: HasCallStack => Number -> Picture
-solidCircle = CWPic . CW.solidCircle . toDouble
+solidCircle r = withFrozenCallStack $ CWPic (CW.solidCircle (toDouble r))
 
 -- | A thick circle, with this radius and line width
 thickCircle :: HasCallStack => (Number, Number) -> Picture
-thickCircle (r, w) = CWPic (CW.thickCircle (toDouble w) (toDouble r))
+thickCircle (r, w) = withFrozenCallStack $ CWPic (CW.thickCircle (toDouble w) (toDouble r))
 
 -- | A thin arc, starting and ending at these angles, with this radius
 arc :: HasCallStack => (Number, Number, Number) -> Picture
-arc (b, e, r) =
-    CWPic
-        (CW.arc (toDouble (pi * b / 180)) (toDouble (pi * e / 180)) (toDouble r))
+arc (b, e, r) = withFrozenCallStack $ CWPic
+    (CW.arc (toDouble (pi * b / 180)) (toDouble (pi * e / 180)) (toDouble r))
 
 -- | A solid sector of a circle (i.e., a pie slice) starting and ending at these
 -- angles, with this radius
 sector :: HasCallStack => (Number, Number, Number) -> Picture
-sector (b, e, r) =
-    CWPic
-        (CW.sector
-             (toDouble (pi * b / 180))
-             (toDouble (pi * e / 180))
-             (toDouble r))
+sector (b, e, r) = withFrozenCallStack $ CWPic
+    (CW.sector
+         (toDouble (pi * b / 180))
+         (toDouble (pi * e / 180))
+         (toDouble r))
 
 -- | A thick arc, starting and ending at these angles, with this radius and
 -- line width
 thickArc :: HasCallStack => (Number, Number, Number, Number) -> Picture
-thickArc (b, e, r, w) =
-    CWPic
-        (CW.thickArc
-             (toDouble w)
-             (toDouble (pi * b / 180))
-             (toDouble (pi * e / 180))
-             (toDouble r))
+thickArc (b, e, r, w) = withFrozenCallStack $ CWPic
+    (CW.thickArc
+        (toDouble w)
+        (toDouble (pi * b / 180))
+        (toDouble (pi * e / 180))
+        (toDouble r))
 
 -- | A rendering of text characters.
 text :: HasCallStack => Text -> Picture
-text = CWPic . CW.text . fromCWText
+text t = withFrozenCallStack $ CWPic (CW.text (fromCWText t))
 
 -- | A rendering of text characters.
 lettering :: HasCallStack => Text -> Picture
-lettering = CWPic . CW.lettering . fromCWText
+lettering t = withFrozenCallStack $ CWPic (CW.lettering (fromCWText t))
 
 -- | A rendering of text characters, with a specific choice of font and style.
 styledText :: HasCallStack => (Text, Font, TextStyle) -> Picture
 styledText (t, f, s) =
-    CWPic (CW.styledText (fromCWStyle s) (fromCWFont f) (fromCWText t))
+    withFrozenCallStack $ CWPic (CW.styledText (fromCWStyle s) (fromCWFont f) (fromCWText t))
   where
     fromCWStyle Plain = CW.Plain
     fromCWStyle Bold = CW.Bold
@@ -233,42 +230,42 @@ styledText (t, f, s) =
 
 -- | A rendering of text characters, with a specific choice of font and style.
 styledLettering :: HasCallStack => (Text, Font, TextStyle) -> Picture
-styledLettering = styledText
+styledLettering args = withFrozenCallStack $ styledText args
 
 -- | A picture drawn entirely in this color.
 colored :: HasCallStack => (Picture, Color) -> Picture
-colored (p, c) = CWPic (CW.colored (toCWColor c) (toCWPic p))
+colored (p, c) = withFrozenCallStack $ CWPic (CW.colored (toCWColor c) (toCWPic p))
 
 -- | A picture drawn entirely in this color.
 coloured :: HasCallStack => (Picture, Color) -> Picture
-coloured = colored
+coloured args = withFrozenCallStack $ colored args
 
 -- | A picture drawn translated in these directions.
 translated :: HasCallStack => (Picture, Number, Number) -> Picture
 translated (p, x, y) =
-    CWPic (CW.translated (toDouble x) (toDouble y) (toCWPic p))
+    withFrozenCallStack $ CWPic (CW.translated (toDouble x) (toDouble y) (toCWPic p))
 
 -- | A picture scaled by these factors.
 scaled :: HasCallStack => (Picture, Number, Number) -> Picture
-scaled (p, x, y) = CWPic (CW.scaled (toDouble x) (toDouble y) (toCWPic p))
+scaled (p, x, y) = withFrozenCallStack $ CWPic (CW.scaled (toDouble x) (toDouble y) (toCWPic p))
 
 -- | A picture scaled by these factors.
 dilated :: HasCallStack => (Picture, Number) -> Picture
-dilated (p, k) = CWPic (CW.dilated (toDouble k) (toCWPic p))
+dilated (p, k) = withFrozenCallStack $ CWPic (CW.dilated (toDouble k) (toCWPic p))
 
 -- | A picture rotated by this angle.
 rotated :: HasCallStack => (Picture, Number) -> Picture
-rotated (p, th) = CWPic (CW.rotated (toDouble (pi * th / 180)) (toCWPic p))
+rotated (p, th) = withFrozenCallStack $ CWPic (CW.rotated (toDouble (pi * th / 180)) (toCWPic p))
 
 -- A picture made by drawing these pictures, ordered from top to bottom.
 pictures :: HasCallStack => [Picture] -> Picture
-pictures = CWPic . CW.pictures . map toCWPic
+pictures ps = withFrozenCallStack $ CWPic (CW.pictures (map toCWPic ps))
 
 -- Binary composition of pictures.
 (&) :: HasCallStack => Picture -> Picture -> Picture
 infixr 0 &
 
-a & b = CWPic (toCWPic a CW.<> toCWPic b)
+a & b = withFrozenCallStack $ CWPic (toCWPic a CW.<> toCWPic b)
 
 -- | A coordinate plane.  Adding this to your pictures can help you measure distances
 -- more accurately.
@@ -278,8 +275,8 @@ a & b = CWPic (toCWPic a CW.<> toCWPic b)
 --    program = drawingOf(myPicture & coordinatePlane)
 --    myPicture = ...
 coordinatePlane :: HasCallStack => Picture
-coordinatePlane = CWPic CW.coordinatePlane
+coordinatePlane = withFrozenCallStack $ CWPic CW.coordinatePlane
 
 -- | The CodeWorld logo.
 codeWorldLogo :: HasCallStack => Picture
-codeWorldLogo = CWPic CW.codeWorldLogo
+codeWorldLogo = withFrozenCallStack $ CWPic CW.codeWorldLogo

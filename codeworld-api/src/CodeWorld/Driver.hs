@@ -94,7 +94,7 @@ import GHCJS.DOM.GlobalEventHandlers hiding (error)
 import GHCJS.DOM.MouseEvent
 import GHCJS.DOM.NonElementParentNode
 import GHCJS.DOM.Types (Element, unElement)
-import GHCJS.DOM.Window as Window
+import qualified GHCJS.DOM.Window as Window
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
 import GHCJS.Marshal
@@ -793,7 +793,7 @@ describePicture (ThickPolygon _ pts w) = "thickPolygon { points = " ++ intercala
 describePicture (SolidRectangle _ w h) = "solidRectangle { width = " ++ showShortFloat w ++ ", height = " ++ showShortFloat h ++ " }"
 describePicture (ThickRectangle _ lw w h) = "thickRectangle { linewidth = " ++ showShortFloat lw ++ ", width = " ++ showShortFloat w ++ ", height = " ++ showShortFloat h ++ " }"
 describePicture (ClosedCurve _ pts) = "closedCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
-describePicture(ThickClosedCurve _ pts w) = "thickClosedCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ ", width = " ++ showShortFloat w ++ " }"
+describePicture (ThickClosedCurve _ pts w) = "thickClosedCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ ", width = " ++ showShortFloat w ++ " }"
 describePicture (Circle _ r) = "circle { radius = " ++ showShortFloat r ++ " }"
 describePicture (SolidCircle _ r) = "solidCircle { radius = " ++ showShortFloat r ++ " }"
 describePicture (ThickCircle _ lw r) =  "thickCircle { linewidth = " ++ showShortFloat lw ++ ", radius = " ++ showShortFloat r ++ " }"
@@ -827,8 +827,9 @@ setCallInfo pic obj =
         Nothing -> return ()
 
 findCSMain :: CallStack -> Maybe (String, SrcLoc)
-findCSMain cs =
-    Data.List.find ((== "main") . srcLocPackage . snd) (getCallStack cs)
+findCSMain cs = case getCallStack cs of
+    ans@(_, SrcLoc{..}) : _ | srcLocPackage == "main" -> Just ans
+    _ -> Nothing
 
 getPictureCS :: Picture -> CallStack
 getPictureCS (SolidPolygon cs _) = cs

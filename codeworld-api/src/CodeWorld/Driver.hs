@@ -785,7 +785,7 @@ showShortFloat x = stripZeros (showFFloatAlt (Just 4) x "")
   where stripZeros = reverse . dropWhile (== '.') . dropWhile (== '0') . reverse
 
 describePicture :: Picture -> String
-describePicture (Rectangle _ w h) = "rectangle { width = " ++ showShortFloat w ++ " , height = " ++ showShortFloat h ++ " }"
+describePicture (Rectangle _ w h) = "rectangle { width = " ++ showShortFloat w ++ ", height = " ++ showShortFloat h ++ " }"
 describePicture (SolidPolygon _ pts) = "solidPolygon { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
 describePicture (SolidClosedCurve _ pts) = "solidClosedCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
 describePicture (Polygon _ pts) = "polygon { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
@@ -801,13 +801,14 @@ describePicture (Polyline _ pts) = "polyline { points = " ++ intercalate ", " [ 
 describePicture (ThickPolyline _ pts w) = "thickPolyline { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ ", width = " ++ showShortFloat w ++ " }"
 describePicture (Curve _ pts) = "curve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
 describePicture (ThickCurve _ pts w) = "thickCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ ", width = " ++ showShortFloat w ++ " }"
-describePicture (Sector _ b e r) =  "sector { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radians )," ++ " radius = " ++ showShortFloat r ++ " }"
-describePicture (Arc _ b e r) = "arc { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radians )," ++ " radius = " ++ showShortFloat r ++ " }"
-describePicture (ThickArc _ b e r w) =  "thickArc { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radians )," ++ " radius = " ++ showShortFloat r ++ ", width = " ++ showShortFloat w ++ " }"
+describePicture (Sector _ b e r) =  "sector { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radias )," ++ " radius = " ++ showShortFloat r ++ " }"
+describePicture (Arc _ b e r) = "arc { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radias )," ++ " radius = " ++ showShortFloat r ++ " }"
+describePicture (ThickArc _ b e r w) =  "thickArc { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radias )," ++ " radius = " ++ showShortFloat r ++ ", width = " ++ showShortFloat w ++ " }"
 describePicture (Text _ txt) = printf "text { text = '%s' }" txt
 describePicture (Blank _) = "blank"
 describePicture (StyledText _ style font txt) = printf " styledText { style = %s , font = %s, txt = '%s' }" (show style) (show font) txt
-describePicture (Color _ (RGBA r g b a) _) = "colored { color = RGBA( " ++ showShortFloat r ++ showShortFloat g ++ showShortFloat b ++ showShortFloat a ++ ") }"
+describePicture (Color _ (RGBA r g b a) _) = "colored { color = RGBA(" ++ showShortFloat r ++ ", " ++ showShortFloat g ++ ", " ++ showShortFloat b ++ ", " ++ showShortFloat a ++ ") }"
+describePicture (Translate _ x y _) = "translated { x = " ++ showShortFloat x ++ ", y = " ++ showShortFloat y ++ " }"
 describePicture (Scale _ x y _) = "scaled { x = " ++ showShortFloat x ++ ", y = " ++ showShortFloat y ++ " }"
 describePicture (Rotate _ angle _) = "rotated { angle = " ++ showShortFloat angle ++ "° }"
 describePicture (Dilate _ k _) = "dilated { factor = " ++ showShortFloat k ++  " }"
@@ -816,51 +817,47 @@ describePicture (CoordinatePlane _) = "coordinatePlane"
 describePicture (Pictures _) = "pictures"
 
 setCallInfo :: Picture -> Object -> IO ()
-setCallInfo pic obj =
-    case findCSMain (getPictureCS pic) of
-        Just (_, src) -> do
+setCallInfo pic obj = do
+    case getPictureSrcLoc pic of
+        Just loc -> do
             setProp "name" (pToJSVal $ (trim 80 . describePicture) pic) obj
-            setProp "startLine" (pToJSVal $ srcLocStartLine src) obj
-            setProp "startCol" (pToJSVal $ srcLocStartCol src) obj
-            setProp "endLine" (pToJSVal $ srcLocEndLine src) obj
-            setProp "endCol" (pToJSVal $ srcLocEndCol src) obj
+            setProp "startLine" (pToJSVal $ srcLocStartLine loc) obj
+            setProp "startCol" (pToJSVal $ srcLocStartCol loc) obj
+            setProp "endLine" (pToJSVal $ srcLocEndLine loc) obj
+            setProp "endCol" (pToJSVal $ srcLocEndCol loc) obj
         Nothing -> return ()
 
-findCSMain :: CallStack -> Maybe (String, SrcLoc)
-findCSMain cs =
-    Data.List.find ((== "main") . srcLocPackage . snd) (getCallStack cs)
-
-getPictureCS :: Picture -> CallStack
-getPictureCS (SolidPolygon cs _) = cs
-getPictureCS (SolidClosedCurve cs _) = cs
-getPictureCS (Polygon cs _) = cs
-getPictureCS (ThickPolygon cs _ _) = cs
-getPictureCS (Rectangle cs _ _) = cs
-getPictureCS (SolidRectangle cs _ _) = cs
-getPictureCS (ThickRectangle cs _ _ _) = cs
-getPictureCS (ClosedCurve cs _) = cs
-getPictureCS (ThickClosedCurve cs _ _) = cs
-getPictureCS (Circle cs _) = cs
-getPictureCS (SolidCircle cs _) = cs
-getPictureCS (ThickCircle cs _ _) = cs
-getPictureCS (Polyline cs _) = cs
-getPictureCS (ThickPolyline cs _ _) = cs
-getPictureCS (Curve cs _) = cs
-getPictureCS (ThickCurve cs _ _) = cs
-getPictureCS (Sector cs _ _ _) = cs
-getPictureCS (Arc cs _ _ _) = cs
-getPictureCS (ThickArc cs _ _ _ _) = cs
-getPictureCS (Text cs _) = cs
-getPictureCS (Blank cs) = cs
-getPictureCS (StyledText cs _ _ _) = cs
-getPictureCS (Color cs _ _) = cs
-getPictureCS (Translate cs _ _ _) = cs
-getPictureCS (Scale cs _ _ _) = cs
-getPictureCS (Dilate cs _ _) = cs
-getPictureCS (Rotate cs _ _) = cs
-getPictureCS (Logo cs) = cs
-getPictureCS (CoordinatePlane cs) = cs
-getPictureCS (Pictures _) = emptyCallStack
+getPictureSrcLoc :: Picture -> Maybe SrcLoc
+getPictureSrcLoc (SolidPolygon loc _) = Just loc
+getPictureSrcLoc (SolidClosedCurve loc _) = Just loc
+getPictureSrcLoc (Polygon loc _) = Just loc
+getPictureSrcLoc (ThickPolygon loc _ _) = Just loc
+getPictureSrcLoc (Rectangle loc _ _) = Just loc
+getPictureSrcLoc (SolidRectangle loc _ _) = Just loc
+getPictureSrcLoc (ThickRectangle loc _ _ _) = Just loc
+getPictureSrcLoc (ClosedCurve loc _) = Just loc
+getPictureSrcLoc (ThickClosedCurve loc _ _) = Just loc
+getPictureSrcLoc (Circle loc _) = Just loc
+getPictureSrcLoc (SolidCircle loc _) = Just loc
+getPictureSrcLoc (ThickCircle loc _ _) = Just loc
+getPictureSrcLoc (Polyline loc _) = Just loc
+getPictureSrcLoc (ThickPolyline loc _ _) = Just loc
+getPictureSrcLoc (Curve loc _) = Just loc
+getPictureSrcLoc (ThickCurve loc _ _) = Just loc
+getPictureSrcLoc (Sector loc _ _ _) = Just loc
+getPictureSrcLoc (Arc loc _ _ _) = Just loc
+getPictureSrcLoc (ThickArc loc _ _ _ _) = Just loc
+getPictureSrcLoc (Text loc _) = Just loc
+getPictureSrcLoc (Blank loc) = Just loc
+getPictureSrcLoc (StyledText loc _ _ _) = Just loc
+getPictureSrcLoc (Color loc _ _) = Just loc
+getPictureSrcLoc (Translate loc _ _ _) = Just loc
+getPictureSrcLoc (Scale loc _ _ _) = Just loc
+getPictureSrcLoc (Dilate loc _ _) = Just loc
+getPictureSrcLoc (Rotate loc _ _) = Just loc
+getPictureSrcLoc (Logo loc) = Just loc
+getPictureSrcLoc (CoordinatePlane loc) = Just loc
+getPictureSrcLoc (Pictures _) = Nothing
 
 -- If a picture is found, the result will include an array of the base picture
 -- and all transformations.

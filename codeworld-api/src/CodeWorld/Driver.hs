@@ -44,7 +44,6 @@ module CodeWorld.Driver
 import CodeWorld.CollaborationUI (SetupPhase(..), Step(..), UIState)
 import qualified CodeWorld.CollaborationUI as CUI
 import qualified CodeWorld.CanvasM as CM
-import CodeWorld.CanvasM (CanvasM, runCanvasM)
 import CodeWorld.Color
 import CodeWorld.Event
 import CodeWorld.Picture
@@ -76,6 +75,7 @@ import System.Random
 import Text.Printf
 import Text.Read
 #ifdef ghcjs_HOST_OS
+import CodeWorld.CanvasM (CanvasM, runCanvasM)
 import CodeWorld.Message
 import CodeWorld.Prediction
 import qualified Control.Monad.Trans.State as State

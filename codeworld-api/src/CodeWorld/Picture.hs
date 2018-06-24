@@ -125,11 +125,11 @@ data Picture
           !Double
           !Double
           !Double
-    | StyledText SrcLoc
+    | StyledLettering SrcLoc
            !TextStyle
            !Font
            !Text
-    | Text SrcLoc
+    | Lettering SrcLoc
            !Text
     | Color SrcLoc
             !Color
@@ -274,20 +274,20 @@ sector = Sector (getDebugSrcLoc callStack)
 
 -- | A rendering of text characters.
 text :: HasCallStack => Text -> Picture
-text = Text (getDebugSrcLoc callStack)
+text = Lettering (getDebugSrcLoc callStack)
 
 -- | A rendering of text characters.
 lettering :: HasCallStack => Text -> Picture
-lettering = Text (getDebugSrcLoc callStack)
+lettering = Lettering (getDebugSrcLoc callStack)
 
 -- | A rendering of text characters, with a specific choice of font and style.
 styledText :: HasCallStack => TextStyle -> Font -> Text -> Picture
-styledText = StyledText (getDebugSrcLoc callStack)
+styledText = StyledLettering (getDebugSrcLoc callStack)
 
 -- | A rendering of text characters onto a Picture, with a specific
 -- choice of font and style.
 styledLettering :: HasCallStack => TextStyle -> Font -> Text -> Picture
-styledLettering = StyledText (getDebugSrcLoc callStack)
+styledLettering = StyledLettering (getDebugSrcLoc callStack)
 
 -- | A picture drawn entirely in this color.
 colored :: HasCallStack => Color -> Picture -> Picture

@@ -277,9 +277,9 @@ pictureToDrawing (ThickCurve _ pts w) = Shape $ pathDrawer pts w False True
 pictureToDrawing (Sector _ b e r) = Shape $ sectorDrawer b e r
 pictureToDrawing (Arc _ b e r) = Shape $ arcDrawer b e r 0
 pictureToDrawing (ThickArc _ b e r w) = Shape $ arcDrawer b e r w
-pictureToDrawing (Text _ txt) = Shape $ textDrawer Plain Serif txt
+pictureToDrawing (Lettering _ txt) = Shape $ textDrawer Plain Serif txt
 pictureToDrawing (Blank _) = Drawings $ []
-pictureToDrawing (StyledText _ sty fnt txt) = Shape $ textDrawer sty fnt txt
+pictureToDrawing (StyledLettering _ sty fnt txt) = Shape $ textDrawer sty fnt txt
 pictureToDrawing (Logo _) = Shape $ logoDrawer
 pictureToDrawing (CoordinatePlane _) = Shape $ coordinatePlaneDrawer
 pictureToDrawing (Color _ col p) =
@@ -680,16 +680,16 @@ picToObj' pic =
                 ]
                 obj
             retVal obj
-        Text cs txt -> do
-            obj <- init "text"
+        Lettering cs txt -> do
+            obj <- init "lettering"
             setProps
                 [ ("font", pToJSVal $ fontString Plain Serif)
                 , ("text", pToJSVal txt)
                 ]
                 obj
             retVal obj
-        StyledText cs style font txt -> do
-            obj <- init "styledText"
+        StyledLettering cs style font txt -> do
+            obj <- init "styledLettering"
             setProps
                 [ ("font", pToJSVal $ fontString style font)
                 , ("text", pToJSVal txt)
@@ -804,9 +804,9 @@ describePicture (ThickCurve _ pts w) = "thickCurve { points = " ++ intercalate "
 describePicture (Sector _ b e r) =  "sector { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radias )," ++ " radius = " ++ showShortFloat r ++ " }"
 describePicture (Arc _ b e r) = "arc { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radias )," ++ " radius = " ++ showShortFloat r ++ " }"
 describePicture (ThickArc _ b e r w) =  "thickArc { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radias )," ++ " radius = " ++ showShortFloat r ++ ", width = " ++ showShortFloat w ++ " }"
-describePicture (Text _ txt) = printf "text { text = '%s' }" txt
+describePicture (Lettering _ txt) = printf "lettering { text = '%s' }" txt
 describePicture (Blank _) = "blank"
-describePicture (StyledText _ style font txt) = printf " styledText { style = %s , font = %s, txt = '%s' }" (show style) (show font) txt
+describePicture (StyledLettering _ style font txt) = printf " styledLettering { style = %s , font = %s, text = '%s' }" (show style) (show font) txt
 describePicture (Color _ (RGBA r g b a) _) = "colored { color = RGBA(" ++ showShortFloat r ++ ", " ++ showShortFloat g ++ ", " ++ showShortFloat b ++ ", " ++ showShortFloat a ++ ") }"
 describePicture (Translate _ x y _) = "translated { x = " ++ showShortFloat x ++ ", y = " ++ showShortFloat y ++ " }"
 describePicture (Scale _ x y _) = "scaled { x = " ++ showShortFloat x ++ ", y = " ++ showShortFloat y ++ " }"
@@ -847,9 +847,9 @@ getPictureSrcLoc (ThickCurve loc _ _) = Just loc
 getPictureSrcLoc (Sector loc _ _ _) = Just loc
 getPictureSrcLoc (Arc loc _ _ _) = Just loc
 getPictureSrcLoc (ThickArc loc _ _ _ _) = Just loc
-getPictureSrcLoc (Text loc _) = Just loc
+getPictureSrcLoc (Lettering loc _) = Just loc
 getPictureSrcLoc (Blank loc) = Just loc
-getPictureSrcLoc (StyledText loc _ _ _) = Just loc
+getPictureSrcLoc (StyledLettering loc _ _ _) = Just loc
 getPictureSrcLoc (Color loc _ _) = Just loc
 getPictureSrcLoc (Translate loc _ _ _) = Just loc
 getPictureSrcLoc (Scale loc _ _ _) = Just loc

@@ -79,7 +79,7 @@ main = do
 -- authenticated client, and that should reject unauthenticated clients, use
 -- @authenticated@.
 public :: Snap () -> CodeWorldHandler
-public = optionallyAuthenticated . const
+public = const
 
 -- A revised upload policy that allows up to 8 MB of uploaded data in a
 -- request.  This is needed to handle uploads of projects including editor

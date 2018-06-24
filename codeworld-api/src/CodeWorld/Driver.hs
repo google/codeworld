@@ -827,9 +827,8 @@ setCallInfo pic obj =
         Nothing -> return ()
 
 findCSMain :: CallStack -> Maybe (String, SrcLoc)
-findCSMain cs = case getCallStack cs of
-    ans@(_, SrcLoc{..}) : _ | srcLocPackage == "main" -> Just ans
-    _ -> Nothing
+findCSMain cs =
+    Data.List.find ((== "main") . srcLocPackage . snd) (getCallStack cs)
 
 getPictureCS :: Picture -> CallStack
 getPictureCS (SolidPolygon cs _) = cs

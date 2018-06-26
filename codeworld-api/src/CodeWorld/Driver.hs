@@ -2350,8 +2350,8 @@ drawControl w alpha TimeLabel = translated 8 (-9) p
 drawControl _ alpha SpeedSlider = translated (-4) (-9) p
   where
     p =
-        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 2.8) <>
-        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 2.8)
+        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.8)
 
 animationControls :: Wrapped Double -> [Control Double]
 animationControls w

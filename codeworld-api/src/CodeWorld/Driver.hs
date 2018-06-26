@@ -2361,9 +2361,9 @@ animationControls :: Wrapped Double -> [Control Double]
 animationControls w
     | mouseMovedTime w > 5 = []
     | playbackSpeed w == 0 && state w > 0 =
-        [RestartButton, PlayButton, StepButton, BackButton, TimeLabel]
-    | playbackSpeed w == 0 = [RestartButton, PlayButton, StepButton, TimeLabel]
-    | otherwise = [RestartButton, PauseButton, TimeLabel]
+        [RestartButton, PlayButton, StepButton, BackButton, TimeLabel, SpeedSlider]
+    | playbackSpeed w == 0 = [RestartButton, PlayButton, StepButton, TimeLabel, SpeedSlider]
+    | otherwise = [RestartButton, PauseButton, TimeLabel, SpeedSlider]
 
 animationOf f = runPauseable initial (+) animationControls f
   where

@@ -2276,6 +2276,8 @@ handleControl _ (x, y) BackButton w
         w {state = max 0 (state w - 0.1)}
 handleControl f (x, y) StepButton w
     | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = w {state = f 0.1 (state w)}
+handleControl f (x, y) SpeedSlider w
+    | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = w {state = f 0.1 (state w)}
 handleControl _ _ _ w = w
 
 wrappedDraw ::
@@ -2345,6 +2347,15 @@ drawControl w alpha TimeLabel = translated 8 (-9) p
             (scaled 0.5 0.5 $ text (pack (showFFloatAlt (Just 4) (state w) "s"))) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 3.0 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 3.0 0.8)
+drawControl _ alpha SpeedSlider = translated (-6) (-9) p
+  where
+    p =
+        colored
+            (RGBA 0 0 0 alpha)
+            (translated (-0.15) 0 (solidRectangle 0.2 0.5) <>
+             solidPolygon [(0.05, 0.25), (0.05, -0.25), (0.3, 0)]) <>
+        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
 
 animationControls :: Wrapped Double -> [Control Double]
 animationControls w

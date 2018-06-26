@@ -55,4 +55,3 @@ Library
   Exposed:             True
   Ghc-options:         -O2
                        -Wincomplete-patterns
-                       -Werror

@@ -2248,7 +2248,7 @@ wrappedStep f dt w =
     { state =
           if playbackSpeed w == 0
               then state w
-              else f dt (state w)
+              else f (dt * playbackSpeed) (state w)
     , mouseMovedTime = mouseMovedTime w + dt
     }
 
@@ -2277,7 +2277,7 @@ handleControl _ (x, y) BackButton w
 handleControl f (x, y) StepButton w
     | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = w {state = f 0.1 (state w)}
 handleControl f (x, y) SpeedSlider w
-    | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = w {state = f 0.1 (state w)}
+    | -5.4 < x && x < -2.6 && -9.4 < y && y < -8.6 = w {state = f 0.1 (state w)}
 handleControl _ _ _ w = w
 
 wrappedDraw ::

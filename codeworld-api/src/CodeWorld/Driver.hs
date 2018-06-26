@@ -2248,7 +2248,7 @@ wrappedStep f dt w =
     { state =
           if playbackSpeed w == 0
               then state w
-              else f (dt * playbackSpeed) (state w)
+              else f (dt * playbackSpeed w) (state w)
     , mouseMovedTime = mouseMovedTime w + dt
     }
 

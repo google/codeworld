@@ -2229,7 +2229,7 @@ interactionOf initial step event draw = runInspect initial step event draw
 
 data Wrapped a = Wrapped
     { state :: a
-    , paused :: Bool
+    , playbackSpeed :: Double
     , mouseMovedTime :: Double
     } deriving (Show)
 
@@ -2246,7 +2246,7 @@ wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
 wrappedStep f dt w =
     w
     { state =
-          if paused w
+          if playbackSpeed w == 0
               then state w
               else f dt (state w)
     , mouseMovedTime = mouseMovedTime w + dt
@@ -2268,9 +2268,9 @@ handleControl ::
 handleControl _ (x, y) RestartButton w
     | -9.4 < x && x < -8.6 && -9.4 < y && y < -8.6 = w {state = 0}
 handleControl _ (x, y) PlayButton w
-    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {paused = False}
+    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 1}
 handleControl _ (x, y) PauseButton w
-    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {paused = True}
+    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 0}
 handleControl _ (x, y) BackButton w
     | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6 =
         w {state = max 0 (state w - 0.1)}
@@ -2360,26 +2360,26 @@ drawControl _ alpha SpeedSlider = translated (-6) (-9) p
 animationControls :: Wrapped Double -> [Control Double]
 animationControls w
     | mouseMovedTime w > 5 = []
-    | paused w && state w > 0 =
+    | playbackSpeed w == 0 && state w > 0 =
         [RestartButton, PlayButton, StepButton, BackButton, TimeLabel]
-    | paused w = [RestartButton, PlayButton, StepButton, TimeLabel]
+    | playbackSpeed w == 0 = [RestartButton, PlayButton, StepButton, TimeLabel]
     | otherwise = [RestartButton, PauseButton, TimeLabel]
 
 animationOf f = runPauseable initial (+) animationControls f
   where
-    initial = Wrapped {state = 0, paused = False, mouseMovedTime = 1000}
+    initial = Wrapped {state = 0, playbackSpeed = 1, mouseMovedTime = 1000}
 
 simulationControls :: Wrapped w -> [Control w]
 simulationControls w
     | mouseMovedTime w > 5 = []
-    | paused w = [PlayButton, StepButton]
+    | playbackSpeed w == 0 = [PlayButton, StepButton]
     | otherwise = [PauseButton]
 
 simulationOf simInitial simStep simDraw =
     runPauseable initial simStep simulationControls simDraw
   where
     initial =
-        Wrapped {state = simInitial, paused = False, mouseMovedTime = 1000}
+        Wrapped {state = simInitial, playbackSpeed = 1, mouseMovedTime = 1000}
 
 trace msg x = unsafePerformIO $ do
     hPutStrLn stderr (T.unpack msg)

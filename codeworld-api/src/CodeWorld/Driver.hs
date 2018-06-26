@@ -2240,6 +2240,7 @@ data Control :: * -> * where
     RestartButton :: Control Double
     BackButton :: Control Double
     TimeLabel :: Control Double
+    SpeedSlider :: Control Double
 
 wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
 wrappedStep f dt w =

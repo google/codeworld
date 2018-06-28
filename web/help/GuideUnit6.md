@@ -1,85 +1,103 @@
-Animations are exciting, and get things moving.  But they suffer from one big
-drawback: they have no memory!  Every new frame of the program starts over, with
-only one number: how many seconds since the start.  You can build animations for
-simple motion, where you can immediately describe what it's like at any point as
-an expression involving time.  But animations break down when you want something
-that acts in a less predictable way.
+Animations are exciting, and get things moving.  But it's even better when your
+programs interact with the person using them, like games other applications.  In
+CodeWorld, programs that interact and respond to the person using them are
+called *activities*, and you'll write them with a function called `activityOf`.
 
-Think about a ball bouncing around in a room.  Can you write an expression that
-says exactly where the ball will be at any point in time?  It's not easy!  But
-if you know the position and direction the ball is moving, you can figure out
-where it should go next.  This is an example of something that's *hard* to
-describe as a function of time, but *easier* to describe the changes happening
-in each moment.
+State
+=====
 
-We now want to describe programs that have *state*, or memory.  In CodeWorld,
-the simplest programs with state are called simulations.
+The most important thing about an activity is its *state*, a word with just means
+"the way things are right now".  The state of an activity is a *value* that
+includes everything the computer needs to remember about how things are.
 
-Parts of a Simulation
-=====================
+The idea of a program having memory is new.  You might have noticed that
+animations have no memory at all: every new frame starts over, with only one
+number: how many seconds since the start.  You have to be able to describe the
+whole animation with a function that only sees that number of seconds!  When
+your program is interacting with the user, though, what you see 17 seconds in
+depends on not just the time, but also on what **happened** during that 17
+seconds.  The state is where you keep the information you need the computer to
+remember.
 
-Pictures and animations were described by a single thing: for a pictures, it was
-a picture.  For animations, it was a function mapping numbers to pictures.  But
-a simulation is actually built out of *three* separate (but related) parts.
-Here they are:
+Parts of an Activity
+====================
+
+Drawings and animations were described by a single thing: for drawings, it was a
+picture.  For animations, it was a function mapping numbers to pictures.  But an
+activity is actually built out of *three* separate (but related) parts.  Here
+they are:
 
 Part 1: Initial state
 ---------------------
 
-The first part of a simulation is often called `initial`, and it tells you how
-the simulation is when it starts.
+The first part of an activity is often called `initial`, and it tells you the
+state when the activity starts.
 
-Part 2: Step function
----------------------
+Part 2: Change function
+-----------------------
 
-The next part of a simulation is often called `step`, and it tells you how the
-simulation changes when time passes.
+The second part of an activity is often called `step`, and it tells you how
+the state changes when something happens.  That could be a click of a mouse, a
+key press, or just time passing.
 
 Part 3: Picture function
 ------------------------
 
-The final part of a simulation is often called `picture`, and it tells you how the
-simulation should be presented on the screen as a `Picture`.
-
-All three of these parts share some data called the "world", which records
-everything you want to *remember* about the simulation as it happens.
+The third part of an activity is often called `picture`, and it tells you how
+the state should be drawn on the screen as a `Picture`.
 
 Building Simulations
 ====================
 
 It may sound complicated, but let's jump in and look at an example:
 
-    program          = simulationOf(initial, step, picture)
-    initial(rs)      = (5, 0)
-    step((x, y), dt) = (x - y * dt, y + x * dt)
-    picture(x, y)    = translated(rectangle(1, 1), x, y)
+    program                       = activityOf(initial, change, picture)
+    initial(rs)                   = (0, 0)
+    change(p, PointerPress(x, y)) = (x, y)
+    change(p, other)              = p
+    picture(x, y)                 = translated(rectangle(1, 1), x, y)
 
-In this case, the "world" is a point: the location of an object.  The step
-function is the heart of any simulation.  Here, it changes the `x` and `y`
-coordinates to move the object, by amounts that depend on where the object is
-now.  When the object is near the top of the screen, so `y` is a large number,
-it's pushed to the left.  Conversely, when it's near the bottom and `y` is
-negative, it's pushed to the right.  When it's near the right, so `x` is a large
-number, it's pushed up.  When `x` is negative on the left side, it's pushed
-down.
+This example just shows a small square that moves when you click somewhere.  In
+this case, the state - the way things are - is a point.  The `initial` function
+tells you where the square starts, which is the point (0, 0) (sometimes called
+the "origin").  The `change` function tells you how the state changes when
+things happen: it moves when you click somewhere, and otherwise stays the same.
+And the `picture` function tells you what the program looks like: it looks like
+a small square, in the location you last clicked.
 
-This still leaves `initial`, which tells us that the object starts at (5,0), and
-`picture`, which says the object looks like a square, and appears at the
-position in the world.
+Sometimes, an activity doesn't change with mouse clicks, but just to the normal
+passing of time.  Consider this one:
+
+    program                         = activityOf(initial, change, picture)
+    initial(rs)                     = (5, 0)
+    change((x, y), TimePassing(dt)) = (x - y * dt, y + x * dt)
+    change(p, other)                = p
+    picture(x, y)                   = translated(rectangle(1, 1), x, y)
+
+In this case, the state is still a point: the location of an object, but it
+starts to one side.  The x and y coordinates change over time, by amounts that
+depend on where the object is now:
+
+* When the object is near the top of the screen, so `y` is a positive number,
+  it's pushed to the left.
+* When it's near the bottom and `y` is negative, it's pushed to the right.
+* When it's near the right, so `x` is positive, it's pushed up.
+* When `x` is negative on the left side, it's pushed down.
 
 Can you guess what this will look like?  Try it and find out!
 
-Simulations are a lot like science experiments.  You get to describe the rules
-for how things change at each moment in time, but the overall behavior of the
-system can still surprise you!
+Activities can be a lot like science experiments.  You get to describe the
+**rules** for how things change, but the overall behavior of the system can
+still surprise you!
 
-Choosing a World
+Choosing a State
 ----------------
 
-The world type is the first big choice you make when building a simulation.  In
-the simulation above, the world was a point.  When you write your own simulations,
-though, the world type can be whatever you choose.  The world type is your answer
-to this question:  What do I need to *remember* for the simulation to continue.
+The state is the first big choice you make when building an activity.  In the
+activities above, the state was a point - an ordered pair with an x and y
+coordinate.  When you write your own simulations, though, the state can be
+whatever type you choose.  The state is your answer to this question:  What do
+I need to *remember* for the activity to continue?
 
 Think of these possibilities:
 * Do you need to remember the *locations* of things?
@@ -87,10 +105,42 @@ Think of these possibilities:
 * Do you need to remember the *direction* things are moving?
 * Do you need to remember the *angle* of something that turns?
 
-Anything you need to remember will go into your world type.  Let's look at some
-examples.
+Anything you need to remember will go into your state type.
 
-### Simulations with one number ###
+Reacting to Events
+------------------
+
+Once you've chosen a state, the next big choice you make is how the state
+should react to things happening.  The things that can happen are values of a
+type called `Event`.  There are several types of events:
+
+* `KeyPress` and `KeyRelease` tell you that the person using your program has
+  pressed or released a key on the keyboard.
+* `PointerPress` and `PointerRelease` tell you that they have clicked or let
+  go of a mouse or a touch screen.
+* `PointerMovement` tells you they have moved the location they are pointing
+  to with the mouse or touch screen.
+* `TimePassing` tells you that some time has passed.  These events are
+  constantly happening.
+
+To respond to some kind of event, you write an *equation* of your `change`
+function, which describes what happens when that kind of event is received.
+So your `change` function is normally defined with several equations using
+*pattern matching*.
+
+One mistake that's easy to make is forgetting to say what happens with an
+event that you *don't* care about.  You should always end your `change`
+function with an equation like
+
+    change(state, anything) = state
+
+That equation matches any event that hasn't been matched yet, and says that
+if some other event happens, the new state should be the same as the old
+state.
+
+**From here on, the guide hasn't been updated.**
+
+### States with one number ###
 
 The simplest kind of state is a single number.  Let's build a simulation to move
 a box across the screen.  You could have done this with an animation, but this

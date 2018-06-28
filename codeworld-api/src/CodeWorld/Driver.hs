@@ -2240,7 +2240,7 @@ data Control :: * -> * where
     RestartButton :: Control Double
     BackButton :: Control Double
     TimeLabel :: Control Double
-    SpeedSlider :: Control Double
+    SpeedSlider :: Control a
 
 wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
 wrappedStep f dt w =
@@ -2371,8 +2371,8 @@ animationOf f = runPauseable initial (+) animationControls f
 simulationControls :: Wrapped w -> [Control w]
 simulationControls w
     | mouseMovedTime w > 5 = []
-    | playbackSpeed w == 0 = [PlayButton, StepButton]
-    | otherwise = [PauseButton]
+    | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
+    | otherwise = [PauseButton, SpeedSlider]
 
 simulationOf simInitial simStep simDraw =
     runPauseable initial simStep simulationControls simDraw

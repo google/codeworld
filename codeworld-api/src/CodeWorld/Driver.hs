@@ -2229,7 +2229,7 @@ interactionOf initial step event draw = runInspect initial step event draw
 
 data Wrapped a = Wrapped
     { state :: a
-    , paused :: Bool
+    , playbackSpeed :: Double
     , mouseMovedTime :: Double
     } deriving (Show)
 
@@ -2240,14 +2240,15 @@ data Control :: * -> * where
     RestartButton :: Control Double
     BackButton :: Control Double
     TimeLabel :: Control Double
+    SpeedSlider :: Control a
 
 wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
 wrappedStep f dt w =
     w
     { state =
-          if paused w
+          if playbackSpeed w == 0
               then state w
-              else f dt (state w)
+              else f (dt * playbackSpeed w) (state w)
     , mouseMovedTime = mouseMovedTime w + dt
     }
 
@@ -2267,14 +2268,16 @@ handleControl ::
 handleControl _ (x, y) RestartButton w
     | -9.4 < x && x < -8.6 && -9.4 < y && y < -8.6 = w {state = 0}
 handleControl _ (x, y) PlayButton w
-    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {paused = False}
+    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 1}
 handleControl _ (x, y) PauseButton w
-    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {paused = True}
+    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 0}
 handleControl _ (x, y) BackButton w
     | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6 =
         w {state = max 0 (state w - 0.1)}
 handleControl f (x, y) StepButton w
     | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = w {state = f 0.1 (state w)}
+handleControl f (x, y) SpeedSlider w
+    | -5.4 < x && x < -2.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 5 * (x + 5.4) / 2.8}
 handleControl _ _ _ w = w
 
 wrappedDraw ::
@@ -2344,30 +2347,38 @@ drawControl w alpha TimeLabel = translated 8 (-9) p
             (scaled 0.5 0.5 $ text (pack (showFFloatAlt (Just 4) (state w) "s"))) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 3.0 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 3.0 0.8)
+drawControl w alpha SpeedSlider = translated (-4) (-9) p
+  where
+    p =
+    
+        translated x 0 (solidRectangle 0.2 0.8) <>
+        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.6) <>
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.6)
+    x = playbackSpeed w / 5 * 2.8 - 1.4
 
 animationControls :: Wrapped Double -> [Control Double]
 animationControls w
     | mouseMovedTime w > 5 = []
-    | paused w && state w > 0 =
-        [RestartButton, PlayButton, StepButton, BackButton, TimeLabel]
-    | paused w = [RestartButton, PlayButton, StepButton, TimeLabel]
-    | otherwise = [RestartButton, PauseButton, TimeLabel]
+    | playbackSpeed w == 0 && state w > 0 =
+        [RestartButton, PlayButton, StepButton, BackButton, TimeLabel, SpeedSlider]
+    | playbackSpeed w == 0 = [RestartButton, PlayButton, StepButton, TimeLabel, SpeedSlider]
+    | otherwise = [RestartButton, PauseButton, TimeLabel, SpeedSlider]
 
 animationOf f = runPauseable initial (+) animationControls f
   where
-    initial = Wrapped {state = 0, paused = False, mouseMovedTime = 1000}
+    initial = Wrapped {state = 0, playbackSpeed = 1, mouseMovedTime = 1000}
 
 simulationControls :: Wrapped w -> [Control w]
 simulationControls w
     | mouseMovedTime w > 5 = []
-    | paused w = [PlayButton, StepButton]
-    | otherwise = [PauseButton]
+    | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
+    | otherwise = [PauseButton, SpeedSlider]
 
 simulationOf simInitial simStep simDraw =
     runPauseable initial simStep simulationControls simDraw
   where
     initial =
-        Wrapped {state = simInitial, paused = False, mouseMovedTime = 1000}
+        Wrapped {state = simInitial, playbackSpeed = 1, mouseMovedTime = 1000}
 
 trace msg x = unsafePerformIO $ do
     hPutStrLn stderr (T.unpack msg)

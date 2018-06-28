@@ -2347,7 +2347,7 @@ drawControl w alpha TimeLabel = translated 8 (-9) p
             (scaled 0.5 0.5 $ text (pack (showFFloatAlt (Just 4) (state w) "s"))) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 3.0 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 3.0 0.8)
-drawControl _ alpha SpeedSlider = translated (-4) (-9) p
+drawControl w alpha SpeedSlider = translated (-4) (-9) p
   where
     p =
     

@@ -2231,6 +2231,7 @@ data Wrapped a = Wrapped
     { state :: a
     , playbackSpeed :: Double
     , mouseMovedTime :: Double
+    , draggingSpeed :: Bool
     } deriving (Show)
 
 data Control :: * -> * where
@@ -2264,19 +2265,19 @@ wrappedEvent ctrls f (MousePress LeftButton p) w =
 wrappedEvent _ _ _ w = w
 
 handleControl ::
-       (Double -> a -> a) -> Point -> Control a -> Wrapped a -> Wrapped a
-handleControl _ (x, y) RestartButton w
+       (Double -> a -> a) -> Event -> Control a -> Wrapped a -> Wrapped a
+handleControl _ (PointerPress, (x, y)) RestartButton w
     | -9.4 < x && x < -8.6 && -9.4 < y && y < -8.6 = w {state = 0}
-handleControl _ (x, y) PlayButton w
+handleControl _ (PointerPress, (x, y)) PlayButton w
     | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 1}
-handleControl _ (x, y) PauseButton w
+handleControl _ (PointerPress, (x, y)) PauseButton w
     | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 0}
-handleControl _ (x, y) BackButton w
+handleControl _ (PointerPress, (x,y)) BackButton w
     | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6 =
         w {state = max 0 (state w - 0.1)}
-handleControl f (x, y) StepButton w
+handleControl f (PointerPress, (x, y)) StepButton w
     | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = w {state = f 0.1 (state w)}
-handleControl f (x, y) SpeedSlider w
+handleControl f (PointerPress, (x, y)) SpeedSlider w
     | -5.4 < x && x < -2.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 5 * (x + 5.4) / 2.8}
 handleControl _ _ _ w = w
 

@@ -107,6 +107,7 @@ body {
 #source {
   position: relative;
 }
+
 #source .CodeMirror {
   position:absolute;
   top: 0;
@@ -149,6 +150,7 @@ body {
   padding: 5px;
   margin-bottom: 0px;
 }
+
 #message.error {
   background-color: #fcc;
 }
@@ -187,45 +189,90 @@ body {
 .cw-button.yellow:hover:active,
 .cw-button.green.project-active,
 .cw-button.green.project-active:hover:active {
-  background-color: #a6a614;
+  background-color: hsl(60, 75%, 35%);
+}
+
+.haskell .cw-button.yellow,
+.haskell .cw-button.yellow:hover:active,
+.haskell .cw-button.green.project-active,
+.haskell .cw-button.green.project-active:hover:active {
+  background-color: hsl(180, 75%, 35%);
 }
 
 .cw-button.yellow:hover,
 .cw-button.green.project-active:hover {
-  background-color: #78780f;
+  background-color: hsl(60, 75%, 25%);
+}
+
+.haskell .cw-button.yellow:hover,
+.haskell .cw-button.green.project-active:hover {
+  background-color: hsl(180, 75%, 25%);
 }
 
 .cw-button.green,
 .cw-button.green:hover:active {
-  background-color: #4ba614;
+  background-color: hsl(130, 75%, 35%);
+}
+
+.haskell .cw-button.green,
+.haskell .cw-button.green:hover:active {
+  background-color: hsl(210, 75%, 35%);
 }
 
 .cw-button.green:hover {
-  background-color: #36780f;
+  background-color: hsl(130, 75%, 25%);
+}
+
+.haskell .cw-button.green:hover {
+  background-color: hsl(210, 75%, 25%);
 }
 
 .cw-button.blue,.cw-button.blue:hover:active {
-  background-color: #144ba6;
+  background-color: hsl(220, 75%, 35%);
+}
+
+.haskell .cw-button.blue,.cw-button.blue:hover:active {
+  background-color: hsl(135, 75%, 35%);
 }
 
 .cw-button.blue:hover {
-  background-color: #0f3678;
+  background-color: hsl(220, 75%, 25%);
+}
+
+.haskell .cw-button.blue:hover {
+  background-color: hsl(135, 75%, 25%);
 }
 
 .cw-button.red,.cw-button.red:hover:active {
-  background-color: #a62b14;
+  background-color: hsl(10, 75%, 35%);
+}
+
+.haskell .cw-button.red,.cw-button.red:hover:active {
+  background-color: hsl(60, 75%, 35%);
 }
 
 .cw-button.red:hover {
-  background-color: #78160f;
+  background-color: hsl(10, 75%, 25%);
+}
+
+.haskell .cw-button.red:hover {
+  background-color: hsl(60, 75%, 25%);
 }
 
 .cw-button.cyan,.cw-button.cyan:hover:active {
-    background-color: #00A0A0;
+    background-color: hsl(180, 75%, 35%);
+}
+
+.haskell .cw-button.cyan,.cw-button.cyan:hover:active {
+    background-color: hsl(300, 50%, 35%);
 }
 
 .cw-button.cyan:hover {
-    background-color: #007070;
+    background-color: hsl(180, 75%, 25%);
+}
+
+.haskell .cw-button.cyan:hover {
+    background-color: hsl(300, 50%, 25%);
 }
 
 .cw-button:focus { outline: none; }

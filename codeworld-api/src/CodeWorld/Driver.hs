@@ -2276,7 +2276,11 @@ handleControl _ (PointerPress (x,y)) BackButton w
         w {state = max 0 (state w - 0.1)}
 handleControl f (PointerPress (x, y)) StepButton w
     | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = w {state = f 0.1 (state w)}
-handleControl f (PointerPress (x, y)) SpeedSlider w
+handleControl _ (PointerPress (x, y)) SpeedSlider w
+    | -5.4 < x && x < -2.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 5 * (x + 5.4) / 2.8}
+handleControl _ (PointerMovement (x, y)) SpeedSlider w
+    | -5.4 < x && x < -2.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 5 * (x + 5.4) / 2.8}
+handleControl _ (PointerRelease (x, y)) SpeedSlider w
     | -5.4 < x && x < -2.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 5 * (x + 5.4) / 2.8}
 handleControl _ _ _ w = w
 

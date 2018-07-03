@@ -2260,7 +2260,6 @@ wrappedEvent ::
     -> Wrapped a
     -> Wrapped a
 wrappedEvent _ _ (TimePassing _) w = w
-wrappedEvent _ _ (MouseMovement _) w = w
 wrappedEvent ctrls f (event) w =
     (foldr (handleControl f (event)) w (ctrls w)) {mouseMovedTime = 0}
 

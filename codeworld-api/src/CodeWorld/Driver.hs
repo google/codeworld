@@ -2352,7 +2352,7 @@ drawControl w alpha SpeedSlider = translated (-4) (-9) p
     p =
         colored
             (RGBA 0 0 0 alpha)
-            (scaled 0.5 0.5 $ translated 0 0.5 $ lettering (pack (showFFloatAlt (Just 2) (playbackSpeed w) ""))) <>
+            (scaled 0.5 0.5 $ translated 0 0.8 $ lettering (pack (showFFloatAlt (Just 2) (playbackSpeed w) ""))) <>
         translated x 0 (solidRectangle 0.2 0.8) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.6) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.6)

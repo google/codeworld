@@ -2259,10 +2259,10 @@ wrappedEvent ::
     -> Event
     -> Wrapped a
     -> Wrapped a
-wrappedEvent _ _ (MouseMovement _) w = w {mouseMovedTime = 0}
-wrappedEvent ctrls f (MousePress LeftButton p) w =
-    (foldr (handleControl f (PointerPress p)) w (ctrls w)) {mouseMovedTime = 0}
-wrappedEvent _ _ _ w = w
+wrappedEvent _ _ (TimePassing _) w = w
+wrappedEvent _ _ (MouseMovement _) w = w
+wrappedEvent ctrls f (event) w =
+    (foldr (handleControl f (event)) w (ctrls w)) {mouseMovedTime = 0}
 
 handleControl ::
        (Double -> a -> a) -> Event -> Control a -> Wrapped a -> Wrapped a

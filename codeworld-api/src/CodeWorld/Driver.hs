@@ -242,6 +242,14 @@ data Drawing
                      Drawing
     | Drawings [Drawing]
 
+#if MIN_VERSION_base(4,11,0)
+
+instance Semigroup Drawing where
+    a <> Drawings bs = Drawings (a : bs)
+    a <> b           = Drawings [a, b]
+
+#endif
+
 instance Monoid Drawing where
     mempty = Drawings []
     mappend a (Drawings bs) = Drawings (a : bs)

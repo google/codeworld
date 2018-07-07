@@ -156,6 +156,11 @@ instance MonadCanvas CanvasM where
 
 #else
 
+type CanvasM = Canvas
+
+runCanvasM :: Canvas.DeviceContext -> CanvasM a -> IO a
+runCanvasM = Canvas.send
+
 instance MonadCanvas Canvas where
     type Image Canvas = Canvas.CanvasContext
     save = Canvas.save ()

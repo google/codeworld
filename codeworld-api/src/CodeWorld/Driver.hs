@@ -44,6 +44,7 @@ module CodeWorld.Driver
 import CodeWorld.CollaborationUI (SetupPhase(..), Step(..), UIState)
 import qualified CodeWorld.CollaborationUI as CUI
 import qualified CodeWorld.CanvasM as CM
+import CodeWorld.CanvasM (CanvasM, runCanvasM)
 import CodeWorld.Color
 import CodeWorld.Event
 import CodeWorld.Picture
@@ -75,7 +76,6 @@ import System.Random
 import Text.Printf
 import Text.Read
 #ifdef ghcjs_HOST_OS
-import CodeWorld.CanvasM (CanvasM, runCanvasM)
 import CodeWorld.Message
 import CodeWorld.Prediction
 import qualified Control.Monad.Trans.State as State
@@ -793,33 +793,177 @@ showShortFloat x = stripZeros (showFFloatAlt (Just 4) x "")
   where stripZeros = reverse . dropWhile (== '.') . dropWhile (== '0') . reverse
 
 describePicture :: Picture -> String
-describePicture (Rectangle _ w h) = "rectangle { width = " ++ showShortFloat w ++ ", height = " ++ showShortFloat h ++ " }"
-describePicture (SolidPolygon _ pts) = "solidPolygon { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
-describePicture (SolidClosedCurve _ pts) = "solidClosedCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
-describePicture (Polygon _ pts) = "polygon { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
-describePicture (ThickPolygon _ pts w) = "thickPolygon { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ ", width = " ++ showShortFloat w ++ " }"
-describePicture (SolidRectangle _ w h) = "solidRectangle { width = " ++ showShortFloat w ++ ", height = " ++ showShortFloat h ++ " }"
-describePicture (ThickRectangle _ lw w h) = "thickRectangle { linewidth = " ++ showShortFloat lw ++ ", width = " ++ showShortFloat w ++ ", height = " ++ showShortFloat h ++ " }"
-describePicture (ClosedCurve _ pts) = "closedCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
-describePicture (ThickClosedCurve _ pts w) = "thickClosedCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ ", width = " ++ showShortFloat w ++ " }"
+describePicture (Rectangle _ w h) =
+    "rectangle {" ++
+      " width = " ++ showShortFloat w ++
+      ", height = " ++ showShortFloat h ++
+    " }"
+describePicture (SolidPolygon _ pts) =
+    "solidPolygon {" ++
+      " points = [" ++
+        intercalate ", " [
+          "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")"
+          | (x, y) <- pts
+        ] ++
+      "]" ++
+    " }"
+describePicture (SolidClosedCurve _ pts) =
+    "solidClosedCurve {" ++
+      " points = [" ++
+        intercalate ", " [
+          "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")"
+          | (x, y) <- pts
+        ] ++
+      "]" ++
+    " }"
+describePicture (Polygon _ pts) =
+    "polygon {" ++
+      " points = [" ++
+        intercalate ", " [
+          "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")"
+          | (x, y) <- pts
+        ] ++
+      "]" ++
+    " }"
+describePicture (ThickPolygon _ pts w) =
+    "thickPolygon {" ++
+      " points = [" ++
+        intercalate ", " [
+          "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")"
+          | (x, y) <- pts
+        ] ++
+      "], thickness = " ++ showShortFloat w ++
+    " }"
+describePicture (ClosedCurve _ pts) =
+    "closedCurve {" ++
+      " points = [" ++
+        intercalate ", " [
+          "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")"
+          | (x, y) <- pts
+        ] ++
+      "]" ++
+    " }"
+describePicture (ThickClosedCurve _ pts w) =
+    "thickClosedCurve {" ++
+      " points = [" ++
+        intercalate ", " [
+          "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")"
+          | (x, y) <- pts
+        ] ++
+      "]" ++
+      ", thickness = " ++ showShortFloat w ++
+    " }"
+describePicture (Polyline _ pts) =
+    "polyline {" ++
+      " points = [" ++
+        intercalate ", " [
+          "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")"
+          | (x, y) <- pts
+        ] ++
+      "]" ++
+    " }"
+describePicture (ThickPolyline _ pts w) =
+    "thickPolyline {" ++
+      " points = [" ++
+        intercalate ", " [
+          "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")"
+          | (x, y) <- pts ] ++
+        "]" ++
+      ", thickness = " ++ showShortFloat w ++
+    " }"
+describePicture (Curve _ pts) =
+    "curve {" ++
+      " points = [" ++
+        intercalate ", " [
+          "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")"
+          | (x, y) <- pts
+        ] ++
+      "]" ++
+    " }"
+describePicture (ThickCurve _ pts w) =
+    "thickCurve {" ++
+      " points = [" ++
+        intercalate ", " [
+          "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")"
+          | (x, y) <- pts
+        ] ++
+      "]" ++
+      ", thickness = " ++ showShortFloat w ++
+    " }"
+describePicture (SolidRectangle _ w h) =
+    "solidRectangle {" ++
+      " width = " ++ showShortFloat w ++
+      ", height = " ++ showShortFloat h ++
+    " }"
+describePicture (ThickRectangle _ lw w h) =
+    "thickRectangle {" ++
+      " thickness = " ++ showShortFloat lw ++
+      ", width = " ++ showShortFloat w ++
+      ", height = " ++ showShortFloat h ++
+    " }"
 describePicture (Circle _ r) = "circle { radius = " ++ showShortFloat r ++ " }"
-describePicture (SolidCircle _ r) = "solidCircle { radius = " ++ showShortFloat r ++ " }"
-describePicture (ThickCircle _ lw r) =  "thickCircle { linewidth = " ++ showShortFloat lw ++ ", radius = " ++ showShortFloat r ++ " }"
-describePicture (Polyline _ pts) = "polyline { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
-describePicture (ThickPolyline _ pts w) = "thickPolyline { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ ", width = " ++ showShortFloat w ++ " }"
-describePicture (Curve _ pts) = "curve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ " }"
-describePicture (ThickCurve _ pts w) = "thickCurve { points = " ++ intercalate ", " [ "(" ++ showShortFloat x ++ ", " ++ showShortFloat y ++ ")" | (x, y) <- pts ] ++ ", width = " ++ showShortFloat w ++ " }"
-describePicture (Sector _ b e r) =  "sector { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radias )," ++ " radius = " ++ showShortFloat r ++ " }"
-describePicture (Arc _ b e r) = "arc { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radias )," ++ " radius = " ++ showShortFloat r ++ " }"
-describePicture (ThickArc _ b e r w) =  "thickArc { startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++ showShortFloat b ++ " radians)" ++ ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++ showShortFloat e ++ " radias )," ++ " radius = " ++ showShortFloat r ++ ", width = " ++ showShortFloat w ++ " }"
+describePicture (SolidCircle _ r) =
+    "solidCircle { radius = " ++ showShortFloat r ++ " }"
+describePicture (ThickCircle _ lw r) =
+    "thickCircle {" ++
+      " thickness = " ++ showShortFloat lw ++
+      ", radius = " ++ showShortFloat r ++
+    " }"
+describePicture (Sector _ b e r) =
+    "sector {" ++
+      " startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++
+        showShortFloat b ++ " radians)" ++
+      ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++
+        showShortFloat e ++ " radians)" ++
+      ", radius = " ++ showShortFloat r ++
+    " }"
+describePicture (Arc _ b e r) =
+    "arc {" ++
+      " startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++
+        showShortFloat b ++ " radians)" ++
+      ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "° (" ++
+        showShortFloat e ++ " radians)" ++
+      ", radius = " ++ showShortFloat r ++
+    " }"
+describePicture (ThickArc _ b e r w) =
+    "thickArc {" ++
+      " startAngle = " ++ showShortFloat (180 * b / pi) ++ "° (" ++
+        showShortFloat b ++ " radians)" ++
+      ", endAngle = " ++ showShortFloat (180 * e / pi) ++ "°" ++ " (" ++
+        showShortFloat e ++ " radians)" ++
+      ", radius = " ++ showShortFloat r ++
+      ", thickness = " ++ showShortFloat w ++
+    " }"
 describePicture (Lettering _ txt) = printf "lettering { text = '%s' }" txt
 describePicture (Blank _) = "blank"
-describePicture (StyledLettering _ style font txt) = printf " styledLettering { style = %s , font = %s, text = '%s' }" (show style) (show font) txt
-describePicture (Color _ (RGBA r g b a) _) = "colored { color = RGBA(" ++ showShortFloat r ++ ", " ++ showShortFloat g ++ ", " ++ showShortFloat b ++ ", " ++ showShortFloat a ++ ") }"
-describePicture (Translate _ x y _) = "translated { x = " ++ showShortFloat x ++ ", y = " ++ showShortFloat y ++ " }"
-describePicture (Scale _ x y _) = "scaled { x = " ++ showShortFloat x ++ ", y = " ++ showShortFloat y ++ " }"
-describePicture (Rotate _ angle _) = "rotated { angle = " ++ showShortFloat angle ++ "° }"
-describePicture (Dilate _ k _) = "dilated { factor = " ++ showShortFloat k ++  " }"
+describePicture (StyledLettering _ style font txt) =
+    printf " styledLettering { style = %s , font = %s, text = '%s' }"
+           (show style)
+           (show font)
+           txt
+describePicture (Color _ (RGBA r g b a) _) =
+    "colored {" ++
+      " color = RGBA(" ++
+        showShortFloat r ++
+        ", " ++ showShortFloat g ++
+        ", " ++ showShortFloat b ++
+        ", " ++ showShortFloat a ++
+      ")" ++
+    " }"
+describePicture (Translate _ x y _) =
+    "translated {" ++
+      " x = " ++ showShortFloat x ++
+      ", y = " ++ showShortFloat y ++
+    " }"
+describePicture (Scale _ x y _) =
+    "scaled {" ++
+      " x = " ++ showShortFloat x ++
+      ", y = " ++ showShortFloat y ++
+    " }"
+describePicture (Rotate _ angle _) =
+    "rotated { angle = " ++ showShortFloat angle ++ "° }"
+describePicture (Dilate _ k _) =
+    "dilated { factor = " ++ showShortFloat k ++  " }"
 describePicture (Logo _) = "codeWorldLogo"
 describePicture (CoordinatePlane _) = "coordinatePlane"
 describePicture (Pictures _) = "pictures"
@@ -1129,6 +1273,7 @@ drawingOf pic = runStatic pic
 --------------------------------------------------------------------------------
 -- Stand-alone implementation of drawing
 #else
+
 withDS :: DrawState -> Canvas () -> Canvas ()
 withDS (ta, tb, tc, td, te, tf, col) action =
     Canvas.saveRestore $ do

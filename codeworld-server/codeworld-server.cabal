@@ -42,5 +42,5 @@ Executable codeworld-server
     text,
     unix
 
-  Ghc-options: -threaded -Wall -funbox-strict-fields -O2
+  Ghc-options: -threaded -Wall -funbox-strict-fields -O
                -fno-warn-unused-do-bind

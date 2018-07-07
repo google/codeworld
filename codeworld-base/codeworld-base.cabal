@@ -41,4 +41,4 @@ Library
                        text,
                        time
   Exposed:             False
-  Ghc-options:         -O2
+  Ghc-options:         -O

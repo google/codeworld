@@ -175,7 +175,7 @@ matches txt pat = txt =~ pat
 
 runCompiler :: FilePath -> Int -> [String] -> IO (Maybe ByteString)
 runCompiler dir micros args = do
-    result <- tryCompile ("-O2" : args)
+    result <- tryCompile ("-O" : args)
     case result of
         Just _  -> return result
         Nothing -> tryCompile args

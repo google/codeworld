@@ -28,4 +28,4 @@ Library
                        regex-tdfa
 
   Exposed: True
-  Ghc-options: -O2
+  Ghc-options: -O

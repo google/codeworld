@@ -18,4 +18,4 @@ Library
                        text
 
   Exposed:             True
-  Ghc-options:         -O2
+  Ghc-options:         -O

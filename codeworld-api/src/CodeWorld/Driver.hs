@@ -2238,7 +2238,8 @@ interactionOf initial step event draw = runInspect initial step event draw
 data Wrapped a = Wrapped
     { state :: a
     , playbackSpeed :: Double
-    , mouseMovedTime :: Double
+    , lastInteractionTime :: Double
+    , isDragging :: Bool
     } deriving (Show)
 
 data Control :: * -> * where
@@ -2257,7 +2258,7 @@ wrappedStep f dt w =
           if playbackSpeed w == 0
               then state w
               else f (dt * playbackSpeed w) (state w)
-    , mouseMovedTime = mouseMovedTime w + dt
+    , lastInteractionTime = lastInteractionTime w + dt
     }
 
 wrappedEvent ::
@@ -2266,26 +2267,29 @@ wrappedEvent ::
     -> Event
     -> Wrapped a
     -> Wrapped a
-wrappedEvent _ _ (MouseMovement _) w = w {mouseMovedTime = 0}
-wrappedEvent ctrls f (MousePress LeftButton p) w =
-    (foldr (handleControl f p) w (ctrls w)) {mouseMovedTime = 0}
-wrappedEvent _ _ _ w = w
+wrappedEvent _ _ (TimePassing _) w = w
+wrappedEvent ctrls f (event) w =
+    (foldr (handleControl f event) w (ctrls w)) {lastInteractionTime = 0}
 
 handleControl ::
-       (Double -> a -> a) -> Point -> Control a -> Wrapped a -> Wrapped a
-handleControl _ (x, y) RestartButton w
+       (Double -> a -> a) -> Event -> Control a -> Wrapped a -> Wrapped a
+handleControl _ (PointerPress (x, y)) RestartButton w
     | -9.4 < x && x < -8.6 && -9.4 < y && y < -8.6 = w {state = 0}
-handleControl _ (x, y) PlayButton w
+handleControl _ (PointerPress (x, y)) PlayButton w
     | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 1}
-handleControl _ (x, y) PauseButton w
+handleControl _ (PointerPress (x, y)) PauseButton w
     | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 0}
-handleControl _ (x, y) BackButton w
+handleControl _ (PointerPress (x,y)) BackButton w
     | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6 =
         w {state = max 0 (state w - 0.1)}
-handleControl f (x, y) StepButton w
+handleControl f (PointerPress (x, y)) StepButton w
     | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = w {state = f 0.1 (state w)}
-handleControl f (x, y) SpeedSlider w
-    | -5.4 < x && x < -2.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 5 * (x + 5.4) / 2.8}
+handleControl _ (PointerPress (x, y)) SpeedSlider w
+    | -5.4 < x && x < -2.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 5 * (x + 5.4) / 2.8, isDragging = True}
+handleControl _ (PointerMovement (x, y)) SpeedSlider w
+    | isDragging w = w {playbackSpeed = 5 * (x + 5.4) / 2.8}
+handleControl _ (PointerRelease (x, y)) SpeedSlider w
+    | isDragging w = w {playbackSpeed = 5 * (x + 5.4) / 2.8, isDragging = False}
 handleControl _ _ _ w = w
 
 wrappedDraw ::
@@ -2298,8 +2302,8 @@ drawControlPanel ctrls w
     | otherwise = blank
   where
     alpha
-        | mouseMovedTime w < 4.5 = 1
-        | mouseMovedTime w < 5.0 = 10 - 2 * mouseMovedTime w
+        | lastInteractionTime w < 4.5 = 1
+        | lastInteractionTime w < 5.0 = 10 - 2 * lastInteractionTime w
         | otherwise = 0
 
 drawControl :: Wrapped a -> Double -> Control a -> Picture
@@ -2358,7 +2362,9 @@ drawControl w alpha TimeLabel = translated 8 (-9) p
 drawControl w alpha SpeedSlider = translated (-4) (-9) p
   where
     p =
-    
+        colored
+            (RGBA 0 0 0 alpha)
+            (translated x 0.45 $ scaled 0.5 0.5 $ lettering (pack (showFFloatAlt (Just 2) (playbackSpeed w) ""))) <>
         translated x 0 (solidRectangle 0.2 0.8) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.6) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.6)
@@ -2366,7 +2372,7 @@ drawControl w alpha SpeedSlider = translated (-4) (-9) p
 
 animationControls :: Wrapped Double -> [Control Double]
 animationControls w
-    | mouseMovedTime w > 5 = []
+    | lastInteractionTime w > 5 = []
     | playbackSpeed w == 0 && state w > 0 =
         [RestartButton, PlayButton, StepButton, BackButton, TimeLabel, SpeedSlider]
     | playbackSpeed w == 0 = [RestartButton, PlayButton, StepButton, TimeLabel, SpeedSlider]
@@ -2374,11 +2380,11 @@ animationControls w
 
 animationOf f = runPauseable initial (+) animationControls f
   where
-    initial = Wrapped {state = 0, playbackSpeed = 1, mouseMovedTime = 1000}
+    initial = Wrapped {state = 0, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
 
 simulationControls :: Wrapped w -> [Control w]
 simulationControls w
-    | mouseMovedTime w > 5 = []
+    | lastInteractionTime w > 5 = []
     | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
     | otherwise = [PauseButton, SpeedSlider]
 
@@ -2386,7 +2392,7 @@ simulationOf simInitial simStep simDraw =
     runPauseable initial simStep simulationControls simDraw
   where
     initial =
-        Wrapped {state = simInitial, playbackSpeed = 1, mouseMovedTime = 1000}
+        Wrapped {state = simInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
 
 trace msg x = unsafePerformIO $ do
     hPutStrLn stderr (T.unpack msg)

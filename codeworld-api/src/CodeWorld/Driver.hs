@@ -2272,7 +2272,11 @@ wrappedEvent ctrls f (event) w =
     (foldr (handleControl f event) w (ctrls w)) {lastInteractionTime = 0}
 
 xToPlaybackSpeed :: Double -> Double
-xToPlaybackSpeed x = min 5 (max 0 (5 * (x + 5.4) / 2.8))
+xToPlaybackSpeed x = foldr (snapSlider) (min 5 $ max 0 $ 5 * (x + 4.4) / 2.8) [1..4]
+
+snapSlider :: Double -> Double -> Double
+snapSlider target val | abs (val - target) < 0.2 = target
+                | otherwise                = val
 
 handleControl ::
        (Double -> a -> a) -> Event -> Control a -> Wrapped a -> Wrapped a
@@ -2288,7 +2292,7 @@ handleControl _ (PointerPress (x,y)) BackButton w
 handleControl f (PointerPress (x, y)) StepButton w
     | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = w {state = f 0.1 (state w)}
 handleControl _ (PointerPress (x, y)) SpeedSlider w
-    | -5.4 < x && x < -2.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = xToPlaybackSpeed x, isDragging = True}
+    | -4.4 < x && x < -1.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = xToPlaybackSpeed x, isDragging = True}
 handleControl _ (PointerMovement (x, y)) SpeedSlider w
     | isDragging w = w {playbackSpeed = xToPlaybackSpeed x}
 handleControl _ (PointerRelease (x, y)) SpeedSlider w
@@ -2362,15 +2366,15 @@ drawControl w alpha TimeLabel = translated 8 (-9) p
             (scaled 0.5 0.5 $ text (pack (showFFloatAlt (Just 4) (state w) "s"))) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 3.0 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 3.0 0.8)
-drawControl w alpha SpeedSlider = translated (-4) (-9) p
+drawControl w alpha SpeedSlider = translated (-3) (-9) p
   where
     p =
         colored
             (RGBA 0 0 0 alpha)
-            (translated x 0.45 $ scaled 0.5 0.5 $ lettering (pack (showFFloatAlt (Just 2) (playbackSpeed w) ""))) <>
+            (translated x 0.75 $ scaled 0.5 0.5 $ lettering (pack (showFFloatAlt (Just 2) (playbackSpeed w) ""))) <>
         translated x 0 (solidRectangle 0.2 0.8) <>
-        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.6) <>
-        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.6)
+        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.25) <>
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.25)
     x = playbackSpeed w / 5 * 2.8 - 1.4
 
 animationControls :: Wrapped Double -> [Control Double]

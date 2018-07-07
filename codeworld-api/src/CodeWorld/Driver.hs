@@ -2271,6 +2271,9 @@ wrappedEvent _ _ (TimePassing _) w = w
 wrappedEvent ctrls f (event) w =
     (foldr (handleControl f event) w (ctrls w)) {lastInteractionTime = 0}
 
+xToPlaybackSpeed :: Double -> Double
+xToPlaybackSpeed x = min 5 (max 0 (5 * (x + 5.4) / 2.8))
+
 handleControl ::
        (Double -> a -> a) -> Event -> Control a -> Wrapped a -> Wrapped a
 handleControl _ (PointerPress (x, y)) RestartButton w
@@ -2285,11 +2288,11 @@ handleControl _ (PointerPress (x,y)) BackButton w
 handleControl f (PointerPress (x, y)) StepButton w
     | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = w {state = f 0.1 (state w)}
 handleControl _ (PointerPress (x, y)) SpeedSlider w
-    | -5.4 < x && x < -2.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 5 * (x + 5.4) / 2.8, isDragging = True}
+    | -5.4 < x && x < -2.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = xToPlaybackSpeed x, isDragging = True}
 handleControl _ (PointerMovement (x, y)) SpeedSlider w
-    | isDragging w = w {playbackSpeed = 5 * (x + 5.4) / 2.8}
+    | isDragging w = w {playbackSpeed = xToPlaybackSpeed x}
 handleControl _ (PointerRelease (x, y)) SpeedSlider w
-    | isDragging w = w {playbackSpeed = 5 * (x + 5.4) / 2.8, isDragging = False}
+    | isDragging w = w {playbackSpeed = xToPlaybackSpeed x, isDragging = False}
 handleControl _ _ _ w = w
 
 wrappedDraw ::

@@ -179,6 +179,12 @@ simulationOf
                                  --   the state into a picture to display.
   -> IO ()
 
+debugSimulationOf
+  :: world
+  -> (Double -> world -> [world])
+  -> [world -> Picture]
+  -> IO ()
+
 -- | Runs an interactive event-driven CodeWorld program.  This is a
 -- generalization of simulations that can respond to events like key presses
 -- and mouse movement.

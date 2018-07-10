@@ -35,6 +35,7 @@ module CodeWorld.Driver
     , groupActivityOf
     , unsafeGroupActivityOf
     , simulationOf
+    , debugSimulationOf
     , interactionOf
     , collaborationOf
     , unsafeCollaborationOf
@@ -2541,6 +2542,12 @@ simulationControls w
     | otherwise = [PauseButton, SpeedSlider]
 
 simulationOf simInitial simStep simDraw =
+    runPauseable initial simStep simulationControls simDraw
+  where
+    initial =
+        Wrapped {state = simInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
+
+debugSimulationOf simInitial simStep simDraw =
     runPauseable initial simStep simulationControls simDraw
   where
     initial =

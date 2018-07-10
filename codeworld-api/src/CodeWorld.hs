@@ -23,6 +23,7 @@ module CodeWorld (
     , groupActivityOf
     , unsafeGroupActivityOf
     , simulationOf
+    , debugSimulationOf
     , interactionOf
     , collaborationOf
     , unsafeCollaborationOf

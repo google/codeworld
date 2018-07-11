@@ -180,9 +180,11 @@ simulationOf
   -> IO ()
 
 debugSimulationOf
-  :: world
-  -> (Double -> world -> [world])
-  -> [world -> Picture]
+  :: world                       -- ^ The initial state of the simulation.
+  -> (Double -> world -> world)  -- ^ The time step function, which advances
+                                 --   the state given the time difference.
+  -> (world -> Picture)          -- ^ The visualization function, which converts
+                                 --   the state into a picture to display.
   -> IO ()
 
 -- | Runs an interactive event-driven CodeWorld program.  This is a
@@ -2402,6 +2404,7 @@ data Control :: * -> * where
     BackButton :: Control Double
     TimeLabel :: Control Double
     SpeedSlider :: Control a
+    UndoButton :: Control [a]
 
 wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
 wrappedStep f dt w =
@@ -2441,6 +2444,9 @@ handleControl _ (PointerPress (x, y)) PauseButton w
 handleControl _ (PointerPress (x,y)) BackButton w
     | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6 =
         w {state = max 0 (state w - 0.1)}
+handleControl _ (PointerPress (x,y)) UndoButton w
+    | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6 =
+        w {state = tail (state w)}
 handleControl f (PointerPress (x, y)) StepButton w
     | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = w {state = f 0.1 (state w)}
 handleControl _ (PointerPress (x, y)) SpeedSlider w
@@ -2501,6 +2507,15 @@ drawControl _ alpha BackButton = translated (-7) (-9) p
              solidPolygon [(-0.05, 0.25), (-0.05, -0.25), (-0.3, 0)]) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+drawControl _ alpha UndoButton = translated (-7) (-9) p
+  where
+    p =
+        colored
+            (RGBA 0 0 0 alpha)
+            (translated 0.15 0 (solidRectangle 0.2 0.5) <>
+             solidPolygon [(-0.05, 0.25), (-0.05, -0.25), (-0.3, 0)]) <>
+        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
 drawControl _ alpha StepButton = translated (-6) (-9) p
   where
     p =
@@ -2547,6 +2562,13 @@ simulationControls w
     | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
     | otherwise = [PauseButton, SpeedSlider]
 
+debugSimulationControls :: Wrapped [w] -> [Control [w]]
+debugSimulationControls w
+    | lastInteractionTime w > 5 = []
+    | playbackSpeed w == 0 && not (null (tail (state w))) = [PlayButton, StepButton, SpeedSlider, UndoButton]
+    | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
+    | otherwise = [PauseButton, SpeedSlider]
+
 simulationOf simInitial simStep simDraw =
     runPauseable initial simStep simulationControls simDraw
   where
@@ -2554,10 +2576,12 @@ simulationOf simInitial simStep simDraw =
         Wrapped {state = simInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
 
 debugSimulationOf simInitial simStep simDraw =
-    runPauseable initial simStep simulationControls simDraw
+    runPauseable initial step debugSimulationControls draw
   where
     initial =
-        Wrapped {state = simInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
+        Wrapped {state = [simInitial], playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
+    step dt (x:xs) = simStep dt x : x : xs
+    draw (x:xs) = simDraw x
 
 trace msg x = unsafePerformIO $ do
     hPutStrLn stderr (T.unpack msg)

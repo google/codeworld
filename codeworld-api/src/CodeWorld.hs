@@ -25,6 +25,7 @@ module CodeWorld (
     , simulationOf
     , debugSimulationOf
     , interactionOf
+    , debugInteractionOf
     , collaborationOf
     , unsafeCollaborationOf
     -- * Pictures

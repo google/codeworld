@@ -37,6 +37,7 @@ module CodeWorld.Driver
     , simulationOf
     , debugSimulationOf
     , interactionOf
+    , debugInteractionOf
     , collaborationOf
     , unsafeCollaborationOf
     , trace
@@ -191,6 +192,16 @@ debugSimulationOf
 -- generalization of simulations that can respond to events like key presses
 -- and mouse movement.
 interactionOf
+  :: world                       -- ^ The initial state of the interaction.
+  -> (Double -> world -> world)  -- ^ The time step function, which advances
+                                 --   the state given the time difference.
+  -> (Event -> world -> world)   -- ^ The event handling function, which updates
+                                 --   the state given a user interface event.
+  -> (world -> Picture)          -- ^ The visualization function, which converts
+                                 --   the state into a picture to display.
+  -> IO ()
+
+debugInteractionOf
   :: world                       -- ^ The initial state of the interaction.
   -> (Double -> world -> world)  -- ^ The time step function, which advances
                                  --   the state given the time difference.

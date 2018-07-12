@@ -95,6 +95,7 @@ function init()
                 closeOnConfirm: false
             }, go);
         } else {
+            initCodeworld();
             loadXmlHash(hash,true);
         }
     } else {

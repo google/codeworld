@@ -4,6 +4,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE JavaScriptFFI #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
@@ -1928,9 +1929,11 @@ run initial stepHandler eventHandler drawHandler injectTime = do
     offscreenCanvas <- Canvas.create 500 500
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-    on window resize $ do
-        liftIO $ setCanvasSize canvas canvas
-        liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+    needsRedraw <- newMVar ()
+    on window resize $ void $ liftIO $ do
+        setCanvasSize canvas canvas
+        setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+        tryPutMVar needsRedraw ()
     currentState <- newMVar initial
     eventHappened <- newMVar ()
     let sendEvent event = do
@@ -1972,7 +1975,10 @@ run initial stepHandler eventHandler drawHandler injectTime = do
                    | not needsTime -> return False
                    | otherwise ->
                        not <$> isUniversallyConstant fullStepHandler nextState
-            go t1 picFrame nextStateName nextNeedsTime
+            nextFrame <- tryTakeMVar needsRedraw >>= \case
+                Nothing -> return picFrame
+                Just () -> makeStableName undefined
+            go t1 nextFrame nextStateName nextNeedsTime
     t0 <- getTime
     nullFrame <- makeStableName undefined
     initialStateName <- makeStableName $! initial
@@ -2059,6 +2065,25 @@ runStatic pic = do
     inspect (return pic) handlePause handleHighlight
     drawToScreen
 
+-- Utility functions that apply a function in either the left or right half of a
+-- tuple.  Crucially, if the function preserves sharing on its side, then the
+-- wrapper also preserves sharing.
+inLeft :: (a -> a) -> (a, b) -> (a, b)
+inLeft f ab = unsafePerformIO $ do
+  let (a, b) = ab
+  aName <- makeStableName $! a
+  let a' = f a
+  aName' <- makeStableName $! a'
+  return $ if aName == aName' then ab else (a', b)
+
+inRight :: (b -> b) -> (a, b) -> (a, b)
+inRight f ab = unsafePerformIO $ do
+  let (a, b) = ab
+  bName <- makeStableName $! b
+  let b' = f b
+  bName' <- makeStableName $! b'
+  return $ if bName == bName' then ab else (a, b')
+
 -- Wraps the event and state from run so they can be paused by pressing the Inspect
 -- button.
 runInspect ::
@@ -2068,16 +2093,16 @@ runInspect initial stepHandler eventHandler drawHandler = do
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
     let initialWrapper = (debugStateInit, initial)
-        stepHandlerWrapper dt (debugState, state) =
+        stepHandlerWrapper dt wrapper@(debugState, state) =
             case debugStateActive debugState of
-                True -> (debugState, state)
-                False -> (debugState, stepHandler dt state)
-        eventHandlerWrapper evt (debugState, state) =
+                True -> wrapper
+                False -> inRight (stepHandler dt) wrapper
+        eventHandlerWrapper evt wrapper@(debugState, state) =
             case evt of
                 Left debugEvent ->
-                    (updateDebugState debugEvent debugState, state)
+                    inLeft (updateDebugState debugEvent) wrapper
                 Right normalEvent ->
-                    (debugState, eventHandler normalEvent state)
+                    inRight (eventHandler normalEvent) wrapper
         drawHandlerWrapper (debugState, state) =
             drawDebugState debugState (pictureToDrawing $ drawHandler state)
         drawPicHandler (debugState, state) = drawHandler state

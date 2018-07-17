@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE JavaScriptFFI #-}
@@ -2081,47 +2082,9 @@ runStatic pic = do
 
 -- Wraps the event and state from run so they can be paused by pressing the Inspect
 -- button.
-runInspect ::
-       s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
-runInspect initial stepHandler eventHandler drawHandler = do
-    Just window <- currentWindow
-    Just doc <- currentDocument
-    Just canvas <- getElementById doc ("screen" :: JSString)
-    let initialWrapper = (debugStateInit, initial)
-        stepHandlerWrapper dt (debugState, state) =
-            case debugStateActive debugState of
-                True -> (debugState, state)
-                False -> (debugState, stepHandler dt state)
-        eventHandlerWrapper evt (debugState, state) =
-            case evt of
-                Left debugEvent ->
-                    (updateDebugState debugEvent debugState, state)
-                Right normalEvent ->
-                    (debugState, eventHandler normalEvent state)
-        drawHandlerWrapper (debugState, state) =
-            drawDebugState debugState (pictureToDrawing $ drawHandler state)
-        drawPicHandler (debugState, state) = drawHandler state
-    (sendEvent, getState) <-
-        run
-            initialWrapper
-            stepHandlerWrapper
-            eventHandlerWrapper
-            drawHandlerWrapper
-            (Right . TimePassing)
-    let pauseEvent True = sendEvent $ Left DebugStart
-        pauseEvent False = sendEvent $ Left DebugStop
-        highlightSelectEvent True n = sendEvent $ Left (HighlightEvent n)
-        highlightSelectEvent False n = sendEvent $ Left (SelectEvent n)
-    onEvents canvas (sendEvent . Right)
-    inspect (drawPicHandler <$> getState) pauseEvent highlightSelectEvent
-
-runPauseable ::
-       Wrapped s
-    -> (Double -> s -> s)
-    -> (Wrapped s -> [Control s])
-    -> (s -> Picture)
-    -> IO ()
-runPauseable initial stepHandler controls drawHandler = do
+runInspect :: 
+      Wrapped s -> (Double -> s -> s) -> (Wrapped s -> [Control s]) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
+runInspect initial stepHandler controls eventHandler drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -2136,7 +2099,7 @@ runPauseable initial stepHandler controls drawHandler = do
                     (updateDebugState debugEvent debugState, wrappedState)
                 Right normalEvent ->
                     ( debugState
-                    , wrappedEvent controls stepHandler normalEvent wrappedState)
+                    , wrappedEvent controls stepHandler eventHandler normalEvent wrappedState)
         drawHandlerWrapper (debugState, wrappedState) =
             case debugStateActive debugState of
                 True -> drawDebugState debugState plainDrawing
@@ -2146,7 +2109,7 @@ runPauseable initial stepHandler controls drawHandler = do
           where
             plainDrawing = pictureToDrawing $ drawHandler (state wrappedState)
         drawPicHandler (debugState, wrappedState) =
-            drawHandler $ state wrappedState
+            drawHandler $ state wrappedState        
     (sendEvent, getState) <-
         run
             initialWrapper
@@ -2398,14 +2361,17 @@ collaborationOf numPlayers initial step event draw = do
 -- Common code for activity, interaction, animation and simulation interfaces
 activityOf initial event draw = interactionOf initial (const id) event draw
 
-interactionOf initial step event draw = runInspect initial step event draw
+interactionOf baseInitial step event draw = runInspect initial step (const []) event draw
+   where
+ initial =
+        Wrapped {state = baseInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
 
 data Wrapped a = Wrapped
     { state :: a
     , playbackSpeed :: Double
     , lastInteractionTime :: Double
     , isDragging :: Bool
-    } deriving (Show)
+    } deriving (Show, Functor)
 
 data Control :: * -> * where
     PlayButton :: Control a
@@ -2430,12 +2396,13 @@ wrappedStep f dt w =
 wrappedEvent ::
        (Wrapped a -> [Control a])
     -> (Double -> a -> a)
+    -> (Event -> a -> a)
     -> Event
     -> Wrapped a
     -> Wrapped a
-wrappedEvent _ _ (TimePassing _) w = w
-wrappedEvent ctrls f (event) w =
-    (foldr (handleControl f event) w (ctrls w)) {lastInteractionTime = 0}
+wrappedEvent _ _ eventHandler (TimePassing dt) w = fmap (eventHandler (TimePassing dt)) w
+wrappedEvent ctrls f eventHandler event w =
+   fmap (eventHandler event) ((foldr (handleControl f event) w (ctrls w)) {lastInteractionTime = 0})
 
 xToPlaybackSpeed :: Double -> Double
 xToPlaybackSpeed x = foldr (snapSlider) (min 5 $ max 0 $ 5 * (x + 4.4) / 2.8) [1..4]
@@ -2563,7 +2530,7 @@ animationControls w
     | playbackSpeed w == 0 = [RestartButton, PlayButton, StepButton, TimeLabel, SpeedSlider]
     | otherwise = [RestartButton, PauseButton, TimeLabel, SpeedSlider]
 
-animationOf f = runPauseable initial (+) animationControls f
+animationOf f = runInspect initial (+) animationControls (\_ r -> r) f
   where
     initial = Wrapped {state = 0, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
 
@@ -2581,13 +2548,13 @@ debugSimulationControls w
     | otherwise = [PauseButton, SpeedSlider]
 
 simulationOf simInitial simStep simDraw =
-    runPauseable initial simStep simulationControls simDraw
+    runInspect initial simStep simulationControls (\_ r -> r) simDraw
   where
     initial =
         Wrapped {state = simInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
 
 debugSimulationOf simInitial simStep simDraw =
-    runPauseable initial step debugSimulationControls draw
+    runInspect initial step debugSimulationControls (\_ r -> r) draw
   where
     initial =
         Wrapped {state = [simInitial], playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
@@ -2597,3 +2564,5 @@ debugSimulationOf simInitial simStep simDraw =
 trace msg x = unsafePerformIO $ do
     hPutStrLn stderr (T.unpack msg)
     return x
+
+debugInteractionOf = undefined

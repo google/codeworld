@@ -16,10 +16,11 @@
 
 source base.sh
 
+run . rm -rf data/*/user/???/*.js
+run . rm -rf data/*/user/???/*.err.txt
+
 fuser -k -n tcp 8080
 fuser -k -n tcp 9160
-rm -rf data/*/user/???/*.js
-rm -rf data/*/user/???/*.err.txt
 
 mkdir -p log
 

@@ -2083,8 +2083,8 @@ runStatic pic = do
 -- Wraps the event and state from run so they can be paused by pressing the Inspect
 -- button.
 runInspect :: 
-      Wrapped s -> (Double -> s -> s) -> (Wrapped s -> [Control s]) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
-runInspect initial stepHandler controls eventHandler drawHandler = do
+       (Wrapped s -> [Control s]) -> Wrapped s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
+runInspect controls initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -2361,7 +2361,7 @@ collaborationOf numPlayers initial step event draw = do
 -- Common code for activity, interaction, animation and simulation interfaces
 activityOf initial event draw = interactionOf initial (const id) event draw
 
-interactionOf baseInitial step event draw = runInspect initial step (const []) event draw
+interactionOf baseInitial step event draw = runInspect (const []) initial step event draw
    where
  initial =
         Wrapped {state = baseInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
@@ -2530,7 +2530,7 @@ animationControls w
     | playbackSpeed w == 0 = [RestartButton, PlayButton, StepButton, TimeLabel, SpeedSlider]
     | otherwise = [RestartButton, PauseButton, TimeLabel, SpeedSlider]
 
-animationOf f = runInspect initial (+) animationControls (\_ r -> r) f
+animationOf f = runInspect animationControls initial (+) (\_ r -> r) f
   where
     initial = Wrapped {state = 0, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
 
@@ -2548,13 +2548,13 @@ debugSimulationControls w
     | otherwise = [PauseButton, SpeedSlider]
 
 simulationOf simInitial simStep simDraw =
-    runInspect initial simStep simulationControls (\_ r -> r) simDraw
+    runInspect simulationControls initial simStep (\_ r -> r) simDraw
   where
     initial =
         Wrapped {state = simInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
 
 debugSimulationOf simInitial simStep simDraw =
-    runInspect initial step debugSimulationControls (\_ r -> r) draw
+    runInspect debugSimulationControls initial step (\_ r -> r) draw
   where
     initial =
         Wrapped {state = [simInitial], playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
@@ -2565,4 +2565,13 @@ trace msg x = unsafePerformIO $ do
     hPutStrLn stderr (T.unpack msg)
     return x
 
-debugInteractionOf = undefined
+debugInteractionCtrls :: Wrapped w -> [Control w]
+debugInteractionCtrls w
+    | lastInteractionTime w > 5 = []
+    | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
+    | otherwise = [PauseButton, SpeedSlider] 
+
+debugInteractionOf baseInitial step event draw = runInspect debugInteractionCtrls initial step event draw 
+  where
+    initial =
+        Wrapped {state = baseInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}

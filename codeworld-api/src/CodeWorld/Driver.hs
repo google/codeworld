@@ -2111,7 +2111,7 @@ runInspect controls initial stepHandler eventHandler drawHandler = do
           where
             plainDrawing = pictureToDrawing $ drawHandler (state wrappedState)
         drawPicHandler (debugState, wrappedState) =
-            drawHandler $ state wrappedState        
+            drawHandler $ state wrappedState   
     (sendEvent, getState) <-
         run
             initialWrapper
@@ -2413,7 +2413,8 @@ wrappedEvent ctrls f eventHandler event w
          handled :: Bool
          (afterControls, handled) = foldr stepFunction (w, False) (ctrls w)
          stepFunction :: Control a -> (Wrapped a, Bool) -> (Wrapped a, Bool)
-         stepFunction control (world, handled) = if handled then (world, True) else handleControl f event control world
+         stepFunction control (world, handled) = 
+          if handled then (world, True) else handleControl f event control world
 
 xToPlaybackSpeed :: Double -> Double
 xToPlaybackSpeed x = foldr (snapSlider) (min 5 $ max 0 $ 5 * (x + 4.4) / 2.8) [1..4]
@@ -2552,8 +2553,8 @@ simulationControls w
     | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
     | otherwise = [PauseButton, SpeedSlider]
 
-debugSimulationControls :: Wrapped [w] -> [Control [w]]
-debugSimulationControls w
+statefulDebugControls :: Wrapped [w] -> [Control [w]]
+statefulDebugControls w
     | lastInteractionTime w > 5 = []
     | playbackSpeed w == 0 && not (null (tail (state w))) = [PlayButton, StepButton, SpeedSlider, UndoButton]
     | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
@@ -2566,27 +2567,30 @@ simulationOf simInitial simStep simDraw =
         Wrapped {state = simInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
 
 debugSimulationOf simInitial simStep simDraw =
-    runInspect debugSimulationControls initial step (\_ r -> r) draw
+    runInspect statefulDebugControls initial step (\_ r -> r) draw
   where
     initial =
         Wrapped {state = [simInitial], playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
-    step dt (x:xs) = simStep dt x : x : xs
+    step dt (x:xs) = case x `seq` x' `seq` reallyUnsafePtrEquality# x x' of
+        0# -> x' : x : xs
+        _  -> x : xs
+      where x' = simStep dt x
     draw (x:xs) = simDraw x
 
 trace msg x = unsafePerformIO $ do
     hPutStrLn stderr (T.unpack msg)
     return x
 
-debugInteractionOf baseInitial baseStep baseEvent baseDraw = runInspect debugSimulationControls initial step event draw 
+debugInteractionOf baseInitial baseStep baseEvent baseDraw = 
+  runInspect statefulDebugControls initial step event draw 
   where
     initial =
         Wrapped {state = [baseInitial], playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
-    event e (x:xs) = case x `seq` x' `seq` reallyUnsafePtrEquality# x x' of
+    prependIfChanged :: (a -> a) -> [a] -> [a]
+    prependIfChanged f (x:xs) = case x `seq` x' `seq` (reallyUnsafePtrEquality# x x') of
         0# -> x' : x : xs
         _  -> x : xs
-      where x' = baseEvent e x
-    step dt (x:xs) = case x `seq` x' `seq` reallyUnsafePtrEquality# x x' of
-        0# -> x' : x : xs
-        _  -> x : xs
-      where x' = baseStep dt x
+      where x' = f x
+    step dt = prependIfChanged (baseStep dt)
+    event e = prependIfChanged (baseEvent e)
     draw (x:xs) = baseDraw x

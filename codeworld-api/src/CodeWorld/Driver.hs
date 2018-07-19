@@ -2413,8 +2413,9 @@ wrappedEvent ctrls f eventHandler event w
          handled :: Bool
          (afterControls, handled) = foldr stepFunction (w, False) (ctrls w)
          stepFunction :: Control a -> (Wrapped a, Bool) -> (Wrapped a, Bool)
-         stepFunction control (world, handled) = 
-          if handled then (world, True) else handleControl f event control world
+         stepFunction control (world, handled)
+            | handled == True = (world, True)
+            | otherwise = handleControl f event control world
 
 xToPlaybackSpeed :: Double -> Double
 xToPlaybackSpeed x = foldr (snapSlider) (min 5 $ max 0 $ 5 * (x + 4.4) / 2.8) [1..4]

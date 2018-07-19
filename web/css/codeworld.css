@@ -133,11 +133,10 @@ body {
 }
 
 #runner {
-  flex: 0 0 500px;
-  -webkit-flex: 0 0 500px;
-  -ms-flex: 0 0 500px;
-
-  position: relative;
+  flex: 0 0 auto;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
+  width: calc(100% - 8px);
 }
 
 #message {
@@ -306,11 +305,12 @@ body {
   height: 100%;
 }
 
-.ui-layout-resizer-west-dragging {
+.ui-layout-resizer-dragging {
   background-color: #444444;
   cursor: ew-resize !important;
 }
 
+.ui-layout-resizer-east-open:hover,
 .ui-layout-resizer-west-open:hover {
   cursor: ew-resize !important;
 }

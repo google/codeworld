@@ -5,6 +5,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE JavaScriptFFI #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -1951,9 +1952,11 @@ run initial stepHandler eventHandler drawHandler injectTime = do
     offscreenCanvas <- Canvas.create 500 500
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-    on window resize $ do
-        liftIO $ setCanvasSize canvas canvas
-        liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+    needsRedraw <- newMVar ()
+    on window resize $ void $ liftIO $ do
+        setCanvasSize canvas canvas
+        setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+        tryPutMVar needsRedraw ()
     currentState <- newMVar initial
     eventHappened <- newMVar ()
     let sendEvent event = do
@@ -1995,7 +1998,10 @@ run initial stepHandler eventHandler drawHandler injectTime = do
                    | not needsTime -> return False
                    | otherwise ->
                        not <$> isUniversallyConstant fullStepHandler nextState
-            go t1 picFrame nextStateName nextNeedsTime
+            nextFrame <- tryTakeMVar needsRedraw >>= \case
+                Nothing -> return picFrame
+                Just () -> makeStableName undefined
+            go t1 nextFrame nextStateName nextNeedsTime
     t0 <- getTime
     nullFrame <- makeStableName undefined
     initialStateName <- makeStableName $! initial
@@ -2082,6 +2088,25 @@ runStatic pic = do
     inspect (return pic) handlePause handleHighlight
     drawToScreen
 
+-- Utility functions that apply a function in either the left or right half of a
+-- tuple.  Crucially, if the function preserves sharing on its side, then the
+-- wrapper also preserves sharing.
+inLeft :: (a -> a) -> (a, b) -> (a, b)
+inLeft f ab = unsafePerformIO $ do
+  let (a, b) = ab
+  aName <- makeStableName $! a
+  let a' = f a
+  aName' <- makeStableName $! a'
+  return $ if aName == aName' then ab else (a', b)
+
+inRight :: (b -> b) -> (a, b) -> (a, b)
+inRight f ab = unsafePerformIO $ do
+  let (a, b) = ab
+  bName <- makeStableName $! b
+  let b' = f b
+  bName' <- makeStableName $! b'
+  return $ if bName == bName' then ab else (a, b')
+
 -- Wraps the event and state from run so they can be paused by pressing the Inspect
 -- button.
 runInspect :: 
@@ -2091,25 +2116,21 @@ runInspect controls initial stepHandler eventHandler drawHandler = do
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
     let initialWrapper = (debugStateInit, initial)
-        stepHandlerWrapper dt (debugState, wrappedState) =
+        stepHandlerWrapper dt wrapper@(debugState, _) =
             case debugStateActive debugState of
-                True -> (debugState, wrappedState)
-                False -> (debugState, wrappedStep stepHandler dt wrappedState)
-        eventHandlerWrapper evt (debugState, wrappedState) =
-            case evt of
-                Left debugEvent ->
-                    (updateDebugState debugEvent debugState, wrappedState)
-                Right normalEvent ->
-                    ( debugState
-                    , wrappedEvent controls stepHandler eventHandler normalEvent wrappedState)
+                True -> wrapper
+                False -> inRight (wrappedStep stepHandler dt) wrapper
+        eventHandlerWrapper evt wrapper =
+            case (debugStateActive debugState, evt) of
+                (True, _) -> wrapper
+                (_, Left debugEvent) ->
+                    inLeft (updateDebugState debugEvent) wrapper
+                (_, Right normalEvent) ->
+                    inRight (wrappedEvent controls stepHandler eventHandler normalEvent) wrapper
         drawHandlerWrapper (debugState, wrappedState) =
             case debugStateActive debugState of
-                True -> drawDebugState debugState plainDrawing
-                False ->
-                    pictureToDrawing $
-                    wrappedDraw controls drawHandler wrappedState
-          where
-            plainDrawing = pictureToDrawing $ drawHandler (state wrappedState)
+                True -> drawDebugState debugState $ pictureToDrawing $ drawHandler (state wrappedState)
+                False -> pictureToDrawing (wrappedDraw controls drawHandler wrappedState)
         drawPicHandler (debugState, wrappedState) =
             drawHandler $ state wrappedState
     (sendEvent, getState) <-

@@ -18,11 +18,6 @@
 
 <html>
   <head>
-    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=default,Array.prototype.find,Number.isFinite,Number.isInteger,console,console.log,document.head,performance.now"></script>
-    <script language="javascript" src="js/blocks_rts.js"></script>
-    <script language="javascript" src="js/blocks_lib.js"></script>
-    <script language="javascript" src="js/blocks_out.js"></script>
-
     <title>CodeWorld Blocks</title>
     <link rel="stylesheet" href="css/blockly.css">
     <link rel="stylesheet" href="css/codemirror.css">
@@ -41,31 +36,6 @@
     <script type="text/template" id="openFolderTemplate">
       <a class="cw-button yellow"><i class="mdi mdi-18px mdi-chevron-down"></i> <i class="mdi mdi-18px mdi-folder-outline"></i>&nbsp; {{label}}</a>
     </script>
-
-    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
-
-    <script src="blockly/blockly_compressed.js"></script>
-    <script src="blockly/blocks/lists.js"></script>
-    <!-- CodeWorld blocks -->
-    <script src="js/blocks/cw-text.js"></script>
-    <script src="js/blocks/cw-logic.js"></script>
-    <script src="js/blocks/cw-tuples.js"></script>
-    <script src="js/blocks/cw-pictures.js"></script>
-    <script src="js/blocks/cw-math.js"></script>
-    <script src="js/blocks/cw-lists.js"></script>
-    <script src="js/blocks/cw-program.js"></script>
-    <script src="js/blocks/cw-event.js"></script>
-    <script src="js/blocks/init.js"></script>
-    <!-- Blockly blocks -->
-    <script src="blockly/blocks/types.js"></script>
-    <script src="blockly/blocks/procedures.js"></script>
-    <script src="blockly/blocks/funblocks-procedures.js"></script>
-    <script src="blockly/msg/js/en.js"></script>
-    
-    <!-- Initialization in JS -->
-    <script src="js/codeworld_shared.js"></script> 
-    <script src="js/funblocks.js"></script> 
-
   </head>
   <body>
     <div id="nav" class="dropbox ui-layout-west">
@@ -135,6 +105,35 @@
       </div>
     </div>
 
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=default,Array.prototype.find,Number.isFinite,Number.isInteger,console,console.log,document.head,performance.now"></script>
+
+    <!-- Initialization in JS -->
+    <script src="js/codeworld_shared.js"></script> 
+    <script src="js/funblocks.js"></script> 
+
+    <script language="javascript" src="js/blocks_rts.js"></script>
+    <script language="javascript" src="js/blocks_lib.js"></script>
+    <script language="javascript" src="js/blocks_out.js"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+
+    <script src="blockly/blockly_compressed.js"></script>
+    <script src="blockly/blocks/lists.js"></script>
+    <!-- CodeWorld blocks -->
+    <script src="js/blocks/cw-text.js"></script>
+    <script src="js/blocks/cw-logic.js"></script>
+    <script src="js/blocks/cw-tuples.js"></script>
+    <script src="js/blocks/cw-pictures.js"></script>
+    <script src="js/blocks/cw-math.js"></script>
+    <script src="js/blocks/cw-lists.js"></script>
+    <script src="js/blocks/cw-program.js"></script>
+    <script src="js/blocks/cw-event.js"></script>
+    <script src="js/blocks/init.js"></script>
+    <!-- Blockly blocks -->
+    <script src="blockly/blocks/types.js"></script>
+    <script src="blockly/blocks/procedures.js"></script>
+    <script src="blockly/blocks/funblocks-procedures.js"></script>
+    <script src="blockly/msg/js/en.js"></script>
+    
     <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js" integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E=" crossorigin="anonymous"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-layout/1.4.3/jquery.layout_and_plugins.min.js"></script>
@@ -171,6 +170,7 @@
     <script type="text/javascript" src="js/codemirror-compressed.js" charset="UTF-8"></script>
     <script type="text/javascript" src="js/codeworld-mode.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/promise-polyfill@7.1.0/dist/promise.min.js"></script>
+
     <script type="text/javascript">init();</script>
 
     <xml id="toolbox" style="display: none">

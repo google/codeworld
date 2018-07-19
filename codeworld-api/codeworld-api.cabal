@@ -38,7 +38,8 @@ Library
                        random               >= 1.1 && < 1.2,
                        random-shuffle       >= 0.0.4 && < 0.1,
                        cereal               >= 0.5.4 && < 0.6,
-                       cereal-text          >= 0.1.0 && < 0.2
+                       cereal-text          >= 0.1.0 && < 0.2,
+                       ghc-prim
 
   if impl(ghcjs)
     Build-depends:

@@ -5,6 +5,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE JavaScriptFFI #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
@@ -68,6 +69,7 @@ import Data.Text (Text, pack, singleton)
 import qualified Debug.Trace
 import GHC.Fingerprint.Type
 import GHC.Generics
+import GHC.Prim
 import GHC.Stack
 import GHC.StaticPtr
 import Numeric
@@ -2393,16 +2395,25 @@ wrappedStep f dt w =
     , lastInteractionTime = lastInteractionTime w + dt
     }
 
-wrappedEvent ::
+wrappedEvent :: forall a . 
        (Wrapped a -> [Control a])
     -> (Double -> a -> a)
     -> (Event -> a -> a)
     -> Event
     -> Wrapped a
     -> Wrapped a
-wrappedEvent _ _ eventHandler (TimePassing dt) w = fmap (eventHandler (TimePassing dt)) w
-wrappedEvent ctrls f eventHandler event w =
-   fmap (eventHandler event) ((foldr (handleControl f event) w (ctrls w)) {lastInteractionTime = 0})
+wrappedEvent _ _ eventHandler (TimePassing dt) w
+   | playbackSpeed w == 0 = w
+   | otherwise = fmap (eventHandler (TimePassing dt)) w
+wrappedEvent ctrls f eventHandler event w
+   | playbackSpeed w == 0 || handled = afterControls {lastInteractionTime = 0}
+   | otherwise = fmap (eventHandler event) afterControls {lastInteractionTime = 0}
+   where 
+         afterControls :: Wrapped a
+         handled :: Bool
+         (afterControls, handled) = foldr stepFunction (w, False) (ctrls w)
+         stepFunction :: Control a -> (Wrapped a, Bool) -> (Wrapped a, Bool)
+         stepFunction control (world, handled) = if handled then (world, True) else handleControl f event control world
 
 xToPlaybackSpeed :: Double -> Double
 xToPlaybackSpeed x = foldr (snapSlider) (min 5 $ max 0 $ 5 * (x + 4.4) / 2.8) [1..4]
@@ -2412,28 +2423,29 @@ snapSlider target val | abs (val - target) < 0.2 = target
                 | otherwise                = val
 
 handleControl ::
-       (Double -> a -> a) -> Event -> Control a -> Wrapped a -> Wrapped a
+       (Double -> a -> a) -> Event -> Control a -> Wrapped a -> (Wrapped a, Bool)
 handleControl _ (PointerPress (x, y)) RestartButton w
-    | -9.4 < x && x < -8.6 && -9.4 < y && y < -8.6 = w {state = 0}
+    | -9.4 < x && x < -8.6 && -9.4 < y && y < -8.6 = (w {state = 0}, True)
 handleControl _ (PointerPress (x, y)) PlayButton w
-    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 1}
+    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = (w {playbackSpeed = 1}, True) 
 handleControl _ (PointerPress (x, y)) PauseButton w
-    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 0}
+    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = (w {playbackSpeed = 0}, True)
 handleControl _ (PointerPress (x,y)) BackButton w
     | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6 =
-        w {state = max 0 (state w - 0.1)}
+        (w {state = max 0 (state w - 0.1)}, True)
 handleControl _ (PointerPress (x,y)) UndoButton w
     | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6 =
-        w {state = tail (state w)}
+        (w {state = tail (state w)}, True)
 handleControl f (PointerPress (x, y)) StepButton w
-    | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = w {state = f 0.1 (state w)}
+    | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = (w {state = f 0.1 (state w)}, True)
 handleControl _ (PointerPress (x, y)) SpeedSlider w
-    | -4.5 < x && x < -1.5 && -9.4 < y && y < -8.6 = w {playbackSpeed = xToPlaybackSpeed x, isDragging = True}
+    | -4.5 < x && x < -1.5 && -9.4 < y && y < -8.6 = 
+      (w {playbackSpeed = xToPlaybackSpeed x, isDragging = True}, True)
 handleControl _ (PointerMovement (x, y)) SpeedSlider w
-    | isDragging w = w {playbackSpeed = xToPlaybackSpeed x}
+    | isDragging w = (w {playbackSpeed = xToPlaybackSpeed x}, True)
 handleControl _ (PointerRelease (x, y)) SpeedSlider w
-    | isDragging w = w {playbackSpeed = xToPlaybackSpeed x, isDragging = False}
-handleControl _ _ _ w = w
+    | isDragging w = (w {playbackSpeed = xToPlaybackSpeed x, isDragging = False}, True)
+handleControl _ _ _ w = (w, False)
 
 wrappedDraw ::
        (Wrapped a -> [Control a]) -> (a -> Picture) -> Wrapped a -> Picture
@@ -2565,13 +2577,16 @@ trace msg x = unsafePerformIO $ do
     hPutStrLn stderr (T.unpack msg)
     return x
 
-debugInteractionCtrls :: Wrapped w -> [Control w]
-debugInteractionCtrls w
-    | lastInteractionTime w > 5 = []
-    | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
-    | otherwise = [PauseButton, SpeedSlider] 
-
-debugInteractionOf baseInitial step event draw = runInspect debugInteractionCtrls initial step event draw 
+debugInteractionOf baseInitial baseStep baseEvent baseDraw = runInspect debugSimulationControls initial step event draw 
   where
     initial =
-        Wrapped {state = baseInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
+        Wrapped {state = [baseInitial], playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
+    event e (x:xs) = case x `seq` x' `seq` reallyUnsafePtrEquality# x x' of
+        0# -> x' : x : xs
+        _  -> x : xs
+      where x' = baseEvent e x
+    step dt (x:xs) = case x `seq` x' `seq` reallyUnsafePtrEquality# x x' of
+        0# -> x' : x : xs
+        _  -> x : xs
+      where x' = baseStep dt x
+    draw (x:xs) = baseDraw x

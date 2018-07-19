@@ -22,7 +22,9 @@ module Internal.CodeWorld
     , animationOf
     , activityOf
     , groupActivityOf
+    , CW.unsafeGroupActivityOf
     , simulationOf
+    , CW.debugSimulationOf
     , interactionOf
     , collaborationOf
     , traced

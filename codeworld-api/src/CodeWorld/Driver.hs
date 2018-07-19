@@ -2111,7 +2111,7 @@ runInspect controls initial stepHandler eventHandler drawHandler = do
           where
             plainDrawing = pictureToDrawing $ drawHandler (state wrappedState)
         drawPicHandler (debugState, wrappedState) =
-            drawHandler $ state wrappedState   
+            drawHandler $ state wrappedState
     (sendEvent, getState) <-
         run
             initialWrapper
@@ -2566,31 +2566,29 @@ simulationOf simInitial simStep simDraw =
     initial =
         Wrapped {state = simInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
 
+prependIfChanged :: (a -> a) -> [a] -> [a]
+prependIfChanged f (x:xs) = case x `seq` x' `seq` (reallyUnsafePtrEquality# x x') of
+        0# -> x' : x : xs
+        _  -> x : xs
+      where x' = f x
+
 debugSimulationOf simInitial simStep simDraw =
     runInspect statefulDebugControls initial step (\_ r -> r) draw
   where
     initial =
         Wrapped {state = [simInitial], playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
-    step dt (x:xs) = case x `seq` x' `seq` reallyUnsafePtrEquality# x x' of
-        0# -> x' : x : xs
-        _  -> x : xs
-      where x' = simStep dt x
+    step dt = prependIfChanged (simStep dt)
     draw (x:xs) = simDraw x
-
-trace msg x = unsafePerformIO $ do
-    hPutStrLn stderr (T.unpack msg)
-    return x
 
 debugInteractionOf baseInitial baseStep baseEvent baseDraw = 
   runInspect statefulDebugControls initial step event draw 
   where
     initial =
         Wrapped {state = [baseInitial], playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
-    prependIfChanged :: (a -> a) -> [a] -> [a]
-    prependIfChanged f (x:xs) = case x `seq` x' `seq` (reallyUnsafePtrEquality# x x') of
-        0# -> x' : x : xs
-        _  -> x : xs
-      where x' = f x
     step dt = prependIfChanged (baseStep dt)
     event e = prependIfChanged (baseEvent e)
     draw (x:xs) = baseDraw x
+
+trace msg x = unsafePerformIO $ do
+    hPutStrLn stderr (T.unpack msg)
+    return x

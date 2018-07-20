@@ -54,5 +54,4 @@ Library
                        time                  >= 1.6.0 && < 1.9
 
   Exposed:             True
-  Ghc-options:         -O
-                       -Wincomplete-patterns
+  Ghc-options:         -Wincomplete-patterns

@@ -57,8 +57,6 @@ Library
 
   Exposed: True
 
-  Ghc-options: -O
-
 Test-Suite codeworld-compiler-test
   Type:               exitcode-stdio-1.0
   Main-is:            Main.hs

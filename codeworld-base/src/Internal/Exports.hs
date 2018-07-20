@@ -126,6 +126,7 @@ module Internal.Exports
     , drawingOf
     , animationOf
     , activityOf
+    , debugActivityOf
     , groupActivityOf
     , simulationOf
     , debugSimulationOf

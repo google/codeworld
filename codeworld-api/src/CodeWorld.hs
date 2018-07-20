@@ -20,6 +20,7 @@ module CodeWorld (
       drawingOf
     , animationOf
     , activityOf
+    , debugActivityOf
     , groupActivityOf
     , unsafeGroupActivityOf
     , simulationOf

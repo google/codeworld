@@ -21,6 +21,7 @@ module Internal.CodeWorld
     , drawingOf
     , animationOf
     , activityOf
+    , debugActivityOf
     , groupActivityOf
     , simulationOf
     , debugSimulationOf
@@ -70,6 +71,14 @@ activityOf ::
        , world -> Picture)
     -> Program
 activityOf (initial, event, draw) = interactionOf (initial, fst, event, draw)
+
+debugActivityOf ::
+       ( [Number] -> world
+       , (world, Event) -> world
+       , world -> Picture)
+    -> Program
+debugActivityOf (initial, event, draw) =
+    debugInteractionOf (initial, fst, event, draw)
 
 groupActivityOf ::
        ( Number

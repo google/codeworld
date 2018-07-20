@@ -35,6 +35,7 @@ module CodeWorld.Driver
     ( drawingOf
     , animationOf
     , activityOf
+    , debugActivityOf
     , groupActivityOf
     , unsafeGroupActivityOf
     , simulationOf
@@ -137,6 +138,17 @@ animationOf :: (Double -> Picture)  -- ^ A function that produces animation
 -- can interact with the user, change over time, and remember information about
 -- the past.
 activityOf
+  :: world                       -- ^ The initial state of the interaction.
+  -> (Event -> world -> world)   -- ^ The event handling function, which updates
+                                 --   the state given an event.
+  -> (world -> Picture)          -- ^ The visualization function, which converts
+                                 --   the state into a picture to display.
+  -> IO ()
+
+-- | Runs an interactive CodeWorld program in debugging mode.  In this mode,
+-- the program gets controls to pause and manipulate time, and even go back in
+-- time to look at past states.
+debugActivityOf
   :: world                       -- ^ The initial state of the interaction.
   -> (Event -> world -> world)   -- ^ The event handling function, which updates
                                  --   the state given an event.
@@ -2384,7 +2396,9 @@ collaborationOf numPlayers initial step event draw = do
 
 --------------------------------------------------------------------------------
 -- Common code for activity, interaction, animation and simulation interfaces
-activityOf initial event draw = interactionOf initial (const id) event draw
+
+activityOf initial change picture =
+    interactionOf initial (const id) change picture
 
 interactionOf = runInspect (const [])
 
@@ -2608,6 +2622,9 @@ debugInteractionOf initial baseStep baseEvent baseDraw =
     step dt = prependIfChanged (baseStep dt)
     event e = prependIfChanged (baseEvent e)
     draw (x:xs) = baseDraw x
+
+debugActivityOf initial change picture =
+    debugInteractionOf initial (const id) change picture
 
 trace msg x = unsafePerformIO $ do
     hPutStrLn stderr (T.unpack msg)

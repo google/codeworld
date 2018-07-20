@@ -2110,12 +2110,17 @@ inRight f ab = unsafePerformIO $ do
 -- Wraps the event and state from run so they can be paused by pressing the Inspect
 -- button.
 runInspect :: 
-       (Wrapped s -> [Control s]) -> Wrapped s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
+       (Wrapped s -> [Control s])
+    -> s
+    -> (Double -> s -> s)
+    -> (Event -> s -> s)
+    -> (s -> Picture) 
+    -> IO ()
 runInspect controls initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    let initialWrapper = (debugStateInit, initial)
+    let initialWrapper = (debugStateInit, wrappedInitial initial)
         stepHandlerWrapper dt wrapper@(debugState, _) =
             case debugStateActive debugState of
                 True -> wrapper
@@ -2301,10 +2306,14 @@ run initial stepHandler eventHandler drawHandler =
         go t0 nullFrame initialStateName True
 
 runInspect :: 
-       (Wrapped s -> [Control s]) -> Wrapped s -> (Double -> s -> s) 
-       -> (Event -> s -> s) -> (s -> Picture) -> IO ()
+       (Wrapped s -> [Control s])
+    -> s
+    -> (Double -> s -> s)
+    -> (Event -> s -> s)
+    -> (s -> Picture) 
+    -> IO ()
 runInspect controls initial stepHandler eventHandler drawHandler =
-    run initial
+    run (wrappedInitial initial)
         (wrappedStep stepHandler)
         (wrappedEvent controls stepHandler eventHandler)
         (wrappedDraw controls drawHandler)
@@ -2377,10 +2386,7 @@ collaborationOf numPlayers initial step event draw = do
 -- Common code for activity, interaction, animation and simulation interfaces
 activityOf initial event draw = interactionOf initial (const id) event draw
 
-interactionOf baseInitial step event draw = runInspect (const []) initial step event draw
-   where
- initial =
-        Wrapped {state = baseInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
+interactionOf = runInspect (const [])
 
 data Wrapped a = Wrapped
     { state :: a
@@ -2398,6 +2404,14 @@ data Control :: * -> * where
     TimeLabel :: Control Double
     SpeedSlider :: Control a
     UndoButton :: Control [a]
+
+wrappedInitial :: a -> Wrapped a
+wrappedInitial w = Wrapped { 
+      state = w,
+      playbackSpeed = 1,
+      lastInteractionTime = 1000,
+      isDragging = False
+    }
 
 wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
 wrappedStep f dt w =
@@ -2558,9 +2572,7 @@ animationControls w
     | playbackSpeed w == 0 = [RestartButton, PlayButton, StepButton, TimeLabel, SpeedSlider]
     | otherwise = [RestartButton, PauseButton, TimeLabel, SpeedSlider]
 
-animationOf f = runInspect animationControls initial (+) (\_ r -> r) f
-  where
-    initial = Wrapped {state = 0, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
+animationOf f = runInspect animationControls 0 (+) (\_ r -> r) f
 
 simulationControls :: Wrapped w -> [Control w]
 simulationControls w
@@ -2575,11 +2587,8 @@ statefulDebugControls w
     | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
     | otherwise = [PauseButton, SpeedSlider]
 
-simulationOf simInitial simStep simDraw =
-    runInspect simulationControls initial simStep (\_ r -> r) simDraw
-  where
-    initial =
-        Wrapped {state = simInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
+simulationOf initial step draw =
+    runInspect simulationControls initial step (\_ r -> r) draw
 
 prependIfChanged :: (a -> a) -> [a] -> [a]
 prependIfChanged f (x:xs) = case x `seq` x' `seq` (reallyUnsafePtrEquality# x x') of
@@ -2587,19 +2596,15 @@ prependIfChanged f (x:xs) = case x `seq` x' `seq` (reallyUnsafePtrEquality# x x'
         _  -> x : xs
       where x' = f x
 
-debugSimulationOf simInitial simStep simDraw =
-    runInspect statefulDebugControls initial step (\_ r -> r) draw
+debugSimulationOf initial simStep simDraw =
+    runInspect statefulDebugControls [initial] step (\_ r -> r) draw
   where
-    initial =
-        Wrapped {state = [simInitial], playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
     step dt = prependIfChanged (simStep dt)
     draw (x:xs) = simDraw x
 
-debugInteractionOf baseInitial baseStep baseEvent baseDraw = 
-  runInspect statefulDebugControls initial step event draw 
+debugInteractionOf initial baseStep baseEvent baseDraw = 
+  runInspect statefulDebugControls [initial] step event draw 
   where
-    initial =
-        Wrapped {state = [baseInitial], playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
     step dt = prependIfChanged (baseStep dt)
     event e = prependIfChanged (baseEvent e)
     draw (x:xs) = baseDraw x

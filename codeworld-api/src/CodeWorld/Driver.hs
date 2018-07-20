@@ -2120,7 +2120,7 @@ runInspect controls initial stepHandler eventHandler drawHandler = do
             case debugStateActive debugState of
                 True -> wrapper
                 False -> inRight (wrappedStep stepHandler dt) wrapper
-        eventHandlerWrapper evt wrapper =
+        eventHandlerWrapper evt wrapper@(debugState, _) =
             case (debugStateActive debugState, evt) of
                 (True, _) -> wrapper
                 (_, Left debugEvent) ->
@@ -2300,20 +2300,13 @@ run initial stepHandler eventHandler drawHandler =
         initialStateName <- makeStableName $! initial
         go t0 nullFrame initialStateName True
 
-runInspect ::
-       s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
-runInspect = run
-
-runPauseable ::
-       Wrapped s
-    -> (Double -> s -> s)
-    -> (Wrapped s -> [Control s])
-    -> (s -> Picture)
-    -> IO ()
-runPauseable initial stepHandler controls drawHandler =
+runInspect :: 
+       (Wrapped s -> [Control s]) -> Wrapped s -> (Double -> s -> s) 
+       -> (Event -> s -> s) -> (s -> Picture) -> IO ()
+runInspect controls initial stepHandler eventHandler drawHandler =
     run initial
         (wrappedStep stepHandler)
-        (wrappedEvent controls stepHandler)
+        (wrappedEvent controls stepHandler eventHandler)
         (wrappedDraw controls drawHandler)
 
 getDeployHash :: IO Text

@@ -22,10 +22,10 @@ module Internal.CodeWorld
     , animationOf
     , activityOf
     , groupActivityOf
-    , CW.unsafeGroupActivityOf
     , simulationOf
-    , CW.debugSimulationOf
+    , debugSimulationOf
     , interactionOf
+    , debugInteractionOf
     , collaborationOf
     , traced
     ) where
@@ -91,6 +91,17 @@ simulationOf (initial, step, draw) =
            (toCWPic . draw)
        `catch` reportError
 
+debugSimulationOf ::
+       ([Number] -> world, (world, Number) -> world, world -> Picture)
+    -> Program
+debugSimulationOf (initial, step, draw) =
+    do rs <- chooseRandoms
+       CW.debugSimulationOf
+           (initial rs)
+           (\dt w -> step (w, fromDouble dt))
+           (toCWPic . draw)
+       `catch` reportError
+
 interactionOf ::
        ( [Number] -> world
        , (world, Number) -> world
@@ -100,6 +111,21 @@ interactionOf ::
 interactionOf (initial, step, event, draw) =
     do rs <- chooseRandoms
        CW.interactionOf
+           (initial rs)
+           (\dt w -> step (w, fromDouble dt))
+           (\ev w -> event (w, fromCWEvent ev))
+           (toCWPic . draw)
+       `catch` reportError
+
+debugInteractionOf ::
+       ( [Number] -> world
+       , (world, Number) -> world
+       , (world, Event) -> world
+       , world -> Picture)
+    -> Program
+debugInteractionOf (initial, step, event, draw) =
+    do rs <- chooseRandoms
+       CW.debugInteractionOf
            (initial rs)
            (\dt w -> step (w, fromDouble dt))
            (\ev w -> event (w, fromCWEvent ev))

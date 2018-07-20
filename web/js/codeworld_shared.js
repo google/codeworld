@@ -372,7 +372,6 @@ var Auth = (() => {
 
   function onAuthInitialized(auth) {
     window.auth2 = auth;
-    auth2.isSignedIn.listen(signinCallback);
     auth2.currentUser.listen(signinCallback);
 
     if (auth2.isSignedIn.get()) {

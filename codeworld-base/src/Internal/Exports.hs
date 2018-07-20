@@ -128,7 +128,9 @@ module Internal.Exports
     , activityOf
     , groupActivityOf
     , simulationOf
+    , debugSimulationOf
     , interactionOf
+    , debugInteractionOf
     , collaborationOf
     ) where
 

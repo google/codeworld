@@ -1,10 +1,12 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE JavaScriptFFI #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
@@ -36,7 +38,9 @@ module CodeWorld.Driver
     , groupActivityOf
     , unsafeGroupActivityOf
     , simulationOf
+    , debugSimulationOf
     , interactionOf
+    , debugInteractionOf
     , collaborationOf
     , unsafeCollaborationOf
     , trace
@@ -66,6 +70,7 @@ import Data.Text (Text, pack, singleton)
 import qualified Debug.Trace
 import GHC.Fingerprint.Type
 import GHC.Generics
+import GHC.Prim
 import GHC.Stack
 import GHC.StaticPtr
 import Numeric
@@ -179,10 +184,28 @@ simulationOf
                                  --   the state into a picture to display.
   -> IO ()
 
+debugSimulationOf
+  :: world                       -- ^ The initial state of the simulation.
+  -> (Double -> world -> world)  -- ^ The time step function, which advances
+                                 --   the state given the time difference.
+  -> (world -> Picture)          -- ^ The visualization function, which converts
+                                 --   the state into a picture to display.
+  -> IO ()
+
 -- | Runs an interactive event-driven CodeWorld program.  This is a
 -- generalization of simulations that can respond to events like key presses
 -- and mouse movement.
 interactionOf
+  :: world                       -- ^ The initial state of the interaction.
+  -> (Double -> world -> world)  -- ^ The time step function, which advances
+                                 --   the state given the time difference.
+  -> (Event -> world -> world)   -- ^ The event handling function, which updates
+                                 --   the state given a user interface event.
+  -> (world -> Picture)          -- ^ The visualization function, which converts
+                                 --   the state into a picture to display.
+  -> IO ()
+
+debugInteractionOf
   :: world                       -- ^ The initial state of the interaction.
   -> (Double -> world -> world)  -- ^ The time step function, which advances
                                  --   the state given the time difference.
@@ -2086,70 +2109,33 @@ inRight f ab = unsafePerformIO $ do
 
 -- Wraps the event and state from run so they can be paused by pressing the Inspect
 -- button.
-runInspect ::
-       s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
-runInspect initial stepHandler eventHandler drawHandler = do
+runInspect :: 
+       (Wrapped s -> [Control s])
+    -> s
+    -> (Double -> s -> s)
+    -> (Event -> s -> s)
+    -> (s -> Picture) 
+    -> IO ()
+runInspect controls initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    let initialWrapper = (debugStateInit, initial)
-        stepHandlerWrapper dt wrapper@(debugState, state) =
+    let initialWrapper = (debugStateInit, wrappedInitial initial)
+        stepHandlerWrapper dt wrapper@(debugState, _) =
             case debugStateActive debugState of
                 True -> wrapper
-                False -> inRight (stepHandler dt) wrapper
-        eventHandlerWrapper evt wrapper@(debugState, state) =
-            case evt of
-                Left debugEvent ->
+                False -> inRight (wrappedStep stepHandler dt) wrapper
+        eventHandlerWrapper evt wrapper@(debugState, _) =
+            case (debugStateActive debugState, evt) of
+                (True, _) -> wrapper
+                (_, Left debugEvent) ->
                     inLeft (updateDebugState debugEvent) wrapper
-                Right normalEvent ->
-                    inRight (eventHandler normalEvent) wrapper
-        drawHandlerWrapper (debugState, state) =
-            drawDebugState debugState (pictureToDrawing $ drawHandler state)
-        drawPicHandler (debugState, state) = drawHandler state
-    (sendEvent, getState) <-
-        run
-            initialWrapper
-            stepHandlerWrapper
-            eventHandlerWrapper
-            drawHandlerWrapper
-            (Right . TimePassing)
-    let pauseEvent True = sendEvent $ Left DebugStart
-        pauseEvent False = sendEvent $ Left DebugStop
-        highlightSelectEvent True n = sendEvent $ Left (HighlightEvent n)
-        highlightSelectEvent False n = sendEvent $ Left (SelectEvent n)
-    onEvents canvas (sendEvent . Right)
-    inspect (drawPicHandler <$> getState) pauseEvent highlightSelectEvent
-
-runPauseable ::
-       Wrapped s
-    -> (Double -> s -> s)
-    -> (Wrapped s -> [Control s])
-    -> (s -> Picture)
-    -> IO ()
-runPauseable initial stepHandler controls drawHandler = do
-    Just window <- currentWindow
-    Just doc <- currentDocument
-    Just canvas <- getElementById doc ("screen" :: JSString)
-    let initialWrapper = (debugStateInit, initial)
-        stepHandlerWrapper dt (debugState, wrappedState) =
-            case debugStateActive debugState of
-                True -> (debugState, wrappedState)
-                False -> (debugState, wrappedStep stepHandler dt wrappedState)
-        eventHandlerWrapper evt (debugState, wrappedState) =
-            case evt of
-                Left debugEvent ->
-                    (updateDebugState debugEvent debugState, wrappedState)
-                Right normalEvent ->
-                    ( debugState
-                    , wrappedEvent controls stepHandler normalEvent wrappedState)
+                (_, Right normalEvent) ->
+                    inRight (wrappedEvent controls stepHandler eventHandler normalEvent) wrapper
         drawHandlerWrapper (debugState, wrappedState) =
             case debugStateActive debugState of
-                True -> drawDebugState debugState plainDrawing
-                False ->
-                    pictureToDrawing $
-                    wrappedDraw controls drawHandler wrappedState
-          where
-            plainDrawing = pictureToDrawing $ drawHandler (state wrappedState)
+                True -> drawDebugState debugState $ pictureToDrawing $ drawHandler (state wrappedState)
+                False -> pictureToDrawing (wrappedDraw controls drawHandler wrappedState)
         drawPicHandler (debugState, wrappedState) =
             drawHandler $ state wrappedState
     (sendEvent, getState) <-
@@ -2319,20 +2305,17 @@ run initial stepHandler eventHandler drawHandler =
         initialStateName <- makeStableName $! initial
         go t0 nullFrame initialStateName True
 
-runInspect ::
-       s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
-runInspect = run
-
-runPauseable ::
-       Wrapped s
+runInspect :: 
+       (Wrapped s -> [Control s])
+    -> s
     -> (Double -> s -> s)
-    -> (Wrapped s -> [Control s])
-    -> (s -> Picture)
+    -> (Event -> s -> s)
+    -> (s -> Picture) 
     -> IO ()
-runPauseable initial stepHandler controls drawHandler =
-    run initial
+runInspect controls initial stepHandler eventHandler drawHandler =
+    run (wrappedInitial initial)
         (wrappedStep stepHandler)
-        (wrappedEvent controls stepHandler)
+        (wrappedEvent controls stepHandler eventHandler)
         (wrappedDraw controls drawHandler)
 
 getDeployHash :: IO Text
@@ -2403,14 +2386,14 @@ collaborationOf numPlayers initial step event draw = do
 -- Common code for activity, interaction, animation and simulation interfaces
 activityOf initial event draw = interactionOf initial (const id) event draw
 
-interactionOf initial step event draw = runInspect initial step event draw
+interactionOf = runInspect (const [])
 
 data Wrapped a = Wrapped
     { state :: a
     , playbackSpeed :: Double
     , lastInteractionTime :: Double
     , isDragging :: Bool
-    } deriving (Show)
+    } deriving (Show, Functor)
 
 data Control :: * -> * where
     PlayButton :: Control a
@@ -2420,6 +2403,15 @@ data Control :: * -> * where
     BackButton :: Control Double
     TimeLabel :: Control Double
     SpeedSlider :: Control a
+    UndoButton :: Control [a]
+
+wrappedInitial :: a -> Wrapped a
+wrappedInitial w = Wrapped { 
+      state = w,
+      playbackSpeed = 1,
+      lastInteractionTime = 1000,
+      isDragging = False
+    }
 
 wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
 wrappedStep f dt w =
@@ -2431,15 +2423,27 @@ wrappedStep f dt w =
     , lastInteractionTime = lastInteractionTime w + dt
     }
 
-wrappedEvent ::
+wrappedEvent :: forall a . 
        (Wrapped a -> [Control a])
     -> (Double -> a -> a)
+    -> (Event -> a -> a)
     -> Event
     -> Wrapped a
     -> Wrapped a
-wrappedEvent _ _ (TimePassing _) w = w
-wrappedEvent ctrls f (event) w =
-    (foldr (handleControl f event) w (ctrls w)) {lastInteractionTime = 0}
+wrappedEvent _ _ eventHandler (TimePassing dt) w
+   | playbackSpeed w == 0 = w
+   | otherwise = fmap (eventHandler (TimePassing dt)) w
+wrappedEvent ctrls f eventHandler event w
+   | playbackSpeed w == 0 || handled = afterControls {lastInteractionTime = 0}
+   | otherwise = fmap (eventHandler event) afterControls {lastInteractionTime = 0}
+   where 
+         afterControls :: Wrapped a
+         handled :: Bool
+         (afterControls, handled) = foldr stepFunction (w, False) (ctrls w)
+         stepFunction :: Control a -> (Wrapped a, Bool) -> (Wrapped a, Bool)
+         stepFunction control (world, handled)
+            | handled == True = (world, True)
+            | otherwise = handleControl f event control world
 
 xToPlaybackSpeed :: Double -> Double
 xToPlaybackSpeed x = foldr (snapSlider) (min 5 $ max 0 $ 5 * (x + 4.4) / 2.8) [1..4]
@@ -2449,25 +2453,29 @@ snapSlider target val | abs (val - target) < 0.2 = target
                 | otherwise                = val
 
 handleControl ::
-       (Double -> a -> a) -> Event -> Control a -> Wrapped a -> Wrapped a
+       (Double -> a -> a) -> Event -> Control a -> Wrapped a -> (Wrapped a, Bool)
 handleControl _ (PointerPress (x, y)) RestartButton w
-    | -9.4 < x && x < -8.6 && -9.4 < y && y < -8.6 = w {state = 0}
+    | -9.4 < x && x < -8.6 && -9.4 < y && y < -8.6 = (w {state = 0}, True)
 handleControl _ (PointerPress (x, y)) PlayButton w
-    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 1}
+    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = (w {playbackSpeed = 1}, True) 
 handleControl _ (PointerPress (x, y)) PauseButton w
-    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = w {playbackSpeed = 0}
+    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = (w {playbackSpeed = 0}, True)
 handleControl _ (PointerPress (x,y)) BackButton w
     | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6 =
-        w {state = max 0 (state w - 0.1)}
+        (w {state = max 0 (state w - 0.1)}, True)
+handleControl _ (PointerPress (x,y)) UndoButton w
+    | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6 =
+        (w {state = tail (state w)}, True)
 handleControl f (PointerPress (x, y)) StepButton w
-    | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = w {state = f 0.1 (state w)}
+    | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = (w {state = f 0.1 (state w)}, True)
 handleControl _ (PointerPress (x, y)) SpeedSlider w
-    | -4.5 < x && x < -1.5 && -9.4 < y && y < -8.6 = w {playbackSpeed = xToPlaybackSpeed x, isDragging = True}
+    | -4.5 < x && x < -1.5 && -9.4 < y && y < -8.6 = 
+      (w {playbackSpeed = xToPlaybackSpeed x, isDragging = True}, True)
 handleControl _ (PointerMovement (x, y)) SpeedSlider w
-    | isDragging w = w {playbackSpeed = xToPlaybackSpeed x}
+    | isDragging w = (w {playbackSpeed = xToPlaybackSpeed x}, True)
 handleControl _ (PointerRelease (x, y)) SpeedSlider w
-    | isDragging w = w {playbackSpeed = xToPlaybackSpeed x, isDragging = False}
-handleControl _ _ _ w = w
+    | isDragging w = (w {playbackSpeed = xToPlaybackSpeed x, isDragging = False}, True)
+handleControl _ _ _ w = (w, False)
 
 wrappedDraw ::
        (Wrapped a -> [Control a]) -> (a -> Picture) -> Wrapped a -> Picture
@@ -2519,6 +2527,15 @@ drawControl _ alpha BackButton = translated (-7) (-9) p
              solidPolygon [(-0.05, 0.25), (-0.05, -0.25), (-0.3, 0)]) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+drawControl _ alpha UndoButton = translated (-7) (-9) p
+  where
+    p =
+        colored
+            (RGBA 0 0 0 alpha)
+            (translated 0.15 0 (solidRectangle 0.2 0.5) <>
+             solidPolygon [(-0.05, 0.25), (-0.05, -0.25), (-0.3, 0)]) <>
+        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
 drawControl _ alpha StepButton = translated (-6) (-9) p
   where
     p =
@@ -2555,9 +2572,7 @@ animationControls w
     | playbackSpeed w == 0 = [RestartButton, PlayButton, StepButton, TimeLabel, SpeedSlider]
     | otherwise = [RestartButton, PauseButton, TimeLabel, SpeedSlider]
 
-animationOf f = runPauseable initial (+) animationControls f
-  where
-    initial = Wrapped {state = 0, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
+animationOf f = runInspect animationControls 0 (+) (\_ r -> r) f
 
 simulationControls :: Wrapped w -> [Control w]
 simulationControls w
@@ -2565,11 +2580,34 @@ simulationControls w
     | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
     | otherwise = [PauseButton, SpeedSlider]
 
-simulationOf simInitial simStep simDraw =
-    runPauseable initial simStep simulationControls simDraw
+statefulDebugControls :: Wrapped [w] -> [Control [w]]
+statefulDebugControls w
+    | lastInteractionTime w > 5 = []
+    | playbackSpeed w == 0 && not (null (tail (state w))) = [PlayButton, StepButton, SpeedSlider, UndoButton]
+    | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
+    | otherwise = [PauseButton, SpeedSlider]
+
+simulationOf initial step draw =
+    runInspect simulationControls initial step (\_ r -> r) draw
+
+prependIfChanged :: (a -> a) -> [a] -> [a]
+prependIfChanged f (x:xs) = case x `seq` x' `seq` (reallyUnsafePtrEquality# x x') of
+        0# -> x' : x : xs
+        _  -> x : xs
+      where x' = f x
+
+debugSimulationOf initial simStep simDraw =
+    runInspect statefulDebugControls [initial] step (\_ r -> r) draw
   where
-    initial =
-        Wrapped {state = simInitial, playbackSpeed = 1, lastInteractionTime = 1000, isDragging = False}
+    step dt = prependIfChanged (simStep dt)
+    draw (x:xs) = simDraw x
+
+debugInteractionOf initial baseStep baseEvent baseDraw = 
+  runInspect statefulDebugControls [initial] step event draw 
+  where
+    step dt = prependIfChanged (baseStep dt)
+    event e = prependIfChanged (baseEvent e)
+    draw (x:xs) = baseDraw x
 
 trace msg x = unsafePerformIO $ do
     hPutStrLn stderr (T.unpack msg)

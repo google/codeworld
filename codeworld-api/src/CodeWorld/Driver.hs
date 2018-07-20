@@ -2139,9 +2139,9 @@ runInspect controls initial stepHandler eventHandler drawHandler = do
                 False -> inRight (wrappedStep stepHandler dt) wrapper
         eventHandlerWrapper evt wrapper@(debugState, _) =
             case (debugStateActive debugState, evt) of
-                (True, _) -> wrapper
                 (_, Left debugEvent) ->
                     inLeft (updateDebugState debugEvent) wrapper
+                (True, _) -> wrapper
                 (_, Right normalEvent) ->
                     inRight (wrappedEvent controls stepHandler eventHandler normalEvent) wrapper
         drawHandlerWrapper (debugState, wrappedState) =

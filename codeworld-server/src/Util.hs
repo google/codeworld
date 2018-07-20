@@ -74,8 +74,11 @@ autocompletePath = "web/codeworld-base.txt"
 clientIdPath :: FilePath
 clientIdPath = "web/clientId.txt"
 
+sourceRootDir :: BuildMode -> FilePath
+sourceRootDir (BuildMode m) = "data" </> m </> "user"
+
 buildRootDir :: BuildMode -> FilePath
-buildRootDir (BuildMode m) = "data" </> m </> "user"
+buildRootDir (BuildMode m) = "data" </> m </> "build"
 
 shareRootDir :: BuildMode -> FilePath
 shareRootDir (BuildMode m) = "data" </> m </> "share"
@@ -154,8 +157,13 @@ dirBase (DirId d) =
 nameToDirId :: Text -> DirId
 nameToDirId = DirId . hashToId "D" . T.encodeUtf8
 
-ensureProgramDir :: BuildMode -> ProgramId -> IO ()
-ensureProgramDir mode (ProgramId p) = createDirectoryIfMissing True dir
+ensureSourceDir :: BuildMode -> ProgramId -> IO ()
+ensureSourceDir mode (ProgramId p) = createDirectoryIfMissing True dir
+  where
+    dir = sourceRootDir mode </> take 3 (T.unpack p)
+
+ensureBuildDir :: BuildMode -> ProgramId -> IO ()
+ensureBuildDir mode (ProgramId p) = createDirectoryIfMissing True dir
   where
     dir = buildRootDir mode </> take 3 (T.unpack p)
 

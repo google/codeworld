@@ -16,8 +16,7 @@
 
 source base.sh
 
-run . rm -rf data/*/user/???/*.js
-run . rm -rf data/*/user/???/*.err.txt
+run . rm -rf data/*/build
 
 fuser -k -n tcp 8080
 fuser -k -n tcp 9160

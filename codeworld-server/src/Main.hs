@@ -346,8 +346,8 @@ saveXMLHashHandler = public $ do
         modifyResponse $ setResponseCode 500
     Just source <- getParam "source"
     let programId = sourceToProgramId source
-    liftIO $ ensureProgramDir mode programId
-    liftIO $ B.writeFile (buildRootDir mode </> sourceXML programId) source
+    liftIO $ ensureSourceDir mode programId
+    liftIO $ B.writeFile (sourceRootDir mode </> sourceXML programId) source
     modifyResponse $ setContentType "text/plain"
     writeBS (T.encodeUtf8 (unProgramId programId))
 
@@ -359,8 +359,9 @@ compileHandler = public $ do
         deployId = sourceToDeployId source
     success <-
         liftIO $ do
-            ensureProgramDir mode programId
-            B.writeFile (buildRootDir mode </> sourceFile programId) source
+            ensureSourceDir mode programId
+            ensureBuildDir mode programId
+            B.writeFile (sourceRootDir mode </> sourceFile programId) source
             writeDeployLink mode deployId programId
             compileIfNeeded mode programId
     unless success $ modifyResponse $ setResponseCode 500
@@ -385,14 +386,14 @@ loadXMLHandler = public $ do
         modifyResponse $ setResponseCode 500
     programId <- getHashParam False mode
     modifyResponse $ setContentType "text/plain"
-    serveFile (buildRootDir mode </> sourceXML programId)
+    serveFile (sourceRootDir mode </> sourceXML programId)
 
 loadSourceHandler :: CodeWorldHandler
 loadSourceHandler = public $ do
     mode <- getBuildMode
     programId <- getHashParam False mode
     modifyResponse $ setContentType "text/x-haskell"
-    serveFile (buildRootDir mode </> sourceFile programId)
+    serveFile (sourceRootDir mode </> sourceFile programId)
 
 runHandler :: CodeWorldHandler
 runHandler = public $ do
@@ -429,7 +430,7 @@ compileIfNeeded mode programId = do
         then return hasTarget
         else compileSource
                  FullBuild
-                 (buildRootDir mode </> sourceFile programId)
+                 (sourceRootDir mode </> sourceFile programId)
                  (buildRootDir mode </> targetFile programId)
                  (buildRootDir mode </> resultFile programId)
                  (getMode mode)

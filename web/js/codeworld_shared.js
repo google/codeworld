@@ -126,43 +126,39 @@ function registerStandardHints(successFunc)
     CodeMirror.registerHelper('hint', 'codeworld', function(cm) {
         var cur = cm.getCursor();
         var token = cm.getTokenAt(cur);
-        var to = CodeMirror.Pos(cur.line, token.end);
 
-	//To check for the case of insertion in between two parameters
-        r = new RegExp("^\\s+$");
-	// If string is completely made of spaces
-        if (r.test(token.string)) {
-            token.string = token.string.substr(0, cur.ch - token.start);
-            token.end = cur.ch;
-            to = CodeMirror.Pos(cur.line, token.end);
-        }
-
-        if (token.string && /\w/.test(token.string[token.string.length - 1])) {
-            var term = token.string,
-                from = CodeMirror.Pos(cur.line, token.start);
+        // If the current token is whitespace, it can be split.
+        if (/^\s+$/.test(token.string)) {
+            var term = "";
+            var from = cur;
         } else {
-            var term = "",
-                from = to;
+            var term = token.string.substr(0, cur.ch - token.start);
+            var from = CodeMirror.Pos(cur.line, token.start);
         }
+
         var found = [];
+
         for (var i = 0; i < hints.length; i++) {
             var hint = hints[i];
-            if (hint.text.slice(0, term.length) == term)
+            if (hint.text.startsWith(term)) {
                 found.push(hint);
+            }
         }
 
         var lines = cm.getValue().split("\n");
         for (var i=0; i < lines.length; i++) {
-            if (/^\S*\s*::[^:]*$/.test(lines[i]) &&
-                lines[i].split(" ::")[0].startsWith(token.string)) {
-                found.push(createHint(lines[i],0,lines[i].split(" ::")[0].length));
+            if (/^\S*\s*::[^:]*$/.test(lines[i])) {
+                var candidate = lines[i].split(" ::")[0];
+                if (candidate.startsWith(term)) {
+                    found.push(createHint(lines[i], 0, candidate.length));
+                }
             }
         }
 
-        if (found.length) return {
+        if (found.length > 0) return {
             list: found,
             from: from,
-            to: to
+            to: cur
         };
     });
 

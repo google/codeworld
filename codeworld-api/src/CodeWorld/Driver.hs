@@ -2417,7 +2417,8 @@ data Control :: * -> * where
     BackButton :: Control Double
     TimeLabel :: Control Double
     SpeedSlider :: Control a
-    UndoButton :: Control [a]
+    UndoButton :: Control ([a], [a])
+    RedoButton :: Control ([a], [a])
 
 wrappedInitial :: a -> Wrapped a
 wrappedInitial w = Wrapped { 
@@ -2479,7 +2480,10 @@ handleControl _ (PointerPress (x,y)) BackButton w
         (w {state = max 0 (state w - 0.1)}, True)
 handleControl _ (PointerPress (x,y)) UndoButton w
     | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6 =
-        (w {state = tail (state w)}, True)
+        (fmap (\(x:xs, ys) -> (xs, x:ys)) w, True)
+handleControl _ (PointerPress (x,y)) RedoButton w
+    | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 =
+        (fmap (\(xs, y:ys) -> (y:xs, ys)) w, True)
 handleControl f (PointerPress (x, y)) StepButton w
     | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = (w {state = f 0.1 (state w)}, True)
 handleControl _ (PointerPress (x, y)) SpeedSlider w
@@ -2559,6 +2563,15 @@ drawControl _ alpha StepButton = translated (-6) (-9) p
              solidPolygon [(0.05, 0.25), (0.05, -0.25), (0.3, 0)]) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+drawControl _ alpha RedoButton = translated (-6) (-9) p
+  where
+    p =
+        colored
+            (RGBA 0 0 0 alpha)
+            (translated (-0.15) 0 (solidRectangle 0.2 0.5) <>
+             solidPolygon [(0.05, 0.25), (0.05, -0.25), (0.3, 0)]) <>
+        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
 drawControl w alpha TimeLabel = translated 8 (-9) p
   where
     p =
@@ -2594,34 +2607,40 @@ simulationControls w
     | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
     | otherwise = [PauseButton, SpeedSlider]
 
-statefulDebugControls :: Wrapped [w] -> [Control [w]]
+statefulDebugControls :: Wrapped ([w],[w]) -> [Control ([w],[w])]
 statefulDebugControls w
     | lastInteractionTime w > 5 = []
-    | playbackSpeed w == 0 && not (null (tail (state w))) = [PlayButton, StepButton, SpeedSlider, UndoButton]
-    | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
+    | playbackSpeed w == 0 = [PlayButton, SpeedSlider] ++ advance ++ regress
     | otherwise = [PauseButton, SpeedSlider]
+  where 
+    hasHistory = not (null (tail (fst (state w))))
+    hasFuture  = not (null (snd (state w)))
+    advance | hasFuture  = [RedoButton]
+            | otherwise  = [StepButton]
+    regress | hasHistory = [UndoButton]
+            | otherwise  = []
 
 simulationOf initial step draw =
     runInspect simulationControls initial step (\_ r -> r) draw
 
-prependIfChanged :: (a -> a) -> [a] -> [a]
-prependIfChanged f (x:xs) = case x `seq` x' `seq` (reallyUnsafePtrEquality# x x') of
-        0# -> x' : x : xs
-        _  -> x : xs
+prependIfChanged :: (a -> a) -> ([a],[a]) -> ([a],[a])
+prependIfChanged f (x:xs, ys) = case x `seq` x' `seq` (reallyUnsafePtrEquality# x x') of
+        0# -> (x' : x : xs, [])
+        _  -> (x : xs, ys)
       where x' = f x
 
 debugSimulationOf initial simStep simDraw =
-    runInspect statefulDebugControls [initial] step (\_ r -> r) draw
+    runInspect statefulDebugControls ([initial],[]) step (\_ r -> r) draw
   where
     step dt = prependIfChanged (simStep dt)
-    draw (x:xs) = simDraw x
+    draw (x:_, _) = simDraw x
 
 debugInteractionOf initial baseStep baseEvent baseDraw = 
-  runInspect statefulDebugControls [initial] step event draw 
+  runInspect statefulDebugControls ([initial], []) step event draw 
   where
     step dt = prependIfChanged (baseStep dt)
     event e = prependIfChanged (baseEvent e)
-    draw (x:xs) = baseDraw x
+    draw (x:_, _) = baseDraw x
 
 debugActivityOf initial change picture =
     debugInteractionOf initial (const id) change picture

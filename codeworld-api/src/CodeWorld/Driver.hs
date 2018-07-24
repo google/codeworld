@@ -1887,11 +1887,14 @@ initialGameState :: GameState s
 initialGameState = Main CUI.initial
 
 foreign import javascript
-               "/[&?]dhash=(.{22})/.exec(window.location.search)[1]" js_deployHash
-               :: IO JSVal
+    "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
+    js_deployHash :: IO JSVal
 
 getDeployHash :: IO Text
 getDeployHash = pFromJSVal <$> js_deployHash
+
+foreign import javascript "cw$deterministic_math();"
+    enableDeterministicMath :: IO ()
 
 runGame ::
        GameToken
@@ -1902,6 +1905,7 @@ runGame ::
     -> (Int -> s -> Picture)
     -> IO ()
 runGame token numPlayers initial stepHandler eventHandler drawHandler = do
+    enableDeterministicMath
     let fullStepHandler dt = stepHandler dt . eventHandler (-1) (TimePassing dt)
     js_showCanvas
     Just window <- currentWindow

@@ -42,6 +42,7 @@ Library
                        ghc-prim             >= 0.3.1 && < 0.6
 
   if impl(ghcjs)
+    Js-sources:        jsbits/sim_fp.js
     Build-depends:
                        ghcjs-base,
                        ghcjs-prim,

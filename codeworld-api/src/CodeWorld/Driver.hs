@@ -2446,19 +2446,16 @@ wrappedEvent :: forall a .
     -> Wrapped a
     -> Wrapped a
 wrappedEvent _ _ eventHandler (TimePassing dt) w
-   | playbackSpeed w == 0 = w
-   | otherwise = fmap (eventHandler (TimePassing dt)) w
-wrappedEvent ctrls f eventHandler event w
-   | playbackSpeed w == 0 || handled = afterControls {lastInteractionTime = 0}
-   | otherwise = fmap (eventHandler event) afterControls {lastInteractionTime = 0}
-   where 
-         afterControls :: Wrapped a
-         handled :: Bool
-         (afterControls, handled) = foldr stepFunction (w, False) (ctrls w)
-         stepFunction :: Control a -> (Wrapped a, Bool) -> (Wrapped a, Bool)
-         stepFunction control (world, handled)
-            | handled == True = (world, True)
-            | otherwise = handleControl f event control world
+    | playbackSpeed w == 0 = w
+    | otherwise = fmap (eventHandler (TimePassing (dt * playbackSpeed w))) w
+wrappedEvent ctrls stepHandler eventHandler event w
+    | playbackSpeed w == 0 || handled = afterControls {lastInteractionTime = 0}
+    | otherwise = fmap (eventHandler event) afterControls {lastInteractionTime = 0}
+  where
+    (afterControls, handled) = foldr stepFunction (w, False) (ctrls w)
+    stepFunction control (world, True) = (world, True)
+    stepFunction control (world, False) = handleControl fullStep event control world
+    fullStep dt = stepHandler dt . eventHandler (TimePassing dt)
 
 xToPlaybackSpeed :: Double -> Double
 xToPlaybackSpeed x = foldr (snapSlider) (min 5 $ max 0 $ 5 * (x + 4.4) / 2.8) [1..4]

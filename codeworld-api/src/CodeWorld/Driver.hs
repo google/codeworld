@@ -2406,7 +2406,8 @@ data Wrapped a = Wrapped
     { state :: a
     , playbackSpeed :: Double
     , lastInteractionTime :: Double
-    , isDragging :: Bool
+    , isDraggingSpeed :: Bool
+    , isDraggingHistory :: Bool
     } deriving (Show, Functor)
 
 data Control :: * -> * where
@@ -2426,7 +2427,8 @@ wrappedInitial w = Wrapped {
       state = w,
       playbackSpeed = 1,
       lastInteractionTime = 1000,
-      isDragging = False
+      isDraggingSpeed = False,
+      isDraggingHistory = False
     }
 
 wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
@@ -2486,12 +2488,30 @@ handleControl f (PointerPress (x, y)) StepButton w
     | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = (w {state = f 0.1 (state w)}, True)
 handleControl _ (PointerPress (x, y)) SpeedSlider w
     | -4.5 < x && x < -1.5 && -9.4 < y && y < -8.6 = 
-      (w {playbackSpeed = xToPlaybackSpeed x, isDragging = True}, True)
+      (w {playbackSpeed = xToPlaybackSpeed x, isDraggingSpeed = True}, True)
 handleControl _ (PointerMovement (x, y)) SpeedSlider w
-    | isDragging w = (w {playbackSpeed = xToPlaybackSpeed x}, True)
+    | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed x}, True)
 handleControl _ (PointerRelease (x, y)) SpeedSlider w
-    | isDragging w = (w {playbackSpeed = xToPlaybackSpeed x, isDragging = False}, True)
+    | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed x, isDraggingSpeed = False}, True)
+handleControl _ (PointerPress (x, y)) HistorySlider w
+    | 1.5 < x && x < 4.5 && -9.4 < y && y < -8.6 = 
+      (travelToTime ((x - 1.6) / 2.8) <$> w {isDraggingHistory = True}, True)
+handleControl _ (PointerMovement (x, y)) HistorySlider w
+    | isDraggingHistory w = (travelToTime ((x - 1.6) / 2.8) <$> w, True)
+handleControl _ (PointerRelease (x, y)) HistorySlider w
+    | isDraggingHistory w = (travelToTime ((x - 1.6) / 2.8) <$> w {isDraggingHistory = False}, True)
 handleControl _ _ _ w = (w, False)
+
+travelToTime :: Double -> ([s],[s]) -> ([s],[s])  
+travelToTime t (past, future) = go past future (n1 - desiredN1)
+  where n1 = length past
+        n2 = length future
+        n = n1 + n2
+        desiredN1 = min n $ max 1 $ round $ t * fromIntegral n
+        go past future diff
+          | diff > 0 = go (tail past) (head past : future) (diff - 1)
+          | diff < 0 = go (head future : past) (tail future) (diff + 1)
+          | otherwise = (past, future)
 
 wrappedDraw ::
        (Wrapped a -> [Control a]) -> (a -> Picture) -> Wrapped a -> Picture
@@ -2588,16 +2608,19 @@ drawControl w alpha SpeedSlider = translated (-3) (-9) p
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.25) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.25)
     x = playbackSpeed w / 5 * 2.8 - 1.4
-drawControl w alpha HistorySlider = translated (-3) (-9) p
+drawControl w alpha HistorySlider = translated (3) (-9) p
   where
     p =
         colored
             (RGBA 0 0 0 alpha)
-            (translated x 0.75 $ scaled 0.5 0.5 $ lettering (pack (showFFloatAlt (Just 2) (playbackSpeed w) ""))) <>
+            (translated x 0.75 $ scaled 0.5 0.5 $ lettering (pack (show n1 ++ "/" ++ show (n1 + n2)))) <>
         translated x 0 (solidRectangle 0.2 0.8) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.25) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.25)
-    x = playbackSpeed w / 5 * 2.8 - 1.4
+    x = fromIntegral n1 / fromIntegral (n1 + n2) * 2.8 - 1.4
+    n1 = length (fst (state w))
+    n2 = length (snd (state w))
+
 
 animationControls :: Wrapped Double -> [Control Double]
 animationControls w
@@ -2618,7 +2641,7 @@ simulationControls w
 statefulDebugControls :: Wrapped ([w],[w]) -> [Control ([w],[w])]
 statefulDebugControls w
     | lastInteractionTime w > 5 = []
-    | playbackSpeed w == 0 = [PlayButton, SpeedSlider] ++ advance ++ regress
+    | playbackSpeed w == 0 = [PlayButton, SpeedSlider, HistorySlider] ++ advance ++ regress
     | otherwise = [PauseButton, SpeedSlider]
   where 
     hasHistory = not (null (tail (fst (state w))))

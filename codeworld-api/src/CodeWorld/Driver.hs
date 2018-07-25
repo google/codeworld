@@ -2423,6 +2423,7 @@ data Control :: * -> * where
     SpeedSlider :: Control a
     UndoButton :: Control ([a], [a])
     RedoButton :: Control ([a], [a])
+    HistorySlider :: Control ([a], [a])
 
 wrappedInitial :: a -> Wrapped a
 wrappedInitial w = Wrapped { 
@@ -2582,6 +2583,16 @@ drawControl w alpha TimeLabel = translated 8 (-9) p
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 3.0 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 3.0 0.8)
 drawControl w alpha SpeedSlider = translated (-3) (-9) p
+  where
+    p =
+        colored
+            (RGBA 0 0 0 alpha)
+            (translated x 0.75 $ scaled 0.5 0.5 $ lettering (pack (showFFloatAlt (Just 2) (playbackSpeed w) ""))) <>
+        translated x 0 (solidRectangle 0.2 0.8) <>
+        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.25) <>
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.25)
+    x = playbackSpeed w / 5 * 2.8 - 1.4
+drawControl w alpha HistorySlider = translated (-3) (-9) p
   where
     p =
         colored

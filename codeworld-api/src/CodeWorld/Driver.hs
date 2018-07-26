@@ -2415,16 +2415,16 @@ data Wrapped a = Wrapped
     } deriving (Show, Functor)
 
 data Control :: * -> * where
-    PlayButton :: Control a
-    PauseButton :: Control a
-    StepButton :: Control a
-    RestartButton :: Control Double
-    BackButton :: Control Double
-    TimeLabel :: Control Double
-    SpeedSlider :: Control a
-    UndoButton :: Control ([a], [a])
-    RedoButton :: Control ([a], [a])
-    HistorySlider :: Control ([a], [a])
+    PlayButton :: Point -> Control a
+    PauseButton :: Point -> Control a
+    StepButton :: Point -> Control a
+    RestartButton :: Point -> Control Double
+    BackButton :: Point -> Control Double
+    TimeLabel :: Point -> Control Double
+    SpeedSlider :: Point -> Control a
+    UndoButton :: Point -> Control ([a], [a])
+    RedoButton :: Point -> Control ([a], [a])
+    HistorySlider :: Point -> Control ([a], [a])
 
 wrappedInitial :: a -> Wrapped a
 wrappedInitial w = Wrapped { 
@@ -2464,8 +2464,8 @@ wrappedEvent ctrls stepHandler eventHandler event w
     stepFunction control (world, False) = handleControl fullStep event control world
     fullStep dt = stepHandler dt . eventHandler (TimePassing dt)
 
-xToPlaybackSpeed :: Double -> Double
-xToPlaybackSpeed x = foldr (snapSlider) (min 5 $ max 0 $ 5 * (x + 4.4) / 2.8) [1..4]
+xToPlaybackSpeed :: Double -> Double -> Double
+xToPlaybackSpeed cx x = foldr (snapSlider) (min 5 $ max 0 $ 5 * (x + 1.4 - cx) / 2.8) [1..4]
 
 snapSlider :: Double -> Double -> Double
 snapSlider target val | abs (val - target) < 0.2 = target
@@ -2473,37 +2473,37 @@ snapSlider target val | abs (val - target) < 0.2 = target
 
 handleControl ::
        (Double -> a -> a) -> Event -> Control a -> Wrapped a -> (Wrapped a, Bool)
-handleControl _ (PointerPress (x, y)) RestartButton w
-    | -9.4 < x && x < -8.6 && -9.4 < y && y < -8.6 = (w {state = 0}, True)
-handleControl _ (PointerPress (x, y)) PlayButton w
-    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = (w {playbackSpeed = 1}, True) 
-handleControl _ (PointerPress (x, y)) PauseButton w
-    | -8.4 < x && x < -7.6 && -9.4 < y && y < -8.6 = (w {playbackSpeed = 0}, True)
-handleControl _ (PointerPress (x,y)) BackButton w
-    | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6 =
+handleControl _ (PointerPress (x, y)) (RestartButton (cx, cy)) w
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {state = 0}, True)
+handleControl _ (PointerPress (x, y)) (PlayButton (cx, cy)) w
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {playbackSpeed = 1}, True) 
+handleControl _ (PointerPress (x, y)) (PauseButton (cx, cy)) w
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4  = (w {playbackSpeed = 0}, True)
+handleControl _ (PointerPress (x,y)) (BackButton (cx, cy)) w
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 =
         (w {state = max 0 (state w - 0.1)}, True)
-handleControl _ (PointerPress (x,y)) UndoButton w
-    | -7.4 < x && x < -6.6 && -9.4 < y && y < -8.6 =
+handleControl _ (PointerPress (x,y)) (UndoButton (cx, cy)) w
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 =
         (fmap (\(x:xs, ys) -> (xs, x:ys)) w, True)
-handleControl _ (PointerPress (x,y)) RedoButton w
-    | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 =
+handleControl _ (PointerPress (x,y)) (RedoButton (cx, cy)) w
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 =
         (fmap (\(xs, y:ys) -> (y:xs, ys)) w, True)
-handleControl f (PointerPress (x, y)) StepButton w
-    | -6.4 < x && x < -5.6 && -9.4 < y && y < -8.6 = (w {state = f 0.1 (state w)}, True)
-handleControl _ (PointerPress (x, y)) SpeedSlider w
+handleControl f (PointerPress (x, y)) (StepButton (cx, cy)) w
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {state = f 0.1 (state w)}, True)
+handleControl _ (PointerPress (x, y)) (SpeedSlider (cx, cy)) w
     | -4.5 < x && x < -1.5 && -9.4 < y && y < -8.6 = 
-      (w {playbackSpeed = xToPlaybackSpeed x, isDraggingSpeed = True}, True)
-handleControl _ (PointerMovement (x, y)) SpeedSlider w
-    | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed x}, True)
-handleControl _ (PointerRelease (x, y)) SpeedSlider w
-    | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed x, isDraggingSpeed = False}, True)
-handleControl _ (PointerPress (x, y)) HistorySlider w
+      (w {playbackSpeed = xToPlaybackSpeed cx x, isDraggingSpeed = True}, True)
+handleControl _ (PointerMovement (x, y)) (SpeedSlider (cx, cy)) w
+    | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed cx x}, True)
+handleControl _ (PointerRelease (x, y)) (SpeedSlider (cx, cy)) w
+    | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed cx x, isDraggingSpeed = False}, True)
+handleControl _ (PointerPress (x, y)) (HistorySlider (cx, cy)) w
     | 1.5 < x && x < 4.5 && -9.4 < y && y < -8.6 = 
-      (travelToTime ((x - 1.6) / 2.8) <$> w {isDraggingHistory = True}, True)
-handleControl _ (PointerMovement (x, y)) HistorySlider w
-    | isDraggingHistory w = (travelToTime ((x - 1.6) / 2.8) <$> w, True)
-handleControl _ (PointerRelease (x, y)) HistorySlider w
-    | isDraggingHistory w = (travelToTime ((x - 1.6) / 2.8) <$> w {isDraggingHistory = False}, True)
+      (travelToTime ((x - (cx - 1.4)) / 2.8) <$> w {isDraggingHistory = True}, True)
+handleControl _ (PointerMovement (x, y)) (HistorySlider (cx, cy)) w
+    | isDraggingHistory w = (travelToTime ((x - (cx - 1.4)) / 2.8) <$> w, True)
+handleControl _ (PointerRelease (x, y)) (HistorySlider (cx, cy)) w
+    | isDraggingHistory w = (travelToTime ((x - (cx - 1.4)) / 2.8) <$> w {isDraggingHistory = False}, True)
 handleControl _ _ _ w = (w, False)
 
 travelToTime :: Double -> ([s],[s]) -> ([s],[s])  
@@ -2532,7 +2532,7 @@ drawControlPanel ctrls w
         | otherwise = 0
 
 drawControl :: Wrapped a -> Double -> Control a -> Picture
-drawControl _ alpha RestartButton = translated (-9) (-9) p
+drawControl _ alpha (RestartButton (x,y)) = translated x y p
   where
     p =
         colored
@@ -2541,7 +2541,7 @@ drawControl _ alpha RestartButton = translated (-9) (-9) p
              translated 0.173 (-0.1) (solidRectangle 0.17 0.17)) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
-drawControl _ alpha PlayButton = translated (-8) (-9) p
+drawControl _ alpha (PlayButton (x,y)) = translated x y p
   where
     p =
         colored
@@ -2549,7 +2549,7 @@ drawControl _ alpha PlayButton = translated (-8) (-9) p
             (solidPolygon [(-0.2, 0.25), (-0.2, -0.25), (0.2, 0)]) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
-drawControl _ alpha PauseButton = translated (-8) (-9) p
+drawControl _ alpha (PauseButton (x,y)) = translated x y p
   where
     p =
         colored
@@ -2558,7 +2558,7 @@ drawControl _ alpha PauseButton = translated (-8) (-9) p
              translated 0.15 0 (solidRectangle 0.2 0.6)) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
-drawControl _ alpha BackButton = translated (-7) (-9) p
+drawControl _ alpha (BackButton (x,y)) = translated x y p
   where
     p =
         colored
@@ -2567,7 +2567,7 @@ drawControl _ alpha BackButton = translated (-7) (-9) p
              solidPolygon [(-0.05, 0.25), (-0.05, -0.25), (-0.3, 0)]) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
-drawControl _ alpha UndoButton = translated (-7) (-9) p
+drawControl _ alpha (UndoButton (x,y)) = translated x y p
   where
     p =
         colored
@@ -2576,7 +2576,7 @@ drawControl _ alpha UndoButton = translated (-7) (-9) p
              solidPolygon [(-0.05, 0.25), (-0.05, -0.25), (-0.3, 0)]) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
-drawControl _ alpha StepButton = translated (-6) (-9) p
+drawControl _ alpha (StepButton (x,y)) = translated x y p
   where
     p =
         colored
@@ -2585,7 +2585,7 @@ drawControl _ alpha StepButton = translated (-6) (-9) p
              solidPolygon [(0.05, 0.25), (0.05, -0.25), (0.3, 0)]) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
-drawControl _ alpha RedoButton = translated (-6) (-9) p
+drawControl _ alpha (RedoButton (x,y)) = translated x y p
   where
     p =
         colored
@@ -2594,7 +2594,7 @@ drawControl _ alpha RedoButton = translated (-6) (-9) p
              solidPolygon [(0.05, 0.25), (0.05, -0.25), (0.3, 0)]) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
-drawControl w alpha TimeLabel = translated 8 (-9) p
+drawControl w alpha (TimeLabel (x,y)) = translated x y p
   where
     p =
         colored
@@ -2602,26 +2602,26 @@ drawControl w alpha TimeLabel = translated 8 (-9) p
             (scaled 0.5 0.5 $ text (pack (showFFloatAlt (Just 4) (state w) "s"))) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 3.0 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 3.0 0.8)
-drawControl w alpha SpeedSlider = translated (-3) (-9) p
+drawControl w alpha (SpeedSlider (x,y)) = translated x y p
   where
     p =
         colored
             (RGBA 0 0 0 alpha)
-            (translated x 0.75 $ scaled 0.5 0.5 $ lettering (pack (showFFloatAlt (Just 2) (playbackSpeed w) "x"))) <>
-        translated x 0 (solidRectangle 0.2 0.8) <>
+            (translated xoff 0.75 $ scaled 0.5 0.5 $ lettering (pack (showFFloatAlt (Just 2) (playbackSpeed w) "x"))) <>
+        translated xoff 0 (solidRectangle 0.2 0.8) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.25) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.25)
-    x = playbackSpeed w / 5 * 2.8 - 1.4
-drawControl w alpha HistorySlider = translated (3) (-9) p
+    xoff = playbackSpeed w / 5 * 2.8 - 1.4
+drawControl w alpha (HistorySlider (x,y)) = translated x y p
   where
     p =
         colored
             (RGBA 0 0 0 alpha)
-            (translated x 0.75 $ scaled 0.5 0.5 $ lettering (pack (show n1 ++ "/" ++ show (n1 + n2)))) <>
-        translated x 0 (solidRectangle 0.2 0.8) <>
+            (translated xoff 0.75 $ scaled 0.5 0.5 $ lettering (pack (show n1 ++ "/" ++ show (n1 + n2)))) <>
+        translated xoff 0 (solidRectangle 0.2 0.8) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.25) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.25)
-    x = fromIntegral n1 / fromIntegral (n1 + n2) * 2.8 - 1.4
+    xoff = fromIntegral n1 / fromIntegral (n1 + n2) * 2.8 - 1.4
     n1 = length (fst (state w))
     n2 = length (snd (state w))
 
@@ -2630,29 +2630,29 @@ animationControls :: Wrapped Double -> [Control Double]
 animationControls w
     | lastInteractionTime w > 5 = []
     | playbackSpeed w == 0 && state w > 0 =
-        [RestartButton, PlayButton, StepButton, BackButton, TimeLabel, SpeedSlider]
-    | playbackSpeed w == 0 = [RestartButton, PlayButton, StepButton, TimeLabel, SpeedSlider]
-    | otherwise = [RestartButton, PauseButton, TimeLabel, SpeedSlider]
+        [RestartButton (-9, -9), PlayButton (-8, -9), StepButton (-6, -9), BackButton (-7, -9), TimeLabel (8, -9), SpeedSlider (-3, -9)]
+    | playbackSpeed w == 0 = [RestartButton (-9, -9), PlayButton (-8, -9), StepButton (-6, -9), TimeLabel (8, -9), SpeedSlider (-3, -9)]
+    | otherwise = [RestartButton (-9, -9), PauseButton (-8, -9), TimeLabel (8, -9), SpeedSlider (-3, -9)]
 
 animationOf f = runInspect animationControls 0 (+) (\_ r -> r) f
 
 simulationControls :: Wrapped w -> [Control w]
 simulationControls w
     | lastInteractionTime w > 5 = []
-    | playbackSpeed w == 0 = [PlayButton, StepButton, SpeedSlider]
-    | otherwise = [PauseButton, SpeedSlider]
+    | playbackSpeed w == 0 = [PlayButton (-8, -9), StepButton (-6, -9), SpeedSlider (-6, -9)]
+    | otherwise = [PauseButton (-8, -9), SpeedSlider (-6, -9)]
 
 statefulDebugControls :: Wrapped ([w],[w]) -> [Control ([w],[w])]
 statefulDebugControls w
     | lastInteractionTime w > 5 = []
-    | playbackSpeed w == 0 = [PlayButton, SpeedSlider, HistorySlider] ++ advance ++ regress
-    | otherwise = [PauseButton, SpeedSlider]
+    | playbackSpeed w == 0 = [PlayButton (-8, -9), SpeedSlider (-6, -9), HistorySlider (3, -9)] ++ advance ++ regress
+    | otherwise = [PauseButton (-8, -9), SpeedSlider (-6, -9)]
   where 
     hasHistory = not (null (tail (fst (state w))))
     hasFuture  = not (null (snd (state w)))
-    advance | hasFuture  = [RedoButton]
-            | otherwise  = [StepButton]
-    regress | hasHistory = [UndoButton]
+    advance | hasFuture  = [RedoButton (-6, -9)]
+            | otherwise  = [StepButton (-6, -9)]
+    regress | hasHistory = [UndoButton (-7, -9)]
             | otherwise  = []
 
 simulationOf initial step draw =

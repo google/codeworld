@@ -578,11 +578,11 @@ function saveProjectBase(path, projectName) {
       lastXML = getWorkspaceXMLText();
       window.openProjectName = projectName;
       cancelMove();
-      updateUI();
 
       if (allProjectNames[allProjectNames.length -1].indexOf(projectName) == -1) {
         discoverProjects(path, allProjectNames.length - 1);
       }
+      updateUI();
     }
     saveProjectBase_(path, projectName, 'blocklyXML', successFunc);
 }

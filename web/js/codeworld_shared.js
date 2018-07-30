@@ -438,14 +438,16 @@ function discoverProjects_(path, buildMode, index) {
     data.append('path', path);
 
     sendHttp('POST', 'listFolder', data, function(request) {
-        if (request.status != 200) {
-            return;
+        if (request.status == 200) {
+            loadingDir = false;
+            var allContents = JSON.parse(request.responseText);
+            allProjectNames[index] = allContents['files'];
+            allFolderNames[index] = allContents['dirs'];
         }
-        var allContents = JSON.parse(request.responseText);
-        allProjectNames[index] = allContents['files'];
-        allFolderNames[index] = allContents['dirs'];
         updateNavBar();
     });
+
+    window.loadingDir = true;
 }
 
 function moveHere_(path, buildMode, successFunc) {

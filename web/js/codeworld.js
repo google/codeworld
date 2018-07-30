@@ -446,7 +446,7 @@ function updateNavBar() {
     }
 
     for (let i = 0; i < nestedDirs.length; i++) {
-        var nextProjects;
+        var nextProjects = null;
         allFolderNames[i].forEach(function(folderName) {
             var active = i + 1 < nestedDirs.length && nestedDirs[i + 1] == folderName;
             if (!signedIn() && !active) {
@@ -466,7 +466,20 @@ function updateNavBar() {
             var span = makeProjectNode(projectName, i, active);
             projects.appendChild(span);
         });
-        projects = nextProjects;
+        if (nextProjects) projects = nextProjects;
+    }
+
+    if (projects && window.loadingDir) {
+        var span = document.createElement('span');
+        span.style.display = 'flex';
+        span.style.flexDirection = 'column';
+        span.style.marginLeft = (3 + 16 * (nestedDirs.length - 1)) + 'px';
+        var spinner = document.createElement('div');
+        spinner.classList.add('cw-button');
+        spinner.classList.add('green');
+        spinner.innerText = 'Loading...';
+        span.appendChild(spinner);
+        projects.appendChild(span);
     }
 }
 
@@ -499,8 +512,8 @@ function moveProject() {
             window.move.file = tempOpen;
         }
 
-        updateNavBar();
         discoverProjects("", 0);
+        updateNavBar();
     }, false);
 }
 

@@ -2671,7 +2671,7 @@ animationOf f = runInspect animationControls 0 (+) (\_ r -> r) f
 simulationControls :: Wrapped w -> [Control w]
 simulationControls w
     | lastInteractionTime w > 5 = []
-    | playbackSpeed w == 0 = [PlayButton (-8, -9), StepButton (-6, -9),
+    | playbackSpeed w == 0 = [PlayButton (-8, -9), StepButton (-2, -9),
                               SpeedSlider (-6, -9), FastForwardButton (-4, -9)]
     | otherwise = [PauseButton (-8, -9), FastForwardButton (-4, -9),
                    SpeedSlider (-6, -9)]

@@ -2540,15 +2540,6 @@ wrappedDraw ::
        (Wrapped a -> [Control a]) -> (a -> Picture) -> Wrapped a -> Picture
 wrappedDraw ctrls f w = drawControlPanel ctrls w <> dilated (zoomFactor w) (f (state w))
 
--- f :: a -> Picture (given an a, returns a Picture) 
--- w :: Wrapped a
--- state :: Wrapped a -> a (unwraps a)
--- state w :: a (result of state)
--- f (state w) :: Picture
--- (f :: a -> Picture) (state w :: a) :: Picture
--- dilated :: Double -> Picture -> Picture
--- dilated (zoomFactor w) (f (state w)) :: Picture
-
 drawControlPanel :: (Wrapped a -> [Control a]) -> Wrapped a -> Picture
 drawControlPanel ctrls w
     | alpha > 0 = pictures [drawControl w alpha c | c <- ctrls w]

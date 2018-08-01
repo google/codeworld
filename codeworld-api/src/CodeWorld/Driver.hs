@@ -2410,6 +2410,7 @@ data Wrapped a = Wrapped
     { state :: a
     , playbackSpeed :: Double
     , lastInteractionTime :: Double
+    , zoomFactor :: Double
     , isDraggingSpeed :: Bool
     , isDraggingHistory :: Bool
     } deriving (Show, Functor)
@@ -2419,6 +2420,9 @@ data Control :: * -> * where
     PauseButton :: Point -> Control a
     StepButton :: Point -> Control a
     RestartButton :: Point -> Control Double
+    ZoomInButton :: Point -> Control a
+    ZoomOutButton :: Point -> Control a
+    ResetViewButton :: Point -> Control a
     FastForwardButton :: Point -> Control a
     StartOverButton :: Point -> Control ([a], [a])
     BackButton :: Point -> Control Double
@@ -2433,6 +2437,7 @@ wrappedInitial w = Wrapped {
       state = w,
       playbackSpeed = 1,
       lastInteractionTime = 1000,
+      zoomFactor = 1,
       isDraggingSpeed = False,
       isDraggingHistory = False
     }
@@ -2482,11 +2487,17 @@ handleControl _ (PointerPress (x, y)) (StartOverButton (cx, cy)) w
   where
     f (past, future) = let x:xs = reverse past in ([x], xs ++ future)
 handleControl _ (PointerPress (x, y)) (PlayButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {playbackSpeed = 1}, True) 
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {playbackSpeed = 1}, True)
 handleControl _ (PointerPress (x, y)) (PauseButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4  = (w {playbackSpeed = 0}, True)
 handleControl _ (PointerPress (x, y)) (FastForwardButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4  = (w {playbackSpeed = min 5 $ max 2 $ playbackSpeed w + 1}, True)
+handleControl _ (PointerPress (x, y)) (ZoomInButton (cx, cy)) w
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = zoomFactor w * 1.25}, True)
+handleControl _ (PointerPress (x, y)) (ZoomOutButton (cx, cy)) w
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = zoomFactor w / 1.25}, True)
+handleControl _ (PointerPress (x, y)) (ResetViewButton (cx, cy)) w
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = 1}, True)
 handleControl _ (PointerPress (x,y)) (BackButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 =
         (w {state = max 0 (state w - 0.1)}, True)
@@ -2527,7 +2538,16 @@ travelToTime t (past, future) = go past future (n1 - desiredN1)
 
 wrappedDraw ::
        (Wrapped a -> [Control a]) -> (a -> Picture) -> Wrapped a -> Picture
-wrappedDraw ctrls f w = drawControlPanel ctrls w <> f (state w)
+wrappedDraw ctrls f w = drawControlPanel ctrls w <> dilated (zoomFactor w) (f (state w))
+
+-- f :: a -> Picture (given an a, returns a Picture) 
+-- w :: Wrapped a
+-- state :: Wrapped a -> a (unwraps a)
+-- state w :: a (result of state)
+-- f (state w) :: Picture
+-- (f :: a -> Picture) (state w :: a) :: Picture
+-- dilated :: Double -> Picture -> Picture
+-- dilated (zoomFactor w) (f (state w)) :: Picture
 
 drawControlPanel :: (Wrapped a -> [Control a]) -> Wrapped a -> Picture
 drawControlPanel ctrls w
@@ -2582,6 +2602,39 @@ drawControl _ alpha (FastForwardButton (x,y)) = translated x y p
             (RGBA 0 0 0 alpha)
             (solidPolygon [(-0.3, 0.25), (-0.3, -0.25), (-0.05, 0)] <>
              solidPolygon [(0.05, 0.25), (0.05, -0.25), (0.3, 0)]) <>
+        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+drawControl _ alpha (ZoomInButton (x,y)) = translated x y p
+  where
+    p =
+        colored
+            (RGBA 0 0 0 alpha)
+            (translated (-0.05) (0.05) (
+                thickCircle 0.1 0.22 <>
+                solidRectangle 0.06 0.25 <>
+                solidRectangle 0.25 0.06 <>
+                rotated (-pi / 4) (translated 0.35 0 (solidRectangle 0.2 0.1))
+            )) <>
+        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+drawControl _ alpha (ZoomOutButton (x,y)) = translated x y p
+  where
+    p =
+        colored
+            (RGBA 0 0 0 alpha)
+            (translated (-0.05) (0.05) (
+                thickCircle 0.1 0.22 <>
+                solidRectangle 0.25 0.06 <>
+                rotated (-pi / 4) (translated 0.35 0 (solidRectangle 0.2 0.1))
+            )) <>
+        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+drawControl _ alpha (ResetViewButton (x,y)) = translated x y p
+  where
+    p =
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.7 0.2) <>
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.2 0.7) <>
+        colored (RGBA 0.0 0.0 0.0 alpha) (thickRectangle 0.1 0.5 0.5) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
 drawControl _ alpha (BackButton (x,y)) = translated x y p
@@ -2655,16 +2708,25 @@ drawControl w alpha (HistorySlider (x,y)) = translated x y p
 animationControls :: Wrapped Double -> [Control Double]
 animationControls w
     | lastInteractionTime w > 5 = []
-    | playbackSpeed w == 0 && state w > 0 =
-        [RestartButton (-9, -9), PlayButton (-8, -9), StepButton (-6, -9),
-         BackButton (-7, -9), TimeLabel (8, -9), SpeedSlider (-3, -9), 
-         FastForwardButton (-1, -9)]
-    | playbackSpeed w == 0 = 
-        [RestartButton (-9, -9), PlayButton (-8, -9), StepButton (-6, -9),
-         TimeLabel (8, -9), SpeedSlider (-3, -9), FastForwardButton (-1, -9)]
-    | otherwise = 
-        [RestartButton (-9, -9), PauseButton (-8, -9),
-         FastForwardButton (-1, -9), TimeLabel (8, -9), SpeedSlider (-3, -9)]
+    | otherwise = commonControls ++ pauseDependentControls ++ 
+                  backButton ++ resetViewButton
+    where commonControls = [
+              RestartButton (-9, -9),
+              TimeLabel (8, -9),
+              SpeedSlider (-3, -9), 
+              FastForwardButton (-1, -9),
+              ZoomInButton (9, -7),
+              ZoomOutButton (9, -8)
+            ]
+          pauseDependentControls
+            | playbackSpeed w == 0 = [PlayButton (-8, -9), StepButton (-6, -9)]
+            | otherwise = [PauseButton (-8, -9)]
+          backButton
+            | playbackSpeed w == 0 && state w > 0 = [BackButton (-7, -9)]
+            | otherwise = []
+          resetViewButton
+            | zoomFactor w /= 1 = [ResetViewButton (9, -6)]
+            | otherwise = []
 
 animationOf f = runInspect animationControls 0 (+) (\_ r -> r) f
 
@@ -2672,18 +2734,19 @@ simulationControls :: Wrapped w -> [Control w]
 simulationControls w
     | lastInteractionTime w > 5 = []
     | playbackSpeed w == 0 = [PlayButton (-8, -9), StepButton (-2, -9),
-                              SpeedSlider (-6, -9), FastForwardButton (-4, -9)]
+                              SpeedSlider (-6, -9), FastForwardButton (-4, -9),
+                              ZoomInButton (9, -7), ZoomOutButton (9, -8)]
     | otherwise = [PauseButton (-8, -9), FastForwardButton (-4, -9),
-                   SpeedSlider (-6, -9)]
+                   SpeedSlider (-6, -9), ZoomInButton (9, -7), ZoomOutButton (9, -8)]
 
 statefulDebugControls :: Wrapped ([w],[w]) -> [Control ([w],[w])]
 statefulDebugControls w
     | lastInteractionTime w > 5 = []
     | playbackSpeed w == 0 =
         [PlayButton (-8, -9), SpeedSlider (-6, -9), HistorySlider (3, -9),
-         FastForwardButton (-4, -9)] ++ advance ++ regress
+         FastForwardButton (-4, -9), ZoomInButton (9, -7), ZoomOutButton (9, -8)] ++ advance ++ regress
     | otherwise = [PauseButton (-8, -9), FastForwardButton (-4, -9),
-                   SpeedSlider (-6, -9)]
+                   SpeedSlider (-6, -9), ZoomInButton (9, -7), ZoomOutButton (9, -8)]
   where   
     hasHistory = not (null (tail (fst (state w))))
     hasFuture  = not (null (snd (state w)))

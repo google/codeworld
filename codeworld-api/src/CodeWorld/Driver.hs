@@ -2026,6 +2026,8 @@ data Wrapped a = Wrapped
     , playbackSpeed :: Double
     , lastInteractionTime :: Double
     , zoomFactor :: Double
+    , panCenter :: Point
+    , panDraggingAnchor :: Maybe Point
     , isDraggingSpeed :: Bool
     , isDraggingHistory :: Bool
     } deriving (Show, Functor)
@@ -2037,6 +2039,7 @@ data Control :: * -> * where
     RestartButton :: Point -> Control Double
     ZoomInButton :: Point -> Control a
     ZoomOutButton :: Point -> Control a
+    PanningLayer :: Control a
     ResetViewButton :: Point -> Control a
     FastForwardButton :: Point -> Control a
     StartOverButton :: Point -> Control ([a], [a])
@@ -2053,6 +2056,8 @@ wrappedInitial w = Wrapped {
       playbackSpeed = 1,
       lastInteractionTime = 1000,
       zoomFactor = 1,
+      panCenter = (0,0),
+      panDraggingAnchor = Nothing,
       isDraggingSpeed = False,
       isDraggingHistory = False
     }
@@ -2112,7 +2117,7 @@ handleControl _ (PointerPress (x, y)) (ZoomInButton (cx, cy)) w
 handleControl _ (PointerPress (x, y)) (ZoomOutButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = zoomFactor w / 1.25}, True)
 handleControl _ (PointerPress (x, y)) (ResetViewButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = 1}, True)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = 1, panCenter = (0, 0)}, True)
 handleControl _ (PointerPress (x,y)) (BackButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 =
         (w {state = max 0 (state w - 0.1)}, True)
@@ -2138,6 +2143,16 @@ handleControl _ (PointerMovement (x, y)) (HistorySlider (cx, cy)) w
     | isDraggingHistory w = (travelToTime ((x - (cx - 1.4)) / 2.8) <$> w, True)
 handleControl _ (PointerRelease (x, y)) (HistorySlider (cx, cy)) w
     | isDraggingHistory w = (travelToTime ((x - (cx - 1.4)) / 2.8) <$> w {isDraggingHistory = False}, True)
+handleControl _ (PointerPress (x, y)) PanningLayer w =
+      (w {panDraggingAnchor = Just (x, y)}, True)
+handleControl _ (PointerMovement (x, y)) PanningLayer w
+    | Just (ax, ay) <- panDraggingAnchor w
+    , (px, py) <- panCenter w
+    = (w { panCenter = (px + (x - ax) / zoomFactor w, py + (y - ay) / zoomFactor w),
+           panDraggingAnchor = Just (x, y)
+         }, True)
+handleControl _ (PointerRelease (x, y)) PanningLayer w
+    | Just (ax, ay) <- panDraggingAnchor w = (w {panDraggingAnchor = Nothing}, True)
 handleControl _ _ _ w = (w, False)
 
 travelToTime :: Double -> ([s],[s]) -> ([s],[s])  
@@ -2153,7 +2168,8 @@ travelToTime t (past, future) = go past future (n1 - desiredN1)
 
 wrappedDraw ::
        (Wrapped a -> [Control a]) -> (a -> Picture) -> Wrapped a -> Picture
-wrappedDraw ctrls f w = drawControlPanel ctrls w <> dilated (zoomFactor w) (f (state w))
+wrappedDraw ctrls f w = drawControlPanel ctrls w <> dilated (zoomFactor w) (translated dx dy (f (state w)))
+  where (dx, dy) = panCenter w
 
 drawControlPanel :: (Wrapped a -> [Control a]) -> Wrapped a -> Picture
 drawControlPanel ctrls w
@@ -2235,6 +2251,7 @@ drawControl _ alpha (ZoomOutButton (x,y)) = translated x y p
             )) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.8 0.8)
+drawControl _ _ PanningLayer = blank
 drawControl _ alpha (ResetViewButton (x,y)) = translated x y p
   where
     p =
@@ -2314,61 +2331,87 @@ drawControl w alpha (HistorySlider (x,y)) = translated x y p
 animationControls :: Wrapped Double -> [Control Double]
 animationControls w
     | lastInteractionTime w > 5 = []
-    | otherwise = commonControls ++ pauseDependentControls ++ 
+    | otherwise = [PanningLayer] ++ commonControls ++ pauseDependentControls ++
                   backButton ++ resetViewButton
-    where commonControls = [
-              RestartButton (-9, -9),
-              TimeLabel (8, -9),
-              SpeedSlider (-3, -9), 
-              FastForwardButton (-1, -9),
-              ZoomInButton (9, -7),
-              ZoomOutButton (9, -8)
-            ]
-          pauseDependentControls
-            | playbackSpeed w == 0 = [PlayButton (-8, -9), StepButton (-6, -9)]
-            | otherwise = [PauseButton (-8, -9)]
-          backButton
-            | playbackSpeed w == 0 && state w > 0 = [BackButton (-7, -9)]
-            | otherwise = []
-          resetViewButton
-            | zoomFactor w /= 1 = [ResetViewButton (9, -6)]
-            | otherwise = []
+  where
+    commonControls = [
+        RestartButton (-9, -9),
+        TimeLabel (8, -9),
+        SpeedSlider (-3, -9),
+        FastForwardButton (-1, -9),
+        ZoomInButton (9, -7),
+        ZoomOutButton (9, -8)
+      ]
+    pauseDependentControls
+      | playbackSpeed w == 0 = [PlayButton (-8, -9), StepButton (-6, -9)]
+      | otherwise = [PauseButton (-8, -9)]
+    backButton
+      | playbackSpeed w == 0 && state w > 0 = [BackButton (-7, -9)]
+      | otherwise = []
+    resetViewButton
+      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -6)]
+      | otherwise = []
 
 animationOf f = runInspect animationControls 0 (+) (\_ r -> r) f
 
 simulationControls :: Wrapped w -> [Control w]
 simulationControls w
     | lastInteractionTime w > 5 = []
-    | playbackSpeed w == 0 = [PlayButton (-8, -9), StepButton (-2, -9),
-                              SpeedSlider (-6, -9), FastForwardButton (-4, -9),
-                              ZoomInButton (9, -7), ZoomOutButton (9, -8)]
-    | otherwise = [PauseButton (-8, -9), FastForwardButton (-4, -9),
-                   SpeedSlider (-6, -9), ZoomInButton (9, -7), ZoomOutButton (9, -8)]
+    | otherwise = [PanningLayer] ++ pauseDependentControls ++ commonControls ++
+                  resetViewButton
+  where
+    commonControls = [
+        FastForwardButton (-4, -9),
+        SpeedSlider (-6, -9),
+        ZoomInButton (9, -7),
+        ZoomOutButton (9, -8)
+      ]
+    pauseDependentControls
+      | playbackSpeed w == 0 = [PlayButton (-8, -9), StepButton (-2, -9)]
+      | otherwise = [PauseButton (-8, -9)]
+    resetViewButton
+      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -6)]
+      | otherwise = []
 
 statefulDebugControls :: Wrapped ([w],[w]) -> [Control ([w],[w])]
 statefulDebugControls w
     | lastInteractionTime w > 5 = []
-    | playbackSpeed w == 0 =
-        [PlayButton (-8, -9), SpeedSlider (-6, -9), HistorySlider (3, -9),
-         FastForwardButton (-4, -9), ZoomInButton (9, -7), ZoomOutButton (9, -8)] ++ advance ++ regress
-    | otherwise = [PauseButton (-8, -9), FastForwardButton (-4, -9),
-                   SpeedSlider (-6, -9), ZoomInButton (9, -7), ZoomOutButton (9, -8)]
+    | otherwise = panningLayer ++ pauseDependentControls ++ commonControls ++
+                  resetViewButton
   where   
     hasHistory = not (null (tail (fst (state w))))
     hasFuture  = not (null (snd (state w)))
     advance | hasFuture  = [RedoButton (5, -9)]
             | otherwise  = [StepButton (5, -9)]
-    regress | hasHistory = [UndoButton (1, -9), StartOverButton (0, -9)]
+    regress | hasHistory = [UndoButton (1, -9)]
             | otherwise  = []
+    commonControls = [
+        StartOverButton (0, -9),
+        FastForwardButton (-4, -9),
+        SpeedSlider (-6, -9),
+        ZoomInButton (9, -7),
+        ZoomOutButton (9, -8)
+      ]
+    pauseDependentControls
+      | playbackSpeed w == 0 = 
+            [PlayButton (-8, -9), HistorySlider (3, -9)] ++ advance ++ regress
+      | otherwise = [PauseButton (-8, -9)]
+    resetViewButton
+      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -6)]
+      | otherwise = []
+    panningLayer 
+      | playbackSpeed w == 0 = [PanningLayer]
+      | otherwise = []
 
 simulationOf initial step draw =
     runInspect simulationControls initial step (\_ r -> r) draw
 
 prependIfChanged :: (a -> a) -> ([a],[a]) -> ([a],[a])
-prependIfChanged f (x:xs, ys) = case x `seq` x' `seq` (reallyUnsafePtrEquality# x x') of
+prependIfChanged f (x:xs, ys) =
+    case x `seq` x' `seq` (reallyUnsafePtrEquality# x x') of
         0# -> (x' : x : xs, [])
         _  -> (x : xs, ys)
-      where x' = f x
+  where x' = f x
 
 debugSimulationOf initial simStep simDraw =
     runInspect statefulDebugControls ([initial],[]) step (\_ r -> r) draw

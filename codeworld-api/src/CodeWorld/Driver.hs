@@ -637,32 +637,25 @@ findTopShape ds (Drawings (dr:drs)) = do
 --------------------------------------------------------------------------------
 -- GHCJS implementation of drawing
 
+-- Debug Mode logic
+inspect ::
+       IO Picture -> (Bool -> IO ()) -> (Bool -> Maybe NodeId -> IO ()) -> IO ()
+inspect getPic handleActive highlight =
+    initDebugMode (handlePointRequest getPic) handleActive getPic highlight
+
+handlePointRequest :: IO Picture -> Point -> IO (Maybe NodeId)
+handlePointRequest getPic pt = do
+    drawing <- pictureToDrawing <$> getPic
+    findTopShapeFromPoint pt drawing
+
 foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
-    js_canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
+    canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
 
 foreign import javascript unsafe "$1.getContext('2d', { alpha: false })"
-    js_getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
-
-foreign import javascript unsafe "performance.now()"
-    js_getHighResTimestamp :: IO Double
-
-foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
-    js_initDebugMode :: Callback (JSVal -> IO JSVal)
-                     -> Callback (JSVal -> IO ())
-                     -> Callback (IO JSVal)
-                     -> Callback (JSVal -> JSVal -> IO ())
-                     -> Callback (JSVal -> JSVal -> IO ())
-                     -> IO ()
-
-foreign import javascript "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
-    js_deployHash :: IO JSVal
-
-foreign import javascript unsafe "cw$deterministic_math();"
-    enableDeterministicMath :: IO ()
+    getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
 
 foreign import javascript unsafe "showCanvas()"
-    js_showCanvas :: IO ()
-
+    showCanvas :: IO ()
 
 canvasFromElement :: Element -> Canvas.Canvas
 canvasFromElement = Canvas.Canvas . unElement
@@ -672,6 +665,9 @@ elementFromCanvas = pFromJSVal . jsval
 
 getTime :: IO Double
 getTime = (/ 1000) <$> js_getHighResTimestamp
+
+foreign import javascript unsafe "performance.now()"
+    js_getHighResTimestamp :: IO Double
 
 nextFrame :: IO Double
 nextFrame = waitForAnimationFrame >> getTime
@@ -693,17 +689,6 @@ drawCodeWorldLogo ds x y w h = do
                 CM.globalCompositeOperation "destination-in"
                 CM.drawImage (canvasFromElement canvas) 0 0 w h
             CM.drawImage img x y w h
-
--- Debug Mode logic
-inspect ::
-       IO Picture -> (Bool -> IO ()) -> (Bool -> Maybe NodeId -> IO ()) -> IO ()
-inspect getPic handleActive highlight =
-    initDebugMode (handlePointRequest getPic) handleActive getPic highlight
-
-handlePointRequest :: IO Picture -> Point -> IO (Maybe NodeId)
-handlePointRequest getPic pt = do
-    drawing <- pictureToDrawing <$> getPic
-    findTopShapeFromPoint pt drawing
 
 initDebugMode ::
        (Point -> IO (Maybe NodeId))
@@ -737,14 +722,14 @@ initDebugMode getnode setactive getpicture highlight = do
             offscreenCanvas <- Canvas.create 500 500
             setCanvasSize canvas canvas
             setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-            screen <- js_getCodeWorldContext (canvasFromElement canvas)
+            screen <- getCodeWorldContext (canvasFromElement canvas)
             rect <- getBoundingClientRect canvas
             withScreen (elementFromCanvas offscreenCanvas) rect $
                 drawFrame (node <> coordinatePlaneDrawing)
             rect <- getBoundingClientRect canvas
             cw <- ClientRect.getWidth rect
             ch <- ClientRect.getHeight rect
-            js_canvasDrawImage
+            canvasDrawImage
                 screen
                 (elementFromCanvas offscreenCanvas)
                 0
@@ -752,6 +737,14 @@ initDebugMode getnode setactive getpicture highlight = do
                 (round cw)
                 (round ch)
     js_initDebugMode getnodeCB setactiveCB getpictureCB highlightCB drawCB
+
+foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
+    js_initDebugMode :: Callback (JSVal -> IO JSVal)
+                     -> Callback (JSVal -> IO ())
+                     -> Callback (IO JSVal)
+                     -> Callback (JSVal -> JSVal -> IO ())
+                     -> Callback (JSVal -> JSVal -> IO ())
+                     -> IO ()
 
 picToObj :: Picture -> IO JSVal
 picToObj = fmap fst . flip State.runStateT 0 . picToObj'
@@ -1043,7 +1036,7 @@ withScreen :: Element -> ClientRect.ClientRect -> CanvasM a -> IO a
 withScreen canvas rect action = do
     cw <- ClientRect.getWidth rect
     ch <- ClientRect.getHeight rect
-    ctx <- js_getCodeWorldContext (canvasFromElement canvas)
+    ctx <- getCodeWorldContext (canvasFromElement canvas)
     runCanvasM ctx $ CM.saveRestore $ do
         CM.translate (realToFrac cw / 2) (realToFrac ch / 2)
         CM.scale (realToFrac cw / 500) (-realToFrac ch / 500)
@@ -1114,9 +1107,12 @@ display drawing =
             drawDrawing initialDS drawing
 
 drawingOf pic = display (pictureToDrawing pic)
+
 #endif
+
 --------------------------------------------------------------------------------
 -- Common event handling and core interaction code
+
 keyCodeToText :: Word -> Text
 keyCodeToText n =
     case n of
@@ -1232,9 +1228,12 @@ deriving instance Generic Fingerprint
 instance Serialize Fingerprint
 
 instance Serialize GameToken
+
+#ifdef ghcjs_HOST_OS
+
 --------------------------------------------------------------------------------
 -- GHCJS event handling and core interaction code
-#ifdef ghcjs_HOST_OS
+
 getMousePos :: IsMouseEvent e => Element -> EventM w e Point
 getMousePos canvas = do
     (ix, iy) <- mouseClientXY
@@ -1508,8 +1507,8 @@ sendClientMessage ws msg = WS.send (encodeClientMessage msg) ws
 initialGameState :: GameState s
 initialGameState = Main CUI.initial
 
-getDeployHash :: IO Text
-getDeployHash = pFromJSVal <$> js_deployHash
+foreign import javascript unsafe "cw$deterministic_math();"
+    enableDeterministicMath :: IO ()
 
 runGame ::
        GameToken
@@ -1522,7 +1521,7 @@ runGame ::
 runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     enableDeterministicMath
     let fullStepHandler dt = stepHandler dt . eventHandler (-1) (TimePassing dt)
-    js_showCanvas
+    showCanvas
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -1541,7 +1540,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
             eventHandler
             token
             currentGameState
-    screen <- js_getCodeWorldContext (canvasFromElement canvas)
+    screen <- getCodeWorldContext (canvasFromElement canvas)
     let go t0 lastFrame = do
             gs <- readMVar currentGameState
             let pic = gameDraw fullStepHandler drawHandler gs t0
@@ -1553,7 +1552,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
                 rect <- getBoundingClientRect canvas
                 cw <- ClientRect.getWidth rect
                 ch <- ClientRect.getHeight rect
-                js_canvasDrawImage
+                canvasDrawImage
                     screen
                     (elementFromCanvas offscreenCanvas)
                     0
@@ -1568,6 +1567,12 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     initialStateName <- makeStableName $! initialGameState
     go t0 nullFrame
 
+getDeployHash :: IO Text
+getDeployHash = pFromJSVal <$> js_getDeployHash
+
+foreign import javascript "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
+    js_getDeployHash :: IO JSVal
+
 run :: s
     -> (Double -> s -> s)
     -> (e -> s -> s)
@@ -1576,7 +1581,7 @@ run :: s
     -> IO (e -> IO (), IO s)
 run initial stepHandler eventHandler drawHandler injectTime = do
     let fullStepHandler dt = stepHandler dt . eventHandler (injectTime dt)
-    js_showCanvas
+    showCanvas
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -1595,7 +1600,7 @@ run initial stepHandler eventHandler drawHandler injectTime = do
                 modifyMVarIfNeeded currentState (return . eventHandler event)
             when changed $ void $ tryPutMVar eventHappened ()
         getState = readMVar currentState
-    screen <- js_getCodeWorldContext (canvasFromElement canvas)
+    screen <- getCodeWorldContext (canvasFromElement canvas)
     let go t0 lastFrame lastStateName needsTime = do
             pic <- drawHandler <$> readMVar currentState
             picFrame <- makeStableName $! pic
@@ -1606,7 +1611,7 @@ run initial stepHandler eventHandler drawHandler injectTime = do
                 rect <- getBoundingClientRect canvas
                 cw <- ClientRect.getWidth rect
                 ch <- ClientRect.getHeight rect
-                js_canvasDrawImage
+                canvasDrawImage
                     screen
                     (elementFromCanvas offscreenCanvas)
                     0
@@ -1678,14 +1683,14 @@ drawDebugState state drawing =
 
 runStatic :: Picture -> IO ()
 runStatic pic = do
-    js_showCanvas
+    showCanvas
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
     offscreenCanvas <- Canvas.create 500 500
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-    screen <- js_getCodeWorldContext (canvasFromElement canvas)
+    screen <- getCodeWorldContext (canvasFromElement canvas)
     debugState <- newMVar debugStateInit
     let draw =
             flip drawDebugState (pictureToDrawing pic) <$> readMVar debugState
@@ -1697,7 +1702,7 @@ runStatic pic = do
             rect <- getBoundingClientRect canvas
             cw <- ClientRect.getWidth rect
             ch <- ClientRect.getHeight rect
-            js_canvasDrawImage
+            canvasDrawImage
                 screen
                 (elementFromCanvas offscreenCanvas)
                 0
@@ -1847,9 +1852,12 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
                 go (m + 1) $ Drawings drs
     mapLeft :: (a -> b) -> Either a c -> Either b c
     mapLeft f = either (Left . f) Right
+
+#else
+
 --------------------------------------------------------------------------------
 -- Stand-Alone event handling and core interaction code
-#else
+
 fromButtonNum :: Int -> Maybe MouseButton
 fromButtonNum 1 = Just LeftButton
 fromButtonNum 2 = Just MiddleButton
@@ -1961,6 +1969,7 @@ runGame ::
     -> (Int -> s -> Picture)
     -> IO ()
 runGame = error "game API unimplemented in stand-alone interface mode"
+
 #endif
 
 --------------------------------------------------------------------------------

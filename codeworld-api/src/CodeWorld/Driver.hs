@@ -757,287 +757,50 @@ picToObj :: Picture -> IO JSVal
 picToObj = fmap fst . flip State.runStateT 0 . picToObj'
 
 picToObj' :: Picture -> State.StateT Int IO JSVal
-picToObj' pic =
-    case pic of
-        SolidPolygon cs pts -> do
-            obj <- init "solidPolygon"
-            ptsJS <- pointsToArr pts
-            setProps [("points", ptsJS), ("smooth", pToJSVal False)] obj
-            retVal obj
-        SolidClosedCurve cs pts -> do
-            obj <- init "solidClosedCurve"
-            ptsJS <- pointsToArr pts
-            setProps [("points", ptsJS), ("smooth", pToJSVal True)] obj
-            retVal obj
-        Polygon cs pts -> do
-            obj <- init "polygon"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal (0 :: Double))
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        ThickPolygon cs pts w -> do
-            obj <- init "thickPolygon"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal w)
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        Rectangle _ w h -> do
-            obj <- init "rectangle"
-            setProps
-                [ ("width",  pToJSVal w)
-                , ("height", pToJSVal h)
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        SolidRectangle _ w h -> do
-            obj <- init "solidRectangle"
-            setProps 
-                [ ("width",  pToJSVal w)
-                , ("height", pToJSVal h)
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        ThickRectangle _ lw w h-> do
-            obj <- init "thickRectangle"
-            setProps
-                [
-                  ("linewidth", pToJSVal lw)
-                , ("width",  pToJSVal w)
-                , ("height", pToJSVal h)
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        ClosedCurve cs pts -> do
-            obj <- init "closedCurve"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal (0 :: Double))
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal True)
-                ]
-                obj
-            retVal obj
-        ThickClosedCurve cs pts w -> do
-            obj <- init "thickClosedCurve"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal w)
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal True)
-                ]
-                obj
-            retVal obj
-        Circle cs r -> do
-            obj <- init "circle"
-            setProps
-                [ ("radius", pToJSVal r)
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        SolidCircle cs r -> do
-            obj <- init "solidCircle"
-            setProps
-                [ ("radius", pToJSVal r)
-                , ("closed", pToJSVal True)
-                ]
-                obj
-            retVal obj
-        ThickCircle cs lw r -> do
-            obj <- init "thickCircle"
-            setProps
-                [ ("radius", pToJSVal r)
-                , ("linewidth", pToJSVal lw)
-                , ("endAngle", pToJSVal True)
-                , ("radius", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        Polyline cs pts -> do
-            obj <- init "polyline"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal (0 :: Double))
-                , ("closed", pToJSVal False)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        ThickPolyline cs pts w -> do
-            obj <- init "thickPolyline"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal w)
-                , ("closed", pToJSVal False)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        Curve cs pts -> do
-            obj <- init "curve"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal (0 :: Double))
-                , ("closed", pToJSVal False)
-                , ("smooth", pToJSVal True)
-                ]
-                obj
-            retVal obj
-        ThickCurve cs pts w -> do
-            obj <- init "thickCurve"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal w)
-                , ("closed", pToJSVal False)
-                , ("smooth", pToJSVal True)
-                ]
-                obj
-            retVal obj
-        Sector cs b e r -> do
-            obj <- init "sector"
-            setProps
-                [ ("startAngle", pToJSVal b)
-                , ("endAngle", pToJSVal e)
-                , ("radius", pToJSVal r)
-                ]
-                obj
-            retVal obj
-        Arc cs b e r -> do
-            obj <- init "arc"
-            setProps
-                [ ("startAngle", pToJSVal b)
-                , ("endAngle", pToJSVal e)
-                , ("radius", pToJSVal r)
-                , ("width", pToJSVal (0 :: Double))
-                ]
-                obj
-            retVal obj
-        ThickArc cs b e r w -> do
-            obj <- init "thickArc"
-            setProps
-                [ ("startAngle", pToJSVal b)
-                , ("endAngle", pToJSVal e)
-                , ("radius", pToJSVal r)
-                , ("width", pToJSVal w)
-                ]
-                obj
-            retVal obj
-        Lettering cs txt -> do
-            obj <- init "lettering"
-            setProps
-                [ ("font", pToJSVal $ fontString Plain Serif)
-                , ("text", pToJSVal txt)
-                ]
-                obj
-            retVal obj
-        StyledLettering cs style font txt -> do
-            obj <- init "styledLettering"
-            setProps
-                [ ("font", pToJSVal $ fontString style font)
-                , ("text", pToJSVal txt)
-                ]
-                obj
-            retVal obj
-        Color cs (RGBA r g b a) p -> do
-            obj <- init "color"
-            picJS <- picToObj' p
-            setProps
-                [ ("picture", picJS)
-                , ("red", pToJSVal r)
-                , ("green", pToJSVal g)
-                , ("blue", pToJSVal b)
-                , ("alpha", pToJSVal a)
-                ]
-                obj
-            retVal obj
-        Translate cs x y p -> do
-            obj <- init "translate"
-            picJS <- picToObj' p
-            setProps
-                [("picture", picJS), ("x", pToJSVal x), ("y", pToJSVal y)]
-                obj
-            retVal obj
-        Scale cs x y p -> do
-            obj <- init "scale"
-            picJS <- picToObj' p
-            setProps
-                [("picture", picJS), ("x", pToJSVal x), ("y", pToJSVal y)]
-                obj
-            retVal obj
-        Dilate cs k p -> do
-            obj <- init "scale"
-            picJS <- picToObj' p
-            setProps
-                [("picture", picJS), ("k", pToJSVal k)]
-                obj
-            retVal obj
-        Rotate cs angle p -> do
-            obj <- init "rotate"
-            picJS <- picToObj' p
-            setProps [("picture", picJS), ("angle", pToJSVal angle)] obj
-            retVal obj
-        Pictures ps -> do
-            obj <- init "pictures"
-            arr <- liftIO $ Array.create
-            let push = liftIO . flip Array.push arr
-            mapM (\p -> picToObj' p >>= push) ps
-            setProps [("pictures", unsafeCoerce arr)] obj
-            retVal obj
-        Logo cs -> init "logo" >>= retVal
-        Blank cs -> init "blank" >>= retVal
-        CoordinatePlane cs -> init "coordinatePlane" >>= retVal
+picToObj' pic = objToJSVal <$> case pic of
+    Pictures ps -> mkNodeWithChildren ps
+    Color cs (RGBA r g b a) p -> mkNodeWithChild p
+    Translate cs x y p -> mkNodeWithChild p
+    Scale cs x y p -> mkNodeWithChild p
+    Dilate cs k p -> mkNodeWithChild p
+    Rotate cs angle p -> mkNodeWithChild p
+    _ -> mkSimpleNode
   where
-    incId :: State.StateT Int IO Int
-    incId = do
-        currentId <- State.get
-        State.put (currentId + 1)
-        return currentId
-    init :: JSString -> State.StateT Int IO Object
-    init tp = do
+    mkSimpleNode :: State.StateT Int IO Object
+    mkSimpleNode = do
         obj <- liftIO create
-        liftIO $ setProp "type" (pToJSVal tp) obj
-        id <- incId
-        liftIO $ setProp "id" (pToJSVal id) obj
-        liftIO $ setCallInfo pic obj
-        return obj
-    objToJSVal = unsafeCoerce :: Object -> JSVal
-    retVal :: Object -> State.StateT Int IO JSVal
-    retVal = return . objToJSVal
-    pointsToArr :: [Point] -> State.StateT Int IO JSVal
-    pointsToArr pts =
+        id <- do
+            currentId <- State.get
+            State.put (currentId + 1)
+            return currentId
         liftIO $ do
-            let go [] _ = return ()
-                go ((x, y):pts) arr = do
-                    Array.push (pToJSVal x) arr
-                    Array.push (pToJSVal y) arr
-                    go pts arr
-            arr <- Array.create
-            go pts arr
-            return $ (unsafeCoerce arr :: JSVal)
-    setProps xs obj = liftIO $ void $ mapM (\(s, v) -> setProp s v obj) xs
+            setProp "id" (pToJSVal id) obj
+            setProp "name" (pToJSVal $ (trim 80 . describePicture) pic) obj
+            case getPictureSrcLoc pic of
+                Just loc -> do
+                    setProp "startLine" (pToJSVal $ srcLocStartLine loc) obj
+                    setProp "startCol" (pToJSVal $ srcLocStartCol loc) obj
+                    setProp "endLine" (pToJSVal $ srcLocEndLine loc) obj
+                    setProp "endCol" (pToJSVal $ srcLocEndCol loc) obj
+                Nothing -> return ()
+        return obj
+
+    mkNodeWithChild :: Picture -> State.StateT Int IO Object
+    mkNodeWithChild p = do
+        obj <- mkSimpleNode
+        subPic <- picToObj' p
+        liftIO $ setProp "picture" subPic obj
+        return obj
+
+    mkNodeWithChildren :: [Picture] -> State.StateT Int IO Object
+    mkNodeWithChildren ps = do
+        obj <- mkSimpleNode
+        arr <- liftIO $ Array.create
+        mapM_ (\p -> picToObj' p >>= liftIO . flip Array.push arr) ps
+        liftIO $ setProp "pictures" (unsafeCoerce arr) obj
+        return obj
+
+    objToJSVal = unsafeCoerce :: Object -> JSVal
 
 trim :: Int -> String -> String
 trim x y = let mid = (x - 2) `div` 2
@@ -1224,17 +987,6 @@ describePicture (Dilate _ k _) =
 describePicture (Logo _) = "codeWorldLogo"
 describePicture (CoordinatePlane _) = "coordinatePlane"
 describePicture (Pictures _) = "pictures"
-
-setCallInfo :: Picture -> Object -> IO ()
-setCallInfo pic obj = do
-    case getPictureSrcLoc pic of
-        Just loc -> do
-            setProp "name" (pToJSVal $ (trim 80 . describePicture) pic) obj
-            setProp "startLine" (pToJSVal $ srcLocStartLine loc) obj
-            setProp "startCol" (pToJSVal $ srcLocStartCol loc) obj
-            setProp "endLine" (pToJSVal $ srcLocEndLine loc) obj
-            setProp "endCol" (pToJSVal $ srcLocEndCol loc) obj
-        Nothing -> return ()
 
 getPictureSrcLoc :: Picture -> Maybe SrcLoc
 getPictureSrcLoc (SolidPolygon loc _) = Just loc

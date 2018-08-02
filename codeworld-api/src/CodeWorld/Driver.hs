@@ -82,7 +82,9 @@ import System.Mem.StableName
 import System.Random
 import Text.Printf
 import Text.Read
+
 #ifdef ghcjs_HOST_OS
+
 import CodeWorld.Message
 import CodeWorld.Prediction
 import qualified Control.Monad.Trans.State as State
@@ -116,11 +118,14 @@ import qualified JavaScript.Web.Location as Loc
 import qualified JavaScript.Web.MessageEvent as WS
 import qualified JavaScript.Web.WebSocket as WS
 import Unsafe.Coerce
+
 #else
+
 import Data.Time.Clock
 import qualified Graphics.Blank as Canvas
 import Graphics.Blank (Canvas)
 import Text.Printf
+
 #endif
 
 --------------------------------------------------------------------------------
@@ -402,32 +407,6 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
             , k /= 0
             ]
 
---------------------------------------------------------------------------------
--- GHCJS implementation of drawing
-#ifdef ghcjs_HOST_OS
-foreign import javascript unsafe
-               "$1.drawImage($2, $3, $4, $5, $6);" js_canvasDrawImage ::
-               Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
-
-foreign import javascript unsafe
-               "$1.getContext('2d', { alpha: false })" js_getCodeWorldContext ::
-               Canvas.Canvas -> IO Canvas.Context
-
-foreign import javascript unsafe "performance.now()"
-               js_getHighResTimestamp :: IO Double
-
-canvasFromElement :: Element -> Canvas.Canvas
-canvasFromElement = Canvas.Canvas . unElement
-
-elementFromCanvas :: Canvas.Canvas -> Element
-elementFromCanvas = pFromJSVal . jsval
-
-getTime :: IO Double
-getTime = (/ 1000) <$> js_getHighResTimestamp
-
-nextFrame :: IO Double
-nextFrame = waitForAnimationFrame >> getTime
-
 withDS :: DrawState -> CanvasM a -> CanvasM a
 withDS (ta, tb, tc, td, te, tf, col) action = CM.saveRestore $ do
     CM.transform ta tb tc td te tf
@@ -452,6 +431,251 @@ applyColor ds =
                 (round $ b * 255)
                 a
 
+type Drawer = DrawState -> DrawMethods
+
+data DrawMethods = DrawMethods
+    { drawShape :: CanvasM ()
+    , shapeContains :: CanvasM Bool
+    }
+
+polygonDrawer ps smooth ds =
+    DrawMethods
+    { drawShape = do
+          trace
+          applyColor ds
+          CM.fill
+    , shapeContains = do
+          trace
+          CM.isPointInPath (0, 0)
+    }
+  where
+    trace = withDS ds $ followPath ps True smooth
+
+pathDrawer ps w closed smooth ds =
+    DrawMethods
+    { drawShape = drawFigure ds w $ followPath ps closed smooth
+    , shapeContains =
+          do let width =
+                     if w == 0
+                         then 0.3
+                         else w
+             drawFigure ds width $ followPath ps closed smooth
+             CM.isPointInStroke (0, 0)
+    }
+
+sectorDrawer b e r ds =
+    DrawMethods
+    { drawShape = do
+          trace
+          applyColor ds
+          CM.fill
+    , shapeContains = do
+          trace
+          CM.isPointInPath (0, 0)
+    }
+  where
+    trace =
+        withDS ds $ do
+            CM.arc 0 0 (25 * abs r) b e (b > e)
+            CM.lineTo (0, 0)
+
+arcDrawer b e r w ds =
+    DrawMethods
+    { drawShape =
+          drawFigure ds w $ CM.arc 0 0 (25 * abs r) b e (b > e)
+    , shapeContains =
+          do let width =
+                     if w == 0
+                         then 0.3
+                         else w
+             CM.lineWidth (width * 25)
+             drawFigure ds width $
+                 CM.arc 0 0 (25 * abs r) b e (b > e)
+             CM.isPointInStroke (0, 0)
+    }
+
+textDrawer sty fnt txt ds =
+    DrawMethods
+    { drawShape =
+          withDS ds $ do
+              CM.scale 1 (-1)
+              applyColor ds
+              CM.font (fontString sty fnt)
+              CM.fillText txt (0, 0)
+    , shapeContains =
+          do CM.font (fontString sty fnt)
+             width <- CM.measureText txt
+             let height = 25 -- constant, defined in fontString
+             withDS ds $
+                 CM.rect ((-0.5) * width) ((-0.5) * height) width height
+             CM.isPointInPath (0, 0)
+    }
+
+logoDrawer ds =
+    DrawMethods
+    { drawShape =
+          withDS ds $ do
+              CM.scale 1 (-1)
+              drawCodeWorldLogo ds (-221) (-91) 442 182
+    , shapeContains =
+          withDS ds $ do
+              CM.rect (-221) (-91) 442 182
+              CM.isPointInPath (0, 0)
+    }
+
+coordinatePlaneDrawer ds =
+    DrawMethods
+    { drawShape = drawDrawing ds coordinatePlaneDrawing
+    , shapeContains = fst <$> findTopShape ds coordinatePlaneDrawing
+    }
+
+followPath :: [Point] -> Bool -> Bool -> CanvasM ()
+followPath [] closed _ = return ()
+followPath [p1] closed _ = return ()
+followPath ((sx, sy):ps) closed False = do
+    CM.moveTo (25 * sx, 25 * sy)
+    forM_ ps $ \(x, y) -> CM.lineTo (25 * x, 25 * y)
+    when closed $ CM.closePath
+followPath [p1, p2] False True = followPath [p1, p2] False False
+followPath ps False True = do
+    let [(x1, y1), (x2, y2), (x3, y3)] = take 3 ps
+        dprev = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
+        dnext = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
+        p = dprev / (dprev + dnext)
+        cx = x2 + p * (x1 - x3) / 2
+        cy = y2 + p * (y1 - y3) / 2
+    CM.moveTo (25 * x1, 25 * y1)
+    CM.quadraticCurveTo (25 * cx, 25 * cy) (25 * x2, 25 * y2)
+    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $ \((x1, y1), (x2, y2), (x3, y3), (x4, y4)) -> do
+        let dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
+            d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
+            d2 = sqrt ((x4 - x3) ^ 2 + (y4 - y3) ^ 2)
+            p = d1 / (d1 + d2)
+            r = d1 / (dp + d1)
+            cx1 = x2 + r * (x3 - x1) / 2
+            cy1 = y2 + r * (y3 - y1) / 2
+            cx2 = x3 + p * (x2 - x4) / 2
+            cy2 = y3 + p * (y2 - y4) / 2
+        CM.bezierCurveTo
+            (25 * cx1, 25 * cy1)
+            (25 * cx2, 25 * cy2)
+            (25 * x3,  25 * y3)
+    let [(x1, y1), (x2, y2), (x3, y3)] = reverse $ take 3 $ reverse ps
+        dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
+        d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
+        r = d1 / (dp + d1)
+        cx = x2 + r * (x3 - x1) / 2
+        cy = y2 + r * (y3 - y1) / 2
+    CM.quadraticCurveTo (25 * cx, 25 * cy) (25 * x3, 25 * y3)
+followPath ps@(_:(sx, sy):_) True True = do
+    CM.moveTo (25 * sx, 25 * sy)
+    let rep = cycle ps
+    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $ \((x1, y1), (x2, y2), (x3, y3), (x4, y4)) -> do
+        let dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
+            d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
+            d2 = sqrt ((x4 - x3) ^ 2 + (y4 - y3) ^ 2)
+            p = d1 / (d1 + d2)
+            r = d1 / (dp + d1)
+            cx1 = x2 + r * (x3 - x1) / 2
+            cy1 = y2 + r * (y3 - y1) / 2
+            cx2 = x3 + p * (x2 - x4) / 2
+            cy2 = y3 + p * (y2 - y4) / 2
+        CM.bezierCurveTo
+            (25 * cx1, 25 * cy1)
+            (25 * cx2, 25 * cy2)
+            (25 * x3,  25 * y3)
+    CM.closePath
+
+drawFigure :: DrawState -> Double -> CanvasM () -> CanvasM ()
+drawFigure ds w figure = do
+    withDS ds $ do
+        figure
+        when (w /= 0) $ do
+            CM.lineWidth (25 * w)
+            applyColor ds
+            CM.stroke
+    when (w == 0) $ do
+        CM.lineWidth 1
+        applyColor ds
+        CM.stroke
+
+fontString :: TextStyle -> Font -> Text
+fontString style font = stylePrefix style <> "25px " <> fontName font
+  where
+    stylePrefix Plain = ""
+    stylePrefix Bold = "bold "
+    stylePrefix Italic = "italic "
+    fontName SansSerif = "sans-serif"
+    fontName Serif = "serif"
+    fontName Monospace = "monospace"
+    fontName Handwriting = "cursive"
+    fontName Fancy = "fantasy"
+    fontName (NamedFont txt) = "\"" <> T.filter (/= '"') txt <> "\""
+
+drawDrawing :: DrawState -> Drawing -> CanvasM ()
+drawDrawing ds (Shape shape) = drawShape $ shape ds
+drawDrawing ds (Transformation f d) = drawDrawing (f ds) d
+drawDrawing ds (Drawings drs) = mapM_ (drawDrawing ds) (reverse drs)
+
+findTopShape :: DrawState -> Drawing -> CanvasM (Bool, Int)
+findTopShape ds (Shape drawer) = do
+    contained <- shapeContains $ drawer ds
+    case contained of
+        True -> return (True, 0)
+        False -> return (False, 1)
+findTopShape ds (Transformation f d) =
+    fmap (+ 1) <$> findTopShape (f ds) d
+findTopShape ds (Drawings []) = return (False, 1)
+findTopShape ds (Drawings (dr:drs)) = do
+    (found, count) <- findTopShape ds dr
+    case found of
+        True -> return (True, count + 1)
+        False -> fmap (+ count) <$> findTopShape ds (Drawings drs)
+
+#ifdef ghcjs_HOST_OS
+
+--------------------------------------------------------------------------------
+-- GHCJS implementation of drawing
+
+foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
+    js_canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
+
+foreign import javascript unsafe "$1.getContext('2d', { alpha: false })"
+    js_getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
+
+foreign import javascript unsafe "performance.now()"
+    js_getHighResTimestamp :: IO Double
+
+foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
+    js_initDebugMode :: Callback (JSVal -> IO JSVal)
+                     -> Callback (JSVal -> IO ())
+                     -> Callback (IO JSVal)
+                     -> Callback (JSVal -> JSVal -> IO ())
+                     -> Callback (JSVal -> JSVal -> IO ())
+                     -> IO ()
+
+foreign import javascript "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
+    js_deployHash :: IO JSVal
+
+foreign import javascript unsafe "cw$deterministic_math();"
+    enableDeterministicMath :: IO ()
+
+foreign import javascript unsafe "showCanvas()"
+    js_showCanvas :: IO ()
+
+
+canvasFromElement :: Element -> Canvas.Canvas
+canvasFromElement = Canvas.Canvas . unElement
+
+elementFromCanvas :: Canvas.Canvas -> Element
+elementFromCanvas = pFromJSVal . jsval
+
+getTime :: IO Double
+getTime = (/ 1000) <$> js_getHighResTimestamp
+
+nextFrame :: IO Double
+nextFrame = waitForAnimationFrame >> getTime
+
 drawCodeWorldLogo ::
        DrawState -> Int -> Int -> Int -> Int -> CanvasM ()
 drawCodeWorldLogo ds x y w h = do
@@ -471,9 +695,6 @@ drawCodeWorldLogo ds x y w h = do
             CM.drawImage img x y w h
 
 -- Debug Mode logic
-inspectStatic :: Picture -> IO ()
-inspectStatic pic = inspect (return pic) (\_ -> return ()) (\_ _ -> return ())
-
 inspect ::
        IO Picture -> (Bool -> IO ()) -> (Bool -> Maybe NodeId -> IO ()) -> IO ()
 inspect getPic handleActive highlight =
@@ -536,287 +757,50 @@ picToObj :: Picture -> IO JSVal
 picToObj = fmap fst . flip State.runStateT 0 . picToObj'
 
 picToObj' :: Picture -> State.StateT Int IO JSVal
-picToObj' pic =
-    case pic of
-        SolidPolygon cs pts -> do
-            obj <- init "solidPolygon"
-            ptsJS <- pointsToArr pts
-            setProps [("points", ptsJS), ("smooth", pToJSVal False)] obj
-            retVal obj
-        SolidClosedCurve cs pts -> do
-            obj <- init "solidClosedCurve"
-            ptsJS <- pointsToArr pts
-            setProps [("points", ptsJS), ("smooth", pToJSVal True)] obj
-            retVal obj
-        Polygon cs pts -> do
-            obj <- init "polygon"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal (0 :: Double))
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        ThickPolygon cs pts w -> do
-            obj <- init "thickPolygon"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal w)
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        Rectangle _ w h -> do
-            obj <- init "rectangle"
-            setProps
-                [ ("width",  pToJSVal w)
-                , ("height", pToJSVal h)
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        SolidRectangle _ w h -> do
-            obj <- init "solidRectangle"
-            setProps 
-                [ ("width",  pToJSVal w)
-                , ("height", pToJSVal h)
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        ThickRectangle _ lw w h-> do
-            obj <- init "thickRectangle"
-            setProps
-                [
-                  ("linewidth", pToJSVal lw)
-                , ("width",  pToJSVal w)
-                , ("height", pToJSVal h)
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        ClosedCurve cs pts -> do
-            obj <- init "closedCurve"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal (0 :: Double))
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal True)
-                ]
-                obj
-            retVal obj
-        ThickClosedCurve cs pts w -> do
-            obj <- init "thickClosedCurve"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal w)
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal True)
-                ]
-                obj
-            retVal obj
-        Circle cs r -> do
-            obj <- init "circle"
-            setProps
-                [ ("radius", pToJSVal r)
-                , ("closed", pToJSVal True)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        SolidCircle cs r -> do
-            obj <- init "solidCircle"
-            setProps
-                [ ("radius", pToJSVal r)
-                , ("closed", pToJSVal True)
-                ]
-                obj
-            retVal obj
-        ThickCircle cs lw r -> do
-            obj <- init "thickCircle"
-            setProps
-                [ ("radius", pToJSVal r)
-                , ("linewidth", pToJSVal lw)
-                , ("endAngle", pToJSVal True)
-                , ("radius", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        Polyline cs pts -> do
-            obj <- init "polyline"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal (0 :: Double))
-                , ("closed", pToJSVal False)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        ThickPolyline cs pts w -> do
-            obj <- init "thickPolyline"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal w)
-                , ("closed", pToJSVal False)
-                , ("smooth", pToJSVal False)
-                ]
-                obj
-            retVal obj
-        Curve cs pts -> do
-            obj <- init "curve"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal (0 :: Double))
-                , ("closed", pToJSVal False)
-                , ("smooth", pToJSVal True)
-                ]
-                obj
-            retVal obj
-        ThickCurve cs pts w -> do
-            obj <- init "thickCurve"
-            ptsJS <- pointsToArr pts
-            setProps
-                [ ("points", ptsJS)
-                , ("width", pToJSVal w)
-                , ("closed", pToJSVal False)
-                , ("smooth", pToJSVal True)
-                ]
-                obj
-            retVal obj
-        Sector cs b e r -> do
-            obj <- init "sector"
-            setProps
-                [ ("startAngle", pToJSVal b)
-                , ("endAngle", pToJSVal e)
-                , ("radius", pToJSVal r)
-                ]
-                obj
-            retVal obj
-        Arc cs b e r -> do
-            obj <- init "arc"
-            setProps
-                [ ("startAngle", pToJSVal b)
-                , ("endAngle", pToJSVal e)
-                , ("radius", pToJSVal r)
-                , ("width", pToJSVal (0 :: Double))
-                ]
-                obj
-            retVal obj
-        ThickArc cs b e r w -> do
-            obj <- init "thickArc"
-            setProps
-                [ ("startAngle", pToJSVal b)
-                , ("endAngle", pToJSVal e)
-                , ("radius", pToJSVal r)
-                , ("width", pToJSVal w)
-                ]
-                obj
-            retVal obj
-        Lettering cs txt -> do
-            obj <- init "lettering"
-            setProps
-                [ ("font", pToJSVal $ fontString Plain Serif)
-                , ("text", pToJSVal txt)
-                ]
-                obj
-            retVal obj
-        StyledLettering cs style font txt -> do
-            obj <- init "styledLettering"
-            setProps
-                [ ("font", pToJSVal $ fontString style font)
-                , ("text", pToJSVal txt)
-                ]
-                obj
-            retVal obj
-        Color cs (RGBA r g b a) p -> do
-            obj <- init "color"
-            picJS <- picToObj' p
-            setProps
-                [ ("picture", picJS)
-                , ("red", pToJSVal r)
-                , ("green", pToJSVal g)
-                , ("blue", pToJSVal b)
-                , ("alpha", pToJSVal a)
-                ]
-                obj
-            retVal obj
-        Translate cs x y p -> do
-            obj <- init "translate"
-            picJS <- picToObj' p
-            setProps
-                [("picture", picJS), ("x", pToJSVal x), ("y", pToJSVal y)]
-                obj
-            retVal obj
-        Scale cs x y p -> do
-            obj <- init "scale"
-            picJS <- picToObj' p
-            setProps
-                [("picture", picJS), ("x", pToJSVal x), ("y", pToJSVal y)]
-                obj
-            retVal obj
-        Dilate cs k p -> do
-            obj <- init "scale"
-            picJS <- picToObj' p
-            setProps
-                [("picture", picJS), ("k", pToJSVal k)]
-                obj
-            retVal obj
-        Rotate cs angle p -> do
-            obj <- init "rotate"
-            picJS <- picToObj' p
-            setProps [("picture", picJS), ("angle", pToJSVal angle)] obj
-            retVal obj
-        Pictures ps -> do
-            obj <- init "pictures"
-            arr <- liftIO $ Array.create
-            let push = liftIO . flip Array.push arr
-            mapM (\p -> picToObj' p >>= push) ps
-            setProps [("pictures", unsafeCoerce arr)] obj
-            retVal obj
-        Logo cs -> init "logo" >>= retVal
-        Blank cs -> init "blank" >>= retVal
-        CoordinatePlane cs -> init "coordinatePlane" >>= retVal
+picToObj' pic = objToJSVal <$> case pic of
+    Pictures ps -> mkNodeWithChildren ps
+    Color cs (RGBA r g b a) p -> mkNodeWithChild p
+    Translate cs x y p -> mkNodeWithChild p
+    Scale cs x y p -> mkNodeWithChild p
+    Dilate cs k p -> mkNodeWithChild p
+    Rotate cs angle p -> mkNodeWithChild p
+    _ -> mkSimpleNode
   where
-    incId :: State.StateT Int IO Int
-    incId = do
-        currentId <- State.get
-        State.put (currentId + 1)
-        return currentId
-    init :: JSString -> State.StateT Int IO Object
-    init tp = do
+    mkSimpleNode :: State.StateT Int IO Object
+    mkSimpleNode = do
         obj <- liftIO create
-        liftIO $ setProp "type" (pToJSVal tp) obj
-        id <- incId
-        liftIO $ setProp "id" (pToJSVal id) obj
-        liftIO $ setCallInfo pic obj
-        return obj
-    objToJSVal = unsafeCoerce :: Object -> JSVal
-    retVal :: Object -> State.StateT Int IO JSVal
-    retVal = return . objToJSVal
-    pointsToArr :: [Point] -> State.StateT Int IO JSVal
-    pointsToArr pts =
+        id <- do
+            currentId <- State.get
+            State.put (currentId + 1)
+            return currentId
         liftIO $ do
-            let go [] _ = return ()
-                go ((x, y):pts) arr = do
-                    Array.push (pToJSVal x) arr
-                    Array.push (pToJSVal y) arr
-                    go pts arr
-            arr <- Array.create
-            go pts arr
-            return $ (unsafeCoerce arr :: JSVal)
-    setProps xs obj = liftIO $ void $ mapM (\(s, v) -> setProp s v obj) xs
+            setProp "id" (pToJSVal id) obj
+            setProp "name" (pToJSVal $ (trim 80 . describePicture) pic) obj
+            case getPictureSrcLoc pic of
+                Just loc -> do
+                    setProp "startLine" (pToJSVal $ srcLocStartLine loc) obj
+                    setProp "startCol" (pToJSVal $ srcLocStartCol loc) obj
+                    setProp "endLine" (pToJSVal $ srcLocEndLine loc) obj
+                    setProp "endCol" (pToJSVal $ srcLocEndCol loc) obj
+                Nothing -> return ()
+        return obj
+
+    mkNodeWithChild :: Picture -> State.StateT Int IO Object
+    mkNodeWithChild p = do
+        obj <- mkSimpleNode
+        subPic <- picToObj' p
+        liftIO $ setProp "picture" subPic obj
+        return obj
+
+    mkNodeWithChildren :: [Picture] -> State.StateT Int IO Object
+    mkNodeWithChildren ps = do
+        obj <- mkSimpleNode
+        arr <- liftIO $ Array.create
+        mapM_ (\p -> picToObj' p >>= liftIO . flip Array.push arr) ps
+        liftIO $ setProp "pictures" (unsafeCoerce arr) obj
+        return obj
+
+    objToJSVal = unsafeCoerce :: Object -> JSVal
 
 trim :: Int -> String -> String
 trim x y = let mid = (x - 2) `div` 2
@@ -1004,17 +988,6 @@ describePicture (Logo _) = "codeWorldLogo"
 describePicture (CoordinatePlane _) = "coordinatePlane"
 describePicture (Pictures _) = "pictures"
 
-setCallInfo :: Picture -> Object -> IO ()
-setCallInfo pic obj = do
-    case getPictureSrcLoc pic of
-        Just loc -> do
-            setProp "name" (pToJSVal $ (trim 80 . describePicture) pic) obj
-            setProp "startLine" (pToJSVal $ srcLocStartLine loc) obj
-            setProp "startCol" (pToJSVal $ srcLocStartCol loc) obj
-            setProp "endLine" (pToJSVal $ srcLocEndLine loc) obj
-            setProp "endCol" (pToJSVal $ srcLocEndCol loc) obj
-        Nothing -> return ()
-
 getPictureSrcLoc :: Picture -> Maybe SrcLoc
 getPictureSrcLoc (SolidPolygon loc _) = Just loc
 getPictureSrcLoc (SolidClosedCurve loc _) = Just loc
@@ -1060,224 +1033,6 @@ findTopShapeFromPoint (x, y) pic = do
         True -> return $ Just node
         False -> return Nothing
 
-findTopShape :: DrawState -> Drawing -> CanvasM (Bool, Int)
-findTopShape ds (Shape drawer) = do
-    contained <- shapeContains $ drawer ds
-    case contained of
-        True -> return (True, 0)
-        False -> return (False, 1)
-findTopShape ds (Transformation f d) =
-    map2 (+ 1) $ findTopShape (f ds) d
-findTopShape ds (Drawings []) = return (False, 1)
-findTopShape ds (Drawings (dr:drs)) = do
-    (found, count) <- findTopShape ds dr
-    case found of
-        True -> return (True, count + 1)
-        False -> map2 (+ count) $ findTopShape ds (Drawings drs)
-
-map2 :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
-map2 = fmap . fmap
-
-foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
-               js_initDebugMode :: Callback (JSVal -> IO JSVal)
-                                -> Callback (JSVal -> IO ())
-                                -> Callback (IO JSVal)
-                                -> Callback (JSVal -> JSVal -> IO ())
-                                -> Callback (JSVal -> JSVal -> IO ())
-                                -> IO ()
-
------------------------------------------------------------------------------------
--- GHCJS Drawing
-type Drawer = DrawState -> DrawMethods
-
-data DrawMethods = DrawMethods
-    { drawShape :: CanvasM ()
-    , shapeContains :: CanvasM Bool
-    }
-
-polygonDrawer ps smooth ds =
-    DrawMethods
-    { drawShape = do
-          trace
-          applyColor ds
-          CM.fill
-    , shapeContains = do
-          trace
-          CM.isPointInPath (0, 0)
-    }
-  where
-    trace = withDS ds $ followPath ps True smooth
-
-pathDrawer ps w closed smooth ds =
-    DrawMethods
-    { drawShape = drawFigure ds w $ followPath ps closed smooth
-    , shapeContains =
-          do let width =
-                     if w == 0
-                         then 0.3
-                         else w
-             drawFigure ds width $ followPath ps closed smooth
-             CM.isPointInStroke (0, 0)
-    }
-
-sectorDrawer b e r ds =
-    DrawMethods
-    { drawShape = do
-          trace
-          applyColor ds
-          CM.fill
-    , shapeContains = do
-          trace
-          CM.isPointInPath (0, 0)
-    }
-  where
-    trace =
-        withDS ds $ do
-            CM.arc 0 0 (25 * abs r) b e (b > e)
-            CM.lineTo (0, 0)
-
-arcDrawer b e r w ds =
-    DrawMethods
-    { drawShape =
-          drawFigure ds w $ CM.arc 0 0 (25 * abs r) b e (b > e)
-    , shapeContains =
-          do let width =
-                     if w == 0
-                         then 0.3
-                         else w
-             CM.lineWidth (width * 25)
-             drawFigure ds width $
-                 CM.arc 0 0 (25 * abs r) b e (b > e)
-             CM.isPointInStroke (0, 0)
-    }
-
-textDrawer sty fnt txt ds =
-    DrawMethods
-    { drawShape =
-          withDS ds $ do
-              CM.scale 1 (-1)
-              applyColor ds
-              CM.font (fontString sty fnt)
-              CM.fillText txt (0, 0)
-    , shapeContains =
-          do CM.font (fontString sty fnt)
-             width <- CM.measureText txt
-             let height = 25 -- constant, defined in fontString
-             withDS ds $
-                 CM.rect ((-0.5) * width) ((-0.5) * height) width height
-             CM.isPointInPath (0, 0)
-    }
-
-logoDrawer ds =
-    DrawMethods
-    { drawShape =
-          withDS ds $ do
-              CM.scale 1 (-1)
-              drawCodeWorldLogo ds (-221) (-91) 442 182
-    , shapeContains =
-          withDS ds $ do
-              CM.rect (-221) (-91) 442 182
-              CM.isPointInPath (0, 0)
-    }
-
-coordinatePlaneDrawer ds =
-    DrawMethods
-    { drawShape = drawDrawing ds coordinatePlaneDrawing
-    , shapeContains = fst <$> findTopShape ds coordinatePlaneDrawing
-    }
-
-foreign import javascript unsafe "showCanvas()" js_showCanvas ::
-               IO ()
-
-followPath :: [Point] -> Bool -> Bool -> CanvasM ()
-followPath [] closed _ = return ()
-followPath [p1] closed _ = return ()
-followPath ((sx, sy):ps) closed False = do
-    CM.moveTo (25 * sx, 25 * sy)
-    forM_ ps $ \(x, y) -> CM.lineTo (25 * x, 25 * y)
-    when closed $ CM.closePath
-followPath [p1, p2] False True = followPath [p1, p2] False False
-followPath ps False True = do
-    let [(x1, y1), (x2, y2), (x3, y3)] = take 3 ps
-        dprev = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-        dnext = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
-        p = dprev / (dprev + dnext)
-        cx = x2 + p * (x1 - x3) / 2
-        cy = y2 + p * (y1 - y3) / 2
-    CM.moveTo (25 * x1, 25 * y1)
-    CM.quadraticCurveTo (25 * cx, 25 * cy) (25 * x2, 25 * y2)
-    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $ \((x1, y1), (x2, y2), (x3, y3), (x4, y4)) -> do
-        let dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-            d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
-            d2 = sqrt ((x4 - x3) ^ 2 + (y4 - y3) ^ 2)
-            p = d1 / (d1 + d2)
-            r = d1 / (dp + d1)
-            cx1 = x2 + r * (x3 - x1) / 2
-            cy1 = y2 + r * (y3 - y1) / 2
-            cx2 = x3 + p * (x2 - x4) / 2
-            cy2 = y3 + p * (y2 - y4) / 2
-        CM.bezierCurveTo
-            (25 * cx1, 25 * cy1)
-            (25 * cx2, 25 * cy2)
-            (25 * x3,  25 * y3)
-    let [(x1, y1), (x2, y2), (x3, y3)] = reverse $ take 3 $ reverse ps
-        dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-        d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
-        r = d1 / (dp + d1)
-        cx = x2 + r * (x3 - x1) / 2
-        cy = y2 + r * (y3 - y1) / 2
-    CM.quadraticCurveTo (25 * cx, 25 * cy) (25 * x3, 25 * y3)
-followPath ps@(_:(sx, sy):_) True True = do
-    CM.moveTo (25 * sx, 25 * sy)
-    let rep = cycle ps
-    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $ \((x1, y1), (x2, y2), (x3, y3), (x4, y4)) -> do
-        let dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-            d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
-            d2 = sqrt ((x4 - x3) ^ 2 + (y4 - y3) ^ 2)
-            p = d1 / (d1 + d2)
-            r = d1 / (dp + d1)
-            cx1 = x2 + r * (x3 - x1) / 2
-            cy1 = y2 + r * (y3 - y1) / 2
-            cx2 = x3 + p * (x2 - x4) / 2
-            cy2 = y3 + p * (y2 - y4) / 2
-        CM.bezierCurveTo
-            (25 * cx1, 25 * cy1)
-            (25 * cx2, 25 * cy2)
-            (25 * x3,  25 * y3)
-    CM.closePath
-
-drawFigure :: DrawState -> Double -> CanvasM () -> CanvasM ()
-drawFigure ds w figure = do
-    withDS ds $ do
-        figure
-        when (w /= 0) $ do
-            CM.lineWidth (25 * w)
-            applyColor ds
-            CM.stroke
-    when (w == 0) $ do
-        CM.lineWidth 1
-        applyColor ds
-        CM.stroke
-
-fontString :: TextStyle -> Font -> Text
-fontString style font = stylePrefix style <> "25px " <> fontName font
-  where
-    stylePrefix Plain = ""
-    stylePrefix Bold = "bold "
-    stylePrefix Italic = "italic "
-    fontName SansSerif = "sans-serif"
-    fontName Serif = "serif"
-    fontName Monospace = "monospace"
-    fontName Handwriting = "cursive"
-    fontName Fancy = "fantasy"
-    fontName (NamedFont txt) =
-        "\"" <> T.filter (/= '"') txt <> "\""
-
-drawDrawing :: DrawState -> Drawing -> CanvasM ()
-drawDrawing ds (Shape shape) = drawShape $ shape ds
-drawDrawing ds (Transformation f d) = drawDrawing (f ds) d
-drawDrawing ds (Drawings drs) = mapM_ (drawDrawing ds) (reverse drs)
-
 drawFrame :: Drawing -> CanvasM ()
 drawFrame drawing = do
     CM.fillColor 255 255 255 1
@@ -1306,148 +1061,15 @@ setCanvasSize target canvas = do
     setAttribute target ("height" :: JSString) (show (round cy))
 
 drawingOf pic = runStatic pic
---------------------------------------------------------------------------------
--- Stand-alone implementation of drawing
+
 #else
 
-withDS :: DrawState -> Canvas () -> Canvas ()
-withDS (ta, tb, tc, td, te, tf, col) action =
-    Canvas.saveRestore $ do
-        Canvas.transform (ta, tb, tc, td, te, tf)
-        Canvas.beginPath ()
-        action
+--------------------------------------------------------------------------------
+-- Stand-alone implementation of drawing
 
-applyColor :: DrawState -> Canvas ()
-applyColor ds =
-    case getColorDS ds of
-        Nothing -> do
-            Canvas.strokeStyle "black"
-            Canvas.fillStyle "black"
-        Just (RGBA r g b a) -> do
-            let style =
-                    pack $
-                    printf
-                        "rgba(%.0f,%.0f,%.0f,%f)"
-                        (r * 255)
-                        (g * 255)
-                        (b * 255)
-                        a
-            Canvas.strokeStyle style
-            Canvas.fillStyle style
-
-drawFigure :: DrawState -> Double -> Canvas () -> Canvas ()
-drawFigure ds w figure = do
-    withDS ds $ do
-        figure
-        when (w /= 0) $ do
-            Canvas.lineWidth (25 * w)
-            applyColor ds
-            Canvas.stroke ()
-    when (w == 0) $ do
-        Canvas.lineWidth 1
-        applyColor ds
-        Canvas.stroke ()
-
-followPath :: [Point] -> Bool -> Bool -> Canvas ()
-followPath [] closed _ = return ()
-followPath [p1] closed _ = return ()
-followPath ((sx, sy):ps) closed False = do
-    Canvas.moveTo (25 * sx, 25 * sy)
-    forM_ ps $ \(x, y) -> Canvas.lineTo (25 * x, 25 * y)
-    when closed $ Canvas.closePath ()
-followPath [p1, p2] False True = followPath [p1, p2] False False
-followPath ps False True = do
-    let [(x1, y1), (x2, y2), (x3, y3)] = take 3 ps
-        dprev = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-        dnext = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
-        p = dprev / (dprev + dnext)
-        cx = x2 + p * (x1 - x3) / 2
-        cy = y2 + p * (y1 - y3) / 2
-    Canvas.moveTo (25 * x1, 25 * y1)
-    Canvas.quadraticCurveTo (25 * cx, 25 * cy, 25 * x2, 25 * y2)
-    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $ \((x1, y1), (x2, y2), (x3, y3), (x4, y4)) ->
-        let dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-            d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
-            d2 = sqrt ((x4 - x3) ^ 2 + (y4 - y3) ^ 2)
-            p = d1 / (d1 + d2)
-            r = d1 / (dp + d1)
-            cx1 = x2 + r * (x3 - x1) / 2
-            cy1 = y2 + r * (y3 - y1) / 2
-            cx2 = x3 + p * (x2 - x4) / 2
-            cy2 = y3 + p * (y2 - y4) / 2
-        in Canvas.bezierCurveTo
-               (25 * cx1, 25 * cy1, 25 * cx2, 25 * cy2, 25 * x3, 25 * y3)
-    let [(x1, y1), (x2, y2), (x3, y3)] = reverse $ take 3 $ reverse ps
-        dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-        d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
-        r = d1 / (dp + d1)
-        cx = x2 + r * (x3 - x1) / 2
-        cy = y2 + r * (y3 - y1) / 2
-    Canvas.quadraticCurveTo (25 * cx, 25 * cy, 25 * x3, 25 * y3)
-followPath ps@(_:(sx, sy):_) True True = do
-    Canvas.moveTo (25 * sx, 25 * sy)
-    let rep = cycle ps
-    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $ \((x1, y1), (x2, y2), (x3, y3), (x4, y4)) ->
-        let dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-            d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
-            d2 = sqrt ((x4 - x3) ^ 2 + (y4 - y3) ^ 2)
-            p = d1 / (d1 + d2)
-            r = d1 / (dp + d1)
-            cx1 = x2 + r * (x3 - x1) / 2
-            cy1 = y2 + r * (y3 - y1) / 2
-            cx2 = x3 + p * (x2 - x4) / 2
-            cy2 = y3 + p * (y2 - y4) / 2
-        in Canvas.bezierCurveTo
-               (25 * cx1, 25 * cy1, 25 * cx2, 25 * cy2, 25 * x3, 25 * y3)
-    Canvas.closePath ()
-
-fontString :: TextStyle -> Font -> Text
-fontString style font = stylePrefix style <> "25px " <> fontName font
-  where
-    stylePrefix Plain = ""
-    stylePrefix Bold = "bold "
-    stylePrefix Italic = "italic "
-    fontName SansSerif = "sans-serif"
-    fontName Serif = "serif"
-    fontName Monospace = "monospace"
-    fontName Handwriting = "cursive"
-    fontName Fancy = "fantasy"
-    fontName (NamedFont txt) = "\"" <> T.filter (/= '"') txt <> "\""
-
-type Drawer = DrawState -> Canvas ()
-
-polygonDrawer ps smooth ds = do
-    withDS ds $ followPath ps True smooth
-    applyColor ds
-    Canvas.fill ()
-
-pathDrawer ps w closed smooth ds = drawFigure ds w $ followPath ps closed smooth
-
-sectorDrawer b e r ds =
-    withDS ds $ do
-        Canvas.arc (0, 0, 25 * abs r, b, e, b > e)
-        Canvas.lineTo (0, 0)
-        applyColor ds
-        Canvas.fill ()
-
-arcDrawer b e r w ds =
-    drawFigure ds w $ Canvas.arc (0, 0, 25 * abs r, b, e, b > e)
-
-textDrawer sty fnt txt ds =
-    withDS ds $ do
-        Canvas.scale (1, -1)
-        applyColor ds
-        Canvas.font (fontString sty fnt)
-        Canvas.fillText (txt, 0, 0)
-
-logoDrawer ds = return ()
-
-coordinatePlaneDrawer ds = drawDrawing ds coordinatePlaneDrawing
-
-drawDrawing :: DrawState -> Drawing -> Canvas ()
-drawDrawing ds (Shape drawer) = drawer ds
-drawDrawing ds (Transformation f d) = drawDrawing (f ds) d
-drawDrawing ds (Drawings drs) = mapM_ (drawDrawing ds) (reverse drs)
+drawCodeWorldLogo ::
+       DrawState -> Int -> Int -> Int -> Int -> CanvasM ()
+drawCodeWorldLogo ds x y w h = return ()
 
 setupScreenContext :: (Int, Int) -> Canvas ()
 setupScreenContext (cw, ch)
@@ -1886,15 +1508,8 @@ sendClientMessage ws msg = WS.send (encodeClientMessage msg) ws
 initialGameState :: GameState s
 initialGameState = Main CUI.initial
 
-foreign import javascript
-    "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
-    js_deployHash :: IO JSVal
-
 getDeployHash :: IO Text
 getDeployHash = pFromJSVal <$> js_deployHash
-
-foreign import javascript "cw$deterministic_math();"
-    enableDeterministicMath :: IO ()
 
 runGame ::
        GameToken

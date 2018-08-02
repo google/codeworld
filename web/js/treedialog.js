@@ -129,18 +129,10 @@
         }
     }
 
-    function getSimpleName(pic) {
-        if (pic.type == "pictures") {
-            return "pictures";
-        } else {
-            return pic.name;
-        }
-    }
-
     function createPicLink(pic) {
         let a = document.createElement("a");
 
-        a.appendChild( document.createTextNode( getSimpleName(pic) ) );
+        a.appendChild( document.createTextNode( pic.name ) );
         a.href = "javascript: void(0);";
         a.classList.add("treedialog-piclink");
         a.addEventListener("click", function (evt) {
@@ -154,7 +146,7 @@
             });
 
             currentPic = pic;
-            dialog.dialog("option", "title", getSimpleName(pic) );
+            dialog.dialog("option", "title", pic.name );
             drawShape(canvas, pic.id);
             if (!pic.pictures) {
                 codeworldEditor.setSelection(
@@ -166,7 +158,7 @@
         a.addEventListener("mouseover", function (evt) {
             highlight(true, pic.id);
 
-            if (pic.type != "pictures") {
+            if (!pic.pictures) {
                 if (marker) marker.clear();
                 marker = codeworldEditor.markText(
                     { line: pic.startLine - 1, ch: pic.startCol - 1 },
@@ -240,7 +232,7 @@
 
         drawShape(canvas, id);
 
-        dialog.dialog("option", "title", getSimpleName(picture) );
+        dialog.dialog("option", "title", picture.name );
     }
     window.openTreeDialog = openTreeDialog;
 

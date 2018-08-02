@@ -1,7 +1,7 @@
 CodeWorld
 =========
 
-CodeWorld is an educational environment using Haskell.  It provides a simple
+CodeWorld is an educational environment using Haskell. It provides a simple
 mathematical model for geometric figures, animations, and interactive and
 multi-player games.  The web-based programming environment supports this
 educational mission with a zero-setup editor and compiler, easy sharing and
@@ -65,7 +65,7 @@ Contributing
 ============
 
 There is a slight bit of paperwork involved in contributing to CodeWorld.  You'll need to
-agree to a Contributor License Agreement.  See CONTRIBUTING.md for details.
+agree to a Contributor License Agreement.  See [`CONTRIBUTING.md`](CONTRIBUTING.md) for details.
 
 Build and Deployment
 ====================

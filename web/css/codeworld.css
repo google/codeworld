@@ -277,6 +277,20 @@ body {
 .cw-button:focus { outline: none; }
 ::-moz-focus-inner { border:0; }
 
+.loader {
+    border: 3px solid #ffffff55;
+    border-top: 3px solid #ffffffee;
+    border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 .dropbox {
   background-color: white;
   border: solid #cccccc 1px;

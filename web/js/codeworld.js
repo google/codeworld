@@ -470,15 +470,13 @@ function updateNavBar() {
     }
 
     if (projects && window.loadingDir) {
+        var template = document.getElementById('loaderTemplate').innerHTML;
         var span = document.createElement('span');
+        span.innerHTML = template;
+        var elem = span.getElementsByTagName('a')[0];
+        elem.style.marginLeft = (3 + 16 * (nestedDirs.length - 1)) + 'px';
         span.style.display = 'flex';
         span.style.flexDirection = 'column';
-        span.style.marginLeft = (3 + 16 * (nestedDirs.length - 1)) + 'px';
-        var spinner = document.createElement('div');
-        spinner.classList.add('cw-button');
-        spinner.classList.add('green');
-        spinner.innerText = 'Loading...';
-        span.appendChild(spinner);
         projects.appendChild(span);
     }
 }

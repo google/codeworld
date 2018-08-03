@@ -69,6 +69,7 @@ formatDiagnostics compilerOutput extraWarnings =
 compileSource :: Stage -> FilePath -> FilePath -> FilePath -> String -> IO Bool
 compileSource stage src out err mode = runDiagnostics mode src >>= \case
     (False, messages) -> do
+        createDirectoryIfMissing True (takeDirectory err)
         B.writeFile err (formatDiagnostics "" messages)
         return False
     (True, extraMessages) ->
@@ -95,6 +96,8 @@ compileSource stage src out err mode = runDiagnostics mode src >>= \case
             runCompiler tmpdir timeout ghcjsArgs >>= \case
                 Nothing -> return False
                 Just output -> do
+                    createDirectoryIfMissing True (takeDirectory err)
+                    createDirectoryIfMissing True (takeDirectory out)
                     let filteredOutput =
                             case mode of
                                 "codeworld" -> filterOutput output

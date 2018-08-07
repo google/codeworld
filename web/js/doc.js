@@ -27,6 +27,7 @@ window.env = parent;
             for (var i = 0; i < pres.length; ++i) {
                 (function() {
                     var pre = pres[i];
+
                     var text = pre.textContent;
                     pre.innerHTML = '';
                     CodeMirror.runMode(text, { name: 'codeworld', overrideKeywords: codeworldKeywords }, pre);
@@ -48,12 +49,12 @@ window.env = parent;
     }
 
     function linkFunBlocks(elem) {
-        var pres = elem.getElementsByTagName('xml');
+        var blocks = elem.getElementsByTagName('xml');
         var i = 0;
 
-        while (pres != null && pres.length > 0) {
-            let pre = pres[0];
-            let text = pre.outerHTML;
+        while (blocks != null && blocks.length > 0) {
+            let block = blocks[0];
+            let text = block.outerHTML;
 
             var iframe = document.createElement('iframe');
             iframe.setAttribute('frameborder', '0');
@@ -68,11 +69,11 @@ window.env = parent;
             iframe.src = 'blockframe.html';
             iframe.classList.add('clickable');
 
-            var parent = pre.parentNode;
-            parent.insertBefore(iframe, pre);
-            parent.removeChild(pre);
+            var parent = block.parentNode;
+            parent.insertBefore(iframe, block);
+            parent.removeChild(block);
 
-            pres = elem.getElementsByTagName('xml');
+            blocks = elem.getElementsByTagName('xml');
             i++;
         }
     }
@@ -202,7 +203,7 @@ window.env = parent;
                 var raw = request.responseText;
 
                 if (path.endsWith('.md')) {
-                    content.innerHTML = new Remarkable({ html: true }).render(raw);
+                    content.innerHTML = window.markdeep.format(raw, false);
                     relativizeLinks(source, content, 'img', 'src');
                     if (shelf && shelf.blocks) {
                         linkFunBlocks(content);
@@ -280,6 +281,10 @@ window.env = parent;
             }
         });
     }
+
+    var markdeepStyle = document.createElement('style');
+    document.head.appendChild(markdeepStyle);
+    markdeepStyle.outerHTML = window.markdeep.stylesheet();
 
     if (params.get('shelf')) {
         var request = new XMLHttpRequest();

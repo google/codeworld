@@ -14,28 +14,8 @@
  * limitations under the License.
  */
 
-html {
-    color: #222;
-    font-size: 1em;
-    line-height: 1.4;
-    font-family: Arial, sans-serif;
-    font-size: 13px;
-}
-
 body {
   margin: 0px 0px 0px 0px;
-}
-
-pre {
-  margin-left: 20px;
-  margin-right: 10px;
-  padding: 5px;
-  background-color: #f8f8f8;
-  border: dotted #888 1px;
-  font-family: monospace;
-  font-size: 1em;
-  overflow-x: auto;
-  overflow-y: hidden;
 }
 
 pre.clickable {
@@ -47,25 +27,6 @@ pre.clickable:hover {
   cursor: pointer;
 }
 
-a[href] {
-  text-decoration: none;
-  font-weight: bold;
-  color: #444;
-  border: none;
-  margin: 1px;
-}
-
-a[href]:focus {
-  border: none;
-}
-
-a[href]:hover {
-  cursor: pointer;
-  background-color: #eee;
-  border: dotted #888 1px;
-  margin: 0px;
-}
-
 #helpacc {
   position: fixed;
   overflow: auto;
@@ -74,6 +35,9 @@ a[href]:hover {
   margin: 0px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
   border-right: solid #ccc 3px;
+
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11pt;
 }
 
 #helpacc .accentry {

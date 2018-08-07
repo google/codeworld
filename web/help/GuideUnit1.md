@@ -5,7 +5,9 @@ Writing code in CodeWorld is like writing a dictionary or glossary.  Your
 project is a bunch of *definitions*.  You write a definition to say what
 something means.  For example, you might write:
 
-    wheel = circle(2)
+```
+wheel = circle(2)
+```
 
 This is a definition of "wheel": it says that "wheel" means a circle with a radius of 2.
 *Radius* just means the distance from the center of the circle to the edge.
@@ -22,8 +24,10 @@ special variable called *program*.  Every CodeWorld project needs *exactly* *one
 definition for the *program* variable.  Finished code might look something like
 this:
 
-    program = drawingOf(wheel)
-    wheel   = circle(2)
+```
+program = drawingOf(wheel)
+wheel   = circle(2)
+```
 
 That's a complete project, so try it out!
 
@@ -59,10 +63,12 @@ Pictures would be pretty boring if they could only have one shape.  Luckily, you
 can combine more than one shape in the same picture using `&` (which means *and*).
 For example:
 
-    program = drawingOf(design)
-    design  = solidRectangle(4, 0.4)
-              & solidCircle(1.2)
-              & circle(2)
+```
+program = drawingOf(design)
+design  = solidRectangle(4, 0.4)
+          & solidCircle(1.2)
+          & circle(2)
+```
 
 Try that out, and see what it looks like!  See how the definition of design takes
 more than one line?  That's okay: you can start a new line any time you want to.
@@ -73,11 +79,13 @@ spaces.  We often like to use those spaces to line things up, too.
 When combining pictures, it helps if you remember to name things!  Another way of
 describing the same program we just looked at is:
 
-    program = drawingOf(design)
-    design  = slot & middle & outside
-    slot    = solidRectangle(4, 0.4)
-    middle  = solidCircle(1.2)
-    outside = circle(2)
+```
+program = drawingOf(design)
+design  = slot & middle & outside
+slot    = solidRectangle(4, 0.4)
+middle  = solidCircle(1.2)
+outside = circle(2)
+```
 
 You will learn that it helps to think about more complicated pictures if you give
 good names to the pieces.
@@ -88,16 +96,20 @@ Colors
 Pictures don't need to be black and white.  You can use `colored` to change the color
 of your pictures.  Here's a simple example:
 
-    program  = drawingOf(redWheel)
-    redWheel = colored(wheel, red)
-    wheel    = solidCircle(4)
+```
+program  = drawingOf(redWheel)
+redWheel = colored(wheel, red)
+wheel    = solidCircle(4)
+```
 
 You can also mix colors in the same picture:
 
-    program = drawingOf(tree)
-    tree    = colored(leaves, green) & colored(trunk, brown)
-    leaves  = sector(0, 180, 4)
-    trunk   = solidRectangle(1, 4)
+```
+program = drawingOf(tree)
+tree    = colored(leaves, green) & colored(trunk, brown)
+leaves  = sector(0, 180, 4)
+trunk   = solidRectangle(1, 4)
+```
 
 You can also modify the colors!  Here are a few ways to do that:
 
@@ -109,11 +121,13 @@ You can also modify the colors!  Here are a few ways to do that:
 
 Let's try some example code:
 
-    program = drawingOf(overlap)
-    overlap = colored(square,  translucent(blue))
-            & colored(disk, translucent(green))
-    square  = solidRectangle(5, 5)
-    disk    = solidCircle(3)
+```
+program = drawingOf(overlap)
+overlap = colored(square,  translucent(blue))
+        & colored(disk, translucent(green))
+square  = solidRectangle(5, 5)
+disk    = solidCircle(3)
+```
 
 Transformations
 ---------------
@@ -137,13 +151,15 @@ To use `translated`, you give it three things:
 
 Ready for an example?
 
-    program = drawingOf(forest)
-    forest  = translated(tree, -5, 5)
-            & translated(tree,  0, 0)
-            & translated(tree,  5,-5)
-    tree    = colored(leaves, green) & colored(trunk, brown)
-    leaves  = sector(0, 180, 4)
-    trunk   = solidRectangle(1, 4)
+```
+program = drawingOf(forest)
+forest  = translated(tree, -5, 5)
+        & translated(tree,  0, 0)
+        & translated(tree,  5,-5)
+tree    = colored(leaves, green) & colored(trunk, brown)
+leaves  = sector(0, 180, 4)
+trunk   = solidRectangle(1, 4)
+```
 
 What does `translated(..., 0, 0)` mean?  Well, it means don't move the picture at
 all!  We wrote the `translated` there just to make things line up nicely.
@@ -159,9 +175,11 @@ To use `rotated`, you give it two things:
 
 Here's an example:
 
-    program = drawingOf(diamond)
-    diamond = rotated(square, 45)
-    square  = solidRectangle(4, 4)
+```
+program = drawingOf(diamond)
+diamond = rotated(square, 45)
+square  = solidRectangle(4, 4)
+```
 
 A diamond is just a square, turned so it's diagonal.
 
@@ -180,9 +198,11 @@ horizontally or vertically.  To use `scaled`, you'll give:
 
 Here's an example of `scaled`:
 
-    program = drawingOf(oval)
-    oval    = scaled(base, 2, 0.5)
-    base    = solidCircle(4)
+```
+program = drawingOf(oval)
+oval    = scaled(base, 2, 0.5)
+base    = solidCircle(4)
+```
 
 You should try to get a good feeling for the meaning of those scaling
 factors.  Try changing the numbers in the example, and see if you can
@@ -231,9 +251,11 @@ Nesting
 
 Remember how we used `rotated`?  Here's a quick reminder:
 
-    program = drawingOf(diamond)
-    diamond = rotated(square, 45)
-    square  = rectangle(2, 2)
+```
+program = drawingOf(diamond)
+diamond = rotated(square, 45)
+square  = rectangle(2, 2)
+```
 
 Nice!  However, naming everything like that can get tedious.  If you
 have a simple shape, such as `rectangle(2, 2)`, you may not want
@@ -242,12 +264,16 @@ the name would go.
 
 Try it:
 
-    program = drawingOf(diamond)
-    diamond = rotated(rectangle(2, 2), 45)
+```
+program = drawingOf(diamond)
+diamond = rotated(rectangle(2, 2), 45)
+```
 
 Or even:
 
-    program = drawingOf(rotated(rectangle(2, 2), 45))
+```
+program = drawingOf(rotated(rectangle(2, 2), 45))
+```
 
 Careful, though!  You can avoid naming simple things, but if you
 nest too much, you get parentheses inside of parentheses inside of
@@ -271,12 +297,14 @@ divide, use `/`.
 
 Check out this code:
 
-    program = drawingOf(design)
-    design  = rotated(rectangle(4, 0.2), 1 * 180 / 5)
-            & rotated(rectangle(4, 0.2), 2 * 180 / 5)
-            & rotated(rectangle(4, 0.2), 3 * 180 / 5)
-            & rotated(rectangle(4, 0.2), 4 * 180 / 5)
-            & rotated(rectangle(4, 0.2), 5 * 180 / 5)
+```
+program = drawingOf(design)
+design  = rotated(rectangle(4, 0.2), 1 * 180 / 5)
+        & rotated(rectangle(4, 0.2), 2 * 180 / 5)
+        & rotated(rectangle(4, 0.2), 3 * 180 / 5)
+        & rotated(rectangle(4, 0.2), 4 * 180 / 5)
+        & rotated(rectangle(4, 0.2), 5 * 180 / 5)
+```
 
 We could have written `36`, '72', '108', '144', and `180` (the answers to
 those math problems).  But this way, it's very clear what we are doing:
@@ -293,7 +321,9 @@ The Coordinate Plane
 To draw more precise shapes, we can use points on a "coordinate plane".  You
 can see a coordinate plane right now, just by running this code:
 
-    program = drawingOf(coordinatePlane)
+```
+program = drawingOf(coordinatePlane)
+```
 
 The coordinate plane is made up of two directions: *horizontal* (also
 called x) and *vertical* (also called y).  The very center of the screen
@@ -327,8 +357,10 @@ Points, Lines and Polygons
 Now you can draw things like sequences of lines by giving a list of points in
 the coordinate plane to a function called `polyline`:
 
-    program = drawingOf(zigzag)
-    zigzag  = polyline([(-2, 0), (-1, 1), (0, -1), (1, 1), (2, 0)])
+```
+program = drawingOf(zigzag)
+zigzag  = polyline([(-2, 0), (-1, 1), (0, -1), (1, 1), (2, 0)])
+```
 
 The square brackets form something called a *list*.  You haven't seen lists
 before, but they are just what they sound like: collections of multiple
@@ -338,23 +370,29 @@ before giving them to the `polyline` function.
 To draw a closed shape, use `polygon` instead.  Can you figure out the
 mystery picture before you click Run?
 
-    program = drawingOf(mystery)
-    mystery = polygon(
-        [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
+```
+program = drawingOf(mystery)
+mystery = polygon(
+    [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
+```
 
 If you prefer to fill in your shape, you can use `solidPolygon` instead of
 `polygon` and you'll get a solid version:
 
-    program = drawingOf(mystery)
-    mystery = solidPolygon(
-        [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
+```
+program = drawingOf(mystery)
+mystery = solidPolygon(
+    [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
+```
 
 There are also `thickPolygon` and `thickPolyline` which use an extra
 parameter for thickness:
 
-    program = drawingOf(mystery)
-    mystery = thickPolygon(
-        [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)], 1)
+```
+program = drawingOf(mystery)
+mystery = thickPolygon(
+    [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)], 1)
+```
 
 Finally, if you'd like to connect points with a curved line instead of straight
 line segments, there are functions called `curve` and `thickCurve` for curves
@@ -368,8 +406,10 @@ Drawing with the Coordinate Plane
 A neat trick is to use the coordinate plane as you write your code.  Say
 you want to draw a butterfly.  You might start by writing:
 
-    program   = drawingOf(butterfly & coordinatePlane)
-    butterfly = blank
+```
+program   = drawingOf(butterfly & coordinatePlane)
+butterfly = blank
+```
 
 Now run your program, and you have a coordinate plane to measure what
 points to use in your shapes.  When you're done, just remove the
@@ -409,11 +449,13 @@ Type Annotations
 
 To declare types in your code, you can use `::`, like this:
 
-    wheel :: Picture
-    wheel = solidCircle(size)
+```
+wheel :: Picture
+wheel = solidCircle(size)
 
-    size :: Number
-    size = 4
+size :: Number
+size = 4
+```
 
 You don't *have* to say what type things are.  It's completely optional,
 and the computer can always figure that out on its own.  But if you do
@@ -431,8 +473,10 @@ many types of lists: lists of numbers, lists of pictures, lists of colors, and
 so on.  To write the type of a list, we first write the type of the things
 *inside* the list, then surround it with square brackets.
 
-    numbers :: [Number]
-    numbers = [ 1, 2, 3, 4 ]
+```
+numbers :: [Number]
+numbers = [ 1, 2, 3, 4 ]
+```
 
 Points and Tuples
 -----------------
@@ -440,8 +484,10 @@ Points and Tuples
 What about a point, like the ones we used to make polylines and polygons?  It
 actually works just fine to say the type is `Point`:
 
-    start :: Point
-    start = (0, 5)
+```
+start :: Point
+start = (0, 5)
+```
 
 When the computer talks about points, though, it sometimes calls their type
 something different: `(Number, Number)`.  This is just a way to say what we

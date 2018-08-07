@@ -22,8 +22,10 @@ code, and build programs to show the answer.
 The trick is to use the `printed` function, which turns a number into
 `Text`.  Here's an example:
 
-    program = drawingOf(lettering(printed(answer)))
-    answer  = 7 * 8
+```
+program = drawingOf(lettering(printed(answer)))
+answer  = 7 * 8
+```
 
 If you run this program, you'll see "56" on the screen.
 
@@ -32,8 +34,10 @@ Precedence
 
 The same technique can be used for more complex expressions, such as:
 
-    program = drawingOf(lettering(printed(answer)))
-    answer  = 36 * (3 + 7) - 24 + 5^2
+```
+program = drawingOf(lettering(printed(answer)))
+answer  = 36 * (3 + 7) - 24 + 5^2
+```
 
 When evaluating expressions, it's important to be careful about how the
 expression breaks down into subexpressions, based on the rules of operator
@@ -97,17 +101,19 @@ faster!
 
 Here's our first attempt:
 
-    program = drawingOf(lettering(printed(answer)))
-    answer  =  1 +  2 +  3 +  4 +  5 +  6 +  7 +  8 +  9 +  10 +
-              11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 19 +  20 +
-              21 + 22 + 23 + 24 + 25 + 26 + 27 + 28 + 29 +  30 +
-              31 + 32 + 33 + 34 + 35 + 36 + 37 + 38 + 39 +  40 +
-              41 + 42 + 43 + 44 + 45 + 46 + 47 + 48 + 49 +  50 +
-              51 + 52 + 53 + 54 + 55 + 56 + 57 + 58 + 59 +  60 +
-              61 + 62 + 63 + 64 + 65 + 66 + 67 + 68 + 69 +  70 +
-              71 + 72 + 73 + 74 + 75 + 76 + 77 + 78 + 79 +  80 +
-              81 + 82 + 83 + 84 + 85 + 86 + 87 + 88 + 89 +  90 +
-              91 + 92 + 93 + 94 + 95 + 96 + 97 + 98 + 99 + 100
+```
+program = drawingOf(lettering(printed(answer)))
+answer  =  1 +  2 +  3 +  4 +  5 +  6 +  7 +  8 +  9 +  10 +
+          11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 19 +  20 +
+          21 + 22 + 23 + 24 + 25 + 26 + 27 + 28 + 29 +  30 +
+          31 + 32 + 33 + 34 + 35 + 36 + 37 + 38 + 39 +  40 +
+          41 + 42 + 43 + 44 + 45 + 46 + 47 + 48 + 49 +  50 +
+          51 + 52 + 53 + 54 + 55 + 56 + 57 + 58 + 59 +  60 +
+          61 + 62 + 63 + 64 + 65 + 66 + 67 + 68 + 69 +  70 +
+          71 + 72 + 73 + 74 + 75 + 76 + 77 + 78 + 79 +  80 +
+          81 + 82 + 83 + 84 + 85 + 86 + 87 + 88 + 89 +  90 +
+          91 + 92 + 93 + 94 + 95 + 96 + 97 + 98 + 99 + 100
+```
 
 If you try this, you get the right answer: 5050.  But although the computer
 itself did the computation in the blink of an eye, Gauss would have been done before
@@ -121,7 +127,9 @@ For this question, we can ask: "What is the sum of all the numbers from 1 up to
 some bigger number?"  The answer *depends* on the bigger number, so it's a
 function:
 
-    sumFromOneTo(n) = ???
+```
+sumFromOneTo(n) = ???
+```
 
 But how would you write this function?  The trick is to write *two* equations.
 
@@ -132,11 +140,13 @@ But how would you write this function?  The trick is to write *two* equations.
 
 Here's what this looks like for Gauss's problem:
 
-    program = drawingOf(lettering(printed(answer)))
-    answer  = sumFromOneTo(100)
+```
+program = drawingOf(lettering(printed(answer)))
+answer  = sumFromOneTo(100)
 
-    sumFromOneTo(1) = 1
-    sumFromOneTo(n) = sumFromOneTo(n - 1) + n
+sumFromOneTo(1) = 1
+sumFromOneTo(n) = sumFromOneTo(n - 1) + n
+```
 
 To add the numbers from 1 to 1 is easy: there is only one number, so there's
 nothing to add.  To add the numbers from 1 to `n`, where `n` is bigger than 1,
@@ -167,8 +177,10 @@ possibilities, do you see why the factorial gives the number of ways?)
 It's easy to use the same technique as we used for triangle numbers, and
 multiply instead to find the factorial.  We get something like this:
 
-    factorial(1) = 1
-    factorial(n) = factorial(n - 1) * n
+```
+factorial(1) = 1
+factorial(n) = factorial(n - 1) * n
+```
 
 If you play with this, you might notice that the factorial gets very large, very
 quickly!  Think about this: a deck of cards has 52 cards in it.  That means if
@@ -214,17 +226,19 @@ always need to choose a *depth*, which should decrease for every smaller piece.
 
 Here's an example of a fractal that draws a tree:
 
-    program = drawingOf(tree)
+```
+program = drawingOf(tree)
 
-    tree = branch(7)
+tree = branch(7)
 
-    branch(0) = blank
-    branch(n) =
-        polyline([(0,0), (0, 5)]) &
-        translated(smallBranch, 0, 5) &
-        translated(rotated(smallBranch,  30), 0, 2.5) &
-        translated(rotated(smallBranch, -30), 0, 2.5)
-      where smallBranch = scaled(branch(n-1), 0.5, 0.5)
+branch(0) = blank
+branch(n) =
+    polyline([(0,0), (0, 5)]) &
+    translated(smallBranch, 0, 5) &
+    translated(rotated(smallBranch,  30), 0, 2.5) &
+    translated(rotated(smallBranch, -30), 0, 2.5)
+  where smallBranch = scaled(branch(n-1), 0.5, 0.5)
+```
 
 Notice how there's still a *base case*, where a `branch` with depth 0 is just
 a blank picture.  The *general case* describes what a branch looks like, in
@@ -240,41 +254,47 @@ fractals!  Here are some more well-known fractals:
 This is a curve made up of four copies of itself.  Arranging three of these in
 a triangular pattern can make a nice snowflake pattern.
 
-    program = drawingOf(kochCurve(5))
+```
+program = drawingOf(kochCurve(5))
 
-    kochCurve(0) = polyline([(-6, 0), (6, 0)])
-    kochCurve(n) = translated(sub, -4, 0) &
-                   translated(sub,  4, 0) &
-                   translated(rotated(sub,  60), -1, sqrt(3)) &
-                   translated(rotated(sub, 300),  1, sqrt(3))
-      where sub  = dilated(kochCurve(n-1), 1/3)
+kochCurve(0) = polyline([(-6, 0), (6, 0)])
+kochCurve(n) = translated(sub, -4, 0) &
+               translated(sub,  4, 0) &
+               translated(rotated(sub,  60), -1, sqrt(3)) &
+               translated(rotated(sub, 300),  1, sqrt(3))
+  where sub  = dilated(kochCurve(n-1), 1/3)
+```
 
 #### Sierpinski's triangle ####
 
 This pattern starts with a triangle, and then repeatedly removes the center to
 leave three smaller triangles.
 
-    program = drawingOf(sierpinski(8))
+```
+program = drawingOf(sierpinski(8))
 
-    sierpinski(0) = solidPolygon([(0, 8), (7, -4), (-7, -4)])
-    sierpinski(n) = translated(sub, -3.5, -2) &
-                    translated(sub,  3.5, -2) &
-                    translated(sub,  0.0,  4)
-      where sub  = dilated(sierpinski(n-1), 1/2)
+sierpinski(0) = solidPolygon([(0, 8), (7, -4), (-7, -4)])
+sierpinski(n) = translated(sub, -3.5, -2) &
+                translated(sub,  3.5, -2) &
+                translated(sub,  0.0,  4)
+  where sub  = dilated(sierpinski(n-1), 1/2)
+```
 
 ### General pattern ###
 
 When you explore your own fractals, it can be useful to use this pattern, with
 blanks filled in using pictures or numbers of your choice.
 
-    fractal(0) = leaf
-    fractal(n) = joint
-               & _______________ branch _______________
-               & _______________ branch _______________
-      where branch = dilated(fractal(n-1), ____)
+```
+fractal(0) = leaf
+fractal(n) = joint
+           & _______________ branch _______________
+           & _______________ branch _______________
+  where branch = dilated(fractal(n-1), ____)
 
-    leaf  = ___________________________________________
-    joint = ___________________________________________
+leaf  = ___________________________________________
+joint = ___________________________________________
+```
 
 Usually only one of `leaf` or `joint` will be filled in.  The blanks around
 the branch variables can be filled in with translations and rotations that
@@ -298,7 +318,9 @@ For example, CodeWorld already provides a function to add up the numbers in a
 list, using a function called `sum`.  Here's another way to solve the problem we
 investigated earlier, adding the numbers from one to one hundred.
 
-    total = sum([1 .. 100])
+```
+total = sum([1 .. 100])
+```
 
 That almost feels like cheating!  But it's always better to write in a clear and
 easy to read manner, and use the capabilities the computer already has.
@@ -358,8 +380,10 @@ height.
 One way to solve this problem is to just try all these possibilities, and then
 take the largest area you get.  That's easy with a list comprehension.
 
-    program = drawingOf(lettering(printed(answer)))
-    answer = maximum([ w * (25 - 2 * w) | w <- [1 .. 12] ])
+```
+program = drawingOf(lettering(printed(answer)))
+answer = maximum([ w * (25 - 2 * w) | w <- [1 .. 12] ])
+```
 
 If you run this program, the answer is 78 square toothpicks.  (That comes from an
 `I` shape that is 6 toothpicks wide, and 13 tall.)

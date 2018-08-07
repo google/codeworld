@@ -1,4 +1,4 @@
-<img src="/codeworld.png" style="max-width: 100%;">
+![CodeWorld](/codeworld.png style="max-width: 100%;")
 
 Welcome to CodeWorld!
 =====================
@@ -42,6 +42,8 @@ The CodeWorld environment
 
 Before you start writing your own code, here's a quick tour of the tools you have.
 
+![The CodeWorld environment](/help/cw-env.png style="max-width: 100%;")
+
 You'll type your code in the **editor**, which is right behind this guide.  To get
 to the editor, click *outside* of the guide to get rid of it.  Don't worry; the
 guide is right here waiting for you by pressing the **Guide** button.
@@ -58,12 +60,13 @@ To try your programs, click the **Run** button, at the bottom right corner of th
 screen.  Your program will run in the **canvas**, at the top-right corner of the
 screen.  Don't worry! Nothing you do in CodeWorld can harm your computer.
 
-Beneath the canvas, the **message** area will show you any messages about
+Beneath the canvas, the **message area** will show you any messages about
 your program.  These could be *errors*, explaining what your computer doesn't
 understand about your code.  They could be *warnings*, making a suggestion for
 improving your code.  Or they could be *trace* messaged, that you can add
 yourself to help understand what your program is doing.
 
 If there's a problem with your code, the message window will turn a light red,
-or pink, color.  When this happens, it's okay!  Just read the message that
-explains what is wrong, and then double-check your code.
+or pink, color.  This is called an *error message*.  It's okay!  Just read the
+error message to understand what is wrong, and then double-check your code.
+Remember: error messages are your friends; they help you fix mistakes.

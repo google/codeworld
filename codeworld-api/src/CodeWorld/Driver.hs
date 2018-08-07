@@ -2093,12 +2093,24 @@ wrappedEvent _ _ eventHandler (TimePassing dt) w
     | otherwise = fmap (eventHandler (TimePassing (dt * playbackSpeed w))) w
 wrappedEvent ctrls stepHandler eventHandler event w
     | playbackSpeed w == 0 || handled = afterControls {lastInteractionTime = 0}
-    | otherwise = fmap (eventHandler event) afterControls {lastInteractionTime = 0}
+    | otherwise = fmap (eventHandler (adaptEvent event)) afterControls {lastInteractionTime = 0}
   where
     (afterControls, handled) = foldr stepFunction (w, False) (ctrls w)
+
     stepFunction control (world, True) = (world, True)
     stepFunction control (world, False) = handleControl fullStep event control world
+
     fullStep dt = stepHandler dt . eventHandler (TimePassing dt)
+
+    adaptEvent (MouseMovement p)  = MouseMovement (adaptPoint p)
+    adaptEvent (MousePress b p)   = MousePress b (adaptPoint p)
+    adaptEvent (MouseRelease b p) = MouseRelease b (adaptPoint p)
+    adaptEvent other              = other
+
+    adaptPoint (x, y) = (x / k - dx, y / k - dy)
+
+    (dx, dy) = panCenter w
+    k        = zoomFactor w
 
 xToPlaybackSpeed :: Double -> Double -> Double
 xToPlaybackSpeed cx x = foldr (snapSlider) (min 5 $ max 0 $ 5 * (x + 1.4 - cx) / 2.8) [1..4]
@@ -2177,8 +2189,9 @@ travelToTime t (past, future) = go past future (n1 - desiredN1)
 
 wrappedDraw ::
        (Wrapped a -> [Control a]) -> (a -> Picture) -> Wrapped a -> Picture
-wrappedDraw ctrls f w = drawControlPanel ctrls w <> dilated (zoomFactor w) (translated dx dy (f (state w)))
+wrappedDraw ctrls f w = drawControlPanel ctrls w <> dilated k (translated dx dy (f (state w)))
   where (dx, dy) = panCenter w
+        k        = zoomFactor w
 
 drawControlPanel :: (Wrapped a -> [Control a]) -> Wrapped a -> Picture
 drawControlPanel ctrls w

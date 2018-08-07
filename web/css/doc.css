@@ -18,6 +18,22 @@ body {
   margin: 0px 0px 0px 0px;
 }
 
+#popout {
+  display: block;
+  float: right;
+  clear: both;
+  top: 10px;
+  right: 10px;
+}
+
+#popout a {
+  text-decoration: none;
+  font-weight: bold;
+  padding: 3px;
+  border: dotted #888 1px;
+  border-radius: 5px;
+}
+
 .md pre.tilde.clickable {
   background-color: #f0f8ff;
 }

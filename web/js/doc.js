@@ -130,6 +130,7 @@ window.env = parent;
 
     function addPopout(help) {
         var popdiv = document.createElement('div');
+        popdiv.id = 'popout';
         popdiv.style = 'text-align: right';
         var popout = document.createElement('a');
         popout.innerHTML = '<i class="mdi mdi-18px mdi-open-in-new"></i>&nbsp;Open the Help in a New Tab';

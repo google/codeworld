@@ -360,7 +360,6 @@ compileHandler = public $ do
     success <-
         liftIO $ do
             ensureSourceDir mode programId
-            ensureBuildDir mode programId
             B.writeFile (sourceRootDir mode </> sourceFile programId) source
             writeDeployLink mode deployId programId
             compileIfNeeded mode programId

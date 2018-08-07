@@ -162,11 +162,6 @@ ensureSourceDir mode (ProgramId p) = createDirectoryIfMissing True dir
   where
     dir = sourceRootDir mode </> take 3 (T.unpack p)
 
-ensureBuildDir :: BuildMode -> ProgramId -> IO ()
-ensureBuildDir mode (ProgramId p) = createDirectoryIfMissing True dir
-  where
-    dir = buildRootDir mode </> take 3 (T.unpack p)
-
 ensureShareDir :: BuildMode -> ShareId -> IO ()
 ensureShareDir mode (ShareId s) = createDirectoryIfMissing True dir
   where

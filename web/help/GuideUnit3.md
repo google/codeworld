@@ -24,10 +24,10 @@ Computers make this job much easier!  All you need to do is describe a pattern o
 motion.  The computer does the hard work of drawing many similar pictures.  The
 way you do this is with a function.
 
-```
+~~~~~
 program      = animationOf(propellor)
 propellor(t) = rotated(solidRectangle(10, 1), 60 * t)
-```
+~~~~~
 
 See if you can explain to yourself or someone else what is happening here.
 
@@ -79,11 +79,11 @@ How fast (in degrees per second) is the propellor rotating?
 The program above shows a propellor that appears to be moving.  But not all
 animations look like motion!  Try this one:
 
-```
+~~~~~
 program = animationOf(f)
 f(t) = translated(solidCircle(1), x, 0)
   where x = 10 * randomNumbers(t) # 1
-```
+~~~~~
 
 Why did the propellor look fine, but this animation was flickering more than
 moving?  The problem is that `f` here is not *continuous*.  When a function is
@@ -120,11 +120,11 @@ The list goes on and on!  And you don't need to settle for just one of these.
 You can use `t` as many times in your animation as you like!  This example
 combines change in rotation and translation at the same time:
 
-```
+~~~~~
 program  = animationOf(wheel)
 wheel(t) = translated(rotated(tire, -60 * t), t - 10, 3)
 tire     = circle(1) & solidRectangle(0.1, 2)
-```
+~~~~~
 
 Top-down animation
 ------------------
@@ -137,9 +137,9 @@ difference between pictures and animations.
 As you build up complicated animations, it it crucial to keep in mind exactly
 which expressions mean what.  Let's examine a simple animation, such as:
 
-```
+~~~~~
 ball(t) = thickCircle(t, 1)
-```
+~~~~~
 
 It is a common mistake to think that because you define the animation by
 writing this line, `ball(t)` is the name of the animation.  Actually, `ball`
@@ -178,11 +178,11 @@ The `&` operator is used to combine pictures.  But what if you have two
 animations and want to show them at the same time?  You can't use `&` to
 combine the two animations.  So this won't work:
 
-```
+~~~~~
 program = animationOf(a & b)
 a(t)    = rotated(solidRectangle(1, 1), 45 * t)
 b(t)    = circle(t)
-```
+~~~~~
 
 The problem is that `a` and `b` are animations rather than pictures, so
 they can't be combined using `&`.  If you try, you'll see an error message
@@ -192,12 +192,12 @@ but you've given it animations (which are functions), instead.
 But you can use `&` to combine two *pictures*, in the pattern that
 describes one frame of the animation.  This will work:
 
-```
+~~~~~
 program = animationOf(c)
 c(t)    = a(t) & b(t)
 a(t)    = rotated(solidRectangle(1, 1), 45 * t)
 b(t)    = circle(t)
-```
+~~~~~
 
 We've instead defined a new animation, `c`, and established the pattern
 that each frame of `c` is obtained by combining the frames from `a` and
@@ -221,10 +221,10 @@ than a line, the fundamental change is to an angle, and that angle increases
 at a fixed speed.  In this example, the box rotates at a fixed speed of 45
 degrees per second, so the change of the angle is linear:
 
-```
+~~~~~
 program = animationOf(box)
 box(t)  = rotated(solidRectangle(1, 1), 45 * t)
-```
+~~~~~
 
 When describing linear change, there are two questions to ask yourself:
 
@@ -242,12 +242,12 @@ which moves back and forth in the same motion forever.  We create this
 pattern of motion using a special function called a sine wave, and
 written as `sin`.  Here's a simple pendulum for an example:
 
-```
+~~~~~
 program     = animationOf(pendulum)
 pendulum(t) = rotated(arm, 45 * sin(60 * t))
 arm         = translated(solidRectangle(1, 6), 0, -3)
             & translated(solidCircle(1), 0, -6)
-```
+~~~~~
 
 Periodic change is a little more complicated than linear motion.  There are
 four questions you need to ask yourself to plan this motion.
@@ -283,12 +283,12 @@ stops and then falls back down, due to acceleration caused by gravity.
 
 Here's an example of a ball flying through the air using quadratic change:
 
-```
+~~~~~
 program = animationOf(ball)
 ball(t) = translated(solidCircle(1),
                      10 * t - 10,
                      -5 + 20 * t - 10 * t^2)
-```
+~~~~~
 
 Notice that the x coordinate is a linear expression, because the ball moves at
 a fixed speed in that direction.  But the y direction involves gravity.
@@ -313,10 +313,10 @@ When you want a function that keeps getting closer to a point, but doesn't ever
 quite get there, the inverse function is your tool of choice.  Here's an
 example:
 
-```
+~~~~~
 program = animationOf(scene)
 scene(t) = translated(solidCircle(1/4), 0, 5 - 3 / (t + 1))
-```
+~~~~~
 
 The two questions to ask are:
 
@@ -341,11 +341,11 @@ The `min` and `max` functions take the minimum or maximum, respectively, of two
 numbers.  This allows you to create simple effects where something moves and
 then stops.  For example:
 
-```
+~~~~~
 program = animationOf(drop)
 drop(t) = translated(ball, 0, max(-8, 10 - t))
 ball    = solidCircle(1)
-```
+~~~~~
 
 The ball will be at a y position of `10 - t` as long as that's more than `-8`.
 But as soon as the ball reaches `-8`, it stops, because the first parameter to
@@ -355,10 +355,10 @@ a number that increases up to a limit.
 The `remainder` function causes a number to increase up to a limit, then drop
 back down to zero and start over.  For example:
 
-```
+~~~~~
 program   = animationOf(twitch)
 twitch(t) = rotated(solidRectangle(5, 1), remainder(45 * t, 90))
-```
+~~~~~
 
 The expression `45 * t` is linear, so it increases steadily at a rate of 45
 degrees per second.  But the remainder function ensures that when it reaches
@@ -373,7 +373,7 @@ an entire function, each attached to some condition that says when it applies.
 
 Here's an example of an animation using guards.
 
-```
+~~~~~
 program       = animationOf(flight)
 
 flight(t)
@@ -384,7 +384,7 @@ flight(t)
   | otherwise = translated(rotated(rocket, -45), 2 * t - 21, 2 * t - 22)
 
 rocket = solidRectangle(1, 4)
-```
+~~~~~
 
 ### The multi-step animation pattern ###
 
@@ -402,7 +402,7 @@ used.
 
 Here, we've rewritten the rocket example in this way:
 
-```
+~~~~~
 program       = animationOf(flight)
 
 flight(t)
@@ -419,7 +419,7 @@ step4(t) = translated(rotated(rocket, 15 * t - 90), 5, 4)
 step5(t) = translated(rotated(rocket, -45), 2 * t + 5, 2 * t + 4)
 
 rocket = solidRectangle(1, 4)
-```
+~~~~~
 
 This code does exactly the same thing as the earlier example.  But see
 how much easier it is to understand?  For example, in `step5`, the starting
@@ -448,12 +448,12 @@ You can practice graphing on paper, but it's also not too hard to draw the
 graph of a function using CodeWorld.  Here's a program that draws the graph of a
 sine (periodic) function.
 
-```
+~~~~~
 program = drawingOf(graph & coordinatePlane)
 graph = curve([ (x, f(x)) | x <- [0, 0.1 .. 10] ])
 
 f(t) = 3 * sin(90 * t)
-```
+~~~~~
 
 See how the back-and-forth pattern of the sine function is visible on the
 screen?  You can easily see that this function will start at 0, and as time

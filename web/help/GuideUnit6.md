@@ -51,13 +51,13 @@ Building Simulations
 
 It may sound complicated, but let's jump in and look at an example:
 
-```
+~~~~~
 program                       = activityOf(initial, change, picture)
 initial(rs)                   = (0, 0)
 change(p, PointerPress(x, y)) = (x, y)
 change(p, other)              = p
 picture(x, y)                 = translated(rectangle(1, 1), x, y)
-```
+~~~~~
 
 This example just shows a small square that moves when you click somewhere.  In
 this case, the state - the way things are - is a point.  The `initial` function
@@ -70,13 +70,13 @@ a small square, in the location you last clicked.
 Sometimes, an activity doesn't change with mouse clicks, but just to the normal
 passing of time.  Consider this one:
 
-```
+~~~~~
 program                         = activityOf(initial, change, picture)
 initial(rs)                     = (5, 0)
 change((x, y), TimePassing(dt)) = (x - y * dt, y + x * dt)
 change(p, other)                = p
 picture(x, y)                   = translated(rectangle(1, 1), x, y)
-```
+~~~~~
 
 In this case, the state is still a point: the location of an object, but it
 starts to one side.  The x and y coordinates change over time, by amounts that
@@ -136,9 +136,9 @@ One mistake that's easy to make is forgetting to say what happens with an
 event that you *don't* care about.  You should always end your `change`
 function with an equation like
 
-```
+~~~~~
 change(state, anything) = state
-```
+~~~~~
 
 That equation matches any event that hasn't been matched yet, and says that
 if some other event happens, the new state should be the same as the old
@@ -152,12 +152,12 @@ The simplest kind of state is a single number.  Let's build a simulation to move
 a box across the screen.  You could have done this with an animation, but this
 makes a good starting point to learn how things work with simulations.
 
-```
+~~~~~
 program     = simulationOf(initial, step, picture)
 initial(rs) = -10
 step(x, dt) = x + dt
 picture(x)  = translated(solidRectangle(1, 1), x, 0)
-```
+~~~~~
 
 The world, in thic coordinate, is the x coordinate of the box.  That's the only
 thing you need to remember!  Why not the y coordinate?  Because it is always
@@ -183,13 +183,13 @@ at the same time.  Let's try to make a rolling wheel, which will need to move
 (translation) and turn (rotation) at the same time.  In the state, we'll need
 both an x coordinate, and an angle of rotation.
 
-```
+~~~~~
 program = simulationOf(initial, step, picture)
 initial(rs) = (-10, 0)
 step((x, angle), dt) = (x + dt, angle - 60 * dt)
 picture(x, angle) = translated(rotated(wheel, angle), x, 0)
 wheel = circle(1) & solidRectangle(2, 1/4) & solidRectangle(1/4, 2)
-```
+~~~~~
 
 The initial world has an x coordinate of -10, and an angle of zero.  As time
 passes, the x coordinate increases by one unit per second, but the angle of
@@ -216,12 +216,12 @@ This simple animation shows a baseball flying through the air.  While only
 the x position and y position are needed to *draw* the simulation, the y
 speed also changes, and needs to be remembered.
 
-```
+~~~~~
 program = simulationOf(initial, step, picture)
 initial(rs) = (-9, -9, 15)
 step((x, y, vy), dt) = (x + 6 * dt, y + vy * dt, vy - 10 * dt)
 picture(x, y, vy) = translated(solidCircle(1/2), x, y)
-```
+~~~~~
 
 As you can see, the velocity in the y direction, `vy`, starts at 15 units per
 second upward.  But as time passes, it decreases, until eventually it becomes
@@ -260,12 +260,12 @@ of that object as part of the state.
 The last example above already did for this for movement in the y direction.
 But we could rewrite it to keep track of velocity in the x direction, as well.
 
-```
+~~~~~
 program = simulationOf(initial, step, picture)
 initial(rs) = (-9, -9, 6, 15)
 step((x, y, vx, vy), dt) = (x + vx * dt, y + vy * dt, vx, vy - 10 * dt)
 picture(x, y, vx, vy) = translated(solidCircle(1/2), x, y)
-```
+~~~~~
 
 This simulation does the same thing as the one before it, but notice how we've
 taken the constant `6`, and moved it from the code for the `step` function to a

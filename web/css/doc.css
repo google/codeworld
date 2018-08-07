@@ -18,12 +18,12 @@ body {
   margin: 0px 0px 0px 0px;
 }
 
-pre.clickable {
-  background-color: #eff8ff;
+.md pre.tilde.clickable {
+  background-color: #f0f8ff;
 }
 
-pre.clickable:hover {
-  background-color: #f5faff;
+.md pre.tilde.clickable:hover {
+  background-color: #f8fcff;
   cursor: pointer;
 }
 

@@ -8,7 +8,7 @@ This fancy CodeWorld logo is built out of geometric patterns.  It shows off
 creating patterns with list comprehensions, as well as some other fun
 tricks and capabilities of picture mode.
 
-```
+~~~~~
 program = drawingOf(logo)
 
 logo = pictures([
@@ -72,7 +72,7 @@ top = go(5)
                              translated(rotated(sub, 300),  2/3, 1.12) ])
 
 bottom = scaled(top, 1, -1)
-```
+~~~~~
 
 Example: Ferris Wheel
 =====================
@@ -81,7 +81,7 @@ An example of an animation.  An animation is a function from time to a
 Picture.  The parameter, normally called t, is the total time that's passed
 in seconds.
 
-```
+~~~~~
 program = animationOf(scene)
 
 scene(t) = ferrisWheel(t) & backdrop(t)
@@ -119,7 +119,7 @@ circularPath(pic, a) = rotated(translated(rotated(pic, -a), 6, 0), a)
 
 car = translated(solidRectangle(0.2, 1.2), 0, -0.5) &
       translated(solidRectangle(1.6, 0.8), 0, -1.2)
-```
+~~~~~
 
 Example: Mandelbrot Set
 =======================
@@ -133,7 +133,7 @@ The example starts by teaching CodeWorld how to do arithmetic with complex
 numbers.  The new operators `<+>` and `<*>` are chosen to represent complex
 addition and multiplication.
 
-```
+~~~~~
 -- Complex arithmetic
 data Complex where
     C :: (Number, Number) -> Complex
@@ -180,7 +180,7 @@ mandelbrot(n, k) = rotated(scaled(pic, 5, 5), 90)
         shade(p, m)   = colored(p, gray((1 - 1/m)^5))
 
 program = drawingOf(mandelbrot(500, 25))
-```
+~~~~~
 
 Example: Bounce
 ===============
@@ -193,7 +193,7 @@ This is an example of simulation mode.  The position of the ball is
 difficult to describe as an immediate function of the current time, so
 instead, the program simulates the movement of the ball in small steps.
 
-```
+~~~~~
 program = activityOf(initial, change, picture)
 
 data World where
@@ -223,7 +223,7 @@ bounce(Ball((x,y), (vx,vy))) = Ball((nx,ny), (nvx, nvy))
 fence(lo, hi, x) = max(lo, min(hi, x))
 
 picture(Ball((x,y),_)) = translated(solidCircle(radius), x, y)
-```
+~~~~~
 
 Example: Maze
 =============
@@ -348,7 +348,7 @@ foldl :: (b -> a -> b) -> b -> [a] -> b
 foldl f z0 xs0 = lgo z0 xs0 where
   lgo z []     =  z
   lgo z (x:xs) = lgo (f z x) xs
-```
+~~~~~
 
 Example: Asteroids
 ==================
@@ -359,7 +359,7 @@ simulates simple physics (vector acceleration and velocity) over time, as
 well as responding to the user.  It tracks scores between games, and it uses
 random numbers to make each game unique.  There's quite a lot there!
 
-```
+~~~~~
 program = activityOf(initial, change, picture)
 
 data World = World {
@@ -501,7 +501,7 @@ scoreBar(s, l, m)
 
     fmtScore :: Number -> Text
     fmtScore(n) = printed(floor(10 * n))
-```
+~~~~~
 
 License
 =======

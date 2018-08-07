@@ -20,7 +20,7 @@ Function Definitions
 Here's how you would define a house as a function that's waiting on a color
 for the roof, and apply it to draw a house with a red roof.
 
-```
+~~~~~
 program = drawingOf(scene)
 scene   = house(red)
 
@@ -29,7 +29,7 @@ house(roofColor) = colored(roof, roofColor) & solidRectangle(6, 7)
 
 roof :: Picture
 roof = translated(thickArc(45, 135, 6, 1), 0, -2)
-```
+~~~~~
 
 Notice that before the equal sign, you give a name for the piece of missing
 information, which is called the parameter.  When using the function, you need
@@ -38,7 +38,7 @@ to provide parentheses with specific values for those arguments.
 Parameters to functions can be of any type.  The next example defines a
 function with a picture as a parameter.
 
-```
+~~~~~
 program = drawingOf(ringOf(rectangle(1,1)))
 ringOf(p) = rotated(translated(p, 5, 0),  60) &
             rotated(translated(p, 5, 0), 120) &
@@ -46,7 +46,7 @@ ringOf(p) = rotated(translated(p, 5, 0),  60) &
             rotated(translated(p, 5, 0), 240) &
             rotated(translated(p, 5, 0), 300) &
             rotated(translated(p, 5, 0), 360)
-```
+~~~~~
 
 The name `p` is given to the parameter to `ringOf`.  When `ringOf` is used in
 the definition of `program`, it must be given a parameter, with a specific picture
@@ -90,14 +90,14 @@ problems.  To do this, you can use the `where` clause.  This goes at the end of
 the definition, and lets you define local variables that are only used inside of
 that definition.  It looks like this:
 
-```
+~~~~~
 program = drawingOf(mouse)
 mouse = head & body & tail
   where head = translated(solidCircle(1), 2, 2) &
                translated(solidCircle(1/4), 3, 2)
         body = solidCircle(2)
         tail = translated(solidRectangle(2, 1/4), -2, -1)
-```
+~~~~~
 
 The formatting matters here!  The word `where` must be indented.  It cannot
 start at the beginning of a new line, because it is still part of the definition
@@ -124,13 +124,13 @@ To write a conditional function, instead of one equal sign and a right-hand
 side, you'll right several of these, preceded by *guards*.  A guard gives a
 statement that must be true for this right-hand side of the equation to apply.
 
-```
+~~~~~
 program       = drawingOf(thing(1) & thing(2) & thing(3))
 thing(n)
   | n > 2     = rectangle(n, 2)
   | n > 1     = rectangle(n, n)
   | otherwise = circle(n)
-```
+~~~~~
 
 This will draw a rectangle, a square, and a circle.  When each guard matches,
 that choice is made for the definition.  Guards are evaluated from the top down,
@@ -153,10 +153,10 @@ So far, all of your functions have used variables to just name their parameters.
 Sometimes, though, you want to dig inside of a parameters, and match its pieces.
 You can do that, too.  Here's a really basic example:
 
-```
+~~~~~
 f :: [Number] -> Number
 f([a, b, c]) = a + b + c
-```
+~~~~~
 
 The function `f` expects *one* parameter, which is a list.  But it then breaks
 apart that list, and adds up three numbers that it finds inside.  If you ask
@@ -172,12 +172,12 @@ when its parameter is a list of length exactly `3`.
 The way you handle more cases is by writing multiple equations.  For example,
 you might write:
 
-```
+~~~~~
 f :: [Number] -> Number
 f([])    = 42
 f([a])   = a + 1
 f(other) = sum(other)
-```
+~~~~~
 
 This function is defined for more lists.  The first equation contains a pattern
 that just matches the empty list.  The second matches a list of length one.  And
@@ -194,19 +194,19 @@ always use a variable as a name for its value.  But on the left side of an equal
 sign, a variable is just a parameter that will match *anything*, but a value
 will only match itself.  So this does exactly what you might guess:
 
-```
+~~~~~
 f(0) = 1
 f(1) = 2
 f(2) = 4
 f(n) = 10 * n
-```
+~~~~~
 
 But this doesn't do what you think:
 
-```
+~~~~~
 f(pi)    = 1
 f(other) = 2
-```
+~~~~~
 
 You might think that function maps `pi` to the value `1` but everything else to
 `2`.  Surprisingly, though, it actually gives a value of `1` for all inputs!
@@ -214,10 +214,10 @@ That's because `pi` is a variable, so the first equation is interpreted as
 saying: match anything, and call it `pi`.  To write the function you meant, you
 would need to write:
 
-```
+~~~~~
 f(x) | x == pi   = 1
      | otherwise = 2
-```
+~~~~~
 
 Pattern matching, therefore, isn't the best way to match specific values,
 because you can't use variables at all!  It is, however, a great way to write

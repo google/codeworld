@@ -16,14 +16,14 @@ You can use the function called `pictures` to combine a list of pictures
 together into one picture.  It's just like the `&` operator, except that it
 works on a whole list of pictures instead of just two.  For example:
 
-```
+~~~~~
 program = drawingOf(allThePictures)
 allThePictures = pictures([
     solidRectangle(4, 0.4),
     solidCircle(1.2),
     circle(2)
     ])
-```
+~~~~~
 
 List comprehensions
 -------------------
@@ -35,10 +35,10 @@ simpler list, and copying something once for each thing in it.  So if you
 have a list of numbers, you can turn it into a list of *circles*, each
 with a different radius.  That looks like this:
 
-```
+~~~~~
 program = drawingOf(target)
 target  = pictures([ circle(r) | r <- [1, 2, 3, 4, 5] ])
-```
+~~~~~
 
 The list comprehension was `[ circle(r) | r <- [1, 2, 3, 4, 5] ]`, and it
 has a few parts:
@@ -75,11 +75,11 @@ have to give the first two numbers, then use `..` to continue from there.
 
 Here's another example:
 
-```
+~~~~~
 program = drawingOf(star)
 star    = pictures([ rotated(rectangle(10, 1/10), angle)
                      | angle <- [10, 20 .. 360] ])
-```
+~~~~~
 
 So we start with a list of numbers counting by 10s from 10 to 360.  Then we
 call each of those numbers the variable "angle", and get a list of pictures
@@ -96,10 +96,10 @@ First, you can filter out certain members of the list you start with.
 Suppose you want to draw those circles, like in the `target` example, but
 you don't want to draw the middle one.  One way to say that is:
 
-```
+~~~~~
 program = drawingOf(target)
 target  = pictures([ circle(r) | r <- [1 .. 5], r /= 3 ])
-```
+~~~~~
 
 Notice that `/=` means "not equal to".  So this says to make a picture out
 of circles built from each radius from 1 to 5, *except* for 3.
@@ -107,11 +107,11 @@ of circles built from each radius from 1 to 5, *except* for 3.
 Second, you can base your list comprehension on several lists.
 This will draw a grid of circles:
 
-```
+~~~~~
 program = drawingOf(grid)
 grid    = pictures([ translated(circle(1/2), x, y)
                      | x <- [-9 .. 9], y <- [-9 .. 9] ])
-```
+~~~~~
 
 Because there are two base lists separated by commas, this will draw a
 circle for *every* *possible* *combination* of x and y from those lists.
@@ -122,13 +122,13 @@ of including a result for all possible combinations, this will only match
 the first element of each list, then the second from each list, and so on.
 Here's an example, using a list of numbers, and a list of colors!
 
-```
+~~~~~
 program = drawingOf(circles)
 circles = pictures([ colored(circle(r), c) | r <- sizes
                                            | c <- colors ])
 sizes   = [ 1, 2, 3, 4, 5 ]
 colors  = [ red, green, blue, yellow, purple ]
-```
+~~~~~
 
 If you used a comma to separate the base lists, this would draw red,
 green, blue, yellow, *and* purple circles at *each* of the sizes, and that

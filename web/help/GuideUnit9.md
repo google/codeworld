@@ -43,38 +43,38 @@ Choosing Random State
 
 Let's start with a simulation that moves a circle across the screen.
 
-```
+~~~~~
 program = simulationOf(initial, step, picture)
 
 initial(rs)       = (-8, 4)
 step((x, vx), dt) = (x + vx * dt, vx)
 picture(x, vx)    = translated(circle(1), x, 0)
-```
+~~~~~
 
 Suppose you wanted the speed of the ball to be different each time.  The easiest
 way to do this is to use the first random number sent to `initial` as the speed.
 
-```
+~~~~~
 initial(rs)       = (-8, rs # 1)
-```
+~~~~~
 
 A speed between 0 and 1 is pretty slow, though.  You can scale the number into a
 range, by multiplying by the size of the range, and adding the lower bound.  So
 to choose a range of speeds between 1 and 5, you'd write `4 * rs # 1 + 1`.  Here
 is that complete code.
 
-```
+~~~~~
 initial(rs)       = (-8, 4 * rs # 1 + 1)
-```
+~~~~~
 
 Of course, you can also use pattern matching with the `:` operator to get
 numbers from the list.  This is particularly convenient when you want to choose
 more than one quantity at random.  Here, for example, is what it looks like to
 choose both the starting position and speed at random.
 
-```
+~~~~~
 initial(x:vx:rs)       = (5 * x - 5, 4 * vx + 1)
-```
+~~~~~
 
 Saving Randomness
 -----------------
@@ -89,7 +89,7 @@ Here's an example of the first strategy.  The square will turn a sequence of
 random colors.  The code describes the entire infinite sequence of colors using
 a list comprehension in the state.
 
-```
+~~~~~
 program = simulationOf(initial, step, picture)
 
 initial(rs) = (0, [ HSL(360 * r, 0.75, 0.5) | r <- rs ])
@@ -98,7 +98,7 @@ step((t, c:cs), dt) | t > 1     = (0, cs)
                     | otherwise = (t + dt, c:cs)
 
 picture(t, c:cs) = colored(solidRectangle(10, 10), c)
-```
+~~~~~
 
 You might wonder how the computer ever finishes *calculating* an infinite list
 of colors, all before the simulation even starts!  Don't worry.  The computer is
@@ -109,7 +109,7 @@ Another way to write this same program would be to just remember the starting
 list of random numbers, and compute the colors from that when drawing the
 picture itself.  The program is the same, but the code looks a little different:
 
-```
+~~~~~
 program = simulationOf(initial, step, picture)
 
 initial(rs) = (0, rs)
@@ -119,7 +119,7 @@ step((t, h:hs), dt) | t > 1     = (0, hs)
 
 picture(t, h:hs) =
     colored(solidRectangle(10, 10), HSL(360 * h, 0.75, 0.5))
-```
+~~~~~
 
 Applying Random Numbers
 -----------------------

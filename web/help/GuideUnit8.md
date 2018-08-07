@@ -15,15 +15,15 @@ commonly called `event`.  The `event` function fits into `interactionOf` between
 the `step` and `picture` functions, so while the first line of a simulation
 looks like this:
 
-```
+~~~~~
 program          = simulationOf(initial, step, picture)
-```
+~~~~~
 
 the first line of an interaction looks like this:
 
-```
+~~~~~
 program          = interactionOf(initial, step, event, picture)
-```
+~~~~~
 
 Here's how the `event` function of an interaction fits in with the parts we are
 familiar with from simulations.
@@ -36,13 +36,13 @@ how your program's state should change when someone uses the keyboard or mouse.
 In simulations, the state stayed the same.  You can define `event` to say this
 explicitly:
 
-```
+~~~~~
 program     = interactionOf(initial, step, event, picture)
 initial(rs) = -10
 step(x, dt) = x + dt
 event(x, e) = x
 picture(x)  = translated(solidCircle(1/2), x, 0)
-```
+~~~~~
 
 This `event` function produces the same state as before, regardless of any event
 that occurred.  In other words, this same program could have been described with
@@ -82,7 +82,7 @@ back the way it was when the key is released.
 Here's some example code.  This program moves a circle around the screen when
 the user presses the arrow keys:
 
-```
+~~~~~
 program = interactionOf(initial, step, event, picture)
 
 initial(rs) = (0, 0)
@@ -96,7 +96,7 @@ event((x, y), KeyPress("Right")) = (x + 1, y)
 event(point,  other)             = point
 
 picture(x, y) = translated(solidCircle(1/2), x, y)
-```
+~~~~~
 
 Notice that the `event` function uses multiple constructors, to handle different
 events.  This is a common way of doing things, just like with all data types
@@ -119,13 +119,13 @@ recognize it.  These are some common keys used in interactions.
 You can't memorize them all, though!  Instead, here's a program that will help
 you find the name of any key on the keyboard:
 
-```
+~~~~~
 program = interactionOf(initial, step, event, lettering)
 initial(rs)              = ""
 step(s, dt)              = s
 event(s, KeyPress(name)) = name
 event(s,  other)         = s
-```
+~~~~~
 
 (Notice that this program doesn't define its own `picture` function.  The
 built-in function called `lettering` already does that job, so we can just use
@@ -141,23 +141,23 @@ y positions of the pointer.
 
 Here's a simple example that lets you draw polygons by clicking on vertices.
 
-```
+~~~~~
 program = interactionOf(initial, step, event, polyline)
 initial(rs)                      = []
 step(state, dt)                  = state
 event(state, PointerPress(x, y)) = state ++ [ (x, y) ]
 event(state, other)              = state
-```
+~~~~~
 
 In some programs, you'll care if the click is in a specific part - for example,
 on a button.  In that case, you may want to add guards to your event function,
 like this:
 
-```
+~~~~~
 event(state, PointerPress(x, t))
   | x > -2, x < 2, y > 5, y < 7 = somethingExciting
 event(state, other) = state
-```
+~~~~~
 
 Collaborations
 ==============
@@ -187,7 +187,7 @@ For a simple collaboration, we can let both players draw on the screen with the
 pointer.  A player's own dots will appear in black, while the other player's
 dots will appear in green.  This collaboration looks like this:
 
-```
+~~~~~
 program = collaborationOf(2, initial, step, event, picture)
 
 initial(rs) = ([], [])
@@ -203,7 +203,7 @@ picture((ps, qs), 2) = dots(qs) & colored(dots(ps), red)
 
 dots(ps) = pictures([
     translated(solidCircle(1/4), x, y) | (x, y) <- ps ])
-```
+~~~~~
 
 When you run this program, instead of seeing your own game right away, you start
 out in a *lobby*, which allows you to create a new game for people to join and

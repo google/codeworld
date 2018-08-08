@@ -48,6 +48,20 @@ window.env = parent;
         });
     }
 
+    function activateCollapsible(root) {
+        var elems = root.getElementsByClassName('collapsible');
+        for (var i = 0; i < elems.length; ++i) {
+            let elem = elems[i];
+            elem.onclick = function() {
+                if (elem.classList.contains('expanded')) {
+                    elem.classList.remove('expanded');
+                } else {
+                    elem.classList.add('expanded');
+                }
+            }
+        }
+    }
+
     function linkFunBlocks(elem) {
         var blocks = elem.getElementsByTagName('xml');
         var i = 0;
@@ -209,8 +223,10 @@ window.env = parent;
                     if (shelf && shelf.blocks) {
                         linkFunBlocks(content);
                         linkCodeBlocks(content, false);
+                        activateCollapsible(content);
                     } else {
                         linkCodeBlocks(content);
+                        activateCollapsible(content);
                     }
                 } else {
                     content.innerHTML = raw;

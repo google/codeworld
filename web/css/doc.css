@@ -25,7 +25,6 @@ body {
   top: 10px;
   right: 10px;
 }
-
 #popout a {
   text-decoration: none;
   font-weight: bold;
@@ -37,10 +36,44 @@ body {
 .md pre.tilde.clickable {
   background-color: #f0f8ff;
 }
-
 .md pre.tilde.clickable:hover {
   background-color: #f8fcff;
   cursor: pointer;
+}
+
+.md div.admonition.collapsible::before {
+  content: "+";
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 150%;
+  position: relative;
+  top: 2px;
+  color: rgba(68,138,255,.8);
+  left: -2.95rem;
+  display: block;
+  width: 0;
+  height: 0;
+}
+.md div.admonition.collapsible.expanded::before {
+  content: "\2013";
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 150%;
+  position: relative;
+  top: 2px;
+  color: rgba(68,138,255,.8);
+  left: -2.95rem;
+  display: block;
+  width: 0;
+  height: 0;
+}
+
+.md div.admonition.collapsible > * {
+  display: none;
+}
+.md div.admonition.collapsible > .admonition-title,
+.md div.admonition.collapsible.expanded > * {
+  display: inherit;
 }
 
 #helpacc {

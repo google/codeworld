@@ -14,28 +14,40 @@ don't worry: the **Guide** button at the bottom of the screen will get you back 
 How to be successful
 ====================
 
-Before you get started, let's talk about some strategies to be successful.
+Before you get started, let's talk about some strategies to be successful.  Expand the
+sections below to explore each strategy.
 
-1. **Try everything!** You can't learn computer programming by reading about it.
-   When you *wonder* what will happen if you try something, just try it!  If you
-   think you understand, prove it to yourself!
+!!! collapsible: Try everything!
+    You can't learn computer programming by reading about it. When you *wonder* what
+    will happen if you try something, just try it. If you think you understand, prove
+    it to yourself. You learn when you are writing code.
 
-   Many of the examples in this guide can be copied into the CodeWorld editor and run as
-   is! If you see a blue box, you can click it to copy the code and try it out.
+    Many of the examples in this guide can be copied into the CodeWorld editor and run as
+    is! If you see a blue shaded code example, that means you can click on it to copy
+    and run it, and see the result.
 
-2. **Value your mistakes!** You might have heard that mistakes prove you are
-   learning. That's even more true of computer programming. Even the best programmers
-   don't usually get it right the first time, so don't try to avoid making mistakes.
-   Instead, learn to understand and fix your mistakes more easily.
+!!! collapsible: Value your mistakes!
+    You might have heard that mistakes prove you are learning. That's even more true in
+    computer programming. In fact, even the best programmers don't usually get it right
+    the first time.  Writing code is only one step in computer programmer. The next step
+    is to try it, and fix the mistakes.
 
-3. **Have fun!** Programming can be difficult, but it doesn't have to be boring. Let
-   yourself have some fun, share your creations with friends and family, and most of
-   all, laugh.
+    A mistake doesn't mean you're bad at programming.  It just means you're not done
+    yet. As you become a better programmer, you will still make mistakes, but you will
+    learn to understand and fix your mistakes more easily.
 
-To get some cool ideas about what you can do in CodeWorld, you might want to check
-out the [CodeWorld Gallery](/gallery.html), with examples of projects built by
-other students.  Don't worry if you aren't that advanced yet.  It takes patience,
-but you can get there, too!
+!!! collapsible: Have fun!
+    Coding can be difficult, because it requires you to think about all of the details,
+    and say precisely what you mean. But it doesn't have to be unpleasant.
+
+    To have a good time, practice laughing at your mistakes. Share your creations with
+    friends and family, whether or not they turned out exactly like you hoped!  We're
+    all in this together.
+
+    To get some cool ideas about what you can do in CodeWorld, you might want to check
+    out the [CodeWorld Gallery](/gallery.html), with examples of projects built by
+    other students.  Don't worry if you aren't that advanced yet.  It takes patience,
+    but you can get there, too!
 
 The CodeWorld environment
 =========================

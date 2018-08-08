@@ -2128,11 +2128,11 @@ handleControl _ (PointerRelease (x, y)) (ZoomSlider (cx, cy)) w
     | isDraggingZoom w = (w {zoomFactor = yToZoomFactor (y - cy), isDraggingZoom = False}, True)
 handleControl _ (PointerPress (x, y)) (HistorySlider (cx, cy)) w
     | abs (x - cx) < 1.5 && abs (y - cy) < 0.4 = 
-      (travelToTime ((x - (cx - 1.4)) / 2.8) <$> w {isDraggingHistory = True}, True)
+      (travelToTime (x - cx) <$> w {isDraggingHistory = True}, True)
 handleControl _ (PointerMovement (x, y)) (HistorySlider (cx, cy)) w
-    | isDraggingHistory w = (travelToTime ((x - (cx - 1.4)) / 2.8) <$> w, True)
+    | isDraggingHistory w = (travelToTime (x - cx) <$> w, True)
 handleControl _ (PointerRelease (x, y)) (HistorySlider (cx, cy)) w
-    | isDraggingHistory w = (travelToTime ((x - (cx - 1.4)) / 2.8) <$> w {isDraggingHistory = False}, True)
+    | isDraggingHistory w = (travelToTime (x - cx) <$> w {isDraggingHistory = False}, True)
 handleControl _ (PointerPress (x, y)) PanningLayer w =
       (w {panDraggingAnchor = Just (x, y)}, True)
 handleControl _ (PointerMovement (x, y)) PanningLayer w
@@ -2146,11 +2146,13 @@ handleControl _ (PointerRelease (x, y)) PanningLayer w
 handleControl _ _ _ w = (w, False)
 
 travelToTime :: Double -> ([s],[s]) -> ([s],[s])  
-travelToTime t (past, future) = go past future (n1 - desiredN1)
+travelToTime t (past, future)
+    | n == 1    = (past, future)
+    | otherwise = go past future (n1 - desiredN1)
   where n1 = length past
         n2 = length future
         n = n1 + n2
-        desiredN1 = min n $ max 1 $ round $ t * fromIntegral n
+        desiredN1 = round (scaleRange (-1.4, 1.4) (1, fromIntegral n) t)
         go past future diff
           | diff > 0 = go (tail past) (head past : future) (diff - 1)
           | diff < 0 = go (head future : past) (tail future) (diff + 1)
@@ -2327,9 +2329,11 @@ drawControl w alpha (HistorySlider (x,y)) = translated x y p
         colored (RGBA 0.0 0.0 0.0 alpha) (translated xoff 0 (solidRectangle 0.2 0.8)) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.25) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.25)
-    xoff = fromIntegral n1 / fromIntegral (n1 + n2) * 2.8 - 1.4
+    xoff | n < 2 = 1.4
+         | otherwise   = scaleRange (1, fromIntegral n) (-1.4, 1.4) (fromIntegral n1)
     n1 = length (fst (state w))
     n2 = length (snd (state w))
+    n  = n1 + n2
 
 drawingControls :: Wrapped () -> [Control ()]
 drawingControls w

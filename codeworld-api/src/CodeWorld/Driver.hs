@@ -1983,6 +1983,7 @@ data Wrapped a = Wrapped
     , panDraggingAnchor :: Maybe Point
     , isDraggingSpeed :: Bool
     , isDraggingHistory :: Bool
+    , isDraggingZoom :: Bool
     } deriving (Show, Functor)
 
 data Control :: * -> * where
@@ -1999,6 +2000,7 @@ data Control :: * -> * where
     BackButton :: Point -> Control Double
     TimeLabel :: Point -> Control Double
     SpeedSlider :: Point -> Control a
+    ZoomSlider :: Point -> Control a
     UndoButton :: Point -> Control ([a], [a])
     RedoButton :: Point -> Control ([a], [a])
     HistorySlider :: Point -> Control ([a], [a])
@@ -2063,6 +2065,9 @@ snapSlider :: Double -> Double -> Double
 snapSlider target val | abs (val - target) < 0.2 = target
                 | otherwise                = val
 
+yToZoomFactor :: Double -> Double -> Double
+yToZoomFactor cy y = 1.25 ** (min 10 $ max (-10) $ 20 * (y + 1.4 - cy) / 2.8 - 10)
+
 handleControl ::
        (Double -> a -> a) -> Event -> Control a -> Wrapped a -> (Wrapped a, Bool)
 handleControl _ (PointerPress (x, y)) (RestartButton (cx, cy)) w
@@ -2078,9 +2083,9 @@ handleControl _ (PointerPress (x, y)) (PauseButton (cx, cy)) w
 handleControl _ (PointerPress (x, y)) (FastForwardButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4  = (w {playbackSpeed = min 5 $ max 2 $ playbackSpeed w + 1}, True)
 handleControl _ (PointerPress (x, y)) (ZoomInButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = zoomFactor w * 1.25}, True)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = min (1.25 ** 10) (zoomFactor w * 1.25)}, True)
 handleControl _ (PointerPress (x, y)) (ZoomOutButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = zoomFactor w / 1.25}, True)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = max (1.25 ** (-10)) (zoomFactor w / 1.25)}, True)
 handleControl _ (PointerPress (x, y)) (ResetViewButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = 1, panCenter = (0, 0)}, True)
 handleControl _ (PointerPress (x,y)) (BackButton (cx, cy)) w
@@ -2095,14 +2100,21 @@ handleControl _ (PointerPress (x,y)) (RedoButton (cx, cy)) w
 handleControl f (PointerPress (x, y)) (StepButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {state = f 0.1 (state w)}, True)
 handleControl _ (PointerPress (x, y)) (SpeedSlider (cx, cy)) w
-    | abs (x - cx) < 1.5 && abs (y - cy) < 1.5 = 
+    | abs (x - cx) < 1.5 && abs (y - cy) < 0.4 = 
       (w {playbackSpeed = xToPlaybackSpeed cx x, isDraggingSpeed = True}, True)
 handleControl _ (PointerMovement (x, y)) (SpeedSlider (cx, cy)) w
     | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed cx x}, True)
 handleControl _ (PointerRelease (x, y)) (SpeedSlider (cx, cy)) w
     | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed cx x, isDraggingSpeed = False}, True)
+handleControl _ (PointerPress (x, y)) (ZoomSlider (cx, cy)) w
+    | abs (x - cx) < 0.4 && abs (y - cy) < 1.5 = 
+      (w {zoomFactor = yToZoomFactor cy y, isDraggingZoom = True}, True)
+handleControl _ (PointerMovement (x, y)) (ZoomSlider (cx, cy)) w
+    | isDraggingZoom w = (w {zoomFactor = yToZoomFactor cy y}, True)
+handleControl _ (PointerRelease (x, y)) (ZoomSlider (cx, cy)) w
+    | isDraggingZoom w = (w {zoomFactor = yToZoomFactor cy y, isDraggingZoom = False}, True)
 handleControl _ (PointerPress (x, y)) (HistorySlider (cx, cy)) w
-    | abs (x - cx) < 1.5 && abs (y - cy) < 1.5 = 
+    | abs (x - cx) < 1.5 && abs (y - cy) < 0.4 = 
       (travelToTime ((x - (cx - 1.4)) / 2.8) <$> w {isDraggingHistory = True}, True)
 handleControl _ (PointerMovement (x, y)) (HistorySlider (cx, cy)) w
     | isDraggingHistory w = (travelToTime ((x - (cx - 1.4)) / 2.8) <$> w, True)
@@ -2280,6 +2292,16 @@ drawControl w alpha (SpeedSlider (x,y)) = translated x y p
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.25) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.25)
     xoff = playbackSpeed w / 5 * 2.8 - 1.4
+drawControl w alpha (ZoomSlider (x,y)) = translated x y p
+  where
+    p =
+        colored
+            (RGBA 0 0 0 alpha)
+            (translated (-1) yoff $ scaled 0.5 0.5 $ lettering (pack (show (round (zoomFactor w * 100) :: Int) ++ "%"))) <>
+        translated 0 yoff (solidRectangle 0.8 0.2) <>
+        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.25 2.8) <>
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.25 2.8)
+    yoff = (logBase 1.25 (zoomFactor w) + 10) / 20 * 2.8 - 1.4
 drawControl w alpha (HistorySlider (x,y)) = translated x y p
   where
     p =
@@ -2300,11 +2322,12 @@ drawingControls w
   where
     commonControls = [
         PanningLayer,
-        ZoomInButton (9, -7),
-        ZoomOutButton (9, -8)
+        ZoomInButton (9, -4),
+        ZoomOutButton (9, -8),
+        ZoomSlider (9, -6)
       ]
     resetViewButton
-      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -6)]
+      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -3)]
       | otherwise = []
 
 drawingOf pic = runInspect drawingControls () (\_ _ -> ()) (\_ _ -> ()) (const pic)

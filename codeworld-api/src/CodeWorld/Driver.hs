@@ -2073,11 +2073,13 @@ xToPlaybackSpeed x = snapSlider 0.2 [1..4] $ scaleRange (-1.4, 1.4) (0, 5) x
 playbackSpeedToX :: Double -> Double
 playbackSpeedToX s = scaleRange (0, 5) (-1.4, 1.4) s
 
+zoomIncrement = 8 ** (1/10)
+
 yToZoomFactor :: Double -> Double
-yToZoomFactor y = 1.25 ** (scaleRange (-1.4, 1.4) (-10, 10) y)
+yToZoomFactor y = zoomIncrement ** (scaleRange (-1.4, 1.4) (-10, 10) y)
 
 zoomFactorToY :: Double -> Double
-zoomFactorToY z = scaleRange (-10, 10) (-1.4, 1.4) (logBase 1.25 z)
+zoomFactorToY z = scaleRange (-10, 10) (-1.4, 1.4) (logBase zoomIncrement z)
 
 handleControl ::
        (Double -> a -> a) -> Event -> Control a -> Wrapped a -> (Wrapped a, Bool)
@@ -2094,9 +2096,9 @@ handleControl _ (PointerPress (x, y)) (PauseButton (cx, cy)) w
 handleControl _ (PointerPress (x, y)) (FastForwardButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4  = (w {playbackSpeed = min 5 $ max 2 $ playbackSpeed w + 1}, True)
 handleControl _ (PointerPress (x, y)) (ZoomInButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = min (1.25 ** 10) (zoomFactor w * 1.25)}, True)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = min (zoomIncrement ** 10) (zoomFactor w * zoomIncrement)}, True)
 handleControl _ (PointerPress (x, y)) (ZoomOutButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = max (1.25 ** (-10)) (zoomFactor w / 1.25)}, True)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = max (zoomIncrement ** (-10)) (zoomFactor w / zoomIncrement)}, True)
 handleControl _ (PointerPress (x, y)) (ResetViewButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = 1, panCenter = (0, 0)}, True)
 handleControl _ (PointerPress (x,y)) (BackButton (cx, cy)) w

@@ -1053,8 +1053,6 @@ setCanvasSize target canvas = do
     setAttribute target ("width" :: JSString) (show (round cx))
     setAttribute target ("height" :: JSString) (show (round cy))
 
-drawingOf pic = runStatic pic
-
 #else
 
 --------------------------------------------------------------------------------
@@ -1096,17 +1094,6 @@ runBlankCanvas act = do
     Canvas.blankCanvas options $ \context -> do
         putStrLn "Program is starting..."
         act context
-
-display :: Drawing -> IO ()
-display drawing =
-    runBlankCanvas $ \context ->
-        Canvas.send context $
-        Canvas.saveRestore $ do
-            let rect = (Canvas.width context, Canvas.height context)
-            setupScreenContext rect
-            drawDrawing initialDS drawing
-
-drawingOf pic = display (pictureToDrawing pic)
 
 #endif
 
@@ -1680,49 +1667,6 @@ drawDebugState state drawing =
                 (shapeSelected state)
                 drawing
         False -> drawing
-
-runStatic :: Picture -> IO ()
-runStatic pic = do
-    showCanvas
-    Just window <- currentWindow
-    Just doc <- currentDocument
-    Just canvas <- getElementById doc ("screen" :: JSString)
-    offscreenCanvas <- Canvas.create 500 500
-    setCanvasSize canvas canvas
-    setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-    screen <- getCodeWorldContext (canvasFromElement canvas)
-    debugState <- newMVar debugStateInit
-    let draw =
-            flip drawDebugState (pictureToDrawing pic) <$> readMVar debugState
-        drawToScreen = withoutPreemption $ do
-            drawing <- draw
-            rect <- getBoundingClientRect canvas
-            withScreen (elementFromCanvas offscreenCanvas) rect $
-                drawFrame drawing
-            rect <- getBoundingClientRect canvas
-            cw <- ClientRect.getWidth rect
-            ch <- ClientRect.getHeight rect
-            canvasDrawImage
-                screen
-                (elementFromCanvas offscreenCanvas)
-                0
-                0
-                (round cw)
-                (round ch)
-        sendEvent evt = do
-            takeMVar debugState >>= putMVar debugState . updateDebugState evt
-            drawToScreen
-        handlePause True = sendEvent DebugStart
-        handlePause False = sendEvent DebugStop
-        handleHighlight True node = sendEvent $ HighlightEvent node
-        handleHighlight False node = sendEvent $ SelectEvent node
-    on window resize $
-        liftIO $ do
-            setCanvasSize canvas canvas
-            setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-            drawToScreen
-    inspect (return pic) handlePause handleHighlight
-    drawToScreen
 
 -- Utility functions that apply a function in either the left or right half of a
 -- tuple.  Crucially, if the function preserves sharing on its side, then the
@@ -2349,6 +2293,21 @@ drawControl w alpha (HistorySlider (x,y)) = translated x y p
     n1 = length (fst (state w))
     n2 = length (snd (state w))
 
+drawingControls :: Wrapped () -> [Control ()]
+drawingControls w
+    | lastInteractionTime w > 5 = []
+    | otherwise = commonControls ++ resetViewButton
+  where
+    commonControls = [
+        PanningLayer,
+        ZoomInButton (9, -7),
+        ZoomOutButton (9, -8)
+      ]
+    resetViewButton
+      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -6)]
+      | otherwise = []
+
+drawingOf pic = runInspect drawingControls () (\_ _ -> ()) (\_ _ -> ()) (const pic)
 
 animationControls :: Wrapped Double -> [Control Double]
 animationControls w

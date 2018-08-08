@@ -2014,7 +2014,8 @@ wrappedInitial w = Wrapped {
       panCenter = (0,0),
       panDraggingAnchor = Nothing,
       isDraggingSpeed = False,
-      isDraggingHistory = False
+      isDraggingHistory = False,
+      isDraggingZoom = False
     }
 
 wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
@@ -2058,15 +2059,25 @@ wrappedEvent ctrls stepHandler eventHandler event w
     (dx, dy) = panCenter w
     k        = zoomFactor w
 
-xToPlaybackSpeed :: Double -> Double -> Double
-xToPlaybackSpeed cx x = foldr (snapSlider) (min 5 $ max 0 $ 5 * (x + 1.4 - cx) / 2.8) [1..4]
+scaleRange :: (Double, Double) -> (Double, Double) -> Double -> Double
+scaleRange (a1, b1) (a2, b2) x = min b2 $ max a2 $ (x - a1) / (b1 - a1) * (b2 - a2) + a2
 
-snapSlider :: Double -> Double -> Double
-snapSlider target val | abs (val - target) < 0.2 = target
-                | otherwise                = val
+snapSlider :: Double -> [Double] -> Double -> Double
+snapSlider eps targets val = foldr snap val targets
+    where snap t v | abs (t - v) < eps = t
+                   | otherwise         = v
 
-yToZoomFactor :: Double -> Double -> Double
-yToZoomFactor cy y = 1.25 ** (min 10 $ max (-10) $ 20 * (y + 1.4 - cy) / 2.8 - 10)
+xToPlaybackSpeed :: Double -> Double
+xToPlaybackSpeed x = snapSlider 0.2 [1..4] $ scaleRange (-1.4, 1.4) (0, 5) x
+
+playbackSpeedToX :: Double -> Double
+playbackSpeedToX s = scaleRange (0, 5) (-1.4, 1.4) s
+
+yToZoomFactor :: Double -> Double
+yToZoomFactor y = 1.25 ** (scaleRange (-1.4, 1.4) (-10, 10) y)
+
+zoomFactorToY :: Double -> Double
+zoomFactorToY z = scaleRange (-10, 10) (-1.4, 1.4) (logBase 1.25 z)
 
 handleControl ::
        (Double -> a -> a) -> Event -> Control a -> Wrapped a -> (Wrapped a, Bool)
@@ -2101,18 +2112,18 @@ handleControl f (PointerPress (x, y)) (StepButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {state = f 0.1 (state w)}, True)
 handleControl _ (PointerPress (x, y)) (SpeedSlider (cx, cy)) w
     | abs (x - cx) < 1.5 && abs (y - cy) < 0.4 = 
-      (w {playbackSpeed = xToPlaybackSpeed cx x, isDraggingSpeed = True}, True)
+      (w {playbackSpeed = xToPlaybackSpeed (x - cx), isDraggingSpeed = True}, True)
 handleControl _ (PointerMovement (x, y)) (SpeedSlider (cx, cy)) w
-    | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed cx x}, True)
+    | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed (x - cx)}, True)
 handleControl _ (PointerRelease (x, y)) (SpeedSlider (cx, cy)) w
-    | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed cx x, isDraggingSpeed = False}, True)
+    | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed (x - cx), isDraggingSpeed = False}, True)
 handleControl _ (PointerPress (x, y)) (ZoomSlider (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 1.5 = 
-      (w {zoomFactor = yToZoomFactor cy y, isDraggingZoom = True}, True)
+      (w {zoomFactor = yToZoomFactor (y - cy), isDraggingZoom = True}, True)
 handleControl _ (PointerMovement (x, y)) (ZoomSlider (cx, cy)) w
-    | isDraggingZoom w = (w {zoomFactor = yToZoomFactor cy y}, True)
+    | isDraggingZoom w = (w {zoomFactor = yToZoomFactor (y - cy)}, True)
 handleControl _ (PointerRelease (x, y)) (ZoomSlider (cx, cy)) w
-    | isDraggingZoom w = (w {zoomFactor = yToZoomFactor cy y, isDraggingZoom = False}, True)
+    | isDraggingZoom w = (w {zoomFactor = yToZoomFactor (y - cy), isDraggingZoom = False}, True)
 handleControl _ (PointerPress (x, y)) (HistorySlider (cx, cy)) w
     | abs (x - cx) < 1.5 && abs (y - cy) < 0.4 = 
       (travelToTime ((x - (cx - 1.4)) / 2.8) <$> w {isDraggingHistory = True}, True)
@@ -2287,28 +2298,31 @@ drawControl w alpha (SpeedSlider (x,y)) = translated x y p
     p =
         colored
             (RGBA 0 0 0 alpha)
-            (translated xoff 0.75 $ scaled 0.5 0.5 $ lettering (pack (showFFloatAlt (Just 2) (playbackSpeed w) "x"))) <>
-        translated xoff 0 (solidRectangle 0.2 0.8) <>
+            (translated xoff 0.75 $ scaled 0.5 0.5 $
+                 lettering (pack (showFFloatAlt (Just 2) (playbackSpeed w) "x"))) <>
+        colored (RGBA 0 0 0 alpha) (translated xoff 0 (solidRectangle 0.2 0.8)) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.25) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.25)
-    xoff = playbackSpeed w / 5 * 2.8 - 1.4
+    xoff = playbackSpeedToX (playbackSpeed w)
 drawControl w alpha (ZoomSlider (x,y)) = translated x y p
   where
     p =
         colored
             (RGBA 0 0 0 alpha)
-            (translated (-1) yoff $ scaled 0.5 0.5 $ lettering (pack (show (round (zoomFactor w * 100) :: Int) ++ "%"))) <>
-        translated 0 yoff (solidRectangle 0.8 0.2) <>
+            (translated (-1.1) yoff $ scaled 0.5 0.5 $
+                 lettering (pack (show (round (zoomFactor w * 100) :: Int) ++ "%"))) <>
+        colored (RGBA 0 0 0 alpha) (translated 0 yoff (solidRectangle 0.8 0.2)) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.25 2.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.25 2.8)
-    yoff = (logBase 1.25 (zoomFactor w) + 10) / 20 * 2.8 - 1.4
+    yoff = zoomFactorToY (zoomFactor w)
 drawControl w alpha (HistorySlider (x,y)) = translated x y p
   where
     p =
         colored
             (RGBA 0 0 0 alpha)
-            (translated xoff 0.75 $ scaled 0.5 0.5 $ lettering (pack (show n1 ++ "/" ++ show (n1 + n2)))) <>
-        translated xoff 0 (solidRectangle 0.2 0.8) <>
+            (translated xoff 0.75 $ scaled 0.5 0.5 $
+                 lettering (pack (show n1 ++ "/" ++ show (n1 + n2)))) <>
+        colored (RGBA 0.0 0.0 0.0 alpha) (translated xoff 0 (solidRectangle 0.2 0.8)) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.25) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.25)
     xoff = fromIntegral n1 / fromIntegral (n1 + n2) * 2.8 - 1.4
@@ -2335,16 +2349,18 @@ drawingOf pic = runInspect drawingControls () (\_ _ -> ()) (\_ _ -> ()) (const p
 animationControls :: Wrapped Double -> [Control Double]
 animationControls w
     | lastInteractionTime w > 5 = []
-    | otherwise = [PanningLayer] ++ commonControls ++ pauseDependentControls ++
+    | otherwise = commonControls ++ pauseDependentControls ++
                   backButton ++ resetViewButton
   where
     commonControls = [
+        PanningLayer,
         RestartButton (-9, -9),
         TimeLabel (8, -9),
         SpeedSlider (-3, -9),
         FastForwardButton (-1, -9),
-        ZoomInButton (9, -7),
-        ZoomOutButton (9, -8)
+        ZoomInButton (9, -4),
+        ZoomOutButton (9, -8),
+        ZoomSlider (9, -6)
       ]
     pauseDependentControls
       | playbackSpeed w == 0 = [PlayButton (-8, -9), StepButton (-6, -9)]
@@ -2353,7 +2369,7 @@ animationControls w
       | playbackSpeed w == 0 && state w > 0 = [BackButton (-7, -9)]
       | otherwise = []
     resetViewButton
-      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -6)]
+      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -3)]
       | otherwise = []
 
 animationOf f = runInspect animationControls 0 (+) (\_ r -> r) f
@@ -2361,20 +2377,21 @@ animationOf f = runInspect animationControls 0 (+) (\_ r -> r) f
 simulationControls :: Wrapped w -> [Control w]
 simulationControls w
     | lastInteractionTime w > 5 = []
-    | otherwise = [PanningLayer] ++ pauseDependentControls ++ commonControls ++
-                  resetViewButton
+    | otherwise = commonControls ++ pauseDependentControls ++ resetViewButton
   where
     commonControls = [
+        PanningLayer,
         FastForwardButton (-4, -9),
         SpeedSlider (-6, -9),
-        ZoomInButton (9, -7),
-        ZoomOutButton (9, -8)
+        ZoomInButton (9, -4),
+        ZoomOutButton (9, -8),
+        ZoomSlider (9, -6)
       ]
     pauseDependentControls
       | playbackSpeed w == 0 = [PlayButton (-8, -9), StepButton (-2, -9)]
       | otherwise = [PauseButton (-8, -9)]
     resetViewButton
-      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -6)]
+      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -3)]
       | otherwise = []
 
 statefulDebugControls :: Wrapped ([w],[w]) -> [Control ([w],[w])]
@@ -2393,15 +2410,16 @@ statefulDebugControls w
         StartOverButton (0, -9),
         FastForwardButton (-4, -9),
         SpeedSlider (-6, -9),
-        ZoomInButton (9, -7),
-        ZoomOutButton (9, -8)
+        ZoomInButton (9, -4),
+        ZoomOutButton (9, -8),
+        ZoomSlider (9, -6)
       ]
     pauseDependentControls
       | playbackSpeed w == 0 = 
             [PlayButton (-8, -9), HistorySlider (3, -9)] ++ advance ++ regress
       | otherwise = [PauseButton (-8, -9)]
     resetViewButton
-      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -6)]
+      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -3)]
       | otherwise = []
     panningLayer 
       | playbackSpeed w == 0 = [PanningLayer]

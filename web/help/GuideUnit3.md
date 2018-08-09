@@ -24,7 +24,7 @@ Computers make this job much easier!  All you need to do is describe a pattern o
 motion.  The computer does the hard work of drawing many similar pictures.  The
 way you do this is with a function.
 
-~~~~~
+~~~~~ . clickable
 program      = animationOf(propellor)
 propellor(t) = rotated(solidRectangle(10, 1), 60 * t)
 ~~~~~
@@ -79,7 +79,7 @@ How fast (in degrees per second) is the propellor rotating?
 The program above shows a propellor that appears to be moving.  But not all
 animations look like motion!  Try this one:
 
-~~~~~
+~~~~~ . clickable
 program = animationOf(f)
 f(t) = translated(solidCircle(1), x, 0)
   where x = 10 * randomNumbers(t) # 1
@@ -120,7 +120,7 @@ The list goes on and on!  And you don't need to settle for just one of these.
 You can use `t` as many times in your animation as you like!  This example
 combines change in rotation and translation at the same time:
 
-~~~~~
+~~~~~ . clickable
 program  = animationOf(wheel)
 wheel(t) = translated(rotated(tire, -60 * t), t - 10, 3)
 tire     = circle(1) & solidRectangle(0.1, 2)
@@ -192,7 +192,7 @@ but you've given it animations (which are functions), instead.
 But you can use `&` to combine two *pictures*, in the pattern that
 describes one frame of the animation.  This will work:
 
-~~~~~
+~~~~~ . clickable
 program = animationOf(c)
 c(t)    = a(t) & b(t)
 a(t)    = rotated(solidRectangle(1, 1), 45 * t)
@@ -221,7 +221,7 @@ than a line, the fundamental change is to an angle, and that angle increases
 at a fixed speed.  In this example, the box rotates at a fixed speed of 45
 degrees per second, so the change of the angle is linear:
 
-~~~~~
+~~~~~ . clickable
 program = animationOf(box)
 box(t)  = rotated(solidRectangle(1, 1), 45 * t)
 ~~~~~
@@ -242,7 +242,7 @@ which moves back and forth in the same motion forever.  We create this
 pattern of motion using a special function called a sine wave, and
 written as `sin`.  Here's a simple pendulum for an example:
 
-~~~~~
+~~~~~ . clickable
 program     = animationOf(pendulum)
 pendulum(t) = rotated(arm, 45 * sin(60 * t))
 arm         = translated(solidRectangle(1, 6), 0, -3)
@@ -283,7 +283,7 @@ stops and then falls back down, due to acceleration caused by gravity.
 
 Here's an example of a ball flying through the air using quadratic change:
 
-~~~~~
+~~~~~ . clickable
 program = animationOf(ball)
 ball(t) = translated(solidCircle(1),
                      10 * t - 10,
@@ -313,7 +313,7 @@ When you want a function that keeps getting closer to a point, but doesn't ever
 quite get there, the inverse function is your tool of choice.  Here's an
 example:
 
-~~~~~
+~~~~~ . clickable
 program = animationOf(scene)
 scene(t) = translated(solidCircle(1/4), 0, 5 - 3 / (t + 1))
 ~~~~~
@@ -341,7 +341,7 @@ The `min` and `max` functions take the minimum or maximum, respectively, of two
 numbers.  This allows you to create simple effects where something moves and
 then stops.  For example:
 
-~~~~~
+~~~~~ . clickable
 program = animationOf(drop)
 drop(t) = translated(ball, 0, max(-8, 10 - t))
 ball    = solidCircle(1)
@@ -355,7 +355,7 @@ a number that increases up to a limit.
 The `remainder` function causes a number to increase up to a limit, then drop
 back down to zero and start over.  For example:
 
-~~~~~
+~~~~~ . clickable
 program   = animationOf(twitch)
 twitch(t) = rotated(solidRectangle(5, 1), remainder(45 * t, 90))
 ~~~~~
@@ -373,7 +373,7 @@ an entire function, each attached to some condition that says when it applies.
 
 Here's an example of an animation using guards.
 
-~~~~~
+~~~~~ . clickable
 program       = animationOf(flight)
 
 flight(t)
@@ -402,7 +402,7 @@ used.
 
 Here, we've rewritten the rocket example in this way:
 
-~~~~~
+~~~~~ . clickable
 program       = animationOf(flight)
 
 flight(t)
@@ -448,7 +448,7 @@ You can practice graphing on paper, but it's also not too hard to draw the
 graph of a function using CodeWorld.  Here's a program that draws the graph of a
 sine (periodic) function.
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(graph & coordinatePlane)
 graph = curve([ (x, f(x)) | x <- [0, 0.1 .. 10] ])
 

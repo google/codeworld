@@ -51,7 +51,7 @@ Building Simulations
 
 It may sound complicated, but let's jump in and look at an example:
 
-~~~~~
+~~~~~ . clickable
 program                       = activityOf(initial, change, picture)
 initial(rs)                   = (0, 0)
 change(p, PointerPress(x, y)) = (x, y)
@@ -70,7 +70,7 @@ a small square, in the location you last clicked.
 Sometimes, an activity doesn't change with mouse clicks, but just to the normal
 passing of time.  Consider this one:
 
-~~~~~
+~~~~~ . clickable
 program                         = activityOf(initial, change, picture)
 initial(rs)                     = (5, 0)
 change((x, y), TimePassing(dt)) = (x - y * dt, y + x * dt)
@@ -152,7 +152,7 @@ The simplest kind of state is a single number.  Let's build a simulation to move
 a box across the screen.  You could have done this with an animation, but this
 makes a good starting point to learn how things work with simulations.
 
-~~~~~
+~~~~~ . clickable
 program     = simulationOf(initial, step, picture)
 initial(rs) = -10
 step(x, dt) = x + dt
@@ -183,7 +183,7 @@ at the same time.  Let's try to make a rolling wheel, which will need to move
 (translation) and turn (rotation) at the same time.  In the state, we'll need
 both an x coordinate, and an angle of rotation.
 
-~~~~~
+~~~~~ . clickable
 program = simulationOf(initial, step, picture)
 initial(rs) = (-10, 0)
 step((x, angle), dt) = (x + dt, angle - 60 * dt)
@@ -216,7 +216,7 @@ This simple animation shows a baseball flying through the air.  While only
 the x position and y position are needed to *draw* the simulation, the y
 speed also changes, and needs to be remembered.
 
-~~~~~
+~~~~~ . clickable
 program = simulationOf(initial, step, picture)
 initial(rs) = (-9, -9, 15)
 step((x, y, vy), dt) = (x + 6 * dt, y + vy * dt, vy - 10 * dt)
@@ -260,7 +260,7 @@ of that object as part of the state.
 The last example above already did for this for movement in the y direction.
 But we could rewrite it to keep track of velocity in the x direction, as well.
 
-~~~~~
+~~~~~ . clickable
 program = simulationOf(initial, step, picture)
 initial(rs) = (-9, -9, 6, 15)
 step((x, y, vx, vy), dt) = (x + vx * dt, y + vy * dt, vx, vy - 10 * dt)

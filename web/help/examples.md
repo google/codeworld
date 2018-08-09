@@ -8,7 +8,7 @@ This fancy CodeWorld logo is built out of geometric patterns.  It shows off
 creating patterns with list comprehensions, as well as some other fun
 tricks and capabilities of picture mode.
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(logo)
 
 logo = pictures([
@@ -81,7 +81,7 @@ An example of an animation.  An animation is a function from time to a
 Picture.  The parameter, normally called t, is the total time that's passed
 in seconds.
 
-~~~~~
+~~~~~ . clickable
 program = animationOf(scene)
 
 scene(t) = ferrisWheel(t) & backdrop(t)
@@ -133,7 +133,7 @@ The example starts by teaching CodeWorld how to do arithmetic with complex
 numbers.  The new operators `<+>` and `<*>` are chosen to represent complex
 addition and multiplication.
 
-~~~~~
+~~~~~ . clickable
 -- Complex arithmetic
 data Complex where
     C :: (Number, Number) -> Complex
@@ -193,7 +193,7 @@ This is an example of simulation mode.  The position of the ball is
 difficult to describe as an immediate function of the current time, so
 instead, the program simulates the movement of the ball in small steps.
 
-~~~~~
+~~~~~ . clickable
 program = activityOf(initial, change, picture)
 
 data World where
@@ -234,7 +234,7 @@ interaction mode.  Unlike the Asteroids example, this game doesn't use
 the step function at all!  Instead, all changes in the state are made
 in response to actions from the user.
 
-~~~
+~~~~~ . clickable
 program = activityOf(createWorld, event, drawWorld)
 
 {- A World contains
@@ -359,7 +359,7 @@ simulates simple physics (vector acceleration and velocity) over time, as
 well as responding to the user.  It tracks scores between games, and it uses
 random numbers to make each game unique.  There's quite a lot there!
 
-~~~~~
+~~~~~ . clickable
 program = activityOf(initial, change, picture)
 
 data World = World {

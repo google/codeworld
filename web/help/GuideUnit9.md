@@ -43,7 +43,7 @@ Choosing Random State
 
 Let's start with a simulation that moves a circle across the screen.
 
-~~~~~
+~~~~~ . clickable
 program = simulationOf(initial, step, picture)
 
 initial(rs)       = (-8, 4)
@@ -89,7 +89,7 @@ Here's an example of the first strategy.  The square will turn a sequence of
 random colors.  The code describes the entire infinite sequence of colors using
 a list comprehension in the state.
 
-~~~~~
+~~~~~ . clickable
 program = simulationOf(initial, step, picture)
 
 initial(rs) = (0, [ HSL(360 * r, 0.75, 0.5) | r <- rs ])
@@ -109,7 +109,7 @@ Another way to write this same program would be to just remember the starting
 list of random numbers, and compute the colors from that when drawing the
 picture itself.  The program is the same, but the code looks a little different:
 
-~~~~~
+~~~~~ . clickable
 program = simulationOf(initial, step, picture)
 
 initial(rs) = (0, rs)

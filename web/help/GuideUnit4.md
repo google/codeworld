@@ -16,7 +16,7 @@ You can use the function called `pictures` to combine a list of pictures
 together into one picture.  It's just like the `&` operator, except that it
 works on a whole list of pictures instead of just two.  For example:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(allThePictures)
 allThePictures = pictures([
     solidRectangle(4, 0.4),
@@ -35,7 +35,7 @@ simpler list, and copying something once for each thing in it.  So if you
 have a list of numbers, you can turn it into a list of *circles*, each
 with a different radius.  That looks like this:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(target)
 target  = pictures([ circle(r) | r <- [1, 2, 3, 4, 5] ])
 ~~~~~
@@ -75,7 +75,7 @@ have to give the first two numbers, then use `..` to continue from there.
 
 Here's another example:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(star)
 star    = pictures([ rotated(rectangle(10, 1/10), angle)
                      | angle <- [10, 20 .. 360] ])
@@ -96,7 +96,7 @@ First, you can filter out certain members of the list you start with.
 Suppose you want to draw those circles, like in the `target` example, but
 you don't want to draw the middle one.  One way to say that is:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(target)
 target  = pictures([ circle(r) | r <- [1 .. 5], r /= 3 ])
 ~~~~~
@@ -107,7 +107,7 @@ of circles built from each radius from 1 to 5, *except* for 3.
 Second, you can base your list comprehension on several lists.
 This will draw a grid of circles:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(grid)
 grid    = pictures([ translated(circle(1/2), x, y)
                      | x <- [-9 .. 9], y <- [-9 .. 9] ])
@@ -122,7 +122,7 @@ of including a result for all possible combinations, this will only match
 the first element of each list, then the second from each list, and so on.
 Here's an example, using a list of numbers, and a list of colors!
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(circles)
 circles = pictures([ colored(circle(r), c) | r <- sizes
                                            | c <- colors ])

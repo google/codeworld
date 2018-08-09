@@ -22,7 +22,7 @@ code, and build programs to show the answer.
 The trick is to use the `printed` function, which turns a number into
 `Text`.  Here's an example:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(lettering(printed(answer)))
 answer  = 7 * 8
 ~~~~~
@@ -34,7 +34,7 @@ Precedence
 
 The same technique can be used for more complex expressions, such as:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(lettering(printed(answer)))
 answer  = 36 * (3 + 7) - 24 + 5^2
 ~~~~~
@@ -101,7 +101,7 @@ faster!
 
 Here's our first attempt:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(lettering(printed(answer)))
 answer  =  1 +  2 +  3 +  4 +  5 +  6 +  7 +  8 +  9 +  10 +
           11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 19 +  20 +
@@ -140,7 +140,7 @@ But how would you write this function?  The trick is to write *two* equations.
 
 Here's what this looks like for Gauss's problem:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(lettering(printed(answer)))
 answer  = sumFromOneTo(100)
 
@@ -226,7 +226,7 @@ always need to choose a *depth*, which should decrease for every smaller piece.
 
 Here's an example of a fractal that draws a tree:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(tree)
 
 tree = branch(7)
@@ -254,7 +254,7 @@ fractals!  Here are some more well-known fractals:
 This is a curve made up of four copies of itself.  Arranging three of these in
 a triangular pattern can make a nice snowflake pattern.
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(kochCurve(5))
 
 kochCurve(0) = polyline([(-6, 0), (6, 0)])
@@ -270,7 +270,7 @@ kochCurve(n) = translated(sub, -4, 0) &
 This pattern starts with a triangle, and then repeatedly removes the center to
 leave three smaller triangles.
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(sierpinski(8))
 
 sierpinski(0) = solidPolygon([(0, 8), (7, -4), (-7, -4)])
@@ -380,7 +380,7 @@ height.
 One way to solve this problem is to just try all these possibilities, and then
 take the largest area you get.  That's easy with a list comprehension.
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(lettering(printed(answer)))
 answer = maximum([ w * (25 - 2 * w) | w <- [1 .. 12] ])
 ~~~~~

@@ -20,7 +20,7 @@ Function Definitions
 Here's how you would define a house as a function that's waiting on a color
 for the roof, and apply it to draw a house with a red roof.
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(scene)
 scene   = house(red)
 
@@ -38,7 +38,7 @@ to provide parentheses with specific values for those arguments.
 Parameters to functions can be of any type.  The next example defines a
 function with a picture as a parameter.
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(ringOf(rectangle(1,1)))
 ringOf(p) = rotated(translated(p, 5, 0),  60) &
             rotated(translated(p, 5, 0), 120) &
@@ -90,7 +90,7 @@ problems.  To do this, you can use the `where` clause.  This goes at the end of
 the definition, and lets you define local variables that are only used inside of
 that definition.  It looks like this:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(mouse)
 mouse = head & body & tail
   where head = translated(solidCircle(1), 2, 2) &
@@ -124,7 +124,7 @@ To write a conditional function, instead of one equal sign and a right-hand
 side, you'll right several of these, preceded by *guards*.  A guard gives a
 statement that must be true for this right-hand side of the equation to apply.
 
-~~~~~
+~~~~~ . clickable
 program       = drawingOf(thing(1) & thing(2) & thing(3))
 thing(n)
   | n > 2     = rectangle(n, 2)

@@ -4,7 +4,7 @@ Getting started
 To build your first program in CodeWorld, type (or just click on) this
 code:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(codeWorldLogo)
 ~~~~~
 
@@ -88,7 +88,7 @@ logo!  Next, you can build a digital nametag for yourself.  To do this,
 you'll start by telling your computer that your program should be a drawing
 of a nametag.
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(nametag)
 ~~~~~
 
@@ -117,7 +117,7 @@ To finish your code, you'll need to define the variable `nametag`, and
 describe to your computer exactly what a nametag is.  To start, you can
 add your name, like this!
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(nametag)
 nametag = lettering("Camille")
 ~~~~~
@@ -135,7 +135,7 @@ and **`rectangle`** -- are useful.
 
 Here's a name tag with a border:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(nametag)
 nametag = lettering("Camille") & circle(4) & rectangle(8, 8)
 ~~~~~
@@ -153,7 +153,7 @@ expects.
 Try these examples to learn more:
 
 !!! : Concentric circles
-    ~~~~~
+    ~~~~~ . clickable
     program = drawingOf(nametag)
     nametag = lettering("Diego") & circle(4) & circle(5) & circle(6)
     ~~~~~
@@ -163,7 +163,7 @@ Try these examples to learn more:
     the circle to the edge.
 
 !!! : Nested rectangles
-    ~~~~~
+    ~~~~~ . clickable
     program = drawingOf(nametag)
     nametag = lettering("Alyssa") & rectangle(6, 2) & rectangle(7, 3)
     ~~~~~
@@ -172,7 +172,7 @@ Try these examples to learn more:
     units wide it should be, and the second is how many units tall.
 
 !!! : Overlapping rectangles
-    ~~~~~
+    ~~~~~ . clickable
     program = drawingOf(nametag)
     nametag = lettering("Karim") & rectangle(8, 2) & rectangle(7, 3) &
               rectangle(6, 4) & rectangle(5, 5)
@@ -208,6 +208,12 @@ went wrong.
     glossary, and everything in it should define a word.  To correct this
     mistake, you would add `nametag =` to the beginning of the second line.
 
+    ~~~~~ . clickable
+    program = drawingOf(nametag)
+
+    nametag = lettering("Jonas") & circle(5)
+    ~~~~~
+
 !!! collapsible: `parse error (possibly incorrect indentation or mismatched brackets)`
     This message can come from a missing *indent*.  For example, consider this code:
 
@@ -223,6 +229,12 @@ went wrong.
     believes it should be a new definition, because it starts against the
     left margin.  To fix this mistake, you would add a few spaces at the
     beginning of the last line, to indent it.
+
+    ~~~~~ . clickable
+    program = drawingOf(nametag)
+
+    nametag = lettering("Emma") & circle(10)
+    ~~~~~
 
     This error can also tell you that you have an open parethesis -- **(** --
     without a matching close parenthesis -- **)**.
@@ -249,7 +261,7 @@ went wrong.
     include both.  To do that, you would write one definition for
     `nametag`, and use **`&`** to combine the parts.  Like this:
 
-    ~~~~~
+    ~~~~~ . clickable
     program = drawingOf(nametag)
 
     nametag = lettering("Victor") & circle(10)
@@ -274,7 +286,7 @@ went wrong.
     The solution here is to combine the pictures, before using the
     `drawingOf` function.  That looks like this.
 
-    ~~~~~
+    ~~~~~ . clickable
     program = drawingOf(nametag & border)
 
     nametag = lettering("Miriam")
@@ -295,7 +307,7 @@ went wrong.
     using **`&`**.  Use the `lettering` function to exchange the text
     for a picture first, then combine it.  Like this:
 
-    ~~~~~
+    ~~~~~ . clickable
     program = drawingOf(nametag)
     nametag = lettering("Haruto") & circle(10)
     ~~~~~
@@ -320,8 +332,8 @@ favoriteColor = blue
 ~~~~~
 
 !!! Warning
-    This isn't a complete program!  If you try to run this example, you
-    will see an error message:
+    This isn't a complete program!  If you try to run this example, you will see
+    an error message:
 
     `The variable program is not defined in your code.`
 
@@ -334,7 +346,7 @@ ways, but in CodeWorld they are used specifically to *define variables*.
 When you define a variable, you can use it in the rest of your code, like
 this:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(nametag)
 nametag = lettering(name) & circle(4)
 name = "Guiseppe"
@@ -344,7 +356,8 @@ This code says that your program is a drawing of a nametag, a nametag
 contains lettering of the name, and the name is "Guiseppe".  So "Guiseppe"
 is written on the name tag.
 
-!!! Warning: Don't put quotes around a variable!
+!!! Warning
+    Don't put quotes around a variable!
     This code includes the expression `lettering(name)`, **without**
     quotation marks.  What would happen if you included quotation marks?
     You'd see a nametag with the word "name" written on it!
@@ -356,7 +369,7 @@ is written on the name tag.
 Remember, though, that defining a variable doesn't do anything by itself.
 Suppose you wrote this code:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(nametag)
 nametag = lettering("Chris")
 border = circle(5)
@@ -366,14 +379,14 @@ If you run the code, you might be surprised to find there is no border!
 You've told your computer what the word `border` means, but you didn't
 say you wanted one in your program!  You might try this instead.
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(nametag)
 nametag = lettering("Chris") & border
 border = circle(5)
 ~~~~~
 
 That extra `& border` tells your computer that you actually *want* a
-border in the name tag.
+border in the name tag.  Defining it isn't enough.
 
 Defining `program`
 ------------------
@@ -439,7 +452,7 @@ Pictures would be pretty boring if they could only have one shape.  Luckily, you
 can combine more than one shape in the same picture using `&` (which means *and*).
 For example:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(design)
 design  = solidRectangle(4, 0.4)
           & solidCircle(1.2)
@@ -455,7 +468,7 @@ spaces.  We often like to use those spaces to line things up, too.
 When combining pictures, it helps if you remember to name things!  Another way of
 describing the same program we just looked at is:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(design)
 design  = slot & middle & outside
 slot    = solidRectangle(4, 0.4)
@@ -472,7 +485,7 @@ Colors
 Pictures don't need to be black and white.  You can use `colored` to change the color
 of your pictures.  Here's a simple example:
 
-~~~~~
+~~~~~ . clickable
 program  = drawingOf(redWheel)
 redWheel = colored(wheel, red)
 wheel    = solidCircle(4)
@@ -480,7 +493,7 @@ wheel    = solidCircle(4)
 
 You can also mix colors in the same picture:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(tree)
 tree    = colored(leaves, green) & colored(trunk, brown)
 leaves  = sector(0, 180, 4)
@@ -497,7 +510,7 @@ You can also modify the colors!  Here are a few ways to do that:
 
 Let's try some example code:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(overlap)
 overlap = colored(square,  translucent(blue))
         & colored(disk, translucent(green))
@@ -527,7 +540,7 @@ To use `translated`, you give it three things:
 
 Ready for an example?
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(forest)
 forest  = translated(tree, -5, 5)
         & translated(tree,  0, 0)
@@ -551,7 +564,7 @@ To use `rotated`, you give it two things:
 
 Here's an example:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(diamond)
 diamond = rotated(square, 45)
 square  = solidRectangle(4, 4)
@@ -574,7 +587,7 @@ horizontally or vertically.  To use `scaled`, you'll give:
 
 Here's an example of `scaled`:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(oval)
 oval    = scaled(base, 2, 0.5)
 base    = solidCircle(4)
@@ -627,7 +640,7 @@ Nesting
 
 Remember how we used `rotated`?  Here's a quick reminder:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(diamond)
 diamond = rotated(square, 45)
 square  = rectangle(2, 2)
@@ -640,14 +653,14 @@ the name would go.
 
 Try it:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(diamond)
 diamond = rotated(rectangle(2, 2), 45)
 ~~~~~
 
 Or even:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(rotated(rectangle(2, 2), 45))
 ~~~~~
 
@@ -673,7 +686,7 @@ divide, use `/`.
 
 Check out this code:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(design)
 design  = rotated(rectangle(4, 0.2), 1 * 180 / 5)
         & rotated(rectangle(4, 0.2), 2 * 180 / 5)
@@ -697,7 +710,7 @@ The Coordinate Plane
 To draw more precise shapes, we can use points on a "coordinate plane".  You
 can see a coordinate plane right now, just by running this code:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(coordinatePlane)
 ~~~~~
 
@@ -733,7 +746,7 @@ Points, Lines and Polygons
 Now you can draw things like sequences of lines by giving a list of points in
 the coordinate plane to a function called `polyline`:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(zigzag)
 zigzag  = polyline([(-2, 0), (-1, 1), (0, -1), (1, 1), (2, 0)])
 ~~~~~
@@ -746,7 +759,7 @@ before giving them to the `polyline` function.
 To draw a closed shape, use `polygon` instead.  Can you figure out the
 mystery picture before you click Run?
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(mystery)
 mystery = polygon(
     [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
@@ -755,7 +768,7 @@ mystery = polygon(
 If you prefer to fill in your shape, you can use `solidPolygon` instead of
 `polygon` and you'll get a solid version:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(mystery)
 mystery = solidPolygon(
     [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
@@ -764,7 +777,7 @@ mystery = solidPolygon(
 There are also `thickPolygon` and `thickPolyline` which use an extra
 parameter for thickness:
 
-~~~~~
+~~~~~ . clickable
 program = drawingOf(mystery)
 mystery = thickPolygon(
     [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)], 1)
@@ -782,7 +795,7 @@ Drawing with the Coordinate Plane
 A neat trick is to use the coordinate plane as you write your code.  Say
 you want to draw a butterfly.  You might start by writing:
 
-~~~~~
+~~~~~ . clickable
 program   = drawingOf(butterfly & coordinatePlane)
 butterfly = blank
 ~~~~~

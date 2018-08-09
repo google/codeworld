@@ -28,18 +28,24 @@ window.env = parent;
                 (function() {
                     var pre = pres[i];
 
+                    // Markdeep buries the class annotations a bit, so we dig.
+                    var clickable =
+                        pre.classList.contains('clickable') ||
+                        (pre.firstChild && pre.firstChild.classList &&
+                            pre.firstChild.classList.contains('clickable')) ||
+                        (pre.firstChild && pre.firstChild.firstChild && pre.firstChild.firstChild.classList &&
+                            pre.firstChild.firstChild.classList.contains('clickable'));
+
                     var text = pre.textContent;
                     pre.innerHTML = '';
                     CodeMirror.runMode(text, { name: 'codeworld', overrideKeywords: codeworldKeywords }, pre);
                     pre.classList.add('cm-s-default');
 
-                    if (linkable) {
-                        if (text.indexOf("main ") != -1 || text.indexOf("program ") != -1) {
-                            pre.classList.add('clickable');
-                            pre.onclick = function() {
-                                if (env && env.loadSample) {
-                                    env.loadSample(text);
-                                }
+                    if (linkable && clickable) {
+                        pre.classList.add('clickable');
+                        pre.onclick = function() {
+                            if (env && env.loadSample) {
+                                env.loadSample(text);
                             }
                         }
                     }

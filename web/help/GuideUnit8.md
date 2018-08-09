@@ -36,7 +36,7 @@ how your program's state should change when someone uses the keyboard or mouse.
 In simulations, the state stayed the same.  You can define `event` to say this
 explicitly:
 
-~~~~~
+~~~~~ . clickable
 program     = interactionOf(initial, step, event, picture)
 initial(rs) = -10
 step(x, dt) = x + dt
@@ -82,7 +82,7 @@ back the way it was when the key is released.
 Here's some example code.  This program moves a circle around the screen when
 the user presses the arrow keys:
 
-~~~~~
+~~~~~ . clickable
 program = interactionOf(initial, step, event, picture)
 
 initial(rs) = (0, 0)
@@ -119,7 +119,7 @@ recognize it.  These are some common keys used in interactions.
 You can't memorize them all, though!  Instead, here's a program that will help
 you find the name of any key on the keyboard:
 
-~~~~~
+~~~~~ . clickable
 program = interactionOf(initial, step, event, lettering)
 initial(rs)              = ""
 step(s, dt)              = s
@@ -141,7 +141,7 @@ y positions of the pointer.
 
 Here's a simple example that lets you draw polygons by clicking on vertices.
 
-~~~~~
+~~~~~ . clickable
 program = interactionOf(initial, step, event, polyline)
 initial(rs)                      = []
 step(state, dt)                  = state
@@ -187,7 +187,7 @@ For a simple collaboration, we can let both players draw on the screen with the
 pointer.  A player's own dots will appear in black, while the other player's
 dots will appear in green.  This collaboration looks like this:
 
-~~~~~
+~~~~~ . clickable
 program = collaborationOf(2, initial, step, event, picture)
 
 initial(rs) = ([], [])

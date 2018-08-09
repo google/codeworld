@@ -29,25 +29,39 @@ sections below to explore each strategy.
 !!! collapsible: Value your mistakes!
     You might have heard that mistakes prove you are learning. That's even more true in
     computer programming. In fact, even the best programmers don't usually get it right
-    the first time.  Writing code is only one step in computer programmer. The next step
-    is to try it, and fix the mistakes.
+    the first time.  Writing code is only one step in computer programming. The next step
+    is to try it, and fix your mistakes.
 
     A mistake doesn't mean you're bad at programming.  It just means you're not done
     yet. As you become a better programmer, you will still make mistakes, but you will
     learn to understand and fix your mistakes more easily.
 
+!!! collapsible: Be creative!
+    Although it's a good starting point to try the examples in this guide, it's not good
+    enough.  To really understand coding, you need to write your own code, from the
+    beginning, to build interesting things no one has built before.  So find things that
+    inspire you, and set your own goals.  You learn the most when you start projects
+    that you don't quite know how to finish, but strive to finish them anyway.
+
+!!! collapsible: Expect to understand!
+    Remember that your goal is never to get the right answer.  Your goal is to
+    understand, so that you can build on your knowledge to do bigger and better things.
+    If you don't understand, speak up! Ask questions, and dig deeper until you do.
+    Never be happy with copying code but not understanding why it works.
+
 !!! collapsible: Have fun!
     Coding can be difficult, because it requires you to think about all of the details,
-    and say precisely what you mean. But it doesn't have to be unpleasant.
-
-    To have a good time, practice laughing at your mistakes. Share your creations with
-    friends and family, whether or not they turned out exactly like you hoped!  We're
-    all in this together.
+    and say precisely what you mean. But it doesn't have to be unpleasant. Practice
+    laughing at your experiences. Experienced coders all know the feeling of wanting to
+    kick their computer across the room, but they can also talk about it with a grin.
+    Share your creations with friends and family, whether or not they turned out exactly
+    like you hoped.  Remember that we're all in this together, and we're on each other's
+    side.
 
     To get some cool ideas about what you can do in CodeWorld, you might want to check
     out the [CodeWorld Gallery](/gallery.html), with examples of projects built by
     other students.  Don't worry if you aren't that advanced yet.  It takes patience,
-    but you can get there, too!
+    but you can get there, too.
 
 The CodeWorld environment
 =========================

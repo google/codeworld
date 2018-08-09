@@ -1,35 +1,282 @@
-Definitions
-===========
+Getting started
+===============
 
-Writing code in CodeWorld is like writing a dictionary or glossary.  Your
-project is a bunch of *definitions*.  You write a definition to say what
-something means.  For example, you might write:
+To build your first program in CodeWorld, type (or just click on) this
+code:
 
 ~~~~~
-wheel = circle(2)
+program = drawingOf(codeWorldLogo)
 ~~~~~
 
-This is a definition of "wheel": it says that "wheel" means a circle with a radius of 2.
-*Radius* just means the distance from the center of the circle to the edge.
+If you type this and click the **Run** button, you'll see a drawing of the
+CodeWorld logo in the *canvas* on the right side of the screen.
 
-In CodeWorld, you do absolutely everything by naming things.  We call the names (like
-"wheel") *variables*.  So in this example, we defined a *variable* called
-"wheel". You will define a lot of variables in CodeWorld.
+!!! Warning: Did something go wrong?
+    If you don't see the CodeWorld logo, don't worry.  You can fix it!
 
-Defining program
-----------------
+    Computers can be very picky, so make sure you have typed *exactly* what
+    you see above.  That means everything needs to be spelled correctly, the
+    same letters need to be capitalized, and you need parentheses just where
+    they are.  There should be nothing else in your editor except that one
+    line.
 
-Sooner or later, you need to say what program you want.  You do that by defining a
-special variable called *program*.  Every CodeWorld project needs *exactly* *one*
-definition for the *program* variable.  Finished code might look something like
+    When you make a mistake, the computer usually shows you an *error message*,
+    which shows up on the right side of your screen, in a pink shaded window.
+    These messages tell you what went wrong.
+
+    ![](/help/cw-error-notinscope.png)
+
+    * If you see "not in scope", this means you have misspelled a word, or
+      used the wrong capitalization.
+    * If you see "parse error", this can mean you've left out or have
+      extra punctuation marks or symbols.
+
+    Check your code carefully, and try again.
+
+If you've done any coding before, you may have heard that code is like a recipe
+that tells a computer step-by-step what to do.  But in CodeWorld, that's not
+true!  Here, your code is like a *dictionary* or *glossary*, and it tells the
+computer what words mean.
+
+Dissecting your first program
+-----------------------------
+
+Here's the code you just wrote, and what its parts mean.
+
+    | `program`  | `=` | `drawingOf(` | `codeWorldLogo`     | `)` |
+    |------------|-----|--------------|---------------------|-----|
+    | My program | is  | a drawing of | the CodeWorld logo. |     |
+
+* `program` is the **variable** that you're defining. A variable is a name for
+  something.  In most math, variables are just one letter, and they stand for
+  numbers.  In CodeWorld, though, variables can name many different types of
+  values: numbers, pictures, colors, text, and even whole programs.  Because
+  you will use so many of them, you can name variables with with whole words,
+  always starting with a *lower-case* letter.
+
+!!! collapsible: Camel case
+    Sometimes, you may want more than one word to name a variable!
+    The computer needs each variable to be a single word starting with a
+    lower-case letter--so leave out the spaces.  To make it easier to
+    tell when a new word starts, you can capitalize the *second* and
+    *later* words.
+
+    ![](/help/camel.png width="40%")
+
+    In your first programs, `drawingOf` and `codeWorldLogo` were written in
+    this way.  It's often called **camel case**.  Why?  Because the variable
+    name has humps!
+
+* The **equal sign** means "is", and tells the computer that two expressions mean
+  the same thing.  It is used to connect a variable with its definition.
+
+* `drawingOf` is called a **function**.  You'll use functions a lot, and you'll
+  learn more about them later!  This particular function, `drawingOf`, tells the
+  computer that your program is a drawing.  So instead of playing a game or
+  animation, it will just show a picture.
+
+* `codeWorldLogo` is the specific picture your program will show.  Your
+  computer already knows what the CodeWorld logo looks like, so this was an
+  easy program to write.  Most of your own programs will need to describe
+  the picture that you want to show in more detail.
+
+Building a nametag
+------------------
+
+Of course, you can do a lot more in CodeWorld than just look at the CodeWorld
+logo!  Next, you can build a digital nametag for yourself.  To do this,
+you'll start by telling your computer that your program should be a drawing
+of a nametag.
+
+~~~~~
+program = drawingOf(nametag)
+~~~~~
+
+**This program doesn't work!**  If you've typed everything correctly you should
+see an error message, `Variable not in scope: nametag :: Picture`.
+This is your computer telling you that it doesn't know what `nametag` means!
+
+!!! Tip: Run your program often
+    Even though your code was not finished, it didn't hurt to click **Run**.
+    You can think of error messages as being a conversation with your
+    computer.  You're just asking what it needs next!
+
+    In this case, `Variable not in scope` told you that you need to
+    define `nametag`.  But if you typed something wrong, you might see
+    a different message, like `Parse error` or `Couldn't match types`.
+    These are clues that you have made a different mistake.  That's
+    okay, too.  The sooner you know about the mistake, the sooner you
+    can fix it.
+
+    Did you notice that your computer already told you that nametag is a
+    picture?  It figured that out from context.  Because you asked for a
+    *drawing* of `nametag`, it is expecting `nametag` to be a picture.
+    Just one more way the computer lets you know what it's thinking.
+
+To finish your code, you'll need to define the variable `nametag`, and
+describe to your computer exactly what a nametag is.  To start, you can
+add your name, like this!
+
+~~~~~
+program = drawingOf(nametag)
+nametag = lettering("Camille")
+~~~~~
+
+You've used a new function, **`lettering`**.  This function describes a
+picture with letters (or any other kind of text) on it.
+
+Next, you can add a border to your nametag.  You might be tempted to add
+a new line like `nametag = ...` to your code, but you can't! Remember,
+your code is like a dictionary, and each definition in it should give
+the whole definition for that word.  To include a second shape in your
+nametag, you'll use **`&`**, which you can read as "and" or "in front
+of". To describe the border itself, two more functions -- **`circle`**
+and **`rectangle`** -- are useful.
+
+Here's a name tag with a border:
+
+~~~~~
+program = drawingOf(nametag)
+nametag = lettering("Camille") & circle(4)
+~~~~~
+
+To sum up, here are the shape functions you can use in your nametag,
+and the **arguments**, or information inside the parentheses, that
+each one expects.
+
+| Function    | Expected arguments (inside parentheses)            |
+|-------------|----------------------------------------------------|
+| `lettering` | Some text in quotation marks                       |
+| `circle`    | A radius--the distance from the center to the edge |
+| `rectangle` | The width and height of the rectangle              |
+
+Try these examples to learn more:
+
+!!! : Concentric circles
+    ~~~~~
+    program = drawingOf(nametag)
+    nametag = lettering("Diego") & circle(4) & circle(5) & circle(6)
+    ~~~~~
+
+    The `circle` function needs only a single number, which is the *radius*
+    of the circle.  Radius means the number of units from the center of
+    the circle to the edge.
+
+!!! : Nested rectangles
+    ~~~~~
+    program = drawingOf(nametag)
+    nametag = lettering("Alyssa") & rectangle(6, 2) & rectangle(7, 3)
+    ~~~~~
+
+    The `rectangle` function needs **two** numbers.  The first is how many
+    units wide it should be, and the second is how many units tall.
+
+!!! : Overlapping rectangles
+    ~~~~~
+    program = drawingOf(nametag)
+    nametag = lettering("Karim") & rectangle(8, 2) & rectangle(7, 3) &
+              rectangle(6, 4) & rectangle(5, 5)
+    ~~~~~
+
+    Notice how the definition of `nametag` got too long?  It's okay to
+    start a new line, but you **must** indent the new line.  That is,
+    leave some blank spaces at the beginning.  If you forget to indent,
+    the computer will be confused, and think you're defining a new
+    variable.  This can cause a `Parse error` message.
+
+Once you've understood these examples, try your own combinations, as well.
+
+Defining variables
+------------------
+
+Because your code is like a dictionary or glossary, you can define as many
+*variables* as you like. For example, you might write:
+
+~~~~~
+name = "Han"
+age = 14
+favoriteColor = blue
+~~~~~
+
+Each of these lines is an **equation**, which says that two expressions are
+*equal*, or have the same value.  In math, you use equations in many
+ways, but in CodeWorld they are used specifically to *define variables*.
+
+When you define a variable, you can use it in the rest of your code, like
 this:
 
 ~~~~~
-program = drawingOf(wheel)
-wheel   = circle(2)
+program = drawingOf(nametag)
+nametag = lettering(name) & circle(4)
+name = "Guiseppe"
 ~~~~~
 
-That's a complete project, so try it out!
+This code says that your program is a drawing of a nametag, a nametag
+contains lettering of the name, and the name is "Guiseppe".  So "Guiseppe"
+is written on the name tag.
+
+!!! Warning: Don't put quotes around a variable!
+    This code includes the expression `lettering(name)`, **without**
+    quotation marks.  What would happen if you included quotation marks?
+    You'd see a nametag with the word "name" written on it!
+
+    Oops!  Quotation marks tell the computer *not* to interpret something
+    as code, but just as a piece of text.  Variables are code, so don't
+    put quotation marks around your code.
+
+Remember, though, that defining a variable doesn't do anything by itself.
+Suppose you wrote this code:
+
+~~~~~
+program = drawingOf(nametag)
+nametag = lettering("Chris")
+border = circle(5)
+~~~~~
+
+If you run the code, you might be surprised to find there is no border!
+You've told your computer what the word `border` means, but you didn't
+say you wanted one in your program!  You might try this instead.
+
+~~~~~
+program = drawingOf(nametag)
+nametag = lettering("Chris") & border
+border = circle(5)
+~~~~~
+
+That extra `& border` tells your computer that you actually *want* a
+border in the name tag.
+
+Defining `program`
+------------------
+
+Remember that defining a variable doesn't do anything by itself.  But your
+code is nothing but a bunch of definitions, just like a glossary or
+dictionary! Then how does your code make any difference at all?
+
+The answer lies in a special variable called `program`.  Every CodeWorld
+project needs *exactly one* definition for the `program` variable.
+This is where the computer will look for a description of the program it
+should run.  Sometimes, like in the very first program you wrote, this
+is the only definition you need.  But usually, you will use other
+variables that the computer doesn't know *in* your definition of
+CodeWorld. Just like you might if you were studying, the computer will look
+up those words, too. And if their definitions use more words the computer
+doesn't know, it will look up *those* words, and so on until it
+understands everything.
+
+Remember: a definition only matters if the variable you're defining is
+*used* somewhere in the definition of program (or the definition of
+something else used in program, or so on.)
+
+!!! Tip: Warnings
+    When you write code that is correct, but could be improved, you will
+    sometimes see a *warning*.  This is a message in the message area
+    that lets you know about a problem, even though your program runs.
+
+    One warning you might see is `defined but not used`.  This warning
+    tells you that you've defined a variable, but it's not necessary,
+    because it isn't used anywhere in the meaning of that special
+    `program` variable.
 
 Pictures
 ========

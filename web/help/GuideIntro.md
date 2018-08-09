@@ -1,4 +1,4 @@
-![CodeWorld](/codeworld.png style="max-width: 100%;")
+![](/codeworld.png style="max-width: 100%;")
 
 Welcome to CodeWorld!
 =====================
@@ -54,7 +54,7 @@ The CodeWorld environment
 
 Before you start writing your own code, here's a quick tour of the tools you have.
 
-![The CodeWorld environment](/help/cw-env.png style="max-width: 100%;")
+![](/help/cw-env.png style="max-width: 100%;")
 
 You'll type your code in the **editor**, which is right behind this guide.  To get
 to the editor, click *outside* of the guide to get rid of it.  Don't worry; the

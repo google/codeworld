@@ -137,12 +137,12 @@ Here's a name tag with a border:
 
 ~~~~~
 program = drawingOf(nametag)
-nametag = lettering("Camille") & circle(4)
+nametag = lettering("Camille") & circle(4) & rectangle(8, 8)
 ~~~~~
 
-To sum up, here are the shape functions you can use in your nametag,
-and the **arguments**, or information inside the parentheses, that
-each one expects.
+Here are the shape functions you can use in your nametag, and the
+**arguments**, or information inside the parentheses, that each one
+expects.
 
 | Function    | Expected arguments (inside parentheses)            |
 |-------------|----------------------------------------------------|
@@ -309,14 +309,23 @@ that you've typed what you intended.
 Defining variables
 ------------------
 
+In the nametags above, you defined *variables* called `program` and `nametag`.
 Because your code is like a dictionary or glossary, you can define as many
-*variables* as you like. For example, you might write:
+variables as you like. For example, you might write:
 
 ~~~~~
 name = "Han"
 age = 14
 favoriteColor = blue
 ~~~~~
+
+!!! Warning
+    This isn't a complete program!  If you try to run this example, you
+    will see an error message:
+
+    `The variable program is not defined in your code.`
+
+    More on that later!
 
 Each of these lines is an **equation**, which says that two expressions are
 *equal*, or have the same value.  In math, you use equations in many

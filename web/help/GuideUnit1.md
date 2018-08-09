@@ -148,7 +148,7 @@ each one expects.
 |-------------|----------------------------------------------------|
 | `lettering` | Some text in quotation marks                       |
 | `circle`    | A radius--the distance from the center to the edge |
-| `rectangle` | The width and height of the rectangle              |
+| `rectangle` | The width *and* height of the rectangle            |
 
 Try these examples to learn more:
 
@@ -185,6 +185,126 @@ Try these examples to learn more:
     variable.  This can cause a `Parse error` message.
 
 Once you've understood these examples, try your own combinations, as well.
+
+Understanding mistakes
+----------------------
+
+As you experminent with your programs, you're likely to try a few things
+that don't work.  Explore these common error messages to understand what
+went wrong.
+
+!!! collapsible: `Parse error: naked expression at top level`
+    This message means there's something in your program that doesn't look
+    like a definition.  For example, if you wrote this:
+
+    ~~~~~
+    program = drawingOf(nametag)
+
+    lettering("Jonas") & circle(5)
+    ~~~~~
+
+    On the second line, instead of an *equation* to define `nametag`, this
+    program just wrote an expression.  Remember that your code is a
+    glossary, and everything in it should define a word.  To correct this
+    mistake, you would add `nametag =` to the beginning of the second line.
+
+!!! collapsible: `parse error (possibly incorrect indentation or mismatched brackets)`
+    This message can come from a missing *indent*.  For example, consider this code:
+
+    ~~~~~
+    program = drawingOf(nametag)
+
+    nametag = lettering("Emma") &
+    circle(10)
+    ~~~~~
+
+    Here, the programmer meant for `circle(10)` to be part of the
+    definition of `nametag`.  The computer doesn't understand this, and
+    believes it should be a new definition, because it starts against the
+    left margin.  To fix this mistake, you would add a few spaces at the
+    beginning of the last line, to indent it.
+
+    This error can also tell you that you have an open parethesis -- **(** --
+    without a matching close parenthesis -- **)**.
+
+!!! collapsible: `Multiple declarations of nametag`
+    This message tells you that you defined the same word in two different
+    ways.  Sometimes this happens in human languages, and we call them
+    homonyms -- for example, "duck" could mean an animal, or it could mean
+    dodging a flying object!  Your computer, though, can't deal with this
+    each variable can only be defined once.
+
+    Take a look at this program.
+
+    ~~~~~
+    program = drawingOf(nametag)
+
+    nametag = lettering("Victor")
+    nametag = circle(10)
+    ~~~~~
+
+    One line says `nametag` means the text "Miriam", but the second line
+    says that `nametag` instead means a circle with a radius of 10.  So
+    which is it?  Most likely, the programmer here meant for `nametag` to
+    include both.  To do that, you would write one definition for
+    `nametag`, and use **`&`** to combine the parts.  Like this:
+
+    ~~~~~
+    program = drawingOf(nametag)
+
+    nametag = lettering("Victor") & circle(10)
+    ~~~~~
+
+!!! collapsible: `Couldn't match type Program with Picture`
+    Once you've got the hang of using **`&`** to combine pictures, you
+    might be tempted to use it everywhere! For example, you might try to
+    write this.
+
+    ~~~~~
+    program = drawingOf(nametag) & drawingOf(border)
+
+    nametag = lettering("Miriam")
+    border = circle(10)
+    ~~~~~
+
+    The problem here is that **`&`** can only combine *pictures*.  The
+    `drawingOf` function turns a picture into a *computer program*, and
+    you cannot use **`&`** to combine two different computer programs!
+
+    The solution here is to combine the pictures, before using the
+    `drawingOf` function.  That looks like this.
+
+    ~~~~~
+    program = drawingOf(nametag & border)
+
+    nametag = lettering("Miriam")
+    border = circle(10)
+    ~~~~~
+
+!!! collapsible: `Couldn't match type Picture with Text`
+    Just like there's a difference between a computer program and a
+    picture, there's also a difference between *text* and *pictures*.
+    Consider this code.
+
+    ~~~~~
+    program = drawingOf(nametag)
+    nametag = "Haruto" & circle(10)
+    ~~~~~
+
+    The text, "Haruto", isn't a picture yet, so it cannot by combined
+    using **`&`**.  Use the `lettering` function to exchange the text
+    for a picture first, then combine it.  Like this:
+
+    ~~~~~
+    program = drawingOf(nametag)
+    nametag = lettering("Haruto") & circle(10)
+    ~~~~~
+
+Regardless of the message, you can always click on the line and column
+number next to an error message, and get straight to the location in
+your code where the error was recognized.  (Sometimes, though, your
+actual mistake could be earlier!)  So just read over it and double-check
+that you've typed what you intended.
 
 Defining variables
 ------------------

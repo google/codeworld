@@ -33,13 +33,12 @@ CodeWorld logo in the *canvas* on the right side of the screen.
 
     Check your code carefully, and try again.
 
-If you've done any coding before, you may have heard that code is like a recipe
-that tells a computer step-by-step what to do.  But in CodeWorld, that's not
-true!  Here, your code is like a *dictionary* or *glossary*, and it tells the
-computer what words mean.
-
 Dissecting your first program
 -----------------------------
+
+If you've done coding before, you may have heard that code is like a recipe
+that tells a computer step-by-step what to do.  In CodeWorld, though, code is
+more like a *dictionary* or *glossary*. It tells the computer what words mean.
 
 Here's the code you just wrote, and what its parts mean.
 
@@ -48,8 +47,8 @@ Here's the code you just wrote, and what its parts mean.
     | My program | is  | a drawing of | the CodeWorld logo. |     |
 
 * `program` is the **variable** that you're defining. A variable is a name for
-  something.  In most math, variables are just one letter, and they stand for
-  numbers.  In CodeWorld, though, variables can name many different types of
+  something.  In most math, variables are just one letter long, and they stand
+  for numbers.  In CodeWorld, though, variables can name many different types of
   values: numbers, pictures, colors, text, and even whole programs.  Because
   you will use so many of them, you can name variables with with whole words,
   always starting with a *lower-case* letter.
@@ -144,11 +143,11 @@ Here are the shape functions you can use in your nametag, and the
 **arguments**, or information inside the parentheses, that each one
 expects.
 
-| Function    | Expected arguments (inside parentheses)            |
-|-------------|----------------------------------------------------|
-| `lettering` | Some text in quotation marks                       |
-| `circle`    | A radius--the distance from the center to the edge |
-| `rectangle` | The width *and* height of the rectangle            |
+| Function    | Expected arguments (inside parentheses)            | Example            |
+|-------------|----------------------------------------------------|--------------------|
+| `lettering` | Some text in quotation marks                       | lettering("Jenna") |
+| `circle`    | A radius--the distance from the center to the edge | circle(7)          |
+| `rectangle` | The width *and* height of the rectangle            | rectangle(5, 3)    |
 
 Try these examples to learn more:
 
@@ -388,8 +387,7 @@ border = circle(5)
 That extra `& border` tells your computer that you actually *want* a
 border in the name tag.  Defining it isn't enough.
 
-Defining `program`
-------------------
+### The `program` variable
 
 Remember that defining a variable doesn't do anything by itself.  But your
 code is nothing but a bunch of definitions, just like a glossary or
@@ -420,64 +418,181 @@ something else used in program, or so on.)
     because it isn't used anywhere in the meaning of that special
     `program` variable.
 
-Pictures
-========
+All about functions
+-------------------
 
-You know how to draw a circle.  Now let's play around with some different basic
-shapes:
+All of the code you've written so far has made use of functions.  These are
+important tools you'll use in your coding, so let's investigate them in more
+detail.
 
-* `circle(8)`: Play around with the *radius* to get a feel for how different sizes
-  look on the screen.
-* `circle(0.5)`: You can even use fractions or decimals for your radius.
-* `solidCircle(5)`: Use `solidCircle` instead of `circle`, and your circle will be
-  filled in.
-* `rectangle(4,8)`:  You can draw a rectangle by giving both a width and a height.
-* `rectangle(4,4)`:  A square is just a rectangle, where the width is the same as
-  the height.
-* `solidRectangle(8,4)`: Just like with circles, you can use `solidRectangle` to
-  fill in the shape.
-* `lettering("I Love Pandas!")`: You can write text (such as letters and words) to
-  the screen by using `lettering`.  You need quotes around the words.
+> A **function** is a relationship that associates each possible input with a
+> specific result.
 
-There are plenty more: `polyline`, which draws a sequence of line segments; `polygon`,
-which draws a polygon; `thickCircle`, which draws a circle with a thicker line;
-`thickRectangle`, which is the same as `thickCircle` but for rectangles; `arc`, which
-draws an arc; `sector`, which draws a filled in portion of a circle (like a pie slice);
-the list goes on and on!  Don't worry; you will be able to play with all of them.
+The type of input a function expects is called its *domain*, and the type of
+result is called its *range*.  Here are the functions you've used so far.
 
-Combining Shapes
-----------------
+Function    | Domain             | Range
+------------|--------------------|---------
+`drawingOf` | `Picture`          | Program
+`lettering` | `Text`             | Picture
+`circle`    | `Number`           | Picture
+`rectangle` | `(Number, Number)` | Picture
 
-Pictures would be pretty boring if they could only have one shape.  Luckily, you
-can combine more than one shape in the same picture using `&` (which means *and*).
-For example:
+(In addition to this, the **`&`** is a binary operator.  It's a kind of
+function, too, but it works differently because it is a symbol, rather than
+a name.  Since it works differently, don't think of it as a function quite
+yet.)
 
-~~~~~ . clickable
-program = drawingOf(design)
-design  = solidRectangle(4, 0.4)
-          & solidCircle(1.2)
-          & circle(2)
+**Applying** a function means using the function to describe its result for
+a specific input.  To apply a function to some input, you write the name of
+the function, an open parenthesis, the input values (called **arguments**),
+and then a close-parenthesis.  When there is more than one argument to a
+function, you can write the domain in CodeWorld by listing them all in
+parentheses, separated by commas, like you see in `rectangle` in the table
+above.
+
+!!! Tip
+    Parentheses always come in pairs, and are used like a circle around the
+    arguments to a function.  The name of the function, at the beginning,
+    adds a handle to that circle, forming something like a frying pan.
+
+    ![](/help/cw-frying-pan.png)
+
+    Go over some programs you've written up to this point, and see if you
+    can see the frying pans for every function that's used.
+
+### Exploring available functions
+
+How you can use a function in your code depends on its domain and range.
+There's a short notation that's useful for saying what the domain and range
+of a function are, and it looks like this:
+
+~~~~~
+drawingOf :: Picture -> Program
+lettering :: Text -> Picture
+circle :: Number -> Picture
+rectangle :: (Number, Number) -> Picture
 ~~~~~
 
-Try that out, and see what it looks like!  See how the definition of design takes
-more than one line?  That's okay: you can start a new line any time you want to.
-However, *only* new definitions can start at the beginning of the line.  If you
-start a new line inside of a definition, you have to *indent* it by leaving a few
-spaces.  We often like to use those spaces to line things up, too.
+These lines, called **type signatures**, don't *define* the functions; they
+just provide a little bit of information about what arguments they need,
+and what type of result they have.  Read the two colons (**`::`**) as
+"has the type", and the arrow (**`->`**) as meaning a *function* from one
+kind of thing to another.  So the first line says "`drawingOf` has the type:
+function from pictures to programs".
 
-When combining pictures, it helps if you remember to name things!  Another way of
-describing the same program we just looked at is:
+You can explore all of the functions the computer already knows when you
+use CodeWorld, by pressing Shift-Space or Ctrl-Space on a blank line in the
+CodeWorld editor.  Try it!  The list gives all the names your computer
+already knows, and there are a lot of them!  By typing the first few
+letters of the function you want, you can narrow down the list.  The type
+signatures tell you what types of information you need to provide to apply
+the function, and what type you can expect to end up with.
 
-~~~~~ . clickable
-program = drawingOf(design)
-design  = slot & middle & outside
-slot    = solidRectangle(4, 0.4)
-middle  = solidCircle(1.2)
-outside = circle(2)
-~~~~~
+For practice, see if you can write code using each of the following
+functions.  Start by looking up their domain and range using Shift-Space or
+Ctrl-Space, and see if you can use them with just that hint.  If you need
+more hints, expand the sections below for an example and explanation.
 
-You will learn that it helps to think about more complicated pictures if you give
-good names to the pieces.
+!!! collapsible: `solidCircle`
+    ~~~~~
+    solidCircle :: Number -> Picture
+    ~~~~~
+
+    This type signature tells you that the only argument to `solidCircle`
+    is a number, and the result is a picture.  Here's an example of a
+    program that uses `solidCircle`.
+
+    ~~~~~ . clickable
+    program = drawingOf(pic)
+    pic = solidCircle(5)
+    ~~~~~
+
+    You might have noticed that even though the type signature tells you
+    the input is a number, it doesn't tell you what that number means!
+    Type signatures just tell you the *form* needed to use the function,
+    not the meaning.  But if you experiment, you may discover that the
+    argument is the radius of the circle.
+
+!!! collapsible: `solidRectangle`
+    ~~~~~
+    solidRectangle :: (Number, Number) -> Picture
+    ~~~~~
+
+    This type signature tells you that `solidRectangle` needs two
+    arguments, both numbers, and the result is a picture.  Here's an
+    example of a program that uses `solidRectangle`.
+
+    ~~~~~ . clickable
+    program = drawingOf(pic)
+    pic = solidRectangle(7, 3)
+    ~~~~~
+
+    The first number is the width of the rectangle, and the second
+    number is the height.
+
+!!! collapsible: `thickCircle`
+    ~~~~~
+    thickCircle :: (Number, Number) -> Picture
+    ~~~~~
+
+    This type signature tells you that `thickCircle` needs two arguments,
+    both numbers, and the result is a picture.  Here's an example of a
+    program that uses `thickCircle`.
+
+    ~~~~~ . clickable
+    program = drawingOf(pic)
+    pic = thickCircle(5, 1)
+    ~~~~~
+
+    Functions beginning with "thick" draw shapes with a thick line, and
+    the thickness of that line is the last argument to the function.  So
+    The first argument is the radius of the circle, and the second is
+    the line thickness the circle is drawn at.
+
+!!! collapsible: `thickRectangle`
+    ~~~~~
+    thickRectangle :: (Number, Number, Number) -> Picture
+    ~~~~~
+
+    This time, the type signature tells you that `thickRectangle` needs
+    three arguments, a new record!  All three arguments are numbers, and
+    the result is a picture.  Here's an example of a program that uses
+    `thickRectangle`.
+
+    ~~~~~ . clickable
+    program = drawingOf(pic)
+    pic = thickCircle(8, 4, 1)
+    ~~~~~
+
+    The first two arguments are the width and height of the rectangle.
+    The third and final argument is the thickness of the line to draw it
+    with.
+
+!!! collapsible: `codeWorldLogo`
+    ~~~~~
+    codeWorldLogo :: Picture
+    ~~~~~
+
+    This was a trick question: `codeWorldLogo` isn't a function at all!
+    It still has a type signature, but there is no arrow, because it's
+    just a picture.  That means there are no parentheses after it, and
+    no arguments.
+
+    ~~~~~ . clickable
+    program = drawingOf(pic)
+    pic = codeWorldLogo
+    ~~~~~
+
+    This is the same program as the very first one you wrote!
+
+As you continue with CodeWorld, you'll learn a few more functions.  For
+now, see if you can spruce up your nametag with some thicker lines.
+Try some solid shapes, too, and think about whether they are useful for
+creating your nametag.
+
+Transformations
+===============
 
 Colors
 ------
@@ -614,26 +729,6 @@ definition.  Can you tell the difference?  Expressions describe
 something, but don't give it a name.  But every definition has an
 expression inside, after the equal sign.  So expressions are pretty
 important.
-
-Functions
----------
-
-A special kind of expression is when you apply a *function*, which you
-will do a lot in CodeWorld.  A function is like a variable that still needs
-more information.  You've already used a lot of functions:
-
-* `rectangle` is a function.  It needs a width and a height, and makes a
-  picture.
-* `light` is a function.  It needs a color, and makes another color that's
-  about the same, but lighter.
-* `drawingOf` is a function.  It needs a picture, and makes a program to
-  draw that picture.
-* `scaled` is a function.  It needs a picture and two scaling factors, and
-  makes a modified picture.
-
-As you've already seen, to apply a function, you can write the function
-name, then the extra information it needs (these are called *parameters*)
-in parentheses after it, with commas between them.
 
 Nesting
 -------

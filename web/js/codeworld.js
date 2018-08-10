@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+var autohelpEnabled = location.hash.length <= 2;
+
 /*
  * Initializes the programming environment.  This is called after the
  * entire document body and other JavaScript has loaded.
@@ -801,7 +803,7 @@ function signinCallback(result) {
     discoverProjects("", 0);
     cancelMove();
     updateUI();
-    if (isFirstSignin && !signedIn() && location.hash.length <= 2) {
+    if (isFirstSignin && !signedIn() && autohelpEnabled) {
         help();
     }
     isFirstSignin = false;

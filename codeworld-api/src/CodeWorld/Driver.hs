@@ -2127,7 +2127,7 @@ handleControl _ (PointerMovement (x, y)) (ZoomSlider (cx, cy)) w
 handleControl _ (PointerRelease (x, y)) (ZoomSlider (cx, cy)) w
     | isDraggingZoom w = (w {zoomFactor = yToZoomFactor (y - cy), isDraggingZoom = False}, True)
 handleControl _ (PointerPress (x, y)) (HistorySlider (cx, cy)) w
-    | abs (x - cx) < 1.5 && abs (y - cy) < 0.4 = 
+    | abs (x - cx) < 2.5 && abs (y - cy) < 0.4 = 
       (travelToTime (x - cx) <$> w {isDraggingHistory = True}, True)
 handleControl _ (PointerMovement (x, y)) (HistorySlider (cx, cy)) w
     | isDraggingHistory w = (travelToTime (x - cx) <$> w, True)
@@ -2152,7 +2152,7 @@ travelToTime t (past, future)
   where n1 = length past
         n2 = length future
         n = n1 + n2
-        desiredN1 = round (scaleRange (-1.4, 1.4) (1, fromIntegral n) t)
+        desiredN1 = round (scaleRange (-2.4, 2.4) (1, fromIntegral n) t)
         go past future diff
           | diff > 0 = go (tail past) (head past : future) (diff - 1)
           | diff < 0 = go (head future : past) (tail future) (diff + 1)
@@ -2327,10 +2327,10 @@ drawControl w alpha (HistorySlider (x,y)) = translated x y p
             (translated xoff 0.75 $ scaled 0.5 0.5 $
                  lettering (pack (show n1 ++ "/" ++ show (n1 + n2)))) <>
         colored (RGBA 0.0 0.0 0.0 alpha) (translated xoff 0 (solidRectangle 0.2 0.8)) <>
-        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.25) <>
-        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.25)
-    xoff | n < 2 = 1.4
-         | otherwise   = scaleRange (1, fromIntegral n) (-1.4, 1.4) (fromIntegral n1)
+        colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 4.8 0.25) <>
+        colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 4.8 0.25)
+    xoff | n < 2 = 2.4
+         | otherwise   = scaleRange (1, fromIntegral n) (-2.4, 2.4) (fromIntegral n1)
     n1 = length (fst (state w))
     n2 = length (snd (state w))
     n  = n1 + n2
@@ -2408,12 +2408,12 @@ statefulDebugControls w
   where   
     hasHistory = not (null (tail (fst (state w))))
     hasFuture  = not (null (snd (state w)))
-    advance | hasFuture  = [RedoButton (5, -9)]
-            | otherwise  = [StepButton (5, -9)]
-    regress | hasHistory = [UndoButton (1, -9)]
+    advance | hasFuture  = [RedoButton (6, -9)]
+            | otherwise  = [StepButton (6, -9)]
+    regress | hasHistory = [UndoButton (0, -9)]
             | otherwise  = []
     commonControls = [
-        StartOverButton (0, -9),
+        StartOverButton (-1, -9),
         FastForwardButton (-4, -9),
         SpeedSlider (-6, -9),
         ZoomInButton (9, -4),

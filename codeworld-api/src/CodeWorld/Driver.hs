@@ -1168,29 +1168,26 @@ keyCodeToText n =
     fromAscii n = singleton (chr (fromIntegral n))
     fromNum n = pack (show (fromIntegral n))
 
-isUniversallyConstant :: (a -> s -> s) -> s -> IO Bool
+isUniversallyConstant :: (a -> s -> s) -> s -> Bool
 isUniversallyConstant f old =
-    falseOr $ do
-        oldName <- makeStableName old
+    unsafePerformIO $ falseOr $ do
+        oldName <- makeStableName $! old
         genName <- makeStableName $! f undefined old
         return (genName == oldName)
   where
     falseOr x = x `catch` \(e :: SomeException) -> return False
 
-applyIfModifying :: (s -> IO s) -> s -> IO (Maybe s)
-applyIfModifying f s0 = do
+ifDifferent :: (s -> s) -> s -> Maybe s
+ifDifferent f s0 = unsafePerformIO $ do
     oldName <- makeStableName $! s0
-    s1 <- f s0
     newName <- makeStableName $! s1
-    if newName /= oldName
-        then return (Just s1)
-        else return Nothing
+    if newName == oldName then return Nothing else return (Just s1)
+  where s1 = f s0
 
-modifyMVarIfNeeded :: MVar s -> (s -> IO s) -> IO Bool
-modifyMVarIfNeeded var f =
+modifyMVarIfDifferent :: MVar s -> (s -> s) -> IO Bool
+modifyMVarIfDifferent var f =
     modifyMVar var $ \s0 -> do
-        ms1 <- applyIfModifying f s0
-        case ms1 of
+        case ifDifferent f s0 of
             Nothing -> return (s0, False)
             Just s1 -> return (s1, True)
 
@@ -1429,10 +1426,8 @@ gameHandle numPlayers initial stepHandler eventHandler token gsm event = do
             t <- getTime
             let gameState0 = currentState stepHandler gameRate (t - tstart) f
             let eventFun = eventHandler pid event
-            ms1 <- (return . eventFun) `applyIfModifying` gameState0
-            case ms1 of
-                Nothing -> do
-                    putMVar gsm gs
+            case ifDifferent eventFun gameState0 of
+                Nothing -> putMVar gsm gs
                 Just s1 -> do
                     sendClientMessage
                         ws
@@ -1584,7 +1579,7 @@ run initial stepHandler eventHandler drawHandler injectTime = do
     eventHappened <- newMVar ()
     let sendEvent event = do
             changed <-
-                modifyMVarIfNeeded currentState (return . eventHandler event)
+                modifyMVarIfDifferent currentState (eventHandler event)
             when changed $ void $ tryPutMVar eventHappened ()
         getState = readMVar currentState
     screen <- getCodeWorldContext (canvasFromElement canvas)
@@ -1616,11 +1611,9 @@ run initial stepHandler eventHandler drawHandler injectTime = do
                           getTime
             nextState <- readMVar currentState
             nextStateName <- makeStableName $! nextState
-            nextNeedsTime <-
-                if | nextStateName /= lastStateName -> return True
-                   | not needsTime -> return False
-                   | otherwise ->
-                       not <$> isUniversallyConstant fullStepHandler nextState
+            let nextNeedsTime =
+                    nextStateName /= lastStateName ||
+                    needsTime && not (isUniversallyConstant fullStepHandler nextState)
             nextFrame <- tryTakeMVar needsRedraw >>= \case
                 Nothing -> return picFrame
                 Just () -> makeStableName undefined
@@ -1878,10 +1871,9 @@ run initial stepHandler eventHandler drawHandler =
                               getCurrentTime
                 nextState <- readMVar currentState
                 nextStateName <- makeStableName $! nextState
-                nextNeedsTime <-
-                    if nextStateName == lastStateName
-                        then not <$> isUniversallyConstant fullStepHandler nextState
-                        else return True
+                let nextNeedsTime =
+                        nextStateName /= lastStateName ||
+                        needsTime && not (isUniversallyConstant fullStepHandler nextState)
                 go t1 picFrame nextStateName nextNeedsTime
         t0 <- getCurrentTime
         nullFrame <- makeStableName undefined

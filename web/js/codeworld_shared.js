@@ -190,8 +190,8 @@ function registerStandardHints(successFunc)
     });
 
     var hintBlacklist = [
-        // Symbols that only exist to implement RebindableSyntax, map to
-        // built-in Haskell types, or maintain backward compatibility.
+        // Symbols that only exist to implement RebindableSyntax or map to
+        // built-in Haskell types.
         "Bool",
         "IO",
         "fail",
@@ -202,11 +202,26 @@ function registerStandardHints(successFunc)
         "fromRational",
         "fromString",
         "ifThenElse",
-        "path",
-        "thickPath",
         "toCWText",
         "toDouble",
         "toInt",
+
+        // Deprecated exports.
+        "MousePress",
+        "MouseRelease",
+        "MouseMovement",
+        "MouseButton",
+        "LeftButton",
+        "RightButton",
+        "MiddleButton",
+        "Maybe",
+        "Nothing",
+        "Just",
+        "withDefault",
+        "hasValue",
+        "definitely",
+        "path",
+        "thickPath",
     ];
 
     lines.forEach(function(line) {

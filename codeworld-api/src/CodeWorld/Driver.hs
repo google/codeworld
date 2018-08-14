@@ -1555,6 +1555,12 @@ getDeployHash = pFromJSVal <$> js_getDeployHash
 foreign import javascript "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
     js_getDeployHash :: IO JSVal
 
+foreign import javascript "console.log($1);"
+    js_debugLog :: JSString -> IO ()
+
+debugLog :: String -> IO ()
+debugLog = js_debugLog . Data.JSString.pack
+
 run :: s
     -> (Double -> s -> s)
     -> (e -> s -> s)
@@ -1604,7 +1610,7 @@ run initial stepHandler eventHandler drawHandler injectTime = do
                 if | needsTime ->
                        do t1 <- nextFrame
                           let dt = min (t1 - t0) 0.25
-                          modifyMVar_ currentState (return . fullStepHandler dt)
+                          modifyMVarIfDifferent currentState (fullStepHandler dt)
                           return t1
                    | otherwise ->
                        do takeMVar eventHappened
@@ -1715,7 +1721,7 @@ runInspect controls initial stepHandler eventHandler drawHandler = do
         run
             initialWrapper
             stepHandlerWrapper
-            eventHandlerWrapper
+            (\e w -> (eventHandlerWrapper e) w)
             drawHandlerWrapper
             (Right . TimePassing)
     let pauseEvent True = sendEvent $ Left DebugStart
@@ -1791,6 +1797,9 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
     mapLeft f = either (Left . f) Right
 
 #else
+
+debugLog :: String -> IO ()
+debugLog = putStrLn
 
 --------------------------------------------------------------------------------
 -- Stand-Alone event handling and core interaction code
@@ -2010,15 +2019,27 @@ wrappedInitial w = Wrapped {
       isDraggingZoom = False
     }
 
+toState :: (a -> a) -> (Wrapped a -> Wrapped a)
+toState f w = case ifDifferent f (state w) of
+    Just newState -> w { state = newState }
+    _             -> w
+
 wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
-wrappedStep f dt w =
-    w
-    { state =
-          if playbackSpeed w == 0
-              then state w
-              else f (dt * playbackSpeed w) (state w)
-    , lastInteractionTime = lastInteractionTime w + dt
-    }
+wrappedStep f dt w = updateInteractionTime (updateState w)
+  where updateInteractionTime w
+          | lastInteractionTime w > 5 = w
+          | otherwise = w { lastInteractionTime = lastInteractionTime w + dt }
+        updateState w
+          | playbackSpeed w == 0 = w
+          | otherwise = toState (f (dt * playbackSpeed w)) w
+
+reportDiff :: String -> (a -> a) -> (a -> a)
+reportDiff msg f x = unsafePerformIO $ do
+    a <- makeStableName $! x
+    b <- makeStableName $! r
+    when (a /= b) $ debugLog $ msg ++ ": reportDiff found a diff"
+    return r
+  where r = f x
 
 wrappedEvent :: forall a . 
        (Wrapped a -> [Control a])
@@ -2029,10 +2050,10 @@ wrappedEvent :: forall a .
     -> Wrapped a
 wrappedEvent _ _ eventHandler (TimePassing dt) w
     | playbackSpeed w == 0 = w
-    | otherwise = fmap (eventHandler (TimePassing (dt * playbackSpeed w))) w
+    | otherwise = toState (eventHandler (TimePassing (dt * playbackSpeed w))) w
 wrappedEvent ctrls stepHandler eventHandler event w
     | playbackSpeed w == 0 || handled = afterControls {lastInteractionTime = 0}
-    | otherwise = fmap (eventHandler (adaptEvent event)) afterControls {lastInteractionTime = 0}
+    | otherwise = toState (eventHandler (adaptEvent event)) afterControls {lastInteractionTime = 0}
   where
     (afterControls, handled) = foldr stepFunction (w, False) (ctrls w)
 

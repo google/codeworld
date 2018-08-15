@@ -428,6 +428,12 @@ detail.
 > A **function** is a relationship that associates each possible input with a
 > specific result.
 
+**************************************************
+*    input     .----------.     output
+*      o------>| function +------>o
+* (arguments)  '----------'    (result)
+**************************************************
+
 The type of input a function expects is called its *domain*, and the type of
 result is called its *range*.  Here are the functions you've used so far.
 
@@ -676,6 +682,15 @@ Since `colored(outerBorder, blue)` is an expression that describes a
 picture, you can combine it with other pictures using **`&`**, just
 like you could with `circle`, `rectangle`, and other shapes.
 
+Here is a table of colors you can use:
+
+|            |            |            |            |
+|------------|------------|------------|------------|
+| red        | yellow     | green      | orange     |
+| blue       | purple     | pink       | brown      |
+| cyan       | magenta    | chartreuse | aquamarine |
+| azure      | rose       | white      | black      |
+
 Translation: Moving the picture
 -------------------------------
 
@@ -699,14 +714,17 @@ useful tool for finding these numbers is the **coordinate plane**.
     program = drawingOf(coordinatePlane)
     ~~~~~
 
-This guide consists of two number lines.  The first number line is horizontal,
-with positive numbers to the right and negative numbers to the left.  You can
-use this line to describe how far left or right to move a picture.  The second
-number line is vertical, with positive numbers on top, and negative numbers on
-the bottom.  You use that number line to describe how far up or down to move
-a picture.  With both numbers, you can move a picture anywhere you like.
+This guide consists of two number lines.
 
-For example, if you wanted a circle representing the sun, in the top left
+* The first number line is horizontal, with positive numbers to the right and
+  negative numbers to the left.  You can use this line to describe how far
+  left or right to move a picture.
+* The second number line is vertical, with positive numbers on top, and
+  negative numbers on the bottom.  You use that number line to describe how
+  far up or down to move a picture.
+
+With both numbers together, you can move a picture anywhere you like.
+For example, if you wanted a circle representing the sun in the top left
 corner of the screen.
 
 * First, you would look at the horizontal number line, and see that negative
@@ -774,36 +792,43 @@ colored :: (Picture, Color) -> Picture
 translated :: (Picture, Number, Number) -> Picture
 ~~~~~
 
-Using these building blocks, you can build your own creative pictures.  The
-way to start is just to name relevant pictures, and build up toward the full
-picture you'd like to draw.
+Using these building blocks, you can now build your own creative pictures.
+Coloring and moving shapes really opens up the possibilities.  You might
+try:
 
-!!! Tip: Here are some tips that will come in handy:
-    * When you use a transformation on a picture, you get back a new picture.
-      No you can apply a new transformation to it!  This lets you color and
-      translate a picture at the same time.
-    * When you use coloring and translation, solid shapes are a lot more fun.
-      They got in the way in your nametags, but now you can recolor them, or
-      move them out of the way.
-    * If you overlap two pictures with **`&`**, remember that the first one
-      goes in front, and the second picture behind it.
-    * You will define a lot of variables as you work.  To draw a sunset, you
-      might write something like this.
-      ~~~~~ . clickable
-      program = drawingOf(sunset)
-      sunset = translated(ground, 0, -5) &
-               translated(orangeSun, 0, 2) &
-               blueSky
-      orangeSun = colored(sun, orange)
-      sun = solidCircle(3)
-      ground = solidRectangle(20, 10)
-      blueSky = colored(sky, blue)
-      sky = solidRectangle(20, 20)
-      ~~~~~
-      See if you can describe exactly what each name means, and then check
-      your answer by changing the definition of program to draw that
-      variable by itself.  Understanding the meaning of each of your
-      variables is how you get better at programming!
+* Using more solid shapes, now that they aren't stuck covering the center
+  of your picture.  You can color them and move them around.
+* Placing a large solid colored shape behind your picture (using **`&`**)
+  to make a background color.  Remember that when you use **`&`**, the
+  first picture goes in front, so keep your background at the end!
+* Even applying more than one transformation--such as a coloring and a
+  translation, to the same starting picture.
+
+You will define a lot of variables as you work.  To draw a sunset, you
+might write something like this.
+
+~~~~~ . clickable
+program = drawingOf(sunset)
+sunset = translated(ground, 0, -5) &
+         translated(orangeSun, 0, 2) &
+         blueSky
+orangeSun = colored(sun, orange)
+sun = solidCircle(3)
+ground = solidRectangle(20, 10)
+blueSky = colored(sky, blue)
+sky = solidRectangle(20, 20)
+~~~~~
+
+See if you can describe exactly what each name means, and then check
+your answer by changing the definition of program to draw that variable
+by itself.  Understanding the meaning of each of your variables is how
+you get better at programming!
+
+!!! : Challenge -- Make your own emoji!
+    Using your skills, can you invent your own emoji?  Try a yellow
+    solid circle for the face, and then arrange smaller circles and
+    rectangles for eyes, a nose, and mouth, and anything else you
+    like!  Hair? Glasses?  Go wild!
 
 Rotation: Turning the picture
 -----------------------------

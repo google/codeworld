@@ -594,11 +594,33 @@ creating your nametag.
 Transformations
 ===============
 
-Colors
-------
+The nametags you built in the last section were pretty cool!  Still, they
+had some limitations.  First, they were black and white.  Colors would
+make them much more exciting.  And second, all the shapes were in the
+center of the screen.  You can fix both of these problems using
+*transformations*.
 
-Pictures don't need to be black and white.  You can use `colored` to change the color
-of your pictures.  Here's a simple example:
+**************************************************
+* starting        .----------------.
+* picture o------>|                |
+*                 | transformation +---->o result
+* other info o--->|                |
+*                 '----------------'
+**************************************************
+[A **transformation** is a function that turns a starting picture (and some other information) into a result picture.]
+
+You can use transformations to make several kinds of changes to your
+program.  Here, we will look at five different transformations: coloring,
+translation, rotation, dilation, and scaling.
+
+Coloring
+--------
+
+The first transformation you will use is coloring.  The `colored` function
+changes the color used to draw a picture. This function expects two arguments:
+a picture, and a color.  The colors of the input picture don't matter at all;
+only the shapes involved.  The result of the `colored` function is a new
+picture, which is just like the one you put in except for the different color.
 
 ~~~~~ . clickable
 program  = drawingOf(redWheel)
@@ -606,69 +628,185 @@ redWheel = colored(wheel, red)
 wheel    = solidCircle(4)
 ~~~~~
 
-You can also mix colors in the same picture:
+Try that out.  Once you understand it, let's take a closer look at this
+program, by asking and answering a question.
+
+!!! collapsible: What does the picture named `wheel` look like?
+    It's a filled-in circle, of radius 4, drawn in **black**.
+
+    Surprised?  If so, this is a good chance to review what a
+    transformation does--and what it doesn't do.  The equation
+    `redWheel = colored(wheel, red)` tells you that `redWheel` is a
+    picture that is just like `wheel`, except drawn in red.  So yes,
+    `redWheel` is drawn in red, just like you expect; but that
+    *doesn't* change the meaning of `wheel`.  It just defines another
+    picture.
+
+    The code above draws in red, but that's because you've asked for a
+    drawing of `redWheel`.  Can you guess what this one would do?
+
+    ~~~~~ . clickable
+    program  = drawingOf(wheel)
+    redWheel = colored(wheel, red)
+    wheel    = solidCircle(4)
+    ~~~~~
+
+    This code draws a black circle. The definition of `redWheel` doesn't
+    change anything, because when defining `program`, you didn't define it
+    to be a drawing of `redWheel`.
+
+When you use `colored` in a program, the a *whole expression* like
+`colored(pic, blue)` describes a picture, so you can use an expression
+like this in all the same places you could use any other description of
+a picture.  For example, you might define a nametag like this.
 
 ~~~~~ . clickable
-program = drawingOf(tree)
-tree    = colored(leaves, green) & colored(trunk, brown)
-leaves  = sector(0, 180, 4)
-trunk   = solidRectangle(1, 4)
+program = drawingOf(nametag)
+
+nametag = colored(outerBorder, blue) &
+          colored(innerBorder, green) &
+          colored(name, red)
+
+outerBorder = thickRectangle(15, 15, 1)
+innerBorder = thickCircle(6, 1)
+name        = lettering("Winona")
 ~~~~~
 
-You can also modify the colors!  Here are a few ways to do that:
+Since `colored(outerBorder, blue)` is an expression that describes a
+picture, you can combine it with other pictures using **`&`**, just
+like you could with `circle`, `rectangle`, and other shapes.
 
-* `dark(red)`, means `red`, except a little darker.
-* `light(green)` means `green`, but a little lighter.  So `light` is the opposite
-  of `dark`.
-* `translucent(blue)` means blue, but see-through.  The word "translucent" means
-  partially transparent or see-through.
+Translation: Moving the picture
+-------------------------------
 
-Let's try some example code:
+The second transformation you can use in your programs is translation.  The
+`translated` function changes the location of a picture.  Its inputs are a
+starting picture, and two distances to move the picture.  The result of
+`translated` is a new picture with the same content, but shifted either
+horizontally (that is, left or right) or vertically (that is, up or down).
+
+When you give distances to move the picture to the `translated` function,
+you will list the horizontal change first, and the vertical change second.  A
+useful tool for finding these numbers is the **coordinate plane**.
+
+![](/help/coordinate-plane.png)
+
+!!! Tip: Get your own coordinate plane
+    The coordinate plane is a picture that your computer knows about in
+    CodeWorld.  To make your own coordinate plane, just use this code:
+
+    ~~~~~ . clickable
+    program = drawingOf(coordinatePlane)
+    ~~~~~
+
+This guide consists of two number lines.  The first number line is horizontal,
+with positive numbers to the right and negative numbers to the left.  You can
+use this line to describe how far left or right to move a picture.  The second
+number line is vertical, with positive numbers on top, and negative numbers on
+the bottom.  You use that number line to describe how far up or down to move
+a picture.  With both numbers, you can move a picture anywhere you like.
+
+For example, if you wanted a circle representing the sun, in the top left
+corner of the screen.
+
+* First, you would look at the horizontal number line, and see that negative
+  numbers are used to move a shape to the left.  You can pick a number like
+  -5, which is a bit left on the screen.
+* Next, you would look at the vertical number line, and see that positive
+  numbers are used to move an object up.  You can pick a number like 7, which
+  is most of the way to the top of the screen.
+
+The expression describing a picture of the sun in the right place is now
+`translated(sun, -5, 7)`.  The first argument is the picture to start with,
+which you would need to define elsewhere in your program.  The second and
+third arguments are the distances to move the shape in your new picture,
+with horizontal first, then vertical.
+
+Here is the complete program:
 
 ~~~~~ . clickable
-program = drawingOf(overlap)
-overlap = colored(square,  translucent(blue))
-        & colored(disk, translucent(green))
-square  = solidRectangle(5, 5)
-disk    = solidCircle(3)
+program = drawingOf(pic)
+pic = translated(sun, -5, 7)
+sun = solidCircle(2)
 ~~~~~
 
-Transformations
----------------
+!!! collapsible: What is you only wanted to move the object to the side?
+    Functions always need the same number of arguments!  The `translated`
+    function expects three of them, so you *must* give all three arguments
+    to use it.
 
-So far, all the pictures we've drawn have been at the middle of the screen.  That's
-no fun.  But never fear, *transformations* are here!
+    If you only want to move the object in one direction, you can use zero
+    (0) for the other direction.  For example, `translated(sun, 0, 5)`
+    describes the sun at midday.  It is still up in the air, but it has
+    not been moved at all to the right or left, because the distance to
+    move is zero.
 
-Transformations are ways to change a picture.  There are three kinds of
-transformations you can use in CodeWorld:
+!!! collapsible: What does `translated(pic, 0, 0)` mean?
+    Just for fun, what happens if you user zero for both distances?  Think
+    about it!
 
-### Translation: Moving Your Pictures ###
+    If you do not move the picture in either direction, then the result is
+    the same picture you started with!  That is, `translated(pic, 0, 0)`
+    is an expression that describes the same picture as `pic`.  It makes
+    no difference whether you type one or the other.
 
-You can *translate* a picture to move it up, down, left, or right on the screen.
-To use `translated`, you give it three things:
+Practicing transformations
+--------------------------
 
-* A picture to move.
-* A distance to move the picture *left* or *right*. Negative numbers
-  are left, and positive numbers are right.
-* A distance to move the picture *up* or *down*.  Negative numbers are down,
-  and positive numbers are up.
+You now know about seven different shapes, and two different transformations.
+Your CodeWorld vocabulary is growing.  Here's a summary of what you've seen
+so far.
 
-Ready for an example?
-
-~~~~~ . clickable
-program = drawingOf(forest)
-forest  = translated(tree, -5, 5)
-        & translated(tree,  0, 0)
-        & translated(tree,  5,-5)
-tree    = colored(leaves, green) & colored(trunk, brown)
-leaves  = sector(0, 180, 4)
-trunk   = solidRectangle(1, 4)
+Basic shapes:
+~~~~~
+circle :: Number -> Picture
+solidCircle :: Number -> Picture
+thickCircle :: (Number, Number) -> Picture
+rectangle :: (Number, Number) -> Picture
+solidRectangle :: (Number, Number) -> Picture
+thickRectangle :: (Number, Number, Number) -> Picture
+lettering :: Text -> Picture
 ~~~~~
 
-What does `translated(..., 0, 0)` mean?  Well, it means don't move the picture at
-all!  We wrote the `translated` there just to make things line up nicely.
+Transformations:
+~~~~~
+colored :: (Picture, Color) -> Picture
+translated :: (Picture, Number, Number) -> Picture
+~~~~~
 
-### Rotation: Turning Your Pictures ###
+Using these building blocks, you can build your own creative pictures.  The
+way to start is just to name relevant pictures, and build up toward the full
+picture you'd like to draw.
+
+!!! Tip: Here are some tips that will come in handy:
+    * When you use a transformation on a picture, you get back a new picture.
+      No you can apply a new transformation to it!  This lets you color and
+      translate a picture at the same time.
+    * When you use coloring and translation, solid shapes are a lot more fun.
+      They got in the way in your nametags, but now you can recolor them, or
+      move them out of the way.
+    * If you overlap two pictures with **`&`**, remember that the first one
+      goes in front, and the second picture behind it.
+    * You will define a lot of variables as you work.  To draw a sunset, you
+      might write something like this.
+      ~~~~~ . clickable
+      program = drawingOf(sunset)
+      sunset = translated(ground, 0, -5) &
+               translated(orangeSun, 0, 2) &
+               blueSky
+      orangeSun = colored(sun, orange)
+      sun = solidCircle(3)
+      ground = solidRectangle(20, 10)
+      blueSky = colored(sky, blue)
+      sky = solidRectangle(20, 20)
+      ~~~~~
+      See if you can describe exactly what each name means, and then check
+      your answer by changing the definition of program to draw that
+      variable by itself.  Understanding the meaning of each of your
+      variables is how you get better at programming!
+
+Rotation: Turning the picture
+-----------------------------
 
 You can *rotate* a picture to turn it, either clockwise or counter-clockwise.
 To use `rotated`, you give it two things:
@@ -687,7 +825,11 @@ square  = solidRectangle(4, 4)
 
 A diamond is just a square, turned so it's diagonal.
 
-### Scaling: Stretching Your Pictures ###
+Dilation: Resizing the picture
+------------------------------
+
+Scaling: Stretching the picture
+-------------------------------
 
 Finally, you can *scale* a picture to stretch it or flip it over, either
 horizontally or vertically.  To use `scaled`, you'll give:

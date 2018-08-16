@@ -749,8 +749,6 @@ function goto(line, col) {
 }
 
 function compile() {
-    run('', '', 'Compiling...', false);
-
     if (document.getElementById("runner").contentWindow.debugActive)
         document.getElementById("runner").contentWindow.stopDebugMode();
 
@@ -761,7 +759,28 @@ function compile() {
     data.append('source', src);
     data.append('mode', window.buildMode);
 
+    var compileStartTime = Date.now();
+    var compileFinished = false;
+    var compileDots = 0;
+
+    run('', '', 'Compiling', false);
+    var compileHandle = setInterval(function() {
+      if (compileFinished) {
+        clearInterval(compileHandle);
+      } else {
+        compileDots = (compileDots + 1) % 4;
+        var msg = 'Compiling' + '.'.repeat(compileDots);
+
+        var delay = Date.now() - compileStartTime;
+        if (delay > 10000) {
+          msg += '\n\nSit tight!  This is taking longer than usual.';
+        }
+        run('', '', msg, false);
+      }
+    }, 300);
+
     sendHttp('POST', 'compile', data, function(request) {
+        compileFinished = true;
         var success = request.status == 200;
 
         var hash;
@@ -770,9 +789,13 @@ function compile() {
           hash = request.responseText;
           dhash = null;
         } else {
-          var obj = JSON.parse(request.responseText);
-          hash = obj.hash;
-          dhash = obj.dhash;
+          try {
+            var obj = JSON.parse(request.responseText);
+            hash = obj.hash;
+            dhash = obj.dhash;
+          } catch (e) {
+            run('', '', "Sorry!  Your program couldn't be run right now.", true);
+          }
         }
 
         var data = new FormData();
@@ -784,7 +807,7 @@ function compile() {
             if (request.status == 200) {
                 msg = request.responseText.trim();
             } else if (request.status >= 400) {
-                msg = "Sorry!  Your program couldn't be run right now.  Please try again.";
+                msg = "Sorry!  Your program couldn't be run right now.";
             }
             if (msg != '') msg += '\n\n';
 

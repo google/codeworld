@@ -158,7 +158,7 @@ compileSource stage src out err mode = runDiagnostics mode src >>= \case
                             return hasTarget
 
 userCompileMicros :: Int
-userCompileMicros = 45 * 1000000
+userCompileMicros = 20 * 1000000
 
 checkDangerousSource :: FilePath -> IO Bool
 checkDangerousSource src = do

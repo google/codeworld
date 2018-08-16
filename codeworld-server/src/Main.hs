@@ -25,16 +25,18 @@
 -}
 module Main where
 
+import CodeWorld.Account (UserId)
 import CodeWorld.Auth
         ( AuthConfig
         , authMethod
         , authenticated
         , authRoutes
         , getAuthConfig
-        , optionallyAuthenticated
         )
 import Compile
 import Control.Applicative
+import Control.Concurrent.QSem
+import Control.Exception (bracket_)
 import Control.Monad
 import Control.Monad.Trans
 import Data.Aeson
@@ -63,24 +65,40 @@ import System.FilePath
 import Model
 import Util
 
--- |A CodeWorld Snap API action
-type CodeWorldHandler = AuthConfig -> Snap ()
+maxSimultaneousCompiles :: Int
+maxSimultaneousCompiles = 4
+
+data Context = Context {
+    authConfig :: AuthConfig,
+    compileSem :: QSem
+    }
 
 main :: IO ()
 main = do
+    ctx <- makeContext
+    quickHttpServe $ (processBody >> site ctx) <|> site ctx
+
+makeContext :: IO Context
+makeContext = do
     appDir <- getCurrentDirectory
-    authConfig <- getAuthConfig appDir
-    putStrLn $ "Authentication method: " ++ authMethod authConfig
-    quickHttpServe $ (processBody >> site authConfig) <|> site authConfig
+    auth <- getAuthConfig appDir
+    putStrLn $ "Authentication method: " ++ authMethod auth
+    sem <- newQSem maxSimultaneousCompiles
+    return (Context auth sem)
+
+-- |A CodeWorld Snap API action
+type CodeWorldHandler = Context -> Snap ()
 
 -- |A public handler that can be called from both authenticated and
--- unauthenticated clients and that does not need access to the optional user
--- ID. If the action needs access to the user ID for authenticated clients,
--- use @optionallyAuthenticated@ directly instead. For handlers that require an
--- authenticated client, and that should reject unauthenticated clients, use
--- @authenticated@.
-public :: Snap () -> CodeWorldHandler
-public = const
+-- unauthenticated clients and that does not need access to the user
+-- ID.
+public :: CodeWorldHandler -> CodeWorldHandler
+public = id
+
+-- |A private handler that can only be called from authenticated
+-- clients and needs access to the user ID.
+private :: (UserId -> CodeWorldHandler) -> CodeWorldHandler
+private handler ctx = authenticated (flip handler ctx) (authConfig ctx)
 
 -- A revised upload policy that allows up to 8 MB of uploaded data in a
 -- request.  This is needed to handle uploads of projects including editor
@@ -110,30 +128,30 @@ getBuildMode =
         _ -> return (BuildMode "codeworld")
 
 site :: CodeWorldHandler
-site authConfig =
+site ctx =
     let routes =
-            [ ("loadProject", loadProjectHandler authConfig)
-            , ("saveProject", saveProjectHandler authConfig)
-            , ("deleteProject", deleteProjectHandler authConfig)
-            , ("listFolder", listFolderHandler authConfig)
-            , ("createFolder", createFolderHandler authConfig)
-            , ("deleteFolder", deleteFolderHandler authConfig)
-            , ("shareFolder", shareFolderHandler authConfig)
-            , ("shareContent", shareContentHandler authConfig)
-            , ("moveProject", moveProjectHandler authConfig)
-            , ("compile", compileHandler authConfig)
-            , ("saveXMLhash", saveXMLHashHandler authConfig)
-            , ("loadXML", loadXMLHandler authConfig)
-            , ("loadSource", loadSourceHandler authConfig)
-            , ("run", runHandler authConfig)
-            , ("runJS", runHandler authConfig)
-            , ("runMsg", runMessageHandler authConfig)
+            [ ("loadProject", loadProjectHandler ctx)
+            , ("saveProject", saveProjectHandler ctx)
+            , ("deleteProject", deleteProjectHandler ctx)
+            , ("listFolder", listFolderHandler ctx)
+            , ("createFolder", createFolderHandler ctx)
+            , ("deleteFolder", deleteFolderHandler ctx)
+            , ("shareFolder", shareFolderHandler ctx)
+            , ("shareContent", shareContentHandler ctx)
+            , ("moveProject", moveProjectHandler ctx)
+            , ("compile", compileHandler ctx)
+            , ("saveXMLhash", saveXMLHashHandler ctx)
+            , ("loadXML", loadXMLHandler ctx)
+            , ("loadSource", loadSourceHandler ctx)
+            , ("run", runHandler ctx)
+            , ("runJS", runHandler ctx)
+            , ("runMsg", runMessageHandler ctx)
             , ("haskell", serveFile "web/env.html")
             , ("blocks", serveFile "web/blocks.html")
             , ("funblocks", serveFile "web/blocks.html")
-            , ("indent", indentHandler authConfig)
+            , ("indent", indentHandler ctx)
             ]
-            ++ authRoutes authConfig
+            ++ authRoutes (authConfig ctx)
     in route routes <|> serveDirectory "web"
 
 -- A DirectoryConfig that sets the cache-control header to avoid errors when new
@@ -144,7 +162,7 @@ dirConfig = defaultDirectoryConfig {preServeHook = disableCache}
     disableCache _ = modifyRequest (addHeader "Cache-control" "no-cache")
 
 createFolderHandler :: CodeWorldHandler
-createFolderHandler = authenticated $ \userId -> do
+createFolderHandler = private $ \userId ctx -> do
     mode <- getBuildMode
     Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
     let dirIds = map (nameToDirId . T.pack) path
@@ -158,7 +176,7 @@ createFolderHandler = authenticated $ \userId -> do
         BC.pack $ last path
 
 deleteFolderHandler :: CodeWorldHandler
-deleteFolderHandler = authenticated $ \userId -> do
+deleteFolderHandler = private $ \userId ctx -> do
     mode <- getBuildMode
     Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
     let dirIds = map (nameToDirId . T.pack) path
@@ -178,7 +196,7 @@ deleteFolderHandler = authenticated $ \userId -> do
             else dir
 
 loadProjectHandler :: CodeWorldHandler
-loadProjectHandler = authenticated $ \userId -> do
+loadProjectHandler = private $ \userId ctx -> do
     mode <- getBuildMode
     Just name <- getParam "name"
     let projectName = T.decodeUtf8 name
@@ -194,7 +212,7 @@ loadProjectHandler = authenticated $ \userId -> do
     serveFile file
 
 saveProjectHandler :: CodeWorldHandler
-saveProjectHandler = authenticated $ \userId -> do
+saveProjectHandler = private $ \userId ctx -> do
     mode <- getBuildMode
     Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
     let dirIds = map (nameToDirId . T.pack) path
@@ -208,7 +226,7 @@ saveProjectHandler = authenticated $ \userId -> do
     liftIO $ LB.writeFile file $ encode project
 
 deleteProjectHandler :: CodeWorldHandler
-deleteProjectHandler = authenticated $ \userId -> do
+deleteProjectHandler = private $ \userId ctx -> do
     mode <- getBuildMode
     Just name <- getParam "name"
     let projectName = T.decodeUtf8 name
@@ -233,7 +251,7 @@ deleteProjectHandler = authenticated $ \userId -> do
             else removeFileIfExists file
 
 listFolderHandler :: CodeWorldHandler
-listFolderHandler = authenticated $ \userId -> do
+listFolderHandler = private $ \userId ctx -> do
     mode <- getBuildMode
     Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
     let dirIds = map (nameToDirId . T.pack) path
@@ -249,7 +267,7 @@ listFolderHandler = authenticated $ \userId -> do
     writeLBS (encode (Directory files dirs))
 
 shareFolderHandler :: CodeWorldHandler
-shareFolderHandler = authenticated $ \userId -> do
+shareFolderHandler = private $ \userId ctx -> do
     mode <- getBuildMode
     Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
     let dirIds = map (nameToDirId . T.pack) path
@@ -264,7 +282,7 @@ shareFolderHandler = authenticated $ \userId -> do
     writeBS $ T.encodeUtf8 checkSum
 
 shareContentHandler :: CodeWorldHandler
-shareContentHandler = authenticated $ \userId -> do
+shareContentHandler = private $ \userId ctx -> do
     mode <- getBuildMode
     Just shash <- getParam "shash"
     sharingFolder <-
@@ -283,7 +301,7 @@ shareContentHandler = authenticated $ \userId -> do
             name
 
 moveProjectHandler :: CodeWorldHandler
-moveProjectHandler = authenticated $ \userId -> do
+moveProjectHandler = private $ \userId ctx -> do
     mode <- getBuildMode
     Just moveTo <- fmap (splitDirectories . BC.unpack) <$> getParam "moveTo"
     let moveToDir = joinPath $ map (dirBase . nameToDirId . T.pack) moveTo
@@ -347,7 +365,7 @@ withProgramLock (BuildMode mode) (ProgramId hash) action = do
     withFileLock tmpFile Exclusive (const action)
 
 saveXMLHashHandler :: CodeWorldHandler
-saveXMLHashHandler = public $ do
+saveXMLHashHandler = public $ \ctx -> do
     mode <- getBuildMode
     unless (mode == BuildMode "blocklyXML") $
         modifyResponse $ setResponseCode 500
@@ -360,7 +378,7 @@ saveXMLHashHandler = public $ do
     writeBS (T.encodeUtf8 (unProgramId programId))
 
 compileHandler :: CodeWorldHandler
-compileHandler = public $ do
+compileHandler = public $ \ctx -> do
     mode <- getBuildMode
     Just source <- getParam "source"
     let programId = sourceToProgramId source
@@ -369,7 +387,7 @@ compileHandler = public $ do
         ensureSourceDir mode programId
         B.writeFile (sourceRootDir mode </> sourceFile programId) source
         writeDeployLink mode deployId programId
-        compileIfNeeded mode programId
+        compileIfNeeded ctx mode programId
     unless success $ modifyResponse $ setResponseCode 500
     modifyResponse $ setContentType "text/plain"
     let result = CompileResult (unProgramId programId) (unDeployId deployId)
@@ -386,7 +404,7 @@ getHashParam allowDeploy mode =
                 liftIO $ resolveDeployId mode deployId
 
 loadXMLHandler :: CodeWorldHandler
-loadXMLHandler = public $ do
+loadXMLHandler = public $ \ctx -> do
     mode <- getBuildMode
     unless (mode == BuildMode "blocklyXML") $
         modifyResponse $ setResponseCode 500
@@ -395,29 +413,29 @@ loadXMLHandler = public $ do
     serveFile (sourceRootDir mode </> sourceXML programId)
 
 loadSourceHandler :: CodeWorldHandler
-loadSourceHandler = public $ do
+loadSourceHandler = public $ \ctx -> do
     mode <- getBuildMode
     programId <- getHashParam False mode
     modifyResponse $ setContentType "text/x-haskell"
     serveFile (sourceRootDir mode </> sourceFile programId)
 
 runHandler :: CodeWorldHandler
-runHandler = public $ do
+runHandler = public $ \ctx -> do
     mode <- getBuildMode
     programId <- getHashParam True mode
-    liftIO $ compileIfNeeded mode programId
+    liftIO $ compileIfNeeded ctx mode programId
     modifyResponse $ setContentType "text/javascript"
     serveFile (buildRootDir mode </> targetFile programId)
 
 runMessageHandler :: CodeWorldHandler
-runMessageHandler = public $ do
+runMessageHandler = public $ \ctx -> do
     mode <- getBuildMode
     programId <- getHashParam False mode
     modifyResponse $ setContentType "text/plain"
     serveFile (buildRootDir mode </> resultFile programId)
 
 indentHandler :: CodeWorldHandler
-indentHandler = public $ do
+indentHandler = public $ \ctx -> do
     mode <- getBuildMode
     Just source <- getParam "source"
     case reformat defaultConfig Nothing Nothing source of
@@ -428,18 +446,19 @@ indentHandler = public $ do
             modifyResponse $ setContentType "text/x-haskell"
             writeLBS $ toLazyByteString res
 
-compileIfNeeded :: BuildMode -> ProgramId -> IO Bool
-compileIfNeeded mode programId = do
+compileIfNeeded :: Context -> BuildMode -> ProgramId -> IO Bool
+compileIfNeeded ctx mode programId = do
     hasResult <- doesFileExist (buildRootDir mode </> resultFile programId)
     hasTarget <- doesFileExist (buildRootDir mode </> targetFile programId)
-    if hasResult
-        then return hasTarget
-        else compileSource
-                 FullBuild
-                 (sourceRootDir mode </> sourceFile programId)
-                 (buildRootDir mode </> targetFile programId)
-                 (buildRootDir mode </> resultFile programId)
-                 (getMode mode)
+    if hasResult then return hasTarget else do
+        let sem = compileSem ctx
+        bracket_ (waitQSem sem) (signalQSem sem) $
+            compileSource
+                FullBuild
+                (sourceRootDir mode </> sourceFile programId)
+                (buildRootDir mode </> targetFile programId)
+                (buildRootDir mode </> resultFile programId)
+                (getMode mode)
 
 getMode :: BuildMode -> String
 getMode (BuildMode m) = m

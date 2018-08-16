@@ -57,6 +57,7 @@ import Snap.Http.Server (quickHttpServe)
 import Snap.Util.FileServe
 import Snap.Util.FileUploads
 import System.Directory
+import System.FileLock
 import System.FilePath
 
 import Model
@@ -339,6 +340,12 @@ moveProjectHandler = authenticated $ \userId -> do
                     else moveFromDir
         (_, _, _) -> return ()
 
+withProgramLock :: BuildMode -> ProgramId -> IO a -> IO a
+withProgramLock (BuildMode mode) (ProgramId hash) action = do
+    tmpDir <- getTemporaryDirectory
+    let tmpFile = tmpDir </> "codeworld" <.> T.unpack hash <.> mode
+    withFileLock tmpFile Exclusive (const action)
+
 saveXMLHashHandler :: CodeWorldHandler
 saveXMLHashHandler = public $ do
     mode <- getBuildMode
@@ -346,8 +353,9 @@ saveXMLHashHandler = public $ do
         modifyResponse $ setResponseCode 500
     Just source <- getParam "source"
     let programId = sourceToProgramId source
-    liftIO $ ensureSourceDir mode programId
-    liftIO $ B.writeFile (sourceRootDir mode </> sourceXML programId) source
+    liftIO $ withProgramLock mode programId $ do
+        ensureSourceDir mode programId
+        B.writeFile (sourceRootDir mode </> sourceXML programId) source
     modifyResponse $ setContentType "text/plain"
     writeBS (T.encodeUtf8 (unProgramId programId))
 
@@ -357,12 +365,11 @@ compileHandler = public $ do
     Just source <- getParam "source"
     let programId = sourceToProgramId source
         deployId = sourceToDeployId source
-    success <-
-        liftIO $ do
-            ensureSourceDir mode programId
-            B.writeFile (sourceRootDir mode </> sourceFile programId) source
-            writeDeployLink mode deployId programId
-            compileIfNeeded mode programId
+    success <- liftIO $ withProgramLock mode programId $ do
+        ensureSourceDir mode programId
+        B.writeFile (sourceRootDir mode </> sourceFile programId) source
+        writeDeployLink mode deployId programId
+        compileIfNeeded mode programId
     unless success $ modifyResponse $ setResponseCode 500
     modifyResponse $ setContentType "text/plain"
     let result = CompileResult (unProgramId programId) (unDeployId deployId)

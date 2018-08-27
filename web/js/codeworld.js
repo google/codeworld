@@ -795,6 +795,7 @@ function compile() {
             dhash = obj.dhash;
           } catch (e) {
             run('', '', "Sorry!  Your program couldn't be run right now.", true);
+            return;
           }
         }
 

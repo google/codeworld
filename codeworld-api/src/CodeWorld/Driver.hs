@@ -1561,6 +1561,9 @@ foreign import javascript "console.log($1);"
 debugLog :: String -> IO ()
 debugLog = js_debugLog . Data.JSString.pack
 
+propagateErrors :: ThreadId -> IO () -> IO ()
+propagateErrors tid action = action `catch` \ (e :: SomeException) -> throwTo tid e
+
 run :: s
     -> (Double -> s -> s)
     -> (e -> s -> s)
@@ -1622,13 +1625,13 @@ run initial stepHandler eventHandler drawHandler injectTime = do
     t0 <- getTime
     nullFrame <- makeStableName undefined
     initialStateName <- makeStableName $! initial
-    drawThread <- forkIO $ go t0 nullFrame initialStateName True
-    let process event = do
+    mainThread <- myThreadId
+    drawThread <- forkIO $ propagateErrors mainThread $
+        go t0 nullFrame initialStateName True
+    let sendEvent event = propagateErrors drawThread $ do
             changed <-
                 modifyMVarIfDifferent currentState (eventHandler event)
             when changed $ void $ tryPutMVar eventHappened ()
-        sendEvent event =
-            process event `catch` \(e :: SomeException) -> throwTo drawThread e
         getState = readMVar currentState
     return (sendEvent, getState)
 
@@ -1688,6 +1691,9 @@ inRight f ab = unsafePerformIO $ do
   bName' <- makeStableName $! b'
   return $ if bName == bName' then ab else (a, b')
 
+foreign import javascript interruptible "window.dummyVar = 0;"
+  waitForever :: IO ()
+
 -- Wraps the event and state from run so they can be paused by pressing the Inspect
 -- button.
 runInspect :: 
@@ -1732,6 +1738,7 @@ runInspect controls initial stepHandler eventHandler drawHandler = do
         highlightSelectEvent False n = sendEvent $ Left (SelectEvent n)
     onEvents canvas (sendEvent . Right)
     inspect (drawPicHandler <$> getState) pauseEvent highlightSelectEvent
+    waitForever
 
 -- Given a drawing, highlight the first node and select second node. Both recolor
 -- the nodes, but highlight also brings the node to the top.

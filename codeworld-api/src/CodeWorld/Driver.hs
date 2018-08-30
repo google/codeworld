@@ -1583,11 +1583,6 @@ run initial stepHandler eventHandler drawHandler injectTime = do
         tryPutMVar needsRedraw ()
     currentState <- newMVar initial
     eventHappened <- newMVar ()
-    let sendEvent event = do
-            changed <-
-                modifyMVarIfDifferent currentState (eventHandler event)
-            when changed $ void $ tryPutMVar eventHappened ()
-        getState = readMVar currentState
     screen <- getCodeWorldContext (canvasFromElement canvas)
     let go t0 lastFrame lastStateName needsTime = do
             pic <- drawHandler <$> readMVar currentState
@@ -1627,7 +1622,14 @@ run initial stepHandler eventHandler drawHandler injectTime = do
     t0 <- getTime
     nullFrame <- makeStableName undefined
     initialStateName <- makeStableName $! initial
-    forkIO $ go t0 nullFrame initialStateName True
+    drawThread <- forkIO $ go t0 nullFrame initialStateName True
+    let process event = do
+            changed <-
+                modifyMVarIfDifferent currentState (eventHandler event)
+            when changed $ void $ tryPutMVar eventHappened ()
+        sendEvent event =
+            process event `catch` \(e :: SomeException) -> throwTo drawThread e
+        getState = readMVar currentState
     return (sendEvent, getState)
 
 data DebugState = DebugState

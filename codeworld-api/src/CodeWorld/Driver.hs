@@ -1534,7 +1534,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
                 rect <- getBoundingClientRect canvas
                 cw <- ClientRect.getWidth rect
                 ch <- ClientRect.getHeight rect
-                canvasDrawImage
+                when (cw > 0 && ch > 0) $ canvasDrawImage
                     screen
                     (elementFromCanvas offscreenCanvas)
                     0
@@ -1597,7 +1597,7 @@ run initial stepHandler eventHandler drawHandler injectTime = do
                 rect <- getBoundingClientRect canvas
                 cw <- ClientRect.getWidth rect
                 ch <- ClientRect.getHeight rect
-                canvasDrawImage
+                when (cw > 0 && ch > 0) $ canvasDrawImage
                     screen
                     (elementFromCanvas offscreenCanvas)
                     0

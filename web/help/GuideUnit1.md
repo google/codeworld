@@ -606,27 +606,30 @@ make them much more exciting.  And second, all the shapes were in the
 center of the screen.  You can fix both of these problems using
 *transformations*.
 
-**************************************************
-* starting        .----------------.
-* picture o------>|                |
-*                 | transformation +---->o result
-* other info o--->|                |
-*                 '----------------'
-**************************************************
-[A **transformation** is a function that turns a starting picture (and some other information) into a result picture.]
+A **transformation** is a function that receives a picture called the
+original, and a description of something to change about it, and
+produces a new picture that is like the original except for that change.
+
+*************************************************
+*               .----------------.
+* original o--->|                |
+*               | transformation +---->o result
+* changes o---->|                |
+*               '----------------'
+*************************************************
 
 You can use transformations to make several kinds of changes to your
-program.  Here, we will look at five different transformations: coloring,
+pictures.  Here, we will look at five different transformations: coloring,
 translation, rotation, dilation, and scaling.
 
 Coloring
 --------
 
 The first transformation you will use is coloring.  The `colored` function
-changes the color used to draw a picture. This function expects two arguments:
-a picture, and a color.  The colors of the input picture don't matter at all;
-only the shapes involved.  The result of the `colored` function is a new
-picture, which is just like the one you put in except for the different color.
+changes the color of a picture. This function expects two arguments: the
+original, and a new color.  The colors of the original don't matter at
+all; only the shapes involved.  The result of the `colored` function is a new
+picture, which is just like the original, except for the different color.
 
 ~~~~~ . clickable
 program  = drawingOf(redWheel)
@@ -640,16 +643,18 @@ program, by asking and answering a question.
 !!! collapsible: What does the picture named `wheel` look like?
     It's a filled-in circle, of radius 4, drawn in **black**.
 
+    <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=DrYNeySBqPKubPkzT48dTEA" width=250 height=250 style="border: none;"></iframe></div>
+
     Surprised?  If so, this is a good chance to review what a
     transformation does--and what it doesn't do.  The equation
     `redWheel = colored(wheel, red)` tells you that `redWheel` is a
     picture that is just like `wheel`, except drawn in red.  So yes,
-    `redWheel` is drawn in red, just like you expect; but that
-    *doesn't* change the meaning of `wheel`.  It just defines another
-    picture.
+    `redWheel` is drawn in red, like you expect.  But that *doesn't*
+    change the meaning of `wheel`.  `redWheel` is a different picture.
+    The final program draws a wheel in red, because you've defined the
+    program to be a drawing of `redWheel`.
 
-    The code above draws in red, but that's because you've asked for a
-    drawing of `redWheel`.  Can you guess what this one would do?
+    Can you guess what the result of this code is?
 
     ~~~~~ . clickable
     program  = drawingOf(wheel)
@@ -657,14 +662,14 @@ program, by asking and answering a question.
     wheel    = solidCircle(4)
     ~~~~~
 
-    This code draws a black circle. The definition of `redWheel` doesn't
-    change anything, because when defining `program`, you didn't define it
-    to be a drawing of `redWheel`.
+    This time, you see a black circle. `redWheel` is still defined to
+    be a red circle; but that doesn't change anything, because
+    `program` is defined to be a drawing of `wheel`, which is black.
 
-When you use `colored` in a program, the a *whole expression* like
+When you use `colored` in a program, a *whole expression* like
 `colored(pic, blue)` describes a picture, so you can use an expression
 like this in all the same places you could use any other description of
-a picture.  For example, you might define a nametag like this.
+a picture.  For example, you might define `nametag` like this.
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
@@ -680,7 +685,8 @@ name        = lettering("Winona")
 
 Since `colored(outerBorder, blue)` is an expression that describes a
 picture, you can combine it with other pictures using **`&`**, just
-like you could with `circle`, `rectangle`, and other shapes.
+like you could with `circle(5)`, `rectangle(3, 4)`, or any other
+picture expression.
 
 Here is a table of colors you can use:
 
@@ -691,56 +697,75 @@ Here is a table of colors you can use:
 | cyan       | magenta    | chartreuse | aquamarine |
 | azure      | rose       | white      | black      |
 
-Translation: Moving the picture
--------------------------------
+!!! Tip
+    Why would you use `white`, when the background color in CodeWorld
+    is already white?
+
+    Although the background in CodeWorld starts out white, you can
+    use a large colored shape to change the background to some other
+    color.  Then a white shape in front of that color would be
+    visible.
+
+    ~~~~~ . clickable
+    program  = drawingOf(nametag)
+    nametag  = colored(label, white) & colored(backdrop, purple)
+    label    = lettering("Hashim")
+    backdrop = solidRectangle(20, 20)
+    ~~~~~
+
+    If you do this, remember that **`&`** means "in front of", so
+    the shape in front should come first, and your backdrop should
+    come last.
+
+Translation: Moving
+-------------------
 
 The second transformation you can use in your programs is translation.  The
-`translated` function changes the location of a picture.  Its inputs are a
-starting picture, and two distances to move the picture.  The result of
-`translated` is a new picture with the same content, but shifted either
-horizontally (that is, left or right) or vertically (that is, up or down).
+`translated` function changes the location of a picture.  Its inputs are the
+original picture, and two distances to move the picture.  The result of
+`translated` is a new picture with the same content as the original, but
+shifted either horizontally (that is, left or right) or vertically
+(that is, up or down) or both.
 
-When you give distances to move the picture to the `translated` function,
-you will list the horizontal change first, and the vertical change second.  A
-useful tool for finding these numbers is the **coordinate plane**.
+When you give distances to the `translated` function, you will list the
+horizontal change first, and the vertical change second.  A useful tool for
+finding these numbers is the **coordinate plane**.
 
-![](/help/coordinate-plane.png)
+![](/help/coordinate-plane.png width=50%)
 
 !!! Tip: Get your own coordinate plane
     The coordinate plane is a picture that your computer knows about in
-    CodeWorld.  To make your own coordinate plane, just use this code:
+    CodeWorld.  To make your own coordinate plane, use this code:
 
     ~~~~~ . clickable
     program = drawingOf(coordinatePlane)
     ~~~~~
 
-This guide consists of two number lines.
+This tool combines of two number lines.
 
-* The first number line is horizontal, with positive numbers to the right and
-  negative numbers to the left.  You can use this line to describe how far
-  left or right to move a picture.
-* The second number line is vertical, with positive numbers on top, and
-  negative numbers on the bottom.  You use that number line to describe how
-  far up or down to move a picture.
+1. The first number line is *horizontal*, with positive numbers to the right
+   and negative numbers to the left.  You can use this line to describe how
+   far left or right to move a picture.
+2. The second number line is vertical, with positive numbers on top, and
+   negative numbers on the bottom.  You use that number line to describe
+   how far up or down to move a picture.
 
 With both numbers together, you can move a picture anywhere you like.
-For example, if you wanted a circle representing the sun in the top left
-corner of the screen.
 
-* First, you would look at the horizontal number line, and see that negative
-  numbers are used to move a shape to the left.  You can pick a number like
-  -5, which is a bit left on the screen.
-* Next, you would look at the vertical number line, and see that positive
-  numbers are used to move an object up.  You can pick a number like 7, which
-  is most of the way to the top of the screen.
+For example, if you wanted a circle representing the sun in the top left
+corner of the screen.  First, you could look at the horizontal number line,
+and see that negative numbers are used to move a shape to the left.  You might
+pick -5, which is a bit left on the screen.  Next, you could look at the
+vertical number line, and see that positive numbers are used to move an object
+up.  You might pick 7, which is most of the way to the top of the screen.
 
 The expression describing a picture of the sun in the right place is now
-`translated(sun, -5, 7)`.  The first argument is the picture to start with,
-which you would need to define elsewhere in your program.  The second and
-third arguments are the distances to move the shape in your new picture,
-with horizontal first, then vertical.
+`translated(sun, -5, 7)`.  The first argument is the original, which you
+would define elsewhere in the program.  The second and third arguments are
+the distances to move the shape in your new picture, with horizontal first,
+then vertical.
 
-Here is the complete program:
+Here is a complete program:
 
 ~~~~~ . clickable
 program = drawingOf(pic)
@@ -748,32 +773,31 @@ pic = translated(sun, -5, 7)
 sun = solidCircle(2)
 ~~~~~
 
-!!! collapsible: What is you only wanted to move the object to the side?
+!!! collapsible: What if you only wanted to move the original to the side?
     Functions always need the same number of arguments!  The `translated`
     function expects three of them, so you *must* give all three arguments
     to use it.
 
-    If you only want to move the object in one direction, you can use zero
-    (0) for the other direction.  For example, `translated(sun, 0, 5)`
-    describes the sun at midday.  It is still up in the air, but it has
-    not been moved at all to the right or left, because the distance to
-    move is zero.
+    If you only want to move the original in one direction, use zero (`0`)
+    for the other direction.  For example, `translated(sun, 0, 5)` describes
+    the sun at midday.  It has still been moved up, but not at all to the
+    right or left, because the second argument is zero.
 
 !!! collapsible: What does `translated(pic, 0, 0)` mean?
-    Just for fun, what happens if you user zero for both distances?  Think
+    Just for fun, what happens if you use zero for both distances?  Think
     about it!
 
     If you do not move the picture in either direction, then the result is
-    the same picture you started with!  That is, `translated(pic, 0, 0)`
-    is an expression that describes the same picture as `pic`.  It makes
-    no difference whether you type one or the other.
+    the same as the original!  That is, `translated(pic, 0, 0)` is another
+    expression that describes the same picture as `pic`.  It makes no
+    difference to the computer which expression you use.
 
-Practicing transformations
---------------------------
+Transformation practice
+-----------------------
 
-You now know about seven different shapes, and two different transformations.
-Your CodeWorld vocabulary is growing.  Here's a summary of what you've seen
-so far.
+You now know seven different functions for building shapes, and two
+transformations.  Your CodeWorld vocabulary is growing.  Here's a summary
+of what you've seen so far.
 
 Basic shapes:
 ~~~~~
@@ -792,17 +816,24 @@ colored :: (Picture, Color) -> Picture
 translated :: (Picture, Number, Number) -> Picture
 ~~~~~
 
-Using these building blocks, you can now build your own creative pictures.
+And a couple plain pictures:
+~~~~~
+codeWorldLogo :: Picture
+coordinatePlane :: Picture
+~~~~~
+
+Using these building blocks, you can build your own creative pictures.
 Coloring and moving shapes really opens up the possibilities.  You might
 try:
 
 * Using more solid shapes, now that they aren't stuck covering the center
   of your picture.  You can color them and move them around.
-* Placing a large solid colored shape behind your picture (using **`&`**)
-  to make a background color.  Remember that when you use **`&`**, the
-  first picture goes in front, so keep your background at the end!
+* Placing a large solid colored shape, a backdrop, behind your picture
+  (using **`&`**) to change the background color.  Remember that when you
+  use **`&`**, the first picture goes in front, so keep your backdrop at
+  the end!
 * Even applying more than one transformation--such as a coloring and a
-  translation, to the same starting picture.
+  translation, starting from one original.
 
 You will define a lot of variables as you work.  To draw a sunset, you
 might write something like this.
@@ -824,23 +855,39 @@ your answer by changing the definition of program to draw that variable
 by itself.  Understanding the meaning of each of your variables is how
 you get better at programming!
 
-!!! : Challenge -- Make your own emoji!
+!!! Note: Challenge -- Make your own emoji!
     Using your skills, can you invent your own emoji?  Try a yellow
     solid circle for the face, and then arrange smaller circles and
     rectangles for eyes, a nose, and mouth, and anything else you
     like!  Hair? Glasses?  Go wild!
 
-Rotation: Turning the picture
------------------------------
+Rotation: Turning
+-----------------
 
-You can *rotate* a picture to turn it, either clockwise or counter-clockwise.
-To use `rotated`, you give it two things:
+The next transformation to try is turning a picture.  Turning is also
+called **rotation**, so this third transformation is done with the `rotated`
+function.  The `rotated` function needs two arguments: the original picture,
+and an angle to rotate (or turn) it.  Because `rotated` is a transformation,
+the result is a new picture that is just like the first, except that it has
+been rotated.
 
-* A picture to rotate.
-* A number of degrees to rotate the picture.  Negative numbers are clockwise,
-  and positive numbers are counter-clockwise.
+To guide yourself in thinking about rotations, imagine a protractor, like
+this one.
 
-Here's an example:
+![](protractor.png width=70%)
+
+As you can see, a fourth of a turn is 90 degrees, and half a turn is
+180 degrees.  Positive angles represent turning the picture counterclockwise.
+To turn the picture clockwise instead, use a negative angle.
+
+!!! Warning
+    It might seem a bit backwards that **counterclockwise** turns are
+    represented by positive angles.  Yet, this is how mathematicians
+    usually measure angles.  Pay attention, and don't let it fool you.
+
+If you think about it, a diamond could be just a square, turned a bit to the
+side so that its edges are diagonal.  Here's some code that describes a
+diamond in this way.
 
 ~~~~~ . clickable
 program = drawingOf(diamond)
@@ -848,36 +895,151 @@ diamond = rotated(square, 45)
 square  = solidRectangle(4, 4)
 ~~~~~
 
-A diamond is just a square, turned so it's diagonal.
+You can probably think about a lot of other pictures you can draw using
+rotated rectangles, text, and more.
 
-Dilation: Resizing the picture
-------------------------------
+!!! collapsible: What happens if you rotate a circle?
+    If you rotate a circle, you won't notice any difference at all!  That's
+    because a circle looks the same in all directions.  Mathematicians
+    would say that a circle has *rotational symmetry*.  What that means to
+    you is that you should save your rotations for shapes where it matters!
 
-Scaling: Stretching the picture
--------------------------------
+!!! collapsible: Can you rotate *and* translate a picture?
+    Yes, but the result might surprise you!
 
-Finally, you can *scale* a picture to stretch it or flip it over, either
-horizontally or vertically.  To use `scaled`, you'll give:
+    When you rotate a picture, it's rotated around the *center* of the
+    picture.  Translation can move the shapes away from the center.  Consider
+    this code.
 
-* A picture to stretch.
-* A factor by which to stretch the picture horizontally.  1 means leave it
-  alone.  Numbers bigger than 1 stretch it out, and numbers smaller than 1
-  (like 0.5) squish it together to make it smaller.  Negative numbers flip
-  the picture over, like looking at it in a mirror.
-* A factor by which to stretch the picture vertically.  The meaning of
-  numbers is the same.
+    ~~~~~ . clickable
+    program = drawingOf(rotatedBox)
+    rotatedBox = rotated(translatedBox, 60)
+    translatedBox = translated(box, 7, 0)
+    box = solidRectangle(2, 2)
+    ~~~~~
 
-Here's an example of `scaled`:
+    <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=DTtRwAtzs4VAQep7g74-9dQ" width=250 height=250 style="border: none;"></iframe></div>
+
+    Are you surprised to see the box way up near the top of the screen,
+    when it was only translated to the right?  The explanation is that the
+    picture `translatedBox` was rotated around its *center*, but the box
+    itself is at the edge.  The diagram below might help to understand what
+    happened.
+
+    <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=De8I5BbL9gFgl_3D74ZINNQ" width=250 height=250 style="border: none;"></iframe></div>
+
+    To avoid this, consider rotating the shape first, and then translating
+    the rotated shape.
+
+Dilation: Resizing
+------------------
+
+Yet another transformation is used to change the size of a picture.
+Changing size is also called **dilation**, so this transformation is done
+with the `dilated` function.  This function needs two arguments: the
+original picture, and a scale factor.  The scale factor says how much
+larger or smaller the result should be.  For example:
+
+| Scale Factor   | Result                   |
+|:--------------:|--------------------------|
+|      `2`       | Twice as large           |
+|      `3`       | Three times as large     |
+| `1/2` or `0.5` | Half the size            |
+| `1/5` or `0.2` | One fifth the size       |
+|      `1`       | The same as the original |
+
+Here is an example of a program using the `dilated` function.
 
 ~~~~~ . clickable
-program = drawingOf(oval)
-oval    = scaled(base, 2, 0.5)
+program = drawingOf(poem)
+poem = translated(firstLine, 0, 1) & translated(secondLine, 0, -1)
+firstLine = dilated(asBig, 5)
+secondLine = dilated(asAMouse, 1/2)
+asBig = lettering("AS BIG")
+asAMouse = lettering("as a mouse")
+~~~~~
+
+Some functions you've used to build shapes--like `rectangle` or
+`circle`--already have arguments you can use to control their size.
+It makes no difference whether you use the `dilated` function to resize
+these shapes, or just build the picture larger in the first place.  So
+`circle(6)` is the same picture you'd get by dilating `circle(3)` by a
+scale factor of 2, and `rectangle(1, 2)` is the same picture you'd get
+by dilating `rectangle(2, 4)` by a scale factor of one half.  But other
+functions, like `lettering`, don't give you the same choices.  If you want
+smaller or larger letters, `dilated` is the way to go.  As you build up
+other more complicated pictures, dilation also comes in handy to resize
+the whole picture at once, so you don't have to change each piece
+separately.
+
+!!! collapsible: How does dilation combine with rotation and translation?
+    Rotation and dilation are independent of each other.  In other words,
+    if you rotated and then translate a shape, you get the same result as
+    translating and then rotating.
+
+    Some extra care is needed to combine dilation with translation, though.
+    Just like rotation always rotates around the *center* of a picture,
+    dilation always resizes away from or towards the *center*.  That means
+    shapes in the center of a picture remain in the center, but a shape
+    that is away from the center is pushed further away from (if the picture
+    is getting larger), or pulled toward (if the picture is getting smaller)
+    the center.
+
+!!! collapsible: What happens if you dilate by a negative number?
+    This might seem weird, but dilating by a negative scale factor turns your
+    picture upside down!  In other words, `dilated(pic, -1)` is always the
+    same picture as `rotated(pic, 180)`.
+
+!!! collapsible: What happens if you dilate by zero?
+    Dilating by a scale factor of zero makes your picture disappear!  Think
+    of dilation as being like multiplication.  If you dilate by 1 (just like
+    if you multiply by 1), you don't change the picture at all.  If you
+    dilate by 0 (just like if you multiply by zero), the whole picture goes
+    away, and you have nothing left.
+
+    This is different from rotation or translation, which are are like
+    adding, rather than multiplying.  Rotating or translating by 0 doesn't
+    change the picture.
+
+Scaling: Stretching
+-------------------
+
+Finally, scaling is used to stretch or flip a picture.  The `scaled`
+function needs three arguments: the original, and two different scale
+factors in the horizontal and vertical directions.  If the two scale
+factors are the same, then scaling is just like dilation.  But when they
+are different, scaling lets you stretch a picture in one direction more
+or less than the other.
+
+~~~~~ . clickable
+program = drawingOf(ellipse)
+ellipse = scaled(base, 2, 0.5)
 base    = solidCircle(4)
 ~~~~~
 
-You should try to get a good feeling for the meaning of those scaling
-factors.  Try changing the numbers in the example, and see if you can
-guess what will happen before you press run.
+This program shows a drawing of an ellipse, which is just a stretched-out
+circle.  You can also stretch other shapes, and even letters and other
+pictures that you define yourself.
+
+!!! collapsible: How are the scale factors different between `scaled` and `dilated`?
+    The scale factors in the `scaled` function work much the same way as they
+    do for `dilated`--just in one direction at a time.  A scale factor of zero
+    still produces a blank picture, and one still leaves the picture
+    unchanged.  Numbers larger than one stretch the picture larger, and
+    numbers smaller than one squishes the picture to be smaller than the
+    original.
+
+    One difference is in the meaning of negative numbers.  A negative scale
+    factor in one direction will *reflect* the original picture in that
+    direction.
+
+    <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=DRp_AUpr0hMAVvPcWCndLgw" width=250 height=250 style="border: none;"></iframe></div>
+
+    If you scale by a negative scale factor in both directions, though,
+    then you've just turned the picture upside down.  You can try this
+    with a card or slip of paper: if you flip it horizontally, then flip
+    it again vertically, it ends up in the same position as if you'd
+    turned it 180 degrees.
 
 Expressions
 ===========

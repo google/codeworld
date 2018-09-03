@@ -1013,7 +1013,7 @@ or less than the other.
 
 ~~~~~ . clickable
 program = drawingOf(ellipse)
-ellipse = scaled(base, 2, 0.5)
+ellipse = scaled(base, 2, 1/2)
 base    = solidCircle(4)
 ~~~~~
 
@@ -1041,48 +1041,80 @@ pictures that you define yourself.
     it again vertically, it ends up in the same position as if you'd
     turned it 180 degrees.
 
-Expressions
-===========
+Designing Programs
+==================
 
-Now that you've spent some time trying out pictures, let's learn a few
-more tricks you can use.  Anything you can write after the equal sign
-is called an *expression*.  For example:
+You've now seen many of the basic functions you need to describe pictures
+with mathematics, and draw them in CodeWorld.  In this section, you will
+learn more about using these tools to create original artwork, and keep
+track of your work as it grows more elaborate and complex.
 
-* `circle(4)` is an expression.
-* `colored(lettering("Help"), red)` is also an expression.
-* `rectangle(1, 4) & circle(2)` is an expression.
-* `leaves & trunk` is an expression.
+Expressions and types
+---------------------
 
-However, `tree = leaves & trunk` is *not* an expression.  It's a
-definition.  Can you tell the difference?  Expressions describe
-something, but don't give it a name.  But every definition has an
-expression inside, after the equal sign.  So expressions are pretty
-important.
+You have been using expressions already, as you wrote your first code.
+An **expression** is the code or notation you use to describe a value
+such as a picture, number, color, or program.  Here are some examples of
+simple expressions.
 
-Nesting
--------
+| Expression               | Type of value |
+|--------------------------|:-------------:|
+| `drawingOf(nametag)`     | Program       |
+| `codeWorldLogo`          | Picture       |
+| `circle(4)`              | Picture       |
+| `translated(sun, -5, 7)` | Picture       |
+| `colored(wheel, red)`    | Picture       |
+| `circle(8) & circle(9)`  | Picture       |
+| `blue`                   | Color         |
+| `1/2`                    | Number        |
+| `2`                      | Number        |
+| `"Sofia"`                | Text          |
 
-Remember how we used `rotated`?  Here's a quick reminder:
+Every expression has a type, which is the kind of thing that it
+describes.  The simple types you've worked with so far include
+`Program`, `Picture`, `Color`, `Number`, and `Text`.  These types
+are used in the domain and range of the functions you use for
+programming.
+
+Nesting expressions
+-------------------
+
+You might notice that many of the expressions in the table above
+have other expressions inside of them.  For example, `circle(8)`,
+an expression for a picture, uses `8`, an expression for a number,
+inside.  In fact, this happens all the time.  Most expressions are
+made of other, smaller expressions, much like how Russian nesting
+dolls have other smaller dolls inside.
+
+![](nesting-dolls.jpg width="50%")
+
+Just like with the dolls, this is called **nesting**.  Up until now,
+your programs haven't used too many nested expressions.  Instead, if
+you wanted to apply several transformations to the same basic shape,
+you have named all of the partially transformed shapes, so that can
+refer to them in the next equation.  Here's a quick reminder how you
+might define a diamond by naming the simpler pictures it is
+transformed from.
 
 ~~~~~ . clickable
 program = drawingOf(diamond)
 diamond = rotated(square, 45)
-square  = rectangle(2, 2)
+square  = solidRectangle(4, 4)
 ~~~~~
 
-Nice!  However, naming everything like that can get tedious.  If you
-have a simple shape, such as `rectangle(2, 2)`, you may not want
-to bother giving it a name.  You can just describe the shape right where
-the name would go.
+Naming everything like that can be tedious, though.  If you have a
+simple shape, such as `rectangle(2, 2)`, you may not want to bother
+giving it a name.  You can just describe the shape right where the
+name would go, instead.
 
-Try it:
+That looks like this:
 
 ~~~~~ . clickable
 program = drawingOf(diamond)
 diamond = rotated(rectangle(2, 2), 45)
 ~~~~~
 
-Or even:
+Or even this:
 
 ~~~~~ . clickable
 program = drawingOf(rotated(rectangle(2, 2), 45))
@@ -1090,18 +1122,7 @@ program = drawingOf(rotated(rectangle(2, 2), 45))
 
 Careful, though!  You can avoid naming simple things, but if you
 nest too much, you get parentheses inside of parentheses inside of
-parentheses,  and pretty soon it's hard to tell what's going on!
-
-You can also nest other things besides pictures.  Remember that `dark`,
-`light`, and `transparent` were functions that modify colors.  But since
-`dark(red)` and `light(green)` are colors themselves, so you can use the
-same functions on them!  Check out some of these colors:
-
-* `dark(dark(green))`
-* `translucent(light(blue))`
-
-Numbers
--------
+parentheses, and pretty soon it's hard to tell what's going on!
 
 Nesting can be used for numbers, too.  You can let the computer work out
 math for you on numbers, too.  When you write math expressions, you can
@@ -1119,17 +1140,32 @@ design  = rotated(rectangle(4, 0.2), 1 * 180 / 5)
         & rotated(rectangle(4, 0.2), 5 * 180 / 5)
 ~~~~~
 
-We could have written `36`, '72', '108', '144', and `180` (the answers to
-those math problems).  But this way, it's very clear what we are doing:
-dividing 180 degrees into fifths, and then rotating a rectangle by each
-amount.  And we don't have to worry about getting one of the answers
-wrong!
+We could have written `36`, '72', '108', '144', and `180`, instead of
+writing math expressions for the angles.  But this way, it's very
+clear what we are doing: dividing 180 degrees into fifths, and then
+rotating a rectangle by each amount.  And we don't have to worry
+about getting your arithmetic wrong!
 
 Just like in math, you can use parentheses to group expressions, so
 `3 * (6 - 2)` is `3 * 4`, which is `12`.
 
-The Coordinate Plane
-====================
+Matching parentheses
+--------------------
+
+This section to be written.
+
+Top-down decomposition
+----------------------
+
+This section to be written.
+
+Parse trees
+-----------
+
+This section to be written.
+
+Advanced shapes
+===============
 
 To draw more precise shapes, we can use points on a "coordinate plane".  You
 can see a coordinate plane right now, just by running this code:
@@ -1164,7 +1200,7 @@ plane:
 
 Got it?  Great!
 
-Points, Lines and Polygons
+Points, lines and polygons
 --------------------------
 
 Now you can draw things like sequences of lines by giving a list of points in
@@ -1213,7 +1249,7 @@ with endpoints, and `closedCurve`, `solidClosedCurve`, and `thickClosedCurve`
 for curves that join back to their starting point in a loop.  These functions
 work exactly like `polyline` and `polygon`, but just draw smooth curves instead.
 
-Drawing with the Coordinate Plane
+Drawing with the coordinate plane
 ---------------------------------
 
 A neat trick is to use the coordinate plane as you write your code.  Say
@@ -1228,115 +1264,5 @@ Now run your program, and you have a coordinate plane to measure what
 points to use in your shapes.  When you're done, just remove the
 `& coordinatePlane` to get rid of the guidelines.
 
-Types
-=====
-
-We've seen many different kinds of things so far that show up in your
-code: pictures, numbers, text, points, colors... maybe you're wondering how to keep them
-all straight!  CodeWorld calls these kinds of things *types*.  You'll mostly see types in two
-places:
-
-* When you make a mistake, you'll often see types mentioned in *error*
-  *messages* that tell you about the problem.
-* If you want to, you can say things about types in your code.
-  If you do, the computer then knows more about what you meant, and
-  can sometimes explain the problems in your code better.
-
-Simple Types
-------------
-
-Hear are some of the types that you've used in your code:
-
-* `Program` is the type of the variable `program` that you define in all
-  your code.
-* `Picture` is the type for pictures.
-* `Number` is the type for numbers.
-* `Color` is the type for colors.
-* `Text` is the type for pieces of text, usually written in quotes.
-
-Notice that while variables start with a lower-case letter, types are
-capitalized.
-
-Type Annotations
+Arcs and sectors
 ----------------
-
-To declare types in your code, you can use `::`, like this:
-
-~~~~~
-wheel :: Picture
-wheel = solidCircle(size)
-
-size :: Number
-size = 4
-~~~~~
-
-You don't *have* to say what type things are.  It's completely optional,
-and the computer can always figure that out on its own.  But if you do
-say what your types are, two things happen:
-
-* Other people reading your code can understand what's going on.
-* When you make a mistake the computer can be more helpful explaining
-  what's wrong.
-
-List Types
-----------
-
-What about lists?  Would you guess their type is `List`?  Not quite!  There are
-many types of lists: lists of numbers, lists of pictures, lists of colors, and
-so on.  To write the type of a list, we first write the type of the things
-*inside* the list, then surround it with square brackets.
-
-~~~~~
-numbers :: [Number]
-numbers = [ 1, 2, 3, 4 ]
-~~~~~
-
-Points and Tuples
------------------
-
-What about a point, like the ones we used to make polylines and polygons?  It
-actually works just fine to say the type is `Point`:
-
-~~~~~
-start :: Point
-start = (0, 5)
-~~~~~
-
-When the computer talks about points, though, it sometimes calls their type
-something different: `(Number, Number)`.  This is just a way to say what we
-already know: a point is an ordered pair, with each part being a number!  It
-turns out `Point` is just shorthand for `(Number, Number)`, and they both mean
-the same thing.
-
-Types like that, with parentheses and commas, are sometimes called *tuples*.  So
-a `Point` is a specific kind of tuple.  Other tuples might use different types,
-different numbers of things, and even different types for the different values
-inside!
-
-* `(Number, Color)` is a tuple type.  Some possible values are the pairs
-  `(4, red)` or `(-3, dark(green))`.
-* `(Number, Text, Number, Color)` is a tuple type with four values inside.  A
-  possible value is `(3, "train", 10, blue)`.
-
-Tuples will be used a lot more later on, when we're dealing with memory and
-state.  For now, you'll mostly use them for points on the coordinate plane.
-
-Functions
----------
-
-Functions have their own types. Here are some examples:
-
-* `light` is a function that needs a color and makes another color.  It
-  has the type `Color -> Color`.
-* `circle` is a function that needs a number (the radius), and makes a
-  picture (a circle with that radius).  It has the type
-  `Number -> Picture`.
-* `rectangle` is a function that needs two numbers, and makes a picture.
-  It has the type `(Number, Number) -> Picture`.
-* `translated` is a function that needs a picture and two numbers (the x
-  and y distances), and makes a new picture.  It has the type
-  `(Picture, Number, Number) -> Picture`.
-
-In general, function types have arrows (`->`) in them.  On the left of the arrow
-is the type of things that the function needs: its *domain*.  On the right side
-of the arrow is the type of things that the function makes: its *range*.

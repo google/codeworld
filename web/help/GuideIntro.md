@@ -3,7 +3,7 @@
 Welcome to CodeWorld!
 =====================
 
-CodeWorld is an environment where you can build create drawings, animations, and even
+CodeWorld is an environment where you can build and create drawings, animations, and even
 single-player and multi-player video games using mathematics, using shapes, colors and
 transformations.  It's programming a computer with mathematics.
 

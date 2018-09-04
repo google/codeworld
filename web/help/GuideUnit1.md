@@ -1041,13 +1041,13 @@ pictures that you define yourself.
     it again vertically, it ends up in the same position as if you'd
     turned it 180 degrees.
 
-Designing Programs
-==================
+Expression structure
+====================
 
 You've now seen many of the basic functions you need to describe pictures
 with mathematics, and draw them in CodeWorld.  In this section, you will
-learn more about using these tools to create original artwork, and keep
-track of your work as it grows more elaborate and complex.
+learn more about how these pieces fit together to build artwork that is as
+elaborate and complex as you like.
 
 Expressions and types
 ---------------------
@@ -1075,6 +1075,70 @@ describes.  The simple types you've worked with so far include
 `Program`, `Picture`, `Color`, `Number`, and `Text`.  These types
 are used in the domain and range of the functions you use for
 programming.
+
+To learn more about the kinds of expressions you can write in
+CodeWorld, explore the topics below.
+
+!!! collapsible: Literal expressions
+    For some types, like numbers and text, you can write values
+    directly as a simple kind of expression.  These are called
+    **literal** expressions.
+
+    Literal expressions for numbers can be whole numbers, like
+    `5` or `-1`, or they can be decimals, like `1.5` or `3.14`.
+    You can also write fractions, like `1/2`, as just a number,
+    too, although this isn't *exactly* a literal; it's actually
+    dividing two other numbers.
+
+    Text is the other type of value that has a literal
+    expression.  A literal expression for text is written in
+    quotation marks.  Your name, in the nametag program you
+    wrote earlier, is an example.
+
+!!! collapsible: Variables
+    A variable is another kind of expression.  Variables are
+    names the computer already knows, or that you have defined
+    elsewhere, that represent a value.  Some of the variables
+    you have used as expressions are `codeWorldLogo` (which is
+    a known picture), `blue` (which is a known color), or
+    `nametag` (a picture that you defined elsewhere in the
+    program).
+
+    Most of the time, variables that are already known to the
+    computer act about the same as literal expressions.  As you
+    learn more advanced techniques, the difference will become
+    important.
+
+!!! collapsible: Function applications
+    Most of the expressions you've written so far have been
+    function applications.  These expressions are written with
+    the name of a function to apply, followed by parentheses,
+    and inside the parentheses the arguments for that function.
+    The value described by the whole expression is the *result*
+    of that function when it's given those arguments.
+
+!!! collapsible: Operations
+    Finally, you've written some expressions that are operations.
+    Some operations are `2 + 2`, or `codeWorldLogo & coordinatePlane`.
+    An operation is written with the first value at the beginning,
+    an operator in the middle, and a second value at the end.  You
+    can continue and chain more operations at the end as well, as
+    in `5 + 4 + 3 + 2 + 1`, or `circle(1) & circle(2) & circle(3)`.
+
+    You know some operators on numbers from your mathematics
+    studies.  These include addition (written as `+`),
+    subtraction (written as `-`), multiplication (written as
+    `*`), and division (written as `/`).  These work for numbers
+    in CodeWorld just as they do for numbers in mathematics.
+    That also means they follow the order of operations, and
+    you can use parentheses when needed to communicate how to
+    group the operations together.
+
+    The other operator you've used a lot is `&`, the "in front
+    of" operator for pictures.  Even though the values you combine
+    are pictures instead of numbers, the `&` operator works in
+    pretty much the same way as the operations you know on
+    numbers.
 
 Nesting expressions
 -------------------
@@ -1149,18 +1213,239 @@ about getting your arithmetic wrong!
 Just like in math, you can use parentheses to group expressions, so
 `3 * (6 - 2)` is `3 * 4`, which is `12`.
 
-Matching parentheses
+Parenthesis matching
 --------------------
 
-This section to be written.
+Many of the expressions you write will use parentheses -- "(" and ")" --
+to group their parts.  There are parentheses in all function applications,
+but they can also be used to group operators.  These parentheses are the
+key to understanding the structure of your code.  They *always* come in
+matching pairs -- one open-parenthesis always goes with a matching close
+parenthesis -- and help divide up your code into logical parts.
 
-Top-down decomposition
+As you nest expressions deeper, though, it becomes more challenging to
+match up these parentheses.
+
+A good way to start matching parentheses is to look at them as parts of
+a circle.  If you write the expression on paper, you can complete those
+circles.  You can't cross lines as you do so!
+
+For instance, these two pair of parentheses:
+
+~~~~~
+(   )  (   )
+~~~~~
+
+can be completed into these circles:
+
+*****************
+*   .-.    .-.
+*  (   )  (   )
+*   '-'    '-'
+*****************
+
+These nested parentheses:
+
+~~~~~
+(  (   )  (   )  )
+~~~~~
+
+can be completed to form these nested circles:
+
+***********************
+*   .--------------.
+*  |   .-.    .-.   |
+*  |  (   )  (   )  |
+*  |   '-'    '-'   |
+*   '--------------'
+***********************
+
+For harder cases, there are two strategies worth knowing for
+matching parentheses: matching from the **inside out**, and
+**counting**.
+
+### Inside-out matching
+
+Matching from the inside out is the easiest strategy to match up all
+the parentheses in an expression.  Look at these deeply nested
+parentheses:
+
+~~~~~
+(   )  (  (   )  (  (   )  )  )
+~~~~~
+
+It may not be apparent which parentheses match at a glance.  But
+you can certainly match some: the parentheses that face each other
+with no other parentheses in between must match:
+
+************************************
+*   .-.       .-.       .-.
+*  (   )  (  (   )  (  (   )  )  )
+*   '-'       '-'       '-'
+************************************
+
+With those matches out of the way, it's easy to see more pairs of
+parentheses that face each other with no *unmatched* parentheses
+between them.  If you keep matching what you can in this way, you
+will eventually complete the match:
+
+************************************
+*          .--------------------.
+*         |          .-------.   |
+*   .-.   |   .-.   |   .-.   |  |
+*  (   )  |  (   )  |  (   )  |  |
+*   '-'   |   '-'   |   '-'   |  |
+*         |          '-------'   |
+*          '--------------------'
+************************************
+
+When using this strategy, you will draw the smallest circles first,
+and then fill in the larger circles around them.
+
+### Parenthesis counting
+
+The counting strategy is better when you want to find the match
+for a specific parenthesis.  Starting from an open-parenthesis, you
+will scan forward, counting how many more close-parentheses you
+need before you've found its match.  Each open-parenthesis you find
+increases the count by one, while each close-parenthesis decreases
+the count by one.  When you reach zero, you've found the match.
+
+Suppose you wanted to find the match for the first parenthesis in
+this sequence:
+
+~~~~~
+(  (  (   )  (   )  )  )  (  (   )  )
+~~~~~
+
+You would count like this:
+
+******************************************
+*  (  (  (   )  (   )  )  )  (  (   )  )
+*
+*  ^  ^  ^   ^  ^   ^  ^  ^
+*  |  |  |   |  |   |  |  |
+*  1  2  3   2  3   2  1  0
+******************************************
+
+The parenthesis where you finally said "zero" is the match for the
+one you started on.
+
+!!! Tip:
+    CodeWorld provides a few more clues to help you match parentheses.
+    Matching pairs of parentheses are always the same color when you look
+    at your code with CodeWorld.  So to find the match for a green
+    parenthesis, you need only look for the other green ones.  Also,
+    if you move your text cursor next to a parenthesis, the entire
+    contents of the parenthesis pair (and the function name, if it's part
+    of a function application) will be underlined.  These tools can help
+    you avoid the need to count.
+
+Parsing subexpressions
 ----------------------
 
-This section to be written.
+Of course, in your actual code, there are more than just parentheses.
+Consider a nested expression like this:
 
-Parse trees
------------
+~~~~~
+drawingOf(colored(circle(5) & rectangle(1, 2), blue))
+~~~~~
+
+Can you identify the two arguments needed by the `colored` function?
+(The first is `circle(5) & rectangle(1, 2)`, and the second is
+`blue`.)  How would you figure this out in general?  If you can match
+parentheses, then you can extend this to diagramming the entire code.
+
+You may remember that when you first wrote function applications, you
+drew frying-pan diagrams to represent the name of the function on a
+handle in front, and the inputs in a circle like the ingredients placed
+in the pan.  You can do the same here.  However, the arguments that go
+in each pan may include other expressions, called **subexpressions**.
+Those can have more subexpressions, and so on!
+
+This code:
+
+~~~~~
+colored(rectangle(5, 10), blue)
+~~~~~
+
+can be visualized like this:
+
+*********************************************
+*           .----------------------+-----.
+*          |             .--+---.  |      |
+*  .-------+  .---------+   |    | |      |
+* | colored| | rectangle| 5 | 10 | | blue |
+*  '-------+  '---------+   |    | |      |
+*          |             '--+---'  |      |
+*           '----------------------+-----'
+*********************************************
+
+In this diagram, you can clearly see that there are two arguments to
+the colored function, and that the first is another function
+application, while the other is the color blue.  If you look closer
+at the first argument, you'll see that it's *another* function
+application, with two arguments of its own.
+
+Picking apart the pieces of an expression like this is called
+**parsing**, and it's an important skill to build so that you can read
+and understand code more easily.  Parsing is all about answering two
+questions:
+
+1. What **form** of expression is this?  For example, is this a literal
+   expression, a function application, or an operation?
+2. What are the **subexpressions**, or smaller expressions that
+   represent values that are put together by the main expression?
+
+In this example, the *form* is a function application of the `colored`
+function.  The two arguments to the function, `rectangle(5, 10)` and
+`blue`, are *subexpressions*.
+
+If the form of expression is an operation, you can draw the diagram a
+little differently.  Operators work exactly like functions, but instead
+of writing them in front of the arguments, they sit between their
+arguments (called "operands").  We can represent them with a similar
+diagram, but need two circles for the left and right operands.
+
+For instance, `5 + 3` can be visualized like this:
+
+*****************
+*  .-.     .-.
+* |   +---+   |
+* | 5 | + | 3 |
+* |   +---+   |
+*  '-'     '-'
+*****************
+
+Returning to the example that started this section:
+
+~~~~~
+drawingOf(colored(circle(5) & rectangle(1, 2), blue))
+~~~~~
+
+can be visualized something like this:
+
+**********************************************************************************
+*             .---------------------------------------------------------------.
+*            |           .---------------------------------------------+----.  |
+*            |          |  .-------------.     .--------------------.  |     | |
+*            |          | |          .-.  +---+             .--+--.  | |     | |
+*  .---------+  .-------+ |  .------+   | |   |  .---------+   |   | | |     | |
+* | drawingOf| | colored| | | circle| 5 | | & | | rectangle| 1 | 2 | | | blue| |
+*  '---------+  '-------+ |  '------+   | |   |  '---------+   |   | | |     | |
+*            |          | |          '-'  +---+             '--+--'  | |     | |
+*            |          |  '-------------'     '--------------------'  |     | |
+*            |           '---------------------------------------------+----'  |
+*             '---------------------------------------------------------------'
+**********************************************************************************
+
+While this may not seem much simpler, it does make it easier to understand the
+structure of the expression  You can see that the entire expression is an
+application of the `drawingOf` function, which has one argument.  And you can
+look closer at the argument to see what its pieces are.
+
+Top-down decomposition
+======================
 
 This section to be written.
 
@@ -1266,3 +1551,5 @@ points to use in your shapes.  When you're done, just remove the
 
 Arcs and sectors
 ----------------
+
+This section to be written.

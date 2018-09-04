@@ -54,13 +54,12 @@ Here's the code you just wrote, and what its parts mean.
   always starting with a *lower-case* letter.
 
 !!! collapsible: Camel case
-    Sometimes, you may want more than one word to name a variable!
-    The computer needs each variable to be a single word starting with a
-    lower-case letter--so leave out the spaces.  To make it easier to
-    tell when a new word starts, you can capitalize the *second* and
-    *later* words.
+    Sometimes, you may want more than one word to name a variable!  The
+    computer needs each variable to be a single word starting with a lower-case
+    letter--so leave out the spaces.  To make it easier to tell when a new word
+    starts, you can capitalize the *second* and *later* words.
 
-    ![](/help/camel.png width="40%")
+    ![](/help/camel.png width="30%")
 
     In your first programs, `drawingOf` and `codeWorldLogo` were written in
     this way.  It's often called **camel case**.  Why?  Because the variable
@@ -439,15 +438,14 @@ result is called its *range*.  Here are the functions you've used so far.
 
 Function    | Domain             | Range
 ------------|--------------------|---------
-`drawingOf` | `Picture`          | Program
-`lettering` | `Text`             | Picture
-`circle`    | `Number`           | Picture
-`rectangle` | `(Number, Number)` | Picture
+`drawingOf` | `Picture`          | `Program`
+`lettering` | `Text`             | `Picture`
+`circle`    | `Number`           | `Picture`
+`rectangle` | `(Number, Number)` | `Picture`
 
-(In addition to this, the **`&`** is a binary operator.  It's a kind of
-function, too, but it works differently because it is a symbol, rather than
-a name.  Since it works differently, don't think of it as a function quite
-yet.)
+(In addition to this, **`&`** is a binary operator.  It's a kind of
+function, too, but it looks different because it is a symbol, rather than
+a name.)
 
 **Applying** a function means using the function to describe its result for
 a specific input.  To apply a function to some input, you write the name of

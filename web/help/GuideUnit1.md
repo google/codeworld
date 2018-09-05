@@ -1486,10 +1486,122 @@ look closer at the argument to see what its pieces are.
 Top-down decomposition
 ======================
 
+You've now got the skills needed to draw simple pictures.  But how do you start
+something more advanced?  In this section, you'll learn some techniques for
+organizing your work on larger and more involved projects.
+
+Breaking down shapes
+--------------------
+
+Ultimately, the way you describe everything in CodeWorld is by breaking it
+down into simpler pieces that can be described on their own.  For example,
+when you define a picture of a car, you might write:
+
+~~~~~
+car = body & hood & frontWheel & backWheel
+~~~~~
+
+You can then proceed to define each of those pieces separately.  This works
+fine when your entire pictures is made of a handful of shapes.  But a more
+advanced picture might include 50 or more separate shapes!  Listing them all
+in one large definition isn't wise.
+
+Instead, you can break down shapes at several levels.  For instance, an
+entire picture of a space scene may involve four or five main parts -- such
+as a space station, planet, alien, rocket, and stars.  But each of those may also
+involve several pieces -- an alien may consist of a head, body, arms, and
+tentacles.  Some of those might be further broken down into parts -- the
+alien's head into an eye (just one, because it's an alien), a nose, a mouth,
+and a chin.  You might even break down the eyes into two parts, as well: the
+whites, the iris (which is the colored ring), and the pupil (the black hole
+that light passes through).
+
+The strategy for building more complex pictures is to just *keep going*.  If
+a part of your picture is a simple shape like a circle or rectangle, then you
+can stop here; but if not, you have to break it down one more level.
+
+You could end up with something like this:
+
+~~~~~
+scene = alien & planet & spaceStation & rocket & backdrop
+alien = head & body & arms & tentacles
+head = nose & eye & mouth & face
+eye = pupil & iris & white
+backdrop = stars & space
+...
+~~~~~
+
+And you're just getting started!  Finally, though, you get to pictures that
+are simple enough to define with a single shape.
+
+~~~~~
+...
+pupil = solidCircle(1/2)
+iris = colored(solidCircle(2/3), brown)
+whites = colored(solidCircle(1), white)
+face = colored(solidCircle(3), purple)
+space = solidRectangle(20, 20)
+~~~~~
+
+This gives the following partial decomposition of the space scene.
+
+*********************************************************************
+*                                   scene
+*                                     |
+*           .---------+----------+---' '--------+---------.
+*          |          |          |              |          |
+*        alien     planet     spaceStation    rocket    backdrop
+*          |                                               |
+*       .-' '---+----+-------.                       .----' '-.
+*      |        |    |        |                     |          |
+*    head    body  arms  tentacles                stars      space
+*      |
+*   .-' '-+------+-----.
+*  |      |      |      |
+* nose   eye   mouth   face
+********************************************************************
+
+Finally, you will need to add translations to the parts to move them to the
+right part of the screen.  It takes some persistence, but eventually, you
+can create an intricate and impressive picture in this way.
+
+Stubbing
+--------
+
+If you try to write a very large program all at once, though, you're bound
+to get frustrated and have a bad time.  Instead, you should try to write
+your program so that you can look at it one piece at a time, and see it
+take shape.
+
+This section to be finished.  It should introduce the `blank` picture, and
+walk through the process of adding a stub, and then filling it in.  It should
+also mention stubbing with visible shapes to better arrange parts on the
+screen.
+
+Reusing variables
+-----------------
+
+This section to be written.
+
+Separation of concerns
+----------------------
+
+This section to be written.
+
+Composing transformations
+-------------------------
+
 This section to be written.
 
 Advanced shapes
 ===============
+
+As you progress, you may want more flexible shapes than just circles, text,
+and rectangles.  In this section, you will learn ways to describe more
+flexible basic shapes to use in your drawings.
+
+Points and coordinates
+----------------------
 
 To draw more precise shapes, we can use points on a "coordinate plane".  You
 can see a coordinate plane right now, just by running this code:
@@ -1524,8 +1636,8 @@ plane:
 
 Got it?  Great!
 
-Points, lines and polygons
---------------------------
+Lines, curves, and polygons
+---------------------------
 
 Now you can draw things like sequences of lines by giving a list of points in
 the coordinate plane to a function called `polyline`:

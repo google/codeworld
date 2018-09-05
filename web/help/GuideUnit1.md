@@ -456,9 +456,9 @@ parentheses, separated by commas, like you see in `rectangle` in the table
 above.
 
 !!! Tip
-    Parentheses always come in pairs, and are used like a circle around the
+    Parentheses always come in pairs, and are used like a ring around the
     arguments to a function.  The name of the function, at the beginning,
-    adds a handle to that circle, forming something like a frying pan.
+    adds a handle to that ring, forming something like a frying pan.
 
     ![](/help/cw-frying-pan.png)
 
@@ -1224,9 +1224,10 @@ parenthesis -- and help divide up your code into logical parts.
 As you nest expressions deeper, though, it becomes more challenging to
 match up these parentheses.
 
-A good way to start matching parentheses is to look at them as parts of
-a circle.  If you write the expression on paper, you can complete those
-circles.  You can't cross lines as you do so!
+A good way to start matching parentheses is to look at each pair as making
+a ring around the code inside them.  If you write the expression on paper,
+you can complete the ring by joining the edges of the parentheses.  You
+want to do this without crossing the lines.
 
 For instance, these two pair of parentheses:
 
@@ -1234,7 +1235,7 @@ For instance, these two pair of parentheses:
 (   )  (   )
 ~~~~~
 
-can be completed into these circles:
+can be completed into these rings:
 
 *****************
 *   .-.    .-.
@@ -1248,7 +1249,7 @@ These nested parentheses:
 (  (   )  (   )  )
 ~~~~~
 
-can be completed to form these nested circles:
+can be completed to form these nested rings:
 
 ***********************
 *   .--------------.
@@ -1258,9 +1259,9 @@ can be completed to form these nested circles:
 *   '--------------'
 ***********************
 
-For harder cases, there are two strategies worth knowing for
-matching parentheses: matching from the **inside out**, and
-**counting**.
+For harder cases, there are a few strategies worth knowing for
+keeping track of parentheses: matching from the **inside out**,
+**counting**, **wrapping** expressions, and using your **tools**.
 
 ### Inside-out matching
 
@@ -1297,8 +1298,8 @@ will eventually complete the match:
 *          '--------------------'
 ************************************
 
-When using this strategy, you will draw the smallest circles first,
-and then fill in the larger circles around them.
+When using this strategy, you will draw the smallest rings first,
+and then fill in the larger rings around them.
 
 ### Parenthesis counting
 
@@ -1327,17 +1328,57 @@ You would count like this:
 ******************************************
 
 The parenthesis where you finally said "zero" is the match for the
-one you started on.
+one you started on.  This counting technique lets you find the match
+for that specific parenthesis without needing to sort through
+everything in between.
 
-!!! Tip:
-    CodeWorld provides a few more clues to help you match parentheses.
-    Matching pairs of parentheses are always the same color when you look
-    at your code with CodeWorld.  So to find the match for a green
-    parenthesis, you need only look for the other green ones.  Also,
-    if you move your text cursor next to a parenthesis, the entire
-    contents of the parenthesis pair (and the function name, if it's part
-    of a function application) will be underlined.  These tools can help
-    you avoid the need to count.
+### Wrapping expressions
+
+Another technique for managing parentheses is to start with a simple
+picture, and then *wrap* it in function applications one at a time.
+For example, you could start with a circle, then color it, scale it,
+and move it, in steps like this:
+
+~~~~~
+pic =                           circle(2)
+~~~~~
+
+~~~~~
+pic =                   colored(circle(2), red)
+~~~~~
+
+~~~~~
+pic =            scaled(colored(circle(2), red), 2, 1)
+~~~~~
+
+~~~~~
+pic = translated(scaled(colored(circle(2), red), 2, 1), 0, -5)
+~~~~~
+
+Things get easier when you realize that you don't need to type your
+whole program from left to right!  Here, just like you matched
+parentheses from the inside out, you typed them that way, too.  If
+you always type your open parenthesis and its matching close
+parenthesis at the same time, you can never forget one of them.  And
+if you also fill in the rest of the expression when you do, you can
+think about one change at a time.  And if you run your program after
+each step, you will find and fix your mistakes right away, instead
+of waiting until you've forgotten when you meant to type.
+
+### Using tools wisely
+
+The CodeWorld web site is the too you use to create your drawings.
+It also has some tricks to help you keep track of parentheses.
+
+Matching pairs of parentheses are always the same color when you look
+at your code with CodeWorld.  So to find the match for a green
+parenthesis, you need only look for the other green ones.  You can
+see this in the examples of parentheses earlier, if you look for it!
+
+Also, if you move your text cursor next to a parenthesis, the entire
+contents of the parenthesis pair (and the function name, if it's part
+of a function application) will be underlined.  These tools can help
+you avoid the need to count.
 
 Parsing subexpressions
 ----------------------

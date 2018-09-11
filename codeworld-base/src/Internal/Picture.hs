@@ -206,17 +206,20 @@ thickArc (b, e, r, w) = withFrozenCallStack $ CWPic
         (toDouble r))
 
 -- | A rendering of text characters.
-text :: HasCallStack => Text -> Picture
-text t = withFrozenCallStack $ CWPic (CW.text (fromCWText t))
-
--- | A rendering of text characters.
 lettering :: HasCallStack => Text -> Picture
 lettering t = withFrozenCallStack $ CWPic (CW.lettering (fromCWText t))
 
+-- | A rendering of text characters.
+text :: HasCallStack => Text -> Picture
+text t = withFrozenCallStack $ CWPic (CW.lettering (fromCWText t))
+
+{-# WARNING text ["Please use lettering(...) instead of text(...).",
+                  "text may be removed July 2019."] #-}
+
 -- | A rendering of text characters, with a specific choice of font and style.
-styledText :: HasCallStack => (Text, Font, TextStyle) -> Picture
-styledText (t, f, s) =
-    withFrozenCallStack $ CWPic (CW.styledText (fromCWStyle s) (fromCWFont f) (fromCWText t))
+styledLettering :: HasCallStack => (Text, Font, TextStyle) -> Picture
+styledLettering (t, f, s) =
+    withFrozenCallStack $ CWPic (CW.styledLettering (fromCWStyle s) (fromCWFont f) (fromCWText t))
   where
     fromCWStyle Plain = CW.Plain
     fromCWStyle Bold = CW.Bold
@@ -229,8 +232,11 @@ styledText (t, f, s) =
     fromCWFont (NamedFont fnt) = CW.NamedFont (fromCWText fnt)
 
 -- | A rendering of text characters, with a specific choice of font and style.
-styledLettering :: HasCallStack => (Text, Font, TextStyle) -> Picture
-styledLettering args = withFrozenCallStack $ styledText args
+styledText :: HasCallStack => (Text, Font, TextStyle) -> Picture
+styledText args = withFrozenCallStack $ styledLettering args
+
+{-# WARNING styledText ["Please use styledLettering(...) instead of styledText(...).",
+                        "styledText may be removed July 2019."] #-}
 
 -- | A picture drawn entirely in this color.
 colored :: HasCallStack => (Picture, Color) -> Picture

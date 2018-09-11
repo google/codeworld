@@ -222,6 +222,8 @@ function registerStandardHints(successFunc)
         "definitely",
         "path",
         "thickPath",
+        "text",
+        "styledText",
     ];
 
     lines.forEach(function(line) {

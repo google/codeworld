@@ -170,7 +170,7 @@ picture (MainMenu time mousePos) =
     button "Join" (dull green) 0 (-1.5) 8 2 mousePos &
     connectScreen "Main Menu" time
 picture (Joining time mousePos code) =
-    translated 0 2 (text "Enter the game key:") & letterBoxes white code &
+    translated 0 2 (lettering "Enter the game key:") & letterBoxes white code &
     (if T.length code < 4
          then button "Cancel" (dull yellow) 0 (-3) 8 2 mousePos
          else button "Join" (dull green) 0 (-3) 8 2 mousePos) &
@@ -179,7 +179,7 @@ picture (Connecting time mousePos) =
     button "Cancel" (dull yellow) 0 (-3) 8 2 mousePos &
     connectScreen "Connecting..." time
 picture (Waiting time mousePos code numPlayers present) =
-    translated 0 2 (text "Share this key with other players:") &
+    translated 0 2 (lettering "Share this key with other players:") &
     translated 0 4 (playerDots numPlayers present) &
     letterBoxes (gray 0.8) code &
     button "Cancel" (dull yellow) 0 (-3) 8 2 mousePos &
@@ -195,7 +195,7 @@ letterBoxes color txt =
 
 letterBox :: Color -> Text -> Picture
 letterBox c t =
-    thickRectangle 0.1 1.5 1.5 & text t & colored c (solidRectangle 1.5 1.5)
+    thickRectangle 0.1 1.5 1.5 & lettering t & colored c (solidRectangle 1.5 1.5)
 
 pad :: Int -> a -> [a] -> [a]
 pad 0 _ xs = xs
@@ -210,7 +210,7 @@ button ::
        Text -> Color -> Double -> Double -> Double -> Double -> Point -> Picture
 button txt btnColor x y w h (mx, my) =
     translated x y $
-    colored white (styledText Plain SansSerif txt) &
+    colored white (styledLettering Plain SansSerif txt) &
     colored color (roundRect w h)
   where
     color
@@ -227,7 +227,7 @@ roundRect w h =
         ]
 
 playerDots n m
-    | n > 8 = text $ T.pack $ show m ++ " / " ++ show n
+    | n > 8 = lettering $ T.pack $ show m ++ " / " ++ show n
 playerDots n m =
     pictures
         [ translated
@@ -247,7 +247,7 @@ connectScreen hdr t = translated 0 (-7) connectBox
         & translated 0 5 codeWorldLogo
         & colored background (solidRectangle 20 20)
   where
-    connectBox = scaled 2 2 (text hdr)
+    connectBox = scaled 2 2 (lettering hdr)
                & rectangle 14 3
                & colored connectColor (solidRectangle 14 3)
     connectColor = let k = (1 + sin (3 * t)) / 5

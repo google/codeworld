@@ -393,7 +393,7 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
             [ translated
                 (fromIntegral k)
                 0.3
-                (scaled 0.5 0.5 (text (pack (show k))))
+                (scaled 0.5 0.5 (lettering (pack (show k))))
             | k <- [-9,-8 .. 9]
             , k /= 0
             ]
@@ -402,7 +402,7 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
             [ translated
                 0.3
                 (fromIntegral k)
-                (scaled 0.5 0.5 (text (pack (show k))))
+                (scaled 0.5 0.5 (lettering (pack (show k))))
             | k <- [-9,-8 .. 9]
             , k /= 0
             ]
@@ -2316,7 +2316,7 @@ drawControl w alpha (TimeLabel (x,y)) = translated x y p
     p =
         colored
             (RGBA 0 0 0 alpha)
-            (scaled 0.5 0.5 $ text (pack (showFFloatAlt (Just 4) (state w) "s"))) <>
+            (scaled 0.5 0.5 $ lettering (pack (showFFloatAlt (Just 4) (state w) "s"))) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 3.0 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 3.0 0.8)
 drawControl w alpha (SpeedSlider (x,y)) = translated x y p

@@ -79,16 +79,16 @@ checkOptions Options {..} = do
 
 runWithOptions :: Options -> IO ()
 runWithOptions opts@Options {..} = do
-    success <-
+    result <-
         if genBase
             then compileBase opts
             else compile opts
     readFile err >>= hPutStrLn stderr
-    if success
-        then exitSuccess
-        else exitFailure
+    case result of
+        CompileSuccess -> exitSuccess
+        _              -> exitFailure
 
-compileBase :: Options -> IO Bool
+compileBase :: Options -> IO CompileStatus
 compileBase Options {..} = do
     withSystemTempDirectory "genbase" $ \tmpdir -> do
         let linkMain = tmpdir </> "LinkMain.hs"
@@ -97,7 +97,7 @@ compileBase Options {..} = do
         let stage = GenBase "LinkBase" linkBase (fromJust baseSymbols)
         compileSource stage linkMain output err mode
 
-compile :: Options -> IO Bool
+compile :: Options -> IO CompileStatus
 compile opts@Options {..} = do
     let stage =
             case baseSymbols of

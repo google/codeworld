@@ -19,6 +19,7 @@
 module Compile
     ( compileSource
     , Stage(..)
+    , CompileStatus(..)
     ) where
 
 import Control.Concurrent
@@ -44,6 +45,13 @@ data Stage
               FilePath
               FilePath
     | UseBase FilePath
+    deriving (Eq, Show)
+
+data CompileStatus
+    = CompileSuccess
+    | CompileError
+    | CompileAborted
+    deriving (Eq, Show)
 
 runDiagnostics :: String -> FilePath -> IO (Bool, [String])
 runDiagnostics mode src = do
@@ -66,12 +74,12 @@ formatDiagnostics ::  ByteString -> [String] -> ByteString
 formatDiagnostics compilerOutput extraWarnings =
     B.intercalate "\n\n" (compilerOutput : map pack extraWarnings)
 
-compileSource :: Stage -> FilePath -> FilePath -> FilePath -> String -> IO Bool
+compileSource :: Stage -> FilePath -> FilePath -> FilePath -> String -> IO CompileStatus
 compileSource stage src out err mode = runDiagnostics mode src >>= \case
     (False, messages) -> do
         createDirectoryIfMissing True (takeDirectory err)
         B.writeFile err (formatDiagnostics "" messages)
-        return False
+        return CompileError
     (True, extraMessages) ->
         withSystemTempDirectory "build" $ \tmpdir -> do
             copyFile src (tmpdir </> "program.hs")
@@ -94,7 +102,7 @@ compileSource stage src out err mode = runDiagnostics mode src >>= \case
                         return ["-use-base", "out.base.symbs"]
             let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
             runCompiler tmpdir timeout ghcjsArgs >>= \case
-                Nothing -> return False
+                Nothing -> return CompileAborted
                 Just output -> do
                     createDirectoryIfMissing True (takeDirectory err)
                     createDirectoryIfMissing True (takeDirectory out)
@@ -104,7 +112,7 @@ compileSource stage src out err mode = runDiagnostics mode src >>= \case
                                 _ -> output
                     B.writeFile err (formatDiagnostics filteredOutput extraMessages)
                     let target = tmpdir </> "program.jsexe"
-                    case stage of
+                    hasTarget <- case stage of
                         GenBase _ _ syms -> do
                             hasTarget <-
                                 and <$>
@@ -156,6 +164,7 @@ compileSource stage src out err mode = runDiagnostics mode src >>= \case
                                     out
                                     (rtsCode <> libCode <> outCode)
                             return hasTarget
+                    return $ if hasTarget then CompileSuccess else CompileError
 
 userCompileMicros :: Int
 userCompileMicros = 20 * 1000000

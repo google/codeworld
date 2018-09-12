@@ -1,6 +1,7 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC
     -fno-warn-incomplete-patterns
     -fno-warn-name-shadowing
@@ -383,12 +384,12 @@ compileHandler = public $ \ctx -> do
     Just source <- getParam "source"
     let programId = sourceToProgramId source
         deployId = sourceToDeployId source
-    success <- liftIO $ withProgramLock mode programId $ do
+    result <- liftIO $ withProgramLock mode programId $ do
         ensureSourceDir mode programId
         B.writeFile (sourceRootDir mode </> sourceFile programId) source
         writeDeployLink mode deployId programId
         compileIfNeeded ctx mode programId
-    unless success $ modifyResponse $ setResponseCode 500
+    modifyResponse $ setResponseCode (responseCodeFromCompileStatus result)
     modifyResponse $ setContentType "text/plain"
     let result = CompileResult (unProgramId programId) (unDeployId deployId)
     writeLBS (encode result)
@@ -423,9 +424,11 @@ runHandler :: CodeWorldHandler
 runHandler = public $ \ctx -> do
     mode <- getBuildMode
     programId <- getHashParam True mode
-    liftIO $ compileIfNeeded ctx mode programId
-    modifyResponse $ setContentType "text/javascript"
-    serveFile (buildRootDir mode </> targetFile programId)
+    result <- liftIO $ compileIfNeeded ctx mode programId
+    modifyResponse $ setResponseCode (responseCodeFromCompileStatus result)
+    when (result == CompileSuccess) $ do
+        modifyResponse $ setContentType "text/javascript"
+        serveFile (buildRootDir mode </> targetFile programId)
 
 runMessageHandler :: CodeWorldHandler
 runMessageHandler = public $ \ctx -> do
@@ -446,19 +449,26 @@ indentHandler = public $ \ctx -> do
             modifyResponse $ setContentType "text/x-haskell"
             writeLBS $ toLazyByteString res
 
-compileIfNeeded :: Context -> BuildMode -> ProgramId -> IO Bool
+responseCodeFromCompileStatus :: CompileStatus -> Int
+responseCodeFromCompileStatus CompileSuccess = 200
+responseCodeFromCompileStatus CompileError   = 400
+responseCodeFromCompileStatus CompileAborted = 500
+
+compileIfNeeded :: Context -> BuildMode -> ProgramId -> IO CompileStatus
 compileIfNeeded ctx mode programId = do
     hasResult <- doesFileExist (buildRootDir mode </> resultFile programId)
     hasTarget <- doesFileExist (buildRootDir mode </> targetFile programId)
-    if hasResult then return hasTarget else do
-        let sem = compileSem ctx
-        bracket_ (waitQSem sem) (signalQSem sem) $
-            compileSource
-                FullBuild
-                (sourceRootDir mode </> sourceFile programId)
-                (buildRootDir mode </> targetFile programId)
-                (buildRootDir mode </> resultFile programId)
-                (getMode mode)
+    if | hasResult && hasTarget -> return CompileSuccess
+       | hasResult -> return CompileError
+       | otherwise -> do
+             let sem = compileSem ctx
+             bracket_ (waitQSem sem) (signalQSem sem) $
+                 compileSource
+                     FullBuild
+                     (sourceRootDir mode </> sourceFile programId)
+                     (buildRootDir mode </> targetFile programId)
+                     (buildRootDir mode </> resultFile programId)
+                     (getMode mode)
 
 getMode :: BuildMode -> String
 getMode (BuildMode m) = m

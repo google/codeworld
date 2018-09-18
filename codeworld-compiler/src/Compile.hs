@@ -237,6 +237,7 @@ standardBuildArgs True =
     , "-XNamedFieldPuns"
     , "-XNoMonomorphismRestriction"
     , "-XNoQuasiQuotes"
+    , "-XNoPatternGuards"
     , "-XNoTemplateHaskell"
     , "-XNoUndecidableInstances"
     , "-XOverloadedStrings"

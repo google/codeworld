@@ -72,6 +72,8 @@ filterStages =
     , ("a pattern binding", "the definition")
     , ("Use -v to see a list of the files searched for\\.", "")
     , ("CallStack \\(from HasCallStack\\):", "When evaluating:")
+    , ("accepting non-standard pattern guards \\(use PatternGuards to suppress this message\\)",
+       "This arrow <- can't be used here. (To compare a negative number, add a space after <.)")
     , ("\n\\s+\n", "\n")
     ]
 

@@ -1,5 +1,3 @@
-program.hs:1:18: error: Missing parentheses in function application
-
 
 program.hs:7:7: error:
     • Couldn't match type [Number] with (Number, Number)
@@ -7,3 +5,6 @@ program.hs:7:7: error:
         Actual type: [Number]
     • In the expression: [2, - 4]
       In an equation for end: end = [2, - 4]
+
+
+program.hs:1:21: warning: Missing parentheses in function application.

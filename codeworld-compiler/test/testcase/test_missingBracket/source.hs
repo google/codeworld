@@ -1,1 +1,1 @@
-main = drawingOf(circle(2)
+program = drawingOf(circle(2)

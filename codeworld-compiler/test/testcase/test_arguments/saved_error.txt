@@ -1,5 +1,5 @@
 
-program.hs:1:27: error:
+program.hs:1:30: error:
     • Couldn't match expected type (Number, Number)
                   with actual type (Number, Number, Number, Number)
     • In the argument(s) of rectangle, namely (2, 2, 2, 2)

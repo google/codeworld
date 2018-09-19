@@ -1,1 +1,1 @@
-main = drawingOf(rectangle(2,2,2,2))
+program = drawingOf(rectangle(2,2,2,2))

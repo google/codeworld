@@ -65,9 +65,9 @@ genTestCases (x) = map toTestCase x
 
 toTestCase x =
     x ~: do
-        err1 <- compileErrorOutput x
-        err2 <- savedErrorOutput x
-        assertEqual x err1 err2
+        actual <- compileErrorOutput x
+        expected <- savedErrorOutput x
+        assertEqual x expected actual
 
 getTestCases :: FilePath -> IO Counts
 getTestCases path = do

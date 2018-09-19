@@ -19,6 +19,16 @@ export PATH=$BUILD/bin:$PATH
 export LANG=${LANG:-C.UTF-8}
 export PREFIX=$BUILD
 
+if test -t 1; then
+  ncolors=$(tput colors)
+  if test -n "$ncolors" && test "$ncolors" -ge 8; then
+    setnormal="$(tput sgr0)"
+    setred="$(tput setaf 1)"
+    setgreen="$(tput setaf 2)"
+    setyellow="$(tput setaf 3)"
+  fi
+fi
+
 function run {
   local old_pwd=$PWD
   local temp_pwd
@@ -33,16 +43,23 @@ function run {
   shift
 
   if [ $quiet -eq 0 ]; then
-    echo RUNNING: $@
+    if [[ ${temp_pwd} -ef . ]]; then
+      echo "${setgreen}===== RUNNING: ${setyellow}$@${setnormal}"
+    else
+      echo "${setgreen}===== IN ${setyellow}${temp_pwd}${setgreen}, RUNNING: ${setyellow}$@${setnormal}"
+    fi
   fi
 
   cd $temp_pwd
   $@
-  if [ $? -ne 0 ]; then
-    echo ============================
-    echo = Aborting: Command failed =
-    echo ============================
-
+  exitcode=$?
+  if [ $exitcode -ne 0 ]; then
+    echo
+    echo "${setred}========== Aborting: Command failed. =========="
+    echo "${setred}DIRECTORY: ${setyellow}${temp_pwd}"
+    echo "${setred}COMMAND  : ${setyellow}$@"
+    echo "${setred}EXIT CODE: ${setyellow}${exitcode}"
+    echo "${setred}===============================================${setnormal}"
     exit 1
   fi
   cd $old_pwd

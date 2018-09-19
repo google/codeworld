@@ -1,5 +1,5 @@
-main :: Program
-main = drawingOf(wheel)
+program :: Program
+program = drawingOf(wheel)
 
 wheel :: Picture
 wheel = solidCircle(size)

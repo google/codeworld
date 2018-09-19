@@ -1,4 +1,4 @@
-main = drawingOf(path[start, end])
+program = drawingOf(path[start, end])
 
 start :: Point
 start = (0, 0)

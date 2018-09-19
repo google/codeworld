@@ -27,6 +27,7 @@ Test-Suite test-prediction
     Build-depends:     base,
                        containers,
                        QuickCheck
+  default-language:    Haskell2010
 
 Test-Suite test-prediction-paper
     Hs-source-dirs:    tests, src
@@ -37,3 +38,4 @@ Test-Suite test-prediction-paper
     Build-depends:     base,
                        containers,
                        QuickCheck
+  default-language:    Haskell2010

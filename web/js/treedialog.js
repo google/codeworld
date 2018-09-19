@@ -188,7 +188,7 @@
 
     // Globals
     
-    function initTreeDialog(pic, highlt, draw) {
+    function initTreeDialog(pic, highlt, draw, closeCallback) {
         fullPic = pic;
         highlight = highlt;
         drawShape = draw;
@@ -204,6 +204,7 @@
             close: function () {
                 open = false;
                 highlight(true,-1);
+                if (closeCallback) closeCallback();
             }
         });
 

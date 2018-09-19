@@ -118,7 +118,8 @@
         debugSetActive(true);
         cachedPic = debugGetPicture();
 
-        parent.initTreeDialog(cachedPic, debugHighlightShape, debugDrawShape);
+        parent.initTreeDialog(cachedPic, debugHighlightShape, debugDrawShape, () => stopDebugMode());
+        parent.openTreeDialog(0);
 
         window.debugActive = true;
         parent.updateUI()

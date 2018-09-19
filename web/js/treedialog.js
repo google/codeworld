@@ -70,6 +70,7 @@
                 } else {
                     collapse();
                 }
+
             } else {
                 toggleButton.classList.add("collapse-spacer");
             }
@@ -78,7 +79,7 @@
             let link = createPicLink(p);
             p.link = link;
             if (open) {
-                link.classList.add("piclink-selected");
+                link.click();
             }
             span.appendChild( link );
             to.appendChild(span);
@@ -230,8 +231,6 @@
         canvas = buildDrawingPreview();
         content.appendChild( canvas );
         content.appendChild( buildNestedList(id) );
-
-        drawShape(canvas, id);
 
         dialog.dialog("option", "title", picture.name );
     }

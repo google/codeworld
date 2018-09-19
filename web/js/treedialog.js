@@ -91,7 +91,7 @@
             } else if (p.pictures) {
                 for (let i=0;i<p.pictures.length;i++) {
                     let li = document.createElement("li"),
-                        op = open&&(id > p.pictures[i].id)&&(i==p.pictures.length-1||id<p.pictures[i+1].id);
+                        op = open&&(id >= p.pictures[i].id)&&(i==p.pictures.length-1||id<p.pictures[i+1].id);
                     go(p.pictures[i], li, op);
                     ul.appendChild(li);
                 }

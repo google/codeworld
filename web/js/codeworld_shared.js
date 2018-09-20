@@ -103,23 +103,6 @@ function registerStandardHints(successFunc)
     // Add hint highlighting
     var hints = [
         createHint("program :: Program", 0, 7),
-        createHint("--  single line comment", 0, 2, 'hint-keyword'),
-        createHint("{-  start a multi-line comment", 0, 2, 'hint-keyword'),
-        createHint("-}  end a multi-line comment", 0, 2, 'hint-keyword'),
-        createHint("::  write a type annotation", 0, 2, 'hint-keyword'),
-        createHint("->  declare a function type or case branch", 0, 2, 'hint-keyword'),
-        createHint("<-  list comprehension index", 0, 2, 'hint-keyword'),
-        createHint("..  list range", 0, 2, 'hint-keyword'),
-        createHint("case  decide between many options", 0, 4, 'hint-keyword'),
-        createHint("of  finish a case statement", 0, 2, 'hint-keyword'),
-        createHint("if  decide between two choices", 0, 2, 'hint-keyword'),
-        createHint("then  1st choice of an if statement", 0, 4, 'hint-keyword'),
-        createHint("else  2nd choice of an if statement", 0, 4, 'hint-keyword'),
-        createHint("data  define a new data type", 0, 4, 'hint-keyword'),
-        createHint("let  define local variables", 0, 3, 'hint-keyword'),
-        createHint("in  finish a let statement", 0, 2, 'hint-keyword'),
-        createHint("where  define local variables", 0, 5, 'hint-keyword'),
-        createHint("type  define a type synonym", 0, 4, 'hint-keyword'),
         createHint("(:) :: a -> [a] -> [a]", 1, 2)
     ];
 
@@ -301,7 +284,13 @@ function registerStandardHints(successFunc)
     });
 
     hints.sort(function(a, b) {
-        return a.source < b.source ? -1 : 1
+        function startsWithLetter(c) {
+            return /^[a-zA-Z].*/.test(c);
+        }
+
+        if (startsWithLetter(a.text) && !startsWithLetter(b.text)) return -1;
+        else if (startsWithLetter(b.text) && !startsWithLetter(a.text)) return 1;
+        else return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1
     });
     CodeMirror.registerHelper('hintWords', 'codeworld', hints);
     successFunc();

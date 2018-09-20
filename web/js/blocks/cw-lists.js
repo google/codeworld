@@ -589,9 +589,9 @@ Blockly.Blocks['lists_at'] = {
     this.setOutput(true);
     this.setInputsInline(true);
 
-    Blockly.TypeInf.defineFunction("at", 
+    Blockly.TypeInf.defineFunction("#",
           Type.fromList([Type.Lit("list", [Type.Var("a")]), Type.Lit("Number"), Type.Var("a")]));
-    this.setAsFunction("at");
+    this.setAsFunction("#");
   }
 };
 

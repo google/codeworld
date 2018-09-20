@@ -478,7 +478,6 @@ regularBlockNames =
                   ,"lists_first"
                   ,"lists_rest"
                   ,"lists_length"
-                  ,"lists_at"
                   -- FUNCTIONS
                   ,"lists_polyline"
                   ,"lists_thickPolyline"
@@ -513,6 +512,7 @@ infixBlocks =   [
                   ,("conLess",sInfixBlock)
                   ,("conLeq",sInfixBlock)
                   ,("lists_cons", sInfixBlock)
+                  ,("lists_at", sInfixBlock)
                     ]
 
 specialBlocks :: [(T.Text,ParserFunction)]

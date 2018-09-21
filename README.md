@@ -18,7 +18,8 @@ There are several variants of CodeWorld available:
   package and `blank-canvas`.
 - [CodeWorld Blocks](https://code.world/blocks) provides a drag-and-drop
   programming user interface for younger students to build programs with
-  CodeWorld.
+  CodeWorld.  This interface still has some bugs, and isn't recommended for
+  use.
 
 Status
 ======

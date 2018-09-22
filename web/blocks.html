@@ -38,70 +38,70 @@
     </script>
   </head>
   <body>
-    <div id="nav" class="dropbox ui-layout-west">
-      <div class="nav_items">
-        <a id="newFolderButton" class="cw-button red" onclick="newFolder()">
-          <i class="mdi mdi-18px mdi-folder"></i>&nbsp; New Folder
-        </a>
-        <a id="newButton" class="cw-button red" onclick="newProject()">
-          <i class="mdi mdi-18px mdi-plus"></i>&nbsp; New
-        </a>
-        <a id="saveButton" class="cw-button blue" style="display:none" onclick="saveProject()">
-          <i class="mdi mdi-18px mdi-cloud-upload"></i>&nbsp; Save
-        </a>
-        <a id="saveAsButton" class="cw-button blue" onclick="saveProjectAs()">
-          <i class="mdi mdi-18px mdi-dots-horizontal"></i>&nbsp; Save As
-        </a>
-        <a id="deleteButton" class="cw-button red" style="display:none" onclick="deleteProject()">
-          <i class="mdi mdi-18px mdi-delete"></i>&nbsp; Delete
-        </a>
-        <a id="moveButton" class="cw-button blue" style="display:none" onclick="moveProject()">
-          <i class="mdi mdi-18px mdi-folder-move"></i>&nbsp; Move
-        </a>
-        <a id="moveHereButton" class="cw-button blue" style="display:none" onclick="moveHere()">
-          <i class="mdi mdi-18px mdi-folder-download"></i>&nbsp; Move Here
-        </a>
-        <a id="cancelMoveButton" class="cw-button red" style="display:none" onclick="cancelMove()">
-          <i class="mdi mdi-18px mdi-close-circle"></i>&nbsp; Cancel
-        </a>
+    <div class="ui-layout-container">
+      <div id="nav" class="dropbox ui-layout-west">
+        <div class="nav_items">
+          <a id="newFolderButton" class="cw-button red" onclick="newFolder()">
+            <i class="mdi mdi-18px mdi-folder"></i>&nbsp; New Folder
+          </a>
+          <a id="newButton" class="cw-button red" onclick="newProject()">
+            <i class="mdi mdi-18px mdi-plus"></i>&nbsp; New
+          </a>
+          <a id="saveButton" class="cw-button blue" style="display:none" onclick="saveProject()">
+            <i class="mdi mdi-18px mdi-cloud-upload"></i>&nbsp; Save
+          </a>
+          <a id="saveAsButton" class="cw-button blue" onclick="saveProjectAs()">
+            <i class="mdi mdi-18px mdi-dots-horizontal"></i>&nbsp; Save As
+          </a>
+          <a id="deleteButton" class="cw-button red" style="display:none" onclick="deleteProject()">
+            <i class="mdi mdi-18px mdi-delete"></i>&nbsp; Delete
+          </a>
+          <a id="moveButton" class="cw-button blue" style="display:none" onclick="moveProject()">
+            <i class="mdi mdi-18px mdi-folder-move"></i>&nbsp; Move
+          </a>
+          <a id="moveHereButton" class="cw-button blue" style="display:none" onclick="moveHere()">
+            <i class="mdi mdi-18px mdi-folder-download"></i>&nbsp; Move Here
+          </a>
+          <a id="cancelMoveButton" class="cw-button red" style="display:none" onclick="cancelMove()">
+            <i class="mdi mdi-18px mdi-close-circle"></i>&nbsp; Cancel
+          </a>
+        </div>
+        <div class="nav_items" id="nav_mine"></div>
       </div>
-      <div class="nav_items" id="nav_mine"></div>
+
+
+      <div class="dropbox ui-layout-center" id="blocklyDiv" style="height: 84%; width:100%;"> </div>
+
+      <div id="result" style="display:none" class="ui-layout-east">
+        <iframe id="runner" class="dropbox" width="500" height="500"
+        style="display:none;"></iframe>
+
+        <pre id="message" class="dropbox" style="width:100%; min-height:100px;
+        padding:5px;display:none;"></pre>
+
+        <span><a type="button" style="margin-top:5px;" id="editButton" target="_blank" class="cw-button blue">
+              <span>Edit code</span>
+        </a> 
+        </span>
+        <pre id="genCode" class="dropbox cm-s-default CodeMirror"
+        style="width:100%; height:100%; padding:10px;">
+        </pre> 
+      </div>
     </div>
-
-
-    <div class="dropbox ui-layout-center" id="blocklyDiv" style="height: 84%; width:100%;"> </div>
-
-    <div id="result" style="display:none" class="ui-layout-east">
-      <iframe id="runner" class="dropbox" width="500" height="500"
-      style="display:none;"></iframe>
-
-      <pre id="message" class="dropbox" style="width:100%; min-height:100px;
-      padding:5px;display:none;"></pre>
-
-      <span><a type="button" style="margin-top:5px;" id="editButton" target="_blank" class="cw-button blue">
-            <span>Edit code</span>
-      </a> 
-      </span>
-      <pre id="genCode" class="dropbox cm-s-default CodeMirror"
-      style="width:100%; height:100%; padding:10px;">
-      </pre> 
-    </div>
-    <div class="ui-layout-south">
-      <div id="toolbar">
-        <div id="buttons">
-          <a id="navButton" class="cw-button blue" onclick="window.mainLayout.toggle('west')"><i class="mdi mdi-18px mdi-menu"></i></a>
-          <a id="signin"  class="cw-button blue" onclick="signin()"><i class="mdi mdi-18px mdi-login"></i>&nbsp; Sign In</a>
-          <a id="signout" class="cw-button blue" style="display:none" onclick="signout()"><i class="mdi mdi-18px mdi-logout"></i>&nbsp; Sign Out</a>
-          <a id="docButton" class="cw-button blue" onclick="help()"><i class="mdi mdi-18px mdi-book-open-variant"></i>&nbsp; Help</a>
-          <a id="bugButton" class="cw-button blue" target="_blank" href="https://github.com/google/codeworld/issues/new?labels=funblocks"><i class="mdi mdi-18px mdi-bug"></i>&nbsp; Report Bug</a>
-        </div>
-        <span></span>
-        <div id="runButtons">
-          <a id="shareFolderButton" class="cw-button yellow" style="display:none" onclick="shareFolder()"><i class="mdi mdi-18px mdi-folder-outline"></i>&nbsp; Share Folder</a>
-          <a id="shareButton" class="cw-button yellow" style="display:none" onclick="share()"><i class="mdi mdi-18px mdi-share"></i>&nbsp; Share</a>
-          <a class="cw-button red" id="btnStop"><i class="mdi mdi-18px mdi-stop"></i>&nbsp; Stop</a>
-          <a class="cw-button green" id="btnRun"><i class="mdi mdi-18px mdi-play"></i>&nbsp; Run</a>
-        </div>
+    <div id="toolbar">
+      <div id="buttons">
+        <a id="navButton" class="cw-button blue" onclick="window.mainLayout.toggle('west')"><i class="mdi mdi-18px mdi-menu"></i></a>
+        <a id="signin"  class="cw-button blue" onclick="signin()"><i class="mdi mdi-18px mdi-login"></i>&nbsp; Sign In</a>
+        <a id="signout" class="cw-button blue" style="display:none" onclick="signout()"><i class="mdi mdi-18px mdi-logout"></i>&nbsp; Sign Out</a>
+        <a id="docButton" class="cw-button blue" onclick="help()"><i class="mdi mdi-18px mdi-book-open-variant"></i>&nbsp; Help</a>
+        <a id="bugButton" class="cw-button blue" target="_blank" href="https://github.com/google/codeworld/issues/new?labels=funblocks"><i class="mdi mdi-18px mdi-bug"></i>&nbsp; Report Bug</a>
+      </div>
+      <span></span>
+      <div id="runButtons">
+        <a id="shareFolderButton" class="cw-button yellow" style="display:none" onclick="shareFolder()"><i class="mdi mdi-18px mdi-folder-outline"></i>&nbsp; Share Folder</a>
+        <a id="shareButton" class="cw-button yellow" style="display:none" onclick="share()"><i class="mdi mdi-18px mdi-share"></i>&nbsp; Share</a>
+        <a class="cw-button red" id="btnStop"><i class="mdi mdi-18px mdi-stop"></i>&nbsp; Stop</a>
+        <a class="cw-button green" id="btnRun"><i class="mdi mdi-18px mdi-play"></i>&nbsp; Run</a>
       </div>
     </div>
 
@@ -138,13 +138,8 @@
     <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js" integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E=" crossorigin="anonymous"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-layout/1.4.3/jquery.layout_and_plugins.min.js"></script>
     <script type="text/javascript">
-      window.mainLayout = $('body').layout({
+      window.mainLayout = $('.ui-layout-container').layout({
         default: {},
-        south: {
-          resizable: false,
-          closable: false,
-          enableCursorHotkey: false
-        },
         west: {
           initHidden: true,
           minSize: 50,

@@ -19,6 +19,10 @@ export PATH=$BUILD/bin:$PATH
 export LANG=${LANG:-C.UTF-8}
 export PREFIX=$BUILD
 
+setnormal=""
+setred=""
+setgreen=""
+setyellow=""
 if test -t 1; then
   ncolors=$(tput colors)
   if test -n "$ncolors" && test "$ncolors" -ge 8; then

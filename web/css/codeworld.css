@@ -167,7 +167,6 @@ body {
   overflow: auto;
   font-size: 11px;
   padding: 5px;
-  margin-bottom: 0px;
 }
 
 #message.error {

@@ -40,6 +40,7 @@ data Options = Options
     , baseSymbols :: Maybe String
     , genBase :: Bool
     , baseIgnore :: [String]
+    , noCode :: Bool
     } deriving (Show)
 
 main = execParser opts >>= \opts -> checkOptions opts >> runWithOptions opts
@@ -64,11 +65,18 @@ main = execParser opts >>= \opts -> checkOptions opts >> runWithOptions opts
         many
             (strOption
                  (long "ignore-in-base" <> metavar "ModOrSymbol" <>
-                  help "Ignore this module or symbol in base."))
+                  help "Ignore this module or symbol in base.")) <*>
+        switch (long "no-code" <> help "Run an error-check, with no code gen.")
     opts = info parser mempty
 
 checkOptions :: Options -> IO ()
 checkOptions Options {..} = do
+    when (noCode && genBase) $ do
+        hPutStrLn stderr ("Flag --no-code conflicts with --gen-base")
+        exitFailure
+    when (noCode && baseSymbols /= Nothing) $ do
+        hPutStrLn stderr ("Flag --no-code conflicts with --base-symbols")
+        exitFailure
     when (genBase && baseSymbols == Nothing) $ do
         hPutStrLn stderr ("Flag --gen-base requires --base-symbols")
         exitFailure
@@ -100,7 +108,8 @@ compileBase Options {..} = do
 compile :: Options -> IO CompileStatus
 compile opts@Options {..} = do
     let stage =
-            case baseSymbols of
-                Nothing -> FullBuild
-                Just syms -> UseBase syms
+            case (baseSymbols, noCode) of
+                (_, True) -> ErrorCheck
+                (Nothing, False) -> FullBuild
+                (Just syms, False) -> UseBase syms
     compileSource stage source output err mode

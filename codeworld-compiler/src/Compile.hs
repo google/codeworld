@@ -1,5 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.
@@ -30,6 +31,7 @@ import Data.ByteString.Char8 (pack)
 import Data.List (intercalate)
 import Data.Monoid
 import ErrorSanitizer
+import System.Exit (ExitCode(..))
 import System.Directory
 import System.FilePath
 import System.IO
@@ -40,7 +42,8 @@ import Text.Regex.TDFA
 import ParseCode
 
 data Stage
-    = FullBuild
+    = ErrorCheck
+    | FullBuild
     | GenBase String
               FilePath
               FilePath
@@ -93,6 +96,7 @@ compileSource stage src out err mode = runDiagnostics mode src >>= \case
                       _             -> userCompileMicros
             linkArgs <-
                 case stage of
+                    ErrorCheck -> return ["-fno-code"]
                     FullBuild -> return []
                     GenBase mod base _ -> do
                         copyFile base (tmpdir </> mod <.> "hs")
@@ -103,7 +107,8 @@ compileSource stage src out err mode = runDiagnostics mode src >>= \case
             let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
             runCompiler tmpdir timeout ghcjsArgs >>= \case
                 Nothing -> return CompileAborted
-                Just output -> do
+                Just (exitCode, output) -> do
+                    let success = exitCode == ExitSuccess
                     createDirectoryIfMissing True (takeDirectory err)
                     createDirectoryIfMissing True (takeDirectory out)
                     let filteredOutput =
@@ -112,59 +117,29 @@ compileSource stage src out err mode = runDiagnostics mode src >>= \case
                                 _ -> output
                     B.writeFile err (formatDiagnostics filteredOutput extraMessages)
                     let target = tmpdir </> "program.jsexe"
-                    hasTarget <- case stage of
+                    when success $ case stage of
                         GenBase _ _ syms -> do
-                            hasTarget <-
-                                and <$>
-                                mapM
-                                    doesFileExist
-                                    [ target </> "rts.js"
-                                    , target </> "lib.base.js"
-                                    , target </> "out.base.js"
-                                    , target </> "out.base.symbs"
-                                    ]
-                            when hasTarget $ do
-                                rtsCode <- B.readFile $ target </> "rts.js"
-                                libCode <-
-                                    B.readFile $ target </> "lib.base.js"
-                                outCode <-
-                                    B.readFile $ target </> "out.base.js"
-                                B.writeFile
-                                    out
-                                    (rtsCode <> libCode <> outCode)
-                                copyFile (target </> "out.base.symbs") syms
-                            return hasTarget
+                            rtsCode <- B.readFile $ target </> "rts.js"
+                            libCode <-
+                                B.readFile $ target </> "lib.base.js"
+                            outCode <-
+                                B.readFile $ target </> "out.base.js"
+                            B.writeFile
+                                out
+                                (rtsCode <> libCode <> outCode)
+                            copyFile (target </> "out.base.symbs") syms
                         UseBase _ -> do
-                            hasTarget <-
-                                and <$>
-                                mapM
-                                    doesFileExist
-                                    [ target </> "lib.js"
-                                    , target </> "out.js"
-                                    ]
-                            when hasTarget $ do
-                                libCode <- B.readFile $ target </> "lib.js"
-                                outCode <- B.readFile $ target </> "out.js"
-                                B.writeFile out (libCode <> outCode)
-                            return hasTarget
+                            libCode <- B.readFile $ target </> "lib.js"
+                            outCode <- B.readFile $ target </> "out.js"
+                            B.writeFile out (libCode <> outCode)
                         FullBuild -> do
-                            hasTarget <-
-                                and <$>
-                                mapM
-                                    doesFileExist
-                                    [ target </> "rts.js"
-                                    , target </> "lib.js"
-                                    , target </> "out.js"
-                                    ]
-                            when hasTarget $ do
-                                rtsCode <- B.readFile $ target </> "rts.js"
-                                libCode <- B.readFile $ target </> "lib.js"
-                                outCode <- B.readFile $ target </> "out.js"
-                                B.writeFile
-                                    out
-                                    (rtsCode <> libCode <> outCode)
-                            return hasTarget
-                    return $ if hasTarget then CompileSuccess else CompileError
+                            rtsCode <- B.readFile $ target </> "rts.js"
+                            libCode <- B.readFile $ target </> "lib.js"
+                            outCode <- B.readFile $ target </> "out.js"
+                            B.writeFile
+                                out
+                                (rtsCode <> libCode <> outCode)
+                    return $ if success then CompileSuccess else CompileError
 
 userCompileMicros :: Int
 userCompileMicros = 20 * 1000000
@@ -185,14 +160,14 @@ hasOldStyleMain fname = do
 matches :: ByteString -> ByteString -> Bool
 matches txt pat = txt =~ pat
 
-runCompiler :: FilePath -> Int -> [String] -> IO (Maybe ByteString)
+runCompiler :: FilePath -> Int -> [String] -> IO (Maybe (ExitCode, ByteString))
 runCompiler dir micros args = do
     result <- tryCompile ("-O" : args)
     case result of
         Just _  -> return result
         Nothing -> tryCompile args
   where
-    tryCompile :: [String] -> IO (Maybe ByteString)
+    tryCompile :: [String] -> IO (Maybe (ExitCode, ByteString))
     tryCompile currentArgs = do
         (Just inh, Just outh, Just errh, pid) <-
             createProcess
@@ -207,8 +182,8 @@ runCompiler dir micros args = do
         result <- withTimeout micros $ B.hGetContents errh
         hClose outh
         terminateProcess pid
-        _ <- waitForProcess pid
-        return result
+        exitCode <- waitForProcess pid
+        return $ (exitCode,) <$> result
 
 standardBuildArgs :: Bool -> [String]
 standardBuildArgs True =

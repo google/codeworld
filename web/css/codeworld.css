@@ -17,10 +17,26 @@
 html { height: 100%; width: 100%; }
 
 body {
+  align-items: stretch;
+  -webkit-align-items: stretch;
+  -ms-align-items: stretch;
   height: 100%;
   background-color: #e5eff9;
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  flex-direction: column;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
   margin: 0px;
   overflow: hidden;
+}
+
+.ui-layout-container {
+  flex: 1 1 auto;
+  -webkit-flex: 1 1 auto;
+  -ms-flex: 1 1 auto;
+  padding-bottom: 5px;
 }
 
 #toolbar {
@@ -33,24 +49,27 @@ body {
   flex-direction: row;
   -webkit-flex-direction: row;
   -ms-flex-direction: row;
-}
-
-#toolbar div {
   flex: 0 0 auto;
   -webkit-flex: 0 0 auto;
   -ms-flex: 0 0 auto;
-  display: flex;
-  display: -webkit-flex;
-  display: -ms-flex;
+}
+
+#toolbar > div {
   align-items: stretch;
   -webkit-align-items: stretch;
   -ms-align-items: stretch;
-  flex-direction: row;
-  -webkit-flex-direction: row;
-  -ms-flex-direction: row;
+  display: flex;
+  display: -webkit-flex;
+  display: -ms-flex;
+  flex: 0 1 auto;
+  -webkit-flex: 0 1 auto;
+  -ms-flex: 0 1 auto;
+  flex-flow: row wrap;
+  -webkit-flex-flow: row wrap;
+  -ms-flex-flow: row wrap;
 }
 
-#toolbar span {
+#toolbar > span {
   flex: 1 1 auto;
   -webkit-flex: 1 1 auto;
   -ms-flex: 1 1 auto;
@@ -130,6 +149,7 @@ body {
   -ms-flex-direction: column;
 
   margin: 0px;
+  overflow-y: auto;
 }
 
 #runner {
@@ -295,6 +315,7 @@ body {
   background-color: white;
   border: solid #cccccc 1px;
   box-shadow: 1px 1px 2px #000;
+  box-sizing: border-box;
   margin: 2px 4px 4px 2px;
 }
 

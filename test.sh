@@ -20,6 +20,5 @@ for i in $(grep -l -i Test-Suite */*.cabal); do
     TARGET=$(dirname $i)
     run $TARGET cabal install --enable-tests --only-dependencies
     run $TARGET cabal configure --enable-tests
-    run $TARGET cabal build
     run $TARGET cabal test
 done

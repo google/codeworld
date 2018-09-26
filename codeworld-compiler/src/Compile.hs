@@ -43,11 +43,13 @@ import ParseCode
 
 data Stage
     = ErrorCheck
-    | FullBuild
-    | GenBase String
-              FilePath
-              FilePath
-    | UseBase FilePath
+    | FullBuild FilePath  -- ^ Output file location
+    | GenBase   String    -- ^ Base module name
+                FilePath  -- ^ Base module file location
+                FilePath  -- ^ Output file location
+                FilePath  -- ^ Symbol file location
+    | UseBase   FilePath  -- ^ Output file location
+                FilePath  -- ^ Symbol file location
     deriving (Eq, Show)
 
 data CompileStatus
@@ -77,8 +79,8 @@ formatDiagnostics ::  ByteString -> [String] -> ByteString
 formatDiagnostics compilerOutput extraWarnings =
     B.intercalate "\n\n" (compilerOutput : map pack extraWarnings)
 
-compileSource :: Stage -> FilePath -> FilePath -> FilePath -> String -> IO CompileStatus
-compileSource stage src out err mode = runDiagnostics mode src >>= \case
+compileSource :: Stage -> FilePath -> FilePath -> String -> IO CompileStatus
+compileSource stage src err mode = runDiagnostics mode src >>= \case
     (False, messages) -> do
         createDirectoryIfMissing True (takeDirectory err)
         B.writeFile err (formatDiagnostics "" messages)
@@ -92,16 +94,16 @@ compileSource stage src out err mode = runDiagnostics mode src >>= \case
                     "codeworld" -> standardBuildArgs <$> hasOldStyleMain src
             let timeout =
                   case stage of
-                      GenBase _ _ _ -> maxBound :: Int
-                      _             -> userCompileMicros
+                      GenBase _ _ _ _ -> maxBound :: Int
+                      _               -> userCompileMicros
             linkArgs <-
                 case stage of
                     ErrorCheck -> return ["-fno-code"]
-                    FullBuild -> return []
-                    GenBase mod base _ -> do
+                    FullBuild _ -> return []
+                    GenBase mod base _ _ -> do
                         copyFile base (tmpdir </> mod <.> "hs")
                         return ["-generate-base", mod]
-                    UseBase syms -> do
+                    UseBase _ syms -> do
                         copyFile syms (tmpdir </> "out.base.symbs")
                         return ["-use-base", "out.base.symbs"]
             let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
@@ -110,7 +112,6 @@ compileSource stage src out err mode = runDiagnostics mode src >>= \case
                 Just (exitCode, output) -> do
                     let success = exitCode == ExitSuccess
                     createDirectoryIfMissing True (takeDirectory err)
-                    createDirectoryIfMissing True (takeDirectory out)
                     let filteredOutput =
                             case mode of
                                 "codeworld" -> filterOutput output
@@ -118,24 +119,27 @@ compileSource stage src out err mode = runDiagnostics mode src >>= \case
                     B.writeFile err (formatDiagnostics filteredOutput extraMessages)
                     let target = tmpdir </> "program.jsexe"
                     when success $ case stage of
-                        GenBase _ _ syms -> do
+                        GenBase _ _ out syms -> do
                             rtsCode <- B.readFile $ target </> "rts.js"
                             libCode <-
                                 B.readFile $ target </> "lib.base.js"
                             outCode <-
                                 B.readFile $ target </> "out.base.js"
+                            createDirectoryIfMissing True (takeDirectory out)
                             B.writeFile
                                 out
                                 (rtsCode <> libCode <> outCode)
                             copyFile (target </> "out.base.symbs") syms
-                        UseBase _ -> do
+                        UseBase out _ -> do
                             libCode <- B.readFile $ target </> "lib.js"
                             outCode <- B.readFile $ target </> "out.js"
+                            createDirectoryIfMissing True (takeDirectory out)
                             B.writeFile out (libCode <> outCode)
-                        FullBuild -> do
+                        FullBuild out -> do
                             rtsCode <- B.readFile $ target </> "rts.js"
                             libCode <- B.readFile $ target </> "lib.js"
                             outCode <- B.readFile $ target </> "out.js"
+                            createDirectoryIfMissing True (takeDirectory out)
                             B.writeFile
                                 out
                                 (rtsCode <> libCode <> outCode)

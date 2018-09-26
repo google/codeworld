@@ -62,6 +62,7 @@ import Snap.Util.FileUploads
 import System.Directory
 import System.FileLock
 import System.FilePath
+import System.IO.Temp
 
 import Model
 import Util
@@ -141,6 +142,7 @@ site ctx =
             , ("shareContent", shareContentHandler ctx)
             , ("moveProject", moveProjectHandler ctx)
             , ("compile", compileHandler ctx)
+            , ("errorCheck", errorCheckHandler ctx)
             , ("saveXMLhash", saveXMLHashHandler ctx)
             , ("loadXML", loadXMLHandler ctx)
             , ("loadSource", loadSourceHandler ctx)
@@ -384,15 +386,24 @@ compileHandler = public $ \ctx -> do
     Just source <- getParam "source"
     let programId = sourceToProgramId source
         deployId = sourceToDeployId source
-    result <- liftIO $ withProgramLock mode programId $ do
+    status <- liftIO $ withProgramLock mode programId $ do
         ensureSourceDir mode programId
         B.writeFile (sourceRootDir mode </> sourceFile programId) source
         writeDeployLink mode deployId programId
         compileIfNeeded ctx mode programId
-    modifyResponse $ setResponseCode (responseCodeFromCompileStatus result)
+    modifyResponse $ setResponseCode (responseCodeFromCompileStatus status)
     modifyResponse $ setContentType "text/plain"
     let result = CompileResult (unProgramId programId) (unDeployId deployId)
     writeLBS (encode result)
+
+errorCheckHandler :: CodeWorldHandler
+errorCheckHandler = public $ \ctx -> do
+    mode <- getBuildMode
+    Just source <- getParam "source"
+    (status, output) <- liftIO $ errorCheck ctx mode source
+    modifyResponse $ setResponseCode (responseCodeFromCompileStatus status)
+    modifyResponse $ setContentType "text/plain"
+    writeBS output
 
 getHashParam :: Bool -> BuildMode -> Snap ProgramId
 getHashParam allowDeploy mode =
@@ -452,7 +463,7 @@ indentHandler = public $ \ctx -> do
 responseCodeFromCompileStatus :: CompileStatus -> Int
 responseCodeFromCompileStatus CompileSuccess = 200
 responseCodeFromCompileStatus CompileError   = 400
-responseCodeFromCompileStatus CompileAborted = 500
+responseCodeFromCompileStatus CompileAborted = 503
 
 compileIfNeeded :: Context -> BuildMode -> ProgramId -> IO CompileStatus
 compileIfNeeded ctx mode programId = do
@@ -464,11 +475,22 @@ compileIfNeeded ctx mode programId = do
              let sem = compileSem ctx
              bracket_ (waitQSem sem) (signalQSem sem) $
                  compileSource
-                     FullBuild
+                     (FullBuild (buildRootDir mode </> targetFile programId))
                      (sourceRootDir mode </> sourceFile programId)
-                     (buildRootDir mode </> targetFile programId)
                      (buildRootDir mode </> resultFile programId)
                      (getMode mode)
+
+errorCheck :: Context -> BuildMode -> B.ByteString -> IO (CompileStatus, B.ByteString)
+errorCheck ctx mode source = withSystemTempDirectory "cw_errorCheck" $ \dir -> do
+    let srcFile = dir </> "program.hs"
+    let errFile = dir </> "output.txt"
+    B.writeFile srcFile source
+    let sem = compileSem ctx
+    status <- bracket_ (waitQSem sem) (signalQSem sem) $
+        compileSource ErrorCheck srcFile errFile (getMode mode)
+    hasOutput <- doesFileExist errFile
+    output <- if hasOutput then B.readFile errFile else return B.empty
+    return (status, output)
 
 getMode :: BuildMode -> String
 getMode (BuildMode m) = m

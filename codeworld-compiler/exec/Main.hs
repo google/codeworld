@@ -34,13 +34,12 @@ import System.IO.Temp (withSystemTempDirectory)
 
 data Options = Options
     { source :: FilePath
-    , output :: FilePath
+    , output :: Maybe FilePath
     , err :: FilePath
     , mode :: String
     , baseSymbols :: Maybe String
     , genBase :: Bool
     , baseIgnore :: [String]
-    , noCode :: Bool
     } deriving (Show)
 
 main = execParser opts >>= \opts -> checkOptions opts >> runWithOptions opts
@@ -48,9 +47,10 @@ main = execParser opts >>= \opts -> checkOptions opts >> runWithOptions opts
     parser =
         Options <$>
         argument str (metavar "SourceFile" <> help "Location of input file") <*>
-        strOption
-            (long "output" <> short 'o' <> metavar "OutputFile" <>
-             help "Location of output file") <*>
+        optional
+            (strOption
+                (long "output" <> short 'o' <> metavar "OutputFile" <>
+                 help "Location of output file")) <*>
         strOption
             (long "error" <> short 'e' <> metavar "ErrorFile" <>
              help "Location of error file") <*>
@@ -65,17 +65,16 @@ main = execParser opts >>= \opts -> checkOptions opts >> runWithOptions opts
         many
             (strOption
                  (long "ignore-in-base" <> metavar "ModOrSymbol" <>
-                  help "Ignore this module or symbol in base.")) <*>
-        switch (long "no-code" <> help "Run an error-check, with no code gen.")
+                  help "Ignore this module or symbol in base."))
     opts = info parser mempty
 
 checkOptions :: Options -> IO ()
 checkOptions Options {..} = do
-    when (noCode && genBase) $ do
-        hPutStrLn stderr ("Flag --no-code conflicts with --gen-base")
+    when (output == Nothing && genBase) $ do
+        hPutStrLn stderr ("Flag --gen-base requires output")
         exitFailure
-    when (noCode && baseSymbols /= Nothing) $ do
-        hPutStrLn stderr ("Flag --no-code conflicts with --base-symbols")
+    when (output == Nothing && baseSymbols /= Nothing) $ do
+        hPutStrLn stderr ("Flag --base-symbols requires output")
         exitFailure
     when (genBase && baseSymbols == Nothing) $ do
         hPutStrLn stderr ("Flag --gen-base requires --base-symbols")
@@ -102,14 +101,14 @@ compileBase Options {..} = do
         let linkMain = tmpdir </> "LinkMain.hs"
         let linkBase = tmpdir </> "LinkBase.hs"
         generateBaseBundle source (map T.pack baseIgnore) mode linkMain linkBase
-        let stage = GenBase "LinkBase" linkBase (fromJust baseSymbols)
-        compileSource stage linkMain output err mode
+        let stage = GenBase "LinkBase" linkBase (fromJust output) (fromJust baseSymbols)
+        compileSource stage linkMain err mode
 
 compile :: Options -> IO CompileStatus
 compile opts@Options {..} = do
     let stage =
-            case (baseSymbols, noCode) of
-                (_, True) -> ErrorCheck
-                (Nothing, False) -> FullBuild
-                (Just syms, False) -> UseBase syms
-    compileSource stage source output err mode
+            case (output, baseSymbols) of
+                (Nothing, _) -> ErrorCheck
+                (Just out, Nothing) -> FullBuild out
+                (Just out, Just syms) -> UseBase out syms
+    compileSource stage source err mode

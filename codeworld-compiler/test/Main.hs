@@ -51,9 +51,8 @@ compileErrorOutput testName = do
     createDir <- createDirectoryIfMissing True (testcaseOutputDir </> testName)
     out <-
         compileSource
-            FullBuild
+            (FullBuild (testOutputFile testName))
             (testSourceFile testName)
-            (testOutputFile testName)
             (testErrorFile testName)
             "codeworld"
     errMsg <- readFile (testErrorFile testName)

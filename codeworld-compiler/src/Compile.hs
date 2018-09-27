@@ -99,13 +99,13 @@ compileSource stage src err mode verbose = runDiagnostics mode src >>= \case
             linkArgs <-
                 case stage of
                     ErrorCheck -> return ["-fno-code"]
-                    FullBuild _ -> return []
+                    FullBuild _ -> return ["-dedupe"]
                     GenBase mod base _ _ -> do
                         copyFile base (tmpdir </> mod <.> "hs")
                         return [mod <.> "hs", "-generate-base", mod]
                     UseBase _ syms -> do
                         copyFile syms (tmpdir </> "out.base.symbs")
-                        return ["-use-base", "out.base.symbs"]
+                        return ["-dedupe", "-use-base", "out.base.symbs"]
             let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
             runCompiler tmpdir timeout ghcjsArgs verbose >>= \case
                 Nothing -> return CompileAborted
@@ -194,7 +194,6 @@ runCompiler dir micros args verbose = do
 standardBuildArgs :: Bool -> [String]
 standardBuildArgs True =
     [ "-DGHCJS_BROWSER"
-    , "-dedupe"
     , "-Wall"
     , "-fno-warn-deprecated-flags"
     , "-fno-warn-amp"
@@ -238,7 +237,6 @@ standardBuildArgs False = standardBuildArgs True ++ ["-main-is", "Main.program"]
 haskellCompatibleBuildArgs :: [String]
 haskellCompatibleBuildArgs =
     [ "-DGHCJS_BROWSER"
-    , "-dedupe"
     , "-Wall"
     , "-package"
     , "codeworld-api"

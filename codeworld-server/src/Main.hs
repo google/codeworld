@@ -479,6 +479,7 @@ compileIfNeeded ctx mode programId = do
                      (sourceRootDir mode </> sourceFile programId)
                      (buildRootDir mode </> resultFile programId)
                      (getMode mode)
+                     False
 
 errorCheck :: Context -> BuildMode -> B.ByteString -> IO (CompileStatus, B.ByteString)
 errorCheck ctx mode source = withSystemTempDirectory "cw_errorCheck" $ \dir -> do
@@ -487,7 +488,7 @@ errorCheck ctx mode source = withSystemTempDirectory "cw_errorCheck" $ \dir -> d
     B.writeFile srcFile source
     let sem = compileSem ctx
     status <- bracket_ (waitQSem sem) (signalQSem sem) $
-        compileSource ErrorCheck srcFile errFile (getMode mode)
+        compileSource ErrorCheck srcFile errFile (getMode mode) False
     hasOutput <- doesFileExist errFile
     output <- if hasOutput then B.readFile errFile else return B.empty
     return (status, output)

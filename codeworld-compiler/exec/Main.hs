@@ -35,11 +35,12 @@ import System.IO.Temp (withSystemTempDirectory)
 data Options = Options
     { source :: FilePath
     , output :: Maybe FilePath
-    , err :: FilePath
+    , errfile :: Maybe FilePath
     , mode :: String
     , baseSymbols :: Maybe String
     , genBase :: Bool
     , baseIgnore :: [String]
+    , verbose :: Bool
     } deriving (Show)
 
 main = execParser opts >>= \opts -> checkOptions opts >> runWithOptions opts
@@ -51,9 +52,10 @@ main = execParser opts >>= \opts -> checkOptions opts >> runWithOptions opts
             (strOption
                 (long "output" <> short 'o' <> metavar "OutputFile" <>
                  help "Location of output file")) <*>
-        strOption
-            (long "error" <> short 'e' <> metavar "ErrorFile" <>
-             help "Location of error file") <*>
+        optional
+            (strOption
+                (long "error" <> short 'e' <> metavar "ErrorFile" <>
+                 help "Location of error file")) <*>
         strOption
             (long "mode" <> short 'm' <> metavar "BuildMode" <>
              help "Enter the mode of compilation") <*>
@@ -65,7 +67,8 @@ main = execParser opts >>= \opts -> checkOptions opts >> runWithOptions opts
         many
             (strOption
                  (long "ignore-in-base" <> metavar "ModOrSymbol" <>
-                  help "Ignore this module or symbol in base."))
+                  help "Ignore this module or symbol in base.")) <*>
+        switch (long "verbose" <> short 'v' <> help "Enable verbose output..")
     opts = info parser mempty
 
 checkOptions :: Options -> IO ()
@@ -85,30 +88,40 @@ checkOptions Options {..} = do
         exitFailure
 
 runWithOptions :: Options -> IO ()
-runWithOptions opts@Options {..} = do
+runWithOptions opts@Options {..} = withSystemTempDirectory"cw_errout" $ \errdir -> do
+    let err = case errfile of
+            Nothing -> errdir </> "err.txt"
+            Just err -> err
     result <-
         if genBase
-            then compileBase opts
-            else compile opts
+            then compileBase opts err
+            else compile opts err
     readFile err >>= hPutStrLn stderr
     case result of
         CompileSuccess -> exitSuccess
         _              -> exitFailure
 
-compileBase :: Options -> IO CompileStatus
-compileBase Options {..} = do
+compileBase :: Options -> FilePath -> IO CompileStatus
+compileBase Options {..} err = do
     withSystemTempDirectory "genbase" $ \tmpdir -> do
         let linkMain = tmpdir </> "LinkMain.hs"
         let linkBase = tmpdir </> "LinkBase.hs"
         generateBaseBundle source (map T.pack baseIgnore) mode linkMain linkBase
+        when verbose $ do
+            hPutStrLn stderr "GENERATED LinkMain.hs as:"
+            readFile linkMain >>= hPutStrLn stderr
+            hPutStrLn stderr "========================="
+            hPutStrLn stderr "GENERATED LinkBase.hs as:"
+            readFile linkBase >>= hPutStrLn stderr
+            hPutStrLn stderr "========================="
         let stage = GenBase "LinkBase" linkBase (fromJust output) (fromJust baseSymbols)
-        compileSource stage linkMain err mode
+        compileSource stage linkMain err mode verbose
 
-compile :: Options -> IO CompileStatus
-compile opts@Options {..} = do
+compile :: Options -> FilePath -> IO CompileStatus
+compile opts@Options {..} err = do
     let stage =
             case (output, baseSymbols) of
                 (Nothing, _) -> ErrorCheck
                 (Just out, Nothing) -> FullBuild out
                 (Just out, Just syms) -> UseBase out syms
-    compileSource stage source err mode
+    compileSource stage source err mode verbose

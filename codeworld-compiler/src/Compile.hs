@@ -79,8 +79,8 @@ formatDiagnostics ::  ByteString -> [String] -> ByteString
 formatDiagnostics compilerOutput extraWarnings =
     B.intercalate "\n\n" (compilerOutput : map pack extraWarnings)
 
-compileSource :: Stage -> FilePath -> FilePath -> String -> IO CompileStatus
-compileSource stage src err mode = runDiagnostics mode src >>= \case
+compileSource :: Stage -> FilePath -> FilePath -> String -> Bool -> IO CompileStatus
+compileSource stage src err mode verbose = runDiagnostics mode src >>= \case
     (False, messages) -> do
         createDirectoryIfMissing True (takeDirectory err)
         B.writeFile err (formatDiagnostics "" messages)
@@ -102,12 +102,12 @@ compileSource stage src err mode = runDiagnostics mode src >>= \case
                     FullBuild _ -> return []
                     GenBase mod base _ _ -> do
                         copyFile base (tmpdir </> mod <.> "hs")
-                        return ["-generate-base", mod]
+                        return [mod <.> "hs", "-generate-base", mod]
                     UseBase _ syms -> do
                         copyFile syms (tmpdir </> "out.base.symbs")
                         return ["-use-base", "out.base.symbs"]
             let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
-            runCompiler tmpdir timeout ghcjsArgs >>= \case
+            runCompiler tmpdir timeout ghcjsArgs verbose >>= \case
                 Nothing -> return CompileAborted
                 Just (exitCode, output) -> do
                     let success = exitCode == ExitSuccess
@@ -164,8 +164,8 @@ hasOldStyleMain fname = do
 matches :: ByteString -> ByteString -> Bool
 matches txt pat = txt =~ pat
 
-runCompiler :: FilePath -> Int -> [String] -> IO (Maybe (ExitCode, ByteString))
-runCompiler dir micros args = do
+runCompiler :: FilePath -> Int -> [String] -> Bool -> IO (Maybe (ExitCode, ByteString))
+runCompiler dir micros args verbose = do
     result <- tryCompile ("-O" : args)
     case result of
         Just _  -> return result
@@ -173,6 +173,7 @@ runCompiler dir micros args = do
   where
     tryCompile :: [String] -> IO (Maybe (ExitCode, ByteString))
     tryCompile currentArgs = do
+        when verbose $ hPutStrLn stderr $ "COMMAND: ghcjs " ++ intercalate " " args
         (Just inh, Just outh, Just errh, pid) <-
             createProcess
                 (proc "ghcjs" args)
@@ -187,6 +188,7 @@ runCompiler dir micros args = do
         hClose outh
         terminateProcess pid
         exitCode <- waitForProcess pid
+        when verbose $ hPutStrLn stderr $ "RESULT: " ++ show exitCode
         return $ (exitCode,) <$> result
 
 standardBuildArgs :: Bool -> [String]

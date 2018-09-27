@@ -55,6 +55,7 @@ compileErrorOutput testName = do
             (testSourceFile testName)
             (testErrorFile testName)
             "codeworld"
+            False
     errMsg <- readFile (testErrorFile testName)
     return errMsg
 

@@ -19,6 +19,10 @@
   font-size: 9pt;
 }
 
+.CodeMirror-ruler {
+  z-index: 1;
+}
+
 pre.cm-s-default span.cm-builtin,    div.CodeMirror span.cm-builtin    {color: #30a; font-weight: bold}
 pre.cm-s-default span.cm-builtin-2,  div.CodeMirror span.cm-builtin-2  {color: #38c; font-weight: bold}
 pre.cm-s-default span.cm-keyword,    div.CodeMirror span.cm-keyword    {color: #828; font-weight: bold}
@@ -31,8 +35,8 @@ pre.cm-s-default span.cm-meta,       div.CodeMirror span.cm-meta       {color: #
 pre.cm-s-default span.cm-qualifier,  div.CodeMirror span.cm-qualifier  {color: #666;}
 pre.cm-s-default span.cm-number,     div.CodeMirror span.cm-number     {color: #a10;}
 pre.cm-s-default span.cm-bracket,    div.CodeMirror span.cm-bracket    {color: #000;}
-pre.cm-s-default span.cm-bracket-0,  div.CodeMirror span.cm-bracket-0  {font-weight: bold; color: hsl( 80, 80%, 40%);}
-pre.cm-s-default span.cm-bracket-1,  div.CodeMirror span.cm-bracket-1  {font-weight: bold; color: hsl(225, 60%, 60%);}
+pre.cm-s-default span.cm-bracket-0,  div.CodeMirror span.cm-bracket-0  {font-weight: bold; color: hsl( 80, 80%, 40%); font-size: 1.25em; letter-spacing: -0.12em}
+pre.cm-s-default span.cm-bracket-1,  div.CodeMirror span.cm-bracket-1  {font-weight: bold; color: hsl(225, 60%, 60%); font-size: 1.10em; letter-spacing: -0.055em;}
 pre.cm-s-default span.cm-bracket-2,  div.CodeMirror span.cm-bracket-2  {font-weight: bold; color: hsl(320, 60%, 50%);}
 pre.cm-s-default span.cm-bracket-3,  div.CodeMirror span.cm-bracket-3  {font-weight: bold; color: hsl( 60, 60%, 40%);}
 pre.cm-s-default span.cm-bracket-4,  div.CodeMirror span.cm-bracket-4  {font-weight: bold; color: hsl(175, 60%, 40%);}

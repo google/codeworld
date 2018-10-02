@@ -37,7 +37,6 @@ import System.FilePath
 import System.IO
 import System.IO.Temp (withSystemTempDirectory)
 import System.Process
-import Text.Regex.TDFA
 
 import ParseCode
 
@@ -58,111 +57,80 @@ data CompileStatus
     | CompileAborted
     deriving (Eq, Show)
 
-runDiagnostics :: String -> FilePath -> IO (Bool, [String])
-runDiagnostics mode src = do
-    dangerous <- checkDangerousSource src
-    case (dangerous, mode) of
-        (True, _) -> return (False, ["Sorry, but your program refers " ++
-                                     "to forbidden language features."])
-        (False, "codeworld") -> do
-            parseWarnings <- checkParsedCode src
-            oldMain <- hasOldStyleMain src
-            let oldStyleWarnings
-                  | oldMain = ["program.hs:1:1: warning:\n" ++
-                               "    Please define 'program' instead of 'main'.\n" ++
-                               "    Defining 'main' may stop working July 2019."]
-                  | otherwise = []
-            return (True, parseWarnings ++ oldStyleWarnings)
-        (False, _) -> return (True, [])
-
 formatDiagnostics ::  ByteString -> [String] -> ByteString
 formatDiagnostics compilerOutput extraWarnings =
     B.intercalate "\n\n" (compilerOutput : map pack extraWarnings)
 
 compileSource :: Stage -> FilePath -> FilePath -> String -> Bool -> IO CompileStatus
-compileSource stage src err mode verbose = runDiagnostics mode src >>= \case
-    (False, messages) -> do
-        createDirectoryIfMissing True (takeDirectory err)
-        B.writeFile err (formatDiagnostics "" messages)
-        return CompileError
-    (True, extraMessages) ->
-        withSystemTempDirectory "build" $ \tmpdir -> do
-            copyFile src (tmpdir </> "program.hs")
-            baseArgs <-
-                case mode of
-                    "haskell" -> return haskellCompatibleBuildArgs
-                    "codeworld" -> standardBuildArgs <$> hasOldStyleMain src
-            let timeout =
-                  case stage of
-                      GenBase _ _ _ _ -> maxBound :: Int
-                      _               -> userCompileMicros
-            linkArgs <-
-                case stage of
-                    ErrorCheck -> return ["-fno-code"]
-                    FullBuild _ -> return ["-dedupe"]
-                    GenBase mod base _ _ -> do
-                        copyFile base (tmpdir </> mod <.> "hs")
-                        return [mod <.> "hs", "-generate-base", mod]
-                    UseBase _ syms -> do
-                        copyFile syms (tmpdir </> "out.base.symbs")
-                        return ["-dedupe", "-use-base", "out.base.symbs"]
-            let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
-            runCompiler tmpdir timeout ghcjsArgs verbose >>= \case
-                Nothing -> return CompileAborted
-                Just (exitCode, output) -> do
-                    let success = exitCode == ExitSuccess
-                    createDirectoryIfMissing True (takeDirectory err)
-                    let filteredOutput =
-                            case mode of
-                                "codeworld" -> filterOutput output
-                                _ -> output
-                    B.writeFile err (formatDiagnostics filteredOutput extraMessages)
-                    let target = tmpdir </> "program.jsexe"
-                    when success $ case stage of
-                        GenBase _ _ out syms -> do
-                            rtsCode <- B.readFile $ target </> "rts.js"
-                            libCode <-
-                                B.readFile $ target </> "lib.base.js"
-                            outCode <-
-                                B.readFile $ target </> "out.base.js"
-                            createDirectoryIfMissing True (takeDirectory out)
-                            B.writeFile
-                                out
-                                (rtsCode <> libCode <> outCode)
-                            copyFile (target </> "out.base.symbs") syms
-                        UseBase out _ -> do
-                            libCode <- B.readFile $ target </> "lib.js"
-                            outCode <- B.readFile $ target </> "out.js"
-                            createDirectoryIfMissing True (takeDirectory out)
-                            B.writeFile out (libCode <> outCode)
-                        FullBuild out -> do
-                            rtsCode <- B.readFile $ target </> "rts.js"
-                            libCode <- B.readFile $ target </> "lib.js"
-                            outCode <- B.readFile $ target </> "out.js"
-                            createDirectoryIfMissing True (takeDirectory out)
-                            B.writeFile
-                                out
-                                (rtsCode <> libCode <> outCode)
-                    return $ if success then CompileSuccess else CompileError
+compileSource stage src err mode verbose = do
+    contents <- B.readFile src
+    case runCustomDiagnostics mode contents of
+        (True, messages) -> do
+            createDirectoryIfMissing True (takeDirectory err)
+            B.writeFile err (formatDiagnostics "" messages)
+            return CompileError
+        (False, extraMessages) ->
+            withSystemTempDirectory "build" $ \tmpdir -> do
+                copyFile src (tmpdir </> "program.hs")
+                baseArgs <-
+                    case mode of
+                        "haskell" -> return haskellCompatibleBuildArgs
+                        "codeworld" -> return (standardBuildArgs (hasOldStyleMain contents))
+                let timeout =
+                      case stage of
+                          GenBase _ _ _ _ -> maxBound :: Int
+                          _               -> userCompileMicros
+                linkArgs <-
+                    case stage of
+                        ErrorCheck -> return ["-fno-code"]
+                        FullBuild _ -> return ["-dedupe"]
+                        GenBase mod base _ _ -> do
+                            copyFile base (tmpdir </> mod <.> "hs")
+                            return [mod <.> "hs", "-generate-base", mod]
+                        UseBase _ syms -> do
+                            copyFile syms (tmpdir </> "out.base.symbs")
+                            return ["-dedupe", "-use-base", "out.base.symbs"]
+                let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
+                runCompiler tmpdir timeout ghcjsArgs verbose >>= \case
+                    Nothing -> return CompileAborted
+                    Just (exitCode, output) -> do
+                        let success = exitCode == ExitSuccess
+                        createDirectoryIfMissing True (takeDirectory err)
+                        let filteredOutput =
+                                case mode of
+                                    "codeworld" -> filterOutput output
+                                    _ -> output
+                        B.writeFile err (formatDiagnostics filteredOutput extraMessages)
+                        let target = tmpdir </> "program.jsexe"
+                        when success $ case stage of
+                            GenBase _ _ out syms -> do
+                                rtsCode <- B.readFile $ target </> "rts.js"
+                                libCode <-
+                                    B.readFile $ target </> "lib.base.js"
+                                outCode <-
+                                    B.readFile $ target </> "out.base.js"
+                                createDirectoryIfMissing True (takeDirectory out)
+                                B.writeFile
+                                    out
+                                    (rtsCode <> libCode <> outCode)
+                                copyFile (target </> "out.base.symbs") syms
+                            UseBase out _ -> do
+                                libCode <- B.readFile $ target </> "lib.js"
+                                outCode <- B.readFile $ target </> "out.js"
+                                createDirectoryIfMissing True (takeDirectory out)
+                                B.writeFile out (libCode <> outCode)
+                            FullBuild out -> do
+                                rtsCode <- B.readFile $ target </> "rts.js"
+                                libCode <- B.readFile $ target </> "lib.js"
+                                outCode <- B.readFile $ target </> "out.js"
+                                createDirectoryIfMissing True (takeDirectory out)
+                                B.writeFile
+                                    out
+                                    (rtsCode <> libCode <> outCode)
+                        return $ if success then CompileSuccess else CompileError
 
 userCompileMicros :: Int
 userCompileMicros = 20 * 1000000
-
-checkDangerousSource :: FilePath -> IO Bool
-checkDangerousSource src = do
-    contents <- B.readFile src
-    return $
-        matches contents ".*TemplateHaskell.*" ||
-        matches contents ".*QuasiQuotes.*" ||
-        matches contents ".*glasgow-exts.*"
-
-hasOldStyleMain :: FilePath -> IO Bool
-hasOldStyleMain fname = do
-    contents <- B.readFile fname
-    return (matches contents "(^|\\n)main[ \\t]*=")
-
-matches :: ByteString -> ByteString -> Bool
-matches txt pat = txt =~ pat
 
 runCompiler :: FilePath -> Int -> [String] -> Bool -> IO (Maybe (ExitCode, ByteString))
 runCompiler dir micros args verbose = do

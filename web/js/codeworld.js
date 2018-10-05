@@ -682,6 +682,9 @@ function formatSource() {
 }
 
 function stop() {
+    if (document.getElementById("runner").contentWindow.debugActive)
+        document.getElementById("runner").contentWindow.stopDebugMode();
+
     run('', '', '', false);
 }
 

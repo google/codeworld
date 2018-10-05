@@ -62,96 +62,89 @@ rotatedVector angle (x, y) =
 dotProduct :: Vector -> Vector -> Double
 dotProduct (x1, y1) (x2, y2) = x1 * x2 + y1 * y2
 
-getDebugSrcLoc :: CallStack -> SrcLoc
-getDebugSrcLoc cs =
-    case Data.List.find ((== "main") . srcLocPackage) locs of
-        Just loc -> loc
-        Nothing -> error "Cannot find debug source location."
-  where
-    locs = map snd (getCallStack cs)
-
 data Picture
-    = SolidPolygon SrcLoc
+    = SolidPolygon (Maybe SrcLoc)
               [Point]
-    | SolidClosedCurve SrcLoc
+    | SolidClosedCurve (Maybe SrcLoc)
               [Point]
-    | Polygon SrcLoc
+    | Polygon (Maybe SrcLoc)
            [Point]
-    | ThickPolygon SrcLoc
-           [Point]
-           !Double
-    | Rectangle SrcLoc
-           !Double
-           !Double
-    | SolidRectangle SrcLoc
-           !Double
-           !Double
-    | ThickRectangle SrcLoc
-           !Double
-           !Double
-           !Double
-    | ClosedCurve SrcLoc
-           [Point]
-    | ThickClosedCurve SrcLoc
+    | ThickPolygon (Maybe SrcLoc)
            [Point]
            !Double
-    | Polyline SrcLoc
+    | Rectangle (Maybe SrcLoc)
+           !Double
+           !Double
+    | SolidRectangle (Maybe SrcLoc)
+           !Double
+           !Double
+    | ThickRectangle (Maybe SrcLoc)
+           !Double
+           !Double
+           !Double
+    | ClosedCurve (Maybe SrcLoc)
            [Point]
-    | ThickPolyline SrcLoc
+    | ThickClosedCurve (Maybe SrcLoc)
            [Point]
            !Double
-    | Curve SrcLoc
+    | Polyline (Maybe SrcLoc)
            [Point]
-    | ThickCurve SrcLoc
+    | ThickPolyline (Maybe SrcLoc)
            [Point]
            !Double
-    | Circle SrcLoc
+    | Curve (Maybe SrcLoc)
+           [Point]
+    | ThickCurve (Maybe SrcLoc)
+           [Point]
            !Double
-    | SolidCircle SrcLoc
+    | Circle (Maybe SrcLoc)
            !Double
-    | ThickCircle SrcLoc
+    | SolidCircle (Maybe SrcLoc)
+           !Double
+    | ThickCircle (Maybe SrcLoc)
            !Double
            !Double
-    | Sector SrcLoc
+    | Sector (Maybe SrcLoc)
              !Double
              !Double
              !Double
-    | Arc SrcLoc
+    | Arc (Maybe SrcLoc)
           !Double
           !Double
           !Double
-    | ThickArc SrcLoc
+    | ThickArc (Maybe SrcLoc)
           !Double
           !Double
           !Double
           !Double
-    | StyledLettering SrcLoc
+    | StyledLettering (Maybe SrcLoc)
            !TextStyle
            !Font
            !Text
-    | Lettering SrcLoc
+    | Lettering (Maybe SrcLoc)
            !Text
-    | Color SrcLoc
+    | Color (Maybe SrcLoc)
             !Color
             !Picture
-    | Translate SrcLoc
+    | Translate (Maybe SrcLoc)
                 !Double
                 !Double
                 !Picture
-    | Scale SrcLoc
+    | Scale (Maybe SrcLoc)
             !Double
             !Double
             !Picture
-    | Dilate SrcLoc
+    | Dilate (Maybe SrcLoc)
              !Double
              !Picture
-    | Rotate SrcLoc
+    | Rotate (Maybe SrcLoc)
              !Double
              !Picture
-    | CoordinatePlane SrcLoc
-    | Logo SrcLoc
-    | Pictures [Picture]
-    | Blank SrcLoc
+    | CoordinatePlane (Maybe SrcLoc)
+    | Logo (Maybe SrcLoc)
+    | Pictures (Maybe SrcLoc) [Picture]
+    | PictureAnd (Maybe SrcLoc) [Picture]
+    | Blank (Maybe SrcLoc)
 
 data TextStyle
     = Plain
@@ -322,28 +315,29 @@ rotated :: HasCallStack => Double -> Picture -> Picture
 rotated = Rotate (getDebugSrcLoc callStack)
 
 -- A picture made by drawing these pictures, ordered from top to bottom.
-pictures :: [Picture] -> Picture
-pictures = Pictures
+pictures :: HasCallStack => [Picture] -> Picture
+pictures = Pictures (getDebugSrcLoc callStack)
+
+-- | Binary composition of pictures.
+(&) :: HasCallStack => Picture -> Picture -> Picture
+infixr 0 &
+
+a & b@(PictureAnd loc2 bs)
+  | srcContains loc1 loc2 = PictureAnd loc1 (a:bs)
+  where loc1 = getDebugSrcLoc callStack
+a & b = PictureAnd (getDebugSrcLoc callStack) [a, b]
+
+instance Monoid Picture where
+    mempty = blank
+    mappend = (&)
+    mconcat = pictures
 
 #if MIN_VERSION_base(4,11,0)
 
 instance Semigroup Picture where
-    a <> (Pictures bs) = Pictures (a : bs)
-    a <> b             = Pictures [a, b]
+    (<>) = (&)
 
 #endif
-
-instance Monoid Picture where
-    mempty = blank
-    mappend a (Pictures bs) = Pictures (a : bs)
-    mappend a b = Pictures [a, b]
-    mconcat = pictures
-
--- | Binary composition of pictures.
-(&) :: Picture -> Picture -> Picture
-infixr 0 &
-
-(&) = mappend
 
 -- | A coordinate plane.  Adding this to your pictures can help you measure distances
 -- more accurately.
@@ -358,3 +352,18 @@ coordinatePlane = CoordinatePlane (getDebugSrcLoc callStack)
 -- | The CodeWorld logo.
 codeWorldLogo :: HasCallStack => Picture
 codeWorldLogo = Logo (getDebugSrcLoc callStack)
+
+getDebugSrcLoc :: CallStack -> Maybe SrcLoc
+getDebugSrcLoc cs = Data.List.find ((== "main") . srcLocPackage) locs
+  where
+    locs = map snd (getCallStack cs)
+
+srcContains :: Maybe SrcLoc -> Maybe SrcLoc -> Bool
+srcContains Nothing _ = False
+srcContains _ Nothing = True
+srcContains (Just a) (Just b) =
+    srcLocFile a == srcLocFile b && srcLocStartLine a < srcLocStartLine b ||
+    (srcLocStartLine a == srcLocStartLine b &&
+     srcLocStartCol a <= srcLocStartCol b) &&
+    srcLocEndLine a > srcLocEndLine b ||
+    (srcLocEndLine a == srcLocEndLine b && srcLocEndCol a >= srcLocEndCol b)

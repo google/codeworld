@@ -149,7 +149,7 @@
             currentPic = pic;
             dialog.dialog("option", "title", pic.name );
             drawShape(canvas, pic.id);
-            if (!pic.pictures) {
+            if (pic.startLine && pic.startCol && pic.endLine && pic.endCol) {
                 codeworldEditor.setSelection(
                     { line: pic.startLine - 1, ch: pic.startCol - 1 },
                     { line: pic.endLine - 1, ch: pic.endCol - 1 },
@@ -159,7 +159,7 @@
         a.addEventListener("mouseover", function (evt) {
             highlight(true, pic.id);
 
-            if (!pic.pictures) {
+            if (pic.startLine && pic.startCol && pic.endLine && pic.endCol) {
                 if (marker) marker.clear();
                 marker = codeworldEditor.markText(
                     { line: pic.startLine - 1, ch: pic.startCol - 1 },

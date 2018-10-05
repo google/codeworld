@@ -341,7 +341,8 @@ pictureToDrawing (Dilate _ k p) =
     Transformation (scaleDS k k) $ pictureToDrawing p
 pictureToDrawing (Rotate _ r p) =
     Transformation (rotateDS r) $ pictureToDrawing p
-pictureToDrawing (Pictures ps) = Drawings $ pictureToDrawing <$> ps
+pictureToDrawing (Pictures _ ps) = Drawings $ pictureToDrawing <$> ps
+pictureToDrawing (PictureAnd _ ps) = Drawings $ pictureToDrawing <$> ps
 
 initialDS :: DrawState
 initialDS = (1, 0, 0, 1, 0, 0, Nothing)
@@ -751,12 +752,13 @@ picToObj = fmap fst . flip State.runStateT 0 . picToObj'
 
 picToObj' :: Picture -> State.StateT Int IO JSVal
 picToObj' pic = objToJSVal <$> case pic of
-    Pictures ps -> mkNodeWithChildren ps
-    Color cs (RGBA r g b a) p -> mkNodeWithChild p
-    Translate cs x y p -> mkNodeWithChild p
-    Scale cs x y p -> mkNodeWithChild p
-    Dilate cs k p -> mkNodeWithChild p
-    Rotate cs angle p -> mkNodeWithChild p
+    Pictures _ ps -> mkNodeWithChildren ps
+    PictureAnd _ ps -> mkNodeWithChildren ps
+    Color _ _ p -> mkNodeWithChild p
+    Translate _ _ _ p -> mkNodeWithChild p
+    Scale _ _ _ p -> mkNodeWithChild p
+    Dilate _ _ p -> mkNodeWithChild p
+    Rotate _ _ p -> mkNodeWithChild p
     _ -> mkSimpleNode
   where
     mkSimpleNode :: State.StateT Int IO Object
@@ -928,41 +930,45 @@ describePicture (Dilate _ k _)
   | otherwise   = printf "dilated(..., %s)" (showFloat k)
 describePicture (Logo _) = "codeWorldLogo"
 describePicture (CoordinatePlane _) = "coordinatePlane"
-describePicture (Pictures _)
+describePicture (Pictures _ _)
   | haskellMode = "pictures"
   | otherwise   = "pictures(...)"
+describePicture (PictureAnd _ _)
+  | haskellMode = "(&)"
+  | otherwise   = "... & ..."
 
 getPictureSrcLoc :: Picture -> Maybe SrcLoc
-getPictureSrcLoc (SolidPolygon loc _) = Just loc
-getPictureSrcLoc (SolidClosedCurve loc _) = Just loc
-getPictureSrcLoc (Polygon loc _) = Just loc
-getPictureSrcLoc (ThickPolygon loc _ _) = Just loc
-getPictureSrcLoc (Rectangle loc _ _) = Just loc
-getPictureSrcLoc (SolidRectangle loc _ _) = Just loc
-getPictureSrcLoc (ThickRectangle loc _ _ _) = Just loc
-getPictureSrcLoc (ClosedCurve loc _) = Just loc
-getPictureSrcLoc (ThickClosedCurve loc _ _) = Just loc
-getPictureSrcLoc (Circle loc _) = Just loc
-getPictureSrcLoc (SolidCircle loc _) = Just loc
-getPictureSrcLoc (ThickCircle loc _ _) = Just loc
-getPictureSrcLoc (Polyline loc _) = Just loc
-getPictureSrcLoc (ThickPolyline loc _ _) = Just loc
-getPictureSrcLoc (Curve loc _) = Just loc
-getPictureSrcLoc (ThickCurve loc _ _) = Just loc
-getPictureSrcLoc (Sector loc _ _ _) = Just loc
-getPictureSrcLoc (Arc loc _ _ _) = Just loc
-getPictureSrcLoc (ThickArc loc _ _ _ _) = Just loc
-getPictureSrcLoc (Lettering loc _) = Just loc
-getPictureSrcLoc (Blank loc) = Just loc
-getPictureSrcLoc (StyledLettering loc _ _ _) = Just loc
-getPictureSrcLoc (Color loc _ _) = Just loc
-getPictureSrcLoc (Translate loc _ _ _) = Just loc
-getPictureSrcLoc (Scale loc _ _ _) = Just loc
-getPictureSrcLoc (Dilate loc _ _) = Just loc
-getPictureSrcLoc (Rotate loc _ _) = Just loc
-getPictureSrcLoc (Logo loc) = Just loc
-getPictureSrcLoc (CoordinatePlane loc) = Just loc
-getPictureSrcLoc (Pictures _) = Nothing
+getPictureSrcLoc (SolidPolygon loc _) = loc
+getPictureSrcLoc (SolidClosedCurve loc _) = loc
+getPictureSrcLoc (Polygon loc _) = loc
+getPictureSrcLoc (ThickPolygon loc _ _) = loc
+getPictureSrcLoc (Rectangle loc _ _) = loc
+getPictureSrcLoc (SolidRectangle loc _ _) = loc
+getPictureSrcLoc (ThickRectangle loc _ _ _) = loc
+getPictureSrcLoc (ClosedCurve loc _) = loc
+getPictureSrcLoc (ThickClosedCurve loc _ _) = loc
+getPictureSrcLoc (Circle loc _) = loc
+getPictureSrcLoc (SolidCircle loc _) = loc
+getPictureSrcLoc (ThickCircle loc _ _) = loc
+getPictureSrcLoc (Polyline loc _) = loc
+getPictureSrcLoc (ThickPolyline loc _ _) = loc
+getPictureSrcLoc (Curve loc _) = loc
+getPictureSrcLoc (ThickCurve loc _ _) = loc
+getPictureSrcLoc (Sector loc _ _ _) = loc
+getPictureSrcLoc (Arc loc _ _ _) = loc
+getPictureSrcLoc (ThickArc loc _ _ _ _) = loc
+getPictureSrcLoc (Lettering loc _) = loc
+getPictureSrcLoc (Blank loc) = loc
+getPictureSrcLoc (StyledLettering loc _ _ _) = loc
+getPictureSrcLoc (Color loc _ _) = loc
+getPictureSrcLoc (Translate loc _ _ _) = loc
+getPictureSrcLoc (Scale loc _ _ _) = loc
+getPictureSrcLoc (Dilate loc _ _) = loc
+getPictureSrcLoc (Rotate loc _ _) = loc
+getPictureSrcLoc (Logo loc) = loc
+getPictureSrcLoc (CoordinatePlane loc) = loc
+getPictureSrcLoc (Pictures loc _) = loc
+getPictureSrcLoc (PictureAnd loc _) = loc
 
 -- If a picture is found, the result will include an array of the base picture
 -- and all transformations.

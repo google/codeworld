@@ -271,7 +271,7 @@ pictures ps = withFrozenCallStack $ CWPic (CW.pictures (map toCWPic ps))
 (&) :: HasCallStack => Picture -> Picture -> Picture
 infixr 0 &
 
-a & b = withFrozenCallStack $ CWPic (toCWPic a CW.<> toCWPic b)
+a & b = withFrozenCallStack $ CWPic (toCWPic a CW.& toCWPic b)
 
 -- | A coordinate plane.  Adding this to your pictures can help you measure distances
 -- more accurately.

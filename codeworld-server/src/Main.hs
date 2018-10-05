@@ -68,7 +68,7 @@ import Model
 import Util
 
 maxSimultaneousCompiles :: Int
-maxSimultaneousCompiles = 2
+maxSimultaneousCompiles = 4
 
 data Context = Context {
     authConfig :: AuthConfig,

@@ -356,22 +356,6 @@ body {
   cursor: pointer !important;
 }
 
-.matching-bracket {
-  font-weight: bolder;
-}
-
-.non-matching-bracket {
-}
-
-.function-highlight {
-  border-bottom: solid ; border-color: #888888;
-}
-
-.function-name-highlight {
-  border-bottom: solid ; border-color: #888888;
-  font-style: italic;
-}
-
 #recordIcon {
   color: #B30000;
   animation: record-blink 1s cubic-bezier(.5, 0, 1, 1) infinite alternate;

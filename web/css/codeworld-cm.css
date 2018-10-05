@@ -36,7 +36,7 @@ pre.cm-s-default span.cm-qualifier,  div.CodeMirror span.cm-qualifier  {color: #
 pre.cm-s-default span.cm-number,     div.CodeMirror span.cm-number     {color: #a10;}
 pre.cm-s-default span.cm-bracket,    div.CodeMirror span.cm-bracket    {color: #000;}
 pre.cm-s-default span.cm-bracket-0,  div.CodeMirror span.cm-bracket-0  {font-weight: bold; color: hsl( 80, 80%, 40%); font-size: 1.25em; letter-spacing: -0.12em}
-pre.cm-s-default span.cm-bracket-1,  div.CodeMirror span.cm-bracket-1  {font-weight: bold; color: hsl(225, 60%, 60%); font-size: 1.10em; letter-spacing: -0.055em;}
+pre.cm-s-default span.cm-bracket-1,  div.CodeMirror span.cm-bracket-1  {font-weight: bold; color: hsl(225, 60%, 60%); font-size: 1.12em; letter-spacing: -0.064em;}
 pre.cm-s-default span.cm-bracket-2,  div.CodeMirror span.cm-bracket-2  {font-weight: bold; color: hsl(320, 60%, 50%);}
 pre.cm-s-default span.cm-bracket-3,  div.CodeMirror span.cm-bracket-3  {font-weight: bold; color: hsl( 60, 60%, 40%);}
 pre.cm-s-default span.cm-bracket-4,  div.CodeMirror span.cm-bracket-4  {font-weight: bold; color: hsl(175, 60%, 40%);}
@@ -45,8 +45,8 @@ pre.cm-s-default span.cm-bracket-6,  div.CodeMirror span.cm-bracket-6  {font-wei
 pre.cm-s-default span.cm-bracket-7,  div.CodeMirror span.cm-error      {color: #f00;}
 
 /* Make bracket matching look nicer. */
-div.CodeMirror span.CodeMirror-matchingbracket { outline: solid rgba(0,0,0,0.15) 1px }
-div.CodeMirror span.CodeMirror-nonmatchingbracket { outline: solid rgba(255,0,0,0.5) 1px }
+div.CodeMirror span.CodeMirror-matchingbracket { outline: solid rgba(0,0,0,0.15) 0.1em }
+div.CodeMirror span.CodeMirror-nonmatchingbracket { outline: solid rgba(255,0,0,0.5) 0.1em }
 
 /* Highlighting for matches to the selected word. */
 div.CodeMirror span.cm-matchhighlight { background-color: rgba(128, 255, 128, 0.3) }

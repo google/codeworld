@@ -368,7 +368,8 @@ setColorDS :: Color -> DrawState -> DrawState
 setColorDS col (a, b, c, d, e, f, Nothing) = (a, b, c, d, e, f, Just col)
 setColorDS col@(RGBA _ _ _ 0) (a, b, c, d, e, f, _) =
     (a, b, c, d, e, f, Just col)
-setColorDS _ (a, b, c, d, e, f, Just col) = (a, b, c, d, e, f, Just col)
+setColorDS (RGBA _ _ _ alpha1) (a, b, c, d, e, f, Just (RGBA rr gg bb alpha2)) =
+    (a, b, c, d, e, f, Just (RGBA rr gg bb (alpha1 * alpha2)))
 
 getColorDS :: DrawState -> Maybe Color
 getColorDS (a, b, c, d, e, f, col) = col

@@ -33,8 +33,9 @@ function init() {
     } else {
         window.buildMode = 'codeworld';
     }
-
     document.documentElement.classList.add(window.buildMode);
+
+    window.cancelCompile = function() {};
 
     var hash = location.hash.slice(1);
     if (hash.length > 0) {
@@ -684,6 +685,8 @@ function formatSource() {
 function stop() {
     if (document.getElementById("runner").contentWindow.debugActive)
         document.getElementById("runner").contentWindow.stopDebugMode();
+    destroyTreeDialog();
+    window.cancelCompile();
 
     run('', '', '', false);
 }
@@ -752,10 +755,7 @@ function goto(line, col) {
 }
 
 function compile() {
-    if (document.getElementById("runner").contentWindow.debugActive)
-        document.getElementById("runner").contentWindow.stopDebugMode();
-
-    destroyTreeDialog();
+    stop();
 
     var src = window.codeworldEditor.getValue();
     var data = new FormData();
@@ -766,24 +766,31 @@ function compile() {
     var compileFinished = false;
     var compileDots = 0;
 
-    run('', '', 'Compiling', false);
-    var compileHandle = setInterval(function() {
-      if (compileFinished) {
-        clearInterval(compileHandle);
-      } else {
-        compileDots = (compileDots + 1) % 4;
-        var msg = 'Compiling' + '.'.repeat(compileDots);
+    window.cancelCompile = function() {
+        compileFinished = true;
+        window.cancelCompile = function() {};
+    };
 
-        var delay = Date.now() - compileStartTime;
-        if (delay > 10000) {
-          msg += '\n\nSit tight!  This is taking longer than usual.';
+    sweetAlert2({
+        title: 'Compiling...',
+        text: 'Your code is compiling.  Please wait.',
+        showConfirmButton: false,
+        showCancelButton: true,
+        showCloseButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        allowEnterKey: false
+    }).then((result) => {
+        if (result.dismiss = sweetAlert2.DismissReason.cancel) {
+            window.cancelCompile();
         }
-        run('', '', msg, false);
-      }
-    }, 300);
+    });
 
     sendHttp('POST', 'compile', data, function(request) {
-        compileFinished = true;
+        if (compileFinished) return;
+        sweetAlert2.close();
+        window.cancelCompile();
+
         var success = request.status == 200;
 
         var hash;

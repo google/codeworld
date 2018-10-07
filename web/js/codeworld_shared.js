@@ -580,13 +580,17 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
     }
 
     function go() {
-        sweetAlert({
+        sweetAlert2({
             title: 'Saving ' + projectName + '...',
-            text: 'Hold your horses!  I\'m still saving your project.',
+            text: 'Saving your project.  Please wait.',
             showConfirmButton: false,
             showCancelButton: false,
-            closeOnConfirm: false
+            showCloseButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            allowEnterKey: false
         });
+
         var project = getCurrentProject();
         project['name'] = projectName;
 
@@ -596,11 +600,10 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
         data.append('path', path);
 
         sendHttp('POST', 'saveProject', data, function(request) {
+            sweetAlert2.close();
             if (request.status != 200) {
                 sweetAlert('Oops!', 'Could not save your project!!!  Please try again.', 'error');
                 return;
-            } else {
-                sweetAlert.close();
             }
 
             successFunc();

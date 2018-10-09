@@ -50,7 +50,7 @@ dangerousSourceDiagnostics contents
 oldStyleDiagnostics :: String -> ByteString -> [Diagnostic]
 oldStyleDiagnostics "codeworld" contents
   | hasOldStyleMain contents
-    = [(noSrcSpan, Error,
+    = [(noSrcSpan, Warning,
         "warning:\n" ++
         "\tPlease define 'program' instead of 'main'.\n" ++
         "\tDefining 'main' may stop working July 2019.")]

@@ -20,8 +20,9 @@ var autohelpEnabled = location.hash.length <= 2;
  * Initializes the programming environment.  This is called after the
  * entire document body and other JavaScript has loaded.
  */
-function init() {
-    Alert.init().then(Auth.init);
+async function init() {
+    await Alert.init();
+    await Auth.init();
 
     allProjectNames = [[]];
     allFolderNames = [[]];

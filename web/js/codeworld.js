@@ -29,6 +29,9 @@ async function init() {
     openProjectName = null;
     nestedDirs = [""];
 
+    window.savedGeneration = null;
+    window.runningGeneration = null;
+
     if (window.location.pathname == '/haskell') {
         window.buildMode = 'haskell'
     } else {
@@ -689,10 +692,12 @@ function stop() {
     destroyTreeDialog();
     window.cancelCompile();
 
-    run('', '', '', false);
+    run('', '', '', false, null);
 }
 
-function run(hash, dhash, msg, error) {
+function run(hash, dhash, msg, error, generation) {
+    window.runningGeneration = generation;
+
     var runner = document.getElementById('runner');
 
     // Stop canvas recording if the recorder is active
@@ -759,6 +764,8 @@ function compile() {
     stop();
 
     var src = window.codeworldEditor.getValue();
+    var compileGeneration = window.codeworldEditor.getDoc().changeGeneration(true);
+
     var data = new FormData();
     data.append('source', src);
     data.append('mode', window.buildMode);
@@ -824,9 +831,9 @@ function compile() {
             if (msg != '') msg += '\n\n';
 
             if (success) {
-                run(hash, dhash, msg, false);
+                run(hash, dhash, msg, false, compileGeneration);
             } else {
-                run(hash, '', msg, true);
+                run(hash, '', msg, true, compileGeneration);
             }
         });
     });

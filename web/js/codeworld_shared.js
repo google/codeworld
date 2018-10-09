@@ -830,6 +830,27 @@ function share() {
     });
   }
 
+  if (window.runningGeneration) {
+    if (!window.codeworldEditor.getDoc().isClean(window.runningGeneration)) {
+      sweetAlert2({
+        type: 'warning',
+        text: 'You have changed your code since running the program. ' +
+              ' Rebuild so that you can share your latest code?',
+        confirmButtonText: 'Yes, Rebuild',
+        cancelButtonText: 'No, Share Old Program',
+        showConfirmButton: true,
+        showCancelButton: true
+      }).then((result) => {
+        if (result.dismiss == sweetAlert2.DismissReason.cancel) {
+          go();
+        } else if (result.value) {
+          compile();
+        }
+      });
+      return;
+    }
+  }
+
   go();
 }
 

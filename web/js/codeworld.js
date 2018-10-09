@@ -780,8 +780,9 @@ function compile() {
     };
 
     sweetAlert2({
-        title: 'Compiling...',
-        text: 'Your code is compiling.  Please wait.',
+        title: 'Compiling',
+        text: 'Your code is compiling.  Please wait...',
+        onOpen: sweetAlert2.showLoading,
         showConfirmButton: false,
         showCancelButton: true,
         showCloseButton: false,

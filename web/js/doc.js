@@ -163,6 +163,9 @@ window.env = parent;
                 if (parent.sweetAlert) {
                     parent.sweetAlert.close();
                 }
+                if (parent.sweetAlert2) {
+                    parent.sweetAlert2.close();
+                }
             });
             e.preventDefault();
         };

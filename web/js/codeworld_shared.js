@@ -551,8 +551,7 @@ function saveProjectAs() {
         type: 'input',
         inputValue: defaultName,
         confirmButtonText: 'Save',
-        showCancelButton: true,
-        closeOnConfirm: false
+        showCancelButton: true
     }, go);
 }
 

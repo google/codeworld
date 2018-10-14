@@ -24,6 +24,16 @@ async function init() {
     await Alert.init();
     await Auth.init();
 
+    // Keep the base bundle preloaded by retrying regularly.
+    function preloadBaseBundle() {
+        var request = new XMLHttpRequest();
+        request.open('GET', '/runBaseJS', true);
+        request.setRequestHeader('Cache-control', 'max-stale');
+        request.send();
+    }
+    preloadBaseBundle();
+    window.setInterval(preloadBaseBundle, 1000 * 60 * 60);
+
     allProjectNames = [[]];
     allFolderNames = [[]];
     openProjectName = null;

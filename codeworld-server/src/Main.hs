@@ -453,9 +453,11 @@ runHandler = public $ \ctx -> do
 runBaseHandler :: CodeWorldHandler
 runBaseHandler = public $ \ctx -> do
     maybeVer <- fmap T.decodeUtf8 <$> getParam "version"
+    hasProgram <- (\ mode hash dhash -> mode && (hash || dhash))
+       <$> hasParam "mode" <*> hasParam "hash" <*> hasParam "dhash"
     case maybeVer of
         Just ver -> serveFile (baseCodeFile ver)
-        Nothing -> do
+        Nothing | hasProgram -> do
             mode <- getBuildMode
             programId <- getHashParam True mode
             result <- liftIO $
@@ -464,7 +466,13 @@ runBaseHandler = public $ \ctx -> do
             when (result == CompileSuccess) $ do
                 ver <- liftIO $
                     B.readFile (buildRootDir mode </> baseVersionFile programId)
-                redirect $ "/runBaseJS?version=" <> ver
+                impliedVersion ver
+        _ -> do
+            ver <- liftIO baseVersion
+            liftIO $ buildBaseIfNeeded ctx ver
+            impliedVersion (T.encodeUtf8 ver)
+  where impliedVersion ver = redirect $ "/runBaseJS?version=" <> ver
+        hasParam name = (/= Nothing) <$> getParam name
 
 runMessageHandler :: CodeWorldHandler
 runMessageHandler = public $ \ctx -> do

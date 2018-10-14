@@ -153,6 +153,7 @@ site ctx =
             , ("loadSource", loadSourceHandler ctx)
             , ("run", runHandler ctx)
             , ("runJS", runHandler ctx)
+            , ("runBaseJS", runBaseHandler ctx)
             , ("runMsg", runMessageHandler ctx)
             , ("haskell", serveFile "web/env.html")
             , ("blocks", serveFile "web/blocks.html")
@@ -411,14 +412,16 @@ errorCheckHandler = public $ \ctx -> do
     writeBS output
 
 getHashParam :: Bool -> BuildMode -> Snap ProgramId
-getHashParam allowDeploy mode =
-    getParam "hash" >>= \case
+getHashParam allowDeploy mode = do
+    maybeHash <- getParam "hash"
+    case maybeHash of
         Just h -> return (ProgramId (T.decodeUtf8 h))
         Nothing
             | allowDeploy -> do
                 Just dh <- getParam "dhash"
                 let deployId = DeployId (T.decodeUtf8 dh)
                 liftIO $ resolveDeployId mode deployId
+            | otherwise -> pass
 
 loadXMLHandler :: CodeWorldHandler
 loadXMLHandler = public $ \ctx -> do
@@ -440,11 +443,28 @@ runHandler :: CodeWorldHandler
 runHandler = public $ \ctx -> do
     mode <- getBuildMode
     programId <- getHashParam True mode
-    result <- liftIO $ compileIfNeeded ctx mode programId
+    result <- liftIO $
+        withProgramLock mode programId $ compileIfNeeded ctx mode programId
     modifyResponse $ setResponseCode (responseCodeFromCompileStatus result)
     when (result == CompileSuccess) $ do
         modifyResponse $ setContentType "text/javascript"
         serveFile (buildRootDir mode </> targetFile programId)
+
+runBaseHandler :: CodeWorldHandler
+runBaseHandler = public $ \ctx -> do
+    maybeVer <- fmap T.decodeUtf8 <$> getParam "version"
+    case maybeVer of
+        Just ver -> serveFile (baseCodeFile ver)
+        Nothing -> do
+            mode <- getBuildMode
+            programId <- getHashParam True mode
+            result <- liftIO $
+                withProgramLock mode programId$ compileIfNeeded ctx mode programId
+            modifyResponse $ setResponseCode (responseCodeFromCompileStatus result)
+            when (result == CompileSuccess) $ do
+                ver <- liftIO $
+                    B.readFile (buildRootDir mode </> baseVersionFile programId)
+                redirect $ "/runBaseJS?version=" <> ver
 
 runMessageHandler :: CodeWorldHandler
 runMessageHandler = public $ \ctx -> do
@@ -487,14 +507,11 @@ compileIncrementally ctx mode programId = do
 
     case baseStatus of
         CompileSuccess -> do
-            -- Don't actually compile incrementally yet!  We're just getting the
-            -- infrastructure in place.  This can be changed once the rest of
-            -- the system is working.
-            let stage = FullBuild (buildRootDir mode </> targetFile programId)
-
             let source = sourceRootDir mode </> sourceFile programId
+            let target = buildRootDir mode </> targetFile programId
             let result = buildRootDir mode </> resultFile programId
             let baseVer = buildRootDir mode </> baseVersionFile programId
+            let stage = UseBase target (baseSymbolFile ver)
 
             status <- compileSource stage source result (getMode mode) False
             T.writeFile baseVer ver

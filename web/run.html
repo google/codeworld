@@ -34,17 +34,28 @@
     var gid = params['gid']
     if (!mode) mode = 'codeworld';
 
-    var uri = 'runJS?mode=' + mode;
-    if (hash) uri += '&hash=' + hash;
-    if (dhash) uri += '&dhash=' + dhash;
+    var query = '?mode=' + mode;
+    if (hash) query += '&hash=' + hash;
+    if (dhash) query += '&dhash=' + dhash;
 
-    var loadScript = document.createElement('script');
-    loadScript.setAttribute('type', 'text/javascript');
-    loadScript.setAttribute('src', uri);
-    loadScript.onload = function() {
-      start();
+    var baseURI = 'runBaseJS' + query;
+    var codeURI = 'runJS' + query;
+
+    var loadBase = document.createElement('script');
+    loadBase.setAttribute('type', 'text/javascript');
+    loadBase.setAttribute('src', baseURI);
+    loadBase.async = false;
+    loadBase.onload = function() {
+        var loadScript = document.createElement('script');
+        loadScript.setAttribute('type', 'text/javascript');
+        loadScript.setAttribute('src', codeURI);
+        loadScript.onload = function() {
+          start();
+        };
+        document.body.appendChild(loadScript);
     };
-    document.head.appendChild(loadScript);
+    document.body.appendChild(loadBase);
+
   </script>
   <script type="text/javascript" src="js/debugmode.js"></script>
 </html>

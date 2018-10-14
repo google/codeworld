@@ -2,19 +2,24 @@
 {-# LANGUAGE ParallelListComp #-}
 {-# LANGUAGE PatternGuards #-}
 
-module GenBase where
+module CodeWorld.Compile.Base (generateBaseBundle, baseVersion) where
 
+import Data.Char
 import Data.Monoid
+import Data.ByteString (ByteString)
+import qualified Data.ByteString as B
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
+import System.Process
 import Text.Regex.TDFA
 import Text.Regex.TDFA.Text
 
 generateBaseBundle ::
-       FilePath -> [Text] -> String -> FilePath -> FilePath -> IO ()
-generateBaseBundle hoogleDB blacklist mode mainFile baseFile = do
-    (imports, exprs) <- readHoogleDB hoogleDB blacklist
+       [FilePath] -> [Text] -> String -> FilePath -> FilePath -> IO ()
+generateBaseBundle hoogleDBs blacklist mode mainFile baseFile = do
+    (imports, exprs) <- readHoogleDBs hoogleDBs blacklist
     let defs =
             [ "d" <> T.pack (show i) <> " = " <> e
             | i <- [0 :: Int ..]
@@ -28,6 +33,9 @@ generateBaseBundle hoogleDB blacklist mode mainFile baseFile = do
     T.writeFile baseFile src
     T.writeFile mainFile $
         T.unlines ["module Main where", "import LinkBase", mainDef]
+
+readHoogleDBs :: [FilePath] -> [Text] -> IO ([Text], [Text])
+readHoogleDBs files blacklist = foldMap (flip readHoogleDB blacklist) files
 
 readHoogleDB :: FilePath -> [Text] -> IO ([Text], [Text])
 readHoogleDB file blacklist = do
@@ -56,3 +64,17 @@ submatch :: Text -> Text -> Maybe Text
 submatch t pat
     | [_, match] <- getAllTextSubmatches (t =~ pat) = Just match
     | otherwise = Nothing
+
+baseVersion :: IO Text
+baseVersion = do
+    (_, Just outh, _, pid) <-
+        createProcess
+            (shell "ghcjs-pkg list -v 2>&1 | sha256sum")
+            { std_in = NoStream
+            , std_out = CreatePipe
+            , std_err = NoStream
+            , close_fds = True
+            }
+    hash <- T.decodeUtf8 <$> B.takeWhile (/= fromIntegral (ord ' ')) <$> B.hGetContents outh
+    waitForProcess pid
+    return hash

@@ -34,8 +34,10 @@ import CodeWorld.Auth
         , authRoutes
         , getAuthConfig
         )
-import Compile
+import CodeWorld.Compile
+import CodeWorld.Compile.Base
 import Control.Applicative
+import Control.Concurrent (forkIO)
 import Control.Concurrent.QSem
 import Control.Exception (bracket_)
 import Control.Monad
@@ -49,6 +51,7 @@ import Data.Char (isSpace)
 import Data.List
 import Data.Maybe
 import Data.Monoid
+import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
@@ -72,21 +75,23 @@ maxSimultaneousCompiles = 4
 
 data Context = Context {
     authConfig :: AuthConfig,
-    compileSem :: QSem
+    compileSem :: QSem,
+    baseSem :: QSem
     }
 
 main :: IO ()
 main = do
     ctx <- makeContext
+    forkIO $ baseVersion >>= buildBaseIfNeeded ctx >> return ()
     quickHttpServe $ (processBody >> site ctx) <|> site ctx
 
 makeContext :: IO Context
 makeContext = do
-    appDir <- getCurrentDirectory
-    auth <- getAuthConfig appDir
-    putStrLn $ "Authentication method: " ++ authMethod auth
-    sem <- newQSem maxSimultaneousCompiles
-    return (Context auth sem)
+    ctx <- Context <$> (getAuthConfig =<< getCurrentDirectory)
+                   <*> newQSem maxSimultaneousCompiles
+                   <*> newQSem 1
+    putStrLn $ "Authentication method: " ++ authMethod (authConfig ctx)
+    return ctx
 
 -- |A CodeWorld Snap API action
 type CodeWorldHandler = Context -> Snap ()
@@ -471,15 +476,56 @@ compileIfNeeded ctx mode programId = do
     hasTarget <- doesFileExist (buildRootDir mode </> targetFile programId)
     if | hasResult && hasTarget -> return CompileSuccess
        | hasResult -> return CompileError
-       | otherwise -> do
-             let sem = compileSem ctx
-             bracket_ (waitQSem sem) (signalQSem sem) $
-                 compileSource
-                     (FullBuild (buildRootDir mode </> targetFile programId))
-                     (sourceRootDir mode </> sourceFile programId)
-                     (buildRootDir mode </> resultFile programId)
-                     (getMode mode)
-                     False
+       | otherwise ->
+             bracket_ (waitQSem $ compileSem ctx) (signalQSem $ compileSem ctx) $
+                 compileIncrementally ctx mode programId
+
+compileIncrementally :: Context -> BuildMode -> ProgramId -> IO CompileStatus
+compileIncrementally ctx mode programId = do
+    ver <- baseVersion
+    baseStatus <- buildBaseIfNeeded ctx ver
+
+    case baseStatus of
+        CompileSuccess -> do
+            -- Don't actually compile incrementally yet!  We're just getting the
+            -- infrastructure in place.  This can be changed once the rest of
+            -- the system is working.
+            let stage = FullBuild (buildRootDir mode </> targetFile programId)
+
+            let source = sourceRootDir mode </> sourceFile programId
+            let result = buildRootDir mode </> resultFile programId
+            let baseVer = buildRootDir mode </> baseVersionFile programId
+
+            status <- compileSource stage source result (getMode mode) False
+            T.writeFile baseVer ver
+
+            -- It's possible that a new library was built during the compile.  If so, then the code
+            -- we've just built is suspect, and it's better to just build it anew!
+            checkVer <- baseVersion
+            if ver == checkVer then return status
+                               else compileIncrementally ctx mode programId
+        _ -> return CompileAborted
+
+buildBaseIfNeeded :: Context -> Text -> IO CompileStatus
+buildBaseIfNeeded ctx ver = do
+    codeExists <- doesFileExist (baseCodeFile ver)
+    symbolsExist <- doesFileExist (baseSymbolFile ver)
+    if not codeExists || not symbolsExist then
+        bracket_ (waitQSem $ baseSem ctx) (signalQSem $ baseSem ctx) $
+            withSystemTempDirectory "genbase" $ \tmpdir -> do
+                let linkMain = tmpdir </> "LinkMain.hs"
+                let linkBase = tmpdir </> "LinkBase.hs"
+                let err = tmpdir </> "output.txt"
+                generateBaseBundle basePaths baseIgnore "codeworld" linkMain linkBase
+                let stage = GenBase "LinkBase" linkBase (baseCodeFile ver) (baseSymbolFile ver)
+                compileSource stage linkMain err "codeworld" False
+        else return CompileSuccess
+
+basePaths :: [FilePath]
+basePaths = ["codeworld-base/dist/doc/html/codeworld-base/codeworld-base.txt"]
+
+baseIgnore :: [Text]
+baseIgnore = ["fromCWText", "toCWText", "randomsFrom"]
 
 errorCheck :: Context -> BuildMode -> B.ByteString -> IO (CompileStatus, B.ByteString)
 errorCheck ctx mode source = withSystemTempDirectory "cw_errorCheck" $ \dir -> do

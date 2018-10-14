@@ -16,9 +16,9 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-import Compile
-import GenBase
 
+import CodeWorld.Compile
+import CodeWorld.Compile.Base
 import Control.Applicative
 import Control.Monad
 import Data.Maybe
@@ -106,7 +106,7 @@ compileBase Options {..} err = do
     withSystemTempDirectory "genbase" $ \tmpdir -> do
         let linkMain = tmpdir </> "LinkMain.hs"
         let linkBase = tmpdir </> "LinkBase.hs"
-        generateBaseBundle source (map T.pack baseIgnore) mode linkMain linkBase
+        generateBaseBundle [source] (map T.pack baseIgnore) mode linkMain linkBase
         when verbose $ do
             hPutStrLn stderr "GENERATED LinkMain.hs as:"
             readFile linkMain >>= hPutStrLn stderr

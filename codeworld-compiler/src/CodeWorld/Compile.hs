@@ -17,12 +17,14 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-module Compile
+
+module CodeWorld.Compile
     ( compileSource
     , Stage(..)
     , CompileStatus(..)
     ) where
 
+import CodeWorld.Compile.ParseCode
 import Control.Concurrent
 import Control.Monad
 import Data.ByteString (ByteString)
@@ -37,8 +39,6 @@ import System.FilePath
 import System.IO
 import System.IO.Temp (withSystemTempDirectory)
 import System.Process
-
-import ParseCode
 
 data Stage
     = ErrorCheck

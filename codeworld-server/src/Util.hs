@@ -68,11 +68,16 @@ newtype ShareId = ShareId
     { unShareId :: Text
     } deriving (Eq)
 
+type BaseVersion = Text
+
 autocompletePath :: FilePath
 autocompletePath = "web/codeworld-base.txt"
 
 clientIdPath :: FilePath
 clientIdPath = "web/clientId.txt"
+
+baseRootDir :: FilePath
+baseRootDir = "data/base"
 
 sourceRootDir :: BuildMode -> FilePath
 sourceRootDir (BuildMode m) = "data" </> m </> "user"
@@ -88,6 +93,12 @@ projectRootDir (BuildMode m) = "data" </> m </> "projects"
 
 deployRootDir :: BuildMode -> FilePath
 deployRootDir (BuildMode m) = "data" </> m </> "deploy"
+
+baseCodeFile :: BaseVersion -> FilePath
+baseCodeFile ver = baseRootDir </> T.unpack ver </> "base.js"
+
+baseSymbolFile :: BaseVersion -> FilePath
+baseSymbolFile ver = baseRootDir </> T.unpack ver </> "base.symbs"
 
 sourceBase :: ProgramId -> FilePath
 sourceBase (ProgramId p) =
@@ -105,6 +116,9 @@ targetFile programId = sourceBase programId <.> "js"
 
 resultFile :: ProgramId -> FilePath
 resultFile programId = sourceBase programId <.> "err.txt"
+
+baseVersionFile :: ProgramId -> FilePath
+baseVersionFile programId = sourceBase programId <.> "basever"
 
 auxiliaryFiles :: ProgramId -> [FilePath]
 auxiliaryFiles programId =
@@ -202,8 +216,7 @@ dirFilter dirs char =
 projectFileNames :: [FilePath] -> IO [Text]
 projectFileNames subHashedDirs = do
     hashedFiles <- dirFilter subHashedDirs 'S'
-    projects <-
-        fmap catMaybes $
+    projects <- fmap catMaybes $
         forM hashedFiles $ \f -> do
             exists <- doesFileExist f
             if exists

@@ -16,22 +16,22 @@ Executable codeworld-compiler
   Hs-source-dirs: exec
   Main-is: Main.hs
 
-  Other-modules: GenBase
-
   Build-depends:
     base,
     codeworld-compiler,
     directory,
     filepath,
     optparse-applicative,
-    regex-tdfa,
-    regex-tdfa-text,
     temporary,
     text
 
 Library
-  Exposed-modules: Compile
-  Other-modules: ParseCode
+  Exposed-modules:
+    CodeWorld.Compile,
+    CodeWorld.Compile.Base
+
+  Other-modules:
+    CodeWorld.Compile.ParseCode
 
   Build-depends:
     aeson,
@@ -48,6 +48,7 @@ Library
     mtl,
     process,
     regex-tdfa,
+    regex-tdfa-text,
     split,
     syb,
     temporary,

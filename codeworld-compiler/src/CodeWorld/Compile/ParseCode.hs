@@ -15,7 +15,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-module ParseCode (runCustomDiagnostics, hasOldStyleMain) where
+
+module CodeWorld.Compile.ParseCode (runCustomDiagnostics, hasOldStyleMain) where
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B

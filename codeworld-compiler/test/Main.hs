@@ -15,7 +15,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-import Compile
+
+import CodeWorld.Compile
 import Control.Monad
 import Data.Char
 import System.Directory

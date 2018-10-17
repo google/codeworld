@@ -38,6 +38,7 @@ data Options = Options
     , errfile :: Maybe FilePath
     , mode :: String
     , baseSymbols :: Maybe String
+    , baseURL :: Maybe String
     , genBase :: Bool
     , baseIgnore :: [String]
     , verbose :: Bool
@@ -63,6 +64,10 @@ main = execParser opts >>= \opts -> checkOptions opts >> runWithOptions opts
             (strOption
                  (long "base-syms" <> short 's' <> metavar "BaseSyms" <>
                   help "Location of base symbol file")) <*>
+        optional
+            (strOption
+                 (long "base-url" <> short 'u' <> metavar "BaseURL" <>
+                  help "URL to dynamically load base JS bundle")) <*>
         switch (long "gen-base" <> short 'b' <> help "Generate a base bundle.") <*>
         many
             (strOption
@@ -75,6 +80,9 @@ checkOptions :: Options -> IO ()
 checkOptions Options {..} = do
     when (output == Nothing && genBase) $ do
         hPutStrLn stderr ("Flag --gen-base requires output")
+        exitFailure
+    when ((baseSymbols == Nothing) /= (baseURL == Nothing)) $ do
+        hPutStrLn stderr ("Flags --base-symbols and --base-url can't be used separately")
         exitFailure
     when (output == Nothing && baseSymbols /= Nothing) $ do
         hPutStrLn stderr ("Flag --base-symbols requires output")
@@ -120,8 +128,8 @@ compileBase Options {..} err = do
 compile :: Options -> FilePath -> IO CompileStatus
 compile opts@Options {..} err = do
     let stage =
-            case (output, baseSymbols) of
-                (Nothing, _) -> ErrorCheck
-                (Just out, Nothing) -> FullBuild out
-                (Just out, Just syms) -> UseBase out syms
+            case (output, baseSymbols, baseURL) of
+                (Nothing, _, _) -> ErrorCheck
+                (Just out, Nothing, _) -> FullBuild out
+                (Just out, Just syms, Just url) -> UseBase out syms url
     compileSource stage source err mode verbose

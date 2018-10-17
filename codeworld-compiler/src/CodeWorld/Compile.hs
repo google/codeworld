@@ -49,6 +49,7 @@ data Stage
                 FilePath  -- ^ Symbol file location
     | UseBase   FilePath  -- ^ Output file location
                 FilePath  -- ^ Symbol file location
+                String    -- ^ URL of the base JavaScript bundle
     deriving (Eq, Show)
 
 data CompileStatus
@@ -87,7 +88,7 @@ compileSource stage src err mode verbose = do
                         GenBase mod base _ _ -> do
                             copyFile base (tmpdir </> mod <.> "hs")
                             return [mod <.> "hs", "-generate-base", mod]
-                        UseBase _ syms -> do
+                        UseBase _ syms _ -> do
                             copyFile syms (tmpdir </> "out.base.symbs")
                             return ["-dedupe", "-use-base", "out.base.symbs"]
                 let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
@@ -114,11 +115,23 @@ compileSource stage src err mode verbose = do
                                     out
                                     (rtsCode <> libCode <> outCode)
                                 copyFile (target </> "out.base.symbs") syms
-                            UseBase out _ -> do
+                            UseBase out _ baseURL -> do
+                                let prefix = pack $
+                                        "var el = document.createElement('script');" ++
+                                        "el.type = 'text/javascript';" ++
+                                        "el.src = '" ++ baseURL ++ "';" ++
+                                        "el.async = false;" ++
+                                        "el.onload = function() {"
+                                let suffix = pack $
+                                          "window.h$mainZCZCMainzimain = h$mainZCZCMainzimain;" ++
+                                          "start();" ++
+                                          "start = function() {};" ++
+                                        "};" ++
+                                        "document.body.appendChild(el);"
                                 libCode <- B.readFile $ target </> "lib.js"
                                 outCode <- B.readFile $ target </> "out.js"
                                 createDirectoryIfMissing True (takeDirectory out)
-                                B.writeFile out (libCode <> outCode)
+                                B.writeFile out (prefix <> libCode <> outCode <> suffix)
                             FullBuild out -> do
                                 rtsCode <- B.readFile $ target </> "rts.js"
                                 libCode <- B.readFile $ target </> "lib.js"

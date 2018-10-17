@@ -38,24 +38,12 @@
     if (hash) query += '&hash=' + hash;
     if (dhash) query += '&dhash=' + dhash;
 
-    var baseURI = 'runBaseJS' + query;
-    var codeURI = 'runJS' + query;
+    var uri = 'runJS' + query;
 
-    var loadBase = document.createElement('script');
-    loadBase.setAttribute('type', 'text/javascript');
-    loadBase.setAttribute('src', baseURI);
-    loadBase.async = false;
-    loadBase.onload = function() {
-        var loadScript = document.createElement('script');
-        loadScript.setAttribute('type', 'text/javascript');
-        loadScript.setAttribute('src', codeURI);
-        loadScript.onload = function() {
-          start();
-        };
-        document.body.appendChild(loadScript);
-    };
-    document.body.appendChild(loadBase);
-
+    var loadScript = document.createElement('script');
+    loadScript.setAttribute('type', 'text/javascript');
+    loadScript.setAttribute('src', uri);
+    document.body.appendChild(loadScript);
   </script>
   <script type="text/javascript" src="js/debugmode.js"></script>
 </html>

@@ -551,7 +551,8 @@ function saveProjectAs() {
         type: 'input',
         inputValue: defaultName,
         confirmButtonText: 'Save',
-        showCancelButton: true
+        showCancelButton: true,
+        closeOnConfirm: false
     }, go);
 }
 
@@ -579,6 +580,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
     }
 
     function go() {
+        sweetAlert.close();
         sweetAlert2({
             title: 'Saving ' + projectName + '...',
             text: 'Saving your project.  Please wait.',

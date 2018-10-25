@@ -1571,27 +1571,222 @@ Stubbing
 If you try to write a very large program all at once, though, you're bound
 to get frustrated and have a bad time.  Instead, you should try to write
 your program so that you can look at it one piece at a time, and see it
-take shape.
+take shape.  If you follow the top-down design process, you will end up with
+a lot of undefined variables that stop you from running your code!
 
-This section to be finished.  It should introduce the `blank` picture, and
-walk through the process of adding a stub, and then filling it in.  It should
-also mention stubbing with visible shapes to better arrange parts on the
-screen.
+To prevent this, you can use stubs.  A **stub** is an incomplete definition
+of a variable, that you write as a placeholder for the true value later on.
+Let's revisit the alien above.  You may start by writing:
+
+~~~~~
+program = drawingOf(scene)
+scene = alien & planet & spaceStation & rocket & backdrop
+~~~~~
+
+At this point, there are five undefined variables: `alien`, `planet`,
+`spaceStation`, `rocket`, and `backdrop`.  Instead of immediately defining
+all of the these variables (which is a lot of work!), you could extend your
+program into this one, which you can run right away.
+
+~~~~~ . clickable
+program = drawingOf(scene)
+scene = alien & planet & spaceStation & rocket & backdrop
+alien = blank
+planet = blank
+spaceStation = blank
+rocket = blank
+backdrop = blank
+~~~~~
+
+If you run this program, you may notice that you don't see anything.
+That's because all the parts of your drawing are defined to be `blank`.
+In CodeWorld, **`blank`** is a picture of nothing at all!
+
+~~~~~
+blank :: Picture
+~~~~~
+
+It's the first place you'll turn for a stub.  Now that you can run
+your code, you can go back and start filling in the `blank`s --
+literally -- with drawings of each part.
+
+Sometimes, a stub isn't just blank, but a simpler version of the picture
+itself.  You might have a great idea for how to draw a rocket and an alien
+planet with craters and rings.  But for now, you may consider defining the
+rocket to just be a rectangle, the planet to be a circle, and so on.
+
+~~~~~ . clickable
+program = drawingOf(scene)
+scene = alien & planet & spaceStation & rocket & backdrop
+alien = scaled(circle(1), 1, 2)
+planet = circle(3)
+spaceStation = rectangle(10, 4)
+rocket = rectangle(2, 8)
+backdrop = blank
+~~~~~
+
+Now you can start to fit these pieces fit together in the larger picture.
+There's no use building a complex space station if there's no room for a
+space station in your drawing!  With these simple shapes in place, you can
+add translations to lay out the main parts in your entire drawing, and get
+a rough idea of how they work together.
+
+~~~~~ . clickable
+program = drawingOf(scene)
+scene = translated(alien, 3, 7) &
+        translated(planet, -2, -5) &
+        translated(spaceStation, -3, 3) &
+        translated(rocket, 6, 3) &
+        backdrop
+alien = scaled(circle(1), 1, 2)
+planet = circle(3)
+spaceStation = rectangle(10, 4)
+rocket = rectangle(2, 8)
+backdrop = blank
+~~~~~
+
+This becomes a rough sketch of your final drawing.  Now that you can
+visualize how everything fits together, you can more confidently dig
+in and fill out each of the pieces.
 
 Reusing variables
 -----------------
 
-This section to be written.
+It's common in your drawings to want more than one of the same shape.
+You might want an entire sky full of stars, or a field of flowers,
+or a flock of birds.  A common mistake, in this case, is to write your
+code like this:
 
-Separation of concerns
-----------------------
+~~~~~
+bird1 = ... some code ...
+bird2 = ... the exact same code ...
+bird3 = ... the same code again ...
+~~~~~
 
-This section to be written.
+You don't need to do this!  Once you have a definition of a picture,
+you can use that variable any number of times in the same program,
+like this.
+
+~~~~~
+bird = ... some code ...
+flock = bird & translated(bird, 2, 1) & translated(bird, -3, 2)
+~~~~~
+
+This is an important part of how we build larger programs, and
+computer programmers call it *reuse*.  They sometimes talk about a
+rule of thumb called DRY, which stands for "Don't Repeat Yourself".
+Any time you are tempted to type the exact same thing more than
+once, you can consider defining a variable, instead, and just using
+the variable several times.
+
+Sometimes it's not that simple, though.  Let's look at a more
+complicated situation.  Imagine you've written a picture of three
+fish like this:
+
+~~~~~ . clickable
+program = drawingOf(fish1 & fish2 & fish3)
+fish1 = translated(sector(30, 330, 2),  4,  2) &
+        translated(sector(-90, 90, 2),  1,  2)
+fish2 = translated(sector(30, 330, 2),  1, -3) &
+        translated(sector(-90, 90, 2), -2, -3)
+fish3 = translated(sector(30, 330, 2), -2,  1) &
+        translated(sector(-90, 90, 2), -5,  1)
+~~~~~
+
+If you run this program, you can clearly see three copies of the same
+fish, but the code isn't identical.  There are different numbers for
+the translations.  The problem is that the code uses the same
+`translated` functions for two things: arranging the parts of each
+fish, and arranging the fish on the screen.  In order to reuse the
+same variable for a fish, you would first need to separate these
+translations.
+
+Inside of a fish, the important relationship is that the tail is
+3 units to the left of the body.  You can start, then, by defining
+fish with just that part of the translation.
+
+~~~~~
+fish = sector(30, 330, 2) &
+       translated(sector(-90, 90, 2), -3, 0)
+~~~~~
+
+Now that this is done, you can translate each *entire* *fish* to the
+desired point on the canvas.
+
+~~~~~ . clickable
+program = drawingOf(school)
+school = translated(fish, 4, 2) &
+         translated(fish, 1, -3) &
+         translated(fish, -2, 1)
+fish = sector(30, 330, 2) &
+       translated(sector(-90, 90, 2), -3, 0)
+~~~~~
+
+This program correctly follows the DRY ("Don't Repeat Yourself") rule
+of thumb, because it says everything exactly once.  When you are
+trying to reuse variables, it's important to translate the entire
+variable when possible, and use transformations on the parts only to
+arrange the parts relative to each other.
+
+Abstraction and separation of concerns
+--------------------------------------
+
+You may be wondering why computer programmers follow the DRY ("Don't Repeat
+Yourself") rule of thumb.  There are a few reasons.
+
+First, it can make your code a lot shorter.  Shorter code is easier to read
+and understand, and also makes it easier to notice and fix your mistakes.
+There are just fewer places for mistakes to happen.  When you make several
+copies of a definition, it's possible to get one of them wrong.  But when
+you reuse the same one, once you've written it correctly once, it's
+guaranteed to be correct everywhere.  If you change your mind about what a
+part should look like, too, you can change it once, and it will be fixed
+everywhere.
+
+There is a more important reason, though.  It's easier to create ambitious
+things in code when you have more powerful vocabulary to do it with.  For
+example, once you have a word for a fish, you could more easily try out
+different arrangements of fish, because there's not very much code involved
+in moving or adding one more fish.  You can think about ideas like making a
+loop of fish chasing each other's tails, or a family with a large fish and
+several smaller fish following.  You might have trouble even expressing the
+code for these ideas if you have to build new fish each time!
+
+What's going on here is called **abstraction**.  Abstraction is all about
+dealing with higher level ideas, and freeing yourself from thinking about
+technical details over and over again.  Abstraction is thinking about
+aliens, or butterflies, or fish, instead of rectangles, circles, and lines.
+Of course, the computer still needs to know where to draw the rectangles
+and circles and lines to make an alien, but you can say that once and then
+move on to bigger questions.
+
+!!! collapsible:How is abstraction related to top-down decomposition?
+    There's a close relationship between the ideas of abstraction and
+    top-down decomposition.  Top-down decomposition is about thinking about
+    the higher-level pieces of your drawing *first*.  Abstraction is about
+    thinking about the higher-level pieces *more* *often*.  So both
+    top-down decomposition and reuse of variables are techniques for
+    abstraction.
+
+Another important tool for abstraction is called *separation* *of*
+*concerns*.  This involves thinking about which properties of one part of
+your drawing are *intrinsic* to that part, and which ones are just
+*accidental*.  For example, in the school of fish earlier, the tail being
+left of the body was part of the appearance of a fish.  But being located
+at some point on the canvas was not.
+
+To be written:
+- Changing the definition of program to isolate a piece.
+- The cascading transforms antipattern
 
 Composing transformations
 -------------------------
 
-This section to be written.
+To be written:
+- Inside-out order of transformations, and reminder about "wrapping".
+- Order of transformations: translation and rotation.
+- Order of transformations: translation and scaling.
+- Order of transformations: rotation and scaling.
 
 Advanced shapes
 ===============
@@ -1633,8 +1828,6 @@ plane:
 * `(-5, 5)`: This one is on the top left.  Top because the y coordinate
   (the second number) is positive, and left because the x coordinate (the
   first number) is negative.
-
-Got it?  Great!
 
 Lines, curves, and polygons
 ---------------------------

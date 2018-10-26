@@ -1332,53 +1332,28 @@ one you started on.  This counting technique lets you find the match
 for that specific parenthesis without needing to sort through
 everything in between.
 
-### Wrapping expressions
-
-Another technique for managing parentheses is to start with a simple
-picture, and then *wrap* it in function applications one at a time.
-For example, you could start with a circle, then color it, scale it,
-and move it, in steps like this:
-
-~~~~~
-pic =                           circle(2)
-~~~~~
-
-~~~~~
-pic =                   colored(circle(2), red)
-~~~~~
-
-~~~~~
-pic =            scaled(colored(circle(2), red), 2, 1)
-~~~~~
-
-~~~~~
-pic = translated(scaled(colored(circle(2), red), 2, 1), 0, -5)
-~~~~~
-
-Things get easier when you realize that you don't need to type your
-whole program from left to right!  Here, just like you matched
-parentheses from the inside out, you typed them that way, too.  If
-you always type your open parenthesis and its matching close
-parenthesis at the same time, you can never forget one of them.  And
-if you also fill in the rest of the expression when you do, you can
-think about one change at a time.  And if you run your program after
-each step, you will find and fix your mistakes right away, instead
-of waiting until you've forgotten when you meant to type.
-
 ### Using tools wisely
 
 The CodeWorld web site is the too you use to create your drawings.
 It also has some tricks to help you keep track of parentheses.
 
-Matching pairs of parentheses are always the same color when you look
-at your code with CodeWorld.  So to find the match for a green
-parenthesis, you need only look for the other green ones.  You can
-see this in the examples of parentheses earlier, if you look for it!
+* Matching pairs of parentheses are always the same color when you look
+  at your code with CodeWorld.  So to find the match for a green
+  parenthesis, you need only look for the other green ones.  You can
+  see this in the examples of parentheses earlier, if you look for it.
 
-Also, if you move your text cursor next to a parenthesis, the entire
-contents of the parenthesis pair (and the function name, if it's part
-of a function application) will be underlined.  These tools can help
-you avoid the need to count.
+  Parentheses on the outside are also drawn larger than those inside.
+  This is a common convention in mathematics.
+
+* If you move your text cursor next to a parenthesis, that parenthesis
+  and its match will both be highlighted with a box.  This helps you
+  avoid the need to do the counting shown above to find the match for
+  a specific parenthesis.
+
+This can help you understand the structure of expressions in CodeWorld
+when working on the web site.  However, it's still a good idea to
+practice working out pairs of matching parentheses, since they come up
+all over mathematics.
 
 Parsing subexpressions
 ----------------------
@@ -1482,6 +1457,447 @@ While this may not seem much simpler, it does make it easier to understand the
 structure of the expression  You can see that the entire expression is an
 application of the `drawingOf` function, which has one argument.  And you can
 look closer at the argument to see what its pieces are.
+
+Composing transformations
+-------------------------
+
+Often, you want to apply more than one transformation to the same picture.
+For example, you may want to color something blue, rotate it, and translate it
+to the right location.  To do this, you can nest these transformations
+together, like this:
+
+~~~~~
+    translated( rotated( colored(pic, blue), 45 ), 0, 5 )
+~~~~~
+
+Just like when matching parentheses, the way to read nested transformations is
+from the inside out.  In this example:
+
+1. You started with the picture called `pic`.
+2. Then you changed the color of that picture to blue.
+3. Then you rotated that picture by 45 degrees.
+4. Finally, you translated that picture up by 5 units.
+
+This might seem unusual at first, since the function names occur in the
+opposite order.  It might also surprise you that the arguments like `blue`
+and `45` come in the opposite order as the functions they apply to.  Just
+remember that every transformation starts with the picture described by its
+argument.  As a result, the starting point is on the inside, and the
+transformations are wrapped around that subexpression working from the
+inside out, like this:
+
+***********************************************************************
+*  .---------------------------------------------------------------.
+* |              .-----------------------------------------.        |
+* |             |           .-----------------------.       |       |
+* |             |          |           .---.         |      |       |
+* | translated( | rotated( | colored( | pic | ,blue) | ,45) | ,0,5) |
+* |             |          |           '---'         |      |       |
+* |             |           '-----------------------'       |       |
+* |              '-----------------------------------------'        |
+*  '---------------------------------------------------------------'
+***********************************************************************
+
+You can write these expressions in the same way, starting with a simple
+picture, and then *wrapping* it in function applications one at a time.
+For example, you could start with a circle, then color it, scale it,
+and move it, in steps like this:
+
+~~~~~ .
+pic =                           circle(2)
+~~~~~
+
+~~~~~ .
+pic =                   colored(circle(2), red)
+~~~~~
+
+~~~~~ .
+pic =            scaled(colored(circle(2), red), 2, 1)
+~~~~~
+
+~~~~~ .
+pic = translated(scaled(colored(circle(2), red), 2, 1), 0, -5)
+~~~~~
+
+Things get easier when you realize that you don't need to type your
+whole program from left to right!  Here, just like you matched
+parentheses from the inside out, you typed them that way, too.  If
+you always type your open parenthesis and its matching close
+parenthesis at the same time, you can never forget one of them.  And
+if you also fill in the rest of the expression when you do, you can
+think about one change at a time.  If you run your program after
+each step, you will also find and fix your mistakes right away,
+instead of waiting until you've forgotten when you meant to type.
+
+When you perform multiple transformations in sequence, the order can
+matter!  Explore the notes below to learn more.
+
+!!! collapsible: Translation and rotation.
+    The `rotated` function rotates a picture *around* *its* *center*.
+    That's an important fact to keep in mind when you are both rotating
+    and translating the same picture.  The following animation shows the
+    same rectangle being rotated and translated in two orders: with the
+    rotation first, and then with the translation first.
+
+    <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=DKBVUuu3EZUkn4c28OjuXXw" width=250 height=250 style="border: none;"></iframe></div>
+
+    The result you probably expected comes from rotating first, on the
+    inside of the expression, and then translating that result.  If you
+    do it the other way around, the rotation also moves the object in a
+    sort of orbit around the center.
+
+!!! collapsible: Translation and dilation.
+    The `dilated` and `scaled` functions stretch pictures *away* *from*
+    or *towards* *the* *center*.  That means that applying these
+    functions to a shapes that's not located at the center will also
+    change their position.  The following animation shows the same
+    rectangle being dilated and translated in two orders: with the
+    dilation first, and then with the translation first.
+
+    <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=DN7I7K6uQA-oLxQXSnCUx2w" width=250 height=250 style="border: none;"></iframe></div>
+
+    The result you probably expect comes from dilating or scaling first,
+    on the inside of the expression, and then translating that result.
+    If you translate on the inside, then dilating or scaling will change
+    the position of the object, by pushing it away, or pulling it toward
+    the center.
+
+!!! collapsible: Rotation and scaling.
+    The `scaled` function stretches pictures along the x and y directions,
+    but these directions change when that picture is rotated.  As a result,
+    scaling before and after rotation have different effects.  You can see
+    that in this illustration.
+
+    <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=DWZKlE3toXcS8vRFvNXgX9w" width=250 height=250 style="border: none;"></iframe></div>
+
+    You probably expected the result you get from scaling on the inside,
+    and then rotating the result of that.  This only makes a difference,
+    though, when the scale factors are different in the x and y directions.
+    If you are dilating, or scaling by the same factor in all directions,
+    then it makes no difference whether you scale or rotate first.
+
+To summarize, you usually want your translations on the outside, rotations
+inside that, and scaling or dilation inside of that, like this:
+
+~~~~~
+translated(rotated(scaled(pic, ...), ...), ...)
+~~~~~
+
+Advanced drawing
+================
+
+As you progress, you may want more flexible shapes than just circles, text,
+and rectangles.  In this section, you will learn ways to describe more
+flexible basic shapes to use in your drawings.
+
+Points and coordinates
+----------------------
+
+To draw more precise shapes, we can use points on a "coordinate plane".
+
+![](/help/coordinate-plane.png width="50%")
+
+You can include a coordinate plane in your CodeWorld drawings, too, by
+using the `coordinatePlane` variable, like this:
+
+~~~~~ . clickable
+program = drawingOf(coordinatePlane)
+~~~~~
+
+The coordinate plane is made up of two directions: *horizontal* (also
+called x) and *vertical* (also called y).  The very center of the screen
+is at position zero in both x and y, and can be written as `(0, 0)`.  In
+general, points can be described by listing two numbers:
+
+* Which number they are above or below on the horizontal line.  This is
+  called the *x* *coordinate*.
+* Which number they are beside on the vertical line.  This is called the
+  *y* *coordinate*.
+
+Since zero is in the middle, one direction uses *positive* numbers, and
+the other uses *negative* numbers.  Once you have these numbers, you can
+write a point by listing them in parentheses with a comma: the x coordinate
+*always* comes first, and the y coordinate *always* comes second.
+
+Try finding these points on the coordinate plane:
+
+!!! collapsible: `(5, 5)`
+    This is in the top right part of the coordinate plane.  Positive
+    x coordinates are on the right, and positive y coordinates on the
+    top.
+
+    <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=Dm0R63kOAB6q6eoshTPEdWQ" width=250 height=250 style="border: none;"></iframe></div>
+
+!!! collapsible: `(5, 0)`
+    This is on the middle right.  The y coordinate of 0 places the
+    point neither up nor down, but directly in the center of the
+    canvas.
+
+    <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=D9QqfcpFjA-kDFWfSTbPhQQ" width=250 height=250 style="border: none;"></iframe></div>
+
+!!! collapsible: `(-5, 5)`
+    This one is on the top left.  It's near the top because of the positive
+    y coordinate, and left because of the negative x coordinate.
+
+    <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=DF0rw2g67WsV9yxQ2Yk0lDw" width=250 height=250 style="border: none;"></iframe></div>
+
+Lines, curves, and polygons
+---------------------------
+
+Now you can draw things like sequences of lines by giving a list of points in
+the coordinate plane to a function called `polyline`:
+
+~~~~~ . clickable
+program = drawingOf(zigzag)
+zigzag  = polyline([(-2, 0), (-1, 1), (0, -1), (1, 1), (2, 0)])
+~~~~~
+
+!!! Lists
+    The square brackets form something called a *list*.  You haven't seen lists
+    before, but they are just what they sound like: collections of multiple
+    things in order.  When drawing lines, curves, and polygons, you will place
+    your points in a list (in square brackets) before giving them to the
+    function.
+
+To draw a closed shape, which ends back where it started, you can use `polygon`
+instead.  Can you figure out the mystery picture before you run it?
+
+~~~~~ . clickable
+program = drawingOf(mystery)
+mystery = polygon(
+    [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
+~~~~~
+
+If you prefer to fill in your shape, you can use `solidPolygon` instead of
+`polygon` and you'll get a solid version.
+
+~~~~~ . clickable
+program = drawingOf(mystery)
+mystery = solidPolygon(
+    [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
+~~~~~
+
+There are also `thickPolygon` and `thickPolyline` which use an extra
+parameter for thickness, following the same pattern as the other picture
+functions you've seen:
+
+~~~~~ . clickable
+program = drawingOf(mystery)
+mystery = thickPolygon(
+    [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)], 1)
+~~~~~
+
+Finally, if you'd like to connect points with a curved line instead of straight
+line segments, there are functions called `curve` and `thickCurve` for curves
+with endpoints, and `closedCurve`, `solidClosedCurve`, and `thickClosedCurve`
+for curves that join back to their starting point in a loop.  These functions
+work exactly like `polyline` and `polygon`, but just draw smooth curves instead.
+
+Drawing with the coordinate plane
+---------------------------------
+
+A neat trick is to use the coordinate plane as you write your code.  Say
+you want to draw a butterfly.  You might start by writing:
+
+~~~~~ . clickable
+program   = drawingOf(butterfly & coordinatePlane)
+butterfly = polyline([ ])
+~~~~~
+
+Now run your program, and you have a coordinate plane to measure what
+points to use in your shapes.  (When you're done, just remove the
+`& coordinatePlane` to get rid of the guidelines.)
+
+No matter which exact kind of line, curve, or polygon you want in the end,
+it's usually easier to start with `polyline`.  That's because `polyline`
+shows you exactly where the points you've chosen are, without drawing extra
+lines back to the starting point or curving all over the place.  Once your
+points are in the right place, it's easy to change the function to the one
+you want.
+
+You can see what your shape looks like so far by trying your code out
+often.  Every new vertex or two is a great time to click that Run button
+and make sure the shape looks the way you expected.
+
+Arcs and sectors
+----------------
+
+The last few kinds of shapes you can draw in CodeWorld are arcs and sectors.
+These are parts of a circle.  The can use arcs to describe a smile, or sectors
+to describe a piece of pie or pizza.
+
+The key to drawing arcs and sectors is using angles to describe which portion
+of a circle you want to draw.  The angles you can use are described in this
+diagram.
+
+![](/help/polar-angles.png width="75%")
+
+Arcs and sectors are drawn with these functions:
+
+~~~~~
+arc :: (Number, Number, Number) -> Picture
+thickArc :: (Number, Number, Number, Number) -> Picture
+sector :: (Number, Number, Number) -> Picture
+~~~~~
+
+The three arguments to the `arc` function are:
+1. An angle giving the direction of one side of the arc.
+2. An angle giving the direction of the other side of the arc.
+3. The radius of the circle that the arc belongs to.
+
+The order of the first two arguments doesn't matter at all.  But the choice of
+number does matter!  The arc will cover all of the directions between the
+numbers you choose.  So even though -90 and 270 represent the same direction,
+the expression `arc(-90, 90, 5)` covers all the directions to the right of the
+y axis, since those are the angles in between the numbers -90 and 90.  But the
+expression `arc(270, 90, 5)` covers the angles to the left of the y axis,
+because those are the numbers between 270 and 90.
+
+Following the same pattern as most other shapes, the `thickArc` function is
+just like `arc`, except that you give it one extra number representing the
+thickness of the line to draw.  The `sector` function is sort of like the
+solid variant of `arc`, in that it draws one slice of a solid circle.  That
+looks like a piece of pie or pizza.
+
+Transforming colors
+-------------------
+
+You've already seen how to use the `colored` function to transform a picture
+by changing its color.  However, up to this point, you've ben limited to
+choosing a few colors known to the computer.  Now it's time to learn a bit more
+about the rich variety of colors available to you.
+
+The colors available are as follows:
+* The **primary** light colors: `red`, `green`, and `blue`
+* The **secondary** light colors: `cyan`, `magenta`, and `yellow`
+* The **tertiary** light colors: `orange`, `chartreuse`, `aquamarine`, `azure`, `violet`, and `rose`
+* Miscellaneous colors: `purple`, `pink`, `brown`, `black`, and `white`
+
+The primary colors might be a little different from what you are used to.
+Computers use the primary light colors: red, green, and blue.  These are
+a little different from the primary ink colors (cyan, magenta, and yellow),
+or the primary paint colors (red, yellow, and blue).  The primary light
+colors can be mixed by shining both on the same spot.  For example, if you
+stood in a dark room, and shone a red and a green colored flashlight at the
+same spot on the wall, you could see the yellow color made when these colors
+of light mix.  Light works a bit differently from paints (where you'd
+expect to mix blue and yellow to make green), or from inks (where you'd make
+red by mixing yellow and magenta).
+
+You can also make shades of gray, by using the `gray` function.  This
+function expects an argument between 0 and 1.  `gray(0)` is just black,
+and `gray(1)` is white.  To make a true gray, pass a number somewhere in
+between these extremes: a lower number for a darker shade, or a higher number
+for a lighter shade.
+
+You can also mix and transform colors using these functions:
+
+~~~~~
+light :: Color -> Color
+dark :: Color -> Color
+
+bright :: Color -> Color
+dull :: Color -> Color
+
+translucent :: Color -> Color
+
+mixed :: (Color, Color) -> Color
+~~~~~
+
+The `light` and `dark` functions change the shade of a color.  For example,
+`dark(green)` is still green, but a darker shade.  You can apply these
+functions more than once, so `dark(dark(green))` is an even darker shade.
+
+The `bright` and `dull` functions change the amount of color.  So, for
+example, `dull(blue)` is a sort of grayish blue, but `bright(blue)` is a
+vivid blue.  Again, you can apply them more than once, so for example,
+`dull(dull(blue))` is almost completely gray.
+
+The `translucent` function makes a color partially transparent, so you can
+see through it to the pictures that you've placed behind it using the **`&`**
+operator.
+
+Finally, you can mix colors using `mixed`.  If you want a reddish brown, for
+example, you can use `mixed(red, brown)`.
+
+Several of these functions can be used together.  These let you describe
+very detailed colors, like:
+
+~~~~~
+mixed(light(dull(yellow)), bright(green))
+~~~~~
+
+!!! collapsible: What's the difference between `bright` and `light`?
+    The functions `bright` and `light` sound very much alike, but they
+    don't mean the same thing.  `light` makes a color lighter in shade,
+    so it's closer to white.  But `bright` makes the color more vibrant,
+    further away from gray.
+
+### Color spaces
+
+One more way to build a color is by giving the exact proportions of red,
+green, and blue light used to describe it.  This is known as the RGB form
+of the color.
+
+~~~~~
+RGB :: (Number, Number, Number) -> Color
+~~~~~
+
+The proportions are numbers between 0 (no light of that color)
+and 1 (as much light of that color as possible).  The color white can be
+described as `RGB(1,1,1)` meaning that it contains as much light as possible
+in all colors.  Black, on the other hand, is `RGB(0,0,0)`, meaning it is the
+color you get from, no light at all.
+
+The RGB colors can be visualized as a cube, where the amount of red, green,
+and blue light is measured along each edge.
+
+![](https://upload.wikimedia.org/wikipedia/commons/a/af/RGB_color_solid_cube.png width=50%)
+
+!!! collapsible: Using RGB colors from other places
+    You can often find the RGB values for colors on the internet.  You'll
+    need to know, though, what scale they are using.  For historical reasons,
+    RGB forms are sometimes given on a scale from 0 to 255, instead of
+    0 to 1.  To use these in CodeWorld, you'll need to divide the numbers
+    by 255.
+
+    For example, Wikipedia [will tell you](https://en.wikipedia.org/wiki/Forest_green)
+    that the RGB form of "forest green" is (34, 139, 34).  To describe this color
+    in CodeWorld, you would write `RGB(34/255, 139/255, 34/255)`.
+
+A second way to describe colors is using the HSL form.
+
+~~~~~
+HSL :: (Number, Number, Number) -> Color
+~~~~~
+
+In this form, you first provide the **hue**, which is the direction of the color
+on the *color wheel*, as an angle.  0 degrees represents red, and positive
+angles move from there to yellow, green, blue, purple, and back to red.
+
+The second two numbers are **saturation**, which says how much color there
+is (0 means a shade of gray, while 1 means a super-bright color), and
+**luminosity**, which describes the lightness of the color (0 means black, normal
+colors are 0.5, and 1 means white).
+
+![](https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/RGB_color_wheel_72.svg/1024px-RGB_color_wheel_72.svg.png width=50%)
+
+Finally, a variant of the RGB form is called RGBA.
+
+~~~~~
+RGBA :: (Number, Number, Number, Number) -> Color
+~~~~~
+
+This function takes the same red, green, and blue proportions as RGB, but then
+another number called the *alpha*, describing how opaque the color is.  An
+alpha of 0 is completely transparent, so you cannot see the picture at all.
+An alpha of 1 is completely opaque, so the shape can't be seen through at all.
+A partially transparent shape would have an alpha number somewhere between zero
+and one.
+
+The `RGB`, `HSL`, and `RGBA` functions are the most powerful tools you have,
+but also the hardest to use.  If you just want a dark blue, try `dark(blue)`.
+But if you definitely need a specific color, these functions are there for you.
 
 Top-down decomposition
 ======================
@@ -1734,166 +2150,70 @@ Abstraction and separation of concerns
 You may be wondering why computer programmers follow the DRY ("Don't Repeat
 Yourself") rule of thumb.  There are a few reasons.
 
-First, it can make your code a lot shorter.  Shorter code is easier to read
-and understand, and also makes it easier to notice and fix your mistakes.
-There are just fewer places for mistakes to happen.  When you make several
-copies of a definition, it's possible to get one of them wrong.  But when
-you reuse the same one, once you've written it correctly once, it's
-guaranteed to be correct everywhere.  If you change your mind about what a
-part should look like, too, you can change it once, and it will be fixed
-everywhere.
-
-There is a more important reason, though.  It's easier to create ambitious
-things in code when you have more powerful vocabulary to do it with.  For
-example, once you have a word for a fish, you could more easily try out
-different arrangements of fish, because there's not very much code involved
-in moving or adding one more fish.  You can think about ideas like making a
-loop of fish chasing each other's tails, or a family with a large fish and
-several smaller fish following.  You might have trouble even expressing the
-code for these ideas if you have to build new fish each time!
+1. It can make your code a lot shorter.  Shorter code is easier to read
+   and understand, and also makes it easier to notice and fix your mistakes.
+   There are just fewer places for mistakes to happen.  When you reuse the same
+   code, once you've written it correctly once, it's correct everywhere.  If
+   you change your mind about what a part should look like, too, you only need
+   to change it in one place.
+2. There is a more important reason, though.  It's easier to create ambitious
+   things in code when you have more powerful vocabulary to do it with.  Once
+   you have a word for a fish, you could more easily try out different
+   arrangements of fish.  You can think about ideas like making a family out
+   of dilated fish with different sizes.  You might have trouble even expressing
+   the code for ideas like that if you have to build new fish each time!
 
 What's going on here is called **abstraction**.  Abstraction is all about
 dealing with higher level ideas, and freeing yourself from thinking about
 technical details over and over again.  Abstraction is thinking about
 aliens, or butterflies, or fish, instead of rectangles, circles, and lines.
 Of course, the computer still needs to know where to draw the rectangles
-and circles and lines to make an alien, but you can say that once and then
-move on to bigger questions.
+and circles and lines to make an alien, but you can say that once inside
+the definition of your simple pictures and there's no need to worry about
+it when thinking about bigger questions.
 
 !!! collapsible:How is abstraction related to top-down decomposition?
-    There's a close relationship between the ideas of abstraction and
-    top-down decomposition.  Top-down decomposition is about thinking about
-    the higher-level pieces of your drawing *first*.  Abstraction is about
-    thinking about the higher-level pieces *more* *often*.  So both
+    There's a close relationship between the ideas of **abstraction** and
+    **top-down decomposition**.  Top-down decomposition is about thinking
+    about the higher-level pieces of your drawing *first*.  Abstraction is
+    about thinking about the higher-level pieces *more* *often*.  So both
     top-down decomposition and reuse of variables are techniques for
     abstraction.
 
-Another important tool for abstraction is called *separation* *of*
-*concerns*.  This involves thinking about which properties of one part of
-your drawing are *intrinsic* to that part, and which ones are just
-*accidental*.  For example, in the school of fish earlier, the tail being
-left of the body was part of the appearance of a fish.  But being located
-at some point on the canvas was not.
+One really important step toward abstraction is the **separation** **of**
+**concerns**.  Some details of your pictures are *essential* to the idea
+of the picture but others, like the position in the drawing, can change
+without changing the idea.  Separation of concerns means that when defining
+a variable like `fish`, you should include the things that are essential to
+being a fish, but not things about how the fish fits in your larger drawing.
 
-To be written:
-- Changing the definition of program to isolate a piece.
-- The cascading transforms antipattern
+A common mistake would be to define `fish` as a picture of a fish in the
+top right corner.  When you wanted a fish in a different place, you would
+then need to translate it relative to that position in the corner.  You
+might even end up with something like this.
 
-Composing transformations
--------------------------
-
-To be written:
-- Inside-out order of transformations, and reminder about "wrapping".
-- Order of transformations: translation and rotation.
-- Order of transformations: translation and scaling.
-- Order of transformations: rotation and scaling.
-
-Advanced shapes
-===============
-
-As you progress, you may want more flexible shapes than just circles, text,
-and rectangles.  In this section, you will learn ways to describe more
-flexible basic shapes to use in your drawings.
-
-Points and coordinates
-----------------------
-
-To draw more precise shapes, we can use points on a "coordinate plane".  You
-can see a coordinate plane right now, just by running this code:
-
-~~~~~ . clickable
-program = drawingOf(coordinatePlane)
+~~~~~
+fish = translated(sector(30, 330, 2), 4, 4) &
+       translated(sector(-90, 90, 2), 1, 4)
+fish2 = translated(fish, -10, -5)
+fish3 = translated(fish2, 7, -4)
+fish4 = translated(fish3, 0, 10)
 ~~~~~
 
-The coordinate plane is made up of two directions: *horizontal* (also
-called x) and *vertical* (also called y).  The very center of the screen
-is at position zero in both x and y, and can be written as `(0, 0)`.  In
-general, points can be described by listing two numbers:
+This does reuse the definition of `fish`, but it's hard to tell where these
+fish will appear on the page.  A better pattern would be to define the
+variable `fish` to draw a fish in the center of the picture, and then
+translate that each time.
 
-* Which number they are above or below on the horizontal line.  This is
-  called the *x* *coordinate*.
-* Which number they are beside on the vertical line.  This is called the
-  *y* *coordinate*.
-
-Since zero is in the middle, one direction uses *positive* numbers, and
-the other uses *negative* numbers.  Once you have these numbers, you can
-write a point by listing them in parentheses with a comma: the x coordinate
-*always* comes first, and the y coordinate *always* comes second.
-
-Run the code above, and then try finding these points on the coordinate
-plane:
-
-* `(5, 5)`: This is in the top right part of the coordinate plane.
-* `(5, 0)`: This is on the middle right.
-* `(-5, 5)`: This one is on the top left.  Top because the y coordinate
-  (the second number) is positive, and left because the x coordinate (the
-  first number) is negative.
-
-Lines, curves, and polygons
----------------------------
-
-Now you can draw things like sequences of lines by giving a list of points in
-the coordinate plane to a function called `polyline`:
-
-~~~~~ . clickable
-program = drawingOf(zigzag)
-zigzag  = polyline([(-2, 0), (-1, 1), (0, -1), (1, 1), (2, 0)])
+~~~~~
+fish = sector(30, 330, 2) &
+       translated(sector(-90, 90, 2), -3, 0)
+fish1 = translated(fish, 4, 4)
+fish2 = translated(fish, -6, -1)
+fish3 = translated(fish2, 1, -5)
+fish4 = translated(fish3, 1, 5)
 ~~~~~
 
-The square brackets form something called a *list*.  You haven't seen lists
-before, but they are just what they sound like: collections of multiple
-things in order.  You need to place your points in a list (in square brackets)
-before giving them to the `polyline` function.
-
-To draw a closed shape, use `polygon` instead.  Can you figure out the
-mystery picture before you click Run?
-
-~~~~~ . clickable
-program = drawingOf(mystery)
-mystery = polygon(
-    [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
-~~~~~
-
-If you prefer to fill in your shape, you can use `solidPolygon` instead of
-`polygon` and you'll get a solid version:
-
-~~~~~ . clickable
-program = drawingOf(mystery)
-mystery = solidPolygon(
-    [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)])
-~~~~~
-
-There are also `thickPolygon` and `thickPolyline` which use an extra
-parameter for thickness:
-
-~~~~~ . clickable
-program = drawingOf(mystery)
-mystery = thickPolygon(
-    [(-3, -4), (0, 5), (3, -4), (-4, 2), (4, 2), (-3, -4)], 1)
-~~~~~
-
-Finally, if you'd like to connect points with a curved line instead of straight
-line segments, there are functions called `curve` and `thickCurve` for curves
-with endpoints, and `closedCurve`, `solidClosedCurve`, and `thickClosedCurve`
-for curves that join back to their starting point in a loop.  These functions
-work exactly like `polyline` and `polygon`, but just draw smooth curves instead.
-
-Drawing with the coordinate plane
----------------------------------
-
-A neat trick is to use the coordinate plane as you write your code.  Say
-you want to draw a butterfly.  You might start by writing:
-
-~~~~~ . clickable
-program   = drawingOf(butterfly & coordinatePlane)
-butterfly = blank
-~~~~~
-
-Now run your program, and you have a coordinate plane to measure what
-points to use in your shapes.  When you're done, just remove the
-`& coordinatePlane` to get rid of the guidelines.
-
-Arcs and sectors
-----------------
-
-This section to be written.
+In this example, it's much easier to see where the fish are located in
+the drawing.  The variable `fish` is in the center, and each of the
+four specific fish are translated from there.

@@ -113,6 +113,10 @@ pink = fromCWColor CW.pink
 mixed :: (Color, Color) -> Color
 mixed (a, b) = fromCWColor (CW.mixed (toCWColor a) (toCWColor b))
 
+{-# WARNING mixed
+    ["The type of mixed will soon be changed to: mixed :: [Color] -> Color",
+     "All existing uses will break, but are easily fixed."] #-}
+
 lighter :: (Color, Number) -> Color
 lighter (c, d) = fromCWColor (CW.lighter (toDouble d) (toCWColor c))
 
@@ -144,6 +148,16 @@ gray, grey :: Number -> Color
 gray = fromCWColor . CW.gray . toDouble
 
 grey = gray
+
+{-# WARNING gray
+    ["The function argument to gray will soon be removed.",
+     "All existing uses will break, but are easily fixed.",
+     "To avoid breaking, consider replacing gray(k) with HSL(0, 0, k)."] #-}
+
+{-# WARNING grey
+    ["The function argument to grey will soon be removed.",
+     "All existing uses will break, but are easily fixed.",
+     "To avoid breaking, consider replacing grey(k) with HSL(0, 0, k)."] #-}
 
 assortedColors :: [Color]
 assortedColors = P.map fromCWColor CW.assortedColors

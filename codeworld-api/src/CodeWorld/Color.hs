@@ -125,6 +125,10 @@ mixed (fenceColor -> RGBA r1 g1 b1 a1) (fenceColor -> RGBA r2 g2 b2 a2)
     b = sqrt ((b1 ^ 2 * a1 + b2 ^ 2 * a2) / (a1 + a2))
     a = (a1 + a2) / 2
 
+{-# WARNING mixed
+    ["The type of mixed will soon be changed to: mixed :: [Color] -> Color",
+     "All existing uses will break, but are easily fixed."] #-}
+
 -- Helper function that sets the alpha of the second color to that
 -- of the first
 sameAlpha :: Color -> Color -> Color
@@ -164,6 +168,16 @@ gray, grey :: Double -> Color
 gray = grey
 
 grey (fence -> k) = RGBA k k k 1
+
+{-# WARNING gray
+    ["The function argument to gray will soon be removed.",
+     "All existing uses will break, but are easily fixed.",
+     "To avoid breaking, consider replacing (gray k) with (HSL 0 0 k)."] #-}
+
+{-# WARNING grey
+    ["The function argument to grey will soon be removed.",
+     "All existing uses will break, but are easily fixed.",
+     "To avoid breaking, consider replacing (grey k) with (HSL 0 0 k)."] #-}
 
 -- | An infinite list of colors.
 assortedColors :: [Color]

@@ -312,7 +312,9 @@ function addToMessage(msg) {
             '<a href="#" onclick="goto($1, $2);">Line $1-$3, Column $2-$4</a>');
 
     var message = document.getElementById('message');
-    message.innerHTML += msg
+    var atEnd = message.scrollTop >= message.scrollHeight - message.clientHeight;
+    message.innerHTML += msg;
+    if (atEnd) message.scrollTop = message.scrollHeight;
 }
 
 function signin() {

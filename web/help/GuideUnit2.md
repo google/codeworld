@@ -1,41 +1,171 @@
-Writing Your Own Functions
-==================
+Creating Your Own Functions
+===========================
 
-You already know how to define variables, so that you can refer to a
-shape by a simple name, and use it several times.  But sometimes, you don't
-want *exactly* the same thing several times.  You want things with one or
-two differences.  Maybe you want three faces, but with different sized eyes.
-Or maybe you want three houses, with different colored roofs.  In these cases,
-you want to write a new function.
+In the last part, you learned about creating drawings in CodeWorld by
+describing pictures.  One of the most important tools was variables:
+names for values that you can put together to build your final program.
+A variable names a single value, such as a number, color, text, or
+picture.
 
-A function is like a variable, but it is incomplete.  It is waiting for more
-information, which needs to be provided when it is used.  Think of some of
-the functions that we've already used.  `circle` is an incomplete shape: it
-needs a radius.  `rectangle` needs a width and a height.  Similarly, you
-can write your own functions that need their own parameters.
+In this section, you will consider this question: what do you do when
+you want to name a concept, but some of the details can change each time
+you use it.  Flowers in a drawing might look similar, but have different
+colors or sizes.  Some space aliens might have different numbers of
+tentacles or eyes.  You could even name more general concepts: the idea
+of a "ring" of pictures, arranged in a circle around the center, is the
+same regardless of whether it's a ring of people, dogs, houses, or clouds.
 
-Function Definitions
---------------------
+In these situations, you need a function.  Functions capture ideas that
+*depend* *on* some details that haven't been decided yet, such as the
+color of a flower, or what to arrange in a ring.  They are incomplete,
+still waiting for more information before they describe a specific
+picture, number, color, etc.
 
-Here's how you would define a house as a function that's waiting on a color
-for the roof, and apply it to draw a house with a red roof.
+You've used a lot of functions already: most of the words that your
+computer already knows -- like `circle`, `rectangle`, `translated`, or
+`dark` -- are examples of functions.  You didn't need to tell the computer
+what those functions mean.  They were already *defined*.  You can also
+define your own functions, and that's what you'll do in this part.
+
+Function as a formula
+---------------------
+
+As you learned in the last section, a **function** is a relationship that
+associates each possible input with a specific result.  The inputs to a
+function are called *arguments*, and the type of input the function
+expects is called its *domain*.  The type of *result* produced a function
+is called its *range*.  Altogether, the function can be thought of as a
+machine, of sorts, that turns arguments (input values) into results
+(output values), like this.
+
+**************************************************
+*    input     .----------.     output
+*      o------>| function +------>o
+* (arguments)  '----------'    (result)
+**************************************************
+
+One way of describing a function is to make a table showing which
+result is associated with each possible input.  For example, if `f` is
+a function that associates any number with twice itself, then it has
+this table.
+
+Input: `x`    | Output: `f(x)`
+:------------:|:-------------:
+      2       |         4
+      3       |         6
+      4       |         8
+      5       |        10
+      6       |        12
+
+Since there are infinitely many numbers, you could never make a complete
+table!  But once you've recognized the pattern, you can imagine that the
+table goes on forever.  This table in one important way to represent a
+function.
+
+As useful as function tables are, though, for understanding a function,
+they don't tell you the pattern; they only leave you to recognize it
+yourself.  Because computers aren't very good at guessing things,
+function tables are not a good language for your next task: defining
+your own function.  A different representation is better, and the one
+you will use is a *formula*.
+
+One way to understand functions as a formula is to start by writing a
+sequence of equations, having the same information as the table above:
+
+~~~~~
+f(2) = 4
+f(3) = 6
+f(4) = 8
+f(5) = 10
+f(6) = 12
+~~~~~
+
+But again, it's impossible to write an equation for every possible input.
+So instead, you will write one equation that captures the *pattern* in the
+lines above:
+
+~~~~~
+f(x) = x * 2
+~~~~~
+
+This is a formula that defines a function.  It captures the pattern in the
+explicit equations above.  The way to read a function formula is to read
+a silent "for any value of `x`..." at the beginning.  So this one says:
+For any value of `x`, `f(x)` is `x * 2`.  The `x` can be any new name that
+you like.  It just names some part of the equations that differs each
+time.
+
+Abstracting functions
+---------------------
+
+This technique of capturing the parts of expressions that differ and naming
+them as arguments is very powerful.  Any time you have a repeating pattern
+of some kind, you can just name the parts that differ with arguments, and
+write down the entire pattern.  This doesn't just work for numbers.  It's
+okay for other types such as colors and pictures, as well.
+
+Suppose you had a drawing of these three signs:
+
+~~~~~ . clickable
+program = drawingOf(signs)
+signs = translated(sign1, -7, 0) & sign2 & translated(sign3, 7, 0)
+
+sign1 = colored(lettering("Go"), white) &
+        colored(solidRectangle(5, 5), green)
+sign2 = colored(lettering("Stop"), white) &
+        colored(solidRectangle(5, 5), red)
+sign3 = colored(lettering("Caution"), white) &
+        colored(solidRectangle(5, 5), orange)
+~~~~~
+
+Noticing that the three signs usually follow the same pattern, you can
+write one function.  The steps to doing this are:
+
+1. Name the parts that differ.  In this case, that's the label on the sign,
+   and the color of the sign.
+2. Write one equation giving the formula for this function.
+3. Change the definitions of the original variables to use the function
+   instead of repeating the pattern.
+
+The result looks like this.
+
+~~~~~ . clickable
+program = drawingOf(signs)
+signs = translated(sign1, -7, 0) & sign2 & translated(sign3, 7, 0)
+
+sign(label, color) = colored(lettering(label), white) &
+                     colored(solidRectangle(5, 5), color)
+
+sign1 = sign("Go", green)
+sign2 = sign("Stop", red)
+sign3 = sign("Caution", orange)
+~~~~~
+
+As you get more practice, you might skip over defining the repeated pattern
+entirely, and just write a function to begin with.  Suppose you are
+defining a house, and you already know that you'll want to be able to
+easily change the color of the roof.  You can define the house from the
+start with an argument for the roof color.
 
 ~~~~~ . clickable
 program = drawingOf(scene)
 scene   = house(red)
-
-house :: Color -> Picture
-house(roofColor) = colored(roof, roofColor) & solidRectangle(6, 7)
-
-roof :: Picture
+house(roofColor) = colored(roof, roofColor) & frame
 roof = translated(thickArc(45, 135, 6, 1), 0, -2)
+frame = solidRectangle(6, 7)
 ~~~~~
 
-Notice that before the equal sign, you give a name for the piece of missing
-information, which is called the parameter.  When using the function, you need
-to provide parentheses with specific values for those arguments.
+Even though you didn't start with three houses, the result is the same.
+Before the equal sign, you give a name for the piece of missing
+information, which is the argument.  (Again, there's a silent phrase:
+"For any value of `roofColor`, ...")  When using the function, you need
+to fill the function's parentheses with specific values for those
+arguments.
 
-Parameters to functions can be of any type.  The next example defines a
+Types of function arguments
+---------------------------
+
+Arguments to functions can be of any type.  The next example defines a
 function with a picture as a parameter.
 
 ~~~~~ . clickable

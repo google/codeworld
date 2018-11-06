@@ -1,5 +1,5 @@
-Creating Your Own Functions
-===========================
+Defining Functions
+==================
 
 In the last part, you learned about creating drawings in CodeWorld by
 describing pictures.  One of the most important tools was variables:
@@ -162,33 +162,117 @@ information, which is the argument.  (Again, there's a silent phrase:
 to fill the function's parentheses with specific values for those
 arguments.
 
-Types of function arguments
----------------------------
-
-Arguments to functions can be of any type.  The next example defines a
-function with a picture as a parameter.
+Arguments to functions can be of any type.  You've seen functions with
+numbers, colors, and text as arguments.  The argument can even be a
+picture.  Here's an example of a function with a picture as an argument.
 
 ~~~~~ . clickable
 program = drawingOf(ringOf(rectangle(1,1)))
-ringOf(p) = rotated(translated(p, 5, 0),  60) &
-            rotated(translated(p, 5, 0), 120) &
-            rotated(translated(p, 5, 0), 180) &
-            rotated(translated(p, 5, 0), 240) &
-            rotated(translated(p, 5, 0), 300) &
-            rotated(translated(p, 5, 0), 360)
+ringOf(pic) = rotated(translated(pic, 5, 0),  60) &
+              rotated(translated(pic, 5, 0), 120) &
+              rotated(translated(pic, 5, 0), 180) &
+              rotated(translated(pic, 5, 0), 240) &
+              rotated(translated(pic, 5, 0), 300) &
+              rotated(translated(pic, 5, 0), 360)
 ~~~~~
 
 The name `p` is given to the parameter to `ringOf`.  When `ringOf` is used in
 the definition of `program`, it must be given a parameter, with a specific picture
 to substitute for occurrences of the parameter `p`.
 
-The idea of *substitution* is fundamental in how you define functions in
-CodeWorld.  When you use a function, the body of the function is adapted by
-finding all parameter names, and substituting the corresponding actual
-parameters from where the function is used.
+Substitution
+------------
+
+The idea of **substitution** is fundamental to how functions work.  Substitution
+just means taking two expressions that have the same value, and substituting
+one for the other.  Substitution never changes the meaning of an expression,
+but it can be used to rewrite an expression in simpler terms until you know
+what it means.
+
+Simple examples of substitution don't need any variables at all!  Consider these
+two equations.
+
+~~~~~
+eye = circle(1) & pupil
+pupil = solidCircle(1/3)
+~~~~~
+
+The second equation tells you that the two expressions `pupil` and
+`solidCircle(1/3)` have the same value.  Therefore, in the first line, you
+can *substitute* the second expression in place of the word `pupil`, to get:
+
+~~~~~
+eye = circle(1) & solidCircle(1/3)
+~~~~~
+
+You've done these kinds of substitutions already.  Functions give you a new
+way of doing substitution.  When you have a formula that describes the pattern
+of a function, you can substitute any possible value of the argument in place
+of the placeholder variable of the pattern, to get an equation for a specific
+use of that function.  Consider this more complicated eye:
+
+~~~~~
+eye(color) = solidCircle(1/3) &
+             colored(solidCircle(1/2), color) &
+             circle(1)
+~~~~~
+
+This is a general pattern.  (Remember the implied "for any value of `color`..."
+at the beginning.)  To decide which specific picture is meant by `eye(blue)`,
+substitute the specific value you are interested in where ever the placeholder
+appears.
+
+~~~~~
+eye(blue) = solidCircle(1/3) &
+            colored(solidCircle(1/2), blue) &
+            circle(1)
+~~~~~
+
+!!! Warning: Don't type the last block of code.
+    This is one of many specific equations that are all implied by the overall
+    *pattern* written earlier.  You do not need to tell the computer about eyes
+    of each specific color.
+
+Now this equation tells you that you can replace the expression `eye(blue)` with
+the longer expression on the right-hand side.
+
+Substitution is in some ways the opposite of abstraction.  Abstracting a function
+means pulling out the parts that change you can write a more general pattern.
+Substitution lets you start from a general pattern, and get an equation for any
+specific choice of values.
+
+Abstracting Expressions
+=======================
+
+This section to be written.
+
+Equivalent expressions
+----------------------
+
+This section to be written.
+
+### Identity ###
+
+This section to be written.
+
+### Associating ###
+
+This section to be written.
+
+### Distributing ###
+
+This section to be written.
+
+### Commuting ###
+
+This section to be written.
+
+## Splitting and combining ###
+
+This section to be written.
 
 Scope
------
+=====
 
 When you defined variables in the previous section, those variables could be
 used anywhere in the code.  The variables that stand for arguments in functions
@@ -204,7 +288,8 @@ variable.  This sheds a new light on everyone's favorite error message:
 "Variable not in scope"!  The message really means that you are using a name
 that might be defined somewhere, but it doesn't make sense *here*.
 
-### The `where` clause ###
+Defining local variables
+------------------------
 
 You can actually add your own variables in *local scope*, as well.  Even if the
 variable doesn't represent a function argument, you might want to limit how much
@@ -242,8 +327,28 @@ Another nice thing about `where` is that because the definitions are local, you
 to define parts of your pictures as simple old variables, even when they depend
 on arguments.
 
-Conditional Functions and Guards
-================================
+Plumbing
+--------
+
+This section remains to be written.
+
+Calculating with Arguments
+==========================
+
+This section remains to be written.
+
+Tracking arithmetic
+-------------------
+
+This section remains to be written.
+
+Intermediate results
+--------------------
+
+This section remains to be written.
+
+Conditional Functions
+=====================
 
 All of the functions defined so far have basically the same form regardless of
 their parameters.  Sometimes, you may want the definition to follow a different
@@ -352,3 +457,34 @@ f(x) | x == pi   = 1
 Pattern matching, therefore, isn't the best way to match specific values,
 because you can't use variables at all!  It is, however, a great way to write
 functions that depend on the *structure* of a parameter.
+
+Design
+======
+
+This section to be written.
+
+Principles of Design
+--------------------
+
+This section to be written.
+
+### Contrast ###
+
+This section to be written.
+
+### Repetition ###
+
+This section to be written.
+
+### Alignment ###
+
+This section to be written.
+
+### Repetition ###
+
+This section to be written.
+
+Refactoring
+-----------
+
+This section to be written.

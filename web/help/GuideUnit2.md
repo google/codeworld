@@ -1,4 +1,4 @@
-Defining Functions
+Defining functions
 ==================
 
 In the last part, you learned about creating drawings in CodeWorld by
@@ -257,7 +257,7 @@ function means pulling out the specific parts that change, so you can write a
 more general pattern.  Substitution lets you start from a general pattern, and
 get an equation for any specific choice of values.
 
-Unifying Expressions
+Unifying expressions
 ====================
 
 So far, we've only written functions for examples where several definitions
@@ -526,7 +526,7 @@ Plumbing
 
 This section remains to be written.
 
-Calculating with Arguments
+Calculating with arguments
 ==========================
 
 This section remains to be written.
@@ -541,7 +541,7 @@ Intermediate results
 
 This section remains to be written.
 
-Conditional Functions
+Conditional functions
 =====================
 
 All of the functions defined so far have basically the same form regardless of
@@ -657,7 +657,7 @@ Design
 
 This section to be written.
 
-Principles of Design
+Principles of design
 --------------------
 
 This section to be written.

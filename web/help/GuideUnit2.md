@@ -329,13 +329,33 @@ variable, then these expressions all have the same value regardless of which
 specific picture it is.
 
 ~~~~~
-    pic
-    pic & blank
-    translated(pic, 0, 0)
-    rotated(pic, 0)
-    dilated(pic, 1)
-    scaled(pic, 1, 1)
+pic
 ~~~~~
+
+~~~~~
+pic & blank
+~~~~~
+
+~~~~~
+translated(pic, 0, 0)
+~~~~~
+
+~~~~~
+rotated(pic, 0)
+~~~~~
+
+~~~~~
+dilated(pic, 1)
+~~~~~
+
+~~~~~
+scaled(pic, 1, 1)
+~~~~~
+
+An operation that doesn't change the value it's operating on is called an
+**identity operation**.  Explore these examples to see how you can use
+identity operations, such as overlaying a blank picture or rotating by 0
+degrees, to rewrite expressions so they follow the same pattern.
 
 !!! collapsible: Rewriting expressions with `blank`
     Remember that **`&`** is an operator for pictures, just like **`+`** is for
@@ -379,17 +399,47 @@ specific picture it is.
     ~~~~~
 
 !!! collapsible: Rewriting expressions with identity transformations.
-    Example to be written.
+    The geometric transformations -- `translated`, `rotated`, `dilated`,
+    and `scaled` -- each have arguments where they don't change the
+    picture at all.  For `translated` and `rotated`, which act like
+    addition, those arguments are zero.  For `dilated` and `scaled`,
+    which act like multiplication, those arguments are one.
+
+    This means that if you are trying to generalize a collection of
+    variables, but one of them is missing a transformation, you can
+    add the missing transformation with zeros or ones to rewrite the
+    expression in the same form as other examples.
+
+    An example here is still to be written.
 
 ### Distributing transformations ###
 
-This section to be written.
+(This section should be expanded.)
+
+For numbers, the **distributive property** tells you that multiplying by
+a sum, like `3 * (5 + 7)`, is the same as multiplying each part of the
+sum, like `3 * 5 + 3 * 7`.  The operations we have on pictures are
+different, but they have their own distributive properties.  Namely,
+translating, rotating, dilating, or scaling an overlay of two pictures,
+such as `a & b`, is the same as doing the same transformation to each
+part of the overlay.
+
+Here's what that means in equations.
 
 ~~~~~
-    translated(a & b, x, y) = translated(a, x, y) & translated(b, x, y)
-    rotated(a & b, angle) = rotated(a, angle) & rotated(b, angle)
-    dilated(a & b, k) = dilated(a, k) & dilated(b, k)
-    scaled(a & b, kx, ky) = scaled(a, kx, ky) & scaled(b, kx, ky)
+translated(a & b, x, y) = translated(a, x, y) & translated(b, x, y)
+~~~~~
+
+~~~~~
+rotated(a & b, angle) = rotated(a, angle) & rotated(b, angle)
+~~~~~
+
+~~~~~
+dilated(a & b, k) = dilated(a, k) & dilated(b, k)
+~~~~~
+
+~~~~~
+scaled(a & b, kx, ky) = scaled(a, kx, ky) & scaled(b, kx, ky)
 ~~~~~
 
 In general, `colored` is the one transformation that cannot be distributed
@@ -405,64 +455,154 @@ known to be opaque, then `colored` can be distributed.
 
 ### Commuting transformations ###
 
-This section to be written.
+(This section should be expanded.)
+
+You've already seen that it can make a big difference which order
+transformations are applied in, so in general you can't just change that
+order to write expressions in the same patterns.  There are some particular
+cases, though, where you can do precisely that.
+
+The `colored` function **commutes** with any other transformation except
+another use of `colored`.  That means it never matters whether you apply
+`colored` inside or outside of `translated`, `rotated`, `dilated`, or
+`scaled`.  Here's how we say that with equations.
 
 ~~~~~
-    colored(translated(pic, x, y), color) = translated(colored(pic, color), x, y)
-    colored(rotated(pic, angle), color)   = rotated(colored(pic, color), angle)
-    colored(dilated(pic, k), color)       = dilated(colored(pic, color), k)
-    colored(scaled(pic, kx, ky), color)   = scaled(colored(pic, color), kx, ky)
-
-    dilated(rotated(pic, angle), k) = rotated(dilated(pic, k), angle)
+colored(translated(pic, x, y), color) = translated(colored(pic, color), x, y)
 ~~~~~
 
-Most other transformations don't commute directly, but swapping translations
-with scaling or dilation is possible.  It just requires changing the distance
-of the transformation.
+~~~~~
+colored(rotated(pic, angle), color)   = rotated(colored(pic, color), angle)
+~~~~~
 
 ~~~~~
-    dilated(translated(pic, x, y), k) =
-        translated(dilated(pic, k), k * x, k * y)
+colored(dilated(pic, k), color)       = dilated(colored(pic, color), k)
+~~~~~
 
-    scaled(translated(pic, x, y), kx, ky) =
-        translated(scaled(pic, kx, ky), kx * x, ky * y)
+~~~~~
+colored(scaled(pic, kx, ky), color)   = scaled(colored(pic, color), kx, ky)
+~~~~~
+
+Another pair of transformations that commute with each other are `rotated`
+and `dilated`.  You can rotate and then dilate, or dilate and then rotate,
+and you'll get the same picture either way.
+
+~~~~~
+dilated(rotated(pic, angle), k) = rotated(dilated(pic, k), angle)
+~~~~~
+
+Be careful, though!  The same is not true of scaling.  Rotation commutes with
+dilation because the dilation does the same thing to points in all *directions*,
+but scaling acts differently in different directions, so rotating (which changes
+direction) makes a difference.  In fact, most other transformations don't
+commute directly.
+
+Translation almost commutes with dilation or scaling: swapping them just
+requires changing the distance of the transformation by multiplying (or dividing)
+by the scaling factor.
+
+~~~~~
+dilated(translated(pic, x, y), k) =
+    translated(dilated(pic, k), k * x, k * y)
+~~~~~
+
+~~~~~
+scaled(translated(pic, x, y), kx, ky) =
+    translated(scaled(pic, kx, ky), kx * x, ky * y)
 ~~~~~
 
 ### Splitting and combining ###
 
-This section to be written.
+(This section should be expanded.)
+
+One more way to rewrite expressions is to split a transformation into
+two of the same transformation.  For example, translating by 5 units is
+the same thing as translating by 3 units, and then further translating
+that picture by 2 more.  Translation and rotation both work in this way:
+if you combine two in a row, that's the same as adding the amounts.
 
 ~~~~~
-    translated(translated(pic, x1, y1), x2, y2) =
-        translated(pic, x1 + x2, y1 + y2)
+translated(translated(pic, x1, y1), x2, y2) =
+    translated(pic, x1 + x2, y1 + y2)
+~~~~~
 
-    rotated(rotated(pic, angle1), angle2) =
-        rotated(pic, angle1 + angle2)
+~~~~~
+rotated(rotated(pic, angle1), angle2) =
+    rotated(pic, angle1 + angle2)
+~~~~~
 
-    dilated(dilated(pic, k1), k2) = dilated(pic, k1 * k2)
+Recall that dilation and scaling are more like multiplication.  (Think about
+how you might use dilation to make a picture three *times* the size.)  To
+combine two of these in a row, you multiply the amounts.
 
-    scaled(scaled(pic, kx1, ky1), kx2, ky2) =
-        scaled(pic, kx1 + kx2, ky1 + ky2)
+~~~~~
+dilated(dilated(pic, k1), k2) = dilated(pic, k1 * k2)
+~~~~~
+
+~~~~~
+scaled(scaled(pic, kx1, ky1), kx2, ky2) =
+    scaled(pic, kx1 * kx2, ky1 * ky2)
 ~~~~~
 
 ### Other equivalences ###
 
-This section to be written.
+(This section should be expanded.)
+
+In addition to the categories above, there are a bunch of miscellaneous
+equivalences that are worth seeing, since they let you rewrite things in
+even more ways.
 
 ~~~~~
-    blank = lettering("")
-    blank = polygon([])
+blank = lettering("")
+blank = polygon([])
+~~~~~
 
-    circle(r) = arc(0, 360, r)
+~~~~~
+circle(r) = arc(0, 360, r)
+~~~~~
 
-    rectangle(w, h) = polygon([
-        (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)])
+~~~~~
+rectangle(w, h) = polygon([
+    (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)])
+~~~~~
 
-    dilated(pic, k) = scaled(pic, k, k)
+~~~~~
+dilated(pic, k) = scaled(pic, k, k)
+~~~~~
 
-    scaled(pic, -1, -1) = rotated(pic, 180)
+~~~~~
+dilaled(pic, -1) = rotated(pic, 180)
+~~~~~
 
-    rotated(pic, angle) = rotated(pic, angle + 360)
+~~~~~
+rotated(pic, angle) = rotated(pic, angle + 360)
+~~~~~
+
+~~~~~
+translated(polygon([(x1, y1), (x2, y2), (x3, y3)]), x, y) =
+    polygon([(x1 + x, y1 + y), (x2 + x, y2 + y), (x3 + x, y3 + y)])
+~~~~~
+
+~~~~~
+scaled(polygon([(x1, y1), (x2, y2), (x3, y3)]), kx, ky) =
+    polygon([(x1 * kx, y1 * ky), (x2 * kx, y2 * ky), (x3 * kx, y3 * ky)])
+~~~~~
+
+~~~~~
+rotated(polygon([(x1, y1), (x2, y2), (x3, y3)]), angle) =
+    polygon([rotatedPoint((x1, y1), angle),
+             rotatedPoint((x2, y2), angle),
+             rotatedPoint((x3, y3), angle)])
+~~~~~
+
+There are functions you can use to translate, rotate, dilate, or scale
+individual points, too.
+
+~~~~~
+translatedPoint :: (Point, Number, Number) -> Point
+rotatedPoint :: (Point, Number) -> Point
+dilatedPoint :: (Point, Number) -> Point
+scaledPoint :: (Point, Number, Number) -> Point
 ~~~~~
 
 Scope
@@ -524,22 +664,22 @@ on arguments.
 Plumbing
 --------
 
-This section remains to be written.
+(This section remains to be written.)
 
 Calculating with arguments
 ==========================
 
-This section remains to be written.
+(This section remains to be written.)
 
 Tracking arithmetic
 -------------------
 
-This section remains to be written.
+(This section remains to be written.)
 
 Intermediate results
 --------------------
 
-This section remains to be written.
+(This section remains to be written.)
 
 Conditional functions
 =====================
@@ -655,33 +795,46 @@ functions that depend on the *structure* of a parameter.
 Design
 ======
 
-This section to be written.
+(This section remains to be written.)
 
 Principles of design
 --------------------
 
-This section to be written.
+(This section remains to be written.)
 
 ### Contrast ###
 
-This section to be written.
+(This section remains to be written.)
 
 ### Repetition ###
 
-This section to be written.
+(This section remains to be written.)
 
 ### Alignment ###
 
-This section to be written.
+(This section remains to be written.)
 
 ### Repetition ###
 
-This section to be written.
+(This section remains to be written.)
 
 Abstraction
 -----------
 
+(This section remains to be written.)
+
 Refactoring
 -----------
 
-This section to be written.
+(This section should be expanded.)
+
+Computer programmers use the word **refactoring** to describe changes to
+their code that don't change the program, but just describe it differently.
+The goal of refactoring is usually to communicate better to other humans
+who read the code, or to reorganize the code so that it's easier to make
+other changes.
+
+The techniques you've learned in this part of the guide -- rewriting
+expressions in equivalent ways, capturing repeated patterns, controlling
+scope, building strong abstractions, and using design principles to
+communicate more clearly in code -- are the basic tools of refactoring.

@@ -4,7 +4,7 @@
   "named": {
     "Introduction":        "help/GuideIntro.md",
     "Part 1: Expressions": "help/GuideUnit1.md",
-    "Part 2: Functions":   "help/GuideUnit2.md",
+    "Part 2: Patterns":    "help/GuideUnit2.md",
     "Part 3: Change":      "help/GuideUnit3.md",
     "Part 4: Repetition":  "help/GuideUnit4.md",
     "Part 5: Computation": "help/GuideUnit5.md",

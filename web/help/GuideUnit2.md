@@ -95,14 +95,16 @@ For any value of `x`, `f(x)` is `x * 2`.  The `x` can be any new name that
 you like.  It just names some part of the equations that differs each
 time.
 
-Abstracting functions
+Generalizing patterns
 ---------------------
 
 This technique of capturing the parts of expressions that differ and naming
-them as arguments is very powerful.  Any time you have a repeating pattern
-of some kind, you can just name the parts that differ with arguments, and
-write down the entire pattern.  This doesn't just work for numbers.  It's
-okay for other types such as colors and pictures, as well.
+them as arguments is very powerful.  You are working from *specific*
+examples to a *general* pattern, a process called **generalization**.  Any
+time you have a repeating pattern of some kind, you can just name the parts
+that differ with arguments, and write down the entire pattern.  This
+doesn't just work for numbers.  You can do the same for other types such as
+colors and pictures, as well.
 
 Suppose you had a drawing of these three signs:
 
@@ -176,9 +178,23 @@ ringOf(pic) = rotated(translated(pic, 5, 0),  60) &
               rotated(translated(pic, 5, 0), 360)
 ~~~~~
 
-The name `p` is given to the parameter to `ringOf`.  When `ringOf` is used in
+The name `pic` is given to the parameter to `ringOf`.  When `ringOf` is used in
 the definition of `program`, it must be given a parameter, with a specific picture
-to substitute for occurrences of the parameter `p`.
+to substitute for occurrences of the parameter `pic`.
+
+The results of functions can also be different types.  For example, "pastel"
+refers to a color that's soft and pale, such as a baby blue or lavender
+color.  Compared to full colors, a pastel color is lighter, and more gray.
+Your computer doesn't know what a pastel color is yet, but you can teach it!
+
+~~~~~
+pastel(c) = light(dull(c))
+neon(c) = dark(bright(c))
+~~~~~
+
+With these functions defined, you can use colors like `neon(green)` or
+`pastel(yellow)`.  But it doesn't stop there: you can define functions with any
+type of value that you like: pictures, numbers, colors, text... you name it.
 
 Substitution
 ------------
@@ -236,40 +252,218 @@ eye(blue) = solidCircle(1/3) &
 Now this equation tells you that you can replace the expression `eye(blue)` with
 the longer expression on the right-hand side.
 
-Substitution is in some ways the opposite of abstraction.  Abstracting a function
-means pulling out the parts that change you can write a more general pattern.
-Substitution lets you start from a general pattern, and get an equation for any
-specific choice of values.
+Substitution is in some ways the opposite of generalization.  Generalizing a
+function means pulling out the specific parts that change, so you can write a
+more general pattern.  Substitution lets you start from a general pattern, and
+get an equation for any specific choice of values.
 
-Abstracting Expressions
-=======================
+Unifying Expressions
+====================
 
-This section to be written.
+So far, we've only written functions for examples where several definitions
+had exactly the same form or shape, and the differences were in the choice of
+specific values, like colors or numbers.  That's a good start, but functions
+will become a lot more useful when you can be a little more flexible, by
+rewriting expressions to have the same form, even if they didn't start out
+that way.
+
+Let's look at an example.  Consider these three definitions:
+
+~~~~~
+a = colored(solidCircle(1), red)
+b = colored(solidCircle(2), blue)
+c = solidCircle(3)
+~~~~~
+
+It's straightforward to generalize these into a function that can be used for
+either `a` or `b`.  That function would be
+
+~~~~~
+f(radius, color) = colored(solidCircle(radius), color)
+
+a = f(1, red)
+b = f(2, blue)
+~~~~~
+
+But what about `c`?  At first glance, it doesn't seem to follow the same
+pattern.  But wait a second.  The definition of `c` can be rewritten like
+this:
+
+~~~~~
+c = colored(solidCircle(3), black)
+~~~~~
+
+The `solidCircle` function already produces pictures of black circles, so the
+extra `colored` function doesn't change anything at all.  But it *does* make
+`c` follow the same pattern, so that it can be rewritten as
+
+~~~~~
+c = f(3, black)
+~~~~~
+
+To use functions more effectively, then, it helps to know techniques for
+rewriting expressions so that they look different, but have the same
+value.  You can apply these techniques to write a wider variety of different
+pictures
 
 Equivalent expressions
 ----------------------
 
+You already know some ways to write the same expression in different ways.
+For example, you can write the number 6 as just `6`, or as `6 + 0`, or
+`2 * 3`, or `6 * 1`, or even `3 * 3 - 3`.  When it comes to expressions that
+describe pictures, you may be less familiar with how to easily move and
+add and drop transformations and such.  In this section, you'll see more
+some examples of different ways to rewrite expressions to have the same
+values.
+
+The examples here are mostly about pictures, but the ideas come up again
+and again, for values of many types.
+
+### Identities ###
+
+It's useful to know when an operation doesn't change a value at all.  For
+example, multiplying by 1 or adding 0 doesn't change a number.  There are
+also operations on pictures that don't change them.  If `pic` is a picture
+variable, then these expressions all have the same value regardless of which
+specific picture it is.
+
+~~~~~
+    pic
+    pic & blank
+    translated(pic, 0, 0)
+    rotated(pic, 0)
+    dilated(pic, 1)
+    scaled(pic, 1, 1)
+~~~~~
+
+!!! collapsible: Rewriting expressions with `blank`
+    Remember that **`&`** is an operator for pictures, just like **`+`** is for
+    numbers.  And just like adding zero doesn't change a number, `blank` is a
+    picture that doesn't change anything it's combined with using `&`.  (The
+    picture `blank` is completely transparent, so overlaying it in front of or
+    behind another picture doesn't change what you see.)
+
+    As an example of rewriting an expression using `blank` to generalize
+    a function, consider this code.
+
+    ~~~~~ . clickable
+    program = drawingOf(closet)
+
+    closet = translated(shirt1, -5, -5) & shirt2 & translated(shirt3, 5, 5)
+
+    shirt1 = lettering("lol") & colored(shape, blue)
+    shirt2 = dilated(codeWorldLogo, 1/4) & colored(shape, red)
+    shirt3 = colored(shape, yellow)
+
+    shape = solidRectangle(6, 8) & thickArc(20, 160, 4, 2)
+    ~~~~~
+
+    The first two shirts combine some kind of picture as a design on the
+    front with a shirt shape behind it.  The third, though, has no design.
+    However, it can be rewritten as `blank & colored(shape, yellow)`, and
+    it now follows the same pattern, which can be generalized into a
+    function.
+
+    ~~~~~ . clickable
+    program = drawingOf(closet)
+
+    closet = translated(shirt1, -5, -5) & shirt2 & translated(shirt3, 5, 5)
+
+    shirt1 = shirt(lettering("lol"), blue)
+    shirt2 = shirt(dilated(codeWorldLogo, 1/4), red)
+    shirt3 = shirt(blank, yellow)
+
+    shirt(design, color) = design & colored(shape, color)
+    shape = solidRectangle(6, 8) & thickArc(20, 160, 4, 2)
+    ~~~~~
+
+!!! collapsible: Rewriting expressions with identity transformations.
+    Example to be written.
+
+### Distributing transformations ###
+
 This section to be written.
 
-### Identity ###
+~~~~~
+    translated(a & b, x, y) = translated(a, x, y) & translated(b, x, y)
+    rotated(a & b, angle) = rotated(a, angle) & rotated(b, angle)
+    dilated(a & b, k) = dilated(a, k) & dilated(b, k)
+    scaled(a & b, kx, ky) = scaled(a, kx, ky) & scaled(b, kx, ky)
+~~~~~
+
+In general, `colored` is the one transformation that cannot be distributed
+in this way.  That is, `colored(a & b, color)` can sometimes be a different
+picture from `colored(a, color) & colored(b, color)`.  The problem arises
+when `a` and `b` overlap, and `color` has transparency.  In this case,
+`colored(a & b, color)` applies the color consistently throughout `pic`,
+including the areas of overlap.  But applying the color to each part and
+then overlaying them creates a visible region of overlap.
+
+In cases where `a` and `b` are known not to overlap, or where `color` is
+known to be opaque, then `colored` can be distributed.
+
+### Commuting transformations ###
 
 This section to be written.
 
-### Associating ###
+~~~~~
+    colored(translated(pic, x, y), color) = translated(colored(pic, color), x, y)
+    colored(rotated(pic, angle), color)   = rotated(colored(pic, color), angle)
+    colored(dilated(pic, k), color)       = dilated(colored(pic, color), k)
+    colored(scaled(pic, kx, ky), color)   = scaled(colored(pic, color), kx, ky)
+
+    dilated(rotated(pic, angle), k) = rotated(dilated(pic, k), angle)
+~~~~~
+
+Most other transformations don't commute directly, but swapping translations
+with scaling or dilation is possible.  It just requires changing the distance
+of the transformation.
+
+~~~~~
+    dilated(translated(pic, x, y), k) =
+        translated(dilated(pic, k), k * x, k * y)
+
+    scaled(translated(pic, x, y), kx, ky) =
+        translated(scaled(pic, kx, ky), kx * x, ky * y)
+~~~~~
+
+### Splitting and combining ###
 
 This section to be written.
 
-### Distributing ###
+~~~~~
+    translated(translated(pic, x1, y1), x2, y2) =
+        translated(pic, x1 + x2, y1 + y2)
+
+    rotated(rotated(pic, angle1), angle2) =
+        rotated(pic, angle1 + angle2)
+
+    dilated(dilated(pic, k1), k2) = dilated(pic, k1 * k2)
+
+    scaled(scaled(pic, kx1, ky1), kx2, ky2) =
+        scaled(pic, kx1 + kx2, ky1 + ky2)
+~~~~~
+
+### Other equivalences ###
 
 This section to be written.
 
-### Commuting ###
+~~~~~
+    blank = lettering("")
+    blank = polygon([])
 
-This section to be written.
+    circle(r) = arc(0, 360, r)
 
-## Splitting and combining ###
+    rectangle(w, h) = polygon([
+        (-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)])
 
-This section to be written.
+    dilated(pic, k) = scaled(pic, k, k)
+
+    scaled(pic, -1, -1) = rotated(pic, 180)
+
+    rotated(pic, angle) = rotated(pic, angle + 360)
+~~~~~
 
 Scope
 =====
@@ -483,6 +677,9 @@ This section to be written.
 ### Repetition ###
 
 This section to be written.
+
+Abstraction
+-----------
 
 Refactoring
 -----------

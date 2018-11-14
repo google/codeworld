@@ -375,3 +375,48 @@ body {
 .swal2-popup {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
 }
+
+.req-list {
+  text-align: left;
+}
+.req-yes {
+  color: darkgreen;
+  list-style-type: none;
+}
+.req-yes:before {
+  content: "✓ ";
+}
+.req-no {
+  color: darkred;
+  list-style-type: none;
+}
+.req-no:before {
+  content: "✗ ";
+}
+.req-indet {
+  color: darkmagenta;
+  list-style-type: none;
+}
+.req-indet:before {
+  content: "? ";
+  font-weight: bold;
+}
+.req-yes,
+.req-no,
+.req-indet {
+  margin-bottom: 10px;
+}
+.req-yes:before,
+.req-no:before,
+.req-indet:before {
+  margin-left: -36px;
+  font-size: 32px;
+  vertical-align: middle;
+}
+.req-details {
+  color: #555;
+}
+.req-indet .req-details {
+  white-space: pre;
+  font-family: monospace;
+}

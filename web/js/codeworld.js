@@ -762,7 +762,60 @@ function run(hash, dhash, msg, error, generation) {
     document.getElementById('runner').addEventListener('load', function () {
         updateUI();
     });
+
+    showRequiredChecksInDialog(msg);
 }
+
+function showRequiredChecksInDialog(msg) {
+    var matches = msg.match(/:: REQUIREMENTS ::((?:.|[\r\n])*):: END REQUIREMENTS ::/)
+    if (!matches) {
+      return;
+    }
+    var reqs = matches[1].split(/[\r\n]+/);
+    var items = [];
+    for (var i = 0; i < reqs.length; ++i) {
+        var req = reqs[i];
+        if (!req) continue;
+        var bullet = req.slice(0, 4).toUpperCase();
+        var rest = req.slice(4);
+        if (bullet === '[Y] ') {
+            // Successful requirement
+            items.push([true, htmlEscapeString(rest)]);
+        } else if (bullet === '[N] ') {
+            // Unsuccessful requirement
+            items.push([false, htmlEscapeString(rest)]);
+        } else if (bullet === '[?] ') {
+            // Indeterminate (usually a parse error in the requirement)
+            items.push([undefined, htmlEscapeString(rest)]);
+        } else if (items.length > 0) {
+            // Detail message for the previous requirement.
+            items[items.length - 1].push(req);
+        }
+    }
+    var itemsHtml = items.map(function(item) {
+        var head = item[1];
+        var rest = item.slice(2).join('<br>');
+        var details = rest ? '<br><span class="req-details">' + rest + '</span>' : '';
+        var itemclass = (item[0] === undefined) ? 'req-indet' : (item[0] ? 'req-yes' : 'req-no');
+        return '<li class="' + itemclass + '">' + head + details + '</li>';
+    });
+    sweetAlert({
+        html: true,
+        title: 'Requirements',
+        text: '<ul class="req-list">' + itemsHtml.join('') +  '</ul>',
+        confirmButtonText: 'Dismiss',
+        showCancelButton: false,
+        closeOnConfirm: true
+    });
+}
+
+var htmlEscapeString = (function() {
+    var el = document.createElement('div')
+    return function escape(str) {
+        el.textContent = str;
+        return el.innerHTML;
+    };
+})();
 
 function goto(line, col) {
     codeworldEditor.getDoc().setCursor(line - 1, col - 1);

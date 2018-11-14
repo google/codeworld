@@ -18,10 +18,13 @@
 
 module CodeWorld.Compile.ParseCode (runCustomDiagnostics, hasOldStyleMain) where
 
+import CodeWorld.Compile.Requirements
+import Data.Array
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
-import Data.ByteString.Char8 ()
+import qualified Data.ByteString.Char8 as BC
 import Data.Generics
+import Data.Monoid
 import Data.List (sort)
 import Data.Text (unpack)
 import Data.Text.Encoding (decodeUtf8)
@@ -62,7 +65,7 @@ hasOldStyleMain contents = matches contents "(^|\\n)main[ \\t]*="
 
 parsedCodeDiagnostics :: String -> ByteString -> [Diagnostic]
 parsedCodeDiagnostics "codeworld" contents = case result of
-    ParseOk mod -> getErrors mod
+    ParseOk mod -> getErrors contents mod
     ParseFailed _ _ -> []  -- Fall through and use GHC's parse errors.
   where result = parseFileContentsWithMode mode (unpack (decodeUtf8 contents))
         mode = defaultParseMode { parseFilename = "program.hs" }
@@ -71,12 +74,13 @@ parsedCodeDiagnostics _ _ = []
 matches :: ByteString -> ByteString -> Bool
 matches txt pat = txt =~ pat
 
-getErrors :: Module SrcSpanInfo -> [Diagnostic]
-getErrors m =
+getErrors :: ByteString -> Module SrcSpanInfo -> [Diagnostic]
+getErrors src m =
     everything (++) (mkQ [] badExpApps) m ++
     everything (++) (mkQ [] badMatchApps) m ++
     everything (++) (mkQ [] badPatternApps) m ++
-    everything (++) (mkQ [] varlessPatBinds) m
+    everything (++) (mkQ [] varlessPatBinds) m ++
+    requirementsResponse src m
 
 badExpApps :: Exp SrcSpanInfo -> [Diagnostic]
 badExpApps (App loc _ e)
@@ -130,3 +134,25 @@ formatLocation (SrcSpanInfo s _)
     fn = srcSpanFilename s
     line = srcSpanStartLine s
     col = srcSpanStartColumn s
+
+requirementsResponse :: ByteString -> Module SrcSpanInfo -> [Diagnostic]
+requirementsResponse src m
+  | hasReqs   = [(noSrcSpan, Info, response)]
+  | otherwise = []
+  where pattern = "{-+[[:space:]]*(REQUIRES\\b(\n|[^-]|-[^}])*)-}" :: ByteString
+        matches = src =~ pattern :: [MatchArray]
+        reqs = [ parseRequirement $ B.take len (B.drop off src)
+                 | matchArray <- matches
+                 , rangeSize (bounds matchArray) > 1
+                 , let (off, len) = matchArray ! 1 ]
+        hasReqs = not (null (reqs))
+        response = ":: REQUIREMENTS ::\n" <>
+                   concatMap (handleRequirement m) reqs <>
+                   ":: END REQUIREMENTS ::\n"
+
+handleRequirement :: Module SrcSpanInfo -> Either String Requirement -> String
+handleRequirement m (Left err) = "[?] A requirement could not be understood\n" <> err
+handleRequirement m (Right r) = label <> desc <> "\n" <> concat [ msg ++ "\n" | msg <- msgs ]
+  where (desc, success, msgs) = evalRequirement r m
+        label | success   = "[Y] "
+              | otherwise = "[N] "

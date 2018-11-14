@@ -1,3 +1,4 @@
+
 Name:                codeworld-compiler
 Version:             0.1.0.0
 Synopsis:            GHCJS based standalone compiler for CodeWorld
@@ -32,9 +33,11 @@ Library
 
   Other-modules:
     CodeWorld.Compile.ParseCode
+    CodeWorld.Compile.Requirements
 
   Build-depends:
     aeson,
+    array,
     base,
     base64-bytestring,
     bytestring,
@@ -43,7 +46,9 @@ Library
     data-default,
     directory,
     filepath,
+    hashable,
     haskell-src-exts,
+    megaparsec,
     memory,
     mtl,
     process,

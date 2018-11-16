@@ -44,11 +44,15 @@ pattern = "{-+[[:space:]]*(REQUIRES\\b(\n|[^-]|-[^}])*)-}"
 
 extractRequirements :: Text -> ([Diagnostic], [Requirement])
 extractRequirements src = (diags, reqs)
-  where results = [ (srcSpanFor src off len,
-                     parseRequirement (T.take len (T.drop off src)))
+  where results = [ (noSrcSpan, parseRequirement ln col chunk)
                     | matchArray :: MatchArray <- src =~ pattern
                     , rangeSize (bounds matchArray) > 1
-                    , let (off, len) = matchArray ! 1 ]
+                    , let (off, len) = matchArray ! 1
+                    , let srcSpanInfo = srcSpanFor src off len
+                    , let SrcSpanInfo spn _ = srcSpanInfo
+                    , let ln = srcSpanStartLine spn
+                    , let col = srcSpanStartColumn spn
+                    , let chunk = T.take len (T.drop off src) ]
         diags = [ (srcSpan, Warning,
                    "The requirement could not be understood:\n" ++ err)
                   | (srcSpan, Left err) <- results ]
@@ -64,12 +68,13 @@ handleRequirement m r =
 srcSpanFor :: Text -> Int -> Int -> SrcSpanInfo
 srcSpanFor src off len =
     SrcSpanInfo (SrcSpan "program.hs" ln1 col1 ln2 col2) []
-  where (ln1, col1) = advance 0 off 1 1
-        (ln2, col2) = advance off len ln1 col1
+  where (_, ln1, col1) = T.foldl' next (off, 1, 1) pre
+        (_, ln2, col2) = T.foldl' next (len, ln1, col1) mid
 
-        advance _ !0 !ln !col = (ln, col)
-        advance !i !n !ln !col = case T.index src n of
-            '\r' -> advance (i+1) (n-1) ln col
-            '\n' -> advance (i+1) (n-1) (ln + 1) 1
-            '\t' -> advance (i+1) (n-1) ln (col + 8 - (mod (col - 1) 8))
-            _    -> advance (i+1) (n-1) ln (col + 1)
+        (pre, post) = T.splitAt off src
+        mid = T.take len post
+
+        next (!n, !ln, !col) '\r' = (n - 1, ln, col)
+        next (!n, !ln, !col) '\n' = (n - 1, ln + 1, 1)
+        next (!n, !ln, !col) '\t' = (n - 1, ln, col + 8 - (col - 1) `mod` 8)
+        next (!n, !ln, !col) _    = (n - 1, ln, col + 1)

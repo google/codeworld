@@ -93,6 +93,10 @@ simpleParamsParser = do
     symbol ")"
     return (HasSimpleParams a)
 
-parseRequirement :: Text -> Either String Requirement
-parseRequirement bs = either (Left . errorBundlePretty) Right $
-    parse requirementParser "" (unpack bs)
+parseRequirement :: Int -> Int -> Text -> Either String Requirement
+parseRequirement ln col txt = either (Left . errorBundlePretty) Right $ snd $
+    runParser' requirementParser initialState
+  where str = unpack txt
+        initialState = State str 0 posState
+        posState = PosState str 0 srcPos (mkPos 8) (replicate (col - 1) ' ')
+        srcPos = SourcePos "program.hs" (mkPos ln) (mkPos col)

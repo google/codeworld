@@ -888,7 +888,7 @@ function compile() {
         sendHttp('POST', 'runMsg', data, function(request) {
             var msg = '';
             if (request.status == 200) {
-                msg = request.responseText.trim();
+                msg = request.responseText.replace(/^[\r\n]+|[\r\n]+$/g, '');
             } else if (request.status >= 400) {
                 msg = "Sorry!  Your program couldn't be run right now.";
             }

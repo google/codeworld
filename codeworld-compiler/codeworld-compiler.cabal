@@ -61,7 +61,8 @@ Library
     split,
     syb,
     temporary,
-    text
+    text,
+    zlib
 
   Hs-source-dirs: src
 

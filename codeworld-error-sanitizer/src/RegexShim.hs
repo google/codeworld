@@ -17,43 +17,44 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-module RegexShim
-    ( replace
-    ) where
+module RegexShim (replace) where
+
+import Data.Text (Text)
+
 #ifdef ghcjs_HOST_OS
-import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as C
+
 import Data.JSString (JSString)
-import qualified Data.JSString as J
+import Data.JSString.Text
 
 foreign import javascript unsafe
                "$3.replace(new RegExp($1, \"g\"), $2)" js_replace ::
                JSString -> JSString -> JSString -> JSString
 
-replace :: ByteString -> ByteString -> ByteString -> ByteString
-replace regex replacement str =
-    j_to_b (js_replace (b_to_j regex) (b_to_j replacement) (b_to_j str))
-  where
-    j_to_b = C.pack . J.unpack
-    b_to_j = J.pack . C.unpack
+replace :: Text -> Text -> Text -> Text
+replace regex replacement str = textFromJSString $
+    js_replace (textToJSString regex)
+               (textToJSString replacement)
+               (textToJSString str)
+
 #else
+
 import Data.Array (elems)
-import Data.ByteString (ByteString)
-import qualified Data.ByteString as B
 import Data.List
 import Data.Monoid
+import qualified Data.Text as T
 import Text.Regex.Base
 import Text.Regex.TDFA
-import Text.Regex.TDFA.ByteString
+import Text.Regex.TDFA.Text
 
-replace :: ByteString -> ByteString -> ByteString -> ByteString
+replace :: Text -> Text -> Text -> Text
 replace regex replacement str =
     let parts = concatMap elems $ (str =~ regex :: [MatchArray])
     in foldl replaceOne str (reverse parts)
   where
-    replaceOne :: ByteString -> (Int, Int) -> ByteString
+    replaceOne :: Text -> (Int, Int) -> Text
     replaceOne str (start, len) = pre <> replacement <> post
       where
-        pre = B.take start str
-        post = B.drop (start + len) str
+        pre = T.take start str
+        post = T.drop (start + len) str
+
 #endif

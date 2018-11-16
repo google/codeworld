@@ -18,69 +18,74 @@
 
 module CodeWorld.Compile.ParseCode (runCustomDiagnostics, hasOldStyleMain) where
 
+import CodeWorld.Compile.Diagnostics
 import CodeWorld.Compile.Requirements
 import Data.Array
-import Data.ByteString (ByteString)
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as BC
 import Data.Generics
 import Data.Monoid
 import Data.List (sort)
-import Data.Text (unpack)
+import Data.Text (Text, unpack)
 import Data.Text.Encoding (decodeUtf8)
 import Language.Haskell.Exts
 import Text.Regex.TDFA
+import Text.Regex.TDFA.Text
 
-type Diagnostic = (SrcSpanInfo, Level, String)
-data Level = Info | Warning | Error deriving (Eq, Ord)
+hasOldStyleMain :: Text -> Bool
+hasOldStyleMain src = src =~ ("(^|\\n)main[ \\t]*=" :: Text)
 
-runCustomDiagnostics :: String -> ByteString -> (Bool, [String])
-runCustomDiagnostics mode contents = (abort, msgs)
-  where diags = sort $ dangerousSourceDiagnostics contents ++
-                       oldStyleDiagnostics mode contents ++
-                       parsedCodeDiagnostics mode contents
+runCustomDiagnostics :: SourceMode -> Text -> (Bool, [String])
+runCustomDiagnostics mode src = (abort, msgs)
+  where diags = dangerousSourceDiagnostics mode src code ++
+                oldStyleDiagnostics mode src code ++
+                parsedCodeDiagnostics mode src code ++
+                requirementsDiagnostics mode src code
+        code = parseCode src
         worst = maximum (Info : map (\(_, level, _) -> level) diags)
         abort = worst >= Error
-        msgs  = [ formatLocation loc ++ msg | (loc, _, msg) <- diags ]
+        msgs  = [ formatLocation loc ++ msg | (loc, _, msg) <- sort diags ]
 
-dangerousSourceDiagnostics :: ByteString -> [Diagnostic]
-dangerousSourceDiagnostics contents
-  | matches contents ".*TemplateHaskell.*" ||
-    matches contents ".*QuasiQuotes.*" ||
-    matches contents ".*glasgow-exts.*"
+parseCode :: Text -> ParsedCode
+parseCode src = case result of
+    ParseOk mod -> Parsed mod
+    ParseFailed _ _ -> NoParse
+  where result = parseFileContentsWithMode mode (unpack src)
+        mode = defaultParseMode { parseFilename = "program.hs" }
+
+-- Look for uses of Template Haskell or related features in the compiler.  These
+-- cannot currently be used, because the compiler isn't properly sandboxed, so
+-- this would be a remote code execution vulnerability.
+--
+-- At the moment, we don't look in the parsed code, but instead match
+-- regular expressions against the source.  That's because I don't quite
+-- trust haskell-src-exts to correctly parse the source.
+dangerousSourceDiagnostics :: SourceMode -> Text -> ParsedCode -> [Diagnostic]
+dangerousSourceDiagnostics _ src _
+  | src =~ (".*TemplateHaskell.*" :: Text) ||
+    src =~ (".*QuasiQuotes.*" :: Text) ||
+    src =~ (".*glasgow-exts.*" :: Text)
     = [(noSrcSpan, Error, "Sorry, but your program uses forbidden language features.")]
   | otherwise = []
 
-oldStyleDiagnostics :: String -> ByteString -> [Diagnostic]
-oldStyleDiagnostics "codeworld" contents
-  | hasOldStyleMain contents
+-- Looks for uses of old-style main in CodeWorld-mode modules.  These
+-- will be broken soon, so we issue a warning.
+oldStyleDiagnostics :: SourceMode -> Text -> ParsedCode -> [Diagnostic]
+oldStyleDiagnostics "codeworld" src _
+  | hasOldStyleMain src
     = [(noSrcSpan, Warning,
         "warning:\n" ++
         "\tPlease define 'program' instead of 'main'.\n" ++
         "\tDefining 'main' may stop working July 2019.")]
-oldStyleDiagnostics _ _ = []
+oldStyleDiagnostics _ _ _ = []
 
-hasOldStyleMain :: ByteString -> Bool
-hasOldStyleMain contents = matches contents "(^|\\n)main[ \\t]*="
-
-parsedCodeDiagnostics :: String -> ByteString -> [Diagnostic]
-parsedCodeDiagnostics "codeworld" contents = case result of
-    ParseOk mod -> getErrors contents mod
-    ParseFailed _ _ -> []  -- Fall through and use GHC's parse errors.
-  where result = parseFileContentsWithMode mode (unpack (decodeUtf8 contents))
-        mode = defaultParseMode { parseFilename = "program.hs" }
-parsedCodeDiagnostics _ _ = []
-
-matches :: ByteString -> ByteString -> Bool
-matches txt pat = txt =~ pat
-
-getErrors :: ByteString -> Module SrcSpanInfo -> [Diagnostic]
-getErrors src m =
-    everything (++) (mkQ [] badExpApps) m ++
-    everything (++) (mkQ [] badMatchApps) m ++
-    everything (++) (mkQ [] badPatternApps) m ++
-    everything (++) (mkQ [] varlessPatBinds) m ++
-    requirementsResponse src m
+parsedCodeDiagnostics :: SourceMode -> Text -> ParsedCode -> [Diagnostic]
+parsedCodeDiagnostics "codeworld" src (Parsed mod) =
+    everything (++) (mkQ [] badExpApps) mod ++
+    everything (++) (mkQ [] badMatchApps) mod ++
+    everything (++) (mkQ [] badPatternApps) mod ++
+    everything (++) (mkQ [] varlessPatBinds) mod
+parsedCodeDiagnostics "codeworld" _ NoParse = []
+    -- Fall back on GHC for user-visible parse errors, for the moment.
+parsedCodeDiagnostics _ _ _ = []
 
 badExpApps :: Exp SrcSpanInfo -> [Diagnostic]
 badExpApps (App loc _ e)
@@ -134,25 +139,3 @@ formatLocation (SrcSpanInfo s _)
     fn = srcSpanFilename s
     line = srcSpanStartLine s
     col = srcSpanStartColumn s
-
-requirementsResponse :: ByteString -> Module SrcSpanInfo -> [Diagnostic]
-requirementsResponse src m
-  | hasReqs   = [(noSrcSpan, Info, response)]
-  | otherwise = []
-  where pattern = "{-+[[:space:]]*(REQUIRES\\b(\n|[^-]|-[^}])*)-}" :: ByteString
-        matches = src =~ pattern :: [MatchArray]
-        reqs = [ parseRequirement $ B.take len (B.drop off src)
-                 | matchArray <- matches
-                 , rangeSize (bounds matchArray) > 1
-                 , let (off, len) = matchArray ! 1 ]
-        hasReqs = not (null (reqs))
-        response = ":: REQUIREMENTS ::\n" <>
-                   concatMap (handleRequirement m) reqs <>
-                   ":: END REQUIREMENTS ::\n"
-
-handleRequirement :: Module SrcSpanInfo -> Either String Requirement -> String
-handleRequirement m (Left err) = "[?] A requirement could not be understood\n" <> err
-handleRequirement m (Right r) = label <> desc <> "\n" <> concat [ msg ++ "\n" | msg <- msgs ]
-  where (desc, success, msgs) = evalRequirement r m
-        label | success   = "[Y] "
-              | otherwise = "[N] "

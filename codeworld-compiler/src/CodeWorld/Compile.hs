@@ -25,13 +25,15 @@ module CodeWorld.Compile
     ) where
 
 import CodeWorld.Compile.ParseCode
+import Control.Applicative
 import Control.Concurrent
 import Control.Monad
-import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
-import Data.ByteString.Char8 (pack)
 import Data.List (intercalate)
 import Data.Monoid
+import Data.Text (Text)
+import qualified Data.Text as T
+import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import ErrorSanitizer
 import System.Exit (ExitCode(..))
 import System.Directory
@@ -58,17 +60,23 @@ data CompileStatus
     | CompileAborted
     deriving (Eq, Show)
 
-formatDiagnostics ::  ByteString -> [String] -> ByteString
+formatDiagnostics :: Text -> [String] -> Text
 formatDiagnostics compilerOutput extraWarnings =
-    B.intercalate "\n\n" (compilerOutput : map pack extraWarnings)
+    T.intercalate "\n\n" (compilerOutput : map T.pack extraWarnings)
+
+readUtf8 :: FilePath -> IO Text
+readUtf8 f = decodeUtf8 <$> B.readFile f
+
+writeUtf8 :: FilePath -> Text -> IO ()
+writeUtf8 f = B.writeFile f . encodeUtf8
 
 compileSource :: Stage -> FilePath -> FilePath -> String -> Bool -> IO CompileStatus
 compileSource stage src err mode verbose = do
-    contents <- B.readFile src
+    contents <- readUtf8 src
     case runCustomDiagnostics mode contents of
         (True, messages) -> do
             createDirectoryIfMissing True (takeDirectory err)
-            B.writeFile err (formatDiagnostics "" messages)
+            B.writeFile err $ encodeUtf8 (formatDiagnostics "" messages)
             return CompileError
         (False, extraMessages) ->
             withSystemTempDirectory "build" $ \tmpdir -> do
@@ -99,60 +107,51 @@ compileSource stage src err mode verbose = do
                         createDirectoryIfMissing True (takeDirectory err)
                         let filteredOutput =
                                 case mode of
-                                    "codeworld" -> filterOutput output
+                                    "codeworld" -> rewriteErrors output
                                     _ -> output
-                        B.writeFile err (formatDiagnostics filteredOutput extraMessages)
+                        B.writeFile err $ encodeUtf8 $
+                            formatDiagnostics filteredOutput extraMessages
                         let target = tmpdir </> "program.jsexe"
                         when success $ case stage of
                             GenBase _ _ out syms -> do
-                                rtsCode <- B.readFile $ target </> "rts.js"
-                                libCode <-
-                                    B.readFile $ target </> "lib.base.js"
-                                outCode <-
-                                    B.readFile $ target </> "out.base.js"
+                                rtsCode <- readUtf8 (target </> "rts.js")
+                                libCode <- readUtf8 (target </> "lib.base.js")
+                                outCode <- readUtf8 (target </> "out.base.js")
                                 createDirectoryIfMissing True (takeDirectory out)
-                                B.writeFile
-                                    out
-                                    (rtsCode <> libCode <> outCode)
+                                writeUtf8 out (rtsCode <> libCode <> outCode)
                                 copyFile (target </> "out.base.symbs") syms
                             UseBase out _ baseURL -> do
-                                let prefix = pack $
+                                let prefix = T.pack $
                                         "var el = document.createElement('script');" ++
                                         "el.type = 'text/javascript';" ++
                                         "el.src = '" ++ baseURL ++ "';" ++
                                         "el.async = false;" ++
                                         "el.onload = function() {"
-                                let suffix = pack $
+                                let suffix = T.pack $
                                           "window.h$mainZCZCMainzimain = h$mainZCZCMainzimain;" ++
                                           "start();" ++
                                           "start = function() {};" ++
                                         "};" ++
                                         "document.body.appendChild(el);"
-                                libCode <- B.readFile $ target </> "lib.js"
-                                outCode <- B.readFile $ target </> "out.js"
+                                libCode <- readUtf8 (target </> "lib.js")
+                                outCode <- readUtf8 (target </> "out.js")
                                 createDirectoryIfMissing True (takeDirectory out)
-                                B.writeFile out (prefix <> libCode <> outCode <> suffix)
+                                writeUtf8 out (prefix <> libCode <> outCode <> suffix)
                             FullBuild out -> do
-                                rtsCode <- B.readFile $ target </> "rts.js"
-                                libCode <- B.readFile $ target </> "lib.js"
-                                outCode <- B.readFile $ target </> "out.js"
+                                rtsCode <- readUtf8 (target </> "rts.js")
+                                libCode <- readUtf8 (target </> "lib.js")
+                                outCode <- readUtf8 (target </> "out.js")
                                 createDirectoryIfMissing True (takeDirectory out)
-                                B.writeFile
-                                    out
-                                    (rtsCode <> libCode <> outCode)
+                                writeUtf8 out (rtsCode <> libCode <> outCode)
                         return $ if success then CompileSuccess else CompileError
 
 userCompileMicros :: Int
 userCompileMicros = 20 * 1000000
 
-runCompiler :: FilePath -> Int -> [String] -> Bool -> IO (Maybe (ExitCode, ByteString))
-runCompiler dir micros args verbose = do
-    result <- tryCompile ("-O" : args)
-    case result of
-        Just _  -> return result
-        Nothing -> tryCompile args
+runCompiler :: FilePath -> Int -> [String] -> Bool -> IO (Maybe (ExitCode, Text))
+runCompiler dir micros args verbose = tryCompile ("-O" : args) <|> tryCompile args
   where
-    tryCompile :: [String] -> IO (Maybe (ExitCode, ByteString))
+    tryCompile :: [String] -> IO (Maybe (ExitCode, Text))
     tryCompile currentArgs = do
         when verbose $ hPutStrLn stderr $ "COMMAND: ghcjs " ++ intercalate " " args
         (Just inh, Just outh, Just errh, pid) <-
@@ -165,7 +164,7 @@ runCompiler dir micros args verbose = do
                 , close_fds = True
                 }
         hClose inh
-        result <- withTimeout micros $ B.hGetContents errh
+        result <- withTimeout micros $ decodeUtf8 <$> B.hGetContents errh
         hClose outh
         terminateProcess pid
         exitCode <- waitForProcess pid

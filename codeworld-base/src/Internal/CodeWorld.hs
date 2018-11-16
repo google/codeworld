@@ -33,8 +33,8 @@ module Internal.CodeWorld
 
 import qualified "codeworld-api" CodeWorld as CW
 import Control.Exception
-import qualified Data.ByteString.Char8 as C
 import Data.Text (Text)
+import qualified Data.Text as T
 import ErrorSanitizer
 import Internal.Event
 import Internal.Num (Number, fromDouble, fromInt, toDouble, toInt)
@@ -46,13 +46,11 @@ import System.IO
 import System.IO.Unsafe
 import System.Random
 
-data LiteralException =
-    LiteralException String
-
+data LiteralException = LiteralException Text
 instance Exception LiteralException
 
 instance Show LiteralException where
-    show (LiteralException msg) = msg
+    show (LiteralException msg) = T.unpack (rewriteErrors msg)
 
 traced :: (a, CWT.Text) -> a
 traced (x, msg) = CW.trace (CWT.fromCWText msg) x
@@ -167,5 +165,4 @@ chooseRandoms = do
     return (fromDouble n : ns)
 
 reportError :: SomeException -> IO ()
-reportError ex =
-    throwIO (LiteralException (C.unpack (filterOutput (C.pack (show ex)))))
+reportError ex = throwIO (LiteralException (T.pack (show ex)))

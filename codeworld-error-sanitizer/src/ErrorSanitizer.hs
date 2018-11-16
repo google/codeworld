@@ -15,16 +15,14 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-module ErrorSanitizer
-    ( filterOutput
-    ) where
+module ErrorSanitizer (rewriteErrors) where
 
-import Data.ByteString (ByteString)
 import Data.List
+import Data.Text (Text)
 import RegexShim (replace)
 
-filterStages :: [(ByteString, ByteString)]
-filterStages =
+rewriteStages :: [(Text, Text)]
+rewriteStages =
     [ ("\xe2\x80\x98", "")
     , ("\xe2\x80\x99", "")
     , (" \\[-W[a-z-]*\\]", "")
@@ -77,7 +75,7 @@ filterStages =
     , ("\n\\s+\n", "\n")
     ]
 
-filterOutput :: ByteString -> ByteString
-filterOutput output = foldl' applyStage output filterStages
+rewriteErrors :: Text -> Text
+rewriteErrors output = foldl' applyStage output rewriteStages
   where
     applyStage s (pattern, sub) = replace pattern sub s

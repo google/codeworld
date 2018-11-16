@@ -32,8 +32,12 @@ Library
     CodeWorld.Compile.Base
 
   Other-modules:
+    CodeWorld.Compile.Diagnostics
     CodeWorld.Compile.ParseCode
     CodeWorld.Compile.Requirements
+    CodeWorld.Compile.Requirements.Eval
+    CodeWorld.Compile.Requirements.Language
+    CodeWorld.Compile.Requirements.Types
 
   Build-depends:
     aeson,

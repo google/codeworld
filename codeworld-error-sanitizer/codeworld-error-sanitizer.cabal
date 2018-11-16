@@ -17,7 +17,7 @@ Library
   Exposed-modules:     ErrorSanitizer
   Other-modules:       RegexShim
   Build-depends:       base,
-                       bytestring
+                       text
 
   if impl(ghcjs)
     Build-depends:     ghcjs-base,
@@ -25,6 +25,7 @@ Library
   else
     Build-depends:     array,
                        regex-base,
-                       regex-tdfa
+                       regex-tdfa,
+                       regex-tdfa-text
 
   Exposed: True

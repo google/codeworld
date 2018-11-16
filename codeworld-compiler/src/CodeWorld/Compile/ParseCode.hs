@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.
@@ -22,6 +23,7 @@ import CodeWorld.Compile.Diagnostics
 import CodeWorld.Compile.Requirements
 import Data.Array
 import Data.Generics
+import Data.Maybe (isJust)
 import Data.Monoid
 import Data.List (sort)
 import Data.Text (Text, unpack)
@@ -31,7 +33,7 @@ import Text.Regex.TDFA
 import Text.Regex.TDFA.Text
 
 hasOldStyleMain :: Text -> Bool
-hasOldStyleMain src = src =~ ("(^|\\n)main[ \\t]*=" :: Text)
+hasOldStyleMain src = isJust (findOldStyleMain src)
 
 runCustomDiagnostics :: SourceMode -> Text -> (Bool, [String])
 runCustomDiagnostics mode src = (abort, msgs)
@@ -80,12 +82,18 @@ dangerousSourceDiagnostics _ src _
 -- will be broken soon, so we issue a warning.
 oldStyleDiagnostics :: SourceMode -> Text -> ParsedCode -> [Diagnostic]
 oldStyleDiagnostics "codeworld" src _
-  | hasOldStyleMain src
-    = [(noSrcSpan, Warning,
+  | Just (off, len) <- findOldStyleMain src
+    = [(srcSpanFor src off len, Warning,
         "warning:\n" ++
         "\tPlease define 'program' instead of 'main'.\n" ++
         "\tDefining 'main' may stop working July 2019.")]
 oldStyleDiagnostics _ _ _ = []
+
+findOldStyleMain :: Text -> Maybe (Int, Int)
+findOldStyleMain src
+  | rangeSize (bounds matchArray) > 2 = Just (matchArray ! 2)
+  | otherwise = Nothing
+  where matchArray :: MatchArray = src =~ ("(^|\\n)(main)[ \\t]*=" :: Text)
 
 parsedCodeDiagnostics :: SourceMode -> Text -> ParsedCode -> [Diagnostic]
 parsedCodeDiagnostics "codeworld" src (Parsed mod) =

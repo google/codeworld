@@ -20,7 +20,7 @@ module CodeWorld.Compile.Diagnostics where
 
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Haskell.Exts (Module, SrcSpanInfo(..), SrcSpan(..))
+import Language.Haskell.Exts (Module, SrcSpanInfo(..), SrcSpan(..), noSrcSpan)
 
 type SourceMode = String  -- typically "codeworld" or "haskell"
 
@@ -33,7 +33,6 @@ data ParsedCode = Parsed (Module SrcSpanInfo) | NoParse
 formatLocation :: SrcSpanInfo -> String
 formatLocation spn@(SrcSpanInfo s _)
   | spn == noSrcSpan = ""
-  | fn == ""         = "program.hs:1:1: "
   | otherwise        = "program.hs:" ++ show line ++ ":" ++ show col ++ ": "
   where
     fn = srcSpanFilename s

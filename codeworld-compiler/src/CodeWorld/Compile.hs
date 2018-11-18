@@ -1,5 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
 {-
@@ -27,9 +28,11 @@ module CodeWorld.Compile
 import CodeWorld.Compile.ParseCode
 import Control.Applicative
 import Control.Concurrent
+import Control.Exception
 import Control.Monad
 import qualified Data.ByteString as B
 import Data.List (intercalate)
+import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -71,105 +74,99 @@ writeUtf8 :: FilePath -> Text -> IO ()
 writeUtf8 f = B.writeFile f . encodeUtf8
 
 compileSource :: Stage -> FilePath -> FilePath -> String -> Bool -> IO CompileStatus
-compileSource stage src err mode verbose = do
-    contents <- readUtf8 src
-    case runCustomDiagnostics mode contents of
-        (True, messages) -> do
-            createDirectoryIfMissing True (takeDirectory err)
-            B.writeFile err $ encodeUtf8 (formatDiagnostics "" messages)
-            return CompileError
-        (False, extraMessages) ->
-            withSystemTempDirectory "build" $ \tmpdir -> do
-                copyFile src (tmpdir </> "program.hs")
-                baseArgs <-
-                    case mode of
-                        "haskell" -> return haskellCompatibleBuildArgs
-                        "codeworld" -> return (standardBuildArgs (hasOldStyleMain contents))
-                let timeout =
-                      case stage of
-                          GenBase _ _ _ _ -> maxBound :: Int
-                          _               -> userCompileMicros
-                linkArgs <-
-                    case stage of
-                        ErrorCheck -> return ["-fno-code"]
-                        FullBuild _ -> return ["-dedupe"]
-                        GenBase mod base _ _ -> do
-                            copyFile base (tmpdir </> mod <.> "hs")
-                            return [mod <.> "hs", "-generate-base", mod]
-                        UseBase _ syms _ -> do
-                            copyFile syms (tmpdir </> "out.base.symbs")
-                            return ["-dedupe", "-use-base", "out.base.symbs"]
-                let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
-                runCompiler tmpdir timeout ghcjsArgs verbose >>= \case
-                    Nothing -> return CompileAborted
-                    Just (exitCode, output) -> do
-                        let success = exitCode == ExitSuccess
-                        createDirectoryIfMissing True (takeDirectory err)
-                        let filteredOutput =
-                                case mode of
-                                    "codeworld" -> rewriteErrors output
-                                    _ -> output
-                        B.writeFile err $ encodeUtf8 $
-                            formatDiagnostics filteredOutput extraMessages
-                        let target = tmpdir </> "program.jsexe"
-                        when success $ case stage of
-                            GenBase _ _ out syms -> do
-                                rtsCode <- readUtf8 (target </> "rts.js")
-                                libCode <- readUtf8 (target </> "lib.base.js")
-                                outCode <- readUtf8 (target </> "out.base.js")
-                                createDirectoryIfMissing True (takeDirectory out)
-                                writeUtf8 out (rtsCode <> libCode <> outCode)
-                                copyFile (target </> "out.base.symbs") syms
-                            UseBase out _ baseURL -> do
-                                let prefix = T.pack $
-                                        "var el = document.createElement('script');" ++
-                                        "el.type = 'text/javascript';" ++
-                                        "el.src = '" ++ baseURL ++ "';" ++
-                                        "el.async = false;" ++
-                                        "el.onload = function() {"
-                                let suffix = T.pack $
-                                          "window.h$mainZCZCMainzimain = h$mainZCZCMainzimain;" ++
-                                          "start();" ++
-                                          "start = function() {};" ++
-                                        "};" ++
-                                        "document.body.appendChild(el);"
-                                libCode <- readUtf8 (target </> "lib.js")
-                                outCode <- readUtf8 (target </> "out.js")
-                                createDirectoryIfMissing True (takeDirectory out)
-                                writeUtf8 out (prefix <> libCode <> outCode <> suffix)
-                            FullBuild out -> do
-                                rtsCode <- readUtf8 (target </> "rts.js")
-                                libCode <- readUtf8 (target </> "lib.js")
-                                outCode <- readUtf8 (target </> "out.js")
-                                createDirectoryIfMissing True (takeDirectory out)
-                                writeUtf8 out (rtsCode <> libCode <> outCode)
-                        return $ if success then CompileSuccess else CompileError
+compileSource stage src err mode verbose =
+    fromMaybe CompileAborted <$> withTimeout timeout go
+  where
+    timeout = case stage of
+        GenBase _ _ _ _ -> maxBound :: Int
+        _               -> userCompileMicros
+    go = do
+        contents <- readUtf8 src
+        case runCustomDiagnostics mode contents of
+            (True, messages) -> do
+                createDirectoryIfMissing True (takeDirectory err)
+                B.writeFile err $ encodeUtf8 (formatDiagnostics "" messages)
+                return CompileError
+            (False, extraMessages) ->
+                withSystemTempDirectory "build" $ \tmpdir -> do
+                    copyFile src (tmpdir </> "program.hs")
+                    baseArgs <-
+                        case mode of
+                            "haskell" -> return haskellCompatibleBuildArgs
+                            "codeworld" -> return (standardBuildArgs (hasOldStyleMain contents))
+                    linkArgs <-
+                        case stage of
+                            ErrorCheck -> return ["-fno-code"]
+                            FullBuild _ -> return ["-dedupe"]
+                            GenBase mod base _ _ -> do
+                                copyFile base (tmpdir </> mod <.> "hs")
+                                return [mod <.> "hs", "-generate-base", mod]
+                            UseBase _ syms _ -> do
+                                copyFile syms (tmpdir </> "out.base.symbs")
+                                return ["-dedupe", "-use-base", "out.base.symbs"]
+                    let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
+                    runCompiler tmpdir timeout ghcjsArgs verbose >>= \case
+                        Nothing -> return CompileAborted
+                        Just (exitCode, output) -> do
+                            let success = exitCode == ExitSuccess
+                            createDirectoryIfMissing True (takeDirectory err)
+                            let filteredOutput =
+                                    case mode of
+                                        "codeworld" -> rewriteErrors output
+                                        _ -> output
+                            B.writeFile err $ encodeUtf8 $
+                                formatDiagnostics filteredOutput extraMessages
+                            let target = tmpdir </> "program.jsexe"
+                            when success $ case stage of
+                                GenBase _ _ out syms -> do
+                                    rtsCode <- readUtf8 (target </> "rts.js")
+                                    libCode <- readUtf8 (target </> "lib.base.js")
+                                    outCode <- readUtf8 (target </> "out.base.js")
+                                    createDirectoryIfMissing True (takeDirectory out)
+                                    writeUtf8 out (rtsCode <> libCode <> outCode)
+                                    copyFile (target </> "out.base.symbs") syms
+                                UseBase out _ baseURL -> do
+                                    let prefix = T.pack $
+                                            "var el = document.createElement('script');" ++
+                                            "el.type = 'text/javascript';" ++
+                                            "el.src = '" ++ baseURL ++ "';" ++
+                                            "el.async = false;" ++
+                                            "el.onload = function() {"
+                                    let suffix = T.pack $
+                                              "window.h$mainZCZCMainzimain = h$mainZCZCMainzimain;" ++
+                                              "start();" ++
+                                              "start = function() {};" ++
+                                            "};" ++
+                                            "document.body.appendChild(el);"
+                                    libCode <- readUtf8 (target </> "lib.js")
+                                    outCode <- readUtf8 (target </> "out.js")
+                                    createDirectoryIfMissing True (takeDirectory out)
+                                    writeUtf8 out (prefix <> libCode <> outCode <> suffix)
+                                FullBuild out -> do
+                                    rtsCode <- readUtf8 (target </> "rts.js")
+                                    libCode <- readUtf8 (target </> "lib.js")
+                                    outCode <- readUtf8 (target </> "out.js")
+                                    createDirectoryIfMissing True (takeDirectory out)
+                                    writeUtf8 out (rtsCode <> libCode <> outCode)
+                            return $ if success then CompileSuccess else CompileError
 
 userCompileMicros :: Int
-userCompileMicros = 20 * 1000000
+userCompileMicros = 30 * 1000000
 
 runCompiler :: FilePath -> Int -> [String] -> Bool -> IO (Maybe (ExitCode, Text))
-runCompiler dir micros args verbose = tryCompile ("-O" : args) <|> tryCompile args
+runCompiler dir timeout args verbose =
+    withTimeout firstAttemptTimeout (attempt ("-O" : args)) <|>
+    Just <$> attempt args
   where
-    tryCompile :: [String] -> IO (Maybe (ExitCode, Text))
-    tryCompile currentArgs = do
-        when verbose $ hPutStrLn stderr $ "COMMAND: ghcjs " ++ intercalate " " args
-        (Just inh, Just outh, Just errh, pid) <-
-            createProcess
-                (proc "ghcjs" args)
-                { cwd = Just dir
-                , std_in = CreatePipe
-                , std_out = CreatePipe
-                , std_err = CreatePipe
-                , close_fds = True
-                }
-        hClose inh
-        result <- withTimeout micros $ decodeUtf8 <$> B.hGetContents errh
-        hClose outh
-        terminateProcess pid
-        exitCode <- waitForProcess pid
+    firstAttemptTimeout = timeout `div` 2
+
+    attempt :: [String] -> IO (ExitCode, Text)
+    attempt currentArgs = do
+        when verbose $ hPutStrLn stderr $
+            "COMMAND: ghcjs " ++ intercalate " " args
+        (exitCode, result) <- runSync dir "ghcjs" args
         when verbose $ hPutStrLn stderr $ "RESULT: " ++ show exitCode
-        return $ (exitCode,) <$> result
+        return (exitCode, result)
 
 standardBuildArgs :: Bool -> [String]
 standardBuildArgs True =
@@ -233,3 +230,23 @@ withTimeout micros action = do
     killThread killer
     killThread runner
     return r
+
+-- Runs a command, where if the thread terminates, the subprocess is automatically
+-- killed.
+runSync :: FilePath -> String -> [String] -> IO (ExitCode, Text)
+runSync dir cmd args = mask $ \restore -> do
+    (Nothing, Just outh, Just errh, pid) <-
+        createProcess
+            (proc cmd args)
+            { cwd = Just dir
+            , std_in = NoStream
+            , std_out = CreatePipe
+            , std_err = CreatePipe
+            , close_fds = True
+            }
+    let cleanup (e :: SomeException) = terminateProcess pid >> throwIO e
+    handle cleanup $ restore $ do
+        result <- decodeUtf8 <$> B.hGetContents errh
+        hClose outh
+        exitCode <- waitForProcess pid
+        return (exitCode, result)

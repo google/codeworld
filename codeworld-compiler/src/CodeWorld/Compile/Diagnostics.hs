@@ -30,6 +30,16 @@ data Level = Info | Warning | Error deriving (Eq, Ord)
 
 data ParsedCode = Parsed (Module SrcSpanInfo) | NoParse
 
+formatLocation :: SrcSpanInfo -> String
+formatLocation spn@(SrcSpanInfo s _)
+  | spn == noSrcSpan = ""
+  | fn == ""         = "program.hs:1:1: "
+  | otherwise        = "program.hs:" ++ show line ++ ":" ++ show col ++ ": "
+  where
+    fn = srcSpanFilename s
+    line = srcSpanStartLine s
+    col = srcSpanStartColumn s
+
 srcSpanFor :: Text -> Int -> Int -> SrcSpanInfo
 srcSpanFor src off len =
     SrcSpanInfo (SrcSpan "program.hs" ln1 col1 ln2 col2) []

@@ -53,16 +53,6 @@ parseCode src = case result of
   where result = parseFileContentsWithMode mode (unpack src)
         mode = defaultParseMode { parseFilename = "program.hs" }
 
-formatLocation :: SrcSpanInfo -> String
-formatLocation spn@(SrcSpanInfo s _)
-  | spn == noSrcSpan = ""
-  | fn == ""         = "program.hs:1:1: "
-  | otherwise        = "program.hs:" ++ show line ++ ":" ++ show col ++ ": "
-  where
-    fn = srcSpanFilename s
-    line = srcSpanStartLine s
-    col = srcSpanStartColumn s
-
 -- Look for uses of Template Haskell or related features in the compiler.  These
 -- cannot currently be used, because the compiler isn't properly sandboxed, so
 -- this would be a remote code execution vulnerability.

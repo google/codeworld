@@ -1,3 +1,5 @@
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -25,11 +27,15 @@ module CodeWorld.Compile
     , CompileStatus(..)
     ) where
 
+import CodeWorld.Compile.Diagnostics
 import CodeWorld.Compile.ParseCode
 import Control.Applicative
 import Control.Concurrent
 import Control.Exception
 import Control.Monad
+import Control.Monad.IO.Class
+import Control.Monad.State
+import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import Data.List (intercalate)
 import Data.Maybe
@@ -73,82 +79,120 @@ readUtf8 f = decodeUtf8 <$> B.readFile f
 writeUtf8 :: FilePath -> Text -> IO ()
 writeUtf8 f = B.writeFile f . encodeUtf8
 
-compileSource :: Stage -> FilePath -> FilePath -> String -> Bool -> IO CompileStatus
-compileSource stage src err mode verbose =
-    fromMaybe CompileAborted <$> withTimeout timeout go
+data CompileState = CompileState {
+    compileMode         :: SourceMode,
+    compileStage        :: Stage,
+    compileSourcePath   :: FilePath,
+    compileOutputPath   :: FilePath,
+    compileVerbose      :: Bool,
+    compileTimeout      :: Int,
+    compileStatus       :: CompileStatus,
+    compileErrors       :: [Diagnostic],
+    compileReadSource   :: Maybe ByteString,
+    compileParsedSource :: Maybe ParsedCode
+    }
+
+type MonadCompile m = (MonadState CompileState m, MonadIO m)
+
+compileSource
+    :: Stage -> FilePath -> FilePath -> String -> Bool -> IO CompileStatus
+compileSource stage src err mode verbose = fromMaybe CompileAborted <$>
+    withTimeout timeout (compileStatus <$> execStateT compile initialState)
   where
+    initialState = CompileState {
+        compileMode = mode,
+        compileStage = stage,
+        compileSourcePath = src,
+        compileOutputPath = err,
+        compileVerbose = verbose,
+        compileTimeout = timeout,
+        compileStatus = CompileSuccess,
+        compileErrors = [],
+        compileReadSource = Nothing,
+        compileParsedSource = Nothing
+        }
     timeout = case stage of
         GenBase _ _ _ _ -> maxBound :: Int
         _               -> userCompileMicros
-    go = do
-        contents <- readUtf8 src
-        case runCustomDiagnostics mode contents of
-            (True, messages) -> do
-                createDirectoryIfMissing True (takeDirectory err)
-                B.writeFile err $ encodeUtf8 (formatDiagnostics "" messages)
-                return CompileError
-            (False, extraMessages) ->
-                withSystemTempDirectory "build" $ \tmpdir -> do
-                    copyFile src (tmpdir </> "program.hs")
-                    baseArgs <-
-                        case mode of
-                            "haskell" -> return haskellCompatibleBuildArgs
-                            "codeworld" -> return (standardBuildArgs (hasOldStyleMain contents))
-                    linkArgs <-
-                        case stage of
-                            ErrorCheck -> return ["-fno-code"]
-                            FullBuild _ -> return ["-dedupe"]
-                            GenBase mod base _ _ -> do
-                                copyFile base (tmpdir </> mod <.> "hs")
-                                return [mod <.> "hs", "-generate-base", mod]
-                            UseBase _ syms _ -> do
-                                copyFile syms (tmpdir </> "out.base.symbs")
-                                return ["-dedupe", "-use-base", "out.base.symbs"]
-                    let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
-                    runCompiler tmpdir timeout ghcjsArgs verbose >>= \case
-                        Nothing -> return CompileAborted
-                        Just (exitCode, output) -> do
-                            let success = exitCode == ExitSuccess
-                            createDirectoryIfMissing True (takeDirectory err)
-                            let filteredOutput =
-                                    case mode of
-                                        "codeworld" -> rewriteErrors output
-                                        _ -> output
-                            B.writeFile err $ encodeUtf8 $
-                                formatDiagnostics filteredOutput extraMessages
-                            let target = tmpdir </> "program.jsexe"
-                            when success $ case stage of
-                                GenBase _ _ out syms -> do
-                                    rtsCode <- readUtf8 (target </> "rts.js")
-                                    libCode <- readUtf8 (target </> "lib.base.js")
-                                    outCode <- readUtf8 (target </> "out.base.js")
-                                    createDirectoryIfMissing True (takeDirectory out)
-                                    writeUtf8 out (rtsCode <> libCode <> outCode)
-                                    copyFile (target </> "out.base.symbs") syms
-                                UseBase out _ baseURL -> do
-                                    let prefix = T.pack $
-                                            "var el = document.createElement('script');" ++
-                                            "el.type = 'text/javascript';" ++
-                                            "el.src = '" ++ baseURL ++ "';" ++
-                                            "el.async = false;" ++
-                                            "el.onload = function() {"
-                                    let suffix = T.pack $
-                                              "window.h$mainZCZCMainzimain = h$mainZCZCMainzimain;" ++
-                                              "start();" ++
-                                              "start = function() {};" ++
-                                            "};" ++
-                                            "document.body.appendChild(el);"
-                                    libCode <- readUtf8 (target </> "lib.js")
-                                    outCode <- readUtf8 (target </> "out.js")
-                                    createDirectoryIfMissing True (takeDirectory out)
-                                    writeUtf8 out (prefix <> libCode <> outCode <> suffix)
-                                FullBuild out -> do
-                                    rtsCode <- readUtf8 (target </> "rts.js")
-                                    libCode <- readUtf8 (target </> "lib.js")
-                                    outCode <- readUtf8 (target </> "out.js")
-                                    createDirectoryIfMissing True (takeDirectory out)
-                                    writeUtf8 out (rtsCode <> libCode <> outCode)
-                            return $ if success then CompileSuccess else CompileError
+
+compile :: MonadCompile m => m ()
+compile = do
+    stage <- gets compileStage
+    src <- gets compileSourcePath
+    err <- gets compileOutputPath
+    verbose <- gets compileVerbose
+    mode <- gets compileMode
+    timeout <- gets compileTimeout
+
+    contents <- liftIO $ readUtf8 src
+    status <- case runCustomDiagnostics mode contents of
+        (True, messages) -> liftIO $ do
+            createDirectoryIfMissing True (takeDirectory err)
+            B.writeFile err $ encodeUtf8 (formatDiagnostics "" messages)
+            return CompileError
+        (False, extraMessages) ->
+            liftIO $ withSystemTempDirectory "build" $ \tmpdir -> do
+                copyFile src (tmpdir </> "program.hs")
+                baseArgs <-
+                    case mode of
+                        "haskell" -> return haskellCompatibleBuildArgs
+                        "codeworld" -> return (standardBuildArgs (hasOldStyleMain contents))
+                linkArgs <-
+                    case stage of
+                        ErrorCheck -> return ["-fno-code"]
+                        FullBuild _ -> return ["-dedupe"]
+                        GenBase mod base _ _ -> do
+                            copyFile base (tmpdir </> mod <.> "hs")
+                            return [mod <.> "hs", "-generate-base", mod]
+                        UseBase _ syms _ -> do
+                            copyFile syms (tmpdir </> "out.base.symbs")
+                            return ["-dedupe", "-use-base", "out.base.symbs"]
+                let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
+                runCompiler tmpdir timeout ghcjsArgs verbose >>= \case
+                    Nothing -> return CompileAborted
+                    Just (exitCode, output) -> do
+                        let success = exitCode == ExitSuccess
+                        createDirectoryIfMissing True (takeDirectory err)
+                        let filteredOutput =
+                                case mode of
+                                    "codeworld" -> rewriteErrors output
+                                    _ -> output
+                        B.writeFile err $ encodeUtf8 $
+                            formatDiagnostics filteredOutput extraMessages
+                        let target = tmpdir </> "program.jsexe"
+                        when success $ case stage of
+                            GenBase _ _ out syms -> do
+                                rtsCode <- readUtf8 (target </> "rts.js")
+                                libCode <- readUtf8 (target </> "lib.base.js")
+                                outCode <- readUtf8 (target </> "out.base.js")
+                                createDirectoryIfMissing True (takeDirectory out)
+                                writeUtf8 out (rtsCode <> libCode <> outCode)
+                                copyFile (target </> "out.base.symbs") syms
+                            UseBase out _ baseURL -> do
+                                let prefix = T.pack $
+                                        "var el = document.createElement('script');" ++
+                                        "el.type = 'text/javascript';" ++
+                                        "el.src = '" ++ baseURL ++ "';" ++
+                                        "el.async = false;" ++
+                                        "el.onload = function() {"
+                                let suffix = T.pack $
+                                          "window.h$mainZCZCMainzimain = h$mainZCZCMainzimain;" ++
+                                          "start();" ++
+                                          "start = function() {};" ++
+                                        "};" ++
+                                        "document.body.appendChild(el);"
+                                libCode <- readUtf8 (target </> "lib.js")
+                                outCode <- readUtf8 (target </> "out.js")
+                                createDirectoryIfMissing True (takeDirectory out)
+                                writeUtf8 out (prefix <> libCode <> outCode <> suffix)
+                            FullBuild out -> do
+                                rtsCode <- readUtf8 (target </> "rts.js")
+                                libCode <- readUtf8 (target </> "lib.js")
+                                outCode <- readUtf8 (target </> "out.js")
+                                createDirectoryIfMissing True (takeDirectory out)
+                                writeUtf8 out (rtsCode <> libCode <> outCode)
+                        return $ if success then CompileSuccess else CompileError
+    modify $ \state -> state { compileStatus = status }
 
 userCompileMicros :: Int
 userCompileMicros = 30 * 1000000

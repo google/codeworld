@@ -49,6 +49,7 @@ Library
     cryptonite,
     data-default,
     directory,
+    exceptions,
     filepath,
     hashable,
     haskell-src-exts,

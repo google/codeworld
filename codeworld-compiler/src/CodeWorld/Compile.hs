@@ -92,14 +92,15 @@ compile = do
     timeout <- gets compileTimeout
 
     contents <- liftIO $ readUtf8 src
+
     status <- case runCustomDiagnostics mode contents of
         (True, messages) -> liftIO $ do
-            createDirectoryIfMissing True (takeDirectory err)
-            B.writeFile err $ encodeUtf8 (formatDiagnostics "" messages)
+            liftIO $ createDirectoryIfMissing True (takeDirectory err)
+            liftIO $ B.writeFile err $ encodeUtf8 (formatDiagnostics "" messages)
             return CompileError
         (False, extraMessages) ->
-            liftIO $ withSystemTempDirectory "build" $ \tmpdir -> do
-                copyFile src (tmpdir </> "program.hs")
+            withSystemTempDirectory "build" $ \tmpdir -> do
+                liftIO $ copyFile src (tmpdir </> "program.hs")
                 baseArgs <-
                     case mode of
                         "haskell" -> return haskellCompatibleBuildArgs
@@ -109,33 +110,33 @@ compile = do
                         ErrorCheck -> return ["-fno-code"]
                         FullBuild _ -> return ["-dedupe"]
                         GenBase mod base _ _ -> do
-                            copyFile base (tmpdir </> mod <.> "hs")
+                            liftIO $ copyFile base (tmpdir </> mod <.> "hs")
                             return [mod <.> "hs", "-generate-base", mod]
                         UseBase _ syms _ -> do
-                            copyFile syms (tmpdir </> "out.base.symbs")
+                            liftIO $ copyFile syms (tmpdir </> "out.base.symbs")
                             return ["-dedupe", "-use-base", "out.base.symbs"]
                 let ghcjsArgs = ["program.hs"] ++ baseArgs ++ linkArgs
-                runCompiler tmpdir timeout ghcjsArgs verbose >>= \case
+                liftIO (runCompiler tmpdir timeout ghcjsArgs verbose) >>= \case
                     Nothing -> return CompileAborted
                     Just (exitCode, output) -> do
                         let success = exitCode == ExitSuccess
-                        createDirectoryIfMissing True (takeDirectory err)
+                        liftIO $ createDirectoryIfMissing True (takeDirectory err)
                         let filteredOutput =
                                 case mode of
                                     "codeworld" -> rewriteErrors output
                                     _ -> output
-                        B.writeFile err $ encodeUtf8 $
+                        liftIO $ B.writeFile err $ encodeUtf8 $
                             formatDiagnostics filteredOutput extraMessages
                         let target = tmpdir </> "program.jsexe"
                         when success $ case stage of
-                            GenBase _ _ out syms -> do
+                            GenBase _ _ out syms -> liftIO $ do
                                 rtsCode <- readUtf8 (target </> "rts.js")
                                 libCode <- readUtf8 (target </> "lib.base.js")
                                 outCode <- readUtf8 (target </> "out.base.js")
                                 createDirectoryIfMissing True (takeDirectory out)
                                 writeUtf8 out (rtsCode <> libCode <> outCode)
                                 copyFile (target </> "out.base.symbs") syms
-                            UseBase out _ baseURL -> do
+                            UseBase out _ baseURL -> liftIO $ do
                                 let prefix = T.pack $
                                         "var el = document.createElement('script');" ++
                                         "el.type = 'text/javascript';" ++
@@ -152,7 +153,7 @@ compile = do
                                 outCode <- readUtf8 (target </> "out.js")
                                 createDirectoryIfMissing True (takeDirectory out)
                                 writeUtf8 out (prefix <> libCode <> outCode <> suffix)
-                            FullBuild out -> do
+                            FullBuild out -> liftIO $ do
                                 rtsCode <- readUtf8 (target </> "rts.js")
                                 libCode <- readUtf8 (target </> "lib.js")
                                 outCode <- readUtf8 (target </> "out.js")

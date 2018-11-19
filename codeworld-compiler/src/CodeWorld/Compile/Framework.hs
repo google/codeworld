@@ -26,8 +26,8 @@ module CodeWorld.Compile.Framework where
 
 import Control.Applicative
 import Control.Concurrent
-import Control.Exception
 import Control.Monad
+import Control.Monad.Catch
 import Control.Monad.IO.Class
 import Control.Monad.State
 import Data.ByteString (ByteString)
@@ -78,7 +78,7 @@ data CompileState = CompileState {
     compileParsedSource :: Maybe ParsedCode
     }
 
-type MonadCompile m = (MonadState CompileState m, MonadIO m)
+type MonadCompile m = (MonadState CompileState m, MonadIO m, MonadMask m)
 
 getSourceCode :: MonadCompile m => m ByteString
 getSourceCode = do
@@ -132,7 +132,7 @@ runSync dir cmd args = mask $ \restore -> do
             , std_err = CreatePipe
             , close_fds = True
             }
-    let cleanup (e :: SomeException) = terminateProcess pid >> throwIO e
+    let cleanup (e :: SomeException) = terminateProcess pid >> throwM e
     handle cleanup $ restore $ do
         result <- decodeUtf8 <$> B.hGetContents errh
         hClose outh

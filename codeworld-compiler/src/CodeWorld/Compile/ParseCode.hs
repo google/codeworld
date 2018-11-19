@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 {-
@@ -17,9 +18,9 @@
   limitations under the License.
 -}
 
-module CodeWorld.Compile.ParseCode (runCustomDiagnostics, hasOldStyleMain) where
+module CodeWorld.Compile.ParseCode (runCustomDiagnostics, hasOldStyleMain, parseCode) where
 
-import CodeWorld.Compile.Diagnostics
+import CodeWorld.Compile.Framework
 import CodeWorld.Compile.Requirements
 import Data.Array
 import Data.Generics
@@ -45,13 +46,6 @@ runCustomDiagnostics mode src = (abort, msgs)
         worst = maximum (Info : map (\(_, level, _) -> level) diags)
         abort = worst >= Error
         msgs  = [ formatLocation loc ++ msg | (loc, _, msg) <- sort diags ]
-
-parseCode :: Text -> ParsedCode
-parseCode src = case result of
-    ParseOk mod -> Parsed mod
-    ParseFailed _ _ -> NoParse
-  where result = parseFileContentsWithMode mode (unpack src)
-        mode = defaultParseMode { parseFilename = "program.hs" }
 
 -- Look for uses of Template Haskell or related features in the compiler.  These
 -- cannot currently be used, because the compiler isn't properly sandboxed, so

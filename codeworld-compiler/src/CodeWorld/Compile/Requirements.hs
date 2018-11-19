@@ -19,7 +19,7 @@
 
 module CodeWorld.Compile.Requirements (requirementsDiagnostics) where
 
-import CodeWorld.Compile.Diagnostics
+import CodeWorld.Compile.Framework
 import CodeWorld.Compile.Requirements.Eval
 import CodeWorld.Compile.Requirements.Language
 import Codec.Compression.Zlib

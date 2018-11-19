@@ -22,7 +22,7 @@ module CodeWorld.Compile.Requirements.Eval (
     evalRequirement
     ) where
 
-import CodeWorld.Compile.Diagnostics
+import CodeWorld.Compile.Framework
 import CodeWorld.Compile.Requirements.Types
 import Data.ByteString (ByteString)
 import Data.ByteString.Char8 (unpack)

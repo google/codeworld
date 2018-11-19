@@ -27,7 +27,7 @@ module CodeWorld.Compile
     , CompileStatus(..)
     ) where
 
-import CodeWorld.Compile.Diagnostics
+import CodeWorld.Compile.Framework
 import CodeWorld.Compile.ParseCode
 import Control.Applicative
 import Control.Concurrent
@@ -51,24 +51,6 @@ import System.IO
 import System.IO.Temp (withSystemTempDirectory)
 import System.Process
 
-data Stage
-    = ErrorCheck
-    | FullBuild FilePath  -- ^ Output file location
-    | GenBase   String    -- ^ Base module name
-                FilePath  -- ^ Base module file location
-                FilePath  -- ^ Output file location
-                FilePath  -- ^ Symbol file location
-    | UseBase   FilePath  -- ^ Output file location
-                FilePath  -- ^ Symbol file location
-                String    -- ^ URL of the base JavaScript bundle
-    deriving (Eq, Show)
-
-data CompileStatus
-    = CompileSuccess
-    | CompileError
-    | CompileAborted
-    deriving (Eq, Show)
-
 formatDiagnostics :: Text -> [String] -> Text
 formatDiagnostics compilerOutput extraWarnings =
     T.intercalate "\n\n" (compilerOutput : map T.pack extraWarnings)
@@ -78,21 +60,6 @@ readUtf8 f = decodeUtf8 <$> B.readFile f
 
 writeUtf8 :: FilePath -> Text -> IO ()
 writeUtf8 f = B.writeFile f . encodeUtf8
-
-data CompileState = CompileState {
-    compileMode         :: SourceMode,
-    compileStage        :: Stage,
-    compileSourcePath   :: FilePath,
-    compileOutputPath   :: FilePath,
-    compileVerbose      :: Bool,
-    compileTimeout      :: Int,
-    compileStatus       :: CompileStatus,
-    compileErrors       :: [Diagnostic],
-    compileReadSource   :: Maybe ByteString,
-    compileParsedSource :: Maybe ParsedCode
-    }
-
-type MonadCompile m = (MonadState CompileState m, MonadIO m)
 
 compileSource
     :: Stage -> FilePath -> FilePath -> String -> Bool -> IO CompileStatus
@@ -264,33 +231,3 @@ haskellCompatibleBuildArgs =
     , "-package"
     , "QuickCheck"
     ]
-
-withTimeout :: Int -> IO a -> IO (Maybe a)
-withTimeout micros action = do
-    result <- newEmptyMVar
-    killer <- forkIO $ threadDelay micros >> putMVar result Nothing
-    runner <- forkIO $ action >>= putMVar result . Just
-    r <- takeMVar result
-    killThread killer
-    killThread runner
-    return r
-
--- Runs a command, where if the thread terminates, the subprocess is automatically
--- killed.
-runSync :: FilePath -> String -> [String] -> IO (ExitCode, Text)
-runSync dir cmd args = mask $ \restore -> do
-    (Nothing, Just outh, Just errh, pid) <-
-        createProcess
-            (proc cmd args)
-            { cwd = Just dir
-            , std_in = NoStream
-            , std_out = CreatePipe
-            , std_err = CreatePipe
-            , close_fds = True
-            }
-    let cleanup (e :: SomeException) = terminateProcess pid >> throwIO e
-    handle cleanup $ restore $ do
-        result <- decodeUtf8 <$> B.hGetContents errh
-        hClose outh
-        exitCode <- waitForProcess pid
-        return (exitCode, result)

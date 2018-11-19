@@ -32,7 +32,7 @@ Library
     CodeWorld.Compile.Base
 
   Other-modules:
-    CodeWorld.Compile.Diagnostics
+    CodeWorld.Compile.Framework
     CodeWorld.Compile.ParseCode
     CodeWorld.Compile.Requirements
     CodeWorld.Compile.Requirements.Eval

@@ -154,6 +154,8 @@ The following use cases have been proposed, but are not yet implemented.
 - Style constraints.  e.g., all top-level definitions must have type
   declarations.  Or all lines must be 80 characters or less.
 
+- No warnings.  Alternatively, no warnings of specific types.
+
 - Count requirements.  There must be at least 10 defined variables.  Or
   three polygons.  Perhaps this could be accomplished with a cardinality
   constraint on the matching form above.
@@ -163,3 +165,33 @@ The following use cases have been proposed, but are not yet implemented.
   built-in).  For instance, you may want students to only use a given
   variable called `ellipse`, and not use `circle` on its own outside
   of that.
+
+Open questions
+==============
+
+1. Can we support runtime testing?
+
+One appealing idea is to also add runtime testing to the requirements
+language.  This is much harder to do.
+
+I foresee implementing this by using a GHC plugin to inject the testing
+code at the beginning of `main`.  The blocker for this is that it
+requires a later GHC, than CodeWorld currently uses.  At the same time,
+we'd move requirements reporting from a diagnostic output at
+compile-time to a runtime action.  Requirements that are checked at
+compile time would be hard-coded into the result, but dynamic
+requirements (checked at runtime) would be evaluated on each execution.
+
+2. Can requirements be embedded into a URL, rather than comments in
+   the code?
+
+The main motivation here is that students are likely to just delete
+the requirements block in their code, either intentionally or
+accidentally.  Embedding the requirements into a URL would make them
+more durable.  One idea is to make the URL just another source file,
+which would be parsed for REQUIRES and XREQUIRES comments, and those
+would be added to the requirements for the current file.
+
+(How this interacts with the GHC plugin implementation is also
+interesting.  I suspect we'd need to then embed the requirements
+into plugin options.)

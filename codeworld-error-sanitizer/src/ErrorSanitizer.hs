@@ -23,8 +23,8 @@ import RegexShim (replace)
 
 rewriteStages :: [(Text, Text)]
 rewriteStages =
-    [ ("\xe2\x80\x98", "")
-    , ("\xe2\x80\x99", "")
+    [ ("\8216", "")
+    , ("\8217", "")
     , (" \\[-W[a-z-]*\\]", "")
     , ("IO action main", "variable program")
     , ("main IO action", "variable")

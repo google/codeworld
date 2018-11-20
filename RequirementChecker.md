@@ -99,3 +99,30 @@ of pattern matching.  This is by no means intended to be the final
 constraint language; rather, it was the set of requirements needed for
 a specific test case, and was therefore implemented first (in a hacky
 way).  The language is strongly subject to change in the future.
+
+Here are the current three checks implemented.
+
+- `matchesExpected(var, 999999)`
+
+  Checks that the definition of `var`, once source locations are
+  cleared, hashes to the given value (module 1 million).  This is
+  used to verify that the student hasn't modified code they
+  weren't supposed to change.
+
+- `hasSimpleParams(var)`
+
+  Checks that `var` is defined as a function, all of whose arguments
+  are plain variables.  Any use of more complex pattern matching will
+  cause this requirements to fail.  It will also fail if `var` is not
+  defined.
+
+- `definedByFunction(var, func)`
+
+  Checks that `var` is defined directly to be `func` applied to some
+  arguments.  This example was implemented directly because it was the
+  main point of the test class where we first tried out this feature.
+
+The existing language should not be interpreted as any indicator of
+future syntax.  In particular, it seems likely we will settle on a more
+standard format in the future, rather than a custom parser.  Something
+like YAML or HCL seems best.

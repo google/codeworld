@@ -109,6 +109,10 @@ Here are the current three checks implemented.
   used to verify that the student hasn't modified code they
   weren't supposed to change.
 
+  The usual process for using this is to first write a failing
+  check with some arbitrarily chosen hash.  The failure message
+  will include the correct hash, so you can update the check.
+
 - `hasSimpleParams(var)`
 
   Checks that `var` is defined as a function, all of whose arguments
@@ -126,3 +130,36 @@ The existing language should not be interpreted as any indicator of
 future syntax.  In particular, it seems likely we will settle on a more
 standard format in the future, rather than a custom parser.  Something
 like YAML or HCL seems best.
+
+### Desirable use cases
+
+The following use cases have been proposed, but are not yet implemented.
+
+- Checking specific syntax against a pattern.  The idea is that you should
+  be able to say:
+  
+      decl_matches:
+      
+        foo __var_x __var_y = __var_x + __var_y^2 sqrt __any
+
+  The pattern will be parsed as a declaration, and then a search will
+  happen for a matching declaration anywhere in the module.  Anything
+  except `__blah` style names will be matched immediately, but these
+  special names will have special behavior (above: `__any` matches
+  anything, and `__var_x` or `__var_y` match any variable, but all
+  matches of each must be the same.  Other special behavior might
+  include allowing something to be repeated (so a function definition
+  could have an arbitrary number of arguments or guards), etc.
+
+- Style constraints.  e.g., all top-level definitions must have type
+  declarations.  Or all lines must be 80 characters or less.
+
+- Count requirements.  There must be at least 10 defined variables.  Or
+  three polygons.  Perhaps this could be accomplished with a cardinality
+  constraint on the matching form above.
+
+- Forbidden imported symbols or modules.  By whitelist or blacklist.
+  Exceptions should be allowed for specific definitions (usually
+  built-in).  For instance, you may want students to only use a given
+  variable called `ellipse`, and not use `circle` on its own outside
+  of that.

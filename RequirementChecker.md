@@ -140,7 +140,7 @@ The following use cases have been proposed, but are not yet implemented.
   
       decl_matches:
       
-        foo __var_x __var_y = __var_x + __var_y^2 sqrt __any
+        foo __var_x __var_y = __var_x + __var_y^2 - sqrt __any
 
   The pattern will be parsed as a declaration, and then a search will
   happen for a matching declaration anywhere in the module.  Anything

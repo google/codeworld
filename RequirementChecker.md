@@ -92,15 +92,7 @@ Requirements Language
 ---------------------
 
 The requirements checker can currently check only a very limited set
-of conditions: that a hash of a given declaration matches an expected
-value, that an identifier is defined by a top-level application of a
-desired function, and that a function is defined using a limited form
-of pattern matching.  This is by no means intended to be the final
-constraint language; rather, it was the set of requirements needed for
-a specific test case, and was therefore implemented first (in a hacky
-way).  The language is strongly subject to change in the future.
-
-Here are the current three checks implemented.
+of conditions. Here are the current checks implemented.
 
 - `matchesExpected(var, 999999)`
 
@@ -118,7 +110,7 @@ Here are the current three checks implemented.
   Checks that `var` is defined as a function, all of whose arguments
   are plain variables.  Any use of more complex pattern matching will
   cause this requirements to fail.  It will also fail if `var` is not
-  defined.
+  defined to be a function.
 
 - `definedByFunction(var, func)`
 
@@ -126,7 +118,22 @@ Here are the current three checks implemented.
   arguments.  This example was implemented directly because it was the
   main point of the test class where we first tried out this feature.
 
-The existing language should not be interpreted as any indicator of
+- `notDefined(var)`
+
+  Checks that there is no definition for a variable named `var`.  If
+  there is, it fails.
+
+- `usesAllParams(func)`
+
+  Checks that `func` makes use of all of its named parameters.  If
+  any parameters are not used in an equation, it fails.
+
+This is by no means intended to be the final constraint language;
+rather, it was the set of requirements needed for a specific test
+case, and was therefore implemented first (in a hacky way).  The
+language is strongly subject to change in the future.
+
+Even the overall syntax should not be interpreted as any indicator of
 future syntax.  In particular, it seems likely we will settle on a more
 standard format in the future, rather than a custom parser.  Something
 like YAML or HCL seems best.

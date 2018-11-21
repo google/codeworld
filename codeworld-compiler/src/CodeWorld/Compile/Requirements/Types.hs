@@ -28,4 +28,6 @@ data Requirement = Requirement {
 data Rule = DefinedByFunction String String
           | MatchesExpected String Int
           | HasSimpleParams String
+          | UsesAllParams String
+          | NotDefined String
     deriving (Show)

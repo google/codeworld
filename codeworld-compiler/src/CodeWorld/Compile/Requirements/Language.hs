@@ -63,7 +63,11 @@ requirementParser = do
     return (Requirement doc rules)
 
 ruleParser :: Parser Rule
-ruleParser = definedByParser <|> matchesExpectedParser <|> simpleParamsParser
+ruleParser = definedByParser <|>
+             matchesExpectedParser <|>
+             simpleParamsParser <|>
+             usesAllParamsParser <|>
+             notDefinedParser
 
 definedByParser :: Parser Rule
 definedByParser = do
@@ -92,6 +96,22 @@ simpleParamsParser = do
     a <- identifier
     symbol ")"
     return (HasSimpleParams a)
+
+usesAllParamsParser :: Parser Rule
+usesAllParamsParser = do
+    symbol "usesAllParams"
+    symbol "("
+    a <- identifier
+    symbol ")"
+    return (UsesAllParams a)
+
+notDefinedParser :: Parser Rule
+notDefinedParser = do
+    symbol "notDefined"
+    symbol "("
+    a <- identifier
+    symbol ")"
+    return (NotDefined a)
 
 parseRequirement :: Int -> Int -> Text -> Either String Requirement
 parseRequirement ln col txt = either (Left . errorBundlePretty) Right $ snd $

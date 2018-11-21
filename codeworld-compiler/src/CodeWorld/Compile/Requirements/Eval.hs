@@ -47,14 +47,15 @@ ruleFailures (Parsed m) (DefinedByFunction a b) = checkDefinedBy m a b
 ruleFailures (Parsed m) (MatchesExpected a expectedHash) =
     checkMatchesExpected m a expectedHash
 ruleFailures (Parsed m) (HasSimpleParams a) = checkHasSimpleParams m a
+ruleFailures (Parsed m) (UsesAllParams a) = checkUsesAllParams m a
+ruleFailures (Parsed m) (NotDefined a) = checkNotDefined m a
 
 checkDefinedBy :: Module SrcSpanInfo -> String -> String -> [String]
 checkDefinedBy m a b
-  | null aDefs = ["`" ++ a ++ "` is not defined."]
-  | all (isDefinedBy b) aDefs = []
+  | null defs = ["`" ++ a ++ "` is not defined."]
+  | all (isDefinedBy b) defs = []
   | otherwise = [ "`" ++ a ++ "` is not defined directly using `" ++ b ++ "`." ]
-  where aDefs = allDefinitionsOf a m
-        bDefs = allDefinitionsOf b m
+  where defs = allDefinitionsOf a m
 
         isDefinedBy :: String -> Rhs SrcSpanInfo -> Bool
         isDefinedBy b (UnGuardedRhs _ exp) = isExpOf b exp
@@ -96,6 +97,46 @@ checkHasSimpleParams m a
         isSimpleParam (PWildCard _) = True
         isSimpleParam _ = False
 
+checkUsesAllParams :: Module SrcSpanInfo -> String -> [String]
+checkUsesAllParams m a
+  | usesAllParams = []
+  | otherwise = [ "`" ++ a ++ "` has unused arguments." ]
+  where usesAllParams = everything (&&) (mkQ True targetVarUsesParams) m
+
+        targetVarUsesParams :: Decl SrcSpanInfo -> Bool
+        targetVarUsesParams (FunBind _ ms)
+            | any isTargetMatch ms = all matchUsesAllArgs ms
+        targetVarUsesParams _ = True
+
+        isTargetMatch (Match _ (Ident _ aa) _ _ _) = a == aa
+        isTargetMatch (InfixMatch _ _ (Ident _ aa) _ _ _) = a == aa
+
+        matchUsesAllArgs (Match _ _ ps rhs binds) = uses ps rhs binds
+        matchUsesAllArgs (InfixMatch _ p _ ps rhs binds) = uses (p:ps) rhs binds
+
+        uses ps rhs binds =
+            all (\v -> rhsUses v rhs || bindsUses v binds) (patVars ps)
+
+        patVars ps = concatMap (everything (++) (mkQ [] patShallowVars)) ps
+
+        patShallowVars :: Pat SrcSpanInfo -> [String]
+        patShallowVars (PVar _ (Ident _ v)) = [v]
+        patShallowVars (PNPlusK _ (Ident _ v) _) = [v]
+        patShallowVars (PAsPat _ (Ident _ v) _) = [v]
+        patShallowVars _ = []
+
+        rhsUses v rhs = everything (||) (mkQ False (isVar v)) rhs
+        bindsUses v binds = everything (||) (mkQ False (isVar v)) binds
+
+        isVar :: String -> Exp SrcSpanInfo -> Bool
+        isVar v (Var _ (UnQual _ (Ident _ vv))) = v == vv
+        isVar _ _ = False
+
+checkNotDefined :: Module SrcSpanInfo -> String -> [String]
+checkNotDefined m a
+  | null (allDefinitionsOf a m) = []
+  | otherwise = ["`" ++ a ++ "` should not be defined."]
+
 allDefinitionsOf :: String -> Module SrcSpanInfo -> [Rhs SrcSpanInfo]
 allDefinitionsOf a m = everything (++) (mkQ [] funcDefs) m ++
                        everything (++) (mkQ [] patDefs) m
@@ -106,15 +147,6 @@ allDefinitionsOf a m = everything (++) (mkQ [] funcDefs) m ++
         patDefs :: Decl SrcSpanInfo -> [Rhs SrcSpanInfo]
         patDefs (PatBind _ pat rhs _) | patDefines pat a = [rhs]
         patDefs _ = []
-
-hasDefinition :: Module SrcSpanInfo -> String -> Bool
-hasDefinition m a = everything (||) (mkQ False isFuncDef) m ||
-                    everything (||) (mkQ False isPatternDef) m
-  where isFuncDef :: Match SrcSpanInfo -> Bool
-        isFuncDef (Match _ (Ident _ aa) _ _ _) = a == aa
-
-        isPatternDef :: Decl SrcSpanInfo -> Bool
-        isPatternDef (PatBind _ pat _ _) = patDefines pat a
 
 patDefines :: Pat SrcSpanInfo -> String -> Bool
 patDefines (PVar _ (Ident _ aa)) a = a == aa

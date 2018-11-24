@@ -128,6 +128,10 @@ of conditions. Here are the current checks implemented.
   Checks that `func` makes use of all of its named parameters.  If
   any parameters are not used in an equation, it fails.
 
+- `notUsed(var)`
+
+  Checks that there are no references to a name in the module.
+
 This is by no means intended to be the final constraint language;
 rather, it was the set of requirements needed for a specific test
 case, and was therefore implemented first (in a hacky way).  The

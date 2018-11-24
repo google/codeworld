@@ -54,7 +54,7 @@ requirementsDiagnostics _ src m
         obfuscated = T.unpack (obfuscate (map snd sources))
 
 plainPattern :: Text
-plainPattern = "{-+[[:space:]]*(REQUIRES\\b(\n|[^-]|-[^}])*)-}"
+plainPattern = "{-+[[:space:]]*REQUIRES\\b((\n|[^-]|-[^}])*)-}"
 
 codedPattern :: Text
 codedPattern = "{-+[[:space:]]*XREQUIRES\\b((\n|[^-]|-[^}])*)-}"

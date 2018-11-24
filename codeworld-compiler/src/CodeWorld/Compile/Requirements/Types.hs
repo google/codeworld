@@ -30,4 +30,5 @@ data Rule = DefinedByFunction String String
           | HasSimpleParams String
           | UsesAllParams String
           | NotDefined String
+          | NotUsed String
     deriving (Show)

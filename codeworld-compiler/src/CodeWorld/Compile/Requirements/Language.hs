@@ -56,7 +56,6 @@ integer = lexeme L.decimal
 
 requirementParser :: Parser Requirement
 requirementParser = do
-    lexeme (symbol "REQUIRES")
     doc <- between quote quote (many nonquote)
     rules <- many ruleParser
     eof
@@ -67,7 +66,8 @@ ruleParser = definedByParser <|>
              matchesExpectedParser <|>
              simpleParamsParser <|>
              usesAllParamsParser <|>
-             notDefinedParser
+             notDefinedParser <|>
+             notUsedParser
 
 definedByParser :: Parser Rule
 definedByParser = do
@@ -112,6 +112,14 @@ notDefinedParser = do
     a <- identifier
     symbol ")"
     return (NotDefined a)
+
+notUsedParser :: Parser Rule
+notUsedParser = do
+    symbol "notUsed"
+    symbol "("
+    a <- identifier
+    symbol ")"
+    return (NotUsed a)
 
 parseRequirement :: Int -> Int -> Text -> Either String Requirement
 parseRequirement ln col txt = either (Left . errorBundlePretty) Right $ snd $

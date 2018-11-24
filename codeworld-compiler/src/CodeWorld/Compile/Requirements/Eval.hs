@@ -49,6 +49,8 @@ ruleFailures (Parsed m) (MatchesExpected a expectedHash) =
 ruleFailures (Parsed m) (HasSimpleParams a) = checkHasSimpleParams m a
 ruleFailures (Parsed m) (UsesAllParams a) = checkUsesAllParams m a
 ruleFailures (Parsed m) (NotDefined a) = checkNotDefined m a
+ruleFailures (Parsed m) (NotUsed a) = checkNotUsed m a
+ruleFailures (Parsed m) _ = ["Could not understand this requirement."]
 
 checkDefinedBy :: Module SrcSpanInfo -> String -> String -> [String]
 checkDefinedBy m a b
@@ -136,6 +138,15 @@ checkNotDefined :: Module SrcSpanInfo -> String -> [String]
 checkNotDefined m a
   | null (allDefinitionsOf a m) = []
   | otherwise = ["`" ++ a ++ "` should not be defined."]
+
+checkNotUsed :: Module SrcSpanInfo -> String -> [String]
+checkNotUsed m a
+  | everything (||) (mkQ False exprUse) m
+              = ["`" ++ a ++ "` should not be used."]
+  | otherwise = []
+  where exprUse :: Exp SrcSpanInfo -> Bool
+        exprUse (Var _ (UnQual _ (Ident _ v))) | v == a = True
+        exprUse _ = False
 
 allDefinitionsOf :: String -> Module SrcSpanInfo -> [Rhs SrcSpanInfo]
 allDefinitionsOf a m = everything (++) (mkQ [] funcDefs) m ++

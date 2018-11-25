@@ -23,7 +23,7 @@ data Requirement = Requirement {
     requiredDescription :: String,
     requiredRules :: [Rule]
     }
-    deriving (Show)
+    deriving Show
 
 data Rule = DefinedByFunction String String
           | MatchesExpected String Int
@@ -31,4 +31,4 @@ data Rule = DefinedByFunction String String
           | UsesAllParams String
           | NotDefined String
           | NotUsed String
-    deriving (Show)
+    deriving Show

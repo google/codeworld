@@ -50,7 +50,7 @@ checkRequirements = do
         m <- getParsedCode
         let obfuscated = T.unpack (obfuscate (map snd sources))
         addDiagnostics
-            [ (noSrcSpan, Info,
+            [ (noSrcSpan, CompileSuccess,
                "                    :: REQUIREMENTS ::\n" ++
                "Obfuscated:\n\n    XREQUIRES" ++ obfuscated ++ "\n\n" ++
                concatMap (handleRequirement m) reqs ++
@@ -68,7 +68,7 @@ extractRequirementsSource = do
     src <- decodeUtf8 <$> getSourceCode
     let plain = extractSubmatches plainPattern src
     let blocks = map (fmap deobfuscate) (extractSubmatches codedPattern src)
-    addDiagnostics [ (spn, Warning, "Coded requirements were corrupted.")
+    addDiagnostics [ (spn, CompileSuccess, "Coded requirements were corrupted.")
                      | (spn, Nothing) <- blocks ]
     let coded = [ (spn, rule) | (spn, Just block) <- blocks, rule <- block ]
     return (plain ++ coded)
@@ -90,7 +90,7 @@ extractRequirements sources = do
                     , let col = srcSpanStartColumn spn ]
         diags = [ format err | Left err <- results ]
         reqs =  [ req | Right req <- results ]
-        format err = (noSrcSpan, Warning,
+        format err = (noSrcSpan, CompileSuccess,
                       "The requirement could not be understood:\n" ++ err)
 
 handleRequirement :: ParsedCode -> Requirement -> String

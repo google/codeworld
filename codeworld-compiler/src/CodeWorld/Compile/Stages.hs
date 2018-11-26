@@ -61,7 +61,7 @@ checkDangerousSource = do
           src =~ (".*QuasiQuotes.*" :: Text) ||
           src =~ (".*glasgow-exts.*" :: Text)) $ do
         addDiagnostics
-            [ (noSrcSpan, Error,
+            [ (noSrcSpan, CompileError,
                "Sorry, but your program uses forbidden language features.")
             ]
 
@@ -74,7 +74,7 @@ checkOldStyleMain = do
     case (mode, findOldStyleMain src) of
         ("codeworld", Just (off, len)) -> do
             addDiagnostics
-                [ (srcSpanFor src off len, Warning,
+                [ (srcSpanFor src off len, CompileSuccess,
                    "warning:\n" ++
                    "\tPlease define 'program' instead of 'main'.\n" ++
                    "\tDefining 'main' may stop working July 2019.")
@@ -101,21 +101,21 @@ checkFunctionParentheses = do
 
 badExpApps :: Exp SrcSpanInfo -> [Diagnostic]
 badExpApps (App loc _ e)
-    | not (isGoodExpAppRhs e) = [(loc, Warning, errorMsg)]
+    | not (isGoodExpAppRhs e) = [(loc, CompileSuccess, errorMsg)]
   where
     errorMsg = "warning: Missing parentheses in function application."
 badExpApps _ = []
 
 badMatchApps :: Match SrcSpanInfo -> [Diagnostic]
 badMatchApps (Match loc _ pats _ _) =
-    [(loc, Warning, errorMsg) | p <- pats, not (isGoodPatAppRhs p)]
+    [(loc, CompileSuccess, errorMsg) | p <- pats, not (isGoodPatAppRhs p)]
   where
     errorMsg = "warning: Missing parentheses in function application."
 badMatchApps _ = []
 
 badPatternApps :: Pat SrcSpanInfo -> [Diagnostic]
 badPatternApps (PApp loc _ pats) =
-    [(loc, Warning, errorMsg) | p <- pats, not (isGoodPatAppRhs p)]
+    [(loc, CompileSuccess, errorMsg) | p <- pats, not (isGoodPatAppRhs p)]
   where
     errorMsg = "warning: Missing parentheses in constructor application."
 badPatternApps _ = []
@@ -142,9 +142,10 @@ checkVarlessPatterns = do
 
 varlessPatBinds :: Decl SrcSpanInfo -> [Diagnostic]
 varlessPatBinds (PatBind loc pat _ _)
-  | not (everything (||) (mkQ False isPatVar) pat) = [(loc, Error, errorMsg)]
-  where errorMsg = "This definition doesn't define any variables.\n\t" ++
-                   "Variables must begin with a lowercase letter."
+  | not (everything (||) (mkQ False isPatVar) pat)
+    = [(loc, CompileError,
+        "This definition doesn't define any variables.\n\t" ++
+        "Variables must begin with a lowercase letter.")]
 varlessPatBinds _ = []
 
 isPatVar :: Pat SrcSpanInfo -> Bool

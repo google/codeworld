@@ -63,7 +63,7 @@ data CompileStatus
     = CompileSuccess
     | CompileError
     | CompileAborted
-    deriving (Eq, Show)
+    deriving (Eq, Show, Ord)
 
 data CompileState = CompileState {
     compileMode         :: SourceMode,
@@ -79,6 +79,12 @@ data CompileState = CompileState {
     }
 
 type MonadCompile m = (MonadState CompileState m, MonadIO m, MonadMask m)
+
+type SourceMode = String  -- typically "codeworld" or "haskell"
+
+type Diagnostic = (SrcSpanInfo, CompileStatus, String)
+
+data ParsedCode = Parsed (Module SrcSpanInfo) | NoParse
 
 getSourceCode :: MonadCompile m => m ByteString
 getSourceCode = do
@@ -110,17 +116,21 @@ parseCode src = case result of
         mode = defaultParseMode { parseFilename = "program.hs" }
 
 addDiagnostics :: MonadCompile m => [Diagnostic] -> m ()
-addDiagnostics diags
-  | not (null diags) = do
-      modify $ \state -> state {
-          compileErrors = compileErrors state ++ diags,
-          compileStatus =
-              if compileStatus state == CompileSuccess &&
-                 maximum (map (\(_, lvl, _) -> lvl) diags) == Error
-              then CompileError
-              else compileStatus state
-          }
-  | otherwise = return ()
+addDiagnostics diags = modify $ \state -> state {
+    compileErrors = compileErrors state ++ diags,
+    compileStatus = maximum
+        (compileStatus state : map (\(_, s, _) -> s) diags)
+    }
+
+failCompile :: MonadCompile m => m ()
+failCompile = do
+    modify $ \state -> state {
+        compileStatus = max CompileError (compileStatus state) }
+
+ifSucceeding :: MonadCompile m => m () -> m ()
+ifSucceeding m = do
+    status <- gets compileStatus
+    when (status == CompileSuccess) m
 
 withTimeout :: Int -> IO a -> IO (Maybe a)
 withTimeout micros action = do
@@ -151,14 +161,6 @@ runSync dir cmd args = mask $ \restore -> do
         hClose outh
         exitCode <- waitForProcess pid
         return (exitCode, result)
-
-type SourceMode = String  -- typically "codeworld" or "haskell"
-
-type Diagnostic = (SrcSpanInfo, Level, String)
-
-data Level = Info | Warning | Error deriving (Eq, Ord)
-
-data ParsedCode = Parsed (Module SrcSpanInfo) | NoParse
 
 formatLocation :: SrcSpanInfo -> String
 formatLocation spn@(SrcSpanInfo s _)

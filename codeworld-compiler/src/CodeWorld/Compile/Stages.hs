@@ -19,7 +19,7 @@
   limitations under the License.
 -}
 
-module CodeWorld.Compile.ParseCode (runCustomDiagnostics, hasOldStyleMain, parseCode) where
+module CodeWorld.Compile.Stages (runCustomDiagnostics, hasOldStyleMain) where
 
 import CodeWorld.Compile.Framework
 import CodeWorld.Compile.Requirements

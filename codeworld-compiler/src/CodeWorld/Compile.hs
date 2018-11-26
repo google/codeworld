@@ -28,7 +28,7 @@ module CodeWorld.Compile
     ) where
 
 import CodeWorld.Compile.Framework
-import CodeWorld.Compile.ParseCode
+import CodeWorld.Compile.Stages
 import Control.Applicative
 import Control.Concurrent
 import Control.Exception

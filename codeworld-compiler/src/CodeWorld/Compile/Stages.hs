@@ -19,7 +19,12 @@
   limitations under the License.
 -}
 
-module CodeWorld.Compile.Stages (runCustomDiagnostics, hasOldStyleMain) where
+module CodeWorld.Compile.Stages
+    ( hasOldStyleMain
+    , checkDangerousSource
+    , checkCodeConventions
+    , checkRequirements
+    ) where
 
 import CodeWorld.Compile.Framework
 import CodeWorld.Compile.Requirements
@@ -39,13 +44,15 @@ import Text.Regex.TDFA.Text
 hasOldStyleMain :: Text -> Bool
 hasOldStyleMain src = isJust (findOldStyleMain src)
 
-runCustomDiagnostics :: MonadCompile m => m ()
-runCustomDiagnostics = do
-    checkDangerousSource
-    checkOldStyleMain
-    checkFunctionParentheses
-    checkVarlessPatterns
-    checkRequirements
+-- Checks a full list of conventions that are enforced by the CodeWorld
+-- compiler for "codeworld" mode.  In other modes, this has no effect.
+checkCodeConventions :: MonadCompile m => m ()
+checkCodeConventions = do
+    mode <- gets compileMode
+    when (mode == "codeworld") $ do
+        checkOldStyleMain
+        checkFunctionParentheses
+        checkVarlessPatterns
 
 -- Look for uses of Template Haskell or related features in the compiler.  These
 -- cannot currently be used, because the compiler isn't properly sandboxed, so
@@ -69,10 +76,9 @@ checkDangerousSource = do
 -- will be broken soon, so we issue a warning.
 checkOldStyleMain :: MonadCompile m => m ()
 checkOldStyleMain = do
-    mode <- gets compileMode
     src <- decodeUtf8 <$> getSourceCode
-    case (mode, findOldStyleMain src) of
-        ("codeworld", Just (off, len)) -> do
+    case findOldStyleMain src of
+        Just (off, len) -> do
             addDiagnostics
                 [ (srcSpanFor src off len, CompileSuccess,
                    "warning:\n" ++
@@ -88,16 +94,13 @@ findOldStyleMain src
   where matchArray :: MatchArray = src =~ ("(^|\\n)(main)[ \\t]*=" :: Text)
 
 checkFunctionParentheses :: MonadCompile m => m ()
-checkFunctionParentheses = do
-    mode <- gets compileMode
-    parsed <- getParsedCode
-    let diags = case (mode, parsed) of
-            ("codeworld", Parsed mod) ->
-                everything (++) (mkQ [] badExpApps) mod ++
-                everything (++) (mkQ [] badMatchApps) mod ++
-                everything (++) (mkQ [] badPatternApps) mod
-            _ -> []  -- Fall back on GHC for user-visible parse errors.
-    addDiagnostics diags
+checkFunctionParentheses =
+    getParsedCode >>= \parsed -> case parsed of
+        Parsed mod -> addDiagnostics $
+            everything (++) (mkQ [] badExpApps) mod ++
+            everything (++) (mkQ [] badMatchApps) mod ++
+            everything (++) (mkQ [] badPatternApps) mod
+        _ -> return ()  -- Fall back on GHC for parse errors.
 
 badExpApps :: Exp SrcSpanInfo -> [Diagnostic]
 badExpApps (App loc _ e)
@@ -131,14 +134,11 @@ isGoodPatAppRhs (PTuple _ _ _) = True
 isGoodPatAppRhs _ = False
 
 checkVarlessPatterns :: MonadCompile m => m ()
-checkVarlessPatterns = do
-    mode <- gets compileMode
-    parsed <- getParsedCode
-    let diags = case (mode, parsed) of
-            ("codeworld", Parsed mod) ->
-                everything (++) (mkQ [] varlessPatBinds) mod
-            _ -> []
-    addDiagnostics diags
+checkVarlessPatterns =
+    getParsedCode >>= \parsed -> case parsed of
+        Parsed mod -> addDiagnostics $
+            everything (++) (mkQ [] varlessPatBinds) mod
+        _ -> return ()
 
 varlessPatBinds :: Decl SrcSpanInfo -> [Diagnostic]
 varlessPatBinds (PatBind loc pat _ _)

@@ -92,16 +92,18 @@ userCompileMicros = 30 * 1000000
 
 build :: MonadCompile m => m ()
 build = do
-    runCustomDiagnostics
-    preCompileStatus <- gets compileStatus
+    checkDangerousSource
 
-    ifSucceeding compileCode
+    ifSucceeding $ do
+        checkCodeConventions
+        compileCode
 
-    err <- gets compileOutputPath
-    liftIO $ createDirectoryIfMissing True (takeDirectory err)
+    ifSucceeding checkRequirements
 
+    errPath <- gets compileOutputPath
     diags <- gets compileErrors
-    liftIO $ B.writeFile err $ encodeUtf8 $ formatDiagnostics diags
+    liftIO $ createDirectoryIfMissing True (takeDirectory errPath)
+    liftIO $ B.writeFile errPath $ encodeUtf8 $ formatDiagnostics diags
 
 compileCode :: MonadCompile m => m ()
 compileCode = ifSucceeding $ withSystemTempDirectory "build" $ \tmpdir -> do

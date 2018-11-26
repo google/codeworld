@@ -36,6 +36,7 @@ Library
     CodeWorld.Compile.Requirements
     CodeWorld.Compile.Requirements.Eval
     CodeWorld.Compile.Requirements.Language
+    CodeWorld.Compile.Requirements.LegacyLanguage
     CodeWorld.Compile.Requirements.Types
     CodeWorld.Compile.Stages
 

@@ -1,4 +1,3 @@
-
 program.hs:1:30: error:
     • Couldn't match expected type (Number, Number)
                   with actual type (Number, Number, Number, Number)

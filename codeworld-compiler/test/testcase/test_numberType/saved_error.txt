@@ -1,4 +1,3 @@
-
 program.hs:5:21: error:
     • Couldn't match expected type Number with actual type Picture
     • In the argument(s) of solidCircle, namely (size)

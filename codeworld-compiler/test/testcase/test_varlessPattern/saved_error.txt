@@ -1,4 +1,2 @@
-
-
 program.hs:3:1: This definition doesn't define any variables.
 	Variables must begin with a lowercase letter.

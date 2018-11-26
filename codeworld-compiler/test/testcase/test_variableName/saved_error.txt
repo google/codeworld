@@ -1,4 +1,3 @@
-
 program.hs:1:21: error:
     • Variable not in scope: circl :: Picture
     • Perhaps you meant one of these:

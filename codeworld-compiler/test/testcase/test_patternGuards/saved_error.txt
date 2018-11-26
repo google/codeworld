@@ -1,4 +1,3 @@
-
 program.hs:3:5: warning:
     This arrow <- can't be used here. (To compare a negative number, add a space after <.)
         t <- 8

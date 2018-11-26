@@ -1,4 +1,3 @@
-
 program.hs:2:35: error:
     parse error on input =
     Perhaps you need a 'let' in a 'do' block?

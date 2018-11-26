@@ -1,4 +1,3 @@
-
 program.hs:1:23: error:
     • Couldn't match expected type Picture
                   with actual type Number -> Picture

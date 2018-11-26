@@ -19,10 +19,11 @@
 import CodeWorld.Compile
 import Control.Monad
 import Data.Char
+import Data.List
 import System.Directory
 import System.Exit
 import System.FilePath.Posix
-import Test.HUnit -- only import needed, others are optional
+import Test.HUnit
 
 testcaseDir :: FilePath
 testcaseDir = "test/testcase"
@@ -42,10 +43,13 @@ testSavedErrorFile testName = testcaseDir </> testName </> "saved_error.txt"
 testOutputFile :: String -> FilePath
 testOutputFile testName = testcaseOutputDir </> testName </> "output.js"
 
+trim :: String -> String
+trim = dropWhile isSpace . dropWhileEnd isSpace
+
 savedErrorOutput :: String -> IO String
 savedErrorOutput testName = do
     savedErrMsg <- readFile (testSavedErrorFile testName)
-    return savedErrMsg
+    return (trim savedErrMsg)
 
 compileErrorOutput :: String -> IO String
 compileErrorOutput testName = do
@@ -58,11 +62,11 @@ compileErrorOutput testName = do
             "codeworld"
             False
     errMsg <- readFile (testErrorFile testName)
-    return errMsg
+    return (trim errMsg)
 
 genTestCases :: [String] -> [Test]
 genTestCases [] = ["Empty directory testcase" ~: "FOo" ~=? (map toUpper "foo")]
-genTestCases (x) = map toTestCase x
+genTestCases x  = map toTestCase x
 
 toTestCase x =
     x ~: do

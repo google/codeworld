@@ -1,4 +1,3 @@
-
 program.hs:1:21: error:
     • Variable not in scope: diamond :: Picture
     • Perhaps you meant diamonds (line 2)

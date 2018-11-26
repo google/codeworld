@@ -1,3 +1,2 @@
-
 program.hs:2:1: error:
     parse error (possibly incorrect indentation or mismatched brackets)

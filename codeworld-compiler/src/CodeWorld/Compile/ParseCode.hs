@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -22,6 +23,8 @@ module CodeWorld.Compile.ParseCode (runCustomDiagnostics, hasOldStyleMain, parse
 
 import CodeWorld.Compile.Framework
 import CodeWorld.Compile.Requirements
+import Control.Monad
+import Control.Monad.State
 import Data.Array
 import Data.Generics
 import Data.Maybe (isJust)
@@ -36,16 +39,13 @@ import Text.Regex.TDFA.Text
 hasOldStyleMain :: Text -> Bool
 hasOldStyleMain src = isJust (findOldStyleMain src)
 
-runCustomDiagnostics :: SourceMode -> Text -> (Bool, [String])
-runCustomDiagnostics mode src = (abort, msgs)
-  where diags = dangerousSourceDiagnostics mode src code ++
-                oldStyleDiagnostics mode src code ++
-                parsedCodeDiagnostics mode src code ++
-                requirementsDiagnostics mode src code
-        code = parseCode src
-        worst = maximum (Info : map (\(_, level, _) -> level) diags)
-        abort = worst >= Error
-        msgs  = [ formatLocation loc ++ msg | (loc, _, msg) <- sort diags ]
+runCustomDiagnostics :: MonadCompile m => m ()
+runCustomDiagnostics = do
+    checkDangerousSource
+    checkOldStyleMain
+    checkFunctionParentheses
+    checkVarlessPatterns
+    checkRequirements
 
 -- Look for uses of Template Haskell or related features in the compiler.  These
 -- cannot currently be used, because the compiler isn't properly sandboxed, so
@@ -54,24 +54,32 @@ runCustomDiagnostics mode src = (abort, msgs)
 -- At the moment, we don't look in the parsed code, but instead match
 -- regular expressions against the source.  That's because I don't quite
 -- trust haskell-src-exts to correctly parse the source.
-dangerousSourceDiagnostics :: SourceMode -> Text -> ParsedCode -> [Diagnostic]
-dangerousSourceDiagnostics _ src _
-  | src =~ (".*TemplateHaskell.*" :: Text) ||
-    src =~ (".*QuasiQuotes.*" :: Text) ||
-    src =~ (".*glasgow-exts.*" :: Text)
-    = [(noSrcSpan, Error, "Sorry, but your program uses forbidden language features.")]
-  | otherwise = []
+checkDangerousSource :: MonadCompile m => m ()
+checkDangerousSource = do
+    src <- decodeUtf8 <$> getSourceCode
+    when (src =~ (".*TemplateHaskell.*" :: Text) ||
+          src =~ (".*QuasiQuotes.*" :: Text) ||
+          src =~ (".*glasgow-exts.*" :: Text)) $ do
+        addDiagnostics
+            [ (noSrcSpan, Error,
+               "Sorry, but your program uses forbidden language features.")
+            ]
 
 -- Looks for uses of old-style main in CodeWorld-mode modules.  These
 -- will be broken soon, so we issue a warning.
-oldStyleDiagnostics :: SourceMode -> Text -> ParsedCode -> [Diagnostic]
-oldStyleDiagnostics "codeworld" src _
-  | Just (off, len) <- findOldStyleMain src
-    = [(srcSpanFor src off len, Warning,
-        "warning:\n" ++
-        "\tPlease define 'program' instead of 'main'.\n" ++
-        "\tDefining 'main' may stop working July 2019.")]
-oldStyleDiagnostics _ _ _ = []
+checkOldStyleMain :: MonadCompile m => m ()
+checkOldStyleMain = do
+    mode <- gets compileMode
+    src <- decodeUtf8 <$> getSourceCode
+    case (mode, findOldStyleMain src) of
+        ("codeworld", Just (off, len)) -> do
+            addDiagnostics
+                [ (srcSpanFor src off len, Warning,
+                   "warning:\n" ++
+                   "\tPlease define 'program' instead of 'main'.\n" ++
+                   "\tDefining 'main' may stop working July 2019.")
+                ]
+        _ -> return ()
 
 findOldStyleMain :: Text -> Maybe (Int, Int)
 findOldStyleMain src
@@ -79,15 +87,17 @@ findOldStyleMain src
   | otherwise = Nothing
   where matchArray :: MatchArray = src =~ ("(^|\\n)(main)[ \\t]*=" :: Text)
 
-parsedCodeDiagnostics :: SourceMode -> Text -> ParsedCode -> [Diagnostic]
-parsedCodeDiagnostics "codeworld" src (Parsed mod) =
-    everything (++) (mkQ [] badExpApps) mod ++
-    everything (++) (mkQ [] badMatchApps) mod ++
-    everything (++) (mkQ [] badPatternApps) mod ++
-    everything (++) (mkQ [] varlessPatBinds) mod
-parsedCodeDiagnostics "codeworld" _ NoParse = []
-    -- Fall back on GHC for user-visible parse errors, for the moment.
-parsedCodeDiagnostics _ _ _ = []
+checkFunctionParentheses :: MonadCompile m => m ()
+checkFunctionParentheses = do
+    mode <- gets compileMode
+    parsed <- getParsedCode
+    let diags = case (mode, parsed) of
+            ("codeworld", Parsed mod) ->
+                everything (++) (mkQ [] badExpApps) mod ++
+                everything (++) (mkQ [] badMatchApps) mod ++
+                everything (++) (mkQ [] badPatternApps) mod
+            _ -> []  -- Fall back on GHC for user-visible parse errors.
+    addDiagnostics diags
 
 badExpApps :: Exp SrcSpanInfo -> [Diagnostic]
 badExpApps (App loc _ e)
@@ -119,6 +129,16 @@ isGoodPatAppRhs :: Pat l -> Bool
 isGoodPatAppRhs (PParen _ _) = True
 isGoodPatAppRhs (PTuple _ _ _) = True
 isGoodPatAppRhs _ = False
+
+checkVarlessPatterns :: MonadCompile m => m ()
+checkVarlessPatterns = do
+    mode <- gets compileMode
+    parsed <- getParsedCode
+    let diags = case (mode, parsed) of
+            ("codeworld", Parsed mod) ->
+                everything (++) (mkQ [] varlessPatBinds) mod
+            _ -> []
+    addDiagnostics diags
 
 varlessPatBinds :: Decl SrcSpanInfo -> [Diagnostic]
 varlessPatBinds (PatBind loc pat _ _)

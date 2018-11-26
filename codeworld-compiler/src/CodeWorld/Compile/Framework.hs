@@ -109,6 +109,19 @@ parseCode src = case result of
   where result = parseFileContentsWithMode mode (T.unpack src)
         mode = defaultParseMode { parseFilename = "program.hs" }
 
+addDiagnostics :: MonadCompile m => [Diagnostic] -> m ()
+addDiagnostics diags
+  | not (null diags) = do
+      modify $ \state -> state {
+          compileErrors = compileErrors state ++ diags,
+          compileStatus =
+              if compileStatus state == CompileSuccess &&
+                 maximum (map (\(_, lvl, _) -> lvl) diags) == Error
+              then CompileError
+              else compileStatus state
+          }
+  | otherwise = return ()
+
 withTimeout :: Int -> IO a -> IO (Maybe a)
 withTimeout micros action = do
     result <- newEmptyMVar

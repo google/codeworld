@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -17,13 +18,14 @@
   limitations under the License.
 -}
 
-module CodeWorld.Compile.Requirements (requirementsDiagnostics) where
+module CodeWorld.Compile.Requirements (checkRequirements) where
 
 import CodeWorld.Compile.Framework
 import CodeWorld.Compile.Requirements.Eval
 import CodeWorld.Compile.Requirements.Language
 import Codec.Compression.Zlib
 import Control.Exception
+import Control.Monad
 import Data.Array
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -40,18 +42,20 @@ import System.IO.Unsafe
 import Text.Regex.TDFA
 import Text.Regex.TDFA.Text
 
-requirementsDiagnostics :: SourceMode -> Text -> ParsedCode -> [Diagnostic]
-requirementsDiagnostics _ src m
-  | null reqs = diags
-  | otherwise = (noSrcSpan, Info,
-                 "                    :: REQUIREMENTS ::\n" ++
-                 "Obfuscated:\n\n    XREQUIRES" ++ obfuscated ++ "\n\n" ++
-                 concatMap (handleRequirement m) reqs ++
-                 "                  :: END REQUIREMENTS ::\n") : diags
-  where (diags1, sources) = extractRequirementsSource src
-        (diags2, reqs) = extractRequirements sources
-        diags = diags1 ++ diags2
-        obfuscated = T.unpack (obfuscate (map snd sources))
+checkRequirements :: MonadCompile m => m ()
+checkRequirements = do
+    sources <- extractRequirementsSource
+    reqs <- extractRequirements sources
+    when (not (null reqs)) $ do
+        m <- getParsedCode
+        let obfuscated = T.unpack (obfuscate (map snd sources))
+        addDiagnostics
+            [ (noSrcSpan, Info,
+               "                    :: REQUIREMENTS ::\n" ++
+               "Obfuscated:\n\n    XREQUIRES" ++ obfuscated ++ "\n\n" ++
+               concatMap (handleRequirement m) reqs ++
+               "                  :: END REQUIREMENTS ::\n")
+            ]
 
 plainPattern :: Text
 plainPattern = "{-+[[:space:]]*REQUIRES\\b((\n|[^-]|-[^}])*)-}"
@@ -59,23 +63,27 @@ plainPattern = "{-+[[:space:]]*REQUIRES\\b((\n|[^-]|-[^}])*)-}"
 codedPattern :: Text
 codedPattern = "{-+[[:space:]]*XREQUIRES\\b((\n|[^-]|-[^}])*)-}"
 
-extractRequirementsSource :: Text -> ([Diagnostic], [(SrcSpanInfo, Text)])
-extractRequirementsSource src = (diags, plain ++ coded)
-    where plain = extractSubmatches 1 plainPattern src
-          blocks = map (fmap deobfuscate) (extractSubmatches 1 codedPattern src)
-          coded = [ (spn, rule) | (spn, Just block) <- blocks, rule <- block ]
-          diags = [ err spn | (spn, Nothing) <- blocks ]
-          err spn = (spn, Warning, "Coded requirements were corrupted.")
+extractRequirementsSource :: MonadCompile m => m [(SrcSpanInfo, Text)]
+extractRequirementsSource = do
+    src <- decodeUtf8 <$> getSourceCode
+    let plain = extractSubmatches plainPattern src
+    let blocks = map (fmap deobfuscate) (extractSubmatches codedPattern src)
+    addDiagnostics [ (spn, Warning, "Coded requirements were corrupted.")
+                     | (spn, Nothing) <- blocks ]
+    let coded = [ (spn, rule) | (spn, Just block) <- blocks, rule <- block ]
+    return (plain ++ coded)
 
-extractSubmatches :: Int -> Text -> Text -> [(SrcSpanInfo, Text)]
-extractSubmatches num pattern src =
+extractSubmatches :: Text -> Text -> [(SrcSpanInfo, Text)]
+extractSubmatches pattern src =
     [ (srcSpanFor src off len, T.take len (T.drop off src))
       | matchArray :: MatchArray <- src =~ pattern
-      , rangeSize (bounds matchArray) > num
-      , let (off, len) = matchArray ! num ]
+      , rangeSize (bounds matchArray) > 1
+      , let (off, len) = matchArray ! 1 ]
 
-extractRequirements :: [(SrcSpanInfo, Text)] -> ([Diagnostic], [Requirement])
-extractRequirements sources = (diags, reqs)
+extractRequirements :: MonadCompile m => [(SrcSpanInfo, Text)] -> m [Requirement]
+extractRequirements sources = do
+    addDiagnostics diags
+    return reqs
   where results = [ parseRequirement ln col source
                     | (SrcSpanInfo spn _, source) <- sources
                     , let ln = srcSpanStartLine spn

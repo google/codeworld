@@ -84,21 +84,20 @@ compileSource stage src err mode verbose = fromMaybe CompileAborted <$>
 
 compile :: MonadCompile m => m ()
 compile = do
-    stage <- gets compileStage
-    src <- gets compileSourcePath
-    err <- gets compileOutputPath
-    verbose <- gets compileVerbose
-    mode <- gets compileMode
-    timeout <- gets compileTimeout
+    runCustomDiagnostics
+    preCompileStatus <- gets compileStatus
 
-    contents <- liftIO $ readUtf8 src
+    status <- case preCompileStatus of
+        CompileSuccess -> do
+            stage <- gets compileStage
+            src <- gets compileSourcePath
+            err <- gets compileOutputPath
+            verbose <- gets compileVerbose
+            mode <- gets compileMode
+            timeout <- gets compileTimeout
+            contents <- decodeUtf8 <$> getSourceCode
 
-    status <- case runCustomDiagnostics mode contents of
-        (True, messages) -> liftIO $ do
-            liftIO $ createDirectoryIfMissing True (takeDirectory err)
-            liftIO $ B.writeFile err $ encodeUtf8 (formatDiagnostics "" messages)
-            return CompileError
-        (False, extraMessages) ->
+            extraMessages <- map (\(l, _, t) -> formatLocation l ++ t) <$> gets compileErrors
             withSystemTempDirectory "build" $ \tmpdir -> do
                 liftIO $ copyFile src (tmpdir </> "program.hs")
                 baseArgs <-
@@ -160,6 +159,12 @@ compile = do
                                 createDirectoryIfMissing True (takeDirectory out)
                                 writeUtf8 out (rtsCode <> libCode <> outCode)
                         return $ if success then CompileSuccess else CompileError
+        _ -> do
+            err <- gets compileOutputPath
+            messages <- map (\(l, _, t) -> formatLocation l ++ t) <$> gets compileErrors
+            liftIO $ createDirectoryIfMissing True (takeDirectory err)
+            liftIO $ B.writeFile err $ encodeUtf8 (formatDiagnostics "" messages)
+            return CompileError
     modify $ \state -> state { compileStatus = status }
 
 userCompileMicros :: Int

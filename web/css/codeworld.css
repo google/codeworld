@@ -416,7 +416,3 @@ body {
 .req-details {
   color: #555;
 }
-.req-indet .req-details {
-  white-space: pre;
-  font-family: monospace;
-}

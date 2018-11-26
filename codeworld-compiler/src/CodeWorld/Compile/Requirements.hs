@@ -97,8 +97,9 @@ handleRequirement :: ParsedCode -> Requirement -> String
 handleRequirement m r =
     label ++ desc ++ "\n" ++ concat [ "      " ++ msg ++ "\n" | msg <- msgs ]
   where (desc, success, msgs) = evalRequirement r m
-        label | success   = "[Y] "
-              | otherwise = "[N] "
+        label | success == Nothing   = "[?] "
+              | success == Just True = "[Y] "
+              | otherwise            = "[N] "
 
 obfuscate :: [Text] -> Text
 obfuscate = wrapWithPrefix 60 "\n    " . decodeUtf8 . B64.encode .

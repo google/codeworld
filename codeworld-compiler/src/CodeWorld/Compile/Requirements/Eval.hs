@@ -36,9 +36,11 @@ import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 
-evalRequirement :: Requirement -> ParsedCode -> (String, Bool, [String])
+evalRequirement :: Requirement -> ParsedCode -> (String, Maybe Bool, [String])
+evalRequirement Requirement{..} NoParse =
+    (requiredDescription, Nothing, ["Could not check this requirement."])
 evalRequirement Requirement{..} m =
-    (requiredDescription, null failures, failures)
+    (requiredDescription, Just (null failures), failures)
   where failures = concatMap (ruleFailures m) requiredRules
 
 ruleFailures :: ParsedCode -> Rule -> [String]

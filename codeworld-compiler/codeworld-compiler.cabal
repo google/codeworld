@@ -33,11 +33,11 @@ Library
 
   Other-modules:
     CodeWorld.Compile.Framework
-    CodeWorld.Compile.ParseCode
     CodeWorld.Compile.Requirements
     CodeWorld.Compile.Requirements.Eval
     CodeWorld.Compile.Requirements.Language
     CodeWorld.Compile.Requirements.Types
+    CodeWorld.Compile.Stages
 
   Build-depends:
     aeson >= 1.1,

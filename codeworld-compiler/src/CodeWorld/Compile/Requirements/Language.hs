@@ -29,7 +29,6 @@ import Data.Aeson.Types (explicitParseFieldMaybe)
 import qualified Data.Aeson.Types as Aeson
 import Data.Char
 import Data.Either
-import Data.Foldable
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -45,8 +44,8 @@ import Text.Regex.TDFA.Text ()
 
 instance FromJSON Requirement where
     parseJSON = withObject "Requirement" $ \v ->
-        Requirement <$> v .: "description"
-                    <*> v .: "rules"
+        Requirement <$> v .: "Description"
+                    <*> v .: "Rules"
 
 instance FromJSON Rule where
     parseJSON = withObject "Rule" $ \o -> do
@@ -58,9 +57,10 @@ instance FromJSON Rule where
             , explicitParseFieldMaybe notDefined o "notDefined"
             , explicitParseFieldMaybe notUsed o "notUsed"
             ]
-        case asum choices of
-            Just r  -> return r
-            Nothing -> fail "Unrecognized rule type."
+        case catMaybes choices of
+            [r] -> return r
+            []  -> fail "No recognized rule type was defined."
+            _   -> fail "More than one type was found for a single rule."
 
 definedByFunction :: Aeson.Value -> Aeson.Parser Rule
 definedByFunction = withObject "definedByFunction" $ \o ->

@@ -35,14 +35,21 @@ when you're done.
 A REQUIRES comment looks like this:
 
     {-
-        REQUIRES "Some user-readable description"
-        <<list of machine-readable conditions>>
+        REQUIRES
+
+        Description: Some user-readable description.
+        Rules:
+        - << YAML-format description of 1st rule to check >>
+        - << YAML-format description of 2nd rule to check >>
+        - << YAML-format description of 3rd rule to check >>
     -}
 
-The user-readable description is an arbitrary string, which is used
-in the output to provide a section header explaining what went wrong.
-The machine-readable conditions describe the formal requirements that
-are varified.  Details on that language are below.
+`Description` is a user-readable arbitrary string, which is used in
+the output to provide a section header explaining what went wrong.
+The `Rules` are YAML machine-readable descriptions of the formal
+requirements that are verified.  Details on the rules are below.
+(There is a second, older format for requirements, which is not
+described here and will go away soon.)
 
 An XREQUIRES comment is an obfuscated variation on REQUIRES.  Instead
 of a single requirement, it contains a base64-encoded and gzipped list
@@ -60,20 +67,22 @@ of requirements.  It looks like this:
 
 The purpose of an XREQUIRES comment is to embed requirements in a way
 that does not give away the solution to someone who casually glances
-at the comment.  It is merely obfuscation rather than encryption, but
-still, sometimes it is valuable to help honest learners avoid peeking
-at the answers by accident.  One writes an XREQUIRES comment by first
-writing REQUIRES comments, and then copying the obfuscated form from
-the compiler output when running the program with unobfuscated
-requirements.
+at the comment.  It is merely obfuscation, not encryption.  Sometimes
+it is valuable to help honest learners avoid peeking at the answers
+by accident.  One writes an XREQUIRES comment by first writing
+REQUIRES comments, and then replacing them with the obfuscated form
+obtained from compiler output when running that program.  It is
+suggested that you keep a link to the code with unobfuscated
+requirements, to make it easier to update your requirements later.
 
 Requirements Output Block
 -------------------------
 
 A typical requirements output block looks something like this:
 
-              :: REQUIREMENTS ::
+                        :: REQUIREMENTS ::
     Obfuscated:
+
         XREQUIRES
         eJyNkE9LxDAQxb/KkNMKQWxtd/Wo0IW96S56sUJmm+km0CQlyeKfT2+oDQq6
         sKcZeL957zEvbNs8Pm22zQ5aJkbvDh6N4CCkiyFNtHLaBQTljoME6yLsCYyT
@@ -86,7 +95,18 @@ A typical requirements output block looks something like this:
     [Y] First user-visible description
     [N] First user-visible description
         Detailed description of what went wrong.
-            :: END REQUIREMENTS ::
+                      :: END REQUIREMENTS ::
+
+The requirements block includes everything from `:: REQUIREMENTS ::`
+to the matching `:: END REQUIREMENTS ::`.
+
+The block begins with an obfuscated version of the requirements,
+which can be used to replace the plain-text requirements as
+discussed above.  After this, there are top-level lines beginning
+with one of `[Y] `, `[N] `, or `[?] `.  These indicate, for each
+requirement, if the requirement is satisfied, not satisfied, or if
+there was a problem checking the requirement.  If the latter two
+cases, there are further lines explaining what went wrong.
 
 Requirements Language
 ---------------------
@@ -94,53 +114,84 @@ Requirements Language
 The requirements checker can currently check only a very limited set
 of conditions. Here are the current checks implemented.
 
-- `matchesExpected(var, 999999)`
+- matchesExpected
+
+  Example:
+
+      matchesExpected:
+        variable: var
+        hash: 999999
 
   Checks that the definition of `var`, once source locations are
-  cleared, hashes to the given value (module 1 million).  This is
+  cleared, hashes to the given value (modulo 1 million).  This is
   used to verify that the student hasn't modified code they
   weren't supposed to change.
 
-  The usual process for using this is to first write a failing
-  check with some arbitrarily chosen hash.  The failure message
-  will include the correct hash, so you can update the check.
+  The usual process for using this rule is to first write a
+  failing check with some arbitrarily chosen hash.  The failure
+  message will include the correct hash, so you can update the
+  check.
 
-- `hasSimpleParams(var)`
+- `hasSimpleParams`
 
-  Checks that `var` is defined as a function, all of whose arguments
+  Example:
+
+      hasSimpleParams: f
+
+  Checks that `f` is defined as a function, all of whose arguments
   are plain variables.  Any use of more complex pattern matching will
-  cause this requirements to fail.  It will also fail if `var` is not
-  defined to be a function.
+  cause this requirements to fail.  It will also fail if `f` is not
+  defined, or if its definition isn't a function binding.
 
-- `definedByFunction(var, func)`
+  This is a very specific check that isn't good for anything except
+  a particular range of assignments in the test class.  You probably
+  shouldn't use it.  Note that many trivial changes, such as defining
+  `f` in point-free style, or using a lambda, will cause this to
+  fail.
+
+- `definedByFunction`
+
+  Example:
+
+      definedByFunction:
+        variable: var
+        function: func
 
   Checks that `var` is defined directly to be `func` applied to some
-  arguments.  This example was implemented directly because it was the
-  main point of the test class where we first tried out this feature.
+  arguments.  This example was implemented because it was the main
+  point of the test class where we first tried out this feature.  It
+  probably isn't what you're looking for in more general cases.
 
-- `notDefined(var)`
+- `notDefined`
+
+  Example:
+
+      notDefined: var
 
   Checks that there is no definition for a variable named `var`.  If
   there is, it fails.
 
-- `usesAllParams(func)`
+- `usesAllParams`
+
+  Example:
+
+      usesAllParams: func
 
   Checks that `func` makes use of all of its named parameters.  If
   any parameters are not used in an equation, it fails.
 
-- `notUsed(var)`
+- `notUsed`
 
-  Checks that there are no references to a name in the module.
+  Example:
+
+      notUsed: var
+
+  Checks that there are no references to `var` in the module.
 
 This is by no means intended to be the final constraint language;
 rather, it was the set of requirements needed for a specific test
 case, and was therefore implemented first (in a hacky way).  The
 language is strongly subject to change in the future.
-
-Even the overall syntax should not be interpreted as any indicator of
-future syntax.  In particular, it seems likely we will settle on a more
-standard format in the future, rather than a custom parser.  Something
-like YAML or HCL seems best.
 
 ### Desirable use cases
 
@@ -149,8 +200,8 @@ The following use cases have been proposed, but are not yet implemented.
 - Checking specific syntax against a pattern.  The idea is that you should
   be able to say:
   
-      decl_matches:
-      
+      declMatches: |
+
         foo __var_x __var_y = __var_x + __var_y^2 - sqrt __any
 
   The pattern will be parsed as a declaration, and then a search will
@@ -206,3 +257,11 @@ would be added to the requirements for the current file.
 (How this interacts with the GHC plugin implementation is also
 interesting.  I suspect we'd need to then embed the requirements
 into plugin options.)
+
+3. Can the implementation be moved to a source plugin?
+
+This would be ideal, because it would open the door to more powerful
+checks, such as those involving type unification, or other static
+analysis already implemented in GHC.  For example,
+http://hackage.haskell.org/package/inspection-testing shows some
+very powerful uses of GHC via plugins to prove things about code.

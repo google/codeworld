@@ -104,16 +104,50 @@ getParsedCode = do
         Just parsed -> return parsed
         Nothing -> do
             source <- getSourceCode
-            let parsed = parseCode (decodeUtf8 source)
+            mode <- gets compileMode
+            let exts | mode == "codeworld" = codeworldModeExts
+                     | otherwise = []
+            let parsed = parseCode (decodeUtf8 source) exts
             modify $ \state -> state { compileParsedSource = Just parsed }
             return parsed
 
-parseCode :: Text -> ParsedCode
-parseCode src = case result of
+codeworldModeExts :: [String]
+codeworldModeExts =
+    [ "BangPatterns"
+    , "DisambiguateRecordFields"
+    , "EmptyDataDecls"
+    , "ExistentialQuantification"
+    , "ForeignFunctionInterface"
+    , "GADTs"
+    , "JavaScriptFFI"
+    , "KindSignatures"
+    , "LiberalTypeSynonyms"
+    , "NamedFieldPuns"
+    , "NoMonomorphismRestriction"
+    , "NoPatternGuards"
+    , "NoQuasiQuotes"
+    , "NoTemplateHaskell"
+    , "NoUndecidableInstances"
+    , "OverloadedStrings"
+    , "PackageImports"
+    , "ParallelListComp"
+    , "PartialTypeSignatures"
+    , "RankNTypes"
+    , "RebindableSyntax"
+    , "RecordWildCards"
+    , "ScopedTypeVariables"
+    , "TypeOperators"
+    , "ViewPatterns"
+    ]
+
+parseCode :: Text -> [String] -> ParsedCode
+parseCode src exts = case result of
     ParseOk mod -> Parsed mod
     ParseFailed _ _ -> NoParse
   where result = parseFileContentsWithMode mode (T.unpack src)
-        mode = defaultParseMode { parseFilename = "program.hs" }
+        extVals = [ parseExtension ext | ext <- exts ]
+        mode = defaultParseMode { parseFilename = "program.hs",
+                                  extensions = extVals }
 
 addDiagnostics :: MonadCompile m => [Diagnostic] -> m ()
 addDiagnostics diags = modify $ \state -> state {

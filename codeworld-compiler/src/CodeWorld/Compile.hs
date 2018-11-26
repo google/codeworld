@@ -219,7 +219,7 @@ runCompiler dir timeout args verbose =
 
 addParsedDiagnostics :: MonadCompile m => Text -> m ()
 addParsedDiagnostics output = addDiagnostics newDiags
-  where messages = T.splitOn "\n\n" (T.strip output)
+  where messages = filter (/= "") $ T.splitOn "\n\n" (T.strip output)
         newDiags = [ parseDiagnostic msg | msg <- messages ]
 
 parseDiagnostic :: Text -> Diagnostic

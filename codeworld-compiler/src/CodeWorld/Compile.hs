@@ -4,6 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE ViewPatterns #-}
 
 {-
   Copyright 2018 The CodeWorld Authors. All rights reserved.
@@ -37,7 +38,7 @@ import Control.Monad.IO.Class
 import Control.Monad.State
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
-import Data.List (intercalate)
+import Data.List
 import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
@@ -51,6 +52,9 @@ import System.FilePath
 import System.IO
 import System.IO.Temp (withSystemTempDirectory)
 import System.Process
+import Text.Read (readMaybe)
+import Text.Regex.TDFA
+import Text.Regex.TDFA.Text
 
 formatDiagnostics :: [Diagnostic] -> Text
 formatDiagnostics diags =
@@ -101,7 +105,7 @@ build = do
     ifSucceeding checkRequirements
 
     errPath <- gets compileOutputPath
-    diags <- gets compileErrors
+    diags <- sort <$> gets compileErrors
     liftIO $ createDirectoryIfMissing True (takeDirectory errPath)
     liftIO $ B.writeFile errPath $ encodeUtf8 $ formatDiagnostics diags
 
@@ -216,7 +220,35 @@ runCompiler dir timeout args verbose =
 addParsedDiagnostics :: MonadCompile m => Text -> m ()
 addParsedDiagnostics output = addDiagnostics newDiags
   where messages = T.splitOn "\n\n" (T.strip output)
-        newDiags = [ (noSrcSpan, CompileSuccess, T.unpack msg) | msg <- messages ]
+        newDiags = [ parseDiagnostic msg | msg <- messages ]
+
+parseDiagnostic :: Text -> Diagnostic
+parseDiagnostic msg
+  | ((_ : (readT -> Just ln)
+        : (readT -> Just col)
+        : body : _) : _) <-
+        msg =~ ("^program.hs:([0-9]+):([0-9]+): ((.|\n)*)$" :: Text)
+    = (srcSpanFrom ln ln col col, CompileSuccess, T.unpack body)
+  | ((_ : (readT -> Just ln)
+        : (readT -> Just col1)
+        : (readT -> Just col2)
+        : body : _) : _) <-
+        msg =~ ("^program.hs:([0-9]+):([0-9]+)-([0-9]+): ((.|\n)*)$" :: Text)
+    = (srcSpanFrom ln ln col1 col2, CompileSuccess, T.unpack body)
+  | ((_ : (readT -> Just ln1)
+        : (readT -> Just col1)
+        : (readT -> Just ln2)
+        : (readT -> Just col2)
+        : body : _) : _) <-
+        msg =~ ("^program.hs:[(]([0-9]+),([0-9]+)[)]" <>
+                "-[(]([0-9]+),([0-9]+)[)]: ((.|\n)*)$" :: Text)
+    = (srcSpanFrom ln1 ln2 col1 col2, CompileSuccess, T.unpack body)
+  | otherwise = (noSrcSpan, CompileSuccess, T.unpack msg ++ " (no loc)")
+  where readT = readMaybe . T.unpack
+
+srcSpanFrom :: Int -> Int -> Int -> Int -> SrcSpanInfo
+srcSpanFrom l1 l2 c1 c2 =
+    SrcSpanInfo (SrcSpan "program.hs" l1 c1 l2 c2) []
 
 copyOutputFrom :: MonadCompile m => FilePath -> m ()
 copyOutputFrom target = gets compileStage >>= \stage -> case stage of

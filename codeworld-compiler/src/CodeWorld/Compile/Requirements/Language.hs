@@ -180,7 +180,7 @@ notUsedParser = do
     return (NotUsed a)
 
 legacyFormatPattern :: Text
-legacyFormatPattern = "^[[:space:]]*\"[^\\n]*\".*"
+legacyFormatPattern = "^[[:space:]]*\"[^\n]*\".*"
 
 parseRequirement :: Int -> Int -> Text -> Either String Requirement
 parseRequirement ln col txt

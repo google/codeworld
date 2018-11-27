@@ -52,7 +52,7 @@ rewriteStages =
     , ("IO [a-z][a-zA-Z0-9_]*", "Program")
     , ("[ ]*Perhaps you intended to use TemplateHaskell\n", "")
     , ("imported from [^)\n]*", "defined in the standard library")
-    , ("\\(and originally defined in [^)]*\\)", "\n")
+    , ("[ ]*[(]and originally defined in [^)]*[)]\n", "")
     , ("the first argument", "the argument(s)")
     , ( "[ ]*The function [a-zA-Z0-9_]* is applied to [a-z0-9]* arguments,\n"
       , "")

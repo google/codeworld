@@ -1,0 +1,2 @@
+program = blank
+  foo = blank

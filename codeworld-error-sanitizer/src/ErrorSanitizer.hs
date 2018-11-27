@@ -32,11 +32,13 @@ rewriteStages =
     , ("module Main", "your code")
     , ("main\\:Main", "your code")
     , ("is applied to too few arguments", "is missing arguments")
-    , ( "Couldn't match expected type Text\\s*with actual type GHC.Types.Char"
-      , "Text requires double quotes, rather than single.")
+    , ("Couldn't match expected type Text\\s*with actual type GHC.Types.Char",
+       "Text requires double quotes, rather than single.")
     , ("base-[0-9.]*:GHC\\.Stack\\.Types\\.HasCallStack => ", "")
-    , ( "When checking that:\\s*[^\n]*\\s*is more polymorphic than:\\s*[^\n]*(\n\\s*)?"
-      , "")
+    , ("When checking that:\\s*[^\n]*\\s*is more polymorphic than:\\s*[^\n]*(\n\\s*)?",
+       "")
+    , ("Perhaps you need a 'let' in a 'do' block[?][ \t\n]*e.g. '[^']*' instead of '[^']*'",
+       "An equation does not fit here. Is this line indented incorrectly?")
     , ("\\[GHC\\.Types\\.Char\\] -> ", "\n")
     , ("base(-[0-9.]*)?\\:(.|\n)*->( |\n)*", "\n")
     , ("integer-gmp(-[0-9\\.]*)?:(.|\n)*->( |\n)*", "")
@@ -54,17 +56,17 @@ rewriteStages =
     , ("imported from [^)\n]*", "defined in the standard library")
     , ("[ ]*[(]and originally defined in [^)]*[)]\n", "")
     , ("the first argument", "the argument(s)")
-    , ( "[ ]*The function [a-zA-Z0-9_]* is applied to [a-z0-9]* arguments,\n"
-      , "")
+    , ("[ ]*The function [a-zA-Z0-9_]* is applied to [a-z0-9]* arguments,\n",
+       "")
     , ("[ ]*but its type .* has only .*\n", "")
-    , ( "A data constructor of that name is in scope; did you mean DataKinds\\?"
-      , "That name refers to a value, not a type.")
+    , ("A data constructor of that name is in scope; did you mean DataKinds\\?",
+       "That name refers to a value, not a type.")
     , ("type constructor or class", "type")
-    , ( "Illegal tuple section: use TupleSections"
-      , "This tuple is missing a value, or has an extra comma.")
+    , ("Illegal tuple section: use TupleSections",
+       "This tuple is missing a value, or has an extra comma.")
     , ("in string/character literal", "in text literal")
-    , ( "lexical error at character '\\\\822[01]'"
-      , "Smart quotes are not allowed.")
+    , ("lexical error at character '\\\\822[01]'",
+       "Smart quotes are not allowed.")
     , ("[(]main[)]", "program")
     , ("\\bmain\\b", "program")
     , ("a pattern binding", "the definition")

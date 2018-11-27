@@ -4,20 +4,9 @@ about: Report something wrong with the CodeWorld web site
 
 ---
 
-**Describe the bug**
+**Shared Program**: https://code.world/#Pxxxxxxxxxxx (if applicable)
 
-A clear description of what the bug is.
+**Description**
 
-**Shared Program**
-
-If you have a program that demonstrates what is wrong, add a link here from the "Share" button:
-- https://code.world/#Pxxxxxxxxxxx
-
-**Details**
-
-- What browser are you using?
-- What operating system are you using?
-
-**Additional context**
-
-Add any other context about the problem here.
+(If you don't know what's causing the problem, please include the
+browser and operating system you're using in the description.)

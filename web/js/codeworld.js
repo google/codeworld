@@ -806,6 +806,15 @@ function showRequiredChecksInDialog(msg) {
         confirmButtonText: 'Dismiss',
         showCancelButton: false,
         closeOnConfirm: true
+    }, function() {
+        var runner = document.getElementById('runner');
+        if (!runner) return;
+        if (runner.style.display == 'none') return;
+
+        setTimeout(() => {
+            runner.focus();
+            runner.contentWindow.focus();
+        }, 0);
     });
 }
 

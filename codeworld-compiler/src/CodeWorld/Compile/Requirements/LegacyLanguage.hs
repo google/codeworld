@@ -71,6 +71,7 @@ integer = lexeme L.decimal
 legacyRequirementParser :: Parser Requirement
 legacyRequirementParser = do
     optional ws
+    optional (symbol "REQUIRES")
     doc <- between quote quote (many nonquote)
     rules <- many ruleParser
     eof
@@ -136,11 +137,9 @@ notUsedParser = do
     symbol ")"
     return (NotUsed a)
 
-legacyFormatPattern :: Text
-legacyFormatPattern = "^[[:space:]]*\"[^\n]*\".*"
-
 isLegacyFormat :: Text -> Bool
-isLegacyFormat txt = txt =~ ("^[[:space:]]*\"[^\n]*\".*" :: Text)
+isLegacyFormat txt =
+    txt =~ ("^[[:space:]]*(REQUIRES)?[[:space:]]*\"[^\n]*\".*" :: Text)
 
 parseLegacyRequirement :: Int -> Int -> Text -> Either String Requirement
 parseLegacyRequirement ln col txt =

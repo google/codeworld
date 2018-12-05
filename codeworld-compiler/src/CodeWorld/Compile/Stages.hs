@@ -53,6 +53,7 @@ checkCodeConventions = do
         checkOldStyleMain
         checkFunctionParentheses
         checkVarlessPatterns
+        checkPatternGuards
 
 -- Look for uses of Template Haskell or related features in the compiler.  These
 -- cannot currently be used, because the compiler isn't properly sandboxed, so
@@ -153,3 +154,17 @@ isPatVar (PVar _ _) = True
 isPatVar (PNPlusK _ _ _) = True
 isPatVar (PAsPat _ _ _) = True
 isPatVar _ = False
+
+checkPatternGuards :: MonadCompile m => m ()
+checkPatternGuards =
+    getParsedCode >>= \parsed -> case parsed of
+        Parsed mod -> addDiagnostics $
+            everything (++) (mkQ [] patternGuards) mod
+        _ -> return ()
+
+patternGuards :: GuardedRhs SrcSpanInfo -> [Diagnostic]
+patternGuards (GuardedRhs _ stmts _) =
+    [ (loc, CompileError,
+       "This arrow can't be used here.\n\t" ++
+       "To compare a negative number, add a space between < and -.")
+      | Generator loc _ _ <- stmts ]

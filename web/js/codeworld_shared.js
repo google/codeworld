@@ -221,6 +221,7 @@ function registerStandardHints(successFunc)
         "Purple",
         "Pink",
         "Brown",
+        "Pi",
     ];
 
     lines.forEach(function(line) {

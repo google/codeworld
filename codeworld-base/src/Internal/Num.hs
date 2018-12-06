@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 {-
@@ -42,6 +43,7 @@ module Internal.Num
     , quotient
     , remainder
     , pi
+    , pattern Pi
     , exp
     , sqrt
     , squareRoot
@@ -299,10 +301,20 @@ remainder (a, b) = a - b * quotient (a, b)
 {-| The constant pi, which is equal to the ration between the circumference
     and diameter of a circle.
 
-  pi is approximately 3.14159.
+  pi is approximately 3.14.
 -}
 pi :: Number
-pi = fromDouble P.pi
+pi = fromDouble 3.141592653589793
+
+{-| The constant Pi, which is equal to the ration between the circumference
+    and diameter of a circle.
+
+  Pi is approximately 3.14.
+-}
+pattern Pi :: Number
+pattern Pi = Number 3.141592653589793
+
+{-# WARNING Pi "This is part of an experimental API change." #-}
 
 {-| Gives the exponential of a number.  This is equal to the constant e,
     raised to the power of the number.

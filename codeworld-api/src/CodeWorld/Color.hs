@@ -169,16 +169,6 @@ gray = grey
 
 grey (fence -> k) = RGBA k k k 1
 
-{-# WARNING gray
-    ["The function argument to gray will soon be removed.",
-     "All existing uses will break, but are easily fixed.",
-     "To avoid breaking, consider replacing (gray k) with (HSL 0 0 k)."] #-}
-
-{-# WARNING grey
-    ["The function argument to grey will soon be removed.",
-     "All existing uses will break, but are easily fixed.",
-     "To avoid breaking, consider replacing (grey k) with (HSL 0 0 k)."] #-}
-
 -- | An infinite list of colors.
 assortedColors :: [Color]
 assortedColors = [ HSL (adjusted h) 0.75 0.5 | h <- [0, 2 * pi / phi ..] ]
@@ -228,3 +218,44 @@ luminosity (fenceColor -> RGBA r g b a) = (lo + hi) / 2
 
 alpha :: Color -> Double
 alpha (RGBA r g b a) = fence a
+
+-- New-style colors
+
+pattern White :: Color
+pattern Black :: Color
+pattern Gray :: Color
+pattern Grey :: Color
+pattern Red :: Color
+pattern Orange :: Color
+pattern Yellow :: Color
+pattern Green :: Color
+pattern Blue :: Color
+pattern Purple :: Color
+pattern Pink :: Color
+pattern Brown :: Color
+
+pattern White  = HSL 0.00 0.00 1.00
+pattern Black  = HSL 0.00 0.00 0.00
+pattern Gray   = HSL 0.00 0.00 0.50
+pattern Grey   = HSL 0.00 0.00 0.50
+pattern Red    = HSL 0.00 0.75 0.50
+pattern Orange = HSL 0.61 0.75 0.50
+pattern Yellow = HSL 0.98 0.75 0.50
+pattern Green  = HSL 2.09 0.75 0.50
+pattern Blue   = HSL 3.84 0.75 0.50
+pattern Purple = HSL 4.80 0.75 0.50
+pattern Pink   = HSL 5.76 0.75 0.75
+pattern Brown  = HSL 0.52 0.60 0.40
+
+{-# WARNING White "This is an experimental API." #-}
+{-# WARNING Black "This is an experimental API." #-}
+{-# WARNING Gray "This is an experimental API." #-}
+{-# WARNING Grey "This is an experimental API." #-}
+{-# WARNING Red "This is an experimental API." #-}
+{-# WARNING Orange "This is an experimental API." #-}
+{-# WARNING Yellow "This is an experimental API." #-}
+{-# WARNING Green "This is an experimental API." #-}
+{-# WARNING Blue "This is an experimental API." #-}
+{-# WARNING Purple "This is an experimental API." #-}
+{-# WARNING Pink "This is an experimental API." #-}
+{-# WARNING Brown "This is an experimental API." #-}

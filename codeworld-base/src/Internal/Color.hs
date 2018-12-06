@@ -149,16 +149,6 @@ gray = fromCWColor . CW.gray . toDouble
 
 grey = gray
 
-{-# WARNING gray
-    ["The function argument to gray will soon be removed.",
-     "All existing uses will break, but are easily fixed.",
-     "To avoid breaking, consider replacing gray(k) with HSL(0, 0, k)."] #-}
-
-{-# WARNING grey
-    ["The function argument to grey will soon be removed.",
-     "All existing uses will break, but are easily fixed.",
-     "To avoid breaking, consider replacing grey(k) with HSL(0, 0, k)."] #-}
-
 assortedColors :: [Color]
 assortedColors = P.map fromCWColor CW.assortedColors
 
@@ -170,3 +160,44 @@ saturation = fromDouble . CW.saturation . toCWColor
 luminosity = fromDouble . CW.luminosity . toCWColor
 
 alpha = fromDouble . CW.alpha . toCWColor
+
+-- New style colors
+
+pattern White :: Color
+pattern Black :: Color
+pattern Gray :: Color
+pattern Grey :: Color
+pattern Red :: Color
+pattern Orange :: Color
+pattern Yellow :: Color
+pattern Green :: Color
+pattern Blue :: Color
+pattern Purple :: Color
+pattern Pink :: Color
+pattern Brown :: Color
+
+pattern White  = HSL(  0, 0.00, 1.00)
+pattern Black  = HSL(  0, 0.00, 0.00)
+pattern Gray   = HSL(  0, 0.00, 0.50)
+pattern Grey   = HSL(  0, 0.00, 0.50)
+pattern Red    = HSL(  0, 0.75, 0.50)
+pattern Orange = HSL( 35, 0.75, 0.50)
+pattern Yellow = HSL( 56, 0.75, 0.50)
+pattern Green  = HSL(120, 0.75, 0.50)
+pattern Blue   = HSL(220, 0.75, 0.50)
+pattern Purple = HSL(275, 0.75, 0.50)
+pattern Pink   = HSL(330, 0.75, 0.75)
+pattern Brown  = HSL( 30, 0.60, 0.40)
+
+{-# WARNING White "This is an experimental API." #-}
+{-# WARNING Black "This is an experimental API." #-}
+{-# WARNING Gray "This is an experimental API." #-}
+{-# WARNING Grey "This is an experimental API." #-}
+{-# WARNING Red "This is an experimental API." #-}
+{-# WARNING Orange "This is an experimental API." #-}
+{-# WARNING Yellow "This is an experimental API." #-}
+{-# WARNING Green "This is an experimental API." #-}
+{-# WARNING Blue "This is an experimental API." #-}
+{-# WARNING Purple "This is an experimental API." #-}
+{-# WARNING Pink "This is an experimental API." #-}
+{-# WARNING Brown "This is an experimental API." #-}

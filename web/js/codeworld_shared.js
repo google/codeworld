@@ -207,6 +207,20 @@ function registerStandardHints(successFunc)
         "thickPath",
         "text",
         "styledText",
+
+        // Experimental exports.
+        "White",
+        "Black",
+        "Gray",
+        "Grey",
+        "Red",
+        "Orange",
+        "Yellow",
+        "Green",
+        "Blue",
+        "Purple",
+        "Pink",
+        "Brown",
     ];
 
     lines.forEach(function(line) {

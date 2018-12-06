@@ -933,6 +933,7 @@ function saveProjectBase(path, projectName) {
         window.openProjectName = projectName;
         var doc = window.codeworldEditor.getDoc();
         window.savedGeneration = doc.changeGeneration(true);
+        window.codeworldEditor.focus();
     }
 
     saveProjectBase_(path, projectName, window.buildMode, successFunc);

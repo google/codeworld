@@ -22,10 +22,12 @@ module CodeWorld.Compile.Requirements.Language (parseRequirement) where
 import CodeWorld.Compile.Framework
 import CodeWorld.Compile.Requirements.LegacyLanguage
 import CodeWorld.Compile.Requirements.Types
+import Control.Applicative
 import Data.Aeson
 import Data.Aeson.Types (explicitParseFieldMaybe)
 import qualified Data.Aeson.Types as Aeson
 import Data.Either
+import Data.Foldable
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -48,6 +50,11 @@ instance FromJSON Rule where
             , explicitParseFieldMaybe notDefined o "notDefined"
             , explicitParseFieldMaybe notUsed o "notUsed"
             , explicitParseFieldMaybe containsMatch o "containsMatch"
+            , explicitParseFieldMaybe onFailure o "onFailure"
+            , explicitParseFieldMaybe ifThen o "ifThen"
+            , explicitParseFieldMaybe allOf o "all"
+            , explicitParseFieldMaybe anyOf o "any"
+            , explicitParseFieldMaybe notThis o "not"
             ]
         case catMaybes choices of
             [r] -> return r
@@ -81,8 +88,46 @@ notUsed = withText "notUsed" $ \t ->
     return $ NotUsed $ T.unpack t
 
 containsMatch :: Aeson.Value -> Aeson.Parser Rule
-containsMatch = withText "containsMatch" $ \t ->
-    return $ ContainsMatch $ T.unpack t
+containsMatch = withObject "containsMatch" $ \o ->
+    ContainsMatch <$> o .: "template"
+                  <*> o .:? "topLevel" .!= True
+                  <*> o .:? "cardinality" .!= exactlyOne
+
+onFailure :: Aeson.Value -> Aeson.Parser Rule
+onFailure = withObject "onFailure" $ \o ->
+    OnFailure <$> o .: "message"
+              <*> o .: "rule"
+
+ifThen :: Aeson.Value -> Aeson.Parser Rule
+ifThen = withObject "ifThen" $ \o ->
+    OnFailure <$> o .: "if"
+              <*> o .: "then"
+
+allOf :: Aeson.Value -> Aeson.Parser Rule
+allOf v = AllOf <$> withArray "all" (mapM parseJSON . toList) v
+
+anyOf :: Aeson.Value -> Aeson.Parser Rule
+anyOf v = AnyOf <$> withArray "any" (mapM parseJSON . toList) v
+
+notThis :: Aeson.Value -> Aeson.Parser Rule
+notThis v = NotThis <$> parseJSON v
+
+instance FromJSON Cardinality where
+    parseJSON val = parseAsNum val <|> parseAsObj val
+      where parseAsNum val = do
+                n <- parseJSON val
+                return (Cardinality (Just n) (Just n))
+            parseAsObj = withObject "cardinality" $ \o -> do
+                exactly <- o .:? "exactly"
+                mini <- o .:? "atLeast"
+                maxi <- o .:? "atMost"
+                case (exactly, mini, maxi) of
+                    (Just n, Nothing, Nothing) ->
+                        return (Cardinality (Just n) (Just n))
+                    (Nothing, Nothing, Nothing) ->
+                        fail "Missing cardinality"
+                    (Nothing, m, n) ->
+                        return (Cardinality m n)
 
 parseRequirement :: Int -> Int -> Text -> Either String Requirement
 parseRequirement ln col txt

@@ -159,13 +159,48 @@ checkRule (NotUsed a) = withParsedCode $ \m -> do
              -> failure $ "`" ++ a ++ "` should not be used."
        | otherwise -> success
 
-checkRule (ContainsMatch a) = withParsedCode $ \m -> do
-    tmpl <- parseCode (T.pack a)
-    case (tmpl, m) of
-        (Parsed (Module _ _ _ _ tmplDecls), Module _ _ _ _ decls)
-          | all (\t -> any (match t) decls) tmplDecls -> success
-          | otherwise -> failure $ "There was no match."
+checkRule (ContainsMatch tmpl topLevel card) = withParsedCode $ \m -> do
+    let decls
+          | topLevel = case m of
+              Module _ _ _ _ decls -> Just decls
+              _ -> Nothing
+          | otherwise = Just $ everything (++) (mkQ [] (:[])) m
+    tmpl <- parseCode (T.pack tmpl)
+    case (tmpl, decls) of
+        (Parsed (Module _ _ _ _ [tmpl]), Just decls) -> do
+            let n = length (filter (match tmpl) decls)
+            if | hasCardinality card n -> success
+               | otherwise -> failure $ "Wrong number of matches."
         _ -> abort
+
+checkRule (OnFailure msg rule) = do
+    result <- checkRule rule
+    case result of
+        Just (_:_) -> failure msg
+        other -> return other
+
+checkRule (IfThen a b) = do
+    cond <- checkRule a
+    case cond of
+        Just [] -> checkRule b
+        Just _ -> success
+        Nothing -> abort
+
+checkRule (AllOf rules) = do
+    results <- sequence <$> mapM checkRule rules
+    return (concat <$> results)
+
+checkRule (AnyOf rules) = do
+    results <- sequence <$> mapM checkRule rules
+    return $ (<$> results) $ \errs ->
+        if any null errs then [] else ["No alternatives succeeded."]
+
+checkRule (NotThis rule) = do
+    result <- checkRule rule
+    case result of
+        Just [] -> failure "A rule matched, but shouldn't have."
+        Just _ -> success
+        Nothing -> abort
 
 checkRule _ = abort
 

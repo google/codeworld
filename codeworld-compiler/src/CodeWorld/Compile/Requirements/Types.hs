@@ -14,10 +14,7 @@
   limitations under the License.
 -}
 
-module CodeWorld.Compile.Requirements.Types (
-    Requirement(..),
-    Rule(..)
-    ) where
+module CodeWorld.Compile.Requirements.Types where
 
 data Requirement = Requirement {
     requiredDescription :: String,
@@ -31,5 +28,30 @@ data Rule = DefinedByFunction String String
           | UsesAllParams String
           | NotDefined String
           | NotUsed String
-          | ContainsMatch String
+          | ContainsMatch {
+                matchTemplate :: String,
+                matchTopLevel :: Bool,
+                matchCardinality :: Cardinality
+            }
+          | OnFailure String Rule
+          | IfThen Rule Rule
+          | AllOf [Rule]
+          | AnyOf [Rule]
+          | NotThis Rule
     deriving Show
+
+data Cardinality = Cardinality {
+    atLeast :: Maybe Int,
+    atMost :: Maybe Int
+    }
+    deriving Show
+
+anyNumber, exactlyOne, atLeastOne :: Cardinality
+anyNumber = Cardinality Nothing Nothing
+exactlyOne = Cardinality (Just 1) (Just 1)
+atLeastOne = Cardinality (Just 1) Nothing
+
+hasCardinality :: Cardinality -> Int -> Bool
+hasCardinality (Cardinality (Just k) _) n | n < k = False
+hasCardinality (Cardinality _ (Just k)) n | n > k = False
+hasCardinality _ _ = True

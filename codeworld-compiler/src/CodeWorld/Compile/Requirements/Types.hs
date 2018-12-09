@@ -31,4 +31,5 @@ data Rule = DefinedByFunction String String
           | UsesAllParams String
           | NotDefined String
           | NotUsed String
+          | ContainsMatch String
     deriving Show

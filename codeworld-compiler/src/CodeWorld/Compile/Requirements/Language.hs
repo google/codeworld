@@ -47,6 +47,7 @@ instance FromJSON Rule where
             , explicitParseFieldMaybe usesAllParams o "usesAllParams"
             , explicitParseFieldMaybe notDefined o "notDefined"
             , explicitParseFieldMaybe notUsed o "notUsed"
+            , explicitParseFieldMaybe containsMatch o "containsMatch"
             ]
         case catMaybes choices of
             [r] -> return r
@@ -78,6 +79,10 @@ notDefined = withText "notDefined" $ \t ->
 notUsed :: Aeson.Value -> Aeson.Parser Rule
 notUsed = withText "notUsed" $ \t ->
     return $ NotUsed $ T.unpack t
+
+containsMatch :: Aeson.Value -> Aeson.Parser Rule
+containsMatch = withText "containsMatch" $ \t ->
+    return $ ContainsMatch $ T.unpack t
 
 parseRequirement :: Int -> Int -> Text -> Either String Requirement
 parseRequirement ln col txt

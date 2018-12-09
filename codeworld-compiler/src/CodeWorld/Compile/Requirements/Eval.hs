@@ -1,4 +1,6 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE RecordWildCards #-}
 
 {-
@@ -23,43 +25,47 @@ module CodeWorld.Compile.Requirements.Eval (
     ) where
 
 import CodeWorld.Compile.Framework
+import CodeWorld.Compile.Requirements.Matcher
 import CodeWorld.Compile.Requirements.Types
-import Data.ByteString (ByteString)
-import Data.ByteString.Char8 (unpack)
+import Control.Monad.IO.Class
 import Data.Char
 import Data.Either
 import Data.Generics hiding (empty)
 import Data.Hashable
+import qualified Data.Text as T
 import Data.Void
 import Language.Haskell.Exts hiding (Rule, parse)
-import Text.Megaparsec
-import Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer as L
 
-evalRequirement :: Requirement -> ParsedCode -> (String, Maybe Bool, [String])
-evalRequirement Requirement{..} NoParse =
-    (requiredDescription, Nothing, ["Could not check this requirement."])
-evalRequirement Requirement{..} m =
-    (requiredDescription, Just (null failures), failures)
-  where failures = concatMap (ruleFailures m) requiredRules
+evalRequirement :: MonadCompile m => Requirement -> m (Maybe Bool, [String])
+evalRequirement Requirement{..} = do
+    results <- fmap concat <$> (sequence <$> mapM checkRule requiredRules)
+    return $ case results of
+        Nothing -> (Nothing, ["Could not check this requirement."])
+        Just errs -> (Just (null errs), errs)
 
-ruleFailures :: ParsedCode -> Rule -> [String]
-ruleFailures NoParse _ = []
-ruleFailures (Parsed m) (DefinedByFunction a b) = checkDefinedBy m a b
-ruleFailures (Parsed m) (MatchesExpected a expectedHash) =
-    checkMatchesExpected m a expectedHash
-ruleFailures (Parsed m) (HasSimpleParams a) = checkHasSimpleParams m a
-ruleFailures (Parsed m) (UsesAllParams a) = checkUsesAllParams m a
-ruleFailures (Parsed m) (NotDefined a) = checkNotDefined m a
-ruleFailures (Parsed m) (NotUsed a) = checkNotUsed m a
-ruleFailures (Parsed m) _ = ["Could not understand this requirement."]
+type Result = Maybe [String]
 
-checkDefinedBy :: Module SrcSpanInfo -> String -> String -> [String]
-checkDefinedBy m a b
-  | null defs = ["`" ++ a ++ "` is not defined."]
-  | all (isDefinedBy b) defs = []
-  | otherwise = [ "`" ++ a ++ "` is not defined directly using `" ++ b ++ "`." ]
-  where defs = allDefinitionsOf a m
+success :: MonadCompile m => m Result
+success = return (Just [])
+
+failure :: MonadCompile m => String -> m Result
+failure err = return (Just [err])
+
+abort :: MonadCompile m => m Result
+abort = return Nothing
+
+withParsedCode :: MonadCompile m
+               => (Module SrcSpanInfo -> m Result)
+               -> m Result
+withParsedCode check = do
+    getParsedCode >>= \pc -> case pc of
+        NoParse -> abort
+        Parsed m -> check m
+
+checkRule :: MonadCompile m => Rule -> m Result
+
+checkRule (DefinedByFunction a b) = withParsedCode $ \m -> do
+    let defs = allDefinitionsOf a m
 
         isDefinedBy :: String -> Rhs SrcSpanInfo -> Bool
         isDefinedBy b (UnGuardedRhs _ exp) = isExpOf b exp
@@ -73,22 +79,22 @@ checkDefinedBy m a b
         isExpOf b (Paren _ exp) = isExpOf b exp
         isExpOf b _ = False
 
-checkMatchesExpected :: Module SrcSpanInfo -> String -> Int -> [String]
-checkMatchesExpected m a expectedHash
-  | null defs = ["`" ++ a ++ "` is not defined."]
-  | computedHash == expectedHash = []
-  | otherwise = ["`" ++ a ++ "` does not have the expected definition. (" ++
-                 show computedHash ++ ")"]
-  where defs = allDefinitionsOf a m
+    if | null defs -> failure $ "`" ++ a ++ "` is not defined."
+       | all (isDefinedBy b) defs -> success
+       | otherwise -> failure ("`" ++ a ++ "` is not defined directly using `" ++ b ++ "`.")
+
+checkRule (MatchesExpected a h) = withParsedCode $ \m -> do
+    let defs = allDefinitionsOf a m
         computedHash = hash (concatMap (show . eraseSrcLocs) defs) `mod` 1000000
         eraseSrcLocs rhs = everywhere (mkT (const noSrcSpan)) rhs
+    if | null defs -> failure $ "`" ++ a ++ "` is not defined."
+       | computedHash == h -> success
+       | otherwise -> failure $
+            "`" ++ a ++ "` does not have the expected definition. (" ++
+            show computedHash ++ ")"
 
-checkHasSimpleParams :: Module SrcSpanInfo -> String -> [String]
-checkHasSimpleParams m a
-  | null paramPatterns = ["`" ++ a ++ "` is not defined as a function."]
-  | all isSimpleParam paramPatterns = []
-  | otherwise = ["`" ++ a ++ "` has equations with pattern matching."]
-  where paramPatterns = everything (++) (mkQ [] matchParams) m
+checkRule (HasSimpleParams a) = withParsedCode $ \m -> do
+    let paramPatterns = everything (++) (mkQ [] matchParams) m
 
         matchParams :: Match SrcSpanInfo -> [Pat SrcSpanInfo]
         matchParams (Match _ (Ident _ aa) pats _ _) | a == aa = pats
@@ -101,11 +107,12 @@ checkHasSimpleParams m a
         isSimpleParam (PWildCard _) = True
         isSimpleParam _ = False
 
-checkUsesAllParams :: Module SrcSpanInfo -> String -> [String]
-checkUsesAllParams m a
-  | usesAllParams = []
-  | otherwise = [ "`" ++ a ++ "` has unused arguments." ]
-  where usesAllParams = everything (&&) (mkQ True targetVarUsesParams) m
+    if | null paramPatterns -> failure $ "`" ++ a ++ "` is not defined as a function."
+       | all isSimpleParam paramPatterns -> success
+       | otherwise -> failure $ "`" ++ a ++ "` has equations with pattern matching."
+
+checkRule (UsesAllParams a) = withParsedCode $ \m -> do
+    let usesAllParams = everything (&&) (mkQ True targetVarUsesParams) m
 
         targetVarUsesParams :: Decl SrcSpanInfo -> Bool
         targetVarUsesParams (FunBind _ ms)
@@ -136,19 +143,31 @@ checkUsesAllParams m a
         isVar v (Var _ (UnQual _ (Ident _ vv))) = v == vv
         isVar _ _ = False
 
-checkNotDefined :: Module SrcSpanInfo -> String -> [String]
-checkNotDefined m a
-  | null (allDefinitionsOf a m) = []
-  | otherwise = ["`" ++ a ++ "` should not be defined."]
+    if | usesAllParams -> success
+       | otherwise -> failure $ "`" ++ a ++ "` has unused arguments."
 
-checkNotUsed :: Module SrcSpanInfo -> String -> [String]
-checkNotUsed m a
-  | everything (||) (mkQ False exprUse) m
-              = ["`" ++ a ++ "` should not be used."]
-  | otherwise = []
-  where exprUse :: Exp SrcSpanInfo -> Bool
+checkRule (NotDefined a) = withParsedCode $ \m -> do
+    if | null (allDefinitionsOf a m) -> success
+       | otherwise -> failure $ "`" ++ a ++ "` should not be defined."
+
+checkRule (NotUsed a) = withParsedCode $ \m -> do
+    let exprUse :: Exp SrcSpanInfo -> Bool
         exprUse (Var _ (UnQual _ (Ident _ v))) | v == a = True
         exprUse _ = False
+
+    if | everything (||) (mkQ False exprUse) m
+             -> failure $ "`" ++ a ++ "` should not be used."
+       | otherwise -> success
+
+checkRule (ContainsMatch a) = withParsedCode $ \m -> do
+    tmpl <- parseCode (T.pack a)
+    case (tmpl, m) of
+        (Parsed (Module _ _ _ _ tmplDecls), Module _ _ _ _ decls)
+          | all (\t -> any (match t) decls) tmplDecls -> success
+          | otherwise -> failure $ "There was no match."
+        _ -> abort
+
+checkRule _ = abort
 
 allDefinitionsOf :: String -> Module SrcSpanInfo -> [Rhs SrcSpanInfo]
 allDefinitionsOf a m = everything (++) (mkQ [] funcDefs) m ++

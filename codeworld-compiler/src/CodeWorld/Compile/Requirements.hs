@@ -23,6 +23,7 @@ module CodeWorld.Compile.Requirements (checkRequirements) where
 import CodeWorld.Compile.Framework
 import CodeWorld.Compile.Requirements.Eval
 import CodeWorld.Compile.Requirements.Language
+import CodeWorld.Compile.Requirements.Types
 import Codec.Compression.Zlib
 import Control.Exception
 import Control.Monad
@@ -47,13 +48,13 @@ checkRequirements = do
     sources <- extractRequirementsSource
     reqs <- extractRequirements sources
     when (not (null reqs)) $ do
-        m <- getParsedCode
+        results <- mapM handleRequirement reqs
         let obfuscated = T.unpack (obfuscate (map snd sources))
         addDiagnostics
             [ (noSrcSpan, CompileSuccess,
                "                    :: REQUIREMENTS ::\n" ++
                "Obfuscated:\n\n    XREQUIRES" ++ obfuscated ++ "\n\n" ++
-               concatMap (handleRequirement m) reqs ++
+               concat results ++
                "                  :: END REQUIREMENTS ::\n")
             ]
 
@@ -93,13 +94,14 @@ extractRequirements sources = do
         format err = (noSrcSpan, CompileSuccess,
                       "The requirement could not be understood:\n" ++ err)
 
-handleRequirement :: ParsedCode -> Requirement -> String
-handleRequirement m r =
-    label ++ desc ++ "\n" ++ concat [ "      " ++ msg ++ "\n" | msg <- msgs ]
-  where (desc, success, msgs) = evalRequirement r m
-        label | success == Nothing   = "[?] "
-              | success == Just True = "[Y] "
-              | otherwise            = "[N] "
+handleRequirement :: MonadCompile m => Requirement -> m String
+handleRequirement req = do
+    let desc = requiredDescription req
+    (success, msgs) <- evalRequirement req
+    let label | success == Nothing   = "[?] " ++ desc ++ "\n"
+              | success == Just True = "[Y] " ++ desc ++ "\n"
+              | otherwise            = "[N] " ++ desc ++ "\n"
+    return $ label ++ concat [ "      " ++ msg ++ "\n" | msg <- msgs ]
 
 obfuscate :: [Text] -> Text
 obfuscate = wrapWithPrefix 60 "\n    " . decodeUtf8 . B64.encode .

@@ -77,6 +77,7 @@ data CompileState = CompileState {
     compileReadSource   :: Maybe ByteString,
     compileParsedSource :: Maybe ParsedCode
     }
+    deriving Show
 
 type MonadCompile m = (MonadState CompileState m, MonadIO m, MonadMask m)
 
@@ -84,7 +85,7 @@ type SourceMode = String  -- typically "codeworld" or "haskell"
 
 type Diagnostic = (SrcSpanInfo, CompileStatus, String)
 
-data ParsedCode = Parsed (Module SrcSpanInfo) | NoParse
+data ParsedCode = Parsed (Module SrcSpanInfo) | NoParse deriving Show
 
 getSourceCode :: MonadCompile m => m ByteString
 getSourceCode = do
@@ -104,10 +105,7 @@ getParsedCode = do
         Just parsed -> return parsed
         Nothing -> do
             source <- getSourceCode
-            mode <- gets compileMode
-            let exts | mode == "codeworld" = codeworldModeExts
-                     | otherwise = []
-            let parsed = parseCode (decodeUtf8 source) exts
+            parsed <- parseCode (decodeUtf8 source)
             modify $ \state -> state { compileParsedSource = Just parsed }
             return parsed
 
@@ -140,14 +138,19 @@ codeworldModeExts =
     , "ViewPatterns"
     ]
 
-parseCode :: Text -> [String] -> ParsedCode
-parseCode src exts = case result of
-    ParseOk mod -> Parsed mod
-    ParseFailed _ _ -> NoParse
-  where result = parseFileContentsWithMode mode (T.unpack src)
+parseCode :: MonadCompile m => Text -> m ParsedCode
+parseCode src = do
+    sourceMode <- gets compileMode
+    let result = parseFileContentsWithMode mode (T.unpack src)
+        exts | sourceMode == "codeworld" = codeworldModeExts
+             | otherwise = []
         extVals = [ parseExtension ext | ext <- exts ]
         mode = defaultParseMode { parseFilename = "program.hs",
                                   extensions = extVals }
+
+    return $ case result of
+        ParseOk mod -> Parsed mod
+        ParseFailed _ _ -> NoParse
 
 addDiagnostics :: MonadCompile m => [Diagnostic] -> m ()
 addDiagnostics diags = modify $ \state -> state {

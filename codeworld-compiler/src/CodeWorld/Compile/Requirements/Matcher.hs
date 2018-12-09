@@ -1,4 +1,5 @@
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ViewPatterns #-}
 
 {-
@@ -19,12 +20,26 @@
 
 module CodeWorld.Compile.Requirements.Matcher where
 
+import Data.Generics
+import Data.Generics.Twins
 import Data.List
 import Language.Haskell.Exts
 
-pattern SpecialExp nm <- Var _ (UnQual _ (Ident _ (specialName -> Just nm)))
-pattern SpecialPat nm <- PVar _ (Ident _ (specialName -> Just nm))
+match :: Data a => a -> a -> Bool
+match tmpl val = matchQ tmpl val
 
-specialName :: String -> Maybe String
-specialName s | "__" `isPrefixOf` s = Just s
-              | otherwise           = Nothing
+matchQ :: GenericQ (GenericQ Bool)
+matchQ tmpl val
+  | Just _ <- cast tmpl :: Maybe SrcSpanInfo = True
+  | Just t <- cast tmpl, Just v <- cast val, matchesAnyPat t v = True
+  | Just t <- cast tmpl, Just v <- cast val, matchesAnyExp t v = True
+  | otherwise = toConstr tmpl == toConstr val &&
+                and (gzipWithQ matchQ tmpl val)
+
+matchesAnyPat :: Pat SrcSpanInfo -> Pat SrcSpanInfo -> Bool
+matchesAnyPat (PVar _ (Ident _ "__any")) _ = True
+matchesAnyPat _ _ = False
+
+matchesAnyExp :: Exp SrcSpanInfo -> Exp SrcSpanInfo -> Bool
+matchesAnyExp (Var _ (UnQual _ (Ident _ "__any"))) _ = True
+matchesAnyExp _ _ = False

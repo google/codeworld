@@ -160,14 +160,14 @@ checkRule (NotUsed a) = withParsedCode $ \m -> do
        | otherwise -> success
 
 checkRule (ContainsMatch tmpl topLevel card) = withParsedCode $ \m -> do
-    let decls
+    let maybeDecls
           | topLevel = case m of
               Module _ _ _ _ decls -> Just decls
               _ -> Nothing
           | otherwise = Just $ everything (++) (mkQ [] (:[])) m
     tmpl <- parseCode (T.pack tmpl)
-    case (tmpl, decls) of
-        (Parsed (Module _ _ _ _ [tmpl]), Just decls) -> do
+    case (maybeDecls, tmpl) of
+        (Just decls, Parsed (Module _ _ _ _ [tmpl])) -> do
             let n = length (filter (match tmpl) decls)
             if | hasCardinality card n -> success
                | otherwise -> failure $ "Wrong number of matches."

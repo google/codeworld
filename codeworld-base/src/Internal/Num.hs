@@ -298,7 +298,7 @@ remainder :: HasCallStack => (Number, Number) -> Number
 remainder (a, 0) = withFrozenCallStack (P.error "Cannot divide by zero.")
 remainder (a, b) = a - b * quotient (a, b)
 
-{-| The constant pi, which is equal to the ration between the circumference
+{-| The constant pi, which is equal to the ratio between the circumference
     and diameter of a circle.
 
   pi is approximately 3.14.
@@ -306,7 +306,7 @@ remainder (a, b) = a - b * quotient (a, b)
 pi :: Number
 pi = fromDouble 3.141592653589793
 
-{-| The constant Pi, which is equal to the ration between the circumference
+{-| The constant Pi, which is equal to the ratio between the circumference
     and diameter of a circle.
 
   Pi is approximately 3.14.

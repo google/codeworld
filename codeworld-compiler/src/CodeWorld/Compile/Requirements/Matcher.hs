@@ -20,26 +20,76 @@
 
 module CodeWorld.Compile.Requirements.Matcher where
 
+import Control.Monad
 import Data.Generics
 import Data.Generics.Twins
 import Data.List
+import Data.Maybe
 import Language.Haskell.Exts
 
 match :: Data a => a -> a -> Bool
 match tmpl val = matchQ tmpl val
 
 matchQ :: GenericQ (GenericQ Bool)
-matchQ tmpl val
-  | Just _ <- cast tmpl :: Maybe SrcSpanInfo = True
-  | Just t <- cast tmpl, Just v <- cast val, matchesAnyPat t v = True
-  | Just t <- cast tmpl, Just v <- cast val, matchesAnyExp t v = True
-  | otherwise = toConstr tmpl == toConstr val &&
-                and (gzipWithQ matchQ tmpl val)
+matchQ = matchesPatParens ||| matchesExpParens ||| matchesPatWildcard
+    ||| matchesExpWildcard ||| structuralEq
 
-matchesAnyPat :: Pat SrcSpanInfo -> Pat SrcSpanInfo -> Bool
-matchesAnyPat (PVar _ (Ident _ "__any")) _ = True
-matchesAnyPat _ _ = False
+matchesPatParens :: Pat SrcSpanInfo -> Pat SrcSpanInfo -> Maybe Bool
+matchesPatParens (PParen _ a) b = Just (matchQ a b)
+matchesPatParens a (PParen _ b) = Just (matchQ a b)
+matchesPatParens a b = Nothing
 
-matchesAnyExp :: Exp SrcSpanInfo -> Exp SrcSpanInfo -> Bool
-matchesAnyExp (Var _ (UnQual _ (Ident _ "__any"))) _ = True
-matchesAnyExp _ _ = False
+matchesExpParens :: Exp SrcSpanInfo -> Exp SrcSpanInfo -> Maybe Bool
+matchesExpParens (Paren _ a) b = Just (matchQ a b)
+matchesExpParens a (Paren _ b) = Just (matchQ a b)
+matchesExpParens a b = Nothing
+
+matchesPatWildcard :: Pat SrcSpanInfo -> Pat SrcSpanInfo -> Maybe Bool
+matchesPatWildcard (PVar _ (Ident _ "__any")) _ = Just True
+matchesPatWildcard (PVar _ (Ident _ "__var")) p = Just (isVar p)
+  where isVar (PVar _ _) = True
+        isVar _ = False
+matchesPatWildcard (PVar _ (Ident _ "__num")) p = Just (isNum p)
+  where isNum (PLit _ _ (Int _ _ _)) = True
+        isNum (PLit _ _ (Frac _ _ _)) = True
+        isNum _ = False
+matchesPatWildcard (PVar _ (Ident _ "__str")) p = Just (isStr p)
+  where isStr (PLit _ _ (String _ _ _)) = True
+        isStr _ = False
+matchesPatWildcard (PVar _ (Ident _ "__char")) p = Just (isChr p)
+  where isChr (PLit _ _ (Char _ _ _)) = True
+        isChr _ = False
+matchesPatWildcard (PApp _ (UnQual _ (Ident _ "__tupleof")) pat) p = Just (allMatch pat p)
+  where allMatch pat (PTuple _ _ pats) = all (matchQ pat) pats
+        allMatch _ _ = False
+matchesPatWildcard _ _ = Nothing
+
+matchesExpWildcard :: Exp SrcSpanInfo -> Exp SrcSpanInfo -> Maybe Bool
+matchesExpWildcard (Var _ (UnQual _ (Ident _ "__any"))) _ = Just True
+matchesExpWildcard (Var _ (UnQual _ (Ident _ "__var"))) e = Just (isVar e)
+  where isVar (Var _ _) = True
+        isVar _ = False
+matchesExpWildcard (Var _ (UnQual _ (Ident _ "__num"))) e = Just (isNum e)
+  where isNum (Lit _ (Int _ _ _)) = True
+        isNum (Lit _ (Frac _ _ _)) = True
+        isNum _ = False
+matchesExpWildcard (Var _ (UnQual _ (Ident _ "__str"))) e = Just (isStr e)
+  where isStr (Lit _ (String _ _ _)) = True
+        isStr _ = False
+matchesExpWildcard (Var _ (UnQual _ (Ident _ "__char"))) e = Just (isChr e)
+  where isChr (Lit _ (Char _ _ _)) = True
+        isChr _ = False
+matchesExpWildcard (App _ (Var _ (UnQual _ (Ident _ "__tupleof"))) exp) e = Just (allMatch exp e)
+  where allMatch exp (Tuple _ _ exps) = all (matchQ exp) exps
+        allMatch _ _ = False
+matchesExpWildcard _ _ = Nothing
+
+structuralEq :: (Data a, Data b) => a -> b -> Bool
+structuralEq x y = toConstr x == toConstr y && and (gzipWithQ matchQ x y)
+
+(|||) :: (Typeable a, Typeable b, Typeable x)
+    => (x -> x -> Maybe Bool)
+    -> (a -> b -> Bool)
+    -> (a -> b -> Bool)
+f ||| g = \x y -> fromMaybe (g x y) (join (f <$> cast x <*> cast y))
+infixr 0 |||

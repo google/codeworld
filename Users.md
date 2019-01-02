@@ -14,7 +14,7 @@ CodeWorld is used in many classrooms, for a variety of purposes.  Here's a list 
 ## 2016-2017
 
 * Math 6893 at LSU
-  * A graduate seminar by Fernando Alegre at Luisiana State University for math and science teachers with no previous programming experience.  CodeWorld [was used](http://magnet.phys.lsu.edu/code/6893/) for building simulations and animations.
+  * A graduate seminar by Fernando Alegre at Louisiana State University for math and science teachers with no previous programming experience.  CodeWorld [was used](http://magnet.phys.lsu.edu/code/6893/) for building simulations and animations.
 * Portola Elementary School
   * A class of 4th and 5th grade students met at Portola Elementary in San Bruno, CA in the Fall of 2016.  This class used the [CodeWorld Blocks UI](http://code.world/blocks).  They were taught by Chris Smith, Adrian Matteis, and Han Wang from Google, and by Brooklyn Cook from Serendipity School.
 * Parkside Intermediate School

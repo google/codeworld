@@ -50,16 +50,22 @@ instance FromJSON Rule where
             , explicitParseFieldMaybe notDefined o "notDefined"
             , explicitParseFieldMaybe notUsed o "notUsed"
             , explicitParseFieldMaybe containsMatch o "containsMatch"
-            , explicitParseFieldMaybe onFailure o "onFailure"
             , explicitParseFieldMaybe ifThen o "ifThen"
             , explicitParseFieldMaybe allOf o "all"
             , explicitParseFieldMaybe anyOf o "any"
             , explicitParseFieldMaybe notThis o "not"
             ]
         case catMaybes choices of
-            [r] -> return r
+            [r] -> decorateWith o r
             []  -> fail "No recognized rule type was defined."
             _   -> fail "More than one type was found for a single rule."
+
+decorateWith :: Aeson.Object -> Rule -> Aeson.Parser Rule
+decorateWith obj = wrapCustomMessage
+  where wrapCustomMessage rule = do
+            msg <- obj .:? "message"
+            case msg of Just str -> return (OnFailure str rule)
+                        _        -> return rule
 
 definedByFunction :: Aeson.Value -> Aeson.Parser Rule
 definedByFunction = withObject "definedByFunction" $ \o ->
@@ -92,11 +98,6 @@ containsMatch = withObject "containsMatch" $ \o ->
     ContainsMatch <$> o .: "template"
                   <*> o .:? "topLevel" .!= True
                   <*> o .:? "cardinality" .!= exactlyOne
-
-onFailure :: Aeson.Value -> Aeson.Parser Rule
-onFailure = withObject "onFailure" $ \o ->
-    OnFailure <$> o .: "message"
-              <*> o .: "rule"
 
 ifThen :: Aeson.Value -> Aeson.Parser Rule
 ifThen = withObject "ifThen" $ \o ->

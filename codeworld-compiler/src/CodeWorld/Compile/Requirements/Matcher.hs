@@ -31,8 +31,11 @@ match :: Data a => a -> a -> Bool
 match tmpl val = matchQ tmpl val
 
 matchQ :: GenericQ (GenericQ Bool)
-matchQ = matchesPatParens ||| matchesExpParens ||| matchesPatWildcard
-    ||| matchesExpWildcard ||| structuralEq
+matchQ = matchesSrcSpanInfo ||| matchesPatParens ||| matchesExpParens
+    ||| matchesPatWildcard ||| matchesExpWildcard ||| structuralEq
+
+matchesSrcSpanInfo :: SrcSpanInfo -> SrcSpanInfo -> Maybe Bool
+matchesSrcSpanInfo _ _ = Just True
 
 matchesPatParens :: Pat SrcSpanInfo -> Pat SrcSpanInfo -> Maybe Bool
 matchesPatParens (PParen _ a) b = Just (matchQ a b)
@@ -59,9 +62,11 @@ matchesPatWildcard (PVar _ (Ident _ "__str")) p = Just (isStr p)
 matchesPatWildcard (PVar _ (Ident _ "__char")) p = Just (isChr p)
   where isChr (PLit _ _ (Char _ _ _)) = True
         isChr _ = False
-matchesPatWildcard (PApp _ (UnQual _ (Ident _ "__tupleof")) pat) p = Just (allMatch pat p)
+matchesPatWildcard (PApp _ (UnQual _ (Ident _ "TupleOf_")) pat) p = Just (allMatch pat p)
   where allMatch pat (PTuple _ _ pats) = all (matchQ pat) pats
         allMatch _ _ = False
+matchesPatWildcard (PApp _ (UnQual _ (Ident _ "Contains_")) pat) p = Just (subMatch pat p)
+  where subMatch pat = everything (||) (mkQ False (match pat))
 matchesPatWildcard _ _ = Nothing
 
 matchesExpWildcard :: Exp SrcSpanInfo -> Exp SrcSpanInfo -> Maybe Bool
@@ -79,9 +84,11 @@ matchesExpWildcard (Var _ (UnQual _ (Ident _ "__str"))) e = Just (isStr e)
 matchesExpWildcard (Var _ (UnQual _ (Ident _ "__char"))) e = Just (isChr e)
   where isChr (Lit _ (Char _ _ _)) = True
         isChr _ = False
-matchesExpWildcard (App _ (Var _ (UnQual _ (Ident _ "__tupleof"))) exp) e = Just (allMatch exp e)
+matchesExpWildcard (App _ (Var _ (UnQual _ (Ident _ "tupleOf_"))) exp) e = Just (allMatch exp e)
   where allMatch exp (Tuple _ _ exps) = all (matchQ exp) exps
         allMatch _ _ = False
+matchesExpWildcard (App _ (Var _ (UnQual _ (Ident _ "contains_"))) exp) e = Just (subMatch exp e)
+  where subMatch exp = everything (||) (mkQ False (match exp))
 matchesExpWildcard _ _ = Nothing
 
 structuralEq :: (Data a, Data b) => a -> b -> Bool

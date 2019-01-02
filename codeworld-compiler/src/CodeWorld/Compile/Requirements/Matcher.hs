@@ -125,7 +125,7 @@ matchQ :: GenericQ (GenericQ Bool)
 matchQ = matchesSrcSpanInfo
      ||| (matchesSpecials :: Pat SrcSpanInfo -> Pat SrcSpanInfo -> Maybe Bool)
      ||| (matchesSpecials :: Exp SrcSpanInfo -> Exp SrcSpanInfo -> Maybe Bool)
-     ||| matchesPatWildcard ||| matchesExpWildcard
+     ||| matchesWildcard
      ||| structuralEq
 
 matchesSrcSpanInfo :: SrcSpanInfo -> SrcSpanInfo -> Maybe Bool
@@ -158,49 +158,9 @@ matchesSpecials (toSplice -> Just (ParenSplice _ (App _ op (BracketExp _ (fromBr
       _ -> Nothing
 matchesSpecials _ _ = Nothing
 
-matchesPatWildcard :: Pat SrcSpanInfo -> Pat SrcSpanInfo -> Maybe Bool
-matchesPatWildcard (PVar _ (Ident _ "__any")) _ = Just True
-matchesPatWildcard (PVar _ (Ident _ "__var")) p = Just (isVar p)
-  where isVar (PVar _ _) = True
-        isVar _ = False
-matchesPatWildcard (PVar _ (Ident _ "__num")) p = Just (isNum p)
-  where isNum (PLit _ _ (Int _ _ _)) = True
-        isNum (PLit _ _ (Frac _ _ _)) = True
-        isNum _ = False
-matchesPatWildcard (PVar _ (Ident _ "__str")) p = Just (isStr p)
-  where isStr (PLit _ _ (String _ _ _)) = True
-        isStr _ = False
-matchesPatWildcard (PVar _ (Ident _ "__char")) p = Just (isChr p)
-  where isChr (PLit _ _ (Char _ _ _)) = True
-        isChr _ = False
-matchesPatWildcard (PApp _ (UnQual _ (Ident _ "TupleOf_")) pat) p = Just (allMatch pat p)
-  where allMatch pat (PTuple _ _ pats) = all (matchQ pat) pats
-        allMatch _ _ = False
-matchesPatWildcard (PApp _ (UnQual _ (Ident _ "Contains_")) pat) p = Just (subMatch pat p)
-  where subMatch pat = everything (||) (mkQ False (match pat))
-matchesPatWildcard _ _ = Nothing
-
-matchesExpWildcard :: Exp SrcSpanInfo -> Exp SrcSpanInfo -> Maybe Bool
-matchesExpWildcard (Var _ (UnQual _ (Ident _ "__any"))) _ = Just True
-matchesExpWildcard (Var _ (UnQual _ (Ident _ "__var"))) e = Just (isVar e)
-  where isVar (Var _ _) = True
-        isVar _ = False
-matchesExpWildcard (Var _ (UnQual _ (Ident _ "__num"))) e = Just (isNum e)
-  where isNum (Lit _ (Int _ _ _)) = True
-        isNum (Lit _ (Frac _ _ _)) = True
-        isNum _ = False
-matchesExpWildcard (Var _ (UnQual _ (Ident _ "__str"))) e = Just (isStr e)
-  where isStr (Lit _ (String _ _ _)) = True
-        isStr _ = False
-matchesExpWildcard (Var _ (UnQual _ (Ident _ "__char"))) e = Just (isChr e)
-  where isChr (Lit _ (Char _ _ _)) = True
-        isChr _ = False
-matchesExpWildcard (App _ (Var _ (UnQual _ (Ident _ "tupleOf_"))) exp) e = Just (allMatch exp e)
-  where allMatch exp (Tuple _ _ exps) = all (matchQ exp) exps
-        allMatch _ _ = False
-matchesExpWildcard (App _ (Var _ (UnQual _ (Ident _ "contains_"))) exp) e = Just (subMatch exp e)
-  where subMatch exp = everything (||) (mkQ False (match exp))
-matchesExpWildcard _ _ = Nothing
+matchesWildcard :: Name SrcSpanInfo -> Name SrcSpanInfo -> Maybe Bool
+matchesWildcard (Ident _ name) _ | name `startsWith` "__" = Just True
+matchesWildcard _ _ = Nothing
 
 structuralEq :: (Data a, Data b) => a -> b -> Bool
 structuralEq x y = toConstr x == toConstr y && and (gzipWithQ matchQ x y)

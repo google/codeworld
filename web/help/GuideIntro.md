@@ -72,7 +72,8 @@ Before you start writing your own code, here's a quick tour of the tools you hav
 
 You'll type your code in the **editor**, which is right behind this guide.  To get
 to the editor, click *outside* of the guide to get rid of it.  Don't worry; the
-guide is right here waiting for you by pressing the **Guide** button.
+guide is right here waiting for you by pressing the **Guide** button at the bottom of
+the screen.
 
 It's important to save your work.  To do that, click the **Sign In** button.  Once
 you're signed in, you will see the **project browser** on the left.  Use it to save

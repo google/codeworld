@@ -1,4 +1,4 @@
-{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ViewPatterns #-}
 
@@ -27,25 +27,136 @@ import Data.List
 import Data.Maybe
 import Language.Haskell.Exts
 
+class (Data a, Typeable a) => Template a where
+  toSplice :: a -> Maybe (Splice SrcSpanInfo)
+  fromBracket :: Bracket SrcSpanInfo -> Maybe a
+
+  toParens :: a -> Maybe a
+  toTuple :: a -> Maybe [a]
+  toVar :: a -> Maybe a
+  toCon :: a -> Maybe a
+  toLit :: a -> Maybe a
+  toNum :: a -> Maybe a
+  toChar :: a -> Maybe a
+  toStr :: a -> Maybe a
+
+instance Template (Pat SrcSpanInfo) where
+  toSplice (PSplice _ s) = Just s
+  toSplice _ = Nothing
+
+  fromBracket (PatBracket _ p) = Just p
+  fromBracket _ = Nothing
+
+  toParens (PParen _ x) = Just x
+  toParens _ = Nothing
+
+  toTuple (PTuple _ _ ps) = Just ps
+  toTuple _ = Nothing
+
+  toVar x@(PVar _ _) = Just x
+  toVar _ = Nothing
+
+  toCon x@(PApp _ _ []) = Just x
+  toCon _ = Nothing
+
+  toLit x@(PLit _ _ _) = Just x
+  toLit _ = Nothing
+
+  toNum x@(PLit _ _ (Int _ _ _)) = Just x
+  toNum x@(PLit _ _ (Frac _ _ _)) = Just x
+  toNum x@(PLit _ _ (PrimInt _ _ _)) = Just x
+  toNum x@(PLit _ _ (PrimWord _ _ _)) = Just x
+  toNum x@(PLit _ _ (PrimFloat _ _ _)) = Just x
+  toNum x@(PLit _ _ (PrimDouble _ _ _)) = Just x
+  toNum _ = Nothing
+
+  toChar x@(PLit _ _ (Char _ _ _)) = Just x
+  toChar x@(PLit _ _ (PrimChar _ _ _)) = Just x
+  toChar _ = Nothing
+
+  toStr x@(PLit _ _ (String _ _ _)) = Just x
+  toStr x@(PLit _ _ (PrimString _ _ _)) = Just x
+  toStr _ = Nothing
+
+instance Template (Exp SrcSpanInfo) where
+  toSplice (SpliceExp _ s) = Just s
+  toSplice _ = Nothing
+
+  fromBracket (ExpBracket _ e) = Just e
+  fromBracket _ = Nothing
+
+  toParens (Paren _ x) = Just x
+  toParens _ = Nothing
+
+  toTuple (Tuple _ _ es) = Just es
+  toTuple _ = Nothing
+
+  toVar x@(Var _ _) = Just x
+  toVar _ = Nothing
+
+  toCon x@(Con _ _) = Just x
+  toCon _ = Nothing
+
+  toLit x@(Lit _ _) = Just x
+  toLit x@(NegApp _ (Lit _ _)) = Just x
+  toLit _ = Nothing
+
+  toNum x@(Lit _ (Int _ _ _)) = Just x
+  toNum x@(Lit _ (Frac _ _ _)) = Just x
+  toNum x@(Lit _ (PrimInt _ _ _)) = Just x
+  toNum x@(Lit _ (PrimWord _ _ _)) = Just x
+  toNum x@(Lit _ (PrimFloat _ _ _)) = Just x
+  toNum x@(Lit _ (PrimDouble _ _ _)) = Just x
+  toNum x@(NegApp _ (toNum -> Just _)) = Just x
+  toNum _ = Nothing
+
+  toChar x@(Lit _ (Char _ _ _)) = Just x
+  toChar x@(Lit _ (PrimChar _ _ _)) = Just x
+  toChar _ = Nothing
+
+  toStr x@(Lit _ (String _ _ _)) = Just x
+  toStr x@(Lit _ (PrimString _ _ _)) = Just x
+  toStr _ = Nothing
+
 match :: Data a => a -> a -> Bool
 match tmpl val = matchQ tmpl val
 
 matchQ :: GenericQ (GenericQ Bool)
-matchQ = matchesSrcSpanInfo ||| matchesPatParens ||| matchesExpParens
-    ||| matchesPatWildcard ||| matchesExpWildcard ||| structuralEq
+matchQ = matchesSrcSpanInfo
+     ||| (matchesSpecials :: Pat SrcSpanInfo -> Pat SrcSpanInfo -> Maybe Bool)
+     ||| (matchesSpecials :: Exp SrcSpanInfo -> Exp SrcSpanInfo -> Maybe Bool)
+     ||| matchesPatWildcard ||| matchesExpWildcard
+     ||| structuralEq
 
 matchesSrcSpanInfo :: SrcSpanInfo -> SrcSpanInfo -> Maybe Bool
 matchesSrcSpanInfo _ _ = Just True
 
-matchesPatParens :: Pat SrcSpanInfo -> Pat SrcSpanInfo -> Maybe Bool
-matchesPatParens (PParen _ a) b = Just (matchQ a b)
-matchesPatParens a (PParen _ b) = Just (matchQ a b)
-matchesPatParens a b = Nothing
-
-matchesExpParens :: Exp SrcSpanInfo -> Exp SrcSpanInfo -> Maybe Bool
-matchesExpParens (Paren _ a) b = Just (matchQ a b)
-matchesExpParens a (Paren _ b) = Just (matchQ a b)
-matchesExpParens a b = Nothing
+matchesSpecials :: Template a => a -> a -> Maybe Bool
+matchesSpecials (toParens -> Just x) y = Just (matchQ x y)
+matchesSpecials x (toParens -> Just y) = Just (matchQ x y)
+matchesSpecials (toSplice -> Just (IdSplice _ "any")) _ = Just True
+matchesSpecials (toSplice -> Just (IdSplice _ "var")) x =
+    case toVar x of Just _ -> Just True; Nothing -> Just False
+matchesSpecials (toSplice -> Just (IdSplice _ "con")) x =
+    case toCon x of Just _ -> Just True; Nothing -> Just False
+matchesSpecials (toSplice -> Just (IdSplice _ "lit")) x =
+    case toLit x of Just _ -> Just True; Nothing -> Just False
+matchesSpecials (toSplice -> Just (IdSplice _ "num")) x =
+    case toNum x of Just _ -> Just True; Nothing -> Just False
+matchesSpecials (toSplice -> Just (IdSplice _ "char")) x =
+    case toChar x of Just _ -> Just True; Nothing -> Just False
+matchesSpecials (toSplice -> Just (IdSplice _ "str")) x =
+    case toStr x of Just _ -> Just True; Nothing -> Just False
+matchesSpecials (toSplice -> Just (ParenSplice _ (App _ op (BracketExp _ (fromBracket -> Just tmpl))))) x
+  = case op of
+      Var _ (UnQual _ (Ident _ "tupleOf")) ->
+          case toTuple x of
+            Just xs -> Just (all (match tmpl) xs)
+            Nothing -> Just False
+      Var _ (UnQual _ (Ident _ "contains")) ->
+          Just (everything (||) (mkQ False (match tmpl)) x)
+      _ -> Nothing
+matchesSpecials _ _ = Nothing
 
 matchesPatWildcard :: Pat SrcSpanInfo -> Pat SrcSpanInfo -> Maybe Bool
 matchesPatWildcard (PVar _ (Ident _ "__any")) _ = Just True

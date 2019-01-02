@@ -165,7 +165,7 @@ checkRule (ContainsMatch tmpl topLevel card) = withParsedCode $ \m -> do
               Module _ _ _ _ decls -> Just decls
               _ -> Nothing
           | otherwise = Just $ everything (++) (mkQ [] (:[])) m
-    tmpl <- parseCode (T.pack tmpl)
+    tmpl <- parseCode ["TemplateHaskell"] (T.pack tmpl)
     case (maybeDecls, tmpl) of
         (Just decls, Parsed (Module _ _ _ _ [tmpl])) -> do
             let n = length (filter (match tmpl) decls)

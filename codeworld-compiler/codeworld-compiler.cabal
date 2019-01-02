@@ -54,7 +54,7 @@ Library
     exceptions,
     filepath,
     hashable,
-    haskell-src-exts,
+    haskell-src-exts >= 1.20,
     megaparsec,
     memory,
     mtl,

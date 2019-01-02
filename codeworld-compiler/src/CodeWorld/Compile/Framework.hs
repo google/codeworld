@@ -105,7 +105,7 @@ getParsedCode = do
         Just parsed -> return parsed
         Nothing -> do
             source <- getSourceCode
-            parsed <- parseCode (decodeUtf8 source)
+            parsed <- parseCode [] (decodeUtf8 source)
             modify $ \state -> state { compileParsedSource = Just parsed }
             return parsed
 
@@ -138,13 +138,13 @@ codeworldModeExts =
     , "ViewPatterns"
     ]
 
-parseCode :: MonadCompile m => Text -> m ParsedCode
-parseCode src = do
+parseCode :: MonadCompile m => [String] -> Text -> m ParsedCode
+parseCode extraExts src = do
     sourceMode <- gets compileMode
     let result = parseFileContentsWithMode mode (T.unpack src)
-        exts | sourceMode == "codeworld" = codeworldModeExts
+        modeExts | sourceMode == "codeworld" = codeworldModeExts
              | otherwise = []
-        extVals = [ parseExtension ext | ext <- exts ]
+        extVals = [ parseExtension ext | ext <- modeExts ++ extraExts ]
         mode = defaultParseMode { parseFilename = "program.hs",
                                   extensions = extVals }
 

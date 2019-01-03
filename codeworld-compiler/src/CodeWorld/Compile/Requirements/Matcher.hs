@@ -165,7 +165,7 @@ matchesSpecials (toSplice -> Just (ParenSplice _ (App _ op (List _ (sequence . m
 matchesSpecials _ _ = Nothing
 
 matchesWildcard :: Name SrcSpanInfo -> Name SrcSpanInfo -> Maybe Bool
-matchesWildcard (Ident _ name) _ | "__" `isPrefixOf` name = Just True
+matchesWildcard (Ident _ name) _ | "_" `isPrefixOf` name && "_" `isSuffixOf` name = Just True
 matchesWildcard _ _ = Nothing
 
 structuralEq :: (Data a, Data b) => a -> b -> Bool

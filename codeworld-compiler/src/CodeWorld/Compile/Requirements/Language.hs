@@ -63,7 +63,7 @@ instance FromJSON Rule where
 decorateWith :: Aeson.Object -> Rule -> Aeson.Parser Rule
 decorateWith obj = wrapCustomMessage
   where wrapCustomMessage rule = do
-            msg <- obj .:? "message"
+            msg <- obj .:? "explanation"
             case msg of Just str -> return (OnFailure str rule)
                         _        -> return rule
 

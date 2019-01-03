@@ -21,8 +21,9 @@ nicely for the user to check their work.
 The input format inside the source code consists of REQUIRES or
 XREQUIRES comments, the high-level format of which is described in the
 next section.  The output from the compiler consists of a
-`:: REQUIREMENTS ::` block.  Finally, the most complex piece
-is the requirement specification language, described at the end.
+`:: REQUIREMENTS ::` block, which is formatted and presented to the
+user by the environment.  Finally, the most complex piece is the
+requirement specification language, described at the end.
 
 Requirement Comments
 --------------------
@@ -45,15 +46,17 @@ A REQUIRES comment looks like this:
     -}
 
 `Description` is a user-readable arbitrary string, which is used in
-the output to provide a section header explaining what went wrong.
+the output to provide a section header summarizing this requirement.
 The `Rules` are YAML machine-readable descriptions of the formal
-requirements that are verified.  Details on the rules are below.
-(There is a second, older format for requirements, which is not
-described here and will go away soon.)
+rules that are verified.  Details on the rules are below. A program
+can contain multiple REQUIRES blocks, one for each top-level
+requirement.  Each requirement can then have any number of rules that
+must pass before that requirement is satisfied.
 
 An XREQUIRES comment is an obfuscated variation on REQUIRES.  Instead
-of a single requirement, it contains a base64-encoded and gzipped list
-of requirements.  It looks like this:
+of a single requirement, it contains a compressed and base64-encoded
+list of requirements.  (It is possible to include multiple XREQUIRES
+blocks, but it's not necessary.)  It looks like this:
 
     {-
         XREQUIRES
@@ -92,8 +95,8 @@ A typical requirements output block looks something like this:
         cuJpqDwHuj4Hqn4g9voF6VGoEg==
 
     [Y] First user-visible description
-    [Y] First user-visible description
-    [N] First user-visible description
+    [Y] Second user-visible description
+    [N] Third user-visible description
         Detailed description of what went wrong.
                       :: END REQUIREMENTS ::
 
@@ -101,12 +104,13 @@ The requirements block includes everything from `:: REQUIREMENTS ::`
 to the matching `:: END REQUIREMENTS ::`.
 
 The block begins with an obfuscated version of the requirements,
-which can be used to replace the plain-text requirements as
-discussed above.  After this, there are top-level lines beginning
-with one of `[Y] `, `[N] `, or `[?] `.  These indicate, for each
-requirement, if the requirement is satisfied, not satisfied, or if
-there was a problem checking the requirement.  If the latter two
-cases, there are further lines explaining what went wrong.
+which can be used to replace the plain-text requirements (REQUIRES)
+with the obfuscated version (XREQUIRES) as discussed above.  After this,
+there are top-level lines beginning with one of `[Y] `, `[N] `, or
+`[?] `.  These indicate, for each requirement, if the requirement is
+satisfied, not satisfied, or if there was a problem checking the
+requirement.  If the latter two cases, there are further lines
+explaining what went wrong.
 
 Requirements Language
 ---------------------
@@ -114,7 +118,64 @@ Requirements Language
 The requirements checker can currently check only a very limited set
 of conditions. Here are the current checks implemented.
 
-- matchesExpected
+- `containsMatch`
+
+  Example:
+
+      containsMatch:
+        template: |
+          __func $any = $any
+        cardinality:
+          atLeast: 4
+      explanation: The code defines fewer than 4 functions.
+
+  Checks that the code contains a declaration matching the one given.
+  The template is a standard Haskell declaration, except that it can
+  contain certain wildcards.  Any identifier beginning with two
+  underscores, like `__x`, is a placeholder that matches any chosen
+  name.  Additionally, there's some additional extra syntax:
+
+  - `$any` matches any pattern or expression at all.
+  - `$var` matches any variable name.
+  - `$con` matches any constructor name.
+  - `$lit` matches any literal expression.
+  - `$num`, `$char`, or `$str` match specific types of literals.
+  - `$(tupleOf [| some template |])` matches any tuple whose elements
+    each match the template in Oxford brackets (that is, between `[|`
+    and `|]`).
+  - `$(contains [| some template |])` matches any pattern or
+    expressions with a subexpression that matches the template in
+    Oxford brackets (that is, between `[|` and `|]`).
+  - `$(allOf [ [| first template |], [| second template |] ])` matches
+    any expression that matches all of the child templates.  Other
+    logical combinators include `anyOf` and `noneOf`.
+
+  This is the workhorse of structural rules.  It's fairly powerful,
+  but comes with some downsides.  It is complex to use correctly, and
+  gives poor descriptions to the user when it fails.  A common pattern
+  is to use it with custom explanations ina  progressive sequence, like
+  this.
+
+      - all:
+        - containsMatch:
+            template: |
+              f $any = $any
+          explanation: The function f is not defined.
+
+        - containsMatch:
+            template: |
+              f $var = $any
+          explanation: f should use variables as placeholder for its arguments.
+
+        - containsMatch:
+            template: |
+              f $var = $(contains [| translated |])
+          explanation: f should use translation in its definition.
+
+  Note the use of `all` (discussed below) which tries each rule in
+  turn and stops on the first failure.
+
+- `matchesExpected`
 
   Example:
 
@@ -131,36 +192,6 @@ of conditions. Here are the current checks implemented.
   failing check with some arbitrarily chosen hash.  The failure
   message will include the correct hash, so you can update the
   check.
-
-- `hasSimpleParams`
-
-  Example:
-
-      hasSimpleParams: f
-
-  Checks that `f` is defined as a function, all of whose arguments
-  are plain variables.  Any use of more complex pattern matching will
-  cause this requirements to fail.  It will also fail if `f` is not
-  defined, or if its definition isn't a function binding.
-
-  This is a very specific check that isn't good for anything except
-  a particular range of assignments in the test class.  You probably
-  shouldn't use it.  Note that many trivial changes, such as defining
-  `f` in point-free style, or using a lambda, will cause this to
-  fail.
-
-- `definedByFunction`
-
-  Example:
-
-      definedByFunction:
-        variable: var
-        function: func
-
-  Checks that `var` is defined directly to be `func` applied to some
-  arguments.  This example was implemented because it was the main
-  point of the test class where we first tried out this feature.  It
-  probably isn't what you're looking for in more general cases.
 
 - `notDefined`
 
@@ -188,21 +219,20 @@ of conditions. Here are the current checks implemented.
 
   Checks that there are no references to `var` in the module.
 
-This is by no means intended to be the final constraint language;
-rather, it was the set of requirements needed for a specific test
-case, and was therefore implemented first (in a hacky way).  The
-language is strongly subject to change in the future.
+This is by no means intended to be the full constraint language;
+rather, it is a small set of a few requirements that can be used for
+testing.  The language is strongly subject to change in the future.
 
 ### Desirable use cases
 
 The following use cases have been proposed, but are not yet implemented.
 
-- Checking specific syntax against a pattern.  The idea is that you should
+- Capturing .  The idea is that you should
   be able to say:
   
       declMatches: |
 
-        foo __var_x __var_y = __var_x + __var_y^2 - sqrt __any
+        foo __x __y = __x + __y^2 - sqrt $any
 
   The pattern will be parsed as a declaration, and then a search will
   happen for a matching declaration anywhere in the module.  Anything
@@ -217,10 +247,6 @@ The following use cases have been proposed, but are not yet implemented.
   declarations.  Or all lines must be 80 characters or less.
 
 - No warnings.  Alternatively, no warnings of specific types.
-
-- Count requirements.  There must be at least 10 defined variables.  Or
-  three polygons.  Perhaps this could be accomplished with a cardinality
-  constraint on the matching form above.
 
 - Forbidden imported symbols or modules.  By whitelist or blacklist.
   Exceptions should be allowed for specific definitions (usually

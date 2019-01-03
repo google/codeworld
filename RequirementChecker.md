@@ -131,8 +131,8 @@ of conditions. Here are the current checks implemented.
 
   Checks that the code contains a declaration matching the one given.
   The template is a standard Haskell declaration, except that it can
-  contain certain wildcards.  Any identifier beginning with two
-  underscores, like `__x`, is a placeholder that matches any chosen
+  contain certain wildcards.  Any identifier beginning and ending with
+  underscores, like `_x_`, is a placeholder that matches any chosen
   name.  Additionally, there's some additional extra syntax:
 
   - `$any` matches any pattern or expression at all.

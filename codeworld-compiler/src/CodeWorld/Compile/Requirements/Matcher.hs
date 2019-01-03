@@ -156,6 +156,12 @@ matchesSpecials (toSplice -> Just (ParenSplice _ (App _ op (BracketExp _ (fromBr
       Var _ (UnQual _ (Ident _ "contains")) ->
           Just (everything (||) (mkQ False (match tmpl)) x)
       _ -> Nothing
+matchesSpecials (toSplice -> Just (ParenSplice _ (App _ op (List _ (sequence . map (\(BracketExp _ b) -> fromBracket b) -> Just xs))))) x
+  = case op of
+      Var _ (UnQual _ (Ident _ "allOf")) -> Just (all (flip match x) xs)
+      Var _ (UnQual _ (Ident _ "anyOf")) -> Just (any (flip match x) xs)
+      Var _ (UnQual _ (Ident _ "noneOf")) -> Just (not (any (flip match x) xs))
+      _ -> Nothing
 matchesSpecials _ _ = Nothing
 
 matchesWildcard :: Name SrcSpanInfo -> Name SrcSpanInfo -> Maybe Bool

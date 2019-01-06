@@ -28,6 +28,7 @@ import CodeWorld.Compile.Framework
 import CodeWorld.Compile.Requirements.Matcher
 import CodeWorld.Compile.Requirements.Types
 import Control.Monad.IO.Class
+import Data.Array
 import Data.Char
 import Data.Either
 import Data.Generics hiding (empty)
@@ -35,6 +36,7 @@ import Data.Hashable
 import qualified Data.Text as T
 import Data.Void
 import Language.Haskell.Exts hiding (Rule, parse)
+import Text.Regex.TDFA hiding (match)
 
 evalRequirement :: MonadCompile m => Requirement -> m (Maybe Bool, [String])
 evalRequirement Requirement{..} = do
@@ -168,6 +170,12 @@ checkRule (ContainsMatch tmpl topLevel card) = withParsedCode $ \m -> do
                     in  length (filter (match tmpl) decls)
                 Parsed (Module _ _ _ [tmpl] _) ->
                     length $ filter (match tmpl) $ concat $ gmapQ (mkQ [] id) m
+    if | hasCardinality card n -> success
+       | otherwise -> failure $ "Wrong number of matches."
+
+checkRule (MatchesRegex pat card) = do
+    src <- getSourceCode
+    let n = rangeSize (bounds (src =~ pat :: MatchArray))
     if | hasCardinality card n -> success
        | otherwise -> failure $ "Wrong number of matches."
 

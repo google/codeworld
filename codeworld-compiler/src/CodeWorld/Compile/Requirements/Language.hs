@@ -50,6 +50,7 @@ instance FromJSON Rule where
             , explicitParseFieldMaybe notDefined o "notDefined"
             , explicitParseFieldMaybe notUsed o "notUsed"
             , explicitParseFieldMaybe containsMatch o "containsMatch"
+            , explicitParseFieldMaybe matchesRegex o "matchesRegex"
             , explicitParseFieldMaybe ifThen o "ifThen"
             , explicitParseFieldMaybe allOf o "all"
             , explicitParseFieldMaybe anyOf o "any"
@@ -97,7 +98,12 @@ containsMatch :: Aeson.Value -> Aeson.Parser Rule
 containsMatch = withObject "containsMatch" $ \o ->
     ContainsMatch <$> o .: "template"
                   <*> o .:? "topLevel" .!= True
-                  <*> o .:? "cardinality" .!= exactlyOne
+                  <*> o .:? "cardinality" .!= atLeastOne
+
+matchesRegex :: Aeson.Value -> Aeson.Parser Rule
+matchesRegex = withObject "matchesRegex" $ \o ->
+    MatchesRegex <$> o .: "pattern"
+                 <*> o .:? "cardinality" .!= atLeastOne
 
 ifThen :: Aeson.Value -> Aeson.Parser Rule
 ifThen = withObject "ifThen" $ \o ->

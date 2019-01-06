@@ -33,6 +33,10 @@ data Rule = DefinedByFunction String String
                 matchTopLevel :: Bool,
                 matchCardinality :: Cardinality
             }
+          | MatchesRegex {
+                regexPattern :: String,
+                regexCardinality :: Cardinality
+            }
           | OnFailure String Rule
           | IfThen Rule Rule
           | AllOf [Rule]

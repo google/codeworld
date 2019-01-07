@@ -116,18 +116,19 @@ purple = violet
 pink = lighter 0.25 rose
 
 mixed :: Color -> Color -> Color
-mixed (fenceColor -> RGBA r1 g1 b1 a1) (fenceColor -> RGBA r2 g2 b2 a2)
-    | a1 + a2 == 0 = RGBA 0 0 0 0
-    | otherwise = RGBA r g b a
-  where
-    r = sqrt ((r1 ^ 2 * a1 + r2 ^ 2 * a2) / (a1 + a2))
-    g = sqrt ((g1 ^ 2 * a1 + g2 ^ 2 * a2) / (a1 + a2))
-    b = sqrt ((b1 ^ 2 * a1 + b2 ^ 2 * a2) / (a1 + a2))
-    a = (a1 + a2) / 2
+mixed c1 c2 = mixedAll [c1, c2]
 
 {-# WARNING mixed
     ["The type of mixed will soon be changed to: mixed :: [Color] -> Color",
      "All existing uses will break, but are easily fixed."] #-}
+
+mixedAll :: [Color] -> Color
+mixedAll colors = go 0 0 0 0 0 colors
+  where go rr gg bb aa n ((fenceColor -> RGBA r g b a) : cs) =
+            go (rr + r^2 * a) (gg + g^2 * a) (bb + b^2 * a) (aa + a) (n + 1) cs
+        go rr gg bb aa n []
+          | aa == 0   = RGBA 0 0 0 0
+          | otherwise = RGBA (sqrt (rr/aa)) (sqrt (gg/aa)) (sqrt (bb/aa)) (aa/n)
 
 -- Helper function that sets the alpha of the second color to that
 -- of the first

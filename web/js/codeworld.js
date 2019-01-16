@@ -150,7 +150,8 @@ function initCodeworld() {
             "Ctrl-Enter": compile,
             "Ctrl-Up": changeFontSize(1),
             "Ctrl-Down": changeFontSize(-1)
-        }
+        },
+      textHover: onHover
     });
     window.codeworldEditor.refresh();
 

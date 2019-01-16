@@ -72,6 +72,7 @@ function build_codemirror {
                search \
                searchcursor \
                show-hint \
+               text-hover \
     --local node_modules/uglify-js/bin/uglifyjs \
     > codemirror-compressed.js
 }

@@ -125,14 +125,13 @@ var hintBlacklist = [
 var codeWorldBuiltinsDocs = {};
 
 function onHover(cm, data, node){
-    var result = null;
-    if (data && data.token && data.token.string != "") {
+    if (data && data.token && data.token.string) {
         var token_name = data.token.string;
-        if (token_name && hintBlacklist.indexOf(token_name) == -1 && codeWorldBuiltinsDocs[token_name]){
-            result = codeWorldBuiltinsDocs[token_name];
+        if (hintBlacklist.indexOf(token_name) == -1 && codeWorldBuiltinsDocs[token_name]){
+            return codeWorldBuiltinsDocs[token_name];
         }
     }
-    return result;
+    return;
 }
 
 // Hints and hover tooltips
@@ -249,7 +248,6 @@ function registerStandardHints(successFunc)
     codeworldKeywords['main'] = 'deprecated';
     codeworldKeywords['program'] = 'builtin';
 
-    codeWorldBuiltinsDocs['main'] = createHover('main :: Program', 0, 4, 'Your program.');
     codeWorldBuiltinsDocs['program'] = createHover('program :: Program', 0, 7, 'Your program.');
 
     var doc = "";
@@ -287,10 +285,10 @@ function registerStandardHints(successFunc)
         // Filter out CallStack constraints.
         line = line.replace(/:: HasCallStack =>/g, '::');
 
-        if (line.startsWith("-- ")) {
-            doc += line.replace(/(\-\- \| |\-\-   )/g, "") + "<br>";
-        } else if (line === ""){
-            doc = ""
+        if (line.startsWith("-- |")) {
+            doc = line.replace(/\-\- \| /g, "") + "\n";
+        } else if (doc != "" && line.startsWith("-- ")){
+            doc += line.replace(/\-\-   /g, "") + "\n";
         } else {
             var wordStart = 0;
             if (line.startsWith("type ") || line.startsWith("data ")) {

@@ -314,8 +314,6 @@ pi = fromDouble 3.141592653589793
 pattern Pi :: Number
 pattern Pi = Number 3.141592653589793
 
-{-# WARNING Pi "This is part of an experimental API change." #-}
-
 {-| Gives the exponential of a number.  This is equal to the constant e,
     raised to the power of the number.
 

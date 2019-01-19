@@ -188,16 +188,3 @@ pattern Blue   = HSL(220, 0.75, 0.50)
 pattern Purple = HSL(275, 0.75, 0.50)
 pattern Pink   = HSL(330, 0.75, 0.75)
 pattern Brown  = HSL( 30, 0.60, 0.40)
-
-{-# WARNING White "This is an experimental API." #-}
-{-# WARNING Black "This is an experimental API." #-}
-{-# WARNING Gray "This is an experimental API." #-}
-{-# WARNING Grey "This is an experimental API." #-}
-{-# WARNING Red "This is an experimental API." #-}
-{-# WARNING Orange "This is an experimental API." #-}
-{-# WARNING Yellow "This is an experimental API." #-}
-{-# WARNING Green "This is an experimental API." #-}
-{-# WARNING Blue "This is an experimental API." #-}
-{-# WARNING Purple "This is an experimental API." #-}
-{-# WARNING Pink "This is an experimental API." #-}
-{-# WARNING Brown "This is an experimental API." #-}

@@ -115,7 +115,7 @@ li.CodeMirror-hint-active {
 }
 
 .marked {
-    background: #FFFF00;
+    background: #ff0;
 }
 
 /* source-code-pro-regular - latin */
@@ -134,20 +134,19 @@ li.CodeMirror-hint-active {
 
 /* Style overrides for hovers. */
 .CodeMirror-hover-tooltip {
-    background-color: white;
-    border-radius: 3px 3px 3px 3px;
-    border: 1px solid #eee;
-    font-family: monospace;
-    font-size: 10pt;
+    background-color: #ffe;
+    border-radius: 0.5em;
+    border: 1px solid #888;
+    box-shadow: 0.1em 0.1em 0.1em gray;
     overflow: hidden;
-    padding: 2px 5px;
+    padding: 5px 8px;
     position: fixed;
     min-width: 200px;
     min-height: 10px;
     max-width: 600px;
     max-height: 400px;
     opacity: 0;
-    white-space: pre-wrap;
+
     transition: opacity .4s;
     -moz-transition: opacity .4s;
     -webkit-transition: opacity .4s;
@@ -155,8 +154,15 @@ li.CodeMirror-hint-active {
     -ms-transition: opacity .4s;
 }
 
+.hover-decl {
+    font-family: "Source Code Pro", monospace;
+    font-size: 10pt;
+    white-space: pre-wrap;
+}
+
 .hover-doc {
-    padding-top: 10px;
+    padding-top: 0.5em;
+    font-size: 11pt;
 }
 
 .CodeMirror-hover-tooltip .hint-word {

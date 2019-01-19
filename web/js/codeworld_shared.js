@@ -169,15 +169,22 @@ function registerStandardHints(successFunc)
         if (!hint){
             hint = createHint(line, wordStart, wordEnd);
         }
+
+        var docDiv = document.createElement('div');
+
         var annotation = document.createElement('div');
         hint.render(annotation);
-        var description = document.createElement('div');
-        description.innerHTML = doc;
-        description.className = " hover-doc";
-        var docDiv = document.createElement('div');
+        annotation.className = "hover-decl";
         docDiv.appendChild(annotation);
-        docDiv.appendChild(description);
-        return docDiv
+
+        if (doc !== "") {
+            var description = document.createElement('div');
+            description.innerHTML = doc;
+            description.className = " hover-doc";
+            docDiv.appendChild(description);
+        }
+
+        return docDiv;
     }
 
     // Add hint highlighting

@@ -251,7 +251,11 @@ function registerStandardHints(successFunc)
     codeWorldBuiltinsDocs['program'] = createHover('program :: Program', 0, 7, 'Your program.');
 
     var doc = "";
+    var prevLine = "";
     lines.forEach(function(line) {
+        if (!prevLine.startsWith("--")) doc = "";
+        prevLine = line;
+
         if (line.startsWith("type Program")) {
             // We must intervene to hide the IO type.
             line = "data Program";

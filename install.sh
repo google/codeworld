@@ -252,7 +252,8 @@ run $BUILD  rm -rf downloads
 run $BUILD            git clone https://github.com/codemirror/CodeMirror.git
 run $BUILD/CodeMirror git checkout tags/5.25.2
 run $BUILD/CodeMirror npm install
-run $BUILD/CodeMirror npm install -s uglify-js
+run $BUILD/CodeMirror npm install -s uglify-js codemirror-extension
+run $BUILD/CodeMirror cp -r node_modules/codemirror-extension/addon/hover addon/hover
 
 # Go ahead and run a first build, which installs more local packages.
 ./build.sh

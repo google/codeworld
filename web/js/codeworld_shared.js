@@ -70,6 +70,71 @@ var Alert = (() => {
   return mine;
 })();
 
+var hintBlacklist = [
+    // Symbols that only exist to implement RebindableSyntax or map to
+    // built-in Haskell types.
+    "Bool",
+    "IO",
+    "fail",
+    "fromCWText",
+    "fromDouble",
+    "fromInt",
+    "fromInteger",
+    "fromRational",
+    "fromString",
+    "ifThenElse",
+    "toCWText",
+    "toDouble",
+    "toInt",
+
+    // Deprecated exports.
+    "MousePress",
+    "MouseRelease",
+    "MouseMovement",
+    "MouseButton",
+    "LeftButton",
+    "RightButton",
+    "MiddleButton",
+    "Maybe",
+    "Nothing",
+    "Just",
+    "withDefault",
+    "hasValue",
+    "definitely",
+    "path",
+    "thickPath",
+    "text",
+    "styledText",
+
+    // Experimental exports.
+    "White",
+    "Black",
+    "Gray",
+    "Grey",
+    "Red",
+    "Orange",
+    "Yellow",
+    "Green",
+    "Blue",
+    "Purple",
+    "Pink",
+    "Brown",
+    "Pi",
+];
+
+var codeWorldBuiltinsDocs = {};
+
+function onHover(cm, data, node){
+    if (data && data.token && data.token.string) {
+        var token_name = data.token.string;
+        if (hintBlacklist.indexOf(token_name) == -1 && codeWorldBuiltinsDocs[token_name]){
+            return codeWorldBuiltinsDocs[token_name];
+        }
+    }
+    return;
+}
+
+// Hints and hover tooltips
 function registerStandardHints(successFunc)
 {
     function createHint(line, wordStart, wordEnd, cname) {
@@ -98,6 +163,21 @@ function registerStandardHints(successFunc)
             render: renderer,
             source: line
         };
+    }
+
+    function createHover(line, wordStart, wordEnd, doc, hint){
+        if (!hint){
+            hint = createHint(line, wordStart, wordEnd);
+        }
+        var annotation = document.createElement('div');
+        hint.render(annotation);
+        var description = document.createElement('div');
+        description.innerHTML = doc;
+        description.className = " hover-doc";
+        var docDiv = document.createElement('div');
+        docDiv.appendChild(annotation);
+        docDiv.appendChild(description);
+        return docDiv
     }
 
     // Add hint highlighting
@@ -168,62 +248,9 @@ function registerStandardHints(successFunc)
     codeworldKeywords['main'] = 'deprecated';
     codeworldKeywords['program'] = 'builtin';
 
-    lines = lines.sort().filter(function(item, pos, array) {
-        return !pos || item != array[pos - 1];
-    });
+    codeWorldBuiltinsDocs['program'] = createHover('program :: Program', 0, 7, 'Your program.');
 
-    var hintBlacklist = [
-        // Symbols that only exist to implement RebindableSyntax or map to
-        // built-in Haskell types.
-        "Bool",
-        "IO",
-        "fail",
-        "fromCWText",
-        "fromDouble",
-        "fromInt",
-        "fromInteger",
-        "fromRational",
-        "fromString",
-        "ifThenElse",
-        "toCWText",
-        "toDouble",
-        "toInt",
-
-        // Deprecated exports.
-        "MousePress",
-        "MouseRelease",
-        "MouseMovement",
-        "MouseButton",
-        "LeftButton",
-        "RightButton",
-        "MiddleButton",
-        "Maybe",
-        "Nothing",
-        "Just",
-        "withDefault",
-        "hasValue",
-        "definitely",
-        "path",
-        "thickPath",
-        "text",
-        "styledText",
-
-        // Experimental exports.
-        "White",
-        "Black",
-        "Gray",
-        "Grey",
-        "Red",
-        "Orange",
-        "Yellow",
-        "Green",
-        "Blue",
-        "Purple",
-        "Pink",
-        "Brown",
-        "Pi",
-    ];
-
+    var doc = "";
     lines.forEach(function(line) {
         if (line.startsWith("type Program")) {
             // We must intervene to hide the IO type.
@@ -244,8 +271,6 @@ function registerStandardHints(successFunc)
             return;
         } else if (line.startsWith("instance ")) {
             return;
-        } else if (line.startsWith("-- ")) {
-            return;
         } else if (line.startsWith("infix ")) {
             return;
         } else if (line.startsWith("infixl ")) {
@@ -260,42 +285,48 @@ function registerStandardHints(successFunc)
         // Filter out CallStack constraints.
         line = line.replace(/:: HasCallStack =>/g, '::');
 
-        var wordStart = 0;
-        if (line.startsWith("type ") || line.startsWith("data ")) {
-            wordStart += 5;
+        if (line.startsWith("-- |")) {
+            doc = line.replace(/\-\- \| /g, "") + "\n";
+        } else if (doc != "" && line.startsWith("-- ")){
+            doc += line.replace(/\-\-   /g, "") + "\n";
+        } else {
+            var wordStart = 0;
+            if (line.startsWith("type ") || line.startsWith("data ")) {
+                wordStart += 5;
 
-            // Hide kind annotations.
-            var kindIndex = line.indexOf(" ::");
-            if (kindIndex != -1) {
-                line = line.substr(0, kindIndex);
+                // Hide kind annotations.
+                var kindIndex = line.indexOf(" ::");
+                if (kindIndex != -1) {
+                    line = line.substr(0, kindIndex);
+                }
+            }
+
+            var wordEnd = line.indexOf(" ", wordStart);
+            if (wordEnd == -1) {
+                wordEnd = line.length;
+            }
+            if (wordStart == wordEnd) {
+                return;
+            }
+
+            if (line[wordStart] == "(" && line[wordEnd - 1] == ")") {
+                wordStart++;
+                wordEnd--;
+            }
+
+            var word = line.substr(wordStart, wordEnd - wordStart);
+            var hint = createHint(line, wordStart, wordEnd);
+            codeWorldBuiltinsDocs[word] = createHover(line, wordStart, wordEnd, doc, hint)
+            if (hintBlacklist.indexOf(word) >= 0) {
+                codeworldKeywords[word] = 'deprecated';
+            } else if (/^[A-Z:]/.test(word)) {
+                codeworldKeywords[word] = 'builtin-2';
+                hints.push(hint);
+            } else {
+                codeworldKeywords[word] = 'builtin';
+                hints.push(hint);
             }
         }
-
-        var wordEnd = line.indexOf(" ", wordStart);
-        if (wordEnd == -1) {
-            wordEnd = line.length;
-        }
-        if (wordStart == wordEnd) {
-            return;
-        }
-
-        if (line[wordStart] == "(" && line[wordEnd - 1] == ")") {
-            wordStart++;
-            wordEnd--;
-        }
-
-        var word = line.substr(wordStart, wordEnd - wordStart);
-
-        if (hintBlacklist.indexOf(word) >= 0) {
-            codeworldKeywords[word] = 'deprecated';
-        } else if (/^[A-Z:]/.test(word)) {
-            codeworldKeywords[word] = 'builtin-2';
-            hints.push(createHint(line, wordStart, wordEnd));
-        } else {
-            codeworldKeywords[word] = 'builtin';
-            hints.push(createHint(line, wordStart, wordEnd));
-        }
-
     });
 
     hints.sort(function(a, b) {
@@ -771,7 +802,7 @@ function createFolder(path, buildMode, successFunc) {
 }
 
 function loadProject_(index, name, buildMode, successFunc) {
-    
+
   warnIfUnsaved(function(){
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to open projects.', 'error');

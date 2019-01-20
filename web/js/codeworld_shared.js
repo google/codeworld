@@ -193,6 +193,18 @@ function registerStandardHints(successFunc)
         createHint("(:) :: a -> [a] -> [a]", 1, 2)
     ];
 
+    function sortHints(list) {
+        list.sort(function(a, b) {
+            function startsWithLetter(c) {
+                return /^[a-zA-Z].*/.test(c);
+            }
+
+            if (startsWithLetter(a.text) && !startsWithLetter(b.text)) return -1;
+            else if (startsWithLetter(b.text) && !startsWithLetter(a.text)) return 1;
+            else return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1
+        });
+    }
+
     CodeMirror.registerHelper('hint', 'codeworld', function(cm) {
         var cur = cm.getCursor();
         var token = cm.getTokenAt(cur);
@@ -224,6 +236,8 @@ function registerStandardHints(successFunc)
                 }
             }
         }
+
+        sortHints(found);
 
         if (found.length > 0) return {
             list: found,
@@ -340,15 +354,7 @@ function registerStandardHints(successFunc)
         }
     });
 
-    hints.sort(function(a, b) {
-        function startsWithLetter(c) {
-            return /^[a-zA-Z].*/.test(c);
-        }
-
-        if (startsWithLetter(a.text) && !startsWithLetter(b.text)) return -1;
-        else if (startsWithLetter(b.text) && !startsWithLetter(a.text)) return 1;
-        else return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1
-    });
+    sortHints(hints);
     CodeMirror.registerHelper('hintWords', 'codeworld', hints);
     successFunc();
   });

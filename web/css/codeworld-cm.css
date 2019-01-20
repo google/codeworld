@@ -135,6 +135,7 @@ li.CodeMirror-hint-active {
 /* Style overrides for hovers. */
 .CodeMirror-hover-tooltip {
     background-color: #ffe;
+
     border-radius: 0.5em;
     border: 1px solid #888;
     box-shadow: 0.1em 0.1em 0.1em gray;
@@ -152,6 +153,21 @@ li.CodeMirror-hint-active {
     -webkit-transition: opacity .4s;
     -o-transition: opacity .4s;
     -ms-transition: opacity .4s;
+}
+
+.CodeMirror-hover-tooltip div.fade {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    width: 100%;
+    height: 100%;
+    display: block;
+
+    background-image: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0) 0px,
+        rgba(0, 0, 0, 0) 350px,
+        #ffe 400px);
 }
 
 .hover-decl {

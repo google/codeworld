@@ -170,8 +170,9 @@ function registerStandardHints(successFunc)
             hint = createHint(line, wordStart, wordEnd);
         }
 
-        var docDiv = document.createElement('div');
+        var topDiv = document.createElement('div');
 
+        var docDiv = document.createElement('div');
         var annotation = document.createElement('div');
         hint.render(annotation);
         annotation.className = "hover-decl";
@@ -184,7 +185,12 @@ function registerStandardHints(successFunc)
             docDiv.appendChild(description);
         }
 
-        return docDiv;
+        var fadeDiv = document.createElement('div');
+        fadeDiv.className = 'fade';
+
+        topDiv.appendChild(docDiv);
+        topDiv.appendChild(fadeDiv);
+        return topDiv;
     }
 
     // Add hint highlighting

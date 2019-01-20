@@ -150,8 +150,8 @@ function registerStandardHints(successFunc)
             wordElem.appendChild(document.createTextNode(word));
             elem.appendChild(wordElem);
             if (wordEnd < line.length) {
-                var leftover = line.slice(wordEnd);
-                if (line.length > 60 && leftover.length > 3) {
+                var leftover = line.slice(wordEnd).replace(/\s+/g, ' ');
+                if (wordEnd + leftover.length > 60 && leftover.length > 3) {
                   leftover = leftover.slice(0, 57 - wordEnd) + '...';
                 }
                 elem.appendChild(document.createTextNode(leftover));

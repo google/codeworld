@@ -122,13 +122,117 @@ var hintBlacklist = [
     "Pi",
 ];
 
-var codeWorldBuiltinsDocs = {};
+
+// codeWorldDocs is variable containing annotations and documentation
+// of builtin and user-defined variables.
+// Expected format:
+// codeWorldDocs = {
+//   codeWorldLogo: {
+//     annotation: "Picture",
+//     doc: "The CodeWorld logo."
+//   }
+// }
+
+var codeWorldDocs = {};
+
+function renderHint(keyword) {
+    
+};
+
+function renderHover(keyword) {
+    var elem = document.createElement('div')
+
+    if (!codeWorldDocs[keyword]){
+        return null;
+    };
+    elem.title = keyword;
+    var keywordData = codeWorldDocs[keyword];
+
+    // Variable name + annotaion
+    var topLine = document.createElement("div");
+    topLine.className = "hover-decl";
+    var wordElem = document.createElement("span");
+    wordElem.className = "hint-word";
+    wordElem.appendChild(document.createTextNode(keyword));
+    topLine.appendChild(wordElem);
+    if (keywordData.annotation) {
+        var annotation = document.createElement('div');
+        topLine.appendChild(document.createTextNode(" :: " + keywordData.annotation))
+    };
+    elem.appendChild(topLine)
+
+    // Docs
+    if (keywordData.doc) {
+        var docElem = document.createElement('div');
+        docElem.innerHTML = keywordData.doc;
+        docElem.className = "hover-doc";
+        elem.appendChild(docElem)
+    };
+    return elem;
+};
+
+function applyCodemirrorChange(line, change) {
+    if (change.origin === "+input"){
+        return line.slice(0, change.from.ch) + change.text.join('') + line.slice(change.from.ch);
+    } else if (change.origin === "+delete"){
+        return line.slice(0, change.from.ch) + line.slice(change.from.ch + 1);
+    } else if (["setValue", "complete"].indexOf(change.origin) != -1){
+        return;
+    } else {
+        console.log("Event \"" + change.origin + "\" not handled.");
+        return;
+    }
+}
+
+function getWordAndAnnotation(line) {
+    var annotation = null,
+        word = null;
+    // there is top-level assignment
+    if (/^\S+\s*=/.test(line)) {
+        word = line.split("=")[0].trim()
+    };
+    // there is top level type annotation
+    if (/^\S+\s*::/.test(line)) {
+        var splitted = line.split("::");
+        word = splitted[0].trim()
+        annotation = splitted[1].trim()
+    };
+    return {
+        word: word,
+        annotation: annotation
+    }
+}
+
+function updateDocs(cm, change) {
+    // take current line
+    var before = cm.getLine(change.from.line);
+    // make line after applied change
+    var after = applyCodemirrorChange(before, change);
+
+    before_data = getWordAndAnnotation(before)
+    after_data = getWordAndAnnotation(after)
+
+    // user updated name/annotaion of some variable
+    // updating hovers/hints information
+    if (!(before_data.word === after_data.word
+          && before_data.annotation === after_data.annotation
+          // We don't want to override builtins.
+          // Marker of builtin variable - it have docs.
+          && codeWorldDocs[before_data.word]
+          && !codeWorldDocs[before_data.word].doc
+         )) {
+        delete codeWorldDocs[before_data.word]
+    }
+    codeWorldDocs[after_data.word] = {annotation: after_data.annotation}
+
+
+};
 
 function onHover(cm, data, node){
     if (data && data.token && data.token.string) {
         var token_name = data.token.string;
-        if (hintBlacklist.indexOf(token_name) == -1 && codeWorldBuiltinsDocs[token_name]){
-            return codeWorldBuiltinsDocs[token_name];
+        if (hintBlacklist.indexOf(token_name) == -1){
+            return renderHover(token_name);
         }
     }
     return;
@@ -165,27 +269,6 @@ function registerStandardHints(successFunc)
         };
     }
 
-    function createHover(line, wordStart, wordEnd, doc, hint){
-        if (!hint){
-            hint = createHint(line, wordStart, wordEnd);
-        }
-
-        var docDiv = document.createElement('div');
-
-        var annotation = document.createElement('div');
-        hint.render(annotation);
-        annotation.className = "hover-decl";
-        docDiv.appendChild(annotation);
-
-        if (doc !== "") {
-            var description = document.createElement('div');
-            description.innerHTML = doc;
-            description.className = " hover-doc";
-            docDiv.appendChild(description);
-        }
-
-        return docDiv;
-    }
 
     // Add hint highlighting
     var hints = [
@@ -255,7 +338,10 @@ function registerStandardHints(successFunc)
     codeworldKeywords['main'] = 'deprecated';
     codeworldKeywords['program'] = 'builtin';
 
-    codeWorldBuiltinsDocs['program'] = createHover('program :: Program', 0, 7, 'Your program.');
+    codeWorldDocs['program'] = {
+        annotation: "Program",
+        doc: "Your program."
+    };
 
     var doc = "";
     var prevLine = "";
@@ -327,7 +413,10 @@ function registerStandardHints(successFunc)
 
             var word = line.substr(wordStart, wordEnd - wordStart);
             var hint = createHint(line, wordStart, wordEnd);
-            codeWorldBuiltinsDocs[word] = createHover(line, wordStart, wordEnd, doc, hint)
+            codeWorldDocs[word] = getWordAndAnnotation(line);
+            if (doc) {
+                codeWorldDocs[word].doc = doc;
+            }
             if (hintBlacklist.indexOf(word) >= 0) {
                 codeworldKeywords[word] = 'deprecated';
             } else if (/^[A-Z:]/.test(word)) {

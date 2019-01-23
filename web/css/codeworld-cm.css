@@ -61,7 +61,7 @@ div.CodeMirror span.cm-matchhighlight { background-color: rgba(128, 255, 128, 0.
 
 .CodeMirror-hint {
   max-width: 100em;
-  color: #555;
+  color: #30a;
 }
 
 li.CodeMirror-hint-active {
@@ -74,10 +74,11 @@ li.CodeMirror-hint-active {
   color: #30a;
 }
 
-.CodeMirror-hint .hint-keyword {
-  font-weight: bold;
-  color: #828;
+.CodeMirror-hint {
+    font-weight: bold;
+    color: #828;
 }
+
 
 /* Styles needed for the dialog add-on, used for search. */
 
@@ -165,7 +166,17 @@ li.CodeMirror-hint-active {
     font-size: 11pt;
 }
 
-.CodeMirror-hover-tooltip .hint-word {
+.hint-word {
     font-weight: bold;
     color: #30a;
+}
+
+.hint-description {
+    width: 400px;
+    max-height: 400px;
+    background-color: #ffe;
+    border-radius: 0.3em;
+    border: 1px solid #888;
+    overflow: hidden;
+    position: absolute;
 }

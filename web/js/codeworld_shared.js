@@ -135,10 +135,6 @@ var hintBlacklist = [
 
 var codeWorldDocs = {};
 
-function renderHint(keyword) {
-    
-};
-
 function renderHover(keyword) {
     var elem = document.createElement('div')
 
@@ -290,10 +286,10 @@ function registerStandardHints(successFunc)
         }
 
         var found = [];
-
+        var hints = Object.keys(codeWorldDocs)
         for (var i = 0; i < hints.length; i++) {
             var hint = hints[i];
-            if (hint.text.startsWith(term)) {
+            if (hint.startsWith(term)){
                 found.push(hint);
             }
         }
@@ -307,12 +303,39 @@ function registerStandardHints(successFunc)
                 }
             }
         }
+        if (found.length > 0) {
+            var data = {
+                list: found,
+                from: from,
+                to: cur
+            };
 
-        if (found.length > 0) return {
-            list: found,
-            from: from,
-            to: cur
-        };
+            function deleteOldHintDocs(){
+                $(".hint-description").remove()
+            }
+
+            CodeMirror.on(data, 'close', deleteOldHintDocs);
+            CodeMirror.on(data, 'pick', deleteOldHintDocs);
+
+            // Tracking of hint selection
+            CodeMirror.on(
+                data, 'select',
+                function (selection, elem) {
+                    var codeWordInfo = codeWorldDocs[selection],
+                        hihtsWidget = elem.parentElement,
+                        hintsWidgetRect = elem.parentElement.getBoundingClientRect(),
+                        doc = document.createElement('div');
+                    // delete previous displayed doc
+                    deleteOldHintDocs();
+                    doc.className = "hint-description";
+                    doc.style.top = hintsWidgetRect.top + "px";
+                    doc.style.left = hintsWidgetRect.right + "px";
+                    doc.appendChild(renderHover(selection))
+                    document.body.appendChild(doc)
+                }
+            );
+            return data;
+        }
     });
 
     sendHttp('GET', 'codeworld-base.txt', null, function(request) {

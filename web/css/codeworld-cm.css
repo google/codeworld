@@ -15,12 +15,12 @@
  */
 
 .CodeMirror {
-  font-family: "Source Code Pro", monospace;
-  font-size: 9pt;
+    font-family: "Source Code Pro", monospace;
+    font-size: 9pt;
 }
 
 .CodeMirror-ruler {
-  z-index: 1;
+    z-index: 1;
 }
 
 pre.cm-s-default span.cm-builtin,    div.CodeMirror span.cm-builtin    {color: #30a; font-weight: bold}
@@ -68,6 +68,10 @@ li.CodeMirror-hint-active {
     max-width: 100em;
     font-weight: bold;
     color: #30a;
+    font-family: "Source Code Pro", monospace;
+    font-size: 9pt;
+    white-space: pre;
+
 }
 
 /* Styles needed for the dialog add-on, used for search. */
@@ -82,60 +86,22 @@ li.CodeMirror-hint-active {
   color: #333;
 }
 
-.CodeMirror-dialog-top {
-  border-bottom: 1px solid #eee;
-  top: 0;
-}
 
-.CodeMirror-dialog-bottom {
-  border-top: 1px solid #eee;
-  bottom: 0;
-}
+/* Style overrides for the autocomplete box and doc-on-hover. */
 
-.CodeMirror-dialog input {
-  border: none;
-  outline: none;
-  background: transparent;
-  width: 20em;
-  color: inherit;
-  font-family: "Source Code Pro", monospace;
-}
-
-.CodeMirror-dialog button {
-  font-size: 70%;
-}
-
-.marked {
-    background: #ff0;
-}
-
-/* source-code-pro-regular - latin */
-@font-face {
-  font-family: "Source Code Pro";
-  font-style: normal;
-  font-weight: 400;
-  src: url('../SourceCodePro/source-code-pro-v7-latin-regular.eot'); /* IE9 Compat Modes */
-  src: local('Source Code Pro'), local('SourceCodePro-Regular'),
-       url('../SourceCodePro/source-code-pro-v7-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-       url('../SourceCodePro/source-code-pro-v7-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
-       url('../SourceCodePro/source-code-pro-v7-latin-regular.woff') format('woff'), /* Modern Browsers */
-       url('../SourceCodePro/source-code-pro-v7-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
-       url('../SourceCodePro/source-code-pro-v7-latin-regular.svg#SourceCodePro') format('svg'); /* Legacy iOS */
-}
-
-/* Style overrides for hovers. */
 .CodeMirror-hover-tooltip {
     background-color: #ffe;
+
     border-radius: 0.5em;
     border: 1px solid #888;
     box-shadow: 0.1em 0.1em 0.1em gray;
     overflow: hidden;
-    padding: 5px 8px;
+    padding: 0.3em 0.5em;
     position: fixed;
-    min-width: 200px;
-    min-height: 10px;
-    max-width: 600px;
-    max-height: 400px;
+    min-width: 5em;
+    min-height: 1em;
+    max-width: 30em;
+    max-height: 20em;
     opacity: 0;
 
     transition: opacity .4s;
@@ -145,28 +111,18 @@ li.CodeMirror-hint-active {
     -ms-transition: opacity .4s;
 }
 
-.hover-decl {
-    font-family: "Source Code Pro", monospace;
-    font-size: 10pt;
-    white-space: pre-wrap;
-}
-
-.hover-doc {
-    padding-top: 0.5em;
-    font-size: 11pt;
-}
-
-.hint-word {
-    font-weight: bold;
-    color: #30a;
-}
-
-.hint-description {
-    width: 400px;
-    max-height: 400px;
-    background-color: #ffe;
-    border-radius: 0.3em;
-    border: 1px solid #888;
-    overflow: hidden;
+.CodeMirror-hover-tooltip div.fade {
     position: absolute;
+    top: 0px;
+    bottom: 0px;
+    width: 100%;
+    height: 100%;
+    display: block;
+
+    background-image: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0) 0em,
+        rgba(0, 0, 0, 0) 17em,
+        #ffe 20em);
 }
+

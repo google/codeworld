@@ -416,3 +416,20 @@ body {
 .req-details {
   color: #555;
 }
+.hover-doc {
+    padding-top: 0.5em;
+    font-size: 11pt;
+}
+.hint-word {
+    font-weight: bold;
+    color: #30a;
+}
+.hint-description {
+    width: 400px;
+    max-height: 400px;
+    background-color: #ffe;
+    border-radius: 0.3em;
+    border: 1px solid #888;
+    overflow: hidden;
+    position: absolute;
+}

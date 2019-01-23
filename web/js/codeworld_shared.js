@@ -220,8 +220,6 @@ function updateDocs(cm, change) {
         delete codeWorldDocs[before_data.word]
     }
     codeWorldDocs[after_data.word] = {annotation: after_data.annotation}
-
-
 };
 
 function onHover(cm, data, node){
@@ -237,41 +235,7 @@ function onHover(cm, data, node){
 // Hints and hover tooltips
 function registerStandardHints(successFunc)
 {
-    function createHint(line, wordStart, wordEnd, cname) {
-        var word = line.slice(wordStart, wordEnd);
-        if (!cname) cname = 'hint-word';
-
-        function renderer(elem, data, cur) {
-            if (wordStart > 0) {
-                elem.appendChild(document.createTextNode(line.slice(0, wordStart)));
-            }
-            var wordElem = document.createElement("span");
-            wordElem.className = cname;
-            wordElem.appendChild(document.createTextNode(word));
-            elem.appendChild(wordElem);
-            if (wordEnd < line.length) {
-                var leftover = line.slice(wordEnd);
-                if (line.length > 60 && leftover.length > 3) {
-                  leftover = leftover.slice(0, 57 - wordEnd) + '...';
-                }
-                elem.appendChild(document.createTextNode(leftover));
-                elem.title = line;
-            }
-        }
-        return {
-            text: word,
-            render: renderer,
-            source: line
-        };
-    }
-
-
     // Add hint highlighting
-    var hints = [
-        createHint("program :: Program", 0, 7),
-        createHint("(:) :: a -> [a] -> [a]", 1, 2)
-    ];
-
     CodeMirror.registerHelper('hint', 'codeworld', function(cm) {
         var cur = cm.getCursor();
         var token = cm.getTokenAt(cur);
@@ -294,15 +258,15 @@ function registerStandardHints(successFunc)
             }
         }
 
-        var lines = cm.getValue().split("\n");
-        for (var i=0; i < lines.length; i++) {
-            if (/^\S*\s*::[^:]*$/.test(lines[i])) {
-                var candidate = lines[i].split(" ::")[0];
-                if (candidate.startsWith(term)) {
-                    found.push(createHint(lines[i], 0, candidate.length));
-                }
+        found.sort(function(a, b) {
+            function startsWithLetter(c) {
+                return /^[a-zA-Z].*/.test(c);
             }
-        }
+                if (startsWithLetter(a) && !startsWithLetter(b)) return -1;
+                else if (startsWithLetter(b) && !startsWithLetter(a)) return 1;
+                else return a.toLowerCase() < b.toLowerCase() ? -1 : 1
+            });
+
         if (found.length > 0) {
             var data = {
                 list: found,
@@ -328,6 +292,7 @@ function registerStandardHints(successFunc)
                     // delete previous displayed doc
                     deleteOldHintDocs();
                     doc.className = "hint-description";
+                    doc.style["min-height"] = hintsWidgetRect.height + "px";
                     doc.style.top = hintsWidgetRect.top + "px";
                     doc.style.left = hintsWidgetRect.right + "px";
                     doc.appendChild(renderHover(selection))
@@ -367,11 +332,7 @@ function registerStandardHints(successFunc)
     };
 
     var doc = "";
-    var prevLine = "";
     lines.forEach(function(line) {
-        if (!prevLine.startsWith("--")) doc = "";
-        prevLine = line;
-
         if (line.startsWith("type Program")) {
             // We must intervene to hide the IO type.
             line = "data Program";
@@ -407,7 +368,7 @@ function registerStandardHints(successFunc)
 
         if (line.startsWith("-- |")) {
             doc = line.replace(/\-\- \| /g, "") + "\n";
-        } else if (doc != "" && line.startsWith("-- ")){
+        } else if (line.startsWith("-- ")){
             doc += line.replace(/\-\-   /g, "") + "\n";
         } else {
             var wordStart = 0;
@@ -435,7 +396,6 @@ function registerStandardHints(successFunc)
             }
 
             var word = line.substr(wordStart, wordEnd - wordStart);
-            var hint = createHint(line, wordStart, wordEnd);
             codeWorldDocs[word] = getWordAndAnnotation(line);
             if (doc) {
                 codeWorldDocs[word].doc = doc;
@@ -444,24 +404,12 @@ function registerStandardHints(successFunc)
                 codeworldKeywords[word] = 'deprecated';
             } else if (/^[A-Z:]/.test(word)) {
                 codeworldKeywords[word] = 'builtin-2';
-                hints.push(hint);
             } else {
                 codeworldKeywords[word] = 'builtin';
-                hints.push(hint);
             }
         }
     });
 
-    hints.sort(function(a, b) {
-        function startsWithLetter(c) {
-            return /^[a-zA-Z].*/.test(c);
-        }
-
-        if (startsWithLetter(a.text) && !startsWithLetter(b.text)) return -1;
-        else if (startsWithLetter(b.text) && !startsWithLetter(a.text)) return 1;
-        else return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1
-    });
-    CodeMirror.registerHelper('hintWords', 'codeworld', hints);
     successFunc();
   });
 }

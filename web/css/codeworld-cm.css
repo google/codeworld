@@ -59,26 +59,16 @@ div.CodeMirror span.cm-matchhighlight { background-color: rgba(128, 255, 128, 0.
 
 /* Style overrides for the autocomplete box. */
 
-.CodeMirror-hint {
-  max-width: 100em;
-  color: #30a;
-}
-
 li.CodeMirror-hint-active {
   background: #def;
   color: #555;
 }
 
-.CodeMirror-hint .hint-word {
-  font-weight: bold;
-  color: #30a;
-}
-
 .CodeMirror-hint {
+    max-width: 100em;
     font-weight: bold;
-    color: #828;
+    color: #30a;
 }
-
 
 /* Styles needed for the dialog add-on, used for search. */
 

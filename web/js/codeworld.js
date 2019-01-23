@@ -158,7 +158,6 @@ function initCodeworld() {
     CodeMirror.commands.save = function(cm) {
         saveProject();
     }
-
     document.onkeydown = function(e) {
         if (e.ctrlKey && e.keyCode === 83) { // Ctrl+S
             saveProject();
@@ -172,12 +171,6 @@ function initCodeworld() {
 
     window.codeworldEditor.on('changes', window.updateUI);
     window.codeworldEditor.on("beforeChange", updateDocs)
-    window.codeworldEditor.on("select", function (selection, elem){
-        console.log('SELECTION', selection, elem)
-    })
-    window.codeworldEditor.on("pick", function (selection){
-        console.log('picked', selection)
-    })
 
     window.onbeforeunload = function(event) {
         if (!isEditorClean()) {

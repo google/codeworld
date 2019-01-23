@@ -289,7 +289,6 @@ function registerStandardHints(successFunc)
                         hihtsWidget = elem.parentElement,
                         hintsWidgetRect = elem.parentElement.getBoundingClientRect(),
                         doc = document.createElement('div');
-                    // delete previous displayed doc
                     deleteOldHintDocs();
                     doc.className = "hint-description";
                     doc.style["min-height"] = hintsWidgetRect.height + "px";

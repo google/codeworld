@@ -54,14 +54,15 @@ div.CodeMirror span.cm-matchhighlight { background-color: rgba(128, 255, 128, 0.
 
 /* Grayed-out style for the empty editor placeholder. */
 .CodeMirror pre.CodeMirror-placeholder {
-  color: #999;
+    color: #999;
 }
 
-/* Style overrides for the autocomplete box. */
+
+/* Style overrides for the autocomplete box and doc-on-hover. */
 
 li.CodeMirror-hint-active {
-  background: #def;
-  color: #555;
+    background: #def;
+    color: #555;
 }
 
 .CodeMirror-hint {
@@ -73,21 +74,6 @@ li.CodeMirror-hint-active {
     white-space: pre;
 
 }
-
-/* Styles needed for the dialog add-on, used for search. */
-
-.CodeMirror-dialog {
-  position: absolute;
-  left: 0; right: 0;
-  background-color: #f5deb3;
-  z-index: 15;
-  padding: .1em .8em;
-  overflow: hidden;
-  color: #333;
-}
-
-
-/* Style overrides for the autocomplete box and doc-on-hover. */
 
 .CodeMirror-hover-tooltip {
     background-color: #ffe;
@@ -126,3 +112,55 @@ li.CodeMirror-hint-active {
         #ffe 20em);
 }
 
+/* Styles needed for the dialog add-on, used for search. */
+
+.CodeMirror-dialog {
+    position: absolute;
+    left: 0; right: 0;
+    background-color: #f5deb3;
+    z-index: 15;
+    padding: .1em .8em;
+    overflow: hidden;
+    color: #333;
+}
+
+.CodeMirror-dialog-top {
+    border-bottom: 1px solid #eee;
+    top: 0;
+}
+
+.CodeMirror-dialog-bottom {
+    border-top: 1px solid #eee;
+    bottom: 0;
+}
+
+.CodeMirror-dialog input {
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 20em;
+    color: inherit;
+    font-family: "Source Code Pro", monospace;
+}
+
+.CodeMirror-dialog button {
+    font-size: 70%;
+}
+
+.marked {
+    background: #ff0;
+}
+
+/* source-code-pro-regular - latin */
+@font-face {
+    font-family: "Source Code Pro";
+    font-style: normal;
+    font-weight: 400;
+    src: url('../SourceCodePro/source-code-pro-v7-latin-regular.eot'); /* IE9 Compat Modes */
+    src: local('Source Code Pro'), local('SourceCodePro-Regular'),
+         url('../SourceCodePro/source-code-pro-v7-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+         url('../SourceCodePro/source-code-pro-v7-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+         url('../SourceCodePro/source-code-pro-v7-latin-regular.woff') format('woff'), /* Modern Browsers */
+         url('../SourceCodePro/source-code-pro-v7-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+         url('../SourceCodePro/source-code-pro-v7-latin-regular.svg#SourceCodePro') format('svg'); /* Legacy iOS */
+}

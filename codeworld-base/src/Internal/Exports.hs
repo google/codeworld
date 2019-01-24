@@ -22,8 +22,9 @@ module Internal.Exports
     ( Number
     , Text
     -- * Colors
-    , Color(..)
+    , Color
     , Colour
+    , pattern RGBA
     , pattern RGB
     , pattern HSL
     , black

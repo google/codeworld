@@ -27,29 +27,39 @@ import Internal.Truth
 import qualified "base" Prelude as P
 import "base" Prelude ((.))
 
-newtype Color =
-    RGBA (Number, Number, Number, Number)
-    deriving (P.Eq)
-
+newtype Color = Color CW.Color deriving (P.Eq)
 type Colour = Color
 
 {-# RULES
 "equality/color" forall (x :: Color) . (==) x = (P.==) x
  #-}
 
-pattern RGB :: (Number, Number, Number) -> Color
+pattern RGBA :: (Number, Number, Number, Number) -> Color
+pattern RGBA components <- (toRGBA -> components)
+  where RGBA components
+          = let (r, g, b, a) = components
+            in Color (CW.RGBA (toDouble r) (toDouble g)
+                              (toDouble b) (toDouble a))
 
+-- Utility function for RGB pattern synonym.
+toRGBA :: Color -> (Number, Number, Number, Number)
+toRGBA (Color (CW.RGBA r g b a)) =
+    (fromDouble r, fromDouble g, fromDouble b, fromDouble a)
+
+pattern RGB :: (Number, Number, Number) -> Color
 pattern RGB components <- (toRGB -> P.Just components)
   where RGB components
-          = let (r, g, b) = components in RGBA (r, g, b, 1)
+          = let (r, g, b) = components
+            in Color (CW.RGBA (toDouble r) (toDouble g)
+                              (toDouble b) (toDouble 1))
 
 -- Utility function for RGB pattern synonym.
 toRGB :: Color -> P.Maybe (Number, Number, Number)
-toRGB (RGBA (r, g, b, 1)) = P.Just (r, g, b)
+toRGB (Color (CW.RGBA r g b (fromDouble -> 1))) =
+    P.Just (fromDouble r, fromDouble g, fromDouble b)
 toRGB _ = P.Nothing
 
 pattern HSL :: (Number, Number, Number) -> Color
-
 pattern HSL components <- (toHSL -> P.Just components)
   where HSL components = fromHSL components
 
@@ -63,12 +73,10 @@ fromHSL (h, s, l) =
     fromCWColor (CW.HSL (toDouble (pi * h / 180)) (toDouble s) (toDouble l))
 
 toCWColor :: Color -> CW.Color
-toCWColor (RGBA (r, g, b, a)) =
-    CW.RGBA (toDouble r) (toDouble g) (toDouble b) (toDouble a)
+toCWColor (Color c) = c
 
 fromCWColor :: CW.Color -> Color
-fromCWColor (CW.RGBA r g b a) =
-    RGBA (fromDouble r, fromDouble g, fromDouble b, fromDouble a)
+fromCWColor = Color
 
 mixed :: [Color] -> Color
 mixed = fromCWColor . CW.mixed . P.map toCWColor
@@ -115,40 +123,40 @@ alpha = fromDouble . CW.alpha . toCWColor
 -- New style colors
 
 pattern White :: Color
-pattern White  = HSL(  0, 0.00, 1.00)
+pattern White  = Color CW.White
 
 pattern Black :: Color
-pattern Black  = HSL(  0, 0.00, 0.00)
+pattern Black  = Color CW.Black
 
 pattern Gray :: Color
-pattern Gray   = HSL(  0, 0.00, 0.50)
+pattern Gray   = Color CW.Gray
 
 pattern Grey :: Color
-pattern Grey   = HSL(  0, 0.00, 0.50)
+pattern Grey   = Color CW.Grey
 
 pattern Red :: Color
-pattern Red    = HSL(  0, 0.75, 0.50)
+pattern Red    = Color CW.Red
 
 pattern Orange :: Color
-pattern Orange = HSL( 35, 0.75, 0.50)
+pattern Orange = Color CW.Orange
 
 pattern Yellow :: Color
-pattern Yellow = HSL( 56, 0.75, 0.50)
+pattern Yellow = Color CW.Yellow
 
 pattern Green :: Color
-pattern Green  = HSL(120, 0.75, 0.50)
+pattern Green  = Color CW.Green
 
 pattern Blue :: Color
-pattern Blue   = HSL(220, 0.75, 0.50)
+pattern Blue   = Color CW.Blue
 
 pattern Purple :: Color
-pattern Purple = HSL(275, 0.75, 0.50)
+pattern Purple = Color CW.Purple
 
 pattern Pink :: Color
-pattern Pink   = HSL(330, 0.75, 0.75)
+pattern Pink   = Color CW.Pink
 
 pattern Brown :: Color
-pattern Brown  = HSL( 30, 0.60, 0.40)
+pattern Brown  = Color CW.Brown
 
 -- Old style colors
 

@@ -1801,7 +1801,7 @@ dull :: Color -> Color
 
 translucent :: Color -> Color
 
-mixed :: (Color, Color) -> Color
+mixed :: [Color] -> Color
 ~~~~~
 
 The `light` and `dark` functions change the shade of a color.  For example,
@@ -1818,13 +1818,17 @@ see through it to the pictures that you've placed behind it using the **`&`**
 operator.
 
 Finally, you can mix colors using `mixed`.  If you want a reddish brown, for
-example, you can use `mixed(red, brown)`.
+example, you can use `mixed([red, brown])`.  Just like polygons earlier, the
+`mixed` function has a list as a parameter, which means you can give it any
+number of colors to mix together.  You can even mix colors in different
+proportions by listing the same color more than once, as in
+`mixed([red, red, yellow])`
 
 Several of these functions can be used together.  These let you describe
 very detailed colors, like:
 
 ~~~~~
-mixed(light(dull(yellow)), bright(green))
+mixed([light(dull(yellow)), bright(green)])
 ~~~~~
 
 !!! collapsible: What's the difference between `bright` and `light`?

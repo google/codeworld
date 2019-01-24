@@ -115,15 +115,8 @@ purple = violet
 
 pink = lighter 0.25 rose
 
-mixed :: Color -> Color -> Color
-mixed c1 c2 = mixedAll [c1, c2]
-
-{-# WARNING mixed
-    ["The type of mixed will soon be changed to: mixed :: [Color] -> Color",
-     "All existing uses will break, but are easily fixed."] #-}
-
-mixedAll :: [Color] -> Color
-mixedAll colors = go 0 0 0 0 0 colors
+mixed :: [Color] -> Color
+mixed colors = go 0 0 0 0 0 colors
   where go rr gg bb aa n ((fenceColor -> RGBA r g b a) : cs) =
             go (rr + r^2 * a) (gg + g^2 * a) (bb + b^2 * a) (aa + a) (n + 1) cs
         go rr gg bb aa n []

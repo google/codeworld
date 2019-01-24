@@ -110,12 +110,8 @@ purple = fromCWColor CW.purple
 
 pink = fromCWColor CW.pink
 
-mixed :: (Color, Color) -> Color
-mixed (a, b) = fromCWColor (CW.mixed (toCWColor a) (toCWColor b))
-
-{-# WARNING mixed
-    ["The type of mixed will soon be changed to: mixed :: [Color] -> Color",
-     "All existing uses will break, but are easily fixed."] #-}
+mixed :: [Color] -> Color
+mixed = fromCWColor . CW.mixed . P.map toCWColor
 
 lighter :: (Color, Number) -> Color
 lighter (c, d) = fromCWColor (CW.lighter (toDouble d) (toCWColor c))

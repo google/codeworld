@@ -13,10 +13,10 @@ program = drawingOf(logo)
 
 logo = pictures([
   translated(top,                      0,  6),
-  translated(colored(c, dark(green)), -6,  3),
-  translated(colored(o, dark(blue)),  -2,  3),
-  translated(colored(d, dark(yellow)), 2,  3),
-  translated(colored(e, dark(red)),    6,  3),
+  translated(colored(c, dark(Green)), -6,  3),
+  translated(colored(o, dark(Blue)),  -2,  3),
+  translated(colored(d, dark(Yellow)), 2,  3),
+  translated(colored(e, dark(Red)),    6,  3),
   translated(w,                       -8, -2),
   translated(o,                       -4, -2),
   translated(r,                        0, -2),
@@ -38,7 +38,7 @@ e = go(8)
   where go(1) = blank
         go(n) = translated(arc(180, 270, 2), 1, 2 - phi)
               & translated(rotated(scaled(go (n-1), 1/phi, 1/phi), 270), 0, 1)
-              & colored(rectangle(2, 2 * phi), gray(0.5))
+              & colored(rectangle(2, 2 * phi), Gray)
         phi = (1 + sqrt(5)) / 2
 
 w = scaled(design, 0.4, 1)
@@ -88,21 +88,21 @@ scene(t) = ferrisWheel(t) & backdrop(t)
 
 backdrop(t) = pictures([
     movingCloud(t),
-    colored(translated(solidRectangle(20, 4), 0, -8), light(green)),
-    colored(solidRectangle(20, 20), light(blue))
+    colored(translated(solidRectangle(20, 4), 0, -8), light(Green)),
+    colored(solidRectangle(20, 20), light(Blue))
     ])
 
 movingCloud(t) = translated(cloud, remainder(2 * t, 28) - 14, 8)
 
-cloud = colored(cloudParts, white)
+cloud = colored(cloudParts, White)
   where cloudParts = translated(solidCircle(1.6),  0,  -0.4)
                    & translated(solidCircle(1.2), -1.2, 0.4)
                    & translated(solidCircle(1.2),  1,   0.2)
 
 ferrisWheel(t) = pictures([
     movingPart(t),
-    colored(solidPolygon([ (-8, -8), (0, -4), (8, -8) ]), gray(0.5)),
-    colored(solidRectangle(0.4, 10), gray(0.3))
+    colored(solidPolygon([ (-8, -8), (0, -4), (8, -8) ]), Gray),
+    colored(solidRectangle(0.4, 10), dark(Gray))
     ])
 
 movingPart(t) =
@@ -177,7 +177,7 @@ mandelbrot(n, k) = rotated(scaled(pic, 5, 5), 90)
                          , Finite(m) <- [depth(0, C(0, 0), C(x, y), k)] ])
         width         = 4 / n
         spot(x, y, m) = translated(shade(solidRectangle(width, width), m), x, y)
-        shade(p, m)   = colored(p, gray((1 - 1/m)^5))
+        shade(p, m)   = colored(p, HSL(0, 0, (1 - 1/m)^5))
 
 program = drawingOf(mandelbrot(500, 25))
 ~~~~~
@@ -272,7 +272,7 @@ drawWorld(WorldOf(loc, maze)) = scaled(translated(
     drawBall(loc) & drawMaze(maze), -10, -10), 0.98, 0.98)
   where
     drawBall(x, y) = translated(ball, x, y)
-    ball = translated(colored(solidCircle(0.5), blue), 0.5, 0.5)
+    ball = translated(colored(solidCircle(0.5), Blue), 0.5, 0.5)
 
 directions = [up, down, right, left]
 up = (0,1); down = (0,-1); right = (1,0); left = (-1, 0)
@@ -325,12 +325,12 @@ buildMaze(w, h, randoms) = go((w-1, h-1), startMaze, randoms) where
 drawMaze(MazeOf(w, h, _, ds)) = doorsPic & allGridLines
   where
     doorsPic = pictures [drawDoor(d) | d <- ds]
-    allGridLines = colored(horizontalLines & verticalLines, black)
+    allGridLines = colored(horizontalLines & verticalLines, Black)
     horizontalLines = pictures([polyline([(w, y), (0, y)]) | y <- [0..h]])
     verticalLines   = pictures([polyline([(x, h), (x, 0)]) | x <- [0..w]])
 
 drawDoor :: Door -> Picture
-drawDoor(from, to) = colored(thickPolyline(g(from, to), 0.1), white)
+drawDoor(from, to) = colored(thickPolyline(g(from, to), 0.1), White)
   where
     g :: (Point, Point) -> [Point]
     g ((fx,fy), (tx,ty))
@@ -464,40 +464,40 @@ picture(w) = scoreBar(score(w), lastScore(w), maxScore(w))
            & solidRectangle(20, 20)
 
 starsPic(ss) = pictures([
-    colored(translated(solidCircle(r), x, y), gray(0.5)) | ((x,y),r) <- ss
+    colored(translated(solidCircle(r), x, y), Gray) | ((x,y),r) <- ss
     ])
 
 astsPic(as) = pictures([
-    colored(translated(solidCircle(1.2), x, y), light(red)) | ((x,y),_) <- as
+    colored(translated(solidCircle(1.2), x, y), light(Red)) | ((x,y),_) <- as
     ])
 
 shipPic(((x,y),_), dir, th) = translated(rotated(ship, dir), x, y)
-  where ship = fire & body & colored(circle(0.48), gray(0.2))
+  where ship = fire & body & colored(circle(0.48), dark(Gray))
         fire | th > 0 = colored(solidPolygon([
                           (-0.32, -0.32),
                           (-0.4,  -0.44),
                           ( 0.4,  -0.44),
                           ( 0.32, -0.32)
-                        ]), orange)
+                        ]), Orange)
              | otherwise = blank
         body = colored(solidPolygon([
                   (-0.36, -0.32),
                   ( 0.36, -0.32),
                   ( 0,     0.48)
-               ]), cyan)
+               ]), light(Blue))
 
-energyBar(e) = colored(translated(solidRectangle(16*e, 0.6), 0, -9.2), yellow)
+energyBar(e) = colored(translated(solidRectangle(16*e, 0.6), 0, -9.2), Yellow)
 
 scoreBar(s, l, m)
     = translated(label("Score", s), -8, 9)
     & translated(label("Last",  l), -1, 9)
     & translated(label("Max",   m),  6, 9)
-    & colored(translated(solidRectangle(20, 0.6), 0, 9), blue)
+    & colored(translated(solidRectangle(20, 0.6), 0, 9), Blue)
   where
     label :: (Text, Number) -> Picture
     label(txt, n) = colored(scaled(lettering(txt <> ": " <> fmtScore(n)),
                                    0.7, 0.5),
-                            white)
+                            White)
 
     fmtScore :: Number -> Text
     fmtScore(n) = printed(floor(10 * n))

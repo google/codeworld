@@ -75,46 +75,6 @@ toHSL :: Color -> Maybe (Double, Double, Double)
 toHSL c@(RGBA _ _ _ 1) = Just (hue c, saturation c, luminosity c)
 toHSL _ = Nothing
 
-white, black :: Color
-white = RGBA 1 1 1 1
-
-black = RGBA 0 0 0 1
-
--- Primary and secondary colors
-red, green, blue, cyan, magenta, yellow :: Color
-red = HSL (0 / 3 * pi) 0.75 0.5
-
-yellow = HSL (1 / 3 * pi) 0.75 0.5
-
-green = HSL (2 / 3 * pi) 0.75 0.5
-
-cyan = HSL (3 / 3 * pi) 0.75 0.5
-
-blue = HSL (4 / 3 * pi) 0.75 0.5
-
-magenta = HSL (5 / 3 * pi) 0.75 0.5
-
--- Tertiary colors
-orange, rose, chartreuse, aquamarine, violet, azure :: Color
-orange = HSL (1 / 6 * pi) 0.75 0.5
-
-chartreuse = HSL (3 / 6 * pi) 0.75 0.5
-
-aquamarine = HSL (5 / 6 * pi) 0.75 0.5
-
-azure = HSL (7 / 6 * pi) 0.75 0.5
-
-violet = HSL (9 / 6 * pi) 0.75 0.5
-
-rose = HSL (11 / 6 * pi) 0.75 0.5
-
--- Other common colors and color names
-brown = HSL (1 / 6 * pi) 0.5 0.5
-
-purple = violet
-
-pink = lighter 0.25 rose
-
 mixed :: [Color] -> Color
 mixed colors = go 0 0 0 0 0 colors
   where go rr gg bb aa n ((fenceColor -> RGBA r g b a) : cs) =
@@ -157,11 +117,6 @@ dull = duller 0.25
 
 translucent :: Color -> Color
 translucent (fenceColor -> RGBA r g b a) = RGBA r g b (a / 2)
-
-gray, grey :: Double -> Color
-gray = grey
-
-grey (fence -> k) = RGBA k k k 1
 
 -- | An infinite list of colors.
 assortedColors :: [Color]
@@ -216,27 +171,102 @@ alpha (RGBA r g b a) = fence a
 -- New-style colors
 
 pattern White :: Color
-pattern Black :: Color
-pattern Gray :: Color
-pattern Grey :: Color
-pattern Red :: Color
-pattern Orange :: Color
-pattern Yellow :: Color
-pattern Green :: Color
-pattern Blue :: Color
-pattern Purple :: Color
-pattern Pink :: Color
-pattern Brown :: Color
-
 pattern White  = HSL 0.00 0.00 1.00
+
+pattern Black :: Color
 pattern Black  = HSL 0.00 0.00 0.00
+
+pattern Gray :: Color
 pattern Gray   = HSL 0.00 0.00 0.50
+
+pattern Grey :: Color
 pattern Grey   = HSL 0.00 0.00 0.50
+
+pattern Red :: Color
 pattern Red    = HSL 0.00 0.75 0.50
+
+pattern Orange :: Color
 pattern Orange = HSL 0.61 0.75 0.50
+
+pattern Yellow :: Color
 pattern Yellow = HSL 0.98 0.75 0.50
+
+pattern Green :: Color
 pattern Green  = HSL 2.09 0.75 0.50
+
+pattern Blue :: Color
 pattern Blue   = HSL 3.84 0.75 0.50
+
+pattern Purple :: Color
 pattern Purple = HSL 4.80 0.75 0.50
+
+pattern Pink :: Color
 pattern Pink   = HSL 5.76 0.75 0.75
+
+pattern Brown :: Color
 pattern Brown  = HSL 0.52 0.60 0.40
+
+-- Old-style colors
+
+white, black, red, green, blue, cyan, magenta, yellow :: Color
+orange, rose, chartreuse, aquamarine, violet, azure :: Color
+gray, grey :: Double -> Color
+
+white = RGBA 1 1 1 1
+black = RGBA 0 0 0 1
+red = HSL (0 / 3 * pi) 0.75 0.5
+yellow = HSL (1 / 3 * pi) 0.75 0.5
+green = HSL (2 / 3 * pi) 0.75 0.5
+cyan = HSL (3 / 3 * pi) 0.75 0.5
+blue = HSL (4 / 3 * pi) 0.75 0.5
+magenta = HSL (5 / 3 * pi) 0.75 0.5
+orange = HSL (1 / 6 * pi) 0.75 0.5
+chartreuse = HSL (3 / 6 * pi) 0.75 0.5
+aquamarine = HSL (5 / 6 * pi) 0.75 0.5
+azure = HSL (7 / 6 * pi) 0.75 0.5
+violet = HSL (9 / 6 * pi) 0.75 0.5
+rose = HSL (11 / 6 * pi) 0.75 0.5
+brown = HSL (1 / 6 * pi) 0.5 0.5
+purple = violet
+pink = lighter 0.25 rose
+grey (fence -> k) = RGBA k k k 1
+gray = grey
+
+{-# WARNING white      [ "Please use White (capitalized) instead of white."
+                       , "The variable white may be removed July 2019." ] #-}
+{-# WARNING black      [ "Please use Black (capitalized) instead of black."
+                       , "The variable black may be removed July 2019." ] #-}
+{-# WARNING red        [ "Please use Red (capitalized) instead of red."
+                       , "The variable red may be removed July 2019." ] #-}
+{-# WARNING green      [ "Please use Green (capitalized) instead of green."
+                       , "The variable green may be removed July 2019." ] #-}
+{-# WARNING blue       [ "Please use Blue (capitalized) instead of blue."
+                       , "The variable blue may be removed July 2019." ] #-}
+{-# WARNING yellow     [ "Please use Yellow (capitalized) instead of yellow."
+                       , "The variable yellow may be removed July 2019." ] #-}
+{-# WARNING orange     [ "Please use Orange (capitalized) instead of orange."
+                       , "The variable orange may be removed July 2019." ] #-}
+{-# WARNING brown      [ "Please use Brown (capitalized) instead of brown."
+                       , "The variable brown may be removed July 2019." ] #-}
+{-# WARNING purple     [ "Please use Purple (capitalized) instead of purple."
+                       , "The variable purple may be removed July 2019." ] #-}
+{-# WARNING pink       [ "Please use Pink (capitalized) instead of pink."
+                       , "The variable pink may be removed July 2019." ] #-}
+{-# WARNING magenta    [ "Please use the RGB function instead of magenta."
+                       , "The variable magenta may be removed July 2019." ] #-}
+{-# WARNING cyan       [ "Please use the RGB function instead of cyan."
+                       , "The variable cyan may be removed July 2019." ] #-}
+{-# WARNING chartreuse [ "Please use the RGB function instead of chartreuse."
+                       , "The variable chartreuse may be removed July 2019." ] #-}
+{-# WARNING aquamarine [ "Please use the RGB function instead of aquamarine."
+                       , "The variable aquamarine may be removed July 2019." ] #-}
+{-# WARNING azure      [ "Please use the RGB function instead of azure."
+                       , "The variable azure may be removed July 2019." ] #-}
+{-# WARNING rose       [ "Please use the RGB function instead of rose."
+                       , "The variable rose may be removed July 2019." ] #-}
+{-# WARNING violet     [ "Please use Purple instead of violet."
+                       , "The variable violet may be removed July 2019." ] #-}
+{-# WARNING gray       [ "Please use Gray with the light/dark functions instead."
+                       , "The gray function may be removed July 2019." ] #-}
+{-# WARNING grey       [ "Please use Grey with the light/dark functions instead."
+                       , "The grey function may be removed July 2019." ] #-}

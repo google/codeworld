@@ -70,46 +70,6 @@ fromCWColor :: CW.Color -> Color
 fromCWColor (CW.RGBA r g b a) =
     RGBA (fromDouble r, fromDouble g, fromDouble b, fromDouble a)
 
-white, black :: Color
-white = fromCWColor CW.white
-
-black = fromCWColor CW.black
-
--- Primary and secondary colors
-red, green, blue, cyan, magenta, yellow :: Color
-red = fromCWColor CW.red
-
-yellow = fromCWColor CW.yellow
-
-green = fromCWColor CW.green
-
-cyan = fromCWColor CW.cyan
-
-blue = fromCWColor CW.blue
-
-magenta = fromCWColor CW.magenta
-
--- Tertiary colors
-orange, rose, chartreuse, aquamarine, violet, azure :: Color
-orange = fromCWColor CW.orange
-
-chartreuse = fromCWColor CW.chartreuse
-
-aquamarine = fromCWColor CW.aquamarine
-
-azure = fromCWColor CW.azure
-
-violet = fromCWColor CW.violet
-
-rose = fromCWColor CW.rose
-
--- Other common colors and color names
-brown = fromCWColor CW.brown
-
-purple = fromCWColor CW.purple
-
-pink = fromCWColor CW.pink
-
 mixed :: [Color] -> Color
 mixed = fromCWColor . CW.mixed . P.map toCWColor
 
@@ -140,11 +100,6 @@ dull = fromCWColor . CW.dull . toCWColor
 translucent :: Color -> Color
 translucent = fromCWColor . CW.translucent . toCWColor
 
-gray, grey :: Number -> Color
-gray = fromCWColor . CW.gray . toDouble
-
-grey = gray
-
 assortedColors :: [Color]
 assortedColors = P.map fromCWColor CW.assortedColors
 
@@ -160,27 +115,102 @@ alpha = fromDouble . CW.alpha . toCWColor
 -- New style colors
 
 pattern White :: Color
-pattern Black :: Color
-pattern Gray :: Color
-pattern Grey :: Color
-pattern Red :: Color
-pattern Orange :: Color
-pattern Yellow :: Color
-pattern Green :: Color
-pattern Blue :: Color
-pattern Purple :: Color
-pattern Pink :: Color
-pattern Brown :: Color
-
 pattern White  = HSL(  0, 0.00, 1.00)
+
+pattern Black :: Color
 pattern Black  = HSL(  0, 0.00, 0.00)
+
+pattern Gray :: Color
 pattern Gray   = HSL(  0, 0.00, 0.50)
+
+pattern Grey :: Color
 pattern Grey   = HSL(  0, 0.00, 0.50)
+
+pattern Red :: Color
 pattern Red    = HSL(  0, 0.75, 0.50)
+
+pattern Orange :: Color
 pattern Orange = HSL( 35, 0.75, 0.50)
+
+pattern Yellow :: Color
 pattern Yellow = HSL( 56, 0.75, 0.50)
+
+pattern Green :: Color
 pattern Green  = HSL(120, 0.75, 0.50)
+
+pattern Blue :: Color
 pattern Blue   = HSL(220, 0.75, 0.50)
+
+pattern Purple :: Color
 pattern Purple = HSL(275, 0.75, 0.50)
+
+pattern Pink :: Color
 pattern Pink   = HSL(330, 0.75, 0.75)
+
+pattern Brown :: Color
 pattern Brown  = HSL( 30, 0.60, 0.40)
+
+-- Old style colors
+
+white, black, red, green, blue, cyan, magenta, yellow :: Color
+orange, rose, chartreuse, aquamarine, violet, azure :: Color
+gray, grey :: Number -> Color
+
+white = fromCWColor CW.white
+black = fromCWColor CW.black
+red = fromCWColor CW.red
+yellow = fromCWColor CW.yellow
+green = fromCWColor CW.green
+cyan = fromCWColor CW.cyan
+blue = fromCWColor CW.blue
+magenta = fromCWColor CW.magenta
+orange = fromCWColor CW.orange
+chartreuse = fromCWColor CW.chartreuse
+aquamarine = fromCWColor CW.aquamarine
+azure = fromCWColor CW.azure
+violet = fromCWColor CW.violet
+rose = fromCWColor CW.rose
+brown = fromCWColor CW.brown
+purple = fromCWColor CW.purple
+pink = fromCWColor CW.pink
+gray = fromCWColor . CW.gray . toDouble
+grey = gray
+
+{-# WARNING white      [ "Please use White (capitalized) instead of white."
+                       , "The variable white may be removed July 2019." ] #-}
+{-# WARNING black      [ "Please use Black (capitalized) instead of black."
+                       , "The variable black may be removed July 2019." ] #-}
+{-# WARNING red        [ "Please use Red (capitalized) instead of red."
+                       , "The variable red may be removed July 2019." ] #-}
+{-# WARNING green      [ "Please use Green (capitalized) instead of green."
+                       , "The variable green may be removed July 2019." ] #-}
+{-# WARNING blue       [ "Please use Blue (capitalized) instead of blue."
+                       , "The variable blue may be removed July 2019." ] #-}
+{-# WARNING yellow     [ "Please use Yellow (capitalized) instead of yellow."
+                       , "The variable yellow may be removed July 2019." ] #-}
+{-# WARNING orange     [ "Please use Orange (capitalized) instead of orange."
+                       , "The variable orange may be removed July 2019." ] #-}
+{-# WARNING brown      [ "Please use Brown (capitalized) instead of brown."
+                       , "The variable brown may be removed July 2019." ] #-}
+{-# WARNING purple     [ "Please use Purple (capitalized) instead of purple."
+                       , "The variable purple may be removed July 2019." ] #-}
+{-# WARNING pink       [ "Please use Pink (capitalized) instead of pink."
+                       , "The variable pink may be removed July 2019." ] #-}
+{-# WARNING magenta    [ "Please use RGB(...) instead of magenta."
+                       , "The variable magenta may be removed July 2019." ] #-}
+{-# WARNING cyan       [ "Please use RGB(...) instead of cyan."
+                       , "The variable cyan may be removed July 2019." ] #-}
+{-# WARNING chartreuse [ "Please use RGB(...) instead of chartreuse."
+                       , "The variable chartreuse may be removed July 2019." ] #-}
+{-# WARNING aquamarine [ "Please use RGB(...) instead of aquamarine."
+                       , "The variable aquamarine may be removed July 2019." ] #-}
+{-# WARNING azure      [ "Please use RGB(...) instead of azure."
+                       , "The variable azure may be removed July 2019." ] #-}
+{-# WARNING rose       [ "Please use RGB(...) instead of rose."
+                       , "The variable rose may be removed July 2019." ] #-}
+{-# WARNING violet     [ "Please use Purple instead of violet."
+                       , "The variable violet may be removed July 2019." ] #-}
+{-# WARNING gray       [ "Please use Gray with the light/dark functions instead."
+                       , "The gray(...) function may be removed July 2019." ] #-}
+{-# WARNING grey       [ "Please use Grey with the light/dark functions instead."
+                       , "The grey(...) function may be removed July 2019." ] #-}

@@ -326,7 +326,7 @@ variables as you like. For example, you might write:
 ~~~~~
 name = "Han"
 age = 14
-favoriteColor = blue
+favoriteColor = Blue
 ~~~~~
 
 !!! Warning
@@ -357,12 +357,13 @@ is written on the name tag.
 !!! Warning
     Don't put quotes around a variable!
     This code includes the expression `lettering(name)`, **without**
-    quotation marks.  What would happen if you included quotation marks?
-    You'd see a nametag with the word "name" written on it!
+    quotation marks.  What would happen if you write `lettering("name")`
+    with the quotation marks?  You'd see a nametag with the word "name"
+    written on it.  Oops!
 
-    Oops!  Quotation marks tell the computer *not* to interpret something
-    as code, but just as a piece of text.  Variables are code, so don't
-    put quotation marks around your code.
+    Quotation marks tell the computer *not* to interpret something as code,
+    but just as a piece of text.  Variables are code, so don't put
+    quotation marks around your code.
 
 Remember, though, that defining a variable doesn't do anything by itself.
 Suppose you wrote this code:
@@ -566,7 +567,7 @@ more hints, expand the sections below for an example and explanation.
 
     ~~~~~ . clickable
     program = drawingOf(pic)
-    pic = thickCircle(8, 4, 1)
+    pic = thickRectangle(8, 4, 1)
     ~~~~~
 
     The first two arguments are the width and height of the rectangle.
@@ -631,9 +632,13 @@ picture, which is just like the original, except for the different color.
 
 ~~~~~ . clickable
 program  = drawingOf(redWheel)
-redWheel = colored(wheel, red)
+redWheel = colored(wheel, Red)
 wheel    = solidCircle(4)
 ~~~~~
+
+!!! Tip: Color names are capitalized.
+    Color names are not variables, but just plain values.  Because of this,
+    they are written with capital letters, like `Red` instead of `red`.
 
 Try that out.  Once you understand it, let's take a closer look at this
 program, by asking and answering a question.
@@ -645,43 +650,47 @@ program, by asking and answering a question.
 
     Surprised?  If so, this is a good chance to review what a
     transformation does--and what it doesn't do.  The equation
-    `redWheel = colored(wheel, red)` tells you that `redWheel` is a
-    picture that is just like `wheel`, except drawn in red.  So yes,
-    `redWheel` is drawn in red, like you expect.  But that *doesn't*
-    change the meaning of `wheel`.  `redWheel` is a different picture.
-    The final program draws a wheel in red, because you've defined the
-    program to be a drawing of `redWheel`.
+    `redWheel = colored(wheel, Red)` defines a variable called
+    `redWheel`, which is a picture that is just like `wheel`, except
+    drawn in red.  The new variable, `redWheel`, is colored red like
+    you expected.  But that *doesn't* change the meaning of the other
+    variable, `wheel`.  Remember that `redWheel` and `wheel` are
+    different pictures.
+
+    The final program draws a wheel in red, because you defined the
+    **program** to be a drawing of `redWheel`.
 
     Can you guess what the result of this code is?
 
     ~~~~~ . clickable
     program  = drawingOf(wheel)
-    redWheel = colored(wheel, red)
+    redWheel = colored(wheel, Red)
     wheel    = solidCircle(4)
     ~~~~~
 
-    This time, you see a black circle. `redWheel` is still defined to
-    be a red circle; but that doesn't change anything, because
-    `program` is defined to be a drawing of `wheel`, which is black.
+    If you ran this, you see a black circle. `redWheel` is still
+    defined to be a red circle; but that doesn't change anything
+    because `program` is defined to be a drawing of `wheel`, which
+    is still black.
 
 When you use `colored` in a program, a *whole expression* like
-`colored(pic, blue)` describes a picture, so you can use an expression
+`colored(pic, Blue)` describes a picture, so you can use an expression
 like this in all the same places you could use any other description of
 a picture.  For example, you might define `nametag` like this.
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
 
-nametag = colored(outerBorder, blue) &
-          colored(innerBorder, green) &
-          colored(name, red)
+nametag = colored(outerBorder, Blue) &
+          colored(innerBorder, Green) &
+          colored(name, Red)
 
 outerBorder = thickRectangle(15, 15, 1)
 innerBorder = thickCircle(6, 1)
 name        = lettering("Winona")
 ~~~~~
 
-Since `colored(outerBorder, blue)` is an expression that describes a
+Since `colored(outerBorder, Blue)` is an expression that describes a
 picture, you can combine it with other pictures using **`&`**, just
 like you could with `circle(5)`, `rectangle(3, 4)`, or any other
 picture expression.
@@ -690,14 +699,13 @@ Here is a table of colors you can use:
 
 |            |            |            |            |
 |------------|------------|------------|------------|
-| red        | yellow     | green      | orange     |
-| blue       | purple     | pink       | brown      |
-| cyan       | magenta    | chartreuse | aquamarine |
-| azure      | rose       | white      | black      |
+| Red        | Yellow     | Green      | Blue       |
+| Orange     | Purple     | Pink       | Brown      |
+| White      | Black      | Gray       |            |
 
 !!! Tip
-    Why would you use `white`, when the background color in CodeWorld
-    is already white?
+    Why would you ever use the color `White`, when the background
+    color in CodeWorld is already white?
 
     Although the background in CodeWorld starts out white, you can
     use a large colored shape to change the background to some other
@@ -706,7 +714,7 @@ Here is a table of colors you can use:
 
     ~~~~~ . clickable
     program  = drawingOf(nametag)
-    nametag  = colored(label, white) & colored(backdrop, purple)
+    nametag  = colored(label, White) & colored(backdrop, Purple)
     label    = lettering("Hashim")
     backdrop = solidRectangle(20, 20)
     ~~~~~
@@ -841,10 +849,10 @@ program = drawingOf(sunset)
 sunset = translated(ground, 0, -5) &
          translated(orangeSun, 0, 2) &
          blueSky
-orangeSun = colored(sun, orange)
+orangeSun = colored(sun, Orange)
 sun = solidCircle(3)
 ground = solidRectangle(20, 10)
-blueSky = colored(sky, blue)
+blueSky = colored(sky, Blue)
 sky = solidRectangle(20, 20)
 ~~~~~
 
@@ -854,10 +862,10 @@ by itself.  Understanding the meaning of each of your variables is how
 you get better at programming!
 
 !!! Note: Challenge -- Make your own emoji!
-    Using your skills, can you invent your own emoji?  Try a yellow
-    solid circle for the face, and then arrange smaller circles and
+    Using your skills, can you invent your own emoji?  Try a solid
+    yellow circle for the face, and then arrange smaller circles and
     rectangles for eyes, a nose, and mouth, and anything else you
-    like!  Hair? Glasses?  Go wild!
+    like!  Rectangles for hair?  Circles for glasses?  Go wild!
 
 Rotation: Turning
 -----------------
@@ -928,6 +936,13 @@ rotated rectangles, text, and more.
 
     To avoid this, consider rotating the shape first, and then translating
     the rotated shape.
+
+    ~~~~~ . clickable
+    program = drawingOf(translatedBox)
+    rotatedBox = rotated(box, 60)
+    translatedBox = translated(rotatedBox, 7, 0)
+    box = solidRectangle(2, 2)
+    ~~~~~
 
 Dilation: Resizing
 ------------------
@@ -1061,9 +1076,9 @@ simple expressions.
 | `codeWorldLogo`          | Picture       |
 | `circle(4)`              | Picture       |
 | `translated(sun, -5, 7)` | Picture       |
-| `colored(wheel, red)`    | Picture       |
+| `colored(wheel, Red)`    | Picture       |
 | `circle(8) & circle(9)`  | Picture       |
-| `blue`                   | Color         |
+| `Blue`                   | Color         |
 | `1/2`                    | Number        |
 | `2`                      | Number        |
 | `"Sofia"`                | Text          |
@@ -1078,9 +1093,9 @@ To learn more about the kinds of expressions you can write in
 CodeWorld, explore the topics below.
 
 !!! collapsible: Literal expressions
-    For some types, like numbers and text, you can write values
-    directly as a simple kind of expression.  These are called
-    **literal** expressions.
+    For some types, like numbers, text, and colors, you can write
+    values directly as a simple kind of expression.  These are
+    called **literal** expressions.
 
     Literal expressions for numbers can be whole numbers, like
     `5` or `-1`, or they can be decimals, like `1.5` or `3.14`.
@@ -1088,24 +1103,28 @@ CodeWorld, explore the topics below.
     too, although this isn't *exactly* a literal; it's actually
     dividing two other numbers.
 
-    Text is the other type of value that has a literal
-    expression.  A literal expression for text is written in
-    quotation marks.  Your name, in the nametag program you
-    wrote earlier, is an example.
+    Text also has literal expressions.  A literal expression for
+    text is written in quotation marks.  Your name, in the nametag
+    program you wrote earlier, is an example.
+
+    Finally, common color names like `Blue` and `Green` are
+    literal expressions, too.
 
 !!! collapsible: Variables
     A variable is another kind of expression.  Variables are
     names the computer already knows, or that you have defined
     elsewhere, that represent a value.  Some of the variables
     you have used as expressions are `codeWorldLogo` (which is
-    a known picture), `blue` (which is a known color), or
-    `nametag` (a picture that you defined elsewhere in the
-    program).
+    a known picture) or `nametag` (a picture that you defined
+    elsewhere in the program).
 
     Most of the time, variables that are already known to the
     computer act about the same as literal expressions.  As you
     learn more advanced techniques, the difference will become
-    important.
+    important.  In CodeWorld, you can always tell the
+    difference because variables start with lower-case letters.
+    (In mathematics outside of CodeWorld, variables are mostly
+    lower-case letters, too, but it's not a hard and fast rule.)
 
 !!! collapsible: Function applications
     Most of the expressions you've written so far have been
@@ -1362,12 +1381,12 @@ Of course, in your actual code, there are more than just parentheses.
 Consider a nested expression like this:
 
 ~~~~~
-drawingOf(colored(circle(5) & rectangle(1, 2), blue))
+drawingOf(colored(circle(5) & rectangle(1, 2), Blue))
 ~~~~~
 
 Can you identify the two arguments needed by the `colored` function?
 (The first is `circle(5) & rectangle(1, 2)`, and the second is
-`blue`.)  How would you figure this out in general?  If you can match
+`Blue`.)  How would you figure this out in general?  If you can match
 parentheses, then you can extend this to diagramming the entire code.
 
 You may remember that when you first wrote function applications, you
@@ -1389,17 +1408,16 @@ can be visualized like this:
 *           .----------------------+-----.
 *          |             .--+---.  |      |
 *  .-------+  .---------+   |    | |      |
-* | colored| | rectangle| 5 | 10 | | blue |
+* | colored| | rectangle| 5 | 10 | | Blue |
 *  '-------+  '---------+   |    | |      |
 *          |             '--+---'  |      |
 *           '----------------------+-----'
 *********************************************
 
 In this diagram, you can clearly see that there are two arguments to
-the colored function, and that the first is another function
-application, while the other is the color blue.  If you look closer
-at the first argument, you'll see that it's *another* function
-application, with two arguments of its own.
+the colored function: a picture with its own expression, and the color
+`blue`.  If you look closer at the first argument, you'll see that it's
+*another* function application, with two number arguments of its own.
 
 Picking apart the pieces of an expression like this is called
 **parsing**, and it's an important skill to build so that you can read
@@ -1407,13 +1425,13 @@ and understand code more easily.  Parsing is all about answering two
 questions:
 
 1. What **form** of expression is this?  For example, is this a literal
-   expression, a function application, or an operation?
+   expression, a variable, a function application, or an operation?
 2. What are the **subexpressions**, or smaller expressions that
    represent values that are put together by the main expression?
 
 In this example, the *form* is a function application of the `colored`
 function.  The two arguments to the function, `rectangle(5, 10)` and
-`blue`, are *subexpressions*.
+`Blue`, are *subexpressions*.
 
 If the form of expression is an operation, you can draw the diagram a
 little differently.  Operators work exactly like functions, but instead
@@ -1434,7 +1452,7 @@ For instance, `5 + 3` can be visualized like this:
 Returning to the example that started this section:
 
 ~~~~~
-drawingOf(colored(circle(5) & rectangle(1, 2), blue))
+drawingOf(colored(circle(5) & rectangle(1, 2), Blue))
 ~~~~~
 
 can be visualized something like this:
@@ -1445,7 +1463,7 @@ can be visualized something like this:
 *            |          |  .-------------.     .--------------------.  |     | |
 *            |          | |          .-.  +---+             .--+--.  | |     | |
 *  .---------+  .-------+ |  .------+   | |   |  .---------+   |   | | |     | |
-* | drawingOf| | colored| | | circle| 5 | | & | | rectangle| 1 | 2 | | | blue| |
+* | drawingOf| | colored| | | circle| 5 | | & | | rectangle| 1 | 2 | | | Blue| |
 *  '---------+  '-------+ |  '------+   | |   |  '---------+   |   | | |     | |
 *            |          | |          '-'  +---+             '--+--'  | |     | |
 *            |          |  '-------------'     '--------------------'  |     | |
@@ -1467,19 +1485,19 @@ to the right location.  To do this, you can nest these transformations
 together, like this:
 
 ~~~~~
-    translated( rotated( colored(pic, blue), 45 ), 0, 5 )
+    translated( rotated( colored(pic, Blue), 45 ), 0, 5 )
 ~~~~~
 
 Just like when matching parentheses, the way to read nested transformations is
 from the inside out.  In this example:
 
 1. You started with the picture called `pic`.
-2. Then you changed the color of that picture to blue.
+2. Then you changed the color of that picture to `Blue`.
 3. Then you rotated that picture by 45 degrees.
 4. Finally, you translated that picture up by 5 units.
 
 This might seem unusual at first, since the function names occur in the
-opposite order.  It might also surprise you that the arguments like `blue`
+opposite order.  It might also surprise you that the arguments like `Blue`
 and `45` come in the opposite order as the functions they apply to.  Just
 remember that every transformation starts with the picture described by its
 argument.  As a result, the starting point is on the inside, and the
@@ -1491,7 +1509,7 @@ inside out, like this:
 * |              .-----------------------------------------.        |
 * |             |           .-----------------------.       |       |
 * |             |          |           .---.         |      |       |
-* | translated( | rotated( | colored( | pic | ,blue) | ,45) | ,0,5) |
+* | translated( | rotated( | colored( | pic | ,Blue) | ,45) | ,0,5) |
 * |             |          |           '---'         |      |       |
 * |             |           '-----------------------'       |       |
 * |              '-----------------------------------------'        |
@@ -1508,15 +1526,15 @@ pic =                           circle(2)
 ~~~~~
 
 ~~~~~ .
-pic =                   colored(circle(2), red)
+pic =                   colored(circle(2), Red)
 ~~~~~
 
 ~~~~~ .
-pic =            scaled(colored(circle(2), red), 2, 1)
+pic =            scaled(colored(circle(2), Red), 2, 1)
 ~~~~~
 
 ~~~~~ .
-pic = translated(scaled(colored(circle(2), red), 2, 1), 0, -5)
+pic = translated(scaled(colored(circle(2), Red), 2, 1), 0, -5)
 ~~~~~
 
 Things get easier when you realize that you don't need to type your
@@ -1763,95 +1781,86 @@ Transforming colors
 -------------------
 
 You've already seen how to use the `colored` function to transform a picture
-by changing its color.  However, up to this point, you've ben limited to
-choosing a few colors known to the computer.  Now it's time to learn a bit more
-about the rich variety of colors available to you.
-
-The colors available are as follows:
-* The **primary** light colors: `red`, `green`, and `blue`
-* The **secondary** light colors: `cyan`, `magenta`, and `yellow`
-* The **tertiary** light colors: `orange`, `chartreuse`, `aquamarine`, `azure`, `violet`, and `rose`
-* Miscellaneous colors: `purple`, `pink`, `brown`, `black`, and `white`
-
-The primary colors might be a little different from what you are used to.
-Computers use the primary light colors: red, green, and blue.  These are
-a little different from the primary ink colors (cyan, magenta, and yellow),
-or the primary paint colors (red, yellow, and blue).  The primary light
-colors can be mixed by shining both on the same spot.  For example, if you
-stood in a dark room, and shone a red and a green colored flashlight at the
-same spot on the wall, you could see the yellow color made when these colors
-of light mix.  Light works a bit differently from paints (where you'd
-expect to mix blue and yellow to make green), or from inks (where you'd make
-red by mixing yellow and magenta).
-
-You can also make shades of gray, by using the `gray` function.  This
-function expects an argument between 0 and 1.  `gray(0)` is just black,
-and `gray(1)` is white.  To make a true gray, pass a number somewhere in
-between these extremes: a lower number for a darker shade, or a higher number
-for a lighter shade.
-
-You can also mix and transform colors using these functions:
+by changing its color.  However, up to this point, you've been limited to
+choosing a few colors known to the computer: namely, `Red`, `Yellow`, `Green`,
+`Blue`, `Orange`, `Brown`, `Pink`, `Purple`, `White`, `Black`, and `Gray`.
+Now it's time to explore some new functions that you can use to customize
+your colors.
 
 ~~~~~
 light :: Color -> Color
 dark :: Color -> Color
-
-bright :: Color -> Color
-dull :: Color -> Color
-
-translucent :: Color -> Color
-
-mixed :: [Color] -> Color
 ~~~~~
 
 The `light` and `dark` functions change the shade of a color.  For example,
-`dark(green)` is still green, but a darker shade.  You can apply these
-functions more than once, so `dark(dark(green))` is an even darker shade.
+`dark(Green)` is still green, but a darker shade.  You can apply these
+functions more than once, so `dark(dark(Green))` is an even darker shade.
+
+~~~~~
+bright :: Color -> Color
+dull :: Color -> Color
+~~~~~
 
 The `bright` and `dull` functions change the amount of color.  So, for
-example, `dull(blue)` is a sort of grayish blue, but `bright(blue)` is a
-vivid blue.  Again, you can apply them more than once, so for example,
-`dull(dull(blue))` is almost completely gray.
+example, `dull(Blue)` is a muted and grayish blue, but `bright(Blue)` is
+vivid and colorful.  Again, you can apply them more than once, so
+`dull(dull(Blue))` is almost completely gray, but with a blue tint to it.
+
+~~~~~
+translucent :: Color -> Color
+~~~~~
 
 The `translucent` function makes a color partially transparent, so you can
 see through it to the pictures that you've placed behind it using the **`&`**
 operator.
 
+~~~~~
+mixed :: [Color] -> Color
+~~~~~
+
 Finally, you can mix colors using `mixed`.  If you want a reddish brown, for
-example, you can use `mixed([red, brown])`.  Just like polygons earlier, the
-`mixed` function has a list as a parameter, which means you can give it any
-number of colors to mix together.  You can even mix colors in different
-proportions by listing the same color more than once, as in
-`mixed([red, red, yellow])`
+example, you can use `mixed([Red, Brown])`.  Just like the polygons you used
+earlier, the `mixed` function receives a **list** in square brackets for a
+parameter.  You can give it any number of colors to mix together.  You can
+even mix colors in different proportions by listing the same color more than
+once, as in `mixed([Red, Red, Brown])`
 
 Several of these functions can be used together.  These let you describe
 very detailed colors, like:
 
 ~~~~~
-mixed([light(dull(yellow)), bright(green)])
+mixed([light(dull(Yellow)), bright(Green)])
 ~~~~~
 
 !!! collapsible: What's the difference between `bright` and `light`?
     The functions `bright` and `light` sound very much alike, but they
     don't mean the same thing.  `light` makes a color lighter in shade,
-    so it's closer to white.  But `bright` makes the color more vibrant,
-    further away from gray.
+    so it's closer to white.  But `bright` makes it more vibrant and
+    colorful - further away from gray.
 
 ### Color spaces
 
-One more way to build a color is by giving the exact proportions of red,
-green, and blue light used to describe it.  This is known as the RGB form
-of the color.
+You've just learned how to customize your colors by using transformations
+like `light`, `dark`, `bright`, or `dull`.  These functions start with a
+base color, and modify it.  But you can also describe colors using
+numbers.  The schemes you can use to describe a color using numbers are
+called **color spaces**.
 
 ~~~~~
 RGB :: (Number, Number, Number) -> Color
 ~~~~~
 
-The proportions are numbers between 0 (no light of that color)
-and 1 (as much light of that color as possible).  The color white can be
-described as `RGB(1,1,1)` meaning that it contains as much light as possible
-in all colors.  Black, on the other hand, is `RGB(0,0,0)`, meaning it is the
-color you get from, no light at all.
+The RGB color space describes colors by the amount of red, green, or blue
+light that is mixed together to produce that color.  This might be
+surprising, but any color can be produced by mixing those three!  Because
+of this, they are known as the primary light colors.
+
+The proportions you provide for each primary color are numbers between 0
+(meaning, no light of that color at all) and 1 (meaning, as much light of
+that color as possible).  The color `White` could also be written as
+`RGB(1,1,1)` meaning that it contains as much light as possible in all
+three colors.  `Black`, on the other hand, is `RGB(0,0,0)`, meaning it is
+the color you get from no light at all.
 
 The RGB colors can be visualized as a cube, where the amount of red, green,
 and blue light is measured along each edge.
@@ -1861,36 +1870,41 @@ and blue light is measured along each edge.
 !!! collapsible: Using RGB colors from other places
     You can often find the RGB values for colors on the internet.  You'll
     need to know, though, what scale they are using.  For historical reasons,
-    RGB forms are sometimes given on a scale from 0 to 255, instead of
-    0 to 1.  To use these in CodeWorld, you'll need to divide the numbers
-    by 255.
+    RGB forms are often given on a scale from 0 to 255, instead of 0 to 1.
+    To use these in CodeWorld, you'll need to divide the numbers by 255.
 
     For example, Wikipedia [will tell you](https://en.wikipedia.org/wiki/Forest_green)
-    that the RGB form of "forest green" is (34, 139, 34).  To describe this color
-    in CodeWorld, you would write `RGB(34/255, 139/255, 34/255)`.
-
-A second way to describe colors is using the HSL form.
+    that the RGB values for "forest green" are 34, 139, and 34.  To describe
+    this color in CodeWorld, you could write `RGB(34/255, 139/255, 34/255)`.
 
 ~~~~~
 HSL :: (Number, Number, Number) -> Color
 ~~~~~
 
-In this form, you first provide the **hue**, which is the direction of the color
-on the *color wheel*, as an angle.  0 degrees represents red, and positive
-angles move from there to yellow, green, blue, purple, and back to red.
-
-The second two numbers are **saturation**, which says how much color there
-is (0 means a shade of gray, while 1 means a super-bright color), and
-**luminosity**, which describes the lightness of the color (0 means black, normal
-colors are 0.5, and 1 means white).
+A second way to describe colors is using the HSL form.  In this form, you
+first provide the **hue**, which is the direction of that color on the *color
+wheel*, as an angle.  A hue of 0 degrees is a shade of red, and positive
+angles move from there through yellow, green, blue, purple, and back to red
+again.
 
 ![](https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/RGB_color_wheel_72.svg/1024px-RGB_color_wheel_72.svg.png width=50%)
 
-Finally, a variant of the RGB form is called RGBA.
+The second number is **saturation**, which says how much color there
+is.  For this number, 0 means a shade of gray with no color at all, while 1
+means super-colorful.  You may recall that `bright` is a function that
+increases the saturation of a color, and `dull` decreases it.
+
+Finally, **luminosity**, describes the lightness of the color.  A luminosity
+of 0 is always black, and 1 is white, regardless of the other numbers.  You
+might remember that `light` and `dark` are functions that change the
+luminosity of a color.  An ordinary medium-tone color has a luminosity of
+about a half, which you can write as `0.5` or `1/2`.
 
 ~~~~~
 RGBA :: (Number, Number, Number, Number) -> Color
 ~~~~~
+
+Finally, a variant of the RGB color space is called RGBA.
 
 This function takes the same red, green, and blue proportions as RGB, but then
 another number called the *alpha*, describing how opaque the color is.  An
@@ -1900,8 +1914,11 @@ A partially transparent shape would have an alpha number somewhere between zero
 and one.
 
 The `RGB`, `HSL`, and `RGBA` functions are the most powerful tools you have,
-but also the hardest to use.  If you just want a dark blue, try `dark(blue)`.
-But if you definitely need a specific color, these functions are there for you.
+but also the hardest to use.  Using them too often makes your code not only
+harder to write, but also harder for others to read.  So if you just want a
+dark blue, try `dark(Blue)` first.  But if you definitely need a precise
+color, or if you're having trouble describing the color you want with simpler
+expressions, these functions are available to you.
 
 Top-down decomposition
 ======================
@@ -1951,19 +1968,8 @@ backdrop = stars & space
 ...
 ~~~~~
 
-And you're just getting started!  Finally, though, you get to pictures that
-are simple enough to define with a single shape.
-
-~~~~~
-...
-pupil = solidCircle(1/2)
-iris = colored(solidCircle(2/3), brown)
-whites = colored(solidCircle(1), white)
-face = colored(solidCircle(3), purple)
-space = solidRectangle(20, 20)
-~~~~~
-
-This gives the following partial decomposition of the space scene.
+And you're just getting started!  This gives the following partial
+decomposition of the space scene.
 
 *********************************************************************
 *                                   scene
@@ -1980,6 +1986,18 @@ This gives the following partial decomposition of the space scene.
 *  |      |      |      |
 * nose   eye   mouth   face
 ********************************************************************
+
+Finally, though, you get to pictures that are simple enough to define with
+a single shape.
+
+~~~~~
+...
+pupil = solidCircle(1/2)
+iris = colored(solidCircle(2/3), Brown)
+whites = colored(solidCircle(1), White)
+face = colored(solidCircle(3), Purple)
+space = solidRectangle(20, 20)
+~~~~~
 
 Finally, you will need to add translations to the parts to move them to the
 right part of the screen.  It takes some persistence, but eventually, you

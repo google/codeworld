@@ -27,7 +27,7 @@ import Internal.Truth
 import qualified "base" Prelude as P
 import "base" Prelude ((.))
 
-newtype Color = Color CW.Color deriving (P.Eq)
+newtype Color = Color { toCWColor :: CW.Color } deriving (P.Eq)
 type Colour = Color
 
 {-# RULES
@@ -70,46 +70,40 @@ toHSL _ = P.Nothing
 
 fromHSL :: (Number, Number, Number) -> Color
 fromHSL (h, s, l) =
-    fromCWColor (CW.HSL (toDouble (pi * h / 180)) (toDouble s) (toDouble l))
-
-toCWColor :: Color -> CW.Color
-toCWColor (Color c) = c
-
-fromCWColor :: CW.Color -> Color
-fromCWColor = Color
+    Color (CW.HSL (toDouble (pi * h / 180)) (toDouble s) (toDouble l))
 
 mixed :: [Color] -> Color
-mixed = fromCWColor . CW.mixed . P.map toCWColor
+mixed = Color . CW.mixed . P.map toCWColor
 
 lighter :: (Color, Number) -> Color
-lighter (c, d) = fromCWColor (CW.lighter (toDouble d) (toCWColor c))
+lighter (c, d) = Color (CW.lighter (toDouble d) (toCWColor c))
 
 light :: Color -> Color
-light = fromCWColor . CW.light . toCWColor
+light = Color . CW.light . toCWColor
 
 darker :: (Color, Number) -> Color
-darker (c, d) = fromCWColor (CW.darker (toDouble d) (toCWColor c))
+darker (c, d) = Color (CW.darker (toDouble d) (toCWColor c))
 
 dark :: Color -> Color
-dark = fromCWColor . CW.dark . toCWColor
+dark = Color . CW.dark . toCWColor
 
 brighter :: (Color, Number) -> Color
-brighter (c, d) = fromCWColor (CW.brighter (toDouble d) (toCWColor c))
+brighter (c, d) = Color (CW.brighter (toDouble d) (toCWColor c))
 
 bright :: Color -> Color
-bright = fromCWColor . CW.bright . toCWColor
+bright = Color . CW.bright . toCWColor
 
 duller :: (Color, Number) -> Color
-duller (c, d) = fromCWColor (CW.duller (toDouble d) (toCWColor c))
+duller (c, d) = Color (CW.duller (toDouble d) (toCWColor c))
 
 dull :: Color -> Color
-dull = fromCWColor . CW.dull . toCWColor
+dull = Color . CW.dull . toCWColor
 
 translucent :: Color -> Color
-translucent = fromCWColor . CW.translucent . toCWColor
+translucent = Color . CW.translucent . toCWColor
 
 assortedColors :: [Color]
-assortedColors = P.map fromCWColor CW.assortedColors
+assortedColors = P.map Color CW.assortedColors
 
 hue, saturation, luminosity, alpha :: Color -> Number
 hue = (180 *) . (/ pi) . fromDouble . CW.hue . toCWColor
@@ -164,24 +158,24 @@ white, black, red, green, blue, cyan, magenta, yellow :: Color
 orange, rose, chartreuse, aquamarine, violet, azure :: Color
 gray, grey :: Number -> Color
 
-white = fromCWColor CW.white
-black = fromCWColor CW.black
-red = fromCWColor CW.red
-yellow = fromCWColor CW.yellow
-green = fromCWColor CW.green
-cyan = fromCWColor CW.cyan
-blue = fromCWColor CW.blue
-magenta = fromCWColor CW.magenta
-orange = fromCWColor CW.orange
-chartreuse = fromCWColor CW.chartreuse
-aquamarine = fromCWColor CW.aquamarine
-azure = fromCWColor CW.azure
-violet = fromCWColor CW.violet
-rose = fromCWColor CW.rose
-brown = fromCWColor CW.brown
-purple = fromCWColor CW.purple
-pink = fromCWColor CW.pink
-gray = fromCWColor . CW.gray . toDouble
+white = Color CW.white
+black = Color CW.black
+red = Color CW.red
+yellow = Color CW.yellow
+green = Color CW.green
+cyan = Color CW.cyan
+blue = Color CW.blue
+magenta = Color CW.magenta
+orange = Color CW.orange
+chartreuse = Color CW.chartreuse
+aquamarine = Color CW.aquamarine
+azure = Color CW.azure
+violet = Color CW.violet
+rose = Color CW.rose
+brown = Color CW.brown
+purple = Color CW.purple
+pink = Color CW.pink
+gray = Color . CW.gray . toDouble
 grey = gray
 
 {-# WARNING white      [ "Please use White (capitalized) instead of white."

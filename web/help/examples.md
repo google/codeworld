@@ -189,9 +189,11 @@ In this example, a ball bounces around the screen.  The ball starts with
 a random position and velocity, and bounces when it hits the edge of the
 screen.
 
-This is an example of simulation mode.  The position of the ball is
-difficult to describe as an immediate function of the current time, so
-instead, the program simulates the movement of the ball in small steps.
+This is an example of a program with state, using the `activityOf`
+function.  The position of the ball would be difficult to describe in an
+animation, as a function of the current time.  So instead, the program
+simulates the movement of the ball in small steps, remembering what has
+happened so far.
 
 ~~~~~ . clickable
 program = activityOf(initial, change, picture)
@@ -229,10 +231,9 @@ Example: Maze
 =============
 
 This example generates random mazes, and allows the player to navigate
-through the maze.  It is an example of a different style of game, using
-interaction mode.  Unlike the Asteroids example, this game doesn't use
-the step function at all!  Instead, all changes in the state are made
-in response to actions from the user.
+through the maze using their keyboard.  This demonstrates more of the
+capabilities of the `activityOf` function to respond to different kinds
+of events.
 
 ~~~~~ . clickable
 program = activityOf(createWorld, event, drawWorld)
@@ -353,11 +354,12 @@ foldl f z0 xs0 = lgo z0 xs0 where
 Example: Asteroids
 ==================
 
-Asteroids is an example of an elaborate game built with CodeWorld.  Using the
-interaction mode, Asteroids keeps track of a detailed world state, and
-simulates simple physics (vector acceleration and velocity) over time, as
-well as responding to the user.  It tracks scores between games, and it uses
-random numbers to make each game unique.  There's quite a lot there!
+Asteroids is an example of an elaborate game built with CodeWorld.  It
+combines interaction with the user through mouse and keyboard events, and
+physics simulation with velocity and position vectors that runs
+continuously over time.  The detailed game state also tracks scores
+between games, and uses random numbers to make each game unique.  There's
+quite a lot there!
 
 ~~~~~ . clickable
 program = activityOf(initial, change, picture)

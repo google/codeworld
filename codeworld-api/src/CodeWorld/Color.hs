@@ -233,40 +233,40 @@ grey (fence -> k) = RGBA k k k 1
 gray = grey
 
 {-# WARNING white      [ "Please use White (capitalized) instead of white."
-                       , "The variable white may be removed July 2019." ] #-}
+                       , "The variable white may be removed July 2020." ] #-}
 {-# WARNING black      [ "Please use Black (capitalized) instead of black."
-                       , "The variable black may be removed July 2019." ] #-}
+                       , "The variable black may be removed July 2020." ] #-}
 {-# WARNING red        [ "Please use Red (capitalized) instead of red."
-                       , "The variable red may be removed July 2019." ] #-}
+                       , "The variable red may be removed July 2020." ] #-}
 {-# WARNING green      [ "Please use Green (capitalized) instead of green."
-                       , "The variable green may be removed July 2019." ] #-}
+                       , "The variable green may be removed July 2020." ] #-}
 {-# WARNING blue       [ "Please use Blue (capitalized) instead of blue."
-                       , "The variable blue may be removed July 2019." ] #-}
+                       , "The variable blue may be removed July 2020." ] #-}
 {-# WARNING yellow     [ "Please use Yellow (capitalized) instead of yellow."
-                       , "The variable yellow may be removed July 2019." ] #-}
+                       , "The variable yellow may be removed July 2020." ] #-}
 {-# WARNING orange     [ "Please use Orange (capitalized) instead of orange."
-                       , "The variable orange may be removed July 2019." ] #-}
+                       , "The variable orange may be removed July 2020." ] #-}
 {-# WARNING brown      [ "Please use Brown (capitalized) instead of brown."
-                       , "The variable brown may be removed July 2019." ] #-}
+                       , "The variable brown may be removed July 2020." ] #-}
 {-# WARNING purple     [ "Please use Purple (capitalized) instead of purple."
-                       , "The variable purple may be removed July 2019." ] #-}
+                       , "The variable purple may be removed July 2020." ] #-}
 {-# WARNING pink       [ "Please use Pink (capitalized) instead of pink."
-                       , "The variable pink may be removed July 2019." ] #-}
+                       , "The variable pink may be removed July 2020." ] #-}
 {-# WARNING magenta    [ "Please use the RGB function instead of magenta."
-                       , "The variable magenta may be removed July 2019." ] #-}
+                       , "The variable magenta may be removed July 2020." ] #-}
 {-# WARNING cyan       [ "Please use the RGB function instead of cyan."
-                       , "The variable cyan may be removed July 2019." ] #-}
+                       , "The variable cyan may be removed July 2020." ] #-}
 {-# WARNING chartreuse [ "Please use the RGB function instead of chartreuse."
-                       , "The variable chartreuse may be removed July 2019." ] #-}
+                       , "The variable chartreuse may be removed July 2020." ] #-}
 {-# WARNING aquamarine [ "Please use the RGB function instead of aquamarine."
-                       , "The variable aquamarine may be removed July 2019." ] #-}
+                       , "The variable aquamarine may be removed July 2020." ] #-}
 {-# WARNING azure      [ "Please use the RGB function instead of azure."
-                       , "The variable azure may be removed July 2019." ] #-}
+                       , "The variable azure may be removed July 2020." ] #-}
 {-# WARNING rose       [ "Please use the RGB function instead of rose."
-                       , "The variable rose may be removed July 2019." ] #-}
+                       , "The variable rose may be removed July 2020." ] #-}
 {-# WARNING violet     [ "Please use Purple instead of violet."
-                       , "The variable violet may be removed July 2019." ] #-}
+                       , "The variable violet may be removed July 2020." ] #-}
 {-# WARNING gray       [ "Please use Gray with the light/dark functions instead."
-                       , "The gray function may be removed July 2019." ] #-}
+                       , "The gray function may be removed July 2020." ] #-}
 {-# WARNING grey       [ "Please use Grey with the light/dark functions instead."
-                       , "The grey function may be removed July 2019." ] #-}
+                       , "The grey function may be removed July 2020." ] #-}

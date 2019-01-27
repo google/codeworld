@@ -203,6 +203,7 @@ data World where
 
 radius = 2
 border = 10 - radius
+gravity = 30
 
 initial(x:y:vx:vy:_) = Ball((16*x  - 8, 16*y  - 8),
                             (16*vx - 8, 16*vy - 8))
@@ -211,10 +212,10 @@ change(world, TimePassing(dt)) = bounce(move(world, dt))
 change(world, other)           = world
 
 move(Ball((x,y), (vx,vy)), dt) = Ball((new_x, new_y), (new_vx, new_vy))
-  where new_x  = x + new_vx * dt
-        new_y  = y + new_vy * dt
+  where new_x  = x + vx * dt
+        new_y  = y + vy * dt - 0.5 * gravity * dt ^ 2
         new_vx = vx
-        new_vy = vy - 30 * dt
+        new_vy = vy - gravity * dt
 
 bounce(Ball((x,y), (vx,vy))) = Ball((nx,ny), (nvx, nvy))
   where nx  = fence(-border, border, x)

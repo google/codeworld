@@ -196,7 +196,7 @@ simulates the movement of the ball in small steps, remembering what has
 happened so far.
 
 ~~~~~ . clickable
-program = activityOf(initial, change, picture)
+program = activityOf(initial, fine(change, 0.05), picture)
 
 data World where
     Ball :: (Point, Vector) -> World
@@ -207,6 +207,12 @@ gravity = 30
 
 initial(x:y:vx:vy:_) = Ball((16*x  - 8, 16*y  - 8),
                             (16*vx - 8, 16*vy - 8))
+
+fine :: ((a, Event) -> a, Number) -> ((a, Event) -> a)
+fine(f, max_dt) = ff
+  where ff(x, TimePassing(dt))
+          | dt > max_dt = ff(f(x, TimePassing(max_dt)), TimePassing(dt - max_dt))
+        ff(x, other) = f(x, other)
 
 change(world, TimePassing(dt)) = bounce(move(world, dt))
 change(world, other)           = world

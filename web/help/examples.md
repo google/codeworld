@@ -217,13 +217,9 @@ move(Ball((x,y), (vx,vy)), dt) = Ball((new_x, new_y), (new_vx, new_vy))
         new_vx = vx
         new_vy = vy - gravity * dt
 
-bounce(Ball((x,y), (vx,vy))) = Ball((nx,ny), (nvx, nvy))
-  where nx  = fence(-border, border, x)
-        ny  = fence(-border, border, y)
-        nvx = if nx /= x then -vx else vx
-        nvy = if ny /= y then -vy else vy
-
-fence(lo, hi, x) = max(lo, min(hi, x))
+bounce(Ball((x,y), (vx,vy))) = Ball((x,y), (nvx, nvy))
+  where nvx = if (x < -border && vx < 0) || (x > border && vx > 0) then -vx else vx
+        nvy = if (y < -border && vy < 0) || (y > border && vy > 0) then -vy else vy
 
 picture(Ball((x,y),_)) = translated(solidCircle(radius), x, y)
 ~~~~~

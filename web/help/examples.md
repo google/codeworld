@@ -196,33 +196,36 @@ simulates the movement of the ball in small steps, remembering what has
 happened so far.
 
 ~~~~~ . clickable
-program = activityOf(initial, change, picture)
+program = activityOf(initial, fine(change, 0.05), picture)
 
 data World where
     Ball :: (Point, Vector) -> World
 
 radius = 2
 border = 10 - radius
+gravity = 30
 
 initial(x:y:vx:vy:_) = Ball((16*x  - 8, 16*y  - 8),
                             (16*vx - 8, 16*vy - 8))
+
+fine :: ((a, Event) -> a, Number) -> ((a, Event) -> a)
+fine(f, max_dt) = ff
+  where ff(x, TimePassing(dt))
+          | dt > max_dt = ff(f(x, TimePassing(max_dt)), TimePassing(dt - max_dt))
+        ff(x, other) = f(x, other)
 
 change(world, TimePassing(dt)) = bounce(move(world, dt))
 change(world, other)           = world
 
 move(Ball((x,y), (vx,vy)), dt) = Ball((new_x, new_y), (new_vx, new_vy))
-  where new_x  = x + new_vx * dt
-        new_y  = y + new_vy * dt
+  where new_x  = x + vx * dt
+        new_y  = y + vy * dt - 0.5 * gravity * dt ^ 2
         new_vx = vx
-        new_vy = vy - 30 * dt
+        new_vy = vy - gravity * dt
 
-bounce(Ball((x,y), (vx,vy))) = Ball((nx,ny), (nvx, nvy))
-  where nx  = fence(-border, border, x)
-        ny  = fence(-border, border, y)
-        nvx = if nx /= x then -vx else vx
-        nvy = if ny /= y then -vy else vy
-
-fence(lo, hi, x) = max(lo, min(hi, x))
+bounce(Ball((x,y), (vx,vy))) = Ball((x,y), (nvx, nvy))
+  where nvx = if (x < -border && vx < 0) || (x > border && vx > 0) then -vx else vx
+        nvy = if (y < -border && vy < 0) || (y > border && vy > 0) then -vy else vy
 
 picture(Ball((x,y),_)) = translated(solidCircle(radius), x, y)
 ~~~~~

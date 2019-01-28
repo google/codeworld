@@ -128,10 +128,26 @@ checkFunctionParentheses :: MonadCompile m => m ()
 checkFunctionParentheses =
     getParsedCode >>= \parsed -> case parsed of
         Parsed mod -> addDiagnostics $
-            everything (++) (mkQ [] badExpApps) mod ++
+            dedupErrorSpans (everything (++) (mkQ [] badExpApps) mod) ++
             everything (++) (mkQ [] badMatchApps) mod ++
             everything (++) (mkQ [] badPatternApps) mod
         _ -> return ()  -- Fall back on GHC for parse errors.
+
+dedupErrorSpans :: [Diagnostic] -> [Diagnostic]
+dedupErrorSpans [] = []
+dedupErrorSpans [err] = [err]
+dedupErrorSpans ((loc1, sev1, msg1) : (loc2, sev2, msg2) : errs)
+  | loc1 `contains` loc2 = dedupErrorSpans ((loc1, sev1, msg1) : errs)
+  | otherwise = (loc1, sev1, msg1) : dedupErrorSpans ((loc2, sev2, msg2) : errs)
+  where
+    SrcSpanInfo {srcInfoSpan = span1} `contains` SrcSpanInfo {srcInfoSpan = span2} =
+        srcSpanFilename span1 == srcSpanFilename span2 &&
+        (srcSpanStartLine span1 < srcSpanStartLine span2 ||
+         (srcSpanStartLine span1 == srcSpanStartLine span2 &&
+          srcSpanStartColumn span1 <= srcSpanStartColumn span2)) &&
+        (srcSpanEndLine span1 > srcSpanEndLine span2 ||
+         (srcSpanEndLine span1 == srcSpanEndLine span2 &&
+          srcSpanEndColumn span1 >= srcSpanEndColumn span2))
 
 badExpApps :: Exp SrcSpanInfo -> [Diagnostic]
 badExpApps (App loc _ e)
@@ -142,14 +158,14 @@ badExpApps _ = []
 
 badMatchApps :: Match SrcSpanInfo -> [Diagnostic]
 badMatchApps (Match loc _ pats _ _) =
-    [(loc, CompileSuccess, errorMsg) | p <- pats, not (isGoodPatAppRhs p)]
+    take 1 [(loc, CompileSuccess, errorMsg) | p <- pats, not (isGoodPatAppRhs p)]
   where
     errorMsg = "warning: Missing parentheses in function application."
 badMatchApps _ = []
 
 badPatternApps :: Pat SrcSpanInfo -> [Diagnostic]
 badPatternApps (PApp loc _ pats) =
-    [(loc, CompileSuccess, errorMsg) | p <- pats, not (isGoodPatAppRhs p)]
+    take 1 [(loc, CompileSuccess, errorMsg) | p <- pats, not (isGoodPatAppRhs p)]
   where
     errorMsg = "warning: Missing parentheses in constructor application."
 badPatternApps _ = []

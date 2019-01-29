@@ -170,7 +170,9 @@ function initCodeworld() {
     };
 
     window.codeworldEditor.on('changes', window.updateUI);
-    window.codeworldEditor.on("beforeChange", updateDocs)
+
+    setTimeout(codeToDoc, 5000);
+    setInterval(codeToDoc, 30000);
 
     window.onbeforeunload = function(event) {
         if (!isEditorClean()) {

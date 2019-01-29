@@ -68,8 +68,8 @@ top = go(5)
         go(n) = let sub = scaled(go (n-1), 1/3, 1/3)
                in pictures([ translated(sub, -8/3, 0),
                              translated(sub,  8/3, 0),
-                             translated(rotated(sub,  60), -2/3, 1.12),
-                             translated(rotated(sub, 300),  2/3, 1.12) ])
+                             translated(rotated(sub,  60), -2/3, 2/sqrt(3)),
+                             translated(rotated(sub, 300),  2/3, 2/sqrt(3)) ])
 
 bottom = scaled(top, 1, -1)
 ~~~~~

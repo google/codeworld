@@ -78,6 +78,7 @@ function build_codemirror {
   exitcode=$?
   if [ $exitcode -ne 0 ]; then
     cat codemirror-compressed.js
+    rm codemirror-compressed.js
   fi
   return $exitcode
 }

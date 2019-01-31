@@ -75,6 +75,12 @@ function build_codemirror {
                text-hover \
     --local node_modules/uglify-js/bin/uglifyjs \
     > codemirror-compressed.js
+  exitcode=$?
+  if [ $exitcode -ne 0 ]; then
+    cat codemirror-compressed.js
+    rm codemirror-compressed.js
+  fi
+  return $exitcode
 }
 
 run $BUILD/CodeMirror build_codemirror

@@ -57,22 +57,32 @@ div.CodeMirror span.cm-matchhighlight { background-color: rgba(128, 255, 128, 0.
     color: #999;
 }
 
-
 /* Style overrides for the autocomplete box and doc-on-hover. */
+
+.CodeMirror-hint, .hover-decl {
+    color: #555;
+    font-family: "Source Code Pro", monospace;
+    font-size: 9pt;
+    white-space: pre;
+}
+
+.CodeMirror-hint .hint-word, .hover-decl .hint-word {
+    font-weight: bold;
+    color: #30a;
+}
+
+.CodeMirror-hint .hint-keyword, .hover-decl .hint-keyword {
+    font-weight: bold;
+    color: #828;
+}
+
+.CodeMirror-hint {
+    max-width: 40em;
+}
 
 li.CodeMirror-hint-active {
     background: #def;
     color: #555;
-}
-
-.CodeMirror-hint {
-    max-width: 100em;
-    font-weight: bold;
-    color: #30a;
-    font-family: "Source Code Pro", monospace;
-    font-size: 9pt;
-    white-space: pre;
-
 }
 
 .CodeMirror-hover-tooltip {
@@ -110,6 +120,11 @@ li.CodeMirror-hint-active {
         rgba(0, 0, 0, 0) 0em,
         rgba(0, 0, 0, 0) 17em,
         #ffe 20em);
+}
+
+.hover-doc {
+    padding-top: 0.5em;
+    font-size: 11pt;
 }
 
 /* Styles needed for the dialog add-on, used for search. */

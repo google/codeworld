@@ -170,9 +170,11 @@ function initCodeworld() {
     };
 
     window.codeworldEditor.on('changes', window.updateUI);
-
-    setTimeout(codeToDoc, 5000);
-    setInterval(codeToDoc, 30000);
+    window.reparseTimeoutId = null;
+    window.codeworldEditor.on("change", () => {
+        if (window.reparseTimeoutId) clearTimeout(window.reparseTimeoutId);
+        window.reparseTimeoutId = setTimeout(parseSymbolsFromCurrentCode, 3000);
+    });
 
     window.onbeforeunload = function(event) {
         if (!isEditorClean()) {
@@ -643,7 +645,7 @@ function setCode(code, history, name, autostart) {
     }
 
     codeworldEditor.focus();
-
+    parseSymbolsFromCurrentCode();
     if (autostart) {
         compile();
     } else {

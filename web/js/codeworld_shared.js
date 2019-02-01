@@ -122,127 +122,146 @@ var hintBlacklist = [
     "Pi",
 ];
 
-
-// codeWorldDocs is variable containing annotations and documentation
+// codeWorldSymbols is variable containing annotations and documentation
 // of builtin and user-defined variables.
 // Expected format:
-// codeWorldDocs = {
+// codeWorldSymbols = {
 //   codeWorldLogo: {
-//     annotation: "Picture",
-//     doc: "The CodeWorld logo.",
-//     builtin: true // codeWorld definitions, not from current project
+//     declaration: "codeWorldLogo :: Picture",
+//     symbolStart: 0,
+//     symbolEnd: 13,
+//     doc: "The CodeWorld logo."
 //   }
 // }
 
-var codeWorldDocs = {};
+var codeWorldSymbols = {},
+    codeWorldBuiltinSymbols = {};
 
-function codeToDoc() {
+function getWordStart(word, line) {
+    return line.indexOf(word);
+}
+
+function getWordEnd(word, line) {
+    var wordStart = getWordStart(word, line);
+    if (wordStart != -1) {
+        return wordStart + word.length
+    }
+    return -1;
+}
+
+function parseSymbolsFromCurrentCode() {
     var lines = window.codeworldEditor.getValue().split('\n'),
         word = null,
-        annotation = null;
+        parseResults = {};
+
     lines.forEach(function(line) {
         // f(x, y) =
         if (/^\w+\(.*/.test(line)) {
-            updateDocs(line.split("(")[0])
+            word = line.split("(")[0];
+            parseResults[word] = {
+                symbolStart: getWordStart(word, line),
+                symbolEnd: getWordEnd(word, line)
+            }
         }
         // foo =
         else if (/^\S+\s*=/.test(line)) {
-            updateDocs(line.split("=")[0].trim())
+            word = line.split("=")[0].trim();
+            parseResults[word] = {
+                symbolStart: getWordStart(word, line),
+                symbolEnd: getWordEnd(word, line)
+            };
         }
         // data Foo
         else if (/^data\s.+/.test(line)) {
-            updateDocs(line.split(" ")[1])
+            word = line.split(" ")[1];
+            parseResults[word] = {
+                declaration: line.slice(0, getWordStart(word, line)),
+                symbolStart: getWordStart(word, line),
+                symbolEnd: getWordEnd(word, line)
+            }
         }
         // type Foo = Bar
         else if (/^type\s.+/.test(line)) {
-            var splitted = line.split("=")
-            updateDocs(splitted[0].split(" ")[1], splitted[1].trim())
+            var splitted = line.split("=");
+            word = splitted[0].trim().split(" ").slice(-1)[0];
+            parseResults[word] = {
+                declaration: line,
+                symbolStart: getWordStart(word, line),
+                symbolEnd: getWordEnd(word, line)
+            };
         }
         // (*#^) :: Type
-        else if (/^\([^\(\)]+\)/.test(line)) {
-            var splitted = line.split("::")
-            updateDocs(splitted[0].split("(")[1].split(")")[0], splitted[1].trim())
+        else if (/^\([^\(\)]+\)\s*::/.test(line)) {
+            var splitted = line.split("::");
+            var word = splitted[0].trim()
+            word = word.slice(1, word.length - 1)
+            parseResults[word] = {
+                declaration: line,
+                symbolStart: getWordStart(word, line),
+                symbolEnd: getWordEnd(word, line)
+            }
         }
         // foo :: Type
         else if (/^\S+\s*::/.test(line)) {
             var splitted = line.split("::");
-            updateDocs(splitted[0].trim(), splitted[1].trim())
+            word = splitted[0].trim()
+            parseResults[word] = {
+                declaration: line,
+                symbolStart: getWordStart(word, line),
+                symbolEnd: getWordEnd(word, line),
+            }
         }
     })
+    codeWorldSymbols = Object.assign({}, parseResults, codeWorldBuiltinSymbols);
 };
 
-
-function wordAndAnnotationFromHaskell(line) {
-    var annotation = null,
-        word = null;
-    // there is top-level assignment
-    if (/^\S+\s*=/.test(line)) {
-        word = line.split("=")[0].trim()
-    };
-    // there is top level type annotation
-    if (/^\S+\s*::/.test(line)) {
-        var splitted = line.split("::");
-        word = splitted[0].trim()
-        annotation = splitted[1].trim()
-    };
-    return {
-        word: word,
-        annotation: annotation,
-        builtin: true
-    }
-}
-
-
 function renderHover(keyword) {
-    var elem = document.createElement('div')
+    var topDiv = document.createElement('div')
 
-    if (!codeWorldDocs[keyword] // no entry
-        || // no docs or annotation - nothing to show on hover
-        !(codeWorldDocs[keyword].doc
-         || codeWorldDocs[keyword].annotation)){
+    if (!codeWorldSymbols[keyword] // no entry
+        || // no docs or declaration - nothing to show on hover
+        !(codeWorldSymbols[keyword].doc
+         || codeWorldSymbols[keyword].declaration)){
         return;
     };
-    elem.title = keyword;
-    var keywordData = codeWorldDocs[keyword];
+    topDiv.title = keyword;
+    var keywordData = codeWorldSymbols[keyword];
 
-    // Variable name + annotaion
-    var topLine = document.createElement("div");
-    topLine.className = "hover-decl";
+    var docDiv = document.createElement('div');
+    var annotation = document.createElement("div");
+    annotation.className = "hover-decl";
+
+    if (keywordData.symbolStart > 0) {
+        annotation.appendChild(document.createTextNode(
+            keywordData.declaration.slice(0, keywordData.symbolStart)));
+    }
+
     var wordElem = document.createElement("span");
     wordElem.className = "hint-word";
     wordElem.appendChild(document.createTextNode(keyword));
-    topLine.appendChild(wordElem);
-    if (keywordData.annotation) {
-        var annotation = document.createElement('div');
-        topLine.appendChild(document.createTextNode(" :: " + keywordData.annotation))
-    };
-    elem.appendChild(topLine)
-
-    // Docs
-    if (keywordData.doc) {
-        var docElem = document.createElement('div');
-        docElem.innerHTML = keywordData.doc;
-        docElem.className = "hover-doc";
-        elem.appendChild(docElem)
-    };
-    return elem;
-};
-
-function updateDocs(word, annotation, doc) {
-    // updating hovers/hints information
-
-    // We don't want to override builtins.
-    if (codeWorldDocs[word] && codeWorldDocs[word].builtin) {
-        return
-    }
-    else {
-        delete codeWorldDocs[word]
-        codeWorldDocs[word] = {
-            annotation: annotation,
-            doc: doc,
-            builtin: false
+    annotation.appendChild(wordElem);
+    if (keywordData.symbolEnd < keywordData.declaration.length) {
+        var leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(/\s+/g, ' ');
+        if (keywordData.symbolEnd + leftover.length > 60 && leftover.length > 3) {
+            leftover = leftover.slice(0, 57 - keywordData.symbolEnd) + '...';
         }
-    }
+        annotation.appendChild(document.createTextNode(leftover));
+    };
+    docDiv.appendChild(annotation)
+
+    if (keywordData.doc) {
+        var description = document.createElement('div');
+        description.innerHTML = keywordData.doc;
+        description.className = "hover-doc";
+        docDiv.appendChild(description)
+    };
+
+    var fadeDiv = document.createElement('div');
+    fadeDiv.className = 'fade';
+
+    topDiv.appendChild(docDiv);
+    topDiv.appendChild(fadeDiv);
+    return topDiv;
 };
 
 function onHover(cm, data, node){
@@ -272,7 +291,7 @@ function registerStandardHints(successFunc)
         }
 
         var found = [];
-        var hints = Object.keys(codeWorldDocs)
+        var hints = Object.keys(codeWorldSymbols)
         for (var i = 0; i < hints.length; i++) {
             var hint = hints[i];
             if (hint.startsWith(term)){
@@ -307,13 +326,13 @@ function registerStandardHints(successFunc)
             CodeMirror.on(
                 data, 'select',
                 function (selection, elem) {
-                    var codeWordInfo = codeWorldDocs[selection],
+                    var codeWordInfo = codeWorldSymbols[selection],
                         hintsWidgetRect = elem.parentElement.getBoundingClientRect(),
                         doc = document.createElement('div');
                     deleteOldHintDocs();
                     var hover = renderHover(selection);
                     if (hover) {
-                        doc.className = "hint-description";
+                        doc.className += "hint-description";
                         doc.style["min-height"] = hintsWidgetRect.height + "px";
                         doc.style.top = hintsWidgetRect.top + "px";
                         doc.style.left = hintsWidgetRect.right + "px";
@@ -349,10 +368,11 @@ function registerStandardHints(successFunc)
     codeworldKeywords['main'] = 'deprecated';
     codeworldKeywords['program'] = 'builtin';
 
-    codeWorldDocs['program'] = {
-        annotation: "Program",
+    codeWorldBuiltinSymbols['program'] = {
+        declaration: "program :: Program",
         doc: "Your program.",
-        builtin: true
+        symbolStart: 0,
+        symbolEnd: 6
     };
 
     var doc = "";
@@ -420,9 +440,13 @@ function registerStandardHints(successFunc)
             }
 
             var word = line.substr(wordStart, wordEnd - wordStart);
-            codeWorldDocs[word] = wordAndAnnotationFromHaskell(line);
+            codeWorldBuiltinSymbols[word] = {
+                declaration: line,
+                symbolStart: wordStart,
+                symbolEnd: wordEnd
+            }
             if (doc) {
-                codeWorldDocs[word].doc = doc;
+                codeWorldBuiltinSymbols[word].doc = doc;
             }
             if (hintBlacklist.indexOf(word) >= 0) {
                 codeworldKeywords[word] = 'deprecated';

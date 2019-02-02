@@ -443,7 +443,7 @@ step(w, dt)
         asts      = [ stepBody(ast, dt) | ast <- asts(w) ],
         ship      = stepThrust(stepBody(ship(w), dt), effective(w, thrust), direction(w), dt),
         direction = stepDir(direction(w), left(w), right(w), dt),
-        energy    = fence(energy(w) + dt * (0.5 * (1 - thrust(w)) - 1.0 * thrust(w)), 0, 1),
+        energy    = fence(energy(w) + dt * (0.5 - 1.5 * thrust(w)), 0, 1),
         score     = score(w) + dt,
         maxScore  = max(maxScore(w), score(w) + dt)
         }

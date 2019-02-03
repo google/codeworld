@@ -85,6 +85,7 @@ then
   run . sudo apt-get install -y libgmp-dev
 
   # Needed for GHCJS
+  run . sudo apt-get install -y gnupg
   run --quiet . curl -sL https://deb.nodesource.com/setup_8.x | run . sudo -E bash -
   run . sudo apt-get install -y nodejs
 

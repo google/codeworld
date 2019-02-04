@@ -43,7 +43,6 @@ import Internal.Prelude (randomsFrom)
 import qualified Internal.Text as CWT
 import "base" Prelude
 import System.IO
-import System.IO.Unsafe
 import System.Random
 
 data LiteralException = LiteralException Text
@@ -160,9 +159,8 @@ collaborationOf (players, initial, step, event, picture)
 
 chooseRandoms :: IO [Number]
 chooseRandoms = do
-    n <- randomRIO (0, 1)
-    ns <- unsafeInterleaveIO chooseRandoms
-    return (fromDouble n : ns)
+    g <- newStdGen
+    return (map fromDouble (randomRs (0, 1) g))
 
 reportError :: SomeException -> IO ()
 reportError ex = throwIO (LiteralException (T.pack (show ex)))

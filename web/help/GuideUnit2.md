@@ -5,27 +5,26 @@ In the last part, you learned about creating drawings in CodeWorld by
 describing pictures.  One of the most important tools was variables:
 names for values that you can put together to build your final program.
 A variable names a single value, such as a number, color, text, or
-picture.
-
-In this section, you will consider this question: what do you do when
-you want to name a concept, but some of the details can change each time
-you use it.  Flowers in a drawing might look similar, but have different
-colors or sizes.  Some space aliens might have different numbers of
-tentacles or eyes.  You could even name more general concepts: the idea
-of a "ring" of pictures, arranged in a circle around the center, is the
-same regardless of whether it's a ring of people, dogs, houses, or clouds.
+picture.  But sometimes you want to name a more general idea, and some
+of the details can change each time you use it.  Flowers in a drawing
+might look similar, but have different colors or sizes.  Some space
+aliens might have different numbers of tentacles or eyes.  You could
+even name more abstract concepts: the idea of a "ring" of pictures,
+arranged in a circle, is the same whether it's a ring of people, dogs,
+houses, or clouds.
 
 In these situations, you need a function.  Functions capture ideas that
 *depend* *on* some details that haven't been decided yet, such as the
 color of a flower, or what to arrange in a ring.  They are incomplete,
-still waiting for more information before they describe a specific
+still waiting for more information before they can describe a specific
 picture, number, color, etc.
 
 You've used a lot of functions already: most of the words that your
 computer already knows -- like `circle`, `rectangle`, `translated`, or
 `dark` -- are examples of functions.  You didn't need to tell the computer
-what those functions mean.  They were already *defined*.  You can also
-define your own functions, and that's what you'll do in this part.
+what those functions mean.  They were already *defined* for you.  But
+you can also define your own functions, and that's what you'll do in this
+section.
 
 Function as a formula
 ---------------------
@@ -35,8 +34,8 @@ associates each possible input with a specific result.  The inputs to a
 function are called *arguments*, and the type of input the function
 expects is called its *domain*.  The type of *result* produced a function
 is called its *range*.  Altogether, the function can be thought of as a
-machine, of sorts, that turns arguments (input values) into results
-(output values), like this.
+kind of machine that turns arguments (input values) into results (output
+values), like this.
 
 **************************************************
 *    input     .----------.     output
@@ -57,22 +56,11 @@ Input: `x`    | Output: `f(x)`
       5       |        10
       6       |        12
 
-Since there are infinitely many numbers, you could never make a complete
-table!  But once you've recognized the pattern, you can imagine that the
-table goes on forever.  This table in one important way to represent a
-function.
-
-As useful as function tables are, though, for understanding a function,
-they don't tell you the pattern; they only leave you to recognize it
-yourself.  Because computers aren't very good at guessing things,
-function tables are not a good language for your next task: defining
-your own function.  A different representation is better, and the one
-you will use is a *formula*.
-
-One way to understand functions as a formula is to start by writing a
-sequence of equations, having the same information as the table above:
+You can write the same information in a form the computer understands
+by writing equations, like this:
 
 ~~~~~
+f :: Number -> Number
 f(2) = 4
 f(3) = 6
 f(4) = 8
@@ -80,20 +68,27 @@ f(5) = 10
 f(6) = 12
 ~~~~~
 
-But again, it's impossible to write an equation for every possible input.
-So instead, you will write one equation that captures the *pattern* in the
-lines above:
+!!! Tip: The first line is a type signature.
+    Type signatures are optional, but if you provide them, they describe
+    the domain and range of the function.
+
+Since there are infinitely many numbers, you could never make a complete
+table or write equations for every possible argument!  Once you've
+recognized the pattern, you can imagine that it goes on that way for any
+number you put in.  Your computer, though, can't recognize patterns on
+its own, so it needs a little more help.  Since it's impossible to write
+an equation for every possible input, you can instead write one equation
+that captures the *common pattern* in the equations above:
 
 ~~~~~
 f(x) = x * 2
 ~~~~~
 
-This is a formula that defines a function.  It captures the pattern in the
-explicit equations above.  The way to read a function formula is to read
-a silent "for any value of `x`..." at the beginning.  So this one says:
+This is a formula representation of the function.  It captures the pattern
+in the specific equations above.  The way to read a function formula is to
+read a silent "for any value of `x`..." at the beginning.  So this one says:
 For any value of `x`, `f(x)` is `x * 2`.  The `x` can be any new name that
-you like.  It just names some part of the equations that differs each
-time.
+you like.  It just names the parts of the equations that differ each time.
 
 Generalizing patterns
 ---------------------
@@ -112,20 +107,20 @@ Suppose you had a drawing of these three signs:
 program = drawingOf(signs)
 signs = translated(sign1, -7, 0) & sign2 & translated(sign3, 7, 0)
 
-sign1 = colored(lettering("Go"), white) &
-        colored(solidRectangle(5, 5), green)
-sign2 = colored(lettering("Stop"), white) &
-        colored(solidRectangle(5, 5), red)
-sign3 = colored(lettering("Caution"), white) &
-        colored(solidRectangle(5, 5), orange)
+sign1 = colored(lettering("Go"), White) &
+        colored(solidRectangle(5, 5), Green)
+sign2 = colored(lettering("Stop"), White) &
+        colored(solidRectangle(5, 5), Red)
+sign3 = colored(lettering("Caution"), White) &
+        colored(solidRectangle(5, 5), Orange)
 ~~~~~
 
-Noticing that the three signs usually follow the same pattern, you can
+If you notice that the three signs usually follow the same pattern, you can
 write one function.  The steps to doing this are:
 
 1. Name the parts that differ.  In this case, that's the label on the sign,
    and the color of the sign.
-2. Write one equation giving the formula for this function.
+2. Write one equation giving the general formula for this function.
 3. Change the definitions of the original variables to use the function
    instead of repeating the pattern.
 
@@ -135,23 +130,23 @@ The result looks like this.
 program = drawingOf(signs)
 signs = translated(sign1, -7, 0) & sign2 & translated(sign3, 7, 0)
 
-sign(label, color) = colored(lettering(label), white) &
+sign(label, color) = colored(lettering(label), White) &
                      colored(solidRectangle(5, 5), color)
 
-sign1 = sign("Go", green)
-sign2 = sign("Stop", red)
-sign3 = sign("Caution", orange)
+sign1 = sign("Go", Green)
+sign2 = sign("Stop", Red)
+sign3 = sign("Caution", Orange)
 ~~~~~
 
 As you get more practice, you might skip over defining the repeated pattern
 entirely, and just write a function to begin with.  Suppose you are
 defining a house, and you already know that you'll want to be able to
 easily change the color of the roof.  You can define the house from the
-start with an argument for the roof color.
+start with an argument for the roof color:
 
 ~~~~~ . clickable
 program = drawingOf(scene)
-scene   = house(red)
+scene   = house(Red)
 house(roofColor) = colored(roof, roofColor) & frame
 roof = translated(thickArc(45, 135, 6, 1), 0, -2)
 frame = solidRectangle(6, 7)
@@ -182,18 +177,37 @@ The name `pic` is given to the parameter to `ringOf`.  When `ringOf` is used in
 the definition of `program`, it must be given a parameter, with a specific picture
 to substitute for occurrences of the parameter `pic`.
 
+!!! collapsible: What other function could you write to simplify this code?
+    Any time you see the same code written many times, you should think of it
+    as an opportunity for a function.  Here, there are many lines with the
+    same nested rotation and translation.  This code can be rewritten to use
+    a function instead.
+
+    ~~~~~ . clickable
+    program = drawingOf(ringOf(rectangle(1,1)))
+    ringOf(pic) = part(pic,  60) & part(pic, 120) & part(pic, 180) &
+                  part(pic, 240) & part(pic, 300) & part(pic, 360)
+    part(pic, angle) = rotated(translated(pic, 5, 0), angle)
+    ~~~~~
+
+    You might find this program shorter and easier to read than the original.
+    It's okay if you don't prefer it, though.  Just like writing in Human
+    languages, there are different styles in code, and as you learn, you will
+    develop your own voice and make your own decisions about how to
+    communicate well.
+
 The results of functions can also be different types.  For example, "pastel"
-refers to a color that's soft and pale, such as a baby blue or lavender
-color.  Compared to full colors, a pastel color is lighter, and more gray.
-Your computer doesn't know what a pastel color is yet, but you can teach it!
+refers to a color that's soft and pale, such as a baby blue or lavender.
+Compared to full colors, a pastel color is lighter, and more gray.  Your
+computer doesn't know what a pastel color is... **yet**.  Let's teach it!
 
 ~~~~~
 pastel(c) = light(dull(c))
 neon(c) = dark(bright(c))
 ~~~~~
 
-With these functions defined, you can use colors like `neon(green)` or
-`pastel(yellow)`.  But it doesn't stop there: you can define functions with any
+With these functions defined, you can use colors like `neon(Green)` or
+`pastel(Yellow)`.  But it doesn't stop there: you can define functions with any
 type of value that you like: pictures, numbers, colors, text... you name it.
 
 Substitution
@@ -234,22 +248,22 @@ eye(color) = solidCircle(1/3) &
 ~~~~~
 
 This is a general pattern.  (Remember the implied "for any value of `color`..."
-at the beginning.)  To decide which specific picture is meant by `eye(blue)`,
+at the beginning.)  To decide which specific picture is meant by `eye(Blue)`,
 substitute the specific value you are interested in where ever the placeholder
-appears.
+appears.  One specific instance of this equation is this.
 
 ~~~~~
-eye(blue) = solidCircle(1/3) &
-            colored(solidCircle(1/2), blue) &
+eye(Blue) = solidCircle(1/3) &
+            colored(solidCircle(1/2), Blue) &
             circle(1)
 ~~~~~
 
 !!! Warning: Don't type the last block of code.
     This is one of many specific equations that are all implied by the overall
-    *pattern* written earlier.  You do not need to tell the computer about eyes
-    of each specific color.
+    pattern written earlier.  You do not need to tell the computer about eyes
+    of each specific color, because you've already told it the *pattern*.
 
-Now this equation tells you that you can replace the expression `eye(blue)` with
+This equation tells you that you can replace the expression `eye(Blue)` with
 the longer expression on the right-hand side.
 
 Substitution is in some ways the opposite of generalization.  Generalizing a
@@ -270,8 +284,8 @@ that way.
 Let's look at an example.  Consider these three definitions:
 
 ~~~~~
-a = colored(solidCircle(1), red)
-b = colored(solidCircle(2), blue)
+a = colored(solidCircle(1), Red)
+b = colored(solidCircle(2), Blue)
 c = solidCircle(3)
 ~~~~~
 
@@ -281,8 +295,8 @@ either `a` or `b`.  That function would be
 ~~~~~
 f(radius, color) = colored(solidCircle(radius), color)
 
-a = f(1, red)
-b = f(2, blue)
+a = f(1, Red)
+b = f(2, Blue)
 ~~~~~
 
 But what about `c`?  At first glance, it doesn't seem to follow the same
@@ -290,7 +304,7 @@ pattern.  But wait a second.  The definition of `c` can be rewritten like
 this:
 
 ~~~~~
-c = colored(solidCircle(3), black)
+c = colored(solidCircle(3), Black)
 ~~~~~
 
 The `solidCircle` function already produces pictures of black circles, so the
@@ -298,7 +312,7 @@ extra `colored` function doesn't change anything at all.  But it *does* make
 `c` follow the same pattern, so that it can be rewritten as
 
 ~~~~~
-c = f(3, black)
+c = f(3, Black)
 ~~~~~
 
 To use functions more effectively, then, it helps to know techniques for
@@ -372,16 +386,16 @@ degrees, to rewrite expressions so they follow the same pattern.
 
     closet = translated(shirt1, -5, -5) & shirt2 & translated(shirt3, 5, 5)
 
-    shirt1 = lettering("lol") & colored(shape, blue)
-    shirt2 = dilated(codeWorldLogo, 1/4) & colored(shape, red)
-    shirt3 = colored(shape, yellow)
+    shirt1 = lettering("lol") & colored(shape, Blue)
+    shirt2 = dilated(codeWorldLogo, 1/4) & colored(shape, Red)
+    shirt3 = colored(shape, Yellow)
 
     shape = solidRectangle(6, 8) & thickArc(20, 160, 4, 2)
     ~~~~~
 
     The first two shirts combine some kind of picture as a design on the
     front with a shirt shape behind it.  The third, though, has no design.
-    However, it can be rewritten as `blank & colored(shape, yellow)`, and
+    However, it can be rewritten as `blank & colored(shape, Yellow)`, and
     it now follows the same pattern, which can be generalized into a
     function.
 
@@ -390,9 +404,9 @@ degrees, to rewrite expressions so they follow the same pattern.
 
     closet = translated(shirt1, -5, -5) & shirt2 & translated(shirt3, 5, 5)
 
-    shirt1 = shirt(lettering("lol"), blue)
-    shirt2 = shirt(dilated(codeWorldLogo, 1/4), red)
-    shirt3 = shirt(blank, yellow)
+    shirt1 = shirt(lettering("lol"), Blue)
+    shirt2 = shirt(dilated(codeWorldLogo, 1/4), Red)
+    shirt3 = shirt(blank, Yellow)
 
     shirt(design, color) = design & colored(shape, color)
     shape = solidRectangle(6, 8) & thickArc(20, 160, 4, 2)

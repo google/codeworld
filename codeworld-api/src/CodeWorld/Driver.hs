@@ -825,25 +825,17 @@ showPoints pts =
 
 showColor :: Color -> String
 showColor c@(RGBA r g b a)
-  | c == black = "black"
-  | c == white = "white"
-  | c == red = "red"
-  | c == green = "green"
-  | c == blue = "blue"
-  | c == cyan = "cyan"
-  | c == magenta = "magenta"
-  | c == yellow = "yellow"
-  | c == aquamarine = "aquamarine"
-  | c == orange = "orange"
-  | c == azure = "azure"
-  | c == violet = "violet"
-  | c == chartreuse = "chartreuse"
-  | c == rose = "rose"
-  | c == brown = "brown"
-  | c == pink = "pink"
-  | c == purple = "purple"
-  | haskellMode, r == g, g == b, a == 1 = printf "(gray %s)" (showFloat r)
-  | r == g, g == b, a == 1 = printf "gray(%s)" (showFloat r)
+  | c == Black = "Black"
+  | c == White = "White"
+  | c == Red = "Red"
+  | c == Green = "Green"
+  | c == Blue = "Blue"
+  | c == Yellow = "Yellow"
+  | c == Orange = "Orange"
+  | c == Brown = "Brown"
+  | c == Pink = "Pink"
+  | c == Purple = "Purple"
+  | c == Gray = "Gray"
   | haskellMode, a == 1 = printf "(RGB %s %s %s)" (showFloat r) (showFloat g) (showFloat b)
   | a == 1 = printf "RGB(%s, %s, %s)" (showFloat r) (showFloat g) (showFloat b)
   | haskellMode = printf "(RGBA %s %s %s %s)" (showFloat r) (showFloat g) (showFloat b) (showFloat a)

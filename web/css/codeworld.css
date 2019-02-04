@@ -416,18 +416,3 @@ body {
 .req-details {
   color: #555;
 }
-.hint-word {
-    font-weight: bold;
-    color: #30a;
-}
-.hint-description {
-    width: 400px;
-    max-height: 400px;
-    padding: 0.3em 0.5em;
-    background-color: #ffe;
-    border-radius: 0.5em;
-    border: 1px solid #888;
-    box-shadow: 0.1em 0.1em 0.1em gray;
-    overflow: hidden;
-    position: absolute;
-}

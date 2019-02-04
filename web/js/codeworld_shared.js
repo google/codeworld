@@ -167,25 +167,20 @@ function parseSymbolsFromCurrentCode() {
     lines.forEach(function(line) {
         // f(x, y) =
         if (/^\w+\(.*/.test(line)) {
-            word = line.split("(")[0];
-            parseResults[word] = {
-                symbolStart: getWordStart(word, line),
-                symbolEnd: getWordEnd(word, line)
-            }
+            word = line.split("(")[0].trim();
+            parseResults[word] = {};
         }
         // foo =
         else if (/^\S+\s*=/.test(line)) {
             word = line.split("=")[0].trim();
-            parseResults[word] = {
-                symbolStart: getWordStart(word, line),
-                symbolEnd: getWordEnd(word, line)
-            };
+            parseResults[word] = {};
         }
         // data Foo
         else if (/^data\s.+/.test(line)) {
-            word = line.split(" ")[1];
+            match = /^data\s+(\S+)\b.*/.exec(line);
+            word = match[1];
             parseResults[word] = {
-                declaration: line.slice(0, getWordStart(word, line)),
+                declaration: line.slice(0, getWordEnd(word, line)),
                 symbolStart: getWordStart(word, line),
                 symbolEnd: getWordEnd(word, line)
             }
@@ -193,7 +188,8 @@ function parseSymbolsFromCurrentCode() {
         // type Foo = Bar
         else if (/^type\s.+/.test(line)) {
             var splitted = line.split("=");
-            word = splitted[0].trim().split(" ").slice(-1)[0];
+            match = /^type\s+(\S+\b).*/.exec(line);
+            word = match[1];
             parseResults[word] = {
                 declaration: line,
                 symbolStart: getWordStart(word, line),

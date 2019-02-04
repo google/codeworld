@@ -169,11 +169,11 @@ function initCodeworld() {
         }
     };
 
-    window.codeworldEditor.on('changes', window.updateUI);
     window.reparseTimeoutId = null;
-    window.codeworldEditor.on("change", () => {
+    window.codeworldEditor.on("changes", () => {
         if (window.reparseTimeoutId) clearTimeout(window.reparseTimeoutId);
         window.reparseTimeoutId = setTimeout(parseSymbolsFromCurrentCode, 3000);
+        window.updateUI;
     });
 
     window.onbeforeunload = function(event) {

@@ -419,8 +419,8 @@ makeAsts(n, r1:r2:r3:r4:rs) = (ast : asts, rs2)
         ast = ((x,y), (vx,vy))
         (asts, rs2) = makeAsts(n-1, rs)
 
-effective(w, f) | energy(w) > 0 = f(w)
-                | otherwise     = 0
+effectiveThrust(w) | energy(w) > 0 = thrust(w)
+                   | otherwise     = 0
 
 lost(w) = any([collision(ast) | ast <- asts(w)])
     where ((shipx, shipy),_) = ship(w)
@@ -441,9 +441,9 @@ step(w, dt)
                           savedRandoms(w))
   | otherwise = w {
         asts      = [ stepBody(ast, dt) | ast <- asts(w) ],
-        ship      = stepThrust(stepBody(ship(w), dt), effective(w, thrust), direction(w), dt),
+        ship      = stepThrust(stepBody(ship(w), dt), effectiveThrust(w), direction(w), dt),
         direction = stepDir(direction(w), left(w), right(w), dt),
-        energy    = fence(energy(w) + dt * (0.5 - 1.5 * effective(w, thrust)), 0, 1),
+        energy    = fence(energy(w) + dt * (0.5 - 1.5 * thrust(w)), 0, 1),
         score     = score(w) + dt,
         maxScore  = max(maxScore(w), score(w) + dt)
         }
@@ -463,7 +463,7 @@ stepBody(((x,y),(sx,sy)), dt) = ((wrap(x + sx * dt), wrap(y + sy * dt)), (sx, sy
 
 picture(w) = scoreBar(score(w), lastScore(w), maxScore(w))
            & energyBar(energy(w))
-           & shipPic(ship(w), direction(w), effective(w, thrust))
+           & shipPic(ship(w), direction(w), effectiveThrust(w))
            & astsPic(asts(w))
            & starsPic(stars(w))
            & solidRectangle(20, 20)

@@ -63,7 +63,12 @@ div.CodeMirror span.cm-matchhighlight { background-color: rgba(128, 255, 128, 0.
     color: #555;
     font-family: "Source Code Pro", monospace;
     font-size: 9pt;
-    white-space: pre;
+    white-space: pre-line;
+}
+
+.hover-decl {
+    padding-left: 2em;
+    text-indent: -2em;
 }
 
 .CodeMirror-hint .hint-word, .hover-decl .hint-word {
@@ -93,7 +98,6 @@ li.CodeMirror-hint-active {
     min-height: 1em;
     max-height: 20em;
     min-width: 5em;
-    max-width: 30em;
     overflow: hidden;
     padding: 0.3em 0.5em;
     transition: opacity .4s;
@@ -106,12 +110,13 @@ li.CodeMirror-hint-active {
 .CodeMirror-hover-tooltip {
     opacity: 0;
     position: fixed;
+    max-width: 30em;
 }
 
 .hint-description {
     position: absolute;
     height: 14.2em;
-    width: 30em;
+    width: 20em;
     z-index: 11;
 }
 

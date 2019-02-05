@@ -242,7 +242,7 @@ function parseSymbolsFromCurrentCode() {
     codeWorldSymbols = Object.assign({}, parseResults, codeWorldBuiltinSymbols);
 };
 
-function renderDeclaration(decl, keyword, keywordData) {
+function renderDeclaration(decl, keyword, keywordData, maxLen) {
     if (keywordData.symbolStart > 0) {
         decl.appendChild(document.createTextNode(
             keywordData.declaration.slice(0, keywordData.symbolStart)));
@@ -255,8 +255,8 @@ function renderDeclaration(decl, keyword, keywordData) {
 
     if (keywordData.symbolEnd < keywordData.declaration.length) {
         var leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(/\s+/g, ' ');
-        if (keywordData.symbolEnd + leftover.length > 60 && leftover.length > 3) {
-            leftover = leftover.slice(0, 57 - keywordData.symbolEnd) + '...';
+        if (keywordData.symbolEnd + leftover.length > maxLen && leftover.length > 3) {
+            leftover = leftover.slice(0, maxLen - 3 - keywordData.symbolEnd) + '...';
         }
         decl.appendChild(document.createTextNode(leftover));
     }
@@ -275,7 +275,7 @@ function renderHover(keyword) {
     var docDiv = document.createElement('div');
 
     var annotation = document.createElement("div");
-    renderDeclaration(annotation, keyword, keywordData);
+    renderDeclaration(annotation, keyword, keywordData, 9999);
     annotation.className = "hover-decl";
     docDiv.appendChild(annotation)
 
@@ -327,7 +327,7 @@ function registerStandardHints(successFunc)
                 found.push({
                     text: hint,
                     render: (elem) => {
-                        renderDeclaration(elem, hint, codeWorldSymbols[hint]);
+                        renderDeclaration(elem, hint, codeWorldSymbols[hint], 50);
                     }
                 });
             }

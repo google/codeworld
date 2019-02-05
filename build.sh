@@ -58,22 +58,23 @@ run .  cabal_install --ghcjs ./funblocks-client
 
 # Build the CodeMirror JavaScript bundle.
 function build_codemirror {
-  bin/compress codemirror \
-               haskell \
-               active-line \
-               annotatescrollbar \
-               dialog \
-               match-highlighter \
-               matchbrackets \
-               matchesonscrollbar \
-               placeholder \
-               rulers \
-               runmode \
-               search \
-               searchcursor \
-               show-hint \
-               text-hover \
-    --local node_modules/uglify-js/bin/uglifyjs \
+  node_modules/uglify-js/bin/uglifyjs \
+      lib/codemirror.js \
+      addon/dialog/dialog.js \
+      addon/display/placeholder.js \
+      addon/display/rulers.js \
+      addon/edit/matchbrackets.js \
+      addon/hint/show-hint.js \
+      addon/runmode/runmode.js \
+      addon/scroll/annotatescrollbar.js \
+      addon/search/match-highlighter.js \
+      addon/search/matchesonscrollbar.js \
+      addon/search/search.js \
+      addon/search/searchcursor.js \
+      addon/selection/active-line.js \
+      mode/haskell/haskell.js \
+      node_modules/codemirror-extension/addon/hover/text-hover.js \
+      -c -m \
     > codemirror-compressed.js
   exitcode=$?
   if [ $exitcode -ne 0 ]; then

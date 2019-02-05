@@ -428,14 +428,19 @@ function registerStandardHints(successFunc)
             // Hide the distinction between patterns and constructors.
             line = line.substr(8);
         } else if (line.startsWith("class ")) {
+            doc = "";
             return;
         } else if (line.startsWith("instance ")) {
+            doc = "";
             return;
         } else if (line.startsWith("infix ")) {
+            doc = "";
             return;
         } else if (line.startsWith("infixl ")) {
+            doc = "";
             return;
         } else if (line.startsWith("infixr ")) {
+            doc = "";
             return;
         }
 
@@ -466,6 +471,7 @@ function registerStandardHints(successFunc)
                 wordEnd = line.length;
             }
             if (wordStart == wordEnd) {
+                doc = "";
                 return;
             }
 
@@ -490,6 +496,7 @@ function registerStandardHints(successFunc)
             } else {
                 codeworldKeywords[word] = 'builtin';
             }
+            doc = "";
         }
     });
 

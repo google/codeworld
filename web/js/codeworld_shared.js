@@ -163,33 +163,41 @@ function parseSymbolsFromCurrentCode() {
     var lines = window.codeworldEditor.getValue().split('\n'),
         word = null,
         parseResults = {},
-        lineIndex = 1;
+        lineIndex = 0;
 
     lines.forEach(function(line) {
+        lineIndex++;
+
+        var docString = "Defined in your code on line "
+                      + lineIndex.toString() + ".";
         // f(x, y) =
         if (/^\w+\(.*/.test(line)) {
             word = line.split("(")[0].trim();
+            if (parseResults[word]) return;
             parseResults[word] = {
                 declaration: word,
-                doc: "Defined in your code on line " + lineIndex.toString() + "."
+                doc: docString
             };
         }
         // foo =
         else if (/^\S+\s*=/.test(line)) {
             word = line.split("=")[0].trim();
+            if (parseResults[word]) return;
             parseResults[word] = {
                 declaration: word,
-                doc: "Defined in your code on line " + lineIndex.toString() + "."
+                doc: docString
             };
         }
         // data Foo
         else if (/^data\s.+/.test(line)) {
             match = /^data\s+(\S+)\b.*/.exec(line);
             word = match[1];
+            if (parseResults[word]) return;
             parseResults[word] = {
                 declaration: line.slice(0, getWordEnd(word, line)),
                 symbolStart: getWordStart(word, line),
-                symbolEnd: getWordEnd(word, line)
+                symbolEnd: getWordEnd(word, line),
+                doc: docString
             }
         }
         // type Foo = Bar
@@ -197,10 +205,12 @@ function parseSymbolsFromCurrentCode() {
             var splitted = line.split("=");
             match = /^type\s+(\S+\b).*/.exec(line);
             word = match[1];
+            if (parseResults[word]) return;
             parseResults[word] = {
                 declaration: line,
                 symbolStart: getWordStart(word, line),
-                symbolEnd: getWordEnd(word, line)
+                symbolEnd: getWordEnd(word, line),
+                doc: docString
             };
         }
         // (*#^) :: Type
@@ -208,23 +218,26 @@ function parseSymbolsFromCurrentCode() {
             var splitted = line.split("::");
             var word = splitted[0].trim()
             word = word.slice(1, word.length - 1)
+            if (parseResults[word]) return;
             parseResults[word] = {
                 declaration: line,
                 symbolStart: getWordStart(word, line),
-                symbolEnd: getWordEnd(word, line)
+                symbolEnd: getWordEnd(word, line),
+                doc: docString
             }
         }
         // foo :: Type
         else if (/^\S+\s*::/.test(line)) {
             var splitted = line.split("::");
             word = splitted[0].trim()
+            if (parseResults[word]) return;
             parseResults[word] = {
                 declaration: line,
                 symbolStart: getWordStart(word, line),
                 symbolEnd: getWordEnd(word, line),
+                doc: docString
             }
         }
-        lineIndex++;
     })
     codeWorldSymbols = Object.assign({}, parseResults, codeWorldBuiltinSymbols);
 };

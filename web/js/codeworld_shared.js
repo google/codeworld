@@ -162,18 +162,25 @@ function getWordEnd(word, line) {
 function parseSymbolsFromCurrentCode() {
     var lines = window.codeworldEditor.getValue().split('\n'),
         word = null,
-        parseResults = {};
+        parseResults = {},
+        lineIndex = 1;
 
     lines.forEach(function(line) {
         // f(x, y) =
         if (/^\w+\(.*/.test(line)) {
             word = line.split("(")[0].trim();
-            parseResults[word] = {};
+            parseResults[word] = {
+                declaration: word,
+                doc: "Defined in your code on line " + lineIndex.toString() + "."
+            };
         }
         // foo =
         else if (/^\S+\s*=/.test(line)) {
             word = line.split("=")[0].trim();
-            parseResults[word] = {};
+            parseResults[word] = {
+                declaration: word,
+                doc: "Defined in your code on line " + lineIndex.toString() + "."
+            };
         }
         // data Foo
         else if (/^data\s.+/.test(line)) {
@@ -217,6 +224,7 @@ function parseSymbolsFromCurrentCode() {
                 symbolEnd: getWordEnd(word, line),
             }
         }
+        lineIndex++;
     })
     codeWorldSymbols = Object.assign({}, parseResults, codeWorldBuiltinSymbols);
 };
@@ -224,10 +232,7 @@ function parseSymbolsFromCurrentCode() {
 function renderHover(keyword) {
     var topDiv = document.createElement('div')
 
-    if (!codeWorldSymbols[keyword] // no entry
-        || // no docs or declaration - nothing to show on hover
-        !(codeWorldSymbols[keyword].doc
-         || codeWorldSymbols[keyword].declaration)){
+    if (!codeWorldSymbols[keyword]){
         return;
     };
     topDiv.title = keyword;
@@ -377,7 +382,7 @@ function registerStandardHints(successFunc)
         declaration: "program :: Program",
         doc: "Your program.",
         symbolStart: 0,
-        symbolEnd: 6
+        symbolEnd: 7
     };
 
     var doc = "";

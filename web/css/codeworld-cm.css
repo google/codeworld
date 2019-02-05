@@ -110,7 +110,9 @@ li.CodeMirror-hint-active {
 
 .hint-description {
     position: absolute;
-    max-width: 30em;
+    height: 14.2em;
+    width: 30em;
+    z-index: 11;
 }
 
 .CodeMirror-hover-tooltip div.fade {

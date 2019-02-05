@@ -368,7 +368,6 @@ function registerStandardHints(successFunc)
                     var hover = renderHover(selection.text);
                     if (hover) {
                         doc.className += "hint-description";
-                        doc.style["min-height"] = hintsWidgetRect.height + "px";
                         doc.style.top = hintsWidgetRect.top + "px";
                         doc.style.left = hintsWidgetRect.right + "px";
                         doc.appendChild(hover)

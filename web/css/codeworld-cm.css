@@ -108,6 +108,11 @@ li.CodeMirror-hint-active {
     position: fixed;
 }
 
+.hint-description {
+    position: absolute;
+    max-width: 30em;
+}
+
 .CodeMirror-hover-tooltip div.fade {
     position: absolute;
     top: 0px;
@@ -179,12 +184,4 @@ li.CodeMirror-hint-active {
          url('../SourceCodePro/source-code-pro-v7-latin-regular.woff') format('woff'), /* Modern Browsers */
          url('../SourceCodePro/source-code-pro-v7-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
          url('../SourceCodePro/source-code-pro-v7-latin-regular.svg#SourceCodePro') format('svg'); /* Legacy iOS */
-}
-.hint-word {
-    font-weight: bold;
-    color: #30a;
-}
-.hint-description {
-    position: absolute;
-    width: 40em;
 }

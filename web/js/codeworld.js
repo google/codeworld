@@ -151,7 +151,7 @@ function initCodeworld() {
             "Ctrl-Up": changeFontSize(1),
             "Ctrl-Down": changeFontSize(-1)
         },
-      textHover: onHover
+        textHover: onHover
     });
     window.codeworldEditor.refresh();
 
@@ -169,7 +169,12 @@ function initCodeworld() {
         }
     };
 
-    window.codeworldEditor.on('changes', window.updateUI);
+    window.reparseTimeoutId = null;
+    window.codeworldEditor.on("changes", () => {
+        if (window.reparseTimeoutId) clearTimeout(window.reparseTimeoutId);
+        window.reparseTimeoutId = setTimeout(parseSymbolsFromCurrentCode, 3000);
+        window.updateUI();
+    });
 
     window.onbeforeunload = function(event) {
         if (!isEditorClean()) {
@@ -640,7 +645,7 @@ function setCode(code, history, name, autostart) {
     }
 
     codeworldEditor.focus();
-
+    parseSymbolsFromCurrentCode();
     if (autostart) {
         compile();
     } else {

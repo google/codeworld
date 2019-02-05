@@ -132,95 +132,161 @@ var hintBlacklist = [
     "pi",
 ];
 
-var codeWorldBuiltinsDocs = {};
+// codeWorldSymbols is variable containing annotations and documentation
+// of builtin and user-defined variables.
+// Expected format:
+// codeWorldSymbols = {
+//   codeWorldLogo: {
+//     declaration: "codeWorldLogo :: Picture",
+//     symbolStart: 0,
+//     symbolEnd: 13,
+//     doc: "The CodeWorld logo."
+//   }
+// }
+
+var codeWorldSymbols = {},
+    codeWorldBuiltinSymbols = {};
+
+function getWordStart(word, line) {
+    return line.indexOf(word);
+}
+
+function getWordEnd(word, line) {
+    var wordStart = getWordStart(word, line);
+    if (wordStart != -1) {
+        return wordStart + word.length
+    }
+    return -1;
+}
+
+function parseSymbolsFromCurrentCode() {
+    var lines = window.codeworldEditor.getValue().split('\n'),
+        word = null,
+        parseResults = {},
+        lineIndex = 1;
+
+    lines.forEach(function(line) {
+        // f(x, y) =
+        if (/^\w+\(.*/.test(line)) {
+            word = line.split("(")[0].trim();
+            parseResults[word] = {
+                declaration: word,
+                doc: "Defined in your code on line " + lineIndex.toString() + "."
+            };
+        }
+        // foo =
+        else if (/^\S+\s*=/.test(line)) {
+            word = line.split("=")[0].trim();
+            parseResults[word] = {
+                declaration: word,
+                doc: "Defined in your code on line " + lineIndex.toString() + "."
+            };
+        }
+        // data Foo
+        else if (/^data\s.+/.test(line)) {
+            match = /^data\s+(\S+)\b.*/.exec(line);
+            word = match[1];
+            parseResults[word] = {
+                declaration: line.slice(0, getWordEnd(word, line)),
+                symbolStart: getWordStart(word, line),
+                symbolEnd: getWordEnd(word, line)
+            }
+        }
+        // type Foo = Bar
+        else if (/^type\s.+/.test(line)) {
+            var splitted = line.split("=");
+            match = /^type\s+(\S+\b).*/.exec(line);
+            word = match[1];
+            parseResults[word] = {
+                declaration: line,
+                symbolStart: getWordStart(word, line),
+                symbolEnd: getWordEnd(word, line)
+            };
+        }
+        // (*#^) :: Type
+        else if (/^\([^\(\)]+\)\s*::/.test(line)) {
+            var splitted = line.split("::");
+            var word = splitted[0].trim()
+            word = word.slice(1, word.length - 1)
+            parseResults[word] = {
+                declaration: line,
+                symbolStart: getWordStart(word, line),
+                symbolEnd: getWordEnd(word, line)
+            }
+        }
+        // foo :: Type
+        else if (/^\S+\s*::/.test(line)) {
+            var splitted = line.split("::");
+            word = splitted[0].trim()
+            parseResults[word] = {
+                declaration: line,
+                symbolStart: getWordStart(word, line),
+                symbolEnd: getWordEnd(word, line),
+            }
+        }
+        lineIndex++;
+    })
+    codeWorldSymbols = Object.assign({}, parseResults, codeWorldBuiltinSymbols);
+};
+
+function renderHover(keyword) {
+    var topDiv = document.createElement('div')
+
+    if (!codeWorldSymbols[keyword]){
+        return;
+    };
+    topDiv.title = keyword;
+    var keywordData = codeWorldSymbols[keyword];
+
+    var docDiv = document.createElement('div');
+    var annotation = document.createElement("div");
+    annotation.className = "hover-decl";
+
+    if (keywordData.symbolStart > 0) {
+        annotation.appendChild(document.createTextNode(
+            keywordData.declaration.slice(0, keywordData.symbolStart)));
+    }
+
+    var wordElem = document.createElement("span");
+    wordElem.className = "hint-word";
+    wordElem.appendChild(document.createTextNode(keyword));
+    annotation.appendChild(wordElem);
+    if (keywordData.symbolEnd < keywordData.declaration.length) {
+        var leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(/\s+/g, ' ');
+        if (keywordData.symbolEnd + leftover.length > 60 && leftover.length > 3) {
+            leftover = leftover.slice(0, 57 - keywordData.symbolEnd) + '...';
+        }
+        annotation.appendChild(document.createTextNode(leftover));
+    };
+    docDiv.appendChild(annotation)
+
+    if (keywordData.doc) {
+        var description = document.createElement('div');
+        description.innerHTML = keywordData.doc;
+        description.className = "hover-doc";
+        docDiv.appendChild(description)
+    };
+
+    var fadeDiv = document.createElement('div');
+    fadeDiv.className = 'fade';
+
+    topDiv.appendChild(docDiv);
+    topDiv.appendChild(fadeDiv);
+    return topDiv;
+};
 
 function onHover(cm, data, node){
     if (data && data.token && data.token.string) {
         var token_name = data.token.string;
-        if (hintBlacklist.indexOf(token_name) == -1 && codeWorldBuiltinsDocs[token_name]){
-            return codeWorldBuiltinsDocs[token_name];
+        if (hintBlacklist.indexOf(token_name) == -1){
+            return renderHover(token_name);
         }
     }
-    return;
 }
 
 // Hints and hover tooltips
 function registerStandardHints(successFunc)
 {
-    function createHint(line, wordStart, wordEnd, cname) {
-        var word = line.slice(wordStart, wordEnd);
-        if (!cname) cname = 'hint-word';
-
-        function renderer(elem, data, cur) {
-            if (wordStart > 0) {
-                elem.appendChild(document.createTextNode(line.slice(0, wordStart)));
-            }
-            var wordElem = document.createElement("span");
-            wordElem.className = cname;
-            wordElem.appendChild(document.createTextNode(word));
-            elem.appendChild(wordElem);
-            if (wordEnd < line.length) {
-                var leftover = line.slice(wordEnd).replace(/\s+/g, ' ');
-                if (wordEnd + leftover.length > 60 && leftover.length > 3) {
-                  leftover = leftover.slice(0, 57 - wordEnd) + '...';
-                }
-                elem.appendChild(document.createTextNode(leftover));
-                elem.title = line;
-            }
-        }
-        return {
-            text: word,
-            render: renderer,
-            source: line
-        };
-    }
-
-    function createHover(line, wordStart, wordEnd, doc, hint){
-        if (!hint){
-            hint = createHint(line, wordStart, wordEnd);
-        }
-
-        var topDiv = document.createElement('div');
-
-        var docDiv = document.createElement('div');
-        var annotation = document.createElement('div');
-        hint.render(annotation);
-        annotation.className = "hover-decl";
-        docDiv.appendChild(annotation);
-
-        if (doc !== "") {
-            var description = document.createElement('div');
-            description.innerHTML = doc;
-            description.className = " hover-doc";
-            docDiv.appendChild(description);
-        }
-
-        var fadeDiv = document.createElement('div');
-        fadeDiv.className = 'fade';
-
-        topDiv.appendChild(docDiv);
-        topDiv.appendChild(fadeDiv);
-        return topDiv;
-    }
-
-    // Add hint highlighting
-    var hints = [
-        createHint("program :: Program", 0, 7),
-        createHint("(:) :: a -> [a] -> [a]", 1, 2)
-    ];
-
-    function sortHints(list) {
-        list.sort(function(a, b) {
-            function startsWithLetter(c) {
-                return /^[a-zA-Z].*/.test(c);
-            }
-
-            if (startsWithLetter(a.text) && !startsWithLetter(b.text)) return -1;
-            else if (startsWithLetter(b.text) && !startsWithLetter(a.text)) return 1;
-            else return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1
-        });
-    }
-
     CodeMirror.registerHelper('hint', 'codeworld', function(cm) {
         var cur = cm.getCursor();
         var token = cm.getTokenAt(cur);
@@ -235,31 +301,58 @@ function registerStandardHints(successFunc)
         }
 
         var found = [];
-
+        var hints = Object.keys(codeWorldSymbols)
         for (var i = 0; i < hints.length; i++) {
             var hint = hints[i];
-            if (hint.text.startsWith(term)) {
+            if (hint.startsWith(term)){
                 found.push(hint);
             }
         }
 
-        var lines = cm.getValue().split("\n");
-        for (var i=0; i < lines.length; i++) {
-            if (/^\S*\s*::[^:]*$/.test(lines[i])) {
-                var candidate = lines[i].split(" ::")[0];
-                if (candidate.startsWith(term)) {
-                    found.push(createHint(lines[i], 0, candidate.length));
-                }
+        found.sort(function(a, b) {
+            function startsWithLetter(c) {
+                return /^[a-zA-Z].*/.test(c);
             }
+                if (startsWithLetter(a) && !startsWithLetter(b)) return -1;
+                else if (startsWithLetter(b) && !startsWithLetter(a)) return 1;
+                else return a.toLowerCase() < b.toLowerCase() ? -1 : 1
+            });
+
+        if (found.length > 0) {
+            var data = {
+                list: found,
+                from: from,
+                to: cur
+            };
+
+            function deleteOldHintDocs(){
+                $(".hint-description").remove()
+            }
+
+            CodeMirror.on(data, 'close', deleteOldHintDocs);
+            CodeMirror.on(data, 'pick', deleteOldHintDocs);
+
+            // Tracking of hint selection
+            CodeMirror.on(
+                data, 'select',
+                function (selection, elem) {
+                    var codeWordInfo = codeWorldSymbols[selection],
+                        hintsWidgetRect = elem.parentElement.getBoundingClientRect(),
+                        doc = document.createElement('div');
+                    deleteOldHintDocs();
+                    var hover = renderHover(selection);
+                    if (hover) {
+                        doc.className += "hint-description";
+                        doc.style["min-height"] = hintsWidgetRect.height + "px";
+                        doc.style.top = hintsWidgetRect.top + "px";
+                        doc.style.left = hintsWidgetRect.right + "px";
+                        doc.appendChild(hover)
+                        document.body.appendChild(doc)
+                    }
+                }
+            );
+            return data;
         }
-
-        sortHints(found);
-
-        if (found.length > 0) return {
-            list: found,
-            from: from,
-            to: cur
-        };
     });
 
     sendHttp('GET', 'codeworld-base.txt', null, function(request) {
@@ -285,14 +378,15 @@ function registerStandardHints(successFunc)
     codeworldKeywords['main'] = 'deprecated';
     codeworldKeywords['program'] = 'builtin';
 
-    codeWorldBuiltinsDocs['program'] = createHover('program :: Program', 0, 7, 'Your program.');
+    codeWorldBuiltinSymbols['program'] = {
+        declaration: "program :: Program",
+        doc: "Your program.",
+        symbolStart: 0,
+        symbolEnd: 7
+    };
 
     var doc = "";
-    var prevLine = "";
     lines.forEach(function(line) {
-        if (!prevLine.startsWith("--")) doc = "";
-        prevLine = line;
-
         if (line.startsWith("type Program")) {
             // We must intervene to hide the IO type.
             line = "data Program";
@@ -328,7 +422,7 @@ function registerStandardHints(successFunc)
 
         if (line.startsWith("-- |")) {
             doc = line.replace(/\-\- \| /g, "") + "\n";
-        } else if (doc != "" && line.startsWith("-- ")){
+        } else if (line.startsWith("-- ")){
             doc += line.replace(/\-\-   /g, "") + "\n";
         } else {
             var wordStart = 0;
@@ -356,22 +450,24 @@ function registerStandardHints(successFunc)
             }
 
             var word = line.substr(wordStart, wordEnd - wordStart);
-            var hint = createHint(line, wordStart, wordEnd);
-            codeWorldBuiltinsDocs[word] = createHover(line, wordStart, wordEnd, doc, hint)
+            codeWorldBuiltinSymbols[word] = {
+                declaration: line,
+                symbolStart: wordStart,
+                symbolEnd: wordEnd
+            }
+            if (doc) {
+                codeWorldBuiltinSymbols[word].doc = doc;
+            }
             if (hintBlacklist.indexOf(word) >= 0) {
                 codeworldKeywords[word] = 'deprecated';
             } else if (/^[A-Z:]/.test(word)) {
                 codeworldKeywords[word] = 'builtin-2';
-                hints.push(hint);
             } else {
                 codeworldKeywords[word] = 'builtin';
-                hints.push(hint);
             }
         }
     });
 
-    sortHints(hints);
-    CodeMirror.registerHelper('hintWords', 'codeworld', hints);
     successFunc();
   });
 }

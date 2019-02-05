@@ -88,7 +88,7 @@ li.CodeMirror-hint-active {
 .CodeMirror-hover-tooltip, .hint-description {
     background-color: #ffe;
     border-radius: 0.5em;
-    border: 0.05em solid #888;
+    border: 1px solid #888;
     box-shadow: 0.1em 0.1em 0.1em gray;
     max-height: 20em;
     overflow: hidden;

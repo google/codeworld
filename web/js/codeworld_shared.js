@@ -282,7 +282,6 @@ function onHover(cm, data, node){
 // Hints and hover tooltips
 function registerStandardHints(successFunc)
 {
-    // Add hint highlighting
     CodeMirror.registerHelper('hint', 'codeworld', function(cm) {
         var cur = cm.getCursor();
         var token = cm.getTokenAt(cur);

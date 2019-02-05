@@ -242,6 +242,27 @@ function parseSymbolsFromCurrentCode() {
     codeWorldSymbols = Object.assign({}, parseResults, codeWorldBuiltinSymbols);
 };
 
+function renderDeclaration(decl, keyword, keywordData) {
+    if (keywordData.symbolStart > 0) {
+        decl.appendChild(document.createTextNode(
+            keywordData.declaration.slice(0, keywordData.symbolStart)));
+    }
+
+    var wordElem = document.createElement("span");
+    wordElem.className = "hint-word";
+    wordElem.appendChild(document.createTextNode(keyword));
+    decl.appendChild(wordElem);
+
+    if (keywordData.symbolEnd < keywordData.declaration.length) {
+        var leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(/\s+/g, ' ');
+        if (keywordData.symbolEnd + leftover.length > 60 && leftover.length > 3) {
+            leftover = leftover.slice(0, 57 - keywordData.symbolEnd) + '...';
+        }
+        decl.appendChild(document.createTextNode(leftover));
+    }
+    return decl;
+}
+
 function renderHover(keyword) {
     var topDiv = document.createElement('div')
 
@@ -252,25 +273,10 @@ function renderHover(keyword) {
     var keywordData = codeWorldSymbols[keyword];
 
     var docDiv = document.createElement('div');
+
     var annotation = document.createElement("div");
+    renderDeclaration(annotation, keyword, keywordData);
     annotation.className = "hover-decl";
-
-    if (keywordData.symbolStart > 0) {
-        annotation.appendChild(document.createTextNode(
-            keywordData.declaration.slice(0, keywordData.symbolStart)));
-    }
-
-    var wordElem = document.createElement("span");
-    wordElem.className = "hint-word";
-    wordElem.appendChild(document.createTextNode(keyword));
-    annotation.appendChild(wordElem);
-    if (keywordData.symbolEnd < keywordData.declaration.length) {
-        var leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(/\s+/g, ' ');
-        if (keywordData.symbolEnd + leftover.length > 60 && leftover.length > 3) {
-            leftover = leftover.slice(0, 57 - keywordData.symbolEnd) + '...';
-        }
-        annotation.appendChild(document.createTextNode(leftover));
-    };
     docDiv.appendChild(annotation)
 
     if (keywordData.doc) {
@@ -316,9 +322,14 @@ function registerStandardHints(successFunc)
         var found = [];
         var hints = Object.keys(codeWorldSymbols)
         for (var i = 0; i < hints.length; i++) {
-            var hint = hints[i];
+            let hint = hints[i];
             if (hint.startsWith(term)){
-                found.push(hint);
+                found.push({
+                    text: hint,
+                    render: (elem) => {
+                        renderDeclaration(elem, hint, codeWorldSymbols[hint]);
+                    }
+                });
             }
         }
 
@@ -326,10 +337,11 @@ function registerStandardHints(successFunc)
             function startsWithLetter(c) {
                 return /^[a-zA-Z].*/.test(c);
             }
-                if (startsWithLetter(a) && !startsWithLetter(b)) return -1;
-                else if (startsWithLetter(b) && !startsWithLetter(a)) return 1;
-                else return a.toLowerCase() < b.toLowerCase() ? -1 : 1
-            });
+
+            if (startsWithLetter(a.text) && !startsWithLetter(b.text)) return -1;
+            else if (startsWithLetter(b.text) && !startsWithLetter(a.text)) return 1;
+            else return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1
+        });
 
         if (found.length > 0) {
             var data = {
@@ -349,11 +361,11 @@ function registerStandardHints(successFunc)
             CodeMirror.on(
                 data, 'select',
                 function (selection, elem) {
-                    var codeWordInfo = codeWorldSymbols[selection],
+                    var codeWordInfo = codeWorldSymbols[selection.text],
                         hintsWidgetRect = elem.parentElement.getBoundingClientRect(),
                         doc = document.createElement('div');
                     deleteOldHintDocs();
-                    var hover = renderHover(selection);
+                    var hover = renderHover(selection.text);
                     if (hover) {
                         doc.className += "hint-description";
                         doc.style["min-height"] = hintsWidgetRect.height + "px";

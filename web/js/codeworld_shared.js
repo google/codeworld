@@ -480,14 +480,17 @@ function registerStandardHints(successFunc)
             }
 
             var word = line.substr(wordStart, wordEnd - wordStart);
-            codeWorldBuiltinSymbols[word] = {
-                declaration: line,
-                symbolStart: wordStart,
-                symbolEnd: wordEnd
+            if (hintBlacklist.indexOf(word) < 0) {
+                codeWorldBuiltinSymbols[word] = {
+                    declaration: line,
+                    symbolStart: wordStart,
+                    symbolEnd: wordEnd
+                }
+                if (doc) {
+                    codeWorldBuiltinSymbols[word].doc = doc;
+                }
             }
-            if (doc) {
-                codeWorldBuiltinSymbols[word].doc = doc;
-            }
+
             if (hintBlacklist.indexOf(word) >= 0) {
                 codeworldKeywords[word] = 'deprecated';
             } else if (/^[A-Z:]/.test(word)) {

@@ -416,3 +416,23 @@ body {
 .req-details {
   color: #555;
 }
+#obsolete-code-alert {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: hidden;
+    pointer-events: none;
+    background-color: #303030;
+    position: absolute;
+    z-index: 0;
+}
+.obsolete-code-alert-fadeout {
+    opacity: 0;
+    transition: visibility 0s 1s, opacity 1s linear;
+    visibility: hidden;
+ }
+.obsolete-code-alert-fadein {
+    opacity: .7;
+    transition: opacity 1s linear;
+    visibility: visible;
+}

@@ -502,6 +502,7 @@ function registerStandardHints(successFunc)
         }
     });
 
+    parseSymbolsFromCurrentCode();
     successFunc();
   });
 }

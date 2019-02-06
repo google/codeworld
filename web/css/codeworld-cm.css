@@ -35,8 +35,8 @@ pre.cm-s-default span.cm-meta,       div.CodeMirror span.cm-meta       {color: #
 pre.cm-s-default span.cm-qualifier,  div.CodeMirror span.cm-qualifier  {color: #666;}
 pre.cm-s-default span.cm-number,     div.CodeMirror span.cm-number     {color: #a10;}
 pre.cm-s-default span.cm-bracket,    div.CodeMirror span.cm-bracket    {color: #000;}
-pre.cm-s-default span.cm-bracket-0,  div.CodeMirror span.cm-bracket-0  {font-weight: bold; color: hsl( 80, 80%, 40%); font-size: 1.25em; letter-spacing: -0.12em}
-pre.cm-s-default span.cm-bracket-1,  div.CodeMirror span.cm-bracket-1  {font-weight: bold; color: hsl(225, 60%, 60%); font-size: 1.12em; letter-spacing: -0.064em;}
+pre.cm-s-default span.cm-bracket-0,  div.CodeMirror span.cm-bracket-0  {font-weight: bold; color: hsl( 80, 80%, 40%); transform: scale(1.25); display: inline-block;}
+pre.cm-s-default span.cm-bracket-1,  div.CodeMirror span.cm-bracket-1  {font-weight: bold; color: hsl(225, 60%, 60%); transform: scale(1.12); display: inline-block;}
 pre.cm-s-default span.cm-bracket-2,  div.CodeMirror span.cm-bracket-2  {font-weight: bold; color: hsl(320, 60%, 50%);}
 pre.cm-s-default span.cm-bracket-3,  div.CodeMirror span.cm-bracket-3  {font-weight: bold; color: hsl( 60, 60%, 40%);}
 pre.cm-s-default span.cm-bracket-4,  div.CodeMirror span.cm-bracket-4  {font-weight: bold; color: hsl(175, 60%, 40%);}
@@ -63,7 +63,12 @@ div.CodeMirror span.cm-matchhighlight { background-color: rgba(128, 255, 128, 0.
     color: #555;
     font-family: "Source Code Pro", monospace;
     font-size: 9pt;
-    white-space: pre;
+    white-space: pre-line;
+}
+
+.hover-decl {
+    padding-left: 2em;
+    text-indent: -2em;
 }
 
 .CodeMirror-hint .hint-word, .hover-decl .hint-word {
@@ -93,7 +98,6 @@ li.CodeMirror-hint-active {
     min-height: 1em;
     max-height: 20em;
     min-width: 5em;
-    max-width: 30em;
     overflow: hidden;
     padding: 0.3em 0.5em;
     transition: opacity .4s;
@@ -106,28 +110,39 @@ li.CodeMirror-hint-active {
 .CodeMirror-hover-tooltip {
     opacity: 0;
     position: fixed;
+    max-width: 30em;
 }
 
 .hint-description {
     position: absolute;
     height: 14.2em;
-    width: 30em;
+    width: 20em;
     z-index: 11;
 }
 
-.CodeMirror-hover-tooltip div.fade {
+div.fade {
     position: absolute;
     top: 0px;
     bottom: 0px;
     width: 100%;
     height: 100%;
     display: block;
+}
 
+.CodeMirror-hover-tooltip div.fade {
     background-image: linear-gradient(
         to bottom,
         rgba(0, 0, 0, 0) 0em,
         rgba(0, 0, 0, 0) 17em,
         #ffe 20em);
+}
+
+.hint-description div.fade {
+    background-image: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0) 0em,
+        rgba(0, 0, 0, 0) 11.2em,
+        #ffe 14.2em);
 }
 
 .hover-doc {
@@ -186,4 +201,18 @@ li.CodeMirror-hint-active {
          url('../SourceCodePro/source-code-pro-v7-latin-regular.woff') format('woff'), /* Modern Browsers */
          url('../SourceCodePro/source-code-pro-v7-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
          url('../SourceCodePro/source-code-pro-v7-latin-regular.svg#SourceCodePro') format('svg'); /* Legacy iOS */
+}
+
+/* source-code-pro-bold - latin */
+@font-face {
+    font-family: "Source Code Pro";
+    font-style: normal;
+    font-weight: 700;
+    src: url('../SourceCodePro/source-code-pro-v7-latin-700.eot'); /* IE9 Compat Modes */
+    src: local('Source Code Pro Bold'), local('SourceCodePro-Bold'),
+         url('../SourceCodePro/source-code-pro-v7-latin-700.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+         url('../SourceCodePro/source-code-pro-v7-latin-700.woff2') format('woff2'), /* Super Modern Browsers */
+         url('../SourceCodePro/source-code-pro-v7-latin-700.woff') format('woff'), /* Modern Browsers */
+         url('../SourceCodePro/source-code-pro-v7-latin-700.ttf') format('truetype'), /* Safari, Android, iOS */
+         url('../SourceCodePro/source-code-pro-v7-latin-700.svg#SourceCodePro') format('svg'); /* Legacy iOS */
 }

@@ -417,13 +417,15 @@ body {
   color: #555;
 }
 #obsolete-code-alert {
-    width: 100%;
-    height: 100%;
     display: block;
     overflow: hidden;
     pointer-events: none;
-    background-color: #303030;
+    background-color: #333;
+    color: white;
+    padding: 2em;
+    text-align: center;
     position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
     z-index: 0;
 }
 .obsolete-code-alert-fadeout {

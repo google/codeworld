@@ -202,3 +202,17 @@ div.fade {
          url('../SourceCodePro/source-code-pro-v7-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
          url('../SourceCodePro/source-code-pro-v7-latin-regular.svg#SourceCodePro') format('svg'); /* Legacy iOS */
 }
+
+/* source-code-pro-bold - latin */
+@font-face {
+    font-family: "Source Code Pro";
+    font-style: normal;
+    font-weight: 700;
+    src: url('../SourceCodePro/source-code-pro-v7-latin-700.eot'); /* IE9 Compat Modes */
+    src: local('Source Code Pro Bold'), local('SourceCodePro-Bold'),
+         url('../SourceCodePro/source-code-pro-v7-latin-700.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+         url('../SourceCodePro/source-code-pro-v7-latin-700.woff2') format('woff2'), /* Super Modern Browsers */
+         url('../SourceCodePro/source-code-pro-v7-latin-700.woff') format('woff'), /* Modern Browsers */
+         url('../SourceCodePro/source-code-pro-v7-latin-700.ttf') format('truetype'), /* Safari, Android, iOS */
+         url('../SourceCodePro/source-code-pro-v7-latin-700.svg#SourceCodePro') format('svg'); /* Legacy iOS */
+}

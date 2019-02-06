@@ -72,7 +72,10 @@ async function init() {
                         sweetAlert('Oops!', 'Could not load the shared directory. Please try again.', 'error');
                     }
                     initCodeworld();
-                    registerStandardHints(function(){setMode(true);});
+                    registerStandardHints(function() {
+                        setMode(true);
+                        parseSymbolsFromCurrentCode();
+                    });
                     discoverProjects("", 0);
                     updateUI();
                 });
@@ -89,12 +92,18 @@ async function init() {
             }, go);
         } else {
             initCodeworld();
-            registerStandardHints(function(){setMode(true);});
+            registerStandardHints(function(){
+                setMode(true);
+                parseSymbolsFromCurrentCode();
+            });
             updateUI();
         }
     } else {
         initCodeworld();
-        registerStandardHints(function(){setMode(true);});
+        registerStandardHints(function(){
+            setMode(true);
+            parseSymbolsFromCurrentCode();
+        });
         updateUI();
     }
  

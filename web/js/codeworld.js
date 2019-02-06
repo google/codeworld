@@ -15,6 +15,7 @@
  */
 
 var autohelpEnabled = location.hash.length <= 2;
+var compiledCodeHash = null;
 
 /*
  * Initializes the programming environment.  This is called after the
@@ -181,8 +182,11 @@ function initCodeworld() {
     window.reparseTimeoutId = null;
     window.codeworldEditor.on("changes", () => {
         if (window.reparseTimeoutId) clearTimeout(window.reparseTimeoutId);
-        window.reparseTimeoutId = setTimeout(parseSymbolsFromCurrentCode, 3000);
-        window.updateUI();
+        window.reparseTimeoutId = setTimeout(
+            function() {
+                parseSymbolsFromCurrentCode();
+                window.updateUI();
+            }, 3000);
     });
 
     window.onbeforeunload = function(event) {
@@ -407,6 +411,19 @@ function updateUI() {
 
     if (!isEditorClean()) {
         title = "* " + title;
+    }
+
+    // If true - code currently in document is not equal to
+    // last compiled code
+    var codeIsObsolete = compiledCodeHash
+        !== hashString(window.codeworldEditor.getValue()),
+        obsoleteAlert = document.getElementById('obsolete-code-alert');
+    if (codeIsObsolete){
+        obsoleteAlert.classList.add("obsolete-code-alert-fadein");
+        obsoleteAlert.classList.remove("obsolete-code-alert-fadeout");
+    } else {
+        obsoleteAlert.classList.add("obsolete-code-alert-fadeout");
+        obsoleteAlert.classList.remove("obsolete-code-alert-fadein");
     }
 
     document.title = title + " - CodeWorld"
@@ -847,6 +864,17 @@ function goto(line, col) {
     codeworldEditor.focus();
 }
 
+function hashString(string){
+	  var hash = 0;
+	  if (string.length == 0) return hash;
+	  for (i = 0; i < string.length; i++) {
+	      char = string.charCodeAt(i);
+	      hash = ((hash<<5)-hash)+char;
+	      hash = hash & hash; // Convert to 32bit integer
+	  }
+	  return hash;
+}
+
 function compile() {
     stop();
 
@@ -919,6 +947,7 @@ function compile() {
             if (msg != '') msg += '\n\n';
 
             if (success) {
+                compiledCodeHash = hashString(src);
                 run(hash, dhash, msg, false, compileGeneration);
             } else {
                 run(hash, '', msg, true, compileGeneration);

@@ -15,7 +15,6 @@
  */
 
 var autohelpEnabled = location.hash.length <= 2;
-var compiledCodeHash = null;
 
 /*
  * Initializes the programming environment.  This is called after the
@@ -182,11 +181,10 @@ function initCodeworld() {
     window.reparseTimeoutId = null;
     window.codeworldEditor.on("changes", () => {
         if (window.reparseTimeoutId) clearTimeout(window.reparseTimeoutId);
-        window.reparseTimeoutId = setTimeout(
-            function() {
-                parseSymbolsFromCurrentCode();
-                window.updateUI();
-            }, 3000);
+        window.reparseTimeoutId = setTimeout(function() {
+            parseSymbolsFromCurrentCode();
+        }, 1500);
+        window.updateUI();
     });
 
     window.onbeforeunload = function(event) {
@@ -415,10 +413,10 @@ function updateUI() {
 
     // If true - code currently in document is not equal to
     // last compiled code
-    var codeIsObsolete = compiledCodeHash
-        !== hashString(window.codeworldEditor.getValue()),
-        obsoleteAlert = document.getElementById('obsolete-code-alert');
-    if (codeIsObsolete){
+    var running = document.getElementById('runner').style.display != 'none';
+    var obsolete = !window.codeworldEditor.getDoc().isClean(window.runningGeneration);
+    var obsoleteAlert = document.getElementById('obsolete-code-alert');
+    if (running && obsolete){
         obsoleteAlert.classList.add("obsolete-code-alert-fadein");
         obsoleteAlert.classList.remove("obsolete-code-alert-fadeout");
     } else {
@@ -864,17 +862,6 @@ function goto(line, col) {
     codeworldEditor.focus();
 }
 
-function hashString(string){
-	  var hash = 0;
-	  if (string.length == 0) return hash;
-	  for (i = 0; i < string.length; i++) {
-	      char = string.charCodeAt(i);
-	      hash = ((hash<<5)-hash)+char;
-	      hash = hash & hash; // Convert to 32bit integer
-	  }
-	  return hash;
-}
-
 function compile() {
     stop();
 
@@ -928,7 +915,7 @@ function compile() {
             hash = obj.hash;
             dhash = obj.dhash;
           } catch (e) {
-            run('', '', "Sorry!  Your program couldn't be run right now.", true);
+            run('', '', "Sorry!  Your program couldn't be run right now.", true, null);
             return;
           }
         }
@@ -947,7 +934,6 @@ function compile() {
             if (msg != '') msg += '\n\n';
 
             if (success) {
-                compiledCodeHash = hashString(src);
                 run(hash, dhash, msg, false, compileGeneration);
             } else {
                 run(hash, '', msg, true, compileGeneration);

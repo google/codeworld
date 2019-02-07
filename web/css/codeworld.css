@@ -424,13 +424,15 @@ body {
     display: block;
     overflow: hidden;
     pointer-events: none;
-    background: linear-gradient(rgba(0, 0, 0, 0.7) 0px,
-                                rgba(0, 0, 0, 0.7) 3em,
-                                rgba(0, 0, 0, 0.3) 6em,
-                                rgba(0, 0, 0, 0.3) 100%);
+    background: linear-gradient(to bottom,
+        rgba(0, 0, 0, 0.7) 0px,
+        rgba(0, 0, 0, 0.6) 2em,
+        rgba(0, 0, 0, 0) 3em,
+        rgba(0, 0, 0, 0) 100%);
     color: white;
-    padding: 2em;
-    text-align: center;
+    padding: 0.5em;
+    text-align: right;
+    vertical-align: bottom;
     position: absolute;
     left: 3px; right: 4px; top: 3px; bottom: 7px;
     z-index: 0;

@@ -413,9 +413,10 @@ function updateUI() {
 
     // If true - code currently in document is not equal to
     // last compiled code
-    var codeIsObsolete = !window.codeworldEditor.getDoc().isClean(window.runningGeneration);
+    var running = document.getElementById('runner').style.display != 'none';
+    var obsolete = !window.codeworldEditor.getDoc().isClean(window.runningGeneration);
     var obsoleteAlert = document.getElementById('obsolete-code-alert');
-    if (codeIsObsolete){
+    if (running && obsolete){
         obsoleteAlert.classList.add("obsolete-code-alert-fadein");
         obsoleteAlert.classList.remove("obsolete-code-alert-fadeout");
     } else {

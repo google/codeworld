@@ -416,16 +416,23 @@ body {
 .req-details {
   color: #555;
 }
+
+.runner-box {
+  position: relative;
+}
 #obsolete-code-alert {
     display: block;
     overflow: hidden;
     pointer-events: none;
-    background-color: #333;
+    background: linear-gradient(rgba(0, 0, 0, 0.7) 0px,
+                                rgba(0, 0, 0, 0.7) 3em,
+                                rgba(0, 0, 0, 0.3) 6em,
+                                rgba(0, 0, 0, 0.3) 100%);
     color: white;
     padding: 2em;
     text-align: center;
     position: absolute;
-    left: 0; right: 0; top: 0; bottom: 0;
+    left: 3px; right: 4px; top: 3px; bottom: 7px;
     z-index: 0;
 }
 .obsolete-code-alert-fadeout {
@@ -434,7 +441,7 @@ body {
     visibility: hidden;
  }
 .obsolete-code-alert-fadein {
-    opacity: .7;
+    opacity: 1;
     transition: opacity 1s linear;
     visibility: visible;
 }

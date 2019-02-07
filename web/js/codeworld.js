@@ -186,7 +186,7 @@ function initCodeworld() {
             function() {
                 parseSymbolsFromCurrentCode();
                 window.updateUI();
-            }, 3000);
+            }, 1500);
     });
 
     window.onbeforeunload = function(event) {

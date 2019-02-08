@@ -160,7 +160,22 @@ function initCodeworld() {
             "Ctrl-Up": changeFontSize(1),
             "Ctrl-Down": changeFontSize(-1)
         },
-        textHover: onHover
+        textHover: onHover,
+        gutters: ["CodeMirror-lint-markers"],
+        lint: {
+            getAnnotations: function(text, callback, cm){
+                var data = new FormData();
+                data.append("source", text)
+                var request = sendHttp(
+                    "POST", "errorCheck", data,
+                    function(request){
+                        if (request.status == 400){
+                            callback(parseCompileErrors(request.responseText))
+                        } else {callback([])};
+                    });
+            },
+            async: true
+        }
     });
     window.codeworldEditor.refresh();
 
@@ -1015,4 +1030,42 @@ function downloadProject() {
         elem.click();
         document.body.removeChild(elem);
     }
+}
+
+function parseCompileErrors(rawErrors){
+    var errors = [];
+    rawErrors = rawErrors.split("\n\n");
+    rawErrors.forEach(function(rawError){
+        rawError = rawError.split('\n');
+        var error = {},
+            annotation = rawError[0],
+            message = rawError.slice(1).join('\n');
+
+        var match = /^program.hs:(\d+):(\d+): (\w+):(.*)/.exec(annotation);
+
+        var lineNumber = Number(match[1])-1,
+            charNumber = Number(match[2])-1;
+
+        var token = window.codeworldEditor.getLineTokens(lineNumber).find(
+            function(t){ return t.start === charNumber });
+
+        if (token) {
+            var start = token.start,
+                end = token.end;
+        } else {
+            var start = charNumber,
+                end = charNumber + 1;
+        }
+
+        error.from = CodeMirror.Pos(lineNumber, start);
+        error.to = CodeMirror.Pos(lineNumber, end);
+        error.severity = match[3];
+        if (match[4]){
+            error.message = match[4] + '\n' + message
+        } else {
+            error.message = message;
+        }
+        errors.push(error)
+    })
+    return errors;
 }

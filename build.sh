@@ -65,6 +65,7 @@ function build_codemirror {
       addon/display/rulers.js \
       addon/edit/matchbrackets.js \
       addon/hint/show-hint.js \
+      addon/lint/lint.js \
       addon/runmode/runmode.js \
       addon/scroll/annotatescrollbar.js \
       addon/search/match-highlighter.js \

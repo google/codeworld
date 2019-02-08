@@ -1038,8 +1038,8 @@ function parseCompileErrors(rawErrors){
     rawErrors.forEach(function(rawError){
         rawError = rawError.split('\n');
         var error = {},
-            annotation = rawError[0],
-            message = rawError.slice(1).join('\n');
+            annotation = rawError[0].trim(),
+            message = rawError.slice(1).map((err) => {return err.trim()}).join('\n');
 
         var match = /^program.hs:(\d+):(\d+): (\w+):(.*)/.exec(annotation);
 
@@ -1061,7 +1061,7 @@ function parseCompileErrors(rawErrors){
         error.to = CodeMirror.Pos(lineNumber, end);
         error.severity = match[3];
         if (match[4]){
-            error.message = match[4] + '\n' + message
+            error.message = match[4].trim() + '\n' + message
         } else {
             error.message = message;
         }

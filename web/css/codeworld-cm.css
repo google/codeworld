@@ -90,7 +90,7 @@ li.CodeMirror-hint-active {
     color: #555;
 }
 
-.CodeMirror-hover-tooltip, .hint-description {
+.CodeMirror-hover-tooltip, .CodeMirror-lint-tooltip, .hint-description {
     background-color: #ffe;
     border-radius: 0.5em;
     border: 1px solid #888;

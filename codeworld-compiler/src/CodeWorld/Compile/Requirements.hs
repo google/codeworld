@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ParallelListComp #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 {-
@@ -69,7 +70,7 @@ extractRequirementsSource = do
     src <- decodeUtf8 <$> getSourceCode
     let plain = extractSubmatches plainPattern src
     let blocks = map (fmap deobfuscate) (extractSubmatches codedPattern src)
-    addDiagnostics [ (spn, CompileSuccess, "Coded requirements were corrupted.")
+    addDiagnostics [ (spn, CompileSuccess, "warning: Coded requirements were corrupted.")
                      | (spn, Nothing) <- blocks ]
     let coded = [ (spn, rule) | (spn, Just block) <- blocks, rule <- block ]
     return (plain ++ coded)
@@ -89,10 +90,10 @@ extractRequirements sources = do
                     | (SrcSpanInfo spn _, source) <- sources
                     , let ln = srcSpanStartLine spn
                     , let col = srcSpanStartColumn spn ]
-        diags = [ format err | Left err <- results ]
+        diags = [ format loc err | Left err <- results | (loc, _) <- sources ]
         reqs =  [ req | Right req <- results ]
-        format err = (noSrcSpan, CompileSuccess,
-                      "The requirement could not be understood:\n" ++ err)
+        format loc err = (loc, CompileSuccess,
+                          "error: The requirement could not be understood:\n" ++ err)
 
 handleRequirement :: MonadCompile m => Requirement -> m String
 handleRequirement req = do

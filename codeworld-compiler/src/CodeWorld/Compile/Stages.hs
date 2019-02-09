@@ -71,7 +71,7 @@ checkDangerousSource = do
           src =~ (".*glasgow-exts.*" :: Text)) $ do
         addDiagnostics
             [ (noSrcSpan, CompileError,
-               "Sorry, but your program uses forbidden language features.")
+               "error: Sorry, but your program uses forbidden language features.")
             ]
 
 -- Looks for uses of old-style main in CodeWorld-mode modules.  These
@@ -191,7 +191,7 @@ varlessPatBinds :: Decl SrcSpanInfo -> [Diagnostic]
 varlessPatBinds (PatBind loc pat _ _)
   | not (everything (||) (mkQ False isPatVar) pat)
     = [(loc, CompileError,
-        "This definition doesn't define any variables.\n\t" ++
+        "error: This definition doesn't define any variables.\n\t" ++
         "Variables must begin with a lowercase letter.")]
 varlessPatBinds _ = []
 
@@ -211,6 +211,6 @@ checkPatternGuards =
 patternGuards :: GuardedRhs SrcSpanInfo -> [Diagnostic]
 patternGuards (GuardedRhs _ stmts _) =
     [ (loc, CompileError,
-       "This arrow can't be used here.\n\t" ++
+       "error: This arrow can't be used here.\n\t" ++
        "To compare a negative number, add a space between < and -.")
       | Generator loc _ _ <- stmts ]

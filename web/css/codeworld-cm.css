@@ -150,6 +150,19 @@ div.fade {
     font-size: 11pt;
 }
 
+div.CodeMirror-lint-message-warning, div.CodeMirror-lint-message-error {
+    padding-left: calc(18px + 0.5em);
+}
+
+div.CodeMirror-lint-message-warning:not(:last-child):after,
+div.CodeMirror-lint-message-error:not(:last-child):after {
+    content: "";
+    border-bottom: solid #ccc 1px;
+    display: block;
+    padding-bottom: 0.5em;
+    margin-bottom: 0.5em;
+}
+
 /* Styles needed for the dialog add-on, used for search. */
 
 .CodeMirror-dialog {

@@ -160,7 +160,26 @@ function initCodeworld() {
             "Ctrl-Up": changeFontSize(1),
             "Ctrl-Down": changeFontSize(-1)
         },
-        textHover: onHover
+        textHover: onHover,
+        gutters: ["CodeMirror-lint-markers"],
+        lint: {
+            getAnnotations: function(text, callback){
+                var data = new FormData();
+                data.append("source", text)
+                var request = sendHttp(
+                    "POST", "errorCheck", data,
+                    function(request){
+                        if (request.status == 400 || request.status == 200){
+                            callback(parseCompileErrors(request.responseText))
+                        } else {
+                            console.log("Not expected behavior: don't know how to " +
+                                        "handle request with status ",
+                                        request.status, request)
+                        };
+                    });
+            },
+            async: true
+        }
     });
     window.codeworldEditor.refresh();
 
@@ -1022,4 +1041,54 @@ function downloadProject() {
         elem.click();
         document.body.removeChild(elem);
     }
+}
+
+function parseCompileErrors(rawErrors){
+    var errors = [];
+    rawErrors = rawErrors.split("\n\n");
+    rawErrors.forEach(function(rawError){
+        rawError = rawError.split('\n');
+        var firstLine = rawError[0].trim(),
+            message = rawError.slice(1).map((err) => {return err.trim()}).join('\n'),
+            re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/,
+            re2 = /^program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\): (\w+):(.*)/,
+            startLine, endLine, startCol, endCol, match, severity, description;
+
+        if (re1.test(firstLine)) {
+            match = re1.exec(firstLine);
+            startLine = Number(match[1])-1;
+            endLine = startLine;
+            startCol = Number(match[3])-1;
+            if(match[4]) {
+                endCol = Number(match[4])-1;
+            } else {
+                var token = window.codeworldEditor.getLineTokens(startLine).find(
+                    function(t){ return t.start === startCol});
+                if (token){
+                    endCol = token.end;
+                } else {
+                    endCol = startCol+1;
+                }
+            }
+        } else if (re2.test(firstLine)) {
+            match = re2.exec(firstLine);
+            startLine = Number(match[1])-1;
+            startCol = Number(match[2])-1;
+            endLine = Number(match[3])-1;
+            endCol = Number(match[4])-1;
+        } else {
+            console.log("Can not parse error header:", firstLine);
+            return;
+        }
+        severity = match[5]
+        description = match[6] ? match[6].trim() + '\n' : ""
+
+        errors.push({
+            from: CodeMirror.Pos(startLine, startCol),
+            to: CodeMirror.Pos(endLine, endCol),
+            severity: severity,
+            message: description + message
+        })
+    })
+    return errors;
 }

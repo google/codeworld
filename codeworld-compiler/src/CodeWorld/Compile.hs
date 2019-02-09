@@ -283,3 +283,4 @@ copyOutputFrom target = gets compileStage >>= \stage -> case stage of
         outCode <- readUtf8 (target </> "out.js")
         createDirectoryIfMissing True (takeDirectory out)
         writeUtf8 out (rtsCode <> libCode <> outCode)
+    ErrorCheck -> return ()

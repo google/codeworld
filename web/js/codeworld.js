@@ -194,6 +194,13 @@ function initCodeworld() {
             return msg;
         }
     }
+
+    window.onresize = function() {
+        if (window.resizeTimeoutId) clearTimeout(window.resizeTimeoutId);
+        window.resizeTimeoutId = setTimeout(function() {
+            window.codeworldEditor.setSize();
+        }, 1000);
+    }
 }
 
 class CanvasRecorder {

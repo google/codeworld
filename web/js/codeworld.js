@@ -164,19 +164,32 @@ function initCodeworld() {
         gutters: ["CodeMirror-lint-markers"],
         lint: {
             getAnnotations: function(text, callback){
+                var request;
+                function cancelLintRequest() {
+                    if (window.codeworldEditor) {
+                        window.codeworldEditor.off("change", cancelLintRequest);
+                    }
+                    if (request) request.abort();
+                }
+
                 var data = new FormData();
                 data.append("source", text)
-                var request = sendHttp(
-                    "POST", "errorCheck", data,
-                    function(request){
-                        if (request.status == 400 || request.status == 200){
-                            callback(parseCompileErrors(request.responseText))
-                        } else {
-                            console.log("Not expected behavior: don't know how to " +
-                                        "handle request with status ",
-                                        request.status, request)
-                        };
-                    });
+                request = sendHttp("POST", "errorCheck", data, function(request) {
+                    if (window.codeworldEditor) {
+                        window.codeworldEditor.off("change", cancelLintRequest);
+                    }
+
+                    if (request.status == 400 || request.status == 200){
+                        callback(parseCompileErrors(request.responseText))
+                    } else {
+                        console.log("Not expected behavior: don't know how to " +
+                                    "handle request with status ",
+                                    request.status, request)
+                    };
+                });
+                if (window.codeworldEditor) {
+                    window.codeworldEditor.on("change", cancelLintRequest);
+                }
             },
             async: true
         }

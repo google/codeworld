@@ -1072,14 +1072,16 @@ function parseCompileErrors(rawErrors) {
     rawErrors.forEach(function(rawError) {
         rawError = rawError.split('\n');
         var firstLine = rawError[0].trim(),
-            message = rawError.slice(1).map((err) => {
+            otherLines = rawError.slice(1).map((err) => {
                 return err.trim()
             }).join('\n'),
             re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/,
             re2 = /^program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\): (\w+):(.*)/,
             startLine, endLine, startCol, endCol, match, severity, description;
 
-        if (re1.test(firstLine)) {
+        if (firstLine.trim() === "") {
+            return;
+        } else if (re1.test(firstLine)) {
             match = re1.exec(firstLine);
             startLine = Number(match[1]) - 1;
             endLine = startLine;
@@ -1097,24 +1099,26 @@ function parseCompileErrors(rawErrors) {
                     endCol = startCol + 1;
                 }
             }
+            severity = match[5]
+            description = match[6] ? match[6].trim() + '\n' : "" + otherLines;
         } else if (re2.test(firstLine)) {
             match = re2.exec(firstLine);
             startLine = Number(match[1]) - 1;
             startCol = Number(match[2]) - 1;
             endLine = Number(match[3]) - 1;
             endCol = Number(match[4]) - 1;
+            severity = match[5]
+            description = match[6] ? match[6].trim() + '\n' : "" + otherLines;
         } else {
             console.log("Can not parse error header:", firstLine);
             return;
         }
-        severity = match[5]
-        description = match[6] ? match[6].trim() + '\n' : ""
 
         errors.push({
             from: CodeMirror.Pos(startLine, startCol),
             to: CodeMirror.Pos(endLine, endCol),
             severity: severity,
-            message: description + message
+            message: description
         })
     })
     return errors;

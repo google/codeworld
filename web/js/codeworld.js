@@ -333,11 +333,11 @@ function stopRecording() {
 
 function setMode(force) {
     if (window.buildMode == 'haskell') {
-        if (force || window.codeworldEditor.getMode().name == 'codeworld') {
+        if (force || window.codeworldEditor.getMode().name !== 'haskell') {
             window.codeworldEditor.setOption('mode', 'haskell');
         }
     } else {
-        if (force || window.codeworldEditor.getMode().name != 'codeworld') {
+        if (force || window.codeworldEditor.getMode().name !== 'codeworld') {
             window.codeworldEditor.setOption(
                 'mode', {
                     name: 'codeworld',

@@ -184,6 +184,7 @@ function initCodeworld() {
 
                 let data = new FormData();
                 data.append("source", text)
+                data.append('mode', window.buildMode);
                 request = sendHttp("POST", "errorCheck", data, request => {
                     if (window.codeworldEditor) {
                         window.codeworldEditor.off("change", cancelLintRequest);

@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2018 The CodeWorld Authors. All rights reserved.
  *
@@ -16,7 +15,7 @@
  */
 "use strict";
 
-(function () {
+(function() {
     let available = false;
     let active = false;
 
@@ -72,7 +71,7 @@
         if (!available) {
             canvas = document.getElementById("screen");
 
-            canvas.addEventListener("mousemove", function (evt) {
+            canvas.addEventListener("mousemove", function(evt) {
                 if (active) {
                     let nodeId = debugGetNode({
                         x: evt.clientX,
@@ -83,13 +82,13 @@
                 }
             });
 
-            canvas.addEventListener("mouseout", function (evt) {
+            canvas.addEventListener("mouseout", function(evt) {
                 if (active) {
                     debugHighlightShape(true, -1);
                 }
             });
-            
-            canvas.addEventListener("click", function (evt) {
+
+            canvas.addEventListener("click", function(evt) {
                 if (active) {
                     let nodeId = debugGetNode({
                         x: evt.clientX,
@@ -131,8 +130,8 @@
         debugSetActive(false);
         cachedPic = null;
 
-        debugHighlightShape(true,-1);
-        debugHighlightShape(false,-1);
+        debugHighlightShape(true, -1);
+        debugHighlightShape(false, -1);
 
         parent.destroyTreeDialog();
 

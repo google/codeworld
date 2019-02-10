@@ -15,7 +15,7 @@
  */
 "use strict";
 
-(function () {
+(function() {
     let dialog = null,
         content = null,
         fullPic = null,
@@ -37,27 +37,27 @@
     }
 
     function buildNestedList(id) {
-        let go = function (p, to, open) {
+        let go = function(p, to, open) {
             let ul = document.createElement("ul"),
                 span = document.createElement("span"),
                 toggleButton = document.createElement("span"),
                 collapsed = false;
 
-            let collapse = function () {
+            let collapse = function() {
                 ul.style.display = "none";
                 toggleButton.innerHTML = "&#x25B6;";
                 collapsed = true;
             }
 
-            let decollapse = function () {
+            let decollapse = function() {
                 ul.style.display = "";
                 toggleButton.innerHTML = "&#x25BC;";
                 collapsed = false;
             }
 
-            if ( p.picture || p.pictures ) {
+            if (p.picture || p.pictures) {
                 toggleButton.classList.add("collapse-button");
-                toggleButton.addEventListener("click", function (evt) {
+                toggleButton.addEventListener("click", function(evt) {
                     if (collapsed) {
                         decollapse();
                     } else {
@@ -81,7 +81,7 @@
             if (open) {
                 link.click();
             }
-            span.appendChild( link );
+            span.appendChild(link);
             to.appendChild(span);
 
             if (p.picture) {
@@ -90,9 +90,9 @@
                 ul.appendChild(li);
                 to.appendChild(ul);
             } else if (p.pictures) {
-                for (let i=0;i<p.pictures.length;i++) {
+                for (let i = 0; i < p.pictures.length; i++) {
                     let li = document.createElement("li"),
-                        op = open&&(id >= p.pictures[i].id)&&(i==p.pictures.length-1||id<p.pictures[i+1].id);
+                        op = open && (id >= p.pictures[i].id) && (i == p.pictures.length - 1 || id < p.pictures[i + 1].id);
                     go(p.pictures[i], li, op);
                     ul.appendChild(li);
                 }
@@ -111,7 +111,7 @@
 
     function getPicNode(id, cb) {
         let current = fullPic;
-        if (!cb) cb = function (x) {};
+        if (!cb) cb = function(x) {};
 
         while (current.id <= id) {
             cb(current);
@@ -122,7 +122,7 @@
                 current = current.picture;
             } else if (current.pictures) {
                 let i = current.pictures.length - 1;
-                while ( current.pictures[i].id > id ) i--;
+                while (current.pictures[i].id > id) i--;
                 current = current.pictures[i];
             } else {
                 return null;
@@ -133,41 +133,52 @@
     function createPicLink(pic) {
         let a = document.createElement("a");
 
-        a.appendChild( document.createTextNode( pic.name ) );
+        a.appendChild(document.createTextNode(pic.name));
         a.href = "javascript: void(0);";
         a.classList.add("treedialog-piclink");
-        a.addEventListener("click", function (evt) {
+        a.addEventListener("click", function(evt) {
             if (marker) marker.clear();
 
-            getPicNode(currentPic.id, function (node) {
+            getPicNode(currentPic.id, function(node) {
                 node.link.classList.remove("piclink-selected");
             });
-            getPicNode(pic.id, function (node) {
+            getPicNode(pic.id, function(node) {
                 node.link.classList.add("piclink-selected");
             });
 
             currentPic = pic;
-            dialog.dialog("option", "title", pic.name );
+            dialog.dialog("option", "title", pic.name);
             drawShape(canvas, pic.id);
             if (pic.startLine && pic.startCol && pic.endLine && pic.endCol) {
-                codeworldEditor.setSelection(
-                    { line: pic.startLine - 1, ch: pic.startCol - 1 },
-                    { line: pic.endLine - 1, ch: pic.endCol - 1 },
-                    { origin: "+treedialog" });
+                codeworldEditor.setSelection({
+                    line: pic.startLine - 1,
+                    ch: pic.startCol - 1
+                }, {
+                    line: pic.endLine - 1,
+                    ch: pic.endCol - 1
+                }, {
+                    origin: "+treedialog"
+                });
             }
         });
-        a.addEventListener("mouseover", function (evt) {
+        a.addEventListener("mouseover", function(evt) {
             highlight(true, pic.id);
 
             if (pic.startLine && pic.startCol && pic.endLine && pic.endCol) {
                 if (marker) marker.clear();
-                marker = codeworldEditor.markText(
-                    { line: pic.startLine - 1, ch: pic.startCol - 1 },
-                    { line: pic.endLine - 1, ch: pic.endCol - 1 },
-                    { origin: "+treedialog", className: "marked" })
+                marker = codeworldEditor.markText({
+                    line: pic.startLine - 1,
+                    ch: pic.startCol - 1
+                }, {
+                    line: pic.endLine - 1,
+                    ch: pic.endCol - 1
+                }, {
+                    origin: "+treedialog",
+                    className: "marked"
+                })
             }
         });
-        a.addEventListener("mouseout", function (evt) {
+        a.addEventListener("mouseout", function(evt) {
             highlight(true, -1);
 
             if (marker) {
@@ -188,7 +199,7 @@
     }
 
     // Globals
-    
+
     function initTreeDialog(pic, highlt, draw, closeCallback) {
         fullPic = pic;
         highlight = highlt;
@@ -202,9 +213,9 @@
             autoOpen: false,
             height: 650,
             width: 650,
-            close: function () {
+            close: function() {
                 open = false;
-                highlight(true,-1);
+                highlight(true, -1);
                 if (closeCallback) closeCallback();
             }
         });
@@ -222,17 +233,17 @@
 
         // Select should probably look better before this is enabled
         // highlight(false, id);
-        
+
         let picture = getPicNode(id);
         currentPic = picture;
 
         content.innerHTML = "";
-        
-        canvas = buildDrawingPreview();
-        content.appendChild( canvas );
-        content.appendChild( buildNestedList(id) );
 
-        dialog.dialog("option", "title", picture.name );
+        canvas = buildDrawingPreview();
+        content.appendChild(canvas);
+        content.appendChild(buildNestedList(id));
+
+        dialog.dialog("option", "title", picture.name);
     }
     window.openTreeDialog = openTreeDialog;
 
@@ -249,7 +260,7 @@
             dialog.remove();
         }
         if (highlight) {
-            highlight(false,-1);
+            highlight(false, -1);
         }
         dialog = null;
         content = null;

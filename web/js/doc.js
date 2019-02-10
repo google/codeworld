@@ -20,7 +20,7 @@ window.env = parent;
     var shelf = {};
     var contents = {};
 
-    function linkCodeBlocks(elem, linkable=true) {
+    function linkCodeBlocks(elem, linkable = true) {
         codeworldKeywords = {};
         registerStandardHints(function() {
             var pres = elem.getElementsByTagName('pre');
@@ -38,7 +38,10 @@ window.env = parent;
 
                     var text = pre.textContent;
                     pre.innerHTML = '';
-                    CodeMirror.runMode(text, { name: 'codeworld', overrideKeywords: codeworldKeywords }, pre);
+                    CodeMirror.runMode(text, {
+                        name: 'codeworld',
+                        overrideKeywords: codeworldKeywords
+                    }, pre);
                     pre.classList.add('cm-s-default');
 
                     if (linkable && clickable) {
@@ -156,9 +159,9 @@ window.env = parent;
         popout.innerHTML = '<i class="mdi mdi-18px mdi-open-in-new"></i>&nbsp;Open the Help in a New Tab';
         popout.target = '_blank';
         popout.href = document.location.href;
-        popout.onclick = function (e) {
+        popout.onclick = function(e) {
             var tab = open(this.href);
-            tab.addEventListener("load", function () {
+            tab.addEventListener("load", function() {
                 tab.env = parent;
                 if (parent.sweetAlert) {
                     parent.sweetAlert.close();

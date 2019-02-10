@@ -34,8 +34,12 @@ async function init() {
     preloadBaseBundle();
     window.setInterval(preloadBaseBundle, 1000 * 60 * 60);
 
-    allProjectNames = [[]];
-    allFolderNames = [[]];
+    allProjectNames = [
+        []
+    ];
+    allFolderNames = [
+        []
+    ];
     openProjectName = null;
     nestedDirs = [""];
 
@@ -56,7 +60,7 @@ async function init() {
         if (hash.slice(-2) == '==') {
             hash = hash.slice(0, -2);
         }
-        if(hash[0] == 'F') {
+        if (hash[0] == 'F') {
             function go(folderName) {
                 var data = new FormData();
                 data.append('mode', window.buildMode);
@@ -91,7 +95,7 @@ async function init() {
             }, go);
         } else {
             initCodeworld();
-            registerStandardHints(function(){
+            registerStandardHints(function() {
                 setMode(true);
                 parseSymbolsFromCurrentCode();
             });
@@ -99,13 +103,13 @@ async function init() {
         }
     } else {
         initCodeworld();
-        registerStandardHints(function(){
+        registerStandardHints(function() {
             setMode(true);
             parseSymbolsFromCurrentCode();
         });
         updateUI();
     }
- 
+
     if (hash.length > 0) {
         if (hash.slice(-2) == '==') {
             hash = hash.slice(0, -2);
@@ -163,8 +167,9 @@ function initCodeworld() {
         textHover: onHover,
         gutters: ["CodeMirror-lint-markers"],
         lint: {
-            getAnnotations: function(text, callback){
+            getAnnotations: function(text, callback) {
                 var request;
+
                 function cancelLintRequest() {
                     if (window.codeworldEditor) {
                         window.codeworldEditor.off("change", cancelLintRequest);
@@ -179,12 +184,12 @@ function initCodeworld() {
                         window.codeworldEditor.off("change", cancelLintRequest);
                     }
 
-                    if (request.status == 400 || request.status == 200){
+                    if (request.status == 400 || request.status == 200) {
                         callback(parseCompileErrors(request.responseText))
                     } else {
                         console.log("Not expected behavior: don't know how to " +
-                                    "handle request with status ",
-                                    request.status, request)
+                            "handle request with status ",
+                            request.status, request)
                     };
                 });
                 if (window.codeworldEditor) {
@@ -260,10 +265,10 @@ class CanvasRecorder {
 
             // Set file name
             var d = new Date();
-            var videoFileName = 'codeworld_recording_'
-                                + d.toDateString().split(' ').join('_') + '_'
-                                + d.getHours() +':'+ d.getMinutes() +':'+ d.getSeconds()
-                                +'.webm';
+            var videoFileName = 'codeworld_recording_' +
+                d.toDateString().split(' ').join('_') + '_' +
+                d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() +
+                '.webm';
 
             // Create a new video link
             var a = document.createElement("a");
@@ -325,12 +330,12 @@ function setMode(force) {
 }
 
 function getCurrentProject() {
-  var doc = window.codeworldEditor.getDoc();
-  return {
-      'name': window.openProjectName || 'Untitled',
-      'source': doc.getValue(),
-      'history': doc.getHistory()
-  };
+    var doc = window.codeworldEditor.getDoc();
+    return {
+        'name': window.openProjectName || 'Untitled',
+        'source': doc.getValue(),
+        'history': doc.getHistory()
+    };
 }
 
 function folderHandler(folderName, index, state) {
@@ -406,35 +411,35 @@ function updateUI() {
     }
 
     if (window.move) {
-      document.getElementById('newButton').style.display = 'none';
-      document.getElementById('saveButton').style.display = 'none';
-      document.getElementById('saveAsButton').style.display = 'none';
-      document.getElementById('deleteButton').style.display = 'none';
-      document.getElementById('downloadButton').style.display = 'none';
-      document.getElementById('moveButton').style.display = 'none';
-      document.getElementById('moveHereButton').style.display = '';
-      document.getElementById('cancelMoveButton').style.display = '';
-      document.getElementById('runButtons').style.display = 'none';
-      document.getElementById('shareFolderButton').style.display = 'none';
-    } else {
-      document.getElementById('newButton').style.display = '';
-      document.getElementById('saveAsButton').style.display = '';
-      document.getElementById('downloadButton').style.display = '';
-      document.getElementById('runButtons').style.display = '';
-      document.getElementById('moveHereButton').style.display = 'none';
-      document.getElementById('cancelMoveButton').style.display = 'none';
-
-      if (nestedDirs.length != 1 && (openProjectName == null || openProjectName == '')) {
-          document.getElementById('shareFolderButton').style.display = '';
-      } else {
-          document.getElementById('shareFolderButton').style.display = 'none';
-      }
-
-      if((openProjectName != null && openProjectName != '') || nestedDirs.length != 1) {
-        document.getElementById('moveButton').style.display = '';
-      } else {
+        document.getElementById('newButton').style.display = 'none';
+        document.getElementById('saveButton').style.display = 'none';
+        document.getElementById('saveAsButton').style.display = 'none';
+        document.getElementById('deleteButton').style.display = 'none';
+        document.getElementById('downloadButton').style.display = 'none';
         document.getElementById('moveButton').style.display = 'none';
-      }
+        document.getElementById('moveHereButton').style.display = '';
+        document.getElementById('cancelMoveButton').style.display = '';
+        document.getElementById('runButtons').style.display = 'none';
+        document.getElementById('shareFolderButton').style.display = 'none';
+    } else {
+        document.getElementById('newButton').style.display = '';
+        document.getElementById('saveAsButton').style.display = '';
+        document.getElementById('downloadButton').style.display = '';
+        document.getElementById('runButtons').style.display = '';
+        document.getElementById('moveHereButton').style.display = 'none';
+        document.getElementById('cancelMoveButton').style.display = 'none';
+
+        if (nestedDirs.length != 1 && (openProjectName == null || openProjectName == '')) {
+            document.getElementById('shareFolderButton').style.display = '';
+        } else {
+            document.getElementById('shareFolderButton').style.display = 'none';
+        }
+
+        if ((openProjectName != null && openProjectName != '') || nestedDirs.length != 1) {
+            document.getElementById('moveButton').style.display = '';
+        } else {
+            document.getElementById('moveButton').style.display = 'none';
+        }
     }
 
     updateNavBar();
@@ -455,7 +460,7 @@ function updateUI() {
     var running = document.getElementById('runner').style.display != 'none';
     var obsolete = !window.codeworldEditor.getDoc().isClean(window.runningGeneration);
     var obsoleteAlert = document.getElementById('obsolete-code-alert');
-    if (running && obsolete){
+    if (running && obsolete) {
         obsoleteAlert.classList.add("obsolete-code-alert-fadein");
         obsoleteAlert.classList.remove("obsolete-code-alert-fadeout");
     } else {
@@ -502,7 +507,7 @@ function updateNavBar() {
 
     var makeProjectNode = function(name, level, active) {
         var title = name;
-        if(active && !isEditorClean()) {
+        if (active && !isEditorClean()) {
             title = "* " + title;
         }
         var encodedName = title
@@ -617,11 +622,11 @@ function changeFontSize(incr) {
         var fontSize = 12;
         var fontUnit = 'px';
         if (fontParts.length >= 3) {
-          fontSize = parseInt(fontParts[1]);
-          fontUnit = fontParts[2];
+            fontSize = parseInt(fontParts[1]);
+            fontUnit = fontParts[2];
         }
         fontSize += incr;
-        if(fontSize < 8) fontSize = 8;
+        if (fontSize < 8) fontSize = 8;
         elem.style.fontSize = fontSize + fontUnit;
         window.codeworldEditor.refresh();
     }
@@ -741,7 +746,8 @@ function loadProject(name, index) {
     if (window.move) {
         return;
     }
-    function successFunc(project){
+
+    function successFunc(project) {
         setCode(project.source, project.history, name);
     }
     loadProject_(index, name, window.buildMode, successFunc);
@@ -749,8 +755,8 @@ function loadProject(name, index) {
 
 function formatSource() {
     if (window.buildMode == 'codeworld') {
-      // Unfortunately, there isn't an acceptable style for CodeWorld yet.
-      return;
+        // Unfortunately, there isn't an acceptable style for CodeWorld yet.
+        return;
     }
 
     var src = window.codeworldEditor.getValue();
@@ -760,7 +766,7 @@ function formatSource() {
 
     sendHttp('POST', 'indent', data, function(request) {
         if (request.status == 200) {
-          codeworldEditor.getDoc().setValue(request.responseText);
+            codeworldEditor.getDoc().setValue(request.responseText);
         }
     });
 }
@@ -828,7 +834,7 @@ function run(hash, dhash, msg, error, generation) {
 
     updateUI();
 
-    document.getElementById('runner').addEventListener('load', function () {
+    document.getElementById('runner').addEventListener('load', function() {
         updateUI();
     });
 
@@ -838,7 +844,7 @@ function run(hash, dhash, msg, error, generation) {
 function showRequiredChecksInDialog(msg) {
     var matches = msg.match(/:: REQUIREMENTS ::((?:.|[\r\n])*):: END REQUIREMENTS ::/)
     if (!matches) {
-      return;
+        return;
     }
     var reqs = matches[1].split(/[\r\n]+/);
     var items = [];
@@ -871,7 +877,7 @@ function showRequiredChecksInDialog(msg) {
     sweetAlert({
         html: true,
         title: 'Requirements',
-        text: '<ul class="req-list">' + itemsHtml.join('') +  '</ul>',
+        text: '<ul class="req-list">' + itemsHtml.join('') + '</ul>',
         confirmButtonText: 'Dismiss',
         showCancelButton: false,
         closeOnConfirm: true
@@ -946,17 +952,17 @@ function compile() {
         var hash;
         var dhash;
         if (request.responseText.length == 23) {
-          hash = request.responseText;
-          dhash = null;
+            hash = request.responseText;
+            dhash = null;
         } else {
-          try {
-            var obj = JSON.parse(request.responseText);
-            hash = obj.hash;
-            dhash = obj.dhash;
-          } catch (e) {
-            run('', '', "Sorry!  Your program couldn't be run right now.", true, null);
-            return;
-          }
+            try {
+                var obj = JSON.parse(request.responseText);
+                hash = obj.hash;
+                dhash = obj.dhash;
+            } catch (e) {
+                run('', '', "Sorry!  Your program couldn't be run right now.", true, null);
+                return;
+            }
         }
 
         var data = new FormData();
@@ -993,7 +999,7 @@ function signinCallback(result) {
     isFirstSignin = false;
 }
 
-function discoverProjects(path, index){
+function discoverProjects(path, index) {
     discoverProjects_(path, window.buildMode, index);
 }
 
@@ -1013,6 +1019,7 @@ function deleteFolder() {
     if (path == "" || window.openProjectName != null) {
         return;
     }
+
     function successFunc() {
         savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
         setCode('');
@@ -1025,7 +1032,8 @@ function deleteProject() {
         deleteFolder();
         return;
     }
-    function successFunc(){
+
+    function successFunc() {
         savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
         setCode('');
     }
@@ -1039,8 +1047,10 @@ function shareFolder() {
 
 function downloadProject() {
     var blob = new Blob(
-        [window.codeworldEditor.getDoc().getValue()],
-        { type: 'text/plain', endings: 'native' });
+        [window.codeworldEditor.getDoc().getValue()], {
+            type: 'text/plain',
+            endings: 'native'
+        });
     var filename = "untitled.hs";
     if (window.openProjectName) filename = window.openProjectName + '.hs';
 
@@ -1056,39 +1066,43 @@ function downloadProject() {
     }
 }
 
-function parseCompileErrors(rawErrors){
+function parseCompileErrors(rawErrors) {
     var errors = [];
     rawErrors = rawErrors.split("\n\n");
-    rawErrors.forEach(function(rawError){
+    rawErrors.forEach(function(rawError) {
         rawError = rawError.split('\n');
         var firstLine = rawError[0].trim(),
-            message = rawError.slice(1).map((err) => {return err.trim()}).join('\n'),
+            message = rawError.slice(1).map((err) => {
+                return err.trim()
+            }).join('\n'),
             re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/,
             re2 = /^program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\): (\w+):(.*)/,
             startLine, endLine, startCol, endCol, match, severity, description;
 
         if (re1.test(firstLine)) {
             match = re1.exec(firstLine);
-            startLine = Number(match[1])-1;
+            startLine = Number(match[1]) - 1;
             endLine = startLine;
-            startCol = Number(match[3])-1;
-            if(match[4]) {
-                endCol = Number(match[4])-1;
+            startCol = Number(match[3]) - 1;
+            if (match[4]) {
+                endCol = Number(match[4]) - 1;
             } else {
                 var token = window.codeworldEditor.getLineTokens(startLine).find(
-                    function(t){ return t.start === startCol});
-                if (token){
+                    function(t) {
+                        return t.start === startCol
+                    });
+                if (token) {
                     endCol = token.end;
                 } else {
-                    endCol = startCol+1;
+                    endCol = startCol + 1;
                 }
             }
         } else if (re2.test(firstLine)) {
             match = re2.exec(firstLine);
-            startLine = Number(match[1])-1;
-            startCol = Number(match[2])-1;
-            endLine = Number(match[3])-1;
-            endCol = Number(match[4])-1;
+            startLine = Number(match[1]) - 1;
+            startCol = Number(match[2]) - 1;
+            endLine = Number(match[3]) - 1;
+            endCol = Number(match[4]) - 1;
         } else {
             console.log("Can not parse error header:", firstLine);
             return;

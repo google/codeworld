@@ -47,29 +47,29 @@ function sendHttpRaw(method, url, body, callback) {
 }
 
 var Html = (() => {
-  const mine = {};
+    const mine = {};
 
-  mine.encode = str => $("<div/>").text(str).html();
+    mine.encode = str => $("<div/>").text(str).html();
 
-  return mine;
+    return mine;
 })();
 
 var Alert = (() => {
-  const mine = {};
+    const mine = {};
 
-  // Load SweetAlert2 and SweetAlert in correct order
-  mine.init = () =>
-    Promise.resolve($.getScript("https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js"))
-      .then(() => {
-        window.sweetAlert2 = window.sweetAlert;
-        return $.getScript("https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.0/sweetalert.min.js");
-      })
-      .catch(e => console.log("Alert.init failed"));
+    // Load SweetAlert2 and SweetAlert in correct order
+    mine.init = () =>
+        Promise.resolve($.getScript("https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js"))
+        .then(() => {
+            window.sweetAlert2 = window.sweetAlert;
+            return $.getScript("https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.0/sweetalert.min.js");
+        })
+        .catch(e => console.log("Alert.init failed"));
 
-  // Build SweetAlert title HTML
-  mine.title = (text, iconClass) => `<i class="mdi mdi-72px ${iconClass}"></i>&nbsp; ${Html.encode(text)}`;
+    // Build SweetAlert title HTML
+    mine.title = (text, iconClass) => `<i class="mdi mdi-72px ${iconClass}"></i>&nbsp; ${Html.encode(text)}`;
 
-  return mine;
+    return mine;
 })();
 
 var hintBlacklist = [
@@ -170,8 +170,8 @@ function parseSymbolsFromCurrentCode() {
     lines.forEach(function(line) {
         lineIndex++;
 
-        var docString = "Defined in your code on line "
-                      + lineIndex.toString() + ".";
+        var docString = "Defined in your code on line " +
+            lineIndex.toString() + ".";
         // f(x, y) =
         if (/^\w+\(.*/.test(line)) {
             word = line.split("(")[0].trim();
@@ -268,7 +268,7 @@ function renderDeclaration(decl, keyword, keywordData, maxLen) {
 function renderHover(keyword) {
     var topDiv = document.createElement('div')
 
-    if (!codeWorldSymbols[keyword]){
+    if (!codeWorldSymbols[keyword]) {
         return;
     };
     topDiv.title = keyword;
@@ -296,18 +296,17 @@ function renderHover(keyword) {
     return topDiv;
 };
 
-function onHover(cm, data, node){
+function onHover(cm, data, node) {
     if (data && data.token && data.token.string) {
         var token_name = data.token.string;
-        if (hintBlacklist.indexOf(token_name) == -1){
+        if (hintBlacklist.indexOf(token_name) == -1) {
             return renderHover(token_name);
         }
     }
 }
 
 // Hints and hover tooltips
-function registerStandardHints(successFunc)
-{
+function registerStandardHints(successFunc) {
     CodeMirror.registerHelper('hint', 'codeworld', function(cm) {
         var cur = cm.getCursor();
         var token = cm.getTokenAt(cur);
@@ -325,7 +324,7 @@ function registerStandardHints(successFunc)
         var hints = Object.keys(codeWorldSymbols)
         for (var i = 0; i < hints.length; i++) {
             let hint = hints[i];
-            if (hint.startsWith(term)){
+            if (hint.startsWith(term)) {
                 found.push({
                     text: hint,
                     render: (elem) => {
@@ -352,7 +351,7 @@ function registerStandardHints(successFunc)
                 to: cur
             };
 
-            function deleteOldHintDocs(){
+            function deleteOldHintDocs() {
                 $(".hint-description").remove()
             }
 
@@ -362,7 +361,7 @@ function registerStandardHints(successFunc)
             // Tracking of hint selection
             CodeMirror.on(
                 data, 'select',
-                function (selection, elem) {
+                function(selection, elem) {
                     var codeWordInfo = codeWorldSymbols[selection.text],
                         hintsWidgetRect = elem.parentElement.getBoundingClientRect(),
                         doc = document.createElement('div');
@@ -382,130 +381,130 @@ function registerStandardHints(successFunc)
     });
 
     sendHttp('GET', 'codeworld-base.txt', null, function(request) {
-    var lines = [];
-    if (request.status != 200) {
-        console.log('Failed to load autocomplete word list.');
-    } else {
-        lines = request.responseText.split('\n');
-    }
-
-    var startLine = lines.indexOf('module Prelude') + 1;
-    var endLine = startLine;
-    while (endLine < lines.length) {
-        if (lines[endLine].startsWith("module ")) {
-            break;
-        }
-        endLine++;
-    }
-    lines = lines.slice(startLine, endLine);
-
-    // Special case for "main" and "program", since they are morally
-    // built-in names.
-    codeworldKeywords['main'] = 'deprecated';
-    codeworldKeywords['program'] = 'builtin';
-
-    codeWorldBuiltinSymbols['program'] = {
-        declaration: "program :: Program",
-        doc: "Your program.",
-        symbolStart: 0,
-        symbolEnd: 7
-    };
-
-    var doc = "";
-    lines.forEach(function(line) {
-        if (line.startsWith("type Program")) {
-            // We must intervene to hide the IO type.
-            line = "data Program";
-        } else if (line.startsWith("type Truth")) {
-            line = "data Truth";
-        } else if (line.startsWith("True ::")) {
-            line = "True :: Truth";
-        } else if (line.startsWith("False ::")) {
-            line = "False :: Truth";
-        } else if (line.startsWith("newtype ")) {
-            // Hide the distinction between newtype and data.
-            line = "data " + line.substr(8);
-        } else if (line.startsWith("pattern ")) {
-            // Hide the distinction between patterns and constructors.
-            line = line.substr(8);
-        } else if (line.startsWith("class ")) {
-            doc = "";
-            return;
-        } else if (line.startsWith("instance ")) {
-            doc = "";
-            return;
-        } else if (line.startsWith("infix ")) {
-            doc = "";
-            return;
-        } else if (line.startsWith("infixl ")) {
-            doc = "";
-            return;
-        } else if (line.startsWith("infixr ")) {
-            doc = "";
-            return;
-        }
-
-        // Filter out strictness annotations.
-        line = line.replace(/(\s)!([A-Za-z\(\[])/g, '$1$2');
-
-        // Filter out CallStack constraints.
-        line = line.replace(/:: HasCallStack =>/g, '::');
-
-        if (line.startsWith("-- |")) {
-            doc = line.replace(/\-\- \| /g, "") + "\n";
-        } else if (line.startsWith("-- ")){
-            doc += line.replace(/\-\-   /g, "") + "\n";
+        var lines = [];
+        if (request.status != 200) {
+            console.log('Failed to load autocomplete word list.');
         } else {
-            var wordStart = 0;
-            if (line.startsWith("type ") || line.startsWith("data ")) {
-                wordStart += 5;
+            lines = request.responseText.split('\n');
+        }
 
-                // Hide kind annotations.
-                var kindIndex = line.indexOf(" ::");
-                if (kindIndex != -1) {
-                    line = line.substr(0, kindIndex);
-                }
+        var startLine = lines.indexOf('module Prelude') + 1;
+        var endLine = startLine;
+        while (endLine < lines.length) {
+            if (lines[endLine].startsWith("module ")) {
+                break;
             }
+            endLine++;
+        }
+        lines = lines.slice(startLine, endLine);
 
-            var wordEnd = line.indexOf(" ", wordStart);
-            if (wordEnd == -1) {
-                wordEnd = line.length;
-            }
-            if (wordStart == wordEnd) {
+        // Special case for "main" and "program", since they are morally
+        // built-in names.
+        codeworldKeywords['main'] = 'deprecated';
+        codeworldKeywords['program'] = 'builtin';
+
+        codeWorldBuiltinSymbols['program'] = {
+            declaration: "program :: Program",
+            doc: "Your program.",
+            symbolStart: 0,
+            symbolEnd: 7
+        };
+
+        var doc = "";
+        lines.forEach(function(line) {
+            if (line.startsWith("type Program")) {
+                // We must intervene to hide the IO type.
+                line = "data Program";
+            } else if (line.startsWith("type Truth")) {
+                line = "data Truth";
+            } else if (line.startsWith("True ::")) {
+                line = "True :: Truth";
+            } else if (line.startsWith("False ::")) {
+                line = "False :: Truth";
+            } else if (line.startsWith("newtype ")) {
+                // Hide the distinction between newtype and data.
+                line = "data " + line.substr(8);
+            } else if (line.startsWith("pattern ")) {
+                // Hide the distinction between patterns and constructors.
+                line = line.substr(8);
+            } else if (line.startsWith("class ")) {
+                doc = "";
+                return;
+            } else if (line.startsWith("instance ")) {
+                doc = "";
+                return;
+            } else if (line.startsWith("infix ")) {
+                doc = "";
+                return;
+            } else if (line.startsWith("infixl ")) {
+                doc = "";
+                return;
+            } else if (line.startsWith("infixr ")) {
                 doc = "";
                 return;
             }
 
-            if (line[wordStart] == "(" && line[wordEnd - 1] == ")") {
-                wordStart++;
-                wordEnd--;
-            }
+            // Filter out strictness annotations.
+            line = line.replace(/(\s)!([A-Za-z\(\[])/g, '$1$2');
 
-            var word = line.substr(wordStart, wordEnd - wordStart);
-            if (hintBlacklist.indexOf(word) < 0) {
-                codeWorldBuiltinSymbols[word] = {
-                    declaration: line,
-                    symbolStart: wordStart,
-                    symbolEnd: wordEnd
-                }
-                if (doc) {
-                    codeWorldBuiltinSymbols[word].doc = doc;
-                }
-            }
+            // Filter out CallStack constraints.
+            line = line.replace(/:: HasCallStack =>/g, '::');
 
-            if (hintBlacklist.indexOf(word) >= 0) {
-                codeworldKeywords[word] = 'deprecated';
-            } else if (/^[A-Z:]/.test(word)) {
-                codeworldKeywords[word] = 'builtin-2';
+            if (line.startsWith("-- |")) {
+                doc = line.replace(/\-\- \| /g, "") + "\n";
+            } else if (line.startsWith("-- ")) {
+                doc += line.replace(/\-\-   /g, "") + "\n";
             } else {
-                codeworldKeywords[word] = 'builtin';
-            }
-            doc = "";
-        }
-    });
+                var wordStart = 0;
+                if (line.startsWith("type ") || line.startsWith("data ")) {
+                    wordStart += 5;
 
-    successFunc();
-  });
+                    // Hide kind annotations.
+                    var kindIndex = line.indexOf(" ::");
+                    if (kindIndex != -1) {
+                        line = line.substr(0, kindIndex);
+                    }
+                }
+
+                var wordEnd = line.indexOf(" ", wordStart);
+                if (wordEnd == -1) {
+                    wordEnd = line.length;
+                }
+                if (wordStart == wordEnd) {
+                    doc = "";
+                    return;
+                }
+
+                if (line[wordStart] == "(" && line[wordEnd - 1] == ")") {
+                    wordStart++;
+                    wordEnd--;
+                }
+
+                var word = line.substr(wordStart, wordEnd - wordStart);
+                if (hintBlacklist.indexOf(word) < 0) {
+                    codeWorldBuiltinSymbols[word] = {
+                        declaration: line,
+                        symbolStart: wordStart,
+                        symbolEnd: wordEnd
+                    }
+                    if (doc) {
+                        codeWorldBuiltinSymbols[word].doc = doc;
+                    }
+                }
+
+                if (hintBlacklist.indexOf(word) >= 0) {
+                    codeworldKeywords[word] = 'deprecated';
+                } else if (/^[A-Z:]/.test(word)) {
+                    codeworldKeywords[word] = 'builtin-2';
+                } else {
+                    codeworldKeywords[word] = 'builtin';
+                }
+                doc = "";
+            }
+        });
+
+        successFunc();
+    });
 }
 
 function addToMessage(msg) {
@@ -529,7 +528,9 @@ function addToMessage(msg) {
 }
 
 function signin() {
-    if (window.auth2) auth2.signIn({prompt: 'login'});
+    if (window.auth2) auth2.signIn({
+        prompt: 'login'
+    });
 }
 
 function signout() {
@@ -541,93 +542,94 @@ function signedIn() {
 }
 
 var Auth = (() => {
-  const mine = {};
+    const mine = {};
 
-  function initLocalAuth() {
-    Promise.resolve($.getScript("/js/codeworld_local_auth.js"))
-      .then(() => onAuthInitialized(LocalAuth.init()))
-      .catch(e => console.log("initLocalAuth failed"));
-  }
-
-  function initGoogleAuth() {
-    Promise.resolve($.getScript("https://apis.google.com/js/platform.js"))
-      .then(() => gapi.load("auth2", () =>
-        withClientId(clientId => {
-          function sendHttpAuth(method, url, body, callback) {
-            if (body != null && signedIn()) {
-              const idToken = window.auth2.currentUser.get().getAuthResponse().id_token;
-              body.append("id_token", idToken);
-            }
-
-            const request = new XMLHttpRequest();
-
-            if (callback) {
-              request.onreadystatechange = () => {
-                if (request.readyState == 4) {
-                  callback(request);
-                }
-              };
-            }
-
-            request.open(method, url, true);
-            request.send(body);
-
-            return request;
-          }
-
-          const auth2 = Object.assign({ sendHttpAuth: sendHttpAuth }, gapi.auth2.init({
-            client_id: clientId,
-            scope: 'profile',
-            fetch_basic_profile: false
-          }));
-
-          onAuthInitialized(auth2);
-        })
-      ))
-      .catch(e => console.log("initGoogleAuth failed"));
-  }
-
-  function onAuthInitialized(auth) {
-    window.auth2 = auth;
-    auth2.currentUser.listen(signinCallback);
-
-    if (auth2.isSignedIn.get()) {
-      auth2.signIn();
+    function initLocalAuth() {
+        Promise.resolve($.getScript("/js/codeworld_local_auth.js"))
+            .then(() => onAuthInitialized(LocalAuth.init()))
+            .catch(e => console.log("initLocalAuth failed"));
     }
 
-    discoverProjects("", 0);
-    updateUI();
-  }
+    function initGoogleAuth() {
+        Promise.resolve($.getScript("https://apis.google.com/js/platform.js"))
+            .then(() => gapi.load("auth2", () =>
+                withClientId(clientId => {
+                    function sendHttpAuth(method, url, body, callback) {
+                        if (body != null && signedIn()) {
+                            const idToken = window.auth2.currentUser.get().getAuthResponse().id_token;
+                            body.append("id_token", idToken);
+                        }
 
-  function onAuthDisabled() {
-    window.auth2 = null;
-    document.getElementById("signin").style.display = "none";
-    discoverProjects("", 0);
-    updateUI();
-  }
+                        const request = new XMLHttpRequest();
 
-  mine.init = () =>
-    sendHttp("GET", "authMethod", null, resp => {
-      if (resp.status == 200) {
-        const obj = JSON.parse(resp.responseText);
-        switch (obj.authMethod) {
-          case "Local":
-            initLocalAuth();
-            break;
-          case "Google":
-            initGoogleAuth();
-            break;
-          default:
-            onAuthDisabled();
-            break;
+                        if (callback) {
+                            request.onreadystatechange = () => {
+                                if (request.readyState == 4) {
+                                    callback(request);
+                                }
+                            };
+                        }
+
+                        request.open(method, url, true);
+                        request.send(body);
+
+                        return request;
+                    }
+
+                    const auth2 = Object.assign({
+                        sendHttpAuth: sendHttpAuth
+                    }, gapi.auth2.init({
+                        client_id: clientId,
+                        scope: 'profile',
+                        fetch_basic_profile: false
+                    }));
+
+                    onAuthInitialized(auth2);
+                })
+            ))
+            .catch(e => console.log("initGoogleAuth failed"));
+    }
+
+    function onAuthInitialized(auth) {
+        window.auth2 = auth;
+        auth2.currentUser.listen(signinCallback);
+
+        if (auth2.isSignedIn.get()) {
+            auth2.signIn();
         }
-      }
-      else {
-        onAuthDisabled();
-      }
-    });
 
-  return mine;
+        discoverProjects("", 0);
+        updateUI();
+    }
+
+    function onAuthDisabled() {
+        window.auth2 = null;
+        document.getElementById("signin").style.display = "none";
+        discoverProjects("", 0);
+        updateUI();
+    }
+
+    mine.init = () =>
+        sendHttp("GET", "authMethod", null, resp => {
+            if (resp.status == 200) {
+                const obj = JSON.parse(resp.responseText);
+                switch (obj.authMethod) {
+                    case "Local":
+                        initLocalAuth();
+                        break;
+                    case "Google":
+                        initGoogleAuth();
+                        break;
+                    default:
+                        onAuthDisabled();
+                        break;
+                }
+            } else {
+                onAuthDisabled();
+            }
+        });
+
+    return mine;
 })();
 
 function withClientId(f) {
@@ -646,8 +648,14 @@ function withClientId(f) {
 
 function discoverProjects_(path, buildMode, index) {
     if (!signedIn()) {
-        allProjectNames = window.openProjectName ? [[window.openProjectName]] : [[]];
-        allFolderNames = [[]];
+        allProjectNames = window.openProjectName ? [
+            [window.openProjectName]
+        ] : [
+            []
+        ];
+        allFolderNames = [
+            []
+        ];
         nestedDirs = [""];
         cancelMove();
         updateUI();
@@ -711,8 +719,8 @@ function moveHere_(path, buildMode, successFunc) {
 }
 
 function cancelMove() {
-  window.move = null;
-  updateUI();
+    window.move = null;
+    updateUI();
 }
 
 function warnIfUnsaved(action, showAnother) {
@@ -741,11 +749,11 @@ function saveProjectAs() {
 
     var text;
     if (nestedDirs.length > 1) {
-      text = 'Enter a name for your project in folder <b>' +
-          $('<div>').text(nestedDirs.slice(1).join('/')).html().replace(/ /g, '&nbsp;') +
-          ':';
+        text = 'Enter a name for your project in folder <b>' +
+            $('<div>').text(nestedDirs.slice(1).join('/')).html().replace(/ /g, '&nbsp;') +
+            ':';
     } else {
-      text = 'Enter a name for your project:';
+        text = 'Enter a name for your project:';
     }
 
     var defaultName;
@@ -883,10 +891,10 @@ function deleteProject_(path, buildMode, successFunc) {
 }
 
 function deleteFolder_(path, buildMode, successFunc) {
-    if(path == "" || window.openProjectName != null) {
+    if (path == "" || window.openProjectName != null) {
         return;
     }
-    if(!signedIn()) {
+    if (!signedIn()) {
         sweetAlert('Oops', 'You must sign in to delete a folder.', 'error');
         updateUI();
         return;
@@ -921,14 +929,14 @@ function deleteFolder_(path, buildMode, successFunc) {
 
 function createFolder(path, buildMode, successFunc) {
     warnIfUnsaved(function() {
-        if(!signedIn()) {
+        if (!signedIn()) {
             sweetAlert('Oops!', 'You must sign in to create a folder.', 'error');
             updateUI();
             return;
         }
 
         function go(folderName) {
-            if(folderName == null || folderName == '') {
+            if (folderName == null || folderName == '') {
                 return;
             }
 
@@ -970,104 +978,104 @@ function createFolder(path, buildMode, successFunc) {
 
 function loadProject_(index, name, buildMode, successFunc) {
 
-  warnIfUnsaved(function(){
-    if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
-        updateUI();
-        return;
-    }
-
-    var data = new FormData();
-    data.append('name', name);
-    data.append('mode', buildMode);
-    data.append('path', nestedDirs.slice(1, index + 1).join('/'));
-
-    sendHttp('POST', 'loadProject', data, function(request) {
-        if (request.status == 200) {
-            var project = JSON.parse(request.responseText);
-
-            successFunc(project);
-            window.nestedDirs = nestedDirs.slice(0, index + 1);
-            window.allProjectNames = allProjectNames.slice(0, index + 1);
-            window.allFolderNames = allFolderNames.slice(0, index + 1);
-            cancelMove();
+    warnIfUnsaved(function() {
+        if (!signedIn()) {
+            sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
             updateUI();
+            return;
         }
-    });
-  }, false);
+
+        var data = new FormData();
+        data.append('name', name);
+        data.append('mode', buildMode);
+        data.append('path', nestedDirs.slice(1, index + 1).join('/'));
+
+        sendHttp('POST', 'loadProject', data, function(request) {
+            if (request.status == 200) {
+                var project = JSON.parse(request.responseText);
+
+                successFunc(project);
+                window.nestedDirs = nestedDirs.slice(0, index + 1);
+                window.allProjectNames = allProjectNames.slice(0, index + 1);
+                window.allFolderNames = allFolderNames.slice(0, index + 1);
+                cancelMove();
+                updateUI();
+            }
+        });
+    }, false);
 }
 
 function share() {
-  var offerSource = true;
+    var offerSource = true;
 
-  function go() {
-    var url;
-    var msg;
-    var showConfirm;
-    var confirmText;
+    function go() {
+        var url;
+        var msg;
+        var showConfirm;
+        var confirmText;
 
-    if (!window.deployHash) {
-      url = window.location.href;
-      msg = 'Copy this link to share your program and code with others!';
-      showConfirm = false;
-    } else if (offerSource) {
-      url = window.location.href;
-      msg = 'Copy this link to share your program and code with others!';
-      showConfirm = true;
-      confirmText = 'Share Without Code';
-    } else {
-      var a = document.createElement('a');
-      a.href = window.location.href;
-      a.hash = '';
-      a.pathname = '/run.html'
-      a.search = '?mode=' + window.buildMode + '&dhash=' + window.deployHash;
+        if (!window.deployHash) {
+            url = window.location.href;
+            msg = 'Copy this link to share your program and code with others!';
+            showConfirm = false;
+        } else if (offerSource) {
+            url = window.location.href;
+            msg = 'Copy this link to share your program and code with others!';
+            showConfirm = true;
+            confirmText = 'Share Without Code';
+        } else {
+            var a = document.createElement('a');
+            a.href = window.location.href;
+            a.hash = '';
+            a.pathname = '/run.html'
+            a.search = '?mode=' + window.buildMode + '&dhash=' + window.deployHash;
 
-      url = a.href;
-      msg = 'Copy this link to share your program (but not code) with others!';
-      showConfirm = true;
-      confirmText = 'Share With Code';
-    }
-
-    sweetAlert({
-        html: true,
-        title: '<i class="mdi mdi-72px mdi-share"></i>&nbsp; Share',
-        text: msg,
-        type: 'input',
-        inputValue: url,
-        showConfirmButton: showConfirm,
-        confirmButtonText: confirmText,
-        closeOnConfirm: false,
-        showCancelButton: true,
-        cancelButtonText: 'Done',
-        animation: 'slide-from-bottom'
-    }, function() {
-      offerSource = !offerSource;
-      go();
-    });
-  }
-
-  if (window.runningGeneration) {
-    if (!window.codeworldEditor.getDoc().isClean(window.runningGeneration)) {
-      sweetAlert2({
-        type: 'warning',
-        text: 'You have changed your code since running the program. ' +
-              ' Rebuild so that you can share your latest code?',
-        confirmButtonText: 'Yes, Rebuild',
-        cancelButtonText: 'No, Share Old Program',
-        showConfirmButton: true,
-        showCancelButton: true
-      }).then((result) => {
-        if (result.dismiss == sweetAlert2.DismissReason.cancel) {
-          go();
-        } else if (result.value) {
-          compile();
+            url = a.href;
+            msg = 'Copy this link to share your program (but not code) with others!';
+            showConfirm = true;
+            confirmText = 'Share With Code';
         }
-      });
-      return;
-    }
-  }
 
-  go();
+        sweetAlert({
+            html: true,
+            title: '<i class="mdi mdi-72px mdi-share"></i>&nbsp; Share',
+            text: msg,
+            type: 'input',
+            inputValue: url,
+            showConfirmButton: showConfirm,
+            confirmButtonText: confirmText,
+            closeOnConfirm: false,
+            showCancelButton: true,
+            cancelButtonText: 'Done',
+            animation: 'slide-from-bottom'
+        }, function() {
+            offerSource = !offerSource;
+            go();
+        });
+    }
+
+    if (window.runningGeneration) {
+        if (!window.codeworldEditor.getDoc().isClean(window.runningGeneration)) {
+            sweetAlert2({
+                type: 'warning',
+                text: 'You have changed your code since running the program. ' +
+                    ' Rebuild so that you can share your latest code?',
+                confirmButtonText: 'Yes, Rebuild',
+                cancelButtonText: 'No, Share Old Program',
+                showConfirmButton: true,
+                showCancelButton: true
+            }).then((result) => {
+                if (result.dismiss == sweetAlert2.DismissReason.cancel) {
+                    go();
+                } else if (result.value) {
+                    compile();
+                }
+            });
+            return;
+        }
+    }
+
+    go();
 }
 
 function inspect() {
@@ -1077,12 +1085,12 @@ function inspect() {
 }
 
 function shareFolder_(mode) {
-    if(!signedIn()) {
+    if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to share your folder.', 'error');
         updateUI();
         return;
     }
-    if(nestedDirs.length == 1 || (openProjectName != null && openProjectName != '')) {
+    if (nestedDirs.length == 1 || (openProjectName != null && openProjectName != '')) {
         sweetAlert('Oops!', 'YOu must select a folder to share!', 'error');
         updateUI();
         return;
@@ -1095,9 +1103,9 @@ function shareFolder_(mode) {
         var data = new FormData();
         data.append('mode', mode);
         data.append('path', path);
- 
+
         sendHttp('POST', 'shareFolder', data, function(request) {
-            if(request.status != 200) {
+            if (request.status != 200) {
                 sweetAlert('Oops!', 'Could not share your folder! Please try again.', 'error');
                 return;
             }

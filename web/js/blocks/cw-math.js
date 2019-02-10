@@ -23,40 +23,40 @@ goog.require('Blockly.Blocks');
 
 // Stefan
 Blockly.Blocks['numNumber'] = {
-  /**
-   * Block for numeric value.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.setHelpUrl(Blockly.Msg.MATH_NUMBER_HELPURL);
-    this.setColour(210);
-    var field = new Blockly.FieldNumber('0');
-    field.setValidator(Blockly.FieldNumber.prototype.basicNumberValidator);
-    this.appendDummyInput()
-        .appendField(field, 'NUMBER');
-    this.setOutput(true);
-    this.setTooltip(Blockly.Msg.MATH_NUMBER_TOOLTIP);
-    this.setAsLiteral('Number');
-  }
+    /**
+     * Block for numeric value.
+     * @this Blockly.Block
+     */
+    init: function() {
+        this.setHelpUrl(Blockly.Msg.MATH_NUMBER_HELPURL);
+        this.setColour(210);
+        var field = new Blockly.FieldNumber('0');
+        field.setValidator(Blockly.FieldNumber.prototype.basicNumberValidator);
+        this.appendDummyInput()
+            .appendField(field, 'NUMBER');
+        this.setOutput(true);
+        this.setTooltip(Blockly.Msg.MATH_NUMBER_TOOLTIP);
+        this.setAsLiteral('Number');
+    }
 };
 
 // TODO, moves these to Haskell
 Blockly.Blocks['numNumberPerc'] = {
-  /**
-   * Block for numeric value.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.setHelpUrl(Blockly.Msg.MATH_NUMBER_HELPURL);
-    this.setColour(210);
-    var field = new Blockly.FieldNumber('0');
-    field.setValidator(Blockly.FieldNumber.prototype.basicNumberValidator);
-    this.appendDummyInput()
-        .appendField(field, 'NUMBER')
-        .appendField(new Blockly.FieldLabel('%','blocklyTextEmph'));
-    this.setOutput(true, 'Number');
-    // Sorin
-    this.setAsLiteral("Number");
-    this.setTooltip(Blockly.Msg.MATH_NUMBER_TOOLTIP);
-  }
+    /**
+     * Block for numeric value.
+     * @this Blockly.Block
+     */
+    init: function() {
+        this.setHelpUrl(Blockly.Msg.MATH_NUMBER_HELPURL);
+        this.setColour(210);
+        var field = new Blockly.FieldNumber('0');
+        field.setValidator(Blockly.FieldNumber.prototype.basicNumberValidator);
+        this.appendDummyInput()
+            .appendField(field, 'NUMBER')
+            .appendField(new Blockly.FieldLabel('%', 'blocklyTextEmph'));
+        this.setOutput(true, 'Number');
+        // Sorin
+        this.setAsLiteral("Number");
+        this.setTooltip(Blockly.Msg.MATH_NUMBER_TOOLTIP);
+    }
 };

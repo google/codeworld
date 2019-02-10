@@ -15,65 +15,67 @@
  */
 
 function addMessage(err, str) {
-  // Catch exceptions to protect against cross-domain access errors.
-  try {
-    if (window.parent && window.parent.addToMessage) {
-      var message = window.parent.addToMessage(str);
+    // Catch exceptions to protect against cross-domain access errors.
+    try {
+        if (window.parent && window.parent.addToMessage) {
+            var message = window.parent.addToMessage(str);
 
-      if (err) {
-        var message = window.parent.document.getElementById('message');
-        message.classList.add('error');
-      }
+            if (err) {
+                var message = window.parent.document.getElementById('message');
+                message.classList.add('error');
+            }
 
-      return;
-    }
-  } catch (e) {}
+            return;
+        }
+    } catch (e) {}
 
-  console.log(str);
+    console.log(str);
 }
 
 function showCanvas() {
-  // Catch exceptions to protect against cross-domain access errors.
-  // If the frame is cross-domain, then it's embedded, in which case
-  // there is no need to show it.
-  try {
-    if (!window.parent) {
-      return;
-    }
+    // Catch exceptions to protect against cross-domain access errors.
+    // If the frame is cross-domain, then it's embedded, in which case
+    // there is no need to show it.
+    try {
+        if (!window.parent) {
+            return;
+        }
 
-    var runner = window.parent.document.getElementById('runner');
-    if (!runner) {
-      return;
-    }
+        var runner = window.parent.document.getElementById('runner');
+        if (!runner) {
+            return;
+        }
 
-    runner.style.display = '';
-    runner.focus();
-    runner.contentWindow.focus();
-  } catch (e) {}
+        runner.style.display = '';
+        runner.focus();
+        runner.contentWindow.focus();
+    } catch (e) {}
 }
 
 function start() {
-  h$base_writeStdout = function(fd, fdo, buf, buf_offset, n, c) {
-    addMessage(false, h$decodeUtf8(buf, n, buf_offset));
-    c(n);
-  };
-  h$base_writeStderr = function(fd, fdo, buf, buf_offset, n, c) {
-    addMessage(false, h$decodeUtf8(buf, n, buf_offset));
-    c(n);
-  };
-  h$log = function() {
-    var s = '';
-    for(var i=0;i<arguments.length;i++) { s = s + arguments[i]; }
-    addMessage(false, s+'\n');
-  };
-  h$errorMsg = function(str) {
-    for(var i=1;i<arguments.length;i++) {
-      str = str.replace(/%s/, arguments[i]);
-    }
-    addMessage(true, '\n' + str);
-  };
-  h$base_stdout_fd.write = h$base_writeStdout;
-  h$base_stderr_fd.write = h$base_writeStderr;
+    h$base_writeStdout = function(fd, fdo, buf, buf_offset, n, c) {
+        addMessage(false, h$decodeUtf8(buf, n, buf_offset));
+        c(n);
+    };
+    h$base_writeStderr = function(fd, fdo, buf, buf_offset, n, c) {
+        addMessage(false, h$decodeUtf8(buf, n, buf_offset));
+        c(n);
+    };
+    h$log = function() {
+        var s = '';
+        for (var i = 0; i < arguments.length; i++) {
+            s = s + arguments[i];
+        }
+        addMessage(false, s + '\n');
+    };
+    h$errorMsg = function(str) {
+        for (var i = 1; i < arguments.length; i++) {
+            str = str.replace(/%s/, arguments[i]);
+        }
+        addMessage(true, '\n' + str);
+    };
+    h$base_stdout_fd.write = h$base_writeStdout;
+    h$base_stderr_fd.write = h$base_writeStderr;
 
-  h$run(h$mainZCZCMainzimain);
+    h$run(h$mainZCZCMainzimain);
 }

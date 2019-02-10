@@ -23,24 +23,22 @@ function loadSample(code) {
     }, false);
 }
 
-function loadWorkspace(text)
-{
-  var workspace = Blockly.mainWorkspace;
-  workspace.clear();
-  var xmldom = Blockly.Xml.textToDom(text);
-  Blockly.Xml.domToWorkspace(xmldom, workspace);
-  lastXML = text;
+function loadWorkspace(text) {
+    var workspace = Blockly.mainWorkspace;
+    workspace.clear();
+    var xmldom = Blockly.Xml.textToDom(text);
+    Blockly.Xml.domToWorkspace(xmldom, workspace);
+    lastXML = text;
 }
 
-function loadXmlHash(hash, autostart)
-{
-   sendHttp('GET', 'loadXML?hash=' + hash + '&mode=blocklyXML', null, function(request) {
-     if (request.status == 200) {
-          loadWorkspace(request.responseText);
-          if(autostart){
-            if(runFunc) runFunc();
-          }
-     }
+function loadXmlHash(hash, autostart) {
+    sendHttp('GET', 'loadXML?hash=' + hash + '&mode=blocklyXML', null, function(request) {
+        if (request.status == 200) {
+            loadWorkspace(request.responseText);
+            if (autostart) {
+                if (runFunc) runFunc();
+            }
+        }
     });
 }
 
@@ -49,13 +47,17 @@ runFunc = null;
 
 openProjectName = '';
 lastXML = '';
-function init()
-{
+
+function init() {
     Alert.init().then(Auth.init);
 
     nestedDirs = [""];
-    allProjectNames = [[]];
-    allFolderNames = [[]];
+    allProjectNames = [
+        []
+    ];
+    allFolderNames = [
+        []
+    ];
     lastXML = null;
     showingResult = false;
     window.buildMode = 'codeworld';
@@ -96,7 +98,7 @@ function init()
             }, go);
         } else {
             initCodeworld();
-            loadXmlHash(hash,true);
+            loadXmlHash(hash, true);
         }
     } else {
         initCodeworld();
@@ -105,8 +107,8 @@ function init()
 
 function initCodeworld() {
     codeworldKeywords = {};
-    registerStandardHints( function(){} );
-    
+    registerStandardHints(function() {});
+
     window.onbeforeunload = function(event) {
         if (containsUnsavedChanges()) {
             var msg = 'There are unsaved changes to your project. ' + 'If you continue, they will be lost!';
@@ -117,22 +119,20 @@ function initCodeworld() {
 }
 
 function getCurrentProject() {
-  return {
-      'name': window.openProjectName || 'Untitled',
-      'source': getWorkspaceXMLText(),
-      'history': ''
-  };
+    return {
+        'name': window.openProjectName || 'Untitled',
+        'source': getWorkspaceXMLText(),
+        'history': ''
+    };
 }
 
 // Sets the generated code
 function updateEditor(code) {
     var editor = document.getElementById('genCode');
-    CodeMirror.runMode(code
-      ,{
+    CodeMirror.runMode(code, {
         name: 'codeworld',
         overrideKeywords: codeworldKeywords
-      }
-      ,editor);
+    }, editor);
 }
 
 function run(xmlHash, codeHash, msg, error, dhash) {
@@ -168,59 +168,55 @@ function run(xmlHash, codeHash, msg, error, dhash) {
         document.getElementById('runner').style.display = 'none';
         window.programRunning = false;
     }
-    if(!hash && !error && !msg){ // We stopped, don't show message window
-      document.getElementById('message').style.display = 'none';
+    if (!hash && !error && !msg) { // We stopped, don't show message window
+        document.getElementById('message').style.display = 'none';
     }
 
-    
-    if(msg){
-      var message = document.getElementById('message');
-      message.innerHTML = '';
-      addToMessage(msg);
 
-      if (error) {
-          message.classList.add('error');
-      } else {
-          message.classList.remove('error');
-      }
+    if (msg) {
+        var message = document.getElementById('message');
+        message.innerHTML = '';
+        addToMessage(msg);
+
+        if (error) {
+            message.classList.add('error');
+        } else {
+            message.classList.remove('error');
+        }
     }
 
-    document.getElementById('editButton').setAttribute('href','/#' + codeHash);
+    document.getElementById('editButton').setAttribute('href', '/#' + codeHash);
     window.deployHash = dhash;
     cancelMove();
     updateUI();
 }
 
-function removeErrors()
-{
+function removeErrors() {
     $('.blocklyDraggable').removeClass('blocklyErrorSelected');
     var blocks = Blockly.getMainWorkspace().getAllBlocks();
 
-    blocks.forEach(function(block){
-      block.removeErrorSelect();
+    blocks.forEach(function(block) {
+        block.removeErrorSelect();
     });
 }
 
-function getWorkspaceXMLText()
-{
+function getWorkspaceXMLText() {
     var workspace = Blockly.getMainWorkspace();
     var xml = Blockly.Xml.workspaceToDom(workspace);
     var xml_text = Blockly.Xml.domToText(xml);
     return xml_text;
 }
 
-function containsUnsavedChanges()
-{
-  var blank = '<xml xmlns="http://www.w3.org/1999/xhtml"></xml>';
-  return getWorkspaceXMLText() != (lastXML || blank);
+function containsUnsavedChanges() {
+    var blank = '<xml xmlns="http://www.w3.org/1999/xhtml"></xml>';
+    return getWorkspaceXMLText() != (lastXML || blank);
 }
 
-function isEditorClean()
-{
-  return !containsUnsavedChanges();
+function isEditorClean() {
+    return !containsUnsavedChanges();
 }
 
-function compile(src,silent) {
+function compile(src, silent) {
     run('', '', 'Compiling...', false);
 
     var xml_text = getWorkspaceXMLText();
@@ -263,7 +259,7 @@ function compile(src,silent) {
                     msg = "Sorry!  Your program couldn't be run right now.  Please try again.";
                 }
                 if (msg != '') msg += '\n\n';
-                if(silent) msg = null;
+                if (silent) msg = null;
 
                 if (success) {
                     run(xmlHash, hash, msg, false, dhash);
@@ -388,8 +384,8 @@ function updateNavBar() {
         });
     });
 
-    var NDlength =  nestedDirs.length;
-    for(let i = 0; i < NDlength; i++) {
+    var NDlength = nestedDirs.length;
+    for (let i = 0; i < NDlength; i++) {
         var tempProjects;
         if (i != 0) {
             var encodedName = nestedDirs[i].replace('&', '&amp;')
@@ -434,7 +430,7 @@ function updateNavBar() {
         });
         allProjectNames[i].forEach(function(projectName) {
             var active = (window.openProjectName == projectName) && (i == NDlength - 1);
-            if(!signedIn() && !active) {
+            if (!signedIn() && !active) {
                 return;
             }
 
@@ -459,7 +455,7 @@ function updateNavBar() {
             span.style.flexDirection = 'column';
             projects.appendChild(span);
         });
-        if ( i + 1 < NDlength ) {
+        if (i + 1 < NDlength) {
             projects = tempProjects;
         }
     }
@@ -483,8 +479,12 @@ function moveProject() {
         var tempPath = nestedDirs.slice(1).join('/');
         clearWorkspace();
         nestedDirs = [""];
-        allProjectNames = [[]];
-        allFolderNames = [[]];
+        allProjectNames = [
+            []
+        ];
+        allFolderNames = [
+            []
+        ];
         discoverProjects("", 0);
         document.getElementById('newFolderButton').style.display = '';
         document.getElementById('newButton').style.display = 'none';
@@ -507,8 +507,12 @@ function moveProject() {
 function moveHere() {
     function successFunc() {
         nestedDirs = [""];
-        allProjectNames = [[]];
-        allFolderNames = [[]];
+        allProjectNames = [
+            []
+        ];
+        allFolderNames = [
+            []
+        ];
         discoverProjects("", 0);
         cancelMove();
         updateUI();
@@ -534,55 +538,55 @@ function signinCallback(result) {
     discoverProjects("", 0);
     cancelMove();
     updateUI();
-    if(result.wc)
-    {
-      // document.getElementById('username').innerHTML = result.wc.wc;
+    if (result.wc) {
+        // document.getElementById('username').innerHTML = result.wc.wc;
     }
 
 }
 
 function signOut() {
-  
-  // call shared sign out
-  signout();
 
-  document.getElementById('projects').innerHTML = '';
-  openProjectName = null;
-  cancelMove();
-  updateUI();
+    // call shared sign out
+    signout();
+
+    document.getElementById('projects').innerHTML = '';
+    openProjectName = null;
+    cancelMove();
+    updateUI();
 }
 
-function discoverProjects(path, index){
-  discoverProjects_(path, 'blocklyXML', index);
+function discoverProjects(path, index) {
+    discoverProjects_(path, 'blocklyXML', index);
 }
 
 function loadProject(name, index) {
-  if (window.move) {
-    return;
-  }
-  function successFunc(project){
-    openProjectName = name;
-    clearRunCode();
-    loadWorkspace(project.source);
-    cancelMove();
-    updateUI();
-    Blockly.getMainWorkspace().clearUndo();
-  }
-  loadProject_(index, name,'blocklyXML',successFunc);
+    if (window.move) {
+        return;
+    }
+
+    function successFunc(project) {
+        openProjectName = name;
+        clearRunCode();
+        loadWorkspace(project.source);
+        cancelMove();
+        updateUI();
+        Blockly.getMainWorkspace().clearUndo();
+    }
+    loadProject_(index, name, 'blocklyXML', successFunc);
 
 }
 
 
 function saveProjectBase(path, projectName) {
     function successFunc() {
-      lastXML = getWorkspaceXMLText();
-      window.openProjectName = projectName;
-      cancelMove();
+        lastXML = getWorkspaceXMLText();
+        window.openProjectName = projectName;
+        cancelMove();
 
-      if (allProjectNames[allProjectNames.length -1].indexOf(projectName) == -1) {
-        discoverProjects(path, allProjectNames.length - 1);
-      }
-      updateUI();
+        if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) == -1) {
+            discoverProjects(path, allProjectNames.length - 1);
+        }
+        updateUI();
     }
     saveProjectBase_(path, projectName, 'blocklyXML', successFunc);
 }
@@ -592,6 +596,7 @@ function deleteFolder() {
     if (path == "" || window.openProjectName != null) {
         return;
     }
+
     function successFunc() {
         clearWorkspace();
         openProjectName = null;
@@ -601,10 +606,11 @@ function deleteFolder() {
 }
 
 function deleteProject() {
-    if(!window.openProjectName) {
+    if (!window.openProjectName) {
         deleteFolder();
         return;
     }
+
     function successFunc() {
         clearWorkspace();
         openProjectName = null;
@@ -634,29 +640,26 @@ function shareFolder() {
 }
 
 function newProject() {
-  warnIfUnsaved(function()
-  {
-    clearRunCode();
-    clearWorkspace();
-    openProjectName = null;
-    cancelMove();
-    updateUI();
-    lastXML = getWorkspaceXMLText();
-    Blockly.getMainWorkspace().clearUndo();
-    window.location.hash = '';
-  }, false);
+    warnIfUnsaved(function() {
+        clearRunCode();
+        clearWorkspace();
+        openProjectName = null;
+        cancelMove();
+        updateUI();
+        lastXML = getWorkspaceXMLText();
+        Blockly.getMainWorkspace().clearUndo();
+        window.location.hash = '';
+    }, false);
 }
 
 // Clear the running iframe and generated code
-function clearRunCode()
-{
+function clearRunCode() {
     var runner = document.getElementById('runner');
     runner.contentWindow.location.replace('about:blank');
     updateEditor('');
 }
 
-function clearWorkspace()
-{
+function clearWorkspace() {
     var workspace = Blockly.mainWorkspace;
     workspace.clear();
 }

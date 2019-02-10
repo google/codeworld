@@ -15,7 +15,7 @@
  */
 "use strict";
 
-(function() {
+(() => {
     let dialog = null,
         content = null,
         fullPic = null,
@@ -37,19 +37,19 @@
     }
 
     function buildNestedList(id) {
-        let go = function(p, to, open) {
+        let go = (p, to, open) => {
             let ul = document.createElement("ul"),
                 span = document.createElement("span"),
                 toggleButton = document.createElement("span"),
                 collapsed = false;
 
-            let collapse = function() {
+            let collapse = () => {
                 ul.style.display = "none";
                 toggleButton.innerHTML = "&#x25B6;";
                 collapsed = true;
             }
 
-            let decollapse = function() {
+            let decollapse = () => {
                 ul.style.display = "";
                 toggleButton.innerHTML = "&#x25BC;";
                 collapsed = false;
@@ -57,7 +57,7 @@
 
             if (p.picture || p.pictures) {
                 toggleButton.classList.add("collapse-button");
-                toggleButton.addEventListener("click", function(evt) {
+                toggleButton.addEventListener("click", (evt) => {
                     if (collapsed) {
                         decollapse();
                     } else {
@@ -111,7 +111,7 @@
 
     function getPicNode(id, cb) {
         let current = fullPic;
-        if (!cb) cb = function(x) {};
+        if (!cb) cb = (x) => {};
 
         while (current.id <= id) {
             cb(current);
@@ -136,13 +136,13 @@
         a.appendChild(document.createTextNode(pic.name));
         a.href = "javascript: void(0);";
         a.classList.add("treedialog-piclink");
-        a.addEventListener("click", function(evt) {
+        a.addEventListener("click", (evt) => {
             if (marker) marker.clear();
 
-            getPicNode(currentPic.id, function(node) {
+            getPicNode(currentPic.id, (node) => {
                 node.link.classList.remove("piclink-selected");
             });
-            getPicNode(pic.id, function(node) {
+            getPicNode(pic.id, (node) => {
                 node.link.classList.add("piclink-selected");
             });
 
@@ -161,7 +161,7 @@
                 });
             }
         });
-        a.addEventListener("mouseover", function(evt) {
+        a.addEventListener("mouseover", (evt) => {
             highlight(true, pic.id);
 
             if (pic.startLine && pic.startCol && pic.endLine && pic.endCol) {
@@ -178,7 +178,7 @@
                 })
             }
         });
-        a.addEventListener("mouseout", function(evt) {
+        a.addEventListener("mouseout", (evt) => {
             highlight(true, -1);
 
             if (marker) {
@@ -213,7 +213,7 @@
             autoOpen: false,
             height: 650,
             width: 650,
-            close: function() {
+            close: () => {
                 open = false;
                 highlight(true, -1);
                 if (closeCallback) closeCallback();

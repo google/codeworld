@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 window.env = parent;
-(function() {
+(() => {
     let params = new URLSearchParams(window.location.search);
 
     let shelf = {};
@@ -22,10 +22,10 @@ window.env = parent;
 
     function linkCodeBlocks(elem, linkable = true) {
         codeworldKeywords = {};
-        registerStandardHints(function() {
+        registerStandardHints(() => {
             let pres = elem.getElementsByTagName('pre');
             for (let i = 0; i < pres.length; ++i) {
-                (function() {
+                (() => {
                     let pre = pres[i];
 
                     // Markdeep buries the class annotations a bit, so we dig.
@@ -46,7 +46,7 @@ window.env = parent;
 
                     if (linkable && clickable) {
                         pre.classList.add('clickable');
-                        pre.onclick = function() {
+                        pre.onclick = () => {
                             if (env && env.loadSample) {
                                 env.loadSample(text);
                             }
@@ -61,7 +61,7 @@ window.env = parent;
         let elems = root.getElementsByClassName('collapsible');
         for (let i = 0; i < elems.length; ++i) {
             let elem = elems[i];
-            elem.onclick = function() {
+            elem.onclick = () => {
                 if (elem.classList.contains('expanded')) {
                     elem.classList.remove('expanded');
                 } else {
@@ -83,7 +83,7 @@ window.env = parent;
             iframe.setAttribute('frameborder', '0');
             iframe.setAttribute('scrolling', 'no');
 
-            iframe.addEventListener("load", function() {
+            iframe.addEventListener("load", () => {
                 this.contentWindow.setParent(parent);
                 this.contentWindow.setId(iframe);
                 this.contentWindow.loadXml.call(iframe.contentWindow, text);
@@ -159,9 +159,9 @@ window.env = parent;
         popout.innerHTML = '<i class="mdi mdi-18px mdi-open-in-new"></i>&nbsp;Open the Help in a New Tab';
         popout.target = '_blank';
         popout.href = document.location.href;
-        popout.onclick = function(e) {
+        popout.onclick = (e) => {
             let tab = open(this.href);
-            tab.addEventListener("load", function() {
+            tab.addEventListener("load", () => {
                 tab.env = parent;
                 if (parent.sweetAlert) {
                     parent.sweetAlert.close();
@@ -220,7 +220,7 @@ window.env = parent;
         } else {
             let request = new XMLHttpRequest();
             request.open('GET', path, true);
-            request.onreadystatechange = function() {
+            request.onreadystatechange = () => {
                 if (request.readyState != 4) {
                     return;
                 }
@@ -303,7 +303,7 @@ window.env = parent;
             collapsible: true,
             active: activeIndex,
             heightStyle: 'content',
-            beforeActivate: function(event, ui) {
+            beforeActivate: (event, ui) => {
                 let name = ui.newHeader.text();
                 let path = name && shelf.named[name];
                 if (path) loadPath(path);
@@ -318,7 +318,7 @@ window.env = parent;
     if (params.get('shelf')) {
         let request = new XMLHttpRequest();
         request.open('GET', params.get('shelf'), true);
-        request.onreadystatechange = function() {
+        request.onreadystatechange = () => {
             if (request.readyState != 4) {
                 return;
             }

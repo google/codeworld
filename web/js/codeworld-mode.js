@@ -21,7 +21,7 @@
 
 "use strict";
 
-CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
+CodeMirror.defineMode("codeworld", (_config, modeConfig) => {
     // This is a regular expression used in multiple contexts.
     let MULTICHAR_ESCAPE_REGEX =
         '\\\\NUL|\\\\SOH|\\\\STX|\\\\ETX|\\\\EOT|\\\\ENQ|\\\\ACK|\\\\BEL|\\\\BS|' +
@@ -109,7 +109,7 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
     }
 
     function blockComment(tokenType) {
-        return function(stream, state) {
+        return (stream, state) => {
             if (state.commentLevel == 0) {
                 state.func = normal;
                 return tokenType;
@@ -128,7 +128,7 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
         };
     }
 
-    let wellKnownWords = (function() {
+    let wellKnownWords = (() => {
         let result = {};
 
         let keywords = [
@@ -150,7 +150,7 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
     })();
 
     return {
-        startState: function() {
+        startState: () => {
             return {
                 func: normal,
                 commentLevel: 0,
@@ -158,7 +158,7 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
             };
         },
 
-        token: function(stream, state) {
+        token: (stream, state) => {
             let t = state.func(stream, state);
             if (['variable', 'variable-2'].indexOf(t) != -1) {
                 let w = stream.current();

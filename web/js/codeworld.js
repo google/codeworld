@@ -53,7 +53,7 @@ async function init() {
     }
     document.documentElement.classList.add(window.buildMode);
 
-    window.cancelCompile = function() {};
+    window.cancelCompile = () => {};
 
     let hash = location.hash.slice(1);
     if (hash.length > 0) {
@@ -67,7 +67,7 @@ async function init() {
                 data.append('shash', hash);
                 data.append('name', folderName);
 
-                sendHttp('POST', 'shareContent', data, function(request) {
+                sendHttp('POST', 'shareContent', data, (request) => {
                     window.location.hash = '';
                     if (request.status == 200) {
                         sweetAlert('Success!', 'The shared folder is moved into your root directory.', 'success');
@@ -75,7 +75,7 @@ async function init() {
                         sweetAlert('Oops!', 'Could not load the shared directory. Please try again.', 'error');
                     }
                     initCodeworld();
-                    registerStandardHints(function() {
+                    registerStandardHints(() => {
                         setMode(true);
                         parseSymbolsFromCurrentCode();
                     });
@@ -95,7 +95,7 @@ async function init() {
             }, go);
         } else {
             initCodeworld();
-            registerStandardHints(function() {
+            registerStandardHints(() => {
                 setMode(true);
                 parseSymbolsFromCurrentCode();
             });
@@ -103,7 +103,7 @@ async function init() {
         }
     } else {
         initCodeworld();
-        registerStandardHints(function() {
+        registerStandardHints(() => {
             setMode(true);
             parseSymbolsFromCurrentCode();
         });
@@ -115,7 +115,7 @@ async function init() {
             hash = hash.slice(0, -2);
         }
         if (hash[0] == 'P') {
-            sendHttp('GET', 'loadSource?hash=' + hash + '&mode=' + window.buildMode, null, function(request) {
+            sendHttp('GET', 'loadSource?hash=' + hash + '&mode=' + window.buildMode, null, (request) => {
                 if (request.status == 200) {
                     setCode(request.responseText, null, null, true);
                 }
@@ -167,7 +167,7 @@ function initCodeworld() {
         textHover: onHover,
         gutters: ["CodeMirror-lint-markers"],
         lint: {
-            getAnnotations: function(text, callback) {
+            getAnnotations: (text, callback) => {
                 let request;
 
                 function cancelLintRequest() {
@@ -179,7 +179,7 @@ function initCodeworld() {
 
                 let data = new FormData();
                 data.append("source", text)
-                request = sendHttp("POST", "errorCheck", data, function(request) {
+                request = sendHttp("POST", "errorCheck", data, (request) => {
                     if (window.codeworldEditor) {
                         window.codeworldEditor.off("change", cancelLintRequest);
                     }
@@ -201,10 +201,10 @@ function initCodeworld() {
     });
     window.codeworldEditor.refresh();
 
-    CodeMirror.commands.save = function(cm) {
+    CodeMirror.commands.save = (cm) => {
         saveProject();
     }
-    document.onkeydown = function(e) {
+    document.onkeydown = (e) => {
         if (e.ctrlKey && e.keyCode === 83) { // Ctrl+S
             saveProject();
             return false;
@@ -218,13 +218,13 @@ function initCodeworld() {
     window.reparseTimeoutId = null;
     window.codeworldEditor.on("changes", () => {
         if (window.reparseTimeoutId) clearTimeout(window.reparseTimeoutId);
-        window.reparseTimeoutId = setTimeout(function() {
+        window.reparseTimeoutId = setTimeout(() => {
             parseSymbolsFromCurrentCode();
         }, 1500);
         window.updateUI();
     });
 
-    window.onbeforeunload = function(event) {
+    window.onbeforeunload = (event) => {
         if (!isEditorClean()) {
             let msg = 'There are unsaved changes to your project. ' + 'If you continue, they will be lost!';
             if (event) event.returnValue = msg;
@@ -232,9 +232,9 @@ function initCodeworld() {
         }
     }
 
-    window.onresize = function() {
+    window.onresize = () => {
         if (window.resizeTimeoutId) clearTimeout(window.resizeTimeoutId);
-        window.resizeTimeoutId = setTimeout(function() {
+        window.resizeTimeoutId = setTimeout(() => {
             window.codeworldEditor.setSize();
         }, 1000);
     }
@@ -251,13 +251,13 @@ class CanvasRecorder {
     }
 
     addChunk(chunks) {
-        return function(e) {
+        return (e) => {
             chunks.push(e.data);
         }
     }
 
     exportStream(chunks) {
-        return function() {
+        return () => {
             let blob = new Blob(chunks);
 
             // Reset data
@@ -339,7 +339,7 @@ function getCurrentProject() {
 }
 
 function folderHandler(folderName, index, state) {
-    warnIfUnsaved(function() {
+    warnIfUnsaved(() => {
         window.nestedDirs = nestedDirs.slice(0, index + 1);
         window.allProjectNames = allProjectNames.slice(0, index + 1);
         window.allFolderNames = allFolderNames.slice(0, index + 1);
@@ -472,19 +472,19 @@ function updateUI() {
 }
 
 function updateNavBar() {
-    allProjectNames.forEach(function(projectNames) {
-        projectNames.sort(function(a, b) {
+    allProjectNames.forEach((projectNames) => {
+        projectNames.sort((a, b) => {
             return a.localeCompare(b);
         });
     });
 
-    allFolderNames.forEach(function(folderNames) {
-        folderNames.sort(function(a, b) {
+    allFolderNames.forEach((folderNames) => {
+        folderNames.sort((a, b) => {
             return a.localeCompare(b);
         });
     });
 
-    let makeDirNode = function(name, isOpen, level) {
+    let makeDirNode = (name, isOpen, level) => {
         let encodedName = name
             .replace('&', '&amp;')
             .replace('<', '&lt;')
@@ -496,7 +496,7 @@ function updateNavBar() {
         span.innerHTML = template;
         let elem = span.getElementsByTagName('a')[0];
         elem.style.marginLeft = (3 + 16 * level) + 'px';
-        elem.onclick = function() {
+        elem.onclick = () => {
             folderHandler(name, level, isOpen);
         };
         span.style.display = 'flex';
@@ -505,7 +505,7 @@ function updateNavBar() {
         return span;
     };
 
-    let makeProjectNode = function(name, level, active) {
+    let makeProjectNode = (name, level, active) => {
         let title = name;
         if (active && !isEditorClean()) {
             title = "* " + title;
@@ -521,7 +521,7 @@ function updateNavBar() {
         span.innerHTML = template;
         let elem = span.getElementsByTagName('a')[0];
         elem.style.marginLeft = (3 + 16 * level) + 'px';
-        elem.onclick = function() {
+        elem.onclick = () => {
             loadProject(name, level);
         };
         span.style.display = 'flex';
@@ -537,7 +537,7 @@ function updateNavBar() {
 
     for (let i = 0; i < nestedDirs.length; i++) {
         let nextProjects = null;
-        allFolderNames[i].forEach(function(folderName) {
+        allFolderNames[i].forEach((folderName) => {
             let active = i + 1 < nestedDirs.length && nestedDirs[i + 1] == folderName;
             if (!signedIn() && !active) {
                 return;
@@ -548,7 +548,7 @@ function updateNavBar() {
                 nextProjects = span.appendChild(document.createElement('div'));
             }
         });
-        allProjectNames[i].forEach(function(projectName) {
+        allProjectNames[i].forEach((projectName) => {
             let active = i + 1 == nestedDirs.length && window.openProjectName == projectName;
             if (!signedIn() && !active) {
                 return;
@@ -572,7 +572,7 @@ function updateNavBar() {
 }
 
 function moveProject() {
-    warnIfUnsaved(function() {
+    warnIfUnsaved(() => {
         if (!signedIn()) {
             sweetAlert('Oops!', 'You must sign in to move this project or folder.', 'error');
             updateUI();
@@ -616,7 +616,7 @@ function moveHere() {
 }
 
 function changeFontSize(incr) {
-    return function() {
+    return () => {
         let elem = window.codeworldEditor.getWrapperElement();
         let fontParts = window.getComputedStyle(elem)['font-size'].match(/^([0-9]+)(.*)$/);
         let fontSize = 12;
@@ -723,13 +723,13 @@ function setCode(code, history, name, autostart) {
 
 function loadSample(code) {
     if (isEditorClean()) sweetAlert.close();
-    warnIfUnsaved(function() {
+    warnIfUnsaved(() => {
         setCode(code);
     }, false);
 }
 
 function newProject() {
-    warnIfUnsaved(function() {
+    warnIfUnsaved(() => {
         setCode('');
     }, false);
 }
@@ -764,7 +764,7 @@ function formatSource() {
     data.append('source', src);
     data.append('mode', window.buildMode);
 
-    sendHttp('POST', 'indent', data, function(request) {
+    sendHttp('POST', 'indent', data, (request) => {
         if (request.status == 200) {
             codeworldEditor.getDoc().setValue(request.responseText);
         }
@@ -834,7 +834,7 @@ function run(hash, dhash, msg, error, generation) {
 
     updateUI();
 
-    document.getElementById('runner').addEventListener('load', function() {
+    document.getElementById('runner').addEventListener('load', () => {
         updateUI();
     });
 
@@ -867,7 +867,7 @@ function showRequiredChecksInDialog(msg) {
             items[items.length - 1].push(req);
         }
     }
-    let itemsHtml = items.map(function(item) {
+    let itemsHtml = items.map((item) => {
         let head = item[1];
         let rest = item.slice(2).join('<br>');
         let details = rest ? '<br><span class="req-details">' + rest + '</span>' : '';
@@ -881,7 +881,7 @@ function showRequiredChecksInDialog(msg) {
         confirmButtonText: 'Dismiss',
         showCancelButton: false,
         closeOnConfirm: true
-    }, function() {
+    }, () => {
         let runner = document.getElementById('runner');
         if (!runner) return;
         if (runner.style.display == 'none') return;
@@ -893,7 +893,7 @@ function showRequiredChecksInDialog(msg) {
     });
 }
 
-let htmlEscapeString = (function() {
+let htmlEscapeString = (() => {
     let el = document.createElement('div')
     return function escape(str) {
         el.textContent = str;
@@ -921,9 +921,9 @@ function compile() {
     let compileFinished = false;
     let compileDots = 0;
 
-    window.cancelCompile = function() {
+    window.cancelCompile = () => {
         compileFinished = true;
-        window.cancelCompile = function() {};
+        window.cancelCompile = () => {};
     };
 
     sweetAlert2({
@@ -942,7 +942,7 @@ function compile() {
         }
     });
 
-    sendHttp('POST', 'compile', data, function(request) {
+    sendHttp('POST', 'compile', data, (request) => {
         if (compileFinished) return;
         sweetAlert2.close();
         window.cancelCompile();
@@ -969,7 +969,7 @@ function compile() {
         data.append('hash', hash);
         data.append('mode', window.buildMode);
 
-        sendHttp('POST', 'runMsg', data, function(request) {
+        sendHttp('POST', 'runMsg', data, (request) => {
             let msg = '';
             if (request.status == 200) {
                 msg = request.responseText.replace(/^[\r\n]+|[\r\n]+$/g, '');
@@ -1069,7 +1069,7 @@ function downloadProject() {
 function parseCompileErrors(rawErrors) {
     let errors = [];
     rawErrors = rawErrors.split("\n\n");
-    rawErrors.forEach(function(rawError) {
+    rawErrors.forEach((rawError) => {
         rawError = rawError.split('\n');
         let firstLine = rawError[0].trim(),
             otherLines = rawError.slice(1).map((err) => {
@@ -1090,7 +1090,7 @@ function parseCompileErrors(rawErrors) {
                 endCol = Number(match[4]) - 1;
             } else {
                 let token = window.codeworldEditor.getLineTokens(startLine).find(
-                    function(t) {
+                    (t) => {
                         return t.start === startCol
                     });
                 if (token) {

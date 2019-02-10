@@ -53,22 +53,22 @@ function showCanvas() {
 }
 
 function start() {
-    h$base_writeStdout = function(fd, fdo, buf, buf_offset, n, c) {
+    h$base_writeStdout = (fd, fdo, buf, buf_offset, n, c) => {
         addMessage(false, h$decodeUtf8(buf, n, buf_offset));
         c(n);
     };
-    h$base_writeStderr = function(fd, fdo, buf, buf_offset, n, c) {
+    h$base_writeStderr = (fd, fdo, buf, buf_offset, n, c) => {
         addMessage(false, h$decodeUtf8(buf, n, buf_offset));
         c(n);
     };
-    h$log = function() {
+    h$log = () => {
         let s = '';
         for (let i = 0; i < arguments.length; i++) {
             s = s + arguments[i];
         }
         addMessage(false, s + '\n');
     };
-    h$errorMsg = function(str) {
+    h$errorMsg = (str) => {
         for (let i = 1; i < arguments.length; i++) {
             str = str.replace(/%s/, arguments[i]);
         }

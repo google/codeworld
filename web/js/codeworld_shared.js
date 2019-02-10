@@ -35,7 +35,7 @@ function sendHttpRaw(method, url, body, callback) {
     let request = new XMLHttpRequest();
 
     if (callback) {
-        request.onreadystatechange = function() {
+        request.onreadystatechange = () => {
             if (request.readyState == 4) callback(request);
         };
     }
@@ -167,7 +167,7 @@ function parseSymbolsFromCurrentCode() {
         parseResults = {},
         lineIndex = 0;
 
-    lines.forEach(function(line) {
+    lines.forEach((line) => {
         lineIndex++;
 
         let docString = "Defined in your code on line " +
@@ -307,7 +307,7 @@ function onHover(cm, data, node) {
 
 // Hints and hover tooltips
 function registerStandardHints(successFunc) {
-    CodeMirror.registerHelper('hint', 'codeworld', function(cm) {
+    CodeMirror.registerHelper('hint', 'codeworld', (cm) => {
         let cur = cm.getCursor();
         let token = cm.getTokenAt(cur);
 
@@ -334,7 +334,7 @@ function registerStandardHints(successFunc) {
             }
         }
 
-        found.sort(function(a, b) {
+        found.sort((a, b) => {
             function startsWithLetter(c) {
                 return /^[a-zA-Z].*/.test(c);
             }
@@ -361,7 +361,7 @@ function registerStandardHints(successFunc) {
             // Tracking of hint selection
             CodeMirror.on(
                 data, 'select',
-                function(selection, elem) {
+                (selection, elem) => {
                     let codeWordInfo = codeWorldSymbols[selection.text],
                         hintsWidgetRect = elem.parentElement.getBoundingClientRect(),
                         doc = document.createElement('div');
@@ -380,7 +380,7 @@ function registerStandardHints(successFunc) {
         }
     });
 
-    sendHttp('GET', 'codeworld-base.txt', null, function(request) {
+    sendHttp('GET', 'codeworld-base.txt', null, (request) => {
         let lines = [];
         if (request.status != 200) {
             console.log('Failed to load autocomplete word list.');
@@ -411,7 +411,7 @@ function registerStandardHints(successFunc) {
         };
 
         let doc = "";
-        lines.forEach(function(line) {
+        lines.forEach((line) => {
             if (line.startsWith("type Program")) {
                 // We must intervene to hide the IO type.
                 line = "data Program";
@@ -635,7 +635,7 @@ let Auth = (() => {
 function withClientId(f) {
     if (window.clientId) return f(window.clientId);
 
-    sendHttp('GET', 'clientId.txt', null, function(request) {
+    sendHttp('GET', 'clientId.txt', null, (request) => {
         if (request.status != 200 || request.responseText == '') {
             sweetAlert('Oops!', 'Missing API client key.  You will not be able to sign in.', 'warning');
             return null;
@@ -666,7 +666,7 @@ function discoverProjects_(path, buildMode, index) {
     data.append('mode', buildMode);
     data.append('path', path);
 
-    sendHttp('POST', 'listFolder', data, function(request) {
+    sendHttp('POST', 'listFolder', data, (request) => {
         if (request.status == 200) {
             loadingDir = false;
             let allContents = JSON.parse(request.responseText);
@@ -708,7 +708,7 @@ function moveHere_(path, buildMode, successFunc) {
         data.append('isFile', "false");
     }
 
-    sendHttp('POST', 'moveProject', data, function(request) {
+    sendHttp('POST', 'moveProject', data, (request) => {
         if (request.status != 200) {
             sweetAlert('Oops', 'Could not move your project! Please try again.', 'error');
             cancelMove();
@@ -823,7 +823,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
         data.append('mode', mode);
         data.append('path', path);
 
-        sendHttp('POST', 'saveProject', data, function(request) {
+        sendHttp('POST', 'saveProject', data, (request) => {
             sweetAlert2.close();
             if (request.status != 200) {
                 sweetAlert('Oops!', 'Could not save your project!!!  Please try again.', 'error');
@@ -871,7 +871,7 @@ function deleteProject_(path, buildMode, successFunc) {
         data.append('mode', buildMode);
         data.append('path', path);
 
-        sendHttp('POST', 'deleteProject', data, function(request) {
+        sendHttp('POST', 'deleteProject', data, (request) => {
             if (request.status == 200) {
                 successFunc();
                 discoverProjects(path, allProjectNames.length - 1);
@@ -905,7 +905,7 @@ function deleteFolder_(path, buildMode, successFunc) {
         data.append('mode', buildMode);
         data.append('path', path);
 
-        sendHttp('POST', 'deleteFolder', data, function(request) {
+        sendHttp('POST', 'deleteFolder', data, (request) => {
             if (request.status == 200) {
                 successFunc();
                 nestedDirs.pop();
@@ -928,7 +928,7 @@ function deleteFolder_(path, buildMode, successFunc) {
 }
 
 function createFolder(path, buildMode, successFunc) {
-    warnIfUnsaved(function() {
+    warnIfUnsaved(() => {
         if (!signedIn()) {
             sweetAlert('Oops!', 'You must sign in to create a folder.', 'error');
             updateUI();
@@ -948,7 +948,7 @@ function createFolder(path, buildMode, successFunc) {
             else
                 data.append('path', path + '/' + folderName);
 
-            sendHttp('POST', 'createFolder', data, function(request) {
+            sendHttp('POST', 'createFolder', data, (request) => {
                 if (request.status != 200) {
                     sweetAlert('Oops', 'Could not create your directory! Please try again.', 'error');
                     return;
@@ -978,7 +978,7 @@ function createFolder(path, buildMode, successFunc) {
 
 function loadProject_(index, name, buildMode, successFunc) {
 
-    warnIfUnsaved(function() {
+    warnIfUnsaved(() => {
         if (!signedIn()) {
             sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
             updateUI();
@@ -990,7 +990,7 @@ function loadProject_(index, name, buildMode, successFunc) {
         data.append('mode', buildMode);
         data.append('path', nestedDirs.slice(1, index + 1).join('/'));
 
-        sendHttp('POST', 'loadProject', data, function(request) {
+        sendHttp('POST', 'loadProject', data, (request) => {
             if (request.status == 200) {
                 let project = JSON.parse(request.responseText);
 
@@ -1048,7 +1048,7 @@ function share() {
             showCancelButton: true,
             cancelButtonText: 'Done',
             animation: 'slide-from-bottom'
-        }, function() {
+        }, () => {
             offerSource = !offerSource;
             go();
         });
@@ -1104,7 +1104,7 @@ function shareFolder_(mode) {
         data.append('mode', mode);
         data.append('path', path);
 
-        sendHttp('POST', 'shareFolder', data, function(request) {
+        sendHttp('POST', 'shareFolder', data, (request) => {
             if (request.status != 200) {
                 sweetAlert('Oops!', 'Could not share your folder! Please try again.', 'error');
                 return;

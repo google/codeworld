@@ -18,7 +18,7 @@
 
 function loadSample(code) {
     if (isEditorClean()) sweetAlert.close();
-    warnIfUnsaved(function() {
+    warnIfUnsaved(() => {
         loadWorkspace(code);
     }, false);
 }
@@ -32,7 +32,7 @@ function loadWorkspace(text) {
 }
 
 function loadXmlHash(hash, autostart) {
-    sendHttp('GET', 'loadXML?hash=' + hash + '&mode=blocklyXML', null, function(request) {
+    sendHttp('GET', 'loadXML?hash=' + hash + '&mode=blocklyXML', null, (request) => {
         if (request.status == 200) {
             loadWorkspace(request.responseText);
             if (autostart) {
@@ -74,7 +74,7 @@ function init() {
                 data.append('shash', hash);
                 data.append('name', folderName);
 
-                sendHttp('POST', 'shareContent', data, function(request) {
+                sendHttp('POST', 'shareContent', data, (request) => {
                     window.location.hash = '';
                     if (request.status == 200) {
                         sweetAlert('Success!', 'The shared folder is moved into your root directory.', 'success');
@@ -107,9 +107,9 @@ function init() {
 
 function initCodeworld() {
     codeworldKeywords = {};
-    registerStandardHints(function() {});
+    registerStandardHints(() => {});
 
-    window.onbeforeunload = function(event) {
+    window.onbeforeunload = (event) => {
         if (containsUnsavedChanges()) {
             let msg = 'There are unsaved changes to your project. ' + 'If you continue, they will be lost!';
             if (event) event.returnValue = msg;
@@ -195,7 +195,7 @@ function removeErrors() {
     $('.blocklyDraggable').removeClass('blocklyErrorSelected');
     let blocks = Blockly.getMainWorkspace().getAllBlocks();
 
-    blocks.forEach(function(block) {
+    blocks.forEach((block) => {
         block.removeErrorSelect();
     });
 }
@@ -224,7 +224,7 @@ function compile(src, silent) {
     data.append('source', xml_text);
     data.append('mode', 'blocklyXML');
 
-    sendHttp('POST', 'saveXMLhash', data, function(request) {
+    sendHttp('POST', 'saveXMLhash', data, (request) => {
         // XML Hash
         let xmlHash = request.responseText;
 
@@ -232,7 +232,7 @@ function compile(src, silent) {
         data.append('source', src);
         data.append('mode', window.buildMode);
 
-        sendHttp('POST', 'compile', data, function(request) {
+        sendHttp('POST', 'compile', data, (request) => {
             let success = request.status == 200;
 
             // Code hash
@@ -251,7 +251,7 @@ function compile(src, silent) {
             data.append('hash', hash);
             data.append('mode', window.buildMode);
 
-            sendHttp('POST', 'runMsg', data, function(request) {
+            sendHttp('POST', 'runMsg', data, (request) => {
                 let msg = '';
                 if (request.status == 200) {
                     msg = request.responseText.trim();
@@ -272,7 +272,7 @@ function compile(src, silent) {
 }
 
 function folderHandler(folderName, index, state) {
-    warnIfUnsaved(function() {
+    warnIfUnsaved(() => {
         window.nestedDirs = nestedDirs.slice(0, index + 1);
         window.allProjectNames = allProjectNames.slice(0, index + 1);
         window.allFolderNames = allFolderNames.slice(0, index + 1);
@@ -372,14 +372,14 @@ function updateNavBar() {
         projects.removeChild(projects.lastChild);
     }
 
-    allProjectNames.forEach(function(projectNames) {
-        projectNames.sort(function(a, b) {
+    allProjectNames.forEach((projectNames) => {
+        projectNames.sort((a, b) => {
             a.localeCompare(b);
         });
     });
 
-    allFolderNames.forEach(function(folderNames) {
-        folderNames.sort(function(a, b) {
+    allFolderNames.forEach((folderNames) => {
+        folderNames.sort((a, b) => {
             a.localeCompare(b);
         });
     });
@@ -397,7 +397,7 @@ function updateNavBar() {
             span.innerHTML = template;
             let elem = span.getElementsByTagName('a')[0];
             elem.style.marginLeft = (3 + 16 * (i - 1)) + 'px';
-            elem.onclick = function() {
+            elem.onclick = () => {
                 folderHandler(nestedDirs[i], i - 1, true);
             };
             span.style.display = 'flex';
@@ -406,7 +406,7 @@ function updateNavBar() {
             projects.parentNode.removeChild(projects);
             projects = span.appendChild(document.createElement('div'));
         }
-        allFolderNames[i].forEach(function(folderName) {
+        allFolderNames[i].forEach((folderName) => {
             let encodedName = folderName.replace('&', '&amp;')
                 .replace('<', '&lt;')
                 .replace('>', '&gt;');
@@ -416,7 +416,7 @@ function updateNavBar() {
             span.innerHTML = template;
             let elem = span.getElementsByTagName('a')[0];
             elem.style.marginLeft = (3 + 16 * i) + 'px';
-            elem.onclick = function() {
+            elem.onclick = () => {
                 folderHandler(folderName, i, false);
             };
             span.style.display = 'flex';
@@ -428,7 +428,7 @@ function updateNavBar() {
                 }
             }
         });
-        allProjectNames[i].forEach(function(projectName) {
+        allProjectNames[i].forEach((projectName) => {
             let active = (window.openProjectName == projectName) && (i == NDlength - 1);
             if (!signedIn() && !active) {
                 return;
@@ -448,7 +448,7 @@ function updateNavBar() {
             span.innerHTML = template;
             let elem = span.getElementsByTagName('a')[0];
             elem.style.marginLeft = (3 + 16 * i) + 'px';
-            elem.onclick = function() {
+            elem.onclick = () => {
                 loadProject(projectName, i);
             }
             span.style.display = 'flex';
@@ -462,7 +462,7 @@ function updateNavBar() {
 }
 
 function moveProject() {
-    warnIfUnsaved(function() {
+    warnIfUnsaved(() => {
         if (!signedIn()) {
             sweetAlert('Oops!', 'You must sign in to move this project or folder.', 'error');
             updateUI();
@@ -640,7 +640,7 @@ function shareFolder() {
 }
 
 function newProject() {
-    warnIfUnsaved(function() {
+    warnIfUnsaved(() => {
         clearRunCode();
         clearWorkspace();
         openProjectName = null;

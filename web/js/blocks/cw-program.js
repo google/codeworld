@@ -26,7 +26,7 @@ Blockly.Blocks['cwSimulationOf'] = {
      * Block for comparison operator.
      * @this Blockly.Block
      */
-    init: function() {
+    init() {
         this.setColour(0);
         this.setOutput(false);
         this.appendValueInput('INITIAL')
@@ -60,7 +60,7 @@ Blockly.Blocks['cwInteractionOf'] = {
      * Block for comparison operator.
      * @this Blockly.Block
      */
-    init: function() {
+    init() {
         this.setColour(0);
         this.setOutput(false);
         this.appendValueInput('INITIAL')
@@ -99,7 +99,7 @@ Blockly.Blocks['cwAnimationOf'] = {
      * Block for comparison operator.
      * @this Blockly.Block
      */
-    init: function() {
+    init() {
         this.setColour(0);
         this.setOutput(false);
         this.appendValueInput('FUNC')

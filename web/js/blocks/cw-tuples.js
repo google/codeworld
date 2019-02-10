@@ -24,7 +24,7 @@ goog.require('Blockly.Blocks');
  * Pairs
  */
 Blockly.Blocks['pair_create_typed'] = {
-    init: function() {
+    init() {
         this.setColour(210);
         this.appendValueInput('FIRST')
             .appendField(new Blockly.FieldLabel('(', 'blocklyTextEmph'));
@@ -46,7 +46,7 @@ Blockly.Blocks['pair_create_typed'] = {
 };
 
 Blockly.Blocks['pair_first_typed'] = {
-    init: function() {
+    init() {
         this.setColour(180);
         this.appendValueInput('PAIR')
             .appendField(new Blockly.FieldLabel("firstOfPair", "blocklyTextEmph"))
@@ -62,7 +62,7 @@ Blockly.Blocks['pair_first_typed'] = {
 };
 
 Blockly.Blocks['pair_second_typed'] = {
-    init: function() {
+    init() {
         this.setColour(180);
         this.appendValueInput('PAIR')
             .appendField(new Blockly.FieldLabel("secondOfPair", "blocklyTextEmph"))

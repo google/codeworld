@@ -28,7 +28,7 @@ Blockly.Blocks['text_typed'] = {
      * Block for text value.
      * @this Blockly.Block
      */
-    init: function() {
+    init() {
         this.setHelpUrl(Blockly.Msg.TEXT_TEXT_HELPURL);
         this.setColour(45);
         this.appendDummyInput()
@@ -46,7 +46,7 @@ Blockly.Blocks['text_typed'] = {
      * @this Blockly.Block
      * @private
      */
-    newQuote_: function(open) {
+    newQuote_(open) {
         let file;
         if (open == this.RTL) {
             file = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAKCAQAAAAqJXdxAAAAqUlEQVQI1z3KvUpCcRiA8ef9E4JNHhI0aFEacm1o0BsI0Slx8wa8gLauoDnoBhq7DcfWhggONDmJJgqCPA7neJ7p934EOOKOnM8Q7PDElo/4x4lFb2DmuUjcUzS3URnGib9qaPNbuXvBO3sGPHJDRG6fGVdMSeWDP2q99FQdFrz26Gu5Tq7dFMzUvbXy8KXeAj57cOklgA+u1B5AoslLtGIHQMaCVnwDnADZIFIrXsoXrgAAAABJRU5ErkJggg==';
@@ -58,7 +58,7 @@ Blockly.Blocks['text_typed'] = {
 };
 
 Blockly.Blocks['txtConcat'] = {
-    init: function() {
+    init() {
         this.appendValueInput('STR0');
         this.appendValueInput('STR1')
             .appendField(new Blockly.FieldLabel("<>", "blocklyTextEmph"));
@@ -72,7 +72,7 @@ Blockly.Blocks['txtConcat'] = {
         this.setAsFunction("<>");
     },
 
-    foldr1: function(fn, xs) {
+    foldr1(fn, xs) {
         let result = xs[xs.length - 1];
         for (let i = xs.length - 2; i > -1; i--) {
             result = fn(xs[i], result);
@@ -80,9 +80,9 @@ Blockly.Blocks['txtConcat'] = {
         return result;
     },
 
-    getExpr: function() {
+    getExpr() {
         let exps = [];
-        this.inputList.forEach(function(inp) {
+        this.inputList.forEach((inp) => {
             if (inp.connection.isConnected())
                 exps.push(inp.connection.targetBlock().getExpr());
             else
@@ -99,7 +99,7 @@ Blockly.Blocks['txtConcat'] = {
         return e;
     },
 
-    decompose: function(workspace) {
+    decompose(workspace) {
         let containerBlock =
             workspace.newBlock('text_combine_container');
         containerBlock.initSvg();
@@ -115,7 +115,7 @@ Blockly.Blocks['txtConcat'] = {
         return containerBlock;
     },
 
-    compose: function(containerBlock) {
+    compose(containerBlock) {
 
         for (let x = 0; x < this.itemCount_; x++) {
             this.removeInput('STR' + x);
@@ -151,13 +151,13 @@ Blockly.Blocks['txtConcat'] = {
         }
     },
 
-    mutationToDom: function() {
+    mutationToDom() {
         let container = document.createElement('mutation');
         container.setAttribute('items', this.itemCount_);
         return container;
     },
 
-    domToMutation: function(xmlElement) {
+    domToMutation(xmlElement) {
         this.itemCount_ = parseInt(xmlElement.getAttribute('items'), 10);
 
         this.inputList = [];
@@ -175,7 +175,7 @@ Blockly.Blocks['txtConcat'] = {
         this.initArrows();
     },
 
-    saveConnections: function(containerBlock) {
+    saveConnections(containerBlock) {
         let itemBlock = containerBlock.getInputTargetBlock('STACK');
         let x = 0;
         while (itemBlock) {
@@ -201,7 +201,7 @@ Blockly.Blocks['text_combine_ele'] = {
      * Mutator block for procedure argument.
      * @this Blockly.Block
      */
-    init: function() {
+    init() {
         this.appendDummyInput()
             .appendField('text');
         this.setPreviousStatement(true);
@@ -214,7 +214,7 @@ Blockly.Blocks['text_combine_ele'] = {
 };
 
 Blockly.Blocks['text_combine_container'] = {
-    init: function() {
+    init() {
         this.setColour(textHUE);
         this.appendDummyInput()
             .appendField('Text inputs');

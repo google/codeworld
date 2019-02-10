@@ -28,7 +28,7 @@ Blockly.Blocks['lists_comprehension'] = {
      * Block for creating a list with any number of elements of any type.
      * @this Blockly.Block
      */
-    init: function() {
+    init() {
         this.setColour(listsHUE);
         this.vars_ = ['i', 'j', 'k'];
         this.varTypes_ = [Type.generateTypeVar('lc'), Type.generateTypeVar('lc'), Type.generateTypeVar('lc')];
@@ -57,7 +57,7 @@ Blockly.Blocks['lists_comprehension'] = {
 
     },
 
-    foldr1: function(fn, xs) {
+    foldr1(fn, xs) {
         let result = xs[xs.length - 1];
         for (let i = xs.length - 2; i > -1; i--) {
             result = fn(xs[i], result);
@@ -65,7 +65,7 @@ Blockly.Blocks['lists_comprehension'] = {
         return result;
     },
 
-    getExpr: function() {
+    getExpr() {
 
         // Do main exp
         let mainExp = Exp.Var('undef');
@@ -142,7 +142,7 @@ Blockly.Blocks['lists_comprehension'] = {
 
     },
 
-    foldr: function(fn, ult, xs) {
+    foldr(fn, ult, xs) {
         let result = ult;
         for (let i = xs.length - 1; i !== -1; i--) {
             result = fn(xs[i], result);
@@ -150,7 +150,7 @@ Blockly.Blocks['lists_comprehension'] = {
         return result;
     },
 
-    resetArrows: function() {
+    resetArrows() {
         this.arrows = null;
         let tps = [];
         this.varTypes_ = [];
@@ -173,10 +173,10 @@ Blockly.Blocks['lists_comprehension'] = {
         this.initArrows(false);
     },
 
-    assignVars: function() {
+    assignVars() {
         let i = 0;
         let thisBlock = this;
-        this.inputList.forEach(function(inp) {
+        this.inputList.forEach((inp) => {
             if (inp.name.startsWith('VAR')) {
                 for (let f = 0; f < inp.fieldRow.length; f++) {
                     let fieldvar = inp.fieldRow[f];
@@ -190,11 +190,11 @@ Blockly.Blocks['lists_comprehension'] = {
         });
     },
 
-    getArgType: function(localId) {
+    getArgType(localId) {
         return this.varTypes_[localId];
     },
 
-    getVars: function(connection) {
+    getVars(connection) {
         let i = 0;
         let available = [];
         for (i = 0; i < this.varCount_; i++) {
@@ -217,7 +217,7 @@ Blockly.Blocks['lists_comprehension'] = {
      * @return {Element} XML storage element.
      * @this Blockly.Block
      */
-    mutationToDom: function() {
+    mutationToDom() {
         let container = document.createElement('mutation');
         container.setAttribute('guardcount', this.guardCount_);
         container.setAttribute('varcount', this.varCount_);
@@ -236,7 +236,7 @@ Blockly.Blocks['lists_comprehension'] = {
      * @param {!Element} xmlElement XML storage element.
      * @this Blockly.Block
      */
-    domToMutation: function(xmlElement) {
+    domToMutation(xmlElement) {
         for (let x = 0; x < this.varCount_; x++) {
             this.removeInput('VAR' + x);
         }
@@ -275,7 +275,7 @@ Blockly.Blocks['lists_comprehension'] = {
      * @return {!Blockly.Block} Root block in mutator.
      * @this Blockly.Block
      */
-    decompose: function(workspace) {
+    decompose(workspace) {
         let containerBlock =
             workspace.newBlock('lists_create_with_container');
         containerBlock.initSvg();
@@ -303,7 +303,7 @@ Blockly.Blocks['lists_comprehension'] = {
      * @param {!Blockly.Block} containerBlock Root block in mutator.
      * @this Blockly.Block
      */
-    compose: function(containerBlock) {
+    compose(containerBlock) {
         // Disconnect all input blocks and remove all inputs.
         for (let x = this.varCount_ - 1; x >= 0; x--) {
             this.removeInput('VAR' + x);
@@ -356,7 +356,7 @@ Blockly.Blocks['lists_comprehension'] = {
      * @param {!Blockly.Block} containerBlock Root block in mutator.
      * @this Blockly.Block
      */
-    saveConnections: function(containerBlock) {
+    saveConnections(containerBlock) {
         let itemBlock = containerBlock.getInputTargetBlock('STACK');
         let x = 0;
         while (itemBlock) {
@@ -374,7 +374,7 @@ Blockly.Blocks['lists_comp_var'] = {
      * Mutator block for procedure argument.
      * @this Blockly.Block
      */
-    init: function() {
+    init() {
         this.appendDummyInput()
             .appendField(new Blockly.FieldTextInput('k'), 'NAME')
             .appendField('\u2190');
@@ -391,7 +391,7 @@ Blockly.Blocks['lists_comp_guard'] = {
      * Mutator block for adding items.
      * @this Blockly.Block
      */
-    init: function() {
+    init() {
         this.setColour(listsHUE);
         this.appendDummyInput()
             .appendField("Guard");
@@ -403,7 +403,7 @@ Blockly.Blocks['lists_comp_guard'] = {
 };
 
 Blockly.Blocks['lists_numgen'] = {
-    init: function() {
+    init() {
         this.appendValueInput("LEFT")
             .appendField("[");
         this.appendValueInput("RIGHT")
@@ -424,7 +424,7 @@ Blockly.Blocks['lists_numgen'] = {
 };
 
 Blockly.Blocks['lists_numgenstep'] = {
-    init: function() {
+    init() {
         this.appendValueInput("LEFT")
             .appendField("[");
         this.appendValueInput("NEXT")
@@ -448,7 +448,7 @@ Blockly.Blocks['lists_numgenstep'] = {
 };
 
 Blockly.Blocks['lists_length'] = {
-    init: function() {
+    init() {
         this.setColour(210);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("length", "blocklyTextEmph"))
@@ -463,7 +463,7 @@ Blockly.Blocks['lists_length'] = {
 };
 
 Blockly.Blocks['lists_repeating'] = {
-    init: function() {
+    init() {
         this.setColour(listsHUE);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("repeating", "blocklyTextEmph"))
@@ -479,7 +479,7 @@ Blockly.Blocks['lists_repeating'] = {
 };
 
 Blockly.Blocks['lists_shuffled'] = {
-    init: function() {
+    init() {
         this.setColour(listsHUE);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("shuffled", "blocklyTextEmph"))
@@ -498,7 +498,7 @@ Blockly.Blocks['lists_shuffled'] = {
 };
 
 Blockly.Blocks['lists_sorted'] = {
-    init: function() {
+    init() {
         this.setColour(listsHUE);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("sorted", "blocklyTextEmph"))
@@ -514,7 +514,7 @@ Blockly.Blocks['lists_sorted'] = {
 };
 
 Blockly.Blocks['lists_reversed'] = {
-    init: function() {
+    init() {
         this.setColour(listsHUE);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("reversed", "blocklyTextEmph"))
@@ -530,7 +530,7 @@ Blockly.Blocks['lists_reversed'] = {
 };
 
 Blockly.Blocks['lists_first'] = {
-    init: function() {
+    init() {
         this.setColour(listsHUE);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("first", "blocklyTextEmph"))
@@ -549,7 +549,7 @@ Blockly.Blocks['lists_first'] = {
 };
 
 Blockly.Blocks['lists_rest'] = {
-    init: function() {
+    init() {
         this.setColour(listsHUE);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("rest", "blocklyTextEmph"))
@@ -568,7 +568,7 @@ Blockly.Blocks['lists_rest'] = {
 };
 
 Blockly.Blocks['lists_at'] = {
-    init: function() {
+    init() {
         this.setColour(180);
         this.appendValueInput('LST');
         this.appendValueInput('POS')
@@ -584,7 +584,7 @@ Blockly.Blocks['lists_at'] = {
 };
 
 Blockly.Blocks['lists_cons'] = {
-    init: function() {
+    init() {
         this.setColour(listsHUE);
         this.appendValueInput('ITEM');
         this.appendValueInput('LST')
@@ -607,7 +607,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
      * Block for creating a list with any number of elements of any type.
      * @this Blockly.Block
      */
-    init: function() {
+    init() {
         this.setColour(260);
         this.appendValueInput('ADD0')
             .appendField(new Blockly.FieldImage("ims/format-list-bulleted.svg", 20, 20))
@@ -628,11 +628,11 @@ Blockly.Blocks['lists_create_with_typed'] = {
 
         Blockly.TypeInf.defineFunction(":", Type.fromList([Type.Var("a"), Type.Lit("list", [Type.Var('a')]), Type.Lit("list", [Type.Var('a')])]));
     },
-    getType: function() {
+    getType() {
         return this.outputConnection.typeExpr.children[0];
     },
 
-    foldr: function(fn, ult, xs) {
+    foldr(fn, ult, xs) {
         let result = ult;
         for (let i = xs.length - 1; i !== -1; i--) {
             result = fn(xs[i], result);
@@ -640,9 +640,9 @@ Blockly.Blocks['lists_create_with_typed'] = {
         return result;
     },
 
-    getExpr: function() {
+    getExpr() {
         let exps = [];
-        this.inputList.forEach(function(inp) {
+        this.inputList.forEach((inp) => {
             if (inp.connection && inp.connection.isConnected()) {
                 let exp = inp.connection.targetBlock().getExpr();
                 exp.tag = inp.connection;
@@ -664,7 +664,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
      * @return {Element} XML storage element.
      * @this Blockly.Block
      */
-    mutationToDom: function() {
+    mutationToDom() {
         let container = document.createElement('mutation');
         container.setAttribute('items', this.itemCount_);
         return container;
@@ -674,7 +674,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
      * @param {!Element} xmlElement XML storage element.
      * @this Blockly.Block
      */
-    domToMutation: function(xmlElement) {
+    domToMutation(xmlElement) {
         for (let x = 0; x < this.itemCount_; x++) {
             this.removeInput('ADD' + x);
         }
@@ -705,7 +705,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
      * @return {!Blockly.Block} Root block in mutator.
      * @this Blockly.Block
      */
-    decompose: function(workspace) {
+    decompose(workspace) {
         let containerBlock =
             workspace.newBlock('lists_create_with_container');
         containerBlock.initSvg();
@@ -723,7 +723,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
      * @param {!Blockly.Block} containerBlock Root block in mutator.
      * @this Blockly.Block
      */
-    compose: function(containerBlock) {
+    compose(containerBlock) {
         // Disconnect all input blocks and remove all inputs.
         if (this.itemCount_ == 0) {
             this.removeInput('EMPTY');
@@ -769,7 +769,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
      * @param {!Blockly.Block} containerBlock Root block in mutator.
      * @this Blockly.Block
      */
-    saveConnections: function(containerBlock) {
+    saveConnections(containerBlock) {
         let itemBlock = containerBlock.getInputTargetBlock('STACK');
         let x = 0;
         while (itemBlock) {

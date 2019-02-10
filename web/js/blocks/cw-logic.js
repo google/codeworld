@@ -22,7 +22,7 @@ goog.require('Blockly.Blocks');
 let colorPoly = 180;
 
 Blockly.Blocks['conIf'] = {
-    init: function() {
+    init() {
         this.setColour(colorPoly);
         this.appendValueInput('IF')
             .appendField('if');

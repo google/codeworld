@@ -27,7 +27,7 @@ Blockly.Blocks['numNumber'] = {
      * Block for numeric value.
      * @this Blockly.Block
      */
-    init: function() {
+    init() {
         this.setHelpUrl(Blockly.Msg.MATH_NUMBER_HELPURL);
         this.setColour(210);
         let field = new Blockly.FieldNumber('0');
@@ -46,7 +46,7 @@ Blockly.Blocks['numNumberPerc'] = {
      * Block for numeric value.
      * @this Blockly.Block
      */
-    init: function() {
+    init() {
         this.setHelpUrl(Blockly.Msg.MATH_NUMBER_HELPURL);
         this.setColour(210);
         let field = new Blockly.FieldNumber('0');

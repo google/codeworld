@@ -22,7 +22,7 @@ goog.require('Blockly.Blocks');
 
 let picsHUE = 160;
 Blockly.Blocks['cwCombine'] = {
-    init: function() {
+    init() {
         this.appendValueInput('PIC0');
         this.appendValueInput('PIC1')
             .appendField(new Blockly.FieldLabel("&", "blocklyTextEmph"));
@@ -36,7 +36,7 @@ Blockly.Blocks['cwCombine'] = {
         this.setAsFunction("&");
     },
 
-    foldr1: function(fn, xs) {
+    foldr1(fn, xs) {
         let result = xs[xs.length - 1];
         for (let i = xs.length - 2; i > -1; i--) {
             result = fn(xs[i], result);
@@ -44,9 +44,9 @@ Blockly.Blocks['cwCombine'] = {
         return result;
     },
 
-    getExpr: function() {
+    getExpr() {
         let exps = [];
-        this.inputList.forEach(function(inp) {
+        this.inputList.forEach((inp) => {
             if (inp.connection.isConnected())
                 exps.push(inp.connection.targetBlock().getExpr());
             else
@@ -63,7 +63,7 @@ Blockly.Blocks['cwCombine'] = {
     },
 
 
-    decompose: function(workspace) {
+    decompose(workspace) {
         let containerBlock =
             workspace.newBlock('pics_combine_container');
         containerBlock.initSvg();
@@ -79,7 +79,7 @@ Blockly.Blocks['cwCombine'] = {
         return containerBlock;
     },
 
-    compose: function(containerBlock) {
+    compose(containerBlock) {
         let tps = [];
 
         for (let x = 0; x < this.itemCount_; x++) {
@@ -114,13 +114,13 @@ Blockly.Blocks['cwCombine'] = {
         }
     },
 
-    mutationToDom: function() {
+    mutationToDom() {
         let container = document.createElement('mutation');
         container.setAttribute('items', this.itemCount_);
         return container;
     },
 
-    domToMutation: function(xmlElement) {
+    domToMutation(xmlElement) {
         this.itemCount_ = parseInt(xmlElement.getAttribute('items'), 10);
         let tps = [];
         this.inputList = [];
@@ -135,7 +135,7 @@ Blockly.Blocks['cwCombine'] = {
         this.arrows = Type.fromList(tps);
         this.initArrows();
     },
-    saveConnections: function(containerBlock) {
+    saveConnections(containerBlock) {
         let itemBlock = containerBlock.getInputTargetBlock('STACK');
         let x = 0;
         while (itemBlock) {
@@ -161,7 +161,7 @@ Blockly.Blocks['pics_combine_ele'] = {
      * Mutator block for procedure argument.
      * @this Blockly.Block
      */
-    init: function() {
+    init() {
         this.appendDummyInput()
             .appendField('picture');
         this.setPreviousStatement(true);
@@ -174,7 +174,7 @@ Blockly.Blocks['pics_combine_ele'] = {
 };
 
 Blockly.Blocks['pics_combine_container'] = {
-    init: function() {
+    init() {
         this.setColour(picsHUE);
         this.appendDummyInput()
             .appendField('Picture inputs');
@@ -186,7 +186,7 @@ Blockly.Blocks['pics_combine_container'] = {
 };
 
 Blockly.Blocks['lists_pictures'] = {
-    init: function() {
+    init() {
         this.setColour(160);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("pictures", "blocklyTextEmph"))
@@ -203,7 +203,7 @@ Blockly.Blocks['lists_pictures'] = {
 };
 
 Blockly.Blocks['lists_polyline'] = {
-    init: function() {
+    init() {
         this.setColour(160);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("polyline", "blocklyTextEmph"))
@@ -220,7 +220,7 @@ Blockly.Blocks['lists_polyline'] = {
 };
 
 Blockly.Blocks['lists_thickPolyline'] = {
-    init: function() {
+    init() {
         this.setColour(160);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("thickPolyline", "blocklyTextEmph"))
@@ -243,7 +243,7 @@ Blockly.Blocks['lists_thickPolyline'] = {
 };
 
 Blockly.Blocks['lists_polygon'] = {
-    init: function() {
+    init() {
         this.setColour(160);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("polygon", "blocklyTextEmph"))
@@ -260,7 +260,7 @@ Blockly.Blocks['lists_polygon'] = {
 };
 
 Blockly.Blocks['lists_solidPolygon'] = {
-    init: function() {
+    init() {
         this.setColour(160);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("solidPolygon", "blocklyTextEmph"))
@@ -277,7 +277,7 @@ Blockly.Blocks['lists_solidPolygon'] = {
 };
 
 Blockly.Blocks['lists_thickPolygon'] = {
-    init: function() {
+    init() {
         this.setColour(160);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("thickPolygon", "blocklyTextEmph"))
@@ -300,7 +300,7 @@ Blockly.Blocks['lists_thickPolygon'] = {
 };
 
 Blockly.Blocks['lists_curve'] = {
-    init: function() {
+    init() {
         this.setColour(160);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("curve", "blocklyTextEmph"))
@@ -317,7 +317,7 @@ Blockly.Blocks['lists_curve'] = {
 };
 
 Blockly.Blocks['lists_thickCurve'] = {
-    init: function() {
+    init() {
         this.setColour(160);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("thickCurve", "blocklyTextEmph"))
@@ -340,7 +340,7 @@ Blockly.Blocks['lists_thickCurve'] = {
 };
 
 Blockly.Blocks['lists_closedCurve'] = {
-    init: function() {
+    init() {
         this.setColour(160);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("closedCurve", "blocklyTextEmph"))
@@ -357,7 +357,7 @@ Blockly.Blocks['lists_closedCurve'] = {
 };
 
 Blockly.Blocks['lists_solidClosedCurve'] = {
-    init: function() {
+    init() {
         this.setColour(160);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("solidClosedCurve", "blocklyTextEmph"))
@@ -374,7 +374,7 @@ Blockly.Blocks['lists_solidClosedCurve'] = {
 };
 
 Blockly.Blocks['lists_thickClosedCurve'] = {
-    init: function() {
+    init() {
         this.setColour(160);
         this.appendValueInput('LST')
             .appendField(new Blockly.FieldLabel("thickClosedCurve", "blocklyTextEmph"))

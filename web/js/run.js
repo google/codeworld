@@ -68,7 +68,7 @@ function start() {
         }
         addMessage(false, s + '\n');
     };
-    h$errorMsg = (str) => {
+    h$errorMsg = str => {
         for (let i = 1; i < arguments.length; i++) {
             str = str.replace(/%s/, arguments[i]);
         }

@@ -21,7 +21,7 @@ goog.provide('Blockly.Blocks.cwEvent');
 goog.require('Blockly.Blocks');
 
 Blockly.cwEvent = () => {};
-Blockly.cwEvent.generateEventBuiltins = (xmlList) => {
+Blockly.cwEvent.generateEventBuiltins = xmlList => {
 
     let LeftButton = new Blockly.UserTypes.Product("LeftButton", []);
     Blockly.TypeInf.addUserDefinedConstructor("LeftButton", Type.fromList([Type.Lit("MouseButton")]));
@@ -54,13 +54,13 @@ Blockly.cwEvent.generateEventBuiltins = (xmlList) => {
 
     let Event = new Blockly.UserTypes.Sum("Event", [KeyPress, KeyRelease, MousePress, MouseRelease, MouseMovement]);
 
-    [MouseButton, Event].forEach((sum) => {
+    [MouseButton, Event].forEach(sum => {
         Blockly.UserTypes.generateConstructors_(sum, xmlList);
         Blockly.UserTypes.generateCase_(sum, xmlList);
     });
 };
 
-Blockly.cwEvent.eventFlyoutCategory = (workspace) => {
+Blockly.cwEvent.eventFlyoutCategory = workspace => {
     let xmlList = [];
     Blockly.cwEvent.generateEventBuiltins(xmlList);
     return xmlList;

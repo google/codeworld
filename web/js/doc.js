@@ -159,7 +159,7 @@ window.env = parent;
         popout.innerHTML = '<i class="mdi mdi-18px mdi-open-in-new"></i>&nbsp;Open the Help in a New Tab';
         popout.target = '_blank';
         popout.href = document.location.href;
-        popout.onclick = (e) => {
+        popout.onclick = e => {
             let tab = open(this.href);
             tab.addEventListener("load", () => {
                 tab.env = parent;

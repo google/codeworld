@@ -176,7 +176,7 @@ Blockly.Blocks['lists_comprehension'] = {
     assignVars() {
         let i = 0;
         let thisBlock = this;
-        this.inputList.forEach((inp) => {
+        this.inputList.forEach(inp => {
             if (inp.name.startsWith('VAR')) {
                 for (let f = 0; f < inp.fieldRow.length; f++) {
                     let fieldvar = inp.fieldRow[f];
@@ -642,7 +642,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
 
     getExpr() {
         let exps = [];
-        this.inputList.forEach((inp) => {
+        this.inputList.forEach(inp => {
             if (inp.connection && inp.connection.isConnected()) {
                 let exp = inp.connection.targetBlock().getExpr();
                 exp.tag = inp.connection;

@@ -57,7 +57,7 @@
 
             if (p.picture || p.pictures) {
                 toggleButton.classList.add("collapse-button");
-                toggleButton.addEventListener("click", (evt) => {
+                toggleButton.addEventListener("click", evt => {
                     if (collapsed) {
                         decollapse();
                     } else {
@@ -111,7 +111,7 @@
 
     function getPicNode(id, cb) {
         let current = fullPic;
-        if (!cb) cb = (x) => {};
+        if (!cb) cb = x => {};
 
         while (current.id <= id) {
             cb(current);
@@ -136,13 +136,13 @@
         a.appendChild(document.createTextNode(pic.name));
         a.href = "javascript: void(0);";
         a.classList.add("treedialog-piclink");
-        a.addEventListener("click", (evt) => {
+        a.addEventListener("click", evt => {
             if (marker) marker.clear();
 
-            getPicNode(currentPic.id, (node) => {
+            getPicNode(currentPic.id, node => {
                 node.link.classList.remove("piclink-selected");
             });
-            getPicNode(pic.id, (node) => {
+            getPicNode(pic.id, node => {
                 node.link.classList.add("piclink-selected");
             });
 
@@ -161,7 +161,7 @@
                 });
             }
         });
-        a.addEventListener("mouseover", (evt) => {
+        a.addEventListener("mouseover", evt => {
             highlight(true, pic.id);
 
             if (pic.startLine && pic.startCol && pic.endLine && pic.endCol) {
@@ -178,7 +178,7 @@
                 })
             }
         });
-        a.addEventListener("mouseout", (evt) => {
+        a.addEventListener("mouseout", evt => {
             highlight(true, -1);
 
             if (marker) {

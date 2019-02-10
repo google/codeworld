@@ -82,7 +82,7 @@ Blockly.Blocks['txtConcat'] = {
 
     getExpr() {
         let exps = [];
-        this.inputList.forEach((inp) => {
+        this.inputList.forEach(inp => {
             if (inp.connection.isConnected())
                 exps.push(inp.connection.targetBlock().getExpr());
             else

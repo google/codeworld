@@ -67,7 +67,7 @@ async function init() {
                 data.append('shash', hash);
                 data.append('name', folderName);
 
-                sendHttp('POST', 'shareContent', data, (request) => {
+                sendHttp('POST', 'shareContent', data, request => {
                     window.location.hash = '';
                     if (request.status == 200) {
                         sweetAlert('Success!', 'The shared folder is moved into your root directory.', 'success');
@@ -115,7 +115,7 @@ async function init() {
             hash = hash.slice(0, -2);
         }
         if (hash[0] == 'P') {
-            sendHttp('GET', 'loadSource?hash=' + hash + '&mode=' + window.buildMode, null, (request) => {
+            sendHttp('GET', 'loadSource?hash=' + hash + '&mode=' + window.buildMode, null, request => {
                 if (request.status == 200) {
                     setCode(request.responseText, null, null, true);
                 }
@@ -179,7 +179,7 @@ function initCodeworld() {
 
                 let data = new FormData();
                 data.append("source", text)
-                request = sendHttp("POST", "errorCheck", data, (request) => {
+                request = sendHttp("POST", "errorCheck", data, request => {
                     if (window.codeworldEditor) {
                         window.codeworldEditor.off("change", cancelLintRequest);
                     }
@@ -201,10 +201,10 @@ function initCodeworld() {
     });
     window.codeworldEditor.refresh();
 
-    CodeMirror.commands.save = (cm) => {
+    CodeMirror.commands.save = cm => {
         saveProject();
     }
-    document.onkeydown = (e) => {
+    document.onkeydown = e => {
         if (e.ctrlKey && e.keyCode === 83) { // Ctrl+S
             saveProject();
             return false;
@@ -224,7 +224,7 @@ function initCodeworld() {
         window.updateUI();
     });
 
-    window.onbeforeunload = (event) => {
+    window.onbeforeunload = event => {
         if (!isEditorClean()) {
             let msg = 'There are unsaved changes to your project. ' + 'If you continue, they will be lost!';
             if (event) event.returnValue = msg;
@@ -251,7 +251,7 @@ class CanvasRecorder {
     }
 
     addChunk(chunks) {
-        return (e) => {
+        return e => {
             chunks.push(e.data);
         }
     }
@@ -472,13 +472,13 @@ function updateUI() {
 }
 
 function updateNavBar() {
-    allProjectNames.forEach((projectNames) => {
+    allProjectNames.forEach(projectNames => {
         projectNames.sort((a, b) => {
             return a.localeCompare(b);
         });
     });
 
-    allFolderNames.forEach((folderNames) => {
+    allFolderNames.forEach(folderNames => {
         folderNames.sort((a, b) => {
             return a.localeCompare(b);
         });
@@ -537,7 +537,7 @@ function updateNavBar() {
 
     for (let i = 0; i < nestedDirs.length; i++) {
         let nextProjects = null;
-        allFolderNames[i].forEach((folderName) => {
+        allFolderNames[i].forEach(folderName => {
             let active = i + 1 < nestedDirs.length && nestedDirs[i + 1] == folderName;
             if (!signedIn() && !active) {
                 return;
@@ -548,7 +548,7 @@ function updateNavBar() {
                 nextProjects = span.appendChild(document.createElement('div'));
             }
         });
-        allProjectNames[i].forEach((projectName) => {
+        allProjectNames[i].forEach(projectName => {
             let active = i + 1 == nestedDirs.length && window.openProjectName == projectName;
             if (!signedIn() && !active) {
                 return;
@@ -764,7 +764,7 @@ function formatSource() {
     data.append('source', src);
     data.append('mode', window.buildMode);
 
-    sendHttp('POST', 'indent', data, (request) => {
+    sendHttp('POST', 'indent', data, request => {
         if (request.status == 200) {
             codeworldEditor.getDoc().setValue(request.responseText);
         }
@@ -867,7 +867,7 @@ function showRequiredChecksInDialog(msg) {
             items[items.length - 1].push(req);
         }
     }
-    let itemsHtml = items.map((item) => {
+    let itemsHtml = items.map(item => {
         let head = item[1];
         let rest = item.slice(2).join('<br>');
         let details = rest ? '<br><span class="req-details">' + rest + '</span>' : '';
@@ -936,13 +936,13 @@ function compile() {
         allowOutsideClick: false,
         allowEscapeKey: false,
         allowEnterKey: false
-    }).then((result) => {
+    }).then(result => {
         if (result.dismiss = sweetAlert2.DismissReason.cancel) {
             window.cancelCompile();
         }
     });
 
-    sendHttp('POST', 'compile', data, (request) => {
+    sendHttp('POST', 'compile', data, request => {
         if (compileFinished) return;
         sweetAlert2.close();
         window.cancelCompile();
@@ -969,7 +969,7 @@ function compile() {
         data.append('hash', hash);
         data.append('mode', window.buildMode);
 
-        sendHttp('POST', 'runMsg', data, (request) => {
+        sendHttp('POST', 'runMsg', data, request => {
             let msg = '';
             if (request.status == 200) {
                 msg = request.responseText.replace(/^[\r\n]+|[\r\n]+$/g, '');
@@ -1069,10 +1069,10 @@ function downloadProject() {
 function parseCompileErrors(rawErrors) {
     let errors = [];
     rawErrors = rawErrors.split("\n\n");
-    rawErrors.forEach((rawError) => {
+    rawErrors.forEach(rawError => {
         rawError = rawError.split('\n');
         let firstLine = rawError[0].trim(),
-            otherLines = rawError.slice(1).map((err) => {
+            otherLines = rawError.slice(1).map(err => {
                 return err.trim()
             }).join('\n'),
             re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/,
@@ -1090,7 +1090,7 @@ function parseCompileErrors(rawErrors) {
                 endCol = Number(match[4]) - 1;
             } else {
                 let token = window.codeworldEditor.getLineTokens(startLine).find(
-                    (t) => {
+                    t => {
                         return t.start === startCol
                     });
                 if (token) {

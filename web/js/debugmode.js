@@ -71,7 +71,7 @@
         if (!available) {
             canvas = document.getElementById("screen");
 
-            canvas.addEventListener("mousemove", (evt) => {
+            canvas.addEventListener("mousemove", evt => {
                 if (active) {
                     let nodeId = debugGetNode({
                         x: evt.clientX,
@@ -82,13 +82,13 @@
                 }
             });
 
-            canvas.addEventListener("mouseout", (evt) => {
+            canvas.addEventListener("mouseout", evt => {
                 if (active) {
                     debugHighlightShape(true, -1);
                 }
             });
 
-            canvas.addEventListener("click", (evt) => {
+            canvas.addEventListener("click", evt => {
                 if (active) {
                     let nodeId = debugGetNode({
                         x: evt.clientX,

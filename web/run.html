@@ -14,35 +14,35 @@
 <script type="text/javascript" src="js/run.js"></script>
 <script type="text/javascript">
     // params from the URL
-    var paramList = location.search.slice(1).split('&');
-    var params = {}
-    for (var i = 0; i < paramList.length; i++) {
-        var name = paramList[i].split('=')[0];
-        var value = paramList[i].slice(name.length + 1);
+    let paramList = location.search.slice(1).split('&');
+    let params = {}
+    for (let i = 0; i < paramList.length; i++) {
+        let name = paramList[i].split('=')[0];
+        let value = paramList[i].slice(name.length + 1);
         params[name] = value;
     }
     // params from the hash
     paramList = location.hash.slice(1).split('&');
-    for (var i = 0; i < paramList.length; i++) {
-        var name = paramList[i].split('=')[0];
-        var value = paramList[i].slice(name.length + 1);
+    for (let i = 0; i < paramList.length; i++) {
+        let name = paramList[i].split('=')[0];
+        let value = paramList[i].slice(name.length + 1);
         params[name] = value;
     }
 
-    var hash = params['hash'];
-    var dhash = params['dhash'];
-    var mode = params['mode'];
+    let hash = params['hash'];
+    let dhash = params['dhash'];
+    let mode = params['mode'];
     // Game id is just dumped in the global JS namespace and read there by gameOf
-    var gid = params['gid']
+    let gid = params['gid']
     if (!mode) mode = 'codeworld';
 
-    var query = '?mode=' + mode;
+    let query = '?mode=' + mode;
     if (hash) query += '&hash=' + hash;
     if (dhash) query += '&dhash=' + dhash;
 
-    var uri = 'runJS' + query;
+    let uri = 'runJS' + query;
 
-    var loadScript = document.createElement('script');
+    let loadScript = document.createElement('script');
     loadScript.setAttribute('type', 'text/javascript');
     loadScript.setAttribute('src', uri);
     document.body.appendChild(loadScript);

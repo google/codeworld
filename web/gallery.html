@@ -82,16 +82,16 @@
         }
     </style>
     <script>
-        var fileName = location.href.split("/").pop().replace(/\.html$/, '.json');
-        $(function() {
-            $.getJSON(fileName, function(data) {
-                $.each(data.items, function(i, item) {
-                    var btn = document.createElement('li');
-                    var a = document.createElement('a');
+        let fileName = location.href.split("/").pop().replace(/\.html$/, '.json');
+        $(() => {
+            $.getJSON(fileName, (data) => {
+                $.each(data.items, (i, item) => {
+                    let btn = document.createElement('li');
+                    let a = document.createElement('a');
                     btn.setAttribute('class', 'choice');
                     btn.append(a);
                     a.innerText = item.name;
-                    var clickHandler = function(event) {
+                    let clickHandler = (event) => {
                         $('.choice').removeClass('sel');
                         $(btn).addClass('sel');
                         $('#screen').attr('src', item.url).focus();
@@ -109,8 +109,8 @@
                     $('#choices').append(btn);
                 });
             });
-            $(window).resize(function(event) {
-                var sz = Math.min($('#screen_container').width(), $('#screen_container').height()) - 50;
+            $(window).resize((event) => {
+                let sz = Math.min($('#screen_container').width(), $('#screen_container').height()) - 50;
                 $('#screen').css('width', sz + 'px')
                 $('#screen').css('height', sz + 'px')
             });

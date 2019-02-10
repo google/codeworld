@@ -15,28 +15,28 @@
  */
 window.env = parent;
 (function() {
-    var params = new URLSearchParams(window.location.search);
+    let params = new URLSearchParams(window.location.search);
 
-    var shelf = {};
-    var contents = {};
+    let shelf = {};
+    let contents = {};
 
     function linkCodeBlocks(elem, linkable = true) {
         codeworldKeywords = {};
         registerStandardHints(function() {
-            var pres = elem.getElementsByTagName('pre');
-            for (var i = 0; i < pres.length; ++i) {
+            let pres = elem.getElementsByTagName('pre');
+            for (let i = 0; i < pres.length; ++i) {
                 (function() {
-                    var pre = pres[i];
+                    let pre = pres[i];
 
                     // Markdeep buries the class annotations a bit, so we dig.
-                    var clickable =
+                    let clickable =
                         pre.classList.contains('clickable') ||
                         (pre.firstChild && pre.firstChild.classList &&
                             pre.firstChild.classList.contains('clickable')) ||
                         (pre.firstChild && pre.firstChild.firstChild && pre.firstChild.firstChild.classList &&
                             pre.firstChild.firstChild.classList.contains('clickable'));
 
-                    var text = pre.textContent;
+                    let text = pre.textContent;
                     pre.innerHTML = '';
                     CodeMirror.runMode(text, {
                         name: 'codeworld',
@@ -58,8 +58,8 @@ window.env = parent;
     }
 
     function activateCollapsible(root) {
-        var elems = root.getElementsByClassName('collapsible');
-        for (var i = 0; i < elems.length; ++i) {
+        let elems = root.getElementsByClassName('collapsible');
+        for (let i = 0; i < elems.length; ++i) {
             let elem = elems[i];
             elem.onclick = function() {
                 if (elem.classList.contains('expanded')) {
@@ -72,14 +72,14 @@ window.env = parent;
     }
 
     function linkFunBlocks(elem) {
-        var blocks = elem.getElementsByTagName('xml');
-        var i = 0;
+        let blocks = elem.getElementsByTagName('xml');
+        let i = 0;
 
         while (blocks != null && blocks.length > 0) {
             let block = blocks[0];
             let text = block.outerHTML;
 
-            var iframe = document.createElement('iframe');
+            let iframe = document.createElement('iframe');
             iframe.setAttribute('frameborder', '0');
             iframe.setAttribute('scrolling', 'no');
 
@@ -92,7 +92,7 @@ window.env = parent;
             iframe.src = 'blockframe.html';
             iframe.classList.add('clickable');
 
-            var parent = block.parentNode;
+            let parent = block.parentNode;
             parent.insertBefore(iframe, block);
             parent.removeChild(block);
 
@@ -102,23 +102,23 @@ window.env = parent;
     }
 
     function addTableOfContents(body, outline) {
-        var contents = document.createElement('div');
+        let contents = document.createElement('div');
         contents.id = 'helpcontents';
         contents.classList.add('contents');
 
-        var elems = body.getElementsByTagName('*');
+        let elems = body.getElementsByTagName('*');
 
-        var currentLevel = 0;
-        var currentElem = contents;
-        var n = 0;
-        for (var i = 0; i < elems.length; ++i) {
-            var header = elems[i];
-            var match = (/h([1-3])/i).exec(header.tagName);
+        let currentLevel = 0;
+        let currentElem = contents;
+        let n = 0;
+        for (let i = 0; i < elems.length; ++i) {
+            let header = elems[i];
+            let match = (/h([1-3])/i).exec(header.tagName);
             if (match == null) continue;
-            var level = parseInt(match[1]);
+            let level = parseInt(match[1]);
 
             while (currentLevel < level) {
-                var sub = document.createElement('ul');
+                let sub = document.createElement('ul');
                 currentElem.appendChild(sub);
                 ++currentLevel;
                 currentElem = sub;
@@ -131,14 +131,14 @@ window.env = parent;
 
             ++n;
 
-            var anchor = document.createElement('a');
+            let anchor = document.createElement('a');
             anchor.setAttribute('name', n);
             anchor.innerHTML = header.innerHTML;
             header.innerHTML = '';
             header.appendChild(anchor);
 
-            var li = document.createElement('li');
-            var link = document.createElement('a');
+            let li = document.createElement('li');
+            let link = document.createElement('a');
             link.setAttribute('href', '#' + n);
             link.textContent = header.textContent;
             li.appendChild(link);
@@ -152,15 +152,15 @@ window.env = parent;
     }
 
     function addPopout(help) {
-        var popdiv = document.createElement('div');
+        let popdiv = document.createElement('div');
         popdiv.id = 'popout';
         popdiv.style = 'text-align: right';
-        var popout = document.createElement('a');
+        let popout = document.createElement('a');
         popout.innerHTML = '<i class="mdi mdi-18px mdi-open-in-new"></i>&nbsp;Open the Help in a New Tab';
         popout.target = '_blank';
         popout.href = document.location.href;
         popout.onclick = function(e) {
-            var tab = open(this.href);
+            let tab = open(this.href);
             tab.addEventListener("load", function() {
                 tab.env = parent;
                 if (parent.sweetAlert) {
@@ -177,10 +177,10 @@ window.env = parent;
     }
 
     function relativizeLinks(base, root, tag, attr) {
-        var elems = root.getElementsByTagName(tag);
+        let elems = root.getElementsByTagName(tag);
         for (let elem of elems) {
             if (elem.hasAttribute(attr)) {
-                var url = new URL(elem.getAttribute(attr), base);
+                let url = new URL(elem.getAttribute(attr), base);
                 if (base.origin == url.origin && base.pathname == url.pathname) {
                     url = url.hash;
                 } else {
@@ -200,7 +200,7 @@ window.env = parent;
     }
 
     function setContent(elem) {
-        var help = document.getElementById('help');
+        let help = document.getElementById('help');
         while (help.firstChild) {
             help.removeChild(help.firstChild);
         }
@@ -218,16 +218,16 @@ window.env = parent;
         if (contents[path] && contents[path].elem) {
             setContent(contents[path].elem);
         } else {
-            var request = new XMLHttpRequest();
+            let request = new XMLHttpRequest();
             request.open('GET', path, true);
             request.onreadystatechange = function() {
                 if (request.readyState != 4) {
                     return;
                 }
 
-                var source = new URL(path, location.href);
-                var content = document.createElement('div');
-                var raw = request.responseText;
+                let source = new URL(path, location.href);
+                let content = document.createElement('div');
+                let raw = request.responseText;
 
                 if (path.endsWith('.md')) {
                     content.innerHTML = window.markdeep.format(raw, false);
@@ -249,7 +249,7 @@ window.env = parent;
                     removeCallStacks(content);
                 }
 
-                var spacerDiv = document.createElement('div');
+                let spacerDiv = document.createElement('div');
                 spacerDiv.style = 'height: 90vh'
                 content.appendChild(spacerDiv);
 
@@ -267,21 +267,21 @@ window.env = parent;
     }
 
     function loadSidebar() {
-        var path = params.get('path');
+        let path = params.get('path');
         if (!path) path = shelf.default;
 
-        var activeIndex = false;
+        let activeIndex = false;
 
-        var acc = document.createElement('div')
+        let acc = document.createElement('div')
         acc.id = 'helpacc';
 
-        var paneNum = 0;
-        for (var doc in shelf.named) {
-            var hdr = document.createElement('h3');
+        let paneNum = 0;
+        for (let doc in shelf.named) {
+            let hdr = document.createElement('h3');
             hdr.innerText = doc;
             acc.appendChild(hdr);
 
-            var entry = document.createElement('div');
+            let entry = document.createElement('div');
             entry.classList.add('accentry');
             entry.innerHTML = '<div>Loading...</div>';
             acc.appendChild(entry);
@@ -304,19 +304,19 @@ window.env = parent;
             active: activeIndex,
             heightStyle: 'content',
             beforeActivate: function(event, ui) {
-                var name = ui.newHeader.text();
-                var path = name && shelf.named[name];
+                let name = ui.newHeader.text();
+                let path = name && shelf.named[name];
                 if (path) loadPath(path);
             }
         });
     }
 
-    var markdeepStyle = document.createElement('style');
+    let markdeepStyle = document.createElement('style');
     document.head.appendChild(markdeepStyle);
     markdeepStyle.outerHTML = window.markdeep.stylesheet();
 
     if (params.get('shelf')) {
-        var request = new XMLHttpRequest();
+        let request = new XMLHttpRequest();
         request.open('GET', params.get('shelf'), true);
         request.onreadystatechange = function() {
             if (request.readyState != 4) {

@@ -21,7 +21,7 @@ goog.provide('Blockly.Blocks.cwText');
 goog.require('Blockly.Blocks');
 
 
-var textHUE = 45;
+let textHUE = 45;
 
 Blockly.Blocks['text_typed'] = {
     /**
@@ -48,9 +48,9 @@ Blockly.Blocks['text_typed'] = {
      */
     newQuote_: function(open) {
         if (open == this.RTL) {
-            var file = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAKCAQAAAAqJXdxAAAAqUlEQVQI1z3KvUpCcRiA8ef9E4JNHhI0aFEacm1o0BsI0Slx8wa8gLauoDnoBhq7DcfWhggONDmJJgqCPA7neJ7p934EOOKOnM8Q7PDElo/4x4lFb2DmuUjcUzS3URnGib9qaPNbuXvBO3sGPHJDRG6fGVdMSeWDP2q99FQdFrz26Gu5Tq7dFMzUvbXy8KXeAj57cOklgA+u1B5AoslLtGIHQMaCVnwDnADZIFIrXsoXrgAAAABJRU5ErkJggg==';
+            let file = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAKCAQAAAAqJXdxAAAAqUlEQVQI1z3KvUpCcRiA8ef9E4JNHhI0aFEacm1o0BsI0Slx8wa8gLauoDnoBhq7DcfWhggONDmJJgqCPA7neJ7p934EOOKOnM8Q7PDElo/4x4lFb2DmuUjcUzS3URnGib9qaPNbuXvBO3sGPHJDRG6fGVdMSeWDP2q99FQdFrz26Gu5Tq7dFMzUvbXy8KXeAj57cOklgA+u1B5AoslLtGIHQMaCVnwDnADZIFIrXsoXrgAAAABJRU5ErkJggg==';
         } else {
-            var file = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAKCAQAAAAqJXdxAAAAn0lEQVQI1z3OMa5BURSF4f/cQhAKjUQhuQmFNwGJEUi0RKN5rU7FHKhpjEH3TEMtkdBSCY1EIv8r7nFX9e29V7EBAOvu7RPjwmWGH/VuF8CyN9/OAdvqIXYLvtRaNjx9mMTDyo+NjAN1HNcl9ZQ5oQMM3dgDUqDo1l8DzvwmtZN7mnD+PkmLa+4mhrxVA9fRowBWmVBhFy5gYEjKMfz9AylsaRRgGzvZAAAAAElFTkSuQmCC';
+            let file = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAKCAQAAAAqJXdxAAAAn0lEQVQI1z3OMa5BURSF4f/cQhAKjUQhuQmFNwGJEUi0RKN5rU7FHKhpjEH3TEMtkdBSCY1EIv8r7nFX9e29V7EBAOvu7RPjwmWGH/VuF8CyN9/OAdvqIXYLvtRaNjx9mMTDyo+NjAN1HNcl9ZQ5oQMM3dgDUqDo1l8DzvwmtZN7mnD+PkmLa+4mhrxVA9fRowBWmVBhFy5gYEjKMfz9AylsaRRgGzvZAAAAAElFTkSuQmCC';
         }
         return new Blockly.FieldImage(file, 12, 12, '"');
     }
@@ -72,15 +72,15 @@ Blockly.Blocks['txtConcat'] = {
     },
 
     foldr1: function(fn, xs) {
-        var result = xs[xs.length - 1];
-        for (var i = xs.length - 2; i > -1; i--) {
+        let result = xs[xs.length - 1];
+        for (let i = xs.length - 2; i > -1; i--) {
             result = fn(xs[i], result);
         }
         return result;
     },
 
     getExpr: function() {
-        var exps = [];
+        let exps = [];
         this.inputList.forEach(function(inp) {
             if (inp.connection.isConnected())
                 exps.push(inp.connection.targetBlock().getExpr());
@@ -93,19 +93,19 @@ Blockly.Blocks['txtConcat'] = {
             exps.push(Exp.Var('undef'));
         }
 
-        var func = (a, b) => Exp.AppFunc([a, b], Exp.Var("<>"));
-        var e = this.foldr1(func, exps);
+        let func = (a, b) => Exp.AppFunc([a, b], Exp.Var("<>"));
+        let e = this.foldr1(func, exps);
         return e;
     },
 
     decompose: function(workspace) {
-        var containerBlock =
+        let containerBlock =
             workspace.newBlock('text_combine_container');
         containerBlock.initSvg();
-        var connection = containerBlock.getInput('STACK').connection;
+        let connection = containerBlock.getInput('STACK').connection;
 
-        for (var x = 0; x < this.itemCount_; x++) {
-            var itemBlock = workspace.newBlock('text_combine_ele');
+        for (let x = 0; x < this.itemCount_; x++) {
+            let itemBlock = workspace.newBlock('text_combine_ele');
             itemBlock.initSvg();
             connection.connect(itemBlock.previousConnection);
             connection = itemBlock.nextConnection;
@@ -116,16 +116,16 @@ Blockly.Blocks['txtConcat'] = {
 
     compose: function(containerBlock) {
 
-        for (var x = 0; x < this.itemCount_; x++) {
+        for (let x = 0; x < this.itemCount_; x++) {
             this.removeInput('STR' + x);
         }
 
         this.itemCount_ = 0;
         // Rebuild the block's inputs.
-        var itemBlock = containerBlock.getInputTargetBlock('STACK');
-        var tps = [];
+        let itemBlock = containerBlock.getInputTargetBlock('STACK');
+        let tps = [];
         while (itemBlock) {
-            var input = this.appendValueInput('STR' + this.itemCount_);
+            let input = this.appendValueInput('STR' + this.itemCount_);
             tps.push(new Type.Lit("Text"));
 
             if (this.itemCount_ > 0) {
@@ -151,7 +151,7 @@ Blockly.Blocks['txtConcat'] = {
     },
 
     mutationToDom: function() {
-        var container = document.createElement('mutation');
+        let container = document.createElement('mutation');
         container.setAttribute('items', this.itemCount_);
         return container;
     },
@@ -160,9 +160,9 @@ Blockly.Blocks['txtConcat'] = {
         this.itemCount_ = parseInt(xmlElement.getAttribute('items'), 10);
 
         this.inputList = [];
-        var tps = [];
-        for (var i = 0; i < this.itemCount_; i++) {
-            var input = this.appendValueInput('STR' + i);
+        let tps = [];
+        for (let i = 0; i < this.itemCount_; i++) {
+            let input = this.appendValueInput('STR' + i);
             tps.push(new Type.Lit("Text"));
             if (i > 0) {
                 input.appendField(new Blockly.FieldLabel("<>", "blocklyTextEmph"));
@@ -175,10 +175,10 @@ Blockly.Blocks['txtConcat'] = {
     },
 
     saveConnections: function(containerBlock) {
-        var itemBlock = containerBlock.getInputTargetBlock('STACK');
-        var x = 0;
+        let itemBlock = containerBlock.getInputTargetBlock('STACK');
+        let x = 0;
         while (itemBlock) {
-            var input = this.getInput('STR' + x);
+            let input = this.getInput('STR' + x);
             if (input && input.connection.targetConnection) {
                 if (input.connection.targetBlock().isShadow_) {
                     x++;

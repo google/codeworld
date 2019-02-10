@@ -20,7 +20,7 @@ goog.provide('Blockly.Blocks.cwLists');
 
 goog.require('Blockly.Blocks');
 
-var listsHUE = 260;
+let listsHUE = 260;
 
 
 Blockly.Blocks['lists_comprehension'] = {
@@ -58,8 +58,8 @@ Blockly.Blocks['lists_comprehension'] = {
     },
 
     foldr1: function(fn, xs) {
-        var result = xs[xs.length - 1];
-        for (var i = xs.length - 2; i > -1; i--) {
+        let result = xs[xs.length - 1];
+        for (let i = xs.length - 2; i > -1; i--) {
             result = fn(xs[i], result);
         }
         return result;
@@ -68,7 +68,7 @@ Blockly.Blocks['lists_comprehension'] = {
     getExpr: function() {
 
         // Do main exp
-        var mainExp = Exp.Var('undef');
+        let mainExp = Exp.Var('undef');
         if (this.getInput("DO").connection.isConnected())
             mainExp = this.getInput("DO").connection.targetBlock().getExpr();
 
@@ -76,26 +76,26 @@ Blockly.Blocks['lists_comprehension'] = {
         mainExp = Exp.App(Exp.Var('returnl'), mainExp);
 
         // Do Guards
-        var guardExps = [];
-        for (var i = 0; i < this.guardCount_; i++) {
-            var inp = this.getInput("GUARD" + i);
+        let guardExps = [];
+        for (let i = 0; i < this.guardCount_; i++) {
+            let inp = this.getInput("GUARD" + i);
             if (inp.connection && inp.connection.isConnected()) {
-                var exp = inp.connection.targetBlock().getExpr();
+                let exp = inp.connection.targetBlock().getExpr();
                 exp.tag = inp.connection;
                 guardExps.push(exp);
             } else {
-                var exp = Exp.Var('undef');
+                let exp = Exp.Var('undef');
                 exp.tag = inp.connection;
                 guardExps.push(exp);
             }
         }
 
-        var boolComb = (a, b) => Exp.AppFunc([a, b], Exp.Var("&&&"));
-        var guardExp;
+        let boolComb = (a, b) => Exp.AppFunc([a, b], Exp.Var("&&&"));
+        let guardExp;
         if (guardExps.length == 0) {
             guardExp = Exp.Lit('Truth');
         } else if (guardExps.length == 1) {
-            var inp = this.getInput("GUARD0");
+            let inp = this.getInput("GUARD0");
             if (inp.connection.isConnected()) {
                 guardExp = inp.connection.targetBlock().getExpr();
                 guardExp.tag = inp.connection;
@@ -108,22 +108,22 @@ Blockly.Blocks['lists_comprehension'] = {
         }
 
         // Do variables
-        var func = (a, b) => Exp.Let(a, b, c); //Exp.AppFunc([a,b],Exp.Var(":"));
-        var result = Exp.AppFunc([mainExp, guardExp], Exp.Var('filtB'));
-        for (var i = this.varCount_ - 1; i !== -1; i--) {
-            var varName = this.vars_[i];
-            var inp = this.getInput("VAR" + i);
-            var exp;
+        let func = (a, b) => Exp.Let(a, b, c); //Exp.AppFunc([a,b],Exp.Var(":"));
+        let result = Exp.AppFunc([mainExp, guardExp], Exp.Var('filtB'));
+        for (let i = this.varCount_ - 1; i !== -1; i--) {
+            let varName = this.vars_[i];
+            let inp = this.getInput("VAR" + i);
+            let exp;
             if (inp && inp.connection.isConnected()) {
                 exp = inp.connection.targetBlock().getExpr();
             } else {
-                var exp = Exp.Var('undef');
+                let exp = Exp.Var('undef');
             }
 
             exp.tag = inp.connection;
 
 
-            var field = inp.fieldRow[0];
+            let field = inp.fieldRow[0];
             if (!field.typeExpr)
                 throw "Wrong field !";
 
@@ -132,7 +132,7 @@ Blockly.Blocks['lists_comprehension'] = {
             exp = Exp.App(Exp.Var('returnl'), exp);
 
 
-            var letExp = Exp.App(Exp.Var("bindl"), exp);
+            let letExp = Exp.App(Exp.Var("bindl"), exp);
 
             result = Exp.App(letExp, Exp.Abs(varName, result))
         }
@@ -143,8 +143,8 @@ Blockly.Blocks['lists_comprehension'] = {
     },
 
     foldr: function(fn, ult, xs) {
-        var result = ult;
-        for (var i = xs.length - 1; i !== -1; i--) {
+        let result = ult;
+        for (let i = xs.length - 1; i !== -1; i--) {
             result = fn(xs[i], result);
         }
         return result;
@@ -152,19 +152,19 @@ Blockly.Blocks['lists_comprehension'] = {
 
     resetArrows: function() {
         this.arrows = null;
-        var tps = [];
+        let tps = [];
         this.varTypes_ = [];
 
-        var a = Type.generateTypeVar('a');
+        let a = Type.generateTypeVar('a');
 
         tps.push(a);
-        for (var i = 0; i < this.varCount_; i++) {
-            var varTp = Type.generateTypeVar('lc');
+        for (let i = 0; i < this.varCount_; i++) {
+            let varTp = Type.generateTypeVar('lc');
             this.varTypes_.push(varTp);
-            var t = Type.Lit("list", [varTp]);
+            let t = Type.Lit("list", [varTp]);
             tps.push(t);
         }
-        for (var i = 0; i < this.guardCount_; i++) {
+        for (let i = 0; i < this.guardCount_; i++) {
             tps.push(Type.Lit("Truth"));
         }
 
@@ -174,14 +174,14 @@ Blockly.Blocks['lists_comprehension'] = {
     },
 
     assignVars: function() {
-        var i = 0;
-        var thisBlock = this;
+        let i = 0;
+        let thisBlock = this;
         this.inputList.forEach(function(inp) {
             if (inp.name.startsWith('VAR')) {
-                for (var f = 0; f < inp.fieldRow.length; f++) {
-                    var fieldvar = inp.fieldRow[f];
+                for (let f = 0; f < inp.fieldRow.length; f++) {
+                    let fieldvar = inp.fieldRow[f];
                     if (fieldvar instanceof Blockly.FieldLocalVar) {
-                        var tp = thisBlock.varTypes_[i++];
+                        let tp = thisBlock.varTypes_[i++];
                         fieldvar.typeExpr = tp;
                         break;
                     }
@@ -195,8 +195,8 @@ Blockly.Blocks['lists_comprehension'] = {
     },
 
     getVars: function(connection) {
-        var i = 0;
-        var available = [];
+        let i = 0;
+        let available = [];
         for (i = 0; i < this.varCount_; i++) {
             if (this.getInput('DO').connection == connection)
                 return this.vars_;
@@ -218,12 +218,12 @@ Blockly.Blocks['lists_comprehension'] = {
      * @this Blockly.Block
      */
     mutationToDom: function() {
-        var container = document.createElement('mutation');
+        let container = document.createElement('mutation');
         container.setAttribute('guardcount', this.guardCount_);
         container.setAttribute('varcount', this.varCount_);
 
-        for (var i = 0; i < this.varCount_; i++) {
-            var parameter = document.createElement('var');
+        for (let i = 0; i < this.varCount_; i++) {
+            let parameter = document.createElement('let');
             parameter.setAttribute('name', this.vars_[i]);
 
             container.appendChild(parameter);
@@ -237,10 +237,10 @@ Blockly.Blocks['lists_comprehension'] = {
      * @this Blockly.Block
      */
     domToMutation: function(xmlElement) {
-        for (var x = 0; x < this.varCount_; x++) {
+        for (let x = 0; x < this.varCount_; x++) {
             this.removeInput('VAR' + x);
         }
-        for (var x = 0; x < this.guardCount_; x++) {
+        for (let x = 0; x < this.guardCount_; x++) {
             this.removeInput('GUARD' + x);
         }
         this.vars_ = [];
@@ -249,11 +249,11 @@ Blockly.Blocks['lists_comprehension'] = {
         this.varCount_ = parseInt(xmlElement.getAttribute('varcount'), 10);
         this.guardCount_ = parseInt(xmlElement.getAttribute('guardcount'), 10);
 
-        for (var i = 0, childNode; childNode = xmlElement.childNodes[i]; i++) {
-            if (childNode.nodeName.toLowerCase() == 'var') {
-                var name = childNode.getAttribute('name');
+        for (let i = 0, childNode; childNode = xmlElement.childNodes[i]; i++) {
+            if (childNode.nodeName.toLowerCase() == 'let') {
+                let name = childNode.getAttribute('name');
 
-                var input = this.appendValueInput('VAR' + i)
+                let input = this.appendValueInput('VAR' + i)
                     .setAlign(Blockly.ALIGN_RIGHT)
                     .appendField(new Blockly.FieldLocalVar(name, this.getArgType(i)))
                     .appendField('\u2190');
@@ -261,8 +261,8 @@ Blockly.Blocks['lists_comprehension'] = {
             }
         }
 
-        for (var x = 0; x < this.guardCount_; x++) {
-            var input = this.appendValueInput('GUARD' + x)
+        for (let x = 0; x < this.guardCount_; x++) {
+            let input = this.appendValueInput('GUARD' + x)
                 .setAlign(Blockly.ALIGN_RIGHT)
                 .appendField('If');
         }
@@ -276,20 +276,20 @@ Blockly.Blocks['lists_comprehension'] = {
      * @this Blockly.Block
      */
     decompose: function(workspace) {
-        var containerBlock =
+        let containerBlock =
             workspace.newBlock('lists_create_with_container');
         containerBlock.initSvg();
-        var connection = containerBlock.getInput('STACK').connection;
+        let connection = containerBlock.getInput('STACK').connection;
 
-        for (var x = 0; x < this.varCount_; x++) {
-            var itemBlock = workspace.newBlock('lists_comp_var');
+        for (let x = 0; x < this.varCount_; x++) {
+            let itemBlock = workspace.newBlock('lists_comp_var');
             itemBlock.setFieldValue(this.vars_[x], 'NAME');
             itemBlock.initSvg();
             connection.connect(itemBlock.previousConnection);
             connection = itemBlock.nextConnection;
         }
-        for (var x = 0; x < this.guardCount_; x++) {
-            var itemBlock = workspace.newBlock('lists_comp_guard');
+        for (let x = 0; x < this.guardCount_; x++) {
+            let itemBlock = workspace.newBlock('lists_comp_guard');
             itemBlock.initSvg();
             connection.connect(itemBlock.previousConnection);
             connection = itemBlock.nextConnection;
@@ -305,10 +305,10 @@ Blockly.Blocks['lists_comprehension'] = {
      */
     compose: function(containerBlock) {
         // Disconnect all input blocks and remove all inputs.
-        for (var x = this.varCount_ - 1; x >= 0; x--) {
+        for (let x = this.varCount_ - 1; x >= 0; x--) {
             this.removeInput('VAR' + x);
         }
-        for (var x = this.guardCount_ - 1; x >= 0; x--) {
+        for (let x = this.guardCount_ - 1; x >= 0; x--) {
             this.removeInput('GUARD' + x);
         }
         this.vars_ = [];
@@ -316,12 +316,12 @@ Blockly.Blocks['lists_comprehension'] = {
         this.varCount_ = 0;
         this.guardCount_ = 0;
         // Rebuild the block's inputs.
-        var itemBlock = containerBlock.getInputTargetBlock('STACK');
+        let itemBlock = containerBlock.getInputTargetBlock('STACK');
         while (itemBlock) {
             if (itemBlock.type == 'lists_comp_var') {
-                var name = itemBlock.getFieldValue('NAME');
+                let name = itemBlock.getFieldValue('NAME');
                 this.vars_[this.varCount_] = name;
-                var input = this.appendValueInput('VAR' + this.varCount_)
+                let input = this.appendValueInput('VAR' + this.varCount_)
                     .setAlign(Blockly.ALIGN_RIGHT)
                     .appendField(new Blockly.FieldLocalVar(name, this.getArgType(this.varCount_)))
                     .appendField('\u2190');
@@ -333,7 +333,7 @@ Blockly.Blocks['lists_comprehension'] = {
                 }
                 this.varCount_++;
             } else if (itemBlock.type == 'lists_comp_guard') {
-                var input = this.appendValueInput('GUARD' + this.guardCount_)
+                let input = this.appendValueInput('GUARD' + this.guardCount_)
                     .setAlign(Blockly.ALIGN_RIGHT)
                     .appendField('If');
                 if (itemBlock.valueConnection_) {
@@ -357,10 +357,10 @@ Blockly.Blocks['lists_comprehension'] = {
      * @this Blockly.Block
      */
     saveConnections: function(containerBlock) {
-        var itemBlock = containerBlock.getInputTargetBlock('STACK');
-        var x = 0;
+        let itemBlock = containerBlock.getInputTargetBlock('STACK');
+        let x = 0;
         while (itemBlock) {
-            var input = this.getInput('VAR' + x);
+            let input = this.getInput('VAR' + x);
             itemBlock.valueConnection_ = input && input.connection.targetConnection;
             x++;
             itemBlock = itemBlock.nextConnection &&
@@ -472,7 +472,7 @@ Blockly.Blocks['lists_repeating'] = {
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField(")");
         this.setOutput(true);
-        var lstType = Type.Lit("list", [Type.Var("a")]);
+        let lstType = Type.Lit("list", [Type.Var("a")]);
         Blockly.TypeInf.defineFunction("repeating", Type.fromList([lstType, lstType]));
         this.setAsFunction("repeating");
     }
@@ -491,7 +491,7 @@ Blockly.Blocks['lists_shuffled'] = {
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField(")");
         this.setOutput(true);
-        var lstType = Type.Lit("list", [Type.Var("a")]);
+        let lstType = Type.Lit("list", [Type.Var("a")]);
         Blockly.TypeInf.defineFunction("shuffled", Type.fromList([lstType, Type.Lit("Number"), lstType]));
         this.setAsFunction("shuffled");
     }
@@ -507,7 +507,7 @@ Blockly.Blocks['lists_sorted'] = {
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField(")");
         this.setOutput(true);
-        var lstType = Type.Lit("list", [Type.Lit("Number")]);
+        let lstType = Type.Lit("list", [Type.Lit("Number")]);
         Blockly.TypeInf.defineFunction("sorted", Type.fromList([lstType, lstType]));
         this.setAsFunction("sorted");
     }
@@ -523,7 +523,7 @@ Blockly.Blocks['lists_reversed'] = {
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField(")");
         this.setOutput(true);
-        var lstType = Type.Lit("list", [Type.Var("a")]);
+        let lstType = Type.Lit("list", [Type.Var("a")]);
         Blockly.TypeInf.defineFunction("reversed", Type.fromList([lstType, lstType]));
         this.setAsFunction("reversed");
     }
@@ -542,7 +542,7 @@ Blockly.Blocks['lists_first'] = {
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField(")");
         this.setOutput(true);
-        var lstType = Type.Lit("list", [Type.Var("a")]);
+        let lstType = Type.Lit("list", [Type.Var("a")]);
         Blockly.TypeInf.defineFunction("first", Type.fromList([lstType, Type.Lit("Number"), lstType]));
         this.setAsFunction("first");
     }
@@ -561,7 +561,7 @@ Blockly.Blocks['lists_rest'] = {
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField(")");
         this.setOutput(true);
-        var lstType = Type.Lit("list", [Type.Var("a")]);
+        let lstType = Type.Lit("list", [Type.Var("a")]);
         Blockly.TypeInf.defineFunction("rest", Type.fromList([lstType, Type.Lit("Number"), lstType]));
         this.setAsFunction("rest");
     }
@@ -593,7 +593,7 @@ Blockly.Blocks['lists_cons'] = {
         this.setOutput(true);
         this.setInputsInline(true);
 
-        var lst = Type.Lit("list", [Type.Var("a")]);
+        let lst = Type.Lit("list", [Type.Var("a")]);
         Blockly.TypeInf.defineFunction(":", Type.fromList([Type.Var("a"), lst, lst]));
         this.setAsFunction(":");
 
@@ -618,8 +618,8 @@ Blockly.Blocks['lists_create_with_typed'] = {
         this.setMutator(new Blockly.Mutator(['lists_create_with_item']));
         this.setTooltip(Blockly.Msg.LISTS_CREATE_WITH_TOOLTIP);
         this.itemCount_ = 3;
-        var tps = [];
-        for (var k = 0; k < this.itemCount_; k++) {
+        let tps = [];
+        for (let k = 0; k < this.itemCount_; k++) {
             tps.push(Type.Var("a"));
         }
         tps.push(Type.Lit("list", [Type.Var("a")]));
@@ -633,28 +633,28 @@ Blockly.Blocks['lists_create_with_typed'] = {
     },
 
     foldr: function(fn, ult, xs) {
-        var result = ult;
-        for (var i = xs.length - 1; i !== -1; i--) {
+        let result = ult;
+        for (let i = xs.length - 1; i !== -1; i--) {
             result = fn(xs[i], result);
         }
         return result;
     },
 
     getExpr: function() {
-        var exps = [];
+        let exps = [];
         this.inputList.forEach(function(inp) {
             if (inp.connection && inp.connection.isConnected()) {
-                var exp = inp.connection.targetBlock().getExpr();
+                let exp = inp.connection.targetBlock().getExpr();
                 exp.tag = inp.connection;
                 exps.push(exp);
             } else {
-                var exp = Exp.Var('undef');
+                let exp = Exp.Var('undef');
                 exp.tag = inp.connection;
                 exps.push(exp);
             }
         });
-        var func = (a, b) => Exp.AppFunc([a, b], Exp.Var(":"));
-        var e = this.foldr(func, Exp.Var("[]"), exps);
+        let func = (a, b) => Exp.AppFunc([a, b], Exp.Var(":"));
+        let e = this.foldr(func, Exp.Var("[]"), exps);
         e.tag = this.outputConnection;
         return e;
     },
@@ -665,7 +665,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
      * @this Blockly.Block
      */
     mutationToDom: function() {
-        var container = document.createElement('mutation');
+        let container = document.createElement('mutation');
         container.setAttribute('items', this.itemCount_);
         return container;
     },
@@ -675,12 +675,12 @@ Blockly.Blocks['lists_create_with_typed'] = {
      * @this Blockly.Block
      */
     domToMutation: function(xmlElement) {
-        for (var x = 0; x < this.itemCount_; x++) {
+        for (let x = 0; x < this.itemCount_; x++) {
             this.removeInput('ADD' + x);
         }
         this.itemCount_ = parseInt(xmlElement.getAttribute('items'), 10);
-        for (var x = 0; x < this.itemCount_; x++) {
-            var input = this.appendValueInput('ADD' + x);
+        for (let x = 0; x < this.itemCount_; x++) {
+            let input = this.appendValueInput('ADD' + x);
             if (x == 0) {
 
                 input.appendField(new Blockly.FieldImage("ims/format-list-bulleted.svg", 20, 20));
@@ -691,8 +691,8 @@ Blockly.Blocks['lists_create_with_typed'] = {
             this.appendDummyInput('EMPTY')
                 .appendField("[ ]");
         }
-        var tps = [];
-        for (var k = 0; k < this.itemCount_; k++) {
+        let tps = [];
+        for (let k = 0; k < this.itemCount_; k++) {
             tps.push(Type.Var("a"));
         }
         tps.push(Type.Lit("list", [Type.Var("a")]));
@@ -706,12 +706,12 @@ Blockly.Blocks['lists_create_with_typed'] = {
      * @this Blockly.Block
      */
     decompose: function(workspace) {
-        var containerBlock =
+        let containerBlock =
             workspace.newBlock('lists_create_with_container');
         containerBlock.initSvg();
-        var connection = containerBlock.getInput('STACK').connection;
-        for (var x = 0; x < this.itemCount_; x++) {
-            var itemBlock = workspace.newBlock('lists_create_with_item');
+        let connection = containerBlock.getInput('STACK').connection;
+        for (let x = 0; x < this.itemCount_; x++) {
+            let itemBlock = workspace.newBlock('lists_create_with_item');
             itemBlock.initSvg();
             connection.connect(itemBlock.previousConnection);
             connection = itemBlock.nextConnection;
@@ -728,15 +728,15 @@ Blockly.Blocks['lists_create_with_typed'] = {
         if (this.itemCount_ == 0) {
             this.removeInput('EMPTY');
         } else {
-            for (var x = this.itemCount_ - 1; x >= 0; x--) {
+            for (let x = this.itemCount_ - 1; x >= 0; x--) {
                 this.removeInput('ADD' + x);
             }
         }
         this.itemCount_ = 0;
         // Rebuild the block's inputs.
-        var itemBlock = containerBlock.getInputTargetBlock('STACK');
+        let itemBlock = containerBlock.getInputTargetBlock('STACK');
         while (itemBlock) {
-            var input = this.appendValueInput('ADD' + this.itemCount_);
+            let input = this.appendValueInput('ADD' + this.itemCount_);
             if (this.itemCount_ == 0) {
                 input.appendField(new Blockly.FieldImage("ims/format-list-bulleted.svg", 20, 20))
                 input.appendField(new Blockly.FieldLabel("List", "blocklyTextEmph"));
@@ -754,8 +754,8 @@ Blockly.Blocks['lists_create_with_typed'] = {
                 .appendField("[ ]");
         }
 
-        var tps = [];
-        for (var k = 0; k < this.itemCount_; k++) {
+        let tps = [];
+        for (let k = 0; k < this.itemCount_; k++) {
             tps.push(Type.Var("a"));
         }
         tps.push(Type.Lit("list", [Type.Var("a")]));
@@ -770,10 +770,10 @@ Blockly.Blocks['lists_create_with_typed'] = {
      * @this Blockly.Block
      */
     saveConnections: function(containerBlock) {
-        var itemBlock = containerBlock.getInputTargetBlock('STACK');
-        var x = 0;
+        let itemBlock = containerBlock.getInputTargetBlock('STACK');
+        let x = 0;
         while (itemBlock) {
-            var input = this.getInput('ADD' + x);
+            let input = this.getInput('ADD' + x);
             itemBlock.valueConnection_ = input && input.connection.targetConnection;
             x++;
             itemBlock = itemBlock.nextConnection &&

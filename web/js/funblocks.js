@@ -24,9 +24,9 @@ function loadSample(code) {
 }
 
 function loadWorkspace(text) {
-    var workspace = Blockly.mainWorkspace;
+    let workspace = Blockly.mainWorkspace;
     workspace.clear();
-    var xmldom = Blockly.Xml.textToDom(text);
+    let xmldom = Blockly.Xml.textToDom(text);
     Blockly.Xml.domToWorkspace(xmldom, workspace);
     lastXML = text;
 }
@@ -62,14 +62,14 @@ function init() {
     showingResult = false;
     window.buildMode = 'codeworld';
 
-    var hash = location.hash.slice(1);
+    let hash = location.hash.slice(1);
     if (hash.length > 0) {
         if (hash.slice(-2) == '==') {
             hash = hash.slice(0, -2);
         }
         if (hash[0] == 'F') {
             function go(folderName) {
-                var data = new FormData();
+                let data = new FormData();
                 data.append('mode', 'blocklyXML');
                 data.append('shash', hash);
                 data.append('name', folderName);
@@ -111,7 +111,7 @@ function initCodeworld() {
 
     window.onbeforeunload = function(event) {
         if (containsUnsavedChanges()) {
-            var msg = 'There are unsaved changes to your project. ' + 'If you continue, they will be lost!';
+            let msg = 'There are unsaved changes to your project. ' + 'If you continue, they will be lost!';
             if (event) event.returnValue = msg;
             return msg;
         }
@@ -128,7 +128,7 @@ function getCurrentProject() {
 
 // Sets the generated code
 function updateEditor(code) {
-    var editor = document.getElementById('genCode');
+    let editor = document.getElementById('genCode');
     CodeMirror.runMode(code, {
         name: 'codeworld',
         overrideKeywords: codeworldKeywords
@@ -136,7 +136,7 @@ function updateEditor(code) {
 }
 
 function run(xmlHash, codeHash, msg, error, dhash) {
-    var hash = codeHash;
+    let hash = codeHash;
 
     if (hash) {
         window.location.hash = '#' + xmlHash;
@@ -154,9 +154,9 @@ function run(xmlHash, codeHash, msg, error, dhash) {
         window.showingDoc = false;
     }
 
-    var runner = document.getElementById('runner');
+    let runner = document.getElementById('runner');
     if (hash && !error) {
-        var loc = 'run.html?hash=' + hash + '&mode=' + window.buildMode;
+        let loc = 'run.html?hash=' + hash + '&mode=' + window.buildMode;
         runner.contentWindow.location.replace(loc);
         document.getElementById('runner').style.display = '';
         document.getElementById('runner').contentWindow.focus();
@@ -174,7 +174,7 @@ function run(xmlHash, codeHash, msg, error, dhash) {
 
 
     if (msg) {
-        var message = document.getElementById('message');
+        let message = document.getElementById('message');
         message.innerHTML = '';
         addToMessage(msg);
 
@@ -193,7 +193,7 @@ function run(xmlHash, codeHash, msg, error, dhash) {
 
 function removeErrors() {
     $('.blocklyDraggable').removeClass('blocklyErrorSelected');
-    var blocks = Blockly.getMainWorkspace().getAllBlocks();
+    let blocks = Blockly.getMainWorkspace().getAllBlocks();
 
     blocks.forEach(function(block) {
         block.removeErrorSelect();
@@ -201,14 +201,14 @@ function removeErrors() {
 }
 
 function getWorkspaceXMLText() {
-    var workspace = Blockly.getMainWorkspace();
-    var xml = Blockly.Xml.workspaceToDom(workspace);
-    var xml_text = Blockly.Xml.domToText(xml);
+    let workspace = Blockly.getMainWorkspace();
+    let xml = Blockly.Xml.workspaceToDom(workspace);
+    let xml_text = Blockly.Xml.domToText(xml);
     return xml_text;
 }
 
 function containsUnsavedChanges() {
-    var blank = '<xml xmlns="http://www.w3.org/1999/xhtml"></xml>';
+    let blank = '<xml xmlns="http://www.w3.org/1999/xhtml"></xml>';
     return getWorkspaceXMLText() != (lastXML || blank);
 }
 
@@ -219,40 +219,40 @@ function isEditorClean() {
 function compile(src, silent) {
     run('', '', 'Compiling...', false);
 
-    var xml_text = getWorkspaceXMLText();
-    var data = new FormData();
+    let xml_text = getWorkspaceXMLText();
+    let data = new FormData();
     data.append('source', xml_text);
     data.append('mode', 'blocklyXML');
 
     sendHttp('POST', 'saveXMLhash', data, function(request) {
         // XML Hash
-        var xmlHash = request.responseText;
+        let xmlHash = request.responseText;
 
-        var data = new FormData();
+        let data = new FormData();
         data.append('source', src);
         data.append('mode', window.buildMode);
 
         sendHttp('POST', 'compile', data, function(request) {
-            var success = request.status == 200;
+            let success = request.status == 200;
 
             // Code hash
-            var hash;
-            var dhash;
+            let hash;
+            let dhash;
             if (request.responseText.length == 23) {
                 hash = request.responseText;
                 dhash = null;
             } else {
-                var obj = JSON.parse(request.responseText);
+                let obj = JSON.parse(request.responseText);
                 hash = obj.hash;
                 dhash = obj.dhash;
             }
 
-            var data = new FormData();
+            let data = new FormData();
             data.append('hash', hash);
             data.append('mode', window.buildMode);
 
             sendHttp('POST', 'runMsg', data, function(request) {
-                var msg = '';
+                let msg = '';
                 if (request.status == 200) {
                     msg = request.responseText.trim();
                 } else if (request.status == 404) {
@@ -298,7 +298,7 @@ function folderHandler(folderName, index, state) {
  * to get the visual presentation to match.
  */
 function updateUI() {
-    var isSignedIn = signedIn();
+    let isSignedIn = signedIn();
     if (isSignedIn) {
         if (document.getElementById('signout').style.display == 'none') {
             document.getElementById('signin').style.display = 'none';
@@ -335,7 +335,7 @@ function updateUI() {
     document.getElementById('runButtons').style.display = '';
 
     updateNavBar();
-    var NDlength = nestedDirs.length;
+    let NDlength = nestedDirs.length;
 
     if (NDlength != 1 && (openProjectName == null || openProjectName == '')) {
         document.getElementById('shareFolderButton').style.display = '';
@@ -351,7 +351,7 @@ function updateUI() {
         document.getElementById('moveButton').style.display = 'none';
     }
 
-    var title;
+    let title;
     if (window.openProjectName) {
         title = window.openProjectName;
     } else {
@@ -366,7 +366,7 @@ function updateUI() {
 }
 
 function updateNavBar() {
-    var projects = document.getElementById('nav_mine');
+    let projects = document.getElementById('nav_mine');
 
     while (projects.lastChild) {
         projects.removeChild(projects.lastChild);
@@ -384,18 +384,18 @@ function updateNavBar() {
         });
     });
 
-    var NDlength = nestedDirs.length;
+    let NDlength = nestedDirs.length;
     for (let i = 0; i < NDlength; i++) {
-        var tempProjects;
+        let tempProjects;
         if (i != 0) {
-            var encodedName = nestedDirs[i].replace('&', '&amp;')
+            let encodedName = nestedDirs[i].replace('&', '&amp;')
                 .replace('<', '&lt;')
                 .replace('>', '&gt;');
-            var template = document.getElementById('openFolderTemplate').innerHTML;
+            let template = document.getElementById('openFolderTemplate').innerHTML;
             template = template.replace('{{label}}', encodedName);
-            var span = document.createElement('span');
+            let span = document.createElement('span');
             span.innerHTML = template;
-            var elem = span.getElementsByTagName('a')[0];
+            let elem = span.getElementsByTagName('a')[0];
             elem.style.marginLeft = (3 + 16 * (i - 1)) + 'px';
             elem.onclick = function() {
                 folderHandler(nestedDirs[i], i - 1, true);
@@ -407,14 +407,14 @@ function updateNavBar() {
             projects = span.appendChild(document.createElement('div'));
         }
         allFolderNames[i].forEach(function(folderName) {
-            var encodedName = folderName.replace('&', '&amp;')
+            let encodedName = folderName.replace('&', '&amp;')
                 .replace('<', '&lt;')
                 .replace('>', '&gt;');
-            var template = document.getElementById('folderTemplate').innerHTML;
+            let template = document.getElementById('folderTemplate').innerHTML;
             template = template.replace('{{label}}', encodedName);
-            var span = document.createElement('span');
+            let span = document.createElement('span');
             span.innerHTML = template;
-            var elem = span.getElementsByTagName('a')[0];
+            let elem = span.getElementsByTagName('a')[0];
             elem.style.marginLeft = (3 + 16 * i) + 'px';
             elem.onclick = function() {
                 folderHandler(folderName, i, false);
@@ -429,24 +429,24 @@ function updateNavBar() {
             }
         });
         allProjectNames[i].forEach(function(projectName) {
-            var active = (window.openProjectName == projectName) && (i == NDlength - 1);
+            let active = (window.openProjectName == projectName) && (i == NDlength - 1);
             if (!signedIn() && !active) {
                 return;
             }
 
-            var title = projectName;
+            let title = projectName;
             if (active && !isEditorClean()) {
                 title = "* " + title;
             }
-            var encodedName = title.replace('&', '&amp;')
+            let encodedName = title.replace('&', '&amp;')
                 .replace('<', '&lt;')
                 .replace('>', '&gt;');
-            var template = document.getElementById('projectTemplate').innerHTML;
+            let template = document.getElementById('projectTemplate').innerHTML;
             template = template.replace('{{label}}', encodedName);
             template = template.replace(/{{ifactive ([^}]*)}}/, active ? "$1" : "");
-            var span = document.createElement('span');
+            let span = document.createElement('span');
             span.innerHTML = template;
-            var elem = span.getElementsByTagName('a')[0];
+            let elem = span.getElementsByTagName('a')[0];
             elem.style.marginLeft = (3 + 16 * i) + 'px';
             elem.onclick = function() {
                 loadProject(projectName, i);
@@ -475,8 +475,8 @@ function moveProject() {
             return;
         }
 
-        var tempOpen = openProjectName;
-        var tempPath = nestedDirs.slice(1).join('/');
+        let tempOpen = openProjectName;
+        let tempPath = nestedDirs.slice(1).join('/');
         clearWorkspace();
         nestedDirs = [""];
         allProjectNames = [
@@ -522,7 +522,7 @@ function moveHere() {
 }
 
 function help() {
-    var url = 'doc.html?shelf=help/blocks.shelf';
+    let url = 'doc.html?shelf=help/blocks.shelf';
     sweetAlert({
         title: '',
         text: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' + url + '"></iframe>',
@@ -592,7 +592,7 @@ function saveProjectBase(path, projectName) {
 }
 
 function deleteFolder() {
-    var path = nestedDirs.slice(1).join('/');
+    let path = nestedDirs.slice(1).join('/');
     if (path == "" || window.openProjectName != null) {
         return;
     }
@@ -616,7 +616,7 @@ function deleteProject() {
         openProjectName = null;
         Blockly.getMainWorkspace().clearUndo();
     }
-    var path = nestedDirs.slice(1).join('/');
+    let path = nestedDirs.slice(1).join('/');
     deleteProject_(path, 'blocklyXML', successFunc);
 
 }
@@ -654,12 +654,12 @@ function newProject() {
 
 // Clear the running iframe and generated code
 function clearRunCode() {
-    var runner = document.getElementById('runner');
+    let runner = document.getElementById('runner');
     runner.contentWindow.location.replace('about:blank');
     updateEditor('');
 }
 
 function clearWorkspace() {
-    var workspace = Blockly.mainWorkspace;
+    let workspace = Blockly.mainWorkspace;
     workspace.clear();
 }

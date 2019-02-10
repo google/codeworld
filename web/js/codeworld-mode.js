@@ -23,30 +23,30 @@
 
 CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
     // This is a regular expression used in multiple contexts.
-    var MULTICHAR_ESCAPE_REGEX =
+    let MULTICHAR_ESCAPE_REGEX =
         '\\\\NUL|\\\\SOH|\\\\STX|\\\\ETX|\\\\EOT|\\\\ENQ|\\\\ACK|\\\\BEL|\\\\BS|' +
         '\\\\HT|\\\\LF|\\\\VT|\\\\FF|\\\\CR|\\\\SO|\\\\SI|\\\\DLE|\\\\DC1|\\\\DC2|' +
         '\\\\DC3|\\\\DC4|\\\\NAK|\\\\SYN|\\\\ETB|\\\\CAN|\\\\EM|\\\\SUB|\\\\ESC|' +
         '\\\\FS|\\\\GS|\\\\RS|\\\\US|\\\\SP|\\\\DEL';
 
-    var RE_WHITESPACE = /[ \v\t\f]+/;
-    var RE_STARTMETA = /{-#/;
-    var RE_STARTCOMMENT = /{-/;
-    var RE_DASHES = /--+(?=$|[^:!#$%&*+.\/<=>?@\\^|~-]+)/;
-    var RE_QUAL = /[A-Z][A-Za-z_0-9']*\.(?=[A-Za-z_:!#$%&*+.\/<=>?@\\^|~]|-[^-])/;
-    var RE_VARID = /[a-z_][A-Za-z_0-9']*/;
-    var RE_CONID = /[A-Z][A-Za-z_0-9']*/;
-    var RE_VARSYM = /[!#$%&*+.\/<=>?@\\^|~-][:!#$%&*+.\/<=>?@\\^|~-]*/;
-    var RE_CONSYM = /:[:!#$%&*+.\/<=>?@\\^|~-]*/;
-    var RE_NUMBER = /[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|0[oO][0-7]+|0[xX][0-9a-fA-F]+/;
-    var RE_CHAR = new RegExp('\'(?:[^\\\\\']|\\\\[abfnrtv\\\\"\']|\\\\^[A-Z@[\\\\\\]^_]|' +
+    let RE_WHITESPACE = /[ \v\t\f]+/;
+    let RE_STARTMETA = /{-#/;
+    let RE_STARTCOMMENT = /{-/;
+    let RE_DASHES = /--+(?=$|[^:!#$%&*+.\/<=>?@\\^|~-]+)/;
+    let RE_QUAL = /[A-Z][A-Za-z_0-9']*\.(?=[A-Za-z_:!#$%&*+.\/<=>?@\\^|~]|-[^-])/;
+    let RE_VARID = /[a-z_][A-Za-z_0-9']*/;
+    let RE_CONID = /[A-Z][A-Za-z_0-9']*/;
+    let RE_VARSYM = /[!#$%&*+.\/<=>?@\\^|~-][:!#$%&*+.\/<=>?@\\^|~-]*/;
+    let RE_CONSYM = /:[:!#$%&*+.\/<=>?@\\^|~-]*/;
+    let RE_NUMBER = /[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|0[oO][0-7]+|0[xX][0-9a-fA-F]+/;
+    let RE_CHAR = new RegExp('\'(?:[^\\\\\']|\\\\[abfnrtv\\\\"\']|\\\\^[A-Z@[\\\\\\]^_]|' +
         MULTICHAR_ESCAPE_REGEX + ')\'');
-    var RE_STRING = new RegExp('"(?:[^\\\\"]|\\\\[abfnrtv\\\\"\'&]|\\\\^[A-Z@[\\\\\\]^_]|' +
+    let RE_STRING = new RegExp('"(?:[^\\\\"]|\\\\[abfnrtv\\\\"\'&]|\\\\^[A-Z@[\\\\\\]^_]|' +
         MULTICHAR_ESCAPE_REGEX + ')*"');
-    var RE_OPENBRACKET = /[([{]/;
-    var RE_CLOSEBRACKET = /[)\]}]/;
-    var RE_INCOMMENT = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/;
-    var RE_ENDCOMMENT = /-}/;
+    let RE_OPENBRACKET = /[([{]/;
+    let RE_CLOSEBRACKET = /[)\]}]/;
+    let RE_INCOMMENT = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/;
+    let RE_ENDCOMMENT = /-}/;
 
     function opening(bracket) {
         if (bracket == ')') return '(';
@@ -93,7 +93,7 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
         }
 
         if (stream.match(RE_CLOSEBRACKET)) {
-            var i = state.brackets.lastIndexOf(opening(stream.current()));
+            let i = state.brackets.lastIndexOf(opening(stream.current()));
             if (i < 0) {
                 return 'bracket';
             } else {
@@ -128,21 +128,21 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
         };
     }
 
-    var wellKnownWords = (function() {
-        var result = {};
+    let wellKnownWords = (function() {
+        let result = {};
 
-        var keywords = [
+        let keywords = [
             'case', 'class', 'data', 'default', 'deriving', 'do', 'else', 'foreign',
             'if', 'import', 'in', 'infix', 'infixl', 'infixr', 'instance', 'let',
             'module', 'newtype', 'of', 'then', 'type', 'where', '_', '..', ':',
             '=', '::', '\\', '<-', '->', '@', '~', '=>', '|'
         ];
 
-        for (var i = 0; i < keywords.length; ++i) result[keywords[i]] = 'keyword';
+        for (let i = 0; i < keywords.length; ++i) result[keywords[i]] = 'keyword';
 
-        var override = modeConfig.overrideKeywords;
+        let override = modeConfig.overrideKeywords;
         if (override)
-            for (var word in override)
+            for (let word in override)
                 if (override.hasOwnProperty(word))
                     result[word] = override[word];
 
@@ -159,9 +159,9 @@ CodeMirror.defineMode("codeworld", function(_config, modeConfig) {
         },
 
         token: function(stream, state) {
-            var t = state.func(stream, state);
+            let t = state.func(stream, state);
             if (['variable', 'variable-2'].indexOf(t) != -1) {
-                var w = stream.current();
+                let w = stream.current();
                 if (wellKnownWords.hasOwnProperty(w)) return wellKnownWords[w];
             }
             return t;

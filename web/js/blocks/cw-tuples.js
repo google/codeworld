@@ -37,9 +37,9 @@ Blockly.Blocks['pair_create_typed'] = {
         this.setOutput(true);
         this.setInputsInline(true);
 
-        var a = Type.Var("a");
-        var b = Type.Var("b");
-        var res = Type.Lit("pair", [a, b]);
+        let a = Type.Var("a");
+        let b = Type.Var("b");
+        let res = Type.Lit("pair", [a, b]);
         Blockly.TypeInf.defineFunction(",", Type.fromList([a, b, res]));
         this.setAsFunction(",");
     }

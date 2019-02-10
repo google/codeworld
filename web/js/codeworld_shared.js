@@ -32,7 +32,7 @@ function sendHttp(method, url, body, callback) {
 }
 
 function sendHttpRaw(method, url, body, callback) {
-    var request = new XMLHttpRequest();
+    let request = new XMLHttpRequest();
 
     if (callback) {
         request.onreadystatechange = function() {
@@ -46,7 +46,7 @@ function sendHttpRaw(method, url, body, callback) {
     return request;
 }
 
-var Html = (() => {
+let Html = (() => {
     const mine = {};
 
     mine.encode = str => $("<div/>").text(str).html();
@@ -54,7 +54,7 @@ var Html = (() => {
     return mine;
 })();
 
-var Alert = (() => {
+let Alert = (() => {
     const mine = {};
 
     // Load SweetAlert2 and SweetAlert in correct order
@@ -72,7 +72,7 @@ var Alert = (() => {
     return mine;
 })();
 
-var hintBlacklist = [
+let hintBlacklist = [
     // Symbols that only exist to implement RebindableSyntax or map to
     // built-in Haskell types.
     "Bool",
@@ -146,7 +146,7 @@ var hintBlacklist = [
 //   }
 // }
 
-var codeWorldSymbols = {},
+let codeWorldSymbols = {},
     codeWorldBuiltinSymbols = {};
 
 function getWordStart(word, line) {
@@ -154,7 +154,7 @@ function getWordStart(word, line) {
 }
 
 function getWordEnd(word, line) {
-    var wordStart = getWordStart(word, line);
+    let wordStart = getWordStart(word, line);
     if (wordStart != -1) {
         return wordStart + word.length
     }
@@ -162,7 +162,7 @@ function getWordEnd(word, line) {
 }
 
 function parseSymbolsFromCurrentCode() {
-    var lines = window.codeworldEditor.getValue().split('\n'),
+    let lines = window.codeworldEditor.getValue().split('\n'),
         word = null,
         parseResults = {},
         lineIndex = 0;
@@ -170,7 +170,7 @@ function parseSymbolsFromCurrentCode() {
     lines.forEach(function(line) {
         lineIndex++;
 
-        var docString = "Defined in your code on line " +
+        let docString = "Defined in your code on line " +
             lineIndex.toString() + ".";
         // f(x, y) =
         if (/^\w+\(.*/.test(line)) {
@@ -204,7 +204,7 @@ function parseSymbolsFromCurrentCode() {
         }
         // type Foo = Bar
         else if (/^type\s.+/.test(line)) {
-            var splitted = line.split("=");
+            let splitted = line.split("=");
             match = /^type\s+(\S+\b).*/.exec(line);
             word = match[1];
             if (parseResults[word]) return;
@@ -217,8 +217,8 @@ function parseSymbolsFromCurrentCode() {
         }
         // (*#^) :: Type
         else if (/^\([^\(\)]+\)\s*::/.test(line)) {
-            var splitted = line.split("::");
-            var word = splitted[0].trim()
+            let splitted = line.split("::");
+            let word = splitted[0].trim()
             word = word.slice(1, word.length - 1)
             if (parseResults[word]) return;
             parseResults[word] = {
@@ -230,7 +230,7 @@ function parseSymbolsFromCurrentCode() {
         }
         // foo :: Type
         else if (/^\S+\s*::/.test(line)) {
-            var splitted = line.split("::");
+            let splitted = line.split("::");
             word = splitted[0].trim()
             if (parseResults[word]) return;
             parseResults[word] = {
@@ -250,13 +250,13 @@ function renderDeclaration(decl, keyword, keywordData, maxLen) {
             keywordData.declaration.slice(0, keywordData.symbolStart)));
     }
 
-    var wordElem = document.createElement("span");
+    let wordElem = document.createElement("span");
     wordElem.className = "hint-word";
     wordElem.appendChild(document.createTextNode(keyword));
     decl.appendChild(wordElem);
 
     if (keywordData.symbolEnd < keywordData.declaration.length) {
-        var leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(/\s+/g, ' ');
+        let leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(/\s+/g, ' ');
         if (keywordData.symbolEnd + leftover.length > maxLen && leftover.length > 3) {
             leftover = leftover.slice(0, maxLen - 3 - keywordData.symbolEnd) + '...';
         }
@@ -266,29 +266,29 @@ function renderDeclaration(decl, keyword, keywordData, maxLen) {
 }
 
 function renderHover(keyword) {
-    var topDiv = document.createElement('div')
+    let topDiv = document.createElement('div')
 
     if (!codeWorldSymbols[keyword]) {
         return;
     };
     topDiv.title = keyword;
-    var keywordData = codeWorldSymbols[keyword];
+    let keywordData = codeWorldSymbols[keyword];
 
-    var docDiv = document.createElement('div');
+    let docDiv = document.createElement('div');
 
-    var annotation = document.createElement("div");
+    let annotation = document.createElement("div");
     renderDeclaration(annotation, keyword, keywordData, 9999);
     annotation.className = "hover-decl";
     docDiv.appendChild(annotation)
 
     if (keywordData.doc) {
-        var description = document.createElement('div');
+        let description = document.createElement('div');
         description.innerHTML = keywordData.doc;
         description.className = "hover-doc";
         docDiv.appendChild(description)
     };
 
-    var fadeDiv = document.createElement('div');
+    let fadeDiv = document.createElement('div');
     fadeDiv.className = 'fade';
 
     topDiv.appendChild(docDiv);
@@ -298,7 +298,7 @@ function renderHover(keyword) {
 
 function onHover(cm, data, node) {
     if (data && data.token && data.token.string) {
-        var token_name = data.token.string;
+        let token_name = data.token.string;
         if (hintBlacklist.indexOf(token_name) == -1) {
             return renderHover(token_name);
         }
@@ -308,21 +308,21 @@ function onHover(cm, data, node) {
 // Hints and hover tooltips
 function registerStandardHints(successFunc) {
     CodeMirror.registerHelper('hint', 'codeworld', function(cm) {
-        var cur = cm.getCursor();
-        var token = cm.getTokenAt(cur);
+        let cur = cm.getCursor();
+        let token = cm.getTokenAt(cur);
 
         // If the current token is whitespace, it can be split.
         if (/^\s+$/.test(token.string)) {
-            var term = "";
-            var from = cur;
+            let term = "";
+            let from = cur;
         } else {
-            var term = token.string.substr(0, cur.ch - token.start);
-            var from = CodeMirror.Pos(cur.line, token.start);
+            let term = token.string.substr(0, cur.ch - token.start);
+            let from = CodeMirror.Pos(cur.line, token.start);
         }
 
-        var found = [];
-        var hints = Object.keys(codeWorldSymbols)
-        for (var i = 0; i < hints.length; i++) {
+        let found = [];
+        let hints = Object.keys(codeWorldSymbols)
+        for (let i = 0; i < hints.length; i++) {
             let hint = hints[i];
             if (hint.startsWith(term)) {
                 found.push({
@@ -345,7 +345,7 @@ function registerStandardHints(successFunc) {
         });
 
         if (found.length > 0) {
-            var data = {
+            let data = {
                 list: found,
                 from: from,
                 to: cur
@@ -362,11 +362,11 @@ function registerStandardHints(successFunc) {
             CodeMirror.on(
                 data, 'select',
                 function(selection, elem) {
-                    var codeWordInfo = codeWorldSymbols[selection.text],
+                    let codeWordInfo = codeWorldSymbols[selection.text],
                         hintsWidgetRect = elem.parentElement.getBoundingClientRect(),
                         doc = document.createElement('div');
                     deleteOldHintDocs();
-                    var hover = renderHover(selection.text);
+                    let hover = renderHover(selection.text);
                     if (hover) {
                         doc.className += "hint-description";
                         doc.style.top = hintsWidgetRect.top + "px";
@@ -381,15 +381,15 @@ function registerStandardHints(successFunc) {
     });
 
     sendHttp('GET', 'codeworld-base.txt', null, function(request) {
-        var lines = [];
+        let lines = [];
         if (request.status != 200) {
             console.log('Failed to load autocomplete word list.');
         } else {
             lines = request.responseText.split('\n');
         }
 
-        var startLine = lines.indexOf('module Prelude') + 1;
-        var endLine = startLine;
+        let startLine = lines.indexOf('module Prelude') + 1;
+        let endLine = startLine;
         while (endLine < lines.length) {
             if (lines[endLine].startsWith("module ")) {
                 break;
@@ -410,7 +410,7 @@ function registerStandardHints(successFunc) {
             symbolEnd: 7
         };
 
-        var doc = "";
+        let doc = "";
         lines.forEach(function(line) {
             if (line.startsWith("type Program")) {
                 // We must intervene to hide the IO type.
@@ -455,18 +455,18 @@ function registerStandardHints(successFunc) {
             } else if (line.startsWith("-- ")) {
                 doc += line.replace(/\-\-   /g, "") + "\n";
             } else {
-                var wordStart = 0;
+                let wordStart = 0;
                 if (line.startsWith("type ") || line.startsWith("data ")) {
                     wordStart += 5;
 
                     // Hide kind annotations.
-                    var kindIndex = line.indexOf(" ::");
+                    let kindIndex = line.indexOf(" ::");
                     if (kindIndex != -1) {
                         line = line.substr(0, kindIndex);
                     }
                 }
 
-                var wordEnd = line.indexOf(" ", wordStart);
+                let wordEnd = line.indexOf(" ", wordStart);
                 if (wordEnd == -1) {
                     wordEnd = line.length;
                 }
@@ -480,7 +480,7 @@ function registerStandardHints(successFunc) {
                     wordEnd--;
                 }
 
-                var word = line.substr(wordStart, wordEnd - wordStart);
+                let word = line.substr(wordStart, wordEnd - wordStart);
                 if (hintBlacklist.indexOf(word) < 0) {
                     codeWorldBuiltinSymbols[word] = {
                         declaration: line,
@@ -521,8 +521,8 @@ function addToMessage(msg) {
         .replace(/program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
             '<a href="#" onclick="goto($1, $2);">Line $1-$3, Column $2-$4</a>');
 
-    var message = document.getElementById('message');
-    var atEnd = message.scrollTop >= message.scrollHeight - message.clientHeight;
+    let message = document.getElementById('message');
+    let atEnd = message.scrollTop >= message.scrollHeight - message.clientHeight;
     message.innerHTML += msg;
     if (atEnd) message.scrollTop = message.scrollHeight;
 }
@@ -541,7 +541,7 @@ function signedIn() {
     return !!(window.auth2 && auth2.isSignedIn.get());
 }
 
-var Auth = (() => {
+let Auth = (() => {
     const mine = {};
 
     function initLocalAuth() {
@@ -662,14 +662,14 @@ function discoverProjects_(path, buildMode, index) {
         return;
     }
 
-    var data = new FormData();
+    let data = new FormData();
     data.append('mode', buildMode);
     data.append('path', path);
 
     sendHttp('POST', 'listFolder', data, function(request) {
         if (request.status == 200) {
             loadingDir = false;
-            var allContents = JSON.parse(request.responseText);
+            let allContents = JSON.parse(request.responseText);
             allProjectNames[index] = allContents['files'];
             allFolderNames[index] = allContents['dirs'];
         }
@@ -692,7 +692,7 @@ function moveHere_(path, buildMode, successFunc) {
         return;
     }
 
-    var data = new FormData();
+    let data = new FormData();
     data.append('mode', buildMode);
     data.append('moveTo', path);
     data.append('moveFrom', window.move.path);
@@ -727,7 +727,7 @@ function warnIfUnsaved(action, showAnother) {
     if (isEditorClean()) {
         action();
     } else {
-        var msg = 'There are unsaved changes to your project. ' + 'Continue and throw away your changes?';
+        let msg = 'There are unsaved changes to your project. ' + 'Continue and throw away your changes?';
         sweetAlert({
             title: 'Warning',
             text: msg,
@@ -747,7 +747,7 @@ function saveProjectAs() {
         return;
     }
 
-    var text;
+    let text;
     if (nestedDirs.length > 1) {
         text = 'Enter a name for your project in folder <b>' +
             $('<div>').text(nestedDirs.slice(1).join('/')).html().replace(/ /g, '&nbsp;') +
@@ -756,7 +756,7 @@ function saveProjectAs() {
         text = 'Enter a name for your project:';
     }
 
-    var defaultName;
+    let defaultName;
     if (window.openProjectName) {
         defaultName = window.openProjectName;
     } else {
@@ -815,10 +815,10 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
             allowEnterKey: false
         });
 
-        var project = getCurrentProject();
+        let project = getCurrentProject();
         project['name'] = projectName;
 
-        var data = new FormData();
+        let data = new FormData();
         data.append('project', JSON.stringify(project));
         data.append('mode', mode);
         data.append('path', path);
@@ -843,7 +843,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
     if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) == -1 || projectName == openProjectName) {
         go();
     } else {
-        var msg = 'Are you sure you want to save over another project?\n\n' +
+        let msg = 'Are you sure you want to save over another project?\n\n' +
             'The previous contents of ' + projectName + ' will be permanently destroyed!';
         sweetAlert({
             title: 'Warning',
@@ -866,7 +866,7 @@ function deleteProject_(path, buildMode, successFunc) {
     }
 
     function go() {
-        var data = new FormData();
+        let data = new FormData();
         data.append('name', window.openProjectName);
         data.append('mode', buildMode);
         data.append('path', path);
@@ -879,7 +879,7 @@ function deleteProject_(path, buildMode, successFunc) {
         });
     }
 
-    var msg = 'Deleting a project will throw away all work, and cannot be undone. ' + 'Are you sure?';
+    let msg = 'Deleting a project will throw away all work, and cannot be undone. ' + 'Are you sure?';
     sweetAlert({
         title: 'Warning',
         text: msg,
@@ -901,7 +901,7 @@ function deleteFolder_(path, buildMode, successFunc) {
     }
 
     function go() {
-        var data = new FormData();
+        let data = new FormData();
         data.append('mode', buildMode);
         data.append('path', path);
 
@@ -916,7 +916,7 @@ function deleteFolder_(path, buildMode, successFunc) {
         });
     }
 
-    var msg = 'Deleting a folder will throw away all of its content, cannot be undone. ' + 'Are you sure?';
+    let msg = 'Deleting a folder will throw away all of its content, cannot be undone. ' + 'Are you sure?';
     sweetAlert({
         title: 'Warning',
         text: msg,
@@ -941,7 +941,7 @@ function createFolder(path, buildMode, successFunc) {
             }
 
             sweetAlert.close();
-            var data = new FormData();
+            let data = new FormData();
             data.append('mode', buildMode);
             if (path == "")
                 data.append('path', folderName);
@@ -985,14 +985,14 @@ function loadProject_(index, name, buildMode, successFunc) {
             return;
         }
 
-        var data = new FormData();
+        let data = new FormData();
         data.append('name', name);
         data.append('mode', buildMode);
         data.append('path', nestedDirs.slice(1, index + 1).join('/'));
 
         sendHttp('POST', 'loadProject', data, function(request) {
             if (request.status == 200) {
-                var project = JSON.parse(request.responseText);
+                let project = JSON.parse(request.responseText);
 
                 successFunc(project);
                 window.nestedDirs = nestedDirs.slice(0, index + 1);
@@ -1006,13 +1006,13 @@ function loadProject_(index, name, buildMode, successFunc) {
 }
 
 function share() {
-    var offerSource = true;
+    let offerSource = true;
 
     function go() {
-        var url;
-        var msg;
-        var showConfirm;
-        var confirmText;
+        let url;
+        let msg;
+        let showConfirm;
+        let confirmText;
 
         if (!window.deployHash) {
             url = window.location.href;
@@ -1024,7 +1024,7 @@ function share() {
             showConfirm = true;
             confirmText = 'Share Without Code';
         } else {
-            var a = document.createElement('a');
+            let a = document.createElement('a');
             a.href = window.location.href;
             a.hash = '';
             a.pathname = '/run.html'
@@ -1095,12 +1095,12 @@ function shareFolder_(mode) {
         updateUI();
         return;
     }
-    var path = nestedDirs.slice(1).join('/');
+    let path = nestedDirs.slice(1).join('/');
 
     function go() {
-        var msg = 'Copy this link to share your folder with others!';
+        let msg = 'Copy this link to share your folder with others!';
 
-        var data = new FormData();
+        let data = new FormData();
         data.append('mode', mode);
         data.append('path', path);
 
@@ -1110,11 +1110,11 @@ function shareFolder_(mode) {
                 return;
             }
 
-            var shareHash = request.responseText;
-            var a = document.createElement('a');
+            let shareHash = request.responseText;
+            let a = document.createElement('a');
             a.href = window.location.href;
             a.hash = '#' + shareHash;
-            var url = a.href;
+            let url = a.href;
             sweetAlert({
                 html: true,
                 title: '<i class="mdi mdi-72px mdi-folder-outline"></i>&nbsp; Share Folder',

@@ -18,10 +18,10 @@ function addMessage(err, str) {
     // Catch exceptions to protect against cross-domain access errors.
     try {
         if (window.parent && window.parent.addToMessage) {
-            var message = window.parent.addToMessage(str);
+            let message = window.parent.addToMessage(str);
 
             if (err) {
-                var message = window.parent.document.getElementById('message');
+                let message = window.parent.document.getElementById('message');
                 message.classList.add('error');
             }
 
@@ -41,7 +41,7 @@ function showCanvas() {
             return;
         }
 
-        var runner = window.parent.document.getElementById('runner');
+        let runner = window.parent.document.getElementById('runner');
         if (!runner) {
             return;
         }
@@ -62,14 +62,14 @@ function start() {
         c(n);
     };
     h$log = function() {
-        var s = '';
-        for (var i = 0; i < arguments.length; i++) {
+        let s = '';
+        for (let i = 0; i < arguments.length; i++) {
             s = s + arguments[i];
         }
         addMessage(false, s + '\n');
     };
     h$errorMsg = function(str) {
-        for (var i = 1; i < arguments.length; i++) {
+        for (let i = 1; i < arguments.length; i++) {
             str = str.replace(/%s/, arguments[i]);
         }
         addMessage(true, '\n' + str);

@@ -44,11 +44,11 @@ Blockly.Blocks['cwSimulationOf'] = {
             .appendField(')');
         this.setInputsInline(true);
 
-        var worldTp = Type.Var("a");
-        var numTp = Type.Lit("Number");
-        var initTp = Type.fromList([Type.Lit("list", [numTp]), worldTp]);
-        var stepTp = Type.fromList([worldTp, numTp, worldTp]);
-        var drawTp = Type.fromList([worldTp, Type.Lit("Picture")]);
+        let worldTp = Type.Var("a");
+        let numTp = Type.Lit("Number");
+        let initTp = Type.fromList([Type.Lit("list", [numTp]), worldTp]);
+        let stepTp = Type.fromList([worldTp, numTp, worldTp]);
+        let drawTp = Type.fromList([worldTp, Type.Lit("Picture")]);
 
         Blockly.TypeInf.defineFunction("simulationOf", Type.fromList([initTp, stepTp, drawTp, Type.Lit("Program")]));
         this.setAsFunction("simulationOf");
@@ -81,12 +81,12 @@ Blockly.Blocks['cwInteractionOf'] = {
             .appendField(')');
         this.setInputsInline(true);
 
-        var worldTp = Type.Var("a");
-        var numTp = Type.Lit("Number");
-        var initTp = Type.fromList([Type.Lit("list", [numTp]), worldTp]);
-        var stepTp = Type.fromList([worldTp, numTp, worldTp]);
-        var eventTp = Type.fromList([worldTp, Type.Lit("Event"), worldTp]);
-        var drawTp = Type.fromList([worldTp, Type.Lit("Picture")]);
+        let worldTp = Type.Var("a");
+        let numTp = Type.Lit("Number");
+        let initTp = Type.fromList([Type.Lit("list", [numTp]), worldTp]);
+        let stepTp = Type.fromList([worldTp, numTp, worldTp]);
+        let eventTp = Type.fromList([worldTp, Type.Lit("Event"), worldTp]);
+        let drawTp = Type.fromList([worldTp, Type.Lit("Picture")]);
 
         Blockly.TypeInf.defineFunction("interactionOf", Type.fromList([initTp, stepTp, eventTp, drawTp, Type.Lit("Program")]));
         this.setAsFunction("interactionOf");
@@ -111,7 +111,7 @@ Blockly.Blocks['cwAnimationOf'] = {
             .appendField(')');
         this.setInputsInline(true);
 
-        var stepTp = Type.Func(Type.Lit("Number"), Type.Lit("Picture"));
+        let stepTp = Type.Func(Type.Lit("Number"), Type.Lit("Picture"));
 
         Blockly.TypeInf.defineFunction("animationOf", Type.Func(stepTp, Type.Lit("Program")));
         this.setAsFunction("animationOf");

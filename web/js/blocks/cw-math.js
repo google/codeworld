@@ -30,7 +30,7 @@ Blockly.Blocks['numNumber'] = {
     init: function() {
         this.setHelpUrl(Blockly.Msg.MATH_NUMBER_HELPURL);
         this.setColour(210);
-        var field = new Blockly.FieldNumber('0');
+        let field = new Blockly.FieldNumber('0');
         field.setValidator(Blockly.FieldNumber.prototype.basicNumberValidator);
         this.appendDummyInput()
             .appendField(field, 'NUMBER');
@@ -49,7 +49,7 @@ Blockly.Blocks['numNumberPerc'] = {
     init: function() {
         this.setHelpUrl(Blockly.Msg.MATH_NUMBER_HELPURL);
         this.setColour(210);
-        var field = new Blockly.FieldNumber('0');
+        let field = new Blockly.FieldNumber('0');
         field.setValidator(Blockly.FieldNumber.prototype.basicNumberValidator);
         this.appendDummyInput()
             .appendField(field, 'NUMBER')

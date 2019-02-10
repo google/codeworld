@@ -20,7 +20,7 @@ goog.provide('Blockly.Blocks.cwPictures');
 
 goog.require('Blockly.Blocks');
 
-var picsHUE = 160;
+let picsHUE = 160;
 Blockly.Blocks['cwCombine'] = {
     init: function() {
         this.appendValueInput('PIC0');
@@ -37,15 +37,15 @@ Blockly.Blocks['cwCombine'] = {
     },
 
     foldr1: function(fn, xs) {
-        var result = xs[xs.length - 1];
-        for (var i = xs.length - 2; i > -1; i--) {
+        let result = xs[xs.length - 1];
+        for (let i = xs.length - 2; i > -1; i--) {
             result = fn(xs[i], result);
         }
         return result;
     },
 
     getExpr: function() {
-        var exps = [];
+        let exps = [];
         this.inputList.forEach(function(inp) {
             if (inp.connection.isConnected())
                 exps.push(inp.connection.targetBlock().getExpr());
@@ -57,20 +57,20 @@ Blockly.Blocks['cwCombine'] = {
             exps.push(Exp.Var('undef'));
             exps.push(Exp.Var('undef'));
         }
-        var func = (a, b) => Exp.AppFunc([a, b], Exp.Var("&"));
-        var e = this.foldr1(func, exps);
+        let func = (a, b) => Exp.AppFunc([a, b], Exp.Var("&"));
+        let e = this.foldr1(func, exps);
         return e;
     },
 
 
     decompose: function(workspace) {
-        var containerBlock =
+        let containerBlock =
             workspace.newBlock('pics_combine_container');
         containerBlock.initSvg();
-        var connection = containerBlock.getInput('STACK').connection;
+        let connection = containerBlock.getInput('STACK').connection;
 
-        for (var x = 0; x < this.itemCount_; x++) {
-            var itemBlock = workspace.newBlock('pics_combine_ele');
+        for (let x = 0; x < this.itemCount_; x++) {
+            let itemBlock = workspace.newBlock('pics_combine_ele');
             itemBlock.initSvg();
             connection.connect(itemBlock.previousConnection);
             connection = itemBlock.nextConnection;
@@ -80,17 +80,17 @@ Blockly.Blocks['cwCombine'] = {
     },
 
     compose: function(containerBlock) {
-        var tps = [];
+        let tps = [];
 
-        for (var x = 0; x < this.itemCount_; x++) {
+        for (let x = 0; x < this.itemCount_; x++) {
             this.removeInput('PIC' + x);
         }
 
         this.itemCount_ = 0;
         // Rebuild the block's inputs.
-        var itemBlock = containerBlock.getInputTargetBlock('STACK');
+        let itemBlock = containerBlock.getInputTargetBlock('STACK');
         while (itemBlock) {
-            var input = this.appendValueInput('PIC' + this.itemCount_);
+            let input = this.appendValueInput('PIC' + this.itemCount_);
             tps.push(Type.Lit("Picture"));
             if (this.itemCount_ > 0) {
                 input.appendField(new Blockly.FieldLabel("&", "blocklyTextEmph"));
@@ -115,17 +115,17 @@ Blockly.Blocks['cwCombine'] = {
     },
 
     mutationToDom: function() {
-        var container = document.createElement('mutation');
+        let container = document.createElement('mutation');
         container.setAttribute('items', this.itemCount_);
         return container;
     },
 
     domToMutation: function(xmlElement) {
         this.itemCount_ = parseInt(xmlElement.getAttribute('items'), 10);
-        var tps = [];
+        let tps = [];
         this.inputList = [];
-        for (var i = 0; i < this.itemCount_; i++) {
-            var input = this.appendValueInput('PIC' + i);
+        for (let i = 0; i < this.itemCount_; i++) {
+            let input = this.appendValueInput('PIC' + i);
             tps.push(Type.Lit("Picture"));
             if (i > 0) {
                 input.appendField(new Blockly.FieldLabel("&", "blocklyTextEmph"));
@@ -136,10 +136,10 @@ Blockly.Blocks['cwCombine'] = {
         this.initArrows();
     },
     saveConnections: function(containerBlock) {
-        var itemBlock = containerBlock.getInputTargetBlock('STACK');
-        var x = 0;
+        let itemBlock = containerBlock.getInputTargetBlock('STACK');
+        let x = 0;
         while (itemBlock) {
-            var input = this.getInput('PIC' + x);
+            let input = this.getInput('PIC' + x);
             if (input && input.connection.targetConnection) {
                 if (input.connection.targetBlock().isShadow_) {
                     x++;
@@ -196,7 +196,7 @@ Blockly.Blocks['lists_pictures'] = {
             .appendField(')');
         this.setInputsInline(false);
         this.setOutput(true);
-        var pic = Type.Lit("Picture");
+        let pic = Type.Lit("Picture");
         Blockly.TypeInf.defineFunction("pictures", Type.fromList([Type.Lit("list", [pic]), pic]));
         this.setAsFunction("pictures");
     }
@@ -213,7 +213,7 @@ Blockly.Blocks['lists_polyline'] = {
             .appendField(')');
         this.setInputsInline(false);
         this.setOutput(true);
-        var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+        let pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
         Blockly.TypeInf.defineFunction("polyline", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
         this.setAsFunction("polyline");
     }
@@ -234,9 +234,9 @@ Blockly.Blocks['lists_thickPolyline'] = {
         this.setInputsInline(false);
         this.setOutput(true);
 
-        var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
-        var pts = Type.Lit("list", [pair]);
-        var num = Type.Lit("Number");
+        let pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+        let pts = Type.Lit("list", [pair]);
+        let num = Type.Lit("Number");
         Blockly.TypeInf.defineFunction("thickPolyline", Type.fromList([pts, num, Type.Lit("Picture")]));
         this.setAsFunction("thickPolyline");
     }
@@ -253,7 +253,7 @@ Blockly.Blocks['lists_polygon'] = {
             .appendField(')');
         this.setInputsInline(false);
         this.setOutput(true);
-        var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+        let pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
         Blockly.TypeInf.defineFunction("polygon", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
         this.setAsFunction("polygon");
     }
@@ -270,7 +270,7 @@ Blockly.Blocks['lists_solidPolygon'] = {
             .appendField(')');
         this.setInputsInline(false);
         this.setOutput(true);
-        var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+        let pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
         Blockly.TypeInf.defineFunction("solidPolygon", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
         this.setAsFunction("solidPolygon");
     }
@@ -291,9 +291,9 @@ Blockly.Blocks['lists_thickPolygon'] = {
         this.setInputsInline(false);
         this.setOutput(true);
 
-        var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
-        var pts = Type.Lit("list", [pair]);
-        var num = Type.Lit("Number");
+        let pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+        let pts = Type.Lit("list", [pair]);
+        let num = Type.Lit("Number");
         Blockly.TypeInf.defineFunction("thickPolygon", Type.fromList([pts, num, Type.Lit("Picture")]));
         this.setAsFunction("thickPolygon");
     }
@@ -310,7 +310,7 @@ Blockly.Blocks['lists_curve'] = {
             .appendField(')');
         this.setInputsInline(false);
         this.setOutput(true);
-        var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+        let pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
         Blockly.TypeInf.defineFunction("curve", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
         this.setAsFunction("curve");
     }
@@ -331,9 +331,9 @@ Blockly.Blocks['lists_thickCurve'] = {
         this.setInputsInline(false);
         this.setOutput(true);
 
-        var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
-        var pts = Type.Lit("list", [pair]);
-        var num = Type.Lit("Number");
+        let pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+        let pts = Type.Lit("list", [pair]);
+        let num = Type.Lit("Number");
         Blockly.TypeInf.defineFunction("thickCurve", Type.fromList([pts, num, Type.Lit("Picture")]));
         this.setAsFunction("thickCurve");
     }
@@ -350,7 +350,7 @@ Blockly.Blocks['lists_closedCurve'] = {
             .appendField(')');
         this.setInputsInline(false);
         this.setOutput(true);
-        var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+        let pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
         Blockly.TypeInf.defineFunction("closedCurve", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
         this.setAsFunction("closedCurve");
     }
@@ -367,7 +367,7 @@ Blockly.Blocks['lists_solidClosedCurve'] = {
             .appendField(')');
         this.setInputsInline(false);
         this.setOutput(true);
-        var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+        let pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
         Blockly.TypeInf.defineFunction("solidClosedCurve", Type.fromList([Type.Lit("list", [pair]), Type.Lit("Picture")]));
         this.setAsFunction("solidClosedCurve");
     }
@@ -388,9 +388,9 @@ Blockly.Blocks['lists_thickClosedCurve'] = {
         this.setInputsInline(false);
         this.setOutput(true);
 
-        var pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
-        var pts = Type.Lit("list", [pair]);
-        var num = Type.Lit("Number");
+        let pair = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
+        let pts = Type.Lit("list", [pair]);
+        let num = Type.Lit("Number");
         Blockly.TypeInf.defineFunction("thickClosedCurve", Type.fromList([pts, num, Type.Lit("Picture")]));
         this.setAsFunction("thickClosedCurve");
     }

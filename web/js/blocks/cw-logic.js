@@ -19,7 +19,7 @@
 goog.provide('Blockly.Blocks.cwLogic');
 goog.require('Blockly.Blocks');
 
-var colorPoly = 180;
+let colorPoly = 180;
 
 Blockly.Blocks['conIf'] = {
     init: function() {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-var LocalAuth = (() => {
+let LocalAuth = (() => {
     const mine = {};
 
     const ERROR_TITLE = "Oops!";
@@ -26,11 +26,11 @@ var LocalAuth = (() => {
     const NEW_PASSWORD_1 = "swal-input3";
     const NEW_PASSWORD_2 = "swal-input4";
 
-    var _userId = null;
-    var _accessToken = null;
-    var _refreshToken = null;
-    var _currentUserCallback = null;
-    var _isSignedInCallback = null;
+    let _userId = null;
+    let _accessToken = null;
+    let _refreshToken = null;
+    let _currentUserCallback = null;
+    let _isSignedInCallback = null;
 
     function httpPost(opts) {
         return new Promise((resolve, reject) => $.ajax(Object.assign({
@@ -69,7 +69,7 @@ var LocalAuth = (() => {
     function validateFormData() {
         const isReset = typeof $(`#${NEW_PASSWORD_1}`).css("display") != "undefined";
         if (isReset) {
-            var formData = {
+            let formData = {
                 userId: $(`#${USER_ID}`).val(),
                 password: $(`#${PASSWORD}`).val(),
                 newPassword1: $(`#${NEW_PASSWORD_1}`).val(),
@@ -80,7 +80,7 @@ var LocalAuth = (() => {
             formData.isValid = !formData.validationResult;
             return formData;
         } else {
-            var formData = {
+            let formData = {
                 userId: $(`#${USER_ID}`).val(),
                 password: $(`#${PASSWORD}`).val()
             };
@@ -138,8 +138,8 @@ var LocalAuth = (() => {
     }
 
     function handleError(e) {
-        var html = null;
-        var isRecoverable = false;
+        let html = null;
+        let isRecoverable = false;
         switch (e.status) {
             case 401:
                 html = "Your session expired.";
@@ -326,7 +326,7 @@ var LocalAuth = (() => {
             return false;
         }
 
-        var obj = null;
+        let obj = null;
         try {
             obj = JSON.parse(request.responseText);
         } catch (e) {

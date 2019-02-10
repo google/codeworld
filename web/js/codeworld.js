@@ -168,6 +168,11 @@ function initCodeworld() {
         gutters: ["CodeMirror-lint-markers"],
         lint: {
             getAnnotations: (text, callback) => {
+                if (text.trim() === "") {
+                    callback([]);
+                    return;
+                }
+
                 let request;
 
                 function cancelLintRequest() {

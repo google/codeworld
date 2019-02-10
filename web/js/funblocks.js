@@ -77,9 +77,13 @@ function init() {
                 sendHttp('POST', 'shareContent', data, request => {
                     window.location.hash = '';
                     if (request.status == 200) {
-                        sweetAlert('Success!', 'The shared folder is moved into your root directory.', 'success');
+                        sweetAlert('Success!',
+                            'The shared folder is moved into your root directory.',
+                            'success');
                     } else {
-                        sweetAlert('Oops!', 'Could not load the shared directory. Please try again.', 'error');
+                        sweetAlert('Oops!',
+                            'Could not load the shared directory. Please try again.',
+                            'error');
                     }
                     initCodeworld();
                     discoverProjects("", 0);
@@ -111,7 +115,8 @@ function initCodeworld() {
 
     window.onbeforeunload = event => {
         if (containsUnsavedChanges()) {
-            let msg = 'There are unsaved changes to your project. ' + 'If you continue, they will be lost!';
+            let msg = 'There are unsaved changes to your project. ' +
+                'If you continue, they will be lost!';
             if (event) event.returnValue = msg;
             return msg;
         }
@@ -256,13 +261,15 @@ function compile(src, silent) {
                 if (request.status == 200) {
                     msg = request.responseText.trim();
                 } else if (request.status == 404) {
-                    msg = "Sorry!  Your program couldn't be run right now.  Please try again.";
+                    msg =
+                        "Sorry!  Your program couldn't be run right now.  Please try again.";
                 }
                 if (msg != '') msg += '\n\n';
                 if (silent) msg = null;
 
                 if (success) {
-                    run(xmlHash, hash, msg, false, dhash);
+                    run(xmlHash, hash, msg, false,
+                        dhash);
                 } else {
                     run(xmlHash, hash, msg, true);
                 }
@@ -429,7 +436,8 @@ function updateNavBar() {
             }
         });
         allProjectNames[i].forEach(projectName => {
-            let active = (window.openProjectName == projectName) && (i == NDlength - 1);
+            let active = (window.openProjectName == projectName) && (i ==
+                NDlength - 1);
             if (!signedIn() && !active) {
                 return;
             }
@@ -443,7 +451,8 @@ function updateNavBar() {
                 .replace('>', '&gt;');
             let template = document.getElementById('projectTemplate').innerHTML;
             template = template.replace('{{label}}', encodedName);
-            template = template.replace(/{{ifactive ([^}]*)}}/, active ? "$1" : "");
+            template = template.replace(/{{ifactive ([^}]*)}}/, active ?
+                "$1" : "");
             let span = document.createElement('span');
             span.innerHTML = template;
             let elem = span.getElementsByTagName('a')[0];
@@ -464,13 +473,18 @@ function updateNavBar() {
 function moveProject() {
     warnIfUnsaved(() => {
         if (!signedIn()) {
-            sweetAlert('Oops!', 'You must sign in to move this project or folder.', 'error');
+            sweetAlert('Oops!',
+                'You must sign in to move this project or folder.',
+                'error');
             updateUI();
             return;
         }
 
-        if ((openProjectName == null || openProjectName == '') && nestedDirs.length == 1) {
-            sweetAlert('Oops!', 'You must select a project or folder to move.', 'error');
+        if ((openProjectName == null || openProjectName == '') &&
+            nestedDirs.length == 1) {
+            sweetAlert('Oops!',
+                'You must select a project or folder to move.',
+                'error');
             updateUI();
             return;
         }
@@ -525,7 +539,8 @@ function help() {
     let url = 'doc.html?shelf=help/blocks.shelf';
     sweetAlert({
         title: '',
-        text: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' + url + '"></iframe>',
+        text: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' +
+            url + '"></iframe>',
         html: true,
         customClass: 'helpdoc',
         allowEscapeKey: true,
@@ -583,7 +598,8 @@ function saveProjectBase(path, projectName) {
         window.openProjectName = projectName;
         cancelMove();
 
-        if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) == -1) {
+        if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) ==
+            -1) {
             discoverProjects(path, allProjectNames.length - 1);
         }
         updateUI();

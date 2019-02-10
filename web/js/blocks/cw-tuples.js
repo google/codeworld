@@ -49,14 +49,17 @@ Blockly.Blocks['pair_first_typed'] = {
     init() {
         this.setColour(180);
         this.appendValueInput('PAIR')
-            .appendField(new Blockly.FieldLabel("firstOfPair", "blocklyTextEmph"))
+            .appendField(new Blockly.FieldLabel("firstOfPair",
+                "blocklyTextEmph"))
             .appendField("(");
         this.appendDummyInput()
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField(")");
         this.setOutput(true);
 
-        Blockly.TypeInf.defineFunction("firstOfPair", Type.fromList([Type.Lit("pair", [Type.Var("a"), Type.Var("b")]), Type.Var("a")]));
+        Blockly.TypeInf.defineFunction("firstOfPair", Type.fromList([Type.Lit(
+            "pair", [Type.Var("a"), Type.Var("b")]), Type.Var(
+            "a")]));
         this.setAsFunction("firstOfPair");
     }
 };
@@ -65,14 +68,17 @@ Blockly.Blocks['pair_second_typed'] = {
     init() {
         this.setColour(180);
         this.appendValueInput('PAIR')
-            .appendField(new Blockly.FieldLabel("secondOfPair", "blocklyTextEmph"))
+            .appendField(new Blockly.FieldLabel("secondOfPair",
+                "blocklyTextEmph"))
             .appendField("(");
         this.appendDummyInput()
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField(")");
         this.setOutput(true);
 
-        Blockly.TypeInf.defineFunction("secondOfPair", Type.fromList([Type.Lit("pair", [Type.Var("a"), Type.Var("b")]), Type.Var("b")]));
+        Blockly.TypeInf.defineFunction("secondOfPair", Type.fromList([Type.Lit(
+            "pair", [Type.Var("a"), Type.Var("b")]), Type.Var(
+            "b")]));
         this.setAsFunction("secondOfPair");
     }
 };

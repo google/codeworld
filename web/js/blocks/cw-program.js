@@ -31,7 +31,8 @@ Blockly.Blocks['cwSimulationOf'] = {
         this.setOutput(false);
         this.appendValueInput('INITIAL')
             .appendField(new Blockly.FieldImage('ims/car-wash.svg', 20, 20))
-            .appendField(new Blockly.FieldLabel('simulationOf', 'blocklyTextEmph'))
+            .appendField(new Blockly.FieldLabel('simulationOf',
+                'blocklyTextEmph'))
             .appendField('(');
         this.appendValueInput('STEP')
             .setAlign(Blockly.ALIGN_RIGHT)
@@ -50,7 +51,9 @@ Blockly.Blocks['cwSimulationOf'] = {
         let stepTp = Type.fromList([worldTp, numTp, worldTp]);
         let drawTp = Type.fromList([worldTp, Type.Lit("Picture")]);
 
-        Blockly.TypeInf.defineFunction("simulationOf", Type.fromList([initTp, stepTp, drawTp, Type.Lit("Program")]));
+        Blockly.TypeInf.defineFunction("simulationOf", Type.fromList([
+            initTp, stepTp, drawTp, Type.Lit("Program")
+        ]));
         this.setAsFunction("simulationOf");
     }
 };
@@ -64,8 +67,10 @@ Blockly.Blocks['cwInteractionOf'] = {
         this.setColour(0);
         this.setOutput(false);
         this.appendValueInput('INITIAL')
-            .appendField(new Blockly.FieldImage('ims/human-handsup.svg', 20, 20))
-            .appendField(new Blockly.FieldLabel('interactionOf', 'blocklyTextEmph'))
+            .appendField(new Blockly.FieldImage('ims/human-handsup.svg', 20,
+                20))
+            .appendField(new Blockly.FieldLabel('interactionOf',
+                'blocklyTextEmph'))
             .appendField('(');
         this.appendValueInput('STEP')
             .setAlign(Blockly.ALIGN_RIGHT)
@@ -88,7 +93,9 @@ Blockly.Blocks['cwInteractionOf'] = {
         let eventTp = Type.fromList([worldTp, Type.Lit("Event"), worldTp]);
         let drawTp = Type.fromList([worldTp, Type.Lit("Picture")]);
 
-        Blockly.TypeInf.defineFunction("interactionOf", Type.fromList([initTp, stepTp, eventTp, drawTp, Type.Lit("Program")]));
+        Blockly.TypeInf.defineFunction("interactionOf", Type.fromList([
+            initTp, stepTp, eventTp, drawTp, Type.Lit("Program")
+        ]));
         this.setAsFunction("interactionOf");
     }
 };
@@ -104,7 +111,8 @@ Blockly.Blocks['cwAnimationOf'] = {
         this.setOutput(false);
         this.appendValueInput('FUNC')
             .appendField(new Blockly.FieldImage('ims/car.svg', 20, 20))
-            .appendField(new Blockly.FieldLabel('animationOf', 'blocklyTextEmph'))
+            .appendField(new Blockly.FieldLabel('animationOf',
+                'blocklyTextEmph'))
             .appendField('(');
         this.appendDummyInput()
             .setAlign(Blockly.ALIGN_RIGHT)
@@ -113,7 +121,8 @@ Blockly.Blocks['cwAnimationOf'] = {
 
         let stepTp = Type.Func(Type.Lit("Number"), Type.Lit("Picture"));
 
-        Blockly.TypeInf.defineFunction("animationOf", Type.Func(stepTp, Type.Lit("Program")));
+        Blockly.TypeInf.defineFunction("animationOf", Type.Func(stepTp,
+            Type.Lit("Program")));
         this.setAsFunction("animationOf");
     }
 };

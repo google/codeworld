@@ -49,9 +49,11 @@ Blockly.Blocks['text_typed'] = {
     newQuote_(open) {
         let file;
         if (open == this.RTL) {
-            file = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAKCAQAAAAqJXdxAAAAqUlEQVQI1z3KvUpCcRiA8ef9E4JNHhI0aFEacm1o0BsI0Slx8wa8gLauoDnoBhq7DcfWhggONDmJJgqCPA7neJ7p934EOOKOnM8Q7PDElo/4x4lFb2DmuUjcUzS3URnGib9qaPNbuXvBO3sGPHJDRG6fGVdMSeWDP2q99FQdFrz26Gu5Tq7dFMzUvbXy8KXeAj57cOklgA+u1B5AoslLtGIHQMaCVnwDnADZIFIrXsoXrgAAAABJRU5ErkJggg==';
+            file =
+                'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAKCAQAAAAqJXdxAAAAqUlEQVQI1z3KvUpCcRiA8ef9E4JNHhI0aFEacm1o0BsI0Slx8wa8gLauoDnoBhq7DcfWhggONDmJJgqCPA7neJ7p934EOOKOnM8Q7PDElo/4x4lFb2DmuUjcUzS3URnGib9qaPNbuXvBO3sGPHJDRG6fGVdMSeWDP2q99FQdFrz26Gu5Tq7dFMzUvbXy8KXeAj57cOklgA+u1B5AoslLtGIHQMaCVnwDnADZIFIrXsoXrgAAAABJRU5ErkJggg==';
         } else {
-            file = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAKCAQAAAAqJXdxAAAAn0lEQVQI1z3OMa5BURSF4f/cQhAKjUQhuQmFNwGJEUi0RKN5rU7FHKhpjEH3TEMtkdBSCY1EIv8r7nFX9e29V7EBAOvu7RPjwmWGH/VuF8CyN9/OAdvqIXYLvtRaNjx9mMTDyo+NjAN1HNcl9ZQ5oQMM3dgDUqDo1l8DzvwmtZN7mnD+PkmLa+4mhrxVA9fRowBWmVBhFy5gYEjKMfz9AylsaRRgGzvZAAAAAElFTkSuQmCC';
+            file =
+                'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAKCAQAAAAqJXdxAAAAn0lEQVQI1z3OMa5BURSF4f/cQhAKjUQhuQmFNwGJEUi0RKN5rU7FHKhpjEH3TEMtkdBSCY1EIv8r7nFX9e29V7EBAOvu7RPjwmWGH/VuF8CyN9/OAdvqIXYLvtRaNjx9mMTDyo+NjAN1HNcl9ZQ5oQMM3dgDUqDo1l8DzvwmtZN7mnD+PkmLa+4mhrxVA9fRowBWmVBhFy5gYEjKMfz9AylsaRRgGzvZAAAAAElFTkSuQmCC';
         }
         return new Blockly.FieldImage(file, 12, 12, '"');
     }
@@ -68,7 +70,9 @@ Blockly.Blocks['txtConcat'] = {
         this.itemCount_ = 2;
         this.functionName = "Literal";
         this.setOutput(true);
-        Blockly.TypeInf.defineFunction("<>", Type.fromList([Type.Lit("Text"), Type.Lit("Text"), Type.Lit("Text")]));
+        Blockly.TypeInf.defineFunction("<>", Type.fromList([Type.Lit("Text"),
+            Type.Lit("Text"), Type.Lit("Text")
+        ]));
         this.setAsFunction("<>");
     },
 
@@ -130,7 +134,8 @@ Blockly.Blocks['txtConcat'] = {
             tps.push(new Type.Lit("Text"));
 
             if (this.itemCount_ > 0) {
-                input.appendField(new Blockly.FieldLabel("<>", "blocklyTextEmph"));
+                input.appendField(new Blockly.FieldLabel("<>",
+                    "blocklyTextEmph"));
             }
             if (itemBlock.valueConnection_) {
                 input.connection.connect(itemBlock.valueConnection_);
@@ -166,7 +171,8 @@ Blockly.Blocks['txtConcat'] = {
             let input = this.appendValueInput('STR' + i);
             tps.push(new Type.Lit("Text"));
             if (i > 0) {
-                input.appendField(new Blockly.FieldLabel("<>", "blocklyTextEmph"));
+                input.appendField(new Blockly.FieldLabel("<>",
+                    "blocklyTextEmph"));
             }
         };
         tps.push(new Type.Lit("Text"));
@@ -219,7 +225,8 @@ Blockly.Blocks['text_combine_container'] = {
         this.appendDummyInput()
             .appendField('Text inputs');
         this.appendStatementInput('STACK');
-        this.setTooltip('A list of inputs that the combine block should have');
+        this.setTooltip(
+            'A list of inputs that the combine block should have');
         this.contextMenu = false;
     },
     getExpr: null

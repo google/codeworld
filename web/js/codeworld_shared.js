@@ -59,15 +59,20 @@ let Alert = (() => {
 
     // Load SweetAlert2 and SweetAlert in correct order
     mine.init = () =>
-        Promise.resolve($.getScript("https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js"))
+        Promise.resolve($.getScript(
+            "https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js"
+        ))
         .then(() => {
             window.sweetAlert2 = window.sweetAlert;
-            return $.getScript("https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.0/sweetalert.min.js");
+            return $.getScript(
+                "https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.0/sweetalert.min.js"
+            );
         })
         .catch(e => console.log("Alert.init failed"));
 
     // Build SweetAlert title HTML
-    mine.title = (text, iconClass) => `<i class="mdi mdi-72px ${iconClass}"></i>&nbsp; ${Html.encode(text)}`;
+    mine.title = (text, iconClass) =>
+        `<i class="mdi mdi-72px ${iconClass}"></i>&nbsp; ${Html.encode(text)}`;
 
     return mine;
 })();
@@ -256,9 +261,12 @@ function renderDeclaration(decl, keyword, keywordData, maxLen) {
     decl.appendChild(wordElem);
 
     if (keywordData.symbolEnd < keywordData.declaration.length) {
-        let leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(/\s+/g, ' ');
-        if (keywordData.symbolEnd + leftover.length > maxLen && leftover.length > 3) {
-            leftover = leftover.slice(0, maxLen - 3 - keywordData.symbolEnd) + '...';
+        let leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(
+            /\s+/g, ' ');
+        if (keywordData.symbolEnd + leftover.length > maxLen && leftover.length >
+            3) {
+            leftover = leftover.slice(0, maxLen - 3 - keywordData.symbolEnd) +
+                '...';
         }
         decl.appendChild(document.createTextNode(leftover));
     }
@@ -329,7 +337,8 @@ function registerStandardHints(successFunc) {
                 found.push({
                     text: hint,
                     render: elem => {
-                        renderDeclaration(elem, hint, codeWorldSymbols[hint], 50);
+                        renderDeclaration(elem, hint,
+                            codeWorldSymbols[hint], 50);
                     }
                 });
             }
@@ -340,9 +349,12 @@ function registerStandardHints(successFunc) {
                 return /^[a-zA-Z].*/.test(c);
             }
 
-            if (startsWithLetter(a.text) && !startsWithLetter(b.text)) return -1;
-            else if (startsWithLetter(b.text) && !startsWithLetter(a.text)) return 1;
-            else return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1
+            if (startsWithLetter(a.text) && !startsWithLetter(b
+                    .text)) return -1;
+            else if (startsWithLetter(b.text) && !
+                startsWithLetter(a.text)) return 1;
+            else return a.text.toLowerCase() < b.text.toLowerCase() ?
+                -1 : 1
         });
 
         if (found.length > 0) {
@@ -371,7 +383,8 @@ function registerStandardHints(successFunc) {
                     if (hover) {
                         doc.className += "hint-description";
                         doc.style.top = hintsWidgetRect.top + "px";
-                        doc.style.left = hintsWidgetRect.right + "px";
+                        doc.style.left = hintsWidgetRect.right +
+                            "px";
                         doc.appendChild(hover)
                         document.body.appendChild(doc)
                     }
@@ -457,7 +470,8 @@ function registerStandardHints(successFunc) {
                 doc += line.replace(/\-\-   /g, "") + "\n";
             } else {
                 let wordStart = 0;
-                if (line.startsWith("type ") || line.startsWith("data ")) {
+                if (line.startsWith("type ") || line.startsWith(
+                        "data ")) {
                     wordStart += 5;
 
                     // Hide kind annotations.
@@ -476,12 +490,14 @@ function registerStandardHints(successFunc) {
                     return;
                 }
 
-                if (line[wordStart] == "(" && line[wordEnd - 1] == ")") {
+                if (line[wordStart] == "(" && line[wordEnd - 1] ==
+                    ")") {
                     wordStart++;
                     wordEnd--;
                 }
 
-                let word = line.substr(wordStart, wordEnd - wordStart);
+                let word = line.substr(wordStart, wordEnd -
+                    wordStart);
                 if (hintBlacklist.indexOf(word) < 0) {
                     codeWorldBuiltinSymbols[word] = {
                         declaration: line,
@@ -552,12 +568,15 @@ let Auth = (() => {
     }
 
     function initGoogleAuth() {
-        Promise.resolve($.getScript("https://apis.google.com/js/platform.js"))
+        Promise.resolve($.getScript(
+                "https://apis.google.com/js/platform.js"))
             .then(() => gapi.load("auth2", () =>
                 withClientId(clientId => {
-                    function sendHttpAuth(method, url, body, callback) {
+                    function sendHttpAuth(method, url, body,
+                        callback) {
                         if (body != null && signedIn()) {
-                            const idToken = window.auth2.currentUser.get().getAuthResponse().id_token;
+                            const idToken = window.auth2.currentUser
+                                .get().getAuthResponse().id_token;
                             body.append("id_token", idToken);
                         }
 
@@ -638,7 +657,9 @@ function withClientId(f) {
 
     sendHttp('GET', 'clientId.txt', null, request => {
         if (request.status != 200 || request.responseText == '') {
-            sweetAlert('Oops!', 'Missing API client key.  You will not be able to sign in.', 'warning');
+            sweetAlert('Oops!',
+                'Missing API client key.  You will not be able to sign in.',
+                'warning');
             return null;
         }
 
@@ -702,7 +723,9 @@ function moveHere_(path, buildMode, successFunc) {
         data.append('name', window.move.file);
     } else {
         if (path.startsWith(window.move.path)) {
-            sweetAlert('Oops!', 'You cannot move a path to a location inside itself.', 'error');
+            sweetAlert('Oops!',
+                'You cannot move a path to a location inside itself.',
+                'error');
             cancelMove();
             return;
         }
@@ -711,7 +734,9 @@ function moveHere_(path, buildMode, successFunc) {
 
     sendHttp('POST', 'moveProject', data, request => {
         if (request.status != 200) {
-            sweetAlert('Oops', 'Could not move your project! Please try again.', 'error');
+            sweetAlert('Oops',
+                'Could not move your project! Please try again.',
+                'error');
             cancelMove();
             return;
         }
@@ -728,7 +753,8 @@ function warnIfUnsaved(action, showAnother) {
     if (isEditorClean()) {
         action();
     } else {
-        let msg = 'There are unsaved changes to your project. ' + 'Continue and throw away your changes?';
+        let msg = 'There are unsaved changes to your project. ' +
+            'Continue and throw away your changes?';
         sweetAlert({
             title: 'Warning',
             text: msg,
@@ -751,7 +777,8 @@ function saveProjectAs() {
     let text;
     if (nestedDirs.length > 1) {
         text = 'Enter a name for your project in folder <b>' +
-            $('<div>').text(nestedDirs.slice(1).join('/')).html().replace(/ /g, '&nbsp;') +
+            $('<div>').text(nestedDirs.slice(1).join('/')).html().replace(/ /g,
+                '&nbsp;') +
             ':';
     } else {
         text = 'Enter a name for your project:';
@@ -827,7 +854,9 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
         sendHttp('POST', 'saveProject', data, request => {
             sweetAlert2.close();
             if (request.status != 200) {
-                sweetAlert('Oops!', 'Could not save your project!!!  Please try again.', 'error');
+                sweetAlert('Oops!',
+                    'Could not save your project!!!  Please try again.',
+                    'error');
                 return;
             }
 
@@ -835,17 +864,20 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
             cancelMove();
             updateUI();
 
-            if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) == -1) {
+            if (allProjectNames[allProjectNames.length - 1].indexOf(
+                    projectName) == -1) {
                 discoverProjects(path, allProjectNames.length - 1);
             }
         });
     }
 
-    if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) == -1 || projectName == openProjectName) {
+    if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) == -1 ||
+        projectName == openProjectName) {
         go();
     } else {
         let msg = 'Are you sure you want to save over another project?\n\n' +
-            'The previous contents of ' + projectName + ' will be permanently destroyed!';
+            'The previous contents of ' + projectName +
+            ' will be permanently destroyed!';
         sweetAlert({
             title: 'Warning',
             text: msg,
@@ -880,7 +912,9 @@ function deleteProject_(path, buildMode, successFunc) {
         });
     }
 
-    let msg = 'Deleting a project will throw away all work, and cannot be undone. ' + 'Are you sure?';
+    let msg =
+        'Deleting a project will throw away all work, and cannot be undone. ' +
+        'Are you sure?';
     sweetAlert({
         title: 'Warning',
         text: msg,
@@ -912,12 +946,15 @@ function deleteFolder_(path, buildMode, successFunc) {
                 nestedDirs.pop();
                 allProjectNames.pop();
                 allFolderNames.pop();
-                discoverProjects(nestedDirs.slice(1).join('/'), allProjectNames.length - 1);
+                discoverProjects(nestedDirs.slice(1).join('/'),
+                    allProjectNames.length - 1);
             }
         });
     }
 
-    let msg = 'Deleting a folder will throw away all of its content, cannot be undone. ' + 'Are you sure?';
+    let msg =
+        'Deleting a folder will throw away all of its content, cannot be undone. ' +
+        'Are you sure?';
     sweetAlert({
         title: 'Warning',
         text: msg,
@@ -931,7 +968,8 @@ function deleteFolder_(path, buildMode, successFunc) {
 function createFolder(path, buildMode, successFunc) {
     warnIfUnsaved(() => {
         if (!signedIn()) {
-            sweetAlert('Oops!', 'You must sign in to create a folder.', 'error');
+            sweetAlert('Oops!', 'You must sign in to create a folder.',
+                'error');
             updateUI();
             return;
         }
@@ -951,11 +989,14 @@ function createFolder(path, buildMode, successFunc) {
 
             sendHttp('POST', 'createFolder', data, request => {
                 if (request.status != 200) {
-                    sweetAlert('Oops', 'Could not create your directory! Please try again.', 'error');
+                    sweetAlert('Oops',
+                        'Could not create your directory! Please try again.',
+                        'error');
                     return;
                 }
 
-                allFolderNames[allFolderNames.length - 1].push(folderName);
+                allFolderNames[allFolderNames.length - 1].push(
+                    folderName);
                 nestedDirs.push(folderName);
                 allFolderNames.push([]);
                 allProjectNames.push([]);
@@ -981,7 +1022,8 @@ function loadProject_(index, name, buildMode, successFunc) {
 
     warnIfUnsaved(() => {
         if (!signedIn()) {
-            sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
+            sweetAlert('Oops!', 'You must sign in to open projects.',
+                'error');
             updateUI();
             return;
         }
@@ -996,9 +1038,12 @@ function loadProject_(index, name, buildMode, successFunc) {
                 let project = JSON.parse(request.responseText);
 
                 successFunc(project);
-                window.nestedDirs = nestedDirs.slice(0, index + 1);
-                window.allProjectNames = allProjectNames.slice(0, index + 1);
-                window.allFolderNames = allFolderNames.slice(0, index + 1);
+                window.nestedDirs = nestedDirs.slice(0, index +
+                    1);
+                window.allProjectNames = allProjectNames.slice(
+                    0, index + 1);
+                window.allFolderNames = allFolderNames.slice(0,
+                    index + 1);
                 cancelMove();
                 updateUI();
             }
@@ -1032,7 +1077,8 @@ function share() {
             a.search = '?mode=' + window.buildMode + '&dhash=' + window.deployHash;
 
             url = a.href;
-            msg = 'Copy this link to share your program (but not code) with others!';
+            msg =
+                'Copy this link to share your program (but not code) with others!';
             showConfirm = true;
             confirmText = 'Share With Code';
         }
@@ -1091,7 +1137,8 @@ function shareFolder_(mode) {
         updateUI();
         return;
     }
-    if (nestedDirs.length == 1 || (openProjectName != null && openProjectName != '')) {
+    if (nestedDirs.length == 1 || (openProjectName != null && openProjectName !=
+            '')) {
         sweetAlert('Oops!', 'YOu must select a folder to share!', 'error');
         updateUI();
         return;
@@ -1107,7 +1154,9 @@ function shareFolder_(mode) {
 
         sendHttp('POST', 'shareFolder', data, request => {
             if (request.status != 200) {
-                sweetAlert('Oops!', 'Could not share your folder! Please try again.', 'error');
+                sweetAlert('Oops!',
+                    'Could not share your folder! Please try again.',
+                    'error');
                 return;
             }
 

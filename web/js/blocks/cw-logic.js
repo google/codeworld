@@ -32,7 +32,9 @@ Blockly.Blocks['conIf'] = {
             .appendField('else');
         this.setInputsInline(true);
         this.setOutput(true);
-        Blockly.TypeInf.defineFunction("if", Type.fromList([Type.Lit("Truth"), Type.Var("a"), Type.Var("a"), Type.Var("a")]));
+        Blockly.TypeInf.defineFunction("if", Type.fromList([Type.Lit(
+            "Truth"), Type.Var("a"), Type.Var("a"), Type.Var(
+            "a")]));
         this.setAsFunction("if");
     }
 };

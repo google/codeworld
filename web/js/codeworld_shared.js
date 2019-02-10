@@ -42,6 +42,8 @@ function sendHttpRaw(method, url, body, callback) {
 
     request.open(method, url, true);
     request.send(body);
+
+    return request;
 }
 
 var Html = (() => {
@@ -569,6 +571,8 @@ var Auth = (() => {
 
             request.open(method, url, true);
             request.send(body);
+
+            return request;
           }
 
           const auth2 = Object.assign({ sendHttpAuth: sendHttpAuth }, gapi.auth2.init({

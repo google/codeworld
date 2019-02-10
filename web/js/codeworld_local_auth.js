@@ -305,6 +305,7 @@ var LocalAuth = (() => {
     request.open(method, url, true);
     request.setRequestHeader("Authorization", `Bearer ${_accessToken}`);
     request.send(body);
+    return request;
   }
 
   function isTokenExpired(request) {

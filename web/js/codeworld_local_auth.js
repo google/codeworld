@@ -67,7 +67,8 @@ let LocalAuth = (() => {
     }
 
     function validateFormData() {
-        const isReset = typeof $(`#${NEW_PASSWORD_1}`).css("display") != "undefined";
+        const isReset = typeof $(`#${NEW_PASSWORD_1}`).css("display") !=
+            "undefined";
         if (isReset) {
             let formData = {
                 userId: $(`#${USER_ID}`).val(),
@@ -85,7 +86,8 @@ let LocalAuth = (() => {
                 password: $(`#${PASSWORD}`).val()
             };
 
-            formData.validationResult = validationMessageSignIn(formData);
+            formData.validationResult = validationMessageSignIn(
+                formData);
             formData.isValid = !formData.validationResult;
             return formData;
         }
@@ -109,7 +111,8 @@ let LocalAuth = (() => {
             return temp;
         }
 
-        if (formData.newPassword1.length <= 0 || formData.newPassword2.length <= 0) {
+        if (formData.newPassword1.length <= 0 || formData.newPassword2.length <=
+            0) {
             return "New password cannot be empty";
         }
 
@@ -129,7 +132,8 @@ let LocalAuth = (() => {
     }
 
     function isPasswordExpired(e) {
-        return e.status == 401 && e.responseJSON && e.responseJSON.reason == "password-expired";
+        return e.status == 401 && e.responseJSON && e.responseJSON.reason ==
+            "password-expired";
     }
 
     function resetFocus() {
@@ -194,7 +198,9 @@ let LocalAuth = (() => {
                 .catch(e => {
                     if (isPasswordExpired(e)) {
                         return sweetAlert2({
-                            title: Alert.title("Reset Your Password", "mdi-account"),
+                            title: Alert.title(
+                                "Reset Your Password",
+                                "mdi-account"),
                             html: `<input id="${USER_ID}" class="swal2-input" placeholder="Enter your user name" value="${Html.encode(formData.userId)}">` +
                                 `<input id="${PASSWORD}" class="swal2-input" placeholder="Enter your password" type="password">` +
                                 `<input id="${NEW_PASSWORD_1}" class="swal2-input" placeholder="Enter new password" type="password">` +
@@ -203,7 +209,9 @@ let LocalAuth = (() => {
                             showCancelButton: true,
                             reverseButtons: true,
                             showLoaderOnConfirm: true,
-                            onOpen: () => $(`#${PASSWORD}`).focus(),
+                            onOpen: () => $(
+                                    `#${PASSWORD}`)
+                                .focus(),
                             preConfirm: onPreConfirmReset,
                         }).then(resp => {
                             if (resp.value) {
@@ -245,7 +253,8 @@ let LocalAuth = (() => {
 
     function signIn(title) {
         return sweetAlert2({
-            title: Alert.title(title || "Sign In", "mdi-account"),
+            title: Alert.title(title || "Sign In",
+                "mdi-account"),
             html: `<input id="${USER_ID}" class="swal2-input" placeholder="Enter your user name">` +
                 `<input id="${PASSWORD}" class="swal2-input" placeholder="Enter your password" type="password">`,
             focusConfirm: false,
@@ -297,13 +306,18 @@ let LocalAuth = (() => {
                     }).then(resp => {
                         _accessToken = resp.result.accessToken;
                         _refreshToken = resp.result.refreshToken;
-                        sendHttpAuth(method, url, body, callback);
+                        sendHttpAuth(method, url, body,
+                            callback);
                     }).catch(() => {
                         signOut()
-                            .then(() => signIn("Please Sign In Again"))
+                            .then(() => signIn(
+                                "Please Sign In Again"))
                             .then(value => {
                                 if (value) {
-                                    return sendHttpAuth(method, url, body, callback);
+                                    return sendHttpAuth(
+                                        method, url,
+                                        body,
+                                        callback);
                                 }
                             }).catch(handleError);
                     });
@@ -316,7 +330,8 @@ let LocalAuth = (() => {
         };
 
         request.open(method, url, true);
-        request.setRequestHeader("Authorization", `Bearer ${_accessToken}`);
+        request.setRequestHeader("Authorization",
+            `Bearer ${_accessToken}`);
         request.send(body);
         return request;
     }

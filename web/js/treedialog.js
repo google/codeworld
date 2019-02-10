@@ -92,7 +92,9 @@
             } else if (p.pictures) {
                 for (let i = 0; i < p.pictures.length; i++) {
                     let li = document.createElement("li"),
-                        op = open && (id >= p.pictures[i].id) && (i == p.pictures.length - 1 || id < p.pictures[i + 1].id);
+                        op = open && (id >= p.pictures[i].id) && (i ==
+                            p.pictures.length - 1 || id < p.pictures[i +
+                                1].id);
                     go(p.pictures[i], li, op);
                     ul.appendChild(li);
                 }
@@ -140,7 +142,8 @@
             if (marker) marker.clear();
 
             getPicNode(currentPic.id, node => {
-                node.link.classList.remove("piclink-selected");
+                node.link.classList.remove(
+                    "piclink-selected");
             });
             getPicNode(pic.id, node => {
                 node.link.classList.add("piclink-selected");
@@ -149,7 +152,8 @@
             currentPic = pic;
             dialog.dialog("option", "title", pic.name);
             drawShape(canvas, pic.id);
-            if (pic.startLine && pic.startCol && pic.endLine && pic.endCol) {
+            if (pic.startLine && pic.startCol && pic.endLine && pic
+                .endCol) {
                 codeworldEditor.setSelection({
                     line: pic.startLine - 1,
                     ch: pic.startCol - 1
@@ -164,7 +168,8 @@
         a.addEventListener("mouseover", evt => {
             highlight(true, pic.id);
 
-            if (pic.startLine && pic.startCol && pic.endLine && pic.endCol) {
+            if (pic.startLine && pic.startCol && pic.endLine && pic
+                .endCol) {
                 if (marker) marker.clear();
                 marker = codeworldEditor.markText({
                     line: pic.startLine - 1,

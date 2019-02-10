@@ -33,15 +33,19 @@ CodeMirror.defineMode("codeworld", (_config, modeConfig) => {
     let RE_STARTMETA = /{-#/;
     let RE_STARTCOMMENT = /{-/;
     let RE_DASHES = /--+(?=$|[^:!#$%&*+.\/<=>?@\\^|~-]+)/;
-    let RE_QUAL = /[A-Z][A-Za-z_0-9']*\.(?=[A-Za-z_:!#$%&*+.\/<=>?@\\^|~]|-[^-])/;
+    let RE_QUAL =
+        /[A-Z][A-Za-z_0-9']*\.(?=[A-Za-z_:!#$%&*+.\/<=>?@\\^|~]|-[^-])/;
     let RE_VARID = /[a-z_][A-Za-z_0-9']*/;
     let RE_CONID = /[A-Z][A-Za-z_0-9']*/;
     let RE_VARSYM = /[!#$%&*+.\/<=>?@\\^|~-][:!#$%&*+.\/<=>?@\\^|~-]*/;
     let RE_CONSYM = /:[:!#$%&*+.\/<=>?@\\^|~-]*/;
-    let RE_NUMBER = /[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|0[oO][0-7]+|0[xX][0-9a-fA-F]+/;
-    let RE_CHAR = new RegExp('\'(?:[^\\\\\']|\\\\[abfnrtv\\\\"\']|\\\\^[A-Z@[\\\\\\]^_]|' +
+    let RE_NUMBER =
+        /[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|0[oO][0-7]+|0[xX][0-9a-fA-F]+/;
+    let RE_CHAR = new RegExp(
+        '\'(?:[^\\\\\']|\\\\[abfnrtv\\\\"\']|\\\\^[A-Z@[\\\\\\]^_]|' +
         MULTICHAR_ESCAPE_REGEX + ')\'');
-    let RE_STRING = new RegExp('"(?:[^\\\\"]|\\\\[abfnrtv\\\\"\'&]|\\\\^[A-Z@[\\\\\\]^_]|' +
+    let RE_STRING = new RegExp(
+        '"(?:[^\\\\"]|\\\\[abfnrtv\\\\"\'&]|\\\\^[A-Z@[\\\\\\]^_]|' +
         MULTICHAR_ESCAPE_REGEX + ')*"');
     let RE_OPENBRACKET = /[([{]/;
     let RE_CLOSEBRACKET = /[)\]}]/;
@@ -89,7 +93,8 @@ CodeMirror.defineMode("codeworld", (_config, modeConfig) => {
 
         if (stream.match(RE_OPENBRACKET)) {
             state.brackets.push(stream.current());
-            return 'bracket' + (state.brackets.length <= 7 ? '-' + (state.brackets.length - 1) : '');
+            return 'bracket' + (state.brackets.length <= 7 ? '-' + (
+                state.brackets.length - 1) : '');
         }
 
         if (stream.match(RE_CLOSEBRACKET)) {
@@ -98,7 +103,8 @@ CodeMirror.defineMode("codeworld", (_config, modeConfig) => {
                 return 'bracket';
             } else {
                 while (state.brackets.length > i) state.brackets.pop();
-                return 'bracket' + (state.brackets.length <= 6 ? '-' + state.brackets.length : '');
+                return 'bracket' + (state.brackets.length <= 6 ? '-' +
+                    state.brackets.length : '');
             }
         }
 
@@ -132,13 +138,18 @@ CodeMirror.defineMode("codeworld", (_config, modeConfig) => {
         let result = {};
 
         let keywords = [
-            'case', 'class', 'data', 'default', 'deriving', 'do', 'else', 'foreign',
-            'if', 'import', 'in', 'infix', 'infixl', 'infixr', 'instance', 'let',
-            'module', 'newtype', 'of', 'then', 'type', 'where', '_', '..', ':',
-            '=', '::', '\\', '<-', '->', '@', '~', '=>', '|'
+            'case', 'class', 'data', 'default', 'deriving',
+            'do', 'else', 'foreign',
+            'if', 'import', 'in', 'infix', 'infixl',
+            'infixr', 'instance', 'let',
+            'module', 'newtype', 'of', 'then', 'type',
+            'where', '_', '..', ':',
+            '=', '::', '\\', '<-', '->', '@', '~', '=>',
+            '|'
         ];
 
-        for (let i = 0; i < keywords.length; ++i) result[keywords[i]] = 'keyword';
+        for (let i = 0; i < keywords.length; ++i) result[
+            keywords[i]] = 'keyword';
 
         let override = modeConfig.overrideKeywords;
         if (override)
@@ -162,7 +173,8 @@ CodeMirror.defineMode("codeworld", (_config, modeConfig) => {
             let t = state.func(stream, state);
             if (['variable', 'variable-2'].indexOf(t) != -1) {
                 let w = stream.current();
-                if (wellKnownWords.hasOwnProperty(w)) return wellKnownWords[w];
+                if (wellKnownWords.hasOwnProperty(w)) return wellKnownWords[
+                    w];
             }
             return t;
         },

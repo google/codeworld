@@ -31,29 +31,42 @@ Blockly.Blocks['lists_comprehension'] = {
     init() {
         this.setColour(listsHUE);
         this.vars_ = ['i', 'j', 'k'];
-        this.varTypes_ = [Type.generateTypeVar('lc'), Type.generateTypeVar('lc'), Type.generateTypeVar('lc')];
+        this.varTypes_ = [Type.generateTypeVar('lc'), Type.generateTypeVar(
+            'lc'), Type.generateTypeVar('lc')];
         this.appendValueInput("DO")
-            .appendField(new Blockly.FieldLabel("List Comprehension", "blocklyTextEmph"))
+            .appendField(new Blockly.FieldLabel("List Comprehension",
+                "blocklyTextEmph"))
         this.appendValueInput('VAR0')
             .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(new Blockly.FieldLocalVar(this.vars_[0], this.getArgType(0)))
+            .appendField(new Blockly.FieldLocalVar(this.vars_[0], this.getArgType(
+                0)))
             .appendField('\u2190');
         this.appendValueInput('VAR1')
             .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(new Blockly.FieldLocalVar(this.vars_[1], this.getArgType(1)))
+            .appendField(new Blockly.FieldLocalVar(this.vars_[1], this.getArgType(
+                1)))
             .appendField('\u2190');
         this.setOutput(true);
-        this.setMutator(new Blockly.Mutator(['lists_comp_var', 'lists_comp_guard']));
+        this.setMutator(new Blockly.Mutator(['lists_comp_var',
+            'lists_comp_guard'
+        ]));
         this.setTooltip(Blockly.Msg.LISTS_CREATE_WITH_TOOLTIP);
         this.varCount_ = 2;
         this.guardCount_ = 0;
         this.resetArrows();
-        Blockly.TypeInf.defineFunction("&&&", Type.fromList([Type.Lit("Truth"), Type.Lit("Truth"), Type.Lit("Truth")]));
-        Blockly.TypeInf.defineFunction("filtB", Type.fromList([Type.Var('a'), Type.Lit("Truth"), Type.Var('a')]));
-        Blockly.TypeInf.defineFunction("returnl", Type.fromList([Type.Var("a"), Type.Lit("list", [Type.Var("a")])]));
-        Blockly.TypeInf.defineFunction("froml", Type.fromList([Type.Lit("list", [Type.Var("a")]), Type.Var("a")]));
+        Blockly.TypeInf.defineFunction("&&&", Type.fromList([Type.Lit(
+            "Truth"), Type.Lit("Truth"), Type.Lit("Truth")]));
+        Blockly.TypeInf.defineFunction("filtB", Type.fromList([Type.Var('a'),
+            Type.Lit("Truth"), Type.Var('a')
+        ]));
+        Blockly.TypeInf.defineFunction("returnl", Type.fromList([Type.Var(
+            "a"), Type.Lit("list", [Type.Var("a")])]));
+        Blockly.TypeInf.defineFunction("froml", Type.fromList([Type.Lit(
+            "list", [Type.Var("a")]), Type.Var("a")]));
         Blockly.TypeInf.defineFunction("bindl", Type.fromList(
-            [Type.Lit("list", [Type.Var("a")]), Type.fromList([Type.Var("a"), Type.Lit("list", [Type.Var("b")])]), Type.Lit("list", [Type.Var("b")])]));
+            [Type.Lit("list", [Type.Var("a")]), Type.fromList([Type
+                .Var("a"), Type.Lit("list", [Type.Var("b")])
+            ]), Type.Lit("list", [Type.Var("b")])]));
 
     },
 
@@ -201,10 +214,12 @@ Blockly.Blocks['lists_comprehension'] = {
             if (this.getInput('DO').connection == connection)
                 return this.vars_;
 
-            if (this.getInput('VAR' + i) && this.getInput('VAR' + i).connection == connection)
+            if (this.getInput('VAR' + i) && this.getInput('VAR' + i).connection ==
+                connection)
                 return available;
 
-            if (this.getInput('GUARD' + i) && this.getInput('GUARD' + i).connection == connection)
+            if (this.getInput('GUARD' + i) && this.getInput('GUARD' + i).connection ==
+                connection)
                 return this.vars_;
 
             available = available.concat(this.vars_[i]);
@@ -247,7 +262,8 @@ Blockly.Blocks['lists_comprehension'] = {
         this.varTypes_ = [];
 
         this.varCount_ = parseInt(xmlElement.getAttribute('varcount'), 10);
-        this.guardCount_ = parseInt(xmlElement.getAttribute('guardcount'), 10);
+        this.guardCount_ = parseInt(xmlElement.getAttribute('guardcount'),
+            10);
 
         for (let i = 0, childNode; childNode = xmlElement.childNodes[i]; i++) {
             if (childNode.nodeName.toLowerCase() == 'let') {
@@ -255,7 +271,8 @@ Blockly.Blocks['lists_comprehension'] = {
 
                 let input = this.appendValueInput('VAR' + i)
                     .setAlign(Blockly.ALIGN_RIGHT)
-                    .appendField(new Blockly.FieldLocalVar(name, this.getArgType(i)))
+                    .appendField(new Blockly.FieldLocalVar(name, this.getArgType(
+                        i)))
                     .appendField('\u2190');
                 this.vars_.push(name);
             }
@@ -323,7 +340,8 @@ Blockly.Blocks['lists_comprehension'] = {
                 this.vars_[this.varCount_] = name;
                 let input = this.appendValueInput('VAR' + this.varCount_)
                     .setAlign(Blockly.ALIGN_RIGHT)
-                    .appendField(new Blockly.FieldLocalVar(name, this.getArgType(this.varCount_)))
+                    .appendField(new Blockly.FieldLocalVar(name, this.getArgType(
+                        this.varCount_)))
                     .appendField('\u2190');
 
                 this.vars_.push(name);
@@ -415,11 +433,15 @@ Blockly.Blocks['lists_numgen'] = {
         this.setInputsInline(true);
         this.setOutput(true);
 
-        Blockly.TypeInf.defineFunction("[..]", Type.fromList([Type.Lit("Number"), Type.Lit("Number"), Type.Lit("list", [Type.Lit("Number")])]));
+        Blockly.TypeInf.defineFunction("[..]", Type.fromList([Type.Lit(
+            "Number"), Type.Lit("Number"), Type.Lit("list",
+            [Type.Lit("Number")])]));
         this.setAsFunction("[..]");
 
         this.setColour(listsHUE);
-        this.setTooltip('Generates a list of numbers between the first and second inputs');
+        this.setTooltip(
+            'Generates a list of numbers between the first and second inputs'
+        );
     }
 };
 
@@ -439,11 +461,15 @@ Blockly.Blocks['lists_numgenstep'] = {
         this.setInputsInline(true);
         this.setOutput(true);
 
-        Blockly.TypeInf.defineFunction("[,..]", Type.fromList([Type.Lit("Number"), Type.Lit("Number"), Type.Lit("Number"), Type.Lit("list", [Type.Lit("Number")])]));
+        Blockly.TypeInf.defineFunction("[,..]", Type.fromList([Type.Lit(
+            "Number"), Type.Lit("Number"), Type.Lit(
+            "Number"), Type.Lit("list", [Type.Lit("Number")])]));
         this.setAsFunction("[,..]");
 
         this.setColour(listsHUE);
-        this.setTooltip('Generates a list of numbers between the first and second inputs, with a step');
+        this.setTooltip(
+            'Generates a list of numbers between the first and second inputs, with a step'
+        );
     }
 };
 
@@ -457,7 +483,8 @@ Blockly.Blocks['lists_length'] = {
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField(")");
         this.setOutput(true);
-        Blockly.TypeInf.defineFunction("length", Type.fromList([Type.Lit("list", [Type.Var("a")]), Type.Lit("Number")]));
+        Blockly.TypeInf.defineFunction("length", Type.fromList([Type.Lit(
+            "list", [Type.Var("a")]), Type.Lit("Number")]));
         this.setAsFunction("length");
     }
 };
@@ -466,14 +493,17 @@ Blockly.Blocks['lists_repeating'] = {
     init() {
         this.setColour(listsHUE);
         this.appendValueInput('LST')
-            .appendField(new Blockly.FieldLabel("repeating", "blocklyTextEmph"))
+            .appendField(new Blockly.FieldLabel("repeating",
+                "blocklyTextEmph"))
             .appendField("(");
         this.appendDummyInput()
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField(")");
         this.setOutput(true);
         let lstType = Type.Lit("list", [Type.Var("a")]);
-        Blockly.TypeInf.defineFunction("repeating", Type.fromList([lstType, lstType]));
+        Blockly.TypeInf.defineFunction("repeating", Type.fromList([lstType,
+            lstType
+        ]));
         this.setAsFunction("repeating");
     }
 };
@@ -482,7 +512,8 @@ Blockly.Blocks['lists_shuffled'] = {
     init() {
         this.setColour(listsHUE);
         this.appendValueInput('LST')
-            .appendField(new Blockly.FieldLabel("shuffled", "blocklyTextEmph"))
+            .appendField(new Blockly.FieldLabel("shuffled",
+                "blocklyTextEmph"))
             .appendField("(");
         this.appendValueInput('SEED')
             .setAlign(Blockly.ALIGN_RIGHT)
@@ -492,7 +523,9 @@ Blockly.Blocks['lists_shuffled'] = {
             .appendField(")");
         this.setOutput(true);
         let lstType = Type.Lit("list", [Type.Var("a")]);
-        Blockly.TypeInf.defineFunction("shuffled", Type.fromList([lstType, Type.Lit("Number"), lstType]));
+        Blockly.TypeInf.defineFunction("shuffled", Type.fromList([lstType,
+            Type.Lit("Number"), lstType
+        ]));
         this.setAsFunction("shuffled");
     }
 };
@@ -508,7 +541,9 @@ Blockly.Blocks['lists_sorted'] = {
             .appendField(")");
         this.setOutput(true);
         let lstType = Type.Lit("list", [Type.Lit("Number")]);
-        Blockly.TypeInf.defineFunction("sorted", Type.fromList([lstType, lstType]));
+        Blockly.TypeInf.defineFunction("sorted", Type.fromList([lstType,
+            lstType
+        ]));
         this.setAsFunction("sorted");
     }
 };
@@ -517,14 +552,17 @@ Blockly.Blocks['lists_reversed'] = {
     init() {
         this.setColour(listsHUE);
         this.appendValueInput('LST')
-            .appendField(new Blockly.FieldLabel("reversed", "blocklyTextEmph"))
+            .appendField(new Blockly.FieldLabel("reversed",
+                "blocklyTextEmph"))
             .appendField("(");
         this.appendDummyInput()
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField(")");
         this.setOutput(true);
         let lstType = Type.Lit("list", [Type.Var("a")]);
-        Blockly.TypeInf.defineFunction("reversed", Type.fromList([lstType, lstType]));
+        Blockly.TypeInf.defineFunction("reversed", Type.fromList([lstType,
+            lstType
+        ]));
         this.setAsFunction("reversed");
     }
 };
@@ -543,7 +581,9 @@ Blockly.Blocks['lists_first'] = {
             .appendField(")");
         this.setOutput(true);
         let lstType = Type.Lit("list", [Type.Var("a")]);
-        Blockly.TypeInf.defineFunction("first", Type.fromList([lstType, Type.Lit("Number"), lstType]));
+        Blockly.TypeInf.defineFunction("first", Type.fromList([lstType,
+            Type.Lit("Number"), lstType
+        ]));
         this.setAsFunction("first");
     }
 };
@@ -562,7 +602,9 @@ Blockly.Blocks['lists_rest'] = {
             .appendField(")");
         this.setOutput(true);
         let lstType = Type.Lit("list", [Type.Var("a")]);
-        Blockly.TypeInf.defineFunction("rest", Type.fromList([lstType, Type.Lit("Number"), lstType]));
+        Blockly.TypeInf.defineFunction("rest", Type.fromList([lstType, Type
+            .Lit("Number"), lstType
+        ]));
         this.setAsFunction("rest");
     }
 };
@@ -578,7 +620,8 @@ Blockly.Blocks['lists_at'] = {
         this.setInputsInline(true);
 
         Blockly.TypeInf.defineFunction("#",
-            Type.fromList([Type.Lit("list", [Type.Var("a")]), Type.Lit("Number"), Type.Var("a")]));
+            Type.fromList([Type.Lit("list", [Type.Var("a")]), Type.Lit(
+                "Number"), Type.Var("a")]));
         this.setAsFunction("#");
     }
 };
@@ -594,7 +637,9 @@ Blockly.Blocks['lists_cons'] = {
         this.setInputsInline(true);
 
         let lst = Type.Lit("list", [Type.Var("a")]);
-        Blockly.TypeInf.defineFunction(":", Type.fromList([Type.Var("a"), lst, lst]));
+        Blockly.TypeInf.defineFunction(":", Type.fromList([Type.Var("a"),
+            lst, lst
+        ]));
         this.setAsFunction(":");
 
     }
@@ -610,7 +655,8 @@ Blockly.Blocks['lists_create_with_typed'] = {
     init() {
         this.setColour(260);
         this.appendValueInput('ADD0')
-            .appendField(new Blockly.FieldImage("ims/format-list-bulleted.svg", 20, 20))
+            .appendField(new Blockly.FieldImage(
+                "ims/format-list-bulleted.svg", 20, 20))
             .appendField(new Blockly.FieldLabel("List", "blocklyTextEmph"));
         this.appendValueInput('ADD1');
         this.appendValueInput('ADD2');
@@ -626,7 +672,10 @@ Blockly.Blocks['lists_create_with_typed'] = {
         this.arrows = Type.fromList(tps);
 
 
-        Blockly.TypeInf.defineFunction(":", Type.fromList([Type.Var("a"), Type.Lit("list", [Type.Var('a')]), Type.Lit("list", [Type.Var('a')])]));
+        Blockly.TypeInf.defineFunction(":", Type.fromList([Type.Var("a"),
+            Type.Lit("list", [Type.Var('a')]), Type.Lit("list",
+                [Type.Var('a')])
+        ]));
     },
     getType() {
         return this.outputConnection.typeExpr.children[0];
@@ -683,7 +732,8 @@ Blockly.Blocks['lists_create_with_typed'] = {
             let input = this.appendValueInput('ADD' + x);
             if (x == 0) {
 
-                input.appendField(new Blockly.FieldImage("ims/format-list-bulleted.svg", 20, 20));
+                input.appendField(new Blockly.FieldImage(
+                    "ims/format-list-bulleted.svg", 20, 20));
                 input.appendField("List");
             }
         }
@@ -738,8 +788,10 @@ Blockly.Blocks['lists_create_with_typed'] = {
         while (itemBlock) {
             let input = this.appendValueInput('ADD' + this.itemCount_);
             if (this.itemCount_ == 0) {
-                input.appendField(new Blockly.FieldImage("ims/format-list-bulleted.svg", 20, 20))
-                input.appendField(new Blockly.FieldLabel("List", "blocklyTextEmph"));
+                input.appendField(new Blockly.FieldImage(
+                    "ims/format-list-bulleted.svg", 20, 20))
+                input.appendField(new Blockly.FieldLabel("List",
+                    "blocklyTextEmph"));
             }
             // Reconnect any child blocks.
             if (itemBlock.valueConnection_) {

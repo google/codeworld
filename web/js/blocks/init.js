@@ -25,16 +25,23 @@ goog.require('Blockly.Blocks.cwEvent');
 // Initialize Blockly logic specific to CodeWorld
 
 // Top level program blocks, only allow one of each
-Blockly.Flyout.programBlockList = ["cwAnimationOf", "cwDrawingOf", "cwSimulationOf", "cwInteractionOf"];
+Blockly.Flyout.programBlockList = ["cwAnimationOf", "cwDrawingOf",
+    "cwSimulationOf", "cwInteractionOf"
+];
 // Automatically generate a type block for each of these
-Blockly.UserTypes.builtinsStatic = ["Truth", "Number", "Color", "Picture", "Text"];
+Blockly.UserTypes.builtinsStatic = ["Truth", "Number", "Color", "Picture",
+    "Text"
+];
 
-Blockly.UserTypes.userReservedNames = ['do', 'let', 'in', 'if', 'then', 'else', 'data', 'type', 'newtype', 'import', 'qualified']
+Blockly.UserTypes.userReservedNames = ['do', 'let', 'in', 'if', 'then', 'else',
+    'data', 'type', 'newtype', 'import', 'qualified'
+]
 
 // Add a these blockTypes to the toolbox
 Blockly.UserTypes.builtinsDynamic = ["type_list"];
 // Enable the Event drawer
 Blockly.Flyout.customDrawers["EVENT"] = Blockly.cwEvent.eventFlyoutCategory;
 
-Blockly.Events.orphanWarning = "This block is disabled because it is isolated from the program.";
+Blockly.Events.orphanWarning =
+    "This block is disabled because it is isolated from the program.";
 Blockly.Events.disconnectedWarning = "There's a block missing";

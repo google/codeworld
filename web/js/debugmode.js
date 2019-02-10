@@ -61,7 +61,8 @@
 
     // Globals
 
-    function initDebugMode(getNode, setActive, getPicture, highlightShape, drawShape) {
+    function initDebugMode(getNode, setActive, getPicture, highlightShape,
+        drawShape) {
         debugGetNode = getNode;
         debugSetActive = setActive;
         debugGetPicture = getPicture;
@@ -117,7 +118,8 @@
         debugSetActive(true);
         cachedPic = debugGetPicture();
 
-        parent.initTreeDialog(cachedPic, debugHighlightShape, debugDrawShape, () => stopDebugMode());
+        parent.initTreeDialog(cachedPic, debugHighlightShape,
+            debugDrawShape, () => stopDebugMode());
         parent.openTreeDialog(0);
 
         window.debugActive = true;

@@ -32,9 +32,12 @@ window.env = parent;
                     let clickable =
                         pre.classList.contains('clickable') ||
                         (pre.firstChild && pre.firstChild.classList &&
-                            pre.firstChild.classList.contains('clickable')) ||
-                        (pre.firstChild && pre.firstChild.firstChild && pre.firstChild.firstChild.classList &&
-                            pre.firstChild.firstChild.classList.contains('clickable'));
+                            pre.firstChild.classList.contains(
+                                'clickable')) ||
+                        (pre.firstChild && pre.firstChild.firstChild &&
+                            pre.firstChild.firstChild.classList &&
+                            pre.firstChild.firstChild.classList
+                            .contains('clickable'));
 
                     let text = pre.textContent;
                     pre.innerHTML = '';
@@ -86,7 +89,8 @@ window.env = parent;
             iframe.addEventListener("load", () => {
                 this.contentWindow.setParent(parent);
                 this.contentWindow.setId(iframe);
-                this.contentWindow.loadXml.call(iframe.contentWindow, text);
+                this.contentWindow.loadXml.call(iframe.contentWindow,
+                    text);
             });
 
             iframe.src = 'blockframe.html';
@@ -156,7 +160,8 @@ window.env = parent;
         popdiv.id = 'popout';
         popdiv.style = 'text-align: right';
         let popout = document.createElement('a');
-        popout.innerHTML = '<i class="mdi mdi-18px mdi-open-in-new"></i>&nbsp;Open the Help in a New Tab';
+        popout.innerHTML =
+            '<i class="mdi mdi-18px mdi-open-in-new"></i>&nbsp;Open the Help in a New Tab';
         popout.target = '_blank';
         popout.href = document.location.href;
         popout.onclick = e => {
@@ -209,7 +214,8 @@ window.env = parent;
         }
         help.appendChild(elem)
         document.body.scrollTop = 0;
-        if (document.firstElementChild) document.firstElementChild.scrollTop = 0;
+        if (document.firstElementChild) document.firstElementChild.scrollTop =
+            0;
     }
 
     function loadPath(path) {
@@ -230,7 +236,8 @@ window.env = parent;
                 let raw = request.responseText;
 
                 if (path.endsWith('.md')) {
-                    content.innerHTML = window.markdeep.format(raw, false);
+                    content.innerHTML = window.markdeep.format(raw,
+                        false);
                     relativizeLinks(source, content, 'img', 'src');
                     if (shelf && shelf.blocks) {
                         linkFunBlocks(content);

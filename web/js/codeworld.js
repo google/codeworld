@@ -70,9 +70,13 @@ async function init() {
                 sendHttp('POST', 'shareContent', data, request => {
                     window.location.hash = '';
                     if (request.status == 200) {
-                        sweetAlert('Success!', 'The shared folder is moved into your root directory.', 'success');
+                        sweetAlert('Success!',
+                            'The shared folder is moved into your root directory.',
+                            'success');
                     } else {
-                        sweetAlert('Oops!', 'Could not load the shared directory. Please try again.', 'error');
+                        sweetAlert('Oops!',
+                            'Could not load the shared directory. Please try again.',
+                            'error');
                     }
                     initCodeworld();
                     registerStandardHints(() => {
@@ -115,11 +119,12 @@ async function init() {
             hash = hash.slice(0, -2);
         }
         if (hash[0] == 'P') {
-            sendHttp('GET', 'loadSource?hash=' + hash + '&mode=' + window.buildMode, null, request => {
-                if (request.status == 200) {
-                    setCode(request.responseText, null, null, true);
-                }
-            });
+            sendHttp('GET', 'loadSource?hash=' + hash + '&mode=' + window.buildMode,
+                null, request => {
+                    if (request.status == 200) {
+                        setCode(request.responseText, null, null, true);
+                    }
+                });
         } else if (hash[0] != 'F') {
             setCode('');
         }
@@ -177,28 +182,35 @@ function initCodeworld() {
 
                 function cancelLintRequest() {
                     if (window.codeworldEditor) {
-                        window.codeworldEditor.off("change", cancelLintRequest);
+                        window.codeworldEditor.off("change",
+                            cancelLintRequest);
                     }
                     if (request) request.abort();
                 }
 
                 let data = new FormData();
                 data.append("source", text)
-                request = sendHttp("POST", "errorCheck", data, request => {
-                    if (window.codeworldEditor) {
-                        window.codeworldEditor.off("change", cancelLintRequest);
-                    }
+                request = sendHttp("POST", "errorCheck", data,
+                    request => {
+                        if (window.codeworldEditor) {
+                            window.codeworldEditor.off("change",
+                                cancelLintRequest);
+                        }
 
-                    if (request.status == 400 || request.status == 200) {
-                        callback(parseCompileErrors(request.responseText))
-                    } else {
-                        console.log("Not expected behavior: don't know how to " +
-                            "handle request with status ",
-                            request.status, request)
-                    };
-                });
+                        if (request.status == 400 || request.status ==
+                            200) {
+                            callback(parseCompileErrors(request
+                                .responseText))
+                        } else {
+                            console.log(
+                                "Not expected behavior: don't know how to " +
+                                "handle request with status ",
+                                request.status, request)
+                        };
+                    });
                 if (window.codeworldEditor) {
-                    window.codeworldEditor.on("change", cancelLintRequest);
+                    window.codeworldEditor.on("change",
+                        cancelLintRequest);
                 }
             },
             async: true
@@ -223,13 +235,15 @@ function initCodeworld() {
     window.reparseTimeoutId = null;
     window.codeworldEditor.on("changes", () => {
         if (window.reparseTimeoutId) clearTimeout(window.reparseTimeoutId);
-        window.reparseTimeoutId = setTimeout(parseSymbolsFromCurrentCode, 1500);
+        window.reparseTimeoutId = setTimeout(
+            parseSymbolsFromCurrentCode, 1500);
         window.updateUI();
     });
 
     window.onbeforeunload = event => {
         if (!isEditorClean()) {
-            let msg = 'There are unsaved changes to your project. ' + 'If you continue, they will be lost!';
+            let msg = 'There are unsaved changes to your project. ' +
+                'If you continue, they will be lost!';
             if (event) event.returnValue = msg;
             return msg;
         }
@@ -432,13 +446,15 @@ function updateUI() {
         document.getElementById('moveHereButton').style.display = 'none';
         document.getElementById('cancelMoveButton').style.display = 'none';
 
-        if (nestedDirs.length != 1 && (openProjectName == null || openProjectName == '')) {
+        if (nestedDirs.length != 1 && (openProjectName == null ||
+                openProjectName == '')) {
             document.getElementById('shareFolderButton').style.display = '';
         } else {
             document.getElementById('shareFolderButton').style.display = 'none';
         }
 
-        if ((openProjectName != null && openProjectName != '') || nestedDirs.length != 1) {
+        if ((openProjectName != null && openProjectName != '') || nestedDirs.length !=
+            1) {
             document.getElementById('moveButton').style.display = '';
         } else {
             document.getElementById('moveButton').style.display = 'none';
@@ -515,7 +531,8 @@ function updateNavBar() {
             .replace('>', '&gt;');
         let template = document.getElementById('projectTemplate').innerHTML;
         template = template.replace('{{label}}', encodedName);
-        template = template.replace(/{{ifactive ([^}]*)}}/, active ? "$1" : "");
+        template = template.replace(/{{ifactive ([^}]*)}}/, active ? "$1" :
+            "");
         let span = document.createElement('span');
         span.innerHTML = template;
         let elem = span.getElementsByTagName('a')[0];
@@ -537,18 +554,21 @@ function updateNavBar() {
     for (let i = 0; i < nestedDirs.length; i++) {
         let nextProjects = null;
         allFolderNames[i].forEach(folderName => {
-            let active = i + 1 < nestedDirs.length && nestedDirs[i + 1] == folderName;
+            let active = i + 1 < nestedDirs.length && nestedDirs[i + 1] ==
+                folderName;
             if (!signedIn() && !active) {
                 return;
             }
             let span = makeDirNode(folderName, active, i);
             projects.appendChild(span);
             if (active) {
-                nextProjects = span.appendChild(document.createElement('div'));
+                nextProjects = span.appendChild(document.createElement(
+                    'div'));
             }
         });
         allProjectNames[i].forEach(projectName => {
-            let active = i + 1 == nestedDirs.length && window.openProjectName == projectName;
+            let active = i + 1 == nestedDirs.length && window.openProjectName ==
+                projectName;
             if (!signedIn() && !active) {
                 return;
             }
@@ -573,13 +593,18 @@ function updateNavBar() {
 function moveProject() {
     warnIfUnsaved(() => {
         if (!signedIn()) {
-            sweetAlert('Oops!', 'You must sign in to move this project or folder.', 'error');
+            sweetAlert('Oops!',
+                'You must sign in to move this project or folder.',
+                'error');
             updateUI();
             return;
         }
 
-        if ((openProjectName == null || openProjectName == '') && nestedDirs.length == 1) {
-            sweetAlert('Oops!', 'You must select a project or folder to move.', 'error');
+        if ((openProjectName == null || openProjectName == '') &&
+            nestedDirs.length == 1) {
+            sweetAlert('Oops!',
+                'You must select a project or folder to move.',
+                'error');
             updateUI();
             return;
         }
@@ -617,7 +642,8 @@ function moveHere() {
 function changeFontSize(incr) {
     return () => {
         let elem = window.codeworldEditor.getWrapperElement();
-        let fontParts = window.getComputedStyle(elem)['font-size'].match(/^([0-9]+)(.*)$/);
+        let fontParts = window.getComputedStyle(elem)['font-size'].match(
+            /^([0-9]+)(.*)$/);
         let fontSize = 12;
         let fontUnit = 'px';
         if (fontParts.length >= 3) {
@@ -641,7 +667,8 @@ function help() {
 
     sweetAlert({
         title: '',
-        text: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' + url + '"></iframe>',
+        text: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' +
+            url + '"></iframe>',
         html: true,
         customClass: 'helpdoc',
         allowEscapeKey: true,
@@ -838,7 +865,8 @@ function run(hash, dhash, msg, error, generation) {
 }
 
 function showRequiredChecksInDialog(msg) {
-    let matches = msg.match(/:: REQUIREMENTS ::((?:.|[\r\n])*):: END REQUIREMENTS ::/)
+    let matches = msg.match(
+        /:: REQUIREMENTS ::((?:.|[\r\n])*):: END REQUIREMENTS ::/)
     if (!matches) {
         return;
     }
@@ -866,9 +894,12 @@ function showRequiredChecksInDialog(msg) {
     let itemsHtml = items.map(item => {
         let head = item[1];
         let rest = item.slice(2).join('<br>');
-        let details = rest ? '<br><span class="req-details">' + rest + '</span>' : '';
-        let itemclass = (item[0] === undefined) ? 'req-indet' : (item[0] ? 'req-yes' : 'req-no');
-        return '<li class="' + itemclass + '">' + head + details + '</li>';
+        let details = rest ? '<br><span class="req-details">' + rest +
+            '</span>' : '';
+        let itemclass = (item[0] === undefined) ? 'req-indet' : (item[0] ?
+            'req-yes' : 'req-no');
+        return '<li class="' + itemclass + '">' + head + details +
+            '</li>';
     });
     sweetAlert({
         html: true,
@@ -907,7 +938,8 @@ function compile() {
     stop();
 
     let src = window.codeworldEditor.getValue();
-    let compileGeneration = window.codeworldEditor.getDoc().changeGeneration(true);
+    let compileGeneration = window.codeworldEditor.getDoc().changeGeneration(
+        true);
 
     let data = new FormData();
     data.append('source', src);
@@ -956,7 +988,9 @@ function compile() {
                 hash = obj.hash;
                 dhash = obj.dhash;
             } catch (e) {
-                run('', '', "Sorry!  Your program couldn't be run right now.", true, null);
+                run('', '',
+                    "Sorry!  Your program couldn't be run right now.",
+                    true, null);
                 return;
             }
         }
@@ -968,9 +1002,11 @@ function compile() {
         sendHttp('POST', 'runMsg', data, request => {
             let msg = '';
             if (request.status == 200) {
-                msg = request.responseText.replace(/^[\r\n]+|[\r\n]+$/g, '');
+                msg = request.responseText.replace(
+                    /^[\r\n]+|[\r\n]+$/g, '');
             } else if (request.status >= 400) {
-                msg = "Sorry!  Your program couldn't be run right now.";
+                msg =
+                    "Sorry!  Your program couldn't be run right now.";
             }
             if (msg != '') msg += '\n\n';
 
@@ -1072,8 +1108,10 @@ function parseCompileErrors(rawErrors) {
                 return err.trim()
             }).join('\n'),
             re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/,
-            re2 = /^program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\): (\w+):(.*)/,
-            startLine, endLine, startCol, endCol, match, severity, description;
+            re2 =
+            /^program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\): (\w+):(.*)/,
+            startLine, endLine, startCol, endCol, match, severity,
+            description;
 
         if (firstLine.trim() === "") {
             return;
@@ -1085,16 +1123,22 @@ function parseCompileErrors(rawErrors) {
             if (match[4]) {
                 endCol = Number(match[4]) - 1;
             } else {
-                let token = window.codeworldEditor.getLineTokens(startLine).find(
+                let token = window.codeworldEditor.getLineTokens(
+                    startLine).find(
                     t => t.start === startCol);
                 if (token) {
                     endCol = token.end;
+                } else if (startCol >= window.codeworldEditor.getDoc().getLine(
+                        startLine).length) {
+                    endCol = startCol;
+                    --startCol;
                 } else {
                     endCol = startCol + 1;
                 }
             }
             severity = match[5]
-            description = match[6] ? match[6].trim() + '\n' : "" + otherLines;
+            description = match[6] ? match[6].trim() + '\n' : "" +
+                otherLines;
         } else if (re2.test(firstLine)) {
             match = re2.exec(firstLine);
             startLine = Number(match[1]) - 1;
@@ -1102,7 +1146,8 @@ function parseCompileErrors(rawErrors) {
             endLine = Number(match[3]) - 1;
             endCol = Number(match[4]) - 1;
             severity = match[5]
-            description = match[6] ? match[6].trim() + '\n' : "" + otherLines;
+            description = match[6] ? match[6].trim() + '\n' : "" +
+                otherLines;
         } else {
             console.log("Can not parse error header:", firstLine);
             return;

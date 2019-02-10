@@ -218,9 +218,7 @@ function initCodeworld() {
     window.reparseTimeoutId = null;
     window.codeworldEditor.on("changes", () => {
         if (window.reparseTimeoutId) clearTimeout(window.reparseTimeoutId);
-        window.reparseTimeoutId = setTimeout(() => {
-            parseSymbolsFromCurrentCode();
-        }, 1500);
+        window.reparseTimeoutId = setTimeout(parseSymbolsFromCurrentCode, 1500);
         window.updateUI();
     });
 
@@ -473,15 +471,11 @@ function updateUI() {
 
 function updateNavBar() {
     allProjectNames.forEach(projectNames => {
-        projectNames.sort((a, b) => {
-            return a.localeCompare(b);
-        });
+        projectNames.sort((a, b) => a.localeCompare(b));
     });
 
     allFolderNames.forEach(folderNames => {
-        folderNames.sort((a, b) => {
-            return a.localeCompare(b);
-        });
+        folderNames.sort((a, b) => a.localeCompare(b));
     });
 
     let makeDirNode = (name, isOpen, level) => {
@@ -833,10 +827,7 @@ function run(hash, dhash, msg, error, generation) {
     window.deployHash = dhash;
 
     updateUI();
-
-    document.getElementById('runner').addEventListener('load', () => {
-        updateUI();
-    });
+    document.getElementById('runner').addEventListener('load', updateUI);
 
     showRequiredChecksInDialog(msg);
 }
@@ -1090,9 +1081,7 @@ function parseCompileErrors(rawErrors) {
                 endCol = Number(match[4]) - 1;
             } else {
                 let token = window.codeworldEditor.getLineTokens(startLine).find(
-                    t => {
-                        return t.start === startCol
-                    });
+                    t => t.start === startCol);
                 if (token) {
                     endCol = token.end;
                 } else {

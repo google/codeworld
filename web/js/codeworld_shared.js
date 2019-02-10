@@ -312,12 +312,13 @@ function registerStandardHints(successFunc) {
         let token = cm.getTokenAt(cur);
 
         // If the current token is whitespace, it can be split.
+        let term, from;
         if (/^\s+$/.test(token.string)) {
-            let term = "";
-            let from = cur;
+            term = "";
+            from = cur;
         } else {
-            let term = token.string.substr(0, cur.ch - token.start);
-            let from = CodeMirror.Pos(cur.line, token.start);
+            term = token.string.substr(0, cur.ch - token.start);
+            from = CodeMirror.Pos(cur.line, token.start);
         }
 
         let found = [];

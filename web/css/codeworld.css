@@ -14,280 +14,289 @@
  * limitations under the License.
  */
 
-html { height: 100%; width: 100%; }
+html {
+    height: 100%;
+    width: 100%;
+}
 
 /* Avoid setting height on body since sweetAlert2 overrides it to `auto` while
  * the dialog is open. */
 body {
-  margin: 0;
+    margin: 0;
 }
 
 .root {
-  flex-grow: 1;
-  align-items: stretch;
-  -webkit-align-items: stretch;
-  -ms-align-items: stretch;
-  height: 100vh;
-  background-color: #e5eff9;
-  display: flex;
-  display: -webkit-flex;
-  display: -ms-flex;
-  flex-direction: column;
-  -webkit-flex-direction: column;
-  -ms-flex-direction: column;
-  overflow: hidden;
+    flex-grow: 1;
+    align-items: stretch;
+    -webkit-align-items: stretch;
+    -ms-align-items: stretch;
+    height: 100vh;
+    background-color: #e5eff9;
+    display: flex;
+    display: -webkit-flex;
+    display: -ms-flex;
+    flex-direction: column;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    overflow: hidden;
 }
 
 .ui-layout-container {
-  flex: 1 1 auto;
-  -webkit-flex: 1 1 auto;
-  -ms-flex: 1 1 auto;
-  padding-bottom: 5px;
+    flex: 1 1 auto;
+    -webkit-flex: 1 1 auto;
+    -ms-flex: 1 1 auto;
+    padding-bottom: 5px;
 }
 
 #toolbar {
-  display: flex;
-  display: -webkit-flex;
-  display: -ms-flex;
-  align-items: stretch;
-  -webkit-align-items: stretch;
-  -ms-align-items: stretch;
-  flex-direction: row;
-  -webkit-flex-direction: row;
-  -ms-flex-direction: row;
-  flex: 0 0 auto;
-  -webkit-flex: 0 0 auto;
-  -ms-flex: 0 0 auto;
+    display: flex;
+    display: -webkit-flex;
+    display: -ms-flex;
+    align-items: stretch;
+    -webkit-align-items: stretch;
+    -ms-align-items: stretch;
+    flex-direction: row;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex: 0 0 auto;
+    -webkit-flex: 0 0 auto;
+    -ms-flex: 0 0 auto;
 }
 
-#toolbar > div {
-  align-items: stretch;
-  -webkit-align-items: stretch;
-  -ms-align-items: stretch;
-  display: flex;
-  display: -webkit-flex;
-  display: -ms-flex;
-  flex: 0 1 auto;
-  -webkit-flex: 0 1 auto;
-  -ms-flex: 0 1 auto;
-  flex-flow: row wrap;
-  -webkit-flex-flow: row wrap;
-  -ms-flex-flow: row wrap;
+#toolbar>div {
+    align-items: stretch;
+    -webkit-align-items: stretch;
+    -ms-align-items: stretch;
+    display: flex;
+    display: -webkit-flex;
+    display: -ms-flex;
+    flex: 0 1 auto;
+    -webkit-flex: 0 1 auto;
+    -ms-flex: 0 1 auto;
+    flex-flow: row wrap;
+    -webkit-flex-flow: row wrap;
+    -ms-flex-flow: row wrap;
 }
 
-#toolbar > span {
-  flex: 1 1 auto;
-  -webkit-flex: 1 1 auto;
-  -ms-flex: 1 1 auto;
+#toolbar>span {
+    flex: 1 1 auto;
+    -webkit-flex: 1 1 auto;
+    -ms-flex: 1 1 auto;
 }
 
 #nav {
-  display: flex;
-  display: -webkit-flex;
-  display: -ms-flex;
-  align-items: stretch;
-  -webkit-align-items: stretch;
-  -ms-align-items: stretch;
-  flex-direction: column;
-  -webkit-flex-direction: column;
-  -ms-flex-direction: column;
+    display: flex;
+    display: -webkit-flex;
+    display: -ms-flex;
+    align-items: stretch;
+    -webkit-align-items: stretch;
+    -ms-align-items: stretch;
+    flex-direction: column;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
 
-  overflow-y: auto;
-  padding-bottom: 3px;
+    overflow-y: auto;
+    padding-bottom: 3px;
 }
 
 .nav_items {
-  flex: 0 0 auto;
-  -webkit-flex: 0 0 auto;
-  -ms-flex: 0 0 auto;
-  display: flex;
-  display: -webkit-flex;
-  display: -ms-flex;
-  align-items: stretch;
-  -webkit-align-items: stretch;
-  -ms-align-items: stretch;
-  flex-direction: column;
-  -webkit-flex-direction: column;
-  -ms-flex-direction: column;
+    flex: 0 0 auto;
+    -webkit-flex: 0 0 auto;
+    -ms-flex: 0 0 auto;
+    display: flex;
+    display: -webkit-flex;
+    display: -ms-flex;
+    align-items: stretch;
+    -webkit-align-items: stretch;
+    -ms-align-items: stretch;
+    flex-direction: column;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
 
-  margin: 0px;
+    margin: 0px;
 }
 
 #keyboard-shortcuts {
-  text-align: center;
-  height: 50vh;
-  overflow: auto;
+    text-align: center;
+    height: 50vh;
+    overflow: auto;
 }
 
 #keyboard-shortcuts table {
-  border-collapse: collapse;
-  display: inline-block;
+    border-collapse: collapse;
+    display: inline-block;
 }
 
 #keyboard-shortcuts table tbody tr td {
-  border: 1px solid black;
-  padding: 4px;
+    border: 1px solid black;
+    padding: 4px;
 }
 
 #source {
-  position: relative;
+    position: relative;
 }
 
 #source .CodeMirror {
-  position:absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: auto;
-  height: auto;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    height: auto;
 }
 
 #result {
-  display: flex;
-  display: -webkit-flex;
-  display: -ms-flex;
-  align-items: stretch;
-  -webkit-align-items: stretch;
-  -ms-align-items: stretch;
-  flex-direction: column;
-  -webkit-flex-direction: column;
-  -ms-flex-direction: column;
+    display: flex;
+    display: -webkit-flex;
+    display: -ms-flex;
+    align-items: stretch;
+    -webkit-align-items: stretch;
+    -ms-align-items: stretch;
+    flex-direction: column;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
 
-  margin: 0px;
-  overflow-y: auto;
+    margin: 0px;
+    overflow-y: auto;
 }
 
 #runner {
-  flex: 0 0 auto;
-  -webkit-flex: 0 0 auto;
-  -ms-flex: 0 0 auto;
-  width: calc(100% - 6px);
+    flex: 0 0 auto;
+    -webkit-flex: 0 0 auto;
+    -ms-flex: 0 0 auto;
+    width: calc(100% - 6px);
 }
 
 #message {
-  flex: 1 1 20px;
-  -webkit-flex: 1 1 20px;
-  -ms-flex: 1 1 20px;
+    flex: 1 1 20px;
+    -webkit-flex: 1 1 20px;
+    -ms-flex: 1 1 20px;
 
-  overflow: auto;
-  font-size: 11px;
-  padding: 5px;
+    overflow: auto;
+    font-size: 11px;
+    padding: 5px;
 }
 
 #message.error {
-  background-color: #fcc;
+    background-color: #fcc;
 }
 
 #message a {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 .cw-button {
-  border-radius: 4px;
-  cursor: pointer;
-  text-align: left;
-  vertical-align: middle;
-  font-size: 12px;
-  font-family: arial, helvetica, sans-serif;
-  margin: 3px 3px 0px 3px;
-  padding: 6px 6px 6px 6px;
-  text-decoration: none;
-  display: inline-block;
-  font-weight: bold;
-  color: white;
-  white-space: nowrap;
-  overflow: hidden;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: left;
+    vertical-align: middle;
+    font-size: 12px;
+    font-family: arial, helvetica, sans-serif;
+    margin: 3px 3px 0px 3px;
+    padding: 6px 6px 6px 6px;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: bold;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 #toolbar .cw-button {
-  margin-bottom: 3px;
-  margin-top: 0px;
+    margin-bottom: 3px;
+    margin-top: 0px;
 }
 
 .cw-button * {
-  vertical-align: middle;
+    vertical-align: middle;
 }
 
 .cw-button.yellow,
 .cw-button.yellow:hover:active,
 .cw-button.green.project-active,
 .cw-button.green.project-active:hover:active {
-  background-color: hsl(60, 75%, 35%);
+    background-color: hsl(60, 75%, 35%);
 }
 
 .haskell .cw-button.yellow,
 .haskell .cw-button.yellow:hover:active,
 .haskell .cw-button.green.project-active,
 .haskell .cw-button.green.project-active:hover:active {
-  background-color: hsl(180, 75%, 35%);
+    background-color: hsl(180, 75%, 35%);
 }
 
 .cw-button.yellow:hover,
 .cw-button.green.project-active:hover {
-  background-color: hsl(60, 75%, 25%);
+    background-color: hsl(60, 75%, 25%);
 }
 
 .haskell .cw-button.yellow:hover,
 .haskell .cw-button.green.project-active:hover {
-  background-color: hsl(180, 75%, 25%);
+    background-color: hsl(180, 75%, 25%);
 }
 
 .cw-button.green,
 .cw-button.green:hover:active {
-  background-color: hsl(130, 75%, 35%);
+    background-color: hsl(130, 75%, 35%);
 }
 
 .haskell .cw-button.green,
 .haskell .cw-button.green:hover:active {
-  background-color: hsl(210, 75%, 35%);
+    background-color: hsl(210, 75%, 35%);
 }
 
 .cw-button.green:hover {
-  background-color: hsl(130, 75%, 25%);
+    background-color: hsl(130, 75%, 25%);
 }
 
 .haskell .cw-button.green:hover {
-  background-color: hsl(210, 75%, 25%);
+    background-color: hsl(210, 75%, 25%);
 }
 
-.cw-button.blue,.cw-button.blue:hover:active {
-  background-color: hsl(220, 75%, 35%);
+.cw-button.blue,
+.cw-button.blue:hover:active {
+    background-color: hsl(220, 75%, 35%);
 }
 
-.haskell .cw-button.blue,.cw-button.blue:hover:active {
-  background-color: hsl(135, 75%, 35%);
+.haskell .cw-button.blue,
+.cw-button.blue:hover:active {
+    background-color: hsl(135, 75%, 35%);
 }
 
 .cw-button.blue:hover {
-  background-color: hsl(220, 75%, 25%);
+    background-color: hsl(220, 75%, 25%);
 }
 
 .haskell .cw-button.blue:hover {
-  background-color: hsl(135, 75%, 25%);
+    background-color: hsl(135, 75%, 25%);
 }
 
-.cw-button.red,.cw-button.red:hover:active {
-  background-color: hsl(10, 75%, 35%);
+.cw-button.red,
+.cw-button.red:hover:active {
+    background-color: hsl(10, 75%, 35%);
 }
 
-.haskell .cw-button.red,.cw-button.red:hover:active {
-  background-color: hsl(60, 75%, 35%);
+.haskell .cw-button.red,
+.cw-button.red:hover:active {
+    background-color: hsl(60, 75%, 35%);
 }
 
 .cw-button.red:hover {
-  background-color: hsl(10, 75%, 25%);
+    background-color: hsl(10, 75%, 25%);
 }
 
 .haskell .cw-button.red:hover {
-  background-color: hsl(60, 75%, 25%);
+    background-color: hsl(60, 75%, 25%);
 }
 
-.cw-button.cyan,.cw-button.cyan:hover:active {
+.cw-button.cyan,
+.cw-button.cyan:hover:active {
     background-color: hsl(180, 75%, 35%);
 }
 
-.haskell .cw-button.cyan,.cw-button.cyan:hover:active {
+.haskell .cw-button.cyan,
+.cw-button.cyan:hover:active {
     background-color: hsl(300, 50%, 35%);
 }
 
@@ -299,8 +308,13 @@ body {
     background-color: hsl(300, 50%, 25%);
 }
 
-.cw-button:focus { outline: none; }
-::-moz-focus-inner { border:0; }
+.cw-button:focus {
+    outline: none;
+}
+
+::-moz-focus-inner {
+    border: 0;
+}
 
 .loader {
     border: 3px solid #ffffff55;
@@ -312,114 +326,143 @@ body {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .dropbox {
-  background-color: white;
-  border: solid #cccccc 1px;
-  box-shadow: 1px 1px 2px #000;
-  box-sizing: border-box;
-  margin: 2px 4px 4px 2px;
+    background-color: white;
+    border: solid #cccccc 1px;
+    box-shadow: 1px 1px 2px #000;
+    box-sizing: border-box;
+    margin: 2px 4px 4px 2px;
 }
 
 .sweet-alert.helpdoc {
-  max-width: 70em;
-  width: 80vw;
-  height: 90vh;
-  margin: 0px 0px 0px 0px !important;
-  padding: 10px 15px 15px 10px !important;
-  position: fixed;
-  top: 3vh;
-  left: 10vw;
+    max-width: 70em;
+    width: 80vw;
+    height: 90vh;
+    margin: 0px 0px 0px 0px !important;
+    padding: 10px 15px 15px 10px !important;
+    position: fixed;
+    top: 3vh;
+    left: 10vw;
 }
 
-.sweet-alert.helpdoc div { display: none; }
-.sweet-alert.helpdoc fieldset { display: none; }
-.sweet-alert.helpdoc h2 { display: none; }
+.sweet-alert.helpdoc div {
+    display: none;
+}
+
+.sweet-alert.helpdoc fieldset {
+    display: none;
+}
+
+.sweet-alert.helpdoc h2 {
+    display: none;
+}
+
 .sweet-alert.helpdoc p {
-  display: block;
-  margin: 0px 0px 0px 0px;
-  padding: 0px 0px 0px 0px;
-  height: 100%;
+    display: block;
+    margin: 0px 0px 0px 0px;
+    padding: 0px 0px 0px 0px;
+    height: 100%;
 }
 
 .ui-layout-resizer-dragging {
-  background-color: #444444;
-  cursor: ew-resize !important;
+    background-color: #444444;
+    cursor: ew-resize !important;
 }
 
 .ui-layout-resizer-east-open:hover,
 .ui-layout-resizer-west-open:hover {
-  cursor: ew-resize !important;
+    cursor: ew-resize !important;
 }
 
 .ui-layout-toggler-east,
 .ui-layout-toggler-west {
-  background-color: #444444;
-  opacity: 1.0;
-  cursor: pointer !important;
+    background-color: #444444;
+    opacity: 1.0;
+    cursor: pointer !important;
 }
 
 #recordIcon {
-  color: #B30000;
-  animation: record-blink 1s cubic-bezier(.5, 0, 1, 1) infinite alternate;
+    color: #B30000;
+    animation: record-blink 1s cubic-bezier(.5, 0, 1, 1) infinite alternate;
 }
 
 @keyframes record-blink {
-  from { opacity: 1; }
-  to { opacity: 0; }
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
 }
 
 .swal2-popup {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
 }
 
 .req-list {
-  text-align: left;
+    text-align: left;
 }
+
 .req-yes {
-  color: darkgreen;
-  list-style-type: none;
+    color: darkgreen;
+    list-style-type: none;
 }
+
 .req-yes:before {
-  content: "✓ ";
+    content: "✓ ";
 }
+
 .req-no {
-  color: darkred;
-  list-style-type: none;
+    color: darkred;
+    list-style-type: none;
 }
+
 .req-no:before {
-  content: "✗ ";
+    content: "✗ ";
 }
+
 .req-indet {
-  color: darkmagenta;
-  list-style-type: none;
+    color: darkmagenta;
+    list-style-type: none;
 }
+
 .req-indet:before {
-  content: "? ";
-  font-weight: bold;
+    content: "? ";
+    font-weight: bold;
 }
+
 .req-yes,
 .req-no,
 .req-indet {
-  margin-bottom: 10px;
+    margin-bottom: 10px;
 }
+
 .req-yes:before,
 .req-no:before,
 .req-indet:before {
-  margin-left: -36px;
-  font-size: 32px;
-  vertical-align: middle;
+    margin-left: -36px;
+    font-size: 32px;
+    vertical-align: middle;
 }
+
 .req-details {
-  color: #555;
+    color: #555;
 }
 
 .runner-box {
-  position: relative;
+    position: relative;
 }
+
 #obsolete-code-alert {
     display: block;
     overflow: hidden;
@@ -434,14 +477,19 @@ body {
     text-align: right;
     vertical-align: bottom;
     position: absolute;
-    left: 3px; right: 4px; top: 3px; bottom: 7px;
+    left: 3px;
+    right: 4px;
+    top: 3px;
+    bottom: 7px;
     z-index: 0;
 }
+
 .obsolete-code-alert-fadeout {
     opacity: 0;
     transition: visibility 0s 1s, opacity 1s linear;
     visibility: hidden;
- }
+}
+
 .obsolete-code-alert-fadein {
     opacity: 1;
     transition: opacity 1s linear;

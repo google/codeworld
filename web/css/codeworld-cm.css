@@ -23,34 +23,139 @@
     z-index: 1;
 }
 
-pre.cm-s-default span.cm-builtin,    div.CodeMirror span.cm-builtin    {color: #30a; font-weight: bold}
-pre.cm-s-default span.cm-builtin-2,  div.CodeMirror span.cm-builtin-2  {color: #38c; font-weight: bold}
-pre.cm-s-default span.cm-keyword,    div.CodeMirror span.cm-keyword    {color: #828; font-weight: bold}
-pre.cm-s-default span.cm-deprecated, div.CodeMirror span.cm-deprecated {color: #888; font-weight: bold; text-decoration: line-through}
-pre.cm-s-default span.cm-variable,   div.CodeMirror span.cm-variable   {color: black;}
-pre.cm-s-default span.cm-variable-2, div.CodeMirror span.cm-variable-2 {color: #38c;}
-pre.cm-s-default span.cm-comment,    div.CodeMirror span.cm-comment    {color: #161;}
-pre.cm-s-default span.cm-string,     div.CodeMirror span.cm-string     {color: #660;}
-pre.cm-s-default span.cm-meta,       div.CodeMirror span.cm-meta       {color: #555;}
-pre.cm-s-default span.cm-qualifier,  div.CodeMirror span.cm-qualifier  {color: #666;}
-pre.cm-s-default span.cm-number,     div.CodeMirror span.cm-number     {color: #a10;}
-pre.cm-s-default span.cm-bracket,    div.CodeMirror span.cm-bracket    {color: #000;}
-pre.cm-s-default span.cm-bracket-0,  div.CodeMirror span.cm-bracket-0  {font-weight: bold; color: hsl( 80, 80%, 40%); transform: scale(1.25); display: inline-block;}
-pre.cm-s-default span.cm-bracket-1,  div.CodeMirror span.cm-bracket-1  {font-weight: bold; color: hsl(225, 60%, 60%); transform: scale(1.12); display: inline-block;}
-pre.cm-s-default span.cm-bracket-2,  div.CodeMirror span.cm-bracket-2  {font-weight: bold; color: hsl(320, 60%, 50%);}
-pre.cm-s-default span.cm-bracket-3,  div.CodeMirror span.cm-bracket-3  {font-weight: bold; color: hsl( 60, 60%, 40%);}
-pre.cm-s-default span.cm-bracket-4,  div.CodeMirror span.cm-bracket-4  {font-weight: bold; color: hsl(175, 60%, 40%);}
-pre.cm-s-default span.cm-bracket-5,  div.CodeMirror span.cm-bracket-5  {font-weight: bold; color: hsl(265, 60%, 55%);}
-pre.cm-s-default span.cm-bracket-6,  div.CodeMirror span.cm-bracket-6  {font-weight: bold; color: hsl( 20, 60%, 50%);}
-pre.cm-s-default span.cm-bracket-7,  div.CodeMirror span.cm-error      {color: #f00;}
+pre.cm-s-default span.cm-builtin,
+div.CodeMirror span.cm-builtin {
+    color: #30a;
+    font-weight: bold
+}
+
+pre.cm-s-default span.cm-builtin-2,
+div.CodeMirror span.cm-builtin-2 {
+    color: #38c;
+    font-weight: bold
+}
+
+pre.cm-s-default span.cm-keyword,
+div.CodeMirror span.cm-keyword {
+    color: #828;
+    font-weight: bold
+}
+
+pre.cm-s-default span.cm-deprecated,
+div.CodeMirror span.cm-deprecated {
+    color: #888;
+    font-weight: bold;
+    text-decoration: line-through
+}
+
+pre.cm-s-default span.cm-variable,
+div.CodeMirror span.cm-variable {
+    color: black;
+}
+
+pre.cm-s-default span.cm-variable-2,
+div.CodeMirror span.cm-variable-2 {
+    color: #38c;
+}
+
+pre.cm-s-default span.cm-comment,
+div.CodeMirror span.cm-comment {
+    color: #161;
+}
+
+pre.cm-s-default span.cm-string,
+div.CodeMirror span.cm-string {
+    color: #660;
+}
+
+pre.cm-s-default span.cm-meta,
+div.CodeMirror span.cm-meta {
+    color: #555;
+}
+
+pre.cm-s-default span.cm-qualifier,
+div.CodeMirror span.cm-qualifier {
+    color: #666;
+}
+
+pre.cm-s-default span.cm-number,
+div.CodeMirror span.cm-number {
+    color: #a10;
+}
+
+pre.cm-s-default span.cm-bracket,
+div.CodeMirror span.cm-bracket {
+    color: #000;
+}
+
+pre.cm-s-default span.cm-bracket-0,
+div.CodeMirror span.cm-bracket-0 {
+    font-weight: bold;
+    color: hsl(80, 80%, 40%);
+    transform: scale(1.25);
+    display: inline-block;
+}
+
+pre.cm-s-default span.cm-bracket-1,
+div.CodeMirror span.cm-bracket-1 {
+    font-weight: bold;
+    color: hsl(225, 60%, 60%);
+    transform: scale(1.12);
+    display: inline-block;
+}
+
+pre.cm-s-default span.cm-bracket-2,
+div.CodeMirror span.cm-bracket-2 {
+    font-weight: bold;
+    color: hsl(320, 60%, 50%);
+}
+
+pre.cm-s-default span.cm-bracket-3,
+div.CodeMirror span.cm-bracket-3 {
+    font-weight: bold;
+    color: hsl(60, 60%, 40%);
+}
+
+pre.cm-s-default span.cm-bracket-4,
+div.CodeMirror span.cm-bracket-4 {
+    font-weight: bold;
+    color: hsl(175, 60%, 40%);
+}
+
+pre.cm-s-default span.cm-bracket-5,
+div.CodeMirror span.cm-bracket-5 {
+    font-weight: bold;
+    color: hsl(265, 60%, 55%);
+}
+
+pre.cm-s-default span.cm-bracket-6,
+div.CodeMirror span.cm-bracket-6 {
+    font-weight: bold;
+    color: hsl(20, 60%, 50%);
+}
+
+pre.cm-s-default span.cm-bracket-7,
+div.CodeMirror span.cm-error {
+    color: #f00;
+}
 
 /* Make bracket matching look nicer. */
-div.CodeMirror span.CodeMirror-matchingbracket { outline: solid rgba(0,0,0,0.15) 0.1em }
-div.CodeMirror span.CodeMirror-nonmatchingbracket { outline: solid rgba(255,0,0,0.5) 0.1em }
+div.CodeMirror span.CodeMirror-matchingbracket {
+    outline: solid rgba(0, 0, 0, 0.15) 0.1em
+}
+
+div.CodeMirror span.CodeMirror-nonmatchingbracket {
+    outline: solid rgba(255, 0, 0, 0.5) 0.1em
+}
 
 /* Highlighting for matches to the selected word. */
-div.CodeMirror span.cm-matchhighlight { background-color: rgba(128, 255, 128, 0.3) }
-.CodeMirror-selection-highlight-scrollbar { background-color: rgba(95, 255, 95, 0.8) }
+div.CodeMirror span.cm-matchhighlight {
+    background-color: rgba(128, 255, 128, 0.3)
+}
+
+.CodeMirror-selection-highlight-scrollbar {
+    background-color: rgba(95, 255, 95, 0.8)
+}
 
 /* Grayed-out style for the empty editor placeholder. */
 .CodeMirror pre.CodeMirror-placeholder {
@@ -59,7 +164,8 @@ div.CodeMirror span.cm-matchhighlight { background-color: rgba(128, 255, 128, 0.
 
 /* Style overrides for the autocomplete box and doc-on-hover. */
 
-.CodeMirror-hint, .hover-decl {
+.CodeMirror-hint,
+.hover-decl {
     color: #555;
     font-family: "Source Code Pro", monospace;
     font-size: 9pt;
@@ -71,12 +177,14 @@ div.CodeMirror span.cm-matchhighlight { background-color: rgba(128, 255, 128, 0.
     text-indent: -2em;
 }
 
-.CodeMirror-hint .hint-word, .hover-decl .hint-word {
+.CodeMirror-hint .hint-word,
+.hover-decl .hint-word {
     font-weight: bold;
     color: #30a;
 }
 
-.CodeMirror-hint .hint-keyword, .hover-decl .hint-keyword {
+.CodeMirror-hint .hint-keyword,
+.hover-decl .hint-keyword {
     font-weight: bold;
     color: #828;
 }
@@ -90,7 +198,9 @@ li.CodeMirror-hint-active {
     color: #555;
 }
 
-.CodeMirror-hover-tooltip, .CodeMirror-lint-tooltip, .hint-description {
+.CodeMirror-hover-tooltip,
+.CodeMirror-lint-tooltip,
+.hint-description {
     background-color: #ffe;
     border-radius: 0.5em;
     border: 1px solid #888;
@@ -130,16 +240,14 @@ div.fade {
 }
 
 .CodeMirror-hover-tooltip div.fade {
-    background-image: linear-gradient(
-        to bottom,
+    background-image: linear-gradient(to bottom,
         rgba(0, 0, 0, 0) 0em,
         rgba(0, 0, 0, 0) 17em,
         #ffe 20em);
 }
 
 .hint-description div.fade {
-    background-image: linear-gradient(
-        to bottom,
+    background-image: linear-gradient(to bottom,
         rgba(0, 0, 0, 0) 0em,
         rgba(0, 0, 0, 0) 11.2em,
         #ffe 14.2em);
@@ -150,7 +258,8 @@ div.fade {
     font-size: 11pt;
 }
 
-div.CodeMirror-lint-message-warning, div.CodeMirror-lint-message-error {
+div.CodeMirror-lint-message-warning,
+div.CodeMirror-lint-message-error {
     padding-left: calc(18px + 0.5em);
 }
 
@@ -167,7 +276,8 @@ div.CodeMirror-lint-message-error:not(:last-child):after {
 
 .CodeMirror-dialog {
     position: absolute;
-    left: 0; right: 0;
+    left: 0;
+    right: 0;
     background-color: #f5deb3;
     z-index: 15;
     padding: .1em .8em;
@@ -207,13 +317,19 @@ div.CodeMirror-lint-message-error:not(:last-child):after {
     font-family: "Source Code Pro";
     font-style: normal;
     font-weight: 400;
-    src: url('../SourceCodePro/source-code-pro-v7-latin-regular.eot'); /* IE9 Compat Modes */
+    src: url('../SourceCodePro/source-code-pro-v7-latin-regular.eot');
+    /* IE9 Compat Modes */
     src: local('Source Code Pro'), local('SourceCodePro-Regular'),
-         url('../SourceCodePro/source-code-pro-v7-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-         url('../SourceCodePro/source-code-pro-v7-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
-         url('../SourceCodePro/source-code-pro-v7-latin-regular.woff') format('woff'), /* Modern Browsers */
-         url('../SourceCodePro/source-code-pro-v7-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
-         url('../SourceCodePro/source-code-pro-v7-latin-regular.svg#SourceCodePro') format('svg'); /* Legacy iOS */
+        url('../SourceCodePro/source-code-pro-v7-latin-regular.eot?#iefix') format('embedded-opentype'),
+        /* IE6-IE8 */
+        url('../SourceCodePro/source-code-pro-v7-latin-regular.woff2') format('woff2'),
+        /* Super Modern Browsers */
+        url('../SourceCodePro/source-code-pro-v7-latin-regular.woff') format('woff'),
+        /* Modern Browsers */
+        url('../SourceCodePro/source-code-pro-v7-latin-regular.ttf') format('truetype'),
+        /* Safari, Android, iOS */
+        url('../SourceCodePro/source-code-pro-v7-latin-regular.svg#SourceCodePro') format('svg');
+    /* Legacy iOS */
 }
 
 /* source-code-pro-bold - latin */
@@ -221,11 +337,17 @@ div.CodeMirror-lint-message-error:not(:last-child):after {
     font-family: "Source Code Pro";
     font-style: normal;
     font-weight: 700;
-    src: url('../SourceCodePro/source-code-pro-v7-latin-700.eot'); /* IE9 Compat Modes */
+    src: url('../SourceCodePro/source-code-pro-v7-latin-700.eot');
+    /* IE9 Compat Modes */
     src: local('Source Code Pro Bold'), local('SourceCodePro-Bold'),
-         url('../SourceCodePro/source-code-pro-v7-latin-700.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-         url('../SourceCodePro/source-code-pro-v7-latin-700.woff2') format('woff2'), /* Super Modern Browsers */
-         url('../SourceCodePro/source-code-pro-v7-latin-700.woff') format('woff'), /* Modern Browsers */
-         url('../SourceCodePro/source-code-pro-v7-latin-700.ttf') format('truetype'), /* Safari, Android, iOS */
-         url('../SourceCodePro/source-code-pro-v7-latin-700.svg#SourceCodePro') format('svg'); /* Legacy iOS */
+        url('../SourceCodePro/source-code-pro-v7-latin-700.eot?#iefix') format('embedded-opentype'),
+        /* IE6-IE8 */
+        url('../SourceCodePro/source-code-pro-v7-latin-700.woff2') format('woff2'),
+        /* Super Modern Browsers */
+        url('../SourceCodePro/source-code-pro-v7-latin-700.woff') format('woff'),
+        /* Modern Browsers */
+        url('../SourceCodePro/source-code-pro-v7-latin-700.ttf') format('truetype'),
+        /* Safari, Android, iOS */
+        url('../SourceCodePro/source-code-pro-v7-latin-700.svg#SourceCodePro') format('svg');
+    /* Legacy iOS */
 }

@@ -15,111 +15,117 @@
  */
 
 body {
-  margin: 0px 0px 0px 0px;
+    margin: 0px 0px 0px 0px;
 }
 
 #popout {
-  display: block;
-  float: right;
-  clear: both;
-  top: 10px;
-  right: 10px;
+    display: block;
+    float: right;
+    clear: both;
+    top: 10px;
+    right: 10px;
 }
+
 #popout a {
-  text-decoration: none;
-  font-weight: bold;
-  padding: 3px;
-  border: dotted #888 1px;
-  border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 3px;
+    border: dotted #888 1px;
+    border-radius: 5px;
 }
 
 .md pre.tilde.clickable {
-  background-color: #f0f8ff;
+    background-color: #f0f8ff;
 }
+
 .md pre.tilde.clickable:hover {
-  background-color: #f8fcff;
-  cursor: pointer;
+    background-color: #f8fcff;
+    cursor: pointer;
 }
 
 .md div.admonition.collapsible {
-  cursor: pointer;
-}
-.md div.admonition.collapsible::before {
-  content: "+";
-  font-weight: bold;
-  font-size: 150%;
-  position: relative;
-  top: 2px;
-  color: rgba(68,138,255,.8);
-  left: -2.95rem;
-  display: block;
-  width: 0;
-  height: 0;
-}
-.md div.admonition.collapsible.expanded::before {
-  content: "\2013";
-  font-weight: bold;
-  font-size: 150%;
-  position: relative;
-  top: 2px;
-  color: rgba(68,138,255,.8);
-  left: -2.95rem;
-  display: block;
-  width: 0;
-  height: 0;
-}
-.md div.admonition.collapsible:not(.expanded) > .admonition-title::after {
-  content: "Click to expand...";
-  color: rgba(0, 0, 0, 0.4);
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 11pt;
-  font-weight: normal;
-  padding-right: 1em;
-  float: right;
-}
-.md div.admonition.collapsible:not(.expanded) > .admonition-title {
-  border-bottom: none;
+    cursor: pointer;
 }
 
-.md div.admonition.collapsible:not(.expanded) > :not(.admonition-title) {
-  display: none;
+.md div.admonition.collapsible::before {
+    content: "+";
+    font-weight: bold;
+    font-size: 150%;
+    position: relative;
+    top: 2px;
+    color: rgba(68, 138, 255, .8);
+    left: -2.95rem;
+    display: block;
+    width: 0;
+    height: 0;
+}
+
+.md div.admonition.collapsible.expanded::before {
+    content: "\2013";
+    font-weight: bold;
+    font-size: 150%;
+    position: relative;
+    top: 2px;
+    color: rgba(68, 138, 255, .8);
+    left: -2.95rem;
+    display: block;
+    width: 0;
+    height: 0;
+}
+
+.md div.admonition.collapsible:not(.expanded)>.admonition-title::after {
+    content: "Click to expand...";
+    color: rgba(0, 0, 0, 0.4);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    font-weight: normal;
+    padding-right: 1em;
+    float: right;
+}
+
+.md div.admonition.collapsible:not(.expanded)>.admonition-title {
+    border-bottom: none;
+}
+
+.md div.admonition.collapsible:not(.expanded)> :not(.admonition-title) {
+    display: none;
 }
 
 .md table.table tr:nth-child(odd) {
-  background: #FFF
+    background: #FFF
 }
 
 #helpacc {
-  position: fixed;
-  overflow: auto;
-  width: 19em;
-  height: 100%;
-  margin: 0px 0px 0px 0px;
-  padding: 0px 0px 0px 0px;
-  border-right: solid #ccc 3px;
+    position: fixed;
+    overflow: auto;
+    width: 19em;
+    height: 100%;
+    margin: 0px 0px 0px 0px;
+    padding: 0px 0px 0px 0px;
+    border-right: solid #ccc 3px;
 
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 11pt;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11pt;
 }
 
 #helpacc .accentry {
-  padding: 0px 0px 0px 0px;
+    padding: 0px 0px 0px 0px;
 }
 
 #help {
-  position: relative;
-  overflow: auto;
-  max-width: 45em;
+    position: relative;
+    overflow: auto;
+    max-width: 45em;
 }
 
-#helpacc + #help {
-  margin-left: 20em;
+#helpacc+#help {
+    margin-left: 20em;
 }
 
 #help #package-header {
-  display: none;
+    display: none;
 }
 
 #help .subs.instances {
-  display: none;
+    display: none;
 }

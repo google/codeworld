@@ -17,7 +17,8 @@
 -->
 
 <html>
-  <head>
+
+<head>
     <meta content="text/html; charset=utf-8" http-equiv="content-type">
     <script language="javascript" src="../js/blocks_rts.js"></script>
     <script language="javascript" src="../js/blocks_lib.js"></script>
@@ -41,52 +42,54 @@
     <script src="../blockly/blocks/funblocks-procedures.js"></script>
     <script src="../blockly/msg/js/en.js"></script>
 
-  </head>
+</head>
 
-  <body>
+<body>
     <div id="blocklyDiv" style="height: 100%; width: 100%"></div>
 
-    <script src="../js/blocks_runmain.js"></script> 
+    <script src="../js/blocks_runmain.js"></script>
     <script>
-    var upperParent = null;
-    var frameId = null;
+        var upperParent = null;
+        var frameId = null;
 
-    function loadXml(data){
-      var workspace = Blockly.getMainWorkspace();
-      if(!workspace){
-        setTimeout(function() { loadXml(data) }, 100);
-        return; // Try again a little later
-      }
-      var xml = Blockly.Xml.textToDom(data);
-      Blockly.Xml.domToWorkspace(xml, workspace);
-      
-      var metrics = workspace.getMetrics();
-      var maxX = metrics.contentWidth + 50;
-      var maxY = metrics.contentHeight + 50;
-      frameId.setAttribute('width',maxX);
-      frameId.setAttribute('height',maxY);
-    }
-
-    function setId(j_id_param){
-      frameId = j_id_param;
-    }
-    
-    function setParent(par){
-      upperParent = par;
-    }
-    
-    document.getElementById('blocklyDiv').addEventListener('click',  
-        function(){
-          if (upperParent){
+        function loadXml(data) {
             var workspace = Blockly.getMainWorkspace();
+            if (!workspace) {
+                setTimeout(function() {
+                    loadXml(data)
+                }, 100);
+                return; // Try again a little later
+            }
+            var xml = Blockly.Xml.textToDom(data);
+            Blockly.Xml.domToWorkspace(xml, workspace);
 
-            var xml = Blockly.Xml.workspaceToDom(workspace);
-            var xml_text = Blockly.Xml.domToText(xml);
-
-            upperParent.loadSample(xml_text);
-          }
+            var metrics = workspace.getMetrics();
+            var maxX = metrics.contentWidth + 50;
+            var maxY = metrics.contentHeight + 50;
+            frameId.setAttribute('width', maxX);
+            frameId.setAttribute('height', maxY);
         }
-      ,false);
+
+        function setId(j_id_param) {
+            frameId = j_id_param;
+        }
+
+        function setParent(par) {
+            upperParent = par;
+        }
+
+        document.getElementById('blocklyDiv').addEventListener('click',
+            function() {
+                if (upperParent) {
+                    var workspace = Blockly.getMainWorkspace();
+
+                    var xml = Blockly.Xml.workspaceToDom(workspace);
+                    var xml_text = Blockly.Xml.domToText(xml);
+
+                    upperParent.loadSample(xml_text);
+                }
+            }, false);
     </script>
-  </body>
+</body>
+
 </html>

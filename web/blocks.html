@@ -17,7 +17,8 @@
 -->
 
 <html>
-  <head>
+
+<head>
     <meta content="text/html; charset=utf-8" http-equiv="content-type">
     <title>CodeWorld Blocks</title>
     <link rel="stylesheet" href="css/blockly.css">
@@ -29,91 +30,90 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.0/sweetalert.min.css">
 
     <script type="text/template" id="projectTemplate">
-      <a class="cw-button green {{ifactive project-active}}"><i class="mdi mdi-18px mdi-cube"></i>&nbsp; {{label}}</a>
+        <a class="cw-button green {{ifactive project-active}}"><i class="mdi mdi-18px mdi-cube"></i>&nbsp; {{label}}</a>
     </script>
     <script type="text/template" id="folderTemplate">
-      <a class="cw-button green"><i class="mdi mdi-18px mdi-chevron-right"></i> <i class="mdi mdi-18px mdi-folder"></i>&nbsp; {{label}}</a>
+        <a class="cw-button green"><i class="mdi mdi-18px mdi-chevron-right"></i> <i class="mdi mdi-18px mdi-folder"></i>&nbsp; {{label}}</a>
     </script>
     <script type="text/template" id="openFolderTemplate">
-      <a class="cw-button yellow"><i class="mdi mdi-18px mdi-chevron-down"></i> <i class="mdi mdi-18px mdi-folder-outline"></i>&nbsp; {{label}}</a>
+        <a class="cw-button yellow"><i class="mdi mdi-18px mdi-chevron-down"></i> <i class="mdi mdi-18px mdi-folder-outline"></i>&nbsp; {{label}}</a>
     </script>
-  </head>
-  <body>
+</head>
+
+<body>
     <div class="root">
-      <div class="ui-layout-container">
-        <div id="nav" class="dropbox ui-layout-west">
-          <div class="nav_items">
-            <a id="newFolderButton" class="cw-button red" onclick="newFolder()">
-              <i class="mdi mdi-18px mdi-folder"></i>&nbsp; New Folder
-            </a>
-            <a id="newButton" class="cw-button red" onclick="newProject()">
-              <i class="mdi mdi-18px mdi-plus"></i>&nbsp; New
-            </a>
-            <a id="saveButton" class="cw-button blue" style="display:none" onclick="saveProject()">
-              <i class="mdi mdi-18px mdi-cloud-upload"></i>&nbsp; Save
-            </a>
-            <a id="saveAsButton" class="cw-button blue" onclick="saveProjectAs()">
-              <i class="mdi mdi-18px mdi-dots-horizontal"></i>&nbsp; Save As
-            </a>
-            <a id="deleteButton" class="cw-button red" style="display:none" onclick="deleteProject()">
-              <i class="mdi mdi-18px mdi-delete"></i>&nbsp; Delete
-            </a>
-            <a id="moveButton" class="cw-button blue" style="display:none" onclick="moveProject()">
-              <i class="mdi mdi-18px mdi-folder-move"></i>&nbsp; Move
-            </a>
-            <a id="moveHereButton" class="cw-button blue" style="display:none" onclick="moveHere()">
-              <i class="mdi mdi-18px mdi-folder-download"></i>&nbsp; Move Here
-            </a>
-            <a id="cancelMoveButton" class="cw-button red" style="display:none" onclick="cancelMove()">
-              <i class="mdi mdi-18px mdi-close-circle"></i>&nbsp; Cancel
-            </a>
-          </div>
-          <div class="nav_items" id="nav_mine"></div>
-        </div>
+        <div class="ui-layout-container">
+            <div id="nav" class="dropbox ui-layout-west">
+                <div class="nav_items">
+                    <a id="newFolderButton" class="cw-button red" onclick="newFolder()">
+                        <i class="mdi mdi-18px mdi-folder"></i>&nbsp; New Folder
+                    </a>
+                    <a id="newButton" class="cw-button red" onclick="newProject()">
+                        <i class="mdi mdi-18px mdi-plus"></i>&nbsp; New
+                    </a>
+                    <a id="saveButton" class="cw-button blue" style="display:none" onclick="saveProject()">
+                        <i class="mdi mdi-18px mdi-cloud-upload"></i>&nbsp; Save
+                    </a>
+                    <a id="saveAsButton" class="cw-button blue" onclick="saveProjectAs()">
+                        <i class="mdi mdi-18px mdi-dots-horizontal"></i>&nbsp; Save As
+                    </a>
+                    <a id="deleteButton" class="cw-button red" style="display:none" onclick="deleteProject()">
+                        <i class="mdi mdi-18px mdi-delete"></i>&nbsp; Delete
+                    </a>
+                    <a id="moveButton" class="cw-button blue" style="display:none" onclick="moveProject()">
+                        <i class="mdi mdi-18px mdi-folder-move"></i>&nbsp; Move
+                    </a>
+                    <a id="moveHereButton" class="cw-button blue" style="display:none" onclick="moveHere()">
+                        <i class="mdi mdi-18px mdi-folder-download"></i>&nbsp; Move Here
+                    </a>
+                    <a id="cancelMoveButton" class="cw-button red" style="display:none" onclick="cancelMove()">
+                        <i class="mdi mdi-18px mdi-close-circle"></i>&nbsp; Cancel
+                    </a>
+                </div>
+                <div class="nav_items" id="nav_mine"></div>
+            </div>
 
 
-        <div class="dropbox ui-layout-center" id="blocklyDiv" style="height: 84%; width:100%;"> </div>
+            <div class="dropbox ui-layout-center" id="blocklyDiv" style="height: 84%; width:100%;"> </div>
 
-        <div id="result" style="display:none" class="ui-layout-east">
-          <div id="obsolete-code-alert" class="obsolete-code-alert-fadeout"></div>
-          <iframe id="runner" class="dropbox" width="500" height="500"
-          style="display:none;"></iframe>
+            <div id="result" style="display:none" class="ui-layout-east">
+                <div id="obsolete-code-alert" class="obsolete-code-alert-fadeout"></div>
+                <iframe id="runner" class="dropbox" width="500" height="500" style="display:none;"></iframe>
 
-          <pre id="message" class="dropbox" style="width:100%; min-height:100px;
+                <pre id="message" class="dropbox" style="width:100%; min-height:100px;
           padding:5px;display:none;"></pre>
 
-          <span><a type="button" style="margin-top:5px;" id="editButton" target="_blank" class="cw-button blue">
-                <span>Edit code</span>
-          </a> 
-          </span>
-          <pre id="genCode" class="dropbox cm-s-default CodeMirror"
-          style="width:100%; height:100%; padding:10px;">
-          </pre> 
+                <span><a type="button" style="margin-top:5px;" id="editButton" target="_blank" class="cw-button blue">
+                        <span>Edit code</span>
+                    </a>
+                </span>
+                <pre id="genCode" class="dropbox cm-s-default CodeMirror" style="width:100%; height:100%; padding:10px;">
+          </pre>
+            </div>
         </div>
-      </div>
-      <div id="toolbar">
-        <div id="buttons">
-          <a id="navButton" class="cw-button blue" onclick="window.mainLayout.toggle('west')"><i class="mdi mdi-18px mdi-menu"></i></a>
-          <a id="signin"  class="cw-button blue" onclick="signin()"><i class="mdi mdi-18px mdi-login"></i>&nbsp; Sign In</a>
-          <a id="signout" class="cw-button blue" style="display:none" onclick="signout()"><i class="mdi mdi-18px mdi-logout"></i>&nbsp; Sign Out</a>
-          <a id="docButton" class="cw-button blue" onclick="help()"><i class="mdi mdi-18px mdi-book-open-variant"></i>&nbsp; Help</a>
-          <a id="bugButton" class="cw-button blue" target="_blank" href="https://github.com/google/codeworld/issues/new?labels=funblocks"><i class="mdi mdi-18px mdi-bug"></i>&nbsp; Report Bug</a>
+        <div id="toolbar">
+            <div id="buttons">
+                <a id="navButton" class="cw-button blue" onclick="window.mainLayout.toggle('west')"><i class="mdi mdi-18px mdi-menu"></i></a>
+                <a id="signin" class="cw-button blue" onclick="signin()"><i class="mdi mdi-18px mdi-login"></i>&nbsp; Sign In</a>
+                <a id="signout" class="cw-button blue" style="display:none" onclick="signout()"><i class="mdi mdi-18px mdi-logout"></i>&nbsp; Sign Out</a>
+                <a id="docButton" class="cw-button blue" onclick="help()"><i class="mdi mdi-18px mdi-book-open-variant"></i>&nbsp; Help</a>
+                <a id="bugButton" class="cw-button blue" target="_blank" href="https://github.com/google/codeworld/issues/new?labels=funblocks"><i class="mdi mdi-18px mdi-bug"></i>&nbsp; Report Bug</a>
+            </div>
+            <span></span>
+            <div id="runButtons">
+                <a id="shareFolderButton" class="cw-button yellow" style="display:none" onclick="shareFolder()"><i class="mdi mdi-18px mdi-folder-outline"></i>&nbsp; Share Folder</a>
+                <a id="shareButton" class="cw-button yellow" style="display:none" onclick="share()"><i class="mdi mdi-18px mdi-share"></i>&nbsp; Share</a>
+                <a class="cw-button red" id="btnStop"><i class="mdi mdi-18px mdi-stop"></i>&nbsp; Stop</a>
+                <a class="cw-button green" id="btnRun"><i class="mdi mdi-18px mdi-play"></i>&nbsp; Run</a>
+            </div>
         </div>
-        <span></span>
-        <div id="runButtons">
-          <a id="shareFolderButton" class="cw-button yellow" style="display:none" onclick="shareFolder()"><i class="mdi mdi-18px mdi-folder-outline"></i>&nbsp; Share Folder</a>
-          <a id="shareButton" class="cw-button yellow" style="display:none" onclick="share()"><i class="mdi mdi-18px mdi-share"></i>&nbsp; Share</a>
-          <a class="cw-button red" id="btnStop"><i class="mdi mdi-18px mdi-stop"></i>&nbsp; Stop</a>
-          <a class="cw-button green" id="btnRun"><i class="mdi mdi-18px mdi-play"></i>&nbsp; Run</a>
-        </div>
-      </div>
     </div>
 
     <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=default,Array.prototype.find,Number.isFinite,Number.isInteger,console,console.log,document.head,performance.now"></script>
 
     <!-- Initialization in JS -->
-    <script src="js/codeworld_shared.js"></script> 
-    <script src="js/funblocks.js"></script> 
+    <script src="js/codeworld_shared.js"></script>
+    <script src="js/funblocks.js"></script>
 
     <script language="javascript" src="js/blocks_rts.js"></script>
     <script language="javascript" src="js/blocks_lib.js"></script>
@@ -137,692 +137,695 @@
     <script src="blockly/blocks/procedures.js"></script>
     <script src="blockly/blocks/funblocks-procedures.js"></script>
     <script src="blockly/msg/js/en.js"></script>
-    
+
     <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js" integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E=" crossorigin="anonymous"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-layout/1.4.3/jquery.layout_and_plugins.min.js"></script>
     <script type="text/javascript">
-      window.mainLayout = $('.ui-layout-container').layout({
-        default: {},
-        west: {
-          initHidden: true,
-          minSize: 50,
-          enableCursorHotkey: false
-        },
-        east: {
-          initHidden: true,
-          resizable: false,
-          size: 508,
-          enableCursorHotkey: false
-        },
-        onresize: function(){
-          Blockly.resizeSvgContents(Blockly.getMainWorkspace());
-          Blockly.getMainWorkspace().resize();
-      
-          window.dispatchEvent(new Event('resize'));
-          $(window).trigger('resize');
-        }
-      });
+        window.mainLayout = $('.ui-layout-container').layout({
+            default: {},
+            west: {
+                initHidden: true,
+                minSize: 50,
+                enableCursorHotkey: false
+            },
+            east: {
+                initHidden: true,
+                resizable: false,
+                size: 508,
+                enableCursorHotkey: false
+            },
+            onresize: function() {
+                Blockly.resizeSvgContents(Blockly.getMainWorkspace());
+                Blockly.getMainWorkspace().resize();
+
+                window.dispatchEvent(new Event('resize'));
+                $(window).trigger('resize');
+            }
+        });
     </script>
 
-    <script src="js/blocks_runmain.js"></script> 
+    <script src="js/blocks_runmain.js"></script>
     <script type="text/javascript" src="js/codemirror-compressed.js" charset="UTF-8"></script>
     <script type="text/javascript" src="js/codeworld-mode.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/promise-polyfill@7.1.0/dist/promise.min.js"></script>
 
-    <script type="text/javascript">init();</script>
+    <script type="text/javascript">
+        init();
+    </script>
 
     <xml id="toolbox" style="display: none">
-      <category name="Programs">
-        <block type="cwDrawingOf"></block>
-        <block type="cwAnimationOf"></block>
-        <block type="cwSimulationOf"></block>
-        <block type="cwInteractionOf"></block>
-        <block type="comment"></block>
-      </category>
-      <category name="Pictures">
-        <block type="cwBlank"></block>
-        <block type="cwCodeWorldLogo"></block>
-        <block type="cwCircle">
-          <value name="RADIUS">
-            <shadow type="numNumber">
-              <field name="NUMBER">5</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="cwSolidCircle">
-          <value name="RADIUS">
-            <shadow type="numNumber">
-              <field name="NUMBER">5</field>
-            </shadow>
-          </value>
-        </block> 
-        <block type="cwThickCircle">
-          <value name="RADIUS">
-            <shadow type="numNumber">
-              <field name="NUMBER">5</field>
-            </shadow>
-          </value>
-          <value name="LINEWIDTH">
-            <shadow type="numNumber">
-              <field name="NUMBER">1</field>
-            </shadow>
-          </value>
-        </block> 
-        <block type="cwRectangle">
-          <value name="WIDTH">
-            <shadow type="numNumber">
-              <field name="NUMBER">5</field>
-            </shadow>
-          </value>
-          <value name="HEIGHT">
-            <shadow type="numNumber">
-              <field name="NUMBER">5</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="cwSolidRectangle">
-          <value name="WIDTH">
-            <shadow type="numNumber">
-              <field name="NUMBER">5</field>
-            </shadow>
-          </value>
-          <value name="HEIGHT">
-            <shadow type="numNumber">
-              <field name="NUMBER">5</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="cwThickRectangle">
-          <value name="WIDTH">
-            <shadow type="numNumber">
-              <field name="NUMBER">5</field>
-            </shadow>
-          </value>
-          <value name="HEIGHT">
-            <shadow type="numNumber">
-              <field name="NUMBER">5</field>
-            </shadow>
-          </value>
-          <value name="LINEWIDTH">
-            <shadow type="numNumber">
-              <field name="NUMBER">1</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="cwArc">
-          <value name="STARTANGLE">
-            <shadow type="numNumber">
-              <field name="NUMBER">45</field>
-            </shadow>
-          </value>
-          <value name="ENDANGLE">
-            <shadow type="numNumber">
-              <field name="NUMBER">135</field>
-            </shadow>
-          </value>
-          <value name="RADIUS">
-            <shadow type="numNumber">
-              <field name="NUMBER">5</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="cwSector">
-          <value name="STARTANGLE">
-            <shadow type="numNumber">
-              <field name="NUMBER">45</field>
-            </shadow>
-          </value>
-          <value name="ENDANGLE">
-            <shadow type="numNumber">
-              <field name="NUMBER">135</field>
-            </shadow>
-          </value>
-          <value name="RADIUS">
-            <shadow type="numNumber">
-              <field name="NUMBER">5</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="cwThickArc">
-          <value name="STARTANGLE">
-            <shadow type="numNumber">
-              <field name="NUMBER">45</field>
-            </shadow>
-          </value>
-          <value name="ENDANGLE">
-            <shadow type="numNumber">
-              <field name="NUMBER">135</field>
-            </shadow>
-          </value>
-          <value name="RADIUS">
-            <shadow type="numNumber">
-              <field name="NUMBER">5</field>
-            </shadow>
-          </value>
-          <value name="LINEWIDTH">
-            <shadow type="numNumber">
-              <field name="NUMBER">1</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="cwText">
-          <value name="TEXT">
-            <shadow type="text_typed">
-              <field name="TEXT"></field>
-            </shadow>
-          </value>
-        </block>
-      </category>
-      <category name="Coordinates">
-        <block type="cwCoordinatePlane"></block>
-        <block type="pair_create_typed">
-          <value name="FIRST">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
-            </shadow>
-          </value>
-          <value name="SECOND">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="lists_polyline">
-        </block>
-        <block type="lists_thickPolyline">
-          <value name="THICKNESS">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="lists_polygon">
-        </block>
-        <block type="lists_solidPolygon">
-        </block>
-        <block type="lists_thickPolygon">
-          <value name="THICKNESS">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="lists_curve">
-        </block>
-        <block type="lists_thickCurve">
-          <value name="THICKNESS">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="lists_closedCurve">
-        </block>
-        <block type="lists_solidClosedCurve">
-        </block>
-        <block type="lists_thickClosedCurve">
-          <value name="THICKNESS">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
-            </shadow>
-          </value>
-        </block>
-      </category>
-      <category name="Transformations">
-        <block type="cwCombine">
-          <value name="PIC0">
-            <shadow type="cwBlank"></shadow>
-          </value>
-          <value name="PIC1">
-            <shadow type="cwBlank"></shadow>
-          </value>
-        </block>
-        <block type="cwColored">
-          <value name="PICTURE">
-            <shadow type="cwBlank"></shadow>
-          </value>
-          <value name="COLOR">
-            <shadow type="cwBlack"></shadow>
-          </value>
-        </block>
-        <block type="cwTranslate">
-          <value name="PICTURE">
-            <shadow type="cwBlank"></shadow>
-          </value>
-          <value name="X">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
-            </shadow>
-          </value>
-          <value name="Y">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="cwRotate">
-          <value name="PICTURE">
-            <shadow type="cwBlank"></shadow>
-          </value>
-          <value name="ANGLE">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="cwScale">
-          <value name="PICTURE">
-            <shadow type="cwBlank"></shadow>
-          </value>
-          <value name="HORZ">
-            <shadow type="numNumberPerc">
-              <field name="NUMBER">100</field>
-            </shadow>
-          </value>
-          <value name="VERTZ">
-            <shadow type="numNumberPerc">
-              <field name="NUMBER">100</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="lists_pictures"></block>
-      </category>
-      <category name="Colors">
-        <block type="cwRed"></block>
-        <block type="cwBlue"></block>
-        <block type="cwGreen"></block>
-        <block type="cwBrown"></block>
-        <block type="cwOrange"></block>
-        <block type="cwBlack"></block>
-        <block type="cwWhite"></block>
-        <block type="cwCyan"></block>
-        <block type="cwMagenta"></block>
-        <block type="cwYellow"></block>
-        <block type="cwAquamarine"></block>
-        <block type="cwAzure"></block>
-        <block type="cwViolet"></block>
-        <block type="cwChartreuse"></block>
-        <block type="cwRose"></block>
-        <block type="cwPink"></block>
-        <block type="cwPurple"></block>
-        <block type="cwGray">
-          <value name="VALUE">
-            <shadow type="numNumberPerc">
-              <field name="NUMBER">50</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="cwMixed">
-          <value name="COL1">
-            <shadow type="cwRed"></shadow>
-          </value>
-          <value name="COL2">
-            <shadow type="cwOrange"></shadow>
-          </value>
-        </block>
-        <block type="cwLight">
-          <value name="COL">
-            <shadow type="cwRed"></shadow>
-          </value>
-        </block>
-        <block type="cwDark">
-          <value name="COL">
-            <shadow type="cwRed"></shadow>
-          </value>
-        </block>
-        <block type="cwBright">
-          <value name="COL">
-            <shadow type="cwRed"></shadow>
-          </value>
-        </block>
-        <block type="cwDull">
-          <value name="COL">
-            <shadow type="cwRed"></shadow>
-          </value>
-        </block>
-        <block type="cwTranslucent">
-          <value name="COL">
-            <shadow type="cwRed"></shadow>
-          </value>
-        </block>
-        <block type="cwRGBA">
-          <value name="RED">
-            <shadow type="numNumberPerc">
-              <field name="NUMBER">50</field>
-            </shadow>
-          </value>
-          <value name="BLUE">
-            <shadow type="numNumberPerc">
-              <field name="NUMBER">50</field>
-            </shadow>
-          </value>
-          <value name="GREEN">
-            <shadow type="numNumberPerc">
-              <field name="NUMBER">50</field>
-            </shadow>
-          </value>
-          <value name="ALPHA">
-            <shadow type="numNumberPerc">
-              <field name="NUMBER">100</field>
-            </shadow>
-          </value>
-        </block>
-      </category>
-      <category name="Numbers">
-        <block type="numNumber"></block>
-        <block type="numNumberPerc"></block>
-        <block type="numAdd">
-          <value name="LEFT">
-            <shadow type="numNumber"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numSub">
-          <value name="LEFT">
-            <shadow type="numNumber"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numMult">
-          <value name="LEFT">
-            <shadow type="numNumber"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numDiv">
-          <value name="LEFT">
-            <shadow type="numNumber"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber">
-              <field name="NUMBER">1</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="numExp">
-          <value name="LEFT">
-            <shadow type="numNumber"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numMax">
-          <value name="LEFT">
-            <shadow type="numNumber"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numMin">
-          <value name="LEFT">
-            <shadow type="numNumber"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numOpposite">
-          <value name="NUM">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numAbs">
-          <value name="NUM">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numRound">
-          <value name="NUM">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numReciprocal">
-          <value name="NUM">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numQuot">
-          <value name="LEFT">
-            <shadow type="numNumber"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numRem">
-          <value name="LEFT">
-            <shadow type="numNumber"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numPi">
-        </block>
-        <block type="numSqrt">
-          <value name="NUM">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numGCD">
-          <value name="LEFT">
-            <shadow type="numNumber"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numSin">
-          <value name="VAL">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="numCos">
-          <value name="VAL">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-      </category>
-      <category name="Text">
-        <block type="text_typed"></block>
-        <block type="txtConcat">
-          <value name="STR0">
-            <shadow type="text_typed"></shadow>
-          </value>
-          <value name="STR1">
-            <shadow type="text_typed"></shadow>
-          </value>
-        </block>
-        <block type="txtPrinted">
-          <value name="TEXT">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="txtLowercase">
-          <value name="TEXT">
-            <shadow type="text_typed"></shadow>
-          </value>
-        </block>
-        <block type="txtUppercase">
-          <value name="TEXT">
-            <shadow type="text_typed"></shadow>
-          </value>
-        </block>
-      </category>
-      <category name="Logic">
-        <block type="conIf">
-          <value name="IF">
-            <shadow type="conTrue"></shadow>
-          </value>
-        </block>
-        <block type="conEq"></block>
-        <block type="conNeq"></block>
-        <block type="conAnd">
-          <value name="LEFT">
-            <shadow type="conTrue"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="conTrue"></shadow>
-          </value>
-        </block>
-        <block type="conOr">
-          <value name="LEFT">
-            <shadow type="conFalse"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="conFalse"></shadow>
-          </value>
-        </block>
-        <block type="conNot">
-          <value name="VALUE">
-            <shadow type="conTrue"></shadow>
-          </value>
-        </block>
-        <block type="conTrue"></block>
-        <block type="conFalse"></block>
-        <block type="conGreater">
-          <value name="LEFT">
-            <shadow type="numNumber"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="conGeq">
-          <value name="LEFT">
-            <shadow type="numNumber"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="conLess">
-          <value name="LEFT">
-            <shadow type="numNumber"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="conLeq">
-          <value name="LEFT">
-            <shadow type="numNumber"></shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="conEven">
-          <value name="VALUE">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="conOdd">
-          <value name="VALUE">
-            <shadow type="numNumber"></shadow>
-          </value>
-        </block>
-        <block type="conStartWith">
-          <value name="TEXTMAIN">
-            <shadow type="text_typed"></shadow>
-          </value>
-          <value name="TEXTTEST">
-            <shadow type="text_typed"></shadow>
-          </value>
-        </block>
-        <block type="conEndWith">
-          <value name="TEXTMAIN">
-            <shadow type="text_typed"></shadow>
-          </value>
-          <value name="TEXTTEST">
-            <shadow type="text_typed"></shadow>
-          </value>
-        </block>
-      </category>
-      <category name="Tuples">
-        <block type="pair_create_typed"> </block>
-        <block type="pair_first_typed"> </block>
-        <block type="pair_second_typed"> </block> 
-      </category>
-      <category name="Lists">
-        <block type="lists_create_with_typed"></block>
-        <block type="lists_cons"></block>
-        <block type="lists_numgen">
-          <value name="LEFT">
-            <shadow type="numNumber">
-              <field name="NUMBER">1</field>
-            </shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber">
-              <field name="NUMBER">10</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="lists_numgenstep">
-          <value name="LEFT">
-            <shadow type="numNumber">
-              <field name="NUMBER">1</field>
-            </shadow>
-          </value>
-          <value name="NEXT">
-            <shadow type="numNumber">
-              <field name="NUMBER">3</field>
-            </shadow>
-          </value>
-          <value name="RIGHT">
-            <shadow type="numNumber">
-              <field name="NUMBER">9</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="lists_comprehension"></block>
-        <block type="lists_at">
-          <value name="POS">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="lists_length"></block>
-        <block type="lists_repeating"></block>
-        <block type="lists_shuffled">
-          <value name="SEED">
-            <shadow type="numNumber">
-              <field name="NUMBER">0</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="lists_sorted"></block>
-        <block type="lists_reversed"></block>
-        <block type="lists_first">
-          <value name="COUNT">
-            <shadow type="numNumber">
-              <field name="NUMBER">3</field>
-            </shadow>
-          </value>
-        </block>
-        <block type="lists_rest">
-          <value name="COUNT">
-            <shadow type="numNumber">
-              <field name="NUMBER">3</field>
-            </shadow>
-          </value>
-        </block>
-      </category>
-      <category name="Types" custom="DATATYPE"></category>
-      <category name="Events" custom="EVENT"></category>
-      <category name="Definitions" custom="PROCEDURE">
-      </category>
+        <category name="Programs">
+            <block type="cwDrawingOf"></block>
+            <block type="cwAnimationOf"></block>
+            <block type="cwSimulationOf"></block>
+            <block type="cwInteractionOf"></block>
+            <block type="comment"></block>
+        </category>
+        <category name="Pictures">
+            <block type="cwBlank"></block>
+            <block type="cwCodeWorldLogo"></block>
+            <block type="cwCircle">
+                <value name="RADIUS">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">5</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cwSolidCircle">
+                <value name="RADIUS">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">5</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cwThickCircle">
+                <value name="RADIUS">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">5</field>
+                    </shadow>
+                </value>
+                <value name="LINEWIDTH">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">1</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cwRectangle">
+                <value name="WIDTH">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">5</field>
+                    </shadow>
+                </value>
+                <value name="HEIGHT">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">5</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cwSolidRectangle">
+                <value name="WIDTH">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">5</field>
+                    </shadow>
+                </value>
+                <value name="HEIGHT">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">5</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cwThickRectangle">
+                <value name="WIDTH">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">5</field>
+                    </shadow>
+                </value>
+                <value name="HEIGHT">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">5</field>
+                    </shadow>
+                </value>
+                <value name="LINEWIDTH">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">1</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cwArc">
+                <value name="STARTANGLE">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">45</field>
+                    </shadow>
+                </value>
+                <value name="ENDANGLE">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">135</field>
+                    </shadow>
+                </value>
+                <value name="RADIUS">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">5</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cwSector">
+                <value name="STARTANGLE">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">45</field>
+                    </shadow>
+                </value>
+                <value name="ENDANGLE">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">135</field>
+                    </shadow>
+                </value>
+                <value name="RADIUS">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">5</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cwThickArc">
+                <value name="STARTANGLE">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">45</field>
+                    </shadow>
+                </value>
+                <value name="ENDANGLE">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">135</field>
+                    </shadow>
+                </value>
+                <value name="RADIUS">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">5</field>
+                    </shadow>
+                </value>
+                <value name="LINEWIDTH">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">1</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cwText">
+                <value name="TEXT">
+                    <shadow type="text_typed">
+                        <field name="TEXT"></field>
+                    </shadow>
+                </value>
+            </block>
+        </category>
+        <category name="Coordinates">
+            <block type="cwCoordinatePlane"></block>
+            <block type="pair_create_typed">
+                <value name="FIRST">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">0</field>
+                    </shadow>
+                </value>
+                <value name="SECOND">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">0</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="lists_polyline">
+            </block>
+            <block type="lists_thickPolyline">
+                <value name="THICKNESS">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">0</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="lists_polygon">
+            </block>
+            <block type="lists_solidPolygon">
+            </block>
+            <block type="lists_thickPolygon">
+                <value name="THICKNESS">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">0</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="lists_curve">
+            </block>
+            <block type="lists_thickCurve">
+                <value name="THICKNESS">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">0</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="lists_closedCurve">
+            </block>
+            <block type="lists_solidClosedCurve">
+            </block>
+            <block type="lists_thickClosedCurve">
+                <value name="THICKNESS">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">0</field>
+                    </shadow>
+                </value>
+            </block>
+        </category>
+        <category name="Transformations">
+            <block type="cwCombine">
+                <value name="PIC0">
+                    <shadow type="cwBlank"></shadow>
+                </value>
+                <value name="PIC1">
+                    <shadow type="cwBlank"></shadow>
+                </value>
+            </block>
+            <block type="cwColored">
+                <value name="PICTURE">
+                    <shadow type="cwBlank"></shadow>
+                </value>
+                <value name="COLOR">
+                    <shadow type="cwBlack"></shadow>
+                </value>
+            </block>
+            <block type="cwTranslate">
+                <value name="PICTURE">
+                    <shadow type="cwBlank"></shadow>
+                </value>
+                <value name="X">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">0</field>
+                    </shadow>
+                </value>
+                <value name="Y">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">0</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cwRotate">
+                <value name="PICTURE">
+                    <shadow type="cwBlank"></shadow>
+                </value>
+                <value name="ANGLE">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">0</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cwScale">
+                <value name="PICTURE">
+                    <shadow type="cwBlank"></shadow>
+                </value>
+                <value name="HORZ">
+                    <shadow type="numNumberPerc">
+                        <field name="NUMBER">100</field>
+                    </shadow>
+                </value>
+                <value name="VERTZ">
+                    <shadow type="numNumberPerc">
+                        <field name="NUMBER">100</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="lists_pictures"></block>
+        </category>
+        <category name="Colors">
+            <block type="cwRed"></block>
+            <block type="cwBlue"></block>
+            <block type="cwGreen"></block>
+            <block type="cwBrown"></block>
+            <block type="cwOrange"></block>
+            <block type="cwBlack"></block>
+            <block type="cwWhite"></block>
+            <block type="cwCyan"></block>
+            <block type="cwMagenta"></block>
+            <block type="cwYellow"></block>
+            <block type="cwAquamarine"></block>
+            <block type="cwAzure"></block>
+            <block type="cwViolet"></block>
+            <block type="cwChartreuse"></block>
+            <block type="cwRose"></block>
+            <block type="cwPink"></block>
+            <block type="cwPurple"></block>
+            <block type="cwGray">
+                <value name="VALUE">
+                    <shadow type="numNumberPerc">
+                        <field name="NUMBER">50</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cwMixed">
+                <value name="COL1">
+                    <shadow type="cwRed"></shadow>
+                </value>
+                <value name="COL2">
+                    <shadow type="cwOrange"></shadow>
+                </value>
+            </block>
+            <block type="cwLight">
+                <value name="COL">
+                    <shadow type="cwRed"></shadow>
+                </value>
+            </block>
+            <block type="cwDark">
+                <value name="COL">
+                    <shadow type="cwRed"></shadow>
+                </value>
+            </block>
+            <block type="cwBright">
+                <value name="COL">
+                    <shadow type="cwRed"></shadow>
+                </value>
+            </block>
+            <block type="cwDull">
+                <value name="COL">
+                    <shadow type="cwRed"></shadow>
+                </value>
+            </block>
+            <block type="cwTranslucent">
+                <value name="COL">
+                    <shadow type="cwRed"></shadow>
+                </value>
+            </block>
+            <block type="cwRGBA">
+                <value name="RED">
+                    <shadow type="numNumberPerc">
+                        <field name="NUMBER">50</field>
+                    </shadow>
+                </value>
+                <value name="BLUE">
+                    <shadow type="numNumberPerc">
+                        <field name="NUMBER">50</field>
+                    </shadow>
+                </value>
+                <value name="GREEN">
+                    <shadow type="numNumberPerc">
+                        <field name="NUMBER">50</field>
+                    </shadow>
+                </value>
+                <value name="ALPHA">
+                    <shadow type="numNumberPerc">
+                        <field name="NUMBER">100</field>
+                    </shadow>
+                </value>
+            </block>
+        </category>
+        <category name="Numbers">
+            <block type="numNumber"></block>
+            <block type="numNumberPerc"></block>
+            <block type="numAdd">
+                <value name="LEFT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numSub">
+                <value name="LEFT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numMult">
+                <value name="LEFT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numDiv">
+                <value name="LEFT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">1</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="numExp">
+                <value name="LEFT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numMax">
+                <value name="LEFT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numMin">
+                <value name="LEFT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numOpposite">
+                <value name="NUM">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numAbs">
+                <value name="NUM">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numRound">
+                <value name="NUM">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numReciprocal">
+                <value name="NUM">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numQuot">
+                <value name="LEFT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numRem">
+                <value name="LEFT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numPi">
+            </block>
+            <block type="numSqrt">
+                <value name="NUM">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numGCD">
+                <value name="LEFT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numSin">
+                <value name="VAL">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="numCos">
+                <value name="VAL">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+        </category>
+        <category name="Text">
+            <block type="text_typed"></block>
+            <block type="txtConcat">
+                <value name="STR0">
+                    <shadow type="text_typed"></shadow>
+                </value>
+                <value name="STR1">
+                    <shadow type="text_typed"></shadow>
+                </value>
+            </block>
+            <block type="txtPrinted">
+                <value name="TEXT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="txtLowercase">
+                <value name="TEXT">
+                    <shadow type="text_typed"></shadow>
+                </value>
+            </block>
+            <block type="txtUppercase">
+                <value name="TEXT">
+                    <shadow type="text_typed"></shadow>
+                </value>
+            </block>
+        </category>
+        <category name="Logic">
+            <block type="conIf">
+                <value name="IF">
+                    <shadow type="conTrue"></shadow>
+                </value>
+            </block>
+            <block type="conEq"></block>
+            <block type="conNeq"></block>
+            <block type="conAnd">
+                <value name="LEFT">
+                    <shadow type="conTrue"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="conTrue"></shadow>
+                </value>
+            </block>
+            <block type="conOr">
+                <value name="LEFT">
+                    <shadow type="conFalse"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="conFalse"></shadow>
+                </value>
+            </block>
+            <block type="conNot">
+                <value name="VALUE">
+                    <shadow type="conTrue"></shadow>
+                </value>
+            </block>
+            <block type="conTrue"></block>
+            <block type="conFalse"></block>
+            <block type="conGreater">
+                <value name="LEFT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="conGeq">
+                <value name="LEFT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="conLess">
+                <value name="LEFT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="conLeq">
+                <value name="LEFT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="conEven">
+                <value name="VALUE">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="conOdd">
+                <value name="VALUE">
+                    <shadow type="numNumber"></shadow>
+                </value>
+            </block>
+            <block type="conStartWith">
+                <value name="TEXTMAIN">
+                    <shadow type="text_typed"></shadow>
+                </value>
+                <value name="TEXTTEST">
+                    <shadow type="text_typed"></shadow>
+                </value>
+            </block>
+            <block type="conEndWith">
+                <value name="TEXTMAIN">
+                    <shadow type="text_typed"></shadow>
+                </value>
+                <value name="TEXTTEST">
+                    <shadow type="text_typed"></shadow>
+                </value>
+            </block>
+        </category>
+        <category name="Tuples">
+            <block type="pair_create_typed"> </block>
+            <block type="pair_first_typed"> </block>
+            <block type="pair_second_typed"> </block>
+        </category>
+        <category name="Lists">
+            <block type="lists_create_with_typed"></block>
+            <block type="lists_cons"></block>
+            <block type="lists_numgen">
+                <value name="LEFT">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">1</field>
+                    </shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">10</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="lists_numgenstep">
+                <value name="LEFT">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">1</field>
+                    </shadow>
+                </value>
+                <value name="NEXT">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">3</field>
+                    </shadow>
+                </value>
+                <value name="RIGHT">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">9</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="lists_comprehension"></block>
+            <block type="lists_at">
+                <value name="POS">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">0</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="lists_length"></block>
+            <block type="lists_repeating"></block>
+            <block type="lists_shuffled">
+                <value name="SEED">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">0</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="lists_sorted"></block>
+            <block type="lists_reversed"></block>
+            <block type="lists_first">
+                <value name="COUNT">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">3</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="lists_rest">
+                <value name="COUNT">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">3</field>
+                    </shadow>
+                </value>
+            </block>
+        </category>
+        <category name="Types" custom="DATATYPE"></category>
+        <category name="Events" custom="EVENT"></category>
+        <category name="Definitions" custom="PROCEDURE">
+        </category>
     </xml>
-  </body>
+</body>
+
 </html>

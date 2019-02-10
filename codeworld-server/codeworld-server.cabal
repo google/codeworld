@@ -37,6 +37,7 @@ Executable codeworld-server
     process,
     regex-compat,
     regex-tdfa,
+    SafeSemaphore,
     snap-core,
     snap-server,
     temporary,

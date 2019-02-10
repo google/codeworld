@@ -38,7 +38,8 @@ import CodeWorld.Compile
 import CodeWorld.Compile.Base
 import Control.Applicative
 import Control.Concurrent (forkIO)
-import Control.Concurrent.QSem
+import Control.Concurrent.MSem (MSem)
+import qualified Control.Concurrent.MSem as MSem
 import Control.Exception (bracket_)
 import Control.Monad
 import Control.Monad.Trans
@@ -73,10 +74,14 @@ import Util
 maxSimultaneousCompiles :: Int
 maxSimultaneousCompiles = 4
 
+maxSimultaneousErrorChecks :: Int
+maxSimultaneousErrorChecks = 2
+
 data Context = Context {
     authConfig :: AuthConfig,
-    compileSem :: QSem,
-    baseSem :: QSem
+    compileSem :: MSem Int,
+    errorSem :: MSem Int,
+    baseSem :: MSem Int
     }
 
 main :: IO ()
@@ -88,8 +93,9 @@ main = do
 makeContext :: IO Context
 makeContext = do
     ctx <- Context <$> (getAuthConfig =<< getCurrentDirectory)
-                   <*> newQSem maxSimultaneousCompiles
-                   <*> newQSem 1
+                   <*> MSem.new maxSimultaneousCompiles
+                   <*> MSem.new maxSimultaneousErrorChecks
+                   <*> MSem.new 1
     putStrLn $ "Authentication method: " ++ authMethod (authConfig ctx)
     return ctx
 
@@ -505,8 +511,7 @@ compileIfNeeded ctx mode programId = do
     if | hasResult && hasTarget -> return CompileSuccess
        | hasResult -> return CompileError
        | otherwise ->
-             bracket_ (waitQSem $ compileSem ctx) (signalQSem $ compileSem ctx) $
-                 compileIncrementally ctx mode programId
+             MSem.with (compileSem ctx) $ compileIncrementally ctx mode programId
 
 compileIncrementally :: Context -> BuildMode -> ProgramId -> IO CompileStatus
 compileIncrementally ctx mode programId = do
@@ -537,8 +542,7 @@ buildBaseIfNeeded ctx ver = do
     codeExists <- doesFileExist (baseCodeFile ver)
     symbolsExist <- doesFileExist (baseSymbolFile ver)
     if not codeExists || not symbolsExist then
-        bracket_ (waitQSem $ baseSem ctx) (signalQSem $ baseSem ctx) $
-            withSystemTempDirectory "genbase" $ \tmpdir -> do
+        MSem.with (baseSem ctx) $ withSystemTempDirectory "genbase" $ \tmpdir -> do
                 let linkMain = tmpdir </> "LinkMain.hs"
                 let linkBase = tmpdir </> "LinkBase.hs"
                 let err = tmpdir </> "output.txt"
@@ -558,8 +562,7 @@ errorCheck ctx mode source = withSystemTempDirectory "cw_errorCheck" $ \dir -> d
     let srcFile = dir </> "program.hs"
     let errFile = dir </> "output.txt"
     B.writeFile srcFile source
-    let sem = compileSem ctx
-    status <- bracket_ (waitQSem sem) (signalQSem sem) $
+    status <- MSem.with (errorSem ctx) $ MSem.with (compileSem ctx) $
         compileSource ErrorCheck srcFile errFile (getMode mode) False
     hasOutput <- doesFileExist errFile
     output <- if hasOutput then B.readFile errFile else return B.empty

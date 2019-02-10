@@ -246,7 +246,11 @@ function parseSymbolsFromCurrentCode() {
             }
         }
     })
-    codeWorldSymbols = Object.assign({}, parseResults, codeWorldBuiltinSymbols);
+    if (window.buildMode === 'codeworld') {
+        codeWorldSymbols = Object.assign({}, parseResults, codeWorldBuiltinSymbols);
+    } else {
+        codeWorldSymbols = Object.assign({}, parseResults);
+    }
 };
 
 function renderDeclaration(decl, keyword, keywordData, maxLen) {

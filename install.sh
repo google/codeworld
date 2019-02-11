@@ -253,7 +253,7 @@ run $BUILD  rm -rf downloads
 run $BUILD            git clone https://github.com/codemirror/CodeMirror.git
 run $BUILD/CodeMirror git checkout tags/5.43.0
 run $BUILD/CodeMirror npm install
-run $BUILD/CodeMirror npm install -s uglify-js codemirror-extension@0.2.0
+run $BUILD/CodeMirror npm install -s uglify-js git+ssh://git@github.com:angelozerr/CodeMirror-Extension.git
 
 # Go ahead and run a first build, which installs more local packages.
 ./build.sh

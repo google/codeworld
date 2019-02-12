@@ -233,9 +233,10 @@ window.onload = function (){
             addPopout(help);
         }
         help.appendChild(elem)
-        document.body.scrollTop = 0;
+
+        document.body.scrollTop = position.pageY;
         if (document.firstElementChild) document.firstElementChild.scrollTop =
-            0;
+            position.pageY;
     }
 
     function loadPath(path) {
@@ -286,9 +287,7 @@ window.onload = function (){
                 if (contents[path].outline) {
                     addTableOfContents(content, contents[path].outline);
                 }
-
                 setContent(content);
-                window.scrollTo(position.pageX, position.pageY);
             }
             request.send(null);
         };
@@ -332,6 +331,8 @@ window.onload = function (){
             active: activeIndex,
             heightStyle: 'content',
             beforeActivate: (event, ui) => {
+                position.pageX = 0;
+                position.pageY = 0;
                 let name = ui.newHeader.text();
                 let path = name && shelf.named[name];
                 if (path) loadPath(path);

@@ -675,6 +675,15 @@ function help() {
         allowEscapeKey: true,
         allowOutsideClick: true,
         showConfirmButton: false,
+    }, function(confirmed){
+        // Kind of onClose event for sweetalert. Function get single bool argument -
+        // true if confirmed, false if not.
+        if (confirmed){
+            console.log("Should never happen. Doc sweetalert have no confirm option.")
+        } else {
+            var docIframe = document.getElementById("doc");
+            docIframe.contentWindow.savePosition();
+        }
     });
 }
 

@@ -14,9 +14,31 @@
  * limitations under the License.
  */
 window.env = parent;
-(() => {
-    let params = new URLSearchParams(window.location.search);
+let params = new URLSearchParams(window.location.search);
+let position = {
+    pageX: 0,
+    pageY: 0,
+    path: params.get('path')
+};
 
+function savePosition() {
+    sessionStorage.setItem('position', JSON.stringify(position));
+};
+
+function loadPosition() {
+    let savedPosition = sessionStorage.getItem('position');
+    if (savedPosition && savedPosition != "undefined") {
+        position = JSON.parse(savedPosition)
+    }
+};
+window.onscroll = event => {
+    position.pageX = event.pageX;
+    position.pageY = event.pageY;
+};
+window.onload = () => {
+    loadPosition();
+};
+(() => {
     let shelf = {};
     let contents = {};
 
@@ -213,14 +235,15 @@ window.env = parent;
             addPopout(help);
         }
         help.appendChild(elem)
-        document.body.scrollTop = 0;
+
+        document.body.scrollTop = position.pageY;
         if (document.firstElementChild) document.firstElementChild.scrollTop =
-            0;
+            position.pageY;
     }
 
     function loadPath(path) {
         if (!path && shelf) path = shelf.default || shelf.named[0][1];
-
+        position.path = path;
         if (contents[path] && contents[path].elem) {
             setContent(contents[path].elem);
         } else {
@@ -266,7 +289,6 @@ window.env = parent;
                 if (contents[path].outline) {
                     addTableOfContents(content, contents[path].outline);
                 }
-
                 setContent(content);
             }
             request.send(null);
@@ -274,7 +296,7 @@ window.env = parent;
     }
 
     function loadSidebar() {
-        let path = params.get('path');
+        let path = position.path;
         if (!path) path = shelf.default;
 
         let activeIndex = false;
@@ -311,6 +333,8 @@ window.env = parent;
             active: activeIndex,
             heightStyle: 'content',
             beforeActivate: (event, ui) => {
+                position.pageX = 0;
+                position.pageY = 0;
                 let name = ui.newHeader.text();
                 let path = name && shelf.named[name];
                 if (path) loadPath(path);
@@ -332,7 +356,7 @@ window.env = parent;
 
             shelf = JSON.parse(request.responseText);
             loadSidebar();
-            loadPath(params.get('path'));
+            loadPath(position.path);
         };
         request.send(null);
     } else {

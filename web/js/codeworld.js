@@ -675,6 +675,11 @@ function help() {
         allowEscapeKey: true,
         allowOutsideClick: true,
         showConfirmButton: false,
+    }, () => {
+        // Kind of onClose event for sweetalert. Function get single bool argument -
+        // true if confirmed, false if not.
+        let docIframe = document.getElementById("doc");
+        docIframe.contentWindow.savePosition();
     });
 }
 

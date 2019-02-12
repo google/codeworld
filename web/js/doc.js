@@ -14,26 +14,28 @@
  * limitations under the License.
  */
 window.env = parent;
-var params = new URLSearchParams(window.location.search);
-var position = {
+let params = new URLSearchParams(window.location.search);
+let position = {
     pageX: 0,
     pageY: 0,
     path: params.get('path')
 };
-function savePosition () {
+
+function savePosition() {
     sessionStorage.setItem('position', JSON.stringify(position));
 };
-function loadPosition (){
-    var savedPosition = sessionStorage.getItem('position');
-    if (savedPosition && savedPosition != "undefined"){
+
+function loadPosition() {
+    let savedPosition = sessionStorage.getItem('position');
+    if (savedPosition && savedPosition != "undefined") {
         position = JSON.parse(savedPosition)
     }
 };
-window.onscroll = function (event){
+window.onscroll = event => {
     position.pageX = event.pageX;
     position.pageY = event.pageY;
 };
-window.onload = function (){
+window.onload = () => {
     loadPosition();
 };
 (() => {

@@ -16,8 +16,8 @@
 window.env = parent;
 let params = new URLSearchParams(window.location.search);
 let position = {
-    pageX: 0,
-    pageY: 0,
+    scrollLeft: 0,
+    scrollTop: 0,
     path: params.get('path')
 };
 
@@ -32,8 +32,8 @@ function loadPosition() {
     }
 };
 window.onscroll = event => {
-    position.pageX = event.pageX;
-    position.pageY = event.pageY;
+    position.scrollLeft = event.target.scrollingElement.scrollLeft;
+    position.scrollTop = event.target.scrollingElement.scrollTop;
 };
 window.onload = () => {
     loadPosition();
@@ -236,9 +236,8 @@ window.onload = () => {
         }
         help.appendChild(elem)
 
-        document.body.scrollTop = position.pageY;
-        if (document.firstElementChild) document.firstElementChild.scrollTop =
-            position.pageY;
+        document.scrollingElement.scrollLeft = position.scrollLeft;
+        document.scrollingElement.scrollTop = position.scrollTop;
     }
 
     function loadPath(path) {
@@ -333,8 +332,8 @@ window.onload = () => {
             active: activeIndex,
             heightStyle: 'content',
             beforeActivate: (event, ui) => {
-                position.pageX = 0;
-                position.pageY = 0;
+                position.scrollLeft = 0;
+                position.scrollTop = 0;
                 let name = ui.newHeader.text();
                 let path = name && shelf.named[name];
                 if (path) loadPath(path);

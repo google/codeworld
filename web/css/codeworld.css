@@ -343,7 +343,7 @@ body {
     margin: 2px 4px 4px 2px;
 }
 
-.sweet-alert.helpdoc {
+.swal2-popup.helpdoc {
     max-width: 70em;
     width: 80vw;
     height: 90vh;
@@ -354,23 +354,15 @@ body {
     left: 10vw;
 }
 
-.sweet-alert.helpdoc div {
-    display: none;
-}
-
-.sweet-alert.helpdoc fieldset {
-    display: none;
-}
-
-.sweet-alert.helpdoc h2 {
-    display: none;
-}
-
-.sweet-alert.helpdoc p {
+.swal2-popup.helpdoc * {
     display: block;
     margin: 0px 0px 0px 0px;
     padding: 0px 0px 0px 0px;
     height: 100%;
+}
+
+.swal2-popup.helpdoc .swal2-header {
+    display: none;
 }
 
 .ui-layout-resizer-dragging {

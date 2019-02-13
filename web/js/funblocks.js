@@ -17,7 +17,7 @@
 // Helper functions /////////////////////////////////////////////////
 
 function loadSample(code) {
-    if (isEditorClean()) sweetAlert.close();
+    if (isEditorClean()) sweetAlert2.close();
     warnIfUnsaved(() => {
         loadWorkspace(code);
     }, false);

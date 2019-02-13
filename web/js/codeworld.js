@@ -751,7 +751,7 @@ function setCode(code, history, name, autostart) {
 }
 
 function loadSample(code) {
-    if (isEditorClean()) sweetAlert.close();
+    if (isEditorClean()) sweetAlert2.close();
     warnIfUnsaved(() => {
         setCode(code);
     }, false);

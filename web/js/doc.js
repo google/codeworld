@@ -73,6 +73,7 @@ window.onload = () => {
                         pre.classList.add('clickable');
                         pre.onclick = () => {
                             if (env && env.loadSample) {
+                                savePosition();
                                 env.loadSample(text);
                             }
                         }

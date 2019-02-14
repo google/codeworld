@@ -18,7 +18,7 @@ function addMessage(err, str) {
     // Catch exceptions to protect against cross-domain access errors.
     try {
         if (window.parent && window.parent.addToMessage) {
-            let message = window.parent.addToMessage(str);
+            window.parent.addToMessage(str);
 
             if (err) {
                 let message = window.parent.document.getElementById('message');

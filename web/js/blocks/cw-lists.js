@@ -121,7 +121,6 @@ Blockly.Blocks['lists_comprehension'] = {
         }
 
         // Do variables
-        let func = (a, b) => Exp.Let(a, b, c); //Exp.AppFunc([a,b],Exp.Var(":"));
         let result = Exp.AppFunc([mainExp, guardExp], Exp.Var('filtB'));
         for (let i = this.varCount_ - 1; i !== -1; i--) {
             let varName = this.vars_[i];
@@ -130,11 +129,10 @@ Blockly.Blocks['lists_comprehension'] = {
             if (inp && inp.connection.isConnected()) {
                 exp = inp.connection.targetBlock().getExpr();
             } else {
-                let exp = Exp.Var('undef');
+                exp = Exp.Var('undef');
             }
 
             exp.tag = inp.connection;
-
 
             let field = inp.fieldRow[0];
             if (!field.typeExpr)
@@ -152,7 +150,6 @@ Blockly.Blocks['lists_comprehension'] = {
 
         result.tag = this.outputConnection;
         return result;
-
     },
 
     foldr(fn, ult, xs) {
@@ -269,7 +266,7 @@ Blockly.Blocks['lists_comprehension'] = {
             if (childNode.nodeName.toLowerCase() == 'let') {
                 let name = childNode.getAttribute('name');
 
-                let input = this.appendValueInput('VAR' + i)
+                this.appendValueInput('VAR' + i)
                     .setAlign(Blockly.ALIGN_RIGHT)
                     .appendField(new Blockly.FieldLocalVar(name, this.getArgType(
                         i)))
@@ -279,7 +276,7 @@ Blockly.Blocks['lists_comprehension'] = {
         }
 
         for (let x = 0; x < this.guardCount_; x++) {
-            let input = this.appendValueInput('GUARD' + x)
+            this.appendValueInput('GUARD' + x)
                 .setAlign(Blockly.ALIGN_RIGHT)
                 .appendField('If');
         }
@@ -731,7 +728,6 @@ Blockly.Blocks['lists_create_with_typed'] = {
         for (let x = 0; x < this.itemCount_; x++) {
             let input = this.appendValueInput('ADD' + x);
             if (x == 0) {
-
                 input.appendField(new Blockly.FieldImage(
                     "ims/format-list-bulleted.svg", 20, 20));
                 input.appendField("List");

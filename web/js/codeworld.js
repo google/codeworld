@@ -948,9 +948,7 @@ function compile() {
     data.append('source', src);
     data.append('mode', window.buildMode);
 
-    let compileStartTime = Date.now();
     let compileFinished = false;
-    let compileDots = 0;
 
     window.cancelCompile = () => {
         compileFinished = true;

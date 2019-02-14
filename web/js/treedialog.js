@@ -102,8 +102,7 @@
             }
         }
 
-        let pic = getPicNode(id),
-            ul = document.createElement("ul"),
+        let ul = document.createElement("ul"),
             li = document.createElement("li");
 
         go(fullPic, li, true);

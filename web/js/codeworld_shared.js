@@ -378,8 +378,7 @@ function registerStandardHints(successFunc) {
             CodeMirror.on(
                 data, 'select',
                 (selection, elem) => {
-                    let codeWordInfo = codeWorldSymbols[selection.text],
-                        hintsWidgetRect = elem.parentElement.getBoundingClientRect(),
+                    let hintsWidgetRect = elem.parentElement.getBoundingClientRect(),
                         doc = document.createElement('div');
                     deleteOldHintDocs();
                     let hover = renderHover(selection.text);

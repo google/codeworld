@@ -399,7 +399,7 @@ function updateNavBar() {
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
             let template = document.getElementById('openFolderTemplate').innerHTML;
-            template = template.replace(/{{label}}/g', encodedName);
+            template = template.replace(/{{label}}/g, encodedName);
             let span = document.createElement('span');
             span.innerHTML = template;
             let elem = span.getElementsByTagName('a')[0];

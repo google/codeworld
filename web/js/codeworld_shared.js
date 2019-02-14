@@ -246,7 +246,8 @@ function parseSymbolsFromCurrentCode() {
         }
     })
     if (window.buildMode === 'codeworld') {
-        codeWorldSymbols = Object.assign({}, parseResults, codeWorldBuiltinSymbols);
+        codeWorldSymbols = Object.assign({}, parseResults,
+            codeWorldBuiltinSymbols);
     } else {
         codeWorldSymbols = Object.assign({}, parseResults);
     }
@@ -835,7 +836,8 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
     function go() {
         sweetAlert.close();
         sweetAlert2({
-            title: 'Saving ' + $('<div>').text(projectName).html() + '...',
+            title: 'Saving ' + $('<div>').text(projectName).html() +
+                '...',
             text: 'Saving your project.  Please wait.',
             showConfirmButton: false,
             showCancelButton: false,

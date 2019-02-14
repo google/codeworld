@@ -30,7 +30,7 @@ Blockly.Blocks['pair_create_typed'] = {
             .appendField(new Blockly.FieldLabel('(', 'blocklyTextEmph'));
         this.appendValueInput('SECOND')
             .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(new Blockly.FieldLabel(',', 'blocklyTextEmph'))
+            .appendField(new Blockly.FieldLabel(',', 'blocklyTextEmph'));
         this.appendDummyInput()
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField(new Blockly.FieldLabel(')', 'blocklyTextEmph'));

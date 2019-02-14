@@ -197,7 +197,7 @@ function parseSymbolsFromCurrentCode() {
         }
         // data Foo
         else if (/^data\s.+/.test(line)) {
-            match = /^data\s+(\S+)\b.*/.exec(line);
+            let match = /^data\s+(\S+)\b.*/.exec(line);
             word = match[1];
             if (parseResults[word]) return;
             parseResults[word] = {
@@ -209,8 +209,7 @@ function parseSymbolsFromCurrentCode() {
         }
         // type Foo = Bar
         else if (/^type\s.+/.test(line)) {
-            let splitted = line.split("=");
-            match = /^type\s+(\S+\b).*/.exec(line);
+            let match = /^type\s+(\S+\b).*/.exec(line);
             word = match[1];
             if (parseResults[word]) return;
             parseResults[word] = {

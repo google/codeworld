@@ -395,11 +395,11 @@ function updateNavBar() {
     for (let i = 0; i < NDlength; i++) {
         let tempProjects;
         if (i != 0) {
-            let encodedName = nestedDirs[i].replace('&', '&amp;')
-                .replace('<', '&lt;')
-                .replace('>', '&gt;');
+            let encodedName = nestedDirs[i].replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
             let template = document.getElementById('openFolderTemplate').innerHTML;
-            template = template.replace('{{label}}', encodedName);
+            template = template.replace(/{{label}}/g', encodedName);
             let span = document.createElement('span');
             span.innerHTML = template;
             let elem = span.getElementsByTagName('a')[0];
@@ -414,11 +414,11 @@ function updateNavBar() {
             projects = span.appendChild(document.createElement('div'));
         }
         allFolderNames[i].forEach(folderName => {
-            let encodedName = folderName.replace('&', '&amp;')
-                .replace('<', '&lt;')
-                .replace('>', '&gt;');
+            let encodedName = folderName.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
             let template = document.getElementById('folderTemplate').innerHTML;
-            template = template.replace('{{label}}', encodedName);
+            template = template.replace(/{{label}}/g, encodedName);
             let span = document.createElement('span');
             span.innerHTML = template;
             let elem = span.getElementsByTagName('a')[0];
@@ -446,12 +446,12 @@ function updateNavBar() {
             if (active && !isEditorClean()) {
                 title = "* " + title;
             }
-            let encodedName = title.replace('&', '&amp;')
-                .replace('<', '&lt;')
-                .replace('>', '&gt;');
+            let encodedName = title.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
             let template = document.getElementById('projectTemplate').innerHTML;
-            template = template.replace('{{label}}', encodedName);
-            template = template.replace(/{{ifactive ([^}]*)}}/, active ?
+            template = template.replace(/{{label}}/g, encodedName);
+            template = template.replace(/{{ifactive ([^}]*)}}/g, active ?
                 "$1" : "");
             let span = document.createElement('span');
             span.innerHTML = template;

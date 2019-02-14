@@ -502,12 +502,12 @@ function updateNavBar() {
 
     let makeDirNode = (name, isOpen, level) => {
         let encodedName = name
-            .replace('&', '&amp;')
-            .replace('<', '&lt;')
-            .replace('>', '&gt;');
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
         let templateName = isOpen ? 'openFolderTemplate' : 'folderTemplate';
         let template = document.getElementById(templateName).innerHTML;
-        template = template.replace('{{label}}', encodedName);
+        template = template.replace(/{{label}}/g, encodedName);
         let span = document.createElement('span');
         span.innerHTML = template;
         let elem = span.getElementsByTagName('a')[0];
@@ -527,12 +527,12 @@ function updateNavBar() {
             title = "* " + title;
         }
         let encodedName = title
-            .replace('&', '&amp;')
-            .replace('<', '&lt;')
-            .replace('>', '&gt;');
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
         let template = document.getElementById('projectTemplate').innerHTML;
-        template = template.replace('{{label}}', encodedName);
-        template = template.replace(/{{ifactive ([^}]*)}}/, active ? "$1" :
+        template = template.replace(/{{label}}/g, encodedName);
+        template = template.replace(/{{ifactive ([^}]*)}}/g, active ? "$1" :
             "");
         let span = document.createElement('span');
         span.innerHTML = template;

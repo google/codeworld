@@ -280,7 +280,7 @@ window.onload = () => {
                 }
 
                 let spacerDiv = document.createElement('div');
-                spacerDiv.style = 'height: 90vh'
+                spacerDiv.style = 'height: 90vh';
                 content.appendChild(spacerDiv);
 
                 if (!contents[path]) contents[path] = {};

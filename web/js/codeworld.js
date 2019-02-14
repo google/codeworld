@@ -47,7 +47,7 @@ async function init() {
     window.runningGeneration = null;
 
     if (window.location.pathname == '/haskell') {
-        window.buildMode = 'haskell'
+        window.buildMode = 'haskell';
     } else {
         window.buildMode = 'codeworld';
     }
@@ -488,7 +488,7 @@ function updateUI() {
         obsoleteAlert.classList.remove("obsolete-code-alert-fadein");
     }
 
-    document.title = title + " - CodeWorld"
+    document.title = title + " - CodeWorld";
 }
 
 function updateNavBar() {
@@ -869,7 +869,7 @@ function run(hash, dhash, msg, error, generation) {
 
 function showRequiredChecksInDialog(msg) {
     let matches = msg.match(
-        /:: REQUIREMENTS ::((?:.|[\r\n])*):: END REQUIREMENTS ::/)
+        /:: REQUIREMENTS ::((?:.|[\r\n])*):: END REQUIREMENTS ::/);
     if (!matches) {
         return;
     }

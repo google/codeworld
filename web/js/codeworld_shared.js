@@ -333,7 +333,7 @@ function registerStandardHints(successFunc) {
         }
 
         let found = [];
-        let hints = Object.keys(codeWorldSymbols)
+        let hints = Object.keys(codeWorldSymbols);
         for (let i = 0; i < hints.length; i++) {
             let hint = hints[i];
             if (hint.startsWith(term)) {
@@ -506,7 +506,7 @@ function registerStandardHints(successFunc) {
                         declaration: line,
                         symbolStart: wordStart,
                         symbolEnd: wordEnd
-                    }
+                    };
                     if (doc) {
                         codeWorldBuiltinSymbols[word].doc = doc;
                     }
@@ -1076,7 +1076,7 @@ function share() {
             let a = document.createElement('a');
             a.href = window.location.href;
             a.hash = '';
-            a.pathname = '/run.html'
+            a.pathname = '/run.html';
             a.search = '?mode=' + window.buildMode + '&dhash=' + window.deployHash;
 
             url = a.href;

@@ -35,7 +35,7 @@ Blockly.Blocks['lists_comprehension'] = {
             'lc'), Type.generateTypeVar('lc')];
         this.appendValueInput("DO")
             .appendField(new Blockly.FieldLabel("List Comprehension",
-                "blocklyTextEmph"))
+                "blocklyTextEmph"));
         this.appendValueInput('VAR0')
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField(new Blockly.FieldLocalVar(this.vars_[0], this.getArgType(
@@ -147,7 +147,7 @@ Blockly.Blocks['lists_comprehension'] = {
 
             let letExp = Exp.App(Exp.Var("bindl"), exp);
 
-            result = Exp.App(letExp, Exp.Abs(varName, result))
+            result = Exp.App(letExp, Exp.Abs(varName, result));
         }
 
         result.tag = this.outputConnection;
@@ -454,7 +454,7 @@ Blockly.Blocks['lists_numgenstep'] = {
             .appendField(",");
         this.appendValueInput("RIGHT")
             .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField("...")
+            .appendField("...");
         this.appendDummyInput()
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField("]");
@@ -789,7 +789,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
             let input = this.appendValueInput('ADD' + this.itemCount_);
             if (this.itemCount_ == 0) {
                 input.appendField(new Blockly.FieldImage(
-                    "ims/format-list-bulleted.svg", 20, 20))
+                    "ims/format-list-bulleted.svg", 20, 20));
                 input.appendField(new Blockly.FieldLabel("List",
                     "blocklyTextEmph"));
             }

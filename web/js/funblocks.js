@@ -369,7 +369,7 @@ function updateUI() {
         title = "* " + title;
     }
 
-    document.title = title + " - CodeWorld"
+    document.title = title + " - CodeWorld";
 }
 
 function updateNavBar() {
@@ -459,7 +459,7 @@ function updateNavBar() {
             elem.style.marginLeft = (3 + 16 * i) + 'px';
             elem.onclick = () => {
                 loadProject(projectName, i);
-            }
+            };
             span.style.display = 'flex';
             span.style.flexDirection = 'column';
             projects.appendChild(span);

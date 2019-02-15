@@ -61,16 +61,16 @@ function start() {
         addMessage(false, h$decodeUtf8(buf, n, buf_offset));
         c(n);
     };
-    h$log = () => {
+    h$log = (...args) => {
         let s = '';
-        for (let i = 0; i < arguments.length; i++) {
-            s = s + arguments[i];
+        for (let i = 0; i < args.length; i++) {
+            s = s + args[i];
         }
         addMessage(false, s + '\n');
     };
-    h$errorMsg = str => {
-        for (let i = 1; i < arguments.length; i++) {
-            str = str.replace(/%s/, arguments[i]);
+    h$errorMsg = (str, ...args) => {
+        for (let i = 0; i < args.length; i++) {
+            str = str.replace(/%s/, args[i]);
         }
         addMessage(true, '\n' + str);
     };

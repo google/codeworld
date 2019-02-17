@@ -27,9 +27,9 @@ function format {
     sed -i 's/\bfunction\b\s*\([(][^)]*[)]\)\s*[{]/\1 => {/' $(find web/js -regex .*\\.js$ -type f)
     sed -i 's/[(]\([a-zA-Z$_][a-zA-Z0-9$_]*\)[)] =>/\1 =>/' $(find web/js -regex .*\\.js$ -type f)
 
-    nodejs build/node_modules/js-beautify/js/bin/js-beautify.js -n -w 80 $(find web/js -regex .*\\.js$ -type f)
-    nodejs build/node_modules/js-beautify/js/bin/css-beautify.js -n -w 80 $(find web/css -regex .*\\.css$ -type f)
-    nodejs build/node_modules/js-beautify/js/bin/html-beautify.js -n -w 80 $(find web -regex .*\\.html$ -type f)
+    node build/node_modules/js-beautify/js/bin/js-beautify.js -n -w 80 $(find web/js -regex .*\\.js$ -type f)
+    node build/node_modules/js-beautify/js/bin/css-beautify.js -n -w 80 $(find web/css -regex .*\\.css$ -type f)
+    node build/node_modules/js-beautify/js/bin/html-beautify.js -n -w 80 $(find web -regex .*\\.html$ -type f)
 }
 
 run . format

@@ -202,7 +202,7 @@ function initCodeworld() {
                             200) {
                             callback(parseCompileErrors(request
                                 .responseText))
-                        } else {
+                        } else if (request.status == 0) {} else {
                             console.log(
                                 "Not expected behavior: don't know how to " +
                                 "handle request with status ",
@@ -850,14 +850,17 @@ function run(hash, dhash, msg, error, generation) {
     }
 
     let message = document.getElementById('message');
-    message.innerHTML = '';
-    addToMessage(msg);
-
-    if (error) {
-        message.classList.add('error');
-    } else {
-        message.classList.remove('error');
-    }
+    message.innerHTML = ''
+    parseCompileErrors(msg).forEach(
+        cmError => {
+            if (cmError.message.trim().split('\n').length < 2) {
+                printMessage(cmError.severity, cmError.firstLine);
+            } else {
+                printMessage(cmError.severity, cmError.firstLine + '\n' +
+                    cmError.message);
+            }
+        }
+    );
 
     window.deployHash = dhash;
 
@@ -1160,7 +1163,8 @@ function parseCompileErrors(rawErrors) {
             from: CodeMirror.Pos(startLine, startCol),
             to: CodeMirror.Pos(endLine, endCol),
             severity: severity,
-            message: description
+            message: description,
+            firstLine: firstLine
         })
     })
     return errors;

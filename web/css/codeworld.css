@@ -168,7 +168,8 @@ body {
     width: calc(100% - 6px);
 }
 
-#message {
+#message,
+#errors {
     flex: 1 1 20px;
     -webkit-flex: 1 1 20px;
     -ms-flex: 1 1 20px;
@@ -178,11 +179,8 @@ body {
     padding: 5px;
 }
 
-#message.error {
-    background-color: #fcc;
-}
-
-#message a {
+#message a,
+#errors a {
     cursor: pointer;
 }
 
@@ -486,4 +484,31 @@ body {
     opacity: 1;
     transition: opacity 1s linear;
     visibility: visible;
+}
+
+.message-box {
+    display: flex;
+    font-family: "Source Code Pro", monospace;
+    padding: 2px;
+}
+
+.message-gutter {
+    background-position: center top;
+    background-repeat: no-repeat;
+    width: 2em;
+    flex-shrink: 0;
+}
+
+.error-message-gutter {
+    border-left: 2px solid red;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAHlBMVEW7AAC7AACxAAC7AAC7AAAAAAC4AAC5AAD///+7AAAUdclpAAAABnRSTlMXnORSiwCK0ZKSAAAATUlEQVR42mWPOQ7AQAgDuQLx/z8csYRmPRIFIwRGnosRrpamvkKi0FTIiMASR3hhKW+hAN6/tIWhu9PDWiTGNEkTtIOucA5Oyr9ckPgAWm0GPBog6v4AAAAASUVORK5CYII=");
+}
+
+.warning-message-gutter {
+    border-left: 2px solid yellow;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAANlBMVEX/uwDvrwD/uwD/uwD/uwD/uwD/uwD/uwD/uwD6twD/uwAAAADurwD2tQD7uAD+ugAAAAD/uwDhmeTRAAAADHRSTlMJ8mN1EYcbmiixgACm7WbuAAAAVklEQVR42n3PUQqAIBBFUU1LLc3u/jdbOJoW1P08DA9Gba8+YWJ6gNJoNYIBzAA2chBth5kLmG9YUoG0NHAUwFXwO9LuBQL1giCQb8gC9Oro2vp5rncCIY8L8uEx5ZkAAAAASUVORK5CYII=");
+}
+
+.log-message-gutter {
+    border-left: 2px solid blue;
 }

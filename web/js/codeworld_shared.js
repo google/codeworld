@@ -15,7 +15,7 @@
  */
 
 /*
- * Utility function for sending an HTTP request to fetch a resource.
+ * Utility function for sending an HTTP request BOOM!to fetch a resource.икщцыук ыьшдуы
  *
  * Args:
  *   - method: The HTTP method to use, such as 'GET'
@@ -247,7 +247,8 @@ function parseSymbolsFromCurrentCode() {
         }
     })
     if (window.buildMode === 'codeworld') {
-        codeWorldSymbols = Object.assign({}, parseResults, codeWorldBuiltinSymbols);
+        codeWorldSymbols = Object.assign({}, parseResults,
+            codeWorldBuiltinSymbols);
     } else {
         codeWorldSymbols = Object.assign({}, parseResults);
     }
@@ -526,26 +527,6 @@ function registerStandardHints(successFunc) {
 
         successFunc();
     });
-}
-
-function addToMessage(msg) {
-    while (msg.match(/(\r\n|[^\x08]|)\x08/)) {
-        msg = msg.replace(/(\r\n|[^\x08])\x08/g, "");
-    }
-
-    msg = msg
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/program\.hs:(\d+):((\d+)(-\d+)?)/g,
-            '<a href="#" onclick="goto($1, $3);">Line $1, Column $2</a>')
-        .replace(/program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
-            '<a href="#" onclick="goto($1, $2);">Line $1-$3, Column $2-$4</a>');
-
-    let message = document.getElementById('message');
-    let atEnd = message.scrollTop >= message.scrollHeight - message.clientHeight;
-    message.innerHTML += msg;
-    if (atEnd) message.scrollTop = message.scrollHeight;
 }
 
 function signin() {
@@ -1184,4 +1165,62 @@ function shareFolder_(mode) {
     }
 
     go();
+}
+
+function preFormatMessage(msg) {
+    while (msg.match(/(\r\n|[^\x08]|)\x08/)) {
+        msg = msg.replace(/(\r\n|[^\x08])\x08/g, "");
+    }
+
+    msg = msg
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/program\.hs:(\d+):((\d+)(-\d+)?)/g,
+            '<a href="#" onclick="goto($1, $3);">Line $1, Column $2</a>')
+        .replace(/program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
+            '<a href="#" onclick="goto($1, $2);">Line $1-$3, Column $2-$4</a>');
+    return msg;
+}
+
+function printMessage(type, message) {
+    if (message.trim() === "") {
+        return;
+    }
+    message = preFormatMessage(message);
+    let outputDiv = document.getElementById("message"),
+        box = document.createElement("div"),
+        messageGutter = document.createElement("div"),
+        messageContent = document.createElement("div"),
+        splitted = message.trim().split('\n');
+
+    messageGutter.classList.add("message-gutter");
+    box.classList.add("message-box");
+    box.appendChild(messageGutter)
+    box.appendChild(messageContent);
+    outputDiv.appendChild(box);
+
+    if (splitted.length < 2) {
+        let singleLineMsg = document.createElement("div");
+        singleLineMsg.innerHTML = message
+        messageContent.appendChild(singleLineMsg)
+    } else {
+        let details = document.createElement("details"),
+            summary = document.createElement("summary");
+        details.innerHTML = splitted.slice(1).join('\n');
+        summary.innerHTML = splitted[0];
+        details.appendChild(summary);
+        messageContent.appendChild(details);
+    }
+    if (type === "error" || type === "warning") {
+        let gutterClass = type === "warning" ?
+            "warning-message-gutter" : "error-message-gutter";
+        messageGutter.classList.add(gutterClass)
+    } else if (type === "log") {
+        messageGutter.classList.add("log-message-gutter")
+    } else {
+        console.log("Unknown code of message type", type, message)
+    }
+
+    outputDiv.scrollTop = outputDiv.scrollHeight;
 }

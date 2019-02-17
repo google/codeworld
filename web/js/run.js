@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-function addMessage(err, str) {
+function addMessage(type, str) {
     // Catch exceptions to protect against cross-domain access errors.
     try {
-        if (window.parent && window.parent.addToMessage) {
-            let message = window.parent.addToMessage(str);
-
-            if (err) {
-                let message = window.parent.document.getElementById('message');
-                message.classList.add('error');
-            }
-
+        if (window.parent && window.parent.printMessage) {
+            window.parent.printMessage(type, str);
             return;
         }
     } catch (e) {}
-
-    console.log(str);
 }
 
 function showCanvas() {
@@ -54,11 +45,11 @@ function showCanvas() {
 
 function start() {
     h$base_writeStdout = (fd, fdo, buf, buf_offset, n, c) => {
-        addMessage(false, h$decodeUtf8(buf, n, buf_offset));
+        addMessage("log", h$decodeUtf8(buf, n, buf_offset));
         c(n);
     };
     h$base_writeStderr = (fd, fdo, buf, buf_offset, n, c) => {
-        addMessage(false, h$decodeUtf8(buf, n, buf_offset));
+        addMessage("log", h$decodeUtf8(buf, n, buf_offset));
         c(n);
     };
     h$log = () => {
@@ -66,13 +57,13 @@ function start() {
         for (let i = 0; i < arguments.length; i++) {
             s = s + arguments[i];
         }
-        addMessage(false, s + '\n');
+        addMessage("log", s);
     };
-    h$errorMsg = str => {
+    h$errorMsg = (str, message) => {
         for (let i = 1; i < arguments.length; i++) {
             str = str.replace(/%s/, arguments[i]);
         }
-        addMessage(true, '\n' + str);
+        addMessage("error", message);
     };
     h$base_stdout_fd.write = h$base_writeStdout;
     h$base_stderr_fd.write = h$base_writeStderr;

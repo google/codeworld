@@ -47,7 +47,7 @@ async function init() {
     window.runningGeneration = null;
 
     if (window.location.pathname == '/haskell') {
-        window.buildMode = 'haskell'
+        window.buildMode = 'haskell';
     } else {
         window.buildMode = 'codeworld';
     }
@@ -488,7 +488,7 @@ function updateUI() {
         obsoleteAlert.classList.remove("obsolete-code-alert-fadein");
     }
 
-    document.title = title + " - CodeWorld"
+    document.title = title + " - CodeWorld";
 }
 
 function updateNavBar() {
@@ -502,12 +502,12 @@ function updateNavBar() {
 
     let makeDirNode = (name, isOpen, level) => {
         let encodedName = name
-            .replace('&', '&amp;')
-            .replace('<', '&lt;')
-            .replace('>', '&gt;');
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
         let templateName = isOpen ? 'openFolderTemplate' : 'folderTemplate';
         let template = document.getElementById(templateName).innerHTML;
-        template = template.replace('{{label}}', encodedName);
+        template = template.replace(/{{label}}/g, encodedName);
         let span = document.createElement('span');
         span.innerHTML = template;
         let elem = span.getElementsByTagName('a')[0];
@@ -527,12 +527,12 @@ function updateNavBar() {
             title = "* " + title;
         }
         let encodedName = title
-            .replace('&', '&amp;')
-            .replace('<', '&lt;')
-            .replace('>', '&gt;');
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
         let template = document.getElementById('projectTemplate').innerHTML;
-        template = template.replace('{{label}}', encodedName);
-        template = template.replace(/{{ifactive ([^}]*)}}/, active ? "$1" :
+        template = template.replace(/{{label}}/g, encodedName);
+        template = template.replace(/{{ifactive ([^}]*)}}/g, active ? "$1" :
             "");
         let span = document.createElement('span');
         span.innerHTML = template;
@@ -872,7 +872,7 @@ function run(hash, dhash, msg, error, generation) {
 
 function showRequiredChecksInDialog(msg) {
     let matches = msg.match(
-        /:: REQUIREMENTS ::((?:.|[\r\n])*):: END REQUIREMENTS ::/)
+        /:: REQUIREMENTS ::((?:.|[\r\n])*):: END REQUIREMENTS ::/);
     if (!matches) {
         return;
     }
@@ -951,9 +951,7 @@ function compile() {
     data.append('source', src);
     data.append('mode', window.buildMode);
 
-    let compileStartTime = Date.now();
     let compileFinished = false;
-    let compileDots = 0;
 
     window.cancelCompile = () => {
         compileFinished = true;

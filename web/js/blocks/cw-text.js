@@ -152,7 +152,7 @@ Blockly.Blocks['txtConcat'] = {
         if (this.itemCount_ < 2) {
             this.setWarningText('This block requires at least 2 inputs');
         } else {
-            this.setWarningText(null)
+            this.setWarningText(null);
         }
     },
 

@@ -35,7 +35,7 @@ Blockly.UserTypes.builtinsStatic = ["Truth", "Number", "Color", "Picture",
 
 Blockly.UserTypes.userReservedNames = ['do', 'let', 'in', 'if', 'then', 'else',
     'data', 'type', 'newtype', 'import', 'qualified'
-]
+];
 
 // Add a these blockTypes to the toolbox
 Blockly.UserTypes.builtinsDynamic = ["type_list"];

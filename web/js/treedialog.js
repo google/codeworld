@@ -47,13 +47,13 @@
                 ul.style.display = "none";
                 toggleButton.innerHTML = "&#x25B6;";
                 collapsed = true;
-            }
+            };
 
             let decollapse = () => {
                 ul.style.display = "";
                 toggleButton.innerHTML = "&#x25BC;";
                 collapsed = false;
-            }
+            };
 
             if (p.picture || p.pictures) {
                 toggleButton.classList.add("collapse-button");
@@ -102,8 +102,7 @@
             }
         }
 
-        let pic = getPicNode(id),
-            ul = document.createElement("ul"),
+        let ul = document.createElement("ul"),
             li = document.createElement("li");
 
         go(fullPic, li, true);

@@ -47,17 +47,8 @@
     //  Draws the node with a coordinate plane in the background.
     let debugDrawShape = null;
 
-    let infobox = null;
     let cachedPic = null;
     let canvas = null;
-
-    function openTreeDialog(id) {
-        parent.openTreeDialog(id);
-    }
-
-    function closeTreeDialog() {
-        parent.destroyTreeDialog();
-    }
 
     // Globals
 

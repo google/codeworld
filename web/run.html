@@ -15,7 +15,7 @@
 <script type="text/javascript">
     // params from the URL
     let paramList = location.search.slice(1).split('&');
-    let params = {}
+    let params = {};
     for (let i = 0; i < paramList.length; i++) {
         let name = paramList[i].split('=')[0];
         let value = paramList[i].slice(name.length + 1);
@@ -33,7 +33,7 @@
     let dhash = params['dhash'];
     let mode = params['mode'];
     // Game id is just dumped in the global JS namespace and read there by gameOf
-    let gid = params['gid']
+    let gid = params['gid'];
     if (!mode) mode = 'codeworld';
 
     let query = '?mode=' + mode;

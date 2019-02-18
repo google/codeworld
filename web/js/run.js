@@ -52,18 +52,18 @@ function start() {
         addMessage("log", h$decodeUtf8(buf, n, buf_offset));
         c(n);
     };
-    h$log = () => {
+    h$log = (...args) => {
         let s = '';
-        for (let i = 0; i < arguments.length; i++) {
-            s = s + arguments[i];
+        for (let i = 0; i < args.length; i++) {
+            s = s + args[i];
         }
         addMessage("log", s);
     };
-    h$errorMsg = (str, message) => {
-        for (let i = 1; i < arguments.length; i++) {
-            str = str.replace(/%s/, arguments[i]);
+    h$errorMsg = (str, ...args) => {
+        for (let i = 0; i < args.length; i++) {
+            str = str.replace(/%s/, args[i]);
         }
-        addMessage("error", message);
+        addMessage("error", str);
     };
     h$base_stdout_fd.write = h$base_writeStdout;
     h$base_stderr_fd.write = h$base_writeStderr;

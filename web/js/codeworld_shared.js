@@ -15,7 +15,7 @@
  */
 
 /*
- * Utility function for sending an HTTP request BOOM!to fetch a resource.икщцыук ыьшдуы
+ * Utility function for sending an HTTP request to fetch a resource.
  *
  * Args:
  *   - method: The HTTP method to use, such as 'GET'
@@ -197,7 +197,7 @@ function parseSymbolsFromCurrentCode() {
         }
         // data Foo
         else if (/^data\s.+/.test(line)) {
-            match = /^data\s+(\S+)\b.*/.exec(line);
+            let match = /^data\s+(\S+)\b.*/.exec(line);
             word = match[1];
             if (parseResults[word]) return;
             parseResults[word] = {
@@ -209,8 +209,7 @@ function parseSymbolsFromCurrentCode() {
         }
         // type Foo = Bar
         else if (/^type\s.+/.test(line)) {
-            let splitted = line.split("=");
-            match = /^type\s+(\S+\b).*/.exec(line);
+            let match = /^type\s+(\S+\b).*/.exec(line);
             word = match[1];
             if (parseResults[word]) return;
             parseResults[word] = {
@@ -335,7 +334,7 @@ function registerStandardHints(successFunc) {
         }
 
         let found = [];
-        let hints = Object.keys(codeWorldSymbols)
+        let hints = Object.keys(codeWorldSymbols);
         for (let i = 0; i < hints.length; i++) {
             let hint = hints[i];
             if (hint.startsWith(term)) {
@@ -380,8 +379,7 @@ function registerStandardHints(successFunc) {
             CodeMirror.on(
                 data, 'select',
                 (selection, elem) => {
-                    let codeWordInfo = codeWorldSymbols[selection.text],
-                        hintsWidgetRect = elem.parentElement.getBoundingClientRect(),
+                    let hintsWidgetRect = elem.parentElement.getBoundingClientRect(),
                         doc = document.createElement('div');
                     deleteOldHintDocs();
                     let hover = renderHover(selection.text);
@@ -508,7 +506,7 @@ function registerStandardHints(successFunc) {
                         declaration: line,
                         symbolStart: wordStart,
                         symbolEnd: wordEnd
-                    }
+                    };
                     if (doc) {
                         codeWorldBuiltinSymbols[word].doc = doc;
                     }
@@ -818,7 +816,8 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
     function go() {
         sweetAlert.close();
         sweetAlert2({
-            title: 'Saving ' + projectName + '...',
+            title: 'Saving ' + $('<div>').text(projectName).html() +
+                '...',
             text: 'Saving your project.  Please wait.',
             showConfirmButton: false,
             showCancelButton: false,
@@ -1058,7 +1057,7 @@ function share() {
             let a = document.createElement('a');
             a.href = window.location.href;
             a.hash = '';
-            a.pathname = '/run.html'
+            a.pathname = '/run.html';
             a.search = '?mode=' + window.buildMode + '&dhash=' + window.deployHash;
 
             url = a.href;

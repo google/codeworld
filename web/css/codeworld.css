@@ -184,6 +184,10 @@ body {
     cursor: pointer;
 }
 
+#message.error {
+    background-color: #fcc;
+}
+
 .cw-button {
     border-radius: 4px;
     cursor: pointer;

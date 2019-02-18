@@ -21,6 +21,8 @@ function addMessage(type, str) {
             return;
         }
     } catch (e) {}
+
+    console.log(str);
 }
 
 function showCanvas() {

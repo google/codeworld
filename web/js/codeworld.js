@@ -202,7 +202,9 @@ function initCodeworld() {
                             200) {
                             callback(parseCompileErrors(request
                                 .responseText))
-                        } else if (request.status == 0) {} else {
+                        } else if (request.status == 0) {
+                            // Request was cancelled because of a later change.  Do nothing.
+                        } else {
                             console.log(
                                 "Not expected behavior: don't know how to " +
                                 "handle request with status ",
@@ -850,7 +852,14 @@ function run(hash, dhash, msg, error, generation) {
     }
 
     let message = document.getElementById('message');
-    message.innerHTML = ''
+    message.innerHTML = '';
+
+    if (error) {
+        message.classList.add('error');
+    } else {
+        message.classList.remove('error');
+    }
+
     parseCompileErrors(msg).forEach(
         cmError => {
             if (cmError.message.trim().split('\n').length < 2) {

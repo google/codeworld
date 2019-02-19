@@ -1206,9 +1206,10 @@ function printMessage(type, message) {
     } else {
         let details = document.createElement("details"),
             summary = document.createElement("summary");
+        details.setAttribute('open', '');
         details.innerHTML = splitted.slice(1).join('\n');
         summary.innerHTML = splitted[0];
-        details.appendChild(summary);
+        details.insertBefore(summary, details.firstChild);
         messageContent.appendChild(details);
     }
     if (type === "error" || type === "warning") {

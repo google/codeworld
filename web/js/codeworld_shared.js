@@ -1196,6 +1196,7 @@ function printMessage(type, message) {
     messageGutter.classList.add("message-gutter");
     messageContent.classList.add("message-content");
     box.classList.add("message-box");
+    box.classList.add(type);
     box.appendChild(messageGutter)
     box.appendChild(messageContent);
     outputDiv.appendChild(box);
@@ -1212,15 +1213,6 @@ function printMessage(type, message) {
         summary.innerHTML = splitted[0];
         details.insertBefore(summary, details.firstChild);
         messageContent.appendChild(details);
-    }
-    if (type === "error" || type === "warning") {
-        let gutterClass = type === "warning" ?
-            "warning-message-gutter" : "error-message-gutter";
-        messageGutter.classList.add(gutterClass)
-    } else if (type === "log") {
-        messageGutter.classList.add("log-message-gutter")
-    } else {
-        console.log("Unknown code of message type", type, message)
     }
 
     outputDiv.scrollTop = outputDiv.scrollHeight;

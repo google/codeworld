@@ -194,7 +194,7 @@ body {
     display: flex;
     font-family: "Source Code Pro", monospace;
     padding: 2px;
-    padding-bottom: 2em;
+    padding-bottom: 1em;
 }
 
 .message-gutter {
@@ -205,10 +205,9 @@ body {
 }
 
 .message-box details:not([open]) summary::after {
-    content: "\a0\2026";
+    content: "\a0\a0\a0...";
     font-weight: bold;
-    font-size: 14px;
-    color: #444;
+    color: #888;
 }
 
 .error-message-gutter {

@@ -862,12 +862,7 @@ function run(hash, dhash, msg, error, generation) {
 
     parseCompileErrors(msg).forEach(
         cmError => {
-            if (cmError.multiline) {
-                printMessage(cmError.severity, cmError.firstLine + '\n' +
-                    cmError.message);
-            } else {
-                printMessage(cmError.severity, cmError.firstLine);
-            }
+            printMessage(cmError.severity, cmError.fullText);
         }
     );
 
@@ -1114,12 +1109,10 @@ function downloadProject() {
 function parseCompileErrors(rawErrors) {
     let errors = [];
     rawErrors = rawErrors.split("\n\n");
-    rawErrors.forEach(rawError => {
-        rawError = rawError.split('\n');
-        let firstLine = rawError[0].trim(),
-            otherLines = rawError.slice(1).map(err => {
-                return err.trim()
-            }).join('\n'),
+    rawErrors.forEach(err => {
+        lines = err.split('\n');
+        let firstLine = lines[0].trim(),
+            otherLines = lines.slice(1).map(ln => ln.trim()).join('\n'),
             re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/,
             re2 =
             /^program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\): (\w+):(.*)/,
@@ -1150,7 +1143,7 @@ function parseCompileErrors(rawErrors) {
                 }
             }
             severity = match[5]
-            description = match[6] ? match[6].trim() + '\n' : "" +
+            description = (match[6] ? match[6].trim() + '\n' : "") +
                 otherLines;
         } else if (re2.test(firstLine)) {
             match = re2.exec(firstLine);
@@ -1159,7 +1152,7 @@ function parseCompileErrors(rawErrors) {
             endLine = Number(match[3]) - 1;
             endCol = Number(match[4]) - 1;
             severity = match[5]
-            description = match[6] ? match[6].trim() + '\n' : "" +
+            description = (match[6] ? match[6].trim() + '\n' : "") +
                 otherLines;
         } else {
             console.log("Can not parse error header:", firstLine);
@@ -1170,9 +1163,8 @@ function parseCompileErrors(rawErrors) {
             from: CodeMirror.Pos(startLine, startCol),
             to: CodeMirror.Pos(endLine, endCol),
             severity: severity,
-            message: description,
-            firstLine: firstLine,
-            multiline: rawError.length > 1
+            fullText: err,
+            message: description
         })
     })
     return errors;

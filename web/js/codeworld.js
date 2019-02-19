@@ -862,11 +862,11 @@ function run(hash, dhash, msg, error, generation) {
 
     parseCompileErrors(msg).forEach(
         cmError => {
-            if (cmError.message.trim().split('\n').length < 2) {
-                printMessage(cmError.severity, cmError.firstLine);
-            } else {
+            if (cmError.multiline) {
                 printMessage(cmError.severity, cmError.firstLine + '\n' +
                     cmError.message);
+            } else {
+                printMessage(cmError.severity, cmError.firstLine);
             }
         }
     );
@@ -1171,7 +1171,8 @@ function parseCompileErrors(rawErrors) {
             to: CodeMirror.Pos(endLine, endCol),
             severity: severity,
             message: description,
-            firstLine: firstLine
+            firstLine: firstLine,
+            multiline: rawError.length > 1
         })
     })
     return errors;

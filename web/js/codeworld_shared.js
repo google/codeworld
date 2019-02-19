@@ -1194,6 +1194,7 @@ function printMessage(type, message) {
         splitted = message.trim().split('\n');
 
     messageGutter.classList.add("message-gutter");
+    messageContent.classList.add("message-content");
     box.classList.add("message-box");
     box.appendChild(messageGutter)
     box.appendChild(messageContent);

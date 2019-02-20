@@ -1128,13 +1128,10 @@ function parseCompileErrors(rawErrors) {
             if (match[4]) {
                 endCol = Number(match[4]) - 1;
             } else {
-                let token = window.codeworldEditor.getLineTokens(
-                    startLine).find(
-                    t => t.start === startCol);
+                let token = window.codeworldEditor.getLineTokens(line).find(t => t.start === startCol);
                 if (token) {
                     endCol = token.end;
-                } else if (startCol >= window.codeworldEditor.getDoc().getLine(
-                        startLine).length) {
+                } else if (startCol >= window.codeworldEditor.getDoc().getLine(line).length) {
                     endCol = startCol;
                     --startCol;
                 } else {
@@ -1147,8 +1144,7 @@ function parseCompileErrors(rawErrors) {
                 to: CodeMirror.Pos(line, endCol),
                 severity: match[5],
                 fullText: err,
-                message: (match[6] ? match[6].trim() + '\n' :
-                    "") + otherLines;
+                message: (match[6] ? match[6].trim() + '\n' : "") + otherLines
             });
         } else if (re2.test(firstLine)) {
             let match = re2.exec(firstLine);
@@ -1163,8 +1159,7 @@ function parseCompileErrors(rawErrors) {
                 to: CodeMirror.Pos(endLine, endCol),
                 severity: match[5],
                 fullText: err,
-                message: (match[6] ? match[6].trim() + '\n' :
-                    "") + otherLines;
+                message: (match[6] ? match[6].trim() + '\n' : "") + otherLines
             });
         } else {
             console.log("Can not parse error header:", firstLine);

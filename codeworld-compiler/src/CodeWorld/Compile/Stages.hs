@@ -150,25 +150,63 @@ dedupErrorSpans ((loc1, sev1, msg1) : (loc2, sev2, msg2) : errs)
           srcSpanEndColumn span1 >= srcSpanEndColumn span2))
 
 badExpApps :: Exp SrcSpanInfo -> [Diagnostic]
-badExpApps (App loc _ e)
-    | not (isGoodExpAppRhs e) = [(loc, CompileSuccess, errorMsg)]
+badExpApps (App loc lhs rhs)
+    | not (isGoodExpAppLhs lhs) = [(ann rhs, CompileError, errorMsg)]
+    | not (isGoodExpAppRhs rhs) = [(ann rhs, CompileSuccess, warningMsg)]
   where
-    errorMsg = "warning: Missing parentheses in function application."
+    errorMsg = "error: " ++ missingParenError ++ missingParenMultiplySuggestion
+    warningMsg = "warning: " ++ missingParenError ++ missingParenMultiplySuggestion ++ missingParenFunctionSuggestion
 badExpApps _ = []
 
 badMatchApps :: Match SrcSpanInfo -> [Diagnostic]
 badMatchApps (Match loc _ pats _ _) =
-    take 1 [(loc, CompileSuccess, errorMsg) | p <- pats, not (isGoodPatAppRhs p)]
+    take 1 [(ann p, CompileSuccess, warningMsg) | p <- pats, not (isGoodPatAppRhs p)]
   where
-    errorMsg = "warning: Missing parentheses in function application."
+    warningMsg = "warning: " ++ missingParenError ++ missingParenFunctionSuggestion
 badMatchApps _ = []
 
 badPatternApps :: Pat SrcSpanInfo -> [Diagnostic]
 badPatternApps (PApp loc _ pats) =
-    take 1 [(loc, CompileSuccess, errorMsg) | p <- pats, not (isGoodPatAppRhs p)]
+    take 1 [(ann p, CompileSuccess, warningMsg) | p <- pats, not (isGoodPatAppRhs p)]
   where
-    errorMsg = "warning: Missing parentheses in constructor application."
+    warningMsg = "warning: " ++ missingParenError ++ missingParenFunctionSuggestion
 badPatternApps _ = []
+
+missingParenError :: String
+missingParenError =
+    "Missing punctuation before this expression." ++
+    "\n    Perhaps you forgot a comma, an operator, or a bracket."
+
+missingParenMultiplySuggestion :: String
+missingParenMultiplySuggestion =
+    "\n    \x2022 To multiply expressions, please use the * operator."
+
+missingParenFunctionSuggestion :: String
+missingParenFunctionSuggestion =
+    "\n    \x2022 To apply a function, add parentheses around the arguments." ++
+    "\n    (Will assume that function arguments were intended.)"
+
+isGoodExpAppLhs :: Exp l -> Bool
+isGoodExpAppLhs (List _ _) = False
+isGoodExpAppLhs (NegApp _ _) = False
+isGoodExpAppLhs (Tuple _ _ _) = False
+isGoodExpAppLhs (UnboxedSum _ _ _ _) = False
+isGoodExpAppLhs (List _ _) = False
+isGoodExpAppLhs (ParArray _ _) = False
+isGoodExpAppLhs (RecConstr _ _ _) = False
+isGoodExpAppLhs (RecUpdate _ _ _) = False
+isGoodExpAppLhs (EnumFrom _ _) = False
+isGoodExpAppLhs (EnumFromTo _ _ _) = False
+isGoodExpAppLhs (EnumFromThen _ _ _) = False
+isGoodExpAppLhs (EnumFromThenTo _ _ _ _) = False
+isGoodExpAppLhs (ParArrayFromTo _ _ _) = False
+isGoodExpAppLhs (ParArrayFromThenTo _ _ _ _) = False
+isGoodExpAppLhs (ListComp _ _ _) = False
+isGoodExpAppLhs (ParComp _ _ _) = False
+isGoodExpAppLhs (ParArrayComp _ _ _) = False
+isGoodExpAppLhs (VarQuote _ _) = False
+isGoodExpAppLhs (TypQuote _ _) = False
+isGoodExpAppLhs _ = True
 
 isGoodExpAppRhs :: Exp l -> Bool
 isGoodExpAppRhs (Paren _ _) = True

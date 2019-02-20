@@ -17,7 +17,7 @@ function addMessage(type, str) {
     // Catch exceptions to protect against cross-domain access errors.
     try {
         if (window.parent && window.parent.printMessage) {
-            window.parent.printMessage(type, str);
+            window.parent.printMessage(type, str, true);
             return;
         }
     } catch (e) {}

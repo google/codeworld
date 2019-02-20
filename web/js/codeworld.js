@@ -16,6 +16,8 @@
 
 let autohelpEnabled = location.hash.length <= 2;
 
+let runtimeErrors = {};
+
 /*
  * Initializes the programming environment.  This is called after the
  * entire document body and other JavaScript has loaded.
@@ -189,7 +191,7 @@ function initCodeworld() {
                 }
 
                 let data = new FormData();
-                data.append("source", text)
+                data.append("source", text);
                 data.append('mode', window.buildMode);
                 request = sendHttp("POST", "errorCheck", data,
                     request => {
@@ -200,8 +202,15 @@ function initCodeworld() {
 
                         if (request.status == 400 || request.status ==
                             200) {
-                            callback(parseCompileErrors(request
-                                .responseText))
+                            let errors = parseCompileErrors(request.responseText);
+                            // Runtime errors is priority source compared to
+                            // server response
+                            errors = errors.filter((error) => {
+                                let key = matchWarningToDeferredError(error.fullText);
+                                return (!runtimeErrors[key]);
+                            });
+                            errors = Array.concat(Object.values(runtimeErrors), errors);
+                            callback(errors);
                         } else if (request.status == 0) {
                             // Request was cancelled because of a later change.  Do nothing.
                         } else {
@@ -865,6 +874,8 @@ function run(hash, dhash, msg, error, generation) {
             printMessage(cmError.severity, cmError.fullText);
         }
     );
+
+    runtimeErrors = {};
 
     window.deployHash = dhash;
 

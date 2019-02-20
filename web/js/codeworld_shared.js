@@ -1169,11 +1169,11 @@ function preFormatMessage(msg) {
     return msg;
 }
 
-function printMessage(type, message) {
+function printMessage(type, message, isRuntime=false) {
     if (message.trim() === "") {
         return;
     }
-    message = preFormatMessage(message);
+    let formattedMessage = preFormatMessage(message);
     let outputDiv = document.getElementById("message"),
         box = document.createElement("div"),
         messageGutter = document.createElement("div"),
@@ -1184,14 +1184,14 @@ function printMessage(type, message) {
     messageContent.classList.add("message-content");
     box.classList.add("message-box");
     box.classList.add(type);
-    box.appendChild(messageGutter)
+    box.appendChild(messageGutter);
     box.appendChild(messageContent);
     outputDiv.appendChild(box);
 
     if (splitted.length < 2) {
         let singleLineMsg = document.createElement("div");
-        singleLineMsg.innerHTML = message
-        messageContent.appendChild(singleLineMsg)
+        singleLineMsg.innerHTML = formattedMessage;
+        messageContent.appendChild(singleLineMsg);
     } else {
         let details = document.createElement("details"),
             summary = document.createElement("summary");
@@ -1203,4 +1203,19 @@ function printMessage(type, message) {
     }
 
     outputDiv.scrollTop = outputDiv.scrollHeight;
+
+    if (isRuntime && type === "error") {
+        parseCompileErrors(message).forEach(
+            (error) => {
+                runtimeErrors[error.fullText] = error;
+            }
+        )
+        let cm = window.codeworldEditor;
+        cm.performLint();
+    }
+}
+
+function matchWarningToDeferredError(msg){
+    return msg.replace("warning", "error")
+        + "\n(deferred type error)";
 }

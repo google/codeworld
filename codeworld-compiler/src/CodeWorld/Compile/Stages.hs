@@ -233,11 +233,23 @@ isGoodExpAppLhs _ = True
 isGoodExpAppRhs :: Exp l -> Bool
 isGoodExpAppRhs (Paren _ _) = True
 isGoodExpAppRhs (Tuple _ _ _) = True
+isGoodExpAppRhs (List _ _) = True
+isGoodExpAppRhs (ParArray _ _) = True
+isGoodExpAppRhs (EnumFrom _ _) = True
+isGoodExpAppRhs (EnumFromThen _ _ _) = True
+isGoodExpAppRhs (EnumFromTo _ _ _) = True
+isGoodExpAppRhs (EnumFromThenTo _ _ _ _) = True
+isGoodExpAppRhs (ParArrayFromTo _ _ _) = True
+isGoodExpAppRhs (ParArrayFromThenTo _ _ _ _) = True
+isGoodExpAppRhs (ListComp _ _ _) = True
+isGoodExpAppRhs (ParComp _ _ _) = True
+isGoodExpAppRhs (ParArrayComp _ _ _) = True
 isGoodExpAppRhs _ = False
 
 isGoodPatAppRhs :: Pat l -> Bool
 isGoodPatAppRhs (PParen _ _) = True
 isGoodPatAppRhs (PTuple _ _ _) = True
+isGoodPatAppRhs (PList _ _) = True
 isGoodPatAppRhs _ = False
 
 -- | Determines whether an expression is likely to be usable as a function

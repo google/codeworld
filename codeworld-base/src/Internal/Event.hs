@@ -19,10 +19,6 @@
 -}
 module Internal.Event
     ( Event(..)
-    , CW.MouseButton(..)
-    , pattern PointerPress
-    , pattern PointerRelease
-    , pattern PointerMovement
     , fromCWEvent
     ) where
 
@@ -71,27 +67,11 @@ import qualified "base" Prelude as P
 data Event
     = KeyPress !Text
     | KeyRelease !Text
-    | MousePress !(CW.MouseButton, Point)
-    | MouseRelease !(CW.MouseButton, Point)
-    | MouseMovement !Point
+    | PointerPress !Point
+    | PointerRelease !Point
+    | PointerMovement !Point
     | TimePassing !Number
     deriving (P.Eq)
-
-pattern PointerPress :: Point -> Event
-pattern PointerPress p = MousePress (CW.LeftButton, p)
-
-pattern PointerRelease :: Point -> Event
-pattern PointerRelease p = MouseRelease (CW.LeftButton, p)
-
-pattern PointerMovement :: Point -> Event
-pattern PointerMovement p = MouseMovement p
-
-{-# WARNING MousePress    ["Please use PointerPress instead of MousePress.",
-                           "MousePress may be removed July 2019."] #-}
-{-# WARNING MouseRelease  ["Please use PointerRelease instead of MouseRelease.",
-                           "MouseRelease may be removed July 2019."] #-}
-{-# WARNING MouseMovement ["Please use PointerMovement instead of MouseMovement.",
-                           "MouseMovement may be removed July 2019."] #-}
 
 {-# RULES
 "equality/event" forall (x :: Event) . (==) x = (P.==) x
@@ -100,7 +80,7 @@ pattern PointerMovement p = MouseMovement p
 fromCWEvent :: CW.Event -> Event
 fromCWEvent (CW.KeyPress key) = KeyPress (toCWText key)
 fromCWEvent (CW.KeyRelease key) = KeyRelease (toCWText key)
-fromCWEvent (CW.MousePress btn p) = MousePress (btn, fromCWVect p)
-fromCWEvent (CW.MouseRelease btn p) = MouseRelease (btn, fromCWVect p)
-fromCWEvent (CW.MouseMovement p) = MouseMovement (fromCWVect p)
+fromCWEvent (CW.PointerPress p) = PointerPress (fromCWVect p)
+fromCWEvent (CW.PointerRelease p) = PointerRelease (fromCWVect p)
+fromCWEvent (CW.PointerMovement p) = PointerMovement (fromCWVect p)
 fromCWEvent (CW.TimePassing dt) = TimePassing (fromDouble dt)

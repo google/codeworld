@@ -136,10 +136,6 @@ module CodeWorld (
     , pattern Brown
     -- * Events
     , Event(..)
-    , MouseButton(..)
-    , pattern PointerPress
-    , pattern PointerRelease
-    , pattern PointerMovement
     -- * Debugging
     , trace
     ) where

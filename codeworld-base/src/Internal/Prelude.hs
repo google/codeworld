@@ -65,18 +65,12 @@ module Internal.Prelude
     , reversed
     , unique
     , transposed
-    -- Maybe
-    , Maybe(..)
-    , withDefault
-    , hasValue
-    , definitely
     -- Random numbers
     , randomsFrom
     , randomNumbers
     , shuffled
     ) where
 
-import qualified "base" Data.Maybe as P
 import qualified "base" Prelude as P
 import "base" Prelude (Bool, ($), (.))
 
@@ -294,48 +288,6 @@ randomsFrom g = fromDouble a : randomsFrom g2
 shuffled :: ([a], Number) -> [a]
 shuffled ([], r) = []
 shuffled (xs, r) = shuffle' xs (P.length xs) (numToStdGen r)
-
-data Maybe a
-    = Nothing
-    | Just a
-
-{-# WARNING Maybe   ["Please use your own data type instead of Maybe and friends.",
-                     "Maybe may be removed July 2018."] #-}
-
-{-# WARNING Just    ["Please use your own data type instead of Maybe and friends.",
-                     "Maybe may be removed July 2018."] #-}
-
-{-# WARNING Nothing ["Please use your own data type instead of Maybe and friends.",
-                     "Maybe may be removed July 2018."] #-}
-
--- | Converts a Maybe value to a plain value, by using a default.
---
--- For example, @withDefault(Nothing, 5)@ is equal to 5, while
--- @withDefault(Just(3), 5)@ is equal to 3.
-withDefault :: (Maybe a, a) -> a
-withDefault (Nothing, d) = d
-withDefault (Just a, _) = a
-
-{-# WARNING withDefault ["Please use your own data type instead of Maybe and friends.",
-                         "Maybe may be removed July 2018."] #-}
-
--- | Determines if a Maybe has a value.
-hasValue :: Maybe a -> Truth
-hasValue Nothing = P.False
-hasValue (Just _) = P.True
-
-{-# WARNING hasValue ["Please use your own data type instead of Maybe and friends.",
-                      "Maybe may be removed July 2018."] #-}
-
--- | Extracts the value from a Maybe, and crashes the program if there
--- is no such value.
-definitely :: HasCallStack => Maybe a -> a
-definitely (Just a) = a
-definitely Nothing =
-    withFrozenCallStack (P.error "Expected a value; found Nothing.")
-
-{-# WARNING definitely ["Please use your own data type instead of Maybe and friends.",
-                        "Maybe may be removed July 2018."] #-}
 
 randomNumbers :: Number -> [Number]
 randomNumbers = randomsFrom . numToStdGen

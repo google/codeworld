@@ -128,10 +128,6 @@ module Internal.Exports
     , codeWorldLogo
     -- * Events
     , Event(..)
-    , MouseButton(..)
-    , pattern PointerPress
-    , pattern PointerRelease
-    , pattern PointerMovement
     -- * Debugging
     , traced
     -- * Entry points

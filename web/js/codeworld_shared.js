@@ -402,9 +402,7 @@ function registerStandardHints(successFunc) {
         }
         lines = lines.slice(startLine, endLine);
 
-        // Special case for "main" and "program", since they are morally
-        // built-in names.
-        codeworldKeywords['main'] = 'deprecated';
+        // Special case for "program", since it is morally a built-in name.
         codeworldKeywords['program'] = 'builtin';
 
         codeWorldBuiltinSymbols['program'] = {

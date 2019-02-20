@@ -196,7 +196,8 @@ body {
     padding: 2px;
 }
 
-.message-box.warning, .message-box.error {
+.message-box.warning,
+.message-box.error {
     padding-bottom: 1em;
 }
 

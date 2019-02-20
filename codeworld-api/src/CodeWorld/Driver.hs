@@ -1181,12 +1181,6 @@ getMousePos canvas = do
             ( 20 * fromIntegral (ix - round cx) / realToFrac cw - 10
             , 20 * fromIntegral (round cy - iy) / realToFrac cw + 10)
 
-fromButtonNum :: Word -> Maybe MouseButton
-fromButtonNum 0 = Just LeftButton
-fromButtonNum 1 = Just MiddleButton
-fromButtonNum 2 = Just RightButton
-fromButtonNum _ = Nothing
-
 onEvents :: Element -> (Event -> IO ()) -> IO ()
 onEvents canvas handler = do
     Just window <- currentWindow
@@ -1205,22 +1199,14 @@ onEvents canvas handler = do
             preventDefault
             stopPropagation
     on window mouseDown $ do
-        button <- mouseButton
-        case fromButtonNum button of
-            Nothing -> return ()
-            Just btn -> do
-                pos <- getMousePos canvas
-                liftIO $ handler (MousePress btn pos)
+        pos <- getMousePos canvas
+        liftIO $ handler (PointerPress pos)
     on window mouseUp $ do
-        button <- mouseButton
-        case fromButtonNum button of
-            Nothing -> return ()
-            Just btn -> do
-                pos <- getMousePos canvas
-                liftIO $ handler (MouseRelease btn pos)
+        pos <- getMousePos canvas
+        liftIO $ handler (PointerRelease pos)
     on window mouseMove $ do
         pos <- getMousePos canvas
-        liftIO $ handler (MouseMovement pos)
+        liftIO $ handler (PointerMovement pos)
     return ()
 
 encodeEvent :: (Timestamp, Maybe Event) -> String
@@ -1763,12 +1749,6 @@ debugLog = putStrLn
 --------------------------------------------------------------------------------
 -- Stand-Alone event handling and core interaction code
 
-fromButtonNum :: Int -> Maybe MouseButton
-fromButtonNum 1 = Just LeftButton
-fromButtonNum 2 = Just MiddleButton
-fromButtonNum 3 = Just RightButton
-fromButtonNum _ = Nothing
-
 getMousePos :: (Int, Int) -> (Double, Double) -> (Double, Double)
 getMousePos (w, h) (x, y) =
     ((x - fromIntegral w / 2) / s, -(y - fromIntegral h / 2) / s)
@@ -1783,13 +1763,11 @@ toEvent rect Canvas.Event {..}
     , Just code <- eWhich =
         Just $ KeyRelease (keyCodeToText (fromIntegral code))
     | eType == "mousedown"
-    , Just button <- eWhich >>= fromButtonNum
-    , Just pos <- getMousePos rect <$> ePageXY = Just $ MousePress button pos
+    , Just pos <- getMousePos rect <$> ePageXY = Just $ PointerPress pos
     | eType == "mouseup"
-    , Just button <- eWhich >>= fromButtonNum
-    , Just pos <- getMousePos rect <$> ePageXY = Just $ MouseRelease button pos
+    , Just pos <- getMousePos rect <$> ePageXY = Just $ PointerRelease pos
     | eType == "mousemove"
-    , Just pos <- getMousePos rect <$> ePageXY = Just $ MouseMovement pos
+    , Just pos <- getMousePos rect <$> ePageXY = Just $ PointerMovement pos
     | otherwise = Nothing
 
 onEvents :: Canvas.DeviceContext -> (Int, Int) -> (Event -> IO ()) -> IO ()
@@ -2021,10 +1999,10 @@ wrappedEvent ctrls stepHandler eventHandler event w
 
     fullStep dt = stepHandler dt . eventHandler (TimePassing dt)
 
-    adaptEvent (MouseMovement p)  = MouseMovement (adaptPoint p)
-    adaptEvent (MousePress b p)   = MousePress b (adaptPoint p)
-    adaptEvent (MouseRelease b p) = MouseRelease b (adaptPoint p)
-    adaptEvent other              = other
+    adaptEvent (PointerMovement p) = PointerMovement (adaptPoint p)
+    adaptEvent (PointerPress p)    = PointerPress (adaptPoint p)
+    adaptEvent (PointerRelease p)  = PointerRelease (adaptPoint p)
+    adaptEvent other               = other
 
     adaptPoint (x, y) = (x / k - dx, y / k - dy)
 

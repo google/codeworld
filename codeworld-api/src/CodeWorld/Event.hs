@@ -58,34 +58,8 @@ import Data.Text (Text)
 data Event
     = KeyPress !Text
     | KeyRelease !Text
-    | MousePress !MouseButton
-                 !Point
-    | MouseRelease !MouseButton
-                   !Point
-    | MouseMovement !Point
+    | PointerPress !Point
+    | PointerRelease !Point
+    | PointerMovement !Point
     | TimePassing !Double
     deriving (Eq, Show, Read)
-
-data MouseButton
-    = LeftButton
-    | MiddleButton
-    | RightButton
-    deriving (Eq, Show, Read)
-
-pattern PointerPress :: Point -> Event
-pattern PointerPress p = MousePress LeftButton p
-
-pattern PointerRelease :: Point -> Event
-pattern PointerRelease p = MouseRelease LeftButton p
-
-pattern PointerMovement :: Point -> Event
-pattern PointerMovement p = MouseMovement p
-
-{-# WARNING MousePress    ["Please use PointerPress instead of MousePress.",
-                           "MousePress may be removed July 2019." ] #-}
-{-# WARNING MouseRelease  ["Please use PointerRelease instead of MouseRelease.",
-                           "MouseRelease may be removed July 2019."] #-}
-{-# WARNING MouseMovement ["Please use PointerMovement instead of MouseMovement.",
-                           "MouseMovement may be removed July 2019."] #-}
-{-# WARNING MouseButton   ["Please use pointer events, which don't have buttons.",
-                           "MouseButton may be removed July 2019."] #-}

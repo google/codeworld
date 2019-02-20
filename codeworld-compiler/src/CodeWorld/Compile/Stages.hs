@@ -32,7 +32,7 @@ import Control.Monad
 import Control.Monad.State
 import Data.Array
 import Data.Generics
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, fromMaybe)
 import Data.Monoid
 import Data.List (sort)
 import Data.Text (Text, unpack)
@@ -150,35 +150,129 @@ dedupErrorSpans ((loc1, sev1, msg1) : (loc2, sev2, msg2) : errs)
           srcSpanEndColumn span1 >= srcSpanEndColumn span2))
 
 badExpApps :: Exp SrcSpanInfo -> [Diagnostic]
-badExpApps (App loc _ e)
-    | not (isGoodExpAppRhs e) = [(loc, CompileSuccess, errorMsg)]
+badExpApps (App loc lhs rhs)
+    | not (isGoodExpAppLhs lhs) = [(ann rhs, CompileError, errorMsg)]
+    | not (isGoodExpAppRhs rhs) = [(ann rhs, CompileError, warningMsg)]
   where
-    errorMsg = "warning: Missing parentheses in function application."
+    errorMsg = "error:" ++ missingParenError ++ multiplicationPhrase
+    warningMsg = "error:" ++ missingParenError ++ multiplicationPhrase ++ functionPhrase
+    functionPhrase
+      | isLikelyFunctionExp lhs = missingParenFunctionSuggestion lhs rhs
+      | otherwise = ""
+    multiplicationPhrase
+      | isLikelyNumberExp lhs && isLikelyNumberExp rhs = missingParenMultiplySuggestion lhs rhs
+      | otherwise = ""
 badExpApps _ = []
 
 badMatchApps :: Match SrcSpanInfo -> [Diagnostic]
-badMatchApps (Match loc _ pats _ _) =
-    take 1 [(loc, CompileSuccess, errorMsg) | p <- pats, not (isGoodPatAppRhs p)]
+badMatchApps (Match loc lhs pats _ _) =
+    take 1 [(ann p, CompileError, warningMsg p) | p <- pats, not (isGoodPatAppRhs p)]
   where
-    errorMsg = "warning: Missing parentheses in function application."
+    warningMsg p = "error:" ++ missingParenError ++ missingParenFunctionSuggestion lhs p
 badMatchApps _ = []
 
 badPatternApps :: Pat SrcSpanInfo -> [Diagnostic]
-badPatternApps (PApp loc _ pats) =
-    take 1 [(loc, CompileSuccess, errorMsg) | p <- pats, not (isGoodPatAppRhs p)]
+badPatternApps (PApp loc lhs pats) =
+    take 1 [(ann p, CompileError, warningMsg p) | p <- pats, not (isGoodPatAppRhs p)]
   where
-    errorMsg = "warning: Missing parentheses in constructor application."
+    warningMsg p = "error:" ++ missingParenError ++ missingParenFunctionSuggestion lhs p
 badPatternApps _ = []
+
+missingParenError :: String
+missingParenError =
+    "\n    \x2022 Missing punctuation before this expression." ++
+    "\n      Perhaps you forgot a comma, an operator, or a bracket."
+
+missingParenMultiplySuggestion :: (Pretty a, Pretty b) => a -> b -> String
+missingParenMultiplySuggestion lhs rhs =
+    "\n    \x2022 To multiply, please use the * operator." ++
+    "\n      For example: " ++ lhsStr ++ " * " ++ rhsStr
+  where lhsStr = fromMaybe "a" (prettyPrintInline lhs)
+        rhsStr = fromMaybe "b" (prettyPrintInline rhs)
+
+missingParenFunctionSuggestion :: (Pretty a, Pretty b) => a -> b -> String
+missingParenFunctionSuggestion lhs rhs =
+    "\n    \x2022 To apply a function, add parentheses around the argument." ++
+    "\n      For example: " ++ lhsStr ++ "(" ++ rhsStr ++ ")"
+  where lhsStr = fromMaybe "f" (prettyPrintInline lhs)
+        rhsStr = fromMaybe "x" (prettyPrintInline rhs)
+
+prettyPrintInline :: Pretty a => a -> Maybe String
+prettyPrintInline a
+  | length result < 25 && not ('\n' `elem` result) = Just result
+  | otherwise = Nothing
+  where result = prettyPrintStyleMode style{ mode = OneLineMode } defaultMode a
+
+-- | Determines whether the left-hand side of a function application
+-- might possibly be a function.  This eliminates cases where just by
+-- syntax alone, we know this cannot possibly be a function, such as
+-- when it's a number or a list literal.
+isGoodExpAppLhs :: Exp l -> Bool
+isGoodExpAppLhs (Lit _ _) = False
+isGoodExpAppLhs (NegApp _ _) = False
+isGoodExpAppLhs (Tuple _ _ _) = False
+isGoodExpAppLhs (UnboxedSum _ _ _ _) = False
+isGoodExpAppLhs (List _ _) = False
+isGoodExpAppLhs (ParArray _ _) = False
+isGoodExpAppLhs (RecConstr _ _ _) = False
+isGoodExpAppLhs (RecUpdate _ _ _) = False
+isGoodExpAppLhs (EnumFrom _ _) = False
+isGoodExpAppLhs (EnumFromTo _ _ _) = False
+isGoodExpAppLhs (EnumFromThen _ _ _) = False
+isGoodExpAppLhs (EnumFromThenTo _ _ _ _) = False
+isGoodExpAppLhs (ParArrayFromTo _ _ _) = False
+isGoodExpAppLhs (ParArrayFromThenTo _ _ _ _) = False
+isGoodExpAppLhs (ListComp _ _ _) = False
+isGoodExpAppLhs (ParComp _ _ _) = False
+isGoodExpAppLhs (ParArrayComp _ _ _) = False
+isGoodExpAppLhs (VarQuote _ _) = False
+isGoodExpAppLhs (TypQuote _ _) = False
+isGoodExpAppLhs (Paren _ exp) = isGoodExpAppLhs exp
+isGoodExpAppLhs _ = True
 
 isGoodExpAppRhs :: Exp l -> Bool
 isGoodExpAppRhs (Paren _ _) = True
 isGoodExpAppRhs (Tuple _ _ _) = True
+isGoodExpAppRhs (List _ _) = True
+isGoodExpAppRhs (ParArray _ _) = True
+isGoodExpAppRhs (EnumFrom _ _) = True
+isGoodExpAppRhs (EnumFromThen _ _ _) = True
+isGoodExpAppRhs (EnumFromTo _ _ _) = True
+isGoodExpAppRhs (EnumFromThenTo _ _ _ _) = True
+isGoodExpAppRhs (ParArrayFromTo _ _ _) = True
+isGoodExpAppRhs (ParArrayFromThenTo _ _ _ _) = True
+isGoodExpAppRhs (ListComp _ _ _) = True
+isGoodExpAppRhs (ParComp _ _ _) = True
+isGoodExpAppRhs (ParArrayComp _ _ _) = True
 isGoodExpAppRhs _ = False
 
 isGoodPatAppRhs :: Pat l -> Bool
 isGoodPatAppRhs (PParen _ _) = True
 isGoodPatAppRhs (PTuple _ _ _) = True
+isGoodPatAppRhs (PList _ _) = True
 isGoodPatAppRhs _ = False
+
+-- | Determines whether an expression is likely to be usable as a function
+-- by adding parenthesized arguments.  Note that when this would usually
+-- require parentheses (such as with a lambda), this should return false.
+isLikelyFunctionExp :: Exp l -> Bool
+isLikelyFunctionExp (Var _ _) = True
+isLikelyFunctionExp (Con _ _) = True
+isLikelyFunctionExp (LeftSection _ _ _) = True
+isLikelyFunctionExp (RightSection _ _ _) = True
+isLikelyFunctionExp (Paren _ exp) = isGoodExpAppLhs exp
+isLikelyFunctionExp _ = False
+
+-- | Determines whether an expression is likely to be usable as a number
+-- in a multiplication.  Note that when this would usually require
+-- parentheses (such as with a let statement), this should return false.
+isLikelyNumberExp :: Exp l -> Bool
+isLikelyNumberExp (Var _ _) = True
+isLikelyNumberExp (Lit _ _) = True
+isLikelyNumberExp (NegApp _ _) = True
+isLikelyNumberExp (App _ _ _) = True
+isLikelyNumberExp (Paren _ _) = True
+isLikelyNumberExp _ = False
 
 checkVarlessPatterns :: MonadCompile m => m ()
 checkVarlessPatterns =

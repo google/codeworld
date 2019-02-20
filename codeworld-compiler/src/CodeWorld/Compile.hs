@@ -97,11 +97,8 @@ userCompileMicros = 30 * 1000000
 build :: MonadCompile m => m ()
 build = do
     checkDangerousSource
-
-    ifSucceeding $ do
-        checkCodeConventions
-        compileCode
-
+    ifSucceeding checkCodeConventions
+    ifSucceeding compileCode
     ifSucceeding checkRequirements
 
     errPath <- gets compileOutputPath

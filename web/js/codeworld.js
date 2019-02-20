@@ -1110,62 +1110,64 @@ function parseCompileErrors(rawErrors) {
     let errors = [];
     rawErrors = rawErrors.split("\n\n");
     rawErrors.forEach(err => {
-        lines = err.split('\n');
-        let firstLine = lines[0].trim(),
-            otherLines = lines.slice(1).map(ln => ln.trim()).join('\n'),
-            re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/,
-            re2 =
-            /^program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\): (\w+):(.*)/,
-            startLine, endLine, startCol, endCol, match, severity,
-            description;
+        let lines = err.split('\n');
+        let firstLine = lines[0].trim();
+        let otherLines = lines.slice(1).map(ln => ln.trim()).join('\n');
+        let re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/;
+        let re2 =
+            /^program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\): (\w+):(.*)/;
 
-        if (firstLine.trim() === "") {
-            return;
+        if (err.trim() === "") {
+            // Ignore empty messages.
         } else if (re1.test(firstLine)) {
-            match = re1.exec(firstLine);
-            startLine = Number(match[1]) - 1;
-            endLine = startLine;
-            startCol = Number(match[3]) - 1;
+            let match = re1.exec(firstLine);
+
+            let line = Number(match[1]) - 1;
+            let startCol = Number(match[3]) - 1;
+            let endCol;
             if (match[4]) {
                 endCol = Number(match[4]) - 1;
             } else {
-                let token = window.codeworldEditor.getLineTokens(
-                    startLine).find(
+                let token = window.codeworldEditor.getLineTokens(line).find(
                     t => t.start === startCol);
                 if (token) {
                     endCol = token.end;
                 } else if (startCol >= window.codeworldEditor.getDoc().getLine(
-                        startLine).length) {
+                        line).length) {
                     endCol = startCol;
                     --startCol;
                 } else {
                     endCol = startCol + 1;
                 }
             }
-            severity = match[5]
-            description = (match[6] ? match[6].trim() + '\n' : "") +
-                otherLines;
+
+            errors.push({
+                from: CodeMirror.Pos(line, startCol),
+                to: CodeMirror.Pos(line, endCol),
+                severity: match[5],
+                fullText: err,
+                message: (match[6] ? match[6].trim() + '\n' :
+                    "") + otherLines
+            });
         } else if (re2.test(firstLine)) {
-            match = re2.exec(firstLine);
-            startLine = Number(match[1]) - 1;
-            startCol = Number(match[2]) - 1;
-            endLine = Number(match[3]) - 1;
-            endCol = Number(match[4]) - 1;
-            severity = match[5]
-            description = (match[6] ? match[6].trim() + '\n' : "") +
-                otherLines;
+            let match = re2.exec(firstLine);
+
+            let startLine = Number(match[1]) - 1;
+            let startCol = Number(match[2]) - 1;
+            let endLine = Number(match[3]) - 1;
+            let endCol = Number(match[4]) - 1;
+
+            errors.push({
+                from: CodeMirror.Pos(startLine, startCol),
+                to: CodeMirror.Pos(endLine, endCol),
+                severity: match[5],
+                fullText: err,
+                message: (match[6] ? match[6].trim() + '\n' :
+                    "") + otherLines
+            });
         } else {
             console.log("Can not parse error header:", firstLine);
-            return;
         }
-
-        errors.push({
-            from: CodeMirror.Pos(startLine, startCol),
-            to: CodeMirror.Pos(endLine, endCol),
-            severity: severity,
-            fullText: err,
-            message: description
-        })
     })
     return errors;
 }

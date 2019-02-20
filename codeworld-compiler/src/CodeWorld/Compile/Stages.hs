@@ -187,7 +187,7 @@ missingParenFunctionSuggestion =
     "\n    (Will assume that function arguments were intended.)"
 
 isGoodExpAppLhs :: Exp l -> Bool
-isGoodExpAppLhs (List _ _) = False
+isGoodExpAppLhs (Lit _ _) = False
 isGoodExpAppLhs (NegApp _ _) = False
 isGoodExpAppLhs (Tuple _ _ _) = False
 isGoodExpAppLhs (UnboxedSum _ _ _ _) = False

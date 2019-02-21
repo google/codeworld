@@ -40,7 +40,6 @@ Blockly.cwEvent.generateEventBuiltins = xmlList => {
         RightButton, MiddleButton
     ]);
 
-
     let point = Type.Lit("pair", [Type.Lit("Number"), Type.Lit("Number")]);
 
     let KeyPress = new Blockly.UserTypes.Product("KeyPress", [Type.Lit(

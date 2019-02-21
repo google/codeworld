@@ -340,12 +340,13 @@ function registerStandardHints(successFunc) {
                 return /^[a-zA-Z].*/.test(c);
             }
 
-            if (startsWithLetter(a.text) && !startsWithLetter(b
-                    .text)) return -1;
-            else if (startsWithLetter(b.text) && !
-                startsWithLetter(a.text)) return 1;
-            else return a.text.toLowerCase() < b.text.toLowerCase() ?
-                -1 : 1
+            if (startsWithLetter(a.text) && !startsWithLetter(b.text)) {
+                return -1;
+            } else if (startsWithLetter(b.text) && !startsWithLetter(a.text)) {
+                return 1;
+            } else {
+                return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1
+            }
         });
 
         if (found.length > 0) {
@@ -458,8 +459,7 @@ function registerStandardHints(successFunc) {
                 doc += line.replace(/\-\-   /g, "") + "\n";
             } else {
                 let wordStart = 0;
-                if (line.startsWith("type ") || line.startsWith(
-                        "data ")) {
+                if (line.startsWith("type ") || line.startsWith("data ")) {
                     wordStart += 5;
 
                     // Hide kind annotations.
@@ -513,9 +513,11 @@ function registerStandardHints(successFunc) {
 }
 
 function signin() {
-    if (window.auth2) auth2.signIn({
-        prompt: 'login'
-    });
+    if (window.auth2) {
+        auth2.signIn({
+            prompt: 'login'
+        });
+    }
 }
 
 function signout() {
@@ -625,7 +627,7 @@ function withClientId(f) {
 
     sendHttp('GET', 'clientId.txt', null, request => {
         if (request.status != 200 || request.responseText == '') {
-            sweetAlert('Oops!',
+            sweetAlert2('Oops!',
                 'Missing API client key.  You will not be able to sign in.',
                 'warning');
             return null;
@@ -671,13 +673,14 @@ function discoverProjects_(path, buildMode, index) {
 
 function moveHere_(path, buildMode, successFunc) {
     if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in before moving.', 'error');
+        sweetAlert2('Oops!', 'You must sign in before moving.', 'error');
         cancelMove();
         return;
     }
 
     if (!window.move) {
-        sweetAlert('Oops!', 'You must first select something to move.', 'error');
+        sweetAlert2('Oops!', 'You must first select something to move.',
+            'error');
         cancelMove();
         return;
     }
@@ -691,7 +694,7 @@ function moveHere_(path, buildMode, successFunc) {
         data.append('name', window.move.file);
     } else {
         if (path.startsWith(window.move.path)) {
-            sweetAlert('Oops!',
+            sweetAlert2('Oops!',
                 'You cannot move a path to a location inside itself.',
                 'error');
             cancelMove();
@@ -702,7 +705,7 @@ function moveHere_(path, buildMode, successFunc) {
 
     sendHttp('POST', 'moveProject', data, request => {
         if (request.status != 200) {
-            sweetAlert('Oops',
+            sweetAlert2('Oops',
                 'Could not move your project! Please try again.',
                 'error');
             cancelMove();
@@ -723,21 +726,23 @@ function warnIfUnsaved(action, showAnother) {
     } else {
         let msg = 'There are unsaved changes to your project. ' +
             'Continue and throw away your changes?';
-        sweetAlert({
-            title: 'Warning',
+        sweetAlert2({
+            title: Alert.title('Warning'),
             text: msg,
             type: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#DD6B55',
             confirmButtonText: 'Yes, discard my changes!',
             closeOnConfirm: !showAnother
-        }, action);
+        }).then(result => {
+            if (result.value) action();
+        });
     }
 }
 
 function saveProjectAs() {
     if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in to save files.', 'error');
+        sweetAlert2('Oops!', 'You must sign in to save files.', 'error');
         updateUI();
         return;
     }
@@ -759,446 +764,454 @@ function saveProjectAs() {
         defaultName = '';
     }
 
-    function go(projectName) {
-        saveProjectBase(nestedDirs.slice(1).join('/'), projectName);
-    }
-
-    sweetAlert({
-        html: true,
-        title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
-        text: text,
-        type: 'input',
+    sweetAlert2({
+        title: Alert.title('Save As', 'mdi-cloud-upload'),
+        html: text,
+        input: 'text',
         inputValue: defaultName,
         confirmButtonText: 'Save',
         showCancelButton: true,
         closeOnConfirm: false
-    }, go);
-}
-
-function saveProject() {
-    if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in to save files.', 'error');
-        updateUI();
-        return;
+    }).then(result => {
+            if (result.value) {
+                saveProjectBase(nestedDirs.slice(1).join('/'),
+                    result.value);
+            });
     }
 
-    if (window.openProjectName) {
-        saveProjectBase(nestedDirs.slice(1).join('/'), openProjectName);
-    } else {
-        saveProjectAs();
-    }
-}
-
-function saveProjectBase_(path, projectName, mode, successFunc) {
-    if (projectName == null || projectName == '') return;
-
-    if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in to save files.', 'error');
-        updateUI();
-        return;
-    }
-
-    function go() {
-        sweetAlert.close();
-        sweetAlert2({
-            title: 'Saving ' + $('<div>').text(projectName).html() +
-                '...',
-            text: 'Saving your project.  Please wait.',
-            showConfirmButton: false,
-            showCancelButton: false,
-            showCloseButton: false,
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            allowEnterKey: false
-        });
-
-        let project = getCurrentProject();
-        project['name'] = projectName;
-
-        let data = new FormData();
-        data.append('project', JSON.stringify(project));
-        data.append('mode', mode);
-        data.append('path', path);
-
-        sendHttp('POST', 'saveProject', data, request => {
-            sweetAlert2.close();
-            if (request.status != 200) {
-                sweetAlert('Oops!',
-                    'Could not save your project!!!  Please try again.',
-                    'error');
-                return;
-            }
-
-            successFunc();
-            cancelMove();
-            updateUI();
-
-            if (allProjectNames[allProjectNames.length - 1].indexOf(
-                    projectName) == -1) {
-                discoverProjects(path, allProjectNames.length - 1);
-            }
-        });
-    }
-
-    if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) == -1 ||
-        projectName == openProjectName) {
-        go();
-    } else {
-        let msg = 'Are you sure you want to save over another project?\n\n' +
-            'The previous contents of ' + projectName +
-            ' will be permanently destroyed!';
-        sweetAlert({
-            title: 'Warning',
-            text: msg,
-            type: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#DD6B55',
-            confirmButtonText: 'Yes, overwrite it!'
-        }, go);
-    }
-}
-
-function deleteProject_(path, buildMode, successFunc) {
-    if (!window.openProjectName) return;
-
-    if (!signedIn()) {
-        sweetAlert('Oops', 'You must sign in to delete a project.', 'error');
-        updateUI();
-        return;
-    }
-
-    function go() {
-        let data = new FormData();
-        data.append('name', window.openProjectName);
-        data.append('mode', buildMode);
-        data.append('path', path);
-
-        sendHttp('POST', 'deleteProject', data, request => {
-            if (request.status == 200) {
-                successFunc();
-                discoverProjects(path, allProjectNames.length - 1);
-            }
-        });
-    }
-
-    let msg =
-        'Deleting a project will throw away all work, and cannot be undone. ' +
-        'Are you sure?';
-    sweetAlert({
-        title: 'Warning',
-        text: msg,
-        type: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#DD6B55',
-        confirmButtonText: 'Yes, delete it!'
-    }, go);
-}
-
-function deleteFolder_(path, buildMode, successFunc) {
-    if (path == "" || window.openProjectName != null) {
-        return;
-    }
-    if (!signedIn()) {
-        sweetAlert('Oops', 'You must sign in to delete a folder.', 'error');
-        updateUI();
-        return;
-    }
-
-    function go() {
-        let data = new FormData();
-        data.append('mode', buildMode);
-        data.append('path', path);
-
-        sendHttp('POST', 'deleteFolder', data, request => {
-            if (request.status == 200) {
-                successFunc();
-                nestedDirs.pop();
-                allProjectNames.pop();
-                allFolderNames.pop();
-                discoverProjects(nestedDirs.slice(1).join('/'),
-                    allProjectNames.length - 1);
-            }
-        });
-    }
-
-    let msg =
-        'Deleting a folder will throw away all of its content, cannot be undone. ' +
-        'Are you sure?';
-    sweetAlert({
-        title: 'Warning',
-        text: msg,
-        type: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#DD6B55',
-        confirmButtonText: 'Yes, delete it!'
-    }, go);
-}
-
-function createFolder(path, buildMode, successFunc) {
-    warnIfUnsaved(() => {
+    function saveProject() {
         if (!signedIn()) {
-            sweetAlert('Oops!', 'You must sign in to create a folder.',
-                'error');
+            sweetAlert2('Oops!', 'You must sign in to save files.', 'error');
             updateUI();
             return;
         }
 
-        function go(folderName) {
-            if (folderName == null || folderName == '') {
-                return;
-            }
+        if (window.openProjectName) {
+            saveProjectBase(nestedDirs.slice(1).join('/'), openProjectName);
+        } else {
+            saveProjectAs();
+        }
+    }
 
-            sweetAlert.close();
+    function saveProjectBase_(path, projectName, mode, successFunc) {
+        if (projectName == null || projectName == '') return;
+
+        if (!signedIn()) {
+            sweetAlert2('Oops!', 'You must sign in to save files.', 'error');
+            updateUI();
+            return;
+        }
+
+        function go() {
+            sweetAlert2({
+                title: Alert.title('Saving ' + projectName + ' ...'),
+                text: 'Saving your project.  Please wait.',
+                showConfirmButton: false,
+                showCancelButton: false,
+                showCloseButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                allowEnterKey: false
+            });
+
+            let project = getCurrentProject();
+            project['name'] = projectName;
+
             let data = new FormData();
-            data.append('mode', buildMode);
-            if (path == "")
-                data.append('path', folderName);
-            else
-                data.append('path', path + '/' + folderName);
+            data.append('project', JSON.stringify(project));
+            data.append('mode', mode);
+            data.append('path', path);
 
-            sendHttp('POST', 'createFolder', data, request => {
+            sendHttp('POST', 'saveProject', data, request => {
+                sweetAlert2.close();
                 if (request.status != 200) {
-                    sweetAlert('Oops',
-                        'Could not create your directory! Please try again.',
+                    sweetAlert2('Oops!',
+                        'Could not save your project!!!  Please try again.',
                         'error');
                     return;
                 }
 
-                allFolderNames[allFolderNames.length - 1].push(
-                    folderName);
-                nestedDirs.push(folderName);
-                allFolderNames.push([]);
-                allProjectNames.push([]);
                 successFunc();
-                updateNavBar();
+                cancelMove();
+                updateUI();
+
+                if (allProjectNames[allProjectNames.length - 1].indexOf(
+                        projectName) == -1) {
+                    discoverProjects(path, allProjectNames.length - 1);
+                }
             });
         }
 
-        sweetAlert({
-            html: true,
-            title: '<i class="mdi mdi72px mdi-folder-plus"></i>&nbsp; Create Folder',
-            text: 'Enter a name for your folder:',
-            type: 'input',
-            inputValue: '',
-            confirmButtonText: 'Create',
-            showCancelButton: true,
-            closeOnConfirm: false
-        }, go);
-    }, true);
-}
+        if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) == -1 ||
+            projectName == openProjectName) {
+            go();
+        } else {
+            let msg = 'Are you sure you want to save over another project?\n\n' +
+                'The previous contents of ' + projectName +
+                ' will be permanently destroyed!';
+            sweetAlert2({
+                title: Alert.title('Warning'),
+                text: msg,
+                type: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#DD6B55',
+                confirmButtonText: 'Yes, overwrite it!'
+            }).then(result => {
+                if (result.value) go();
+            });
+        }
+    }
 
-function loadProject_(index, name, buildMode, successFunc) {
+    function deleteProject_(path, buildMode, successFunc) {
+        if (!window.openProjectName) return;
 
-    warnIfUnsaved(() => {
         if (!signedIn()) {
-            sweetAlert('Oops!', 'You must sign in to open projects.',
-                'error');
+            sweetAlert2('Oops', 'You must sign in to delete a project.', 'error');
             updateUI();
             return;
         }
 
-        let data = new FormData();
-        data.append('name', name);
-        data.append('mode', buildMode);
-        data.append('path', nestedDirs.slice(1, index + 1).join('/'));
+        let msg =
+            'Deleting a project will throw away all work, and cannot be undone. ' +
+            'Are you sure?';
 
-        sendHttp('POST', 'loadProject', data, request => {
-            if (request.status == 200) {
-                let project = JSON.parse(request.responseText);
-
-                successFunc(project);
-                window.nestedDirs = nestedDirs.slice(0, index +
-                    1);
-                window.allProjectNames = allProjectNames.slice(
-                    0, index + 1);
-                window.allFolderNames = allFolderNames.slice(0,
-                    index + 1);
-                cancelMove();
-                updateUI();
-            }
-        });
-    }, false);
-}
-
-function share() {
-    let offerSource = true;
-
-    function go() {
-        let url;
-        let msg;
-        let showConfirm;
-        let confirmText;
-
-        if (!window.deployHash) {
-            url = window.location.href;
-            msg = 'Copy this link to share your program and code with others!';
-            showConfirm = false;
-        } else if (offerSource) {
-            url = window.location.href;
-            msg = 'Copy this link to share your program and code with others!';
-            showConfirm = true;
-            confirmText = 'Share Without Code';
-        } else {
-            let a = document.createElement('a');
-            a.href = window.location.href;
-            a.hash = '';
-            a.pathname = '/run.html';
-            a.search = '?mode=' + window.buildMode + '&dhash=' + window.deployHash;
-
-            url = a.href;
-            msg =
-                'Copy this link to share your program (but not code) with others!';
-            showConfirm = true;
-            confirmText = 'Share With Code';
-        }
-
-        sweetAlert({
-            html: true,
-            title: '<i class="mdi mdi-72px mdi-share"></i>&nbsp; Share',
+        sweetAlert2({
+            title: Alert.title('Warning'),
             text: msg,
-            type: 'input',
-            inputValue: url,
-            showConfirmButton: showConfirm,
-            confirmButtonText: confirmText,
-            closeOnConfirm: false,
+            type: 'warning',
             showCancelButton: true,
-            cancelButtonText: 'Done',
-            animation: 'slide-from-bottom'
-        }, () => {
-            offerSource = !offerSource;
-            go();
-        });
-    }
-
-    if (window.runningGeneration) {
-        if (!window.codeworldEditor.getDoc().isClean(window.runningGeneration)) {
-            sweetAlert2({
-                type: 'warning',
-                text: 'You have changed your code since running the program. ' +
-                    ' Rebuild so that you can share your latest code?',
-                confirmButtonText: 'Yes, Rebuild',
-                cancelButtonText: 'No, Share Old Program',
-                showConfirmButton: true,
-                showCancelButton: true
-            }).then(result => {
-                if (result.dismiss == sweetAlert2.DismissReason.cancel) {
-                    go();
-                } else if (result.value) {
-                    compile();
-                }
-            });
-            return;
-        }
-    }
-
-    go();
-}
-
-function inspect() {
-    document.getElementById('runner').contentWindow.toggleDebugMode();
-    cancelMove();
-    updateUI();
-}
-
-function shareFolder_(mode) {
-    if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in to share your folder.', 'error');
-        updateUI();
-        return;
-    }
-    if (nestedDirs.length == 1 || (openProjectName != null && openProjectName !=
-            '')) {
-        sweetAlert('Oops!', 'YOu must select a folder to share!', 'error');
-        updateUI();
-        return;
-    }
-    let path = nestedDirs.slice(1).join('/');
-
-    function go() {
-        let msg = 'Copy this link to share your folder with others!';
-
-        let data = new FormData();
-        data.append('mode', mode);
-        data.append('path', path);
-
-        sendHttp('POST', 'shareFolder', data, request => {
-            if (request.status != 200) {
-                sweetAlert('Oops!',
-                    'Could not share your folder! Please try again.',
-                    'error');
+            confirmButtonColor: '#DD6B55',
+            confirmButtonText: 'Yes, delete it!'
+        }).then(result => {
+            if (!result.value) {
                 return;
             }
 
-            let shareHash = request.responseText;
-            let a = document.createElement('a');
-            a.href = window.location.href;
-            a.hash = '#' + shareHash;
-            let url = a.href;
-            sweetAlert({
-                html: true,
-                title: '<i class="mdi mdi-72px mdi-folder-outline"></i>&nbsp; Share Folder',
-                text: msg,
-                type: 'input',
-                inputValue: url,
-                showConfirmButton: false,
-                showCancelButton: true,
-                cancelButtonText: 'Done',
-                animation: 'slide-from-bottom'
+            let data = new FormData();
+            data.append('name', window.openProjectName);
+            data.append('mode', buildMode);
+            data.append('path', path);
+
+            sendHttp('POST', 'deleteProject', data, request => {
+                if (request.status == 200) {
+                    successFunc();
+                    discoverProjects(path, allProjectNames.length -
+                        1);
+                }
             });
         });
     }
 
-    go();
-}
+    function deleteFolder_(path, buildMode, successFunc) {
+        if (path == "" || window.openProjectName != null) {
+            return;
+        }
+        if (!signedIn()) {
+            sweetAlert2('Oops', 'You must sign in to delete a folder.', 'error');
+            updateUI();
+            return;
+        }
 
-function preFormatMessage(msg) {
-    while (msg.match(/(\r\n|[^\x08]|)\x08/)) {
-        msg = msg.replace(/(\r\n|[^\x08])\x08/g, "");
+        let msg =
+            'Deleting a folder will throw away all of its content, cannot be undone. ' +
+            'Are you sure?';
+
+        sweetAlert2({
+            title: Alert.title('Warning'),
+            text: msg,
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#DD6B55',
+            confirmButtonText: 'Yes, delete it!'
+        }).then(result => {
+            if (!result.value) {
+                return;
+            }
+
+            let data = new FormData();
+            data.append('mode', buildMode);
+            data.append('path', path);
+
+            sendHttp('POST', 'deleteFolder', data, request => {
+                if (request.status == 200) {
+                    successFunc();
+                    nestedDirs.pop();
+                    allProjectNames.pop();
+                    allFolderNames.pop();
+                    discoverProjects(nestedDirs.slice(1).join('/'),
+                        allProjectNames.length - 1);
+                }
+            });
+        });
     }
 
-    msg = msg
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/program\.hs:(\d+):((\d+)(-\d+)?)/g,
-            '<a href="#" onclick="goto($1, $3);">Line $1, Column $2</a>')
-        .replace(/program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
-            '<a href="#" onclick="goto($1, $2);">Line $1-$3, Column $2-$4</a>');
-    return msg;
-}
+    function createFolder(path, buildMode, successFunc) {
+        warnIfUnsaved(() => {
+            if (!signedIn()) {
+                sweetAlert2('Oops!', 'You must sign in to create a folder.',
+                    'error');
+                updateUI();
+                return;
+            }
 
-function printMessage(type, message) {
-    if (message.trim() === "") {
-        return;
+            function go(folderName) {}
+
+            sweetAlert2({
+                title: Alert.title('Create Folder',
+                    'mdi-folder-plus'),
+                text: 'Enter a name for your folder:',
+                input: 'text',
+                inputValue: '',
+                confirmButtonText: 'Create',
+                showCancelButton: true,
+                closeOnConfirm: false
+            }).then(result => {
+                if (!result.value) {
+                    return;
+                }
+
+                sweetAlert2.close();
+                let data = new FormData();
+                data.append('mode', buildMode);
+                if (path == "")
+                    data.append('path', result.value);
+                else
+                    data.append('path', path + '/' + result.value);
+
+                sendHttp('POST', 'createFolder', data, request => {
+                    if (request.status != 200) {
+                        sweetAlert2('Oops',
+                            'Could not create your directory! Please try again.',
+                            'error');
+                        return;
+                    }
+
+                    allFolderNames[allFolderNames.length -
+                        1].push(
+                        result.value);
+                    nestedDirs.push(result.value);
+                    allFolderNames.push([]);
+                    allProjectNames.push([]);
+                    successFunc();
+                    updateNavBar();
+                });
+            });
+        }, true);
     }
-    message = preFormatMessage(message);
-    let outputDiv = document.getElementById("message"),
-        box = document.createElement("div"),
-        messageGutter = document.createElement("div"),
-        messageContent = document.createElement("div"),
-        splitted = message.trim().split('\n');
 
-    messageGutter.classList.add("message-gutter");
-    messageContent.classList.add("message-content");
-    box.classList.add("message-box");
-    box.classList.add(type);
-    box.appendChild(messageGutter)
-    box.appendChild(messageContent);
-    outputDiv.appendChild(box);
+    function loadProject_(index, name, buildMode, successFunc) {
 
-    if (splitted.length < 2) {
-        let singleLineMsg = document.createElement("div");
-        singleLineMsg.innerHTML = message
-        messageContent.appendChild(singleLineMsg)
-    } else {
-        let details = document.createElement("details"),
-            summary = document.createElement("summary");
-        details.setAttribute('open', '');
-        details.innerHTML = splitted.slice(1).join('\n');
-        summary.innerHTML = splitted[0];
-        details.insertBefore(summary, details.firstChild);
-        messageContent.appendChild(details);
+        warnIfUnsaved(() => {
+            if (!signedIn()) {
+                sweetAlert2('Oops!', 'You must sign in to open projects.',
+                    'error');
+                updateUI();
+                return;
+            }
+
+            let data = new FormData();
+            data.append('name', name);
+            data.append('mode', buildMode);
+            data.append('path', nestedDirs.slice(1, index + 1).join('/'));
+
+            sendHttp('POST', 'loadProject', data, request => {
+                if (request.status == 200) {
+                    let project = JSON.parse(request.responseText);
+
+                    successFunc(project);
+                    window.nestedDirs = nestedDirs.slice(0, index +
+                        1);
+                    window.allProjectNames = allProjectNames.slice(
+                        0, index + 1);
+                    window.allFolderNames = allFolderNames.slice(0,
+                        index + 1);
+                    cancelMove();
+                    updateUI();
+                }
+            });
+        }, false);
     }
 
-    outputDiv.scrollTop = outputDiv.scrollHeight;
-}
+    function share() {
+        let offerSource = true;
+
+        function go() {
+            let url;
+            let msg;
+            let showConfirm;
+            let confirmText;
+
+            if (!window.deployHash) {
+                url = window.location.href;
+                msg = 'Copy this link to share your program and code with others!';
+                showConfirm = false;
+            } else if (offerSource) {
+                url = window.location.href;
+                msg = 'Copy this link to share your program and code with others!';
+                showConfirm = true;
+                confirmText = 'Share Without Code';
+            } else {
+                let a = document.createElement('a');
+                a.href = window.location.href;
+                a.hash = '';
+                a.pathname = '/run.html';
+                a.search = '?mode=' + window.buildMode + '&dhash=' + window.deployHash;
+
+                url = a.href;
+                msg =
+                    'Copy this link to share your program (but not code) with others!';
+                showConfirm = true;
+                confirmText = 'Share With Code';
+            }
+
+            sweetAlert2({
+                title: Alert.title('Share', 'mdi-share'),
+                html: msg,
+                input: 'text',
+                inputValue: url,
+                showConfirmButton: showConfirm,
+                confirmButtonText: confirmText,
+                closeOnConfirm: false,
+                showCancelButton: true,
+                cancelButtonText: 'Done',
+                animation: 'slide-from-bottom'
+            }).then(result => {
+                if (result.value) {
+                    offerSource = !offerSource;
+                    go();
+                }
+            });
+        }
+
+        if (window.runningGeneration) {
+            if (!window.codeworldEditor.getDoc().isClean(window.runningGeneration)) {
+                sweetAlert2({
+                    type: 'warning',
+                    text: 'You have changed your code since running the program. ' +
+                        ' Rebuild so that you can share your latest code?',
+                    confirmButtonText: 'Yes, Rebuild',
+                    cancelButtonText: 'No, Share Old Program',
+                    showConfirmButton: true,
+                    showCancelButton: true
+                }).then(result => {
+                    if (result.value) {
+                        compile();
+                    } else {
+                        go();
+                    }
+                });
+                return;
+            }
+        }
+
+        go();
+    }
+
+    function inspect() {
+        document.getElementById('runner').contentWindow.toggleDebugMode();
+        cancelMove();
+        updateUI();
+    }
+
+    function shareFolder_(mode) {
+        if (!signedIn()) {
+            sweetAlert2('Oops!', 'You must sign in to share your folder.', 'error');
+            updateUI();
+            return;
+        }
+        if (nestedDirs.length == 1 || (openProjectName != null && openProjectName !=
+                '')) {
+            sweetAlert2('Oops!', 'YOu must select a folder to share!', 'error');
+            updateUI();
+            return;
+        }
+        let path = nestedDirs.slice(1).join('/');
+
+        function go() {
+            let msg = 'Copy this link to share your folder with others!';
+
+            let data = new FormData();
+            data.append('mode', mode);
+            data.append('path', path);
+
+            sendHttp('POST', 'shareFolder', data, request => {
+                if (request.status != 200) {
+                    sweetAlert2('Oops!',
+                        'Could not share your folder! Please try again.',
+                        'error');
+                    return;
+                }
+
+                let shareHash = request.responseText;
+                let a = document.createElement('a');
+                a.href = window.location.href;
+                a.hash = '#' + shareHash;
+                let url = a.href;
+                sweetAlert2({
+                    title: Alert.title('Share Folder',
+                        'mdi-folder-outline'),
+                    html: msg,
+                    input: 'text',
+                    inputValue: url,
+                    showConfirmButton: false,
+                    showCancelButton: true,
+                    cancelButtonText: 'Done',
+                    animation: 'slide-from-bottom'
+                });
+            });
+        }
+
+        go();
+    }
+
+    function preFormatMessage(msg) {
+        while (msg.match(/(\r\n|[^\x08]|)\x08/)) {
+            msg = msg.replace(/(\r\n|[^\x08])\x08/g, "");
+        }
+
+        msg = msg
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/program\.hs:(\d+):((\d+)(-\d+)?)/g,
+                '<a href="#" onclick="goto($1, $3);">Line $1, Column $2</a>')
+            .replace(/program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
+                '<a href="#" onclick="goto($1, $2);">Line $1-$3, Column $2-$4</a>');
+        return msg;
+    }
+
+    function printMessage(type, message) {
+        if (message.trim() === "") {
+            return;
+        }
+        message = preFormatMessage(message);
+        let outputDiv = document.getElementById("message"),
+            box = document.createElement("div"),
+            messageGutter = document.createElement("div"),
+            messageContent = document.createElement("div"),
+            splitted = message.trim().split('\n');
+
+        messageGutter.classList.add("message-gutter");
+        messageContent.classList.add("message-content");
+        box.classList.add("message-box");
+        box.classList.add(type);
+        box.appendChild(messageGutter)
+        box.appendChild(messageContent);
+        outputDiv.appendChild(box);
+
+        if (splitted.length < 2) {
+            let singleLineMsg = document.createElement("div");
+            singleLineMsg.innerHTML = message
+            messageContent.appendChild(singleLineMsg)
+        } else {
+            let details = document.createElement("details"),
+                summary = document.createElement("summary");
+            details.setAttribute('open', '');
+            details.innerHTML = splitted.slice(1).join('\n');
+            summary.innerHTML = splitted[0];
+            details.insertBefore(summary, details.firstChild);
+            messageContent.appendChild(details);
+        }
+
+        outputDiv.scrollTop = outputDiv.scrollHeight;
+    }

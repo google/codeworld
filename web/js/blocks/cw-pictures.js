@@ -64,7 +64,6 @@ Blockly.Blocks['cwCombine'] = {
         return e;
     },
 
-
     decompose(workspace) {
         let containerBlock =
             workspace.newBlock('pics_combine_container');

@@ -49,64 +49,66 @@ openProjectName = '';
 lastXML = '';
 
 function init() {
-    Alert.init().then(Auth.init);
+    Alert.init().then(Auth.init).then(() => {
+        nestedDirs = [""];
+        allProjectNames = [
+            []
+        ];
+        allFolderNames = [
+            []
+        ];
+        lastXML = null;
+        showingResult = false;
+        window.buildMode = 'codeworld';
 
-    nestedDirs = [""];
-    allProjectNames = [
-        []
-    ];
-    allFolderNames = [
-        []
-    ];
-    lastXML = null;
-    showingResult = false;
-    window.buildMode = 'codeworld';
-
-    let hash = location.hash.slice(1);
-    if (hash.length > 0) {
-        if (hash.slice(-2) == '==') {
-            hash = hash.slice(0, -2);
-        }
-        if (hash[0] == 'F') {
-            function go(folderName) {
-                let data = new FormData();
-                data.append('mode', 'blocklyXML');
-                data.append('shash', hash);
-                data.append('name', folderName);
-
-                sendHttp('POST', 'shareContent', data, request => {
-                    window.location.hash = '';
-                    if (request.status == 200) {
-                        sweetAlert('Success!',
-                            'The shared folder is moved into your root directory.',
-                            'success');
-                    } else {
-                        sweetAlert('Oops!',
-                            'Could not load the shared directory. Please try again.',
-                            'error');
-                    }
-                    initCodeworld();
-                    discoverProjects("", 0);
-                    updateUI();
-                });
+        let hash = location.hash.slice(1);
+        if (hash.length > 0) {
+            if (hash.slice(-2) == '==') {
+                hash = hash.slice(0, -2);
             }
+            if (hash[0] == 'F') {
+                sweetAlert2({
+                    title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
+                    html: 'Enter a name for the shared folder:',
+                    input: 'text',
+                    confirmButtonText: 'Save',
+                    showCancelButton: false,
+                    closeOnConfirm: false
+                }).then(result => {
+                    if (!result) {
+                        return;
+                    }
 
-            sweetAlert({
-                html: true,
-                title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
-                text: 'Enter a name for the shared folder:',
-                type: 'input',
-                confirmButtonText: 'Save',
-                showCancelButton: false,
-                closeOnConfirm: false
-            }, go);
+                    let data = new FormData();
+                    data.append('mode', 'blocklyXML');
+                    data.append('shash', hash);
+                    data.append('name', result.value);
+
+                    sendHttp('POST', 'shareContent', data,
+                        request => {
+                            window.location.hash = '';
+                            if (request.status == 200) {
+                                sweetAlert2('Success!',
+                                    'The shared folder is moved into your root directory.',
+                                    'success');
+                            } else {
+                                sweetAlert2('Oops!',
+                                    'Could not load the shared directory. Please try again.',
+                                    'error');
+                            }
+                            initCodeworld();
+                            discoverProjects("", 0);
+                            updateUI();
+                        });
+                });
+            } else {
+                initCodeworld();
+                loadXmlHash(hash, true);
+            }
         } else {
             initCodeworld();
-            loadXmlHash(hash, true);
         }
-    } else {
-        initCodeworld();
-    }
+    });
 }
 
 function initCodeworld() {
@@ -176,7 +178,6 @@ function run(xmlHash, codeHash, msg, error, dhash) {
     if (!hash && !error && !msg) { // We stopped, don't show message window
         document.getElementById('message').style.display = 'none';
     }
-
 
     if (msg) {
         let message = document.getElementById('message');
@@ -473,7 +474,7 @@ function updateNavBar() {
 function moveProject() {
     warnIfUnsaved(() => {
         if (!signedIn()) {
-            sweetAlert('Oops!',
+            sweetAlert2('Oops!',
                 'You must sign in to move this project or folder.',
                 'error');
             updateUI();
@@ -482,7 +483,7 @@ function moveProject() {
 
         if ((openProjectName == null || openProjectName == '') &&
             nestedDirs.length == 1) {
-            sweetAlert('Oops!',
+            sweetAlert2('Oops!',
                 'You must select a project or folder to move.',
                 'error');
             updateUI();
@@ -537,11 +538,9 @@ function moveHere() {
 
 function help() {
     let url = 'doc.html?shelf=help/blocks.shelf';
-    sweetAlert({
-        title: '',
-        text: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' +
+    sweetAlert2({
+        html: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' +
             url + '"></iframe>',
-        html: true,
         customClass: 'helpdoc',
         allowEscapeKey: true,
         allowOutsideClick: true,
@@ -590,7 +589,6 @@ function loadProject(name, index) {
     loadProject_(index, name, 'blocklyXML', successFunc);
 
 }
-
 
 function saveProjectBase(path, projectName) {
     function successFunc() {

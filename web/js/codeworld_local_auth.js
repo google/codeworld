@@ -167,10 +167,9 @@ let LocalAuth = (() => {
         } else {
             resetFocus();
 
-            sweetAlert({
-                html: true,
-                title: ERROR_TITLE,
-                text: html,
+            sweetAlert2({
+                title: Alert.title(ERROR_TITLE),
+                html: html,
                 type: "error"
             });
         }

@@ -1206,4 +1206,7 @@ function printMessage(type, message) {
     }
 
     outputDiv.scrollTop = outputDiv.scrollHeight;
+    if(type === "error") {
+        outputDiv.classList.add("error");
+    }
 }

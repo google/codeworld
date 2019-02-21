@@ -17,7 +17,7 @@
 // Helper functions /////////////////////////////////////////////////
 
 function loadSample(code) {
-    if (isEditorClean()) sweetAlert2.close();
+    if (isEditorClean()) sweetAlert.close();
     warnIfUnsaved(() => {
         loadWorkspace(code);
     }, false);
@@ -67,7 +67,7 @@ function init() {
                 hash = hash.slice(0, -2);
             }
             if (hash[0] == 'F') {
-                sweetAlert2({
+                sweetAlert({
                     title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
                     html: 'Enter a name for the shared folder:',
                     input: 'text',
@@ -88,11 +88,11 @@ function init() {
                         request => {
                             window.location.hash = '';
                             if (request.status == 200) {
-                                sweetAlert2('Success!',
+                                sweetAlert('Success!',
                                     'The shared folder is moved into your root directory.',
                                     'success');
                             } else {
-                                sweetAlert2('Oops!',
+                                sweetAlert('Oops!',
                                     'Could not load the shared directory. Please try again.',
                                     'error');
                             }
@@ -474,7 +474,7 @@ function updateNavBar() {
 function moveProject() {
     warnIfUnsaved(() => {
         if (!signedIn()) {
-            sweetAlert2('Oops!',
+            sweetAlert('Oops!',
                 'You must sign in to move this project or folder.',
                 'error');
             updateUI();
@@ -483,7 +483,7 @@ function moveProject() {
 
         if ((openProjectName == null || openProjectName == '') &&
             nestedDirs.length == 1) {
-            sweetAlert2('Oops!',
+            sweetAlert('Oops!',
                 'You must select a project or folder to move.',
                 'error');
             updateUI();
@@ -538,7 +538,7 @@ function moveHere() {
 
 function help() {
     let url = 'doc.html?shelf=help/blocks.shelf';
-    sweetAlert2({
+    sweetAlert({
         html: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' +
             url + '"></iframe>',
         customClass: 'helpdoc',

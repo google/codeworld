@@ -61,7 +61,7 @@ async function init() {
             hash = hash.slice(0, -2);
         }
         if (hash[0] == 'F') {
-            sweetAlert2({
+            sweetAlert({
                 title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
                 html: 'Enter a name for the shared folder:',
                 input: 'text',
@@ -81,11 +81,11 @@ async function init() {
                 sendHttp('POST', 'shareContent', data, request => {
                     window.location.hash = '';
                     if (request.status == 200) {
-                        sweetAlert2('Success!',
+                        sweetAlert('Success!',
                             'The shared folder is moved into your root directory.',
                             'success');
                     } else {
-                        sweetAlert2('Oops!',
+                        sweetAlert('Oops!',
                             'Could not load the shared directory. Please try again.',
                             'error');
                     }
@@ -597,7 +597,7 @@ function updateNavBar() {
 function moveProject() {
     warnIfUnsaved(() => {
         if (!signedIn()) {
-            sweetAlert2('Oops!',
+            sweetAlert('Oops!',
                 'You must sign in to move this project or folder.',
                 'error');
             updateUI();
@@ -606,7 +606,7 @@ function moveProject() {
 
         if ((openProjectName == null || openProjectName == '') &&
             nestedDirs.length == 1) {
-            sweetAlert2('Oops!',
+            sweetAlert('Oops!',
                 'You must select a project or folder to move.',
                 'error');
             updateUI();
@@ -668,7 +668,7 @@ function help() {
         url = 'doc.html?shelf=help/' + window.buildMode + '.shelf';
     }
 
-    sweetAlert2({
+    sweetAlert({
         html: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' +
             url + '"></iframe>',
         customClass: 'helpdoc',
@@ -712,7 +712,7 @@ function editorHelp(doc) {
         "<tr><td>Shift + Tab / Ctrl + [ </td><td> Unindent </td></tr>" +
         "<tr><td>Ctrl + I </td><td> Reformat (Haskell mode only) </td></tr>" +
         "</tbody></table></div>";
-    sweetAlert2({
+    sweetAlert({
         html: helpText,
         allowEscapeKey: true,
         allowOutsideClick: true,
@@ -750,7 +750,7 @@ function setCode(code, history, name, autostart) {
 }
 
 function loadSample(code) {
-    if (isEditorClean()) sweetAlert2.close();
+    if (isEditorClean()) sweetAlert.close();
     warnIfUnsaved(() => {
         setCode(code);
     }, false);
@@ -908,7 +908,7 @@ function showRequiredChecksInDialog(msg) {
         return '<li class="' + itemclass + '">' + head + details +
             '</li>';
     });
-    sweetAlert2({
+    sweetAlert({
         title: Alert.title('Requirements'),
         html: '<ul class="req-list">' + itemsHtml.join('') + '</ul>',
         confirmButtonText: 'Dismiss',
@@ -958,10 +958,10 @@ function compile() {
         window.cancelCompile = () => {};
     };
 
-    sweetAlert2({
+    sweetAlert({
         title: Alert.title('Compiling'),
         text: 'Your code is compiling.  Please wait...',
-        onOpen: sweetAlert2.showLoading,
+        onOpen: sweetAlert.showLoading,
         showConfirmButton: false,
         showCancelButton: true,
         showCloseButton: false,
@@ -974,7 +974,7 @@ function compile() {
 
     sendHttp('POST', 'compile', data, request => {
         if (compileFinished) return;
-        sweetAlert2.close();
+        sweetAlert.close();
         window.cancelCompile();
 
         let success = request.status == 200;

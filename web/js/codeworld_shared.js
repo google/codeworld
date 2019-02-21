@@ -57,14 +57,10 @@ let Html = (() => {
 let Alert = (() => {
     const mine = {};
 
-    // Load SweetAlert2 and SweetAlert in correct order
     mine.init = () =>
         Promise.resolve($.getScript(
             "https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js"
         ))
-        .then(() => {
-            window.sweetAlert2 = window.sweetAlert;
-        })
         .catch(e => console.log("Alert.init failed"));
 
     // Build SweetAlert title HTML
@@ -623,7 +619,7 @@ function withClientId(f) {
 
     sendHttp('GET', 'clientId.txt', null, request => {
         if (request.status != 200 || request.responseText == '') {
-            sweetAlert2('Oops!',
+            sweetAlert('Oops!',
                 'Missing API client key.  You will not be able to sign in.',
                 'warning');
             return null;
@@ -669,13 +665,13 @@ function discoverProjects_(path, buildMode, index) {
 
 function moveHere_(path, buildMode, successFunc) {
     if (!signedIn()) {
-        sweetAlert2('Oops!', 'You must sign in before moving.', 'error');
+        sweetAlert('Oops!', 'You must sign in before moving.', 'error');
         cancelMove();
         return;
     }
 
     if (!window.move) {
-        sweetAlert2('Oops!', 'You must first select something to move.',
+        sweetAlert('Oops!', 'You must first select something to move.',
             'error');
         cancelMove();
         return;
@@ -690,7 +686,7 @@ function moveHere_(path, buildMode, successFunc) {
         data.append('name', window.move.file);
     } else {
         if (path.startsWith(window.move.path)) {
-            sweetAlert2('Oops!',
+            sweetAlert('Oops!',
                 'You cannot move a path to a location inside itself.',
                 'error');
             cancelMove();
@@ -701,7 +697,7 @@ function moveHere_(path, buildMode, successFunc) {
 
     sendHttp('POST', 'moveProject', data, request => {
         if (request.status != 200) {
-            sweetAlert2('Oops',
+            sweetAlert('Oops',
                 'Could not move your project! Please try again.',
                 'error');
             cancelMove();
@@ -722,7 +718,7 @@ function warnIfUnsaved(action, showAnother) {
     } else {
         let msg = 'There are unsaved changes to your project. ' +
             'Continue and throw away your changes?';
-        sweetAlert2({
+        sweetAlert({
             title: Alert.title('Warning'),
             text: msg,
             type: 'warning',
@@ -738,7 +734,7 @@ function warnIfUnsaved(action, showAnother) {
 
 function saveProjectAs() {
     if (!signedIn()) {
-        sweetAlert2('Oops!', 'You must sign in to save files.', 'error');
+        sweetAlert('Oops!', 'You must sign in to save files.', 'error');
         updateUI();
         return;
     }
@@ -760,7 +756,7 @@ function saveProjectAs() {
         defaultName = '';
     }
 
-    sweetAlert2({
+    sweetAlert({
         title: Alert.title('Save As', 'mdi-cloud-upload'),
         html: text,
         input: 'text',
@@ -777,7 +773,7 @@ function saveProjectAs() {
 
 function saveProject() {
     if (!signedIn()) {
-        sweetAlert2('Oops!', 'You must sign in to save files.', 'error');
+        sweetAlert('Oops!', 'You must sign in to save files.', 'error');
         updateUI();
         return;
     }
@@ -793,13 +789,13 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
     if (projectName == null || projectName == '') return;
 
     if (!signedIn()) {
-        sweetAlert2('Oops!', 'You must sign in to save files.', 'error');
+        sweetAlert('Oops!', 'You must sign in to save files.', 'error');
         updateUI();
         return;
     }
 
     function go() {
-        sweetAlert2({
+        sweetAlert({
             title: Alert.title('Saving ' + projectName + ' ...'),
             text: 'Saving your project.  Please wait.',
             showConfirmButton: false,
@@ -819,9 +815,9 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
         data.append('path', path);
 
         sendHttp('POST', 'saveProject', data, request => {
-            sweetAlert2.close();
+            sweetAlert.close();
             if (request.status != 200) {
-                sweetAlert2('Oops!',
+                sweetAlert('Oops!',
                     'Could not save your project!!!  Please try again.',
                     'error');
                 return;
@@ -845,7 +841,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
         let msg = 'Are you sure you want to save over another project?\n\n' +
             'The previous contents of ' + projectName +
             ' will be permanently destroyed!';
-        sweetAlert2({
+        sweetAlert({
             title: Alert.title('Warning'),
             text: msg,
             type: 'warning',
@@ -862,7 +858,7 @@ function deleteProject_(path, buildMode, successFunc) {
     if (!window.openProjectName) return;
 
     if (!signedIn()) {
-        sweetAlert2('Oops', 'You must sign in to delete a project.', 'error');
+        sweetAlert('Oops', 'You must sign in to delete a project.', 'error');
         updateUI();
         return;
     }
@@ -871,7 +867,7 @@ function deleteProject_(path, buildMode, successFunc) {
         'Deleting a project will throw away all work, and cannot be undone. ' +
         'Are you sure?';
 
-    sweetAlert2({
+    sweetAlert({
         title: Alert.title('Warning'),
         text: msg,
         type: 'warning',
@@ -903,7 +899,7 @@ function deleteFolder_(path, buildMode, successFunc) {
         return;
     }
     if (!signedIn()) {
-        sweetAlert2('Oops', 'You must sign in to delete a folder.', 'error');
+        sweetAlert('Oops', 'You must sign in to delete a folder.', 'error');
         updateUI();
         return;
     }
@@ -912,7 +908,7 @@ function deleteFolder_(path, buildMode, successFunc) {
         'Deleting a folder will throw away all of its content, cannot be undone. ' +
         'Are you sure?';
 
-    sweetAlert2({
+    sweetAlert({
         title: Alert.title('Warning'),
         text: msg,
         type: 'warning',
@@ -944,7 +940,7 @@ function deleteFolder_(path, buildMode, successFunc) {
 function createFolder(path, buildMode, successFunc) {
     warnIfUnsaved(() => {
         if (!signedIn()) {
-            sweetAlert2('Oops!', 'You must sign in to create a folder.',
+            sweetAlert('Oops!', 'You must sign in to create a folder.',
                 'error');
             updateUI();
             return;
@@ -952,7 +948,7 @@ function createFolder(path, buildMode, successFunc) {
 
         function go(folderName) {}
 
-        sweetAlert2({
+        sweetAlert({
             title: Alert.title('Create Folder',
                 'mdi-folder-plus'),
             text: 'Enter a name for your folder:',
@@ -966,7 +962,7 @@ function createFolder(path, buildMode, successFunc) {
                 return;
             }
 
-            sweetAlert2.close();
+            sweetAlert.close();
             let data = new FormData();
             data.append('mode', buildMode);
             if (path == "")
@@ -976,7 +972,7 @@ function createFolder(path, buildMode, successFunc) {
 
             sendHttp('POST', 'createFolder', data, request => {
                 if (request.status != 200) {
-                    sweetAlert2('Oops',
+                    sweetAlert('Oops',
                         'Could not create your directory! Please try again.',
                         'error');
                     return;
@@ -999,7 +995,7 @@ function loadProject_(index, name, buildMode, successFunc) {
 
     warnIfUnsaved(() => {
         if (!signedIn()) {
-            sweetAlert2('Oops!', 'You must sign in to open projects.',
+            sweetAlert('Oops!', 'You must sign in to open projects.',
                 'error');
             updateUI();
             return;
@@ -1060,7 +1056,7 @@ function share() {
             confirmText = 'Share With Code';
         }
 
-        sweetAlert2({
+        sweetAlert({
             title: Alert.title('Share', 'mdi-share'),
             html: msg,
             input: 'text',
@@ -1081,7 +1077,7 @@ function share() {
 
     if (window.runningGeneration) {
         if (!window.codeworldEditor.getDoc().isClean(window.runningGeneration)) {
-            sweetAlert2({
+            sweetAlert({
                 type: 'warning',
                 text: 'You have changed your code since running the program. ' +
                     ' Rebuild so that you can share your latest code?',
@@ -1111,13 +1107,13 @@ function inspect() {
 
 function shareFolder_(mode) {
     if (!signedIn()) {
-        sweetAlert2('Oops!', 'You must sign in to share your folder.', 'error');
+        sweetAlert('Oops!', 'You must sign in to share your folder.', 'error');
         updateUI();
         return;
     }
     if (nestedDirs.length == 1 || (openProjectName != null && openProjectName !=
             '')) {
-        sweetAlert2('Oops!', 'YOu must select a folder to share!', 'error');
+        sweetAlert('Oops!', 'YOu must select a folder to share!', 'error');
         updateUI();
         return;
     }
@@ -1132,7 +1128,7 @@ function shareFolder_(mode) {
 
         sendHttp('POST', 'shareFolder', data, request => {
             if (request.status != 200) {
-                sweetAlert2('Oops!',
+                sweetAlert('Oops!',
                     'Could not share your folder! Please try again.',
                     'error');
                 return;
@@ -1143,7 +1139,7 @@ function shareFolder_(mode) {
             a.href = window.location.href;
             a.hash = '#' + shareHash;
             let url = a.href;
-            sweetAlert2({
+            sweetAlert({
                 title: Alert.title('Share Folder',
                     'mdi-folder-outline'),
                 html: msg,

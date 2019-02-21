@@ -22,7 +22,6 @@ goog.require('Blockly.Blocks');
 
 let listsHUE = 260;
 
-
 Blockly.Blocks['lists_comprehension'] = {
     /**
      * Block for creating a list with any number of elements of any type.
@@ -141,7 +140,6 @@ Blockly.Blocks['lists_comprehension'] = {
             exp = Exp.App(Exp.Var('froml'), exp);
             exp.tag = field;
             exp = Exp.App(Exp.Var('returnl'), exp);
-
 
             let letExp = Exp.App(Exp.Var("bindl"), exp);
 
@@ -642,8 +640,6 @@ Blockly.Blocks['lists_cons'] = {
     }
 };
 
-
-
 Blockly.Blocks['lists_create_with_typed'] = {
     /**
      * Block for creating a list with any number of elements of any type.
@@ -667,7 +663,6 @@ Blockly.Blocks['lists_create_with_typed'] = {
         }
         tps.push(Type.Lit("list", [Type.Var("a")]));
         this.arrows = Type.fromList(tps);
-
 
         Blockly.TypeInf.defineFunction(":", Type.fromList([Type.Var("a"),
             Type.Lit("list", [Type.Var('a')]), Type.Lit("list",

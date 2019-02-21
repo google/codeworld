@@ -63,11 +63,22 @@ async function init() {
             hash = hash.slice(0, -2);
         }
         if (hash[0] == 'F') {
-            function go(folderName) {
+            sweetAlert({
+                title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
+                html: 'Enter a name for the shared folder:',
+                input: 'text',
+                confirmButtonText: 'Save',
+                showCancelButton: false,
+                closeOnConfirm: false
+            }).then(result => {
+                if (!result) {
+                    return;
+                }
+
                 let data = new FormData();
                 data.append('mode', window.buildMode);
                 data.append('shash', hash);
-                data.append('name', folderName);
+                data.append('name', result.value);
 
                 sendHttp('POST', 'shareContent', data, request => {
                     window.location.hash = '';
@@ -88,17 +99,7 @@ async function init() {
                     discoverProjects("", 0);
                     updateUI();
                 });
-            }
-
-            sweetAlert({
-                html: true,
-                title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
-                text: 'Enter a name for the shared folder:',
-                type: 'input',
-                confirmButtonText: 'Save',
-                showCancelButton: false,
-                closeOnConfirm: false
-            }, go);
+            });
         } else {
             initCodeworld();
             registerStandardHints(() => {
@@ -465,8 +466,8 @@ function updateUI() {
             document.getElementById('shareFolderButton').style.display = 'none';
         }
 
-        if ((openProjectName != null && openProjectName != '') || nestedDirs.length !=
-            1) {
+        if ((openProjectName != null && openProjectName != '') ||
+            nestedDirs.length != 1) {
             document.getElementById('moveButton').style.display = '';
         } else {
             document.getElementById('moveButton').style.display = 'none';
@@ -642,13 +643,12 @@ function moveProject() {
 }
 
 function moveHere() {
-    function successFunc() {
+    moveHere_(nestedDirs.slice(1).join('/'), window.buildMode, () => {
         nestedDirs = [""];
         discoverProjects("", 0);
         cancelMove();
         updateUI();
-    }
-    moveHere_(nestedDirs.slice(1).join('/'), window.buildMode, successFunc);
+    });
 }
 
 function changeFontSize(incr) {
@@ -677,11 +677,10 @@ function help() {
         url = 'doc.html?shelf=help/' + window.buildMode + '.shelf';
     }
 
-    sweetAlert2({
+    sweetAlert({
         html: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' +
             url + '"></iframe>',
         customClass: 'helpdoc',
-        className: 'helpdoc',
         allowEscapeKey: true,
         allowOutsideClick: true,
         showConfirmButton: false,
@@ -723,9 +722,7 @@ function editorHelp(doc) {
         "<tr><td>Ctrl + I </td><td> Reformat (Haskell mode only) </td></tr>" +
         "</tbody></table></div>";
     sweetAlert({
-        title: '',
-        text: helpText,
-        html: true,
+        html: helpText,
         allowEscapeKey: true,
         allowOutsideClick: true,
         showConfirmButton: false,
@@ -762,7 +759,7 @@ function setCode(code, history, name, autostart) {
 }
 
 function loadSample(code) {
-    if (isEditorClean()) sweetAlert2.close();
+    if (isEditorClean()) sweetAlert.close();
     warnIfUnsaved(() => {
         setCode(code);
     }, false);
@@ -775,11 +772,11 @@ function newProject() {
 }
 
 function newFolder() {
-    function successFunc() {
-        if (!window.move)
+    createFolder(nestedDirs.slice(1).join('/'), window.buildMode, () => {
+        if (!window.move) {
             setCode('');
-    }
-    createFolder(nestedDirs.slice(1).join('/'), window.buildMode, successFunc);
+        }
+    });
 }
 
 function loadProject(name, index) {
@@ -787,10 +784,9 @@ function loadProject(name, index) {
         return;
     }
 
-    function successFunc(project) {
+    loadProject_(index, name, window.buildMode, project => {
         setCode(project.source, project.history, name);
-    }
-    loadProject_(index, name, window.buildMode, successFunc);
+    });
 }
 
 function formatSource() {
@@ -812,8 +808,9 @@ function formatSource() {
 }
 
 function stop() {
-    if (document.getElementById("runner").contentWindow.debugActive)
+    if (document.getElementById("runner").contentWindow.debugActive) {
         document.getElementById("runner").contentWindow.stopDebugMode();
+    }
     destroyTreeDialog();
     window.cancelCompile();
 
@@ -923,13 +920,12 @@ function showRequiredChecksInDialog(msg) {
             '</li>';
     });
     sweetAlert({
-        html: true,
-        title: 'Requirements',
-        text: '<ul class="req-list">' + itemsHtml.join('') + '</ul>',
+        title: Alert.title('Requirements'),
+        html: '<ul class="req-list">' + itemsHtml.join('') + '</ul>',
         confirmButtonText: 'Dismiss',
         showCancelButton: false,
         closeOnConfirm: true
-    }, () => {
+    }).then(() => {
         let runner = document.getElementById('runner');
         if (!runner) return;
         if (runner.style.display == 'none') return;
@@ -943,7 +939,7 @@ function showRequiredChecksInDialog(msg) {
 
 let htmlEscapeString = (() => {
     let el = document.createElement('div')
-    return function escape(str) {
+    return str => {
         el.textContent = str;
         return el.innerHTML;
     };
@@ -973,25 +969,23 @@ function compile() {
         window.cancelCompile = () => {};
     };
 
-    sweetAlert2({
-        title: 'Compiling',
+    sweetAlert({
+        title: Alert.title('Compiling'),
         text: 'Your code is compiling.  Please wait...',
-        onOpen: sweetAlert2.showLoading,
+        onOpen: sweetAlert.showLoading,
         showConfirmButton: false,
         showCancelButton: true,
         showCloseButton: false,
         allowOutsideClick: false,
         allowEscapeKey: false,
         allowEnterKey: false
-    }).then(result => {
-        if (result.dismiss = sweetAlert2.DismissReason.cancel) {
-            window.cancelCompile();
-        }
+    }).then(() => {
+        window.cancelCompile();
     });
 
     sendHttp('POST', 'compile', data, request => {
         if (compileFinished) return;
-        sweetAlert2.close();
+        sweetAlert.close();
         window.cancelCompile();
 
         let success = request.status == 200;
@@ -1055,14 +1049,12 @@ function discoverProjects(path, index) {
 }
 
 function saveProjectBase(path, projectName) {
-    function successFunc() {
+    saveProjectBase_(path, projectName, window.buildMode, () => {
         window.openProjectName = projectName;
         let doc = window.codeworldEditor.getDoc();
         window.savedGeneration = doc.changeGeneration(true);
         window.codeworldEditor.focus();
-    }
-
-    saveProjectBase_(path, projectName, window.buildMode, successFunc);
+    });
 }
 
 function deleteFolder() {
@@ -1071,11 +1063,10 @@ function deleteFolder() {
         return;
     }
 
-    function successFunc() {
+    deleteFolder_(path, window.buildMode, () => {
         savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
         setCode('');
-    }
-    deleteFolder_(path, window.buildMode, successFunc);
+    });
 }
 
 function deleteProject() {
@@ -1084,12 +1075,11 @@ function deleteProject() {
         return;
     }
 
-    function successFunc() {
+    let path = nestedDirs.slice(1).join('/');
+    deleteProject_(path, window.buildMode, () => {
         savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
         setCode('');
-    }
-    let path = nestedDirs.slice(1).join('/');
-    deleteProject_(path, window.buildMode, successFunc);
+    });
 }
 
 function shareFolder() {

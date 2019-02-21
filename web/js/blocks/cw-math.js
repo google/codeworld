@@ -20,7 +20,6 @@ goog.provide('Blockly.Blocks.cwMath');
 
 goog.require('Blockly.Blocks');
 
-
 // Stefan
 Blockly.Blocks['numNumber'] = {
     /**

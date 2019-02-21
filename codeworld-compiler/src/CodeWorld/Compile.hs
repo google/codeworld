@@ -128,11 +128,6 @@ prepareCompile dir = do
     liftIO $ copyFile src (dir </> "program.hs")
 
     mode <- gets compileMode
-    baseArgs <- case mode of
-        "haskell" -> return haskellCompatibleBuildArgs
-        "codeworld" ->
-            standardBuildArgs <$> hasOldStyleMain <$> decodeUtf8 <$> getSourceCode
-
     stage <- gets compileStage
     linkArgs <- case stage of
         ErrorCheck -> return ["-fno-code"]
@@ -144,10 +139,10 @@ prepareCompile dir = do
             liftIO $ copyFile syms (dir </> "out.base.symbs")
             return ["-dedupe", "-use-base", "out.base.symbs"]
 
-    return $ ["program.hs"] ++ baseArgs ++ linkArgs
+    return $ ["program.hs"] ++ buildArgs mode ++ linkArgs
 
-standardBuildArgs :: Bool -> [String]
-standardBuildArgs True =
+buildArgs :: SourceMode -> [String]
+buildArgs "codeworld" =
     [ "-DGHCJS_BROWSER"
     , "-Wall"
     , "-Wdeferred-type-errors"
@@ -190,11 +185,10 @@ standardBuildArgs True =
     , "-XTypeOperators"
     , "-XViewPatterns"
     , "-XImplicitPrelude" -- MUST come after RebindableSyntax.
+    , "-main-is"
+    , "Main.program"
     ]
-standardBuildArgs False = standardBuildArgs True ++ ["-main-is", "Main.program"]
-
-haskellCompatibleBuildArgs :: [String]
-haskellCompatibleBuildArgs =
+buildArgs "haskell" =
     [ "-DGHCJS_BROWSER"
     , "-Wall"
     , "-package"

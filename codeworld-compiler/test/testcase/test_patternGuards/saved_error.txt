@@ -1,7 +1,2 @@
-program.hs:3:5: warning:
-    This arrow <- can't be used here. (To compare a negative number, add a space after <.)
-        t <- 8
-
-program.hs:3:6: warning:
-    This binding for t shadows the existing binding
-      bound at program.hs:3:3
+program.hs:3:6: error: This arrow can't be used here.
+	To compare a negative number, add a space between < and -.

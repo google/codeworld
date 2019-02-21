@@ -20,8 +20,7 @@
 -}
 
 module CodeWorld.Compile.Stages
-    ( hasOldStyleMain
-    , checkDangerousSource
+    ( checkDangerousSource
     , checkCodeConventions
     , checkRequirements
     ) where
@@ -41,9 +40,6 @@ import Language.Haskell.Exts
 import Text.Regex.TDFA
 import Text.Regex.TDFA.Text
 
-hasOldStyleMain :: Text -> Bool
-hasOldStyleMain src = isJust (findOldStyleMain src)
-
 -- Checks a full list of conventions that are enforced by the CodeWorld
 -- compiler for "codeworld" mode.  In other modes, this has no effect.
 checkCodeConventions :: MonadCompile m => m ()
@@ -51,7 +47,6 @@ checkCodeConventions = do
     mode <- gets compileMode
     checkOldStyleMixed mode
     when (mode == "codeworld") $ do
-        checkOldStyleMain
         checkFunctionParentheses
         checkVarlessPatterns
         checkPatternGuards
@@ -73,27 +68,6 @@ checkDangerousSource = do
             [ (noSrcSpan, CompileError,
                "error: Sorry, but your program uses forbidden language features.")
             ]
-
--- Looks for uses of old-style main in CodeWorld-mode modules.  These
--- will be broken soon, so we issue a warning.
-checkOldStyleMain :: MonadCompile m => m ()
-checkOldStyleMain = do
-    src <- decodeUtf8 <$> getSourceCode
-    case findOldStyleMain src of
-        Just (off, len) -> do
-            addDiagnostics
-                [ (srcSpanFor src off len, CompileSuccess,
-                   "warning:\n" ++
-                   "\tPlease define 'program' instead of 'main'.\n" ++
-                   "\tDefining 'main' may stop working July 2019.")
-                ]
-        _ -> return ()
-
-findOldStyleMain :: Text -> Maybe (Int, Int)
-findOldStyleMain src
-  | rangeSize (bounds matchArray) > 2 = Just (matchArray ! 2)
-  | otherwise = Nothing
-  where matchArray :: MatchArray = src =~ ("(^|\\n)(main)[ \\t]*=" :: Text)
 
 -- Looks for use of `mixed` with either a pair of colors (in CodeWorld mode) or
 -- two colors (in Haskell mode).  This is likely to be old code from before the

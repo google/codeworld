@@ -27,7 +27,6 @@
     <link rel="stylesheet" href="css/show-hint.css">
     <link rel="stylesheet" href="css/codeworld-cm.css">
     <link rel="stylesheet" href="//cdn.materialdesignicons.com/1.6.50/css/materialdesignicons.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.0/sweetalert.min.css">
 
     <script type="text/template" id="projectTemplate">
         <a class="cw-button green {{ifactive project-active}}"><i class="mdi mdi-18px mdi-cube"></i>&nbsp; {{label}}</a>
@@ -52,8 +51,7 @@
                     <a id="newButton" class="cw-button red" onclick="newProject()">
                         <i class="mdi mdi-18px mdi-plus"></i>&nbsp; New
                     </a>
-                    <a id="saveButton" class="cw-button blue" style="display:none"
-                        onclick="saveProject()">
+                    <a id="saveButton" class="cw-button blue" style="display:none" onclick="saveProject()">
                         <i class="mdi mdi-18px mdi-cloud-upload"></i>&nbsp;
                         Save
                     </a>
@@ -61,21 +59,17 @@
                         <i class="mdi mdi-18px mdi-dots-horizontal"></i>&nbsp;
                         Save As
                     </a>
-                    <a id="deleteButton" class="cw-button red" style="display:none"
-                        onclick="deleteProject()">
+                    <a id="deleteButton" class="cw-button red" style="display:none" onclick="deleteProject()">
                         <i class="mdi mdi-18px mdi-delete"></i>&nbsp; Delete
                     </a>
-                    <a id="moveButton" class="cw-button blue" style="display:none"
-                        onclick="moveProject()">
+                    <a id="moveButton" class="cw-button blue" style="display:none" onclick="moveProject()">
                         <i class="mdi mdi-18px mdi-folder-move"></i>&nbsp; Move
                     </a>
-                    <a id="moveHereButton" class="cw-button blue" style="display:none"
-                        onclick="moveHere()">
+                    <a id="moveHereButton" class="cw-button blue" style="display:none" onclick="moveHere()">
                         <i class="mdi mdi-18px mdi-folder-download"></i>&nbsp;
                         Move Here
                     </a>
-                    <a id="cancelMoveButton" class="cw-button red" style="display:none"
-                        onclick="cancelMove()">
+                    <a id="cancelMoveButton" class="cw-button red" style="display:none" onclick="cancelMove()">
                         <i class="mdi mdi-18px mdi-close-circle"></i>&nbsp;
                         Cancel
                     </a>
@@ -89,14 +83,12 @@
 
             <div id="result" style="display:none" class="ui-layout-east">
                 <div id="obsolete-code-alert" class="obsolete-code-alert-fadeout"></div>
-                <iframe id="runner" class="dropbox" width="500" height="500"
-                    style="display:none;"></iframe>
+                <iframe id="runner" class="dropbox" width="500" height="500" style="display:none;"></iframe>
 
                 <pre id="message" class="dropbox" style="width:100%; min-height:100px;
                                                              padding:5px;display:none;"></pre>
 
-                <span><a type="button" style="margin-top:5px;" id="editButton"
-                        target="_blank" class="cw-button blue">
+                <span><a type="button" style="margin-top:5px;" id="editButton" target="_blank" class="cw-button blue">
                         <span>Edit code</span>
                     </a>
                 </span>
@@ -106,26 +98,19 @@
         </div>
         <div id="toolbar">
             <div id="buttons">
-                <a id="navButton" class="cw-button blue" onclick="window.mainLayout.toggle('west')"><i
-                        class="mdi mdi-18px mdi-menu"></i></a>
-                <a id="signin" class="cw-button blue" onclick="signin()"><i
-                        class="mdi mdi-18px mdi-login"></i>&nbsp; Sign In</a>
-                <a id="signout" class="cw-button blue" style="display:none"
-                    onclick="signout()"><i class="mdi mdi-18px mdi-logout"></i>&nbsp;
+                <a id="navButton" class="cw-button blue" onclick="window.mainLayout.toggle('west')"><i class="mdi mdi-18px mdi-menu"></i></a>
+                <a id="signin" class="cw-button blue" onclick="signin()"><i class="mdi mdi-18px mdi-login"></i>&nbsp; Sign In</a>
+                <a id="signout" class="cw-button blue" style="display:none" onclick="signout()"><i class="mdi mdi-18px mdi-logout"></i>&nbsp;
                     Sign Out</a>
-                <a id="docButton" class="cw-button blue" onclick="help()"><i
-                        class="mdi mdi-18px mdi-book-open-variant"></i>&nbsp;
+                <a id="docButton" class="cw-button blue" onclick="help()"><i class="mdi mdi-18px mdi-book-open-variant"></i>&nbsp;
                     Help</a>
-                <a id="bugButton" class="cw-button blue" target="_blank" href="https://github.com/google/codeworld/issues/new?labels=funblocks"><i
-                        class="mdi mdi-18px mdi-bug"></i>&nbsp; Report Bug</a>
+                <a id="bugButton" class="cw-button blue" target="_blank" href="https://github.com/google/codeworld/issues/new?labels=funblocks"><i class="mdi mdi-18px mdi-bug"></i>&nbsp; Report Bug</a>
             </div>
             <span></span>
             <div id="runButtons">
-                <a id="shareFolderButton" class="cw-button yellow" style="display:none"
-                    onclick="shareFolder()"><i class="mdi mdi-18px mdi-folder-outline"></i>&nbsp;
+                <a id="shareFolderButton" class="cw-button yellow" style="display:none" onclick="shareFolder()"><i class="mdi mdi-18px mdi-folder-outline"></i>&nbsp;
                     Share Folder</a>
-                <a id="shareButton" class="cw-button yellow" style="display:none"
-                    onclick="share()"><i class="mdi mdi-18px mdi-share"></i>&nbsp;
+                <a id="shareButton" class="cw-button yellow" style="display:none" onclick="share()"><i class="mdi mdi-18px mdi-share"></i>&nbsp;
                     Share</a>
                 <a class="cw-button red" id="btnStop"><i class="mdi mdi-18px mdi-stop"></i>&nbsp;
                     Stop</a>
@@ -165,10 +150,8 @@
     <script src="blockly/blocks/funblocks-procedures.js"></script>
     <script src="blockly/msg/js/en.js"></script>
 
-    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
-        crossorigin="anonymous"></script>
-    <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js" integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E="
-        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js" integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E=" crossorigin="anonymous"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-layout/1.4.3/jquery.layout_and_plugins.min.js"></script>
     <script type="text/javascript">
         window.mainLayout = $('.ui-layout-container').layout({

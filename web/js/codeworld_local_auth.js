@@ -57,12 +57,12 @@ let LocalAuth = (() => {
         if (e.which == 13) {
             const formData = validateFormData();
             if (formData.isValid) {
-                sweetAlert2.clickConfirm();
+                sweetAlert.clickConfirm();
             } else {
-                sweetAlert2.showValidationError(formData.validationResult);
+                sweetAlert.showValidationError(formData.validationResult);
             }
         } else {
-            sweetAlert2.resetValidationError();
+            sweetAlert.resetValidationError();
         }
     }
 
@@ -138,7 +138,7 @@ let LocalAuth = (() => {
 
     function resetFocus() {
         $(`#${USER_ID}`).focus();
-        sweetAlert2.hideLoading();
+        sweetAlert.hideLoading();
     }
 
     function handleError(e) {
@@ -162,15 +162,14 @@ let LocalAuth = (() => {
         }
 
         if (isRecoverable) {
-            sweetAlert2.showValidationError(html);
+            sweetAlert.showValidationError(html);
             resetFocus();
         } else {
             resetFocus();
 
             sweetAlert({
-                html: true,
-                title: ERROR_TITLE,
-                text: html,
+                title: Alert.title(ERROR_TITLE),
+                html: html,
                 type: "error"
             });
         }
@@ -179,7 +178,7 @@ let LocalAuth = (() => {
     function onPreConfirmSignIn() {
         const formData = validateFormData();
         if (!formData.isValid) {
-            sweetAlert2.showValidationError(formData.validationResult);
+            sweetAlert.showValidationError(formData.validationResult);
             return false;
         }
 
@@ -197,7 +196,7 @@ let LocalAuth = (() => {
                 }))
                 .catch(e => {
                     if (isPasswordExpired(e)) {
-                        return sweetAlert2({
+                        return sweetAlert({
                             title: Alert.title(
                                 "Reset Your Password",
                                 "mdi-account"),
@@ -228,7 +227,7 @@ let LocalAuth = (() => {
     function onPreConfirmReset() {
         const formData = validateFormData();
         if (!formData.isValid) {
-            sweetAlert2.showValidationError(formData.validationResult);
+            sweetAlert.showValidationError(formData.validationResult);
             return false;
         }
 
@@ -252,7 +251,7 @@ let LocalAuth = (() => {
     }
 
     function signIn(title) {
-        return sweetAlert2({
+        return sweetAlert({
             title: Alert.title(title || "Sign In",
                 "mdi-account"),
             html: `<input id="${USER_ID}" class="swal2-input" placeholder="Enter your user name">` +

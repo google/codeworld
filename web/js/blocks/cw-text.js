@@ -20,7 +20,6 @@ goog.provide('Blockly.Blocks.cwText');
 
 goog.require('Blockly.Blocks');
 
-
 let textHUE = 45;
 
 Blockly.Blocks['text_typed'] = {

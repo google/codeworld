@@ -20,7 +20,6 @@ goog.provide('Blockly.Blocks.cwProgram');
 
 goog.require('Blockly.Blocks');
 
-
 Blockly.Blocks['cwSimulationOf'] = {
     /**
      * Block for comparison operator.
@@ -99,7 +98,6 @@ Blockly.Blocks['cwInteractionOf'] = {
         this.setAsFunction("interactionOf");
     }
 };
-
 
 Blockly.Blocks['cwAnimationOf'] = {
     /**

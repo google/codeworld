@@ -173,8 +173,7 @@ CodeMirror.defineMode("codeworld", (_config, modeConfig) => {
             let t = state.func(stream, state);
             if (['variable', 'variable-2'].indexOf(t) != -1) {
                 let w = stream.current();
-                if (wellKnownWords.hasOwnProperty(w)) return wellKnownWords[
-                    w];
+                if (wellKnownWords.hasOwnProperty(w)) return wellKnownWords[w];
             }
             return t;
         },

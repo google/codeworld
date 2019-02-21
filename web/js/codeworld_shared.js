@@ -57,17 +57,10 @@ let Html = (() => {
 let Alert = (() => {
     const mine = {};
 
-    // Load SweetAlert2 and SweetAlert in correct order
     mine.init = () =>
         Promise.resolve($.getScript(
             "https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js"
         ))
-        .then(() => {
-            window.sweetAlert2 = window.sweetAlert;
-            return $.getScript(
-                "https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.0/sweetalert.min.js"
-            );
-        })
         .catch(e => console.log("Alert.init failed"));
 
     // Build SweetAlert title HTML
@@ -137,9 +130,8 @@ let hintBlacklist = [
 //     doc: "The CodeWorld logo."
 //   }
 // }
-
-let codeWorldSymbols = {},
-    codeWorldBuiltinSymbols = {};
+let codeWorldSymbols = {};
+let codeWorldBuiltinSymbols = {};
 
 function getWordStart(word, line) {
     return line.indexOf(word);
@@ -340,12 +332,13 @@ function registerStandardHints(successFunc) {
                 return /^[a-zA-Z].*/.test(c);
             }
 
-            if (startsWithLetter(a.text) && !startsWithLetter(b
-                    .text)) return -1;
-            else if (startsWithLetter(b.text) && !
-                startsWithLetter(a.text)) return 1;
-            else return a.text.toLowerCase() < b.text.toLowerCase() ?
-                -1 : 1
+            if (startsWithLetter(a.text) && !startsWithLetter(b.text)) {
+                return -1;
+            } else if (startsWithLetter(b.text) && !startsWithLetter(a.text)) {
+                return 1;
+            } else {
+                return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1
+            }
         });
 
         if (found.length > 0) {
@@ -402,9 +395,7 @@ function registerStandardHints(successFunc) {
         }
         lines = lines.slice(startLine, endLine);
 
-        // Special case for "main" and "program", since they are morally
-        // built-in names.
-        codeworldKeywords['main'] = 'deprecated';
+        // Special case for "program", since it is morally a built-in name.
         codeworldKeywords['program'] = 'builtin';
 
         codeWorldBuiltinSymbols['program'] = {
@@ -460,8 +451,7 @@ function registerStandardHints(successFunc) {
                 doc += line.replace(/\-\-   /g, "") + "\n";
             } else {
                 let wordStart = 0;
-                if (line.startsWith("type ") || line.startsWith(
-                        "data ")) {
+                if (line.startsWith("type ") || line.startsWith("data ")) {
                     wordStart += 5;
 
                     // Hide kind annotations.
@@ -515,9 +505,11 @@ function registerStandardHints(successFunc) {
 }
 
 function signin() {
-    if (window.auth2) auth2.signIn({
-        prompt: 'login'
-    });
+    if (window.auth2) {
+        auth2.signIn({
+            prompt: 'login'
+        });
+    }
 }
 
 function signout() {
@@ -679,7 +671,8 @@ function moveHere_(path, buildMode, successFunc) {
     }
 
     if (!window.move) {
-        sweetAlert('Oops!', 'You must first select something to move.', 'error');
+        sweetAlert('Oops!', 'You must first select something to move.',
+            'error');
         cancelMove();
         return;
     }
@@ -726,14 +719,16 @@ function warnIfUnsaved(action, showAnother) {
         let msg = 'There are unsaved changes to your project. ' +
             'Continue and throw away your changes?';
         sweetAlert({
-            title: 'Warning',
+            title: Alert.title('Warning'),
             text: msg,
             type: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#DD6B55',
             confirmButtonText: 'Yes, discard my changes!',
             closeOnConfirm: !showAnother
-        }, action);
+        }).then(result => {
+            if (result.value) action();
+        });
     }
 }
 
@@ -761,20 +756,19 @@ function saveProjectAs() {
         defaultName = '';
     }
 
-    function go(projectName) {
-        saveProjectBase(nestedDirs.slice(1).join('/'), projectName);
-    }
-
     sweetAlert({
-        html: true,
-        title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
-        text: text,
-        type: 'input',
+        title: Alert.title('Save As', 'mdi-cloud-upload'),
+        html: text,
+        input: 'text',
         inputValue: defaultName,
         confirmButtonText: 'Save',
         showCancelButton: true,
         closeOnConfirm: false
-    }, go);
+    }).then(result => {
+        if (result.value) {
+            saveProjectBase(nestedDirs.slice(1).join('/'), result.value);
+        }
+    });
 }
 
 function saveProject() {
@@ -801,10 +795,8 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
     }
 
     function go() {
-        sweetAlert.close();
-        sweetAlert2({
-            title: 'Saving ' + $('<div>').text(projectName).html() +
-                '...',
+        sweetAlert({
+            title: Alert.title('Saving ' + projectName + ' ...'),
             text: 'Saving your project.  Please wait.',
             showConfirmButton: false,
             showCancelButton: false,
@@ -823,7 +815,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
         data.append('path', path);
 
         sendHttp('POST', 'saveProject', data, request => {
-            sweetAlert2.close();
+            sweetAlert.close();
             if (request.status != 200) {
                 sweetAlert('Oops!',
                     'Could not save your project!!!  Please try again.',
@@ -850,13 +842,15 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
             'The previous contents of ' + projectName +
             ' will be permanently destroyed!';
         sweetAlert({
-            title: 'Warning',
+            title: Alert.title('Warning'),
             text: msg,
             type: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#DD6B55',
             confirmButtonText: 'Yes, overwrite it!'
-        }, go);
+        }).then(result => {
+            if (result.value) go();
+        });
     }
 }
 
@@ -869,7 +863,22 @@ function deleteProject_(path, buildMode, successFunc) {
         return;
     }
 
-    function go() {
+    let msg =
+        'Deleting a project will throw away all work, and cannot be undone. ' +
+        'Are you sure?';
+
+    sweetAlert({
+        title: Alert.title('Warning'),
+        text: msg,
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#DD6B55',
+        confirmButtonText: 'Yes, delete it!'
+    }).then(result => {
+        if (!result.value) {
+            return;
+        }
+
         let data = new FormData();
         data.append('name', window.openProjectName);
         data.append('mode', buildMode);
@@ -878,22 +887,11 @@ function deleteProject_(path, buildMode, successFunc) {
         sendHttp('POST', 'deleteProject', data, request => {
             if (request.status == 200) {
                 successFunc();
-                discoverProjects(path, allProjectNames.length - 1);
+                discoverProjects(path, allProjectNames.length -
+                    1);
             }
         });
-    }
-
-    let msg =
-        'Deleting a project will throw away all work, and cannot be undone. ' +
-        'Are you sure?';
-    sweetAlert({
-        title: 'Warning',
-        text: msg,
-        type: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#DD6B55',
-        confirmButtonText: 'Yes, delete it!'
-    }, go);
+    });
 }
 
 function deleteFolder_(path, buildMode, successFunc) {
@@ -906,7 +904,22 @@ function deleteFolder_(path, buildMode, successFunc) {
         return;
     }
 
-    function go() {
+    let msg =
+        'Deleting a folder will throw away all of its content, cannot be undone. ' +
+        'Are you sure?';
+
+    sweetAlert({
+        title: Alert.title('Warning'),
+        text: msg,
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#DD6B55',
+        confirmButtonText: 'Yes, delete it!'
+    }).then(result => {
+        if (!result.value) {
+            return;
+        }
+
         let data = new FormData();
         data.append('mode', buildMode);
         data.append('path', path);
@@ -921,19 +934,7 @@ function deleteFolder_(path, buildMode, successFunc) {
                     allProjectNames.length - 1);
             }
         });
-    }
-
-    let msg =
-        'Deleting a folder will throw away all of its content, cannot be undone. ' +
-        'Are you sure?';
-    sweetAlert({
-        title: 'Warning',
-        text: msg,
-        type: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#DD6B55',
-        confirmButtonText: 'Yes, delete it!'
-    }, go);
+    });
 }
 
 function createFolder(path, buildMode, successFunc) {
@@ -945,8 +946,19 @@ function createFolder(path, buildMode, successFunc) {
             return;
         }
 
-        function go(folderName) {
-            if (folderName == null || folderName == '') {
+        function go(folderName) {}
+
+        sweetAlert({
+            title: Alert.title('Create Folder',
+                'mdi-folder-plus'),
+            text: 'Enter a name for your folder:',
+            input: 'text',
+            inputValue: '',
+            confirmButtonText: 'Create',
+            showCancelButton: true,
+            closeOnConfirm: false
+        }).then(result => {
+            if (!result.value) {
                 return;
             }
 
@@ -954,9 +966,9 @@ function createFolder(path, buildMode, successFunc) {
             let data = new FormData();
             data.append('mode', buildMode);
             if (path == "")
-                data.append('path', folderName);
+                data.append('path', result.value);
             else
-                data.append('path', path + '/' + folderName);
+                data.append('path', path + '/' + result.value);
 
             sendHttp('POST', 'createFolder', data, request => {
                 if (request.status != 200) {
@@ -966,26 +978,16 @@ function createFolder(path, buildMode, successFunc) {
                     return;
                 }
 
-                allFolderNames[allFolderNames.length - 1].push(
-                    folderName);
-                nestedDirs.push(folderName);
+                allFolderNames[allFolderNames.length -
+                    1].push(
+                    result.value);
+                nestedDirs.push(result.value);
                 allFolderNames.push([]);
                 allProjectNames.push([]);
                 successFunc();
                 updateNavBar();
             });
-        }
-
-        sweetAlert({
-            html: true,
-            title: '<i class="mdi mdi72px mdi-folder-plus"></i>&nbsp; Create Folder',
-            text: 'Enter a name for your folder:',
-            type: 'input',
-            inputValue: '',
-            confirmButtonText: 'Create',
-            showCancelButton: true,
-            closeOnConfirm: false
-        }, go);
+        });
     }, true);
 }
 
@@ -1055,10 +1057,9 @@ function share() {
         }
 
         sweetAlert({
-            html: true,
-            title: '<i class="mdi mdi-72px mdi-share"></i>&nbsp; Share',
-            text: msg,
-            type: 'input',
+            title: Alert.title('Share', 'mdi-share'),
+            html: msg,
+            input: 'text',
             inputValue: url,
             showConfirmButton: showConfirm,
             confirmButtonText: confirmText,
@@ -1066,15 +1067,17 @@ function share() {
             showCancelButton: true,
             cancelButtonText: 'Done',
             animation: 'slide-from-bottom'
-        }, () => {
-            offerSource = !offerSource;
-            go();
+        }).then(result => {
+            if (result.value) {
+                offerSource = !offerSource;
+                go();
+            }
         });
     }
 
     if (window.runningGeneration) {
         if (!window.codeworldEditor.getDoc().isClean(window.runningGeneration)) {
-            sweetAlert2({
+            sweetAlert({
                 type: 'warning',
                 text: 'You have changed your code since running the program. ' +
                     ' Rebuild so that you can share your latest code?',
@@ -1083,10 +1086,10 @@ function share() {
                 showConfirmButton: true,
                 showCancelButton: true
             }).then(result => {
-                if (result.dismiss == sweetAlert2.DismissReason.cancel) {
-                    go();
-                } else if (result.value) {
+                if (result.value) {
                     compile();
+                } else {
+                    go();
                 }
             });
             return;
@@ -1137,10 +1140,10 @@ function shareFolder_(mode) {
             a.hash = '#' + shareHash;
             let url = a.href;
             sweetAlert({
-                html: true,
-                title: '<i class="mdi mdi-72px mdi-folder-outline"></i>&nbsp; Share Folder',
-                text: msg,
-                type: 'input',
+                title: Alert.title('Share Folder',
+                    'mdi-folder-outline'),
+                html: msg,
+                input: 'text',
                 inputValue: url,
                 showConfirmButton: false,
                 showCancelButton: true,
@@ -1212,6 +1215,9 @@ function printMessage(type, message, isRuntime=false) {
         )
         let cm = window.codeworldEditor;
         cm.performLint();
+    }
+    if (type === "error") {
+        outputDiv.classList.add("error");
     }
 }
 

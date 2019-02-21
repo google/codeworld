@@ -72,6 +72,7 @@ rewriteStages =
     , ("a pattern binding", "the definition")
     , ("Use -v to see a list of the files searched for\\.", "")
     , ("CallStack \\(from HasCallStack\\):", "When evaluating:")
+    , (", called at program.hs:", ", used at program.hs:")
     , ("\n\\s+\n", "\n")
     ]
 

@@ -92,16 +92,16 @@ pre.cm-s-default span.cm-bracket-0,
 div.CodeMirror span.cm-bracket-0 {
     font-weight: bold;
     color: hsl(80, 80%, 40%);
-    transform: scale(1.25);
-    display: inline-block;
+    font-size: 1.25em;
+    letter-spacing: -0.12em;
 }
 
 pre.cm-s-default span.cm-bracket-1,
 div.CodeMirror span.cm-bracket-1 {
     font-weight: bold;
     color: hsl(225, 60%, 60%);
-    transform: scale(1.12);
-    display: inline-block;
+    font-size: 1.12em;
+    letter-spacing: -0.064em;
 }
 
 pre.cm-s-default span.cm-bracket-2,

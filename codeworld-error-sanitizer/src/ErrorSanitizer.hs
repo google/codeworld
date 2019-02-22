@@ -65,6 +65,10 @@ rewriteStages =
     , ("Illegal tuple section: use TupleSections",
        "This tuple is missing a value, or has an extra comma.")
     , ("in string/character literal", "in text literal")
+    , ("lexical error in text literal at end of input",
+       "Missing the end quotation mark for a Text value.")
+    , ("lexical error in text literal at character '\\\\n'",
+       "Missing the end quotation mark for a Text value.")
     , ("lexical error at character '\\\\822[01]'",
        "Smart quotes are not allowed.")
     , ("[(]main[)]", "program")

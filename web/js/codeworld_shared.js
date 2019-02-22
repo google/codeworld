@@ -94,18 +94,18 @@ let hintBlacklist = [
     "styledText",
 
     // Old-style colors.
-    "white",
-    "black",
-    "gray",
-    "grey",
-    "red",
-    "orange",
-    "yellow",
-    "green",
-    "blue",
-    "purple",
-    "pink",
-    "brown",
+    "White",
+    "Black",
+    "Gray",
+    "Grey",
+    "Red",
+    "Orange",
+    "Yellow",
+    "Green",
+    "Blue",
+    "Purple",
+    "Pink",
+    "Brown",
     "cyan",
     "magenta",
     "yellow",
@@ -113,10 +113,7 @@ let hintBlacklist = [
     "chartreuse",
     "aquamarine",
     "violet",
-    "rose",
-
-    // Old-style constant pi
-    "pi",
+    "rose"
 ];
 
 // codeWorldSymbols is variable containing annotations and documentation

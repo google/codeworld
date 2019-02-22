@@ -825,17 +825,17 @@ showPoints pts =
 
 showColor :: Color -> String
 showColor c@(RGBA r g b a)
-  | c == Black = "Black"
-  | c == White = "White"
-  | c == Red = "Red"
-  | c == Green = "Green"
-  | c == Blue = "Blue"
-  | c == Yellow = "Yellow"
-  | c == Orange = "Orange"
-  | c == Brown = "Brown"
-  | c == Pink = "Pink"
-  | c == Purple = "Purple"
-  | c == Gray = "Gray"
+  | c == black = "black"
+  | c == white = "white"
+  | c == red = "red"
+  | c == green = "green"
+  | c == blue = "blue"
+  | c == yellow = "yellow"
+  | c == orange = "orange"
+  | c == brown = "brown"
+  | c == pink = "pink"
+  | c == purple = "purple"
+  | c == gray = "gray"
   | haskellMode, a == 1 = printf "(RGB %s %s %s)" (showFloat r) (showFloat g) (showFloat b)
   | a == 1 = printf "RGB(%s, %s, %s)" (showFloat r) (showFloat g) (showFloat b)
   | haskellMode = printf "(RGBA %s %s %s %s)" (showFloat r) (showFloat g) (showFloat b) (showFloat a)

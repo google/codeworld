@@ -46,6 +46,7 @@ checkCodeConventions :: MonadCompile m => m ()
 checkCodeConventions = do
     mode <- gets compileMode
     checkOldStyleMixed mode
+    checkOldStyleGray
     when (mode == "codeworld") $ do
         checkFunctionParentheses
         checkVarlessPatterns
@@ -93,6 +94,30 @@ checkOldStyleMixed mode =
                 "\n    The argument should be a list of colors." ++
                 "\n    Example: mixed [red, orange, white]")]
         oldStyleMixed _ _ = []
+
+-- Looks for use of `gray` or `grey` with an argument.  This is likely to be old
+-- code from before the type signature was changed, so there's a custom error
+-- message.
+checkOldStyleGray :: MonadCompile m => m ()
+checkOldStyleGray =
+    getParsedCode >>= \parsed -> case parsed of
+        Parsed mod -> addDiagnostics $
+            everything (++) (mkQ [] oldStyleGray) mod
+        _ -> return ()
+  where oldStyleGray :: Exp SrcSpanInfo -> [Diagnostic]
+        oldStyleGray
+            (App loc (Var _ (UnQual _ (Ident _ "gray"))) _)
+            = [(loc, CompileError,
+                "error: Outdated use of gray as a function." ++
+                "\n    Remove the function argument for a medium shade of gray." ++
+                "\n    For a different shade of gray, use light, dark, or HSL.")]
+        oldStyleGray
+            (App loc (Var _ (UnQual _ (Ident _ "grey"))) _)
+            = [(loc, CompileError,
+                "error: Outdated use of grey as a function." ++
+                "\n    Remove the function argument for a medium shade of grey." ++
+                "\n    For a different shade of gray, use light, dark, or HSL.")]
+        oldStyleGray _ = []
 
 -- Look for function applications without parentheses.  Since CodeWorld
 -- functions are usually applied with parentheses, this often indicates a

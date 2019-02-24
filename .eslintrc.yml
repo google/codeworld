@@ -21,6 +21,10 @@ rules:
   semi:
     - error
     - always
+  no-var:
+    - error
+  prefer-arrow-callback:
+    - error
   prefer-const:
     - error
   no-undef:

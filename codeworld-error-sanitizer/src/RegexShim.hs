@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE JavaScriptFFI #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -36,25 +37,50 @@ replace regex replacement str = textFromJSString $
                (textToJSString replacement)
                (textToJSString str)
 
+groupReplace :: Text -> Text -> Text -> Text
+groupReplace = replace
+
 #else
 
-import Data.Array (elems)
+import Data.Array (bounds, elems, (!))
+import Data.Char (isDigit)
 import Data.List
 import Data.Monoid
 import qualified Data.Text as T
+import Data.Text.Read (decimal)
 import Text.Regex.Base
 import Text.Regex.TDFA
 import Text.Regex.TDFA.Text
 
+getInserts :: Text -> [(Int, (Int, Int))]
+getInserts replacement = case replacement =~ ("[\\][0-9]" :: Text) :: [MatchArray] of
+    [] -> []
+    groups -> fmap processInsertion groups
+    where processInsertion group =
+              case decimal $ T.take len $ T.drop (start + 1) replacement of
+                  Right (index, _) -> (index, (start, len))
+                  Left _ -> error $ T.unpack $ "Can not parse replacement groups in "
+                                  <> replacement -- should never happen beause handled
+                                                 -- by regex matching above
+              where (start, len) = group ! 0
+
+applyInserts :: Text -> Text -> MatchArray -> [(Int, (Int, Int))] -> Text
+applyInserts str replacement matches ((index, (rstart, rlen)):inserts) =
+    let pre = T.take rstart replacement
+        rest = T.drop (rstart + rlen) replacement
+        (sstart, slen) = matches ! index
+        source = T.take slen $ T.drop sstart str
+    in pre <> source <> applyInserts str rest matches inserts
+applyInserts _ replacement _ [] = replacement
+
 replace :: Text -> Text -> Text -> Text
-replace regex replacement str =
-    let parts = concatMap elems $ (str =~ regex :: [MatchArray])
-    in foldl replaceOne str (reverse parts)
-  where
-    replaceOne :: Text -> (Int, Int) -> Text
-    replaceOne str (start, len) = pre <> replacement <> post
-      where
-        pre = T.take start str
-        post = T.drop (start + len) str
+replace regex replacement str = case str =~ regex of
+    (matches: _) ->
+        let (start, len) = matches ! 0
+            pre = T.take start str
+            post = T.drop (start + len) str
+            inserts = getInserts replacement
+        in pre <> applyInserts str replacement matches inserts <> post
+    _ -> error $ T.unpack $ "Regex " <> regex <> " does not match string " <> str
 
 #endif

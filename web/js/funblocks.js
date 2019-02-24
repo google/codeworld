@@ -68,7 +68,7 @@ function init() {
             }
             if (hash[0] == 'F') {
                 sweetAlert({
-                    title: '<i class="mdi mdi-72px mdi-cloud-upload"></i>&nbsp; Save As',
+                    title: Alert.title('Save As', 'mdi-cloud-upload'),
                     html: 'Enter a name for the shared folder:',
                     input: 'text',
                     confirmButtonText: 'Save',

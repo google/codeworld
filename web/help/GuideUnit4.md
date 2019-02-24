@@ -127,7 +127,7 @@ program = drawingOf(circles)
 circles = pictures([ colored(circle(r), c) | r <- sizes
                                            | c <- colors ])
 sizes   = [ 1, 2, 3, 4, 5 ]
-colors  = [ Red, Green, Blue, Yellow, Purple ]
+colors  = [ red, green, blue, yellow, purple ]
 ~~~~~
 
 If you used a comma to separate the base lists, this would draw red,

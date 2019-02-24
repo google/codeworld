@@ -107,12 +107,12 @@ Suppose you had a drawing of these three signs:
 program = drawingOf(signs)
 signs = translated(sign1, -7, 0) & sign2 & translated(sign3, 7, 0)
 
-sign1 = colored(lettering("Go"), White) &
-        colored(solidRectangle(5, 5), Green)
-sign2 = colored(lettering("Stop"), White) &
-        colored(solidRectangle(5, 5), Red)
-sign3 = colored(lettering("Caution"), White) &
-        colored(solidRectangle(5, 5), Orange)
+sign1 = colored(lettering("Go"), white) &
+        colored(solidRectangle(5, 5), green)
+sign2 = colored(lettering("Stop"), white) &
+        colored(solidRectangle(5, 5), red)
+sign3 = colored(lettering("Caution"), white) &
+        colored(solidRectangle(5, 5), orange)
 ~~~~~
 
 If you notice that the three signs usually follow the same pattern, you can
@@ -130,12 +130,12 @@ The result looks like this.
 program = drawingOf(signs)
 signs = translated(sign1, -7, 0) & sign2 & translated(sign3, 7, 0)
 
-sign(label, color) = colored(lettering(label), White) &
+sign(label, color) = colored(lettering(label), white) &
                      colored(solidRectangle(5, 5), color)
 
-sign1 = sign("Go", Green)
-sign2 = sign("Stop", Red)
-sign3 = sign("Caution", Orange)
+sign1 = sign("Go", green)
+sign2 = sign("Stop", red)
+sign3 = sign("Caution", orange)
 ~~~~~
 
 As you get more practice, you might skip over defining the repeated pattern
@@ -146,7 +146,7 @@ start with an argument for the roof color:
 
 ~~~~~ . clickable
 program = drawingOf(scene)
-scene   = house(Red)
+scene   = house(red)
 house(roofColor) = colored(roof, roofColor) & frame
 roof = translated(thickArc(45, 135, 6, 1), 0, -2)
 frame = solidRectangle(6, 7)
@@ -206,8 +206,8 @@ pastel(c) = light(dull(c))
 neon(c) = dark(bright(c))
 ~~~~~
 
-With these functions defined, you can use colors like `neon(Green)` or
-`pastel(Yellow)`.  But it doesn't stop there: you can define functions with any
+With these functions defined, you can use colors like `neon(green)` or
+`pastel(yellow)`.  But it doesn't stop there: you can define functions with any
 type of value that you like: pictures, numbers, colors, text... you name it.
 
 Substitution
@@ -248,13 +248,13 @@ eye(color) = solidCircle(1/3) &
 ~~~~~
 
 This is a general pattern.  (Remember the implied "for any value of `color`..."
-at the beginning.)  To decide which specific picture is meant by `eye(Blue)`,
+at the beginning.)  To decide which specific picture is meant by `eye(blue)`,
 substitute the specific value you are interested in where ever the placeholder
 appears.  One specific instance of this equation is this.
 
 ~~~~~
-eye(Blue) = solidCircle(1/3) &
-            colored(solidCircle(1/2), Blue) &
+eye(blue) = solidCircle(1/3) &
+            colored(solidCircle(1/2), blue) &
             circle(1)
 ~~~~~
 
@@ -263,7 +263,7 @@ eye(Blue) = solidCircle(1/3) &
     pattern written earlier.  You do not need to tell the computer about eyes
     of each specific color, because you've already told it the *pattern*.
 
-This equation tells you that you can replace the expression `eye(Blue)` with
+This equation tells you that you can replace the expression `eye(blue)` with
 the longer expression on the right-hand side.
 
 Substitution is in some ways the opposite of generalization.  Generalizing a
@@ -284,8 +284,8 @@ that way.
 Let's look at an example.  Consider these three definitions:
 
 ~~~~~
-a = colored(solidCircle(1), Red)
-b = colored(solidCircle(2), Blue)
+a = colored(solidCircle(1), red)
+b = colored(solidCircle(2), blue)
 c = solidCircle(3)
 ~~~~~
 
@@ -295,8 +295,8 @@ either `a` or `b`.  That function would be
 ~~~~~
 f(radius, color) = colored(solidCircle(radius), color)
 
-a = f(1, Red)
-b = f(2, Blue)
+a = f(1, red)
+b = f(2, blue)
 ~~~~~
 
 But what about `c`?  At first glance, it doesn't seem to follow the same
@@ -304,7 +304,7 @@ pattern.  But wait a second.  The definition of `c` can be rewritten like
 this:
 
 ~~~~~
-c = colored(solidCircle(3), Black)
+c = colored(solidCircle(3), black)
 ~~~~~
 
 The `solidCircle` function already produces pictures of black circles, so the
@@ -312,7 +312,7 @@ extra `colored` function doesn't change anything at all.  But it *does* make
 `c` follow the same pattern, so that it can be rewritten as
 
 ~~~~~
-c = f(3, Black)
+c = f(3, black)
 ~~~~~
 
 To use functions more effectively, then, it helps to know techniques for
@@ -386,16 +386,16 @@ degrees, to rewrite expressions so they follow the same pattern.
 
     closet = translated(shirt1, -5, -5) & shirt2 & translated(shirt3, 5, 5)
 
-    shirt1 = lettering("lol") & colored(shape, Blue)
-    shirt2 = dilated(codeWorldLogo, 1/4) & colored(shape, Red)
-    shirt3 = colored(shape, Yellow)
+    shirt1 = lettering("lol") & colored(shape, blue)
+    shirt2 = dilated(codeWorldLogo, 1/4) & colored(shape, red)
+    shirt3 = colored(shape, yellow)
 
     shape = solidRectangle(6, 8) & thickArc(20, 160, 4, 2)
     ~~~~~
 
     The first two shirts combine some kind of picture as a design on the
     front with a shirt shape behind it.  The third, though, has no design.
-    However, it can be rewritten as `blank & colored(shape, Yellow)`, and
+    However, it can be rewritten as `blank & colored(shape, yellow)`, and
     it now follows the same pattern, which can be generalized into a
     function.
 
@@ -404,9 +404,9 @@ degrees, to rewrite expressions so they follow the same pattern.
 
     closet = translated(shirt1, -5, -5) & shirt2 & translated(shirt3, 5, 5)
 
-    shirt1 = shirt(lettering("lol"), Blue)
-    shirt2 = shirt(dilated(codeWorldLogo, 1/4), Red)
-    shirt3 = shirt(blank, Yellow)
+    shirt1 = shirt(lettering("lol"), blue)
+    shirt2 = shirt(dilated(codeWorldLogo, 1/4), red)
+    shirt3 = shirt(blank, yellow)
 
     shirt(design, color) = design & colored(shape, color)
     shape = solidRectangle(6, 8) & thickArc(20, 160, 4, 2)

@@ -32,7 +32,7 @@ function sendHttp(method, url, body, callback) {
 }
 
 function sendHttpRaw(method, url, body, callback) {
-    let request = new XMLHttpRequest();
+    const request = new XMLHttpRequest();
 
     if (callback) {
         request.onreadystatechange = () => {
@@ -46,22 +46,22 @@ function sendHttpRaw(method, url, body, callback) {
     return request;
 }
 
-let Html = (() => {
+const Html = (() => {
     const mine = {};
 
-    mine.encode = str => $("<div/>").text(str).html();
+    mine.encode = str => $('<div/>').text(str).html();
 
     return mine;
 })();
 
-let Alert = (() => {
+const Alert = (() => {
     const mine = {};
 
     mine.init = () =>
         Promise.resolve($.getScript(
-            "https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js"
+            'https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js'
         ))
-        .catch(e => console.log("Alert.init failed"));
+            .catch(e => console.log('Alert.init failed'));
 
     // Build SweetAlert title HTML
     mine.title = (text, iconClass) =>
@@ -70,49 +70,49 @@ let Alert = (() => {
     return mine;
 })();
 
-let hintBlacklist = [
+const hintBlacklist = [
     // Symbols that only exist to implement RebindableSyntax or map to
     // built-in Haskell types.
-    "Bool",
-    "IO",
-    "fail",
-    "fromCWText",
-    "fromDouble",
-    "fromInt",
-    "fromInteger",
-    "fromRational",
-    "fromString",
-    "ifThenElse",
-    "toCWText",
-    "toDouble",
-    "toInt",
+    'Bool',
+    'IO',
+    'fail',
+    'fromCWText',
+    'fromDouble',
+    'fromInt',
+    'fromInteger',
+    'fromRational',
+    'fromString',
+    'ifThenElse',
+    'toCWText',
+    'toDouble',
+    'toInt',
 
     // Deprecated exports.
-    "path",
-    "thickPath",
-    "text",
-    "styledText",
+    'path',
+    'thickPath',
+    'text',
+    'styledText',
 
     // Old-style colors.
-    "White",
-    "Black",
-    "Gray",
-    "Grey",
-    "Red",
-    "Orange",
-    "Yellow",
-    "Green",
-    "Blue",
-    "Purple",
-    "Pink",
-    "Brown",
-    "cyan",
-    "magenta",
-    "azure",
-    "chartreuse",
-    "aquamarine",
-    "violet",
-    "rose"
+    'White',
+    'Black',
+    'Gray',
+    'Grey',
+    'Red',
+    'Orange',
+    'Yellow',
+    'Green',
+    'Blue',
+    'Purple',
+    'Pink',
+    'Brown',
+    'cyan',
+    'magenta',
+    'azure',
+    'chartreuse',
+    'aquamarine',
+    'violet',
+    'rose'
 ];
 
 // codeWorldSymbols is variable containing annotations and documentation
@@ -127,16 +127,16 @@ let hintBlacklist = [
 //   }
 // }
 let codeWorldSymbols = {};
-let codeWorldBuiltinSymbols = {};
+const codeWorldBuiltinSymbols = {};
 
 function getWordStart(word, line) {
     return line.indexOf(word);
 }
 
 function getWordEnd(word, line) {
-    let wordStart = getWordStart(word, line);
+    const wordStart = getWordStart(word, line);
     if (wordStart != -1) {
-        return wordStart + word.length
+        return wordStart + word.length;
     }
     return -1;
 }
@@ -150,11 +150,11 @@ function parseSymbolsFromCurrentCode() {
     lines.forEach(line => {
         lineIndex++;
 
-        let docString = "Defined in your code on line " +
-            lineIndex.toString() + ".";
+        const docString = 'Defined in your code on line ' +
+            lineIndex.toString() + '.';
         // f(x, y) =
         if (/^\w+\(.*/.test(line)) {
-            word = line.split("(")[0].trim();
+            word = line.split('(')[0].trim();
             if (parseResults[word]) return;
             parseResults[word] = {
                 declaration: word,
@@ -163,7 +163,7 @@ function parseSymbolsFromCurrentCode() {
         }
         // foo =
         else if (/^\S+\s*=/.test(line)) {
-            word = line.split("=")[0].trim();
+            word = line.split('=')[0].trim();
             if (parseResults[word]) return;
             parseResults[word] = {
                 declaration: word,
@@ -172,7 +172,7 @@ function parseSymbolsFromCurrentCode() {
         }
         // data Foo
         else if (/^data\s.+/.test(line)) {
-            let match = /^data\s+(\S+)\b.*/.exec(line);
+            const match = /^data\s+(\S+)\b.*/.exec(line);
             word = match[1];
             if (parseResults[word]) return;
             parseResults[word] = {
@@ -180,11 +180,11 @@ function parseSymbolsFromCurrentCode() {
                 symbolStart: getWordStart(word, line),
                 symbolEnd: getWordEnd(word, line),
                 doc: docString
-            }
+            };
         }
         // type Foo = Bar
         else if (/^type\s.+/.test(line)) {
-            let match = /^type\s+(\S+\b).*/.exec(line);
+            const match = /^type\s+(\S+\b).*/.exec(line);
             word = match[1];
             if (parseResults[word]) return;
             parseResults[word] = {
@@ -196,37 +196,37 @@ function parseSymbolsFromCurrentCode() {
         }
         // (*#^) :: Type
         else if (/^\([^\(\)]+\)\s*::/.test(line)) {
-            let splitted = line.split("::");
-            let word = splitted[0].trim()
-            word = word.slice(1, word.length - 1)
+            const splitted = line.split('::');
+            let word = splitted[0].trim();
+            word = word.slice(1, word.length - 1);
             if (parseResults[word]) return;
             parseResults[word] = {
                 declaration: line,
                 symbolStart: getWordStart(word, line),
                 symbolEnd: getWordEnd(word, line),
                 doc: docString
-            }
+            };
         }
         // foo :: Type
         else if (/^\S+\s*::/.test(line)) {
-            let splitted = line.split("::");
-            word = splitted[0].trim()
+            const splitted = line.split('::');
+            word = splitted[0].trim();
             if (parseResults[word]) return;
             parseResults[word] = {
                 declaration: line,
                 symbolStart: getWordStart(word, line),
                 symbolEnd: getWordEnd(word, line),
                 doc: docString
-            }
+            };
         }
-    })
+    });
     if (window.buildMode === 'codeworld') {
         codeWorldSymbols = Object.assign({}, parseResults,
             codeWorldBuiltinSymbols);
     } else {
         codeWorldSymbols = Object.assign({}, parseResults);
     }
-};
+}
 
 function renderDeclaration(decl, keyword, keywordData, maxLen) {
     if (keywordData.symbolStart > 0) {
@@ -234,8 +234,8 @@ function renderDeclaration(decl, keyword, keywordData, maxLen) {
             keywordData.declaration.slice(0, keywordData.symbolStart)));
     }
 
-    let wordElem = document.createElement("span");
-    wordElem.className = "hint-word";
+    const wordElem = document.createElement('span');
+    wordElem.className = 'hint-word';
     wordElem.appendChild(document.createTextNode(keyword));
     decl.appendChild(wordElem);
 
@@ -253,39 +253,39 @@ function renderDeclaration(decl, keyword, keywordData, maxLen) {
 }
 
 function renderHover(keyword) {
-    let topDiv = document.createElement('div')
+    const topDiv = document.createElement('div');
 
     if (!codeWorldSymbols[keyword]) {
         return;
-    };
+    }
     topDiv.title = keyword;
-    let keywordData = codeWorldSymbols[keyword];
+    const keywordData = codeWorldSymbols[keyword];
 
-    let docDiv = document.createElement('div');
+    const docDiv = document.createElement('div');
 
-    let annotation = document.createElement("div");
+    const annotation = document.createElement('div');
     renderDeclaration(annotation, keyword, keywordData, 9999);
-    annotation.className = "hover-decl";
-    docDiv.appendChild(annotation)
+    annotation.className = 'hover-decl';
+    docDiv.appendChild(annotation);
 
     if (keywordData.doc) {
-        let description = document.createElement('div');
+        const description = document.createElement('div');
         description.innerHTML = keywordData.doc;
-        description.className = "hover-doc";
-        docDiv.appendChild(description)
-    };
+        description.className = 'hover-doc';
+        docDiv.appendChild(description);
+    }
 
-    let fadeDiv = document.createElement('div');
+    const fadeDiv = document.createElement('div');
     fadeDiv.className = 'fade';
 
     topDiv.appendChild(docDiv);
     topDiv.appendChild(fadeDiv);
     return topDiv;
-};
+}
 
 function onHover(cm, data, node) {
     if (data && data.token && data.token.string) {
-        let token_name = data.token.string;
+        const token_name = data.token.string;
         if (hintBlacklist.indexOf(token_name) == -1) {
             return renderHover(token_name);
         }
@@ -295,23 +295,23 @@ function onHover(cm, data, node) {
 // Hints and hover tooltips
 function registerStandardHints(successFunc) {
     CodeMirror.registerHelper('hint', 'codeworld', cm => {
-        let cur = cm.getCursor();
-        let token = cm.getTokenAt(cur);
+        const cur = cm.getCursor();
+        const token = cm.getTokenAt(cur);
 
         // If the current token is whitespace, it can be split.
         let term, from;
         if (/^\s+$/.test(token.string)) {
-            term = "";
+            term = '';
             from = cur;
         } else {
             term = token.string.substr(0, cur.ch - token.start);
             from = CodeMirror.Pos(cur.line, token.start);
         }
 
-        let found = [];
-        let hints = Object.keys(codeWorldSymbols);
+        const found = [];
+        const hints = Object.keys(codeWorldSymbols);
         for (let i = 0; i < hints.length; i++) {
-            let hint = hints[i];
+            const hint = hints[i];
             if (hint.startsWith(term)) {
                 found.push({
                     text: hint,
@@ -333,19 +333,19 @@ function registerStandardHints(successFunc) {
             } else if (startsWithLetter(b.text) && !startsWithLetter(a.text)) {
                 return 1;
             } else {
-                return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1
+                return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1;
             }
         });
 
         if (found.length > 0) {
-            let data = {
+            const data = {
                 list: found,
                 from: from,
                 to: cur
             };
 
             function deleteOldHintDocs() {
-                $(".hint-description").remove()
+                $('.hint-description').remove();
             }
 
             CodeMirror.on(data, 'close', deleteOldHintDocs);
@@ -355,17 +355,17 @@ function registerStandardHints(successFunc) {
             CodeMirror.on(
                 data, 'select',
                 (selection, elem) => {
-                    let hintsWidgetRect = elem.parentElement.getBoundingClientRect(),
+                    const hintsWidgetRect = elem.parentElement.getBoundingClientRect(),
                         doc = document.createElement('div');
                     deleteOldHintDocs();
-                    let hover = renderHover(selection.text);
+                    const hover = renderHover(selection.text);
                     if (hover) {
-                        doc.className += "hint-description";
-                        doc.style.top = hintsWidgetRect.top + "px";
+                        doc.className += 'hint-description';
+                        doc.style.top = hintsWidgetRect.top + 'px';
                         doc.style.left = hintsWidgetRect.right +
-                            "px";
-                        doc.appendChild(hover)
-                        document.body.appendChild(doc)
+                            'px';
+                        doc.appendChild(hover);
+                        document.body.appendChild(doc);
                     }
                 }
             );
@@ -381,10 +381,10 @@ function registerStandardHints(successFunc) {
             lines = request.responseText.split('\n');
         }
 
-        let startLine = lines.indexOf('module Prelude') + 1;
+        const startLine = lines.indexOf('module Prelude') + 1;
         let endLine = startLine;
         while (endLine < lines.length) {
-            if (lines[endLine].startsWith("module ")) {
+            if (lines[endLine].startsWith('module ')) {
                 break;
             }
             endLine++;
@@ -395,43 +395,43 @@ function registerStandardHints(successFunc) {
         codeworldKeywords['program'] = 'builtin';
 
         codeWorldBuiltinSymbols['program'] = {
-            declaration: "program :: Program",
-            doc: "Your program.",
+            declaration: 'program :: Program',
+            doc: 'Your program.',
             symbolStart: 0,
             symbolEnd: 7
         };
 
-        let doc = "";
+        let doc = '';
         lines.forEach(line => {
-            if (line.startsWith("type Program")) {
+            if (line.startsWith('type Program')) {
                 // We must intervene to hide the IO type.
-                line = "data Program";
-            } else if (line.startsWith("type Truth")) {
-                line = "data Truth";
-            } else if (line.startsWith("True ::")) {
-                line = "True :: Truth";
-            } else if (line.startsWith("False ::")) {
-                line = "False :: Truth";
-            } else if (line.startsWith("newtype ")) {
+                line = 'data Program';
+            } else if (line.startsWith('type Truth')) {
+                line = 'data Truth';
+            } else if (line.startsWith('True ::')) {
+                line = 'True :: Truth';
+            } else if (line.startsWith('False ::')) {
+                line = 'False :: Truth';
+            } else if (line.startsWith('newtype ')) {
                 // Hide the distinction between newtype and data.
-                line = "data " + line.substr(8);
-            } else if (line.startsWith("pattern ")) {
+                line = 'data ' + line.substr(8);
+            } else if (line.startsWith('pattern ')) {
                 // Hide the distinction between patterns and constructors.
                 line = line.substr(8);
-            } else if (line.startsWith("class ")) {
-                doc = "";
+            } else if (line.startsWith('class ')) {
+                doc = '';
                 return;
-            } else if (line.startsWith("instance ")) {
-                doc = "";
+            } else if (line.startsWith('instance ')) {
+                doc = '';
                 return;
-            } else if (line.startsWith("infix ")) {
-                doc = "";
+            } else if (line.startsWith('infix ')) {
+                doc = '';
                 return;
-            } else if (line.startsWith("infixl ")) {
-                doc = "";
+            } else if (line.startsWith('infixl ')) {
+                doc = '';
                 return;
-            } else if (line.startsWith("infixr ")) {
-                doc = "";
+            } else if (line.startsWith('infixr ')) {
+                doc = '';
                 return;
             }
 
@@ -441,38 +441,38 @@ function registerStandardHints(successFunc) {
             // Filter out CallStack constraints.
             line = line.replace(/:: HasCallStack =>/g, '::');
 
-            if (line.startsWith("-- |")) {
-                doc = line.replace(/\-\- \| /g, "") + "\n";
-            } else if (line.startsWith("-- ")) {
-                doc += line.replace(/\-\-   /g, "") + "\n";
+            if (line.startsWith('-- |')) {
+                doc = line.replace(/\-\- \| /g, '') + '\n';
+            } else if (line.startsWith('-- ')) {
+                doc += line.replace(/\-\- {3}/g, '') + '\n';
             } else {
                 let wordStart = 0;
-                if (line.startsWith("type ") || line.startsWith("data ")) {
+                if (line.startsWith('type ') || line.startsWith('data ')) {
                     wordStart += 5;
 
                     // Hide kind annotations.
-                    let kindIndex = line.indexOf(" ::");
+                    const kindIndex = line.indexOf(' ::');
                     if (kindIndex != -1) {
                         line = line.substr(0, kindIndex);
                     }
                 }
 
-                let wordEnd = line.indexOf(" ", wordStart);
+                let wordEnd = line.indexOf(' ', wordStart);
                 if (wordEnd == -1) {
                     wordEnd = line.length;
                 }
                 if (wordStart == wordEnd) {
-                    doc = "";
+                    doc = '';
                     return;
                 }
 
-                if (line[wordStart] == "(" && line[wordEnd - 1] ==
-                    ")") {
+                if (line[wordStart] == '(' && line[wordEnd - 1] ==
+                    ')') {
                     wordStart++;
                     wordEnd--;
                 }
 
-                let word = line.substr(wordStart, wordEnd -
+                const word = line.substr(wordStart, wordEnd -
                     wordStart);
                 if (hintBlacklist.indexOf(word) < 0) {
                     codeWorldBuiltinSymbols[word] = {
@@ -492,7 +492,7 @@ function registerStandardHints(successFunc) {
                 } else {
                     codeworldKeywords[word] = 'builtin';
                 }
-                doc = "";
+                doc = '';
             }
         });
 
@@ -516,26 +516,26 @@ function signedIn() {
     return !!(window.auth2 && auth2.isSignedIn.get());
 }
 
-let Auth = (() => {
+const Auth = (() => {
     const mine = {};
 
     function initLocalAuth() {
-        Promise.resolve($.getScript("/js/codeworld_local_auth.js"))
+        Promise.resolve($.getScript('/js/codeworld_local_auth.js'))
             .then(() => onAuthInitialized(LocalAuth.init()))
-            .catch(e => console.log("initLocalAuth failed"));
+            .catch(e => console.log('initLocalAuth failed'));
     }
 
     function initGoogleAuth() {
         Promise.resolve($.getScript(
-                "https://apis.google.com/js/platform.js"))
-            .then(() => gapi.load("auth2", () =>
+            'https://apis.google.com/js/platform.js'))
+            .then(() => gapi.load('auth2', () =>
                 withClientId(clientId => {
                     function sendHttpAuth(method, url, body,
                         callback) {
                         if (body != null && signedIn()) {
                             const idToken = window.auth2.currentUser
                                 .get().getAuthResponse().id_token;
-                            body.append("id_token", idToken);
+                            body.append('id_token', idToken);
                         }
 
                         const request = new XMLHttpRequest();
@@ -565,7 +565,7 @@ let Auth = (() => {
                     onAuthInitialized(auth2);
                 })
             ))
-            .catch(e => console.log("initGoogleAuth failed"));
+            .catch(e => console.log('initGoogleAuth failed'));
     }
 
     function onAuthInitialized(auth) {
@@ -576,31 +576,31 @@ let Auth = (() => {
             auth2.signIn();
         }
 
-        discoverProjects("", 0);
+        discoverProjects('', 0);
         updateUI();
     }
 
     function onAuthDisabled() {
         window.auth2 = null;
-        document.getElementById("signin").style.display = "none";
-        discoverProjects("", 0);
+        document.getElementById('signin').style.display = 'none';
+        discoverProjects('', 0);
         updateUI();
     }
 
     mine.init = () =>
-        sendHttp("GET", "authMethod", null, resp => {
+        sendHttp('GET', 'authMethod', null, resp => {
             if (resp.status == 200) {
                 const obj = JSON.parse(resp.responseText);
                 switch (obj.authMethod) {
-                    case "Local":
-                        initLocalAuth();
-                        break;
-                    case "Google":
-                        initGoogleAuth();
-                        break;
-                    default:
-                        onAuthDisabled();
-                        break;
+                case 'Local':
+                    initLocalAuth();
+                    break;
+                case 'Google':
+                    initGoogleAuth();
+                    break;
+                default:
+                    onAuthDisabled();
+                    break;
                 }
             } else {
                 onAuthDisabled();
@@ -636,20 +636,20 @@ function discoverProjects_(path, buildMode, index) {
         allFolderNames = [
             []
         ];
-        nestedDirs = [""];
+        nestedDirs = [''];
         cancelMove();
         updateUI();
         return;
     }
 
-    let data = new FormData();
+    const data = new FormData();
     data.append('mode', buildMode);
     data.append('path', path);
 
     sendHttp('POST', 'listFolder', data, request => {
         if (request.status == 200) {
             loadingDir = false;
-            let allContents = JSON.parse(request.responseText);
+            const allContents = JSON.parse(request.responseText);
             allProjectNames[index] = allContents['files'];
             allFolderNames[index] = allContents['dirs'];
         }
@@ -673,12 +673,12 @@ function moveHere_(path, buildMode, successFunc) {
         return;
     }
 
-    let data = new FormData();
+    const data = new FormData();
     data.append('mode', buildMode);
     data.append('moveTo', path);
     data.append('moveFrom', window.move.path);
     if (window.move.file) {
-        data.append('isFile', "true");
+        data.append('isFile', 'true');
         data.append('name', window.move.file);
     } else {
         if (path.startsWith(window.move.path)) {
@@ -688,7 +688,7 @@ function moveHere_(path, buildMode, successFunc) {
             cancelMove();
             return;
         }
-        data.append('isFile', "false");
+        data.append('isFile', 'false');
     }
 
     sendHttp('POST', 'moveProject', data, request => {
@@ -712,7 +712,7 @@ function warnIfUnsaved(action, showAnother) {
     if (isEditorClean()) {
         action();
     } else {
-        let msg = 'There are unsaved changes to your project. ' +
+        const msg = 'There are unsaved changes to your project. ' +
             'Continue and throw away your changes?';
         sweetAlert({
             title: Alert.title('Warning'),
@@ -802,10 +802,10 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
             allowEnterKey: false
         });
 
-        let project = getCurrentProject();
+        const project = getCurrentProject();
         project['name'] = projectName;
 
-        let data = new FormData();
+        const data = new FormData();
         data.append('project', JSON.stringify(project));
         data.append('mode', mode);
         data.append('path', path);
@@ -824,7 +824,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
             updateUI();
 
             if (allProjectNames[allProjectNames.length - 1].indexOf(
-                    projectName) == -1) {
+                projectName) == -1) {
                 discoverProjects(path, allProjectNames.length - 1);
             }
         });
@@ -834,7 +834,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
         projectName == openProjectName) {
         go();
     } else {
-        let msg = 'Are you sure you want to save over another project?\n\n' +
+        const msg = 'Are you sure you want to save over another project?\n\n' +
             'The previous contents of ' + projectName +
             ' will be permanently destroyed!';
         sweetAlert({
@@ -859,7 +859,7 @@ function deleteProject_(path, buildMode, successFunc) {
         return;
     }
 
-    let msg =
+    const msg =
         'Deleting a project will throw away all work, and cannot be undone. ' +
         'Are you sure?';
 
@@ -875,7 +875,7 @@ function deleteProject_(path, buildMode, successFunc) {
             return;
         }
 
-        let data = new FormData();
+        const data = new FormData();
         data.append('name', window.openProjectName);
         data.append('mode', buildMode);
         data.append('path', path);
@@ -891,7 +891,7 @@ function deleteProject_(path, buildMode, successFunc) {
 }
 
 function deleteFolder_(path, buildMode, successFunc) {
-    if (path == "" || window.openProjectName != null) {
+    if (path == '' || window.openProjectName != null) {
         return;
     }
     if (!signedIn()) {
@@ -900,7 +900,7 @@ function deleteFolder_(path, buildMode, successFunc) {
         return;
     }
 
-    let msg =
+    const msg =
         'Deleting a folder will throw away all of its content, cannot be undone. ' +
         'Are you sure?';
 
@@ -916,7 +916,7 @@ function deleteFolder_(path, buildMode, successFunc) {
             return;
         }
 
-        let data = new FormData();
+        const data = new FormData();
         data.append('mode', buildMode);
         data.append('path', path);
 
@@ -957,9 +957,9 @@ function createFolder(path, buildMode, successFunc) {
             }
 
             sweetAlert.close();
-            let data = new FormData();
+            const data = new FormData();
             data.append('mode', buildMode);
-            if (path == "")
+            if (path == '')
                 data.append('path', result.value);
             else
                 data.append('path', path + '/' + result.value);
@@ -995,14 +995,14 @@ function loadProject_(index, name, buildMode, successFunc) {
             return;
         }
 
-        let data = new FormData();
+        const data = new FormData();
         data.append('name', name);
         data.append('mode', buildMode);
         data.append('path', nestedDirs.slice(1, index + 1).join('/'));
 
         sendHttp('POST', 'loadProject', data, request => {
             if (request.status == 200) {
-                let project = JSON.parse(request.responseText);
+                const project = JSON.parse(request.responseText);
 
                 successFunc(project);
                 window.nestedDirs = nestedDirs.slice(0, index +
@@ -1037,7 +1037,7 @@ function share() {
             showConfirm = true;
             confirmText = 'Share Without Code';
         } else {
-            let a = document.createElement('a');
+            const a = document.createElement('a');
             a.href = window.location.href;
             a.hash = '';
             a.pathname = '/run.html';
@@ -1112,7 +1112,7 @@ function shareFolder_(mode) {
         return;
     }
 
-    let data = new FormData();
+    const data = new FormData();
     data.append('mode', mode);
     data.append('path', nestedDirs.slice(1).join('/'));
 
@@ -1124,11 +1124,11 @@ function shareFolder_(mode) {
             return;
         }
 
-        let shareHash = request.responseText;
-        let a = document.createElement('a');
+        const shareHash = request.responseText;
+        const a = document.createElement('a');
         a.href = window.location.href;
         a.hash = '#' + shareHash;
-        let url = a.href;
+        const url = a.href;
         sweetAlert({
             title: Alert.title('Share Folder', 'mdi-folder-outline'),
             html: 'Copy this link to share your folder with others!',
@@ -1144,7 +1144,7 @@ function shareFolder_(mode) {
 
 function preFormatMessage(msg) {
     while (msg.match(/(\r\n|[^\x08]|)\x08/)) {
-        msg = msg.replace(/(\r\n|[^\x08])\x08/g, "");
+        msg = msg.replace(/(\r\n|[^\x08])\x08/g, '');
     }
 
     msg = msg
@@ -1159,31 +1159,31 @@ function preFormatMessage(msg) {
 }
 
 function printMessage(type, message) {
-    if (message.trim() === "") {
+    if (message.trim() === '') {
         return;
     }
     message = preFormatMessage(message);
-    let outputDiv = document.getElementById("message"),
-        box = document.createElement("div"),
-        messageGutter = document.createElement("div"),
-        messageContent = document.createElement("div"),
+    const outputDiv = document.getElementById('message'),
+        box = document.createElement('div'),
+        messageGutter = document.createElement('div'),
+        messageContent = document.createElement('div'),
         splitted = message.trim().split('\n');
 
-    messageGutter.classList.add("message-gutter");
-    messageContent.classList.add("message-content");
-    box.classList.add("message-box");
+    messageGutter.classList.add('message-gutter');
+    messageContent.classList.add('message-content');
+    box.classList.add('message-box');
     box.classList.add(type);
-    box.appendChild(messageGutter)
+    box.appendChild(messageGutter);
     box.appendChild(messageContent);
     outputDiv.appendChild(box);
 
     if (splitted.length < 2) {
-        let singleLineMsg = document.createElement("div");
-        singleLineMsg.innerHTML = message
-        messageContent.appendChild(singleLineMsg)
+        const singleLineMsg = document.createElement('div');
+        singleLineMsg.innerHTML = message;
+        messageContent.appendChild(singleLineMsg);
     } else {
-        let details = document.createElement("details"),
-            summary = document.createElement("summary");
+        const details = document.createElement('details'),
+            summary = document.createElement('summary');
         details.setAttribute('open', '');
         details.innerHTML = splitted.slice(1).join('\n');
         summary.innerHTML = splitted[0];
@@ -1192,7 +1192,7 @@ function printMessage(type, message) {
     }
 
     outputDiv.scrollTop = outputDiv.scrollHeight;
-    if (type === "error") {
-        outputDiv.classList.add("error");
+    if (type === 'error') {
+        outputDiv.classList.add('error');
     }
 }

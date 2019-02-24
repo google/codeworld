@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-let LocalAuth = (() => {
+const LocalAuth = (() => {
     const mine = {};
 
-    const ERROR_TITLE = "Oops!";
-    const SIGN_IN_URL = "/signIn";
-    const SIGN_OUT_URL = "/signOut";
-    const REFRESH_TOKEN_URL = "/refreshToken";
-    const USER_ID = "swal-input1";
-    const PASSWORD = "swal-input2";
-    const NEW_PASSWORD_1 = "swal-input3";
-    const NEW_PASSWORD_2 = "swal-input4";
+    const ERROR_TITLE = 'Oops!';
+    const SIGN_IN_URL = '/signIn';
+    const SIGN_OUT_URL = '/signOut';
+    const REFRESH_TOKEN_URL = '/refreshToken';
+    const USER_ID = 'swal-input1';
+    const PASSWORD = 'swal-input2';
+    const NEW_PASSWORD_1 = 'swal-input3';
+    const NEW_PASSWORD_2 = 'swal-input4';
 
     let _userId = null;
     let _accessToken = null;
@@ -34,8 +34,8 @@ let LocalAuth = (() => {
 
     function httpPost(opts) {
         return new Promise((resolve, reject) => $.ajax(Object.assign({
-                method: "POST"
-            }, opts))
+            method: 'POST'
+        }, opts))
             .done((result, status, xhr) => resolve({
                 result: result,
                 status: status,
@@ -67,10 +67,10 @@ let LocalAuth = (() => {
     }
 
     function validateFormData() {
-        const isReset = typeof $(`#${NEW_PASSWORD_1}`).css("display") !=
-            "undefined";
+        const isReset = typeof $(`#${NEW_PASSWORD_1}`).css('display') !=
+            'undefined';
         if (isReset) {
-            let formData = {
+            const formData = {
                 userId: $(`#${USER_ID}`).val(),
                 password: $(`#${PASSWORD}`).val(),
                 newPassword1: $(`#${NEW_PASSWORD_1}`).val(),
@@ -81,7 +81,7 @@ let LocalAuth = (() => {
             formData.isValid = !formData.validationResult;
             return formData;
         } else {
-            let formData = {
+            const formData = {
                 userId: $(`#${USER_ID}`).val(),
                 password: $(`#${PASSWORD}`).val()
             };
@@ -95,11 +95,11 @@ let LocalAuth = (() => {
 
     function validationMessageSignIn(formData) {
         if (formData.userId.length <= 0) {
-            return "User ID cannot be empty";
+            return 'User ID cannot be empty';
         }
 
         if (formData.password.length <= 0) {
-            return "Password cannot be empty";
+            return 'Password cannot be empty';
         }
 
         return false;
@@ -113,19 +113,19 @@ let LocalAuth = (() => {
 
         if (formData.newPassword1.length <= 0 || formData.newPassword2.length <=
             0) {
-            return "New password cannot be empty";
+            return 'New password cannot be empty';
         }
 
         if (formData.newPassword1 != formData.newPassword2) {
-            return "New passwords must match";
+            return 'New passwords must match';
         }
 
         if (formData.newPassword1 == formData.password) {
-            return "New password must be different from old password";
+            return 'New password must be different from old password';
         }
 
         if (formData.newPassword1.length < 5) {
-            return "New password must be at least 5 characters long";
+            return 'New password must be at least 5 characters long';
         }
 
         return false;
@@ -133,7 +133,7 @@ let LocalAuth = (() => {
 
     function isPasswordExpired(e) {
         return e.status == 401 && e.responseJSON && e.responseJSON.reason ==
-            "password-expired";
+            'password-expired';
     }
 
     function resetFocus() {
@@ -145,20 +145,20 @@ let LocalAuth = (() => {
         let html = null;
         let isRecoverable = false;
         switch (e.status) {
-            case 401:
-                html = "Your session expired.";
-                break;
+        case 401:
+            html = 'Your session expired.';
+            break;
 
-            case 403:
-                html = "Access denied";
-                isRecoverable = true;
-                break;
+        case 403:
+            html = 'Access denied';
+            isRecoverable = true;
+            break;
 
-            default:
-                html =
-                    `The operation failed.<br/>` +
-                    `<small><code>${JSON.stringify(e, null, " ")}</code></small>`;
-                break;
+        default:
+            html =
+                    'The operation failed.<br/>' +
+                    `<small><code>${JSON.stringify(e, null, ' ')}</code></small>`;
+            break;
         }
 
         if (isRecoverable) {
@@ -170,7 +170,7 @@ let LocalAuth = (() => {
             sweetAlert({
                 title: Alert.title(ERROR_TITLE),
                 html: html,
-                type: "error"
+                type: 'error'
             });
         }
     }
@@ -184,11 +184,11 @@ let LocalAuth = (() => {
 
         return new Promise(resolve => {
             httpPost({
-                    url: SIGN_IN_URL,
-                    headers: {
-                        "Authorization": `Basic ${btoa(formData.userId + ":" + formData.password)}`
-                    }
-                })
+                url: SIGN_IN_URL,
+                headers: {
+                    'Authorization': `Basic ${btoa(formData.userId + ':' + formData.password)}`
+                }
+            })
                 .then(resp => resolve({
                     userId: formData.userId,
                     accessToken: resp.result.accessToken,
@@ -198,8 +198,8 @@ let LocalAuth = (() => {
                     if (isPasswordExpired(e)) {
                         return sweetAlert({
                             title: Alert.title(
-                                "Reset Your Password",
-                                "mdi-account"),
+                                'Reset Your Password',
+                                'mdi-account'),
                             html: `<input id="${USER_ID}" class="swal2-input" placeholder="Enter your user name" value="${Html.encode(formData.userId)}">` +
                                 `<input id="${PASSWORD}" class="swal2-input" placeholder="Enter your password" type="password">` +
                                 `<input id="${NEW_PASSWORD_1}" class="swal2-input" placeholder="Enter new password" type="password">` +
@@ -209,7 +209,7 @@ let LocalAuth = (() => {
                             reverseButtons: true,
                             showLoaderOnConfirm: true,
                             onOpen: () => $(
-                                    `#${PASSWORD}`)
+                                `#${PASSWORD}`)
                                 .focus(),
                             preConfirm: onPreConfirmReset,
                         }).then(resp => {
@@ -233,14 +233,14 @@ let LocalAuth = (() => {
 
         return new Promise(resolve => {
             httpPost({
-                    url: SIGN_IN_URL,
-                    data: {
-                        newPassword: formData.newPassword1
-                    },
-                    headers: {
-                        "Authorization": `Basic ${btoa(formData.userId + ":" + formData.password)}`
-                    }
-                })
+                url: SIGN_IN_URL,
+                data: {
+                    newPassword: formData.newPassword1
+                },
+                headers: {
+                    'Authorization': `Basic ${btoa(formData.userId + ':' + formData.password)}`
+                }
+            })
                 .then(resp => resolve({
                     userId: formData.userId,
                     accessToken: resp.result.accessToken,
@@ -252,8 +252,8 @@ let LocalAuth = (() => {
 
     function signIn(title) {
         return sweetAlert({
-            title: Alert.title(title || "Sign In",
-                "mdi-account"),
+            title: Alert.title(title || 'Sign In',
+                'mdi-account'),
             html: `<input id="${USER_ID}" class="swal2-input" placeholder="Enter your user name">` +
                 `<input id="${PASSWORD}" class="swal2-input" placeholder="Enter your password" type="password">`,
             focusConfirm: false,
@@ -276,11 +276,11 @@ let LocalAuth = (() => {
 
     function signOut() {
         return httpPost({
-                url: SIGN_OUT_URL,
-                data: {
-                    refreshToken: _refreshToken
-                }
-            })
+            url: SIGN_OUT_URL,
+            data: {
+                refreshToken: _refreshToken
+            }
+        })
             .catch(e => {
                 // Ignore error
             })
@@ -310,7 +310,7 @@ let LocalAuth = (() => {
                     }).catch(() => {
                         signOut()
                             .then(() => signIn(
-                                "Please Sign In Again"))
+                                'Please Sign In Again'))
                             .then(value => {
                                 if (value) {
                                     return sendHttpAuth(
@@ -329,7 +329,7 @@ let LocalAuth = (() => {
         };
 
         request.open(method, url, true);
-        request.setRequestHeader("Authorization",
+        request.setRequestHeader('Authorization',
             `Bearer ${_accessToken}`);
         request.send(body);
         return request;
@@ -347,7 +347,7 @@ let LocalAuth = (() => {
             return false;
         }
 
-        return obj.reason == "token-expired";
+        return obj.reason == 'token-expired';
     }
 
     // Return an object with the same interface as a Google API auth object
@@ -373,8 +373,8 @@ let LocalAuth = (() => {
             PASSWORD,
             NEW_PASSWORD_1,
             NEW_PASSWORD_2
-        ].map(id => `#${id}`).join(",")
-        $(document).on("keydown", selector, onKeyDown);
+        ].map(id => `#${id}`).join(',');
+        $(document).on('keydown', selector, onKeyDown);
     });
 
     return mine;

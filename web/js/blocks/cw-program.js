@@ -44,16 +44,16 @@ Blockly.Blocks['cwSimulationOf'] = {
             .appendField(')');
         this.setInputsInline(true);
 
-        let worldTp = Type.Var("a");
-        let numTp = Type.Lit("Number");
-        let initTp = Type.fromList([Type.Lit("list", [numTp]), worldTp]);
-        let stepTp = Type.fromList([worldTp, numTp, worldTp]);
-        let drawTp = Type.fromList([worldTp, Type.Lit("Picture")]);
+        const worldTp = Type.Var('a');
+        const numTp = Type.Lit('Number');
+        const initTp = Type.fromList([Type.Lit('list', [numTp]), worldTp]);
+        const stepTp = Type.fromList([worldTp, numTp, worldTp]);
+        const drawTp = Type.fromList([worldTp, Type.Lit('Picture')]);
 
-        Blockly.TypeInf.defineFunction("simulationOf", Type.fromList([
-            initTp, stepTp, drawTp, Type.Lit("Program")
+        Blockly.TypeInf.defineFunction('simulationOf', Type.fromList([
+            initTp, stepTp, drawTp, Type.Lit('Program')
         ]));
-        this.setAsFunction("simulationOf");
+        this.setAsFunction('simulationOf');
     }
 };
 
@@ -85,17 +85,17 @@ Blockly.Blocks['cwInteractionOf'] = {
             .appendField(')');
         this.setInputsInline(true);
 
-        let worldTp = Type.Var("a");
-        let numTp = Type.Lit("Number");
-        let initTp = Type.fromList([Type.Lit("list", [numTp]), worldTp]);
-        let stepTp = Type.fromList([worldTp, numTp, worldTp]);
-        let eventTp = Type.fromList([worldTp, Type.Lit("Event"), worldTp]);
-        let drawTp = Type.fromList([worldTp, Type.Lit("Picture")]);
+        const worldTp = Type.Var('a');
+        const numTp = Type.Lit('Number');
+        const initTp = Type.fromList([Type.Lit('list', [numTp]), worldTp]);
+        const stepTp = Type.fromList([worldTp, numTp, worldTp]);
+        const eventTp = Type.fromList([worldTp, Type.Lit('Event'), worldTp]);
+        const drawTp = Type.fromList([worldTp, Type.Lit('Picture')]);
 
-        Blockly.TypeInf.defineFunction("interactionOf", Type.fromList([
-            initTp, stepTp, eventTp, drawTp, Type.Lit("Program")
+        Blockly.TypeInf.defineFunction('interactionOf', Type.fromList([
+            initTp, stepTp, eventTp, drawTp, Type.Lit('Program')
         ]));
-        this.setAsFunction("interactionOf");
+        this.setAsFunction('interactionOf');
     }
 };
 
@@ -117,10 +117,10 @@ Blockly.Blocks['cwAnimationOf'] = {
             .appendField(')');
         this.setInputsInline(true);
 
-        let stepTp = Type.Func(Type.Lit("Number"), Type.Lit("Picture"));
+        const stepTp = Type.Func(Type.Lit('Number'), Type.Lit('Picture'));
 
-        Blockly.TypeInf.defineFunction("animationOf", Type.Func(stepTp,
-            Type.Lit("Program")));
-        this.setAsFunction("animationOf");
+        Blockly.TypeInf.defineFunction('animationOf', Type.Func(stepTp,
+            Type.Lit('Program')));
+        this.setAsFunction('animationOf');
     }
 };

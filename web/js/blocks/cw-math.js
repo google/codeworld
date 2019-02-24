@@ -29,7 +29,7 @@ Blockly.Blocks['numNumber'] = {
     init() {
         this.setHelpUrl(Blockly.Msg.MATH_NUMBER_HELPURL);
         this.setColour(210);
-        let field = new Blockly.FieldNumber('0');
+        const field = new Blockly.FieldNumber('0');
         field.setValidator(Blockly.FieldNumber.prototype.basicNumberValidator);
         this.appendDummyInput()
             .appendField(field, 'NUMBER');
@@ -48,14 +48,14 @@ Blockly.Blocks['numNumberPerc'] = {
     init() {
         this.setHelpUrl(Blockly.Msg.MATH_NUMBER_HELPURL);
         this.setColour(210);
-        let field = new Blockly.FieldNumber('0');
+        const field = new Blockly.FieldNumber('0');
         field.setValidator(Blockly.FieldNumber.prototype.basicNumberValidator);
         this.appendDummyInput()
             .appendField(field, 'NUMBER')
             .appendField(new Blockly.FieldLabel('%', 'blocklyTextEmph'));
         this.setOutput(true, 'Number');
         // Sorin
-        this.setAsLiteral("Number");
+        this.setAsLiteral('Number');
         this.setTooltip(Blockly.Msg.MATH_NUMBER_TOOLTIP);
     }
 };

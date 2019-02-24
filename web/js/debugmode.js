@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-"use strict";
+'use strict';
 
 (() => {
     let available = false;
@@ -61,11 +61,11 @@
         debugDrawShape = drawShape;
 
         if (!available) {
-            canvas = document.getElementById("screen");
+            canvas = document.getElementById('screen');
 
-            canvas.addEventListener("mousemove", evt => {
+            canvas.addEventListener('mousemove', evt => {
                 if (active) {
-                    let nodeId = debugGetNode({
+                    const nodeId = debugGetNode({
                         x: evt.clientX,
                         y: evt.clientY
                     });
@@ -74,15 +74,15 @@
                 }
             });
 
-            canvas.addEventListener("mouseout", evt => {
+            canvas.addEventListener('mouseout', evt => {
                 if (active) {
                     debugHighlightShape(true, -1);
                 }
             });
 
-            canvas.addEventListener("click", evt => {
+            canvas.addEventListener('click', evt => {
                 if (active) {
-                    let nodeId = debugGetNode({
+                    const nodeId = debugGetNode({
                         x: evt.clientX,
                         y: evt.clientY
                     });
@@ -102,7 +102,7 @@
 
     function startDebugMode() {
         if (!available) {
-            throw new Error("Debug mode is not available.");
+            throw new Error('Debug mode is not available.');
         }
 
         active = true;
@@ -114,7 +114,7 @@
         parent.openTreeDialog(0);
 
         window.debugActive = true;
-        parent.updateUI()
+        parent.updateUI();
     }
     window.startDebugMode = startDebugMode;
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-"use strict";
+'use strict';
 
 (() => {
     let dialog = null,
@@ -27,37 +27,37 @@
         canvas = null;
 
     function openDialog() {
-        dialog.dialog("open");
+        dialog.dialog('open');
         open = true;
     }
 
     function closeDialog() {
-        dialog.dialog("close");
+        dialog.dialog('close');
         open = false;
     }
 
     function buildNestedList(id) {
-        let go = (p, to, open) => {
-            let ul = document.createElement("ul"),
-                span = document.createElement("span"),
-                toggleButton = document.createElement("span"),
+        const go = (p, to, open) => {
+            let ul = document.createElement('ul'),
+                span = document.createElement('span'),
+                toggleButton = document.createElement('span'),
                 collapsed = false;
 
-            let collapse = () => {
-                ul.style.display = "none";
-                toggleButton.innerHTML = "&#x25B6;";
+            const collapse = () => {
+                ul.style.display = 'none';
+                toggleButton.innerHTML = '&#x25B6;';
                 collapsed = true;
             };
 
-            let decollapse = () => {
-                ul.style.display = "";
-                toggleButton.innerHTML = "&#x25BC;";
+            const decollapse = () => {
+                ul.style.display = '';
+                toggleButton.innerHTML = '&#x25BC;';
                 collapsed = false;
             };
 
             if (p.picture || p.pictures) {
-                toggleButton.classList.add("collapse-button");
-                toggleButton.addEventListener("click", evt => {
+                toggleButton.classList.add('collapse-button');
+                toggleButton.addEventListener('click', evt => {
                     if (collapsed) {
                         decollapse();
                     } else {
@@ -72,11 +72,11 @@
                 }
 
             } else {
-                toggleButton.classList.add("collapse-spacer");
+                toggleButton.classList.add('collapse-spacer');
             }
             span.appendChild(toggleButton);
 
-            let link = createPicLink(p);
+            const link = createPicLink(p);
             p.link = link;
             if (open) {
                 link.click();
@@ -85,13 +85,13 @@
             to.appendChild(span);
 
             if (p.picture) {
-                let li = document.createElement("li");
+                const li = document.createElement('li');
                 go(p.picture, li, open);
                 ul.appendChild(li);
                 to.appendChild(ul);
             } else if (p.pictures) {
                 for (let i = 0; i < p.pictures.length; i++) {
-                    let li = document.createElement("li"),
+                    const li = document.createElement('li'),
                         op = open && (id >= p.pictures[i].id) && (i ==
                             p.pictures.length - 1 || id < p.pictures[i +
                                 1].id);
@@ -100,10 +100,10 @@
                 }
                 to.appendChild(ul);
             }
-        }
+        };
 
-        let ul = document.createElement("ul"),
-            li = document.createElement("li");
+        const ul = document.createElement('ul'),
+            li = document.createElement('li');
 
         go(fullPic, li, true);
         ul.appendChild(li);
@@ -132,24 +132,24 @@
     }
 
     function createPicLink(pic) {
-        let a = document.createElement("a");
+        const a = document.createElement('a');
 
         a.appendChild(document.createTextNode(pic.name));
-        a.href = "javascript: void(0);";
-        a.classList.add("treedialog-piclink");
-        a.addEventListener("click", evt => {
+        a.href = 'javascript: void(0);';
+        a.classList.add('treedialog-piclink');
+        a.addEventListener('click', evt => {
             if (marker) marker.clear();
 
             getPicNode(currentPic.id, node => {
                 node.link.classList.remove(
-                    "piclink-selected");
+                    'piclink-selected');
             });
             getPicNode(pic.id, node => {
-                node.link.classList.add("piclink-selected");
+                node.link.classList.add('piclink-selected');
             });
 
             currentPic = pic;
-            dialog.dialog("option", "title", pic.name);
+            dialog.dialog('option', 'title', pic.name);
             drawShape(canvas, pic.id);
             if (pic.startLine && pic.startCol && pic.endLine && pic
                 .endCol) {
@@ -160,11 +160,11 @@
                     line: pic.endLine - 1,
                     ch: pic.endCol - 1
                 }, {
-                    origin: "+treedialog"
+                    origin: '+treedialog'
                 });
             }
         });
-        a.addEventListener("mouseover", evt => {
+        a.addEventListener('mouseover', evt => {
             highlight(true, pic.id);
 
             if (pic.startLine && pic.startCol && pic.endLine && pic
@@ -177,12 +177,12 @@
                     line: pic.endLine - 1,
                     ch: pic.endCol - 1
                 }, {
-                    origin: "+treedialog",
-                    className: "marked"
-                })
+                    origin: '+treedialog',
+                    className: 'marked'
+                });
             }
         });
-        a.addEventListener("mouseout", evt => {
+        a.addEventListener('mouseout', evt => {
             highlight(true, -1);
 
             if (marker) {
@@ -194,7 +194,7 @@
     }
 
     function buildDrawingPreview() {
-        let canvas = document.createElement("canvas");
+        const canvas = document.createElement('canvas');
 
         canvas.width = 250;
         canvas.height = 250;
@@ -209,11 +209,11 @@
         highlight = highlt;
         drawShape = draw;
 
-        let div = document.createElement("div");
+        const div = document.createElement('div');
         dialog = $(div).dialog({
-            dialogClass: "treedialog",
-            title: "Picture Browser",
-            closeText: "",
+            dialogClass: 'treedialog',
+            title: 'Picture Browser',
+            closeText: '',
             autoOpen: false,
             height: 650,
             width: 650,
@@ -224,8 +224,8 @@
             }
         });
 
-        content = document.createElement("div");
-        content.classList.add("treedialog-content");
+        content = document.createElement('div');
+        content.classList.add('treedialog-content');
         dialog.append(content);
     }
     window.initTreeDialog = initTreeDialog;
@@ -238,16 +238,16 @@
         // Select should probably look better before this is enabled
         // highlight(false, id);
 
-        let picture = getPicNode(id);
+        const picture = getPicNode(id);
         currentPic = picture;
 
-        content.innerHTML = "";
+        content.innerHTML = '';
 
         canvas = buildDrawingPreview();
         content.appendChild(canvas);
         content.appendChild(buildNestedList(id));
 
-        dialog.dialog("option", "title", picture.name);
+        dialog.dialog('option', 'title', picture.name);
     }
     window.openTreeDialog = openTreeDialog;
 

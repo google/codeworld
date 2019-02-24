@@ -20,7 +20,7 @@ goog.provide('Blockly.Blocks.cwText');
 
 goog.require('Blockly.Blocks');
 
-let textHUE = 45;
+const textHUE = 45;
 
 Blockly.Blocks['text_typed'] = {
     /**
@@ -35,8 +35,8 @@ Blockly.Blocks['text_typed'] = {
             .appendField(new Blockly.FieldTextInput(''), 'TEXT')
             .appendField(this.newQuote_(false));
         this.setOutput(true);
-        this.setTooltip("Gives the given text");
-        this.setAsLiteral("Text");
+        this.setTooltip('Gives the given text');
+        this.setAsLiteral('Text');
     },
     /**
      * Create an image of an open or closed quote.
@@ -62,17 +62,17 @@ Blockly.Blocks['txtConcat'] = {
     init() {
         this.appendValueInput('STR0');
         this.appendValueInput('STR1')
-            .appendField(new Blockly.FieldLabel("<>", "blocklyTextEmph"));
+            .appendField(new Blockly.FieldLabel('<>', 'blocklyTextEmph'));
         this.setColour(textHUE);
         this.setMutator(new Blockly.Mutator(['text_combine_ele']));
         this.setTooltip('Concatenate multiple text');
         this.itemCount_ = 2;
-        this.functionName = "Literal";
+        this.functionName = 'Literal';
         this.setOutput(true);
-        Blockly.TypeInf.defineFunction("<>", Type.fromList([Type.Lit("Text"),
-            Type.Lit("Text"), Type.Lit("Text")
+        Blockly.TypeInf.defineFunction('<>', Type.fromList([Type.Lit('Text'),
+            Type.Lit('Text'), Type.Lit('Text')
         ]));
-        this.setAsFunction("<>");
+        this.setAsFunction('<>');
     },
 
     foldr1(fn, xs) {
@@ -97,19 +97,19 @@ Blockly.Blocks['txtConcat'] = {
             exps.push(Exp.Var('undef'));
         }
 
-        let func = (a, b) => Exp.AppFunc([a, b], Exp.Var("<>"));
-        let e = this.foldr1(func, exps);
+        const func = (a, b) => Exp.AppFunc([a, b], Exp.Var('<>'));
+        const e = this.foldr1(func, exps);
         return e;
     },
 
     decompose(workspace) {
-        let containerBlock =
+        const containerBlock =
             workspace.newBlock('text_combine_container');
         containerBlock.initSvg();
         let connection = containerBlock.getInput('STACK').connection;
 
         for (let x = 0; x < this.itemCount_; x++) {
-            let itemBlock = workspace.newBlock('text_combine_ele');
+            const itemBlock = workspace.newBlock('text_combine_ele');
             itemBlock.initSvg();
             connection.connect(itemBlock.previousConnection);
             connection = itemBlock.nextConnection;
@@ -127,14 +127,14 @@ Blockly.Blocks['txtConcat'] = {
         this.itemCount_ = 0;
         // Rebuild the block's inputs.
         let itemBlock = containerBlock.getInputTargetBlock('STACK');
-        let tps = [];
+        const tps = [];
         while (itemBlock) {
-            let input = this.appendValueInput('STR' + this.itemCount_);
-            tps.push(new Type.Lit("Text"));
+            const input = this.appendValueInput('STR' + this.itemCount_);
+            tps.push(new Type.Lit('Text'));
 
             if (this.itemCount_ > 0) {
-                input.appendField(new Blockly.FieldLabel("<>",
-                    "blocklyTextEmph"));
+                input.appendField(new Blockly.FieldLabel('<>',
+                    'blocklyTextEmph'));
             }
             if (itemBlock.valueConnection_) {
                 input.connection.connect(itemBlock.valueConnection_);
@@ -144,7 +144,7 @@ Blockly.Blocks['txtConcat'] = {
                 itemBlock.nextConnection.targetBlock();
         }
         this.renderMoveConnections_();
-        tps.push(new Type.Lit("Text"));
+        tps.push(new Type.Lit('Text'));
         this.arrows = Type.fromList(tps);
         this.initArrows();
 
@@ -156,7 +156,7 @@ Blockly.Blocks['txtConcat'] = {
     },
 
     mutationToDom() {
-        let container = document.createElement('mutation');
+        const container = document.createElement('mutation');
         container.setAttribute('items', this.itemCount_);
         return container;
     },
@@ -165,16 +165,16 @@ Blockly.Blocks['txtConcat'] = {
         this.itemCount_ = parseInt(xmlElement.getAttribute('items'), 10);
 
         this.inputList = [];
-        let tps = [];
+        const tps = [];
         for (let i = 0; i < this.itemCount_; i++) {
-            let input = this.appendValueInput('STR' + i);
-            tps.push(new Type.Lit("Text"));
+            const input = this.appendValueInput('STR' + i);
+            tps.push(new Type.Lit('Text'));
             if (i > 0) {
-                input.appendField(new Blockly.FieldLabel("<>",
-                    "blocklyTextEmph"));
+                input.appendField(new Blockly.FieldLabel('<>',
+                    'blocklyTextEmph'));
             }
-        };
-        tps.push(new Type.Lit("Text"));
+        }
+        tps.push(new Type.Lit('Text'));
 
         this.arrows = Type.fromList(tps);
         this.initArrows();
@@ -184,7 +184,7 @@ Blockly.Blocks['txtConcat'] = {
         let itemBlock = containerBlock.getInputTargetBlock('STACK');
         let x = 0;
         while (itemBlock) {
-            let input = this.getInput('STR' + x);
+            const input = this.getInput('STR' + x);
             if (input && input.connection.targetConnection) {
                 if (input.connection.targetBlock().isShadow_) {
                     x++;

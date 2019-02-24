@@ -24,9 +24,9 @@ function loadSample(code) {
 }
 
 function loadWorkspace(text) {
-    let workspace = Blockly.mainWorkspace;
+    const workspace = Blockly.mainWorkspace;
     workspace.clear();
-    let xmldom = Blockly.Xml.textToDom(text);
+    const xmldom = Blockly.Xml.textToDom(text);
     Blockly.Xml.domToWorkspace(xmldom, workspace);
     lastXML = text;
 }
@@ -50,7 +50,7 @@ lastXML = '';
 
 function init() {
     Alert.init().then(Auth.init).then(() => {
-        nestedDirs = [""];
+        nestedDirs = [''];
         allProjectNames = [
             []
         ];
@@ -79,7 +79,7 @@ function init() {
                         return;
                     }
 
-                    let data = new FormData();
+                    const data = new FormData();
                     data.append('mode', 'blocklyXML');
                     data.append('shash', hash);
                     data.append('name', result.value);
@@ -97,7 +97,7 @@ function init() {
                                     'error');
                             }
                             initCodeworld();
-                            discoverProjects("", 0);
+                            discoverProjects('', 0);
                             updateUI();
                         });
                 });
@@ -117,12 +117,12 @@ function initCodeworld() {
 
     window.onbeforeunload = event => {
         if (containsUnsavedChanges()) {
-            let msg = 'There are unsaved changes to your project. ' +
+            const msg = 'There are unsaved changes to your project. ' +
                 'If you continue, they will be lost!';
             if (event) event.returnValue = msg;
             return msg;
         }
-    }
+    };
 }
 
 function getCurrentProject() {
@@ -135,7 +135,7 @@ function getCurrentProject() {
 
 // Sets the generated code
 function updateEditor(code) {
-    let editor = document.getElementById('genCode');
+    const editor = document.getElementById('genCode');
     CodeMirror.runMode(code, {
         name: 'codeworld',
         overrideKeywords: codeworldKeywords
@@ -143,7 +143,7 @@ function updateEditor(code) {
 }
 
 function run(xmlHash, codeHash, msg, error, dhash) {
-    let hash = codeHash;
+    const hash = codeHash;
 
     if (hash) {
         window.location.hash = '#' + xmlHash;
@@ -161,9 +161,9 @@ function run(xmlHash, codeHash, msg, error, dhash) {
         window.showingDoc = false;
     }
 
-    let runner = document.getElementById('runner');
+    const runner = document.getElementById('runner');
     if (hash && !error) {
-        let loc = 'run.html?hash=' + hash + '&mode=' + window.buildMode;
+        const loc = 'run.html?hash=' + hash + '&mode=' + window.buildMode;
         runner.contentWindow.location.replace(loc);
         document.getElementById('runner').style.display = '';
         document.getElementById('runner').contentWindow.focus();
@@ -180,7 +180,7 @@ function run(xmlHash, codeHash, msg, error, dhash) {
     }
 
     if (msg) {
-        let message = document.getElementById('message');
+        const message = document.getElementById('message');
         message.innerHTML = '';
         addToMessage(msg);
 
@@ -199,7 +199,7 @@ function run(xmlHash, codeHash, msg, error, dhash) {
 
 function removeErrors() {
     $('.blocklyDraggable').removeClass('blocklyErrorSelected');
-    let blocks = Blockly.getMainWorkspace().getAllBlocks();
+    const blocks = Blockly.getMainWorkspace().getAllBlocks();
 
     blocks.forEach(block => {
         block.removeErrorSelect();
@@ -207,14 +207,14 @@ function removeErrors() {
 }
 
 function getWorkspaceXMLText() {
-    let workspace = Blockly.getMainWorkspace();
-    let xml = Blockly.Xml.workspaceToDom(workspace);
-    let xml_text = Blockly.Xml.domToText(xml);
+    const workspace = Blockly.getMainWorkspace();
+    const xml = Blockly.Xml.workspaceToDom(workspace);
+    const xml_text = Blockly.Xml.domToText(xml);
     return xml_text;
 }
 
 function containsUnsavedChanges() {
-    let blank = '<xml xmlns="http://www.w3.org/1999/xhtml"></xml>';
+    const blank = '<xml xmlns="http://www.w3.org/1999/xhtml"></xml>';
     return getWorkspaceXMLText() != (lastXML || blank);
 }
 
@@ -225,21 +225,21 @@ function isEditorClean() {
 function compile(src, silent) {
     run('', '', 'Compiling...', false);
 
-    let xml_text = getWorkspaceXMLText();
-    let data = new FormData();
+    const xml_text = getWorkspaceXMLText();
+    const data = new FormData();
     data.append('source', xml_text);
     data.append('mode', 'blocklyXML');
 
     sendHttp('POST', 'saveXMLhash', data, request => {
         // XML Hash
-        let xmlHash = request.responseText;
+        const xmlHash = request.responseText;
 
-        let data = new FormData();
+        const data = new FormData();
         data.append('source', src);
         data.append('mode', window.buildMode);
 
         sendHttp('POST', 'compile', data, request => {
-            let success = request.status == 200;
+            const success = request.status == 200;
 
             // Code hash
             let hash;
@@ -248,12 +248,12 @@ function compile(src, silent) {
                 hash = request.responseText;
                 dhash = null;
             } else {
-                let obj = JSON.parse(request.responseText);
+                const obj = JSON.parse(request.responseText);
                 hash = obj.hash;
                 dhash = obj.dhash;
             }
 
-            let data = new FormData();
+            const data = new FormData();
             data.append('hash', hash);
             data.append('mode', window.buildMode);
 
@@ -263,7 +263,7 @@ function compile(src, silent) {
                     msg = request.responseText.trim();
                 } else if (request.status == 404) {
                     msg =
-                        "Sorry!  Your program couldn't be run right now.  Please try again.";
+                        'Sorry!  Your program couldn\'t be run right now.  Please try again.';
                 }
                 if (msg != '') msg += '\n\n';
                 if (silent) msg = null;
@@ -306,7 +306,7 @@ function folderHandler(folderName, index, state) {
  * to get the visual presentation to match.
  */
 function updateUI() {
-    let isSignedIn = signedIn();
+    const isSignedIn = signedIn();
     if (isSignedIn) {
         if (document.getElementById('signout').style.display == 'none') {
             document.getElementById('signin').style.display = 'none';
@@ -321,7 +321,7 @@ function updateUI() {
             document.getElementById('deleteButton').style.display = '';
         } else {
             document.getElementById('saveButton').style.display = 'none';
-            if (window.nestedDirs != "") {
+            if (window.nestedDirs != '') {
                 document.getElementById('deleteButton').style.display = '';
             } else {
                 document.getElementById('deleteButton').style.display = 'none';
@@ -343,7 +343,7 @@ function updateUI() {
     document.getElementById('runButtons').style.display = '';
 
     updateNavBar();
-    let NDlength = nestedDirs.length;
+    const NDlength = nestedDirs.length;
 
     if (NDlength != 1 && (openProjectName == null || openProjectName == '')) {
         document.getElementById('shareFolderButton').style.display = '';
@@ -363,14 +363,14 @@ function updateUI() {
     if (window.openProjectName) {
         title = window.openProjectName;
     } else {
-        title = "(new)";
+        title = '(new)';
     }
 
     if (!isEditorClean()) {
-        title = "* " + title;
+        title = '* ' + title;
     }
 
-    document.title = title + " - CodeWorld";
+    document.title = title + ' - CodeWorld';
 }
 
 function updateNavBar() {
@@ -392,18 +392,18 @@ function updateNavBar() {
         });
     });
 
-    let NDlength = nestedDirs.length;
+    const NDlength = nestedDirs.length;
     for (let i = 0; i < NDlength; i++) {
         let tempProjects;
         if (i != 0) {
-            let encodedName = nestedDirs[i].replace(/&/g, '&amp;')
+            const encodedName = nestedDirs[i].replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
             let template = document.getElementById('openFolderTemplate').innerHTML;
             template = template.replace(/{{label}}/g, encodedName);
-            let span = document.createElement('span');
+            const span = document.createElement('span');
             span.innerHTML = template;
-            let elem = span.getElementsByTagName('a')[0];
+            const elem = span.getElementsByTagName('a')[0];
             elem.style.marginLeft = (3 + 16 * (i - 1)) + 'px';
             elem.onclick = () => {
                 folderHandler(nestedDirs[i], i - 1, true);
@@ -415,14 +415,14 @@ function updateNavBar() {
             projects = span.appendChild(document.createElement('div'));
         }
         allFolderNames[i].forEach(folderName => {
-            let encodedName = folderName.replace(/&/g, '&amp;')
+            const encodedName = folderName.replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
             let template = document.getElementById('folderTemplate').innerHTML;
             template = template.replace(/{{label}}/g, encodedName);
-            let span = document.createElement('span');
+            const span = document.createElement('span');
             span.innerHTML = template;
-            let elem = span.getElementsByTagName('a')[0];
+            const elem = span.getElementsByTagName('a')[0];
             elem.style.marginLeft = (3 + 16 * i) + 'px';
             elem.onclick = () => {
                 folderHandler(folderName, i, false);
@@ -437,7 +437,7 @@ function updateNavBar() {
             }
         });
         allProjectNames[i].forEach(projectName => {
-            let active = (window.openProjectName == projectName) && (i ==
+            const active = (window.openProjectName == projectName) && (i ==
                 NDlength - 1);
             if (!signedIn() && !active) {
                 return;
@@ -445,18 +445,18 @@ function updateNavBar() {
 
             let title = projectName;
             if (active && !isEditorClean()) {
-                title = "* " + title;
+                title = '* ' + title;
             }
-            let encodedName = title.replace(/&/g, '&amp;')
+            const encodedName = title.replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
             let template = document.getElementById('projectTemplate').innerHTML;
             template = template.replace(/{{label}}/g, encodedName);
             template = template.replace(/{{ifactive ([^}]*)}}/g, active ?
-                "$1" : "");
-            let span = document.createElement('span');
+                '$1' : '');
+            const span = document.createElement('span');
             span.innerHTML = template;
-            let elem = span.getElementsByTagName('a')[0];
+            const elem = span.getElementsByTagName('a')[0];
             elem.style.marginLeft = (3 + 16 * i) + 'px';
             elem.onclick = () => {
                 loadProject(projectName, i);
@@ -490,17 +490,17 @@ function moveProject() {
             return;
         }
 
-        let tempOpen = openProjectName;
-        let tempPath = nestedDirs.slice(1).join('/');
+        const tempOpen = openProjectName;
+        const tempPath = nestedDirs.slice(1).join('/');
         clearWorkspace();
-        nestedDirs = [""];
+        nestedDirs = [''];
         allProjectNames = [
             []
         ];
         allFolderNames = [
             []
         ];
-        discoverProjects("", 0);
+        discoverProjects('', 0);
         document.getElementById('newFolderButton').style.display = '';
         document.getElementById('newButton').style.display = 'none';
         document.getElementById('saveButton').style.display = 'none';
@@ -521,14 +521,14 @@ function moveProject() {
 
 function moveHere() {
     function successFunc() {
-        nestedDirs = [""];
+        nestedDirs = [''];
         allProjectNames = [
             []
         ];
         allFolderNames = [
             []
         ];
-        discoverProjects("", 0);
+        discoverProjects('', 0);
         cancelMove();
         updateUI();
     }
@@ -537,7 +537,7 @@ function moveHere() {
 }
 
 function help() {
-    let url = 'doc.html?shelf=help/blocks.shelf';
+    const url = 'doc.html?shelf=help/blocks.shelf';
     sweetAlert({
         html: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' +
             url + '"></iframe>',
@@ -549,7 +549,7 @@ function help() {
 }
 
 function signinCallback(result) {
-    discoverProjects("", 0);
+    discoverProjects('', 0);
     cancelMove();
     updateUI();
     if (result.wc) {
@@ -606,8 +606,8 @@ function saveProjectBase(path, projectName) {
 }
 
 function deleteFolder() {
-    let path = nestedDirs.slice(1).join('/');
-    if (path == "" || window.openProjectName != null) {
+    const path = nestedDirs.slice(1).join('/');
+    if (path == '' || window.openProjectName != null) {
         return;
     }
 
@@ -630,7 +630,7 @@ function deleteProject() {
         openProjectName = null;
         Blockly.getMainWorkspace().clearUndo();
     }
-    let path = nestedDirs.slice(1).join('/');
+    const path = nestedDirs.slice(1).join('/');
     deleteProject_(path, 'blocklyXML', successFunc);
 
 }
@@ -668,12 +668,12 @@ function newProject() {
 
 // Clear the running iframe and generated code
 function clearRunCode() {
-    let runner = document.getElementById('runner');
+    const runner = document.getElementById('runner');
     runner.contentWindow.location.replace('about:blank');
     updateEditor('');
 }
 
 function clearWorkspace() {
-    let workspace = Blockly.mainWorkspace;
+    const workspace = Blockly.mainWorkspace;
     workspace.clear();
 }

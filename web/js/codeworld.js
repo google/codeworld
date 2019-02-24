@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-let autohelpEnabled = location.hash.length <= 2;
+const autohelpEnabled = location.hash.length <= 2;
 
 /*
  * Initializes the programming environment.  This is called after the
@@ -26,7 +26,7 @@ async function init() {
 
     // Keep the base bundle preloaded by retrying regularly.
     function preloadBaseBundle() {
-        let request = new XMLHttpRequest();
+        const request = new XMLHttpRequest();
         request.open('GET', '/runBaseJS', true);
         request.setRequestHeader('Cache-control', 'max-stale');
         request.send();
@@ -41,7 +41,7 @@ async function init() {
         []
     ];
     openProjectName = null;
-    nestedDirs = [""];
+    nestedDirs = [''];
 
     window.savedGeneration = null;
     window.runningGeneration = null;
@@ -73,7 +73,7 @@ async function init() {
                     return;
                 }
 
-                let data = new FormData();
+                const data = new FormData();
                 data.append('mode', window.buildMode);
                 data.append('shash', hash);
                 data.append('name', result.value);
@@ -94,7 +94,7 @@ async function init() {
                         setMode(true);
                         parseSymbolsFromCurrentCode();
                     });
-                    discoverProjects("", 0);
+                    discoverProjects('', 0);
                     updateUI();
                 });
             });
@@ -135,7 +135,7 @@ async function init() {
 }
 
 function initCodeworld() {
-    let editor = document.getElementById('editor');
+    const editor = document.getElementById('editor');
 
     window.codeworldKeywords = {};
 
@@ -158,23 +158,23 @@ function initCodeworld() {
         },
         rulers: [{
             column: 80,
-            color: "#bbb",
-            lineStyle: "dashed"
+            color: '#bbb',
+            lineStyle: 'dashed'
         }],
         extraKeys: {
-            "Ctrl-Space": "autocomplete",
-            "Shift-Space": "autocomplete",
-            "Tab": "indentMore",
-            "Shift-Tab": "indentLess",
-            "Ctrl-Enter": compile,
-            "Ctrl-Up": changeFontSize(1),
-            "Ctrl-Down": changeFontSize(-1)
+            'Ctrl-Space': 'autocomplete',
+            'Shift-Space': 'autocomplete',
+            'Tab': 'indentMore',
+            'Shift-Tab': 'indentLess',
+            'Ctrl-Enter': compile,
+            'Ctrl-Up': changeFontSize(1),
+            'Ctrl-Down': changeFontSize(-1)
         },
         textHover: onHover,
-        gutters: ["CodeMirror-lint-markers"],
+        gutters: ['CodeMirror-lint-markers'],
         lint: {
             getAnnotations: (text, callback) => {
-                if (text.trim() === "") {
+                if (text.trim() === '') {
                     callback([]);
                     return;
                 }
@@ -183,37 +183,37 @@ function initCodeworld() {
 
                 function cancelLintRequest() {
                     if (window.codeworldEditor) {
-                        window.codeworldEditor.off("change",
+                        window.codeworldEditor.off('change',
                             cancelLintRequest);
                     }
                     if (request) request.abort();
                 }
 
-                let data = new FormData();
-                data.append("source", text)
+                const data = new FormData();
+                data.append('source', text);
                 data.append('mode', window.buildMode);
-                request = sendHttp("POST", "errorCheck", data,
+                request = sendHttp('POST', 'errorCheck', data,
                     request => {
                         if (window.codeworldEditor) {
-                            window.codeworldEditor.off("change",
+                            window.codeworldEditor.off('change',
                                 cancelLintRequest);
                         }
 
                         if (request.status == 400 || request.status ==
                             200) {
                             callback(parseCompileErrors(request
-                                .responseText))
+                                .responseText));
                         } else if (request.status == 0) {
                             // Request was cancelled because of a later change.  Do nothing.
                         } else {
                             console.log(
-                                "Not expected behavior: don't know how to " +
-                                "handle request with status ",
-                                request.status, request)
-                        };
+                                'Not expected behavior: don\'t know how to ' +
+                                'handle request with status ',
+                                request.status, request);
+                        }
                     });
                 if (window.codeworldEditor) {
-                    window.codeworldEditor.on("change",
+                    window.codeworldEditor.on('change',
                         cancelLintRequest);
                 }
             },
@@ -224,7 +224,7 @@ function initCodeworld() {
 
     CodeMirror.commands.save = cm => {
         saveProject();
-    }
+    };
     document.onkeydown = e => {
         if (e.ctrlKey && e.keyCode === 83) { // Ctrl+S
             saveProject();
@@ -237,7 +237,7 @@ function initCodeworld() {
     };
 
     window.reparseTimeoutId = null;
-    window.codeworldEditor.on("changes", () => {
+    window.codeworldEditor.on('changes', () => {
         if (window.reparseTimeoutId) clearTimeout(window.reparseTimeoutId);
         window.reparseTimeoutId = setTimeout(
             parseSymbolsFromCurrentCode, 1500);
@@ -246,24 +246,24 @@ function initCodeworld() {
 
     window.onbeforeunload = event => {
         if (!isEditorClean()) {
-            let msg = 'There are unsaved changes to your project. ' +
+            const msg = 'There are unsaved changes to your project. ' +
                 'If you continue, they will be lost!';
             if (event) event.returnValue = msg;
             return msg;
         }
-    }
+    };
 
     window.onresize = () => {
         if (window.resizeTimeoutId) clearTimeout(window.resizeTimeoutId);
         window.resizeTimeoutId = setTimeout(() => {
             window.codeworldEditor.setSize();
         }, 1000);
-    }
+    };
 }
 
 class CanvasRecorder {
     constructor(canvas, framerate) {
-        let cStream = canvas.captureStream(framerate);
+        const cStream = canvas.captureStream(framerate);
 
         this.chunks = [];
         this.recorder = new MediaRecorder(cStream);
@@ -274,30 +274,30 @@ class CanvasRecorder {
     addChunk(chunks) {
         return e => {
             chunks.push(e.data);
-        }
+        };
     }
 
     exportStream(chunks) {
         return () => {
-            let blob = new Blob(chunks);
+            const blob = new Blob(chunks);
 
             // Reset data
             chunks = [];
 
             // Set file name
-            let d = new Date();
-            let videoFileName = 'codeworld_recording_' +
+            const d = new Date();
+            const videoFileName = 'codeworld_recording_' +
                 d.toDateString().split(' ').join('_') + '_' +
                 d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() +
                 '.webm';
 
             // Create a new video link
-            let a = document.createElement("a");
+            const a = document.createElement('a');
             document.body.appendChild(a);
-            a.style = "display: none";
+            a.style = 'display: none';
 
             // Save the video
-            let url = window.URL.createObjectURL(blob);
+            const url = window.URL.createObjectURL(blob);
             a.href = url;
             a.download = videoFileName;
             a.click();
@@ -305,17 +305,17 @@ class CanvasRecorder {
 
             // Remove the video link
             a.remove();
-        }
+        };
     }
 }
 
 let canvasRecorder;
 
 function captureStart() {
-    let iframe = document.querySelector('#runner');
-    let innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    const iframe = document.querySelector('#runner');
+    const innerDoc = iframe.contentDocument || iframe.contentWindow.document;
 
-    let canvas = innerDoc.querySelector('#screen');
+    const canvas = innerDoc.querySelector('#screen');
 
     canvasRecorder = new CanvasRecorder(canvas, 30);
 
@@ -351,7 +351,7 @@ function setMode(force) {
 }
 
 function getCurrentProject() {
-    let doc = window.codeworldEditor.getDoc();
+    const doc = window.codeworldEditor.getDoc();
     return {
         'name': window.openProjectName || 'Untitled',
         'source': doc.getValue(),
@@ -385,7 +385,7 @@ function folderHandler(folderName, index, state) {
  * to get the visual presentation to match.
  */
 function updateUI() {
-    let isSignedIn = signedIn();
+    const isSignedIn = signedIn();
     if (isSignedIn) {
         if (document.getElementById('signout').style.display == 'none') {
             document.getElementById('signin').style.display = 'none';
@@ -400,7 +400,7 @@ function updateUI() {
             document.getElementById('deleteButton').style.display = '';
         } else {
             document.getElementById('saveButton').style.display = 'none';
-            if (window.nestedDirs != "") {
+            if (window.nestedDirs != '') {
                 document.getElementById('deleteButton').style.display = '';
             } else {
                 document.getElementById('deleteButton').style.display = 'none';
@@ -417,8 +417,8 @@ function updateUI() {
         document.getElementById('deleteButton').style.display = 'none';
     }
 
-    let debugAvailable = document.getElementById('runner').contentWindow.debugAvailable;
-    let debugActive = document.getElementById('runner').contentWindow.debugActive;
+    const debugAvailable = document.getElementById('runner').contentWindow.debugAvailable;
+    const debugActive = document.getElementById('runner').contentWindow.debugActive;
     if (debugAvailable) {
         document.getElementById('inspectButton').style.display = '';
 
@@ -471,27 +471,27 @@ function updateUI() {
     if (window.openProjectName) {
         title = window.openProjectName;
     } else {
-        title = "(new)";
+        title = '(new)';
     }
 
     if (!isEditorClean()) {
-        title = "* " + title;
+        title = '* ' + title;
     }
 
     // If true - code currently in document is not equal to
     // last compiled code
-    let running = document.getElementById('runner').style.display != 'none';
-    let obsolete = !window.codeworldEditor.getDoc().isClean(window.runningGeneration);
-    let obsoleteAlert = document.getElementById('obsolete-code-alert');
+    const running = document.getElementById('runner').style.display != 'none';
+    const obsolete = !window.codeworldEditor.getDoc().isClean(window.runningGeneration);
+    const obsoleteAlert = document.getElementById('obsolete-code-alert');
     if (running && obsolete) {
-        obsoleteAlert.classList.add("obsolete-code-alert-fadein");
-        obsoleteAlert.classList.remove("obsolete-code-alert-fadeout");
+        obsoleteAlert.classList.add('obsolete-code-alert-fadein');
+        obsoleteAlert.classList.remove('obsolete-code-alert-fadeout');
     } else {
-        obsoleteAlert.classList.add("obsolete-code-alert-fadeout");
-        obsoleteAlert.classList.remove("obsolete-code-alert-fadein");
+        obsoleteAlert.classList.add('obsolete-code-alert-fadeout');
+        obsoleteAlert.classList.remove('obsolete-code-alert-fadein');
     }
 
-    document.title = title + " - CodeWorld";
+    document.title = title + ' - CodeWorld';
 }
 
 function updateNavBar() {
@@ -503,17 +503,17 @@ function updateNavBar() {
         folderNames.sort((a, b) => a.localeCompare(b));
     });
 
-    let makeDirNode = (name, isOpen, level) => {
-        let encodedName = name
+    const makeDirNode = (name, isOpen, level) => {
+        const encodedName = name
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
-        let templateName = isOpen ? 'openFolderTemplate' : 'folderTemplate';
+        const templateName = isOpen ? 'openFolderTemplate' : 'folderTemplate';
         let template = document.getElementById(templateName).innerHTML;
         template = template.replace(/{{label}}/g, encodedName);
-        let span = document.createElement('span');
+        const span = document.createElement('span');
         span.innerHTML = template;
-        let elem = span.getElementsByTagName('a')[0];
+        const elem = span.getElementsByTagName('a')[0];
         elem.style.marginLeft = (3 + 16 * level) + 'px';
         elem.onclick = () => {
             folderHandler(name, level, isOpen);
@@ -524,22 +524,22 @@ function updateNavBar() {
         return span;
     };
 
-    let makeProjectNode = (name, level, active) => {
+    const makeProjectNode = (name, level, active) => {
         let title = name;
         if (active && !isEditorClean()) {
-            title = "* " + title;
+            title = '* ' + title;
         }
-        let encodedName = title
+        const encodedName = title
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
         let template = document.getElementById('projectTemplate').innerHTML;
         template = template.replace(/{{label}}/g, encodedName);
-        template = template.replace(/{{ifactive ([^}]*)}}/g, active ? "$1" :
-            "");
-        let span = document.createElement('span');
+        template = template.replace(/{{ifactive ([^}]*)}}/g, active ? '$1' :
+            '');
+        const span = document.createElement('span');
         span.innerHTML = template;
-        let elem = span.getElementsByTagName('a')[0];
+        const elem = span.getElementsByTagName('a')[0];
         elem.style.marginLeft = (3 + 16 * level) + 'px';
         elem.onclick = () => {
             loadProject(name, level);
@@ -558,12 +558,12 @@ function updateNavBar() {
     for (let i = 0; i < nestedDirs.length; i++) {
         let nextProjects = null;
         allFolderNames[i].forEach(folderName => {
-            let active = i + 1 < nestedDirs.length && nestedDirs[i + 1] ==
+            const active = i + 1 < nestedDirs.length && nestedDirs[i + 1] ==
                 folderName;
             if (!signedIn() && !active) {
                 return;
             }
-            let span = makeDirNode(folderName, active, i);
+            const span = makeDirNode(folderName, active, i);
             projects.appendChild(span);
             if (active) {
                 nextProjects = span.appendChild(document.createElement(
@@ -571,22 +571,22 @@ function updateNavBar() {
             }
         });
         allProjectNames[i].forEach(projectName => {
-            let active = i + 1 == nestedDirs.length && window.openProjectName ==
+            const active = i + 1 == nestedDirs.length && window.openProjectName ==
                 projectName;
             if (!signedIn() && !active) {
                 return;
             }
-            let span = makeProjectNode(projectName, i, active);
+            const span = makeProjectNode(projectName, i, active);
             projects.appendChild(span);
         });
         if (nextProjects) projects = nextProjects;
     }
 
     if (projects && window.loadingDir) {
-        let template = document.getElementById('loaderTemplate').innerHTML;
-        let span = document.createElement('span');
+        const template = document.getElementById('loaderTemplate').innerHTML;
+        const span = document.createElement('span');
         span.innerHTML = template;
-        let elem = span.getElementsByTagName('a')[0];
+        const elem = span.getElementsByTagName('a')[0];
         elem.style.marginLeft = (3 + 16 * (nestedDirs.length - 1)) + 'px';
         span.style.display = 'flex';
         span.style.flexDirection = 'column';
@@ -613,8 +613,8 @@ function moveProject() {
             return;
         }
 
-        let tempOpen = openProjectName;
-        let tempPath = nestedDirs.slice(1).join('/');
+        const tempOpen = openProjectName;
+        const tempPath = nestedDirs.slice(1).join('/');
         setCode('');
         if (tempOpen == null || tempOpen == '') {
             nestedDirs.splice(-1);
@@ -628,15 +628,15 @@ function moveProject() {
             window.move.file = tempOpen;
         }
 
-        discoverProjects("", 0);
+        discoverProjects('', 0);
         updateNavBar();
     }, false);
 }
 
 function moveHere() {
     moveHere_(nestedDirs.slice(1).join('/'), window.buildMode, () => {
-        nestedDirs = [""];
-        discoverProjects("", 0);
+        nestedDirs = [''];
+        discoverProjects('', 0);
         cancelMove();
         updateUI();
     });
@@ -644,8 +644,8 @@ function moveHere() {
 
 function changeFontSize(incr) {
     return () => {
-        let elem = window.codeworldEditor.getWrapperElement();
-        let fontParts = window.getComputedStyle(elem)['font-size'].match(
+        const elem = window.codeworldEditor.getWrapperElement();
+        const fontParts = window.getComputedStyle(elem)['font-size'].match(
             /^([0-9]+)(.*)$/);
         let fontSize = 12;
         let fontUnit = 'px';
@@ -657,7 +657,7 @@ function changeFontSize(incr) {
         if (fontSize < 8) fontSize = 8;
         elem.style.fontSize = fontSize + fontUnit;
         window.codeworldEditor.refresh();
-    }
+    };
 }
 
 function help() {
@@ -676,42 +676,42 @@ function help() {
         allowOutsideClick: true,
         showConfirmButton: false,
     }).then(() => {
-        let docIframe = document.getElementById("doc");
+        const docIframe = document.getElementById('doc');
         docIframe.contentWindow.savePosition();
     });
 }
 
 function editorHelp(doc) {
-    let helpText = "<h3>Editor Shortcuts</h3>" +
-        "<div id='keyboard-shortcuts'><table><tbody>" +
-        "<tr><td>Ctrl + Enter </td><td>  Run the program</td></tr>" +
-        "<tr><td>Ctrl + Space / Shift + Space </td><td> Autocomplete</td></tr>" +
-        "<tr><td>Ctrl + Up </td><td> Zoom in </td></tr>" +
-        "<tr><td>Ctrl + Down </td><td>  Zoom out </td></tr>" +
-        "<tr><td>Ctrl + A </td><td>  Select all </td></tr>" +
-        "<tr><td>Ctrl + Home </td><td>  Go to start</td></tr>" +
-        "<tr><td>Ctrl + End </td><td>  Go to end </td></tr>" +
-        "<tr><td>Alt + Left </td><td>  Go to start of line</td></tr>" +
-        "<tr><td>Alt + Right </td><td>  Go to end of line</td></tr>" +
-        "<tr><td>Ctrl + D </td><td>  Delete line </td></tr>" +
-        "<tr><td>Ctrl + Left </td><td>  Go one word left</td></tr>" +
-        "<tr><td>Ctrl + Right </td><td>  Go one word right </td></tr>" +
-        "<tr><td>Ctrl + Backspace </td><td>  Delete previous word</td></tr>" +
-        "<tr><td>Ctrl + Delete </td><td>  Delete next word</td></tr>" +
-        "<tr><td>Ctrl + F </td><td>  Search </td></tr>" +
-        "<tr><td>Ctrl + G </td><td>  Find next occurrence </td></tr>" +
-        "<tr><td>Ctrl + Shift + G </td><td>  Find previous occurrence </td></tr>" +
-        "<tr><td>Ctrl + Shift + F </td><td>  Replace </td></tr>" +
-        "<tr><td>Ctrl + Shift + R </td><td>  Replace all </td></tr>" +
-        "<tr><td>Ctrl + S </td><td> Save </td></tr>" +
-        "<tr><td>Ctrl + Z </td><td> Undo </td></tr>" +
-        "<tr><td>Ctrl + Shift + Z / Ctrl + Y </td><td> Redo </td></tr>" +
-        "<tr><td>Ctrl + U </td><td> Undo selection </td></tr>" +
-        "<tr><td>Ctrl + Shift +  U / Alt + U </td><td> Redo selection </td></tr>" +
-        "<tr><td>Tab / Ctrl + ] </td><td> Indent </td></tr>" +
-        "<tr><td>Shift + Tab / Ctrl + [ </td><td> Unindent </td></tr>" +
-        "<tr><td>Ctrl + I </td><td> Reformat (Haskell mode only) </td></tr>" +
-        "</tbody></table></div>";
+    const helpText = '<h3>Editor Shortcuts</h3>' +
+        '<div id=\'keyboard-shortcuts\'><table><tbody>' +
+        '<tr><td>Ctrl + Enter </td><td>  Run the program</td></tr>' +
+        '<tr><td>Ctrl + Space / Shift + Space </td><td> Autocomplete</td></tr>' +
+        '<tr><td>Ctrl + Up </td><td> Zoom in </td></tr>' +
+        '<tr><td>Ctrl + Down </td><td>  Zoom out </td></tr>' +
+        '<tr><td>Ctrl + A </td><td>  Select all </td></tr>' +
+        '<tr><td>Ctrl + Home </td><td>  Go to start</td></tr>' +
+        '<tr><td>Ctrl + End </td><td>  Go to end </td></tr>' +
+        '<tr><td>Alt + Left </td><td>  Go to start of line</td></tr>' +
+        '<tr><td>Alt + Right </td><td>  Go to end of line</td></tr>' +
+        '<tr><td>Ctrl + D </td><td>  Delete line </td></tr>' +
+        '<tr><td>Ctrl + Left </td><td>  Go one word left</td></tr>' +
+        '<tr><td>Ctrl + Right </td><td>  Go one word right </td></tr>' +
+        '<tr><td>Ctrl + Backspace </td><td>  Delete previous word</td></tr>' +
+        '<tr><td>Ctrl + Delete </td><td>  Delete next word</td></tr>' +
+        '<tr><td>Ctrl + F </td><td>  Search </td></tr>' +
+        '<tr><td>Ctrl + G </td><td>  Find next occurrence </td></tr>' +
+        '<tr><td>Ctrl + Shift + G </td><td>  Find previous occurrence </td></tr>' +
+        '<tr><td>Ctrl + Shift + F </td><td>  Replace </td></tr>' +
+        '<tr><td>Ctrl + Shift + R </td><td>  Replace all </td></tr>' +
+        '<tr><td>Ctrl + S </td><td> Save </td></tr>' +
+        '<tr><td>Ctrl + Z </td><td> Undo </td></tr>' +
+        '<tr><td>Ctrl + Shift + Z / Ctrl + Y </td><td> Redo </td></tr>' +
+        '<tr><td>Ctrl + U </td><td> Undo selection </td></tr>' +
+        '<tr><td>Ctrl + Shift +  U / Alt + U </td><td> Redo selection </td></tr>' +
+        '<tr><td>Tab / Ctrl + ] </td><td> Indent </td></tr>' +
+        '<tr><td>Shift + Tab / Ctrl + [ </td><td> Unindent </td></tr>' +
+        '<tr><td>Ctrl + I </td><td> Reformat (Haskell mode only) </td></tr>' +
+        '</tbody></table></div>';
     sweetAlert({
         html: helpText,
         allowEscapeKey: true,
@@ -721,7 +721,7 @@ function editorHelp(doc) {
 }
 
 function isEditorClean() {
-    let doc = window.codeworldEditor.getDoc();
+    const doc = window.codeworldEditor.getDoc();
 
     if (window.savedGeneration == null) return doc.getValue() == '';
     else return doc.isClean(window.savedGeneration);
@@ -730,7 +730,7 @@ function isEditorClean() {
 function setCode(code, history, name, autostart) {
     openProjectName = name;
 
-    let doc = codeworldEditor.getDoc();
+    const doc = codeworldEditor.getDoc();
     doc.setValue(code);
     savedGeneration = doc.changeGeneration(true);
 
@@ -786,8 +786,8 @@ function formatSource() {
         return;
     }
 
-    let src = window.codeworldEditor.getValue();
-    let data = new FormData();
+    const src = window.codeworldEditor.getValue();
+    const data = new FormData();
     data.append('source', src);
     data.append('mode', window.buildMode);
 
@@ -799,8 +799,8 @@ function formatSource() {
 }
 
 function stop() {
-    if (document.getElementById("runner").contentWindow.debugActive) {
-        document.getElementById("runner").contentWindow.stopDebugMode();
+    if (document.getElementById('runner').contentWindow.debugActive) {
+        document.getElementById('runner').contentWindow.stopDebugMode();
     }
     destroyTreeDialog();
     window.cancelCompile();
@@ -811,10 +811,10 @@ function stop() {
 function run(hash, dhash, msg, error, generation) {
     window.runningGeneration = generation;
 
-    let runner = document.getElementById('runner');
+    const runner = document.getElementById('runner');
 
     // Stop canvas recording if the recorder is active
-    if (canvasRecorder && canvasRecorder.recorder.state === "recording") {
+    if (canvasRecorder && canvasRecorder.recorder.state === 'recording') {
         stopRecording();
     }
 
@@ -827,7 +827,7 @@ function run(hash, dhash, msg, error, generation) {
     }
 
     if (dhash) {
-        let loc = 'run.html?dhash=' + dhash + '&mode=' + window.buildMode;
+        const loc = 'run.html?dhash=' + dhash + '&mode=' + window.buildMode;
         runner.contentWindow.location.replace(loc);
         if (!!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia) {
             document.getElementById('startRecButton').style.display = '';
@@ -848,7 +848,7 @@ function run(hash, dhash, msg, error, generation) {
         window.mainLayout.hide('east');
     }
 
-    let message = document.getElementById('message');
+    const message = document.getElementById('message');
     message.innerHTML = '';
 
     if (error) {
@@ -872,18 +872,18 @@ function run(hash, dhash, msg, error, generation) {
 }
 
 function showRequiredChecksInDialog(msg) {
-    let matches = msg.match(
+    const matches = msg.match(
         /:: REQUIREMENTS ::((?:.|[\r\n])*):: END REQUIREMENTS ::/);
     if (!matches) {
         return;
     }
-    let reqs = matches[1].split(/[\r\n]+/);
-    let items = [];
+    const reqs = matches[1].split(/[\r\n]+/);
+    const items = [];
     for (let i = 0; i < reqs.length; ++i) {
-        let req = reqs[i];
+        const req = reqs[i];
         if (!req) continue;
-        let bullet = req.slice(0, 4).toUpperCase();
-        let rest = req.slice(4);
+        const bullet = req.slice(0, 4).toUpperCase();
+        const rest = req.slice(4);
         if (bullet === '[Y] ') {
             // Successful requirement
             items.push([true, htmlEscapeString(rest)]);
@@ -898,12 +898,12 @@ function showRequiredChecksInDialog(msg) {
             items[items.length - 1].push(req);
         }
     }
-    let itemsHtml = items.map(item => {
-        let head = item[1];
-        let rest = item.slice(2).join('<br>');
-        let details = rest ? '<br><span class="req-details">' + rest +
+    const itemsHtml = items.map(item => {
+        const head = item[1];
+        const rest = item.slice(2).join('<br>');
+        const details = rest ? '<br><span class="req-details">' + rest +
             '</span>' : '';
-        let itemclass = (item[0] === undefined) ? 'req-indet' : (item[0] ?
+        const itemclass = (item[0] === undefined) ? 'req-indet' : (item[0] ?
             'req-yes' : 'req-no');
         return '<li class="' + itemclass + '">' + head + details +
             '</li>';
@@ -915,7 +915,7 @@ function showRequiredChecksInDialog(msg) {
         showCancelButton: false,
         closeOnConfirm: true
     }).then(() => {
-        let runner = document.getElementById('runner');
+        const runner = document.getElementById('runner');
         if (!runner) return;
         if (runner.style.display == 'none') return;
 
@@ -926,8 +926,8 @@ function showRequiredChecksInDialog(msg) {
     });
 }
 
-let htmlEscapeString = (() => {
-    let el = document.createElement('div')
+const htmlEscapeString = (() => {
+    const el = document.createElement('div');
     return str => {
         el.textContent = str;
         return el.innerHTML;
@@ -943,11 +943,11 @@ function goto(line, col) {
 function compile() {
     stop();
 
-    let src = window.codeworldEditor.getValue();
-    let compileGeneration = window.codeworldEditor.getDoc().changeGeneration(
+    const src = window.codeworldEditor.getValue();
+    const compileGeneration = window.codeworldEditor.getDoc().changeGeneration(
         true);
 
-    let data = new FormData();
+    const data = new FormData();
     data.append('source', src);
     data.append('mode', window.buildMode);
 
@@ -977,7 +977,7 @@ function compile() {
         sweetAlert.close();
         window.cancelCompile();
 
-        let success = request.status == 200;
+        const success = request.status == 200;
 
         let hash;
         let dhash;
@@ -986,18 +986,18 @@ function compile() {
             dhash = null;
         } else {
             try {
-                let obj = JSON.parse(request.responseText);
+                const obj = JSON.parse(request.responseText);
                 hash = obj.hash;
                 dhash = obj.dhash;
             } catch (e) {
                 run('', '',
-                    "Sorry!  Your program couldn't be run right now.",
+                    'Sorry!  Your program couldn\'t be run right now.',
                     true, null);
                 return;
             }
         }
 
-        let data = new FormData();
+        const data = new FormData();
         data.append('hash', hash);
         data.append('mode', window.buildMode);
 
@@ -1008,7 +1008,7 @@ function compile() {
                     /^[\r\n]+|[\r\n]+$/g, '');
             } else if (request.status >= 400) {
                 msg =
-                    "Sorry!  Your program couldn't be run right now.";
+                    'Sorry!  Your program couldn\'t be run right now.';
             }
             if (msg != '') msg += '\n\n';
 
@@ -1024,7 +1024,7 @@ function compile() {
 let isFirstSignin = true;
 
 function signinCallback(result) {
-    discoverProjects("", 0);
+    discoverProjects('', 0);
     cancelMove();
     updateUI();
     if (isFirstSignin && !signedIn() && autohelpEnabled) {
@@ -1040,15 +1040,15 @@ function discoverProjects(path, index) {
 function saveProjectBase(path, projectName) {
     saveProjectBase_(path, projectName, window.buildMode, () => {
         window.openProjectName = projectName;
-        let doc = window.codeworldEditor.getDoc();
+        const doc = window.codeworldEditor.getDoc();
         window.savedGeneration = doc.changeGeneration(true);
         window.codeworldEditor.focus();
     });
 }
 
 function deleteFolder() {
-    let path = nestedDirs.slice(1).join('/')
-    if (path == "" || window.openProjectName != null) {
+    const path = nestedDirs.slice(1).join('/');
+    if (path == '' || window.openProjectName != null) {
         return;
     }
 
@@ -1064,7 +1064,7 @@ function deleteProject() {
         return;
     }
 
-    let path = nestedDirs.slice(1).join('/');
+    const path = nestedDirs.slice(1).join('/');
     deleteProject_(path, window.buildMode, () => {
         savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
         setCode('');
@@ -1076,18 +1076,18 @@ function shareFolder() {
 }
 
 function downloadProject() {
-    let blob = new Blob(
+    const blob = new Blob(
         [window.codeworldEditor.getDoc().getValue()], {
             type: 'text/plain',
             endings: 'native'
         });
-    let filename = "untitled.hs";
+    let filename = 'untitled.hs';
     if (window.openProjectName) filename = window.openProjectName + '.hs';
 
     if (window.navigator.msSaveBlob) {
         window.navigator.msSaveBlob(blob, filename);
     } else {
-        let elem = window.document.createElement('a');
+        const elem = window.document.createElement('a');
         elem.href = window.URL.createObjectURL(blob);
         elem.download = filename;
         document.body.appendChild(elem);
@@ -1097,33 +1097,33 @@ function downloadProject() {
 }
 
 function parseCompileErrors(rawErrors) {
-    let errors = [];
-    rawErrors = rawErrors.split("\n\n");
+    const errors = [];
+    rawErrors = rawErrors.split('\n\n');
     rawErrors.forEach(err => {
-        let lines = err.split('\n');
-        let firstLine = lines[0].trim();
-        let otherLines = lines.slice(1).map(ln => ln.trim()).join('\n');
-        let re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/;
-        let re2 =
+        const lines = err.split('\n');
+        const firstLine = lines[0].trim();
+        const otherLines = lines.slice(1).map(ln => ln.trim()).join('\n');
+        const re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/;
+        const re2 =
             /^program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\): (\w+):(.*)/;
 
-        if (err.trim() === "") {
+        if (err.trim() === '') {
             // Ignore empty messages.
         } else if (re1.test(firstLine)) {
-            let match = re1.exec(firstLine);
+            const match = re1.exec(firstLine);
 
-            let line = Number(match[1]) - 1;
+            const line = Number(match[1]) - 1;
             let startCol = Number(match[3]) - 1;
             let endCol;
             if (match[4]) {
                 endCol = Number(match[4]) - 1;
             } else {
-                let token = window.codeworldEditor.getLineTokens(line).find(
+                const token = window.codeworldEditor.getLineTokens(line).find(
                     t => t.start === startCol);
                 if (token) {
                     endCol = token.end;
                 } else if (startCol >= window.codeworldEditor.getDoc().getLine(
-                        line).length) {
+                    line).length) {
                     endCol = startCol;
                     --startCol;
                 } else {
@@ -1137,15 +1137,15 @@ function parseCompileErrors(rawErrors) {
                 severity: match[5],
                 fullText: err,
                 message: (match[6] ? match[6].trim() + '\n' :
-                    "") + otherLines
+                    '') + otherLines
             });
         } else if (re2.test(firstLine)) {
-            let match = re2.exec(firstLine);
+            const match = re2.exec(firstLine);
 
-            let startLine = Number(match[1]) - 1;
-            let startCol = Number(match[2]) - 1;
-            let endLine = Number(match[3]) - 1;
-            let endCol = Number(match[4]) - 1;
+            const startLine = Number(match[1]) - 1;
+            const startCol = Number(match[2]) - 1;
+            const endLine = Number(match[3]) - 1;
+            const endCol = Number(match[4]) - 1;
 
             errors.push({
                 from: CodeMirror.Pos(startLine, startCol),
@@ -1153,11 +1153,11 @@ function parseCompileErrors(rawErrors) {
                 severity: match[5],
                 fullText: err,
                 message: (match[6] ? match[6].trim() + '\n' :
-                    "") + otherLines
+                    '') + otherLines
             });
         } else {
-            console.log("Can not parse error header:", firstLine);
+            console.log('Can not parse error header:', firstLine);
         }
-    })
+    });
     return errors;
 }

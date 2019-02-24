@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 window.env = parent;
-let params = new URLSearchParams(window.location.search);
+const params = new URLSearchParams(window.location.search);
 let position = {
     scrollLeft: 0,
     scrollTop: 0,
@@ -23,14 +23,14 @@ let position = {
 
 function savePosition() {
     sessionStorage.setItem('position', JSON.stringify(position));
-};
+}
 
 function loadPosition() {
-    let savedPosition = sessionStorage.getItem('position');
-    if (savedPosition && savedPosition != "undefined") {
-        position = JSON.parse(savedPosition)
+    const savedPosition = sessionStorage.getItem('position');
+    if (savedPosition && savedPosition != 'undefined') {
+        position = JSON.parse(savedPosition);
     }
-};
+}
 window.onscroll = event => {
     position.scrollLeft = event.target.scrollingElement.scrollLeft;
     position.scrollTop = event.target.scrollingElement.scrollTop;
@@ -40,18 +40,18 @@ window.onload = () => {
 };
 (() => {
     let shelf = {};
-    let contents = {};
+    const contents = {};
 
     function linkCodeBlocks(elem, linkable = true) {
         codeworldKeywords = {};
         registerStandardHints(() => {
-            let pres = elem.getElementsByTagName('pre');
+            const pres = elem.getElementsByTagName('pre');
             for (let i = 0; i < pres.length; ++i) {
                 (() => {
-                    let pre = pres[i];
+                    const pre = pres[i];
 
                     // Markdeep buries the class annotations a bit, so we dig.
-                    let clickable =
+                    const clickable =
                         pre.classList.contains('clickable') ||
                         (pre.firstChild && pre.firstChild.classList &&
                             pre.firstChild.classList.contains(
@@ -59,9 +59,9 @@ window.onload = () => {
                         (pre.firstChild && pre.firstChild.firstChild &&
                             pre.firstChild.firstChild.classList &&
                             pre.firstChild.firstChild.classList
-                            .contains('clickable'));
+                                .contains('clickable'));
 
-                    let text = pre.textContent;
+                    const text = pre.textContent;
                     pre.innerHTML = '';
                     CodeMirror.runMode(text, {
                         name: 'codeworld',
@@ -76,7 +76,7 @@ window.onload = () => {
                                 savePosition();
                                 env.loadSample(text);
                             }
-                        }
+                        };
                     }
                 })();
             }
@@ -84,16 +84,16 @@ window.onload = () => {
     }
 
     function activateCollapsible(root) {
-        let elems = root.getElementsByClassName('collapsible');
+        const elems = root.getElementsByClassName('collapsible');
         for (let i = 0; i < elems.length; ++i) {
-            let elem = elems[i];
+            const elem = elems[i];
             elem.onclick = () => {
                 if (elem.classList.contains('expanded')) {
                     elem.classList.remove('expanded');
                 } else {
                     elem.classList.add('expanded');
                 }
-            }
+            };
         }
     }
 
@@ -102,14 +102,14 @@ window.onload = () => {
         let i = 0;
 
         while (blocks != null && blocks.length > 0) {
-            let block = blocks[0];
-            let text = block.outerHTML;
+            const block = blocks[0];
+            const text = block.outerHTML;
 
-            let iframe = document.createElement('iframe');
+            const iframe = document.createElement('iframe');
             iframe.setAttribute('frameborder', '0');
             iframe.setAttribute('scrolling', 'no');
 
-            iframe.addEventListener("load", () => {
+            iframe.addEventListener('load', () => {
                 this.contentWindow.setParent(parent);
                 this.contentWindow.setId(iframe);
                 this.contentWindow.loadXml.call(iframe.contentWindow,
@@ -119,7 +119,7 @@ window.onload = () => {
             iframe.src = 'blockframe.html';
             iframe.classList.add('clickable');
 
-            let parent = block.parentNode;
+            const parent = block.parentNode;
             parent.insertBefore(iframe, block);
             parent.removeChild(block);
 
@@ -129,23 +129,23 @@ window.onload = () => {
     }
 
     function addTableOfContents(body, outline) {
-        let contents = document.createElement('div');
+        const contents = document.createElement('div');
         contents.id = 'helpcontents';
         contents.classList.add('contents');
 
-        let elems = body.getElementsByTagName('*');
+        const elems = body.getElementsByTagName('*');
 
         let currentLevel = 0;
         let currentElem = contents;
         let n = 0;
         for (let i = 0; i < elems.length; ++i) {
-            let header = elems[i];
-            let match = (/h([1-3])/i).exec(header.tagName);
+            const header = elems[i];
+            const match = (/h([1-3])/i).exec(header.tagName);
             if (match == null) continue;
-            let level = parseInt(match[1]);
+            const level = parseInt(match[1]);
 
             while (currentLevel < level) {
-                let sub = document.createElement('ul');
+                const sub = document.createElement('ul');
                 currentElem.appendChild(sub);
                 ++currentLevel;
                 currentElem = sub;
@@ -158,14 +158,14 @@ window.onload = () => {
 
             ++n;
 
-            let anchor = document.createElement('a');
+            const anchor = document.createElement('a');
             anchor.setAttribute('name', n);
             anchor.innerHTML = header.innerHTML;
             header.innerHTML = '';
             header.appendChild(anchor);
 
-            let li = document.createElement('li');
-            let link = document.createElement('a');
+            const li = document.createElement('li');
+            const link = document.createElement('a');
             link.setAttribute('href', '#' + n);
             link.textContent = header.textContent;
             li.appendChild(link);
@@ -179,17 +179,17 @@ window.onload = () => {
     }
 
     function addPopout(help) {
-        let popdiv = document.createElement('div');
+        const popdiv = document.createElement('div');
         popdiv.id = 'popout';
         popdiv.style = 'text-align: right';
-        let popout = document.createElement('a');
+        const popout = document.createElement('a');
         popout.innerHTML =
             '<i class="mdi mdi-18px mdi-open-in-new"></i>&nbsp;Open the Help in a New Tab';
         popout.target = '_blank';
         popout.href = document.location.href;
         popout.onclick = e => {
-            let tab = open(this.href);
-            tab.addEventListener("load", () => {
+            const tab = open(this.href);
+            tab.addEventListener('load', () => {
                 tab.env = parent;
                 if (parent.sweetAlert) {
                     parent.sweetAlert.close();
@@ -202,8 +202,8 @@ window.onload = () => {
     }
 
     function relativizeLinks(base, root, tag, attr) {
-        let elems = root.getElementsByTagName(tag);
-        for (let elem of elems) {
+        const elems = root.getElementsByTagName(tag);
+        for (const elem of elems) {
             if (elem.hasAttribute(attr)) {
                 let url = new URL(elem.getAttribute(attr), base);
                 if (base.origin == url.origin && base.pathname == url.pathname) {
@@ -220,19 +220,19 @@ window.onload = () => {
         if (node.nodeType == Node.TEXT_NODE) {
             node.nodeValue = node.nodeValue.replace(/HasCallStack => /, '');
         } else {
-            for (let child of node.childNodes) removeCallStacks(child);
+            for (const child of node.childNodes) removeCallStacks(child);
         }
     }
 
     function setContent(elem) {
-        let help = document.getElementById('help');
+        const help = document.getElementById('help');
         while (help.firstChild) {
             help.removeChild(help.firstChild);
         }
         if (parent && parent !== window) {
             addPopout(help);
         }
-        help.appendChild(elem)
+        help.appendChild(elem);
 
         document.scrollingElement.scrollLeft = position.scrollLeft;
         document.scrollingElement.scrollTop = position.scrollTop;
@@ -244,16 +244,16 @@ window.onload = () => {
         if (contents[path] && contents[path].elem) {
             setContent(contents[path].elem);
         } else {
-            let request = new XMLHttpRequest();
+            const request = new XMLHttpRequest();
             request.open('GET', path, true);
             request.onreadystatechange = () => {
                 if (request.readyState != 4) {
                     return;
                 }
 
-                let source = new URL(path, location.href);
-                let content = document.createElement('div');
-                let raw = request.responseText;
+                const source = new URL(path, location.href);
+                const content = document.createElement('div');
+                const raw = request.responseText;
 
                 if (path.endsWith('.md')) {
                     content.innerHTML = window.markdeep.format(raw,
@@ -276,7 +276,7 @@ window.onload = () => {
                     removeCallStacks(content);
                 }
 
-                let spacerDiv = document.createElement('div');
+                const spacerDiv = document.createElement('div');
                 spacerDiv.style = 'height: 90vh';
                 content.appendChild(spacerDiv);
 
@@ -287,9 +287,9 @@ window.onload = () => {
                     addTableOfContents(content, contents[path].outline);
                 }
                 setContent(content);
-            }
+            };
             request.send(null);
-        };
+        }
     }
 
     function loadSidebar() {
@@ -298,16 +298,16 @@ window.onload = () => {
 
         let activeIndex = false;
 
-        let acc = document.createElement('div')
+        const acc = document.createElement('div');
         acc.id = 'helpacc';
 
         let paneNum = 0;
-        for (let doc in shelf.named) {
-            let hdr = document.createElement('h3');
+        for (const doc in shelf.named) {
+            const hdr = document.createElement('h3');
             hdr.innerText = doc;
             acc.appendChild(hdr);
 
-            let entry = document.createElement('div');
+            const entry = document.createElement('div');
             entry.classList.add('accentry');
             entry.innerHTML = '<div>Loading...</div>';
             acc.appendChild(entry);
@@ -318,7 +318,7 @@ window.onload = () => {
                 outline: entry,
                 index: paneNum,
                 elem: null
-            }
+            };
 
             if (shelf.named[doc] == path) activeIndex = paneNum;
             paneNum++;
@@ -332,19 +332,19 @@ window.onload = () => {
             beforeActivate: (event, ui) => {
                 position.scrollLeft = 0;
                 position.scrollTop = 0;
-                let name = ui.newHeader.text();
-                let path = name && shelf.named[name];
+                const name = ui.newHeader.text();
+                const path = name && shelf.named[name];
                 if (path) loadPath(path);
             }
         });
     }
 
-    let markdeepStyle = document.createElement('style');
+    const markdeepStyle = document.createElement('style');
     document.head.appendChild(markdeepStyle);
     markdeepStyle.outerHTML = window.markdeep.stylesheet();
 
     if (params.get('shelf')) {
-        let request = new XMLHttpRequest();
+        const request = new XMLHttpRequest();
         request.open('GET', params.get('shelf'), true);
         request.onreadystatechange = () => {
             if (request.readyState != 4) {

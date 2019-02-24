@@ -137,12 +137,12 @@ async function init() {
 function initCodeworld() {
     let editor = document.getElementById('editor');
 
-    codeworldKeywords = {};
+    window.codeworldKeywords = {};
 
     window.codeworldEditor = CodeMirror.fromTextArea(editor, {
         mode: {
             name: 'codeworld',
-            overrideKeywords: codeworldKeywords
+            overrideKeywords: window.codeworldKeywords
         },
         undoDepth: 50,
         lineNumbers: true,
@@ -344,7 +344,7 @@ function setMode(force) {
             window.codeworldEditor.setOption(
                 'mode', {
                     name: 'codeworld',
-                    overrideKeywords: codeworldKeywords
+                    overrideKeywords: window.codeworldKeywords
                 });
         }
     }

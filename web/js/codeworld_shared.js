@@ -108,7 +108,6 @@ let hintBlacklist = [
     "Brown",
     "cyan",
     "magenta",
-    "yellow",
     "azure",
     "chartreuse",
     "aquamarine",

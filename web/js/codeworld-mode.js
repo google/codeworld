@@ -19,38 +19,38 @@
 // CodeMirror is copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
-"use strict";
+'use strict';
 
-CodeMirror.defineMode("codeworld", (_config, modeConfig) => {
+CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
     // This is a regular expression used in multiple contexts.
-    let MULTICHAR_ESCAPE_REGEX =
+    const MULTICHAR_ESCAPE_REGEX =
         '\\\\NUL|\\\\SOH|\\\\STX|\\\\ETX|\\\\EOT|\\\\ENQ|\\\\ACK|\\\\BEL|\\\\BS|' +
         '\\\\HT|\\\\LF|\\\\VT|\\\\FF|\\\\CR|\\\\SO|\\\\SI|\\\\DLE|\\\\DC1|\\\\DC2|' +
         '\\\\DC3|\\\\DC4|\\\\NAK|\\\\SYN|\\\\ETB|\\\\CAN|\\\\EM|\\\\SUB|\\\\ESC|' +
         '\\\\FS|\\\\GS|\\\\RS|\\\\US|\\\\SP|\\\\DEL';
 
-    let RE_WHITESPACE = /[ \v\t\f]+/;
-    let RE_STARTMETA = /{-#/;
-    let RE_STARTCOMMENT = /{-/;
-    let RE_DASHES = /--+(?=$|[^:!#$%&*+.\/<=>?@\\^|~-]+)/;
-    let RE_QUAL =
+    const RE_WHITESPACE = /[ \v\t\f]+/;
+    const RE_STARTMETA = /{-#/;
+    const RE_STARTCOMMENT = /{-/;
+    const RE_DASHES = /--+(?=$|[^:!#$%&*+.\/<=>?@\\^|~-]+)/;
+    const RE_QUAL =
         /[A-Z][A-Za-z_0-9']*\.(?=[A-Za-z_:!#$%&*+.\/<=>?@\\^|~]|-[^-])/;
-    let RE_VARID = /[a-z_][A-Za-z_0-9']*/;
-    let RE_CONID = /[A-Z][A-Za-z_0-9']*/;
-    let RE_VARSYM = /[!#$%&*+.\/<=>?@\\^|~-][:!#$%&*+.\/<=>?@\\^|~-]*/;
-    let RE_CONSYM = /:[:!#$%&*+.\/<=>?@\\^|~-]*/;
-    let RE_NUMBER =
+    const RE_VARID = /[a-z_][A-Za-z_0-9']*/;
+    const RE_CONID = /[A-Z][A-Za-z_0-9']*/;
+    const RE_VARSYM = /[!#$%&*+.\/<=>?@\\^|~-][:!#$%&*+.\/<=>?@\\^|~-]*/;
+    const RE_CONSYM = /:[:!#$%&*+.\/<=>?@\\^|~-]*/;
+    const RE_NUMBER =
         /[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|0[oO][0-7]+|0[xX][0-9a-fA-F]+/;
-    let RE_CHAR = new RegExp(
-        '\'(?:[^\\\\\']|\\\\[abfnrtv\\\\"\']|\\\\^[A-Z@[\\\\\\]^_]|' +
-        MULTICHAR_ESCAPE_REGEX + ')\'');
-    let RE_STRING = new RegExp(
-        '"(?:[^\\\\"]|\\\\[abfnrtv\\\\"\'&]|\\\\^[A-Z@[\\\\\\]^_]|' +
-        MULTICHAR_ESCAPE_REGEX + ')*"');
-    let RE_OPENBRACKET = /[([{]/;
-    let RE_CLOSEBRACKET = /[)\]}]/;
-    let RE_INCOMMENT = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/;
-    let RE_ENDCOMMENT = /-}/;
+    const RE_CHAR = new RegExp(
+        `'(?:[^\\\\']|\\\\[abfnrtv\\\\"']|\\\\^[A-Z@[\\\\\\]^_]|${ 
+            MULTICHAR_ESCAPE_REGEX})'`);
+    const RE_STRING = new RegExp(
+        `"(?:[^\\\\"]|\\\\[abfnrtv\\\\"'&]|\\\\^[A-Z@[\\\\\\]^_]|${ 
+            MULTICHAR_ESCAPE_REGEX})*"`);
+    const RE_OPENBRACKET = /[([{]/;
+    const RE_CLOSEBRACKET = /[)\]}]/;
+    const RE_INCOMMENT = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/;
+    const RE_ENDCOMMENT = /-}/;
 
     function opening(bracket) {
         if (bracket == ')') return '(';
@@ -93,18 +93,18 @@ CodeMirror.defineMode("codeworld", (_config, modeConfig) => {
 
         if (stream.match(RE_OPENBRACKET)) {
             state.brackets.push(stream.current());
-            return 'bracket' + (state.brackets.length <= 7 ? '-' + (
-                state.brackets.length - 1) : '');
+            return `bracket${state.brackets.length <= 7 ? `-${  
+                state.brackets.length - 1}` : ''}`;
         }
 
         if (stream.match(RE_CLOSEBRACKET)) {
-            let i = state.brackets.lastIndexOf(opening(stream.current()));
+            const i = state.brackets.lastIndexOf(opening(stream.current()));
             if (i < 0) {
                 return 'bracket';
             } else {
                 while (state.brackets.length > i) state.brackets.pop();
-                return 'bracket' + (state.brackets.length <= 6 ? '-' +
-                    state.brackets.length : '');
+                return `bracket${state.brackets.length <= 6 ? `-${ 
+                    state.brackets.length}` : ''}`;
             }
         }
 
@@ -134,10 +134,10 @@ CodeMirror.defineMode("codeworld", (_config, modeConfig) => {
         };
     }
 
-    let wellKnownWords = (() => {
-        let result = {};
+    const wellKnownWords = (() => {
+        const result = {};
 
-        let keywords = [
+        const keywords = [
             'case', 'class', 'data', 'default', 'deriving',
             'do', 'else', 'foreign',
             'if', 'import', 'in', 'infix', 'infixl',
@@ -148,14 +148,19 @@ CodeMirror.defineMode("codeworld", (_config, modeConfig) => {
             '|'
         ];
 
-        for (let i = 0; i < keywords.length; ++i) result[
-            keywords[i]] = 'keyword';
+        for (let i = 0; i < keywords.length; ++i) {
+            result[
+                keywords[i]] = 'keyword';
+        }
 
-        let override = modeConfig.overrideKeywords;
-        if (override)
-            for (let word in override)
-                if (override.hasOwnProperty(word))
+        const override = modeConfig.overrideKeywords;
+        if (override) {
+            for (const word in override) {
+                if (override.hasOwnProperty(word)) {
                     result[word] = override[word];
+                }
+            }
+        }
 
         return result;
     })();
@@ -170,17 +175,17 @@ CodeMirror.defineMode("codeworld", (_config, modeConfig) => {
         },
 
         token: (stream, state) => {
-            let t = state.func(stream, state);
+            const t = state.func(stream, state);
             if (['variable', 'variable-2'].indexOf(t) != -1) {
-                let w = stream.current();
+                const w = stream.current();
                 if (wellKnownWords.hasOwnProperty(w)) return wellKnownWords[w];
             }
             return t;
         },
 
-        blockCommentStart: "{-",
-        blockCommentEnd: "-}",
-        lineComment: "--",
+        blockCommentStart: '{-',
+        blockCommentEnd: '-}',
+        lineComment: '--',
         indent: null
     };
 });

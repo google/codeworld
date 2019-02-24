@@ -25,6 +25,7 @@ rewriteStages :: [(Text, Text)]
 rewriteStages =
     [ ("\8216", "")
     , ("\8217", "")
+    , ("warning: ([a-zA-Z,:0-9 ]*) \\[-Wdefer-[a-z-]*\\]", "error: \\1")
     , (" \\[-W[a-z-]*\\]", "")
     , ("IO action main", "variable program")
     , ("main IO action", "variable")
@@ -65,6 +66,10 @@ rewriteStages =
     , ("Illegal tuple section: use TupleSections",
        "This tuple is missing a value, or has an extra comma.")
     , ("in string/character literal", "in text literal")
+    , ("lexical error in text literal at end of input",
+       "Missing the end quotation mark for a Text value.")
+    , ("lexical error in text literal at character '\\\\n'",
+       "Missing the end quotation mark for a Text value.")
     , ("lexical error at character '\\\\822[01]'",
        "Smart quotes are not allowed.")
     , ("[(]main[)]", "program")
@@ -72,6 +77,7 @@ rewriteStages =
     , ("a pattern binding", "the definition")
     , ("Use -v to see a list of the files searched for\\.", "")
     , ("CallStack \\(from HasCallStack\\):", "When evaluating:")
+    , (", called at program.hs:", ", used at program.hs:")
     , ("\n\\s+\n", "\n")
     ]
 

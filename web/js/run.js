@@ -34,7 +34,7 @@ function showCanvas() {
             return;
         }
 
-        let runner = window.parent.document.getElementById('runner');
+        const runner = window.parent.document.getElementById('runner');
         if (!runner) {
             return;
         }
@@ -47,11 +47,11 @@ function showCanvas() {
 
 function start() {
     h$base_writeStdout = (fd, fdo, buf, buf_offset, n, c) => {
-        addMessage("log", h$decodeUtf8(buf, n, buf_offset));
+        addMessage('log', h$decodeUtf8(buf, n, buf_offset));
         c(n);
     };
     h$base_writeStderr = (fd, fdo, buf, buf_offset, n, c) => {
-        addMessage("log", h$decodeUtf8(buf, n, buf_offset));
+        addMessage('log', h$decodeUtf8(buf, n, buf_offset));
         c(n);
     };
     h$log = (...args) => {
@@ -59,13 +59,13 @@ function start() {
         for (let i = 0; i < args.length; i++) {
             s = s + args[i];
         }
-        addMessage("log", s);
+        addMessage('log', s);
     };
     h$errorMsg = (str, ...args) => {
         for (let i = 0; i < args.length; i++) {
             str = str.replace(/%s/, args[i]);
         }
-        addMessage("error", str);
+        addMessage('error', str);
     };
     h$base_stdout_fd.write = h$base_writeStdout;
     h$base_stderr_fd.write = h$base_writeStderr;

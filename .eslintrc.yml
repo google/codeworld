@@ -1,0 +1,70 @@
+env:
+  browser: true
+  es6: true
+  jquery: true
+extends: 'eslint:recommended'
+globals:
+  Atomics: readonly
+  SharedArrayBuffer: readonly
+parserOptions:
+  ecmaVersion: 2018
+rules:
+  indent:
+    - error
+    - 4
+  linebreak-style:
+    - error
+    - unix
+  quotes:
+    - error
+    - single
+  semi:
+    - error
+    - always
+  no-var:
+    - error
+  prefer-arrow-callback:
+    - error
+  prefer-const:
+    - error
+  curly:
+    - error
+    - multi-line
+  dot-location:
+    - error
+    - property
+  eqeqeq:
+    - error
+    - always
+  no-alert:
+    - error
+  no-floating-decimal:
+    - error
+  no-implicit-coercion:
+    - error
+  wrap-iife:
+    - error
+    - inside
+  strict:
+    - error
+    - global
+  brace-style:
+    - error
+    - 1tbs
+  arrow-spacing:
+    - error
+  prefer-template:
+    - error
+  template-curly-spacing:
+    - error
+    - never
+  no-multi-str:
+    - error
+  no-unused-vars:
+    - error
+    - vars: local
+      args: none
+  no-undef:
+    - off
+  no-console:
+    - off

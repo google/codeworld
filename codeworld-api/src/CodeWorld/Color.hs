@@ -210,48 +210,54 @@ pattern Brown  = HSL 0.52 0.60 0.40
 
 white, black, red, green, blue, cyan, magenta, yellow :: Color
 orange, rose, chartreuse, aquamarine, violet, azure :: Color
-gray, grey :: Double -> Color
+gray, grey :: Color
 
-white = RGBA 1 1 1 1
-black = RGBA 0 0 0 1
-red = HSL (0 / 3 * pi) 0.75 0.5
-yellow = HSL (1 / 3 * pi) 0.75 0.5
-green = HSL (2 / 3 * pi) 0.75 0.5
+white = White
+black = Black
+red = Red
+yellow = Yellow
+green = Green
+blue = Blue
+orange = Orange
+brown = Brown
+purple = Purple
+pink = Pink
+gray = Gray
+grey = Grey
+
 cyan = HSL (3 / 3 * pi) 0.75 0.5
-blue = HSL (4 / 3 * pi) 0.75 0.5
 magenta = HSL (5 / 3 * pi) 0.75 0.5
-orange = HSL (1 / 6 * pi) 0.75 0.5
 chartreuse = HSL (3 / 6 * pi) 0.75 0.5
 aquamarine = HSL (5 / 6 * pi) 0.75 0.5
 azure = HSL (7 / 6 * pi) 0.75 0.5
 violet = HSL (9 / 6 * pi) 0.75 0.5
 rose = HSL (11 / 6 * pi) 0.75 0.5
-brown = HSL (1 / 6 * pi) 0.5 0.5
-purple = violet
-pink = lighter 0.25 rose
-grey (fence -> k) = RGBA k k k 1
-gray = grey
 
-{-# WARNING white      [ "Please use White (capitalized) instead of white."
-                       , "The variable white may be removed July 2020." ] #-}
-{-# WARNING black      [ "Please use Black (capitalized) instead of black."
-                       , "The variable black may be removed July 2020." ] #-}
-{-# WARNING red        [ "Please use Red (capitalized) instead of red."
-                       , "The variable red may be removed July 2020." ] #-}
-{-# WARNING green      [ "Please use Green (capitalized) instead of green."
-                       , "The variable green may be removed July 2020." ] #-}
-{-# WARNING blue       [ "Please use Blue (capitalized) instead of blue."
-                       , "The variable blue may be removed July 2020." ] #-}
-{-# WARNING yellow     [ "Please use Yellow (capitalized) instead of yellow."
-                       , "The variable yellow may be removed July 2020." ] #-}
-{-# WARNING orange     [ "Please use Orange (capitalized) instead of orange."
-                       , "The variable orange may be removed July 2020." ] #-}
-{-# WARNING brown      [ "Please use Brown (capitalized) instead of brown."
-                       , "The variable brown may be removed July 2020." ] #-}
-{-# WARNING purple     [ "Please use Purple (capitalized) instead of purple."
-                       , "The variable purple may be removed July 2020." ] #-}
-{-# WARNING pink       [ "Please use Pink (capitalized) instead of pink."
-                       , "The variable pink may be removed July 2020." ] #-}
+{-# WARNING White      [ "Please use white (lower case) instead of White."
+                       , "The value White may be removed July 2019." ] #-}
+{-# WARNING Black      [ "Please use black (lower case) instead of Black."
+                       , "The value Black may be removed July 2019." ] #-}
+{-# WARNING Red        [ "Please use red (lower case) instead of Red."
+                       , "The value Red may be removed July 2019." ] #-}
+{-# WARNING Green      [ "Please use green (lower case) instead of Green."
+                       , "The value Green may be removed July 2019." ] #-}
+{-# WARNING Blue       [ "Please use blue (lower case) instead of Blue."
+                       , "The value Blue may be removed July 2019." ] #-}
+{-# WARNING Yellow     [ "Please use yellow (lower case) instead of Yellow."
+                       , "The value Yellow may be removed July 2019." ] #-}
+{-# WARNING Orange     [ "Please use orange (lower case) instead of Orange."
+                       , "The value Orange may be removed July 2019." ] #-}
+{-# WARNING Brown      [ "Please use brown (lower case) instead of Brown."
+                       , "The value Brown may be removed July 2019." ] #-}
+{-# WARNING Purple     [ "Please use purple (lower case) instead of Purple."
+                       , "The value Purple may be removed July 2019." ] #-}
+{-# WARNING Pink       [ "Please use pink (lower case) instead of Pink."
+                       , "The value Pink may be removed July 2019." ] #-}
+{-# WARNING Gray       [ "Please use gray (lower case) instead of Gray."
+                       , "The value Gray may be removed July 2019." ] #-}
+{-# WARNING Grey       [ "Please use grey (lower case) instead of Grey."
+                       , "The value Grey may be removed July 2019." ] #-}
+
 {-# WARNING magenta    [ "Please use the RGB function instead of magenta."
                        , "The variable magenta may be removed July 2020." ] #-}
 {-# WARNING cyan       [ "Please use the RGB function instead of cyan."
@@ -266,7 +272,3 @@ gray = grey
                        , "The variable rose may be removed July 2020." ] #-}
 {-# WARNING violet     [ "Please use Purple instead of violet."
                        , "The variable violet may be removed July 2020." ] #-}
-{-# WARNING gray       [ "Please use Gray with the light/dark functions instead."
-                       , "The gray function may be removed July 2020." ] #-}
-{-# WARNING grey       [ "Please use Grey with the light/dark functions instead."
-                       , "The grey function may be removed July 2020." ] #-}

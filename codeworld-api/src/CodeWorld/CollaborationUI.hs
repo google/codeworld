@@ -181,7 +181,7 @@ picture (Connecting time mousePos) =
 picture (Waiting time mousePos code numPlayers present) =
     translated 0 2 (lettering "Share this key with other players:") &
     translated 0 4 (playerDots numPlayers present) &
-    letterBoxes (gray 0.8) code &
+    letterBoxes (HSL 0 0 0.8) code &
     button "Cancel" (dull yellow) 0 (-3) 8 2 mousePos &
     connectScreen "Waiting" time
 

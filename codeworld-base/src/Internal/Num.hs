@@ -43,7 +43,6 @@ module Internal.Num
     , quotient
     , remainder
     , pi
-    , pattern Pi
     , exp
     , sqrt
     , squareRoot
@@ -305,14 +304,6 @@ remainder (a, b) = a - b * quotient (a, b)
 -}
 pi :: Number
 pi = fromDouble 3.141592653589793
-
-{-| The constant Pi, which is equal to the ratio between the circumference
-    and diameter of a circle.
-
-  Pi is approximately 3.14.
--}
-pattern Pi :: Number
-pattern Pi = Number 3.141592653589793
 
 {-| Gives the exponential of a number.  This is equal to the constant e,
     raised to the power of the number.

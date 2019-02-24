@@ -20,16 +20,14 @@ source base.sh
 
 mkdir -p $BUILD/node_modules
 run $BUILD npm install --silent js-beautify
+run $BUILD npm install --silent eslint
 
 function format {
-    sed -i 's/\bvar\b/let/' $(find web/js -regex .*\\.js$ -type f)
-    sed -i 's/: function\b\s*\([(][^)]*[)]\)\s*[{]/\1 {/' $(find web/js -regex .*\\.js$ -type f)
-    sed -i 's/\bfunction\b\s*\([(][^)]*[)]\)\s*[{]/\1 => {/' $(find web/js -regex .*\\.js$ -type f)
-    sed -i 's/[(]\([a-zA-Z$_][a-zA-Z0-9$_]*\)[)] =>/\1 =>/' $(find web/js -regex .*\\.js$ -type f)
-
     nodejs build/node_modules/js-beautify/js/bin/js-beautify.js -n -m 2 $(find web/js -regex .*\\.js$ -type f)
     nodejs build/node_modules/js-beautify/js/bin/css-beautify.js -n $(find web/css -regex .*\\.css$ -type f)
     nodejs build/node_modules/js-beautify/js/bin/html-beautify.js -n $(find web -regex .*\\.html$ -type f)
+
+    nodejs build/node_modules/eslint/bin/eslint.js --fix $(find web/js -regex .*\\.js$ -type f)
 }
 
 run . format

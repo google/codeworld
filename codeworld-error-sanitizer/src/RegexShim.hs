@@ -37,9 +37,6 @@ replace regex replacement str = textFromJSString $
                (textToJSString replacement)
                (textToJSString str)
 
-groupReplace :: Text -> Text -> Text -> Text
-groupReplace = replace
-
 #else
 
 import Data.Array (bounds, elems, (!))

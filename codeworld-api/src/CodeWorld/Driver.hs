@@ -825,17 +825,17 @@ showPoints pts =
 
 showColor :: Color -> String
 showColor c@(RGBA r g b a)
-  | c == Black = "Black"
-  | c == White = "White"
-  | c == Red = "Red"
-  | c == Green = "Green"
-  | c == Blue = "Blue"
-  | c == Yellow = "Yellow"
-  | c == Orange = "Orange"
-  | c == Brown = "Brown"
-  | c == Pink = "Pink"
-  | c == Purple = "Purple"
-  | c == Gray = "Gray"
+  | c == black = "black"
+  | c == white = "white"
+  | c == red = "red"
+  | c == green = "green"
+  | c == blue = "blue"
+  | c == yellow = "yellow"
+  | c == orange = "orange"
+  | c == brown = "brown"
+  | c == pink = "pink"
+  | c == purple = "purple"
+  | c == gray = "gray"
   | haskellMode, a == 1 = printf "(RGB %s %s %s)" (showFloat r) (showFloat g) (showFloat b)
   | a == 1 = printf "RGB(%s, %s, %s)" (showFloat r) (showFloat g) (showFloat b)
   | haskellMode = printf "(RGBA %s %s %s %s)" (showFloat r) (showFloat g) (showFloat b) (showFloat a)
@@ -858,8 +858,8 @@ describePicture (SolidCircle _ r)
   | haskellMode = printf "solidCircle %s" (showFloat r)
   | otherwise   = printf "solidCircle(%s)" (showFloat r)
 describePicture (ThickCircle _ lw r)
-  | haskellMode = printf "solidCircle %s %s" (showFloat lw) (showFloat r)
-  | otherwise   = printf "solidCircle(%s, %s)" (showFloat r) (showFloat lw)
+  | haskellMode = printf "thickCircle %s %s" (showFloat lw) (showFloat r)
+  | otherwise   = printf "thickCircle(%s, %s)" (showFloat r) (showFloat lw)
 describePicture (SolidPolygon _ pts)
   | haskellMode = printf "solidPolygon %s" (showPoints pts)
   | otherwise   = printf "solidPolygon(%s)" (showPoints pts)
@@ -888,8 +888,8 @@ describePicture (Curve _ pts)
   | haskellMode = printf "curve %s" (showPoints pts)
   | otherwise   = printf "curve(%s)" (showPoints pts)
 describePicture (ThickCurve _ pts w)
-  | haskellMode = printf "closedCurve %s %s" (showFloat w) (showPoints pts)
-  | otherwise   = printf "closedCurve(%s, %s)" (showPoints pts) (showFloat w)
+  | haskellMode = printf "thickCurve %s %s" (showFloat w) (showPoints pts)
+  | otherwise   = printf "thickCurve(%s, %s)" (showPoints pts) (showFloat w)
 describePicture (Sector _ b e r)
   | haskellMode = printf "sector %s %s %s" (showFloat b) (showFloat e) (showFloat r)
   | otherwise   = printf "sector(%s°, %s°, %s)" (showFloat (180 * b / pi)) (showFloat (180 * e / pi)) (showFloat r)

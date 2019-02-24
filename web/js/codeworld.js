@@ -16,8 +16,6 @@
 
 const autohelpEnabled = location.hash.length <= 2;
 
-let runtimeErrors = {};
-
 /*
  * Initializes the programming environment.  This is called after the
  * entire document body and other JavaScript has loaded.
@@ -864,8 +862,6 @@ function run(hash, dhash, msg, error, generation) {
             printMessage(cmError.severity, cmError.fullText);
         }
     );
-
-    runtimeErrors = {};
 
     window.deployHash = dhash;
 

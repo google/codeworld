@@ -1163,6 +1163,10 @@ function printMessage(type, message) {
     if (message.trim() === '') {
         return;
     }
+    // Deferred errors already handled on server side
+    if (message.indexOf("deferred") != -1){
+        return;
+    }
     message = preFormatMessage(message);
     const outputDiv = document.getElementById('message'),
         box = document.createElement('div'),
@@ -1193,13 +1197,7 @@ function printMessage(type, message) {
     }
 
     outputDiv.scrollTop = outputDiv.scrollHeight;
-
     if (type === 'error') {
         outputDiv.classList.add('error');
     }
-}
-
-function matchWarningToDeferredError(msg){
-    return msg.replace("warning", "error")
-        + "\n(deferred type error)";
 }

@@ -78,6 +78,6 @@ replace regex replacement str = case str =~ regex of
             post = T.drop (start + len) str
             inserts = getInserts replacement
         in pre <> applyInserts str replacement matches inserts <> post
-    _ -> error $ T.unpack $ "Regex " <> regex <> " does not match string " <> str
+    _ -> str
 
 #endif

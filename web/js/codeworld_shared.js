@@ -150,8 +150,8 @@ function parseSymbolsFromCurrentCode() {
     lines.forEach(line => {
         lineIndex++;
 
-        const docString = 'Defined in your code on line ' +
-            lineIndex.toString() + '.';
+        const docString = `Defined in your code on line ${ 
+            lineIndex.toString()}.`;
         // f(x, y) =
         if (/^\w+\(.*/.test(line)) {
             word = line.split('(')[0].trim();
@@ -244,8 +244,8 @@ function renderDeclaration(decl, keyword, keywordData, maxLen) {
             /\s+/g, ' ');
         if (keywordData.symbolEnd + leftover.length > maxLen && leftover.length >
             3) {
-            leftover = leftover.slice(0, maxLen - 3 - keywordData.symbolEnd) +
-                '...';
+            leftover = `${leftover.slice(0, maxLen - 3 - keywordData.symbolEnd) 
+            }...`;
         }
         decl.appendChild(document.createTextNode(leftover));
     }
@@ -361,9 +361,9 @@ function registerStandardHints(successFunc) {
                     const hover = renderHover(selection.text);
                     if (hover) {
                         doc.className += 'hint-description';
-                        doc.style.top = hintsWidgetRect.top + 'px';
-                        doc.style.left = hintsWidgetRect.right +
-                            'px';
+                        doc.style.top = `${hintsWidgetRect.top}px`;
+                        doc.style.left = `${hintsWidgetRect.right 
+                        }px`;
                         doc.appendChild(hover);
                         document.body.appendChild(doc);
                     }
@@ -414,7 +414,7 @@ function registerStandardHints(successFunc) {
                 line = 'False :: Truth';
             } else if (line.startsWith('newtype ')) {
                 // Hide the distinction between newtype and data.
-                line = 'data ' + line.substr(8);
+                line = `data ${line.substr(8)}`;
             } else if (line.startsWith('pattern ')) {
                 // Hide the distinction between patterns and constructors.
                 line = line.substr(8);
@@ -442,9 +442,9 @@ function registerStandardHints(successFunc) {
             line = line.replace(/:: HasCallStack =>/g, '::');
 
             if (line.startsWith('-- |')) {
-                doc = line.replace(/\-\- \| /g, '') + '\n';
+                doc = `${line.replace(/\-\- \| /g, '')}\n`;
             } else if (line.startsWith('-- ')) {
-                doc += line.replace(/\-\- {3}/g, '') + '\n';
+                doc += `${line.replace(/\-\- {3}/g, '')}\n`;
             } else {
                 let wordStart = 0;
                 if (line.startsWith('type ') || line.startsWith('data ')) {
@@ -513,7 +513,7 @@ function signout() {
 }
 
 function signedIn() {
-    return !!(window.auth2 && auth2.isSignedIn.get());
+    return Boolean(window.auth2 && auth2.isSignedIn.get());
 }
 
 const Auth = (() => {
@@ -737,10 +737,10 @@ function saveProjectAs() {
 
     let text;
     if (nestedDirs.length > 1) {
-        text = 'Enter a name for your project in folder <b>' +
+        text = `Enter a name for your project in folder <b>${ 
             $('<div>').text(nestedDirs.slice(1).join('/')).html().replace(/ /g,
-                '&nbsp;') +
-            ':';
+                '&nbsp;') 
+        }:`;
     } else {
         text = 'Enter a name for your project:';
     }
@@ -792,7 +792,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
 
     function go() {
         sweetAlert({
-            title: Alert.title('Saving ' + projectName + ' ...'),
+            title: Alert.title(`Saving ${projectName} ...`),
             text: 'Saving your project.  Please wait.',
             showConfirmButton: false,
             showCancelButton: false,
@@ -834,9 +834,9 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
         projectName == openProjectName) {
         go();
     } else {
-        const msg = 'Are you sure you want to save over another project?\n\n' +
-            'The previous contents of ' + projectName +
-            ' will be permanently destroyed!';
+        const msg = `${'Are you sure you want to save over another project?\n\n' +
+            'The previous contents of '}${projectName 
+        } will be permanently destroyed!`;
         sweetAlert({
             title: Alert.title('Warning'),
             text: msg,
@@ -959,10 +959,11 @@ function createFolder(path, buildMode, successFunc) {
             sweetAlert.close();
             const data = new FormData();
             data.append('mode', buildMode);
-            if (path == '')
+            if (path == '') {
                 data.append('path', result.value);
-            else
-                data.append('path', path + '/' + result.value);
+            } else {
+                data.append('path', `${path}/${result.value}`);
+            }
 
             sendHttp('POST', 'createFolder', data, request => {
                 if (request.status != 200) {
@@ -1041,7 +1042,7 @@ function share() {
             a.href = window.location.href;
             a.hash = '';
             a.pathname = '/run.html';
-            a.search = '?mode=' + window.buildMode + '&dhash=' + window.deployHash;
+            a.search = `?mode=${window.buildMode}&dhash=${window.deployHash}`;
 
             url = a.href;
             msg =
@@ -1127,7 +1128,7 @@ function shareFolder_(mode) {
         const shareHash = request.responseText;
         const a = document.createElement('a');
         a.href = window.location.href;
-        a.hash = '#' + shareHash;
+        a.hash = `#${shareHash}`;
         const url = a.href;
         sweetAlert({
             title: Alert.title('Share Folder', 'mdi-folder-outline'),

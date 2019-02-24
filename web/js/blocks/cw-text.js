@@ -86,10 +86,11 @@ Blockly.Blocks['txtConcat'] = {
     getExpr() {
         let exps = [];
         this.inputList.forEach(inp => {
-            if (inp.connection.isConnected())
+            if (inp.connection.isConnected()) {
                 exps.push(inp.connection.targetBlock().getExpr());
-            else
+            } else {
                 exps.push(Exp.Var('undef'));
+            }
         });
         if (exps.length < 2) { // If the block has less than 2 inputs, warn the user
             exps = [];
@@ -121,7 +122,7 @@ Blockly.Blocks['txtConcat'] = {
     compose(containerBlock) {
 
         for (let x = 0; x < this.itemCount_; x++) {
-            this.removeInput('STR' + x);
+            this.removeInput(`STR${x}`);
         }
 
         this.itemCount_ = 0;
@@ -129,7 +130,7 @@ Blockly.Blocks['txtConcat'] = {
         let itemBlock = containerBlock.getInputTargetBlock('STACK');
         const tps = [];
         while (itemBlock) {
-            const input = this.appendValueInput('STR' + this.itemCount_);
+            const input = this.appendValueInput(`STR${this.itemCount_}`);
             tps.push(new Type.Lit('Text'));
 
             if (this.itemCount_ > 0) {
@@ -167,7 +168,7 @@ Blockly.Blocks['txtConcat'] = {
         this.inputList = [];
         const tps = [];
         for (let i = 0; i < this.itemCount_; i++) {
-            const input = this.appendValueInput('STR' + i);
+            const input = this.appendValueInput(`STR${i}`);
             tps.push(new Type.Lit('Text'));
             if (i > 0) {
                 input.appendField(new Blockly.FieldLabel('<>',
@@ -184,7 +185,7 @@ Blockly.Blocks['txtConcat'] = {
         let itemBlock = containerBlock.getInputTargetBlock('STACK');
         let x = 0;
         while (itemBlock) {
-            const input = this.getInput('STR' + x);
+            const input = this.getInput(`STR${x}`);
             if (input && input.connection.targetConnection) {
                 if (input.connection.targetBlock().isShadow_) {
                     x++;

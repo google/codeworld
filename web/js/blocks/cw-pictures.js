@@ -49,10 +49,11 @@ Blockly.Blocks['cwCombine'] = {
     getExpr() {
         let exps = [];
         this.inputList.forEach(inp => {
-            if (inp.connection.isConnected())
+            if (inp.connection.isConnected()) {
                 exps.push(inp.connection.targetBlock().getExpr());
-            else
+            } else {
                 exps.push(Exp.Var('undef'));
+            }
         });
         if (exps.length < 2) { // If the block has less than 2 inputs, warn the user
             exps = [];
@@ -84,14 +85,14 @@ Blockly.Blocks['cwCombine'] = {
         const tps = [];
 
         for (let x = 0; x < this.itemCount_; x++) {
-            this.removeInput('PIC' + x);
+            this.removeInput(`PIC${x}`);
         }
 
         this.itemCount_ = 0;
         // Rebuild the block's inputs.
         let itemBlock = containerBlock.getInputTargetBlock('STACK');
         while (itemBlock) {
-            const input = this.appendValueInput('PIC' + this.itemCount_);
+            const input = this.appendValueInput(`PIC${this.itemCount_}`);
             tps.push(Type.Lit('Picture'));
             if (this.itemCount_ > 0) {
                 input.appendField(new Blockly.FieldLabel('&',
@@ -127,7 +128,7 @@ Blockly.Blocks['cwCombine'] = {
         const tps = [];
         this.inputList = [];
         for (let i = 0; i < this.itemCount_; i++) {
-            const input = this.appendValueInput('PIC' + i);
+            const input = this.appendValueInput(`PIC${i}`);
             tps.push(Type.Lit('Picture'));
             if (i > 0) {
                 input.appendField(new Blockly.FieldLabel('&',
@@ -142,7 +143,7 @@ Blockly.Blocks['cwCombine'] = {
         let itemBlock = containerBlock.getInputTargetBlock('STACK');
         let x = 0;
         while (itemBlock) {
-            const input = this.getInput('PIC' + x);
+            const input = this.getInput(`PIC${x}`);
             if (input && input.connection.targetConnection) {
                 if (input.connection.targetBlock().isShadow_) {
                     x++;

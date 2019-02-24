@@ -42,11 +42,11 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
     const RE_NUMBER =
         /[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|0[oO][0-7]+|0[xX][0-9a-fA-F]+/;
     const RE_CHAR = new RegExp(
-        '\'(?:[^\\\\\']|\\\\[abfnrtv\\\\"\']|\\\\^[A-Z@[\\\\\\]^_]|' +
-        MULTICHAR_ESCAPE_REGEX + ')\'');
+        `'(?:[^\\\\']|\\\\[abfnrtv\\\\"']|\\\\^[A-Z@[\\\\\\]^_]|${ 
+            MULTICHAR_ESCAPE_REGEX})'`);
     const RE_STRING = new RegExp(
-        '"(?:[^\\\\"]|\\\\[abfnrtv\\\\"\'&]|\\\\^[A-Z@[\\\\\\]^_]|' +
-        MULTICHAR_ESCAPE_REGEX + ')*"');
+        `"(?:[^\\\\"]|\\\\[abfnrtv\\\\"'&]|\\\\^[A-Z@[\\\\\\]^_]|${ 
+            MULTICHAR_ESCAPE_REGEX})*"`);
     const RE_OPENBRACKET = /[([{]/;
     const RE_CLOSEBRACKET = /[)\]}]/;
     const RE_INCOMMENT = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/;
@@ -93,8 +93,8 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
 
         if (stream.match(RE_OPENBRACKET)) {
             state.brackets.push(stream.current());
-            return 'bracket' + (state.brackets.length <= 7 ? '-' + (
-                state.brackets.length - 1) : '');
+            return `bracket${state.brackets.length <= 7 ? `-${  
+                state.brackets.length - 1}` : ''}`;
         }
 
         if (stream.match(RE_CLOSEBRACKET)) {
@@ -103,8 +103,8 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
                 return 'bracket';
             } else {
                 while (state.brackets.length > i) state.brackets.pop();
-                return 'bracket' + (state.brackets.length <= 6 ? '-' +
-                    state.brackets.length : '');
+                return `bracket${state.brackets.length <= 6 ? `-${ 
+                    state.brackets.length}` : ''}`;
             }
         }
 
@@ -148,14 +148,19 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
             '|'
         ];
 
-        for (let i = 0; i < keywords.length; ++i) result[
-            keywords[i]] = 'keyword';
+        for (let i = 0; i < keywords.length; ++i) {
+            result[
+                keywords[i]] = 'keyword';
+        }
 
         const override = modeConfig.overrideKeywords;
-        if (override)
-            for (const word in override)
-                if (override.hasOwnProperty(word))
+        if (override) {
+            for (const word in override) {
+                if (override.hasOwnProperty(word)) {
                     result[word] = override[word];
+                }
+            }
+        }
 
         return result;
     })();

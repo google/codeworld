@@ -67,7 +67,7 @@ const LocalAuth = (() => {
     }
 
     function validateFormData() {
-        const isReset = typeof $(`#${NEW_PASSWORD_1}`).css('display') !=
+        const isReset = typeof $(`#${NEW_PASSWORD_1}`).css('display') !==
             'undefined';
         if (isReset) {
             const formData = {
@@ -186,7 +186,7 @@ const LocalAuth = (() => {
             httpPost({
                 url: SIGN_IN_URL,
                 headers: {
-                    'Authorization': `Basic ${btoa(formData.userId + ':' + formData.password)}`
+                    'Authorization': `Basic ${btoa(`${formData.userId}:${formData.password}`)}`
                 }
             })
                 .then(resp => resolve({
@@ -238,7 +238,7 @@ const LocalAuth = (() => {
                     newPassword: formData.newPassword1
                 },
                 headers: {
-                    'Authorization': `Basic ${btoa(formData.userId + ':' + formData.password)}`
+                    'Authorization': `Basic ${btoa(`${formData.userId}:${formData.password}`)}`
                 }
             })
                 .then(resp => resolve({
@@ -359,7 +359,7 @@ const LocalAuth = (() => {
             listen: f => _currentUserCallback = f
         },
         isSignedIn: {
-            get: () => !!_userId,
+            get: () => Boolean(_userId),
             listen: f => _isSignedInCallback = f
         },
         signIn: options => signIn(), // ignore any Google auth-specific options

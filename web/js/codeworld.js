@@ -120,7 +120,7 @@ async function init() {
             hash = hash.slice(0, -2);
         }
         if (hash[0] == 'P') {
-            sendHttp('GET', 'loadSource?hash=' + hash + '&mode=' + window.buildMode,
+            sendHttp('GET', `loadSource?hash=${hash}&mode=${window.buildMode}`,
                 null, request => {
                     if (request.status == 200) {
                         setCode(request.responseText, null, null, true);
@@ -286,10 +286,10 @@ class CanvasRecorder {
 
             // Set file name
             const d = new Date();
-            const videoFileName = 'codeworld_recording_' +
-                d.toDateString().split(' ').join('_') + '_' +
-                d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() +
-                '.webm';
+            const videoFileName = `codeworld_recording_${ 
+                d.toDateString().split(' ').join('_')}_${ 
+                d.getHours()}:${d.getMinutes()}:${d.getSeconds() 
+            }.webm`;
 
             // Create a new video link
             const a = document.createElement('a');
@@ -475,7 +475,7 @@ function updateUI() {
     }
 
     if (!isEditorClean()) {
-        title = '* ' + title;
+        title = `* ${title}`;
     }
 
     // If true - code currently in document is not equal to
@@ -491,7 +491,7 @@ function updateUI() {
         obsoleteAlert.classList.remove('obsolete-code-alert-fadein');
     }
 
-    document.title = title + ' - CodeWorld';
+    document.title = `${title} - CodeWorld`;
 }
 
 function updateNavBar() {
@@ -514,7 +514,7 @@ function updateNavBar() {
         const span = document.createElement('span');
         span.innerHTML = template;
         const elem = span.getElementsByTagName('a')[0];
-        elem.style.marginLeft = (3 + 16 * level) + 'px';
+        elem.style.marginLeft = `${3 + 16 * level}px`;
         elem.onclick = () => {
             folderHandler(name, level, isOpen);
         };
@@ -527,7 +527,7 @@ function updateNavBar() {
     const makeProjectNode = (name, level, active) => {
         let title = name;
         if (active && !isEditorClean()) {
-            title = '* ' + title;
+            title = `* ${title}`;
         }
         const encodedName = title
             .replace(/&/g, '&amp;')
@@ -540,7 +540,7 @@ function updateNavBar() {
         const span = document.createElement('span');
         span.innerHTML = template;
         const elem = span.getElementsByTagName('a')[0];
-        elem.style.marginLeft = (3 + 16 * level) + 'px';
+        elem.style.marginLeft = `${3 + 16 * level}px`;
         elem.onclick = () => {
             loadProject(name, level);
         };
@@ -587,7 +587,7 @@ function updateNavBar() {
         const span = document.createElement('span');
         span.innerHTML = template;
         const elem = span.getElementsByTagName('a')[0];
-        elem.style.marginLeft = (3 + 16 * (nestedDirs.length - 1)) + 'px';
+        elem.style.marginLeft = `${3 + 16 * (nestedDirs.length - 1)}px`;
         span.style.display = 'flex';
         span.style.flexDirection = 'column';
         projects.appendChild(span);
@@ -665,12 +665,12 @@ function help() {
     if (window.buildMode == 'haskell') {
         url = 'doc-haskell/CodeWorld.html';
     } else {
-        url = 'doc.html?shelf=help/' + window.buildMode + '.shelf';
+        url = `doc.html?shelf=help/${window.buildMode}.shelf`;
     }
 
     sweetAlert({
-        html: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' +
-            url + '"></iframe>',
+        html: `<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="${ 
+            url}"></iframe>`,
         customClass: 'helpdoc',
         allowEscapeKey: true,
         allowOutsideClick: true,
@@ -819,7 +819,7 @@ function run(hash, dhash, msg, error, generation) {
     }
 
     if (hash) {
-        window.location.hash = '#' + hash;
+        window.location.hash = `#${hash}`;
         document.getElementById('shareButton').style.display = '';
     } else {
         window.location.hash = '';
@@ -827,9 +827,9 @@ function run(hash, dhash, msg, error, generation) {
     }
 
     if (dhash) {
-        const loc = 'run.html?dhash=' + dhash + '&mode=' + window.buildMode;
+        const loc = `run.html?dhash=${dhash}&mode=${window.buildMode}`;
         runner.contentWindow.location.replace(loc);
-        if (!!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia) {
+        if (Boolean(navigator.mediaDevices) && Boolean(navigator.mediaDevices.getUserMedia)) {
             document.getElementById('startRecButton').style.display = '';
         }
     } else {
@@ -901,16 +901,16 @@ function showRequiredChecksInDialog(msg) {
     const itemsHtml = items.map(item => {
         const head = item[1];
         const rest = item.slice(2).join('<br>');
-        const details = rest ? '<br><span class="req-details">' + rest +
-            '</span>' : '';
+        const details = rest ? `<br><span class="req-details">${rest 
+        }</span>` : '';
         const itemclass = (item[0] === undefined) ? 'req-indet' : (item[0] ?
             'req-yes' : 'req-no');
-        return '<li class="' + itemclass + '">' + head + details +
-            '</li>';
+        return `<li class="${itemclass}">${head}${details 
+        }</li>`;
     });
     sweetAlert({
         title: Alert.title('Requirements'),
-        html: '<ul class="req-list">' + itemsHtml.join('') + '</ul>',
+        html: `<ul class="req-list">${itemsHtml.join('')}</ul>`,
         confirmButtonText: 'Dismiss',
         showCancelButton: false,
         closeOnConfirm: true
@@ -1082,7 +1082,7 @@ function downloadProject() {
             endings: 'native'
         });
     let filename = 'untitled.hs';
-    if (window.openProjectName) filename = window.openProjectName + '.hs';
+    if (window.openProjectName) filename = `${window.openProjectName}.hs`;
 
     if (window.navigator.msSaveBlob) {
         window.navigator.msSaveBlob(blob, filename);
@@ -1136,7 +1136,7 @@ function parseCompileErrors(rawErrors) {
                 to: CodeMirror.Pos(line, endCol),
                 severity: match[5],
                 fullText: err,
-                message: (match[6] ? match[6].trim() + '\n' :
+                message: (match[6] ? `${match[6].trim()}\n` :
                     '') + otherLines
             });
         } else if (re2.test(firstLine)) {
@@ -1152,7 +1152,7 @@ function parseCompileErrors(rawErrors) {
                 to: CodeMirror.Pos(endLine, endCol),
                 severity: match[5],
                 fullText: err,
-                message: (match[6] ? match[6].trim() + '\n' :
+                message: (match[6] ? `${match[6].trim()}\n` :
                     '') + otherLines
             });
         } else {

@@ -32,7 +32,7 @@ function loadWorkspace(text) {
 }
 
 function loadXmlHash(hash, autostart) {
-    sendHttp('GET', 'loadXML?hash=' + hash + '&mode=blocklyXML', null, request => {
+    sendHttp('GET', `loadXML?hash=${hash}&mode=blocklyXML`, null, request => {
         if (request.status == 200) {
             loadWorkspace(request.responseText);
             if (autostart) {
@@ -146,7 +146,7 @@ function run(xmlHash, codeHash, msg, error, dhash) {
     const hash = codeHash;
 
     if (hash) {
-        window.location.hash = '#' + xmlHash;
+        window.location.hash = `#${xmlHash}`;
         document.getElementById('shareButton').style.display = '';
         document.getElementById('shareFolderButton').style.display = 'none';
     } else {
@@ -163,7 +163,7 @@ function run(xmlHash, codeHash, msg, error, dhash) {
 
     const runner = document.getElementById('runner');
     if (hash && !error) {
-        const loc = 'run.html?hash=' + hash + '&mode=' + window.buildMode;
+        const loc = `run.html?hash=${hash}&mode=${window.buildMode}`;
         runner.contentWindow.location.replace(loc);
         document.getElementById('runner').style.display = '';
         document.getElementById('runner').contentWindow.focus();
@@ -191,7 +191,7 @@ function run(xmlHash, codeHash, msg, error, dhash) {
         }
     }
 
-    document.getElementById('editButton').setAttribute('href', '/#' + codeHash);
+    document.getElementById('editButton').setAttribute('href', `/#${codeHash}`);
     window.deployHash = dhash;
     cancelMove();
     updateUI();
@@ -367,10 +367,10 @@ function updateUI() {
     }
 
     if (!isEditorClean()) {
-        title = '* ' + title;
+        title = `* ${title}`;
     }
 
-    document.title = title + ' - CodeWorld';
+    document.title = `${title} - CodeWorld`;
 }
 
 function updateNavBar() {
@@ -404,7 +404,7 @@ function updateNavBar() {
             const span = document.createElement('span');
             span.innerHTML = template;
             const elem = span.getElementsByTagName('a')[0];
-            elem.style.marginLeft = (3 + 16 * (i - 1)) + 'px';
+            elem.style.marginLeft = `${3 + 16 * (i - 1)}px`;
             elem.onclick = () => {
                 folderHandler(nestedDirs[i], i - 1, true);
             };
@@ -423,7 +423,7 @@ function updateNavBar() {
             const span = document.createElement('span');
             span.innerHTML = template;
             const elem = span.getElementsByTagName('a')[0];
-            elem.style.marginLeft = (3 + 16 * i) + 'px';
+            elem.style.marginLeft = `${3 + 16 * i}px`;
             elem.onclick = () => {
                 folderHandler(folderName, i, false);
             };
@@ -445,7 +445,7 @@ function updateNavBar() {
 
             let title = projectName;
             if (active && !isEditorClean()) {
-                title = '* ' + title;
+                title = `* ${title}`;
             }
             const encodedName = title.replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
@@ -457,7 +457,7 @@ function updateNavBar() {
             const span = document.createElement('span');
             span.innerHTML = template;
             const elem = span.getElementsByTagName('a')[0];
-            elem.style.marginLeft = (3 + 16 * i) + 'px';
+            elem.style.marginLeft = `${3 + 16 * i}px`;
             elem.onclick = () => {
                 loadProject(projectName, i);
             };
@@ -539,8 +539,8 @@ function moveHere() {
 function help() {
     const url = 'doc.html?shelf=help/blocks.shelf';
     sweetAlert({
-        html: '<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="' +
-            url + '"></iframe>',
+        html: `<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="${ 
+            url}"></iframe>`,
         customClass: 'helpdoc',
         allowEscapeKey: true,
         allowOutsideClick: true,

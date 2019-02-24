@@ -27,6 +27,43 @@ rules:
     - error
   prefer-const:
     - error
+  curly:
+    - error
+    - multi-line
+  dot-location:
+    - error
+    - property
+  eqeqeq:
+    - error
+    - always
+  no-alert:
+    - error
+  no-floating-decimal:
+    - error
+  no-implicit-coercion:
+    - error
+  wrap-iife:
+    - error
+    - inside
+  strict:
+    - error
+    - global
+  brace-style:
+    - error
+    - 1tbs
+  arrow-spacing:
+    - error
+  prefer-template:
+    - error
+  template-curly-spacing:
+    - error
+    - never
+  no-multi-str:
+    - error
+  no-unused-vars:
+    - error
+    - vars: local
+      args: none
   no-undef:
     - off
   no-console:

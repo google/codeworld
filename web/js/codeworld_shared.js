@@ -942,8 +942,6 @@ function createFolder(path, buildMode, successFunc) {
             return;
         }
 
-        function go(folderName) {}
-
         sweetAlert({
             title: Alert.title('Create Folder',
                 'mdi-folder-plus'),
@@ -1113,43 +1111,35 @@ function shareFolder_(mode) {
         updateUI();
         return;
     }
-    let path = nestedDirs.slice(1).join('/');
 
-    function go() {
-        let msg = 'Copy this link to share your folder with others!';
+    let data = new FormData();
+    data.append('mode', mode);
+    data.append('path', nestedDirs.slice(1).join('/'));
 
-        let data = new FormData();
-        data.append('mode', mode);
-        data.append('path', path);
+    sendHttp('POST', 'shareFolder', data, request => {
+        if (request.status != 200) {
+            sweetAlert('Oops!',
+                'Could not share your folder! Please try again.',
+                'error');
+            return;
+        }
 
-        sendHttp('POST', 'shareFolder', data, request => {
-            if (request.status != 200) {
-                sweetAlert('Oops!',
-                    'Could not share your folder! Please try again.',
-                    'error');
-                return;
-            }
-
-            let shareHash = request.responseText;
-            let a = document.createElement('a');
-            a.href = window.location.href;
-            a.hash = '#' + shareHash;
-            let url = a.href;
-            sweetAlert({
-                title: Alert.title('Share Folder',
-                    'mdi-folder-outline'),
-                html: msg,
-                input: 'text',
-                inputValue: url,
-                showConfirmButton: false,
-                showCancelButton: true,
-                cancelButtonText: 'Done',
-                animation: 'slide-from-bottom'
-            });
+        let shareHash = request.responseText;
+        let a = document.createElement('a');
+        a.href = window.location.href;
+        a.hash = '#' + shareHash;
+        let url = a.href;
+        sweetAlert({
+            title: Alert.title('Share Folder', 'mdi-folder-outline'),
+            html: 'Copy this link to share your folder with others!',
+            input: 'text',
+            inputValue: url,
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: 'Done',
+            animation: 'slide-from-bottom'
         });
-    }
-
-    go();
+    });
 }
 
 function preFormatMessage(msg) {

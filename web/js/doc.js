@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+'use strict';
+
 window.env = parent;
 const params = new URLSearchParams(window.location.search);
 let position = {
@@ -27,7 +29,7 @@ function savePosition() {
 
 function loadPosition() {
     const savedPosition = sessionStorage.getItem('position');
-    if (savedPosition && savedPosition != 'undefined') {
+    if (savedPosition && savedPosition !== 'undefined') {
         position = JSON.parse(savedPosition);
     }
 }
@@ -43,7 +45,7 @@ window.onload = () => {
     const contents = {};
 
     function linkCodeBlocks(elem, linkable = true) {
-        codeworldKeywords = {};
+        window.codeworldKeywords = {};
         registerStandardHints(() => {
             const pres = elem.getElementsByTagName('pre');
             for (let i = 0; i < pres.length; ++i) {
@@ -99,9 +101,8 @@ window.onload = () => {
 
     function linkFunBlocks(elem) {
         let blocks = elem.getElementsByTagName('xml');
-        let i = 0;
 
-        while (blocks != null && blocks.length > 0) {
+        while (blocks !== null && blocks.length > 0) {
             const block = blocks[0];
             const text = block.outerHTML;
 
@@ -124,7 +125,6 @@ window.onload = () => {
             parent.removeChild(block);
 
             blocks = elem.getElementsByTagName('xml');
-            i++;
         }
     }
 
@@ -141,7 +141,7 @@ window.onload = () => {
         for (let i = 0; i < elems.length; ++i) {
             const header = elems[i];
             const match = (/h([1-3])/i).exec(header.tagName);
-            if (match == null) continue;
+            if (match === null) continue;
             const level = parseInt(match[1]);
 
             while (currentLevel < level) {
@@ -206,7 +206,7 @@ window.onload = () => {
         for (const elem of elems) {
             if (elem.hasAttribute(attr)) {
                 let url = new URL(elem.getAttribute(attr), base);
-                if (base.origin == url.origin && base.pathname == url.pathname) {
+                if (base.origin === url.origin && base.pathname === url.pathname) {
                     url = url.hash;
                 } else {
                     url = url.href;
@@ -217,7 +217,7 @@ window.onload = () => {
     }
 
     function removeCallStacks(node) {
-        if (node.nodeType == Node.TEXT_NODE) {
+        if (node.nodeType === Node.TEXT_NODE) {
             node.nodeValue = node.nodeValue.replace(/HasCallStack => /, '');
         } else {
             for (const child of node.childNodes) removeCallStacks(child);
@@ -247,7 +247,7 @@ window.onload = () => {
             const request = new XMLHttpRequest();
             request.open('GET', path, true);
             request.onreadystatechange = () => {
-                if (request.readyState != 4) {
+                if (request.readyState !== 4) {
                     return;
                 }
 
@@ -320,7 +320,7 @@ window.onload = () => {
                 elem: null
             };
 
-            if (shelf.named[doc] == path) activeIndex = paneNum;
+            if (shelf.named[doc] === path) activeIndex = paneNum;
             paneNum++;
         }
 
@@ -347,7 +347,7 @@ window.onload = () => {
         const request = new XMLHttpRequest();
         request.open('GET', params.get('shelf'), true);
         request.onreadystatechange = () => {
-            if (request.readyState != 4) {
+            if (request.readyState !== 4) {
                 return;
             }
 

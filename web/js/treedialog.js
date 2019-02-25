@@ -38,17 +38,16 @@
 
     function buildNestedList(id) {
         const go = (p, to, open) => {
-            let ul = document.createElement('ul'),
-                span = document.createElement('span'),
-                toggleButton = document.createElement('span'),
-                collapsed = false;
+            const ul = document.createElement('ul');
+            const span = document.createElement('span');
+            const toggleButton = document.createElement('span');
 
+            let collapsed = false;
             const collapse = () => {
                 ul.style.display = 'none';
                 toggleButton.innerHTML = '&#x25B6;';
                 collapsed = true;
             };
-
             const decollapse = () => {
                 ul.style.display = '';
                 toggleButton.innerHTML = '&#x25BC;';
@@ -91,10 +90,9 @@
                 to.appendChild(ul);
             } else if (p.pictures) {
                 for (let i = 0; i < p.pictures.length; i++) {
-                    const li = document.createElement('li'),
-                        op = open && (id >= p.pictures[i].id) && (i ==
-                            p.pictures.length - 1 || id < p.pictures[i +
-                                1].id);
+                    const li = document.createElement('li');
+                    const op = open && (id >= p.pictures[i].id) &&
+                        (i === p.pictures.length - 1 || id < p.pictures[i + 1].id);
                     go(p.pictures[i], li, op);
                     ul.appendChild(li);
                 }
@@ -102,8 +100,8 @@
             }
         };
 
-        const ul = document.createElement('ul'),
-            li = document.createElement('li');
+        const ul = document.createElement('ul');
+        const li = document.createElement('li');
 
         go(fullPic, li, true);
         ul.appendChild(li);
@@ -117,7 +115,7 @@
         while (current.id <= id) {
             cb(current);
 
-            if (current.id == id) {
+            if (current.id === id) {
                 return current;
             } else if (current.picture) {
                 current = current.picture;

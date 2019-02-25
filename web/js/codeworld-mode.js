@@ -32,13 +32,13 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
     const RE_WHITESPACE = /[ \v\t\f]+/;
     const RE_STARTMETA = /{-#/;
     const RE_STARTCOMMENT = /{-/;
-    const RE_DASHES = /--+(?=$|[^:!#$%&*+.\/<=>?@\\^|~-]+)/;
+    const RE_DASHES = /--+(?=$|[^:!#$%&*+./<=>?@\\^|~-]+)/;
     const RE_QUAL =
-        /[A-Z][A-Za-z_0-9']*\.(?=[A-Za-z_:!#$%&*+.\/<=>?@\\^|~]|-[^-])/;
+        /[A-Z][A-Za-z_0-9']*\.(?=[A-Za-z_:!#$%&*+./<=>?@\\^|~]|-[^-])/;
     const RE_VARID = /[a-z_][A-Za-z_0-9']*/;
     const RE_CONID = /[A-Z][A-Za-z_0-9']*/;
-    const RE_VARSYM = /[!#$%&*+.\/<=>?@\\^|~-][:!#$%&*+.\/<=>?@\\^|~-]*/;
-    const RE_CONSYM = /:[:!#$%&*+.\/<=>?@\\^|~-]*/;
+    const RE_VARSYM = /[!#$%&*+./<=>?@\\^|~-][:!#$%&*+./<=>?@\\^|~-]*/;
+    const RE_CONSYM = /:[:!#$%&*+./<=>?@\\^|~-]*/;
     const RE_NUMBER =
         /[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|0[oO][0-7]+|0[xX][0-9a-fA-F]+/;
     const RE_CHAR = new RegExp(
@@ -53,9 +53,9 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
     const RE_ENDCOMMENT = /-}/;
 
     function opening(bracket) {
-        if (bracket == ')') return '(';
-        if (bracket == ']') return '[';
-        if (bracket == '}') return '{';
+        if (bracket === ')') return '(';
+        if (bracket === ']') return '[';
+        if (bracket === '}') return '{';
         return bracket;
     }
 
@@ -116,7 +116,7 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
 
     function blockComment(tokenType) {
         return (stream, state) => {
-            if (state.commentLevel == 0) {
+            if (state.commentLevel === 0) {
                 state.func = normal;
                 return tokenType;
             }
@@ -176,7 +176,7 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
 
         token: (stream, state) => {
             const t = state.func(stream, state);
-            if (['variable', 'variable-2'].indexOf(t) != -1) {
+            if (['variable', 'variable-2'].indexOf(t) !== -1) {
                 const w = stream.current();
                 if (wellKnownWords.hasOwnProperty(w)) return wellKnownWords[w];
             }

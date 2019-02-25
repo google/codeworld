@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+'use strict';
 
 const LocalAuth = (() => {
     const mine = {};
@@ -54,7 +55,7 @@ const LocalAuth = (() => {
     }
 
     function onKeyDown(e) {
-        if (e.which == 13) {
+        if (e.which === 13) {
             const formData = validateFormData();
             if (formData.isValid) {
                 sweetAlert.clickConfirm();
@@ -116,11 +117,11 @@ const LocalAuth = (() => {
             return 'New password cannot be empty';
         }
 
-        if (formData.newPassword1 != formData.newPassword2) {
+        if (formData.newPassword1 !== formData.newPassword2) {
             return 'New passwords must match';
         }
 
-        if (formData.newPassword1 == formData.password) {
+        if (formData.newPassword1 === formData.password) {
             return 'New password must be different from old password';
         }
 
@@ -132,7 +133,7 @@ const LocalAuth = (() => {
     }
 
     function isPasswordExpired(e) {
-        return e.status == 401 && e.responseJSON && e.responseJSON.reason ==
+        return e.status === 401 && e.responseJSON && e.responseJSON.reason ===
             'password-expired';
     }
 
@@ -295,7 +296,7 @@ const LocalAuth = (() => {
     function sendHttpAuth(method, url, body, callback) {
         const request = new XMLHttpRequest();
         request.onreadystatechange = () => {
-            if (request.readyState == 4) {
+            if (request.readyState === 4) {
                 if (isTokenExpired(request)) {
                     httpPost({
                         url: REFRESH_TOKEN_URL,
@@ -336,7 +337,7 @@ const LocalAuth = (() => {
     }
 
     function isTokenExpired(request) {
-        if (request.status != 401) {
+        if (request.status !== 401) {
             return false;
         }
 
@@ -347,7 +348,7 @@ const LocalAuth = (() => {
             return false;
         }
 
-        return obj.reason == 'token-expired';
+        return obj.reason === 'token-expired';
     }
 
     // Return an object with the same interface as a Google API auth object

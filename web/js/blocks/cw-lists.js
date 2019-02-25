@@ -105,9 +105,9 @@ Blockly.Blocks['lists_comprehension'] = {
 
         const boolComb = (a, b) => Exp.AppFunc([a, b], Exp.Var('&&&'));
         let guardExp;
-        if (guardExps.length == 0) {
+        if (guardExps.length === 0) {
             guardExp = Exp.Lit('Truth');
-        } else if (guardExps.length == 1) {
+        } else if (guardExps.length === 1) {
             const inp = this.getInput('GUARD0');
             if (inp.connection.isConnected()) {
                 guardExp = inp.connection.targetBlock().getExpr();
@@ -208,16 +208,16 @@ Blockly.Blocks['lists_comprehension'] = {
         let i = 0;
         let available = [];
         for (i = 0; i < this.varCount_; i++) {
-            if (this.getInput('DO').connection == connection) {
+            if (this.getInput('DO').connection === connection) {
                 return this.vars_;
             }
 
-            if (this.getInput(`VAR${i}`) && this.getInput(`VAR${i}`).connection ==
+            if (this.getInput(`VAR${i}`) && this.getInput(`VAR${i}`).connection ===
                 connection) {
                 return available;
             }
 
-            if (this.getInput(`GUARD${i}`) && this.getInput(`GUARD${i}`).connection ==
+            if (this.getInput(`GUARD${i}`) && this.getInput(`GUARD${i}`).connection ===
                 connection) {
                 return this.vars_;
             }
@@ -265,8 +265,9 @@ Blockly.Blocks['lists_comprehension'] = {
         this.guardCount_ = parseInt(xmlElement.getAttribute('guardcount'),
             10);
 
-        for (let i = 0, childNode; childNode = xmlElement.childNodes[i]; i++) {
-            if (childNode.nodeName.toLowerCase() == 'let') {
+        for (let i = 0; xmlElement.childNodes[i]; i++) {
+            const childNode = xmlElement.childNodes[i];
+            if (childNode.nodeName.toLowerCase() === 'let') {
                 const name = childNode.getAttribute('name');
 
                 this.appendValueInput(`VAR${i}`)
@@ -335,7 +336,7 @@ Blockly.Blocks['lists_comprehension'] = {
         // Rebuild the block's inputs.
         let itemBlock = containerBlock.getInputTargetBlock('STACK');
         while (itemBlock) {
-            if (itemBlock.type == 'lists_comp_var') {
+            if (itemBlock.type === 'lists_comp_var') {
                 const name = itemBlock.getFieldValue('NAME');
                 this.vars_[this.varCount_] = name;
                 const input = this.appendValueInput(`VAR${this.varCount_}`)
@@ -350,7 +351,7 @@ Blockly.Blocks['lists_comprehension'] = {
                     input.connection.connect(itemBlock.valueConnection_);
                 }
                 this.varCount_++;
-            } else if (itemBlock.type == 'lists_comp_guard') {
+            } else if (itemBlock.type === 'lists_comp_guard') {
                 const input = this.appendValueInput(`GUARD${this.guardCount_}`)
                     .setAlign(Blockly.ALIGN_RIGHT)
                     .appendField('If');
@@ -727,13 +728,13 @@ Blockly.Blocks['lists_create_with_typed'] = {
         this.itemCount_ = parseInt(xmlElement.getAttribute('items'), 10);
         for (let x = 0; x < this.itemCount_; x++) {
             const input = this.appendValueInput(`ADD${x}`);
-            if (x == 0) {
+            if (x === 0) {
                 input.appendField(new Blockly.FieldImage(
                     'ims/format-list-bulleted.svg', 20, 20));
                 input.appendField('List');
             }
         }
-        if (this.itemCount_ == 0) {
+        if (this.itemCount_ === 0) {
             this.appendDummyInput('EMPTY')
                 .appendField('[ ]');
         }
@@ -771,7 +772,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
      */
     compose(containerBlock) {
         // Disconnect all input blocks and remove all inputs.
-        if (this.itemCount_ == 0) {
+        if (this.itemCount_ === 0) {
             this.removeInput('EMPTY');
         } else {
             for (let x = this.itemCount_ - 1; x >= 0; x--) {
@@ -783,7 +784,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
         let itemBlock = containerBlock.getInputTargetBlock('STACK');
         while (itemBlock) {
             const input = this.appendValueInput(`ADD${this.itemCount_}`);
-            if (this.itemCount_ == 0) {
+            if (this.itemCount_ === 0) {
                 input.appendField(new Blockly.FieldImage(
                     'ims/format-list-bulleted.svg', 20, 20));
                 input.appendField(new Blockly.FieldLabel('List',
@@ -797,7 +798,7 @@ Blockly.Blocks['lists_create_with_typed'] = {
             itemBlock = itemBlock.nextConnection &&
                 itemBlock.nextConnection.targetBlock();
         }
-        if (this.itemCount_ == 0) {
+        if (this.itemCount_ === 0) {
             this.appendDummyInput('EMPTY')
                 .appendField('[ ]');
         }

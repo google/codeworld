@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+'use strict';
 
 const autohelpEnabled = location.hash.length <= 2;
 
@@ -34,19 +35,19 @@ async function init() {
     preloadBaseBundle();
     window.setInterval(preloadBaseBundle, 1000 * 60 * 60);
 
-    allProjectNames = [
+    window.allProjectNames = [
         []
     ];
-    allFolderNames = [
+    window.allFolderNames = [
         []
     ];
-    openProjectName = null;
-    nestedDirs = [''];
+    window.openProjectName = null;
+    window.nestedDirs = [''];
 
     window.savedGeneration = null;
     window.runningGeneration = null;
 
-    if (window.location.pathname == '/haskell') {
+    if (window.location.pathname === '/haskell') {
         window.buildMode = 'haskell';
     } else {
         window.buildMode = 'codeworld';
@@ -57,10 +58,10 @@ async function init() {
 
     let hash = location.hash.slice(1);
     if (hash.length > 0) {
-        if (hash.slice(-2) == '==') {
+        if (hash.slice(-2) === '==') {
             hash = hash.slice(0, -2);
         }
-        if (hash[0] == 'F') {
+        if (hash[0] === 'F') {
             sweetAlert({
                 title: Alert.title('Save As', 'mdi-cloud-upload'),
                 html: 'Enter a name for the shared folder:',
@@ -80,7 +81,7 @@ async function init() {
 
                 sendHttp('POST', 'shareContent', data, request => {
                     window.location.hash = '';
-                    if (request.status == 200) {
+                    if (request.status === 200) {
                         sweetAlert('Success!',
                             'The shared folder is moved into your root directory.',
                             'success');
@@ -116,17 +117,17 @@ async function init() {
     }
 
     if (hash.length > 0) {
-        if (hash.slice(-2) == '==') {
+        if (hash.slice(-2) === '==') {
             hash = hash.slice(0, -2);
         }
-        if (hash[0] == 'P') {
+        if (hash[0] === 'P') {
             sendHttp('GET', `loadSource?hash=${hash}&mode=${window.buildMode}`,
                 null, request => {
-                    if (request.status == 200) {
+                    if (request.status === 200) {
                         setCode(request.responseText, null, null, true);
                     }
                 });
-        } else if (hash[0] != 'F') {
+        } else if (hash[0] !== 'F') {
             setCode('');
         }
     } else {
@@ -179,7 +180,7 @@ function initCodeworld() {
                     return;
                 }
 
-                let request;
+                let request = null;
 
                 function cancelLintRequest() {
                     if (window.codeworldEditor) {
@@ -199,11 +200,10 @@ function initCodeworld() {
                                 cancelLintRequest);
                         }
 
-                        if (request.status == 400 || request.status ==
-                            200) {
+                        if (request.status === 400 || request.status === 200) {
                             callback(parseCompileErrors(request
                                 .responseText));
-                        } else if (request.status == 0) {
+                        } else if (request.status === 0) {
                             // Request was cancelled because of a later change.  Do nothing.
                         } else {
                             console.log(
@@ -335,7 +335,7 @@ function stopRecording() {
 }
 
 function setMode(force) {
-    if (window.buildMode == 'haskell') {
+    if (window.buildMode === 'haskell') {
         if (force || window.codeworldEditor.getMode().name !== 'haskell') {
             window.codeworldEditor.setOption('mode', 'haskell');
         }
@@ -361,14 +361,14 @@ function getCurrentProject() {
 
 function folderHandler(folderName, index, state) {
     warnIfUnsaved(() => {
-        window.nestedDirs = nestedDirs.slice(0, index + 1);
-        window.allProjectNames = allProjectNames.slice(0, index + 1);
-        window.allFolderNames = allFolderNames.slice(0, index + 1);
+        window.nestedDirs = window.nestedDirs.slice(0, index + 1);
+        window.allProjectNames = window.allProjectNames.slice(0, index + 1);
+        window.allFolderNames = window.allFolderNames.slice(0, index + 1);
         if (!state) {
-            nestedDirs.push(folderName);
-            allProjectNames.push([]);
-            allFolderNames.push([]);
-            discoverProjects(nestedDirs.slice(1).join('/'), index + 1);
+            window.nestedDirs.push(folderName);
+            window.allProjectNames.push([]);
+            window.allFolderNames.push([]);
+            discoverProjects(window.nestedDirs.slice(1).join('/'), index + 1);
         }
         if (!window.move) {
             setCode('');
@@ -387,7 +387,7 @@ function folderHandler(folderName, index, state) {
 function updateUI() {
     const isSignedIn = signedIn();
     if (isSignedIn) {
-        if (document.getElementById('signout').style.display == 'none') {
+        if (document.getElementById('signout').style.display === 'none') {
             document.getElementById('signin').style.display = 'none';
             document.getElementById('signout').style.display = '';
             document.getElementById('navButton').style.display = '';
@@ -400,14 +400,14 @@ function updateUI() {
             document.getElementById('deleteButton').style.display = '';
         } else {
             document.getElementById('saveButton').style.display = 'none';
-            if (window.nestedDirs != '') {
+            if (window.nestedDirs !== '') {
                 document.getElementById('deleteButton').style.display = '';
             } else {
                 document.getElementById('deleteButton').style.display = 'none';
             }
         }
     } else {
-        if (document.getElementById('signout').style.display == '') {
+        if (document.getElementById('signout').style.display === '') {
             document.getElementById('signin').style.display = '';
             document.getElementById('signout').style.display = 'none';
             document.getElementById('saveButton').style.display = 'none';
@@ -450,15 +450,13 @@ function updateUI() {
         document.getElementById('moveHereButton').style.display = 'none';
         document.getElementById('cancelMoveButton').style.display = 'none';
 
-        if (nestedDirs.length != 1 && (openProjectName == null ||
-                openProjectName == '')) {
+        if (window.nestedDirs.length !== 1 && (window.openProjectName === null || window.openProjectName === '')) {
             document.getElementById('shareFolderButton').style.display = '';
         } else {
             document.getElementById('shareFolderButton').style.display = 'none';
         }
 
-        if ((openProjectName != null && openProjectName != '') ||
-            nestedDirs.length != 1) {
+        if ((window.openProjectName !== null && window.openProjectName !== '') || window.nestedDirs.length !== 1) {
             document.getElementById('moveButton').style.display = '';
         } else {
             document.getElementById('moveButton').style.display = 'none';
@@ -480,7 +478,7 @@ function updateUI() {
 
     // If true - code currently in document is not equal to
     // last compiled code
-    const running = document.getElementById('runner').style.display != 'none';
+    const running = document.getElementById('runner').style.display !== 'none';
     const obsolete = !window.codeworldEditor.getDoc().isClean(window.runningGeneration);
     const obsoleteAlert = document.getElementById('obsolete-code-alert');
     if (running && obsolete) {
@@ -495,11 +493,11 @@ function updateUI() {
 }
 
 function updateNavBar() {
-    allProjectNames.forEach(projectNames => {
+    window.allProjectNames.forEach(projectNames => {
         projectNames.sort((a, b) => a.localeCompare(b));
     });
 
-    allFolderNames.forEach(folderNames => {
+    window.allFolderNames.forEach(folderNames => {
         folderNames.sort((a, b) => a.localeCompare(b));
     });
 
@@ -555,11 +553,10 @@ function updateNavBar() {
         projects.removeChild(projects.lastChild);
     }
 
-    for (let i = 0; i < nestedDirs.length; i++) {
+    for (let i = 0; i < window.nestedDirs.length; i++) {
         let nextProjects = null;
-        allFolderNames[i].forEach(folderName => {
-            const active = i + 1 < nestedDirs.length && nestedDirs[i + 1] ==
-                folderName;
+        window.allFolderNames[i].forEach(folderName => {
+            const active = i + 1 < window.nestedDirs.length && window.nestedDirs[i + 1] === folderName;
             if (!signedIn() && !active) {
                 return;
             }
@@ -570,9 +567,8 @@ function updateNavBar() {
                     'div'));
             }
         });
-        allProjectNames[i].forEach(projectName => {
-            const active = i + 1 == nestedDirs.length && window.openProjectName ==
-                projectName;
+        window.allProjectNames[i].forEach(projectName => {
+            const active = i + 1 === window.nestedDirs.length && window.openProjectName === projectName;
             if (!signedIn() && !active) {
                 return;
             }
@@ -587,7 +583,7 @@ function updateNavBar() {
         const span = document.createElement('span');
         span.innerHTML = template;
         const elem = span.getElementsByTagName('a')[0];
-        elem.style.marginLeft = `${3 + 16 * (nestedDirs.length - 1)}px`;
+        elem.style.marginLeft = `${3 + 16 * (window.nestedDirs.length - 1)}px`;
         span.style.display = 'flex';
         span.style.flexDirection = 'column';
         projects.appendChild(span);
@@ -604,8 +600,7 @@ function moveProject() {
             return;
         }
 
-        if ((openProjectName == null || openProjectName == '') &&
-            nestedDirs.length == 1) {
+        if ((window.openProjectName === null || window.openProjectName === '') && window.nestedDirs.length === 1) {
             sweetAlert('Oops!',
                 'You must select a project or folder to move.',
                 'error');
@@ -613,18 +608,18 @@ function moveProject() {
             return;
         }
 
-        const tempOpen = openProjectName;
-        const tempPath = nestedDirs.slice(1).join('/');
+        const tempOpen = window.openProjectName;
+        const tempPath = window.nestedDirs.slice(1).join('/');
         setCode('');
-        if (tempOpen == null || tempOpen == '') {
-            nestedDirs.splice(-1);
-            allProjectNames.splice(-1);
-            allFolderNames.splice(-1);
+        if (tempOpen === null || tempOpen === '') {
+            window.nestedDirs.splice(-1);
+            window.allProjectNames.splice(-1);
+            window.allFolderNames.splice(-1);
         }
 
         window.move = Object();
         window.move.path = tempPath;
-        if (tempOpen != null && tempOpen != '') {
+        if (tempOpen !== null && tempOpen !== '') {
             window.move.file = tempOpen;
         }
 
@@ -634,8 +629,8 @@ function moveProject() {
 }
 
 function moveHere() {
-    moveHere_(nestedDirs.slice(1).join('/'), window.buildMode, () => {
-        nestedDirs = [''];
+    moveHere_(window.nestedDirs.slice(1).join('/'), window.buildMode, () => {
+        window.nestedDirs = [''];
         discoverProjects('', 0);
         cancelMove();
         updateUI();
@@ -662,7 +657,7 @@ function changeFontSize(incr) {
 
 function help() {
     let url;
-    if (window.buildMode == 'haskell') {
+    if (window.buildMode === 'haskell') {
         url = 'doc-haskell/CodeWorld.html';
     } else {
         url = `doc.html?shelf=help/${window.buildMode}.shelf`;
@@ -723,16 +718,16 @@ function editorHelp(doc) {
 function isEditorClean() {
     const doc = window.codeworldEditor.getDoc();
 
-    if (window.savedGeneration == null) return doc.getValue() == '';
+    if (window.savedGeneration === null) return doc.getValue() === '';
     else return doc.isClean(window.savedGeneration);
 }
 
 function setCode(code, history, name, autostart) {
-    openProjectName = name;
+    window.openProjectName = name;
 
     const doc = codeworldEditor.getDoc();
     doc.setValue(code);
-    savedGeneration = doc.changeGeneration(true);
+    window.savedGeneration = doc.changeGeneration(true);
 
     if (history) {
         doc.setHistory(history);
@@ -763,7 +758,7 @@ function newProject() {
 }
 
 function newFolder() {
-    createFolder(nestedDirs.slice(1).join('/'), window.buildMode, () => {
+    createFolder(window.nestedDirs.slice(1).join('/'), window.buildMode, () => {
         if (!window.move) {
             setCode('');
         }
@@ -781,7 +776,7 @@ function loadProject(name, index) {
 }
 
 function formatSource() {
-    if (window.buildMode == 'codeworld') {
+    if (window.buildMode === 'codeworld') {
         // Unfortunately, there isn't an acceptable style for CodeWorld yet.
         return;
     }
@@ -792,7 +787,7 @@ function formatSource() {
     data.append('mode', window.buildMode);
 
     sendHttp('POST', 'indent', data, request => {
-        if (request.status == 200) {
+        if (request.status === 200) {
             codeworldEditor.getDoc().setValue(request.responseText);
         }
     });
@@ -917,7 +912,7 @@ function showRequiredChecksInDialog(msg) {
     }).then(() => {
         const runner = document.getElementById('runner');
         if (!runner) return;
-        if (runner.style.display == 'none') return;
+        if (runner.style.display === 'none') return;
 
         setTimeout(() => {
             runner.focus();
@@ -977,11 +972,11 @@ function compile() {
         sweetAlert.close();
         window.cancelCompile();
 
-        const success = request.status == 200;
+        const success = request.status === 200;
 
         let hash;
         let dhash;
-        if (request.responseText.length == 23) {
+        if (request.responseText.length === 23) {
             hash = request.responseText;
             dhash = null;
         } else {
@@ -1003,14 +998,14 @@ function compile() {
 
         sendHttp('POST', 'runMsg', data, request => {
             let msg = '';
-            if (request.status == 200) {
+            if (request.status === 200) {
                 msg = request.responseText.replace(
                     /^[\r\n]+|[\r\n]+$/g, '');
             } else if (request.status >= 400) {
                 msg =
                     'Sorry!  Your program couldn\'t be run right now.';
             }
-            if (msg != '') msg += '\n\n';
+            if (msg !== '') msg += '\n\n';
 
             if (success) {
                 run(hash, dhash, msg, false, compileGeneration);
@@ -1047,13 +1042,13 @@ function saveProjectBase(path, projectName) {
 }
 
 function deleteFolder() {
-    const path = nestedDirs.slice(1).join('/');
-    if (path == '' || window.openProjectName != null) {
+    const path = window.nestedDirs.slice(1).join('/');
+    if (path === '' || window.openProjectName !== null) {
         return;
     }
 
     deleteFolder_(path, window.buildMode, () => {
-        savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
+        window.savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
         setCode('');
     });
 }
@@ -1064,9 +1059,9 @@ function deleteProject() {
         return;
     }
 
-    const path = nestedDirs.slice(1).join('/');
+    const path = window.nestedDirs.slice(1).join('/');
     deleteProject_(path, window.buildMode, () => {
-        savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
+        window.savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
         setCode('');
     });
 }

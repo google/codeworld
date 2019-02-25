@@ -68,3 +68,5 @@ rules:
     - off
   no-console:
     - off
+  no-control-regex:
+    - off

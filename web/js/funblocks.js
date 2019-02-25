@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+'use strict';
+
+window.openProjectName = '';
+window.lastXML = '';
+
+// This will get bound in Haskell to a function that runs the program
+window.runFunc = null;
 
 // Helper functions /////////////////////////////////////////////////
 
@@ -28,12 +35,12 @@ function loadWorkspace(text) {
     workspace.clear();
     const xmldom = Blockly.Xml.textToDom(text);
     Blockly.Xml.domToWorkspace(xmldom, workspace);
-    lastXML = text;
+    window.lastXML = text;
 }
 
 function loadXmlHash(hash, autostart) {
     sendHttp('GET', `loadXML?hash=${hash}&mode=blocklyXML`, null, request => {
-        if (request.status == 200) {
+        if (request.status === 200) {
             loadWorkspace(request.responseText);
             if (autostart) {
                 if (runFunc) runFunc();
@@ -42,31 +49,25 @@ function loadXmlHash(hash, autostart) {
     });
 }
 
-// This will get bound in Haskell to a function that runs the program
-runFunc = null;
-
-openProjectName = '';
-lastXML = '';
-
 function init() {
     Alert.init().then(Auth.init).then(() => {
-        nestedDirs = [''];
-        allProjectNames = [
+        window.nestedDirs = [''];
+        window.allProjectNames = [
             []
         ];
-        allFolderNames = [
+        window.allFolderNames = [
             []
         ];
-        lastXML = null;
-        showingResult = false;
+        window.lastXML = null;
+        window.showingResult = false;
         window.buildMode = 'codeworld';
 
         let hash = location.hash.slice(1);
         if (hash.length > 0) {
-            if (hash.slice(-2) == '==') {
+            if (hash.slice(-2) === '==') {
                 hash = hash.slice(0, -2);
             }
-            if (hash[0] == 'F') {
+            if (hash[0] === 'F') {
                 sweetAlert({
                     title: Alert.title('Save As', 'mdi-cloud-upload'),
                     html: 'Enter a name for the shared folder:',
@@ -87,7 +88,7 @@ function init() {
                     sendHttp('POST', 'shareContent', data,
                         request => {
                             window.location.hash = '';
-                            if (request.status == 200) {
+                            if (request.status === 200) {
                                 sweetAlert('Success!',
                                     'The shared folder is moved into your root directory.',
                                     'success');
@@ -112,7 +113,7 @@ function init() {
 }
 
 function initCodeworld() {
-    codeworldKeywords = {};
+    window.codeworldKeywords = {};
     registerStandardHints(() => {});
 
     window.onbeforeunload = event => {
@@ -215,7 +216,7 @@ function getWorkspaceXMLText() {
 
 function containsUnsavedChanges() {
     const blank = '<xml xmlns="http://www.w3.org/1999/xhtml"></xml>';
-    return getWorkspaceXMLText() != (lastXML || blank);
+    return getWorkspaceXMLText() !== (window.lastXML || blank);
 }
 
 function isEditorClean() {
@@ -239,12 +240,12 @@ function compile(src, silent) {
         data.append('mode', window.buildMode);
 
         sendHttp('POST', 'compile', data, request => {
-            const success = request.status == 200;
+            const success = request.status === 200;
 
             // Code hash
             let hash;
             let dhash;
-            if (request.responseText.length == 23) {
+            if (request.responseText.length === 23) {
                 hash = request.responseText;
                 dhash = null;
             } else {
@@ -259,13 +260,13 @@ function compile(src, silent) {
 
             sendHttp('POST', 'runMsg', data, request => {
                 let msg = '';
-                if (request.status == 200) {
+                if (request.status === 200) {
                     msg = request.responseText.trim();
-                } else if (request.status == 404) {
+                } else if (request.status === 404) {
                     msg =
                         'Sorry!  Your program couldn\'t be run right now.  Please try again.';
                 }
-                if (msg != '') msg += '\n\n';
+                if (msg !== '') msg += '\n\n';
                 if (silent) msg = null;
 
                 if (success) {
@@ -281,18 +282,18 @@ function compile(src, silent) {
 
 function folderHandler(folderName, index, state) {
     warnIfUnsaved(() => {
-        window.nestedDirs = nestedDirs.slice(0, index + 1);
-        window.allProjectNames = allProjectNames.slice(0, index + 1);
-        window.allFolderNames = allFolderNames.slice(0, index + 1);
+        window.nestedDirs = window.nestedDirs.slice(0, index + 1);
+        window.allProjectNames = window.allProjectNames.slice(0, index + 1);
+        window.allFolderNames = window.allFolderNames.slice(0, index + 1);
         if (!state) {
-            nestedDirs.push(folderName);
-            allProjectNames.push([]);
-            allFolderNames.push([]);
-            discoverProjects(nestedDirs.slice(1).join('/'), index + 1);
+            window.nestedDirs.push(folderName);
+            window.allProjectNames.push([]);
+            window.allFolderNames.push([]);
+            discoverProjects(window.nestedDirs.slice(1).join('/'), index + 1);
         }
         if (!window.move) {
             clearWorkspace();
-            openProjectName = null;
+            window.openProjectName = null;
             updateUI();
         } else {
             updateNavBar();
@@ -308,7 +309,7 @@ function folderHandler(folderName, index, state) {
 function updateUI() {
     const isSignedIn = signedIn();
     if (isSignedIn) {
-        if (document.getElementById('signout').style.display == 'none') {
+        if (document.getElementById('signout').style.display === 'none') {
             document.getElementById('signin').style.display = 'none';
             document.getElementById('signout').style.display = '';
             document.getElementById('navButton').style.display = '';
@@ -321,14 +322,14 @@ function updateUI() {
             document.getElementById('deleteButton').style.display = '';
         } else {
             document.getElementById('saveButton').style.display = 'none';
-            if (window.nestedDirs != '') {
+            if (window.nestedDirs !== '') {
                 document.getElementById('deleteButton').style.display = '';
             } else {
                 document.getElementById('deleteButton').style.display = 'none';
             }
         }
     } else {
-        if (document.getElementById('signout').style.display == '') {
+        if (document.getElementById('signout').style.display === '') {
             document.getElementById('signin').style.display = '';
             document.getElementById('signout').style.display = 'none';
             document.getElementById('saveButton').style.display = 'none';
@@ -343,9 +344,9 @@ function updateUI() {
     document.getElementById('runButtons').style.display = '';
 
     updateNavBar();
-    const NDlength = nestedDirs.length;
+    const NDlength = window.nestedDirs.length;
 
-    if (NDlength != 1 && (openProjectName == null || openProjectName == '')) {
+    if (NDlength !== 1 && (openProjectName === null || openProjectName === '')) {
         document.getElementById('shareFolderButton').style.display = '';
     } else {
         document.getElementById('shareFolderButton').style.display = 'none';
@@ -353,7 +354,7 @@ function updateUI() {
 
     document.getElementById('moveHereButton').style.display = 'none';
     document.getElementById('cancelMoveButton').style.display = 'none';
-    if ((openProjectName != null && openProjectName != '') || NDlength != 1) {
+    if ((openProjectName !== null && openProjectName !== '') || NDlength !== 1) {
         document.getElementById('moveButton').style.display = '';
     } else {
         document.getElementById('moveButton').style.display = 'none';
@@ -380,23 +381,23 @@ function updateNavBar() {
         projects.removeChild(projects.lastChild);
     }
 
-    allProjectNames.forEach(projectNames => {
+    window.allProjectNames.forEach(projectNames => {
         projectNames.sort((a, b) => {
             a.localeCompare(b);
         });
     });
 
-    allFolderNames.forEach(folderNames => {
+    window.allFolderNames.forEach(folderNames => {
         folderNames.sort((a, b) => {
             a.localeCompare(b);
         });
     });
 
-    const NDlength = nestedDirs.length;
+    const NDlength = window.nestedDirs.length;
     for (let i = 0; i < NDlength; i++) {
         let tempProjects;
-        if (i != 0) {
-            const encodedName = nestedDirs[i].replace(/&/g, '&amp;')
+        if (i !== 0) {
+            const encodedName = window.nestedDirs[i].replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
             let template = document.getElementById('openFolderTemplate').innerHTML;
@@ -406,7 +407,7 @@ function updateNavBar() {
             const elem = span.getElementsByTagName('a')[0];
             elem.style.marginLeft = `${3 + 16 * (i - 1)}px`;
             elem.onclick = () => {
-                folderHandler(nestedDirs[i], i - 1, true);
+                folderHandler(window.nestedDirs[i], i - 1, true);
             };
             span.style.display = 'flex';
             span.style.flexDirection = 'column';
@@ -414,7 +415,7 @@ function updateNavBar() {
             projects.parentNode.removeChild(projects);
             projects = span.appendChild(document.createElement('div'));
         }
-        allFolderNames[i].forEach(folderName => {
+        window.allFolderNames[i].forEach(folderName => {
             const encodedName = folderName.replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
@@ -431,14 +432,13 @@ function updateNavBar() {
             span.style.flexDirection = 'column';
             projects.appendChild(span);
             if (i < NDlength - 1) {
-                if (folderName == nestedDirs[i + 1]) {
+                if (folderName === window.nestedDirs[i + 1]) {
                     tempProjects = projects.lastChild;
                 }
             }
         });
-        allProjectNames[i].forEach(projectName => {
-            const active = (window.openProjectName == projectName) && (i ==
-                NDlength - 1);
+        window.allProjectNames[i].forEach(projectName => {
+            const active = (window.openProjectName === projectName) && (i === NDlength - 1);
             if (!signedIn() && !active) {
                 return;
             }
@@ -481,8 +481,8 @@ function moveProject() {
             return;
         }
 
-        if ((openProjectName == null || openProjectName == '') &&
-            nestedDirs.length == 1) {
+        if ((openProjectName === null || openProjectName === '') &&
+            window.nestedDirs.length === 1) {
             sweetAlert('Oops!',
                 'You must select a project or folder to move.',
                 'error');
@@ -491,13 +491,13 @@ function moveProject() {
         }
 
         const tempOpen = openProjectName;
-        const tempPath = nestedDirs.slice(1).join('/');
+        const tempPath = window.nestedDirs.slice(1).join('/');
         clearWorkspace();
-        nestedDirs = [''];
-        allProjectNames = [
+        window.nestedDirs = [''];
+        window.allProjectNames = [
             []
         ];
-        allFolderNames = [
+        window.allFolderNames = [
             []
         ];
         discoverProjects('', 0);
@@ -513,7 +513,7 @@ function moveProject() {
 
         window.move = Object();
         window.move.path = tempPath;
-        if (tempOpen != null && tempOpen != '') {
+        if (tempOpen !== null && tempOpen !== '') {
             window.move.file = tempOpen;
         }
     }, false);
@@ -521,11 +521,11 @@ function moveProject() {
 
 function moveHere() {
     function successFunc() {
-        nestedDirs = [''];
-        allProjectNames = [
+        window.nestedDirs = [''];
+        window.allProjectNames = [
             []
         ];
-        allFolderNames = [
+        window.allFolderNames = [
             []
         ];
         discoverProjects('', 0);
@@ -533,7 +533,7 @@ function moveHere() {
         updateUI();
     }
 
-    moveHere_(nestedDirs.slice(1).join('/'), 'blocklyXML', successFunc);
+    moveHere_(window.nestedDirs.slice(1).join('/'), 'blocklyXML', successFunc);
 }
 
 function help() {
@@ -564,7 +564,7 @@ function signOut() {
     signout();
 
     document.getElementById('projects').innerHTML = '';
-    openProjectName = null;
+    window.openProjectName = null;
     cancelMove();
     updateUI();
 }
@@ -579,7 +579,7 @@ function loadProject(name, index) {
     }
 
     function successFunc(project) {
-        openProjectName = name;
+        window.openProjectName = name;
         clearRunCode();
         loadWorkspace(project.source);
         cancelMove();
@@ -592,13 +592,12 @@ function loadProject(name, index) {
 
 function saveProjectBase(path, projectName) {
     function successFunc() {
-        lastXML = getWorkspaceXMLText();
+        window.lastXML = getWorkspaceXMLText();
         window.openProjectName = projectName;
         cancelMove();
 
-        if (allProjectNames[allProjectNames.length - 1].indexOf(projectName) ==
-            -1) {
-            discoverProjects(path, allProjectNames.length - 1);
+        if (window.allProjectNames[window.allProjectNames.length - 1].indexOf(projectName) === -1) {
+            discoverProjects(path, window.allProjectNames.length - 1);
         }
         updateUI();
     }
@@ -606,14 +605,14 @@ function saveProjectBase(path, projectName) {
 }
 
 function deleteFolder() {
-    const path = nestedDirs.slice(1).join('/');
-    if (path == '' || window.openProjectName != null) {
+    const path = window.nestedDirs.slice(1).join('/');
+    if (path === '' || window.openProjectName !== null) {
         return;
     }
 
     function successFunc() {
         clearWorkspace();
-        openProjectName = null;
+        window.openProjectName = null;
         Blockly.getMainWorkspace().clearUndo();
     }
     deleteFolder_(path, 'blocklyXML', successFunc);
@@ -627,10 +626,10 @@ function deleteProject() {
 
     function successFunc() {
         clearWorkspace();
-        openProjectName = null;
+        window.openProjectName = null;
         Blockly.getMainWorkspace().clearUndo();
     }
-    const path = nestedDirs.slice(1).join('/');
+    const path = window.nestedDirs.slice(1).join('/');
     deleteProject_(path, 'blocklyXML', successFunc);
 
 }
@@ -639,14 +638,14 @@ function newFolder() {
     function successFunc() {
         if (!window.move) {
             clearWorkspace();
-            openProjectName = null;
+            window.openProjectName = null;
             clearRunCode();
-            lastXML = getWorkspaceXMLText();
+            window.lastXML = getWorkspaceXMLText();
             Blockly.getMainWorkspace().clearUndo();
             window.location.hash = '';
         }
     }
-    createFolder(nestedDirs.slice(1).join('/'), 'blocklyXML', successFunc);
+    createFolder(window.nestedDirs.slice(1).join('/'), 'blocklyXML', successFunc);
 }
 
 function shareFolder() {
@@ -657,10 +656,10 @@ function newProject() {
     warnIfUnsaved(() => {
         clearRunCode();
         clearWorkspace();
-        openProjectName = null;
+        window.openProjectName = null;
         cancelMove();
         updateUI();
-        lastXML = getWorkspaceXMLText();
+        window.lastXML = getWorkspaceXMLText();
         Blockly.getMainWorkspace().clearUndo();
         window.location.hash = '';
     }, false);

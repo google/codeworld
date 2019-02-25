@@ -39,48 +39,23 @@ replace regex replacement str = textFromJSString $
 
 #else
 
-import Data.Array (bounds, elems, (!))
-import Data.Char (isDigit)
+import Data.Array (elems)
 import Data.List
 import Data.Monoid
 import qualified Data.Text as T
-import Data.Text.Read (decimal)
 import Text.Regex.Base
 import Text.Regex.TDFA
 import Text.Regex.TDFA.Text
 
-getInserts :: Text -> [(Int, (Int, Int))]
-getInserts replacement = case replacement =~ ("[\\][0-9]" :: Text) :: [MatchArray] of
-    groups -> map processInsertion groups
-    where processInsertion group =
-              case decimal $ T.take (len - 1) $ T.drop (start + 1) replacement of
-                  Right (index, _) -> (index, (start, len))
-                  Left _ -> error $ T.unpack $ "Can not parse replacement groups in "
-                                  <> replacement -- should never happen beause handled
-                                                 -- by regex matching above
-              where (start, len) = group ! 0
-
-type Inserts = [(Int, (Int, Int))]
-applyInserts :: Text -> Text -> Inserts -> MatchArray -> Text
-applyInserts str replacement inserts matches = go 0 replacement inserts
-  where go pos replacement ((index, (rstart, rlen)) : inserts) =
-            let pre = T.take (rstart - pos) replacement
-                rest = T.drop (rlen + rstart - pos) replacement
-                (sstart, slen) = matches ! index
-                source = T.take slen $ T.drop sstart str
-            in pre <> source <> go (pos + rstart + rlen) rest inserts
-        go _ replacement [] = replacement
-
 replace :: Text -> Text -> Text -> Text
-replace regex replacement str = case str =~ regex of
-    matches@(match : _) ->
-        let (start, _) = match ! 0
-            pre     = T.take start str
-            rightestMatch = last matches
-            rightReBorder = (fst $ rightestMatch ! 0) + (snd $ rightestMatch ! 0)
-            post    = T.drop rightReBorder str
-            inserts = getInserts replacement
-        in pre <> (T.concat $ map (applyInserts str replacement inserts) matches) <> post
-    _ -> replacement
+replace regex replacement str =
+    let parts = concatMap elems $ (str =~ regex :: [MatchArray])
+    in foldl replaceOne str (reverse parts)
+  where
+    replaceOne :: Text -> (Int, Int) -> Text
+    replaceOne str (start, len) = pre <> replacement <> post
+      where
+        pre = T.take start str
+        post = T.drop (start + len) str
 
 #endif

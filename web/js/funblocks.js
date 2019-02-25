@@ -182,14 +182,9 @@ function run(xmlHash, codeHash, msg, error, dhash) {
 
     if (msg) {
         const message = document.getElementById('message');
-        let type = "error";
         message.innerHTML = '';
-        if (error) {
-            type = "error";
-        } else {
-            type = "log";
-        }
-        printMessage(type, msg);
+
+        printMessage(error ? 'error' : 'log', msg);
     }
 
     document.getElementById('editButton').setAttribute('href', `/#${codeHash}`);

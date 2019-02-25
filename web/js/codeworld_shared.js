@@ -1164,7 +1164,7 @@ function printMessage(type, message) {
         return;
     }
     // Deferred errors already handled on server side
-    if (message.indexOf("deferred") != -1){
+    if (message.indexOf('deferred') != -1 && type === 'error'){
         return;
     }
     message = preFormatMessage(message);

@@ -50,15 +50,15 @@ import Text.Regex.TDFA
 import Text.Regex.TDFA.Text
 
 getInserts :: Text -> [(Int, (Int, Int))]
-getInserts replacement = case replacement =~ ("[\\][0-9]" :: Text) :: [MatchArray] of
-    groups -> map processInsertion groups
-    where processInsertion group =
-              case decimal $ T.take (len - 1) $ T.drop (start + 1) replacement of
-                  Right (index, _) -> (index, (start, len))
-                  Left _ -> error $ T.unpack $ "Can not parse replacement groups in "
-                                  <> replacement -- should never happen beause handled
-                                                 -- by regex matching above
-              where (start, len) = group ! 0
+getInserts replacement = map processInsertion groups
+  where
+    groups = map (! 0) (replacement =~ ("[\\][0-9]" :: Text) :: [MatchArray])
+    processInsertion (start, len) =
+        case decimal $ T.take (len - 1) $ T.drop (start + 1) replacement of
+            Right (index, _) -> (index, (start, len))
+            Left _ -> error $ T.unpack $ "Can not parse replacement groups in "
+                            <> replacement -- should never happen beause handled
+                                           -- by regex matching above
 
 type Inserts = [(Int, (Int, Int))]
 applyInserts :: Text -> Text -> Inserts -> MatchArray -> Text
@@ -72,15 +72,15 @@ applyInserts str replacement inserts matches = go 0 replacement inserts
         go _ replacement [] = replacement
 
 replace :: Text -> Text -> Text -> Text
-replace regex replacement str = case str =~ regex of
-    matches@(match : _) ->
-        let (start, _) = match ! 0
-            pre     = T.take start str
-            rightestMatch = last matches
-            rightReBorder = (fst $ rightestMatch ! 0) + (snd $ rightestMatch ! 0)
-            post    = T.drop rightReBorder str
+replace regex replacement str = go 0 str (str =~ regex)
+  where
+    go pos s [] = s
+    go pos s (match : matches) =
+        let (start, len) = match ! 0
+            pre     = T.take (start - pos) s
+            post    = T.drop (start + len - pos) s
             inserts = getInserts replacement
-        in pre <> (T.concat $ map (applyInserts str replacement inserts) matches) <> post
-    _ -> replacement
+        in pre <> applyInserts str replacement inserts match
+               <> go (start + len) post matches
 
 #endif

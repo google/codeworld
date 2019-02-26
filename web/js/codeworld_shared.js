@@ -1149,10 +1149,12 @@ function printMessage(type, message) {
     if (message.trim() === '') {
         return;
     }
-    // Deferred errors already handled on server side
+
     if (message.indexOf('deferred') != -1 && type === 'error'){
+        // Deferred errors were already printed as compile output.
         return;
     }
+
     message = preFormatMessage(message);
 
     const outputDiv = document.getElementById('message');
@@ -1184,7 +1186,15 @@ function printMessage(type, message) {
     }
 
     outputDiv.scrollTop = outputDiv.scrollHeight;
-    if (type === 'error') {
-        outputDiv.classList.add('error');
-    }
+}
+
+function clearMessages() {
+    const outputDiv = document.getElementById('message');
+    outputDiv.innerHTML = '';
+    outputDiv.classList.remove('error');
+}
+
+function markFailed() {
+    const outputDiv = document.getElementById('message');
+    outputDiv.classList.add('error');
 }

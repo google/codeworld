@@ -20,6 +20,7 @@ function addMessage(type, str) {
     try {
         if (window.parent && window.parent.printMessage) {
             window.parent.printMessage(type, str);
+            if (type === 'error') window.parent.markFailed();
             return;
         }
     } catch (e) {

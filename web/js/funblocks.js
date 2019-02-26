@@ -185,6 +185,7 @@ function run(xmlHash, codeHash, msg, error, dhash) {
         message.innerHTML = '';
 
         printMessage(error ? 'error' : 'log', msg);
+        if (error) markFailed();
     }
 
     document.getElementById('editButton').setAttribute('href', `/#${codeHash}`);

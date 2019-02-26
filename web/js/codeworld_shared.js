@@ -1150,7 +1150,9 @@ function printMessage(type, message) {
         return;
     }
 
-    if (message.indexOf('deferred') != -1 && type === 'error'){
+    if (window.buildMode === 'codeworld' &&
+        message.indexOf('deferred') != -1 &&
+        type === 'error') {
         // Deferred errors were already printed as compile output.
         return;
     }

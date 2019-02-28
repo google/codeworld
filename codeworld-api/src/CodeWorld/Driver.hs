@@ -1532,6 +1532,7 @@ run initial stepHandler eventHandler drawHandler injectTime = do
                 rect <- getBoundingClientRect canvas
                 cw <- ClientRect.getWidth rect
                 ch <- ClientRect.getHeight rect
+                when firstFrame showCanvas
                 when (cw > 0 && ch > 0) $ canvasDrawImage
                     screen
                     (elementFromCanvas offscreenCanvas)
@@ -1539,7 +1540,6 @@ run initial stepHandler eventHandler drawHandler injectTime = do
                     0
                     (round cw)
                     (round ch)
-            when firstFrame showCanvas
             t1 <-
                 if | needsTime ->
                        do t1 <- nextFrame

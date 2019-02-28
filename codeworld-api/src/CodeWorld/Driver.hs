@@ -1508,7 +1508,6 @@ run :: s
     -> IO (e -> IO (), IO s)
 run initial stepHandler eventHandler drawHandler injectTime = do
     let fullStepHandler dt = stepHandler dt . eventHandler (injectTime dt)
-    showCanvas
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -1523,7 +1522,7 @@ run initial stepHandler eventHandler drawHandler injectTime = do
     currentState <- newMVar initial
     eventHappened <- newMVar ()
     screen <- getCodeWorldContext (canvasFromElement canvas)
-    let go t0 lastFrame lastStateName needsTime = do
+    let go t0 lastFrame lastStateName needsTime firstFrame = do
             pic <- drawHandler <$> readMVar currentState
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
@@ -1540,6 +1539,7 @@ run initial stepHandler eventHandler drawHandler injectTime = do
                     0
                     (round cw)
                     (round ch)
+            when firstFrame showCanvas
             t1 <-
                 if | needsTime ->
                        do t1 <- nextFrame
@@ -1557,13 +1557,13 @@ run initial stepHandler eventHandler drawHandler injectTime = do
             nextFrame <- tryTakeMVar needsRedraw >>= \case
                 Nothing -> return picFrame
                 Just () -> makeStableName undefined
-            go t1 nextFrame nextStateName nextNeedsTime
+            go t1 nextFrame nextStateName nextNeedsTime False
     t0 <- getTime
     nullFrame <- makeStableName undefined
     initialStateName <- makeStableName $! initial
     mainThread <- myThreadId
     drawThread <- forkIO $ propagateErrors mainThread $
-        go t0 nullFrame initialStateName True
+        go t0 nullFrame initialStateName True True
     let sendEvent event = propagateErrors drawThread $ do
             changed <-
                 modifyMVarIfDifferent currentState (eventHandler event)

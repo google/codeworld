@@ -1,0 +1,1 @@
+../../build/haskell-parser.js

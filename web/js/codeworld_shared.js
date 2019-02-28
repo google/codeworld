@@ -373,6 +373,43 @@ function registerStandardHints(successFunc) {
         if (request.status !== 200) {
             console.log('Failed to load autocomplete word list.');
         } else {
+            let parsed = haskell_parser.parse(request.responseText);
+            parsed.program = {
+                declaration: "program :: Program",
+                doc: "Your program.",
+                symbolStart: 0,
+                symbolEnd: 7
+            }
+            parsed.toString = {
+                declaration: "toString :: Text -> String",
+                doc: "",
+                symbolStart: 0,
+                symbolEnd: 8
+            }
+            parsed["Truth"] = {
+                declaration: "data Truth",
+                doc: "",
+                symbolEnd: 10,
+                symbolStart: 5
+            }
+            parsed["False"] = {
+                declaration: "False :: Truth",
+                doc: "",
+                symbolEnd: 5,
+                symbolStart: 0
+            }
+            parsed["True"] = {
+                declaration: "True :: Truth",
+                doc: "",
+                symbolEnd: 4,
+                symbolStart: 0
+            }
+            parsed["Program"] = {
+                declaration: "data Program",
+                symbolStart: 5,
+                symbolEnd: 12,
+                doc: ""
+            }
             lines = request.responseText.split('\n');
         }
 
@@ -475,9 +512,7 @@ function registerStandardHints(successFunc) {
                         symbolStart: wordStart,
                         symbolEnd: wordEnd
                     };
-                    if (doc) {
-                        window.codeWorldBuiltinSymbols[word].doc = doc;
-                    }
+                    window.codeWorldBuiltinSymbols[word].doc = doc;
                 }
 
                 if (hintBlacklist.indexOf(word) >= 0) {
@@ -490,7 +525,8 @@ function registerStandardHints(successFunc) {
                 doc = '';
             }
         });
-
+        console.log(DeepDiff(window.codeWorldBuiltinSymbols, parsed))
+        window.codeWorldBuiltinSymbols = parsed;
         successFunc();
     });
 }

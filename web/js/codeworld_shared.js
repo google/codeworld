@@ -1146,17 +1146,6 @@ function preFormatMessage(msg) {
 }
 
 function printMessage(type, message) {
-    if (message.trim() === '') {
-        return;
-    }
-
-    if (window.buildMode === 'codeworld' &&
-        message.indexOf('deferred') !== -1 &&
-        type === 'error') {
-        // Deferred errors were already printed as compile output.
-        return;
-    }
-
     message = preFormatMessage(message);
 
     const outputDiv = document.getElementById('message');

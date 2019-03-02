@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
 
@@ -18,9 +19,10 @@
 -}
 module CodeWorld.Color where
 
+import Control.DeepSeq
 import Data.Fixed (mod')
 import Data.List (unfoldr)
-
+import GHC.Generics (Generic)
 import System.Random (mkStdGen)
 import System.Random.Shuffle (shuffle')
 
@@ -29,7 +31,9 @@ data Color =
          !Double
          !Double
          !Double
-    deriving (Show, Eq)
+    deriving (Generic, Show, Eq)
+
+instance NFData Color
 
 type Colour = Color
 

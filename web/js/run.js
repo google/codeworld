@@ -24,8 +24,8 @@ window.programStartTime = Date.now();
 window.hasObservableOutput = false;
 
 function addMessage(type, str) {
-    let recentStart = Date.now() - window.programStartTime < 1000;
-    let printDeferred = window.hasObservableOutput || !recentStart;
+    const recentStart = Date.now() - window.programStartTime < 1000;
+    const printDeferred = window.hasObservableOutput || !recentStart;
 
     window.hasObservableOutput = true;
 
@@ -35,9 +35,9 @@ function addMessage(type, str) {
             window.buildMode === 'codeworld' &&
             /[(]deferred.*error[)]/.test(str)) {
             if (printDeferred) {
-                let match = /^(program.hs:[^ ]*)?/.exec(str);
-                if (match) str = match[1] + ' Giving up because of the error here.';
-                else str = 'Giving up because of errors in the code.'
+                const match = /^(program.hs:[^ ]*)?/.exec(str);
+                if (match) str = `${match[1]} Giving up because of the error here.`;
+                else str = 'Giving up because of errors in the code.';
             } else {
                 str = '';
             }
@@ -80,7 +80,7 @@ function showCanvas() {
 }
 
 function start() {
-    let modeMatch = /\bmode=([A-Za-z0-9]*)\b/.exec(location.search);
+    const modeMatch = /\bmode=([A-Za-z0-9]*)\b/.exec(location.search);
     window.buildMode = modeMatch ? modeMatch[1] : 'codeworld';
 
     window.h$base_writeStdout = (fd, fdo, buf, buf_offset, n, c) => {

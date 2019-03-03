@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -18,9 +19,11 @@
 module CodeWorld.Picture where
 
 import CodeWorld.Color
+import Control.DeepSeq
 import Data.List
 import Data.Monoid ((<>))
 import Data.Text (Text, pack)
+import GHC.Generics (Generic)
 import GHC.Stack
 
 type Point = (Double, Double)
@@ -145,11 +148,17 @@ data Picture
     | Pictures (Maybe SrcLoc) [Picture]
     | PictureAnd (Maybe SrcLoc) [Picture]
     | Blank (Maybe SrcLoc)
+    deriving (Generic)
+
+instance NFData Picture
 
 data TextStyle
     = Plain
     | Bold
-    | Italic deriving (Show)
+    | Italic
+    deriving (Generic, Show)
+
+instance NFData TextStyle
 
 data Font
     = SansSerif
@@ -157,7 +166,10 @@ data Font
     | Monospace
     | Handwriting
     | Fancy
-    | NamedFont !Text deriving (Show)
+    | NamedFont !Text
+    deriving (Generic, Show)
+
+instance NFData Font
 
 -- | A blank picture
 blank :: HasCallStack => Picture

@@ -1182,41 +1182,62 @@ function preFormatMessage(msg) {
 }
 
 function printMessage(type, message) {
-    if (message.trim() === '') {
-        return;
-    }
-    message = preFormatMessage(message);
-
     const outputDiv = document.getElementById('message');
-    const box = document.createElement('div');
-    const messageGutter = document.createElement('div');
-    const messageContent = document.createElement('div');
-    const splitted = message.trim().split('\n');
 
-    messageGutter.classList.add('message-gutter');
-    messageContent.classList.add('message-content');
-    box.classList.add('message-box');
-    box.classList.add(type);
-    box.appendChild(messageGutter);
-    box.appendChild(messageContent);
-    outputDiv.appendChild(box);
+    let box = outputDiv.lastChild;
+    let messageContent;
+    if (box && type === 'log' && box.classList.contains('log')) {
+        box.rawMessage += message;
+        messageContent = box.lastChild;
+    } else {
+        box = document.createElement('div');
+        box.classList.add('message-box');
+        box.classList.add(type);
 
-    if (splitted.length < 2) {
+        const messageGutter = document.createElement('div');
+        messageGutter.classList.add('message-gutter');
+
+        messageContent = document.createElement('div');
+        messageContent.classList.add('message-content');
+
+        box.appendChild(messageGutter);
+        box.appendChild(messageContent);
+
+        box.rawMessage = message;
+    }
+
+    const formatted = preFormatMessage(box.rawMessage);
+    const lines = formatted.trim().split('\n');
+
+    messageContent.innerHTML = '';
+
+    if (lines.length < 2) {
         const singleLineMsg = document.createElement('div');
-        singleLineMsg.innerHTML = message;
+        singleLineMsg.innerHTML = formatted;
         messageContent.appendChild(singleLineMsg);
     } else {
-        const details = document.createElement('details');
         const summary = document.createElement('summary');
+        summary.innerHTML = lines[0];
+
+        const details = document.createElement('details');
         details.setAttribute('open', '');
-        details.innerHTML = splitted.slice(1).join('\n');
-        summary.innerHTML = splitted[0];
+        details.innerHTML = lines.slice(1).join('\n');
+
         details.insertBefore(summary, details.firstChild);
         messageContent.appendChild(details);
     }
 
+    outputDiv.appendChild(box);
     outputDiv.scrollTop = outputDiv.scrollHeight;
-    if (type === 'error') {
-        outputDiv.classList.add('error');
-    }
+}
+
+function clearMessages() {
+    const outputDiv = document.getElementById('message');
+    outputDiv.innerHTML = '';
+    outputDiv.classList.remove('error');
+}
+
+function markFailed() {
+    const outputDiv = document.getElementById('message');
+    outputDiv.classList.add('error');
 }

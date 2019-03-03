@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE JavaScriptFFI #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -38,23 +39,48 @@ replace regex replacement str = textFromJSString $
 
 #else
 
-import Data.Array (elems)
+import Data.Array (bounds, elems, (!))
+import Data.Char (isDigit)
 import Data.List
 import Data.Monoid
 import qualified Data.Text as T
+import Data.Text.Read (decimal)
 import Text.Regex.Base
 import Text.Regex.TDFA
 import Text.Regex.TDFA.Text
 
-replace :: Text -> Text -> Text -> Text
-replace regex replacement str =
-    let parts = concatMap elems $ (str =~ regex :: [MatchArray])
-    in foldl replaceOne str (reverse parts)
+getInserts :: Text -> [(Int, (Int, Int))]
+getInserts replacement = map processInsertion groups
   where
-    replaceOne :: Text -> (Int, Int) -> Text
-    replaceOne str (start, len) = pre <> replacement <> post
-      where
-        pre = T.take start str
-        post = T.drop (start + len) str
+    groups = map (! 0) (replacement =~ ("[\\][0-9]" :: Text) :: [MatchArray])
+    processInsertion (start, len) =
+        case decimal $ T.take (len - 1) $ T.drop (start + 1) replacement of
+            Right (index, _) -> (index, (start, len))
+            Left _ -> error $ T.unpack $ "Can not parse replacement groups in "
+                            <> replacement -- should never happen beause handled
+                                           -- by regex matching above
+
+type Inserts = [(Int, (Int, Int))]
+applyInserts :: Text -> Text -> Inserts -> MatchArray -> Text
+applyInserts str replacement inserts matches = go 0 replacement inserts
+  where go pos replacement ((index, (rstart, rlen)) : inserts) =
+            let pre = T.take (rstart - pos) replacement
+                rest = T.drop (rlen + rstart - pos) replacement
+                (sstart, slen) = matches ! index
+                source = T.take slen $ T.drop sstart str
+            in pre <> source <> go (pos + rstart + rlen) rest inserts
+        go _ replacement [] = replacement
+
+replace :: Text -> Text -> Text -> Text
+replace regex replacement str = go 0 str (str =~ regex)
+  where
+    go pos s [] = s
+    go pos s (match : matches) =
+        let (start, len) = match ! 0
+            pre     = T.take (start - pos) s
+            post    = T.drop (start + len - pos) s
+            inserts = getInserts replacement
+        in pre <> applyInserts str replacement inserts match
+               <> go (start + len) post matches
 
 #endif

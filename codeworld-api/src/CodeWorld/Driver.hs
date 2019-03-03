@@ -57,6 +57,7 @@ import CodeWorld.Picture
 import Control.Concurrent
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
+import Control.DeepSeq
 import Control.Exception
 import Control.Monad
 import Control.Monad.Trans (liftIO)
@@ -96,7 +97,7 @@ import Data.Word
 import GHCJS.Concurrent (withoutPreemption)
 import GHCJS.DOM
 import qualified GHCJS.DOM.ClientRect as ClientRect
-import GHCJS.DOM.Document
+import GHCJS.DOM.Document hiding (evaluate)
 import GHCJS.DOM.Element
 import GHCJS.DOM.EventM
 import GHCJS.DOM.GlobalEventHandlers hiding (error)
@@ -1640,6 +1641,11 @@ runInspect ::
     -> (s -> Picture) 
     -> IO ()
 runInspect controls initial stepHandler eventHandler drawHandler = do
+    -- Ensure that the first frame picture doesn't expose any type errors,
+    -- before showing the canvas.  This avoids showing a blank screen when
+    -- there are deferred type errors that are effectively compile errors.
+    evaluate $ rnf $ drawHandler initial
+
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)

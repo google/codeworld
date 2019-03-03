@@ -843,20 +843,15 @@ function run(hash, dhash, msg, error, generation) {
         window.mainLayout.hide('east');
     }
 
-    const message = document.getElementById('message');
-    message.innerHTML = '';
-
-    if (error) {
-        message.classList.add('error');
-    } else {
-        message.classList.remove('error');
-    }
+    clearMessages();
 
     parseCompileErrors(msg).forEach(
         cmError => {
             printMessage(cmError.severity, cmError.fullText);
         }
     );
+
+    if (error) markFailed();
 
     window.deployHash = dhash;
 

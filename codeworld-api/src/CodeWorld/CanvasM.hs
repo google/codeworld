@@ -181,24 +181,10 @@ instance MonadCanvas Canvas where
             , fromIntegral h)
     globalCompositeOperation op = Canvas.globalCompositeOperation op
     lineWidth w = Canvas.lineWidth w
-    strokeColor r g b a =
-        Canvas.strokeStyle
-            (pack
-                 (printf
-                      "rgba(%.0f,%.0f,%.0f,%f)"
-                      (r * 255)
-                      (g * 255)
-                      (b * 255)
-                      a))
-    fillColor r g b a =
-        Canvas.fillStyle
-            (pack
-                 (printf
-                      "rgba(%.0f,%.0f,%.0f,%f)"
-                      (r * 255)
-                      (g * 255)
-                      (b * 255)
-                      a))
+    strokeColor r g b a = Canvas.strokeStyle
+        (pack (printf "rgba(%d,%d,%d,%.2f)" r g b a))
+    fillColor r g b a = Canvas.fillStyle
+        (pack (printf "rgba(%d,%d,%d,%.2f)" r g b a))
     font t = Canvas.font t
     textCenter = Canvas.textAlign Canvas.CenterAnchor
     textMiddle = Canvas.textBaseline Canvas.MiddleBaseline

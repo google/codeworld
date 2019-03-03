@@ -15,11 +15,37 @@
  */
 'use strict';
 
+// Tracks when the program started, and whether the program has done
+// anything observable (as best we can tell).  This is used to decide
+// whether deferred errors are triggering substantially after the
+// program start (in which case they should trigger a new message),
+// or at startup when the compile errors were just printed anyway.
+window.programStartTime = Date.now();
+window.hasObservableOutput = false;
+
 function addMessage(type, str) {
+    const recentStart = Date.now() - window.programStartTime < 1000;
+    const printDeferred = window.hasObservableOutput || !recentStart;
+
+    window.hasObservableOutput = true;
+
     // Catch exceptions to protect against cross-domain access errors.
     try {
+        if (type === 'error' &&
+            window.buildMode === 'codeworld' &&
+            /[(]deferred.*error[)]/.test(str)) {
+            if (printDeferred) {
+                const match = /^(program.hs:[^ ]*)?/.exec(str);
+                if (match) str = `${match[1]} Giving up because of the error here.`;
+                else str = 'Giving up because of errors in the code.';
+            } else {
+                str = '';
+            }
+        }
+
         if (window.parent && window.parent.printMessage) {
-            window.parent.printMessage(type, str);
+            if (str !== '') window.parent.printMessage(type, str);
+            if (type === 'error') window.parent.markFailed();
             return;
         }
     } catch (e) {
@@ -30,6 +56,8 @@ function addMessage(type, str) {
 }
 
 function showCanvas() {
+    window.hasObservableOutput = true;
+
     // Catch exceptions to protect against cross-domain access errors.
     // If the frame is cross-domain, then it's embedded, in which case
     // there is no need to show it.
@@ -52,6 +80,9 @@ function showCanvas() {
 }
 
 function start() {
+    const modeMatch = /\bmode=([A-Za-z0-9]*)\b/.exec(location.search);
+    window.buildMode = modeMatch ? modeMatch[1] : 'codeworld';
+
     window.h$base_writeStdout = (fd, fdo, buf, buf_offset, n, c) => {
         addMessage('log', h$decodeUtf8(buf, n, buf_offset));
         c(n);
@@ -75,6 +106,9 @@ function start() {
     };
     window.h$base_stdout_fd.write = window.h$base_writeStdout;
     window.h$base_stderr_fd.write = window.h$base_writeStderr;
+
+    // Update program start time in case loading/setup took a while.
+    window.programStartTime = Date.now();
 
     window.h$run(window.h$mainZCZCMainzimain);
 }

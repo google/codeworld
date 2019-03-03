@@ -54,11 +54,15 @@ Id "identifier" = value:Word
                            , location: location()
                            }
                   }
-
-DataKW = doc:(DocBlock)? "data" _ id:Id args:([ ]* Word [ ]*)*
-         tail:(DCol Type)? nl // data IO a :: * -> *
+// data IO a :: * -> *
+DataKW = doc:(DocBlock)? "data" _ id:Id _? args:(Word " ")*
+         tail:(DCol Type)? nl
          {
-             args = args.reduce(concatFoldl, "");
+             args = args.map(
+                 (arg) => {
+                     return arg.reduce(concatFoldl, "")
+                 }
+             ).reduce(concatFoldl, "");
              if (!tail) {
                  tail = "";
              }

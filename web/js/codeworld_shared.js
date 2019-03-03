@@ -357,8 +357,7 @@ function registerStandardHints(successFunc) {
                     if (hover) {
                         doc.className += 'hint-description';
                         doc.style.top = `${hintsWidgetRect.top}px`;
-                        doc.style.left = `${hintsWidgetRect.right 
-                        }px`;
+                        doc.style.left = `${hintsWidgetRect.right}px`;
                         doc.appendChild(hover);
                         document.body.appendChild(doc);
                     }
@@ -367,13 +366,13 @@ function registerStandardHints(successFunc) {
             return data;
         }
     });
-
+    let parsed = {};
     sendHttp('GET', 'codeworld-base.txt', null, request => {
         let lines = [];
         if (request.status !== 200) {
             console.log('Failed to load autocomplete word list.');
         } else {
-            let parsed = haskell_parser.parse(request.responseText);
+            parsed = haddock_parser.parse(request.responseText);
             parsed.program = {
                 declaration: "program :: Program",
                 doc: "Your program.",
@@ -410,6 +409,9 @@ function registerStandardHints(successFunc) {
                 symbolEnd: 12,
                 doc: ""
             }
+            hintBlacklist.forEach((deprecated) => {
+                delete parsed[deprecated];
+            })
             lines = request.responseText.split('\n');
         }
 

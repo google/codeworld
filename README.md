@@ -98,7 +98,7 @@ clobber `~/.ghc`, `~/.ghcjs`, and `~/.cabal`.  I recommend that you run CodeWorl
 dedicated user account to avoid causing problems for other Haskell installations.  If you
 don't, note that you will lose your user package database.
 
-See bug #4 for details.
+See bug [#4](https://github.com/google/codeworld/issues/4) for details.
 
 ### Authentication
 

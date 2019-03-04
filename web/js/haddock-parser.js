@@ -1,1 +1,0 @@
-../../build/haddock-parser.js

@@ -372,7 +372,7 @@ function registerStandardHints(successFunc) {
         if (request.status !== 200) {
             console.log('Failed to load autocomplete word list.');
         } else {
-            parsed = haddock_parser.parse(request.responseText);
+            parsed = haskell_parser.parse(request.responseText);
             parsed.program = {
                 declaration: "program :: Program",
                 doc: "Your program.",

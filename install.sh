@@ -256,10 +256,7 @@ run $BUILD/CodeMirror npm install
 run $BUILD/CodeMirror npm install -s uglify-js git+ssh://git@github.com:angelozerr/CodeMirror-Extension.git
 
 # Install pegjs
-
-run $BUILD       git clone https://github.com/pegjs/pegjs.git
-run $BUILD/pegjs git checkout tags/v0.10.0
-run $BUILD/pegjs npm install
+run $BUILD       npm install pegjs@0.10.0
 
 # Go ahead and run a first build, which installs more local packages.
 ./build.sh

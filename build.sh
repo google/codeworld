@@ -87,9 +87,12 @@ function build_codemirror {
 
 run $BUILD/CodeMirror build_codemirror
 
-# Build pegjs parsers
-function build_pegjs_parsers {
-    bin/pegjs --export-var haddock_parser --format globals -o ../haddock-parser.js ../../web/js/haddock-parser.pegjs
+# Build pegjs parser
+function build_pegjs_parser {
+    ./node_modules/pegjs/bin/pegjs --export-var haskell_parser \
+                                   --format globals \
+                                   -o ./haskell-parser.js \
+                                   ../haskell-parser.pegjs
 }
 
-run $BUILD/pegjs build_pegjs_parsers
+run $BUILD build_pegjs_parser

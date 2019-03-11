@@ -1,12 +1,21 @@
 {
+  var lines = [];
+
   function concatFoldl (acc, value) { return acc + value };
+  function getCachedContext() {
+     if (lines.length >= 1) {
+       return lines
+     } else {
+       lines = text().split('\n')
+       return lines
+     }
+  }
 }
 
 top = Head body:Body { return body; }
 
 Word "word" = value:([a-zA-Z_0-9+*/^<>=&|#-]+)
               { return value.reduce(concatFoldl, "") }
-
 
 Symbol "symbol" = [\"!\\#$%&'()*+,-./:;<=>?@\[\]^_`{|}]
 
@@ -47,7 +56,8 @@ Module = "module" _ name:Word _? nl { return "" }
 
 Head = (PragmaDefinition nl)*
        (SimpleCommentBlock / BlockComment / nl / HaddockTag)* Module
-       { return "" }
+       { getCachedContext()
+         return "" }
 
 Id "identifier" = value:Word
                   { return { value: value

@@ -221,6 +221,8 @@ function parseSymbolsFromCurrentCode() {
     } else {
         window.codeWorldSymbols = Object.assign({}, parseResults);
     }
+    console.log( 'diff for current code'
+               , DeepDiff(parseResults, haskell_parser.parse(window.codeworldEditor.getValue())))
 }
 
 function renderDeclaration(decl, keyword, keywordData, maxLen) {
@@ -374,44 +376,44 @@ function registerStandardHints(successFunc) {
         } else {
             parsed = haskell_parser.parse(request.responseText);
             parsed.program = {
-                declaration: "program :: Program",
-                doc: "Your program.",
+                declaration: 'program :: Program',
+                doc: 'Your program.',
                 symbolStart: 0,
                 symbolEnd: 7
-            }
+            };
             parsed.toString = {
-                declaration: "toString :: Text -> String",
-                doc: "",
+                declaration: 'toString :: Text -> String',
+                doc: '',
                 symbolStart: 0,
                 symbolEnd: 8
-            }
-            parsed["Truth"] = {
-                declaration: "data Truth",
-                doc: "",
+            };
+            parsed['Truth'] = {
+                declaration: 'data Truth',
+                doc: '',
                 symbolEnd: 10,
                 symbolStart: 5
-            }
-            parsed["False"] = {
-                declaration: "False :: Truth",
-                doc: "",
+            };
+            parsed['False'] = {
+                declaration: 'False :: Truth',
+                doc: '',
                 symbolEnd: 5,
                 symbolStart: 0
-            }
-            parsed["True"] = {
-                declaration: "True :: Truth",
-                doc: "",
+            };
+            parsed['True'] = {
+                declaration: 'True :: Truth',
+                doc: '',
                 symbolEnd: 4,
                 symbolStart: 0
-            }
-            parsed["Program"] = {
-                declaration: "data Program",
+            };
+            parsed['Program'] = {
+                declaration: 'data Program',
                 symbolStart: 5,
                 symbolEnd: 12,
-                doc: ""
-            }
+                doc: ''
+            };
             hintBlacklist.forEach((deprecated) => {
                 delete parsed[deprecated];
-            })
+            });
             lines = request.responseText.split('\n');
         }
 
@@ -527,7 +529,8 @@ function registerStandardHints(successFunc) {
                 doc = '';
             }
         });
-        console.log(DeepDiff(window.codeWorldBuiltinSymbols, parsed))
+        console.log("diff for builtins",
+                    DeepDiff(window.codeWorldBuiltinSymbols, parsed))
         window.codeWorldBuiltinSymbols = parsed;
         successFunc();
     });

@@ -351,3 +351,17 @@ div.CodeMirror-lint-message-error:not(:last-child):after {
         url('../SourceCodePro/source-code-pro-v7-latin-700.svg#SourceCodePro') format('svg');
     /* Legacy iOS */
 }
+
+span.cm-layout {
+    position: relative;
+}
+span.cm-layout:before {
+    content: "»";
+    position: absolute;
+    left: -0.65em;
+    top: 0;
+    color: brown;
+}
+.CodeMirror pre.CodeMirror-line {
+    padding-left: 1em;
+}

@@ -1090,7 +1090,7 @@ function parseCompileErrors(rawErrors) {
     const errors = [];
     rawErrors = rawErrors.split('\n\n');
     rawErrors.forEach(err => {
-        const lines = err.split('\n');
+        const lines = err.trim().split('\n');
         const firstLine = lines[0].trim();
         const otherLines = lines.slice(1).map(ln => ln.trim()).join('\n');
         const re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/;

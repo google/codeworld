@@ -361,6 +361,7 @@ span.cm-layout:before {
     left: -0.65em;
     top: 0;
     color: brown;
+    font-weight: normal;
 }
 .CodeMirror pre.CodeMirror-line {
     padding-left: 1em;

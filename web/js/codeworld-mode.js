@@ -74,16 +74,15 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
 
     // Start new layout context.
     function checkContextStarter(stream, state) {
-        let match = null;
-        if (stream.match(RE_LET)   ||
+        if (stream.match(RE_LET) ||
             stream.match(RE_WHERE) ||
-            stream.match(RE_DO)    ||
-            stream.match(RE_CASE)  ||
+            stream.match(RE_DO) ||
+            stream.match(RE_CASE) ||
             stream.match(RE_OF)
-           ) {
-            let nextChar = stream.peek();
+        ) {
+            const nextChar = stream.peek();
             // Check if it word like 'lettering' or 'offer'
-            if (nextChar === null || nextChar === undefined || /\s/.exec(nextChar)){
+            if (nextChar === null || nextChar === undefined || /\s/.exec(nextChar)) {
                 state.scanState = TRIGGERED;
                 return true;
             }
@@ -99,7 +98,7 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
     // scanState:     When TRIGGERED - next token is start of layout context.
 
     function normal(stream, state) {
-        let spanStyles = [];
+        const spanStyles = [];
 
         if (stream.match(RE_WHITESPACE)) return [];
 
@@ -135,7 +134,7 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
                 // Close previous context
                 state.layoutContext.pop();
             }
-            if (stream.column() == lastContext || stream.column() == 0) {
+            if (stream.column() === lastContext || stream.column() === 0) {
                 spanStyles.push('layout');
             }
         } else if (state.scanState === TRIGGERED && stream.match('{')) {
@@ -151,29 +150,29 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         if (stream.match(RE_QUAL)) {
             spanStyles.push('qualifier');
             return spanStyles;
-        };
+        }
         if (stream.match(RE_VARID) || stream.match(RE_VARSYM)) {
             spanStyles.push('variable');
             return spanStyles;
-        };
+        }
         if (stream.match(RE_CONID) || stream.match(RE_CONSYM)) {
             spanStyles.push('variable-2');
             return spanStyles;
-        };
+        }
         if (stream.match(RE_NUMBER)) {
             spanStyles.push('number');
             return spanStyles;
-        };
+        }
         if (stream.match(RE_CHAR) || stream.match(RE_STRING)) {
             spanStyles.push('string');
             return spanStyles;
-        };
+        }
 
         if (stream.match(RE_OPENBRACKET)) {
             state.layoutContext.push(stream.current());
             spanStyles.push(
                 `bracket${state.layoutContext.length <= 7 ? `-${
-                state.layoutContext.length - 1}` : ''}`);
+                    state.layoutContext.length - 1}` : ''}`);
             return spanStyles;
         }
 
@@ -186,7 +185,7 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
                 while (state.layoutContext.length > i) state.layoutContext.pop();
                 spanStyles.push(
                     `bracket${state.layoutContext.length <= 6 ? `-${
-                    state.layoutContext.length}` : ''}`);
+                        state.layoutContext.length}` : ''}`);
                 return spanStyles;
             }
         }
@@ -265,10 +264,9 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
                 if (t.indexOf('variable') !== -1) t.pop(t.indexOf('variable'));
                 if (t.indexOf('variable-2') !== -1) t.pop(t.indexOf('variable-2'));
                 t.push(wellKnownWords[w]);
-            };
+            }
             return t.join(' ');
         },
-
         blockCommentStart: '{-',
         blockCommentEnd: '-}',
         lineComment: '--',

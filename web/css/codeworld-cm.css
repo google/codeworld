@@ -355,6 +355,7 @@ div.CodeMirror-lint-message-error:not(:last-child):after {
 span.cm-layout {
     position: relative;
 }
+
 span.cm-layout:before {
     content: "»";
     position: absolute;
@@ -363,6 +364,7 @@ span.cm-layout:before {
     color: brown;
     font-weight: normal;
 }
+
 .CodeMirror pre.CodeMirror-line {
     padding-left: 1em;
 }

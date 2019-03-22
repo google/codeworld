@@ -804,6 +804,8 @@ function stop() {
 }
 
 function run(hash, dhash, msg, error, generation) {
+    if (!msg && !error) return;
+
     window.runningGeneration = generation;
 
     const runner = document.getElementById('runner');
@@ -858,10 +860,19 @@ function run(hash, dhash, msg, error, generation) {
     updateUI();
     document.getElementById('runner').addEventListener('load', updateUI);
 
-    showRequiredChecksInDialog(msg);
+    delayRequirementUI(2000, msg)
+        .then(showRequiredChecksInDialog);
+}
+
+function delayRequirementUI(time, msg) {
+    return new Promise(function(resolve) {
+        setTimeout(resolve.bind(null, msg), time)
+    });
 }
 
 function showRequiredChecksInDialog(msg) {
+    const outputDiv = document.getElementById('message');
+    if (outputDiv.classList.contains('error')) return;
     const matches = msg.match(
         /:: REQUIREMENTS ::((?:.|[\r\n])*):: END REQUIREMENTS ::/);
     if (!matches) {

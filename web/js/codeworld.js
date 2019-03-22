@@ -804,9 +804,8 @@ function stop() {
 }
 
 function run(hash, dhash, msg, error, generation) {
-    if (!msg && !error) return;
-
     window.runningGeneration = generation;
+    window.lastRunMessage = msg;
 
     const runner = document.getElementById('runner');
 
@@ -859,15 +858,14 @@ function run(hash, dhash, msg, error, generation) {
 
     updateUI();
     document.getElementById('runner').addEventListener('load', updateUI);
-
-    delayRequirementUI(2000, msg)
-        .then(showRequiredChecksInDialog);
 }
 
-function delayRequirementUI(time, msg) {
-    return new Promise(function(resolve) {
-        setTimeout(resolve.bind(null, msg), time)
-    });
+function notifyProgramStarted() {
+    if (window.lastRunMessage) {
+        let msg = window.lastRunMessage;
+        window.lastRunMessage = null;
+        setTimeout(() => { showRequiredChecksInDialog(msg); }, 500);
+    }
 }
 
 function showRequiredChecksInDialog(msg) {

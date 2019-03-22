@@ -55,6 +55,14 @@ function addMessage(type, str) {
     console.log(str);
 }
 
+function notifyStarted() {
+    try {
+        window.parent.notifyProgramStarted();
+    } catch (e) {
+        // Ignore exceptions, which are expected if there's no parent.
+    }
+}
+
 function showCanvas() {
     window.hasObservableOutput = true;
 
@@ -109,6 +117,7 @@ function start() {
 
     // Update program start time in case loading/setup took a while.
     window.programStartTime = Date.now();
+    notifyStarted();
 
     window.h$run(window.h$mainZCZCMainzimain);
 }

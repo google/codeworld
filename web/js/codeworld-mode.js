@@ -47,84 +47,10 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
     const RE_STRING = new RegExp(
         `"(?:[^\\\\"]|\\\\[abfnrtv\\\\"'&]|\\\\^[A-Z@[\\\\\\]^_]|${ 
             MULTICHAR_ESCAPE_REGEX})*"`);
+    const RE_OPENBRACKET = /[([{]/;
     const RE_CLOSEBRACKET = /[)\]}]/;
     const RE_INCOMMENT = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/;
     const RE_ENDCOMMENT = /-}/;
-
-    const RE_MODULE = /\bmodule\b/;
-    const RE_OF = /\bof\b/;
-    const RE_LET = /\blet\b/;
-    const RE_IN = /\bin\b/;
-    const RE_WHERE = /\bwhere\b/;
-    const RE_DO = /\bdo\b/;
-    const RE_LCASE = /\\case\b/; // Lambda case
-
-    // Start of module. If next token is 'module'
-    // or '{' then parse happens in NORMAL mode
-    // otherwise in TRIGGERED
-    const START = 0;
-    // Next non-comment or non-whitespace token
-    // is start of layout context
-    const TRIGGERED = 1;
-    // Parsing inside last layout
-    const NORMAL = 2;
-
-    // Possible values for context objects
-    const BRACE = '{';
-    const BRACKET = '(';
-    const SQUARE = '[';
-    const WHERE = 'where';
-    const LET = 'let';
-    const OF = 'of';
-    const LCASE = 'lcase';
-    const DO = 'do';
-    const ROOT = 'ROOT';
-
-    function rmRightContexts(column, state) {
-        const ctx = state.layoutContext.pop();
-        if (!ctx) return null;
-        if (ctx.type === 'explicit') {
-            let result = rmRightContexts(column, state);
-            // put bracket back
-            state.layoutContext.push(ctx);
-            return result;
-        }
-        if (ctx.column > column) {
-            // Don't push righter context back (close context)
-            // search context to the left from current,
-            // close others on the way
-            return rmRightContexts(column, state);
-        } else {
-            // This context on same level as passed column or to left
-            // put it back and return
-            state.layoutContext.push(ctx);
-            return ctx;
-        };
-    };
-
-    function getExplicitCtxNesting(state) {
-        const ctx = state.layoutContext.pop();
-        if (ctx && ctx.type === 'explicit') {
-            state.layoutContext.push(ctx);
-            return ctx.nesting + 1;
-        }
-        return 0;
-    }
-
-    function rmMatchingExplicitContext(closing, state) {
-        const ctx = state.layoutContext.pop();
-        if (ctx === undefined) {
-            return 0;
-        }
-        if (ctx.type === 'explicit' && ctx.value === opening(closing)) {
-            return ctx.nesting + 1;
-        } else if (ctx) {
-            let result = rmMatchingExplicitContext(closing, state);
-            state.layoutContext.push(ctx);
-            return result;
-        }
-        return 0;
-    }
 
     function opening(bracket) {
         if (bracket === ')') return '(';
@@ -133,145 +59,19 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         return bracket;
     }
 
-    // Check if there start of new layout context.
-    // Returns {style: <style of current token>, context:<layout context>}
-    function checkContextStarter(stream, state) {
-        // if (state.layoutScanState === START && stream.match(RE_MODULE)) {
-        //     state.layoutScanState = NORMAL;
-        //     return {
-        //         style:'keyword',
-        //         contextDraft: {
-        //             type: 'implicit'
-        //         }
-        //     };
-        // } else
-        if (state.layoutScanState === START && stream.match(BRACE)) {
-            state.layoutScanState = TRIGGERED;
-            return {
-                style: 'bracket-0',
-                contextDraft: {
-                    type: 'explicit',
-                    value: BRACE,
-                    nesting: 0
-                }
-            };
-        } else if (state.layoutScanState === START) {
-            state.layoutScanState = TRIGGERED;
-            return {
-                style: null,
-                contextDraft: {
-                    type: 'implicit',
-                    value: ROOT,
-                    nesting: 0
-                }};
-        }
-
-        if (stream.match(BRACE)) {
-            state.layoutScanState = TRIGGERED;
-            return {
-                style: 'bracket',
-                contextDraft: {
-                    type: 'explicit',
-                    value: BRACE
-                }
-            };
-        };
-
-        if (stream.match(SQUARE)) {
-            state.layoutScanState = TRIGGERED;
-            return {
-                style: 'bracket',
-                contextDraft: {
-                    type: 'explicit',
-                    value: SQUARE
-                }
-            };
-        };
-
-        if (stream.match(BRACKET)) {
-            state.layoutScanState = TRIGGERED;
-            return {
-                style: 'bracket',
-                contextDraft: {
-                    type: 'explicit',
-                    value: BRACKET
-                }
-            };
-        };
-
-        if (stream.match(RE_LET)){
-            state.layoutScanState = TRIGGERED;
-            return {
-                style: 'keyword',
-                contextDraft: {
-                    type: 'implicit',
-                    value: LET,
-                    line: stream.lineOracle.line
-                }
-            };
-        };
-        if (stream.match(RE_WHERE)) {
-            state.layoutScanState = TRIGGERED;
-            return {
-                style: 'keyword',
-                contextDraft: {
-                    type: 'implicit',
-                    value: WHERE
-                }
-            };
-        };
-        if (stream.match(RE_DO)) {
-            state.layoutScanState = TRIGGERED;
-            return {
-                style: 'keyword',
-                contextDraft: {
-                    type: 'implicit',
-                    value: DO
-                }
-            };
-        };
-
-        if (stream.match(RE_LCASE)) {
-            state.layoutScanState = TRIGGERED;
-            return {
-                style: 'keyword',
-                contextDraft: {
-                    type: 'implicit',
-                    value: LCASE
-                }
-            };
-        };
-
-        if (stream.match(RE_OF)) {
-            state.layoutScanState = TRIGGERED;
-            return {
-                style: 'keyword',
-                contextDraft: {
-                    type: 'implicit',
-                    value: OF
-                }
-            };
-        };
-        return null;
-    }
-
     // The state has the following properties:
     //
     // func:            The function to tokenize the remaining stream.
     // commentLevel:    Number of levels of block comments.
-    // layoutContext:   Explicit brackets and implicit layout contexts. Array of objects
-    //                   { type: explicit | implicit,
-    //                     value: { | ( | [ | where | let | of | lambdaCase | do | root,
+    // brackets:        Brackets, from outermost to innermost.
+    // layoutContext:   Implicit layout contexts. Array of objects
+    //                   { value: { let | implicit,
     //                     column: integer,
-    //                     line: integer, // required for detecting one line let expressions
-    //                     nesting: integer, // required for brackets styling
     //                   }
-    // layoutScanState: When TRIGGERED - next token is start of layout context.
+    // layoutScanState: start | triggered | lambdaCase | normal
 
     function normal(stream, state) {
-        const spanStyles = [];
-
-        if (stream.match(RE_WHITESPACE)) return [];
+        if (stream.match(RE_WHITESPACE)) return null;
 
         if (stream.match(RE_STARTMETA)) {
             state.func = blockComment('meta');
@@ -287,101 +87,43 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
 
         if (stream.match(RE_DASHES)) {
             stream.skipToEnd();
-            return ['comment'];
+            return 'comment';
         }
 
-        const contextStarter = checkContextStarter(stream, state);
-        if (contextStarter) {
-            const ctxDraft = contextStarter.contextDraft;
-            if (ctxDraft.type === 'explicit' && state.layoutScanState === TRIGGERED) {
-                ctxDraft.nesting = getExplicitCtxNesting(state);
-                let bracketStyleIndex = ctxDraft.nesting;
-                if (bracketStyleIndex !== 7) {
-                    bracketStyleIndex = bracketStyleIndex % 7;
-                };
-                contextStarter.style = 'bracket-' + bracketStyleIndex;
-                state.layoutScanState = NORMAL;
-            };
-            state.layoutContext.push(ctxDraft);
-            return [contextStarter.style];
-        }
+        if (stream.match(RE_QUAL)) return 'qualifier';
+        if (stream.match(RE_VARID) || stream.match(RE_VARSYM)) return 'variable';
+        if (stream.match(RE_CONID) || stream.match(RE_CONSYM)) return 'variable-2';
+        if (stream.match(RE_NUMBER)) return 'number';
+        if (stream.match(RE_CHAR) || stream.match(RE_STRING)) return 'string';
 
-        let currentContext = state.layoutContext.pop();
-
-        // Update current implicit context
-        if (currentContext && currentContext.type === 'implicit' && state.layoutScanState == TRIGGERED) {
-            currentContext.column = stream.column();
-            const prevImplContext = rmRightContexts(stream.column(), state);
-            if (prevImplContext) {
-                // Implicit contexts have pass-through nesting
-                currentContext.nesting = prevImplContext.nesting + 1;
-            } else {
-                currentContext.nesting = 0;
-            }
-            state.layoutScanStxate = NORMAL;
-        }
-
-        if (currentContext) {
-            state.layoutContext.push(currentContext);
-        }
-
-        currentContext = rmRightContexts(stream.column(), state);
-
-        if (currentContext && currentContext.type === 'implicit'
-            && stream.column() === currentContext.column) {
-            spanStyles.push('layout');
-        }
-
-
-        if (stream.match(RE_IN)) {
-            // Cancel previous layout 'let' context
-            // TODO close all contexts from this to prev let
-            // TODO handle one line let expressions
-            state.layoutContext.pop();
-            return ['keyword'];
-        }
-
-        if (stream.match(RE_QUAL)) {
-            spanStyles.push('qualifier');
-            return spanStyles;
-        }
-        if (stream.match(RE_VARID) || stream.match(RE_VARSYM)) {
-            spanStyles.push('variable');
-            return spanStyles;
-        }
-        if (stream.match(RE_CONID) || stream.match(RE_CONSYM)) {
-            spanStyles.push('variable-2');
-            return spanStyles;
-        }
-        if (stream.match(RE_NUMBER)) {
-            spanStyles.push('number');
-            return spanStyles;
-        }
-        if (stream.match(RE_CHAR) || stream.match(RE_STRING)) {
-            spanStyles.push('string');
-            return spanStyles;
+        if (stream.match(RE_OPENBRACKET)) {
+            state.brackets.push(stream.current());
+            return `bracket${state.brackets.length <= 7 ? `-${  
+                state.brackets.length - 1}` : ''}`;
         }
 
         if (stream.match(RE_CLOSEBRACKET)) {
-            let style = rmMatchingExplicitContext(stream.current(), state);
-            if (style !== 7) {
-                style = style % 7;
-            };
-            spanStyles.push('bracket-' + style);
-            return spanStyles;
+            const i = state.brackets.lastIndexOf(opening(stream.current()));
+            if (i < 0) {
+                return 'bracket';
+            } else {
+                while (state.brackets.length > i) state.brackets.pop();
+                return `bracket${state.brackets.length <= 6 ? `-${ 
+                    state.brackets.length}` : ''}`;
+            }
         }
 
-        if (stream.eat(',')) return [];
+        if (stream.eat(',')) return null;
 
         stream.next();
-        return ['error'];
+        return 'error';
     }
 
     function blockComment(tokenType) {
         return (stream, state) => {
             if (state.commentLevel === 0) {
                 state.func = normal;
-                return [tokenType];
+                return tokenType;
             }
 
             stream.match(RE_INCOMMENT);
@@ -393,7 +135,7 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
                 --state.commentLevel;
                 return state.func(stream, state);
             }
-            return [tokenType];
+            return tokenType;
         };
     }
 
@@ -428,26 +170,128 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         return result;
     })();
 
+    function parseToken(stream, state) {
+        const t = state.func(stream, state);
+        if (['variable', 'variable-2'].indexOf(t) !== -1) {
+            const w = stream.current();
+            if (wellKnownWords.hasOwnProperty(w)) {
+                return {
+                    style: wellKnownWords[w],
+                    token: w
+                };
+            }
+        }
+        return {
+            style: t,
+            token: stream.current()
+        };
+    }
+
+    function updateLayout(token, column, state) {
+        let result = false;
+
+        if (state.layoutScanState === 'start') {
+            if (token === 'module' || token === '{') {
+                state.layoutScanState = 'normal';
+                return false;
+            } else {
+                state.layoutScanState = 'triggered';
+                state.layoutContext.push({
+                    value: 'implicit'
+                });
+                return false;
+            }
+        }
+
+        // Close all implicit contexts right to current column
+        state.layoutContext = state.layoutContext.filter(
+            (ctx) => {
+                return column >= ctx.column || ctx.column === undefined;
+            }
+        );
+
+        // Close let - in contexts
+        if (token === 'in') {
+            const ctx = state.layoutContext.pop();
+            if (ctx && ctx.value === 'let') {
+                // Close let context
+                state.layoutScanState = 'normal';
+            } else if (ctx) {
+                state.layoutContext.push(ctx);
+                state.layoutScanState = 'normal';
+            }
+        }
+
+        // Pop current context
+        const currentContext = state.layoutContext.pop();
+        if (currentContext) {
+            // If triggered - update context from prev iteration
+            if (state.layoutScanState === 'triggered') {
+                currentContext.column = column;
+                state.layoutScanState = 'normal';
+                result = true;
+            } else if (state.layoutScanState === 'normal') {
+                if (currentContext.column === column) result = true;
+                else result = false;
+            } else {
+                result = false;
+            }
+            // Push current context
+            state.layoutContext.push(currentContext);
+        }
+
+        // Check if current token is start of new context
+        if (state.layoutScanState === 'lambdaCase') {
+            if (token === 'case') {
+                state.layoutContext.push({
+                    value: 'implicit'
+                });
+                state.layoutScanState = 'triggered';
+            } else {
+                state.layoutScanState = 'normal';
+            }
+        } else if (token === '\\') {
+            state.layoutScanState = 'lambdaCase';
+        } else if (
+            token === 'where' ||
+            token === 'of' ||
+            token === 'do'
+        ) {
+            state.layoutScanState = 'triggered';
+            state.layoutContext.push({
+                value: 'implicit'
+            });
+        } else if (token === 'let') {
+            state.layoutScanState = 'triggered';
+            state.layoutContext.push({
+                value: 'let'
+            });
+        }
+        return result;
+    }
+
     return {
         startState: () => {
             return {
                 func: normal,
                 commentLevel: 0,
                 layoutContext: [],
-                layoutScanState: START,
-                implicitContextNesting: 0
+                brackets: [],
+                layoutScanState: 'start'
             };
         },
-
         token: (stream, state) => {
-            const t = state.func(stream, state);
-            const w = stream.current();
-            if (wellKnownWords.hasOwnProperty(w)) {
-                if (t.indexOf('variable') !== -1) t.splice(t.indexOf('variable'), 1);
-                if (t.indexOf('variable-2') !== -1) t.splice(t.indexOf('variable-2'), 1);
-                t.push(wellKnownWords[w]);
+            const column = stream.column();
+            const {
+                token,
+                style
+            } = parseToken(stream, state);
+            // Skip whitespaces and comments
+            if (token.trim() === '' || style === 'comment' || style === 'meta') {
+                return style;
             }
-            return t.join(' ');
+            const isLayout = updateLayout(token, column, state);
+            return style + (isLayout ? ' layout' : '');
         },
         blockCommentStart: '{-',
         blockCommentEnd: '-}',

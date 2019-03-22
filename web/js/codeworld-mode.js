@@ -195,11 +195,12 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
                 state.layoutScanState = 'normal';
                 return false;
             } else {
-                state.layoutScanState = 'triggered';
+                state.layoutScanState = 'normal';
                 state.layoutContext.push({
-                    value: 'implicit'
+                    value: 'implicit',
+                    column: column
                 });
-                return false;
+                return true;
             }
         }
 

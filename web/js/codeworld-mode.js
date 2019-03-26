@@ -163,6 +163,13 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
     }
 
     function updateLayout(token, column, style, state) {
+        function opening(bracket) {
+            if (bracket === ')') return '(';
+            if (bracket === ']') return '[';
+            if (bracket === '}') return '{';
+            if (bracket === 'in') return 'let';
+        }
+
         // Close any implicit contexts when there are tokens in columns to
         // the left.
         const toClose = state.contexts.findIndex(ctx => !isBracket(ctx) && ctx.column > column);
@@ -173,19 +180,19 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         }
 
         // Create any new implicit contexts called for by layout rules.
-        if (state.lastTokens.length == 0) {
+        if (state.lastTokens.length === 0) {
             if (token !== 'module' && token !== '{') {
                 state.contexts.push({
-                    value: 'where',  // There's an implied "module Main where"
+                    value: 'where', // There's an implied "module Main where"
                     column: column
                 });
             }
         } else {
             const triggered = state.lastTokens.slice(-1).join(' ') === 'where' ||
-                              state.lastTokens.slice(-1).join(' ') === 'of' ||
-                              state.lastTokens.slice(-1).join(' ') === 'do' ||
-                              state.lastTokens.slice(-1).join(' ') === 'let' ||
-                              state.lastTokens.slice(-2).join(' ') === '\\ case';
+                state.lastTokens.slice(-1).join(' ') === 'of' ||
+                state.lastTokens.slice(-1).join(' ') === 'do' ||
+                state.lastTokens.slice(-1).join(' ') === 'let' ||
+                state.lastTokens.slice(-2).join(' ') === '\\ case';
 
             if (triggered && token !== '{') {
                 state.contexts.push({
@@ -203,35 +210,32 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         // implicit contexts created by layout.
         if (RE_OPENBRACKET.test(token)) {
             const level = state.contexts.filter(isBracket).length;
-            if (level <= 6) style = style + '-' + level;
+            if (level <= 6) style = `${style}-${level}`;
 
-            state.contexts.push({ value: token, column: column });
+            state.contexts.push({
+                value: token,
+                column: column
+            });
         }
 
         // Close contexts when syntax demands that we do so.
         if (RE_CLOSEBRACKET.test(token) || (!foundLet && token === 'in')) {
-            function opening(bracket) {
-                if (bracket === ')') return '(';
-                if (bracket === ']') return '[';
-                if (bracket === '}') return '{';
-                if (bracket === 'in') return 'let';
-            }
             state.contexts.reverse();
-            const reverseIndex = state.contexts.findIndex(ctx => ctx.value == opening(token));
+            const reverseIndex = state.contexts.findIndex(ctx => ctx.value === opening(token));
             state.contexts.reverse();
             if (reverseIndex >= 0) {
                 const index = state.contexts.length - reverseIndex - 1;
                 while (state.contexts.length > index) state.contexts.pop();
                 if (token !== 'in') {
                     const level = state.contexts.filter(isBracket).length;
-                    if (level <= 6) style = style + '-' + level;
+                    if (level <= 6) style = `${style}-${level}`;
                 }
             }
         }
 
-        let ctx = state.contexts[state.contexts.length - 1];
-        const isLayout = ctx && !isBracket(ctx) && ctx.column == column;
-        return isLayout ? style + ' layout' : style;
+        const ctx = state.contexts[state.contexts.length - 1];
+        const isLayout = ctx && !isBracket(ctx) && ctx.column === column;
+        return isLayout ? `${style} layout` : style;
     }
 
     return {

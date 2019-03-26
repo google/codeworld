@@ -862,9 +862,11 @@ function run(hash, dhash, msg, error, generation) {
 
 function notifyProgramStarted() {
     if (window.lastRunMessage) {
-        let msg = window.lastRunMessage;
+        const msg = window.lastRunMessage;
         window.lastRunMessage = null;
-        setTimeout(() => { showRequiredChecksInDialog(msg); }, 500);
+        setTimeout(() => {
+            showRequiredChecksInDialog(msg);
+        }, 500);
     }
 }
 

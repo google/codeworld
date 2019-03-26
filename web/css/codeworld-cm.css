@@ -365,6 +365,7 @@ span.cm-layout:before {
     font-weight: normal;
 }
 
-.CodeMirror pre.CodeMirror-line {
+.CodeMirror pre.CodeMirror-line,
+.CodeMirror pre.CodeMirror-placeholder {
     padding-left: 1em;
 }

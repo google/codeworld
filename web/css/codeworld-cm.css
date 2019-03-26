@@ -361,11 +361,11 @@ span.cm-layout:before {
     position: absolute;
     left: -0.65em;
     top: 0;
-    color: brown;
+    color: #a86;
     font-weight: normal;
 }
 
 .CodeMirror pre.CodeMirror-line,
 .CodeMirror pre.CodeMirror-placeholder {
-    padding-left: 1em;
+    padding-left: 0.5em;
 }

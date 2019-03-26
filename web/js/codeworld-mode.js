@@ -202,10 +202,10 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         // Open new contexts for brackets.  These should be inside the
         // implicit contexts created by layout.
         if (RE_OPENBRACKET.test(token)) {
-            state.contexts.push({ value: token, column: column });
+            const level = state.contexts.filter(isBracket).length;
+            if (level <= 6) style = style + '-' + level;
 
-            const level = state.contexts.filter(isBracket).length - 1;
-            if (level <= 6) style = style + level;
+            state.contexts.push({ value: token, column: column });
         }
 
         // Close contexts when syntax demands that we do so.
@@ -224,7 +224,7 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
                 while (state.contexts.length > index) state.contexts.pop();
                 if (token !== 'in') {
                     const level = state.contexts.filter(isBracket).length;
-                    if (level <= 6) style = style + level;
+                    if (level <= 6) style = style + '-' + level;
                 }
             }
         }

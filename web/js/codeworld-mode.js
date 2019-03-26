@@ -233,8 +233,8 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
             }
         }
 
-        const ctx = state.contexts[state.contexts.length - 1];
-        const isLayout = ctx && !isBracket(ctx) && ctx.column === column;
+        const ctx = state.contexts.find(ctx => ctx.column === column);
+        const isLayout = ctx && !isBracket(ctx);
         return isLayout ? `${style} layout` : style;
     }
 

@@ -96,12 +96,20 @@ div.CodeMirror span.cm-bracket-0 {
     letter-spacing: -0.12em;
 }
 
+span.cm-bracket-0.cm-layout:before {
+    font-size: calc(0.8em);
+}
+
 pre.cm-s-default span.cm-bracket-1,
 div.CodeMirror span.cm-bracket-1 {
     font-weight: bold;
     color: hsl(225, 60%, 60%);
     font-size: 1.12em;
     letter-spacing: -0.064em;
+}
+
+span.cm-bracket-1.cm-layout:before {
+    font-size: 0.893em;
 }
 
 pre.cm-s-default span.cm-bracket-2,
@@ -363,6 +371,8 @@ span.cm-layout:before {
     top: 0;
     color: #a86;
     font-weight: normal;
+    font-size: 1em;
+    letter-spacing: 0;
 }
 
 .CodeMirror pre.CodeMirror-line,

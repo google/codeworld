@@ -201,8 +201,8 @@ function initCodeworld() {
                         }
 
                         if (request.status === 400 || request.status === 200) {
-                            callback(parseCompileErrors(request
-                                .responseText));
+                            const messages = parseCompileErrors(request.responseText);
+                            callback(messages);
                         } else if (request.status === 0) {
                             // Request was cancelled because of a later change.  Do nothing.
                         } else {
@@ -1132,13 +1132,19 @@ function parseCompileErrors(rawErrors) {
                 }
             }
 
+            const message =
+                ((match[6] ? `${match[6].trim()}\n` : '') + otherLines)
+                    .replace(/program\.hs:(\d+):((\d+)(-\d+)?)/g,
+                        'Line $1, Column $2')
+                    .replace(/program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
+                        'Line $1-$3, Column $2-$4');
+
             errors.push({
                 from: CodeMirror.Pos(line, startCol),
                 to: CodeMirror.Pos(line, endCol),
                 severity: match[5],
                 fullText: err,
-                message: (match[6] ? `${match[6].trim()}\n` :
-                    '') + otherLines
+                message: message
             });
         } else if (re2.test(firstLine)) {
             const match = re2.exec(firstLine);

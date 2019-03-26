@@ -364,14 +364,14 @@ span.cm-layout {
     position: relative;
 }
 
-span.cm-layout:before {
+span.cm-layout:first-child:before,
+span:not(.cm-layout) + span.cm-layout:before {
     content: "»";
     position: absolute;
     left: -0.65em;
     top: 0;
     color: #a86;
     font-weight: normal;
-    font-size: 1em;
     letter-spacing: 0;
 }
 

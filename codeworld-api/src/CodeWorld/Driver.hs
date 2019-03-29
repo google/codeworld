@@ -2414,5 +2414,9 @@ debugActivityOf initial change picture =
     debugInteractionOf initial (const id) change picture
 
 trace msg x = unsafePerformIO $ do
+    oldMode <- hGetBuffering stderr
+    hSetBuffering stderr (BlockBuffering Nothing)
     hPutStrLn stderr (T.unpack msg)
+    hFlush stderr
+    hSetBuffering stderr oldMode
     return x

@@ -103,37 +103,37 @@ instance MonadIO StubCanvasM where
 
 instance MonadCanvas StubCanvasM where
     type Image StubCanvasM = ()
-    save = StubCanvasM $ return ()
-    restore = StubCanvasM $ return ()
-    transform _ _ _ _ _ _ = StubCanvasM $ return ()
-    translate _ _ = StubCanvasM $ return ()
-    scale _ _ = StubCanvasM $ return ()
+    save = return ()
+    restore = return ()
+    transform _ _ _ _ _ _ = return ()
+    translate _ _ = return ()
+    scale _ _ = return ()
     newImage _ _ m = StubCanvasM $ do
         a <- unStubCanvasM m
         return ((), a)
-    drawImage _ _ _ _ _ = StubCanvasM $ return ()
-    globalCompositeOperation _ = StubCanvasM $ return ()
-    lineWidth _ = StubCanvasM $ return ()
-    strokeColor _ _ _ _ = StubCanvasM $ return ()
-    fillColor _ _ _ _ = StubCanvasM $ return ()
-    font _ = StubCanvasM $ return ()
-    textCenter = StubCanvasM $ return ()
-    textMiddle = StubCanvasM $ return ()
-    beginPath = StubCanvasM $ return ()
-    closePath = StubCanvasM $ return ()
-    moveTo _ = StubCanvasM $ return ()
-    lineTo _ = StubCanvasM $ return ()
-    quadraticCurveTo _ _ = StubCanvasM $ return ()
-    bezierCurveTo _ _ _ = StubCanvasM $ return ()
-    arc _ _ _ _ _ _ = StubCanvasM $ return ()
-    rect _ _ _ _ = StubCanvasM $ return ()
-    fill = StubCanvasM $ return ()
-    stroke = StubCanvasM $ return ()
-    fillRect _ _ _ _ = StubCanvasM $ return ()
-    fillText _ _ = StubCanvasM $ return ()
-    measureText _ = StubCanvasM $ return 0
-    isPointInPath _ = StubCanvasM $ return False
-    isPointInStroke _ = StubCanvasM $ return False
+    drawImage _ _ _ _ _ = return ()
+    globalCompositeOperation _ = return ()
+    lineWidth _ = return ()
+    strokeColor _ _ _ _ = return ()
+    fillColor _ _ _ _ = return ()
+    font _ = return ()
+    textCenter = return ()
+    textMiddle = return ()
+    beginPath = return ()
+    closePath = return ()
+    moveTo _ = return ()
+    lineTo _ = return ()
+    quadraticCurveTo _ _ = return ()
+    bezierCurveTo _ _ _ = return ()
+    arc _ _ _ _ _ _ = return ()
+    rect _ _ _ _ = return ()
+    fill = return ()
+    stroke = return ()
+    fillRect _ _ _ _ = return ()
+    fillText _ _ = return ()
+    measureText _ = return 0
+    isPointInPath _ = return False
+    isPointInStroke _ = return False
 
 data CanvasM a = CanvasM
     { unCanvasM :: Canvas.Context -> IO a

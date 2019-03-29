@@ -18,7 +18,7 @@ set -euo pipefail
 
 source base.sh
 
-rm -rf $BUILD ~/.ghc ~/.ghcjs
+rm -rf $BUILD ~/.ghc ~/.ghcjs ~/.cabal ~/.npm
 
 mkdir $BUILD
 mkdir $BUILD/downloads

@@ -221,6 +221,45 @@ function initCodeworld() {
         }
     });
     window.codeworldEditor.refresh();
+    window.codeworldEditor.on("cursorActivity", function() {
+        const prevDiv = document.getElementById("function-details");
+        if (prevDiv) prevDiv.remove();
+
+        const enclosingFunction = getEnclosingFunction(window.codeworldEditor);
+
+        if (!enclosingFunction || !enclosingFunction.string ||  !window.codeWorldSymbols[enclosingFunction.string]) {
+            return;
+        }
+
+        const topDiv = document.createElement('div');
+
+        topDiv.title = enclosingFunction.string;
+        topDiv.id = "function-details";
+        const keywordData = window.codeWorldSymbols[enclosingFunction.string];
+
+        const docDiv = document.createElement('div');
+        docDiv.classList.add("function-tooltip-styling");
+
+        const annotation = document.createElement('div');
+        renderDeclaration(annotation, enclosingFunction.string, keywordData, 9999, 0);
+        annotation.className = 'hover-decl';
+        docDiv.appendChild(annotation);
+
+        topDiv.appendChild(docDiv);
+        window.codeworldEditor.addWidget(window.codeworldEditor.getCursor(), topDiv, true, "above", "left");
+    });
+
+    window.getEnclosingFunction = (cm) => {
+        const cur = cm.getCursor();
+        const token = cm.getTokenAt(cur);
+        const line = cm.getLine(cur.line);
+        if (! line.includes('(')) return;
+        if (! token) return;
+        return cm.getTokenAt({
+            line: cur.line,
+            ch: line.substr(0, token.end).lastIndexOf('(')
+        });
+    };
 
     CodeMirror.commands.save = cm => {
         saveProject();

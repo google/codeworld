@@ -223,7 +223,7 @@ function parseSymbolsFromCurrentCode() {
     }
 }
 
-function renderDeclaration(decl, keyword, keywordData, maxLen) {
+function renderDeclaration(decl, keyword, keywordData, maxLen, argIndex = -1) {
     if (keywordData.symbolStart > 0) {
         decl.appendChild(document.createTextNode(
             keywordData.declaration.slice(0, keywordData.symbolStart)));
@@ -234,16 +234,23 @@ function renderDeclaration(decl, keyword, keywordData, maxLen) {
     wordElem.appendChild(document.createTextNode(keyword));
     decl.appendChild(wordElem);
 
+    let leftover = "";
     if (keywordData.symbolEnd < keywordData.declaration.length) {
-        let leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(
+        leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(
             /\s+/g, ' ');
         if (keywordData.symbolEnd + leftover.length > maxLen && leftover.length >
             3) {
             leftover = `${leftover.slice(0, maxLen - 3 - keywordData.symbolEnd) 
             }...`;
         }
-        decl.appendChild(document.createTextNode(leftover));
     }
+    else if (argIndex >= 0) {
+        if (!leftover.length) {
+            leftover = " :: Could not decipher arguments";
+        }
+    }
+
+    if (leftover.length) decl.appendChild(document.createTextNode(leftover));
     return decl;
 }
 

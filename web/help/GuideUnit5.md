@@ -217,7 +217,7 @@ single frame; but its effect can certainly be seen over time.
 Reacting to Events
 ==================
 
-You've already seen examples of sevenral events that can cause changes
+You've already seen examples of several events that can cause changes
 in an activity's state.  A more complete list of events is here.
 
 * `KeyPress` and `KeyRelease` tell you that someone has pressed or released
@@ -281,6 +281,7 @@ program = activityOf(initial, change, picture)
 initial(rs) = (-9, -9, 6, 15)
 change((x, y, vx, vy), TimePassing(dt)) =
     (x + vx * dt, y + vy * dt, vx, vy - 10 * dt)
+change(p, other) = p
 picture(x, y, vx, vy) = translated(solidCircle(1/2), x, y)
 ~~~~~
 

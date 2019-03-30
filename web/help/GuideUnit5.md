@@ -203,6 +203,7 @@ initial(rs)       = (9, 3)
 change((y, timer), TimePassing(dt))
   | timer < 0     = (y - 1, 3)
   | otherwise     = (y, timer - dt)
+change(p, other)  = p
 picture(y, timer) = translated(solidCircle(1), 0, y)
 ~~~~~
 

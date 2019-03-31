@@ -230,7 +230,22 @@ function initCodeworld() {
         if (!enclosingFunction || !enclosingFunction.string ||  !window.codeWorldSymbols[enclosingFunction.string]) {
             return;
         }
-
+        const cursor = window.codeworldEditor.getCursor();
+        const currentToken = window.codeworldEditor.getTokenAt(cursor);
+        const lineTokens = window.codeworldEditor.getLineTokens(cursor.line);
+        const argIndex =
+            lineTokens.filter(
+                elem =>
+                    getEnclosingFunction(
+                        window.codeworldEditor,
+                        {
+                            line: cursor.line, ch: elem.end
+                        })
+                        .string === enclosingFunction.string
+                    && elem.type && elem.type !== "keyword"
+                    && elem.type!=="bracket-0"
+                    && elem.type !== "built-in"
+            ).findIndex(elem => (elem.start === currentToken.start || elem.end === currentToken.start || elem.start === currentToken.end || elem.end === currentToken.end));
         const topDiv = document.createElement('div');
 
         topDiv.title = enclosingFunction.string;
@@ -241,16 +256,15 @@ function initCodeworld() {
         docDiv.classList.add("function-tooltip-styling");
 
         const annotation = document.createElement('div');
-        renderDeclaration(annotation, enclosingFunction.string, keywordData, 9999, 0);
+        renderDeclaration(annotation, enclosingFunction.string, keywordData, 9999, argIndex);
         annotation.className = 'hover-decl';
         docDiv.appendChild(annotation);
 
         topDiv.appendChild(docDiv);
-        window.codeworldEditor.addWidget(window.codeworldEditor.getCursor(), topDiv, true, "above", "left");
+        window.codeworldEditor.addWidget(cursor, topDiv, true, "above", "left");
     });
 
-    window.getEnclosingFunction = (cm) => {
-        const cur = cm.getCursor();
+    window.getEnclosingFunction = (cm, cur = cm.getCursor()) => {
         const token = cm.getTokenAt(cur);
         const line = cm.getLine(cur.line);
         if (! line.includes('(')) return;

@@ -244,13 +244,29 @@ function renderDeclaration(decl, keyword, keywordData, maxLen, argIndex = -1) {
             }...`;
         }
     }
-    else if (argIndex >= 0) {
+    if (argIndex >= 0) {
         if (!leftover.length) {
             leftover = " :: Could not decipher arguments";
         }
+        else {
+            let tokens = leftover.substring(
+                leftover.lastIndexOf("(") + 1,
+                leftover.lastIndexOf(")")
+            ).split(",").map(token => token.trim());
+            const ReturnType  = leftover.split("->")[1].trim();
+            argIndex = Math.min(argIndex, tokens.length - 1);
+            tokens[argIndex] = `<strong>${tokens[argIndex]}</strong>`;
+            leftover = ` :: (${tokens.join(', ')}) -> ${ReturnType}`;
+
+        }
     }
 
-    if (leftover.length) decl.appendChild(document.createTextNode(leftover));
+
+    if (leftover.length) {
+        const argElem = document.createElement('span');
+        argElem.innerHTML = leftover;
+        decl.appendChild(argElem);
+    }
     return decl;
 }
 

@@ -28,7 +28,6 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         '\\\\HT|\\\\LF|\\\\VT|\\\\FF|\\\\CR|\\\\SO|\\\\SI|\\\\DLE|\\\\DC1|\\\\DC2|' +
         '\\\\DC3|\\\\DC4|\\\\NAK|\\\\SYN|\\\\ETB|\\\\CAN|\\\\EM|\\\\SUB|\\\\ESC|' +
         '\\\\FS|\\\\GS|\\\\RS|\\\\US|\\\\SP|\\\\DEL';
-
     const RE_WHITESPACE = /[ \v\t\f]+/;
     const RE_STARTMETA = /{-#/;
     const RE_STARTCOMMENT = /{-/;
@@ -86,18 +85,34 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         }
 
         if (stream.match(RE_QUAL)) return 'qualifier';
-        if (stream.match(RE_VARID) || stream.match(RE_VARSYM)) return 'variable';
-        if (stream.match(RE_CONID) || stream.match(RE_CONSYM)) return 'variable-2';
+        let varType = null;
+        if (stream.match(RE_VARID) || stream.match(RE_VARSYM)) varType = 'variable';
+        if (stream.match(RE_CONID) || stream.match(RE_CONSYM)) varType = 'variable-2';
+        if (varType) {
+            if (stream.string[stream.pos] === '(') {
+                state.encFunc.push({
+                    functionName: stream.current(),
+                    roundBracketLevel: state.roundBracketLevel,
+                    argIndex: 0
+                });
+            }
+            return varType;
+        }
         if (stream.match(RE_NUMBER)) return 'number';
         if (stream.match(RE_CHAR) || stream.match(RE_STRING)) return 'string';
 
         if (stream.match(RE_OPENBRACKET)) {
+            if (stream.current() === '(') state.roundBracketLevel++;
             state.brackets.push(stream.current());
             return `bracket${state.brackets.length <= 7 ? `-${  
                 state.brackets.length - 1}` : ''}`;
         }
 
         if (stream.match(RE_CLOSEBRACKET)) {
+            if (stream.current() === ')') {
+                state.roundBracketLevel--;
+                if (state.encFunc.length && state.encFunc[state.encFunc.length - 1].roundBracketLevel === state.roundBracketLevel) state.encFunc.pop();
+            }
             const i = state.brackets.lastIndexOf(opening(stream.current()));
             if (i < 0) {
                 return 'bracket';
@@ -108,7 +123,9 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
             }
         }
 
-        if (stream.eat(',')) return null;
+        if (stream.match(',')) {
+            if (state.encFunc.length) state.encFunc[state.encFunc.length - 1].argIndex++;
+        }
 
         stream.next();
         return 'error';
@@ -170,7 +187,9 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
             return {
                 func: normal,
                 commentLevel: 0,
-                brackets: []
+                brackets: [],
+                encFunc: [],
+                roundBracketLevel: 0
             };
         },
 

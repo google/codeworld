@@ -164,18 +164,6 @@ div.CodeMirror span.cm-matchhighlight {
 
 /* Style overrides for the autocomplete box and doc-on-hover. */
 
-.function-tooltip-styling {
-    background: #ffe;
-    border-radius: 0.5em;
-    border: 1px solid #888;
-    box-shadow: 0.1em 0.1em 0.1em gray;
-    min-height: 1em;
-    max-height: 20em;
-    min-width: 5em;
-    overflow: hidden;
-    padding: 0.3em 0.5em;
-}
-
 #function-details {
     z-index: 10;
 }
@@ -216,7 +204,8 @@ li.CodeMirror-hint-active {
 
 .CodeMirror-hover-tooltip,
 .CodeMirror-lint-tooltip,
-.hint-description {
+.hint-description,
+.function-tooltip-styling {
     background-color: #ffe;
     border-radius: 0.5em;
     border: 1px solid #888;

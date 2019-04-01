@@ -225,55 +225,33 @@ function initCodeworld() {
         const prevDiv = document.getElementById("function-details");
         if (prevDiv) prevDiv.remove();
 
-        const enclosingFunction = getEnclosingFunction(window.codeworldEditor);
-
-        if (!enclosingFunction || !enclosingFunction.string ||  !window.codeWorldSymbols[enclosingFunction.string]) {
-            return;
-        }
         const cursor = window.codeworldEditor.getCursor();
         const currentToken = window.codeworldEditor.getTokenAt(cursor);
-        const lineTokens = window.codeworldEditor.getLineTokens(cursor.line);
-        const argIndex =
-            lineTokens.filter(
-                elem =>
-                    getEnclosingFunction(
-                        window.codeworldEditor,
-                        {
-                            line: cursor.line, ch: elem.end
-                        })
-                        .string === enclosingFunction.string
-                    && elem.type && elem.type !== "keyword"
-                    && elem.type!=="bracket-0"
-                    && elem.type !== "built-in"
-            ).findIndex(elem => (elem.start === currentToken.start || elem.end === currentToken.start || elem.start === currentToken.end || elem.end === currentToken.end));
+        // const lineTokens = window.codeworldEditor.getLineTokens(cursor.line);
+        if (!currentToken.state.encFunc.length) return;
+        const enclosingFunction = currentToken.state.encFunc[currentToken.state.encFunc.length - 1];
+        const enclosingFunctionName = enclosingFunction.functionName;
+        const argIndex = enclosingFunction.argIndex;
+
+        if (!window.codeWorldSymbols[enclosingFunctionName]) return;
+
         const topDiv = document.createElement('div');
 
-        topDiv.title = enclosingFunction.string;
+        topDiv.title = enclosingFunctionName;
         topDiv.id = "function-details";
-        const keywordData = window.codeWorldSymbols[enclosingFunction.string];
+        const keywordData = window.codeWorldSymbols[enclosingFunctionName];
 
         const docDiv = document.createElement('div');
         docDiv.classList.add("function-tooltip-styling");
 
         const annotation = document.createElement('div');
-        renderDeclaration(annotation, enclosingFunction.string, keywordData, 9999, argIndex);
+        renderDeclaration(annotation, enclosingFunctionName, keywordData, 9999, argIndex);
         annotation.className = 'hover-decl';
         docDiv.appendChild(annotation);
 
         topDiv.appendChild(docDiv);
         window.codeworldEditor.addWidget(cursor, topDiv, true, "above", "left");
     });
-
-    window.getEnclosingFunction = (cm, cur = cm.getCursor()) => {
-        const token = cm.getTokenAt(cur);
-        const line = cm.getLine(cur.line);
-        if (! line.includes('(')) return;
-        if (! token) return;
-        return cm.getTokenAt({
-            line: cur.line,
-            ch: line.substr(0, token.end).lastIndexOf('(')
-        });
-    };
 
     CodeMirror.commands.save = cm => {
         saveProject();

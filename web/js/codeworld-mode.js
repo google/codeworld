@@ -51,32 +51,35 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
     const RE_INCOMMENT = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/;
     const RE_ENDCOMMENT = /-}/;
 
-    function opening(bracket) {
-        if (bracket === ')') return '(';
-        if (bracket === ']') return '[';
-        if (bracket === '}') return '{';
-        return bracket;
-    }
-
     // The state has the following properties:
     //
-    // func:          The function to tokenize the remaining stream.
-    // commentLevel:  Number of levels of block comments.
-    // brackets:      Brackets, from outermost to innermost.
+    // func:         The function to tokenize the remaining stream.
+    // commentLevel: Number of levels of block comments.
+    // contexts:     Grouping contexts, from outermost to innermost.
+    //               Array of objects
+    //               {
+    //                 value: '{'. '(', '[', 'let', or 'other'
+    //                 column: integer,
+    //               }
+    // lastTokens:   Array of last up-to-two tokens encountered.
 
-    function normal(stream, state) {
+    function isBracket(context) {
+        return context.value.length === 1;
+    }
+
+    function normal(stream, column, state) {
         if (stream.match(RE_WHITESPACE)) return null;
 
         if (stream.match(RE_STARTMETA)) {
             state.func = blockComment('meta');
             ++state.commentLevel;
-            return state.func(stream, state);
+            return state.func(stream, column, state);
         }
 
         if (stream.match(RE_STARTCOMMENT)) {
             state.func = blockComment('comment');
             ++state.commentLevel;
-            return state.func(stream, state);
+            return state.func(stream, column, state);
         }
 
         if (stream.match(RE_DASHES)) {
@@ -100,31 +103,19 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         }
         if (stream.match(RE_NUMBER)) return 'number';
         if (stream.match(RE_CHAR) || stream.match(RE_STRING)) return 'string';
-
-        if (stream.match(RE_OPENBRACKET)) {
-            if (stream.current() === '(') state.roundBracketLevel++;
-            state.brackets.push(stream.current());
-            return `bracket${state.brackets.length <= 7 ? `-${  
-                state.brackets.length - 1}` : ''}`;
-        }
-
-        if (stream.match(RE_CLOSEBRACKET)) {
+        if (stream.match(RE_OPENBRACKET) || stream.match(RE_CLOSEBRACKET)) {
+            if (stream.current() === '(') {
+                state.roundBracketLevel++;
+            }
             if (stream.current() === ')') {
                 state.roundBracketLevel--;
                 if (state.encFunc.length && state.encFunc[state.encFunc.length - 1].roundBracketLevel === state.roundBracketLevel) state.encFunc.pop();
             }
-            const i = state.brackets.lastIndexOf(opening(stream.current()));
-            if (i < 0) {
-                return 'bracket';
-            } else {
-                while (state.brackets.length > i) state.brackets.pop();
-                return `bracket${state.brackets.length <= 6 ? `-${ 
-                    state.brackets.length}` : ''}`;
-            }
+            return 'bracket';
         }
-
         if (stream.match(',')) {
             if (state.encFunc.length) state.encFunc[state.encFunc.length - 1].argIndex++;
+            return 'comma';
         }
 
         stream.next();
@@ -132,7 +123,7 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
     }
 
     function blockComment(tokenType) {
-        return (stream, state) => {
+        return (stream, column, state) => {
             if (state.commentLevel === 0) {
                 state.func = normal;
                 return tokenType;
@@ -141,11 +132,11 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
             stream.match(RE_INCOMMENT);
             if (stream.match(RE_STARTCOMMENT)) {
                 ++state.commentLevel;
-                return state.func(stream, state);
+                return state.func(stream, column, state);
             }
             if (stream.match(RE_ENDCOMMENT)) {
                 --state.commentLevel;
-                return state.func(stream, state);
+                return state.func(stream, column, state);
             }
             return tokenType;
         };
@@ -182,26 +173,115 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         return result;
     })();
 
+    function parseToken(stream, column, state) {
+        const t = state.func(stream, column, state);
+        if (['variable', 'variable-2'].indexOf(t) !== -1) {
+            const w = stream.current();
+            if (wellKnownWords.hasOwnProperty(w)) {
+                return wellKnownWords[w];
+            }
+        }
+        return t;
+    }
+
+    function updateLayout(token, column, style, state) {
+        function opening(bracket) {
+            if (bracket === ')') return '(';
+            if (bracket === ']') return '[';
+            if (bracket === '}') return '{';
+            if (bracket === 'in') return 'let';
+        }
+
+        // Close any implicit contexts when there are tokens in columns to
+        // the left.
+        const toClose = state.contexts.findIndex(ctx => !isBracket(ctx) && ctx.column > column);
+        let foundLet = false;
+        if (toClose >= 0) {
+            foundLet = state.contexts[toClose].value === 'let';
+            while (state.contexts.length > toClose) state.contexts.pop();
+        }
+
+        // Create any new implicit contexts called for by layout rules.
+        if (state.lastTokens.length === 0) {
+            if (token !== 'module' && token !== '{') {
+                state.contexts.push({
+                    value: 'where', // There's an implied "module Main where"
+                    column: column
+                });
+            }
+        } else {
+            const triggered = state.lastTokens.slice(-1).join(' ') === 'where' ||
+                state.lastTokens.slice(-1).join(' ') === 'of' ||
+                state.lastTokens.slice(-1).join(' ') === 'do' ||
+                state.lastTokens.slice(-1).join(' ') === 'let' ||
+                state.lastTokens.slice(-2).join(' ') === '\\ case';
+
+            if (triggered && token !== '{') {
+                state.contexts.push({
+                    value: state.lastTokens.slice(-1)[0],
+                    column: column
+                });
+            }
+        }
+
+        // Update lastTokens so that layout rules can be applied next time.
+        state.lastTokens = state.lastTokens.slice(-1);
+        state.lastTokens.push(token);
+
+        // Open new contexts for brackets.  These should be inside the
+        // implicit contexts created by layout.
+        if (RE_OPENBRACKET.test(token)) {
+            const level = state.contexts.filter(isBracket).length;
+            if (level <= 6) style = `${style}-${level}`;
+
+            state.contexts.push({
+                value: token,
+                column: column
+            });
+        }
+
+        // Close contexts when syntax demands that we do so.
+        if (RE_CLOSEBRACKET.test(token) || (!foundLet && token === 'in')) {
+            state.contexts.reverse();
+            const reverseIndex = state.contexts.findIndex(ctx => ctx.value === opening(token));
+            state.contexts.reverse();
+            if (reverseIndex >= 0) {
+                const index = state.contexts.length - reverseIndex - 1;
+                while (state.contexts.length > index) state.contexts.pop();
+                if (token !== 'in') {
+                    const level = state.contexts.filter(isBracket).length;
+                    if (level <= 6) style = `${style}-${level}`;
+                }
+            }
+        }
+
+        const ctx = state.contexts.find(ctx => ctx.column === column);
+        const isLayout = ctx && !isBracket(ctx);
+        return isLayout ? `${style} layout` : style;
+    }
+
     return {
         startState: () => {
             return {
                 func: normal,
                 commentLevel: 0,
-                brackets: [],
                 encFunc: [],
-                roundBracketLevel: 0
+                roundBracketLevel: 0,
+                contexts: [],
+                lastTokens: []
             };
         },
-
         token: (stream, state) => {
-            const t = state.func(stream, state);
-            if (['variable', 'variable-2'].indexOf(t) !== -1) {
-                const w = stream.current();
-                if (wellKnownWords.hasOwnProperty(w)) return wellKnownWords[w];
-            }
-            return t;
-        },
+            const column = stream.column();
+            const style = parseToken(stream, column, state);
 
+            // Ignore whitespaces and comments for layout purposes.
+            if (style === null || style === 'comment' || style === 'meta') {
+                return style;
+            }
+
+            return updateLayout(stream.current(), column, style, state);
+        },
         blockCommentStart: '{-',
         blockCommentEnd: '-}',
         lineComment: '--',

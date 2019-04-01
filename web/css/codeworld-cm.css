@@ -96,12 +96,20 @@ div.CodeMirror span.cm-bracket-0 {
     letter-spacing: -0.12em;
 }
 
+span.cm-bracket-0.cm-layout:before {
+    font-size: calc(0.8em);
+}
+
 pre.cm-s-default span.cm-bracket-1,
 div.CodeMirror span.cm-bracket-1 {
     font-weight: bold;
     color: hsl(225, 60%, 60%);
     font-size: 1.12em;
     letter-spacing: -0.064em;
+}
+
+span.cm-bracket-1.cm-layout:before {
+    font-size: 0.893em;
 }
 
 pre.cm-s-default span.cm-bracket-2,
@@ -355,4 +363,24 @@ div.CodeMirror-lint-message-error:not(:last-child):after {
         /* Safari, Android, iOS */
         url('../SourceCodePro/source-code-pro-v7-latin-700.svg#SourceCodePro') format('svg');
     /* Legacy iOS */
+}
+
+span.cm-layout {
+    position: relative;
+}
+
+span.cm-layout:first-child:before,
+span:not(.cm-layout)+span.cm-layout:before {
+    content: "»";
+    position: absolute;
+    left: -0.65em;
+    top: 0;
+    color: #a86;
+    font-weight: normal;
+    letter-spacing: 0;
+}
+
+.CodeMirror pre.CodeMirror-line,
+.CodeMirror pre.CodeMirror-placeholder {
+    padding-left: 0.5em;
 }

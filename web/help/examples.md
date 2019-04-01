@@ -318,10 +318,10 @@ buildMaze(w, h, randoms) = go((w-1, h-1), startMaze, randoms) where
     entranceDoor = ((-1, 0), (0, 0))
     exitDoor     = ((w-1, h-1), (w, h-1))
   go :: (Point, Maze, RandomNumbers) -> Maze
-  go(current, g, rs) = foldl f newMaze nbors where
+  go(current, g, rs) = foldl (f, newMaze, nbors) where
     newMaze = markVisitedAt(g, current)
     nbors = shuffled(unvisitedNeighbors(newMaze, current), rs # 1)
-    f gacc n = if isVisitedAt(gacc, n) then gacc else recur where
+    f (gacc, n) = if isVisitedAt(gacc, n) then gacc else recur where
       newG  = addDoor(gacc, (current, n))
       recur = go(n, newG, rest(rs, 1))
 
@@ -348,10 +348,10 @@ type RandomNumbers = [Number]
 addIfMissing :: ([a], a) -> [a]
 addIfMissing(as, a) = if contains(as, a) then as else a : as
 
-foldl :: (b -> a -> b) -> b -> [a] -> b
-foldl f z0 xs0 = lgo z0 xs0 where
-  lgo z []     =  z
-  lgo z (x:xs) = lgo (f z x) xs
+foldl :: (((b, a) -> b), b, [a]) -> b
+foldl(f, z0, xs0) = lgo(z0, xs0) where
+  lgo(z, [])      =  z
+  lgo(z, (x:xs))  = lgo (f(z, x), xs)
 ~~~~~
 
 Example: Asteroids

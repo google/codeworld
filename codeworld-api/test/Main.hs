@@ -1,0 +1,3 @@
+import CodeWorld
+
+main = return ()

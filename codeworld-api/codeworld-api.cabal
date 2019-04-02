@@ -57,3 +57,11 @@ Library
 
   Exposed:             True
   Ghc-options:         -Wincomplete-patterns
+
+Test-suite unit-tests
+  Type:                exitcode-stdio-1.0
+  Main-is:             Main.hs
+  Hs-source-dirs:      test
+  Build-depends:       base,
+                       codeworld-api
+  Cpp-options:         -DCODEWORLD_UNIT_TEST

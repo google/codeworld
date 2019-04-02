@@ -50,7 +50,7 @@ module CodeWorld.Driver
 import CodeWorld.CollaborationUI (SetupPhase(..), Step(..), UIState)
 import qualified CodeWorld.CollaborationUI as CUI
 import qualified CodeWorld.CanvasM as CM
-import CodeWorld.CanvasM (CanvasM, runCanvasM)
+import CodeWorld.CanvasM (MonadCanvas, CanvasM, runCanvasM)
 import CodeWorld.Color
 import CodeWorld.Event
 import CodeWorld.Picture
@@ -278,21 +278,21 @@ trace :: Text -> a -> a
 -- A Drawing is an intermediate and simpler representation of a Picture, suitable
 -- for drawing. A drawing does not contain unnecessary metadata like CallStacks.
 -- The drawer is specific to the platform.
-data Drawing
-    = Shape Drawer
+data Drawing m
+    = Shape (Drawer m)
     | Transformation (DrawState -> DrawState)
-                     Drawing
-    | Drawings [Drawing]
+                     (Drawing m)
+    | Drawings [Drawing m]
 
 #if MIN_VERSION_base(4,11,0)
 
-instance Semigroup Drawing where
+instance Semigroup (Drawing m) where
     a <> Drawings bs = Drawings (a : bs)
     a <> b           = Drawings [a, b]
 
 #endif
 
-instance Monoid Drawing where
+instance Monoid (Drawing m) where
     mempty = Drawings []
     mappend a (Drawings bs) = Drawings (a : bs)
     mappend a b = Drawings [a, b]
@@ -307,7 +307,7 @@ type DrawState = (Double, Double, Double, Double, Double, Double, Maybe Color)
 -- corresponding nodes are shared. Always >=0.
 type NodeId = Int
 
-pictureToDrawing :: Picture -> Drawing
+pictureToDrawing :: MonadCanvas m => Picture -> Drawing m
 pictureToDrawing (SolidClosedCurve _ pts) = Shape $ polygonDrawer pts True
 pictureToDrawing (SolidPolygon _ pts) = Shape $ polygonDrawer pts False
 pictureToDrawing (Polygon _ pts) = Shape $ pathDrawer pts 0 True False
@@ -375,14 +375,14 @@ setColorDS (RGBA _ _ _ alpha1) (a, b, c, d, e, f, Just (RGBA rr gg bb alpha2)) =
 getColorDS :: DrawState -> Maybe Color
 getColorDS (a, b, c, d, e, f, col) = col
 
-polygonDrawer :: [Point] -> Bool -> Drawer
-pathDrawer :: [Point] -> Double -> Bool -> Bool -> Drawer
-sectorDrawer :: Double -> Double -> Double -> Drawer
-arcDrawer :: Double -> Double -> Double -> Double -> Drawer
-textDrawer :: TextStyle -> Font -> Text -> Drawer
-logoDrawer :: Drawer
-coordinatePlaneDrawer :: Drawer
-coordinatePlaneDrawing :: Drawing
+polygonDrawer :: MonadCanvas m => [Point] -> Bool -> Drawer m
+pathDrawer :: MonadCanvas m => [Point] -> Double -> Bool -> Bool -> Drawer m
+sectorDrawer :: MonadCanvas m => Double -> Double -> Double -> Drawer m
+arcDrawer :: MonadCanvas m => Double -> Double -> Double -> Double -> Drawer m
+textDrawer :: MonadCanvas m => TextStyle -> Font -> Text -> Drawer m
+logoDrawer :: MonadCanvas m => Drawer m
+coordinatePlaneDrawer :: MonadCanvas m => Drawer m
+coordinatePlaneDrawing :: MonadCanvas m => Drawing m
 coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
   where
     xline y = thickPolyline 0.01 [(-10, y), (10, y)]
@@ -410,13 +410,13 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
             , k /= 0
             ]
 
-withDS :: DrawState -> CanvasM a -> CanvasM a
+withDS :: MonadCanvas m => DrawState -> m a -> m a
 withDS (ta, tb, tc, td, te, tf, col) action = CM.saveRestore $ do
     CM.transform ta tb tc td te tf
     CM.beginPath
     action
 
-applyColor :: DrawState -> CanvasM ()
+applyColor :: MonadCanvas m => DrawState -> m ()
 applyColor ds =
     case getColorDS ds of
         Nothing -> do
@@ -434,11 +434,11 @@ applyColor ds =
                 (round $ b * 255)
                 a
 
-type Drawer = DrawState -> DrawMethods
+type Drawer m = DrawState -> DrawMethods m
 
-data DrawMethods = DrawMethods
-    { drawShape :: CanvasM ()
-    , shapeContains :: CanvasM Bool
+data DrawMethods m = DrawMethods
+    { drawShape :: m ()
+    , shapeContains :: m Bool
     }
 
 polygonDrawer ps smooth ds =
@@ -532,7 +532,7 @@ coordinatePlaneDrawer ds =
     , shapeContains = fst <$> findTopShape ds coordinatePlaneDrawing
     }
 
-followPath :: [Point] -> Bool -> Bool -> CanvasM ()
+followPath :: MonadCanvas m => [Point] -> Bool -> Bool -> m ()
 followPath [] closed _ = return ()
 followPath [p1] closed _ = return ()
 followPath ((sx, sy):ps) closed False = do
@@ -589,7 +589,7 @@ followPath ps@(_:(sx, sy):_) True True = do
             (25 * x3,  25 * y3)
     CM.closePath
 
-drawFigure :: DrawState -> Double -> CanvasM () -> CanvasM ()
+drawFigure :: MonadCanvas m => DrawState -> Double -> m () -> m ()
 drawFigure ds w figure = do
     withDS ds $ do
         figure
@@ -615,12 +615,12 @@ fontString style font = stylePrefix style <> "25px " <> fontName font
     fontName Fancy = "fantasy"
     fontName (NamedFont txt) = "\"" <> T.filter (/= '"') txt <> "\""
 
-drawDrawing :: DrawState -> Drawing -> CanvasM ()
+drawDrawing :: MonadCanvas m => DrawState -> Drawing m -> m ()
 drawDrawing ds (Shape shape) = drawShape $ shape ds
 drawDrawing ds (Transformation f d) = drawDrawing (f ds) d
 drawDrawing ds (Drawings drs) = mapM_ (drawDrawing ds) (reverse drs)
 
-findTopShape :: DrawState -> Drawing -> CanvasM (Bool, Int)
+findTopShape :: MonadCanvas m => DrawState -> Drawing m -> m (Bool, Int)
 findTopShape ds (Shape drawer) = do
     contained <- shapeContains $ drawer ds
     case contained of
@@ -676,21 +676,23 @@ nextFrame :: IO Double
 nextFrame = waitForAnimationFrame >> getTime
 
 drawCodeWorldLogo ::
-       DrawState -> Int -> Int -> Int -> Int -> CanvasM ()
+       MonadCanvas m => DrawState -> Int -> Int -> Int -> Int -> m ()
 drawCodeWorldLogo ds x y w h = do
     Just doc <- liftIO $ currentDocument
+    logo <- CM.builtinImage "cwlogo"
     Just canvas <- liftIO $ getElementById doc ("cwlogo" :: JSString)
     case getColorDS ds of
-        Nothing -> CM.drawImage (canvasFromElement canvas) x y w h
+        Nothing -> CM.drawImage logo x y w h
         Just (RGBA r g b a)
             -- This is a tough case.  The best we can do is to allocate an
             -- offscreen buffer as a temporary.
          -> do
-            (img, _) <- CM.newImage w h $ do
+            img <- CM.newImage w h
+            CM.withImage img $ do
                 applyColor ds
                 CM.fillRect 0 0 (fromIntegral w) (fromIntegral h)
                 CM.globalCompositeOperation "destination-in"
-                CM.drawImage (canvasFromElement canvas) 0 0 w h
+                CM.drawImage logo 0 0 w h
             CM.drawImage img x y w h
 
 initDebugMode ::
@@ -966,7 +968,7 @@ getPictureSrcLoc (PictureAnd loc _) = loc
 
 -- If a picture is found, the result will include an array of the base picture
 -- and all transformations.
-findTopShapeFromPoint :: Point -> Drawing -> IO (Maybe NodeId)
+findTopShapeFromPoint :: Point -> Drawing CanvasM -> IO (Maybe NodeId)
 findTopShapeFromPoint (x, y) pic = do
     buf <- Canvas.create 500 500
     ctx <- Canvas.getContext buf
@@ -977,7 +979,7 @@ findTopShapeFromPoint (x, y) pic = do
         True -> return $ Just node
         False -> return Nothing
 
-drawFrame :: Drawing -> CanvasM ()
+drawFrame :: MonadCanvas m => Drawing m -> m ()
 drawFrame drawing = do
     CM.fillColor 255 255 255 1
     CM.fillRect (-250) (-250) 500 500
@@ -1010,21 +1012,20 @@ setCanvasSize target canvas = do
 -- Stand-alone implementation of drawing
 
 drawCodeWorldLogo ::
-       DrawState -> Int -> Int -> Int -> Int -> CanvasM ()
+       MonadCanvas m => DrawState -> Int -> Int -> Int -> Int -> m ()
 drawCodeWorldLogo ds x y w h = return ()
 
-setupScreenContext :: (Int, Int) -> Canvas ()
-setupScreenContext (cw, ch)
-    -- blank before transformation (canvas might be non-sqare)
- = do
-    Canvas.fillStyle "white"
-    Canvas.fillRect (0, 0, fromIntegral cw, fromIntegral ch)
-    Canvas.translate (realToFrac cw / 2, realToFrac ch / 2)
+setupScreenContext :: MonadCanvas m => (Int, Int) -> m ()
+setupScreenContext (cw, ch) = do
+    -- blank before transformation (canvas might be non-square)
+    CM.fillColor 255 255 255 1
+    CM.fillRect 0 0 (fromIntegral cw) (fromIntegral ch)
+    CM.translate (realToFrac cw / 2) (realToFrac ch / 2)
     let s = min (realToFrac cw / 500) (realToFrac ch / 500)
-    Canvas.scale (s, -s)
-    Canvas.lineWidth 0
-    Canvas.textAlign Canvas.CenterAnchor
-    Canvas.textBaseline Canvas.MiddleBaseline
+    CM.scale s (-s)
+    CM.lineWidth 0
+    CM.textCenter
+    CM.textMiddle
 
 type Port = Int
 
@@ -1504,7 +1505,7 @@ propagateErrors tid action = action `catch` \ (e :: SomeException) -> throwTo ti
 run :: s
     -> (Double -> s -> s)
     -> (e -> s -> s)
-    -> (s -> Drawing)
+    -> (s -> Drawing CanvasM)
     -> (Double -> e)
     -> IO (e -> IO (), IO s)
 run initial stepHandler eventHandler drawHandler injectTime = do
@@ -1599,7 +1600,7 @@ updateDebugState (SelectEvent n) prev =
         True -> prev {shapeSelected = n}
         False -> DebugState False Nothing Nothing
 
-drawDebugState :: DebugState -> Drawing -> Drawing
+drawDebugState :: MonadCanvas m => DebugState -> Drawing m -> Drawing m
 drawDebugState state drawing =
     case debugStateActive state of
         True ->
@@ -1684,7 +1685,7 @@ runInspect controls initial stepHandler eventHandler drawHandler = do
 
 -- Given a drawing, highlight the first node and select second node. Both recolor
 -- the nodes, but highlight also brings the node to the top.
-highlightSelectShape :: Maybe NodeId -> Maybe NodeId -> Drawing -> Drawing
+highlightSelectShape :: MonadCanvas m => Maybe NodeId -> Maybe NodeId -> Drawing m -> Drawing m
 highlightSelectShape h s drawing
     | isNothing s =
         fromMaybe drawing $ do
@@ -1708,13 +1709,13 @@ highlightSelectShape h s drawing
     piece n =
         (\(node, ds) -> highlightDrawing ds node) <$> getDrawNode n drawing
 
-highlightDrawing :: DrawState -> Drawing -> Drawing
+highlightDrawing :: MonadCanvas m => DrawState -> Drawing m -> Drawing m
 highlightDrawing (a, b, c, d, e, f, _) drawing =
     Transformation (\_ -> (a, b, c, d, e, f, Just col')) drawing
   where
     col' = RGBA 0 0 0 0.25
 
-getDrawNode :: NodeId -> Drawing -> Maybe (Drawing, DrawState)
+getDrawNode :: NodeId -> Drawing m -> Maybe (Drawing m, DrawState)
 getDrawNode n _
     | n < 0 = Nothing
 getDrawNode n drawing = either Just (const Nothing) $ go initialDS n drawing
@@ -1728,12 +1729,12 @@ getDrawNode n drawing = either Just (const Nothing) $ go initialDS n drawing
             Left d -> Left d
             Right n -> go ds (n + 1) $ Drawings drs
 
-replaceDrawNode :: NodeId -> Drawing -> Drawing -> Maybe Drawing
+replaceDrawNode :: forall m. NodeId -> Drawing m -> Drawing m -> Maybe (Drawing m)
 replaceDrawNode n _ _
     | n < 0 = Nothing
 replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
   where
-    go :: Int -> Drawing -> Either Drawing Int
+    go :: Int -> Drawing m -> Either (Drawing m) Int
     go 0 _ = Left with
     go n (Shape _) = Right (n - 1)
     go n (Transformation f d) = mapLeft (Transformation f) $ go (n - 1) d
@@ -1789,7 +1790,8 @@ run initial stepHandler eventHandler drawHandler =
     runBlankCanvas $ \context -> do
         let fullStepHandler dt = stepHandler dt . eventHandler (TimePassing dt)
         let rect = (Canvas.width context, Canvas.height context)
-        offscreenCanvas <- Canvas.send context $ Canvas.newCanvas rect
+        offscreenCanvas <- runCanvasM context $
+            CM.newImage (Canvas.width context) (Canvas.height context)
         currentState <- newMVar initial
         eventHappened <- newMVar ()
         onEvents context rect $ \event -> do
@@ -1800,12 +1802,12 @@ run initial stepHandler eventHandler drawHandler =
                 pic <- drawHandler <$> readMVar currentState
                 picFrame <- makeStableName $! pic
                 when (picFrame /= lastFrame) $
-                    Canvas.send context $ do
-                        Canvas.with offscreenCanvas $
-                            Canvas.saveRestore $ do
+                    runCanvasM context $ do
+                        CM.withImage offscreenCanvas $
+                            CM.saveRestore $ do
                                 setupScreenContext rect
                                 drawDrawing initialDS (pictureToDrawing pic)
-                        Canvas.drawImageAt (offscreenCanvas, 0, 0)
+                        CM.drawImage offscreenCanvas 0 0 (Canvas.width context) (Canvas.height context)
                 t1 <-
                     if | needsTime ->
                            do tn <- getCurrentTime

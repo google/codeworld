@@ -28,6 +28,9 @@ import Data.Text (Text, pack)
 #ifdef ghcjs_HOST_OS
 
 import Data.JSString.Text
+import GHCJS.DOM
+import GHCJS.DOM.Element
+import GHCJS.DOM.NonElementParentNode
 import GHCJS.Marshal.Pure
 import GHCJS.Types
 import qualified JavaScript.Web.Canvas as Canvas
@@ -41,7 +44,7 @@ import Text.Printf
 
 #endif
 
-class Monad m => MonadCanvas m where
+class (Monad m, MonadIO m) => MonadCanvas m where
     type Image m
 
     save :: m ()
@@ -50,7 +53,9 @@ class Monad m => MonadCanvas m where
            Double -> Double -> Double -> Double -> Double -> Double -> m ()
     translate :: Double -> Double -> m ()
     scale :: Double -> Double -> m ()
-    newImage :: Int -> Int -> m a -> m (Image m, a)
+    newImage :: Int -> Int -> m (Image m)
+    builtinImage :: Text -> m (Image m)
+    withImage :: Image m -> m a -> m a
     drawImage :: Image m -> Int -> Int -> Int -> Int -> m ()
     globalCompositeOperation :: Text -> m ()
     lineWidth :: Double -> m ()
@@ -119,13 +124,14 @@ instance MonadCanvas CanvasM where
     transform a b c d e f = CanvasM (Canvas.transform a b c d e f)
     translate x y = CanvasM (Canvas.translate x y)
     scale x y = CanvasM (Canvas.scale x y)
-    newImage w h m =
-        CanvasM $
-        const $ do
-            buf <- Canvas.create w h
-            ctx <- Canvas.getContext buf
-            a <- unCanvasM m ctx
-            return (buf, a)
+    newImage w h = liftIO (Canvas.create w h)
+    builtinImage name = liftIO $ do
+        Just doc <- currentDocument
+        Just canvas <- getElementById doc (textToJSString name)
+        return (Canvas.Canvas (unElement canvas))
+    withImage img m = liftIO $ do
+        ctx <- Canvas.getContext img
+        unCanvasM m ctx
     drawImage (Canvas.Canvas c) x y w h =
         CanvasM (Canvas.drawImage (Canvas.Image c) x y w h)
     globalCompositeOperation op =
@@ -156,56 +162,108 @@ instance MonadCanvas CanvasM where
 
 #else
 
-type CanvasM = Canvas
+-- Unfortunately, the Canvas monad from blank-canvas lacks a MonadIO instance.
+-- We can recover it by inserting send calls where needed.  This looks a lot
+-- like a free monad, but we want our own interpreter logic, so it's written
+-- by hand.
+
+data CanvasM a = CanvasOp (Maybe Canvas.CanvasContext) (Canvas (CanvasM a))
+               | NativeOp (Canvas.DeviceContext -> IO (CanvasM a))
+               | PureOp a
+    deriving (Functor)
+
+doCanvas :: Maybe Canvas.CanvasContext -> Canvas a -> Canvas a
+doCanvas Nothing m = m
+doCanvas (Just ctx) m = Canvas.with ctx m
+
+interpCanvas :: CanvasM a -> Canvas (CanvasM a)
+interpCanvas (CanvasOp mctx op) = doCanvas mctx op >>= interpCanvas
+interpCanvas other = return other
 
 runCanvasM :: Canvas.DeviceContext -> CanvasM a -> IO a
-runCanvasM = Canvas.send
+runCanvasM _    (PureOp   a)   = return a
+runCanvasM dctx (NativeOp fm) = fm dctx >>= runCanvasM dctx
+runCanvasM dctx m             = Canvas.send dctx (interpCanvas m) >>= runCanvasM dctx
 
-instance MonadCanvas Canvas where
-    type Image Canvas = Canvas.CanvasContext
-    save = Canvas.save ()
-    restore = Canvas.restore ()
-    transform a b c d e f = Canvas.transform (a, b, c, d, e, f)
-    translate x y = Canvas.translate (x, y)
-    scale x y = Canvas.scale (x, y)
-    newImage w h m = do
-        ctx <- Canvas.newCanvas (w, h)
-        a <- Canvas.with ctx m
-        return (ctx, a)
-    drawImage img x y w h =
+instance Applicative CanvasM where
+    pure = PureOp
+
+    (CanvasOp mctx1 f) <*> (CanvasOp mctx2 x) = CanvasOp mctx1 (fmap (<*>) f <*> doCanvas mctx2 x)
+    f <*> x = f `ap` x
+
+instance Monad CanvasM where
+    return = pure
+    PureOp x >>= f = f x
+    NativeOp op >>= f = NativeOp $ \dctx -> do
+        next <- op dctx
+        return (next >>= f)
+    CanvasOp mctx op >>= f = CanvasOp mctx $ bindCanvas (doCanvas mctx op) f
+
+bindCanvas :: Canvas (CanvasM a) -> (a -> CanvasM b) -> Canvas (CanvasM b)
+bindCanvas m cont = do
+    next <- m
+    case next of
+        CanvasOp mctx op -> bindCanvas (doCanvas mctx op) cont
+        _                -> return (next >>= cont)
+
+instance MonadIO CanvasM where
+    liftIO x = NativeOp $ const $ PureOp <$> x
+
+liftCanvas :: Canvas a -> CanvasM a
+liftCanvas m = CanvasOp Nothing (PureOp <$> m)
+
+instance MonadCanvas CanvasM where
+    type Image CanvasM = Canvas.CanvasContext
+
+    save = liftCanvas $ Canvas.save ()
+    restore = liftCanvas $ Canvas.restore ()
+    transform a b c d e f = liftCanvas $ Canvas.transform (a, b, c, d, e, f)
+    translate x y = liftCanvas $ Canvas.translate (x, y)
+    scale x y = liftCanvas $ Canvas.scale (x, y)
+    newImage w h = liftCanvas $ Canvas.newCanvas (w, h)
+    builtinImage name = undefined
+
+    withImage ctx (CanvasOp Nothing m) = CanvasOp (Just ctx) m
+    withImage _   (CanvasOp mctx m)    = CanvasOp mctx m
+    withImage ctx (NativeOp fm)        = NativeOp $ \dctx -> withImage ctx <$> fm dctx
+    withImage _   (PureOp x)           = PureOp x
+
+    drawImage img x y w h = liftCanvas $
         Canvas.drawImageSize
             ( img
             , fromIntegral x
             , fromIntegral y
             , fromIntegral w
             , fromIntegral h)
-    globalCompositeOperation op = Canvas.globalCompositeOperation op
-    lineWidth w = Canvas.lineWidth w
-    strokeColor r g b a = Canvas.strokeStyle
+    globalCompositeOperation op = liftCanvas $
+        Canvas.globalCompositeOperation op
+    lineWidth w = liftCanvas $ Canvas.lineWidth w
+    strokeColor r g b a = liftCanvas $ Canvas.strokeStyle
         (pack (printf "rgba(%d,%d,%d,%.2f)" r g b a))
-    fillColor r g b a = Canvas.fillStyle
+    fillColor r g b a = liftCanvas $ Canvas.fillStyle
         (pack (printf "rgba(%d,%d,%d,%.2f)" r g b a))
-    font t = Canvas.font t
-    textCenter = Canvas.textAlign Canvas.CenterAnchor
-    textMiddle = Canvas.textBaseline Canvas.MiddleBaseline
-    beginPath = Canvas.beginPath ()
-    closePath = Canvas.closePath ()
-    moveTo (x, y) = Canvas.moveTo (x, y)
-    lineTo (x, y) = Canvas.lineTo (x, y)
-    quadraticCurveTo (x1, y1) (x2, y2) =
+    font t = liftCanvas $ Canvas.font t
+    textCenter = liftCanvas $ Canvas.textAlign Canvas.CenterAnchor
+    textMiddle = liftCanvas $ Canvas.textBaseline Canvas.MiddleBaseline
+    beginPath = liftCanvas $ Canvas.beginPath ()
+    closePath = liftCanvas $ Canvas.closePath ()
+    moveTo (x, y) = liftCanvas $ Canvas.moveTo (x, y)
+    lineTo (x, y) = liftCanvas $ Canvas.lineTo (x, y)
+    quadraticCurveTo (x1, y1) (x2, y2) = liftCanvas $
         Canvas.quadraticCurveTo (x1, y1, x2, y2)
-    bezierCurveTo (x1, y1) (x2, y2) (x3, y3) =
+    bezierCurveTo (x1, y1) (x2, y2) (x3, y3) = liftCanvas $
         Canvas.bezierCurveTo (x1, y1, x2, y2, x3, y3)
-    arc x y r a1 a2 dir = Canvas.arc (x, y, r, a1, a2, dir)
-    rect x y w h = Canvas.rect (x, y, w, h)
-    fill = Canvas.fill ()
-    stroke = Canvas.stroke ()
-    fillRect x y w h = Canvas.fillRect (x, y, w, h)
-    fillText t (x, y) = Canvas.fillText (t, x, y)
-    measureText t = do
+    arc x y r a1 a2 dir = liftCanvas $
+        Canvas.arc (x, y, r, a1, a2, dir)
+    rect x y w h = liftCanvas $ Canvas.rect (x, y, w, h)
+    fill = liftCanvas $ Canvas.fill ()
+    stroke = liftCanvas $ Canvas.stroke ()
+    fillRect x y w h = liftCanvas $ Canvas.fillRect (x, y, w, h)
+    fillText t (x, y) = liftCanvas $ Canvas.fillText (t, x, y)
+    measureText t = liftCanvas $ do
         Canvas.TextMetrics w <- Canvas.measureText t
         return w
-    isPointInPath (x, y) = Canvas.isPointInPath (x, y)
-    isPointInStroke (x, y) = return False
+    isPointInPath (x, y) = liftCanvas $ Canvas.isPointInPath (x, y)
+    isPointInStroke (x, y) = liftCanvas $ return False
 
 #endif

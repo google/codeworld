@@ -16,36 +16,6 @@
   limitations under the License.
 -}
 
-import System.Process
-import System.Directory
-import System.FilePath
-import CodeWorld.Compile
-import System.IO.Temp (withSystemTempDirectory)
+import CodeWorld
 
--- testTimeStepElision :: IO Bool
--- testTimeStepElision = do
---     let initial = 0
---         next = fullStepHandler initial
---     initialName <- makeStableName $! initial
---     nextName <- makeStableName $! next
---     return (next == initial) == (initialName == nextName)
-
-source =
-    "{-# LANGUAGE OverloadedStrings #-}\n" ++
-    "import CodeWorld\n" ++
-    "main :: IO ()\n" ++
-    "main = interactionOf () (const id) (const id) picture\n" ++
-    "picture :: () -> Picture\n" ++
-    "picture () = trace \"foo\" $ solidCircle 10\n"
-
-main = withSystemTempDirectory "test" $ \tmpdir -> do
-        let outputFile = tmpdir </> "test.js"
-        let sourceFile = tmpdir </> "source.hs"
-        let errFile = tmpdir </> "err.txt"
-        let stage = FullBuild outputFile
-        writeFile sourceFile source
-        compileSource stage sourceFile errFile "haskell" False >>= \case
-            CompileSuccess -> do
-                 result <- readProcess "nodejs" [outputFile] []
-                 print result
-            _ -> error "Compilation is unsuccessful."
+main = return ()

@@ -32,7 +32,7 @@ library
                                           , directory
                                           , filepath
                                           , http-conduit
-                                          , jwt
+                                          , jwt < 0.10
                                           , snap-core
                                           , split
                                           , text

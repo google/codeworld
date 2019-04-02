@@ -58,17 +58,10 @@ Library
   Exposed:             True
   Ghc-options:         -Wincomplete-patterns
 
-
-Test-Suite codeworld-api-test
-  Type:               exitcode-stdio-1.0
-  Main-is:            Main.hs
-  Hs-source-dirs:     test
-  Build-depends:
-    base,
-    text,
-    codeworld-compiler,
-    codeworld-api,
-    temporary,
-    directory,
-    filepath,
-    process
+Test-suite unit-tests
+  Type:                exitcode-stdio-1.0
+  Main-is:             Main.hs
+  Hs-source-dirs:      test
+  Build-depends:       base,
+                       codeworld-api
+  Cpp-options:         -DCODEWORLD_UNIT_TEST

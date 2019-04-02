@@ -245,20 +245,14 @@ function renderDeclaration(decl, keyword, keywordData, maxLen, argIndex = -1) {
         }
     }
     if (argIndex >= 0) {
-        if (!leftover.length) {
-            leftover = " :: Could not decipher arguments";
-        }
-        else {
-            let tokens = leftover.substring(
-                leftover.lastIndexOf("(") + 1,
-                leftover.lastIndexOf(")")
-            ).split(",").map(token => token.trim());
-            const ReturnType  = leftover.split("->")[1].trim();
-            argIndex = Math.min(argIndex, tokens.length - 1);
-            tokens[argIndex] = `<strong>${tokens[argIndex]}</strong>`;
-            leftover = ` :: (${tokens.join(', ')}) -> ${ReturnType}`;
-
-        }
+        let tokens = leftover.substring(
+            leftover.lastIndexOf("(") + 1,
+            leftover.lastIndexOf(")")
+        ).split(",").map(token => token.trim());
+        const ReturnType  = leftover.split("->")[1].trim();
+        argIndex = Math.min(argIndex, tokens.length - 1);
+        tokens[argIndex] = `<strong>${tokens[argIndex]}</strong>`;
+        leftover = ` :: (${tokens.join(', ')}) -> ${ReturnType}`;
     }
 
 

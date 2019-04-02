@@ -88,35 +88,12 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         }
 
         if (stream.match(RE_QUAL)) return 'qualifier';
-        let varType = null;
-        if (stream.match(RE_VARID) || stream.match(RE_VARSYM)) varType = 'variable';
-        if (stream.match(RE_CONID) || stream.match(RE_CONSYM)) varType = 'variable-2';
-        if (varType) {
-            if (stream.string[stream.pos] === '(') {
-                state.encFunc.push({
-                    functionName: stream.current(),
-                    roundBracketLevel: state.roundBracketLevel,
-                    argIndex: 0
-                });
-            }
-            return varType;
-        }
+        if (stream.match(RE_VARID) || stream.match(RE_VARSYM)) return 'variable';
+        if (stream.match(RE_CONID) || stream.match(RE_CONSYM)) return 'variable-2';
         if (stream.match(RE_NUMBER)) return 'number';
         if (stream.match(RE_CHAR) || stream.match(RE_STRING)) return 'string';
-        if (stream.match(RE_OPENBRACKET) || stream.match(RE_CLOSEBRACKET)) {
-            if (stream.current() === '(') {
-                state.roundBracketLevel++;
-            }
-            if (stream.current() === ')') {
-                state.roundBracketLevel--;
-                if (state.encFunc.length && state.encFunc[state.encFunc.length - 1].roundBracketLevel === state.roundBracketLevel) state.encFunc.pop();
-            }
-            return 'bracket';
-        }
-        if (stream.match(',')) {
-            if (state.encFunc.length) state.encFunc[state.encFunc.length - 1].argIndex++;
-            return 'comma';
-        }
+        if (stream.match(RE_OPENBRACKET) || stream.match(RE_CLOSEBRACKET)) return 'bracket';
+        if (stream.eat(',')) return 'comma';
 
         stream.next();
         return 'error';
@@ -234,10 +211,31 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
             const level = state.contexts.filter(isBracket).length;
             if (level <= 6) style = `${style}-${level}`;
 
+            let functionName = null;
+            if (token === '(' && state.lastTokens.length === 2) {
+                if (RE_VARID.test(state.lastTokens[0]) || RE_CONID.test(state.lastTokens[0])) {
+                    functionName = state.lastTokens[0];
+                }
+            }
+
             state.contexts.push({
                 value: token,
-                column: column
+                column: column,
+                functionName,
+                argIndex: 0
             });
+        }
+
+        // Close implicit contexts on comma.
+        if (token === ',') {
+            while(true) {
+                const topContext = state.contexts.pop();
+                if (!state.contexts.length || isBracket(topContext)) {
+                    if (topContext.hasOwnProperty("argIndex")) topContext.argIndex++;
+                    state.contexts.push(topContext);
+                    break;
+                }
+            }
         }
 
         // Close contexts when syntax demands that we do so.
@@ -265,8 +263,6 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
             return {
                 func: normal,
                 commentLevel: 0,
-                encFunc: [],
-                roundBracketLevel: 0,
                 contexts: [],
                 lastTokens: []
             };

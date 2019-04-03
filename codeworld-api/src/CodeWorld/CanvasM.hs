@@ -88,7 +88,7 @@ saveRestore m = do
     restore
     return r
 
-#ifdef ghcjs_HOST_OS
+#if defined(CODEWORLD_UNIT_TEST)
 
 newtype StubCanvasM a = StubCanvasM
     { unStubCanvasM :: IO a
@@ -139,6 +139,8 @@ instance MonadCanvas StubCanvasM where
     measureText _ = return 0
     isPointInPath _ = return False
     isPointInStroke _ = return False
+
+#elif defined(ghcjs_HOST_OS)
 
 data CanvasM a = CanvasM
     { unCanvasM :: Canvas.Context -> IO a

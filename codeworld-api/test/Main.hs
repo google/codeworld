@@ -1,5 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
 

@@ -28,7 +28,6 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         '\\\\HT|\\\\LF|\\\\VT|\\\\FF|\\\\CR|\\\\SO|\\\\SI|\\\\DLE|\\\\DC1|\\\\DC2|' +
         '\\\\DC3|\\\\DC4|\\\\NAK|\\\\SYN|\\\\ETB|\\\\CAN|\\\\EM|\\\\SUB|\\\\ESC|' +
         '\\\\FS|\\\\GS|\\\\RS|\\\\US|\\\\SP|\\\\DEL';
-
     const RE_WHITESPACE = /[ \v\t\f]+/;
     const RE_STARTMETA = /{-#/;
     const RE_STARTCOMMENT = /{-/;
@@ -212,10 +211,31 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
             const level = state.contexts.filter(isBracket).length;
             if (level <= 6) style = `${style}-${level}`;
 
+            let functionName = null;
+            if (token === '(' && state.lastTokens.length === 2) {
+                if (RE_VARID.test(state.lastTokens[0]) || RE_CONID.test(state.lastTokens[0])) {
+                    functionName = state.lastTokens[0];
+                }
+            }
+
             state.contexts.push({
                 value: token,
-                column: column
+                column: column,
+                functionName,
+                argIndex: 0
             });
+        }
+
+        // Close implicit contexts on comma.
+        if (token === ',') {
+            while(true) {
+                const topContext = state.contexts.pop();
+                if (!state.contexts.length || isBracket(topContext)) {
+                    if (topContext.hasOwnProperty("argIndex")) topContext.argIndex++;
+                    state.contexts.push(topContext);
+                    break;
+                }
+            }
         }
 
         // Close contexts when syntax demands that we do so.

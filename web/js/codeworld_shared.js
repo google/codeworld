@@ -223,7 +223,7 @@ function parseSymbolsFromCurrentCode() {
     }
 }
 
-function renderDeclaration(decl, keyword, keywordData, maxLen) {
+function renderDeclaration(decl, keyword, keywordData, maxLen, argIndex = -1) {
     if (keywordData.symbolStart > 0) {
         decl.appendChild(document.createTextNode(
             keywordData.declaration.slice(0, keywordData.symbolStart)));
@@ -234,15 +234,29 @@ function renderDeclaration(decl, keyword, keywordData, maxLen) {
     wordElem.appendChild(document.createTextNode(keyword));
     decl.appendChild(wordElem);
 
+    let leftover = "";
     if (keywordData.symbolEnd < keywordData.declaration.length) {
-        let leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(
+        leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(
             /\s+/g, ' ');
         if (keywordData.symbolEnd + leftover.length > maxLen && leftover.length >
             3) {
             leftover = `${leftover.slice(0, maxLen - 3 - keywordData.symbolEnd) 
             }...`;
         }
-        decl.appendChild(document.createTextNode(leftover));
+    }
+    if (argIndex >= 0) {
+        const [head, args, tail] = (/^(\s*::\s*[(]*)([\w,\s]*)([)]*\s*->.*)$/).exec(leftover).slice(1);
+        let tokens = args.split(",");
+        argIndex = Math.min(argIndex, tokens.length - 1);
+        tokens[argIndex] = `<strong>${tokens[argIndex]}</strong>`;
+        leftover = `${head}${tokens.join(',')}${tail}`;
+    }
+
+
+    if (leftover.length) {
+        const argElem = document.createElement('span');
+        argElem.innerHTML = leftover;
+        decl.appendChild(argElem);
     }
     return decl;
 }

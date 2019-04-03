@@ -920,8 +920,7 @@ initDebugMode setActive getPic highlight = do
             setCanvasSize canvas canvas
             setCanvasSize (elementFromCanvas offscreenCanvas) canvas
             screen <- getCodeWorldContext (canvasFromElement canvas)
-            rect <- getBoundingClientRect canvas
-            withScreen (elementFromCanvas offscreenCanvas) rect $
+            withScreen offscreenCanvas $
                 drawFrame (node <> coordinatePlaneDrawing)
             rect <- getBoundingClientRect canvas
             cw <- ClientRect.getWidth rect
@@ -996,11 +995,12 @@ picToObj' pic = objToJSVal <$> case pic of
 foreign import javascript unsafe "/\\bmode=haskell\\b/.test(location.search)"
     haskellMode :: Bool
 
-withScreen :: Element -> ClientRect.ClientRect -> CanvasM a -> IO a
-withScreen canvas rect action = do
+withScreen :: Canvas.Canvas -> CanvasM a -> IO a
+withScreen canvas action = do
+    rect <- getBoundingClientRect (elementFromCanvas canvas)
     cw <- ClientRect.getWidth rect
     ch <- ClientRect.getHeight rect
-    ctx <- getCodeWorldContext (canvasFromElement canvas)
+    ctx <- getCodeWorldContext canvas
     runCanvasM ctx $ CM.saveRestore $ do
         setupScreenContext (round cw) (round ch)
         action
@@ -1464,7 +1464,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
                 rect <- getBoundingClientRect canvas
-                withScreen (elementFromCanvas offscreenCanvas) rect $
+                withScreen offscreenCanvas $
                     drawFrame (pictureToDrawing pic)
                 rect <- getBoundingClientRect canvas
                 cw <- ClientRect.getWidth rect
@@ -1521,7 +1521,7 @@ run initial stepHandler eventHandler drawHandler injectTime = do
             picFrame <- makeStableName $! pic
             when (picFrame /= lastFrame) $ do
                 rect <- getBoundingClientRect canvas
-                withScreen (elementFromCanvas offscreenCanvas) rect $
+                withScreen offscreenCanvas $
                     drawFrame pic
                 rect <- getBoundingClientRect canvas
                 cw <- ClientRect.getWidth rect

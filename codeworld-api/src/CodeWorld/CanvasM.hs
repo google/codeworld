@@ -113,9 +113,8 @@ instance MonadCanvas StubCanvasM where
     transform _ _ _ _ _ _ = return ()
     translate _ _ = return ()
     scale _ _ = return ()
-    newImage _ _ m = StubCanvasM $ do
-        a <- unStubCanvasM m
-        return ((), a)
+    newImage _ _ = liftIO $ return ()
+    builtinImage _ = liftIO $ return ()
     drawImage _ _ _ _ _ = return ()
     globalCompositeOperation _ = return ()
     lineWidth _ = return ()

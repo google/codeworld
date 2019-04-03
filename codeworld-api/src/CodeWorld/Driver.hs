@@ -1490,12 +1490,6 @@ getDeployHash = pFromJSVal <$> js_getDeployHash
 foreign import javascript "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
     js_getDeployHash :: IO JSVal
 
-foreign import javascript "console.log($1);"
-    js_debugLog :: JSString -> IO ()
-
-debugLog :: String -> IO ()
-debugLog = js_debugLog . Data.JSString.pack
-
 propagateErrors :: ThreadId -> IO () -> IO ()
 propagateErrors tid action = action `catch` \ (e :: SomeException) -> throwTo tid e
 
@@ -1644,7 +1638,6 @@ runInspect controls initial stepHandler eventHandler drawHandler = do
     -- there are deferred type errors that are effectively compile errors.
     evaluate $ rnf $ drawHandler initial
 
-    Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
     let initialWrapper = (debugStateInit, wrappedInitial initial)
@@ -1746,9 +1739,6 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
     mapLeft f = either (Left . f) Right
 
 #else
-
-debugLog :: String -> IO ()
-debugLog _ = return ()
 
 --------------------------------------------------------------------------------
 -- Stand-Alone event handling and core interaction code
@@ -1979,7 +1969,6 @@ reportDiff :: String -> (a -> a) -> (a -> a)
 reportDiff msg f x = unsafePerformIO $ do
     a <- makeStableName $! x
     b <- makeStableName $! r
-    when (a /= b) $ debugLog $ msg ++ ": reportDiff found a diff"
     return r
   where r = f x
 

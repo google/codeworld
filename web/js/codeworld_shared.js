@@ -245,14 +245,11 @@ function renderDeclaration(decl, keyword, keywordData, maxLen, argIndex = -1) {
         }
     }
     if (argIndex >= 0) {
-        let tokens = leftover.substring(
-            leftover.lastIndexOf("(") + 1,
-            leftover.lastIndexOf(")")
-        ).split(",").map(token => token.trim());
-        const ReturnType  = leftover.split("->")[1].trim();
+        const [head, args, tail] = (/^(\s*::\s*[(]*)([\w,\s]*)([)]*\s*->.*)$/).exec(leftover).slice(1);
+        let tokens = args.split(",");
         argIndex = Math.min(argIndex, tokens.length - 1);
         tokens[argIndex] = `<strong>${tokens[argIndex]}</strong>`;
-        leftover = ` :: (${tokens.join(', ')}) -> ${ReturnType}`;
+        leftover = `${head}${tokens.join(',')}${tail}`;
     }
 
 

@@ -54,7 +54,7 @@ class (Monad m, MonadIO m) => MonadCanvas m where
     translate :: Double -> Double -> m ()
     scale :: Double -> Double -> m ()
     newImage :: Int -> Int -> m (Image m)
-    builtinImage :: Text -> m (Image m)
+    builtinImage :: Text -> m (Maybe (Image m))
     withImage :: Image m -> m a -> m a
     drawImage :: Image m -> Int -> Int -> Int -> Int -> m ()
     globalCompositeOperation :: Text -> m ()
@@ -127,8 +127,8 @@ instance MonadCanvas CanvasM where
     newImage w h = liftIO (Canvas.create w h)
     builtinImage name = liftIO $ do
         Just doc <- currentDocument
-        Just canvas <- getElementById doc (textToJSString name)
-        return (Canvas.Canvas (unElement canvas))
+        canvas <- getElementById doc (textToJSString name)
+        return (Canvas.Canvas . unElement <$> canvas)
     withImage img m = liftIO $ do
         ctx <- Canvas.getContext img
         unCanvasM m ctx
@@ -221,7 +221,7 @@ instance MonadCanvas CanvasM where
     translate x y = liftCanvas $ Canvas.translate (x, y)
     scale x y = liftCanvas $ Canvas.scale (x, y)
     newImage w h = liftCanvas $ Canvas.newCanvas (w, h)
-    builtinImage name = undefined
+    builtinImage name = return Nothing
 
     withImage ctx (CanvasOp Nothing m) = CanvasOp (Just ctx) m
     withImage _   (CanvasOp mctx m)    = CanvasOp mctx m

@@ -602,6 +602,24 @@ drawFigure ds w figure = do
         applyColor ds
         CM.stroke
 
+drawCodeWorldLogo ::
+       MonadCanvas m => DrawState -> Int -> Int -> Int -> Int -> m ()
+drawCodeWorldLogo ds x y w h = do
+    mlogo <- CM.builtinImage "cwlogo"
+    case (mlogo, getColorDS ds) of
+        (Nothing, _) -> return ()
+        (Just logo, Nothing) -> CM.drawImage logo x y w h
+        (Just logo, Just (RGBA r g b a)) -> do
+            -- This is a tough case.  The best we can do is to allocate an
+            -- offscreen buffer as a temporary.
+            img <- CM.newImage w h
+            CM.withImage img $ do
+                applyColor ds
+                CM.fillRect 0 0 (fromIntegral w) (fromIntegral h)
+                CM.globalCompositeOperation "destination-in"
+                CM.drawImage logo 0 0 w h
+            CM.drawImage img x y w h
+
 fontString :: TextStyle -> Font -> Text
 fontString style font = stylePrefix style <> "25px " <> fontName font
   where
@@ -674,26 +692,6 @@ foreign import javascript unsafe "performance.now()"
 
 nextFrame :: IO Double
 nextFrame = waitForAnimationFrame >> getTime
-
-drawCodeWorldLogo ::
-       MonadCanvas m => DrawState -> Int -> Int -> Int -> Int -> m ()
-drawCodeWorldLogo ds x y w h = do
-    Just doc <- liftIO $ currentDocument
-    logo <- CM.builtinImage "cwlogo"
-    Just canvas <- liftIO $ getElementById doc ("cwlogo" :: JSString)
-    case getColorDS ds of
-        Nothing -> CM.drawImage logo x y w h
-        Just (RGBA r g b a)
-            -- This is a tough case.  The best we can do is to allocate an
-            -- offscreen buffer as a temporary.
-         -> do
-            img <- CM.newImage w h
-            CM.withImage img $ do
-                applyColor ds
-                CM.fillRect 0 0 (fromIntegral w) (fromIntegral h)
-                CM.globalCompositeOperation "destination-in"
-                CM.drawImage logo 0 0 w h
-            CM.drawImage img x y w h
 
 initDebugMode ::
        (Point -> IO (Maybe NodeId))
@@ -1010,10 +1008,6 @@ setCanvasSize target canvas = do
 
 --------------------------------------------------------------------------------
 -- Stand-alone implementation of drawing
-
-drawCodeWorldLogo ::
-       MonadCanvas m => DrawState -> Int -> Int -> Int -> Int -> m ()
-drawCodeWorldLogo ds x y w h = return ()
 
 setupScreenContext :: MonadCanvas m => (Int, Int) -> m ()
 setupScreenContext (cw, ch) = do

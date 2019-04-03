@@ -1,4 +1,7 @@
-program.hs:1:21: error:
+program.hs:1:21: error: 
     • Variable not in scope: circl :: Picture
     • Perhaps you meant one of these:
         circ (line 2), circle (defined in the standard library)
+
+program.hs:2:1: warning:
+    Defined but not used: circ

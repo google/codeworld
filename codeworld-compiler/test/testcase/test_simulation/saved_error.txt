@@ -1,4 +1,4 @@
-program.hs:1:32: error:
+program.hs:1:32: error: 
     • Couldn't match expected type ([Number] -> world0,
                                      (world0, Number) -> world0, world0 -> Picture)
                   with actual type (((Number, Number), Number) -> (Number, Number),

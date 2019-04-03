@@ -257,7 +257,12 @@ function initCodeworld() {
         docDiv.appendChild(annotation);
 
         topDiv.appendChild(docDiv);
-        window.codeworldEditor.addWidget(cursor, topDiv, true, "above", "left");
+        const lineTokens = window.codeworldEditor.getLineTokens(cursor.line);
+        const functionToken = lineTokens.filter(tkn => tkn.end <= currentToken.start && tkn.string === functionName).pop();
+        window.codeworldEditor.addWidget({
+            line: cursor.line,
+            ch: functionToken.start
+        }, topDiv, true, "above", "near");
     });
 
     CodeMirror.commands.save = cm => {

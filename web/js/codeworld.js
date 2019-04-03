@@ -231,7 +231,7 @@ function initCodeworld() {
 
         if (!functions.length) return;
 
-        const { functionName, argIndex } = functions.pop();
+        const { functionName, argIndex, column } = functions.pop();
         const keywordData = window.codeWorldSymbols[functionName];
 
         // don't show tooltip if function details or argument types are not known
@@ -257,11 +257,9 @@ function initCodeworld() {
         docDiv.appendChild(annotation);
 
         topDiv.appendChild(docDiv);
-        const lineTokens = window.codeworldEditor.getLineTokens(cursor.line);
-        const functionToken = lineTokens.filter(tkn => tkn.end <= currentToken.start && tkn.string === functionName).pop();
         window.codeworldEditor.addWidget({
             line: cursor.line,
-            ch: functionToken.start
+            ch: column - functionName.length
         }, topDiv, true, "above", "near");
     });
 

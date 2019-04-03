@@ -246,7 +246,13 @@ function initCodeworld() {
         docDiv.classList.add("function-tooltip-styling");
 
         const annotation = document.createElement('div');
-        renderDeclaration(annotation, functionName, keywordData, 9999, argIndex);
+        const returnedVal = renderDeclaration(annotation, functionName, keywordData, 9999, argIndex);
+        //TODO: Remove the if block once a better function parser is integrated.
+        if (returnedVal === null){
+            annotation.remove();
+            topDiv.remove();
+            return;
+        }
         annotation.className = 'hover-decl';
         docDiv.appendChild(annotation);
 

@@ -221,6 +221,38 @@ function initCodeworld() {
         }
     });
     window.codeworldEditor.refresh();
+    window.codeworldEditor.on("cursorActivity", function() {
+        const prevDiv = document.getElementById("function-details");
+        if (prevDiv) prevDiv.remove();
+
+        const cursor = window.codeworldEditor.getCursor();
+        const currentToken = window.codeworldEditor.getTokenAt(cursor);
+        const functions = currentToken.state.contexts.filter(ctx => ctx.functionName);
+
+        if (!functions.length) return;
+
+        const { functionName, argIndex } = functions.pop();
+        const keywordData = window.codeWorldSymbols[functionName];
+
+        // don't show tooltip if function details or argument types are not known
+        if (!keywordData || keywordData.declaration === functionName) return;
+
+        const topDiv = document.createElement('div');
+
+        topDiv.title = functionName;
+        topDiv.id = "function-details";
+
+        const docDiv = document.createElement('div');
+        docDiv.classList.add("function-tooltip-styling");
+
+        const annotation = document.createElement('div');
+        renderDeclaration(annotation, functionName, keywordData, 9999, argIndex);
+        annotation.className = 'hover-decl';
+        docDiv.appendChild(annotation);
+
+        topDiv.appendChild(docDiv);
+        window.codeworldEditor.addWidget(cursor, topDiv, true, "above", "left");
+    });
 
     CodeMirror.commands.save = cm => {
         saveProject();

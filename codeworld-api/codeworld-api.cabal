@@ -19,6 +19,11 @@ Description:
   package to provide a webpage consisting of just a panel locally. This way, the same
   program that runs on the CodeWorld server can also be run locally.
 
+Flag ForTests
+  Description: Build library for tests.
+  Default:     False
+  Manual:      True
+
 Library
   Hs-source-dirs:      src
   Exposed-modules:     CodeWorld,
@@ -57,10 +62,13 @@ Library
 
   Exposed:             True
   Ghc-options:         -Wincomplete-patterns
+  if flag(ForTests)
+     Cpp-options:      -DCODEWORLD_UNIT_TEST
 
 Test-suite unit-tests
   Type:                exitcode-stdio-1.0
   Main-is:             Main.hs
+  Other-modules:       TestDriver
   Hs-source-dirs:      test
   Build-depends:       base,
                        codeworld-api

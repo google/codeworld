@@ -71,5 +71,6 @@ Test-suite unit-tests
   Other-modules:       TestDriver
   Hs-source-dirs:      test
   Build-depends:       base,
-                       codeworld-api
+                       codeworld-api,
+                       HUnit
   Cpp-options:         -DCODEWORLD_UNIT_TEST

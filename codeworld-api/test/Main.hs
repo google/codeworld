@@ -14,6 +14,9 @@
   limitations under the License.
 -}
 
-import CodeWorld
+import Test.HUnit
+import TestDriver
 
-main = return ()
+tests = TestList [TestLabel "Time step elision" test_timeStepElision]
+
+main = runTestTT tests

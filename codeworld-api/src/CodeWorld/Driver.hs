@@ -1495,20 +1495,6 @@ foreign import javascript "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
 propagateErrors :: ThreadId -> IO () -> IO ()
 propagateErrors tid action = action `catch` \ (e :: SomeException) -> throwTo tid e
 
-#if defined(CODEWORLD_UNIT_TEST)
-
-getCanvas = undefined
-
-#else
-
-getCanvas :: IO Element
-getCanvas = do
-    Just doc <- currentDocument
-    Just canvas <- getElementById doc ("screen" :: JSString)
-    return canvas
-
-#endif
-
 run :: MVar s
     -> (Double -> s -> s)
     -> (e -> s -> s)
@@ -1519,7 +1505,8 @@ run worldState stepHandler eventHandler drawHandler injectTime = do
     let fullStepHandler dt = stepHandler dt . eventHandler (injectTime dt)
     showCanvas
     Just window <- currentWindow
-    canvas <- getCanvas
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
     offscreenCanvas <- Canvas.create 500 500
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
@@ -1651,8 +1638,8 @@ runInspect controls initial stepHandler eventHandler drawHandler = do
     -- before showing the canvas.  This avoids showing a blank screen when
     -- there are deferred type errors that are effectively compile errors.
     evaluate $ rnf $ drawHandler initial
-
-    canvas <- getCanvas
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
     worldState <- newMVar (debugStateInit, wrappedInitial initial)
     let stepHandlerWrapper dt wrapper@(debugState, _) =
             case debugStateActive debugState of

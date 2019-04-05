@@ -88,58 +88,7 @@ saveRestore m = do
     restore
     return r
 
-#if defined(CODEWORLD_UNIT_TEST)
-
-newtype StubCanvasM a = StubCanvasM
-    { unStubCanvasM :: IO a
-    } deriving (Functor)
-
-
-instance Applicative StubCanvasM where
-    pure x = StubCanvasM (return x)
-    f <*> x = StubCanvasM (unStubCanvasM f <*> unStubCanvasM x)
-
-instance Monad StubCanvasM where
-    return = pure
-    m >>= f = StubCanvasM (unStubCanvasM m >>= unStubCanvasM . f)
-
-instance MonadIO StubCanvasM where
-    liftIO = StubCanvasM
-
-instance MonadCanvas StubCanvasM where
-    type Image StubCanvasM = ()
-    save = return ()
-    restore = return ()
-    transform _ _ _ _ _ _ = return ()
-    translate _ _ = return ()
-    scale _ _ = return ()
-    newImage _ _ = liftIO $ return ()
-    builtinImage _ = liftIO $ return ()
-    drawImage _ _ _ _ _ = return ()
-    globalCompositeOperation _ = return ()
-    lineWidth _ = return ()
-    strokeColor _ _ _ _ = return ()
-    fillColor _ _ _ _ = return ()
-    font _ = return ()
-    textCenter = return ()
-    textMiddle = return ()
-    beginPath = return ()
-    closePath = return ()
-    moveTo _ = return ()
-    lineTo _ = return ()
-    quadraticCurveTo _ _ = return ()
-    bezierCurveTo _ _ _ = return ()
-    arc _ _ _ _ _ _ = return ()
-    rect _ _ _ _ = return ()
-    fill = return ()
-    stroke = return ()
-    fillRect _ _ _ _ = return ()
-    fillText _ _ = return ()
-    measureText _ = return 0
-    isPointInPath _ = return False
-    isPointInStroke _ = return False
-
-#elif defined(ghcjs_HOST_OS)
+#if defined(ghcjs_HOST_OS)
 
 data CanvasM a = CanvasM
     { unCanvasM :: Canvas.Context -> IO a
@@ -167,6 +116,43 @@ foreign import javascript "$r = $3.isPointInStroke($1, $2);"
 
 instance MonadIO CanvasM where
     liftIO = CanvasM . const
+
+#ifdef CODEWORLD_UNIT_TEST
+
+instance MonadCanvas CanvasM where
+    type Image CanvasM = ()
+    save = return ()
+    restore = return ()
+    transform _ _ _ _ _ _ = return ()
+    translate _ _ = return ()
+    scale _ _ = return ()
+    newImage _ _ = liftIO $ return ()
+    builtinImage _ = liftIO $ return Nothing
+    drawImage _ _ _ _ _ = return ()
+    globalCompositeOperation _ = return ()
+    lineWidth _ = return ()
+    strokeColor _ _ _ _ = return ()
+    fillColor _ _ _ _ = return ()
+    font _ = return ()
+    textCenter = return ()
+    textMiddle = return ()
+    beginPath = return ()
+    closePath = return ()
+    moveTo _ = return ()
+    lineTo _ = return ()
+    quadraticCurveTo _ _ = return ()
+    bezierCurveTo _ _ _ = return ()
+    arc _ _ _ _ _ _ = return ()
+    rect _ _ _ _ = return ()
+    fill = return ()
+    stroke = return ()
+    fillRect _ _ _ _ = return ()
+    fillText _ _ = return ()
+    measureText _ = return 0
+    isPointInPath _ = return False
+    isPointInStroke _ = return False
+
+#else
 
 instance MonadCanvas CanvasM where
     type Image CanvasM = Canvas.Canvas
@@ -210,6 +196,8 @@ instance MonadCanvas CanvasM where
     measureText t = CanvasM (Canvas.measureText (textToJSString t))
     isPointInPath (x, y) = CanvasM (js_isPointInPath x y)
     isPointInStroke (x, y) = CanvasM (js_isPointInStroke x y)
+
+#endif
 
 #else
 

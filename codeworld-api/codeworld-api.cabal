@@ -68,9 +68,11 @@ Library
 Test-suite unit-tests
   Type:                exitcode-stdio-1.0
   Main-is:             Main.hs
-  Other-modules:       TestDriver
+  Other-modules:       Driver
   Hs-source-dirs:      test
   Build-depends:       base,
                        codeworld-api,
-                       HUnit
+                       HUnit,
+                       test-framework,
+                       test-framework-hunit
   Cpp-options:         -DCODEWORLD_UNIT_TEST

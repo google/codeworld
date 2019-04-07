@@ -14,9 +14,8 @@
   limitations under the License.
 -}
 
-import Test.HUnit
-import TestDriver
+import Test.Framework (defaultMain)
+import qualified Driver
 
-tests = TestList [TestLabel "Time step elision" test_timeStepElision]
 
-main = runTestTT tests
+main = defaultMain [Driver.tests]

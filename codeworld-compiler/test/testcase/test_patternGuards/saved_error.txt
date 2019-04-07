@@ -1,2 +1,2 @@
-program.hs:3:6: error: This arrow can't be used here.
+program.hs:18:6: error: This arrow can't be used here.
 	To compare a negative number, add a space between < and -.

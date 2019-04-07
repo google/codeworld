@@ -1,2 +1,2 @@
-program.hs:3:1: error: This definition doesn't define any variables.
+program.hs:18:1: error: This definition doesn't define any variables.
 	Variables must begin with a lowercase letter.

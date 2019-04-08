@@ -646,6 +646,22 @@ Blockly.Blocks['lists_cons'] = {
     }
 };
 
+Blockly.Blocks['lists_append'] = {
+   init() {
+      this.setColour(listsHUE);
+      this.appendValueInput('LST1');
+      this.appendValueInput('LST2')
+          .appendField(new Blockly.FieldLabel('++', 'blocklyTextEmph'));
+      this.setOutput(true);
+      this.setInputsInline(true);
+
+      const lst = Type.Lit('list', [Type.Var('a')]);
+      Blockly.TypeInf.defineFunction('++', Type.fromList([lst, lst, lst]));
+      this.setAsFunction('++');
+   }
+
+};
+
 Blockly.Blocks['lists_create_with_typed'] = {
     /**
      * Block for creating a list with any number of elements of any type.

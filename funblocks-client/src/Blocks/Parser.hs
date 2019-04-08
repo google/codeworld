@@ -513,6 +513,7 @@ infixBlocks =   [
                   ,("conLeq",sInfixBlock)
                   ,("lists_cons", sInfixBlock)
                   ,("lists_at", sInfixBlock)
+                  ,("lists_append", sInfixBlock)
                     ]
 
 specialBlocks :: [(T.Text,ParserFunction)]

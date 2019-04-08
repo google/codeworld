@@ -66,7 +66,7 @@ import Control.Concurrent.MVar
 import Control.DeepSeq
 import Control.Exception
 import Control.Monad
-import Control.Monad.Trans (liftIO)
+import Control.Monad.Trans (MonadIO, liftIO)
 import Data.Char (chr)
 import Data.List (find, zip4, intercalate)
 import Data.Maybe (fromMaybe, isNothing, mapMaybe)
@@ -101,15 +101,17 @@ import qualified Data.JSString
 import Data.JSString.Text
 import Data.Word
 import GHCJS.Concurrent (withoutPreemption)
-import GHCJS.DOM
+import GHCJS.DOM hiding (currentWindow, currentDocument, getElementById, getBoundingClientRect)
+import qualified GHCJS.DOM as DOM
 import qualified GHCJS.DOM.ClientRect as ClientRect
 import GHCJS.DOM.Document hiding (evaluate)
-import GHCJS.DOM.Element
+import GHCJS.DOM.Element hiding (getBoundingClientRect)
+import qualified GHCJS.DOM.Element as DomElement
 import GHCJS.DOM.EventM
 import GHCJS.DOM.GlobalEventHandlers hiding (error)
 import GHCJS.DOM.MouseEvent
-import GHCJS.DOM.NonElementParentNode
-import GHCJS.DOM.Types (Element, unElement)
+import qualified GHCJS.DOM.NonElementParentNode as NonElement
+import GHCJS.DOM.Types (Element, MonadDOM, Window(..), Document(..), unElement)
 import qualified GHCJS.DOM.Window as Window
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
@@ -867,6 +869,44 @@ setupScreenContext cw ch = do
 -- GHCJS implementation of drawing
 
 -- Debug Mode logic
+#ifdef CODEWORLD_UNIT_TEST 
+
+getBoundingClientRect :: (MonadIO m, IsElement self) => self -> m ClientRect.ClientRect
+getBoundingClientRect _ = return (ClientRect.ClientRect nullRef) 
+
+createCanvas :: Int -> Int -> IO Canvas.Canvas
+createCanvas _ _ = return (Canvas.Canvas nullRef)
+
+currentDocument :: MonadDOM m => m (Maybe Document)
+currentDocument = return $ Just (Document nullRef)
+
+currentWindow :: MonadDOM m => m (Maybe Window)
+currentWindow = return $ Just (Window nullRef)
+
+getElementById :: Document -> JSString -> IO (Maybe Element)
+getElementById _ _ = return $ Just (Element nullRef)
+
+canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
+canvasDrawImage _ _ _ _ _ _ = return ()
+
+getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
+getCodeWorldContext _ = return $ Canvas.Context nullRef
+
+showCanvas :: IO ()
+showCanvas = return ()
+
+#else
+
+getBoundingClientRect = DomElement.getBoundingClientRect
+
+createCanvas = Canvas.create
+
+currentWindow  = DOM.currentWindow  
+
+currentDocument = DOM.currentDocument
+
+getElementById = NonElement.getElementById
+
 foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
     canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
 
@@ -874,7 +914,9 @@ foreign import javascript unsafe "$1.getContext('2d', { alpha: false })"
     getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
 
 foreign import javascript unsafe "showCanvas()"
-    showCanvas :: IO ()
+    showCanvas :: IO ()    
+
+#endif
 
 canvasFromElement :: Element -> Canvas.Canvas
 canvasFromElement = Canvas.Canvas . unElement
@@ -921,7 +963,7 @@ initDebugMode setActive getPic highlight = do
                 nodeId = pFromJSVal n
             drawing <- pictureToDrawing <$> getPic
             let node = fromMaybe (Drawings []) $ fst <$> getDrawNode nodeId drawing
-            offscreenCanvas <- Canvas.create 500 500
+            offscreenCanvas <- createCanvas 500 500
             setCanvasSize canvas canvas
             setCanvasSize (elementFromCanvas offscreenCanvas) canvas
             screen <- getCodeWorldContext (canvasFromElement canvas)
@@ -1447,7 +1489,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    offscreenCanvas <- Canvas.create 500 500
+    offscreenCanvas <- createCanvas 500 500
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
     on window resize $ do
@@ -1523,7 +1565,7 @@ run worldState stepHandler eventHandler drawHandler injectTime stepsCount = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    offscreenCanvas <- Canvas.create 500 500
+    offscreenCanvas <- createCanvas 500 500
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
     needsRedraw <- newMVar ()
@@ -1639,8 +1681,17 @@ inRight f ab = unsafePerformIO $ do
   bName' <- makeStableName $! b'
   return $ if bName == bName' then ab else (a, b')
 
+#ifdef CODEWORLD_UNIT_TEST
+
+foreign import javascript interruptible "var dummyVar = 0;"
+  waitForever :: IO () 
+
+#else
+
 foreign import javascript interruptible "window.dummyVar = 0;"
   waitForever :: IO ()
+
+#endif
 
 -- Wraps the event and state from run so they can be paused by pressing the Inspect
 -- button.

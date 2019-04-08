@@ -20,7 +20,7 @@ for i in $(grep -l -i Test-Suite */*.cabal); do
     TARGET=$(dirname $i)
 
     if [ $TARGET == "codeworld-api" ]; then
-        ARGS=--ghcjs\ -f\ ForTests
+        ARGS=--ghcjs
     else
         ARGS=
     fi

@@ -14,19 +14,18 @@ import CodeWorld.CanvasM
 import System.Mem.StableName
 import Control.Concurrent
 
-
 tests :: Test
 tests = testGroup "Driver" [
-    testCase "time step elision" timeStepElision
+    testCase "modifyMVarIfDifferent" modifyMVarIfDifferentTest
     ]
 
-timeStepElision :: Assertion
-timeStepElision = do
-    let initial = ()
-    state <- newMVar initial
+modifyMVarIfDifferentTest :: Assertion
+modifyMVarIfDifferentTest = do
+    let initial = 0
+    mv <- newMVar initial
     initialName <- makeStableName $! initial
-    _ <- run state (const id) (const id) (\_ -> pictureToDrawing $ solidCircle 10)
-            (Right . TimePassing) (NSteps 0 5)
-    current <- readMVar state
-    currentName <- makeStableName $! current
-    assertBool "state is not changed by time steps" (currentName == initialName)
+    modifyMVarIfDifferent mv (\n -> n + 1 - 1)
+    res <- readMVar mv
+    resName <- makeStableName $! res
+    assertBool "modifyMVarIfDifferent" (resName == initialName)
+

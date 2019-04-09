@@ -47,9 +47,7 @@ module CodeWorld.Driver
     , unsafeCollaborationOf
     , trace
 #ifdef CODEWORLD_UNIT_TEST
-    , run
-    , StepsCount (..)
-    , pictureToDrawing
+    , modifyMVarIfDifferent
 #endif
     ) where
 
@@ -66,7 +64,7 @@ import Control.Concurrent.MVar
 import Control.DeepSeq
 import Control.Exception
 import Control.Monad
-import Control.Monad.Trans (MonadIO, liftIO)
+import Control.Monad.Trans (liftIO)
 import Data.Char (chr)
 import Data.List (find, zip4, intercalate)
 import Data.Maybe (fromMaybe, isNothing, mapMaybe)
@@ -101,17 +99,15 @@ import qualified Data.JSString
 import Data.JSString.Text
 import Data.Word
 import GHCJS.Concurrent (withoutPreemption)
-import GHCJS.DOM hiding (currentWindow, currentDocument, getElementById, getBoundingClientRect)
-import qualified GHCJS.DOM as DOM
+import GHCJS.DOM
 import qualified GHCJS.DOM.ClientRect as ClientRect
 import GHCJS.DOM.Document hiding (evaluate)
-import GHCJS.DOM.Element hiding (getBoundingClientRect)
-import qualified GHCJS.DOM.Element as DomElement
+import GHCJS.DOM.Element
 import GHCJS.DOM.EventM
 import GHCJS.DOM.GlobalEventHandlers hiding (error)
 import GHCJS.DOM.MouseEvent
-import qualified GHCJS.DOM.NonElementParentNode as NonElement
-import GHCJS.DOM.Types (Element, MonadDOM, Window(..), Document(..), unElement)
+import GHCJS.DOM.NonElementParentNode
+import GHCJS.DOM.Types (Element, unElement)
 import qualified GHCJS.DOM.Window as Window
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
@@ -863,50 +859,12 @@ setupScreenContext cw ch = do
     CM.textCenter
     CM.textMiddle
 
-#if defined(ghcjs_HOST_OS)
+#ifdef ghcjs_HOST_OS
 
 --------------------------------------------------------------------------------
 -- GHCJS implementation of drawing
 
 -- Debug Mode logic
-#ifdef CODEWORLD_UNIT_TEST 
-
-getBoundingClientRect :: (MonadIO m, IsElement self) => self -> m ClientRect.ClientRect
-getBoundingClientRect _ = return (ClientRect.ClientRect nullRef) 
-
-createCanvas :: Int -> Int -> IO Canvas.Canvas
-createCanvas _ _ = return (Canvas.Canvas nullRef)
-
-currentDocument :: MonadDOM m => m (Maybe Document)
-currentDocument = return $ Just (Document nullRef)
-
-currentWindow :: MonadDOM m => m (Maybe Window)
-currentWindow = return $ Just (Window nullRef)
-
-getElementById :: Document -> JSString -> IO (Maybe Element)
-getElementById _ _ = return $ Just (Element nullRef)
-
-canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
-canvasDrawImage _ _ _ _ _ _ = return ()
-
-getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
-getCodeWorldContext _ = return $ Canvas.Context nullRef
-
-showCanvas :: IO ()
-showCanvas = return ()
-
-#else
-
-getBoundingClientRect = DomElement.getBoundingClientRect
-
-createCanvas = Canvas.create
-
-currentWindow  = DOM.currentWindow  
-
-currentDocument = DOM.currentDocument
-
-getElementById = NonElement.getElementById
-
 foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
     canvasDrawImage :: Canvas.Context -> Element -> Int -> Int -> Int -> Int -> IO ()
 
@@ -914,9 +872,7 @@ foreign import javascript unsafe "$1.getContext('2d', { alpha: false })"
     getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
 
 foreign import javascript unsafe "showCanvas()"
-    showCanvas :: IO ()    
-
-#endif
+    showCanvas :: IO ()
 
 canvasFromElement :: Element -> Canvas.Canvas
 canvasFromElement = Canvas.Canvas . unElement
@@ -963,7 +919,7 @@ initDebugMode setActive getPic highlight = do
                 nodeId = pFromJSVal n
             drawing <- pictureToDrawing <$> getPic
             let node = fromMaybe (Drawings []) $ fst <$> getDrawNode nodeId drawing
-            offscreenCanvas <- createCanvas 500 500
+            offscreenCanvas <- Canvas.create 500 500
             setCanvasSize canvas canvas
             setCanvasSize (elementFromCanvas offscreenCanvas) canvas
             screen <- getCodeWorldContext (canvasFromElement canvas)
@@ -1222,7 +1178,6 @@ getMousePos canvas = do
         cx <- ClientRect.getLeft rect
         cy <- ClientRect.getTop rect
         cw <- ClientRect.getWidth rect
-        ch <- ClientRect.getHeight rect
         return
             ( 20 * fromIntegral (ix - round cx) / realToFrac cw - 10
             , 20 * fromIntegral (round cy - iy) / realToFrac cw + 10)
@@ -1489,7 +1444,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    offscreenCanvas <- createCanvas 500 500
+    offscreenCanvas <- Canvas.create 500 500
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
     on window resize $ do
@@ -1540,32 +1495,19 @@ foreign import javascript "/[&?]dhash=(.{22})/.exec(window.location.search)[1]"
 propagateErrors :: ThreadId -> IO () -> IO ()
 propagateErrors tid action = action `catch` \ (e :: SomeException) -> throwTo tid e
 
--- | Run program infinity or some count of steps
-data StepsCount = Infinity | NSteps Int -- current step
-                                    Int -- max steps
-
-stepPlus :: StepsCount -> StepsCount
-stepPlus Infinity = Infinity
-stepPlus (NSteps current max_) = NSteps (current + 1) max_
-
-stepOverflow :: StepsCount -> Bool
-stepOverflow Infinity = False
-stepOverflow (NSteps current max_) = current > max_
-
-run :: MVar s
+run :: s
     -> (Double -> s -> s)
     -> (e -> s -> s)
     -> (s -> Drawing CanvasM)
     -> (Double -> e)
-    -> StepsCount
-    -> IO (e -> IO ())
-run worldState stepHandler eventHandler drawHandler injectTime stepsCount = do
+    -> IO (e -> IO (), IO s)
+run initial stepHandler eventHandler drawHandler injectTime = do
     let fullStepHandler dt = stepHandler dt . eventHandler (injectTime dt)
     showCanvas
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    offscreenCanvas <- createCanvas 500 500
+    offscreenCanvas <- Canvas.create 500 500
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
     needsRedraw <- newMVar ()
@@ -1573,57 +1515,56 @@ run worldState stepHandler eventHandler drawHandler injectTime stepsCount = do
         setCanvasSize canvas canvas
         setCanvasSize (elementFromCanvas offscreenCanvas) canvas
         tryPutMVar needsRedraw ()
-    world <- readMVar worldState
+    currentState <- newMVar initial
     eventHappened <- newMVar ()
     screen <- getCodeWorldContext (canvasFromElement canvas)
-    let go t0 lastFrame lastStateName needsTime stepsCount = if (stepOverflow stepsCount)
-            then return ()
-            else do
-                pic <- drawHandler <$> readMVar worldState
-                picFrame <- makeStableName $! pic
-                when (picFrame /= lastFrame) $ do
-                    rect <- getBoundingClientRect canvas
-                    withScreen (elementFromCanvas offscreenCanvas) rect $
-                        drawFrame pic
-                    rect <- getBoundingClientRect canvas
-                    cw <- ClientRect.getWidth rect
-                    ch <- ClientRect.getHeight rect
-                    when (cw > 0 && ch > 0) $ canvasDrawImage
-                        screen
-                        (elementFromCanvas offscreenCanvas)
-                        0
-                        0
-                        (round cw)
-                        (round ch)
-                t1 <-
-                    if | needsTime ->
-                          do t1 <- nextFrame
-                             let dt = min (t1 - t0) 0.25
-                             modifyMVarIfDifferent worldState (fullStepHandler dt)
-                             return t1
-                       | otherwise ->
-                          do takeMVar eventHappened
-                             getTime
-                nextState <- readMVar worldState
-                nextStateName <- makeStableName $! nextState
-                let nextNeedsTime =
-                        nextStateName /= lastStateName ||
-                        needsTime && not (isUniversallyConstant fullStepHandler nextState)
-                nextFrame <- tryTakeMVar needsRedraw >>= \case
-                    Nothing -> return picFrame
-                    Just () -> makeStableName undefined
-                go t1 nextFrame nextStateName nextNeedsTime (stepPlus stepsCount)
+    let go t0 lastFrame lastStateName needsTime = do
+            pic <- drawHandler <$> readMVar currentState
+            picFrame <- makeStableName $! pic
+            when (picFrame /= lastFrame) $ do
+                rect <- getBoundingClientRect canvas
+                withScreen (elementFromCanvas offscreenCanvas) rect $
+                    drawFrame pic
+                rect <- getBoundingClientRect canvas
+                cw <- ClientRect.getWidth rect
+                ch <- ClientRect.getHeight rect
+                when (cw > 0 && ch > 0) $ canvasDrawImage
+                    screen
+                    (elementFromCanvas offscreenCanvas)
+                    0
+                    0
+                    (round cw)
+                    (round ch)
+            t1 <-
+                if | needsTime ->
+                       do t1 <- nextFrame
+                          let dt = min (t1 - t0) 0.25
+                          modifyMVarIfDifferent currentState (fullStepHandler dt)
+                          return t1
+                   | otherwise ->
+                       do takeMVar eventHappened
+                          getTime
+            nextState <- readMVar currentState
+            nextStateName <- makeStableName $! nextState
+            let nextNeedsTime =
+                    nextStateName /= lastStateName ||
+                    needsTime && not (isUniversallyConstant fullStepHandler nextState)
+            nextFrame <- tryTakeMVar needsRedraw >>= \case
+                Nothing -> return picFrame
+                Just () -> makeStableName undefined
+            go t1 nextFrame nextStateName nextNeedsTime
     t0 <- getTime
     nullFrame <- makeStableName undefined
-    initialStateName <- makeStableName $! world
+    initialStateName <- makeStableName $! initial
     mainThread <- myThreadId
     drawThread <- forkIO $ propagateErrors mainThread $
-        go t0 nullFrame initialStateName True stepsCount
+        go t0 nullFrame initialStateName True
     let sendEvent event = propagateErrors drawThread $ do
             changed <-
-                modifyMVarIfDifferent worldState (eventHandler event)
+                modifyMVarIfDifferent currentState (eventHandler event)
             when changed $ void $ tryPutMVar eventHappened ()
-    return sendEvent
+        getState = readMVar currentState
+    return (sendEvent, getState)
 
 data DebugState = DebugState
     { debugStateActive :: Bool
@@ -1681,23 +1622,14 @@ inRight f ab = unsafePerformIO $ do
   bName' <- makeStableName $! b'
   return $ if bName == bName' then ab else (a, b')
 
-#ifdef CODEWORLD_UNIT_TEST
-
-foreign import javascript interruptible "var dummyVar = 0;"
-  waitForever :: IO () 
-
-#else
-
 foreign import javascript interruptible "window.dummyVar = 0;"
   waitForever :: IO ()
-
-#endif
 
 -- Wraps the event and state from run so they can be paused by pressing the Inspect
 -- button.
 runInspect :: 
        (Wrapped s -> [Control s])
-    ->  s
+    -> s
     -> (Double -> s -> s)
     -> (Event -> s -> s)
     -> (s -> Picture) 
@@ -1707,10 +1639,11 @@ runInspect controls initial stepHandler eventHandler drawHandler = do
     -- before showing the canvas.  This avoids showing a blank screen when
     -- there are deferred type errors that are effectively compile errors.
     evaluate $ rnf $ drawHandler initial
+
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    worldState <- newMVar (debugStateInit, wrappedInitial initial)
-    let stepHandlerWrapper dt wrapper@(debugState, _) =
+    let initialWrapper = (debugStateInit, wrappedInitial initial)
+        stepHandlerWrapper dt wrapper@(debugState, _) =
             case debugStateActive debugState of
                 True -> wrapper
                 False -> inRight (wrappedStep stepHandler dt) wrapper
@@ -1727,20 +1660,19 @@ runInspect controls initial stepHandler eventHandler drawHandler = do
                 False -> pictureToDrawing (wrappedDraw controls drawHandler wrappedState)
         drawPicHandler (debugState, wrappedState) =
             drawHandler $ state wrappedState
-    sendEvent <-
+    (sendEvent, getState) <-
         run
-            worldState
+            initialWrapper
             stepHandlerWrapper
             (\e w -> (eventHandlerWrapper e) w)
             drawHandlerWrapper
             (Right . TimePassing)
-            Infinity
     let pauseEvent True = sendEvent $ Left DebugStart
         pauseEvent False = sendEvent $ Left DebugStop
         highlightSelectEvent True n = sendEvent $ Left (HighlightEvent n)
         highlightSelectEvent False n = sendEvent $ Left (SelectEvent n)
     onEvents canvas (sendEvent . Right)
-    inspect (drawPicHandler <$> readMVar worldState) pauseEvent highlightSelectEvent
+    inspect (drawPicHandler <$> getState) pauseEvent highlightSelectEvent
     waitForever
 
 -- Given a drawing, highlight the first node and select second node. Both recolor
@@ -1849,14 +1781,14 @@ run initial stepHandler eventHandler drawHandler =
         let cw = Canvas.width context
         let ch = Canvas.height context
         offscreenCanvas <- runCanvasM context $ CM.newImage cw ch
-        worldState <- newMVar initial
+        currentState <- newMVar initial
         eventHappened <- newMVar ()
         onEvents context (cw, ch) $ \event -> do
-            modifyMVar_ worldState (return . eventHandler event)
+            modifyMVar_ currentState (return . eventHandler event)
             tryPutMVar eventHappened ()
             return ()
         let go t0 lastFrame lastStateName needsTime = do
-                pic <- drawHandler <$> readMVar worldState
+                pic <- drawHandler <$> readMVar currentState
                 picFrame <- makeStableName $! pic
                 when (picFrame /= lastFrame) $
                     runCanvasM context $ do
@@ -1875,12 +1807,12 @@ run initial stepHandler eventHandler drawHandler =
                                        round ((tn `diffUTCTime` t0) * 1000000))
                               t1 <- getCurrentTime
                               let dt = realToFrac (t1 `diffUTCTime` t0)
-                              modifyMVar_ worldState (return . fullStepHandler dt)
+                              modifyMVar_ currentState (return . fullStepHandler dt)
                               return t1
                        | otherwise ->
                            do takeMVar eventHappened
                               getCurrentTime
-                nextState <- readMVar worldState
+                nextState <- readMVar currentState
                 nextStateName <- makeStableName $! nextState
                 let nextNeedsTime =
                         nextStateName /= lastStateName ||

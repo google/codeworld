@@ -19,11 +19,6 @@ Description:
   package to provide a webpage consisting of just a panel locally. This way, the same
   program that runs on the CodeWorld server can also be run locally.
 
-Flag ForTests
-  Description: Build library for tests.
-  Default:     False
-  Manual:      True
-
 Library
   Hs-source-dirs:      src
   Exposed-modules:     CodeWorld,

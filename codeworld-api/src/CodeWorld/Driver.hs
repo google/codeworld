@@ -47,7 +47,8 @@ module CodeWorld.Driver
     , unsafeCollaborationOf
     , trace
 #ifdef CODEWORLD_UNIT_TEST
-    , modifyMVarIfDifferent
+    , wrappedStep
+    , wrappedInitial
 #endif
     ) where
 

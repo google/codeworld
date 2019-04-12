@@ -110,10 +110,14 @@ window.onload = () => {
             iframe.setAttribute('frameborder', '0');
             iframe.setAttribute('scrolling', 'no');
 
-            iframe.addEventListener('load', () => {
-                this.contentWindow.setParent(parent);
-                this.contentWindow.setId(iframe);
-                this.contentWindow.loadXml.call(iframe.contentWindow,
+            iframe.addEventListener('load', e => {
+               
+                let currentTarget = e.currentTarget;
+                const contentWindow = currentTarget.contentWindow;
+
+                contentWindow.setParent(parent);
+                contentWindow.setId(iframe);
+                contentWindow.loadXml.call(iframe.contentWindow,
                     text);
             });
 

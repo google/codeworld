@@ -994,7 +994,10 @@ function compile() {
     sweetAlert({
         title: Alert.title('Compiling'),
         text: 'Your code is compiling.  Please wait...',
-        onOpen: sweetAlert.showLoading,
+        onOpen: () => {
+           sweetAlert.showLoading();
+           sweetAlert.getCancelButton().disabled = false;
+        },
         showConfirmButton: false,
         showCancelButton: true,
         showCloseButton: false,

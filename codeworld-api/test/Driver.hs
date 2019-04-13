@@ -1,4 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StaticPointers #-}
+{-# LANGUAGE MagicHash #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Driver (
     tests
@@ -13,24 +16,35 @@ import CodeWorld.Event
 import CodeWorld.CanvasM
 import System.Mem.StableName
 import Control.Concurrent
+import GHC.Prim
 
 tests :: Test
 tests = testGroup "Driver" [
-    testCase "wrapping unshared identity is unshared" wrappedStepDropsUnsharedIdentity,
-    testCase "wrapping shared identity is shared" wrappedStepSavesSharedIdentity
+    testCase "wrapping of shared identity is shared" wrappedStepSavesSharedIdentity,
+    testCase "pointer does not change if updating value is pure" pureIdentityPointerChange,
+    testCase "pointer does not change if updating value is using MVar" mvarPointerChange
     ]
+
+identical :: a -> a -> Bool
+identical !x !y = case reallyUnsafePtrEquality# x y of
+    0# -> False
+    _  -> True
 
 wrappedStepSavesSharedIdentity :: Assertion
 wrappedStepSavesSharedIdentity = do
     let wrapped = wrappedInitial 42
-    initialName <- makeStableName $! wrapped
-    sharedName  <- makeStableName $! (wrappedStep (const id) 1 wrapped)
-    assertBool "" $ initialName == sharedName
+    assertBool "" $ identical wrapped (wrappedStep (const id) 1 wrapped)
 
-wrappedStepDropsUnsharedIdentity :: Assertion
-wrappedStepDropsUnsharedIdentity = do
-    let wrapped = wrappedInitial 42
-        unsharedId x = (x + 1) - 1
-    initialName <- makeStableName $! wrapped
-    unsharedName <- makeStableName $! (wrappedStep (const unsharedId) 1 wrapped)
-    assertBool "" $ initialName /= unsharedName
+pureIdentityPointerChange :: Assertion
+pureIdentityPointerChange = do
+    let initial = 0
+        target = initial + 1 - 1
+    assertBool "" $ identical initial target
+
+mvarPointerChange :: Assertion
+mvarPointerChange = do
+    let initial = 0 :: Integer
+    mvar <- newMVar initial
+    modifyMVar_ mvar (\x -> return $ x + 1 - 1)
+    target <- readMVar mvar
+    assertBool "" $ identical initial target

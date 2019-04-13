@@ -1959,14 +1959,22 @@ toState f w = case ifDifferent f (state w) of
     Just newState -> w { state = newState }
     _             -> w
 
+isIdentityShared :: (Double -> a -> a) -> Double -> a -> Bool
+isIdentityShared f dt state = unsafePerformIO $ do
+    before <- makeStableName $! state
+    after  <- makeStableName $! (f dt state)
+    return $ before == after
+
 wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
-wrappedStep f dt w = updateInteractionTime (updateState w)
-  where updateInteractionTime w
-          | lastInteractionTime w > 5 = w
-          | otherwise = w { lastInteractionTime = lastInteractionTime w + dt }
-        updateState w
-          | playbackSpeed w == 0 = w
-          | otherwise = toState (f (dt * playbackSpeed w)) w
+wrappedStep f dt w = case isIdentityShared f dt (state w) of
+    True  -> w
+    False -> updateInteractionTime (updateState w)
+    where updateInteractionTime w
+            | lastInteractionTime w > 5 = w
+            | otherwise = w { lastInteractionTime = lastInteractionTime w + dt }
+          updateState w
+            | playbackSpeed w == 0 = w
+            | otherwise = toState (f (dt * playbackSpeed w)) w
 
 reportDiff :: String -> (a -> a) -> (a -> a)
 reportDiff msg f x = unsafePerformIO $ do

@@ -20,7 +20,8 @@ import GHC.Prim
 
 tests :: Test
 tests = testGroup "Driver" [
-    testCase "wrapping of shared identity is shared" wrappedStepSavesSharedIdentity,
+    testCase "wrapping of shared identity is shared (steps)" wrappedStepSavesSharedIdentity,
+    testCase "wrapping of shared identity is shared (events)" wrappedEventSavesSharedIdentity,
     testCase "pointer does not change if updating value is pure" pureIdentityPointerChange,
     testCase "pointer does not change if updating value is using MVar" mvarPointerChange
     ]
@@ -29,6 +30,11 @@ identical :: a -> a -> Bool
 identical !x !y = case reallyUnsafePtrEquality# x y of
     0# -> False
     _  -> True
+
+wrappedEventSavesSharedIdentity :: Assertion
+wrappedEventSavesSharedIdentity = do
+    let wrapped = wrappedInitial 42
+    assertBool "" $ identical wrapped (wrappedEvent (\_ -> []) (const id) (const id) (TimePassing 1) wrapped)
 
 wrappedStepSavesSharedIdentity :: Assertion
 wrappedStepSavesSharedIdentity = do

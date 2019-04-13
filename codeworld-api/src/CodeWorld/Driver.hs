@@ -48,6 +48,7 @@ module CodeWorld.Driver
     , trace
 #ifdef CODEWORLD_UNIT_TEST
     , wrappedStep
+    , wrappedEvent
     , wrappedInitial
 #endif
     ) where

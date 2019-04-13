@@ -1,36 +1,28 @@
 {
   "items": [{
     "name": "Dot Grab",
-    "url": "/run.html?mode=codeworld&dhash=DG2pZEqepfQrmxwO7IVO6qw",
-    "code": "/#PEwIFcw4EXZtdP7JdytExKA"
+    "url": "/run.html?mode=codeworld&dhash=DyHz0uXSGmIGK7JNeOy3Hcw",
+    "code": "/#Pwz1IOhVt5AI9CrZZAEaCwg"
   }, {
     "name": "Fading dots",
-    "url": "/run.html?mode=haskell&dhash=DWP9dpe3ThC1u_hYJ4XMdYA",
-    "code": "/haskell#PjNS5MDJqXmkWcSzfTmUeZQ"
+    "url": "/run.html?mode=haskell&dhash=DmOz2qXjlYd65PXrslOmYWA",
+    "code": "/haskell#PA5oqLsumRH49rfJkwgN8SQ"
   }, {
     "name": "Snake",
-    "url": "/run.html?mode=haskell&dhash=DNG5h3HnvJYOTxyY57UnuTg",
-    "code": "/haskell#PMveckjqHHeiorWS0iY_xaA"
+    "url": "/run.html?mode=haskell&dhash=DrlW5vCMkdlXQcAG0BjPcUw",
+    "code": "/haskell#Pzq8A3JYBOIBGF4Kv7qRVrw"
   }, {
     "name": "Tanks",
-    "url": "/run.html?mode=haskell&dhash=DHRYG7vwmq5Ms7U0CTBvWtw",
-    "code": "/haskell#PQ94iinch5mmZ7J9FuhX4zw"
-  }, {
-    "name": "Double pendulum, with Prelude sinus",
-    "url": "/run.html?mode=haskell&dhash=DW6PXkxc1w4D7yYZwaTJwjw",
-    "code": "/haskell#Ps_35Sf5jgYYvQJL7vtbWkw"
-  }, {
-    "name": "Double pendulum, with Prelude sinus, single player",
-    "url": "/run.html?mode=haskell&dhash=DFrxU9e_o6R3gxLXw-fICng",
-    "code": "/haskell#PiEGCotAV8BxEQI8KxTubbg"
+    "url": "/run.html?mode=haskell&dhash=Dgs_nIEkoMxu0ffDXf2AFGg",
+    "code": "/haskell#PV0M7GrfQO5hIiEYDCN79yg"
   }, {
     "name": "Double pendulum, with sinus approximation",
-    "url": "/run.html?mode=haskell&dhash=DXB3D2BYrDVTFzMqjQC_4aA",
-    "code": "/haskell#PefTD_NnqQAWtr0AIttIOLg"
+    "url": "/run.html?mode=haskell&dhash=DagyHeMWeZ5EvKBVL6jma9g",
+    "code": "/haskell#PIzWf-xXnpjd7SauYvRLLZg"
   }, {
     "name": "Double pendulum, with sinus approximation, single player",
-    "url": "/run.html?mode=haskell&dhash=D91JtlWEg352zXNEdy-EFhA",
-    "code": "/haskell#PBPjprQxQ-_jAg2kEy52DEA"
+    "url": "/run.html?mode=haskell&dhash=D7iD6i-W83FVSajdmwcwXRg",
+    "code": "/haskell#PE4W4y_EQIQ8ORSfEhe7KaQ"
   }
   ]
 }

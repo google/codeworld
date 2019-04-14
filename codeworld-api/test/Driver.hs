@@ -34,7 +34,8 @@ identical !x !y = case reallyUnsafePtrEquality# x y of
 wrappedEventSavesSharedIdentity :: Assertion
 wrappedEventSavesSharedIdentity = do
     let wrapped = wrappedInitial 42
-    assertBool "" $ identical wrapped (wrappedEvent (\_ -> []) (const id) (const id) (TimePassing 1) wrapped)
+        target  = wrappedEvent (\_ -> []) (\ _ w -> w) (\_ w -> w) (TimePassing 0) wrapped
+    assertBool "" $ samePointer wrapped target
 
 wrappedStepSavesSharedIdentity :: Assertion
 wrappedStepSavesSharedIdentity = do

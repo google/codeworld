@@ -50,6 +50,7 @@ module CodeWorld.Driver
     , wrappedStep
     , wrappedEvent
     , wrappedInitial
+    , samePointer
 #endif
     ) where
 
@@ -1960,16 +1961,17 @@ toState f w = case ifDifferent f (state w) of
     Just newState -> w { state = newState }
     _             -> w
 
-isIdentityShared :: (Double -> a -> a) -> Double -> a -> Bool
-isIdentityShared f dt state = unsafePerformIO $ do
-    before <- makeStableName $! state
-    after  <- makeStableName $! (f dt state)
-    return $ before == after
+samePointer :: a -> a -> Bool
+samePointer initial target = unsafePerformIO $ do
+    initialName <- makeStableName $! initial
+    targetName  <- makeStableName $! target
+    print $ initialName == targetName
+    return $ initialName == targetName
 
 wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
-wrappedStep f dt w = case isIdentityShared f dt (state w) of
-    True  -> w
-    False -> updateInteractionTime (updateState w)
+wrappedStep f dt w
+    | samePointer (f dt (state w)) (state w) = w
+    | otherwise = updateInteractionTime (updateState w)
     where updateInteractionTime w
             | lastInteractionTime w > 5 = w
             | otherwise = w { lastInteractionTime = lastInteractionTime w + dt }
@@ -1993,6 +1995,7 @@ wrappedEvent :: forall a .
     -> Wrapped a
 wrappedEvent _ _ eventHandler (TimePassing dt) w
     | playbackSpeed w == 0 = w
+    | samePointer (eventHandler (TimePassing (dt * (playbackSpeed w))) (state w)) (state w) = w
     | otherwise = toState (eventHandler (TimePassing (dt * playbackSpeed w))) w
 wrappedEvent ctrls stepHandler eventHandler event w
     | playbackSpeed w == 0 || handled = afterControls {lastInteractionTime = 0}

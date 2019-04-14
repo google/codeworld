@@ -222,6 +222,10 @@ function initCodeworld() {
     });
     window.codeworldEditor.refresh();
     window.codeworldEditor.on("cursorActivity", function() {
+        if (window.buildMode !== 'codeworld') {
+            return;
+        }
+
         const prevDiv = document.getElementById("function-details");
         if (prevDiv) prevDiv.remove();
 

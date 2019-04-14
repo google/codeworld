@@ -1141,11 +1141,6 @@ function shareFolder_(mode) {
             let confirmText;
 
             if (gallery) {
-                title = Alert.title('Share Folder', 'mdi-folder-account-outline'),
-                msg = `Copy this link to share code in ${folderName} with others!`;
-                url = `${baseURL}#${shareHash}`;
-                confirmText = 'Share as Gallery';
-            } else {
                 title = Alert.title('Share Gallery', 'mdi-presentation-play');
                 msg = `Copy this link to make a gallery out of ${folderName}!`;
                 url = new URL(
@@ -1153,6 +1148,11 @@ function shareFolder_(mode) {
                     baseURL)
                     .toString();
                 confirmText = 'Share as Folder';
+            } else {
+                title = Alert.title('Share Folder', 'mdi-folder-account-outline'),
+                msg = `Copy this link to share code in ${folderName} with others!`;
+                url = `${baseURL}#${shareHash}`;
+                confirmText = 'Share as Gallery';
             }
 
             sweetAlert({

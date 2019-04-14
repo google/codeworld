@@ -61,3 +61,21 @@ data CompileResult = CompileResult
 instance ToJSON CompileResult where
     toJSON cr =
         object ["hash" .= compileHash cr, "dhash" .= compileDeployHash cr]
+
+data Gallery = Gallery { galleryItems :: [GalleryItem] }
+data GalleryItem = GalleryItem
+    { galleryItemName :: Text,
+      galleryItemURL :: Text,
+      galleryItemCode :: Maybe Text
+    }
+
+instance ToJSON Gallery where
+    toJSON g = object [ "items" .= galleryItems g ]
+
+instance ToJSON GalleryItem where
+    toJSON item = case galleryItemCode item of
+        Nothing -> object base
+        Just code -> object (("code" .= code) : base)
+      where base = [ "name" .= galleryItemName item
+                   , "url" .= galleryItemURL item
+                   ]

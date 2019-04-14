@@ -83,7 +83,7 @@ async function init() {
                     window.location.hash = '';
                     if (request.status === 200) {
                         sweetAlert('Success!',
-                            'The shared folder is moved into your root directory.',
+                            'The shared folder has been copied to your root directory.',
                             'success');
                     } else {
                         sweetAlert('Oops!',
@@ -482,13 +482,13 @@ function updateUI() {
         document.getElementById('moveHereButton').style.display = 'none';
         document.getElementById('cancelMoveButton').style.display = 'none';
 
-        if (window.nestedDirs.length !== 1 && (window.openProjectName === null || window.openProjectName === '')) {
+        if (window.nestedDirs.length > 1 && !window.openProjectName) {
             document.getElementById('shareFolderButton').style.display = '';
         } else {
             document.getElementById('shareFolderButton').style.display = 'none';
         }
 
-        if ((window.openProjectName !== null && window.openProjectName !== '') || window.nestedDirs.length !== 1) {
+        if (window.openProjectName || window.nestedDirs.length > 1) {
             document.getElementById('moveButton').style.display = '';
         } else {
             document.getElementById('moveButton').style.display = 'none';
@@ -632,7 +632,7 @@ function moveProject() {
             return;
         }
 
-        if ((window.openProjectName === null || window.openProjectName === '') && window.nestedDirs.length === 1) {
+        if (!window.openProjectName && window.nestedDirs.length === 1) {
             sweetAlert('Oops!',
                 'You must select a project or folder to move.',
                 'error');
@@ -643,7 +643,7 @@ function moveProject() {
         const tempOpen = window.openProjectName;
         const tempPath = window.nestedDirs.slice(1).join('/');
         setCode('');
-        if (tempOpen === null || tempOpen === '') {
+        if (!tempOpen) {
             window.nestedDirs.splice(-1);
             window.allProjectNames.splice(-1);
             window.allFolderNames.splice(-1);
@@ -651,7 +651,7 @@ function moveProject() {
 
         window.move = Object();
         window.move.path = tempPath;
-        if (tempOpen !== null && tempOpen !== '') {
+        if (tempOpen) {
             window.move.file = tempOpen;
         }
 
@@ -1084,7 +1084,7 @@ function saveProjectBase(path, projectName) {
 
 function deleteFolder() {
     const path = window.nestedDirs.slice(1).join('/');
-    if (path === '' || window.openProjectName !== null) {
+    if (path === '' || window.openProjectName) {
         return;
     }
 
@@ -1108,7 +1108,7 @@ function deleteProject() {
 }
 
 function shareFolder() {
-    shareFolder_('codeworld');
+    shareFolder_(window.buildMode);
 }
 
 function downloadProject() {

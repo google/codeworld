@@ -88,6 +88,20 @@ If you make changes to CodeWorld, you can rebuild it without rebuilding the depe
 2. Run `./build.sh` to recompile just CodeWorld itself, using previously installed tools and libraries.
 3. Run `./run.sh` to start the server.
 
+Docker
+-------
+
+### To use the image from Docker Hub
+
+`TODO`
+
+### To build a new image
+
+`GIT_COMMIT=<commit> ./build-docker.sh`
+
+or just `./build-docker.sh` to use the commit that is currently
+checked out in your local repository.
+
 Caveats
 -------
 
@@ -96,7 +110,9 @@ Caveats
 While the installation process installs most of its files inside `codeworld/build`, it does
 clobber `~/.ghc`, `~/.ghcjs`, and `~/.cabal`.  I recommend that you run CodeWorld as a
 dedicated user account to avoid causing problems for other Haskell installations.  If you
-don't, note that you will lose your user package database.
+don't, note that you will lose your user package database. Alternatively, if you use
+the docker container, this isolates the aforementioned directories so they will
+not be clobbered.
 
 See bug [#4](https://github.com/google/codeworld/issues/4) for details.
 

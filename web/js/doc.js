@@ -111,8 +111,8 @@ window.onload = () => {
             iframe.setAttribute('scrolling', 'no');
 
             iframe.addEventListener('load', e => {
-               
-                let currentTarget = e.currentTarget;
+
+                const currentTarget = e.currentTarget;
                 const contentWindow = currentTarget.contentWindow;
 
                 contentWindow.setParent(parent);

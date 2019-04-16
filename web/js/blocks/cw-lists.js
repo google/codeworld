@@ -647,18 +647,18 @@ Blockly.Blocks['lists_cons'] = {
 };
 
 Blockly.Blocks['lists_append'] = {
-   init() {
-      this.setColour(listsHUE);
-      this.appendValueInput('LST1');
-      this.appendValueInput('LST2')
-          .appendField(new Blockly.FieldLabel('++', 'blocklyTextEmph'));
-      this.setOutput(true);
-      this.setInputsInline(true);
+    init() {
+        this.setColour(listsHUE);
+        this.appendValueInput('LST1');
+        this.appendValueInput('LST2')
+            .appendField(new Blockly.FieldLabel('++', 'blocklyTextEmph'));
+        this.setOutput(true);
+        this.setInputsInline(true);
 
-      const lst = Type.Lit('list', [Type.Var('a')]);
-      Blockly.TypeInf.defineFunction('++', Type.fromList([lst, lst, lst]));
-      this.setAsFunction('++');
-   }
+        const lst = Type.Lit('list', [Type.Var('a')]);
+        Blockly.TypeInf.defineFunction('++', Type.fromList([lst, lst, lst]));
+        this.setAsFunction('++');
+    }
 
 };
 

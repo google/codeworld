@@ -221,12 +221,12 @@ function initCodeworld() {
         }
     });
     window.codeworldEditor.refresh();
-    window.codeworldEditor.on("cursorActivity", function() {
+    window.codeworldEditor.on('cursorActivity', () => {
         if (window.buildMode !== 'codeworld') {
             return;
         }
 
-        const prevDiv = document.getElementById("function-details");
+        const prevDiv = document.getElementById('function-details');
         if (prevDiv) prevDiv.remove();
 
         const cursor = window.codeworldEditor.getCursor();
@@ -235,7 +235,10 @@ function initCodeworld() {
 
         if (!functions.length) return;
 
-        const { functionName, argIndex } = functions.pop();
+        const {
+            functionName,
+            argIndex
+        } = functions.pop();
         const keywordData = window.codeWorldSymbols[functionName];
 
         // don't show tooltip if function details or argument types are not known
@@ -244,10 +247,10 @@ function initCodeworld() {
         const topDiv = document.createElement('div');
 
         topDiv.title = functionName;
-        topDiv.id = "function-details";
+        topDiv.id = 'function-details';
 
         const docDiv = document.createElement('div');
-        docDiv.classList.add("function-tooltip-styling");
+        docDiv.classList.add('function-tooltip-styling');
 
         const annotation = document.createElement('div');
         renderDeclaration(annotation, functionName, keywordData, 9999, argIndex);
@@ -255,7 +258,7 @@ function initCodeworld() {
         docDiv.appendChild(annotation);
 
         topDiv.appendChild(docDiv);
-        window.codeworldEditor.addWidget(cursor, topDiv, true, "above", "left");
+        window.codeworldEditor.addWidget(cursor, topDiv, true, 'above', 'left');
     });
 
     CodeMirror.commands.save = cm => {
@@ -999,8 +1002,8 @@ function compile() {
         title: Alert.title('Compiling'),
         text: 'Your code is compiling.  Please wait...',
         onOpen: () => {
-           sweetAlert.showLoading();
-           sweetAlert.getCancelButton().disabled = false;
+            sweetAlert.showLoading();
+            sweetAlert.getCancelButton().disabled = false;
         },
         showConfirmButton: false,
         showCancelButton: true,

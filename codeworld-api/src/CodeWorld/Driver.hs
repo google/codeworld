@@ -46,6 +46,12 @@ module CodeWorld.Driver
     , collaborationOf
     , unsafeCollaborationOf
     , trace
+#ifdef CODEWORLD_UNIT_TEST
+    , wrappedStep
+    , wrappedEvent
+    , wrappedInitial
+    , samePointer
+#endif
     ) where
 
 import CodeWorld.CollaborationUI (SetupPhase(..), Step(..), UIState)
@@ -1175,7 +1181,6 @@ getMousePos canvas = do
         cx <- ClientRect.getLeft rect
         cy <- ClientRect.getTop rect
         cw <- ClientRect.getWidth rect
-        ch <- ClientRect.getHeight rect
         return
             ( 20 * fromIntegral (ix - round cx) / realToFrac cw - 10
             , 20 * fromIntegral (round cy - iy) / realToFrac cw + 10)
@@ -1956,14 +1961,23 @@ toState f w = case ifDifferent f (state w) of
     Just newState -> w { state = newState }
     _             -> w
 
+samePointer :: a -> a -> Bool
+samePointer initial target = unsafePerformIO $ do
+    initialName <- makeStableName $! initial
+    targetName  <- makeStableName $! target
+    print $ initialName == targetName
+    return $ initialName == targetName
+
 wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
-wrappedStep f dt w = updateInteractionTime (updateState w)
-  where updateInteractionTime w
-          | lastInteractionTime w > 5 = w
-          | otherwise = w { lastInteractionTime = lastInteractionTime w + dt }
-        updateState w
-          | playbackSpeed w == 0 = w
-          | otherwise = toState (f (dt * playbackSpeed w)) w
+wrappedStep f dt w
+    | samePointer (f dt (state w)) (state w) = w
+    | otherwise = updateInteractionTime (updateState w)
+    where updateInteractionTime w
+            | lastInteractionTime w > 5 = w
+            | otherwise = w { lastInteractionTime = lastInteractionTime w + dt }
+          updateState w
+            | playbackSpeed w == 0 = w
+            | otherwise = toState (f (dt * playbackSpeed w)) w
 
 reportDiff :: String -> (a -> a) -> (a -> a)
 reportDiff msg f x = unsafePerformIO $ do
@@ -1981,6 +1995,7 @@ wrappedEvent :: forall a .
     -> Wrapped a
 wrappedEvent _ _ eventHandler (TimePassing dt) w
     | playbackSpeed w == 0 = w
+    | samePointer (eventHandler (TimePassing (dt * (playbackSpeed w))) (state w)) (state w) = w
     | otherwise = toState (eventHandler (TimePassing (dt * playbackSpeed w))) w
 wrappedEvent ctrls stepHandler eventHandler event w
     | playbackSpeed w == 0 || handled = afterControls {lastInteractionTime = 0}

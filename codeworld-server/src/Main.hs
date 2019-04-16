@@ -515,18 +515,24 @@ galleryItemFromProject mode@(BuildMode modeName) folder name = do
     let projectId = nameToProjectId name
     let file = folder </> projectFile projectId
     Just project <- decode <$> LB.readFile file
+
     let source = T.encodeUtf8 $ projectSource project
     let programId = sourceToProgramId source
     let deployId = sourceToDeployId source
+
     liftIO $ withProgramLock mode programId $ do
         ensureSourceDir mode programId
         B.writeFile (sourceRootDir mode </> sourceFile programId) source
         writeDeployLink mode deployId programId
-    return GalleryItem { galleryItemName = name,
-                         galleryItemURL = "https://code.world/run.html" <>
-                                          "?mode=" <> T.pack modeName <>
-                                          "&dhash=" <> unDeployId deployId,
-                         galleryItemCode = Nothing }
+
+    let baseURL = "/" <> if modeName == "codeworld" then "" else T.pack modeName
+
+    return GalleryItem {
+        galleryItemName = name,
+        galleryItemURL = "https://code.world/run.html" <>
+                         "?mode=" <> T.pack modeName <>
+                         "&dhash=" <> unDeployId deployId,
+        galleryItemCode = Just (baseURL <> "#" <> unProgramId programId) }
 
 responseCodeFromCompileStatus :: CompileStatus -> Int
 responseCodeFromCompileStatus CompileSuccess = 200

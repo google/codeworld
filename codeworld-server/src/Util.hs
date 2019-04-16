@@ -44,8 +44,7 @@ import System.Posix.Files
 
 import Model
 
-newtype BuildMode =
-    BuildMode String
+newtype BuildMode = BuildMode String
     deriving (Eq)
 
 newtype ProgramId = ProgramId

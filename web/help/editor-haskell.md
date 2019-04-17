@@ -4,7 +4,6 @@ Editor Shortcuts
     | `Shortcut`                     | `Action`                     |
     |--------------------------------|------------------------------|
     | Ctrl + Enter                   | Run the program              |
-    | Ctrl + Space, or Shift + Space | Autocomplete                 |
     | Ctrl + Up                      | Zoom in                      |
     | Ctrl + Down                    | Zoom out                     |
     | Ctrl + A                       | Select all                   |
@@ -29,3 +28,4 @@ Editor Shortcuts
     | Ctrl + Shift +  U, or Alt + U  | Redo selection               |
     | Tab, or Ctrl + ]               | Indent                       |
     | Shift + Tab, or Ctrl + [       | Unindent                     |
+    | Ctrl + I                       | Reformat                     |

@@ -696,11 +696,7 @@ function changeFontSize(incr) {
 
 function help() {
     let url;
-    if (window.buildMode === 'haskell') {
-        url = 'doc-haskell/CodeWorld.html';
-    } else {
-        url = `doc.html?shelf=help/${window.buildMode}.shelf`;
-    }
+    url = `doc.html?shelf=help/${window.buildMode}.shelf`;
 
     sweetAlert({
         html: `<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="${ 

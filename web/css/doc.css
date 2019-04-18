@@ -115,7 +115,6 @@ body {
 #help {
     position: relative;
     overflow: auto;
-    max-width: 45em;
 }
 
 #helpacc+#help {

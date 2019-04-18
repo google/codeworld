@@ -56,6 +56,12 @@ async function init() {
 
     window.cancelCompile = () => {};
 
+    initCodeworld();
+    registerStandardHints(() => {
+        setMode(true);
+        parseSymbolsFromCurrentCode();
+    });
+
     let hash = location.hash.slice(1);
     if (hash.length > 0) {
         if (hash.slice(-2) === '==') {
@@ -67,10 +73,9 @@ async function init() {
                 html: 'Enter a name for the shared folder:',
                 input: 'text',
                 confirmButtonText: 'Save',
-                showCancelButton: false,
-                closeOnConfirm: false
+                showCancelButton: false
             }).then(result => {
-                if (!result) {
+                if (!result || !result.value) {
                     return;
                 }
 
@@ -90,29 +95,14 @@ async function init() {
                             'Could not load the shared directory. Please try again.',
                             'error');
                     }
-                    initCodeworld();
-                    registerStandardHints(() => {
-                        setMode(true);
-                        parseSymbolsFromCurrentCode();
-                    });
                     discoverProjects('', 0);
                     updateUI();
                 });
             });
         } else {
-            initCodeworld();
-            registerStandardHints(() => {
-                setMode(true);
-                parseSymbolsFromCurrentCode();
-            });
             updateUI();
         }
     } else {
-        initCodeworld();
-        registerStandardHints(() => {
-            setMode(true);
-            parseSymbolsFromCurrentCode();
-        });
         updateUI();
     }
 
@@ -524,7 +514,9 @@ function updateUI() {
     // If true - code currently in document is not equal to
     // last compiled code
     const running = document.getElementById('runner').style.display !== 'none';
-    const obsolete = !window.codeworldEditor.getDoc().isClean(window.runningGeneration);
+    const obsolete = window.codeworldEditor
+        ? !window.codeworldEditor.getDoc().isClean(window.runningGeneration)
+        : false;
     const obsoleteAlert = document.getElementById('obsolete-code-alert');
     if (running && obsolete) {
         obsoleteAlert.classList.add('obsolete-code-alert-fadein');
@@ -718,6 +710,10 @@ function help() {
 }
 
 function isEditorClean() {
+    if (!window.codeworldEditor) {
+        return true;
+    }
+
     const doc = window.codeworldEditor.getDoc();
 
     if (window.savedGeneration === null) return doc.getValue() === '';

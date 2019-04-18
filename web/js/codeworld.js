@@ -235,10 +235,7 @@ function initCodeworld() {
 
         if (!functions.length) return;
 
-        const {
-            functionName,
-            argIndex
-        } = functions.pop();
+        const { functionName, argIndex, column } = functions.pop();
         const keywordData = window.codeWorldSymbols[functionName];
 
         // don't show tooltip if function details or argument types are not known
@@ -253,12 +250,21 @@ function initCodeworld() {
         docDiv.classList.add('function-tooltip-styling');
 
         const annotation = document.createElement('div');
-        renderDeclaration(annotation, functionName, keywordData, 9999, argIndex);
+        const returnedVal = renderDeclaration(annotation, functionName, keywordData, 9999, argIndex);
+        //TODO: Remove the if block once a better function parser is integrated.
+        if (returnedVal === null){
+            annotation.remove();
+            topDiv.remove();
+            return;
+        }
         annotation.className = 'hover-decl';
         docDiv.appendChild(annotation);
 
         topDiv.appendChild(docDiv);
-        window.codeworldEditor.addWidget(cursor, topDiv, true, 'above', 'left');
+        window.codeworldEditor.addWidget({
+            line: cursor.line,
+            ch: column - functionName.length
+        }, topDiv, true, "above", "near");
     });
 
     CodeMirror.commands.save = cm => {

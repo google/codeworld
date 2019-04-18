@@ -12,6 +12,7 @@
     "Part 7: Computation": "help/GuideUnit7.md",
     "Part 8: Abstraction": "help/GuideUnit8.md",
     "Part 9: Modeling":    "help/GuideUnit9.md",
+    "Appendix: Editor":    "help/editor.md",
     "Appendix: Examples":  "help/examples.md",
     "Appendix: Reference": "doc/Prelude.html"
   }

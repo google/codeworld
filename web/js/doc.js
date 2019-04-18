@@ -17,18 +17,28 @@
 
 window.env = parent;
 const params = new URLSearchParams(window.location.search);
+
 let position = {
     scrollLeft: 0,
     scrollTop: 0,
     path: params.get('path')
 };
 
+function getPositionKey() {
+    const shelf = params.get('shelf');
+    if (shelf) {
+        return `guide.position.${shelf}`;
+    } else {
+        return 'guide.default-position';
+    }
+}
+
 function savePosition() {
-    sessionStorage.setItem('position', JSON.stringify(position));
+    sessionStorage.setItem(getPositionKey(), JSON.stringify(position));
 }
 
 function loadPosition() {
-    const savedPosition = sessionStorage.getItem('position');
+    const savedPosition = sessionStorage.getItem(getPositionKey());
     if (savedPosition && savedPosition !== 'undefined') {
         position = JSON.parse(savedPosition);
     }
@@ -37,10 +47,10 @@ window.onscroll = event => {
     position.scrollLeft = event.target.scrollingElement.scrollLeft;
     position.scrollTop = event.target.scrollingElement.scrollTop;
 };
-window.onload = () => {
-    loadPosition();
-};
+
 (() => {
+    loadPosition();
+
     let shelf = {};
     const contents = {};
 

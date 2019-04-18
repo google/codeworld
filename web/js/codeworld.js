@@ -55,8 +55,13 @@ async function init() {
     document.documentElement.classList.add(window.buildMode);
 
     window.cancelCompile = () => {};
-
     window.clipboard = '';
+
+    initCodeworld();
+    registerStandardHints(() => {
+        setMode(true);
+        parseSymbolsFromCurrentCode();
+    });
 
     let hash = location.hash.slice(1);
     if (hash.length > 0) {
@@ -69,10 +74,9 @@ async function init() {
                 html: 'Enter a name for the shared folder:',
                 input: 'text',
                 confirmButtonText: 'Save',
-                showCancelButton: false,
-                closeOnConfirm: false
+                showCancelButton: false
             }).then(result => {
-                if (!result) {
+                if (!result || !result.value) {
                     return;
                 }
 
@@ -92,29 +96,14 @@ async function init() {
                             'Could not load the shared directory. Please try again.',
                             'error');
                     }
-                    initCodeworld();
-                    registerStandardHints(() => {
-                        setMode(true);
-                        parseSymbolsFromCurrentCode();
-                    });
                     discoverProjects('', 0);
                     updateUI();
                 });
             });
         } else {
-            initCodeworld();
-            registerStandardHints(() => {
-                setMode(true);
-                parseSymbolsFromCurrentCode();
-            });
             updateUI();
         }
     } else {
-        initCodeworld();
-        registerStandardHints(() => {
-            setMode(true);
-            parseSymbolsFromCurrentCode();
-        });
         updateUI();
     }
 
@@ -298,10 +287,7 @@ function initCodeworld() {
 
         if (!functions.length) return;
 
-        const {
-            functionName,
-            argIndex
-        } = functions.pop();
+        const { functionName, argIndex, column } = functions.pop();
         const keywordData = window.codeWorldSymbols[functionName];
 
         // don't show tooltip if function details or argument types are not known
@@ -316,12 +302,21 @@ function initCodeworld() {
         docDiv.classList.add('function-tooltip-styling');
 
         const annotation = document.createElement('div');
-        renderDeclaration(annotation, functionName, keywordData, 9999, argIndex);
+        const returnedVal = renderDeclaration(annotation, functionName, keywordData, 9999, argIndex);
+        //TODO: Remove the if block once a better function parser is integrated.
+        if (returnedVal === null){
+            annotation.remove();
+            topDiv.remove();
+            return;
+        }
         annotation.className = 'hover-decl';
         docDiv.appendChild(annotation);
 
         topDiv.appendChild(docDiv);
-        window.codeworldEditor.addWidget(cursor, topDiv, true, 'above', 'left');
+        window.codeworldEditor.addWidget({
+            line: cursor.line,
+            ch: column - functionName.length
+        }, topDiv, true, "above", "near");
     });
 
     CodeMirror.commands.save = cm => {
@@ -581,7 +576,9 @@ function updateUI() {
     // If true - code currently in document is not equal to
     // last compiled code
     const running = document.getElementById('runner').style.display !== 'none';
-    const obsolete = !window.codeworldEditor.getDoc().isClean(window.runningGeneration);
+    const obsolete = window.codeworldEditor
+        ? !window.codeworldEditor.getDoc().isClean(window.runningGeneration)
+        : false;
     const obsoleteAlert = document.getElementById('obsolete-code-alert');
     if (running && obsolete) {
         obsoleteAlert.classList.add('obsolete-code-alert-fadein');
@@ -759,11 +756,7 @@ function changeFontSize(incr) {
 
 function help() {
     let url;
-    if (window.buildMode === 'haskell') {
-        url = 'doc-haskell/CodeWorld.html';
-    } else {
-        url = `doc.html?shelf=help/${window.buildMode}.shelf`;
-    }
+    url = `doc.html?shelf=help/${window.buildMode}.shelf`;
 
     sweetAlert({
         html: `<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="${ 
@@ -778,46 +771,11 @@ function help() {
     });
 }
 
-function editorHelp(doc) {
-    const helpText = '<h3>Editor Shortcuts</h3>' +
-        '<div id=\'keyboard-shortcuts\'><table><tbody>' +
-        '<tr><td>Ctrl + Enter </td><td>  Run the program</td></tr>' +
-        '<tr><td>Ctrl + Space / Shift + Space </td><td> Autocomplete</td></tr>' +
-        '<tr><td>Ctrl + Up </td><td> Zoom in </td></tr>' +
-        '<tr><td>Ctrl + Down </td><td>  Zoom out </td></tr>' +
-        '<tr><td>Ctrl + A </td><td>  Select all </td></tr>' +
-        '<tr><td>Ctrl + Home </td><td>  Go to start</td></tr>' +
-        '<tr><td>Ctrl + End </td><td>  Go to end </td></tr>' +
-        '<tr><td>Alt + Left </td><td>  Go to start of line</td></tr>' +
-        '<tr><td>Alt + Right </td><td>  Go to end of line</td></tr>' +
-        '<tr><td>Ctrl + D </td><td>  Delete line </td></tr>' +
-        '<tr><td>Ctrl + Left </td><td>  Go one word left</td></tr>' +
-        '<tr><td>Ctrl + Right </td><td>  Go one word right </td></tr>' +
-        '<tr><td>Ctrl + Backspace </td><td>  Delete previous word</td></tr>' +
-        '<tr><td>Ctrl + Delete </td><td>  Delete next word</td></tr>' +
-        '<tr><td>Ctrl + F </td><td>  Search </td></tr>' +
-        '<tr><td>Ctrl + G </td><td>  Find next occurrence </td></tr>' +
-        '<tr><td>Ctrl + Shift + G </td><td>  Find previous occurrence </td></tr>' +
-        '<tr><td>Ctrl + Shift + F </td><td>  Replace </td></tr>' +
-        '<tr><td>Ctrl + Shift + R </td><td>  Replace all </td></tr>' +
-        '<tr><td>Ctrl + S </td><td> Save </td></tr>' +
-        '<tr><td>Ctrl + Z </td><td> Undo </td></tr>' +
-        '<tr><td>Ctrl + Shift + Z / Ctrl + Y </td><td> Redo </td></tr>' +
-        '<tr><td>Ctrl + U </td><td> Undo selection </td></tr>' +
-        '<tr><td>Ctrl + Shift +  U / Alt + U </td><td> Redo selection </td></tr>' +
-        '<tr><td>Tab / Ctrl + ] </td><td> Indent </td></tr>' +
-        '<tr><td>Shift + Tab / Ctrl + [ </td><td> Unindent </td></tr>' +
-        '<tr><td>Ctrl + I </td><td> Reformat (Haskell mode only) </td></tr>' +
-        '</tbody></table></div>';
-    sweetAlert({
-        html: helpText,
-        allowEscapeKey: true,
-        allowOutsideClick: true,
-        showConfirmButton: false,
-    });
-}
-
 function isEditorClean() {
+    if (!window.codeworldEditor) {
+        return true;
+    }
+
     const doc = window.codeworldEditor.getDoc();
 
     if (window.savedGeneration === null) return doc.getValue() === '';

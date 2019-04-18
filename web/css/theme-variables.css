@@ -1,0 +1,62 @@
+/*
+ * Copyright 2019 The CodeWorld Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+:root {
+    --main-bg-color: #e5eff9;
+    --message-bg-color: #fcc;
+    --message-details-color: #888;
+    --kb-shortcuts-table-border: black;
+    --cw-button-color: white;
+    --cw-button-bg-1: hsl(60, 75%, 35%);
+    --cw-button-bg-2: hsl(180, 75%, 35%);
+    --cw-button-bg-3: hsl(60, 75%, 25%);
+    --cw-button-bg-4: hsl(180, 75%, 25%);
+    --cw-button-bg-5: hsl(130, 75%, 35%);
+    --cw-button-bg-6: hsl(210, 75%, 35%);
+    --cw-button-bg-7: hsl(130, 75%, 25%);
+    --cw-button-bg-8: hsl(210, 75%, 25%);
+    --cw-button-bg-9: hsl(220, 75%, 35%);
+    --cw-button-bg-10: hsl(135, 75%, 35%);
+    --cw-button-bg-11: hsl(220, 75%, 25%);
+    --cw-button-bg-12: hsl(135, 75%, 25%);
+    --cw-button-bg-13: hsl(10, 75%, 35%);
+    --cw-button-bg-14: hsl(60, 75%, 35%);
+    --cw-button-bg-15: hsl(10, 75%, 25%);
+    --cw-button-bg-16: hsl(60, 75%, 25%);
+    --cw-button-bg-17: hsl(180, 75%, 35%);
+    --cw-button-bg-18: hsl(300, 50%, 35%);
+    --cw-button-bg-19: hsl(180, 75%, 25%);
+    --cw-button-bg-20: hsl(300, 50%, 25%);
+    --message-error-gutter: red;
+    --message-warning-gutter: yellow;
+    --message-log-gutter: blue;
+    --loader-border: #ffffff55;
+    --loader-border-top: #ffffffee;
+    --dropbox-bg: white;
+    --dropbox-border: #cccccc;
+    --ui-layout-resizer-dialog: #444444;
+    --ui-layout-toggler: #444444;
+    --recordIcon: #B30000;
+    --req-yes: darkgreen;
+    --req-no: darkred;
+    --req-indet: darkmagenta;
+    --req-details: #555;
+    --obsolete-code-alert-color: white;
+    --obsolete-code-alert-grad-point1: rgba(0, 0, 0, 0.7);
+    --obsolete-code-alert-grad-point2: rgba(0, 0, 0, 0.6);
+    --obsolete-code-alert-grad-point3: rgba(0, 0, 0, 0);
+    --obsolete-code-alert-grad-point4: rgba(0, 0, 0, 0);
+}

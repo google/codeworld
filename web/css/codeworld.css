@@ -31,7 +31,7 @@ body {
     -webkit-align-items: stretch;
     -ms-align-items: stretch;
     height: 100vh;
-    background-color: #e5eff9;
+    background-color: var(--main-bg-color);
     display: flex;
     display: -webkit-flex;
     display: -ms-flex;
@@ -128,7 +128,7 @@ body {
 }
 
 #keyboard-shortcuts table tbody tr td {
-    border: 1px solid black;
+    border: 1px solid var(--kb-shortcuts-table-border);
     padding: 4px;
 }
 
@@ -187,7 +187,7 @@ body {
 }
 
 #message.error {
-    background-color: #fcc;
+    background-color: var(--message-bg-color);
 }
 
 .message-box {
@@ -211,21 +211,21 @@ body {
 .message-box details:not([open]) summary::after {
     content: "\a0\a0\a0...";
     font-weight: bold;
-    color: #888;
+    color: var(--message-details-color);
 }
 
 .message-box.error .message-gutter {
-    border-left: 2px solid red;
+    border-left: 2px solid var(--message-error-gutter);
     background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAHlBMVEW7AAC7AACxAAC7AAC7AAAAAAC4AAC5AAD///+7AAAUdclpAAAABnRSTlMXnORSiwCK0ZKSAAAATUlEQVR42mWPOQ7AQAgDuQLx/z8csYRmPRIFIwRGnosRrpamvkKi0FTIiMASR3hhKW+hAN6/tIWhu9PDWiTGNEkTtIOucA5Oyr9ckPgAWm0GPBog6v4AAAAASUVORK5CYII=");
 }
 
 .message-box.warning .message-gutter {
-    border-left: 2px solid yellow;
+    border-left: 2px solid var(--message-warning-gutter);
     background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAANlBMVEX/uwDvrwD/uwD/uwD/uwD/uwD/uwD/uwD/uwD6twD/uwAAAADurwD2tQD7uAD+ugAAAAD/uwDhmeTRAAAADHRSTlMJ8mN1EYcbmiixgACm7WbuAAAAVklEQVR42n3PUQqAIBBFUU1LLc3u/jdbOJoW1P08DA9Gba8+YWJ6gNJoNYIBzAA2chBth5kLmG9YUoG0NHAUwFXwO9LuBQL1giCQb8gC9Oro2vp5rncCIY8L8uEx5ZkAAAAASUVORK5CYII=");
 }
 
 .message-box.log .message-gutter {
-    border-left: 2px solid blue;
+    border-left: 2px solid var(--message-log-gutter);
 }
 
 .cw-button {
@@ -240,7 +240,7 @@ body {
     text-decoration: none;
     display: inline-block;
     font-weight: bold;
-    color: white;
+    color: var(--cw-button-color);
     white-space: nowrap;
     overflow: hidden;
 }
@@ -258,96 +258,96 @@ body {
 .cw-button.yellow:hover:active,
 .cw-button.green.project-active,
 .cw-button.green.project-active:hover:active {
-    background-color: hsl(60, 75%, 35%);
+    background-color: var(--cw-button-bg-1);
 }
 
 .haskell .cw-button.yellow,
 .haskell .cw-button.yellow:hover:active,
 .haskell .cw-button.green.project-active,
 .haskell .cw-button.green.project-active:hover:active {
-    background-color: hsl(180, 75%, 35%);
+    background-color: var(--cw-button-bg-2);
 }
 
 .cw-button.yellow:hover,
 .cw-button.green.project-active:hover {
-    background-color: hsl(60, 75%, 25%);
+    background-color: var(--cw-button-bg-3);
 }
 
 .haskell .cw-button.yellow:hover,
 .haskell .cw-button.green.project-active:hover {
-    background-color: hsl(180, 75%, 25%);
+    background-color: var(--cw-button-bg-4);
 }
 
 .cw-button.green,
 .cw-button.green:hover:active {
-    background-color: hsl(130, 75%, 35%);
+    background-color: var(--cw-button-bg-5);
 }
 
 .haskell .cw-button.green,
 .haskell .cw-button.green:hover:active {
-    background-color: hsl(210, 75%, 35%);
+    background-color: var(--cw-button-bg-6);
 }
 
 .cw-button.green:hover {
-    background-color: hsl(130, 75%, 25%);
+    background-color: var(--cw-button-bg-7);
 }
 
 .haskell .cw-button.green:hover {
-    background-color: hsl(210, 75%, 25%);
+    background-color: var(-cw-button-bg-8);
 }
 
 .cw-button.blue,
 .cw-button.blue:hover:active {
-    background-color: hsl(220, 75%, 35%);
+    background-color: var(--cw-button-bg-9);
 }
 
 .haskell .cw-button.blue,
 .cw-button.blue:hover:active {
-    background-color: hsl(135, 75%, 35%);
+    background-color: var(--cw-button-bg-10);
 }
 
 .cw-button.blue:hover {
-    background-color: hsl(220, 75%, 25%);
+    background-color: var(--cw-button-bg-11);
 }
 
 .haskell .cw-button.blue:hover {
-    background-color: hsl(135, 75%, 25%);
+    background-color: var(--cw-button-bg-12);
 }
 
 .cw-button.red,
 .cw-button.red:hover:active {
-    background-color: hsl(10, 75%, 35%);
+    background-color: var(--cw-button-bg-13);
 }
 
 .haskell .cw-button.red,
 .cw-button.red:hover:active {
-    background-color: hsl(60, 75%, 35%);
+    background-color: var(--cw-button-bg-14);
 }
 
 .cw-button.red:hover {
-    background-color: hsl(10, 75%, 25%);
+    background-color: var(--cw-button-bg-15);
 }
 
 .haskell .cw-button.red:hover {
-    background-color: hsl(60, 75%, 25%);
+    background-color: var(--cw-button-bg-16);
 }
 
 .cw-button.cyan,
 .cw-button.cyan:hover:active {
-    background-color: hsl(180, 75%, 35%);
+    background-color: var(--cw-button-bg-17);
 }
 
 .haskell .cw-button.cyan,
 .cw-button.cyan:hover:active {
-    background-color: hsl(300, 50%, 35%);
+    background-color: var(--cw-button-bg-18);
 }
 
 .cw-button.cyan:hover {
-    background-color: hsl(180, 75%, 25%);
+    background-color: var(--cw-button-bg-19);
 }
 
 .haskell .cw-button.cyan:hover {
-    background-color: hsl(300, 50%, 25%);
+    background-color: var(--cw-button-bg-20);
 }
 
 .cw-button:focus {
@@ -359,8 +359,8 @@ body {
 }
 
 .loader {
-    border: 3px solid #ffffff55;
-    border-top: 3px solid #ffffffee;
+    border: 3px solid var(--loader-border);
+    border-top: 3px solid var(--loader-border-top);
     border-radius: 50%;
     width: 10px;
     height: 10px;
@@ -378,8 +378,8 @@ body {
 }
 
 .dropbox {
-    background-color: white;
-    border: solid #cccccc 1px;
+    background-color: var(--dropbox-bg);
+    border: solid var(--dropbox-border) 1px;
     box-shadow: 1px 1px 2px #000;
     box-sizing: border-box;
     margin: 2px 4px 4px 2px;
@@ -408,7 +408,7 @@ body {
 }
 
 .ui-layout-resizer-dragging {
-    background-color: #444444;
+    background-color: var(--ui-layout-resizer-dialog);
     cursor: ew-resize !important;
 }
 
@@ -419,13 +419,13 @@ body {
 
 .ui-layout-toggler-east,
 .ui-layout-toggler-west {
-    background-color: #444444;
+    background-color: var(--ui-layout-toggler);
     opacity: 1.0;
     cursor: pointer !important;
 }
 
 #recordIcon {
-    color: #B30000;
+    color: var(recordIcon);
     animation: record-blink 1s cubic-bezier(.5, 0, 1, 1) infinite alternate;
 }
 
@@ -448,7 +448,7 @@ body {
 }
 
 .req-yes {
-    color: darkgreen;
+    color: var(--req-yes);
     list-style-type: none;
 }
 
@@ -457,7 +457,7 @@ body {
 }
 
 .req-no {
-    color: darkred;
+    color: var(--req-no);
     list-style-type: none;
 }
 
@@ -466,7 +466,7 @@ body {
 }
 
 .req-indet {
-    color: darkmagenta;
+    color: var(--req-indet);
     list-style-type: none;
 }
 
@@ -490,7 +490,7 @@ body {
 }
 
 .req-details {
-    color: #555;
+    color: var(--req-details);
 }
 
 .runner-box {
@@ -502,11 +502,11 @@ body {
     overflow: hidden;
     pointer-events: none;
     background: linear-gradient(to bottom,
-        rgba(0, 0, 0, 0.7) 0px,
-        rgba(0, 0, 0, 0.6) 2em,
-        rgba(0, 0, 0, 0) 3em,
-        rgba(0, 0, 0, 0) 100%);
-    color: white;
+        var(--obsolete-code-alert-grad-point1) 0px,
+        var(--obsolete-code-alert-grad-point2) 2em,
+        var(--obsolete-code-alert-grad-point3) 3em,
+        var(--obsolete-code-alert-grad-point4) 100%);
+    color: var(--obsolete-code-alert-color);
     padding: 0.5em;
     text-align: right;
     vertical-align: bottom;

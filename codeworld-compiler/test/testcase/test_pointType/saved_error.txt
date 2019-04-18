@@ -1,4 +1,10 @@
-program.hs:7:7: error:
+program.hs:16:21: warning:
+    In the use of path
+    (defined in the standard library):
+    "Please use polyline(...) instead of path(...).
+     path may be removed July 2019."
+
+program.hs:22:7: error: 
     • Couldn't match type [Number] with (Number, Number)
       Expected type: Point
         Actual type: [Number]

@@ -234,7 +234,7 @@ function renderDeclaration(decl, keyword, keywordData, maxLen, argIndex = -1) {
     wordElem.appendChild(document.createTextNode(keyword));
     decl.appendChild(wordElem);
 
-    let leftover = "";
+    let leftover = '';
     if (keywordData.symbolEnd < keywordData.declaration.length) {
         leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(
             /\s+/g, ' ');
@@ -254,7 +254,6 @@ function renderDeclaration(decl, keyword, keywordData, maxLen, argIndex = -1) {
         tokens[argIndex] = `<strong>${tokens[argIndex]}</strong>`;
         leftover = `${head}${tokens.join(',')}${tail}`;
     }
-
 
     if (leftover.length) {
         const argElem = document.createElement('span');
@@ -794,7 +793,7 @@ function saveProject() {
 }
 
 function saveProjectBase_(path, projectName, mode, successFunc) {
-    if (projectName === null || projectName === '') return;
+    if (!projectName) return;
 
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to save files.', 'error');
@@ -901,7 +900,7 @@ function deleteProject_(path, buildMode, successFunc) {
 }
 
 function deleteFolder_(path, buildMode, successFunc) {
-    if (path === '' || window.openProjectName !== null) {
+    if (path === '' || window.openProjectName) {
         return;
     }
     if (!signedIn()) {
@@ -1110,11 +1109,16 @@ function shareFolder_(mode) {
         updateUI();
         return;
     }
-    if (window.nestedDirs.length === 1 || (window.openProjectName !== null && window.openProjectName !== '')) {
-        sweetAlert('Oops!', 'YOu must select a folder to share!', 'error');
+    if (window.nestedDirs.length === 1 || window.openProjectName) {
+        sweetAlert('Oops!', 'You must select a folder to share!', 'error');
         updateUI();
         return;
     }
+
+    const folderName = window.nestedDirs.slice(-1).pop()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 
     const data = new FormData();
     data.append('mode', mode);
@@ -1128,21 +1132,51 @@ function shareFolder_(mode) {
             return;
         }
 
+        const baseURL = window.location.origin + window.location.pathname;
         const shareHash = request.responseText;
-        const a = document.createElement('a');
-        a.href = window.location.href;
-        a.hash = `#${shareHash}`;
-        const url = a.href;
-        sweetAlert({
-            title: Alert.title('Share Folder', 'mdi-folder-outline'),
-            html: 'Copy this link to share your folder with others!',
-            input: 'text',
-            inputValue: url,
-            showConfirmButton: false,
-            showCancelButton: true,
-            cancelButtonText: 'Done',
-            animation: 'slide-from-bottom'
-        });
+        let gallery = false;
+
+        function go() {
+            let title;
+            let url;
+            let msg;
+            let confirmText;
+
+            if (gallery) {
+                title = Alert.title('Share Gallery', 'mdi-presentation-play');
+                msg = `Copy this link to make a gallery out of ${folderName}!`;
+                url = new URL(
+                    `/gallery.html?path=/gallery/${shareHash}?mode=${mode}`,
+                    baseURL)
+                    .toString();
+                confirmText = 'Share as Folder';
+            } else {
+                title = Alert.title('Share Folder', 'mdi-folder-account-outline'),
+                msg = `Copy this link to share code in ${folderName} with others!`;
+                url = `${baseURL}#${shareHash}`;
+                confirmText = 'Share as Gallery';
+            }
+
+            sweetAlert({
+                title: title,
+                html: msg,
+                input: 'text',
+                inputValue: url,
+                showConfirmButton: true,
+                confirmButtonText: confirmText,
+                closeOnConfirm: false,
+                showCancelButton: true,
+                cancelButtonText: 'Done',
+                animation: 'slide-from-bottom'
+            }).then(result => {
+                if (result.value) {
+                    gallery = !gallery;
+                    go();
+                }
+            });
+        }
+
+        go();
     });
 }
 

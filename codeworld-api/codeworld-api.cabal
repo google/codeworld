@@ -20,6 +20,7 @@ Description:
   program that runs on the CodeWorld server can also be run locally.
 
 Library
+  Exposed:             True
   Hs-source-dirs:      src
   Exposed-modules:     CodeWorld,
                        CodeWorld.App,
@@ -28,7 +29,7 @@ Library
                        CodeWorld.Color,
                        CodeWorld.Picture,
                        CodeWorld.Event,
-                       CodeWorld.Driver
+                       CodeWorld.Driver,
                        CodeWorld.CollaborationUI
   Build-depends:       base                 >= 4.9   && < 5,
                        containers           >= 0.5.7 && < 0.7,
@@ -44,8 +45,7 @@ Library
 
   if impl(ghcjs)
     Js-sources:        jsbits/sim_fp.js
-    Build-depends:
-                       ghcjs-base,
+    Build-depends:     ghcjs-base,
                        ghcjs-prim,
                        codeworld-game-api,
                        codeworld-prediction,
@@ -55,5 +55,48 @@ Library
     Build-depends:     blank-canvas          >= 0.6 && < 0.7,
                        time                  >= 1.6.0 && < 1.9
 
-  Exposed:             True
-  Ghc-options:         -Wincomplete-patterns
+  Ghc-options:         -O -Wincomplete-patterns
+
+Test-suite unit-tests
+  Type:                exitcode-stdio-1.0
+  Main-is:             Main.hs
+  Hs-source-dirs:      test,
+                       src
+  Other-modules:       Driver,
+                       CodeWorld,
+                       CodeWorld.App,
+                       CodeWorld.App2,
+                       CodeWorld.CanvasM,
+                       CodeWorld.Color,
+                       CodeWorld.Picture,
+                       CodeWorld.Event,
+                       CodeWorld.Driver,
+                       CodeWorld.CollaborationUI
+  Build-depends:       base,
+                       HUnit,
+                       test-framework,
+                       test-framework-hunit,
+                       containers           >= 0.5.7 && < 0.7,
+                       deepseq              >= 1.4   && < 1.5,
+                       hashable             >= 1.2.4 && < 1.3,
+                       text                 >= 1.2.2 && < 1.3,
+                       mtl                  >= 2.2.1 && < 2.3,
+                       random               >= 1.1   && < 1.2,
+                       random-shuffle       >= 0.0.4 && < 0.1,
+                       cereal               >= 0.5.4 && < 0.6,
+                       cereal-text          >= 0.1.0 && < 0.2,
+                       ghc-prim             >= 0.3.1 && < 0.6
+  if impl(ghcjs)
+    Js-sources:        jsbits/sim_fp.js
+    Build-depends:     ghcjs-base,
+                       ghcjs-prim,
+                       codeworld-game-api,
+                       codeworld-prediction,
+                       ghcjs-dom             >= 0.8 && < 0.9,
+                       transformers
+  else
+    Build-depends:     blank-canvas          >= 0.6 && < 0.7,
+                       time                  >= 1.6.0 && < 1.9
+
+  Ghc-options:         -O
+  Cpp-options:         -DCODEWORLD_UNIT_TEST

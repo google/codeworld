@@ -452,23 +452,10 @@
             <block type="cwOrange"></block>
             <block type="cwBlack"></block>
             <block type="cwWhite"></block>
-            <block type="cwCyan"></block>
-            <block type="cwMagenta"></block>
             <block type="cwYellow"></block>
-            <block type="cwAquamarine"></block>
-            <block type="cwAzure"></block>
-            <block type="cwViolet"></block>
-            <block type="cwChartreuse"></block>
-            <block type="cwRose"></block>
             <block type="cwPink"></block>
             <block type="cwPurple"></block>
-            <block type="cwGray">
-                <value name="VALUE">
-                    <shadow type="numNumberPerc">
-                        <field name="NUMBER">50</field>
-                    </shadow>
-                </value>
-            </block>
+            <block type="cwGray"></block>
             <block type="cwMixed">
                 <value name="COL1">
                     <shadow type="cwRed"></shadow>
@@ -502,6 +489,23 @@
                     <shadow type="cwRed"></shadow>
                 </value>
             </block>
+            <block type="cwRGB">
+                <value name="RED">
+                    <shadow type="numNumberPerc">
+                        <field name="NUMBER">50</field>
+                    </shadow>
+                </value>
+                <value name="BLUE">
+                    <shadow type="numNumberPerc">
+                        <field name="NUMBER">50</field>
+                    </shadow>
+                </value>
+                <value name="GREEN">
+                    <shadow type="numNumberPerc">
+                        <field name="NUMBER">50</field>
+                    </shadow>
+                </value>
+            </block>
             <block type="cwRGBA">
                 <value name="RED">
                     <shadow type="numNumberPerc">
@@ -521,6 +525,23 @@
                 <value name="ALPHA">
                     <shadow type="numNumberPerc">
                         <field name="NUMBER">100</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cwHSL">
+                <value name="HUE">
+                    <shadow type="numNumber">
+                        <field name="NUMBER">180</field>
+                    </shadow>
+                </value>
+                <value name="SAT">
+                    <shadow type="numNumberPerc">
+                        <field name="NUMBER">50</field>
+                    </shadow>
+                </value>
+                <value name="LUM">
+                    <shadow type="numNumberPerc">
+                        <field name="NUMBER">50</field>
                     </shadow>
                 </value>
             </block>
@@ -772,6 +793,7 @@
         <category name="Lists">
             <block type="lists_create_with_typed"></block>
             <block type="lists_cons"></block>
+            <block type="lists_append"></block>
             <block type="lists_numgen">
                 <value name="LEFT">
                     <shadow type="numNumber">
@@ -805,7 +827,7 @@
             <block type="lists_at">
                 <value name="POS">
                     <shadow type="numNumber">
-                        <field name="NUMBER">0</field>
+                        <field name="NUMBER">1</field>
                     </shadow>
                 </value>
             </block>

@@ -1,0 +1,8 @@
+{
+  "default": "doc-haskell/CodeWorld.html",
+  "blocks": false,
+  "named": {
+    "Reference": "doc-haskell/CodeWorld.html",
+    "Editor":    "help/editor-haskell.md"
+  }
+}

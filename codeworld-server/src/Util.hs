@@ -44,8 +44,7 @@ import System.Posix.Files
 
 import Model
 
-newtype BuildMode =
-    BuildMode String
+newtype BuildMode = BuildMode String
     deriving (Eq)
 
 newtype ProgramId = ProgramId
@@ -213,8 +212,9 @@ dirFilter dirs char =
     mapM listDirectoryWithPrefix $
     filter (\x -> head (takeBaseName x) == char) dirs
 
-projectFileNames :: [FilePath] -> IO [Text]
-projectFileNames subHashedDirs = do
+projectFileNames :: FilePath -> IO [Text]
+projectFileNames dir = do
+    subHashedDirs <- listDirectoryWithPrefix dir
     hashedFiles <- dirFilter subHashedDirs 'S'
     projects <- fmap catMaybes $
         forM hashedFiles $ \f -> do
@@ -224,8 +224,9 @@ projectFileNames subHashedDirs = do
                 else return Nothing
     return $ map projectName projects
 
-projectDirNames :: [FilePath] -> IO [Text]
-projectDirNames subHashedDirs = do
+projectDirNames :: FilePath -> IO [Text]
+projectDirNames dir = do
+    subHashedDirs <- listDirectoryWithPrefix dir
     hashedDirs <- dirFilter subHashedDirs 'D'
     dirs <- mapM (\x -> B.readFile $ x </> "dir.info") hashedDirs
     return $ map T.decodeUtf8 dirs

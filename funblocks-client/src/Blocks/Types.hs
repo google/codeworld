@@ -234,9 +234,7 @@ cwChartreuse = standardFunction "cwChartreuse" "chartreuse" Nothing [typeColor] 
 cwRose = standardFunction "cwRose" "rose" Nothing [typeColor] [] colorColor "The color rose"
 cwPink = standardFunction "cwPink" "pink" Nothing [typeColor] [] colorColor "The color pink"
 cwPurple = standardFunction "cwPurple" "purple" Nothing [typeColor] [] colorColor "The color purple"
-
-cwGray = standardFunction "cwGray" "gray" Nothing [typeNumber, typeColor]
-          ["VALUE"] colorColor "The color gray, varying by an amount. Lower value is closer to black"
+cwGray = standardFunction "cwGray" "gray" Nothing [typeNumber] [] colorColor "The color gray"
 
 cwMixed = standardFunction "cwMixed" "mixed" (Just "pot-mix.svg")  [typeColor, typeColor, typeColor]
             ["COL1", "COL2"] colorColor "Two mix of two colors"
@@ -256,9 +254,17 @@ cwDull = standardFunction "cwDull" "dull" Nothing [typeColor, typeColor]
 cwTranslucent = standardFunction "cwTranslucent" "translucent" Nothing [typeColor, typeColor]
                   ["COL"] colorColor "A more translucent color"
 
+cwRGB = standardFunction "cwRGB" "RGB" Nothing [typeNumber, typeNumber, typeNumber, typeColor]
+             ["RED", "GREEN", "BLUE"] colorColor
+             "Makes a color with the given red, green, and blue portions"
+
 cwRGBA = standardFunction "cwRGBA" "RGBA" Nothing [typeNumber, typeNumber, typeNumber, typeNumber, typeColor]
              ["RED", "GREEN", "BLUE", "ALPHA"] colorColor
              "Makes a color with the given red, green, blue and alpha portions"
+
+cwHSL = standardFunction "cwHSL" "HSL" Nothing [typeNumber, typeNumber, typeNumber, typeColor]
+             ["HUE", "SAT", "LUM"] colorColor
+             "Makes a color with the given hue angle, saturation, and luminosity"
 
 -- LOGIC -------------------------------------------
 conIf = DesignBlock "conIf" (Function "if" [typeBool, Poly "a", Poly "a", Poly "a"])
@@ -431,6 +437,8 @@ blockTypes = [
               ,cwDull
               ,cwTranslucent
               ,cwRGBA
+              ,cwRGB
+              ,cwHSL
               -- LOGIC
               -- ,conIf
               ,conAnd

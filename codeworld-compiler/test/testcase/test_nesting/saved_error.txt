@@ -1,3 +1,6 @@
-program.hs:1:21: error:
+program.hs:16:21: error: 
     • Variable not in scope: diamond :: Picture
-    • Perhaps you meant diamonds (line 2)
+    • Perhaps you meant diamonds (line 17)
+
+program.hs:17:1: warning:
+    Defined but not used: diamonds

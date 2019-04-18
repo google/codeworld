@@ -18,7 +18,14 @@ source base.sh
 
 for i in $(grep -l -i Test-Suite */*.cabal); do
     TARGET=$(dirname $i)
-    run $TARGET cabal install --enable-tests --only-dependencies
-    run $TARGET cabal configure --enable-tests
+
+    run $TARGET cabal_install --enable-tests --only-dependencies
+    run $TARGET cabal_configure --enable-tests
     run $TARGET cabal test
+
+    if [ $TARGET == "codeworld-api" ]; then
+        run $TARGET cabal_install --ghcjs --enable-tests --only-dependencies
+        run $TARGET cabal_configure --ghcjs --enable-tests
+        run $TARGET cabal test
+    fi
 done

@@ -13,5 +13,9 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-program = drawingOf(target)
-target = pictures([ circle(r) | r = [1, 2, 3, 4, 5] ])
+
+import Test.Framework (defaultMain)
+import qualified Driver
+
+
+main = defaultMain [Driver.tests]

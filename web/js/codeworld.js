@@ -83,7 +83,7 @@ async function init() {
                     window.location.hash = '';
                     if (request.status === 200) {
                         sweetAlert('Success!',
-                            'The shared folder is moved into your root directory.',
+                            'The shared folder has been copied to your root directory.',
                             'success');
                     } else {
                         sweetAlert('Oops!',
@@ -221,8 +221,12 @@ function initCodeworld() {
         }
     });
     window.codeworldEditor.refresh();
-    window.codeworldEditor.on("cursorActivity", function() {
-        const prevDiv = document.getElementById("function-details");
+    window.codeworldEditor.on('cursorActivity', () => {
+        if (window.buildMode !== 'codeworld') {
+            return;
+        }
+
+        const prevDiv = document.getElementById('function-details');
         if (prevDiv) prevDiv.remove();
 
         const cursor = window.codeworldEditor.getCursor();
@@ -240,10 +244,10 @@ function initCodeworld() {
         const topDiv = document.createElement('div');
 
         topDiv.title = functionName;
-        topDiv.id = "function-details";
+        topDiv.id = 'function-details';
 
         const docDiv = document.createElement('div');
-        docDiv.classList.add("function-tooltip-styling");
+        docDiv.classList.add('function-tooltip-styling');
 
         const annotation = document.createElement('div');
         const returnedVal = renderDeclaration(annotation, functionName, keywordData, 9999, argIndex);
@@ -491,13 +495,13 @@ function updateUI() {
         document.getElementById('moveHereButton').style.display = 'none';
         document.getElementById('cancelMoveButton').style.display = 'none';
 
-        if (window.nestedDirs.length !== 1 && (window.openProjectName === null || window.openProjectName === '')) {
+        if (window.nestedDirs.length > 1 && !window.openProjectName) {
             document.getElementById('shareFolderButton').style.display = '';
         } else {
             document.getElementById('shareFolderButton').style.display = 'none';
         }
 
-        if ((window.openProjectName !== null && window.openProjectName !== '') || window.nestedDirs.length !== 1) {
+        if (window.openProjectName || window.nestedDirs.length > 1) {
             document.getElementById('moveButton').style.display = '';
         } else {
             document.getElementById('moveButton').style.display = 'none';
@@ -641,7 +645,7 @@ function moveProject() {
             return;
         }
 
-        if ((window.openProjectName === null || window.openProjectName === '') && window.nestedDirs.length === 1) {
+        if (!window.openProjectName && window.nestedDirs.length === 1) {
             sweetAlert('Oops!',
                 'You must select a project or folder to move.',
                 'error');
@@ -652,7 +656,7 @@ function moveProject() {
         const tempOpen = window.openProjectName;
         const tempPath = window.nestedDirs.slice(1).join('/');
         setCode('');
-        if (tempOpen === null || tempOpen === '') {
+        if (!tempOpen) {
             window.nestedDirs.splice(-1);
             window.allProjectNames.splice(-1);
             window.allFolderNames.splice(-1);
@@ -660,7 +664,7 @@ function moveProject() {
 
         window.move = Object();
         window.move.path = tempPath;
-        if (tempOpen !== null && tempOpen !== '') {
+        if (tempOpen) {
             window.move.file = tempOpen;
         }
 
@@ -698,11 +702,7 @@ function changeFontSize(incr) {
 
 function help() {
     let url;
-    if (window.buildMode === 'haskell') {
-        url = 'doc-haskell/CodeWorld.html';
-    } else {
-        url = `doc.html?shelf=help/${window.buildMode}.shelf`;
-    }
+    url = `doc.html?shelf=help/${window.buildMode}.shelf`;
 
     sweetAlert({
         html: `<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="${ 
@@ -714,45 +714,6 @@ function help() {
     }).then(() => {
         const docIframe = document.getElementById('doc');
         docIframe.contentWindow.savePosition();
-    });
-}
-
-function editorHelp(doc) {
-    const helpText = '<h3>Editor Shortcuts</h3>' +
-        '<div id=\'keyboard-shortcuts\'><table><tbody>' +
-        '<tr><td>Ctrl + Enter </td><td>  Run the program</td></tr>' +
-        '<tr><td>Ctrl + Space / Shift + Space </td><td> Autocomplete</td></tr>' +
-        '<tr><td>Ctrl + Up </td><td> Zoom in </td></tr>' +
-        '<tr><td>Ctrl + Down </td><td>  Zoom out </td></tr>' +
-        '<tr><td>Ctrl + A </td><td>  Select all </td></tr>' +
-        '<tr><td>Ctrl + Home </td><td>  Go to start</td></tr>' +
-        '<tr><td>Ctrl + End </td><td>  Go to end </td></tr>' +
-        '<tr><td>Alt + Left </td><td>  Go to start of line</td></tr>' +
-        '<tr><td>Alt + Right </td><td>  Go to end of line</td></tr>' +
-        '<tr><td>Ctrl + D </td><td>  Delete line </td></tr>' +
-        '<tr><td>Ctrl + Left </td><td>  Go one word left</td></tr>' +
-        '<tr><td>Ctrl + Right </td><td>  Go one word right </td></tr>' +
-        '<tr><td>Ctrl + Backspace </td><td>  Delete previous word</td></tr>' +
-        '<tr><td>Ctrl + Delete </td><td>  Delete next word</td></tr>' +
-        '<tr><td>Ctrl + F </td><td>  Search </td></tr>' +
-        '<tr><td>Ctrl + G </td><td>  Find next occurrence </td></tr>' +
-        '<tr><td>Ctrl + Shift + G </td><td>  Find previous occurrence </td></tr>' +
-        '<tr><td>Ctrl + Shift + F </td><td>  Replace </td></tr>' +
-        '<tr><td>Ctrl + Shift + R </td><td>  Replace all </td></tr>' +
-        '<tr><td>Ctrl + S </td><td> Save </td></tr>' +
-        '<tr><td>Ctrl + Z </td><td> Undo </td></tr>' +
-        '<tr><td>Ctrl + Shift + Z / Ctrl + Y </td><td> Redo </td></tr>' +
-        '<tr><td>Ctrl + U </td><td> Undo selection </td></tr>' +
-        '<tr><td>Ctrl + Shift +  U / Alt + U </td><td> Redo selection </td></tr>' +
-        '<tr><td>Tab / Ctrl + ] </td><td> Indent </td></tr>' +
-        '<tr><td>Shift + Tab / Ctrl + [ </td><td> Unindent </td></tr>' +
-        '<tr><td>Ctrl + I </td><td> Reformat (Haskell mode only) </td></tr>' +
-        '</tbody></table></div>';
-    sweetAlert({
-        html: helpText,
-        allowEscapeKey: true,
-        allowOutsideClick: true,
-        showConfirmButton: false,
     });
 }
 
@@ -1003,7 +964,10 @@ function compile() {
     sweetAlert({
         title: Alert.title('Compiling'),
         text: 'Your code is compiling.  Please wait...',
-        onOpen: sweetAlert.showLoading,
+        onOpen: () => {
+            sweetAlert.showLoading();
+            sweetAlert.getCancelButton().disabled = false;
+        },
         showConfirmButton: false,
         showCancelButton: true,
         showCloseButton: false,
@@ -1090,7 +1054,7 @@ function saveProjectBase(path, projectName) {
 
 function deleteFolder() {
     const path = window.nestedDirs.slice(1).join('/');
-    if (path === '' || window.openProjectName !== null) {
+    if (path === '' || window.openProjectName) {
         return;
     }
 
@@ -1114,7 +1078,7 @@ function deleteProject() {
 }
 
 function shareFolder() {
-    shareFolder_('codeworld');
+    shareFolder_(window.buildMode);
 }
 
 function downloadProject() {

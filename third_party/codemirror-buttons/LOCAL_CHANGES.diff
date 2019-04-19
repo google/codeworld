@@ -1,7 +1,0 @@
-42c42
-<             buttonNode = document.createElement('button');
----
->             buttonNode = document.createElement('div');
-44,45d43
-<             buttonNode.setAttribute('type', 'button');
-<             buttonNode.setAttribute('tabindex', '-1');

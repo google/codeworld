@@ -212,7 +212,7 @@ function initCodeworld() {
         },
         buttons: [
             {
-                class: 'cw-toolbar-button cw-button-save',
+                class: 'cw-button blue cw-button-save',
                 label: '',
                 title: 'Save',
                 callback: function (cm) {
@@ -220,7 +220,7 @@ function initCodeworld() {
                 }
             },
             {
-                class: 'cw-toolbar-button cw-button-search',
+                class: 'cw-button blue cw-button-search',
                 label: '',
                 title: 'Search',
                 callback: function (cm) {
@@ -228,7 +228,7 @@ function initCodeworld() {
                 }
             },
             {
-                class: 'cw-toolbar-button cw-button-undo',
+                class: 'cw-button blue cw-button-undo',
                 label: '',
                 title: 'Undo',
                 callback: function (cm) {
@@ -236,7 +236,7 @@ function initCodeworld() {
                 }
             },
             {
-                class: 'cw-toolbar-button cw-button-redo',
+                class: 'cw-button blue cw-button-redo',
                 label: '',
                 title: 'Redo',
                 callback: function (cm) {
@@ -244,7 +244,7 @@ function initCodeworld() {
                 }
             },
             {
-                class: 'cw-toolbar-button cw-button-copy',
+                class: 'cw-button blue cw-button-copy',
                 label: '',
                 title: 'Copy',
                 callback: function (cm) {
@@ -253,7 +253,7 @@ function initCodeworld() {
                 }
             },
             {
-                class: 'cw-toolbar-button cw-button-paste',
+                class: 'cw-button blue cw-button-paste',
                 label: '',
                 title: 'Paste',
                 callback: function (cm) {
@@ -261,7 +261,7 @@ function initCodeworld() {
                 }
             },
             {
-                class: 'cw-toolbar-button cw-button-cut',
+                class: 'cw-button blue cw-button-cut',
                 label: '',
                 title: 'Cut',
                 callback: function (cm) {

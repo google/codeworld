@@ -63,7 +63,6 @@ function build_codemirror {
       addon/dialog/dialog.js \
       addon/display/placeholder.js \
       addon/display/rulers.js \
-      addon/display/panel.js \
       addon/edit/matchbrackets.js \
       addon/hint/show-hint.js \
       addon/lint/lint.js \

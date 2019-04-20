@@ -57,6 +57,8 @@ async function init() {
     window.cancelCompile = () => {};
     window.clipboard = '';
 
+    definePanelExtension();
+
     initCodeworld();
     registerStandardHints(() => {
         setMode(true);

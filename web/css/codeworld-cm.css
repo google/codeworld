@@ -386,12 +386,13 @@ span:not(.cm-layout)+span.cm-layout:before {
 }
 
 #source .CodeMirror {
-    position: relative;
+    top: 4em;
 }
 
 .CodeMirror-buttonsPanel {
     margin-bottom: .1em;
-    position: relative;
+    position: absolute;
+    width: 100%;
     padding-left: 1em;
 }
 

@@ -212,66 +212,113 @@ function initCodeworld() {
             },
             async: true
         },
-        buttons: [
-            {
-                class: 'cw-toolbar-button mdi mdi-content-save',
-                label: '',
-                title: 'Save',
-                callback: function (cm) {
-                    saveProject();
-                }
-            },
-            {
-                class: 'cw-toolbar-button mdi mdi-magnify',
-                label: '',
-                title: 'Search',
-                callback: function (cm) {
-                    cm.execCommand('find')
-                }
-            },
-            {
-                class: 'cw-toolbar-button mdi mdi-undo',
-                label: '',
-                title: 'Undo',
-                callback: function (cm) {
-                    cm.undo();
-                }
-            },
-            {
-                class: 'cw-toolbar-button mdi mdi-redo',
-                label: '',
-                title: 'Redo',
-                callback: function (cm) {
-                    cm.redo();
-                }
-            },
-            {
-                class: 'cw-toolbar-button mdi mdi-content-copy',
-                label: '',
-                title: 'Copy',
-                callback: function (cm) {
-                    window.clipboard = cm.getSelection();
-                    document.execCommand('copy');
-                }
-            },
-            {
-                class: 'cw-toolbar-button mdi mdi-content-paste',
-                label: '',
-                title: 'Paste',
-                callback: function (cm) {
-                    cm.replaceSelection(window.clipboard);
-                }
-            },
-            {
-                class: 'cw-toolbar-button mdi mdi-content-cut',
-                label: '',
-                title: 'Cut',
-                callback: function (cm) {
+        buttons: [{
+            class: 'cw-toolbar-button mdi mdi-file-outline',
+            label: '',
+            title: 'New',
+            callback: cm => newProject()
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-content-save',
+            label: '',
+            title: 'Save',
+            callback: cm => saveProject()
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-file-find',
+            label: '',
+            title: 'Search',
+            callback: cm => cm.execCommand('find')
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-file-replace',
+            label: '',
+            title: 'Replace',
+            callback: cm => cm.execCommand('replace')
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-undo',
+            label: '',
+            title: 'Undo',
+            callback: cm => cm.undo()
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-redo',
+            label: '',
+            title: 'Redo',
+            callback: cm => cm.redo()
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-format-indent-increase',
+            label: '',
+            title: 'Indent',
+            callback: cm => cm.execCommand('indentMore')
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-format-indent-decrease',
+            label: '',
+            title: 'Outdent',
+            callback: cm => cm.execCommand('indentLess')
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-magnify-plus',
+            label: '',
+            title: 'Zoom in',
+            callback: cm => changeFontSize(1)()
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-magnify-minus',
+            label: '',
+            title: 'Zoom out',
+            callback: cm => changeFontSize(-1)()
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-content-cut',
+            label: '',
+            title: 'Cut',
+            callback: cm => {
+                if (cm.getSelection()) {
                     window.clipboard = cm.getSelection();
                     document.execCommand('copy');
                     cm.replaceSelection('');
                 }
             }
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-content-copy',
+            label: '',
+            title: 'Copy',
+            callback: cm => {
+                if (cm.getSelection()) {
+                    window.clipboard = cm.getSelection();
+                    document.execCommand('copy');
+                }
+            }
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-content-paste',
+            label: '',
+            title: 'Paste',
+            callback: cm => cm.replaceSelection(window.clipboard)
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-stop',
+            label: '',
+            title: 'Stop',
+            callback: cm => stop()
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-play',
+            label: '',
+            title: 'Run',
+            callback: cm => compile()
+        },
+        {
+            class: 'cw-toolbar-button mdi mdi-auto-fix',
+            label: '',
+            title: 'Run',
+            callback: cm => cm.execCommand('autocomplete')
+        },
         ]
     });
     window.codeworldEditor.refresh();
@@ -289,7 +336,11 @@ function initCodeworld() {
 
         if (!functions.length) return;
 
-        const { functionName, argIndex, column } = functions.pop();
+        const {
+            functionName,
+            argIndex,
+            column
+        } = functions.pop();
         const keywordData = window.codeWorldSymbols[functionName];
 
         // don't show tooltip if function details or argument types are not known
@@ -306,7 +357,7 @@ function initCodeworld() {
         const annotation = document.createElement('div');
         const returnedVal = renderDeclaration(annotation, functionName, keywordData, 9999, argIndex);
         //TODO: Remove the if block once a better function parser is integrated.
-        if (returnedVal === null){
+        if (returnedVal === null) {
             annotation.remove();
             topDiv.remove();
             return;
@@ -318,7 +369,7 @@ function initCodeworld() {
         window.codeworldEditor.addWidget({
             line: cursor.line,
             ch: column - functionName.length
-        }, topDiv, true, "above", "near");
+        }, topDiv, true, 'above', 'near');
     });
 
     CodeMirror.commands.save = cm => {
@@ -578,9 +629,9 @@ function updateUI() {
     // If true - code currently in document is not equal to
     // last compiled code
     const running = document.getElementById('runner').style.display !== 'none';
-    const obsolete = window.codeworldEditor
-        ? !window.codeworldEditor.getDoc().isClean(window.runningGeneration)
-        : false;
+    const obsolete = window.codeworldEditor ?
+        !window.codeworldEditor.getDoc().isClean(window.runningGeneration) :
+        false;
     const obsoleteAlert = document.getElementById('obsolete-code-alert');
     if (running && obsolete) {
         obsoleteAlert.classList.add('obsolete-code-alert-fadein');
@@ -752,14 +803,13 @@ function changeFontSize(incr) {
         fontSize += incr;
         if (fontSize < 8) fontSize = 8;
         elem.style.fontSize = fontSize + fontUnit;
-        elem.parentElement.style.fontSize = (4/3 * fontSize) + fontUnit;
+        elem.parentElement.style.fontSize = (4 / 3 * fontSize) + fontUnit;
         window.codeworldEditor.refresh();
     };
 }
 
 function help() {
-    let url;
-    url = `doc.html?shelf=help/${window.buildMode}.shelf`;
+    const url = `doc.html?shelf=help/${window.buildMode}.shelf`;
 
     sweetAlert({
         html: `<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="${ 

@@ -116,14 +116,14 @@ const hintBlacklist = [
     'rose'
 ];
 
-function definePanelExtension () {
-    CodeMirror.defineExtension("addPanel", function(node) {
-        var originWrapper = this.getWrapperElement();
-        var wrapper = document.createElement("div");
+function definePanelExtension() {
+    CodeMirror.defineExtension('addPanel', function(node) {
+        const originWrapper = this.getWrapperElement();
+        const wrapper = document.createElement('div');
         originWrapper.parentNode.insertBefore(wrapper, originWrapper);
         wrapper.appendChild(originWrapper);
         wrapper.insertBefore(node, wrapper.firstChild);
-        });
+    });
 }
 
 // codeWorldSymbols is variable containing annotations and documentation
@@ -259,7 +259,7 @@ function renderDeclaration(decl, keyword, keywordData, maxLen, argIndex = -1) {
         const parsedFunction = (/^(\s*::\s*[(]*)([\w,\s]*)([)]*\s*->.*)$/).exec(leftover);
         if (!parsedFunction || parsedFunction.length <= 1) return null;
         const [head, args, tail] = parsedFunction.slice(1);
-        let tokens = args.split(",");
+        const tokens = args.split(',');
         argIndex = Math.min(argIndex, tokens.length - 1);
         tokens[argIndex] = `<strong>${tokens[argIndex]}</strong>`;
         leftover = `${head}${tokens.join(',')}${tail}`;

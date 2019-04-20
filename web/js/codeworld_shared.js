@@ -116,6 +116,16 @@ const hintBlacklist = [
     'rose'
 ];
 
+function definePanelExtension () {
+    CodeMirror.defineExtension("addPanel", function(node) {
+        var originWrapper = this.getWrapperElement();
+        var wrapper = document.createElement("div");
+        originWrapper.parentNode.insertBefore(wrapper, originWrapper);
+        wrapper.appendChild(originWrapper);
+        wrapper.insertBefore(node, wrapper.firstChild);
+        });
+}
+
 // codeWorldSymbols is variable containing annotations and documentation
 // of builtin and user-defined variables.
 // Expected format:

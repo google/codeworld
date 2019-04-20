@@ -55,6 +55,9 @@ async function init() {
     document.documentElement.classList.add(window.buildMode);
 
     window.cancelCompile = () => {};
+    window.clipboard = '';
+
+    definePanelExtension();
 
     initCodeworld();
     registerStandardHints(() => {
@@ -208,7 +211,68 @@ function initCodeworld() {
                 }
             },
             async: true
-        }
+        },
+        buttons: [
+            {
+                class: 'cw-toolbar-button cw-button-save',
+                label: '',
+                title: 'Save',
+                callback: function (cm) {
+                    saveProject();
+                }
+            },
+            {
+                class: 'cw-toolbar-button cw-button-search',
+                label: '',
+                title: 'Search',
+                callback: function (cm) {
+                    cm.execCommand('find')
+                }
+            },
+            {
+                class: 'cw-toolbar-button cw-button-undo',
+                label: '',
+                title: 'Undo',
+                callback: function (cm) {
+                    cm.undo();
+                }
+            },
+            {
+                class: 'cw-toolbar-button cw-button-redo',
+                label: '',
+                title: 'Redo',
+                callback: function (cm) {
+                    cm.redo();
+                }
+            },
+            {
+                class: 'cw-toolbar-button cw-button-copy',
+                label: '',
+                title: 'Copy',
+                callback: function (cm) {
+                    window.clipboard = cm.getSelection();
+                    document.execCommand('copy');
+                }
+            },
+            {
+                class: 'cw-toolbar-button cw-button-paste',
+                label: '',
+                title: 'Paste',
+                callback: function (cm) {
+                    cm.replaceSelection(window.clipboard);
+                }
+            },
+            {
+                class: 'cw-toolbar-button cw-button-cut',
+                label: '',
+                title: 'Cut',
+                callback: function (cm) {
+                    window.clipboard = cm.getSelection();
+                    document.execCommand('copy');
+                    cm.replaceSelection('');
+                }
+            }
+        ]
     });
     window.codeworldEditor.refresh();
     window.codeworldEditor.on('cursorActivity', () => {

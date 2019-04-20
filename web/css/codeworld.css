@@ -138,7 +138,7 @@ body {
 
 #source .CodeMirror {
     position: absolute;
-    top: 2.2em;
+    top: calc(1.5em + 2px);
     bottom: 0;
     left: 0;
     right: 0;

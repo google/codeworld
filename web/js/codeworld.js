@@ -214,7 +214,7 @@ function initCodeworld() {
         },
         buttons: [
             {
-                class: 'cw-toolbar-button cw-button-save',
+                class: 'cw-toolbar-button mdi mdi-content-save',
                 label: '',
                 title: 'Save',
                 callback: function (cm) {
@@ -222,7 +222,7 @@ function initCodeworld() {
                 }
             },
             {
-                class: 'cw-toolbar-button cw-button-search',
+                class: 'cw-toolbar-button mdi mdi-magnify',
                 label: '',
                 title: 'Search',
                 callback: function (cm) {
@@ -230,7 +230,7 @@ function initCodeworld() {
                 }
             },
             {
-                class: 'cw-toolbar-button cw-button-undo',
+                class: 'cw-toolbar-button mdi mdi-undo',
                 label: '',
                 title: 'Undo',
                 callback: function (cm) {
@@ -238,7 +238,7 @@ function initCodeworld() {
                 }
             },
             {
-                class: 'cw-toolbar-button cw-button-redo',
+                class: 'cw-toolbar-button mdi mdi-redo',
                 label: '',
                 title: 'Redo',
                 callback: function (cm) {
@@ -246,7 +246,7 @@ function initCodeworld() {
                 }
             },
             {
-                class: 'cw-toolbar-button cw-button-copy',
+                class: 'cw-toolbar-button mdi mdi-content-copy',
                 label: '',
                 title: 'Copy',
                 callback: function (cm) {
@@ -255,7 +255,7 @@ function initCodeworld() {
                 }
             },
             {
-                class: 'cw-toolbar-button cw-button-paste',
+                class: 'cw-toolbar-button mdi mdi-content-paste',
                 label: '',
                 title: 'Paste',
                 callback: function (cm) {
@@ -263,7 +263,7 @@ function initCodeworld() {
                 }
             },
             {
-                class: 'cw-toolbar-button cw-button-cut',
+                class: 'cw-toolbar-button mdi mdi-content-cut',
                 label: '',
                 title: 'Cut',
                 callback: function (cm) {
@@ -752,6 +752,7 @@ function changeFontSize(incr) {
         fontSize += incr;
         if (fontSize < 8) fontSize = 8;
         elem.style.fontSize = fontSize + fontUnit;
+        elem.parentElement.style.fontSize = (4/3 * fontSize) + fontUnit;
         window.codeworldEditor.refresh();
     };
 }

@@ -385,42 +385,24 @@ span:not(.cm-layout)+span.cm-layout:before {
     padding-left: 0.5em;
 }
 
+.CodeMirror-buttonsPanel {
+    font-size: 1em;
+}
+
 .CodeMirror-buttonsPanel div.cw-toolbar-button {
     display: inline-block;
-    margin: 0.1em 0.5em 0em 0.5em;
+    margin: 2px 0.25em 0em 0.25em;
     text-align: center;
     width: 2em;
-    height: 1.6em;
-    filter: brightness(75%);
+    height: 1em;
+    color: #aaa;
 }
 
 .CodeMirror-buttonsPanel div.cw-toolbar-button:hover {
-    filter: brightness(50%);
+    color: #777;
 }
 
 .CodeMirror-buttonsPanel div.cw-toolbar-button:active {
-    transform: translate(2px, 2px);
-    filter: brightness(25%);
-}
-
-.cw-button-cut {
-    background: url("/ims/content-cut.svg") no-repeat center;
-}
-.cw-button-copy {
-    background: url("/ims/content-copy.svg") no-repeat center;
-}
-.cw-button-paste {
-    background: url("/ims/content-paste.svg") no-repeat center;
-}
-.cw-button-redo {
-    background: url("/ims/redo.svg") no-repeat center;
-}
-.cw-button-undo {
-    background: url("/ims/undo.svg") no-repeat center;
-}
-.cw-button-save {
-    background: url("/ims/content-save.svg") no-repeat center;
-}
-.cw-button-search {
-    background: url("/ims/magnify.svg") no-repeat center;
+    transform: translate(1px, 1px);
+    color: #333;
 }

@@ -385,24 +385,12 @@ span:not(.cm-layout)+span.cm-layout:before {
     padding-left: 0.5em;
 }
 
-#source .CodeMirror {
-    top: 4em;
-}
-
-.CodeMirror-buttonsPanel {
-    margin-bottom: .1em;
-    position: absolute;
-    width: 100%;
-    padding-left: 1em;
-}
-
 .CodeMirror-buttonsPanel div.cw-toolbar-button {
     display: inline-block;
-    padding: 0.5em 0.5em 0em 0.5em;
-    margin: 0.5em 0.5em 0em 0.5em;
+    margin: 0.1em 0.5em 0em 0.5em;
     text-align: center;
-    width: 1em;
-    height: 1em;
+    width: 2em;
+    height: 1.6em;
     filter: brightness(75%);
 }
 

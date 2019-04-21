@@ -387,8 +387,10 @@ span:not(.cm-layout)+span.cm-layout:before {
 
 .CodeMirror-buttonsPanel {
     font-size: 1.25em;
+    background-color: #f4f4f4;
     border-bottom: solid #888 1px;
     white-space: nowrap;
+    overflow: hidden;
 }
 
 .CodeMirror-buttonsPanel div.cw-toolbar-button {

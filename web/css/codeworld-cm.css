@@ -393,7 +393,7 @@ span:not(.cm-layout)+span.cm-layout:before {
 
 .CodeMirror-buttonsPanel div.cw-toolbar-button {
     display: inline-block;
-    margin: 2px 0.25em 0em 0.25em;
+    margin: 2px 0.2em 0em 0.2em;
     text-align: center;
     width: 2em;
     height: 1em;

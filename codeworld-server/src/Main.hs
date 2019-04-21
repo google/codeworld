@@ -559,7 +559,7 @@ compileIncrementally ctx mode programId = do
             let target = buildRootDir mode </> targetFile programId
             let result = buildRootDir mode </> resultFile programId
             let baseVer = buildRootDir mode </> baseVersionFile programId
-            let baseURL = "/runBaseJS?version=" ++ T.unpack ver
+            let baseURL = "runBaseJS?version=" ++ T.unpack ver
             let stage = UseBase target (baseSymbolFile ver) baseURL
 
             status <- compileSource stage source result (getMode mode) False

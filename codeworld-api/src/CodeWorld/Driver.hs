@@ -89,6 +89,7 @@ import GHCJS.DOM.Document hiding (evaluate)
 import GHCJS.DOM.Element
 import GHCJS.DOM.EventM
 import GHCJS.DOM.GlobalEventHandlers hiding (error)
+import GHCJS.DOM.KeyboardEvent
 import GHCJS.DOM.MouseEvent
 import GHCJS.DOM.NonElementParentNode
 import GHCJS.DOM.Types (Element, unElement)
@@ -1170,14 +1171,19 @@ onEvents :: Element -> (Event -> IO ()) -> IO ()
 onEvents canvas handler = do
     Just window <- currentWindow
     on window keyDown $ do
-        code <- uiKeyCode
+        code <- getKeyCode =<< event
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
             liftIO $ handler (KeyPress keyName)
             preventDefault
             stopPropagation
+        key <- getKey =<< event
+        when (T.length key == 1) $ do
+            liftIO $ handler (TextEntry key)
+            preventDefault
+            stopPropagation
     on window keyUp $ do
-        code <- uiKeyCode
+        code <- getKeyCode =<< event
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
             liftIO $ handler (KeyRelease keyName)

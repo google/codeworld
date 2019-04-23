@@ -165,6 +165,7 @@ site ctx =
             , ("blocks", serveFile "web/blocks.html")
             , ("funblocks", serveFile "web/blocks.html")
             , ("indent", indentHandler ctx)
+            , ("gallery/:shareHash", galleryHandler ctx)
             ]
             ++ authRoutes (authConfig ctx)
     in route routes <|> serveDirectory "web"
@@ -275,9 +276,8 @@ listFolderHandler = private $ \userId ctx -> do
     liftIO $ ensureUserDir mode userId finalDir
     liftIO $ migrateUser $ userProjectDir mode userId
     let projectDir = userProjectDir mode userId
-    subHashedDirs <- liftIO $ listDirectoryWithPrefix $ projectDir </> finalDir
-    files <- liftIO $ projectFileNames subHashedDirs
-    dirs <- liftIO $ projectDirNames subHashedDirs
+    files <- liftIO $ projectFileNames (projectDir </> finalDir)
+    dirs <- liftIO $ projectDirNames (projectDir </> finalDir)
     modifyResponse $ setContentType "application/json"
     writeLBS (encode (Directory files dirs))
 
@@ -499,6 +499,41 @@ indentHandler = public $ \ctx -> do
             modifyResponse $ setContentType "text/x-haskell"
             writeLBS $ toLazyByteString res
 
+galleryHandler :: CodeWorldHandler
+galleryHandler = public $ const $ do
+    mode <- getBuildMode
+    Just shareHash <- getParam "shareHash"
+    let shareId = ShareId (T.decodeUtf8 shareHash)
+    gallery <- liftIO $ do
+        folder <- BC.unpack <$> B.readFile (shareRootDir mode </> shareLink shareId)
+        files <- sort <$> projectFileNames folder
+        Gallery <$> mapM (galleryItemFromProject mode folder) files
+    writeLBS $ encode gallery
+
+galleryItemFromProject :: BuildMode -> FilePath -> Text -> IO GalleryItem
+galleryItemFromProject mode@(BuildMode modeName) folder name = do
+    let projectId = nameToProjectId name
+    let file = folder </> projectFile projectId
+    Just project <- decode <$> LB.readFile file
+
+    let source = T.encodeUtf8 $ projectSource project
+    let programId = sourceToProgramId source
+    let deployId = sourceToDeployId source
+
+    liftIO $ withProgramLock mode programId $ do
+        ensureSourceDir mode programId
+        B.writeFile (sourceRootDir mode </> sourceFile programId) source
+        writeDeployLink mode deployId programId
+
+    let baseURL = "/" <> if modeName == "codeworld" then "" else T.pack modeName
+
+    return GalleryItem {
+        galleryItemName = name,
+        galleryItemURL = "https://code.world/run.html" <>
+                         "?mode=" <> T.pack modeName <>
+                         "&dhash=" <> unDeployId deployId,
+        galleryItemCode = Just (baseURL <> "#" <> unProgramId programId) }
+
 responseCodeFromCompileStatus :: CompileStatus -> Int
 responseCodeFromCompileStatus CompileSuccess = 200
 responseCodeFromCompileStatus CompileError   = 400
@@ -524,7 +559,7 @@ compileIncrementally ctx mode programId = do
             let target = buildRootDir mode </> targetFile programId
             let result = buildRootDir mode </> resultFile programId
             let baseVer = buildRootDir mode </> baseVersionFile programId
-            let baseURL = "/runBaseJS?version=" ++ T.unpack ver
+            let baseURL = "runBaseJS?version=" ++ T.unpack ver
             let stage = UseBase target (baseSymbolFile ver) baseURL
 
             status <- compileSource stage source result (getMode mode) False

@@ -61,5 +61,6 @@ data Event
     | PointerPress !Point
     | PointerRelease !Point
     | PointerMovement !Point
+    | TextEntry !Text
     | TimePassing !Double
     deriving (Eq, Show, Read)

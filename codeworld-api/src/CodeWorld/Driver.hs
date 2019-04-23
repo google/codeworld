@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveFunctor #-}
@@ -32,21 +33,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-module CodeWorld.Driver
-    ( drawingOf
-    , animationOf
-    , activityOf
-    , debugActivityOf
-    , groupActivityOf
-    , unsafeGroupActivityOf
-    , simulationOf
-    , debugSimulationOf
-    , interactionOf
-    , debugInteractionOf
-    , collaborationOf
-    , unsafeCollaborationOf
-    , trace
-    ) where
+module CodeWorld.Driver where
 
 import CodeWorld.CollaborationUI (SetupPhase(..), Step(..), UIState)
 import qualified CodeWorld.CollaborationUI as CUI
@@ -102,6 +89,7 @@ import GHCJS.DOM.Document hiding (evaluate)
 import GHCJS.DOM.Element
 import GHCJS.DOM.EventM
 import GHCJS.DOM.GlobalEventHandlers hiding (error)
+import GHCJS.DOM.KeyboardEvent
 import GHCJS.DOM.MouseEvent
 import GHCJS.DOM.NonElementParentNode
 import GHCJS.DOM.Types (Element, unElement)
@@ -1175,7 +1163,6 @@ getMousePos canvas = do
         cx <- ClientRect.getLeft rect
         cy <- ClientRect.getTop rect
         cw <- ClientRect.getWidth rect
-        ch <- ClientRect.getHeight rect
         return
             ( 20 * fromIntegral (ix - round cx) / realToFrac cw - 10
             , 20 * fromIntegral (round cy - iy) / realToFrac cw + 10)
@@ -1184,14 +1171,19 @@ onEvents :: Element -> (Event -> IO ()) -> IO ()
 onEvents canvas handler = do
     Just window <- currentWindow
     on window keyDown $ do
-        code <- uiKeyCode
+        code <- getKeyCode =<< event
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
             liftIO $ handler (KeyPress keyName)
             preventDefault
             stopPropagation
+        key <- getKey =<< event
+        when (T.length key == 1) $ do
+            liftIO $ handler (TextEntry key)
+            preventDefault
+            stopPropagation
     on window keyUp $ do
-        code <- uiKeyCode
+        code <- getKeyCode =<< event
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
             liftIO $ handler (KeyRelease keyName)
@@ -1951,19 +1943,25 @@ wrappedInitial w = Wrapped {
       isDraggingZoom = False
     }
 
+identical :: a -> a -> Bool
+identical !x !y = case reallyUnsafePtrEquality# x y of
+    0# -> False
+    _  -> True
+
 toState :: (a -> a) -> (Wrapped a -> Wrapped a)
-toState f w = case ifDifferent f (state w) of
-    Just newState -> w { state = newState }
-    _             -> w
+toState f w | identical s s' = w
+            | otherwise = w { state = s' }
+  where s  = state w
+        s' = f s
 
 wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
 wrappedStep f dt w = updateInteractionTime (updateState w)
-  where updateInteractionTime w
-          | lastInteractionTime w > 5 = w
-          | otherwise = w { lastInteractionTime = lastInteractionTime w + dt }
-        updateState w
-          | playbackSpeed w == 0 = w
-          | otherwise = toState (f (dt * playbackSpeed w)) w
+    where updateInteractionTime w
+            | lastInteractionTime w > 5 = w
+            | otherwise = w { lastInteractionTime = lastInteractionTime w + dt }
+          updateState w
+            | playbackSpeed w == 0 = w
+            | otherwise = toState (f (dt * playbackSpeed w)) w
 
 reportDiff :: String -> (a -> a) -> (a -> a)
 reportDiff msg f x = unsafePerformIO $ do
@@ -2379,11 +2377,10 @@ simulationOf initial step draw =
     runInspect simulationControls initial step (\_ r -> r) draw
 
 prependIfChanged :: (a -> a) -> ([a],[a]) -> ([a],[a])
-prependIfChanged f (x:xs, ys) =
-    case x `seq` x' `seq` (reallyUnsafePtrEquality# x x') of
-        0# -> (x' : x : xs, [])
-        _  -> (x : xs, ys)
-  where x' = f x
+prependIfChanged f (x:xs, ys)
+    | identical x x' = (x:xs, ys)
+    | otherwise = (x':x:xs, ys)
+    where x' = f x
 
 debugSimulationOf initial simStep simDraw =
     runInspect statefulDebugControls ([initial],[]) step (\_ r -> r) draw

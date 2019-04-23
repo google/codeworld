@@ -228,10 +228,10 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
 
         // Close implicit contexts on comma.
         if (token === ',') {
-            while(true) {
+            while (state.contexts.length) {
                 const topContext = state.contexts.pop();
                 if (!state.contexts.length || isBracket(topContext)) {
-                    if (topContext.hasOwnProperty("argIndex")) topContext.argIndex++;
+                    if (topContext.hasOwnProperty('argIndex')) topContext.argIndex++;
                     state.contexts.push(topContext);
                     break;
                 }

@@ -384,3 +384,29 @@ span:not(.cm-layout)+span.cm-layout:before {
 .CodeMirror pre.CodeMirror-placeholder {
     padding-left: 0.5em;
 }
+
+.CodeMirror-buttonsPanel {
+    font-size: 1.25em;
+    background-color: #f4f4f4;
+    border-bottom: solid #888 1px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.CodeMirror-buttonsPanel div.cw-toolbar-button {
+    display: inline-block;
+    margin: 2px 0.2em 0em 0.2em;
+    text-align: center;
+    width: 2em;
+    height: 1em;
+    color: #aaa;
+}
+
+.CodeMirror-buttonsPanel div.cw-toolbar-button:hover {
+    color: #777;
+}
+
+.CodeMirror-buttonsPanel div.cw-toolbar-button:active {
+    transform: translate(1px, 1px);
+    color: #333;
+}

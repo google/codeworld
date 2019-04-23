@@ -70,6 +70,7 @@ data Event
     | PointerPress !Point
     | PointerRelease !Point
     | PointerMovement !Point
+    | TextEntry !Text
     | TimePassing !Number
     deriving (P.Eq)
 
@@ -83,4 +84,5 @@ fromCWEvent (CW.KeyRelease key) = KeyRelease (toCWText key)
 fromCWEvent (CW.PointerPress p) = PointerPress (fromCWVect p)
 fromCWEvent (CW.PointerRelease p) = PointerRelease (fromCWVect p)
 fromCWEvent (CW.PointerMovement p) = PointerMovement (fromCWVect p)
+fromCWEvent (CW.TextEntry t) = TextEntry (toCWText t)
 fromCWEvent (CW.TimePassing dt) = TimePassing (fromDouble dt)

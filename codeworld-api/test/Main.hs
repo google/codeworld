@@ -14,6 +14,8 @@
   limitations under the License.
 -}
 
-import CodeWorld
+import Test.Framework (defaultMain)
+import qualified Driver
 
-main = return ()
+
+main = defaultMain [Driver.tests]

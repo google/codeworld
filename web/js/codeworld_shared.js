@@ -116,6 +116,16 @@ const hintBlacklist = [
     'rose'
 ];
 
+function definePanelExtension() {
+    CodeMirror.defineExtension('addPanel', function(node) {
+        const originWrapper = this.getWrapperElement();
+        const wrapper = document.createElement('div');
+        originWrapper.parentNode.insertBefore(wrapper, originWrapper);
+        wrapper.appendChild(originWrapper);
+        wrapper.insertBefore(node, wrapper.firstChild);
+    });
+}
+
 // codeWorldSymbols is variable containing annotations and documentation
 // of builtin and user-defined variables.
 // Expected format:
@@ -224,39 +234,74 @@ function parseSymbolsFromCurrentCode() {
 }
 
 function renderDeclaration(decl, keyword, keywordData, maxLen, argIndex = -1) {
-    if (keywordData.symbolStart > 0) {
-        decl.appendChild(document.createTextNode(
-            keywordData.declaration.slice(0, keywordData.symbolStart)));
-    }
+    let column = 0;
 
-    const wordElem = document.createElement('span');
-    wordElem.className = 'hint-word';
-    wordElem.appendChild(document.createTextNode(keyword));
-    decl.appendChild(wordElem);
+    function addSegment(text, isWord, isBold) {
+        function addSpan(content, wrappable) {
+            const span = document.createElement('span');
+            if (isWord) span.className = 'hint-word';
+            if (isBold) span.style.fontWeight = 'bold';
+            if (!wrappable) span.style.whiteSpace = 'nowrap';
+            span.appendChild(document.createTextNode(content));
+            decl.appendChild(span);
+            column += content.length;
+        }
 
-    let leftover = "";
-    if (keywordData.symbolEnd < keywordData.declaration.length) {
-        leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(
-            /\s+/g, ' ');
-        if (keywordData.symbolEnd + leftover.length > maxLen && leftover.length >
-            3) {
-            leftover = `${leftover.slice(0, maxLen - 3 - keywordData.symbolEnd) 
-            }...`;
+        function trimFromTail(excess) {
+            const tailLen = decl.lastChild.textContent.length;
+            if (tailLen <= excess) {
+                decl.removeChild(decl.lastChild);
+                trimFromTail(excess - tailLen);
+            } else {
+                decl.lastChild.textContent =
+                    decl.lastChild.textContent.slice(0, tailLen - excess);
+            }
+        }
+
+        const SYM = /^([:!#$%&*+./<=>?@\\^|~-]+)[^:!#$%&*+./<=>?@\\^|~-].*/;
+        const NONSYM = /^([^:!#$%&*+./<=>?@\\^|~-]+)[:!#$%&*+./<=>?@\\^|~-].*/;
+        while (text.length > 0) {
+            const sym = SYM.exec(text);
+            const split = sym || NONSYM.exec(text) || [text, text];
+
+            addSpan(split[1], !sym);
+            text = text.slice(split[1].length);
+        }
+
+        if (column > maxLen) {
+            trimFromTail(column - maxLen + 3);
+            addSpan('...', false);
         }
     }
-    if (argIndex >= 0) {
-        const [head, args, tail] = (/^(\s*::\s*[(]*)([\w,\s]*)([)]*\s*->.*)$/).exec(leftover).slice(1);
-        let tokens = args.split(",");
-        argIndex = Math.min(argIndex, tokens.length - 1);
-        tokens[argIndex] = `<strong>${tokens[argIndex]}</strong>`;
-        leftover = `${head}${tokens.join(',')}${tail}`;
+
+    if (keywordData.symbolStart > 0) {
+        addSegment(keywordData.declaration.slice(0, keywordData.symbolStart));
     }
 
+    addSegment(keyword, true, false);
 
-    if (leftover.length) {
-        const argElem = document.createElement('span');
-        argElem.innerHTML = leftover;
-        decl.appendChild(argElem);
+    if (keywordData.symbolEnd < keywordData.declaration.length) {
+        const leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(
+            /\s+/g, ' ');
+        if (argIndex >= 0) {
+            // TODO: use a more sophisticated parser to fetch arguments,
+            // and remove unnecessary subsequent checks.
+            const parsedFunction = (/^(\s*::\s*[(]?)([\w,\s]*)([)]?\s*->.*)$/).exec(leftover);
+            if (!parsedFunction || parsedFunction.length <= 1) return null;
+
+            const [head, args, tail] = parsedFunction.slice(1);
+            const tokens = args.split(',');
+            argIndex = Math.min(argIndex, tokens.length - 1);
+
+            addSegment(head, false, false);
+            for (let i = 0; i < tokens.length; i++) {
+                if (i > 0) addSegment(',', false, false);
+                addSegment(tokens[i], false, argIndex == i);
+            }
+            addSegment(tail, false, false);
+        } else {
+            addSegment(leftover, false, false);
+        }
     }
     return decl;
 }
@@ -791,7 +836,7 @@ function saveProject() {
 }
 
 function saveProjectBase_(path, projectName, mode, successFunc) {
-    if (projectName === null || projectName === '') return;
+    if (!projectName) return;
 
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to save files.', 'error');
@@ -898,7 +943,7 @@ function deleteProject_(path, buildMode, successFunc) {
 }
 
 function deleteFolder_(path, buildMode, successFunc) {
-    if (path === '' || window.openProjectName !== null) {
+    if (path === '' || window.openProjectName) {
         return;
     }
     if (!signedIn()) {
@@ -1107,11 +1152,16 @@ function shareFolder_(mode) {
         updateUI();
         return;
     }
-    if (window.nestedDirs.length === 1 || (window.openProjectName !== null && window.openProjectName !== '')) {
-        sweetAlert('Oops!', 'YOu must select a folder to share!', 'error');
+    if (window.nestedDirs.length === 1 || window.openProjectName) {
+        sweetAlert('Oops!', 'You must select a folder to share!', 'error');
         updateUI();
         return;
     }
+
+    const folderName = window.nestedDirs.slice(-1).pop()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 
     const data = new FormData();
     data.append('mode', mode);
@@ -1125,21 +1175,51 @@ function shareFolder_(mode) {
             return;
         }
 
+        const baseURL = window.location.origin + window.location.pathname;
         const shareHash = request.responseText;
-        const a = document.createElement('a');
-        a.href = window.location.href;
-        a.hash = `#${shareHash}`;
-        const url = a.href;
-        sweetAlert({
-            title: Alert.title('Share Folder', 'mdi-folder-outline'),
-            html: 'Copy this link to share your folder with others!',
-            input: 'text',
-            inputValue: url,
-            showConfirmButton: false,
-            showCancelButton: true,
-            cancelButtonText: 'Done',
-            animation: 'slide-from-bottom'
-        });
+        let gallery = false;
+
+        function go() {
+            let title;
+            let url;
+            let msg;
+            let confirmText;
+
+            if (gallery) {
+                title = Alert.title('Share Gallery', 'mdi-presentation-play');
+                msg = `Copy this link to make a gallery out of ${folderName}!`;
+                url = new URL(
+                    `/gallery.html?path=/gallery/${shareHash}?mode=${mode}`,
+                    baseURL)
+                    .toString();
+                confirmText = 'Share as Folder';
+            } else {
+                title = Alert.title('Share Folder', 'mdi-folder-account-outline'),
+                msg = `Copy this link to share code in ${folderName} with others!`;
+                url = `${baseURL}#${shareHash}`;
+                confirmText = 'Share as Gallery';
+            }
+
+            sweetAlert({
+                title: title,
+                html: msg,
+                input: 'text',
+                inputValue: url,
+                showConfirmButton: true,
+                confirmButtonText: confirmText,
+                closeOnConfirm: false,
+                showCancelButton: true,
+                cancelButtonText: 'Done',
+                animation: 'slide-from-bottom'
+            }).then(result => {
+                if (result.value) {
+                    gallery = !gallery;
+                    go();
+                }
+            });
+        }
+
+        go();
     });
 }
 

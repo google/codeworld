@@ -41,6 +41,7 @@ import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Base64 as Base64 (decode)
 import qualified Data.ByteString.Char8 as Char8 (pack, unpack)
 import           Data.List.Split (splitOn)
+import           Data.Text (Text)
 import qualified Data.Text as Text (pack)
 import           Snap.Core
                     ( Response
@@ -52,7 +53,6 @@ import           Snap.Core
                     , setResponseCode
                     , writeLBS
                     )
-import           Web.JWT (JSON)
 
 empty :: Int -> Response
 empty code = setResponseCode code emptyResponse
@@ -95,7 +95,8 @@ parseBasicAuthHeader bs = do
                 [userIdRaw, passwordRaw] -> Just (UserId userIdRaw, Password passwordRaw)
                 _ -> Nothing
 
-parseBearerAuthHeader :: ByteString -> Maybe JSON
+--parseBearerAuthHeader :: ByteString -> Maybe JSON
+parseBearerAuthHeader :: ByteString -> Maybe Text
 parseBearerAuthHeader bs = do
     t <- parseAuthValue "Bearer" bs
     return $ Text.pack t

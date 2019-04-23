@@ -164,7 +164,7 @@ function initCodeworld() {
             'Ctrl-Up': changeFontSize(1),
             'Ctrl-Down': changeFontSize(-1)
         },
-        textHover: onHover,
+        textHover: window.buildMode == 'codeworld' ? onHover : null,
         gutters: ['CodeMirror-lint-markers'],
         lint: {
             getAnnotations: (text, callback) => {

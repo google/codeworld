@@ -95,7 +95,6 @@ parseBasicAuthHeader bs = do
                 [userIdRaw, passwordRaw] -> Just (UserId userIdRaw, Password passwordRaw)
                 _ -> Nothing
 
---parseBearerAuthHeader :: ByteString -> Maybe JSON
 parseBearerAuthHeader :: ByteString -> Maybe Text
 parseBearerAuthHeader bs = do
     t <- parseAuthValue "Bearer" bs

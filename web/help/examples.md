@@ -375,6 +375,7 @@ data World = World {
     left         :: Number,
     right        :: Number,
     thrust       :: Number,
+    cooldown     :: Truth,
     energy       :: Number,
     score        :: Number,
     lastScore    :: Number,
@@ -395,6 +396,7 @@ initialWith(m, l, rs) =
           left         = 0,
           right        = 0,
           thrust       = 0,
+          cooldown     = False,
           energy       = 1,
           score        = 0,
           maxScore     = m,
@@ -419,8 +421,8 @@ makeAsts(n, r1:r2:r3:r4:rs) = (ast : asts, rs2)
         ast = ((x,y), (vx,vy))
         (asts, rs2) = makeAsts(n-1, rs)
 
-effectiveThrust(w) | energy(w) > 0 = thrust(w)
-                   | otherwise     = 0
+effectiveThrust(w) | energy(w) > 0 && not(cooldown(w)) = thrust(w)
+                   | otherwise                         = 0
 
 lost(w) = any([collision(ast) | ast <- asts(w)])
     where ((shipx, shipy),_) = ship(w)
@@ -428,7 +430,7 @@ lost(w) = any([collision(ast) | ast <- asts(w)])
 
 change(w, TimePassing(dt))     = step(w, dt)
 change(w, KeyPress("Up"))      = w { thrust = 1 }
-change(w, KeyRelease("Up"))    = w { thrust = 0 }
+change(w, KeyRelease("Up"))    = w { thrust = 0, cooldown = False }
 change(w, KeyPress("Left"))    = w { left   = 1 }
 change(w, KeyRelease("Left"))  = w { left   = 0 }
 change(w, KeyPress("Right"))   = w { right  = 1 }
@@ -443,10 +445,12 @@ step(w, dt)
         asts      = [ stepBody(ast, dt) | ast <- asts(w) ],
         ship      = stepThrust(stepBody(ship(w), dt), effectiveThrust(w), direction(w), dt),
         direction = stepDir(direction(w), left(w), right(w), dt),
-        energy    = fence(energy(w) + dt * (0.5 - 1.5 * thrust(w)), 0, 1),
+        energy    = newEnergy,
+        cooldown  = (cooldown(w) || newEnergy == 0) && newEnergy /= 1,
         score     = score(w) + dt,
         maxScore  = max(maxScore(w), score(w) + dt)
         }
+    where newEnergy = fence(energy(w) + dt * (0.5 - if cooldown(w) then 0 else 1.5 * thrust(w)), 0, 1)
 
 fence(v, lo, hi) = max(lo, min(hi, v))
 

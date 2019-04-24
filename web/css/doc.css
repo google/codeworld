@@ -30,16 +30,16 @@ body {
     text-decoration: none;
     font-weight: bold;
     padding: 3px;
-    border: dotted #888 1px;
+    border: dotted var(--doc-popuout-a-border) 1px;
     border-radius: 5px;
 }
 
 .md pre.tilde.clickable {
-    background-color: #f0f8ff;
+    background-color: var(--doc-tilde-clickable);
 }
 
 .md pre.tilde.clickable:hover {
-    background-color: #f8fcff;
+    background-color: var(--doc-tilde-clickable-hover-bg);
     cursor: pointer;
 }
 
@@ -53,7 +53,7 @@ body {
     font-size: 150%;
     position: relative;
     top: 2px;
-    color: rgba(68, 138, 255, .8);
+    color: var(--doc-before-admonition-collapsible);
     left: -2.95rem;
     display: block;
     width: 0;
@@ -66,7 +66,7 @@ body {
     font-size: 150%;
     position: relative;
     top: 2px;
-    color: rgba(68, 138, 255, .8);
+    color: var(--doc-before-admonition-collapsible-expanded);
     left: -2.95rem;
     display: block;
     width: 0;
@@ -75,7 +75,7 @@ body {
 
 .md div.admonition.collapsible:not(.expanded)>.admonition-title::after {
     content: "Click to expand...";
-    color: rgba(0, 0, 0, 0.4);
+    color: var(--doc-after-admonition-title);
     font-family: Arial, Helvetica, sans-serif;
     font-size: 11pt;
     font-weight: normal;
@@ -92,7 +92,7 @@ body {
 }
 
 .md table.table tr:nth-child(odd) {
-    background: #FFF
+    background: var(--doc-tr-bg)
 }
 
 #helpacc {
@@ -102,7 +102,7 @@ body {
     height: 100%;
     margin: 0px 0px 0px 0px;
     padding: 0px 0px 0px 0px;
-    border-right: solid #ccc 3px;
+    border-right: solid var(--doc-helpacc-border-right) 3px;
 
     font-family: Arial, Helvetica, sans-serif;
     font-size: 11pt;

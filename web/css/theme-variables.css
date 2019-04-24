@@ -15,9 +15,11 @@
  */
 
 :root {
+    /* codeworld.css */
     --main-bg-color: #e5eff9;
     --message-bg-color: #fcc;
-    --message-details-color: #888;
+    --message-font-color: black;
+    --message-details-after-color: #888;
     --kb-shortcuts-table-border: black;
     --cw-button-color: white;
     --cw-button-bg-1: hsl(60, 75%, 35%);
@@ -59,4 +61,192 @@
     --obsolete-code-alert-grad-point2: rgba(0, 0, 0, 0.6);
     --obsolete-code-alert-grad-point3: rgba(0, 0, 0, 0);
     --obsolete-code-alert-grad-point4: rgba(0, 0, 0, 0);
+
+    /* codeworld-cm.css */
+    --builtin: #30a;
+    --builtin-2: #38c;
+    --keyword: #828;
+    --deprecated: #888;
+    --variable: black;
+    --variable2: #38c;
+    --comment: #161;
+    --string: #660;
+    --meta: #555;
+    --qualifier: #666;
+    --number: #a10;
+    --bracket: #000;
+    --bracket-0: hsl(80, 80%, 40%);
+    --bracket-1: hsl(225, 60%, 60%);
+    --bracket-2: hsl(320, 60%, 50%);
+    --bracket-3: hsl(60, 60%, 40%);
+    --bracket-4: hsl(175, 60%, 40%);
+    --bracket-5: hsl(265, 60%, 55%);
+    --bracket-6: hsl(20, 60%, 50%);
+    --bracket-7: #f00;
+    --matchingbracket: rgba(0, 0, 0, 0.15);
+    --nonmatchingbracket: rgba(255, 0, 0, 0.5);
+    --matchhighlight: rgba(128, 255, 128, 0.3);
+    --selection-highlight-scrollbar: rgba(95, 255, 95, 0.8);
+    --cm-placeholder: #999;
+    --hover-decl: #555;
+    --hint-word: #30a;
+    --hint-keyword: #828;
+    --hint-active-bg: #def;
+    --hint-active: #555;
+    --hover-tooltip: #ffe;
+    --hover-tooltip-border: #888;
+    --hover-tooltip-shadow: gray;
+    --hover-tooltip-grad-start: rgba(0, 0, 0, 0);
+    --lint-message-border-bottom: #ccc;
+    --dialog-bg: #f5deb3;
+    --dialog: #333;
+    --dialog-border: #eee;
+    --marked-bg: #ff0;
+    --cm-layout: #a86;
+    --buttonsPanel-bg: #f4f4f4;
+    --border-bottom: #888;
+    --cw-toolbar-button: #aaa;
+    --cw-toolbar-button-hover: #777;
+    --cw-toolbar-button-active: #333;
+
+    /* doc.css */
+    --doc-popuout-a-border: #888;
+    --doc-tilde-clickable-bg: #f0f8ff;
+    --doc-tilde-clickable-hover-bg: #f8fcff;
+    --doc-before-admonition-collapsible: rgba(68, 138, 255, .8);
+    --doc-before-admonition-collapsible-expanded: rgba(68, 138, 255, .8);
+    --doc-after-admonition-title: rgba(0, 0, 0, 0.4);
+    --doc-tr-bg: #FFF;
+    --doc-helpacc-border-right: #ccc;
+
+    /* treedialog.css */
+    --treedialog-border: #000;
+    --treedialog-bg: #FFF;
+    --treedialog-shadow: #000;
+    --treedialog-piclink: black;
+    --treedialog-piclink-selected: yellow;
+
+    /* runner.css */
+    --infobox-bg: white;
+    --infobox-shadow: #000;
+    --stack-item-bg: #eee;
+    --stack-item-hover-bg: #ccc;
+    --stack-list-a: black;
+    --shape-info-hover-bg: #aaa;
+}
+
+.dark-theme {
+        /* codeworld.css */
+        --main-bg-color: #0F0F0F;
+        --message-bg-color: #003333;
+        --message-font-color: white;
+        --message-details-after-color: #777777;
+        --kb-shortcuts-table-border: #FFFFFF;
+        --cw-button-color: #000000;
+        --cw-button-bg-1:  #6363E9;
+        --cw-button-bg-2:  #E96363;
+        --cw-button-bg-3:  #8F8FEF;
+        --cw-button-bg-4:  #EF8F8F;
+        --cw-button-bg-5:  #E963D2;
+        --cw-button-bg-6:  #E9A663;
+        --cw-button-bg-7:  #EF8FDF;
+        --cw-button-bg-8:  #EFBF8F;
+        --cw-button-bg-9:  #E9BC63;
+        --cw-button-bg-10: #E963C7;
+        --cw-button-bg-11: #EFCF8F;
+        --cw-button-bg-12: #EF8FD7;
+        --cw-button-bg-13: #63D2E9;
+        --cw-button-bg-14: #6363E9;
+        --cw-button-bg-15: #8FDFEF;
+        --cw-button-bg-16: #8F8FEF;
+        --cw-button-bg-17: #E96363;
+        --cw-button-bg-18: #79D279;
+        --cw-button-bg-19: #EF8F8F;
+        --cw-button-bg-20: #9FDF9F;
+        --message-error-gutter:   red;
+        --message-warning-gutter: yellow;
+        --message-log-gutter:     blue;
+        --loader-border:          #000000;
+        --loader-border-top:      #000000;
+        --dropbox-bg:             #000000;
+        --dropbox-border:         #333333;
+        --ui-layout-resizer-dialog:  #BBBBBB;
+        --ui-layout-toggler:         #BBBBBB;
+        --recordIcon:                #4CFFFF;
+        --req-yes:                   #FF9BFF;
+        --req-no:                    #74FFFF;
+        --req-indet:                 #74FF74;
+        --req-details:               #AAAAAA;
+    
+        /* codeworld-cm.css */
+        --builtin:    #CCFF55;
+        --builtin-2:  #CC7733;
+        --keyword:    #77DD77;
+        --deprecated: #777777;
+        --variable:   #FFFFFF;
+        --variable2:  #CC7733;
+        --comment:    #EE99EE;
+        --string:     #9999FF;
+        --meta:       #AAAAAA;
+        --qualifier:  #999999;
+        --number:     #55EEFF;
+        --bracket:    #FFFFFF;
+        --bracket-0:  #7E47EB;
+        --bracket-1:  #A38529;
+        --bracket-2:  #33CC66;
+        --bracket-3:  #5C5CD6;
+        --bracket-4:  #D65C66;
+        --bracket-5:  #7EB82E;
+        --bracket-6:  #3399CC;
+        --bracket-7:  #00FFFF;
+        --matchingbracket:    rgba(255, 255, 255, 0.15);
+        --nonmatchingbracket: rgba(0, 255, 255, 0.5);
+        --matchhighlight:     rgba(128, 0, 128, 0.3);
+        --selection-highlight-scrollbar: rgba(160, 0, 160, 0.8);
+        --cm-placeholder:       #666666;
+        --hover-decl:           #AAAAAA;
+        --hint-word:            #CCFF55;
+        --hint-keyword:         #77DD77;
+        --hint-active-bg:       #221100;
+        --hint-active:          #AAAAAA;
+        --hover-tooltip:        #000011;
+        --hover-tooltip-border: #777777;
+        --hover-tooltip-shadow: #7F7F7F;
+        --hover-tooltip-grad-start: rgba(255, 255, 255, 0);
+        --lint-message-border-bottom: #333333;
+        --dialog-bg:                  #0A214C;
+        --dialog:                     #CCCCCC;
+        --dialog-border:              #111111;
+        --marked-bg:                  #0000FF;
+        --cm-layout:                  #557799;
+        --buttonsPanel-bg:            #0F0F0F;
+        --border-bottom:              #777777;
+        --cw-toolbar-button:          #555555;
+        --cw-toolbar-button-hover:    #888888;
+        --cw-toolbar-button-active:   #CCCCCC;
+    
+        /* doc.css */
+        --doc-popuout-a-border:        #777777;
+        --doc-tilde-clickable-bg:      #0F0700;
+        --doc-tilde-clickable-hover-bg:#070300;
+        --doc-before-admonition-collapsible: rgba(187, 116, 0, .8);
+        --doc-before-admonition-collapsible-expanded: rgba(187, 116, 0, .8);
+        --doc-after-admonition-title: rgba(255, 255, 255, 0.4);
+        --doc-tr-bg:#000000;
+        --doc-helpacc-border-right: #333333;
+    
+        /* treedialog.css */
+        --treedialog-border: #FFFFFF;
+        --treedialog-bg: #000000;
+        --treedialog-shadow: #FFFFFF;
+        --treedialog-piclink: #FFFFFF;
+        --treedialog-piclink-selected: #0000FF;
+    
+        /* runner.css */
+        --infobox-bg: #000000;
+        --infobox-shadow: #FFFFFF;
+        --stack-item-bg: #111111;
+        --stack-item-hover-bg: #333333;
+        --stack-list-a: #FFFFFF;
+        --shape-info-hover-bg: #555555;
 }

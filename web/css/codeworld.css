@@ -208,10 +208,14 @@ body {
     flex-shrink: 0;
 }
 
+.message-box {
+    color: var(--message-font-color);
+}
+
 .message-box details:not([open]) summary::after {
     content: "\a0\a0\a0...";
     font-weight: bold;
-    color: var(--message-details-color);
+    color: var(--message-details-after-color);
 }
 
 .message-box.error .message-gutter {

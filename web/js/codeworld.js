@@ -790,13 +790,12 @@ function moveHere() {
 }
 
 function toggleTheme() {
-    var root = document.getElementsByClassName('root')[0];
-    var editor = document.codeworldEditor;
-    root.classList.toggle("dark-theme");
-    if (root.classList.contains("dark-theme")){
-        window.codeworldEditor.setOption("theme", "ambiance")
+    let root = document.getElementsByClassName('root')[0];
+    root.classList.toggle('dark-theme');
+    if (root.classList.contains('dark-theme')){
+        window.codeworldEditor.setOption('theme', 'ambiance');
     } else {
-        window.codeworldEditor.setOption("theme", "default");
+        window.codeworldEditor.setOption('theme', 'default');
     }    
   }
 

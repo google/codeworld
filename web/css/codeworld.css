@@ -533,3 +533,15 @@ body {
     transition: opacity 1s linear;
     visibility: visible;
 }
+
+summary a, details a {
+    color: var(--link);
+}
+
+summary a:visited, details a:visited{
+    color: var(--vlink);
+}
+
+summary a:active, details a:active {
+    color: var(--alink);
+}

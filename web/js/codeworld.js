@@ -316,7 +316,7 @@ function initCodeworld() {
         {
             class: 'cw-toolbar-button mdi mdi-auto-fix',
             label: '',
-            title: 'Run',
+            title: 'Autocomplete',
             callback: cm => cm.execCommand('autocomplete')
         },
         ]

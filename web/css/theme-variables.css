@@ -16,6 +16,9 @@
 
 :root {
     /* codeworld.css */
+    --link: #0000FF;
+    --alink: #FF0000;
+    --vlink: #800080;
     --main-bg-color: #e5eff9;
     --message-bg-color: #fcc;
     --message-font-color: black;
@@ -137,32 +140,34 @@
 
 .dark-theme {
         /* codeworld.css */
+        --link: #FFFF00;
+        --alink: #00FFFF;
+        --vlink: #80FF80;
         --main-bg-color: #0F0F0F;
-        --message-bg-color: #003333;
+        --message-bg-color: #3d3d3d;
         --message-font-color: white;
         --message-details-after-color: #777777;
         --kb-shortcuts-table-border: #FFFFFF;
-        --cw-button-color: #000000;
-        --cw-button-bg-1:  #6363E9;
-        --cw-button-bg-2:  #E96363;
-        --cw-button-bg-3:  #8F8FEF;
-        --cw-button-bg-4:  #EF8F8F;
-        --cw-button-bg-5:  #E963D2;
-        --cw-button-bg-6:  #E9A663;
-        --cw-button-bg-7:  #EF8FDF;
-        --cw-button-bg-8:  #EFBF8F;
-        --cw-button-bg-9:  #E9BC63;
-        --cw-button-bg-10: #E963C7;
-        --cw-button-bg-11: #EFCF8F;
-        --cw-button-bg-12: #EF8FD7;
-        --cw-button-bg-13: #63D2E9;
-        --cw-button-bg-14: #6363E9;
-        --cw-button-bg-15: #8FDFEF;
-        --cw-button-bg-16: #8F8FEF;
-        --cw-button-bg-17: #E96363;
-        --cw-button-bg-18: #79D279;
-        --cw-button-bg-19: #EF8F8F;
-        --cw-button-bg-20: #9FDF9F;
+        --cw-button-bg-1: hsl(60, 75%, 25%);
+        --cw-button-bg-2: hsl(180, 75%, 25%);
+        --cw-button-bg-3: hsl(60, 75%, 15%);
+        --cw-button-bg-4: hsl(180, 75%, 15%);
+        --cw-button-bg-5: hsl(130, 75%, 25%);
+        --cw-button-bg-6: hsl(210, 75%, 25%);
+        --cw-button-bg-7: hsl(130, 75%, 15%);
+        --cw-button-bg-8: hsl(210, 75%, 15%);
+        --cw-button-bg-9: hsl(220, 75%, 25%);
+        --cw-button-bg-10: hsl(135, 75%, 15%);
+        --cw-button-bg-11: hsl(220, 75%, 15%);
+        --cw-button-bg-12: hsl(135, 75%, 15%);
+        --cw-button-bg-13: hsl(10, 75%, 25%);
+        --cw-button-bg-14: hsl(60, 75%, 25%);
+        --cw-button-bg-15: hsl(10, 75%, 15%);
+        --cw-button-bg-16: hsl(60, 75%, 15%);
+        --cw-button-bg-17: hsl(180, 75%, 25%);
+        --cw-button-bg-18: hsl(300, 50%, 25%);
+        --cw-button-bg-19: hsl(180, 75%, 15%);
+        --cw-button-bg-20: hsl(300, 50%, 15%);
         --message-error-gutter:   red;
         --message-warning-gutter: yellow;
         --message-log-gutter:     blue;

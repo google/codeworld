@@ -574,7 +574,7 @@ const Auth = (() => {
     const mine = {};
 
     function initLocalAuth() {
-        Promise.resolve($.getScript('/js/codeworld_local_auth.js'))
+        Promise.resolve($.getScript('js/codeworld_local_auth.js'))
             .then(() => onAuthInitialized(LocalAuth.init()))
             .catch(e => console.log('initLocalAuth failed'));
     }

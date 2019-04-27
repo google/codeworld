@@ -15,6 +15,7 @@ module Extras.Widget( guiDrawingOf, guiActivityOf
                     , withConversion, setConversion
                     -- * Examples
                     , widgetExample1, widgetExample2, widgetExample3
+                    , widgetExample4
                     )
 where
 
@@ -204,14 +205,6 @@ withConversion(conv,w) = w { conversion = conv }
 setConversion :: (Number -> Number) -> Widget -> Widget
 setConversion(conv)(w) = w { conversion = conv }
 
-{-
--- | Set the minimum and the maximum values. The current value
--- will then be set to the minimum.
-setValues :: (Number,Number) -> Widget -> Widget
-setValues(minv',maxv')(w) =
-  w { minv = minv', maxv = maxv', value_ = minv' }
--}
-
 -- | This is the example shown in the documentation for @guiDrawingOf@
 widgetExample1 :: Program
 widgetExample1 = guiDrawingOf(widgets,draw)
@@ -276,6 +269,35 @@ widgetExample3 = guiDrawingOf(widgets,draw)
             , withConversion(\v -> v * 30    , timer("angle"  ,-7,-9)) ]
 
   draw([l,a]) = rotated(translated(colored(solidRectangle(l,0.25),red),l/2,0),a)
+
+
+-- | This example shows a tree created by a recursive function
+widgetExample4 = guiDrawingOf(widgets,draw)
+  -- Example copied from code shared by cdsmith
+  where
+  -- depth = 6   : 6 levels of detail
+  -- decay = 0.5 : Each smaller branch decreases in size by 50%.
+  -- stem  = 0.5 : Branches occur 50% of the way up the stem.
+  -- angle = 30  : Branches point 30 degrees away from the stem.
+  widgets = [ slider("depth",-8,9.5).#setConversion(\p -> truncation(3 + 4*p))
+            , timer("decay",-8,8).#setConversion(\p -> 0.3 + 0.25*saw(p,5))
+            , timer("stem",-8,6.5).#setConversion(\p -> saw(p,17))
+            , slider("angle",-8,5).#setConversion(\p -> 5 + 30*p)
+            ]
+
+  draw([depth,decay,stem,angle]) = 
+    translated(scaled(branch(depth,decay,stem,angle), 2*decay, 2*decay),0,-5)
+
+  branch(0, _, _, _) = polyline[(0,0), (0,5)]
+  branch(depth, decay, stem, angle) = blank
+    & polyline[(0,0), (0, 5)]
+    & translated(smallBranch, 0, 5)
+    & translated(rotated(smallBranch,  angle), 0, stem * 5)
+    & translated(rotated(smallBranch, -angle), 0, stem * 5)
+    where
+    smallBranch = scaled(branch(depth-1, decay, stem, angle), 1-decay, 1-decay)
+
+  saw(t,p) = 1 - abs(2*abs(remainder(t,p))/p - 1)
 
 --------------------------------------------------------------------------------
 -- Internal
@@ -423,8 +445,10 @@ drawRandom(Widget{..}) = drawLabel & drawSelection & drawHighlight
   solid = scaled(solidRectangle(1,1),width,height)
   outline = scaled(rectangle(1,1),width,height)
   (x,y) = centerAt
-  msg = dilated(lettering(label <> ": " <> printed(value_.#conversion)),0.5)
-  drawLabel = translated(msg,x,y)
+  msg(txt) = translated(dilated(lettering(txt),0.5),x,y)
+  drawLabel
+    | highlight = msg(printed(value_.#conversion))
+    | otherwise = msg(label)
   drawSelection
     | selected = translated(colored(solid,grey),x,y)
     | otherwise = blank

@@ -10,7 +10,7 @@
 module Extras.Widget( guiDrawingOf, guiActivityOf
                     -- * Widgets
                     , Widget
-                    , toggle, button, slider, random, timer, counter
+                    , toggle, button, slider, randomBox, timer, counter
                     -- * Convenience functions
                     , withConversion, setConversion
                     -- * Examples
@@ -39,7 +39,7 @@ import Prelude
 -- >             , withConversion(\v -> 1 + 19 * v   , slider("height"       ,-7,-9))
 -- >             , withConversion(flipflop           , toggle("show circle"  ,-7,-5))
 -- >             , withConversion(flipflop           , button("show in green",-7,-3))
--- >             , withConversion(\v -> 0.2 + 0.8 * v, random("radius"       ,-7,-1))
+-- >             , withConversion(\v -> 0.2 + 0.8 * v, randomBox("radius"    ,-7,-1))
 -- >             ]
 -- > 
 -- >   flipflop(v) = truncation(1 + 2 * v)
@@ -60,19 +60,11 @@ import Prelude
 guiDrawingOf :: ([Widget],[Number] -> Picture) -> Program
 guiDrawingOf(widgetsUser,drawUser) = activityOf(initAll,updateAll,drawAll)
   where
-  initAll(rs) = widgets.$initRandom
-    where
-    widgets = [ w { randomPool = randomNumbers(r) } 
-              | w <- widgetsUser | r <- rs
-              ]
-  updateAll(ws,event) = ws.$updateWidget(event)
-  drawAll(ws) = pictures(ws.$drawWidget) & drawUser(ws.$value)
+  initAll(rs) = initRandom(widgetsUser,rs)
 
-initRandom(w@Widget{..})
-  | widget == Random = w { value_ = randomPool#1
-                         , randomPool = rest(randomPool,1) 
-                         }
-  | otherwise = w
+  updateAll(ws,event) = ws.$updateWidget(event)
+
+  drawAll(ws) = pictures(ws.$drawWidget) & drawUser(ws.$value)
 
 -- | The function @guiActivityOf@ is similar to @activityOf@, but it also
 -- takes in a list of widgets. The updating and drawing functions also
@@ -87,7 +79,7 @@ initRandom(w@Widget{..})
 -- >             , withConversion
 -- >               (\v -> truncation(1 + 2*v), toggle("show circle",-7,-5))
 -- >             , button("restart",-7,-3)
--- >             , random("new color",-7,-1)
+-- >             , randomBox("new color",-7,-1)
 -- >             ]
 -- > 
 -- > draw(values,(color@(RGB(r1,r2,r3)),angle,_)) = colored(base,color)
@@ -122,11 +114,8 @@ guiActivityOf :: ( [Widget]
 guiActivityOf(widgetsUser,initUser,updateUser,drawUser) =
   activityOf(initAll,updateAll,drawAll)
   where
-  initAll(rs) = (widgets.$initRandom,initUser(randomNumbers(rs#1)))
-    where
-    widgets = [ w { randomPool = randomNumbers(r) } 
-              | w <- widgetsUser | r <- rest(rs,1)
-              ]
+  initAll(rs) = ( initRandom(widgetsUser,rest(rs,1)) 
+                , initUser(randomNumbers(rs#1)))
   
   updateAll((widgets,state),event) =
     (newWidgets,updateUser(widgets.$value,state,event))
@@ -135,7 +124,16 @@ guiActivityOf(widgetsUser,initUser,updateUser,drawUser) =
     
   drawAll(widgets,state) =
     pictures(widgets.$drawWidget) & drawUser(widgets.$value,state)
-  
+
+initRandom(ws,rs) = [ t(w,r) | w <- ws | r <- rs ]
+  where
+  t(w,r) | isRandom(w) = let rp = randomNumbers(r)
+                         in w { value_ = rp#1, randomPool = rest(rp,1) }
+         | otherwise   = w
+
+isRandom(Widget{widget = Random}) = True
+isRandom(_                      ) = False
+
 -- | A button placed at the given location. While
 -- the button is pressed, the value produced is 0.5,
 -- but when the button is released, the value reverts
@@ -143,7 +141,7 @@ guiActivityOf(widgetsUser,initUser,updateUser,drawUser) =
 button :: (Text,Number,Number) -> Widget
 button(p) = (newWidget(p)) { widget = Button }
 
--- | A toggle (checkbox) with the given label at the given location
+-- | A toggle (checkbox) with the given label at the given location.
 -- When the box is not set, the value produced is 0. When the
 -- box is set, the value produced is 0.5
 toggle :: (Text,Number,Number) -> Widget
@@ -159,8 +157,8 @@ slider(p) = (newWidget(p)) { widget = Slider }
 -- Each time you click on it, the value will change. The
 -- value 1 is never produced, so the actual range of
 -- values is 0 to 0.99999...
-random :: (Text,Number,Number) -> Widget
-random(p) = (newWidget(p)) { widget = Random }
+randomBox :: (Text,Number,Number) -> Widget
+randomBox(p) = (newWidget(p)) { widget = Random }
 
 -- | A button that keeps incrementing the value each time you press it.
 -- The initial value is 1.
@@ -222,7 +220,7 @@ widgetExample1 = guiDrawingOf(widgets,draw)
             , withConversion(\v -> 1 + 19 * v   , slider("height"       ,-7,-9))
             , withConversion(flipflop           , toggle("show circle"  ,-7,-5))
             , withConversion(flipflop           , button("show in green",-7,-3))
-            , withConversion(\v -> 0.2 + 0.8 * v, random("radius"       ,-7,-1))
+            , withConversion(\v -> 0.2 + 0.8 * v, randomBox("radius"    ,-7,-1))
             ]
 
   flipflop(v) = truncation(1 + 2 * v)
@@ -246,7 +244,7 @@ widgetExample2 = guiActivityOf(widgets,init,update,draw)
             , withConversion
               (\v -> truncation(1 + 2*v), toggle("show circle",-7,-5))
             , button("restart",-7,-3)
-            , random("new color",-7,-1)
+            , randomBox("new color",-7,-1)
             ]
 
   draw(values,(color@(RGB(r1,r2,r3)),angle,_)) = colored(base,color)

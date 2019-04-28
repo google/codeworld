@@ -18,7 +18,8 @@ Description:
 Library
   Hs-source-dirs:      src
   Js-sources:          jsbits/deep_eq.js
-  Exposed-modules:     Prelude
+  Exposed-modules:     Prelude,
+                       Extras.Widget
   Other-modules:       Internal.Exports,
                        Internal.Num,
                        Internal.Prelude,

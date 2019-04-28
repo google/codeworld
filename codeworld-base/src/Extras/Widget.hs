@@ -3,6 +3,7 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ParallelListComp #-}
+{-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE RecordWildCards #-}
 
 -- | A very simple Graphical User Interface (GUI) for user interaction with

@@ -107,7 +107,7 @@ body {
     margin: 0px 0px 0px 0px;
     padding: 0px 0px 0px 0px;
     border-right: solid var(--doc-helpacc-border-right) 3px;
-
+    background: var(--doc-bg);
     font-family: Arial, Helvetica, sans-serif;
     font-size: 11pt;
 }
@@ -120,6 +120,7 @@ body {
     position: relative;
     overflow: auto;
     color: var(--doc-color);
+    background: var(--doc-bg);
 }
 
 #helpacc+#help {
@@ -155,4 +156,21 @@ div.ui-accordion-content {
 .md svg.diagram {
     fill: var(--doc-svg-fill) !important;
     stroke: var(--doc-svg-stroke) !important;
+}
+
+/* Haskell-mode. */
+.src {
+    background: var(--haddock-p-bg) !important;
+}
+
+table.info {
+    background-color: var(--haddock-lang-nameplate) !important;
+}
+
+#interface .src .selflink {
+    background: var(--haddock-selflink-bg) !important;
+}
+
+#table-of-contents {
+    background: var(--haddock-toc-bg) !important;
 }

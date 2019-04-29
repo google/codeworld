@@ -122,6 +122,7 @@
     --doc-after-admonition-title: rgba(0, 0, 0, 0.4);
     --doc-tr-bg: #FFF;
     --doc-tr-even-bg:#EEE;
+    --doc-bg: #FFFFFF;
     --doc-helpacc-border-right: #ccc;
     --doc-accordion-background: #F6F6F6;
     --doc-accordion-color: #454545;
@@ -130,6 +131,10 @@
     --doc-color: #000000;
     --doc-svg-fill: #000000;
     --doc-svg-stroke: #000000;
+    --haddock-p-bg: #F0F0F0;
+    --haddock-lang-nameplate: #fff;
+    --haddock-selflink-bg: #f0f0f0;
+    --haddock-toc-bg: #faf9dc;
 
     /* treedialog.css */
     --treedialog-border: #000;
@@ -249,6 +254,7 @@
         --doc-after-admonition-title: rgba(255, 255, 255, 0.4);
         --doc-tr-odd-bg:#000000;
         --doc-tr-even-bg:#444444;
+        --doc-bg: #000000;
         --doc-helpacc-border-right: #333333;
         --doc-accordion-background: #090909;
         --doc-accordion-color: #BABABA;
@@ -257,6 +263,10 @@
         --doc-color: #FFFFFF;
         --doc-svg-fill: #FFFFFF;
         --doc-svg-stroke: #FFFFFF;
+        --haddock-p-bg: #333333;
+        --haddock-lang-nameplate: #000000;
+        --haddock-selflink-bg: #333333;
+        --haddock-toc-bg: #050623;
     
         /* treedialog.css */
         --treedialog-border: #FFFFFF;

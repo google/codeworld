@@ -398,6 +398,7 @@ body {
     position: fixed;
     top: 3vh;
     left: 10vw;
+    background-color: var(--helpdoc-background-color);
 }
 
 .swal2-popup.helpdoc * {

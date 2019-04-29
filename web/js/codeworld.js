@@ -819,12 +819,18 @@ function changeFontSize(incr) {
 }
 
 function help() {
-    const url = `doc.html?shelf=help/${window.buildMode}.shelf`;
+    let url = `doc.html?shelf=help/${window.buildMode}.shelf`;
+    let root = document.getElementsByClassName('root')[0];
+    let customClass = 'helpdoc';
+    if (root.classList.contains('dark-theme')) {
+        url += '&theme=dark-theme';
+        customClass += ' dark-theme';
+    }
 
     sweetAlert({
         html: `<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="${ 
             url}"></iframe>`,
-        customClass: 'helpdoc',
+        customClass: customClass,
         allowEscapeKey: true,
         allowOutsideClick: true,
         showConfirmButton: false,

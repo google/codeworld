@@ -34,12 +34,12 @@ body {
     border-radius: 5px;
 }
 
-.md pre.tilde.clickable {
-    background-color: var(--doc-tilde-clickable);
+.md pre.tilde {
+    background-color: var(--doc-tilde-bg) !important;
 }
 
 .md pre.tilde.clickable:hover {
-    background-color: var(--doc-tilde-clickable-hover-bg);
+    background-color: var(--doc-tilde-clickable-hover-bg) !important;
     cursor: pointer;
 }
 
@@ -91,8 +91,12 @@ body {
     display: none;
 }
 
+.md table.table tr:nth-child(even) {
+    background: var(--doc-tr-even-bg) !important;
+}
+
 .md table.table tr:nth-child(odd) {
-    background: var(--doc-tr-bg)
+    background: var(--doc-tr-odd-bg);
 }
 
 #helpacc {
@@ -115,6 +119,7 @@ body {
 #help {
     position: relative;
     overflow: auto;
+    color: var(--doc-color);
 }
 
 #helpacc+#help {
@@ -127,4 +132,27 @@ body {
 
 #help .subs.instances {
     display: none;
+}
+
+h3.ui-accordion-header {
+    color: var(--doc-accordion-color);
+    background: var(--doc-accordion-background);
+}
+
+h3.ui-accordion-header-active {
+    color: var(--doc-expanded-accordion-color);
+    background: var(--doc-expanded-accordion-background);
+}
+
+div.ui-accordion-content {
+    background: var(--doc-accordion-background);
+}
+
+.ui-widget-content a {
+    color: var(--doc-accordion-color);
+}
+
+.md svg.diagram {
+    fill: var(--doc-svg-fill) !important;
+    stroke: var(--doc-svg-stroke) !important;
 }

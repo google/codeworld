@@ -43,6 +43,13 @@ function loadPosition() {
         position = JSON.parse(savedPosition);
     }
 }
+
+function setTheme(el) {
+    if (params.get('theme')) {
+        el.classList.add(params.get('theme'));
+    }
+}
+
 window.onscroll = event => {
     position.scrollLeft = event.target.scrollingElement.scrollLeft;
     position.scrollTop = event.target.scrollingElement.scrollTop;
@@ -146,6 +153,7 @@ window.onscroll = event => {
         const contents = document.createElement('div');
         contents.id = 'helpcontents';
         contents.classList.add('contents');
+        setTheme(contents);
 
         const elems = body.getElementsByTagName('*');
 
@@ -240,6 +248,7 @@ window.onscroll = event => {
 
     function setContent(elem) {
         const help = document.getElementById('help');
+        setTheme(help);
         while (help.firstChild) {
             help.removeChild(help.firstChild);
         }
@@ -314,6 +323,7 @@ window.onscroll = event => {
 
         const acc = document.createElement('div');
         acc.id = 'helpacc';
+        setTheme(acc);
 
         let paneNum = 0;
         for (const doc in shelf.named) {

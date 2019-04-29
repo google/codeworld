@@ -64,6 +64,7 @@
     --obsolete-code-alert-grad-point2: rgba(0, 0, 0, 0.6);
     --obsolete-code-alert-grad-point3: rgba(0, 0, 0, 0);
     --obsolete-code-alert-grad-point4: rgba(0, 0, 0, 0);
+    --helpdoc-background-color: #FFFFFF;
 
     /* codeworld-cm.css */
     --builtin: #30a;
@@ -120,7 +121,15 @@
     --doc-before-admonition-collapsible-expanded: rgba(68, 138, 255, .8);
     --doc-after-admonition-title: rgba(0, 0, 0, 0.4);
     --doc-tr-bg: #FFF;
+    --doc-tr-even-bg:#EEE;
     --doc-helpacc-border-right: #ccc;
+    --doc-accordion-background: #F6F6F6;
+    --doc-accordion-color: #454545;
+    --doc-expanded-accordion-background: #007FFF;
+    --doc-expanded-accordion-color: #FFFFFF;
+    --doc-color: #000000;
+    --doc-svg-fill: #000000;
+    --doc-svg-stroke: #000000;
 
     /* treedialog.css */
     --treedialog-border: #000;
@@ -182,6 +191,7 @@
         --req-no:                    #74FFFF;
         --req-indet:                 #74FF74;
         --req-details:               #AAAAAA;
+        --helpdoc-background-color:  #000000;
     
         /* codeworld-cm.css */
         --builtin:    #CCFF55;
@@ -232,13 +242,21 @@
     
         /* doc.css */
         --doc-popuout-a-border:        #777777;
-        --doc-tilde-clickable-bg:      #0F0700;
-        --doc-tilde-clickable-hover-bg:#070300;
+        --doc-tilde-bg:      #0F0700;
+        --doc-tilde-clickable-hover-bg:#333333;
         --doc-before-admonition-collapsible: rgba(187, 116, 0, .8);
         --doc-before-admonition-collapsible-expanded: rgba(187, 116, 0, .8);
         --doc-after-admonition-title: rgba(255, 255, 255, 0.4);
-        --doc-tr-bg:#000000;
+        --doc-tr-odd-bg:#000000;
+        --doc-tr-even-bg:#444444;
         --doc-helpacc-border-right: #333333;
+        --doc-accordion-background: #090909;
+        --doc-accordion-color: #BABABA;
+        --doc-expanded-accordion-background: #FF8000;
+        --doc-expanded-accordion-color: #000000;
+        --doc-color: #FFFFFF;
+        --doc-svg-fill: #FFFFFF;
+        --doc-svg-stroke: #FFFFFF;
     
         /* treedialog.css */
         --treedialog-border: #FFFFFF;

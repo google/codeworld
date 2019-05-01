@@ -230,6 +230,10 @@ li.CodeMirror-hint-active {
     -webkit-transition: opacity .4s;
 }
 
+.function-tooltip-styling .hover-decl {
+    white-space: nowrap;
+}
+
 .CodeMirror-hover-tooltip {
     opacity: 0;
     position: fixed;

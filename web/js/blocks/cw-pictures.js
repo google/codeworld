@@ -100,6 +100,13 @@ Blockly.Blocks['cwCombine'] = {
             }
             if (itemBlock.valueConnection_) {
                 input.connection.connect(itemBlock.valueConnection_);
+            } else {
+                const blankBlock = this.workspace.newBlock('cwBlank');
+                blankBlock.setShadow(true);
+                blankBlock.initSvg();
+                blankBlock.render();
+                input.connection.connect(blankBlock.outputConnection);
+
             }
             itemBlock = itemBlock.nextConnection &&
                 itemBlock.nextConnection.targetBlock();

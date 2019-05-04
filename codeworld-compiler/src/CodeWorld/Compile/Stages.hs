@@ -233,6 +233,7 @@ isGoodExpAppRhs :: Exp l -> Bool
 isGoodExpAppRhs (Paren _ _) = True
 isGoodExpAppRhs (Tuple _ _ _) = True
 isGoodExpAppRhs (List _ _) = True
+isGoodExpAppRhs (Con _ (Special _ (UnitCon _))) = True
 isGoodExpAppRhs (ParArray _ _) = True
 isGoodExpAppRhs (EnumFrom _ _) = True
 isGoodExpAppRhs (EnumFromThen _ _ _) = True
@@ -249,6 +250,7 @@ isGoodPatAppRhs :: Pat l -> Bool
 isGoodPatAppRhs (PParen _ _) = True
 isGoodPatAppRhs (PTuple _ _ _) = True
 isGoodPatAppRhs (PList _ _) = True
+isGoodPatAppRhs (PApp _ (Special _ (UnitCon _)) []) = True
 isGoodPatAppRhs _ = False
 
 -- | Determines whether an expression is likely to be usable as a function

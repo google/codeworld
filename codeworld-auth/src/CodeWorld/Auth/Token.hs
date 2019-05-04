@@ -48,7 +48,6 @@ import           Prelude hiding (exp)
 import           Text.Read (readMaybe)
 import           Web.JWT
                     ( ClaimsMap(..)
-                    , JSON
                     , JWTClaimsSet(..)
                     , Signer(..)
                     , StringOrURI
@@ -99,17 +98,17 @@ refreshToken issuer issuedAt userId tokenId =
     let expiresAt = addUTCTime refreshTokenExpiryPeriod issuedAt
     in RefreshToken issuer issuedAt expiresAt userId tokenId
 
-renderAccessToken :: Signer -> AccessToken -> Maybe JSON
+renderAccessToken :: Signer -> AccessToken -> Maybe Text
 renderAccessToken signer (AccessToken issuer issuedAt expiresAt userId) =
     renderHelper signer issuer issuedAt expiresAt userId $
         Map.fromList [ ("token-type", String "access") ]
 
-renderRefreshToken :: Signer -> RefreshToken -> Maybe JSON
+renderRefreshToken :: Signer -> RefreshToken -> Maybe Text
 renderRefreshToken signer (RefreshToken issuer issuedAt expiresAt userId (TokenId tokenId)) =
     renderHelper signer issuer issuedAt expiresAt userId $
         Map.fromList [ ("token-type", String "refresh"), ("token-id", String $ (Text.pack . show) tokenId) ]
 
-renderHelper :: Signer -> Issuer -> UTCTime -> UTCTime -> UserId -> Map Text Value -> Maybe JSON
+renderHelper :: Signer -> Issuer -> UTCTime -> UTCTime -> UserId -> Map Text Value -> Maybe Text
 renderHelper signer issuer issuedAt expiresAt (UserId userIdRaw) extraClaims = do
     issuedAtNum <- utcTimeToNumericDate issuedAt
     expiresAtNum <- utcTimeToNumericDate expiresAt
@@ -120,16 +119,17 @@ renderHelper signer issuer issuedAt expiresAt (UserId userIdRaw) extraClaims = d
             , iat = Just issuedAtNum
             , unregisteredClaims = ClaimsMap extraClaims
             }
-    return $ encodeSigned signer claimsSet
+    return $ encodeSigned signer mempty claimsSet
+   
 
-parseAccessToken :: Signer -> JSON -> Maybe AccessToken
+parseAccessToken :: Signer -> Text -> Maybe AccessToken
 parseAccessToken signer j = do
     (tokenType, issuer, issuedAt, expiresAt, userId, _) <- parseHelper signer j
     case tokenType of
         Access -> Just $ AccessToken issuer issuedAt expiresAt userId
         _ -> Nothing
 
-parseRefreshToken :: Signer -> JSON -> Maybe RefreshToken
+parseRefreshToken :: Signer -> Text -> Maybe RefreshToken
 parseRefreshToken signer j = do
     (tokenType, issuer, issuedAt, expiresAt, userId, extraClaims) <- parseHelper signer j
     case tokenType of
@@ -140,7 +140,7 @@ parseRefreshToken signer j = do
             Just $ RefreshToken issuer issuedAt expiresAt userId tokenId
         _ -> Nothing
 
-parseHelper :: Signer -> JSON -> Maybe (TokenType, Issuer, UTCTime, UTCTime, UserId, Map Text Value)
+parseHelper :: Signer -> Text -> Maybe (TokenType, Issuer, UTCTime, UTCTime, UserId, Map Text Value)
 parseHelper signer j = do
     jwt <- decodeAndVerifySignature signer j
     let c = claims jwt

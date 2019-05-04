@@ -164,7 +164,7 @@ function initCodeworld() {
             'Ctrl-Up': changeFontSize(1),
             'Ctrl-Down': changeFontSize(-1)
         },
-        textHover: onHover,
+        textHover: window.buildMode == 'codeworld' ? onHover : null,
         gutters: ['CodeMirror-lint-markers'],
         lint: {
             getAnnotations: (text, callback) => {
@@ -322,55 +322,8 @@ function initCodeworld() {
         ]
     });
     window.codeworldEditor.refresh();
-    window.codeworldEditor.on('cursorActivity', () => {
-        if (window.buildMode !== 'codeworld') {
-            return;
-        }
-
-        const prevDiv = document.getElementById('function-details');
-        if (prevDiv) prevDiv.remove();
-
-        const cursor = window.codeworldEditor.getCursor();
-        const currentToken = window.codeworldEditor.getTokenAt(cursor);
-        const functions = currentToken.state.contexts.filter(ctx => ctx.functionName);
-
-        if (!functions.length) return;
-
-        const {
-            functionName,
-            argIndex,
-            column
-        } = functions.pop();
-        const keywordData = window.codeWorldSymbols[functionName];
-
-        // don't show tooltip if function details or argument types are not known
-        if (!keywordData || keywordData.declaration === functionName) return;
-
-        const topDiv = document.createElement('div');
-
-        topDiv.title = functionName;
-        topDiv.id = 'function-details';
-
-        const docDiv = document.createElement('div');
-        docDiv.classList.add('function-tooltip-styling');
-
-        const annotation = document.createElement('div');
-        const returnedVal = renderDeclaration(annotation, functionName, keywordData, 9999, argIndex);
-        //TODO: Remove the if block once a better function parser is integrated.
-        if (returnedVal === null) {
-            annotation.remove();
-            topDiv.remove();
-            return;
-        }
-        annotation.className = 'hover-decl';
-        docDiv.appendChild(annotation);
-
-        topDiv.appendChild(docDiv);
-        window.codeworldEditor.addWidget({
-            line: cursor.line,
-            ch: column - functionName.length
-        }, topDiv, true, 'above', 'near');
-    });
+    window.codeworldEditor.on('cursorActivity', updateArgHelp);
+    window.codeworldEditor.on('refresh', updateArgHelp);
 
     CodeMirror.commands.save = cm => {
         saveProject();
@@ -409,6 +362,56 @@ function initCodeworld() {
             window.codeworldEditor.setSize();
         }, 1000);
     };
+}
+
+function updateArgHelp() {
+    if (window.buildMode !== 'codeworld') {
+        return;
+    }
+
+    const prevDiv = document.getElementById('function-details');
+    if (prevDiv) prevDiv.remove();
+
+    const cursor = window.codeworldEditor.getCursor();
+    const currentToken = window.codeworldEditor.getTokenAt(cursor);
+    const functions = currentToken.state.contexts.filter(ctx => ctx.functionName);
+
+    if (!functions.length) return;
+
+    const {
+        functionName,
+        argIndex,
+        column
+    } = functions.pop();
+    const keywordData = window.codeWorldSymbols[functionName];
+
+    // don't show tooltip if function details or argument types are not known
+    if (!keywordData || keywordData.declaration === functionName) return;
+
+    const topDiv = document.createElement('div');
+
+    topDiv.title = functionName;
+    topDiv.id = 'function-details';
+
+    const docDiv = document.createElement('div');
+    docDiv.classList.add('function-tooltip-styling');
+
+    const annotation = document.createElement('div');
+    const returnedVal = renderDeclaration(annotation, functionName, keywordData, 9999, argIndex);
+    //TODO: Remove the if block once a better function parser is integrated.
+    if (returnedVal === null) {
+        annotation.remove();
+        topDiv.remove();
+        return;
+    }
+    annotation.className = 'hover-decl';
+    docDiv.appendChild(annotation);
+
+    topDiv.appendChild(docDiv);
+    window.codeworldEditor.addWidget({
+        line: cursor.line,
+        ch: column - functionName.length,
+    }, topDiv, false, 'above', 'near');
 }
 
 class CanvasRecorder {

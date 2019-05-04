@@ -14,6 +14,7 @@
     "Part 9: Modeling":    "help/GuideUnit9.md",
     "Appendix: Editor":    "help/editor.md",
     "Appendix: Examples":  "help/examples.md",
-    "Appendix: Reference": "doc/Prelude.html"
+    "Appendix: Reference": "doc/Prelude.html",
+    "Appendix: Reference (Extras.Widget)": "doc/Extras-Widget.html"
   }
 }

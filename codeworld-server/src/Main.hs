@@ -529,7 +529,7 @@ galleryItemFromProject mode@(BuildMode modeName) folder name = do
 
     return GalleryItem {
         galleryItemName = name,
-        galleryItemURL = "https://code.world/run.html" <>
+        galleryItemURL = "run.html" <>
                          "?mode=" <> T.pack modeName <>
                          "&dhash=" <> unDeployId deployId,
         galleryItemCode = Just (baseURL <> "#" <> unProgramId programId) }

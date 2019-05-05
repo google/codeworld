@@ -96,7 +96,7 @@ main = do
 makeContext :: IO Context
 makeContext = do
     timeCache <- newTimeCache simpleTimeFormat
-    let logType = LogFileNoRotate "log/user_reports.log" 0
+    let logType = LogFileNoRotate ("data" </> "user_reports.log") 0
     ctx <- Context <$> (getAuthConfig =<< getCurrentDirectory)
                    <*> MSem.new maxSimultaneousCompiles
                    <*> MSem.new maxSimultaneousErrorChecks

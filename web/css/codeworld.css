@@ -201,6 +201,10 @@ body {
     padding-bottom: 1em;
 }
 
+.message-content {
+    width: 100%;
+}
+
 .message-gutter {
     background-position: center top;
     background-repeat: no-repeat;

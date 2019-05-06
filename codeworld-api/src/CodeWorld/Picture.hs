@@ -316,7 +316,7 @@ translated = Translate (getDebugSrcLoc callStack)
 scaled :: HasCallStack => Double -> Double -> Picture -> Picture
 scaled = Scale (getDebugSrcLoc callStack)
 
--- | A picture scaled by these factors.
+-- | A picture scaled by this factor.
 dilated :: HasCallStack => Double -> Picture -> Picture
 dilated = Dilate (getDebugSrcLoc callStack)
 

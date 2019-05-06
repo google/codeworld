@@ -509,8 +509,8 @@ body {
     background: linear-gradient(to bottom,
         var(--obsolete-code-alert-grad-point1) 0px,
         var(--obsolete-code-alert-grad-point2) 2em,
-        var(--obsolete-code-alert-grad-point3) 3em,
-        var(--obsolete-code-alert-grad-point4) 100%);
+        rgba(0, 0, 0, 0) 3em,
+        rgba(0, 0, 0, 0) 100%);
     color: var(--obsolete-code-alert-color);
     padding: 0.5em;
     text-align: right;

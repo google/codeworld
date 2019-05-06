@@ -158,7 +158,6 @@ div.ui-accordion-content {
     stroke: var(--doc-svg-stroke) !important;
 }
 
-/* Haskell-mode. */
 .src {
     background: var(--haddock-p-bg) !important;
 }

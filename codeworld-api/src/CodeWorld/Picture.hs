@@ -312,11 +312,11 @@ coloured = colored
 translated :: HasCallStack => Double -> Double -> Picture -> Picture
 translated = Translate (getDebugSrcLoc callStack)
 
--- | A picture scaled by these factors.
+-- | A picture scaled by these factors in the x and y directions.
 scaled :: HasCallStack => Double -> Double -> Picture -> Picture
 scaled = Scale (getDebugSrcLoc callStack)
 
--- | A picture scaled by these factors.
+-- | A picture scaled uniformly in all directions by this scale factor.
 dilated :: HasCallStack => Double -> Picture -> Picture
 dilated = Dilate (getDebugSrcLoc callStack)
 

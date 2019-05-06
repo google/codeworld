@@ -228,6 +228,14 @@ body {
     border-left: 2px solid blue;
 }
 
+.message-box .report-unhelpful {
+    float: right;
+    white-space: nowrap;
+    font-family: sans-serif;
+    font-style: italic;
+    font-weight: bold;
+}
+
 .cw-button {
     border-radius: 4px;
     cursor: pointer;

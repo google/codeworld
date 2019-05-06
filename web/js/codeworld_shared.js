@@ -1269,13 +1269,16 @@ function printMessage(type, message) {
 
     messageContent.innerHTML = '';
 
+    let firstLine;
     if (lines.length < 2) {
         const singleLineMsg = document.createElement('div');
         singleLineMsg.innerHTML = formatted;
         messageContent.appendChild(singleLineMsg);
+        firstLine = messageContent;
     } else {
         const summary = document.createElement('summary');
         summary.innerHTML = lines[0];
+        firstLine = summary;
 
         const details = document.createElement('details');
         details.setAttribute('open', '');
@@ -1285,8 +1288,39 @@ function printMessage(type, message) {
         messageContent.appendChild(details);
     }
 
+    if (type === 'error' || type === 'warning') {
+        const reportLink = document.createElement('a');
+        reportLink.setAttribute('href', '#');
+        reportLink.classList.add('report-unhelpful');
+        reportLink.onclick = event => sendUnhelpfulReport(event, message);
+        reportLink.innerText = 'Not helpful?';
+        firstLine.appendChild(reportLink);
+    }
+
     outputDiv.appendChild(box);
     outputDiv.scrollTop = outputDiv.scrollHeight;
+}
+
+function sendUnhelpfulReport(event, message) {
+    sweetAlert({
+        title: Alert.title('Report unhelpful message?', 'mdi-flag-variant'),
+        text: 'The report will include your code.',
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'No',
+        showConfirmButton: true,
+        showCancelButton: true
+    }).then(result => {
+        if (!result || !result.value) return;
+
+        const data = new FormData();
+        data.append('message', window.location.href + "\n" + message);
+        sendHttp('POST', 'log', data);
+        sweetAlert({
+            type: 'success',
+            text: 'Thank you for your feedback.'
+        });
+    });
+    event.preventDefault();
 }
 
 function clearMessages() {

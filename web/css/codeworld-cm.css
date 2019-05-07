@@ -414,3 +414,16 @@ span:not(.cm-layout)+span.cm-layout:before {
     transform: translate(1px, 1px);
     color: var(--cw-toolbar-button-active);
 }
+
+
+.cm-s-default.CodeMirror {
+    line-height: 1.4em;
+}
+
+.cm-s-default .CodeMirror-linenumber {
+    padding: 0 5px;
+}
+
+.cm-s-ambiance .cm-comment {
+    font-style: normal;
+}

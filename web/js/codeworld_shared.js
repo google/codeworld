@@ -1303,17 +1303,20 @@ function printMessage(type, message) {
 
 function sendUnhelpfulReport(event, message) {
     sweetAlert({
-        title: Alert.title('Report unhelpful message?', 'mdi-flag-variant'),
+        title: Alert.title('Report unhelpful message:', 'mdi-flag-variant'),
         text: 'The report will include your code.',
-        confirmButtonText: 'Yes',
-        cancelButtonText: 'No',
+        input: 'textarea',
+        inputPlaceholder: 'Anything else to add?',
         showConfirmButton: true,
         showCancelButton: true
     }).then(result => {
-        if (!result || !result.value) return;
+        if (!result || result.dismiss !== sweetAlert.DismissReason.confirm) return;
 
         const data = new FormData();
-        data.append('message', window.location.href + "\n" + message);
+        let report = window.location.href;
+        if (result.value) report += '\n' + result.value;
+        report += '\n' + message;
+        data.append('message', report);
         sendHttp('POST', 'log', data);
         sweetAlert({
             type: 'success',

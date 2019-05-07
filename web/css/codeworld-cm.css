@@ -25,73 +25,73 @@
 
 pre.cm-s-default span.cm-builtin,
 div.CodeMirror span.cm-builtin {
-    color: #30a;
+    color: var(--builtin);
     font-weight: bold
 }
 
 pre.cm-s-default span.cm-builtin-2,
 div.CodeMirror span.cm-builtin-2 {
-    color: #38c;
+    color: var(--builtin-2);
     font-weight: bold
 }
 
 pre.cm-s-default span.cm-keyword,
 div.CodeMirror span.cm-keyword {
-    color: #828;
+    color: var(--keyword);
     font-weight: bold
 }
 
 pre.cm-s-default span.cm-deprecated,
 div.CodeMirror span.cm-deprecated {
-    color: #888;
+    color: var(--deprecated);
     font-weight: bold;
     text-decoration: line-through
 }
 
 pre.cm-s-default span.cm-variable,
 div.CodeMirror span.cm-variable {
-    color: black;
+    color: var(--variable);
 }
 
 pre.cm-s-default span.cm-variable-2,
 div.CodeMirror span.cm-variable-2 {
-    color: #38c;
+    color: var(--variable2);
 }
 
 pre.cm-s-default span.cm-comment,
 div.CodeMirror span.cm-comment {
-    color: #161;
+    color: var(--comment);
 }
 
 pre.cm-s-default span.cm-string,
 div.CodeMirror span.cm-string {
-    color: #660;
+    color: var(--string);
 }
 
 pre.cm-s-default span.cm-meta,
 div.CodeMirror span.cm-meta {
-    color: #555;
+    color: var(--meta);
 }
 
 pre.cm-s-default span.cm-qualifier,
 div.CodeMirror span.cm-qualifier {
-    color: #666;
+    color: var(--qualifier);
 }
 
 pre.cm-s-default span.cm-number,
 div.CodeMirror span.cm-number {
-    color: #a10;
+    color: var(--number);
 }
 
 pre.cm-s-default span.cm-bracket,
 div.CodeMirror span.cm-bracket {
-    color: #000;
+    color: var(--bracket);
 }
 
 pre.cm-s-default span.cm-bracket-0,
 div.CodeMirror span.cm-bracket-0 {
     font-weight: bold;
-    color: hsl(80, 80%, 40%);
+    color: var(--bracket-0);
     font-size: 1.25em;
     letter-spacing: -0.12em;
 }
@@ -103,7 +103,7 @@ span.cm-bracket-0.cm-layout:before {
 pre.cm-s-default span.cm-bracket-1,
 div.CodeMirror span.cm-bracket-1 {
     font-weight: bold;
-    color: hsl(225, 60%, 60%);
+    color: var(--bracket-1);
     font-size: 1.12em;
     letter-spacing: -0.064em;
 }
@@ -115,59 +115,59 @@ span.cm-bracket-1.cm-layout:before {
 pre.cm-s-default span.cm-bracket-2,
 div.CodeMirror span.cm-bracket-2 {
     font-weight: bold;
-    color: hsl(320, 60%, 50%);
+    color: var(--bracket-2);
 }
 
 pre.cm-s-default span.cm-bracket-3,
 div.CodeMirror span.cm-bracket-3 {
     font-weight: bold;
-    color: hsl(60, 60%, 40%);
+    color: var(--bracket-3);
 }
 
 pre.cm-s-default span.cm-bracket-4,
 div.CodeMirror span.cm-bracket-4 {
     font-weight: bold;
-    color: hsl(175, 60%, 40%);
+    color: var(--bracket-4);
 }
 
 pre.cm-s-default span.cm-bracket-5,
 div.CodeMirror span.cm-bracket-5 {
     font-weight: bold;
-    color: hsl(265, 60%, 55%);
+    color: var(bracket-5);
 }
 
 pre.cm-s-default span.cm-bracket-6,
 div.CodeMirror span.cm-bracket-6 {
     font-weight: bold;
-    color: hsl(20, 60%, 50%);
+    color: var(bracket-6);
 }
 
 pre.cm-s-default span.cm-bracket-7,
 div.CodeMirror span.cm-error {
-    color: #f00;
+    color: var(bracket-7);
 }
 
 /* Make bracket matching look nicer. */
 div.CodeMirror span.CodeMirror-matchingbracket {
-    outline: solid rgba(0, 0, 0, 0.15) 0.1em
+    outline: solid var(--matchingbracket) 0.1em
 }
 
 div.CodeMirror span.CodeMirror-nonmatchingbracket {
-    outline: solid rgba(255, 0, 0, 0.5) 0.1em
+    outline: solid var(--nonmatchingbracket) 0.1em
 }
 
 /* Highlighting for matches to the selected word. */
 div.CodeMirror span.cm-matchhighlight {
-    background-color: rgba(128, 255, 128, 0.3)
+    background-color: var(--matchhighlight);
 }
 
 .CodeMirror-selection-highlight-scrollbar {
-    background-color: rgba(95, 255, 95, 0.8)
+    background-color: var(--selection-highlight-scrollbar)
 }
 
 /* Grayed-out style for the empty editor placeholder. */
 .CodeMirror pre.CodeMirror-placeholder {
-    color: #999;
+    color: var(--cm-placeholder);
 }
 
 /* Style overrides for the autocomplete box and doc-on-hover. */
@@ -178,7 +178,7 @@ div.CodeMirror span.cm-matchhighlight {
 
 .CodeMirror-hint,
 .hover-decl {
-    color: #555;
+    color: var(--hover-decl);
     font-family: "Source Code Pro", monospace;
     font-size: 9pt;
     white-space: pre-line;
@@ -192,13 +192,13 @@ div.CodeMirror span.cm-matchhighlight {
 .CodeMirror-hint .hint-word,
 .hover-decl .hint-word {
     font-weight: bold;
-    color: #30a;
+    color: var(--hint-word);
 }
 
 .CodeMirror-hint .hint-keyword,
 .hover-decl .hint-keyword {
     font-weight: bold;
-    color: #828;
+    color: var(--hint-keyword);
 }
 
 .CodeMirror-hint {
@@ -206,18 +206,18 @@ div.CodeMirror span.cm-matchhighlight {
 }
 
 li.CodeMirror-hint-active {
-    background: #def;
-    color: #555;
+    background: var(--hint-active-bg);
+    color: var(--hint-active);
 }
 
 .CodeMirror-hover-tooltip,
 .CodeMirror-lint-tooltip,
 .hint-description,
 .function-tooltip-styling {
-    background-color: #ffe;
+    background-color: var(--hover-tooltip);
     border-radius: 0.5em;
-    border: 1px solid #888;
-    box-shadow: 0.1em 0.1em 0.1em gray;
+    border: 1px solid var(--hover-tooltip-border);
+    box-shadow: 0.1em 0.1em 0.1em var(--hover-tooltip-shadow);
     min-height: 1em;
     max-height: 20em;
     min-width: 5em;
@@ -258,16 +258,16 @@ div.fade {
 
 .CodeMirror-hover-tooltip div.fade {
     background-image: linear-gradient(to bottom,
-        rgba(0, 0, 0, 0) 0em,
-        rgba(0, 0, 0, 0) 17em,
-        #ffe 20em);
+        var(--hover-tooltip-grad-start) 0em,
+        var(--hover-tooltip-grad-start) 17em,
+        var(--hover-tooltip) 20em);
 }
 
 .hint-description div.fade {
     background-image: linear-gradient(to bottom,
-        rgba(0, 0, 0, 0) 0em,
-        rgba(0, 0, 0, 0) 11.2em,
-        #ffe 14.2em);
+        var(--hover-tooltip-grad-start) 0em,
+        var(--hover-tooltip-grad-start) 11.2em,
+        var(--hover-tooltip) 14.2em);
 }
 
 .hover-doc {
@@ -283,7 +283,7 @@ div.CodeMirror-lint-message-error {
 div.CodeMirror-lint-message-warning:not(:last-child):after,
 div.CodeMirror-lint-message-error:not(:last-child):after {
     content: "";
-    border-bottom: solid #ccc 1px;
+    border-bottom: solid var(--lint-message-border-bottom) 1px;
     display: block;
     padding-bottom: 0.5em;
     margin-bottom: 0.5em;
@@ -295,20 +295,20 @@ div.CodeMirror-lint-message-error:not(:last-child):after {
     position: absolute;
     left: 0;
     right: 0;
-    background-color: #f5deb3;
+    background-color: var(--dialog-bg);
     z-index: 15;
     padding: .1em .8em;
     overflow: hidden;
-    color: #333;
+    color: var(--dialog);
 }
 
 .CodeMirror-dialog-top {
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--dialog-border);
     top: 0;
 }
 
 .CodeMirror-dialog-bottom {
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--dialog-border);
     bottom: 0;
 }
 
@@ -326,7 +326,7 @@ div.CodeMirror-lint-message-error:not(:last-child):after {
 }
 
 .marked {
-    background: #ff0;
+    background: var(--marked-bg);
 }
 
 /* source-code-pro-regular - latin */
@@ -379,7 +379,7 @@ span:not(.cm-layout)+span.cm-layout:before {
     position: absolute;
     left: -0.65em;
     top: 0;
-    color: #a86;
+    color: var(--cm-layout);
     font-weight: normal;
     letter-spacing: 0;
 }
@@ -391,8 +391,8 @@ span:not(.cm-layout)+span.cm-layout:before {
 
 .CodeMirror-buttonsPanel {
     font-size: 1.25em;
-    background-color: #f4f4f4;
-    border-bottom: solid #888 1px;
+    background-color: var(--buttonsPanel-bg);
+    border-bottom: solid var(--border-bottom) 1px;
     white-space: nowrap;
     overflow: hidden;
 }
@@ -403,14 +403,14 @@ span:not(.cm-layout)+span.cm-layout:before {
     text-align: center;
     width: 2em;
     height: 1em;
-    color: #aaa;
+    color: var(--cw-toolbar-button);
 }
 
 .CodeMirror-buttonsPanel div.cw-toolbar-button:hover {
-    color: #777;
+    color: var(--cw-toolbar-button-hover);
 }
 
 .CodeMirror-buttonsPanel div.cw-toolbar-button:active {
     transform: translate(1px, 1px);
-    color: #333;
+    color: var(--cw-toolbar-button-active);
 }

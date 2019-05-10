@@ -15,7 +15,7 @@
  */
 'use strict';
 
-const LocalAuth = (() => {
+window.LocalAuth = (() => {
     const mine = {};
 
     const ERROR_TITLE = 'Oops!';

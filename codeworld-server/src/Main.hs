@@ -67,6 +67,8 @@ import System.Directory
 import System.FileLock
 import System.FilePath
 import System.IO.Temp
+import System.Log.FastLogger
+import System.Log.FastLogger.Date
 
 import Model
 import Util
@@ -81,7 +83,8 @@ data Context = Context {
     authConfig :: AuthConfig,
     compileSem :: MSem Int,
     errorSem :: MSem Int,
-    baseSem :: MSem Int
+    baseSem :: MSem Int,
+    userReportLogger :: TimedFastLogger
     }
 
 main :: IO ()
@@ -92,10 +95,13 @@ main = do
 
 makeContext :: IO Context
 makeContext = do
+    timeCache <- newTimeCache simpleTimeFormat
+    let logType = LogFileNoRotate ("data" </> "user_reports.log") 0
     ctx <- Context <$> (getAuthConfig =<< getCurrentDirectory)
                    <*> MSem.new maxSimultaneousCompiles
                    <*> MSem.new maxSimultaneousErrorChecks
                    <*> MSem.new 1
+                   <*> (fst <$> newTimedFastLogger timeCache logType)
     putStrLn $ "Authentication method: " ++ authMethod (authConfig ctx)
     return ctx
 
@@ -166,6 +172,7 @@ site ctx =
             , ("funblocks", serveFile "web/blocks.html")
             , ("indent", indentHandler ctx)
             , ("gallery/:shareHash", galleryHandler ctx)
+            , ("log", logHandler ctx)
             ]
             ++ authRoutes (authConfig ctx)
     in route routes <|> serveDirectory "web"
@@ -533,6 +540,12 @@ galleryItemFromProject mode@(BuildMode modeName) folder name = do
                          "?mode=" <> T.pack modeName <>
                          "&dhash=" <> unDeployId deployId,
         galleryItemCode = Just (baseURL <> "#" <> unProgramId programId) }
+
+logHandler :: CodeWorldHandler
+logHandler = public $ \ctx -> do
+    Just message <- getParam "message"
+    let logLine t = "[" <> toLogStr t <> "] " <> toLogStr message <> "\n"
+    liftIO $ userReportLogger ctx logLine
 
 responseCodeFromCompileStatus :: CompileStatus -> Int
 responseCodeFromCompileStatus CompileSuccess = 200

@@ -30,16 +30,16 @@ body {
     text-decoration: none;
     font-weight: bold;
     padding: 3px;
-    border: dotted #888 1px;
+    border: dotted var(--doc-popuout-a-border) 1px;
     border-radius: 5px;
 }
 
-.md pre.tilde.clickable {
-    background-color: #f0f8ff;
+.md pre.tilde {
+    background-color: var(--doc-tilde-bg) !important;
 }
 
 .md pre.tilde.clickable:hover {
-    background-color: #f8fcff;
+    background-color: var(--doc-tilde-clickable-hover-bg) !important;
     cursor: pointer;
 }
 
@@ -53,7 +53,7 @@ body {
     font-size: 150%;
     position: relative;
     top: 2px;
-    color: rgba(68, 138, 255, .8);
+    color: var(--doc-before-admonition-collapsible);
     left: -2.95rem;
     display: block;
     width: 0;
@@ -66,7 +66,7 @@ body {
     font-size: 150%;
     position: relative;
     top: 2px;
-    color: rgba(68, 138, 255, .8);
+    color: var(--doc-before-admonition-collapsible-expanded);
     left: -2.95rem;
     display: block;
     width: 0;
@@ -75,7 +75,7 @@ body {
 
 .md div.admonition.collapsible:not(.expanded)>.admonition-title::after {
     content: "Click to expand...";
-    color: rgba(0, 0, 0, 0.4);
+    color: var(--doc-after-admonition-title);
     font-family: Arial, Helvetica, sans-serif;
     font-size: 11pt;
     font-weight: normal;
@@ -91,8 +91,12 @@ body {
     display: none;
 }
 
+.md table.table tr:nth-child(even) {
+    background: var(--doc-tr-even-bg) !important;
+}
+
 .md table.table tr:nth-child(odd) {
-    background: #FFF
+    background: var(--doc-tr-odd-bg);
 }
 
 #helpacc {
@@ -102,8 +106,8 @@ body {
     height: 100%;
     margin: 0px 0px 0px 0px;
     padding: 0px 0px 0px 0px;
-    border-right: solid #ccc 3px;
-
+    border-right: solid var(--doc-helpacc-border-right) 3px;
+    background: var(--doc-bg);
     font-family: Arial, Helvetica, sans-serif;
     font-size: 11pt;
 }
@@ -115,6 +119,8 @@ body {
 #help {
     position: relative;
     overflow: auto;
+    color: var(--doc-color);
+    background: var(--doc-bg);
 }
 
 #helpacc+#help {
@@ -127,4 +133,43 @@ body {
 
 #help .subs.instances {
     display: none;
+}
+
+h3.ui-accordion-header {
+    color: var(--doc-accordion-color);
+    background: var(--doc-accordion-background);
+}
+
+h3.ui-accordion-header-active {
+    color: var(--doc-expanded-accordion-color);
+    background: var(--doc-expanded-accordion-background);
+}
+
+div.ui-accordion-content {
+    background: var(--doc-accordion-background);
+}
+
+.ui-widget-content a {
+    color: var(--doc-accordion-color);
+}
+
+.md svg.diagram {
+    fill: var(--doc-svg-fill) !important;
+    stroke: var(--doc-svg-stroke) !important;
+}
+
+.src {
+    background: var(--haddock-p-bg) !important;
+}
+
+table.info {
+    background-color: var(--haddock-lang-nameplate) !important;
+}
+
+#interface .src .selflink {
+    background: var(--haddock-selflink-bg) !important;
+}
+
+#table-of-contents {
+    background: var(--haddock-toc-bg) !important;
 }

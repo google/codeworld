@@ -26,6 +26,7 @@ Executable codeworld-server
     cryptonite,
     data-default,
     directory,
+    fast-logger,
     filelock,
     filepath,
     filesystem-trees >= 0.1.0.6 && < 0.2,

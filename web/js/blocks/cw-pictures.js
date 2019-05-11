@@ -83,32 +83,46 @@ Blockly.Blocks['cwCombine'] = {
 
     compose(containerBlock) {
         const tps = [];
+        const originalItemCount = this.itemCount_;
+      
+        let itemBlock = containerBlock.getInputTargetBlock('STACK');
+        this.itemCount_ = 0;
 
-        for (let x = 0; x < this.itemCount_; x++) {
+        while (itemBlock) {
+           const name = `PIC${this.itemCount_}`;
+           let input = this.getInput(name);
+           tps.push(Type.Lit('Picture'));
+           if (input == null) {
+              input = this.appendValueInput(name);
+              if (this.itemCount_ > 0) {
+                  input.appendField(new Blockly.FieldLabel('&', 'blocklyTextEmph')); 
+              }
+           }
+            
+           //Reconnects block if already connected, otherwise shadow blank block
+           if (itemBlock.valueConnection_) {
+              input.connection.connect(itemBlock.valueConnection_);
+           } else if (input.connection && !input.connection.isConnected()) {
+              const blankBlock = this.workspace.newBlock('cwBlank');
+              blankBlock.setShadow(true);
+              blankBlock.initSvg();
+              input.connection.connect(blankBlock.outputConnection);
+           }
+
+           itemBlock = itemBlock.nextConnection && itemBlock.nextConnection.targetBlock();
+           this.itemCount_++;
+        }
+
+        for (let x = this.itemCount_; x < originalItemCount; x++) {
             this.removeInput(`PIC${x}`);
         }
 
-        this.itemCount_ = 0;
-        // Rebuild the block's inputs.
-        let itemBlock = containerBlock.getInputTargetBlock('STACK');
-        while (itemBlock) {
-            const input = this.appendValueInput(`PIC${this.itemCount_}`);
+        if (this.itemCount_ != originalItemCount) {
             tps.push(Type.Lit('Picture'));
-            if (this.itemCount_ > 0) {
-                input.appendField(new Blockly.FieldLabel('&',
-                    'blocklyTextEmph'));
-            }
-            if (itemBlock.valueConnection_) {
-                input.connection.connect(itemBlock.valueConnection_);
-            }
-            itemBlock = itemBlock.nextConnection &&
-                itemBlock.nextConnection.targetBlock();
-            this.itemCount_++;
+            this.arrows = Type.fromList(tps);
+            this.initArrows();
+            this.renderMoveConnections_();
         }
-        tps.push(Type.Lit('Picture'));
-        this.arrows = Type.fromList(tps);
-        this.initArrows();
-        this.renderMoveConnections_();
 
         if (this.itemCount_ < 2) {
             this.setWarningText('This block requires at least 2 inputs');

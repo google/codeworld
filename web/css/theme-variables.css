@@ -97,7 +97,7 @@
     --hint-active: #555;
     --hover-tooltip: #ffe;
     --hover-tooltip-border: #888;
-    --hover-tooltip-shadow: gray;
+    --hover-tooltip-shadow: #00000080;
     --hover-tooltip-grad-start: rgba(0, 0, 0, 0);
     --lint-message-border-bottom: #ccc;
     --dialog-bg: #f5deb3;
@@ -229,7 +229,7 @@
         --hint-active:          #AAAAAA;
         --hover-tooltip:        #000011;
         --hover-tooltip-border: #777777;
-        --hover-tooltip-shadow: #7F7F7F;
+        --hover-tooltip-shadow: #00000080;
         --hover-tooltip-grad-start: rgba(255, 255, 255, 0);
         --lint-message-border-bottom: #333333;
         --dialog-bg:                  #0A214C;

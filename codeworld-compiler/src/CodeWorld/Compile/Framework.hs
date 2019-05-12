@@ -105,7 +105,7 @@ getParsedCode = do
         Just parsed -> return parsed
         Nothing -> do
             source <- getSourceCode
-            parsed <- parseCode [] (decodeUtf8 source)
+            parsed <- parseCode ["TupleSections"] (decodeUtf8 source)
             modify $ \state -> state { compileParsedSource = Just parsed }
             return parsed
 

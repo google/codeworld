@@ -330,15 +330,15 @@ extraCommas (TupleSection topLoc _ parts) =
         badLocs = catMaybes $ zipWith3 toLoc ([] : groups) groups (tail groups ++ [[]])
         toLoc [] (Nothing : _) []
             = let SrcSpanInfo (SrcSpan _ l1 c1 l2 c2) _ = topLoc
-              in  Just (SrcSpanInfo (SrcSpan file l1 c1 l2 c2) [])
+              in  Just (SrcSpanInfo (SrcSpan file l1 (c1 + 1) l2 (max 1 (c2 - 1))) [])
         toLoc (reverse -> Just before : _) (Nothing : _) []
             = let SrcSpanInfo (SrcSpan _ _ _ l1 c1) _ = ann before
                   SrcSpanInfo (SrcSpan _ _ _ l2 c2) _ = topLoc
-              in  Just (SrcSpanInfo (SrcSpan file l1 c1 l2 c2) [])
+              in  Just (SrcSpanInfo (SrcSpan file l1 c1 l2 (max 1 (c2 - 1))) [])
         toLoc [] (Nothing : _) (Just after : _)
             = let SrcSpanInfo (SrcSpan _ l1 c1 _ _) _ = topLoc
                   SrcSpanInfo (SrcSpan _ l2 c2 _ _) _ = ann after
-              in  Just (SrcSpanInfo (SrcSpan file l1 c1 l2 c2) [])
+              in  Just (SrcSpanInfo (SrcSpan file l1 (c1 + 1) l2 c2) [])
         toLoc (reverse -> Just before : _) (Nothing : _) (Just after : _)
             = let SrcSpanInfo (SrcSpan _ _ _ l1 c1) _ = ann before
                   SrcSpanInfo (SrcSpan _ l2 c2 _ _) _ = ann after

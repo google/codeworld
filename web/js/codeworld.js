@@ -1255,7 +1255,7 @@ function parseCompileErrors(rawErrors) {
             let startCol = Number(match[3]) - 1;
             let endCol;
             if (match[4]) {
-                endCol = Number(match[4]) - 1;
+                endCol = Number(match[4]);
             } else {
                 const token = window.codeworldEditor.getLineTokens(line).find(
                     t => t.start === startCol);
@@ -1290,7 +1290,7 @@ function parseCompileErrors(rawErrors) {
             const startLine = Number(match[1]) - 1;
             const startCol = Number(match[2]) - 1;
             const endLine = Number(match[3]) - 1;
-            const endCol = Number(match[4]) - 1;
+            const endCol = Number(match[4]);
 
             errors.push({
                 from: CodeMirror.Pos(startLine, startCol),

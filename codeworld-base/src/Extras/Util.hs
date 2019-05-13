@@ -32,7 +32,7 @@ module Extras.Util(
     , alphabeticalSortedOn, numericalSortedOn
     -- * Control flow
     , run, recur, repeat, recurWhile, repeatWhile
-    , iterated, foreach, forloop
+    , iterated, foreach, forloop, whileloop
     -- * List manipulation
     , prepend, append, list, listn, pairs, unpairs, zipped, unzipped
     , indexOf
@@ -253,6 +253,41 @@ forloop(init,check,next,output)
   | check(init) = output(init) : forloop(next(init),check,next,output)
   | otherwise = []
 
+
+-- | The function @whileloop@ works similarly to 'forloop', but instead
+-- of collecting outputs of intermediate states, a single output is collected
+-- at the end of the loop. The expression @whileloop(input,check,next,output)@
+-- is a shortcode for @output(recurWhile(check,next)(input))@.
+--
+-- Example 1. The function 'indexOf' can be implemented as a while loop:
+--
+-- > indexOf(x,list) = whileloop(input,check,next,output)
+-- >   where
+-- >   input                    = (list,1,0)
+-- >   check(list,index,found)  = nonEmpty(list) && found == 0
+-- >   next(list,index,found)   = ( rest(list,1)
+-- >                              , index+1
+-- >                              , if x == list#1 then index else found
+-- >                              )
+-- >   output(list,index,found) = found
+--
+-- Example 2. The average of a list of numbers can be calculated by the
+-- following while loop:
+--
+-- > average(numbers) = whileloop(input,check,next,output)
+-- >   where
+-- >   input                        = (numbers, 0, 0)
+-- >   check(numbers,_,_)           = nonEmpty(numbers)
+-- >   next(numbers,total,quantity) = ( rest(numbers,1)
+-- >                                  , total + numbers#1
+-- >                                  , quantity + 1
+-- >                                  )
+-- >   output(_,_,0)                = 0 -- adjust this as needed
+-- >   output(_,total,quantity)     = total / quantity
+--
+whileloop :: (state,Predicate state,state -> state, state -> output)
+          -> output
+whileloop(input,check,next,output) = output(recurWhile(check,next)(input))
 
 -------------------------------------------------------------------------------
 -- List manipulation

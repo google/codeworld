@@ -26,7 +26,8 @@
 
 module Extras.Util(
     -- * Predicates
-    Predicate, precedes, is_in, nonEmpty, selected, selectedValues
+    Predicate, precedes, is_in, nonEmpty
+    , selected, selectedValues, selectedKeys
     -- * Grouping and Sorting lists
     , logicalGroupBy, alphabeticalGroupBy, numericalGroupBy
     , alphabeticalSortedOn, numericalSortedOn

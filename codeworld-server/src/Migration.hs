@@ -20,7 +20,7 @@ isProjectsStructureCorrect = do
     return $ checkForPrefDirs haskellTree && checkForPrefDirs cwTree
     where
         checkForPrefDirs :: FSTree -> Bool
-        checkForPrefDirs tr = null $ filter ((\x -> 3 == length x)) $ concatMap splitPath $ flatten tr
+        checkForPrefDirs tr = null $ filter (\x -> 3 == length x) $ concatMap splitPath $ flatten tr
 
 move :: FilePath -> FilePath -> IO ()
 move src dest = do
@@ -59,4 +59,5 @@ main = do
         else do
             migrateMode (BuildMode "haskell")
             migrateMode (BuildMode "codeworld")
-            print "Succsessfully migrated."
+            migrateMode (BuildMode "blocklyXML")
+            print "Successfully migrated."

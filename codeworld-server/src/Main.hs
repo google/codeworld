@@ -324,7 +324,7 @@ moveProjectHandler = private $ \userId ctx -> do
                 toFile = projectDir </> moveToDir </> projectFile projectId
             liftIO $ ensureProjectDir mode userId moveToDir projectId
             liftIO $ copyFile file toFile
-            liftIO $ removeFileIfExists $ moveFromDir </> projectFile projectId
+            liftIO $ removeFileIfExists file
         (_, False, "false") -> do
             let dirName = last $ splitDirectories moveFromDir
             let dir = moveToDir </> dirName

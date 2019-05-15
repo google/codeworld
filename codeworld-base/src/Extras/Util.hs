@@ -182,12 +182,22 @@ run([])(x) = x
 run(f:fs)(x) = run(fs)(f(x))
 
 -- | Repeat a transformation the given number of times.
--- For example, the expression @recur(3,f)(x)@ is the same as @f(f(f(x)))@
+-- For example, the expression @recur(3,f)(x)@ is the same as @f(f(f(x)))@.
+-- If you use a negative number or a number with decimals, the sign and
+-- the decimals will be ignored. For example, @recur(-7.3,f)@ will repeat
+-- @7@ times.
 recur :: (Number,value -> value) -> value -> value
-recur(0,f)(x) = x
-recur(n,f)(x) = recur(n-1,f)(f(x))
+recur(n,f) = go (truncation(abs(n)))
+    where
+    go 0 x = x
+    go n x = go (n-1) (f x)
 
--- | Repeat a sequence of transformations a given number of times
+-- | Repeat a sequence of transformations a given number of times.
+-- For example, the expression @repeat(2,[f1,f2])(x)@ is the same as
+-- @f2(f1(f2(f1(x))))@.
+-- If you use a negative number or a number with decimals, the sign and
+-- the decimals will be ignored. For example, @repeat(-7.3,seq)@ will repeat
+-- @7@ times.
 repeat :: (Number,[value -> value]) -> value -> value
 repeat(n,fs) = recur(n,run(fs))
 

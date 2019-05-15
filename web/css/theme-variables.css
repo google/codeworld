@@ -218,7 +218,7 @@
         --bracket-6:  #3399CC;
         --bracket-7:  #00FFFF;
         --matchingbracket:    rgba(255, 255, 255, 0.15);
-        --nonmatchingbracket: rgba(0, 255, 255, 0.5);
+        --nonmatchingbracket: rgba(255, 0, 0, 0.9);
         --matchhighlight:     rgba(128, 0, 128, 0.3);
         --selection-highlight-scrollbar: rgba(160, 0, 160, 0.8);
         --cm-placeholder:       #666666;

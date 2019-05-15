@@ -798,9 +798,8 @@ function moveHere() {
 }
 
 function toggleTheme() {
-    const root = document.getElementsByClassName('root')[0];
-    root.classList.toggle('dark-theme');
-    const dark = root.classList.contains('dark-theme');
+    document.body.classList.toggle('dark-theme');
+    const dark = document.body.classList.contains('dark-theme');
     window.codeworldEditor.setOption('theme', dark ? 'ambiance' : 'default');
     window.localStorage.setItem('darkMode', dark);
 }

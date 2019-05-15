@@ -20,6 +20,8 @@ Library
   Js-sources:          jsbits/deep_eq.js
   Exposed-modules:     Prelude,
                        Extras.Cw,
+                       Extras.Op,
+                       Extras.Turtle,
                        Extras.Util,
                        Extras.Widget
   Other-modules:       Internal.Exports,

@@ -63,6 +63,9 @@
     --obsolete-code-alert-grad-point1: rgba(0, 0, 0, 0.7);
     --obsolete-code-alert-grad-point2: rgba(0, 0, 0, 0.6);
     --helpdoc-background-color: #FFFFFF;
+    --swal-background:          #FFFFFF;
+    --swal-title-color:         #595959;
+    --swal-content-color:       #545454;
 
     /* codeworld-cm.css */
     --builtin: #30a;
@@ -199,7 +202,10 @@
         --req-indet:                 #74FF74;
         --req-details:               #AAAAAA;
         --helpdoc-background-color:  #000000;
-    
+        --swal-background:           #000000;
+        --swal-title-color:          #A6A6A6;
+        --swal-content-color:        #A1A1A1;
+
         /* codeworld-cm.css */
         --builtin:    #CCFF55;
         --builtin-2:  #CC7733;

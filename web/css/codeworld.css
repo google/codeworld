@@ -558,3 +558,15 @@ summary a:visited, details a:visited{
 summary a:active, details a:active {
     color: var(--alink);
 }
+
+.swal2-popup {
+    background: var(--swal-background) !important;
+}
+
+.swal2-popup .swal2-title {
+    color: var(--swal-title-color) !important;
+}
+
+.swal2-popup .swal2-content {
+    color: var(--swal-content-color) !important;
+}

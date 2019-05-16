@@ -798,9 +798,8 @@ function moveHere() {
 }
 
 function toggleTheme() {
-    const root = document.getElementsByClassName('root')[0];
-    root.classList.toggle('dark-theme');
-    const dark = root.classList.contains('dark-theme');
+    document.body.classList.toggle('dark-theme');
+    const dark = document.body.classList.contains('dark-theme');
     window.codeworldEditor.setOption('theme', dark ? 'ambiance' : 'default');
     window.localStorage.setItem('darkMode', dark);
 }
@@ -826,9 +825,9 @@ function changeFontSize(incr) {
 
 function help() {
     let url = `doc.html?shelf=help/${window.buildMode}.shelf`;
-    let root = document.getElementsByClassName('root')[0];
     let customClass = 'helpdoc';
-    if (root.classList.contains('dark-theme')) {
+    
+    if (window.localStorage.getItem('darkMode') === 'true') {
         url += '&theme=dark-theme';
         customClass += ' dark-theme';
     }

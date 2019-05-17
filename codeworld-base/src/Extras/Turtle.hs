@@ -343,7 +343,7 @@ alongTrack(points)
   tlens = foreach(tinfo,\(_,dx) -> vectorLength(dx))
   lerp(t,(ax,ay),(bx,by)) = (ax + t * (bx - ax), ay + t * (by - ay))
 
-  go(t) = if t < 0 then ((0,0),0)
+  go(t) = if t <= 0 then let (x0,dx) = tinfo#1 in (x0,vectorDirection(dx))
           else whileloop((t,tlens,tinfo), cond, next, output)
     
   cond(t,ls,_) = nonEmpty(ls) && t >= ls#1

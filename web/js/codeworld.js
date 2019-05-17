@@ -130,6 +130,7 @@ async function init() {
 
 function initCodeworld() {
     const editor = document.getElementById('editor');
+    const darkMode = window.localStorage.getItem('darkMode') === 'true';
 
     window.codeworldKeywords = {};
 
@@ -138,6 +139,8 @@ function initCodeworld() {
             name: 'codeworld',
             overrideKeywords: window.codeworldKeywords
         },
+        theme: darkMode ? 'ambiance' : 'default',
+
         undoDepth: 50,
         lineNumbers: true,
         autofocus: true,
@@ -324,6 +327,8 @@ function initCodeworld() {
     window.codeworldEditor.refresh();
     window.codeworldEditor.on('cursorActivity', updateArgHelp);
     window.codeworldEditor.on('refresh', updateArgHelp);
+
+    if (window.localStorage.getItem('darkMode') === 'true') toggleTheme();
 
     CodeMirror.commands.save = cm => {
         saveProject();
@@ -793,14 +798,11 @@ function moveHere() {
 }
 
 function toggleTheme() {
-    let root = document.getElementsByClassName('root')[0];
-    root.classList.toggle('dark-theme');
-    if (root.classList.contains('dark-theme')){
-        window.codeworldEditor.setOption('theme', 'ambiance');
-    } else {
-        window.codeworldEditor.setOption('theme', 'default');
-    }    
-  }
+    document.body.classList.toggle('dark-theme');
+    const dark = document.body.classList.contains('dark-theme');
+    window.codeworldEditor.setOption('theme', dark ? 'ambiance' : 'default');
+    window.localStorage.setItem('darkMode', dark);
+}
 
 function changeFontSize(incr) {
     return () => {
@@ -823,9 +825,9 @@ function changeFontSize(incr) {
 
 function help() {
     let url = `doc.html?shelf=help/${window.buildMode}.shelf`;
-    let root = document.getElementsByClassName('root')[0];
     let customClass = 'helpdoc';
-    if (root.classList.contains('dark-theme')) {
+    
+    if (window.localStorage.getItem('darkMode') === 'true') {
         url += '&theme=dark-theme';
         customClass += ' dark-theme';
     }
@@ -1252,7 +1254,7 @@ function parseCompileErrors(rawErrors) {
             let startCol = Number(match[3]) - 1;
             let endCol;
             if (match[4]) {
-                endCol = Number(match[4]) - 1;
+                endCol = Number(match[4]);
             } else {
                 const token = window.codeworldEditor.getLineTokens(line).find(
                     t => t.start === startCol);
@@ -1287,7 +1289,7 @@ function parseCompileErrors(rawErrors) {
             const startLine = Number(match[1]) - 1;
             const startCol = Number(match[2]) - 1;
             const endLine = Number(match[3]) - 1;
-            const endCol = Number(match[4]) - 1;
+            const endCol = Number(match[4]);
 
             errors.push({
                 from: CodeMirror.Pos(startLine, startCol),

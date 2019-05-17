@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ViewPatterns #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -30,10 +31,11 @@ import CodeWorld.Compile.Requirements
 import Control.Monad
 import Control.Monad.State
 import Data.Array
+import Data.Function (on)
 import Data.Generics
-import Data.Maybe (isJust, fromMaybe)
+import Data.Maybe (isJust, fromMaybe, catMaybes)
 import Data.Monoid
-import Data.List (sort)
+import Data.List (sort, groupBy)
 import Data.Text (Text, unpack)
 import Data.Text.Encoding (decodeUtf8)
 import Language.Haskell.Exts
@@ -51,6 +53,7 @@ checkCodeConventions = do
         checkFunctionParentheses
         checkVarlessPatterns
         checkPatternGuards
+        checkExtraCommas
 
 -- Look for uses of Template Haskell or related features in the compiler.  These
 -- cannot currently be used, because the compiler isn't properly sandboxed, so
@@ -244,6 +247,7 @@ isGoodExpAppRhs (ParArrayFromThenTo _ _ _ _) = True
 isGoodExpAppRhs (ListComp _ _ _) = True
 isGoodExpAppRhs (ParComp _ _ _) = True
 isGoodExpAppRhs (ParArrayComp _ _ _) = True
+isGoodExpAppRhs (TupleSection _ _ _) = True
 isGoodExpAppRhs _ = False
 
 isGoodPatAppRhs :: Pat l -> Bool
@@ -309,3 +313,36 @@ patternGuards (GuardedRhs _ stmts _) =
        "error: This arrow can't be used here.\n\t" ++
        "To compare a negative number, add a space between < and -.")
       | Generator loc _ _ <- stmts ]
+
+checkExtraCommas :: MonadCompile m => m ()
+checkExtraCommas =
+    getParsedCode >>= \parsed -> case parsed of
+        Parsed mod -> addDiagnostics $
+            everything (++) (mkQ [] extraCommas) mod
+        _ -> return ()
+
+extraCommas :: Exp SrcSpanInfo -> [Diagnostic]
+extraCommas (TupleSection topLoc _ parts) =
+    [ (loc, CompileError,
+       "error: This tuple is missing a value, or has an extra comma.")
+      | loc <- badLocs ]
+  where groups  = groupBy ((==) `on` isJust) parts
+        badLocs = catMaybes $ zipWith3 toLoc ([] : groups) groups (tail groups ++ [[]])
+        toLoc [] (Nothing : _) []
+            = let SrcSpanInfo (SrcSpan _ l1 c1 l2 c2) _ = topLoc
+              in  Just (SrcSpanInfo (SrcSpan file l1 (c1 + 1) l2 (max 1 (c2 - 1))) [])
+        toLoc (reverse -> Just before : _) (Nothing : _) []
+            = let SrcSpanInfo (SrcSpan _ _ _ l1 c1) _ = ann before
+                  SrcSpanInfo (SrcSpan _ _ _ l2 c2) _ = topLoc
+              in  Just (SrcSpanInfo (SrcSpan file l1 c1 l2 (max 1 (c2 - 1))) [])
+        toLoc [] (Nothing : _) (Just after : _)
+            = let SrcSpanInfo (SrcSpan _ l1 c1 _ _) _ = topLoc
+                  SrcSpanInfo (SrcSpan _ l2 c2 _ _) _ = ann after
+              in  Just (SrcSpanInfo (SrcSpan file l1 (c1 + 1) l2 c2) [])
+        toLoc (reverse -> Just before : _) (Nothing : _) (Just after : _)
+            = let SrcSpanInfo (SrcSpan _ _ _ l1 c1) _ = ann before
+                  SrcSpanInfo (SrcSpan _ l2 c2 _ _) _ = ann after
+              in  Just (SrcSpanInfo (SrcSpan file l1 c1 l2 c2) [])
+        toLoc _ _ _ = Nothing
+        file = srcSpanFilename (srcInfoSpan topLoc)
+extraCommas _ = []

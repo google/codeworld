@@ -63,6 +63,9 @@
     --obsolete-code-alert-grad-point1: rgba(0, 0, 0, 0.7);
     --obsolete-code-alert-grad-point2: rgba(0, 0, 0, 0.6);
     --helpdoc-background-color: #FFFFFF;
+    --swal-background:          #FFFFFF;
+    --swal-title-color:         #595959;
+    --swal-content-color:       #545454;
 
     /* codeworld-cm.css */
     --builtin: #30a;
@@ -95,11 +98,15 @@
     --hint-keyword: #828;
     --hint-active-bg: #def;
     --hint-active: #555;
+    --hint-description-color: #000;
+    --hints-list-bg: #fff;
+    --hover-doc-color: #000;
     --hover-tooltip: #ffe;
     --hover-tooltip-border: #888;
-    --hover-tooltip-shadow: gray;
+    --hover-tooltip-shadow: #00000080;
     --hover-tooltip-grad-start: rgba(0, 0, 0, 0);
     --lint-message-border-bottom: #ccc;
+    --lint-tooltip-color: #000;
     --dialog-bg: #f5deb3;
     --dialog: #333;
     --dialog-border: #eee;
@@ -195,7 +202,10 @@
         --req-indet:                 #74FF74;
         --req-details:               #AAAAAA;
         --helpdoc-background-color:  #000000;
-    
+        --swal-background:           #000000;
+        --swal-title-color:          #A6A6A6;
+        --swal-content-color:        #A1A1A1;
+
         /* codeworld-cm.css */
         --builtin:    #CCFF55;
         --builtin-2:  #CC7733;
@@ -218,7 +228,7 @@
         --bracket-6:  #3399CC;
         --bracket-7:  #00FFFF;
         --matchingbracket:    rgba(255, 255, 255, 0.15);
-        --nonmatchingbracket: rgba(0, 255, 255, 0.5);
+        --nonmatchingbracket: rgba(255, 0, 0, 0.9);
         --matchhighlight:     rgba(128, 0, 128, 0.3);
         --selection-highlight-scrollbar: rgba(160, 0, 160, 0.8);
         --cm-placeholder:       #666666;
@@ -227,11 +237,15 @@
         --hint-keyword:         #77DD77;
         --hint-active-bg:       #221100;
         --hint-active:          #AAAAAA;
+        --hint-description-color: #fff;
+        --hints-list-bg: #000;
+        --hover-doc-color:       #fff;
         --hover-tooltip:        #000011;
         --hover-tooltip-border: #777777;
-        --hover-tooltip-shadow: #7F7F7F;
+        --hover-tooltip-shadow: #00000080;
         --hover-tooltip-grad-start: rgba(255, 255, 255, 0);
         --lint-message-border-bottom: #333333;
+        --lint-tooltip-color: #fff;
         --dialog-bg:                  #0A214C;
         --dialog:                     #CCCCCC;
         --dialog-border:              #111111;

@@ -20,10 +20,13 @@ module Extras.Turtle(
     , repeat, run, foreach, forloop
     -- * Tracks
     , Track, track, tracks, partialTracks, randomTracks
+    , trackLength, alongTrack
     -- * Drawing extensions
     , polylines, thickPolylines, solidPolygons, dottylines, dottyline
     -- * Examples
     , turtleExamples
+    -- * Custom Turtles
+    , customTurtle, turtlePosition, turtleAngle,
     ) where
 
 import Prelude
@@ -96,7 +99,8 @@ data Pen = Pu | Pd
 homePosition = (0,0)
 homeHeading = (0,1)
 
-initial = Turtle
+initialTurtle :: Turtle
+initialTurtle = Turtle
   { position = homePosition
   , heading = homeHeading
   , trace = [homePosition]
@@ -104,6 +108,62 @@ initial = Turtle
   , pen = Pd
   , rndNumbers = []
   }
+
+-- | A @customTurtle(x,y,angle)@ is a Turtle positioned at the point @(x,y)@,
+-- which is pointing in the direction specified by the given @angle@,
+-- where the angle is measured in
+-- the normal CodeWorld way, i.e., 0 means pointing to the right,
+-- and the angles increase counter-clockwise.
+-- You can use this Turtle to have finer control over the Turtle.
+--
+-- Notes:
+--
+-- (1) Do not use the commands 'pu' and 'pd' on custom turtles, because
+-- they do not have any visible effect. You must generate your own tracks
+-- explicitly with the help of the 'turtlePosition' function.
+-- (2) Do not use 'randomized' either,
+-- because a custom turtle does not have access to random numbers.
+-- (3) Probably, the only Turtle commands that are useful with custom
+-- turtles are 'fd', 'bk', 'rt' and 'lt'. Any other handling of custom turtles
+-- should be done with regular CodeWorld functions.
+--
+-- Example:
+--
+-- > program = randomDrawingOf(draw)
+-- >   where
+-- >   draw(random) = colored(thickPolyline(turtleTrack,0.2),red)
+-- >     where
+-- >     turtleTrack = forloop(input,cond,next,output)
+-- >     input = (customTurtle(-10,-10,0), random)
+-- >     cond(t,_) = x < 12 && y < 12 where (x,y) = turtlePosition(t)
+-- >     next(t,r) = ( run([mayTurn(r#1), fd(2*r#2)])(t), rest(r,2) )
+-- >     output(t,_) = turtlePosition(t)
+-- >     mayTurn(r) = if r < 0.5 then turned else itself
+-- >     turned(t) = if turtleAngle(t) < 45 then lt(90)(t) else rt(90)(t)
+-- >
+--
+-- The example above randomly moves a custom turtle either up or to the right.
+-- The turtle starts at the lower left corner of the output,
+-- and it moves until it reaches either the top or the
+-- right side of the output, whichever is reached first. This example
+-- uses 'randomDrawingOf' from "Extras.Cw" and 'itself' from "Extras.Util".
+customTurtle :: (Number,Number,Number) -> Turtle
+customTurtle(x,y,angle) = initialTurtle
+  { position = (x,y)
+  , heading = rotatedPoint((1,0),angle)
+  , trace = [(x,y)]
+  , pen = Pu
+  }
+
+-- | The current position of the given Turtle.
+turtlePosition :: Turtle -> Point
+turtlePosition = position
+
+-- | The orientation of the given Turtle measured in the normal way
+-- that CodeWorld uses angles, so that 0 means pointing to
+-- the right, and angles increase counter-clockwise.
+turtleAngle :: Turtle -> Number
+turtleAngle(turtle) = vectorDirection(turtle.#heading)
 
 -------------------------------------------------------------------------------
 -- API
@@ -152,7 +212,7 @@ track(cmd) = cmd.#tracks.#concatenation
 -- >   singleLine(x) = run([pd, fd(x/100), lt(59), pu])
 --
 tracks :: TurtleCommand -> [Track]
-tracks(cmd) = initial.#cmd.#saveTrace.#reversed
+tracks(cmd) = initialTurtle.#cmd.#saveTrace.#reversed
 
 {- The example above in Python:
 
@@ -237,9 +297,67 @@ partialTracks(turtleProg) = foreach([2..sum(lengths)],partial)
 randomTracks :: ([Number],TurtleCommand) -> [Track]
 randomTracks(randoms,cmd) = turtle.#cmd.#saveTrace.#reversed
     where
-    turtle = initial { rndNumbers = randoms }
-  
+    turtle = initialTurtle { rndNumbers = randoms }
+
+
+trackInfo :: Track -> [(Point,Vector)]
+trackInfo(points) = [ (a,vectorDifference(b,a)) 
+                    | a <- points | b <- rest(points,1)
+                    ]
+
+-- | The length of the given Track
+trackLength :: Track -> Number
+trackLength(points) = sum(foreach(trackInfo(points),len))
+    where
+    len(_,dx) = vectorLength(dx)
+
+-- | If @travel = alongTrack(points)@, then @travel@ is a function that can be
+-- used to traverse a track traveling at 1 unit per second. The value
+-- @travel(t)@ is a pair, where the first element is the location at time @t@
+-- and the second argument is the angle of the corresponding segment in
+-- the given track.
+--
+-- Example:
+--
+-- > program = animationOf(movie)
+-- >   where
+-- >   movie(t) = placedAlong(turtleShape,travel(remainder(4*t,tlen))) 
+-- >            & polyline(turtleTrack)
+-- > 
+-- >   placedAlong(pic,((x,y),a)) = translated(rotated(turtleShape,a),x,y)
+-- >   travel = alongTrack(turtleTrack)
+-- >   tlen = trackLength(turtleTrack)
+-- > 
+-- >   greenTurtle = colored(turtleShape, green)
+-- >   turtleShape = rotated(thickPolygon(track(turtle),0.1),-90)
+-- >   turtleTrack = track(run(figs(11, poly(7,18/7))))
+-- >   figs(n,fig) = [repeat(n,[run(fig),lt(360/n)])]
+-- >   poly(n,len) = figs(n,[fd(len)])
+--
+alongTrack :: Track -> Number -> (Point,Number)
+alongTrack(points)
+  | empty(points) = \t -> ((0,0),0)
+  | otherwise = go
+  where
+  tinfo = trackInfo(points)
+  tlens = foreach(tinfo,\(_,dx) -> vectorLength(dx))
+  lerp(t,(ax,ay),(bx,by)) = (ax + t * (bx - ax), ay + t * (by - ay))
+
+  go(t) = if t < 0 then ((0,0),0)
+          else whileloop((t,tlens,tinfo), cond, next, output)
+    
+  cond(t,ls,_) = nonEmpty(ls) && t >= ls#1
+  next(t,ls,xds) = (t - ls#1, rest(ls,1), rest(xds,1))
+  output(_,[],_) = go(0)
+  output(t,ls,xds) = (lerp(t/ls#1,x0,x1),angle)
+    where
+    (x0,dx) = xds#1
+    x1 = vectorSum(x0,dx)
+    angle = vectorDirection(dx)
+
+-------------------------------------------------------------------------------
 -- Turtle Language
+-------------------------------------------------------------------------------
 
 -- | Move the Turtle forward by the given number of units
 fd :: Number -> TurtleCommand
@@ -451,7 +569,6 @@ addPoint(p)(turtle) = case turtle.#pen of
 saveTrace :: Turtle -> [[Point]]
 saveTrace(turtle) = case turtle.#trace of
   [] -> turtle.#traces
-  [_] -> turtle.#traces
   pts -> reversed(pts) : turtle.#traces
             
 
@@ -481,7 +598,7 @@ randomExample = randomDrawingOf(draw)
 -- | The first example is based on the following code:
 --
 -- >   program = drawingOf(polylines(tracks(turtleProgram)))
--- >   turtleProgram = figs(14, poly(7,2))
+-- >   turtleProgram = run(figs(14, poly(7,2)))
 -- >   figs(n,fig) = [repeat(n,[run(fig),lt(360/n)])]
 -- >   poly(n,len) = figs(n,[fd(len)])
 --

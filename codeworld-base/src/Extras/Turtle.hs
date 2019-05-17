@@ -314,7 +314,7 @@ trackLength(points) = sum(foreach(trackInfo(points),len))
 -- | If @travel = alongTrack(points)@, then @travel@ is a function that can be
 -- used to traverse a track traveling at 1 unit per second. The value
 -- @travel(t)@ is a pair, where the first element is the location at time @t@
--- and the second argument is the angle of the corresponding segment in
+-- and the second element is the angle of the corresponding segment in
 -- the given track.
 --
 -- Example:
@@ -336,7 +336,7 @@ trackLength(points) = sum(foreach(trackInfo(points),len))
 --
 alongTrack :: Track -> Number -> (Point,Number)
 alongTrack(points)
-  | empty(points) = \t -> ((0,0),0)
+  | empty(tinfo) = \t -> ((0,0),0)
   | otherwise = go
   where
   tinfo = trackInfo(points)

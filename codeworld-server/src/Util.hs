@@ -296,3 +296,23 @@ removeDirectoryIfExists dirName =
     handleExists e
         | isDoesNotExistError e = return ()
         | otherwise = throwIO e
+
+{--
+{ 
+    type: "directory",
+    name: "folder1",
+    entries: [
+    { type: "directory",
+        name: "folder2",
+        entries: [{type: project, name: "project1"}, {type:"project", name: {project2"}]
+    }]
+}
+--}
+
+
+
+getDirectoryTree :: BuildMode -> UserId -> DirTree
+getDirectoryTree bm uid = do
+    ftr <- getDirectory' $ userProjectDir (BuildMode "codeworld") (UserId "nixorn")
+    let Node root children = toTree ftr
+

@@ -79,3 +79,16 @@ instance ToJSON GalleryItem where
       where base = [ "name" .= galleryItemName item
                    , "url" .= galleryItemURL item
                    ]
+
+type FName = Text
+
+data DirTree = Dir FName [DirTree] | Source Text
+
+instance ToJSON DirTree where
+    toJSON (Source name) = object [ "type" .= "project"
+                                  , "name" .= name
+                                  ]
+    toJSON (Dir name children) = object [ "type" .= "directory"
+                                        , "name" .= name 
+                                        , "entries" .= map toJSON children
+                                        ]

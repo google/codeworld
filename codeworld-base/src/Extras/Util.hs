@@ -35,7 +35,7 @@ module Extras.Util(
     , run, recur, repeat, recurWhile, repeatWhile
     , iterated, foreach, forloop, whileloop
     -- * List manipulation
-    , prepend, append, list, listn, pairs, unpairs, zipped, unzipped
+    , prepend, append, list, listn, butLast, pairs, unpairs, zipped, unzipped
     , indexOf
     -- * Text formatting
     , lJustified, rJustified
@@ -345,6 +345,15 @@ list(f) = [f(i) | i <- [1..]]
 listn :: (Number -> value, Number) -> [value]
 listn(f,n) = [f(i) | i <- [1..n]]
 
+-- | A list containing all the elements of the given list except the
+-- last few. Example: @butLast([1,2,3,4],1)@ is @[1,2,3]@.
+butLast :: ([value],Number) -> [value]
+butLast(ls,num)
+  | num > len = []
+  | otherwise = first(ls,len-num)
+  where
+  len = length(ls)
+
 -- | A list of pairs that is created by
 -- putting together each consecutive pair of values in the given
 -- list. Single elements at the end of the list are discarded.
@@ -467,7 +476,7 @@ printedPoint(x,y) = "(" <> printed(x) <> "," <> printed(y) <> ")"
 -- >     init   =                       (list,0)
 -- >     cond   = \(list,currentSum) -> nonEmpty(list)
 -- >     next   = \(list,currentSum) -> (rest(list,1),currentSum + list#1)
--- >     output = \(list,currentSum) -> currentSum
+-- >     output = \(list,currentSum) -> currentSum + list#1
 --
 cumulativeSums :: [Number] -> [Number]
 cumulativeSums = P.tail . P.scanl (+) 0

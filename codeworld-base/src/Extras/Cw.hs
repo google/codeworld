@@ -423,6 +423,21 @@ withAlpha(RGBA(r,g,b,_),a) = RGBA(r,g,b,a)
 -- top left corner of the output window and grow downward.
 -- Each line of text can fit 66 characters, and 40 lines can fit
 -- in a single page. The lettering is shown in monospaced font.
+--
+-- Example:
+--
+-- > program = slideshow(pages)
+-- >   where
+-- >   pages = foreach(gs,pageFromTexts)
+-- >   gs = groups(ls,40)
+-- >   ls = foreach(result,\g -> joinedWith(g,", "))
+-- >   result = groups(forloop(1,(<= 1000000),(+ 1),printed),8)
+-- >
+--
+-- The example above shows two million numbers in 7143 pages, so that each
+-- pages has 40 lines, each of which has 7 numbers. This example uses
+-- 'forloop' and 'foreach' from "Extras.Util".
+--
 pageFromTexts :: [Text] -> Picture
 pageFromTexts(lines) = pictures([showline(i) | i <- [1..n]])
     where

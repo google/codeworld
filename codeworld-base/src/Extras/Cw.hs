@@ -535,14 +535,21 @@ underlays(f,n) = underlays'(f,max(0,truncation(n)))
 -- that zooms along with the picture. For example, a scaling factor of 2 means
 -- that the picture will show twice as big as usual in each direction.
 --
--- Example:
+-- Example 1:
+--
+-- > program = animationOf(movie)
+-- >     where movie(t) = graphed(circle(5*t^3),1/(1 + t^3))
+--
+-- Example 2:
 --
 -- > program = guiDrawingOf(widgets,draw)
 -- >   where
 -- >   widgets = [withConversion(\v -> 2^(-8 + v*16), slider("zoom",-8,9))]
 -- >   draw([zoom]) = graphed(pictures([circle(n) | n <- [1..100]]), zoom)
 --
--- The example above shows a graph with 100 circles. It used the function
+-- Example 1 shows a circle that grows forever, while the graph keeps
+-- adjusting the scale so that it fits within the output.
+-- Example 2 shows a graph with 100 circles. It used the function
 -- 'guiDrawingOf' from "Extras.Widget".
 --
 graphed :: (Picture,Number) -> Picture
@@ -558,19 +565,33 @@ graph(maxnum) = labels & axes & rotated(axes,90)
   axes = semiMajor & scaled(semiMajor,-1,1)
        & semiMinor & scaled(semiMinor,-1,1)
     
-  labels = pictures(forloop(major,(<= maxnum),(+ major),pq))
-         & pictures(forloop(-major,(>= -maxnum),(+ (-major)),pq))
+  labels = pictures(forloop(major,(<= maxnum),(+ major),p))
+         & pictures(forloop(major,(<= maxnum),(+ major),q))
   axis(x) = polyline([(x*scaling,-10),(x*scaling,10)])
   majorAxis(x) = colored(axis(x),g(0.2,0.5))
   minorAxis(x) = colored(axis(x),g(0.1,0.2))
   g(s,a) = RGBA(s,s,s,a)
-  pq(x) = p(x) & q(x)
-  p(x) = translated(dilated(print,1/2),x*scaling,-1/2)
-    where
-    print = styledLettering(printed(x),Monospace,Plain)
-  q(y) = translated(dilated(print,1/2),-1,y*scaling)
-    where
-    print = styledLettering(rJustified(printed(y),5),Monospace,Plain)
+
+  p(x) | x < 1000000 = translated(lunj( x), p,-1/2)
+                     & translated(lunj(-x),-p,-1/2)
+       | 3 <= p && p < 6 = translated(lunj( x), p,-1/2)
+                         & translated(lunj(-x),-p,-1/2)
+       | otherwise = blank
+       where
+       p = x * scaling
+
+  q(y) | y < 50000 = translated(ljust( y),-1, p)
+                   & translated(ljust(-y),-1,-p)
+       | 3 <= p && p < 6 = translated(lunj( y),-1, p)
+                         & translated(lunj(-y),-1,-p)
+       | otherwise = blank
+       where
+       p = y * scaling
+
+  lunj(v)  = dilated(styledLettering(printed(v),Monospace,Plain),0.5)
+  ljust(v) = dilated(styledLettering( rJustified(printed(v),5)
+                                    , Monospace
+                                    , Plain ), 0.5)
 
 -- Major interval, minor interval and number of decimals
 resolution(x) = if x >= 1 then goUp(1) else goDn(1,0)

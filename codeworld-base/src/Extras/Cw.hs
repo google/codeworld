@@ -433,11 +433,11 @@ withAlpha(RGBA(r,g,b,_),a) = RGBA(r,g,b,a)
 -- >   pages = foreach(gs,pageFromTexts)
 -- >   gs = groups(ls,40)
 -- >   ls = foreach(result,\g -> joinedWith(g,", "))
--- >   result = groups(forloop(1,(<= 1000000),(+ 1),printed),8)
+-- >   result = groups(forloop(1,(<= 2000000),(+ 1),printed),7)
 -- >
 --
 -- The example above shows two million numbers in 7143 pages, so that each
--- pages has 40 lines, each of which has 7 numbers. This example uses
+-- page has 40 lines, each of which has 7 numbers. This example uses
 -- 'forloop' and 'foreach' from "Extras.Util".
 --
 pageFromTexts :: [Text] -> Picture
@@ -531,9 +531,9 @@ underlays(f,n) = underlays'(f,max(0,truncation(n)))
 --- Zoomable graph
 -------------------------------------------------------------------------------
 
--- | The given picture zoomed by the given zoom factor and shown in a graph
--- that zooms along with the picture. For example, a zoom factor of 2 means
--- that the picture will show twice as big as usual.
+-- | The given picture dilated by the given scaling factor and shown in a graph
+-- that zooms along with the picture. For example, a scaling factor of 2 means
+-- that the picture will show twice as big as usual in each direction.
 --
 -- Example:
 --
@@ -558,12 +558,13 @@ graph(maxnum) = labels & axes & rotated(axes,90)
   axes = semiMajor & scaled(semiMajor,-1,1)
        & semiMinor & scaled(semiMinor,-1,1)
     
-  labels = pictures(forloop(major,(<= maxnum),(+ major),\v -> p(v) & q(v)))
-         & pictures(forloop(-major,(>= -maxnum),(+ (-major)),\v -> p(v) & q(v)))
+  labels = pictures(forloop(major,(<= maxnum),(+ major),pq))
+         & pictures(forloop(-major,(>= -maxnum),(+ (-major)),pq))
   axis(x) = polyline([(x*scaling,-10),(x*scaling,10)])
   majorAxis(x) = colored(axis(x),g(0.2,0.5))
   minorAxis(x) = colored(axis(x),g(0.1,0.2))
   g(s,a) = RGBA(s,s,s,a)
+  pq(x) = p(x) & q(x)
   p(x) = translated(dilated(print,1/2),x*scaling,-1/2)
     where
     print = styledLettering(printed(x),Monospace,Plain)

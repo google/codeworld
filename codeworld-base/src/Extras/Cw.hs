@@ -549,7 +549,7 @@ underlays(f,n) = underlays'(f,max(0,truncation(n)))
 --
 -- Example 1 shows a circle that grows forever, while the graph keeps
 -- adjusting the scale so that it fits within the output.
--- Example 2 shows a graph with 100 circles. It used the function
+-- Example 2 shows a graph with 100 circles. It uses the function
 -- 'guiDrawingOf' from "Extras.Widget".
 --
 graphed :: (Picture,Number) -> Picture
@@ -572,21 +572,21 @@ graph(maxnum) = labels & axes & rotated(axes,90)
   minorAxis(x) = colored(axis(x),g(0.1,0.2))
   g(s,a) = RGBA(s,s,s,a)
 
-  p(x) | x < 1000000 = translated(lunj( x), p,-1/2)
-                     & translated(lunj(-x),-p,-1/2)
-       | 3 <= p && p < 6 = translated(lunj( x), p,-1/2)
-                         & translated(lunj(-x),-p,-1/2)
+  p(x) | x < 1000000 = translated(lunj( x), pos,-1/2)
+                     & translated(lunj(-x),-pos,-1/2)
+       | 3 <= pos && pos < 6 = translated(lunj( x), pos,-1/2)
+                             & translated(lunj(-x),-pos,-1/2)
        | otherwise = blank
        where
-       p = x * scaling
+       pos = x * scaling
 
-  q(y) | y < 50000 = translated(ljust( y),-1, p)
-                   & translated(ljust(-y),-1,-p)
-       | 3 <= p && p < 6 = translated(lunj( y),-1, p)
-                         & translated(lunj(-y),-1,-p)
+  q(y) | y < 50000 = translated(ljust( y),-1, pos)
+                   & translated(ljust(-y),-1,-pos)
+       | 3 <= pos && pos < 6 = translated(lunj( y),-1, pos)
+                             & translated(lunj(-y),-1,-pos)
        | otherwise = blank
        where
-       p = y * scaling
+       pos = y * scaling
 
   lunj(v)  = dilated(styledLettering(printed(v),Monospace,Plain),0.5)
   ljust(v) = dilated(styledLettering( rJustified(printed(v),5)

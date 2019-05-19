@@ -560,7 +560,7 @@ graph(maxnum) = labels & axes & rotated(axes,90)
     
   labels = pictures(forloop(major,(<= maxnum),(+ major),\v -> p(v) & q(v)))
          & pictures(forloop(-major,(>= -maxnum),(+ (-major)),\v -> p(v) & q(v)))
-  axis(x) = polyline([(x*scaling,-20),(x*scaling,20)])
+  axis(x) = polyline([(x*scaling,-10),(x*scaling,10)])
   majorAxis(x) = colored(axis(x),g(0.2,0.5))
   minorAxis(x) = colored(axis(x),g(0.1,0.2))
   g(s,a) = RGBA(s,s,s,a)

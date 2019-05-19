@@ -40,6 +40,8 @@ module Extras.Cw(
     , rgb, withAlpha
     -- * Layout
     , pageFromTexts, grid, sprite, overlays, underlays
+    -- * Graphing
+    , graphed
     -- * New entry points
     , slideshow, autoSlideshow
     -- * Entry points with randomization
@@ -49,7 +51,7 @@ module Extras.Cw(
 
 
 import Prelude
-import Extras.Util(lJustified)
+import Extras.Util
 
 -------------------------------------------------------------------------------
 --- Top Level
@@ -524,3 +526,69 @@ underlays(f,n) = underlays'(f,max(0,truncation(n)))
     where
     underlays'(f,0) = blank
     underlays'(f,n) = f(n) & underlays'(f,n-1)
+
+-------------------------------------------------------------------------------
+--- Zoomable graph
+-------------------------------------------------------------------------------
+
+-- | The given picture zoomed by the given zoom factor and shown in a graph
+-- that zooms along with the picture. For example, a zoom factor of 2 means
+-- that the picture will show twice as big as usual.
+--
+-- Example:
+--
+-- > program = guiDrawingOf(widgets,draw)
+-- >   where
+-- >   widgets = [withConversion(\v -> 2^(-8 + v*16), slider("zoom",-8,9))]
+-- >   draw([zoom]) = graphed(pictures([circle(n) | n <- [1..100]]), zoom)
+--
+-- The example above shows a graph with 100 circles. It used the function
+-- 'guiDrawingOf' from "Extras.Widget".
+--
+graphed :: (Picture,Number) -> Picture
+graphed(pic,zoom) = graph(10/zoom) & dilated(pic,zoom)
+
+graph(maxnum) = labels & axes & rotated(axes,90)
+  where
+  semiMajor = pictures(forloop(0,(<= maxnum),(+ major),majorAxis))
+  semiMinor = pictures(forloop(0,(<= maxnum),(+ minor),minorAxis))
+  (limit,major,_) = resolution(maxnum)
+  (_,minor,numdec) = resolution(major)
+  scaling = 10/maxnum
+  axes = semiMajor & scaled(semiMajor,-1,1)
+       & semiMinor & scaled(semiMinor,-1,1)
+    
+  labels = pictures(forloop(major,(<= maxnum),(+ major),\v -> p(v) & q(v)))
+         & pictures(forloop(-major,(>= -maxnum),(+ (-major)),\v -> p(v) & q(v)))
+  axis(x) = polyline([(x*scaling,-20),(x*scaling,20)])
+  majorAxis(x) = colored(axis(x),g(0.2,0.5))
+  minorAxis(x) = colored(axis(x),g(0.1,0.2))
+  g(s,a) = RGBA(s,s,s,a)
+  p(x) = translated(dilated(print,1/2),x*scaling,-1/2)
+    where
+    print = styledLettering(printed(x),Monospace,Plain)
+  q(y) = translated(dilated(print,1/2),-1,y*scaling)
+    where
+    print = styledLettering(rJustified(printed(y),5),Monospace,Plain)
+
+-- Major interval, minor interval and number of decimals
+resolution(x) = if x >= 1 then goUp(1) else goDn(1,0)
+  where
+  
+  goDn(base,dec) | x > base5 = (base,base/5,dec)
+                 | x > base2 = (base5,base5/5,dec+1)
+                 | x > base1 = (base2,base2/4,dec+1)
+                 | otherwise = goDn(base1,dec+1)
+      where
+      base5 = base/2
+      base2 = base/5
+      base1 = base/10
+    
+  goUp(base) | x <= base1 = (base1,base1/5,0)
+             | x <= base2 = (base2,base2/4,0)
+             | x <= base5 = (base5,base5/5,0)
+             | otherwise = goUp(base*10)
+      where
+      base1 = base
+      base2 = base*2
+      base5 = base*5

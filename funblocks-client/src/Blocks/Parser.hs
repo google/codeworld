@@ -459,6 +459,8 @@ regularBlockNames =
                   ,"cwDull"
                   ,"cwTranslucent"
                   ,"cwRGBA"
+                  ,"cwRGB"
+                  ,"cwHSL"
                   -- LOGIC
                   ,"conNot"
                   ,"conTrue"

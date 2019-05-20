@@ -136,6 +136,7 @@
     --doc-color: #000000;
     --doc-svg-fill: #000000;
     --doc-svg-stroke: #000000;
+    --doc-pre-background: rgb(229,237,244);
     --haddock-p-bg: #F0F0F0;
     --haddock-lang-nameplate: #fff;
     --haddock-selflink-bg: #f0f0f0;
@@ -275,6 +276,7 @@
         --doc-color: #FFFFFF;
         --doc-svg-fill: #FFFFFF;
         --doc-svg-stroke: #FFFFFF;
+        --doc-pre-background: rgb(26,18,11);
         --haddock-p-bg: #333333;
         --haddock-lang-nameplate: #000000;
         --haddock-selflink-bg: #333333;

@@ -41,7 +41,7 @@ module Extras.Cw(
     -- * Layout
     , pageFromTexts, grid, sprite, overlays, underlays
     -- * Graphing
-    , graphed
+    , graphed, wideGraphed
     -- * New entry points
     , slideshow, autoSlideshow
     -- * Entry points with randomization
@@ -531,46 +531,55 @@ underlays(f,n) = underlays'(f,max(0,truncation(n)))
 --- Zoomable graph
 -------------------------------------------------------------------------------
 
--- | The given picture dilated by the given scaling factor and shown in a graph
+-- | The given picture dilated by the given scaling factors and shown in a
+-- graph
 -- that zooms along with the picture. For example, a scaling factor of 2 means
 -- that the picture will show twice as big as usual in each direction.
 --
 -- Example 1:
 --
 -- > program = animationOf(movie)
--- >     where movie(t) = graphed(circle(5*t^3),1/(1 + t^3))
+-- >     where movie(t) = let zoom = 1/(1 + t^3)
+-- >                      in  graphed(circle(5*t^3), zoom, zoom)
 --
 -- Example 2:
 --
 -- > program = guiDrawingOf(widgets,draw)
 -- >   where
--- >   widgets = [withConversion(\v -> 2^(-8 + v*16), slider("zoom",-8,9))]
--- >   draw([zoom]) = graphed(pictures([circle(n) | n <- [1..100]]), zoom)
+-- >   widgets = [ withConversion(zooming, slider("zoomX",-8,9))
+-- >             , withConversion(zooming, slider("zoomY",-8,7))
+-- >             ]
+-- >   zooming(v) = 2^(-8 + v*16)
+-- >   draw([zoomX,zoomY]) = graphed(manyCircles, zoomX, zoomY)
+-- >   manyCircles = pictures([circle(n) | n <- [1..100]])
 --
 -- Example 1 shows a circle that grows forever, while the graph keeps
 -- adjusting the scale so that it fits within the output.
 -- Example 2 shows a graph with 100 circles. It uses the function
 -- 'guiDrawingOf' from "Extras.Widget".
 --
-graphed :: (Picture,Number) -> Picture
-graphed(pic,zoom) = graph(10/zoom) & dilated(pic,zoom)
+graphed :: (Picture,Number,Number) -> Picture
+graphed(pic,zoomx,zoomy) = graph(10/zoomx,10/zoomy,10,10)
+                         & scaled(pic,zoomx,zoomy)
 
-graph(maxnum) = labels & axes & rotated(axes,90)
+-- | This function is similar to 'graphed', but it creates a graph that is
+-- as wide as specified by the first parameter.
+-- Thus, @wideGraphed(width,pic,sx,sy)@ creates a graph that is @width@
+-- units wide and @20@ units high.
+wideGraphed :: (Number,Picture,Number,Number) -> Picture
+wideGraphed(width,pic,zoomx,zoomy) =
+  graph(halfwidth/zoomx, 10/zoomy, halfwidth, 10)
+  & scaled(pic,zoomx,zoomy)
   where
-  semiMajor = pictures(forloop(0,(<= maxnum),(+ major),majorAxis))
-  semiMinor = pictures(forloop(0,(<= maxnum),(+ minor),minorAxis))
-  (limit,major,_) = resolution(maxnum)
-  (_,minor,numdec) = resolution(major)
-  scaling = 10/maxnum
-  axes = semiMajor & scaled(semiMajor,-1,1)
-       & semiMinor & scaled(semiMinor,-1,1)
-    
-  labels = pictures(forloop(major,(<= maxnum),(+ major),p))
-         & pictures(forloop(major,(<= maxnum),(+ major),q))
-  axis(x) = polyline([(x*scaling,-10),(x*scaling,10)])
-  majorAxis(x) = colored(axis(x),g(0.2,0.5))
-  minorAxis(x) = colored(axis(x),g(0.1,0.2))
-  g(s,a) = RGBA(s,s,s,a)
+  halfwidth = width/2
+
+graph(maxX,maxY,width,height) = labels & axesX & rotated(axesY,90)
+  where
+  (majorX,axesX) = axes(maxX,width,height)
+  (majorY,axesY) = axes(maxY,height,width)
+
+  labels = pictures(forloop(majorX,(<= maxX),(+ majorX),p))
+         & pictures(forloop(majorY,(<= maxY),(+ majorY),q))
 
   p(x) | x < 1000000 = translated(lunj( x), pos,-1/2)
                      & translated(lunj(-x),-pos,-1/2)
@@ -578,7 +587,7 @@ graph(maxnum) = labels & axes & rotated(axes,90)
                              & translated(lunj(-x),-pos,-1/2)
        | otherwise = blank
        where
-       pos = x * scaling
+       pos = x * width / maxX
 
   q(y) | y < 50000 = translated(ljust( y),-1, pos)
                    & translated(ljust(-y),-1,-pos)
@@ -586,12 +595,27 @@ graph(maxnum) = labels & axes & rotated(axes,90)
                              & translated(lunj(-y),-1,-pos)
        | otherwise = blank
        where
-       pos = y * scaling
+       pos = y * height / maxY
 
   lunj(v)  = dilated(styledLettering(printed(v),Monospace,Plain),0.5)
   ljust(v) = dilated(styledLettering( rJustified(printed(v),5)
                                     , Monospace
                                     , Plain ), 0.5)
+
+axes(maxnum,width,height) = (major, allAxes)
+  where
+  allAxes = semiMajor & scaled(semiMajor,-1,1)
+          & semiMinor & scaled(semiMinor,-1,1)
+
+  semiMajor = pictures(forloop(0,(<= maxnum),(+ major),majorAxis))
+  semiMinor = pictures(forloop(0,(<= maxnum),(+ minor),minorAxis))
+  (limit,major,_) = resolution(maxnum)
+  (_,minor,numdec) = resolution(major)
+  scaling = width / maxnum
+  axis(x) = polyline([(x*scaling,-height),(x*scaling,height)])
+  majorAxis(x) = colored(axis(x),g(0.2,0.5))
+  minorAxis(x) = colored(axis(x),g(0.1,0.2))
+  g(s,a) = RGBA(s,s,s,a)
 
 -- Major interval, minor interval and number of decimals
 resolution(x) = if x >= 1 then goUp(1) else goDn(1,0)

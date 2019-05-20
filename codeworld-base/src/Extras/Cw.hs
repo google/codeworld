@@ -531,10 +531,11 @@ underlays(f,n) = underlays'(f,max(0,truncation(n)))
 --- Zoomable graph
 -------------------------------------------------------------------------------
 
--- | The given picture dilated by the given scaling factors and shown in a
+-- | The given picture scaled by the given scaling factors and shown in a
 -- graph
--- that zooms along with the picture. For example, a scaling factor of 2 means
--- that the picture will show twice as big as usual in each direction.
+-- that zooms along with the picture. For example, a scaling factor of 2
+-- in either the X direction or the Y direction means
+-- that the picture will show twice as big as usual in that direction.
 --
 -- Example 1:
 --

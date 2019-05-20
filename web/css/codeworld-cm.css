@@ -201,6 +201,10 @@ div.CodeMirror span.cm-matchhighlight {
     color: var(--hint-keyword);
 }
 
+.CodeMirror-hints {
+    background: var(--hints-list-bg)
+}
+
 .CodeMirror-hint {
     max-width: 40em;
 }
@@ -228,6 +232,14 @@ li.CodeMirror-hint-active {
     -ms-transition: opacity .4s;
     -o-transition: opacity .4s;
     -webkit-transition: opacity .4s;
+}
+
+.CodeMirror-lint-tooltip {
+    color: var(--lint-tooltip-color);
+}
+
+.hint-description {
+    color: var(--hint-description-color);
 }
 
 .function-tooltip-styling .hover-decl {
@@ -271,6 +283,7 @@ div.fade {
 }
 
 .hover-doc {
+    color: var(--hover-doc-color);
     padding-top: 0.5em;
     font-size: 11pt;
 }

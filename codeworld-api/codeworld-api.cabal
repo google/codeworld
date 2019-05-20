@@ -55,7 +55,7 @@ Library
     Build-depends:     blank-canvas          >= 0.6 && < 0.7,
                        time                  >= 1.6.0 && < 1.9
 
-  Ghc-options:         -O -Wincomplete-patterns
+  Ghc-options:         -O2 -Wincomplete-patterns
 
 Test-suite unit-tests
   Type:                exitcode-stdio-1.0
@@ -98,5 +98,5 @@ Test-suite unit-tests
     Build-depends:     blank-canvas          >= 0.6 && < 0.7,
                        time                  >= 1.6.0 && < 1.9
 
-  Ghc-options:         -O
+  Ghc-options:         -O2
   Cpp-options:         -DCODEWORLD_UNIT_TEST

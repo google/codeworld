@@ -34,6 +34,10 @@ body {
     border-radius: 5px;
 }
 
+pre {
+    background: var(--doc-pre-background) !important;
+}
+
 .md pre.tilde {
     background-color: var(--doc-tilde-bg) !important;
 }

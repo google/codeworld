@@ -1,7 +1,8 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE JavaScriptFFI #-}
@@ -16,7 +17,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE StaticPointers #-}
-{-# LANGUAGE DataKinds #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -58,6 +58,7 @@ import Data.Serialize.Text
 import qualified Data.Text as T
 import Data.Text (Text, pack, singleton)
 import qualified Debug.Trace
+import GHC.Exts
 import GHC.Fingerprint.Type
 import GHC.Generics
 import GHC.Prim
@@ -1899,16 +1900,23 @@ activityOf initial change picture =
 
 interactionOf = runInspect (const [])
 
+data StrictPoint = SP !Double !Double deriving (Eq, Show)
+
+toStrictPoint :: Point -> StrictPoint
+toStrictPoint (x, y) = SP x y
+
+data StrictMaybe a = SNothing | SJust !a deriving (Functor, Show)
+
 data Wrapped a = Wrapped
     { state :: a
-    , playbackSpeed :: Double
-    , lastInteractionTime :: Double
-    , zoomFactor :: Double
-    , panCenter :: Point
-    , panDraggingAnchor :: Maybe Point
-    , isDraggingSpeed :: Bool
-    , isDraggingHistory :: Bool
-    , isDraggingZoom :: Bool
+    , playbackSpeed :: !Double
+    , lastInteractionTime :: !Double
+    , zoomFactor :: !Double
+    , panCenter :: !StrictPoint
+    , panDraggingAnchor :: !(StrictMaybe StrictPoint)
+    , isDraggingSpeed :: !Bool
+    , isDraggingHistory :: !Bool
+    , isDraggingZoom :: !Bool
     } deriving (Show, Functor)
 
 data Control :: * -> * where
@@ -1936,17 +1944,15 @@ wrappedInitial w = Wrapped {
       playbackSpeed = 1,
       lastInteractionTime = 1000,
       zoomFactor = 1,
-      panCenter = (0,0),
-      panDraggingAnchor = Nothing,
+      panCenter = SP 0 0,
+      panDraggingAnchor = SNothing,
       isDraggingSpeed = False,
       isDraggingHistory = False,
       isDraggingZoom = False
     }
 
 identical :: a -> a -> Bool
-identical !x !y = case reallyUnsafePtrEquality# x y of
-    0# -> False
-    _  -> True
+identical !x !y = isTrue# (reallyUnsafePtrEquality# x y)
 
 toState :: (a -> a) -> (Wrapped a -> Wrapped a)
 toState f w | identical s s' = w
@@ -1955,13 +1961,9 @@ toState f w | identical s s' = w
         s' = f s
 
 wrappedStep :: (Double -> a -> a) -> Double -> Wrapped a -> Wrapped a
-wrappedStep f dt w = updateInteractionTime (updateState w)
-    where updateInteractionTime w
-            | lastInteractionTime w > 5 = w
-            | otherwise = w { lastInteractionTime = lastInteractionTime w + dt }
-          updateState w
-            | playbackSpeed w == 0 = w
-            | otherwise = toState (f (dt * playbackSpeed w)) w
+wrappedStep f dt w
+  | playbackSpeed w == 0 = w
+  | otherwise = toState (f (dt * playbackSpeed w)) w
 
 reportDiff :: String -> (a -> a) -> (a -> a)
 reportDiff msg f x = unsafePerformIO $ do
@@ -1977,29 +1979,34 @@ wrappedEvent :: forall a .
     -> Event
     -> Wrapped a
     -> Wrapped a
-wrappedEvent _ _ eventHandler (TimePassing dt) w
-    | playbackSpeed w == 0 = w
-    | otherwise = toState (eventHandler (TimePassing (dt * playbackSpeed w))) w
-wrappedEvent ctrls stepHandler eventHandler event w
-    | playbackSpeed w == 0 || handled = afterControls {lastInteractionTime = 0}
-    | otherwise = toState (eventHandler (adaptEvent event)) afterControls {lastInteractionTime = 0}
+wrappedEvent ctrls stepHandler eventHandler event = markInteraction . handleChange
   where
-    (afterControls, handled) = foldr stepFunction (w, False) (ctrls w)
+    markInteraction w
+      | TimePassing _  <- event, lastInteractionTime w > 5 = w
+      | TimePassing dt <- event = w { lastInteractionTime = lastInteractionTime w + dt }
+      | otherwise = w { lastInteractionTime = 0 }
 
-    stepFunction control (world, True) = (world, True)
-    stepFunction control (world, False) = handleControl fullStep event control world
+    handleChange w0
+      | playbackSpeed w0 == 0 || handled = w1
+      | otherwise = toState (eventHandler (adaptEvent event)) w1
+      where
+        (w1, handled) = foldr doCtrl (w0, False) (ctrls w0)
 
-    fullStep dt = stepHandler dt . eventHandler (TimePassing dt)
+        doCtrl _    (w, True)  = (w, True)
+        doCtrl ctrl (w, False) = handleControl fullStep event ctrl w
 
-    adaptEvent (PointerMovement p) = PointerMovement (adaptPoint p)
-    adaptEvent (PointerPress p)    = PointerPress (adaptPoint p)
-    adaptEvent (PointerRelease p)  = PointerRelease (adaptPoint p)
-    adaptEvent other               = other
+        fullStep dt = stepHandler dt . eventHandler (TimePassing dt)
 
-    adaptPoint (x, y) = (x / k - dx, y / k - dy)
+        adaptEvent (PointerMovement p) = PointerMovement (adaptPoint p)
+        adaptEvent (PointerPress p)    = PointerPress (adaptPoint p)
+        adaptEvent (PointerRelease p)  = PointerRelease (adaptPoint p)
+        adaptEvent (TimePassing dt)    = TimePassing (dt * playbackSpeed w0)
+        adaptEvent other               = other
 
-    (dx, dy) = panCenter w
-    k        = zoomFactor w
+        adaptPoint (x, y) = (x / k - dx, y / k - dy)
+
+        SP dx dy = panCenter w1
+        k        = zoomFactor w1
 
 scaleRange :: (Double, Double) -> (Double, Double) -> Double -> Double
 scaleRange (a1, b1) (a2, b2) x = min b2 $ max a2 $ (x - a1) / (b1 - a1) * (b2 - a2) + a2
@@ -2042,7 +2049,7 @@ handleControl _ (PointerPress (x, y)) (ZoomInButton (cx, cy)) w
 handleControl _ (PointerPress (x, y)) (ZoomOutButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = max (zoomIncrement ** (-10)) (zoomFactor w / zoomIncrement)}, True)
 handleControl _ (PointerPress (x, y)) (ResetViewButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = 1, panCenter = (0, 0)}, True)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = 1, panCenter = SP 0 0}, True)
 handleControl _ (PointerPress (x,y)) (BackButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 =
         (w {state = max 0 (state w - 0.1)}, True)
@@ -2076,15 +2083,16 @@ handleControl _ (PointerMovement (x, y)) (HistorySlider (cx, cy)) w
 handleControl _ (PointerRelease (x, y)) (HistorySlider (cx, cy)) w
     | isDraggingHistory w = (travelToTime (x - cx) <$> w {isDraggingHistory = False}, True)
 handleControl _ (PointerPress (x, y)) PanningLayer w =
-      (w {panDraggingAnchor = Just (x, y)}, True)
+      (w {panDraggingAnchor = SJust (SP x y)}, True)
 handleControl _ (PointerMovement (x, y)) PanningLayer w
-    | Just (ax, ay) <- panDraggingAnchor w
-    , (px, py) <- panCenter w
-    = (w { panCenter = (px + (x - ax) / zoomFactor w, py + (y - ay) / zoomFactor w),
-           panDraggingAnchor = Just (x, y)
+    | SJust (SP ax ay) <- panDraggingAnchor w
+    , SP px py <- panCenter w
+    = (w { panCenter = SP (px + (x - ax) / zoomFactor w)
+                          (py + (y - ay) / zoomFactor w),
+           panDraggingAnchor = SJust (SP x y)
          }, True)
 handleControl _ (PointerRelease (x, y)) PanningLayer w
-    | Just (ax, ay) <- panDraggingAnchor w = (w {panDraggingAnchor = Nothing}, True)
+    | SJust (SP ax ay) <- panDraggingAnchor w = (w {panDraggingAnchor = SNothing}, True)
 handleControl _ _ _ w = (w, False)
 
 travelToTime :: Double -> ([s],[s]) -> ([s],[s])  
@@ -2103,7 +2111,7 @@ travelToTime t (past, future)
 wrappedDraw ::
        (Wrapped a -> [Control a]) -> (a -> Picture) -> Wrapped a -> Picture
 wrappedDraw ctrls f w = drawControlPanel ctrls w <> dilated k (translated dx dy (f (state w)))
-  where (dx, dy) = panCenter w
+  where SP dx dy = panCenter w
         k        = zoomFactor w
 
 drawControlPanel :: (Wrapped a -> [Control a]) -> Wrapped a -> Picture
@@ -2289,7 +2297,7 @@ drawingControls w
         ZoomSlider (9, -6)
       ]
     resetViewButton
-      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -3)]
+      | zoomFactor w /= 1 || panCenter w /= SP 0 0 = [ResetViewButton (9, -3)]
       | otherwise = []
 
 drawingOf pic = runInspect drawingControls () (\_ _ -> ()) (\_ _ -> ()) (const pic)
@@ -2317,7 +2325,7 @@ animationControls w
       | playbackSpeed w == 0 && state w > 0 = [BackButton (-7, -9)]
       | otherwise = []
     resetViewButton
-      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -3)]
+      | zoomFactor w /= 1 || panCenter w /= SP 0 0 = [ResetViewButton (9, -3)]
       | otherwise = []
 
 animationOf f = runInspect animationControls 0 (+) (\_ r -> r) f
@@ -2339,7 +2347,7 @@ simulationControls w
       | playbackSpeed w == 0 = [PlayButton (-8, -9), StepButton (-2, -9)]
       | otherwise = [PauseButton (-8, -9)]
     resetViewButton
-      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -3)]
+      | zoomFactor w /= 1 || panCenter w /= SP 0 0 = [ResetViewButton (9, -3)]
       | otherwise = []
 
 statefulDebugControls :: Wrapped ([w],[w]) -> [Control ([w],[w])]
@@ -2367,7 +2375,7 @@ statefulDebugControls w
             [PlayButton (-8, -9), HistorySlider (3, -9)] ++ advance ++ regress
       | otherwise = [PauseButton (-8, -9)]
     resetViewButton
-      | zoomFactor w /= 1 || panCenter w /= (0,0) = [ResetViewButton (9, -3)]
+      | zoomFactor w /= 1 || panCenter w /= SP 0 0 = [ResetViewButton (9, -3)]
       | otherwise = []
     panningLayer 
       | playbackSpeed w == 0 = [PanningLayer]

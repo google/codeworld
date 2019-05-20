@@ -191,7 +191,6 @@ buildArgs "codeworld" =
     ]
 buildArgs "haskell" =
     [ "-DGHCJS_BROWSER"
-    , "-Wall"
     , "-package"
     , "codeworld-api"
     , "-package"

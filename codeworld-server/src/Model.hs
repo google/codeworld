@@ -25,6 +25,7 @@ import Control.Monad
 import Data.Aeson
 import Data.Text (Text)
 import System.FilePath (FilePath)
+import Data.ByteString (ByteString)
 
 data Project = Project
     { projectName :: Text
@@ -80,15 +81,13 @@ instance ToJSON GalleryItem where
                    , "url" .= galleryItemURL item
                    ]
 
-type FName = Text
-
-data DirTree = Dir FName [DirTree] | Source Text
+data DirTree = Dir Text [DirTree] | Source Text
 
 instance ToJSON DirTree where
-    toJSON (Source name) = object [ "type" .= "project"
-                                  , "name" .= name
-                                  ]
-    toJSON (Dir name children) = object [ "type" .= "directory"
+    toJSON (Source src) = object [ "type" .= ("project" :: String)
+                                 , "source" .= src
+                                 ]
+    toJSON (Dir name children) = object [ "type" .= ("directory" :: String)
                                         , "name" .= name 
                                         , "entries" .= map toJSON children
                                         ]

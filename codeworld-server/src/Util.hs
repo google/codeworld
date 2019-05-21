@@ -37,7 +37,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import System.Directory
-import System.File.Tree (copyTo_, getDirectory)
+import System.File.Tree (Tree(Node), toTree, copyTo_, getDirectory)
 import System.FilePath
 import System.IO.Error
 import System.Posix.Files
@@ -309,10 +309,26 @@ removeDirectoryIfExists dirName =
 }
 --}
 
-
-
-getDirectoryTree :: BuildMode -> UserId -> DirTree
+getDirectoryTree :: BuildMode -> UserId -> IO DirTree
 getDirectoryTree bm uid = do
-    ftr <- getDirectory' $ userProjectDir (BuildMode "codeworld") (UserId "nixorn")
-    let Node root children = toTree ftr
+    ftr <- getDirectory $ userProjectDir bm uid
+    let (Node rootPath children) = toTree ftr
+    children' <- mapM (constructTree rootPath) $ children
+    return $ Dir "root" children'
+    where
+        constructTree :: FilePath -> Tree FilePath -> IO DirTree
+        constructTree prefix (Node path [(Node "dir.info" [])]) = do -- empty directory
+            name <- B.readFile $ prefix </> path </> "dir.info"
+            return $ Dir (T.decodeUtf8 name) []
+        constructTree prefix (Node path []) = do
+            let currentNode = prefix </> path
+            source <- B.readFile currentNode
+            return $ Source $ T.decodeUtf8 source
+        constructTree prefix (Node path children) = do
+            name <- B.readFile $ prefix </> path </> "dir.info"
+            children' <- mapM (constructTree $ prefix </> path) $ filter notDirInfo children
+            return $ Dir (T.decodeUtf8 name) children'
 
+        notDirInfo :: Tree FilePath -> Bool
+        notDirInfo (Node "dir.info" []) = False
+        notDirInfo _ = True

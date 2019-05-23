@@ -41,7 +41,7 @@ module Extras.Cw(
     -- * Layout
     , pageFromTexts, grid, sprite, overlays, underlays
     -- * Graphing
-    , graphed, wideGraphed
+    , graphed, wideGraphed, customGraphed
     -- * New entry points
     , slideshow, autoSlideshow
     -- * Entry points with randomization
@@ -573,6 +573,19 @@ wideGraphed(width,pic,zoomx,zoomy) =
   & scaled(pic,zoomx,zoomy)
   where
   halfwidth = width/2
+
+
+-- | This function is similar to 'graphed', but it creates a graph that is
+-- as wide and as high as specified by the first two parameters.
+-- Thus, @customGraphed(width,height,pic,sx,sy)@ creates a graph that
+-- is @width@ units wide and @heighth@ units high.
+customGraphed :: (Number,Number,Picture,Number,Number) -> Picture
+customGraphed(width,height,pic,zoomx,zoomy) =
+  graph(halfwidth/zoomx, halfheight/zoomy, halfwidth, halfheight)
+  & scaled(pic,zoomx,zoomy)
+  where
+  halfwidth = width/2
+  halfheight = height/2
 
 graph(maxX,maxY,width,height) = labels & axesX & rotated(axesY,90)
   where

@@ -81,13 +81,14 @@ instance ToJSON GalleryItem where
                    , "url" .= galleryItemURL item
                    ]
 
-data DirTree = Dir Text [DirTree] | Source Text
+data DirTree = Dir Text [DirTree] | Source Text Text
 
 instance ToJSON DirTree where
-    toJSON (Source src) = object [ "type" .= ("project" :: String)
-                                 , "source" .= src
-                                 ]
-    toJSON (Dir name children) = object [ "type" .= ("directory" :: String)
-                                        , "name" .= name 
-                                        , "entries" .= map toJSON children
+    toJSON (Source name src) = object [ "name" .= name
+                                      , "data" .= src
+                                      , "type" .= ("project" :: Text)
+                                      ]
+    toJSON (Dir name children) = object [ "name" .= name
+                                        , "children" .= map toJSON children
+                                        , "type" .= ("directory" :: Text)
                                         ]

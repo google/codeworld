@@ -35,6 +35,58 @@ async function init() {
     preloadBaseBundle();
     window.setInterval(preloadBaseBundle, 1000 * 60 * 60);
 
+    window.directoryTree = {};
+    $('#directoryTree').on(
+        'tree.move',
+        function(event) {
+            let position = event.move_info.position;
+            let fromNode = event.move_info.moved_node;
+            let isFile = fromNode.type === "project";
+            let fromPath, name;
+            fromPath = pathToRootDir(fromNode);
+            if (isFile) {
+                name = fromNode.name;
+            } else if (fromPath) {
+                fromPath = [fromPath, fromNode.name].join("/");
+            } else {
+                fromPath = fromNode.name
+            }
+            let toNode = event.move_info.target_node;
+            if (position === 'before' || position === 'after') {
+                toNode = toNode.parent;
+            };
+            let toPath = pathToRootDir(toNode);
+            if (toPath) {
+                toPath = toPath + "/" + toNode.name;
+            } else {
+                toPath = toNode.name;
+            }
+
+            moveDirTreeNode(fromPath, toPath, isFile, name, window.buildMode, () => {
+                discoverProjects('', 0);
+                updateUI();
+            })
+        }
+    )
+    $('#directoryTree').on(
+        'tree.select',
+        (event) => {
+            if (event.node && event.node.type === 'project') {
+                let node = event.node;
+                let path = pathToRootDir(node);
+                loadProject1(node.name, path);
+            }
+        }
+    );
+    $('#directoryTree').on(
+        'tree.click',
+        (event) => {
+            if (event.node && event.node.type === 'directory') {
+                $('#directoryTree').tree('toggle', event.node);
+            }
+        }
+    );
+
     window.allProjectNames = [
         []
     ];
@@ -652,7 +704,21 @@ function updateUI() {
     document.title = `${title} - CodeWorld`;
 }
 
+function updateNavBar1() {
+    if (window.directoryTree.name === 'root') {
+        $('#directoryTree').tree({
+                    data : window.directoryTree.children,
+                    dragAndDrop: true,
+                    keyboardSupport: false,
+                    onCanMoveTo: (moving_node, target_node) => {
+                        return target_node.type !== 'project';
+                    }
+            });
+    }
+}
+
 function updateNavBar() {
+    updateNavBar1();
     window.allProjectNames.forEach(projectNames => {
         projectNames.sort((a, b) => a.localeCompare(b));
     });
@@ -897,6 +963,12 @@ function newFolder() {
             setCode('');
         }
     });
+}
+
+function loadProject1 (name, path) {
+    loadProject_1(path, name, window.buildMode, project => {
+        setCode(project.source, project.history, name);
+    })
 }
 
 function loadProject(name, index) {
@@ -1171,7 +1243,12 @@ function signinCallback(result) {
     isFirstSignin = false;
 }
 
+function discoverProjects1 () {
+    discoverProjects_1(window.buildMode);
+}
+
 function discoverProjects(path, index) {
+    discoverProjects1();
     discoverProjects_(path, window.buildMode, index);
 }
 

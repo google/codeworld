@@ -36,6 +36,8 @@ import Data.Monoid
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import qualified Data.Text.Lazy as LT
+import qualified Data.Text.Lazy.Encoding as LT
 import System.Directory
 import System.File.Tree (Tree(Node), toTree, copyTo_, getDirectory)
 import System.FilePath
@@ -297,18 +299,6 @@ removeDirectoryIfExists dirName =
         | isDoesNotExistError e = return ()
         | otherwise = throwIO e
 
-{--
-{ 
-    type: "directory",
-    name: "folder1",
-    entries: [
-    { type: "directory",
-        name: "folder2",
-        entries: [{type: project, name: "project1"}, {type:"project", name: {project2"}]
-    }]
-}
---}
-
 getDirectoryTree :: BuildMode -> UserId -> IO DirTree
 getDirectoryTree bm uid = do
     ftr <- getDirectory $ userProjectDir bm uid
@@ -322,8 +312,9 @@ getDirectoryTree bm uid = do
             return $ Dir (T.decodeUtf8 name) []
         constructTree prefix (Node path []) = do
             let currentNode = prefix </> path
-            source <- B.readFile currentNode
-            return $ Source $ T.decodeUtf8 source
+            source <- LB.readFile currentNode
+            let Just project = decode source
+            return $ Source (projectName project) $ LT.toStrict $ LT.decodeUtf8 source
         constructTree prefix (Node path children) = do
             name <- B.readFile $ prefix </> path </> "dir.info"
             children' <- mapM (constructTree $ prefix </> path) $ filter notDirInfo children

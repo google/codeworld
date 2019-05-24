@@ -680,6 +680,18 @@ function withClientId(f) {
     });
 }
 
+function discoverProjects_1 (buildMode) {
+    const data = new FormData();
+    data.append('mode', buildMode);
+    sendHttp('POST', 'directoryTree', data, request => {
+        if (request.status === 200) {
+            window.loadingDir = false;
+            window.directoryTree = JSON.parse(request.responseText);
+        }
+        updateNavBar();
+    });
+}
+
 function discoverProjects_(path, buildMode, index) {
     if (!signedIn()) {
         window.allProjectNames = window.openProjectName ? [
@@ -711,6 +723,35 @@ function discoverProjects_(path, buildMode, index) {
     });
 
     window.loadingDir = true;
+}
+
+function moveDirTreeNode(moveFrom, moveTo, isFile, name, buildMode, successFunc) {
+    if (!signedIn()) {
+        sweetAlert('Oops!', 'You must sign in before moving.', 'error');
+        cancelMove();
+        return;
+    }
+    const data = new FormData();
+    data.append('mode', buildMode);
+    data.append('moveTo', moveTo);
+    data.append('moveFrom', moveFrom);
+    if (isFile) {
+        data.append('isFile', 'true');
+        data.append('name', name);
+    } else {
+        data.append('isFile', 'false');
+    }
+
+    sendHttp('POST', 'moveProject', data, request => {
+        if (request.status !== 200) {
+            sweetAlert('Oops',
+                'Could not move your project! Please try again.',
+                'error');
+            return;
+        }
+        successFunc();
+    });
+
 }
 
 function moveHere_(path, buildMode, successFunc) {
@@ -1035,6 +1076,29 @@ function createFolder(path, buildMode, successFunc) {
     }, true);
 }
 
+function loadProject_1(path, name, buildMode, successFunc) {
+    warnIfUnsaved(() => {
+        if (!signedIn()) {
+            sweetAlert('Oops!', 'You must sign in to open projects.',
+                'error');
+            updateUI();
+            return;
+        }
+        const data = new FormData();
+        data.append('name', name);
+        data.append('mode', buildMode);
+        data.append('path', path);
+
+        sendHttp('POST', 'loadProject', data, request => {
+            if (request.status === 200) {
+                const project = JSON.parse(request.responseText);
+                successFunc(project);
+                updateUI();
+            }
+        });
+    }, false);
+}
+
 function loadProject_(index, name, buildMode, successFunc) {
 
     warnIfUnsaved(() => {
@@ -1335,4 +1399,17 @@ function clearMessages() {
 function markFailed() {
     const outputDiv = document.getElementById('message');
     outputDiv.classList.add('error');
+}
+
+// Get path to root dir in format root/sub1/sub2/etc
+// starting from parent.
+function pathToRootDir (nodeInit) {
+    let node = Object.assign(nodeInit);
+    let path = [];
+    while (node.parent && node.parent.name !== '') {
+        node = node.parent;
+        path.push(node.name);
+    }
+    path.reverse();
+    return path.join('/');
 }

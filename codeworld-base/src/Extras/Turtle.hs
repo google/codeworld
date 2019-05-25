@@ -735,7 +735,7 @@ turtleExamples =
   where
   make(i,l,s) = blank
     & translated(lettering(i <> ": " <> l),0,9.5) 
-    & translated(colored(solidRectangle(10,1.2),white),0,9.5)
+    & translated(colored(solidRectangle(10,1.2),RGB(1,1,1)),0,9.5)
     & s.#run.#tracks.#polylines
 
   slides =

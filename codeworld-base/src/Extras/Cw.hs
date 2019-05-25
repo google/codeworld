@@ -36,8 +36,6 @@ module Extras.Cw(
     between, beyond, saw
     -- * Functions for accessing the points in a curve
     , openCurvePoints, closedCurvePoints
-    -- * Color convenience functions
-    , rgb, withAlpha
     -- * Layout
     , pageFromTexts, grid, sprite, overlays, underlays
     -- * Graphing
@@ -402,21 +400,6 @@ closedCurvePoints :: ([Point],Number) -> [Point]
 
   dist(p,q) = vectorLength(vectorDifference(p,q))
 
-
--------------------------------------------------------------------------------
--- Colors
--------------------------------------------------------------------------------
-
--- | This function allows you to specify color components in the range 0 to 255
--- instead of 0 to 1.
-rgb :: (Number,Number,Number) -> Color
-rgb(r,g,b) = RGB(r/256,g/256,b/256) -- Not exact, but colors aren't anyway...
-
--- | This function allows you to specify the level of transparency of the
--- given color. Transparency must be given in the range 0 (fully transparent)
--- to 1 (fully opaque).
-withAlpha :: (Color,Number) -> Color
-withAlpha(RGBA(r,g,b,_),a) = RGBA(r,g,b,a)
 
 -------------------------------------------------------------------------------
 --- Layout

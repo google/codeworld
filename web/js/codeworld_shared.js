@@ -1087,7 +1087,7 @@ function share() {
             const a = document.createElement('a');
             a.href = window.location.href;
             a.hash = '';
-            a.pathname = '/run.html';
+            a.pathname = window.location.pathname + 'run.html';
             a.search = `?mode=${window.buildMode}&dhash=${window.deployHash}`;
 
             url = a.href;

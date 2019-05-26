@@ -617,8 +617,8 @@ axes(maxnum,width,height) = (major, allAxes)
 
   semiMajor = pictures(forloop(0,(<= maxnum),(+ major),majorAxis))
   semiMinor = pictures(forloop(0,(<= maxnum),(+ minor),minorAxis))
-  (limit,major,_) = resolution(maxnum)
-  (_,minor,numdec) = resolution(major)
+  (_,major,_) = resolution(maxnum*10/width)
+  (_,minor,_) = resolution(major)
   scaling = width / maxnum
   axis(x) = polyline([(x*scaling,-height),(x*scaling,height)])
   majorAxis(x) = colored(axis(x),g(0.2,0.5))

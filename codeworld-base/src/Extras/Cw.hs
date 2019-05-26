@@ -38,6 +38,7 @@ module Extras.Cw(
     , openCurvePoints, closedCurvePoints
     -- * Layout
     , pageFromTexts, grid, sprite, overlays, underlays
+    , squareFrame
     -- * Graphing
     , graphed, wideGraphed, customGraphed
     -- * Drawing Trees
@@ -511,6 +512,14 @@ underlays(f,n) = underlays'(f,max(0,truncation(n)))
     where
     underlays'(f,0) = blank
     underlays'(f,n) = f(n) & underlays'(f,n-1)
+
+-- | A white frame around the standard 20x20 output window that covers
+-- anything that may spill over. The argument is the thickness of
+-- the frame border.
+squareFrame :: Number -> Picture
+squareFrame(border) = colored(thickRectangle(s,s,border),RGB(1,1,1))
+  where
+  s = 20 + border
 
 -------------------------------------------------------------------------------
 --- Zoomable graph

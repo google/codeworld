@@ -32,7 +32,7 @@ painted(pic,name) = colored(pic,colorNamed(name))
 -- | This function allows you to specify color components in the range 0 to 255
 -- instead of 0 to 1.
 rgb :: (Number,Number,Number) -> Color
-rgb(r,g,b) = RGB(r/256,g/256,b/256) -- Not exact, but colors aren't anyway...
+rgb(r,g,b) = RGB(r/255,g/255,b/255)
 
 -- | A shade of grey as given by the argument, where @grey(0)@ is @black@
 -- and @grey(1)@ is white.
@@ -99,7 +99,7 @@ colorNamed'(name)
     b = rest(g,2)
     m x = fromHex(first(x,2))
 
-fromHex [hi,lo] = (h(hi) * 16 + h(lo)) / 256
+fromHex [hi,lo] = (h(hi) * 16 + h(lo)) / 255
     where
     h("0") = 0
     h("1") = 1

@@ -1085,10 +1085,7 @@ function share() {
             confirmText = 'Share Without Code';
         } else {
             const a = document.createElement('a');
-            a.href = window.location.href;
-            a.hash = '';
-            a.pathname = '/run.html';
-            a.search = `?mode=${window.buildMode}&dhash=${window.deployHash}`;
+            a.href = `run.html?mode=${window.buildMode}&dhash=${window.deployHash}`;
 
             url = a.href;
             msg =

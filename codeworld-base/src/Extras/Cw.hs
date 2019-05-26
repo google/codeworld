@@ -36,10 +36,9 @@ module Extras.Cw(
     between, beyond, saw
     -- * Functions for accessing the points in a curve
     , openCurvePoints, closedCurvePoints
-    -- * Color convenience functions
-    , rgb, withAlpha
     -- * Layout
     , pageFromTexts, grid, sprite, overlays, underlays
+    , squareFrame
     -- * Graphing
     , graphed, wideGraphed, customGraphed
     -- * Drawing Trees
@@ -404,21 +403,6 @@ closedCurvePoints :: ([Point],Number) -> [Point]
 
 
 -------------------------------------------------------------------------------
--- Colors
--------------------------------------------------------------------------------
-
--- | This function allows you to specify color components in the range 0 to 255
--- instead of 0 to 1.
-rgb :: (Number,Number,Number) -> Color
-rgb(r,g,b) = RGB(r/256,g/256,b/256) -- Not exact, but colors aren't anyway...
-
--- | This function allows you to specify the level of transparency of the
--- given color. Transparency must be given in the range 0 (fully transparent)
--- to 1 (fully opaque).
-withAlpha :: (Color,Number) -> Color
-withAlpha(RGBA(r,g,b,_),a) = RGBA(r,g,b,a)
-
--------------------------------------------------------------------------------
 --- Layout
 -------------------------------------------------------------------------------
 
@@ -528,6 +512,14 @@ underlays(f,n) = underlays'(f,max(0,truncation(n)))
     where
     underlays'(f,0) = blank
     underlays'(f,n) = f(n) & underlays'(f,n-1)
+
+-- | A white frame around the standard 20x20 output window that covers
+-- anything that may spill over. The argument is the thickness of
+-- the frame border.
+squareFrame :: Number -> Picture
+squareFrame(border) = colored(thickRectangle(s,s,border),RGB(1,1,1))
+  where
+  s = 20 + border
 
 -------------------------------------------------------------------------------
 --- Zoomable graph

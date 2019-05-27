@@ -34,8 +34,8 @@ painted(pic,name) = colored(pic,colorNamed(name))
 rgb :: (Number,Number,Number) -> Color
 rgb(r,g,b) = RGB(r/255,g/255,b/255)
 
--- | A shade of grey as given by the argument, where @grey(0)@ is @black@
--- and @grey(1)@ is white.
+-- | A shade of grey as given by the argument, where @greyed(0)@ is @black@
+-- and @greyed(1)@ is white.
 greyed :: Number -> Color
 greyed(g) = RGB(g,g,g)
 

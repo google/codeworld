@@ -206,17 +206,7 @@ deleteFolderHandler = private $ \userId ctx -> do
     let finalDir = joinPath $ map dirBase dirIds
     liftIO $ ensureUserDir mode userId finalDir
     let dir = userProjectDir mode userId </> finalDir
-    empty <-
-        liftIO $
-        fmap
-            (\l1 ->
-                 length l1 == 3 && sort l1 == sort [".", "..", takeFileName dir])
-            (getDirectoryContents (takeDirectory dir))
-    liftIO $
-        removeDirectoryIfExists $
-        if empty
-            then takeDirectory dir
-            else dir
+    liftIO $ removeDirectoryIfExists dir
 
 loadProjectHandler :: CodeWorldHandler
 loadProjectHandler = private $ \userId ctx -> do
@@ -261,17 +251,7 @@ deleteProjectHandler = private $ \userId ctx -> do
     let file =
             userProjectDir mode userId </> finalDir </>
             projectFile projectId
-    empty <-
-        liftIO $
-        fmap
-            (\l1 ->
-                 length l1 == 3 &&
-                 sort l1 == sort [".", "..", takeFileName file])
-            (getDirectoryContents (dropFileName file))
-    liftIO $
-        if empty
-            then removeDirectoryIfExists (dropFileName file)
-            else removeFileIfExists file
+    liftIO $ removeFileIfExists file
 
 listFolderHandler :: CodeWorldHandler
 listFolderHandler = private $ \userId ctx -> do
@@ -281,7 +261,6 @@ listFolderHandler = private $ \userId ctx -> do
     let finalDir = joinPath $ map dirBase dirIds
     liftIO $ ensureUserBaseDir mode userId finalDir
     liftIO $ ensureUserDir mode userId finalDir
-    liftIO $ migrateUser $ userProjectDir mode userId
     let projectDir = userProjectDir mode userId
     files <- liftIO $ projectFileNames (projectDir </> finalDir)
     dirs <- liftIO $ projectDirNames (projectDir </> finalDir)
@@ -345,39 +324,13 @@ moveProjectHandler = private $ \userId ctx -> do
                 toFile = projectDir </> moveToDir </> projectFile projectId
             liftIO $ ensureProjectDir mode userId moveToDir projectId
             liftIO $ copyFile file toFile
-            empty <-
-                liftIO $
-                fmap
-                    (\l1 ->
-                         length l1 == 3 &&
-                         sort l1 ==
-                         sort [".", "..", takeFileName $ projectFile projectId])
-                    (getDirectoryContents
-                         (dropFileName $ moveFromDir </> projectFile projectId))
-            liftIO $
-                if empty
-                    then removeDirectoryIfExists
-                             (dropFileName $
-                              moveFromDir </> projectFile projectId)
-                    else removeFileIfExists $
-                         moveFromDir </> projectFile projectId
+            liftIO $ removeFileIfExists file
         (_, False, "false") -> do
             let dirName = last $ splitDirectories moveFromDir
-            let dir = moveToDir </> take 3 dirName </> dirName
+            let dir = moveToDir </> dirName
             liftIO $ ensureUserBaseDir mode userId dir
             liftIO $ copyDirIfExists moveFromDir $ projectDir </> dir
-            empty <-
-                liftIO $
-                fmap
-                    (\l1 ->
-                         length l1 == 3 &&
-                         sort l1 == sort [".", "..", takeFileName moveFromDir])
-                    (getDirectoryContents (takeDirectory moveFromDir))
-            liftIO $
-                removeDirectoryIfExists $
-                if empty
-                    then takeDirectory moveFromDir
-                    else moveFromDir
+            liftIO $ removeDirectoryIfExists moveFromDir
         (_, _, _) -> return ()
 
 withProgramLock :: BuildMode -> ProgramId -> IO a -> IO a

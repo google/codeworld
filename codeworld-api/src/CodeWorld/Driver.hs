@@ -1165,12 +1165,12 @@ getMousePos canvas = do
         cy <- ClientRect.getTop rect
         cw <- ClientRect.getWidth rect
         ch <- ClientRect.getHeight rect
-        let cs = min cw ch / 2
+        let unitLen = min cw ch / 20
         let mx = round (cx + cw / 2)
         let my = round (cy + ch / 2)
         return
-            ( 10 * fromIntegral (ix - mx) / realToFrac cs
-            , 10 * fromIntegral (my - iy) / realToFrac cs)
+            ( fromIntegral (ix - mx) / realToFrac unitLen
+            , fromIntegral (my - iy) / realToFrac unitLen)
 
 onEvents :: Element -> (Event -> IO ()) -> IO ()
 onEvents canvas handler = do
@@ -1742,9 +1742,11 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
 
 getMousePos :: (Int, Int) -> (Double, Double) -> (Double, Double)
 getMousePos (w, h) (x, y) =
-    ((x - fromIntegral w / 2) / s, -(y - fromIntegral h / 2) / s)
+    ((x - mx) / realToFrac unitLen, (my - y) / realToFrac unitLen)
   where
-    s = min (realToFrac w / 20) (realToFrac h / 20)
+    unitLen = min (fromIntegral w) (fromIntegral h) / 20
+    mx = fromIntegral w / 2
+    my = fromIntegral h / 2
 
 toEvent :: (Int, Int) -> Canvas.Event -> Maybe Event
 toEvent rect Canvas.Event {..}

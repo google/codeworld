@@ -78,11 +78,23 @@ async function init() {
             }
         }
     );
+
     $('#directoryTree').on(
         'tree.click',
         (event) => {
-            if (event.node && event.node.type === 'directory') {
-                $('#directoryTree').tree('toggle', event.node);
+            // Cancel deselection
+            if ($('#directoryTree').tree('isNodeSelected', event.node)) {
+                event.preventDefault();
+            }
+
+            if (event.node.type === 'project') {
+                let node = event.node;
+                let path = pathToRootDir(node);
+                loadProject1(node.name, path);
+            } else {
+                warnIfUnsaved(() => {
+                    setCode('');
+                }, false);
             }
         }
     );
@@ -712,6 +724,21 @@ function updateNavBar1() {
                     keyboardSupport: false,
                     onCanMoveTo: (moving_node, target_node) => {
                         return target_node.type !== 'project';
+                    },
+                    closedIcon: $('<i class="mdi mdi-18px mdi-chevron-right"></i>'),
+                    openedIcon: $('<i class="mdi mdi-18px mdi-chevron-down"></i>'),
+                    onCreateLi: function(node, $li) {
+                        let titleElem = $li.find('.jqtree-element .jqtree-title');
+                        if (node.type === 'directory') {
+                            titleElem.before(
+                                $('<i class="mdi mdi-18px mdi-folder"></i>')
+                            );
+                        } else {
+                            titleElem.before(
+                                $('<i class="mdi mdi-18px mdi-cube"></i>')
+                            );
+                        }
+
                     }
             });
     }
@@ -954,6 +981,9 @@ function loadSample(code) {
 function newProject() {
     warnIfUnsaved(() => {
         setCode('');
+        let treeState = $('#directoryTree').tree('getState');
+        treeState.selected_node = [];
+        $('#directoryTree').tree('setState', treeState);
     }, false);
 }
 

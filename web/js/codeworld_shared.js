@@ -681,15 +681,18 @@ function withClientId(f) {
 }
 
 function discoverProjects_1 (buildMode) {
-    const data = new FormData();
-    data.append('mode', buildMode);
-    sendHttp('POST', 'directoryTree', data, request => {
-        if (request.status === 200) {
-            window.loadingDir = false;
-            window.directoryTree = JSON.parse(request.responseText);
-        }
-        updateNavBar();
-    });
+    if (signedIn()) {
+        const data = new FormData();
+        data.append('mode', buildMode);
+        sendHttp('POST', 'directoryTree', data, request => {
+            if (request.status === 200) {
+                window.loadingDir = false;
+                window.directoryTree = JSON.parse(request.responseText);
+            }
+            updateNavBar();
+            updateUI();
+        });
+    }
 }
 
 function discoverProjects_(path, buildMode, index) {
@@ -802,6 +805,7 @@ function cancelMove() {
     window.move = null;
     updateUI();
 }
+
 
 function warnIfUnsaved(action, showAnother) {
     if (isEditorClean()) {

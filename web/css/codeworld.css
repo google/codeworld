@@ -274,7 +274,7 @@ body {
 .cw-button.yellow:hover:active,
 .cw-button.green.project-active,
 .cw-button.green.project-active:hover:active {
-    background-color: var(--cw-button-bg-1);
+    background-color: var(--cw-button-bg-5);
 }
 
 .haskell .cw-button.yellow,

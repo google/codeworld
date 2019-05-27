@@ -11,6 +11,15 @@ Cabal-version:       >=1.2
 Description:
   The web server for the CodeWorld programming environment.
 
+Executable codeworld-server-migrate
+  Hs-source-dirs: src
+  Main-is: Migration.hs
+  Build-depends:
+    base,
+    directory,
+    filepath,
+    filesystem-trees >= 0.1.0.6 && < 0.2
+
 Executable codeworld-server
   Hs-source-dirs: src
   Main-is: Main.hs

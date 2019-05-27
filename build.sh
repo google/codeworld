@@ -53,6 +53,9 @@ run .  cabal_install ./codeworld-server \
                      ./codeworld-account \
                      ./codeworld-auth
 
+# Run migration of project directory structure for codeworld-server.
+run . codeworld-server-migrate
+
 # Build the JavaScript client code for FunBlocks, the block-based UI.
 run .  cabal_install --ghcjs ./funblocks-client
 

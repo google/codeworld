@@ -53,11 +53,11 @@ migrateMode bm = do
 
 main :: IO ()
 main = do
-    print "Running migration of codeworld-server project structure."
+    putStrLn "Running migration of codeworld-server project structure."
     alreadyDone <- isProjectsStructureCorrect
-    if alreadyDone then print "Migration already done."
+    if alreadyDone then putStrLn "Migration already done."
         else do
             migrateMode (BuildMode "haskell")
             migrateMode (BuildMode "codeworld")
             migrateMode (BuildMode "blocklyXML")
-            print "Successfully migrated."
+            putStrLn "Successfully migrated."

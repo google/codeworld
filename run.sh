@@ -21,6 +21,9 @@ run . rm -rf data/*/build
 fuser -k -n tcp 8080
 fuser -k -n tcp 9160
 
+# Run migration of project directory structure for codeworld-server.
+run . codeworld-server-migrate
+
 mkdir -p log
 
 codeworld-game-server +RTS -T &

@@ -153,6 +153,7 @@ site ctx =
             , ("saveProject", saveProjectHandler ctx)
             , ("deleteProject", deleteProjectHandler ctx)
             , ("listFolder", listFolderHandler ctx)
+            , ("directoryTree", directoryTreeHandler ctx)
             , ("createFolder", createFolderHandler ctx)
             , ("deleteFolder", deleteFolderHandler ctx)
             , ("shareFolder", shareFolderHandler ctx)
@@ -252,6 +253,13 @@ deleteProjectHandler = private $ \userId ctx -> do
             userProjectDir mode userId </> finalDir </>
             projectFile projectId
     liftIO $ removeFileIfExists file
+
+directoryTreeHandler :: CodeWorldHandler
+directoryTreeHandler = private $ \userId ctx -> do
+    mode <- getBuildMode
+    dirTree <- liftIO $ getDirectoryTree mode userId
+    modifyResponse $ setContentType "application/json"
+    writeLBS $ encode dirTree
 
 listFolderHandler :: CodeWorldHandler
 listFolderHandler = private $ \userId ctx -> do

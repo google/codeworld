@@ -1164,9 +1164,13 @@ getMousePos canvas = do
         cx <- ClientRect.getLeft rect
         cy <- ClientRect.getTop rect
         cw <- ClientRect.getWidth rect
+        ch <- ClientRect.getHeight rect
+        let cs = min cw ch / 2
+        let mx = round (cx + cw / 2)
+        let my = round (cy + ch / 2)
         return
-            ( 20 * fromIntegral (ix - round cx) / realToFrac cw - 10
-            , 20 * fromIntegral (round cy - iy) / realToFrac cw + 10)
+            ( 10 * fromIntegral (ix - mx) / realToFrac cs
+            , 10 * fromIntegral (my - iy) / realToFrac cs)
 
 onEvents :: Element -> (Event -> IO ()) -> IO ()
 onEvents canvas handler = do

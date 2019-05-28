@@ -114,14 +114,11 @@ ul.jqtree-tree .jqtree-element {
         }
 
     ul.jqtree-tree span.jqtree-border {
-        position: absolute;
+        position: relative;
         display: block;
-        left: -2px;
-        top: 0;
         border: solid 2px #0000ff;
         border-radius: 6px;
         margin: 0;
-        box-sizing: content-box;
     }
 
     ul.jqtree-tree li.jqtree-selected > .jqtree-element,

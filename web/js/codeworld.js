@@ -36,77 +36,9 @@ async function init() {
     window.setInterval(preloadBaseBundle, 1000 * 60 * 60);
 
     window.directoryTree = {};
-    $('#directoryTree').on(
-        'tree.move',
-        function(event) {
-            let position = event.move_info.position;
-            let fromNode = event.move_info.moved_node;
-            let isFile = fromNode.type === "project";
-            let fromPath, name;
-            fromPath = pathToRootDir(fromNode);
-            if (isFile) {
-                name = fromNode.name;
-            } else if (fromPath) {
-                fromPath = [fromPath, fromNode.name].join("/");
-            } else {
-                fromPath = fromNode.name
-            }
-            let toNode = event.move_info.target_node;
-            if (position === 'before' || position === 'after') {
-                toNode = toNode.parent;
-            };
-            let toPath = pathToRootDir(toNode);
-            if (toPath) {
-                toPath = toPath + "/" + toNode.name;
-            } else {
-                toPath = toNode.name;
-            }
+    initDirectoryTree();
 
-            moveDirTreeNode(fromPath, toPath, isFile, name, window.buildMode, () => {
-                discoverProjects('', 0);
-                updateUI();
-            })
-        }
-    )
-    $('#directoryTree').on(
-        'tree.select',
-        (event) => {
-            if (event.node && event.node.type === 'project') {
-                let node = event.node;
-                let path = pathToRootDir(node);
-                loadProject1(node.name, path);
-            }
-        }
-    );
-
-    $('#directoryTree').on(
-        'tree.click',
-        (event) => {
-            // Cancel deselection
-            if ($('#directoryTree').tree('isNodeSelected', event.node)) {
-                event.preventDefault();
-            }
-
-            if (event.node.type === 'project') {
-                let node = event.node;
-                let path = pathToRootDir(node);
-                loadProject1(node.name, path);
-            } else {
-                warnIfUnsaved(() => {
-                    setCode('');
-                }, false);
-            }
-        }
-    );
-
-    window.allProjectNames = [
-        []
-    ];
-    window.allFolderNames = [
-        []
-    ];
     window.openProjectName = null;
-    window.nestedDirs = [''];
 
     window.savedGeneration = null;
     window.runningGeneration = null;
@@ -162,7 +94,7 @@ async function init() {
                             'Could not load the shared directory. Please try again.',
                             'error');
                     }
-                    discoverProjects('', 0);
+                    discoverProjects(window.buildMode);
                     updateUI();
                 });
             });
@@ -581,26 +513,6 @@ function getCurrentProject() {
     };
 }
 
-function folderHandler(folderName, index, state) {
-    warnIfUnsaved(() => {
-        window.nestedDirs = window.nestedDirs.slice(0, index + 1);
-        window.allProjectNames = window.allProjectNames.slice(0, index + 1);
-        window.allFolderNames = window.allFolderNames.slice(0, index + 1);
-        if (!state) {
-            window.nestedDirs.push(folderName);
-            window.allProjectNames.push([]);
-            window.allFolderNames.push([]);
-            discoverProjects(window.nestedDirs.slice(1).join('/'), index + 1);
-        }
-        if (!window.move) {
-            setCode('');
-            updateUI();
-        } else {
-            updateNavBar();
-        }
-    }, false);
-}
-
 /*
  * Updates all UI components to reflect the current state.  The general pattern
  * is to modify the state stored in variables and such, and then call updateUI
@@ -608,6 +520,7 @@ function folderHandler(folderName, index, state) {
  */
 function updateUI() {
     const isSignedIn = signedIn();
+    let selected = $('#directoryTree').tree('getSelectedNode');
     if (isSignedIn) {
         if (document.getElementById('signout').style.display === 'none') {
             document.getElementById('signin').style.display = 'none';
@@ -617,16 +530,24 @@ function updateUI() {
             window.mainLayout.open('west');
         }
 
-        if (window.openProjectName) {
-            document.getElementById('saveButton').style.display = '';
+        if (selected) {
             document.getElementById('deleteButton').style.display = '';
         } else {
+            document.getElementById('deleteButton').style.display = 'none';
+        }
+
+        if (selected && selected.type === 'project') {
+            document.getElementById('saveButton').style.display = '';
+            document.getElementById('downloadButton').style.display = '';
+            document.getElementById('shareFolderButton').style.display = 'none';
+        } else if (selected && selected.type === 'directory') {
             document.getElementById('saveButton').style.display = 'none';
-            if (window.nestedDirs !== '') {
-                document.getElementById('deleteButton').style.display = '';
-            } else {
-                document.getElementById('deleteButton').style.display = 'none';
-            }
+            document.getElementById('downloadButton').style.display = 'none';
+            document.getElementById('shareFolderButton').style.display = '';
+        } else {
+            document.getElementById('saveButton').style.display = 'none';
+            document.getElementById('shareFolderButton').style.display = 'none';
+            document.getElementById('downloadButton').style.display = 'none';
         }
     } else {
         if (document.getElementById('signout').style.display === '') {
@@ -637,6 +558,7 @@ function updateUI() {
         }
         document.getElementById('navButton').style.display = 'none';
         document.getElementById('deleteButton').style.display = 'none';
+        document.getElementById('shareFolderButton').style.display = 'none';
     }
 
     const debugAvailable = document.getElementById('runner').contentWindow.debugAvailable;
@@ -653,39 +575,9 @@ function updateUI() {
         document.getElementById('inspectButton').style.display = 'none';
     }
 
-    if (window.move) {
-        document.getElementById('newButton').style.display = 'none';
-        document.getElementById('saveButton').style.display = 'none';
-        document.getElementById('saveAsButton').style.display = 'none';
-        document.getElementById('deleteButton').style.display = 'none';
-        document.getElementById('downloadButton').style.display = 'none';
-        document.getElementById('moveButton').style.display = 'none';
-        document.getElementById('moveHereButton').style.display = '';
-        document.getElementById('cancelMoveButton').style.display = '';
-        document.getElementById('runButtons').style.display = 'none';
-        document.getElementById('shareFolderButton').style.display = 'none';
-    } else {
-        document.getElementById('newButton').style.display = '';
-        document.getElementById('saveAsButton').style.display = '';
-        document.getElementById('downloadButton').style.display = '';
-        document.getElementById('runButtons').style.display = '';
-        document.getElementById('moveHereButton').style.display = 'none';
-        document.getElementById('cancelMoveButton').style.display = 'none';
-
-        if (window.nestedDirs.length > 1 && !window.openProjectName) {
-            document.getElementById('shareFolderButton').style.display = '';
-        } else {
-            document.getElementById('shareFolderButton').style.display = 'none';
-        }
-
-        if (window.openProjectName || window.nestedDirs.length > 1) {
-            document.getElementById('moveButton').style.display = '';
-        } else {
-            document.getElementById('moveButton').style.display = 'none';
-        }
-    }
-
-    updateNavBar();
+    document.getElementById('newButton').style.display = '';
+    document.getElementById('saveAsButton').style.display = '';
+    document.getElementById('runButtons').style.display = '';
 
     let title;
     if (window.openProjectName) {
@@ -716,178 +608,10 @@ function updateUI() {
     document.title = `${title} - CodeWorld`;
 }
 
-function updateNavBar1() {
-    if (window.directoryTree.name === 'root') {
-        $('#directoryTree').tree({
-                    data : window.directoryTree.children,
-                    dragAndDrop: true,
-                    keyboardSupport: false,
-                    onCanMoveTo: (moving_node, target_node) => {
-                        return target_node.type !== 'project';
-                    },
-                    closedIcon: $('<i class="mdi mdi-18px mdi-chevron-right"></i>'),
-                    openedIcon: $('<i class="mdi mdi-18px mdi-chevron-down"></i>'),
-                    onCreateLi: function(node, $li) {
-                        let titleElem = $li.find('.jqtree-element .jqtree-title');
-                        if (node.type === 'directory') {
-                            titleElem.before(
-                                $('<i class="mdi mdi-18px mdi-folder"></i>')
-                            );
-                        } else {
-                            titleElem.before(
-                                $('<i class="mdi mdi-18px mdi-cube"></i>')
-                            );
-                        }
-
-                    }
-            });
-    }
-}
-
 function updateNavBar() {
-    updateNavBar1();
-    window.allProjectNames.forEach(projectNames => {
-        projectNames.sort((a, b) => a.localeCompare(b));
-    });
-
-    window.allFolderNames.forEach(folderNames => {
-        folderNames.sort((a, b) => a.localeCompare(b));
-    });
-
-    const makeDirNode = (name, isOpen, level) => {
-        const encodedName = name
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-        const templateName = isOpen ? 'openFolderTemplate' : 'folderTemplate';
-        let template = document.getElementById(templateName).innerHTML;
-        template = template.replace(/{{label}}/g, encodedName);
-        const span = document.createElement('span');
-        span.innerHTML = template;
-        const elem = span.getElementsByTagName('a')[0];
-        elem.style.marginLeft = `${3 + 16 * level}px`;
-        elem.onclick = () => {
-            folderHandler(name, level, isOpen);
-        };
-        span.style.display = 'flex';
-        span.style.flexDirection = 'column';
-
-        return span;
-    };
-
-    const makeProjectNode = (name, level, active) => {
-        let title = name;
-        if (active && !isEditorClean()) {
-            title = `* ${title}`;
-        }
-        const encodedName = title
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-        let template = document.getElementById('projectTemplate').innerHTML;
-        template = template.replace(/{{label}}/g, encodedName);
-        template = template.replace(/{{ifactive ([^}]*)}}/g, active ? '$1' :
-            '');
-        const span = document.createElement('span');
-        span.innerHTML = template;
-        const elem = span.getElementsByTagName('a')[0];
-        elem.style.marginLeft = `${3 + 16 * level}px`;
-        elem.onclick = () => {
-            loadProject(name, level);
-        };
-        span.style.display = 'flex';
-        span.style.flexDirection = 'column';
-        return span;
-    };
-
-    let projects = document.getElementById('nav_mine');
-
-    while (projects.lastChild) {
-        projects.removeChild(projects.lastChild);
-    }
-
-    for (let i = 0; i < window.nestedDirs.length; i++) {
-        let nextProjects = null;
-        window.allFolderNames[i].forEach(folderName => {
-            const active = i + 1 < window.nestedDirs.length && window.nestedDirs[i + 1] === folderName;
-            if (!signedIn() && !active) {
-                return;
-            }
-            const span = makeDirNode(folderName, active, i);
-            projects.appendChild(span);
-            if (active) {
-                nextProjects = span.appendChild(document.createElement(
-                    'div'));
-            }
-        });
-        window.allProjectNames[i].forEach(projectName => {
-            const active = i + 1 === window.nestedDirs.length && window.openProjectName === projectName;
-            if (!signedIn() && !active) {
-                return;
-            }
-            const span = makeProjectNode(projectName, i, active);
-            projects.appendChild(span);
-        });
-        if (nextProjects) projects = nextProjects;
-    }
-
-    if (projects && window.loadingDir) {
-        const template = document.getElementById('loaderTemplate').innerHTML;
-        const span = document.createElement('span');
-        span.innerHTML = template;
-        const elem = span.getElementsByTagName('a')[0];
-        elem.style.marginLeft = `${3 + 16 * (window.nestedDirs.length - 1)}px`;
-        span.style.display = 'flex';
-        span.style.flexDirection = 'column';
-        projects.appendChild(span);
-    }
-}
-
-function moveProject() {
-    warnIfUnsaved(() => {
-        if (!signedIn()) {
-            sweetAlert('Oops!',
-                'You must sign in to move this project or folder.',
-                'error');
-            updateUI();
-            return;
-        }
-
-        if (!window.openProjectName && window.nestedDirs.length === 1) {
-            sweetAlert('Oops!',
-                'You must select a project or folder to move.',
-                'error');
-            updateUI();
-            return;
-        }
-
-        const tempOpen = window.openProjectName;
-        const tempPath = window.nestedDirs.slice(1).join('/');
-        setCode('');
-        if (!tempOpen) {
-            window.nestedDirs.splice(-1);
-            window.allProjectNames.splice(-1);
-            window.allFolderNames.splice(-1);
-        }
-
-        window.move = Object();
-        window.move.path = tempPath;
-        if (tempOpen) {
-            window.move.file = tempOpen;
-        }
-
-        discoverProjects('', 0);
-        updateNavBar();
-    }, false);
-}
-
-function moveHere() {
-    moveHere_(window.nestedDirs.slice(1).join('/'), window.buildMode, () => {
-        window.nestedDirs = [''];
-        discoverProjects('', 0);
-        cancelMove();
-        updateUI();
-    });
+    let state =  $('#directoryTree').tree('getState');
+    $('#directoryTree').tree('loadData', window.directoryTree.children);
+    $('#directoryTree').tree('setState', state);
 }
 
 function toggleTheme() {
@@ -988,27 +712,15 @@ function newProject() {
 }
 
 function newFolder() {
-    createFolder(window.nestedDirs.slice(1).join('/'), window.buildMode, () => {
-        if (!window.move) {
-            setCode('');
-        }
+    createFolder(getNearestDirectory(), window.buildMode, () => {
+        setCode('');
     });
 }
 
-function loadProject1 (name, path) {
-    loadProject_1(path, name, window.buildMode, project => {
+function loadProject (name, path) {
+    loadProject_(path, name, window.buildMode, project => {
         setCode(project.source, project.history, name);
     })
-}
-
-function loadProject(name, index) {
-    if (window.move) {
-        return;
-    }
-
-    loadProject_(index, name, window.buildMode, project => {
-        setCode(project.source, project.history, name);
-    });
 }
 
 function formatSource() {
@@ -1071,7 +783,6 @@ function run(hash, dhash, msg, error, generation) {
     }
 
     if (hash || msg) {
-        cancelMove();
         window.mainLayout.show('east');
         window.mainLayout.open('east');
         document.getElementById('shareFolderButton').style.display = 'none';
@@ -1264,8 +975,7 @@ function compile() {
 let isFirstSignin = true;
 
 function signinCallback(result) {
-    discoverProjects('', 0);
-    cancelMove();
+    discoverProjects(window.buildMode);
     updateUI();
     if (isFirstSignin && !signedIn() && autohelpEnabled) {
         help();
@@ -1273,13 +983,8 @@ function signinCallback(result) {
     isFirstSignin = false;
 }
 
-function discoverProjects1 () {
-    discoverProjects_1(window.buildMode);
-}
-
-function discoverProjects(path, index) {
-    discoverProjects1();
-    discoverProjects_(path, window.buildMode, index);
+function discoverProjects () {
+    discoverProjects_(window.buildMode);
 }
 
 function saveProjectBase(path, projectName) {
@@ -1292,7 +997,7 @@ function saveProjectBase(path, projectName) {
 }
 
 function deleteFolder() {
-    const path = window.nestedDirs.slice(1).join('/');
+    const path = getNearestDirectory();
     if (path === '' || window.openProjectName) {
         return;
     }
@@ -1309,7 +1014,7 @@ function deleteProject() {
         return;
     }
 
-    const path = window.nestedDirs.slice(1).join('/');
+    const path = getNearestDirectory();
     deleteProject_(path, window.buildMode, () => {
         window.savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
         setCode('');

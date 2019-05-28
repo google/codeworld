@@ -80,6 +80,8 @@ class (Monad m, MonadIO m) => MonadCanvas m where
     measureText :: Text -> m Double
     isPointInPath :: (Double, Double) -> m Bool
     isPointInStroke :: (Double, Double) -> m Bool
+    getScreenWidth :: m Double
+    getScreenHeight :: m Double
 
 saveRestore :: MonadCanvas m => m a -> m a
 saveRestore m = do
@@ -91,19 +93,21 @@ saveRestore m = do
 #if defined(ghcjs_HOST_OS)
 
 data CanvasM a = CanvasM
-    { unCanvasM :: Canvas.Context -> IO a
+    { unCanvasM :: (Double, Double) -> Canvas.Context -> IO a
     } deriving (Functor)
 
-runCanvasM :: Canvas.Context -> CanvasM a -> IO a
-runCanvasM = flip unCanvasM
+runCanvasM :: (Double, Double) -> Canvas.Context -> CanvasM a -> IO a
+runCanvasM dim ctx m = unCanvasM m dim ctx
 
 instance Applicative CanvasM where
-    pure x = CanvasM (const (return x))
-    f <*> x = CanvasM (\ctx -> unCanvasM f ctx <*> unCanvasM x ctx)
+    pure x = CanvasM (\_ _ -> return x)
+    f <*> x = CanvasM (\dim ctx -> unCanvasM f dim ctx <*> unCanvasM x dim ctx)
 
 instance Monad CanvasM where
     return = pure
-    m >>= f = CanvasM (\ctx -> unCanvasM m ctx >>= ($ ctx) . unCanvasM . f)
+    m >>= f = CanvasM $ \dim ctx -> do
+        x <- unCanvasM m dim ctx
+        unCanvasM (f x) dim ctx
 
 foreign import javascript "$2.globalCompositeOperation = $1;"
                js_globalCompositeOperation :: JSString -> Canvas.Context -> IO ()
@@ -115,15 +119,15 @@ foreign import javascript "$r = $3.isPointInStroke($1, $2);"
                js_isPointInStroke :: Double -> Double -> Canvas.Context -> IO Bool
 
 instance MonadIO CanvasM where
-    liftIO = CanvasM . const
+    liftIO action = CanvasM $ \_ _ -> action
 
 instance MonadCanvas CanvasM where
     type Image CanvasM = Canvas.Canvas
-    save = CanvasM Canvas.save
-    restore = CanvasM Canvas.restore
-    transform a b c d e f = CanvasM (Canvas.transform a b c d e f)
-    translate x y = CanvasM (Canvas.translate x y)
-    scale x y = CanvasM (Canvas.scale x y)
+    save = CanvasM (const Canvas.save)
+    restore = CanvasM (const Canvas.restore)
+    transform a b c d e f = CanvasM (const (Canvas.transform a b c d e f))
+    translate x y = CanvasM (const (Canvas.translate x y))
+    scale x y = CanvasM (const (Canvas.scale x y))
     newImage w h = liftIO (Canvas.create w h)
     builtinImage name = liftIO $ do
         Just doc <- currentDocument
@@ -131,34 +135,38 @@ instance MonadCanvas CanvasM where
         return (Canvas.Canvas . unElement <$> canvas)
     withImage img m = liftIO $ do
         ctx <- Canvas.getContext img
-        unCanvasM m ctx
+        w <- realToFrac <$> Canvas.width img
+        h <- realToFrac <$> Canvas.height img
+        unCanvasM m (w, h) ctx
     drawImage (Canvas.Canvas c) x y w h =
-        CanvasM (Canvas.drawImage (Canvas.Image c) x y w h)
+        CanvasM (const (Canvas.drawImage (Canvas.Image c) x y w h))
     globalCompositeOperation op =
-        CanvasM (js_globalCompositeOperation (textToJSString op))
-    lineWidth w = CanvasM (Canvas.lineWidth w)
-    strokeColor r g b a = CanvasM (Canvas.strokeStyle r g b a)
-    fillColor r g b a = CanvasM (Canvas.fillStyle r g b a)
-    font t = CanvasM (Canvas.font (textToJSString t))
-    textCenter = CanvasM (Canvas.textAlign Canvas.Center)
-    textMiddle = CanvasM (Canvas.textBaseline Canvas.Middle)
-    beginPath = CanvasM Canvas.beginPath
-    closePath = CanvasM Canvas.closePath
-    moveTo (x, y) = CanvasM (Canvas.moveTo x y)
-    lineTo (x, y) = CanvasM (Canvas.lineTo x y)
+        CanvasM (const (js_globalCompositeOperation (textToJSString op)))
+    lineWidth w = CanvasM (const (Canvas.lineWidth w))
+    strokeColor r g b a = CanvasM (const (Canvas.strokeStyle r g b a))
+    fillColor r g b a = CanvasM (const (Canvas.fillStyle r g b a))
+    font t = CanvasM (const (Canvas.font (textToJSString t)))
+    textCenter = CanvasM (const (Canvas.textAlign Canvas.Center))
+    textMiddle = CanvasM (const (Canvas.textBaseline Canvas.Middle))
+    beginPath = CanvasM (const Canvas.beginPath)
+    closePath = CanvasM (const Canvas.closePath)
+    moveTo (x, y) = CanvasM (const (Canvas.moveTo x y))
+    lineTo (x, y) = CanvasM (const (Canvas.lineTo x y))
     quadraticCurveTo (x1, y1) (x2, y2) =
-        CanvasM (Canvas.quadraticCurveTo x1 y1 x2 y2)
+        CanvasM (const (Canvas.quadraticCurveTo x1 y1 x2 y2))
     bezierCurveTo (x1, y1) (x2, y2) (x3, y3) =
-        CanvasM (Canvas.bezierCurveTo x1 y1 x2 y2 x3 y3)
-    arc x y r a1 a2 dir = CanvasM (Canvas.arc x y r a1 a2 dir)
-    rect x y w h = CanvasM (Canvas.rect x y w h)
-    fill = CanvasM Canvas.fill
-    stroke = CanvasM Canvas.stroke
-    fillRect x y w h = CanvasM (Canvas.fillRect x y w h)
-    fillText t (x, y) = CanvasM (Canvas.fillText (textToJSString t) x y)
-    measureText t = CanvasM (Canvas.measureText (textToJSString t))
-    isPointInPath (x, y) = CanvasM (js_isPointInPath x y)
-    isPointInStroke (x, y) = CanvasM (js_isPointInStroke x y)
+        CanvasM (const (Canvas.bezierCurveTo x1 y1 x2 y2 x3 y3))
+    arc x y r a1 a2 dir = CanvasM (const (Canvas.arc x y r a1 a2 dir))
+    rect x y w h = CanvasM (const (Canvas.rect x y w h))
+    fill = CanvasM (const Canvas.fill)
+    stroke = CanvasM (const Canvas.stroke)
+    fillRect x y w h = CanvasM (const (Canvas.fillRect x y w h))
+    fillText t (x, y) = CanvasM (const (Canvas.fillText (textToJSString t) x y))
+    measureText t = CanvasM (const (Canvas.measureText (textToJSString t)))
+    isPointInPath (x, y) = CanvasM (const (js_isPointInPath x y))
+    isPointInStroke (x, y) = CanvasM (const (js_isPointInStroke x y))
+    getScreenWidth = CanvasM $ \(w, _) _ -> return w
+    getScreenHeight = CanvasM $ \(_, h) _ -> return h
 
 #else
 
@@ -265,5 +273,7 @@ instance MonadCanvas CanvasM where
         return w
     isPointInPath (x, y) = liftCanvas $ Canvas.isPointInPath (x, y)
     isPointInStroke (x, y) = liftCanvas $ return False
+    getScreenWidth = liftCanvas $ Canvas.width <$> Canvas.myCanvasContext
+    getScreenHeight = liftCanvas $ Canvas.height <$> Canvas.myCanvasContext
 
 #endif

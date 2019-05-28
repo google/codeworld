@@ -885,9 +885,10 @@ initDebugMode setActive getPic highlight = do
             let obj = unsafeCoerce pointJS
             x <- pFromJSVal <$> getProp "x" obj
             y <- pFromJSVal <$> getProp "y" obj
-            -- It's safe to use undefined for the context because
-            -- handlePointRequest ignores it.
-            n <- runCanvasM undefined (handlePointRequest getPic (x, y))
+            -- It's safe to use undefined for the context and dimensions
+            -- because handlePointRequest ignores them and works only with
+            -- an off-screen image.
+            n <- runCanvasM undefined undefined (handlePointRequest getPic (x, y))
             return (pToJSVal (fromMaybe (-1) n))
     setActiveCB <- syncCallback1 ContinueAsync $ setActive . pFromJSVal
     getPicCB <- syncCallback' $ getPic >>= picToObj
@@ -987,10 +988,10 @@ foreign import javascript unsafe "/\\bmode=haskell\\b/.test(location.search)"
 
 withScreen :: Element -> ClientRect.ClientRect -> CanvasM a -> IO a
 withScreen canvas rect action = do
-    cw <- ClientRect.getWidth rect
-    ch <- ClientRect.getHeight rect
+    cw <- realToFrac <$> ClientRect.getWidth rect
+    ch <- realToFrac <$> ClientRect.getHeight rect
     ctx <- getCodeWorldContext (canvasFromElement canvas)
-    runCanvasM ctx $ CM.saveRestore $ do
+    runCanvasM (cw, ch) ctx $ CM.saveRestore $ do
         setupScreenContext (round cw) (round ch)
         action
 

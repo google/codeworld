@@ -171,7 +171,7 @@ nameToDirId = DirId . hashToId "D" . T.encodeUtf8
 ensureSourceDir :: BuildMode -> ProgramId -> IO ()
 ensureSourceDir mode (ProgramId p) = createDirectoryIfMissing True dir
   where
-    dir = sourceRootDir mode </> T.unpack p
+    dir = sourceRootDir mode </> take 3 (T.unpack p)
 
 ensureShareDir :: BuildMode -> ShareId -> IO ()
 ensureShareDir mode (ShareId s) = createDirectoryIfMissing True dir

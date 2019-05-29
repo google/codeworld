@@ -885,9 +885,10 @@ initDebugMode setActive getPic highlight = do
             let obj = unsafeCoerce pointJS
             x <- pFromJSVal <$> getProp "x" obj
             y <- pFromJSVal <$> getProp "y" obj
-            -- It's safe to use undefined for the context because
-            -- handlePointRequest ignores it.
-            n <- runCanvasM undefined (handlePointRequest getPic (x, y))
+            -- It's safe to use undefined for the context and dimensions
+            -- because handlePointRequest ignores them and works only with
+            -- an off-screen image.
+            n <- runCanvasM undefined undefined (handlePointRequest getPic (x, y))
             return (pToJSVal (fromMaybe (-1) n))
     setActiveCB <- syncCallback1 ContinueAsync $ setActive . pFromJSVal
     getPicCB <- syncCallback' $ getPic >>= picToObj
@@ -987,10 +988,10 @@ foreign import javascript unsafe "/\\bmode=haskell\\b/.test(location.search)"
 
 withScreen :: Element -> ClientRect.ClientRect -> CanvasM a -> IO a
 withScreen canvas rect action = do
-    cw <- ClientRect.getWidth rect
-    ch <- ClientRect.getHeight rect
+    cw <- realToFrac <$> ClientRect.getWidth rect
+    ch <- realToFrac <$> ClientRect.getHeight rect
     ctx <- getCodeWorldContext (canvasFromElement canvas)
-    runCanvasM ctx $ CM.saveRestore $ do
+    runCanvasM (cw, ch) ctx $ CM.saveRestore $ do
         setupScreenContext (round cw) (round ch)
         action
 
@@ -1164,9 +1165,13 @@ getMousePos canvas = do
         cx <- ClientRect.getLeft rect
         cy <- ClientRect.getTop rect
         cw <- ClientRect.getWidth rect
+        ch <- ClientRect.getHeight rect
+        let unitLen = min cw ch / 20
+        let mx = round (cx + cw / 2)
+        let my = round (cy + ch / 2)
         return
-            ( 20 * fromIntegral (ix - round cx) / realToFrac cw - 10
-            , 20 * fromIntegral (round cy - iy) / realToFrac cw + 10)
+            ( fromIntegral (ix - mx) / realToFrac unitLen
+            , fromIntegral (my - iy) / realToFrac unitLen)
 
 onEvents :: Element -> (Event -> IO ()) -> IO ()
 onEvents canvas handler = do
@@ -1738,9 +1743,11 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
 
 getMousePos :: (Int, Int) -> (Double, Double) -> (Double, Double)
 getMousePos (w, h) (x, y) =
-    ((x - fromIntegral w / 2) / s, -(y - fromIntegral h / 2) / s)
+    ((x - mx) / realToFrac unitLen, (my - y) / realToFrac unitLen)
   where
-    s = min (realToFrac w / 20) (realToFrac h / 20)
+    unitLen = min (fromIntegral w) (fromIntegral h) / 20
+    mx = fromIntegral w / 2
+    my = fromIntegral h / 2
 
 toEvent :: (Int, Int) -> Canvas.Event -> Maybe Event
 toEvent rect Canvas.Event {..}

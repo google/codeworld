@@ -35,7 +35,6 @@ async function init() {
     preloadBaseBundle();
     window.setInterval(preloadBaseBundle, 1000 * 60 * 60);
 
-    window.directoryTree = {};
     initDirectoryTree();
 
     window.openProjectName = null;
@@ -45,8 +44,10 @@ async function init() {
 
     if (window.location.pathname === '/haskell') {
         window.buildMode = 'haskell';
+        window.projectEnv = 'haskell';
     } else {
         window.buildMode = 'codeworld';
+        window.projectEnv = 'codeworld';
     }
     document.documentElement.classList.add(window.buildMode);
 
@@ -94,8 +95,7 @@ async function init() {
                             'Could not load the shared directory. Please try again.',
                             'error');
                     }
-                    discoverProjects(window.buildMode);
-                    updateUI();
+                    discoverProjects();
                 });
             });
         } else {
@@ -520,7 +520,7 @@ function getCurrentProject() {
  */
 function updateUI() {
     const isSignedIn = signedIn();
-    let selected = $('#directoryTree').tree('getSelectedNode');
+    const selected = $('#directoryTree').tree('getSelectedNode');
     if (isSignedIn) {
         if (document.getElementById('signout').style.display === 'none') {
             document.getElementById('signin').style.display = 'none';
@@ -606,12 +606,6 @@ function updateUI() {
     }
 
     document.title = `${title} - CodeWorld`;
-}
-
-function updateNavBar() {
-    let state =  $('#directoryTree').tree('getState');
-    $('#directoryTree').tree('loadData', window.directoryTree.children);
-    $('#directoryTree').tree('setState', state);
 }
 
 function toggleTheme() {
@@ -975,16 +969,11 @@ function compile() {
 let isFirstSignin = true;
 
 function signinCallback(result) {
-    discoverProjects(window.buildMode);
-    updateUI();
+    discoverProjects();
     if (isFirstSignin && !signedIn() && autohelpEnabled) {
         help();
     }
     isFirstSignin = false;
-}
-
-function discoverProjects () {
-    discoverProjects_(window.buildMode);
 }
 
 function saveProjectBase(path, projectName) {
@@ -1002,9 +991,9 @@ function deleteFolder() {
         return;
     }
 
-    deleteFolder_(path, window.buildMode, () => {
+    deleteFolder_(path, window.projectEnv, () => {
         window.savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
-        setCode('');
+        clearWorkspace();
     });
 }
 
@@ -1116,4 +1105,8 @@ function parseCompileErrors(rawErrors) {
         }
     });
     return errors;
+}
+
+function clearWorkspace() {
+    setCode('');
 }

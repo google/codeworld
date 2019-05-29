@@ -1,3 +1,9 @@
+:root {
+    --cw-button-color: #000000;
+    --cw-button-bg-5: #FFFFFF;
+    --cw-button-bg-1: #F0F0F0;
+}
+
 .blocklyDraggable {}
 
 .blocklySvg {

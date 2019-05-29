@@ -51,16 +51,11 @@ function loadXmlHash(hash, autostart) {
 
 function init() {
     Alert.init().then(Auth.init).then(() => {
-        window.nestedDirs = [''];
-        window.allProjectNames = [
-            []
-        ];
-        window.allFolderNames = [
-            []
-        ];
+        initDirectoryTree();
         window.lastXML = null;
         window.showingResult = false;
         window.buildMode = 'codeworld';
+        window.projectEnv = 'blocklyXML';
 
         let hash = location.hash.slice(1);
         if (hash.length > 0) {
@@ -73,8 +68,7 @@ function init() {
                     html: 'Enter a name for the shared folder:',
                     input: 'text',
                     confirmButtonText: 'Save',
-                    showCancelButton: false,
-                    closeOnConfirm: false
+                    showCancelButton: false
                 }).then(result => {
                     if (!result) {
                         return;
@@ -98,8 +92,7 @@ function init() {
                                     'error');
                             }
                             initCodeworld();
-                            discoverProjects('', 0);
-                            updateUI();
+                            discoverProjects();
                         });
                 });
             } else {
@@ -190,7 +183,6 @@ function run(xmlHash, codeHash, msg, error, dhash) {
 
     document.getElementById('editButton').setAttribute('href', `/#${codeHash}`);
     window.deployHash = dhash;
-    cancelMove();
     updateUI();
 }
 
@@ -211,8 +203,8 @@ function getWorkspaceXMLText() {
 }
 
 function containsUnsavedChanges() {
-    const blank = '<xml xmlns="http://www.w3.org/1999/xhtml"></xml>';
-    return getWorkspaceXMLText() !== (window.lastXML || blank);
+    const blank = '<xml xmlns=\"http://www.w3.org/1999/xhtml\"></xml>';
+    return [window.lastXML, blank].indexOf(getWorkspaceXMLText()) == -1;
 }
 
 function isEditorClean() {
@@ -276,27 +268,6 @@ function compile(src, silent) {
     });
 }
 
-function folderHandler(folderName, index, state) {
-    warnIfUnsaved(() => {
-        window.nestedDirs = window.nestedDirs.slice(0, index + 1);
-        window.allProjectNames = window.allProjectNames.slice(0, index + 1);
-        window.allFolderNames = window.allFolderNames.slice(0, index + 1);
-        if (!state) {
-            window.nestedDirs.push(folderName);
-            window.allProjectNames.push([]);
-            window.allFolderNames.push([]);
-            discoverProjects(window.nestedDirs.slice(1).join('/'), index + 1);
-        }
-        if (!window.move) {
-            clearWorkspace();
-            window.openProjectName = null;
-            updateUI();
-        } else {
-            updateNavBar();
-        }
-    }, false);
-}
-
 /*
  * Updates all UI components to reflect the current state.  The general pattern
  * is to modify the state stored in variables and such, and then call updateUI
@@ -318,11 +289,7 @@ function updateUI() {
             document.getElementById('deleteButton').style.display = '';
         } else {
             document.getElementById('saveButton').style.display = 'none';
-            if (window.nestedDirs !== '') {
-                document.getElementById('deleteButton').style.display = '';
-            } else {
-                document.getElementById('deleteButton').style.display = 'none';
-            }
+            document.getElementById('deleteButton').style.display = '';
         }
     } else {
         if (document.getElementById('signout').style.display === '') {
@@ -339,21 +306,12 @@ function updateUI() {
     document.getElementById('saveAsButton').style.display = '';
     document.getElementById('runButtons').style.display = '';
 
-    updateNavBar();
-    const NDlength = window.nestedDirs.length;
+    const selected = $('#directoryTree').tree('getSelectedNode');
 
-    if (NDlength !== 1 && (openProjectName === null || openProjectName === '')) {
+    if (selected && selected.type === 'directory') {
         document.getElementById('shareFolderButton').style.display = '';
     } else {
         document.getElementById('shareFolderButton').style.display = 'none';
-    }
-
-    document.getElementById('moveHereButton').style.display = 'none';
-    document.getElementById('cancelMoveButton').style.display = 'none';
-    if ((openProjectName !== null && openProjectName !== '') || NDlength !== 1) {
-        document.getElementById('moveButton').style.display = '';
-    } else {
-        document.getElementById('moveButton').style.display = 'none';
     }
 
     let title;
@@ -370,168 +328,6 @@ function updateUI() {
     document.title = `${title} - CodeWorld`;
 }
 
-function updateNavBar() {
-    let projects = document.getElementById('nav_mine');
-
-    while (projects.lastChild) {
-        projects.removeChild(projects.lastChild);
-    }
-
-    window.allProjectNames.forEach(projectNames => {
-        projectNames.sort((a, b) => {
-            a.localeCompare(b);
-        });
-    });
-
-    window.allFolderNames.forEach(folderNames => {
-        folderNames.sort((a, b) => {
-            a.localeCompare(b);
-        });
-    });
-
-    const NDlength = window.nestedDirs.length;
-    for (let i = 0; i < NDlength; i++) {
-        let tempProjects;
-        if (i !== 0) {
-            const encodedName = window.nestedDirs[i].replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-            let template = document.getElementById('openFolderTemplate').innerHTML;
-            template = template.replace(/{{label}}/g, encodedName);
-            const span = document.createElement('span');
-            span.innerHTML = template;
-            const elem = span.getElementsByTagName('a')[0];
-            elem.style.marginLeft = `${3 + 16 * (i - 1)}px`;
-            elem.onclick = () => {
-                folderHandler(window.nestedDirs[i], i - 1, true);
-            };
-            span.style.display = 'flex';
-            span.style.flexDirection = 'column';
-            projects.parentNode.insertBefore(span, projects);
-            projects.parentNode.removeChild(projects);
-            projects = span.appendChild(document.createElement('div'));
-        }
-        window.allFolderNames[i].forEach(folderName => {
-            const encodedName = folderName.replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-            let template = document.getElementById('folderTemplate').innerHTML;
-            template = template.replace(/{{label}}/g, encodedName);
-            const span = document.createElement('span');
-            span.innerHTML = template;
-            const elem = span.getElementsByTagName('a')[0];
-            elem.style.marginLeft = `${3 + 16 * i}px`;
-            elem.onclick = () => {
-                folderHandler(folderName, i, false);
-            };
-            span.style.display = 'flex';
-            span.style.flexDirection = 'column';
-            projects.appendChild(span);
-            if (i < NDlength - 1) {
-                if (folderName === window.nestedDirs[i + 1]) {
-                    tempProjects = projects.lastChild;
-                }
-            }
-        });
-        window.allProjectNames[i].forEach(projectName => {
-            const active = (window.openProjectName === projectName) && (i === NDlength - 1);
-            if (!signedIn() && !active) {
-                return;
-            }
-
-            let title = projectName;
-            if (active && !isEditorClean()) {
-                title = `* ${title}`;
-            }
-            const encodedName = title.replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-            let template = document.getElementById('projectTemplate').innerHTML;
-            template = template.replace(/{{label}}/g, encodedName);
-            template = template.replace(/{{ifactive ([^}]*)}}/g, active ?
-                '$1' : '');
-            const span = document.createElement('span');
-            span.innerHTML = template;
-            const elem = span.getElementsByTagName('a')[0];
-            elem.style.marginLeft = `${3 + 16 * i}px`;
-            elem.onclick = () => {
-                loadProject(projectName, i);
-            };
-            span.style.display = 'flex';
-            span.style.flexDirection = 'column';
-            projects.appendChild(span);
-        });
-        if (i + 1 < NDlength) {
-            projects = tempProjects;
-        }
-    }
-}
-
-function moveProject() {
-    warnIfUnsaved(() => {
-        if (!signedIn()) {
-            sweetAlert('Oops!',
-                'You must sign in to move this project or folder.',
-                'error');
-            updateUI();
-            return;
-        }
-
-        if ((openProjectName === null || openProjectName === '') &&
-            window.nestedDirs.length === 1) {
-            sweetAlert('Oops!',
-                'You must select a project or folder to move.',
-                'error');
-            updateUI();
-            return;
-        }
-
-        const tempOpen = openProjectName;
-        const tempPath = window.nestedDirs.slice(1).join('/');
-        clearWorkspace();
-        window.nestedDirs = [''];
-        window.allProjectNames = [
-            []
-        ];
-        window.allFolderNames = [
-            []
-        ];
-        discoverProjects('', 0);
-        document.getElementById('newFolderButton').style.display = '';
-        document.getElementById('newButton').style.display = 'none';
-        document.getElementById('saveButton').style.display = 'none';
-        document.getElementById('saveAsButton').style.display = 'none';
-        document.getElementById('deleteButton').style.display = 'none';
-        document.getElementById('moveButton').style.display = 'none';
-        document.getElementById('moveHereButton').style.display = '';
-        document.getElementById('cancelMoveButton').style.display = '';
-        document.getElementById('runButtons').style.display = 'none';
-
-        window.move = Object();
-        window.move.path = tempPath;
-        if (tempOpen !== null && tempOpen !== '') {
-            window.move.file = tempOpen;
-        }
-    }, false);
-}
-
-function moveHere() {
-    function successFunc() {
-        window.nestedDirs = [''];
-        window.allProjectNames = [
-            []
-        ];
-        window.allFolderNames = [
-            []
-        ];
-        discoverProjects('', 0);
-        cancelMove();
-        updateUI();
-    }
-
-    moveHere_(window.nestedDirs.slice(1).join('/'), 'blocklyXML', successFunc);
-}
-
 function help() {
     const url = 'doc.html?shelf=help/blocks.shelf';
     sweetAlert({
@@ -545,9 +341,7 @@ function help() {
 }
 
 function signinCallback(result) {
-    discoverProjects('', 0);
-    cancelMove();
-    updateUI();
+    discoverProjects();
     if (result.wc) {
         // document.getElementById('username').innerHTML = result.wc.wc;
     }
@@ -561,12 +355,7 @@ function signOut() {
 
     document.getElementById('projects').innerHTML = '';
     window.openProjectName = null;
-    cancelMove();
     updateUI();
-}
-
-function discoverProjects(path, index) {
-    discoverProjects_(path, 'blocklyXML', index);
 }
 
 function loadProject(name, index) {
@@ -578,8 +367,6 @@ function loadProject(name, index) {
         window.openProjectName = name;
         clearRunCode();
         loadWorkspace(project.source);
-        cancelMove();
-        updateUI();
         Blockly.getMainWorkspace().clearUndo();
     }
     loadProject_(index, name, 'blocklyXML', successFunc);
@@ -590,18 +377,13 @@ function saveProjectBase(path, projectName) {
     function successFunc() {
         window.lastXML = getWorkspaceXMLText();
         window.openProjectName = projectName;
-        cancelMove();
-
-        if (window.allProjectNames[window.allProjectNames.length - 1].indexOf(projectName) === -1) {
-            discoverProjects(path, window.allProjectNames.length - 1);
-        }
-        updateUI();
+        discoverProjects();
     }
     saveProjectBase_(path, projectName, 'blocklyXML', successFunc);
 }
 
 function deleteFolder() {
-    const path = window.nestedDirs.slice(1).join('/');
+    const path = getNearestDirectory();
     if (path === '' || window.openProjectName !== null) {
         return;
     }
@@ -625,8 +407,8 @@ function deleteProject() {
         window.openProjectName = null;
         Blockly.getMainWorkspace().clearUndo();
     }
-    const path = window.nestedDirs.slice(1).join('/');
-    deleteProject_(path, 'blocklyXML', successFunc);
+    const path = getNearestDirectory();
+    deleteProject_(path, window.projectEnv, successFunc);
 
 }
 
@@ -641,7 +423,7 @@ function newFolder() {
             window.location.hash = '';
         }
     }
-    createFolder(window.nestedDirs.slice(1).join('/'), 'blocklyXML', successFunc);
+    createFolder(getNearestDirectory(), 'blocklyXML', successFunc);
 }
 
 function shareFolder() {
@@ -653,7 +435,6 @@ function newProject() {
         clearRunCode();
         clearWorkspace();
         window.openProjectName = null;
-        cancelMove();
         updateUI();
         window.lastXML = getWorkspaceXMLText();
         Blockly.getMainWorkspace().clearUndo();

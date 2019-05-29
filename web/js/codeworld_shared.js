@@ -630,14 +630,14 @@ const Auth = (() => {
             window.auth2.signIn();
         }
 
-        discoverProjects(window.buildMode);
+        discoverProjects();
         updateUI();
     }
 
     function onAuthDisabled() {
         window.auth2 = null;
         document.getElementById('signin').style.display = 'none';
-        discoverProjects(window.buildMode);
+        discoverProjects();
         updateUI();
     }
 
@@ -680,16 +680,15 @@ function withClientId(f) {
     });
 }
 
-function discoverProjects_ (buildMode) {
+function discoverProjects () {
     if (signedIn()) {
         const data = new FormData();
-        data.append('mode', buildMode);
+        data.append('mode', window.projectEnv);
         sendHttp('POST', 'directoryTree', data, request => {
             if (request.status === 200) {
                 window.loadingDir = false;
-                window.directoryTree = JSON.parse(request.responseText);
+                $('#directoryTree').tree('loadData', JSON.parse(request.responseText).children);
             }
-            updateNavBar();
             updateUI();
         });
     }
@@ -738,7 +737,7 @@ function warnIfUnsaved(action, showAnother) {
             confirmButtonText: 'Yes, discard my changes!',
             closeOnConfirm: !showAnother
         }).then(result => {
-            if (result.value) action();
+            if (result && result.value) action();
         });
     }
 }
@@ -779,7 +778,7 @@ function saveProjectAs() {
         showCancelButton: true,
         closeOnConfirm: false
     }).then(result => {
-        if (result.value) {
+        if (result && result.value) {
             saveProjectBase(getNearestDirectory(), result.value);
         }
     });
@@ -840,7 +839,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
             successFunc();
             updateUI();
 
-            discoverProjects(window.buildMode);
+            discoverProjects();
         });
     }
 
@@ -860,7 +859,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
             confirmButtonColor: '#DD6B55',
             confirmButtonText: 'Yes, overwrite it!'
         }).then(result => {
-            if (result.value) go();
+            if (result && result.value) go();
         });
     }
 }
@@ -886,7 +885,7 @@ function deleteProject_(path, buildMode, successFunc) {
         confirmButtonColor: '#DD6B55',
         confirmButtonText: 'Yes, delete it!'
     }).then(result => {
-        if (!result.value) {
+        if (!result) {
             return;
         }
 
@@ -898,7 +897,7 @@ function deleteProject_(path, buildMode, successFunc) {
         sendHttp('POST', 'deleteProject', data, request => {
             if (request.status === 200) {
                 successFunc();
-                discoverProjects(window.buildMode);
+                discoverProjects();
             }
         });
     });
@@ -926,7 +925,7 @@ function deleteFolder_(path, buildMode, successFunc) {
         confirmButtonColor: '#DD6B55',
         confirmButtonText: 'Yes, delete it!'
     }).then(result => {
-        if (!result.value) {
+        if (!result) {
             return;
         }
 
@@ -937,7 +936,7 @@ function deleteFolder_(path, buildMode, successFunc) {
         sendHttp('POST', 'deleteFolder', data, request => {
             if (request.status === 200) {
                 successFunc();
-                discoverProjects(window.buildMode);
+                discoverProjects();
             }
         });
     });
@@ -962,7 +961,7 @@ function createFolder(path, buildMode, successFunc) {
             showCancelButton: true,
             closeOnConfirm: false
         }).then(result => {
-            if (!result.value) {
+            if (!result) {
                 return;
             }
 
@@ -1053,7 +1052,7 @@ function share() {
             cancelButtonText: 'Done',
             animation: 'slide-from-bottom'
         }).then(result => {
-            if (result.value) {
+            if (result && result.value) {
                 offerSource = !offerSource;
                 go();
             }
@@ -1071,7 +1070,7 @@ function share() {
                 showConfirmButton: true,
                 showCancelButton: true
             }).then(result => {
-                if (result.value) {
+                if (result && result.value) {
                     compile();
                 } else {
                     go();
@@ -1155,7 +1154,7 @@ function shareFolder_(mode) {
                 cancelButtonText: 'Done',
                 animation: 'slide-from-bottom'
             }).then(result => {
-                if (result.value) {
+                if (result && result.value) {
                     gallery = !gallery;
                     go();
                 }
@@ -1296,7 +1295,7 @@ function pathToRootDir (nodeInit) {
 function initDirectoryTree () {
     $('#directoryTree').tree(
         {
-            data : window.directoryTree.children,
+            data : [],
             dragAndDrop: true,
             keyboardSupport: false,
             onCanMoveTo: (moving_node, target_node) => {
@@ -1342,9 +1341,21 @@ function initDirectoryTree () {
                 } else {
                     fromPath = fromNode.name
                 }
+
+                const haveChildWithSameNameAndType = (fromNode, toNode) => {
+                    // check if target node have child node
+                    // which have same name and type as moving node
+                    // and not equals to moving node
+                    return toNode.children.filter((ch) => {
+                        return ch !== fromNode &&
+                               ch.type == fromNode.type &&
+                               ch.name == fromNode.name
+                    }).length != 0
+                }
                 let toNode = event.move_info.target_node;
-                let toNodeChildNames = toNode.children.map((ch) => {return ch.name});
-                if (position === 'inside' && toNodeChildNames.indexOf(fromNode.name) != -1) {
+                if (position === 'inside' 
+                    && haveChildWithSameNameAndType(fromNode, toNode)
+                    ) {
                     const msg = `${'Are you sure you want to save over another project?\n\n' +
                         'The previous contents of '}${name 
                         } will be permanently destroyed!`;
@@ -1356,18 +1367,17 @@ function initDirectoryTree () {
                         confirmButtonColor: '#DD6B55',
                         confirmButtonText: 'Yes, discard my changes!',
                         closeOnConfirm: true
-                    }).then(result => {
-                        if (result.value) {
+                    }).then((result) => {
+                        if (result && result.value) {
                             let toPath = pathToRootDir(toNode);
                             if (toPath) {
                                 toPath = toPath + "/" + toNode.name;
                             } else {
                                 toPath = toNode.name;
                             }
-                            moveDirTreeNode(fromPath, toPath, isFile, name, window.buildMode, () => {
-                                discoverProjects(window.buildMode);
+                            moveDirTreeNode(fromPath, toPath, isFile, name, window.projectEnv, () => {
+                                event.move_info.do_move();
                             })
-                            event.move_info.do_move();
                         };
                     });
                     return;
@@ -1382,10 +1392,10 @@ function initDirectoryTree () {
                     toPath = toNode.name;
                 }
 
-                moveDirTreeNode(fromPath, toPath, isFile, name, window.buildMode, () => {
-                    discoverProjects(window.buildMode);
+                moveDirTreeNode(fromPath, toPath, isFile, name, window.projectEnv, () => {
+                    event.move_info.do_move();
                 })
-                event.move_info.do_move();
+                
             }
     )})
     $('#directoryTree').on(
@@ -1397,7 +1407,10 @@ function initDirectoryTree () {
                     let path = pathToRootDir(node);
                     window.openProjectName = node.name;
                     loadProject(node.name, path);
+                } else {
+                    window.openProjectName = null;
                 }
+                updateUI();
             })
         }
     );
@@ -1416,7 +1429,7 @@ function initDirectoryTree () {
                 loadProject(node.name, path);
             } else {
                 warnIfUnsaved(() => {
-                    setCode('');
+                    clearWorkspace();
                 }, false);
             }
         }

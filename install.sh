@@ -255,5 +255,9 @@ run $BUILD/CodeMirror git checkout tags/5.43.0
 run $BUILD/CodeMirror npm install
 run $BUILD/CodeMirror npm install -s uglify-js git+ssh://git@github.com:angelozerr/CodeMirror-Extension.git
 
+# Fetch third_party/blockly submodule
+run . git submodule init
+run . git submodule update
+
 # Go ahead and run a first build, which installs more local packages.
 ./build.sh

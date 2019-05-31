@@ -691,7 +691,7 @@ function discoverProjects () {
             }
             updateUI();
         });
-    }
+    } else updateUI();
 }
 
 function moveDirTreeNode(moveFrom, moveTo, isFile, name, buildMode, successFunc) {
@@ -1298,8 +1298,11 @@ function initDirectoryTree () {
             data : [],
             dragAndDrop: true,
             keyboardSupport: false,
-            onCanMoveTo: (moving_node, target_node) => {
-                return target_node.type !== 'project';
+            onCanMoveTo: (moving_node, target_node, position) => {
+                // Forbid move inside project node,
+                // but allow to move before and after
+                if (target_node.type === 'project' && position === 'inside') return false;
+                return true;
             },
             closedIcon: $('<i class="mdi mdi-18px mdi-chevron-right"></i>'),
             openedIcon: $('<i class="mdi mdi-18px mdi-chevron-down"></i>'),
@@ -1470,7 +1473,6 @@ function formatTree (node) {
 function dumpTree() {
     let tree = JSON.parse($('#directoryTree').tree('toJson'));
     tree = tree.map(formatTree);
-    console.log(tree);
     const data = new FormData();
     data.append('mode', window.projectEnv);
     data.append('value', JSON.stringify(tree));

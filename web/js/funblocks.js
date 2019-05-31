@@ -340,12 +340,8 @@ function help() {
     });
 }
 
-function signinCallback(result) {
+function signinCallback() {
     discoverProjects();
-    if (result.wc) {
-        // document.getElementById('username').innerHTML = result.wc.wc;
-    }
-
 }
 
 function signOut() {

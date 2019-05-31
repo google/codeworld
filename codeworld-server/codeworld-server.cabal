@@ -50,6 +50,7 @@ Executable codeworld-server
     SafeSemaphore,
     snap-core,
     snap-server,
+    sort,
     temporary,
     text,
     unix

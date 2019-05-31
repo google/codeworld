@@ -718,8 +718,8 @@ function moveDirTreeNode(moveFrom, moveTo, isFile, name, buildMode, successFunc)
             return;
         }
         successFunc();
+        dumpTree();
     });
-
 }
 
 function warnIfUnsaved(action, showAnother) {
@@ -838,7 +838,7 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
 
             successFunc();
             updateUI();
-
+            dumpTree();
             discoverProjects();
         });
     }
@@ -1452,4 +1452,27 @@ function getNearestDirectory() {
         return path ? path + '/' + selected.name : selected.name ;
     }
     return path;
+}
+
+// Make possible correctly serialization/deserialization
+// on haskell side
+function formatTree (node) {
+    if (node.type === 'directory') {
+        if (!node.children){
+            node.children = []; 
+        } else {
+            node.children = node.children.map(formatTree);
+        }
+    }
+    return node;
+}
+
+function dumpTree() {
+    let tree = JSON.parse($('#directoryTree').tree('toJson'));
+    tree = tree.map(formatTree);
+    console.log(tree);
+    const data = new FormData();
+    data.append('mode', window.projectEnv);
+    data.append('value', JSON.stringify(tree));
+    sendHttp('POST', 'dumpTree', data);
 }

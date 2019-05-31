@@ -25,6 +25,7 @@ import Control.Exception
 import Control.Monad
 import qualified Crypto.Hash as Crypto
 import Data.Aeson
+import Data.Sort
 import Data.ByteArray (convert)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -299,11 +300,23 @@ removeDirectoryIfExists dirName =
         | isDoesNotExistError e = return ()
         | otherwise = throwIO e
 
+loadDumpedTree :: BuildMode -> UserId -> IO DirTree
+loadDumpedTree bm uid = do
+    let file = userProjectDir bm uid </> "tree.info"
+    content  <- LB.readFile file
+    realTree <- getDirectoryTree bm uid
+    return $ 
+        case decode content of
+            Nothing -> realTree
+            Just dumpedTree -> case compareTrees realTree (Dir "root" dumpedTree) of
+                                True  -> Dir "root" dumpedTree
+                                False -> realTree
+
 getDirectoryTree :: BuildMode -> UserId -> IO DirTree
 getDirectoryTree bm uid = do
     ftr <- getDirectory $ userProjectDir bm uid
     let (Node rootPath children) = toTree ftr
-    children' <- mapM (constructTree rootPath) $ children
+    children' <- mapM (constructTree rootPath) $ filter notInfo children
     return $ Dir "root" children'
     where
         constructTree :: FilePath -> Tree FilePath -> IO DirTree
@@ -317,9 +330,17 @@ getDirectoryTree bm uid = do
             return $ Source (projectName project) $ LT.toStrict $ LT.decodeUtf8 source
         constructTree prefix (Node path children) = do
             name <- B.readFile $ prefix </> path </> "dir.info"
-            children' <- mapM (constructTree $ prefix </> path) $ filter notDirInfo children
+            children' <- mapM (constructTree $ prefix </> path) $ filter notInfo children
             return $ Dir (T.decodeUtf8 name) children'
 
-        notDirInfo :: Tree FilePath -> Bool
-        notDirInfo (Node "dir.info" []) = False
-        notDirInfo _ = True
+        notInfo :: Tree FilePath -> Bool
+        notInfo (Node "dir.info" []) = False
+        notInfo (Node "tree.info" []) = False
+        notInfo _ = True
+
+-- If directory trees have same structure
+-- in spite of different order of elements
+compareTrees :: DirTree -> DirTree -> Bool
+compareTrees (Source n1 s1) (Source n2 s2) = n1 == n2 && s1 == s2
+compareTrees (Dir n1 chs1) (Dir n2 chs2) = n1 == n2 && and (map (uncurry compareTrees) $ zip (sort chs1) (sort chs2))
+compareTrees _ _ = False

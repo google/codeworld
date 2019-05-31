@@ -81,7 +81,7 @@ instance ToJSON GalleryItem where
                    , "url" .= galleryItemURL item
                    ]
 
-data DirTree = Dir Text [DirTree] | Source Text Text
+data DirTree = Dir Text [DirTree] | Source Text Text deriving (Show, Eq, Ord)
 
 instance ToJSON DirTree where
     toJSON (Source name src) = object [ "name" .= name
@@ -92,3 +92,11 @@ instance ToJSON DirTree where
                                         , "children" .= map toJSON children
                                         , "type" .= ("directory" :: Text)
                                         ]
+ 
+instance FromJSON DirTree where
+    parseJSON (Object v) = do
+        type_ <- v .: "type"
+        case type_ :: String of
+            "directory" -> Dir    <$> v .: "name" <*> v .: "children"
+            "project" ->   Source <$> v .: "name" <*> v .: "data" 
+    parseJSON _ = mzero

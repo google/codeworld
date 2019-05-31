@@ -153,6 +153,7 @@ site ctx =
             , ("saveProject", saveProjectHandler ctx)
             , ("deleteProject", deleteProjectHandler ctx)
             , ("directoryTree", directoryTreeHandler ctx)
+            , ("dumpTree", dumpTreeHandler ctx)
             , ("createFolder", createFolderHandler ctx)
             , ("deleteFolder", deleteFolderHandler ctx)
             , ("shareFolder", shareFolderHandler ctx)
@@ -256,9 +257,16 @@ deleteProjectHandler = private $ \userId ctx -> do
 directoryTreeHandler :: CodeWorldHandler
 directoryTreeHandler = private $ \userId ctx -> do
     mode <- getBuildMode
-    dirTree <- liftIO $ getDirectoryTree mode userId
+    dirTree <- liftIO $ loadDumpedTree mode userId
     modifyResponse $ setContentType "application/json"
     writeLBS $ encode dirTree
+
+dumpTreeHandler :: CodeWorldHandler
+dumpTreeHandler = private $ \userId ctx -> do
+    mode <- getBuildMode
+    Just value <- getParam "value"
+    let file = userProjectDir mode userId </> "tree.info"
+    liftIO $ B.writeFile file value
 
 shareFolderHandler :: CodeWorldHandler
 shareFolderHandler = private $ \userId ctx -> do

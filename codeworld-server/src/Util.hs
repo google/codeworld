@@ -303,14 +303,17 @@ removeDirectoryIfExists dirName =
 loadDumpedTree :: BuildMode -> UserId -> IO DirTree
 loadDumpedTree bm uid = do
     let file = userProjectDir bm uid </> "tree.info"
-    content  <- LB.readFile file
+    exists <- doesFileExist file
     realTree <- getDirectoryTree bm uid
-    return $ 
-        case decode content of
-            Nothing -> realTree
-            Just dumpedTree -> case compareTrees realTree (Dir "root" dumpedTree) of
-                                True  -> Dir "root" dumpedTree
-                                False -> realTree
+    case exists of
+        False -> return realTree
+        True -> do
+            content  <- LB.readFile file
+            return $ case decode content of
+                Nothing -> realTree
+                Just dumpedTree -> case compareTrees realTree (Dir "root" dumpedTree) of
+                    True  -> Dir "root" dumpedTree
+                    False -> realTree
 
 getDirectoryTree :: BuildMode -> UserId -> IO DirTree
 getDirectoryTree bm uid = do

@@ -1408,7 +1408,7 @@ function initDirectoryTree () {
                     window.openProjectName = node.name;
                     loadProject(node.name, path);
                 } else {
-                    window.openProjectName = null;
+                    clearWorkspace();
                 }
                 updateUI();
             })
@@ -1427,10 +1427,6 @@ function initDirectoryTree () {
                 let node = event.node;
                 let path = pathToRootDir(node);
                 loadProject(node.name, path);
-            } else {
-                warnIfUnsaved(() => {
-                    clearWorkspace();
-                }, false);
             }
         }
     );

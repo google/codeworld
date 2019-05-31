@@ -450,6 +450,7 @@ function clearRunCode() {
 }
 
 function clearWorkspace() {
+    window.openProjectName = null;
     const workspace = Blockly.mainWorkspace;
     workspace.clear();
 }

@@ -152,7 +152,6 @@ site ctx =
             [ ("loadProject", loadProjectHandler ctx)
             , ("saveProject", saveProjectHandler ctx)
             , ("deleteProject", deleteProjectHandler ctx)
-            , ("listFolder", listFolderHandler ctx)
             , ("directoryTree", directoryTreeHandler ctx)
             , ("createFolder", createFolderHandler ctx)
             , ("deleteFolder", deleteFolderHandler ctx)
@@ -260,20 +259,6 @@ directoryTreeHandler = private $ \userId ctx -> do
     dirTree <- liftIO $ getDirectoryTree mode userId
     modifyResponse $ setContentType "application/json"
     writeLBS $ encode dirTree
-
-listFolderHandler :: CodeWorldHandler
-listFolderHandler = private $ \userId ctx -> do
-    mode <- getBuildMode
-    Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
-    let dirIds = map (nameToDirId . T.pack) path
-    let finalDir = joinPath $ map dirBase dirIds
-    liftIO $ ensureUserBaseDir mode userId finalDir
-    liftIO $ ensureUserDir mode userId finalDir
-    let projectDir = userProjectDir mode userId
-    files <- liftIO $ projectFileNames (projectDir </> finalDir)
-    dirs <- liftIO $ projectDirNames (projectDir </> finalDir)
-    modifyResponse $ setContentType "application/json"
-    writeLBS (encode (Directory files dirs))
 
 shareFolderHandler :: CodeWorldHandler
 shareFolderHandler = private $ \userId ctx -> do

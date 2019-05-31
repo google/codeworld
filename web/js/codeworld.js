@@ -1108,5 +1108,6 @@ function parseCompileErrors(rawErrors) {
 }
 
 function clearWorkspace() {
+    window.openProjectName = null;
     setCode('');
 }

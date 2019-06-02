@@ -84,40 +84,40 @@ Blockly.Blocks['cwCombine'] = {
     compose(containerBlock) {
         const tps = [];
         const originalItemCount = this.itemCount_;
-      
+
         let itemBlock = containerBlock.getInputTargetBlock('STACK');
         this.itemCount_ = 0;
 
         while (itemBlock) {
-           const name = `PIC${this.itemCount_}`;
-           let input = this.getInput(name);
-           tps.push(Type.Lit('Picture'));
-           if (input == null) {
-              input = this.appendValueInput(name);
-              if (this.itemCount_ > 0) {
-                  input.appendField(new Blockly.FieldLabel('&', 'blocklyTextEmph')); 
-              }
-           }
-            
-           //Reconnects block if already connected, otherwise shadow blank block
-           if (itemBlock.valueConnection_) {
-              input.connection.connect(itemBlock.valueConnection_);
-           } else if (input.connection && !input.connection.isConnected()) {
-              const blankBlock = this.workspace.newBlock('cwBlank');
-              blankBlock.setShadow(true);
-              blankBlock.initSvg();
-              input.connection.connect(blankBlock.outputConnection);
-           }
+            const name = `PIC${this.itemCount_}`;
+            let input = this.getInput(name);
+            tps.push(Type.Lit('Picture'));
+            if (input === null) {
+                input = this.appendValueInput(name);
+                if (this.itemCount_ > 0) {
+                    input.appendField(new Blockly.FieldLabel('&', 'blocklyTextEmph'));
+                }
+            }
 
-           itemBlock = itemBlock.nextConnection && itemBlock.nextConnection.targetBlock();
-           this.itemCount_++;
+            //Reconnects block if already connected, otherwise shadow blank block
+            if (itemBlock.valueConnection_) {
+                input.connection.connect(itemBlock.valueConnection_);
+            } else if (input.connection && !input.connection.isConnected()) {
+                const blankBlock = this.workspace.newBlock('cwBlank');
+                blankBlock.setShadow(true);
+                blankBlock.initSvg();
+                input.connection.connect(blankBlock.outputConnection);
+            }
+
+            itemBlock = itemBlock.nextConnection && itemBlock.nextConnection.targetBlock();
+            this.itemCount_++;
         }
 
         for (let x = this.itemCount_; x < originalItemCount; x++) {
             this.removeInput(`PIC${x}`);
         }
 
-        if (this.itemCount_ != originalItemCount) {
+        if (this.itemCount_ !== originalItemCount) {
             tps.push(Type.Lit('Picture'));
             this.arrows = Type.fromList(tps);
             this.initArrows();

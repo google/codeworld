@@ -519,10 +519,10 @@ body {
     overflow: hidden;
     pointer-events: none;
     background: linear-gradient(to bottom,
-        var(--obsolete-code-alert-grad-point1) 0px,
-        var(--obsolete-code-alert-grad-point2) 2em,
-        rgba(0, 0, 0, 0) 3em,
-        rgba(0, 0, 0, 0) 100%);
+            var(--obsolete-code-alert-grad-point1) 0px,
+            var(--obsolete-code-alert-grad-point2) 2em,
+            rgba(0, 0, 0, 0) 3em,
+            rgba(0, 0, 0, 0) 100%);
     color: var(--obsolete-code-alert-color);
     padding: 0.5em;
     text-align: right;
@@ -547,15 +547,18 @@ body {
     visibility: visible;
 }
 
-summary a, details a {
+summary a,
+details a {
     color: var(--link);
 }
 
-summary a:visited, details a:visited{
+summary a:visited,
+details a:visited {
     color: var(--vlink);
 }
 
-summary a:active, details a:active {
+summary a:active,
+details a:active {
     color: var(--alink);
 }
 

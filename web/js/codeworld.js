@@ -163,7 +163,7 @@ function initCodeworld() {
             'Ctrl-Up': changeFontSize(1),
             'Ctrl-Down': changeFontSize(-1)
         },
-        textHover: window.buildMode == 'codeworld' ? onHover : null,
+        textHover: window.buildMode === 'codeworld' ? onHover : null,
         gutters: ['CodeMirror-lint-markers'],
         lint: {
             getAnnotations: (text, callback) => {
@@ -637,7 +637,7 @@ function changeFontSize(incr) {
 function help() {
     let url = `doc.html?shelf=help/${window.buildMode}.shelf`;
     let customClass = 'helpdoc';
-    
+
     if (window.localStorage.getItem('darkMode') === 'true') {
         url += '&theme=dark-theme';
         customClass += ' dark-theme';
@@ -700,7 +700,7 @@ function newProject() {
     warnIfUnsaved(() => {
         setCode('');
         // Deselect nodes
-        let treeState = $('#directoryTree').tree('getState');
+        const treeState = $('#directoryTree').tree('getState');
         treeState.selected_node = [];
         $('#directoryTree').tree('setState', treeState);
     }, false);
@@ -712,10 +712,10 @@ function newFolder() {
     });
 }
 
-function loadProject (name, path) {
+function loadProject(name, path) {
     loadProject_(path, name, window.buildMode, project => {
         setCode(project.source, project.history, name);
-    })
+    });
 }
 
 function formatSource() {
@@ -978,7 +978,7 @@ function signinCallback(result) {
 }
 
 function saveProject() {
-    function successFunc () {
+    function successFunc() {
         window.openProjectName = projectName;
         const doc = window.codeworldEditor.getDoc();
         window.savedGeneration = doc.changeGeneration(true);

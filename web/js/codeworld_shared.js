@@ -296,7 +296,7 @@ function renderDeclaration(decl, keyword, keywordData, maxLen, argIndex = -1) {
             addSegment(head, false, false);
             for (let i = 0; i < tokens.length; i++) {
                 if (i > 0) addSegment(',', false, false);
-                addSegment(tokens[i], false, argIndex == i);
+                addSegment(tokens[i], false, argIndex === i);
             }
             addSegment(tail, false, false);
         } else {
@@ -564,6 +564,7 @@ function signin() {
 
 function signout() {
     dumpTree();
+    clearWorkspace();
     if (window.auth2) window.auth2.signOut();
 }
 
@@ -681,7 +682,7 @@ function withClientId(f) {
     });
 }
 
-function discoverProjects () {
+function discoverProjects() {
     if (signedIn()) {
         const data = new FormData();
         data.append('mode', window.projectEnv);
@@ -751,7 +752,7 @@ function saveProjectAs() {
 
     let text;
     let pathToRoot;
-    let selected = $('#directoryTree').tree('getSelectedNode');
+    const selected = $('#directoryTree').tree('getSelectedNode');
     if (selected) pathToRoot = pathToRootDir(selected);
     if (pathToRoot !== '') {
         text = `Enter a name for your project in folder <b>${ 
@@ -779,19 +780,19 @@ function saveProjectAs() {
         closeOnConfirm: false
     }).then(result => {
         const parent = getNearestDirectory_();
-        function successFunc () {
+
+        function successFunc() {
             const appended = $('#directoryTree').tree(
-                'appendNode',
-                {
+                'appendNode', {
                     name: result.value,
                     type: 'project',
                     data: JSON.stringify(getCurrentProject())
                 },
                 parent
-            )
+            );
             clearWorkspace();
             $('#directoryTree').tree(
-                'selectNode', appended)
+                'selectNode', appended);
         }
         if (result && result.value) {
             saveProjectBase(
@@ -853,9 +854,11 @@ function saveProjectBase(path, projectName, mode, successFunc) {
         });
     }
 
-    if (getNearestDirectory_().children.map((d)=> {return d.name}).indexOf(projectName) === -1
-        || projectName === window.openProjectName
-       ) {
+    if (projectName === window.openProjectName ||
+        getNearestDirectory_().children.filter((n) => {
+            return n.name === projectName && n.type === 'project';
+        }).length === 0
+    ) {
         go();
     } else {
         const msg = `${'Are you sure you want to save over another project?\n\n' +
@@ -909,6 +912,7 @@ function deleteProject_(path, buildMode, successFunc) {
                 successFunc();
                 const node = $('#directoryTree').tree('getSelectedNode');
                 $('#directoryTree').tree('removeNode', node);
+                updateUI();
             }
         });
     });
@@ -949,6 +953,7 @@ function deleteFolder_(path, buildMode, successFunc) {
                 successFunc();
                 const node = $('#directoryTree').tree('getSelectedNode');
                 $('#directoryTree').tree('removeNode', node);
+                updateUI();
             }
         });
     });
@@ -997,8 +1002,11 @@ function createFolder(path, buildMode, successFunc) {
                 if (!node) node = $('#directoryTree').tree('getTree');
                 if (node.type !== 'directory') node = node.parent;
                 $('#directoryTree').tree(
-                    'appendNode',
-                    {name: result.value, type: 'directory', children:[]},
+                    'appendNode', {
+                        name: result.value,
+                        type: 'directory',
+                        children: []
+                    },
                     node
                 );
                 dumpTree();
@@ -1008,24 +1016,24 @@ function createFolder(path, buildMode, successFunc) {
 }
 
 function loadProject_(path, name, buildMode, successFunc) {
-        if (!signedIn()) {
-            sweetAlert('Oops!', 'You must sign in to open projects.',
-                'error');
-            updateUI();
-            return;
-        }
-        const data = new FormData();
-        data.append('name', name);
-        data.append('mode', buildMode);
-        data.append('path', path);
+    if (!signedIn()) {
+        sweetAlert('Oops!', 'You must sign in to open projects.',
+            'error');
+        updateUI();
+        return;
+    }
+    const data = new FormData();
+    data.append('name', name);
+    data.append('mode', buildMode);
+    data.append('path', path);
 
-        sendHttp('POST', 'loadProject', data, request => {
-            if (request.status === 200) {
-                const project = JSON.parse(request.responseText);
-                successFunc(project);
-                updateUI();
-            }
-        });
+    sendHttp('POST', 'loadProject', data, request => {
+        if (request.status === 200) {
+            const project = JSON.parse(request.responseText);
+            successFunc(project);
+            updateUI();
+        }
+    });
 }
 
 function share() {
@@ -1273,8 +1281,8 @@ function sendUnhelpfulReport(event, message) {
 
         const data = new FormData();
         let report = window.location.href;
-        if (result.value) report += '\n' + result.value;
-        report += '\n' + message;
+        if (result.value) report += `\n${result.value}`;
+        report += `\n${message}`;
         data.append('message', report);
         sendHttp('POST', 'log', data);
         sweetAlert({
@@ -1298,9 +1306,9 @@ function markFailed() {
 
 // Get path to root dir in format root/sub1/sub2/etc
 // starting from parent.
-function pathToRootDir (nodeInit) {
+function pathToRootDir(nodeInit) {
     let node = Object.assign(nodeInit);
-    let path = [];
+    const path = [];
     while (node.parent && node.parent.name !== '') {
         node = node.parent;
         path.push(node.name);
@@ -1309,34 +1317,32 @@ function pathToRootDir (nodeInit) {
     return path.join('/');
 }
 
-function initDirectoryTree () {
-    $('#directoryTree').tree(
-        {
-            data : [],
-            dragAndDrop: true,
-            keyboardSupport: false,
-            onCanMoveTo: (moving_node, target_node, position) => {
-                // Forbid move inside project node,
-                // but allow to move before and after
-                if (target_node.type === 'project' && position === 'inside') return false;
-                return true;
-            },
-            closedIcon: $('<i class="mdi mdi-18px mdi-chevron-right"></i>'),
-            openedIcon: $('<i class="mdi mdi-18px mdi-chevron-down"></i>'),
-            onCreateLi: function(node, $li) {
-                let titleElem = $li.find('.jqtree-element .jqtree-title');
-                if (node.type === 'directory') {
-                    titleElem.before(
-                        $('<i class="mdi mdi-18px mdi-folder"></i>')
-                    );
-                } else {
-                    titleElem.before(
-                        $('<i class="mdi mdi-18px mdi-cube"></i>')
-                    );
-                }
+function initDirectoryTree() {
+    $('#directoryTree').tree({
+        data: [],
+        dragAndDrop: true,
+        keyboardSupport: false,
+        onCanMoveTo: (moving_node, target_node, position) => {
+            // Forbid move inside project node,
+            // but allow to move before and after
+            if (target_node.type === 'project' && position === 'inside') return false;
+            return true;
+        },
+        closedIcon: $('<i class="mdi mdi-18px mdi-chevron-right"></i>'),
+        openedIcon: $('<i class="mdi mdi-18px mdi-chevron-down"></i>'),
+        onCreateLi: function(node, $li) {
+            const titleElem = $li.find('.jqtree-element .jqtree-title');
+            if (node.type === 'directory') {
+                titleElem.before(
+                    $('<i class="mdi mdi-18px mdi-folder"></i>')
+                );
+            } else {
+                titleElem.before(
+                    $('<i class="mdi mdi-18px mdi-cube"></i>')
+                );
             }
         }
-    );
+    });
     $('#directoryTree').on(
         'tree.move',
         (event) => {
@@ -1349,17 +1355,17 @@ function initDirectoryTree () {
                     updateUI();
                     return;
                 }
-                let position = event.move_info.position;
-                let fromNode = event.move_info.moved_node;
-                let isFile = fromNode.type === "project";
+                const position = event.move_info.position;
+                const fromNode = event.move_info.moved_node;
+                const isFile = fromNode.type === 'project';
                 let fromPath, name;
                 fromPath = pathToRootDir(fromNode);
                 if (isFile) {
                     name = fromNode.name;
                 } else if (fromPath) {
-                    fromPath = [fromPath, fromNode.name].join("/");
+                    fromPath = [fromPath, fromNode.name].join('/');
                 } else {
-                    fromPath = fromNode.name
+                    fromPath = fromNode.name;
                 }
 
                 const haveChildWithSameNameAndType = (fromNode, toNode) => {
@@ -1368,17 +1374,17 @@ function initDirectoryTree () {
                     // and not equals to moving node
                     return toNode.children.filter((ch) => {
                         return ch !== fromNode &&
-                               ch.type == fromNode.type &&
-                               ch.name == fromNode.name
-                    }).length != 0
-                }
+                            ch.type === fromNode.type &&
+                            ch.name === fromNode.name;
+                    }).length !== 0;
+                };
                 let toNode = event.move_info.target_node;
-                if (position === 'inside' 
-                    && haveChildWithSameNameAndType(fromNode, toNode)
-                    ) {
+                if (position === 'inside' &&
+                    haveChildWithSameNameAndType(fromNode, toNode)
+                ) {
                     const msg = `${'Are you sure you want to save over another project?\n\n' +
                         'The previous contents of '}${name 
-                        } will be permanently destroyed!`;
+                    } will be permanently destroyed!`;
                     sweetAlert({
                         title: Alert.title('Warning'),
                         text: msg,
@@ -1391,62 +1397,61 @@ function initDirectoryTree () {
                         if (result && result.value) {
                             let toPath = pathToRootDir(toNode);
                             if (toPath) {
-                                toPath = toPath + "/" + toNode.name;
+                                toPath = `${toPath}/${toNode.name}`;
                             } else {
                                 toPath = toNode.name;
                             }
                             moveDirTreeNode(fromPath, toPath, isFile, name, window.projectEnv, () => {
                                 event.move_info.do_move();
-                            })
-                        };
+                            });
+                        }
                     });
                     return;
-                };
+                }
                 if (position === 'before' || position === 'after') {
                     toNode = toNode.parent;
-                };
+                }
                 let toPath = pathToRootDir(toNode);
                 if (toPath) {
-                    toPath = toPath + "/" + toNode.name;
+                    toPath = `${toPath}/${toNode.name}`;
                 } else {
                     toPath = toNode.name;
                 }
 
                 moveDirTreeNode(fromPath, toPath, isFile, name, window.projectEnv, () => {
                     event.move_info.do_move();
-                })
-                
-            }
-    )})
+                });
+
+            });
+        });
     $('#directoryTree').on(
         'tree.select',
         (event) => {
             warnIfUnsaved(() => {
                 if (event.node && event.node.type === 'project') {
-                    let node = event.node;
-                    let path = pathToRootDir(node);
+                    const node = event.node;
+                    const path = pathToRootDir(node);
                     window.openProjectName = node.name;
                     loadProject(node.name, path);
                 } else {
                     clearWorkspace();
                 }
                 updateUI();
-                }
-            )
+            });
         }
     );
 
     $('#directoryTree').on(
         'tree.click',
         (event) => {
-            // Cancel deselection
-            if ($('#directoryTree').tree('isNodeSelected', event.node)) {
+            // Cancel deselection of project 
+            if (event.node.type === 'project' && $('#directoryTree').tree('isNodeSelected', event.node)) {
                 event.preventDefault();
             }
 
             if (event.node.type === 'project') {
-                let node = event.node;
-                let path = pathToRootDir(node);
+                const node = event.node;
+                const path = pathToRootDir(node);
                 loadProject(node.name, path);
             }
         }
@@ -1455,7 +1460,7 @@ function initDirectoryTree () {
 
 // Get directory nearest to selected node, or root if there is no selection
 function getNearestDirectory_() {
-    let selected = $('#directoryTree').tree('getSelectedNode');
+    const selected = $('#directoryTree').tree('getSelectedNode');
     if (!selected) {
         // nearest directory is root
         return $('#directoryTree').tree('getTree');
@@ -1467,20 +1472,20 @@ function getNearestDirectory_() {
 }
 
 function getNearestDirectory() {
-    let selected = getNearestDirectory_();
-    let path = pathToRootDir(selected);
-    if (selected.type === 'directory'){
-        return path ? path + '/' + selected.name : selected.name ;
+    const selected = getNearestDirectory_();
+    const path = pathToRootDir(selected);
+    if (selected.type === 'directory') {
+        return path ? `${path}/${selected.name}` : selected.name;
     }
     return path;
 }
 
 // Make possible correctly serialization/deserialization
 // on haskell side
-function formatTree (node) {
+function formatTree(node) {
     if (node.type === 'directory') {
-        if (!node.children){
-            node.children = []; 
+        if (!node.children) {
+            node.children = [];
         } else {
             node.children = node.children.map(formatTree);
         }

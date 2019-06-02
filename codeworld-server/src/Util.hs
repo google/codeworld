@@ -344,7 +344,7 @@ getDirectoryTree bm uid = do
 -- If directory trees have same structure
 -- in spite of different order of elements
 compareTrees :: DirTree -> DirTree -> Bool
-compareTrees (Source n1 s1) (Source n2 s2) = n1 == n2 && s1 == s2
+compareTrees (Source n1 s1) (Source n2 s2) = n1 == n2
 compareTrees (Dir n1 chs1) (Dir n2 chs2) 
     | length chs1 == length chs2 = n1 == n2 && and (map (uncurry compareTrees) $ zip (sort chs1) (sort chs2))
     | otherwise = False

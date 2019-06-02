@@ -203,8 +203,8 @@ function getWorkspaceXMLText() {
 }
 
 function containsUnsavedChanges() {
-    const blank = '<xml xmlns=\"http://www.w3.org/1999/xhtml\"></xml>';
-    return [window.lastXML, blank].indexOf(getWorkspaceXMLText()) == -1;
+    const blank = '<xml xmlns="http://www.w3.org/1999/xhtml"></xml>';
+    return [window.lastXML, blank].indexOf(getWorkspaceXMLText()) === -1;
 }
 
 function isEditorClean() {
@@ -284,12 +284,15 @@ function updateUI() {
             window.mainLayout.open('west');
         }
 
-        if (window.openProjectName) {
-            document.getElementById('saveButton').style.display = '';
+        if ($('#directoryTree').tree('getSelectedNode')) {
             document.getElementById('deleteButton').style.display = '';
         } else {
+            document.getElementById('deleteButton').style.display = 'none';
+        }
+        if (window.openProjectName) {
+            document.getElementById('saveButton').style.display = '';
+        } else {
             document.getElementById('saveButton').style.display = 'none';
-            document.getElementById('deleteButton').style.display = '';
         }
     } else {
         if (document.getElementById('signout').style.display === '') {
@@ -414,7 +417,6 @@ function deleteProject() {
     }
     const path = getNearestDirectory();
     deleteProject_(path, window.projectEnv, successFunc);
-
 }
 
 function newFolder() {

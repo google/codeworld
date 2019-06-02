@@ -27,7 +27,7 @@ function loadSample(code) {
     if (isEditorClean()) sweetAlert.close();
     warnIfUnsaved(() => {
         loadWorkspace(code);
-    }, false);
+    });
 }
 
 function loadWorkspace(text) {
@@ -446,7 +446,7 @@ function newProject() {
         window.lastXML = getWorkspaceXMLText();
         Blockly.getMainWorkspace().clearUndo();
         window.location.hash = '';
-    }, false);
+    });
 }
 
 // Clear the running iframe and generated code

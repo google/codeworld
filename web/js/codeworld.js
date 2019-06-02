@@ -693,7 +693,7 @@ function loadSample(code) {
     if (isEditorClean()) sweetAlert.close();
     warnIfUnsaved(() => {
         setCode(code);
-    }, false);
+    });
 }
 
 function newProject() {
@@ -703,7 +703,7 @@ function newProject() {
         const treeState = $('#directoryTree').tree('getState');
         treeState.selected_node = [];
         $('#directoryTree').tree('setState', treeState);
-    }, false);
+    });
 }
 
 function newFolder() {

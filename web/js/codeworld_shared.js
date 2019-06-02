@@ -1012,7 +1012,7 @@ function createFolder(path, buildMode, successFunc) {
                 dumpTree();
             });
         });
-    }, true);
+    });
 }
 
 function loadProject_(path, name, buildMode, successFunc) {

@@ -39,7 +39,7 @@ function loadWorkspace(text) {
 }
 
 function loadXmlHash(hash, autostart) {
-    sendHttp('GET', `loadXML?hash=${hash}&mode=blocklyXML`, null, request => {
+    sendHttp('GET', `loadXML?hash=${hash}&mode=${window.projectEnv}`, null, request => {
         if (request.status === 200) {
             loadWorkspace(request.responseText);
             if (autostart) {
@@ -75,7 +75,7 @@ function init() {
                     }
 
                     const data = new FormData();
-                    data.append('mode', 'blocklyXML');
+                    data.append('mode', window.projectEnv);
                     data.append('shash', hash);
                     data.append('name', result.value);
 
@@ -217,7 +217,7 @@ function compile(src, silent) {
     const xml_text = getWorkspaceXMLText();
     const data = new FormData();
     data.append('source', xml_text);
-    data.append('mode', 'blocklyXML');
+    data.append('mode', window.projectEnv);
 
     sendHttp('POST', 'saveXMLhash', data, request => {
         // XML Hash
@@ -365,17 +365,26 @@ function loadProject(name, index) {
         loadWorkspace(project.source);
         Blockly.getMainWorkspace().clearUndo();
     }
-    loadProject_(index, name, 'blocklyXML', successFunc);
+    loadProject_(index, name, window.projectEnv, successFunc);
 
 }
 
-function saveProjectBase(path, projectName) {
+function saveProject() {
     function successFunc() {
         window.lastXML = getWorkspaceXMLText();
         window.openProjectName = projectName;
         discoverProjects();
     }
-    saveProjectBase_(path, projectName, 'blocklyXML', successFunc);
+
+    if (window.openProjectName) {
+        saveProjectBase(
+            getNearestDirectory(),
+            window.openProjectName,
+            window.projectEnv,
+            successFunc);
+    } else {
+        saveProjectAs();
+    }
 }
 
 function deleteFolder() {
@@ -389,7 +398,7 @@ function deleteFolder() {
         window.openProjectName = null;
         Blockly.getMainWorkspace().clearUndo();
     }
-    deleteFolder_(path, 'blocklyXML', successFunc);
+    deleteFolder_(path, window.projectEnv, successFunc);
 }
 
 function deleteProject() {
@@ -419,11 +428,11 @@ function newFolder() {
             window.location.hash = '';
         }
     }
-    createFolder(getNearestDirectory(), 'blocklyXML', successFunc);
+    createFolder(getNearestDirectory(), window.projectEnv, successFunc);
 }
 
 function shareFolder() {
-    shareFolder_('blocklyXML');
+    shareFolder_(window.projectEnv);
 }
 
 function newProject() {

@@ -699,6 +699,7 @@ function loadSample(code) {
 function newProject() {
     warnIfUnsaved(() => {
         setCode('');
+        // Deselect nodes
         let treeState = $('#directoryTree').tree('getState');
         treeState.selected_node = [];
         $('#directoryTree').tree('setState', treeState);
@@ -976,13 +977,22 @@ function signinCallback(result) {
     isFirstSignin = false;
 }
 
-function saveProjectBase(path, projectName) {
-    saveProjectBase_(path, projectName, window.buildMode, () => {
+function saveProject() {
+    function successFunc () {
         window.openProjectName = projectName;
         const doc = window.codeworldEditor.getDoc();
         window.savedGeneration = doc.changeGeneration(true);
         window.codeworldEditor.focus();
-    });
+    }
+    if (window.openProjectName) {
+        saveProjectBase(
+            getNearestDirectory(),
+            window.openProjectName,
+            window.projectEnv,
+            successFunc);
+    } else {
+        saveProjectAs();
+    }
 }
 
 function deleteFolder() {
@@ -1004,7 +1014,7 @@ function deleteProject() {
     }
 
     const path = getNearestDirectory();
-    deleteProject_(path, window.buildMode, () => {
+    deleteProject_(path, window.projectEnv, () => {
         window.savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
         setCode('');
     });

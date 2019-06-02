@@ -89,7 +89,7 @@ ul.jqtree-tree .jqtree-element {
         }
 
     ul.jqtree-tree li.jqtree-ghost span.jqtree-circle {
-            border: solid 2px #0000ff;
+            border: solid 2px var(--dir-tree-ui-highlight);
             border-radius: 100px;
             height: 8px;
             width: 8px;
@@ -100,7 +100,7 @@ ul.jqtree-tree .jqtree-element {
         }
 
     ul.jqtree-tree li.jqtree-ghost span.jqtree-line {
-            background-color: #0000ff;
+            background-color: var(--dir-tree-ui-highlight);
             height: 2px;
             padding: 0;
             position: absolute;
@@ -116,7 +116,7 @@ ul.jqtree-tree .jqtree-element {
     ul.jqtree-tree span.jqtree-border {
         position: relative;
         display: block;
-        border: solid 2px #0000ff;
+        border: solid 2px var(--dir-tree-ui-highlight);
         border-radius: 6px;
         margin: 0;
     }
@@ -127,7 +127,7 @@ ul.jqtree-tree .jqtree-element {
     }
 
     ul.jqtree-tree .jqtree-moving > .jqtree-element .jqtree-title {
-        outline: dashed 1px #0000ff;
+        outline: dashed 1px var(--dir-tree-ui-highlight);
     }
 
 span.jqtree-dragging {

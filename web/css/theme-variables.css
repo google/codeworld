@@ -66,6 +66,7 @@
     --swal-background:          #FFFFFF;
     --swal-title-color:         #595959;
     --swal-content-color:       #545454;
+    --dir-tree-ui-highlight:    #505050;
 
     /* codeworld-cm.css */
     --builtin: #30a;
@@ -206,6 +207,7 @@
         --swal-background:           #000000;
         --swal-title-color:          #A6A6A6;
         --swal-content-color:        #A1A1A1;
+        --dir-tree-ui-highlight:     #F0F0F0;
 
         /* codeworld-cm.css */
         --builtin:    #CCFF55;

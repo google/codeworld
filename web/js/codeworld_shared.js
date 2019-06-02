@@ -563,6 +563,7 @@ function signin() {
 }
 
 function signout() {
+    dumpTree();
     if (window.auth2) window.auth2.signOut();
 }
 
@@ -722,7 +723,7 @@ function moveDirTreeNode(moveFrom, moveTo, isFile, name, buildMode, successFunc)
     });
 }
 
-function warnIfUnsaved(action, showAnother) {
+function warnIfUnsaved(action) {
     if (isEditorClean()) {
         action();
     } else {
@@ -734,8 +735,7 @@ function warnIfUnsaved(action, showAnother) {
             type: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#DD6B55',
-            confirmButtonText: 'Yes, discard my changes!',
-            closeOnConfirm: !showAnother
+            confirmButtonText: 'Yes, discard my changes!'
         }).then(result => {
             if (result && result.value) action();
         });
@@ -778,27 +778,38 @@ function saveProjectAs() {
         showCancelButton: true,
         closeOnConfirm: false
     }).then(result => {
+        const parent = getNearestDirectory_();
+        function successFunc () {
+            const appended = $('#directoryTree').tree(
+                'appendNode',
+                {
+                    name: result.value,
+                    type: 'project',
+                    data: JSON.stringify(getCurrentProject())
+                },
+                parent
+            )
+            clearWorkspace();
+            $('#directoryTree').tree(
+                'selectNode', appended)
+        }
         if (result && result.value) {
-            saveProjectBase(getNearestDirectory(), result.value);
+            saveProjectBase(
+                getNearestDirectory(),
+                result.value,
+                window.projectEnv,
+                successFunc);
         }
     });
 }
 
-function saveProject() {
+function saveProjectBase(path, projectName, mode, successFunc) {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to save files.', 'error');
         updateUI();
         return;
     }
 
-    if (window.openProjectName) {
-        saveProjectBase(getNearestDirectory(), window.openProjectName);
-    } else {
-        saveProjectAs();
-    }
-}
-
-function saveProjectBase_(path, projectName, mode, successFunc) {
     if (!projectName) return;
 
     if (!signedIn()) {
@@ -839,7 +850,6 @@ function saveProjectBase_(path, projectName, mode, successFunc) {
             successFunc();
             updateUI();
             dumpTree();
-            discoverProjects();
         });
     }
 
@@ -885,7 +895,7 @@ function deleteProject_(path, buildMode, successFunc) {
         confirmButtonColor: '#DD6B55',
         confirmButtonText: 'Yes, delete it!'
     }).then(result => {
-        if (!result) {
+        if (result.dismiss === sweetAlert.DismissReason.cancel || result.dismiss === sweetAlert.DismissReason.backdrop) {
             return;
         }
 
@@ -897,7 +907,8 @@ function deleteProject_(path, buildMode, successFunc) {
         sendHttp('POST', 'deleteProject', data, request => {
             if (request.status === 200) {
                 successFunc();
-                discoverProjects();
+                const node = $('#directoryTree').tree('getSelectedNode');
+                $('#directoryTree').tree('removeNode', node);
             }
         });
     });
@@ -925,7 +936,7 @@ function deleteFolder_(path, buildMode, successFunc) {
         confirmButtonColor: '#DD6B55',
         confirmButtonText: 'Yes, delete it!'
     }).then(result => {
-        if (!result) {
+        if (result.dismiss === sweetAlert.DismissReason.cancel || result.dismiss === sweetAlert.DismissReason.backdrop) {
             return;
         }
 
@@ -936,7 +947,8 @@ function deleteFolder_(path, buildMode, successFunc) {
         sendHttp('POST', 'deleteFolder', data, request => {
             if (request.status === 200) {
                 successFunc();
-                discoverProjects();
+                const node = $('#directoryTree').tree('getSelectedNode');
+                $('#directoryTree').tree('removeNode', node);
             }
         });
     });
@@ -958,10 +970,9 @@ function createFolder(path, buildMode, successFunc) {
             input: 'text',
             inputValue: '',
             confirmButtonText: 'Create',
-            showCancelButton: true,
-            closeOnConfirm: false
+            showCancelButton: true
         }).then(result => {
-            if (!result) {
+            if (!result.value) {
                 return;
             }
 
@@ -982,14 +993,21 @@ function createFolder(path, buildMode, successFunc) {
                     return;
                 }
                 successFunc();
-                discoverProjects();
+                let node = $('#directoryTree').tree('getSelectedNode');
+                if (!node) node = $('#directoryTree').tree('getTree');
+                if (node.type !== 'directory') node = node.parent;
+                $('#directoryTree').tree(
+                    'appendNode',
+                    {name: result.value, type: 'directory', children:[]},
+                    node
+                );
+                dumpTree();
             });
         });
     }, true);
 }
 
 function loadProject_(path, name, buildMode, successFunc) {
-    warnIfUnsaved(() => {
         if (!signedIn()) {
             sweetAlert('Oops!', 'You must sign in to open projects.',
                 'error');
@@ -1008,7 +1026,6 @@ function loadProject_(path, name, buildMode, successFunc) {
                 updateUI();
             }
         });
-    }, false);
 }
 
 function share() {
@@ -1414,7 +1431,8 @@ function initDirectoryTree () {
                     clearWorkspace();
                 }
                 updateUI();
-            })
+                }
+            )
         }
     );
 

@@ -43,6 +43,10 @@ data Rule = DefinedByFunction String String
           | AnyOf [Rule]
           | NotThis Rule
           | LineLength Int
+          | NoWarnings {
+              strict :: Bool,
+              exceptions :: String
+          }
     deriving Show
 
 data Cardinality = Cardinality {

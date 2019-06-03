@@ -215,6 +215,14 @@ checkRule (LineLength len) = do
             failure $ "One or more lines longer than " ++ show len ++ " characters."
        | otherwise -> success
 
+checkRule (NoWarnings b pat) = do
+    diags <- getDiagnostics
+    let warns = if b then diags else filter (\(SrcSpanInfo _ _,_,x) -> not(x =~ pat)) diags
+    if | null warns -> success
+       | otherwise -> do
+             let (SrcSpanInfo (SrcSpan _ l c _ _) _,_,x) = head warns
+             failure $ "Warning found at line " ++ show l ++ ", column " ++ show c
+
 checkRule _ = abort
 
 allDefinitionsOf :: String -> Module SrcSpanInfo -> [Rhs SrcSpanInfo]

@@ -15,7 +15,7 @@
 BUILD=$(pwd)/build
 DOWNLOADS=$BUILD/downloads
 
-export PATH=$BUILD/bin:$PATH
+export PATH=$BUILD/bin:$HOME/.cabal/bin:$PATH
 export LANG=${LANG:-C.UTF-8}
 export PREFIX=$BUILD
 
@@ -70,9 +70,9 @@ function run {
 }
 
 function cabal_install {
-  cabal v1-install --reorder-goals --disable-library-profiling --force-reinstalls --global --prefix=$BUILD $@
+  cabal v2-install --disable-library-profiling $@
 }
 
 function cabal_configure {
-  cabal v1-configure --disable-library-profiling --global --prefix=$BUILD $@
+  cabal v2-configure --disable-library-profiling $@
 }

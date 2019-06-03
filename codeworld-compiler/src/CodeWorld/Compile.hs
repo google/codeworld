@@ -155,6 +155,7 @@ buildArgs "codeworld" =
     , "-fno-warn-unused-matches"
     , "-fdefer-type-errors"
     , "-fdefer-out-of-scope-variables"
+    , "-ferror-spans"
     , "-hide-package"
     , "base"
     , "-package"
@@ -191,6 +192,7 @@ buildArgs "codeworld" =
     ]
 buildArgs "haskell" =
     [ "-DGHCJS_BROWSER"
+    , "-ferror-spans"
     , "-package"
     , "codeworld-api"
     , "-package"

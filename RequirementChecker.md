@@ -219,25 +219,23 @@ of conditions. Here are the current checks implemented.
 
   Checks that there are no references to `var` in the module.
 
-- `lineLength`
+- `maxLineLength`
 
   Example:
 
-      lineLength: 80
+      maxLineLength: 80
   
   Checks that there are no lines longer than 80 characters.
 
--  `noWarnings`
+-  `noWarningsExcept`
 
   Example:
 
-      noWarnings:
-        strict: false
-        exceptions: Defined but not used
+      noWarningsExcept: [Defined but not used]
 
-  If `strict` is true, checks that there are no warnings in the module.
-  If `strict` is false, checks that there are no warnings except for those 
-  matching a regular expression given by `exceptions`.
+  Checks that there are no warnings, except for those that match any of a 
+  list of given regular expressions. This list can be empty, in which case
+  no warnings will be allowed.
 
 This is by no means intended to be the full constraint language;
 rather, it is a small set of a few requirements that can be used for

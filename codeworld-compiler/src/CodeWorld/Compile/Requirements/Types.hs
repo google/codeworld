@@ -42,11 +42,8 @@ data Rule = DefinedByFunction String String
           | AllOf [Rule]
           | AnyOf [Rule]
           | NotThis Rule
-          | LineLength Int
-          | NoWarnings {
-              strict :: Bool,
-              exceptions :: String
-          }
+          | MaxLineLength Int
+          | NoWarningsExcept [String]
     deriving Show
 
 data Cardinality = Cardinality {

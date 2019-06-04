@@ -55,8 +55,8 @@ instance FromJSON Rule where
             , explicitParseFieldMaybe allOf o "all"
             , explicitParseFieldMaybe anyOf o "any"
             , explicitParseFieldMaybe notThis o "not"
-            , explicitParseFieldMaybe lineLength o "lineLength"
-            , explicitParseFieldMaybe noWarnings o "noWarnings"
+            , explicitParseFieldMaybe maxLineLength o "maxLineLength"
+            , explicitParseFieldMaybe noWarningsExcept o "noWarningsExcept"
             ]
         case catMaybes choices of
             [r] -> decorateWith o r
@@ -121,13 +121,11 @@ anyOf v = AnyOf <$> withArray "any" (mapM parseJSON . toList) v
 notThis :: Aeson.Value -> Aeson.Parser Rule
 notThis v = NotThis <$> parseJSON v
 
-lineLength :: Aeson.Value -> Aeson.Parser Rule
-lineLength v = LineLength <$> parseJSON v
+maxLineLength :: Aeson.Value -> Aeson.Parser Rule
+maxLineLength v = MaxLineLength <$> parseJSON v
 
-noWarnings :: Aeson.Value -> Aeson.Parser Rule
-noWarnings = withObject "noWarnings" $ \o ->
-    NoWarnings <$> o .: "strict"
-               <*> o .:? "exceptions" .!= "$."
+noWarningsExcept :: Aeson.Value -> Aeson.Parser Rule
+noWarningsExcept v = NoWarningsExcept <$> withArray "exceptions" (mapM parseJSON . toList) v
 
 instance FromJSON Cardinality where
     parseJSON val = parseAsNum val <|> parseAsObj val

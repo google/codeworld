@@ -209,15 +209,15 @@ checkRule (NotThis rule) = do
         Just _ -> success
         Nothing -> abort
 
-checkRule (LineLength len) = do
+checkRule (MaxLineLength len) = do
     src <- getSourceCode
     if | any (> len) (C.length <$> C.lines src) -> 
             failure $ "One or more lines longer than " ++ show len ++ " characters."
        | otherwise -> success
 
-checkRule (NoWarnings b pat) = do
+checkRule (NoWarningsExcept ex) = do
     diags <- getDiagnostics
-    let warns = if b then diags else filter (\(SrcSpanInfo _ _,_,x) -> not(x =~ pat)) diags
+    let warns = filter (\(SrcSpanInfo _ _,_,x) -> not (any (x =~) ex)) diags
     if | null warns -> success
        | otherwise -> do
              let (SrcSpanInfo (SrcSpan _ l c _ _) _,_,x) = head warns

@@ -109,6 +109,11 @@ getParsedCode = do
             modify $ \state -> state { compileParsedSource = Just parsed }
             return parsed
 
+getDiagnostics :: MonadCompile m => m [Diagnostic]
+getDiagnostics = do
+    diags <- gets compileErrors
+    return diags
+
 codeworldModeExts :: [String]
 codeworldModeExts =
     [ "BangPatterns"

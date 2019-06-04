@@ -219,6 +219,24 @@ of conditions. Here are the current checks implemented.
 
   Checks that there are no references to `var` in the module.
 
+- `maxLineLength`
+
+  Example:
+
+      maxLineLength: 80
+  
+  Checks that there are no lines longer than 80 characters.
+
+-  `noWarningsExcept`
+
+  Example:
+
+      noWarningsExcept: [Defined but not used]
+
+  Checks that there are no warnings, except for those that match any of a 
+  list of given regular expressions. This list can be empty, in which case
+  no warnings will be allowed.
+
 This is by no means intended to be the full constraint language;
 rather, it is a small set of a few requirements that can be used for
 testing.  The language is strongly subject to change in the future.
@@ -243,10 +261,8 @@ The following use cases have been proposed, but are not yet implemented.
   include allowing something to be repeated (so a function definition
   could have an arbitrary number of arguments or guards), etc.
 
-- Style constraints.  e.g., all top-level definitions must have type
-  declarations.  Or all lines must be 80 characters or less.
-
-- No warnings.  Alternatively, no warnings of specific types.
+- Other style constraints.  e.g., all top-level definitions must have type
+  declarations.
 
 - Forbidden imported symbols or modules.  By whitelist or blacklist.
   Exceptions should be allowed for specific definitions (usually

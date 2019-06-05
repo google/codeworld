@@ -25,9 +25,9 @@ import Control.Exception
 import Control.Monad
 import qualified Crypto.Hash as Crypto
 import Data.Aeson
-import Data.Sort
 import Data.ByteArray (convert)
 import Data.ByteString (ByteString)
+import Data.List (sort)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Char8 as BC
@@ -301,10 +301,10 @@ removeDirectoryIfExists dirName =
         | otherwise = throwIO e
 
 loadDumpedTree :: BuildMode -> UserId -> IO DirTree
-loadDumpedTree bm uid = do
-    let file = userProjectDir bm uid </> "tree.info"
+loadDumpedTree mode uid = do
+    let file = userProjectDir mode uid </> "tree.info"
     exists <- doesFileExist file
-    realTree <- getDirectoryTree bm uid
+    realTree <- getDirectoryTree mode uid
     case exists of
         False -> return realTree
         True -> do
@@ -316,9 +316,9 @@ loadDumpedTree bm uid = do
                     False -> realTree
 
 getDirectoryTree :: BuildMode -> UserId -> IO DirTree
-getDirectoryTree bm uid = do
-    ftr <- getDirectory $ userProjectDir bm uid
-    let (Node rootPath children) = toTree ftr
+getDirectoryTree mode uid = do
+    fileTree <- getDirectory $ userProjectDir mode uid
+    let (Node rootPath children) = toTree fileTree
     children' <- mapM (constructTree rootPath) $ filter notInfo children
     return $ Dir "root" children'
     where

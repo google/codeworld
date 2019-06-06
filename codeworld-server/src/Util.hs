@@ -37,7 +37,6 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import System.Directory
-import System.File.Tree (copyTo_, getDirectory)
 import System.FilePath
 import System.IO.Error
 import System.Posix.Files
@@ -280,7 +279,17 @@ hashToId pfx =
     toWebSafe c = c
 
 copyDirIfExists :: FilePath -> FilePath -> IO ()
-copyDirIfExists folder1 folder2 = getDirectory folder1 >>= copyTo_ folder2
+copyDirIfExists src dst = do
+    contents <- listDirectory src
+    dstExists <- doesDirectoryExist dst
+    when (not dstExists) $ createDirectoryIfMissing True dst
+    forM_ contents $ \f -> do
+        let srcPath = src </> f
+        let dstPath = dst </> f
+        isDir <- doesDirectoryExist srcPath
+        if isDir
+          then copyDirIfExists srcPath dstPath
+          else copyFile srcPath dstPath
 
 removeFileIfExists :: FilePath -> IO ()
 removeFileIfExists fileName = removeFile fileName `catch` handleExists

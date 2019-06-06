@@ -23,7 +23,7 @@ library
                                             -Wall
                                             -fwarn-unused-imports
   build-depends:                            base >= 4.7 && < 5
-                                          , bcrypt
+                                          , bcrypt >= 0.0.11
                                           , bytestring
                                           , directory
                                           , hashable

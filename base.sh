@@ -70,9 +70,9 @@ function run {
 }
 
 function cabal_install {
-  cabal v2-install --disable-library-profiling $@
+  cabal install --reorder-goals --disable-library-profiling --force-reinstalls --global --prefix=$BUILD $@
 }
 
 function cabal_configure {
-  cabal v2-configure --disable-library-profiling $@
+  cabal configure --disable-library-profiling --global --prefix=$BUILD $@
 }

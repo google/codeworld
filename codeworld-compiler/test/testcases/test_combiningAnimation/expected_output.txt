@@ -1,0 +1,23 @@
+program.hs:16:23: error: 
+    • Couldn't match expected type Picture
+                  with actual type Number -> Picture
+    • Probable cause: a is missing arguments
+      In the argument(s) of (&), namely a
+      In the argument(s) of animationOf, namely (a & b)
+      In the expression: animationOf (a & b)
+
+program.hs:16:23-26: error: 
+    • Couldn't match expected type Number -> Picture
+                  with actual type Picture
+    • Possible cause: (&) is applied to too many arguments
+      In the argument(s) of animationOf, namely (a & b)
+      In the expression: animationOf (a & b)
+      In an equation for program: program = animationOf (a & b)
+
+program.hs:16:27: error: 
+    • Couldn't match expected type Picture
+                  with actual type Number -> Picture
+    • Probable cause: b is missing arguments
+      In the second argument of (&), namely b
+      In the argument(s) of animationOf, namely (a & b)
+      In the expression: animationOf (a & b)

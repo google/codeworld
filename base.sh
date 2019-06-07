@@ -15,7 +15,7 @@
 BUILD=$(pwd)/build
 DOWNLOADS=$BUILD/downloads
 
-export PATH=$BUILD/bin:$PATH
+export PATH=$BUILD/bin:$HOME/.cabal/bin:$PATH
 export LANG=${LANG:-C.UTF-8}
 export PREFIX=$BUILD
 

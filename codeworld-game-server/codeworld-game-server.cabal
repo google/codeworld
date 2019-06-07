@@ -13,13 +13,13 @@ Cabal-version:       >=1.10
 Executable codeworld-game-server
   Main-is:             Main.hs
   Other-modules:       CodeWorld.GameServer
-  Build-depends:       base >=4.8 && <4.10,
+  Build-depends:       base >= 4.8 && < 5,
                        aeson,
                        text,
-                       websockets == 0.9.*,
+                       websockets >= 0.12.3.0,
                        websockets-snap == 0.10.*,
                        snap-core == 1.0.*,
-                       snap-server == 1.0.*,
+                       snap-server >= 1.0 && < 1.2,
                        transformers,
                        bytestring,
                        random,
@@ -32,10 +32,10 @@ Executable codeworld-game-server
 
 Executable codeworld-game-stresstest
   Main-is:             Stresstest.hs
-  Build-depends:       base >=4.8 && <4.10,
+  Build-depends:       base >= 4.8 && < 5,
                        bytestring,
                        text,
-                       websockets == 0.9.*,
+                       websockets >= 0.12.3.0,
                        codeworld-game-api,
                        async,
                        clock,
@@ -46,10 +46,10 @@ Executable codeworld-game-stresstest
 
 Executable codeworld-game-bot
   Main-is:             Bot.hs
-  Build-depends:       base >=4.8 && <4.10,
+  Build-depends:       base >= 4.8 && < 5,
                        bytestring,
                        text,
-                       websockets == 0.9.*,
+                       websockets >= 0.12.3.0,
                        codeworld-game-api,
                        codeworld-api,
                        async,

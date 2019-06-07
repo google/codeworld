@@ -14,15 +14,16 @@ Description:
 Executable codeworld-server-migrate
   Hs-source-dirs: src
   Main-is: Migration.hs
+  Other-modules: Model, Util
   Build-depends:
     base,
     directory,
-    filepath,
-    filesystem-trees >= 0.1.0.6 && < 0.2
+    filepath
 
 Executable codeworld-server
   Hs-source-dirs: src
   Main-is: Main.hs
+  Other-modules: Model, Util
 
   Build-depends:
     aeson,
@@ -38,7 +39,6 @@ Executable codeworld-server
     fast-logger,
     filelock,
     filepath,
-    filesystem-trees >= 0.1.0.6 && < 0.2,
     haskell-src-exts < 1.21,
     hindent >= 5.2.3,
     http-conduit,

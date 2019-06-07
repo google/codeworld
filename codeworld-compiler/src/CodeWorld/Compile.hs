@@ -145,6 +145,12 @@ prepareCompile dir = do
 buildArgs :: SourceMode -> [String]
 buildArgs "codeworld" =
     [ "-DGHCJS_BROWSER"
+    , "-ferror-spans"
+    , "-fno-diagnostics-show-caret"
+    , "-hide-package"
+    , "base"
+    , "-package"
+    , "codeworld-base"
     , "-Wall"
     , "-Wdeferred-type-errors"
     , "-Wdeferred-out-of-scope-variables"
@@ -155,11 +161,6 @@ buildArgs "codeworld" =
     , "-fno-warn-unused-matches"
     , "-fdefer-type-errors"
     , "-fdefer-out-of-scope-variables"
-    , "-ferror-spans"
-    , "-hide-package"
-    , "base"
-    , "-package"
-    , "codeworld-base"
     , "-Wno-partial-type-signatures"
     , "-XBangPatterns"
     , "-XDisambiguateRecordFields"
@@ -193,6 +194,7 @@ buildArgs "codeworld" =
 buildArgs "haskell" =
     [ "-DGHCJS_BROWSER"
     , "-ferror-spans"
+    , "-fno-diagnostics-show-caret"
     , "-package"
     , "codeworld-api"
     , "-package"

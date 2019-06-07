@@ -1,0 +1,2 @@
+program.hs:1:1: error:
+    The variable program is not defined in your code

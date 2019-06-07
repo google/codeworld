@@ -52,7 +52,7 @@ Library
                        ghcjs-dom             >= 0.8 && < 0.9,
                        transformers
   else
-    Build-depends:     blank-canvas          >= 0.6 && < 0.7,
+    Build-depends:     blank-canvas          >= 0.6 && < 0.8,
                        time                  >= 1.6.0 && < 1.9
 
   Ghc-options:         -O2 -Wincomplete-patterns

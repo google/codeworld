@@ -23,69 +23,39 @@ import Data.List
 import System.Directory
 import System.Exit
 import System.FilePath.Posix
+import System.IO.Temp
 import Test.HUnit
 
-testcaseDir :: FilePath
-testcaseDir = "test/testcase"
-
-testcaseOutputDir :: FilePath
-testcaseOutputDir = "../testcase-output"
-
-testSourceFile :: String -> FilePath
-testSourceFile testName = testcaseDir </> testName </> "source.hs"
-
-testErrorFile :: String -> FilePath
-testErrorFile testName = testcaseOutputDir </> testName </> "error.txt"
-
-testSavedErrorFile :: String -> FilePath
-testSavedErrorFile testName = testcaseDir </> testName </> "saved_error.txt"
-
-testOutputFile :: String -> FilePath
-testOutputFile testName = testcaseOutputDir </> testName </> "output.js"
+compilerOutput :: String -> IO String
+compilerOutput testName =
+    withSystemTempDirectory "cwtest" $ \dir -> do
+        compileSource
+            (FullBuild (dir </> "result.js"))
+            ("test/testcases" </> testName </> "source.hs")
+            (dir </> "output.txt")
+            "codeworld"
+            False
+        readFile (dir </> "output.txt")
 
 trim :: String -> String
 trim = dropWhile isSpace . dropWhileEnd isSpace
 
-savedErrorOutput :: String -> IO String
-savedErrorOutput testName = do
-    savedErrMsg <- readFile (testSavedErrorFile testName)
-    return (trim savedErrMsg)
-
-compileErrorOutput :: String -> IO String
-compileErrorOutput testName = do
-    createDir <- createDirectoryIfMissing True (testcaseOutputDir </> testName)
-    out <-
-        compileSource
-            (FullBuild (testOutputFile testName))
-            (testSourceFile testName)
-            (testErrorFile testName)
-            "codeworld"
-            False
-    errMsg <- readFile (testErrorFile testName)
-    return (trim errMsg)
+toTestCase x =
+    x ~: do
+        putStrLn $ "Testing " ++ x ++ "..."
+        actual <- trim <$> compilerOutput x
+        expected <- trim <$> readFile ("test/testcases" </> x </> "expected_output.txt")
+        assertEqual x expected actual
 
 genTestCases :: [String] -> [Test]
 genTestCases [] = ["Empty directory testcase" ~: "FOo" ~=? (map toUpper "foo")]
 genTestCases x  = map toTestCase x
 
-toTestCase x =
-    x ~: do
-        actual <- compileErrorOutput x
-        expected <- savedErrorOutput x
-        assertEqual x expected actual
-
-getTestCases :: FilePath -> IO Counts
-getTestCases path = do
-    dirContent <- getDirectoryContents path
-    let filtered = filter (`notElem` ["..", "."]) dirContent
-        cases = genTestCases filtered
-        testOutput = runTestTT (TestList cases)
-    testOutput
+runTests :: FilePath -> IO Counts
+runTests path = runTestTT . TestList . genTestCases =<< listDirectory path
 
 main :: IO Counts
 main = do
-    cs@(Counts _ _ errs fails) <- getTestCases testcaseDir
+    cs@(Counts _ _ errs fails) <- runTests "test/testcases"
     putStrLn (showCounts cs)
-    if (errs > 0 || fails > 0)
-        then exitFailure
-        else exitSuccess
+    if errs > 0 || fails > 0 then exitFailure else exitSuccess

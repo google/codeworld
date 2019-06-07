@@ -1,0 +1,3 @@
+program.hs:16:1-8: error:
+    Parse error: An equation was expected here.
+    Are you missing the equal sign?

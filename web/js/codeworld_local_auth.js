@@ -268,6 +268,9 @@ window.LocalAuth = (() => {
                 _userId = value.userId;
                 _accessToken = value.accessToken;
                 _refreshToken = value.refreshToken;
+                window.localStorage.setItem('userId', _userId);
+                window.localStorage.setItem('accessToken', _accessToken);
+                window.localStorage.setItem('refreshToken', _refreshToken);
                 invokeCallbacks();
             }
 
@@ -276,6 +279,9 @@ window.LocalAuth = (() => {
     }
 
     function signOut() {
+        window.localStorage.removeItem('userId');
+        window.localStorage.removeItem('acessToken');
+        window.localStorage.removeItem('refreshToken');
         return httpPost({
             url: SIGN_OUT_URL,
             data: {
@@ -306,6 +312,8 @@ window.LocalAuth = (() => {
                     }).then(resp => {
                         _accessToken = resp.result.accessToken;
                         _refreshToken = resp.result.refreshToken;
+                        window.localStorage.setItem('acessToken', _accessToken);
+                        window.localStorage.setItem('refreshToken', _refreshToken);
                         sendHttpAuth(method, url, body,
                             callback);
                     }).catch(() => {
@@ -352,21 +360,26 @@ window.LocalAuth = (() => {
     }
 
     // Return an object with the same interface as a Google API auth object
-    mine.init = () => ({
-        currentUser: {
-            get: () => ({
-                getId: () => _userId
-            }),
-            listen: f => _currentUserCallback = f
-        },
-        isSignedIn: {
-            get: () => Boolean(_userId),
-            listen: f => _isSignedInCallback = f
-        },
-        signIn: options => signIn(), // ignore any Google auth-specific options
-        signOut: signOut,
-        sendHttpAuth: sendHttpAuth
-    });
+    mine.init = () => {
+        _userId = localStorage.getItem('userId');
+        _accessToken = localStorage.getItem('accessToken');
+        _refreshToken = localStorage.getItem('refreshToken');
+        return {
+            currentUser: {
+                get: () => ({
+                    getId: () => _userId
+                }),
+                listen: f => _currentUserCallback = f
+            },
+            isSignedIn: {
+                get: () => Boolean(_userId),
+                listen: f => _isSignedInCallback = f
+            },
+            signIn: options => signIn(), // ignore any Google auth-specific options
+            signOut: signOut,
+            sendHttpAuth: sendHttpAuth
+        }
+    };
 
     $(() => {
         const selector = [

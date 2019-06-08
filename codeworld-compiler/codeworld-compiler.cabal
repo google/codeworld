@@ -79,7 +79,7 @@ Test-Suite codeworld-compiler-test
   Build-depends:
     base,
     codeworld-compiler,
-    containers == 0.5.*,
+    containers,
     directory,
     filepath,
     HUnit,

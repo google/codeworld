@@ -32,6 +32,7 @@ rewriteStages =
     , ("exported by", "defined in")
     , ("module Main", "your code")
     , ("main\\:Main", "your code")
+    , ("[ ]*\8226 Possible cause: [(].*[)] is applied to too many arguments\n", "")
     , ("is applied to too few arguments", "is missing arguments")
     , ("is applied to too many arguments", "is a value, but a function is needed here.")
     , ("Couldn't match expected type Text\\s*with actual type GHC.Types.Char",

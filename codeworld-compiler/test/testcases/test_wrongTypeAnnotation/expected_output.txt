@@ -1,4 +1,4 @@
-program.hs:20:21-23: error: 
+program.hs:20:21-24: error: 
     • Couldn't match expected type Number with actual type Picture
     • In the argument(s) of solidCircle, namely (size)
       In the expression: solidCircle (size)

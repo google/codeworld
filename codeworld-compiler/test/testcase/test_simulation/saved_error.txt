@@ -1,9 +1,0 @@
-program.hs:16:32: error: 
-    • Couldn't match expected type ([Number] -> world0,
-                                     (world0, Number) -> world0, world0 -> Picture)
-                  with actual type (((Number, Number), Number) -> (Number, Number),
-                                     (Number, Number) -> Picture)
-    • In the argument(s) of simulationOf, namely (step, picture)
-      In the expression: simulationOf (step, picture)
-      In an equation for program:
-          program = simulationOf (step, picture)

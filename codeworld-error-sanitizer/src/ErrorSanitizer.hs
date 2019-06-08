@@ -33,6 +33,7 @@ rewriteStages =
     , ("module Main", "your code")
     , ("main\\:Main", "your code")
     , ("is applied to too few arguments", "is missing arguments")
+    , ("is applied to too many arguments", "is a value, but a function is needed here.")
     , ("Couldn't match expected type Text\\s*with actual type GHC.Types.Char",
        "Text requires double quotes, rather than single.")
     , ("base-[0-9.]*:GHC\\.Stack\\.Types\\.HasCallStack => ", "")
@@ -78,6 +79,8 @@ rewriteStages =
     , ("Use -v to see a list of the files searched for\\.", "")
     , ("CallStack \\(from HasCallStack\\):", "When evaluating:")
     , (", called at program.hs:", ", used at program.hs:")
+    , ("module header, import declaration\n    or top-level declaration expected.",
+       "An equation was expected here.\n    Are you missing the equal sign?")
     , ("\n\\s+\n", "\n")
     ]
 

@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
@@ -11,9 +12,10 @@ import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString as B
 import qualified Data.Text.Encoding as T
 import Util
+import Data.List
 import System.Directory
 import System.FilePath
-import System.File.Tree (FSTree, getDirectory, flatten)
+import Util
 
 data OldProject = OldProject
      { oldProjectName :: Text
@@ -29,33 +31,32 @@ instance FromJSON OldProject where
 getAllUserDirs :: BuildMode -> IO [FilePath]
 getAllUserDirs mode = listDirectoryWithPrefix $ projectRootDir mode
 
--- Projects directories have no 3-letters prefix dirs inside.
-isProjectsStructureCorrect :: IO Bool
-isProjectsStructureCorrect = do
-    let cwDir = projectRootDir (BuildMode "codeworld")
-        haskellDir = projectRootDir (BuildMode "haskell")
-    cwTree <- getDirectory cwDir
-    haskellTree <- getDirectory haskellDir
-    return $ checkForPrefDirs haskellTree && checkForPrefDirs cwTree
-    where
-        checkForPrefDirs :: FSTree -> Bool
-        checkForPrefDirs tr = null $ filter (\x -> 3 == length x) $ concatMap splitPath $ flatten tr
+-- Project directories have no 3-letters prefix dirs inside.
+isProjectStructureCorrect :: FilePath -> IO Bool
+isProjectStructureCorrect path = do
+    contents <- listDirectory path
+    parts <- forM contents $ \f -> do
+        isDir <- doesDirectoryExist (path </> f)
+        if | isDir && length f == 3 && "D" `isPrefixOf` f -> return False
+           | isDir -> isProjectStructureCorrect (path </> f)
+           | otherwise -> return True
+    return (and parts)
 
 move :: FilePath -> FilePath -> IO ()
 move src dest = do
-    isdir <- isDir src
-    case isdir of
+    isDir <- doesDirectoryExist src
+    case isDir of
         True  -> renameDirectory src dest
         False -> renameFile src dest
 
 migrateProjectStructure :: FilePath -> IO ()
 migrateProjectStructure path = do
-    isdir <- isDir path
-    children <- if isdir then listDirectory path else return []
+    isDir <- doesDirectoryExist path
+    children <- if isDir then listDirectory path else return []
     let parent = takeDirectory path
         sources = map (path </>) children
         destinations = map (parent </>) children
-    case isdir of
+    case isDir of
         True -> case length (takeFileName path) == 3 of
             True -> do
                 mapM_ migrateProjectStructure sources
@@ -140,14 +141,13 @@ main = do
     isStructureDone <- isProjectsStructureCorrect
     case (isMetaDone, isStructureDone) of
         (True, True) -> do
-            putStrLn "All migrations already done"
+            putStrLn "All migration already done"
         (False, True) -> do
-            putStrLn "Metadata migrations already done."
+            putStrLn "Metadata migration already done."
             migrateStructure
         (True, False) -> do
-            putStrLn "Structure migrations already done."
+            putStrLn "Structure migration already done."
             migrateMetadata
         (False, False) -> do
             migrateStructure
             migrateMetadata
-

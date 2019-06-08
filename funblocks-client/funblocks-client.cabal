@@ -22,6 +22,17 @@ Executable funblocks-client
   Build-depends:       base 
   Hs-source-dirs:      src
   Main-is:             Main.hs
+  Other-modules:       Blockly.Block
+                     , Blockly.Connection
+                     , Blockly.DesignBlock
+                     , Blockly.Event
+                     , Blockly.General
+                     , Blockly.TypeExpr
+                     , Blockly.Workspace
+                     , Blocks.CodeGen
+                     , Blocks.Parser
+                     , Blocks.Printer
+                     , Blocks.Types
   Default-language:    Haskell2010
   Build-depends:       ghcjs-base,
                        text,

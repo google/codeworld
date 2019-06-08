@@ -34,6 +34,7 @@ import Data.Either
 import Data.Generics hiding (empty)
 import Data.Hashable
 import qualified Data.Text as T
+import qualified Data.ByteString.Char8 as C
 import Data.Void
 import Language.Haskell.Exts hiding (Rule, parse)
 import Text.Regex.TDFA hiding (match)
@@ -207,6 +208,20 @@ checkRule (NotThis rule) = do
         Just [] -> failure "A rule matched, but shouldn't have."
         Just _ -> success
         Nothing -> abort
+
+checkRule (MaxLineLength len) = do
+    src <- getSourceCode
+    if | any (> len) (C.length <$> C.lines src) -> 
+            failure $ "One or more lines longer than " ++ show len ++ " characters."
+       | otherwise -> success
+
+checkRule (NoWarningsExcept ex) = do
+    diags <- getDiagnostics
+    let warns = filter (\(SrcSpanInfo _ _,_,x) -> not (any (x =~) ex)) diags
+    if | null warns -> success
+       | otherwise -> do
+             let (SrcSpanInfo (SrcSpan _ l c _ _) _,_,x) = head warns
+             failure $ "Warning found at line " ++ show l ++ ", column " ++ show c
 
 checkRule _ = abort
 

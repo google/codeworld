@@ -628,11 +628,8 @@ const Auth = (() => {
         window.auth2 = auth;
         window.auth2.currentUser.listen(signinCallback);
 
-        if (window.auth2.isSignedIn.get()) {
-            window.auth2.signIn();
-        }
-
         discoverProjects();
+
         updateUI();
     }
 

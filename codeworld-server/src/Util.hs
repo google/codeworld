@@ -27,7 +27,7 @@ import qualified Crypto.Hash as Crypto
 import Data.Aeson
 import Data.ByteArray (convert)
 import Data.ByteString (ByteString)
-import Data.List (sort)
+import Data.List (sortOn)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Char8 as BC
@@ -224,8 +224,8 @@ projectDirNames :: FilePath -> IO [Text]
 projectDirNames dir = do
     subHashedDirs <- listDirectoryWithPrefix dir
     let hashedDirs = dirFilter subHashedDirs 'D'
-    dirs <- mapM (\x -> B.readFile $ x </> "dir.info") hashedDirs
-    return $ map T.decodeUtf8 dirs
+    dirMetas <- mapM (\x -> LB.readFile $ x </> "dir.info") hashedDirs
+    return $ map (\d -> dirMetaName $ fromJust $ decode d) dirMetas
 
 writeDeployLink :: BuildMode -> DeployId -> ProgramId -> IO ()
 writeDeployLink mode deployId (ProgramId p) = do
@@ -300,52 +300,38 @@ removeDirectoryIfExists dirName =
         | isDoesNotExistError e = return ()
         | otherwise = throwIO e
 
-loadDumpedTree :: BuildMode -> UserId -> IO DirTree
-loadDumpedTree mode uid = do
-    let file = userProjectDir mode uid </> "tree.info"
-    exists <- doesFileExist file
-    realTree <- getDirectoryTree mode uid
-    case exists of
-        False -> return realTree
-        True -> do
-            content  <- LB.readFile file
-            return $ case decode content of
-                Nothing -> realTree
-                Just dumpedTree -> case compareTrees realTree (Dir "root" dumpedTree) of
-                    True  -> Dir "root" dumpedTree
-                    False -> realTree
-
 getDirectoryTree :: BuildMode -> UserId -> IO DirTree
 getDirectoryTree mode uid = do
     fileTree <- getDirectory $ userProjectDir mode uid
     let (Node rootPath children) = toTree fileTree
     children' <- mapM (constructTree rootPath) $ filter notInfo children
-    return $ Dir "root" children'
+    return $ Dir "root" 0 $ sortOn nodeOrder children'
     where
         constructTree :: FilePath -> Tree FilePath -> IO DirTree
         constructTree prefix (Node path [(Node "dir.info" [])]) = do -- empty directory
-            name <- B.readFile $ prefix </> path </> "dir.info"
-            return $ Dir (T.decodeUtf8 name) []
+            rawMeta <- LB.readFile $ prefix </> path </> "dir.info"
+            let Just meta = decode rawMeta
+                name = dirMetaName meta
+                order = dirMetaOrder meta
+            return $ Dir name order []
         constructTree prefix (Node path []) = do
             let currentNode = prefix </> path
             source <- LB.readFile currentNode
             let Just project = decode source
-            return $ Source (projectName project) $ LT.toStrict $ LT.decodeUtf8 source
+            return $ Source (projectName project) (projectOrder project) $ LT.toStrict $ LT.decodeUtf8 source
         constructTree prefix (Node path children) = do
-            name <- B.readFile $ prefix </> path </> "dir.info"
+            rawMeta <- LB.readFile $ prefix </> path </> "dir.info"
+            let Just meta = decode rawMeta
+                name = dirMetaName meta
+                order = dirMetaOrder meta
             children' <- mapM (constructTree $ prefix </> path) $ filter notInfo children
-            return $ Dir (T.decodeUtf8 name) children'
+            return $ Dir name order $ sortOn nodeOrder children'
+
+        nodeOrder :: DirTree -> Int
+        nodeOrder (Dir _ order _) = order
+        nodeOrder (Source _ order _) = order
 
         notInfo :: Tree FilePath -> Bool
         notInfo (Node "dir.info" []) = False
         notInfo (Node "tree.info" []) = False
         notInfo _ = True
-
--- If directory trees have same structure
--- in spite of different order of elements
-compareTrees :: DirTree -> DirTree -> Bool
-compareTrees (Source n1 s1) (Source n2 s2) = n1 == n2
-compareTrees (Dir n1 chs1) (Dir n2 chs2) 
-    | length chs1 == length chs2 = n1 == n2 && and (map (uncurry compareTrees) $ zip (sort chs1) (sort chs2))
-    | otherwise = False
-compareTrees _ _ = False

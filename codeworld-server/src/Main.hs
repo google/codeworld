@@ -190,15 +190,18 @@ createFolderHandler :: CodeWorldHandler
 createFolderHandler = private $ \userId ctx -> do
     mode <- getBuildMode
     Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
-    let dirIds = map (nameToDirId . T.pack) path
-    let finalDir = joinPath $ map dirBase dirIds
+    let pathText = map T.pack path
+        dirIds = map nameToDirId pathText
+        finalDir = joinPath $ map dirBase dirIds
+        name = last pathText
+        order = 0
     liftIO $ ensureUserBaseDir mode userId finalDir
     liftIO $ createDirectory $ userProjectDir mode userId </> finalDir
     modifyResponse $ setContentType "text/plain"
     liftIO $
-        B.writeFile
+        LB.writeFile
             (userProjectDir mode userId </> finalDir </> "dir.info") $
-        BC.pack $ last path
+        encode $ DirectoryMeta name order
 
 deleteFolderHandler :: CodeWorldHandler
 deleteFolderHandler = private $ \userId ctx -> do
@@ -273,7 +276,7 @@ listFolderHandler = private $ \userId ctx -> do
 directoryTreeHandler :: CodeWorldHandler
 directoryTreeHandler = private $ \userId ctx -> do
     mode <- getBuildMode
-    dirTree <- liftIO $ loadDumpedTree mode userId
+    dirTree <- liftIO $ getDirectoryTree mode userId
     modifyResponse $ setContentType "application/json"
     writeLBS $ encode dirTree
 
@@ -307,16 +310,17 @@ shareContentHandler = private $ \userId ctx -> do
         liftIO $
         B.readFile
             (shareRootDir mode </> shareLink (ShareId $ T.decodeUtf8 shash))
-    Just name <- getParam "name"
-    let dirPath = dirBase $ nameToDirId $ T.decodeUtf8 name
+    Just nameBC <- getParam "name"
+    let name = T.decodeUtf8 nameBC
+        dirPath = dirBase $ nameToDirId name
     liftIO $ ensureUserBaseDir mode userId dirPath
     liftIO $
         copyDirIfExists (BC.unpack sharingFolder) $
         userProjectDir mode userId </> dirPath
     liftIO $
-        B.writeFile
+        LB.writeFile
             (userProjectDir mode userId </> dirPath </> "dir.info")
-            name
+            (encode $ DirectoryMeta name 0)
 
 moveProjectHandler :: CodeWorldHandler
 moveProjectHandler = private $ \userId ctx -> do

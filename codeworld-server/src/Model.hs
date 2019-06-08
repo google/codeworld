@@ -31,11 +31,12 @@ data Project = Project
     { projectName :: Text
     , projectSource :: Text
     , projectHistory :: Value
+    , projectOrder :: Int
     }
 
 instance FromJSON Project where
     parseJSON (Object v) =
-        Project <$> v .: "name" <*> v .: "source" <*> v .: "history"
+        Project <$> v .: "name" <*> v .: "order" <*> v .: "source" <*> v .: "history"
     parseJSON _ = mzero
 
 instance ToJSON Project where
@@ -44,6 +45,24 @@ instance ToJSON Project where
             [ "name" .= projectName p
             , "source" .= projectSource p
             , "history" .= projectHistory p
+            , "order" .= projectOrder p
+            ]
+
+data DirectoryMeta = DirectoryMeta
+    { dirMetaName :: Text
+    , dirMetaOrder :: Int
+    } deriving (Show)
+
+instance FromJSON DirectoryMeta where
+    parseJSON (Object v) =
+        DirectoryMeta <$> v .: "name" <*> v .: "order"
+    parseJSON _ = mzero
+
+instance ToJSON DirectoryMeta where
+    toJSON p =
+        object
+            [ "name" .= dirMetaName p
+            , "order" .= dirMetaOrder p
             ]
 
 data Directory = Directory
@@ -81,22 +100,24 @@ instance ToJSON GalleryItem where
                    , "url" .= galleryItemURL item
                    ]
 
-data DirTree = Dir Text [DirTree] | Source Text Text deriving (Show, Eq, Ord)
+data DirTree = Dir Text Int [DirTree] | Source Text Int Text deriving (Show, Eq, Ord)
 
 instance ToJSON DirTree where
-    toJSON (Source name src) = object [ "name" .= name
-                                      , "data" .= src
-                                      , "type" .= ("project" :: Text)
-                                      ]
-    toJSON (Dir name children) = object [ "name" .= name
-                                        , "children" .= map toJSON children
-                                        , "type" .= ("directory" :: Text)
-                                        ]
+    toJSON (Source name order src) = object [ "name" .= name
+                                            , "order" .= order
+                                            , "data" .= src
+                                            , "type" .= ("project" :: Text)
+                                            ]
+    toJSON (Dir name order children) = object [ "name" .= name
+                                              , "order" .= order
+                                              , "children" .= map toJSON children
+                                              , "type" .= ("directory" :: Text)
+                                              ]
  
 instance FromJSON DirTree where
     parseJSON (Object v) = do
         type_ <- v .: "type"
         case type_ :: String of
-            "directory" -> Dir    <$> v .: "name" <*> v .: "children"
-            "project" ->   Source <$> v .: "name" <*> v .: "data" 
+            "directory" -> Dir    <$> v .: "name" <*> v .: "order" <*> v .: "children"
+            "project" ->   Source <$> v .: "name" <*> v .: "order" <*> v .: "data" 
     parseJSON _ = mzero

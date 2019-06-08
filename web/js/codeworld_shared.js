@@ -1484,11 +1484,15 @@ function getNearestDirectory() {
 // on haskell side
 function formatTree(node) {
     if (node.type === 'directory') {
+        delete node.is_open;
         if (!node.children) {
             node.children = [];
         } else {
             node.children = node.children.map(formatTree);
         }
+    } else {
+        // We need only structure and order of elements.
+        node.data = '';
     }
     return node;
 }
@@ -1499,5 +1503,5 @@ function dumpTree() {
     const data = new FormData();
     data.append('mode', window.projectEnv);
     data.append('value', JSON.stringify(tree));
-    sendHttp('POST', 'dumpTree', data);
+    sendHttp('POST', 'writeProjectOrder', data);
 }

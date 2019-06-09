@@ -1,0 +1,2 @@
+program.hs:16:31-33: error:
+    Text should be written with double quotes, not single quotes.

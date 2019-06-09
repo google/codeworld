@@ -50,6 +50,7 @@ checkCodeConventions = do
     checkOldStyleMixed mode
     checkOldStyleGray
     when (mode == "codeworld") $ do
+        checkCharacterLiterals
         checkFunctionParentheses
         checkVarlessPatterns
         checkPatternGuards
@@ -121,6 +122,29 @@ checkOldStyleGray =
                 "\n    Remove the function argument for a medium shade of grey." ++
                 "\n    For a different shade of gray, use light, dark, or HSL.")]
         oldStyleGray _ = []
+
+-- Look for character literals in the source code.  These are always a mistake
+-- in CodeWorld mode, since Text is used as a type even for single characters.
+checkCharacterLiterals :: MonadCompile m => m ()
+checkCharacterLiterals =
+    getParsedCode >>= \parsed -> case parsed of
+        Parsed mod -> addDiagnostics $
+            everything (++) (mkQ [] charLiteralExps) mod ++
+            everything (++) (mkQ [] charLiteralPats) mod
+        _ -> return ()  -- Fall back on GHC for parse errors.
+  where charLiteralExps :: Exp SrcSpanInfo -> [Diagnostic]
+        charLiteralExps (Lit loc (Char _ _ _))        = [(loc, CompileError, msg)]
+        charLiteralExps (Lit loc (PrimChar _ _ _))    = [(loc, CompileError, msg)]
+        charLiteralExps (VarQuote loc _)              = [(loc, CompileError, msg)]
+        charLiteralExps (TypQuote loc _)              = [(loc, CompileError, msg)]
+        charLiteralExps _                             = []
+
+        charLiteralPats :: Pat SrcSpanInfo -> [Diagnostic]
+        charLiteralPats (PLit loc _ (Char _ _ _))     = [(loc, CompileError, msg)]
+        charLiteralPats (PLit loc _ (PrimChar _ _ _)) = [(loc, CompileError, msg)]
+        charLiteralPats _                             = []
+
+        msg = "error:\n    Text should be written with double quotes, not single quotes."
 
 -- Look for function applications without parentheses.  Since CodeWorld
 -- functions are usually applied with parentheses, this often indicates a

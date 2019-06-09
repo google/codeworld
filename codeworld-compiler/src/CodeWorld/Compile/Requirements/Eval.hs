@@ -33,6 +33,7 @@ import Data.Char
 import Data.Either
 import Data.Generics hiding (empty)
 import Data.Hashable
+import Data.List
 import qualified Data.Text as T
 import qualified Data.ByteString.Char8 as C
 import Data.Void
@@ -223,6 +224,22 @@ checkRule (NoWarningsExcept ex) = do
              let (SrcSpanInfo (SrcSpan _ l c _ _) _,_,x) = head warns
              failure $ "Warning found at line " ++ show l ++ ", column " ++ show c
 
+checkRule (TypeDeclarations _) = withParsedCode $ \m -> do
+    let defs = nub $ topLevelNames m
+        noTypeSig = defs \\ (everything (++) (mkQ [] typeSigNames) m)
+
+        typeSigNames :: Decl SrcSpanInfo -> [String]
+        typeSigNames (TypeSig _ l _) = nameString <$> l
+        typeSigNames _ = []
+
+        nameString :: Name SrcSpanInfo -> String
+        nameString (Ident _ s) = s
+        nameString (Symbol _ s) = s
+
+    if | null noTypeSig -> success
+       | otherwise -> failure $ "The definition of `" ++ head noTypeSig
+           ++ "` has no type declaration."
+
 checkRule _ = abort
 
 allDefinitionsOf :: String -> Module SrcSpanInfo -> [Rhs SrcSpanInfo]
@@ -236,6 +253,24 @@ allDefinitionsOf a m = everything (++) (mkQ [] funcDefs) m ++
         patDefs (PatBind _ pat rhs _) | patDefines pat a = [rhs]
         patDefs _ = []
 
+topLevelNames :: Module SrcSpanInfo -> [String]
+topLevelNames m = everything (++) (mkQ [] names) m
+  where names :: Decl SrcSpanInfo -> [String]
+        names (FunBind _ xs) = [funcName x | x <- xs]
+        names (PatBind _ pat _ _) = [patName pat]
+        names _ = []
+
+        funcName :: Match SrcSpanInfo -> String
+        funcName (Match _ (Ident _ s) _ _ _) = s
+        funcName (InfixMatch _ _ (Ident _ s) _ _ _) = s
+
+        patName :: Pat SrcSpanInfo -> String
+        patName (PVar _ (Ident _ a)) = a
+        patName (PParen _ pat) = patName pat
+        patNames _ = []
+
 patDefines :: Pat SrcSpanInfo -> String -> Bool
 patDefines (PVar _ (Ident _ aa)) a = a == aa
 patDefines (PParen _ pat) a = patDefines pat a
+
+

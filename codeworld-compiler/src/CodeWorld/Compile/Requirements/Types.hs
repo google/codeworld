@@ -45,6 +45,7 @@ data Rule = DefinedByFunction String String
           | MaxLineLength Int
           | NoWarningsExcept [String]
           | TypeDeclarations Bool
+          | Blacklist [String]
     deriving Show
 
 data Cardinality = Cardinality {

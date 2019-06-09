@@ -240,6 +240,18 @@ checkRule (TypeDeclarations _) = withParsedCode $ \m -> do
        | otherwise -> failure $ "The definition of `" ++ head noTypeSig
            ++ "` has no type declaration."
 
+checkRule (Blacklist bl) = withParsedCode $ \m -> do
+    let symbols = nub $ everything (++) (mkQ [] nameString) m
+        blacklisted = intersect bl symbols
+        
+        nameString :: Name SrcSpanInfo -> [String]
+        nameString (Ident _ s) = [s]
+        nameString (Symbol _ s) = [s]
+
+    if | null blacklisted -> success
+       | otherwise -> failure $ "The symbol `" ++ head blacklisted
+           ++ "` is blacklisted."
+
 checkRule _ = abort
 
 allDefinitionsOf :: String -> Module SrcSpanInfo -> [Rhs SrcSpanInfo]

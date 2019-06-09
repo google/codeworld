@@ -204,9 +204,9 @@ fi
 GHC_DIR=8.6.5
 GHC_VERSION=8.6.5
 
-# Install a precompiled GHC to bootstrap itself.
+# Install GHC.
 
-if [ ! -f $BUILD/progress/bootstrap-ghc ]; then
+if [ ! -f $BUILD/progress/ghc ]; then
   run $DOWNLOADS               wget https://downloads.haskell.org/~ghc/$GHC_DIR/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
   run $BUILD                   rm -rf ghc-$GHC_VERSION
   run $BUILD                   tar xf $DOWNLOADS/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
@@ -215,24 +215,7 @@ if [ ! -f $BUILD/progress/bootstrap-ghc ]; then
   run $BUILD                   rm -rf ghc-$GHC_VERSION
   run $DOWNLOADS               rm -rf *
 
-  touch $BUILD/progress/bootstrap-ghc
-fi
-
-# Now install the patched GHC, built from source.
-
-if [ ! -f $BUILD/progress/patched-ghc ]; then
-  run $DOWNLOADS               wget https://downloads.haskell.org/~ghc/$GHC_DIR/ghc-$GHC_VERSION-src.tar.xz
-  run $BUILD                   rm -rf ghc-$GHC_VERSION
-  run $BUILD                   tar xf $DOWNLOADS/ghc-$GHC_VERSION-src.tar.xz
-  run .                        patch -p0 -u -d $BUILD < ghc-artifacts/ghc-$GHC_VERSION-default-main.patch
-  run .                        cp ghc-artifacts/build.mk $BUILD/ghc-$GHC_VERSION/mk/build.mk
-  run $BUILD/ghc-$GHC_VERSION  ./configure --prefix=$BUILD
-  run $BUILD/ghc-$GHC_VERSION  make
-  run $BUILD/ghc-$GHC_VERSION  make install
-  run $BUILD                   rm -rf ghc-$GHC_VERSION
-  run $DOWNLOADS               rm -rf *
-
-  touch $BUILD/progress/patched-ghc
+  touch $BUILD/progress/ghc
 fi
 
 # Install cabal-install

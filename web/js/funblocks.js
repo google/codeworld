@@ -92,7 +92,7 @@ function init() {
                                     'error');
                             }
                             initCodeworld();
-                            discoverProjects();
+                            discoverProjects('');
                         });
                 });
             } else {
@@ -344,7 +344,7 @@ function help() {
 }
 
 function signinCallback() {
-    discoverProjects();
+    discoverProjects('');
 }
 
 function signOut() {
@@ -376,7 +376,7 @@ function saveProject() {
     function successFunc() {
         window.lastXML = getWorkspaceXMLText();
         window.openProjectName = projectName;
-        discoverProjects();
+        discoverProjects('');
     }
 
     if (window.openProjectName) {

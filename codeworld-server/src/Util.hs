@@ -204,8 +204,30 @@ ensureProjectDir mode userId path projectId = do
 listDirectoryWithPrefix :: FilePath -> IO [FilePath]
 listDirectoryWithPrefix filePath = map (filePath </>) <$> listDirectory filePath
 
+listDirectoryWithPrefixRecursive :: FilePath -> IO [FilePath]
+listDirectoryWithPrefixRecursive filePath = do
+    subpaths <- map (filePath </>) <$> listDirectory filePath
+    dirs <- filterM doesDirectoryExist subpaths
+    subtrees <- mapM listDirectoryWithPrefixRecursive dirs
+    return $ subpaths ++ (concat subtrees)
+
 dirFilter :: [FilePath] -> Char -> [FilePath]
 dirFilter dirs char = filter (\x -> head (takeBaseName x) == char) dirs
+
+cwEntries :: FilePath -> IO [CWEntry]
+cwEntries dir = do
+    subHashedDirs <- listDirectoryWithPrefix dir
+    let hashedFiles = dirFilter subHashedDirs 'S'
+        hashedDirs = dirFilter subHashedDirs 'D'
+    projects <- mapM projectMeta hashedFiles
+    dirs <- mapM dirMeta hashedDirs
+    return $ projects ++ dirs
+    where projectMeta path = do
+            Just project <- decode <$> LB.readFile path
+            return $ Source project
+          dirMeta path = do
+            Just dir <- decode <$> LB.readFile (path </> "dir.info")
+            return $ Dir dir
 
 projectFileNames :: FilePath -> IO [Text]
 projectFileNames dir = do
@@ -308,39 +330,3 @@ removeDirectoryIfExists dirName =
     handleExists e
         | isDoesNotExistError e = return ()
         | otherwise = throwIO e
-
-getDirectoryTree :: BuildMode -> UserId -> IO DirTree
-getDirectoryTree mode uid = do
-    fileTree <- getDirectory $ userProjectDir mode uid
-    let (Node rootPath children) = toTree fileTree
-    children' <- mapM (constructTree rootPath) $ filter notInfo children
-    return $ Dir "root" 0 $ sortOn nodeOrder children'
-    where
-        constructTree :: FilePath -> Tree FilePath -> IO DirTree
-        constructTree prefix (Node path [(Node "dir.info" [])]) = do -- empty directory
-            rawMeta <- LB.readFile $ prefix </> path </> "dir.info"
-            let Just meta = decode rawMeta
-                name = dirMetaName meta
-                order = dirMetaOrder meta
-            return $ Dir name order []
-        constructTree prefix (Node path []) = do
-            let currentNode = prefix </> path
-            source <- LB.readFile currentNode
-            let Just project = decode source
-            return $ Source (projectName project) (projectOrder project) $ LT.toStrict $ LT.decodeUtf8 source
-        constructTree prefix (Node path children) = do
-            rawMeta <- LB.readFile $ prefix </> path </> "dir.info"
-            let Just meta = decode rawMeta
-                name = dirMetaName meta
-                order = dirMetaOrder meta
-            children' <- mapM (constructTree $ prefix </> path) $ filter notInfo children
-            return $ Dir name order $ sortOn nodeOrder children'
-
-        nodeOrder :: DirTree -> Int
-        nodeOrder (Dir _ order _) = order
-        nodeOrder (Source _ order _) = order
-
-        notInfo :: Tree FilePath -> Bool
-        notInfo (Node "dir.info" []) = False
-        notInfo (Node "tree.info" []) = False
-        notInfo _ = True

@@ -32,13 +32,13 @@ getAllUserDirs :: BuildMode -> IO [FilePath]
 getAllUserDirs mode = listDirectoryWithPrefix $ projectRootDir mode
 
 -- Project directories have no 3-letters prefix dirs inside.
-isProjectStructureCorrect :: FilePath -> IO Bool
-isProjectStructureCorrect path = do
+isProjectsStructureCorrect :: FilePath -> IO Bool
+isProjectsStructureCorrect path = do
     contents <- listDirectory path
     parts <- forM contents $ \f -> do
         isDir <- doesDirectoryExist (path </> f)
         if | isDir && length f == 3 && "D" `isPrefixOf` f -> return False
-           | isDir -> isProjectStructureCorrect (path </> f)
+           | isDir -> isProjectsStructureCorrect (path </> f)
            | otherwise -> return True
     return (and parts)
 
@@ -79,16 +79,14 @@ migrateStructure = do
     migrateMode (BuildMode "blocklyXML")
     putStrLn "Structure successfully migrated."
 
-isDirInfo "dir.info" = True
-isDirInfo _ = False
+isDirInfo path = takeFileName path == "dir.info"
 
-isSourceFile ('S':_) = True
-isSourceFile _ = False
+isSourceFile path = head (takeFileName path) == 'S'
 
 allMetaContainers :: IO [FilePath]
 allMetaContainers = do
-    allFiles <- mapM getDirectory projectDirs
-    return $ filterMetadata $ concat $ map flatten allFiles
+    allFiles <- mapM listDirectoryWithPrefixRecursive projectDirs
+    return $ filterMetadata $ concat allFiles
     where filterMetadata paths = filter (\f -> isSourceFile f || isDirInfo f) paths
 
 projectDirs = map projectRootDir
@@ -124,28 +122,33 @@ migrateMetadata = do
         migrateDirMeta :: FilePath -> IO ()
         migrateDirMeta path = do
             name <- B.readFile path
-            LB.writeFile path $ encode $ DirectoryMeta (T.decodeUtf8 name) 0
-            return ()
+            let tmp = path ++ ".tmp"
+            B.writeFile tmp $ LB.toStrict $ encode $ DirectoryMeta (T.decodeUtf8 name) 0
+            renameFile tmp path
 
         migrateProjectMeta :: FilePath -> IO ()
         migrateProjectMeta path = do
-            rawMeta <- LB.readFile path
-            let Just meta = decode rawMeta
-            LB.writeFile path $ encode $ Project (oldProjectName meta) (oldProjectSource meta) (oldProjectHistory meta) 0
-            return ()
+            Just meta <- decodeFileStrict path
+            let tmp = path ++ ".tmp"
+            B.writeFile tmp $ LB.toStrict $ encode
+                            $ Project (oldProjectName meta)
+                                      (oldProjectSource meta)
+                                      (oldProjectHistory meta)
+                                      0
+            renameFile tmp path
 
 main :: IO ()
 main = do
     putStrLn "Running migration of codeworld-server."
     isMetaDone <- isMetadataMigrated
-    isStructureDone <- isProjectsStructureCorrect
+    isStructureDone <- and <$> mapM isProjectsStructureCorrect projectDirs
     case (isMetaDone, isStructureDone) of
         (True, True) -> do
-            putStrLn "All migration already done"
-        (False, True) -> do
+            putStrLn "All migrations already done"
+        (True, False) -> do
             putStrLn "Metadata migration already done."
             migrateStructure
-        (True, False) -> do
+        (False, True) -> do
             putStrLn "Structure migration already done."
             migrateMetadata
         (False, False) -> do

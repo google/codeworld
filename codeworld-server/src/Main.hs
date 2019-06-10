@@ -152,11 +152,10 @@ site ctx =
             [ ("loadProject", loadProjectHandler ctx)
             , ("saveProject", saveProjectHandler ctx)
             , ("deleteProject", deleteProjectHandler ctx)
-            , ("directoryTree", directoryTreeHandler ctx)
-            , ("writeProjectOrder", writeProjectOrderHandler ctx)
             , ("createFolder", createFolderHandler ctx)
             , ("deleteFolder", deleteFolderHandler ctx)
             , ("listFolder", listFolderHandler ctx)
+            , ("updateFolderMeta", updateFolderMetaHandler ctx)
             , ("shareFolder", shareFolderHandler ctx)
             , ("shareContent", shareContentHandler ctx)
             , ("moveProject", moveProjectHandler ctx)
@@ -268,24 +267,12 @@ listFolderHandler = private $ \userId ctx -> do
     liftIO $ ensureUserBaseDir mode userId finalDir
     liftIO $ ensureUserDir mode userId finalDir
     let projectDir = userProjectDir mode userId
-    files <- liftIO $ projectFileNames (projectDir </> finalDir)
-    dirs <- liftIO $ projectDirNames (projectDir </> finalDir)
+    entries <- liftIO $ cwEntries (projectDir </> finalDir)
     modifyResponse $ setContentType "application/json"
-    writeLBS (encode (Directory files dirs))
+    writeLBS (encode entries)
 
-directoryTreeHandler :: CodeWorldHandler
-directoryTreeHandler = private $ \userId ctx -> do
-    mode <- getBuildMode
-    dirTree <- liftIO $ getDirectoryTree mode userId
-    modifyResponse $ setContentType "application/json"
-    writeLBS $ encode dirTree
-
-writeProjectOrderHandler :: CodeWorldHandler
-writeProjectOrderHandler = private $ \userId ctx -> do
-    mode <- getBuildMode
-    Just value <- getParam "value"
-    let file = userProjectDir mode userId </> "tree.info"
-    liftIO $ B.writeFile file value
+updateFolderMetaHandler :: CodeWorldHandler
+updateFolderMetaHandler = undefined
 
 shareFolderHandler :: CodeWorldHandler
 shareFolderHandler = private $ \userId ctx -> do

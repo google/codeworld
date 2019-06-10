@@ -628,7 +628,7 @@ const Auth = (() => {
         window.auth2 = auth;
         window.auth2.currentUser.listen(signinCallback);
 
-        discoverProjects();
+        discoverProjects('');
 
         updateUI();
     }
@@ -636,7 +636,7 @@ const Auth = (() => {
     function onAuthDisabled() {
         window.auth2 = null;
         document.getElementById('signin').style.display = 'none';
-        discoverProjects();
+        discoverProjects('');
         updateUI();
     }
 
@@ -679,14 +679,30 @@ function withClientId(f) {
     });
 }
 
-function discoverProjects() {
+function loadSubTree (node) {
+    if (signedIn() && node.children.length === 0) {
+        const data = new FormData();
+        data.append('mode', window.projectEnv);
+        data.append('path', getNearestDirectory(node));
+        sendHttp('POST', 'listFolder', data, request => {
+            if (request.status === 200) {
+                window.loadingDir = false;
+                $('#directoryTree').tree('loadData', JSON.parse(request.responseText), node);
+            }
+            updateUI();
+        });
+    } else updateUI();
+}
+
+function discoverProjects(path) {
     if (signedIn()) {
         const data = new FormData();
         data.append('mode', window.projectEnv);
-        sendHttp('POST', 'directoryTree', data, request => {
+        data.append('path', path);
+        sendHttp('POST', 'listFolder', data, request => {
             if (request.status === 200) {
                 window.loadingDir = false;
-                $('#directoryTree').tree('loadData', JSON.parse(request.responseText).children);
+                $('#directoryTree').tree('loadData', JSON.parse(request.responseText));
             }
             updateUI();
         });
@@ -1430,6 +1446,8 @@ function initDirectoryTree() {
                     const path = pathToRootDir(node);
                     window.openProjectName = node.name;
                     loadProject(node.name, path);
+                } else if (event.node && event.node.type === 'directory') {
+                    loadSubTree(event.node);
                 } else {
                     clearWorkspace();
                 }
@@ -1456,8 +1474,13 @@ function initDirectoryTree() {
 }
 
 // Get directory nearest to selected node, or root if there is no selection
-function getNearestDirectory_() {
-    const selected = $('#directoryTree').tree('getSelectedNode');
+function getNearestDirectory_(node) {
+    let selected;
+    if (node) {
+        selected = node;
+    } else {
+        selected = $('#directoryTree').tree('getSelectedNode');
+    }
     if (!selected) {
         // nearest directory is root
         return $('#directoryTree').tree('getTree');
@@ -1468,8 +1491,8 @@ function getNearestDirectory_() {
     }
 }
 
-function getNearestDirectory() {
-    const selected = getNearestDirectory_();
+function getNearestDirectory(node) {
+    const selected = getNearestDirectory_(node);
     const path = pathToRootDir(selected);
     if (selected.type === 'directory') {
         return path ? `${path}/${selected.name}` : selected.name;

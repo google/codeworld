@@ -95,7 +95,7 @@ async function init() {
                             'Could not load the shared directory. Please try again.',
                             'error');
                     }
-                    discoverProjects();
+                    discoverProjects('');
                 });
             });
         } else {
@@ -970,7 +970,7 @@ function compile() {
 let isFirstSignin = true;
 
 function signinCallback(result) {
-    discoverProjects();
+    discoverProjects('');
     if (isFirstSignin && !signedIn() && autohelpEnabled) {
         help();
     }

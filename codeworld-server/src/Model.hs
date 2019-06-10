@@ -36,7 +36,7 @@ data Project = Project
 
 instance FromJSON Project where
     parseJSON (Object v) =
-        Project <$> v .: "name" <*> v .: "order" <*> v .: "source" <*> v .: "history"
+        Project <$> v .: "name" <*> v .: "source" <*> v .: "history" <*> v .: "order"
     parseJSON _ = mzero
 
 instance ToJSON Project where
@@ -46,6 +46,7 @@ instance ToJSON Project where
             , "source" .= projectSource p
             , "history" .= projectHistory p
             , "order" .= projectOrder p
+            , "type" .= ("project" :: Text)
             ]
 
 data DirectoryMeta = DirectoryMeta
@@ -63,15 +64,8 @@ instance ToJSON DirectoryMeta where
         object
             [ "name" .= dirMetaName p
             , "order" .= dirMetaOrder p
+            , "type" .= ("directory" :: Text)
             ]
-
-data Directory = Directory
-    { files :: [Text]
-    , dirs :: [Text]
-    } deriving (Show)
-
-instance ToJSON Directory where
-    toJSON dir = object ["files" .= files dir, "dirs" .= dirs dir]
 
 data CompileResult = CompileResult
     { compileHash :: Text
@@ -100,24 +94,20 @@ instance ToJSON GalleryItem where
                    , "url" .= galleryItemURL item
                    ]
 
-data DirTree = Dir Text Int [DirTree] | Source Text Int Text deriving (Show, Eq, Ord)
+data CWEntry = Dir DirectoryMeta | Source Project
 
-instance ToJSON DirTree where
-    toJSON (Source name order src) = object [ "name" .= name
-                                            , "order" .= order
-                                            , "data" .= src
-                                            , "type" .= ("project" :: Text)
-                                            ]
-    toJSON (Dir name order children) = object [ "name" .= name
-                                              , "order" .= order
-                                              , "children" .= map toJSON children
-                                              , "type" .= ("directory" :: Text)
-                                              ]
+instance ToJSON CWEntry where
+    toJSON (Source project) = toJSON project
+    toJSON (Dir directory) = toJSON directory
  
-instance FromJSON DirTree where
+instance FromJSON CWEntry where
     parseJSON (Object v) = do
         type_ <- v .: "type"
         case type_ :: String of
-            "directory" -> Dir    <$> v .: "name" <*> v .: "order" <*> v .: "children"
-            "project" ->   Source <$> v .: "name" <*> v .: "order" <*> v .: "data" 
+            "directory" -> do 
+                dir <- DirectoryMeta <$> v .: "name" <*> v .: "order"
+                return $ Dir dir
+            "project" -> do
+                project <- Project <$> v .: "name" <*> v .: "source" <*> v .: "history" <*> v .: "order"
+                return $ Source project
     parseJSON _ = mzero

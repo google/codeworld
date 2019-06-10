@@ -506,10 +506,12 @@ function setMode(force) {
 
 function getCurrentProject() {
     const doc = window.codeworldEditor.getDoc();
+    const selected = $('#directoryTree').tree('getSelectedNode');
     return {
         'name': window.openProjectName || 'Untitled',
         'source': doc.getValue(),
-        'history': doc.getHistory()
+        'history': doc.getHistory(),
+        'order': selected.order ? selected.order : 0
     };
 }
 
@@ -979,7 +981,10 @@ function signinCallback(result) {
 
 function saveProject() {
     function successFunc() {
-        window.openProjectName = projectName;
+        const selected = $('#directoryTree').tree('getSelectedNode');
+        if (selected) {
+            window.openProjectName = selected.name;
+        }
         const doc = window.codeworldEditor.getDoc();
         window.savedGeneration = doc.changeGeneration(true);
         window.codeworldEditor.focus();

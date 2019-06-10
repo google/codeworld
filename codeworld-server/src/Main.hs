@@ -235,6 +235,7 @@ saveProjectHandler = private $ \userId ctx -> do
     let dirIds = map (nameToDirId . T.pack) path
     let finalDir = joinPath $ map dirBase dirIds
     Just project <- decode . LB.fromStrict . fromJust <$> getParam "project"
+    liftIO $ print $ projectName project
     let projectId = nameToProjectId (projectName project)
     liftIO $ ensureProjectDir mode userId finalDir projectId
     let file =
@@ -256,7 +257,6 @@ deleteProjectHandler = private $ \userId ctx -> do
             userProjectDir mode userId </> finalDir </>
             projectFile projectId
     liftIO $ removeFileIfExists file
-
 
 listFolderHandler :: CodeWorldHandler
 listFolderHandler = private $ \userId ctx -> do

@@ -684,12 +684,13 @@ function loadSubTree (node) {
         const data = new FormData();
         data.append('mode', window.projectEnv);
         data.append('path', getNearestDirectory(node));
+        showLoadingAnimation(node);
         sendHttp('POST', 'listFolder', data, request => {
             if (request.status === 200) {
-                window.loadingDir = false;
                 $('#directoryTree').tree('loadData', JSON.parse(request.responseText), node);
             }
             updateUI();
+            hideLoadingAnimation(node);
         });
     } else updateUI();
 }
@@ -699,12 +700,13 @@ function discoverProjects(path) {
         const data = new FormData();
         data.append('mode', window.projectEnv);
         data.append('path', path);
+        showLoadingAnimation();
         sendHttp('POST', 'listFolder', data, request => {
             if (request.status === 200) {
-                window.loadingDir = false;
                 $('#directoryTree').tree('loadData', JSON.parse(request.responseText));
             }
             updateUI();
+            hideLoadingAnimation();
         });
     } else updateUI();
 }
@@ -826,12 +828,6 @@ function saveProjectBase(path, projectName, mode, successFunc) {
 
     if (!projectName) return;
 
-    if (!signedIn()) {
-        sweetAlert('Oops!', 'You must sign in to save files.', 'error');
-        updateUI();
-        return;
-    }
-
     function go() {
         sweetAlert({
             title: Alert.title(`Saving ${projectName} ...`),
@@ -845,6 +841,7 @@ function saveProjectBase(path, projectName, mode, successFunc) {
         });
 
         const project = getCurrentProject();
+        console.log(project);
         project['name'] = projectName;
 
         const data = new FormData();
@@ -860,7 +857,6 @@ function saveProjectBase(path, projectName, mode, successFunc) {
                     'error');
                 return;
             }
-
             successFunc();
             updateUI();
             dumpTree();
@@ -1349,6 +1345,11 @@ function initDirectoryTree() {
                 titleElem.before(
                     $('<i class="mdi mdi-18px mdi-folder"></i>')
                 );
+            } else if (node.type === 'loadNotification') {
+                let elem =  $('<div style="float: left" class="loader"></div>');
+                titleElem.before(
+                    elem
+                );
             } else {
                 titleElem.before(
                     $('<i class="mdi mdi-18px mdi-cube"></i>')
@@ -1524,4 +1525,45 @@ function dumpTree() {
     data.append('mode', window.projectEnv);
     data.append('value', JSON.stringify(tree));
     sendHttp('POST', 'writeProjectOrder', data);
+}
+
+function showLoadingAnimation (node) {
+    let selected;
+    if (node) {
+        selected = node;
+    } else {
+        selected = $('#directoryTree').tree('getSelectedNode');
+    }
+    if (!selected) {
+        selected = $('#directoryTree').tree('getTree');
+    }
+    $('#directoryTree').tree(
+        'appendNode',
+        {
+            name: 'Loading...',
+            type: 'loadNotification'
+        },
+        selected
+    );
+    $('#directoryTree').tree(
+        'openNode',
+        selected
+    );
+}
+
+function hideLoadingAnimation (node) {
+    let selected;
+    if (node) {
+        selected = node;
+    } else {
+        selected = $('#directoryTree').tree('getSelectedNode');
+    }
+    if (selected) {
+        selected.children.filter(
+            (c) => {return c.type === 'loadNotification'}
+        ).forEach((c) => {
+            $('#directoryTree').tree('removeNode', c);
+        })
+        
+    }
 }

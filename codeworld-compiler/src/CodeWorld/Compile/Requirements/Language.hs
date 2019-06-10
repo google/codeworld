@@ -59,6 +59,7 @@ instance FromJSON Rule where
             , explicitParseFieldMaybe noWarningsExcept o "noWarningsExcept"
             , explicitParseFieldMaybe typeDeclarations o "typeDeclarations"
             , explicitParseFieldMaybe blacklist o "blacklist"
+            , explicitParseFieldMaybe whitelist o "whitelist"
             ]
         case catMaybes choices of
             [r] -> decorateWith o r
@@ -134,6 +135,9 @@ typeDeclarations v = TypeDeclarations <$> parseJSON v
 
 blacklist :: Aeson.Value -> Aeson.Parser Rule
 blacklist v = Blacklist <$> withArray "blacklist" (mapM parseJSON . toList) v
+
+whitelist :: Aeson.Value -> Aeson.Parser Rule
+whitelist v = Whitelist <$> withArray "whitelist" (mapM parseJSON . toList) v
 
 instance FromJSON Cardinality where
     parseJSON val = parseAsNum val <|> parseAsObj val

@@ -252,6 +252,18 @@ checkRule (Blacklist bl) = withParsedCode $ \m -> do
        | otherwise -> failure $ "The symbol `" ++ head blacklisted
            ++ "` is blacklisted."
 
+checkRule (Whitelist wl) = withParsedCode $ \m -> do
+    let symbols = nub $ everything (++) (mkQ [] nameString) m
+        notWhitelisted = symbols \\ wl
+
+        nameString :: Name SrcSpanInfo -> [String]
+        nameString (Ident _ s) = [s]
+        nameString (Symbol _ s) = [s]
+
+    if | null notWhitelisted -> success
+       | otherwise -> failure $ "The symbol `" ++ head notWhitelisted
+           ++ "` is not whitelisted."
+
 checkRule _ = abort
 
 allDefinitionsOf :: String -> Module SrcSpanInfo -> [Rhs SrcSpanInfo]

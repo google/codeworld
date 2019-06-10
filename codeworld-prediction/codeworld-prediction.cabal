@@ -14,7 +14,7 @@ library
                        CodeWorld.Prediction.Trivial
   other-modules:       Data.MultiMap
                        CodeWorld.Prediction.Paper
-  build-depends:       base >=4.8 && <4.10,
+  build-depends:       base >= 4.8 && < 5,
                        containers
   default-language:    Haskell2010
 

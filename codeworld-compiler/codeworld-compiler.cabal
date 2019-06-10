@@ -79,9 +79,10 @@ Test-Suite codeworld-compiler-test
   Build-depends:
     base,
     codeworld-compiler,
+    containers,
     directory,
-    test-framework,
-    test-framework-hunit,
     filepath,
     HUnit,
-    containers == 0.5.*
+    temporary,
+    test-framework,
+    test-framework-hunit

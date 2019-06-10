@@ -1,2 +1,0 @@
-program.hs:16:1: error:
-    Parse error: naked expression at top level

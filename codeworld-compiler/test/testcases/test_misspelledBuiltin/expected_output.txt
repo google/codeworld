@@ -1,0 +1,3 @@
+program.hs:17:27-30: error: 
+    • Variable not in scope: reds :: Color
+    • Perhaps you meant red (defined in the standard library)

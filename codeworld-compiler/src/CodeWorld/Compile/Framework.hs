@@ -208,10 +208,10 @@ formatLocation :: SrcSpanInfo -> String
 formatLocation spn@(SrcSpanInfo (SrcSpan fn l1 c1 l2 c2) _)
   | spn == noSrcSpan = ""
   | l1 /= l2         = fn ++ ":(" ++ show l1 ++ "," ++ show c1 ++ ")-(" ++
-                       show l2 ++ "," ++ show (max 1 (c2 - 1)) ++ "): "
+                       show l2 ++ "," ++ show (max 1 (c2 - 1)) ++ ")"
   | c1 < c2 - 1      = fn ++ ":" ++ show l1 ++ ":" ++ show c1 ++ "-" ++
-                       show (max 1 (c2 - 1)) ++ ": "
-  | otherwise        = fn ++ ":" ++ show l1 ++ ":" ++ show c1 ++ ": "
+                       show (max 1 (c2 - 1))
+  | otherwise        = fn ++ ":" ++ show l1 ++ ":" ++ show c1
 
 srcSpanFor :: Text -> Int -> Int -> SrcSpanInfo
 srcSpanFor src off len =

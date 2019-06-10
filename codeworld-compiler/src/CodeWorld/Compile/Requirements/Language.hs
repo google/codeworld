@@ -163,6 +163,6 @@ parseRequirement ln col txt
         Yaml.decodeEither' (T.encodeUtf8 txt)
 
 prettyPrintYamlParseException ln col e =
-    formatLocation srcSpan ++ Yaml.prettyPrintParseException e
+    formatLocation srcSpan ++ ": " ++ Yaml.prettyPrintParseException e
   where srcSpan = SrcSpanInfo loc []
         loc     = SrcSpan "program.hs" ln col ln col

@@ -18,162 +18,158 @@ set -euo pipefail
 
 source base.sh
 
-rm -rf $BUILD ~/.ghc ~/.ghcjs ~/.cabal ~/.npm
-
-mkdir $BUILD
-mkdir $BUILD/downloads
-mkdir $BUILD/bin
+mkdir -p $BUILD/downloads
+mkdir -p $BUILD/bin
+mkdir -p $BUILD/progress
 
 # Determine which package management tool is installed, and install
 # necessary system packages.
 
-if type yum > /dev/null 2> /dev/null
-then
-  echo Detected 'yum': Installing packages from there.
-  echo
+if [ ! -f $BUILD/progress/system-pkgs ]; then
+  if type yum > /dev/null 2> /dev/null
+  then
+    echo Detected 'yum': Installing packages from there.
+    echo
 
-  # Update and install basic dependencies
+    # Update and install basic dependencies
 
-  run . sudo yum update -y
+    run . sudo yum update -y
 
-  run . sudo yum install -y git
-  run . sudo yum install -y curl
-  run . sudo yum install -y wget
-  run . sudo yum install -y bzip2
-  run . sudo yum install -y zlib-devel
-  run . sudo yum install -y ncurses-devel
+    run . sudo yum install -y git
+    run . sudo yum install -y curl
+    run . sudo yum install -y wget
+    run . sudo yum install -y bzip2
+    run . sudo yum install -y zlib-devel
+    run . sudo yum install -y ncurses-devel
 
-  # Needed for GHC 7.8
-  run . sudo yum install -y gcc
-  run . sudo yum install -y gcc-c++
-  run . sudo yum install -y gmp-devel
+    # Needed for GHC
+    run . sudo yum install -y gcc
+    run . sudo yum install -y gcc-c++
+    run . sudo yum install -y gmp-devel
 
-  # Needed for GHCJS
-  run --quiet . curl --silent --location https://rpm.nodesource.com/setup_8.x | run . sudo bash -
-  run . sudo yum install -y nodejs
+    # Needed for GHCJS
+    run --quiet . curl --silent --location https://rpm.nodesource.com/setup_8.x | run . sudo bash -
+    run . sudo yum install -y nodejs
 
-  # Needed for ghcjs-boot --dev
-  run . sudo yum install -y patch
-  run . sudo yum install -y autoconf
-  run . sudo yum install -y automake
+    # Needed for ghcjs-boot --dev
+    run . sudo yum install -y patch
+    run . sudo yum install -y autoconf
+    run . sudo yum install -y automake
 
-  # Needed for codeworld-auth
-  run . sudo yum install -y openssl-devel
-elif type apt-get > /dev/null 2> /dev/null
-then
-  echo Detected 'apt-get': Installing packages from there.
-  echo
+    # Needed for codeworld-auth
+    run . sudo yum install -y openssl-devel
+  elif type apt-get > /dev/null 2> /dev/null
+  then
+    echo Detected 'apt-get': Installing packages from there.
+    echo
 
-  # Update and install basic dependencies
+    # Update and install basic dependencies
 
-  run . sudo apt-get update -y
+    run . sudo apt-get update -y
 
-  run . sudo apt-get install -y git
-  run . sudo apt-get install -y curl
-  run . sudo apt-get install -y wget
-  run . sudo apt-get install -y bzip2
-  run . sudo apt-get install -y xz-utils
-  run . sudo apt-get install -y psmisc
+    run . sudo apt-get install -y git
+    run . sudo apt-get install -y curl
+    run . sudo apt-get install -y wget
+    run . sudo apt-get install -y bzip2
+    run . sudo apt-get install -y xz-utils
+    run . sudo apt-get install -y psmisc
 
-  run . sudo apt-get install -y zlib1g-dev
-  run . sudo apt-get install -y libncurses5-dev
+    run . sudo apt-get install -y zlib1g-dev
+    run . sudo apt-get install -y libncurses5-dev
 
-  # Needed for GHC 7.8
-  run . sudo apt-get install -y make
-  run . sudo apt-get install -y gcc
-  run . sudo apt-get install -y g++
-  run . sudo apt-get install -y libgmp-dev
+    # Needed for GHC
+    run . sudo apt-get install -y make
+    run . sudo apt-get install -y gcc
+    run . sudo apt-get install -y g++
+    run . sudo apt-get install -y libgmp-dev
 
-  # Needed for GHCJS
-  run . sudo apt-get install -y gnupg
-  run --quiet . curl -sL https://deb.nodesource.com/setup_8.x | run . sudo -E bash -
-  run . sudo apt-get install -y nodejs
+    # Needed for GHCJS
+    run . sudo apt-get install -y gnupg
+    run --quiet . curl -sL https://deb.nodesource.com/setup_8.x | run . sudo -E bash -
+    run . sudo apt-get install -y nodejs
 
-  # Needed for ghcjs-boot --dev
-  run . sudo apt-get install -y patch
-  run . sudo apt-get install -y autoconf
-  run . sudo apt-get install -y automake
-  run . sudo apt-get install -y libtinfo-dev
+    # Needed for ghcjs-boot --dev
+    run . sudo apt-get install -y patch
+    run . sudo apt-get install -y autoconf
+    run . sudo apt-get install -y automake
+    run . sudo apt-get install -y libtinfo-dev
 
-  # Needed for codeworld-auth
-  run . sudo apt-get install -y libssl-dev
-elif type zypper > /dev/null 2> /dev/null
-then
-  echo Detected 'zypper': Installing packages from there.
-  echo
+    # Needed for codeworld-auth
+    run . sudo apt-get install -y libssl-dev
+  elif type zypper > /dev/null 2> /dev/null
+  then
+    echo Detected 'zypper': Installing packages from there.
+    echo
 
-  # Update and install basic dependencies
+    # Update and install basic dependencies
 
-  run . sudo zypper -n refresh
+    run . sudo zypper -n refresh
 
-  run . sudo zypper -n install git
-  run . sudo zypper -n install curl
-  run . sudo zypper -n install wget
-  run . sudo zypper -n install bzip2
-  run . sudo zypper -n install psmisc
+    run . sudo zypper -n install git
+    run . sudo zypper -n install curl
+    run . sudo zypper -n install wget
+    run . sudo zypper -n install bzip2
+    run . sudo zypper -n install psmisc
 
-  run . sudo zypper -n install zlib-devel
-  run . sudo zypper -n install ncurses-devel
+    run . sudo zypper -n install zlib-devel
+    run . sudo zypper -n install ncurses-devel
 
-  # Needed for GHC 7.8
-  run . sudo zypper -n install make
-  run . sudo zypper -n install gcc
-  run . sudo zypper -n install gmp-devel
+    # Needed for GHC
+    run . sudo zypper -n install make
+    run . sudo zypper -n install gcc
+    run . sudo zypper -n install gmp-devel
 
-  # Needed for GHCJS
-  run . sudo zypper -n install nodejs6
+    # Needed for GHCJS
+    run . sudo zypper -n install nodejs6
 
-  # Needed for ghcjs-boot --dev
-  run . sudo zypper -n install patch
-  run . sudo zypper -n install autoconf
-  run . sudo zypper -n install automake
+    # Needed for ghcjs-boot --dev
+    run . sudo zypper -n install patch
+    run . sudo zypper -n install autoconf
+    run . sudo zypper -n install automake
 
-  # Needed for codeworld-auth
-  run . sudo zypper -n install libopenssl-devel
-elif type brew > /dev/null 2> /dev/null
-then
-  echo Detected 'brew': Installing packages from there.
-  echo
+    # Needed for codeworld-auth
+    run . sudo zypper -n install libopenssl-devel
+  elif type brew > /dev/null 2> /dev/null
+  then
+    echo Detected 'brew': Installing packages from there.
+    echo
 
-  # install missing packages -- don't try to upgrade already installed packages
-  function brew_install {
-    if ! brew ls $1 > /dev/null 2> /dev/null
-    then
-      run . brew install $1
-    fi
-  }
+    # install missing packages -- don't try to upgrade already installed packages
+    function brew_install {
+      if ! brew ls $1 > /dev/null 2> /dev/null
+      then
+        run . brew install $1
+      fi
+    }
 
-  # Update and install basic dependencies
-  xcode-select --install
+    # Update and install basic dependencies
+    xcode-select --install
 
-  brew_install git
-  brew_install curl
-  brew_install wget
-  brew_install bzip2
-# No psmisc in homebrew
-  #brew_install psmisc
+    brew_install git
+    brew_install curl
+    brew_install wget
+    brew_install bzip2
 
-#  brew_install ncurses-devel
+    # Needed for GHC
+    brew_install make
+    brew_install gcc
 
-  # Needed for GHC 7.8
-  brew_install make
-  brew_install gcc
-  #brew_install gmp-devel
+    # Needed for GHCJS
+    brew_install node@6
+    brew_install gnu-tar
 
-  # Needed for GHCJS
-  brew_install node@6
+    # Needed for ghcjs-boot --dev
+    brew_install autoconf
+    brew_install automake
 
-  # Needed for ghcjs-boot --dev
-  # already present on OS X
-  #brew_install patch
-  brew_install autoconf
-  brew_install automake
+    # Needed for codeworld-auth
+    brew_install openssl
+  else
+    echo "WARNING: Could not find package manager."
+    echo "Make sure necessary packages are installed."
+  fi
 
-  # Needed for codeworld-auth
-  brew_install openssl
-else
-  echo "WARNING: Could not find package manager."
-  echo "Make sure necessary packages are installed."
+  touch $BUILD/progress/system-pkgs
 fi
 
 # Choose the right GHC download
@@ -182,7 +178,7 @@ case "${MACHINE}" in
   i386)   GHC_CPU=i386;;
   i686)   GHC_CPU=i386;;
   x86_64) GHC_CPU=x86_64;;
-  amd7)   GHC_CPU=amd7;;
+  amd7)   GHC_CPU=x86_64;;
   *) >&2 echo "Unrecognized machine: ${MACHINE}"; exit 1;;
 esac
 
@@ -190,9 +186,9 @@ set +e
 result=$(/sbin/ldconfig -p 2> /dev/null)
 set -e
 if [[ $result = *libgmp.so.10* ]]; then
-  GHC_ARCH="${GHC_CPU}-deb8-linux"
+  GHC_ARCH="${GHC_CPU}-deb9-linux"
 elif [[ $result = *libgmp.so.3* ]]; then
-  GHC_ARCH="${GHC_CPU}-centos67-linux"
+  GHC_ARCH="${GHC_CPU}-centos7-linux"
 else
   set +e
   result=$(uname 2> /dev/null)
@@ -205,55 +201,81 @@ else
   fi
 fi
 
-# Install a precompiled GHC to bootstrap itself.
+GHC_DIR=8.6.5
+GHC_VERSION=8.6.5
 
-GHC_DIR=8.0.2
-GHC_VERSION=8.0.2
+# Install GHC.
 
-run $DOWNLOADS               wget http://downloads.haskell.org/~ghc/$GHC_DIR/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
-run $BUILD                   tar xf $DOWNLOADS/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
-run $BUILD/ghc-$GHC_VERSION  ./configure --prefix=$BUILD
-run $BUILD/ghc-$GHC_VERSION  make install
-run $BUILD                   rm -rf ghc-$GHC_VERSION
+if [ ! -f $BUILD/progress/ghc ]; then
+  run $DOWNLOADS               wget https://downloads.haskell.org/~ghc/$GHC_DIR/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
+  run $BUILD                   rm -rf ghc-$GHC_VERSION
+  run $BUILD                   tar xf $DOWNLOADS/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
+  run $BUILD/ghc-$GHC_VERSION  ./configure --prefix=$BUILD
+  run $BUILD/ghc-$GHC_VERSION  make install
+  run $BUILD                   rm -rf ghc-$GHC_VERSION
+  run $DOWNLOADS               rm -rf *
 
-# Now install the patched GHC, built from source.
+  touch $BUILD/progress/ghc
+fi
 
-run $DOWNLOADS               wget https://downloads.haskell.org/~ghc/$GHC_DIR/ghc-$GHC_VERSION-src.tar.xz
-run $BUILD                   tar xf $DOWNLOADS/ghc-$GHC_VERSION-src.tar.xz
-run .                        patch -p0 -u -d $BUILD < ghc-artifacts/ghc-$GHC_VERSION-default-main.patch
-run .                        cp ghc-artifacts/build.mk $BUILD/ghc-$GHC_VERSION/mk/build.mk
-run $BUILD/ghc-$GHC_VERSION  ./configure --prefix=$BUILD
-run $BUILD/ghc-$GHC_VERSION  make
-run $BUILD/ghc-$GHC_VERSION  make install
-run $BUILD                   rm -rf ghc-$GHC_VERSION
+# Install cabal-install
 
-# Install all the dependencies for cabal
+if [ ! -f $BUILD/progress/cabal-install ]; then
+  run $DOWNLOADS                     wget https://www.haskell.org/cabal/release/cabal-install-2.4.1.0/cabal-install-2.4.1.0.tar.gz
+  run $BUILD                         rm -rf cabal-install-2.4.1.0
+  run $BUILD                         tar xf $DOWNLOADS/cabal-install-2.4.1.0.tar.gz
+  EXTRA_CONFIGURE_OPTS="" run $BUILD/cabal-install-2.4.1.0 ./bootstrap.sh
+  run .                              cabal update
+  run $BUILD                         rm -rf cabal-install-2.4.1.0
+  run $DOWNLOADS                     rm -rf *
 
-run $DOWNLOADS                     wget https://www.haskell.org/cabal/release/cabal-install-2.0.0.0/cabal-install-2.0.0.0.tar.gz
-run $BUILD                         tar xf $DOWNLOADS/cabal-install-2.0.0.0.tar.gz
-EXTRA_CONFIGURE_OPTS="" run $BUILD/cabal-install-2.0.0.0 ./bootstrap.sh
-run .                              cabal update
-run $BUILD                         rm -rf cabal-install-2.0.0.0
+  touch $BUILD/progress/cabal-install
+fi
 
-# Fetch the prerequisites for GHCJS.
+# Install GHCJS itself (https://github.com/ghcjs/ghcjs), which depends on happy and alex.
 
-run .  cabal_install happy alex
+function fix_libexec_binary {
+  # Work-around for https://github.com/ghcjs/ghcjs/issues/740
+  # Should be run from $BUILD/bin
 
-# Install GHCJS itself (https://github.com/ghcjs/ghcjs) and cabal install.
+  if [ ! -e $BUILD/bin/$1 ]; then
+    ln -s $(dirname $(dirname $(readlink $1)))/libexec/$1 $1-new
+    mv $1-new $1
+  fi
+}
 
-run $BUILD  git clone --branch ghc-8.0 --single-branch https://github.com/ghcjs/ghcjs
-run $BUILD  cabal_install ./ghcjs
-run $BUILD  rm -rf ghcjs
-run . ghcjs-boot --dev --ghcjs-boot-dev-branch ghc-8.0 --shims-dev-branch ghc-8.0 --no-prof --no-haddock
+if [ ! -f $BUILD/progress/ghcjs ]; then
+  run .            cabal v2-install happy-1.19.9 alex --symlink-bindir=$BUILD/bin
+  run $BUILD       rm -rf ghcjs
+  run $BUILD       git clone --branch ghc-8.6 --single-branch https://github.com/ghcjs/ghcjs.git
+  run $BUILD/ghcjs git submodule update --init --recursive
+  run .            patch -p0 -u -d $BUILD < ghc-artifacts/ghcjs-8.6-default-main.patch
+  run $BUILD/ghcjs ./utils/makePackages.sh
+  run $BUILD/ghcjs cabal v2-install . --symlink-bindir=$BUILD/bin -j1 --disable-documentation --overwrite-policy=always
 
-run $BUILD  rm -rf downloads
+  run $BUILD/bin   fix_libexec_binary ghcjs-boot
+  run $BUILD/bin   fix_libexec_binary ghcjs-run
+  run $BUILD/bin   fix_libexec_binary ghcjs-dumparchive
+
+  touch $BUILD/progress/ghcjs
+fi
+
+if [ ! -f $BUILD/progress/ghcjs-boot ]; then
+  run $BUILD/ghcjs  ghcjs-boot --no-prof --no-haddock -s lib/boot
+  touch $BUILD/progress/ghcjs-boot
+fi
 
 # Install tools to build CodeMirror editor.
 
-run $BUILD            git clone https://github.com/codemirror/CodeMirror.git
-run $BUILD/CodeMirror git checkout tags/5.43.0
-run $BUILD/CodeMirror npm install
-run $BUILD/CodeMirror npm install -s uglify-js git+ssh://git@github.com:angelozerr/CodeMirror-Extension.git
+if [ ! -f $BUILD/progress/codemirror ]; then
+  run $BUILD            rm -rf $BUILD/CodeMirror
+  run $BUILD            git clone https://github.com/codemirror/CodeMirror.git
+  run $BUILD/CodeMirror git checkout tags/5.43.0
+  run $BUILD/CodeMirror npm install
+  run $BUILD/CodeMirror npm install -s uglify-js git+ssh://git@github.com:angelozerr/CodeMirror-Extension.git
+
+  touch $BUILD/progress/codemirror
+fi
 
 # Go ahead and run a first build, which installs more local packages.
 ./build.sh

@@ -33,9 +33,9 @@ import Control.Monad.State
 import Data.Array
 import Data.Function (on)
 import Data.Generics
-import Data.Maybe (isJust, fromMaybe, catMaybes)
+import Data.Maybe
 import Data.Monoid
-import Data.List (sort, groupBy)
+import Data.List
 import Data.Text (Text, unpack)
 import Data.Text.Encoding (decodeUtf8)
 import Language.Haskell.Exts
@@ -50,10 +50,12 @@ checkCodeConventions = do
     checkOldStyleMixed mode
     checkOldStyleGray
     when (mode == "codeworld") $ do
+        checkCharacterLiterals
         checkFunctionParentheses
         checkVarlessPatterns
         checkPatternGuards
         checkExtraCommas
+        checkNoncontiguousEquations
 
 -- Look for uses of Template Haskell or related features in the compiler.  These
 -- cannot currently be used, because the compiler isn't properly sandboxed, so
@@ -121,6 +123,70 @@ checkOldStyleGray =
                 "\n    Remove the function argument for a medium shade of grey." ++
                 "\n    For a different shade of gray, use light, dark, or HSL.")]
         oldStyleGray _ = []
+
+-- Look for character literals in the source code.  These are always a mistake
+-- in CodeWorld mode, since Text is used as a type even for single characters.
+checkCharacterLiterals :: MonadCompile m => m ()
+checkCharacterLiterals =
+    getParsedCode >>= \parsed -> case parsed of
+        Parsed mod -> addDiagnostics $
+            everything (++) (mkQ [] charLiteralExps) mod ++
+            everything (++) (mkQ [] charLiteralPats) mod
+        _ -> return ()  -- Fall back on GHC for parse errors.
+  where charLiteralExps :: Exp SrcSpanInfo -> [Diagnostic]
+        charLiteralExps (Lit loc (Char _ _ _))        = [(loc, CompileError, msg)]
+        charLiteralExps (Lit loc (PrimChar _ _ _))    = [(loc, CompileError, msg)]
+        charLiteralExps (VarQuote loc _)              = [(loc, CompileError, msg)]
+        charLiteralExps (TypQuote loc _)              = [(loc, CompileError, msg)]
+        charLiteralExps _                             = []
+
+        charLiteralPats :: Pat SrcSpanInfo -> [Diagnostic]
+        charLiteralPats (PLit loc _ (Char _ _ _))     = [(loc, CompileError, msg)]
+        charLiteralPats (PLit loc _ (PrimChar _ _ _)) = [(loc, CompileError, msg)]
+        charLiteralPats _                             = []
+
+        msg = "error:\n    Text should be written with double quotes, not single quotes."
+
+-- Look for functions whose equations are not contiguous.
+checkNoncontiguousEquations :: MonadCompile m => m ()
+checkNoncontiguousEquations =
+    getParsedCode >>= \parsed -> case parsed of
+        Parsed mod -> addDiagnostics $
+            everything (++) (mkQ [] checkModule) mod ++
+            everything (++) (mkQ [] checkBinds) mod
+        _ -> return ()
+  where checkModule :: Module SrcSpanInfo -> [Diagnostic]
+        checkModule (Module _ _ _ _ decls) = checkDeclList decls
+        checkModule _ = []
+
+        checkBinds :: Binds SrcSpanInfo -> [Diagnostic]
+        checkBinds (BDecls _ decls) = checkDeclList decls
+        checkBinds _ = []
+
+        checkDeclList :: [Decl SrcSpanInfo] -> [Diagnostic]
+        checkDeclList decls = map toMessage $
+            map (\elems -> (fst (head elems), map snd elems)) $
+            filter ((> 1) . length) $
+            groupBy ((==) `on` fst) $
+            sortBy (compare `on` fst) $
+            mapMaybe funDecl decls
+
+        funDecl :: Decl SrcSpanInfo -> Maybe (String, Decl SrcSpanInfo)
+        funDecl decl@(FunBind _ ((Match _ name _ _ _) : _))
+            = Just (nameStr name, decl)
+        funDecl decl@(FunBind _ ((InfixMatch _ _ name _ _ _) : _))
+            = Just (nameStr name, decl)
+        funDecl _ = Nothing
+
+        nameStr :: Name SrcSpanInfo -> String
+        nameStr (Ident _ s) = "function " ++ s
+        nameStr (Symbol _ s) = "operator (" ++ s ++ ")"
+
+        toMessage :: (String, [Decl SrcSpanInfo]) -> Diagnostic
+        toMessage (name, decls) = (ann (decls !! 1), CompileError, "error:\n" ++
+            "    Multiple equations for the same function must be contiguous.\n" ++
+            "    The " ++ name ++ " has equations at:\n" ++
+            (decls >>= \decl -> "    \8226 " ++ formatLocation (ann decl) ++ "\n"))
 
 -- Look for function applications without parentheses.  Since CodeWorld
 -- functions are usually applied with parentheses, this often indicates a

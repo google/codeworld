@@ -237,6 +237,30 @@ of conditions. Here are the current checks implemented.
   list of given regular expressions. This list can be empty, in which case
   no warnings will be allowed.
 
+-  `typeSignatures`
+
+  Example:
+
+      typeSignatures: true
+
+  Checks that all top-level declarations have accompanying type signatures.
+
+-  `blacklist`
+
+  Example:
+
+      blacklist: [circle]
+
+  Checks that none of the symbols appearing in the blacklist are used.
+
+-  `whitelist`
+
+  Example:
+
+      whitelist: [ellipse]
+
+  Checks that only symbols appearing in the whitelist are used.
+
 This is by no means intended to be the full constraint language;
 rather, it is a small set of a few requirements that can be used for
 testing.  The language is strongly subject to change in the future.

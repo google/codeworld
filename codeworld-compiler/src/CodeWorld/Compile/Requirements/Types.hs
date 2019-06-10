@@ -44,7 +44,7 @@ data Rule = DefinedByFunction String String
           | NotThis Rule
           | MaxLineLength Int
           | NoWarningsExcept [String]
-          | TypeDeclarations Bool
+          | TypeSignatures Bool
           | Blacklist [String]
           | Whitelist [String]
     deriving Show

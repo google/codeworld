@@ -224,7 +224,7 @@ checkRule (NoWarningsExcept ex) = do
              let (SrcSpanInfo (SrcSpan _ l c _ _) _,_,x) = head warns
              failure $ "Warning found at line " ++ show l ++ ", column " ++ show c
 
-checkRule (TypeDeclarations _) = withParsedCode $ \m -> do
+checkRule (TypeSignatures b) = withParsedCode $ \m -> do
     let defs = nub $ topLevelNames m
         noTypeSig = defs \\ (everything (++) (mkQ [] typeSigNames) m)
 
@@ -236,9 +236,9 @@ checkRule (TypeDeclarations _) = withParsedCode $ \m -> do
         nameString (Ident _ s) = s
         nameString (Symbol _ s) = s
 
-    if | null noTypeSig -> success
-       | otherwise -> failure $ "The definition of `" ++ head noTypeSig
-           ++ "` has no type declaration."
+    if | null noTypeSig || not b -> success
+       | otherwise -> failure $ "The declaration of `" ++ head noTypeSig
+           ++ "` has no type signature."
 
 checkRule (Blacklist bl) = withParsedCode $ \m -> do
     let symbols = nub $ everything (++) (mkQ [] nameString) m
@@ -291,7 +291,7 @@ topLevelNames m = everything (++) (mkQ [] names) m
         patName :: Pat SrcSpanInfo -> String
         patName (PVar _ (Ident _ a)) = a
         patName (PParen _ pat) = patName pat
-        patNames _ = []
+        patName _ = []
 
 patDefines :: Pat SrcSpanInfo -> String -> Bool
 patDefines (PVar _ (Ident _ aa)) a = a == aa

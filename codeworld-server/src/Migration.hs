@@ -120,22 +120,19 @@ migrateMetadata = do
     putStrLn "Metadata successfully migrated."
     where 
         migrateDirMeta :: FilePath -> IO ()
-        migrateDirMeta path = do
-            name <- B.readFile path
-            let tmp = path ++ ".tmp"
-            B.writeFile tmp $ LB.toStrict $ encode $ DirectoryMeta (T.decodeUtf8 name) 0
-            renameFile tmp path
+        migrateDirMeta path = 
+            rewriteFileContent path $ \fileContent -> do
+                LB.toStrict $ encode $ DirectoryMeta (T.decodeUtf8 fileContent) 0
 
         migrateProjectMeta :: FilePath -> IO ()
-        migrateProjectMeta path = do
-            Just meta <- decodeFileStrict path
-            let tmp = path ++ ".tmp"
-            B.writeFile tmp $ LB.toStrict $ encode
-                            $ Project (oldProjectName meta)
-                                      (oldProjectSource meta)
-                                      (oldProjectHistory meta)
+        migrateProjectMeta path =
+            rewriteFileContent path $ \fileContent -> do
+                let Just project = decodeStrict fileContent
+                LB.toStrict $ encode
+                            $ Project (oldProjectName project)
+                                      (oldProjectSource project)
+                                      (oldProjectHistory project)
                                       0
-            renameFile tmp path
 
 main :: IO ()
 main = do

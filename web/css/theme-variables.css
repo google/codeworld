@@ -67,6 +67,8 @@
     --swal-title-color: #595959;
     --swal-content-color: #545454;
     --dir-tree-ui-highlight: #505050;
+    --wrong-login-color: #666;
+    --wrong-login-background: #f0f0f0;
 
     /* codeworld-cm.css */
     --builtin: #30a;
@@ -208,6 +210,8 @@
     --swal-title-color: #A6A6A6;
     --swal-content-color: #A1A1A1;
     --dir-tree-ui-highlight: #F0F0F0;
+    --wrong-login-color: #aaa;
+    --wrong-login-background: #000000;
 
     /* codeworld-cm.css */
     --builtin: #CCFF55;

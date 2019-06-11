@@ -563,7 +563,6 @@ function signin() {
 }
 
 function signout() {
-    dumpTree();
     clearWorkspace();
     if (window.auth2) window.auth2.signOut();
 }
@@ -629,7 +628,6 @@ const Auth = (() => {
         window.auth2.currentUser.listen(signinCallback);
 
         discoverProjects('');
-
         updateUI();
     }
 
@@ -687,7 +685,13 @@ function loadSubTree (node) {
         showLoadingAnimation(node);
         sendHttp('POST', 'listFolder', data, request => {
             if (request.status === 200) {
-                $('#directoryTree').tree('loadData', JSON.parse(request.responseText), node);
+                $('#directoryTree').tree(
+                    'loadData',
+                    JSON.parse(request.responseText).sort(
+                        (a,b) => {return a.order > b.order}
+                    ),
+                    node
+                );
             }
             updateUI();
             hideLoadingAnimation(node);
@@ -703,7 +707,11 @@ function discoverProjects(path) {
         showLoadingAnimation();
         sendHttp('POST', 'listFolder', data, request => {
             if (request.status === 200) {
-                $('#directoryTree').tree('loadData', JSON.parse(request.responseText));
+                $('#directoryTree').tree(
+                    'loadData',
+                    JSON.parse(request.responseText).sort(
+                        (a,b) => {return a.order > b.order}
+                    ));
             }
             updateUI();
             hideLoadingAnimation();
@@ -735,7 +743,6 @@ function moveDirTreeNode(moveFrom, moveTo, isFile, name, buildMode, successFunc)
             return;
         }
         successFunc();
-        dumpTree();
     });
 }
 
@@ -841,7 +848,6 @@ function saveProjectBase(path, projectName, mode, successFunc) {
         });
 
         const project = getCurrentProject();
-        console.log(project);
         project['name'] = projectName;
 
         const data = new FormData();
@@ -859,7 +865,6 @@ function saveProjectBase(path, projectName, mode, successFunc) {
             }
             successFunc();
             updateUI();
-            dumpTree();
         });
     }
 
@@ -1018,7 +1023,6 @@ function createFolder(path, buildMode, successFunc) {
                     },
                     node
                 );
-                dumpTree();
             });
         });
     });
@@ -1360,6 +1364,8 @@ function initDirectoryTree() {
     $('#directoryTree').on(
         'tree.move',
         (event) => {
+            // TODO load children before moving into empty node
+            // TODO test tree behavior with updating current code from guide examples
             event.preventDefault();
             warnIfUnsaved(() => {
                 if (!signedIn()) {
@@ -1417,6 +1423,7 @@ function initDirectoryTree() {
                             }
                             moveDirTreeNode(fromPath, toPath, isFile, name, window.projectEnv, () => {
                                 event.move_info.do_move();
+                                updateChildrenIndexes(toNode);
                             });
                         }
                     });
@@ -1434,12 +1441,14 @@ function initDirectoryTree() {
 
                 moveDirTreeNode(fromPath, toPath, isFile, name, window.projectEnv, () => {
                     event.move_info.do_move();
+                    updateChildrenIndexes(toNode);
                 });
 
             });
         });
     $('#directoryTree').on(
         'tree.select',
+        // TODO update icon of opened directory
         (event) => {
             warnIfUnsaved(() => {
                 if (event.node && event.node.type === 'project') {
@@ -1476,12 +1485,18 @@ function initDirectoryTree() {
 
 // Get directory nearest to selected node, or root if there is no selection
 function getNearestDirectory_(node) {
-    let selected;
     if (node) {
-        selected = node;
-    } else {
-        selected = $('#directoryTree').tree('getSelectedNode');
+        let isdir = node.type === "directory";
+        let haveParent = Boolean(node.parent);
+        if (isdir) {
+            return node;
+        } else if (haveParent) {
+            return node.parent;
+        }
+        // root node
+        return node;
     }
+    let selected = $('#directoryTree').tree('getSelectedNode');
     if (!selected) {
         // nearest directory is root
         return $('#directoryTree').tree('getTree');
@@ -1516,15 +1531,6 @@ function formatTree(node) {
         node.data = '';
     }
     return node;
-}
-
-function dumpTree() {
-    let tree = JSON.parse($('#directoryTree').tree('toJson'));
-    tree = tree.map(formatTree);
-    const data = new FormData();
-    data.append('mode', window.projectEnv);
-    data.append('value', JSON.stringify(tree));
-    sendHttp('POST', 'writeProjectOrder', data);
 }
 
 function showLoadingAnimation (node) {
@@ -1566,4 +1572,33 @@ function hideLoadingAnimation (node) {
         })
         
     }
+}
+
+function recalcChildIndexes(node) {
+    let index = 0;
+    node.children.forEach((n) => {
+        n.order = index;
+        index++;
+    })
+}
+
+function updateChildrenIndexes(node) {
+    if (signedIn()) {
+        recalcChildIndexes(node);
+        let names = [],
+            types = [],
+            indexes = [];
+        for (var i = 0; i < node.children.length; i++) {
+            names.push(node.children[i].name);
+            types.push(node.children[i].type);
+            indexes.push(i);
+        }
+        const data = new FormData();
+        data.append('mode', window.projectEnv);
+        data.append('path', getNearestDirectory(node));
+        data.append('names', JSON.stringify(names));
+        data.append('types', JSON.stringify(types));
+        data.append('indexes', JSON.stringify(indexes));
+        sendHttp('POST', 'updateChildrenIndexes', data, () => {});
+    } else updateUI();
 }

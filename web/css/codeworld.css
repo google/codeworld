@@ -573,3 +573,8 @@ details a:active {
 .swal2-popup .swal2-content {
     color: var(--swal-content-color) !important;
 }
+
+.swal2-popup .swal2-validationerror {
+    color: var(--wrong-login-color) !important;
+    background: var(--wrong-login-background) !important;
+}

@@ -155,7 +155,7 @@ site ctx =
             , ("createFolder", createFolderHandler ctx)
             , ("deleteFolder", deleteFolderHandler ctx)
             , ("listFolder", listFolderHandler ctx)
-            , ("updateFolderMeta", updateFolderMetaHandler ctx)
+            , ("updateChildrenIndexes", updateChildrenIndexesHandler ctx)
             , ("shareFolder", shareFolderHandler ctx)
             , ("shareContent", shareContentHandler ctx)
             , ("moveProject", moveProjectHandler ctx)
@@ -235,7 +235,6 @@ saveProjectHandler = private $ \userId ctx -> do
     let dirIds = map (nameToDirId . T.pack) path
     let finalDir = joinPath $ map dirBase dirIds
     Just project <- decode . LB.fromStrict . fromJust <$> getParam "project"
-    liftIO $ print $ projectName project
     let projectId = nameToProjectId (projectName project)
     liftIO $ ensureProjectDir mode userId finalDir projectId
     let file =
@@ -271,8 +270,28 @@ listFolderHandler = private $ \userId ctx -> do
     modifyResponse $ setContentType "application/json"
     writeLBS (encode entries)
 
-updateFolderMetaHandler :: CodeWorldHandler
-updateFolderMetaHandler = undefined
+-- | Update order of elements inside of given directory
+updateChildrenIndexesHandler :: CodeWorldHandler
+updateChildrenIndexesHandler = private $ \userId ctx -> do
+    mode <- getBuildMode
+    let projectDir = userProjectDir mode userId
+    Just path <- fmap ((projectDir </>) . joinPath . (map (dirBase . nameToDirId . T.pack)) . splitDirectories . BC.unpack) <$> getParam "path"
+    Just names   <- decodeStrict . fromJust <$> getParam "names"
+    Just types   <- decodeStrict . fromJust <$> getParam "types"
+    Just indexes <- decodeStrict . fromJust <$> getParam "indexes"
+    liftIO $ mapM_ (updateEntryMeta path) $ zip3 names types indexes
+    where 
+        updateEntryMeta :: FilePath -> (Text, Text, Int) -> IO ()
+        updateEntryMeta prefix (name, "directory", order) = do
+            let path = prefix </> (dirBase $ nameToDirId name) </> "dir.info"
+            rewriteFileContent path $ \fileContent -> do
+                let Just meta = decodeStrict fileContent
+                LB.toStrict $ encode $ meta {dirMetaOrder = order} 
+        updateEntryMeta prefix (name, "project", order) = do
+            let path = prefix </> (projectFile $ nameToProjectId name)
+            rewriteFileContent path $ \fileContent -> do
+                let Just meta = decodeStrict fileContent
+                LB.toStrict $ encode $ meta {projectOrder = order}
 
 shareFolderHandler :: CodeWorldHandler
 shareFolderHandler = private $ \userId ctx -> do

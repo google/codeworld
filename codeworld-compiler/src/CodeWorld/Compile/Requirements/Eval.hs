@@ -226,15 +226,7 @@ checkRule (NoWarningsExcept ex) = do
 
 checkRule (TypeSignatures b) = withParsedCode $ \m -> do
     let defs = nub $ topLevelNames m
-        noTypeSig = defs \\ (everything (++) (mkQ [] typeSigNames) m)
-
-        typeSigNames :: Decl SrcSpanInfo -> [String]
-        typeSigNames (TypeSig _ l _) = nameString <$> l
-        typeSigNames _ = []
-
-        nameString :: Name SrcSpanInfo -> String
-        nameString (Ident _ s) = s
-        nameString (Symbol _ s) = s
+        noTypeSig = defs \\ typeSignatures m
 
     if | null noTypeSig || not b -> success
        | otherwise -> failure $ "The declaration of `" ++ head noTypeSig
@@ -278,7 +270,7 @@ allDefinitionsOf a m = everything (++) (mkQ [] funcDefs) m ++
         patDefs _ = []
 
 topLevelNames :: Module SrcSpanInfo -> [String]
-topLevelNames m = everything (++) (mkQ [] names) m
+topLevelNames (Module _ _ _ _ decls) = concat $ names <$> decls
   where names :: Decl SrcSpanInfo -> [String]
         names (FunBind _ xs) = [funcName x | x <- xs]
         names (PatBind _ pat _ _) = [patName pat]
@@ -292,6 +284,18 @@ topLevelNames m = everything (++) (mkQ [] names) m
         patName (PVar _ (Ident _ a)) = a
         patName (PParen _ pat) = patName pat
         patName _ = []
+        
+topLevelNames _ = []
+
+typeSignatures :: Module SrcSpanInfo -> [String]
+typeSignatures (Module _ _ _ _ decls) = concat $ typeSigNames <$> decls
+  where typeSigNames :: Decl SrcSpanInfo -> [String]
+        typeSigNames (TypeSig _ l _) = nameString <$> l
+        typeSigNames _ = []
+
+        nameString :: Name SrcSpanInfo -> String
+        nameString (Ident _ s) = s
+        nameString (Symbol _ s) = s
 
 patDefines :: Pat SrcSpanInfo -> String -> Bool
 patDefines (PVar _ (Ident _ aa)) a = a == aa

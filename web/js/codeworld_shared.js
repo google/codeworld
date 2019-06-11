@@ -1447,8 +1447,25 @@ function initDirectoryTree() {
             });
         });
     $('#directoryTree').on(
+        'tree.open',
+        (event) => {
+            const folderIcon = event.node.element.getElementsByClassName('mdi-folder')[0];
+            if (folderIcon){
+                folderIcon.classList.replace('mdi-folder', 'mdi-folder-outline');
+            }
+        }
+    )
+    $('#directoryTree').on(
+        'tree.close',
+        (event) => {
+            const folderIcon = event.node.element.getElementsByClassName('mdi-folder-outline')[0];
+            if (folderIcon){
+                folderIcon.classList.replace('mdi-folder-outline', 'mdi-folder');
+            }
+        }
+    )
+    $('#directoryTree').on(
         'tree.select',
-        // TODO update icon of opened directory
         (event) => {
             warnIfUnsaved(() => {
                 if (event.node && event.node.type === 'project') {

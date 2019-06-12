@@ -237,6 +237,33 @@ of conditions. Here are the current checks implemented.
   list of given regular expressions. This list can be empty, in which case
   no warnings will be allowed.
 
+-  `typeSignatures`
+
+  Example:
+
+      typeSignatures: true
+
+  Checks that all top-level declarations have accompanying type signatures.
+
+-  `blacklist`
+
+  Example:
+
+      blacklist: [circle]
+
+  Checks that none of the symbols appearing in the blacklist are used. This rule
+  and the whitelist rule currently don't look at the scope, so all occurrences of
+  a given symbol will be banned in this case, but this will be changed later when
+  the requirements checker is migrated to a source plugin.
+
+-  `whitelist`
+
+  Example:
+
+      whitelist: [ellipse]
+
+  Checks that only symbols appearing in the whitelist are used.
+
 This is by no means intended to be the full constraint language;
 rather, it is a small set of a few requirements that can be used for
 testing.  The language is strongly subject to change in the future.
@@ -260,15 +287,6 @@ The following use cases have been proposed, but are not yet implemented.
   matches of each must be the same.  Other special behavior might
   include allowing something to be repeated (so a function definition
   could have an arbitrary number of arguments or guards), etc.
-
-- Other style constraints.  e.g., all top-level definitions must have type
-  declarations.
-
-- Forbidden imported symbols or modules.  By whitelist or blacklist.
-  Exceptions should be allowed for specific definitions (usually
-  built-in).  For instance, you may want students to only use a given
-  variable called `ellipse`, and not use `circle` on its own outside
-  of that.
 
 Open questions
 ==============

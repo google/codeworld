@@ -677,8 +677,8 @@ function withClientId(f) {
     });
 }
 
-function loadSubTree (node) {
-    if (signedIn() && node.children.length === 0) {
+function loadSubTree (node, callback) {
+    if (signedIn() && node.type === 'directory' && node.children.length === 0) {
         const data = new FormData();
         data.append('mode', window.projectEnv);
         data.append('path', getNearestDirectory(node));
@@ -692,11 +692,15 @@ function loadSubTree (node) {
                     ),
                     node
                 );
+                if (callback) callback();
             }
             updateUI();
             hideLoadingAnimation(node);
         });
-    } else updateUI();
+    } else {
+        updateUI();
+        if (callback) callback();
+    }
 }
 
 function discoverProjects(path) {
@@ -815,6 +819,7 @@ function saveProjectAs() {
             clearWorkspace();
             $('#directoryTree').tree(
                 'selectNode', appended);
+            updateChildrenIndexes(parent);
         }
         if (result && result.value) {
             saveProjectBase(
@@ -1345,7 +1350,11 @@ function initDirectoryTree() {
         openedIcon: $('<i class="mdi mdi-18px mdi-chevron-down"></i>'),
         onCreateLi: function(node, $li) {
             const titleElem = $li.find('.jqtree-element .jqtree-title');
-            if (node.type === 'directory') {
+            if (node.type === 'directory' && node.is_open) {
+                titleElem.before(
+                    $('<i class="mdi mdi-18px mdi-folder-outline"></i>')
+                );
+            } else if (node.type === 'directory') {
                 titleElem.before(
                     $('<i class="mdi mdi-18px mdi-folder"></i>')
                 );
@@ -1364,8 +1373,6 @@ function initDirectoryTree() {
     $('#directoryTree').on(
         'tree.move',
         (event) => {
-            // TODO load children before moving into empty node
-            // TODO test tree behavior with updating current code from guide examples
             event.preventDefault();
             warnIfUnsaved(() => {
                 if (!signedIn()) {
@@ -1375,75 +1382,77 @@ function initDirectoryTree() {
                     updateUI();
                     return;
                 }
-                const position = event.move_info.position;
-                const fromNode = event.move_info.moved_node;
-                const isFile = fromNode.type === 'project';
+                const movedNode = event.move_info.moved_node;
+                const isFile = movedNode.type === 'project';
                 let fromPath, name;
-                fromPath = pathToRootDir(fromNode);
+                fromPath = pathToRootDir(movedNode);
                 if (isFile) {
-                    name = fromNode.name;
+                    name = movedNode.name;
                 } else if (fromPath) {
-                    fromPath = [fromPath, fromNode.name].join('/');
+                    fromPath = [fromPath, movedNode.name].join('/');
                 } else {
-                    fromPath = fromNode.name;
+                    fromPath = movedNode.name;
                 }
-
-                const haveChildWithSameNameAndType = (fromNode, toNode) => {
+                const haveChildWithSameNameAndType = (movedNode, toNode) => {
                     // check if target node have child node
                     // which have same name and type as moving node
                     // and not equals to moving node
                     return toNode.children.filter((ch) => {
-                        return ch !== fromNode &&
-                            ch.type === fromNode.type &&
-                            ch.name === fromNode.name;
+                        return  ch.type === movedNode.type &&
+                                ch.name === movedNode.name;
                     }).length !== 0;
                 };
                 let toNode = event.move_info.target_node;
-                if (position === 'inside' &&
-                    haveChildWithSameNameAndType(fromNode, toNode)
-                ) {
-                    const msg = `${'Are you sure you want to save over another project?\n\n' +
-                        'The previous contents of '}${name 
-                    } will be permanently destroyed!`;
-                    sweetAlert({
-                        title: Alert.title('Warning'),
-                        text: msg,
-                        type: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#DD6B55',
-                        confirmButtonText: 'Yes, discard my changes!',
-                        closeOnConfirm: true
-                    }).then((result) => {
-                        if (result && result.value) {
-                            let toPath = pathToRootDir(toNode);
-                            if (toPath) {
-                                toPath = `${toPath}/${toNode.name}`;
-                            } else {
-                                toPath = toNode.name;
-                            }
-                            moveDirTreeNode(fromPath, toPath, isFile, name, window.projectEnv, () => {
-                                event.move_info.do_move();
-                                updateChildrenIndexes(toNode);
-                            });
-                        }
-                    });
-                    return;
-                }
+                const position = event.move_info.position;
                 if (position === 'before' || position === 'after') {
                     toNode = toNode.parent;
                 }
-                let toPath = pathToRootDir(toNode);
-                if (toPath) {
-                    toPath = `${toPath}/${toNode.name}`;
-                } else {
-                    toPath = toNode.name;
-                }
-
-                moveDirTreeNode(fromPath, toPath, isFile, name, window.projectEnv, () => {
+                if (event.move_info.previous_parent === toNode) {
+                    // Reordering in same directory
                     event.move_info.do_move();
                     updateChildrenIndexes(toNode);
-                });
-
+                    return;
+                }
+                // Load content of directory before move something inside
+                loadSubTree(toNode, () => {
+                    let toPath = pathToRootDir(toNode);
+                    if (toPath) {
+                        toPath = `${toPath}/${toNode.name}`;
+                    } else {
+                        toPath = toNode.name;
+                    }
+                    if (haveChildWithSameNameAndType(movedNode, toNode)) {
+                        // Replacement of existing project
+                        const msg = `${'Are you sure you want to save over another project?\n\n' +
+                                    'The previous contents of '}${name 
+                                    } will be permanently destroyed!`;
+                        sweetAlert({
+                            title: Alert.title('Warning'),
+                            text: msg,
+                            type: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#DD6B55',
+                            confirmButtonText: 'Yes, overwrite it!'
+                        }).then((result) => {
+                            if (result && result.value) {
+                                moveDirTreeNode(fromPath, toPath, isFile, name, window.projectEnv, () => {
+                                    toNode.children = toNode.children.filter((n) => {
+                                        return movedNode === n || 
+                                               n.name !== movedNode.name || n.type !== movedNode.type
+                                    })
+                                    event.move_info.do_move();
+                                    updateChildrenIndexes(toNode);
+                                });
+                            }
+                        });
+                    } else {
+                        // Regular moving
+                        moveDirTreeNode(fromPath, toPath, isFile, name, window.projectEnv, () => {
+                            event.move_info.do_move();
+                            updateChildrenIndexes(toNode);
+                        });
+                    }
+                })
             });
         });
     $('#directoryTree').on(
@@ -1591,7 +1600,7 @@ function hideLoadingAnimation (node) {
     }
 }
 
-function recalcChildIndexes(node) {
+function recalcChildrenIndexes(node) {
     let index = 0;
     node.children.forEach((n) => {
         n.order = index;
@@ -1601,7 +1610,7 @@ function recalcChildIndexes(node) {
 
 function updateChildrenIndexes(node) {
     if (signedIn()) {
-        recalcChildIndexes(node);
+        recalcChildrenIndexes(node);
         let names = [],
             types = [],
             indexes = [];

@@ -694,17 +694,15 @@ function setCode(code, history, name, autostart) {
 function loadSample(code) {
     if (isEditorClean()) sweetAlert.close();
     warnIfUnsaved(() => {
+        clearWorkspace();
         setCode(code);
     });
 }
 
 function newProject() {
     warnIfUnsaved(() => {
+        clearWorkspace();
         setCode('');
-        // Deselect nodes
-        const treeState = $('#directoryTree').tree('getState');
-        treeState.selected_node = [];
-        $('#directoryTree').tree('setState', treeState);
     });
 }
 
@@ -1124,5 +1122,9 @@ function parseCompileErrors(rawErrors) {
 
 function clearWorkspace() {
     window.openProjectName = null;
+    // Deselect nodes
+    const treeState = $('#directoryTree').tree('getState');
+    treeState.selected_node = [];
+    $('#directoryTree').tree('setState', treeState);
     setCode('');
 }

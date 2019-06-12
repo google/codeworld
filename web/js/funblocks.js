@@ -398,7 +398,6 @@ function deleteFolder() {
 
     function successFunc() {
         clearWorkspace();
-        window.openProjectName = null;
         Blockly.getMainWorkspace().clearUndo();
     }
     deleteFolder_(path, window.projectEnv, successFunc);
@@ -412,7 +411,6 @@ function deleteProject() {
 
     function successFunc() {
         clearWorkspace();
-        window.openProjectName = null;
         Blockly.getMainWorkspace().clearUndo();
     }
     const path = getNearestDirectory();
@@ -423,7 +421,6 @@ function newFolder() {
     function successFunc() {
         if (!window.move) {
             clearWorkspace();
-            window.openProjectName = null;
             clearRunCode();
             window.lastXML = getWorkspaceXMLText();
             Blockly.getMainWorkspace().clearUndo();
@@ -441,7 +438,6 @@ function newProject() {
     warnIfUnsaved(() => {
         clearRunCode();
         clearWorkspace();
-        window.openProjectName = null;
         updateUI();
         window.lastXML = getWorkspaceXMLText();
         Blockly.getMainWorkspace().clearUndo();
@@ -459,5 +455,9 @@ function clearRunCode() {
 function clearWorkspace() {
     window.openProjectName = null;
     const workspace = Blockly.mainWorkspace;
+    // Deselect nodes
+    const treeState = $('#directoryTree').tree('getState');
+    treeState.selected_node = [];
+    $('#directoryTree').tree('setState', treeState);
     workspace.clear();
 }

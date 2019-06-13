@@ -1128,3 +1128,8 @@ function clearWorkspace() {
     $('#directoryTree').tree('setState', treeState);
     setCode('');
 }
+
+function clearCode() {
+    window.openProjectName = null;
+    setCode('');
+}

@@ -31,12 +31,11 @@ data Project = Project
     { projectName :: Text
     , projectSource :: Text
     , projectHistory :: Value
-    , projectOrder :: Int
     }
 
 instance FromJSON Project where
     parseJSON (Object v) =
-        Project <$> v .: "name" <*> v .: "source" <*> v .: "history" <*> v .: "order"
+        Project <$> v .: "name" <*> v .: "source" <*> v .: "history"
     parseJSON _ = mzero
 
 instance ToJSON Project where
@@ -45,27 +44,37 @@ instance ToJSON Project where
             [ "name" .= projectName p
             , "source" .= projectSource p
             , "history" .= projectHistory p
-            , "order" .= projectOrder p
             , "type" .= ("project" :: Text)
             ]
 
-data DirectoryMeta = DirectoryMeta
-    { dirMetaName :: Text
-    , dirMetaOrder :: Int
-    } deriving (Show)
+data FileSystemEntryType = Dir | Proj deriving (Eq, Ord, Show)
 
-instance FromJSON DirectoryMeta where
-    parseJSON (Object v) =
-        DirectoryMeta <$> v .: "name" <*> v .: "order"
+instance ToJSON FileSystemEntryType where
+    toJSON Dir  = Data.Aeson.String "directory"
+    toJSON Proj = Data.Aeson.String "project"
+
+instance FromJSON FileSystemEntryType where
+    parseJSON (Data.Aeson.String "directory") = return $ Dir
+    parseJSON (Data.Aeson.String "project")   = return $ Proj
     parseJSON _ = mzero
 
-instance ToJSON DirectoryMeta where
-    toJSON p =
-        object
-            [ "name" .= dirMetaName p
-            , "order" .= dirMetaOrder p
-            , "type" .= ("directory" :: Text)
-            ]
+data FileSystemEntry = FSEntry 
+    { fsEntryIndex :: Int
+    , fsEntryName  :: Text
+    , fsEntryType  :: FileSystemEntryType        
+    } deriving (Eq, Ord, Show)
+        
+instance ToJSON FileSystemEntry where
+    toJSON entry = object 
+        [ "index" .= fsEntryIndex entry
+        , "name"  .= fsEntryName entry
+        , "type"  .= fsEntryType entry
+        ]
+
+instance FromJSON FileSystemEntry where
+    parseJSON (Object v) =
+        FSEntry <$>  v .: "index" <*> v .: "name" <*> v .: "type"
+    parseJSON _ = mzero
 
 data CompileResult = CompileResult
     { compileHash :: Text
@@ -79,7 +88,7 @@ instance ToJSON CompileResult where
 data Gallery = Gallery { galleryItems :: [GalleryItem] }
 data GalleryItem = GalleryItem
     { galleryItemName :: Text,
-      galleryItemURL :: Text,
+      galleryItemURL  :: Text,
       galleryItemCode :: Maybe Text
     }
 
@@ -93,21 +102,3 @@ instance ToJSON GalleryItem where
       where base = [ "name" .= galleryItemName item
                    , "url" .= galleryItemURL item
                    ]
-
-data CWEntry = Dir DirectoryMeta | Source Project
-
-instance ToJSON CWEntry where
-    toJSON (Source project) = toJSON project
-    toJSON (Dir directory) = toJSON directory
- 
-instance FromJSON CWEntry where
-    parseJSON (Object v) = do
-        type_ <- v .: "type"
-        case type_ :: String of
-            "directory" -> do 
-                dir <- DirectoryMeta <$> v .: "name" <*> v .: "order"
-                return $ Dir dir
-            "project" -> do
-                project <- Project <$> v .: "name" <*> v .: "source" <*> v .: "history" <*> v .: "order"
-                return $ Source project
-    parseJSON _ = mzero

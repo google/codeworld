@@ -358,10 +358,6 @@ function signOut() {
 }
 
 function loadProject(name, index) {
-    if (window.move) {
-        return;
-    }
-
     function successFunc(project) {
         window.openProjectName = name;
         clearRunCode();
@@ -375,8 +371,6 @@ function loadProject(name, index) {
 function saveProject() {
     function successFunc() {
         window.lastXML = getWorkspaceXMLText();
-        window.openProjectName = projectName;
-        discoverProjects('');
     }
 
     if (window.openProjectName) {
@@ -419,13 +413,10 @@ function deleteProject() {
 
 function newFolder() {
     function successFunc() {
-        if (!window.move) {
-            clearWorkspace();
-            clearRunCode();
-            window.lastXML = getWorkspaceXMLText();
-            Blockly.getMainWorkspace().clearUndo();
-            window.location.hash = '';
-        }
+        clearRunCode();
+        window.lastXML = getWorkspaceXMLText();
+        Blockly.getMainWorkspace().clearUndo();
+        window.location.hash = '';     
     }
     createFolder(getNearestDirectory(), window.projectEnv, successFunc);
 }
@@ -459,5 +450,11 @@ function clearWorkspace() {
     const treeState = $('#directoryTree').tree('getState');
     treeState.selected_node = [];
     $('#directoryTree').tree('setState', treeState);
+    workspace.clear();
+}
+
+function clearCode () {
+    window.openProjectName = null;
+    const workspace = Blockly.mainWorkspace;
     workspace.clear();
 }

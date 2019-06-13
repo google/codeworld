@@ -27,18 +27,16 @@ import qualified Crypto.Hash as Crypto
 import Data.Aeson
 import Data.ByteArray (convert)
 import Data.ByteString (ByteString)
-import Data.List (sortOn)
+import Data.List (sort, sortOn)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as LB
 import Data.Maybe
-import Data.Monoid
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import qualified Data.Text.Lazy as LT
-import qualified Data.Text.Lazy.Encoding as LT
+import qualified Data.Text.IO as T
 import System.Directory
 import System.FilePath
 import System.IO.Error
@@ -214,20 +212,40 @@ listDirectoryWithPrefixRecursive filePath = do
 dirFilter :: [FilePath] -> Char -> [FilePath]
 dirFilter dirs char = filter (\x -> head (takeBaseName x) == char) dirs
 
-cwEntries :: FilePath -> IO [CWEntry]
-cwEntries dir = do
+fsEntries :: FilePath -> IO [FileSystemEntry]
+fsEntries dir = do
     subHashedDirs <- listDirectoryWithPrefix dir
     let hashedFiles = dirFilter subHashedDirs 'S'
         hashedDirs = dirFilter subHashedDirs 'D'
-    projects <- mapM projectMeta hashedFiles
-    dirs <- mapM dirMeta hashedDirs
-    return $ projects ++ dirs
-    where projectMeta path = do
+    projNames <- sort <$> mapM projName hashedFiles
+    dirNames  <- sort <$> mapM dirName hashedDirs
+    haveSavedOrderFile <- doesFileExist $ dir </> "order.info"
+    case haveSavedOrderFile of
+        True -> do
+            dumpedEntries <- fromJust . decode <$> LB.readFile (dir </> "order.info")
+            let (dumpedDirs, dumpedProjects) = span (\x -> fsEntryType x == Dir) $ sortOn fsEntryType dumpedEntries
+                existingDirs = onlyExisting (sortOn fsEntryName dumpedDirs) dirNames
+                existingProjects = onlyExisting (sortOn fsEntryName dumpedProjects)  projNames 
+            return $
+                    updateOrder Dir existingDirs dirNames ++
+                    updateOrder Proj existingProjects projNames
+        False -> return $ updateOrder Dir [] dirNames ++ updateOrder Proj [] projNames
+    where
+        onlyExisting :: [FileSystemEntry] -> [Text] -> [FileSystemEntry]
+        onlyExisting dumped existing = filter (\d -> fsEntryName d `elem` existing) dumped
+
+        updateOrder :: FileSystemEntryType -> [FileSystemEntry] -> [Text] -> [FileSystemEntry]
+        updateOrder _ [] [] = []
+        updateOrder _ (_:_) [] = []
+        updateOrder defType [] (name:names) = (FSEntry 0 name defType) : updateOrder defType [] names
+        updateOrder defType (entry@(FSEntry _ dumpedName _):entries) (name:names)
+            | dumpedName == name = entry : updateOrder defType entries names
+            | otherwise = (FSEntry 0 name defType) : updateOrder defType (entry: entries) names
+
+        projName path = do
             Just project <- decode <$> LB.readFile path
-            return $ Source project
-          dirMeta path = do
-            Just dir <- decode <$> LB.readFile (path </> "dir.info")
-            return $ Dir dir
+            return $ projectName project
+        dirName path = T.readFile (path </> "dir.info")
 
 projectFileNames :: FilePath -> IO [Text]
 projectFileNames dir = do
@@ -245,8 +263,8 @@ projectDirNames :: FilePath -> IO [Text]
 projectDirNames dir = do
     subHashedDirs <- listDirectoryWithPrefix dir
     let hashedDirs = dirFilter subHashedDirs 'D'
-    dirMetas <- mapM (\x -> LB.readFile $ x </> "dir.info") hashedDirs
-    return $ map (\d -> dirMetaName $ fromJust $ decode d) dirMetas
+    dirNames <- mapM (\x -> T.readFile $ x </> "dir.info") hashedDirs
+    return dirNames
 
 writeDeployLink :: BuildMode -> DeployId -> ProgramId -> IO ()
 writeDeployLink mode deployId (ProgramId p) = do

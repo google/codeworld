@@ -193,14 +193,13 @@ createFolderHandler = private $ \userId ctx -> do
         dirIds = map nameToDirId pathText
         finalDir = joinPath $ map dirBase dirIds
         name = last pathText
-        order = 0
     liftIO $ ensureUserBaseDir mode userId finalDir
     liftIO $ createDirectory $ userProjectDir mode userId </> finalDir
     modifyResponse $ setContentType "text/plain"
     liftIO $
-        LB.writeFile
-            (userProjectDir mode userId </> finalDir </> "dir.info") $
-        encode $ DirectoryMeta name order
+        T.writeFile
+            (userProjectDir mode userId </> finalDir </> "dir.info")
+            name
 
 deleteFolderHandler :: CodeWorldHandler
 deleteFolderHandler = private $ \userId ctx -> do
@@ -266,7 +265,7 @@ listFolderHandler = private $ \userId ctx -> do
     liftIO $ ensureUserBaseDir mode userId finalDir
     liftIO $ ensureUserDir mode userId finalDir
     let projectDir = userProjectDir mode userId
-    entries <- liftIO $ cwEntries (projectDir </> finalDir)
+    entries <- liftIO $ fsEntries (projectDir </> finalDir)
     modifyResponse $ setContentType "application/json"
     writeLBS (encode entries)
 
@@ -275,23 +274,14 @@ updateChildrenIndexesHandler :: CodeWorldHandler
 updateChildrenIndexesHandler = private $ \userId ctx -> do
     mode <- getBuildMode
     let projectDir = userProjectDir mode userId
-    Just path <- fmap ((projectDir </>) . joinPath . (map (dirBase . nameToDirId . T.pack)) . splitDirectories . BC.unpack) <$> getParam "path"
-    Just names   <- decodeStrict . fromJust <$> getParam "names"
-    Just types   <- decodeStrict . fromJust <$> getParam "types"
-    Just indexes <- decodeStrict . fromJust <$> getParam "indexes"
-    liftIO $ mapM_ (updateEntryMeta path) $ zip3 names types indexes
-    where 
-        updateEntryMeta :: FilePath -> (Text, Text, Int) -> IO ()
-        updateEntryMeta prefix (name, "directory", order) = do
-            let path = prefix </> (dirBase $ nameToDirId name) </> "dir.info"
-            rewriteFileContent path $ \fileContent -> do
-                let Just meta = decodeStrict fileContent
-                LB.toStrict $ encode $ meta {dirMetaOrder = order} 
-        updateEntryMeta prefix (name, "project", order) = do
-            let path = prefix </> (projectFile $ nameToProjectId name)
-            rewriteFileContent path $ \fileContent -> do
-                let Just meta = decodeStrict fileContent
-                LB.toStrict $ encode $ meta {projectOrder = order}
+    Just path <- fmap ((\p -> projectDir </> p </> "order.info") .
+                        joinPath . (map (dirBase . nameToDirId . T.pack)) .
+                        splitDirectories . BC.unpack)
+                    <$> getParam "path"
+    param <- getParam "entries"
+    -- Encoding just to check if request param is correct
+    Just entries <- decodeStrict . fromJust <$> getParam "entries" :: Snap (Maybe [FileSystemEntry])
+    liftIO $ LB.writeFile path $ encode entries
 
 shareFolderHandler :: CodeWorldHandler
 shareFolderHandler = private $ \userId ctx -> do
@@ -324,9 +314,9 @@ shareContentHandler = private $ \userId ctx -> do
         copyDirIfExists (BC.unpack sharingFolder) $
         userProjectDir mode userId </> dirPath
     liftIO $
-        LB.writeFile
+        T.writeFile
             (userProjectDir mode userId </> dirPath </> "dir.info")
-            (encode $ DirectoryMeta name 0)
+            name
 
 moveProjectHandler :: CodeWorldHandler
 moveProjectHandler = private $ \userId ctx -> do

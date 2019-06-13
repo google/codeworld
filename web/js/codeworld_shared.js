@@ -628,14 +628,12 @@ const Auth = (() => {
         window.auth2.currentUser.listen(signinCallback);
 
         discoverProjects('');
-        updateUI();
     }
 
     function onAuthDisabled() {
         window.auth2 = null;
         document.getElementById('signin').style.display = 'none';
         discoverProjects('');
-        updateUI();
     }
 
     mine.init = () =>
@@ -677,7 +675,7 @@ function withClientId(f) {
     });
 }
 
-function loadSubTree (node, callback) {
+function loadSubTree(node, callback) {
     if (signedIn() && node === $('#directoryTree').tree('getTree')) {
         // Root node already loaded
         if (callback) callback();
@@ -691,7 +689,9 @@ function loadSubTree (node, callback) {
                 $('#directoryTree').tree(
                     'loadData',
                     JSON.parse(request.responseText).sort(
-                        (a,b) => {return a.index > b.index}
+                        (a, b) => {
+                            return a.index > b.index;
+                        }
                     ),
                     node
                 );
@@ -700,7 +700,9 @@ function loadSubTree (node, callback) {
             updateUI();
             hideLoadingAnimation(node);
         });
-    } else { updateUI() }
+    } else {
+        updateUI();
+    }
 }
 
 function discoverProjects(path) {
@@ -714,7 +716,9 @@ function discoverProjects(path) {
                 $('#directoryTree').tree(
                     'loadData',
                     JSON.parse(request.responseText).sort(
-                        (a,b) => {return a.index > b.index}
+                        (a, b) => {
+                            return a.index > b.index;
+                        }
                     ));
             }
             updateUI();
@@ -1359,8 +1363,7 @@ function initDirectoryTree() {
         closedIcon: $('<i class="mdi mdi-18px mdi-chevron-right"></i>'),
         openedIcon: $('<i class="mdi mdi-18px mdi-chevron-down"></i>'),
         onCreateLi: function(node, $li) {
-            console.log(node, node.is_open);
-            let titleElem = $li.find('.jqtree-element .jqtree-title');
+            const titleElem = $li.find('.jqtree-element .jqtree-title');
             if (node.type === 'directory' && node.is_open) {
                 // TODO bug. Some subfolders showed as opened with lazy load. 
                 titleElem.before(
@@ -1409,8 +1412,8 @@ function initDirectoryTree() {
                     // which have same name and type as moving node
                     // and not equals to moving node
                     return toNode.children.filter((ch) => {
-                        return  ch.type === movedNode.type &&
-                                ch.name === movedNode.name;
+                        return ch.type === movedNode.type &&
+                            ch.name === movedNode.name;
                     }).length !== 0;
                 };
                 let toNode = event.move_info.target_node;
@@ -1456,12 +1459,12 @@ function initDirectoryTree() {
                             if (result && result.value) {
                                 moveDirTreeNode(fromPath, toPath, isFile, name, window.projectEnv, () => {
                                     toNode.children = toNode.children.filter((n) => {
-                                        return movedNode === n || 
-                                               n.name !== movedNode.name || n.type !== movedNode.type
-                                    })
+                                        return movedNode === n ||
+                                            n.name !== movedNode.name || n.type !== movedNode.type;
+                                    });
                                     event.move_info.do_move();
                                     updateChildrenIndexes(toNode);
-                                    if (movedNode.type == 'directory') {
+                                    if (movedNode.type === 'directory') {
                                         loadSubTree(movedNode);
                                         clearCode();
                                     }
@@ -1475,27 +1478,27 @@ function initDirectoryTree() {
                             updateChildrenIndexes(toNode);
                         });
                     }
-                })
+                });
             });
         });
     $('#directoryTree').on(
         'tree.open',
         (event) => {
             const folderIcon = event.node.element.getElementsByClassName('mdi-folder')[0];
-            if (folderIcon){
+            if (folderIcon) {
                 folderIcon.classList.replace('mdi-folder', 'mdi-folder-outline');
             }
         }
-    )
+    );
     $('#directoryTree').on(
         'tree.close',
         (event) => {
             const folderIcon = event.node.element.getElementsByClassName('mdi-folder-outline')[0];
-            if (folderIcon){
+            if (folderIcon) {
                 folderIcon.classList.replace('mdi-folder-outline', 'mdi-folder');
             }
         }
-    )
+    );
     $('#directoryTree').on(
         'tree.select',
         (event) => {
@@ -1506,7 +1509,7 @@ function initDirectoryTree() {
                     window.openProjectName = node.name;
                     loadProject(node.name, path);
                 } else if (event.node && event.node.type === 'directory') {
-                    if (event.node.children.length === 0 ) {
+                    if (event.node.children.length === 0) {
                         loadSubTree(event.node);
                     }
                     clearCode();
@@ -1536,8 +1539,8 @@ function initDirectoryTree() {
 // Get directory nearest to selected node, or root if there is no selection
 function getNearestDirectory_(node) {
     if (node) {
-        let isdir = node.type === "directory";
-        let haveParent = Boolean(node.parent);
+        const isdir = node.type === 'directory';
+        const haveParent = Boolean(node.parent);
         if (isdir) {
             return node;
         } else if (haveParent) {
@@ -1546,7 +1549,7 @@ function getNearestDirectory_(node) {
         // root node
         return node;
     }
-    let selected = $('#directoryTree').tree('getSelectedNode');
+    const selected = $('#directoryTree').tree('getSelectedNode');
     if (!selected) {
         // nearest directory is root
         return $('#directoryTree').tree('getTree');
@@ -1566,7 +1569,7 @@ function getNearestDirectory(node) {
     return path;
 }
 
-function showLoadingAnimation (node) {
+function showLoadingAnimation(node) {
     let selected;
     if (node) {
         selected = node;
@@ -1577,8 +1580,7 @@ function showLoadingAnimation (node) {
         selected = $('#directoryTree').tree('getTree');
     }
     $('#directoryTree').tree(
-        'appendNode',
-        {
+        'appendNode', {
             name: 'Loading...',
             type: 'loadNotification'
         },
@@ -1590,7 +1592,7 @@ function showLoadingAnimation (node) {
     );
 }
 
-function hideLoadingAnimation (node) {
+function hideLoadingAnimation(node) {
     let selected;
     if (node) {
         selected = node;
@@ -1599,11 +1601,13 @@ function hideLoadingAnimation (node) {
     }
     if (selected) {
         selected.children.filter(
-            (c) => {return c.type === 'loadNotification'}
+            (c) => {
+                return c.type === 'loadNotification';
+            }
         ).forEach((c) => {
             $('#directoryTree').tree('removeNode', c);
-        })
-        
+        });
+
     }
 }
 
@@ -1612,21 +1616,19 @@ function recalcChildrenIndexes(node) {
     node.children.forEach((n) => {
         n.index = index;
         index++;
-    })
+    });
 }
 
 function updateChildrenIndexes(node) {
     if (signedIn() && node && node.children) {
         recalcChildrenIndexes(node);
-        let repacked = [];
-        for (var i = 0; i < node.children.length; i++) {
-            repacked.push(
-                {
-                    type: node.children[i].type,
-                    name: node.children[i].name,
-                    index: node.children[i].index
-                }
-            );
+        const repacked = [];
+        for (let i = 0; i < node.children.length; i++) {
+            repacked.push({
+                type: node.children[i].type,
+                name: node.children[i].name,
+                index: node.children[i].index
+            });
         }
         const data = new FormData();
         data.append('mode', window.projectEnv);

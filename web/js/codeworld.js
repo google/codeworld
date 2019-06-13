@@ -96,6 +96,7 @@ async function init() {
                             'error');
                     }
                     discoverProjects('');
+                    updateUI();
                 });
             });
         } else {
@@ -506,12 +507,10 @@ function setMode(force) {
 
 function getCurrentProject() {
     const doc = window.codeworldEditor.getDoc();
-    const selected = $('#directoryTree').tree('getSelectedNode');
     return {
         'name': window.openProjectName || 'Untitled',
         'source': doc.getValue(),
-        'history': doc.getHistory(),
-        'order': selected.order ? selected.order : 0
+        'history': doc.getHistory()
     };
 }
 

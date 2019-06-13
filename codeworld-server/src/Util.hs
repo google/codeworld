@@ -348,10 +348,3 @@ removeDirectoryIfExists dirName =
     handleExists e
         | isDoesNotExistError e = return ()
         | otherwise = throwIO e
-
-rewriteFileContent :: FilePath -> (ByteString -> ByteString) -> IO ()
-rewriteFileContent path f = do
-    content <- B.readFile path
-    let tmp = path ++ ".tmp"
-    B.writeFile tmp $ f content
-    renameFile tmp path

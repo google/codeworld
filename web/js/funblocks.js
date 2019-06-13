@@ -416,7 +416,7 @@ function newFolder() {
         clearRunCode();
         window.lastXML = getWorkspaceXMLText();
         Blockly.getMainWorkspace().clearUndo();
-        window.location.hash = '';     
+        window.location.hash = '';
     }
     createFolder(getNearestDirectory(), window.projectEnv, successFunc);
 }
@@ -453,7 +453,7 @@ function clearWorkspace() {
     workspace.clear();
 }
 
-function clearCode () {
+function clearCode() {
     window.openProjectName = null;
     const workspace = Blockly.mainWorkspace;
     workspace.clear();

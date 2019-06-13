@@ -1365,7 +1365,6 @@ function initDirectoryTree() {
         onCreateLi: function(node, $li) {
             const titleElem = $li.find('.jqtree-element .jqtree-title');
             if (node.type === 'directory' && node.is_open) {
-                // TODO bug. Some subfolders showed as opened with lazy load. 
                 titleElem.before(
                     $('<i class="mdi mdi-18px mdi-folder-outline"></i>')
                 );
@@ -1584,10 +1583,6 @@ function showLoadingAnimation(node) {
             name: 'Loading...',
             type: 'loadNotification'
         },
-        selected
-    );
-    $('#directoryTree').tree(
-        'openNode',
         selected
     );
 }

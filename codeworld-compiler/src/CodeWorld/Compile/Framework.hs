@@ -33,7 +33,7 @@ import Control.Monad.IO.Class
 import Control.Monad.State
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
-import Data.List (intercalate, foldl')
+import Data.List (isPrefixOf, intercalate, foldl')
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
@@ -192,20 +192,21 @@ ghcExtensionsByName = M.fromList [
     (GHCParse.flagSpecName spec, GHCParse.flagSpecFlag spec)
     | spec <- GHCParse.xFlags ]
 
+applyExtensionToFlags :: GHCParse.DynFlags -> String -> GHCParse.DynFlags
+applyExtensionToFlags dflags name
+  | "No" `isPrefixOf` name =
+        GHCParse.xopt_unset dflags $ fromJust $ M.lookup (drop 2 name) ghcExtensionsByName
+  | otherwise =
+        GHCParse.xopt_set dflags $ fromJust $ M.lookup name ghcExtensionsByName
+
 ghcParseCode :: MonadCompile m => [String] -> Text -> m GHCParsedCode
 ghcParseCode extraExts src = do
     sourceMode <- gets compileMode
     let buffer = GHCParse.stringToStringBuffer (T.unpack src)
-        (setExts, unsetExts) | sourceMode == "codeworld" = splitExts $ extraExts ++ codeworldModeExts
-                             | otherwise                 = splitExts $ extraExts
-        nodflags = foldl'
-            GHCParse.xopt_unset
-            (GHCParse.defaultDynFlags fakeSettings fakeLlvmConfig)
-            (map (fromJust . flip M.lookup ghcExtensionsByName) unsetExts)
-        dflags = foldl'
-            GHCParse.xopt_set
-            nodflags
-            (map (fromJust . flip M.lookup ghcExtensionsByName) setExts)
+        exts | sourceMode == "codeworld" = extraExts ++ codeworldModeExts
+             | otherwise                 = extraExts
+        defaultFlags = GHCParse.defaultDynFlags fakeSettings fakeLlvmConfig
+        dflags = foldl' applyExtensionToFlags defaultFlags exts
     dflagsWithPragmas <- liftIO $
         fromMaybe dflags <$> parsePragmasIntoDynFlags dflags "program.hs" buffer
     let location = GHCParse.mkRealSrcLoc (GHCParse.mkFastString "program.hs") 1 1

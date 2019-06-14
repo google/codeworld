@@ -169,10 +169,13 @@ checkRule (NotDefined a) = withParsedCode $ \m -> do
     if | null (allDefinitionsOf a m) -> success
        | otherwise -> failure $ "`" ++ a ++ "` should not be defined."
 
-checkRule (NotUsed a) = withParsedCode $ \m -> do
-    let exprUse :: Exp SrcSpanInfo -> Bool
-        exprUse (Var _ (UnQual _ (Ident _ v))) | v == a = True
+checkRule (NotUsed a) = withGHCParsedCode $ \m -> do
+    let exprUse :: GHCParse.HsExpr GHCParse.GhcPs -> Bool
+        exprUse (GHCParse.HsVar _ (GHCParse.L _ v)) | idName v == a = True
         exprUse _ = False
+
+        idName :: GHCParse.IdP GHCParse.GhcPs -> String
+        idName = GHCParse.occNameString . GHCParse.rdrNameOcc
 
     if | everything (||) (mkQ False exprUse) m
              -> failure $ "`" ++ a ++ "` should not be used."

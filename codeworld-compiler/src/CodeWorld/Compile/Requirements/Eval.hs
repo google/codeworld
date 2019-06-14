@@ -247,29 +247,27 @@ checkRule (TypeSignatures b) = withGHCParsedCode $ \m -> do
        | otherwise -> failure $ "The declaration of `" ++ head noTypeSig
            ++ "` has no type signature."
 
-checkRule (Blacklist bl) = withParsedCode $ \m -> do
-    let symbols = nub $ everything (++) (mkQ [] nameString) m
+checkRule (Blacklist bl) = withGHCParsedCode $ \m -> do
+    let symbols = nub $ everything (++) (mkQ [] idName) m
         blacklisted = intersect bl symbols
-        
-        nameString :: Name SrcSpanInfo -> [String]
-        nameString (Ident _ s) = [s]
-        nameString (Symbol _ s) = [s]
+
+        idName :: GHCParse.IdP GHCParse.GhcPs -> [String]
+        idName x = [GHCParse.occNameString $ GHCParse.rdrNameOcc x] 
 
     if | null blacklisted -> success
-        | otherwise -> failure $ "The symbol `" ++ head blacklisted
-            ++ "` is blacklisted."
+       | otherwise -> failure $ "The symbol `" ++ head blacklisted
+           ++ "` is blacklisted."
 
-checkRule (Whitelist wl) = withParsedCode $ \m -> do
-    let symbols = nub $ everything (++) (mkQ [] nameString) m
+checkRule (Whitelist wl) = withGHCParsedCode $ \m -> do
+    let symbols = nub $ everything (++) (mkQ [] idName) m
         notWhitelisted = symbols \\ wl
-
-        nameString :: Name SrcSpanInfo -> [String]
-        nameString (Ident _ s) = [s]
-        nameString (Symbol _ s) = [s]
+        
+        idName :: GHCParse.IdP GHCParse.GhcPs -> [String]
+        idName x = [GHCParse.occNameString $ GHCParse.rdrNameOcc x] 
 
     if | null notWhitelisted -> success
-        | otherwise -> failure $ "The symbol `" ++ head notWhitelisted
-            ++ "` is not whitelisted."
+       | otherwise -> failure $ "The symbol `" ++ head notWhitelisted
+           ++ "` is not whitelisted."
 
 checkRule _ = abort
 

@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE RecordWildCards #-}
 
 {-
@@ -40,6 +41,12 @@ import Data.Void
 import Language.Haskell.Exts hiding (Rule, parse)
 import Text.Regex.TDFA hiding (match)
 
+import qualified "ghc-lib-parser" DynFlags as GHCParse
+import qualified "ghc-lib-parser" HsSyn as GHCParse
+import qualified "ghc-lib-parser" OccName as GHCParse
+import qualified "ghc-lib-parser" RdrName as GHCParse
+import qualified "ghc-lib-parser" SrcLoc as GHCParse
+
 evalRequirement :: MonadCompile m => Requirement -> m (Maybe Bool, [String])
 evalRequirement Requirement{..} = do
     results <- fmap concat <$> (sequence <$> mapM checkRule requiredRules)
@@ -65,6 +72,14 @@ withParsedCode check = do
     getParsedCode >>= \pc -> case pc of
         NoParse -> abort
         Parsed m -> check m
+
+withGHCParsedCode :: MonadCompile m
+                  => (GHCParse.HsModule GHCParse.GhcPs -> m Result)
+                  -> m Result
+withGHCParsedCode check = do
+    getGHCParsedCode >>= \pc -> case pc of
+        GHCNoParse -> abort
+        GHCParsed m -> check m       
 
 checkRule :: MonadCompile m => Rule -> m Result
 
@@ -224,7 +239,7 @@ checkRule (NoWarningsExcept ex) = do
              let (SrcSpanInfo (SrcSpan _ l c _ _) _,_,x) = head warns
              failure $ "Warning found at line " ++ show l ++ ", column " ++ show c
 
-checkRule (TypeSignatures b) = withParsedCode $ \m -> do
+checkRule (TypeSignatures b) = withGHCParsedCode $ \m -> do
     let defs = nub $ topLevelNames m
         noTypeSig = defs \\ typeSignatures m
 
@@ -241,8 +256,8 @@ checkRule (Blacklist bl) = withParsedCode $ \m -> do
         nameString (Symbol _ s) = [s]
 
     if | null blacklisted -> success
-       | otherwise -> failure $ "The symbol `" ++ head blacklisted
-           ++ "` is blacklisted."
+        | otherwise -> failure $ "The symbol `" ++ head blacklisted
+            ++ "` is blacklisted."
 
 checkRule (Whitelist wl) = withParsedCode $ \m -> do
     let symbols = nub $ everything (++) (mkQ [] nameString) m
@@ -253,8 +268,8 @@ checkRule (Whitelist wl) = withParsedCode $ \m -> do
         nameString (Symbol _ s) = [s]
 
     if | null notWhitelisted -> success
-       | otherwise -> failure $ "The symbol `" ++ head notWhitelisted
-           ++ "` is not whitelisted."
+        | otherwise -> failure $ "The symbol `" ++ head notWhitelisted
+            ++ "` is not whitelisted."
 
 checkRule _ = abort
 
@@ -268,34 +283,30 @@ allDefinitionsOf a m = everything (++) (mkQ [] funcDefs) m ++
         patDefs :: Decl SrcSpanInfo -> [Rhs SrcSpanInfo]
         patDefs (PatBind _ pat rhs _) | patDefines pat a = [rhs]
         patDefs _ = []
-
-topLevelNames :: Module SrcSpanInfo -> [String]
-topLevelNames (Module _ _ _ _ decls) = concat $ names <$> decls
-  where names :: Decl SrcSpanInfo -> [String]
-        names (FunBind _ xs) = [funcName x | x <- xs]
-        names (PatBind _ pat _ _) = [patName pat]
+        
+topLevelNames :: GHCParse.HsModule GHCParse.GhcPs -> [String]
+topLevelNames (GHCParse.HsModule {hsmodDecls=decls}) = concat $ names <$> decls
+  where names :: GHCParse.LHsDecl GHCParse.GhcPs -> [String]
+        names (GHCParse.L _ (GHCParse.ValD _ GHCParse.FunBind{fun_id=(GHCParse.L _ funid)})) = [idName funid]
+        names (GHCParse.L _ (GHCParse.ValD _ GHCParse.PatBind{pat_lhs=pat})) = [patName pat]
         names _ = []
 
-        funcName :: Match SrcSpanInfo -> String
-        funcName (Match _ (Ident _ s) _ _ _) = s
-        funcName (InfixMatch _ _ (Ident _ s) _ _ _) = s
+        idName :: GHCParse.IdP GHCParse.GhcPs -> String
+        idName = GHCParse.occNameString . GHCParse.rdrNameOcc 
 
-        patName :: Pat SrcSpanInfo -> String
-        patName (PVar _ (Ident _ a)) = a
-        patName (PParen _ pat) = patName pat
+        patName :: GHCParse.LPat GHCParse.GhcPs -> String
+        patName (GHCParse.VarPat _ (GHCParse.L _ patid)) = idName patid
+        patName (GHCParse.ParPat _ pat) = patName pat
         patName _ = []
-        
-topLevelNames _ = []
 
-typeSignatures :: Module SrcSpanInfo -> [String]
-typeSignatures (Module _ _ _ _ decls) = concat $ typeSigNames <$> decls
-  where typeSigNames :: Decl SrcSpanInfo -> [String]
-        typeSigNames (TypeSig _ l _) = nameString <$> l
+typeSignatures :: GHCParse.HsModule GHCParse.GhcPs -> [String]
+typeSignatures (GHCParse.HsModule {hsmodDecls=decls}) = concat $ typeSigNames <$> decls
+  where typeSigNames :: GHCParse.LHsDecl GHCParse.GhcPs -> [String]
+        typeSigNames (GHCParse.L _ (GHCParse.SigD _ (GHCParse.TypeSig _ sigids _))) = locatedIdName <$> sigids
         typeSigNames _ = []
 
-        nameString :: Name SrcSpanInfo -> String
-        nameString (Ident _ s) = s
-        nameString (Symbol _ s) = s
+        locatedIdName :: GHCParse.Located (GHCParse.IdP GHCParse.GhcPs) -> String
+        locatedIdName (GHCParse.L _ s) = GHCParse.occNameString $ GHCParse.rdrNameOcc s
 
 patDefines :: Pat SrcSpanInfo -> String -> Bool
 patDefines (PVar _ (Ident _ aa)) a = a == aa

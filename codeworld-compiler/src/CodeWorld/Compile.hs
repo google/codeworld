@@ -86,7 +86,8 @@ compileSource stage src err mode verbose = fromMaybe CompileAborted <$>
         compileStatus = CompileSuccess,
         compileErrors = [],
         compileReadSource = Nothing,
-        compileParsedSource = Nothing
+        compileParsedSource = Nothing,
+        compileGHCParsedSource = Nothing
         }
     timeout = case stage of
         GenBase _ _ _ _ -> maxBound :: Int

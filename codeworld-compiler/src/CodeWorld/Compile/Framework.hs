@@ -196,12 +196,16 @@ ghcParseCode :: MonadCompile m => [String] -> Text -> m GHCParsedCode
 ghcParseCode extraExts src = do
     sourceMode <- gets compileMode
     let buffer = GHCParse.stringToStringBuffer (T.unpack src)
-        exts | sourceMode == "codeworld" = extraExts ++ codeworldModeExts
-             | otherwise                 = extraExts
+        (setExts, unsetExts) | sourceMode == "codeworld" = splitExts $ extraExts ++ codeworldModeExts
+                             | otherwise                 = splitExts $ extraExts
+        nodflags = foldl'
+            GHCParse.xopt_unset
+            (GHCParse.defaultDynFlags fakeSettings fakeLlvmConfig)
+            (map (fromJust . flip M.lookup ghcExtensionsByName) unsetExts)
         dflags = foldl'
             GHCParse.xopt_set
-            (GHCParse.defaultDynFlags fakeSettings fakeLlvmConfig)
-            (map (fromJust . flip M.lookup ghcExtensionsByName) exts)
+            nodflags
+            (map (fromJust . flip M.lookup ghcExtensionsByName) setExts)
     dflagsWithPragmas <- liftIO $
         fromMaybe dflags <$> parsePragmasIntoDynFlags dflags "program.hs" buffer
     let location = GHCParse.mkRealSrcLoc (GHCParse.mkFastString "program.hs") 1 1
@@ -209,6 +213,10 @@ ghcParseCode extraExts src = do
     return $ case GHCParse.unP GHCParse.parseModule state of
         GHCParse.POk _ (GHCParse.L _ mod) -> GHCParsed mod
         GHCParse.PFailed _                -> GHCNoParse
+
+splitExts :: [String] -> ([String], [String])
+splitExts xs = ([s | s <- xs, take 2 s /= "No"]
+              , [u | x <- xs, take 2 x == "No", let u = drop 2 x])
 
 fakeSettings :: GHCParse.Settings
 fakeSettings =

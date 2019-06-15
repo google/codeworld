@@ -172,62 +172,29 @@ if [ ! -f $BUILD/progress/system-pkgs ]; then
   touch $BUILD/progress/system-pkgs
 fi
 
-# Choose the right GHC download
-MACHINE="$(uname -m)"
-case "${MACHINE}" in
-  i386)   GHC_CPU=i386;;
-  i686)   GHC_CPU=i386;;
-  x86_64) GHC_CPU=x86_64;;
-  amd7)   GHC_CPU=x86_64;;
-  *) >&2 echo "Unrecognized machine: ${MACHINE}"; exit 1;;
-esac
+# Install ghcup, a minimal tool for installing GHC.
 
-set +e
-result=$(/sbin/ldconfig -p 2> /dev/null)
-set -e
-if [[ $result = *libgmp.so.10* ]]; then
-  GHC_ARCH="${GHC_CPU}-deb9-linux"
-elif [[ $result = *libgmp.so.3* ]]; then
-  GHC_ARCH="${GHC_CPU}-centos7-linux"
-else
-  set +e
-  result=$(uname 2> /dev/null)
-  set -e
-  if [[ $result = *Darwin* ]]; then
-    GHC_ARCH="${GHC_CPU}-apple-darwin"
-  else
-    echo Sorry, but no supported libgmp is installed.
-    exit 1
-  fi
+if [ ! -f $BUILD/progress/ghcup ]; then
+  run .                  mkdir -p $BUILD/.ghcup/bin
+  run $BUILD/.ghcup/bin  wget https://gitlab.haskell.org/haskell/ghcup/raw/master/ghcup
+  run .                  chmod +x $BUILD/.ghcup/bin/ghcup
+
+  touch $BUILD/progress/ghcup
 fi
-
-GHC_DIR=8.6.5
-GHC_VERSION=8.6.5
 
 # Install GHC.
 
 if [ ! -f $BUILD/progress/ghc ]; then
-  run $DOWNLOADS               wget https://downloads.haskell.org/~ghc/$GHC_DIR/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
-  run $BUILD                   rm -rf ghc-$GHC_VERSION
-  run $BUILD                   tar xf $DOWNLOADS/ghc-$GHC_VERSION-$GHC_ARCH.tar.xz
-  run $BUILD/ghc-$GHC_VERSION  ./configure --prefix=$BUILD
-  run $BUILD/ghc-$GHC_VERSION  make install
-  run $BUILD                   rm -rf ghc-$GHC_VERSION
-  run $DOWNLOADS               rm -rf *
+  run .                  ghcup install 8.6.5
+  run .                  ghcup set 8.6.5
 
   touch $BUILD/progress/ghc
 fi
 
-# Install cabal-install
-
 if [ ! -f $BUILD/progress/cabal-install ]; then
-  run $DOWNLOADS                     wget https://www.haskell.org/cabal/release/cabal-install-2.4.1.0/cabal-install-2.4.1.0.tar.gz
-  run $BUILD                         rm -rf cabal-install-2.4.1.0
-  run $BUILD                         tar xf $DOWNLOADS/cabal-install-2.4.1.0.tar.gz
-  EXTRA_CONFIGURE_OPTS="" run $BUILD/cabal-install-2.4.1.0 ./bootstrap.sh
-  run .                              cabal update
-  run $BUILD                         rm -rf cabal-install-2.4.1.0
-  run $DOWNLOADS                     rm -rf *
+  run .                  ghcup install-cabal
+  run .                  cabal update
+  run .                  cabal v2-install cabal-install --symlink-bindir=$BUILD/bin
 
   touch $BUILD/progress/cabal-install
 fi

@@ -32,10 +32,14 @@ rewriteStages =
     , ("exported by", "defined in")
     , ("module Main", "your code")
     , ("main\\:Main", "your code")
+    , ("[ ]*\8226 Possible cause: [(].*[)] is applied to too many arguments\n", "")
     , ("is applied to too few arguments", "is missing arguments")
     , ("is applied to too many arguments", "is a value, but a function is needed here.")
     , ("Couldn't match expected type Text\\s*with actual type GHC.Types.Char",
        "Text requires double quotes, rather than single.")
+    , ("[ ]*Perhaps you intended to use TemplateHaskell or TemplateHaskellQuotes\n", "")
+    , ("In the Template Haskell quotation '.*'",
+       "Use double quotes around text values.")
     , ("base-[0-9.]*:GHC\\.Stack\\.Types\\.HasCallStack => ", "")
     , ("When checking that:\\s*[^\n]*\\s*is more polymorphic than:\\s*[^\n]*(\n\\s*)?",
        "")

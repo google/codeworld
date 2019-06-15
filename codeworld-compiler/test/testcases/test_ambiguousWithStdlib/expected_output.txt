@@ -1,4 +1,4 @@
-program.hs:16:21-32: error:
+program.hs:16:21-33: error:
     Ambiguous occurrence codeWorldLogo
     It could refer to either codeWorldLogo,
                              defined in the standard library

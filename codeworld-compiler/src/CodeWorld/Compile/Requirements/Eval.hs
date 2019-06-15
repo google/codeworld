@@ -33,6 +33,7 @@ import Data.Char
 import Data.Either
 import Data.Generics hiding (empty)
 import Data.Hashable
+import Data.List
 import qualified Data.Text as T
 import qualified Data.ByteString.Char8 as C
 import Data.Void
@@ -223,6 +224,38 @@ checkRule (NoWarningsExcept ex) = do
              let (SrcSpanInfo (SrcSpan _ l c _ _) _,_,x) = head warns
              failure $ "Warning found at line " ++ show l ++ ", column " ++ show c
 
+checkRule (TypeSignatures b) = withParsedCode $ \m -> do
+    let defs = nub $ topLevelNames m
+        noTypeSig = defs \\ typeSignatures m
+
+    if | null noTypeSig || not b -> success
+       | otherwise -> failure $ "The declaration of `" ++ head noTypeSig
+           ++ "` has no type signature."
+
+checkRule (Blacklist bl) = withParsedCode $ \m -> do
+    let symbols = nub $ everything (++) (mkQ [] nameString) m
+        blacklisted = intersect bl symbols
+        
+        nameString :: Name SrcSpanInfo -> [String]
+        nameString (Ident _ s) = [s]
+        nameString (Symbol _ s) = [s]
+
+    if | null blacklisted -> success
+       | otherwise -> failure $ "The symbol `" ++ head blacklisted
+           ++ "` is blacklisted."
+
+checkRule (Whitelist wl) = withParsedCode $ \m -> do
+    let symbols = nub $ everything (++) (mkQ [] nameString) m
+        notWhitelisted = symbols \\ wl
+
+        nameString :: Name SrcSpanInfo -> [String]
+        nameString (Ident _ s) = [s]
+        nameString (Symbol _ s) = [s]
+
+    if | null notWhitelisted -> success
+       | otherwise -> failure $ "The symbol `" ++ head notWhitelisted
+           ++ "` is not whitelisted."
+
 checkRule _ = abort
 
 allDefinitionsOf :: String -> Module SrcSpanInfo -> [Rhs SrcSpanInfo]
@@ -236,6 +269,36 @@ allDefinitionsOf a m = everything (++) (mkQ [] funcDefs) m ++
         patDefs (PatBind _ pat rhs _) | patDefines pat a = [rhs]
         patDefs _ = []
 
+topLevelNames :: Module SrcSpanInfo -> [String]
+topLevelNames (Module _ _ _ _ decls) = concat $ names <$> decls
+  where names :: Decl SrcSpanInfo -> [String]
+        names (FunBind _ xs) = [funcName x | x <- xs]
+        names (PatBind _ pat _ _) = [patName pat]
+        names _ = []
+
+        funcName :: Match SrcSpanInfo -> String
+        funcName (Match _ (Ident _ s) _ _ _) = s
+        funcName (InfixMatch _ _ (Ident _ s) _ _ _) = s
+
+        patName :: Pat SrcSpanInfo -> String
+        patName (PVar _ (Ident _ a)) = a
+        patName (PParen _ pat) = patName pat
+        patName _ = []
+        
+topLevelNames _ = []
+
+typeSignatures :: Module SrcSpanInfo -> [String]
+typeSignatures (Module _ _ _ _ decls) = concat $ typeSigNames <$> decls
+  where typeSigNames :: Decl SrcSpanInfo -> [String]
+        typeSigNames (TypeSig _ l _) = nameString <$> l
+        typeSigNames _ = []
+
+        nameString :: Name SrcSpanInfo -> String
+        nameString (Ident _ s) = s
+        nameString (Symbol _ s) = s
+
 patDefines :: Pat SrcSpanInfo -> String -> Bool
 patDefines (PVar _ (Ident _ aa)) a = a == aa
 patDefines (PParen _ pat) a = patDefines pat a
+
+

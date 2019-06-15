@@ -1,4 +1,4 @@
-program.hs:22:7-12: error: 
+program.hs:22:7-13: error: 
     • Couldn't match type [Number] with (Number, Number)
       Expected type: Point
         Actual type: [Number]

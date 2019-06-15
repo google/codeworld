@@ -57,6 +57,9 @@ instance FromJSON Rule where
             , explicitParseFieldMaybe notThis o "not"
             , explicitParseFieldMaybe maxLineLength o "maxLineLength"
             , explicitParseFieldMaybe noWarningsExcept o "noWarningsExcept"
+            , explicitParseFieldMaybe typeSignatures o "typeSignatures"
+            , explicitParseFieldMaybe blacklist o "blacklist"
+            , explicitParseFieldMaybe whitelist o "whitelist"
             ]
         case catMaybes choices of
             [r] -> decorateWith o r
@@ -127,6 +130,15 @@ maxLineLength v = MaxLineLength <$> parseJSON v
 noWarningsExcept :: Aeson.Value -> Aeson.Parser Rule
 noWarningsExcept v = NoWarningsExcept <$> withArray "exceptions" (mapM parseJSON . toList) v
 
+typeSignatures :: Aeson.Value -> Aeson.Parser Rule
+typeSignatures v = TypeSignatures <$> parseJSON v
+
+blacklist :: Aeson.Value -> Aeson.Parser Rule
+blacklist v = Blacklist <$> withArray "blacklist" (mapM parseJSON . toList) v
+
+whitelist :: Aeson.Value -> Aeson.Parser Rule
+whitelist v = Whitelist <$> withArray "whitelist" (mapM parseJSON . toList) v
+
 instance FromJSON Cardinality where
     parseJSON val = parseAsNum val <|> parseAsObj val
       where parseAsNum val = do
@@ -151,6 +163,6 @@ parseRequirement ln col txt
         Yaml.decodeEither' (T.encodeUtf8 txt)
 
 prettyPrintYamlParseException ln col e =
-    formatLocation srcSpan ++ Yaml.prettyPrintParseException e
+    formatLocation srcSpan ++ ": " ++ Yaml.prettyPrintParseException e
   where srcSpan = SrcSpanInfo loc []
         loc     = SrcSpan "program.hs" ln col ln col

@@ -70,7 +70,7 @@ function run {
 }
 
 function cabal_install {
-  cabal v1-install --reorder-goals --disable-library-profiling --force-reinstalls --global --prefix=$BUILD $@
+  cabal v1-install --symlink-bindir=$BUILD/bin --reorder-goals --disable-library-profiling --force-reinstalls --global --prefix=$BUILD $@
 }
 
 function cabal_configure {

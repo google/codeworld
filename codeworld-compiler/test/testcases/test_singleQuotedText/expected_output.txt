@@ -1,0 +1,3 @@
+program.hs:17:7-11: error:
+    • Syntax error on 'foo'
+    • Use double quotes around text values.

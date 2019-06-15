@@ -6,10 +6,9 @@ program.hs:16:23: error:
       In the argument(s) of animationOf, namely (a & b)
       In the expression: animationOf (a & b)
 
-program.hs:16:23-26: error: 
+program.hs:16:23-27: error: 
     • Couldn't match expected type Number -> Picture
                   with actual type Picture
-    • Possible cause: (&) is applied to too many arguments
       In the argument(s) of animationOf, namely (a & b)
       In the expression: animationOf (a & b)
       In an equation for program: program = animationOf (a & b)

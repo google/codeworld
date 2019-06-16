@@ -83,20 +83,22 @@ withGHCParsedCode check = do
 
 checkRule :: MonadCompile m => Rule -> m Result
 
-checkRule (DefinedByFunction a b) = withParsedCode $ \m -> do
-    let defs = allDefinitionsOf a m
+checkRule (DefinedByFunction a b) = withGHCParsedCode $ \m -> do
+    let defs = allDefinitionsOfGHC a m
 
-        isDefinedBy :: String -> Rhs SrcSpanInfo -> Bool
-        isDefinedBy b (UnGuardedRhs _ exp) = isExpOf b exp
-        isDefinedBy b (GuardedRhss _ rhss) =
-            all (\(GuardedRhs _ _ exp) -> isExpOf b exp) rhss
+        isDefinedBy :: String -> (GHCParse.GRHSs GHCParse.GhcPs (GHCParse.LHsExpr GHCParse.GhcPs)) -> Bool
+        isDefinedBy b (GHCParse.GRHSs{grhssGRHSs=rhss}) 
+          = all (\(GHCParse.L _ (GHCParse.GRHS _ _ (GHCParse.L _ exp))) -> isExpOf b exp) rhss
 
-        isExpOf :: String -> Exp SrcSpanInfo -> Bool
-        isExpOf b (Var _ (UnQual _ (Ident _ bb))) = b == bb
-        isExpOf b (App _ exp _) = isExpOf b exp
-        isExpOf b (Let _ _ exp) = isExpOf b exp
-        isExpOf b (Paren _ exp) = isExpOf b exp
+        isExpOf :: String -> (GHCParse.HsExpr GHCParse.GhcPs) -> Bool
+        isExpOf b (GHCParse.HsVar _ (GHCParse.L _ bb)) = b == idName bb
+        isExpOf b (GHCParse.HsApp _ (GHCParse.L _ exp) _) = isExpOf b exp
+        isExpOf b (GHCParse.HsLet _ _ (GHCParse.L _ exp)) = isExpOf b exp
+        isExpOf b (GHCParse.HsPar _ (GHCParse.L _ exp)) = isExpOf b exp
         isExpOf b _ = False
+
+        idName :: GHCParse.IdP GHCParse.GhcPs -> String
+        idName = GHCParse.occNameString . GHCParse.rdrNameOcc
 
     if | null defs -> failure $ "`" ++ a ++ "` is not defined."
        | all (isDefinedBy b) defs -> success

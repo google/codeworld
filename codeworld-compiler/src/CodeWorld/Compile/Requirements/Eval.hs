@@ -139,37 +139,35 @@ checkRule (HasSimpleParams a) = withGHCParsedCode $ \m -> do
        | all isSimpleParam paramPatterns -> success
        | otherwise -> failure $ "`" ++ a ++ "` has equations with pattern matching."
 
-checkRule (UsesAllParams a) = withParsedCode $ \m -> do
+checkRule (UsesAllParams a) = withGHCParsedCode $ \m -> do
     let usesAllParams = everything (&&) (mkQ True targetVarUsesParams) m
 
-        targetVarUsesParams :: Decl SrcSpanInfo -> Bool
-        targetVarUsesParams (FunBind _ ms)
-            | any isTargetMatch ms = all matchUsesAllArgs ms
+        targetVarUsesParams :: (GHCParse.HsBind GHCParse.GhcPs) -> Bool
+        targetVarUsesParams (GHCParse.FunBind{fun_id=(GHCParse.L _ aa), fun_matches=(GHCParse.MG{mg_alts=(GHCParse.L _ ms)})}) 
+            | idName aa == a = all matchUsesAllArgs ms
         targetVarUsesParams _ = True
 
-        isTargetMatch (Match _ (Ident _ aa) _ _ _) = a == aa
-        isTargetMatch (InfixMatch _ _ (Ident _ aa) _ _ _) = a == aa
+        matchUsesAllArgs (GHCParse.L _ (GHCParse.Match{m_pats=ps, m_grhss=rhs})) = uses ps rhs
 
-        matchUsesAllArgs (Match _ _ ps rhs binds) = uses ps rhs binds
-        matchUsesAllArgs (InfixMatch _ p _ ps rhs binds) = uses (p:ps) rhs binds
-
-        uses ps rhs binds =
-            all (\v -> rhsUses v rhs || bindsUses v binds) (patVars ps)
+        uses ps rhs = 
+            all (\v -> rhsUses v rhs) (patVars ps)
 
         patVars ps = concatMap (everything (++) (mkQ [] patShallowVars)) ps
 
-        patShallowVars :: Pat SrcSpanInfo -> [String]
-        patShallowVars (PVar _ (Ident _ v)) = [v]
-        patShallowVars (PNPlusK _ (Ident _ v) _) = [v]
-        patShallowVars (PAsPat _ (Ident _ v) _) = [v]
+        patShallowVars :: GHCParse.LPat GHCParse.GhcPs -> [String]
+        patShallowVars (GHCParse.VarPat _ (GHCParse.L _ v)) = [idName v]
+        patShallowVars (GHCParse.NPlusKPat _ (GHCParse.L _ v) _ _ _ _) = [idName v]
+        patShallowVars (GHCParse.AsPat _ (GHCParse.L _ v) _) = [idName v]
         patShallowVars _ = []
 
         rhsUses v rhs = everything (||) (mkQ False (isVar v)) rhs
-        bindsUses v binds = everything (||) (mkQ False (isVar v)) binds
 
-        isVar :: String -> Exp SrcSpanInfo -> Bool
-        isVar v (Var _ (UnQual _ (Ident _ vv))) = v == vv
+        isVar :: String -> GHCParse.HsExpr GHCParse.GhcPs -> Bool
+        isVar v (GHCParse.HsVar _ (GHCParse.L _ vv)) = v == idName vv
         isVar _ _ = False
+
+        idName :: GHCParse.IdP GHCParse.GhcPs -> String
+        idName = GHCParse.occNameString . GHCParse.rdrNameOcc
 
     if | usesAllParams -> success
        | otherwise -> failure $ "`" ++ a ++ "` has unused arguments."

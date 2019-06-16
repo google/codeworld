@@ -145,6 +145,7 @@ data Picture
              !Picture
     | CoordinatePlane (Maybe SrcLoc)
     | Logo (Maybe SrcLoc)
+    | Sketch (Maybe SrcLoc) !Text !Text
     | Pictures (Maybe SrcLoc) [Picture]
     | PictureAnd (Maybe SrcLoc) [Picture]
     | Blank (Maybe SrcLoc)

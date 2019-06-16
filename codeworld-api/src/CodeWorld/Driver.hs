@@ -55,8 +55,8 @@ import Data.Maybe (fromMaybe, isNothing, mapMaybe)
 import Data.Monoid
 import Data.Serialize
 import Data.Serialize.Text
+import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Text (Text, pack, singleton)
 import qualified Debug.Trace
 import GHC.Exts
 import GHC.Fingerprint.Type
@@ -321,6 +321,7 @@ pictureToDrawing (Lettering _ txt) = Shape $ textDrawer Plain Serif txt
 pictureToDrawing (Blank _) = Drawings $ []
 pictureToDrawing (StyledLettering _ sty fnt txt) = Shape $ textDrawer sty fnt txt
 pictureToDrawing (Logo _) = Shape $ logoDrawer
+pictureToDrawing (Sketch _ _ url) = Shape $ imageDrawer url
 pictureToDrawing (CoordinatePlane _) = Shape $ coordinatePlaneDrawer
 pictureToDrawing (Color _ col p) =
     Transformation (setColorDS col) $ pictureToDrawing p
@@ -371,6 +372,7 @@ sectorDrawer :: MonadCanvas m => Double -> Double -> Double -> Drawer m
 arcDrawer :: MonadCanvas m => Double -> Double -> Double -> Double -> Drawer m
 textDrawer :: MonadCanvas m => TextStyle -> Font -> Text -> Drawer m
 logoDrawer :: MonadCanvas m => Drawer m
+imageDrawer :: MonadCanvas m => Text -> Drawer m
 coordinatePlaneDrawer :: MonadCanvas m => Drawer m
 coordinatePlaneDrawing :: MonadCanvas m => Drawing m
 coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
@@ -386,7 +388,7 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
             [ translated
                 (fromIntegral k)
                 0.3
-                (scaled 0.5 0.5 (lettering (pack (show k))))
+                (scaled 0.5 0.5 (lettering (T.pack (show k))))
             | k <- [-9,-8 .. 9]
             , k /= 0
             ]
@@ -395,7 +397,7 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
             [ translated
                 0.3
                 (fromIntegral k)
-                (scaled 0.5 0.5 (lettering (pack (show k))))
+                (scaled 0.5 0.5 (lettering (T.pack (show k))))
             | k <- [-9,-8 .. 9]
             , k /= 0
             ]
@@ -515,6 +517,9 @@ logoDrawer ds =
               CM.rect (-221) (-91) 442 182
               CM.isPointInPath (0, 0)
     }
+
+imageDrawer url ds =
+    DrawMethods { drawShape = return (), shapeContains = return False }
 
 coordinatePlaneDrawer ds =
     DrawMethods
@@ -774,6 +779,7 @@ describePicture (Dilate _ k _)
   | haskellMode = printf "dilated %s" (showFloat k)
   | otherwise   = printf "dilated(..., %s)" (showFloat k)
 describePicture (Logo _) = "codeWorldLogo"
+describePicture (Sketch _ name _) = T.unpack name
 describePicture (CoordinatePlane _) = "coordinatePlane"
 describePicture (Pictures _ _)
   | haskellMode = "pictures"
@@ -811,6 +817,7 @@ getPictureSrcLoc (Scale loc _ _ _) = loc
 getPictureSrcLoc (Dilate loc _ _) = loc
 getPictureSrcLoc (Rotate loc _ _) = loc
 getPictureSrcLoc (Logo loc) = loc
+getPictureSrcLoc (Sketch loc _ _) = loc
 getPictureSrcLoc (CoordinatePlane loc) = loc
 getPictureSrcLoc (Pictures loc _) = loc
 getPictureSrcLoc (PictureAnd loc _) = loc
@@ -1104,8 +1111,8 @@ keyCodeToText n =
         255 -> "IntlYen"
         _ -> "Unknown:" <> fromNum n
   where
-    fromAscii n = singleton (chr (fromIntegral n))
-    fromNum n = pack (show (fromIntegral n))
+    fromAscii n = T.singleton (chr (fromIntegral n))
+    fromNum n = T.pack (show (fromIntegral n))
 
 isUniversallyConstant :: (a -> s -> s) -> s -> Bool
 isUniversallyConstant f old =
@@ -2251,7 +2258,7 @@ drawControl w alpha (TimeLabel (x,y)) = translated x y p
     p =
         colored
             (RGBA 0 0 0 alpha)
-            (scaled 0.5 0.5 $ lettering (pack (showFFloatAlt (Just 4) (state w) "s"))) <>
+            (scaled 0.5 0.5 $ lettering (T.pack (showFFloatAlt (Just 4) (state w) "s"))) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 3.0 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 3.0 0.8)
 drawControl w alpha (SpeedSlider (x,y)) = translated x y p
@@ -2260,7 +2267,7 @@ drawControl w alpha (SpeedSlider (x,y)) = translated x y p
         colored
             (RGBA 0 0 0 alpha)
             (translated xoff 0.75 $ scaled 0.5 0.5 $
-                 lettering (pack (showFFloatAlt (Just 2) (playbackSpeed w) "x"))) <>
+                 lettering (T.pack (showFFloatAlt (Just 2) (playbackSpeed w) "x"))) <>
         colored (RGBA 0 0 0 alpha) (translated xoff 0 (solidRectangle 0.2 0.8)) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.25) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.25)
@@ -2271,7 +2278,7 @@ drawControl w alpha (ZoomSlider (x,y)) = translated x y p
         colored
             (RGBA 0 0 0 alpha)
             (translated (-1.1) yoff $ scaled 0.5 0.5 $
-                 lettering (pack (show (round (zoomFactor w * 100) :: Int) ++ "%"))) <>
+                 lettering (T.pack (show (round (zoomFactor w * 100) :: Int) ++ "%"))) <>
         colored (RGBA 0 0 0 alpha) (translated 0 yoff (solidRectangle 0.8 0.2)) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.25 2.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.25 2.8)
@@ -2282,7 +2289,7 @@ drawControl w alpha (HistorySlider (x,y)) = translated x y p
         colored
             (RGBA 0 0 0 alpha)
             (translated xoff 0.75 $ scaled 0.5 0.5 $
-                 lettering (pack (show n1 ++ "/" ++ show (n1 + n2)))) <>
+                 lettering (T.pack (show n1 ++ "/" ++ show (n1 + n2)))) <>
         colored (RGBA 0.0 0.0 0.0 alpha) (translated xoff 0 (solidRectangle 0.2 0.8)) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 4.8 0.25) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 4.8 0.25)

@@ -22,14 +22,16 @@ module Util.EmbedAsUrl (embedAsUrl) where
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Char8 as BC
+import qualified Data.ByteString.Unsafe as B
+import qualified Data.Text.Encoding as T
 import Language.Haskell.TH.Syntax
+import System.IO.Unsafe
 
 embedAsUrl :: String -> FilePath -> Q Exp
 embedAsUrl contentType f = do
     qAddDependentFile f
     payload <- runIO $ B64.encode <$> B.readFile f
     let uri = "data:" <> BC.pack contentType <> ";base64," <> payload
-    [e| unsafePerformIO (
-            unsafePackAddressLen
-                $(return $ LitE $ IntegerL $ fromIntegral $ B.length uri)
-                $(return $ LitE $ StringPrimL $ B.unpack uri)) |]
+    [e| T.decodeUtf8 $ unsafePerformIO $ B.unsafePackAddressLen
+            $(return $ LitE $ IntegerL $ fromIntegral $ B.length uri)
+            $(return $ LitE $ StringPrimL $ B.unpack uri) |]

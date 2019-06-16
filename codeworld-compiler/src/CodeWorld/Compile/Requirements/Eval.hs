@@ -165,8 +165,8 @@ checkRule (UsesAllParams a) = withParsedCode $ \m -> do
     if | usesAllParams -> success
        | otherwise -> failure $ "`" ++ a ++ "` has unused arguments."
 
-checkRule (NotDefined a) = withParsedCode $ \m -> do
-    if | null (allDefinitionsOf a m) -> success
+checkRule (NotDefined a) = withGHCParsedCode $ \m -> do
+    if | null (allDefinitionsOfGHC a m) -> success
        | otherwise -> failure $ "`" ++ a ++ "` should not be defined."
 
 checkRule (NotUsed a) = withGHCParsedCode $ \m -> do
@@ -181,17 +181,18 @@ checkRule (NotUsed a) = withGHCParsedCode $ \m -> do
              -> failure $ "`" ++ a ++ "` should not be used."
        | otherwise -> success
 
-checkRule (ContainsMatch tmpl topLevel card) = withParsedCode $ \m -> do
-    tmpl <- parseCode ["TemplateHaskell"] (T.pack tmpl)
+checkRule (ContainsMatch tmpl topLevel card) = withGHCParsedCode $ \m -> do
+    tmpl <- ghcParseCode ["TemplateHaskell"] (T.pack tmpl)
     let n = case tmpl of
-                Parsed (Module _ _ _ _ [tmpl]) ->
+                GHCParsed (GHCParse.HsModule {hsmodDecls=[tmpl]}) ->
                     let decls | topLevel = concat $ gmapQ (mkQ [] id) m
                               | otherwise = everything (++) (mkQ [] (:[])) m
                     in  length (filter (match tmpl) decls)
-                Parsed (Module _ _ _ [tmpl] _) ->
+                GHCParsed (GHCParse.HsModule {hsmodImports=[tmpl]}) ->
                     length $ filter (match tmpl) $ concat $ gmapQ (mkQ [] id) m
+                _ -> 0
     if | hasCardinality card n -> success
-       | otherwise -> failure $ "Wrong number of matches."
+       | otherwise -> failure $ "Wrong number of matches." ++ show n
 
 checkRule (MatchesRegex pat card) = do
     src <- getSourceCode
@@ -284,7 +285,26 @@ allDefinitionsOf a m = everything (++) (mkQ [] funcDefs) m ++
         patDefs :: Decl SrcSpanInfo -> [Rhs SrcSpanInfo]
         patDefs (PatBind _ pat rhs _) | patDefines pat a = [rhs]
         patDefs _ = []
-        
+
+allDefinitionsOfGHC :: String -> GHCParse.HsModule GHCParse.GhcPs -> [GHCParse.GRHSs GHCParse.GhcPs (GHCParse.LHsExpr GHCParse.GhcPs)]
+allDefinitionsOfGHC a m = everything (++) (mkQ [] defs) m
+  where defs :: GHCParse.HsBind GHCParse.GhcPs -> [GHCParse.GRHSs GHCParse.GhcPs (GHCParse.LHsExpr GHCParse.GhcPs)]
+        defs (GHCParse.FunBind{fun_id=(GHCParse.L _ funid), fun_matches=(GHCParse.MG{mg_alts=(GHCParse.L _ matches)})}) | idName funid == a = concat $ funcDefs <$> matches
+        defs (GHCParse.PatBind{pat_lhs=pat, pat_rhs=rhs}) | patDefinesGHC pat a = [rhs]
+        defs _ = []
+
+        funcDefs :: GHCParse.LMatch GHCParse.GhcPs (GHCParse.LHsExpr GHCParse.GhcPs) -> [GHCParse.GRHSs GHCParse.GhcPs (GHCParse.LHsExpr GHCParse.GhcPs)]
+        funcDefs (GHCParse.L _ (GHCParse.Match{m_grhss=rhs})) = [rhs]
+        funcDefs _ = []
+
+        patDefinesGHC :: GHCParse.LPat GHCParse.GhcPs -> String -> Bool
+        patDefinesGHC (GHCParse.VarPat _ (GHCParse.L _ patid)) a = idName patid == a
+        patDefinesGHC (GHCParse.ParPat _ pat) a = patDefinesGHC pat a
+        patDefinesGHC _ a = False
+
+        idName :: GHCParse.IdP GHCParse.GhcPs -> String
+        idName = GHCParse.occNameString . GHCParse.rdrNameOcc
+
 topLevelNames :: GHCParse.HsModule GHCParse.GhcPs -> [String]
 topLevelNames (GHCParse.HsModule {hsmodDecls=decls}) = concat $ names <$> decls
   where names :: GHCParse.LHsDecl GHCParse.GhcPs -> [String]

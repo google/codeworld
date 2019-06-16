@@ -1367,7 +1367,7 @@ function initDirectoryTree() {
             const titleElem = $li.find('.jqtree-element .jqtree-title');
             if (node.type === 'directory' && node.is_open) {
                 titleElem.before(
-                    $('<i class="mdi mdi-18px mdi-folder-outline"></i>')
+                    $('<i class="mdi mdi-18px mdi-folder-open"></i>')
                 );
             } else if (node.type === 'directory') {
                 titleElem.before(
@@ -1486,16 +1486,16 @@ function initDirectoryTree() {
         (event) => {
             const folderIcon = event.node.element.getElementsByClassName('mdi-folder')[0];
             if (folderIcon) {
-                folderIcon.classList.replace('mdi-folder', 'mdi-folder-outline');
+                folderIcon.classList.replace('mdi-folder', 'mdi-folder-open');
             }
         }
     );
     $('#directoryTree').on(
         'tree.close',
         (event) => {
-            const folderIcon = event.node.element.getElementsByClassName('mdi-folder-outline')[0];
+            const folderIcon = event.node.element.getElementsByClassName('mdi-folder-open')[0];
             if (folderIcon) {
-                folderIcon.classList.replace('mdi-folder-outline', 'mdi-folder');
+                folderIcon.classList.replace('mdi-folder-open', 'mdi-folder');
             }
         }
     );

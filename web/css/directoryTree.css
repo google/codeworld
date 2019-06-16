@@ -4,6 +4,7 @@ ul.jqtree-tree {
     color: var(--cw-button-color);
     list-style: none outside;
     font-weight: bold;
+    margin-top: 0;
     margin-left: 0;
     margin-bottom: 0;
     padding: 0;

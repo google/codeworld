@@ -114,19 +114,26 @@ checkRule (MatchesExpected a h) = withParsedCode $ \m -> do
             "`" ++ a ++ "` does not have the expected definition. (" ++
             show computedHash ++ ")"
 
-checkRule (HasSimpleParams a) = withParsedCode $ \m -> do
-    let paramPatterns = everything (++) (mkQ [] matchParams) m
+checkRule (HasSimpleParams a) = withGHCParsedCode $ \m -> do
+    let paramPatterns = everything (++) (mkQ [] funParams) m
 
-        matchParams :: Match SrcSpanInfo -> [Pat SrcSpanInfo]
-        matchParams (Match _ (Ident _ aa) pats _ _) | a == aa = pats
+        funParams :: (GHCParse.HsBind GHCParse.GhcPs) -> [GHCParse.LPat GHCParse.GhcPs]
+        funParams (GHCParse.FunBind{fun_id=(GHCParse.L _ aa), fun_matches=(GHCParse.MG{mg_alts=(GHCParse.L _ matches)})}) | a == idName aa = concat $ matchParams <$> matches
+        funParams _ = []
+
+        matchParams :: (GHCParse.LMatch GHCParse.GhcPs (GHCParse.LHsExpr GHCParse.GhcPs)) -> [GHCParse.LPat GHCParse.GhcPs]
+        matchParams (GHCParse.L _ (GHCParse.Match{m_pats=pats})) = pats
         matchParams _ = []
 
-        isSimpleParam :: Pat SrcSpanInfo -> Bool
-        isSimpleParam (PVar _ (Ident _ nm)) = isLower (head nm)
-        isSimpleParam (PTuple _ _ pats) = all isSimpleParam pats
-        isSimpleParam (PParen _ pat) = isSimpleParam pat
-        isSimpleParam (PWildCard _) = True
+        isSimpleParam :: GHCParse.LPat GHCParse.GhcPs -> Bool
+        isSimpleParam (GHCParse.VarPat _ (GHCParse.L _ nm)) = isLower (head (idName nm))
+        isSimpleParam (GHCParse.TuplePat _ pats _) = all isSimpleParam pats
+        isSimpleParam (GHCParse.ParPat _ pat) = isSimpleParam pat
+        isSimpleParam (GHCParse.WildPat _) = True
         isSimpleParam _ = False
+
+        idName :: GHCParse.IdP GHCParse.GhcPs -> String
+        idName = GHCParse.occNameString . GHCParse.rdrNameOcc
 
     if | null paramPatterns -> failure $ "`" ++ a ++ "` is not defined as a function."
        | all isSimpleParam paramPatterns -> success
@@ -183,19 +190,18 @@ checkRule (NotUsed a) = withGHCParsedCode $ \m -> do
              -> failure $ "`" ++ a ++ "` should not be used."
        | otherwise -> success
 
-checkRule (ContainsMatch tmpl topLevel card) = withGHCParsedCode $ \m -> do
-    tmpl <- ghcParseCode ["TemplateHaskell"] (T.pack tmpl)
+checkRule (ContainsMatch tmpl topLevel card) = withParsedCode $ \m -> do
+    tmpl <- parseCode ["TemplateHaskell"] (T.pack tmpl)
     let n = case tmpl of
-                GHCParsed (GHCParse.HsModule {hsmodDecls=[tmpl]}) ->
+                Parsed (Module _ _ _ _ [tmpl]) ->
                     let decls | topLevel = concat $ gmapQ (mkQ [] id) m
-                              | otherwise = everything (++) (mkQ [] (:[])) m
+                                | otherwise = everything (++) (mkQ [] (:[])) m
                     in  length (filter (match tmpl) decls)
-                GHCParsed (GHCParse.HsModule {hsmodImports=[tmpl]}) ->
+                Parsed (Module _ _ _ [tmpl] _) ->
                     length $ filter (match tmpl) $ concat $ gmapQ (mkQ [] id) m
-                _ -> 0
     if | hasCardinality card n -> success
-       | otherwise -> failure $ "Wrong number of matches." ++ show n
-
+        | otherwise -> failure $ "Wrong number of matches."
+    
 checkRule (MatchesRegex pat card) = do
     src <- getSourceCode
     let n = rangeSize (bounds (src =~ pat :: MatchArray))

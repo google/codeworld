@@ -1525,12 +1525,12 @@ function initDirectoryTree() {
             // Cancel deselection of project 
             if (event.node.type === 'project' && $('#directoryTree').tree('isNodeSelected', event.node)) {
                 event.preventDefault();
-            }
 
-            if (event.node.type === 'project') {
-                const node = event.node;
-                const path = pathToRootDir(node);
-                loadProject(node.name, path);
+                warnIfUnsaved(() => {
+                    const node = event.node;
+                    const path = pathToRootDir(node);
+                    loadProject(node.name, path);
+                });
             }
         }
     );

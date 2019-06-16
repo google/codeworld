@@ -194,8 +194,8 @@
     --message-error-gutter: red;
     --message-warning-gutter: yellow;
     --message-log-gutter: blue;
-    --loader-border: #000000;
-    --loader-border-top: #000000;
+    --loader-border: #333;
+    --loader-border-top: #000;
     --dropbox-bg: #000000;
     --dropbox-border: #333333;
     --ui-layout-resizer-dialog: #BBBBBB;

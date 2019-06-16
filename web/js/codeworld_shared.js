@@ -695,10 +695,11 @@ function loadSubTree(node, callback) {
                     ),
                     node
                 );
+                $('#directoryTree').tree('openNode', node);
                 if (callback) callback();
             }
             updateUI();
-            hideLoadingAnimation(node);
+            hideLoadingAnimation();
         });
     } else {
         updateUI();
@@ -713,6 +714,7 @@ function discoverProjects(path) {
         showLoadingAnimation();
         sendHttp('POST', 'listFolder', data, request => {
             if (request.status === 200) {
+                hideLoadingAnimation();
                 $('#directoryTree').tree(
                     'loadData',
                     JSON.parse(request.responseText).sort(
@@ -722,7 +724,6 @@ function discoverProjects(path) {
                     ));
             }
             updateUI();
-            hideLoadingAnimation();
         });
     } else updateUI();
 }
@@ -1569,40 +1570,41 @@ function getNearestDirectory(node) {
 }
 
 function showLoadingAnimation(node) {
-    let selected;
-    if (node) {
-        selected = node;
-    } else {
-        selected = $('#directoryTree').tree('getSelectedNode');
+    if (!node) {
+        node = $('#directoryTree').tree('getTree');
     }
-    if (!selected) {
-        selected = $('#directoryTree').tree('getTree');
+    if (node === $('#directoryTree').tree('getTree')) {
+        $('#directoryTree').tree(
+            'appendNode', {
+                name: 'Loading...',
+                type: 'loadNotification'
+            },
+            node
+        );
     }
-    $('#directoryTree').tree(
-        'appendNode', {
-            name: 'Loading...',
-            type: 'loadNotification'
-        },
-        selected
-    );
+    else {
+        let target = node.element.getElementsByClassName('jqtree-title jqtree_common')[0];
+        let elem = document.createElement('div');
+        elem.classList.add('loader'); // float left
+        elem.style.marginLeft='5px';
+        target.after(elem);
+    }
 }
 
 function hideLoadingAnimation(node) {
-    let selected;
-    if (node) {
-        selected = node;
-    } else {
-        selected = $('#directoryTree').tree('getSelectedNode');
+    if (!node) {
+        node = $('#directoryTree').tree('getTree');
     }
-    if (selected) {
-        selected.children.filter(
+    if (node === $('#directoryTree').tree('getTree')) {
+        node.children.filter(
             (c) => {
                 return c.type === 'loadNotification';
             }
         ).forEach((c) => {
             $('#directoryTree').tree('removeNode', c);
         });
-
+    } else {
+        $('.loader').remove();
     }
 }
 

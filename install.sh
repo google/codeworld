@@ -244,5 +244,9 @@ if [ ! -f $BUILD/progress/codemirror ]; then
   touch $BUILD/progress/codemirror
 fi
 
+# Fetch third_party/blockly submodule
+run . git submodule init
+run . git submodule update
+
 # Go ahead and run a first build, which installs more local packages.
 ./build.sh

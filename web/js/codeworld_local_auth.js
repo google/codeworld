@@ -378,7 +378,7 @@ window.LocalAuth = (() => {
             signIn: options => signIn(), // ignore any Google auth-specific options
             signOut: signOut,
             sendHttpAuth: sendHttpAuth
-        }
+        };
     };
 
     $(() => {

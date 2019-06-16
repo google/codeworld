@@ -270,16 +270,16 @@ div.fade {
 
 .CodeMirror-hover-tooltip div.fade {
     background-image: linear-gradient(to bottom,
-        var(--hover-tooltip-grad-start) 0em,
-        var(--hover-tooltip-grad-start) 17em,
-        var(--hover-tooltip) 20em);
+            var(--hover-tooltip-grad-start) 0em,
+            var(--hover-tooltip-grad-start) 17em,
+            var(--hover-tooltip) 20em);
 }
 
 .hint-description div.fade {
     background-image: linear-gradient(to bottom,
-        var(--hover-tooltip-grad-start) 0em,
-        var(--hover-tooltip-grad-start) 11.2em,
-        var(--hover-tooltip) 14.2em);
+            var(--hover-tooltip-grad-start) 0em,
+            var(--hover-tooltip-grad-start) 11.2em,
+            var(--hover-tooltip) 14.2em);
 }
 
 .hover-doc {

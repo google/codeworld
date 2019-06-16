@@ -152,9 +152,10 @@ site ctx =
             [ ("loadProject", loadProjectHandler ctx)
             , ("saveProject", saveProjectHandler ctx)
             , ("deleteProject", deleteProjectHandler ctx)
-            , ("listFolder", listFolderHandler ctx)
             , ("createFolder", createFolderHandler ctx)
             , ("deleteFolder", deleteFolderHandler ctx)
+            , ("listFolder", listFolderHandler ctx)
+            , ("updateChildrenIndexes", updateChildrenIndexesHandler ctx)
             , ("shareFolder", shareFolderHandler ctx)
             , ("shareContent", shareContentHandler ctx)
             , ("moveProject", moveProjectHandler ctx)
@@ -188,15 +189,17 @@ createFolderHandler :: CodeWorldHandler
 createFolderHandler = private $ \userId ctx -> do
     mode <- getBuildMode
     Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
-    let dirIds = map (nameToDirId . T.pack) path
-    let finalDir = joinPath $ map dirBase dirIds
+    let pathText = map T.pack path
+        dirIds = map nameToDirId pathText
+        finalDir = joinPath $ map dirBase dirIds
+        name = last pathText
     liftIO $ ensureUserBaseDir mode userId finalDir
     liftIO $ createDirectory $ userProjectDir mode userId </> finalDir
     modifyResponse $ setContentType "text/plain"
     liftIO $
-        B.writeFile
-            (userProjectDir mode userId </> finalDir </> "dir.info") $
-        BC.pack $ last path
+        T.writeFile
+            (userProjectDir mode userId </> finalDir </> "dir.info")
+            name
 
 deleteFolderHandler :: CodeWorldHandler
 deleteFolderHandler = private $ \userId ctx -> do
@@ -262,10 +265,23 @@ listFolderHandler = private $ \userId ctx -> do
     liftIO $ ensureUserBaseDir mode userId finalDir
     liftIO $ ensureUserDir mode userId finalDir
     let projectDir = userProjectDir mode userId
-    files <- liftIO $ projectFileNames (projectDir </> finalDir)
-    dirs <- liftIO $ projectDirNames (projectDir </> finalDir)
+    entries <- liftIO $ fsEntries (projectDir </> finalDir)
     modifyResponse $ setContentType "application/json"
-    writeLBS (encode (Directory files dirs))
+    writeLBS (encode entries)
+
+-- | Update order of elements inside of given directory
+updateChildrenIndexesHandler :: CodeWorldHandler
+updateChildrenIndexesHandler = private $ \userId ctx -> do
+    mode <- getBuildMode
+    let projectDir = userProjectDir mode userId
+    Just path <- fmap ((\p -> projectDir </> p </> "order.info") .
+                        joinPath . (map (dirBase . nameToDirId . T.pack)) .
+                        splitDirectories . BC.unpack)
+                    <$> getParam "path"
+    param <- getParam "entries"
+    -- Encoding just to check if request param is correct
+    Just entries <- decodeStrict . fromJust <$> getParam "entries" :: Snap (Maybe [FileSystemEntry])
+    liftIO $ LB.writeFile path $ encode entries
 
 shareFolderHandler :: CodeWorldHandler
 shareFolderHandler = private $ \userId ctx -> do
@@ -290,14 +306,15 @@ shareContentHandler = private $ \userId ctx -> do
         liftIO $
         B.readFile
             (shareRootDir mode </> shareLink (ShareId $ T.decodeUtf8 shash))
-    Just name <- getParam "name"
-    let dirPath = dirBase $ nameToDirId $ T.decodeUtf8 name
+    Just nameBC <- getParam "name"
+    let name = T.decodeUtf8 nameBC
+        dirPath = dirBase $ nameToDirId name
     liftIO $ ensureUserBaseDir mode userId dirPath
     liftIO $
         copyDirIfExists (BC.unpack sharingFolder) $
         userProjectDir mode userId </> dirPath
     liftIO $
-        B.writeFile
+        T.writeFile
             (userProjectDir mode userId </> dirPath </> "dir.info")
             name
 

@@ -1,6 +1,9 @@
-build/
-data
-log/
+/build/
+/data
+/log/
+/nohup.out
+/codeworld-auth.txt
+/codeworld-auth.db
 dist
 *.o
 *.js_o
@@ -8,8 +11,3 @@ dist
 *.hi
 *.jsexe
 *.swp
-nohup.out
-web/closure-library
-third_party/closure-library
-/codeworld-auth.txt
-/codeworld-auth.db

@@ -19,6 +19,9 @@ Description:
   package to provide a webpage consisting of just a panel locally. This way, the same
   program that runs on the CodeWorld server can also be run locally.
 
+Extra-source-files:    data/README.md,
+                       data/*.svg
+
 Library
   Exposed:             True
   Hs-source-dirs:      src

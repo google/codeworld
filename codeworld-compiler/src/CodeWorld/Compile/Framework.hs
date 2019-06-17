@@ -215,10 +215,6 @@ ghcParseCode extraExts src = do
         GHCParse.POk _ (GHCParse.L _ mod) -> GHCParsed mod
         GHCParse.PFailed _                -> GHCNoParse
 
-splitExts :: [String] -> ([String], [String])
-splitExts xs = ([s | s <- xs, take 2 s /= "No"]
-              , [u | x <- xs, take 2 x == "No", let u = drop 2 x])
-
 fakeSettings :: GHCParse.Settings
 fakeSettings =
     GHCParse.Settings {

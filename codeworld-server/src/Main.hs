@@ -56,9 +56,10 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
+import qualified Data.Vector as V
 import HIndent (reformat)
 import HIndent.Types (defaultConfig)
-import Network.HTTP.Conduit
+import Network.HTTP.Simple
 import Snap.Core
 import Snap.Http.Server (quickHttpServe)
 import Snap.Util.FileServe
@@ -67,8 +68,6 @@ import System.Directory
 import System.FileLock
 import System.FilePath
 import System.IO.Temp
-import System.Log.FastLogger
-import System.Log.FastLogger.Date
 
 import Model
 import Util
@@ -83,8 +82,7 @@ data Context = Context {
     authConfig :: AuthConfig,
     compileSem :: MSem Int,
     errorSem :: MSem Int,
-    baseSem :: MSem Int,
-    userReportLogger :: TimedFastLogger
+    baseSem :: MSem Int
     }
 
 main :: IO ()
@@ -95,13 +93,10 @@ main = do
 
 makeContext :: IO Context
 makeContext = do
-    timeCache <- newTimeCache simpleTimeFormat
-    let logType = LogFileNoRotate ("data" </> "user_reports.log") 0
     ctx <- Context <$> (getAuthConfig =<< getCurrentDirectory)
                    <*> MSem.new maxSimultaneousCompiles
                    <*> MSem.new maxSimultaneousErrorChecks
                    <*> MSem.new 1
-                   <*> (fst <$> newTimedFastLogger timeCache logType)
     putStrLn $ "Authentication method: " ++ authMethod (authConfig ctx)
     return ctx
 
@@ -514,8 +509,22 @@ galleryItemFromProject mode@(BuildMode modeName) folder name = do
 logHandler :: CodeWorldHandler
 logHandler = public $ \ctx -> do
     Just message <- getParam "message"
-    let logLine t = "[" <> toLogStr t <> "] " <> toLogStr message <> "\n"
-    liftIO $ userReportLogger ctx logLine
+    liftIO $ do
+        let body = object [
+                ("title", String "User-reported unhelpful error message"),
+                ("body", String (T.decodeUtf8 message)),
+                ("labels", Array (V.fromList ["error-message"]))
+                ]
+        authToken <- B.readFile "github-auth-token.txt"
+        let authHeader = "token " <> authToken
+        let userAgent = "https://code.world github integration by cdsmith"
+        request <-
+            addRequestHeader "Authorization" authHeader <$>
+            addRequestHeader "User-agent" userAgent <$>
+            setRequestBodyJSON body <$>
+            parseRequestThrow "POST https://api.github.com/repos/google/codeworld/issues"
+        httpNoBody request
+    return ()
 
 responseCodeFromCompileStatus :: CompileStatus -> Int
 responseCodeFromCompileStatus CompileSuccess = 200

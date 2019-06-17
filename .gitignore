@@ -4,6 +4,7 @@
 /nohup.out
 /codeworld-auth.txt
 /codeworld-auth.db
+/github-auth-token.txt
 dist
 *.o
 *.js_o

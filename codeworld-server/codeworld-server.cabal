@@ -52,7 +52,8 @@ Executable codeworld-server
     snap-server,
     temporary,
     text,
-    unix
+    unix,
+    vector
 
   Ghc-options: -threaded
                -Wall

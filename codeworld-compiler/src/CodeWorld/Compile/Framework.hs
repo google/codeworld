@@ -179,7 +179,7 @@ codeworldModeExts =
 parseCode :: MonadCompile m => [String] -> Text -> m ParsedCode
 parseCode extraExts src = do
     sourceMode <- gets compileMode
-    let exts | sourceMode == "codeworld" = extraExts ++ codeworldModeExts
+    let exts | sourceMode == "codeworld" = codeworldModeExts ++ extraExts
              | otherwise                 = extraExts
         mode = defaultParseMode { parseFilename = "program.hs",
                                   extensions = map parseExtension exts }
@@ -203,7 +203,7 @@ ghcParseCode :: MonadCompile m => [String] -> Text -> m GHCParsedCode
 ghcParseCode extraExts src = do
     sourceMode <- gets compileMode
     let buffer = GHCParse.stringToStringBuffer (T.unpack src)
-        exts | sourceMode == "codeworld" = extraExts ++ codeworldModeExts
+        exts | sourceMode == "codeworld" = codeworldModeExts ++ extraExts
              | otherwise                 = extraExts
         defaultFlags = GHCParse.defaultDynFlags fakeSettings fakeLlvmConfig
         dflags = foldl' applyExtensionToFlags defaultFlags exts

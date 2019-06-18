@@ -1046,16 +1046,36 @@ function loadProject_(path, name, buildMode, successFunc) {
         updateUI();
         return;
     }
+
+    sweetAlert({
+        title: Alert.title(`Loading ${name} ...`),
+        text: 'Please wait.',
+        showConfirmButton: false,
+        showCancelButton: false,
+        showCloseButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        allowEnterKey: false
+    });
+
+    clearCode();
+
     const data = new FormData();
     data.append('name', name);
     data.append('mode', buildMode);
     data.append('path', path);
 
     sendHttp('POST', 'loadProject', data, request => {
+        sweetAlert.close();
         if (request.status === 200) {
             const project = JSON.parse(request.responseText);
             successFunc(project);
             updateUI();
+        } else {
+            sweetAlert('Oops!',
+                'Could not load the project!!!  Please try again.',
+                'error');
+            return;
         }
     });
 }

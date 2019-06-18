@@ -1503,38 +1503,29 @@ function initDirectoryTree() {
         }
     );
     $('#directoryTree').on(
-        'tree.select',
+        'tree.click',
         (event) => {
+            event.preventDefault();
+            // Deselection of selected project. Cancel it and do nothing.
+            if (event.node.type === 'project' && $('#directoryTree').tree('isNodeSelected', event.node)) {
+                return;
+            }
             warnIfUnsaved(() => {
-                if (event.node && event.node.type === 'project') {
+                if (event.node.type === 'project') {
                     const node = event.node;
                     const path = pathToRootDir(node);
                     window.openProjectName = node.name;
                     loadProject(node.name, path);
-                } else if (event.node && event.node.type === 'directory') {
+                    $('#directoryTree').tree('selectNode', event.node)
+                } else if (event.node.type === 'directory') {
                     if (event.node.children.length === 0) {
                         loadSubTree(event.node);
                     }
                     clearCode();
+                    $('#directoryTree').tree('selectNode', event.node);
                 }
-                updateUI();
-            });
-        }
-    );
-
-    $('#directoryTree').on(
-        'tree.click',
-        (event) => {
-            // Cancel deselection of project 
-            if (event.node.type === 'project' && $('#directoryTree').tree('isNodeSelected', event.node)) {
-                event.preventDefault();
-
-                warnIfUnsaved(() => {
-                    const node = event.node;
-                    const path = pathToRootDir(node);
-                    loadProject(node.name, path);
-                });
-            }
+            })
+            updateUI();
         }
     );
 }

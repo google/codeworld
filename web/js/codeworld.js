@@ -702,14 +702,12 @@ function setCode(code, history, name, autostart) {
 function loadSample(code) {
     if (isEditorClean()) sweetAlert.close();
     warnIfUnsaved(() => {
-        clearWorkspace();
         setCode(code);
     });
 }
 
 function newProject() {
     warnIfUnsaved(() => {
-        clearWorkspace();
         setCode('');
     });
 }

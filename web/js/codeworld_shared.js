@@ -1377,10 +1377,13 @@ function initDirectoryTree() {
                 titleElem.before(
                     $('<div style="float: left" class="loader"></div>')
                 );
-            } else {
+            } else if (node.type === 'project') {
+                const asterisk = $('<i class="unsaved-changes"></i>')
+                asterisk.css('display', 'none');
                 titleElem.before(
                     $('<i class="mdi mdi-18px mdi-cube"></i>')
                 );
+                titleElem.after(asterisk);
             }
         }
     });

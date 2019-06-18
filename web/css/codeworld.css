@@ -578,3 +578,10 @@ details a:active {
     color: var(--wrong-login-color) !important;
     background: var(--wrong-login-background) !important;
 }
+
+.unsaved-changes::before {
+    font-size: 8px !important;
+    vertical-align: super;
+    content: "\F6C3";
+    font: normal normal normal 24px/1 "Material Design Icons";
+}

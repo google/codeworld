@@ -295,8 +295,8 @@ data DrawState =
 
 -- | @(AffineTransformation a b c d e f)@ represents an affine transformation matrix
 --
--- > a b e
--- > c d f
+-- > a c e
+-- > b d f
 -- > 0 0 1
 --
 -- References:

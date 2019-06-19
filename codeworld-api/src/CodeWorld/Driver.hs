@@ -288,9 +288,31 @@ instance Monoid (Drawing m) where
     mappend a b = Drawings [a, b]
     mconcat = Drawings
 
--- A DrawState is an affine transformation matrix, plus a Bool indicating whether
--- a color has been chosen yet.
-type DrawState = (Double, Double, Double, Double, Double, Double, Maybe Color)
+data DrawState =
+    DrawState
+        !AffineTransformation
+        !(Maybe Color) -- ^ A 'Color', if already chosen.
+
+-- | @(AffineTransformation a b c d e f)@ represents an affine transformation matrix
+--
+-- > a b e
+-- > c d f
+-- > 0 0 1
+--
+-- References:
+-- https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/transform
+-- https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations
+data AffineTransformation =
+    AffineTransformation !Double !Double !Double !Double !Double !Double
+
+initialAffineTransformation :: AffineTransformation
+initialAffineTransformation = AffineTransformation 1 0 0 1 0 0
+
+mapDSAT :: (AffineTransformation -> AffineTransformation) -> DrawState -> DrawState
+mapDSAT f (DrawState at mc) = DrawState (f at) mc
+
+mapDSColor :: (Maybe Color -> Maybe Color) -> DrawState -> DrawState
+mapDSColor f (DrawState at mc) = DrawState at (f mc)
 
 -- A NodeId a unique id for each node in a Picture of Drawing, chosen by the order
 -- the node appears in DFS. When a Picture is converted to a drawing the NodeId's of
@@ -337,34 +359,38 @@ pictureToDrawing (Pictures _ ps) = Drawings $ pictureToDrawing <$> ps
 pictureToDrawing (PictureAnd _ ps) = Drawings $ pictureToDrawing <$> ps
 
 initialDS :: DrawState
-initialDS = (1, 0, 0, 1, 0, 0, Nothing)
+initialDS = DrawState initialAffineTransformation Nothing
 
 translateDS :: Double -> Double -> DrawState -> DrawState
-translateDS x y (a, b, c, d, e, f, hc) =
-    (a, b, c, d, a * 25 * x + c * 25 * y + e, b * 25 * x + d * 25 * y + f, hc)
+translateDS x y = mapDSAT $ \(AffineTransformation a b c d e f) ->
+    AffineTransformation
+        a b c d
+        (a * 25 * x + c * 25 * y + e)
+        (b * 25 * x + d * 25 * y + f)
 
 scaleDS :: Double -> Double -> DrawState -> DrawState
-scaleDS x y (a, b, c, d, e, f, hc) = (x * a, x * b, y * c, y * d, e, f, hc)
+scaleDS x y = mapDSAT $ \(AffineTransformation a b c d e f) ->
+    AffineTransformation (x * a) (x * b) (y * c) (y * d) e f
 
 rotateDS :: Double -> DrawState -> DrawState
-rotateDS r (a, b, c, d, e, f, hc) =
-    ( a * cos r + c * sin r
-    , b * cos r + d * sin r
-    , c * cos r - a * sin r
-    , d * cos r - b * sin r
-    , e
-    , f
-    , hc)
+rotateDS r = mapDSAT $ \(AffineTransformation a b c d e f) ->
+    AffineTransformation
+        (a * cos r + c * sin r)
+        (b * cos r + d * sin r)
+        (c * cos r - a * sin r)
+        (d * cos r - b * sin r)
+        e
+        f
 
 setColorDS :: Color -> DrawState -> DrawState
-setColorDS col (a, b, c, d, e, f, Nothing) = (a, b, c, d, e, f, Just col)
-setColorDS col@(RGBA _ _ _ 0) (a, b, c, d, e, f, _) =
-    (a, b, c, d, e, f, Just col)
-setColorDS (RGBA _ _ _ alpha1) (a, b, c, d, e, f, Just (RGBA rr gg bb alpha2)) =
-    (a, b, c, d, e, f, Just (RGBA rr gg bb (alpha1 * alpha2)))
+setColorDS col = mapDSColor $ \mcol ->
+    case (col, mcol) of
+        (_, Nothing) -> Just col
+        (RGBA _ _ _ 0, Just _) -> Just col
+        (RGBA _ _ _ alpha, Just (RGBA rr gg bb alpha0)) -> Just (RGBA rr gg bb (alpha0 * alpha))
 
 getColorDS :: DrawState -> Maybe Color
-getColorDS (a, b, c, d, e, f, col) = col
+getColorDS (DrawState at col) = col
 
 polygonDrawer :: MonadCanvas m => [Point] -> Bool -> Drawer m
 pathDrawer :: MonadCanvas m => [Point] -> Double -> Bool -> Bool -> Drawer m
@@ -403,7 +429,7 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
             ]
 
 withDS :: MonadCanvas m => DrawState -> m a -> m a
-withDS (ta, tb, tc, td, te, tf, col) action = CM.saveRestore $ do
+withDS (DrawState (AffineTransformation ta tb tc td te tf) col) action = CM.saveRestore $ do
     CM.transform ta tb tc td te tf
     CM.beginPath
     action
@@ -1705,8 +1731,8 @@ highlightSelectShape h s drawing
         (\(node, ds) -> highlightDrawing ds node) <$> getDrawNode n drawing
 
 highlightDrawing :: MonadCanvas m => DrawState -> Drawing m -> Drawing m
-highlightDrawing (a, b, c, d, e, f, _) drawing =
-    Transformation (\_ -> (a, b, c, d, e, f, Just col')) drawing
+highlightDrawing (DrawState at _) drawing =
+    Transformation (\_ -> DrawState at (Just col')) drawing
   where
     col' = RGBA 0 0 0 0.25
 

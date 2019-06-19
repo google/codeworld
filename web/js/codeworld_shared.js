@@ -1324,9 +1324,12 @@ function sendUnhelpfulReport(event, message) {
         if (!result || result.dismiss !== sweetAlert.DismissReason.confirm) return;
 
         const data = new FormData();
-        let report = window.location.href;
-        if (result.value) report += `\n${result.value}`;
-        report += `\n${message}`;
+        data.append('title', 'User-reported unhelpful error message');
+        data.append('label', 'error-message');
+
+        let report = `**Program:** ${window.location.href}`;
+        if (result.value) report += `\n\n**Comment:**\n\n${result.value}`;
+        report += `\n\n**Message:**\n\n${message.replace(/^/gm, '    ')}`;
         data.append('message', report);
         sendHttp('POST', 'log', data);
         sweetAlert({

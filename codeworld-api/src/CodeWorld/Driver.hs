@@ -972,9 +972,9 @@ foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
                      -> IO ()
 
 picToObj :: Picture -> IO JSVal
-picToObj = fmap fst . flip State.runStateT 0 . picToObj'
+picToObj = fmap fst . flip State.runStateT (NodeId 0) . picToObj'
 
-picToObj' :: Picture -> State.StateT Int IO JSVal
+picToObj' :: Picture -> State.StateT NodeId IO JSVal
 picToObj' pic = objToJSVal <$> case pic of
     Pictures _ ps -> mkNodeWithChildren ps
     PictureAnd _ ps -> mkNodeWithChildren ps
@@ -985,15 +985,15 @@ picToObj' pic = objToJSVal <$> case pic of
     Rotate _ _ p -> mkNodeWithChild p
     _ -> mkSimpleNode
   where
-    mkSimpleNode :: State.StateT Int IO Object
+    mkSimpleNode :: State.StateT NodeId IO Object
     mkSimpleNode = do
         obj <- liftIO create
         id <- do
             currentId <- State.get
-            State.put (currentId + 1)
+            State.modify' succ
             return currentId
         liftIO $ do
-            setProp "id" (pToJSVal id) obj
+            setProp "id" (pToJSVal $ getNodeId id) obj
             setProp "name" (pToJSVal $ (trim 80 . describePicture) pic) obj
             case getPictureSrcLoc pic of
                 Just loc -> do
@@ -1004,14 +1004,14 @@ picToObj' pic = objToJSVal <$> case pic of
                 Nothing -> return ()
         return obj
 
-    mkNodeWithChild :: Picture -> State.StateT Int IO Object
+    mkNodeWithChild :: Picture -> State.StateT NodeId IO Object
     mkNodeWithChild p = do
         obj <- mkSimpleNode
         subPic <- picToObj' p
         liftIO $ setProp "picture" subPic obj
         return obj
 
-    mkNodeWithChildren :: [Picture] -> State.StateT Int IO Object
+    mkNodeWithChildren :: [Picture] -> State.StateT NodeId IO Object
     mkNodeWithChildren ps = do
         obj <- mkSimpleNode
         arr <- liftIO $ Array.create

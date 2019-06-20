@@ -15,6 +15,7 @@
     "Appendix: Editor":    "help/editor.md",
     "Appendix: Examples":  "help/examples.md",
     "Appendix: Reference": "doc/Prelude.html",
+    "Appendix: Reference (Extras.Colors)": "doc/Extras-Colors.html",
     "Appendix: Reference (Extras.Cw)": "doc/Extras-Cw.html",
     "Appendix: Reference (Extras.Turtle)": "doc/Extras-Turtle.html",
     "Appendix: Reference (Extras.Util)": "doc/Extras-Util.html",

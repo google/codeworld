@@ -203,14 +203,16 @@ tickGame state =
     modifyMVar_ (totalStats state) $ \ts ->
         return $! ts {totalGames = totalGames ts + 1}
 
-deriving instance Generic GCStats
+deriving instance Generic RTSStats
+deriving instance Generic GCDetails
 
-instance ToJSON GCStats
+instance ToJSON RTSStats
+instance ToJSON GCDetails
 
 data ServerStats =
     ServerStats CurrentStats
                 TotalStats
-                GCStats
+                RTSStats
 
 -- | merge the fields of 'CurrentStats' and 'TotalStats'
 instance ToJSON ServerStats where
@@ -236,7 +238,7 @@ gameStats :: MonadSnap m => ServerState -> m ()
 gameStats state = do
     cs <- tally <$> liftIO (allGames state)
     ts <- liftIO $ readMVar (totalStats state)
-    gs <- liftIO $ getGCStats
+    gs <- liftIO $ getRTSStats
     let stats = ServerStats cs ts gs
     modifyResponse $ setHeader "Content-Type" "application/json"
     writeLBS (encode stats)

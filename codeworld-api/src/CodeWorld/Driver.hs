@@ -55,8 +55,8 @@ import Data.Maybe (fromMaybe, isNothing, mapMaybe)
 import Data.Monoid
 import Data.Serialize
 import Data.Serialize.Text
+import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Text (Text, pack, singleton)
 import qualified Debug.Trace
 import GHC.Exts
 import GHC.Fingerprint.Type
@@ -288,9 +288,31 @@ instance Monoid (Drawing m) where
     mappend a b = Drawings [a, b]
     mconcat = Drawings
 
--- A DrawState is an affine transformation matrix, plus a Bool indicating whether
--- a color has been chosen yet.
-type DrawState = (Double, Double, Double, Double, Double, Double, Maybe Color)
+data DrawState =
+    DrawState
+        !AffineTransformation
+        !(Maybe Color) -- ^ A 'Color', if already chosen.
+
+-- | @(AffineTransformation a b c d e f)@ represents an affine transformation matrix
+--
+-- > a c e
+-- > b d f
+-- > 0 0 1
+--
+-- References:
+-- https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/transform
+-- https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations
+data AffineTransformation =
+    AffineTransformation !Double !Double !Double !Double !Double !Double
+
+initialAffineTransformation :: AffineTransformation
+initialAffineTransformation = AffineTransformation 1 0 0 1 0 0
+
+mapDSAT :: (AffineTransformation -> AffineTransformation) -> DrawState -> DrawState
+mapDSAT f (DrawState at mc) = DrawState (f at) mc
+
+mapDSColor :: (Maybe Color -> Maybe Color) -> DrawState -> DrawState
+mapDSColor f (DrawState at mc) = DrawState at (f mc)
 
 -- A NodeId a unique id for each node in a Picture of Drawing, chosen by the order
 -- the node appears in DFS. When a Picture is converted to a drawing the NodeId's of
@@ -321,6 +343,7 @@ pictureToDrawing (Lettering _ txt) = Shape $ textDrawer Plain Serif txt
 pictureToDrawing (Blank _) = Drawings $ []
 pictureToDrawing (StyledLettering _ sty fnt txt) = Shape $ textDrawer sty fnt txt
 pictureToDrawing (Logo _) = Shape $ logoDrawer
+pictureToDrawing (Sketch _ _ url) = Shape $ imageDrawer url
 pictureToDrawing (CoordinatePlane _) = Shape $ coordinatePlaneDrawer
 pictureToDrawing (Color _ col p) =
     Transformation (setColorDS col) $ pictureToDrawing p
@@ -336,34 +359,38 @@ pictureToDrawing (Pictures _ ps) = Drawings $ pictureToDrawing <$> ps
 pictureToDrawing (PictureAnd _ ps) = Drawings $ pictureToDrawing <$> ps
 
 initialDS :: DrawState
-initialDS = (1, 0, 0, 1, 0, 0, Nothing)
+initialDS = DrawState initialAffineTransformation Nothing
 
 translateDS :: Double -> Double -> DrawState -> DrawState
-translateDS x y (a, b, c, d, e, f, hc) =
-    (a, b, c, d, a * 25 * x + c * 25 * y + e, b * 25 * x + d * 25 * y + f, hc)
+translateDS x y = mapDSAT $ \(AffineTransformation a b c d e f) ->
+    AffineTransformation
+        a b c d
+        (a * 25 * x + c * 25 * y + e)
+        (b * 25 * x + d * 25 * y + f)
 
 scaleDS :: Double -> Double -> DrawState -> DrawState
-scaleDS x y (a, b, c, d, e, f, hc) = (x * a, x * b, y * c, y * d, e, f, hc)
+scaleDS x y = mapDSAT $ \(AffineTransformation a b c d e f) ->
+    AffineTransformation (x * a) (x * b) (y * c) (y * d) e f
 
 rotateDS :: Double -> DrawState -> DrawState
-rotateDS r (a, b, c, d, e, f, hc) =
-    ( a * cos r + c * sin r
-    , b * cos r + d * sin r
-    , c * cos r - a * sin r
-    , d * cos r - b * sin r
-    , e
-    , f
-    , hc)
+rotateDS r = mapDSAT $ \(AffineTransformation a b c d e f) ->
+    AffineTransformation
+        (a * cos r + c * sin r)
+        (b * cos r + d * sin r)
+        (c * cos r - a * sin r)
+        (d * cos r - b * sin r)
+        e
+        f
 
 setColorDS :: Color -> DrawState -> DrawState
-setColorDS col (a, b, c, d, e, f, Nothing) = (a, b, c, d, e, f, Just col)
-setColorDS col@(RGBA _ _ _ 0) (a, b, c, d, e, f, _) =
-    (a, b, c, d, e, f, Just col)
-setColorDS (RGBA _ _ _ alpha1) (a, b, c, d, e, f, Just (RGBA rr gg bb alpha2)) =
-    (a, b, c, d, e, f, Just (RGBA rr gg bb (alpha1 * alpha2)))
+setColorDS col = mapDSColor $ \mcol ->
+    case (col, mcol) of
+        (_, Nothing) -> Just col
+        (RGBA _ _ _ 0, Just _) -> Just col
+        (RGBA _ _ _ alpha, Just (RGBA rr gg bb alpha0)) -> Just (RGBA rr gg bb (alpha0 * alpha))
 
 getColorDS :: DrawState -> Maybe Color
-getColorDS (a, b, c, d, e, f, col) = col
+getColorDS (DrawState at col) = col
 
 polygonDrawer :: MonadCanvas m => [Point] -> Bool -> Drawer m
 pathDrawer :: MonadCanvas m => [Point] -> Double -> Bool -> Bool -> Drawer m
@@ -371,12 +398,13 @@ sectorDrawer :: MonadCanvas m => Double -> Double -> Double -> Drawer m
 arcDrawer :: MonadCanvas m => Double -> Double -> Double -> Double -> Drawer m
 textDrawer :: MonadCanvas m => TextStyle -> Font -> Text -> Drawer m
 logoDrawer :: MonadCanvas m => Drawer m
+imageDrawer :: MonadCanvas m => Text -> Drawer m
 coordinatePlaneDrawer :: MonadCanvas m => Drawer m
 coordinatePlaneDrawing :: MonadCanvas m => Drawing m
 coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
   where
-    xline y = thickPolyline 0.01 [(-10, y), (10, y)]
-    xaxis = thickPolyline 0.03 [(-10, 0), (10, 0)]
+    xline y = colored (RGBA 0 0 0 0.25) $ polyline [(-10, y), (10, y)]
+    xaxis = colored (RGBA 0 0 0 0.75) $ polyline [(-10, 0), (10, 0)]
     axes = xaxis <> rotated (pi / 2) xaxis
     xguidelines = pictures [xline k | k <- [-10,-9 .. 10]]
     guidelines = xguidelines <> rotated (pi / 2) xguidelines
@@ -386,7 +414,7 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
             [ translated
                 (fromIntegral k)
                 0.3
-                (scaled 0.5 0.5 (lettering (pack (show k))))
+                (scaled 0.5 0.5 (lettering (T.pack (show k))))
             | k <- [-9,-8 .. 9]
             , k /= 0
             ]
@@ -395,13 +423,13 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
             [ translated
                 0.3
                 (fromIntegral k)
-                (scaled 0.5 0.5 (lettering (pack (show k))))
+                (scaled 0.5 0.5 (lettering (T.pack (show k))))
             | k <- [-9,-8 .. 9]
             , k /= 0
             ]
 
 withDS :: MonadCanvas m => DrawState -> m a -> m a
-withDS (ta, tb, tc, td, te, tf, col) action = CM.saveRestore $ do
+withDS (DrawState (AffineTransformation ta tb tc td te tf) col) action = CM.saveRestore $ do
     CM.transform ta tb tc td te tf
     CM.beginPath
     action
@@ -515,6 +543,9 @@ logoDrawer ds =
               CM.rect (-221) (-91) 442 182
               CM.isPointInPath (0, 0)
     }
+
+imageDrawer url ds =
+    DrawMethods { drawShape = return (), shapeContains = return False }
 
 coordinatePlaneDrawer ds =
     DrawMethods
@@ -774,6 +805,7 @@ describePicture (Dilate _ k _)
   | haskellMode = printf "dilated %s" (showFloat k)
   | otherwise   = printf "dilated(..., %s)" (showFloat k)
 describePicture (Logo _) = "codeWorldLogo"
+describePicture (Sketch _ name _) = T.unpack name
 describePicture (CoordinatePlane _) = "coordinatePlane"
 describePicture (Pictures _ _)
   | haskellMode = "pictures"
@@ -811,6 +843,7 @@ getPictureSrcLoc (Scale loc _ _ _) = loc
 getPictureSrcLoc (Dilate loc _ _) = loc
 getPictureSrcLoc (Rotate loc _ _) = loc
 getPictureSrcLoc (Logo loc) = loc
+getPictureSrcLoc (Sketch loc _ _) = loc
 getPictureSrcLoc (CoordinatePlane loc) = loc
 getPictureSrcLoc (Pictures loc _) = loc
 getPictureSrcLoc (PictureAnd loc _) = loc
@@ -885,9 +918,10 @@ initDebugMode setActive getPic highlight = do
             let obj = unsafeCoerce pointJS
             x <- pFromJSVal <$> getProp "x" obj
             y <- pFromJSVal <$> getProp "y" obj
-            -- It's safe to use undefined for the context because
-            -- handlePointRequest ignores it.
-            n <- runCanvasM undefined (handlePointRequest getPic (x, y))
+            -- It's safe to use undefined for the context and dimensions
+            -- because handlePointRequest ignores them and works only with
+            -- an off-screen image.
+            n <- runCanvasM undefined undefined (handlePointRequest getPic (x, y))
             return (pToJSVal (fromMaybe (-1) n))
     setActiveCB <- syncCallback1 ContinueAsync $ setActive . pFromJSVal
     getPicCB <- syncCallback' $ getPic >>= picToObj
@@ -987,10 +1021,10 @@ foreign import javascript unsafe "/\\bmode=haskell\\b/.test(location.search)"
 
 withScreen :: Element -> ClientRect.ClientRect -> CanvasM a -> IO a
 withScreen canvas rect action = do
-    cw <- ClientRect.getWidth rect
-    ch <- ClientRect.getHeight rect
+    cw <- realToFrac <$> ClientRect.getWidth rect
+    ch <- realToFrac <$> ClientRect.getHeight rect
     ctx <- getCodeWorldContext (canvasFromElement canvas)
-    runCanvasM ctx $ CM.saveRestore $ do
+    runCanvasM (cw, ch) ctx $ CM.saveRestore $ do
         setupScreenContext (round cw) (round ch)
         action
 
@@ -1103,8 +1137,8 @@ keyCodeToText n =
         255 -> "IntlYen"
         _ -> "Unknown:" <> fromNum n
   where
-    fromAscii n = singleton (chr (fromIntegral n))
-    fromNum n = pack (show (fromIntegral n))
+    fromAscii n = T.singleton (chr (fromIntegral n))
+    fromNum n = T.pack (show (fromIntegral n))
 
 isUniversallyConstant :: (a -> s -> s) -> s -> Bool
 isUniversallyConstant f old =
@@ -1164,9 +1198,13 @@ getMousePos canvas = do
         cx <- ClientRect.getLeft rect
         cy <- ClientRect.getTop rect
         cw <- ClientRect.getWidth rect
+        ch <- ClientRect.getHeight rect
+        let unitLen = min cw ch / 20
+        let mx = round (cx + cw / 2)
+        let my = round (cy + ch / 2)
         return
-            ( 20 * fromIntegral (ix - round cx) / realToFrac cw - 10
-            , 20 * fromIntegral (round cy - iy) / realToFrac cw + 10)
+            ( fromIntegral (ix - mx) / realToFrac unitLen
+            , fromIntegral (my - iy) / realToFrac unitLen)
 
 onEvents :: Element -> (Event -> IO ()) -> IO ()
 onEvents canvas handler = do
@@ -1693,8 +1731,8 @@ highlightSelectShape h s drawing
         (\(node, ds) -> highlightDrawing ds node) <$> getDrawNode n drawing
 
 highlightDrawing :: MonadCanvas m => DrawState -> Drawing m -> Drawing m
-highlightDrawing (a, b, c, d, e, f, _) drawing =
-    Transformation (\_ -> (a, b, c, d, e, f, Just col')) drawing
+highlightDrawing (DrawState at _) drawing =
+    Transformation (\_ -> DrawState at (Just col')) drawing
   where
     col' = RGBA 0 0 0 0.25
 
@@ -1738,9 +1776,11 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
 
 getMousePos :: (Int, Int) -> (Double, Double) -> (Double, Double)
 getMousePos (w, h) (x, y) =
-    ((x - fromIntegral w / 2) / s, -(y - fromIntegral h / 2) / s)
+    ((x - mx) / realToFrac unitLen, (my - y) / realToFrac unitLen)
   where
-    s = min (realToFrac w / 20) (realToFrac h / 20)
+    unitLen = min (fromIntegral w) (fromIntegral h) / 20
+    mx = fromIntegral w / 2
+    my = fromIntegral h / 2
 
 toEvent :: (Int, Int) -> Canvas.Event -> Maybe Event
 toEvent rect Canvas.Event {..}
@@ -2244,7 +2284,7 @@ drawControl w alpha (TimeLabel (x,y)) = translated x y p
     p =
         colored
             (RGBA 0 0 0 alpha)
-            (scaled 0.5 0.5 $ lettering (pack (showFFloatAlt (Just 4) (state w) "s"))) <>
+            (scaled 0.5 0.5 $ lettering (T.pack (showFFloatAlt (Just 4) (state w) "s"))) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 3.0 0.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 3.0 0.8)
 drawControl w alpha (SpeedSlider (x,y)) = translated x y p
@@ -2253,7 +2293,7 @@ drawControl w alpha (SpeedSlider (x,y)) = translated x y p
         colored
             (RGBA 0 0 0 alpha)
             (translated xoff 0.75 $ scaled 0.5 0.5 $
-                 lettering (pack (showFFloatAlt (Just 2) (playbackSpeed w) "x"))) <>
+                 lettering (T.pack (showFFloatAlt (Just 2) (playbackSpeed w) "x"))) <>
         colored (RGBA 0 0 0 alpha) (translated xoff 0 (solidRectangle 0.2 0.8)) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 2.8 0.25) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 2.8 0.25)
@@ -2264,7 +2304,7 @@ drawControl w alpha (ZoomSlider (x,y)) = translated x y p
         colored
             (RGBA 0 0 0 alpha)
             (translated (-1.1) yoff $ scaled 0.5 0.5 $
-                 lettering (pack (show (round (zoomFactor w * 100) :: Int) ++ "%"))) <>
+                 lettering (T.pack (show (round (zoomFactor w * 100) :: Int) ++ "%"))) <>
         colored (RGBA 0 0 0 alpha) (translated 0 yoff (solidRectangle 0.8 0.2)) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 0.25 2.8) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 0.25 2.8)
@@ -2275,7 +2315,7 @@ drawControl w alpha (HistorySlider (x,y)) = translated x y p
         colored
             (RGBA 0 0 0 alpha)
             (translated xoff 0.75 $ scaled 0.5 0.5 $
-                 lettering (pack (show n1 ++ "/" ++ show (n1 + n2)))) <>
+                 lettering (T.pack (show n1 ++ "/" ++ show (n1 + n2)))) <>
         colored (RGBA 0.0 0.0 0.0 alpha) (translated xoff 0 (solidRectangle 0.2 0.8)) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 4.8 0.25) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 4.8 0.25)

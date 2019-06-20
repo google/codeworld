@@ -1,7 +1,0 @@
-program.hs:16:30: error: 
-    • Couldn't match expected type (Number, Number)
-                  with actual type (Number, Number, Number, Number)
-    • In the argument(s) of rectangle, namely (2, 2, 2, 2)
-      In the argument(s) of drawingOf, namely
-        (rectangle (2, 2, 2, 2))
-      In the expression: drawingOf (rectangle (2, 2, 2, 2))

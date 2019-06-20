@@ -1,0 +1,5 @@
+program.hs:16:21-33: error:
+    Ambiguous occurrence codeWorldLogo
+    It could refer to either codeWorldLogo,
+                             defined in the standard library
+                          or codeWorldLogo, defined at program.hs:17:1

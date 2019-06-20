@@ -42,6 +42,11 @@ data Rule = DefinedByFunction String String
           | AllOf [Rule]
           | AnyOf [Rule]
           | NotThis Rule
+          | MaxLineLength Int
+          | NoWarningsExcept [String]
+          | TypeSignatures Bool
+          | Blacklist [String]
+          | Whitelist [String]
     deriving Show
 
 data Cardinality = Cardinality {

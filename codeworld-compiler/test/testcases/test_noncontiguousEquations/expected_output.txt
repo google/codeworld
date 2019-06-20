@@ -1,0 +1,5 @@
+program.hs:20:1-45: error:
+    Multiple equations for the same function must be contiguous.
+    The function foo has equations at:
+    • program.hs:18:1-20
+    • program.hs:20:1-45

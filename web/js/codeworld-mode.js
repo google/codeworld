@@ -179,7 +179,7 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         }
 
         // Create any new implicit contexts called for by layout rules.
-        if (state.lastTokens.length === 0) {
+        if (state.contexts.length === 0) {
             if (token !== 'module' && token !== '{') {
                 state.contexts.push({
                     value: 'where', // There's an implied "module Main where"
@@ -204,27 +204,6 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         // Update lastTokens so that layout rules can be applied next time.
         state.lastTokens = state.lastTokens.slice(-1);
         state.lastTokens.push(token);
-
-        // Open new contexts for brackets.  These should be inside the
-        // implicit contexts created by layout.
-        if (RE_OPENBRACKET.test(token)) {
-            const level = state.contexts.filter(isBracket).length;
-            if (level <= 6) style = `${style}-${level}`;
-
-            let functionName = null;
-            if (token === '(' && state.lastTokens.length === 2) {
-                if (RE_VARID.test(state.lastTokens[0]) || RE_CONID.test(state.lastTokens[0])) {
-                    functionName = state.lastTokens[0];
-                }
-            }
-
-            state.contexts.push({
-                value: token,
-                column: column,
-                functionName,
-                argIndex: 0
-            });
-        }
 
         // Close implicit contexts on comma.
         if (token === ',') {
@@ -253,8 +232,36 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
             }
         }
 
-        const ctx = state.contexts.find(ctx => ctx.column === column);
-        const isLayout = ctx && !isBracket(ctx);
+        // Decide if this is a new layout statement, whether it's in a new layout context
+        // or an existing one.  If so, then any pre-existing brackets should be closed.
+        const layoutCtx = state.contexts.findIndex(ctx => ctx.column === column);
+        const isLayout = layoutCtx >= 0 && !isBracket(state.contexts[layoutCtx]);
+        if (isLayout) {
+            state.contexts = state.contexts.slice(0, layoutCtx + 1);
+        }
+
+        // Open new contexts for brackets.  These should be inside the
+        // implicit contexts created by layout.
+        if (RE_OPENBRACKET.test(token)) {
+            const level = state.contexts.filter(isBracket).length;
+            if (level <= 6) style = `${style}-${level}`;
+
+            let functionName = null;
+            if (token === '(' && state.lastTokens.length > 1) {
+                const nextToLast = state.lastTokens[state.lastTokens.length - 2];
+                if (RE_VARID.test(nextToLast) || RE_CONID.test(nextToLast)) {
+                    functionName = nextToLast;
+                }
+            }
+
+            state.contexts.push({
+                value: token,
+                column: column,
+                functionName,
+                argIndex: 0
+            });
+        }
+
         return isLayout ? `${style} layout` : style;
     }
 

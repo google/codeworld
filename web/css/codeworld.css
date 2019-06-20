@@ -274,7 +274,7 @@ body {
 .cw-button.yellow:hover:active,
 .cw-button.green.project-active,
 .cw-button.green.project-active:hover:active {
-    background-color: var(--cw-button-bg-1);
+    background-color: var(--cw-button-bg-5);
 }
 
 .haskell .cw-button.yellow,
@@ -519,10 +519,10 @@ body {
     overflow: hidden;
     pointer-events: none;
     background: linear-gradient(to bottom,
-        var(--obsolete-code-alert-grad-point1) 0px,
-        var(--obsolete-code-alert-grad-point2) 2em,
-        rgba(0, 0, 0, 0) 3em,
-        rgba(0, 0, 0, 0) 100%);
+            var(--obsolete-code-alert-grad-point1) 0px,
+            var(--obsolete-code-alert-grad-point2) 2em,
+            rgba(0, 0, 0, 0) 3em,
+            rgba(0, 0, 0, 0) 100%);
     color: var(--obsolete-code-alert-color);
     padding: 0.5em;
     text-align: right;
@@ -547,15 +547,18 @@ body {
     visibility: visible;
 }
 
-summary a, details a {
+summary a,
+details a {
     color: var(--link);
 }
 
-summary a:visited, details a:visited{
+summary a:visited,
+details a:visited {
     color: var(--vlink);
 }
 
-summary a:active, details a:active {
+summary a:active,
+details a:active {
     color: var(--alink);
 }
 
@@ -569,4 +572,16 @@ summary a:active, details a:active {
 
 .swal2-popup .swal2-content {
     color: var(--swal-content-color) !important;
+}
+
+.swal2-popup .swal2-validationerror {
+    color: var(--wrong-login-color) !important;
+    background: var(--wrong-login-background) !important;
+}
+
+.unsaved-changes::before {
+    font-size: 8px !important;
+    vertical-align: super;
+    content: "\F6C3";
+    font: normal normal normal 24px/1 "Material Design Icons";
 }

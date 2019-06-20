@@ -63,7 +63,7 @@ formatDiagnostics diags =
 
 formatDiagnostic :: Diagnostic -> Text
 formatDiagnostic (loc, _, msg) =
-    T.pack (formatLocation loc ++ msg)
+    T.pack (formatLocation loc ++ ": " ++ msg)
 
 readUtf8 :: FilePath -> IO Text
 readUtf8 f = decodeUtf8 <$> B.readFile f
@@ -145,6 +145,12 @@ prepareCompile dir = do
 buildArgs :: SourceMode -> [String]
 buildArgs "codeworld" =
     [ "-DGHCJS_BROWSER"
+    , "-ferror-spans"
+    , "-fno-diagnostics-show-caret"
+    , "-hide-package"
+    , "base"
+    , "-package"
+    , "codeworld-base"
     , "-Wall"
     , "-Wdeferred-type-errors"
     , "-Wdeferred-out-of-scope-variables"
@@ -155,10 +161,6 @@ buildArgs "codeworld" =
     , "-fno-warn-unused-matches"
     , "-fdefer-type-errors"
     , "-fdefer-out-of-scope-variables"
-    , "-hide-package"
-    , "base"
-    , "-package"
-    , "codeworld-base"
     , "-Wno-partial-type-signatures"
     , "-XBangPatterns"
     , "-XDisambiguateRecordFields"
@@ -191,6 +193,8 @@ buildArgs "codeworld" =
     ]
 buildArgs "haskell" =
     [ "-DGHCJS_BROWSER"
+    , "-ferror-spans"
+    , "-fno-diagnostics-show-caret"
     , "-package"
     , "codeworld-api"
     , "-package"
@@ -223,13 +227,13 @@ parseDiagnostic msg
         : (readT -> Just col)
         : body : _) : _) <-
         msg =~ ("^program.hs:([0-9]+):([0-9]+): ((.|\n)*)$" :: Text)
-    = (srcSpanFrom ln ln col col, CompileSuccess, T.unpack body)
+    = (srcSpanFrom ln ln col (col + 1), CompileSuccess, T.unpack body)
   | ((_ : (readT -> Just ln)
         : (readT -> Just col1)
         : (readT -> Just col2)
         : body : _) : _) <-
         msg =~ ("^program.hs:([0-9]+):([0-9]+)-([0-9]+): ((.|\n)*)$" :: Text)
-    = (srcSpanFrom ln ln col1 col2, CompileSuccess, T.unpack body)
+    = (srcSpanFrom ln ln col1 (col2 + 1), CompileSuccess, T.unpack body)
   | ((_ : (readT -> Just ln1)
         : (readT -> Just col1)
         : (readT -> Just ln2)
@@ -237,7 +241,7 @@ parseDiagnostic msg
         : body : _) : _) <-
         msg =~ ("^program.hs:[(]([0-9]+),([0-9]+)[)]" <>
                 "-[(]([0-9]+),([0-9]+)[)]: ((.|\n)*)$" :: Text)
-    = (srcSpanFrom ln1 ln2 col1 col2, CompileSuccess, T.unpack body)
+    = (srcSpanFrom ln1 ln2 col1 (col2 + 1), CompileSuccess, T.unpack body)
   | otherwise = (noSrcSpan, CompileSuccess, T.unpack msg ++ " (no loc)")
   where readT = readMaybe . T.unpack
 

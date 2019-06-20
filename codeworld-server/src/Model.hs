@@ -25,6 +25,7 @@ import Control.Monad
 import Data.Aeson
 import Data.Text (Text)
 import System.FilePath (FilePath)
+import Data.ByteString (ByteString)
 
 data Project = Project
     { projectName :: Text
@@ -43,15 +44,37 @@ instance ToJSON Project where
             [ "name" .= projectName p
             , "source" .= projectSource p
             , "history" .= projectHistory p
+            , "type" .= ("project" :: Text)
             ]
 
-data Directory = Directory
-    { files :: [Text]
-    , dirs :: [Text]
-    } deriving (Show)
+data FileSystemEntryType = Dir | Proj deriving (Eq, Ord, Show)
 
-instance ToJSON Directory where
-    toJSON dir = object ["files" .= files dir, "dirs" .= dirs dir]
+instance ToJSON FileSystemEntryType where
+    toJSON Dir  = Data.Aeson.String "directory"
+    toJSON Proj = Data.Aeson.String "project"
+
+instance FromJSON FileSystemEntryType where
+    parseJSON (Data.Aeson.String "directory") = return $ Dir
+    parseJSON (Data.Aeson.String "project")   = return $ Proj
+    parseJSON _ = mzero
+
+data FileSystemEntry = FSEntry 
+    { fsEntryIndex :: Int
+    , fsEntryName  :: Text
+    , fsEntryType  :: FileSystemEntryType        
+    } deriving (Eq, Ord, Show)
+        
+instance ToJSON FileSystemEntry where
+    toJSON entry = object 
+        [ "index" .= fsEntryIndex entry
+        , "name"  .= fsEntryName entry
+        , "type"  .= fsEntryType entry
+        ]
+
+instance FromJSON FileSystemEntry where
+    parseJSON (Object v) =
+        FSEntry <$>  v .: "index" <*> v .: "name" <*> v .: "type"
+    parseJSON _ = mzero
 
 data CompileResult = CompileResult
     { compileHash :: Text
@@ -65,7 +88,7 @@ instance ToJSON CompileResult where
 data Gallery = Gallery { galleryItems :: [GalleryItem] }
 data GalleryItem = GalleryItem
     { galleryItemName :: Text,
-      galleryItemURL :: Text,
+      galleryItemURL  :: Text,
       galleryItemCode :: Maybe Text
     }
 

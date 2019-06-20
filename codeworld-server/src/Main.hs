@@ -56,9 +56,10 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
+import qualified Data.Vector as V
 import HIndent (reformat)
 import HIndent.Types (defaultConfig)
-import Network.HTTP.Conduit
+import Network.HTTP.Simple
 import Snap.Core
 import Snap.Http.Server (quickHttpServe)
 import Snap.Util.FileServe
@@ -67,8 +68,6 @@ import System.Directory
 import System.FileLock
 import System.FilePath
 import System.IO.Temp
-import System.Log.FastLogger
-import System.Log.FastLogger.Date
 
 import Model
 import Util
@@ -83,8 +82,7 @@ data Context = Context {
     authConfig :: AuthConfig,
     compileSem :: MSem Int,
     errorSem :: MSem Int,
-    baseSem :: MSem Int,
-    userReportLogger :: TimedFastLogger
+    baseSem :: MSem Int
     }
 
 main :: IO ()
@@ -95,13 +93,10 @@ main = do
 
 makeContext :: IO Context
 makeContext = do
-    timeCache <- newTimeCache simpleTimeFormat
-    let logType = LogFileNoRotate ("data" </> "user_reports.log") 0
     ctx <- Context <$> (getAuthConfig =<< getCurrentDirectory)
                    <*> MSem.new maxSimultaneousCompiles
                    <*> MSem.new maxSimultaneousErrorChecks
                    <*> MSem.new 1
-                   <*> (fst <$> newTimedFastLogger timeCache logType)
     putStrLn $ "Authentication method: " ++ authMethod (authConfig ctx)
     return ctx
 
@@ -152,9 +147,10 @@ site ctx =
             [ ("loadProject", loadProjectHandler ctx)
             , ("saveProject", saveProjectHandler ctx)
             , ("deleteProject", deleteProjectHandler ctx)
-            , ("listFolder", listFolderHandler ctx)
             , ("createFolder", createFolderHandler ctx)
             , ("deleteFolder", deleteFolderHandler ctx)
+            , ("listFolder", listFolderHandler ctx)
+            , ("updateChildrenIndexes", updateChildrenIndexesHandler ctx)
             , ("shareFolder", shareFolderHandler ctx)
             , ("shareContent", shareContentHandler ctx)
             , ("moveProject", moveProjectHandler ctx)
@@ -188,15 +184,17 @@ createFolderHandler :: CodeWorldHandler
 createFolderHandler = private $ \userId ctx -> do
     mode <- getBuildMode
     Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
-    let dirIds = map (nameToDirId . T.pack) path
-    let finalDir = joinPath $ map dirBase dirIds
+    let pathText = map T.pack path
+        dirIds = map nameToDirId pathText
+        finalDir = joinPath $ map dirBase dirIds
+        name = last pathText
     liftIO $ ensureUserBaseDir mode userId finalDir
     liftIO $ createDirectory $ userProjectDir mode userId </> finalDir
     modifyResponse $ setContentType "text/plain"
     liftIO $
-        B.writeFile
-            (userProjectDir mode userId </> finalDir </> "dir.info") $
-        BC.pack $ last path
+        T.writeFile
+            (userProjectDir mode userId </> finalDir </> "dir.info")
+            name
 
 deleteFolderHandler :: CodeWorldHandler
 deleteFolderHandler = private $ \userId ctx -> do
@@ -206,17 +204,7 @@ deleteFolderHandler = private $ \userId ctx -> do
     let finalDir = joinPath $ map dirBase dirIds
     liftIO $ ensureUserDir mode userId finalDir
     let dir = userProjectDir mode userId </> finalDir
-    empty <-
-        liftIO $
-        fmap
-            (\l1 ->
-                 length l1 == 3 && sort l1 == sort [".", "..", takeFileName dir])
-            (getDirectoryContents (takeDirectory dir))
-    liftIO $
-        removeDirectoryIfExists $
-        if empty
-            then takeDirectory dir
-            else dir
+    liftIO $ removeDirectoryIfExists dir
 
 loadProjectHandler :: CodeWorldHandler
 loadProjectHandler = private $ \userId ctx -> do
@@ -261,17 +249,7 @@ deleteProjectHandler = private $ \userId ctx -> do
     let file =
             userProjectDir mode userId </> finalDir </>
             projectFile projectId
-    empty <-
-        liftIO $
-        fmap
-            (\l1 ->
-                 length l1 == 3 &&
-                 sort l1 == sort [".", "..", takeFileName file])
-            (getDirectoryContents (dropFileName file))
-    liftIO $
-        if empty
-            then removeDirectoryIfExists (dropFileName file)
-            else removeFileIfExists file
+    liftIO $ removeFileIfExists file
 
 listFolderHandler :: CodeWorldHandler
 listFolderHandler = private $ \userId ctx -> do
@@ -281,12 +259,24 @@ listFolderHandler = private $ \userId ctx -> do
     let finalDir = joinPath $ map dirBase dirIds
     liftIO $ ensureUserBaseDir mode userId finalDir
     liftIO $ ensureUserDir mode userId finalDir
-    liftIO $ migrateUser $ userProjectDir mode userId
     let projectDir = userProjectDir mode userId
-    files <- liftIO $ projectFileNames (projectDir </> finalDir)
-    dirs <- liftIO $ projectDirNames (projectDir </> finalDir)
+    entries <- liftIO $ fsEntries (projectDir </> finalDir)
     modifyResponse $ setContentType "application/json"
-    writeLBS (encode (Directory files dirs))
+    writeLBS (encode entries)
+
+-- | Update order of elements inside of given directory
+updateChildrenIndexesHandler :: CodeWorldHandler
+updateChildrenIndexesHandler = private $ \userId ctx -> do
+    mode <- getBuildMode
+    let projectDir = userProjectDir mode userId
+    Just path <- fmap ((\p -> projectDir </> p </> "order.info") .
+                        joinPath . (map (dirBase . nameToDirId . T.pack)) .
+                        splitDirectories . BC.unpack)
+                    <$> getParam "path"
+    param <- getParam "entries"
+    -- Encoding just to check if request param is correct
+    Just entries <- decodeStrict . fromJust <$> getParam "entries" :: Snap (Maybe [FileSystemEntry])
+    liftIO $ LB.writeFile path $ encode entries
 
 shareFolderHandler :: CodeWorldHandler
 shareFolderHandler = private $ \userId ctx -> do
@@ -311,14 +301,15 @@ shareContentHandler = private $ \userId ctx -> do
         liftIO $
         B.readFile
             (shareRootDir mode </> shareLink (ShareId $ T.decodeUtf8 shash))
-    Just name <- getParam "name"
-    let dirPath = dirBase $ nameToDirId $ T.decodeUtf8 name
+    Just nameBC <- getParam "name"
+    let name = T.decodeUtf8 nameBC
+        dirPath = dirBase $ nameToDirId name
     liftIO $ ensureUserBaseDir mode userId dirPath
     liftIO $
         copyDirIfExists (BC.unpack sharingFolder) $
         userProjectDir mode userId </> dirPath
     liftIO $
-        B.writeFile
+        T.writeFile
             (userProjectDir mode userId </> dirPath </> "dir.info")
             name
 
@@ -345,39 +336,13 @@ moveProjectHandler = private $ \userId ctx -> do
                 toFile = projectDir </> moveToDir </> projectFile projectId
             liftIO $ ensureProjectDir mode userId moveToDir projectId
             liftIO $ copyFile file toFile
-            empty <-
-                liftIO $
-                fmap
-                    (\l1 ->
-                         length l1 == 3 &&
-                         sort l1 ==
-                         sort [".", "..", takeFileName $ projectFile projectId])
-                    (getDirectoryContents
-                         (dropFileName $ moveFromDir </> projectFile projectId))
-            liftIO $
-                if empty
-                    then removeDirectoryIfExists
-                             (dropFileName $
-                              moveFromDir </> projectFile projectId)
-                    else removeFileIfExists $
-                         moveFromDir </> projectFile projectId
+            liftIO $ removeFileIfExists file
         (_, False, "false") -> do
             let dirName = last $ splitDirectories moveFromDir
-            let dir = moveToDir </> take 3 dirName </> dirName
+            let dir = moveToDir </> dirName
             liftIO $ ensureUserBaseDir mode userId dir
             liftIO $ copyDirIfExists moveFromDir $ projectDir </> dir
-            empty <-
-                liftIO $
-                fmap
-                    (\l1 ->
-                         length l1 == 3 &&
-                         sort l1 == sort [".", "..", takeFileName moveFromDir])
-                    (getDirectoryContents (takeDirectory moveFromDir))
-            liftIO $
-                removeDirectoryIfExists $
-                if empty
-                    then takeDirectory moveFromDir
-                    else moveFromDir
+            liftIO $ removeDirectoryIfExists moveFromDir
         (_, _, _) -> return ()
 
 withProgramLock :: BuildMode -> ProgramId -> IO a -> IO a
@@ -543,9 +508,27 @@ galleryItemFromProject mode@(BuildMode modeName) folder name = do
 
 logHandler :: CodeWorldHandler
 logHandler = public $ \ctx -> do
-    Just message <- getParam "message"
-    let logLine t = "[" <> toLogStr t <> "] " <> toLogStr message <> "\n"
-    liftIO $ userReportLogger ctx logLine
+    Just message <- fmap T.decodeUtf8 <$> getParam "message"
+    title <- fromMaybe "User-reported unhelpful error message" <$>
+        fmap T.decodeUtf8 <$> getParam "title"
+    tag <- fromMaybe "error-message" <$> fmap T.decodeUtf8 <$> getParam "tag"
+
+    liftIO $ do
+        let body = object [
+                ("title", String title),
+                ("body", String message),
+                ("labels", toJSON [tag])
+                ]
+        authToken <- B.readFile "github-auth-token.txt"
+        let authHeader = "token " <> authToken
+        let userAgent = "https://code.world github integration by cdsmith"
+        request <-
+            addRequestHeader "Authorization" authHeader <$>
+            addRequestHeader "User-agent" userAgent <$>
+            setRequestBodyJSON body <$>
+            parseRequestThrow "POST https://api.github.com/repos/google/codeworld/issues"
+        httpNoBody request
+    return ()
 
 responseCodeFromCompileStatus :: CompileStatus -> Int
 responseCodeFromCompileStatus CompileSuccess = 200

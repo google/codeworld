@@ -22,7 +22,7 @@ goog.require('Blockly.Blocks');
 
 Blockly.cwEvent = () => {};
 Blockly.cwEvent.generateEventBuiltins = xmlList => {
-
+    /*
     const LeftButton = new Blockly.UserTypes.Product('LeftButton', []);
     Blockly.TypeInf.addUserDefinedConstructor('LeftButton', Type.fromList([
         Type.Lit('MouseButton')
@@ -39,6 +39,7 @@ Blockly.cwEvent.generateEventBuiltins = xmlList => {
     const MouseButton = new Blockly.UserTypes.Sum('MouseButton', [LeftButton,
         RightButton, MiddleButton
     ]);
+    */
 
     const point = Type.Lit('pair', [Type.Lit('Number'), Type.Lit('Number')]);
 
@@ -54,31 +55,62 @@ Blockly.cwEvent.generateEventBuiltins = xmlList => {
         Type.Lit('Text'), Type.Lit('Event')
     ]));
 
+    /*
     const MousePress = new Blockly.UserTypes.Product('MousePress', [Type.Lit(
         'MouseButton'), point]);
     Blockly.TypeInf.addUserDefinedConstructor('MousePress', Type.fromList([
         Type.Lit('MouseButton'), point, Type.Lit('Event')
     ]));
-
+    
     const MouseRelease = new Blockly.UserTypes.Product('MouseRelease', [Type.Lit(
         'MouseButton'), point]);
     Blockly.TypeInf.addUserDefinedConstructor('MouseRelease', Type.fromList(
         [Type.Lit('MouseButton'), point, Type.Lit('Event')]));
+    
 
     const MouseMovement = new Blockly.UserTypes.Product('MouseMovement', [
         point
     ]);
     Blockly.TypeInf.addUserDefinedConstructor('MouseMovement', Type.fromList(
         [point, Type.Lit('Event')]));
+    */
+    
+    const PointerPress = new Blockly.UserTypes.Product('PointerPress', [point]);
+    Blockly.TypeInf.addUserDefinedConstructor('PointerPress', Type.fromList(
+        [point, Type.Lit('Event')]));
+
+    const PointerRelease = new Blockly.UserTypes.Product('PointerRelease', [point]);
+    Blockly.TypeInf.addUserDefinedConstructor('PointerRelease', Type.fromList(
+        [point, Type.Lit('Event')]));
+
+    const PointerMovement = new Blockly.UserTypes.Product('PointerMovement', [point]);
+    Blockly.TypeInf.addUserDefinedConstructor('PointerMovement', Type.fromList(
+        [point, Type.Lit('Event')]));
+
+    const TextEntry = new Blockly.UserTypes.Product('TextEntry', [Type.Lit('Text')]);
+    Blockly.TypeInf.addUserDefinedConstructor('TextEntry', Type.fromList(
+        [Type.Lit('Text'), Type.Lit('Event')]));
+
+    const TimePassing = new Blockly.UserTypes.Product('TimePassing', [Type.Lit('Number')]);
+    Blockly.TypeInf.addUserDefinedConstructor('TimePassing', Type.fromList(
+        [Type.Lit('Number'), Type.Lit('Event')]));
+
+    /*
+    const Event = new Blockly.UserTypes.Sum('Event', [KeyPress, KeyRelease,
+       //MousePress, MouseRelease, 
+       MouseMovement
+    ]);
+    */
 
     const Event = new Blockly.UserTypes.Sum('Event', [KeyPress, KeyRelease,
-        MousePress, MouseRelease, MouseMovement
+        PointerPress, PointerRelease, PointerMovement, TextEntry, TimePassing
     ]);
 
-    [MouseButton, Event].forEach(sum => {
+    [Event].forEach(sum => {
         Blockly.UserTypes.generateConstructors_(sum, xmlList);
         Blockly.UserTypes.generateCase_(sum, xmlList);
     });
+
 };
 
 Blockly.cwEvent.eventFlyoutCategory = workspace => {
@@ -86,3 +118,4 @@ Blockly.cwEvent.eventFlyoutCategory = workspace => {
     Blockly.cwEvent.generateEventBuiltins(xmlList);
     return xmlList;
 };
+

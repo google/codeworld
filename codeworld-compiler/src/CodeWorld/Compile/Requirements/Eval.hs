@@ -177,17 +177,17 @@ checkRule (NotUsed a) = withGHCParsedCode $ \m -> do
              -> failure $ "`" ++ a ++ "` should not be used."
        | otherwise -> success
 
-checkRule (ContainsMatch tmpl topLevel card) = withParsedCode $ \m -> do
-    tmpl <- parseCode ["TemplateHaskell"] (T.pack tmpl)
+checkRule (ContainsMatch tmpl topLevel card) = withGHCParsedCode $ \m -> do
+    tmpl <- ghcParseCode ["TemplateHaskell"] (T.pack tmpl)
     let n = case tmpl of
-                Parsed (Module _ _ _ _ [tmpl]) ->
+                GHCParsed (GHCParse.HsModule {hsmodDecls=[tmpl]}) ->
                     let decls | topLevel = concat $ gmapQ (mkQ [] id) m
-                                | otherwise = everything (++) (mkQ [] (:[])) m
+                              | otherwise = everything (++) (mkQ [] (:[])) m
                     in  length (filter (match tmpl) decls)
-                Parsed (Module _ _ _ [tmpl] _) ->
-                    length $ filter (match tmpl) $ concat $ gmapQ (mkQ [] id) m
+                GHCParsed (GHCParse.HsModule {hsmodImports=[tmpl]}) ->
+                    length $ filter (match tmpl) $ concat $ gmapQ (mkQ [] id) m       
     if | hasCardinality card n -> success
-        | otherwise -> failure $ "Wrong number of matches."
+       | otherwise -> failure $ show n
     
 checkRule (MatchesRegex pat card) = do
     src <- getSourceCode
@@ -311,8 +311,4 @@ patDefines :: GHCParse.LPat GHCParse.GhcPs -> String -> Bool
 patDefines (GHCParse.VarPat _ (GHCParse.L _ patid)) a = idName patid == a
 patDefines (GHCParse.ParPat _ pat) a = patDefines pat a
 patDefines _ a = False
-
-idName :: GHCParse.IdP GHCParse.GhcPs -> String
-idName = GHCParse.occNameString . GHCParse.rdrNameOcc
-
 

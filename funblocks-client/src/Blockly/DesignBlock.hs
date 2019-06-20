@@ -84,7 +84,7 @@ instance Show Type where
   show (Comment) = ""
   show (Program) = "Program"
   show (Arrow tps) = intercalate " -> " $ map show tps
-
+  show (List tp) = "[" ++ show tp ++ "]"
 
 
 data FieldType = LeftField | RightField | CentreField
@@ -161,7 +161,9 @@ setBlockType (DesignBlock name blockType inputs (Inline inline) (Color color) (T
 
 typeToType :: Type -> TE.Type
 typeToType (Poly a) = TE.TypeVar a
+typeToType (List tp) = TE.Lit (T.pack "list") [typeToType tp] 
 typeToType lit = TE.Lit (T.pack $ show lit) []
+
 
 assignBlockType :: Block -> BlockType -> IO ()
 assignBlockType block (Literal name) = B.setAsLiteral block name

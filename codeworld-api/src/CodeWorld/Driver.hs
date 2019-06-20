@@ -50,6 +50,7 @@ import Control.DeepSeq
 import Control.Exception
 import Control.Monad
 import Control.Monad.Trans (liftIO)
+import Data.Aeson (ToJSON(..), (.=), object)
 import Data.Char (chr)
 import Data.List (find, zip4, intercalate)
 import Data.Maybe (fromMaybe, isJust, isNothing, mapMaybe)
@@ -929,7 +930,7 @@ initDebugMode setActive getPic highlight = do
             n <- runCanvasM undefined undefined (handlePointRequest getPic (x, y))
             return (pToJSVal (maybe (-1) getNodeId n))
     setActiveCB <- syncCallback1 ContinueAsync $ setActive . pFromJSVal
-    getPicCB <- syncCallback' $ getPic >>= picToObj
+    getPicCB <- syncCallback' $ getPic >>= toJSVal_aeson . pictureToNode
     highlightCB <-
         syncCallback2 ContinueAsync $ \t n ->
             let select = pFromJSVal t
@@ -971,55 +972,84 @@ foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
                      -> Callback (JSVal -> JSVal -> IO ())
                      -> IO ()
 
-picToObj :: Picture -> IO JSVal
-picToObj = fmap fst . flip State.runStateT (NodeId 0) . picToObj'
+data Node = Node
+  { nodeId :: NodeId
+  , nodeName :: String
+  , nodeSrcLoc :: Maybe SrcLoc
+  , nodeSubs :: SubNodes
+  }
 
-picToObj' :: Picture -> State.StateT NodeId IO JSVal
-picToObj' pic = objToJSVal <$> case pic of
-    Pictures _ ps -> mkNodeWithChildren ps
-    PictureAnd _ ps -> mkNodeWithChildren ps
-    Color _ _ p -> mkNodeWithChild p
-    Translate _ _ _ p -> mkNodeWithChild p
-    Scale _ _ _ p -> mkNodeWithChild p
-    Dilate _ _ p -> mkNodeWithChild p
-    Rotate _ _ p -> mkNodeWithChild p
-    _ -> mkSimpleNode
+data SubNodes
+    = NoSubNodes
+    | SubNode Node
+    | SubNodes [Node]
+
+instance ToJSON Node where
+    toJSON (Node id name srcLoc subs) =
+        object $
+            ["id" .= getNodeId id , "name" .= name]
+            <> srcLoc'
+            <> subs'
+      where
+        srcLoc' = case srcLoc of
+            Nothing -> []
+            Just loc -> [ "startLine" .= srcLocStartLine loc
+                        , "startCol" .= srcLocStartCol loc
+                        , "endLine" .= srcLocEndLine loc
+                        , "endCol" .= srcLocEndCol loc
+                        ]
+        subs' = case subs of
+            NoSubNodes -> []
+            SubNode node -> ["picture" .= node]
+            SubNodes nodes -> ["pictures" .= nodes]
+
+pictureToNode :: Picture -> Node
+pictureToNode = flip State.evalState (NodeId 0) . go
   where
-    mkSimpleNode :: State.StateT NodeId IO Object
-    mkSimpleNode = do
-        obj <- liftIO create
-        id <- do
-            currentId <- State.get
-            State.modify' succ
-            return currentId
-        liftIO $ do
-            setProp "id" (pToJSVal $ getNodeId id) obj
-            setProp "name" (pToJSVal $ (trim 80 . describePicture) pic) obj
-            case getPictureSrcLoc pic of
-                Just loc -> do
-                    setProp "startLine" (pToJSVal $ srcLocStartLine loc) obj
-                    setProp "startCol" (pToJSVal $ srcLocStartCol loc) obj
-                    setProp "endLine" (pToJSVal $ srcLocEndLine loc) obj
-                    setProp "endCol" (pToJSVal $ srcLocEndCol loc) obj
-                Nothing -> return ()
-        return obj
+    go pic = case pic of
+        Pictures _ ps -> nodeWithChildren pic ps
+        PictureAnd _ ps -> nodeWithChildren pic ps
+        Color _ _ p -> nodeWithChild pic p
+        Translate _ _ _ p -> nodeWithChild pic p
+        Scale _ _ _ p -> nodeWithChild pic p
+        Dilate _ _ p -> nodeWithChild pic p
+        Rotate _ _ p -> nodeWithChild pic p
+        SolidPolygon _ _ -> leafNode pic
+        SolidClosedCurve _ _ -> leafNode pic
+        Polygon _ _ -> leafNode pic
+        ThickPolygon _ _ _ -> leafNode pic
+        Rectangle _ _ _ -> leafNode pic
+        SolidRectangle _ _ _ -> leafNode pic
+        ThickRectangle _ _ _ _ -> leafNode pic
+        ClosedCurve _ _ -> leafNode pic
+        ThickClosedCurve _ _ _ -> leafNode pic
+        Polyline _ _ -> leafNode pic
+        ThickPolyline _ _ _ -> leafNode pic
+        Curve _ _ -> leafNode pic
+        ThickCurve _ _ _ -> leafNode pic
+        Circle _ _ -> leafNode pic
+        SolidCircle _ _ -> leafNode pic
+        ThickCircle _ _ _ -> leafNode pic
+        Sector _ _ _ _ -> leafNode pic
+        Arc _ _ _ _ -> leafNode pic
+        ThickArc _ _ _ _ _ -> leafNode pic
+        StyledLettering _ _ _ _ -> leafNode pic
+        Lettering _ _ -> leafNode pic
+        CoordinatePlane _ -> leafNode pic
+        Logo _ -> leafNode pic
+        Sketch _ _ _ -> leafNode pic
+        Blank _ -> leafNode pic
 
-    mkNodeWithChild :: Picture -> State.StateT NodeId IO Object
-    mkNodeWithChild p = do
-        obj <- mkSimpleNode
-        subPic <- picToObj' p
-        liftIO $ setProp "picture" subPic obj
-        return obj
+    nodeWithChildren pic subs = node pic (SubNodes <$> traverse go subs)
+    nodeWithChild pic sub = node pic (SubNode <$> go sub)
+    leafNode pic = node pic (pure NoSubNodes)
 
-    mkNodeWithChildren :: [Picture] -> State.StateT NodeId IO Object
-    mkNodeWithChildren ps = do
-        obj <- mkSimpleNode
-        arr <- liftIO $ Array.create
-        mapM_ (\p -> picToObj' p >>= liftIO . flip Array.push arr) ps
-        liftIO $ setProp "pictures" (unsafeCoerce arr) obj
-        return obj
-
-    objToJSVal = unsafeCoerce :: Object -> JSVal
+    node pic getSubNodes = do
+        nodeId <- State.get <* State.modify' succ
+        let nodeName = trim 80 . describePicture $ pic
+        let nodeSrcLoc = getPictureSrcLoc pic
+        nodeSubs <- getSubNodes
+        pure Node{..}
 
 foreign import javascript unsafe "/\\bmode=haskell\\b/.test(location.search)"
     haskellMode :: Bool

@@ -508,12 +508,16 @@ galleryItemFromProject mode@(BuildMode modeName) folder name = do
 
 logHandler :: CodeWorldHandler
 logHandler = public $ \ctx -> do
-    Just message <- getParam "message"
+    Just message <- fmap T.decodeUtf8 <$> getParam "message"
+    title <- fromMaybe "User-reported unhelpful error message" <$>
+        fmap T.decodeUtf8 <$> getParam "title"
+    tag <- fromMaybe "error-message" <$> fmap T.decodeUtf8 <$> getParam "tag"
+
     liftIO $ do
         let body = object [
-                ("title", String "User-reported unhelpful error message"),
-                ("body", String (T.decodeUtf8 message)),
-                ("labels", Array (V.fromList ["error-message"]))
+                ("title", String title),
+                ("body", String message),
+                ("labels", toJSON [tag])
                 ]
         authToken <- B.readFile "github-auth-token.txt"
         let authHeader = "token " <> authToken

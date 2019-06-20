@@ -134,6 +134,7 @@ function updateEditor(code) {
         name: 'codeworld',
         overrideKeywords: codeworldKeywords
     }, editor);
+    updateUI();
 }
 
 function run(xmlHash, codeHash, msg, error, dhash) {
@@ -326,6 +327,15 @@ function updateUI() {
 
     if (!isEditorClean()) {
         title = `* ${title}`;
+        let selected = $('#directoryTree').tree('getSelectedNode');
+        if (selected && selected.type === 'project') {
+            let asterisk = selected.element.getElementsByClassName('unsaved-changes')[0];
+            if (asterisk) {
+                asterisk.style.display = '';
+            }
+        }
+    } else {
+        $('.unsaved-changes').css('display', 'none');
     }
 
     document.title = `${title} - CodeWorld`;

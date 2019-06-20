@@ -1046,16 +1046,36 @@ function loadProject_(path, name, buildMode, successFunc) {
         updateUI();
         return;
     }
+
+    sweetAlert({
+        title: Alert.title(`Loading ${name} ...`),
+        text: 'Please wait.',
+        showConfirmButton: false,
+        showCancelButton: false,
+        showCloseButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        allowEnterKey: false
+    });
+
+    clearCode();
+
     const data = new FormData();
     data.append('name', name);
     data.append('mode', buildMode);
     data.append('path', path);
 
     sendHttp('POST', 'loadProject', data, request => {
+        sweetAlert.close();
         if (request.status === 200) {
             const project = JSON.parse(request.responseText);
             successFunc(project);
             updateUI();
+        } else {
+            sweetAlert('Oops!',
+                'Could not load the project!!!  Please try again.',
+                'error');
+            return;
         }
     });
 }
@@ -1304,9 +1324,12 @@ function sendUnhelpfulReport(event, message) {
         if (!result || result.dismiss !== sweetAlert.DismissReason.confirm) return;
 
         const data = new FormData();
-        let report = window.location.href;
-        if (result.value) report += `\n${result.value}`;
-        report += `\n${message}`;
+        data.append('title', 'User-reported unhelpful error message');
+        data.append('label', 'error-message');
+
+        let report = `**Program:** ${window.location.href}`;
+        if (result.value) report += `\n\n**Comment:**\n\n${result.value}`;
+        report += `\n\n**Message:**\n\n${message.replace(/^/gm, '    ')}`;
         data.append('message', report);
         sendHttp('POST', 'log', data);
         sweetAlert({
@@ -1377,10 +1400,13 @@ function initDirectoryTree() {
                 titleElem.before(
                     $('<div style="float: left" class="loader"></div>')
                 );
-            } else {
+            } else if (node.type === 'project') {
+                const asterisk = $('<i class="unsaved-changes"></i>')
+                asterisk.css('display', 'none');
                 titleElem.before(
                     $('<i class="mdi mdi-18px mdi-cube"></i>')
                 );
+                titleElem.after(asterisk);
             }
         }
     });
@@ -1500,38 +1526,29 @@ function initDirectoryTree() {
         }
     );
     $('#directoryTree').on(
-        'tree.select',
+        'tree.click',
         (event) => {
+            event.preventDefault();
+            // Deselection of selected project. Cancel it and do nothing.
+            if (event.node.type === 'project' && $('#directoryTree').tree('isNodeSelected', event.node)) {
+                return;
+            }
             warnIfUnsaved(() => {
-                if (event.node && event.node.type === 'project') {
+                if (event.node.type === 'project') {
                     const node = event.node;
                     const path = pathToRootDir(node);
                     window.openProjectName = node.name;
                     loadProject(node.name, path);
-                } else if (event.node && event.node.type === 'directory') {
+                    $('#directoryTree').tree('selectNode', event.node)
+                } else if (event.node.type === 'directory') {
                     if (event.node.children.length === 0) {
                         loadSubTree(event.node);
                     }
                     clearCode();
+                    $('#directoryTree').tree('selectNode', event.node);
                 }
-                updateUI();
-            });
-        }
-    );
-
-    $('#directoryTree').on(
-        'tree.click',
-        (event) => {
-            // Cancel deselection of project 
-            if (event.node.type === 'project' && $('#directoryTree').tree('isNodeSelected', event.node)) {
-                event.preventDefault();
-
-                warnIfUnsaved(() => {
-                    const node = event.node;
-                    const path = pathToRootDir(node);
-                    loadProject(node.name, path);
-                });
-            }
+            })
+            updateUI();
         }
     );
 }

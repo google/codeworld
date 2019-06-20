@@ -212,7 +212,7 @@ function fix_libexec_binary {
 }
 
 if [ ! -f $BUILD/progress/ghcjs ]; then
-  run .            cabal v2-install happy-1.19.9 alex --symlink-bindir=$BUILD/bin
+  run .            cabal v2-install happy-1.19.9 alex hsc2hs --symlink-bindir=$BUILD/bin
   run $BUILD       rm -rf ghcjs
   run $BUILD       git clone --branch ghc-8.6 --single-branch https://github.com/ghcjs/ghcjs.git
   run $BUILD/ghcjs git submodule update --init --recursive
@@ -239,7 +239,7 @@ if [ ! -f $BUILD/progress/codemirror ]; then
   run $BUILD            git clone https://github.com/codemirror/CodeMirror.git
   run $BUILD/CodeMirror git checkout tags/5.43.0
   run $BUILD/CodeMirror npm install
-  run $BUILD/CodeMirror npm install -s uglify-js git+ssh://git@github.com:angelozerr/CodeMirror-Extension.git
+  run $BUILD/CodeMirror npm install -s uglify-js https://github.com/angelozerr/CodeMirror-Extension
 
   touch $BUILD/progress/codemirror
 fi

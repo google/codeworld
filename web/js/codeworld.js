@@ -589,6 +589,15 @@ function updateUI() {
 
     if (!isEditorClean()) {
         title = `* ${title}`;
+        let selected = $('#directoryTree').tree('getSelectedNode');
+        if (selected && selected.type === 'project') {
+            let asterisk = selected.element.getElementsByClassName('unsaved-changes')[0];
+            if (asterisk) {
+                asterisk.style.display = '';
+            }
+        }
+    } else {
+        $('.unsaved-changes').css('display', 'none');
     }
 
     // If true - code currently in document is not equal to
@@ -693,14 +702,12 @@ function setCode(code, history, name, autostart) {
 function loadSample(code) {
     if (isEditorClean()) sweetAlert.close();
     warnIfUnsaved(() => {
-        clearWorkspace();
         setCode(code);
     });
 }
 
 function newProject() {
     warnIfUnsaved(() => {
-        clearWorkspace();
         setCode('');
     });
 }

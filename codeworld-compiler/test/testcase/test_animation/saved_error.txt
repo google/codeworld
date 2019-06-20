@@ -1,6 +1,0 @@
-program.hs:16:25: error: 
-    • Couldn't match expected type Number -> Picture
-                  with actual type Picture
-    • In the argument(s) of animationOf, namely (propellor)
-      In the expression: animationOf (propellor)
-      In an equation for program: program = animationOf (propellor)

@@ -27,23 +27,24 @@ module Blocks.Parser ( Error(..)
   where
 
 import Blockly.Block
-import GHCJS.Types
+import Control.Applicative
+import Control.Monad
+import Control.Monad.Fail
+import Data.JSString.Text
+import Data.List (intercalate)
+import Data.Maybe (fromJust)
+import Data.Monoid ((<>))
+import qualified Data.Text as T
+import Debug.Trace
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
-import Data.JSString.Text
-import Data.Maybe (fromJust)
+import qualified Data.Map as M
 import GHCJS.Marshal
+import GHCJS.Types
 import qualified JavaScript.Array as JA
-import Unsafe.Coerce
-import Data.List (intercalate)
-import qualified Data.Text as T
 import Prelude hiding ((<>), show)
 import qualified Prelude as P
-import Control.Monad
-import Control.Applicative
-import qualified Data.Map as M
-import Debug.Trace
-import Data.Monoid ((<>))
+import Unsafe.Coerce
 
 -- Helpers for converting Text
 pack = textToJSString
@@ -70,6 +71,9 @@ instance Monad SaveErr where
         case f code of
           (SE code_ Nothing) -> SE code_ err
           (SE code_ a) -> SE code_ err
+
+instance MonadFail SaveErr where
+    fail = error
 
 push a = SE a Nothing
 errc :: T.Text -> Block -> SaveErr Expr
@@ -459,6 +463,8 @@ regularBlockNames =
                   ,"cwDull"
                   ,"cwTranslucent"
                   ,"cwRGBA"
+                  ,"cwRGB"
+                  ,"cwHSL"
                   -- LOGIC
                   ,"conNot"
                   ,"conTrue"

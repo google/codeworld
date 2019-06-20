@@ -27,17 +27,17 @@ import qualified Crypto.Hash as Crypto
 import Data.Aeson
 import Data.ByteArray (convert)
 import Data.ByteString (ByteString)
+import Data.List (sort, sortOn)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as LB
 import Data.Maybe
-import Data.Monoid
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import qualified Data.Text.IO as T
 import System.Directory
-import System.File.Tree (copyTo_, getDirectory)
 import System.FilePath
 import System.IO.Error
 import System.Posix.Files
@@ -146,9 +146,7 @@ userProjectDir :: BuildMode -> UserId -> FilePath
 userProjectDir mode (UserId userIdRaw) = projectRootDir mode </> userIdRaw
 
 projectBase :: ProjectId -> FilePath
-projectBase (ProjectId p) =
-    let s = T.unpack p
-    in take 3 s </> s
+projectBase (ProjectId p) = T.unpack p
 
 projectFile :: ProjectId -> FilePath
 projectFile projectId = projectBase projectId <.> "cw"
@@ -163,9 +161,7 @@ nameToProjectId :: Text -> ProjectId
 nameToProjectId = ProjectId . hashToId "S" . T.encodeUtf8
 
 dirBase :: DirId -> FilePath
-dirBase (DirId d) =
-    let s = T.unpack d
-    in take 3 s </> s
+dirBase (DirId d) = T.unpack d
 
 nameToDirId :: Text -> DirId
 nameToDirId = DirId . hashToId "D" . T.encodeUtf8
@@ -206,16 +202,55 @@ ensureProjectDir mode userId path projectId = do
 listDirectoryWithPrefix :: FilePath -> IO [FilePath]
 listDirectoryWithPrefix filePath = map (filePath </>) <$> listDirectory filePath
 
-dirFilter :: [FilePath] -> Char -> IO [FilePath]
-dirFilter dirs char =
-    fmap concat $
-    mapM listDirectoryWithPrefix $
-    filter (\x -> head (takeBaseName x) == char) dirs
+listDirectoryWithPrefixRecursive :: FilePath -> IO [FilePath]
+listDirectoryWithPrefixRecursive filePath = do
+    subpaths <- map (filePath </>) <$> listDirectory filePath
+    dirs <- filterM doesDirectoryExist subpaths
+    subtrees <- mapM listDirectoryWithPrefixRecursive dirs
+    return $ subpaths ++ (concat subtrees)
+
+dirFilter :: [FilePath] -> Char -> [FilePath]
+dirFilter dirs char = filter (\x -> head (takeBaseName x) == char) dirs
+
+fsEntries :: FilePath -> IO [FileSystemEntry]
+fsEntries dir = do
+    subHashedDirs <- listDirectoryWithPrefix dir
+    let hashedFiles = dirFilter subHashedDirs 'S'
+        hashedDirs = dirFilter subHashedDirs 'D'
+    projNames <- sort <$> mapM projName hashedFiles
+    dirNames  <- sort <$> mapM dirName hashedDirs
+    haveSavedOrderFile <- doesFileExist $ dir </> "order.info"
+    case haveSavedOrderFile of
+        True -> do
+            dumpedEntries <- fromJust . decode <$> LB.readFile (dir </> "order.info")
+            let (dumpedDirs, dumpedProjects) = span (\x -> fsEntryType x == Dir) $ sortOn fsEntryType dumpedEntries
+                existingDirs = onlyExisting (sortOn fsEntryName dumpedDirs) dirNames
+                existingProjects = onlyExisting (sortOn fsEntryName dumpedProjects)  projNames 
+            return $
+                    updateOrder Dir existingDirs dirNames ++
+                    updateOrder Proj existingProjects projNames
+        False -> return $ updateOrder Dir [] dirNames ++ updateOrder Proj [] projNames
+    where
+        onlyExisting :: [FileSystemEntry] -> [Text] -> [FileSystemEntry]
+        onlyExisting dumped existing = filter (\d -> fsEntryName d `elem` existing) dumped
+
+        updateOrder :: FileSystemEntryType -> [FileSystemEntry] -> [Text] -> [FileSystemEntry]
+        updateOrder _ [] [] = []
+        updateOrder _ (_:_) [] = []
+        updateOrder defType [] (name:names) = (FSEntry 0 name defType) : updateOrder defType [] names
+        updateOrder defType (entry@(FSEntry _ dumpedName _):entries) (name:names)
+            | dumpedName == name = entry : updateOrder defType entries names
+            | otherwise = (FSEntry 0 name defType) : updateOrder defType (entry: entries) names
+
+        projName path = do
+            Just project <- decode <$> LB.readFile path
+            return $ projectName project
+        dirName path = T.readFile (path </> "dir.info")
 
 projectFileNames :: FilePath -> IO [Text]
 projectFileNames dir = do
     subHashedDirs <- listDirectoryWithPrefix dir
-    hashedFiles <- dirFilter subHashedDirs 'S'
+    let hashedFiles = dirFilter subHashedDirs 'S'
     projects <- fmap catMaybes $
         forM hashedFiles $ \f -> do
             exists <- doesFileExist f
@@ -227,9 +262,9 @@ projectFileNames dir = do
 projectDirNames :: FilePath -> IO [Text]
 projectDirNames dir = do
     subHashedDirs <- listDirectoryWithPrefix dir
-    hashedDirs <- dirFilter subHashedDirs 'D'
-    dirs <- mapM (\x -> B.readFile $ x </> "dir.info") hashedDirs
-    return $ map T.decodeUtf8 dirs
+    let hashedDirs = dirFilter subHashedDirs 'D'
+    dirNames <- mapM (\x -> T.readFile $ x </> "dir.info") hashedDirs
+    return dirNames
 
 writeDeployLink :: BuildMode -> DeployId -> ProgramId -> IO ()
 writeDeployLink mode deployId (ProgramId p) = do
@@ -247,17 +282,6 @@ isDir :: FilePath -> IO Bool
 isDir path = do
     status <- getFileStatus path
     return $ isDirectory status
-
-migrateUser :: FilePath -> IO ()
-migrateUser userRoot = do
-    prevContent <-
-        filter (\x -> take 3 (reverse x) == "wc.") <$> listDirectory userRoot
-    mapM_
-        (\x -> createDirectoryIfMissing False $ userRoot </> take 3 x)
-        prevContent
-    mapM_
-        (\x -> renameFile (userRoot </> x) $ userRoot </> take 3 x </> x)
-        prevContent
 
 getFilesRecursive :: FilePath -> IO [FilePath]
 getFilesRecursive path = do
@@ -298,7 +322,17 @@ hashToId pfx =
     toWebSafe c = c
 
 copyDirIfExists :: FilePath -> FilePath -> IO ()
-copyDirIfExists folder1 folder2 = getDirectory folder1 >>= copyTo_ folder2
+copyDirIfExists src dst = do
+    contents <- listDirectory src
+    dstExists <- doesDirectoryExist dst
+    when (not dstExists) $ createDirectoryIfMissing True dst
+    forM_ contents $ \f -> do
+        let srcPath = src </> f
+        let dstPath = dst </> f
+        isDir <- doesDirectoryExist srcPath
+        if isDir
+          then copyDirIfExists srcPath dstPath
+          else copyFile srcPath dstPath
 
 removeFileIfExists :: FilePath -> IO ()
 removeFileIfExists fileName = removeFile fileName `catch` handleExists

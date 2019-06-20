@@ -36,12 +36,13 @@ module Extras.Cw(
     between, beyond, saw
     -- * Functions for accessing the points in a curve
     , openCurvePoints, closedCurvePoints
-    -- * Color convenience functions
-    , rgb, withAlpha
     -- * Layout
     , pageFromTexts, grid, sprite, overlays, underlays
+    , squareFrame
     -- * Graphing
-    , graphed
+    , graphed, wideGraphed, customGraphed
+    -- * Drawing Trees
+    , Tree, (-<), treeDepth, treeWidth, tree
     -- * New entry points
     , slideshow, autoSlideshow
     -- * Entry points with randomization
@@ -402,21 +403,6 @@ closedCurvePoints :: ([Point],Number) -> [Point]
 
 
 -------------------------------------------------------------------------------
--- Colors
--------------------------------------------------------------------------------
-
--- | This function allows you to specify color components in the range 0 to 255
--- instead of 0 to 1.
-rgb :: (Number,Number,Number) -> Color
-rgb(r,g,b) = RGB(r/256,g/256,b/256) -- Not exact, but colors aren't anyway...
-
--- | This function allows you to specify the level of transparency of the
--- given color. Transparency must be given in the range 0 (fully transparent)
--- to 1 (fully opaque).
-withAlpha :: (Color,Number) -> Color
-withAlpha(RGBA(r,g,b,_),a) = RGBA(r,g,b,a)
-
--------------------------------------------------------------------------------
 --- Layout
 -------------------------------------------------------------------------------
 
@@ -527,71 +513,117 @@ underlays(f,n) = underlays'(f,max(0,truncation(n)))
     underlays'(f,0) = blank
     underlays'(f,n) = f(n) & underlays'(f,n-1)
 
+-- | A white frame around the standard 20x20 output window that covers
+-- anything that may spill over. The argument is the thickness of
+-- the frame border.
+squareFrame :: Number -> Picture
+squareFrame(border) = colored(thickRectangle(s,s,border),RGB(1,1,1))
+  where
+  s = 20 + border
+
 -------------------------------------------------------------------------------
 --- Zoomable graph
 -------------------------------------------------------------------------------
 
--- | The given picture dilated by the given scaling factor and shown in a graph
--- that zooms along with the picture. For example, a scaling factor of 2 means
--- that the picture will show twice as big as usual in each direction.
+-- | The given picture scaled by the given scaling factors and shown in a
+-- graph
+-- that zooms along with the picture. For example, a scaling factor of 2
+-- in either the X direction or the Y direction means
+-- that the picture will show twice as big as usual in that direction.
 --
 -- Example 1:
 --
 -- > program = animationOf(movie)
--- >     where movie(t) = graphed(circle(5*t^3),1/(1 + t^3))
+-- >     where movie(t) = let zoom = 1/(1 + t^3)
+-- >                      in  graphed(circle(5*t^3), zoom, zoom)
 --
 -- Example 2:
 --
 -- > program = guiDrawingOf(widgets,draw)
 -- >   where
--- >   widgets = [withConversion(\v -> 2^(-8 + v*16), slider("zoom",-8,9))]
--- >   draw([zoom]) = graphed(pictures([circle(n) | n <- [1..100]]), zoom)
+-- >   widgets = [ withConversion(zooming, slider("zoomX",-8,9))
+-- >             , withConversion(zooming, slider("zoomY",-8,7))
+-- >             ]
+-- >   zooming(v) = 2^(-8 + v*16)
+-- >   draw([zoomX,zoomY]) = graphed(manyCircles, zoomX, zoomY)
+-- >   manyCircles = pictures([circle(n) | n <- [1..100]])
 --
 -- Example 1 shows a circle that grows forever, while the graph keeps
 -- adjusting the scale so that it fits within the output.
--- Example 2 shows a graph with 100 circles. It used the function
+-- Example 2 shows a graph with 100 circles. It uses the function
 -- 'guiDrawingOf' from "Extras.Widget".
 --
-graphed :: (Picture,Number) -> Picture
-graphed(pic,zoom) = graph(10/zoom) & dilated(pic,zoom)
+graphed :: (Picture,Number,Number) -> Picture
+graphed(pic,zoomx,zoomy) = graph(10/zoomx,10/zoomy,10,10)
+                         & scaled(pic,zoomx,zoomy)
 
-graph(maxnum) = labels & axes & rotated(axes,90)
+-- | This function is similar to 'graphed', but it creates a graph that is
+-- as wide as specified by the first parameter.
+-- Thus, @wideGraphed(width,pic,sx,sy)@ creates a graph that is @width@
+-- units wide and @20@ units high.
+wideGraphed :: (Number,Picture,Number,Number) -> Picture
+wideGraphed(width,pic,zoomx,zoomy) =
+  graph(halfwidth/zoomx, 10/zoomy, halfwidth, 10)
+  & scaled(pic,zoomx,zoomy)
   where
-  semiMajor = pictures(forloop(0,(<= maxnum),(+ major),majorAxis))
-  semiMinor = pictures(forloop(0,(<= maxnum),(+ minor),minorAxis))
-  (limit,major,_) = resolution(maxnum)
-  (_,minor,numdec) = resolution(major)
-  scaling = 10/maxnum
-  axes = semiMajor & scaled(semiMajor,-1,1)
-       & semiMinor & scaled(semiMinor,-1,1)
-    
-  labels = pictures(forloop(major,(<= maxnum),(+ major),p))
-         & pictures(forloop(major,(<= maxnum),(+ major),q))
-  axis(x) = polyline([(x*scaling,-10),(x*scaling,10)])
-  majorAxis(x) = colored(axis(x),g(0.2,0.5))
-  minorAxis(x) = colored(axis(x),g(0.1,0.2))
-  g(s,a) = RGBA(s,s,s,a)
+  halfwidth = width/2
 
-  p(x) | x < 1000000 = translated(lunj( x), p,-1/2)
-                     & translated(lunj(-x),-p,-1/2)
-       | 3 <= p && p < 6 = translated(lunj( x), p,-1/2)
-                         & translated(lunj(-x),-p,-1/2)
+
+-- | This function is similar to 'graphed', but it creates a graph that is
+-- as wide and as high as specified by the first two parameters.
+-- Thus, @customGraphed(width,height,pic,sx,sy)@ creates a graph that
+-- is @width@ units wide and @heighth@ units high.
+customGraphed :: (Number,Number,Picture,Number,Number) -> Picture
+customGraphed(width,height,pic,zoomx,zoomy) =
+  graph(halfwidth/zoomx, halfheight/zoomy, halfwidth, halfheight)
+  & scaled(pic,zoomx,zoomy)
+  where
+  halfwidth = width/2
+  halfheight = height/2
+
+graph(maxX,maxY,width,height) = labels & axesX & rotated(axesY,90)
+  where
+  (majorX,axesX) = axes(maxX,width,height)
+  (majorY,axesY) = axes(maxY,height,width)
+
+  labels = pictures(forloop(majorX,(<= maxX),(+ majorX),p))
+         & pictures(forloop(majorY,(<= maxY),(+ majorY),q))
+
+  p(x) | x < 1000000 = translated(lunj( x), pos,-1/2)
+                     & translated(lunj(-x),-pos,-1/2)
+       | 3 <= pos && pos < 6 = translated(lunj( x), pos,-1/2)
+                             & translated(lunj(-x),-pos,-1/2)
        | otherwise = blank
        where
-       p = x * scaling
+       pos = x * width / maxX
 
-  q(y) | y < 50000 = translated(ljust( y),-1, p)
-                   & translated(ljust(-y),-1,-p)
-       | 3 <= p && p < 6 = translated(lunj( y),-1, p)
-                         & translated(lunj(-y),-1,-p)
+  q(y) | y < 50000 = translated(ljust( y),-1, pos)
+                   & translated(ljust(-y),-1,-pos)
+       | 3 <= pos && pos < 6 = translated(lunj( y),-1, pos)
+                             & translated(lunj(-y),-1,-pos)
        | otherwise = blank
        where
-       p = y * scaling
+       pos = y * height / maxY
 
   lunj(v)  = dilated(styledLettering(printed(v),Monospace,Plain),0.5)
   ljust(v) = dilated(styledLettering( rJustified(printed(v),5)
                                     , Monospace
                                     , Plain ), 0.5)
+
+axes(maxnum,width,height) = (major, allAxes)
+  where
+  allAxes = semiMajor & scaled(semiMajor,-1,1)
+          & semiMinor & scaled(semiMinor,-1,1)
+
+  semiMajor = pictures(forloop(0,(<= maxnum),(+ major),majorAxis))
+  semiMinor = pictures(forloop(0,(<= maxnum),(+ minor),minorAxis))
+  (_,major,_) = resolution(maxnum*10/width)
+  (_,minor,_) = resolution(major)
+  scaling = width / maxnum
+  axis(x) = polyline([(x*scaling,-height),(x*scaling,height)])
+  majorAxis(x) = colored(axis(x),g(0.2,0.5))
+  minorAxis(x) = colored(axis(x),g(0.1,0.2))
+  g(s,a) = RGBA(s,s,s,a)
 
 -- Major interval, minor interval and number of decimals
 resolution(x) = if x >= 1 then goUp(1) else goDn(1,0)
@@ -614,3 +646,127 @@ resolution(x) = if x >= 1 then goUp(1) else goDn(1,0)
       base1 = base
       base2 = base*2
       base5 = base*5
+
+-------------------------------------------------------------------------------
+-- Drawing Trees
+-------------------------------------------------------------------------------
+
+-- | A Tree is built by repeated applications of the @-<@ operator.
+--
+-- Example:
+--
+-- > import Extras.Cw((-<),tree,treeDepth,treeWidth)
+-- > 
+-- > program = drawingOf(picture)
+-- >   where
+-- >   w = 3
+-- >   picture = tree(t1,draw,w) & translated(lettering(info),5,-9)
+-- >     where
+-- >     draw(node) = lettering(node) 
+-- >                & colored(solidRectangle(0.8*w,1),translucent(light(red)))
+-- >     info = joined([ "width: ", printed(treeWidth(t1))
+-- >                   , ", depth: ", printed(treeDepth(t1))
+-- >                   ])
+-- >     t1 = "hello" -< [ "a" -< [ "a1" -< []
+-- >                              , "a2" -< []
+-- >                              ]
+-- >                     , "b" -< [ "b1" -< [ "b11" -< []
+-- >                                        , "b12" -< [ "b121" -< []
+-- >                                                   , "b122" -< [ "b1221" -< []
+-- >                                                               , "b1222" -< []
+-- >                                                               , "b1223" -< []
+-- >                                                               ]
+-- >                                                   ]
+-- >                                        ]
+-- >                              , "b2" -< [ "b21" -< []
+-- >                                        , "b22" -< []
+-- >                                        , "b23" -< []
+-- >                                        ]
+-- >                              ]
+-- >                     , "c" -< []
+-- >                     , "d" -< []
+-- >                     ]
+-- > 
+--
+data Tree a = Node (a,[Tree a])
+
+-- | A tree that has the given node at the head and the given list
+-- of trees as children nodes.
+--
+-- Example: A binary tree
+--
+-- >  program = drawingOf(tree(t,\n -> lettering(printed(n)),1.2))
+-- >  
+-- >  t = 1 -< [ 2 -< [ 4 -< [  8 -< [ 16 -< []
+-- >                                 , 17 -< []
+-- >                                 ]
+-- >                         ,  9 -< [ 18 -< []
+-- >                                 , 19 -< []
+-- >                                 ]
+-- >                         ]
+-- >                  , 5 -< [ 10 -< [ 20 -< []
+-- >                                 , 21 -< []
+-- >                                 ]
+-- >                         , 11 -< [ 22 -< []
+-- >                                 , 23 -< []
+-- >                                 ]
+-- >                         ]
+-- >                  ]
+-- >           , 3 -< [ 6 -< [ 12 -< [ 24 -< []
+-- >                                 , 25 -< []
+-- >                                 ]
+-- >                         , 13 -< [ 26 -< []
+-- >                                 , 27 -< []
+-- >                                 ]
+-- >                         ]
+-- >                  , 7 -< [ 14 -< [ 28 -< []
+-- >                                 , 29 -< []
+-- >                                 ]
+-- >                         , 15 -< [ 30 -< []
+-- >                                 , 31 -< []
+-- >                                 ]
+-- >                         ]
+-- >                  ]
+-- >           ]
+-- >
+--
+(-<) :: a -> [Tree a] -> Tree a
+x -< t = Node(x,t)
+
+-- | The depth of the given tree
+treeDepth :: Tree a -> Number
+treeDepth(Node(_,[])) = 1
+treeDepth(Node(_,t)) = 1 + maximum(foreach(t,treeDepth))
+
+-- | The width of the given tree
+treeWidth :: Tree a -> Number
+treeWidth(Node(_,[])) = 1
+treeWidth(Node(_,t)) = sum(foreach(t,treeWidth))
+
+-- | A Picture of the given tree, where each node is drawn according
+-- to the given function. It is assumed that each node is no wider than the
+-- given width. Otherwise, overlap between nodes will occur.
+tree :: (Tree a,a -> Picture,Number) -> Picture
+tree(tt,draw,size) = dilated(fulltree,20/sfactor)
+  where
+  sfactor = max(width,depth)
+  width = size * treeWidth(tt)
+  fulltree = translated(tree'(tt,-width/2,width),0,(depth-1)/2)
+  depth = 2*treeDepth(tt)-1
+  tree'(Node(a,t),offset,alloc) = translated(draw(a),anchor,0)
+                                & pointers
+                                & translated(nodes,0,-2)
+    where
+    pointers = if empty(t) then blank 
+                           else polyline([(anchor,-0.5),(anchor,-1)])
+    anchor = offset+alloc/2
+    nodes = pictures(forloop(input,cond,next,output))
+      where
+      input = (t,offset,if empty(t) then 0 else size * treeWidth(t#1))
+      cond(ns,_,_) = nonEmpty(ns)
+      next(ns,d,w) = (ns',d+w,if empty(ns') then 0 else size * treeWidth(ns'#1))
+        where
+        ns' = rest(ns,1)
+      output(ns,d,w) = tree'(ns#1,d,w)
+                      & polyline([(d+w/2,0.5),(d+w/2,1)])
+                      & polyline([(d+w/2,1),(offset+alloc/2,1)])

@@ -15,9 +15,24 @@
 BUILD=$(pwd)/build
 DOWNLOADS=$BUILD/downloads
 
-export PATH=$BUILD/bin:$PATH
+#
+# General environment.
+#
+
+export PATH=$BUILD/bin:$HOME/.cabal/bin:$BUILD/.ghcup/bin:$PATH
 export LANG=${LANG:-C.UTF-8}
 export PREFIX=$BUILD
+
+#
+# Environment variables that control ghcup.
+#
+
+export GHCUP_INSTALL_BASE_PREFIX=$BUILD
+export BOOTSTRAP_HASKELL_NONINTERACTIVE=1
+
+#
+# Set up terminal colors.
+#
 
 setnormal=""
 setred=""
@@ -32,6 +47,10 @@ if test -t 1; then
     setyellow="$(tput setaf 3)"
   fi
 fi
+
+#
+# Wrapper script to more legibly run and check response code for programs.
+#
 
 function run {
   local old_pwd=$PWD
@@ -69,10 +88,14 @@ function run {
   cd $old_pwd
 }
 
+#
+# Options around use of cabal-install for installing packages.
+#
+
 function cabal_install {
-  cabal install --reorder-goals --disable-library-profiling --force-reinstalls --global --prefix=$BUILD $@
+  cabal v1-install --symlink-bindir=$BUILD/bin --reorder-goals --disable-library-profiling --force-reinstalls --global --prefix=$BUILD $@
 }
 
 function cabal_configure {
-  cabal configure --disable-library-profiling --global --prefix=$BUILD $@
+  cabal v1-configure --disable-library-profiling --global --prefix=$BUILD $@
 }

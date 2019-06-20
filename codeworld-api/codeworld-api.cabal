@@ -19,22 +19,30 @@ Description:
   package to provide a webpage consisting of just a panel locally. This way, the same
   program that runs on the CodeWorld server can also be run locally.
 
+Extra-source-files:    data/README.md,
+                       data/*.svg
+
 Library
   Exposed:             True
   Hs-source-dirs:      src
   Exposed-modules:     CodeWorld,
                        CodeWorld.App,
-                       CodeWorld.App2
+                       CodeWorld.App2,
+                       CodeWorld.Sketches
   Other-modules:       CodeWorld.CanvasM,
                        CodeWorld.Color,
                        CodeWorld.Picture,
                        CodeWorld.Event,
                        CodeWorld.Driver,
-                       CodeWorld.CollaborationUI
+                       CodeWorld.CollaborationUI,
+                       Util.EmbedAsUrl
   Build-depends:       base                 >= 4.9   && < 5,
+                       base64-bytestring    >= 1.0   && < 1.1,
+                       bytestring           >= 0.9   && < 0.11,
                        containers           >= 0.5.7 && < 0.7,
                        deepseq              >= 1.4   && < 1.5,
                        hashable             >= 1.2.4 && < 1.3,
+                       template-haskell     >= 2.8   && < 2.15,
                        text                 >= 1.2.2 && < 1.3,
                        mtl                  >= 2.2.1 && < 2.3,
                        random               >= 1.1   && < 1.2,
@@ -52,7 +60,7 @@ Library
                        ghcjs-dom             >= 0.8 && < 0.9,
                        transformers
   else
-    Build-depends:     blank-canvas          >= 0.6 && < 0.7,
+    Build-depends:     blank-canvas          >= 0.6 && < 0.8,
                        time                  >= 1.6.0 && < 1.9
 
   Ghc-options:         -O2 -Wincomplete-patterns

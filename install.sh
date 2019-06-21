@@ -212,7 +212,7 @@ function fix_libexec_binary {
 }
 
 if [ ! -f $BUILD/progress/ghcjs ]; then
-  run .            cabal v2-install happy-1.19.9 alex hsc2hs --symlink-bindir=$BUILD/bin
+  run .            cabal v2-install happy-1.19.9 alex --symlink-bindir=$BUILD/bin
   run $BUILD       rm -rf ghcjs
   run $BUILD       git clone --branch ghc-8.6 --single-branch https://github.com/ghcjs/ghcjs.git
   run $BUILD/ghcjs git submodule update --init --recursive

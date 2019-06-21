@@ -5,6 +5,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE JavaScriptFFI #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
@@ -51,7 +52,7 @@ import Control.Monad
 import Control.Monad.Trans (liftIO)
 import Data.Char (chr)
 import Data.List (find, zip4, intercalate)
-import Data.Maybe (fromMaybe, isNothing, mapMaybe)
+import Data.Maybe (fromMaybe, isJust, isNothing, mapMaybe)
 import Data.Monoid
 import Data.Serialize
 import Data.Serialize.Text
@@ -317,7 +318,8 @@ mapDSColor f (DrawState at mc) = DrawState at (f mc)
 -- A NodeId a unique id for each node in a Picture of Drawing, chosen by the order
 -- the node appears in DFS. When a Picture is converted to a drawing the NodeId's of
 -- corresponding nodes are shared. Always >=0.
-type NodeId = Int
+newtype NodeId = NodeId { getNodeId :: Int}
+    deriving (Eq, Ord, Enum)
 
 pictureToDrawing :: MonadCanvas m => Picture -> Drawing m
 pictureToDrawing (SolidClosedCurve _ pts) = Shape $ polygonDrawer pts True
@@ -550,7 +552,7 @@ imageDrawer url ds =
 coordinatePlaneDrawer ds =
     DrawMethods
     { drawShape = drawDrawing ds coordinatePlaneDrawing
-    , shapeContains = fst <$> findTopShape ds coordinatePlaneDrawing
+    , shapeContains = isJust <$> findTopShape ds coordinatePlaneDrawing
     }
 
 followPath :: MonadCanvas m => [Point] -> Bool -> Bool -> m ()
@@ -659,20 +661,26 @@ drawDrawing ds (Shape shape) = drawShape $ shape ds
 drawDrawing ds (Transformation f d) = drawDrawing (f ds) d
 drawDrawing ds (Drawings drs) = mapM_ (drawDrawing ds) (reverse drs)
 
-findTopShape :: MonadCanvas m => DrawState -> Drawing m -> m (Bool, Int)
-findTopShape ds (Shape drawer) = do
-    contained <- shapeContains $ drawer ds
-    case contained of
-        True -> return (True, 0)
-        False -> return (False, 1)
-findTopShape ds (Transformation f d) =
-    fmap (+ 1) <$> findTopShape (f ds) d
-findTopShape ds (Drawings []) = return (False, 1)
-findTopShape ds (Drawings (dr:drs)) = do
-    (found, count) <- findTopShape ds dr
-    case found of
-        True -> return (True, count + 1)
-        False -> fmap (+ count) <$> findTopShape ds (Drawings drs)
+findTopShape :: MonadCanvas m => DrawState -> Drawing m -> m (Maybe NodeId)
+findTopShape ds d = do
+    (found, n) <- go ds d
+    return $ if found
+        then Just (NodeId n)
+        else Nothing
+  where
+    go ds (Shape drawer) = do
+        contained <- shapeContains $ drawer ds
+        case contained of
+            True -> return (True, 0)
+            False -> return (False, 1)
+    go ds (Transformation f d) =
+        fmap (+ 1) <$> go (f ds) d
+    go ds (Drawings []) = return (False, 1)
+    go ds (Drawings (dr:drs)) = do
+        (found, count) <- go ds dr
+        case found of
+            True -> return (True, count + 1)
+            False -> fmap (+ count) <$> go ds (Drawings drs)
 
 handlePointRequest :: MonadCanvas m => IO Picture -> Point -> m (Maybe NodeId)
 handlePointRequest getPic pt = do
@@ -853,12 +861,9 @@ getPictureSrcLoc (PictureAnd loc _) = loc
 findTopShapeFromPoint :: MonadCanvas m => Point -> Drawing m -> m (Maybe NodeId)
 findTopShapeFromPoint (x, y) pic = do
     img <- CM.newImage 500 500
-    (found, node) <- CM.withImage img $
+    CM.withImage img $
         findTopShape (translateDS (10 - x / 25) (y / 25 - 10) initialDS)
                      pic
-    case found of
-        True -> return $ Just node
-        False -> return Nothing
 
 drawFrame :: MonadCanvas m => Drawing m -> m ()
 drawFrame drawing = do
@@ -922,7 +927,7 @@ initDebugMode setActive getPic highlight = do
             -- because handlePointRequest ignores them and works only with
             -- an off-screen image.
             n <- runCanvasM undefined undefined (handlePointRequest getPic (x, y))
-            return (pToJSVal (fromMaybe (-1) n))
+            return (pToJSVal (maybe (-1) getNodeId n))
     setActiveCB <- syncCallback1 ContinueAsync $ setActive . pFromJSVal
     getPicCB <- syncCallback' $ getPic >>= picToObj
     highlightCB <-
@@ -931,12 +936,12 @@ initDebugMode setActive getPic highlight = do
                 node =
                     case ((pFromJSVal n) :: Int) < 0 of
                         True -> Nothing
-                        False -> Just $ pFromJSVal n
+                        False -> Just $ NodeId $ pFromJSVal n
             in highlight select node
     drawCB <-
         syncCallback2 ContinueAsync $ \c n -> do
             let canvas = unsafeCoerce c :: Element
-                nodeId = pFromJSVal n
+                nodeId = NodeId $ pFromJSVal n
             drawing <- pictureToDrawing <$> getPic
             let node = fromMaybe (Drawings []) $ fst <$> getDrawNode nodeId drawing
             offscreenCanvas <- Canvas.create 500 500
@@ -967,9 +972,9 @@ foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
                      -> IO ()
 
 picToObj :: Picture -> IO JSVal
-picToObj = fmap fst . flip State.runStateT 0 . picToObj'
+picToObj = fmap fst . flip State.runStateT (NodeId 0) . picToObj'
 
-picToObj' :: Picture -> State.StateT Int IO JSVal
+picToObj' :: Picture -> State.StateT NodeId IO JSVal
 picToObj' pic = objToJSVal <$> case pic of
     Pictures _ ps -> mkNodeWithChildren ps
     PictureAnd _ ps -> mkNodeWithChildren ps
@@ -980,15 +985,15 @@ picToObj' pic = objToJSVal <$> case pic of
     Rotate _ _ p -> mkNodeWithChild p
     _ -> mkSimpleNode
   where
-    mkSimpleNode :: State.StateT Int IO Object
+    mkSimpleNode :: State.StateT NodeId IO Object
     mkSimpleNode = do
         obj <- liftIO create
         id <- do
             currentId <- State.get
-            State.put (currentId + 1)
+            State.modify' succ
             return currentId
         liftIO $ do
-            setProp "id" (pToJSVal id) obj
+            setProp "id" (pToJSVal $ getNodeId id) obj
             setProp "name" (pToJSVal $ (trim 80 . describePicture) pic) obj
             case getPictureSrcLoc pic of
                 Just loc -> do
@@ -999,14 +1004,14 @@ picToObj' pic = objToJSVal <$> case pic of
                 Nothing -> return ()
         return obj
 
-    mkNodeWithChild :: Picture -> State.StateT Int IO Object
+    mkNodeWithChild :: Picture -> State.StateT NodeId IO Object
     mkNodeWithChild p = do
         obj <- mkSimpleNode
         subPic <- picToObj' p
         liftIO $ setProp "picture" subPic obj
         return obj
 
-    mkNodeWithChildren :: [Picture] -> State.StateT Int IO Object
+    mkNodeWithChildren :: [Picture] -> State.StateT NodeId IO Object
     mkNodeWithChildren ps = do
         obj <- mkSimpleNode
         arr <- liftIO $ Array.create
@@ -1738,34 +1743,34 @@ highlightDrawing (DrawState at _) drawing =
 
 getDrawNode :: NodeId -> Drawing m -> Maybe (Drawing m, DrawState)
 getDrawNode n _
-    | n < 0 = Nothing
+    | n < (NodeId 0) = Nothing
 getDrawNode n drawing = either Just (const Nothing) $ go initialDS n drawing
   where
-    go ds 0 d = Left (d, ds)
-    go ds n (Shape _) = Right (n - 1)
-    go ds n (Transformation f dr) = go (f ds) (n - 1) dr
-    go ds n (Drawings []) = Right (n - 1)
+    go ds (NodeId 0) d = Left (d, ds)
+    go ds n (Shape _) = Right (pred n)
+    go ds n (Transformation f dr) = go (f ds) (pred n) dr
+    go ds n (Drawings []) = Right (pred n)
     go ds n (Drawings (dr:drs)) =
-        case go ds (n - 1) dr of
+        case go ds (pred n) dr of
             Left d -> Left d
-            Right n -> go ds (n + 1) $ Drawings drs
+            Right n -> go ds (succ n) $ Drawings drs
 
 replaceDrawNode :: forall m. NodeId -> Drawing m -> Drawing m -> Maybe (Drawing m)
 replaceDrawNode n _ _
-    | n < 0 = Nothing
+    | n < (NodeId 0) = Nothing
 replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
   where
-    go :: Int -> Drawing m -> Either (Drawing m) Int
-    go 0 _ = Left with
-    go n (Shape _) = Right (n - 1)
-    go n (Transformation f d) = mapLeft (Transformation f) $ go (n - 1) d
-    go n (Drawings []) = Right (n - 1)
+    go :: NodeId -> Drawing m -> Either (Drawing m) NodeId
+    go (NodeId 0) _ = Left with
+    go n (Shape _) = Right (pred n)
+    go n (Transformation f d) = mapLeft (Transformation f) $ go (pred n) d
+    go n (Drawings []) = Right (pred n)
     go n (Drawings (dr:drs)) =
-        case go (n - 1) dr of
+        case go (pred n) dr of
             Left d -> Left $ Drawings (d : drs)
             Right m ->
                 mapLeft (\(Drawings qs) -> Drawings (dr : qs)) $
-                go (m + 1) $ Drawings drs
+                go (succ n) $ Drawings drs
     mapLeft :: (a -> b) -> Either a c -> Either b c
     mapLeft f = either (Left . f) Right
 

@@ -392,14 +392,115 @@ setColorDS col = mapDSColor $ \mcol ->
 getColorDS :: DrawState -> Maybe Color
 getColorDS (DrawState at col) = col
 
+type Drawer m = DrawState -> DrawMethods m
+
+data DrawMethods m = DrawMethods
+    { drawShape :: m ()
+    , shapeContains :: m Bool
+    }
+
 polygonDrawer :: MonadCanvas m => [Point] -> Bool -> Drawer m
+polygonDrawer ps smooth ds =
+    DrawMethods
+    { drawShape = do
+          trace
+          applyColor ds
+          CM.fill
+    , shapeContains = do
+          trace
+          CM.isPointInPath (0, 0)
+    }
+  where
+    trace = withDS ds $ followPath ps True smooth
+
 pathDrawer :: MonadCanvas m => [Point] -> Double -> Bool -> Bool -> Drawer m
+pathDrawer ps w closed smooth ds =
+    DrawMethods
+    { drawShape = drawFigure ds w $ followPath ps closed smooth
+    , shapeContains =
+          do let width =
+                     if w == 0
+                         then 0.3
+                         else w
+             drawFigure ds width $ followPath ps closed smooth
+             CM.isPointInStroke (0, 0)
+    }
+
 sectorDrawer :: MonadCanvas m => Double -> Double -> Double -> Drawer m
+sectorDrawer b e r ds =
+    DrawMethods
+    { drawShape = do
+          trace
+          applyColor ds
+          CM.fill
+    , shapeContains = do
+          trace
+          CM.isPointInPath (0, 0)
+    }
+  where
+    trace =
+        withDS ds $ do
+            CM.arc 0 0 (25 * abs r) b e (b > e)
+            CM.lineTo (0, 0)
+
 arcDrawer :: MonadCanvas m => Double -> Double -> Double -> Double -> Drawer m
+arcDrawer b e r w ds =
+    DrawMethods
+    { drawShape =
+          drawFigure ds w $ CM.arc 0 0 (25 * abs r) b e (b > e)
+    , shapeContains =
+          do let width =
+                     if w == 0
+                         then 0.3
+                         else w
+             CM.lineWidth (width * 25)
+             drawFigure ds width $
+                 CM.arc 0 0 (25 * abs r) b e (b > e)
+             CM.isPointInStroke (0, 0)
+    }
+
 textDrawer :: MonadCanvas m => TextStyle -> Font -> Text -> Drawer m
+textDrawer sty fnt txt ds =
+    DrawMethods
+    { drawShape =
+          withDS ds $ do
+              CM.scale 1 (-1)
+              applyColor ds
+              CM.font (fontString sty fnt)
+              CM.fillText txt (0, 0)
+    , shapeContains =
+          do CM.font (fontString sty fnt)
+             width <- CM.measureText txt
+             let height = 25 -- constant, defined in fontString
+             withDS ds $
+                 CM.rect ((-0.5) * width) ((-0.5) * height) width height
+             CM.isPointInPath (0, 0)
+    }
+
 logoDrawer :: MonadCanvas m => Drawer m
+logoDrawer ds =
+    DrawMethods
+    { drawShape =
+          withDS ds $ do
+              CM.scale 1 (-1)
+              drawCodeWorldLogo ds (-221) (-91) 442 182
+    , shapeContains =
+          withDS ds $ do
+              CM.rect (-221) (-91) 442 182
+              CM.isPointInPath (0, 0)
+    }
+
 imageDrawer :: MonadCanvas m => Text -> Drawer m
+imageDrawer url ds =
+    DrawMethods { drawShape = return (), shapeContains = return False }
+
 coordinatePlaneDrawer :: MonadCanvas m => Drawer m
+coordinatePlaneDrawer ds =
+    DrawMethods
+    { drawShape = drawDrawing ds coordinatePlaneDrawing
+    , shapeContains = fst <$> findTopShape ds coordinatePlaneDrawing
+    }
+
 coordinatePlaneDrawing :: MonadCanvas m => Drawing m
 coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
   where
@@ -451,107 +552,6 @@ applyColor ds =
                 (round $ g * 255)
                 (round $ b * 255)
                 a
-
-type Drawer m = DrawState -> DrawMethods m
-
-data DrawMethods m = DrawMethods
-    { drawShape :: m ()
-    , shapeContains :: m Bool
-    }
-
-polygonDrawer ps smooth ds =
-    DrawMethods
-    { drawShape = do
-          trace
-          applyColor ds
-          CM.fill
-    , shapeContains = do
-          trace
-          CM.isPointInPath (0, 0)
-    }
-  where
-    trace = withDS ds $ followPath ps True smooth
-
-pathDrawer ps w closed smooth ds =
-    DrawMethods
-    { drawShape = drawFigure ds w $ followPath ps closed smooth
-    , shapeContains =
-          do let width =
-                     if w == 0
-                         then 0.3
-                         else w
-             drawFigure ds width $ followPath ps closed smooth
-             CM.isPointInStroke (0, 0)
-    }
-
-sectorDrawer b e r ds =
-    DrawMethods
-    { drawShape = do
-          trace
-          applyColor ds
-          CM.fill
-    , shapeContains = do
-          trace
-          CM.isPointInPath (0, 0)
-    }
-  where
-    trace =
-        withDS ds $ do
-            CM.arc 0 0 (25 * abs r) b e (b > e)
-            CM.lineTo (0, 0)
-
-arcDrawer b e r w ds =
-    DrawMethods
-    { drawShape =
-          drawFigure ds w $ CM.arc 0 0 (25 * abs r) b e (b > e)
-    , shapeContains =
-          do let width =
-                     if w == 0
-                         then 0.3
-                         else w
-             CM.lineWidth (width * 25)
-             drawFigure ds width $
-                 CM.arc 0 0 (25 * abs r) b e (b > e)
-             CM.isPointInStroke (0, 0)
-    }
-
-textDrawer sty fnt txt ds =
-    DrawMethods
-    { drawShape =
-          withDS ds $ do
-              CM.scale 1 (-1)
-              applyColor ds
-              CM.font (fontString sty fnt)
-              CM.fillText txt (0, 0)
-    , shapeContains =
-          do CM.font (fontString sty fnt)
-             width <- CM.measureText txt
-             let height = 25 -- constant, defined in fontString
-             withDS ds $
-                 CM.rect ((-0.5) * width) ((-0.5) * height) width height
-             CM.isPointInPath (0, 0)
-    }
-
-logoDrawer ds =
-    DrawMethods
-    { drawShape =
-          withDS ds $ do
-              CM.scale 1 (-1)
-              drawCodeWorldLogo ds (-221) (-91) 442 182
-    , shapeContains =
-          withDS ds $ do
-              CM.rect (-221) (-91) 442 182
-              CM.isPointInPath (0, 0)
-    }
-
-imageDrawer url ds =
-    DrawMethods { drawShape = return (), shapeContains = return False }
-
-coordinatePlaneDrawer ds =
-    DrawMethods
-    { drawShape = drawDrawing ds coordinatePlaneDrawing
-    , shapeContains = fst <$> findTopShape ds coordinatePlaneDrawing
-    }
 
 followPath :: MonadCanvas m => [Point] -> Bool -> Bool -> m ()
 followPath [] closed _ = return ()

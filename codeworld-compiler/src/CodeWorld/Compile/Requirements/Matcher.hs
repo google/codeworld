@@ -146,59 +146,55 @@ matchQ = (matchesSpecials :: (Pat GhcPs) -> (Pat GhcPs) -> Maybe Bool)
 matchesSpecials :: Template a => a -> a -> Maybe Bool
 matchesSpecials (toParens -> Just x) y = Just (matchQ x y)
 matchesSpecials x (toParens -> Just y) = Just (matchQ x y)
-matchesSpecials (toSplice -> Just (HsTypedSplice _ _ _ (L _ (HsApp _ op (L _ (HsBracket _ (fromBracket -> Just tmpl))))))) x = 
-  case op of
-        (L _ (HsVar _ (L _ id))) ->
-            case idName id of
-              "tupleOf" -> case toTuple x of Just xs -> Just (all (match tmpl) xs); Nothing -> Just False
-              "contains" -> Just (everything (||) (mkQ False (match tmpl)) x)
-              _ -> Nothing
-        _ -> Nothing
-matchesSpecials (toSplice -> Just (HsUntypedSplice _ _ _ (L _ (HsApp _ op (L _ (HsBracket _ (fromBracket -> Just tmpl))))))) x = 
-  case op of
-        (L _ (HsVar _ (L _ id))) ->
-            case idName id of
-              "tupleOf" -> case toTuple x of Just xs -> Just (all (match tmpl) xs); Nothing -> Just False
-              "contains" -> Just (everything (||) (mkQ False (match tmpl)) x)
-              _ -> Nothing
-        _ -> Nothing
-matchesSpecials (toSplice -> Just (HsTypedSplice _ _ _ (L _ (HsApp _ op (L _ (ExplicitList _ _ (sequence . map (\(L _ (HsBracket _ b)) -> fromBracket b) -> Just xs))))))) x = 
-  case op of
-        (L _ (HsVar _ (L _ id))) ->
-            case idName id of
-              "allOf" -> Just (all (flip match x) xs)
-              "anyOf" -> Just (any (flip match x) xs)
-              "noneOf" -> Just (not (any (flip match x) xs))
-        _ -> Nothing
-matchesSpecials (toSplice -> Just (HsUntypedSplice _ _ _ (L _ (HsApp _ op (L _ (ExplicitList _ _ (sequence . map (\(L _ (HsBracket _ b)) -> fromBracket b) -> Just xs))))))) x = 
-  case op of
-        (L _ (HsVar _ (L _ id))) ->
-            case idName id of
-              "allOf" -> Just (all (flip match x) xs)
-              "anyOf" -> Just (any (flip match x) xs)
-              "noneOf" -> Just (not (any (flip match x) xs))
-        _ -> Nothing
-matchesSpecials (toSplice -> Just (HsTypedSplice _ _ _ (L _ (HsVar _ (L _ id))))) x =
-  case idName id of
-    "any" -> Just True
-    "var" -> case toVar x of Just _ -> Just True; Nothing -> Just False
-    "con" -> case toCon x of Just _ -> Just True; Nothing -> Just False
-    "lit" -> case toLit x of Just _ -> Just True; Nothing -> Just False
-    "num" -> case toNum x of Just _ -> Just True; Nothing -> Just False
-    "char" -> case toChar x of Just _ -> Just True; Nothing -> Just False
-    "str" -> case toStr x of Just _ -> Just True; Nothing -> Just False
-    _ -> Nothing
-matchesSpecials (toSplice -> Just (HsUntypedSplice _ _ _ (L _ (HsVar _ (L _ id))))) x =
-  case idName id of
-    "any" -> Just True
-    "var" -> case toVar x of Just _ -> Just True; Nothing -> Just False
-    "con" -> case toCon x of Just _ -> Just True; Nothing -> Just False
-    "lit" -> case toLit x of Just _ -> Just True; Nothing -> Just False
-    "num" -> case toNum x of Just _ -> Just True; Nothing -> Just False
-    "char" -> case toChar x of Just _ -> Just True; Nothing -> Just False
-    "str" -> case toStr x of Just _ -> Just True; Nothing -> Just False
-    _ -> Nothing
+matchesSpecials (toSplice -> 
+  Just (HsTypedSplice _ _ _ (L _ (HsApp _ op (L _ (HsBracket _ (fromBracket -> Just tmpl))))))) x = 
+    matchBrackets op tmpl x
+matchesSpecials (toSplice -> 
+  Just (HsUntypedSplice _ _ _ (L _ (HsApp _ op (L _ (HsBracket _ (fromBracket -> Just tmpl))))))) x = 
+    matchBrackets op tmpl x
+matchesSpecials (toSplice -> 
+  Just (HsTypedSplice _ _ _ (L _ (HsApp _ op (L _ (ExplicitList _ _ (sequence . map (\(L _ (HsBracket _ b)) -> fromBracket b) -> Just xs))))))) x = 
+    matchLogical op xs x
+matchesSpecials (toSplice -> 
+  Just (HsUntypedSplice _ _ _ (L _ (HsApp _ op (L _ (ExplicitList _ _ (sequence . map (\(L _ (HsBracket _ b)) -> fromBracket b) -> Just xs))))))) x = 
+    matchLogical op xs x
+matchesSpecials (toSplice -> 
+  Just (HsTypedSplice _ _ _ (L _ (HsVar _ (L _ id))))) x =
+    matchSimple id x
+matchesSpecials (toSplice -> 
+  Just (HsUntypedSplice _ _ _ (L _ (HsVar _ (L _ id))))) x =
+    matchSimple id x
 matchesSpecials _ _ = Nothing
+
+matchBrackets :: Template a => LHsExpr GhcPs -> a -> a -> Maybe Bool
+matchBrackets op tmpl x = case op of
+  (L _ (HsVar _ (L _ id))) ->
+    case idName id of
+      "tupleOf" -> case toTuple x of Just xs -> Just (all (match tmpl) xs); Nothing -> Just False
+      "contains" -> Just (everything (||) (mkQ False (match tmpl)) x)
+      _ -> Nothing
+  _ -> Nothing
+
+matchLogical :: Template a => LHsExpr GhcPs -> [a] -> a -> Maybe Bool
+matchLogical op xs x = case op of
+  (L _ (HsVar _ (L _ id))) ->
+    case idName id of
+      "allOf" -> Just (all (flip match x) xs)
+      "anyOf" -> Just (any (flip match x) xs)
+      "noneOf" -> Just (not (any (flip match x) xs))
+      _ -> Nothing
+  _ -> Nothing
+
+matchSimple :: Template a => IdP GhcPs -> a -> Maybe Bool
+matchSimple id x = case idName id of
+  "any" -> Just True
+  "var" -> case toVar x of Just _ -> Just True; Nothing -> Just False
+  "con" -> case toCon x of Just _ -> Just True; Nothing -> Just False
+  "lit" -> case toLit x of Just _ -> Just True; Nothing -> Just False
+  "num" -> case toNum x of Just _ -> Just True; Nothing -> Just False
+  "char" -> case toChar x of Just _ -> Just True; Nothing -> Just False
+  "str" -> case toStr x of Just _ -> Just True; Nothing -> Just False
+  _ -> Nothing
 
 matchesWildcard :: IdP GhcPs -> IdP GhcPs -> Maybe Bool
 matchesWildcard id _ | "_" `isPrefixOf` (idName id) && "_" `isSuffixOf` (idName id) = Just True

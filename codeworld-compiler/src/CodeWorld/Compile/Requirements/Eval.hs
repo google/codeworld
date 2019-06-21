@@ -41,11 +41,8 @@ import Data.Void
 import qualified Language.Haskell.Exts as Exts
 import Text.Regex.TDFA hiding (match)
 
-import "ghc-lib-parser" DynFlags
 import "ghc-lib-parser" HsSyn
-import "ghc-lib-parser" OccName
 import "ghc-lib-parser" Outputable
-import "ghc-lib-parser" RdrName
 import "ghc-lib-parser" SrcLoc
 
 evalRequirement :: MonadCompile m => Requirement -> m (Maybe Bool, [String])
@@ -179,7 +176,7 @@ checkRule (ContainsMatch tmpl topLevel card) = withParsedCode $ \m -> do
                 GHCParsed (HsModule {hsmodImports=[tmpl]}) ->
                     length $ filter (match tmpl) $ concat $ gmapQ (mkQ [] id) m       
     if | hasCardinality card n -> success
-       | otherwise -> failure $ show n
+       | otherwise -> failure $ "Wrong number of matches."
     
 checkRule (MatchesRegex pat card) = do
     src <- getSourceCode

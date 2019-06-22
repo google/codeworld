@@ -348,13 +348,47 @@ logoDrawer ds =
               CM.isPointInPath (0, 0)
     }
 
+drawCodeWorldLogo ::
+       MonadCanvas m => DrawState -> Int -> Int -> Int -> Int -> m ()
+drawCodeWorldLogo ds x y w h = do
+    mlogo <- CM.builtinImage "cwlogo"
+    case (mlogo, getColorDS ds) of
+        (Nothing, _) -> return ()
+        (Just logo, Nothing) -> CM.drawImage logo x y w h
+        (Just logo, Just (RGBA r g b a)) -> do
+            -- This is a tough case.  The best we can do is to allocate an
+            -- offscreen buffer as a temporary.
+            img <- CM.newImage w h
+            CM.withImage img $ do
+                applyColor ds
+                CM.fillRect 0 0 (fromIntegral w) (fromIntegral h)
+                CM.globalCompositeOperation "destination-in"
+                CM.drawImage logo 0 0 w h
+            CM.drawImage img x y w h
+
 imageDrawer :: MonadCanvas m => Text -> Text -> Drawer m
 imageDrawer name url ds =
     DrawMethods
-    { drawShape =
-          withDS ds $ do
-              CM.scale 25 (-25)
-              CM.drawImgURL name url
+    { drawShape = 
+          case getColorDS ds of
+              Nothing -> withDS ds $ do
+                  CM.scale 25 (-25)
+                  CM.drawImgURL name url
+              Just (RGBA r g b a) -> do
+                  w <- CM.getScreenWidth
+                  h <- CM.getScreenHeight
+                  img <- CM.newImage (round w) (round h)
+                  CM.withImage img $ do
+                      applyColor ds
+                      CM.fillRect 0 0 w h
+                      setupScreenContext (round w) (round h)
+                      withDS ds $ do
+                          CM.globalCompositeOperation "destination-in"
+                          CM.scale 25 (-25)
+                          CM.drawImgURL name url
+                  CM.saveRestore $ do
+                      CM.scale 1 (-1)
+                      CM.drawImage img (round (-w/2)) (round (-h/2)) (round w) (round h)
     , shapeContains =
           withDS ds $ do
               return False
@@ -488,24 +522,6 @@ drawFigure ds w figure = do
         CM.lineWidth 1
         applyColor ds
         CM.stroke
-
-drawCodeWorldLogo ::
-       MonadCanvas m => DrawState -> Int -> Int -> Int -> Int -> m ()
-drawCodeWorldLogo ds x y w h = do
-    mlogo <- CM.builtinImage "cwlogo"
-    case (mlogo, getColorDS ds) of
-        (Nothing, _) -> return ()
-        (Just logo, Nothing) -> CM.drawImage logo x y w h
-        (Just logo, Just (RGBA r g b a)) -> do
-            -- This is a tough case.  The best we can do is to allocate an
-            -- offscreen buffer as a temporary.
-            img <- CM.newImage w h
-            CM.withImage img $ do
-                applyColor ds
-                CM.fillRect 0 0 (fromIntegral w) (fromIntegral h)
-                CM.globalCompositeOperation "destination-in"
-                CM.drawImage logo 0 0 w h
-            CM.drawImage img x y w h
 
 fontString :: TextStyle -> Font -> Text
 fontString style font = stylePrefix style <> "25px " <> fontName font
@@ -737,9 +753,6 @@ drawFrame drawing = do
 
 setupScreenContext :: MonadCanvas m => Int -> Int -> m ()
 setupScreenContext cw ch = do
-    -- blank before transformation (canvas might be non-square)
-    CM.fillColor 255 255 255 1
-    CM.fillRect 0 0 (fromIntegral cw) (fromIntegral ch)
     CM.translate (realToFrac cw / 2) (realToFrac ch / 2)
     let s = min (realToFrac cw / 500) (realToFrac ch / 500)
     CM.scale s (-s)

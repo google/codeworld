@@ -1856,6 +1856,9 @@ unsafeCollaborationOf numPlayers initial step event draw = do
   where
     token = NoToken
 
+{-# WARNING unsafeCollaborationOf ["Please use unsafeGroupActivityOf instead of unsafeCollaborationOf.",
+                                   "unsafeCollaborationOf may be removed July 2020."] #-}
+
 -- | Runs an interactive multi-user CodeWorld program, involving multiple
 -- participants over the internet.
 collaborationOf
@@ -1892,6 +1895,9 @@ collaborationOf numPlayers initial step event draw = do
         (deRefStaticPtr event)
         (deRefStaticPtr draw)
 
+{-# WARNING collaborationOf ["Please use groupActivityOf instead of collaborationOf.",
+                             "collaborationOf may be removed July 2020."] #-}
+
 --------------------------------------------------------------------------------
 -- Common code for activity, interaction, animation and simulation interfaces
 
@@ -1899,7 +1905,7 @@ collaborationOf numPlayers initial step event draw = do
 -- can interact with the user, change over time, and remember information about
 -- the past.
 activityOf
-  :: world                       -- ^ The initial state of the interaction.
+  :: world                       -- ^ The initial state of the activity.
   -> (Event -> world -> world)   -- ^ The event handling function, which updates
                                  --   the state given an event.
   -> (world -> Picture)          -- ^ The visualization function, which converts
@@ -1921,6 +1927,9 @@ interactionOf
                                  --   the state into a picture to display.
   -> IO ()
 interactionOf = runInspect (const [])
+
+{-# WARNING interactionOf ["Please use activityOf instead of interactionOf.",
+                           "interactionOf may be removed July 2020."] #-}
 
 data StrictPoint = SP !Double !Double deriving (Eq, Show)
 
@@ -2422,6 +2431,9 @@ simulationOf
 simulationOf initial step draw =
     runInspect simulationControls initial step (\_ r -> r) draw
 
+{-# WARNING simulationOf ["Please use activityOf instead of simulationOf.",
+                          "simulationOf may be removed July 2020."] #-}
+
 prependIfChanged :: (a -> a) -> ([a],[a]) -> ([a],[a])
 prependIfChanged f (x:xs, ys)
     | identical x x' = (x:xs, ys)
@@ -2441,6 +2453,9 @@ debugSimulationOf initial simStep simDraw =
     step dt = prependIfChanged (simStep dt)
     draw (x:_, _) = simDraw x
 
+{-# WARNING debugSimulationOf ["Please use debugActivityOf instead of debugSimulationOf.",
+                               "debugSimulationOf may be removed July 2020."] #-}
+
 debugInteractionOf
   :: world                       -- ^ The initial state of the interaction.
   -> (Double -> world -> world)  -- ^ The time step function, which advances
@@ -2456,6 +2471,9 @@ debugInteractionOf initial baseStep baseEvent baseDraw =
     step dt = prependIfChanged (baseStep dt)
     event e = prependIfChanged (baseEvent e)
     draw (x:_, _) = baseDraw x
+
+{-# WARNING debugInteractionOf ["Please use debugActivityOf instead of debugInteractionOf.",
+                                "debugInteractionOf may be removed July 2020."] #-}
 
 -- | Runs an interactive CodeWorld program in debugging mode.  In this mode,
 -- the program gets controls to pause and manipulate time, and even go back in

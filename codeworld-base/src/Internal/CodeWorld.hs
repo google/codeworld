@@ -97,6 +97,9 @@ simulationOf (initial, step, draw) =
            (toCWPic . draw)
        `catch` reportError
 
+{-# WARNING simulationOf ["Please use activityOf instead of simulationOf.",
+                          "simulationOf may be removed July 2020."] #-}
+
 debugSimulationOf ::
        ([Number] -> world, (world, Number) -> world, world -> Picture)
     -> Program
@@ -107,6 +110,9 @@ debugSimulationOf (initial, step, draw) =
            (\dt w -> step (w, fromDouble dt))
            (toCWPic . draw)
        `catch` reportError
+
+{-# WARNING debugSimulationOf ["Please use debugActivityOf instead of debugSimulationOf.",
+                               "debugSimulationOf may be removed July 2020."] #-}
 
 interactionOf ::
        ( [Number] -> world
@@ -123,6 +129,9 @@ interactionOf (initial, step, event, draw) =
            (toCWPic . draw)
        `catch` reportError
 
+{-# WARNING interactionOf ["Please use activityOf instead of interactionOf.",
+                           "interactionOf may be removed July 2020."] #-}
+
 debugInteractionOf ::
        ( [Number] -> world
        , (world, Number) -> world
@@ -137,6 +146,9 @@ debugInteractionOf (initial, step, event, draw) =
            (\ev w -> event (w, fromCWEvent ev))
            (toCWPic . draw)
        `catch` reportError
+
+{-# WARNING debugInteractionOf ["Please use debugActivityOf instead of debugInteractionOf.",
+                                "debugInteractionOf may be removed July 2020."] #-}
 
 collaborationOf ::
        ( Number
@@ -156,6 +168,9 @@ collaborationOf (players, initial, step, event, picture)
         (\player ev state -> event (state, fromCWEvent ev, fromInt player + 1))
         (\player state -> toCWPic (picture (state, fromInt player + 1))) `catch`
     reportError
+
+{-# WARNING collaborationOf ["Please use groupActivityOf instead of collaborationOf.",
+                             "collaborationOf may be removed July 2020."] #-}
 
 chooseRandoms :: IO [Number]
 chooseRandoms = do

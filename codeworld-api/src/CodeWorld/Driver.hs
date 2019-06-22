@@ -349,11 +349,12 @@ logoDrawer ds =
     }
 
 imageDrawer :: MonadCanvas m => Text -> Text -> Drawer m
-imageDrawer url ds =
+imageDrawer name url ds =
     DrawMethods
     { drawShape =
           withDS ds $ do
-              return ()
+              CM.scale 25 (-25)
+              CM.drawImgURL name url
     , shapeContains =
           withDS ds $ do
               return False

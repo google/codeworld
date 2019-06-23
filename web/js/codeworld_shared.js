@@ -165,11 +165,31 @@ function parseSymbolsFromCurrentCode() {
     const parseResults = {};
     let lineIndex = 0;
 
+    let imports = [];
+
     lines.forEach(line => {
         lineIndex++;
 
-        const docString = `Defined in your code on line ${ 
-            lineIndex.toString()}.`;
+        const importExp =
+            /^import\s+(qualified)?\s*([A-Z][A-Za-z0-9.']*)(\s+(as)\s+([A-Z][A-Za-z0-9.']*))?(\s+(hiding))?\s*([(]([^()]*|([(][^()]*[)])*)[)])?\s*$/;
+        if (importExp.test(line)) {
+            const match = importExp.exec(line)
+            const qualified = !!match[1];
+            const module = match[2];
+            const asName = match[5] !== undefined ? match[5] : module;
+            const hiding = !!match[7];
+            const importList = match[9];
+            imports.push({
+                module: module,
+                asName: asName,
+                qualified: qualified,
+                hiding: hiding,
+                importList: importList
+            });
+        }
+
+        const docString = `Defined in your code on line ${lineIndex}.`;
+
         if (/^\w+\(.*/.test(line)) {
             // f(x, y) =
             const word = line.split('(')[0].trim();
@@ -233,9 +253,26 @@ function parseSymbolsFromCurrentCode() {
             };
         }
     });
+
+    if (!imports.find(i => i.module === 'Prelude')) {
+        imports.push({
+            module: 'Prelude',
+            asName: 'Prelude',
+            qualified: false,
+            hiding: false,
+            importList: undefined
+        });
+    }
+
     if (window.buildMode === 'codeworld') {
-        window.codeWorldSymbols = Object.assign({}, parseResults,
-            window.codeWorldModules['Prelude'], window.codeWorldBuiltins);
+        console.log(imports);
+        let symbols = Object.assign({}, window.codeWorldBuiltins);
+        for (let i of imports) {
+            if (i.module in window.codeWorldModules) {
+                symbols = Object.assign(symbols, window.codeWorldModules[i.module]);
+            }
+        }
+        window.codeWorldSymbols = Object.assign(symbols, parseResults);
     } else {
         window.codeWorldSymbols = Object.assign({}, parseResults);
     }

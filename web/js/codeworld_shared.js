@@ -138,7 +138,15 @@ function definePanelExtension() {
 //   }
 // }
 window.codeWorldSymbols = {};
-window.codeWorldBuiltinSymbols = {};
+window.codeWorldModules = { 'Prelude': {} };
+window.codeWorldBuiltins = {
+    'program': {
+        declaration: 'program :: Program',
+        doc: 'Your program.',
+        symbolStart: 0,
+        symbolEnd: 7
+    }
+};
 
 function getWordStart(word, line) {
     return line.indexOf(word);
@@ -227,7 +235,7 @@ function parseSymbolsFromCurrentCode() {
     });
     if (window.buildMode === 'codeworld') {
         window.codeWorldSymbols = Object.assign({}, parseResults,
-            window.codeWorldBuiltinSymbols);
+            window.codeWorldModules['Prelude'], window.codeWorldBuiltins);
     } else {
         window.codeWorldSymbols = Object.assign({}, parseResults);
     }
@@ -435,36 +443,36 @@ function registerStandardHints(successFunc) {
             lines = request.responseText.split('\n');
         }
 
-        const startLine = lines.indexOf('module Prelude') + 1;
-        let endLine = startLine;
-        while (endLine < lines.length) {
-            if (lines[endLine].startsWith('module ')) {
-                break;
-            }
-            endLine++;
-        }
-        lines = lines.slice(startLine, endLine);
-
         // Special case for "program", since it is morally a built-in name.
         window.codeworldKeywords['program'] = 'builtin';
 
-        window.codeWorldBuiltinSymbols['program'] = {
-            declaration: 'program :: Program',
-            doc: 'Your program.',
-            symbolStart: 0,
-            symbolEnd: 7
-        };
-
+        window.codeWorldModules = {};
+        let module = null;
         let doc = '';
         lines.forEach(line => {
-            if (line.startsWith('type Program')) {
+            if (line.startsWith('module ')) {
+                module = line.substr(7);
+                if (!window.codeWorldModules[module]) {
+                    window.codeWorldModules[module] = {};
+                }
+                doc = '';
+                return;
+            }
+
+            if (!module) {
+                // Ignore anything outside of a module.
+                doc = '';
+                return;
+            }
+
+            if (module === 'Prelude' && line.startsWith('type Program')) {
                 // We must intervene to hide the IO type.
                 line = 'data Program';
-            } else if (line.startsWith('type Truth')) {
+            } else if (module === 'Prelude' && line.startsWith('type Truth')) {
                 line = 'data Truth';
-            } else if (line.startsWith('True ::')) {
+            } else if (module === 'Prelude' && line.startsWith('True ::')) {
                 line = 'True :: Truth';
-            } else if (line.startsWith('False ::')) {
+            } else if (module === 'Prelude' && line.startsWith('False ::')) {
                 line = 'False :: Truth';
             } else if (line.startsWith('newtype ')) {
                 // Hide the distinction between newtype and data.
@@ -529,23 +537,26 @@ function registerStandardHints(successFunc) {
                 const word = line.substr(wordStart, wordEnd -
                     wordStart);
                 if (hintBlacklist.indexOf(word) < 0) {
-                    window.codeWorldBuiltinSymbols[word] = {
+                    window.codeWorldModules[module][word] = {
                         declaration: line,
                         symbolStart: wordStart,
                         symbolEnd: wordEnd
                     };
                     if (doc) {
-                        window.codeWorldBuiltinSymbols[word].doc = doc;
+                        window.codeWorldModules[module][word].doc = doc;
                     }
                 }
 
-                if (hintBlacklist.indexOf(word) >= 0) {
-                    window.codeworldKeywords[word] = 'deprecated';
-                } else if (/^[A-Z:]/.test(word)) {
-                    window.codeworldKeywords[word] = 'builtin-2';
-                } else {
-                    window.codeworldKeywords[word] = 'builtin';
+                if (module === 'Prelude') {
+                    if (hintBlacklist.indexOf(word) >= 0) {
+                        window.codeworldKeywords[word] = 'deprecated';
+                    } else if (/^[A-Z:]/.test(word)) {
+                        window.codeworldKeywords[word] = 'builtin-2';
+                    } else {
+                        window.codeworldKeywords[word] = 'builtin';
+                    }
                 }
+
                 doc = '';
             }
         });

@@ -714,8 +714,11 @@ findTopShapeFromPoint (x, y) pic = do
 
 drawFrame :: MonadCanvas m => Drawing m -> m ()
 drawFrame drawing = do
+    w <- CM.getScreenWidth
+    h <- CM.getScreenHeight
+    let ratio = 500 / min w h
     CM.fillColor 255 255 255 1
-    CM.fillRect (-250) (-250) 500 500
+    CM.fillRect (-ratio * w / 2) (-ratio * h / 2) (ratio * w) (ratio * h)
     drawDrawing initialDS drawing
 
 setupScreenContext :: MonadCanvas m => Int -> Int -> m ()

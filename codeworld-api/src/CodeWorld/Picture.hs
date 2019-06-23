@@ -1,5 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -25,6 +27,7 @@ import Data.Monoid ((<>))
 import Data.Text (Text, pack)
 import GHC.Generics (Generic)
 import GHC.Stack
+import Util.EmbedAsUrl
 
 type Point = (Double, Double)
 
@@ -93,7 +96,6 @@ data Picture
     | Dilate (Maybe SrcLoc) !Double !Picture
     | Rotate (Maybe SrcLoc) !Double !Picture
     | CoordinatePlane (Maybe SrcLoc)
-    | Logo (Maybe SrcLoc)
     | Sketch (Maybe SrcLoc) !Text !Text !Double !Double
     | Pictures (Maybe SrcLoc) [Picture]
     | PictureAnd (Maybe SrcLoc) [Picture]
@@ -313,7 +315,12 @@ coordinatePlane = CoordinatePlane (getDebugSrcLoc callStack)
 
 -- | The CodeWorld logo.
 codeWorldLogo :: HasCallStack => Picture
-codeWorldLogo = Logo (getDebugSrcLoc callStack)
+codeWorldLogo =
+    Sketch
+        (getDebugSrcLoc callStack)
+        "codeWorldLogo"
+        $(embedAsUrl "image/svg+xml" "data/codeworld.svg")
+        17.68 7.28
 
 getDebugSrcLoc :: CallStack -> Maybe SrcLoc
 getDebugSrcLoc cs = Data.List.find ((== "main") . srcLocPackage) locs

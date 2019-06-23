@@ -200,7 +200,6 @@ pictureToDrawing (ThickArc _ b e r w) = Shape $ arcDrawer b e r w
 pictureToDrawing (Lettering _ txt) = Shape $ textDrawer Plain Serif txt
 pictureToDrawing (Blank _) = Drawings $ []
 pictureToDrawing (StyledLettering _ sty fnt txt) = Shape $ textDrawer sty fnt txt
-pictureToDrawing (Logo _) = Shape $ logoDrawer
 pictureToDrawing (Sketch _ name url w h) = Shape $ imageDrawer name url w h
 pictureToDrawing (CoordinatePlane _) = Shape $ coordinatePlaneDrawer
 pictureToDrawing (Color _ col p) =
@@ -335,45 +334,14 @@ textDrawer sty fnt txt ds =
              CM.isPointInPath (0, 0)
     }
 
-logoDrawer :: MonadCanvas m => Drawer m
-logoDrawer ds =
-    DrawMethods
-    { drawShape =
-          withDS ds $ do
-              CM.scale 1 (-1)
-              drawCodeWorldLogo ds (-221) (-91) 442 182
-    , shapeContains =
-          withDS ds $ do
-              CM.rect (-221) (-91) 442 182
-              CM.isPointInPath (0, 0)
-    }
-
-drawCodeWorldLogo ::
-       MonadCanvas m => DrawState -> Int -> Int -> Int -> Int -> m ()
-drawCodeWorldLogo ds x y w h = do
-    mlogo <- CM.builtinImage "cwlogo"
-    case (mlogo, getColorDS ds) of
-        (Nothing, _) -> return ()
-        (Just logo, Nothing) -> CM.drawImage logo x y w h
-        (Just logo, Just (RGBA r g b a)) -> do
-            -- This is a tough case.  The best we can do is to allocate an
-            -- offscreen buffer as a temporary.
-            img <- CM.newImage w h
-            CM.withImage img $ do
-                applyColor ds
-                CM.fillRect 0 0 (fromIntegral w) (fromIntegral h)
-                CM.globalCompositeOperation "destination-in"
-                CM.drawImage logo 0 0 w h
-            CM.drawImage img x y w h
-
 imageDrawer :: MonadCanvas m => Text -> Text -> Double -> Double -> Drawer m
 imageDrawer name url imgw imgh ds =
     DrawMethods
     { drawShape = 
           case getColorDS ds of
               Nothing -> withDS ds $ do
-                  CM.scale 25 (-25)
-                  CM.drawImgURL name url imgw imgh
+                  CM.scale 1 (-1)
+                  CM.drawImgURL name url (25 * imgw) (25 * imgh)
               Just (RGBA r g b a) -> do
                   w <- CM.getScreenWidth
                   h <- CM.getScreenHeight
@@ -384,14 +352,15 @@ imageDrawer name url imgw imgh ds =
                       setupScreenContext (round w) (round h)
                       withDS ds $ do
                           CM.globalCompositeOperation "destination-in"
-                          CM.scale 25 (-25)
-                          CM.drawImgURL name url imgw imgh
+                          CM.scale 1 (-1)
+                          CM.drawImgURL name url (25 * imgw) (25 * imgh)
                   CM.saveRestore $ do
                       CM.scale 1 (-1)
                       CM.drawImage img (round (-w/2)) (round (-h/2)) (round w) (round h)
     , shapeContains =
           withDS ds $ do
-              return False
+              CM.rect (-25 * imgw / 2) (-25 * imgh / 2) (25 * imgw) (25 * imgh)
+              CM.isPointInPath (0, 0)
     }
 
 coordinatePlaneDrawer :: MonadCanvas m => Drawer m
@@ -692,7 +661,6 @@ describePicture (Rotate _ angle _)
 describePicture (Dilate _ k _)
   | haskellMode = printf "dilated %s" (showFloat k)
   | otherwise   = printf "dilated(..., %s)" (showFloat k)
-describePicture (Logo _) = "codeWorldLogo"
 describePicture (Sketch _ name _ _ _) = T.unpack name
 describePicture (CoordinatePlane _) = "coordinatePlane"
 describePicture (Pictures _ _)
@@ -730,7 +698,6 @@ getPictureSrcLoc (Translate loc _ _ _) = loc
 getPictureSrcLoc (Scale loc _ _ _) = loc
 getPictureSrcLoc (Dilate loc _ _) = loc
 getPictureSrcLoc (Rotate loc _ _) = loc
-getPictureSrcLoc (Logo loc) = loc
 getPictureSrcLoc (Sketch loc _ _ _ _) = loc
 getPictureSrcLoc (CoordinatePlane loc) = loc
 getPictureSrcLoc (Pictures loc _) = loc
@@ -912,7 +879,6 @@ pictureToNode = flip State.evalState (NodeId 0) . go
         StyledLettering _ _ _ _ -> leafNode pic
         Lettering _ _ -> leafNode pic
         CoordinatePlane _ -> leafNode pic
-        Logo _ -> leafNode pic
         Sketch _ _ _ _ _ -> leafNode pic
         Blank _ -> leafNode pic
 

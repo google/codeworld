@@ -44,6 +44,7 @@ class (Data a, Typeable a) => Template a where
   toNum :: a -> Maybe a
   toChar :: a -> Maybe a
   toStr :: a -> Maybe a
+  toName :: a -> Maybe a
 
 instance Template (Pat GhcPs) where
   toSplice (SplicePat _ s) = Just s
@@ -138,10 +139,15 @@ match :: Data a => a -> a -> Bool
 match tmpl val = matchQ tmpl val
 
 matchQ :: GenericQ (GenericQ Bool)
-matchQ = (matchesSpecials :: (Pat GhcPs) -> (Pat GhcPs) -> Maybe Bool)
+matchQ = matchesGhcPs
+      ||| (matchesSpecials :: (Pat GhcPs) -> (Pat GhcPs) -> Maybe Bool)
       ||| (matchesSpecials :: (HsExpr GhcPs) -> (HsExpr GhcPs) -> Maybe Bool)
       ||| matchesWildcard
+      ||| mismatchedNames
       ||| structuralEq
+
+matchesGhcPs :: GhcPs -> GhcPs -> Maybe Bool
+matchesGhcPs _ _ = Just True
 
 matchesSpecials :: Template a => a -> a -> Maybe Bool
 matchesSpecials (toParens -> Just x) y = Just (matchQ x y)
@@ -199,6 +205,9 @@ matchSimple id x = case idName id of
 matchesWildcard :: IdP GhcPs -> IdP GhcPs -> Maybe Bool
 matchesWildcard id _ | "_" `isPrefixOf` (idName id) && "_" `isSuffixOf` (idName id) = Just True
 matchesWildcard _ _ = Nothing
+
+mismatchedNames :: IdP GhcPs -> IdP GhcPs -> Maybe Bool
+mismatchedNames x y = if idName x /= idName y then Just False else Nothing
 
 structuralEq :: (Data a, Data b) => a -> b -> Bool
 structuralEq x y = toConstr x == toConstr y && and (gzipWithQ matchQ x y)

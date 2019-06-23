@@ -167,12 +167,12 @@ checkRule (NotUsed a) = withParsedCode $ \m -> do
        | otherwise -> success
 
 checkRule (ContainsMatch tmpl topLevel card) = withParsedCode $ \m -> do
-    tmpl <- ghcParseCode ["TemplateHaskell"] (T.pack tmpl)
+    tmpl <- ghcParseCode ["TemplateHaskell", "TemplateHaskellQuotes"] (T.pack tmpl)
     let n = case tmpl of
                 GHCParsed (HsModule {hsmodDecls=[tmpl]}) ->
                     let decls | topLevel = concat $ gmapQ (mkQ [] id) m
                               | otherwise = everything (++) (mkQ [] (:[])) m
-                    in  length (filter (match tmpl) decls)
+                    in length (filter (match tmpl) decls)
                 GHCParsed (HsModule {hsmodImports=[tmpl]}) ->
                     length $ filter (match tmpl) $ concat $ gmapQ (mkQ [] id) m       
     if | hasCardinality card n -> success

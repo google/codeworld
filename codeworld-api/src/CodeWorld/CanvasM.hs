@@ -59,7 +59,7 @@ class (Monad m, MonadIO m) => MonadCanvas m where
     builtinImage :: Text -> m (Maybe (Image m))
     withImage :: Image m -> m a -> m a
     drawImage :: Image m -> Int -> Int -> Int -> Int -> m ()
-    drawImgURL :: Text -> Text -> m ()
+    drawImgURL :: Text -> Text -> Double -> Double -> m ()
     globalCompositeOperation :: Text -> m ()
     lineWidth :: Double -> m ()
     strokeColor :: Int -> Int -> Int -> Double -> m ()
@@ -158,9 +158,15 @@ instance MonadCanvas CanvasM where
         unCanvasM m (w, h) ctx
     drawImage (Canvas.Canvas c) x y w h =
         CanvasM (const (Canvas.drawImage (Canvas.Image c) x y w h))
-    drawImgURL name url = CanvasM $ \ _ ctx -> do
+    drawImgURL name url w h = CanvasM $ \ _ ctx -> do
         img <- createOrGetImage name url
-        Canvas.drawImage (Canvas.Image (unElement img)) (-5) (-5) 10 10 ctx
+        Canvas.drawImage
+            (Canvas.Image (unElement img))
+            (round (-w/2))
+            (round (-h/2))
+            (round w)
+            (round h)
+            ctx
     globalCompositeOperation op =
         CanvasM (const (js_globalCompositeOperation (textToJSString op)))
     lineWidth w = CanvasM (const (Canvas.lineWidth w))
@@ -265,7 +271,7 @@ instance MonadCanvas CanvasM where
             , fromIntegral w
             , fromIntegral h)
 
-    drawImgURL name url = return ()
+    drawImgURL name url w h = return ()
 
     globalCompositeOperation op = liftCanvas $
         Canvas.globalCompositeOperation op

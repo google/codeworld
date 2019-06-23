@@ -201,7 +201,7 @@ pictureToDrawing (Lettering _ txt) = Shape $ textDrawer Plain Serif txt
 pictureToDrawing (Blank _) = Drawings $ []
 pictureToDrawing (StyledLettering _ sty fnt txt) = Shape $ textDrawer sty fnt txt
 pictureToDrawing (Logo _) = Shape $ logoDrawer
-pictureToDrawing (Sketch _ name url) = Shape $ imageDrawer name url
+pictureToDrawing (Sketch _ name url w h) = Shape $ imageDrawer name url w h
 pictureToDrawing (CoordinatePlane _) = Shape $ coordinatePlaneDrawer
 pictureToDrawing (Color _ col p) =
     Transformation (setColorDS col) $ pictureToDrawing p
@@ -366,14 +366,14 @@ drawCodeWorldLogo ds x y w h = do
                 CM.drawImage logo 0 0 w h
             CM.drawImage img x y w h
 
-imageDrawer :: MonadCanvas m => Text -> Text -> Drawer m
-imageDrawer name url ds =
+imageDrawer :: MonadCanvas m => Text -> Text -> Double -> Double -> Drawer m
+imageDrawer name url imgw imgh ds =
     DrawMethods
     { drawShape = 
           case getColorDS ds of
               Nothing -> withDS ds $ do
                   CM.scale 25 (-25)
-                  CM.drawImgURL name url
+                  CM.drawImgURL name url imgw imgh
               Just (RGBA r g b a) -> do
                   w <- CM.getScreenWidth
                   h <- CM.getScreenHeight
@@ -385,7 +385,7 @@ imageDrawer name url ds =
                       withDS ds $ do
                           CM.globalCompositeOperation "destination-in"
                           CM.scale 25 (-25)
-                          CM.drawImgURL name url
+                          CM.drawImgURL name url imgw imgh
                   CM.saveRestore $ do
                       CM.scale 1 (-1)
                       CM.drawImage img (round (-w/2)) (round (-h/2)) (round w) (round h)
@@ -693,7 +693,7 @@ describePicture (Dilate _ k _)
   | haskellMode = printf "dilated %s" (showFloat k)
   | otherwise   = printf "dilated(..., %s)" (showFloat k)
 describePicture (Logo _) = "codeWorldLogo"
-describePicture (Sketch _ name _) = T.unpack name
+describePicture (Sketch _ name _ _ _) = T.unpack name
 describePicture (CoordinatePlane _) = "coordinatePlane"
 describePicture (Pictures _ _)
   | haskellMode = "pictures"
@@ -731,7 +731,7 @@ getPictureSrcLoc (Scale loc _ _ _) = loc
 getPictureSrcLoc (Dilate loc _ _) = loc
 getPictureSrcLoc (Rotate loc _ _) = loc
 getPictureSrcLoc (Logo loc) = loc
-getPictureSrcLoc (Sketch loc _ _) = loc
+getPictureSrcLoc (Sketch loc _ _ _ _) = loc
 getPictureSrcLoc (CoordinatePlane loc) = loc
 getPictureSrcLoc (Pictures loc _) = loc
 getPictureSrcLoc (PictureAnd loc _) = loc
@@ -913,7 +913,7 @@ pictureToNode = flip State.evalState (NodeId 0) . go
         Lettering _ _ -> leafNode pic
         CoordinatePlane _ -> leafNode pic
         Logo _ -> leafNode pic
-        Sketch _ _ _ -> leafNode pic
+        Sketch _ _ _ _ _ -> leafNode pic
         Blank _ -> leafNode pic
 
     nodeWithChildren pic subs = node pic (SubNodes <$> traverse go subs)

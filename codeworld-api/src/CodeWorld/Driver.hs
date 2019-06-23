@@ -122,151 +122,6 @@ import Text.Printf
 #endif
 
 --------------------------------------------------------------------------------
--- The common interface, provided by both implementations below.
--- | Draws a 'Picture'.  This is the simplest CodeWorld entry point.
-drawingOf :: Picture  -- ^ The picture to show on the screen.
-          -> IO ()
-
--- | Shows an animation, with a picture for each time given by the parameter.
-animationOf :: (Double -> Picture)  -- ^ A function that produces animation
-                                    --   frames, given the time in seconds.
-            -> IO ()
-
--- | Runs an interactive CodeWorld program that responds to events.  Activities
--- can interact with the user, change over time, and remember information about
--- the past.
-activityOf
-  :: world                       -- ^ The initial state of the interaction.
-  -> (Event -> world -> world)   -- ^ The event handling function, which updates
-                                 --   the state given an event.
-  -> (world -> Picture)          -- ^ The visualization function, which converts
-                                 --   the state into a picture to display.
-  -> IO ()
-
--- | Runs an interactive CodeWorld program in debugging mode.  In this mode,
--- the program gets controls to pause and manipulate time, and even go back in
--- time to look at past states.
-debugActivityOf
-  :: world                       -- ^ The initial state of the interaction.
-  -> (Event -> world -> world)   -- ^ The event handling function, which updates
-                                 --   the state given an event.
-  -> (world -> Picture)          -- ^ The visualization function, which converts
-                                 --   the state into a picture to display.
-  -> IO ()
-
--- | Runs an interactive multi-user CodeWorld program that is joined by several
--- participants over the internet.
-groupActivityOf
-  :: Int  -- ^ The number of participants to expect.  The participants will be
-          -- ^ numbered starting at 0.
-  -> StaticPtr (StdGen -> world)
-          -- ^ The initial state of the activity.
-  -> StaticPtr (Int -> Event -> world -> world)
-          -- ^ The event handling function, which updates the state given a
-          --   participant number and user interface event.
-  -> StaticPtr (Int -> world -> Picture)
-          -- ^ The visualization function, which converts a participant number
-          --   and the state into a picture to display.
-  -> IO ()
-
--- | A version of 'groupActivityOf' that avoids static pointers, and does not
--- check for consistency.
-unsafeGroupActivityOf
-  :: Int  -- ^ The number of participants to expect.  The participants will be
-          -- ^ numbered starting at 0.
-  -> (StdGen -> world)
-          -- ^ The initial state of the activity.
-  -> (Int -> Event -> world -> world)
-          -- ^ The event handling function, which updates the state given a
-          --   participant number and user interface event.
-  -> (Int -> world -> Picture)
-          -- ^ The visualization function, which converts a participant number
-          --   and the state into a picture to display.
-  -> IO ()
-
--- | Shows a simulation, which is essentially a continuous-time dynamical
--- system described by an initial value and step function.
-simulationOf
-  :: world                       -- ^ The initial state of the simulation.
-  -> (Double -> world -> world)  -- ^ The time step function, which advances
-                                 --   the state given the time difference.
-  -> (world -> Picture)          -- ^ The visualization function, which converts
-                                 --   the state into a picture to display.
-  -> IO ()
-
-debugSimulationOf
-  :: world                       -- ^ The initial state of the simulation.
-  -> (Double -> world -> world)  -- ^ The time step function, which advances
-                                 --   the state given the time difference.
-  -> (world -> Picture)          -- ^ The visualization function, which converts
-                                 --   the state into a picture to display.
-  -> IO ()
-
--- | Runs an interactive event-driven CodeWorld program.  This is a
--- generalization of simulations that can respond to events like key presses
--- and mouse movement.
-interactionOf
-  :: world                       -- ^ The initial state of the interaction.
-  -> (Double -> world -> world)  -- ^ The time step function, which advances
-                                 --   the state given the time difference.
-  -> (Event -> world -> world)   -- ^ The event handling function, which updates
-                                 --   the state given a user interface event.
-  -> (world -> Picture)          -- ^ The visualization function, which converts
-                                 --   the state into a picture to display.
-  -> IO ()
-
-debugInteractionOf
-  :: world                       -- ^ The initial state of the interaction.
-  -> (Double -> world -> world)  -- ^ The time step function, which advances
-                                 --   the state given the time difference.
-  -> (Event -> world -> world)   -- ^ The event handling function, which updates
-                                 --   the state given a user interface event.
-  -> (world -> Picture)          -- ^ The visualization function, which converts
-                                 --   the state into a picture to display.
-  -> IO ()
-
--- | Runs an interactive multi-user CodeWorld program, involving multiple
--- participants over the internet.
-collaborationOf
-  :: Int  -- ^ The number of participants to expect.  The participants will be
-          -- ^ numbered starting at 0.
-  -> StaticPtr (StdGen -> world)
-          -- ^ The initial state of the collaboration.
-  -> StaticPtr (Double -> world -> world)
-          -- ^ The time step function, which advances the state given the time
-          --   difference.
-  -> StaticPtr (Int -> Event -> world -> world)
-          -- ^ The event handling function, which updates the state given a
-          --   participant number and user interface event.
-  -> StaticPtr (Int -> world -> Picture)
-          -- ^ The visualization function, which converts a participant number
-          --   and the state into a picture to display.
-  -> IO ()
-
--- | A version of 'collaborationOf' that avoids static pointers, and does not
--- check for consistent parameters.
-unsafeCollaborationOf
-  :: Int  -- ^ The number of participants to expect.  The participants will be
-          -- ^ numbered starting at 0.
-  -> (StdGen -> world)
-          -- ^ The initial state of the collaboration.
-  -> (Double -> world -> world)
-          -- ^ The time step function, which advances the state given the time
-          --   difference.
-  -> (Int -> Event -> world -> world)
-          -- ^ The event handling function, which updates the state given a
-          --   participant number and user interface event.
-  -> (Int -> world -> Picture)
-          -- ^ The visualization function, which converts a participant number
-          --   and the state into a picture to display.
-  -> IO ()
-
--- | Prints a debug message to the CodeWorld console when a value is forced.
--- This is equivalent to the similarly named function in `Debug.Trace`, except
--- that it uses the CodeWorld console instead of standard output.
-trace :: Text -> a -> a
-
---------------------------------------------------------------------------------
 -- A Drawing is an intermediate and simpler representation of a Picture, suitable
 -- for drawing. A drawing does not contain unnecessary metadata like CallStacks.
 -- The drawer is specific to the platform.
@@ -345,8 +200,7 @@ pictureToDrawing (ThickArc _ b e r w) = Shape $ arcDrawer b e r w
 pictureToDrawing (Lettering _ txt) = Shape $ textDrawer Plain Serif txt
 pictureToDrawing (Blank _) = Drawings $ []
 pictureToDrawing (StyledLettering _ sty fnt txt) = Shape $ textDrawer sty fnt txt
-pictureToDrawing (Logo _) = Shape $ logoDrawer
-pictureToDrawing (Sketch _ _ url) = Shape $ imageDrawer url
+pictureToDrawing (Sketch _ name url w h) = Shape $ imageDrawer name url w h
 pictureToDrawing (CoordinatePlane _) = Shape $ coordinatePlaneDrawer
 pictureToDrawing (Color _ col p) =
     Transformation (setColorDS col) $ pictureToDrawing p
@@ -480,22 +334,34 @@ textDrawer sty fnt txt ds =
              CM.isPointInPath (0, 0)
     }
 
-logoDrawer :: MonadCanvas m => Drawer m
-logoDrawer ds =
+imageDrawer :: MonadCanvas m => Text -> Text -> Double -> Double -> Drawer m
+imageDrawer name url imgw imgh ds =
     DrawMethods
-    { drawShape =
-          withDS ds $ do
-              CM.scale 1 (-1)
-              drawCodeWorldLogo ds (-221) (-91) 442 182
+    { drawShape = 
+          case getColorDS ds of
+              Nothing -> withDS ds $ do
+                  CM.scale 1 (-1)
+                  CM.drawImgURL name url (25 * imgw) (25 * imgh)
+              Just (RGBA r g b a) -> do
+                  w <- CM.getScreenWidth
+                  h <- CM.getScreenHeight
+                  img <- CM.newImage (round w) (round h)
+                  CM.withImage img $ do
+                      applyColor ds
+                      CM.fillRect 0 0 w h
+                      setupScreenContext (round w) (round h)
+                      withDS ds $ do
+                          CM.globalCompositeOperation "destination-in"
+                          CM.scale 1 (-1)
+                          CM.drawImgURL name url (25 * imgw) (25 * imgh)
+                  CM.saveRestore $ do
+                      CM.scale 1 (-1)
+                      CM.drawImage img (round (-w/2)) (round (-h/2)) (round w) (round h)
     , shapeContains =
           withDS ds $ do
-              CM.rect (-221) (-91) 442 182
+              CM.rect (-25 * imgw / 2) (-25 * imgh / 2) (25 * imgw) (25 * imgh)
               CM.isPointInPath (0, 0)
     }
-
-imageDrawer :: MonadCanvas m => Text -> Drawer m
-imageDrawer url ds =
-    DrawMethods { drawShape = return (), shapeContains = return False }
 
 coordinatePlaneDrawer :: MonadCanvas m => Drawer m
 coordinatePlaneDrawer ds =
@@ -625,24 +491,6 @@ drawFigure ds w figure = do
         CM.lineWidth 1
         applyColor ds
         CM.stroke
-
-drawCodeWorldLogo ::
-       MonadCanvas m => DrawState -> Int -> Int -> Int -> Int -> m ()
-drawCodeWorldLogo ds x y w h = do
-    mlogo <- CM.builtinImage "cwlogo"
-    case (mlogo, getColorDS ds) of
-        (Nothing, _) -> return ()
-        (Just logo, Nothing) -> CM.drawImage logo x y w h
-        (Just logo, Just (RGBA r g b a)) -> do
-            -- This is a tough case.  The best we can do is to allocate an
-            -- offscreen buffer as a temporary.
-            img <- CM.newImage w h
-            CM.withImage img $ do
-                applyColor ds
-                CM.fillRect 0 0 (fromIntegral w) (fromIntegral h)
-                CM.globalCompositeOperation "destination-in"
-                CM.drawImage logo 0 0 w h
-            CM.drawImage img x y w h
 
 fontString :: TextStyle -> Font -> Text
 fontString style font = stylePrefix style <> "25px " <> fontName font
@@ -813,8 +661,7 @@ describePicture (Rotate _ angle _)
 describePicture (Dilate _ k _)
   | haskellMode = printf "dilated %s" (showFloat k)
   | otherwise   = printf "dilated(..., %s)" (showFloat k)
-describePicture (Logo _) = "codeWorldLogo"
-describePicture (Sketch _ name _) = T.unpack name
+describePicture (Sketch _ name _ _ _) = T.unpack name
 describePicture (CoordinatePlane _) = "coordinatePlane"
 describePicture (Pictures _ _)
   | haskellMode = "pictures"
@@ -851,8 +698,7 @@ getPictureSrcLoc (Translate loc _ _ _) = loc
 getPictureSrcLoc (Scale loc _ _ _) = loc
 getPictureSrcLoc (Dilate loc _ _) = loc
 getPictureSrcLoc (Rotate loc _ _) = loc
-getPictureSrcLoc (Logo loc) = loc
-getPictureSrcLoc (Sketch loc _ _) = loc
+getPictureSrcLoc (Sketch loc _ _ _ _) = loc
 getPictureSrcLoc (CoordinatePlane loc) = loc
 getPictureSrcLoc (Pictures loc _) = loc
 getPictureSrcLoc (PictureAnd loc _) = loc
@@ -874,9 +720,6 @@ drawFrame drawing = do
 
 setupScreenContext :: MonadCanvas m => Int -> Int -> m ()
 setupScreenContext cw ch = do
-    -- blank before transformation (canvas might be non-square)
-    CM.fillColor 255 255 255 1
-    CM.fillRect 0 0 (fromIntegral cw) (fromIntegral ch)
     CM.translate (realToFrac cw / 2) (realToFrac ch / 2)
     let s = min (realToFrac cw / 500) (realToFrac ch / 500)
     CM.scale s (-s)
@@ -1036,8 +879,7 @@ pictureToNode = flip State.evalState (NodeId 0) . go
         StyledLettering _ _ _ _ -> leafNode pic
         Lettering _ _ -> leafNode pic
         CoordinatePlane _ -> leafNode pic
-        Logo _ -> leafNode pic
-        Sketch _ _ _ -> leafNode pic
+        Sketch _ _ _ _ _ -> leafNode pic
         Blank _ -> leafNode pic
 
     nodeWithChildren pic subs = node pic (SubNodes <$> traverse go subs)
@@ -1920,6 +1762,20 @@ runGame = error "game API unimplemented in stand-alone interface mode"
 --------------------------------------------------------------------------------
 -- Common code for game interface
 
+-- | Runs an interactive multi-user CodeWorld program that is joined by several
+-- participants over the internet.
+groupActivityOf
+  :: Int  -- ^ The number of participants to expect.  The participants will be
+          -- ^ numbered starting at 0.
+  -> StaticPtr (StdGen -> world)
+          -- ^ The initial state of the activity.
+  -> StaticPtr (Int -> Event -> world -> world)
+          -- ^ The event handling function, which updates the state given a
+          --   participant number and user interface event.
+  -> StaticPtr (Int -> world -> Picture)
+          -- ^ The visualization function, which converts a participant number
+          --   and the state into a picture to display.
+  -> IO ()
 groupActivityOf numPlayers initial event draw = do
     dhash <- getDeployHash
     let token =
@@ -1938,9 +1794,40 @@ groupActivityOf numPlayers initial event draw = do
         (deRefStaticPtr event)
         (deRefStaticPtr draw)
 
+-- | A version of 'groupActivityOf' that avoids static pointers, and does not
+-- check for consistency.
+unsafeGroupActivityOf
+  :: Int  -- ^ The number of participants to expect.  The participants will be
+          -- ^ numbered starting at 0.
+  -> (StdGen -> world)
+          -- ^ The initial state of the activity.
+  -> (Int -> Event -> world -> world)
+          -- ^ The event handling function, which updates the state given a
+          --   participant number and user interface event.
+  -> (Int -> world -> Picture)
+          -- ^ The visualization function, which converts a participant number
+          --   and the state into a picture to display.
+  -> IO ()
 unsafeGroupActivityOf numPlayers initial event draw =
     unsafeCollaborationOf numPlayers initial (const id) event draw
 
+-- | A version of 'collaborationOf' that avoids static pointers, and does not
+-- check for consistent parameters.
+unsafeCollaborationOf
+  :: Int  -- ^ The number of participants to expect.  The participants will be
+          -- ^ numbered starting at 0.
+  -> (StdGen -> world)
+          -- ^ The initial state of the collaboration.
+  -> (Double -> world -> world)
+          -- ^ The time step function, which advances the state given the time
+          --   difference.
+  -> (Int -> Event -> world -> world)
+          -- ^ The event handling function, which updates the state given a
+          --   participant number and user interface event.
+  -> (Int -> world -> Picture)
+          -- ^ The visualization function, which converts a participant number
+          --   and the state into a picture to display.
+  -> IO ()
 unsafeCollaborationOf numPlayers initial step event draw = do
     dhash <- getDeployHash
     let token = PartialToken dhash
@@ -1948,6 +1835,26 @@ unsafeCollaborationOf numPlayers initial step event draw = do
   where
     token = NoToken
 
+{-# WARNING unsafeCollaborationOf ["Please use unsafeGroupActivityOf instead of unsafeCollaborationOf.",
+                                   "unsafeCollaborationOf may be removed July 2020."] #-}
+
+-- | Runs an interactive multi-user CodeWorld program, involving multiple
+-- participants over the internet.
+collaborationOf
+  :: Int  -- ^ The number of participants to expect.  The participants will be
+          -- ^ numbered starting at 0.
+  -> StaticPtr (StdGen -> world)
+          -- ^ The initial state of the collaboration.
+  -> StaticPtr (Double -> world -> world)
+          -- ^ The time step function, which advances the state given the time
+          --   difference.
+  -> StaticPtr (Int -> Event -> world -> world)
+          -- ^ The event handling function, which updates the state given a
+          --   participant number and user interface event.
+  -> StaticPtr (Int -> world -> Picture)
+          -- ^ The visualization function, which converts a participant number
+          --   and the state into a picture to display.
+  -> IO ()
 collaborationOf numPlayers initial step event draw = do
     dhash <- getDeployHash
     let token =
@@ -1967,13 +1874,41 @@ collaborationOf numPlayers initial step event draw = do
         (deRefStaticPtr event)
         (deRefStaticPtr draw)
 
+{-# WARNING collaborationOf ["Please use groupActivityOf instead of collaborationOf.",
+                             "collaborationOf may be removed July 2020."] #-}
+
 --------------------------------------------------------------------------------
 -- Common code for activity, interaction, animation and simulation interfaces
 
+-- | Runs an interactive CodeWorld program that responds to events.  Activities
+-- can interact with the user, change over time, and remember information about
+-- the past.
+activityOf
+  :: world                       -- ^ The initial state of the activity.
+  -> (Event -> world -> world)   -- ^ The event handling function, which updates
+                                 --   the state given an event.
+  -> (world -> Picture)          -- ^ The visualization function, which converts
+                                 --   the state into a picture to display.
+  -> IO ()
 activityOf initial change picture =
     interactionOf initial (const id) change picture
 
+-- | Runs an interactive event-driven CodeWorld program.  This is a
+-- generalization of simulations that can respond to events like key presses
+-- and mouse movement.
+interactionOf
+  :: world                       -- ^ The initial state of the interaction.
+  -> (Double -> world -> world)  -- ^ The time step function, which advances
+                                 --   the state given the time difference.
+  -> (Event -> world -> world)   -- ^ The event handling function, which updates
+                                 --   the state given a user interface event.
+  -> (world -> Picture)          -- ^ The visualization function, which converts
+                                 --   the state into a picture to display.
+  -> IO ()
 interactionOf = runInspect (const [])
+
+{-# WARNING interactionOf ["Please use activityOf instead of interactionOf.",
+                           "interactionOf may be removed July 2020."] #-}
 
 data StrictPoint = SP !Double !Double deriving (Eq, Show)
 
@@ -2375,6 +2310,9 @@ drawingControls w
       | zoomFactor w /= 1 || panCenter w /= SP 0 0 = [ResetViewButton (9, -3)]
       | otherwise = []
 
+-- | Draws a 'Picture'.  This is the simplest CodeWorld entry point.
+drawingOf :: Picture  -- ^ The picture to show on the screen.
+          -> IO ()
 drawingOf pic = runInspect drawingControls () (\_ _ -> ()) (\_ _ -> ()) (const pic)
 
 animationControls :: Wrapped Double -> [Control Double]
@@ -2403,6 +2341,10 @@ animationControls w
       | zoomFactor w /= 1 || panCenter w /= SP 0 0 = [ResetViewButton (9, -3)]
       | otherwise = []
 
+-- | Shows an animation, with a picture for each time given by the parameter.
+animationOf :: (Double -> Picture)  -- ^ A function that produces animation
+                                    --   frames, given the time in seconds.
+            -> IO ()
 animationOf f = runInspect animationControls 0 (+) (\_ r -> r) f
 
 simulationControls :: Wrapped w -> [Control w]
@@ -2456,8 +2398,20 @@ statefulDebugControls w
       | playbackSpeed w == 0 = [PanningLayer]
       | otherwise = []
 
+-- | Shows a simulation, which is essentially a continuous-time dynamical
+-- system described by an initial value and step function.
+simulationOf
+  :: world                       -- ^ The initial state of the simulation.
+  -> (Double -> world -> world)  -- ^ The time step function, which advances
+                                 --   the state given the time difference.
+  -> (world -> Picture)          -- ^ The visualization function, which converts
+                                 --   the state into a picture to display.
+  -> IO ()
 simulationOf initial step draw =
     runInspect simulationControls initial step (\_ r -> r) draw
+
+{-# WARNING simulationOf ["Please use activityOf instead of simulationOf.",
+                          "simulationOf may be removed July 2020."] #-}
 
 prependIfChanged :: (a -> a) -> ([a],[a]) -> ([a],[a])
 prependIfChanged f (x:xs, ys)
@@ -2465,12 +2419,31 @@ prependIfChanged f (x:xs, ys)
     | otherwise = (x':x:xs, ys)
     where x' = f x
 
+debugSimulationOf
+  :: world                       -- ^ The initial state of the simulation.
+  -> (Double -> world -> world)  -- ^ The time step function, which advances
+                                 --   the state given the time difference.
+  -> (world -> Picture)          -- ^ The visualization function, which converts
+                                 --   the state into a picture to display.
+  -> IO ()
 debugSimulationOf initial simStep simDraw =
     runInspect statefulDebugControls ([initial],[]) step (\_ r -> r) draw
   where
     step dt = prependIfChanged (simStep dt)
     draw (x:_, _) = simDraw x
 
+{-# WARNING debugSimulationOf ["Please use debugActivityOf instead of debugSimulationOf.",
+                               "debugSimulationOf may be removed July 2020."] #-}
+
+debugInteractionOf
+  :: world                       -- ^ The initial state of the interaction.
+  -> (Double -> world -> world)  -- ^ The time step function, which advances
+                                 --   the state given the time difference.
+  -> (Event -> world -> world)   -- ^ The event handling function, which updates
+                                 --   the state given a user interface event.
+  -> (world -> Picture)          -- ^ The visualization function, which converts
+                                 --   the state into a picture to display.
+  -> IO ()
 debugInteractionOf initial baseStep baseEvent baseDraw = 
   runInspect statefulDebugControls ([initial], []) step event draw 
   where
@@ -2478,9 +2451,26 @@ debugInteractionOf initial baseStep baseEvent baseDraw =
     event e = prependIfChanged (baseEvent e)
     draw (x:_, _) = baseDraw x
 
+{-# WARNING debugInteractionOf ["Please use debugActivityOf instead of debugInteractionOf.",
+                                "debugInteractionOf may be removed July 2020."] #-}
+
+-- | Runs an interactive CodeWorld program in debugging mode.  In this mode,
+-- the program gets controls to pause and manipulate time, and even go back in
+-- time to look at past states.
+debugActivityOf
+  :: world                       -- ^ The initial state of the interaction.
+  -> (Event -> world -> world)   -- ^ The event handling function, which updates
+                                 --   the state given an event.
+  -> (world -> Picture)          -- ^ The visualization function, which converts
+                                 --   the state into a picture to display.
+  -> IO ()
 debugActivityOf initial change picture =
     debugInteractionOf initial (const id) change picture
 
+-- | Prints a debug message to the CodeWorld console when a value is forced.
+-- This is equivalent to the similarly named function in `Debug.Trace`, except
+-- that it sets appropriate buffering to use the CodeWorld console.
+trace :: Text -> a -> a
 trace msg x = unsafePerformIO $ do
     oldMode <- hGetBuffering stderr
     hSetBuffering stderr (BlockBuffering Nothing)

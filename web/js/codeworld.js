@@ -589,9 +589,9 @@ function updateUI() {
 
     if (!isEditorClean()) {
         title = `* ${title}`;
-        let selected = $('#directoryTree').tree('getSelectedNode');
+        const selected = $('#directoryTree').tree('getSelectedNode');
         if (selected && selected.type === 'project') {
-            let asterisk = selected.element.getElementsByClassName('unsaved-changes')[0];
+            const asterisk = selected.element.getElementsByClassName('unsaved-changes')[0];
             if (asterisk) {
                 asterisk.style.display = '';
             }

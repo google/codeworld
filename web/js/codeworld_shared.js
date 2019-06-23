@@ -1401,7 +1401,7 @@ function initDirectoryTree() {
                     $('<div style="float: left" class="loader"></div>')
                 );
             } else if (node.type === 'project') {
-                const asterisk = $('<i class="unsaved-changes"></i>')
+                const asterisk = $('<i class="unsaved-changes"></i>');
                 asterisk.css('display', 'none');
                 titleElem.before(
                     $('<i class="mdi mdi-18px mdi-cube"></i>')
@@ -1539,7 +1539,7 @@ function initDirectoryTree() {
                     const path = pathToRootDir(node);
                     window.openProjectName = node.name;
                     loadProject(node.name, path);
-                    $('#directoryTree').tree('selectNode', event.node)
+                    $('#directoryTree').tree('selectNode', event.node);
                 } else if (event.node.type === 'directory') {
                     if (event.node.children.length === 0) {
                         loadSubTree(event.node);
@@ -1547,7 +1547,7 @@ function initDirectoryTree() {
                     clearCode();
                     $('#directoryTree').tree('selectNode', event.node);
                 }
-            })
+            });
             updateUI();
         }
     );
@@ -1598,12 +1598,11 @@ function showLoadingAnimation(node) {
             },
             node
         );
-    }
-    else {
-        let target = node.element.getElementsByClassName('jqtree-title jqtree_common')[0];
-        let elem = document.createElement('div');
+    } else {
+        const target = node.element.getElementsByClassName('jqtree-title jqtree_common')[0];
+        const elem = document.createElement('div');
         elem.classList.add('loader'); // float left
-        elem.style.marginLeft='5px';
+        elem.style.marginLeft = '5px';
         target.after(elem);
     }
 }

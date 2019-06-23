@@ -1,5 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -25,6 +27,7 @@ import Data.Monoid ((<>))
 import Data.Text (Text, pack)
 import GHC.Generics (Generic)
 import GHC.Stack
+import Util.EmbedAsUrl
 
 type Point = (Double, Double)
 
@@ -66,86 +69,34 @@ dotProduct :: Vector -> Vector -> Double
 dotProduct (x1, y1) (x2, y2) = x1 * x2 + y1 * y2
 
 data Picture
-    = SolidPolygon (Maybe SrcLoc)
-              [Point]
-    | SolidClosedCurve (Maybe SrcLoc)
-              [Point]
-    | Polygon (Maybe SrcLoc)
-           [Point]
-    | ThickPolygon (Maybe SrcLoc)
-           [Point]
-           !Double
-    | Rectangle (Maybe SrcLoc)
-           !Double
-           !Double
-    | SolidRectangle (Maybe SrcLoc)
-           !Double
-           !Double
-    | ThickRectangle (Maybe SrcLoc)
-           !Double
-           !Double
-           !Double
-    | ClosedCurve (Maybe SrcLoc)
-           [Point]
-    | ThickClosedCurve (Maybe SrcLoc)
-           [Point]
-           !Double
-    | Polyline (Maybe SrcLoc)
-           [Point]
-    | ThickPolyline (Maybe SrcLoc)
-           [Point]
-           !Double
-    | Curve (Maybe SrcLoc)
-           [Point]
-    | ThickCurve (Maybe SrcLoc)
-           [Point]
-           !Double
-    | Circle (Maybe SrcLoc)
-           !Double
-    | SolidCircle (Maybe SrcLoc)
-           !Double
-    | ThickCircle (Maybe SrcLoc)
-           !Double
-           !Double
-    | Sector (Maybe SrcLoc)
-             !Double
-             !Double
-             !Double
-    | Arc (Maybe SrcLoc)
-          !Double
-          !Double
-          !Double
-    | ThickArc (Maybe SrcLoc)
-          !Double
-          !Double
-          !Double
-          !Double
-    | StyledLettering (Maybe SrcLoc)
-           !TextStyle
-           !Font
-           !Text
-    | Lettering (Maybe SrcLoc)
-           !Text
-    | Color (Maybe SrcLoc)
-            !Color
-            !Picture
-    | Translate (Maybe SrcLoc)
-                !Double
-                !Double
-                !Picture
-    | Scale (Maybe SrcLoc)
-            !Double
-            !Double
-            !Picture
-    | Dilate (Maybe SrcLoc)
-             !Double
-             !Picture
-    | Rotate (Maybe SrcLoc)
-             !Double
-             !Picture
+    = SolidPolygon (Maybe SrcLoc) [Point]
+    | SolidClosedCurve (Maybe SrcLoc) [Point]
+    | Polygon (Maybe SrcLoc) [Point]
+    | ThickPolygon (Maybe SrcLoc) [Point] !Double
+    | Rectangle (Maybe SrcLoc) !Double !Double
+    | SolidRectangle (Maybe SrcLoc) !Double !Double
+    | ThickRectangle (Maybe SrcLoc) !Double !Double !Double
+    | ClosedCurve (Maybe SrcLoc) [Point]
+    | ThickClosedCurve (Maybe SrcLoc) [Point] !Double
+    | Polyline (Maybe SrcLoc) [Point]
+    | ThickPolyline (Maybe SrcLoc) [Point] !Double
+    | Curve (Maybe SrcLoc) [Point]
+    | ThickCurve (Maybe SrcLoc) [Point] !Double
+    | Circle (Maybe SrcLoc) !Double
+    | SolidCircle (Maybe SrcLoc) !Double
+    | ThickCircle (Maybe SrcLoc) !Double !Double
+    | Sector (Maybe SrcLoc) !Double !Double !Double
+    | Arc (Maybe SrcLoc) !Double !Double !Double
+    | ThickArc (Maybe SrcLoc) !Double !Double !Double !Double
+    | StyledLettering (Maybe SrcLoc) !TextStyle !Font !Text
+    | Lettering (Maybe SrcLoc) !Text
+    | Color (Maybe SrcLoc) !Color !Picture
+    | Translate (Maybe SrcLoc) !Double !Double !Picture
+    | Scale (Maybe SrcLoc) !Double !Double !Picture
+    | Dilate (Maybe SrcLoc) !Double !Picture
+    | Rotate (Maybe SrcLoc) !Double !Picture
     | CoordinatePlane (Maybe SrcLoc)
-    | Logo (Maybe SrcLoc)
-    | Sketch (Maybe SrcLoc) !Text !Text
+    | Sketch (Maybe SrcLoc) !Text !Text !Double !Double
     | Pictures (Maybe SrcLoc) [Picture]
     | PictureAnd (Maybe SrcLoc) [Picture]
     | Blank (Maybe SrcLoc)
@@ -364,7 +315,12 @@ coordinatePlane = CoordinatePlane (getDebugSrcLoc callStack)
 
 -- | The CodeWorld logo.
 codeWorldLogo :: HasCallStack => Picture
-codeWorldLogo = Logo (getDebugSrcLoc callStack)
+codeWorldLogo =
+    Sketch
+        (getDebugSrcLoc callStack)
+        "codeWorldLogo"
+        $(embedAsUrl "image/svg+xml" "data/codeworld.svg")
+        17.68 7.28
 
 getDebugSrcLoc :: CallStack -> Maybe SrcLoc
 getDebugSrcLoc cs = Data.List.find ((== "main") . srcLocPackage) locs

@@ -178,7 +178,11 @@ function parseSymbolsFromCurrentCode() {
             const module = match[2];
             const asName = match[5] !== undefined ? match[5] : module;
             const hiding = !!match[7];
-            const importList = match[9];
+            const importList = match[9] &&
+                match[9]
+                    .split(',')
+                    .map(s => s.trim())
+                    .map(s => /[(].*[)]/.test(s) ? s.substr(1, s.length - 2) : s);
             imports.push({
                 module: module,
                 asName: asName,
@@ -186,6 +190,7 @@ function parseSymbolsFromCurrentCode() {
                 hiding: hiding,
                 importList: importList
             });
+            return;
         }
 
         const docString = `Defined in your code on line ${lineIndex}.`;
@@ -267,9 +272,16 @@ function parseSymbolsFromCurrentCode() {
     if (window.buildMode === 'codeworld') {
         console.log(imports);
         let symbols = Object.assign({}, window.codeWorldBuiltins);
-        for (let i of imports) {
+        for (const i of imports) {
             if (i.module in window.codeWorldModules) {
-                symbols = Object.assign(symbols, window.codeWorldModules[i.module]);
+                for (const symbol in window.codeWorldModules[i.module]) {
+                    if (i.importList) {
+                        if (i.hiding && i.importList.includes(symbol)) continue;
+                        if (!i.hiding && !i.importList.includes(symbol)) continue;
+                    }
+                    const name = i.qualified ? `${i.asName}.${symbol}` : symbol;
+                    symbols[name] = window.codeWorldModules[i.module][symbol];
+                }
             }
         }
         window.codeWorldSymbols = Object.assign(symbols, parseResults);

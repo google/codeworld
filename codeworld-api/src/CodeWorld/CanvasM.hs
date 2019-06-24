@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-unused-imports -Wno-unused-do-bind #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
@@ -137,7 +137,7 @@ createOrGetImage name url = do
             setAttribute img (textToJSString "id") name
             setAttribute img (textToJSString "src") url
             Just body <- getBody doc
-            appendChild body img
+            _ <- appendChild body img
             return img
 
 instance MonadCanvas CanvasM where

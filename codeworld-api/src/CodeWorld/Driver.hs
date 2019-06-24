@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-name-shadowing -Wno-missing-signatures -Wno-unused-local-binds -Wno-unused-do-bind -Wno-orphans -Wno-unused-imports -Wno-unticked-promoted-constructors #-}
+{-# OPTIONS_GHC -Wno-name-shadowing -Wno-missing-signatures -Wno-unused-local-binds -Wno-orphans -Wno-unused-imports -Wno-unticked-promoted-constructors #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
@@ -1095,7 +1095,7 @@ getMousePos canvas = do
 onEvents :: Element -> (Event -> IO ()) -> IO ()
 onEvents canvas handler = do
     Just window <- currentWindow
-    on window keyDown $ do
+    _ <- on window keyDown $ do
         code <- getKeyCode =<< event
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
@@ -1107,20 +1107,20 @@ onEvents canvas handler = do
             liftIO $ handler (TextEntry key)
             preventDefault
             stopPropagation
-    on window keyUp $ do
+    _ <- on window keyUp $ do
         code <- getKeyCode =<< event
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
             liftIO $ handler (KeyRelease keyName)
             preventDefault
             stopPropagation
-    on window mouseDown $ do
+    _ <- on window mouseDown $ do
         pos <- getMousePos canvas
         liftIO $ handler (PointerPress pos)
-    on window mouseUp $ do
+    _ <- on window mouseUp $ do
         pos <- getMousePos canvas
         liftIO $ handler (PointerRelease pos)
-    on window mouseMove $ do
+    _ <- on window mouseMove $ do
         pos <- getMousePos canvas
         liftIO $ handler (PointerMovement pos)
     return ()
@@ -1362,7 +1362,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     offscreenCanvas <- Canvas.create 500 500
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-    on window resize $ do
+    _ <- on window resize $ do
         liftIO $ setCanvasSize canvas canvas
         liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
     currentGameState <- newMVar initialGameState
@@ -1426,7 +1426,7 @@ run initial stepHandler eventHandler drawHandler injectTime = do
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
     needsRedraw <- newMVar ()
-    on window resize $ void $ liftIO $ do
+    _ <- on window resize $ void $ liftIO $ do
         setCanvasSize canvas canvas
         setCanvasSize (elementFromCanvas offscreenCanvas) canvas
         tryPutMVar needsRedraw ()
@@ -1454,7 +1454,7 @@ run initial stepHandler eventHandler drawHandler injectTime = do
                 if | needsTime ->
                        do t1 <- nextFrame
                           let dt = min (t1 - t0) 0.25
-                          modifyMVarIfDifferent currentState (fullStepHandler dt)
+                          _ <- modifyMVarIfDifferent currentState (fullStepHandler dt)
                           return t1
                    | otherwise ->
                        do takeMVar eventHappened
@@ -1704,8 +1704,7 @@ run initial stepHandler eventHandler drawHandler =
         eventHappened <- newMVar ()
         onEvents context (cw, ch) $ \event -> do
             modifyMVar_ currentState (return . eventHandler event)
-            tryPutMVar eventHappened ()
-            return ()
+            void $ tryPutMVar eventHappened ()
         let go t0 lastFrame lastStateName needsTime = do
                 pic <- drawHandler <$> readMVar currentState
                 picFrame <- makeStableName $! pic

@@ -194,7 +194,6 @@ fi
 if [ ! -f $BUILD/progress/cabal-install ]; then
   run .                  ghcup install-cabal
   run .                  cabal update
-  run .                  cabal v2-install cabal-install --symlink-bindir=$BUILD/bin
 
   touch $BUILD/progress/cabal-install
 fi

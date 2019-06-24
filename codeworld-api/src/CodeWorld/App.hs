@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-deprecations -Wno-name-shadowing -Wno-unused-matches #-}
 {-# LANGUAGE GADTSyntax #-}
 {-# LANGUAGE KindSignatures #-}
 

@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-incomplete-patterns -Wno-name-shadowing -Wno-unused-matches -Wno-missing-signatures -Wno-unused-local-binds -Wno-unused-do-bind -Wno-type-defaults -Wno-orphans -Wno-unused-imports -Wno-unticked-promoted-constructors #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}

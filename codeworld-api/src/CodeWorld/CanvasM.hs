@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-unused-imports -Wno-unused-do-bind -Wno-unused-matches #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE ForeignFunctionInterface #-}

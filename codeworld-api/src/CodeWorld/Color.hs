@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-missing-signatures -Wno-unused-matches -Wno-type-defaults -Wno-name-shadowing -Wno-unused-imports #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}

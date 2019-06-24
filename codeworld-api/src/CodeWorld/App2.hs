@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-deprecations -Wno-unused-imports #-}
 {-# LANGUAGE GADTSyntax #-}
 {-# LANGUAGE KindSignatures #-}
 

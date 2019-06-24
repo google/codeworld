@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-unused-imports -Wno-unticked-promoted-constructors -Wno-name-shadowing -Wno-unused-matches -Wno-missing-signatures -Wno-missing-pattern-synonym-signatures #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ParallelListComp #-}
 {-# LANGUAGE PatternGuards #-}

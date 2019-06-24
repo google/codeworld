@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-name-shadowing -Wno-unused-matches -Wno-missing-signatures -Wno-unused-local-binds -Wno-unused-do-bind -Wno-type-defaults -Wno-orphans -Wno-unused-imports -Wno-unticked-promoted-constructors #-}
+{-# OPTIONS_GHC -Wno-name-shadowing -Wno-missing-signatures -Wno-unused-local-binds -Wno-unused-do-bind -Wno-type-defaults -Wno-orphans -Wno-unused-imports -Wno-unticked-promoted-constructors #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
@@ -248,7 +248,7 @@ setColorDS col = mapDSColor $ \mcol ->
         (RGBA _ _ _ alpha, Just (RGBA rr gg bb alpha0)) -> Just (RGBA rr gg bb (alpha0 * alpha))
 
 getColorDS :: DrawState -> Maybe Color
-getColorDS (DrawState at col) = col
+getColorDS (DrawState _ col) = col
 
 type Drawer m = DrawState -> DrawMethods m
 
@@ -343,7 +343,7 @@ imageDrawer name url imgw imgh ds =
               Nothing -> withDS ds $ do
                   CM.scale 1 (-1)
                   CM.drawImgURL name url (25 * imgw) (25 * imgh)
-              Just (RGBA r g b a) -> do
+              Just (RGBA _ _ _ _) -> do
                   w <- CM.getScreenWidth
                   h <- CM.getScreenHeight
                   img <- CM.newImage (round w) (round h)
@@ -400,7 +400,7 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
             ]
 
 withDS :: MonadCanvas m => DrawState -> m a -> m a
-withDS (DrawState (AffineTransformation ta tb tc td te tf) col) action = CM.saveRestore $ do
+withDS (DrawState (AffineTransformation ta tb tc td te tf) _col) action = CM.saveRestore $ do
     CM.transform ta tb tc td te tf
     CM.beginPath
     action
@@ -424,8 +424,8 @@ applyColor ds =
                 a
 
 followPath :: MonadCanvas m => [Point] -> Bool -> Bool -> m ()
-followPath [] closed _ = return ()
-followPath [p1] closed _ = return ()
+followPath [] _ _ = return ()
+followPath [_] _ _ = return ()
 followPath ((sx, sy):ps) closed False = do
     CM.moveTo (25 * sx, 25 * sy)
     forM_ ps $ \(x, y) -> CM.lineTo (25 * x, 25 * y)
@@ -525,7 +525,7 @@ findTopShape ds d = do
             False -> return (False, 1)
     go ds (Transformation f d) =
         fmap (+ 1) <$> go (f ds) d
-    go ds (Drawings []) = return (False, 1)
+    go _ (Drawings []) = return (False, 1)
     go ds (Drawings (dr:drs)) = do
         (found, count) <- go ds dr
         case found of
@@ -1028,7 +1028,7 @@ isUniversallyConstant f old =
         genName <- makeStableName $! f undefined old
         return (genName == oldName)
   where
-    falseOr x = x `catch` \(e :: SomeException) -> return False
+    falseOr x = x `catch` \(_ :: SomeException) -> return False
 
 ifDifferent :: (s -> s) -> s -> Maybe s
 ifDifferent f s0 = unsafePerformIO $ do
@@ -1275,7 +1275,7 @@ gameHandle numPlayers initial stepHandler eventHandler token gsm event = do
             let eventFun = eventHandler pid event
             case ifDifferent eventFun gameState0 of
                 Nothing -> putMVar gsm gs
-                Just s1 -> do
+                Just _ -> do
                     sendClientMessage
                         ws
                         (InEvent (encodeEvent (gameTime gs t, Just event)))
@@ -1393,7 +1393,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
             go t1 picFrame
     t0 <- getTime
     nullFrame <- makeStableName undefined
-    initialStateName <- makeStableName $! initialGameState
+    _ <- makeStableName $! initialGameState
     go t0 nullFrame
 
 getDeployHash :: IO Text
@@ -1492,8 +1492,8 @@ debugStateInit :: DebugState
 debugStateInit = DebugState False Nothing Nothing
 
 updateDebugState :: DebugEvent -> DebugState -> DebugState
-updateDebugState DebugStart prev = DebugState True Nothing Nothing
-updateDebugState DebugStop prev = DebugState False Nothing Nothing
+updateDebugState DebugStart _prev = DebugState True Nothing Nothing
+updateDebugState DebugStop _prev = DebugState False Nothing Nothing
 updateDebugState (HighlightEvent n) prev =
     case debugStateActive prev of
         True -> prev {shapeHighlighted = n}
@@ -1568,7 +1568,7 @@ runInspect controls initial stepHandler eventHandler drawHandler = do
             case debugStateActive debugState of
                 True -> drawDebugState debugState $ pictureToDrawing $ drawHandler (state wrappedState)
                 False -> pictureToDrawing (wrappedDraw controls drawHandler wrappedState)
-        drawPicHandler (debugState, wrappedState) =
+        drawPicHandler (_debugState, wrappedState) =
             drawHandler $ state wrappedState
     (sendEvent, getState) <-
         run
@@ -1623,9 +1623,9 @@ getDrawNode n _
 getDrawNode n drawing = either Just (const Nothing) $ go initialDS n drawing
   where
     go ds (NodeId 0) d = Left (d, ds)
-    go ds n (Shape _) = Right (pred n)
+    go _ n (Shape _) = Right (pred n)
     go ds n (Transformation f dr) = go (f ds) (pred n) dr
-    go ds n (Drawings []) = Right (pred n)
+    go _ n (Drawings []) = Right (pred n)
     go ds n (Drawings (dr:drs)) =
         case go ds (pred n) dr of
             Left d -> Left d
@@ -1644,7 +1644,7 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
     go n (Drawings (dr:drs)) =
         case go (pred n) dr of
             Left d -> Left $ Drawings (d : drs)
-            Right m ->
+            Right _ ->
                 mapLeft (\(Drawings qs) -> Drawings (dr : qs)) $
                 go (succ n) $ Drawings drs
     mapLeft :: (a -> b) -> Either a c -> Either b c
@@ -1979,13 +1979,6 @@ wrappedStep f dt w
   | playbackSpeed w == 0 = w
   | otherwise = toState (f (dt * playbackSpeed w)) w
 
-reportDiff :: String -> (a -> a) -> (a -> a)
-reportDiff msg f x = unsafePerformIO $ do
-    a <- makeStableName $! x
-    b <- makeStableName $! r
-    return r
-  where r = f x
-
 wrappedEvent :: forall a . 
        (Wrapped a -> [Control a])
     -> (Double -> a -> a)
@@ -2078,23 +2071,23 @@ handleControl f (PointerPress (x, y)) (StepButton (cx, cy)) w
 handleControl _ (PointerPress (x, y)) (SpeedSlider (cx, cy)) w
     | abs (x - cx) < 1.5 && abs (y - cy) < 0.4 = 
       (w {playbackSpeed = xToPlaybackSpeed (x - cx), isDraggingSpeed = True}, True)
-handleControl _ (PointerMovement (x, y)) (SpeedSlider (cx, cy)) w
+handleControl _ (PointerMovement (x, _)) (SpeedSlider (cx, _)) w
     | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed (x - cx)}, True)
-handleControl _ (PointerRelease (x, y)) (SpeedSlider (cx, cy)) w
+handleControl _ (PointerRelease (x, _)) (SpeedSlider (cx, _)) w
     | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed (x - cx), isDraggingSpeed = False}, True)
 handleControl _ (PointerPress (x, y)) (ZoomSlider (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 1.5 = 
       (w {zoomFactor = yToZoomFactor (y - cy), isDraggingZoom = True}, True)
-handleControl _ (PointerMovement (x, y)) (ZoomSlider (cx, cy)) w
+handleControl _ (PointerMovement (_, y)) (ZoomSlider (_, cy)) w
     | isDraggingZoom w = (w {zoomFactor = yToZoomFactor (y - cy)}, True)
-handleControl _ (PointerRelease (x, y)) (ZoomSlider (cx, cy)) w
+handleControl _ (PointerRelease (_, y)) (ZoomSlider (_, cy)) w
     | isDraggingZoom w = (w {zoomFactor = yToZoomFactor (y - cy), isDraggingZoom = False}, True)
 handleControl _ (PointerPress (x, y)) (HistorySlider (cx, cy)) w
     | abs (x - cx) < 2.5 && abs (y - cy) < 0.4 = 
       (travelToTime (x - cx) <$> w {isDraggingHistory = True}, True)
-handleControl _ (PointerMovement (x, y)) (HistorySlider (cx, cy)) w
+handleControl _ (PointerMovement (x, _)) (HistorySlider (cx, _)) w
     | isDraggingHistory w = (travelToTime (x - cx) <$> w, True)
-handleControl _ (PointerRelease (x, y)) (HistorySlider (cx, cy)) w
+handleControl _ (PointerRelease (x, _)) (HistorySlider (cx, _)) w
     | isDraggingHistory w = (travelToTime (x - cx) <$> w {isDraggingHistory = False}, True)
 handleControl _ (PointerPress (x, y)) PanningLayer w =
       (w {panDraggingAnchor = SJust (SP x y)}, True)
@@ -2105,8 +2098,8 @@ handleControl _ (PointerMovement (x, y)) PanningLayer w
                           (py + (y - ay) / zoomFactor w),
            panDraggingAnchor = SJust (SP x y)
          }, True)
-handleControl _ (PointerRelease (x, y)) PanningLayer w
-    | SJust (SP ax ay) <- panDraggingAnchor w = (w {panDraggingAnchor = SNothing}, True)
+handleControl _ (PointerRelease _) PanningLayer w
+    | SJust _ <- panDraggingAnchor w = (w {panDraggingAnchor = SNothing}, True)
 handleControl _ _ _ w = (w, False)
 
 travelToTime :: Double -> ([s],[s]) -> ([s],[s])  

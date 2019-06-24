@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-unused-imports -Wno-unticked-promoted-constructors -Wno-name-shadowing -Wno-unused-matches -Wno-missing-signatures -Wno-missing-pattern-synonym-signatures #-}
+{-# OPTIONS_GHC -Wno-unused-imports -Wno-unticked-promoted-constructors -Wno-name-shadowing -Wno-missing-signatures -Wno-missing-pattern-synonym-signatures #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ParallelListComp #-}
 {-# LANGUAGE PatternGuards #-}
@@ -134,9 +134,9 @@ event BackSpace (Joining t p code)
     | T.length code > 0 = ContinueMain (Joining t p (T.init code))
 event ConnectClick (Joining t p code)
     | T.length code == 4 = Join code (Connecting t p)
-event CancelClick (Joining t p code) = ContinueMain (MainMenu t p)
+event CancelClick (Joining t p _) = ContinueMain (MainMenu t p)
 event CancelClick (Connecting t p) = CancelConnect (MainMenu t p)
-event CancelClick (Waiting t p c n m) = CancelWait (MainMenu t p)
+event CancelClick (Waiting t p _ _ _) = CancelWait (MainMenu t p)
 event _ s = continueUIState s
 
 pattern CreateClick <-

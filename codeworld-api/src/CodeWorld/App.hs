@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-deprecations -Wno-name-shadowing -Wno-unused-matches #-}
+{-# OPTIONS_GHC -Wno-deprecations -Wno-name-shadowing #-}
 {-# LANGUAGE GADTSyntax #-}
 {-# LANGUAGE KindSignatures #-}
 
@@ -63,7 +63,7 @@ subrule getter setter (TimeRule step_b) = TimeRule step_a
   where step_a dt a = setter (step_b dt (getter a)) a
 subrule getter setter (EventRule event_b) = EventRule event_a
   where event_a k ev a = setter (event_b k ev (getter a)) a
-subrule getter setter (PictureRule pic_b) = PictureRule pic_a
+subrule getter _setter (PictureRule pic_b) = PictureRule pic_a
   where pic_a n = pic_b n . getter
 subrule getter setter (Rules rules) = Rules (map (subrule getter setter) rules)
 

@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-missing-signatures -Wno-unused-matches -Wno-type-defaults -Wno-name-shadowing -Wno-unused-imports #-}
+{-# OPTIONS_GHC -Wno-missing-signatures -Wno-type-defaults -Wno-name-shadowing -Wno-unused-imports #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -91,7 +91,7 @@ mixed colors = go 0 0 0 0 0 colors
 -- Helper function that sets the alpha of the second color to that
 -- of the first
 sameAlpha :: Color -> Color -> Color
-sameAlpha (fenceColor -> RGBA r1 g1 b1 a1) (fenceColor -> RGBA r2 g2 b2 a2) =
+sameAlpha (fenceColor -> RGBA _ _ _ a1) (fenceColor -> RGBA r2 g2 b2 _) =
     RGBA r2 g2 b2 a1
 
 lighter :: Double -> Color -> Color
@@ -144,7 +144,7 @@ assortedColors = [ HSL (adjusted h) 0.75 0.5 | h <- [0, 2 * pi / phi ..] ]
     b4 = -1.0451841243520298e-02
 
 hue :: Color -> Double
-hue (fenceColor -> RGBA r g b a)
+hue (fenceColor -> RGBA r g b _)
     | hi - lo < epsilon = 0
     | r == hi && g >= b = (g - b) / (hi - lo) * pi / 3
     | r == hi = (g - b) / (hi - lo) * pi / 3 + 2 * pi
@@ -156,7 +156,7 @@ hue (fenceColor -> RGBA r g b a)
     epsilon = 0.000001
 
 saturation :: Color -> Double
-saturation (fenceColor -> RGBA r g b a)
+saturation (fenceColor -> RGBA r g b _)
     | hi - lo < epsilon = 0
     | otherwise = (hi - lo) / (1 - abs (hi + lo - 1))
   where
@@ -165,13 +165,13 @@ saturation (fenceColor -> RGBA r g b a)
     epsilon = 0.000001
 
 luminosity :: Color -> Double
-luminosity (fenceColor -> RGBA r g b a) = (lo + hi) / 2
+luminosity (fenceColor -> RGBA r g b _) = (lo + hi) / 2
   where
     hi = max r (max g b)
     lo = min r (min g b)
 
 alpha :: Color -> Double
-alpha (RGBA r g b a) = fence a
+alpha (RGBA _ _ _ a) = fence a
 
 -- New-style colors
 

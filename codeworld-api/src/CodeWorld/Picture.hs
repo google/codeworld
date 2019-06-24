@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-unused-imports -Wno-type-defaults -Wno-unused-matches #-}
+{-# OPTIONS_GHC -Wno-unused-imports -Wno-type-defaults #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -287,7 +287,7 @@ pictures = Pictures (getDebugSrcLoc callStack)
 (&) :: HasCallStack => Picture -> Picture -> Picture
 infixr 0 &
 
-a & b@(PictureAnd loc2 bs)
+a & PictureAnd loc2 bs
   | srcContains loc1 loc2 = PictureAnd loc1 (a:bs)
   where loc1 = getDebugSrcLoc callStack
 a & b = PictureAnd (getDebugSrcLoc callStack) [a, b]

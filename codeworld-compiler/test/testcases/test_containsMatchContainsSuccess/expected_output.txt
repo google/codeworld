@@ -1,0 +1,11 @@
+:                     :: REQUIREMENTS ::
+Obfuscated:
+
+    XREQUIRES
+    eJxVjjEKwzAMRa/yCRmSoT2AoVvXLl3jDMZRiCFVgiWXDjl87QYMFVr09CT+
+    0Fi2fCfxMewaNjbwG6sLLA+nfqkTJHlPIpafaSUxlnH5VwvKpfTaV6dkcJwA
+    mLv27WKPG9qu/hsOaHQsxZ1wjP3Ppk8+ZncmmSHLltYJSajKeYOQWwUTzYFD
+    IVfLzfgFAQ9H/A==
+
+[Y] containsMatch contains success
+                  :: END REQUIREMENTS ::

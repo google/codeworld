@@ -1,0 +1,14 @@
+:                     :: REQUIREMENTS ::
+Obfuscated:
+
+    XREQUIRES
+    eJyLVorJi8lzSS1OLsosKMnMz7NSyMsPTyzKy8xLL3atSE4tKFFIS8zMKS1K
+    jckLKs1JLbaKyVPQxVBkpRAdG5OnFAsAxj0dtw==
+
+[N] noWarningsExcept failure
+      Warning found at line 9, column 1
+                  :: END REQUIREMENTS ::
+
+
+program.hs:9:1: warning:
+    Defined but not used: x

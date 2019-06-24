@@ -1,0 +1,12 @@
+:                     :: REQUIREMENTS ::
+Obfuscated:
+
+    XREQUIRES
+    eJxVjrEKg0AMhl/lRxx0aB9A6Na1S1fPIWgOD65RLrnSwYfvWUFoyJIvX8Lf
+    V06c3FnHFFYLi3QYFzEKog+ycT4neAoxJ3byzJG1c4LLv7qjUsavNZJxh+0A
+    gG/qN6UWN9TN+a/fYIlEd3fCNrQ/mz/lWOhI4qHzkuOErHzKZYNQ2hQT+yBh
+    J1cn1fAF9kRH6w==
+
+[N] containsMatch contains failure
+      f should use translation in its definition.
+                  :: END REQUIREMENTS ::

@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-incomplete-patterns -Wno-name-shadowing -Wno-unused-matches -Wno-missing-signatures -Wno-unused-local-binds -Wno-unused-do-bind -Wno-type-defaults -Wno-orphans -Wno-unused-imports -Wno-unticked-promoted-constructors #-}
+{-# OPTIONS_GHC -Wno-name-shadowing -Wno-unused-matches -Wno-missing-signatures -Wno-unused-local-binds -Wno-unused-do-bind -Wno-type-defaults -Wno-orphans -Wno-unused-imports -Wno-unticked-promoted-constructors #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
@@ -2422,6 +2422,7 @@ prependIfChanged f (x:xs, ys)
     | identical x x' = (x:xs, ys)
     | otherwise = (x':x:xs, ys)
     where x' = f x
+prependIfChanged _ ([], _) = error "prependIfChanged: empty state"
 
 debugSimulationOf
   :: world                       -- ^ The initial state of the simulation.
@@ -2435,6 +2436,7 @@ debugSimulationOf initial simStep simDraw =
   where
     step dt = prependIfChanged (simStep dt)
     draw (x:_, _) = simDraw x
+    draw ([], _) = error "debugSimulationOf: empty state"
 
 {-# WARNING debugSimulationOf ["Please use debugActivityOf instead of debugSimulationOf.",
                                "debugSimulationOf may be removed July 2020."] #-}
@@ -2454,6 +2456,7 @@ debugInteractionOf initial baseStep baseEvent baseDraw =
     step dt = prependIfChanged (baseStep dt)
     event e = prependIfChanged (baseEvent e)
     draw (x:_, _) = baseDraw x
+    draw ([], _) = error "debugInteractionOf: empty state"
 
 {-# WARNING debugInteractionOf ["Please use debugActivityOf instead of debugInteractionOf.",
                                 "debugInteractionOf may be removed July 2020."] #-}

@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-missing-signatures -Wno-type-defaults -Wno-name-shadowing -Wno-unused-imports #-}
+{-# OPTIONS_GHC -Wno-missing-signatures -Wno-name-shadowing -Wno-unused-imports #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -83,7 +83,7 @@ toHSL _ = Nothing
 mixed :: [Color] -> Color
 mixed colors = go 0 0 0 0 0 colors
   where go rr gg bb aa n ((fenceColor -> RGBA r g b a) : cs) =
-            go (rr + r^2 * a) (gg + g^2 * a) (bb + b^2 * a) (aa + a) (n + 1) cs
+            go (rr + r*r * a) (gg + g*g * a) (bb + b*b * a) (aa + a) (n + 1) cs
         go rr gg bb aa n []
           | aa == 0   = RGBA 0 0 0 0
           | otherwise = RGBA (sqrt (rr/aa)) (sqrt (gg/aa)) (sqrt (bb/aa)) (aa/n)

@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-unused-imports -Wno-type-defaults #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -47,7 +47,7 @@ dilatedPoint k (x, y) = (k * x, k * y)
 type Vector = (Double, Double)
 
 vectorLength :: Vector -> Double
-vectorLength (x, y) = sqrt (x ^ 2 + y ^ 2)
+vectorLength (x, y) = sqrt (x*x + y*y)
 
 vectorDirection :: Vector -> Double
 vectorDirection (x, y) = atan2 y x

@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-name-shadowing -Wno-missing-signatures -Wno-unused-local-binds -Wno-unused-do-bind -Wno-type-defaults -Wno-orphans -Wno-unused-imports -Wno-unticked-promoted-constructors #-}
+{-# OPTIONS_GHC -Wno-name-shadowing -Wno-missing-signatures -Wno-unused-local-binds -Wno-unused-do-bind -Wno-orphans -Wno-unused-imports -Wno-unticked-promoted-constructors #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
@@ -387,7 +387,7 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
                 0.3
                 (scaled 0.5 0.5 (lettering (T.pack (show k))))
             | k <- [-9,-8 .. 9]
-            , k /= 0
+            , k /= (0 :: Int)
             ]
     ynumbers =
         pictures
@@ -396,7 +396,7 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
                 (fromIntegral k)
                 (scaled 0.5 0.5 (lettering (T.pack (show k))))
             | k <- [-9,-8 .. 9]
-            , k /= 0
+            , k /= (0 :: Int)
             ]
 
 withDS :: MonadCanvas m => DrawState -> m a -> m a
@@ -432,18 +432,18 @@ followPath ((sx, sy):ps) closed False = do
     when closed $ CM.closePath
 followPath [p1, p2] False True = followPath [p1, p2] False False
 followPath ps False True = do
-    let [(x1, y1), (x2, y2), (x3, y3)] = take 3 ps
-        dprev = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-        dnext = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
+    let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = take 3 ps
+        dprev = euclideanDistance p1 p2
+        dnext = euclideanDistance p2 p3
         p = dprev / (dprev + dnext)
         cx = x2 + p * (x1 - x3) / 2
         cy = y2 + p * (y1 - y3) / 2
     CM.moveTo (25 * x1, 25 * y1)
     CM.quadraticCurveTo (25 * cx, 25 * cy) (25 * x2, 25 * y2)
-    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $ \((x1, y1), (x2, y2), (x3, y3), (x4, y4)) -> do
-        let dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-            d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
-            d2 = sqrt ((x4 - x3) ^ 2 + (y4 - y3) ^ 2)
+    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $ \(p1@(x1, y1), p2@(x2, y2), p3@(x3, y3), p4@(x4, y4)) -> do
+        let dp = euclideanDistance p1 p2
+            d1 = euclideanDistance p2 p3
+            d2 = euclideanDistance p3 p4
             p = d1 / (d1 + d2)
             r = d1 / (dp + d1)
             cx1 = x2 + r * (x3 - x1) / 2
@@ -454,9 +454,9 @@ followPath ps False True = do
             (25 * cx1, 25 * cy1)
             (25 * cx2, 25 * cy2)
             (25 * x3,  25 * y3)
-    let [(x1, y1), (x2, y2), (x3, y3)] = reverse $ take 3 $ reverse ps
-        dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-        d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
+    let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = reverse $ take 3 $ reverse ps
+        dp = euclideanDistance p1 p2
+        d1 = euclideanDistance p2 p3
         r = d1 / (dp + d1)
         cx = x2 + r * (x3 - x1) / 2
         cy = y2 + r * (y3 - y1) / 2
@@ -464,10 +464,10 @@ followPath ps False True = do
 followPath ps@(_:(sx, sy):_) True True = do
     CM.moveTo (25 * sx, 25 * sy)
     let rep = cycle ps
-    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $ \((x1, y1), (x2, y2), (x3, y3), (x4, y4)) -> do
-        let dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-            d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
-            d2 = sqrt ((x4 - x3) ^ 2 + (y4 - y3) ^ 2)
+    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $ \(p1@(x1, y1), p2@(x2, y2), p3@(x3, y3), p4@(x4, y4)) -> do
+        let dp = euclideanDistance p1 p2
+            d1 = euclideanDistance p2 p3
+            d2 = euclideanDistance p3 p4
             p = d1 / (d1 + d2)
             r = d1 / (dp + d1)
             cx1 = x2 + r * (x3 - x1) / 2
@@ -479,6 +479,11 @@ followPath ps@(_:(sx, sy):_) True True = do
             (25 * cx2, 25 * cy2)
             (25 * x3,  25 * y3)
     CM.closePath
+
+euclideanDistance :: Point -> Point -> Double
+euclideanDistance (x1, y1) (x2, y2) = sqrt $ square (x2 - x1) + square (y2 - y1)
+  where
+    square x = x * x
 
 drawFigure :: MonadCanvas m => DrawState -> Double -> m () -> m ()
 drawFigure ds w figure = do
@@ -914,8 +919,8 @@ setCanvasSize target canvas = do
     rect <- getBoundingClientRect canvas
     cx <- ClientRect.getWidth rect
     cy <- ClientRect.getHeight rect
-    setAttribute target ("width" :: JSString) (show (round cx))
-    setAttribute target ("height" :: JSString) (show (round cy))
+    setAttribute target ("width" :: JSString) (show (round cx :: Int))
+    setAttribute target ("height" :: JSString) (show (round cy :: Int))
 
 #else
 
@@ -1019,7 +1024,7 @@ keyCodeToText n =
         _ -> "Unknown:" <> fromNum n
   where
     fromAscii n = T.singleton (chr (fromIntegral n))
-    fromNum n = T.pack (show (fromIntegral n))
+    fromNum n = T.pack (show n)
 
 isUniversallyConstant :: (a -> s -> s) -> s -> Bool
 isUniversallyConstant f old =
@@ -1657,11 +1662,13 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
 
 getMousePos :: (Int, Int) -> (Double, Double) -> (Double, Double)
 getMousePos (w, h) (x, y) =
-    ((x - mx) / realToFrac unitLen, (my - y) / realToFrac unitLen)
+    ((x - mx) / unitLen, (my - y) / unitLen)
   where
-    unitLen = min (fromIntegral w) (fromIntegral h) / 20
-    mx = fromIntegral w / 2
-    my = fromIntegral h / 2
+    w' = fromIntegral w
+    h' = fromIntegral h
+    unitLen = min w' h' / 20
+    mx = w' / 2
+    my = h' / 2
 
 toEvent :: (Int, Int) -> Canvas.Event -> Maybe Event
 toEvent rect Canvas.Event {..}

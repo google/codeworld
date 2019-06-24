@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -Wno-unused-imports #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
@@ -21,10 +20,9 @@
 
 module CodeWorld.CanvasM where
 
-import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.Trans (MonadIO)
-import Data.Text (Text, pack)
+import Data.Text (Text)
 
 #ifdef ghcjs_HOST_OS
 
@@ -34,13 +32,13 @@ import GHCJS.DOM.Document
 import GHCJS.DOM.Element
 import GHCJS.DOM.Node
 import GHCJS.DOM.NonElementParentNode
-import GHCJS.Marshal.Pure
 import GHCJS.Types
 import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
 
 #else
 
+import Data.Text (pack)
 import qualified Graphics.Blank as Canvas
 import Graphics.Blank (Canvas)
 import Text.Printf

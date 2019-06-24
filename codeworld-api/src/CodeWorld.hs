@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -Wno-unused-imports #-}
 {-# LANGUAGE PatternSynonyms #-}
 
 {-
@@ -145,4 +144,3 @@ import CodeWorld.Color
 import CodeWorld.Driver
 import CodeWorld.Event
 import CodeWorld.Picture
-import Data.Monoid

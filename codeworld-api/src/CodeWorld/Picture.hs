@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -Wno-unused-imports #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -25,7 +24,7 @@ import CodeWorld.Color
 import Control.DeepSeq
 import Data.List
 import Data.Monoid ((<>))
-import Data.Text (Text, pack)
+import Data.Text (Text)
 import GHC.Generics (Generic)
 import GHC.Stack
 import Util.EmbedAsUrl

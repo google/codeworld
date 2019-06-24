@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-missing-signatures -Wno-name-shadowing -Wno-unused-imports #-}
+{-# OPTIONS_GHC -Wno-missing-signatures -Wno-name-shadowing #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -21,11 +21,7 @@
 module CodeWorld.Color where
 
 import Control.DeepSeq
-import Data.Fixed (mod')
-import Data.List (unfoldr)
 import GHC.Generics (Generic)
-import System.Random (mkStdGen)
-import System.Random.Shuffle (shuffle')
 
 data Color =
     RGBA !Double

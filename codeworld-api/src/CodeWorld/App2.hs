@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-deprecations -Wno-unused-imports #-}
+{-# OPTIONS_GHC -Wno-deprecations #-}
 {-# LANGUAGE GADTSyntax #-}
 {-# LANGUAGE KindSignatures #-}
 
@@ -33,8 +33,6 @@ module CodeWorld.App2
     ) where
 
 import CodeWorld
-import Data.List (foldl')
-import System.Random (StdGen)
 
 data Application :: * -> * where
     App :: state

@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-unused-imports -Wno-unticked-promoted-constructors -Wno-name-shadowing -Wno-missing-signatures -Wno-missing-pattern-synonym-signatures #-}
+{-# OPTIONS_GHC -Wno-unticked-promoted-constructors -Wno-name-shadowing -Wno-missing-signatures -Wno-missing-pattern-synonym-signatures #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ParallelListComp #-}
 {-# LANGUAGE PatternGuards #-}
@@ -40,7 +40,6 @@ import CodeWorld.Event
 import CodeWorld.Picture
 
 import Data.Char
-import Data.Monoid
 import qualified Data.Text as T
 import Data.Text (Text)
 

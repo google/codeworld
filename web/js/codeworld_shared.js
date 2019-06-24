@@ -138,7 +138,9 @@ function definePanelExtension() {
 //   }
 // }
 window.codeWorldSymbols = {};
-window.codeWorldModules = { 'Prelude': {} };
+window.codeWorldModules = {
+    'Prelude': {}
+};
 window.codeWorldBuiltins = {
     'program': {
         declaration: 'program :: Program',
@@ -165,7 +167,7 @@ function parseSymbolsFromCurrentCode() {
     const parseResults = {};
     let lineIndex = 0;
 
-    let imports = [];
+    const imports = [];
 
     lines.forEach(line => {
         lineIndex++;
@@ -173,11 +175,11 @@ function parseSymbolsFromCurrentCode() {
         const importExp =
             /^import\s+(qualified)?\s*([A-Z][A-Za-z0-9.']*)(\s+(as)\s+([A-Z][A-Za-z0-9.']*))?(\s+(hiding))?\s*([(]([^()]*|([(][^()]*[)])*)[)])?\s*$/;
         if (importExp.test(line)) {
-            const match = importExp.exec(line)
-            const qualified = !!match[1];
+            const match = importExp.exec(line);
+            const qualified = Boolean(match[1]);
             const module = match[2];
             const asName = match[5] !== undefined ? match[5] : module;
-            const hiding = !!match[7];
+            const hiding = Boolean(match[7]);
             const importList = match[9] &&
                 match[9]
                     .split(',')
@@ -271,7 +273,7 @@ function parseSymbolsFromCurrentCode() {
 
     if (window.buildMode === 'codeworld') {
         console.log(imports);
-        let symbols = Object.assign({}, window.codeWorldBuiltins);
+        const symbols = Object.assign({}, window.codeWorldBuiltins);
         for (const i of imports) {
             if (i.module in window.codeWorldModules) {
                 for (const symbol in window.codeWorldModules[i.module]) {

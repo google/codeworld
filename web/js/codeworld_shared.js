@@ -1217,10 +1217,7 @@ function shareFolder_(mode) {
         return;
     }
 
-    const folderName = getNearestDirectory_().name
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+    const folderName = Html.encode(getNearestDirectory_().name);
 
     const data = new FormData();
     data.append('mode', mode);
@@ -1287,10 +1284,7 @@ function preFormatMessage(msg) {
         msg = msg.replace(/(\r\n|[^\x08])\x08/g, '');
     }
 
-    msg = msg
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
+    msg = Html.encode(msg)
         .replace(/program\.hs:(\d+):((\d+)(-\d+)?)/g,
             '<a href="#" onclick="goto($1, $3);">Line $1, Column $2</a>')
         .replace(/program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,

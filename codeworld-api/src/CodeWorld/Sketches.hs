@@ -275,10 +275,10 @@ sketchedKey =
            $(embedAsUrl "image/svg+xml" "data/KeyTransparency70.svg")
            10 10
 
-sketchedKitten :: HasCallStack => Picture
-sketchedKitten =
+sketchedCat :: HasCallStack => Picture
+sketchedCat =
     Sketch (getDebugSrcLoc callStack)
-           "sketchedKitten"
+           "sketchedCat"
            $(embedAsUrl "image/svg+xml" "data/KittenTransparency70.svg")
            10 10
 

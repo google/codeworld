@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-name-shadowing -Wno-orphans -Wno-unused-imports -Wno-unticked-promoted-constructors #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
@@ -247,7 +248,7 @@ setColorDS col = mapDSColor $ \mcol ->
         (RGBA _ _ _ alpha, Just (RGBA rr gg bb alpha0)) -> Just (RGBA rr gg bb (alpha0 * alpha))
 
 getColorDS :: DrawState -> Maybe Color
-getColorDS (DrawState at col) = col
+getColorDS (DrawState _ col) = col
 
 type Drawer m = DrawState -> DrawMethods m
 
@@ -342,7 +343,7 @@ imageDrawer name url imgw imgh ds =
               Nothing -> withDS ds $ do
                   CM.scale 1 (-1)
                   CM.drawImgURL name url (25 * imgw) (25 * imgh)
-              Just (RGBA r g b a) -> do
+              Just (RGBA _ _ _ _) -> do
                   w <- CM.getScreenWidth
                   h <- CM.getScreenHeight
                   img <- CM.newImage (round w) (round h)
@@ -386,7 +387,7 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
                 0.3
                 (scaled 0.5 0.5 (lettering (T.pack (show k))))
             | k <- [-9,-8 .. 9]
-            , k /= 0
+            , k /= (0 :: Int)
             ]
     ynumbers =
         pictures
@@ -395,11 +396,11 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
                 (fromIntegral k)
                 (scaled 0.5 0.5 (lettering (T.pack (show k))))
             | k <- [-9,-8 .. 9]
-            , k /= 0
+            , k /= (0 :: Int)
             ]
 
 withDS :: MonadCanvas m => DrawState -> m a -> m a
-withDS (DrawState (AffineTransformation ta tb tc td te tf) col) action = CM.saveRestore $ do
+withDS (DrawState (AffineTransformation ta tb tc td te tf) _col) action = CM.saveRestore $ do
     CM.transform ta tb tc td te tf
     CM.beginPath
     action
@@ -423,26 +424,26 @@ applyColor ds =
                 a
 
 followPath :: MonadCanvas m => [Point] -> Bool -> Bool -> m ()
-followPath [] closed _ = return ()
-followPath [p1] closed _ = return ()
+followPath [] _ _ = return ()
+followPath [_] _ _ = return ()
 followPath ((sx, sy):ps) closed False = do
     CM.moveTo (25 * sx, 25 * sy)
     forM_ ps $ \(x, y) -> CM.lineTo (25 * x, 25 * y)
     when closed $ CM.closePath
 followPath [p1, p2] False True = followPath [p1, p2] False False
 followPath ps False True = do
-    let [(x1, y1), (x2, y2), (x3, y3)] = take 3 ps
-        dprev = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-        dnext = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
+    let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = take 3 ps
+        dprev = euclideanDistance p1 p2
+        dnext = euclideanDistance p2 p3
         p = dprev / (dprev + dnext)
         cx = x2 + p * (x1 - x3) / 2
         cy = y2 + p * (y1 - y3) / 2
     CM.moveTo (25 * x1, 25 * y1)
     CM.quadraticCurveTo (25 * cx, 25 * cy) (25 * x2, 25 * y2)
-    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $ \((x1, y1), (x2, y2), (x3, y3), (x4, y4)) -> do
-        let dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-            d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
-            d2 = sqrt ((x4 - x3) ^ 2 + (y4 - y3) ^ 2)
+    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $ \(p1@(x1, y1), p2@(x2, y2), p3@(x3, y3), p4@(x4, y4)) -> do
+        let dp = euclideanDistance p1 p2
+            d1 = euclideanDistance p2 p3
+            d2 = euclideanDistance p3 p4
             p = d1 / (d1 + d2)
             r = d1 / (dp + d1)
             cx1 = x2 + r * (x3 - x1) / 2
@@ -453,9 +454,9 @@ followPath ps False True = do
             (25 * cx1, 25 * cy1)
             (25 * cx2, 25 * cy2)
             (25 * x3,  25 * y3)
-    let [(x1, y1), (x2, y2), (x3, y3)] = reverse $ take 3 $ reverse ps
-        dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-        d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
+    let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = reverse $ take 3 $ reverse ps
+        dp = euclideanDistance p1 p2
+        d1 = euclideanDistance p2 p3
         r = d1 / (dp + d1)
         cx = x2 + r * (x3 - x1) / 2
         cy = y2 + r * (y3 - y1) / 2
@@ -463,10 +464,10 @@ followPath ps False True = do
 followPath ps@(_:(sx, sy):_) True True = do
     CM.moveTo (25 * sx, 25 * sy)
     let rep = cycle ps
-    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $ \((x1, y1), (x2, y2), (x3, y3), (x4, y4)) -> do
-        let dp = sqrt ((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
-            d1 = sqrt ((x3 - x2) ^ 2 + (y3 - y2) ^ 2)
-            d2 = sqrt ((x4 - x3) ^ 2 + (y4 - y3) ^ 2)
+    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $ \(p1@(x1, y1), p2@(x2, y2), p3@(x3, y3), p4@(x4, y4)) -> do
+        let dp = euclideanDistance p1 p2
+            d1 = euclideanDistance p2 p3
+            d2 = euclideanDistance p3 p4
             p = d1 / (d1 + d2)
             r = d1 / (dp + d1)
             cx1 = x2 + r * (x3 - x1) / 2
@@ -478,6 +479,11 @@ followPath ps@(_:(sx, sy):_) True True = do
             (25 * cx2, 25 * cy2)
             (25 * x3,  25 * y3)
     CM.closePath
+
+euclideanDistance :: Point -> Point -> Double
+euclideanDistance (x1, y1) (x2, y2) = sqrt $ square (x2 - x1) + square (y2 - y1)
+  where
+    square x = x * x
 
 drawFigure :: MonadCanvas m => DrawState -> Double -> m () -> m ()
 drawFigure ds w figure = do
@@ -524,7 +530,7 @@ findTopShape ds d = do
             False -> return (False, 1)
     go ds (Transformation f d) =
         fmap (+ 1) <$> go (f ds) d
-    go ds (Drawings []) = return (False, 1)
+    go _ (Drawings []) = return (False, 1)
     go ds (Drawings (dr:drs)) = do
         (found, count) <- go ds dr
         case found of
@@ -913,8 +919,8 @@ setCanvasSize target canvas = do
     rect <- getBoundingClientRect canvas
     cx <- ClientRect.getWidth rect
     cy <- ClientRect.getHeight rect
-    setAttribute target ("width" :: JSString) (show (round cx))
-    setAttribute target ("height" :: JSString) (show (round cy))
+    setAttribute target ("width" :: JSString) (show (round cx :: Int))
+    setAttribute target ("height" :: JSString) (show (round cy :: Int))
 
 #else
 
@@ -1018,7 +1024,7 @@ keyCodeToText n =
         _ -> "Unknown:" <> fromNum n
   where
     fromAscii n = T.singleton (chr (fromIntegral n))
-    fromNum n = T.pack (show (fromIntegral n))
+    fromNum n = T.pack (show n)
 
 isUniversallyConstant :: (a -> s -> s) -> s -> Bool
 isUniversallyConstant f old =
@@ -1027,7 +1033,7 @@ isUniversallyConstant f old =
         genName <- makeStableName $! f undefined old
         return (genName == oldName)
   where
-    falseOr x = x `catch` \(e :: SomeException) -> return False
+    falseOr x = x `catch` \(_ :: SomeException) -> return False
 
 ifDifferent :: (s -> s) -> s -> Maybe s
 ifDifferent f s0 = unsafePerformIO $ do
@@ -1056,7 +1062,6 @@ data GameToken
                     , tokenEvent :: StaticKey
                     , tokenDraw :: StaticKey }
     | PartialToken { tokenDeployHash :: Text }
-    | NoToken
     deriving (Generic)
 
 deriving instance Generic Fingerprint
@@ -1089,7 +1094,7 @@ getMousePos canvas = do
 onEvents :: Element -> (Event -> IO ()) -> IO ()
 onEvents canvas handler = do
     Just window <- currentWindow
-    on window keyDown $ do
+    _ <- on window keyDown $ do
         code <- getKeyCode =<< event
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
@@ -1101,20 +1106,20 @@ onEvents canvas handler = do
             liftIO $ handler (TextEntry key)
             preventDefault
             stopPropagation
-    on window keyUp $ do
+    _ <- on window keyUp $ do
         code <- getKeyCode =<< event
         let keyName = keyCodeToText code
         when (keyName /= "") $ do
             liftIO $ handler (KeyRelease keyName)
             preventDefault
             stopPropagation
-    on window mouseDown $ do
+    _ <- on window mouseDown $ do
         pos <- getMousePos canvas
         liftIO $ handler (PointerPress pos)
-    on window mouseUp $ do
+    _ <- on window mouseUp $ do
         pos <- getMousePos canvas
         liftIO $ handler (PointerRelease pos)
-    on window mouseMove $ do
+    _ <- on window mouseMove $ do
         pos <- getMousePos canvas
         liftIO $ handler (PointerMovement pos)
     return ()
@@ -1274,7 +1279,7 @@ gameHandle numPlayers initial stepHandler eventHandler token gsm event = do
             let eventFun = eventHandler pid event
             case ifDifferent eventFun gameState0 of
                 Nothing -> putMVar gsm gs
-                Just s1 -> do
+                Just _ -> do
                     sendClientMessage
                         ws
                         (InEvent (encodeEvent (gameTime gs t, Just event)))
@@ -1323,8 +1328,6 @@ connectToGameServer handleServerMessage = do
             WS.StringData str -> do
                 return $ readMaybe (Data.JSString.unpack str)
             _ -> return Nothing
-    encodeClientMessage :: ClientMessage -> JSString
-    encodeClientMessage m = Data.JSString.pack (show m)
 
 sendClientMessage :: WS.WebSocket -> ClientMessage -> IO ()
 sendClientMessage ws msg = WS.send (encodeClientMessage msg) ws
@@ -1356,7 +1359,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     offscreenCanvas <- Canvas.create 500 500
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-    on window resize $ do
+    _ <- on window resize $ do
         liftIO $ setCanvasSize canvas canvas
         liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
     currentGameState <- newMVar initialGameState
@@ -1392,7 +1395,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
             go t1 picFrame
     t0 <- getTime
     nullFrame <- makeStableName undefined
-    initialStateName <- makeStableName $! initialGameState
+    _ <- makeStableName $! initialGameState
     go t0 nullFrame
 
 getDeployHash :: IO Text
@@ -1420,7 +1423,7 @@ run initial stepHandler eventHandler drawHandler injectTime = do
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
     needsRedraw <- newMVar ()
-    on window resize $ void $ liftIO $ do
+    _ <- on window resize $ void $ liftIO $ do
         setCanvasSize canvas canvas
         setCanvasSize (elementFromCanvas offscreenCanvas) canvas
         tryPutMVar needsRedraw ()
@@ -1448,7 +1451,7 @@ run initial stepHandler eventHandler drawHandler injectTime = do
                 if | needsTime ->
                        do t1 <- nextFrame
                           let dt = min (t1 - t0) 0.25
-                          modifyMVarIfDifferent currentState (fullStepHandler dt)
+                          _ <- modifyMVarIfDifferent currentState (fullStepHandler dt)
                           return t1
                    | otherwise ->
                        do takeMVar eventHappened
@@ -1491,8 +1494,8 @@ debugStateInit :: DebugState
 debugStateInit = DebugState False Nothing Nothing
 
 updateDebugState :: DebugEvent -> DebugState -> DebugState
-updateDebugState DebugStart prev = DebugState True Nothing Nothing
-updateDebugState DebugStop prev = DebugState False Nothing Nothing
+updateDebugState DebugStart _prev = DebugState True Nothing Nothing
+updateDebugState DebugStop _prev = DebugState False Nothing Nothing
 updateDebugState (HighlightEvent n) prev =
     case debugStateActive prev of
         True -> prev {shapeHighlighted = n}
@@ -1567,7 +1570,7 @@ runInspect controls initial stepHandler eventHandler drawHandler = do
             case debugStateActive debugState of
                 True -> drawDebugState debugState $ pictureToDrawing $ drawHandler (state wrappedState)
                 False -> pictureToDrawing (wrappedDraw controls drawHandler wrappedState)
-        drawPicHandler (debugState, wrappedState) =
+        drawPicHandler (_debugState, wrappedState) =
             drawHandler $ state wrappedState
     (sendEvent, getState) <-
         run
@@ -1622,9 +1625,9 @@ getDrawNode n _
 getDrawNode n drawing = either Just (const Nothing) $ go initialDS n drawing
   where
     go ds (NodeId 0) d = Left (d, ds)
-    go ds n (Shape _) = Right (pred n)
+    go _ n (Shape _) = Right (pred n)
     go ds n (Transformation f dr) = go (f ds) (pred n) dr
-    go ds n (Drawings []) = Right (pred n)
+    go _ n (Drawings []) = Right (pred n)
     go ds n (Drawings (dr:drs)) =
         case go ds (pred n) dr of
             Left d -> Left d
@@ -1643,7 +1646,7 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
     go n (Drawings (dr:drs)) =
         case go (pred n) dr of
             Left d -> Left $ Drawings (d : drs)
-            Right m ->
+            Right _ ->
                 mapLeft (\(Drawings qs) -> Drawings (dr : qs)) $
                 go (succ n) $ Drawings drs
     mapLeft :: (a -> b) -> Either a c -> Either b c
@@ -1656,11 +1659,13 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
 
 getMousePos :: (Int, Int) -> (Double, Double) -> (Double, Double)
 getMousePos (w, h) (x, y) =
-    ((x - mx) / realToFrac unitLen, (my - y) / realToFrac unitLen)
+    ((x - mx) / unitLen, (my - y) / unitLen)
   where
-    unitLen = min (fromIntegral w) (fromIntegral h) / 20
-    mx = fromIntegral w / 2
-    my = fromIntegral h / 2
+    w' = fromIntegral w
+    h' = fromIntegral h
+    unitLen = min w' h' / 20
+    mx = w' / 2
+    my = h' / 2
 
 toEvent :: (Int, Int) -> Canvas.Event -> Maybe Event
 toEvent rect Canvas.Event {..}
@@ -1696,8 +1701,7 @@ run initial stepHandler eventHandler drawHandler =
         eventHappened <- newMVar ()
         onEvents context (cw, ch) $ \event -> do
             modifyMVar_ currentState (return . eventHandler event)
-            tryPutMVar eventHappened ()
-            return ()
+            void $ tryPutMVar eventHappened ()
         let go t0 lastFrame lastStateName needsTime = do
                 pic <- drawHandler <$> readMVar currentState
                 picFrame <- makeStableName $! pic
@@ -1835,8 +1839,6 @@ unsafeCollaborationOf numPlayers initial step event draw = do
     dhash <- getDeployHash
     let token = PartialToken dhash
     runGame token numPlayers initial step event draw
-  where
-    token = NoToken
 
 {-# WARNING unsafeCollaborationOf ["Please use unsafeGroupActivityOf instead of unsafeCollaborationOf.",
                                    "unsafeCollaborationOf may be removed July 2020."] #-}
@@ -1978,13 +1980,6 @@ wrappedStep f dt w
   | playbackSpeed w == 0 = w
   | otherwise = toState (f (dt * playbackSpeed w)) w
 
-reportDiff :: String -> (a -> a) -> (a -> a)
-reportDiff msg f x = unsafePerformIO $ do
-    a <- makeStableName $! x
-    b <- makeStableName $! r
-    return r
-  where r = f x
-
 wrappedEvent :: forall a . 
        (Wrapped a -> [Control a])
     -> (Double -> a -> a)
@@ -2035,6 +2030,7 @@ xToPlaybackSpeed x = snapSlider 0.2 [1..4] $ scaleRange (-1.4, 1.4) (0, 5) x
 playbackSpeedToX :: Double -> Double
 playbackSpeedToX s = scaleRange (0, 5) (-1.4, 1.4) s
 
+zoomIncrement :: Double
 zoomIncrement = 8 ** (1/10)
 
 yToZoomFactor :: Double -> Double
@@ -2077,23 +2073,23 @@ handleControl f (PointerPress (x, y)) (StepButton (cx, cy)) w
 handleControl _ (PointerPress (x, y)) (SpeedSlider (cx, cy)) w
     | abs (x - cx) < 1.5 && abs (y - cy) < 0.4 = 
       (w {playbackSpeed = xToPlaybackSpeed (x - cx), isDraggingSpeed = True}, True)
-handleControl _ (PointerMovement (x, y)) (SpeedSlider (cx, cy)) w
+handleControl _ (PointerMovement (x, _)) (SpeedSlider (cx, _)) w
     | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed (x - cx)}, True)
-handleControl _ (PointerRelease (x, y)) (SpeedSlider (cx, cy)) w
+handleControl _ (PointerRelease (x, _)) (SpeedSlider (cx, _)) w
     | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed (x - cx), isDraggingSpeed = False}, True)
 handleControl _ (PointerPress (x, y)) (ZoomSlider (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 1.5 = 
       (w {zoomFactor = yToZoomFactor (y - cy), isDraggingZoom = True}, True)
-handleControl _ (PointerMovement (x, y)) (ZoomSlider (cx, cy)) w
+handleControl _ (PointerMovement (_, y)) (ZoomSlider (_, cy)) w
     | isDraggingZoom w = (w {zoomFactor = yToZoomFactor (y - cy)}, True)
-handleControl _ (PointerRelease (x, y)) (ZoomSlider (cx, cy)) w
+handleControl _ (PointerRelease (_, y)) (ZoomSlider (_, cy)) w
     | isDraggingZoom w = (w {zoomFactor = yToZoomFactor (y - cy), isDraggingZoom = False}, True)
 handleControl _ (PointerPress (x, y)) (HistorySlider (cx, cy)) w
     | abs (x - cx) < 2.5 && abs (y - cy) < 0.4 = 
       (travelToTime (x - cx) <$> w {isDraggingHistory = True}, True)
-handleControl _ (PointerMovement (x, y)) (HistorySlider (cx, cy)) w
+handleControl _ (PointerMovement (x, _)) (HistorySlider (cx, _)) w
     | isDraggingHistory w = (travelToTime (x - cx) <$> w, True)
-handleControl _ (PointerRelease (x, y)) (HistorySlider (cx, cy)) w
+handleControl _ (PointerRelease (x, _)) (HistorySlider (cx, _)) w
     | isDraggingHistory w = (travelToTime (x - cx) <$> w {isDraggingHistory = False}, True)
 handleControl _ (PointerPress (x, y)) PanningLayer w =
       (w {panDraggingAnchor = SJust (SP x y)}, True)
@@ -2104,8 +2100,8 @@ handleControl _ (PointerMovement (x, y)) PanningLayer w
                           (py + (y - ay) / zoomFactor w),
            panDraggingAnchor = SJust (SP x y)
          }, True)
-handleControl _ (PointerRelease (x, y)) PanningLayer w
-    | SJust (SP ax ay) <- panDraggingAnchor w = (w {panDraggingAnchor = SNothing}, True)
+handleControl _ (PointerRelease _) PanningLayer w
+    | SJust _ <- panDraggingAnchor w = (w {panDraggingAnchor = SNothing}, True)
 handleControl _ _ _ w = (w, False)
 
 travelToTime :: Double -> ([s],[s]) -> ([s],[s])  
@@ -2421,6 +2417,7 @@ prependIfChanged f (x:xs, ys)
     | identical x x' = (x:xs, ys)
     | otherwise = (x':x:xs, ys)
     where x' = f x
+prependIfChanged _ ([], _) = error "prependIfChanged: empty state"
 
 debugSimulationOf
   :: world                       -- ^ The initial state of the simulation.
@@ -2434,6 +2431,7 @@ debugSimulationOf initial simStep simDraw =
   where
     step dt = prependIfChanged (simStep dt)
     draw (x:_, _) = simDraw x
+    draw ([], _) = error "debugSimulationOf: empty state"
 
 {-# WARNING debugSimulationOf ["Please use debugActivityOf instead of debugSimulationOf.",
                                "debugSimulationOf may be removed July 2020."] #-}
@@ -2453,6 +2451,7 @@ debugInteractionOf initial baseStep baseEvent baseDraw =
     step dt = prependIfChanged (baseStep dt)
     event e = prependIfChanged (baseEvent e)
     draw (x:_, _) = baseDraw x
+    draw ([], _) = error "debugInteractionOf: empty state"
 
 {-# WARNING debugInteractionOf ["Please use debugActivityOf instead of debugInteractionOf.",
                                 "debugInteractionOf may be removed July 2020."] #-}

@@ -20,10 +20,9 @@
 
 module CodeWorld.CanvasM where
 
-import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.Trans (MonadIO)
-import Data.Text (Text, pack)
+import Data.Text (Text)
 
 #ifdef ghcjs_HOST_OS
 
@@ -33,13 +32,13 @@ import GHCJS.DOM.Document
 import GHCJS.DOM.Element
 import GHCJS.DOM.Node
 import GHCJS.DOM.NonElementParentNode
-import GHCJS.Marshal.Pure
 import GHCJS.Types
 import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
 
 #else
 
+import Data.Text (pack)
 import qualified Graphics.Blank as Canvas
 import Graphics.Blank (Canvas)
 import Text.Printf
@@ -136,7 +135,7 @@ createOrGetImage name url = do
             setAttribute img (textToJSString "id") name
             setAttribute img (textToJSString "src") url
             Just body <- getBody doc
-            appendChild body img
+            _ <- appendChild body img
             return img
 
 instance MonadCanvas CanvasM where
@@ -256,7 +255,7 @@ instance MonadCanvas CanvasM where
     translate x y = liftCanvas $ Canvas.translate (x, y)
     scale x y = liftCanvas $ Canvas.scale (x, y)
     newImage w h = liftCanvas $ Canvas.newCanvas (w, h)
-    builtinImage name = return Nothing
+    builtinImage _name = return Nothing
 
     withImage ctx (CanvasOp Nothing m) = CanvasOp (Just ctx) m
     withImage _   (CanvasOp mctx m)    = CanvasOp mctx m
@@ -271,7 +270,7 @@ instance MonadCanvas CanvasM where
             , fromIntegral w
             , fromIntegral h)
 
-    drawImgURL name url w h = return ()
+    drawImgURL _name _url _w _h = return ()
 
     globalCompositeOperation op = liftCanvas $
         Canvas.globalCompositeOperation op
@@ -302,7 +301,7 @@ instance MonadCanvas CanvasM where
         Canvas.TextMetrics w <- Canvas.measureText t
         return w
     isPointInPath (x, y) = liftCanvas $ Canvas.isPointInPath (x, y)
-    isPointInStroke (x, y) = liftCanvas $ return False
+    isPointInStroke _ = liftCanvas $ return False
     getScreenWidth = liftCanvas $ Canvas.width <$> Canvas.myCanvasContext
     getScreenHeight = liftCanvas $ Canvas.height <$> Canvas.myCanvasContext
 

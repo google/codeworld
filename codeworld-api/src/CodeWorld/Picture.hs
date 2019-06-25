@@ -24,7 +24,7 @@ import CodeWorld.Color
 import Control.DeepSeq
 import Data.List
 import Data.Monoid ((<>))
-import Data.Text (Text, pack)
+import Data.Text (Text)
 import GHC.Generics (Generic)
 import GHC.Stack
 import Util.EmbedAsUrl
@@ -46,7 +46,7 @@ dilatedPoint k (x, y) = (k * x, k * y)
 type Vector = (Double, Double)
 
 vectorLength :: Vector -> Double
-vectorLength (x, y) = sqrt (x ^ 2 + y ^ 2)
+vectorLength (x, y) = sqrt (x*x + y*y)
 
 vectorDirection :: Vector -> Double
 vectorDirection (x, y) = atan2 y x
@@ -286,7 +286,7 @@ pictures = Pictures (getDebugSrcLoc callStack)
 (&) :: HasCallStack => Picture -> Picture -> Picture
 infixr 0 &
 
-a & b@(PictureAnd loc2 bs)
+a & PictureAnd loc2 bs
   | srcContains loc1 loc2 = PictureAnd loc1 (a:bs)
   where loc1 = getDebugSrcLoc callStack
 a & b = PictureAnd (getDebugSrcLoc callStack) [a, b]

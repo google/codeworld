@@ -1062,7 +1062,6 @@ data GameToken
                     , tokenEvent :: StaticKey
                     , tokenDraw :: StaticKey }
     | PartialToken { tokenDeployHash :: Text }
-    | NoToken
     deriving (Generic)
 
 deriving instance Generic Fingerprint

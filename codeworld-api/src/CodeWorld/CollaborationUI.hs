@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-unticked-promoted-constructors -Wno-name-shadowing -Wno-missing-pattern-synonym-signatures #-}
+{-# OPTIONS_GHC -Wno-unticked-promoted-constructors -Wno-name-shadowing #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ParallelListComp #-}
 {-# LANGUAGE PatternGuards #-}
@@ -138,19 +138,25 @@ event CancelClick (Connecting t p) = CancelConnect (MainMenu t p)
 event CancelClick (Waiting t p _ _ _) = CancelWait (MainMenu t p)
 event _ s = continueUIState s
 
+pattern CreateClick :: Event
 pattern CreateClick <-
         PointerPress (inButton 0 1.5 8 2 -> True)
 
+pattern JoinClick :: Event
 pattern JoinClick <-
         PointerPress (inButton 0 (-1.5) 8 2 -> True)
 
+pattern ConnectClick :: Event
 pattern ConnectClick <-
         PointerPress (inButton 0 (-3.0) 8 2 -> True)
 
+pattern LetterPress :: Text -> Event
 pattern LetterPress c <- (isLetterPress -> Just c)
 
+pattern BackSpace :: Event
 pattern BackSpace <- KeyPress "Backspace"
 
+pattern CancelClick :: Event
 pattern CancelClick <- (isCancelClick -> True)
 
 isLetterPress :: Event -> Maybe Text

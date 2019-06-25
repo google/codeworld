@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-name-shadowing -Wno-unused-local-binds -Wno-orphans -Wno-unused-imports -Wno-unticked-promoted-constructors #-}
+{-# OPTIONS_GHC -Wno-name-shadowing -Wno-orphans -Wno-unused-imports -Wno-unticked-promoted-constructors #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
@@ -1329,8 +1329,6 @@ connectToGameServer handleServerMessage = do
             WS.StringData str -> do
                 return $ readMaybe (Data.JSString.unpack str)
             _ -> return Nothing
-    encodeClientMessage :: ClientMessage -> JSString
-    encodeClientMessage m = Data.JSString.pack (show m)
 
 sendClientMessage :: WS.WebSocket -> ClientMessage -> IO ()
 sendClientMessage ws msg = WS.send (encodeClientMessage msg) ws
@@ -1842,8 +1840,6 @@ unsafeCollaborationOf numPlayers initial step event draw = do
     dhash <- getDeployHash
     let token = PartialToken dhash
     runGame token numPlayers initial step event draw
-  where
-    token = NoToken
 
 {-# WARNING unsafeCollaborationOf ["Please use unsafeGroupActivityOf instead of unsafeCollaborationOf.",
                                    "unsafeCollaborationOf may be removed July 2020."] #-}

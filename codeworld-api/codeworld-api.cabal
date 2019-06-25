@@ -73,14 +73,13 @@ Test-suite unit-tests
                        src
   Other-modules:       Driver,
                        CodeWorld,
-                       CodeWorld.App,
-                       CodeWorld.App2,
                        CodeWorld.CanvasM,
                        CodeWorld.Color,
                        CodeWorld.Picture,
                        CodeWorld.Event,
                        CodeWorld.Driver,
-                       CodeWorld.CollaborationUI
+                       CodeWorld.CollaborationUI,
+                       Util.EmbedAsUrl
   Build-depends:       aeson,
                        base,
                        base64-bytestring    >= 1.0   && < 1.1,

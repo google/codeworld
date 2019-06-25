@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-name-shadowing -Wno-missing-signatures -Wno-unused-local-binds -Wno-orphans -Wno-unused-imports -Wno-unticked-promoted-constructors #-}
+{-# OPTIONS_GHC -Wno-name-shadowing -Wno-unused-local-binds -Wno-orphans -Wno-unused-imports -Wno-unticked-promoted-constructors #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
@@ -2035,6 +2035,7 @@ xToPlaybackSpeed x = snapSlider 0.2 [1..4] $ scaleRange (-1.4, 1.4) (0, 5) x
 playbackSpeedToX :: Double -> Double
 playbackSpeedToX s = scaleRange (0, 5) (-1.4, 1.4) s
 
+zoomIncrement :: Double
 zoomIncrement = 8 ** (1/10)
 
 yToZoomFactor :: Double -> Double

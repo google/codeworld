@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-unticked-promoted-constructors -Wno-name-shadowing -Wno-missing-signatures -Wno-missing-pattern-synonym-signatures #-}
+{-# OPTIONS_GHC -Wno-unticked-promoted-constructors -Wno-name-shadowing -Wno-missing-pattern-synonym-signatures #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ParallelListComp #-}
 {-# LANGUAGE PatternGuards #-}
@@ -226,6 +226,7 @@ roundRect w h =
         , y <- [-h / 2 + 0.25, h / 2 - 0.25]
         ]
 
+playerDots :: Int -> Int -> Picture
 playerDots n m
     | n > 8 = lettering $ T.pack $ show m ++ " / " ++ show n
 playerDots n m =

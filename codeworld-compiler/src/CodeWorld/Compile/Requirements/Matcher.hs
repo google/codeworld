@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ViewPatterns #-}
 
@@ -25,11 +26,15 @@ import Data.Generics
 import Data.Generics.Twins
 import Data.List
 import Data.Maybe
-import Language.Haskell.Exts
+
+import "ghc-lib-parser" HsSyn
+import "ghc-lib-parser" OccName
+import "ghc-lib-parser" RdrName
+import "ghc-lib-parser" SrcLoc
 
 class (Data a, Typeable a) => Template a where
-  toSplice :: a -> Maybe (Splice SrcSpanInfo)
-  fromBracket :: Bracket SrcSpanInfo -> Maybe a
+  toSplice :: a -> Maybe (HsSplice GhcPs)
+  fromBracket :: (HsBracket GhcPs) -> Maybe a
 
   toParens :: a -> Maybe a
   toTuple :: a -> Maybe [a]
@@ -39,134 +44,170 @@ class (Data a, Typeable a) => Template a where
   toNum :: a -> Maybe a
   toChar :: a -> Maybe a
   toStr :: a -> Maybe a
+  toName :: a -> Maybe a
 
-instance Template (Pat SrcSpanInfo) where
-  toSplice (PSplice _ s) = Just s
+instance Template (Pat GhcPs) where
+  toSplice (SplicePat _ s) = Just s
   toSplice _ = Nothing
 
-  fromBracket (PatBracket _ p) = Just p
+  fromBracket (PatBr _ p) = Just p
   fromBracket _ = Nothing
 
-  toParens (PParen _ x) = Just x
+  toParens (ParPat _ x) = Just x
   toParens _ = Nothing
 
-  toTuple (PTuple _ _ ps) = Just ps
+  toTuple (TuplePat _ ps _) = Just ps
   toTuple _ = Nothing
 
-  toVar x@(PVar _ _) = Just x
+  toVar x@(VarPat _ _) = Just x
   toVar _ = Nothing
 
-  toCon x@(PApp _ _ []) = Just x
+  toCon x@(ConPatIn _ _) = Just x
+  toCon x@(ConPatOut {}) = Just x
   toCon _ = Nothing
 
-  toLit x@(PLit _ _ _) = Just x
+  toLit x@(LitPat _ _) = Just x
   toLit _ = Nothing
 
-  toNum x@(PLit _ _ (Int _ _ _)) = Just x
-  toNum x@(PLit _ _ (Frac _ _ _)) = Just x
-  toNum x@(PLit _ _ (PrimInt _ _ _)) = Just x
-  toNum x@(PLit _ _ (PrimWord _ _ _)) = Just x
-  toNum x@(PLit _ _ (PrimFloat _ _ _)) = Just x
-  toNum x@(PLit _ _ (PrimDouble _ _ _)) = Just x
+  toNum x@(LitPat _ (HsInt _ _)) = Just x
+  toNum x@(LitPat _ (HsInteger _ _ _)) = Just x
+  toNum x@(LitPat _ (HsRat _ _ _)) = Just x
+  toNum x@(LitPat _ (HsIntPrim _ _)) = Just x
+  toNum x@(LitPat _ (HsWordPrim _ _)) = Just x
+  toNum x@(LitPat _ (HsInt64Prim _ _)) = Just x
+  toNum x@(LitPat _ (HsWord64Prim _ _)) = Just x
+  toNum x@(LitPat _ (HsFloatPrim _ _)) = Just x
+  toNum x@(LitPat _ (HsDoublePrim _ _)) = Just x
   toNum _ = Nothing
 
-  toChar x@(PLit _ _ (Char _ _ _)) = Just x
-  toChar x@(PLit _ _ (PrimChar _ _ _)) = Just x
+  toChar x@(LitPat _ (HsChar _ _)) = Just x
+  toChar x@(LitPat _ (HsCharPrim _ _)) = Just x
   toChar _ = Nothing
 
-  toStr x@(PLit _ _ (String _ _ _)) = Just x
-  toStr x@(PLit _ _ (PrimString _ _ _)) = Just x
+  toStr x@(LitPat _ (HsString _ _)) = Just x
+  toStr x@(LitPat _ (HsStringPrim _ _)) = Just x
   toStr _ = Nothing
 
-instance Template (Exp SrcSpanInfo) where
-  toSplice (SpliceExp _ s) = Just s
+instance Template (HsExpr GhcPs) where
+  toSplice (HsSpliceE _ s) = Just s
   toSplice _ = Nothing
 
-  fromBracket (ExpBracket _ e) = Just e
+  fromBracket (ExpBr _ (L _ e)) = Just e
   fromBracket _ = Nothing
 
-  toParens (Paren _ x) = Just x
+  toParens (HsPar _ (L _ x)) = Just x
   toParens _ = Nothing
 
-  toTuple (Tuple _ _ es) = Just es
+  toTuple (ExplicitTuple _ args _) = Just (concat $ tupArgExpr <$> args)
   toTuple _ = Nothing
 
-  toVar x@(Var _ _) = Just x
+  toVar x@(HsVar _ _) = Just x
   toVar _ = Nothing
 
-  toCon x@(Con _ _) = Just x
+  toCon x@(HsConLikeOut _ _) = Just x
   toCon _ = Nothing
 
-  toLit x@(Lit _ _) = Just x
-  toLit x@(NegApp _ (Lit _ _)) = Just x
+  toLit x@(HsLit _ _) = Just x
+  toLit x@(NegApp _ (L _ (HsLit _ _)) _) = Just x
   toLit _ = Nothing
 
-  toNum x@(Lit _ (Int _ _ _)) = Just x
-  toNum x@(Lit _ (Frac _ _ _)) = Just x
-  toNum x@(Lit _ (PrimInt _ _ _)) = Just x
-  toNum x@(Lit _ (PrimWord _ _ _)) = Just x
-  toNum x@(Lit _ (PrimFloat _ _ _)) = Just x
-  toNum x@(Lit _ (PrimDouble _ _ _)) = Just x
-  toNum x@(NegApp _ (toNum -> Just _)) = Just x
+  toNum x@(HsLit _ (HsInt _ _)) = Just x
+  toNum x@(HsLit _ (HsInteger _ _ _)) = Just x
+  toNum x@(HsLit _ (HsRat _ _ _)) = Just x
+  toNum x@(HsLit _ (HsIntPrim _ _)) = Just x
+  toNum x@(HsLit _ (HsWordPrim _ _)) = Just x
+  toNum x@(HsLit _ (HsInt64Prim _ _)) = Just x
+  toNum x@(HsLit _ (HsWord64Prim _ _)) = Just x
+  toNum x@(HsLit _ (HsFloatPrim _ _)) = Just x
+  toNum x@(HsLit _ (HsDoublePrim _ _)) = Just x
+  toNum x@(NegApp _ (L _ (toNum -> Just _)) _)= Just x
   toNum _ = Nothing
 
-  toChar x@(Lit _ (Char _ _ _)) = Just x
-  toChar x@(Lit _ (PrimChar _ _ _)) = Just x
+  toChar x@(HsLit _ (HsChar _ _)) = Just x
+  toChar x@(HsLit _ (HsCharPrim _ _)) = Just x
   toChar _ = Nothing
 
-  toStr x@(Lit _ (String _ _ _)) = Just x
-  toStr x@(Lit _ (PrimString _ _ _)) = Just x
+  toStr x@(HsLit _ (HsString _ _)) = Just x
+  toStr x@(HsLit _ (HsStringPrim _ _)) = Just x
   toStr _ = Nothing
+
+tupArgExpr :: (LHsTupArg GhcPs) -> [HsExpr GhcPs]
+tupArgExpr (L _ (Present _ (L _ x))) = [x]
+tupArgExpr _ = []
 
 match :: Data a => a -> a -> Bool
 match tmpl val = matchQ tmpl val
 
 matchQ :: GenericQ (GenericQ Bool)
-matchQ = matchesSrcSpanInfo
-     ||| (matchesSpecials :: Pat SrcSpanInfo -> Pat SrcSpanInfo -> Maybe Bool)
-     ||| (matchesSpecials :: Exp SrcSpanInfo -> Exp SrcSpanInfo -> Maybe Bool)
-     ||| matchesWildcard
-     ||| structuralEq
+matchQ = matchesGhcPs
+      ||| (matchesSpecials :: (Pat GhcPs) -> (Pat GhcPs) -> Maybe Bool)
+      ||| (matchesSpecials :: (HsExpr GhcPs) -> (HsExpr GhcPs) -> Maybe Bool)
+      ||| matchesWildcard
+      ||| mismatchedNames
+      ||| structuralEq
 
-matchesSrcSpanInfo :: SrcSpanInfo -> SrcSpanInfo -> Maybe Bool
-matchesSrcSpanInfo _ _ = Just True
+matchesGhcPs :: GhcPs -> GhcPs -> Maybe Bool
+matchesGhcPs _ _ = Just True
 
 matchesSpecials :: Template a => a -> a -> Maybe Bool
 matchesSpecials (toParens -> Just x) y = Just (matchQ x y)
 matchesSpecials x (toParens -> Just y) = Just (matchQ x y)
-matchesSpecials (toSplice -> Just (IdSplice _ "any")) _ = Just True
-matchesSpecials (toSplice -> Just (IdSplice _ "var")) x =
-    case toVar x of Just _ -> Just True; Nothing -> Just False
-matchesSpecials (toSplice -> Just (IdSplice _ "con")) x =
-    case toCon x of Just _ -> Just True; Nothing -> Just False
-matchesSpecials (toSplice -> Just (IdSplice _ "lit")) x =
-    case toLit x of Just _ -> Just True; Nothing -> Just False
-matchesSpecials (toSplice -> Just (IdSplice _ "num")) x =
-    case toNum x of Just _ -> Just True; Nothing -> Just False
-matchesSpecials (toSplice -> Just (IdSplice _ "char")) x =
-    case toChar x of Just _ -> Just True; Nothing -> Just False
-matchesSpecials (toSplice -> Just (IdSplice _ "str")) x =
-    case toStr x of Just _ -> Just True; Nothing -> Just False
-matchesSpecials (toSplice -> Just (ParenSplice _ (App _ op (BracketExp _ (fromBracket -> Just tmpl))))) x
-  = case op of
-      Var _ (UnQual _ (Ident _ "tupleOf")) ->
-          case toTuple x of
-            Just xs -> Just (all (match tmpl) xs)
-            Nothing -> Just False
-      Var _ (UnQual _ (Ident _ "contains")) ->
-          Just (everything (||) (mkQ False (match tmpl)) x)
-      _ -> Nothing
-matchesSpecials (toSplice -> Just (ParenSplice _ (App _ op (List _ (sequence . map (\(BracketExp _ b) -> fromBracket b) -> Just xs))))) x
-  = case op of
-      Var _ (UnQual _ (Ident _ "allOf")) -> Just (all (flip match x) xs)
-      Var _ (UnQual _ (Ident _ "anyOf")) -> Just (any (flip match x) xs)
-      Var _ (UnQual _ (Ident _ "noneOf")) -> Just (not (any (flip match x) xs))
-      _ -> Nothing
+matchesSpecials (toSplice -> 
+  Just (HsTypedSplice _ _ _ (L _ (HsApp _ op (L _ (HsBracket _ (fromBracket -> Just tmpl))))))) x = 
+    matchBrackets op tmpl x
+matchesSpecials (toSplice -> 
+  Just (HsUntypedSplice _ _ _ (L _ (HsApp _ op (L _ (HsBracket _ (fromBracket -> Just tmpl))))))) x = 
+    matchBrackets op tmpl x
+matchesSpecials (toSplice -> 
+  Just (HsTypedSplice _ _ _ (L _ (HsApp _ op (L _ (ExplicitList _ _ (sequence . map (\(L _ (HsBracket _ b)) -> fromBracket b) -> Just xs))))))) x = 
+    matchLogical op xs x
+matchesSpecials (toSplice -> 
+  Just (HsUntypedSplice _ _ _ (L _ (HsApp _ op (L _ (ExplicitList _ _ (sequence . map (\(L _ (HsBracket _ b)) -> fromBracket b) -> Just xs))))))) x = 
+    matchLogical op xs x
+matchesSpecials (toSplice -> 
+  Just (HsTypedSplice _ _ _ (L _ (HsVar _ (L _ id))))) x =
+    matchSimple id x
+matchesSpecials (toSplice -> 
+  Just (HsUntypedSplice _ _ _ (L _ (HsVar _ (L _ id))))) x =
+    matchSimple id x
 matchesSpecials _ _ = Nothing
 
-matchesWildcard :: Name SrcSpanInfo -> Name SrcSpanInfo -> Maybe Bool
-matchesWildcard (Ident _ name) _ | "_" `isPrefixOf` name && "_" `isSuffixOf` name = Just True
+matchBrackets :: Template a => LHsExpr GhcPs -> a -> a -> Maybe Bool
+matchBrackets op tmpl x = case op of
+  (L _ (HsVar _ (L _ id))) ->
+    case idName id of
+      "tupleOf" -> case toTuple x of Just xs -> Just (all (match tmpl) xs); Nothing -> Just False
+      "contains" -> Just (everything (||) (mkQ False (match tmpl)) x)
+      _ -> Nothing
+  _ -> Nothing
+
+matchLogical :: Template a => LHsExpr GhcPs -> [a] -> a -> Maybe Bool
+matchLogical op xs x = case op of
+  (L _ (HsVar _ (L _ id))) ->
+    case idName id of
+      "allOf" -> Just (all (flip match x) xs)
+      "anyOf" -> Just (any (flip match x) xs)
+      "noneOf" -> Just (not (any (flip match x) xs))
+      _ -> Nothing
+  _ -> Nothing
+
+matchSimple :: Template a => IdP GhcPs -> a -> Maybe Bool
+matchSimple id x = case idName id of
+  "any" -> Just True
+  "var" -> case toVar x of Just _ -> Just True; Nothing -> Just False
+  "con" -> case toCon x of Just _ -> Just True; Nothing -> Just False
+  "lit" -> case toLit x of Just _ -> Just True; Nothing -> Just False
+  "num" -> case toNum x of Just _ -> Just True; Nothing -> Just False
+  "char" -> case toChar x of Just _ -> Just True; Nothing -> Just False
+  "str" -> case toStr x of Just _ -> Just True; Nothing -> Just False
+  _ -> Nothing
+
+matchesWildcard :: IdP GhcPs -> IdP GhcPs -> Maybe Bool
+matchesWildcard id _ | "_" `isPrefixOf` (idName id) && "_" `isSuffixOf` (idName id) = Just True
 matchesWildcard _ _ = Nothing
+
+mismatchedNames :: IdP GhcPs -> IdP GhcPs -> Maybe Bool
+mismatchedNames x y = if idName x /= idName y then Just False else Nothing
 
 structuralEq :: (Data a, Data b) => a -> b -> Bool
 structuralEq x y = toConstr x == toConstr y && and (gzipWithQ matchQ x y)
@@ -177,3 +218,6 @@ structuralEq x y = toConstr x == toConstr y && and (gzipWithQ matchQ x y)
     -> (a -> b -> Bool)
 f ||| g = \x y -> fromMaybe (g x y) (join (f <$> cast x <*> cast y))
 infixr 0 |||
+
+idName :: IdP GhcPs -> String
+idName = occNameString . rdrNameOcc

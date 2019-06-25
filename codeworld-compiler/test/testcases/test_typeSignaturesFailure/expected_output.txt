@@ -1,0 +1,10 @@
+:                     :: REQUIREMENTS ::
+Obfuscated:
+
+    XREQUIRES
+    eJyLVorJi8lzSS1OLsosKMnMz7NSKKksSA3OTM9LLCktSi1WSEvMzAEyYvKC
+    SnNSi61i8hR00ZQAtRSVAhUoxQIAkv0dbw==
+
+[N] typeSignatures failure
+      The declaration of `program` has no type signature.
+                  :: END REQUIREMENTS ::

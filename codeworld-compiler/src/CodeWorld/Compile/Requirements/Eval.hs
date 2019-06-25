@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE RecordWildCards #-}
 
 {-
@@ -37,8 +38,12 @@ import Data.List
 import qualified Data.Text as T
 import qualified Data.ByteString.Char8 as C
 import Data.Void
-import Language.Haskell.Exts hiding (Rule, parse)
+import qualified Language.Haskell.Exts as Exts
 import Text.Regex.TDFA hiding (match)
+
+import "ghc-lib-parser" HsSyn
+import "ghc-lib-parser" Outputable
+import "ghc-lib-parser" SrcLoc
 
 evalRequirement :: MonadCompile m => Requirement -> m (Maybe Bool, [String])
 evalRequirement Requirement{..} = do
@@ -59,28 +64,27 @@ abort :: MonadCompile m => m Result
 abort = return Nothing
 
 withParsedCode :: MonadCompile m
-               => (Module SrcSpanInfo -> m Result)
-               -> m Result
+                  => (HsModule GhcPs -> m Result)
+                  -> m Result
 withParsedCode check = do
-    getParsedCode >>= \pc -> case pc of
-        NoParse -> abort
-        Parsed m -> check m
+    getGHCParsedCode >>= \pc -> case pc of
+        GHCNoParse -> abort
+        GHCParsed m -> check m       
 
 checkRule :: MonadCompile m => Rule -> m Result
 
 checkRule (DefinedByFunction a b) = withParsedCode $ \m -> do
     let defs = allDefinitionsOf a m
 
-        isDefinedBy :: String -> Rhs SrcSpanInfo -> Bool
-        isDefinedBy b (UnGuardedRhs _ exp) = isExpOf b exp
-        isDefinedBy b (GuardedRhss _ rhss) =
-            all (\(GuardedRhs _ _ exp) -> isExpOf b exp) rhss
+        isDefinedBy :: String -> (GRHSs GhcPs (LHsExpr GhcPs)) -> Bool
+        isDefinedBy b (GRHSs{grhssGRHSs=rhss}) 
+          = all (\(L _ (GRHS _ _ (L _ exp))) -> isExpOf b exp) rhss
 
-        isExpOf :: String -> Exp SrcSpanInfo -> Bool
-        isExpOf b (Var _ (UnQual _ (Ident _ bb))) = b == bb
-        isExpOf b (App _ exp _) = isExpOf b exp
-        isExpOf b (Let _ _ exp) = isExpOf b exp
-        isExpOf b (Paren _ exp) = isExpOf b exp
+        isExpOf :: String -> (HsExpr GhcPs) -> Bool
+        isExpOf b (HsVar _ (L _ bb)) = b == idName bb
+        isExpOf b (HsApp _ (L _ exp) _) = isExpOf b exp
+        isExpOf b (HsLet _ _ (L _ exp)) = isExpOf b exp
+        isExpOf b (HsPar _ (L _ exp)) = isExpOf b exp
         isExpOf b _ = False
 
     if | null defs -> failure $ "`" ++ a ++ "` is not defined."
@@ -88,9 +92,8 @@ checkRule (DefinedByFunction a b) = withParsedCode $ \m -> do
        | otherwise -> failure ("`" ++ a ++ "` is not defined directly using `" ++ b ++ "`.")
 
 checkRule (MatchesExpected a h) = withParsedCode $ \m -> do
-    let defs = allDefinitionsOf a m
-        computedHash = hash (concatMap (show . eraseSrcLocs) defs) `mod` 1000000
-        eraseSrcLocs rhs = everywhere (mkT (const noSrcSpan)) rhs
+    let defs = allBindingsOf a m
+        computedHash = hash (concatMap showSDocUnsafe defs) `mod` 1000000
     if | null defs -> failure $ "`" ++ a ++ "` is not defined."
        | computedHash == h -> success
        | otherwise -> failure $
@@ -98,17 +101,22 @@ checkRule (MatchesExpected a h) = withParsedCode $ \m -> do
             show computedHash ++ ")"
 
 checkRule (HasSimpleParams a) = withParsedCode $ \m -> do
-    let paramPatterns = everything (++) (mkQ [] matchParams) m
+    let paramPatterns = everything (++) (mkQ [] funParams) m
 
-        matchParams :: Match SrcSpanInfo -> [Pat SrcSpanInfo]
-        matchParams (Match _ (Ident _ aa) pats _ _) | a == aa = pats
+        funParams :: (HsBind GhcPs) -> [LPat GhcPs]
+        funParams (FunBind{fun_id=(L _ aa), fun_matches=(MG{mg_alts=(L _ matches)})}) 
+            | a == idName aa = concat $ matchParams <$> matches
+        funParams _ = []
+
+        matchParams :: (LMatch GhcPs (LHsExpr GhcPs)) -> [LPat GhcPs]
+        matchParams (L _ (Match{m_pats=pats})) = pats
         matchParams _ = []
 
-        isSimpleParam :: Pat SrcSpanInfo -> Bool
-        isSimpleParam (PVar _ (Ident _ nm)) = isLower (head nm)
-        isSimpleParam (PTuple _ _ pats) = all isSimpleParam pats
-        isSimpleParam (PParen _ pat) = isSimpleParam pat
-        isSimpleParam (PWildCard _) = True
+        isSimpleParam :: LPat GhcPs -> Bool
+        isSimpleParam (VarPat _ (L _ nm)) = isLower (head (idName nm))
+        isSimpleParam (TuplePat _ pats _) = all isSimpleParam pats
+        isSimpleParam (ParPat _ pat) = isSimpleParam pat
+        isSimpleParam (WildPat _) = True
         isSimpleParam _ = False
 
     if | null paramPatterns -> failure $ "`" ++ a ++ "` is not defined as a function."
@@ -118,33 +126,28 @@ checkRule (HasSimpleParams a) = withParsedCode $ \m -> do
 checkRule (UsesAllParams a) = withParsedCode $ \m -> do
     let usesAllParams = everything (&&) (mkQ True targetVarUsesParams) m
 
-        targetVarUsesParams :: Decl SrcSpanInfo -> Bool
-        targetVarUsesParams (FunBind _ ms)
-            | any isTargetMatch ms = all matchUsesAllArgs ms
+        targetVarUsesParams :: (HsBind GhcPs) -> Bool
+        targetVarUsesParams (FunBind{fun_id=(L _ aa), fun_matches=(MG{mg_alts=(L _ ms)})}) 
+            | idName aa == a = all matchUsesAllArgs ms
         targetVarUsesParams _ = True
 
-        isTargetMatch (Match _ (Ident _ aa) _ _ _) = a == aa
-        isTargetMatch (InfixMatch _ _ (Ident _ aa) _ _ _) = a == aa
+        matchUsesAllArgs (L _ (Match{m_pats=ps, m_grhss=rhs})) = uses ps rhs
 
-        matchUsesAllArgs (Match _ _ ps rhs binds) = uses ps rhs binds
-        matchUsesAllArgs (InfixMatch _ p _ ps rhs binds) = uses (p:ps) rhs binds
-
-        uses ps rhs binds =
-            all (\v -> rhsUses v rhs || bindsUses v binds) (patVars ps)
+        uses ps rhs = 
+            all (\v -> rhsUses v rhs) (patVars ps)
 
         patVars ps = concatMap (everything (++) (mkQ [] patShallowVars)) ps
 
-        patShallowVars :: Pat SrcSpanInfo -> [String]
-        patShallowVars (PVar _ (Ident _ v)) = [v]
-        patShallowVars (PNPlusK _ (Ident _ v) _) = [v]
-        patShallowVars (PAsPat _ (Ident _ v) _) = [v]
+        patShallowVars :: LPat GhcPs -> [String]
+        patShallowVars (VarPat _ (L _ v)) = [idName v]
+        patShallowVars (NPlusKPat _ (L _ v) _ _ _ _) = [idName v]
+        patShallowVars (AsPat _ (L _ v) _) = [idName v]
         patShallowVars _ = []
 
         rhsUses v rhs = everything (||) (mkQ False (isVar v)) rhs
-        bindsUses v binds = everything (||) (mkQ False (isVar v)) binds
 
-        isVar :: String -> Exp SrcSpanInfo -> Bool
-        isVar v (Var _ (UnQual _ (Ident _ vv))) = v == vv
+        isVar :: String -> HsExpr GhcPs -> Bool
+        isVar v (HsVar _ (L _ vv)) = v == idName vv
         isVar _ _ = False
 
     if | usesAllParams -> success
@@ -155,8 +158,8 @@ checkRule (NotDefined a) = withParsedCode $ \m -> do
        | otherwise -> failure $ "`" ++ a ++ "` should not be defined."
 
 checkRule (NotUsed a) = withParsedCode $ \m -> do
-    let exprUse :: Exp SrcSpanInfo -> Bool
-        exprUse (Var _ (UnQual _ (Ident _ v))) | v == a = True
+    let exprUse :: HsExpr GhcPs -> Bool
+        exprUse (HsVar _ (L _ v)) | idName v == a = True
         exprUse _ = False
 
     if | everything (||) (mkQ False exprUse) m
@@ -164,17 +167,17 @@ checkRule (NotUsed a) = withParsedCode $ \m -> do
        | otherwise -> success
 
 checkRule (ContainsMatch tmpl topLevel card) = withParsedCode $ \m -> do
-    tmpl <- parseCode ["TemplateHaskell"] (T.pack tmpl)
+    tmpl <- ghcParseCode ["TemplateHaskell", "TemplateHaskellQuotes"] (T.pack tmpl)
     let n = case tmpl of
-                Parsed (Module _ _ _ _ [tmpl]) ->
+                GHCParsed (HsModule {hsmodDecls=[tmpl]}) ->
                     let decls | topLevel = concat $ gmapQ (mkQ [] id) m
                               | otherwise = everything (++) (mkQ [] (:[])) m
-                    in  length (filter (match tmpl) decls)
-                Parsed (Module _ _ _ [tmpl] _) ->
-                    length $ filter (match tmpl) $ concat $ gmapQ (mkQ [] id) m
+                    in length (filter (match tmpl) decls)
+                GHCParsed (HsModule {hsmodImports=[tmpl]}) ->
+                    length $ filter (match tmpl) $ concat $ gmapQ (mkQ [] id) m       
     if | hasCardinality card n -> success
        | otherwise -> failure $ "Wrong number of matches."
-
+    
 checkRule (MatchesRegex pat card) = do
     src <- getSourceCode
     let n = rangeSize (bounds (src =~ pat :: MatchArray))
@@ -218,10 +221,10 @@ checkRule (MaxLineLength len) = do
 
 checkRule (NoWarningsExcept ex) = do
     diags <- getDiagnostics
-    let warns = filter (\(SrcSpanInfo _ _,_,x) -> not (any (x =~) ex)) diags
+    let warns = filter (\(Exts.SrcSpanInfo _ _,_,x) -> not (any (x =~) ex)) diags
     if | null warns -> success
        | otherwise -> do
-             let (SrcSpanInfo (SrcSpan _ l c _ _) _,_,x) = head warns
+             let (Exts.SrcSpanInfo (Exts.SrcSpan _ l c _ _) _,_,x) = head warns
              failure $ "Warning found at line " ++ show l ++ ", column " ++ show c
 
 checkRule (TypeSignatures b) = withParsedCode $ \m -> do
@@ -233,24 +236,20 @@ checkRule (TypeSignatures b) = withParsedCode $ \m -> do
            ++ "` has no type signature."
 
 checkRule (Blacklist bl) = withParsedCode $ \m -> do
-    let symbols = nub $ everything (++) (mkQ [] nameString) m
+    let symbols = nub $ everything (++) (mkQ [] idNameList) m
         blacklisted = intersect bl symbols
-        
-        nameString :: Name SrcSpanInfo -> [String]
-        nameString (Ident _ s) = [s]
-        nameString (Symbol _ s) = [s]
+
+        idNameList x = [idName x] 
 
     if | null blacklisted -> success
        | otherwise -> failure $ "The symbol `" ++ head blacklisted
            ++ "` is blacklisted."
 
 checkRule (Whitelist wl) = withParsedCode $ \m -> do
-    let symbols = nub $ everything (++) (mkQ [] nameString) m
+    let symbols = nub $ everything (++) (mkQ [] idNameList) m
         notWhitelisted = symbols \\ wl
 
-        nameString :: Name SrcSpanInfo -> [String]
-        nameString (Ident _ s) = [s]
-        nameString (Symbol _ s) = [s]
+        idNameList x = [idName x]
 
     if | null notWhitelisted -> success
        | otherwise -> failure $ "The symbol `" ++ head notWhitelisted
@@ -258,47 +257,47 @@ checkRule (Whitelist wl) = withParsedCode $ \m -> do
 
 checkRule _ = abort
 
-allDefinitionsOf :: String -> Module SrcSpanInfo -> [Rhs SrcSpanInfo]
-allDefinitionsOf a m = everything (++) (mkQ [] funcDefs) m ++
-                       everything (++) (mkQ [] patDefs) m
-  where funcDefs :: Match SrcSpanInfo -> [Rhs SrcSpanInfo]
-        funcDefs (Match _ (Ident _ aa) _ rhs _) | a == aa = [rhs]
+allDefinitionsOf :: String -> HsModule GhcPs -> [GRHSs GhcPs (LHsExpr GhcPs)]
+allDefinitionsOf a m = everything (++) (mkQ [] defs) m
+  where defs :: HsBind GhcPs -> [GRHSs GhcPs (LHsExpr GhcPs)]
+        defs (FunBind{fun_id=(L _ funid), fun_matches=(MG{mg_alts=(L _ matches)})}) 
+            | idName funid == a = concat $ funcDefs <$> matches
+        defs (PatBind{pat_lhs=pat, pat_rhs=rhs}) | patDefines pat a = [rhs]
+        defs _ = []
+
+        funcDefs :: LMatch GhcPs (LHsExpr GhcPs) -> [GRHSs GhcPs (LHsExpr GhcPs)]
+        funcDefs (L _ (Match{m_grhss=rhs})) = [rhs]
         funcDefs _ = []
 
-        patDefs :: Decl SrcSpanInfo -> [Rhs SrcSpanInfo]
-        patDefs (PatBind _ pat rhs _) | patDefines pat a = [rhs]
-        patDefs _ = []
+allBindingsOf :: String -> HsModule GhcPs -> [SDoc]
+allBindingsOf a m = everything (++) (mkQ [] binds) m
+  where binds :: HsBind GhcPs -> [SDoc]
+        binds (FunBind{fun_id=(L _ funid), fun_matches=matches}) | idName funid == a = [pprFunBind matches]
+        binds (PatBind{pat_lhs=pat, pat_rhs=rhs}) | patDefines pat a = [pprPatBind pat rhs]
+        binds _ = []
 
-topLevelNames :: Module SrcSpanInfo -> [String]
-topLevelNames (Module _ _ _ _ decls) = concat $ names <$> decls
-  where names :: Decl SrcSpanInfo -> [String]
-        names (FunBind _ xs) = [funcName x | x <- xs]
-        names (PatBind _ pat _ _) = [patName pat]
+topLevelNames :: HsModule GhcPs -> [String]
+topLevelNames (HsModule {hsmodDecls=decls}) = concat $ names <$> decls
+  where names :: LHsDecl GhcPs -> [String]
+        names (L _ (ValD _ FunBind{fun_id=(L _ funid)})) = [idName funid]
+        names (L _ (ValD _ PatBind{pat_lhs=pat})) = [patName pat]
         names _ = []
 
-        funcName :: Match SrcSpanInfo -> String
-        funcName (Match _ (Ident _ s) _ _ _) = s
-        funcName (InfixMatch _ _ (Ident _ s) _ _ _) = s
-
-        patName :: Pat SrcSpanInfo -> String
-        patName (PVar _ (Ident _ a)) = a
-        patName (PParen _ pat) = patName pat
+        patName :: LPat GhcPs -> String
+        patName (VarPat _ (L _ patid)) = idName patid
+        patName (ParPat _ pat) = patName pat
         patName _ = []
-        
-topLevelNames _ = []
 
-typeSignatures :: Module SrcSpanInfo -> [String]
-typeSignatures (Module _ _ _ _ decls) = concat $ typeSigNames <$> decls
-  where typeSigNames :: Decl SrcSpanInfo -> [String]
-        typeSigNames (TypeSig _ l _) = nameString <$> l
+typeSignatures :: HsModule GhcPs -> [String]
+typeSignatures (HsModule {hsmodDecls=decls}) = concat $ typeSigNames <$> decls
+  where typeSigNames :: LHsDecl GhcPs -> [String]
+        typeSigNames (L _ (SigD _ (TypeSig _ sigids _))) = locatedIdName <$> sigids
         typeSigNames _ = []
 
-        nameString :: Name SrcSpanInfo -> String
-        nameString (Ident _ s) = s
-        nameString (Symbol _ s) = s
+        locatedIdName (L _ s) = idName s
 
-patDefines :: Pat SrcSpanInfo -> String -> Bool
-patDefines (PVar _ (Ident _ aa)) a = a == aa
-patDefines (PParen _ pat) a = patDefines pat a
-
+patDefines :: LPat GhcPs -> String -> Bool
+patDefines (VarPat _ (L _ patid)) a = idName patid == a
+patDefines (ParPat _ pat) a = patDefines pat a
+patDefines _ a = False
 

@@ -79,7 +79,7 @@ toHSL _ = Nothing
 mixed :: [Color] -> Color
 mixed colors = go 0 0 0 0 0 colors
   where go rr gg bb aa n ((fenceColor -> RGBA r g b a) : cs) =
-            go (rr + r*r * a) (gg + g*g * a) (bb + b*b * a) (aa + a) (n + 1) cs
+            go (rr + r * r * a) (gg + g * g * a) (bb + b * b * a) (aa + a) (n + 1) cs
         go rr gg bb aa n []
           | aa == 0   = RGBA 0 0 0 0
           | otherwise = RGBA (sqrt (rr/aa)) (sqrt (gg/aa)) (sqrt (bb/aa)) (aa/n)

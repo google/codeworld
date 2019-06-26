@@ -2052,11 +2052,11 @@ handleControl _ (PointerPress (x, y)) (PlayButton (cx, cy)) w
 handleControl _ (PointerPress (x, y)) (PauseButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4  = (w {playbackSpeed = 0}, True)
 handleControl _ (PointerPress (x, y)) (FastForwardButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4  = (w {playbackSpeed = min 5 $ max 2 $ playbackSpeed w + 1}, True)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4  = (w {playbackSpeed = max 2 (playbackSpeed w + 1)}, True)
 handleControl _ (PointerPress (x, y)) (ZoomInButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = min (zoomIncrement ** 10) (zoomFactor w * zoomIncrement)}, True)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = zoomFactor w * zoomIncrement}, True)
 handleControl _ (PointerPress (x, y)) (ZoomOutButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = max (zoomIncrement ** (-10)) (zoomFactor w / zoomIncrement)}, True)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = zoomFactor w / zoomIncrement}, True)
 handleControl _ (PointerPress (x, y)) (ResetViewButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = 1, panCenter = SP 0 0}, True)
 handleControl _ (PointerPress (x,y)) (BackButton (cx, cy)) w

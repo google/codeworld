@@ -35,6 +35,8 @@ rewriteStages =
     , ("[ ]*\8226 Possible cause: [(].*[)] is applied to too many arguments\n", "")
     , ("[ ]*except perhaps to import instances from [A-Za-z0-9.]*\n", "")
     , ("[ ]*To import instances alone, use: import [A-Za-z0-9.]*[(][)]\n", "")
+    , ("^([ ]*(\8226 )?)(.*[Nn]ot in scope: .* :: Text)",
+       "\\1\\3\n\\1Perhaps you meant to put quotation marks around this text.")
     , ("is applied to too few arguments", "is missing arguments")
     , ("is applied to too many arguments", "is a value, but a function is needed here.")
     , ("Couldn't match expected type Text\\s*with actual type GHC.Types.Char",

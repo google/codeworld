@@ -388,7 +388,7 @@ span.cm-layout {
 
 span.cm-layout:first-child:before,
 span:not(.cm-layout)+span.cm-layout:before {
-    content: "»";
+    content: "\00BB";
     position: absolute;
     left: -0.65em;
     top: 0;

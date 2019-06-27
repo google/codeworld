@@ -1,0 +1,11 @@
+:                     :: REQUIREMENTS ::
+Obfuscated:
+
+    XREQUIRES
+    eJxdyjEOgCAMQNGrNO4mzsx6AVfrULEKCRZSwHh8NW7+8eVPDQpKz9mqT8VH
+    MXBQsY7zcCW2hVfYyIeqjDLWwNmgQPt/Xnw6ST0tgQ0kjbvS8bGj7Ax0KM18
+    A/MZJ0k=
+
+[N] matchesExpected failure
+      `program` does not have the expected definition. (12076)
+                  :: END REQUIREMENTS ::

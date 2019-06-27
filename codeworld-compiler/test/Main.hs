@@ -24,7 +24,9 @@ import System.Directory
 import System.Exit
 import System.FilePath.Posix
 import System.IO.Temp
-import Test.HUnit
+import Test.Framework
+import Test.Framework.Providers.HUnit
+import Test.HUnit hiding (Test)
 
 compilerOutput :: String -> IO String
 compilerOutput testName =
@@ -40,22 +42,14 @@ compilerOutput testName =
 trim :: String -> String
 trim = dropWhile isSpace . dropWhileEnd isSpace
 
-toTestCase x =
-    x ~: do
-        putStrLn $ "Testing " ++ x ++ "..."
-        actual <- trim <$> compilerOutput x
-        expected <- trim <$> readFile ("test/testcases" </> x </> "expected_output.txt")
-        assertEqual x expected actual
+toTestCase x = testCase x $ do
+    actual <- trim <$> compilerOutput x
+    expected <- trim <$> readFile ("test/testcases" </> x </> "expected_output.txt")
+    assertEqual x expected actual
 
 genTestCases :: [String] -> [Test]
-genTestCases [] = ["Empty directory testcase" ~: "FOo" ~=? (map toUpper "foo")]
+genTestCases [] = [testCase "Locating test cases" $ assertFailure "No test cases found."]
 genTestCases x  = map toTestCase x
 
-runTests :: FilePath -> IO Counts
-runTests path = runTestTT . TestList . genTestCases =<< listDirectory path
-
-main :: IO Counts
-main = do
-    cs@(Counts _ _ errs fails) <- runTests "test/testcases"
-    putStrLn (showCounts cs)
-    if errs > 0 || fails > 0 then exitFailure else exitSuccess
+main :: IO ()
+main = defaultMain . genTestCases =<< listDirectory "test/testcases"

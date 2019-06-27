@@ -1,0 +1,12 @@
+:                     :: REQUIREMENTS ::
+Obfuscated:
+
+    XREQUIRES
+    eJxVjjELwjAQhf/KUVx16hRwc9RF3IyUI73QQHwtyQUt+ONtWhy85eC7j/fu
+    3lhYnCS7FCYNIwy5EcoB+cLqBmLM5DnEksTiWqJkY0H7f6uiZVSeU2QVQ58N
+    EHW+wHW0qzHHdW0Xx6kP4Bh0Nj+X9Syc1VC7EnkvYeDtqdsgS2Uv1IsPkExe
+    XpJIBwa1VEuqlw8WzeMLfkJIJA==
+
+[N] containsMatch any failure
+      The code defines fewer than 4 functions.
+                  :: END REQUIREMENTS ::

@@ -19,6 +19,7 @@ Library
   Hs-source-dirs:      src
   Js-sources:          jsbits/deep_eq.js
   Exposed-modules:     Prelude,
+                       Sketches,
                        Extras.Colors,
                        Extras.Cw,
                        Extras.Op,

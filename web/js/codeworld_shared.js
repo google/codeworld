@@ -138,7 +138,17 @@ function definePanelExtension() {
 //   }
 // }
 window.codeWorldSymbols = {};
-window.codeWorldBuiltinSymbols = {};
+window.codeWorldModules = {
+    'Prelude': {}
+};
+window.codeWorldBuiltins = {
+    'program': {
+        declaration: 'program :: Program',
+        doc: 'Your program.',
+        symbolStart: 0,
+        symbolEnd: 7
+    }
+};
 
 function getWordStart(word, line) {
     return line.indexOf(word);
@@ -157,11 +167,36 @@ function parseSymbolsFromCurrentCode() {
     const parseResults = {};
     let lineIndex = 0;
 
+    const imports = [];
+
     lines.forEach(line => {
         lineIndex++;
 
-        const docString = `Defined in your code on line ${ 
-            lineIndex.toString()}.`;
+        const importExp =
+            /^import\s+(qualified)?\s*([A-Z][A-Za-z0-9.']*)(\s+(as)\s+([A-Z][A-Za-z0-9.']*))?(\s+(hiding))?\s*([(]([^()]*|([(][^()]*[)])*)[)])?\s*$/;
+        if (importExp.test(line)) {
+            const match = importExp.exec(line);
+            const qualified = Boolean(match[1]);
+            const module = match[2];
+            const asName = match[5] !== undefined ? match[5] : module;
+            const hiding = Boolean(match[7]);
+            const importList = match[9] &&
+                match[9]
+                    .split(',')
+                    .map(s => s.trim())
+                    .map(s => /[(].*[)]/.test(s) ? s.substr(1, s.length - 2) : s);
+            imports.push({
+                module: module,
+                asName: asName,
+                qualified: qualified,
+                hiding: hiding,
+                importList: importList
+            });
+            return;
+        }
+
+        const docString = `Defined in your code on line ${lineIndex}.`;
+
         if (/^\w+\(.*/.test(line)) {
             // f(x, y) =
             const word = line.split('(')[0].trim();
@@ -225,9 +260,33 @@ function parseSymbolsFromCurrentCode() {
             };
         }
     });
+
+    if (!imports.find(i => i.module === 'Prelude')) {
+        imports.push({
+            module: 'Prelude',
+            asName: 'Prelude',
+            qualified: false,
+            hiding: false,
+            importList: undefined
+        });
+    }
+
     if (window.buildMode === 'codeworld') {
-        window.codeWorldSymbols = Object.assign({}, parseResults,
-            window.codeWorldBuiltinSymbols);
+        console.log(imports);
+        const symbols = Object.assign({}, window.codeWorldBuiltins);
+        for (const i of imports) {
+            if (i.module in window.codeWorldModules) {
+                for (const symbol in window.codeWorldModules[i.module]) {
+                    if (i.importList) {
+                        if (i.hiding && i.importList.includes(symbol)) continue;
+                        if (!i.hiding && !i.importList.includes(symbol)) continue;
+                    }
+                    const name = i.qualified ? `${i.asName}.${symbol}` : symbol;
+                    symbols[name] = window.codeWorldModules[i.module][symbol];
+                }
+            }
+        }
+        window.codeWorldSymbols = Object.assign(symbols, parseResults);
     } else {
         window.codeWorldSymbols = Object.assign({}, parseResults);
     }
@@ -435,36 +494,36 @@ function registerStandardHints(successFunc) {
             lines = request.responseText.split('\n');
         }
 
-        const startLine = lines.indexOf('module Prelude') + 1;
-        let endLine = startLine;
-        while (endLine < lines.length) {
-            if (lines[endLine].startsWith('module ')) {
-                break;
-            }
-            endLine++;
-        }
-        lines = lines.slice(startLine, endLine);
-
         // Special case for "program", since it is morally a built-in name.
         window.codeworldKeywords['program'] = 'builtin';
 
-        window.codeWorldBuiltinSymbols['program'] = {
-            declaration: 'program :: Program',
-            doc: 'Your program.',
-            symbolStart: 0,
-            symbolEnd: 7
-        };
-
+        window.codeWorldModules = {};
+        let module = null;
         let doc = '';
         lines.forEach(line => {
-            if (line.startsWith('type Program')) {
+            if (line.startsWith('module ')) {
+                module = line.substr(7);
+                if (!window.codeWorldModules[module]) {
+                    window.codeWorldModules[module] = {};
+                }
+                doc = '';
+                return;
+            }
+
+            if (!module) {
+                // Ignore anything outside of a module.
+                doc = '';
+                return;
+            }
+
+            if (module === 'Prelude' && line.startsWith('type Program')) {
                 // We must intervene to hide the IO type.
                 line = 'data Program';
-            } else if (line.startsWith('type Truth')) {
+            } else if (module === 'Prelude' && line.startsWith('type Truth')) {
                 line = 'data Truth';
-            } else if (line.startsWith('True ::')) {
+            } else if (module === 'Prelude' && line.startsWith('True ::')) {
                 line = 'True :: Truth';
-            } else if (line.startsWith('False ::')) {
+            } else if (module === 'Prelude' && line.startsWith('False ::')) {
                 line = 'False :: Truth';
             } else if (line.startsWith('newtype ')) {
                 // Hide the distinction between newtype and data.
@@ -529,23 +588,26 @@ function registerStandardHints(successFunc) {
                 const word = line.substr(wordStart, wordEnd -
                     wordStart);
                 if (hintBlacklist.indexOf(word) < 0) {
-                    window.codeWorldBuiltinSymbols[word] = {
+                    window.codeWorldModules[module][word] = {
                         declaration: line,
                         symbolStart: wordStart,
                         symbolEnd: wordEnd
                     };
                     if (doc) {
-                        window.codeWorldBuiltinSymbols[word].doc = doc;
+                        window.codeWorldModules[module][word].doc = doc;
                     }
                 }
 
-                if (hintBlacklist.indexOf(word) >= 0) {
-                    window.codeworldKeywords[word] = 'deprecated';
-                } else if (/^[A-Z:]/.test(word)) {
-                    window.codeworldKeywords[word] = 'builtin-2';
-                } else {
-                    window.codeworldKeywords[word] = 'builtin';
+                if (module === 'Prelude') {
+                    if (hintBlacklist.indexOf(word) >= 0) {
+                        window.codeworldKeywords[word] = 'deprecated';
+                    } else if (/^[A-Z:]/.test(word)) {
+                        window.codeworldKeywords[word] = 'builtin-2';
+                    } else {
+                        window.codeworldKeywords[word] = 'builtin';
+                    }
                 }
+
                 doc = '';
             }
         });
@@ -1169,10 +1231,7 @@ function shareFolder_(mode) {
         return;
     }
 
-    const folderName = getNearestDirectory_().name
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+    const folderName = Html.encode(getNearestDirectory_().name);
 
     const data = new FormData();
     data.append('mode', mode);
@@ -1239,10 +1298,7 @@ function preFormatMessage(msg) {
         msg = msg.replace(/(\r\n|[^\x08])\x08/g, '');
     }
 
-    msg = msg
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
+    msg = Html.encode(msg)
         .replace(/program\.hs:(\d+):((\d+)(-\d+)?)/g,
             '<a href="#" onclick="goto($1, $3);">Line $1, Column $2</a>')
         .replace(/program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
@@ -1401,7 +1457,7 @@ function initDirectoryTree() {
                     $('<div style="float: left" class="loader"></div>')
                 );
             } else if (node.type === 'project') {
-                const asterisk = $('<i class="unsaved-changes"></i>')
+                const asterisk = $('<i class="unsaved-changes"></i>');
                 asterisk.css('display', 'none');
                 titleElem.before(
                     $('<i class="mdi mdi-18px mdi-cube"></i>')
@@ -1539,7 +1595,7 @@ function initDirectoryTree() {
                     const path = pathToRootDir(node);
                     window.openProjectName = node.name;
                     loadProject(node.name, path);
-                    $('#directoryTree').tree('selectNode', event.node)
+                    $('#directoryTree').tree('selectNode', event.node);
                 } else if (event.node.type === 'directory') {
                     if (event.node.children.length === 0) {
                         loadSubTree(event.node);
@@ -1547,7 +1603,7 @@ function initDirectoryTree() {
                     clearCode();
                     $('#directoryTree').tree('selectNode', event.node);
                 }
-            })
+            });
             updateUI();
         }
     );
@@ -1598,12 +1654,11 @@ function showLoadingAnimation(node) {
             },
             node
         );
-    }
-    else {
-        let target = node.element.getElementsByClassName('jqtree-title jqtree_common')[0];
-        let elem = document.createElement('div');
+    } else {
+        const target = node.element.getElementsByClassName('jqtree-title jqtree_common')[0];
+        const elem = document.createElement('div');
         elem.classList.add('loader'); // float left
-        elem.style.marginLeft='5px';
+        elem.style.marginLeft = '5px';
         target.after(elem);
     }
 }

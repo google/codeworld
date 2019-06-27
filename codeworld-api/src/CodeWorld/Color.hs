@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -20,11 +21,7 @@
 module CodeWorld.Color where
 
 import Control.DeepSeq
-import Data.Fixed (mod')
-import Data.List (unfoldr)
 import GHC.Generics (Generic)
-import System.Random (mkStdGen)
-import System.Random.Shuffle (shuffle')
 
 data Color =
     RGBA !Double
@@ -82,7 +79,7 @@ toHSL _ = Nothing
 mixed :: [Color] -> Color
 mixed colors = go 0 0 0 0 0 colors
   where go rr gg bb aa n ((fenceColor -> RGBA r g b a) : cs) =
-            go (rr + r^2 * a) (gg + g^2 * a) (bb + b^2 * a) (aa + a) (n + 1) cs
+            go (rr + r * r * a) (gg + g * g * a) (bb + b * b * a) (aa + a) (n + 1) cs
         go rr gg bb aa n []
           | aa == 0   = RGBA 0 0 0 0
           | otherwise = RGBA (sqrt (rr/aa)) (sqrt (gg/aa)) (sqrt (bb/aa)) (aa/n)
@@ -90,7 +87,7 @@ mixed colors = go 0 0 0 0 0 colors
 -- Helper function that sets the alpha of the second color to that
 -- of the first
 sameAlpha :: Color -> Color -> Color
-sameAlpha (fenceColor -> RGBA r1 g1 b1 a1) (fenceColor -> RGBA r2 g2 b2 a2) =
+sameAlpha (fenceColor -> RGBA _ _ _ a1) (fenceColor -> RGBA r2 g2 b2 _) =
     RGBA r2 g2 b2 a1
 
 lighter :: Double -> Color -> Color
@@ -143,7 +140,7 @@ assortedColors = [ HSL (adjusted h) 0.75 0.5 | h <- [0, 2 * pi / phi ..] ]
     b4 = -1.0451841243520298e-02
 
 hue :: Color -> Double
-hue (fenceColor -> RGBA r g b a)
+hue (fenceColor -> RGBA r g b _)
     | hi - lo < epsilon = 0
     | r == hi && g >= b = (g - b) / (hi - lo) * pi / 3
     | r == hi = (g - b) / (hi - lo) * pi / 3 + 2 * pi
@@ -155,7 +152,7 @@ hue (fenceColor -> RGBA r g b a)
     epsilon = 0.000001
 
 saturation :: Color -> Double
-saturation (fenceColor -> RGBA r g b a)
+saturation (fenceColor -> RGBA r g b _)
     | hi - lo < epsilon = 0
     | otherwise = (hi - lo) / (1 - abs (hi + lo - 1))
   where
@@ -164,13 +161,13 @@ saturation (fenceColor -> RGBA r g b a)
     epsilon = 0.000001
 
 luminosity :: Color -> Double
-luminosity (fenceColor -> RGBA r g b a) = (lo + hi) / 2
+luminosity (fenceColor -> RGBA r g b _) = (lo + hi) / 2
   where
     hi = max r (max g b)
     lo = min r (min g b)
 
 alpha :: Color -> Double
-alpha (RGBA r g b a) = fence a
+alpha (RGBA _ _ _ a) = fence a
 
 -- New-style colors
 
@@ -214,7 +211,7 @@ pattern Brown  = HSL 0.52 0.60 0.40
 
 white, black, red, green, blue, cyan, magenta, yellow :: Color
 orange, rose, chartreuse, aquamarine, violet, azure :: Color
-gray, grey :: Color
+gray, grey, brown, purple, pink :: Color
 
 white = White
 black = Black

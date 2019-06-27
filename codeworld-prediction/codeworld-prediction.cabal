@@ -23,7 +23,8 @@ Test-Suite test-prediction
     Main-is:           prediction.hs
     Type:              exitcode-stdio-1.0
     Other-modules:     CodeWorld.Prediction
-                       Common
+                       Common,
+                       Data.MultiMap
     Build-depends:     base,
                        containers,
                        QuickCheck
@@ -34,7 +35,8 @@ Test-Suite test-prediction-paper
     Main-is:           prediction-paper.hs
     Type:              exitcode-stdio-1.0
     Other-modules:     CodeWorld.Prediction.Paper
-                       Common
+                       Common,
+                       Data.MultiMap
     Build-depends:     base,
                        containers,
                        QuickCheck

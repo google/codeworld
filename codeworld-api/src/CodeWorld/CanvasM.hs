@@ -20,24 +20,25 @@
 
 module CodeWorld.CanvasM where
 
-import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.Trans (MonadIO)
-import Data.Text (Text, pack)
+import Data.Text (Text)
 
 #ifdef ghcjs_HOST_OS
 
 import Data.JSString.Text
 import GHCJS.DOM
+import GHCJS.DOM.Document
 import GHCJS.DOM.Element
+import GHCJS.DOM.Node
 import GHCJS.DOM.NonElementParentNode
-import GHCJS.Marshal.Pure
 import GHCJS.Types
 import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
 
 #else
 
+import Data.Text (pack)
 import qualified Graphics.Blank as Canvas
 import Graphics.Blank (Canvas)
 import Text.Printf
@@ -57,6 +58,7 @@ class (Monad m, MonadIO m) => MonadCanvas m where
     builtinImage :: Text -> m (Maybe (Image m))
     withImage :: Image m -> m a -> m a
     drawImage :: Image m -> Int -> Int -> Int -> Int -> m ()
+    drawImgURL :: Text -> Text -> Double -> Double -> m ()
     globalCompositeOperation :: Text -> m ()
     lineWidth :: Double -> m ()
     strokeColor :: Int -> Int -> Int -> Double -> m ()
@@ -121,6 +123,21 @@ foreign import javascript "$r = $3.isPointInStroke($1, $2);"
 instance MonadIO CanvasM where
     liftIO action = CanvasM $ \_ _ -> action
 
+createOrGetImage :: Text -> Text -> IO Element
+createOrGetImage name url = do
+    Just doc <- currentDocument
+    maybeImg <- getElementById doc name
+    case maybeImg of
+        Just img -> return img
+        Nothing -> do
+            img <- createElement doc (textToJSString "img")
+            setAttribute img (textToJSString "style") (textToJSString "display: none")
+            setAttribute img (textToJSString "id") name
+            setAttribute img (textToJSString "src") url
+            Just body <- getBody doc
+            _ <- appendChild body img
+            return img
+
 instance MonadCanvas CanvasM where
     type Image CanvasM = Canvas.Canvas
     save = CanvasM (const Canvas.save)
@@ -140,6 +157,15 @@ instance MonadCanvas CanvasM where
         unCanvasM m (w, h) ctx
     drawImage (Canvas.Canvas c) x y w h =
         CanvasM (const (Canvas.drawImage (Canvas.Image c) x y w h))
+    drawImgURL name url w h = CanvasM $ \ _ ctx -> do
+        img <- createOrGetImage name url
+        Canvas.drawImage
+            (Canvas.Image (unElement img))
+            (round (-w/2))
+            (round (-h/2))
+            (round w)
+            (round h)
+            ctx
     globalCompositeOperation op =
         CanvasM (const (js_globalCompositeOperation (textToJSString op)))
     lineWidth w = CanvasM (const (Canvas.lineWidth w))
@@ -229,7 +255,7 @@ instance MonadCanvas CanvasM where
     translate x y = liftCanvas $ Canvas.translate (x, y)
     scale x y = liftCanvas $ Canvas.scale (x, y)
     newImage w h = liftCanvas $ Canvas.newCanvas (w, h)
-    builtinImage name = return Nothing
+    builtinImage _name = return Nothing
 
     withImage ctx (CanvasOp Nothing m) = CanvasOp (Just ctx) m
     withImage _   (CanvasOp mctx m)    = CanvasOp mctx m
@@ -243,6 +269,9 @@ instance MonadCanvas CanvasM where
             , fromIntegral y
             , fromIntegral w
             , fromIntegral h)
+
+    drawImgURL _name _url _w _h = return ()
+
     globalCompositeOperation op = liftCanvas $
         Canvas.globalCompositeOperation op
     lineWidth w = liftCanvas $ Canvas.lineWidth w
@@ -272,7 +301,7 @@ instance MonadCanvas CanvasM where
         Canvas.TextMetrics w <- Canvas.measureText t
         return w
     isPointInPath (x, y) = liftCanvas $ Canvas.isPointInPath (x, y)
-    isPointInStroke (x, y) = liftCanvas $ return False
+    isPointInStroke _ = liftCanvas $ return False
     getScreenWidth = liftCanvas $ Canvas.width <$> Canvas.myCanvasContext
     getScreenHeight = liftCanvas $ Canvas.height <$> Canvas.myCanvasContext
 

@@ -1915,6 +1915,63 @@ interactionOf = runInspect (const [])
 {-# WARNING interactionOf ["Please use activityOf instead of interactionOf.",
                            "interactionOf may be removed July 2020."] #-}
 
+data Timeline a = Timeline {
+    past :: [a],   -- reversed list of past states
+    present :: !a, -- present state
+    future :: [a]  -- list of future states
+    }
+
+undoTimeline :: Timeline a -> Timeline a
+undoTimeline timeline@Timeline{..} = case past of
+    [] -> timeline
+    (x:xs) -> Timeline xs x (present : future)
+
+redoTimeline :: Timeline a -> Timeline a
+redoTimeline timeline@Timeline{..} = case future of
+    [] -> timeline
+    (x:xs) -> Timeline (present : past) x xs
+
+restartTimeline :: Timeline a -> Timeline a
+restartTimeline timeline@Timeline{..}
+  | null past = timeline
+  | otherwise = Timeline [] x (xs ++ present : future)
+  where x : xs = reverse past
+
+timelineLength :: Timeline a -> Int
+timelineLength Timeline{..} = length past + 1 + length future
+
+travelToTime :: Double -> Timeline a -> Timeline a
+travelToTime t timeline@Timeline{..}
+    | diff >= 0 = iterate redoTimeline timeline !! diff
+    | otherwise = iterate undoTimeline timeline !! (-diff)
+  where desiredPast = round (t * (fromIntegral (timelineLength timeline - 1)))
+        actualPast = length past
+        diff = desiredPast - actualPast
+
+timelinePos :: Timeline a -> Double
+timelinePos Timeline{..}
+    | null past && null future = 1
+    | otherwise = fromIntegral (length past) / fromIntegral (length past + length future)
+
+data Control :: * -> * where
+    PlayButton :: Point -> Control a
+    PauseButton :: Point -> Control a
+    StepButton :: Point -> Control a
+    RestartButton :: Point -> Control Double
+    ZoomInButton :: Point -> Control a
+    ZoomOutButton :: Point -> Control a
+    PanningLayer :: Control a
+    ResetViewButton :: Point -> Control a
+    FastForwardButton :: Point -> Control a
+    StartOverButton :: Point -> Control (Timeline a)
+    BackButton :: Point -> Control Double
+    TimeLabel :: Point -> Control Double
+    SpeedSlider :: Point -> Control a
+    ZoomSlider :: Point -> Control a
+    UndoButton :: Point -> Control (Timeline a)
+    RedoButton :: Point -> Control (Timeline a)
+    HistorySlider :: Point -> Control (Timeline a)
+
 data StrictPoint = SP !Double !Double deriving (Eq, Show)
 
 toStrictPoint :: Point -> StrictPoint
@@ -1933,25 +1990,6 @@ data Wrapped a = Wrapped
     , isDraggingHistory :: !Bool
     , isDraggingZoom :: !Bool
     } deriving (Show, Functor)
-
-data Control :: * -> * where
-    PlayButton :: Point -> Control a
-    PauseButton :: Point -> Control a
-    StepButton :: Point -> Control a
-    RestartButton :: Point -> Control Double
-    ZoomInButton :: Point -> Control a
-    ZoomOutButton :: Point -> Control a
-    PanningLayer :: Control a
-    ResetViewButton :: Point -> Control a
-    FastForwardButton :: Point -> Control a
-    StartOverButton :: Point -> Control ([a], [a])
-    BackButton :: Point -> Control Double
-    TimeLabel :: Point -> Control Double
-    SpeedSlider :: Point -> Control a
-    ZoomSlider :: Point -> Control a
-    UndoButton :: Point -> Control ([a], [a])
-    RedoButton :: Point -> Control ([a], [a])
-    HistorySlider :: Point -> Control ([a], [a])
 
 wrappedInitial :: a -> Wrapped a
 wrappedInitial w = Wrapped { 
@@ -2044,15 +2082,13 @@ handleControl ::
 handleControl _ (PointerPress (x, y)) (RestartButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {state = 0}, True)
 handleControl _ (PointerPress (x, y)) (StartOverButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (fmap f w, True)
-  where
-    f (past, future) = let x:xs = reverse past in ([x], xs ++ future)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (restartTimeline <$> w, True)
 handleControl _ (PointerPress (x, y)) (PlayButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {playbackSpeed = 1}, True)
 handleControl _ (PointerPress (x, y)) (PauseButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4  = (w {playbackSpeed = 0}, True)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {playbackSpeed = 0}, True)
 handleControl _ (PointerPress (x, y)) (FastForwardButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4  = (w {playbackSpeed = max 2 (playbackSpeed w + 1)}, True)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {playbackSpeed = max 2 (playbackSpeed w + 1)}, True)
 handleControl _ (PointerPress (x, y)) (ZoomInButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = zoomFactor w * zoomIncrement}, True)
 handleControl _ (PointerPress (x, y)) (ZoomOutButton (cx, cy)) w
@@ -2060,14 +2096,11 @@ handleControl _ (PointerPress (x, y)) (ZoomOutButton (cx, cy)) w
 handleControl _ (PointerPress (x, y)) (ResetViewButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {zoomFactor = 1, panCenter = SP 0 0}, True)
 handleControl _ (PointerPress (x,y)) (BackButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 =
-        (w {state = max 0 (state w - 0.1)}, True)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (max 0 . (subtract 0.1) <$> w, True)
 handleControl _ (PointerPress (x,y)) (UndoButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 =
-        (fmap (\(x:xs, ys) -> (xs, x:ys)) w, True)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (undoTimeline <$> w, True)
 handleControl _ (PointerPress (x,y)) (RedoButton (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 =
-        (fmap (\(xs, y:ys) -> (y:xs, ys)) w, True)
+    | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (redoTimeline <$> w, True)
 handleControl f (PointerPress (x, y)) (StepButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {state = f 0.1 (state w)}, True)
 handleControl _ (PointerPress (x, y)) (SpeedSlider (cx, cy)) w
@@ -2086,11 +2119,11 @@ handleControl _ (PointerRelease (_, y)) (ZoomSlider (_, cy)) w
     | isDraggingZoom w = (w {zoomFactor = yToZoomFactor (y - cy), isDraggingZoom = False}, True)
 handleControl _ (PointerPress (x, y)) (HistorySlider (cx, cy)) w
     | abs (x - cx) < 2.5 && abs (y - cy) < 0.4 = 
-      (travelToTime (x - cx) <$> w {isDraggingHistory = True}, True)
+      (travelToTime (1/2 + (x - cx) / 4.8) <$> w { isDraggingHistory = True }, True)
 handleControl _ (PointerMovement (x, _)) (HistorySlider (cx, _)) w
-    | isDraggingHistory w = (travelToTime (x - cx) <$> w, True)
+    | isDraggingHistory w = (travelToTime (1/2 + (x - cx) / 4.8) <$> w, True)
 handleControl _ (PointerRelease (x, _)) (HistorySlider (cx, _)) w
-    | isDraggingHistory w = (travelToTime (x - cx) <$> w {isDraggingHistory = False}, True)
+    | isDraggingHistory w = (travelToTime (1/2 + (x - cx) / 4.8) <$> w { isDraggingHistory = False }, True)
 handleControl _ (PointerPress (x, y)) PanningLayer w =
       (w {panDraggingAnchor = SJust (SP x y)}, True)
 handleControl _ (PointerMovement (x, y)) PanningLayer w
@@ -2103,19 +2136,6 @@ handleControl _ (PointerMovement (x, y)) PanningLayer w
 handleControl _ (PointerRelease _) PanningLayer w
     | SJust _ <- panDraggingAnchor w = (w {panDraggingAnchor = SNothing}, True)
 handleControl _ _ _ w = (w, False)
-
-travelToTime :: Double -> ([s],[s]) -> ([s],[s])  
-travelToTime t (past, future)
-    | n == 1    = (past, future)
-    | otherwise = go past future (n1 - desiredN1)
-  where n1 = length past
-        n2 = length future
-        n = n1 + n2
-        desiredN1 = round (scaleRange (-2.4, 2.4) (1, fromIntegral n) t)
-        go past future diff
-          | diff > 0 = go (tail past) (head past : future) (diff - 1)
-          | diff < 0 = go (head future : past) (tail future) (diff + 1)
-          | otherwise = (past, future)
 
 wrappedDraw ::
        (Wrapped a -> [Control a]) -> (a -> Picture) -> Wrapped a -> Picture
@@ -2284,15 +2304,13 @@ drawControl w alpha (HistorySlider (x,y)) = translated x y p
         colored
             (RGBA 0 0 0 alpha)
             (translated xoff 0.75 $ scaled 0.5 0.5 $
-                 lettering (T.pack (show n1 ++ "/" ++ show (n1 + n2)))) <>
+                lettering (T.pack (show i ++ "/" ++ show n))) <>
         colored (RGBA 0.0 0.0 0.0 alpha) (translated xoff 0 (solidRectangle 0.2 0.8)) <>
         colored (RGBA 0.2 0.2 0.2 alpha) (rectangle 4.8 0.25) <>
         colored (RGBA 0.8 0.8 0.8 alpha) (solidRectangle 4.8 0.25)
-    xoff | n < 2 = 2.4
-         | otherwise   = scaleRange (1, fromIntegral n) (-2.4, 2.4) (fromIntegral n1)
-    n1 = length (fst (state w))
-    n2 = length (snd (state w))
-    n  = n1 + n2
+    xoff = timelinePos (state w) * 4.8 - 2.4
+    i = 1 + length (past (state w))
+    n = timelineLength (state w)
 
 drawingControls :: Wrapped () -> [Control ()]
 drawingControls w
@@ -2366,14 +2384,14 @@ simulationControls w
       | zoomFactor w /= 1 || panCenter w /= SP 0 0 = [ResetViewButton (9, -3)]
       | otherwise = []
 
-statefulDebugControls :: Wrapped ([w],[w]) -> [Control ([w],[w])]
+statefulDebugControls :: Wrapped (Timeline w) -> [Control (Timeline w)]
 statefulDebugControls w
     | lastInteractionTime w > 5 = []
     | otherwise = panningLayer ++ pauseDependentControls ++ commonControls ++
                   resetViewButton
   where   
-    hasHistory = not (null (tail (fst (state w))))
-    hasFuture  = not (null (snd (state w)))
+    hasHistory = not (null (past (state w)))
+    hasFuture  = not (null (future (state w)))
     advance | hasFuture  = [RedoButton (6, -9)]
             | otherwise  = [StepButton (6, -9)]
     regress | hasHistory = [UndoButton (0, -9)]
@@ -2412,12 +2430,11 @@ simulationOf initial step draw =
 {-# WARNING simulationOf ["Please use activityOf instead of simulationOf.",
                           "simulationOf may be removed July 2020."] #-}
 
-prependIfChanged :: (a -> a) -> ([a],[a]) -> ([a],[a])
-prependIfChanged f (x:xs, ys)
-    | identical x x' = (x:xs, ys)
-    | otherwise = (x':x:xs, ys)
-    where x' = f x
-prependIfChanged _ ([], _) = error "prependIfChanged: empty state"
+prependIfChanged :: (a -> a) -> Timeline a -> Timeline a
+prependIfChanged f timeline@Timeline{..}
+    | identical present new = timeline
+    | otherwise = Timeline (present : past) new []
+  where new = f present
 
 debugSimulationOf
   :: world                       -- ^ The initial state of the simulation.
@@ -2427,11 +2444,10 @@ debugSimulationOf
                                  --   the state into a picture to display.
   -> IO ()
 debugSimulationOf initial simStep simDraw =
-    runInspect statefulDebugControls ([initial],[]) step (\_ r -> r) draw
+    runInspect statefulDebugControls (Timeline [] initial []) step (\_ r -> r) draw
   where
     step dt = prependIfChanged (simStep dt)
-    draw (x:_, _) = simDraw x
-    draw ([], _) = error "debugSimulationOf: empty state"
+    draw = simDraw . present
 
 {-# WARNING debugSimulationOf ["Please use debugActivityOf instead of debugSimulationOf.",
                                "debugSimulationOf may be removed July 2020."] #-}
@@ -2445,13 +2461,12 @@ debugInteractionOf
   -> (world -> Picture)          -- ^ The visualization function, which converts
                                  --   the state into a picture to display.
   -> IO ()
-debugInteractionOf initial baseStep baseEvent baseDraw = 
-  runInspect statefulDebugControls ([initial], []) step event draw 
+debugInteractionOf initial baseStep baseEvent baseDraw =
+  runInspect statefulDebugControls (Timeline [] initial []) step event draw
   where
     step dt = prependIfChanged (baseStep dt)
     event e = prependIfChanged (baseEvent e)
-    draw (x:_, _) = baseDraw x
-    draw ([], _) = error "debugInteractionOf: empty state"
+    draw = baseDraw . present
 
 {-# WARNING debugInteractionOf ["Please use debugActivityOf instead of debugInteractionOf.",
                                 "debugInteractionOf may be removed July 2020."] #-}

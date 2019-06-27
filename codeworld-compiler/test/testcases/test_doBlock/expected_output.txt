@@ -1,0 +1,3 @@
+program.hs:(1,11)-(3,20): error:
+    The word do should not be used in your code.
+    If this is a variable name, please choose another name.

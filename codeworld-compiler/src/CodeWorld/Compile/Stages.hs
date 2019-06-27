@@ -50,7 +50,7 @@ checkCodeConventions = do
     checkOldStyleMixed mode
     checkOldStyleGray
     when (mode == "codeworld") $ do
-        checkCharacterLiterals
+        checkExcludedSyntax
         checkFunctionParentheses
         checkVarlessPatterns
         checkPatternGuards
@@ -74,6 +74,34 @@ checkDangerousSource = do
             [ (noSrcSpan, CompileError,
                "error: Sorry, but your program uses forbidden language features.")
             ]
+
+-- Look for excluded syntax.  In CodeWorld mode, students are not intended to
+-- use some Haskell-specific features, such as do-blocks and character literals.
+checkExcludedSyntax :: MonadCompile m => m ()
+checkExcludedSyntax =
+    getParsedCode >>= \parsed -> case parsed of
+        Parsed mod -> addDiagnostics $ dedupErrorSpans $
+            everything (++) (mkQ [] checkExps) mod ++
+            everything (++) (mkQ [] checkPats) mod
+        _ -> return ()
+  where checkExps :: Exp SrcSpanInfo -> [Diagnostic]
+        checkExps (Do loc _)                    = [(loc, CompileError, doBlockMsg)]
+        checkExps (Lit loc (Char _ _ _))        = [(loc, CompileError, charLiteralMsg)]
+        checkExps (Lit loc (PrimChar _ _ _))    = [(loc, CompileError, charLiteralMsg)]
+        checkExps (VarQuote loc _)              = [(loc, CompileError, charLiteralMsg)]
+        checkExps (TypQuote loc _)              = [(loc, CompileError, charLiteralMsg)]
+        checkExps _                             = []
+
+        checkPats :: Pat SrcSpanInfo -> [Diagnostic]
+        checkPats (PLit loc _ (Char _ _ _))     = [(loc, CompileError, charLiteralMsg)]
+        checkPats (PLit loc _ (PrimChar _ _ _)) = [(loc, CompileError, charLiteralMsg)]
+        checkPats _                             = []
+
+        doBlockMsg = "error:\n" ++
+            "    The word do should not be used in your code.\n" ++
+            "    If this is a variable name, please choose another name."
+        charLiteralMsg = "error:\n" ++
+            "    Text should be written with double quotes, not single quotes."
 
 -- Looks for use of `mixed` with either a pair of colors (in CodeWorld mode) or
 -- two colors (in Haskell mode).  This is likely to be old code from before the
@@ -123,29 +151,6 @@ checkOldStyleGray =
                 "\n    Remove the function argument for a medium shade of grey." ++
                 "\n    For a different shade of gray, use light, dark, or HSL.")]
         oldStyleGray _ = []
-
--- Look for character literals in the source code.  These are always a mistake
--- in CodeWorld mode, since Text is used as a type even for single characters.
-checkCharacterLiterals :: MonadCompile m => m ()
-checkCharacterLiterals =
-    getParsedCode >>= \parsed -> case parsed of
-        Parsed mod -> addDiagnostics $
-            everything (++) (mkQ [] charLiteralExps) mod ++
-            everything (++) (mkQ [] charLiteralPats) mod
-        _ -> return ()  -- Fall back on GHC for parse errors.
-  where charLiteralExps :: Exp SrcSpanInfo -> [Diagnostic]
-        charLiteralExps (Lit loc (Char _ _ _))        = [(loc, CompileError, msg)]
-        charLiteralExps (Lit loc (PrimChar _ _ _))    = [(loc, CompileError, msg)]
-        charLiteralExps (VarQuote loc _)              = [(loc, CompileError, msg)]
-        charLiteralExps (TypQuote loc _)              = [(loc, CompileError, msg)]
-        charLiteralExps _                             = []
-
-        charLiteralPats :: Pat SrcSpanInfo -> [Diagnostic]
-        charLiteralPats (PLit loc _ (Char _ _ _))     = [(loc, CompileError, msg)]
-        charLiteralPats (PLit loc _ (PrimChar _ _ _)) = [(loc, CompileError, msg)]
-        charLiteralPats _                             = []
-
-        msg = "error:\n    Text should be written with double quotes, not single quotes."
 
 -- Look for functions whose equations are not contiguous.
 checkNoncontiguousEquations :: MonadCompile m => m ()

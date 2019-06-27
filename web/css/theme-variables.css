@@ -289,11 +289,11 @@
     --haddock-toc-bg: #050623;
 
     /* treedialog.css */
-    --treedialog-border: #FFFFFF;
-    --treedialog-bg: #000000;
-    --treedialog-shadow: #FFFFFF;
-    --treedialog-piclink: #FFFFFF;
-    --treedialog-piclink-selected: #0000FF;
+    --treedialog-border: white;
+    --treedialog-bg: black;
+    --treedialog-shadow: white;
+    --treedialog-piclink: white;
+    --treedialog-piclink-selected: yellow;
 
     /* runner.css */
     --infobox-bg: #000000;

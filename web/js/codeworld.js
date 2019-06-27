@@ -931,22 +931,28 @@ function compile() {
 
         const success = request.status === 200;
 
-        let hash;
+        let hash = '';
         let dhash;
-        if (request.responseText.length === 23) {
-            hash = request.responseText;
-            dhash = null;
-        } else {
-            try {
-                const obj = JSON.parse(request.responseText);
-                hash = obj.hash;
-                dhash = obj.dhash;
-            } catch (e) {
-                run('', '',
-                    'Sorry!  Your program couldn\'t be run right now.',
-                    true, null);
-                return;
+        if (request.status < 500) {
+            if (request.responseText.length === 23) {
+                hash = request.responseText;
+                dhash = null;
+            } else {
+                try {
+                    const obj = JSON.parse(request.responseText);
+                    hash = obj.hash;
+                    dhash = obj.dhash;
+                } catch (e) {}
             }
+        }
+
+        if (!hash) {
+            sweetAlert({
+                title: Alert.title('Could not compile'),
+                text: 'The compiler is unavailable.  Please try again later.',
+                type: 'error'
+            });
+            return;
         }
 
         const data = new FormData();

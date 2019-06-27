@@ -2,7 +2,8 @@
   "default": "doc-haskell/CodeWorld.html",
   "blocks": false,
   "named": {
-    "Reference": "doc-haskell/CodeWorld.html",
-    "Editor":    "help/editor-haskell.md"
+    "Reference":            "doc-haskell/CodeWorld.html",
+    "Reference (Sketches)": "doc-haskell/CodeWorld-Sketches.html",
+    "Editor":               "help/editor-haskell.md"
   }
 }

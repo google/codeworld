@@ -1921,6 +1921,12 @@ data Timeline a = Timeline {
     future :: [a]  -- list of future states
     }
 
+applyToTimeline :: (a -> a) -> Timeline a -> Timeline a
+applyToTimeline f timeline@Timeline{..}
+    | identical present new = timeline
+    | otherwise = Timeline (present : past) new []
+  where new = f present
+
 undoTimeline :: Timeline a -> Timeline a
 undoTimeline timeline@Timeline{..} = case past of
     [] -> timeline
@@ -2430,12 +2436,6 @@ simulationOf initial step draw =
 {-# WARNING simulationOf ["Please use activityOf instead of simulationOf.",
                           "simulationOf may be removed July 2020."] #-}
 
-prependIfChanged :: (a -> a) -> Timeline a -> Timeline a
-prependIfChanged f timeline@Timeline{..}
-    | identical present new = timeline
-    | otherwise = Timeline (present : past) new []
-  where new = f present
-
 debugSimulationOf
   :: world                       -- ^ The initial state of the simulation.
   -> (Double -> world -> world)  -- ^ The time step function, which advances
@@ -2446,7 +2446,7 @@ debugSimulationOf
 debugSimulationOf initial simStep simDraw =
     runInspect statefulDebugControls (Timeline [] initial []) step (\_ r -> r) draw
   where
-    step dt = prependIfChanged (simStep dt)
+    step dt = applyToTimeline (simStep dt)
     draw = simDraw . present
 
 {-# WARNING debugSimulationOf ["Please use debugActivityOf instead of debugSimulationOf.",
@@ -2464,8 +2464,8 @@ debugInteractionOf
 debugInteractionOf initial baseStep baseEvent baseDraw =
   runInspect statefulDebugControls (Timeline [] initial []) step event draw
   where
-    step dt = prependIfChanged (baseStep dt)
-    event e = prependIfChanged (baseEvent e)
+    step dt = applyToTimeline (baseStep dt)
+    event e = applyToTimeline (baseEvent e)
     draw = baseDraw . present
 
 {-# WARNING debugInteractionOf ["Please use debugActivityOf instead of debugInteractionOf.",

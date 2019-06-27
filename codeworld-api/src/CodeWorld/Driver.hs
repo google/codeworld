@@ -1144,10 +1144,6 @@ data GameState s
               PlayerId
               (Future s)
 
-isRunning :: GameState s -> Bool
-isRunning Running {} = True
-isRunning _ = False
-
 gameTime :: GameState s -> Timestamp -> Double
 gameTime (Running _ _ tstart _ _) t = t - tstart
 gameTime _ _ = 0
@@ -1979,10 +1975,6 @@ data Control :: * -> * where
     HistorySlider :: Point -> Control (Timeline a)
 
 data StrictPoint = SP !Double !Double deriving (Eq, Show)
-
-toStrictPoint :: Point -> StrictPoint
-toStrictPoint (x, y) = SP x y
-
 data StrictMaybe a = SNothing | SJust !a deriving (Functor, Show)
 
 data Wrapped a = Wrapped

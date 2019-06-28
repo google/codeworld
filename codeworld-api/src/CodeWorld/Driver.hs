@@ -399,6 +399,10 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
             , k /= (0 :: Int)
             ]
 
+-- | Applies the affine transformation from the DrawState and prepares to draw
+-- with it.  This does not set the color at the same time, because different
+-- pictures need to apply the color, if any, in different ways, often outside of
+-- the action that sets up the geometry.
 withDS :: MonadCanvas m => DrawState -> m a -> m a
 withDS (DrawState (AffineTransformation ta tb tc td te tf) _col) action = CM.saveRestore $ do
     CM.transform ta tb tc td te tf

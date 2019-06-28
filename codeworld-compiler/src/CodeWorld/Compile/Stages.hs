@@ -206,22 +206,6 @@ checkFunctionParentheses =
             everything (++) (mkQ [] badPatternApps) mod
         _ -> return ()  -- Fall back on GHC for parse errors.
 
-dedupErrorSpans :: [Diagnostic] -> [Diagnostic]
-dedupErrorSpans [] = []
-dedupErrorSpans [err] = [err]
-dedupErrorSpans ((loc1, sev1, msg1) : (loc2, sev2, msg2) : errs)
-  | loc1 `contains` loc2 = dedupErrorSpans ((loc1, sev1, msg1) : errs)
-  | otherwise = (loc1, sev1, msg1) : dedupErrorSpans ((loc2, sev2, msg2) : errs)
-  where
-    SrcSpanInfo {srcInfoSpan = span1} `contains` SrcSpanInfo {srcInfoSpan = span2} =
-        srcSpanFilename span1 == srcSpanFilename span2 &&
-        (srcSpanStartLine span1 < srcSpanStartLine span2 ||
-         (srcSpanStartLine span1 == srcSpanStartLine span2 &&
-          srcSpanStartColumn span1 <= srcSpanStartColumn span2)) &&
-        (srcSpanEndLine span1 > srcSpanEndLine span2 ||
-         (srcSpanEndLine span1 == srcSpanEndLine span2 &&
-          srcSpanEndColumn span1 >= srcSpanEndColumn span2))
-
 badExpApps :: Exp SrcSpanInfo -> [Diagnostic]
 badExpApps (App loc lhs rhs)
     | not (isGoodExpAppLhs lhs) = [(ann rhs, CompileError, errorMsg)]
@@ -417,3 +401,19 @@ extraCommas (TupleSection topLoc _ parts) =
         toLoc _ _ _ = Nothing
         file = srcSpanFilename (srcInfoSpan topLoc)
 extraCommas _ = []
+
+dedupErrorSpans :: [Diagnostic] -> [Diagnostic]
+dedupErrorSpans [] = []
+dedupErrorSpans [err] = [err]
+dedupErrorSpans ((loc1, sev1, msg1) : (loc2, sev2, msg2) : errs)
+  | loc1 `contains` loc2 = dedupErrorSpans ((loc1, sev1, msg1) : errs)
+  | otherwise = (loc1, sev1, msg1) : dedupErrorSpans ((loc2, sev2, msg2) : errs)
+  where
+    SrcSpanInfo {srcInfoSpan = span1} `contains` SrcSpanInfo {srcInfoSpan = span2} =
+        srcSpanFilename span1 == srcSpanFilename span2 &&
+        (srcSpanStartLine span1 < srcSpanStartLine span2 ||
+         (srcSpanStartLine span1 == srcSpanStartLine span2 &&
+          srcSpanStartColumn span1 <= srcSpanStartColumn span2)) &&
+        (srcSpanEndLine span1 > srcSpanEndLine span2 ||
+         (srcSpanEndLine span1 == srcSpanEndLine span2 &&
+          srcSpanEndColumn span1 >= srcSpanEndColumn span2))

@@ -98,24 +98,6 @@ import System.Environment
 #endif
 
 --------------------------------------------------------------------------------
--- A Drawing is an intermediate and simpler representation of a Picture, suitable
--- for drawing. A drawing does not contain unnecessary metadata like CallStacks.
--- The drawer is specific to the platform.
-data Drawing m
-    = Shape (Drawer m)
-    | Transformation (DrawState -> DrawState)
-                     (Drawing m)
-    | Drawings [Drawing m]
-
-instance Semigroup (Drawing m) where
-    a <> Drawings bs = Drawings (a : bs)
-    a <> b           = Drawings [a, b]
-
-instance Monoid (Drawing m) where
-    mempty = Drawings []
-    mappend a (Drawings bs) = Drawings (a : bs)
-    mappend a b = Drawings [a, b]
-    mconcat = Drawings
 
 data DrawState =
     DrawState
@@ -143,11 +125,178 @@ mapDSAT f (DrawState at mc) = DrawState (f at) mc
 mapDSColor :: (Maybe Color -> Maybe Color) -> DrawState -> DrawState
 mapDSColor f (DrawState at mc) = DrawState at (f mc)
 
--- A NodeId a unique id for each node in a Picture of Drawing, chosen by the order
--- the node appears in DFS. When a Picture is converted to a drawing the NodeId's of
--- corresponding nodes are shared. Always >=0.
-newtype NodeId = NodeId { getNodeId :: Int}
-    deriving (Eq, Ord, Enum)
+initialDS :: DrawState
+initialDS = DrawState initialAffineTransformation Nothing
+
+translateDS :: Double -> Double -> DrawState -> DrawState
+translateDS x y = mapDSAT $ \(AffineTransformation a b c d e f) ->
+    AffineTransformation
+        a b c d
+        (a * 25 * x + c * 25 * y + e)
+        (b * 25 * x + d * 25 * y + f)
+
+scaleDS :: Double -> Double -> DrawState -> DrawState
+scaleDS x y = mapDSAT $ \(AffineTransformation a b c d e f) ->
+    AffineTransformation (x * a) (x * b) (y * c) (y * d) e f
+
+rotateDS :: Double -> DrawState -> DrawState
+rotateDS r = mapDSAT $ \(AffineTransformation a b c d e f) ->
+    AffineTransformation
+        (a * cos r + c * sin r)
+        (b * cos r + d * sin r)
+        (c * cos r - a * sin r)
+        (d * cos r - b * sin r)
+        e
+        f
+
+setColorDS :: Color -> DrawState -> DrawState
+setColorDS col = mapDSColor $ \mcol ->
+    case (col, mcol) of
+        (_, Nothing) -> Just col
+        (RGBA _ _ _ 0, Just _) -> Just col
+        (RGBA _ _ _ alpha, Just (RGBA rr gg bb alpha0)) -> Just (RGBA rr gg bb (alpha0 * alpha))
+
+getColorDS :: DrawState -> Maybe Color
+getColorDS (DrawState _ col) = col
+
+--------------------------------------------------------------------------------
+
+-- | Applies the affine transformation from the DrawState and prepares to draw
+-- with it.  This does not set the color at the same time, because different
+-- pictures need to apply the color, if any, in different ways, often outside of
+-- the action that sets up the geometry.
+withDS :: MonadCanvas m => DrawState -> m a -> m a
+withDS (DrawState (AffineTransformation ta tb tc td te tf) _col) action = CM.saveRestore $ do
+    CM.transform ta tb tc td te tf
+    CM.beginPath
+    action
+
+applyColor :: MonadCanvas m => DrawState -> m ()
+applyColor ds =
+    case getColorDS ds of
+        Nothing -> do
+            CM.strokeColor 0 0 0 1
+            CM.fillColor 0 0 0 1
+        Just (RGBA r g b a) -> do
+            CM.strokeColor
+                (round $ r * 255)
+                (round $ g * 255)
+                (round $ b * 255)
+                a
+            CM.fillColor
+                (round $ r * 255)
+                (round $ g * 255)
+                (round $ b * 255)
+                a
+
+followPath :: MonadCanvas m => [Point] -> Bool -> Bool -> m ()
+followPath [] _ _ = return ()
+followPath [_] _ _ = return ()
+followPath ((sx, sy):ps) closed False = do
+    CM.moveTo (25 * sx, 25 * sy)
+    forM_ ps $ \(x, y) -> CM.lineTo (25 * x, 25 * y)
+    when closed $ CM.closePath
+followPath [p1, p2] False True = followPath [p1, p2] False False
+followPath ps False True = do
+    let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = take 3 ps
+        dprev = euclideanDistance p1 p2
+        dnext = euclideanDistance p2 p3
+        p = dprev / (dprev + dnext)
+        cx = x2 + p * (x1 - x3) / 2
+        cy = y2 + p * (y1 - y3) / 2
+    CM.moveTo (25 * x1, 25 * y1)
+    CM.quadraticCurveTo (25 * cx, 25 * cy) (25 * x2, 25 * y2)
+    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $ \(p1@(x1, y1), p2@(x2, y2), p3@(x3, y3), p4@(x4, y4)) -> do
+        let dp = euclideanDistance p1 p2
+            d1 = euclideanDistance p2 p3
+            d2 = euclideanDistance p3 p4
+            p = d1 / (d1 + d2)
+            r = d1 / (dp + d1)
+            cx1 = x2 + r * (x3 - x1) / 2
+            cy1 = y2 + r * (y3 - y1) / 2
+            cx2 = x3 + p * (x2 - x4) / 2
+            cy2 = y3 + p * (y2 - y4) / 2
+        CM.bezierCurveTo
+            (25 * cx1, 25 * cy1)
+            (25 * cx2, 25 * cy2)
+            (25 * x3,  25 * y3)
+    let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = reverse $ take 3 $ reverse ps
+        dp = euclideanDistance p1 p2
+        d1 = euclideanDistance p2 p3
+        r = d1 / (dp + d1)
+        cx = x2 + r * (x3 - x1) / 2
+        cy = y2 + r * (y3 - y1) / 2
+    CM.quadraticCurveTo (25 * cx, 25 * cy) (25 * x3, 25 * y3)
+followPath ps@(_:(sx, sy):_) True True = do
+    CM.moveTo (25 * sx, 25 * sy)
+    let rep = cycle ps
+    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $ \(p1@(x1, y1), p2@(x2, y2), p3@(x3, y3), p4@(x4, y4)) -> do
+        let dp = euclideanDistance p1 p2
+            d1 = euclideanDistance p2 p3
+            d2 = euclideanDistance p3 p4
+            p = d1 / (d1 + d2)
+            r = d1 / (dp + d1)
+            cx1 = x2 + r * (x3 - x1) / 2
+            cy1 = y2 + r * (y3 - y1) / 2
+            cx2 = x3 + p * (x2 - x4) / 2
+            cy2 = y3 + p * (y2 - y4) / 2
+        CM.bezierCurveTo
+            (25 * cx1, 25 * cy1)
+            (25 * cx2, 25 * cy2)
+            (25 * x3,  25 * y3)
+    CM.closePath
+
+euclideanDistance :: Point -> Point -> Double
+euclideanDistance (x1, y1) (x2, y2) = sqrt $ square (x2 - x1) + square (y2 - y1)
+  where
+    square x = x * x
+
+drawFigure :: MonadCanvas m => DrawState -> Double -> m () -> m ()
+drawFigure ds w figure = do
+    withDS ds $ do
+        figure
+        when (w /= 0) $ do
+            CM.lineWidth (25 * w)
+            applyColor ds
+            CM.stroke
+    when (w == 0) $ do
+        CM.lineWidth 1
+        applyColor ds
+        CM.stroke
+
+fontString :: TextStyle -> Font -> Text
+fontString style font = stylePrefix style <> "25px " <> fontName font
+  where
+    stylePrefix Plain = ""
+    stylePrefix Bold = "bold "
+    stylePrefix Italic = "italic "
+    fontName SansSerif = "sans-serif"
+    fontName Serif = "serif"
+    fontName Monospace = "monospace"
+    fontName Handwriting = "cursive"
+    fontName Fancy = "fantasy"
+    fontName (NamedFont txt) = "\"" <> T.filter (/= '"') txt <> "\""
+
+--------------------------------------------------------------------------------
+
+-- | A Drawing is an intermediate and simpler representation of a Picture, suitable
+-- for drawing. A drawing does not contain unnecessary metadata like CallStacks.
+-- The drawer is specific to the platform.
+data Drawing m
+    = Shape (Drawer m)
+    | Transformation (DrawState -> DrawState)
+                     (Drawing m)
+    | Drawings [Drawing m]
+
+instance Semigroup (Drawing m) where
+    a <> Drawings bs = Drawings (a : bs)
+    a <> b           = Drawings [a, b]
+
+instance Monoid (Drawing m) where
+    mempty = Drawings []
+    mappend a (Drawings bs) = Drawings (a : bs)
+    mappend a b = Drawings [a, b]
+    mconcat = Drawings
 
 pictureToDrawing :: MonadCanvas m => Picture -> Drawing m
 pictureToDrawing (SolidClosedCurve _ pts) = Shape $ polygonDrawer pts True
@@ -186,40 +335,6 @@ pictureToDrawing (Rotate _ r p) =
     Transformation (rotateDS r) $ pictureToDrawing p
 pictureToDrawing (Pictures _ ps) = Drawings $ pictureToDrawing <$> ps
 pictureToDrawing (PictureAnd _ ps) = Drawings $ pictureToDrawing <$> ps
-
-initialDS :: DrawState
-initialDS = DrawState initialAffineTransformation Nothing
-
-translateDS :: Double -> Double -> DrawState -> DrawState
-translateDS x y = mapDSAT $ \(AffineTransformation a b c d e f) ->
-    AffineTransformation
-        a b c d
-        (a * 25 * x + c * 25 * y + e)
-        (b * 25 * x + d * 25 * y + f)
-
-scaleDS :: Double -> Double -> DrawState -> DrawState
-scaleDS x y = mapDSAT $ \(AffineTransformation a b c d e f) ->
-    AffineTransformation (x * a) (x * b) (y * c) (y * d) e f
-
-rotateDS :: Double -> DrawState -> DrawState
-rotateDS r = mapDSAT $ \(AffineTransformation a b c d e f) ->
-    AffineTransformation
-        (a * cos r + c * sin r)
-        (b * cos r + d * sin r)
-        (c * cos r - a * sin r)
-        (d * cos r - b * sin r)
-        e
-        f
-
-setColorDS :: Color -> DrawState -> DrawState
-setColorDS col = mapDSColor $ \mcol ->
-    case (col, mcol) of
-        (_, Nothing) -> Just col
-        (RGBA _ _ _ 0, Just _) -> Just col
-        (RGBA _ _ _ alpha, Just (RGBA rr gg bb alpha0)) -> Just (RGBA rr gg bb (alpha0 * alpha))
-
-getColorDS :: DrawState -> Maybe Color
-getColorDS (DrawState _ col) = col
 
 type Drawer m = DrawState -> DrawMethods m
 
@@ -339,7 +454,7 @@ coordinatePlaneDrawer :: MonadCanvas m => Drawer m
 coordinatePlaneDrawer ds =
     DrawMethods
     { drawShape = drawDrawing ds coordinatePlaneDrawing
-    , shapeContains = isJust <$> findTopShape ds coordinatePlaneDrawing
+    , shapeContains = drawingContains ds coordinatePlaneDrawing
     }
 
 coordinatePlaneDrawing :: MonadCanvas m => Drawing m
@@ -370,126 +485,23 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
             , k /= (0 :: Int)
             ]
 
--- | Applies the affine transformation from the DrawState and prepares to draw
--- with it.  This does not set the color at the same time, because different
--- pictures need to apply the color, if any, in different ways, often outside of
--- the action that sets up the geometry.
-withDS :: MonadCanvas m => DrawState -> m a -> m a
-withDS (DrawState (AffineTransformation ta tb tc td te tf) _col) action = CM.saveRestore $ do
-    CM.transform ta tb tc td te tf
-    CM.beginPath
-    action
-
-applyColor :: MonadCanvas m => DrawState -> m ()
-applyColor ds =
-    case getColorDS ds of
-        Nothing -> do
-            CM.strokeColor 0 0 0 1
-            CM.fillColor 0 0 0 1
-        Just (RGBA r g b a) -> do
-            CM.strokeColor
-                (round $ r * 255)
-                (round $ g * 255)
-                (round $ b * 255)
-                a
-            CM.fillColor
-                (round $ r * 255)
-                (round $ g * 255)
-                (round $ b * 255)
-                a
-
-followPath :: MonadCanvas m => [Point] -> Bool -> Bool -> m ()
-followPath [] _ _ = return ()
-followPath [_] _ _ = return ()
-followPath ((sx, sy):ps) closed False = do
-    CM.moveTo (25 * sx, 25 * sy)
-    forM_ ps $ \(x, y) -> CM.lineTo (25 * x, 25 * y)
-    when closed $ CM.closePath
-followPath [p1, p2] False True = followPath [p1, p2] False False
-followPath ps False True = do
-    let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = take 3 ps
-        dprev = euclideanDistance p1 p2
-        dnext = euclideanDistance p2 p3
-        p = dprev / (dprev + dnext)
-        cx = x2 + p * (x1 - x3) / 2
-        cy = y2 + p * (y1 - y3) / 2
-    CM.moveTo (25 * x1, 25 * y1)
-    CM.quadraticCurveTo (25 * cx, 25 * cy) (25 * x2, 25 * y2)
-    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $ \(p1@(x1, y1), p2@(x2, y2), p3@(x3, y3), p4@(x4, y4)) -> do
-        let dp = euclideanDistance p1 p2
-            d1 = euclideanDistance p2 p3
-            d2 = euclideanDistance p3 p4
-            p = d1 / (d1 + d2)
-            r = d1 / (dp + d1)
-            cx1 = x2 + r * (x3 - x1) / 2
-            cy1 = y2 + r * (y3 - y1) / 2
-            cx2 = x3 + p * (x2 - x4) / 2
-            cy2 = y3 + p * (y2 - y4) / 2
-        CM.bezierCurveTo
-            (25 * cx1, 25 * cy1)
-            (25 * cx2, 25 * cy2)
-            (25 * x3,  25 * y3)
-    let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = reverse $ take 3 $ reverse ps
-        dp = euclideanDistance p1 p2
-        d1 = euclideanDistance p2 p3
-        r = d1 / (dp + d1)
-        cx = x2 + r * (x3 - x1) / 2
-        cy = y2 + r * (y3 - y1) / 2
-    CM.quadraticCurveTo (25 * cx, 25 * cy) (25 * x3, 25 * y3)
-followPath ps@(_:(sx, sy):_) True True = do
-    CM.moveTo (25 * sx, 25 * sy)
-    let rep = cycle ps
-    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $ \(p1@(x1, y1), p2@(x2, y2), p3@(x3, y3), p4@(x4, y4)) -> do
-        let dp = euclideanDistance p1 p2
-            d1 = euclideanDistance p2 p3
-            d2 = euclideanDistance p3 p4
-            p = d1 / (d1 + d2)
-            r = d1 / (dp + d1)
-            cx1 = x2 + r * (x3 - x1) / 2
-            cy1 = y2 + r * (y3 - y1) / 2
-            cx2 = x3 + p * (x2 - x4) / 2
-            cy2 = y3 + p * (y2 - y4) / 2
-        CM.bezierCurveTo
-            (25 * cx1, 25 * cy1)
-            (25 * cx2, 25 * cy2)
-            (25 * x3,  25 * y3)
-    CM.closePath
-
-euclideanDistance :: Point -> Point -> Double
-euclideanDistance (x1, y1) (x2, y2) = sqrt $ square (x2 - x1) + square (y2 - y1)
-  where
-    square x = x * x
-
-drawFigure :: MonadCanvas m => DrawState -> Double -> m () -> m ()
-drawFigure ds w figure = do
-    withDS ds $ do
-        figure
-        when (w /= 0) $ do
-            CM.lineWidth (25 * w)
-            applyColor ds
-            CM.stroke
-    when (w == 0) $ do
-        CM.lineWidth 1
-        applyColor ds
-        CM.stroke
-
-fontString :: TextStyle -> Font -> Text
-fontString style font = stylePrefix style <> "25px " <> fontName font
-  where
-    stylePrefix Plain = ""
-    stylePrefix Bold = "bold "
-    stylePrefix Italic = "italic "
-    fontName SansSerif = "sans-serif"
-    fontName Serif = "serif"
-    fontName Monospace = "monospace"
-    fontName Handwriting = "cursive"
-    fontName Fancy = "fantasy"
-    fontName (NamedFont txt) = "\"" <> T.filter (/= '"') txt <> "\""
-
 drawDrawing :: MonadCanvas m => DrawState -> Drawing m -> m ()
-drawDrawing ds (Shape shape) = drawShape $ shape ds
+drawDrawing ds (Shape drawer) = drawShape (drawer ds)
 drawDrawing ds (Transformation f d) = drawDrawing (f ds) d
 drawDrawing ds (Drawings drs) = mapM_ (drawDrawing ds) (reverse drs)
+
+drawingContains :: MonadCanvas m => DrawState -> Drawing m -> m Bool
+drawingContains ds (Shape drawer) = shapeContains (drawer ds)
+drawingContains ds (Transformation f d) = drawingContains (f ds) d
+drawingContains ds (Drawings drs) = or <$> mapM (drawingContains ds) drs
+
+--------------------------------------------------------------------------------
+
+-- A NodeId a unique id for each node in a Picture of Drawing, chosen by the order
+-- the node appears in DFS. When a Picture is converted to a drawing the NodeId's of
+-- corresponding nodes are shared. Always >=0.
+newtype NodeId = NodeId { getNodeId :: Int}
+    deriving (Eq, Ord, Enum)
 
 findTopShape :: MonadCanvas m => DrawState -> Drawing m -> m (Maybe NodeId)
 findTopShape ds d = do

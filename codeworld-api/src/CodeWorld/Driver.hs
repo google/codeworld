@@ -1539,52 +1539,44 @@ foreign import javascript interruptible "window.dummyVar = 0;"
 
 -- Wraps the event and state from run so they can be paused by pressing the Inspect
 -- button.
-runInspect :: 
-       (Wrapped s -> [Control s])
-    -> s
+runInspect
+    :: s
     -> (Double -> s -> s)
     -> (Event -> s -> s)
-    -> (s -> Picture) 
+    -> (s -> Picture)
+    -> (s -> Picture)
     -> IO ()
-runInspect controls initial stepHandler eventHandler drawHandler = do
+runInspect initial step event draw rawDraw = do
     -- Ensure that the first frame picture doesn't expose any type errors,
     -- before showing the canvas.  This avoids showing a blank screen when
     -- there are deferred type errors that are effectively compile errors.
-    evaluate $ rnf $ drawHandler initial
+    evaluate $ rnf $ rawDraw initial
 
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    let initialWrapper = (debugStateInit, wrappedInitial initial)
-        stepHandlerWrapper dt wrapper@(debugState, _) =
+    let debugInitial = (debugStateInit, initial)
+        debugStep dt s@(debugState, _) =
             case debugStateActive debugState of
-                True -> wrapper
-                False -> inRight (wrappedStep stepHandler dt) wrapper
-        eventHandlerWrapper evt wrapper@(debugState, _) =
+                True -> s
+                False -> inRight (step dt) s
+        debugEvent evt s@(debugState, _) =
             case (debugStateActive debugState, evt) of
-                (_, Left debugEvent) ->
-                    inLeft (updateDebugState debugEvent) wrapper
-                (True, _) -> wrapper
-                (_, Right normalEvent) ->
-                    inRight (wrappedEvent controls stepHandler eventHandler normalEvent) wrapper
-        drawHandlerWrapper (debugState, wrappedState) =
+                (_, Left e) -> inLeft (updateDebugState e) s
+                (True, _) -> s
+                (_, Right e) -> inRight (event e) s
+        debugDraw (debugState, s) =
             case debugStateActive debugState of
-                True -> drawDebugState debugState $ pictureToDrawing $ drawHandler (state wrappedState)
-                False -> pictureToDrawing (wrappedDraw controls drawHandler wrappedState)
-        drawPicHandler (_debugState, wrappedState) =
-            drawHandler $ state wrappedState
+                True -> drawDebugState debugState (pictureToDrawing (rawDraw s))
+                False -> pictureToDrawing (draw s)
+        debugRawDraw (_debugState, s) = rawDraw s
     (sendEvent, getState) <-
-        run
-            initialWrapper
-            stepHandlerWrapper
-            (\e w -> (eventHandlerWrapper e) w)
-            drawHandlerWrapper
-            (Right . TimePassing)
+        run debugInitial debugStep debugEvent debugDraw (Right . TimePassing)
     let pauseEvent True = sendEvent $ Left DebugStart
         pauseEvent False = sendEvent $ Left DebugStop
         highlightSelectEvent True n = sendEvent $ Left (HighlightEvent n)
         highlightSelectEvent False n = sendEvent $ Left (SelectEvent n)
     onEvents canvas (sendEvent . Right)
-    inspect (drawPicHandler <$> getState) pauseEvent highlightSelectEvent
+    inspect (debugRawDraw <$> getState) pauseEvent highlightSelectEvent
     waitForever
 
 -- Given a drawing, highlight the first node and select second node. Both recolor
@@ -1738,24 +1730,20 @@ run initial stepHandler eventHandler drawHandler =
         initialStateName <- makeStableName $! initial
         go t0 nullFrame initialStateName True
 
-runInspect :: 
-       (Wrapped s -> [Control s])
-    -> s
+runInspect
+    :: s
     -> (Double -> s -> s)
     -> (Event -> s -> s)
-    -> (s -> Picture) 
+    -> (s -> Picture)
+    -> (s -> Picture)
     -> IO ()
-runInspect controls initial stepHandler eventHandler drawHandler =
-    run (wrappedInitial initial)
-        (wrappedStep stepHandler)
-        (wrappedEvent controls stepHandler eventHandler)
-        (wrappedDraw controls drawHandler)
+runInspect initial step event draw _rawDraw = run initial step event draw
 
 getDeployHash :: IO Text
 getDeployHash = error "game API unimplemented in stand-alone interface mode"
 
-runGame ::
-       GameToken
+runGame
+    :: GameToken
     -> Int
     -> (StdGen -> s)
     -> (Double -> s -> s)
@@ -1910,7 +1898,7 @@ interactionOf
   -> (world -> Picture)          -- ^ The visualization function, which converts
                                  --   the state into a picture to display.
   -> IO ()
-interactionOf = runInspect (const [])
+interactionOf initial step event draw = runInspect initial step event draw draw
 
 {-# WARNING interactionOf ["Please use activityOf instead of interactionOf.",
                            "interactionOf may be removed July 2020."] #-}
@@ -1920,6 +1908,9 @@ data Timeline a = Timeline {
     present :: !a, -- present state
     future :: [a]  -- list of future states
     }
+
+newTimeline :: a -> Timeline a
+newTimeline x = Timeline [] x []
 
 applyToTimeline :: (a -> a) -> Timeline a -> Timeline a
 applyToTimeline f timeline@Timeline{..}
@@ -2332,7 +2323,15 @@ drawingControls w
 -- | Draws a 'Picture'.  This is the simplest CodeWorld entry point.
 drawingOf :: Picture  -- ^ The picture to show on the screen.
           -> IO ()
-drawingOf pic = runInspect drawingControls () (\_ _ -> ()) (\_ _ -> ()) (const pic)
+drawingOf pic =
+    runInspect (wrappedInitial ())
+               (wrappedStep step)
+               (wrappedEvent drawingControls step event)
+               (wrappedDraw drawingControls draw)
+               (draw . state)
+  where step _ _ = ()
+        event _ _ = ()
+        draw _ = pic
 
 animationControls :: Wrapped Double -> [Control Double]
 animationControls w
@@ -2364,7 +2363,12 @@ animationControls w
 animationOf :: (Double -> Picture)  -- ^ A function that produces animation
                                     --   frames, given the time in seconds.
             -> IO ()
-animationOf f = runInspect animationControls 0 (+) (\_ r -> r) f
+animationOf f =
+    runInspect (wrappedInitial 0)
+               (wrappedStep (+))
+               (wrappedEvent animationControls (+) (const id))
+               (wrappedDraw animationControls f)
+               (f . state)
 
 simulationControls :: Wrapped w -> [Control w]
 simulationControls w
@@ -2427,7 +2431,11 @@ simulationOf
                                  --   the state into a picture to display.
   -> IO ()
 simulationOf initial step draw =
-    runInspect simulationControls initial step (\_ r -> r) draw
+    runInspect (wrappedInitial initial)
+               (wrappedStep step)
+               (wrappedEvent simulationControls step (const id))
+               (wrappedDraw simulationControls draw)
+               (draw . state)
 
 {-# WARNING simulationOf ["Please use activityOf instead of simulationOf.",
                           "simulationOf may be removed July 2020."] #-}
@@ -2439,10 +2447,15 @@ debugSimulationOf
   -> (world -> Picture)          -- ^ The visualization function, which converts
                                  --   the state into a picture to display.
   -> IO ()
-debugSimulationOf initial simStep simDraw =
-    runInspect statefulDebugControls (Timeline [] initial []) step (\_ r -> r) draw
+debugSimulationOf simInitial simStep simDraw =
+    runInspect (wrappedInitial initial)
+               (wrappedStep step)
+               (wrappedEvent statefulDebugControls step (const id))
+               (wrappedDraw statefulDebugControls draw)
+               (draw . state)
   where
-    step dt = applyToTimeline (simStep dt)
+    initial = newTimeline simInitial
+    step = applyToTimeline . simStep
     draw = simDraw . present
 
 {-# WARNING debugSimulationOf ["Please use debugActivityOf instead of debugSimulationOf.",
@@ -2457,11 +2470,16 @@ debugInteractionOf
   -> (world -> Picture)          -- ^ The visualization function, which converts
                                  --   the state into a picture to display.
   -> IO ()
-debugInteractionOf initial baseStep baseEvent baseDraw =
-  runInspect statefulDebugControls (Timeline [] initial []) step event draw
+debugInteractionOf baseInitial baseStep baseEvent baseDraw =
+    runInspect (wrappedInitial initial)
+               (wrappedStep step)
+               (wrappedEvent statefulDebugControls step event)
+               (wrappedDraw statefulDebugControls draw)
+               (draw . state)
   where
-    step dt = applyToTimeline (baseStep dt)
-    event e = applyToTimeline (baseEvent e)
+    initial = newTimeline baseInitial
+    step = applyToTimeline . baseStep
+    event = applyToTimeline . baseEvent
     draw = baseDraw . present
 
 {-# WARNING debugInteractionOf ["Please use debugActivityOf instead of debugInteractionOf.",

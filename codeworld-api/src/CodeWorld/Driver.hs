@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wno-name-shadowing -Wno-orphans -Wno-unticked-promoted-constructors #-}
+
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
@@ -31,6 +32,7 @@ module CodeWorld.Driver where
 
 import qualified CodeWorld.CanvasM as CM
 import CodeWorld.Color
+import CodeWorld.DrawState
 import CodeWorld.Event
 import CodeWorld.Picture
 import Control.Concurrent
@@ -96,70 +98,6 @@ import qualified Graphics.Blank as Canvas
 import System.Environment
 
 #endif
-
---------------------------------------------------------------------------------
-
-data DrawState =
-    DrawState
-        !AffineTransformation
-        !(Maybe Color) -- ^ A 'Color', if already chosen.
-
--- | @(AffineTransformation a b c d e f)@ represents an affine transformation matrix
---
--- > a c e
--- > b d f
--- > 0 0 1
---
--- References:
--- https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/transform
--- https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations
-data AffineTransformation =
-    AffineTransformation !Double !Double !Double !Double !Double !Double
-
-initialAffineTransformation :: AffineTransformation
-initialAffineTransformation = AffineTransformation 1 0 0 1 0 0
-
-mapDSAT :: (AffineTransformation -> AffineTransformation) -> DrawState -> DrawState
-mapDSAT f (DrawState at mc) = DrawState (f at) mc
-
-mapDSColor :: (Maybe Color -> Maybe Color) -> DrawState -> DrawState
-mapDSColor f (DrawState at mc) = DrawState at (f mc)
-
-initialDS :: DrawState
-initialDS = DrawState initialAffineTransformation Nothing
-
-translateDS :: Double -> Double -> DrawState -> DrawState
-translateDS x y = mapDSAT $ \(AffineTransformation a b c d e f) ->
-    AffineTransformation
-        a b c d
-        (a * 25 * x + c * 25 * y + e)
-        (b * 25 * x + d * 25 * y + f)
-
-scaleDS :: Double -> Double -> DrawState -> DrawState
-scaleDS x y = mapDSAT $ \(AffineTransformation a b c d e f) ->
-    AffineTransformation (x * a) (x * b) (y * c) (y * d) e f
-
-rotateDS :: Double -> DrawState -> DrawState
-rotateDS r = mapDSAT $ \(AffineTransformation a b c d e f) ->
-    AffineTransformation
-        (a * cos r + c * sin r)
-        (b * cos r + d * sin r)
-        (c * cos r - a * sin r)
-        (d * cos r - b * sin r)
-        e
-        f
-
-setColorDS :: Color -> DrawState -> DrawState
-setColorDS col = mapDSColor $ \mcol ->
-    case (col, mcol) of
-        (_, Nothing) -> Just col
-        (RGBA _ _ _ 0, Just _) -> Just col
-        (RGBA _ _ _ alpha, Just (RGBA rr gg bb alpha0)) -> Just (RGBA rr gg bb (alpha0 * alpha))
-
-getColorDS :: DrawState -> Maybe Color
-getColorDS (DrawState _ col) = col
-
---------------------------------------------------------------------------------
 
 -- | Applies the affine transformation from the DrawState and prepares to draw
 -- with it.  This does not set the color at the same time, because different

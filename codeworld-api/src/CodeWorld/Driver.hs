@@ -131,8 +131,8 @@ followPath :: MonadCanvas m => [Point] -> Bool -> Bool -> m ()
 followPath [] _ _ = return ()
 followPath [_] _ _ = return ()
 followPath ((sx, sy):ps) closed False = do
-    CM.moveTo (25 * sx, 25 * sy)
-    forM_ ps $ \(x, y) -> CM.lineTo (25 * x, 25 * y)
+    CM.moveTo (sx, sy)
+    forM_ ps $ \(x, y) -> CM.lineTo (x, y)
     when closed $ CM.closePath
 followPath [p1, p2] False True = followPath [p1, p2] False False
 followPath ps False True = do
@@ -142,8 +142,8 @@ followPath ps False True = do
         p = dprev / (dprev + dnext)
         cx = x2 + p * (x1 - x3) / 2
         cy = y2 + p * (y1 - y3) / 2
-    CM.moveTo (25 * x1, 25 * y1)
-    CM.quadraticCurveTo (25 * cx, 25 * cy) (25 * x2, 25 * y2)
+    CM.moveTo (x1, y1)
+    CM.quadraticCurveTo (cx, cy) (x2, y2)
     forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $ \(p1@(x1, y1), p2@(x2, y2), p3@(x3, y3), p4@(x4, y4)) -> do
         let dp = euclideanDistance p1 p2
             d1 = euclideanDistance p2 p3
@@ -155,18 +155,18 @@ followPath ps False True = do
             cx2 = x3 + p * (x2 - x4) / 2
             cy2 = y3 + p * (y2 - y4) / 2
         CM.bezierCurveTo
-            (25 * cx1, 25 * cy1)
-            (25 * cx2, 25 * cy2)
-            (25 * x3,  25 * y3)
+            (cx1, cy1)
+            (cx2, cy2)
+            (x3,  y3)
     let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = reverse $ take 3 $ reverse ps
         dp = euclideanDistance p1 p2
         d1 = euclideanDistance p2 p3
         r = d1 / (dp + d1)
         cx = x2 + r * (x3 - x1) / 2
         cy = y2 + r * (y3 - y1) / 2
-    CM.quadraticCurveTo (25 * cx, 25 * cy) (25 * x3, 25 * y3)
+    CM.quadraticCurveTo (cx, cy) (x3, y3)
 followPath ps@(_:(sx, sy):_) True True = do
-    CM.moveTo (25 * sx, 25 * sy)
+    CM.moveTo (sx, sy)
     let rep = cycle ps
     forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $ \(p1@(x1, y1), p2@(x2, y2), p3@(x3, y3), p4@(x4, y4)) -> do
         let dp = euclideanDistance p1 p2
@@ -179,9 +179,9 @@ followPath ps@(_:(sx, sy):_) True True = do
             cx2 = x3 + p * (x2 - x4) / 2
             cy2 = y3 + p * (y2 - y4) / 2
         CM.bezierCurveTo
-            (25 * cx1, 25 * cy1)
-            (25 * cx2, 25 * cy2)
-            (25 * x3,  25 * y3)
+            (cx1, cy1)
+            (cx2, cy2)
+            (x3,  y3)
     CM.closePath
 
 euclideanDistance :: Point -> Point -> Double
@@ -194,16 +194,16 @@ drawFigure ds w figure = do
     withDS ds $ do
         figure
         when (w /= 0) $ do
-            CM.lineWidth (25 * w)
+            CM.lineWidth w
             applyColor ds
             CM.stroke
     when (w == 0) $ do
-        CM.lineWidth 1
+        CM.lineWidth =<< pixelSize
         applyColor ds
         CM.stroke
 
 fontString :: TextStyle -> Font -> Text
-fontString style font = stylePrefix style <> "25px " <> fontName font
+fontString style font = stylePrefix style <> "1px " <> fontName font
   where
     stylePrefix Plain = ""
     stylePrefix Bold = "bold "
@@ -299,13 +299,10 @@ pathDrawer :: MonadCanvas m => [Point] -> Double -> Bool -> Bool -> Drawer m
 pathDrawer ps w closed smooth ds =
     DrawMethods
     { drawShape = drawFigure ds w $ followPath ps closed smooth
-    , shapeContains =
-          do let width =
-                     if w == 0
-                         then 0.3
-                         else w
-             drawFigure ds width $ followPath ps closed smooth
-             CM.isPointInStroke (0, 0)
+    , shapeContains = do
+          s <- pixelSize
+          drawFigure ds (max s w) $ followPath ps closed smooth
+          CM.isPointInStroke (0, 0)
     }
 
 sectorDrawer :: MonadCanvas m => Double -> Double -> Double -> Drawer m
@@ -322,23 +319,21 @@ sectorDrawer b e r ds =
   where
     trace =
         withDS ds $ do
-            CM.arc 0 0 (25 * abs r) b e (b > e)
+            CM.arc 0 0 (abs r) b e (b > e)
             CM.lineTo (0, 0)
 
 arcDrawer :: MonadCanvas m => Double -> Double -> Double -> Double -> Drawer m
 arcDrawer b e r w ds =
     DrawMethods
     { drawShape =
-          drawFigure ds w $ CM.arc 0 0 (25 * abs r) b e (b > e)
-    , shapeContains =
-          do let width =
-                     if w == 0
-                         then 0.3
-                         else w
-             CM.lineWidth (width * 25)
-             drawFigure ds width $
-                 CM.arc 0 0 (25 * abs r) b e (b > e)
-             CM.isPointInStroke (0, 0)
+          drawFigure ds w $ CM.arc 0 0 (abs r) b e (b > e)
+    , shapeContains = do
+          s <- pixelSize
+          let width = max s w
+          CM.lineWidth width
+          drawFigure ds width $
+              CM.arc 0 0 (abs r) b e (b > e)
+          CM.isPointInStroke (0, 0)
     }
 
 textDrawer :: MonadCanvas m => TextStyle -> Font -> Text -> Drawer m
@@ -353,7 +348,7 @@ textDrawer sty fnt txt ds =
     , shapeContains =
           do CM.font (fontString sty fnt)
              width <- CM.measureText txt
-             let height = 25 -- constant, defined in fontString
+             let height = 1 -- constant, defined in fontString
              withDS ds $
                  CM.rect ((-0.5) * width) ((-0.5) * height) width height
              CM.isPointInPath (0, 0)
@@ -366,7 +361,7 @@ imageDrawer name url imgw imgh ds =
           case getColorDS ds of
               Nothing -> withDS ds $ do
                   CM.scale 1 (-1)
-                  CM.drawImgURL name url (25 * imgw) (25 * imgh)
+                  CM.drawImgURL name url imgw imgh
               Just (RGBA _ _ _ _) -> do
                   w <- CM.getScreenWidth
                   h <- CM.getScreenHeight
@@ -378,13 +373,13 @@ imageDrawer name url imgw imgh ds =
                       withDS ds $ do
                           CM.globalCompositeOperation "destination-in"
                           CM.scale 1 (-1)
-                          CM.drawImgURL name url (25 * imgw) (25 * imgh)
+                          CM.drawImgURL name url imgw imgh
                   CM.saveRestore $ do
                       CM.scale 1 (-1)
                       CM.drawImage img (round (-w/2)) (round (-h/2)) (round w) (round h)
     , shapeContains =
           withDS ds $ do
-              CM.rect (-25 * imgw / 2) (-25 * imgh / 2) (25 * imgw) (25 * imgh)
+              CM.rect (-imgw / 2) (-imgh / 2) imgw imgh
               CM.isPointInPath (0, 0)
     }
 
@@ -639,9 +634,9 @@ getPictureSrcLoc (PictureAnd loc _) = loc
 findTopShapeFromPoint :: MonadCanvas m => Point -> Drawing m -> m (Maybe NodeId)
 findTopShapeFromPoint (x, y) pic = do
     img <- CM.newImage 500 500
-    CM.withImage img $
-        findTopShape (translateDS (10 - x / 25) (y / 25 - 10) initialDS)
-                     pic
+    CM.withImage img $ do
+        setupScreenContext 500 500
+        findTopShape (translateDS (-x) (-y) initialDS) pic
 
 drawFrame :: MonadCanvas m => Drawing m -> m ()
 drawFrame drawing = do
@@ -652,11 +647,17 @@ drawFrame drawing = do
     CM.fillRect (-ratio * w / 2) (-ratio * h / 2) (ratio * w) (ratio * h)
     drawDrawing initialDS drawing
 
+pixelSize :: MonadCanvas m => m Double
+pixelSize = do
+    cw <- CM.getScreenWidth
+    ch <- CM.getScreenHeight
+    return $ max (20 / realToFrac cw) (20 / realToFrac ch)
+
 setupScreenContext :: MonadCanvas m => Int -> Int -> m ()
 setupScreenContext cw ch = do
     CM.translate (realToFrac cw / 2) (realToFrac ch / 2)
-    let s = min (realToFrac cw / 500) (realToFrac ch / 500)
-    CM.scale s (-s)
+    s <- pixelSize
+    CM.scale (1/s) (-1/s)
     CM.lineWidth 0
     CM.textCenter
     CM.textMiddle

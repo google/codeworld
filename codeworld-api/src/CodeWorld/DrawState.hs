@@ -52,8 +52,8 @@ translateDS :: Double -> Double -> DrawState -> DrawState
 translateDS x y = mapDSAT $ \(AffineTransformation a b c d e f) ->
     AffineTransformation
         a b c d
-        (a * 25 * x + c * 25 * y + e)
-        (b * 25 * x + d * 25 * y + f)
+        (a * x + c * y + e)
+        (b * x + d * y + f)
 
 scaleDS :: Double -> Double -> DrawState -> DrawState
 scaleDS x y = mapDSAT $ \(AffineTransformation a b c d e f) ->

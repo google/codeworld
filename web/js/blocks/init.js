@@ -30,7 +30,7 @@ Blockly.Flyout.programBlockList = ['cwAnimationOf', 'cwDrawingOf',
 
 // Automatically generate a type block for each of these
 Blockly.UserTypes.builtinsStatic = ['Truth', 'Number', 'Color', 'Picture',
-    'Text'
+    'Text', 'Event'
 ];
 
 Blockly.UserTypes.userReservedNames = ['do', 'let', 'in', 'if', 'then', 'else',

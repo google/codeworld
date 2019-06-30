@@ -29,3 +29,25 @@ Library
                        regex-tdfa-text
 
   Exposed: True
+
+Test-suite unit-tests
+  Type:                exitcode-stdio-1.0
+  Main-is:             Main.hs
+  Hs-source-dirs:      test,
+                       src
+  Other-modules:       ErrorSanitizer,
+                       RegexShim
+  build-depends:       base,
+                       HUnit,
+                       test-framework,
+                       test-framework-hunit,
+                       text
+  if impl(ghcjs)
+    Build-depends:     ghcjs-base,
+                       ghcjs-prim
+  else
+    Build-depends:     array,
+                       regex-base,
+                       regex-tdfa,
+                       regex-tdfa-text
+

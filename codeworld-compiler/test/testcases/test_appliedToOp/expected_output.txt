@@ -1,0 +1,8 @@
+program.hs:3:6-10: error:
+    • The expression in this function argument is incomplete.
+
+program.hs:5:2-6: error:
+    • The expression in this function argument is incomplete.
+
+program.hs:10:6-10: error:
+    • The expression in this function argument is incomplete.

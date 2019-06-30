@@ -68,7 +68,7 @@ applyInserts str replacement inserts matches = go 0 replacement inserts
                 rest = T.drop (rlen + rstart - pos) replacement
                 (sstart, slen) = matches ! index
                 source = T.take slen $ T.drop sstart str
-            in pre <> source <> go (pos + rstart + rlen) rest inserts
+            in pre <> source <> go (rstart + rlen) rest inserts
         go _ replacement [] = replacement
 
 replace :: Text -> Text -> Text -> Text

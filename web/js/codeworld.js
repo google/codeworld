@@ -305,7 +305,7 @@ function initCodeworld() {
             class: 'cw-toolbar-button mdi mdi-stop',
             label: '',
             title: 'Stop',
-            callback: cm => stop()
+            callback: cm => stopRun()
         },
         {
             class: 'cw-toolbar-button mdi mdi-play',
@@ -695,7 +695,7 @@ function setCode(code, history, name, autostart) {
     if (autostart) {
         compile();
     } else {
-        stop();
+        stopRun();
     }
 }
 
@@ -742,7 +742,7 @@ function formatSource() {
     });
 }
 
-function stop() {
+function stopRun() {
     if (document.getElementById('runner').contentWindow.debugActive) {
         document.getElementById('runner').contentWindow.stopDebugMode();
     }
@@ -890,7 +890,7 @@ function goto(line, col) {
 }
 
 function compile() {
-    stop();
+    stopRun();
 
     const src = window.codeworldEditor.getValue();
     const compileGeneration = window.codeworldEditor.getDoc().changeGeneration(
@@ -931,22 +931,29 @@ function compile() {
 
         const success = request.status === 200;
 
-        let hash;
-        let dhash;
-        if (request.responseText.length === 23) {
-            hash = request.responseText;
-            dhash = null;
-        } else {
-            try {
-                const obj = JSON.parse(request.responseText);
-                hash = obj.hash;
-                dhash = obj.dhash;
-            } catch (e) {
-                run('', '',
-                    'Sorry!  Your program couldn\'t be run right now.',
-                    true, null);
-                return;
+        let hash, dhash;
+        if (request.status < 500) {
+            if (request.responseText.length === 23) {
+                hash = request.responseText;
+                dhash = null;
+            } else {
+                try {
+                    const obj = JSON.parse(request.responseText);
+                    hash = obj.hash;
+                    dhash = obj.dhash;
+                } catch (e) {
+                    hash = '';
+                }
             }
+        }
+
+        if (!hash) {
+            sweetAlert({
+                title: Alert.title('Could not compile'),
+                text: 'The compiler is unavailable.  Please try again later.',
+                type: 'error'
+            });
+            return;
         }
 
         const data = new FormData();

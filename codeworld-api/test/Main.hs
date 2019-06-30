@@ -1,3 +1,8 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StaticPointers #-}
+{-# LANGUAGE MagicHash #-}
+{-# LANGUAGE BangPatterns #-}
+
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
 
@@ -14,8 +19,28 @@
   limitations under the License.
 -}
 
-import Test.Framework (defaultMain)
-import qualified Driver
+import CodeWorld
+import CodeWorld.EntryPoints
+import Test.Framework (defaultMain, Test, testGroup)
+import Test.Framework.Providers.HUnit (testCase)
+import Test.HUnit hiding (Test)
 
+main :: IO ()
+main = defaultMain [wrapperIdentityTests]
 
-main = defaultMain [Driver.tests]
+checkWrappedIdentity :: (Wrapped a -> Wrapped a) -> Wrapped a -> Assertion
+checkWrappedIdentity f x = assertBool "identity" (identical x (f x))
+
+wrapperIdentityTests :: Test
+wrapperIdentityTests = testGroup "wrapperIdentityTests"
+    [ testCase "toState preserves identity" $
+          checkWrappedIdentity (toState id) (wrappedInitial (42 :: Int))
+    , testCase "wrappedStep preserves identity" $
+          checkWrappedIdentity (wrappedStep (const id) 1) (wrappedInitial (42 :: Int))
+    , testCase "wrapping of shared identity is shared (events)" $
+          checkWrappedIdentity (wrappedEvent (const [])
+                                             (const id)
+                                             (const id)
+                                             (TimePassing 1))
+                               (wrappedInitial (42 :: Int))
+    ]

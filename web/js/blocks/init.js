@@ -26,11 +26,12 @@ goog.require('Blockly.Blocks.cwEvent');
 
 // Top level program blocks, only allow one of each
 Blockly.Flyout.programBlockList = ['cwAnimationOf', 'cwDrawingOf',
-    'cwSimulationOf', 'cwInteractionOf'
+    'cwSimulationOf', 'cwInteractionOf', 'cwActivityOf'
 ];
+
 // Automatically generate a type block for each of these
 Blockly.UserTypes.builtinsStatic = ['Truth', 'Number', 'Color', 'Picture',
-    'Text'
+    'Text', 'Event'
 ];
 
 Blockly.UserTypes.userReservedNames = ['do', 'let', 'in', 'if', 'then', 'else',

@@ -238,6 +238,18 @@ blockAnim block = do
                       Just inpBlock -> return $ getFunctionName inpBlock 
                       Nothing -> errFunc_ block
 
+blockActivity :: ParserFunction
+blockActivity block = do
+        initial <- aux "INITIAL"
+        event <- aux "EVENT"
+        draw <- aux "DRAW"
+        return $ FuncDef "program" [] $ CallFunc "activityOf"
+                                            [CallFunc initial [],CallFunc event [],CallFunc draw []]
+   where
+     aux name = case getInputBlock block name of
+                       Just inpBlock -> return $ getFunctionName inpBlock
+                       Nothing -> errFunc_ block  
+
 blockSimulation :: ParserFunction
 blockSimulation block = do
         initial <- aux "INITIAL"
@@ -401,7 +413,7 @@ regularBlockNames =
                   "cwBlank"
                   ,"cwCoordinatePlane"
                   ,"cwCodeWorldLogo"
-                  ,"cwText"
+                  ,"cwLettering"
                   ,"cwCircle"
                   ,"cwThickCircle"
                   ,"cwSolidCircle"
@@ -528,6 +540,7 @@ specialBlocks = [  -- PROGRAMS
                   ,("cwAnimationOf",blockAnim)
                   ,("cwSimulationOf",blockSimulation)
                   ,("cwInteractionOf",blockInteraction)
+                  ,("cwActivityOf",blockActivity)
                   -- PICTURES
                   ,("cwCombine", blockCombine)
                   -- NUMBERS

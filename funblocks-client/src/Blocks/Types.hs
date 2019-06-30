@@ -71,7 +71,7 @@ cwCoordinatePlane = standardFunction "cwCoordinatePlane" "coordinatePlane" Nothi
 
 cwCodeWorldLogo = standardFunction "cwCodeWorldLogo" "codeWorldLogo" Nothing [Picture] [] colorPicture "Picture of CodeWorld logo"
 
-cwText = standardFunction "cwText" "text" Nothing [typeText, Picture]
+cwLettering = standardFunction "cwLettering" "lettering" Nothing [typeText, Picture]
             ["TEXT"] colorPicture "Picture of text"
 
 cwDrawingOf = DesignBlock "cwDrawingOf" (Top "drawingOf" [typePicture, typeProgram])
@@ -236,8 +236,8 @@ cwPink = standardFunction "cwPink" "pink" Nothing [typeColor] [] colorColor "The
 cwPurple = standardFunction "cwPurple" "purple" Nothing [typeColor] [] colorColor "The color purple"
 cwGray = standardFunction "cwGray" "gray" Nothing [typeNumber] [] colorColor "The color gray"
 
-cwMixed = standardFunction "cwMixed" "mixed" (Just "pot-mix.svg")  [typeColor, typeColor, typeColor]
-            ["COL1", "COL2"] colorColor "Two mix of two colors"
+cwMixed = standardFunction "cwMixed" "mixed" (Just "pot-mix.svg") [List typeColor, typeColor] 
+            ["COL"] colorColor "Mix of a list of colors"
 
 cwLight = standardFunction "cwLight" "light" Nothing [typeColor, typeColor]
             ["COL"] colorColor "A lighter color"
@@ -370,7 +370,7 @@ blockTypes = [
               cwBlank
               ,cwCoordinatePlane
               ,cwCodeWorldLogo
-              ,cwText
+              ,cwLettering
               ,cwDrawingOf
               ,cwCircle
               ,cwThickCircle

@@ -59,7 +59,7 @@ setErrorMessage msg = do
   -- setInnerHTML msgEl $ Just msg
 
 programBlocks :: [T.Text]
-programBlocks = map T.pack ["cwDrawingOf","cwAnimationOf", "cwSimulationOf", "cwInteractionOf"]
+programBlocks = map T.pack ["cwActivityOf", "cwDrawingOf","cwAnimationOf", "cwSimulationOf", "cwInteractionOf"]
 
 btnStopClick = do 
   liftIO js_stop
@@ -147,7 +147,6 @@ main = do
 onChange ws event = do 
                       (code, errs) <- workspaceToCode ws
                       js_updateEditor (pack code)
-
 
 
 setRunFunc :: Workspace -> IO ()

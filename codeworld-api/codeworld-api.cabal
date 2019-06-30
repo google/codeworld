@@ -28,7 +28,7 @@ Library
   Exposed-modules:     CodeWorld,
                        CodeWorld.App,
                        CodeWorld.App2,
-                       CodeWorld.App3,
+                       CodeWorld.Reflex,
                        CodeWorld.Sketches
   Other-modules:       CodeWorld.CanvasM,
                        CodeWorld.CollaborationUI,

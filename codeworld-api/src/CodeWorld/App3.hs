@@ -27,6 +27,6 @@ import qualified Reflex as R
 
 applicationOf
     :: (forall t m. (R.Reflex t, R.MonadHold t m, MonadFix m)
-        => R.Event t Event -> m (R.Behavior t Picture))
+        => R.Event t Event -> m (R.Dynamic t Picture))
     -> IO ()
 applicationOf = runReactive

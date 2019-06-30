@@ -1574,7 +1574,7 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
 
 runReactive
     :: (forall t m. (R.Reflex t, R.MonadHold t m, MonadFix m)
-        => (R.Event t Event -> m (R.Behavior t Picture)))
+        => (R.Event t Event -> m (R.Dynamic t Picture)))
     -> IO ()
 runReactive program = do
     showCanvas
@@ -1586,21 +1586,9 @@ runReactive program = do
     offscreenCanvas <- Canvas.create 500 500
     setCanvasSize canvas canvas
     setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-
-    _ <- on window resize $ liftIO $ do
-        setCanvasSize canvas canvas
-        setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-
-    (eventTrigger, pictureBehavior) <- R.runSpiderHost $ do
-        (e, trigger) <- R.newEventWithTriggerRef
-        b <- R.runHostFrame (program e)
-        return (trigger, b)
-    onEvents canvas (R.runSpiderHost . R.fireEventRef eventTrigger)
-
     screen <- getCodeWorldContext (canvasFromElement canvas)
-    let go t0 = do
-            pic <- R.runSpiderHost $ R.runHostFrame $ R.sample pictureBehavior
 
+    let frame pic = do
             rect <- getBoundingClientRect canvas
             withScreen (elementFromCanvas offscreenCanvas) rect $
                 drawFrame (pictureToDrawing pic)
@@ -1615,9 +1603,32 @@ runReactive program = do
                 (round cw)
                 (round ch)
 
+    (eventTrigger, dynPicture, pictureHandle) <- R.runSpiderHost $ do
+        (e, trigger) <- R.newEventWithTriggerRef
+        dynPicture <- R.runHostFrame (program e)
+        handle <- R.subscribeEvent (R.updated dynPicture)
+        return (trigger, dynPicture, handle)
+
+    let pump e = do
+            maybePic <- R.runSpiderHost $
+                R.fireEventRefAndRead eventTrigger e pictureHandle
+            maybe (return ()) frame maybePic
+    let redraw = do
+            pic <- R.runSpiderHost $
+                R.runHostFrame $ R.sample $ R.current dynPicture
+            frame pic
+
+    onEvents canvas pump
+    _ <- on window resize $ liftIO $ do
+        setCanvasSize canvas canvas
+        setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+        redraw
+
+    redraw
+    let go t0 = do
             t1 <- nextFrame
             let dt = min (t1 - t0) 0.25
-            R.runSpiderHost $ R.fireEventRef eventTrigger (TimePassing dt)
+            pump (TimePassing dt)
             go t1
     go =<< getTime
 
@@ -1731,22 +1742,14 @@ runGame = error "game API unimplemented in stand-alone interface mode"
 
 runReactive
     :: (forall t m. (R.Reflex t, R.MonadHold t m, MonadFix m)
-        => R.Event t Event -> m (R.Behavior t Picture))
+        => R.Event t Event -> m (R.Dynamic t Picture))
     -> IO ()
 runReactive program = runBlankCanvas $ \context -> do
     let cw = Canvas.width context
     let ch = Canvas.height context
     offscreenCanvas <- runCanvasM context $ CM.newImage cw ch
 
-    (eventTrigger, pictureBehavior) <- R.runSpiderHost $ do
-        (e, trigger) <- R.newEventWithTriggerRef
-        b <- R.runHostFrame (program e)
-        return (trigger, b)
-    onEvents context (cw, ch) (R.runSpiderHost . R.fireEventRef eventTrigger)
-
-    let go t0 = do
-            pic <- R.runSpiderHost $ R.runHostFrame $ R.sample pictureBehavior
-
+    let frame pic = do
             runCanvasM context $ do
                 CM.withImage offscreenCanvas $
                     CM.saveRestore $ do
@@ -1754,11 +1757,30 @@ runReactive program = runBlankCanvas $ \context -> do
                         drawDrawing initialDS (pictureToDrawing pic)
                 CM.drawImage offscreenCanvas 0 0 cw ch
 
+    (eventTrigger, dynPicture, pictureHandle) <- R.runSpiderHost $ do
+        (e, trigger) <- R.newEventWithTriggerRef
+        dynPicture <- R.runHostFrame (program e)
+        handle <- R.subscribeEvent (R.updated dynPicture)
+        return (trigger, dynPicture, handle)
+
+    let pump e = do
+            maybePic <- R.runSpiderHost $
+                R.fireEventRefAndRead eventTrigger e pictureHandle
+            maybe (return ()) frame maybePic
+    let redraw = do
+            pic <- R.runSpiderHost $
+                R.runHostFrame $ R.sample $ R.current dynPicture
+            frame pic
+
+    onEvents context (cw, ch) pump
+
+    redraw
+    let go t0 = do
             tn <- getCurrentTime
             threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
             t1 <- getCurrentTime
             let dt = min 0.25 $ realToFrac (t1 `diffUTCTime` t0)
-            R.runSpiderHost $ R.fireEventRef eventTrigger (TimePassing dt)
+            pump (TimePassing dt)
             go t1
     go =<< getCurrentTime
 

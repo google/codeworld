@@ -28,6 +28,7 @@ Library
   Exposed-modules:     CodeWorld,
                        CodeWorld.App,
                        CodeWorld.App2,
+                       CodeWorld.App3,
                        CodeWorld.Sketches
   Other-modules:       CodeWorld.CanvasM,
                        CodeWorld.CollaborationUI,
@@ -51,7 +52,8 @@ Library
                        random               >= 1.1   && < 1.2,
                        cereal               >= 0.5.4 && < 0.6,
                        cereal-text          >= 0.1.0 && < 0.2,
-                       ghc-prim             >= 0.3.1 && < 0.6
+                       ghc-prim             >= 0.3.1 && < 0.6,
+                       reflex               >= 0.6   && < 0.7
 
   if impl(ghcjs)
     Js-sources:        jsbits/sim_fp.js
@@ -98,7 +100,9 @@ Test-suite unit-tests
                        random               >= 1.1   && < 1.2,
                        cereal               >= 0.5.4 && < 0.6,
                        cereal-text          >= 0.1.0 && < 0.2,
-                       ghc-prim             >= 0.3.1 && < 0.6
+                       ghc-prim             >= 0.3.1 && < 0.6,
+                       reflex               >= 0.6   && < 0.7
+
   if impl(ghcjs)
     Js-sources:        jsbits/sim_fp.js
     Build-depends:     ghcjs-base,

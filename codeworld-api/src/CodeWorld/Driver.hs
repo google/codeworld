@@ -9,6 +9,7 @@
 {-# LANGUAGE JavaScriptFFI #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -38,6 +39,7 @@ import CodeWorld.Picture
 import Control.Concurrent
 import Control.Exception
 import Control.Monad
+import Control.Monad.Fix
 import Control.Monad.Trans (liftIO)
 import Data.Char (chr)
 import Data.List (zip4, intercalate)
@@ -51,6 +53,8 @@ import GHC.Generics
 import GHC.Stack
 import GHC.StaticPtr
 import Numeric (showFFloatAlt)
+import qualified Reflex as R
+import qualified Reflex.Host.Class as R
 import System.IO.Unsafe
 import System.Mem.StableName
 import System.Random
@@ -1568,6 +1572,55 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
     mapLeft :: (a -> b) -> Either a c -> Either b c
     mapLeft f = either (Left . f) Right
 
+runReactive
+    :: (forall t m. (R.Reflex t, R.MonadHold t m, MonadFix m)
+        => (R.Event t Event -> m (R.Behavior t Picture)))
+    -> IO ()
+runReactive program = do
+    showCanvas
+
+    Just window <- currentWindow
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
+
+    offscreenCanvas <- Canvas.create 500 500
+    setCanvasSize canvas canvas
+    setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+
+    _ <- on window resize $ liftIO $ do
+        setCanvasSize canvas canvas
+        setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+
+    (eventTrigger, pictureBehavior) <- R.runSpiderHost $ do
+        (e, trigger) <- R.newEventWithTriggerRef
+        b <- R.runHostFrame (program e)
+        return (trigger, b)
+    onEvents canvas (R.runSpiderHost . R.fireEventRef eventTrigger)
+
+    screen <- getCodeWorldContext (canvasFromElement canvas)
+    let go t0 = do
+            pic <- R.runSpiderHost $ R.runHostFrame $ R.sample pictureBehavior
+
+            rect <- getBoundingClientRect canvas
+            withScreen (elementFromCanvas offscreenCanvas) rect $
+                drawFrame (pictureToDrawing pic)
+            rect <- getBoundingClientRect canvas
+            cw <- ClientRect.getWidth rect
+            ch <- ClientRect.getHeight rect
+            when (cw > 0 && ch > 0) $ canvasDrawImage
+                screen
+                (elementFromCanvas offscreenCanvas)
+                0
+                0
+                (round cw)
+                (round ch)
+
+            t1 <- nextFrame
+            let dt = min (t1 - t0) 0.25
+            R.runSpiderHost $ R.fireEventRef eventTrigger (TimePassing dt)
+            go t1
+    go =<< getTime
+
 #else
 
 --------------------------------------------------------------------------------
@@ -1675,5 +1728,38 @@ runGame
     -> (Int -> s -> Picture)
     -> IO ()
 runGame = error "game API unimplemented in stand-alone interface mode"
+
+runReactive
+    :: (forall t m. (R.Reflex t, R.MonadHold t m, MonadFix m)
+        => R.Event t Event -> m (R.Behavior t Picture))
+    -> IO ()
+runReactive program = runBlankCanvas $ \context -> do
+    let cw = Canvas.width context
+    let ch = Canvas.height context
+    offscreenCanvas <- runCanvasM context $ CM.newImage cw ch
+
+    (eventTrigger, pictureBehavior) <- R.runSpiderHost $ do
+        (e, trigger) <- R.newEventWithTriggerRef
+        b <- R.runHostFrame (program e)
+        return (trigger, b)
+    onEvents context (cw, ch) (R.runSpiderHost . R.fireEventRef eventTrigger)
+
+    let go t0 = do
+            pic <- R.runSpiderHost $ R.runHostFrame $ R.sample pictureBehavior
+
+            runCanvasM context $ do
+                CM.withImage offscreenCanvas $
+                    CM.saveRestore $ do
+                        setupScreenContext cw ch
+                        drawDrawing initialDS (pictureToDrawing pic)
+                CM.drawImage offscreenCanvas 0 0 cw ch
+
+            tn <- getCurrentTime
+            threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
+            t1 <- getCurrentTime
+            let dt = min 0.25 $ realToFrac (t1 `diffUTCTime` t0)
+            R.runSpiderHost $ R.fireEventRef eventTrigger (TimePassing dt)
+            go t1
+    go =<< getCurrentTime
 
 #endif

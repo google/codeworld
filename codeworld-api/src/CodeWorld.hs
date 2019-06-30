@@ -141,6 +141,6 @@ module CodeWorld (
     ) where
 
 import CodeWorld.Color
-import CodeWorld.Driver
+import CodeWorld.EntryPoints
 import CodeWorld.Event
 import CodeWorld.Picture

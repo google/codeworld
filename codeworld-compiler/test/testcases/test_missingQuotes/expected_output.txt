@@ -1,0 +1,8 @@
+program.hs:3:17-25: error: 
+    Data constructor not in scope: Christmas :: Text
+    Perhaps you meant to put quotation marks around this text.
+
+program.hs:4:17-22: error: 
+    • Variable not in scope: easter :: Text
+    • Perhaps you meant to put quotation marks around this text.
+    • Perhaps you meant after (defined in the standard library)

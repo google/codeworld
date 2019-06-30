@@ -155,7 +155,6 @@ setRunFunc ws = do
                                         runOrError ws) 
       js_setRunFunc cb
 
-
 -- FFI
 
 -- call blockworld.js compile

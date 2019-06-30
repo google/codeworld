@@ -26,7 +26,8 @@ goog.require('Blockly.Blocks.cwEvent');
 
 // Top level program blocks, only allow one of each
 Blockly.Flyout.programBlockList = ['cwAnimationOf', 'cwDrawingOf',
-    'cwSimulationOf', 'cwInteractionOf', 'cwActivityOf'];
+    'cwSimulationOf', 'cwInteractionOf', 'cwActivityOf'
+];
 
 // Automatically generate a type block for each of these
 Blockly.UserTypes.builtinsStatic = ['Truth', 'Number', 'Color', 'Picture',
@@ -45,9 +46,3 @@ Blockly.Flyout.customDrawers['EVENT'] = Blockly.cwEvent.eventFlyoutCategory;
 Blockly.Events.orphanWarning =
     'This block is disabled because it is isolated from the program.';
 Blockly.Events.disconnectedWarning = 'There\'s a block missing';
-
-
-
-
-
-

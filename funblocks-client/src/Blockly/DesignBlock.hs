@@ -164,7 +164,6 @@ typeToType (Poly a) = TE.TypeVar a
 typeToType (List tp) = TE.Lit (T.pack "list") [typeToType tp] 
 typeToType lit = TE.Lit (T.pack $ show lit) []
 
-
 assignBlockType :: Block -> BlockType -> IO ()
 assignBlockType block (Literal name) = B.setAsLiteral block name
 assignBlockType block (Function name tps) = do 

@@ -65,7 +65,6 @@ Blockly.cwEvent.generateEventBuiltins = xmlList => {
         Blockly.UserTypes.generateConstructors_(sum, xmlList);
         Blockly.UserTypes.generateCase_(sum, xmlList);
     });
-
 };
 
 Blockly.cwEvent.eventFlyoutCategory = workspace => {
@@ -73,4 +72,3 @@ Blockly.cwEvent.eventFlyoutCategory = workspace => {
     Blockly.cwEvent.generateEventBuiltins(xmlList);
     return xmlList;
 };
-

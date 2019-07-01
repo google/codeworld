@@ -16,9 +16,10 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-module CodeWorld.Reflex
-    {-# WARNING "This is an experimental API.  It can change at any time." #-}
-    (
+
+-- | Module for using CodeWorld pictures in Reflex-based FRP applications.
+module CodeWorld.Reflex (
+    -- $intro
     -- * Entry Point
       reflexOf
     , ReactiveInput
@@ -121,6 +122,34 @@ import CodeWorld.Color
 import Control.Monad.Fix
 import Reflex
 
+-- $intro
+-- = Using Reflex with CodeWorld
+--
+-- This is an alternative to the standard CodeWorld API, which is based on
+-- the Reflex library.  You should import this *instead* of 'CodeWorld', since
+-- the 'CodeWorld' module exports conflict with Reflex names.
+--
+-- You'll provide a function whose input can be used to access the user's
+-- actions with keys, the mouse pointer, and time, and whose output is a
+-- 'Picture'.  The 'Picture' value is build with the same combinators as the
+-- main 'CodeWorld' library.
+--
+-- A simple example:
+--
+-- @
+--     import CodeWorld.Reflex
+--     import Reflex
+--
+--     main :: IO ()
+--     main = reflexOf $ \\input -> do
+--         angle <- foldDyn (+) 0 (gate (current (pointerDown input)) (timePassing input))
+--         return $ (uncurry translated \<$> pointerPosition input \<*>)
+--                $ (colored \<$> bool red green \<$> pointerDown input \<*>)
+--                $ (rotated \<$> angle \<*>)
+--                $ constDyn (solidRectangle 2 2)
+-- @
+
+-- | The entry point for running Reflex-based CodeWorld programs.
 reflexOf
     :: (forall t m. (Reflex t, MonadHold t m, MonadFix m)
         => ReactiveInput t -> m (Dynamic t Picture))

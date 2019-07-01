@@ -11,6 +11,7 @@
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
@@ -40,8 +41,10 @@ import Control.Concurrent
 import Control.Exception
 import Control.Monad
 import Control.Monad.Fix
+import Control.Monad.Identity
 import Control.Monad.Trans (liftIO)
 import Data.Char (chr)
+import Data.Dependent.Map (DSum(..))
 import Data.List (zip4, intercalate)
 import Data.Maybe
 import Data.Serialize
@@ -1616,64 +1619,63 @@ runReactive program = do
                 (round ch)
         frame Nothing = return ()
 
-    (keyPress, keyPressTrigger) <- R.runSpiderHost R.newEventWithTriggerRef
-    (textEntry, textEntryTrigger) <- R.runSpiderHost R.newEventWithTriggerRef
-    (keyRelease, keyReleaseTrigger) <- R.runSpiderHost R.newEventWithTriggerRef
-    (pointerPress, pointerPressTrigger) <- R.runSpiderHost R.newEventWithTriggerRef
-    (pointerRelease, pointerReleaseTrigger) <- R.runSpiderHost R.newEventWithTriggerRef
-    (pointerMovement, pointerMovementTrigger) <- R.runSpiderHost R.newEventWithTriggerRef
-    (timePassing, timePassingTrigger) <- R.runSpiderHost R.newEventWithTriggerRef
+    rec
+        keyPress <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger ->
+            on window keyDown $ do
+                keyName <- keyCodeToText <$> (getKeyCode =<< event)
+                when (keyName /= "") $ do
+                    liftIO $ sendEvents [ trigger :=> Identity keyName ]
+                    preventDefault
+                    stopPropagation
+        textEntry <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger ->
+            on window keyDown $ do
+                key <- getKey =<< event
+                when (T.length key == 1) $ do
+                    liftIO $ sendEvents [trigger :=> Identity key]
+                    preventDefault
+                    stopPropagation
+        keyRelease <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger ->
+            on window keyUp $ do
+                keyName <- keyCodeToText <$> (getKeyCode =<< event)
+                when (keyName /= "") $ do
+                    liftIO $ sendEvents [trigger :=> Identity keyName]
+                    preventDefault
+                    stopPropagation
+        pointerPress <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger ->
+            on window mouseDown $ do
+                pos <- getMousePos canvas
+                liftIO $ sendEvents [trigger :=> Identity pos]
+        pointerRelease <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger ->
+            on window mouseUp $ do
+                pos <- getMousePos canvas
+                liftIO $ sendEvents [trigger :=> Identity pos]
+        pointerMovement <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger ->
+            on window mouseMove $ do
+                pos <- getMousePos canvas
+                liftIO $ sendEvents [trigger :=> Identity pos]
+        (timePassing, timePassingTrigger) <- R.runSpiderHost R.newEventWithTriggerRef
 
-    pointerPosition <- R.runSpiderHost $ R.holdDyn (0, 0) pointerMovement
-    pointerDown <- R.runSpiderHost $ R.holdDyn False $
-        R.mergeWith (&&) [True <$ pointerPress, False <$ pointerRelease]
-    currentTime <- R.runSpiderHost $ R.foldDyn (+) 0 timePassing
+        pointerPosition <- R.runSpiderHost $ R.holdDyn (0, 0) pointerMovement
+        pointerDown <- R.runSpiderHost $ R.holdDyn False $
+            R.mergeWith (&&) [True <$ pointerPress, False <$ pointerRelease]
+        currentTime <- R.runSpiderHost $ R.foldDyn (+) 0 timePassing
 
-    let input = ReactiveInput{..}
+        dynPicture <- R.runSpiderHost $ R.runHostFrame $ program ReactiveInput{..}
+        let redraw = do
+                pic <- R.runSpiderHost $
+                    R.runHostFrame $ R.sample $ R.current dynPicture
+                frame (Just pic)
 
-    (dynPicture, pictureHandle) <- R.runSpiderHost $ do
-        pic <- R.runHostFrame (program input)
-        handle <- R.subscribeEvent (R.updated pic)
-        return (pic, handle)
+        pictureHandle <- R.runSpiderHost $ R.subscribeEvent (R.updated dynPicture)
+        let sendEvents events = do
+                pic <- R.runSpiderHost $ R.fireEventsAndRead events $
+                    R.readEvent pictureHandle >>= sequence
+                frame pic
 
-    let redraw = do
-            pic <- R.runSpiderHost $
-                R.runHostFrame $ R.sample $ R.current dynPicture
-            frame (Just pic)
+        let sendEventRef trigger val = do
+                pic <- R.runSpiderHost $ R.fireEventRefAndRead trigger val pictureHandle
+                frame pic
 
-    let sendEvent trigger val = do
-            pic <- R.runSpiderHost $
-                R.fireEventRefAndRead trigger val pictureHandle
-            frame pic
-
-    _ <- on window keyDown $ do
-        code <- getKeyCode =<< event
-        let keyName = keyCodeToText code
-        when (keyName /= "") $ do
-            liftIO $ sendEvent keyPressTrigger keyName
-            preventDefault
-            stopPropagation
-        key <- getKey =<< event
-        when (T.length key == 1) $ do
-            liftIO $ sendEvent textEntryTrigger key
-            preventDefault
-            stopPropagation
-    _ <- on window keyUp $ do
-        code <- getKeyCode =<< event
-        let keyName = keyCodeToText code
-        when (keyName /= "") $ do
-            liftIO $ sendEvent keyReleaseTrigger keyName
-            preventDefault
-            stopPropagation
-    _ <- on window mouseDown $ do
-        pos <- getMousePos canvas
-        liftIO $ sendEvent pointerPressTrigger pos
-    _ <- on window mouseUp $ do
-        pos <- getMousePos canvas
-        liftIO $ sendEvent pointerReleaseTrigger pos
-    _ <- on window mouseMove $ do
-        pos <- getMousePos canvas
-        liftIO $ sendEvent pointerMovementTrigger pos
     _ <- on window resize $ liftIO $ do
         setCanvasSize canvas canvas
         setCanvasSize (elementFromCanvas offscreenCanvas) canvas
@@ -1682,7 +1684,7 @@ runReactive program = do
     redraw
     let go t0 = do
         t1 <- nextFrame
-        liftIO $ sendEvent timePassingTrigger (t1 - t0)
+        liftIO $ sendEventRef timePassingTrigger (t1 - t0)
         go t1
     go =<< getTime
 

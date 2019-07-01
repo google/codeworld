@@ -45,6 +45,7 @@ import Control.Monad.Identity
 import Control.Monad.Trans (liftIO)
 import Data.Char (chr)
 import Data.Dependent.Map (DSum(..))
+import Data.IORef
 import Data.List (zip4, intercalate)
 import Data.Maybe
 import Data.Serialize
@@ -90,6 +91,7 @@ import GHCJS.Marshal
 import GHCJS.Marshal.Pure
 import GHCJS.Types
 import JavaScript.Object
+import JavaScript.Web.AnimationFrame
 import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
 import qualified JavaScript.Web.Location as Loc
@@ -1653,18 +1655,25 @@ runReactive program = do
             on window mouseMove $ do
                 pos <- getMousePos canvas
                 liftIO $ sendEvents [trigger :=> Identity pos]
-        (timePassing, timePassingTrigger) <- R.runSpiderHost R.newEventWithTriggerRef
 
+        t0 <- getTime
+        timeTick <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger -> do
+            active <- newIORef True
+            let timeStep t = do
+                    stillActive <- readIORef active
+                    when stillActive $ do
+                        sendEvents [trigger :=> Identity (t - t0)]
+                        void $ inAnimationFrame ContinueAsync timeStep
+            void $ inAnimationFrame ContinueAsync timeStep
+            return (writeIORef active False)
+
+        currentTime <- R.runSpiderHost $ R.holdDyn 0 ((/ 1000) <$> timeTick)
+        timePassing <- R.runSpiderHost $ R.ffilter (> 0) <$> diffsWith (-) 0 currentTime
         pointerPosition <- R.runSpiderHost $ R.holdDyn (0, 0) pointerMovement
         pointerDown <- R.runSpiderHost $ R.holdDyn False $
             R.mergeWith (&&) [True <$ pointerPress, False <$ pointerRelease]
-        currentTime <- R.runSpiderHost $ R.foldDyn (+) 0 timePassing
 
         dynPicture <- R.runSpiderHost $ R.runHostFrame $ program ReactiveInput{..}
-        let redraw = do
-                pic <- R.runSpiderHost $
-                    R.runHostFrame $ R.sample $ R.current dynPicture
-                frame (Just pic)
 
         pictureHandle <- R.runSpiderHost $ R.subscribeEvent (R.updated dynPicture)
         let sendEvents events = do
@@ -1672,9 +1681,10 @@ runReactive program = do
                     R.readEvent pictureHandle >>= sequence
                 frame pic
 
-        let sendEventRef trigger val = do
-                pic <- R.runSpiderHost $ R.fireEventRefAndRead trigger val pictureHandle
-                frame pic
+    let redraw = do
+            pic <- R.runSpiderHost $
+                R.runHostFrame $ R.sample $ R.current dynPicture
+            frame (Just pic)
 
     _ <- on window resize $ liftIO $ do
         setCanvasSize canvas canvas
@@ -1682,11 +1692,13 @@ runReactive program = do
         redraw
 
     redraw
-    let go t0 = do
-        t1 <- nextFrame
-        liftIO $ sendEventRef timePassingTrigger (t1 - t0)
-        go t1
-    go =<< getTime
+    waitForever
+
+diffsWith :: (R.Reflex t, R.MonadHold t m, MonadFix m)
+          => (a -> a -> b) -> a -> R.Dynamic t a -> m (R.Event t b)
+diffsWith f start dyn = do
+    pairs <- R.foldDyn (\new (old, _) -> (new, old)) (start, start) (R.updated dyn)
+    return $ uncurry f <$> R.updated pairs
 
 #else
 

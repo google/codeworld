@@ -4,6 +4,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE JavaScriptFFI #-}
@@ -14,6 +15,7 @@
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeFamilies #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -42,6 +44,7 @@ import Control.Exception
 import Control.Monad
 import Control.Monad.Fix
 import Data.Char (chr)
+import Data.IORef
 import Data.List (zip4, intercalate)
 import Data.Maybe
 import Data.Serialize
@@ -70,18 +73,18 @@ import CodeWorld.Message
 import CodeWorld.Prediction
 import Control.DeepSeq
 import Control.Monad.Identity
+import Control.Monad.Ref
 import Control.Monad.Trans (MonadIO, liftIO)
 import qualified Control.Monad.Trans.State as State
 import Data.Aeson (ToJSON(..), (.=), object)
 import Data.Dependent.Map (DSum(..))
 import Data.Hashable
-import Data.IORef
 import qualified Data.JSString
 import qualified GHCJS.DOM.ClientRect as ClientRect
 import GHCJS.DOM
 import GHCJS.DOM.Element
 import GHCJS.DOM.EventM
-import GHCJS.DOM.GlobalEventHandlers hiding (error)
+import GHCJS.DOM.GlobalEventHandlers hiding (error, keyPress)
 import GHCJS.DOM.KeyboardEvent
 import GHCJS.DOM.MouseEvent
 import GHCJS.DOM.NonElementParentNode
@@ -1631,6 +1634,98 @@ createPhysicalReactiveInput window canvas fire = do
 
     return ReactiveInput{..}
 
+connectInspect
+    :: forall t m. (MonadIO m, MonadRef m, R.MonadReflexHost t m,
+                    MonadFix m, R.MonadHold t m, Ref m ~ IORef)
+    => Element
+    -> R.Dynamic t Picture
+    -> (forall a. m a -> IO a)
+    -> ([DSum (R.EventTrigger t) Identity] -> IO ())
+    -> m (R.Dynamic t DebugState)
+connectInspect canvas userPicture runHost fire = do
+    let samplePic = runHost $
+            R.runHostFrame $ R.sample $ R.current userPicture
+
+    -- Sample the current user picture to search for a current node.
+    getNodeCB <- liftIO $ syncCallback1' $ \pointJS -> do
+        let obj = unsafeCoerce pointJS
+        x <- pFromJSVal <$> getProp "x" obj
+        y <- pFromJSVal <$> getProp "y" obj
+        n <- getNodeAtCoords canvas x y =<< samplePic
+        return (pToJSVal (maybe (-1) getNodeId n))
+
+    -- Sample the current user picture to return the scene tree.
+    getPicCB <- liftIO $ syncCallback' $ do
+        toJSVal_aeson =<< pictureToNode <$> samplePic
+
+    -- Sample the current user picture to draw to a canvas.
+    drawCB <- liftIO $ syncCallback2 ContinueAsync $ \c n -> do
+        let canvas = unsafeCoerce c :: Element
+        let nodeId = NodeId (pFromJSVal n)
+        drawPartialPic canvas nodeId =<< samplePic
+
+    debugEventRef <- liftIO $ newIORef $ const (return ())
+    debugEvent <- R.newEventWithTrigger $ \trigger -> do
+        writeIORef debugEventRef $ \e -> fire [trigger :=> Identity e]
+        return $ writeIORef debugEventRef $ const (return ())
+
+    -- Fire an event to change debug active state.
+    setActiveCB <- liftIO $ syncCallback1 ContinueAsync $ \ active -> case pFromJSVal active of
+        True  -> ($ DebugStart) =<< readIORef debugEventRef
+        False -> ($ DebugStop)  =<< readIORef debugEventRef
+
+    -- Fire an event to change the highlight or selection.
+    highlightCB <- liftIO $ syncCallback2 ContinueAsync $ \t n -> do
+        let isSelect = pFromJSVal t
+        let nodeNum = pFromJSVal n
+        let nodeId = if nodeNum < 0 then Nothing else Just (NodeId nodeNum)
+        if isSelect then ($ SelectEvent nodeId) =<< readIORef debugEventRef
+                    else ($ HighlightEvent nodeId) =<< readIORef debugEventRef
+
+    liftIO $ js_initDebugMode getNodeCB setActiveCB getPicCB highlightCB drawCB
+
+    R.foldDyn updateDebugState debugStateInit debugEvent
+
+inspectLogicalDrawing
+    :: R.Reflex t
+    => R.Dynamic t DebugState
+    -> R.Dynamic t Picture
+    -> R.Dynamic t (Drawing CanvasM)
+inspectLogicalDrawing debugState userPicture = do
+    state <- debugStateActive <$> debugState
+    drawing <- pictureToDrawing <$> userPicture
+    case state of
+        True -> drawDebugState <$> debugState <*> pure drawing
+        False -> return drawing
+
+inspectLogicalInput
+    :: forall t m. (MonadIO m, MonadRef m, R.MonadReflexHost t m,
+                    MonadFix m, Ref m ~ IORef, R.MonadHold t m)
+    => R.Dynamic t DebugState
+    -> ReactiveInput t
+    -> m (ReactiveInput t)
+inspectLogicalInput debugState physicalInput = do
+    -- Physical inputs should either be frozen or dropped during debugging.
+    let filterInDebugMode :: forall a. R.Event t a -> R.Event t a
+        filterInDebugMode = R.gate (debugStateActive <$> R.current debugState)
+    let freezeInDebugMode :: forall a. R.Dynamic t a -> a -> m (R.Dynamic t a)
+        freezeInDebugMode dyn initial =
+            R.holdDyn initial (filterInDebugMode (R.updated dyn))
+
+    logicalPointerPosition <- freezeInDebugMode (pointerPosition physicalInput) (0, 0)
+    logicalPointerDown     <- freezeInDebugMode (pointerDown physicalInput) False
+
+    return $ ReactiveInput {
+            keyPress        = filterInDebugMode (keyPress physicalInput),
+            keyRelease      = filterInDebugMode (keyRelease physicalInput),
+            textEntry       = filterInDebugMode (textEntry physicalInput),
+            pointerPress    = filterInDebugMode (pointerPress physicalInput),
+            pointerRelease  = filterInDebugMode (pointerRelease physicalInput),
+            pointerPosition = logicalPointerPosition,
+            pointerDown     = logicalPointerDown,
+            timePassing     = filterInDebugMode (timePassing physicalInput)
+            }
+
 runReactive
     :: (forall t m. (R.Reflex t, R.MonadHold t m, MonadFix m)
         => (ReactiveInput t -> m (R.Dynamic t Picture)))
@@ -1648,25 +1743,33 @@ runReactive program = do
 
     let handleFrame _ = do
             pic <- swapMVar pendingFrame Nothing
-            maybe (return ()) (frameRenderer . pictureToDrawing) pic
+            maybe (return ()) frameRenderer pic
 
     let asyncRender pic = do
             old <- swapMVar pendingFrame (Just pic)
             when (isNothing old) $ void $ inAnimationFrame ContinueAsync handleFrame
 
     rec
-        input <- R.runSpiderHost $ createPhysicalReactiveInput window canvas fireAndRedraw
-        dynPicture <- R.runSpiderHost $ R.runHostFrame $ program input
-        pictureHandle <- R.runSpiderHost $ R.subscribeEvent (R.updated dynPicture)
+        physicalInput <- R.runSpiderHost $
+            createPhysicalReactiveInput window canvas fireAndRedraw
+        userPicture <- R.runSpiderHost $ R.runHostFrame $ program logicalInput
+
+        debugState <- R.runSpiderHost $
+            connectInspect canvas userPicture R.runSpiderHost fireAndRedraw
+
+        logicalInput <- R.runSpiderHost $ inspectLogicalInput debugState physicalInput
+        let logicalDrawing = inspectLogicalDrawing debugState userPicture
+
+        logicalDrawingHandle <- R.runSpiderHost $ R.subscribeEvent (R.updated logicalDrawing)
+
         let fireAndRedraw events = do
-                pic <- R.runSpiderHost $ R.fireEventsAndRead events $
-                    R.readEvent pictureHandle >>= sequence
-                maybe (return ()) asyncRender pic
+                drawing <- R.runSpiderHost $ R.fireEventsAndRead events $
+                    R.readEvent logicalDrawingHandle >>= sequence
+                maybe (return ()) asyncRender drawing
 
     let redraw = do
-            pic <- R.runSpiderHost $ R.runHostFrame $ R.sample $ R.current dynPicture
-            asyncRender pic
-
+            drawing <- R.runSpiderHost $ R.runHostFrame $ R.sample $ R.current logicalDrawing
+            asyncRender drawing
     _ <- on window resize $ liftIO $ setCanvasSize canvas canvas >> redraw
 
     redraw
@@ -1819,7 +1922,8 @@ runReactive program = runBlankCanvas $ \context -> do
                 R.runHostFrame $ R.sample $ R.current dynPicture
             frame (Just pic)
 
-    let sendEvent trigger val = do
+    let sendEvent :: IORef (Maybe (R.EventTrigger (R.SpiderTimeline R.Global) a)) -> a -> IO ()
+        sendEvent trigger val = do
             pic <- R.runSpiderHost $
                 R.fireEventRefAndRead trigger val pictureHandle
             frame pic

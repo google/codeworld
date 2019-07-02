@@ -42,7 +42,7 @@ import Control.Exception
 import Control.Monad
 import Control.Monad.Fix
 import Control.Monad.Identity
-import Control.Monad.Trans (liftIO)
+import Control.Monad.Trans (MonadIO, liftIO)
 import Data.Char (chr)
 import Data.Dependent.Map (DSum(..))
 import Data.IORef
@@ -85,7 +85,7 @@ import GHCJS.DOM.GlobalEventHandlers hiding (error)
 import GHCJS.DOM.KeyboardEvent
 import GHCJS.DOM.MouseEvent
 import GHCJS.DOM.NonElementParentNode
-import GHCJS.DOM.Types (Element, unElement)
+import GHCJS.DOM.Types (Window, Element, unElement)
 import GHCJS.Foreign.Callback
 import GHCJS.Marshal
 import GHCJS.Marshal.Pure
@@ -690,6 +690,20 @@ canvasFromElement = Canvas.Canvas . unElement
 elementFromCanvas :: Canvas.Canvas -> Element
 elementFromCanvas = pFromJSVal . jsval
 
+createFrameRenderer :: Element -> IO (Drawing CanvasM -> IO ())
+createFrameRenderer canvas = do
+    offscreenCanvas <- Canvas.create 500 500
+    screen <- getCodeWorldContext (canvasFromElement canvas)
+    return $ \pic -> do
+        setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+        rect <- getBoundingClientRect canvas
+        withScreen (elementFromCanvas offscreenCanvas) rect (drawFrame pic)
+        cw <- ClientRect.getWidth rect
+        ch <- ClientRect.getHeight rect
+        when (cw > 0 && ch > 0) $
+            canvasDrawImage screen (elementFromCanvas offscreenCanvas)
+                            0 0 (round cw) (round ch)
+
 getTime :: IO Double
 getTime = (/ 1000) <$> Performance.now
 
@@ -1227,16 +1241,19 @@ runGame ::
 runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     enableDeterministicMath
     let fullStepHandler dt = stepHandler dt . eventHandler (-1) (TimePassing dt)
+
     showCanvas
+
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    offscreenCanvas <- Canvas.create 500 500
+
     setCanvasSize canvas canvas
-    setCanvasSize (elementFromCanvas offscreenCanvas) canvas
     _ <- on window resize $ do
         liftIO $ setCanvasSize canvas canvas
-        liftIO $ setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+
+    frameRenderer <- createFrameRenderer canvas
+
     currentGameState <- newMVar initialGameState
     onEvents canvas $
         gameHandle
@@ -1246,31 +1263,17 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
             eventHandler
             token
             currentGameState
-    screen <- getCodeWorldContext (canvasFromElement canvas)
+
     let go t0 lastFrame = do
             gs <- readMVar currentGameState
             let pic = gameDraw fullStepHandler drawHandler gs t0
             picFrame <- makeStableName $! pic
-            when (picFrame /= lastFrame) $ do
-                rect <- getBoundingClientRect canvas
-                withScreen (elementFromCanvas offscreenCanvas) rect $
-                    drawFrame (pictureToDrawing pic)
-                rect <- getBoundingClientRect canvas
-                cw <- ClientRect.getWidth rect
-                ch <- ClientRect.getHeight rect
-                when (cw > 0 && ch > 0) $ canvasDrawImage
-                    screen
-                    (elementFromCanvas offscreenCanvas)
-                    0
-                    0
-                    (round cw)
-                    (round ch)
+            when (picFrame /= lastFrame) $ frameRenderer (pictureToDrawing pic)
             t1 <- nextFrame
             modifyMVar_ currentGameState $ return . gameStep fullStepHandler t1
             go t1 picFrame
     t0 <- getTime
     nullFrame <- makeStableName undefined
-    _ <- makeStableName $! initialGameState
     go t0 nullFrame
 
 getDeployHash :: IO Text
@@ -1290,38 +1293,26 @@ run :: s
     -> IO (e -> IO (), IO s)
 run initial stepHandler eventHandler drawHandler injectTime = do
     let fullStepHandler dt = stepHandler dt . eventHandler (injectTime dt)
+
     showCanvas
+
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-    offscreenCanvas <- Canvas.create 500 500
-    setCanvasSize canvas canvas
-    setCanvasSize (elementFromCanvas offscreenCanvas) canvas
+
     needsRedraw <- newMVar ()
     _ <- on window resize $ void $ liftIO $ do
         setCanvasSize canvas canvas
-        setCanvasSize (elementFromCanvas offscreenCanvas) canvas
         tryPutMVar needsRedraw ()
+    setCanvasSize canvas canvas
+
+    frameRenderer <- createFrameRenderer canvas
     currentState <- newMVar initial
     eventHappened <- newMVar ()
-    screen <- getCodeWorldContext (canvasFromElement canvas)
     let go t0 lastFrame lastStateName needsTime = do
             pic <- drawHandler <$> readMVar currentState
             picFrame <- makeStableName $! pic
-            when (picFrame /= lastFrame) $ do
-                rect <- getBoundingClientRect canvas
-                withScreen (elementFromCanvas offscreenCanvas) rect $
-                    drawFrame pic
-                rect <- getBoundingClientRect canvas
-                cw <- ClientRect.getWidth rect
-                ch <- ClientRect.getHeight rect
-                when (cw > 0 && ch > 0) $ canvasDrawImage
-                    screen
-                    (elementFromCanvas offscreenCanvas)
-                    0
-                    0
-                    (round cw)
-                    (round ch)
+            when (picFrame /= lastFrame) $ frameRenderer pic
             t1 <-
                 case needsTime of
                     True -> do
@@ -1355,6 +1346,27 @@ run initial stepHandler eventHandler drawHandler injectTime = do
         getState = readMVar currentState
     return (sendEvent, getState)
 
+getNodeAtCoords :: Element -> Double -> Double -> Picture -> IO (Maybe NodeId)
+getNodeAtCoords canvas x y pic = do
+    rect <- getBoundingClientRect canvas
+    cx <- realToFrac <$> ClientRect.getLeft rect
+    cy <- realToFrac <$> ClientRect.getTop rect
+    cw <- realToFrac <$> ClientRect.getWidth rect
+    ch <- realToFrac <$> ClientRect.getHeight rect
+
+    -- It's safe to pass undefined for the context because
+    -- findTopShapeFromPoint only draws to an offscreen buffer.
+    runCanvasM (cw, ch) undefined $
+        findTopShapeFromPoint (x - cx, y - cy) (pictureToDrawing pic)
+
+drawPartialPic :: Element -> NodeId -> Picture -> IO ()
+drawPartialPic canvas nodeId pic = do
+    setCanvasSize canvas canvas
+    let node = fromMaybe (Drawings []) $
+            fst <$> getDrawNode nodeId (pictureToDrawing pic)
+    frameRenderer <- createFrameRenderer canvas
+    frameRenderer (node <> coordinatePlaneDrawing)
+
 initDebugMode :: Element
               -> (Bool -> IO ())
               -> IO Picture
@@ -1366,16 +1378,8 @@ initDebugMode canvas setActive getPic highlight = do
             let obj = unsafeCoerce pointJS
             x <- pFromJSVal <$> getProp "x" obj
             y <- pFromJSVal <$> getProp "y" obj
-            drawing <- pictureToDrawing <$> getPic
-            rect <- getBoundingClientRect canvas
-            cx <- realToFrac <$> ClientRect.getLeft rect
-            cy <- realToFrac <$> ClientRect.getTop rect
-            cw <- realToFrac <$> ClientRect.getWidth rect
-            ch <- realToFrac <$> ClientRect.getHeight rect
-            -- It's safe to pass undefined for the context because
-            -- findTopShapeFromPoint only draws to an offscreen buffer.
-            n <- runCanvasM (cw, ch) undefined $
-                findTopShapeFromPoint (x - cx, y - cy) drawing
+            pic <- getPic
+            n <- getNodeAtCoords canvas x y pic
             return (pToJSVal (maybe (-1) getNodeId n))
     setActiveCB <- syncCallback1 ContinueAsync $ setActive . pFromJSVal
     getPicCB <- syncCallback' $ getPic >>= toJSVal_aeson . pictureToNode
@@ -1391,25 +1395,7 @@ initDebugMode canvas setActive getPic highlight = do
         syncCallback2 ContinueAsync $ \c n -> do
             let canvas = unsafeCoerce c :: Element
                 nodeId = NodeId $ pFromJSVal n
-            drawing <- pictureToDrawing <$> getPic
-            let node = fromMaybe (Drawings []) $ fst <$> getDrawNode nodeId drawing
-            offscreenCanvas <- Canvas.create 500 500
-            setCanvasSize canvas canvas
-            setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-            screen <- getCodeWorldContext (canvasFromElement canvas)
-            rect <- getBoundingClientRect canvas
-            withScreen (elementFromCanvas offscreenCanvas) rect $
-                drawFrame (node <> coordinatePlaneDrawing)
-            rect <- getBoundingClientRect canvas
-            cw <- ClientRect.getWidth rect
-            ch <- ClientRect.getHeight rect
-            canvasDrawImage
-                screen
-                (elementFromCanvas offscreenCanvas)
-                0
-                0
-                (round cw)
-                (round ch)
+            drawPartialPic canvas nodeId =<< getPic
     js_initDebugMode getNodeCB setActiveCB getPicCB highlightCB drawCB
 
 foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
@@ -1586,6 +1572,70 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
     mapLeft :: (a -> b) -> Either a c -> Either b c
     mapLeft f = either (Left . f) Right
 
+--------------------------------------------------------------------------------
+-- FRP implementation
+
+createPhysicalReactiveInput
+    :: (R.Reflex t, R.MonadReflexCreateTrigger t m, R.MonadHold t m,
+        MonadFix m, MonadIO m)
+    => Window
+    -> Element
+    -> ([DSum (R.EventTrigger t) Identity] -> IO ())
+    -> m (ReactiveInput t)
+createPhysicalReactiveInput window canvas fire = do
+    keyPress <- R.newEventWithTrigger $ \trigger ->
+        on window keyDown $ do
+            keyName <- keyCodeToText <$> (getKeyCode =<< event)
+            when (keyName /= "") $ do
+                liftIO $ fire [ trigger :=> Identity keyName ]
+                preventDefault
+                stopPropagation
+    textEntry <- R.newEventWithTrigger $ \trigger ->
+        on window keyDown $ do
+            key <- getKey =<< event
+            when (T.length key == 1) $ do
+                liftIO $ fire [trigger :=> Identity key]
+                preventDefault
+                stopPropagation
+    keyRelease <- R.newEventWithTrigger $ \trigger ->
+        on window keyUp $ do
+            keyName <- keyCodeToText <$> (getKeyCode =<< event)
+            when (keyName /= "") $ do
+                liftIO $ fire [trigger :=> Identity keyName]
+                preventDefault
+                stopPropagation
+    pointerPress <- R.newEventWithTrigger $ \trigger ->
+        on window mouseDown $ do
+            pos <- getMousePos canvas
+            liftIO $ fire [trigger :=> Identity pos]
+    pointerRelease <- R.newEventWithTrigger $ \trigger ->
+        on window mouseUp $ do
+            pos <- getMousePos canvas
+            liftIO $ fire [trigger :=> Identity pos]
+    pointerMovement <- R.newEventWithTrigger $ \trigger ->
+        on window mouseMove $ do
+            pos <- getMousePos canvas
+            liftIO $ fire [trigger :=> Identity pos]
+
+    t0 <- liftIO getTime
+    timeTick <- R.newEventWithTrigger $ \trigger -> do
+        active <- newIORef True
+        let timeStep t = do
+                stillActive <- readIORef active
+                when stillActive $ do
+                    fire [trigger :=> Identity (t - t0)]
+                    void $ inAnimationFrame ContinueAsync timeStep
+        void $ inAnimationFrame ContinueAsync timeStep
+        return (writeIORef active False)
+
+    currentTime <- R.holdDyn 0 ((/ 1000) <$> timeTick)
+    timePassing <- R.ffilter (> 0) <$> diffsWith (-) 0 currentTime
+    pointerPosition <- R.holdDyn (0, 0) pointerMovement
+    pointerDown <- R.holdDyn False $
+        R.mergeWith (&&) [True <$ pointerPress, False <$ pointerRelease]
+
+    return ReactiveInput{..}
+
 runReactive
     :: (forall t m. (R.Reflex t, R.MonadHold t m, MonadFix m)
         => (ReactiveInput t -> m (R.Dynamic t Picture)))
@@ -1596,96 +1646,24 @@ runReactive program = do
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
-
-    offscreenCanvas <- Canvas.create 500 500
     setCanvasSize canvas canvas
-    setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-    screen <- getCodeWorldContext (canvasFromElement canvas)
 
-    let frame (Just pic) = do
-            rect <- getBoundingClientRect canvas
-            withScreen (elementFromCanvas offscreenCanvas) rect $
-                drawFrame (pictureToDrawing pic)
-            cw <- ClientRect.getWidth rect
-            ch <- ClientRect.getHeight rect
-            when (cw > 0 && ch > 0) $ canvasDrawImage
-                screen
-                (elementFromCanvas offscreenCanvas)
-                0
-                0
-                (round cw)
-                (round ch)
-        frame Nothing = return ()
+    frameRenderer <- createFrameRenderer canvas
+    let fullRenderer = maybe (return ()) (frameRenderer . pictureToDrawing)
 
     rec
-        keyPress <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger ->
-            on window keyDown $ do
-                keyName <- keyCodeToText <$> (getKeyCode =<< event)
-                when (keyName /= "") $ do
-                    liftIO $ sendEvents [ trigger :=> Identity keyName ]
-                    preventDefault
-                    stopPropagation
-        textEntry <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger ->
-            on window keyDown $ do
-                key <- getKey =<< event
-                when (T.length key == 1) $ do
-                    liftIO $ sendEvents [trigger :=> Identity key]
-                    preventDefault
-                    stopPropagation
-        keyRelease <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger ->
-            on window keyUp $ do
-                keyName <- keyCodeToText <$> (getKeyCode =<< event)
-                when (keyName /= "") $ do
-                    liftIO $ sendEvents [trigger :=> Identity keyName]
-                    preventDefault
-                    stopPropagation
-        pointerPress <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger ->
-            on window mouseDown $ do
-                pos <- getMousePos canvas
-                liftIO $ sendEvents [trigger :=> Identity pos]
-        pointerRelease <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger ->
-            on window mouseUp $ do
-                pos <- getMousePos canvas
-                liftIO $ sendEvents [trigger :=> Identity pos]
-        pointerMovement <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger ->
-            on window mouseMove $ do
-                pos <- getMousePos canvas
-                liftIO $ sendEvents [trigger :=> Identity pos]
-
-        t0 <- getTime
-        timeTick <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger -> do
-            active <- newIORef True
-            let timeStep t = do
-                    stillActive <- readIORef active
-                    when stillActive $ do
-                        sendEvents [trigger :=> Identity (t - t0)]
-                        void $ inAnimationFrame ContinueAsync timeStep
-            void $ inAnimationFrame ContinueAsync timeStep
-            return (writeIORef active False)
-
-        currentTime <- R.runSpiderHost $ R.holdDyn 0 ((/ 1000) <$> timeTick)
-        timePassing <- R.runSpiderHost $ R.ffilter (> 0) <$> diffsWith (-) 0 currentTime
-        pointerPosition <- R.runSpiderHost $ R.holdDyn (0, 0) pointerMovement
-        pointerDown <- R.runSpiderHost $ R.holdDyn False $
-            R.mergeWith (&&) [True <$ pointerPress, False <$ pointerRelease]
-
-        dynPicture <- R.runSpiderHost $ R.runHostFrame $ program ReactiveInput{..}
-
+        input <- R.runSpiderHost $ createPhysicalReactiveInput window canvas fireAndRedraw
+        dynPicture <- R.runSpiderHost $ R.runHostFrame $ program input
         pictureHandle <- R.runSpiderHost $ R.subscribeEvent (R.updated dynPicture)
-        let sendEvents events = do
+        let fireAndRedraw events = do
                 pic <- R.runSpiderHost $ R.fireEventsAndRead events $
                     R.readEvent pictureHandle >>= sequence
-                frame pic
+                fullRenderer pic
 
     let redraw = do
-            pic <- R.runSpiderHost $
-                R.runHostFrame $ R.sample $ R.current dynPicture
-            frame (Just pic)
-
-    _ <- on window resize $ liftIO $ do
-        setCanvasSize canvas canvas
-        setCanvasSize (elementFromCanvas offscreenCanvas) canvas
-        redraw
+            pic <- R.runSpiderHost $ R.runHostFrame $ R.sample $ R.current dynPicture
+            fullRenderer (Just pic)
+    _ <- on window resize $ liftIO $ setCanvasSize canvas canvas >> redraw
 
     redraw
     waitForever

@@ -96,6 +96,7 @@ import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
 import qualified JavaScript.Web.Location as Loc
 import qualified JavaScript.Web.MessageEvent as WS
+import qualified JavaScript.Web.Performance as Performance
 import qualified JavaScript.Web.WebSocket as WS
 import Unsafe.Coerce
 
@@ -113,10 +114,11 @@ import System.Environment
 -- pictures need to apply the color, if any, in different ways, often outside of
 -- the action that sets up the geometry.
 withDS :: MonadCanvas m => DrawState -> m a -> m a
-withDS (DrawState (AffineTransformation ta tb tc td te tf) _col) action = CM.saveRestore $ do
-    CM.transform ta tb tc td te tf
-    CM.beginPath
-    action
+withDS (DrawState (AffineTransformation ta tb tc td te tf) _col) action =
+    CM.saveRestore $ do
+        CM.transform ta tb tc td te tf
+        CM.beginPath
+        action
 
 applyColor :: MonadCanvas m => DrawState -> m ()
 applyColor ds =
@@ -439,6 +441,34 @@ drawingContains ds (Drawings drs) = or <$> mapM (drawingContains ds) drs
 
 --------------------------------------------------------------------------------
 
+clearScreen :: MonadCanvas m => m ()
+clearScreen = do
+    w <- CM.getScreenWidth
+    h <- CM.getScreenHeight
+    px <- pixelSize
+    CM.fillColor 255 255 255 1
+    CM.fillRect (-w/2 * px) (-h/2 * px) (w * px) (h * px)
+
+drawFrame :: MonadCanvas m => Drawing m -> m ()
+drawFrame drawing = clearScreen >> drawDrawing initialDS drawing
+
+pixelSize :: MonadCanvas m => m Double
+pixelSize = do
+    cw <- CM.getScreenWidth
+    ch <- CM.getScreenHeight
+    return $ max (20 / realToFrac cw) (20 / realToFrac ch)
+
+setupScreenContext :: MonadCanvas m => Int -> Int -> m ()
+setupScreenContext cw ch = do
+    CM.translate (realToFrac cw / 2) (realToFrac ch / 2)
+    s <- pixelSize
+    CM.scale (1/s) (-1/s)
+    CM.lineWidth 0
+    CM.textCenter
+    CM.textMiddle
+
+--------------------------------------------------------------------------------
+
 -- A NodeId a unique id for each node in a Picture of Drawing, chosen by the order
 -- the node appears in DFS. When a Picture is converted to a drawing the NodeId's of
 -- corresponding nodes are shared. Always >=0.
@@ -465,11 +495,6 @@ findTopShape ds d = do
         case found of
             True -> return (True, count + 1)
             False -> fmap (+ count) <$> go ds (Drawings drs)
-
-handlePointRequest :: MonadCanvas m => IO Picture -> Point -> m (Maybe NodeId)
-handlePointRequest getPic pt = do
-    drawing <- liftIO $ pictureToDrawing <$> getPic
-    findTopShapeFromPoint pt drawing
 
 inspect ::
        IO Picture -> (Bool -> IO ()) -> (Bool -> Maybe NodeId -> IO ()) -> IO ()
@@ -647,30 +672,6 @@ findTopShapeFromPoint (x, y) pic = do
         setupScreenContext 500 500
         findTopShape (translateDS (-x) (-y) initialDS) pic
 
-drawFrame :: MonadCanvas m => Drawing m -> m ()
-drawFrame drawing = do
-    w <- CM.getScreenWidth
-    h <- CM.getScreenHeight
-    let ratio = 500 / min w h
-    CM.fillColor 255 255 255 1
-    CM.fillRect (-ratio * w / 2) (-ratio * h / 2) (ratio * w) (ratio * h)
-    drawDrawing initialDS drawing
-
-pixelSize :: MonadCanvas m => m Double
-pixelSize = do
-    cw <- CM.getScreenWidth
-    ch <- CM.getScreenHeight
-    return $ max (20 / realToFrac cw) (20 / realToFrac ch)
-
-setupScreenContext :: MonadCanvas m => Int -> Int -> m ()
-setupScreenContext cw ch = do
-    CM.translate (realToFrac cw / 2) (realToFrac ch / 2)
-    s <- pixelSize
-    CM.scale (1/s) (-1/s)
-    CM.lineWidth 0
-    CM.textCenter
-    CM.textMiddle
-
 #ifdef ghcjs_HOST_OS
 
 --------------------------------------------------------------------------------
@@ -693,13 +694,10 @@ elementFromCanvas :: Canvas.Canvas -> Element
 elementFromCanvas = pFromJSVal . jsval
 
 getTime :: IO Double
-getTime = (/ 1000) <$> js_getHighResTimestamp
-
-foreign import javascript unsafe "performance.now()"
-    js_getHighResTimestamp :: IO Double
+getTime = (/ 1000) <$> Performance.now
 
 nextFrame :: IO Double
-nextFrame = waitForAnimationFrame >> getTime
+nextFrame = (/ 1000) <$> waitForAnimationFrame
 
 initDebugMode :: (Bool -> IO ())
               -> IO Picture
@@ -711,10 +709,11 @@ initDebugMode setActive getPic highlight = do
             let obj = unsafeCoerce pointJS
             x <- pFromJSVal <$> getProp "x" obj
             y <- pFromJSVal <$> getProp "y" obj
+            drawing <- pictureToDrawing <$> getPic
             -- It's safe to use undefined for the context and dimensions
-            -- because handlePointRequest ignores them and works only with
+            -- because findTopShapeFromPoint ignores them and works only with
             -- an off-screen image.
-            n <- runCanvasM undefined undefined (handlePointRequest getPic (x, y))
+            n <- runCanvasM undefined undefined $ findTopShapeFromPoint (x, y) drawing
             return (pToJSVal (maybe (-1) getNodeId n))
     setActiveCB <- syncCallback1 ContinueAsync $ setActive . pFromJSVal
     getPicCB <- syncCallback' $ getPic >>= toJSVal_aeson . pictureToNode
@@ -1609,7 +1608,6 @@ runReactive program = do
             rect <- getBoundingClientRect canvas
             withScreen (elementFromCanvas offscreenCanvas) rect $
                 drawFrame (pictureToDrawing pic)
-            rect <- getBoundingClientRect canvas
             cw <- ClientRect.getWidth rect
             ch <- ClientRect.getHeight rect
             when (cw > 0 && ch > 0) $ canvasDrawImage

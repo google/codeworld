@@ -496,6 +496,15 @@ findTopShape ds d = do
             True -> return (True, count + 1)
             False -> fmap (+ count) <$> go ds (Drawings drs)
 
+-- If a picture is found, the result will include an array of the base picture
+-- and all transformations.
+findTopShapeFromPoint :: MonadCanvas m => Point -> Drawing m -> m (Maybe NodeId)
+findTopShapeFromPoint (x, y) pic = do
+    img <- CM.newImage 500 500
+    CM.withImage img $ do
+        setupScreenContext 500 500
+        findTopShape (translateDS (-x/25) (y/25) initialDS) pic
+
 inspect ::
        IO Picture -> (Bool -> IO ()) -> (Bool -> Maybe NodeId -> IO ()) -> IO ()
 inspect getPic handleActive highlight =
@@ -662,15 +671,6 @@ getPictureSrcLoc (Sketch loc _ _ _ _) = loc
 getPictureSrcLoc (CoordinatePlane loc) = loc
 getPictureSrcLoc (Pictures loc _) = loc
 getPictureSrcLoc (PictureAnd loc _) = loc
-
--- If a picture is found, the result will include an array of the base picture
--- and all transformations.
-findTopShapeFromPoint :: MonadCanvas m => Point -> Drawing m -> m (Maybe NodeId)
-findTopShapeFromPoint (x, y) pic = do
-    img <- CM.newImage 500 500
-    CM.withImage img $ do
-        setupScreenContext 500 500
-        findTopShape (translateDS (-x) (-y) initialDS) pic
 
 #ifdef ghcjs_HOST_OS
 

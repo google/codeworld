@@ -41,11 +41,7 @@ import Control.Concurrent
 import Control.Exception
 import Control.Monad
 import Control.Monad.Fix
-import Control.Monad.Identity
-import Control.Monad.Trans (MonadIO, liftIO)
 import Data.Char (chr)
-import Data.Dependent.Map (DSum(..))
-import Data.IORef
 import Data.List (zip4, intercalate)
 import Data.Maybe
 import Data.Serialize
@@ -73,9 +69,13 @@ import qualified CodeWorld.CollaborationUI as CUI
 import CodeWorld.Message
 import CodeWorld.Prediction
 import Control.DeepSeq
+import Control.Monad.Identity
+import Control.Monad.Trans (MonadIO, liftIO)
 import qualified Control.Monad.Trans.State as State
 import Data.Aeson (ToJSON(..), (.=), object)
+import Data.Dependent.Map (DSum(..))
 import Data.Hashable
+import Data.IORef
 import qualified Data.JSString
 import qualified GHCJS.DOM.ClientRect as ClientRect
 import GHCJS.DOM

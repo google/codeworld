@@ -1762,12 +1762,11 @@ runReactive program = do
     rec
         physicalInput <- R.runSpiderHost $
             createPhysicalReactiveInput window canvas fireAndRedraw
+        userPicture <- R.runSpiderHost $ R.runHostFrame $ program logicalInput
 
         debugState <- R.runSpiderHost $
             connectInspect canvas userPicture R.runSpiderHost fireRefAndRedraw
         logicalInput <- R.runSpiderHost $ inspectLogicalInput debugState physicalInput
-
-        userPicture <- R.runSpiderHost $ R.runHostFrame $ program logicalInput
         let logicalDrawing = inspectLogicalDrawing debugState userPicture
 
         logicalDrawingHandle <- R.runSpiderHost $ R.subscribeEvent (R.updated logicalDrawing)

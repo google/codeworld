@@ -1757,12 +1757,11 @@ runReactive program = do
     rec
         physicalInput <- R.runSpiderHost $
             createPhysicalReactiveInput window canvas fireAndRedraw
+        userPicture <- R.runSpiderHost $ R.runHostFrame $ program logicalInput
 
         debugState <- R.runSpiderHost $
             connectInspect canvas userPicture R.runSpiderHost fireRefAndRedraw
         logicalInput <- R.runSpiderHost $ inspectLogicalInput debugState physicalInput
-
-        userPicture <- R.runSpiderHost $ R.runHostFrame $ program logicalInput
         let logicalDrawing = inspectLogicalDrawing debugState userPicture
 
         logicalDrawingHandle <- R.runSpiderHost $ R.subscribeEvent (R.updated logicalDrawing)
@@ -1773,7 +1772,8 @@ runReactive program = do
                     R.readEvent logicalDrawingHandle >>= sequence
                 fullRenderer drawing
 
-        let fireRefAndRedraw :: forall a. IORef (Maybe (R.EventTrigger (R.SpiderTimeline R.Global) a)) -> a -> IO ()
+        let fireRefAndRedraw :: forall a.
+                IORef (Maybe (R.EventTrigger (R.SpiderTimeline R.Global) a)) -> a -> IO ()
             fireRefAndRedraw trigger val = do
                 drawing <- R.runSpiderHost $ R.fireEventRefAndRead trigger val logicalDrawingHandle
                 fullRenderer drawing

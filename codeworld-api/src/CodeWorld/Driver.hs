@@ -213,19 +213,6 @@ drawFigure ds w figure = do
         applyColor ds
         CM.stroke
 
-fontString :: TextStyle -> Font -> Text
-fontString style font = stylePrefix style <> "1px " <> fontName font
-  where
-    stylePrefix Plain = ""
-    stylePrefix Bold = "bold "
-    stylePrefix Italic = "italic "
-    fontName SansSerif = "sans-serif"
-    fontName Serif = "serif"
-    fontName Monospace = "monospace"
-    fontName Handwriting = "cursive"
-    fontName Fancy = "fantasy"
-    fontName (NamedFont txt) = "\"" <> T.filter (/= '"') txt <> "\""
-
 --------------------------------------------------------------------------------
 
 -- | A Drawing is an intermediate and simpler representation of a Picture, suitable
@@ -352,18 +339,29 @@ textDrawer sty fnt txt ds =
     DrawMethods
     { drawShape =
           withDS ds $ do
-              CM.scale 1 (-1)
+              CM.scale (1/25) (-1/25)
               applyColor ds
               CM.font (fontString sty fnt)
               CM.fillText txt (0, 0)
     , shapeContains = \x y ->
           do CM.font (fontString sty fnt)
-             width <- CM.measureText txt
+             width <- (/ 25) <$> CM.measureText txt
              let height = 1 -- constant, defined in fontString
              withDS ds $
                  CM.rect ((-0.5) * width) ((-0.5) * height) width height
              CM.isPointInPath (x, y)
     }
+  where
+    fontString style font = stylePrefix style <> "25px " <> fontName font
+    stylePrefix Plain = ""
+    stylePrefix Bold = "bold "
+    stylePrefix Italic = "italic "
+    fontName SansSerif = "sans-serif"
+    fontName Serif = "serif"
+    fontName Monospace = "monospace"
+    fontName Handwriting = "cursive"
+    fontName Fancy = "fantasy"
+    fontName (NamedFont txt) = "\"" <> T.filter (/= '"') txt <> "\""
 
 imageDrawer :: MonadCanvas m => Text -> Text -> Double -> Double -> Drawer m
 imageDrawer name url imgw imgh ds =

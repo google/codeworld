@@ -1577,6 +1577,12 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
 --------------------------------------------------------------------------------
 -- FRP implementation
 
+diffsWith :: (R.Reflex t, R.MonadHold t m, MonadFix m)
+          => (a -> a -> b) -> a -> R.Dynamic t a -> m (R.Event t b)
+diffsWith f start dyn = do
+    pairs <- R.foldDyn (\new (old, _) -> (new, old)) (start, start) (R.updated dyn)
+    return $ uncurry f <$> R.updated pairs
+
 createPhysicalReactiveInput
     :: (R.Reflex t, R.MonadReflexCreateTrigger t m, R.MonadHold t m,
         MonadFix m, MonadIO m)
@@ -1642,9 +1648,9 @@ connectInspect
     => Element
     -> R.Dynamic t Picture
     -> (forall a. m a -> IO a)
-    -> (forall a. IORef (Maybe (R.EventTrigger t a)) -> a -> IO ())
-    -> m (R.Dynamic t (Maybe (Maybe NodeId, Maybe NodeId)))
-connectInspect canvas userPicture runHost fireRef = do
+    -> ([DSum (R.EventTrigger t) Identity] -> IO ())
+    -> m (R.Dynamic t DebugState)
+connectInspect canvas userPicture runHost fire = do
     let samplePic = runHost $
             R.runHostFrame $ R.sample $ R.current userPicture
 
@@ -1666,56 +1672,50 @@ connectInspect canvas userPicture runHost fireRef = do
         let nodeId = NodeId (pFromJSVal n)
         drawPartialPic canvas nodeId =<< samplePic
 
-    (activeSetEvent, activeTriggerRef) <- R.newEventWithTriggerRef
-    (highlightSetEvent, highlightTriggerRef) <- R.newEventWithTriggerRef
-    (selectionSetEvent, selectionTriggerRef) <- R.newEventWithTriggerRef
+    debugEventRef <- liftIO $ newIORef $ const (return ())
+    debugEvent <- R.newEventWithTrigger $ \trigger -> do
+        writeIORef debugEventRef $ \e -> fire [trigger :=> Identity e]
+        return $ writeIORef debugEventRef $ const (return ())
 
     -- Fire an event to change debug active state.
-    setActiveCB <- liftIO $ syncCallback1 ContinueAsync $ \ active -> do
-        fireRef activeTriggerRef (pFromJSVal active)
+    setActiveCB <- liftIO $ syncCallback1 ContinueAsync $ \ active -> case pFromJSVal active of
+        True  -> ($ DebugStart) =<< readIORef debugEventRef
+        False -> ($ DebugStop)  =<< readIORef debugEventRef
 
     -- Fire an event to change the highlight or selection.
     highlightCB <- liftIO $ syncCallback2 ContinueAsync $ \t n -> do
         let isSelect = pFromJSVal t
         let nodeNum = pFromJSVal n
         let nodeId = if nodeNum < 0 then Nothing else Just (NodeId nodeNum)
-        if isSelect then fireRef selectionTriggerRef nodeId
-                    else fireRef highlightTriggerRef nodeId
+        if isSelect then ($ SelectEvent nodeId) =<< readIORef debugEventRef
+                    else ($ HighlightEvent nodeId) =<< readIORef debugEventRef
 
     liftIO $ js_initDebugMode getNodeCB setActiveCB getPicCB highlightCB drawCB
 
-    debugActive <- R.holdDyn False activeSetEvent
-    debugHighlight <- R.holdDyn Nothing highlightSetEvent
-    debugSelection <- R.holdDyn Nothing selectionSetEvent
-
-    R.holdUniqDyn $ do
-        active <- debugActive
-        if active then Just <$> ((,) <$> debugHighlight <*> debugSelection)
-                  else return Nothing
+    R.foldDyn updateDebugState debugStateInit debugEvent
 
 inspectLogicalDrawing
     :: R.Reflex t
-    => R.Dynamic t (Maybe (Maybe NodeId, Maybe NodeId))
+    => R.Dynamic t DebugState
     -> R.Dynamic t Picture
     -> R.Dynamic t (Drawing CanvasM)
 inspectLogicalDrawing debugState userPicture = do
-    userDrawing <- pictureToDrawing <$> userPicture
-    state <- debugState
-    return $ case state of
-        Just (highlight, selection) ->
-            highlightSelectShape highlight selection userDrawing
-        Nothing -> userDrawing
+    state <- debugStateActive <$> debugState
+    drawing <- pictureToDrawing <$> userPicture
+    case state of
+        True -> drawDebugState <$> debugState <*> pure drawing
+        False -> return drawing
 
 inspectLogicalInput
     :: forall t m. (MonadIO m, MonadRef m, R.MonadReflexHost t m,
                     MonadFix m, Ref m ~ IORef, R.MonadHold t m)
-    => R.Dynamic t (Maybe (Maybe NodeId, Maybe NodeId))
+    => R.Dynamic t DebugState
     -> ReactiveInput t
     -> m (ReactiveInput t)
 inspectLogicalInput debugState physicalInput = do
     -- Physical inputs should either be frozen or dropped during debugging.
     let filterInDebugMode :: forall a. R.Event t a -> R.Event t a
-        filterInDebugMode = R.gate (isNothing <$> R.current debugState)
+        filterInDebugMode = R.gate (debugStateActive <$> R.current debugState)
     let freezeInDebugMode :: forall a. R.Dynamic t a -> a -> m (R.Dynamic t a)
         freezeInDebugMode dyn initial =
             R.holdDyn initial (filterInDebugMode (R.updated dyn))
@@ -1765,14 +1765,13 @@ runReactive program = do
         userPicture <- R.runSpiderHost $ R.runHostFrame $ program logicalInput
 
         debugState <- R.runSpiderHost $
-            connectInspect canvas userPicture R.runSpiderHost fireRefAndRedraw
+            connectInspect canvas userPicture R.runSpiderHost fireAndRedraw
         logicalInput <- R.runSpiderHost $ inspectLogicalInput debugState physicalInput
         let logicalDrawing = inspectLogicalDrawing debugState userPicture
 
         logicalDrawingHandle <- R.runSpiderHost $ R.subscribeEvent (R.updated logicalDrawing)
 
         let fireAndRedraw events = do
-            fireAndRedraw events = do
                 drawing <- R.runSpiderHost $ R.fireEventsAndRead events $
                     R.readEvent logicalDrawingHandle >>= sequence
                 maybe (return ()) asyncRender drawing
@@ -1784,12 +1783,6 @@ runReactive program = do
 
     redraw
     waitForever
-
-diffsWith :: (R.Reflex t, R.MonadHold t m, MonadFix m)
-          => (a -> a -> b) -> a -> R.Dynamic t a -> m (R.Event t b)
-diffsWith f start dyn = do
-    pairs <- R.foldDyn (\new (old, _) -> (new, old)) (start, start) (R.updated dyn)
-    return $ uncurry f <$> R.updated pairs
 
 #else
 

@@ -849,8 +849,7 @@ data ReactiveInput t = ReactiveInput {
     pointerRelease :: R.Event t Point,
     pointerPosition :: R.Dynamic t Point,
     pointerDown :: R.Dynamic t Bool,
-    timePassing :: R.Event t Double,
-    currentTime :: R.Dynamic t Double
+    timePassing :: R.Event t Double
     }
 
 keyCodeToText :: Word -> Text
@@ -1617,19 +1616,17 @@ createPhysicalReactiveInput window canvas fire = do
             pos <- getMousePos canvas
             liftIO $ fire [trigger :=> Identity pos]
 
-    t0 <- liftIO getTime
-    timeTick <- R.newEventWithTrigger $ \trigger -> do
+    timePassing <- R.newEventWithTrigger $ \trigger -> do
         active <- newIORef True
-        let timeStep t = do
+        let timeStep t1 t2 = do
                 stillActive <- readIORef active
                 when stillActive $ do
-                    fire [trigger :=> Identity (t - t0)]
-                    void $ inAnimationFrame ContinueAsync timeStep
-        void $ inAnimationFrame ContinueAsync timeStep
+                    fire [trigger :=> Identity ((t2 - t1) / 1000)]
+                    void $ inAnimationFrame ContinueAsync (timeStep t2)
+        t0 <- getTime
+        void $ inAnimationFrame ContinueAsync (timeStep t0)
         return (writeIORef active False)
 
-    currentTime <- R.holdDyn 0 ((/ 1000) <$> timeTick)
-    timePassing <- R.ffilter (> 0) <$> diffsWith (-) 0 currentTime
     pointerPosition <- R.holdDyn (0, 0) pointerMovement
     pointerDown <- R.holdDyn False $
         R.mergeWith (&&) [True <$ pointerPress, False <$ pointerRelease]
@@ -1808,7 +1805,6 @@ runReactive program = runBlankCanvas $ \context -> do
     pointerPosition <- R.runSpiderHost $ R.holdDyn (0, 0) pointerMovement
     pointerDown <- R.runSpiderHost $ R.holdDyn False $
         R.mergeWith (&&) [True <$ pointerPress, False <$ pointerRelease]
-    currentTime <- R.runSpiderHost $ R.foldDyn (+) 0 timePassing
 
     let input = ReactiveInput{..}
 
@@ -1828,7 +1824,9 @@ runReactive program = runBlankCanvas $ \context -> do
             frame pic
 
     redraw
-    let go t0 = do
+
+    t0 <- getCurrentTime
+    let go t1 = do
             events <- Canvas.flush context
             forM_ events $ \event -> case Canvas.eType event of
                 "keydown" | Just code <- Canvas.eWhich event -> do
@@ -1848,10 +1846,10 @@ runReactive program = runBlankCanvas $ \context -> do
 
             tn <- getCurrentTime
             threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
-            t1 <- getCurrentTime
-            let dt = min 0.25 $ realToFrac (t1 `diffUTCTime` t0)
+            t2 <- getCurrentTime
+            let dt = realToFrac (t2 `diffUTCTime` t1)
             sendEvent timePassingTrigger dt
-            go t1
-    go =<< getCurrentTime
+            go t2
+    go t0
 
 #endif

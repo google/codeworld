@@ -30,7 +30,6 @@ module CodeWorld.Reflex (
     , pointerRelease
     , pointerPosition
     , pointerDown
-    , currentTime
     , timePassing
     -- * Pictures
     , Picture

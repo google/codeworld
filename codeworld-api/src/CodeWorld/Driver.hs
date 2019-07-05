@@ -1646,7 +1646,15 @@ runReactive program = do
     setCanvasSize canvas canvas
 
     frameRenderer <- createFrameRenderer canvas
-    let fullRenderer = maybe (return ()) (frameRenderer . pictureToDrawing)
+    pendingFrame <- liftIO $ newMVar Nothing
+
+    let handleFrame _ = do
+            pic <- swapMVar pendingFrame Nothing
+            maybe (return ()) (frameRenderer . pictureToDrawing) pic
+
+    let asyncRender pic = do
+            old <- swapMVar pendingFrame (Just pic)
+            when (isNothing old) $ void $ inAnimationFrame ContinueAsync handleFrame
 
     rec
         input <- R.runSpiderHost $ createPhysicalReactiveInput window canvas fireAndRedraw
@@ -1655,11 +1663,12 @@ runReactive program = do
         let fireAndRedraw events = do
                 pic <- R.runSpiderHost $ R.fireEventsAndRead events $
                     R.readEvent pictureHandle >>= sequence
-                fullRenderer pic
+                maybe (return ()) asyncRender pic
 
     let redraw = do
             pic <- R.runSpiderHost $ R.runHostFrame $ R.sample $ R.current dynPicture
-            fullRenderer (Just pic)
+            asyncRender pic
+
     _ <- on window resize $ liftIO $ setCanvasSize canvas canvas >> redraw
 
     redraw

@@ -1672,12 +1672,6 @@ runReactive program = do
     redraw
     waitForever
 
-diffsWith :: (R.Reflex t, R.MonadHold t m, MonadFix m)
-          => (a -> a -> b) -> a -> R.Dynamic t a -> m (R.Event t b)
-diffsWith f start dyn = do
-    pairs <- R.foldDyn (\new (old, _) -> (new, old)) (start, start) (R.updated dyn)
-    return $ uncurry f <$> R.updated pairs
-
 #else
 
 --------------------------------------------------------------------------------

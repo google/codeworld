@@ -76,6 +76,7 @@ import CodeWorld.Message
 import CodeWorld.Prediction
 import Control.DeepSeq
 import Control.Monad.Identity
+import Control.Monad.Ref
 import Control.Monad.Trans (MonadIO, liftIO)
 import qualified Control.Monad.Trans.State as State
 import Data.Aeson (ToJSON(..), (.=), object)

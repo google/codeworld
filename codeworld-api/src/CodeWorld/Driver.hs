@@ -1640,9 +1640,9 @@ connectInspect
     => Element
     -> R.Dynamic t Picture
     -> (forall a. m a -> IO a)
-    -> ([DSum (R.EventTrigger t) Identity] -> IO ())
-    -> m (R.Dynamic t DebugState)
-connectInspect canvas userPicture runHost fire = do
+    -> ((DebugState -> DebugState) -> IO ())
+    -> m ()
+connectInspect canvas userPicture runHost fireUpdate = do
     let samplePic = runHost $
             R.runHostFrame $ R.sample $ R.current userPicture
 
@@ -1664,27 +1664,20 @@ connectInspect canvas userPicture runHost fire = do
         let nodeId = NodeId (pFromJSVal n)
         drawPartialPic canvas nodeId =<< samplePic
 
-    debugEventRef <- liftIO $ newIORef $ const (return ())
-    debugEvent <- R.newEventWithTrigger $ \trigger -> do
-        writeIORef debugEventRef $ \e -> fire [trigger :=> Identity e]
-        return $ writeIORef debugEventRef $ const (return ())
-
     -- Fire an event to change debug active state.
     setActiveCB <- liftIO $ syncCallback1 ContinueAsync $ \ active -> case pFromJSVal active of
-        True  -> ($ DebugStart) =<< readIORef debugEventRef
-        False -> ($ DebugStop)  =<< readIORef debugEventRef
+        True  -> fireUpdate (updateDebugState DebugStart)
+        False -> fireUpdate (updateDebugState DebugStop)
 
     -- Fire an event to change the highlight or selection.
     highlightCB <- liftIO $ syncCallback2 ContinueAsync $ \t n -> do
         let isSelect = pFromJSVal t
         let nodeNum = pFromJSVal n
         let nodeId = if nodeNum < 0 then Nothing else Just (NodeId nodeNum)
-        if isSelect then ($ SelectEvent nodeId) =<< readIORef debugEventRef
-                    else ($ HighlightEvent nodeId) =<< readIORef debugEventRef
+        if isSelect then fireUpdate (updateDebugState (SelectEvent nodeId))
+                    else fireUpdate (updateDebugState (HighlightEvent nodeId))
 
     liftIO $ js_initDebugMode getNodeCB setActiveCB getPicCB highlightCB drawCB
-
-    R.foldDyn updateDebugState debugStateInit debugEvent
 
 inspectLogicalDrawing
     :: R.Reflex t
@@ -1707,7 +1700,7 @@ inspectLogicalInput
 inspectLogicalInput debugState physicalInput = do
     -- Physical inputs should either be frozen or dropped during debugging.
     let filterInDebugMode :: forall a. R.Event t a -> R.Event t a
-        filterInDebugMode = R.gate (debugStateActive <$> R.current debugState)
+        filterInDebugMode = R.gate (not . debugStateActive <$> R.current debugState)
     let freezeInDebugMode :: forall a. R.Dynamic t a -> a -> m (R.Dynamic t a)
         freezeInDebugMode dyn initial =
             R.holdDyn initial (filterInDebugMode (R.updated dyn))
@@ -1749,23 +1742,28 @@ runReactive program = do
             old <- swapMVar pendingFrame (Just pic)
             when (isNothing old) $ void $ inAnimationFrame ContinueAsync handleFrame
 
+    (debugUpdate, debugUpdateTriggerRef) <- R.runSpiderHost R.newEventWithTriggerRef
+    debugState <- R.runSpiderHost $ R.foldDyn ($) debugStateInit debugUpdate
+
     rec
         physicalInput <- R.runSpiderHost $
             createPhysicalReactiveInput window canvas fireAndRedraw
-        userPicture <- R.runSpiderHost $ R.runHostFrame $ program logicalInput
-
-        debugState <- R.runSpiderHost $
-            connectInspect canvas userPicture R.runSpiderHost fireAndRedraw
-
         logicalInput <- R.runSpiderHost $ inspectLogicalInput debugState physicalInput
+        userPicture <- R.runSpiderHost $ R.runHostFrame $ program logicalInput
         let logicalDrawing = inspectLogicalDrawing debugState userPicture
-
         logicalDrawingHandle <- R.runSpiderHost $ R.subscribeEvent (R.updated logicalDrawing)
 
         let fireAndRedraw events = do
                 drawing <- R.runSpiderHost $ R.fireEventsAndRead events $
                     R.readEvent logicalDrawingHandle >>= sequence
                 maybe (return ()) asyncRender drawing
+
+    let fireDebugUpdateAndRedraw f = do
+            drawing <- R.runSpiderHost $
+                R.fireEventRefAndRead debugUpdateTriggerRef f logicalDrawingHandle
+            maybe (return ()) asyncRender drawing
+    R.runSpiderHost $
+        connectInspect canvas userPicture R.runSpiderHost fireDebugUpdateAndRedraw
 
     let redraw = do
             drawing <- R.runSpiderHost $ R.runHostFrame $ R.sample $ R.current logicalDrawing

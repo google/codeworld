@@ -1635,49 +1635,43 @@ createPhysicalReactiveInput window canvas fire = do
     return ReactiveInput{..}
 
 connectInspect
-    :: forall t m. (MonadIO m, MonadRef m, R.MonadReflexHost t m,
-                    MonadFix m, R.MonadHold t m, Ref m ~ IORef)
-    => Element
-    -> R.Dynamic t Picture
-    -> (forall a. m a -> IO a)
+    :: Element
+    -> IO Picture
     -> ((DebugState -> DebugState) -> IO ())
-    -> m ()
-connectInspect canvas userPicture runHost fireUpdate = do
-    let samplePic = runHost $
-            R.runHostFrame $ R.sample $ R.current userPicture
-
+    -> IO ()
+connectInspect canvas samplePicture fireUpdate = do
     -- Sample the current user picture to search for a current node.
-    getNodeCB <- liftIO $ syncCallback1' $ \pointJS -> do
+    getNodeCB <- syncCallback1' $ \pointJS -> do
         let obj = unsafeCoerce pointJS
         x <- pFromJSVal <$> getProp "x" obj
         y <- pFromJSVal <$> getProp "y" obj
-        n <- getNodeAtCoords canvas x y =<< samplePic
+        n <- getNodeAtCoords canvas x y =<< samplePicture
         return (pToJSVal (maybe (-1) getNodeId n))
 
     -- Sample the current user picture to return the scene tree.
-    getPicCB <- liftIO $ syncCallback' $ do
-        toJSVal_aeson =<< pictureToNode <$> samplePic
+    getPicCB <- syncCallback' $ do
+        toJSVal_aeson =<< pictureToNode <$> samplePicture
 
     -- Sample the current user picture to draw to a canvas.
-    drawCB <- liftIO $ syncCallback2 ContinueAsync $ \c n -> do
+    drawCB <- syncCallback2 ContinueAsync $ \c n -> do
         let canvas = unsafeCoerce c :: Element
         let nodeId = NodeId (pFromJSVal n)
-        drawPartialPic canvas nodeId =<< samplePic
+        drawPartialPic canvas nodeId =<< samplePicture
 
     -- Fire an event to change debug active state.
-    setActiveCB <- liftIO $ syncCallback1 ContinueAsync $ \ active -> case pFromJSVal active of
+    setActiveCB <- syncCallback1 ContinueAsync $ \ active -> case pFromJSVal active of
         True  -> fireUpdate (updateDebugState DebugStart)
         False -> fireUpdate (updateDebugState DebugStop)
 
     -- Fire an event to change the highlight or selection.
-    highlightCB <- liftIO $ syncCallback2 ContinueAsync $ \t n -> do
+    highlightCB <- syncCallback2 ContinueAsync $ \t n -> do
         let isSelect = pFromJSVal t
         let nodeNum = pFromJSVal n
         let nodeId = if nodeNum < 0 then Nothing else Just (NodeId nodeNum)
         if isSelect then fireUpdate (updateDebugState (SelectEvent nodeId))
                     else fireUpdate (updateDebugState (HighlightEvent nodeId))
 
-    liftIO $ js_initDebugMode getNodeCB setActiveCB getPicCB highlightCB drawCB
+    js_initDebugMode getNodeCB setActiveCB getPicCB highlightCB drawCB
 
 inspectLogicalDrawing
     :: R.Reflex t
@@ -1762,8 +1756,8 @@ runReactive program = do
             drawing <- R.runSpiderHost $
                 R.fireEventRefAndRead debugUpdateTriggerRef f logicalDrawingHandle
             maybe (return ()) asyncRender drawing
-    R.runSpiderHost $
-        connectInspect canvas userPicture R.runSpiderHost fireDebugUpdateAndRedraw
+    let samplePicture = R.runSpiderHost $ R.runHostFrame $ R.sample $ R.current userPicture
+    connectInspect canvas samplePicture fireDebugUpdateAndRedraw
 
     let redraw = do
             drawing <- R.runSpiderHost $ R.runHostFrame $ R.sample $ R.current logicalDrawing

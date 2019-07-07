@@ -75,9 +75,6 @@ import qualified CodeWorld.CollaborationUI as CUI
 import CodeWorld.Message
 import CodeWorld.Prediction
 import Control.DeepSeq
-import Control.Monad.Identity
-import Control.Monad.Ref
-import Control.Monad.Trans (MonadIO, liftIO)
 import qualified Control.Monad.Trans.State as State
 import Data.Aeson (ToJSON(..), (.=), object)
 import Data.Dependent.Map (DSum(..))
@@ -1723,7 +1720,6 @@ inspectLogicalInput debugState physicalInput = do
 
     logicalPointerPosition <- freezeInDebugMode (pointerPosition physicalInput) (0, 0)
     logicalPointerDown     <- freezeInDebugMode (pointerDown physicalInput) False
-    logicalCurrentTime     <- freezeInDebugMode (currentTime physicalInput) 0
 
     return $ ReactiveInput {
             keyPress        = filterInDebugMode (keyPress physicalInput),
@@ -1733,8 +1729,7 @@ inspectLogicalInput debugState physicalInput = do
             pointerRelease  = filterInDebugMode (pointerRelease physicalInput),
             pointerPosition = logicalPointerPosition,
             pointerDown     = logicalPointerDown,
-            timePassing     = filterInDebugMode (timePassing physicalInput),
-            currentTime     = logicalCurrentTime
+            timePassing     = filterInDebugMode (timePassing physicalInput)
             }
 
 runReactive
@@ -1754,7 +1749,7 @@ runReactive program = do
 
     let handleFrame _ = do
             pic <- swapMVar pendingFrame Nothing
-            maybe (return ()) (frameRenderer . pictureToDrawing) pic
+            maybe (return ()) frameRenderer pic
 
     let asyncRender pic = do
             old <- swapMVar pendingFrame (Just pic)

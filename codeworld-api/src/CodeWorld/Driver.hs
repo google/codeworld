@@ -1082,14 +1082,9 @@ handleServerMessage numPlayers initial stepHandler eventHandler gsm sm = do
                 return (Waiting ws gid pid (CUI.startWaiting gid s))
             (PlayersWaiting m n, Waiting ws gid pid s) ->
                 return (Waiting ws gid pid (CUI.updatePlayers n m s))
-            (Started, Waiting ws gid pid _) ->
-                return
-                    (Running
-                         ws
-                         gid
-                         t
-                         pid
-                         (initFuture (initial (mkStdGen (hash gid))) numPlayers))
+            (Started, Waiting ws gid pid _) -> do
+                let s = initFuture (initial (mkStdGen (hash gid))) numPlayers
+                return (Running ws gid t pid s)
             (OutEvent pid eo, Running ws gid tstart mypid s) ->
                 case decodeEvent eo of
                     Just (t', event) ->
@@ -1098,13 +1093,7 @@ handleServerMessage numPlayers initial stepHandler eventHandler gsm sm = do
                             result
                                 | ours = s -- we already took care of our events
                                 | otherwise =
-                                    addEvent
-                                        stepHandler
-                                        gameRate
-                                        mypid
-                                        t'
-                                        func
-                                        s
+                                    addEvent stepHandler gameRate mypid t' func s
                         in return (Running ws gid tstart mypid result)
                     Nothing -> return (Running ws gid tstart mypid s)
             _ -> return gs
@@ -1272,7 +1261,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
             t1 <- nextFrame
             modifyMVar_ currentGameState $ return . gameStep fullStepHandler t1
             go t1 picFrame
-    t0 <- getTime
+    t0 <- nextFrame
     nullFrame <- makeStableName undefined
     go t0 nullFrame
 
@@ -1318,11 +1307,12 @@ run initial stepHandler eventHandler drawHandler injectTime = do
                     True -> do
                         t1 <- nextFrame
                         let dt = min (t1 - t0) 0.25
-                        _ <- modifyMVarIfDifferent currentState (fullStepHandler dt)
+                        when (dt > 0) $ void $
+                            modifyMVarIfDifferent currentState (fullStepHandler dt)
                         return t1
                     False -> do
                         takeMVar eventHappened
-                        getTime
+                        nextFrame
             nextState <- readMVar currentState
             nextStateName <- makeStableName $! nextState
             let nextNeedsTime =
@@ -1333,7 +1323,7 @@ run initial stepHandler eventHandler drawHandler injectTime = do
                 Nothing -> return picFrame
                 Just () -> makeStableName undefined
             go t1 nextFrame nextStateName nextNeedsTime
-    t0 <- getTime
+    t0 <- nextFrame
     nullFrame <- makeStableName undefined
     initialStateName <- makeStableName $! initial
     mainThread <- myThreadId
@@ -1622,9 +1612,10 @@ createPhysicalReactiveInput window canvas fire = do
         let timeStep t1 t2 = do
                 stillActive <- readIORef active
                 when stillActive $ do
-                    fire [trigger :=> Identity ((t2 - t1) / 1000)]
+                    when (t2 > t1) $ fire [
+                        trigger :=> Identity (min 0.25 ((t2 - t1) / 1000))]
                     void $ inAnimationFrame ContinueAsync (timeStep t2)
-        t0 <- getTime
+        t0 <- nextFrame
         void $ inAnimationFrame ContinueAsync (timeStep t0)
         return (writeIORef active False)
 
@@ -1834,7 +1825,7 @@ run initial stepHandler eventHandler drawHandler =
                                  round ((tn `diffUTCTime` t0) * 1000000))
                         t1 <- getCurrentTime
                         let dt = realToFrac (t1 `diffUTCTime` t0)
-                        modifyMVar_ currentState (return . fullStepHandler dt)
+                        when (dt > 0) $ modifyMVar_ currentState (return . fullStepHandler dt)
                         return t1
                     False -> do
                         takeMVar eventHappened

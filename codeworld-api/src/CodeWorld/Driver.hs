@@ -475,7 +475,7 @@ setupScreenContext cw ch = do
 -- the node appears in DFS. When a Picture is converted to a drawing the NodeId's of
 -- corresponding nodes are shared. Always >=0.
 newtype NodeId = NodeId { getNodeId :: Int}
-    deriving (Eq, Ord, Enum)
+    deriving (Eq, Ord, Enum, Show)
 
 findTopShape :: MonadCanvas m => DrawState -> Drawing m -> Double -> Double -> m (Maybe NodeId)
 findTopShape ds d x y = do
@@ -1401,7 +1401,7 @@ data DebugState = DebugState
     { debugStateActive :: Bool
     , shapeHighlighted :: Maybe NodeId
     , shapeSelected :: Maybe NodeId
-    }
+    } deriving (Eq, Show)
 
 data DebugEvent
     = DebugStart
@@ -1657,25 +1657,13 @@ connectInspect canvas samplePicture fireUpdate = do
 
     -- Fire an event to change the highlight or selection.
     highlightCB <- syncCallback2 ContinueAsync $ \t n -> do
-        let isSelect = pFromJSVal t
+        let isHighlight = pFromJSVal t
         let nodeNum = pFromJSVal n
         let nodeId = if nodeNum < 0 then Nothing else Just (NodeId nodeNum)
-        if isSelect then fireUpdate (updateDebugState (SelectEvent nodeId))
-                    else fireUpdate (updateDebugState (HighlightEvent nodeId))
+        if isHighlight then fireUpdate (updateDebugState (HighlightEvent nodeId))
+                       else fireUpdate (updateDebugState (SelectEvent nodeId))
 
     js_initDebugMode getNodeCB setActiveCB getPicCB highlightCB drawCB
-
-inspectLogicalDrawing
-    :: R.Reflex t
-    => R.Dynamic t DebugState
-    -> R.Dynamic t Picture
-    -> R.Dynamic t (Drawing CanvasM)
-inspectLogicalDrawing debugState userPicture = do
-    state <- debugStateActive <$> debugState
-    drawing <- pictureToDrawing <$> userPicture
-    case state of
-        True -> drawDebugState <$> debugState <*> pure drawing
-        False -> return drawing
 
 inspectLogicalInput
     :: forall t m. (MonadIO m, MonadRef m, R.MonadReflexHost t m,
@@ -1729,14 +1717,14 @@ runReactive program = do
             when (isNothing old) $ void $ inAnimationFrame ContinueAsync handleFrame
 
     (debugUpdate, debugUpdateTriggerRef) <- R.runSpiderHost R.newEventWithTriggerRef
-    debugState <- R.runSpiderHost $ R.foldDyn ($) debugStateInit debugUpdate
+    debugState <- R.runSpiderHost $ R.holdUniqDyn =<< R.foldDyn ($) debugStateInit debugUpdate
 
     rec
         physicalInput <- R.runSpiderHost $
             createPhysicalReactiveInput window canvas fireAndRedraw
         logicalInput <- R.runSpiderHost $ inspectLogicalInput debugState physicalInput
         userPicture <- R.runSpiderHost $ R.runHostFrame $ program logicalInput
-        let logicalDrawing = inspectLogicalDrawing debugState userPicture
+        let logicalDrawing = drawDebugState <$> debugState <*> (pictureToDrawing <$> userPicture)
         logicalDrawingHandle <- R.runSpiderHost $ R.subscribeEvent (R.updated logicalDrawing)
 
         let fireAndRedraw events = do

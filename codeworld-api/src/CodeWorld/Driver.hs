@@ -43,6 +43,7 @@ import Control.Concurrent
 import Control.Exception
 import Control.Monad
 import Control.Monad.Fix
+import Data.Bool
 import Data.Char (chr)
 import Data.IORef
 import Data.List (zip4, intercalate)
@@ -1665,6 +1666,9 @@ connectInspect canvas samplePicture fireUpdate = do
 
     js_initDebugMode getNodeCB setActiveCB getPicCB highlightCB drawCB
 
+gateDyn :: forall t a. R.Reflex t => R.Dynamic t Bool -> R.Event t a -> R.Event t a
+gateDyn dyn e = R.switchDyn (bool R.never e <$> dyn)
+
 inspectLogicalInput
     :: forall t m. (MonadIO m, MonadRef m, R.MonadReflexHost t m,
                     MonadFix m, Ref m ~ IORef, R.MonadHold t m)
@@ -1674,7 +1678,7 @@ inspectLogicalInput
 inspectLogicalInput debugState physicalInput = do
     -- Physical inputs should either be frozen or dropped during debugging.
     let filterInDebugMode :: forall a. R.Event t a -> R.Event t a
-        filterInDebugMode = R.gate (not . debugStateActive <$> R.current debugState)
+        filterInDebugMode = gateDyn (not . debugStateActive <$> debugState)
     let freezeInDebugMode :: forall a. R.Dynamic t a -> a -> m (R.Dynamic t a)
         freezeInDebugMode dyn initial =
             R.holdDyn initial (filterInDebugMode (R.updated dyn))

@@ -384,10 +384,11 @@ imageDrawer name url imgw imgh ds =
                       setupScreenContext (round w) (round h)
                       withDS ds $ do
                           CM.globalCompositeOperation "destination-in"
-                          CM.scale 1 (-1)
+                          CM.scale (1) (-1)
                           CM.drawImgURL name url imgw imgh
                   CM.saveRestore $ do
-                      CM.scale 1 (-1)
+                      px <- pixelSize
+                      CM.scale px (-px)
                       CM.drawImage img (round (-w/2)) (round (-h/2)) (round w) (round h)
     , shapeContains = \x y ->
           withDS ds $ do

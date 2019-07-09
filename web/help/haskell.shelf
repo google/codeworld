@@ -5,6 +5,7 @@
     "Reference":            "doc-haskell/CodeWorld.html",
     "Reference (Reflex)":   "doc-haskell/CodeWorld-Reflex.html",
     "Reference (Sketches)": "doc-haskell/CodeWorld-Sketches.html",
-    "Editor":               "help/editor-haskell.md"
+    "Editor":               "help/editor-haskell.md",
+    "Examples":             "help/examples-haskell.md"
   }
 }

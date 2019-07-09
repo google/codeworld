@@ -82,6 +82,7 @@ import Data.Dependent.Map (DSum(..))
 import Data.Hashable
 import qualified Data.JSString
 import qualified GHCJS.DOM.ClientRect as ClientRect
+import GHCJS.Concurrent (withoutPreemption)
 import GHCJS.DOM
 import GHCJS.DOM.Element
 import GHCJS.DOM.EventM
@@ -697,7 +698,7 @@ createFrameRenderer :: Element -> IO (Drawing CanvasM -> IO ())
 createFrameRenderer canvas = do
     offscreenCanvas <- Canvas.create 500 500
     screen <- getCodeWorldContext (canvasFromElement canvas)
-    return $ \pic -> do
+    return $ \pic -> withoutPreemption $ do
         setCanvasSize (elementFromCanvas offscreenCanvas) canvas
         rect <- getBoundingClientRect canvas
         withScreen (elementFromCanvas offscreenCanvas) rect (drawFrame pic)

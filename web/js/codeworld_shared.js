@@ -883,7 +883,6 @@ function saveProjectAs() {
                 },
                 parent
             );
-            clearWorkspace();
             $('#directoryTree').tree(
                 'selectNode', appended);
             updateChildrenIndexes(parent);

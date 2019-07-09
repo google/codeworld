@@ -43,7 +43,6 @@ import Control.Concurrent
 import Control.Exception
 import Control.Monad
 import Control.Monad.Fix
-import Data.Bool
 import Data.Char (chr)
 import Data.IORef
 import Data.List (zip4, intercalate)
@@ -78,6 +77,7 @@ import Control.Monad.Ref
 import Control.Monad.Trans (MonadIO, liftIO)
 import qualified Control.Monad.Trans.State as State
 import Data.Aeson (ToJSON(..), (.=), object)
+import Data.Bool
 import Data.Dependent.Map (DSum(..))
 import Data.Hashable
 import qualified Data.JSString
@@ -1360,146 +1360,6 @@ drawPartialPic canvas nodeId pic = do
     frameRenderer <- createFrameRenderer canvas
     frameRenderer (node <> coordinatePlaneDrawing)
 
-initDebugMode :: Element
-              -> (Bool -> IO ())
-              -> IO Picture
-              -> (Bool -> Maybe NodeId -> IO ())
-              -> IO ()
-initDebugMode canvas setActive getPic highlight = do
-    getNodeCB <-
-        syncCallback1' $ \pointJS -> do
-            let obj = unsafeCoerce pointJS
-            x <- pFromJSVal <$> getProp "x" obj
-            y <- pFromJSVal <$> getProp "y" obj
-            pic <- getPic
-            n <- getNodeAtCoords canvas x y pic
-            return (pToJSVal (maybe (-1) getNodeId n))
-    setActiveCB <- syncCallback1 ContinueAsync $ setActive . pFromJSVal
-    getPicCB <- syncCallback' $ getPic >>= toJSVal_aeson . pictureToNode
-    highlightCB <-
-        syncCallback2 ContinueAsync $ \t n ->
-            let select = pFromJSVal t
-                node =
-                    case ((pFromJSVal n) :: Int) < 0 of
-                        True -> Nothing
-                        False -> Just $ NodeId $ pFromJSVal n
-            in highlight select node
-    drawCB <-
-        syncCallback2 ContinueAsync $ \c n -> do
-            let canvas = unsafeCoerce c :: Element
-                nodeId = NodeId $ pFromJSVal n
-            drawPartialPic canvas nodeId =<< getPic
-    js_initDebugMode getNodeCB setActiveCB getPicCB highlightCB drawCB
-
-foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
-    js_initDebugMode :: Callback (JSVal -> IO JSVal)
-                     -> Callback (JSVal -> IO ())
-                     -> Callback (IO JSVal)
-                     -> Callback (JSVal -> JSVal -> IO ())
-                     -> Callback (JSVal -> JSVal -> IO ())
-                     -> IO ()
-
-data DebugState = DebugState
-    { debugStateActive :: Bool
-    , shapeHighlighted :: Maybe NodeId
-    , shapeSelected :: Maybe NodeId
-    } deriving (Eq, Show)
-
-data DebugEvent
-    = DebugStart
-    | DebugStop
-    | HighlightEvent (Maybe NodeId)
-    | SelectEvent (Maybe NodeId)
-
-debugStateInit :: DebugState
-debugStateInit = DebugState False Nothing Nothing
-
-updateDebugState :: DebugEvent -> DebugState -> DebugState
-updateDebugState DebugStart _prev = DebugState True Nothing Nothing
-updateDebugState DebugStop _prev = DebugState False Nothing Nothing
-updateDebugState (HighlightEvent n) prev =
-    case debugStateActive prev of
-        True -> prev {shapeHighlighted = n}
-        False -> DebugState False Nothing Nothing
-updateDebugState (SelectEvent n) prev =
-    case debugStateActive prev of
-        True -> prev {shapeSelected = n}
-        False -> DebugState False Nothing Nothing
-
-drawDebugState :: MonadCanvas m => DebugState -> Drawing m -> Drawing m
-drawDebugState state drawing =
-    case debugStateActive state of
-        True ->
-            highlightSelectShape
-                (shapeHighlighted state)
-                (shapeSelected state)
-                drawing
-        False -> drawing
-
--- Utility functions that apply a function in either the left or right half of a
--- tuple.  Crucially, if the function preserves sharing on its side, then the
--- wrapper also preserves sharing.
-inLeft :: (a -> a) -> (a, b) -> (a, b)
-inLeft f ab = unsafePerformIO $ do
-  let (a, b) = ab
-  aName <- makeStableName $! a
-  let a' = f a
-  aName' <- makeStableName $! a'
-  return $ if aName == aName' then ab else (a', b)
-
-inRight :: (b -> b) -> (a, b) -> (a, b)
-inRight f ab = unsafePerformIO $ do
-  let (a, b) = ab
-  bName <- makeStableName $! b
-  let b' = f b
-  bName' <- makeStableName $! b'
-  return $ if bName == bName' then ab else (a, b')
-
-foreign import javascript interruptible "window.dummyVar = 0;"
-  waitForever :: IO ()
-
--- Wraps the event and state from run so they can be paused by pressing the Inspect
--- button.
-runInspect
-    :: s
-    -> (Double -> s -> s)
-    -> (Event -> s -> s)
-    -> (s -> Picture)
-    -> (s -> Picture)
-    -> IO ()
-runInspect initial step event draw rawDraw = do
-    -- Ensure that the first frame picture doesn't expose any type errors,
-    -- before showing the canvas.  This avoids showing a blank screen when
-    -- there are deferred type errors that are effectively compile errors.
-    evaluate $ rnf $ rawDraw initial
-
-    Just doc <- currentDocument
-    Just canvas <- getElementById doc ("screen" :: JSString)
-    let debugInitial = (debugStateInit, initial)
-        debugStep dt s@(debugState, _) =
-            case debugStateActive debugState of
-                True -> s
-                False -> inRight (step dt) s
-        debugEvent evt s@(debugState, _) =
-            case (debugStateActive debugState, evt) of
-                (_, Left e) -> inLeft (updateDebugState e) s
-                (True, _) -> s
-                (_, Right e) -> inRight (event e) s
-        debugDraw (debugState, s) =
-            case debugStateActive debugState of
-                True -> drawDebugState debugState (pictureToDrawing (rawDraw s))
-                False -> pictureToDrawing (draw s)
-        debugRawDraw (_debugState, s) = rawDraw s
-    (sendEvent, getState) <-
-        run debugInitial debugStep debugEvent debugDraw (Right . TimePassing)
-    let pauseEvent True = sendEvent $ Left DebugStart
-        pauseEvent False = sendEvent $ Left DebugStop
-        highlightSelectEvent True n = sendEvent $ Left (HighlightEvent n)
-        highlightSelectEvent False n = sendEvent $ Left (SelectEvent n)
-    onEvents canvas (sendEvent . Right)
-    initDebugMode canvas pauseEvent (debugRawDraw <$> getState) highlightSelectEvent
-    waitForever
-
 -- Given a drawing, highlight the first node and select second node. Both recolor
 -- the nodes, but highlight also brings the node to the top.
 highlightSelectShape :: MonadCanvas m => Maybe NodeId -> Maybe NodeId -> Drawing m -> Drawing m
@@ -1565,6 +1425,149 @@ replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
     mapLeft :: (a -> b) -> Either a c -> Either b c
     mapLeft f = either (Left . f) Right
 
+data DebugState = DebugState
+    { debugStateActive :: Bool
+    , shapeHighlighted :: Maybe NodeId
+    , shapeSelected :: Maybe NodeId
+    } deriving (Eq, Show)
+
+debugStateInit :: DebugState
+debugStateInit = DebugState False Nothing Nothing
+
+startDebugState :: DebugState -> DebugState
+startDebugState = const (DebugState True Nothing Nothing)
+
+stopDebugState :: DebugState -> DebugState
+stopDebugState = const (DebugState False Nothing Nothing)
+
+highlightDebugState :: Maybe NodeId -> DebugState -> DebugState
+highlightDebugState n prev =
+    case debugStateActive prev of
+        True -> prev {shapeHighlighted = n}
+        False -> DebugState False Nothing Nothing
+
+selectDebugState :: Maybe NodeId -> DebugState -> DebugState
+selectDebugState n prev =
+    case debugStateActive prev of
+        True -> prev {shapeSelected = n}
+        False -> DebugState False Nothing Nothing
+
+drawDebugState :: MonadCanvas m => DebugState -> Drawing m -> Drawing m
+drawDebugState state drawing =
+    case debugStateActive state of
+        True ->
+            highlightSelectShape
+                (shapeHighlighted state)
+                (shapeSelected state)
+                drawing
+        False -> drawing
+
+connectInspect
+    :: Element
+    -> IO Picture
+    -> ((DebugState -> DebugState) -> IO ())
+    -> IO ()
+connectInspect canvas samplePicture fireUpdate = do
+    -- Sample the current user picture to search for a current node.
+    getNodeCB <- syncCallback1' $ \pointJS -> do
+        let obj = unsafeCoerce pointJS
+        x <- pFromJSVal <$> getProp "x" obj
+        y <- pFromJSVal <$> getProp "y" obj
+        n <- getNodeAtCoords canvas x y =<< samplePicture
+        return (pToJSVal (maybe (-1) getNodeId n))
+
+    -- Sample the current user picture to return the scene tree.
+    getPicCB <- syncCallback' $ samplePicture >>= toJSVal_aeson . pictureToNode
+
+    -- Sample the current user picture to draw to a canvas.
+    drawCB <- syncCallback2 ContinueAsync $ \c n -> do
+        let canvas = unsafeCoerce c :: Element
+        let nodeId = NodeId (pFromJSVal n)
+        drawPartialPic canvas nodeId =<< samplePicture
+
+    -- Fire an event to change debug active state.
+    setActiveCB <- syncCallback1 ContinueAsync $ \ active -> case pFromJSVal active of
+        True  -> fireUpdate startDebugState
+        False -> fireUpdate stopDebugState
+
+    -- Fire an event to change the highlight or selection.
+    highlightCB <- syncCallback2 ContinueAsync $ \t n -> do
+        let isHighlight = pFromJSVal t
+        let nodeNum = pFromJSVal n
+        let nodeId = if nodeNum < 0 then Nothing else Just (NodeId nodeNum)
+        if isHighlight then fireUpdate (highlightDebugState nodeId)
+                       else fireUpdate (selectDebugState nodeId)
+
+    js_initDebugMode getNodeCB setActiveCB getPicCB highlightCB drawCB
+
+foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
+    js_initDebugMode :: Callback (JSVal -> IO JSVal)
+                     -> Callback (JSVal -> IO ())
+                     -> Callback (IO JSVal)
+                     -> Callback (JSVal -> JSVal -> IO ())
+                     -> Callback (JSVal -> JSVal -> IO ())
+                     -> IO ()
+
+-- Utility functions that apply a function in either the left or right half of a
+-- tuple.  Crucially, if the function preserves sharing on its side, then the
+-- wrapper also preserves sharing.
+inLeft :: (a -> a) -> (a, b) -> (a, b)
+inLeft f ab = unsafePerformIO $ do
+  let (a, b) = ab
+  aName <- makeStableName $! a
+  let a' = f a
+  aName' <- makeStableName $! a'
+  return $ if aName == aName' then ab else (a', b)
+
+inRight :: (b -> b) -> (a, b) -> (a, b)
+inRight f ab = unsafePerformIO $ do
+  let (a, b) = ab
+  bName <- makeStableName $! b
+  let b' = f b
+  bName' <- makeStableName $! b'
+  return $ if bName == bName' then ab else (a, b')
+
+foreign import javascript interruptible "window.dummyVar = 0;"
+  waitForever :: IO ()
+
+-- Wraps the event and state from run so they can be paused by pressing the Inspect
+-- button.
+runInspect
+    :: s
+    -> (Double -> s -> s)
+    -> (Event -> s -> s)
+    -> (s -> Picture)
+    -> (s -> Picture)
+    -> IO ()
+runInspect initial step event draw rawDraw = do
+    -- Ensure that the first frame picture doesn't expose any type errors,
+    -- before showing the canvas.  This avoids showing a blank screen when
+    -- there are deferred type errors that are effectively compile errors.
+    evaluate $ rnf $ rawDraw initial
+
+    Just doc <- currentDocument
+    Just canvas <- getElementById doc ("screen" :: JSString)
+    let debugInitial = (debugStateInit, initial)
+        debugStep dt s@(debugState, _) =
+            case debugStateActive debugState of
+                True -> s
+                False -> inRight (step dt) s
+        debugEvent evt s@(debugState, _) =
+            case (debugStateActive debugState, evt) of
+                (_, Left f) -> inLeft f s
+                (True, _) -> s
+                (_, Right e) -> inRight (event e) s
+        debugDraw (debugState, s) =
+            case debugStateActive debugState of
+                True -> drawDebugState debugState (pictureToDrawing (rawDraw s))
+                False -> pictureToDrawing (draw s)
+        debugRawDraw (_debugState, s) = rawDraw s
+    (sendEvent, getState) <-
+        run debugInitial debugStep debugEvent debugDraw (Right . TimePassing)
+    onEvents canvas (sendEvent . Right)
+    connectInspect canvas (debugRawDraw <$> getState) (sendEvent . Left)
+    waitForever
+
 --------------------------------------------------------------------------------
 -- FRP implementation
 
@@ -1627,45 +1630,6 @@ createPhysicalReactiveInput window canvas fire = do
         R.mergeWith (&&) [True <$ pointerPress, False <$ pointerRelease]
 
     return ReactiveInput{..}
-
-connectInspect
-    :: Element
-    -> IO Picture
-    -> ((DebugState -> DebugState) -> IO ())
-    -> IO ()
-connectInspect canvas samplePicture fireUpdate = do
-    -- Sample the current user picture to search for a current node.
-    getNodeCB <- syncCallback1' $ \pointJS -> do
-        let obj = unsafeCoerce pointJS
-        x <- pFromJSVal <$> getProp "x" obj
-        y <- pFromJSVal <$> getProp "y" obj
-        n <- getNodeAtCoords canvas x y =<< samplePicture
-        return (pToJSVal (maybe (-1) getNodeId n))
-
-    -- Sample the current user picture to return the scene tree.
-    getPicCB <- syncCallback' $ do
-        toJSVal_aeson =<< pictureToNode <$> samplePicture
-
-    -- Sample the current user picture to draw to a canvas.
-    drawCB <- syncCallback2 ContinueAsync $ \c n -> do
-        let canvas = unsafeCoerce c :: Element
-        let nodeId = NodeId (pFromJSVal n)
-        drawPartialPic canvas nodeId =<< samplePicture
-
-    -- Fire an event to change debug active state.
-    setActiveCB <- syncCallback1 ContinueAsync $ \ active -> case pFromJSVal active of
-        True  -> fireUpdate (updateDebugState DebugStart)
-        False -> fireUpdate (updateDebugState DebugStop)
-
-    -- Fire an event to change the highlight or selection.
-    highlightCB <- syncCallback2 ContinueAsync $ \t n -> do
-        let isHighlight = pFromJSVal t
-        let nodeNum = pFromJSVal n
-        let nodeId = if nodeNum < 0 then Nothing else Just (NodeId nodeNum)
-        if isHighlight then fireUpdate (updateDebugState (HighlightEvent nodeId))
-                       else fireUpdate (updateDebugState (SelectEvent nodeId))
-
-    js_initDebugMode getNodeCB setActiveCB getPicCB highlightCB drawCB
 
 gateDyn :: forall t a. R.Reflex t => R.Dynamic t Bool -> R.Event t a -> R.Event t a
 gateDyn dyn e = R.switchDyn (bool R.never e <$> dyn)

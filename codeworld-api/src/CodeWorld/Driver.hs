@@ -43,6 +43,7 @@ import Control.Concurrent
 import Control.Exception
 import Control.Monad
 import Control.Monad.Fix
+import Data.Bool
 import Data.Char (chr)
 import Data.IORef
 import Data.List (zip4, intercalate)
@@ -77,7 +78,6 @@ import Control.Monad.Ref
 import Control.Monad.Trans (MonadIO, liftIO)
 import qualified Control.Monad.Trans.State as State
 import Data.Aeson (ToJSON(..), (.=), object)
-import Data.Bool
 import Data.Dependent.Map (DSum(..))
 import Data.Hashable
 import qualified Data.JSString
@@ -856,6 +856,9 @@ data ReactiveInput t = ReactiveInput {
     timePassing :: R.Event t Double
     }
 
+gateDyn :: forall t a. R.Reflex t => R.Dynamic t Bool -> R.Event t a -> R.Event t a
+gateDyn dyn e = R.switchDyn (bool R.never e <$> dyn)
+
 keyCodeToText :: Word -> Text
 keyCodeToText n =
     case n of
@@ -1452,15 +1455,15 @@ selectDebugState n prev =
         True -> prev {shapeSelected = n}
         False -> DebugState False Nothing Nothing
 
-drawDebugState :: MonadCanvas m => DebugState -> Drawing m -> Drawing m
-drawDebugState state drawing =
+drawDebugState :: MonadCanvas m => DebugState -> Drawing m -> Drawing m -> Drawing m
+drawDebugState state inspectDrawing displayDrawing =
     case debugStateActive state of
         True ->
             highlightSelectShape
                 (shapeHighlighted state)
                 (shapeSelected state)
-                drawing
-        False -> drawing
+                inspectDrawing
+        False -> displayDrawing
 
 connectInspect
     :: Element
@@ -1558,9 +1561,7 @@ runInspect initial step event draw rawDraw = do
                 (True, _) -> s
                 (_, Right e) -> inRight (event e) s
         debugDraw (debugState, s) =
-            case debugStateActive debugState of
-                True -> drawDebugState debugState (pictureToDrawing (rawDraw s))
-                False -> pictureToDrawing (draw s)
+            drawDebugState debugState (pictureToDrawing (rawDraw s)) (pictureToDrawing (draw s))
         debugRawDraw (_debugState, s) = rawDraw s
     (sendEvent, getState) <-
         run debugInitial debugStep debugEvent debugDraw (Right . TimePassing)
@@ -1631,9 +1632,6 @@ createPhysicalReactiveInput window canvas fire = do
 
     return ReactiveInput{..}
 
-gateDyn :: forall t a. R.Reflex t => R.Dynamic t Bool -> R.Event t a -> R.Event t a
-gateDyn dyn e = R.switchDyn (bool R.never e <$> dyn)
-
 inspectLogicalInput
     :: forall t m. (MonadIO m, MonadRef m, R.MonadReflexHost t m,
                     MonadFix m, Ref m ~ IORef, R.MonadHold t m)
@@ -1664,7 +1662,7 @@ inspectLogicalInput debugState physicalInput = do
 
 runReactive
     :: (forall t m. (R.Reflex t, R.MonadHold t m, MonadFix m)
-        => (ReactiveInput t -> m (R.Dynamic t Picture)))
+        => (ReactiveInput t -> m (R.Dynamic t Picture, R.Dynamic t Picture)))
     -> IO ()
 runReactive program = do
     showCanvas
@@ -1692,8 +1690,10 @@ runReactive program = do
         physicalInput <- R.runSpiderHost $
             createPhysicalReactiveInput window canvas fireAndRedraw
         logicalInput <- R.runSpiderHost $ inspectLogicalInput debugState physicalInput
-        userPicture <- R.runSpiderHost $ R.runHostFrame $ program logicalInput
-        let logicalDrawing = drawDebugState <$> debugState <*> (pictureToDrawing <$> userPicture)
+        (inspectPicture, displayPicture) <- R.runSpiderHost $ R.runHostFrame $ program logicalInput
+        let logicalDrawing = drawDebugState <$> debugState
+                                            <*> (pictureToDrawing <$> inspectPicture)
+                                            <*> (pictureToDrawing <$> displayPicture)
         logicalDrawingHandle <- R.runSpiderHost $ R.subscribeEvent (R.updated logicalDrawing)
 
         let fireAndRedraw events = do
@@ -1705,7 +1705,7 @@ runReactive program = do
             drawing <- R.runSpiderHost $
                 R.fireEventRefAndRead debugUpdateTriggerRef f logicalDrawingHandle
             maybe (return ()) asyncRender drawing
-    let samplePicture = R.runSpiderHost $ R.runHostFrame $ R.sample $ R.current userPicture
+    let samplePicture = R.runSpiderHost $ R.runHostFrame $ R.sample $ R.current inspectPicture
     connectInspect canvas samplePicture fireDebugUpdateAndRedraw
 
     let redraw = do
@@ -1823,7 +1823,7 @@ runGame = error "game API unimplemented in stand-alone interface mode"
 
 runReactive
     :: (forall t m. (R.Reflex t, R.MonadHold t m, MonadFix m)
-        => ReactiveInput t -> m (R.Dynamic t Picture))
+        => ReactiveInput t -> m (R.Dynamic t Picture, R.Dynamic t Picture))
     -> IO ()
 runReactive program = runBlankCanvas $ \context -> do
     let cw = Canvas.width context
@@ -1854,9 +1854,9 @@ runReactive program = runBlankCanvas $ \context -> do
     let input = ReactiveInput{..}
 
     (dynPicture, pictureHandle) <- R.runSpiderHost $ do
-        pic <- R.runHostFrame (program input)
-        handle <- R.subscribeEvent (R.updated pic)
-        return (pic, handle)
+        (_inspectPic, displayPic) <- R.runHostFrame (program input)
+        handle <- R.subscribeEvent (R.updated displayPic)
+        return (displayPic, handle)
 
     let redraw = do
             pic <- R.runSpiderHost $

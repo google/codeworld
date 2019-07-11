@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RankNTypes #-}
 
@@ -120,6 +121,7 @@ import CodeWorld.Driver
 import CodeWorld.Picture
 import CodeWorld.Color
 import Control.Monad.Fix
+import Control.Monad.Trans
 import qualified Data.Text as T
 import Reflex
 
@@ -152,7 +154,8 @@ import Reflex
 
 -- | The entry point for running Reflex-based CodeWorld programs.
 reflexOf
-    :: (forall t m. (Reflex t, MonadHold t m, MonadFix m)
+    :: (forall t m. (Reflex t, MonadHold t m, MonadFix m, PerformEvent t m,
+                     MonadIO (Performable m), Adjustable t m, PostBuild t m)
         => ReactiveInput t -> m (Dynamic t Picture))
     -> IO ()
 reflexOf program = runReactive $ \input -> do

@@ -21,7 +21,7 @@
 -- | Module for using CodeWorld pictures in Reflex-based FRP applications.
 module CodeWorld.Reflex (
     -- $intro
-    -- * Entry Point
+    -- * Old Entry Point
       reflexOf
     , debugReflexOf
     , ReactiveInput
@@ -33,6 +33,9 @@ module CodeWorld.Reflex (
     , pointerPosition
     , pointerDown
     , timePassing
+    -- * New Entry Point
+    , reactiveOf
+    , ReflexCodeWorld(..)
     -- * Pictures
     , Picture
     , TextStyle(..)
@@ -259,3 +262,8 @@ withZoomAndPan zoomInPos zoomOutPos zoomSlidePos resetPos base input = do
         colored (RGBA 0.0 0.0 0.0 1) (thickRectangle 0.1 0.5 0.5) <>
         colored (RGBA 0.2 0.2 0.2 1) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 1) (solidRectangle 0.8 0.8)
+
+reactiveOf :: (forall t m. ReflexCodeWorld t m => m ()) -> IO ()
+reactiveOf program = runReactive $ \input -> do
+    (userPicture, displayPicture) <- runReactiveProgram program input
+    return (userPicture, displayPicture)

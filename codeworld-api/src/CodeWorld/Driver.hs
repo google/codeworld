@@ -5,9 +5,12 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE JavaScriptFFI #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE RankNTypes #-}
@@ -16,6 +19,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -43,8 +47,8 @@ import Control.Concurrent
 import Control.Exception
 import Control.Monad
 import Control.Monad.Fix
+import Control.Monad.Reader
 import Control.Monad.Ref
-import Control.Monad.Trans (MonadIO, liftIO)
 import Data.Bool
 import Data.Char (chr)
 import Data.Dependent.Sum
@@ -845,20 +849,6 @@ runBlankCanvas act = do
 --------------------------------------------------------------------------------
 -- Common event handling and core interaction code
 
-data ReactiveInput t = ReactiveInput {
-    keyPress :: R.Event t Text,
-    keyRelease :: R.Event t Text,
-    textEntry :: R.Event t Text,
-    pointerPress :: R.Event t Point,
-    pointerRelease :: R.Event t Point,
-    pointerPosition :: R.Dynamic t Point,
-    pointerDown :: R.Dynamic t Bool,
-    timePassing :: R.Event t Double
-    }
-
-gateDyn :: forall t a. R.Reflex t => R.Dynamic t Bool -> R.Event t a -> R.Event t a
-gateDyn dyn e = R.switchDyn (bool R.never e <$> dyn)
-
 keyCodeToText :: Word -> Text
 keyCodeToText n =
     case n of
@@ -1569,8 +1559,270 @@ runInspect initial step event draw rawDraw = do
     connectInspect canvas (debugRawDraw <$> getState) (sendEvent . Left)
     waitForever
 
+#else
+
+--------------------------------------------------------------------------------
+-- Stand-Alone event handling and core interaction code
+
+getMousePos :: (Int, Int) -> (Double, Double) -> (Double, Double)
+getMousePos (w, h) (x, y) =
+    ((x - mx) / unitLen, (my - y) / unitLen)
+  where
+    w' = fromIntegral w
+    h' = fromIntegral h
+    unitLen = min w' h' / 20
+    mx = w' / 2
+    my = h' / 2
+
+toEvent :: (Int, Int) -> Canvas.Event -> Maybe Event
+toEvent rect Canvas.Event {..}
+    | eType == "keydown"
+    , Just code <- eWhich = Just $ KeyPress (keyCodeToText (fromIntegral code))
+    | eType == "keyup"
+    , Just code <- eWhich =
+        Just $ KeyRelease (keyCodeToText (fromIntegral code))
+    | eType == "mousedown"
+    , Just pos <- getMousePos rect <$> ePageXY = Just $ PointerPress pos
+    | eType == "mouseup"
+    , Just pos <- getMousePos rect <$> ePageXY = Just $ PointerRelease pos
+    | eType == "mousemove"
+    , Just pos <- getMousePos rect <$> ePageXY = Just $ PointerMovement pos
+    | otherwise = Nothing
+
+onEvents :: Canvas.DeviceContext -> (Int, Int) -> (Event -> IO ()) -> IO ()
+onEvents context rect handler = void $ forkIO $ forever $ do
+    maybeEvent <- toEvent rect <$> Canvas.wait context
+    forM_ maybeEvent handler
+
+run :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
+run initial stepHandler eventHandler drawHandler =
+    runBlankCanvas $ \context -> do
+        let fullStepHandler dt = stepHandler dt . eventHandler (TimePassing dt)
+        let cw = Canvas.width context
+        let ch = Canvas.height context
+        offscreenCanvas <- runCanvasM context $ CM.newImage cw ch
+        currentState <- newMVar initial
+        eventHappened <- newMVar ()
+        onEvents context (cw, ch) $ \event -> do
+            modifyMVar_ currentState (return . eventHandler event)
+            void $ tryPutMVar eventHappened ()
+        let go t0 lastFrame lastStateName needsTime = do
+                pic <- drawHandler <$> readMVar currentState
+                picFrame <- makeStableName $! pic
+                when (picFrame /= lastFrame) $
+                    runCanvasM context $ do
+                        CM.withImage offscreenCanvas $
+                            CM.saveRestore $ do
+                                setupScreenContext cw ch
+                                drawDrawing initialDS (pictureToDrawing pic)
+                        CM.drawImage offscreenCanvas 0 0 cw ch
+                t1 <- case needsTime of
+                    True -> do
+                        tn <- getCurrentTime
+                        threadDelay $
+                            max
+                                0
+                                (50000 -
+                                 round ((tn `diffUTCTime` t0) * 1000000))
+                        t1 <- getCurrentTime
+                        let dt = realToFrac (t1 `diffUTCTime` t0)
+                        when (dt > 0) $ modifyMVar_ currentState (return . fullStepHandler dt)
+                        return t1
+                    False -> do
+                        takeMVar eventHappened
+                        getCurrentTime
+                nextState <- readMVar currentState
+                nextStateName <- makeStableName $! nextState
+                let nextNeedsTime =
+                        nextStateName /= lastStateName ||
+                        needsTime && not (isUniversallyConstant fullStepHandler nextState)
+                go t1 picFrame nextStateName nextNeedsTime
+        t0 <- getCurrentTime
+        nullFrame <- makeStableName undefined
+        initialStateName <- makeStableName $! initial
+        go t0 nullFrame initialStateName True
+
+runInspect
+    :: s
+    -> (Double -> s -> s)
+    -> (Event -> s -> s)
+    -> (s -> Picture)
+    -> (s -> Picture)
+    -> IO ()
+runInspect initial step event draw _rawDraw = run initial step event draw
+
+getDeployHash :: IO Text
+getDeployHash = error "game API unimplemented in stand-alone interface mode"
+
+runGame
+    :: GameToken
+    -> Int
+    -> (StdGen -> s)
+    -> (Double -> s -> s)
+    -> (Int -> Event -> s -> s)
+    -> (Int -> s -> Picture)
+    -> IO ()
+runGame = error "game API unimplemented in stand-alone interface mode"
+
+#endif
+
 --------------------------------------------------------------------------------
 -- FRP implementation
+
+data ReactiveInput t = ReactiveInput {
+    keyPress :: R.Event t Text,
+    keyRelease :: R.Event t Text,
+    textEntry :: R.Event t Text,
+    pointerPress :: R.Event t Point,
+    pointerRelease :: R.Event t Point,
+    pointerPosition :: R.Dynamic t Point,
+    pointerDown :: R.Dynamic t Bool,
+    timePassing :: R.Event t Double
+    }
+
+type ReactiveOutput = ([Picture], [Picture])
+
+newtype ReactiveProgram t m a = ReactiveProgram {
+    unReactiveProgram :: ReaderT (ReactiveInput t) (R.DynamicWriterT t ReactiveOutput m) a
+    }
+
+deriving instance Functor m => Functor (ReactiveProgram t m)
+deriving instance Monad m => Applicative (ReactiveProgram t m)
+deriving instance Monad m => Monad (ReactiveProgram t m)
+deriving instance MonadFix m => MonadFix (ReactiveProgram t m)
+deriving instance R.MonadSample t m => R.MonadSample t (ReactiveProgram t m)
+deriving instance R.MonadHold t m => R.MonadHold t (ReactiveProgram t m)
+deriving instance R.PerformEvent t m => R.PerformEvent t (ReactiveProgram t m)
+deriving instance R.PostBuild t m => R.PostBuild t (ReactiveProgram t m)
+
+instance (MonadFix m, R.MonadHold t m, R.Adjustable t m) => R.Adjustable t (ReactiveProgram t m) where
+    runWithReplace a0 a' =
+        ReactiveProgram $ R.runWithReplace (unReactiveProgram a0) $ fmap unReactiveProgram a'
+    traverseIntMapWithKeyWithAdjust f dm0 dm' =
+        ReactiveProgram $ R.traverseIntMapWithKeyWithAdjust (\k v -> unReactiveProgram (f k v)) dm0 dm'
+    traverseDMapWithKeyWithAdjust f dm0 dm' =
+        ReactiveProgram $ R.traverseDMapWithKeyWithAdjust (\k v -> unReactiveProgram (f k v)) dm0 dm'
+    traverseDMapWithKeyWithAdjustWithMove f dm0 dm' =
+        ReactiveProgram $ R.traverseDMapWithKeyWithAdjustWithMove (\k v -> unReactiveProgram (f k v)) dm0 dm'
+
+runReactiveProgram
+    :: (R.Reflex t, MonadFix m)
+    => ReactiveProgram t m ()
+    -> ReactiveInput t
+    -> m (R.Dynamic t Picture, R.Dynamic t Picture)
+runReactiveProgram (ReactiveProgram program) input = do
+    ((), output) <- R.runDynamicWriterT (runReaderT program input)
+    return $ R.splitDynPure $ do
+        (userPictures, displayPictures) <- output
+        let userPicture = case userPictures of
+                []  -> blank
+                [p] -> p
+                ps  -> pictures ps
+        return (userPicture, pictures displayPictures)
+
+transformReactiveProgram
+    :: (R.Reflex t, R.MonadHold t m, MonadFix m)
+    => (ReactiveInput t -> ReactiveInput t)
+    -> (ReactiveOutput -> ReactiveOutput)
+    -> (ReactiveProgram t m a -> ReactiveProgram t m a)
+transformReactiveProgram input output (ReactiveProgram program) =
+    ReactiveProgram (mapReaderT (R.withDynamicWriterT output) $ withReaderT input program)
+
+drawSystem :: (R.Reflex t, Monad m) => R.Dynamic t Picture -> ReactiveProgram t m ()
+drawSystem pic = ReactiveProgram $ R.tellDyn $ (\a -> ([], [a])) <$> pic
+
+-- | Type class for the builder monad of a CodeWorld/Reflex app.
+class (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
+       R.Adjustable t m, MonadIO (R.Performable m), R.PostBuild t m)
+  => ReflexCodeWorld t m | m -> t where
+    -- | Gets an Event of key presses.  The event value is a logical key name.
+    getKeyPress :: m (R.Event t Text)
+
+    -- | Gets an Event of key presses that match the given predicate.
+    -- Matching instances will be filtered from events fetched in the body.
+    takeKeyPress :: R.Dynamic t (Text -> Bool) -> (R.Event t Text -> m a) -> m a
+
+    -- | Gets an Event of key presses.  The event value is a logical key name.
+    getKeyRelease :: m (R.Event t Text)
+
+    -- | Gets an Event of key releases that match the given predicate.
+    -- Matching instances will be filtered from events fetched in the body.
+    takeKeyRelease :: R.Dynamic t (Text -> Bool) -> (R.Event t Text -> m a) -> m a
+
+    -- | Gets an Event of text entered.  The event value is the typed text.
+    getTextEntry :: m (R.Event t Text)
+
+    -- | Gets an Event of text entered that matches the given predicate.
+    -- Matching instances will be filtered from events fetched in the body.
+    takeTextEntry :: R.Dynamic t (Text -> Bool) -> (R.Event t Text -> m a) -> m a
+
+    -- | Gets an event of pointer clicks.  The event value is the location of
+    -- the click.
+    getPointerClick :: m (R.Event t Point)
+
+    -- | Gets an event of pointer clicks that match the given predicate.
+    -- Matching instances will be filtered from events fetched in the body.
+    takePointerClick :: R.Dynamic t (Point -> Bool) -> (R.Event t Point -> m a) -> m a
+
+    -- | Gets the Dynamic position of the pointer.
+    getPointerPosition :: m (R.Dynamic t Point)
+
+    -- | Gets a Dynamic indicator whether the pointer is held down.
+    isPointerDown :: m (R.Dynamic t Bool)
+
+    -- | Gets an Event indicating the passage of time.
+    getTimePassing :: m (R.Event t Double)
+
+    -- | Emits a given Dynamic picture to be drawn to the screen.
+    draw :: R.Dynamic t Picture -> m ()
+
+instance (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
+          R.Adjustable t m, MonadIO (R.Performable m), R.PostBuild t m)
+  => ReflexCodeWorld t (ReactiveProgram t m) where
+    getKeyPress = ReactiveProgram $ asks keyPress
+
+    takeKeyPress predicate body = do
+        base <- getKeyPress
+        let (nonmatch, match) = splitDyn predicate base
+        transformReactiveProgram (\i -> i { keyPress = nonmatch }) id (body match)
+
+    getKeyRelease = ReactiveProgram $ asks keyRelease
+
+    takeKeyRelease predicate body = do
+        base <- getKeyRelease
+        let (nonmatch, match) = splitDyn predicate base
+        transformReactiveProgram (\i -> i { keyRelease = nonmatch }) id (body match)
+
+    getTextEntry = ReactiveProgram $ asks textEntry
+
+    takeTextEntry predicate body = do
+        base <- getTextEntry
+        let (nonmatch, match) = splitDyn predicate base
+        transformReactiveProgram (\i -> i { textEntry = nonmatch }) id (body match)
+
+    getPointerClick = ReactiveProgram $ asks pointerPress
+
+    takePointerClick predicate body = do
+        base <- getPointerClick
+        let (nonmatch, match) = splitDyn predicate base
+        transformReactiveProgram (\i -> i { pointerPress = nonmatch }) id (body match)
+
+    getPointerPosition = ReactiveProgram $ asks pointerPosition
+
+    isPointerDown = ReactiveProgram $ asks pointerDown
+
+    getTimePassing = ReactiveProgram $ asks timePassing
+
+    draw pic = ReactiveProgram $ R.tellDyn $ (\a -> ([a], [a])) <$> pic
+
+splitDyn :: forall t a. R.Reflex t => R.Dynamic t (a -> Bool) -> R.Event t a -> (R.Event t a, R.Event t a)
+splitDyn predicate e = R.fanEither $ R.attachPromptlyDynWith f predicate e
+  where f pred val = if pred val then Right val else Left val
+
+gateDyn :: forall t a. R.Reflex t => R.Dynamic t Bool -> R.Event t a -> R.Event t a
+gateDyn dyn e = R.switchDyn (bool R.never e <$> dyn)
+
+#ifdef ghcjs_HOST_OS
 
 createPhysicalReactiveInput
     :: forall t m. (R.MonadReflexCreateTrigger t m, R.Reflex t, R.MonadHold t m)
@@ -1724,109 +1976,6 @@ runReactive program = do
     waitForever
 
 #else
-
---------------------------------------------------------------------------------
--- Stand-Alone event handling and core interaction code
-
-getMousePos :: (Int, Int) -> (Double, Double) -> (Double, Double)
-getMousePos (w, h) (x, y) =
-    ((x - mx) / unitLen, (my - y) / unitLen)
-  where
-    w' = fromIntegral w
-    h' = fromIntegral h
-    unitLen = min w' h' / 20
-    mx = w' / 2
-    my = h' / 2
-
-toEvent :: (Int, Int) -> Canvas.Event -> Maybe Event
-toEvent rect Canvas.Event {..}
-    | eType == "keydown"
-    , Just code <- eWhich = Just $ KeyPress (keyCodeToText (fromIntegral code))
-    | eType == "keyup"
-    , Just code <- eWhich =
-        Just $ KeyRelease (keyCodeToText (fromIntegral code))
-    | eType == "mousedown"
-    , Just pos <- getMousePos rect <$> ePageXY = Just $ PointerPress pos
-    | eType == "mouseup"
-    , Just pos <- getMousePos rect <$> ePageXY = Just $ PointerRelease pos
-    | eType == "mousemove"
-    , Just pos <- getMousePos rect <$> ePageXY = Just $ PointerMovement pos
-    | otherwise = Nothing
-
-onEvents :: Canvas.DeviceContext -> (Int, Int) -> (Event -> IO ()) -> IO ()
-onEvents context rect handler = void $ forkIO $ forever $ do
-    maybeEvent <- toEvent rect <$> Canvas.wait context
-    forM_ maybeEvent handler
-
-run :: s -> (Double -> s -> s) -> (Event -> s -> s) -> (s -> Picture) -> IO ()
-run initial stepHandler eventHandler drawHandler =
-    runBlankCanvas $ \context -> do
-        let fullStepHandler dt = stepHandler dt . eventHandler (TimePassing dt)
-        let cw = Canvas.width context
-        let ch = Canvas.height context
-        offscreenCanvas <- runCanvasM context $ CM.newImage cw ch
-        currentState <- newMVar initial
-        eventHappened <- newMVar ()
-        onEvents context (cw, ch) $ \event -> do
-            modifyMVar_ currentState (return . eventHandler event)
-            void $ tryPutMVar eventHappened ()
-        let go t0 lastFrame lastStateName needsTime = do
-                pic <- drawHandler <$> readMVar currentState
-                picFrame <- makeStableName $! pic
-                when (picFrame /= lastFrame) $
-                    runCanvasM context $ do
-                        CM.withImage offscreenCanvas $
-                            CM.saveRestore $ do
-                                setupScreenContext cw ch
-                                drawDrawing initialDS (pictureToDrawing pic)
-                        CM.drawImage offscreenCanvas 0 0 cw ch
-                t1 <- case needsTime of
-                    True -> do
-                        tn <- getCurrentTime
-                        threadDelay $
-                            max
-                                0
-                                (50000 -
-                                 round ((tn `diffUTCTime` t0) * 1000000))
-                        t1 <- getCurrentTime
-                        let dt = realToFrac (t1 `diffUTCTime` t0)
-                        when (dt > 0) $ modifyMVar_ currentState (return . fullStepHandler dt)
-                        return t1
-                    False -> do
-                        takeMVar eventHappened
-                        getCurrentTime
-                nextState <- readMVar currentState
-                nextStateName <- makeStableName $! nextState
-                let nextNeedsTime =
-                        nextStateName /= lastStateName ||
-                        needsTime && not (isUniversallyConstant fullStepHandler nextState)
-                go t1 picFrame nextStateName nextNeedsTime
-        t0 <- getCurrentTime
-        nullFrame <- makeStableName undefined
-        initialStateName <- makeStableName $! initial
-        go t0 nullFrame initialStateName True
-
-runInspect
-    :: s
-    -> (Double -> s -> s)
-    -> (Event -> s -> s)
-    -> (s -> Picture)
-    -> (s -> Picture)
-    -> IO ()
-runInspect initial step event draw _rawDraw = run initial step event draw
-
-getDeployHash :: IO Text
-getDeployHash = error "game API unimplemented in stand-alone interface mode"
-
-runGame
-    :: GameToken
-    -> Int
-    -> (StdGen -> s)
-    -> (Double -> s -> s)
-    -> (Int -> Event -> s -> s)
-    -> (Int -> s -> Picture)
-    -> IO ()
-runGame = error "game API unimplemented in stand-alone interface mode"
 
 runReactive
     :: (forall t m. (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,

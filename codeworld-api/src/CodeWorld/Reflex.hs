@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo #-}
 
 {-
@@ -201,17 +202,60 @@ reactiveOf program = runReactive $ \input -> runReactiveProgram program input
 debugReactiveOf :: (forall t m. ReflexCodeWorld t m => m ()) -> IO ()
 debugReactiveOf program = runReactive $ \input -> flip runReactiveProgram input $ do
     hoverAlpha <- getHoverAlpha
+
+    controlState <- reactiveDebugControls hoverAlpha
+    logicalInputs <- makeLogicalInputs controlState =<< getReactiveInput
+    withReactiveInput logicalInputs program
+
+type ControlState t = (Dynamic t Bool, Dynamic t Double, Dynamic t (Point -> Point))
+
+makeLogicalInputs :: (Reflex t, MonadHold t m) => ControlState t -> ReactiveInput t -> m (ReactiveInput t)
+makeLogicalInputs (running, timeDilation, pointTransform) input = do
+    keyPress <- return $ gateDyn running $ keyPress input
+    keyRelease <- return $ gateDyn running $ keyRelease input
+    textEntry <- return $ gateDyn running $ textEntry input
+    pointerPress <- return $ gateDyn running $ attachWith ($) (current pointTransform) (pointerPress input)
+    pointerRelease <- return $ gateDyn running $ attachWith ($) (current pointTransform) (pointerRelease input)
+    pointerPosition <- freezeDyn running $ pointTransform <*> pointerPosition input
+    pointerDown <- freezeDyn running $ pointerDown input
+    timePassing <- return $ gateDyn running $ attachWith (*) (current timeDilation) (timePassing input)
+    return ReactiveInput{..}
+
+freezeDyn :: (Reflex t, MonadHold t m) => Dynamic t Bool -> Dynamic t a -> m (Dynamic t a)
+freezeDyn predicate dyn = do
+    initial <- sample (current dyn)
+    holdDyn initial (gateDyn predicate (updated dyn))
+
+reactiveDebugControls
+    :: (PerformEvent t m, Adjustable t m, MonadIO (Performable m),
+        PostBuild t m, MonadHold t m, MonadFix m)
+    => Dynamic t Double -> ReactiveProgram t m (ControlState t)
+reactiveDebugControls hoverAlpha = do
     rec
-        resetClick <- resetButton hoverAlpha (9, -3) ((/= 1) <$> zoomFactor)
+        playPauseClick <- playPauseButton hoverAlpha running (-8, -9)
+        speedFactor <- foldDyn ($) 1 $ mergeWith (.) [
+            (\s -> if s == 0 then 1 else 0) <$ playPauseClick
+            ]
+        let running = (> 0) <$> speedFactor
+
+    rec
+        resetClick <- resetButton hoverAlpha (9, -3) needsReset
         zoomFactor <- zoomControls hoverAlpha (9, -6) resetClick
+        panOffset <- panControls running resetClick
+        let needsReset = (||) <$> ((/= 1) <$> zoomFactor)
+                              <*> ((/= (0, 0)) <$> panOffset)
+
+    transformUserPicture $ uncurry translated <$> panOffset
     transformUserPicture $ dilated <$> zoomFactor
-    withZoomedMouseEvents zoomFactor $ program
+    return (running, speedFactor, transformPoint <$> zoomFactor <*> panOffset)
+  where
+    transformPoint z (dx, dy) (x, y) = ((x - dx) / z, (y - dy) / z)
 
 {-# WARNING debugReactiveOf
         ["After the current migration is complete,",
          "debugReactiveOf will probably be renamed to debugReflexOf."] #-}
 
-getHoverAlpha :: forall t m. ReflexCodeWorld t m => m (Dynamic t Double)
+getHoverAlpha :: ReflexCodeWorld t m => m (Dynamic t Double)
 getHoverAlpha = do
     time <- getTimePassing
     move <- updated <$> getPointerPosition
@@ -225,13 +269,32 @@ getHoverAlpha = do
                     | t > 5.0   = 0
                     | otherwise = 10 - 2 * t
 
-withZoomedMouseEvents :: Reflex t => Dynamic t Double -> ReactiveProgram t m a -> ReactiveProgram t m a
-withZoomedMouseEvents zoomFactor = withReactiveInput $ \i -> i {
-    pointerPress = attachPromptlyDynWith zoomPoint zoomFactor (pointerPress i),
-    pointerRelease = attachPromptlyDynWith zoomPoint zoomFactor (pointerRelease i),
-    pointerPosition = zoomPoint <$> zoomFactor <*> pointerPosition i
-    }
-  where zoomPoint z (x, y) = (x / z, y / z)
+playPauseButton
+    :: (PerformEvent t m, Adjustable t m, MonadIO (Performable m),
+        PostBuild t m, MonadHold t m, MonadFix m)
+    => Dynamic t Double
+    -> Dynamic t Bool
+    -> Point
+    -> ReactiveProgram t m (Event t ())
+playPauseButton hoverAlpha running pos = do
+    click <- ffilter (onRect 0.8 0.8 pos) <$> getPointerClick
+    systemDraw $ uncurry translated pos <$>
+        (bool (playButton <$> hoverAlpha) (pauseButton <$> hoverAlpha) =<< running)
+    return $ () <$ click
+  where
+    playButton a =
+        colored
+            (RGBA 0 0 0 a)
+            (solidPolygon [(-0.2, 0.25), (-0.2, -0.25), (0.2, 0)]) <>
+        colored (RGBA 0.2 0.2 0.2 a) (rectangle 0.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 a) (solidRectangle 0.8 0.8)
+    pauseButton a =
+        colored
+            (RGBA 0 0 0 a)
+            (translated (-0.15) 0 (solidRectangle 0.2 0.6) <>
+             translated 0.15 0 (solidRectangle 0.2 0.6)) <>
+        colored (RGBA 0.2 0.2 0.2 a) (rectangle 0.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 a) (solidRectangle 0.8 0.8)
 
 resetButton
     :: (PerformEvent t m, Adjustable t m, MonadIO (Performable m),
@@ -251,6 +314,30 @@ resetButton hoverAlpha pos needsReset = do
         colored (RGBA 0.0 0.0 0.0 a) (thickRectangle 0.1 0.5 0.5) <>
         colored (RGBA 0.2 0.2 0.2 a) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 a) (solidRectangle 0.8 0.8)
+
+panControls
+    :: (PerformEvent t m, Adjustable t m, MonadIO (Performable m),
+        PostBuild t m, MonadHold t m, MonadFix m)
+    => Dynamic t Bool
+    -> Event t ()
+    -> ReactiveProgram t m (Dynamic t (Double, Double))
+panControls running resetClick = do
+    click <- gateDyn (not <$> running) <$> getPointerClick
+    release <- ffilter not <$> updated <$> isPointerDown
+    dragging <- holdDyn False $ mergeWith (&&) [True <$ click, False <$ release]
+
+    pos <- getPointerPosition
+    let dragPos = bool (const Nothing) Just <$> dragging <*> pos
+    diffPairs <- foldDyn (\x (y,_) -> (x,y)) (Nothing, Nothing) (updated dragPos)
+    let drags = fmapMaybe toMovement (updated diffPairs)
+
+    foldDyn ($) (0, 0) $ mergeWith (.) [
+        vectorSum <$> drags,
+        const (0, 0) <$ resetClick
+        ]
+  where
+    toMovement (Just (x1, y1), Just (x2, y2)) = Just (x1 - x2, y1 - y2)
+    toMovement _ = Nothing
 
 zoomControls
     :: (PerformEvent t m, Adjustable t m, MonadIO (Performable m),

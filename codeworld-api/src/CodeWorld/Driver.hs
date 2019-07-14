@@ -1737,9 +1737,13 @@ runReactiveProgram (ReactiveProgram program) input = do
         return (userPicture, sysPic & tform userPicture)
 
 withReactiveInput
-    :: (ReactiveInput t -> ReactiveInput t)
+    :: ReactiveInput t
     -> (ReactiveProgram t m a -> ReactiveProgram t m a)
-withReactiveInput f (ReactiveProgram program) = ReactiveProgram (withReaderT f program)
+withReactiveInput input (ReactiveProgram program)
+    = ReactiveProgram (withReaderT (const input) program)
+
+getReactiveInput :: Monad m => ReactiveProgram t m (ReactiveInput t)
+getReactiveInput = ReactiveProgram ask
 
 systemDraw :: (R.Reflex t, Monad m) => R.Dynamic t Picture -> ReactiveProgram t m ()
 systemDraw = ReactiveProgram . R.tellDyn . fmap (\a -> mempty { systemPicture = a })

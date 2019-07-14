@@ -139,6 +139,7 @@ import Control.Monad.Fix
 import Control.Monad.Trans
 import Data.Bool
 import qualified Data.Text as T
+import Numeric (showFFloatAlt)
 import Reflex
 
 -- $intro
@@ -207,18 +208,26 @@ debugReactiveOf program = runReactive $ \input -> flip runReactiveProgram input 
     logicalInputs <- makeLogicalInputs controlState =<< getReactiveInput
     withReactiveInput logicalInputs program
 
-type ControlState t = (Dynamic t Bool, Dynamic t Double, Dynamic t (Point -> Point))
+data ControlState t = ControlState {
+    csRunning :: Dynamic t Bool,
+    csTimeDilation :: Dynamic t Double,
+    csPointTransform :: Dynamic t (Point -> Point),
+    csSyntheticStep :: Event t ()
+    }
 
 makeLogicalInputs :: (Reflex t, MonadHold t m) => ControlState t -> ReactiveInput t -> m (ReactiveInput t)
-makeLogicalInputs (running, timeDilation, pointTransform) input = do
-    keyPress <- return $ gateDyn running $ keyPress input
-    keyRelease <- return $ gateDyn running $ keyRelease input
-    textEntry <- return $ gateDyn running $ textEntry input
-    pointerPress <- return $ gateDyn running $ attachWith ($) (current pointTransform) (pointerPress input)
-    pointerRelease <- return $ gateDyn running $ attachWith ($) (current pointTransform) (pointerRelease input)
-    pointerPosition <- freezeDyn running $ pointTransform <*> pointerPosition input
-    pointerDown <- freezeDyn running $ pointerDown input
-    timePassing <- return $ gateDyn running $ attachWith (*) (current timeDilation) (timePassing input)
+makeLogicalInputs ControlState{..} input = do
+    keyPress <- return $ gateDyn csRunning $ keyPress input
+    keyRelease <- return $ gateDyn csRunning $ keyRelease input
+    textEntry <- return $ gateDyn csRunning $ textEntry input
+    pointerPress <- return $ gateDyn csRunning $ attachWith ($) (current csPointTransform) (pointerPress input)
+    pointerRelease <- return $ gateDyn csRunning $ attachWith ($) (current csPointTransform) (pointerRelease input)
+    pointerPosition <- freezeDyn csRunning $ csPointTransform <*> pointerPosition input
+    pointerDown <- freezeDyn csRunning $ pointerDown input
+    timePassing <- return $ mergeWith (+) [
+        gateDyn csRunning $ attachWith (*) (current csTimeDilation) (timePassing input),
+        0.1 <$ csSyntheticStep
+        ]
     return ReactiveInput{..}
 
 freezeDyn :: (Reflex t, MonadHold t m) => Dynamic t Bool -> Dynamic t a -> m (Dynamic t a)
@@ -231,23 +240,35 @@ reactiveDebugControls
         PostBuild t m, MonadHold t m, MonadFix m)
     => Dynamic t Double -> ReactiveProgram t m (ControlState t)
 reactiveDebugControls hoverAlpha = do
+    fastForwardClick <- fastForwardButton hoverAlpha (-4, -9)
     rec
+        speedDragged <- speedSlider hoverAlpha (-6, -9) speedFactor
         playPauseClick <- playPauseButton hoverAlpha running (-8, -9)
         speedFactor <- foldDyn ($) 1 $ mergeWith (.) [
-            (\s -> if s == 0 then 1 else 0) <$ playPauseClick
+            (\s -> if s == 0 then 1 else 0) <$ playPauseClick,
+            (\s -> min 2.0 (s + 1)) <$ fastForwardClick,
+            const <$> speedDragged
             ]
         let running = (> 0) <$> speedFactor
 
     rec
-        resetClick <- resetButton hoverAlpha (9, -3) needsReset
-        zoomFactor <- zoomControls hoverAlpha (9, -6) resetClick
-        panOffset <- panControls running resetClick
+        resetViewClick <- resetViewButton hoverAlpha (9, -3) needsReset
+        zoomFactor <- zoomControls hoverAlpha (9, -6) resetViewClick
+        panOffset <- panControls running resetViewClick
         let needsReset = (||) <$> ((/= 1) <$> zoomFactor)
                               <*> ((/= (0, 0)) <$> panOffset)
 
+    stepClick <- stepButton hoverAlpha (-2, -9) running
+
     transformUserPicture $ uncurry translated <$> panOffset
     transformUserPicture $ dilated <$> zoomFactor
-    return (running, speedFactor, transformPoint <$> zoomFactor <*> panOffset)
+
+    return $ ControlState {
+        csRunning = running,
+        csTimeDilation = speedFactor,
+        csPointTransform = transformPoint <$> zoomFactor <*> panOffset,
+        csSyntheticStep = stepClick
+        }
   where
     transformPoint z (dx, dy) (x, y) = ((x - dx) / z, (y - dy) / z)
 
@@ -277,9 +298,9 @@ playPauseButton
     -> Point
     -> ReactiveProgram t m (Event t ())
 playPauseButton hoverAlpha running pos = do
-    click <- ffilter (onRect 0.8 0.8 pos) <$> getPointerClick
     systemDraw $ uncurry translated pos <$>
         (bool (playButton <$> hoverAlpha) (pauseButton <$> hoverAlpha) =<< running)
+    click <- ffilter (onRect 0.8 0.8 pos) <$> getPointerClick
     return $ () <$ click
   where
     playButton a =
@@ -296,14 +317,80 @@ playPauseButton hoverAlpha running pos = do
         colored (RGBA 0.2 0.2 0.2 a) (rectangle 0.8 0.8) <>
         colored (RGBA 0.8 0.8 0.8 a) (solidRectangle 0.8 0.8)
 
-resetButton
+stepButton
     :: (PerformEvent t m, Adjustable t m, MonadIO (Performable m),
         PostBuild t m, MonadHold t m, MonadFix m)
     => Dynamic t Double
     -> Point
     -> Dynamic t Bool
     -> ReactiveProgram t m (Event t ())
-resetButton hoverAlpha pos needsReset = do
+stepButton hoverAlpha pos running = do
+    systemDraw $ uncurry translated pos <$>
+        (bool (button <$> hoverAlpha) (constDyn blank) =<< running)
+    click <- gateDyn (not <$> running) <$> ffilter (onRect 0.8 0.8 pos) <$> getPointerClick
+    return $ () <$ click
+  where
+    button a =
+        colored
+            (RGBA 0 0 0 a)
+            (translated (-0.15) 0 (solidRectangle 0.2 0.5) <>
+             solidPolygon [(0.05, 0.25), (0.05, -0.25), (0.3, 0)]) <>
+        colored (RGBA 0.2 0.2 0.2 a) (rectangle 0.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 a) (solidRectangle 0.8 0.8)
+
+fastForwardButton
+    :: (PerformEvent t m, Adjustable t m, MonadIO (Performable m),
+        PostBuild t m, MonadHold t m, MonadFix m)
+    => Dynamic t Double
+    -> Point
+    -> ReactiveProgram t m (Event t ())
+fastForwardButton hoverAlpha pos = do
+    systemDraw $ uncurry translated pos <$> button <$> hoverAlpha
+    click <- ffilter (onRect 0.8 0.8 pos) <$> getPointerClick
+    return $ () <$ click
+  where
+    button a =
+        colored
+            (RGBA 0 0 0 a)
+            (solidPolygon [(-0.3, 0.25), (-0.3, -0.25), (-0.05, 0)] <>
+             solidPolygon [(0.05, 0.25), (0.05, -0.25), (0.3, 0)]) <>
+        colored (RGBA 0.2 0.2 0.2 a) (rectangle 0.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 a) (solidRectangle 0.8 0.8)
+
+speedSlider
+    :: (PerformEvent t m, Adjustable t m, MonadIO (Performable m),
+        PostBuild t m, MonadHold t m, MonadFix m)
+    => Dynamic t Double
+    -> Point
+    -> Dynamic t Double
+    -> ReactiveProgram t m (Event t Double)
+speedSlider hoverAlpha pos speedFactor = do
+    systemDraw $ uncurry translated pos <$> (slider <$> hoverAlpha <*> speedFactor)
+    click <- ffilter (onRect 3.0 0.8 pos) <$> getPointerClick
+    release <- ffilter not <$> updated <$> isPointerDown
+    dragging <- holdDyn False $ mergeWith (&&) [True <$ click, False <$ release]
+    pointer <- getPointerPosition
+    return $ speedFromPoint <$> mergeWith const [gateDyn dragging (updated pointer), click]
+  where
+    speedFromPoint (x, _y) = scaleRange (-1.4, 1.4) (0, 5) (x - fst pos)
+    xFromSpeed speed = scaleRange (0, 5) (-1.4, 1.4) speed
+    slider a speed = let xoff = xFromSpeed speed in
+        colored
+            (RGBA 0 0 0 a)
+            (translated xoff 0.75 $ scaled 0.5 0.5 $
+                 lettering (T.pack (showFFloatAlt (Just 2) speed "x"))) <>
+        colored (RGBA 0 0 0 a) (translated xoff 0 (solidRectangle 0.2 0.8)) <>
+        colored (RGBA 0.2 0.2 0.2 a) (rectangle 2.8 0.25) <>
+        colored (RGBA 0.8 0.8 0.8 a) (solidRectangle 2.8 0.25)
+
+resetViewButton
+    :: (PerformEvent t m, Adjustable t m, MonadIO (Performable m),
+        PostBuild t m, MonadHold t m, MonadFix m)
+    => Dynamic t Double
+    -> Point
+    -> Dynamic t Bool
+    -> ReactiveProgram t m (Event t ())
+resetViewButton hoverAlpha pos needsReset = do
     click <- gateDyn needsReset . ffilter (onRect 0.8 0.8 pos) <$> getPointerClick
     systemDraw $ uncurry translated pos <$> (bool (constDyn blank) (button <$> hoverAlpha) =<< needsReset)
     return $ () <$ click

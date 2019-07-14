@@ -40,13 +40,9 @@ module CodeWorld.Reflex (
     , debugReactiveOf
     , ReflexCodeWorld
     , getKeyPress
-    , takeKeyPress
     , getKeyRelease
-    , takeKeyRelease
     , getTextEntry
-    , takeTextEntry
     , getPointerClick
-    , takePointerClick
     , getPointerPosition
     , isPointerDown
     , getTimePassing

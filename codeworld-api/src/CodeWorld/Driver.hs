@@ -1756,31 +1756,15 @@ class (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
     -- | Gets an Event of key presses.  The event value is a logical key name.
     getKeyPress :: m (R.Event t Text)
 
-    -- | Gets an Event of key presses that match the given predicate.
-    -- Matching instances will be filtered from events fetched in the body.
-    takeKeyPress :: R.Dynamic t (Text -> Bool) -> (R.Event t Text -> m a) -> m a
-
     -- | Gets an Event of key presses.  The event value is a logical key name.
     getKeyRelease :: m (R.Event t Text)
-
-    -- | Gets an Event of key releases that match the given predicate.
-    -- Matching instances will be filtered from events fetched in the body.
-    takeKeyRelease :: R.Dynamic t (Text -> Bool) -> (R.Event t Text -> m a) -> m a
 
     -- | Gets an Event of text entered.  The event value is the typed text.
     getTextEntry :: m (R.Event t Text)
 
-    -- | Gets an Event of text entered that matches the given predicate.
-    -- Matching instances will be filtered from events fetched in the body.
-    takeTextEntry :: R.Dynamic t (Text -> Bool) -> (R.Event t Text -> m a) -> m a
-
     -- | Gets an event of pointer clicks.  The event value is the location of
     -- the click.
     getPointerClick :: m (R.Event t Point)
-
-    -- | Gets an event of pointer clicks that match the given predicate.
-    -- Matching instances will be filtered from events fetched in the body.
-    takePointerClick :: R.Dynamic t (Point -> Bool) -> (R.Event t Point -> m a) -> m a
 
     -- | Gets the Dynamic position of the pointer.
     getPointerPosition :: m (R.Dynamic t Point)
@@ -1799,31 +1783,11 @@ instance (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
   => ReflexCodeWorld t (ReactiveProgram t m) where
     getKeyPress = ReactiveProgram $ asks keyPress
 
-    takeKeyPress predicate body = do
-        base <- getKeyPress
-        let (nonmatch, match) = splitDyn predicate base
-        withReactiveInput (\i -> i { keyPress = nonmatch }) (body match)
-
     getKeyRelease = ReactiveProgram $ asks keyRelease
-
-    takeKeyRelease predicate body = do
-        base <- getKeyRelease
-        let (nonmatch, match) = splitDyn predicate base
-        withReactiveInput (\i -> i { keyRelease = nonmatch }) (body match)
 
     getTextEntry = ReactiveProgram $ asks textEntry
 
-    takeTextEntry predicate body = do
-        base <- getTextEntry
-        let (nonmatch, match) = splitDyn predicate base
-        withReactiveInput (\i -> i { textEntry = nonmatch }) (body match)
-
     getPointerClick = ReactiveProgram $ asks pointerPress
-
-    takePointerClick predicate body = do
-        base <- getPointerClick
-        let (nonmatch, match) = splitDyn predicate base
-        withReactiveInput (\i -> i { pointerPress = nonmatch }) (body match)
 
     getPointerPosition = ReactiveProgram $ asks pointerPosition
 

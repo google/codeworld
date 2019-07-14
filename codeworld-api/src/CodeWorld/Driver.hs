@@ -1680,7 +1680,21 @@ data ReactiveInput t = ReactiveInput {
     timePassing :: R.Event t Double
     }
 
-type ReactiveOutput = ([Picture], [Picture])
+data ReactiveOutput = ReactiveOutput {
+    userPictures :: [Picture],
+    userTransform :: Picture -> Picture,
+    systemPicture :: Picture
+    }
+
+instance Semigroup ReactiveOutput where
+    a <> b = ReactiveOutput {
+        userPictures = userPictures a ++ userPictures b,
+        userTransform = userTransform a . userTransform b,
+        systemPicture = systemPicture a & systemPicture b
+        }
+
+instance Monoid ReactiveOutput where
+    mempty = ReactiveOutput [] id blank
 
 newtype ReactiveProgram t m a = ReactiveProgram {
     unReactiveProgram :: ReaderT (ReactiveInput t) (R.DynamicWriterT t ReactiveOutput m) a
@@ -1713,23 +1727,27 @@ runReactiveProgram
 runReactiveProgram (ReactiveProgram program) input = do
     ((), output) <- R.runDynamicWriterT (runReaderT program input)
     return $ R.splitDynPure $ do
-        (userPictures, displayPictures) <- output
-        let userPicture = case userPictures of
+        pics <- userPictures <$> output
+        let userPicture = case pics of
                 []  -> blank
                 [p] -> p
                 ps  -> pictures ps
-        return (userPicture, pictures displayPictures)
+        tform <- userTransform <$> output
+        sysPic <- systemPicture <$> output
+        return (userPicture, sysPic & tform userPicture)
 
-transformReactiveProgram
-    :: (R.Reflex t, R.MonadHold t m, MonadFix m)
-    => (ReactiveInput t -> ReactiveInput t)
-    -> (ReactiveOutput -> ReactiveOutput)
+withReactiveInput
+    :: (ReactiveInput t -> ReactiveInput t)
     -> (ReactiveProgram t m a -> ReactiveProgram t m a)
-transformReactiveProgram input output (ReactiveProgram program) =
-    ReactiveProgram (mapReaderT (R.withDynamicWriterT output) $ withReaderT input program)
+withReactiveInput f (ReactiveProgram program) = ReactiveProgram (withReaderT f program)
 
-drawSystem :: (R.Reflex t, Monad m) => R.Dynamic t Picture -> ReactiveProgram t m ()
-drawSystem pic = ReactiveProgram $ R.tellDyn $ (\a -> ([], [a])) <$> pic
+systemDraw :: (R.Reflex t, Monad m) => R.Dynamic t Picture -> ReactiveProgram t m ()
+systemDraw = ReactiveProgram . R.tellDyn . fmap (\a -> mempty { systemPicture = a })
+
+transformUserPicture
+    :: (R.Reflex t, Monad m) => R.Dynamic t (Picture -> Picture) -> ReactiveProgram t m ()
+transformUserPicture =
+    ReactiveProgram . R.tellDyn . fmap (\a -> mempty { userTransform = a })
 
 -- | Type class for the builder monad of a CodeWorld/Reflex app.
 class (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
@@ -1784,28 +1802,28 @@ instance (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
     takeKeyPress predicate body = do
         base <- getKeyPress
         let (nonmatch, match) = splitDyn predicate base
-        transformReactiveProgram (\i -> i { keyPress = nonmatch }) id (body match)
+        withReactiveInput (\i -> i { keyPress = nonmatch }) (body match)
 
     getKeyRelease = ReactiveProgram $ asks keyRelease
 
     takeKeyRelease predicate body = do
         base <- getKeyRelease
         let (nonmatch, match) = splitDyn predicate base
-        transformReactiveProgram (\i -> i { keyRelease = nonmatch }) id (body match)
+        withReactiveInput (\i -> i { keyRelease = nonmatch }) (body match)
 
     getTextEntry = ReactiveProgram $ asks textEntry
 
     takeTextEntry predicate body = do
         base <- getTextEntry
         let (nonmatch, match) = splitDyn predicate base
-        transformReactiveProgram (\i -> i { textEntry = nonmatch }) id (body match)
+        withReactiveInput (\i -> i { textEntry = nonmatch }) (body match)
 
     getPointerClick = ReactiveProgram $ asks pointerPress
 
     takePointerClick predicate body = do
         base <- getPointerClick
         let (nonmatch, match) = splitDyn predicate base
-        transformReactiveProgram (\i -> i { pointerPress = nonmatch }) id (body match)
+        withReactiveInput (\i -> i { pointerPress = nonmatch }) (body match)
 
     getPointerPosition = ReactiveProgram $ asks pointerPosition
 
@@ -1813,7 +1831,7 @@ instance (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
 
     getTimePassing = ReactiveProgram $ asks timePassing
 
-    draw pic = ReactiveProgram $ R.tellDyn $ (\a -> ([a], [a])) <$> pic
+    draw = ReactiveProgram . R.tellDyn . fmap (\a -> mempty { userPictures = [a] })
 
 splitDyn :: forall t a. R.Reflex t => R.Dynamic t (a -> Bool) -> R.Event t a -> (R.Event t a, R.Event t a)
 splitDyn predicate e = R.fanEither $ R.attachPromptlyDynWith f predicate e

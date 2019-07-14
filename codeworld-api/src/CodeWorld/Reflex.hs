@@ -200,15 +200,30 @@ reactiveOf program = runReactive $ \input -> runReactiveProgram program input
 
 debugReactiveOf :: (forall t m. ReflexCodeWorld t m => m ()) -> IO ()
 debugReactiveOf program = runReactive $ \input -> flip runReactiveProgram input $ do
+    hoverAlpha <- getHoverAlpha
     rec
-        resetClick <- resetButton (9, -3) ((/= 1) <$> zoomFactor)
-        zoomFactor <- zoomControls (9, -6) resetClick
+        resetClick <- resetButton hoverAlpha (9, -3) ((/= 1) <$> zoomFactor)
+        zoomFactor <- zoomControls hoverAlpha (9, -6) resetClick
     transformUserPicture $ dilated <$> zoomFactor
     withZoomedMouseEvents zoomFactor $ program
 
 {-# WARNING debugReactiveOf
         ["After the current migration is complete,",
          "debugReactiveOf will probably be renamed to debugReflexOf."] #-}
+
+getHoverAlpha :: forall t m. ReflexCodeWorld t m => m (Dynamic t Double)
+getHoverAlpha = do
+    time <- getTimePassing
+    move <- updated <$> getPointerPosition
+    rec timeSinceMove <- foldDyn ($) 999 $ mergeWith (.) [
+            (+) <$> gateDyn ((< 5) <$> timeSinceMove) time,
+            const 0 <$ move
+            ]
+    return (alphaFromTime <$> timeSinceMove)
+  where
+    alphaFromTime t | t < 4.5   = 1
+                    | t > 5.0   = 0
+                    | otherwise = 10 - 2 * t
 
 withZoomedMouseEvents :: Reflex t => Dynamic t Double -> ReactiveProgram t m a -> ReactiveProgram t m a
 withZoomedMouseEvents zoomFactor = withReactiveInput $ \i -> i {
@@ -221,32 +236,34 @@ withZoomedMouseEvents zoomFactor = withReactiveInput $ \i -> i {
 resetButton
     :: (PerformEvent t m, Adjustable t m, MonadIO (Performable m),
         PostBuild t m, MonadHold t m, MonadFix m)
-    => Point
+    => Dynamic t Double
+    -> Point
     -> Dynamic t Bool
     -> ReactiveProgram t m (Event t ())
-resetButton pos needsReset = do
+resetButton hoverAlpha pos needsReset = do
     click <- gateDyn needsReset . ffilter (onRect 0.8 0.8 pos) <$> getPointerClick
-    systemDraw $ uncurry translated pos <$> bool blank button <$> needsReset
+    systemDraw $ uncurry translated pos <$> (bool (constDyn blank) (button <$> hoverAlpha) =<< needsReset)
     return $ () <$ click
   where
-    button =
-        colored (RGBA 0.8 0.8 0.8 1) (solidRectangle 0.7 0.2) <>
-        colored (RGBA 0.8 0.8 0.8 1) (solidRectangle 0.2 0.7) <>
-        colored (RGBA 0.0 0.0 0.0 1) (thickRectangle 0.1 0.5 0.5) <>
-        colored (RGBA 0.2 0.2 0.2 1) (rectangle 0.8 0.8) <>
-        colored (RGBA 0.8 0.8 0.8 1) (solidRectangle 0.8 0.8)
+    button a =
+        colored (RGBA 0.8 0.8 0.8 a) (solidRectangle 0.7 0.2) <>
+        colored (RGBA 0.8 0.8 0.8 a) (solidRectangle 0.2 0.7) <>
+        colored (RGBA 0.0 0.0 0.0 a) (thickRectangle 0.1 0.5 0.5) <>
+        colored (RGBA 0.2 0.2 0.2 a) (rectangle 0.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 a) (solidRectangle 0.8 0.8)
 
 zoomControls
     :: (PerformEvent t m, Adjustable t m, MonadIO (Performable m),
         PostBuild t m, MonadHold t m, MonadFix m)
-    => Point
+    => Dynamic t Double
+    -> Point
     -> Event t ()
     -> ReactiveProgram t m (Dynamic t Double)
-zoomControls (x, y) resetClick = do
-    zoomInClick <- zoomInButton (x, y + 2)
-    zoomOutClick <- zoomOutButton (x, y - 2)
+zoomControls hoverAlpha (x, y) resetClick = do
+    zoomInClick <- zoomInButton hoverAlpha (x, y + 2)
+    zoomOutClick <- zoomOutButton hoverAlpha (x, y - 2)
     rec
-        zoomDrag <- zoomSlider (x, y) zoomFactor
+        zoomDrag <- zoomSlider hoverAlpha (x, y) zoomFactor
         zoomFactor <- foldDyn ($) 1 $ mergeWith (.) [
             (* zoomIncrement) <$ zoomInClick,
             (/ zoomIncrement) <$ zoomOutClick,
@@ -258,44 +275,48 @@ zoomControls (x, y) resetClick = do
 zoomInButton
     :: (PerformEvent t m, Adjustable t m, MonadIO (Performable m),
         PostBuild t m, MonadHold t m, MonadFix m)
-    => Point -> ReactiveProgram t m (Event t ())
-zoomInButton pos = do
-    systemDraw $ constDyn $ uncurry translated pos $
+    => Dynamic t Double -> Point -> ReactiveProgram t m (Event t ())
+zoomInButton hoverAlpha pos = do
+    systemDraw $ uncurry translated pos <$> button <$> hoverAlpha
+    (() <$) <$> ffilter (onRect 0.8 0.8 pos) <$> getPointerClick
+  where
+    button a =
         colored
-            (RGBA 0 0 0 1)
+            (RGBA 0 0 0 a)
             (translated (-0.05) (0.05) (
                 thickCircle 0.1 0.22 <>
                 solidRectangle 0.06 0.25 <>
                 solidRectangle 0.25 0.06 <>
                 rotated (-pi / 4) (translated 0.35 0 (solidRectangle 0.2 0.1))
             )) <>
-        colored (RGBA 0.2 0.2 0.2 1) (rectangle 0.8 0.8) <>
-        colored (RGBA 0.8 0.8 0.8 1) (solidRectangle 0.8 0.8)
-    (() <$) <$> ffilter (onRect 0.8 0.8 pos) <$> getPointerClick
+        colored (RGBA 0.2 0.2 0.2 a) (rectangle 0.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 a) (solidRectangle 0.8 0.8)
 
 zoomOutButton
     :: (PerformEvent t m, Adjustable t m, MonadIO (Performable m),
         PostBuild t m, MonadHold t m, MonadFix m)
-    => Point -> ReactiveProgram t m (Event t ())
-zoomOutButton pos = do
-    systemDraw $ constDyn $ uncurry translated pos $
+    => Dynamic t Double -> Point -> ReactiveProgram t m (Event t ())
+zoomOutButton hoverAlpha pos = do
+    systemDraw $ uncurry translated pos <$> button <$> hoverAlpha
+    (() <$) <$> ffilter (onRect 0.8 0.8 pos) <$> getPointerClick
+  where
+    button a =
         colored
-            (RGBA 0 0 0 1)
+            (RGBA 0 0 0 a)
             (translated (-0.05) (0.05) (
                 thickCircle 0.1 0.22 <>
                 solidRectangle 0.25 0.06 <>
                 rotated (-pi / 4) (translated 0.35 0 (solidRectangle 0.2 0.1))
             )) <>
-        colored (RGBA 0.2 0.2 0.2 1) (rectangle 0.8 0.8) <>
-        colored (RGBA 0.8 0.8 0.8 1) (solidRectangle 0.8 0.8)
-    (() <$) <$> ffilter (onRect 0.8 0.8 pos) <$> getPointerClick
+        colored (RGBA 0.2 0.2 0.2 a) (rectangle 0.8 0.8) <>
+        colored (RGBA 0.8 0.8 0.8 a) (solidRectangle 0.8 0.8)
 
 zoomSlider
     :: (PerformEvent t m, Adjustable t m, MonadIO (Performable m),
         PostBuild t m, MonadHold t m, MonadFix m)
-    => Point -> Dynamic t Double -> ReactiveProgram t m (Event t Double)
-zoomSlider pos factor = do
-    systemDraw $ uncurry translated pos <$> slider <$> factor
+    => Dynamic t Double -> Point -> Dynamic t Double -> ReactiveProgram t m (Event t Double)
+zoomSlider hoverAlpha pos factor = do
+    systemDraw $ uncurry translated pos <$> (slider <$> hoverAlpha <*> factor)
     click <- ffilter (onRect 0.8 3.0 pos) <$> getPointerClick
     release <- ffilter not <$> updated <$> isPointerDown
     dragging <- holdDyn False $ mergeWith (&&) [True <$ click, False <$ release]
@@ -304,14 +325,14 @@ zoomSlider pos factor = do
   where
     zoomFromPoint (_x, y) = zoomIncrement ** (scaleRange (-1.4, 1.4) (-10, 10) (y - snd pos))
     yFromZoom z = scaleRange (-10, 10) (-1.4, 1.4) (logBase zoomIncrement z)
-    slider z = let yoff = yFromZoom z in
+    slider a z = let yoff = yFromZoom z in
         colored
-            (RGBA 0 0 0 1)
+            (RGBA 0 0 0 a)
             (translated (-1.1) yoff $ scaled 0.5 0.5 $
                  lettering (T.pack (show (round (z * 100) :: Int) ++ "%"))) <>
-        colored (RGBA 0 0 0 1) (translated 0 yoff (solidRectangle 0.8 0.2)) <>
-        colored (RGBA 0.2 0.2 0.2 1) (rectangle 0.25 2.8) <>
-        colored (RGBA 0.8 0.8 0.8 1) (solidRectangle 0.25 2.8)
+        colored (RGBA 0 0 0 a) (translated 0 yoff (solidRectangle 0.8 0.2)) <>
+        colored (RGBA 0.2 0.2 0.2 a) (rectangle 0.25 2.8) <>
+        colored (RGBA 0.8 0.8 0.8 a) (solidRectangle 0.25 2.8)
 
 zoomIncrement :: Double
 zoomIncrement = 8 ** (1/10)

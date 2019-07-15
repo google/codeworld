@@ -1,0 +1,218 @@
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections #-}
+
+{-
+  Copyright 2019 The CodeWorld Authors. All rights reserved.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-}
+
+module Framework where
+
+import Control.Applicative
+import Control.Concurrent
+import Control.Monad
+import Control.Monad.Catch
+import Control.Monad.IO.Class
+import Control.Monad.State
+import Data.ByteString (ByteString)
+import qualified Data.ByteString as B
+import Data.List (isPrefixOf, intercalate, foldl')
+import Data.Map (Map)
+import qualified Data.Map as M
+import Data.Maybe
+import Data.Monoid
+import Data.Text (Text)
+import qualified Data.Text as T
+import Data.Text.Encoding (decodeUtf8, encodeUtf8)
+import Language.Haskell.Exts
+import System.Exit (ExitCode(..))
+import System.Directory
+import System.FilePath
+import System.IO
+import System.IO.Temp (withSystemTempDirectory)
+import System.Process
+
+import qualified Config as GHCParse
+import qualified DynFlags as GHCParse
+import qualified FastString as GHCParse
+import qualified Fingerprint as GHCParse
+import qualified GHC.LanguageExtensions.Type as GHCParse
+import qualified HeaderInfo as GHCParse
+import qualified HsExtension as GHCParse
+import qualified HsSyn as GHCParse
+import qualified HscTypes as GHCParse
+import qualified Lexer as GHCParse
+import qualified Panic as GHCParse
+import qualified Parser as GHCParse
+import qualified Platform as GHCParse
+import qualified SrcLoc as GHCParse
+import qualified StringBuffer as GHCParse
+
+data Stage
+    = ErrorCheck
+    | FullBuild FilePath  -- ^ Output file location
+    | GenBase   String    -- ^ Base module name
+                FilePath  -- ^ Base module file location
+                FilePath  -- ^ Output file location
+                FilePath  -- ^ Symbol file location
+    | UseBase   FilePath  -- ^ Output file location
+                FilePath  -- ^ Symbol file location
+                String    -- ^ URL of the base JavaScript bundle
+    deriving (Eq, Show)
+
+data CompileStatus
+    = CompileSuccess
+    | CompileError
+    | CompileAborted
+    deriving (Eq, Show, Ord)
+
+data CompileState = CompileState {
+    compileStage           :: Stage,
+    compileSourcePath      :: FilePath,
+    compileOutputPath      :: FilePath,
+    compileVerbose         :: Bool,
+    compileTimeout         :: Int,
+    compileStatus          :: CompileStatus,
+    compileErrors          :: [Diagnostic],
+    compileReadSource      :: Maybe ByteString,
+    compileParsedSource    :: Maybe ParsedCode,
+    compileGHCParsedSource :: Maybe GHCParsedCode
+    }
+
+type MonadCompile m = (MonadState CompileState m, MonadIO m, MonadMask m)
+
+type Diagnostic = (SrcSpanInfo, CompileStatus, String)
+
+data ParsedCode = Parsed (Module SrcSpanInfo) | NoParse deriving Show
+
+data GHCParsedCode = GHCParsed (GHCParse.HsModule GHCParse.GhcPs) | GHCNoParse
+
+getDiagnostics :: MonadCompile m => m [Diagnostic]
+getDiagnostics = do
+    diags <- gets compileErrors
+    return diags
+
+ghcExtensionsByName :: Map String GHCParse.Extension
+ghcExtensionsByName = M.fromList [
+    (GHCParse.flagSpecName spec, GHCParse.flagSpecFlag spec)
+    | spec <- GHCParse.xFlags ]
+
+applyExtensionToFlags :: GHCParse.DynFlags -> String -> GHCParse.DynFlags
+applyExtensionToFlags dflags name
+  | "No" `isPrefixOf` name =
+        GHCParse.xopt_unset dflags $ fromJust $ M.lookup (drop 2 name) ghcExtensionsByName
+  | otherwise =
+        GHCParse.xopt_set dflags $ fromJust $ M.lookup name ghcExtensionsByName
+
+ghcParseCode :: [String] -> Text -> GHCParsedCode
+ghcParseCode exts src = do
+    let buffer = GHCParse.stringToStringBuffer (T.unpack src)
+        defaultFlags = GHCParse.defaultDynFlags fakeSettings fakeLlvmConfig
+        dflags = foldl' applyExtensionToFlags defaultFlags exts
+        location = GHCParse.mkRealSrcLoc (GHCParse.mkFastString "program.hs") 1 1
+        state    = GHCParse.mkPState dflags buffer location
+    case GHCParse.unP GHCParse.parseModule state of
+        GHCParse.POk _ (GHCParse.L _ mod) -> GHCParsed mod
+        GHCParse.PFailed _ _ _            -> GHCNoParse
+
+fakeSettings :: GHCParse.Settings
+fakeSettings =
+    GHCParse.Settings {
+        GHCParse.sTargetPlatform = GHCParse.Platform {
+            GHCParse.platformWordSize = 8,
+            GHCParse.platformOS = GHCParse.OSUnknown
+        },
+        GHCParse.sPlatformConstants = GHCParse.PlatformConstants {
+            GHCParse.pc_DYNAMIC_BY_DEFAULT = False
+        }
+    }
+
+fakeLlvmConfig :: (GHCParse.LlvmTargets, GHCParse.LlvmPasses)
+fakeLlvmConfig = ([], [])
+
+addDiagnostics :: MonadCompile m => [Diagnostic] -> m ()
+addDiagnostics diags = modify $ \state -> state {
+    compileErrors = compileErrors state ++ diags,
+    compileStatus = maximum
+        (compileStatus state : map (\(_, s, _) -> s) diags)
+    }
+
+failCompile :: MonadCompile m => m ()
+failCompile = do
+    modify $ \state -> state {
+        compileStatus = max CompileError (compileStatus state) }
+
+ifSucceeding :: MonadCompile m => m () -> m ()
+ifSucceeding m = do
+    status <- gets compileStatus
+    when (status == CompileSuccess) m
+
+withTimeout :: Int -> IO a -> IO (Maybe a)
+withTimeout micros action = do
+    result <- newEmptyMVar
+    killer <- forkIO $ threadDelay micros >> putMVar result Nothing
+    runner <- forkIO $ action >>= putMVar result . Just
+    r <- takeMVar result
+    killThread killer
+    killThread runner
+    return r
+
+-- Runs a command, where if the thread terminates, the subprocess is automatically
+-- killed.
+runSync :: FilePath -> String -> [String] -> IO (ExitCode, Text)
+runSync dir cmd args = mask $ \restore -> do
+    (Nothing, Just outh, Just errh, pid) <-
+        createProcess
+            (proc cmd args)
+            { cwd = Just dir
+            , std_in = NoStream
+            , std_out = CreatePipe
+            , std_err = CreatePipe
+            , close_fds = True
+            }
+    let cleanup (e :: SomeException) = terminateProcess pid >> throwM e
+    handle cleanup $ restore $ do
+        result <- decodeUtf8 <$> B.hGetContents errh
+        hClose outh
+        exitCode <- waitForProcess pid
+        return (exitCode, result)
+
+formatLocation :: SrcSpanInfo -> String
+formatLocation spn@(SrcSpanInfo (SrcSpan fn l1 c1 l2 c2) _)
+  | spn == noSrcSpan = ""
+  | l1 /= l2         = fn ++ ":(" ++ show l1 ++ "," ++ show c1 ++ ")-(" ++
+                       show l2 ++ "," ++ show (max 1 (c2 - 1)) ++ ")"
+  | c1 < c2 - 1      = fn ++ ":" ++ show l1 ++ ":" ++ show c1 ++ "-" ++
+                       show (max 1 (c2 - 1))
+  | otherwise        = fn ++ ":" ++ show l1 ++ ":" ++ show c1
+
+srcSpanFor :: Text -> Int -> Int -> SrcSpanInfo
+srcSpanFor src off len =
+    SrcSpanInfo (SrcSpan "program.hs" ln1 col1 ln2 col2) []
+  where (_, ln1, col1) = T.foldl' next (off, 1, 1) pre
+        (_, ln2, col2) = T.foldl' next (len, ln1, col1) mid
+
+        (pre, post) = T.splitAt off src
+        mid = T.take len post
+
+        next (!n, !ln, !col) '\r' = (n - 1, ln, col)
+        next (!n, !ln, !col) '\n' = (n - 1, ln + 1, 1)
+        next (!n, !ln, !col) '\t' = (n - 1, ln, col + 8 - (col - 1) `mod` 8)
+        next (!n, !ln, !col) _    = (n - 1, ln, col + 1)

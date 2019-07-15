@@ -65,49 +65,7 @@ import qualified Platform as GHCParse
 import qualified SrcLoc as GHCParse
 import qualified StringBuffer as GHCParse
 
-data Stage
-    = ErrorCheck
-    | FullBuild FilePath  -- ^ Output file location
-    | GenBase   String    -- ^ Base module name
-                FilePath  -- ^ Base module file location
-                FilePath  -- ^ Output file location
-                FilePath  -- ^ Symbol file location
-    | UseBase   FilePath  -- ^ Output file location
-                FilePath  -- ^ Symbol file location
-                String    -- ^ URL of the base JavaScript bundle
-    deriving (Eq, Show)
-
-data CompileStatus
-    = CompileSuccess
-    | CompileError
-    | CompileAborted
-    deriving (Eq, Show, Ord)
-
-data CompileState = CompileState {
-    compileStage           :: Stage,
-    compileSourcePath      :: FilePath,
-    compileOutputPath      :: FilePath,
-    compileVerbose         :: Bool,
-    compileTimeout         :: Int,
-    compileStatus          :: CompileStatus,
-    compileErrors          :: [Diagnostic],
-    compileReadSource      :: Maybe ByteString,
-    compileParsedSource    :: Maybe ParsedCode,
-    compileGHCParsedSource :: Maybe GHCParsedCode
-    }
-
-type MonadCompile m = (MonadState CompileState m, MonadIO m, MonadMask m)
-
-type Diagnostic = (SrcSpanInfo, CompileStatus, String)
-
-data ParsedCode = Parsed (Module SrcSpanInfo) | NoParse deriving Show
-
 data GHCParsedCode = GHCParsed (GHCParse.HsModule GHCParse.GhcPs) | GHCNoParse
-
-getDiagnostics :: MonadCompile m => m [Diagnostic]
-getDiagnostics = do
-    diags <- gets compileErrors
-    return diags
 
 ghcExtensionsByName :: Map String GHCParse.Extension
 ghcExtensionsByName = M.fromList [
@@ -146,53 +104,6 @@ fakeSettings =
 
 fakeLlvmConfig :: (GHCParse.LlvmTargets, GHCParse.LlvmPasses)
 fakeLlvmConfig = ([], [])
-
-addDiagnostics :: MonadCompile m => [Diagnostic] -> m ()
-addDiagnostics diags = modify $ \state -> state {
-    compileErrors = compileErrors state ++ diags,
-    compileStatus = maximum
-        (compileStatus state : map (\(_, s, _) -> s) diags)
-    }
-
-failCompile :: MonadCompile m => m ()
-failCompile = do
-    modify $ \state -> state {
-        compileStatus = max CompileError (compileStatus state) }
-
-ifSucceeding :: MonadCompile m => m () -> m ()
-ifSucceeding m = do
-    status <- gets compileStatus
-    when (status == CompileSuccess) m
-
-withTimeout :: Int -> IO a -> IO (Maybe a)
-withTimeout micros action = do
-    result <- newEmptyMVar
-    killer <- forkIO $ threadDelay micros >> putMVar result Nothing
-    runner <- forkIO $ action >>= putMVar result . Just
-    r <- takeMVar result
-    killThread killer
-    killThread runner
-    return r
-
--- Runs a command, where if the thread terminates, the subprocess is automatically
--- killed.
-runSync :: FilePath -> String -> [String] -> IO (ExitCode, Text)
-runSync dir cmd args = mask $ \restore -> do
-    (Nothing, Just outh, Just errh, pid) <-
-        createProcess
-            (proc cmd args)
-            { cwd = Just dir
-            , std_in = NoStream
-            , std_out = CreatePipe
-            , std_err = CreatePipe
-            , close_fds = True
-            }
-    let cleanup (e :: SomeException) = terminateProcess pid >> throwM e
-    handle cleanup $ restore $ do
-        result <- decodeUtf8 <$> B.hGetContents errh
-        hClose outh
-        exitCode <- waitForProcess pid
-        return (exitCode, result)
 
 formatLocation :: SrcSpanInfo -> String
 formatLocation spn@(SrcSpanInfo (SrcSpan fn l1 c1 l2 c2) _)

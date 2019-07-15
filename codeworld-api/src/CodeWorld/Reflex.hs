@@ -246,7 +246,7 @@ reactiveDebugControls hoverAlpha = do
         playPauseClick <- playPauseButton hoverAlpha running (-8, -9)
         speedFactor <- foldDyn ($) 1 $ mergeWith (.) [
             (\s -> if s == 0 then 1 else 0) <$ playPauseClick,
-            (\s -> min 2.0 (s + 1)) <$ fastForwardClick,
+            (\s -> max 2.0 (s + 1)) <$ fastForwardClick,
             const <$> speedDragged
             ]
         let running = (> 0) <$> speedFactor

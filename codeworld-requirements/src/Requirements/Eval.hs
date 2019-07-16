@@ -42,13 +42,14 @@ import Data.Void
 import qualified Language.Haskell.Exts as Exts
 import Text.Regex.TDFA hiding (match)
 
+import DynFlags
 import HsSyn
 import Outputable
 import SrcLoc
 
-evalRequirement :: HsModule GhcPs -> C.ByteString -> Requirement -> (Maybe Bool, [String])
-evalRequirement m s Requirement{..} = let
-        results = map (checkRule m s) requiredRules
+evalRequirement :: DynFlags -> HsModule GhcPs -> C.ByteString -> Requirement -> (Maybe Bool, [String])
+evalRequirement f m s Requirement{..} = let
+        results = map (checkRule f m s) requiredRules
         evals = if any isNothing results then Nothing else Just $ concat (catMaybes results)
     in case evals of
         Nothing -> (Nothing, ["Could not check this requirement."])
@@ -70,15 +71,15 @@ withParsedCode :: HsModule GhcPs
                   -> m Result
 withParsedCode = flip id
 
-checkRule :: HsModule GhcPs -> C.ByteString -> Rule -> Result
-checkRule m s r = case getStage r of
+checkRule :: DynFlags -> HsModule GhcPs -> C.ByteString -> Rule -> Result
+checkRule f m s r = case getStage r of
     Source -> checkRuleSource s r 
-    Parse -> checkRuleParse m r
+    Parse -> checkRuleParse f m r
     _ -> abort -- until other stages are implemented
 
-checkRuleParse :: HsModule GhcPs -> Rule -> Result
+checkRuleParse :: DynFlags -> HsModule GhcPs -> Rule -> Result
 
-checkRuleParse m (DefinedByFunction a b)
+checkRuleParse _ m (DefinedByFunction a b)
         | null defs = failure $ "`" ++ a ++ "` is not defined."
         | all (isDefinedBy b) defs = success
         | otherwise = failure ("`" ++ a ++ "` is not defined directly using `" ++ b ++ "`.")
@@ -96,7 +97,7 @@ checkRuleParse m (DefinedByFunction a b)
         isExpOf b (HsPar _ (L _ exp)) = isExpOf b exp
         isExpOf b _ = False
 
-checkRuleParse m (MatchesExpected a h)
+checkRuleParse _ m (MatchesExpected a h)
         | null defs = failure $ "`" ++ a ++ "` is not defined."
         | computedHash == h = success
         | otherwise = failure $
@@ -106,7 +107,7 @@ checkRuleParse m (MatchesExpected a h)
         defs = allBindingsOf a m
         computedHash = hash (concatMap showSDocUnsafe defs) `mod` 1000000
 
-checkRuleParse m (HasSimpleParams a) 
+checkRuleParse _ m (HasSimpleParams a) 
         | null paramPatterns = failure $ "`" ++ a ++ "` is not defined as a function."
         | all isSimpleParam paramPatterns = success
         | otherwise = failure $ "`" ++ a ++ "` has equations with pattern matching."
@@ -129,7 +130,7 @@ checkRuleParse m (HasSimpleParams a)
         isSimpleParam (L _ (WildPat _)) = True
         isSimpleParam _ = False
 
-checkRuleParse m (UsesAllParams a)
+checkRuleParse _ m (UsesAllParams a)
         | usesAllParams = success
         | otherwise = failure $ "`" ++ a ++ "` has unused arguments."
     where
@@ -159,11 +160,11 @@ checkRuleParse m (UsesAllParams a)
         isVar v (HsVar _ (L _ vv)) = v == idName vv
         isVar _ _ = False
 
-checkRuleParse m (NotDefined a)
+checkRuleParse _ m (NotDefined a)
         | null (allDefinitionsOf a m) = success
         | otherwise = failure $ "`" ++ a ++ "` should not be defined."
 
-checkRuleParse m (NotUsed a)
+checkRuleParse _ m (NotUsed a)
         | everything (||) (mkQ False exprUse) m
              = failure $ "`" ++ a ++ "` should not be used."
         | otherwise = success
@@ -172,11 +173,11 @@ checkRuleParse m (NotUsed a)
         exprUse (HsVar _ (L _ v)) | idName v == a = True
         exprUse _ = False
 
-checkRuleParse m (ContainsMatch tmpl topLevel card)
+checkRuleParse f m (ContainsMatch tmpl topLevel card)
         | hasCardinality card n = success
         | otherwise = failure $ "Wrong number of matches."
     where
-        p = ghcParseCode ["TemplateHaskell", "TemplateHaskellQuotes"] (T.pack tmpl)
+        p = ghcParseCode f ["TemplateHaskell", "TemplateHaskellQuotes"] (T.pack tmpl)
         n = case p of
             GHCParsed (HsModule {hsmodDecls=[tmpl]}) ->
                 let decls | topLevel = concat $ gmapQ (mkQ [] id) m
@@ -186,11 +187,11 @@ checkRuleParse m (ContainsMatch tmpl topLevel card)
                 length $ filter (match tmpl) $ concat $ gmapQ (mkQ [] id) m       
 
 
-checkRuleParse m (OnFailure msg rule) = case checkRuleParse m rule of
+checkRuleParse f m (OnFailure msg rule) = case checkRuleParse f m rule of
     Just (_:_) -> failure msg
     other -> other
 
-checkRuleParse m (NotThis rule) = case checkRuleParse m rule of
+checkRuleParse f m (NotThis rule) = case checkRuleParse f m rule of
     Just [] -> failure "A rule matched, but shouldn't have."
     Just _ -> success
     Nothing -> abort
@@ -203,7 +204,7 @@ checkRuleParse m (NotThis rule) = case checkRuleParse m rule of
              let (Exts.SrcSpanInfo (Exts.SrcSpan _ l c _ _) _,_,x) = head warns
              failure $ "Warning found at line " ++ show l ++ ", column " ++ show c-}
 
-checkRuleParse m (TypeSignatures b)
+checkRuleParse _ m (TypeSignatures b)
         | null noTypeSig || not b = success
         | otherwise = failure $ "The declaration of `" ++ head noTypeSig
            ++ "` has no type signature."
@@ -211,7 +212,7 @@ checkRuleParse m (TypeSignatures b)
         defs = nub $ topLevelNames m
         noTypeSig = defs \\ typeSignatures m
 
-checkRuleParse m (Blacklist bl) -- Should happen after typechecking
+checkRuleParse _ m (Blacklist bl) -- Should happen after typechecking
        | null blacklisted = success
        | otherwise = failure $ "The symbol `" ++ head blacklisted
            ++ "` is blacklisted."
@@ -221,7 +222,7 @@ checkRuleParse m (Blacklist bl) -- Should happen after typechecking
 
         idNameList x = [idName x] 
 
-checkRuleParse m (Whitelist wl) -- Should happen after typechecking
+checkRuleParse _ m (Whitelist wl) -- Should happen after typechecking
         | null notWhitelisted = success
         | otherwise = failure $ "The symbol `" ++ head notWhitelisted
             ++ "` is not whitelisted."
@@ -231,7 +232,7 @@ checkRuleParse m (Whitelist wl) -- Should happen after typechecking
 
         idNameList x = [idName x] 
 
-checkRuleParse _ _ = abort
+checkRuleParse _ _ _ = abort
 
 checkRuleSource :: C.ByteString -> Rule -> Result
 
@@ -257,19 +258,19 @@ checkRuleSource s (MaxLineLength len)
 
 checkRuleSource _ _ = abort
 
-checkRuleMultiple :: HsModule GhcPs -> C.ByteString -> Rule -> Result
+checkRuleMultiple :: DynFlags -> HsModule GhcPs -> C.ByteString -> Rule -> Result --fix
 
-checkRuleMultiple m s (IfThen a b) = case checkRule m s a of 
-    Just [] -> checkRule m s b
+checkRuleMultiple f m s (IfThen a b) = case checkRule f m s a of 
+    Just [] -> checkRule f m s b
     Just _ -> success
     Nothing -> abort
 
-checkRuleMultiple m s (AllOf rules) = do
-    let results = map (checkRule m s) rules
+checkRuleMultiple f m s (AllOf rules) = do
+    let results = map (checkRule f m s) rules
     if any isNothing results then Nothing else Just $ concat (catMaybes results)
 
-checkRuleMultiple m s (AnyOf rules) = do
-    let results = map (checkRule m s) rules
+checkRuleMultiple f m s (AnyOf rules) = do
+    let results = map (checkRule f m s) rules
     if any isNothing results then Nothing else do
         let errs = catMaybes results 
         return (if any null errs then [] else ["No alternatives succeeded."])

@@ -79,11 +79,10 @@ applyExtensionToFlags dflags name
   | otherwise =
         GHCParse.xopt_set dflags $ fromJust $ M.lookup name ghcExtensionsByName
 
-ghcParseCode :: [String] -> Text -> GHCParsedCode
-ghcParseCode exts src = do
+ghcParseCode :: GHCParse.DynFlags -> [String] -> Text -> GHCParsedCode
+ghcParseCode flags exts src = do
     let buffer = GHCParse.stringToStringBuffer (T.unpack src)
-        defaultFlags = GHCParse.defaultDynFlags fakeSettings fakeLlvmConfig
-        dflags = foldl' applyExtensionToFlags defaultFlags exts
+        dflags = foldl' applyExtensionToFlags flags exts
         location = GHCParse.mkRealSrcLoc (GHCParse.mkFastString "program.hs") 1 1
         state    = GHCParse.mkPState dflags buffer location
     case GHCParse.unP GHCParse.parseModule state of

@@ -25,7 +25,7 @@ module RequirementsChecker (plugin) where
 
         let flags = ms_hspp_opts summary
             (L _ code) = hpm_module mod
-            req = checkRequirements code src
+            req = checkRequirements flags code src
 
         case req of
             Nothing -> return ()

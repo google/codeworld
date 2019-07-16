@@ -89,21 +89,6 @@ ghcParseCode flags exts src = do
         GHCParse.POk _ (GHCParse.L _ mod) -> GHCParsed mod
         GHCParse.PFailed _ _ _            -> GHCNoParse
 
-fakeSettings :: GHCParse.Settings
-fakeSettings =
-    GHCParse.Settings {
-        GHCParse.sTargetPlatform = GHCParse.Platform {
-            GHCParse.platformWordSize = 8,
-            GHCParse.platformOS = GHCParse.OSUnknown
-        },
-        GHCParse.sPlatformConstants = GHCParse.PlatformConstants {
-            GHCParse.pc_DYNAMIC_BY_DEFAULT = False
-        }
-    }
-
-fakeLlvmConfig :: (GHCParse.LlvmTargets, GHCParse.LlvmPasses)
-fakeLlvmConfig = ([], [])
-
 formatLocation :: SrcSpanInfo -> String
 formatLocation spn@(SrcSpanInfo (SrcSpan fn l1 c1 l2 c2) _)
   | spn == noSrcSpan = ""

@@ -75,6 +75,7 @@ checkRule :: DynFlags -> HsModule GhcPs -> C.ByteString -> Rule -> Result
 checkRule f m s r = case getStage r of
     Source -> checkRuleSource s r 
     Parse -> checkRuleParse f m r
+    Multiple -> checkRuleMultiple f m s r
     _ -> abort -- until other stages are implemented
 
 checkRuleParse :: DynFlags -> HsModule GhcPs -> Rule -> Result

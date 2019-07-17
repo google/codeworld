@@ -227,7 +227,7 @@ if [ ! -f $BUILD/progress/ghcjs ]; then
 fi
 
 if [ ! -f $BUILD/progress/ghcjs-boot ]; then
-  run $BUILD/ghcjs  ghcjs-boot --no-prof --no-haddock -s lib/boot
+  run $BUILD/ghcjs  ghcjs-boot -j$NPROC --no-prof --no-haddock -s lib/boot
   touch $BUILD/progress/ghcjs-boot
 fi
 

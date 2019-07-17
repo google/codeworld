@@ -31,6 +31,12 @@ export GHCUP_INSTALL_BASE_PREFIX=$BUILD
 export BOOTSTRAP_HASKELL_NONINTERACTIVE=1
 
 #
+# Parallelism
+#
+
+export NPROC=$(grep -c ^processor /proc/cpuinfo)
+
+#
 # Set up terminal colors.
 #
 
@@ -93,7 +99,7 @@ function run {
 #
 
 function cabal_install {
-  cabal v1-install --symlink-bindir=$BUILD/bin --reorder-goals --disable-library-profiling --force-reinstalls --global --prefix=$BUILD $@
+  cabal v1-install -j$NPROC --symlink-bindir=$BUILD/bin --reorder-goals --disable-library-profiling --force-reinstalls --global --prefix=$BUILD $@
 }
 
 function cabal_configure {

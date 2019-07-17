@@ -45,6 +45,7 @@ run codeworld-api   cabal haddock --hoogle
 run .  cabal_install ./codeworld-server \
                      ./codeworld-error-sanitizer \
                      ./codeworld-compiler \
+                     ./codeworld-requirements \
                      ./codeworld-game-api \
                      ./codeworld-prediction \
                      ./codeworld-api \

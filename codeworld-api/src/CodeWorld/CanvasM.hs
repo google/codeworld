@@ -112,13 +112,16 @@ instance Monad CanvasM where
         unCanvasM (f x) dim ctx
 
 foreign import javascript "$2.globalCompositeOperation = $1;"
-               js_globalCompositeOperation :: JSString -> Canvas.Context -> IO ()
+    js_globalCompositeOperation :: JSString -> Canvas.Context -> IO ()
 
 foreign import javascript "$r = $3.isPointInPath($1, $2);"
-               js_isPointInPath :: Double -> Double -> Canvas.Context -> IO Bool
+    js_isPointInPath :: Double -> Double -> Canvas.Context -> IO Bool
 
 foreign import javascript "$r = $3.isPointInStroke($1, $2);"
-               js_isPointInStroke :: Double -> Double -> Canvas.Context -> IO Bool
+    js_isPointInStroke :: Double -> Double -> Canvas.Context -> IO Bool
+
+foreign import javascript interruptible "$1.onload = $c; $1.src = $2;"
+    js_loadImage :: Element -> JSString -> IO ()
 
 instance MonadIO CanvasM where
     liftIO action = CanvasM $ \_ _ -> action
@@ -133,9 +136,9 @@ createOrGetImage name url = do
             img <- createElement doc (textToJSString "img")
             setAttribute img (textToJSString "style") (textToJSString "display: none")
             setAttribute img (textToJSString "id") name
-            setAttribute img (textToJSString "src") url
             Just body <- getBody doc
             _ <- appendChild body img
+            js_loadImage img (textToJSString url)
             return img
 
 instance MonadCanvas CanvasM where

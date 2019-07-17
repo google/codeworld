@@ -21,13 +21,7 @@ source base.sh
 run .  cabal update
 
 # Install the codeworld-base and codeworld-api packages
-#
-# -f-quickcheck disables QuickCheck support in these, which
-# prevents a reinstall of QuickCheck from also causing Reflex
-# to rebuild.  Switching to cabal v2-install would fix issues
-# like this.
-run .  cabal_install -f-quickcheck --ghcjs \
-                             ./codeworld-prediction \
+run .  cabal_install --ghcjs ./codeworld-prediction \
                              ./codeworld-error-sanitizer \
                              ./codeworld-api \
                              ./codeworld-base \

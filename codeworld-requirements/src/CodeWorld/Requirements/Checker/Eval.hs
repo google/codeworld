@@ -20,14 +20,14 @@
   limitations under the License.
 -}
 
-module Requirements.Eval (
+module CodeWorld.Requirements.Checker.Eval (
     Requirement,
     evalRequirement
     ) where
 
-import Framework
-import Requirements.Matcher
-import Requirements.Types
+import CodeWorld.Requirements.Framework
+import CodeWorld.Requirements.Checker.Matcher
+import CodeWorld.Requirements.Checker.Types
 import Control.Monad.IO.Class
 import Data.Array
 import Data.Char

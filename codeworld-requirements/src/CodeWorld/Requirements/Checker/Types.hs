@@ -14,7 +14,7 @@
   limitations under the License.
 -}
 
-module Requirements.Types where
+module CodeWorld.Requirements.Checker.Types where
 
     data Requirement = Requirement {
         requiredDescription :: String,

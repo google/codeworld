@@ -14,9 +14,9 @@
   limitations under the License.
 -}
 
-module RequirementsChecker (plugin) where
+module CodeWorld.Requirements.RequirementsChecker (plugin) where
 
-    import Requirements
+    import CodeWorld.Requirements.Requirements
     import Control.Monad.IO.Class
     import qualified Data.ByteString as B
 

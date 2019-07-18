@@ -19,12 +19,12 @@
   limitations under the License.
 -}
 
-module Requirements (checkRequirements) where
+module CodeWorld.Requirements.Requirements (checkRequirements) where
 
-import Framework
-import Requirements.Eval
-import Requirements.Language
-import Requirements.Types
+import CodeWorld.Requirements.Framework
+import CodeWorld.Requirements.Checker.Eval
+import CodeWorld.Requirements.Checker.Language
+import CodeWorld.Requirements.Checker.Types
 import Codec.Compression.Zlib
 import Control.Exception
 import Control.Monad

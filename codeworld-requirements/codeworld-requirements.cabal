@@ -13,13 +13,13 @@ extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     RequirementsChecker
-  other-modules:       Framework
-                       Requirements
-                       Requirements.Eval
-                       Requirements.Language
-                       Requirements.Matcher
-                       Requirements.Types
+  exposed-modules:     CodeWorld.Requirements.RequirementsChecker
+  other-modules:       CodeWorld.Requirements.Framework
+                       CodeWorld.Requirements.Requirements
+                       CodeWorld.Requirements.Checker.Eval
+                       CodeWorld.Requirements.Checker.Language
+                       CodeWorld.Requirements.Checker.Matcher
+                       CodeWorld.Requirements.Checker.Types
   -- other-extensions:
   build-depends:       base,
                        aeson,

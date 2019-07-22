@@ -16,9 +16,11 @@
 
 module CodeWorld.Requirements.RequirementsChecker (plugin) where
 
+    import CodeWorld.Requirements.Framework
     import CodeWorld.Requirements.Requirements
     import Control.Monad.IO.Class
     import qualified Data.ByteString as B
+    import Data.Text.Encoding
 
     import Bag
     import ErrUtils
@@ -31,23 +33,24 @@ module CodeWorld.Requirements.RequirementsChecker (plugin) where
 
     plugin :: Plugin
     plugin = defaultPlugin {
-        parsedResultAction = \_args -> parsedStep,
-        typeCheckResultAction = \_args -> typeCheckedStep
+        typeCheckResultAction = \_args -> requirementsChecker
     }
 
-    parsedStep :: ModSummary -> HsParsedModule -> Hsc HsParsedModule
-    parsedStep summary mod = do
+    requirementsChecker :: ModSummary -> TcGblEnv -> TcM TcGblEnv
+    requirementsChecker summary env = do
         src <- liftIO (B.readFile $ ms_hspp_file summary)
 
         let flags = ms_hspp_opts summary
-            (L _ code) = hpm_module mod
-            req = checkRequirements flags code src
+            parsed = ghcParseCode flags [] $ decodeUtf8 src
+        
+        case parsed of
+            GHCParsed code -> do
+                let req = checkRequirements flags env code src
 
-        case req of
-            Nothing -> return ()
-            Just r -> liftIO (putMsg flags $ text r)
+                case req of
+                    Nothing -> return ()
+                    Just r -> liftIO (putMsg flags $ text r)
 
-        pure mod
+            GHCNoParse -> return ()
 
-    typeCheckedStep :: ModSummary -> TcGblEnv -> TcM TcGblEnv
-    typeCheckedStep summary env = pure env
+        pure env

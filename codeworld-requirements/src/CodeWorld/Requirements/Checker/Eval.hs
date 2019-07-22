@@ -46,10 +46,11 @@ import DynFlags
 import HsSyn
 import Outputable
 import SrcLoc
+import TcRnTypes
 
-evalRequirement :: DynFlags -> HsModule GhcPs -> C.ByteString -> Requirement -> (Maybe Bool, [String])
-evalRequirement f m s Requirement{..} = let
-        results = map (checkRule f m s) requiredRules
+evalRequirement :: DynFlags -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Requirement -> (Maybe Bool, [String])
+evalRequirement e f m s Requirement{..} = let
+        results = map (checkRule e f m s) requiredRules
         evals = if any isNothing results then Nothing else Just $ concat (catMaybes results)
     in case evals of
         Nothing -> (Nothing, ["Could not check this requirement."])
@@ -71,11 +72,12 @@ withParsedCode :: HsModule GhcPs
                   -> m Result
 withParsedCode = flip id
 
-checkRule :: DynFlags -> HsModule GhcPs -> C.ByteString -> Rule -> Result
-checkRule f m s r = case getStage r of
+checkRule :: DynFlags -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Rule -> Result
+checkRule f e m s r = case getStage r of
     Source -> checkRuleSource s r 
     Parse -> checkRuleParse f m r
-    Multiple -> checkRuleMultiple f m s r
+    Typecheck -> checkRuleTypecheck e r
+    Multiple -> checkRuleMultiple f e m s r
     _ -> abort -- until other stages are implemented
 
 checkRuleParse :: DynFlags -> HsModule GhcPs -> Rule -> Result
@@ -259,22 +261,28 @@ checkRuleSource s (MaxLineLength len)
 
 checkRuleSource _ _ = abort
 
-checkRuleMultiple :: DynFlags -> HsModule GhcPs -> C.ByteString -> Rule -> Result --fix
+checkRuleMultiple :: DynFlags -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Rule -> Result --fix
 
-checkRuleMultiple f m s (IfThen a b) = case checkRule f m s a of 
-    Just [] -> checkRule f m s b
+checkRuleMultiple f e m s (IfThen a b) = case checkRule f e m s a of 
+    Just [] -> checkRule f e m s b
     Just _ -> success
     Nothing -> abort
 
-checkRuleMultiple f m s (AllOf rules) = do
-    let results = map (checkRule f m s) rules
+checkRuleMultiple f e m s (AllOf rules) = do
+    let results = map (checkRule f e m s) rules
     if any isNothing results then Nothing else Just $ concat (catMaybes results)
 
-checkRuleMultiple f m s (AnyOf rules) = do
-    let results = map (checkRule f m s) rules
+checkRuleMultiple f e m s (AnyOf rules) = do
+    let results = map (checkRule f e m s) rules
     if any isNothing results then Nothing else do
         let errs = catMaybes results 
         return (if any null errs then [] else ["No alternatives succeeded."])
+
+checkRuleMultiple _ _ _ _ _ = abort
+
+checkRuleTypecheck :: TcGblEnv -> Rule -> Result
+
+checkRuleTypecheck _ _ = abort
 
 allDefinitionsOf :: String -> HsModule GhcPs -> [GRHSs GhcPs (LHsExpr GhcPs)]
 allDefinitionsOf a m = everything (++) (mkQ [] defs) m

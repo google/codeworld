@@ -72,7 +72,7 @@ module CodeWorld.Requirements.Checker.Types where
     getStage (AnyOf _) = Multiple
     getStage (NotThis r) = getStage r
     getStage (MaxLineLength _) = Source
-    getStage (NoWarningsExcept _) = Parse -- Typecheck
+    getStage (NoWarningsExcept _) = Typecheck
     getStage (TypeSignatures _) = Parse
     getStage (Blacklist _) = Parse -- Typecheck
     getStage (Whitelist _) = Parse -- Typecheck

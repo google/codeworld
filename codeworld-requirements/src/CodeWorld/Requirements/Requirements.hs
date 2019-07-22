@@ -45,15 +45,16 @@ import Text.Regex.TDFA
 import Text.Regex.TDFA.Text
 
 import DynFlags
+import ErrUtils
 import HsSyn
 import TcRnTypes
 
-checkRequirements :: DynFlags -> TcGblEnv -> HsModule GhcPs -> ByteString -> Maybe String
-checkRequirements e f m s = do
+checkRequirements :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> ByteString -> Maybe String
+checkRequirements e c f m s = do
     let (sources, sdiags) = extractRequirementsSource s
         (reqs, rdiags) = extractRequirements sources
     if (not (null reqs)) then
-        let results = map (handleRequirement e f m s) reqs
+        let results = map (handleRequirement e c f m s) reqs
             obfuscated = T.unpack (obfuscate (map snd sources))
         in Just $  "\n                      :: REQUIREMENTS ::\n" ++
                    "Obfuscated:\n\n    XREQUIRES" ++ obfuscated ++ "\n\n" ++
@@ -94,10 +95,10 @@ extractRequirements sources = (reqs, diags)
         reqs =  [ req | Right req <- results ]
         format loc err = ("error: The requirement could not be understood:\n" ++ err ++ "\n")
 
-handleRequirement :: DynFlags -> TcGblEnv -> HsModule GhcPs -> ByteString -> Requirement -> String
-handleRequirement e f m s req = let
+handleRequirement :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> ByteString -> Requirement -> String
+handleRequirement e c f m s req = let
     desc = requiredDescription req
-    (success, msgs) = evalRequirement e f m s req
+    (success, msgs) = evalRequirement e c f m s req
     label | success == Nothing   = "[?] " ++ desc ++ "\n"
           | success == Just True = "[Y] " ++ desc ++ "\n"
           | otherwise            = "[N] " ++ desc ++ "\n"

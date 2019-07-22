@@ -28,6 +28,7 @@ module CodeWorld.Requirements.RequirementsChecker (plugin) where
     import Outputable
     import Plugins
     import SrcLoc
+    import TcRnMonad
     import TcRnTypes
 
 
@@ -45,7 +46,9 @@ module CodeWorld.Requirements.RequirementsChecker (plugin) where
         
         case parsed of
             GHCParsed code -> do
-                let req = checkRequirements flags env code src
+                lcl <- getLclEnv
+                errs <- readTcRef $ tcl_errs lcl
+                let req = checkRequirements flags errs env code src
 
                 case req of
                     Nothing -> return ()

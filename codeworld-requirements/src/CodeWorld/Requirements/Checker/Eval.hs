@@ -42,15 +42,17 @@ import Data.Void
 import qualified Language.Haskell.Exts as Exts
 import Text.Regex.TDFA hiding (match)
 
+import Bag
 import DynFlags
+import ErrUtils
 import HsSyn
 import Outputable
 import SrcLoc
 import TcRnTypes
 
-evalRequirement :: DynFlags -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Requirement -> (Maybe Bool, [String])
-evalRequirement e f m s Requirement{..} = let
-        results = map (checkRule e f m s) requiredRules
+evalRequirement :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Requirement -> (Maybe Bool, [String])
+evalRequirement e c f m s Requirement{..} = let
+        results = map (checkRule e c f m s) requiredRules
         evals = if any isNothing results then Nothing else Just $ concat (catMaybes results)
     in case evals of
         Nothing -> (Nothing, ["Could not check this requirement."])
@@ -67,18 +69,12 @@ failure err = Just [err]
 abort :: Result
 abort = Nothing
 
-withParsedCode :: HsModule GhcPs
-                  -> (HsModule GhcPs -> m Result)
-                  -> m Result
-withParsedCode = flip id
-
-checkRule :: DynFlags -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Rule -> Result
-checkRule f e m s r = case getStage r of
+checkRule :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Rule -> Result
+checkRule f c e m s r = case getStage r of
     Source -> checkRuleSource s r 
     Parse -> checkRuleParse f m r
-    Typecheck -> checkRuleTypecheck e r
-    Multiple -> checkRuleMultiple f e m s r
-    _ -> abort -- until other stages are implemented
+    Typecheck -> checkRuleTypecheck c e r
+    Multiple -> checkRuleMultiple f c e m s r
 
 checkRuleParse :: DynFlags -> HsModule GhcPs -> Rule -> Result
 
@@ -199,14 +195,6 @@ checkRuleParse f m (NotThis rule) = case checkRuleParse f m rule of
     Just _ -> success
     Nothing -> abort
 
-{-checkRule src (NoWarningsExcept ex) = do
-    diags <- getDiagnostics
-    let warns = filter (\(Exts.SrcSpanInfo _ _,_,x) -> not (any (x =~) ex)) diags
-    if | null warns -> success
-       | otherwise -> do
-             let (Exts.SrcSpanInfo (Exts.SrcSpan _ l c _ _) _,_,x) = head warns
-             failure $ "Warning found at line " ++ show l ++ ", column " ++ show c-}
-
 checkRuleParse _ m (TypeSignatures b)
         | null noTypeSig || not b = success
         | otherwise = failure $ "The declaration of `" ++ head noTypeSig
@@ -261,28 +249,34 @@ checkRuleSource s (MaxLineLength len)
 
 checkRuleSource _ _ = abort
 
-checkRuleMultiple :: DynFlags -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Rule -> Result --fix
+checkRuleMultiple :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Rule -> Result --fix
 
-checkRuleMultiple f e m s (IfThen a b) = case checkRule f e m s a of 
-    Just [] -> checkRule f e m s b
+checkRuleMultiple f c e m s (IfThen a b) = case checkRule f c e m s a of 
+    Just [] -> checkRule f c e m s b
     Just _ -> success
     Nothing -> abort
 
-checkRuleMultiple f e m s (AllOf rules) = do
-    let results = map (checkRule f e m s) rules
-    if any isNothing results then Nothing else Just $ concat (catMaybes results)
+checkRuleMultiple f c e m s (AllOf rules) = do
+    let results = map (checkRule f c e m s) rules
+    if any isNothing results then abort else Just $ concat (catMaybes results)
 
-checkRuleMultiple f e m s (AnyOf rules) = do
-    let results = map (checkRule f e m s) rules
-    if any isNothing results then Nothing else do
+checkRuleMultiple f c e m s (AnyOf rules) = do
+    let results = map (checkRule f c e m s) rules
+    if any isNothing results then abort else do
         let errs = catMaybes results 
         return (if any null errs then [] else ["No alternatives succeeded."])
 
-checkRuleMultiple _ _ _ _ _ = abort
+checkRuleMultiple _ _ _ _ _ _ = abort
 
-checkRuleTypecheck :: TcGblEnv -> Rule -> Result
+checkRuleTypecheck :: Messages -> TcGblEnv -> Rule -> Result
 
-checkRuleTypecheck _ _ = abort
+checkRuleTypecheck c e (NoWarningsExcept ex)
+        | null warns = success
+        | otherwise = failure $ "At least one forbidden warning found."
+    where msgs = showSDocUnsafe <$> (pprErrMsgBagWithLoc $ fst c)
+          warns = filter (\x -> not (any (x =~) ex)) msgs
+
+checkRuleTypecheck _ _ _ = abort
 
 allDefinitionsOf :: String -> HsModule GhcPs -> [GRHSs GhcPs (LHsExpr GhcPs)]
 allDefinitionsOf a m = everything (++) (mkQ [] defs) m

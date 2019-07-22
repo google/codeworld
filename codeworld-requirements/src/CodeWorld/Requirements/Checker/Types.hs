@@ -66,11 +66,11 @@ module CodeWorld.Requirements.Checker.Types where
     getStage (NotUsed _) = Parse
     getStage (ContainsMatch{}) = Parse
     getStage (MatchesRegex{}) = Source
-    getStage (OnFailure _ r) = getStage r
+    getStage (OnFailure _ _) = Multiple
     getStage (IfThen _ _) = Multiple
     getStage (AllOf _) = Multiple
     getStage (AnyOf _) = Multiple
-    getStage (NotThis r) = getStage r
+    getStage (NotThis _) = Multiple
     getStage (MaxLineLength _) = Source
     getStage (NoWarningsExcept _) = Typecheck
     getStage (TypeSignatures _) = Parse

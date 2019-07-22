@@ -185,16 +185,6 @@ checkRuleParse f m (ContainsMatch tmpl topLevel card)
             GHCParsed (HsModule {hsmodImports=[tmpl]}) ->
                 length $ filter (match tmpl) $ concat $ gmapQ (mkQ [] id) m       
 
-
-checkRuleParse f m (OnFailure msg rule) = case checkRuleParse f m rule of
-    Just (_:_) -> failure msg
-    other -> other
-
-checkRuleParse f m (NotThis rule) = case checkRuleParse f m rule of
-    Just [] -> failure "A rule matched, but shouldn't have."
-    Just _ -> success
-    Nothing -> abort
-
 checkRuleParse _ m (TypeSignatures b)
         | null noTypeSig || not b = success
         | otherwise = failure $ "The declaration of `" ++ head noTypeSig
@@ -233,15 +223,6 @@ checkRuleSource s (MatchesRegex pat card)
     where
         n = rangeSize (bounds (s =~ pat :: MatchArray))
 
-checkRuleSource s (OnFailure msg rule) = case checkRuleSource s rule of
-    Just (_:_) -> failure msg
-    other -> other
-
-checkRuleSource s (NotThis rule) = case checkRuleSource s rule of
-    Just [] -> failure "A rule matched, but shouldn't have."
-    Just _ -> success
-    Nothing -> abort
-
 checkRuleSource s (MaxLineLength len)
     | any (> len) (C.length <$> C.lines s) = 
         failure $ "One or more lines longer than " ++ show len ++ " characters."
@@ -249,7 +230,16 @@ checkRuleSource s (MaxLineLength len)
 
 checkRuleSource _ _ = abort
 
-checkRuleMultiple :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Rule -> Result --fix
+checkRuleMultiple :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Rule -> Result 
+
+checkRuleMultiple f c e m s (OnFailure msg rule) = case checkRule f c e m s rule of
+    Just (_:_) -> failure msg
+    other -> other
+
+checkRuleMultiple f c e m s (NotThis rule) = case checkRule f c e m s rule of
+    Just [] -> failure "A rule matched, but shouldn't have."
+    Just _ -> success
+    Nothing -> abort
 
 checkRuleMultiple f c e m s (IfThen a b) = case checkRule f c e m s a of 
     Just [] -> checkRule f c e m s b

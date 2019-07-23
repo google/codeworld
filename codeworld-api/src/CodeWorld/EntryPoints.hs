@@ -41,9 +41,27 @@ import System.Random
 --------------------------------------------------------------------------------
 -- Common code for activity, interaction, animation and simulation interfaces
 
--- | Runs an interactive CodeWorld program that responds to events.  Activities
--- can interact with the user, change over time, and remember information about
--- the past.
+-- | Runs an interactive CodeWorld program that responds to 'Event's.
+-- Activities can interact with the user, change over time, and remember
+-- information about the past.
+--
+-- Example: a program which draws a circle and changes its radius when user
+-- presses Up or Down keys on her keyboard
+--
+-- @
+--  &#x7b;-\# LANGUAGE OverloadedStrings \#-&#x7d;
+-- import CodeWorld
+--
+-- main = activityOf initialRadius updateRadius circle
+--    where
+--      initialRadius = 1
+--
+--      updateRadius event radius =
+--        case event of
+--          KeyPress "Up"   -> radius + 1
+--          KeyPress "Down" -> radius - 1
+--          _               -> radius
+-- @
 activityOf
   :: world                       -- ^ The initial state of the activity.
   -> (Event -> world -> world)   -- ^ The event handling function, which updates
@@ -153,7 +171,7 @@ data Wrapped a = Wrapped
     } deriving (Show, Functor)
 
 wrappedInitial :: a -> Wrapped a
-wrappedInitial w = Wrapped { 
+wrappedInitial w = Wrapped {
       state = w,
       playbackSpeed = 1,
       lastInteractionTime = 1000,
@@ -265,21 +283,21 @@ handleControl _ (PointerPress (x,y)) (RedoButton (cx, cy)) w
 handleControl f (PointerPress (x, y)) (StepButton (cx, cy)) w
     | abs (x - cx) < 0.4 && abs (y - cy) < 0.4 = (w {state = f 0.1 (state w)}, True)
 handleControl _ (PointerPress (x, y)) (SpeedSlider (cx, cy)) w
-    | abs (x - cx) < 1.5 && abs (y - cy) < 0.4 = 
+    | abs (x - cx) < 1.5 && abs (y - cy) < 0.4 =
       (w {playbackSpeed = xToPlaybackSpeed (x - cx), isDraggingSpeed = True}, True)
 handleControl _ (PointerMovement (x, _)) (SpeedSlider (cx, _)) w
     | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed (x - cx)}, True)
 handleControl _ (PointerRelease (x, _)) (SpeedSlider (cx, _)) w
     | isDraggingSpeed w = (w {playbackSpeed = xToPlaybackSpeed (x - cx), isDraggingSpeed = False}, True)
 handleControl _ (PointerPress (x, y)) (ZoomSlider (cx, cy)) w
-    | abs (x - cx) < 0.4 && abs (y - cy) < 1.5 = 
+    | abs (x - cx) < 0.4 && abs (y - cy) < 1.5 =
       (w {zoomFactor = yToZoomFactor (y - cy), isDraggingZoom = True}, True)
 handleControl _ (PointerMovement (_, y)) (ZoomSlider (_, cy)) w
     | isDraggingZoom w = (w {zoomFactor = yToZoomFactor (y - cy)}, True)
 handleControl _ (PointerRelease (_, y)) (ZoomSlider (_, cy)) w
     | isDraggingZoom w = (w {zoomFactor = yToZoomFactor (y - cy), isDraggingZoom = False}, True)
 handleControl _ (PointerPress (x, y)) (HistorySlider (cx, cy)) w
-    | abs (x - cx) < 2.5 && abs (y - cy) < 0.4 = 
+    | abs (x - cx) < 2.5 && abs (y - cy) < 0.4 =
       (travelToTime (1/2 + (x - cx) / 4.8) <$> w { isDraggingHistory = True }, True)
 handleControl _ (PointerMovement (x, _)) (HistorySlider (cx, _)) w
     | isDraggingHistory w = (travelToTime (1/2 + (x - cx) / 4.8) <$> w, True)
@@ -488,7 +506,13 @@ drawingControls w
       | zoomFactor w /= 1 || panCenter w /= SP 0 0 = [ResetViewButton (9, -3)]
       | otherwise = []
 
--- | Draws a 'Picture'.  This is the simplest CodeWorld entry point.
+-- | Draws a 'Picture'. This is the simplest CodeWorld entry point.
+--
+-- Example: a program which draws a circle of radius 1 in the middle of canvas
+--
+-- @
+-- main = drawingOf $ circle 1
+-- @
 drawingOf :: Picture  -- ^ The picture to show on the screen.
           -> IO ()
 drawingOf pic =
@@ -528,6 +552,18 @@ animationControls w
       | otherwise = []
 
 -- | Shows an animation, with a picture for each time given by the parameter.
+--
+-- Example: a program showing a square which rotates once every two seconds
+--
+-- @
+-- main = animationOf rotatingSquare
+--
+-- rotatingSquare :: Double -> Picture
+-- rotatingSquare seconds = rotated angle square
+--   where
+--     square = rectangle 2 2
+--     angle = pi * seconds
+-- @
 animationOf :: (Double -> Picture)  -- ^ A function that produces animation
                                     --   frames, given the time in seconds.
             -> IO ()
@@ -563,7 +599,7 @@ statefulDebugControls w
     | lastInteractionTime w > 5 = []
     | otherwise = panningLayer ++ pauseDependentControls ++ commonControls ++
                   resetViewButton
-  where   
+  where
     hasHistory = not (null (past (state w)))
     hasFuture  = not (null (future (state w)))
     advance | hasFuture  = [RedoButton (6, -9)]
@@ -579,13 +615,13 @@ statefulDebugControls w
         ZoomSlider (9, -6)
       ]
     pauseDependentControls
-      | playbackSpeed w == 0 = 
+      | playbackSpeed w == 0 =
             [PlayButton (-8, -9), HistorySlider (3, -9)] ++ advance ++ regress
       | otherwise = [PauseButton (-8, -9)]
     resetViewButton
       | zoomFactor w /= 1 || panCenter w /= SP 0 0 = [ResetViewButton (9, -3)]
       | otherwise = []
-    panningLayer 
+    panningLayer
       | playbackSpeed w == 0 = [PanningLayer]
       | otherwise = []
 
@@ -653,9 +689,9 @@ debugInteractionOf baseInitial baseStep baseEvent baseDraw =
 {-# WARNING debugInteractionOf ["Please use debugActivityOf instead of debugInteractionOf.",
                                 "debugInteractionOf may be removed July 2020."] #-}
 
--- | Runs an interactive CodeWorld program in debugging mode.  In this mode,
--- the program gets controls to pause and manipulate time, and even go back in
--- time to look at past states.
+-- | A version of 'activityOf' which runs an interactive CodeWorld program
+-- in debugging mode.  In this mode, the program gets controls to pause and
+-- manipulate time, and even go back in time to look at past states.
 debugActivityOf
   :: world                       -- ^ The initial state of the interaction.
   -> (Event -> world -> world)   -- ^ The event handling function, which updates
@@ -668,11 +704,24 @@ debugActivityOf initial change picture =
 
 -- | Runs an interactive multi-user CodeWorld program that is joined by several
 -- participants over the internet.
+--
+-- Example: a skeleton of a game for two players
+--
+-- @
+-- &#x7b;-\# LANGUAGE StaticPointers, OverloadedStrings \#-&#x7d;
+-- import CodeWorld
+--
+-- main = groupActivityOf 2 init step view
+--   where
+--     init = static (\\gen -> {- initialize state of the game world, possibly using random number generator -})
+--     step = static (\\playerNumber event world -> {- modify world based on event occuring for given player -})
+--     view = static (\\playerNumber world -> {- generate a picture that will be shown to given player in the given state of the world-})
+-- @
 groupActivityOf
   :: Int  -- ^ The number of participants to expect.  The participants will be
-          -- ^ numbered starting at 0.
+          -- numbered starting at 0.
   -> StaticPtr (StdGen -> world)
-          -- ^ The initial state of the activity.
+          -- ^ The function to create initial state of the activity. 'System.Random.StdGen' parameter can be used to generate random numbers.
   -> StaticPtr (Int -> Event -> world -> world)
           -- ^ The event handling function, which updates the state given a
           --   participant number and user interface event.
@@ -702,7 +751,7 @@ groupActivityOf numPlayers initial event draw = do
 -- check for consistency.
 unsafeGroupActivityOf
   :: Int  -- ^ The number of participants to expect.  The participants will be
-          -- ^ numbered starting at 0.
+          -- numbered starting at 0.
   -> (StdGen -> world)
           -- ^ The initial state of the activity.
   -> (Int -> Event -> world -> world)
@@ -719,7 +768,7 @@ unsafeGroupActivityOf numPlayers initial event draw =
 -- check for consistent parameters.
 unsafeCollaborationOf
   :: Int  -- ^ The number of participants to expect.  The participants will be
-          -- ^ numbered starting at 0.
+          -- numbered starting at 0.
   -> (StdGen -> world)
           -- ^ The initial state of the collaboration.
   -> (Double -> world -> world)
@@ -744,7 +793,7 @@ unsafeCollaborationOf numPlayers initial step event draw = do
 -- participants over the internet.
 collaborationOf
   :: Int  -- ^ The number of participants to expect.  The participants will be
-          -- ^ numbered starting at 0.
+          -- numbered starting at 0.
   -> StaticPtr (StdGen -> world)
           -- ^ The initial state of the collaboration.
   -> StaticPtr (Double -> world -> world)

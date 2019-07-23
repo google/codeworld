@@ -34,6 +34,7 @@ module CodeWorld.Requirements.RequirementsChecker (plugin) where
 
     plugin :: Plugin
     plugin = defaultPlugin {
+        renamedResultAction = keepRenamedSource,
         typeCheckResultAction = \_args -> requirementsChecker
     }
 

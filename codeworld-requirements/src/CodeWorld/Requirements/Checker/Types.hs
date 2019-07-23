@@ -74,8 +74,8 @@ module CodeWorld.Requirements.Checker.Types where
     getStage (MaxLineLength _) = Source
     getStage (NoWarningsExcept _) = Typecheck
     getStage (TypeSignatures _) = Parse
-    getStage (Blacklist _) = Parse -- Typecheck
-    getStage (Whitelist _) = Parse -- Typecheck
+    getStage (Blacklist _) = Typecheck
+    getStage (Whitelist _) = Typecheck
     
     anyNumber, exactlyOne, atLeastOne :: Cardinality
     anyNumber = Cardinality Nothing Nothing

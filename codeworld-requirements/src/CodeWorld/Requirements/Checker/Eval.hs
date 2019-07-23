@@ -45,10 +45,15 @@ import Text.Regex.TDFA hiding (match)
 import Bag
 import DynFlags
 import ErrUtils
+import FastString
 import HsSyn
+import Name
 import Outputable
 import SrcLoc
 import TcRnTypes
+import Var
+
+import Debug.Trace
 
 evalRequirement :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Requirement -> (Maybe Bool, [String])
 evalRequirement e c f m s Requirement{..} = let
@@ -193,26 +198,6 @@ checkRuleParse _ m (TypeSignatures b)
         defs = nub $ topLevelNames m
         noTypeSig = defs \\ typeSignatures m
 
-checkRuleParse _ m (Blacklist bl) -- Should happen after typechecking
-       | null blacklisted = success
-       | otherwise = failure $ "The symbol `" ++ head blacklisted
-           ++ "` is blacklisted."
-    where
-        symbols = nub $ everything (++) (mkQ [] idNameList) m
-        blacklisted = intersect bl symbols
-
-        idNameList x = [idName x] 
-
-checkRuleParse _ m (Whitelist wl) -- Should happen after typechecking
-        | null notWhitelisted = success
-        | otherwise = failure $ "The symbol `" ++ head notWhitelisted
-            ++ "` is not whitelisted."
-    where
-        symbols = nub $ everything (++) (mkQ [] idNameList) m
-        notWhitelisted = symbols \\ wl
-
-        idNameList x = [idName x] 
-
 checkRuleParse _ _ _ = abort
 
 checkRuleSource :: C.ByteString -> Rule -> Result
@@ -266,6 +251,26 @@ checkRuleTypecheck c e (NoWarningsExcept ex)
     where msgs = showSDocUnsafe <$> (pprErrMsgBagWithLoc $ fst c)
           warns = filter (\x -> not (any (x =~) ex)) msgs
 
+checkRuleTypecheck _ e (Blacklist bl)
+        | null forbidden = success
+        | otherwise = failure $ "The symbol `" ++ head forbidden
+            ++ "` is blacklisted."
+    where
+        names = nub $ everything (++) (mkQ [] nameStrings) (tcg_rn_decls e)
+        forbidden = intersect bl names
+
+        nameStrings x = [nameString x]
+
+checkRuleTypecheck _ e (Whitelist wl)
+        | null forbidden = success
+        | otherwise = failure $ "The symbol `" ++ head forbidden
+             ++ "` is not whitelisted."
+    where
+        symbols = nub $ everything (++) (mkQ [] nameStrings) (tcg_rn_decls e)
+        forbidden = symbols \\ wl
+
+        nameStrings x = [nameString x]
+
 checkRuleTypecheck _ _ _ = abort
 
 allDefinitionsOf :: String -> HsModule GhcPs -> [GRHSs GhcPs (LHsExpr GhcPs)]
@@ -311,4 +316,8 @@ patDefines :: LPat GhcPs -> String -> Bool
 patDefines (L _ (VarPat _ (L _ patid))) a = idName patid == a
 patDefines (L _ (ParPat _ pat)) a = patDefines pat a
 patDefines _ a = False
+
+nameString :: IdP GhcRn -> String
+nameString = showSDocUnsafe . pprOccName . nameOccName
+
 

@@ -254,7 +254,7 @@ pictureToDrawing (ThickRectangle _ lw w h) = Shape $ pathDrawer (rectangleVertic
 pictureToDrawing (ClosedCurve _ pts) = Shape $ pathDrawer pts 0 True True
 pictureToDrawing (ThickClosedCurve _ pts w) = Shape $ pathDrawer pts w True True
 pictureToDrawing (Circle _ r) = Shape $ arcDrawer 0 (2 * pi) r 0
-pictureToDrawing (SolidCircle _ r) = Shape $ sectorDrawer 0 (2 * pi) r 
+pictureToDrawing (SolidCircle _ r) = Shape $ sectorDrawer 0 (2 * pi) r
 pictureToDrawing (ThickCircle _ lw r) = Shape $ arcDrawer 0 (2 * pi) r lw
 pictureToDrawing (Polyline _ pts) = Shape $ pathDrawer pts 0 False False
 pictureToDrawing (ThickPolyline _ pts w) = Shape $ pathDrawer pts w False False
@@ -375,7 +375,7 @@ textDrawer sty fnt txt ds =
 imageDrawer :: MonadCanvas m => Text -> Text -> Double -> Double -> Drawer m
 imageDrawer name url imgw imgh ds =
     DrawMethods
-    { drawShape = 
+    { drawShape =
           case getColorDS ds of
               Nothing -> withDS ds $ do
                   CM.scale 1 (-1)
@@ -1614,6 +1614,7 @@ run initial stepHandler eventHandler drawHandler =
                         CM.withImage offscreenCanvas $
                             CM.saveRestore $ do
                                 setupScreenContext cw ch
+                                clearScreen
                                 drawDrawing initialDS (pictureToDrawing pic)
                         CM.drawImage offscreenCanvas 0 0 cw ch
                 t1 <- case needsTime of
@@ -1977,6 +1978,7 @@ runReactive program = runBlankCanvas $ \context -> do
             CM.withImage offscreenCanvas $
                 CM.saveRestore $ do
                     setupScreenContext cw ch
+                    clearScreen
                     drawDrawing initialDS (pictureToDrawing pic)
             CM.drawImage offscreenCanvas 0 0 cw ch
 

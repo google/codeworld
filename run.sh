@@ -17,6 +17,7 @@
 source base.sh
 
 run . rm -rf data/*/build
+rm -rf $(for fn in $(find data/base -atime +20 -regex .*\\.js$ ); do dirname $fn; done)
 
 fuser -k -n tcp 8080
 fuser -k -n tcp 9160

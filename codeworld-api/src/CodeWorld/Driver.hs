@@ -1614,8 +1614,7 @@ run initial stepHandler eventHandler drawHandler =
                         CM.withImage offscreenCanvas $
                             CM.saveRestore $ do
                                 setupScreenContext cw ch
-                                clearScreen
-                                drawDrawing initialDS (pictureToDrawing pic)
+                                drawFrame (pictureToDrawing pic)
                         CM.drawImage offscreenCanvas 0 0 cw ch
                 t1 <- case needsTime of
                     True -> do
@@ -1978,8 +1977,7 @@ runReactive program = runBlankCanvas $ \context -> do
             CM.withImage offscreenCanvas $
                 CM.saveRestore $ do
                     setupScreenContext cw ch
-                    clearScreen
-                    drawDrawing initialDS (pictureToDrawing pic)
+                    drawFrame (pictureToDrawing pic)
             CM.drawImage offscreenCanvas 0 0 cw ch
 
     (postBuild, postBuildTriggerRef) <- R.runSpiderHost R.newEventWithTriggerRef

@@ -53,8 +53,6 @@ import SrcLoc
 import TcRnTypes
 import Var
 
-import Debug.Trace
-
 evalRequirement :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Requirement -> (Maybe Bool, [String])
 evalRequirement e c f m s Requirement{..} = let
         results = map (checkRule e c f m s) requiredRules
@@ -80,6 +78,21 @@ checkRule f c e m s r = case getStage r of
     Parse -> checkRuleParse f m r
     Typecheck -> checkRuleTypecheck c e r
     Multiple -> checkRuleMultiple f c e m s r
+
+checkRuleSource :: C.ByteString -> Rule -> Result
+
+checkRuleSource s (MatchesRegex pat card)
+        | hasCardinality card n = success
+        | otherwise = failure $ "Wrong number of matches."
+    where
+        n = rangeSize (bounds (s =~ pat :: MatchArray))
+
+checkRuleSource s (MaxLineLength len)
+    | any (> len) (C.length <$> C.lines s) = 
+        failure $ "One or more lines longer than " ++ show len ++ " characters."
+    | otherwise = success
+
+checkRuleSource _ _ = abort
 
 checkRuleParse :: DynFlags -> HsModule GhcPs -> Rule -> Result
 
@@ -200,49 +213,6 @@ checkRuleParse _ m (TypeSignatures b)
 
 checkRuleParse _ _ _ = abort
 
-checkRuleSource :: C.ByteString -> Rule -> Result
-
-checkRuleSource s (MatchesRegex pat card)
-        | hasCardinality card n = success
-        | otherwise = failure $ "Wrong number of matches."
-    where
-        n = rangeSize (bounds (s =~ pat :: MatchArray))
-
-checkRuleSource s (MaxLineLength len)
-    | any (> len) (C.length <$> C.lines s) = 
-        failure $ "One or more lines longer than " ++ show len ++ " characters."
-    | otherwise = success
-
-checkRuleSource _ _ = abort
-
-checkRuleMultiple :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Rule -> Result 
-
-checkRuleMultiple f c e m s (OnFailure msg rule) = case checkRule f c e m s rule of
-    Just (_:_) -> failure msg
-    other -> other
-
-checkRuleMultiple f c e m s (NotThis rule) = case checkRule f c e m s rule of
-    Just [] -> failure "A rule matched, but shouldn't have."
-    Just _ -> success
-    Nothing -> abort
-
-checkRuleMultiple f c e m s (IfThen a b) = case checkRule f c e m s a of 
-    Just [] -> checkRule f c e m s b
-    Just _ -> success
-    Nothing -> abort
-
-checkRuleMultiple f c e m s (AllOf rules) = do
-    let results = map (checkRule f c e m s) rules
-    if any isNothing results then abort else Just $ concat (catMaybes results)
-
-checkRuleMultiple f c e m s (AnyOf rules) = do
-    let results = map (checkRule f c e m s) rules
-    if any isNothing results then abort else do
-        let errs = catMaybes results 
-        return (if any null errs then [] else ["No alternatives succeeded."])
-
-checkRuleMultiple _ _ _ _ _ _ = abort
-
 checkRuleTypecheck :: Messages -> TcGblEnv -> Rule -> Result
 
 checkRuleTypecheck c e (NoWarningsExcept ex)
@@ -272,6 +242,34 @@ checkRuleTypecheck _ e (Whitelist wl)
         nameStrings x = [nameString x]
 
 checkRuleTypecheck _ _ _ = abort
+
+checkRuleMultiple :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Rule -> Result 
+
+checkRuleMultiple f c e m s (OnFailure msg rule) = case checkRule f c e m s rule of
+    Just (_:_) -> failure msg
+    other -> other
+
+checkRuleMultiple f c e m s (NotThis rule) = case checkRule f c e m s rule of
+    Just [] -> failure "A rule matched, but shouldn't have."
+    Just _ -> success
+    Nothing -> abort
+
+checkRuleMultiple f c e m s (IfThen a b) = case checkRule f c e m s a of 
+    Just [] -> checkRule f c e m s b
+    Just _ -> success
+    Nothing -> abort
+
+checkRuleMultiple f c e m s (AllOf rules) = do
+    let results = map (checkRule f c e m s) rules
+    if any isNothing results then abort else Just $ concat (catMaybes results)
+
+checkRuleMultiple f c e m s (AnyOf rules) = do
+    let results = map (checkRule f c e m s) rules
+    if any isNothing results then abort else do
+        let errs = catMaybes results 
+        return (if any null errs then [] else ["No alternatives succeeded."])
+
+checkRuleMultiple _ _ _ _ _ _ = abort
 
 allDefinitionsOf :: String -> HsModule GhcPs -> [GRHSs GhcPs (LHsExpr GhcPs)]
 allDefinitionsOf a m = everything (++) (mkQ [] defs) m
@@ -319,5 +317,3 @@ patDefines _ a = False
 
 nameString :: IdP GhcRn -> String
 nameString = showSDocUnsafe . pprOccName . nameOccName
-
-

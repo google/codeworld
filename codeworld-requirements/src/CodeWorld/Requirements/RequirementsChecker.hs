@@ -18,19 +18,14 @@ module CodeWorld.Requirements.RequirementsChecker (plugin) where
 
     import CodeWorld.Requirements.Framework
     import CodeWorld.Requirements.Requirements
-    import Control.Monad.IO.Class
     import qualified Data.ByteString as B
     import Data.Text.Encoding
 
-    import Bag
     import ErrUtils
     import HscTypes
     import Outputable
     import Plugins
-    import SrcLoc
     import TcRnMonad
-    import TcRnTypes
-
 
     plugin :: Plugin
     plugin = defaultPlugin {

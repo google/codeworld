@@ -54,8 +54,8 @@ import TcRnTypes
 import Var
 
 evalRequirement :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Requirement -> (Maybe Bool, [String])
-evalRequirement e c f m s Requirement{..} = let
-        results = map (checkRule e c f m s) requiredRules
+evalRequirement f c e m s Requirement{..} = let
+        results = map (checkRule f c e m s) requiredRules
         evals = if any isNothing results then Nothing else Just $ concat (catMaybes results)
     in case evals of
         Nothing -> (Nothing, ["Could not check this requirement."])

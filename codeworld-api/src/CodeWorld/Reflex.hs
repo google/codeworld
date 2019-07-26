@@ -146,17 +146,16 @@ import Reflex
 -- = Using Reflex with CodeWorld
 --
 -- This is an alternative to the standard CodeWorld API, which is based on
--- the Reflex library.  You should import this *instead* of 'CodeWorld', since
+-- the Reflex library.  You should import this __instead__ of 'CodeWorld', since
 -- the 'CodeWorld' module exports conflict with Reflex names.
 --
 -- You'll provide a function whose input can be used to access the user's
 -- actions with keys, the mouse pointer, and time, and whose output is a
--- 'Picture'.  The 'Picture' value is build with the same combinators as the
+-- 'Picture'.  The 'Picture' value is built with the same combinators as the
 -- main 'CodeWorld' library.
 --
 -- The Reflex API is documented in many places, but a great reference is
--- available in the <https://github.com/reflex-frp/reflex/blob/develop/Quickref.md
--- Reflex Quick Reference>.
+-- available in the <https://github.com/reflex-frp/reflex/blob/develop/Quickref.md Reflex Quick Reference>.
 
 -- $old
 --
@@ -166,16 +165,16 @@ import Reflex
 -- A simple example:
 --
 -- @
---     import CodeWorld.Reflex
---     import Reflex
+-- import CodeWorld.Reflex
+-- import Reflex
 --
---     main :: IO ()
---     main = reflexOf $ \\input -> do
---         angle <- foldDyn (+) 0 (gate (current (pointerDown input)) (timePassing input))
---         return $ (uncurry translated \<$> pointerPosition input \<*>)
---                $ (colored \<$> bool red green \<$> pointerDown input \<*>)
---                $ (rotated \<$> angle \<*>)
---                $ constDyn (solidRectangle 2 2)
+-- main :: IO ()
+-- main = reflexOf $ \\input -> do
+--     angle <- foldDyn (+) 0 (gate (current (pointerDown input)) (timePassing input))
+--     return $ (uncurry translated \<$> pointerPosition input \<*>)
+--            $ (colored \<$> bool red green \<$> pointerDown input \<*>)
+--            $ (rotated \<$> angle \<*>)
+--            $ constDyn (solidRectangle 2 2)
 -- @
 
 

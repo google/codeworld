@@ -31,6 +31,11 @@ import Util.EmbedAsUrl
 
 type Point = (Double, Double)
 
+-- | Move given point by given X-axis and Y-axis offsets
+-- >>> translatedPoint 1 2 (10,10)
+-- (11.0,12.0)
+-- >>> translatedPoint (-1) (-2) (0,0)
+-- (-1.0,-2.0)
 translatedPoint :: Double -> Double -> Point -> Point
 translatedPoint tx ty (x, y) = (x + tx, y + ty)
 
@@ -48,6 +53,15 @@ type Vector = (Double, Double)
 vectorLength :: Vector -> Double
 vectorLength (x, y) = sqrt (x*x + y*y)
 
+{-| Given vector, calculate angle in radians that it has with the X-axis.
+
+>>> vectorDirection (1,0)
+0.0
+>>> vectorDirection (1,1)
+0.7853981633974483
+>>> vectorDirection (0,1)
+1.5707963267948966
+-}
 vectorDirection :: Vector -> Double
 vectorDirection (x, y) = atan2 y x
 
@@ -60,7 +74,13 @@ vectorDifference (x1, y1) (x2, y2) = (x1 - x2, y1 - y2)
 scaledVector :: Double -> Vector -> Vector
 scaledVector k (x, y) = (k * x, k * y)
 
-{-| Angle is in radians -}
+{-| Rotate given vector by given angle in radians
+
+>>> rotatedVector pi (1.0, 0.0)
+(-1.0,1.2246467991473532e-16)
+>>> rotatedVector (pi / 2) (1.0, 0.0)
+(6.123233995736766e-17,1.0)
+ -}
 rotatedVector :: Double -> Vector -> Vector
 rotatedVector angle (x, y) =
     (x * cos angle - y * sin angle, x * sin angle + y * cos angle)
@@ -199,7 +219,7 @@ thickRectangle lw w h = ThickRectangle (getDebugSrcLoc callStack) lw w h
 
 -- | A thin circle, with this radius
 circle :: HasCallStack => Double -> Picture
-circle = Circle (getDebugSrcLoc callStack) 
+circle = Circle (getDebugSrcLoc callStack)
 
 -- | A thick circle, with this line width and radius
 thickCircle :: HasCallStack => Double -> Double -> Picture
@@ -220,7 +240,7 @@ thickArc w b e r = ThickArc (getDebugSrcLoc callStack) b e r w
 
 -- | A solid circle, with this radius
 solidCircle :: HasCallStack => Double -> Picture
-solidCircle = SolidCircle (getDebugSrcLoc callStack) 
+solidCircle = SolidCircle (getDebugSrcLoc callStack)
 
 -- | A solid sector of a circle (i.e., a pie slice) starting and ending at these
 -- angles, with this radius
@@ -307,9 +327,10 @@ instance Semigroup Picture where
 -- more accurately.
 --
 -- Example:
---
---    main = drawingOf (myPicture <> coordinatePlane)
---    myPicture = ...
+-- @
+-- main = drawingOf (myPicture <> coordinatePlane)
+-- myPicture = ...
+-- @
 coordinatePlane :: HasCallStack => Picture
 coordinatePlane = CoordinatePlane (getDebugSrcLoc callStack)
 

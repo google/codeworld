@@ -23,7 +23,7 @@
   limitations under the License.
 -}
 
-module Framework where
+module CodeWorld.Requirements.Framework where
 
 import Control.Applicative
 import Control.Concurrent

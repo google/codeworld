@@ -20,14 +20,14 @@
   limitations under the License.
 -}
 
-module Requirements.Eval (
+module CodeWorld.Requirements.Checker.Eval (
     Requirement,
     evalRequirement
     ) where
 
-import Framework
-import Requirements.Matcher
-import Requirements.Types
+import CodeWorld.Requirements.Framework
+import CodeWorld.Requirements.Checker.Matcher
+import CodeWorld.Requirements.Checker.Types
 import Control.Monad.IO.Class
 import Data.Array
 import Data.Char
@@ -42,14 +42,20 @@ import Data.Void
 import qualified Language.Haskell.Exts as Exts
 import Text.Regex.TDFA hiding (match)
 
+import Bag
 import DynFlags
+import ErrUtils
+import FastString
 import HsSyn
+import Name
 import Outputable
 import SrcLoc
+import TcRnTypes
+import Var
 
-evalRequirement :: DynFlags -> HsModule GhcPs -> C.ByteString -> Requirement -> (Maybe Bool, [String])
-evalRequirement f m s Requirement{..} = let
-        results = map (checkRule f m s) requiredRules
+evalRequirement :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Requirement -> (Maybe Bool, [String])
+evalRequirement f c e m s Requirement{..} = let
+        results = map (checkRule f c e m s) requiredRules
         evals = if any isNothing results then Nothing else Just $ concat (catMaybes results)
     in case evals of
         Nothing -> (Nothing, ["Could not check this requirement."])
@@ -66,17 +72,27 @@ failure err = Just [err]
 abort :: Result
 abort = Nothing
 
-withParsedCode :: HsModule GhcPs
-                  -> (HsModule GhcPs -> m Result)
-                  -> m Result
-withParsedCode = flip id
-
-checkRule :: DynFlags -> HsModule GhcPs -> C.ByteString -> Rule -> Result
-checkRule f m s r = case getStage r of
+checkRule :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Rule -> Result
+checkRule f c e m s r = case getStage r of
     Source -> checkRuleSource s r 
     Parse -> checkRuleParse f m r
-    Multiple -> checkRuleMultiple f m s r
-    _ -> abort -- until other stages are implemented
+    Typecheck -> checkRuleTypecheck c e r
+    Multiple -> checkRuleMultiple f c e m s r
+
+checkRuleSource :: C.ByteString -> Rule -> Result
+
+checkRuleSource s (MatchesRegex pat card)
+        | hasCardinality card n = success
+        | otherwise = failure $ "Wrong number of matches."
+    where
+        n = rangeSize (bounds (s =~ pat :: MatchArray))
+
+checkRuleSource s (MaxLineLength len)
+    | any (> len) (C.length <$> C.lines s) = 
+        failure $ "One or more lines longer than " ++ show len ++ " characters."
+    | otherwise = success
+
+checkRuleSource _ _ = abort
 
 checkRuleParse :: DynFlags -> HsModule GhcPs -> Rule -> Result
 
@@ -187,24 +203,6 @@ checkRuleParse f m (ContainsMatch tmpl topLevel card)
             GHCParsed (HsModule {hsmodImports=[tmpl]}) ->
                 length $ filter (match tmpl) $ concat $ gmapQ (mkQ [] id) m       
 
-
-checkRuleParse f m (OnFailure msg rule) = case checkRuleParse f m rule of
-    Just (_:_) -> failure msg
-    other -> other
-
-checkRuleParse f m (NotThis rule) = case checkRuleParse f m rule of
-    Just [] -> failure "A rule matched, but shouldn't have."
-    Just _ -> success
-    Nothing -> abort
-
-{-checkRule src (NoWarningsExcept ex) = do
-    diags <- getDiagnostics
-    let warns = filter (\(Exts.SrcSpanInfo _ _,_,x) -> not (any (x =~) ex)) diags
-    if | null warns -> success
-       | otherwise -> do
-             let (Exts.SrcSpanInfo (Exts.SrcSpan _ l c _ _) _,_,x) = head warns
-             failure $ "Warning found at line " ++ show l ++ ", column " ++ show c-}
-
 checkRuleParse _ m (TypeSignatures b)
         | null noTypeSig || not b = success
         | otherwise = failure $ "The declaration of `" ++ head noTypeSig
@@ -213,68 +211,65 @@ checkRuleParse _ m (TypeSignatures b)
         defs = nub $ topLevelNames m
         noTypeSig = defs \\ typeSignatures m
 
-checkRuleParse _ m (Blacklist bl) -- Should happen after typechecking
-       | null blacklisted = success
-       | otherwise = failure $ "The symbol `" ++ head blacklisted
-           ++ "` is blacklisted."
-    where
-        symbols = nub $ everything (++) (mkQ [] idNameList) m
-        blacklisted = intersect bl symbols
-
-        idNameList x = [idName x] 
-
-checkRuleParse _ m (Whitelist wl) -- Should happen after typechecking
-        | null notWhitelisted = success
-        | otherwise = failure $ "The symbol `" ++ head notWhitelisted
-            ++ "` is not whitelisted."
-    where
-        symbols = nub $ everything (++) (mkQ [] idNameList) m
-        notWhitelisted = symbols \\ wl
-
-        idNameList x = [idName x] 
-
 checkRuleParse _ _ _ = abort
 
-checkRuleSource :: C.ByteString -> Rule -> Result
+checkRuleTypecheck :: Messages -> TcGblEnv -> Rule -> Result
 
-checkRuleSource s (MatchesRegex pat card)
-        | hasCardinality card n = success
-        | otherwise = failure $ "Wrong number of matches."
+checkRuleTypecheck c e (NoWarningsExcept ex)
+        | null warns = success
+        | otherwise = failure $ "At least one forbidden warning found."
+    where msgs = showSDocUnsafe <$> (pprErrMsgBagWithLoc $ fst c)
+          warns = filter (\x -> not (any (x =~) ex)) msgs
+
+checkRuleTypecheck _ e (Blacklist bl)
+        | null forbidden = success
+        | otherwise = failure $ "The symbol `" ++ head forbidden
+            ++ "` is blacklisted."
     where
-        n = rangeSize (bounds (s =~ pat :: MatchArray))
+        names = nub $ everything (++) (mkQ [] nameStrings) (tcg_rn_decls e)
+        forbidden = intersect bl names
 
-checkRuleSource s (OnFailure msg rule) = case checkRuleSource s rule of
+        nameStrings x = [nameString x]
+
+checkRuleTypecheck _ e (Whitelist wl)
+        | null forbidden = success
+        | otherwise = failure $ "The symbol `" ++ head forbidden
+             ++ "` is not whitelisted."
+    where
+        symbols = nub $ everything (++) (mkQ [] nameStrings) (tcg_rn_decls e)
+        forbidden = symbols \\ wl
+
+        nameStrings x = [nameString x]
+
+checkRuleTypecheck _ _ _ = abort
+
+checkRuleMultiple :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Rule -> Result 
+
+checkRuleMultiple f c e m s (OnFailure msg rule) = case checkRule f c e m s rule of
     Just (_:_) -> failure msg
     other -> other
 
-checkRuleSource s (NotThis rule) = case checkRuleSource s rule of
+checkRuleMultiple f c e m s (NotThis rule) = case checkRule f c e m s rule of
     Just [] -> failure "A rule matched, but shouldn't have."
     Just _ -> success
     Nothing -> abort
 
-checkRuleSource s (MaxLineLength len)
-    | any (> len) (C.length <$> C.lines s) = 
-        failure $ "One or more lines longer than " ++ show len ++ " characters."
-    | otherwise = success
-
-checkRuleSource _ _ = abort
-
-checkRuleMultiple :: DynFlags -> HsModule GhcPs -> C.ByteString -> Rule -> Result --fix
-
-checkRuleMultiple f m s (IfThen a b) = case checkRule f m s a of 
-    Just [] -> checkRule f m s b
+checkRuleMultiple f c e m s (IfThen a b) = case checkRule f c e m s a of 
+    Just [] -> checkRule f c e m s b
     Just _ -> success
     Nothing -> abort
 
-checkRuleMultiple f m s (AllOf rules) = do
-    let results = map (checkRule f m s) rules
-    if any isNothing results then Nothing else Just $ concat (catMaybes results)
+checkRuleMultiple f c e m s (AllOf rules) = do
+    let results = map (checkRule f c e m s) rules
+    if any isNothing results then abort else Just $ concat (catMaybes results)
 
-checkRuleMultiple f m s (AnyOf rules) = do
-    let results = map (checkRule f m s) rules
-    if any isNothing results then Nothing else do
+checkRuleMultiple f c e m s (AnyOf rules) = do
+    let results = map (checkRule f c e m s) rules
+    if any isNothing results then abort else do
         let errs = catMaybes results 
         return (if any null errs then [] else ["No alternatives succeeded."])
+
+checkRuleMultiple _ _ _ _ _ _ = abort
 
 allDefinitionsOf :: String -> HsModule GhcPs -> [GRHSs GhcPs (LHsExpr GhcPs)]
 allDefinitionsOf a m = everything (++) (mkQ [] defs) m
@@ -320,3 +315,5 @@ patDefines (L _ (VarPat _ (L _ patid))) a = idName patid == a
 patDefines (L _ (ParPat _ pat)) a = patDefines pat a
 patDefines _ a = False
 
+nameString :: IdP GhcRn -> String
+nameString = showSDocUnsafe . pprOccName . nameOccName

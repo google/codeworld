@@ -17,10 +17,10 @@
   limitations under the License.
 -}
 
-module Requirements.Language (parseRequirement) where
+module CodeWorld.Requirements.Checker.Language (parseRequirement) where
 
-import Framework
-import Requirements.Types
+import CodeWorld.Requirements.Framework
+import CodeWorld.Requirements.Checker.Types
 import Control.Applicative
 import Data.Aeson
 import Data.Aeson.Types (explicitParseFieldMaybe)

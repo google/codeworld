@@ -14,40 +14,42 @@
   limitations under the License.
 -}
 
-module RequirementsChecker (plugin) where
+module CodeWorld.Requirements.RequirementsChecker (plugin) where
 
-    import Requirements
-    import Control.Monad.IO.Class
+    import CodeWorld.Requirements.Framework
+    import CodeWorld.Requirements.Requirements
     import qualified Data.ByteString as B
+    import Data.Text.Encoding
 
-    import Bag
     import ErrUtils
     import HscTypes
     import Outputable
     import Plugins
-    import SrcLoc
-    import TcRnTypes
-
+    import TcRnMonad
 
     plugin :: Plugin
     plugin = defaultPlugin {
-        parsedResultAction = \_args -> parsedStep,
-        typeCheckResultAction = \_args -> typeCheckedStep
+        renamedResultAction = keepRenamedSource,
+        typeCheckResultAction = \_args -> requirementsChecker
     }
 
-    parsedStep :: ModSummary -> HsParsedModule -> Hsc HsParsedModule
-    parsedStep summary mod = do
+    requirementsChecker :: ModSummary -> TcGblEnv -> TcM TcGblEnv
+    requirementsChecker summary env = do
         src <- liftIO (B.readFile $ ms_hspp_file summary)
 
         let flags = ms_hspp_opts summary
-            (L _ code) = hpm_module mod
-            req = checkRequirements flags code src
+            parsed = ghcParseCode flags [] $ decodeUtf8 src
+        
+        case parsed of
+            GHCParsed code -> do
+                lcl <- getLclEnv
+                errs <- readTcRef $ tcl_errs lcl
+                let req = checkRequirements flags errs env code src
 
-        case req of
-            Nothing -> return ()
-            Just r -> liftIO (putMsg flags $ text r)
+                case req of
+                    Nothing -> return ()
+                    Just r -> liftIO (putMsg flags $ text r)
 
-        pure mod
+            GHCNoParse -> return ()
 
-    typeCheckedStep :: ModSummary -> TcGblEnv -> TcM TcGblEnv
-    typeCheckedStep summary env = pure env
+        pure env

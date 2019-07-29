@@ -19,12 +19,12 @@
   limitations under the License.
 -}
 
-module Requirements (checkRequirements) where
+module CodeWorld.Requirements.Requirements (checkRequirements) where
 
-import Framework
-import Requirements.Eval
-import Requirements.Language
-import Requirements.Types
+import CodeWorld.Requirements.Framework
+import CodeWorld.Requirements.Checker.Eval
+import CodeWorld.Requirements.Checker.Language
+import CodeWorld.Requirements.Checker.Types
 import Codec.Compression.Zlib
 import Control.Exception
 import Control.Monad
@@ -45,14 +45,16 @@ import Text.Regex.TDFA
 import Text.Regex.TDFA.Text
 
 import DynFlags
+import ErrUtils
 import HsSyn
+import TcRnTypes
 
-checkRequirements :: DynFlags -> HsModule GhcPs -> ByteString -> Maybe String
-checkRequirements f m s = do
+checkRequirements :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> ByteString -> Maybe String
+checkRequirements e c f m s = do
     let (sources, sdiags) = extractRequirementsSource s
         (reqs, rdiags) = extractRequirements sources
     if (not (null reqs)) then
-        let results = map (handleRequirement f m s) reqs
+        let results = map (handleRequirement e c f m s) reqs
             obfuscated = T.unpack (obfuscate (map snd sources))
         in Just $  "\n                      :: REQUIREMENTS ::\n" ++
                    "Obfuscated:\n\n    XREQUIRES" ++ obfuscated ++ "\n\n" ++
@@ -93,10 +95,10 @@ extractRequirements sources = (reqs, diags)
         reqs =  [ req | Right req <- results ]
         format loc err = ("error: The requirement could not be understood:\n" ++ err ++ "\n")
 
-handleRequirement :: DynFlags -> HsModule GhcPs -> ByteString -> Requirement -> String
-handleRequirement f m s req = let
+handleRequirement :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> ByteString -> Requirement -> String
+handleRequirement e c f m s req = let
     desc = requiredDescription req
-    (success, msgs) = evalRequirement f m s req
+    (success, msgs) = evalRequirement e c f m s req
     label | success == Nothing   = "[?] " ++ desc ++ "\n"
           | success == Just True = "[Y] " ++ desc ++ "\n"
           | otherwise            = "[N] " ++ desc ++ "\n"

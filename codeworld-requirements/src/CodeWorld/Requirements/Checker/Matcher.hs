@@ -19,7 +19,7 @@
   limitations under the License.
 -}
 
-module Requirements.Matcher where
+module CodeWorld.Requirements.Checker.Matcher where
 
 import Control.Monad
 import Data.Generics

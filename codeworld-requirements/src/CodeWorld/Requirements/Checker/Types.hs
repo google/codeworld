@@ -14,7 +14,7 @@
   limitations under the License.
 -}
 
-module Requirements.Types where
+module CodeWorld.Requirements.Checker.Types where
 
     data Requirement = Requirement {
         requiredDescription :: String,
@@ -66,16 +66,16 @@ module Requirements.Types where
     getStage (NotUsed _) = Parse
     getStage (ContainsMatch{}) = Parse
     getStage (MatchesRegex{}) = Source
-    getStage (OnFailure _ r) = getStage r
+    getStage (OnFailure _ _) = Multiple
     getStage (IfThen _ _) = Multiple
     getStage (AllOf _) = Multiple
     getStage (AnyOf _) = Multiple
-    getStage (NotThis r) = getStage r
+    getStage (NotThis _) = Multiple
     getStage (MaxLineLength _) = Source
-    getStage (NoWarningsExcept _) = Parse -- Typecheck
+    getStage (NoWarningsExcept _) = Typecheck
     getStage (TypeSignatures _) = Parse
-    getStage (Blacklist _) = Parse -- Typecheck
-    getStage (Whitelist _) = Parse -- Typecheck
+    getStage (Blacklist _) = Typecheck
+    getStage (Whitelist _) = Typecheck
     
     anyNumber, exactlyOne, atLeastOne :: Cardinality
     anyNumber = Cardinality Nothing Nothing

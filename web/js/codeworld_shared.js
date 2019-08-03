@@ -844,7 +844,7 @@ function saveProjectAs() {
     }
 
     let text;
-    let pathToRoot;
+    let pathToRoot = '';
     const selected = $('#directoryTree').tree('getSelectedNode');
     if (selected) pathToRoot = pathToRootDir(selected);
     if (pathToRoot !== '') {

@@ -10,7 +10,6 @@ copyright:                                  (c) 2019, The CodeWorld Authors
 category:                                   Command Line
 build-type:                                 Simple
 cabal-version:                              >= 1.10
-extra-source-files:                         README.md
 
 source-repository head
   type:                                     git

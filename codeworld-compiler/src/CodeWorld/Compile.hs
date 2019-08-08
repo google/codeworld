@@ -86,8 +86,7 @@ compileSource stage src err mode verbose = fromMaybe CompileAborted <$>
         compileStatus = CompileSuccess,
         compileErrors = [],
         compileReadSource = Nothing,
-        compileParsedSource = Nothing,
-        compileGHCParsedSource = Nothing
+        compileParsedSource = Nothing
         }
     timeout = case stage of
         GenBase _ _ _ _ -> maxBound :: Int
@@ -101,7 +100,6 @@ build = do
     checkDangerousSource
     ifSucceeding checkCodeConventions
     ifSucceeding compileCode
-    ifSucceeding checkRequirements
 
     errPath <- gets compileOutputPath
     diags <- sort <$> gets compileErrors
@@ -152,6 +150,10 @@ buildArgs "codeworld" =
     , "base"
     , "-package"
     , "codeworld-base"
+    , "-package"
+    , "codeworld-requirements"
+    , "-fplugin"
+    , "CodeWorld.Requirements.RequirementsChecker"
     , "-Wall"
     , "-Wdeferred-type-errors"
     , "-Wdeferred-out-of-scope-variables"
@@ -200,6 +202,10 @@ buildArgs "haskell" =
     , "codeworld-api"
     , "-package"
     , "QuickCheck"
+    , "-package"
+    , "codeworld-requirements"
+    , "-fplugin"
+    , "CodeWorld.Requirements.RequirementsChecker"
     ]
 
 runCompiler :: FilePath -> Int -> [String] -> Bool -> IO (ExitCode, Text)

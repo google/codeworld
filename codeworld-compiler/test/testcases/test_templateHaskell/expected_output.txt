@@ -1,0 +1,2 @@
+program.hs:1:14-28: error:
+    Sorry, but your program uses forbidden language features.

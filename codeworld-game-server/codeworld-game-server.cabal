@@ -7,7 +7,6 @@ Author:              The CodeWorld Authors
 Maintainer:          Joachim Breitner <mail@joachim-breitner.de>
 Copyright:           (c) 2019, The CodeWorld Authors
 Build-type:          Simple
-Extra-source-files:  ChangeLog.md
 Cabal-version:       >=1.10
 
 Executable codeworld-game-server

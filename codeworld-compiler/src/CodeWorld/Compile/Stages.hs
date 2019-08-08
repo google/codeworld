@@ -65,12 +65,12 @@ checkCodeConventions = do
 checkDangerousSource :: MonadCompile m => m ()
 checkDangerousSource = do
     src <- decodeUtf8 <$> getSourceCode
-    when (src =~ (".*TemplateHaskell.*" :: Text) ||
-          src =~ (".*QuasiQuotes.*" :: Text) ||
-          src =~ (".*glasgow-exts.*" :: Text)) $ do
+    let matches = src =~ (".*(TemplateHaskell|QuasiQuotes|glasgow-exts).*" :: Text) :: [MatchArray]
+    when (not (null matches)) $ do
+        let (off, len) = matches !! 0 ! 1
         addDiagnostics
-            [ (noSrcSpan, CompileError,
-               "error: Sorry, but your program uses forbidden language features.")
+            [ (srcSpanFor src off len, CompileError,
+               "error:\n    Sorry, but your program uses forbidden language features.")
             ]
 
 -- Look for excluded syntax.  In CodeWorld mode, students are not intended to

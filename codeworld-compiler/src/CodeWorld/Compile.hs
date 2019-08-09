@@ -150,8 +150,6 @@ buildArgs "codeworld" =
     , "base"
     , "-package"
     , "codeworld-base"
-    , "-package"
-    , "codeworld-requirements"
     , "-fplugin"
     , "CodeWorld.Requirements.RequirementsChecker"
     , "-Wall"
@@ -202,8 +200,6 @@ buildArgs "haskell" =
     , "codeworld-api"
     , "-package"
     , "QuickCheck"
-    , "-package"
-    , "codeworld-requirements"
     , "-fplugin"
     , "CodeWorld.Requirements.RequirementsChecker"
     ]

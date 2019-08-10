@@ -394,6 +394,14 @@ function saveProject() {
     }
 }
 
+function saveProjectAs() {
+    function successFunc(name) {
+        window.lastXML = getWorkspaceXMLText();
+        window.openProjectName = name;
+    }
+    saveProjectAsBase(successFunc);
+}
+
 function deleteFolder() {
     const path = getNearestDirectory();
     if (path === '' || window.openProjectName !== null) {

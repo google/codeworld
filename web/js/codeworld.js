@@ -1011,6 +1011,16 @@ function saveProject() {
     }
 }
 
+function saveProjectAs() {
+    function successFunc(name) {
+        window.openProjectName = name;
+        const doc = window.codeworldEditor.getDoc();
+        window.savedGeneration = doc.changeGeneration(true);
+        window.codeworldEditor.focus();
+    }
+    saveProjectAsBase(successFunc);
+}
+
 function deleteFolder() {
     const path = getNearestDirectory();
     if (path === '' || window.openProjectName) {

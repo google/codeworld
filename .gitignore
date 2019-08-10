@@ -6,6 +6,7 @@
 /codeworld-auth.db
 /github-auth-token.txt
 dist
+dist-newstyle
 *.o
 *.js_o
 *.js_hi

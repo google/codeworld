@@ -12,10 +12,16 @@ build-type:          Simple
 extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 
+flag build-plugin-for-ghcjs
+  Description: Build for GHCJS
+  Default:     False
+  Manual:      True
+
 library
   if impl(ghcjs)
     hs-source-dirs:    stub-src
-    build-depends:     ghc-api-ghcjs
+    build-depends:     ghc >= 8.6.5,
+                       ghc-boot-th
   else
     hs-source-dirs:    src
     other-modules:     CodeWorld.Requirements.Framework
@@ -24,7 +30,10 @@ library
                        CodeWorld.Requirements.Checker.Language
                        CodeWorld.Requirements.Checker.Matcher
                        CodeWorld.Requirements.Checker.Types
-    build-depends:     ghc >= 8.6.5,
+    if flag(build-plugin-for-ghcjs)
+      build-depends:   ghc-api-ghcjs
+    else
+      build-depends:   ghc >= 8.6.5,
                        ghc-boot-th
 
   exposed-modules:     CodeWorld.Requirements.RequirementsChecker

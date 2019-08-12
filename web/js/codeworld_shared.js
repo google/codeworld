@@ -836,7 +836,7 @@ function warnIfUnsaved(action) {
     }
 }
 
-function saveProjectAs() {
+function saveProjectAsBase(successFunc) {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to save files.', 'error');
         updateUI();
@@ -874,25 +874,32 @@ function saveProjectAs() {
     }).then(result => {
         const parent = getNearestDirectory_();
 
-        function successFunc() {
-            const appended = $('#directoryTree').tree(
-                'appendNode', {
-                    name: result.value,
-                    type: 'project',
-                    data: JSON.stringify(getCurrentProject())
-                },
-                parent
-            );
-            $('#directoryTree').tree(
-                'selectNode', appended);
+        function localSuccessFunc() {
+            const matches = parent.children.filter(n => n.name === result.value && n.type === 'project');
+            let node;
+            if (matches.length === 0) {
+                node = $('#directoryTree').tree(
+                    'appendNode', {
+                        name: result.value,
+                        type: 'project',
+                        data: JSON.stringify(getCurrentProject())
+                    },
+                    parent
+                );
+            } else {
+                node = matches[0];
+            }
+
+            $('#directoryTree').tree('selectNode', node);
             updateChildrenIndexes(parent);
+            successFunc(result.value);
         }
         if (result && result.value) {
             saveProjectBase(
                 getNearestDirectory(),
                 result.value,
                 window.projectEnv,
-                successFunc);
+                localSuccessFunc);
         }
     });
 }
@@ -973,7 +980,7 @@ function deleteProject_(path, buildMode, successFunc) {
 
     const msg =
         'Deleting a project will throw away all work, and cannot be undone. ' +
-        'Are you sure?';
+        `Are you sure you want to delete ${window.openProjectName}?`;
 
     sweetAlert({
         title: Alert.title('Warning'),

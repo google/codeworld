@@ -122,18 +122,6 @@ module CodeWorld (
     , saturation
     , luminosity
     , alpha
-    , pattern White
-    , pattern Black
-    , pattern Gray
-    , pattern Grey
-    , pattern Red
-    , pattern Orange
-    , pattern Yellow
-    , pattern Green
-    , pattern Blue
-    , pattern Purple
-    , pattern Pink
-    , pattern Brown
     -- * Events
     , Event(..)
     -- * Debugging

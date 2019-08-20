@@ -169,62 +169,24 @@ luminosity (fenceColor -> RGBA r g b _) = (lo + hi) / 2
 alpha :: Color -> Double
 alpha (RGBA _ _ _ a) = fence a
 
--- New-style colors
-
-pattern White :: Color
-pattern White  = HSL 0.00 0.00 1.00
-
-pattern Black :: Color
-pattern Black  = HSL 0.00 0.00 0.00
-
-pattern Gray :: Color
-pattern Gray   = HSL 0.00 0.00 0.50
-
-pattern Grey :: Color
-pattern Grey   = HSL 0.00 0.00 0.50
-
-pattern Red :: Color
-pattern Red    = HSL 0.00 0.75 0.50
-
-pattern Orange :: Color
-pattern Orange = HSL 0.61 0.75 0.50
-
-pattern Yellow :: Color
-pattern Yellow = HSL 0.98 0.75 0.50
-
-pattern Green :: Color
-pattern Green  = HSL 2.09 0.75 0.50
-
-pattern Blue :: Color
-pattern Blue   = HSL 3.84 0.75 0.50
-
-pattern Purple :: Color
-pattern Purple = HSL 4.80 0.75 0.50
-
-pattern Pink :: Color
-pattern Pink   = HSL 5.76 0.75 0.75
-
-pattern Brown :: Color
-pattern Brown  = HSL 0.52 0.60 0.40
-
 -- Old-style colors
 
 white, black, red, green, blue, cyan, magenta, yellow :: Color
 orange, rose, chartreuse, aquamarine, violet, azure :: Color
 gray, grey, brown, purple, pink :: Color
 
-white = White
-black = Black
-red = Red
-yellow = Yellow
-green = Green
-blue = Blue
-orange = Orange
-brown = Brown
-purple = Purple
-pink = Pink
-gray = Gray
-grey = Grey
+white  = HSL 0.00 0.00 1.00
+black  = HSL 0.00 0.00 0.00
+gray   = HSL 0.00 0.00 0.50
+grey   = HSL 0.00 0.00 0.50
+red    = HSL 0.00 0.75 0.50
+orange = HSL 0.61 0.75 0.50
+yellow = HSL 0.98 0.75 0.50
+green  = HSL 2.09 0.75 0.50
+blue   = HSL 3.84 0.75 0.50
+purple = HSL 4.80 0.75 0.50
+pink   = HSL 5.76 0.75 0.75
+brown  = HSL 0.52 0.60 0.40
 
 cyan = HSL (3 / 3 * pi) 0.75 0.5
 magenta = HSL (5 / 3 * pi) 0.75 0.5
@@ -233,31 +195,6 @@ aquamarine = HSL (5 / 6 * pi) 0.75 0.5
 azure = HSL (7 / 6 * pi) 0.75 0.5
 violet = HSL (9 / 6 * pi) 0.75 0.5
 rose = HSL (11 / 6 * pi) 0.75 0.5
-
-{-# WARNING White      [ "Please use white (lower case) instead of White."
-                       , "The value White may be removed July 2019." ] #-}
-{-# WARNING Black      [ "Please use black (lower case) instead of Black."
-                       , "The value Black may be removed July 2019." ] #-}
-{-# WARNING Red        [ "Please use red (lower case) instead of Red."
-                       , "The value Red may be removed July 2019." ] #-}
-{-# WARNING Green      [ "Please use green (lower case) instead of Green."
-                       , "The value Green may be removed July 2019." ] #-}
-{-# WARNING Blue       [ "Please use blue (lower case) instead of Blue."
-                       , "The value Blue may be removed July 2019." ] #-}
-{-# WARNING Yellow     [ "Please use yellow (lower case) instead of Yellow."
-                       , "The value Yellow may be removed July 2019." ] #-}
-{-# WARNING Orange     [ "Please use orange (lower case) instead of Orange."
-                       , "The value Orange may be removed July 2019." ] #-}
-{-# WARNING Brown      [ "Please use brown (lower case) instead of Brown."
-                       , "The value Brown may be removed July 2019." ] #-}
-{-# WARNING Purple     [ "Please use purple (lower case) instead of Purple."
-                       , "The value Purple may be removed July 2019." ] #-}
-{-# WARNING Pink       [ "Please use pink (lower case) instead of Pink."
-                       , "The value Pink may be removed July 2019." ] #-}
-{-# WARNING Gray       [ "Please use gray (lower case) instead of Gray."
-                       , "The value Gray may be removed July 2019." ] #-}
-{-# WARNING Grey       [ "Please use grey (lower case) instead of Grey."
-                       , "The value Grey may be removed July 2019." ] #-}
 
 {-# WARNING magenta    [ "Please use the RGB function instead of magenta."
                        , "The variable magenta may be removed July 2020." ] #-}
@@ -271,5 +208,5 @@ rose = HSL (11 / 6 * pi) 0.75 0.5
                        , "The variable azure may be removed July 2020." ] #-}
 {-# WARNING rose       [ "Please use the RGB function instead of rose."
                        , "The variable rose may be removed July 2020." ] #-}
-{-# WARNING violet     [ "Please use Purple instead of violet."
+{-# WARNING violet     [ "Please use purple instead of violet."
                        , "The variable violet may be removed July 2020." ] #-}

@@ -156,7 +156,7 @@ path :: HasCallStack => [Point] -> Picture
 path ps = Polyline (getDebugSrcLoc callStack) ps
 
 {-# WARNING path ["Please use polyline instead of path.",
-                  "path may be removed July 2019."] #-}
+                  "path may be removed July 2020."] #-}
 
 -- | A thick sequence of line segments, with given line width and endpoints
 thickPolyline :: HasCallStack => Double -> [Point] -> Picture
@@ -167,7 +167,7 @@ thickPath :: HasCallStack => Double -> [Point] -> Picture
 thickPath n ps = ThickPolyline (getDebugSrcLoc callStack) ps n
 
 {-# WARNING thickPath ["Please used thickPolyline instead of thickPath.",
-                       "thickPath may be removed July 2019."] #-}
+                       "thickPath may be removed July 2020."] #-}
 
 -- | A thin polygon with these points as vertices
 polygon :: HasCallStack => [Point] -> Picture
@@ -254,7 +254,7 @@ text :: HasCallStack => Text -> Picture
 text = Lettering (getDebugSrcLoc callStack)
 
 {-# WARNING text ["Please used lettering instead of text.",
-                  "text may be removed July 2019."] #-}
+                  "text may be removed July 2020."] #-}
 
 -- | A rendering of text characters.
 lettering :: HasCallStack => Text -> Picture
@@ -265,7 +265,7 @@ styledText :: HasCallStack => TextStyle -> Font -> Text -> Picture
 styledText = StyledLettering (getDebugSrcLoc callStack)
 
 {-# WARNING styledText ["Please used styledLettering instead of styledText.",
-                        "styledText may be removed July 2019."] #-}
+                        "styledText may be removed July 2020."] #-}
 
 -- | A rendering of text characters onto a Picture, with a specific
 -- choice of font and style.

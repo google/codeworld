@@ -111,7 +111,7 @@ path :: HasCallStack => [Point] -> Picture
 path ps = withFrozenCallStack $ CWPic (CW.path (map toCWVect ps))
 
 {-# WARNING path ["Please use polyline(...) instead of path(...).",
-                  "path may be removed July 2019."] #-}
+                  "path may be removed July 2020."] #-}
 
 -- | A thin sequence of line segments, with these endpoints and line width
 thickPolyline :: HasCallStack => ([Point], Number) -> Picture
@@ -122,7 +122,7 @@ thickPath :: HasCallStack => ([Point], Number) -> Picture
 thickPath (ps, n) = withFrozenCallStack $ CWPic (CW.thickPath (toDouble n) (map toCWVect ps))
 
 {-# WARNING thickPath ["Please use thickPolyline(...) instead of thickPath(...).",
-                       "thickPath may be removed July 2019."] #-}
+                       "thickPath may be removed July 2020."] #-}
 
 -- | A thin polygon with these points as vertices
 polygon :: HasCallStack => [Point] -> Picture
@@ -214,7 +214,7 @@ text :: HasCallStack => Text -> Picture
 text t = withFrozenCallStack $ CWPic (CW.lettering (fromCWText t))
 
 {-# WARNING text ["Please use lettering(...) instead of text(...).",
-                  "text may be removed July 2019."] #-}
+                  "text may be removed July 2020."] #-}
 
 -- | A rendering of text characters, with a specific choice of font and style.
 styledLettering :: HasCallStack => (Text, Font, TextStyle) -> Picture
@@ -236,7 +236,7 @@ styledText :: HasCallStack => (Text, Font, TextStyle) -> Picture
 styledText args = withFrozenCallStack $ styledLettering args
 
 {-# WARNING styledText ["Please use styledLettering(...) instead of styledText(...).",
-                        "styledText may be removed July 2019."] #-}
+                        "styledText may be removed July 2020."] #-}
 
 -- | A picture drawn entirely in this color.
 colored :: HasCallStack => (Picture, Color) -> Picture

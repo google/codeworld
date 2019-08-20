@@ -116,60 +116,24 @@ alpha = fromDouble . CW.alpha . toCWColor
 
 -- New style colors
 
-pattern White :: Color
-pattern White  = Color CW.White
-
-pattern Black :: Color
-pattern Black  = Color CW.Black
-
-pattern Gray :: Color
-pattern Gray   = Color CW.Gray
-
-pattern Grey :: Color
-pattern Grey   = Color CW.Grey
-
-pattern Red :: Color
-pattern Red    = Color CW.Red
-
-pattern Orange :: Color
-pattern Orange = Color CW.Orange
-
-pattern Yellow :: Color
-pattern Yellow = Color CW.Yellow
-
-pattern Green :: Color
-pattern Green  = Color CW.Green
-
-pattern Blue :: Color
-pattern Blue   = Color CW.Blue
-
-pattern Purple :: Color
-pattern Purple = Color CW.Purple
-
-pattern Pink :: Color
-pattern Pink   = Color CW.Pink
-
-pattern Brown :: Color
-pattern Brown  = Color CW.Brown
-
 -- Old style colors
 
 white, black, red, green, blue, cyan, magenta, yellow :: Color
 orange, rose, chartreuse, aquamarine, violet, azure :: Color
 gray, grey :: Color
 
-white = White
-black = Black
-red = Red
-yellow = Yellow
-green = Green
-blue = Blue
-orange = Orange
-brown = Brown
-purple = Purple
-pink = Pink
-gray = Gray
-grey = Grey
+white  = Color CW.white
+black  = Color CW.black
+gray   = Color CW.gray
+grey   = Color CW.grey
+red    = Color CW.red
+orange = Color CW.orange
+yellow = Color CW.yellow
+green  = Color CW.green
+blue   = Color CW.blue
+purple = Color CW.purple
+pink   = Color CW.pink
+brown  = Color CW.brown
 
 cyan = Color CW.cyan
 magenta = Color CW.magenta
@@ -178,31 +142,6 @@ aquamarine = Color CW.aquamarine
 azure = Color CW.azure
 violet = Color CW.violet
 rose = Color CW.rose
-
-{-# WARNING White      [ "Please use white (lower case) instead of White."
-                       , "The value White may be removed July 2019." ] #-}
-{-# WARNING Black      [ "Please use black (lower case) instead of Black."
-                       , "The value Black may be removed July 2019." ] #-}
-{-# WARNING Red        [ "Please use red (lower case) instead of Red."
-                       , "The value Red may be removed July 2019." ] #-}
-{-# WARNING Green      [ "Please use green (lower case) instead of Green."
-                       , "The value Green may be removed July 2019." ] #-}
-{-# WARNING Blue       [ "Please use blue (lower case) instead of Blue."
-                       , "The value Blue may be removed July 2019." ] #-}
-{-# WARNING Yellow     [ "Please use yellow (lower case) instead of Yellow."
-                       , "The value Yellow may be removed July 2019." ] #-}
-{-# WARNING Orange     [ "Please use orange (lower case) instead of Orange."
-                       , "The value Orange may be removed July 2019." ] #-}
-{-# WARNING Brown      [ "Please use brown (lower case) instead of Brown."
-                       , "The value Brown may be removed July 2019." ] #-}
-{-# WARNING Purple     [ "Please use purple (lower case) instead of Purple."
-                       , "The value Purple may be removed July 2019." ] #-}
-{-# WARNING Pink       [ "Please use pink (lower case) instead of Pink."
-                       , "The value Pink may be removed July 2019." ] #-}
-{-# WARNING Gray       [ "Please use gray (lower case) instead of Gray."
-                       , "The value Gray may be removed July 2019." ] #-}
-{-# WARNING Grey       [ "Please use grey (lower case) instead of Gray."
-                       , "The value Grey may be removed July 2019." ] #-}
 
 {-# WARNING magenta    [ "Please use RGB(...) instead of magenta."
                        , "The variable magenta may be removed July 2020." ] #-}
@@ -216,5 +155,5 @@ rose = Color CW.rose
                        , "The variable azure may be removed July 2020." ] #-}
 {-# WARNING rose       [ "Please use RGB(...) instead of rose."
                        , "The variable rose may be removed July 2020." ] #-}
-{-# WARNING violet     [ "Please use Purple instead of violet."
+{-# WARNING violet     [ "Please use purple instead of violet."
                        , "The variable violet may be removed July 2020." ] #-}

@@ -21,13 +21,14 @@
 
 'use strict';
 
-CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
+CodeMirror.defineMode('codeworld', (config, modeConfig) => {
     // This is a regular expression used in multiple contexts.
     const MULTICHAR_ESCAPE_REGEX =
         '\\\\NUL|\\\\SOH|\\\\STX|\\\\ETX|\\\\EOT|\\\\ENQ|\\\\ACK|\\\\BEL|\\\\BS|' +
         '\\\\HT|\\\\LF|\\\\VT|\\\\FF|\\\\CR|\\\\SO|\\\\SI|\\\\DLE|\\\\DC1|\\\\DC2|' +
         '\\\\DC3|\\\\DC4|\\\\NAK|\\\\SYN|\\\\ETB|\\\\CAN|\\\\EM|\\\\SUB|\\\\ESC|' +
         '\\\\FS|\\\\GS|\\\\RS|\\\\US|\\\\SP|\\\\DEL';
+    const CONTINUATION_REGEX = '\\s*(?:[:!#$%&*+./<=>?@\\^|~,)\\]}-]|where|in|of|then|else|deriving)';
     const RE_WHITESPACE = /[ \v\t\f]+/;
     const RE_STARTMETA = /{-#/;
     const RE_STARTCOMMENT = /{-/;
@@ -41,20 +42,21 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
     const RE_NUMBER =
         /[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|0[oO][0-7]+|0[xX][0-9a-fA-F]+/;
     const RE_CHAR = new RegExp(
-        `'(?:[^\\\\']|\\\\[abfnrtv\\\\"']|\\\\^[A-Z@[\\\\\\]^_]|${ 
-            MULTICHAR_ESCAPE_REGEX})'`);
+        `'(?:[^\\\\']|\\\\[abfnrtv\\\\"']|\\\\^[A-Z@[\\\\\\]^_]|${MULTICHAR_ESCAPE_REGEX})'`);
     const RE_STRING = new RegExp(
-        `"(?:[^\\\\"]|\\\\[abfnrtv\\\\"'&]|\\\\^[A-Z@[\\\\\\]^_]|${ 
-            MULTICHAR_ESCAPE_REGEX})*"`);
+        `"(?:[^\\\\"]|\\\\[abfnrtv\\\\"'&]|\\\\^[A-Z@[\\\\\\]^_]|${MULTICHAR_ESCAPE_REGEX})*"`);
     const RE_OPENBRACKET = /[([{]/;
     const RE_CLOSEBRACKET = /[)\]}]/;
     const RE_INCOMMENT = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/;
     const RE_ENDCOMMENT = /-}/;
+    const RE_ELECTRIC_START = new RegExp(`^${CONTINUATION_REGEX}`);
+    const RE_ELECTRIC_INPUT = new RegExp(`^${CONTINUATION_REGEX}$`);
 
     // The state has the following properties:
     //
     // func:         The function to tokenize the remaining stream.
     // commentLevel: Number of levels of block comments.
+    // continued:    The last token cannot end a layout statement.
     // contexts:     Grouping contexts, from outermost to innermost.
     //               Array of objects
     //               {
@@ -87,13 +89,38 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
             return 'comment';
         }
 
+        state.continued = false;
+
         if (stream.match(RE_QUAL)) return 'qualifier';
-        if (stream.match(RE_VARID) || stream.match(RE_VARSYM)) return 'variable';
-        if (stream.match(RE_CONID) || stream.match(RE_CONSYM)) return 'variable-2';
+        if (stream.match(RE_CONID)) return 'variable-2';
         if (stream.match(RE_NUMBER)) return 'number';
         if (stream.match(RE_CHAR) || stream.match(RE_STRING)) return 'string';
         if (stream.match(RE_OPENBRACKET) || stream.match(RE_CLOSEBRACKET)) return 'bracket';
-        if (stream.eat(',')) return 'comma';
+
+        if (stream.match(RE_VARID)) {
+            if (['case', 'of', 'class', 'data', 'instance', 'deriving',
+                 'do', 'if', 'then', 'else', 'import', 'infix', 'infixl',
+                 'infixr', 'instance', 'let', 'in', 'module', 'newtype',
+                 'type', 'where'].indexOf(stream.current()) > 0) {
+                state.continued = true;
+            }
+            return 'variable';
+        }
+
+        if (stream.match(RE_VARSYM)) {
+            state.continued = true;
+            return 'variable';
+        }
+
+        if (stream.match(RE_CONSYM)) {
+            state.continued = true;
+            return 'variable-2';
+        }
+
+        if (stream.eat(',')) {
+            state.continued = true;
+            return 'comma';
+        }
 
         stream.next();
         return 'error';
@@ -265,11 +292,13 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
         return isLayout ? `${style} layout` : style;
     }
 
+    const CONTINUATION_CHAR = /[]/;
     return {
         startState: () => {
             return {
                 func: normal,
                 commentLevel: 0,
+                continued: false,
                 contexts: [],
                 lastTokens: []
             };
@@ -285,9 +314,25 @@ CodeMirror.defineMode('codeworld', (_config, modeConfig) => {
 
             return updateLayout(stream.current(), column, style, state);
         },
+        indent: (state, textAfter) => {
+            if (state.commentLevel > 0) return CodeMirror.Pass;
+
+            let layoutIndent = 0;
+            let extraIndent = state.continued;
+            for (let i = state.contexts.length - 1; i >= 0; i--) {
+                if (isBracket(state.contexts[i])) {
+                    extraIndent = true;
+                } else {
+                    layoutIndent = state.contexts[i].column;
+                    break;
+                }
+            }
+            extraIndent = extraIndent || RE_ELECTRIC_START.test(textAfter);
+            return layoutIndent + (extraIndent ? config.indentUnit : 0);
+        },
+        electricInput: RE_ELECTRIC_INPUT,
         blockCommentStart: '{-',
         blockCommentEnd: '-}',
-        lineComment: '--',
-        indent: null
+        lineComment: '--'
     };
 });

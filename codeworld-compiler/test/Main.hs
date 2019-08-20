@@ -32,7 +32,7 @@ compilerOutput :: String -> IO String
 compilerOutput testName =
     withSystemTempDirectory "cwtest" $ \dir -> do
         compileSource
-            (FullBuild (dir </> "result.js"))
+            ErrorCheck
             ("test/testcases" </> testName </> "source.hs")
             (dir </> "output.txt")
             "codeworld"

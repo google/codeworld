@@ -253,10 +253,10 @@ went wrong.
     nametag = circle(10)
     ~~~~~
 
-    One line says `nametag` means the text "Victor", but the second line
-    says that `nametag` instead means a circle with a radius of 10.  So
-    which is it?  You probably meant for `nametag` to include both.  To
-    do that, you would write one definition for `nametag`, and use
+    One line says `nametag` means a picture of the text "Victor", but the
+    second line says that `nametag` instead means a circle with a radius of
+    10.  So which is it?  You probably meant for `nametag` to include both.
+    To do that, you would write one definition for `nametag`, and use
     **`&`** to combine the parts.  Like this:
 
     ~~~~~ . clickable
@@ -898,7 +898,7 @@ square  = solidRectangle(4, 4)
 ~~~~~
 
 You can probably think about a lot of other pictures you can draw using
-rotated rectangles, text, and more.
+rotated rectangles, lettering, and more.
 
 !!! collapsible: What happens if you rotate a circle?
     If you rotate a circle, you won't notice any difference at all!  That's
@@ -1600,9 +1600,9 @@ translated(rotated(scaled(pic, ...), ...), ...)
 Advanced drawing
 ================
 
-As you progress, you may want more flexible shapes than just circles, text,
-and rectangles.  In this section, you will learn ways to describe more
-flexible basic shapes to use in your drawings.
+As you progress, you may want more flexible shapes than just circles,
+lettering, and rectangles.  In this section, you will learn ways to describe
+more flexible basic shapes to use in your drawings.
 
 Points and coordinates
 ----------------------

@@ -1,0 +1,2 @@
+program.hs:16:1-24: error:
+    Could not find module NonExistentModule

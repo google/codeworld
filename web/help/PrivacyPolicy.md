@@ -14,28 +14,32 @@ even if it is executing the same software.
 
 If you choose to use the CodeWorld server, then you agree to the
 collection and use of information as provided by this policy. The
-personal information that I collect is used for providing and improving
-the Service. I will not use or share your information with anyone except
+personal information that we collect is used for providing and improving
+the Service. we will not use or share your information with anyone except
 as described in this privacy policy.
 
 Information Collection and Use
 ------------------------------
 
-During normal operation, the CodeWorld server will provide you with tokens,
-in the form of URLs, which you can choose to share with others.  These
-tokens will provide access to the code which you have submitted to the
-server, to help you share your creations with others.  By submitting your
-code, you agree that the CodeWorld server may provide your code to anyone
-who has obtained these tokens.
+During normal operation, the CodeWorld server will store the code that
+you submit to it.  This code is not shared with others.  However, the
+server will provide you with tokens, in the form of URLs, which you can
+choose to share with others.  These tokens will grant access to your
+work, to help you share your creations with others.  By submitting your
+work, you agree that the CodeWorld server may store it, and share it
+with anyone who has obtained these tokens given to you.  CodeWorld may
+also use your work for anonymous statistical analysis.
 
 When using the CodeWorld server, you may optionally sign in and save your
 data.  This is not required to use the CodeWorld server, but doing so will
 enable additional features, including saving and loading projects.  When you
-sign in, the CodeWorld server collects information which can be used to
-associate you to projects which you have previously saved.  When you use
-the feature to save projects, the CodeWorld server will retain your
-projects along with this identifying information, for the purpose of
-providing it to you in the future.
+sign in, the CodeWorld server collects only an identification number, which
+is used to associate you to projects which you have previously saved.  When
+you use the feature to save projects, the CodeWorld server will retain your
+saved projects along with this identification number, for the sole purpose
+of providing you with access to your in the future.  When you sign in,
+CodeWorld does not collect or retain your name, email address, or any other
+identifying information.
 
 As part of the normal operation of this server, data is collected in logs.
 These logs may contain the number and timing of requests, IP addresses, and
@@ -58,40 +62,40 @@ to refuse our cookies, some features of the server may not work as intended.
 Service Providers
 -----------------
 
-I may employ third-party companies and individuals for the following reasons:
+We may employ third-party companies and individuals for the following reasons:
 
 * To facilitate the service;
 * To provide the service on my behalf;
 * To perform related services; or
 * To assist in analyzing how the service is used.
 
-If you use the CodeWorld server, these third parties may have access to your
-personal information. The reason is to perform the tasks assigned to them on
-our behalf. However, they are obligated not to disclose or use the information
-for any other purpose.
+If you use the CodeWorld server, these third parties may have access to stored
+information. The reason is to perform the tasks assigned to them on our behalf.
+However, they are obligated not to disclose or use the information for any
+other purpose.
 
 Security
 --------
 
-I value your trust in providing your information, and I strive to use
+We value your trust in providing your information, and strive to use
 commercially acceptable means of protecting it.  But remember that no method of
 transmission over the internet or electronic storage is 100% secure and
-reliable, and I cannot guarantee its absolute security.
+reliable, and we cannot guarantee its absolute security.
 
 Links to Other Sites
 --------------------
 
 This Service may contain links to other sites. If you click on a third-party
 link, you will be directed to that site. Note that these external sites are not
-operated by me. Therefore, I strongly advise you to review the Privacy Policy
-of these websites. I have no control over and assume no responsibility for the
+operated by me. Therefore, we strongly advise you to review the Privacy Policy
+of these websites. We have no control over and assume no responsibility for the
 content, privacy policies, or practices of any third-party sites or services.
 
 Changes to This Privacy Policy
 ------------------------------
 
-I may update this privacy policy from time to time. Thus, you are advised to
-review this page periodically for any changes. I will notify you of any changes
+We may update this privacy policy from time to time. Thus, you are advised to
+review this page periodically for any changes. We will notify you of any changes
 by posting the new privacy policy on this page. These changes are effective
 immediately after they are posted on this page.
 

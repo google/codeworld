@@ -96,7 +96,7 @@
             available = true;
             window.debugAvailable = true;
             if (parent && parent.updateUI) {
-              parent.updateUI();
+                parent.updateUI();
             }
         }
     }

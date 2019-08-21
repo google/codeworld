@@ -36,7 +36,7 @@ Blockly.cwEvent.generateEventBuiltins = xmlList => {
     Blockly.TypeInf.addUserDefinedConstructor('KeyRelease', Type.fromList([
         Type.Lit('Text'), Type.Lit('Event')
     ]));
-    
+
     const PointerPress = new Blockly.UserTypes.Product('PointerPress', [point]);
     Blockly.TypeInf.addUserDefinedConstructor('PointerPress', Type.fromList(
         [point, Type.Lit('Event')]));

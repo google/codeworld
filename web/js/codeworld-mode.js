@@ -99,9 +99,10 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
 
         if (stream.match(RE_VARID)) {
             if (['case', 'of', 'class', 'data', 'instance', 'deriving',
-                 'do', 'if', 'then', 'else', 'import', 'infix', 'infixl',
-                 'infixr', 'instance', 'let', 'in', 'module', 'newtype',
-                 'type', 'where'].indexOf(stream.current()) > 0) {
+                'do', 'if', 'then', 'else', 'import', 'infix', 'infixl',
+                'infixr', 'instance', 'let', 'in', 'module', 'newtype',
+                'type', 'where'
+            ].indexOf(stream.current()) > 0) {
                 state.continued = true;
             }
             return 'variable';
@@ -292,7 +293,6 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         return isLayout ? `${style} layout` : style;
     }
 
-    const CONTINUATION_CHAR = /[]/;
     return {
         startState: () => {
             return {
@@ -327,8 +327,9 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                     break;
                 }
             }
-            extraIndent = extraIndent || RE_ELECTRIC_START.test(textAfter);
-            return layoutIndent + (extraIndent ? config.indentUnit : 0);
+            if (/^where/.test(textAfter)) return layoutIndent + Math.ceil(config.indentUnit / 2);
+            else if (extraIndent || RE_ELECTRIC_START.test(textAfter)) return layoutIndent + config.indentUnit;
+            else return layoutIndent;
         },
         electricInput: RE_ELECTRIC_INPUT,
         blockCommentStart: '{-',

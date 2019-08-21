@@ -21,38 +21,38 @@ goog.provide('Blockly.Blocks.cwProgram');
 goog.require('Blockly.Blocks');
 
 Blockly.Blocks['cwActivityOf'] = {
-   /**
-    * Block for comparison operator.
-    * @this Blockly.Block
-    */
-   init() {
-      this.setColour(0);
-      this.setOutput(false);
-      this.appendValueInput('INITIAL')
-          .appendField(new Blockly.FieldLabel('activityOf', 'blocklyTextEmph'))
-          .appendField('(');
-      this.appendValueInput('EVENT')
-          .setAlign(Blockly.ALIGN_RIGHT)
-          .appendField(',');
-      this.appendValueInput('DRAW')
-          .setAlign(Blockly.ALIGN_RIGHT)
-          .appendField(',');
-      this.appendDummyInput()
-          .setAlign(Blockly.ALIGN_RIGHT)
-          .appendField(')');
-      this.setInputsInline(true);
+    /**
+     * Block for comparison operator.
+     * @this Blockly.Block
+     */
+    init() {
+        this.setColour(0);
+        this.setOutput(false);
+        this.appendValueInput('INITIAL')
+            .appendField(new Blockly.FieldLabel('activityOf', 'blocklyTextEmph'))
+            .appendField('(');
+        this.appendValueInput('EVENT')
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField(',');
+        this.appendValueInput('DRAW')
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField(',');
+        this.appendDummyInput()
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField(')');
+        this.setInputsInline(true);
 
-      const worldTp = Type.Var('a');
-      const numTp = Type.Lit('Number');
-      const initTp = Type.fromList([Type.Lit('list', [numTp]), worldTp]);
-      const eventTp = Type.fromList([worldTp, Type.Lit('Event'), worldTp]);
-      const drawTp = Type.fromList([worldTp, Type.Lit('Picture')]);
+        const worldTp = Type.Var('a');
+        const numTp = Type.Lit('Number');
+        const initTp = Type.fromList([Type.Lit('list', [numTp]), worldTp]);
+        const eventTp = Type.fromList([worldTp, Type.Lit('Event'), worldTp]);
+        const drawTp = Type.fromList([worldTp, Type.Lit('Picture')]);
 
-      Blockly.TypeInf.defineFunction('activityOf', Type.fromList([
-         initTp, eventTp, drawTp, Type.Lit('Program')
-      ]));
-      this.setAsFunction('activityOf');
-   }
+        Blockly.TypeInf.defineFunction('activityOf', Type.fromList([
+            initTp, eventTp, drawTp, Type.Lit('Program')
+        ]));
+        this.setAsFunction('activityOf');
+    }
 };
 
 Blockly.Blocks['cwSimulationOf'] = {

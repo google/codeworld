@@ -315,7 +315,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             return updateLayout(stream.current(), column, style, state);
         },
         indent: (state, textAfter) => {
-            if (state.commentLevel > 0) return CodeMirror.Pass;
+            if (state.commentLevel > 0 || state.contexts.length < 1) return CodeMirror.Pass;
 
             // Find the top layout level.  If the next token closes a layout, then
             // this is the layout above the one that's closed, but an extra indent is

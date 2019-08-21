@@ -207,7 +207,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         }
 
         // Create any new implicit contexts called for by layout rules.
-        if (state.contexts.length === 0) {
+        if (state.lastTokens.length === 0) {
             if (token !== 'module' && token !== '{') {
                 state.contexts.push({
                     value: 'where', // There's an implied "module Main where"

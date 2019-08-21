@@ -675,7 +675,7 @@ const Auth = (() => {
                         sendHttpAuth: sendHttpAuth
                     }, gapi.auth2.init({
                         client_id: clientId,
-                        scope: 'profile',
+                        scope: 'openid',
                         fetch_basic_profile: false
                     }));
 

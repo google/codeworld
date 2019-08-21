@@ -189,14 +189,14 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         return t;
     }
 
-    function updateLayout(token, column, style, state) {
-        function opening(bracket) {
-            if (bracket === ')') return '(';
-            if (bracket === ']') return '[';
-            if (bracket === '}') return '{';
-            if (bracket === 'in') return 'let';
-        }
+    function opening(bracket) {
+        if (bracket === ')') return '(';
+        if (bracket === ']') return '[';
+        if (bracket === '}') return '{';
+        if (bracket === 'in') return 'let';
+    }
 
+    function updateLayout(token, column, style, state) {
         // Close any implicit contexts when there are tokens in columns to
         // the left.
         const toClose = state.contexts.findIndex(ctx => !isBracket(ctx) && ctx.column > column);
@@ -317,16 +317,27 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         indent: (state, textAfter) => {
             if (state.commentLevel > 0) return CodeMirror.Pass;
 
-            let layoutIndent = 0;
-            let extraIndent = state.continued;
-            for (let i = state.contexts.length - 1; i >= 0; i--) {
-                if (isBracket(state.contexts[i])) {
-                    extraIndent = true;
-                } else {
-                    layoutIndent = state.contexts[i].column;
-                    break;
+            // Find the top layout level.  If the next token closes a layout, then
+            // this is the layout above the one that's closed, but an extra indent is
+            // needed.  Otherwise, it's the top of the stack.
+            let topLayout = state.contexts.length - 1;
+            const token = textAfter.match(/^in\b|[,)\]}]/);
+            if (token && token[0] === ',') {
+                while (topLayout > 0 && !isBracket(state.contexts[topLayout])) {
+                    --topLayout;
                 }
+            } else if (token && state.contexts.findIndex(ctx => ctx.value === opening(token[0])) >= 1) {
+                while (state.contexts[topLayout].value !== opening(token[0])) {
+                    --topLayout;
+                }
+                --topLayout;
             }
+
+            while (topLayout > 0 && isBracket(state.contexts[topLayout])) --topLayout;
+
+            const layoutIndent = state.contexts[topLayout].column || 0;
+            const extraIndent = state.continued || topLayout < state.contexts.length - 1;
+
             if (/^where/.test(textAfter)) return layoutIndent + Math.ceil(config.indentUnit / 2);
             else if (extraIndent || RE_ELECTRIC_START.test(textAfter)) return layoutIndent + config.indentUnit;
             else return layoutIndent;

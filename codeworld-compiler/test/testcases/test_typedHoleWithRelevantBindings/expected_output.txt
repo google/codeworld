@@ -1,0 +1,14 @@
+program.hs:18:1: warning:
+    Defined but not used: f
+
+program.hs:18:8: warning:
+    • Found hole: _ :: Number -> Number
+    • Valid hole fits include
+        f :: Number -> Number (bound at program.hs:18:1)
+        abs :: Number -> Number
+          (defined in the standard library
+           (and originally defined in codeworld-
+Number
+          (defined in the standard library
+           (and originally defined in the standard library))
+        ...

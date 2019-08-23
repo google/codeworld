@@ -86,6 +86,8 @@ rewriteStages =
     , ("\\bmain\\b", "program")
     , ("a pattern binding", "the definition")
     , ("Use -v to see a list of the files searched for\\.", "")
+    , ("    \8226 Relevant bindings include\n(        [^\n]*\n)*", "")
+    , ("      Valid hole fits include", "    \8226 Valid hole fits include")
     , ("[(]Some hole fits suppressed; use -fmax-valid-hole-fits=N or -fno-max-valid-hole-fits[)]", "...")
     , ("[(]Some bindings suppressed; use -fmax-relevant-binds=N or -fno-max-relevant-binds[)]", "...")
     , ("CallStack \\(from HasCallStack\\):", "When evaluating:")

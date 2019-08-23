@@ -44,6 +44,7 @@ rewriteStages =
     , ("[ ]*Perhaps you intended to use TemplateHaskell or TemplateHaskellQuotes\n", "")
     , ("In the Template Haskell quotation '.*'",
        "Use double quotes around text values.")
+    , ("[ ]+\8226 In ([^\n\8226]|\n )+\n", "")
     , ("base-[0-9.]*:GHC\\.Stack\\.Types\\.HasCallStack => ", "")
     , ("When checking that:\\s*[^\n]*\\s*is more polymorphic than:\\s*[^\n]*(\n\\s*)?",
        "")
@@ -85,7 +86,6 @@ rewriteStages =
     , ("\\bmain\\b", "program")
     , ("a pattern binding", "the definition")
     , ("Use -v to see a list of the files searched for\\.", "")
-    , ("(Found hole: _ :: [^\n]*( |\n)*\8226) In the expression: _\n[ ]*In\\b", "\\1 In")
     , ("[(]Some hole fits suppressed; use -fmax-valid-hole-fits=N or -fno-max-valid-hole-fits[)]", "...")
     , ("CallStack \\(from HasCallStack\\):", "When evaluating:")
     , (", called at program.hs:", ", used at program.hs:")

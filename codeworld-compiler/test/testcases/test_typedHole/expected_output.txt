@@ -1,8 +1,5 @@
 program.hs:17:28: warning:
     • Found hole: _ :: Number
-    • In the argument(s) of (+), namely _
-      In the argument(s) of circle, namely (_ + 5)
-      In the argument(s) of drawingOf, namely (circle (_ + 5))
     • Valid hole fits include
         a :: Number (bound at program.hs:18:9)
         b :: Number (bound at program.hs:19:9)

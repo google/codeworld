@@ -87,6 +87,7 @@ rewriteStages =
     , ("a pattern binding", "the definition")
     , ("Use -v to see a list of the files searched for\\.", "")
     , ("[(]Some hole fits suppressed; use -fmax-valid-hole-fits=N or -fno-max-valid-hole-fits[)]", "...")
+    , ("[(]Some bindings suppressed; use -fmax-relevant-binds=N or -fno-max-relevant-binds[)]", "...")
     , ("CallStack \\(from HasCallStack\\):", "When evaluating:")
     , (", called at program.hs:", ", used at program.hs:")
     , ("module header, import declaration\n    or top-level declaration expected.",

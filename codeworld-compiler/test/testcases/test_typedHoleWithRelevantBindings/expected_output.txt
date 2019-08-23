@@ -1,14 +1,17 @@
-program.hs:18:1: warning:
+program.hs:17:1: warning:
     Defined but not used: f
 
-program.hs:18:8: warning:
-    • Found hole: _ :: Number -> Number
+program.hs:17:8: warning:
+    • Found hole: _ :: t -> t1
+      Where: t, t1 are rigid type variables bound by
+               the inferred type of f :: t -> t1
+               at program.hs:17:1-11
     • Valid hole fits include
-        f :: Number -> Number (bound at program.hs:18:1)
-        abs :: Number -> Number
-          (defined in the standard library
-           (and originally defined in codeworld-
-Number
+        f :: forall t1 t2. t1 -> t2
+          with f @t @t1
+          (defined at program.hs:17:1)
+        undefined :: forall a.
+                     
+t1)
           (defined in the standard library
            (and originally defined in the standard library))
-        ...

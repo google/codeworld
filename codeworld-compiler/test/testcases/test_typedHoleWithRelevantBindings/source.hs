@@ -14,7 +14,5 @@
   limitations under the License.
 -}
 
-f :: Number -> Number
 f(x) = _(x)
-
 program = drawingOf(blank)

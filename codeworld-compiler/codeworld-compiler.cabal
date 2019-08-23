@@ -55,7 +55,7 @@ Library
     exceptions,
     filepath,
     -- Later versions renamed Platform to GHC.Platform
-    ghc-lib-parser < 0.20190603,
+    ghc-lib-parser <= 0.20190603,
     hashable,
     haskell-src-exts >= 1.20,
     megaparsec,

@@ -45,7 +45,8 @@ rewriteStages =
     , ("In the Template Haskell quotation '.*'",
        "Use double quotes around text values.")
     , ("[ ]+\8226 In ([^\n\8226]|\n )+\n", "")
-    , ("base-[0-9.]*:GHC\\.Stack\\.Types\\.HasCallStack => ", "")
+    , ("base-[0-9.]*:GHC\\.Stack\\.Types\\.HasCallStack =>( |\n)*", "")
+    , ("\n          [ ]*([^\n])\n", " \\1\n")  -- Fix egregious wrapping from prev line
     , ("When checking that:\\s*[^\n]*\\s*is more polymorphic than:\\s*[^\n]*(\n\\s*)?",
        "")
     , ("Perhaps you need a 'let' in a 'do' block[?][ \t\n]*e.g. '[^']*' instead of '[^']*'",
@@ -89,7 +90,6 @@ rewriteStages =
     , ("    \8226 Relevant bindings include\n(        [^\n]*\n)*", "")
     , ("      Valid hole fits include", "    \8226 Valid hole fits include")
     , ("[(]Some hole fits suppressed; use -fmax-valid-hole-fits=N or -fno-max-valid-hole-fits[)]", "...")
-    , ("[(]Some bindings suppressed; use -fmax-relevant-binds=N or -fno-max-relevant-binds[)]", "...")
     , ("CallStack \\(from HasCallStack\\):", "When evaluating:")
     , (", called at program.hs:", ", used at program.hs:")
     , ("module header, import declaration\n    or top-level declaration expected.",

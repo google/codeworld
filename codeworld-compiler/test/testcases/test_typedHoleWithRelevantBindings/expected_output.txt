@@ -10,8 +10,7 @@ program.hs:17:8: warning:
         f :: forall t1 t2. t1 -> t2
           with f @t @t1
           (defined at program.hs:17:1)
-        undefined :: forall a.
-                     
-t1)
+        undefined :: forall a. a
+          with undefined @(t -> t1)
           (defined in the standard library
            (and originally defined in the standard library))

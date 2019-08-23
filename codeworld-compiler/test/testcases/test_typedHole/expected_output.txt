@@ -1,0 +1,40 @@
+program.hs:17:28: warning:
+    • Found hole: _ :: Number
+    • In the argument(s) of (+), namely _
+      In the argument(s) of circle, namely (_ + 5)
+      In the argument(s) of drawingOf, namely (circle (_ + 5))
+    • Valid hole fits include
+        a :: Number (bound at program.hs:18:9)
+        b :: Number (bound at program.hs:19:9)
+        c :: Number (bound at program.hs:20:9)
+        d :: Number (bound at program.hs:21:9)
+        e :: Number (bound at program.hs:22:9)
+        f :: Number (bound at program.hs:23:9)
+        ...
+
+program.hs:18:9: warning:
+    Defined but not used: a
+
+program.hs:19:9: warning:
+    Defined but not used: b
+
+program.hs:20:9: warning:
+    Defined but not used: c
+
+program.hs:21:9: warning:
+    Defined but not used: d
+
+program.hs:22:9: warning:
+    Defined but not used: e
+
+program.hs:23:9: warning:
+    Defined but not used: f
+
+program.hs:24:9: warning:
+    Defined but not used: g
+
+program.hs:25:9: warning:
+    Defined but not used: h
+
+program.hs:26:9: warning:
+    Defined but not used: i

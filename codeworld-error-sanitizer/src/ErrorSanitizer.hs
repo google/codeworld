@@ -85,6 +85,8 @@ rewriteStages =
     , ("\\bmain\\b", "program")
     , ("a pattern binding", "the definition")
     , ("Use -v to see a list of the files searched for\\.", "")
+    , ("(Found hole: _ :: [^\n]*( |\n)*\8226) In the expression: _\n[ ]*In\\b", "\\1 In")
+    , ("[(]Some hole fits suppressed; use -fmax-valid-hole-fits=N or -fno-max-valid-hole-fits[)]", "...")
     , ("CallStack \\(from HasCallStack\\):", "When evaluating:")
     , (", called at program.hs:", ", used at program.hs:")
     , ("module header, import declaration\n    or top-level declaration expected.",

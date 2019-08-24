@@ -1,12 +1,12 @@
 program.hs:17:28: warning:
     • Found hole: _ :: Number
     • Valid hole fits include
-        a :: Number (bound at program.hs:18:9)
-        b :: Number (bound at program.hs:19:9)
-        c :: Number (bound at program.hs:20:9)
-        d :: Number (bound at program.hs:21:9)
-        e :: Number (bound at program.hs:22:9)
-        f :: Number (bound at program.hs:23:9)
+        a :: Number (defined at program.hs:18:9)
+        b :: Number (defined at program.hs:19:9)
+        c :: Number (defined at program.hs:20:9)
+        d :: Number (defined at program.hs:21:9)
+        e :: Number (defined at program.hs:22:9)
+        f :: Number (defined at program.hs:23:9)
         ...
 
 program.hs:18:9: warning:

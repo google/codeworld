@@ -12,5 +12,4 @@ program.hs:17:8: warning:
           (defined at program.hs:17:1)
         undefined :: forall a. a
           with undefined @(t -> t1)
-          (defined in the standard library
-           (and originally defined in the standard library))
+          (defined in the standard library)

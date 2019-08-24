@@ -30,6 +30,7 @@ rewriteStages =
     , ("IO action main", "variable program")
     , ("main IO action", "variable")
     , ("exported by", "defined in")
+    , ("bound at program[.]hs", "defined at program.hs")
     , ("module Main", "your code")
     , ("main\\:Main", "your code")
     , ("[ ]*\8226 Possible cause: [(].*[)] is applied to too many arguments\n", "")
@@ -45,8 +46,7 @@ rewriteStages =
     , ("In the Template Haskell quotation '.*'",
        "Use double quotes around text values.")
     , ("[ ]+\8226 In ([^\n\8226]|\n )+\n", "")
-    , ("base-[0-9.]*:GHC\\.Stack\\.Types\\.HasCallStack =>( |\n)*", "")
-    , ("\n          [ ]*([^\n])\n", " \\1\n")  -- Fix egregious wrapping from prev line
+    , ("(( |\n)*)base-[0-9.]*:GHC\\.Stack\\.Types\\.HasCallStack =>( |\n)*", " ")
     , ("When checking that:\\s*[^\n]*\\s*is more polymorphic than:\\s*[^\n]*(\n\\s*)?",
        "")
     , ("Perhaps you need a 'let' in a 'do' block[?][ \t\n]*e.g. '[^']*' instead of '[^']*'",
@@ -66,7 +66,7 @@ rewriteStages =
     , ("IO [a-z][a-zA-Z0-9_]*", "Program")
     , ("[ ]*Perhaps you intended to use TemplateHaskell\n", "")
     , ("imported from [^)\n]*", "defined in the standard library")
-    , ("[ ]*[(]and originally defined in [^)]*[)]\n", "")
+    , ("( |\n)*[(]and originally defined in [^)]*[)]", "")
     , ("the first argument", "the argument(s)")
     , ("[ ]*The function [a-zA-Z0-9_]* is applied to [a-z0-9]* arguments,\n",
        "")

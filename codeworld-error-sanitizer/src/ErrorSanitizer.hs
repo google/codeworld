@@ -87,13 +87,17 @@ rewriteStages =
     , ("\\bmain\\b", "program")
     , ("a pattern binding", "the definition")
     , ("Use -v to see a list of the files searched for\\.", "")
+    , ("^      Where: [^\n]*rigid type variable[^\n]*\n(       [^\n]*\n)*", "")
     , ("    \8226 Relevant bindings include\n(        [^\n]*\n)*", "")
+    , ("    \8226 Relevant bindings include [^\n]*\n", "")
     , ("      Valid hole fits include", "    \8226 Valid hole fits include")
+    , ("^[ ]+with [^\n]+@[^\n]+\n", "")
     , ("[(]Some hole fits suppressed; use -fmax-valid-hole-fits=N or -fno-max-valid-hole-fits[)]", "...")
     , ("CallStack \\(from HasCallStack\\):", "When evaluating:")
     , (", called at program.hs:", ", used at program.hs:")
     , ("module header, import declaration\n    or top-level declaration expected.",
        "An equation was expected here.\n    Are you missing the equal sign?")
+    , ("forall( [a-z0-9]+)*[.] ", "")
     , ("\n\\s+\n", "\n")
     ]
 

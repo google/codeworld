@@ -3,13 +3,8 @@ program.hs:17:1: warning:
 
 program.hs:17:8: warning:
     • Found hole: _ :: t -> t1
-      Where: t, t1 are rigid type variables bound by
-               the inferred type of f :: t -> t1
-               at program.hs:17:1-11
     • Valid hole fits include
-        f :: forall t1 t2. t1 -> t2
-          with f @t @t1
+        f :: t1 -> t2
           (defined at program.hs:17:1)
-        undefined :: forall a. a
-          with undefined @(t -> t1)
+        undefined :: a
           (defined in the standard library)

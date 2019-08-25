@@ -60,7 +60,11 @@ checkRequirements e c f m s = do
                    "Obfuscated:\n\n    XREQUIRES" ++ obfuscated ++ "\n\n" ++
                    concat sdiags ++ concat rdiags ++ concat results ++
                    "                  :: END REQUIREMENTS ::\n"
-        else Nothing
+    else if (not (null sdiags) || not (null rdiags)) then
+        Just $ "\n                      :: REQUIREMENTS ::\n" ++
+               concat sdiags ++ concat rdiags ++
+               "                  :: END REQUIREMENTS ::\n"
+    else Nothing
 
 plainPattern :: Text
 plainPattern = "{-+[[:space:]]*REQUIRES\\b((\n|[^-]|-[^}])*)-}"

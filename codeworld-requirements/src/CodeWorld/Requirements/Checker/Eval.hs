@@ -181,15 +181,6 @@ checkRuleParse _ m (NotDefined a)
         | null (allDefinitionsOf a m) = success
         | otherwise = failure $ "`" ++ a ++ "` should not be defined."
 
-checkRuleParse _ m (NotUsed a)
-        | everything (||) (mkQ False exprUse) m
-             = failure $ "`" ++ a ++ "` should not be used."
-        | otherwise = success
-    where
-        exprUse :: HsExpr GhcPs -> Bool
-        exprUse (HsVar _ (L _ v)) | idName v == a = True
-        exprUse _ = False
-
 checkRuleParse f m (ContainsMatch tmpl topLevel card)
         | hasCardinality card n = success
         | otherwise = failure $ "Wrong number of matches."
@@ -214,6 +205,15 @@ checkRuleParse _ m (TypeSignatures b)
 checkRuleParse _ _ _ = abort
 
 checkRuleTypecheck :: Messages -> TcGblEnv -> Rule -> Result
+
+checkRuleTypecheck _ e (NotUsed a)
+        | everything (||) (mkQ False exprUse) (tcg_rn_decls e)
+             = failure $ "`" ++ a ++ "` should not be used."
+        | otherwise = success
+    where
+        exprUse :: HsExpr GhcRn -> Bool
+        exprUse (HsVar _ (L _ v)) | nameString v == a = True
+        exprUse _ = False
 
 checkRuleTypecheck c e (NoWarningsExcept ex)
         | null warns = success

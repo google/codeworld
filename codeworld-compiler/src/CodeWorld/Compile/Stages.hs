@@ -23,11 +23,9 @@
 module CodeWorld.Compile.Stages
     ( checkDangerousSource
     , checkCodeConventions
-    , checkRequirements
     ) where
 
 import CodeWorld.Compile.Framework
-import CodeWorld.Compile.Requirements
 import Control.Monad
 import Control.Monad.State
 import Data.Array

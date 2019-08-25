@@ -25,6 +25,7 @@ run .  cabal_install --ghcjs ./codeworld-prediction \
                              ./codeworld-error-sanitizer \
                              ./codeworld-api \
                              ./codeworld-base \
+                             ./codeworld-requirements \
                              ./codeworld-game-api \
                              QuickCheck \
                              linear
@@ -52,7 +53,8 @@ run .  cabal_install ./codeworld-server \
                      ./codeworld-api \
                      ./codeworld-game-server \
                      ./codeworld-account \
-                     ./codeworld-auth
+                     ./codeworld-auth \
+                     -f build-plugin-for-ghcjs
 
 # Build the JavaScript client code for FunBlocks, the block-based UI.
 run .  cabal_install --ghcjs ./funblocks-client

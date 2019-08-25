@@ -12,15 +12,31 @@ build-type:          Simple
 extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 
+flag build-plugin-for-ghcjs
+  Description: Build for GHCJS
+  Default:     False
+  Manual:      True
+
 library
-  exposed-modules:     CodeWorld.Requirements.RequirementsChecker
-  other-modules:       CodeWorld.Requirements.Framework
+  if impl(ghcjs)
+    hs-source-dirs:    stub-src
+    build-depends:     ghc >= 8.6.5,
+                       ghc-boot-th
+  else
+    hs-source-dirs:    src
+    other-modules:     CodeWorld.Requirements.Framework
                        CodeWorld.Requirements.Requirements
                        CodeWorld.Requirements.Checker.Eval
                        CodeWorld.Requirements.Checker.Language
                        CodeWorld.Requirements.Checker.Matcher
                        CodeWorld.Requirements.Checker.Types
-  -- other-extensions:
+    if flag(build-plugin-for-ghcjs)
+      build-depends:   ghc-api-ghcjs
+    else
+      build-depends:   ghc >= 8.6.5,
+                       ghc-boot-th
+
+  exposed-modules:     CodeWorld.Requirements.RequirementsChecker
   build-depends:       base,
                        aeson,
                        array,
@@ -30,8 +46,6 @@ library
                        directory,
                        exceptions,
                        filepath,
-                       ghc >= 8.6.5,
-                       ghc-boot-th,
                        hashable,
                        haskell-src-exts >= 1.20,
                        mtl,
@@ -43,5 +57,4 @@ library
                        text,
                        yaml,
                        zlib
-  hs-source-dirs:      src
   default-language:    Haskell2010

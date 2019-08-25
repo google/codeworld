@@ -63,7 +63,7 @@ module CodeWorld.Requirements.Checker.Types where
     getStage (HasSimpleParams _) = Parse
     getStage (UsesAllParams _) = Parse
     getStage (NotDefined _) = Parse
-    getStage (NotUsed _) = Parse
+    getStage (NotUsed _) = Typecheck
     getStage (ContainsMatch{}) = Parse
     getStage (MatchesRegex{}) = Source
     getStage (OnFailure _ _) = Multiple

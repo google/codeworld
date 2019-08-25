@@ -229,6 +229,10 @@ fi
 if [ ! -f $BUILD/progress/ghcjs-boot ]; then
   run $BUILD/ghcjs  ghcjs-boot -j$NPROC --no-prof --no-haddock -s lib/boot
   touch $BUILD/progress/ghcjs-boot
+
+  run .  cabal_install --ghcjs ./build/ghcjs/lib/ghc-api-ghcjs \
+                              ./build/ghcjs/lib/template-haskell-ghcjs \
+                              ./build/ghcjs/lib/ghci-ghcjs
 fi
 
 # Install tools to build CodeMirror editor.

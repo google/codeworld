@@ -52,7 +52,7 @@ rewriteStages =
     , ("Perhaps you need a 'let' in a 'do' block[?][ \t\n]*e.g. '[^']*' instead of '[^']*'",
        "An equation does not fit here. Is this line indented incorrectly?")
     , ("\\[GHC\\.Types\\.Char\\] -> ", "\n")
-    , ("base(-[0-9.]*)?\\:(.|\n)*->( |\n)*", "\n")
+    , ("base(-[0-9.]*)?\\:.*( |\n)*->( |\n)*", "\n")
     , ("integer-gmp(-[0-9\\.]*)?:(.|\n)*->( |\n)*", "")
     , ("GHC\\.[A-Za-z.]*(\\s|\n)*->( |\n)*", "")
     , ("at src/[A-Za-z0-9\\/.:]*", "")

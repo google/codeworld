@@ -62,7 +62,7 @@ import qualified "ghc-lib-parser" HscTypes as GHCParse
 import qualified "ghc-lib-parser" Lexer as GHCParse
 import qualified "ghc-lib-parser" Panic as GHCParse
 import qualified "ghc-lib-parser" Parser as GHCParse
-import qualified "ghc-lib-parser" Platform as GHCParse
+import qualified "ghc-lib-parser" GHC.Platform as GHCParse
 import qualified "ghc-lib-parser" SrcLoc as GHCParse
 import qualified "ghc-lib-parser" StringBuffer as GHCParse
 import qualified "ghc-lib-parser" ToolSettings as GHCParse

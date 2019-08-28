@@ -150,6 +150,8 @@ window.codeWorldBuiltins = {
     }
 };
 
+window.alreadyReportedErrors = new Set();
+
 function getWordStart(word, line) {
     return line.indexOf(word);
 }
@@ -1362,19 +1364,29 @@ function printMessage(type, message) {
     }
 
     if (type === 'error' || type === 'warning') {
-        const reportLink = document.createElement('a');
-        reportLink.setAttribute('href', '#');
-        reportLink.classList.add('report-unhelpful');
-        reportLink.onclick = event => sendUnhelpfulReport(event, message);
-        reportLink.innerText = 'Not helpful?';
-        firstLine.appendChild(reportLink);
+        if (!window.alreadyReportedErrors.has(scrubError(message))) {
+            const reportLink = document.createElement('a');
+            reportLink.setAttribute('href', '#');
+            reportLink.classList.add('report-unhelpful');
+            reportLink.onclick = event => sendUnhelpfulReport(event, message, reportLink);
+            reportLink.innerText = 'Not helpful?';
+            firstLine.appendChild(reportLink);
+        }
     }
 
     outputDiv.appendChild(box);
     outputDiv.scrollTop = outputDiv.scrollHeight;
 }
 
-function sendUnhelpfulReport(event, message) {
+function sendUnhelpfulReport(event, message, reportLink) {
+    if (window.alreadyReportedErrors.has(scrubError(message))) {
+        sweetAlert({
+            type: 'info',
+            text: 'You have already reported this message.  Thank you for your feedback.'
+        });
+        reportLink.style.display = 'none';
+        return;
+    }
     sweetAlert({
         title: Alert.title('Report unhelpful message:', 'mdi-flag-variant'),
         text: 'The report will include your code.',
@@ -1398,8 +1410,15 @@ function sendUnhelpfulReport(event, message) {
             type: 'success',
             text: 'Thank you for your feedback.'
         });
+
+        reportLink.style.display = 'none';
+        window.alreadyReportedErrors.add(scrubError(message));
     });
     event.preventDefault();
+}
+
+function scrubError(msg) {
+    return msg.replace(/program[.]hs:[0-9:-]*/g, '(loc)');
 }
 
 function clearMessages() {

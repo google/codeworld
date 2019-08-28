@@ -196,17 +196,17 @@ azure = HSL (7 / 6 * pi) 0.75 0.5
 violet = HSL (9 / 6 * pi) 0.75 0.5
 rose = HSL (11 / 6 * pi) 0.75 0.5
 
-{-# WARNING magenta    [ "Please use the RGB function instead of magenta."
+{-# WARNING magenta    [ "Please use HSL(5 * pi / 3, 0.75, 0.5) instead of magenta."
                        , "The variable magenta may be removed July 2020." ] #-}
-{-# WARNING cyan       [ "Please use the RGB function instead of cyan."
+{-# WARNING cyan       [ "Please use HSL(pi, 0.75, 0.5) instead of cyan."
                        , "The variable cyan may be removed July 2020." ] #-}
-{-# WARNING chartreuse [ "Please use the RGB function instead of chartreuse."
+{-# WARNING chartreuse [ "Please use HSL(pi / 2, 0.75, 0.5) instead of chartreuse."
                        , "The variable chartreuse may be removed July 2020." ] #-}
-{-# WARNING aquamarine [ "Please use the RGB function instead of aquamarine."
+{-# WARNING aquamarine [ "Please use HSL(5 * pi / 6, 0.75, 0.5) instead of aquamarine."
                        , "The variable aquamarine may be removed July 2020." ] #-}
-{-# WARNING azure      [ "Please use the RGB function instead of azure."
+{-# WARNING azure      [ "Please use HSL(7 * pi / 6, 0.75, 0.5) instead of azure."
                        , "The variable azure may be removed July 2020." ] #-}
-{-# WARNING rose       [ "Please use the RGB function instead of rose."
+{-# WARNING rose       [ "Please use HSL(11 * pi / 6, 0.75, 0.5) instead of rose."
                        , "The variable rose may be removed July 2020." ] #-}
 {-# WARNING violet     [ "Please use purple instead of violet."
                        , "The variable violet may be removed July 2020." ] #-}

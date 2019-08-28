@@ -143,17 +143,17 @@ azure = Color CW.azure
 violet = Color CW.violet
 rose = Color CW.rose
 
-{-# WARNING magenta    [ "Please use RGB(...) instead of magenta."
+{-# WARNING magenta    [ "Please use HSL(300, 0.75, 0.5) instead of magenta."
                        , "The variable magenta may be removed July 2020." ] #-}
-{-# WARNING cyan       [ "Please use RGB(...) instead of cyan."
+{-# WARNING cyan       [ "Please use HSL(180, 0.75, 0.5) instead of cyan."
                        , "The variable cyan may be removed July 2020." ] #-}
-{-# WARNING chartreuse [ "Please use RGB(...) instead of chartreuse."
+{-# WARNING chartreuse [ "Please use HSL(90, 0.75, 0.5) instead of chartreuse."
                        , "The variable chartreuse may be removed July 2020." ] #-}
-{-# WARNING aquamarine [ "Please use RGB(...) instead of aquamarine."
+{-# WARNING aquamarine [ "Please use HSL(150, 0.75, 0.5) instead of aquamarine."
                        , "The variable aquamarine may be removed July 2020." ] #-}
-{-# WARNING azure      [ "Please use RGB(...) instead of azure."
+{-# WARNING azure      [ "Please use RGB(210, 0.75, 0.5) instead of azure."
                        , "The variable azure may be removed July 2020." ] #-}
-{-# WARNING rose       [ "Please use RGB(...) instead of rose."
+{-# WARNING rose       [ "Please use RGB(330, 0.75, 0.5) instead of rose."
                        , "The variable rose may be removed July 2020." ] #-}
 {-# WARNING violet     [ "Please use purple instead of violet."
                        , "The variable violet may be removed July 2020." ] #-}

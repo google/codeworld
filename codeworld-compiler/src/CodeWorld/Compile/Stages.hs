@@ -50,6 +50,7 @@ checkCodeConventions = do
     checkOldStyleMixed mode
     checkOldStyleGray
     when (mode == "codeworld") $ do
+        checkOldStyleMain
         checkExcludedSyntax
         checkFunctionParentheses
         checkVarlessPatterns
@@ -74,6 +75,31 @@ checkDangerousSource = do
             [ (srcSpanFor src off len, CompileError,
                "error:\n    Sorry, but your program uses forbidden language features.")
             ]
+
+-- Look for a definition of `main` in a source file that does not define `program`
+-- Add a custom error message for this case.
+checkOldStyleMain :: MonadCompile m => m ()
+checkOldStyleMain =
+    getParsedCode >>= \parsed -> case parsed of
+        Parsed mod | Nothing <- getTopLevelDef mod "program",
+                     Just d <- getTopLevelDef mod "main" ->
+            addDiagnostics [(ann d, CompileSuccess, errorMsg)]
+        _ -> return ()
+  where
+    errorMsg = "warning:\n    Please define program instead of main."
+
+getTopLevelDef :: Module l -> String -> Maybe (Decl l)
+getTopLevelDef (Module _ _ _ _ decls) name
+    = listToMaybe [ d | d <- decls, definedName d == Just name ]
+  where definedName (FunBind _ (Match _ (Ident _ name) _ _ _ : _)) = Just name
+        definedName (PatBind _ pat _ _) = definedNameByPat pat
+        definedName _ = Nothing
+
+        definedNameByPat (PVar _ (Ident _ name)) = Just name
+        definedNameByPat (PParen _ pat) = definedNameByPat pat
+        definedNameByPat _ = Nothing
+
+getTopLevelDef _ _ = Nothing
 
 -- Look for excluded syntax.  In CodeWorld mode, students are not intended to
 -- use some Haskell-specific features, such as do-blocks and character literals.

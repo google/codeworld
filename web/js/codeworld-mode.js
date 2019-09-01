@@ -313,6 +313,22 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 lastTokens: []
             };
         },
+        copyState: state => {
+            return {
+                func: state.func,
+                commentLevel: state.commentLevel,
+                continued: state.continued,
+                contexts: state.contexts.map(ctx => {
+                    return {
+                        value: ctx.value,
+                        column: ctx.column,
+                        functionName: ctx.functionName,
+                        argIndex: ctx.argIndex || 0
+                    };
+                }),
+                lastTokens: state.lastTokens.map(t => t)
+            };
+        },
         token: (stream, state) => {
             const column = stream.column();
             const style = parseToken(stream, column, state);

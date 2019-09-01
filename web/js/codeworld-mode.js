@@ -28,7 +28,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         '\\\\HT|\\\\LF|\\\\VT|\\\\FF|\\\\CR|\\\\SO|\\\\SI|\\\\DLE|\\\\DC1|\\\\DC2|' +
         '\\\\DC3|\\\\DC4|\\\\NAK|\\\\SYN|\\\\ETB|\\\\CAN|\\\\EM|\\\\SUB|\\\\ESC|' +
         '\\\\FS|\\\\GS|\\\\RS|\\\\US|\\\\SP|\\\\DEL';
-    const CONTINUATION_REGEX = '\\s*(?:[:!#$%&*+./<=>?@\\^|~,)\\]}-]|where|in|of|then|else|deriving)';
+    const CONTINUATION_REGEX = '\\s*(?:[:!#$%&*+./<=>?@\\^|~,)\\]}-]|where|in|of|deriving)';
     const RE_WHITESPACE = /[ \v\t\f]+/;
     const RE_STARTMETA = /{-#/;
     const RE_STARTCOMMENT = /{-/;
@@ -239,8 +239,9 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         state.lastTokens = state.lastTokens.slice(-1);
         state.lastTokens.push(token);
 
-        // Close implicit contexts on comma.
+        // Close contexts when syntax demands that we do so.
         if (token === ',') {
+            // Close implicit contexts on comma.
             while (state.contexts.length) {
                 const topContext = state.contexts.pop();
                 if (!state.contexts.length || isBracket(topContext)) {
@@ -249,10 +250,9 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                     break;
                 }
             }
-        }
-
-        // Close contexts when syntax demands that we do so.
-        if (RE_CLOSEBRACKET.test(token) || (!foundLet && token === 'in')) {
+        } else if (RE_CLOSEBRACKET.test(token) || (!foundLet && token === 'in')) {
+            // Close contexts inside brackets when the brackets are closed.
+            // Note that let/in counts as a bracket pair for this purposes.
             state.contexts.reverse();
             const reverseIndex = state.contexts.findIndex(ctx => ctx.value === opening(token));
             state.contexts.reverse();
@@ -260,9 +260,16 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 const index = state.contexts.length - reverseIndex - 1;
                 while (state.contexts.length > index) state.contexts.pop();
                 if (token !== 'in') {
+                    // Update the style to indicate bracket level.
                     const level = state.contexts.filter(isBracket).length;
                     if (level <= 6) style = `${style}-${level}`;
                 }
+            }
+        } else if (token === 'where') {
+            const topContext = () => state.contexts[state.contexts.length - 1];
+            while (state.contexts.length > 0 &&
+                   ['let', 'of', 'do', 'case'].indexOf(topContext().value) >= 0) {
+                state.contexts.pop();
             }
         }
 
@@ -347,9 +354,14 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             // this is the layout above the one that's closed, but an extra indent is
             // needed.  Otherwise, it's the top of the stack.
             let topLayout = state.contexts.length - 1;
-            const token = textAfter.match(/^(in\b|[,)\]}])/);
+            const token = textAfter.match(/^(in\b|where\b|[,)\]}])/);
             if (token && token[0] === ',') {
                 while (topLayout > 0 && !isBracket(state.contexts[topLayout])) {
+                    --topLayout;
+                }
+            } else if (token && token[0] === 'where') {
+                while (topLayout > 0 &&
+                       ['let', 'of', 'do', 'case'].indexOf(state.contexts[topLayout].value) >= 0) {
                     --topLayout;
                 }
             } else if (token && state.contexts.findIndex(ctx => ctx.value === opening(token[0])) >= 1) {
@@ -361,7 +373,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
 
             const layoutIndent = state.contexts[topLayout].column || 0;
 
-            if (/^where/.test(textAfter)) return layoutIndent + Math.ceil(config.indentUnit / 2);
+            if (/^(where|[|])/.test(textAfter)) return layoutIndent + Math.ceil(config.indentUnit / 2);
             else if (state.continued || RE_ELECTRIC_START.test(textAfter)) return layoutIndent + config.indentUnit;
             else return layoutIndent;
         },

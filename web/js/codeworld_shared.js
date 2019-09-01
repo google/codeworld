@@ -274,7 +274,6 @@ function parseSymbolsFromCurrentCode() {
     }
 
     if (window.buildMode === 'codeworld') {
-        console.log(imports);
         const symbols = Object.assign({}, window.codeWorldBuiltins);
         for (const i of imports) {
             if (i.module in window.codeWorldModules) {

@@ -384,7 +384,8 @@ function updateArgHelp() {
     const {
         functionName,
         argIndex,
-        column
+        ln,
+        ch
     } = functions.pop();
     const keywordData = window.codeWorldSymbols[functionName];
 
@@ -412,8 +413,8 @@ function updateArgHelp() {
 
     topDiv.appendChild(docDiv);
     window.codeworldEditor.addWidget({
-        line: cursor.line,
-        ch: column - functionName.length,
+        line: ln,
+        ch: ch - functionName.length,
     }, topDiv, false, 'above', 'near');
 }
 

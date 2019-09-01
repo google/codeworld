@@ -61,11 +61,14 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
     //               Array of objects
     //               {
     //                 value: '{'. '(', '[', 'let', or 'other'
-    //                 column: integer,
+    //                 column: base indent column for the context,
+    //                 ln: line at which the context started
+    //                 ch: column at which the context started
     //                 functionName: string (optional)
     //                 argIndex: integer (optional)
     //               }
     // lastTokens:   Array of last up-to-two tokens encountered.
+    // line:         Current line number
 
     function isBracket(context) {
         return context.value.length === 1;
@@ -184,8 +187,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         return result;
     })();
 
-    function parseToken(stream, column, state) {
-        const t = state.func(stream, column, state);
+    function parseToken(stream, state) {
+        const t = state.func(stream, stream.column(), state);
         if (['variable', 'variable-2'].indexOf(t) !== -1) {
             const w = stream.current();
             if (wellKnownWords.hasOwnProperty(w)) {
@@ -217,7 +220,9 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             if (token !== 'module' && token !== '{') {
                 state.contexts.push({
                     value: 'where', // There's an implied "module Main where"
-                    column: column
+                    column: column,
+                    ln: state.line,
+                    ch: column
                 });
             }
         } else {
@@ -230,7 +235,9 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             if (triggered && token !== '{') {
                 state.contexts.push({
                     value: state.lastTokens.slice(-1)[0],
-                    column: column
+                    column: column,
+                    ln: state.line,
+                    ch: column
                 });
             }
         }
@@ -302,6 +309,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             state.contexts.push({
                 value: token,
                 column: newColumn,
+                ln: state.line,
+                ch: column,
                 functionName,
                 argIndex: 0
             });
@@ -317,7 +326,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 commentLevel: 0,
                 continued: false,
                 contexts: [],
-                lastTokens: []
+                lastTokens: [],
+                line: 0
             };
         },
         copyState: state => {
@@ -329,23 +339,30 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                     return {
                         value: ctx.value,
                         column: ctx.column,
+                        ln: ctx.ln,
+                        ch: ctx.ch,
                         functionName: ctx.functionName,
                         argIndex: ctx.argIndex || 0
                     };
                 }),
-                lastTokens: state.lastTokens.map(t => t)
+                lastTokens: state.lastTokens.map(t => t),
+                line: state.line
             };
         },
         token: (stream, state) => {
             const column = stream.column();
-            const style = parseToken(stream, column, state);
+            let style = parseToken(stream, state);
 
             // Ignore whitespaces and comments for layout purposes.
-            if (style === null || style === 'comment' || style === 'meta') {
-                return style;
+            if (style !== null && style !== 'comment' && style !== 'meta') {
+                style = updateLayout(stream.current(), column, style, state);
             }
 
-            return updateLayout(stream.current(), column, style, state);
+            if (stream.eol()) state.line++;
+            return style;
+        },
+        blankLine: state => {
+            state.line++;
         },
         indent: (state, textAfter) => {
             if (state.commentLevel > 0 || state.contexts.length < 1) return CodeMirror.Pass;

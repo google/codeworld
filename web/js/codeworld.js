@@ -322,6 +322,11 @@ function initCodeworld() {
         },
         ]
     });
+    if (window.buildMode === 'codeworld') {
+        window.codeworldEditor.addKeyMap({
+            'Backspace': backspace
+        });
+    }
     window.codeworldEditor.refresh();
     window.codeworldEditor.on('cursorActivity', updateArgHelp);
     window.codeworldEditor.on('refresh', updateArgHelp);
@@ -365,6 +370,19 @@ function initCodeworld() {
             window.codeworldEditor.setSize();
         }, 1000);
     };
+}
+
+function backspace() {
+    const selections = window.codeworldEditor.getSelections();
+    if (selections.length === 1 && selections[0] === '') {
+        const cursor = window.codeworldEditor.getCursor();
+        const prefix = window.codeworldEditor.getDoc()
+            .getLine(cursor.line).slice(0, cursor.ch)
+        if (/^[\s]+$/.test(prefix)) window.codeworldEditor.execCommand('indentLess');
+        else window.codeworldEditor.execCommand('delCharBefore');
+        return;
+    }
+    window.codeworldEditor.execCommand('delCharBefore');
 }
 
 function updateArgHelp() {

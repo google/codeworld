@@ -145,7 +145,7 @@ function initCodeworld() {
         styleActiveLine: !WURFL || !WURFL.is_mobile,
         showTrailingSpace: true,
         indentWithTabs: false,
-        indentUnit: 4,
+        indentUnit: 2,
         autoClearEmptyLines: true,
         highlightSelectionMatches: {
             showToken: /\w/,

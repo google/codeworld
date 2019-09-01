@@ -56,12 +56,14 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
     //
     // func:         The function to tokenize the remaining stream.
     // commentLevel: Number of levels of block comments.
-    // continued:    The last token cannot end a layout statement.
+    // continued:    The last token cannot end an expression or layout statement.
     // contexts:     Grouping contexts, from outermost to innermost.
     //               Array of objects
     //               {
     //                 value: '{'. '(', '[', 'let', or 'other'
     //                 column: integer,
+    //                 functionName: string (optional)
+    //                 argIndex: integer (optional)
     //               }
     // lastTokens:   Array of last up-to-two tokens encountered.
 
@@ -95,14 +97,18 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         if (stream.match(RE_CONID)) return 'variable-2';
         if (stream.match(RE_NUMBER)) return 'number';
         if (stream.match(RE_CHAR) || stream.match(RE_STRING)) return 'string';
-        if (stream.match(RE_OPENBRACKET) || stream.match(RE_CLOSEBRACKET)) return 'bracket';
+        if (stream.match(RE_CLOSEBRACKET)) return 'bracket';
+        if (stream.match(RE_OPENBRACKET)) {
+            state.continued = true;
+            return 'bracket';
+        }
 
         if (stream.match(RE_VARID)) {
             if (['case', 'of', 'class', 'data', 'instance', 'deriving',
                 'do', 'if', 'then', 'else', 'import', 'infix', 'infixl',
                 'infixr', 'instance', 'let', 'in', 'module', 'newtype',
                 'type', 'where'
-            ].indexOf(stream.current()) > 0) {
+            ].indexOf(stream.current()) >= 0) {
                 state.continued = true;
             }
             return 'variable';
@@ -282,9 +288,13 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 }
             }
 
+            let newColumn = 0;
+            if (state.contexts.length > 0) {
+                newColumn = state.contexts[state.contexts.length - 1].column + config.indentUnit;
+            }
             state.contexts.push({
                 value: token,
-                column: column,
+                column: newColumn,
                 functionName,
                 argIndex: 0
             });
@@ -321,7 +331,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             // this is the layout above the one that's closed, but an extra indent is
             // needed.  Otherwise, it's the top of the stack.
             let topLayout = state.contexts.length - 1;
-            const token = textAfter.match(/^in\b|[,)\]}]/);
+            const token = textAfter.match(/^(in\b|[,)\]}])/);
             if (token && token[0] === ',') {
                 while (topLayout > 0 && !isBracket(state.contexts[topLayout])) {
                     --topLayout;
@@ -333,13 +343,10 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 --topLayout;
             }
 
-            while (topLayout > 0 && isBracket(state.contexts[topLayout])) --topLayout;
-
             const layoutIndent = state.contexts[topLayout].column || 0;
-            const extraIndent = state.continued || topLayout < state.contexts.length - 1;
 
             if (/^where/.test(textAfter)) return layoutIndent + Math.ceil(config.indentUnit / 2);
-            else if (extraIndent || RE_ELECTRIC_START.test(textAfter)) return layoutIndent + config.indentUnit;
+            else if (state.continued || RE_ELECTRIC_START.test(textAfter)) return layoutIndent + config.indentUnit;
             else return layoutIndent;
         },
         electricInput: RE_ELECTRIC_INPUT,

@@ -163,7 +163,8 @@ function initCodeworld() {
             'Shift-Tab': 'indentLess',
             'Ctrl-Enter': compile,
             'Ctrl-Up': changeFontSize(1),
-            'Ctrl-Down': changeFontSize(-1)
+            'Ctrl-Down': changeFontSize(-1),
+            'Backspace': backspace
         },
         textHover: window.buildMode === 'codeworld' ? onHover : null,
         gutters: ['CodeMirror-lint-markers'],
@@ -322,11 +323,8 @@ function initCodeworld() {
         },
         ]
     });
-    if (window.buildMode === 'codeworld') {
-        window.codeworldEditor.addKeyMap({
-            'Backspace': backspace
-        });
-    }
+    CodeMirror.commands.indentMore = cm => changeIndent('add');
+    CodeMirror.commands.indentLess = cm => changeIndent('subtract');
     window.codeworldEditor.refresh();
     window.codeworldEditor.on('cursorActivity', updateArgHelp);
     window.codeworldEditor.on('refresh', updateArgHelp);
@@ -373,16 +371,68 @@ function initCodeworld() {
 }
 
 function backspace() {
-    const selections = window.codeworldEditor.getSelections();
-    if (selections.length === 1 && selections[0] === '') {
+    if (window.buildMode === 'codeworld' && !window.codeworldEditor.somethingSelected()) {
         const cursor = window.codeworldEditor.getCursor();
-        const prefix = window.codeworldEditor.getDoc()
-            .getLine(cursor.line).slice(0, cursor.ch)
-        if (/^[\s]+$/.test(prefix)) window.codeworldEditor.execCommand('indentLess');
-        else window.codeworldEditor.execCommand('delCharBefore');
-        return;
+        const prefix =
+            window.codeworldEditor.getDoc().getLine(cursor.line).slice(0, cursor.ch);
+        if (/^[\s]+$/.test(prefix)) {
+            window.codeworldEditor.execCommand('indentLess');
+            return;
+        }
     }
     window.codeworldEditor.execCommand('delCharBefore');
+}
+
+function changeIndent(how) {
+    if (window.buildMode === 'codeworld') {
+        const range = window.codeworldEditor.listSelections()[0];
+        const lineNum = Math.min(range.anchor.line, range.head.line);
+        const line = window.codeworldEditor.getDoc().getLine(lineNum);
+        const lineStart = window.codeworldEditor.getTokenAt({
+            line: lineNum,
+            ch: 0
+        });
+        if (lineStart) {
+            let prevIndent = 0;
+            while (prevIndent < line.length && line.charAt(prevIndent) === ' ') {
+                prevIndent++;
+            }
+
+            const textAfter = line.slice(prevIndent);
+            const smartIndent = getSmartIndent(lineStart.state, textAfter, prevIndent, how);
+            if (smartIndent >= 0) {
+                window.codeworldEditor.indentSelection(smartIndent - prevIndent);
+                return;
+            }
+        }
+    }
+    window.codeworldEditor.indentSelection(how);
+}
+
+function getSmartIndent(state, textAfter, prevIndent, how) {
+    if (how !== 'add' && how !== 'subtract') return -1;
+    const dir = how === 'add' ? {
+        start: 0,
+        end: state.contexts.length + 1,
+        inc: 1,
+        predicate: n => n > prevIndent
+    } : {
+        start: state.contexts.length,
+        end: -1,
+        inc: -1,
+        predicate: n => n < prevIndent
+    };
+
+    const mode = window.codeworldEditor.getDoc().getMode();
+
+    for (let i = dir.start; i !== dir.end; i += dir.inc) {
+        const stateCopy = mode.copyState(state);
+        stateCopy.contexts = stateCopy.contexts.slice(0, i);
+        const detected = mode.indent(stateCopy, textAfter);
+        if (dir.predicate(detected)) return detected;
+    }
+
+    return -1;
 }
 
 function updateArgHelp() {

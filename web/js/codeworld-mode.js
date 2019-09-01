@@ -274,8 +274,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             }
         } else if (token === 'where') {
             const topContext = () => state.contexts[state.contexts.length - 1];
-            while (state.contexts.length > 0 &&
-                   ['let', 'of', 'do', 'case'].indexOf(topContext().value) >= 0) {
+            while (state.contexts.length > 0 && ['let', 'of', 'do', 'case'].indexOf(topContext().value) >= 0) {
                 state.contexts.pop();
             }
         }
@@ -377,8 +376,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                     --topLayout;
                 }
             } else if (token && token[0] === 'where') {
-                while (topLayout > 0 &&
-                       ['let', 'of', 'do', 'case'].indexOf(state.contexts[topLayout].value) >= 0) {
+                while (topLayout > 0 && ['let', 'of', 'do', 'case'].indexOf(state.contexts[topLayout].value) >= 0) {
                     --topLayout;
                 }
             } else if (token && state.contexts.findIndex(ctx => ctx.value === opening(token[0])) >= 1) {

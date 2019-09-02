@@ -478,12 +478,10 @@ function updateArgHelp() {
     }
     annotation.className = 'hover-decl';
     docDiv.appendChild(annotation);
-
     topDiv.appendChild(docDiv);
-    window.codeworldEditor.addWidget({
-        line: ln,
-        ch: ch - functionName.length,
-    }, topDiv, false, 'above', 'near');
+
+    const widgetPos = { line: ln > 1 ? ln : cursor.line, ch:ch - functionName.length };
+    window.codeworldEditor.addWidget(widgetPos, topDiv, false, 'above', 'near');
 }
 
 class CanvasRecorder {

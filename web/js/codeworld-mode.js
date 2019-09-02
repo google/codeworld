@@ -28,7 +28,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         '\\\\HT|\\\\LF|\\\\VT|\\\\FF|\\\\CR|\\\\SO|\\\\SI|\\\\DLE|\\\\DC1|\\\\DC2|' +
         '\\\\DC3|\\\\DC4|\\\\NAK|\\\\SYN|\\\\ETB|\\\\CAN|\\\\EM|\\\\SUB|\\\\ESC|' +
         '\\\\FS|\\\\GS|\\\\RS|\\\\US|\\\\SP|\\\\DEL';
-    const CONTINUATION_REGEX = '\\s*(?:[:!#$%&*+./<=>?@\\^|~,)\\]}-]|where|in|of|deriving)';
+    const CONTINUATION_REGEX = '\\s*(?:[:!#$%&*+./<=>?@\\^|~,)\\]}-]|where|in|of|then|else|deriving)';
     const RE_WHITESPACE = /[ \v\t\f]+/;
     const RE_STARTMETA = /{-#/;
     const RE_STARTCOMMENT = /{-/;

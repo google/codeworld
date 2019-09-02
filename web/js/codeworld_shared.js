@@ -1309,9 +1309,9 @@ function preFormatMessage(msg) {
 
     msg = Html.encode(msg)
         .replace(/program\.hs:(\d+):((\d+)(-\d+)?)/g,
-            '<a href="#" onclick="goto($1, $3);">Line $1, Column $2</a>')
+            '<a href="#" onclick="goto($1, $3); return false;">Line $1, Column $2</a>')
         .replace(/program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
-            '<a href="#" onclick="goto($1, $2);">Line $1-$3, Column $2-$4</a>');
+            '<a href="#" onclick="goto($1, $2); return false;">Line $1-$3, Column $2-$4</a>');
     return msg;
 }
 

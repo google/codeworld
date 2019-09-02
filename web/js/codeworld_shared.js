@@ -626,8 +626,10 @@ function signin() {
 }
 
 function signout() {
-    clearWorkspace();
-    if (window.auth2) window.auth2.signOut();
+    warnIfUnsaved(() => {
+        clearWorkspace();
+        if (window.auth2) window.auth2.signOut();
+    });
 }
 
 function signedIn() {

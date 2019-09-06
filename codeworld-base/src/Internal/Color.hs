@@ -151,9 +151,9 @@ rose = Color CW.rose
                        , "The variable chartreuse may be removed July 2020." ] #-}
 {-# WARNING aquamarine [ "Please use HSL(150, 0.75, 0.5) instead of aquamarine."
                        , "The variable aquamarine may be removed July 2020." ] #-}
-{-# WARNING azure      [ "Please use RGB(210, 0.75, 0.5) instead of azure."
+{-# WARNING azure      [ "Please use HSL(210, 0.75, 0.5) instead of azure."
                        , "The variable azure may be removed July 2020." ] #-}
-{-# WARNING rose       [ "Please use RGB(330, 0.75, 0.5) instead of rose."
+{-# WARNING rose       [ "Please use HSL(330, 0.75, 0.5) instead of rose."
                        , "The variable rose may be removed July 2020." ] #-}
 {-# WARNING violet     [ "Please use purple instead of violet."
                        , "The variable violet may be removed July 2020." ] #-}

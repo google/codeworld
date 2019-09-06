@@ -51,6 +51,8 @@ rewriteStages =
        "")
     , ("Perhaps you need a 'let' in a 'do' block[?][ \t\n]*e.g. '[^']*' instead of '[^']*'",
        "An equation does not fit here. Is this line indented incorrectly?")
+    , ("[pP]arse error on input import\n",
+       "Parse error\n    Import statements belong at the beginning of your code.\n")
     , ("\\[GHC\\.Types\\.Char\\] -> ", "\n")
     , ("base(-[0-9.]*)?\\:.*( |\n)*->( |\n)*", "\n")
     , ("integer-gmp(-[0-9\\.]*)?:(.|\n)*->( |\n)*", "")

@@ -1,0 +1,2 @@
+program.hs:18:1-6: error: Parse error
+    Import statements belong at the beginning of your code.

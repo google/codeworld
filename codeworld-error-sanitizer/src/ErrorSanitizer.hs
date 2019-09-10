@@ -43,6 +43,8 @@ rewriteStages =
     , ("Couldn't match expected type Text\\s*with actual type GHC.Types.Char",
        "Text requires double quotes, rather than single.")
     , ("[ ]*Perhaps you intended to use TemplateHaskell or TemplateHaskellQuotes\n", "")
+    , ("possibly incorrect indentation or mismatched brackets",
+       "You may be missing an indent, or a parenthesis on the previous line")
     , ("In the Template Haskell quotation '.*'",
        "Use double quotes around text values.")
     , ("[ ]+\8226 In ([^\n\8226]|\n )+\n", "")

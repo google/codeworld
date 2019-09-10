@@ -1,2 +1,2 @@
 program.hs:17:1: error:
-    parse error (possibly incorrect indentation or mismatched brackets)
+    parse error (You may be missing an indent, or a parenthesis on the previous line)

@@ -28,7 +28,6 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         '\\\\HT|\\\\LF|\\\\VT|\\\\FF|\\\\CR|\\\\SO|\\\\SI|\\\\DLE|\\\\DC1|\\\\DC2|' +
         '\\\\DC3|\\\\DC4|\\\\NAK|\\\\SYN|\\\\ETB|\\\\CAN|\\\\EM|\\\\SUB|\\\\ESC|' +
         '\\\\FS|\\\\GS|\\\\RS|\\\\US|\\\\SP|\\\\DEL';
-    const CONTINUATION_REGEX = '\\s*(?:[:!#$%&*+./<=>?@\\^|~,)\\]}-]|where|in|of|then|else|deriving)';
     const RE_WHITESPACE = /[ \v\t\f]+/;
     const RE_STARTMETA = /{-#/;
     const RE_STARTCOMMENT = /{-/;
@@ -49,8 +48,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
     const RE_CLOSEBRACKET = /[)\]}]/;
     const RE_INCOMMENT = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/;
     const RE_ENDCOMMENT = /-}/;
-    const RE_ELECTRIC_START = new RegExp(`^${CONTINUATION_REGEX}`);
-    const RE_ELECTRIC_INPUT = new RegExp(`^${CONTINUATION_REGEX}$`);
+    const RE_ELECTRIC_START = /^\s*(?:[:!#$%&*+./<=>?@\^|~,)\]}-]+|where\b|in\b|of\b|then\b|else\b|deriving\b)/;
+    const RE_ELECTRIC_INPUT = /^\s*(?:[:!#$%&*+./<=>?@\^|~,)\]}-]+|where|in|of|then|else|deriving).?$/;
 
     // The state has the following properties:
     //
@@ -388,7 +387,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
 
             const layoutIndent = state.contexts[topLayout].column || 0;
 
-            if (/^(where|[|])/.test(textAfter)) return layoutIndent + Math.ceil(config.indentUnit / 2);
+            if (/^(where\b|[|]($|[^:!#$%&*+./<=>?@\\^|~-]+))/.test(textAfter)) return layoutIndent + Math.ceil(config.indentUnit / 2);
+            else if (RE_DASHES.exec(textAfter) && RE_DASHES.exec(textAfter).index === 0) return layoutIndent;
             else if (state.continued || RE_ELECTRIC_START.test(textAfter)) return layoutIndent + config.indentUnit;
             else return layoutIndent;
         },

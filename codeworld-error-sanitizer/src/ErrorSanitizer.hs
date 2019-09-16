@@ -102,6 +102,7 @@ rewriteStages =
     , ("module header, import declaration\n    or top-level declaration expected.",
        "An equation was expected here.\n    Are you missing the equal sign?")
     , ("forall( [a-z0-9]+)*[.] ", "")
+    , ("^<<loop>>$", "Stuck because your code contains a circular definition.")
     , ("\n\\s+\n", "\n")
     ]
 

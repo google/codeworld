@@ -250,7 +250,7 @@ playerDots n m =
 
 connectScreen :: Text -> Double -> Picture
 connectScreen hdr t = translated 0 (-7) connectBox
-        & translated 0 2.5 (colored background (solidRectangle 20 3.5))
+        & translated 0 2.5 (colored background (solidRectangle 20 4))
         & translated 0 5 codeWorldLogo
         & colored background (solidRectangle 20 20)
   where

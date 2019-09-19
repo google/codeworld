@@ -50,6 +50,7 @@ checkCodeConventions = do
     checkOldStyleMixed mode
     checkOldStyleGray
     when (mode == "codeworld") $ do
+        checkLsuModules
         checkOldStyleMain
         checkExcludedSyntax
         checkFunctionParentheses
@@ -75,6 +76,25 @@ checkDangerousSource = do
             [ (srcSpanFor src off len, CompileError,
                "error:\n    Sorry, but your program uses forbidden language features.")
             ]
+
+-- Look for modules defined by LSU's computational thinking curriculum.  These
+-- must be compiled on LSU's server, so we tell students to go there instead.
+checkLsuModules :: MonadCompile m => m ()
+checkLsuModules =
+    getParsedCode >>= \parsed -> case parsed of
+        Parsed mod -> addDiagnostics $ everything (++) (mkQ [] checkImp) mod
+        _ -> return ()
+  where checkImp :: ImportDecl SrcSpanInfo -> [Diagnostic]
+        checkImp d | ModuleName loc name <- importModule d, name `elem` lsuModules
+            = [(loc, CompileError, errorMsg name)]
+        checkImp _ = []
+
+        lsuModules = [
+            "Standard", "Standard.Debug", "Lessons.Penguin", "Lessons.Logic"]
+
+        errorMsg name = "error: Could not find " ++ name ++
+            "\n    For LSU computational thinking curriculum," ++
+            "\n    use the link provided by your teacher."
 
 -- Look for a definition of `main` in a source file that does not define `program`
 -- Add a custom error message for this case.

@@ -1,0 +1,15 @@
+program.hs:17:8-15: error: Could not find Standard
+    For LSU computational thinking curriculum,
+    use the link provided by your teacher.
+
+program.hs:18:8-21: error: Could not find Standard.Debug
+    For LSU computational thinking curriculum,
+    use the link provided by your teacher.
+
+program.hs:19:8-22: error: Could not find Lessons.Penguin
+    For LSU computational thinking curriculum,
+    use the link provided by your teacher.
+
+program.hs:20:8-20: error: Could not find Lessons.Logic
+    For LSU computational thinking curriculum,
+    use the link provided by your teacher.

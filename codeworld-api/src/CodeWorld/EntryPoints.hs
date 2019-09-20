@@ -84,7 +84,9 @@ interactionOf
   -> (world -> Picture)          -- ^ The visualization function, which converts
                                  --   the state into a picture to display.
   -> IO ()
-interactionOf initial step event draw = runInspect initial step event draw draw
+interactionOf initial step event draw = do
+    hFlush stdout
+    runInspect initial step event draw draw
 
 {-# WARNING interactionOf ["Please use activityOf instead of interactionOf.",
                            "interactionOf may be removed July 2020."] #-}
@@ -515,7 +517,8 @@ drawingControls w
 -- @
 drawingOf :: Picture  -- ^ The picture to show on the screen.
           -> IO ()
-drawingOf pic =
+drawingOf pic = do
+    hFlush stdout
     runInspect (wrappedInitial ())
                (wrappedStep step)
                (wrappedEvent drawingControls step event)
@@ -567,7 +570,8 @@ animationControls w
 animationOf :: (Double -> Picture)  -- ^ A function that produces animation
                                     --   frames, given the time in seconds.
             -> IO ()
-animationOf f =
+animationOf f = do
+    hFlush stdout
     runInspect (wrappedInitial 0)
                (wrappedStep (+))
                (wrappedEvent animationControls (+) (const id))
@@ -634,7 +638,8 @@ simulationOf
   -> (world -> Picture)          -- ^ The visualization function, which converts
                                  --   the state into a picture to display.
   -> IO ()
-simulationOf initial step draw =
+simulationOf initial step draw = do
+    hFlush stdout
     runInspect (wrappedInitial initial)
                (wrappedStep step)
                (wrappedEvent simulationControls step (const id))
@@ -651,7 +656,8 @@ debugSimulationOf
   -> (world -> Picture)          -- ^ The visualization function, which converts
                                  --   the state into a picture to display.
   -> IO ()
-debugSimulationOf simInitial simStep simDraw =
+debugSimulationOf simInitial simStep simDraw = do
+    hFlush stdout
     runInspect (wrappedInitial initial)
                (wrappedStep step)
                (wrappedEvent statefulDebugControls step (const id))
@@ -674,7 +680,8 @@ debugInteractionOf
   -> (world -> Picture)          -- ^ The visualization function, which converts
                                  --   the state into a picture to display.
   -> IO ()
-debugInteractionOf baseInitial baseStep baseEvent baseDraw =
+debugInteractionOf baseInitial baseStep baseEvent baseDraw = do
+    hFlush stdout
     runInspect (wrappedInitial initial)
                (wrappedStep step)
                (wrappedEvent statefulDebugControls step event)
@@ -730,6 +737,7 @@ groupActivityOf
           --   and the state into a picture to display.
   -> IO ()
 groupActivityOf numPlayers initial event draw = do
+    hFlush stdout
     dhash <- getDeployHash
     let token =
             SteplessToken
@@ -782,6 +790,7 @@ unsafeCollaborationOf
           --   and the state into a picture to display.
   -> IO ()
 unsafeCollaborationOf numPlayers initial step event draw = do
+    hFlush stdout
     dhash <- getDeployHash
     let token = PartialToken dhash
     runGame token numPlayers initial step event draw
@@ -807,6 +816,7 @@ collaborationOf
           --   and the state into a picture to display.
   -> IO ()
 collaborationOf numPlayers initial step event draw = do
+    hFlush stdout
     dhash <- getDeployHash
     let token =
             FullToken

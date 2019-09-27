@@ -58,6 +58,8 @@ checkCodeConventions = do
         checkPatternGuards
         checkExtraCommas
         checkNoncontiguousEquations
+        checkAndOnPrograms
+        checkAndOnFunctions
 
 -- Look for uses of Template Haskell or related features in the compiler.  These
 -- cannot currently be used, because the compiler isn't properly sandboxed, so
@@ -491,6 +493,39 @@ extraCommas (TupleSection topLoc _ parts) =
         toLoc _ _ _ = Nothing
         file = srcSpanFilename (srcInfoSpan topLoc)
 extraCommas _ = []
+
+checkAndOnPrograms :: MonadCompile m => m ()
+checkAndOnPrograms =
+    getParsedCode >>= \parsed -> case parsed of
+        Parsed mod -> addDiagnostics $ dedupErrorSpans $
+            everything (++) (mkQ [] andOnPrograms) mod
+        _ -> return ()
+  where
+    andOnPrograms :: Exp SrcSpanInfo -> [Diagnostic]
+    andOnPrograms (InfixApp _ e1 (QVarOp loc (UnQual _ (Symbol _ "&"))) e2)
+        | isProgExp e1 || isProgExp e2 = [(loc, CompileError, errorMsg)]
+    andOnPrograms _ = []
+
+    isProgExp (App _ (Var _ (UnQual _ (Ident _ "drawingOf"))) _) = True
+    isProgExp (App _ (Var _ (UnQual _ (Ident _ "animationOf"))) _) = True
+    isProgExp (App _ (Var _ (UnQual _ (Ident _ "activityOf"))) _) = True
+    isProgExp (App _ (Var _ (UnQual _ (Ident _ "debugActivityOf"))) _) = True
+    isProgExp (App _ (Var _ (UnQual _ (Ident _ "groupActivityOf"))) _) = True
+    isProgExp _ = False
+
+    errorMsg =
+        "error:\n" ++
+        "    \x2022 The & operator overlays two Pictures.\n" ++
+        "      but here it is applied to Programs, instead.\n" ++
+        "    \x2022 Suggested fix: move & inside the picture expression.\n" ++
+        "      For example: drawingOf(a) & drawingOf(b) should be written as\n" ++
+        "      drawingOf(a & b), instead."
+
+checkAndOnFunctions :: MonadCompile m => m ()
+checkAndOnFunctions =
+    getParsedCode >>= \parsed -> case parsed of
+        Parsed mod -> return ()
+        _ -> return ()
 
 dedupErrorSpans :: [Diagnostic] -> [Diagnostic]
 dedupErrorSpans [] = []

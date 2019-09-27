@@ -469,7 +469,7 @@ function updateArgHelp() {
     docDiv.classList.add('function-tooltip-styling');
 
     const annotation = document.createElement('div');
-    const returnedVal = renderDeclaration(annotation, functionName, keywordData, 9999, argIndex);
+    const returnedVal = renderDeclaration(annotation, keywordData, 9999, argIndex);
     //TODO: Remove the if block once a better function parser is integrated.
     if (returnedVal === null) {
         annotation.remove();

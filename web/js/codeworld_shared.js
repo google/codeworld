@@ -116,6 +116,9 @@ const hintBlacklist = [
     'rose'
 ];
 
+const VAR_OR_CON = /^[a-zA-Z_][A-Za-z_0-9']*$/;
+const QUALIFIER = /^[A-Z][A-Za-z_0-9']*[.]$/;
+
 function definePanelExtension() {
     CodeMirror.defineExtension('addPanel', function(node) {
         const originWrapper = this.getWrapperElement();
@@ -126,7 +129,7 @@ function definePanelExtension() {
     });
 }
 
-// codeWorldSymbols is variable containing annotations and documentation
+// codeWorldSymbols is a variable containing annotations and documentation
 // of builtin and user-defined variables.
 // Expected format:
 // codeWorldSymbols = {
@@ -134,6 +137,7 @@ function definePanelExtension() {
 //     declaration: "codeWorldLogo :: Picture",
 //     symbolStart: 0,
 //     symbolEnd: 13,
+//     insertText: "codeWorldLogo",
 //     doc: "The CodeWorld logo."
 //   }
 // }
@@ -146,7 +150,8 @@ window.codeWorldBuiltins = {
         declaration: 'program :: Program',
         doc: 'Your program.',
         symbolStart: 0,
-        symbolEnd: 7
+        symbolEnd: 7,
+        insertText: "program"
     }
 };
 
@@ -205,6 +210,7 @@ function parseSymbolsFromCurrentCode() {
             if (parseResults[word]) return;
             parseResults[word] = {
                 declaration: word,
+                insertText: word,
                 doc: docString
             };
         } else if (/^\S+\s*=/.test(line)) {
@@ -213,6 +219,7 @@ function parseSymbolsFromCurrentCode() {
             if (parseResults[word]) return;
             parseResults[word] = {
                 declaration: word,
+                insertText: word,
                 doc: docString
             };
         } else if (/^data\s.+/.test(line)) {
@@ -224,6 +231,7 @@ function parseSymbolsFromCurrentCode() {
                 declaration: line.slice(0, getWordEnd(word, line)),
                 symbolStart: getWordStart(word, line),
                 symbolEnd: getWordEnd(word, line),
+                insertText: word,
                 doc: docString
             };
         } else if (/^type\s.+/.test(line)) {
@@ -235,6 +243,7 @@ function parseSymbolsFromCurrentCode() {
                 declaration: line,
                 symbolStart: getWordStart(word, line),
                 symbolEnd: getWordEnd(word, line),
+                insertText: word,
                 doc: docString
             };
         } else if (/^\([^()]+\)\s*::/.test(line)) {
@@ -247,6 +256,7 @@ function parseSymbolsFromCurrentCode() {
                 declaration: line,
                 symbolStart: getWordStart(word, line),
                 symbolEnd: getWordEnd(word, line),
+                insertText: word,
                 doc: docString
             };
         } else if (/^\S+\s*::/.test(line)) {
@@ -258,6 +268,7 @@ function parseSymbolsFromCurrentCode() {
                 declaration: line,
                 symbolStart: getWordStart(word, line),
                 symbolEnd: getWordEnd(word, line),
+                insertText: word,
                 doc: docString
             };
         }
@@ -282,9 +293,19 @@ function parseSymbolsFromCurrentCode() {
                         if (i.hiding && i.importList.includes(symbol)) continue;
                         if (!i.hiding && !i.importList.includes(symbol)) continue;
                     }
-                    const name = i.qualified ? `${i.asName}.${symbol}` : symbol;
-                    symbols[name] = window.codeWorldModules[i.module][symbol];
+                    symbols[i.asName + '.' + symbol] = window.codeWorldModules[i.module][symbol];
+                    if (!i.qualified) {
+                        symbols[symbol] = window.codeWorldModules[i.module][symbol];
+                    }
                 }
+                symbols[i.asName] = {
+                    declaration: `module ${i.asName}`,
+                    symbolStart: 7,
+                    symbolEnd: 7 + i.asName.length,
+                    insertText: i.asName + '.',
+                    module: true,
+                    doc: null
+                };
             }
         }
         window.codeWorldSymbols = Object.assign(symbols, parseResults);
@@ -293,7 +314,7 @@ function parseSymbolsFromCurrentCode() {
     }
 }
 
-function renderDeclaration(decl, keyword, keywordData, maxLen, argIndex = -1) {
+function renderDeclaration(decl, keywordData, maxLen, argIndex = -1) {
     let column = 0;
 
     function addSegment(text, isWord, isBold) {
@@ -338,7 +359,7 @@ function renderDeclaration(decl, keyword, keywordData, maxLen, argIndex = -1) {
         addSegment(keywordData.declaration.slice(0, keywordData.symbolStart));
     }
 
-    addSegment(keyword, true, false);
+    addSegment(keywordData.declaration.slice(keywordData.symbolStart, keywordData.symbolEnd), true, false);
 
     if (keywordData.symbolEnd < keywordData.declaration.length) {
         const leftover = keywordData.declaration.slice(keywordData.symbolEnd).replace(
@@ -366,19 +387,14 @@ function renderDeclaration(decl, keyword, keywordData, maxLen, argIndex = -1) {
     return decl;
 }
 
-function renderHover(keyword) {
+function renderHover(keywordData) {
+    if (!keywordData) return;
+
     const topDiv = document.createElement('div');
-
-    if (!window.codeWorldSymbols[keyword]) {
-        return;
-    }
-    topDiv.title = keyword;
-    const keywordData = window.codeWorldSymbols[keyword];
-
     const docDiv = document.createElement('div');
 
     const annotation = document.createElement('div');
-    renderDeclaration(annotation, keyword, keywordData, 9999);
+    renderDeclaration(annotation, keywordData, 9999);
     annotation.className = 'hover-decl';
     docDiv.appendChild(annotation);
 
@@ -401,7 +417,7 @@ function onHover(cm, data, node) {
     if (data && data.token && data.token.string) {
         const token_name = data.token.string;
         if (hintBlacklist.indexOf(token_name) === -1) {
-            return renderHover(token_name);
+            return renderHover(window.codeWorldSymbols[token_name]);
         }
     }
 }
@@ -409,29 +425,65 @@ function onHover(cm, data, node) {
 // Hints and hover tooltips
 function registerStandardHints(successFunc) {
     CodeMirror.registerHelper('hint', 'codeworld', cm => {
+        const deleteOldHintDocs = () => {
+            $('.hint-description').remove();
+        };
+
+        deleteOldHintDocs();
+
         const cur = cm.getCursor();
         const token = cm.getTokenAt(cur);
 
         // If the current token is whitespace, it can be split.
-        let term, from;
-        if (/^\s+$/.test(token.string)) {
+        let term = token.string.substr(0, cur.ch - token.start);
+        let from = CodeMirror.Pos(cur.line, token.start);
+
+        if (!VAR_OR_CON.test(term)) {
             term = '';
             from = cur;
-        } else {
-            term = token.string.substr(0, cur.ch - token.start);
-            from = CodeMirror.Pos(cur.line, token.start);
+        }
+
+        let prefix = '';
+        let start = from.ch;
+        while (start > 1) {
+            let qtoken = cm.getTokenAt(CodeMirror.Pos(cur.line, start));
+            let qual = qtoken.string;
+            if (qtoken.string == '.') {
+                qtoken = cm.getTokenAt(CodeMirror.Pos(cur.line, qtoken.start));
+                qual = qtoken.string + '.';
+            }
+            if (!QUALIFIER.test(qual)) break;
+
+            prefix = qual + prefix;
+            start = qtoken.start;
         }
 
         const found = [];
         const hints = Object.keys(window.codeWorldSymbols);
         for (let i = 0; i < hints.length; i++) {
             const hint = hints[i];
-            if (hint.startsWith(term)) {
+            const parts = hint.split(/\.(?=[^\.]+$)/);
+            const hintPrefix = parts.length < 2 ? '' : (parts[0] + '.');
+            const hintIdent = parts.length < 2 ? hint : parts[1];
+            if (!VAR_OR_CON.test(hintIdent)) continue;
+            if (window.codeWorldSymbols[hint].module) {
+                if (hint.startsWith(prefix) &&
+                        hint.toLowerCase().startsWith((prefix + term).toLowerCase())) {
+                    found.push({
+                        text: window.codeWorldSymbols[hint].insertText.substr(prefix.length),
+                        details: window.codeWorldSymbols[hint],
+                        render: elem => {
+                            renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
+                        }
+                    });
+                }
+            } else if (hintPrefix === prefix
+                    && hintIdent.toLowerCase().startsWith(term.toLowerCase())) {
                 found.push({
-                    text: hint,
+                    text: window.codeWorldSymbols[hint].insertText,
+                    details: window.codeWorldSymbols[hint],
                     render: elem => {
-                        renderDeclaration(elem, hint,
-                            window.codeWorldSymbols[hint], 50);
+                        renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
                     }
                 });
             }
@@ -458,12 +510,11 @@ function registerStandardHints(successFunc) {
                 to: cur
             };
 
-            const deleteOldHintDocs = () => {
-                $('.hint-description').remove();
-            };
-
             CodeMirror.on(data, 'close', deleteOldHintDocs);
             CodeMirror.on(data, 'pick', deleteOldHintDocs);
+            CodeMirror.on(data, 'pick', completion => {
+                if (completion.details.module) cm.showHint();
+            });
 
             // Tracking of hint selection
             CodeMirror.on(
@@ -472,7 +523,7 @@ function registerStandardHints(successFunc) {
                     const hintsWidgetRect = elem.parentElement.getBoundingClientRect();
                     const doc = document.createElement('div');
                     deleteOldHintDocs();
-                    const hover = renderHover(selection.text);
+                    const hover = renderHover(selection.details);
                     if (hover) {
                         doc.className += 'hint-description';
                         doc.style.top = `${hintsWidgetRect.top}px`;
@@ -586,13 +637,19 @@ function registerStandardHints(successFunc) {
                     wordEnd--;
                 }
 
-                const word = line.substr(wordStart, wordEnd -
-                    wordStart);
-                if (hintBlacklist.indexOf(word) < 0) {
+                const word = line.substr(wordStart, wordEnd - wordStart);
+                let isBlacklisted = false;
+                if (module === 'Prelude') {
+                    if (hintBlacklist.indexOf(word) >= 0) isBlacklisted = true;
+                } else {
+                    if (['RGB', 'HSL', 'RGBA'].indexOf(word) >= 0) isBlacklisted = true;
+                }
+                if (!isBlacklisted) {
                     window.codeWorldModules[module][word] = {
                         declaration: line,
                         symbolStart: wordStart,
-                        symbolEnd: wordEnd
+                        symbolEnd: wordEnd,
+                        insertText: word
                     };
                     if (doc) {
                         window.codeWorldModules[module][word].doc = doc;

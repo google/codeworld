@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -61,6 +62,7 @@ checkCodeConventions = do
         checkNoncontiguousEquations
         checkAndOnPrograms
         checkAndInAnimation
+        checkCodeWorldImport
 
 -- Look for uses of Template Haskell or related features in the compiler.  These
 -- cannot currently be used, because the compiler isn't properly sandboxed, so
@@ -547,6 +549,23 @@ checkAndInAnimation =
         "      should be written instead as:\n" ++
         "          program = animationOf(overall)\n" ++
         "          overall(t) = a(t) & b(t)"
+
+checkCodeWorldImport :: MonadCompile m => m ()
+checkCodeWorldImport =
+    getParsedCode >>= \parsed -> case parsed of
+        Parsed mod -> addDiagnostics $
+            everything (++) (mkQ [] codeWorldImport) mod
+        _ -> return ()
+  where
+    codeWorldImport :: ImportDecl SrcSpanInfo -> [Diagnostic]
+    codeWorldImport ImportDecl{importAnn, importModule}
+        | ModuleName _ "CodeWorld" <- importModule = [(importAnn, CompileError, errorMsg)]
+        | otherwise = []
+
+    errorMsg =
+        "error:\n" ++
+        "    Could not find module CodeWorld\n" ++
+        "    Perhaps you meant to use http://code.world/haskell"
 
 dedupErrorSpans :: [Diagnostic] -> [Diagnostic]
 dedupErrorSpans [] = []

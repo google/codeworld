@@ -148,10 +148,9 @@ buildArgs "codeworld" =
     [ "-DGHCJS_BROWSER"
     , "-ferror-spans"
     , "-fno-diagnostics-show-caret"
-    , "-hide-package"
-    , "base"
-    , "-package"
-    , "codeworld-base"
+    , "-hide-package", "base"
+    , "-hide-package", "codeworld-api"
+    , "-package", "codeworld-base"
     , "-Wall"
     , "-Wdeferred-type-errors"
     , "-Wdeferred-out-of-scope-variables"
@@ -190,17 +189,16 @@ buildArgs "codeworld" =
     , "-XTypeOperators"
     , "-XViewPatterns"
     , "-XImplicitPrelude" -- MUST come after RebindableSyntax.
-    , "-main-is"
-    , "Main.program"
+    , "-main-is", "Main.program"
     ]
+
 buildArgs "haskell" =
     [ "-DGHCJS_BROWSER"
     , "-ferror-spans"
     , "-fno-diagnostics-show-caret"
-    , "-package"
-    , "codeworld-api"
-    , "-package"
-    , "QuickCheck"
+    , "-package", "codeworld-api"
+    , "-package", "QuickCheck"
+    , "-package", "reflex"
     ]
 
 runCompiler :: FilePath -> Int -> [String] -> Bool -> IO (ExitCode, Text)

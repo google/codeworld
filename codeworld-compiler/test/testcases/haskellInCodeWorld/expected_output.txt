@@ -1,0 +1,6 @@
+program.hs:17:1-16: error:
+    Could not find module CodeWorld
+    Perhaps you meant to use http://code.world/haskell
+
+program.hs:19:1-32: warning:
+    Please define program instead of main.

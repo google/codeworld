@@ -216,7 +216,7 @@ if [ ! -f $BUILD/progress/ghcjs ]; then
   run $BUILD       rm -rf ghcjs
   run $BUILD       git clone --recurse-submodules --branch ghc-8.6 --single-branch https://github.com/ghcjs/ghcjs.git
   # The following two commands can be combined in git 2.13 using --recurse-submodules.
-  run $BUILD/ghcjs git checkout e87195eaa2bc7e320e18cf10386802bc90b7c874
+  run $BUILD/ghcjs git checkout eeeb0cde48e093e278fc1a4f418b48a2d23aa08c
   run $BUILD/ghcjs git submodule update --init
   run .            patch -p0 -u -d $BUILD < ghc-artifacts/ghcjs-8.6-default-main.patch
   run $BUILD/ghcjs ./utils/makePackages.sh

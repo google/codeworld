@@ -224,7 +224,7 @@ fakeSettings =
         },
         GHCParse.sFileSettings = GHCParse.FileSettings {},
         GHCParse.sTargetPlatform = GHCParse.Platform {
-            GHCParse.platformWordSize = 8,
+            GHCParse.platformWordSize = GHCParse.PW8,
             GHCParse.platformOS = GHCParse.OSUnknown,
             GHCParse.platformUnregisterised = True
         },

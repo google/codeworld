@@ -54,7 +54,7 @@ Library
     directory,
     exceptions,
     filepath,
-    ghc-lib-parser >= 0.20190703 && < 8.8,
+    ghc-lib-parser >= 0.20190909 && < 8.8,
     hashable,
     haskell-src-exts >= 1.20,
     megaparsec,

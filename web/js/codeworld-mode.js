@@ -48,8 +48,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
     const RE_CLOSEBRACKET = /[)\]}]/;
     const RE_INCOMMENT = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/;
     const RE_ENDCOMMENT = /-}/;
-    const RE_ELECTRIC_START = /^\s*(?:[:!#$%&*+./<=>?@\^|~,)\]}-]+|where\b|in\b|of\b|then\b|else\b|deriving\b)/;
-    const RE_ELECTRIC_INPUT = /^\s*(?:[:!#$%&*+./<=>?@\^|~,)\]}-]+|where|in|of|then|else|deriving).?$/;
+    const RE_ELECTRIC_START = /^\s*(?:[:!#$%&*+./<=>?@^|~,)\]}-]+|where\b|in\b|of\b|then\b|else\b|deriving\b)/;
+    const RE_ELECTRIC_INPUT = /^\s*(?:[:!#$%&*+./<=>?@^|~,)\]}-]+|where|in|of|then|else|deriving).?$/;
 
     // The state has the following properties:
     //

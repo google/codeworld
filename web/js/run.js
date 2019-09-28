@@ -107,7 +107,7 @@ function start() {
             hasWarnedStdin = true;
         }
         c(0);
-    }
+    };
 
     window.h$log = (...args) => {
         let s = '';

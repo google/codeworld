@@ -480,7 +480,10 @@ function updateArgHelp() {
     docDiv.appendChild(annotation);
     topDiv.appendChild(docDiv);
 
-    const widgetPos = { line: ln > 1 ? ln : cursor.line, ch:ch - functionName.length };
+    const widgetPos = {
+        line: ln > 1 ? ln : cursor.line,
+        ch: ch - functionName.length
+    };
     window.codeworldEditor.addWidget(widgetPos, topDiv, false, 'above', 'near');
 }
 

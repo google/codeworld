@@ -151,7 +151,7 @@ window.codeWorldBuiltins = {
         doc: 'Your program.',
         symbolStart: 0,
         symbolEnd: 7,
-        insertText: "program"
+        insertText: 'program'
     }
 };
 
@@ -293,7 +293,7 @@ function parseSymbolsFromCurrentCode() {
                         if (i.hiding && i.importList.includes(symbol)) continue;
                         if (!i.hiding && !i.importList.includes(symbol)) continue;
                     }
-                    symbols[i.asName + '.' + symbol] = window.codeWorldModules[i.module][symbol];
+                    symbols[`${i.asName}.${symbol}`] = window.codeWorldModules[i.module][symbol];
                     if (!i.qualified) {
                         symbols[symbol] = window.codeWorldModules[i.module][symbol];
                     }
@@ -302,7 +302,7 @@ function parseSymbolsFromCurrentCode() {
                     declaration: `module ${i.asName}`,
                     symbolStart: 7,
                     symbolEnd: 7 + i.asName.length,
-                    insertText: i.asName + '.',
+                    insertText: `${i.asName}.`,
                     module: true,
                     doc: null
                 };
@@ -431,9 +431,9 @@ function getQualifierPrefix(cm, pos) {
     while (start > 1) {
         let qtoken = cm.getTokenAt(CodeMirror.Pos(pos.line, start));
         let qual = qtoken.string;
-        if (qtoken.string == '.') {
+        if (qtoken.string === '.') {
             qtoken = cm.getTokenAt(CodeMirror.Pos(pos.line, qtoken.start));
-            qual = qtoken.string + '.';
+            qual = `${qtoken.string}.`;
         }
         if (!QUALIFIER.test(qual)) break;
 
@@ -470,13 +470,13 @@ function registerStandardHints(successFunc) {
         const hints = Object.keys(window.codeWorldSymbols);
         for (let i = 0; i < hints.length; i++) {
             const hint = hints[i];
-            const parts = hint.split(/\.(?=[^\.]+$)/);
-            const hintPrefix = parts.length < 2 ? '' : (parts[0] + '.');
+            const parts = hint.split(/\.(?=[^.]+$)/);
+            const hintPrefix = parts.length < 2 ? '' : (`${parts[0]}.`);
             const hintIdent = parts.length < 2 ? hint : parts[1];
             if (!VAR_OR_CON.test(hintIdent)) continue;
             if (window.codeWorldSymbols[hint].module) {
                 if (hint.startsWith(prefix) &&
-                        hint.toLowerCase().startsWith((prefix + term).toLowerCase())) {
+                    hint.toLowerCase().startsWith((prefix + term).toLowerCase())) {
                     found.push({
                         text: window.codeWorldSymbols[hint].insertText.substr(prefix.length),
                         details: window.codeWorldSymbols[hint],
@@ -485,8 +485,8 @@ function registerStandardHints(successFunc) {
                         }
                     });
                 }
-            } else if (hintPrefix === prefix
-                    && hintIdent.toLowerCase().startsWith(term.toLowerCase())) {
+            } else if (hintPrefix === prefix &&
+                hintIdent.toLowerCase().startsWith(term.toLowerCase())) {
                 found.push({
                     text: window.codeWorldSymbols[hint].insertText,
                     details: window.codeWorldSymbols[hint],

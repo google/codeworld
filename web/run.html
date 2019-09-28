@@ -17,15 +17,15 @@
     let paramList = location.search.slice(1).split('&');
     let params = {};
     for (let i = 0; i < paramList.length; i++) {
-        let name = paramList[i].split('=')[0];
-        let value = paramList[i].slice(name.length + 1);
+        let name = decodeURIComponent(paramList[i].split('=')[0]);
+        let value = decodeURIComponent(paramList[i].slice(name.length + 1));
         params[name] = value;
     }
     // params from the hash
     paramList = location.hash.slice(1).split('&');
     for (let i = 0; i < paramList.length; i++) {
-        let name = paramList[i].split('=')[0];
-        let value = paramList[i].slice(name.length + 1);
+        let name = decodeURIComponent(paramList[i].split('=')[0]);
+        let value = decodeURIComponent(paramList[i].slice(name.length + 1));
         params[name] = value;
     }
 
@@ -36,9 +36,9 @@
     let gid = params['gid'];
     if (!mode) mode = 'codeworld';
 
-    let query = '?mode=' + mode;
-    if (hash) query += '&hash=' + hash;
-    if (dhash) query += '&dhash=' + dhash;
+    let query = '?mode=' + encodeURIComponent(mode);
+    if (hash) query += '&hash=' + encodeURIComponent(hash);
+    if (dhash) query += '&dhash=' + encodeURIComponent(dhash);
 
     let uri = 'runJS' + query;
 

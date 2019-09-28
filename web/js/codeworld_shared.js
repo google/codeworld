@@ -415,11 +415,32 @@ function renderHover(keywordData) {
 
 function onHover(cm, data, node) {
     if (data && data.token && data.token.string) {
+        const prefix = getQualifierPrefix(
+            cm, CodeMirror.Pos(data.token.state.line, data.token.start));
         const token_name = data.token.string;
         if (hintBlacklist.indexOf(token_name) === -1) {
-            return renderHover(window.codeWorldSymbols[token_name]);
+            const info = window.codeWorldSymbols[prefix + token_name];
+            return renderHover(info);
         }
     }
+}
+
+function getQualifierPrefix(cm, pos) {
+    let prefix = '';
+    let start = pos.ch;
+    while (start > 1) {
+        let qtoken = cm.getTokenAt(CodeMirror.Pos(pos.line, start));
+        let qual = qtoken.string;
+        if (qtoken.string == '.') {
+            qtoken = cm.getTokenAt(CodeMirror.Pos(pos.line, qtoken.start));
+            qual = qtoken.string + '.';
+        }
+        if (!QUALIFIER.test(qual)) break;
+
+        prefix = qual + prefix;
+        start = qtoken.start;
+    }
+    return prefix;
 }
 
 // Hints and hover tooltips
@@ -443,20 +464,7 @@ function registerStandardHints(successFunc) {
             from = cur;
         }
 
-        let prefix = '';
-        let start = from.ch;
-        while (start > 1) {
-            let qtoken = cm.getTokenAt(CodeMirror.Pos(cur.line, start));
-            let qual = qtoken.string;
-            if (qtoken.string == '.') {
-                qtoken = cm.getTokenAt(CodeMirror.Pos(cur.line, qtoken.start));
-                qual = qtoken.string + '.';
-            }
-            if (!QUALIFIER.test(qual)) break;
-
-            prefix = qual + prefix;
-            start = qtoken.start;
-        }
+        const prefix = getQualifierPrefix(cm, from);
 
         const found = [];
         const hints = Object.keys(window.codeWorldSymbols);

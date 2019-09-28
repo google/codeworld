@@ -1,6 +1,7 @@
 program.hs:17:36: error:
-    • The & operator overlays two Pictures.
-      but here it is applied to Programs, instead.
-    • Suggested fix: move & inside the picture expression.
-      For example: drawingOf(a) & drawingOf(b) should be written as
-      drawingOf(a & b), instead.
+    • The & operator cannot be used to combine programs.
+    • Suggested fix: move & inside a picture expression.
+    • For example:
+          program = drawingOf(a) & drawingOf(b)
+      should be written instead as:
+          program = drawingOf(a & b)

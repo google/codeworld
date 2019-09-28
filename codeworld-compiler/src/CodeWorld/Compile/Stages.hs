@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE ViewPatterns #-}
 
 {-
@@ -59,7 +60,7 @@ checkCodeConventions = do
         checkExtraCommas
         checkNoncontiguousEquations
         checkAndOnPrograms
-        checkAndOnFunctions
+        checkAndInAnimation
 
 -- Look for uses of Template Haskell or related features in the compiler.  These
 -- cannot currently be used, because the compiler isn't properly sandboxed, so
@@ -515,17 +516,37 @@ checkAndOnPrograms =
 
     errorMsg =
         "error:\n" ++
-        "    \x2022 The & operator overlays two Pictures.\n" ++
-        "      but here it is applied to Programs, instead.\n" ++
-        "    \x2022 Suggested fix: move & inside the picture expression.\n" ++
-        "      For example: drawingOf(a) & drawingOf(b) should be written as\n" ++
-        "      drawingOf(a & b), instead."
+        "    \x2022 The & operator cannot be used to combine programs.\n" ++
+        "    \x2022 Suggested fix: move & inside a picture expression.\n" ++
+        "    \x2022 For example:\n" ++
+        "          program = drawingOf(a) & drawingOf(b)\n" ++
+        "      should be written instead as:\n" ++
+        "          program = drawingOf(a & b)"
 
-checkAndOnFunctions :: MonadCompile m => m ()
-checkAndOnFunctions =
+checkAndInAnimation :: MonadCompile m => m ()
+checkAndInAnimation =
     getParsedCode >>= \parsed -> case parsed of
-        Parsed mod -> return ()
+        Parsed mod -> addDiagnostics $ dedupErrorSpans $
+            everything (++) (mkQ [] andInAnimation) mod
         _ -> return ()
+  where
+    andInAnimation :: Exp SrcSpanInfo -> [Diagnostic]
+    andInAnimation
+        (App _ (Var _ (UnQual _ (Ident _ "animationOf")))
+               (Paren _ (InfixApp loc _ (QVarOp _ (UnQual _ (Symbol _ "&"))) _)))
+        = [(loc, CompileError, errorMsg)]
+    andInAnimation _ = []
+
+    errorMsg =
+        "error:\n" ++
+        "    \x2022 The & operator cannot be used with functions.\n" ++
+        "    \x2022 If you intended to combine animations,\n" ++
+        "      you must combine the frames in a function, instead.\n" ++
+        "    \x2022 For example:\n" ++
+        "          program = animationOf(a & b)\n" ++
+        "      should be written instead as:\n" ++
+        "          program = animationOf(overall)\n" ++
+        "          overall(t) = a(t) & b(t)"
 
 dedupErrorSpans :: [Diagnostic] -> [Diagnostic]
 dedupErrorSpans [] = []

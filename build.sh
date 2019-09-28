@@ -18,8 +18,6 @@ cwd=$(pwd)
 
 source base.sh
 
-run .  cabal update
-
 # Install the codeworld-base and codeworld-api packages
 run .  cabal_install --ghcjs ./codeworld-prediction \
                              ./codeworld-error-sanitizer \

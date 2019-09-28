@@ -67,6 +67,7 @@ if [ ! -f $BUILD/progress/system-pkgs ]; then
 
     run . sudo apt-get update -y
 
+    run . sudo apt-get install -y pkg-config
     run . sudo apt-get install -y git
     run . sudo apt-get install -y curl
     run . sudo apt-get install -y wget
@@ -192,8 +193,8 @@ if [ ! -f $BUILD/progress/ghc ]; then
 fi
 
 if [ ! -f $BUILD/progress/cabal-install ]; then
-  run .                  ghcup install-cabal
-  run .                  cabal update
+  run .                  ghcup install-cabal 2.4.1.0
+  run .                  cabal update --index-state='2019-09-28T01:46:00Z'
 
   touch $BUILD/progress/cabal-install
 fi
@@ -213,8 +214,10 @@ function fix_libexec_binary {
 if [ ! -f $BUILD/progress/ghcjs ]; then
   run .            cabal v2-install happy-1.19.9 alex --symlink-bindir=$BUILD/bin
   run $BUILD       rm -rf ghcjs
-  run $BUILD       git clone --branch ghc-8.6 --single-branch https://github.com/ghcjs/ghcjs.git
-  run $BUILD/ghcjs git submodule update --init --recursive
+  run $BUILD       git clone --recurse-submodules --branch ghc-8.6 --single-branch https://github.com/ghcjs/ghcjs.git
+  # The following two commands can be combined in git 2.13 using --recurse-submodules.
+  run $BUILD/ghcjs git checkout e87195eaa2bc7e320e18cf10386802bc90b7c874
+  run $BUILD/ghcjs git submodule update --init
   run .            patch -p0 -u -d $BUILD < ghc-artifacts/ghcjs-8.6-default-main.patch
   run $BUILD/ghcjs ./utils/makePackages.sh
   run $BUILD/ghcjs cabal v2-install . --symlink-bindir=$BUILD/bin -j1 --disable-documentation --overwrite-policy=always

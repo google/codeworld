@@ -515,7 +515,7 @@ function registerStandardHints(successFunc) {
             const data = {
                 list: found,
                 from: from,
-                to: cur
+                to: VAR_OR_CON.test(term) ? CodeMirror.Pos(cur.line, token.end) : cur
             };
 
             CodeMirror.on(data, 'close', deleteOldHintDocs);

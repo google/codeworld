@@ -193,6 +193,10 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             if (wellKnownWords.hasOwnProperty(w)) {
                 return wellKnownWords[w];
             }
+            if (w === 'qualified' &&
+                state.lastTokens.slice(-1).join(' ') === 'import') {
+                return 'keyword';
+            }
         }
         return t;
     }

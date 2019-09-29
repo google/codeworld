@@ -443,6 +443,44 @@ function getQualifierPrefix(cm, pos) {
     return prefix;
 }
 
+function substitutionCost(a, b, fixedLen) {
+    const insertCost = 1;
+    const deleteCost = 1.5;
+    const transCost = 1;
+    const substCost = 1.5;
+    const caseCost = 0.1;
+
+    const d = Array(b.length + 1).fill().map(() => Array(a.length + 1));
+    function scale(i) {
+        return i >= fixedLen ? 10 : 100;
+    }
+
+    for (let i = 0; i <= a.length; i += 1) {
+        for (let j = 0; j <= b.length; j += 1) {
+            if (i === 0 && j === 0) {
+                d[j][i] = 0;
+                continue;
+            } else if (i === 0) {
+                d[j][i] = d[j-1][i] + insertCost * scale(i);
+            } else if (j === 0) {
+                d[j][i] = d[j][i-1] + deleteCost * scale(i-1);
+            } else {
+                let replaceCost = a[i-1] === b[j-1] ? 0 :
+                        (a[i-1].toLowerCase() === b[j-1].toLowerCase() ? caseCost : substCost);
+
+                d[j][i] = Math.min(
+                    d[j][i-1] + deleteCost * scale(i-1),
+                    d[j-1][i] + insertCost * scale(i),
+                    d[j-1][i-1] + replaceCost * scale(i-1));
+                if (i > 1 && j > 1 && a[i-1] == b[j-2] && a[i-2] == b[j-1]) {
+                    d[j][i] = Math.min(d[j][i], d[j-2][i-2] + transCost * scale(i-2));
+                }
+            }
+        }
+    }
+    return d[b.length][a.length];
+}
+
 // Hints and hover tooltips
 function registerStandardHints(successFunc) {
     CodeMirror.registerHelper('hint', 'codeworld', cm => {
@@ -466,7 +504,13 @@ function registerStandardHints(successFunc) {
 
         const prefix = getQualifierPrefix(cm, from);
 
-        const found = [];
+        // The found collection is organized into three tiers:
+        //
+        // 1. Exact match for the current token.
+        // 2. Current token is a case-sensitive prefix.
+        // 3. Others, to be presented as fuzzy matches.
+        const found = [[], [], []];
+
         const hints = Object.keys(window.codeWorldSymbols);
         for (let i = 0; i < hints.length; i++) {
             const hint = hints[i];
@@ -475,45 +519,59 @@ function registerStandardHints(successFunc) {
             const hintIdent = parts.length < 2 ? hint : parts[1];
             if (!VAR_OR_CON.test(hintIdent)) continue;
             if (window.codeWorldSymbols[hint].module) {
-                if (hint.startsWith(prefix) &&
-                    hint.toLowerCase().startsWith((prefix + term).toLowerCase())) {
-                    found.push({
-                        text: window.codeWorldSymbols[hint].insertText.substr(prefix.length),
+                if (hint.startsWith(prefix)) {
+                    const candidate = {
+                            text: window.codeWorldSymbols[hint].insertText.substr(prefix.length),
+                            details: window.codeWorldSymbols[hint],
+                            render: elem => {
+                                renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
+                            }};
+                    if (hint === prefix + token.string) {
+                        found[0].push(candidate);
+                    } else if (hint.startsWith(prefix + term)) {
+                        found[1].push(candidate);
+                    } else {
+                        found[2].push(candidate);
+                    }
+                }
+            } else if (hintPrefix === prefix) {
+                const candidate = {
+                        text: window.codeWorldSymbols[hint].insertText,
                         details: window.codeWorldSymbols[hint],
                         render: elem => {
                             renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
-                        }
-                    });
+                        }};
+                if (hintIdent === token.string) {
+                    found[0].push(candidate);
+                } else if (hintIdent.startsWith(term)) {
+                    found[1].push(candidate);
+                } else {
+                    found[2].push(candidate);
                 }
-            } else if (hintPrefix === prefix &&
-                hintIdent.toLowerCase().startsWith(term.toLowerCase())) {
-                found.push({
-                    text: window.codeWorldSymbols[hint].insertText,
-                    details: window.codeWorldSymbols[hint],
-                    render: elem => {
-                        renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
-                    }
-                });
             }
         }
 
-        found.sort((a, b) => {
-            function startsWithLetter(c) {
-                return /^[a-zA-Z].*/.test(c);
-            }
+        // If there's a chance to find an exact match, clear out the fuzzy matches
+        // so that the exact match is chosen.
+        if (found[0].length + found[1].length === 1) {
+            found[2] = [];
+        }
 
-            if (startsWithLetter(a.text) && !startsWithLetter(b.text)) {
-                return -1;
-            } else if (startsWithLetter(b.text) && !startsWithLetter(a.text)) {
-                return 1;
-            } else {
+        const options = found[0].concat(found[1]).concat(found[2]);
+        for (let candidate of options) {
+            candidate.cost = substitutionCost(token.string, candidate.text, term.length)
+                - candidate.text.length * 10;
+        }
+
+        if (options.length > 0) {
+            options.sort((a, b) => {
+                if (a.cost < b.cost) return -1;
+                if (a.cost > b.cost) return 1;
                 return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1;
-            }
-        });
+            });
 
-        if (found.length > 0) {
             const data = {
-                list: found,
+                list: options,
                 from: from,
                 to: VAR_OR_CON.test(term) ? CodeMirror.Pos(cur.line, token.end) : cur
             };

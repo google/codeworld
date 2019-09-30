@@ -76,7 +76,7 @@ if [ ! -f $BUILD/progress/system-pkgs ]; then
     run . sudo apt-get install -y psmisc
 
     run . sudo apt-get install -y zlib1g-dev
-    run . sudo apt-get install -y libncurses5-dev
+    run . sudo apt-get install -y libncurses5{,-dev}
 
     # Needed for GHC
     run . sudo apt-get install -y make

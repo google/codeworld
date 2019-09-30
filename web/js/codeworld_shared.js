@@ -93,6 +93,11 @@ const hintBlacklist = [
     'thickPath',
     'text',
     'styledText',
+    'collaborationOf',
+    'simulationOf',
+    'interactionOf',
+    'debugInteractionOf',
+    'debugSimulationOf',
 
     // Old-style colors.
     'White',
@@ -478,7 +483,8 @@ function substitutionCost(a, b, fixedLen) {
             }
         }
     }
-    return d[b.length][a.length];
+
+    return d[b.length][a.length] + scale(fixedLen) * (a.length - b.length);
 }
 
 // Hints and hover tooltips
@@ -559,8 +565,7 @@ function registerStandardHints(successFunc) {
 
         const options = found[0].concat(found[1]).concat(found[2]);
         for (let candidate of options) {
-            candidate.cost = substitutionCost(token.string, candidate.text, term.length)
-                - candidate.text.length * 10;
+            candidate.cost = substitutionCost(token.string, candidate.text, term.length);
         }
 
         if (options.length > 0) {
@@ -570,8 +575,15 @@ function registerStandardHints(successFunc) {
                 return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1;
             });
 
+            const lowCost = options[0].cost;
+            let numGood;
+            for (numGood = 1; numGood < options.length; numGood++) {
+                if (numGood >= 16 && options[numGood].cost > 2 * options[0].cost + 50) break;
+            }
+            const goodOptions = options.slice(0, numGood);
+
             const data = {
-                list: options,
+                list: goodOptions,
                 from: from,
                 to: VAR_OR_CON.test(term) ? CodeMirror.Pos(cur.line, token.end) : cur
             };

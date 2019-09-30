@@ -17,10 +17,50 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-module Internal.Exports
-    -- Miscellaneous types and functions
-    ( Number
-    , Text
+module Internal.Exports (
+    -- * Entry points
+      Program
+    , drawingOf
+    , animationOf
+    , activityOf
+    , debugActivityOf
+    , groupActivityOf
+    -- * Pictures
+    , Picture
+    , codeWorldLogo
+    , circle
+    , solidCircle
+    , thickCircle
+    , rectangle
+    , solidRectangle
+    , thickRectangle
+    , pictures
+    , (&)
+    , coordinatePlane
+    , blank
+    , colored
+    , coloured
+    , translated
+    , scaled
+    , dilated
+    , rotated
+    , polyline
+    , thickPolyline
+    , polygon
+    , thickPolygon
+    , solidPolygon
+    , curve
+    , thickCurve
+    , closedCurve
+    , thickClosedCurve
+    , solidClosedCurve
+    , arc
+    , sector
+    , thickArc
+    , lettering
+    , styledLettering
+    , Font(..)
+    , TextStyle(..)
     -- * Colors
     , Color
     , Colour
@@ -32,36 +72,29 @@ module Internal.Exports
     , red
     , green
     , blue
-    , cyan
-    , magenta
     , yellow
-    , aquamarine
     , orange
-    , azure
-    , violet
-    , chartreuse
-    , rose
     , brown
     , pink
     , purple
     , gray
     , grey
     , mixed
-    , lighter
     , light
-    , darker
     , dark
-    , brighter
     , bright
-    , duller
     , dull
     , translucent
     , assortedColors
+    , lighter
+    , darker
+    , brighter
+    , duller
     , hue
     , saturation
     , luminosity
     , alpha
-    -- * Pictures
+    -- * Points and vectors
     , Point
     , translatedPoint
     , rotatedPoint
@@ -75,61 +108,27 @@ module Internal.Exports
     , scaledVector
     , rotatedVector
     , dotProduct
-    , Picture
-    , Font(..)
-    , TextStyle(..)
-    , blank
-    , polyline
-    , path
-    , thickPolyline
-    , thickPath
-    , polygon
-    , thickPolygon
-    , solidPolygon
-    , curve
-    , thickCurve
-    , closedCurve
-    , thickClosedCurve
-    , solidClosedCurve
-    , rectangle
-    , solidRectangle
-    , thickRectangle
-    , circle
-    , solidCircle
-    , thickCircle
-    , arc
-    , sector
-    , thickArc
-    , text
-    , lettering
-    , styledText
-    , styledLettering
-    , colored
-    , coloured
-    , translated
-    , scaled
-    , dilated
-    , rotated
-    , pictures
-    , (&)
-    , coordinatePlane
-    , codeWorldLogo
     -- * Events
     , Event(..)
     -- * Debugging
     , traced
-    -- * Entry points
-    , Program
-    , drawingOf
-    , animationOf
-    , activityOf
-    , debugActivityOf
-    , groupActivityOf
+    -- * Deprecated definitions (do not use)
+    , path
+    , thickPath
+    , text
+    , styledText
     , simulationOf
     , debugSimulationOf
     , interactionOf
     , debugInteractionOf
     , collaborationOf
+    , cyan
+    , magenta
+    , aquamarine
+    , azure
+    , violet
+    , chartreuse
+    , rose
     ) where
 
 import "base" Prelude (IO)

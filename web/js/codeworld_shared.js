@@ -98,27 +98,17 @@ const hintBlacklist = [
     'interactionOf',
     'debugInteractionOf',
     'debugSimulationOf',
-
-    // Old-style colors.
-    'White',
-    'Black',
-    'Gray',
-    'Grey',
-    'Red',
-    'Orange',
-    'Yellow',
-    'Green',
-    'Blue',
-    'Purple',
-    'Pink',
-    'Brown',
     'cyan',
     'magenta',
     'azure',
     'chartreuse',
     'aquamarine',
     'violet',
-    'rose'
+    'rose',
+    'hue',
+    'saturation',
+    'luminosity',
+    'alpha'
 ];
 
 const VAR_OR_CON = /^[a-zA-Z_][A-Za-z_0-9']*$/;

@@ -565,7 +565,6 @@ function registerStandardHints(successFunc) {
                 return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1;
             });
 
-            const lowCost = options[0].cost;
             let numGood;
             for (numGood = 1; numGood < options.length; numGood++) {
                 if (numGood >= 16 && options[numGood].cost > 2 * options[0].cost + 50) break;

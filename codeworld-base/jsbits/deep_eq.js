@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-#include <ghcjs/rts.h>
+#include <ghcjs/rts.h>  // lgtm [js/syntax-error]
 
 function cw$getThunks(o) {
     function isHeapObject(o) {

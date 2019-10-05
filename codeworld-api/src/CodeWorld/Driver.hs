@@ -1227,8 +1227,6 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     enableDeterministicMath
     let fullStepHandler dt = stepHandler dt . eventHandler (-1) (TimePassing dt)
 
-    showCanvas
-
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -1236,6 +1234,8 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     setCanvasSize canvas canvas
     _ <- on window resize $ do
         liftIO $ setCanvasSize canvas canvas
+
+    showCanvas
 
     frameRenderer <- createFrameRenderer canvas
 
@@ -1279,8 +1279,6 @@ run :: s
 run initial stepHandler eventHandler drawHandler injectTime = do
     let fullStepHandler dt = stepHandler dt . eventHandler (injectTime dt)
 
-    showCanvas
-
     Just window <- currentWindow
     Just doc <- currentDocument
     Just canvas <- getElementById doc ("screen" :: JSString)
@@ -1290,6 +1288,8 @@ run initial stepHandler eventHandler drawHandler injectTime = do
         setCanvasSize canvas canvas
         tryPutMVar needsRedraw ()
     setCanvasSize canvas canvas
+
+    showCanvas
 
     frameRenderer <- createFrameRenderer canvas
     currentState <- newMVar initial

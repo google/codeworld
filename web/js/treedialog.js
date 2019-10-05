@@ -269,4 +269,14 @@
         highlight = null;
     }
     window.destroyTreeDialog = destroyTreeDialog;
+
+    window.addEventListener('message', event => {
+        if (!event.data.type) return;
+
+        if (event.data.type === 'openTreeDialog') {
+            openTreeDialog(event.data.nodeId);
+        } else if (event.data.type === 'destroyTreeDialog') {
+            destroyTreeDialog();
+        }
+    });
 })();

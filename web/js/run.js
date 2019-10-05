@@ -23,6 +23,14 @@
 window.programStartTime = Date.now();
 window.hasObservableOutput = false;
 
+window.addEventListener('message', event => {
+    if (!event.data.type) return;
+
+    if (event.data.type === 'canvasShown') {
+        window.dispatchEvent(new Event('resize'));
+    }
+});
+
 function addMessage(type, str) {
     const recentStart = Date.now() - window.programStartTime < 1000;
     const printDeferred = window.hasObservableOutput || !recentStart;
@@ -43,9 +51,8 @@ function addMessage(type, str) {
             }
         }
 
-        if (window.parent && window.parent.printMessage) {
-            if (str !== '') window.parent.printMessage(type, str);
-            if (type === 'error') window.parent.markFailed();
+        if (window.parent) {
+            window.parent.postMessage({type: 'message', msgType: type, str: str}, '*');
             return;
         }
     } catch (e) {
@@ -57,7 +64,7 @@ function addMessage(type, str) {
 
 function notifyStarted() {
     try {
-        window.parent.notifyProgramStarted();
+        window.parent.postMessage({type: 'programStarted'}, '*');
     } catch (e) {
         // Ignore exceptions, which are expected if there's no parent.
     }
@@ -74,14 +81,7 @@ function showCanvas() {
             return;
         }
 
-        const runner = window.parent.document.getElementById('runner');
-        if (!runner) {
-            return;
-        }
-
-        runner.style.display = '';
-        runner.focus();
-        runner.contentWindow.focus();
+        window.parent.postMessage({type: 'showCanvas'}, '*');
     } catch (e) {
         // Ignore, and assume the canvas is already shown.
     }

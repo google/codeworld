@@ -823,6 +823,31 @@ function stopRun() {
     run('', '', '', false, null);
 }
 
+window.addEventListener('message', event => {
+    if (!event.data.type) return;
+
+    if (event.data.type === 'programStarted') {
+        if (window.lastRunMessage) {
+            const msg = window.lastRunMessage;
+            window.lastRunMessage = null;
+            setTimeout(() => {
+                showRequiredChecksInDialog(msg);
+            }, 500);
+        }
+    } else if (event.data.type === 'showCanvas') {
+        const runner = document.getElementById('runner');
+        runner.style.display = '';
+        runner.focus();
+        runner.contentWindow.focus();
+        runner.contentWindow.postMessage({type: 'canvasShown'}, '*');
+    } else if (event.data.type === 'message') {
+        if (event.data.str !== '') printMessage(event.data.msgType, event.data.str);
+        if (event.data.msgType === 'error') markFailed();
+    } else if (event.data.type === 'updateUI') {
+        updateUI();
+    }
+});
+
 function run(hash, dhash, msg, error, generation) {
     window.runningGeneration = generation;
     window.lastRunMessage = msg;
@@ -877,16 +902,6 @@ function run(hash, dhash, msg, error, generation) {
 
     updateUI();
     document.getElementById('runner').addEventListener('load', updateUI);
-}
-
-function notifyProgramStarted() {
-    if (window.lastRunMessage) {
-        const msg = window.lastRunMessage;
-        window.lastRunMessage = null;
-        setTimeout(() => {
-            showRequiredChecksInDialog(msg);
-        }, 500);
-    }
 }
 
 function showRequiredChecksInDialog(msg) {

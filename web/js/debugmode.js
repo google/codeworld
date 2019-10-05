@@ -88,15 +88,15 @@
                     });
 
                     if (nodeId >= 0) {
-                        parent.openTreeDialog(nodeId);
+                        parent.postMessage({type: 'openTreeDialog', nodeId: nodeId}, '*');
                     }
                 }
             });
 
             available = true;
             window.debugAvailable = true;
-            if (parent && parent.updateUI) {
-                parent.updateUI();
+            if (parent) {
+                parent.postMessage({type: 'updateUI'}, '*');
             }
         }
     }
@@ -113,10 +113,10 @@
 
         parent.initTreeDialog(cachedPic, debugHighlightShape,
             debugDrawShape, () => stopDebugMode());
-        parent.openTreeDialog(0);
+        parent.postMessage({type: 'openTreeDialog', nodeId: 0}, '*');
 
         window.debugActive = true;
-        parent.updateUI();
+        parent.postMessage({type: 'updateUI'}, '*');
     }
     window.startDebugMode = startDebugMode;
 
@@ -128,10 +128,10 @@
         debugHighlightShape(true, -1);
         debugHighlightShape(false, -1);
 
-        parent.destroyTreeDialog();
+        parent.postMessage({type: 'destroyTreeDialog'}, '*');
 
         window.debugActive = false;
-        parent.updateUI();
+        parent.postMessage({type: 'updateUI'}, '*');
     }
     window.stopDebugMode = stopDebugMode;
 

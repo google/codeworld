@@ -43,22 +43,17 @@
     //   position). A negative value indicates to stop highlighting or selecting.
     //   At most one shape may be highlighted and one shape selected at a time.
     let debugHighlightShape = null;
-    // debugDrawShape :: (Canvas, Int) -> ()
-    //  Draws the node with a coordinate plane in the background.
-    let debugDrawShape = null;
 
     let cachedPic = null;
     let canvas = null;
 
     // Globals
 
-    function initDebugMode(getNode, setActive, getPicture, highlightShape,
-        drawShape) {
+    function initDebugMode(getNode, setActive, getPicture, highlightShape) {
         debugGetNode = getNode;
         debugSetActive = setActive;
         debugGetPicture = getPicture;
         debugHighlightShape = highlightShape;
-        debugDrawShape = drawShape;
 
         if (!available) {
             canvas = document.getElementById('screen');
@@ -111,9 +106,7 @@
         debugSetActive(true);
         cachedPic = debugGetPicture();
 
-        parent.initTreeDialog(cachedPic, debugHighlightShape,
-            debugDrawShape, () => stopDebugMode());
-        parent.postMessage({type: 'openTreeDialog', nodeId: 0}, '*');
+        parent.postMessage({type: 'openTreeDialog', fullPic: cachedPic, nodeId: 0}, '*');
 
         window.debugActive = true;
         parent.postMessage({type: 'updateUI'}, '*');
@@ -143,4 +136,14 @@
         }
     }
     window.toggleDebugMode = toggleDebugMode;
+
+    window.addEventListener('message', event => {
+        if (!event.data.type) return;
+
+        if (event.data.type === 'highlight') {
+            if (active) debugHighlightShape(true, event.data.nodeId);
+        } else if (event.data.type === 'cancelDebug') {
+            stopDebugMode();
+        }
+    });
 })();

@@ -20,11 +20,8 @@
         content = null,
         fullPic = null,
         currentPic = null,
-        drawShape = null,
-        highlight = null,
         marker = null,
-        open = false,
-        canvas = null;
+        open = false;
 
     function openDialog() {
         dialog.dialog('open');
@@ -148,7 +145,6 @@
 
             currentPic = pic;
             dialog.dialog('option', 'title', pic.name);
-            drawShape(canvas, pic.id);
             if (pic.startLine && pic.startCol && pic.endLine && pic
                 .endCol) {
                 codeworldEditor.setSelection({
@@ -163,7 +159,7 @@
             }
         });
         a.addEventListener('mouseover', evt => {
-            highlight(true, pic.id);
+            highlight(pic.id);
 
             if (pic.startLine && pic.startCol && pic.endLine && pic
                 .endCol) {
@@ -181,7 +177,7 @@
             }
         });
         a.addEventListener('mouseout', evt => {
-            highlight(true, -1);
+            highlight(-1);
 
             if (marker) {
                 marker.clear();
@@ -191,21 +187,20 @@
         return a;
     }
 
-    function buildDrawingPreview() {
-        const canvas = document.createElement('canvas');
-
-        canvas.width = 250;
-        canvas.height = 250;
-
-        return canvas;
-    }
-
     // Globals
 
-    function initTreeDialog(pic, highlt, draw, closeCallback) {
+    function highlight(nodeId) {
+        const runner = document.getElementById('runner');
+        runner.contentWindow.postMessage({type: 'highlight', nodeId: nodeId}, '*')
+    }
+
+    function cancelDebug() {
+        const runner = document.getElementById('runner');
+        runner.contentWindow.postMessage({type: 'cancelDebug'}, '*')
+    }
+
+    function initTreeDialog(pic) {
         fullPic = pic;
-        highlight = highlt;
-        drawShape = draw;
 
         const div = document.createElement('div');
         dialog = $(div).dialog({
@@ -217,8 +212,8 @@
             width: 650,
             close: () => {
                 open = false;
-                highlight(true, -1);
-                if (closeCallback) closeCallback();
+                highlight(-1);
+                cancelDebug();
             }
         });
 
@@ -233,16 +228,11 @@
             openDialog();
         }
 
-        // Select should probably look better before this is enabled
-        // highlight(false, id);
-
         const picture = getPicNode(id);
         currentPic = picture;
 
         content.innerHTML = '';
 
-        canvas = buildDrawingPreview();
-        content.appendChild(canvas);
         content.appendChild(buildNestedList(id));
 
         dialog.dialog('option', 'title', picture.name);
@@ -261,12 +251,9 @@
         if (dialog) {
             dialog.remove();
         }
-        if (highlight) {
-            highlight(false, -1);
-        }
+        highlight(-1);
         dialog = null;
         content = null;
-        highlight = null;
     }
     window.destroyTreeDialog = destroyTreeDialog;
 
@@ -274,6 +261,7 @@
         if (!event.data.type) return;
 
         if (event.data.type === 'openTreeDialog') {
+            initTreeDialog(event.data.fullPic);
             openTreeDialog(event.data.nodeId);
         } else if (event.data.type === 'destroyTreeDialog') {
             destroyTreeDialog();

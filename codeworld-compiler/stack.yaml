@@ -1,0 +1,38 @@
+
+packages:
+  - .
+
+extra-deps:
+  - haskell-src-exts-1.21.0
+  - ghc-lib-parser-0.20190909
+  - ../codeworld-error-sanitizer
+  - ../codeworld-api
+  - blank-canvas-0.7
+  - ref-tf-0.4.0.2
+  - reflex-0.6.2.4
+  - constraints-extras-0.3.0.2
+  - dependent-map-0.3
+  - dependent-sum-0.6.1
+  - monoidal-containers-0.6
+  - witherable-0.3.1
+  - kansas-comet-0.4
+  # - test-framework-hunit-0.3.0.2
+  # - test-framework-0.8.2.0
+  # - HUnit-1.6.0.0
+
+resolver: lts-14.9
+# compiler: ghcjs-8.6.0.1_ghc-8.6.2
+# compiler-check: newer-minor
+# setup-info:
+#   ghcjs:
+#     source:
+#       ghcjs-8.6.0.1_ghc-8.6.2:
+#         url: /ghcjs
+
+# docker:
+#     enable: true
+#     repo: "peterbecich/stack-build-ghcjs-8.6" # It will automatically add :lts-x.xx
+#     # auto-pull: true
+#     persist: true
+
+# system-ghc: false

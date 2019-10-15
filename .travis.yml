@@ -18,6 +18,15 @@ language: generic
 cache:
   directories:
   - $HOME/.stack
+  - $HOME/codeworld-account/.stack-work
+  - $HOME/codeworld-api/.stack-work
+  - $HOME/codeworld-auth/.stack-work
+  - $HOME/codeworld-compiler/.stack-work
+  - $HOME/codeworld-error-sanitizer/.stack-work
+  - $HOME/codeworld-game-api/.stack-work
+  - $HOME/codeworld-game-server/.stack-work
+  - $HOME/codeworld-prediction/.stack-work
+  - $HOME/codeworld-server/.stack-work
 
 # Ensure necessary system libraries are present
 addons:
@@ -25,15 +34,25 @@ addons:
     packages:
       - libgmp-dev
 
+env:
+  - MODULE=.
+  - MODULE=codeworld-account
+  - MODULE=codeworld-api
+  - MODULE=codeworld-auth
+  - MODULE=codeworld-compiler
+  - MODULE=codeworld-error-sanitizer
+  - MODULE=codeworld-game-api
+  - MODULE=codeworld-game-server
+  - MODULE=codeworld-prediction
+  - MODULE=codeworld-server
+
 before_install:
 # Download and unpack the stack executable
 - mkdir -p ~/.local/bin
 - export PATH=$HOME/.local/bin:$PATH
 - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
 
-install:
-# Build dependencies
-- stack --no-terminal --install-ghc build --only-dependencies
-
 script:
-- stack --no-terminal build --haddock --no-haddock-deps
+  - cd $MODULE
+  - stack setup
+  - stack build --fast

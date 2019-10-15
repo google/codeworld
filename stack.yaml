@@ -10,7 +10,7 @@ packages:
   - codeworld-game-server
   - codeworld-prediction
   - codeworld-server
-  # compile ghcjs packages separately
+  # can't compile these
   # - codeworld-base  
   # - funblocks-client
 
@@ -30,11 +30,3 @@ extra-deps:
   - witherable-0.3.1
   - constraints-extras-0.3.0.2
   - kansas-comet-0.4
-
-#   - kansas-comet-0.4
-#   - jwt-0.9.0
-#   - containers-0.5.11.0
-#   - network-2.6.3.6
-#   - filesystem-trees-0.1.0.6
-#   - directory-1.2.7.1
-#   - hindent-5.2.7

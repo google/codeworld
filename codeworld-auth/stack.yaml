@@ -7,4 +7,3 @@ allow-newer: false
 
 extra-deps:
   - ../codeworld-account
-  # - jwt-0.9.0

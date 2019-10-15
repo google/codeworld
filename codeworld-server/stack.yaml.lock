@@ -12,6 +12,13 @@ packages:
   original:
     hackage: hindent-5.3.1
 - completed:
+    hackage: haskell-src-exts-1.20.3@sha256:83ae523bbec907a42c043de1f5bbf4c1554e7c3b898af07bb1ce6e80eaa282ec,4589
+    pantry-tree:
+      size: 92343
+      sha256: 44f923980e915c41b96f326d93ef19c0b51e0799fe2370d7604d16c8cbad9151
+  original:
+    hackage: haskell-src-exts-1.20.3
+- completed:
     hackage: ghc-lib-parser-0.20190909@sha256:47677612d04fddde238c17350b14c3fc3b927ff0aa0ee4b2d5f8e1f3ed998d0e,8805
     pantry-tree:
       size: 19280

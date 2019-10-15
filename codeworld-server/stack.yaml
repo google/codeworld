@@ -3,18 +3,13 @@ resolver: lts-14.9
 packages:
   - .
 
-allow-newer: true
+allow-newer: false
 
 extra-deps:
   - ../codeworld-account
   - ../codeworld-auth
   - ../codeworld-compiler
   - ../codeworld-error-sanitizer
-  - hindent-5.3.1
   - ghc-lib-parser-0.20190909
-
-  # - filesystem-trees-0.1.0.6
-  # - containers-0.5.11.0
-  # - directory-1.2.7.1
-  # - time-1.7.0.1
-  # - jwt-0.9.0
+  - haskell-src-exts-1.20.3
+  - hindent-5.3.1

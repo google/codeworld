@@ -23,4 +23,3 @@ dist-*
 *.o
 *.prof
 *.swp
-testcase-output/

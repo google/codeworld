@@ -1,10 +1,7 @@
 resolver: lts-14.9
-        
 packages:
   - .
-
 allow-newer: false
-
 extra-deps:
   - blank-canvas-0.6.3
   - kansas-comet-0.4

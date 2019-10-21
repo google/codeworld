@@ -1,7 +1,0 @@
-resolver: lts-14.9
-packages:
-  - .
-allow-newer: false
-
-extra-deps:
-  - ../codeworld-account

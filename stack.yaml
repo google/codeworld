@@ -17,16 +17,21 @@ packages:
 allow-newer: false
   
 extra-deps:
+  - binary-0.8.7.0
   - blank-canvas-0.6.3
   - colour-2.3.4
-  - ref-tf-0.4.0.2
-  - reflex-0.6.2.4
-  - ghc-lib-parser-0.20190909
-  - haskell-src-exts-1.20.3
-  - hindent-5.3.1
+  - constraints-extras-0.3.0.2
+  - containers-0.6.2.1
   - dependent-map-0.3
   - dependent-sum-0.6.1
-  - monoidal-containers-0.6
-  - witherable-0.3.1
-  - constraints-extras-0.3.0.2
+  - ghc-lib-parser-0.20190909
+  - haskell-src-exts-1.20.3
+  - hpc-0.6.0.3
+  - hindent-5.3.1
   - kansas-comet-0.4
+  - monoidal-containers-0.6
+  - network-2.6.3.6
+  - ref-tf-0.4.0.2
+  - reflex-0.6.2.4
+  - text-1.2.4.0
+  - witherable-0.3.1

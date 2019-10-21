@@ -1349,7 +1349,7 @@ everything in between.
 
 ### Using tools wisely
 
-The CodeWorld web site is the too you use to create your drawings.
+The CodeWorld web site is the tool you use to create your drawings.
 It also has some tricks to help you keep track of parentheses.
 
 * Matching pairs of parentheses are always the same color when you look

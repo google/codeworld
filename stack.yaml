@@ -1,4 +1,4 @@
-resolver: lts-14.9
+resolver: lts-14.11
 
 packages: 
   - codeworld-account

@@ -49,7 +49,6 @@ before_install:
 - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
 
 script:
-  - cd $MODULE
   - stack setup
-  - stack build --fast
-  - if [ $TEST == "true" ]; then stack test --fast; fi
+  - stack build $MODULE --fast
+  - if [ $TEST == "true" ]; then stack test $MODULE --fast; fi

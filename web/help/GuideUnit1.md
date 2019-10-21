@@ -1468,7 +1468,7 @@ can be visualized something like this:
 **********************************************************************************
 
 While this may not seem much simpler, it does make it easier to understand the
-structure of the expression  You can see that the entire expression is an
+structure of the expression.  You can see that the entire expression is an
 application of the `drawingOf` function, which has one argument.  And you can
 look closer at the argument to see what its pieces are.
 

@@ -1348,7 +1348,7 @@ function share() {
 }
 
 function inspect() {
-    document.getElementById('runner').contentWindow.toggleDebugMode();
+    document.getElementById('runner').contentWindow.postMessage({type: 'toggleDebug'}, '*');
     updateUI();
 }
 

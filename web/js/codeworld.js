@@ -814,9 +814,7 @@ function formatSource() {
 }
 
 function stopRun() {
-    if (document.getElementById('runner').contentWindow.debugActive) {
-        document.getElementById('runner').contentWindow.stopDebugMode();
-    }
+    document.getElementById('runner').contentWindow.postMessage({type: 'cancelDebug'}, '*');
     destroyTreeDialog();
     window.cancelCompile();
 

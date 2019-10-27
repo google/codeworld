@@ -191,12 +191,12 @@
 
     function highlight(nodeId) {
         const runner = document.getElementById('runner');
-        runner.contentWindow.postMessage({type: 'highlight', nodeId: nodeId}, '*')
+        runner.contentWindow.postMessage({type: 'highlight', nodeId: nodeId}, '*');
     }
 
     function cancelDebug() {
         const runner = document.getElementById('runner');
-        runner.contentWindow.postMessage({type: 'cancelDebug'}, '*')
+        runner.contentWindow.postMessage({type: 'cancelDebug'}, '*');
     }
 
     function initTreeDialog(pic) {
@@ -261,7 +261,7 @@
         if (!event.data.type) return;
 
         if (event.data.type === 'openTreeDialog') {
-            initTreeDialog(event.data.fullPic);
+            if (event.data.fullPic) initTreeDialog(event.data.fullPic);
             openTreeDialog(event.data.nodeId);
         } else if (event.data.type === 'destroyTreeDialog') {
             destroyTreeDialog();

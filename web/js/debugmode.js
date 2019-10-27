@@ -144,6 +144,8 @@
             if (active) debugHighlightShape(true, event.data.nodeId);
         } else if (event.data.type === 'cancelDebug') {
             stopDebugMode();
+        } else if (event.data.type === 'toggleDebug') {
+            toggleDebugMode();
         }
     });
 })();

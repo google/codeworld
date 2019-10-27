@@ -1,0 +1,54 @@
+# https://docs.haskellstack.org/en/stable/travis_ci/
+
+dist: bionic
+language: generic
+cache:
+  directories:
+  - $HOME/.stack
+  - $HOME/codeworld-account/.stack-work
+  - $HOME/codeworld-api/.stack-work
+  - $HOME/codeworld-auth/.stack-work
+  - $HOME/codeworld-compiler/.stack-work
+  - $HOME/codeworld-error-sanitizer/.stack-work
+  - $HOME/codeworld-game-api/.stack-work
+  - $HOME/codeworld-game-server/.stack-work
+  - $HOME/codeworld-prediction/.stack-work
+  - $HOME/codeworld-server/.stack-work
+
+addons:
+  apt:
+    packages:
+      - libgmp-dev
+
+matrix:
+  include:
+  - name: "root (no tests)"
+    env: MODULE=. TEST=false
+  - name: "account"
+    env: MODULE=codeworld-account TEST=true
+  - name: "api"
+    env: MODULE=codeworld-api TEST=true
+  - name: "auth"
+    env: MODULE=codeworld-auth TEST=true
+  - name: "compiler (no tests)"
+    env: MODULE=codeworld-compiler TEST=false
+  - name: "error-sanitizer"
+    env: MODULE=codeworld-error-sanitizer TEST=true
+  - name: "game-api"
+    env: MODULE=codeworld-game-api TEST=true
+  - name: "game-server"
+    env: MODULE=codeworld-game-server TEST=true
+  - name: "prediction"
+    env: MODULE=codeworld-prediction TEST=true
+  - name: "server"
+    env: MODULE=codeworld-server TEST=true
+
+before_install:
+- mkdir -p ~/.local/bin
+- export PATH=$HOME/.local/bin:$PATH
+- travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+
+script:
+  - stack setup
+  - stack build $MODULE --fast
+  - if [ $TEST == "true" ]; then stack test $MODULE --fast; fi

@@ -1,0 +1,37 @@
+resolver: lts-14.11
+
+packages: 
+  - codeworld-account
+  - codeworld-api
+  - codeworld-auth
+  - codeworld-compiler
+  - codeworld-error-sanitizer
+  - codeworld-game-api
+  - codeworld-game-server
+  - codeworld-prediction
+  - codeworld-server
+  # can't compile these
+  # - codeworld-base  
+  # - funblocks-client
+
+allow-newer: false
+  
+extra-deps:
+  - binary-0.8.7.0
+  - blank-canvas-0.6.3
+  - colour-2.3.4
+  - constraints-extras-0.3.0.2
+  - containers-0.6.2.1
+  - dependent-map-0.3
+  - dependent-sum-0.6.1
+  - ghc-lib-parser-0.20190909
+  - haskell-src-exts-1.20.3
+  - hpc-0.6.0.3
+  - hindent-5.3.1
+  - kansas-comet-0.4
+  - monoidal-containers-0.6
+  - network-2.6.3.6
+  - ref-tf-0.4.0.2
+  - reflex-0.6.2.4
+  - text-1.2.4.0
+  - witherable-0.3.1

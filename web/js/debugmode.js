@@ -19,10 +19,6 @@
     let available = false;
     let active = false;
 
-    // Checked by parent.updateUI
-    window.debugAvailable = false;
-    window.debugActive = false;
-
     // These functions are provided by a debugmode-supported entrypoint when
     // calling initDebugMode
     //  debugGetNode :: { x :: Double, y :: Double } -> Int
@@ -56,6 +52,8 @@
         debugHighlightShape = highlightShape;
 
         if (!available) {
+            available = true;
+
             canvas = document.getElementById('screen');
 
             canvas.addEventListener('mousemove', evt => {
@@ -88,10 +86,8 @@
                 }
             });
 
-            available = true;
-            window.debugAvailable = true;
             if (parent) {
-                parent.postMessage({type: 'updateUI'}, '*');
+                parent.postMessage({type: 'initDebug'}, '*');
             }
         }
     }
@@ -107,9 +103,7 @@
         cachedPic = debugGetPicture();
 
         parent.postMessage({type: 'openTreeDialog', fullPic: cachedPic, nodeId: 0}, '*');
-
-        window.debugActive = true;
-        parent.postMessage({type: 'updateUI'}, '*');
+        parent.postMessage({type: 'setDebug', active: true}, '*');
     }
     window.startDebugMode = startDebugMode;
 
@@ -122,9 +116,7 @@
         debugHighlightShape(false, -1);
 
         parent.postMessage({type: 'destroyTreeDialog'}, '*');
-
-        window.debugActive = false;
-        parent.postMessage({type: 'updateUI'}, '*');
+        parent.postMessage({type: 'setDebug', active: false}, '*');
     }
     window.stopDebugMode = stopDebugMode;
 

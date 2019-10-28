@@ -41,6 +41,8 @@ async function init() {
 
     window.savedGeneration = null;
     window.runningGeneration = null;
+    window.debugAvailable = false;
+    window.debugActive = false;
 
     if (window.location.pathname === '/haskell') {
         window.buildMode = 'haskell';
@@ -633,12 +635,10 @@ function updateUI() {
         document.getElementById('shareFolderButton').style.display = 'none';
     }
 
-    const debugAvailable = document.getElementById('runner').contentWindow.debugAvailable;
-    const debugActive = document.getElementById('runner').contentWindow.debugActive;
-    if (debugAvailable) {
+    if (window.debugAvailable) {
         document.getElementById('inspectButton').style.display = '';
 
-        if (debugActive) {
+        if (window.debugActive) {
             document.getElementById('inspectButton').style.color = 'black';
         } else {
             document.getElementById('inspectButton').style.color = '';
@@ -843,11 +843,19 @@ window.addEventListener('message', event => {
         if (event.data.msgType === 'error') markFailed();
     } else if (event.data.type === 'updateUI') {
         updateUI();
+    } else if (event.data.type === 'initDebug') {
+        window.debugAvailable = true;
+        updateUI();
+    } else if (event.data.type === 'setDebug') {
+        window.debugActive = event.data.active;
+        updateUI();
     }
 });
 
 function run(hash, dhash, msg, error, generation) {
     window.runningGeneration = generation;
+    window.debugAvailable = false;
+    window.debugActive = false;
     window.lastRunMessage = msg;
 
     const runner = document.getElementById('runner');

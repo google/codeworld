@@ -16,9 +16,6 @@
 'use strict';
 
 (() => {
-    let available = false;
-    let active = false;
-
     // These functions are provided by a debugmode-supported entrypoint when
     // calling initDebugMode
     //  debugGetNode :: { x :: Double, y :: Double } -> Int
@@ -40,8 +37,8 @@
     //   At most one shape may be highlighted and one shape selected at a time.
     let debugHighlightShape = null;
 
-    let cachedPic = null;
-    let canvas = null;
+    let canvas = null;  // Null if debugging isn't enabled.
+    let cachedPic = null;  // Null if debugging isn't active.
 
     // Globals
 
@@ -51,13 +48,11 @@
         debugGetPicture = getPicture;
         debugHighlightShape = highlightShape;
 
-        if (!available) {
-            available = true;
-
+        if (canvas === null) {
             canvas = document.getElementById('screen');
 
             canvas.addEventListener('mousemove', evt => {
-                if (active) {
+                if (cachedPic !== null) {
                     const nodeId = debugGetNode({
                         x: evt.clientX,
                         y: evt.clientY
@@ -68,13 +63,13 @@
             });
 
             canvas.addEventListener('mouseout', evt => {
-                if (active) {
+                if (cachedPic !== null) {
                     debugHighlightShape(true, -1);
                 }
             });
 
             canvas.addEventListener('click', evt => {
-                if (active) {
+                if (cachedPic !== null) {
                     const nodeId = debugGetNode({
                         x: evt.clientX,
                         y: evt.clientY
@@ -93,49 +88,27 @@
     }
     window.initDebugMode = initDebugMode;
 
-    function startDebugMode() {
-        if (!available) {
-            throw new Error('Debug mode is not available.');
-        }
-
-        active = true;
-        debugSetActive(true);
-        cachedPic = debugGetPicture();
-
-        parent.postMessage({type: 'openTreeDialog', fullPic: cachedPic, nodeId: 0}, '*');
-        parent.postMessage({type: 'setDebug', active: true}, '*');
-    }
-    window.startDebugMode = startDebugMode;
-
-    function stopDebugMode() {
-        active = false;
-        debugSetActive(false);
-        cachedPic = null;
-
-        debugHighlightShape(true, -1);
-        debugHighlightShape(false, -1);
-
-        parent.postMessage({type: 'destroyTreeDialog'}, '*');
-        parent.postMessage({type: 'setDebug', active: false}, '*');
-    }
-    window.stopDebugMode = stopDebugMode;
-
     function toggleDebugMode() {
-        if (active) {
-            stopDebugMode();
+        cachedPic = cachedPic === true ? debugGetPicture() : null;
+        debugSetActive(cachedPic !== true);
+        debugHighlightShape(true, -1);
+
+        if (cachedPic === null) {
+            parent.postMessage({type: 'destroyTreeDialog'}, '*');
         } else {
-            startDebugMode();
+            parent.postMessage({type: 'openTreeDialog', fullPic: cachedPic, nodeId: 0}, '*');
         }
+
+        parent.postMessage({type: 'setDebug', active: cachedPic !== null}, '*');
     }
-    window.toggleDebugMode = toggleDebugMode;
 
     window.addEventListener('message', event => {
         if (!event.data.type) return;
 
         if (event.data.type === 'highlight') {
-            if (active) debugHighlightShape(true, event.data.nodeId);
+            if (cachedPic !== null) debugHighlightShape(true, event.data.nodeId);
         } else if (event.data.type === 'cancelDebug') {
-            stopDebugMode();
+            if (cachedPic !== null) toggleDebugMode();
         } else if (event.data.type === 'toggleDebug') {
             toggleDebugMode();
         }

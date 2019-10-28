@@ -814,8 +814,10 @@ function formatSource() {
 }
 
 function stopRun() {
-    document.getElementById('runner').contentWindow.postMessage({type: 'cancelDebug'}, '*');
-    destroyTreeDialog();
+    if (window.debugActive) {
+        document.getElementById('runner').contentWindow.postMessage({type: 'toggleDebug'}, '*');
+        destroyTreeDialog();
+    }
     window.cancelCompile();
 
     run('', '', '', false, null);

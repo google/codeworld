@@ -815,7 +815,7 @@ function formatSource() {
 
 function stopRun() {
     if (window.debugActive) {
-        document.getElementById('runner').contentWindow.postMessage({type: 'toggleDebug'}, '*');
+        document.getElementById('runner').contentWindow.postMessage({type: 'cancelDebug'}, '*');
         destroyTreeDialog();
     }
     window.cancelCompile();
@@ -856,6 +856,15 @@ window.addEventListener('message', event => {
         updateUI();
     }
 });
+
+function inspect() {
+    if (window.debugActive) {
+        document.getElementById('runner').contentWindow.postMessage({type: 'cancelDebug'}, '*');
+    } else {
+        document.getElementById('runner').contentWindow.postMessage({type: 'startDebug'}, '*');
+    }
+    updateUI();
+}
 
 function run(hash, dhash, msg, error, generation) {
     window.runningGeneration = generation;

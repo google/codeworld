@@ -38,7 +38,7 @@
     let debugHighlightShape = null;
 
     let canvas = null;  // Null if debugging isn't enabled.
-    let cachedPic = null;  // Null if debugging isn't active.
+    let active = false;
 
     // Globals
 
@@ -52,7 +52,7 @@
             canvas = document.getElementById('screen');
 
             canvas.addEventListener('mousemove', evt => {
-                if (cachedPic !== null) {
+                if (active) {
                     const nodeId = debugGetNode({
                         x: evt.clientX,
                         y: evt.clientY
@@ -63,13 +63,13 @@
             });
 
             canvas.addEventListener('mouseout', evt => {
-                if (cachedPic !== null) {
+                if (active) {
                     debugHighlightShape(true, -1);
                 }
             });
 
             canvas.addEventListener('click', evt => {
-                if (cachedPic !== null) {
+                if (active) {
                     const nodeId = debugGetNode({
                         x: evt.clientX,
                         y: evt.clientY
@@ -88,27 +88,31 @@
     }
     window.initDebugMode = initDebugMode;
 
-    function toggleDebugMode() {
-        cachedPic = cachedPic === null ? debugGetPicture() : null;
-        debugSetActive(cachedPic !== null);
+    function startDebug() {
+        active = true;
+        debugSetActive(true);
         debugHighlightShape(true, -1);
 
-        if (cachedPic === null) {
-            parent.postMessage({type: 'destroyTreeDialog'}, '*');
-        } else {
-            parent.postMessage({type: 'openTreeDialog', fullPic: cachedPic, nodeId: 0}, '*');
-        }
+        parent.postMessage({type: 'openTreeDialog', fullPic: debugGetPicture(), nodeId: 0}, '*');
+    }
+
+    function stopDebug() {
+        active = false;
+        debugSetActive(false);
+        debugHighlightShape(true, -1);
+
+        parent.postMessage({type: 'destroyTreeDialog'}, '*');
     }
 
     window.addEventListener('message', event => {
         if (!event.data.type) return;
 
         if (event.data.type === 'highlight') {
-            if (cachedPic !== null) debugHighlightShape(true, event.data.nodeId);
+            if (active) debugHighlightShape(true, event.data.nodeId);
         } else if (event.data.type === 'cancelDebug') {
-            if (cachedPic !== null) toggleDebugMode();
-        } else if (event.data.type === 'toggleDebug') {
-            toggleDebugMode();
+            stopDebug();
+        } else if (event.data.type === 'startDebug') {
+            startDebug();
         }
     });
 })();

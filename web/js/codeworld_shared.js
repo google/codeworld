@@ -1347,11 +1347,6 @@ function share() {
     go();
 }
 
-function inspect() {
-    document.getElementById('runner').contentWindow.postMessage({type: 'toggleDebug'}, '*');
-    updateUI();
-}
-
 function shareFolder_(mode) {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to share your folder.', 'error');

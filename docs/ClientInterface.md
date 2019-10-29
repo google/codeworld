@@ -80,9 +80,15 @@ This instructs the program to highlight in its output the portion of
 the picture corresponding to the `nodeId` attribute.  If the `nodeId`
 attribute is -1, then the highlight should be cancelled.
 
-### `{type: 'toggleDebug'}`
+### `{type: 'startDebug'}`
 
-This instructs the program to either enter or exit debug mode.  The
-program will respond with either an `openTreeDialog` message containing
-a `fullPic` attribute, or a `destroyTreeDialog` message, as described
-above.
+This instructs the program to enter debug mode, freezing its normal
+functions and interacting with the debugger.  The program will respond
+by immediately sending a `openTreeDialog` message back, containing a
+`fullPic` attribute as well as `nodeId`.
+
+### `{type: 'cancelDebug'}`
+
+This instructs the program to leave debug mode and resume its normal
+functions.  The program will acknowledge that it has done so by sending
+a `destroyTreeDialog` message.

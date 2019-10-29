@@ -59,12 +59,14 @@
                     });
 
                     debugHighlightShape(true, nodeId);
+                    parent.postMessage({type: 'nodeHovered', nodeId: nodeId}, '*');
                 }
             });
 
             canvas.addEventListener('mouseout', evt => {
                 if (active) {
                     debugHighlightShape(true, -1);
+                    parent.postMessage({type: 'nodeHovered', nodeId: -1}, '*');
                 }
             });
 
@@ -75,14 +77,12 @@
                         y: evt.clientY
                     });
 
-                    if (nodeId >= 0) {
-                        parent.postMessage({type: 'openTreeDialog', nodeId: nodeId}, '*');
-                    }
+                    parent.postMessage({type: 'nodeClicked', nodeId: nodeId}, '*');
                 }
             });
 
             if (parent) {
-                parent.postMessage({type: 'initDebug'}, '*');
+                parent.postMessage({type: 'debugReady'}, '*');
             }
         }
     }
@@ -93,7 +93,7 @@
         debugSetActive(true);
         debugHighlightShape(true, -1);
 
-        parent.postMessage({type: 'openTreeDialog', fullPic: debugGetPicture(), nodeId: 0}, '*');
+        parent.postMessage({type: 'debugActive', fullPic: debugGetPicture()}, '*');
     }
 
     function stopDebug() {
@@ -101,15 +101,19 @@
         debugSetActive(false);
         debugHighlightShape(true, -1);
 
-        parent.postMessage({type: 'destroyTreeDialog'}, '*');
+        parent.postMessage({type: 'debugFinished'}, '*');
     }
 
     window.addEventListener('message', event => {
         if (!event.data.type) return;
 
-        if (event.data.type === 'highlight') {
+        if (event.data.type === 'debugHighlight') {
             if (active) debugHighlightShape(true, event.data.nodeId);
-        } else if (event.data.type === 'cancelDebug') {
+        } else if (event.data.type === 'debugSelect') {
+            if (active) {
+                // For now, do nothing.  Selection is not implemented.
+            }
+        } else if (event.data.type === 'stopDebug') {
             stopDebug();
         } else if (event.data.type === 'startDebug') {
             startDebug();

@@ -26,7 +26,7 @@ window.hasObservableOutput = false;
 window.addEventListener('message', event => {
     if (!event.data.type) return;
 
-    if (event.data.type === 'canvasShown') {
+    if (event.data.type === 'graphicsShown') {
         window.dispatchEvent(new Event('resize'));
     }
 });
@@ -52,7 +52,7 @@ function addMessage(type, str) {
         }
 
         if (window.parent) {
-            window.parent.postMessage({type: 'message', msgType: type, str: str}, '*');
+            window.parent.postMessage({type: 'consoleOut', msgType: type, str: str}, '*');
             return;
         }
     } catch (e) {
@@ -81,7 +81,7 @@ function showCanvas() {
             return;
         }
 
-        window.parent.postMessage({type: 'showCanvas'}, '*');
+        window.parent.postMessage({type: 'showGraphics'}, '*');
     } catch (e) {
         // Ignore, and assume the canvas is already shown.
     }

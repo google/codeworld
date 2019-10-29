@@ -815,7 +815,7 @@ function formatSource() {
 
 function stopRun() {
     if (window.debugActive) {
-        document.getElementById('runner').contentWindow.postMessage({type: 'cancelDebug'}, '*');
+        document.getElementById('runner').contentWindow.postMessage({type: 'stopDebug'}, '*');
         destroyTreeDialog();
     }
     window.cancelCompile();
@@ -834,24 +834,24 @@ window.addEventListener('message', event => {
                 showRequiredChecksInDialog(msg);
             }, 500);
         }
-    } else if (event.data.type === 'showCanvas') {
+    } else if (event.data.type === 'showGraphics') {
         const runner = document.getElementById('runner');
         runner.style.display = '';
         runner.focus();
         runner.contentWindow.focus();
-        runner.contentWindow.postMessage({type: 'canvasShown'}, '*');
-    } else if (event.data.type === 'message') {
+        runner.contentWindow.postMessage({type: 'graphicsShown'}, '*');
+    } else if (event.data.type === 'consoleOut') {
         if (event.data.str !== '') printMessage(event.data.msgType, event.data.str);
         if (event.data.msgType === 'error') markFailed();
     } else if (event.data.type === 'updateUI') {
         updateUI();
-    } else if (event.data.type === 'initDebug') {
+    } else if (event.data.type === 'debugReady') {
         window.debugAvailable = true;
         updateUI();
-    } else if (event.data.type === 'openTreeDialog') {
+    } else if (event.data.type === 'debugActive') {
         window.debugActive = true;
         updateUI();
-    } else if (event.data.type === 'destroyTreeDialog') {
+    } else if (event.data.type === 'debugFinished') {
         window.debugActive = false;
         updateUI();
     }
@@ -859,7 +859,7 @@ window.addEventListener('message', event => {
 
 function inspect() {
     if (window.debugActive) {
-        document.getElementById('runner').contentWindow.postMessage({type: 'cancelDebug'}, '*');
+        document.getElementById('runner').contentWindow.postMessage({type: 'stopDebug'}, '*');
     } else {
         document.getElementById('runner').contentWindow.postMessage({type: 'startDebug'}, '*');
     }

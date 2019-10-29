@@ -191,12 +191,17 @@
 
     function highlight(nodeId) {
         const runner = document.getElementById('runner');
-        runner.contentWindow.postMessage({type: 'highlight', nodeId: nodeId}, '*');
+        runner.contentWindow.postMessage({type: 'debugHighlight', nodeId: nodeId}, '*');
+    }
+
+    function select(nodeId) {
+        const runner = document.getElementById('runner');
+        runner.contentWindow.postMessage({type: 'debugSelect', nodeId: nodeId}, '*');
     }
 
     function cancelDebug() {
         const runner = document.getElementById('runner');
-        runner.contentWindow.postMessage({type: 'cancelDebug'}, '*');
+        runner.contentWindow.postMessage({type: 'stopDebug'}, '*');
     }
 
     function initTreeDialog(pic) {
@@ -223,10 +228,12 @@
     }
     window.initTreeDialog = initTreeDialog;
 
-    function openTreeDialog(id) {
+    function selectNode(id) {
         if (!open) {
             openDialog();
         }
+
+        focus(id);
 
         const picture = getPicNode(id);
         currentPic = picture;
@@ -237,7 +244,6 @@
 
         dialog.dialog('option', 'title', picture.name);
     }
-    window.openTreeDialog = openTreeDialog;
 
     function closeTreeDialog() {
         closeDialog();
@@ -260,10 +266,14 @@
     window.addEventListener('message', event => {
         if (!event.data.type) return;
 
-        if (event.data.type === 'openTreeDialog') {
-            if (event.data.fullPic) initTreeDialog(event.data.fullPic);
-            openTreeDialog(event.data.nodeId);
-        } else if (event.data.type === 'destroyTreeDialog') {
+        if (event.data.type === 'debugActive') {
+            initTreeDialog(event.data.fullPic);
+            selectNode(0);
+        } if (event.data.type === 'nodeClicked') {
+            selectNode(event.data.nodeId);
+        } if (event.data.type === 'nodeHovered') {
+            // For now, do nothing.
+        } else if (event.data.type === 'debugFinished') {
             destroyTreeDialog();
         }
     });

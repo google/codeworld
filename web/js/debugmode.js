@@ -89,8 +89,8 @@
     window.initDebugMode = initDebugMode;
 
     function toggleDebugMode() {
-        cachedPic = cachedPic === true ? debugGetPicture() : null;
-        debugSetActive(cachedPic !== true);
+        cachedPic = cachedPic === null ? debugGetPicture() : null;
+        debugSetActive(cachedPic !== null);
         debugHighlightShape(true, -1);
 
         if (cachedPic === null) {
@@ -98,8 +98,6 @@
         } else {
             parent.postMessage({type: 'openTreeDialog', fullPic: cachedPic, nodeId: 0}, '*');
         }
-
-        parent.postMessage({type: 'setDebug', active: cachedPic !== null}, '*');
     }
 
     window.addEventListener('message', event => {

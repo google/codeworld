@@ -848,8 +848,11 @@ window.addEventListener('message', event => {
     } else if (event.data.type === 'initDebug') {
         window.debugAvailable = true;
         updateUI();
-    } else if (event.data.type === 'setDebug') {
-        window.debugActive = event.data.active;
+    } else if (event.data.type === 'openTreeDialog') {
+        window.debugActive = true;
+        updateUI();
+    } else if (event.data.type === 'destroyTreeDialog') {
+        window.debugActive = false;
         updateUI();
     }
 });

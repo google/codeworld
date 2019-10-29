@@ -4,7 +4,9 @@ dist: bionic
 language: generic
 cache:
   directories:
+  - $HOME/.local/bin
   - $HOME/.stack
+  - $HOME/.stack-work
   - $HOME/codeworld-account/.stack-work
   - $HOME/codeworld-api/.stack-work
   - $HOME/codeworld-auth/.stack-work
@@ -20,35 +22,162 @@ addons:
     packages:
       - libgmp-dev
 
-matrix:
+jobs:
   include:
-  - name: "root (no tests)"
-    env: MODULE=. TEST=false
-  - name: "account"
-    env: MODULE=codeworld-account TEST=true
-  - name: "api"
-    env: MODULE=codeworld-api TEST=true
-  - name: "auth"
-    env: MODULE=codeworld-auth TEST=true
-  - name: "compiler (no tests)"
-    env: MODULE=codeworld-compiler TEST=false
-  - name: "error-sanitizer"
-    env: MODULE=codeworld-error-sanitizer TEST=true
-  - name: "game-api"
-    env: MODULE=codeworld-game-api TEST=true
-  - name: "game-server"
-    env: MODULE=codeworld-game-server TEST=true
-  - name: "prediction"
-    env: MODULE=codeworld-prediction TEST=true
-  - name: "server"
-    env: MODULE=codeworld-server TEST=true
-
-before_install:
-- mkdir -p ~/.local/bin
-- export PATH=$HOME/.local/bin:$PATH
-- travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
-
-script:
-  - stack setup
-  - stack build $MODULE --fast
-  - if [ $TEST == "true" ]; then stack test $MODULE --fast; fi
+    - stage: Install Stack
+      script:
+        - export DIR=~/.local/bin
+        - if [ ! -d "$DIR" ]; then mkdir -p ~/.local/bin; fi
+        - export PATH=$HOME/.local/bin:$PATH
+        - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+        - stack setup
+    - stage: Build dependencies
+      name: "root"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build --dependencies-only
+    - stage: Build dependencies
+      name: "Account"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build --dependencies-only codeworld-account
+    - stage: Build dependencies
+      name: "API"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build --dependencies-only codeworld-api
+    - stage: Build dependencies
+      name: "Auth"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build --dependencies-only codeworld-auth
+    - stage: Build dependencies
+      name: "Compiler"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build --dependencies-only codeworld-compiler
+    - stage: Build dependencies
+      name: "Error Sanitizer"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build --dependencies-only codeworld-error-sanitizer
+    - stage: Build dependencies
+      name: "Game API"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build --dependencies-only codeworld-game-api
+    - stage: Build dependencies
+      name: "Game Server"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build --dependencies-only codeworld-game-server
+    - stage: Build dependencies
+      name: "Prediction"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build --dependencies-only codeworld-prediction
+    - stage: Build dependencies
+      name: "Server"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build --dependencies-only codeworld-server
+    - stage: Build
+      name: "root"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build
+    - stage: Build
+      name: "Account"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build codeworld-account
+    - stage: Build
+      name: "API"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build codeworld-api
+    - stage: Build
+      name: "Auth"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build codeworld-auth
+    - stage: Build
+      name: "Compiler"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build codeworld-compiler
+    - stage: Build
+      name: "Error Sanitizer"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build codeworld-error-sanitizer
+    - stage: Build
+      name: "Game API"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build codeworld-game-api
+    - stage: Build
+      name: "Game Server"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build codeworld-game-server
+    - stage: Build
+      name: "Prediction"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build codeworld-prediction
+    - stage: Build
+      name: "Server"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build codeworld-server
+    # - stage: Test
+    #   name: "root"
+    #   script:
+    #     - export PATH=$HOME/.local/bin:$PATH
+    #     - stack test
+    - stage: Test
+      name: "Account"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack test codeworld-account
+    - stage: Test
+      name: "API"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack test codeworld-api
+    - stage: Test
+      name: "Auth"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack test codeworld-auth
+    # - stage: Test
+    #   name: "Compiler"
+    #   script:
+    #     - export PATH=$HOME/.local/bin:$PATH
+    #     - stack test codeworld-compiler
+    - stage: Test
+      name: "Error Sanitizer"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack test codeworld-error-sanitizer
+    - stage: Test
+      name: "Game API"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack test codeworld-game-api
+    - stage: Test
+      name: "Game Server"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack test codeworld-game-server
+    - stage: Test
+      name: "Prediction"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack test codeworld-prediction
+    - stage: Test
+      name: "Server"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack test codeworld-server

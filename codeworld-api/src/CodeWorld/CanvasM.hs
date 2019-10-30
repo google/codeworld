@@ -60,6 +60,7 @@ class (Monad m, MonadIO m) => MonadCanvas m where
     drawImage :: Image m -> Int -> Int -> Int -> Int -> m ()
     drawImgURL :: Text -> Text -> Double -> Double -> m ()
     globalCompositeOperation :: Text -> m ()
+    globalAlpha :: Double -> m ()
     lineWidth :: Double -> m ()
     strokeColor :: Int -> Int -> Int -> Double -> m ()
     fillColor :: Int -> Int -> Int -> Double -> m ()
@@ -113,6 +114,9 @@ instance Monad CanvasM where
 
 foreign import javascript "$2.globalCompositeOperation = $1;"
     js_globalCompositeOperation :: JSString -> Canvas.Context -> IO ()
+
+foreign import javascript "$2.globalAlpha = $1;"
+    js_globalAlpha :: Double -> Canvas.Context -> IO ()
 
 foreign import javascript "$r = $3.isPointInPath($1, $2);"
     js_isPointInPath :: Double -> Double -> Canvas.Context -> IO Bool
@@ -171,6 +175,7 @@ instance MonadCanvas CanvasM where
             ctx
     globalCompositeOperation op =
         CanvasM (const (js_globalCompositeOperation (textToJSString op)))
+    globalAlpha a = CanvasM (const (js_globalAlpha a))
     lineWidth w = CanvasM (const (Canvas.lineWidth w))
     strokeColor r g b a = CanvasM (const (Canvas.strokeStyle r g b a))
     fillColor r g b a = CanvasM (const (Canvas.fillStyle r g b a))
@@ -275,8 +280,8 @@ instance MonadCanvas CanvasM where
 
     drawImgURL _name _url _w _h = return ()
 
-    globalCompositeOperation op = liftCanvas $
-        Canvas.globalCompositeOperation op
+    globalCompositeOperation op = liftCanvas $ Canvas.globalCompositeOperation op
+    globalAlpha a = liftCanvas $ Canvas.globalAlpha a
     lineWidth w = liftCanvas $ Canvas.lineWidth w
     strokeColor r g b a = liftCanvas $ Canvas.strokeStyle
         (pack (printf "rgba(%d,%d,%d,%.2f)" r g b a))

@@ -47,6 +47,7 @@ import Control.Concurrent
 import Control.Exception
 import Control.Monad
 import Control.Monad.Fix
+import Control.Monad.Loops
 import Control.Monad.Reader
 import Control.Monad.Ref
 import Data.Bool
@@ -129,23 +130,41 @@ withDS (DrawState (AffineTransformation ta tb tc td te tf) _col) action =
         CM.beginPath
         action
 
+setColor :: MonadCanvas m => Color -> m ()
+setColor (RGBA r g b a) = do
+    CM.strokeColor
+        (round $ r * 255)
+        (round $ g * 255)
+        (round $ b * 255)
+        a
+    CM.fillColor
+        (round $ r * 255)
+        (round $ g * 255)
+        (round $ b * 255)
+        a
+
 applyColor :: MonadCanvas m => DrawState -> m ()
-applyColor ds =
-    case getColorDS ds of
-        Nothing -> do
-            CM.strokeColor 0 0 0 1
-            CM.fillColor 0 0 0 1
-        Just (RGBA r g b a) -> do
-            CM.strokeColor
-                (round $ r * 255)
-                (round $ g * 255)
-                (round $ b * 255)
-                a
-            CM.fillColor
-                (round $ r * 255)
-                (round $ g * 255)
-                (round $ b * 255)
-                a
+applyColor ds = case getColorDS ds of
+    Nothing -> setColor (RGBA 0 0 0 1)
+    Just c -> setColor c
+
+-- | A slower way to draw a picture, which has some useful properties.  It
+-- can draw images in non-standard colors, and apply transparent colors
+-- properly to overlapping compositions of basic shapes.  There must be a
+-- color in the DrawState.
+viaOffscreen :: MonadCanvas m => Color -> (Color -> m ()) -> m ()
+viaOffscreen (RGBA r g b a) pic = do
+    w <- CM.getScreenWidth
+    h <- CM.getScreenHeight
+    img <- CM.newImage (round w) (round h)
+    CM.withImage img $ do
+        setupScreenContext (round w) (round h)
+        pic (RGBA r g b 1)
+    CM.saveRestore $ do
+        px <- pixelSize
+        CM.scale px (-px)
+        CM.globalAlpha a
+        CM.drawImage img (round (-w/2)) (round (-h/2)) (round w) (round h)
 
 followPath :: MonadCanvas m => [Point] -> Bool -> Bool -> m ()
 followPath [] _ _ = return ()
@@ -222,149 +241,141 @@ drawFigure ds w figure = do
         applyColor ds
         CM.stroke
 
+fillFigure :: MonadCanvas m => DrawState -> m () -> m ()
+fillFigure ds figure = do
+    withDS ds $ figure
+    applyColor ds
+    CM.fill
+
 --------------------------------------------------------------------------------
 
--- | A Drawing is an intermediate and simpler representation of a Picture, suitable
--- for drawing. A drawing does not contain unnecessary metadata like CallStacks.
--- The drawer is specific to the platform.
-data Drawing m
-    = Shape (Drawer m)
-    | Transformation (DrawState -> DrawState)
-                     (Drawing m)
-    | Drawings [Drawing m]
+drawPicture :: MonadCanvas m => Picture -> DrawState -> m ()
+drawPicture (SolidClosedCurve _ pts) ds = drawPolygon pts True ds
+drawPicture (SolidPolygon _ pts) ds = drawPolygon pts False ds
+drawPicture (Polygon _ pts) ds = drawPath pts 0 True False ds
+drawPicture (ThickPolygon _ pts w) ds = drawPath pts w True False ds
+drawPicture (Rectangle _ w h) ds = drawPath (rectangleVertices w h) 0 True False ds
+drawPicture (SolidRectangle _ w h) ds = drawPolygon (rectangleVertices w h) False ds
+drawPicture (ThickRectangle _ lw w h) ds = drawPath (rectangleVertices w h) lw True False ds
+drawPicture (ClosedCurve _ pts) ds = drawPath pts 0 True True ds
+drawPicture (ThickClosedCurve _ pts w) ds = drawPath pts w True True ds
+drawPicture (Circle _ r) ds = drawArc 0 (2 * pi) r 0 ds
+drawPicture (SolidCircle _ r) ds = drawSector 0 (2 * pi) r ds
+drawPicture (ThickCircle _ lw r) ds = drawArc 0 (2 * pi) r lw ds
+drawPicture (Polyline _ pts) ds = drawPath pts 0 False False ds
+drawPicture (ThickPolyline _ pts w) ds = drawPath pts w False False ds
+drawPicture (Curve _ pts) ds = drawPath pts 0 False True ds
+drawPicture (ThickCurve _ pts w) ds = drawPath pts w False True ds
+drawPicture (Sector _ b e r) ds = drawSector b e r ds
+drawPicture (Arc _ b e r) ds = drawArc b e r 0 ds
+drawPicture (ThickArc _ b e r w) ds = drawArc b e r w ds
+drawPicture (Lettering _ txt) ds = drawText Plain Serif txt ds
+drawPicture (Blank _) _ = return ()
+drawPicture (StyledLettering _ sty fnt txt) ds = drawText sty fnt txt ds
+drawPicture (Sketch _ name url w h) ds = drawImage name url w h ds
+drawPicture (CoordinatePlane _) ds = drawPicture coordinatePlanePic ds
+drawPicture (Color _ col p) ds = drawPicture p (setColorDS col ds)
+drawPicture (Translate _ x y p) ds = drawPicture p (translateDS x y ds)
+drawPicture (Scale _ x y p) ds = drawPicture p (scaleDS x y ds)
+drawPicture (Dilate _ k p) ds = drawPicture p (scaleDS k k ds)
+drawPicture (Rotate _ r p) ds = drawPicture p (rotateDS r ds)
+drawPicture (Pictures _ ps) ds = forM_ (reverse ps) $ \p -> drawPicture p ds
+drawPicture (PictureAnd _ ps) ds = forM_ (reverse ps) $ \p -> drawPicture p ds
 
-instance Semigroup (Drawing m) where
-    a <> Drawings bs = Drawings (a : bs)
-    a <> b           = Drawings [a, b]
+pictureContains :: MonadCanvas m => Picture -> DrawState -> Point -> m Bool
+pictureContains (SolidClosedCurve _ pts) ds pt = polygonContains pts True ds pt
+pictureContains (SolidPolygon _ pts) ds pt = polygonContains pts False ds pt
+pictureContains (Polygon _ pts) ds pt = pathContains pts 0 True False ds pt
+pictureContains (ThickPolygon _ pts w) ds pt = pathContains pts w True False ds pt
+pictureContains (Rectangle _ w h) ds pt = pathContains (rectangleVertices w h) 0 True False ds pt
+pictureContains (SolidRectangle _ w h) ds pt = polygonContains (rectangleVertices w h) False ds pt
+pictureContains (ThickRectangle _ lw w h) ds pt = pathContains (rectangleVertices w h) lw True False ds pt
+pictureContains (ClosedCurve _ pts) ds pt = pathContains pts 0 True True ds pt
+pictureContains (ThickClosedCurve _ pts w) ds pt = pathContains pts w True True ds pt
+pictureContains (Circle _ r) ds pt = arcContains 0 (2 * pi) r 0 ds pt
+pictureContains (SolidCircle _ r) ds pt = sectorContains 0 (2 * pi) r ds pt
+pictureContains (ThickCircle _ lw r) ds pt = arcContains 0 (2 * pi) r lw ds pt
+pictureContains (Polyline _ pts) ds pt = pathContains pts 0 False False ds pt
+pictureContains (ThickPolyline _ pts w) ds pt = pathContains pts w False False ds pt
+pictureContains (Curve _ pts) ds pt = pathContains pts 0 False True ds pt
+pictureContains (ThickCurve _ pts w) ds pt = pathContains pts w False True ds pt
+pictureContains (Sector _ b e r) ds pt = sectorContains b e r ds pt
+pictureContains (Arc _ b e r) ds pt = arcContains b e r 0 ds pt
+pictureContains (ThickArc _ b e r w) ds pt = arcContains b e r w ds pt
+pictureContains (Lettering _ txt) ds pt = textContains Plain Serif txt ds pt
+pictureContains (Blank _) _ _ = return False
+pictureContains (StyledLettering _ sty fnt txt) ds pt = textContains sty fnt txt ds pt
+pictureContains (Sketch _ name url w h) ds pt = imageContains name url w h ds pt
+pictureContains (CoordinatePlane _) ds pt = pictureContains coordinatePlanePic ds pt
+pictureContains (Color _ _ p) ds pt = pictureContains p ds pt
+pictureContains (Translate _ x y p) ds pt = pictureContains p (translateDS x y ds) pt
+pictureContains (Scale _ x y p) ds pt = pictureContains p (scaleDS x y ds) pt
+pictureContains (Dilate _ k p) ds pt = pictureContains p (scaleDS k k ds) pt
+pictureContains (Rotate _ r p) ds pt = pictureContains p (rotateDS r ds) pt
+pictureContains (Pictures _ ps) ds pt = orM [pictureContains p ds pt | p <- ps]
+pictureContains (PictureAnd _ ps) ds pt = orM [pictureContains p ds pt | p <- ps]
 
-instance Monoid (Drawing m) where
-    mempty = Drawings []
-    mappend a (Drawings bs) = Drawings (a : bs)
-    mappend a b = Drawings [a, b]
-    mconcat = Drawings
+drawPolygon :: MonadCanvas m => [Point] -> Bool -> DrawState -> m ()
+drawPolygon ps smooth ds = fillFigure ds $ followPath ps True smooth
 
-pictureToDrawing :: MonadCanvas m => Picture -> Drawing m
-pictureToDrawing (SolidClosedCurve _ pts) = Shape $ polygonDrawer pts True
-pictureToDrawing (SolidPolygon _ pts) = Shape $ polygonDrawer pts False
-pictureToDrawing (Polygon _ pts) = Shape $ pathDrawer pts 0 True False
-pictureToDrawing (ThickPolygon _ pts w) = Shape $ pathDrawer pts w True False
-pictureToDrawing (Rectangle _ w h) = Shape $ pathDrawer (rectangleVertices w h) 0 True False
-pictureToDrawing (SolidRectangle _ w h) = Shape $ polygonDrawer (rectangleVertices w h) False
-pictureToDrawing (ThickRectangle _ lw w h) = Shape $ pathDrawer (rectangleVertices w h) lw True False
-pictureToDrawing (ClosedCurve _ pts) = Shape $ pathDrawer pts 0 True True
-pictureToDrawing (ThickClosedCurve _ pts w) = Shape $ pathDrawer pts w True True
-pictureToDrawing (Circle _ r) = Shape $ arcDrawer 0 (2 * pi) r 0
-pictureToDrawing (SolidCircle _ r) = Shape $ sectorDrawer 0 (2 * pi) r
-pictureToDrawing (ThickCircle _ lw r) = Shape $ arcDrawer 0 (2 * pi) r lw
-pictureToDrawing (Polyline _ pts) = Shape $ pathDrawer pts 0 False False
-pictureToDrawing (ThickPolyline _ pts w) = Shape $ pathDrawer pts w False False
-pictureToDrawing (Curve _ pts) = Shape $ pathDrawer pts 0 False True
-pictureToDrawing (ThickCurve _ pts w) = Shape $ pathDrawer pts w False True
-pictureToDrawing (Sector _ b e r) = Shape $ sectorDrawer b e r
-pictureToDrawing (Arc _ b e r) = Shape $ arcDrawer b e r 0
-pictureToDrawing (ThickArc _ b e r w) = Shape $ arcDrawer b e r w
-pictureToDrawing (Lettering _ txt) = Shape $ textDrawer Plain Serif txt
-pictureToDrawing (Blank _) = Drawings $ []
-pictureToDrawing (StyledLettering _ sty fnt txt) = Shape $ textDrawer sty fnt txt
-pictureToDrawing (Sketch _ name url w h) = Shape $ imageDrawer name url w h
-pictureToDrawing (CoordinatePlane _) = Shape $ coordinatePlaneDrawer
-pictureToDrawing (Color _ col p) =
-    Transformation (setColorDS col) $ pictureToDrawing p
-pictureToDrawing (Translate _ x y p) =
-    Transformation (translateDS x y) $ pictureToDrawing p
-pictureToDrawing (Scale _ x y p) =
-    Transformation (scaleDS x y) $ pictureToDrawing p
-pictureToDrawing (Dilate _ k p) =
-    Transformation (scaleDS k k) $ pictureToDrawing p
-pictureToDrawing (Rotate _ r p) =
-    Transformation (rotateDS r) $ pictureToDrawing p
-pictureToDrawing (Pictures _ ps) = Drawings $ pictureToDrawing <$> ps
-pictureToDrawing (PictureAnd _ ps) = Drawings $ pictureToDrawing <$> ps
+polygonContains :: MonadCanvas m => [Point] -> Bool -> DrawState -> Point -> m Bool
+polygonContains ps smooth ds p = do
+    withDS ds $ followPath ps True smooth
+    CM.isPointInPath p
 
-type Drawer m = DrawState -> DrawMethods m
+drawPath :: MonadCanvas m => [Point] -> Double -> Bool -> Bool -> DrawState -> m ()
+drawPath ps w closed smooth ds = drawFigure ds w $ followPath ps closed smooth
 
-data DrawMethods m = DrawMethods
-    { drawShape :: m ()
-    , shapeContains :: Double -> Double -> m Bool
-    }
+pathContains :: MonadCanvas m => [Point] -> Double -> Bool -> Bool -> DrawState -> Point -> m Bool
+pathContains ps w closed smooth ds p = do
+    s <- pixelSize
+    drawFigure ds (max s w) $ followPath ps closed smooth
+    CM.isPointInStroke p
 
-polygonDrawer :: MonadCanvas m => [Point] -> Bool -> Drawer m
-polygonDrawer ps smooth ds =
-    DrawMethods
-    { drawShape = do
-          trace
-          applyColor ds
-          CM.fill
-    , shapeContains = \x y -> do
-          trace
-          CM.isPointInPath (x, y)
-    }
+drawSector :: MonadCanvas m => Double -> Double -> Double -> DrawState -> m ()
+drawSector b e r ds = do
+    fillFigure ds $ CM.arc 0 0 (abs r) b e (b > e) >> CM.lineTo (0, 0)
+
+sectorContains :: MonadCanvas m => Double -> Double -> Double -> DrawState -> Point -> m Bool
+sectorContains b e r ds p = do
+    withDS ds $ CM.arc 0 0 (abs r) b e (b > e) >> CM.lineTo (0, 0)
+    CM.isPointInPath p
+
+drawArc :: MonadCanvas m => Double -> Double -> Double -> Double -> DrawState -> m ()
+drawArc b e r w ds = do
+    drawFigure ds w $ CM.arc 0 0 (abs r) b e (b > e)
+
+arcContains :: MonadCanvas m => Double -> Double -> Double -> Double -> DrawState -> Point -> m Bool
+arcContains b e r w ds p = do
+    s <- pixelSize
+    let width = max s w
+    CM.lineWidth width
+    drawFigure ds width $
+        CM.arc 0 0 (abs r) b e (b > e)
+    CM.isPointInStroke p
+
+drawText :: MonadCanvas m => TextStyle -> Font -> Text -> DrawState -> m ()
+drawText sty fnt txt ds = withDS ds $ do
+    CM.scale (1/25) (-1/25)
+    applyColor ds
+    CM.font (fontString sty fnt)
+    CM.fillText txt (0, 0)
+
+textContains :: MonadCanvas m => TextStyle -> Font -> Text -> DrawState -> Point -> m Bool
+textContains sty fnt txt ds p = do
+    CM.font (fontString sty fnt)
+    width <- (/ 25) <$> CM.measureText txt
+    let height = 1 -- constant, defined in fontString
+    withDS ds $ CM.rect ((-0.5) * width) ((-0.5) * height) width height
+    CM.isPointInPath p
+
+fontString :: TextStyle -> Font -> Text
+fontString style font = stylePrefix style <> "25px " <> fontName font
   where
-    trace = withDS ds $ followPath ps True smooth
-
-pathDrawer :: MonadCanvas m => [Point] -> Double -> Bool -> Bool -> Drawer m
-pathDrawer ps w closed smooth ds =
-    DrawMethods
-    { drawShape = drawFigure ds w $ followPath ps closed smooth
-    , shapeContains = \x y -> do
-          s <- pixelSize
-          drawFigure ds (max s w) $ followPath ps closed smooth
-          CM.isPointInStroke (x, y)
-    }
-
-sectorDrawer :: MonadCanvas m => Double -> Double -> Double -> Drawer m
-sectorDrawer b e r ds =
-    DrawMethods
-    { drawShape = do
-          trace
-          applyColor ds
-          CM.fill
-    , shapeContains = \x y -> do
-          trace
-          CM.isPointInPath (x, y)
-    }
-  where
-    trace =
-        withDS ds $ do
-            CM.arc 0 0 (abs r) b e (b > e)
-            CM.lineTo (0, 0)
-
-arcDrawer :: MonadCanvas m => Double -> Double -> Double -> Double -> Drawer m
-arcDrawer b e r w ds =
-    DrawMethods
-    { drawShape =
-          drawFigure ds w $ CM.arc 0 0 (abs r) b e (b > e)
-    , shapeContains = \x y -> do
-          s <- pixelSize
-          let width = max s w
-          CM.lineWidth width
-          drawFigure ds width $
-              CM.arc 0 0 (abs r) b e (b > e)
-          CM.isPointInStroke (x, y)
-    }
-
-textDrawer :: MonadCanvas m => TextStyle -> Font -> Text -> Drawer m
-textDrawer sty fnt txt ds =
-    DrawMethods
-    { drawShape =
-          withDS ds $ do
-              CM.scale (1/25) (-1/25)
-              applyColor ds
-              CM.font (fontString sty fnt)
-              CM.fillText txt (0, 0)
-    , shapeContains = \x y ->
-          do CM.font (fontString sty fnt)
-             width <- (/ 25) <$> CM.measureText txt
-             let height = 1 -- constant, defined in fontString
-             withDS ds $
-                 CM.rect ((-0.5) * width) ((-0.5) * height) width height
-             CM.isPointInPath (x, y)
-    }
-  where
-    fontString style font = stylePrefix style <> "25px " <> fontName font
     stylePrefix Plain = ""
     stylePrefix Bold = "bold "
     stylePrefix Italic = "italic "
+
     fontName SansSerif = "sans-serif"
     fontName Serif = "serif"
     fontName Monospace = "monospace"
@@ -372,45 +383,31 @@ textDrawer sty fnt txt ds =
     fontName Fancy = "fantasy"
     fontName (NamedFont txt) = "\"" <> T.filter (/= '"') txt <> "\""
 
-imageDrawer :: MonadCanvas m => Text -> Text -> Double -> Double -> Drawer m
-imageDrawer name url imgw imgh ds =
-    DrawMethods
-    { drawShape =
-          case getColorDS ds of
-              Nothing -> withDS ds $ do
-                  CM.scale 1 (-1)
-                  CM.drawImgURL name url imgw imgh
-              Just (RGBA _ _ _ _) -> do
-                  w <- CM.getScreenWidth
-                  h <- CM.getScreenHeight
-                  img <- CM.newImage (round w) (round h)
-                  CM.withImage img $ do
-                      applyColor ds
-                      CM.fillRect 0 0 w h
-                      setupScreenContext (round w) (round h)
-                      withDS ds $ do
-                          CM.globalCompositeOperation "destination-in"
-                          CM.scale (1) (-1)
-                          CM.drawImgURL name url imgw imgh
-                  CM.saveRestore $ do
-                      px <- pixelSize
-                      CM.scale px (-px)
-                      CM.drawImage img (round (-w/2)) (round (-h/2)) (round w) (round h)
-    , shapeContains = \x y ->
-          withDS ds $ do
-              CM.rect (-imgw / 2) (-imgh / 2) imgw imgh
-              CM.isPointInPath (x, y)
-    }
+drawImage :: MonadCanvas m => Text -> Text -> Double -> Double -> DrawState -> m ()
+drawImage name url imgw imgh ds = case getColorDS ds of
+    -- Fast path: draw in original color.
+    Nothing -> withDS ds $ do
+        CM.scale 1 (-1)
+        CM.drawImgURL name url imgw imgh
 
-coordinatePlaneDrawer :: MonadCanvas m => Drawer m
-coordinatePlaneDrawer ds =
-    DrawMethods
-    { drawShape = drawDrawing ds coordinatePlaneDrawing
-    , shapeContains = drawingContains ds coordinatePlaneDrawing
-    }
+    -- Slow path: draw in a different color via an offscreen canvas.
+    Just oc -> viaOffscreen oc $ \c -> do
+        setColor c
+        w <- CM.getScreenWidth
+        h <- CM.getScreenHeight
+        CM.fillRect (-w/2) (-h/2) w h
+        CM.globalCompositeOperation "destination-in"
+        withDS ds $ do
+            CM.scale (1) (-1)
+            CM.drawImgURL name url imgw imgh
 
-coordinatePlaneDrawing :: MonadCanvas m => Drawing m
-coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
+imageContains :: MonadCanvas m => Text -> Text -> Double -> Double -> DrawState -> Point -> m Bool
+imageContains _ _ imgw imgh ds p = withDS ds $ do
+    CM.rect (-imgw / 2) (-imgh / 2) imgw imgh
+    CM.isPointInPath p
+
+coordinatePlanePic :: Picture
+coordinatePlanePic = axes <> numbers <> guidelines
   where
     xline y = colored (RGBA 0 0 0 0.25) $ polyline [(-10, y), (10, y)]
     xaxis = colored (RGBA 0 0 0 0.75) $ polyline [(-10, 0), (10, 0)]
@@ -437,16 +434,6 @@ coordinatePlaneDrawing = pictureToDrawing $ axes <> numbers <> guidelines
             , k /= (0 :: Int)
             ]
 
-drawDrawing :: MonadCanvas m => DrawState -> Drawing m -> m ()
-drawDrawing ds (Shape drawer) = drawShape (drawer ds)
-drawDrawing ds (Transformation f d) = drawDrawing (f ds) d
-drawDrawing ds (Drawings drs) = mapM_ (drawDrawing ds) (reverse drs)
-
-drawingContains :: MonadCanvas m => DrawState -> Drawing m -> Double -> Double -> m Bool
-drawingContains ds (Shape drawer) x y = shapeContains (drawer ds) x y
-drawingContains ds (Transformation f d) x y = drawingContains (f ds) d x y
-drawingContains ds (Drawings drs) x y = or <$> mapM (\d -> drawingContains ds d x y) drs
-
 --------------------------------------------------------------------------------
 
 clearScreen :: MonadCanvas m => m ()
@@ -457,8 +444,8 @@ clearScreen = do
     CM.fillColor 255 255 255 1
     CM.fillRect (-w/2 * px) (-h/2 * px) (w * px) (h * px)
 
-drawFrame :: MonadCanvas m => Drawing m -> m ()
-drawFrame drawing = clearScreen >> drawDrawing initialDS drawing
+drawFrame :: MonadCanvas m => Picture -> m ()
+drawFrame pic = clearScreen >> drawPicture pic initialDS
 
 pixelSize :: MonadCanvas m => m Double
 pixelSize = do
@@ -477,36 +464,53 @@ setupScreenContext cw ch = do
 
 --------------------------------------------------------------------------------
 
--- A NodeId a unique id for each node in a Picture of Drawing, chosen by the order
--- the node appears in DFS. When a Picture is converted to a drawing the NodeId's of
--- corresponding nodes are shared. Always >=0.
+-- A NodeId a unique id for each node in a Picture, chosen by the order the node
+-- appears in DFS.  Always >=0.
 newtype NodeId = NodeId { getNodeId :: Int}
     deriving (Eq, Ord, Enum, Show)
 
-findTopShape :: MonadCanvas m => DrawState -> Drawing m -> Double -> Double -> m (Maybe NodeId)
-findTopShape ds d x y = do
-    (found, n) <- go ds d x y
+getChildNodes :: Picture -> [Picture]
+getChildNodes (Color _ _ p) = [p]
+getChildNodes (Translate _ _ _ p) = [p]
+getChildNodes (Scale _ _ _ p) = [p]
+getChildNodes (Dilate _ _ p) = [p]
+getChildNodes (Rotate _ _ p) = [p]
+getChildNodes (Pictures _ ps) = ps
+getChildNodes (PictureAnd _ ps) = ps
+getChildNodes _ = []
+
+getRootTransform :: Picture -> DrawState -> DrawState
+getRootTransform (Color _ c _) = setColorDS c
+getRootTransform (Translate _ x y _) = translateDS x y
+getRootTransform (Scale _ x y _) = scaleDS x y
+getRootTransform (Dilate _ k _) = scaleDS k k
+getRootTransform (Rotate _ r _) = rotateDS r
+getRootTransform _ = id
+
+findTopShape :: MonadCanvas m => DrawState -> Picture -> Double -> Double -> m (Maybe NodeId)
+findTopShape ds pic x y = do
+    (found, n) <- searchSingle ds pic x y
     return $ if found
         then Just (NodeId n)
         else Nothing
   where
-    go ds (Shape drawer) x y = do
-        contained <- shapeContains (drawer ds) x y
-        case contained of
-            True -> return (True, 0)
-            False -> return (False, 1)
-    go ds (Transformation f d) x y =
-        fmap (+ 1) <$> go (f ds) d x y
-    go _ (Drawings []) _ _ = return (False, 1)
-    go ds (Drawings (dr:drs)) x y = do
-        (found, count) <- go ds dr x y
+    searchSingle ds pic x y = case getChildNodes pic of
+        [] -> do
+            contained <- pictureContains pic ds (x, y)
+            case contained of
+                True -> return (True, 0)
+                False -> return (False, 1)
+        pics -> fmap (+ 1) <$> searchMulti (getRootTransform pic ds) pics x y
+    searchMulti _ [] _ _ = return (False, 0)
+    searchMulti ds (pic:pics) x y = do
+        (found, count) <- searchSingle ds pic x y
         case found of
-            True -> return (True, count + 1)
-            False -> fmap (+ count) <$> go ds (Drawings drs) x y
+            True -> return (True, count)
+            False -> fmap (+ count) <$> searchMulti ds pics x y
 
 -- If a picture is found, the result will include an array of the base picture
 -- and all transformations.
-findTopShapeFromPoint :: MonadCanvas m => Point -> Drawing m -> m (Maybe NodeId)
+findTopShapeFromPoint :: MonadCanvas m => Point -> Picture -> m (Maybe NodeId)
 findTopShapeFromPoint (x, y) pic = do
     cw <- CM.getScreenWidth
     ch <- CM.getScreenHeight
@@ -698,7 +702,7 @@ canvasFromElement = Canvas.Canvas . unElement
 elementFromCanvas :: Canvas.Canvas -> Element
 elementFromCanvas = pFromJSVal . jsval
 
-createFrameRenderer :: Element -> IO (Drawing CanvasM -> IO ())
+createFrameRenderer :: Element -> IO (Picture -> IO ())
 createFrameRenderer canvas = do
     offscreenCanvas <- Canvas.create 500 500
     screen <- getCodeWorldContext (canvasFromElement canvas)
@@ -1253,7 +1257,7 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
             gs <- readMVar currentGameState
             let pic = gameDraw fullStepHandler drawHandler gs t0
             picFrame <- makeStableName $! pic
-            when (picFrame /= lastFrame) $ frameRenderer (pictureToDrawing pic)
+            when (picFrame /= lastFrame) $ frameRenderer pic
             t1 <- nextFrame
             modifyMVar_ currentGameState $ return . gameStep fullStepHandler t1
             go t1 picFrame
@@ -1273,7 +1277,7 @@ propagateErrors tid action = action `catch` \ (e :: SomeException) -> throwTo ti
 run :: s
     -> (Double -> s -> s)
     -> (e -> s -> s)
-    -> (s -> Drawing CanvasM)
+    -> (s -> Picture)
     -> (Double -> e)
     -> IO (e -> IO (), IO s)
 run initial stepHandler eventHandler drawHandler injectTime = do
@@ -1343,80 +1347,58 @@ getNodeAtCoords canvas x y pic = do
     -- It's safe to pass undefined for the context because
     -- findTopShapeFromPoint only draws to an offscreen buffer.
     runCanvasM (cw, ch) undefined $
-        findTopShapeFromPoint (x - cx, y - cy) (pictureToDrawing pic)
+        findTopShapeFromPoint (x - cx, y - cy) pic
 
 drawPartialPic :: Element -> NodeId -> Picture -> IO ()
 drawPartialPic canvas nodeId pic = do
     setCanvasSize canvas canvas
-    let node = fromMaybe (Drawings []) $
-            fst <$> getDrawNode nodeId (pictureToDrawing pic)
+    let node = fromMaybe blank (getNode nodeId pic)
     frameRenderer <- createFrameRenderer canvas
-    frameRenderer (node <> coordinatePlaneDrawing)
+    frameRenderer (node <> coordinatePlane)
 
--- Given a drawing, highlight the first node and select second node. Both recolor
--- the nodes, but highlight also brings the node to the top.
-highlightSelectShape :: MonadCanvas m => Maybe NodeId -> Maybe NodeId -> Drawing m -> Drawing m
-highlightSelectShape h s drawing
-    | isNothing s =
-        fromMaybe drawing $ do
-            h' <- h
-            hp <- piece h'
-            return $ hp <> drawing
-    | isNothing h =
-        fromMaybe drawing $ do
-            s' <- s
-            sp <- piece s'
-            replaceDrawNode s' sp drawing
-    | otherwise =
-        fromMaybe drawing $ do
-            h' <- h
-            s' <- s
-            hp <- piece h'
-            sp <- piece s'
-            replaced <- replaceDrawNode s' sp drawing
-            return $ hp <> replaced
-  where
-    piece n =
-        (\(node, ds) -> highlightDrawing ds node) <$> getDrawNode n drawing
+applySelectAndHighlights :: Maybe NodeId -> [NodeId] -> Picture -> Picture
+applySelectAndHighlights sel hs p = applyHighlights hs' p'
+    where (p', hs') = applySelect sel (p, hs)
 
-highlightDrawing :: MonadCanvas m => DrawState -> Drawing m -> Drawing m
-highlightDrawing (DrawState at _) drawing =
-    Transformation (\_ -> DrawState at (Just col')) drawing
-  where
-    col' = RGBA 0 0 0 0.25
+applySelect :: Maybe NodeId -> (Picture, [NodeId]) -> (Picture, [NodeId])
+applySelect Nothing (pic, highlights) = (pic, highlights)
+applySelect (Just (NodeId n)) (pic, highlights) =
+    case getNode (NodeId n) pic of
+        Nothing -> (pic, highlights)
+        Just pic' -> (pic', [ NodeId (h - n) | NodeId h <- highlights ])
 
-getDrawNode :: NodeId -> Drawing m -> Maybe (Drawing m, DrawState)
-getDrawNode n _
-    | n < (NodeId 0) = Nothing
-getDrawNode n drawing = either Just (const Nothing) $ go initialDS n drawing
-  where
-    go ds (NodeId 0) d = Left (d, ds)
-    go _ n (Shape _) = Right (pred n)
-    go ds n (Transformation f dr) = go (f ds) (pred n) dr
-    go _ n (Drawings []) = Right (pred n)
-    go ds n (Drawings (dr:drs)) =
-        case go ds (pred n) dr of
-            Left d -> Left d
-            Right n -> go ds (succ n) $ Drawings drs
+applyHighlights :: [NodeId] -> Picture -> Picture
+applyHighlights hs p = pictures [highlight h p | h <- hs] <> p
 
-replaceDrawNode :: forall m. NodeId -> Drawing m -> Drawing m -> Maybe (Drawing m)
-replaceDrawNode n _ _
-    | n < (NodeId 0) = Nothing
-replaceDrawNode n with drawing = either Just (const Nothing) $ go n drawing
-  where
-    go :: NodeId -> Drawing m -> Either (Drawing m) NodeId
-    go (NodeId 0) _ = Left with
-    go n (Shape _) = Right (pred n)
-    go n (Transformation f d) = mapLeft (Transformation f) $ go (pred n) d
-    go n (Drawings []) = Right (pred n)
-    go n (Drawings (dr:drs)) =
-        case go (pred n) dr of
-            Left d -> Left $ Drawings (d : drs)
-            Right _ ->
-                mapLeft (\(Drawings qs) -> Drawings (dr : qs)) $
-                go (succ n) $ Drawings drs
-    mapLeft :: (a -> b) -> Either a c -> Either b c
-    mapLeft f = either (Left . f) Right
+highlight :: NodeId -> Picture -> Picture
+highlight n pic = case getTransformedNode n pic of
+    Nothing -> blank
+    Just shape -> colored (RGBA 0 0 0 0.25) shape
+
+indexNode :: Bool -> Int -> NodeId -> Picture -> Either Int Picture
+indexNode _ i (NodeId n) p
+    | i == n = Right p
+    | i > n = error "Bad node id"
+indexNode True i n (Translate loc x y p)
+    = Translate loc x y <$> indexNode True (i + 1) n p
+indexNode True i n (Scale loc x y p)
+    = Scale loc x y <$> indexNode True (i + 1) n p
+indexNode True i n (Dilate loc k p)
+    = Dilate loc k <$> indexNode True (i + 1) n p
+indexNode True i n (Rotate loc r p)
+    = Rotate loc r <$> indexNode True (i + 1) n p
+indexNode keepTx i n p = go keepTx (i + 1) (getChildNodes p)
+  where go _ i [] = Left i
+        go keepTx i (pic:pics) =
+            case indexNode keepTx i n pic of
+                Left ii -> go keepTx ii pics
+                Right p -> Right p
+
+getTransformedNode :: NodeId -> Picture -> Maybe Picture
+getTransformedNode n pic = either (const Nothing) Just (indexNode True 0 n pic)
+
+getNode :: NodeId -> Picture -> Maybe Picture
+getNode n pic = either (const Nothing) Just (indexNode False 0 n pic)
 
 data DebugState = DebugState
     { debugStateActive :: Bool
@@ -1445,15 +1427,14 @@ selectDebugState n prev =
         True -> prev {shapeSelected = n}
         False -> DebugState False Nothing Nothing
 
-drawDebugState :: MonadCanvas m => DebugState -> Drawing m -> Drawing m -> Drawing m
-drawDebugState state inspectDrawing displayDrawing =
+drawDebugState :: DebugState -> Picture -> Picture -> Picture
+drawDebugState state inspectPic displayPic =
     case debugStateActive state of
-        True ->
-            highlightSelectShape
-                (shapeHighlighted state)
-                (shapeSelected state)
-                inspectDrawing
-        False -> displayDrawing
+        True -> applySelectAndHighlights
+            (shapeSelected state)
+            (maybeToList (shapeHighlighted state))
+            inspectPic
+        False -> displayPic
 
 connectInspect
     :: Element
@@ -1551,7 +1532,7 @@ runInspect initial step event draw rawDraw = do
                 (True, _) -> s
                 (_, Right e) -> inRight (event e) s
         debugDraw (debugState, s) =
-            drawDebugState debugState (pictureToDrawing (rawDraw s)) (pictureToDrawing (draw s))
+            drawDebugState debugState (rawDraw s) (draw s)
         debugRawDraw (_debugState, s) = rawDraw s
     (sendEvent, getState) <-
         run debugInitial debugStep debugEvent debugDraw (Right . TimePassing)
@@ -1614,7 +1595,7 @@ run initial stepHandler eventHandler drawHandler =
                         CM.withImage offscreenCanvas $
                             CM.saveRestore $ do
                                 setupScreenContext cw ch
-                                drawFrame (pictureToDrawing pic)
+                                drawFrame pic
                         CM.drawImage offscreenCanvas 0 0 cw ch
                 t1 <- case needsTime of
                     True -> do
@@ -1930,14 +1911,14 @@ runReactive program = do
         logicalInput <- R.runSpiderHost $ inspectLogicalInput debugState physicalInput
         (inspectPicture, fireCommand) <- R.runSpiderHost $ R.hostPerformEventT $ do
             (inspectPicture, displayPicture) <- R.runPostBuildT (program logicalInput) postBuild
-            let logicalDrawing = drawDebugState <$> debugState
-                                                <*> (pictureToDrawing <$> inspectPicture)
-                                                <*> (pictureToDrawing <$> displayPicture)
+            let logicalPicture = drawDebugState <$> debugState
+                                                <*> inspectPicture
+                                                <*> displayPicture
             R.performEvent_ $ liftIO <$> R.mergeWith const [
                 (setCanvasSize canvas canvas >>) . asyncRender <$>
-                    R.tagPromptlyDyn logicalDrawing resizeEvent,
-                asyncRender <$> R.updated logicalDrawing,
-                asyncRender <$> R.tagPromptlyDyn logicalDrawing postBuild
+                    R.tagPromptlyDyn logicalPicture resizeEvent,
+                asyncRender <$> R.updated logicalPicture,
+                asyncRender <$> R.tagPromptlyDyn logicalPicture postBuild
                 ]
             return inspectPicture
 
@@ -1977,7 +1958,7 @@ runReactive program = runBlankCanvas $ \context -> do
             CM.withImage offscreenCanvas $
                 CM.saveRestore $ do
                     setupScreenContext cw ch
-                    drawFrame (pictureToDrawing pic)
+                    drawFrame pic
             CM.drawImage offscreenCanvas 0 0 cw ch
 
     (postBuild, postBuildTriggerRef) <- R.runSpiderHost R.newEventWithTriggerRef

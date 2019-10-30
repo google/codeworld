@@ -76,5 +76,8 @@ setColorDS col = mapDSColor $ \mcol ->
         (RGBA _ _ _ 0, Just _) -> Just col
         (RGBA _ _ _ a1, Just (RGBA r0 g0 b0 a0)) -> Just (RGBA r0 g0 b0 (a0 * a1))
 
+opaqueDS :: DrawState -> DrawState
+opaqueDS = mapDSColor $ fmap $ \(RGBA r g b _) -> RGBA r g b 1
+
 getColorDS :: DrawState -> Maybe Color
 getColorDS (DrawState _ col) = col

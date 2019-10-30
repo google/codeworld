@@ -274,7 +274,9 @@ drawPicture (Blank _) _ = return ()
 drawPicture (StyledLettering _ sty fnt txt) ds = drawText sty fnt txt ds
 drawPicture (Sketch _ name url w h) ds = drawImage name url w h ds
 drawPicture (CoordinatePlane _) ds = drawPicture coordinatePlanePic ds
-drawPicture (Color _ col p) ds = drawPicture p (setColorDS col ds)
+drawPicture (Color _ col p) ds
+  | isSimplePic p || isOpaque col = drawPicture p (setColorDS col ds)
+  | otherwise = viaOffscreen col $ \c -> drawPicture p (setColorDS c ds)
 drawPicture (Translate _ x y p) ds = drawPicture p (translateDS x y ds)
 drawPicture (Scale _ x y p) ds = drawPicture p (scaleDS x y ds)
 drawPicture (Dilate _ k p) ds = drawPicture p (scaleDS k k ds)
@@ -314,6 +316,24 @@ pictureContains (Dilate _ k p) ds pt = pictureContains p (scaleDS k k ds) pt
 pictureContains (Rotate _ r p) ds pt = pictureContains p (rotateDS r ds) pt
 pictureContains (Pictures _ ps) ds pt = orM [pictureContains p ds pt | p <- ps]
 pictureContains (PictureAnd _ ps) ds pt = orM [pictureContains p ds pt | p <- ps]
+
+isSimplePic :: Picture -> Bool
+isSimplePic (Pictures _ []) = True
+isSimplePic (Pictures _ [p]) = isSimplePic p
+isSimplePic (Pictures _ _) = False
+isSimplePic (PictureAnd _ []) = True
+isSimplePic (PictureAnd _ [p]) = isSimplePic p
+isSimplePic (PictureAnd _ _) = False
+isSimplePic (Translate _ _ _ p) = isSimplePic p
+isSimplePic (Scale _ _ _ p) = isSimplePic p
+isSimplePic (Dilate _ _ p) = isSimplePic p
+isSimplePic (Rotate _ _ p) = isSimplePic p
+isSimplePic (Color _ c p) | isOpaque c = isSimplePic p
+isSimplePic _ = True
+
+isOpaque :: Color -> Bool
+isOpaque (RGBA _ _ _ 1) = True
+isOpaque _ = False
 
 drawPolygon :: MonadCanvas m => [Point] -> Bool -> DrawState -> m ()
 drawPolygon ps smooth ds = fillFigure ds $ followPath ps True smooth

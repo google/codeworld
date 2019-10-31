@@ -328,7 +328,7 @@ isSimplePic (Translate _ _ _ p) = isSimplePic p
 isSimplePic (Scale _ _ _ p) = isSimplePic p
 isSimplePic (Dilate _ _ p) = isSimplePic p
 isSimplePic (Rotate _ _ p) = isSimplePic p
-isSimplePic (Color _ c p) | isOpaque c = isSimplePic p
+isSimplePic (Color _ _ p) = isSimplePic p
 isSimplePic _ = True
 
 isOpaque :: Color -> Bool

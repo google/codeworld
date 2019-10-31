@@ -126,9 +126,7 @@
         if (event.data.type === 'debugHighlight') {
             if (active) debugHighlightShape(true, event.data.nodeId);
         } else if (event.data.type === 'debugSelect') {
-            if (active) {
-                // For now, do nothing.  Selection is not implemented.
-            }
+            if (active) debugHighlightShape(false, event.data.nodeId);
         } else if (event.data.type === 'stopDebug') {
             stopDebug();
         } else if (event.data.type === 'startDebug') {

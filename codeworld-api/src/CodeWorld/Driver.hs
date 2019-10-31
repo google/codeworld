@@ -1398,7 +1398,7 @@ highlight n pic = case getTransformedNode n pic of
 indexNode :: Bool -> Int -> NodeId -> Picture -> Either Int Picture
 indexNode _ i (NodeId n) p
     | i == n = Right p
-    | i > n = error "Bad node id"
+    | i > n = Left 0
 indexNode True i n (Translate loc x y p)
     = Translate loc x y <$> indexNode True (i + 1) n p
 indexNode True i n (Scale loc x y p)

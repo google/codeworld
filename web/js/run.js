@@ -52,7 +52,11 @@ function addMessage(type, str) {
         }
 
         if (window.parent) {
-            window.parent.postMessage({type: 'consoleOut', msgType: type, str: str}, '*');
+            window.parent.postMessage({
+                type: 'consoleOut',
+                msgType: type,
+                str: str
+            }, '*');
             return;
         }
     } catch (e) {
@@ -64,7 +68,9 @@ function addMessage(type, str) {
 
 function notifyStarted() {
     try {
-        window.parent.postMessage({type: 'programStarted'}, '*');
+        window.parent.postMessage({
+            type: 'programStarted'
+        }, '*');
     } catch (e) {
         // Ignore exceptions, which are expected if there's no parent.
     }
@@ -81,7 +87,9 @@ function showCanvas() {
             return;
         }
 
-        window.parent.postMessage({type: 'showGraphics'}, '*');
+        window.parent.postMessage({
+            type: 'showGraphics'
+        }, '*');
     } catch (e) {
         // Ignore, and assume the canvas is already shown.
     }

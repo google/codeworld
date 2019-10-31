@@ -37,7 +37,7 @@
     //   At most one shape may be highlighted and one shape selected at a time.
     let debugHighlightShape = null;
 
-    let canvas = null;  // Null if debugging isn't enabled.
+    let canvas = null; // Null if debugging isn't enabled.
     let active = false;
 
     // Globals
@@ -59,14 +59,20 @@
                     });
 
                     debugHighlightShape(true, nodeId);
-                    parent.postMessage({type: 'nodeHovered', nodeId: nodeId}, '*');
+                    parent.postMessage({
+                        type: 'nodeHovered',
+                        nodeId: nodeId
+                    }, '*');
                 }
             });
 
             canvas.addEventListener('mouseout', evt => {
                 if (active) {
                     debugHighlightShape(true, -1);
-                    parent.postMessage({type: 'nodeHovered', nodeId: -1}, '*');
+                    parent.postMessage({
+                        type: 'nodeHovered',
+                        nodeId: -1
+                    }, '*');
                 }
             });
 
@@ -77,12 +83,17 @@
                         y: evt.clientY
                     });
 
-                    parent.postMessage({type: 'nodeClicked', nodeId: nodeId}, '*');
+                    parent.postMessage({
+                        type: 'nodeClicked',
+                        nodeId: nodeId
+                    }, '*');
                 }
             });
 
             if (parent) {
-                parent.postMessage({type: 'debugReady'}, '*');
+                parent.postMessage({
+                    type: 'debugReady'
+                }, '*');
             }
         }
     }
@@ -93,7 +104,10 @@
         debugSetActive(true);
         debugHighlightShape(true, -1);
 
-        parent.postMessage({type: 'debugActive', fullPic: debugGetPicture()}, '*');
+        parent.postMessage({
+            type: 'debugActive',
+            fullPic: debugGetPicture()
+        }, '*');
     }
 
     function stopDebug() {
@@ -101,7 +115,9 @@
         debugSetActive(false);
         debugHighlightShape(true, -1);
 
-        parent.postMessage({type: 'debugFinished'}, '*');
+        parent.postMessage({
+            type: 'debugFinished'
+        }, '*');
     }
 
     window.addEventListener('message', event => {

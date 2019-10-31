@@ -446,6 +446,7 @@ function substitutionCost(a, b, fixedLen) {
     const caseCost = 0.1;
 
     const d = Array(b.length + 1).fill().map(() => Array(a.length + 1));
+
     function scale(i) {
         return i >= fixedLen ? 10 : 100;
     }
@@ -456,19 +457,19 @@ function substitutionCost(a, b, fixedLen) {
                 d[j][i] = 0;
                 continue;
             } else if (i === 0) {
-                d[j][i] = d[j-1][i] + insertCost * scale(i);
+                d[j][i] = d[j - 1][i] + insertCost * scale(i);
             } else if (j === 0) {
-                d[j][i] = d[j][i-1] + deleteCost * scale(i-1);
+                d[j][i] = d[j][i - 1] + deleteCost * scale(i - 1);
             } else {
-                let replaceCost = a[i-1] === b[j-1] ? 0 :
-                        (a[i-1].toLowerCase() === b[j-1].toLowerCase() ? caseCost : substCost);
+                const replaceCost = a[i - 1] === b[j - 1] ? 0 :
+                    (a[i - 1].toLowerCase() === b[j - 1].toLowerCase() ? caseCost : substCost);
 
                 d[j][i] = Math.min(
-                    d[j][i-1] + deleteCost * scale(i-1),
-                    d[j-1][i] + insertCost * scale(i),
-                    d[j-1][i-1] + replaceCost * scale(i-1));
-                if (i > 1 && j > 1 && a[i-1] == b[j-2] && a[i-2] == b[j-1]) {
-                    d[j][i] = Math.min(d[j][i], d[j-2][i-2] + transCost * scale(i-2));
+                    d[j][i - 1] + deleteCost * scale(i - 1),
+                    d[j - 1][i] + insertCost * scale(i),
+                    d[j - 1][i - 1] + replaceCost * scale(i - 1));
+                if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+                    d[j][i] = Math.min(d[j][i], d[j - 2][i - 2] + transCost * scale(i - 2));
                 }
             }
         }
@@ -505,7 +506,11 @@ function registerStandardHints(successFunc) {
         // 1. Exact match for the current token.
         // 2. Current token is a case-sensitive prefix.
         // 3. Others, to be presented as fuzzy matches.
-        const found = [[], [], []];
+        const found = [
+            [],
+            [],
+            []
+        ];
 
         const hints = Object.keys(window.codeWorldSymbols);
         for (let i = 0; i < hints.length; i++) {
@@ -517,11 +522,12 @@ function registerStandardHints(successFunc) {
             if (window.codeWorldSymbols[hint].module) {
                 if (hint.startsWith(prefix)) {
                     const candidate = {
-                            text: window.codeWorldSymbols[hint].insertText.substr(prefix.length),
-                            details: window.codeWorldSymbols[hint],
-                            render: elem => {
-                                renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
-                            }};
+                        text: window.codeWorldSymbols[hint].insertText.substr(prefix.length),
+                        details: window.codeWorldSymbols[hint],
+                        render: elem => {
+                            renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
+                        }
+                    };
                     if (hint === prefix + token.string) {
                         found[0].push(candidate);
                     } else if (hint.startsWith(prefix + term)) {
@@ -532,11 +538,12 @@ function registerStandardHints(successFunc) {
                 }
             } else if (hintPrefix === prefix) {
                 const candidate = {
-                        text: window.codeWorldSymbols[hint].insertText,
-                        details: window.codeWorldSymbols[hint],
-                        render: elem => {
-                            renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
-                        }};
+                    text: window.codeWorldSymbols[hint].insertText,
+                    details: window.codeWorldSymbols[hint],
+                    render: elem => {
+                        renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
+                    }
+                };
                 if (hintIdent === token.string) {
                     found[0].push(candidate);
                 } else if (hintIdent.startsWith(term)) {
@@ -554,7 +561,7 @@ function registerStandardHints(successFunc) {
         }
 
         const options = found[0].concat(found[1]).concat(found[2]);
-        for (let candidate of options) {
+        for (const candidate of options) {
             candidate.cost = substitutionCost(token.string, candidate.text, term.length);
         }
 

@@ -815,7 +815,9 @@ function formatSource() {
 
 function stopRun() {
     if (window.debugActive) {
-        document.getElementById('runner').contentWindow.postMessage({type: 'stopDebug'}, '*');
+        document.getElementById('runner').contentWindow.postMessage({
+            type: 'stopDebug'
+        }, '*');
         destroyTreeDialog();
     }
     window.cancelCompile();
@@ -839,7 +841,9 @@ window.addEventListener('message', event => {
         runner.style.display = '';
         runner.focus();
         runner.contentWindow.focus();
-        runner.contentWindow.postMessage({type: 'graphicsShown'}, '*');
+        runner.contentWindow.postMessage({
+            type: 'graphicsShown'
+        }, '*');
     } else if (event.data.type === 'consoleOut') {
         if (event.data.str !== '') printMessage(event.data.msgType, event.data.str);
         if (event.data.msgType === 'error') markFailed();
@@ -859,9 +863,13 @@ window.addEventListener('message', event => {
 
 function inspect() {
     if (window.debugActive) {
-        document.getElementById('runner').contentWindow.postMessage({type: 'stopDebug'}, '*');
+        document.getElementById('runner').contentWindow.postMessage({
+            type: 'stopDebug'
+        }, '*');
     } else {
-        document.getElementById('runner').contentWindow.postMessage({type: 'startDebug'}, '*');
+        document.getElementById('runner').contentWindow.postMessage({
+            type: 'startDebug'
+        }, '*');
     }
     updateUI();
 }

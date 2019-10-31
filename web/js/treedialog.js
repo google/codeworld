@@ -133,6 +133,8 @@
         a.href = 'javascript: void(0);';
         a.classList.add('treedialog-piclink');
         a.addEventListener('click', evt => {
+            select(pic.id);
+
             if (marker) marker.clear();
 
             getPicNode(currentPic.id, node => {
@@ -191,17 +193,25 @@
 
     function highlight(nodeId) {
         const runner = document.getElementById('runner');
-        runner.contentWindow.postMessage({type: 'debugHighlight', nodeId: nodeId}, '*');
+        runner.contentWindow.postMessage({
+            type: 'debugHighlight',
+            nodeId: nodeId
+        }, '*');
     }
 
     function select(nodeId) {
         const runner = document.getElementById('runner');
-        runner.contentWindow.postMessage({type: 'debugSelect', nodeId: nodeId}, '*');
+        runner.contentWindow.postMessage({
+            type: 'debugSelect',
+            nodeId: nodeId
+        }, '*');
     }
 
     function cancelDebug() {
         const runner = document.getElementById('runner');
-        runner.contentWindow.postMessage({type: 'stopDebug'}, '*');
+        runner.contentWindow.postMessage({
+            type: 'stopDebug'
+        }, '*');
     }
 
     function initTreeDialog(pic) {
@@ -218,6 +228,7 @@
             close: () => {
                 open = false;
                 highlight(-1);
+                select(-1);
                 cancelDebug();
             }
         });
@@ -233,7 +244,7 @@
             openDialog();
         }
 
-        focus(id);
+        select(id);
 
         const picture = getPicNode(id);
         currentPic = picture;
@@ -269,9 +280,11 @@
         if (event.data.type === 'debugActive') {
             initTreeDialog(event.data.fullPic);
             selectNode(0);
-        } if (event.data.type === 'nodeClicked') {
+        }
+        if (event.data.type === 'nodeClicked') {
             selectNode(event.data.nodeId);
-        } if (event.data.type === 'nodeHovered') {
+        }
+        if (event.data.type === 'nodeHovered') {
             // For now, do nothing.
         } else if (event.data.type === 'debugFinished') {
             destroyTreeDialog();

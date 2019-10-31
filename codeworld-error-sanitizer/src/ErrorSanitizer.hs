@@ -43,8 +43,11 @@ rewriteStages =
     , ("Couldn't match expected type Text\\s*with actual type GHC.Types.Char",
        "Text requires double quotes, rather than single.")
     , ("[ ]*Perhaps you intended to use TemplateHaskell or TemplateHaskellQuotes\n", "")
-    , ("possibly incorrect indentation or mismatched brackets",
-       "You may be missing an indent, or a parenthesis on the previous line")
+    , ("(program.hs:[0-9]*:1:(.|\n )*) [(]possibly incorrect indentation or mismatched brackets[)]",
+       "\\1\n    \8226 If this line continues the previous definition, indent it." <>
+       "\n    \8226 Otherwise, are you missing a parenthesis on the previous line)?")
+    , (" [(]possibly incorrect indentation or mismatched brackets[)]",
+       "\n    \8226 Are you missing a parenthesis?")
     , ("In the Template Haskell quotation '.*'",
        "Use double quotes around text values.")
     , ("[ ]+\8226 In ([^\n\8226]|\n )+\n", "")

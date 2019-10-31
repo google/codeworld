@@ -1,0 +1,3 @@
+program.hs:16:30: error:
+    parse error
+    • Are you missing a parenthesis?

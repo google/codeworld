@@ -1,2 +1,4 @@
 program.hs:17:1: error:
-    parse error (You may be missing an indent, or a parenthesis on the previous line)
+    parse error
+    • If this line continues the previous definition, indent it.
+    • Otherwise, are you missing a parenthesis on the previous line)?

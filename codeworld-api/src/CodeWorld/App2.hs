@@ -1,6 +1,6 @@
-{-# OPTIONS_GHC -Wno-deprecations #-}
 {-# LANGUAGE GADTSyntax #-}
 {-# LANGUAGE KindSignatures #-}
+{-# OPTIONS_GHC -Wno-deprecations #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -19,9 +19,8 @@
 -}
 
 module CodeWorld.App2
-    {-# WARNING "This is an experimental API.  It can change at any time." #-}
-    (
-    Application,
+  {-# WARNING "This is an experimental API.  It can change at any time." #-}
+  ( Application,
     defaultApplication,
     withTimeStep,
     withEventHandler,
@@ -29,61 +28,69 @@ module CodeWorld.App2
     withMultiEventHandler,
     withMultiPicture,
     subapplication,
-    applicationOf
-    ) where
+    applicationOf,
+  )
+where
 
 import CodeWorld
 
 data Application :: * -> * where
-    App :: state
-        -> (Double -> state -> state)
-        -> (Int -> Event -> state -> state)
-        -> (Int -> state -> Picture)
-        -> Application state
+  App ::
+    state ->
+    (Double -> state -> state) ->
+    (Int -> Event -> state -> state) ->
+    (Int -> state -> Picture) ->
+    Application state
 
 defaultApplication :: state -> Application state
 defaultApplication s =
-    App s (const id) (const (const id)) (const (const blank))
+  App s (const id) (const (const id)) (const (const blank))
 
-withTimeStep :: (Double -> state -> state)
-             -> Application state
-             -> Application state
+withTimeStep ::
+  (Double -> state -> state) ->
+  Application state ->
+  Application state
 withTimeStep f (App initial step event picture) =
-    App initial (\dt -> f dt . step dt) event picture
+  App initial (\dt -> f dt . step dt) event picture
 
-withEventHandler :: (Event -> state -> state)
-                 -> Application state
-                 -> Application state
+withEventHandler ::
+  (Event -> state -> state) ->
+  Application state ->
+  Application state
 withEventHandler f (App initial step event picture) =
-    App initial step (\k ev -> f ev . event k ev) picture
+  App initial step (\k ev -> f ev . event k ev) picture
 
 withPicture :: (state -> Picture) -> Application state -> Application state
 withPicture f (App initial step event picture) =
-    App initial step event (\k s -> f s & picture k s)
+  App initial step event (\k s -> f s & picture k s)
 
-withMultiEventHandler :: (Int -> Event -> state -> state)
-                      -> Application state
-                      -> Application state
+withMultiEventHandler ::
+  (Int -> Event -> state -> state) ->
+  Application state ->
+  Application state
 withMultiEventHandler f (App initial step event picture) =
-    App initial step (\k ev -> f k ev . event k ev) picture
+  App initial step (\k ev -> f k ev . event k ev) picture
 
-withMultiPicture :: (Int -> state -> Picture)
-                 -> Application state
-                 -> Application state
+withMultiPicture ::
+  (Int -> state -> Picture) ->
+  Application state ->
+  Application state
 withMultiPicture f (App initial step event picture) =
-    App initial step event (\k s -> f k s & picture k s)
+  App initial step event (\k s -> f k s & picture k s)
 
-subapplication :: (a -> b)
-               -> (b -> a -> a)
-               -> Application b
-               -> (b -> a)
-               -> Application a
+subapplication ::
+  (a -> b) ->
+  (b -> a -> a) ->
+  Application b ->
+  (b -> a) ->
+  Application a
 subapplication getter setter (App initial step event picture) f =
-    App (f initial)
-        (\dt s   -> setter (step dt (getter s)) s)
-        (\k ev s -> setter (event k ev (getter s)) s)
-        (\k      -> picture k . getter)
+  App
+    (f initial)
+    (\dt s -> setter (step dt (getter s)) s)
+    (\k ev s -> setter (event k ev (getter s)) s)
+    (\k -> picture k . getter)
 
 applicationOf :: Application world -> IO ()
 applicationOf (App initial step event picture) =
-    interactionOf initial step (event 0) (picture 0)
+  interactionOf initial step (event 0) (picture 0)

@@ -19,10 +19,11 @@ module CodeWorld.DrawState where
 
 import CodeWorld.Color
 
-data DrawState =
+data DrawState
+  = -- | A 'Color', if already chosen.
     DrawState
-        !AffineTransformation
-        !(Maybe Color) -- ^ A 'Color', if already chosen.
+      !AffineTransformation
+      !(Maybe Color)
 
 -- | @(AffineTransformation a b c d e f)@ represents an affine transformation matrix
 --
@@ -33,8 +34,8 @@ data DrawState =
 -- References:
 -- https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/transform
 -- https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations
-data AffineTransformation =
-    AffineTransformation !Double !Double !Double !Double !Double !Double
+data AffineTransformation
+  = AffineTransformation !Double !Double !Double !Double !Double !Double
 
 initialAffineTransformation :: AffineTransformation
 initialAffineTransformation = AffineTransformation 1 0 0 1 0 0
@@ -50,31 +51,34 @@ initialDS = DrawState initialAffineTransformation Nothing
 
 translateDS :: Double -> Double -> DrawState -> DrawState
 translateDS x y = mapDSAT $ \(AffineTransformation a b c d e f) ->
-    AffineTransformation
-        a b c d
-        (a * x + c * y + e)
-        (b * x + d * y + f)
+  AffineTransformation
+    a
+    b
+    c
+    d
+    (a * x + c * y + e)
+    (b * x + d * y + f)
 
 scaleDS :: Double -> Double -> DrawState -> DrawState
 scaleDS x y = mapDSAT $ \(AffineTransformation a b c d e f) ->
-    AffineTransformation (x * a) (x * b) (y * c) (y * d) e f
+  AffineTransformation (x * a) (x * b) (y * c) (y * d) e f
 
 rotateDS :: Double -> DrawState -> DrawState
 rotateDS r = mapDSAT $ \(AffineTransformation a b c d e f) ->
-    AffineTransformation
-        (a * cos r + c * sin r)
-        (b * cos r + d * sin r)
-        (c * cos r - a * sin r)
-        (d * cos r - b * sin r)
-        e
-        f
+  AffineTransformation
+    (a * cos r + c * sin r)
+    (b * cos r + d * sin r)
+    (c * cos r - a * sin r)
+    (d * cos r - b * sin r)
+    e
+    f
 
 setColorDS :: Color -> DrawState -> DrawState
 setColorDS col = mapDSColor $ \mcol ->
-    case (col, mcol) of
-        (_, Nothing) -> Just col
-        (RGBA _ _ _ 0, Just _) -> Just col
-        (RGBA _ _ _ a1, Just (RGBA r0 g0 b0 a0)) -> Just (RGBA r0 g0 b0 (a0 * a1))
+  case (col, mcol) of
+    (_, Nothing) -> Just col
+    (RGBA _ _ _ 0, Just _) -> Just col
+    (RGBA _ _ _ a1, Just (RGBA r0 g0 b0 a0)) -> Just (RGBA r0 g0 b0 (a0 * a1))
 
 opaqueDS :: DrawState -> DrawState
 opaqueDS = mapDSColor $ fmap $ \(RGBA r g b _) -> RGBA r g b 1

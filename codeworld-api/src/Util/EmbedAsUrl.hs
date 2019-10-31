@@ -17,7 +17,10 @@
   limitations under the License.
 -}
 
-module Util.EmbedAsUrl (embedAsUrl) where
+module Util.EmbedAsUrl
+  ( embedAsUrl,
+  )
+where
 
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
@@ -29,9 +32,12 @@ import System.IO.Unsafe
 
 embedAsUrl :: String -> FilePath -> Q Exp
 embedAsUrl contentType f = do
-    qAddDependentFile f
-    payload <- runIO $ B64.encode <$> B.readFile f
-    let uri = "data:" <> BC.pack contentType <> ";base64," <> payload
-    [e| T.decodeUtf8 $ unsafePerformIO $ B.unsafePackAddressLen
-            $(return $ LitE $ IntegerL $ fromIntegral $ B.length uri)
-            $(return $ LitE $ StringPrimL $ B.unpack uri) |]
+  qAddDependentFile f
+  payload <- runIO $ B64.encode <$> B.readFile f
+  let uri = "data:" <> BC.pack contentType <> ";base64," <> payload
+  [e|
+    T.decodeUtf8 $ unsafePerformIO $
+      B.unsafePackAddressLen
+        $(return $ LitE $ IntegerL $ fromIntegral $ B.length uri)
+        $(return $ LitE $ StringPrimL $ B.unpack uri)
+    |]

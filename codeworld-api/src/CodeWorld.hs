@@ -15,118 +15,123 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-module CodeWorld (
-    -- * Entry points
-      drawingOf
-    , animationOf
-    , activityOf
-    , debugActivityOf
-    , groupActivityOf
-    , unsafeGroupActivityOf
-    , simulationOf
-    , debugSimulationOf
-    , interactionOf
-    , debugInteractionOf
-    , collaborationOf
-    , unsafeCollaborationOf
+module CodeWorld
+  ( -- * Entry points
+    drawingOf,
+    animationOf,
+    activityOf,
+    debugActivityOf,
+    groupActivityOf,
+    unsafeGroupActivityOf,
+    simulationOf,
+    debugSimulationOf,
+    interactionOf,
+    debugInteractionOf,
+    collaborationOf,
+    unsafeCollaborationOf,
+
     -- * Pictures
-    , Picture
-    , TextStyle(..)
-    , Font(..)
-    , blank
-    , polyline
-    , path
-    , thickPolyline
-    , thickPath
-    , polygon
-    , thickPolygon
-    , solidPolygon
-    , curve
-    , thickCurve
-    , closedCurve
-    , thickClosedCurve
-    , solidClosedCurve
-    , rectangle
-    , solidRectangle
-    , thickRectangle
-    , circle
-    , solidCircle
-    , thickCircle
-    , arc
-    , sector
-    , thickArc
-    , text
-    , lettering
-    , styledText
-    , styledLettering
-    , colored
-    , coloured
-    , translated
-    , scaled
-    , dilated
-    , rotated
-    , pictures
-    , (<>)
-    , (&)
-    , coordinatePlane
-    , codeWorldLogo
-    , Point
-    , translatedPoint
-    , rotatedPoint
-    , scaledPoint
-    , dilatedPoint
-    , Vector
-    , vectorLength
-    , vectorDirection
-    , vectorSum
-    , vectorDifference
-    , scaledVector
-    , rotatedVector
-    , dotProduct
+    Picture,
+    TextStyle (..),
+    Font (..),
+    blank,
+    polyline,
+    path,
+    thickPolyline,
+    thickPath,
+    polygon,
+    thickPolygon,
+    solidPolygon,
+    curve,
+    thickCurve,
+    closedCurve,
+    thickClosedCurve,
+    solidClosedCurve,
+    rectangle,
+    solidRectangle,
+    thickRectangle,
+    circle,
+    solidCircle,
+    thickCircle,
+    arc,
+    sector,
+    thickArc,
+    text,
+    lettering,
+    styledText,
+    styledLettering,
+    colored,
+    coloured,
+    translated,
+    scaled,
+    dilated,
+    rotated,
+    pictures,
+    (<>),
+    (&),
+    coordinatePlane,
+    codeWorldLogo,
+    Point,
+    translatedPoint,
+    rotatedPoint,
+    scaledPoint,
+    dilatedPoint,
+    Vector,
+    vectorLength,
+    vectorDirection,
+    vectorSum,
+    vectorDifference,
+    scaledVector,
+    rotatedVector,
+    dotProduct,
+
     -- * Colors
-    , Color(..)
-    , Colour
-    , pattern RGB
-    , pattern HSL
-    , black
-    , white
-    , red
-    , green
-    , blue
-    , cyan
-    , magenta
-    , yellow
-    , aquamarine
-    , orange
-    , azure
-    , violet
-    , chartreuse
-    , rose
-    , brown
-    , pink
-    , purple
-    , gray
-    , grey
-    , mixed
-    , lighter
-    , light
-    , darker
-    , dark
-    , brighter
-    , bright
-    , duller
-    , dull
-    , translucent
-    , assortedColors
-    , hue
-    , saturation
-    , luminosity
-    , alpha
+    Color (..),
+    Colour,
+    pattern RGB,
+    pattern HSL,
+    black,
+    white,
+    red,
+    green,
+    blue,
+    cyan,
+    magenta,
+    yellow,
+    aquamarine,
+    orange,
+    azure,
+    violet,
+    chartreuse,
+    rose,
+    brown,
+    pink,
+    purple,
+    gray,
+    grey,
+    mixed,
+    lighter,
+    light,
+    darker,
+    dark,
+    brighter,
+    bright,
+    duller,
+    dull,
+    translucent,
+    assortedColors,
+    hue,
+    saturation,
+    luminosity,
+    alpha,
+
     -- * Events
-    , Event(..)
+    Event (..),
+
     -- * Debugging
-    , trace
-    ) where
+    trace,
+  )
+where
 
 import CodeWorld.Color
 import CodeWorld.EntryPoints

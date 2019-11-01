@@ -6,16 +6,16 @@ cache:
   directories:
   - $HOME/.local/bin
   - $HOME/.stack
-  - $HOME/.stack-work
-  - $HOME/codeworld-account/.stack-work
-  - $HOME/codeworld-api/.stack-work
-  - $HOME/codeworld-auth/.stack-work
-  - $HOME/codeworld-compiler/.stack-work
-  - $HOME/codeworld-error-sanitizer/.stack-work
-  - $HOME/codeworld-game-api/.stack-work
-  - $HOME/codeworld-game-server/.stack-work
-  - $HOME/codeworld-prediction/.stack-work
-  - $HOME/codeworld-server/.stack-work
+  - $TRAVIS_BUILD_DIR/.stack-work
+  - $TRAVIS_BUILD_DIR/codeworld-account/.stack-work
+  - $TRAVIS_BUILD_DIR/codeworld-api/.stack-work
+  - $TRAVIS_BUILD_DIR/codeworld-auth/.stack-work
+  - $TRAVIS_BUILD_DIR/codeworld-compiler/.stack-work
+  - $TRAVIS_BUILD_DIR/codeworld-error-sanitizer/.stack-work
+  - $TRAVIS_BUILD_DIR/codeworld-game-api/.stack-work
+  - $TRAVIS_BUILD_DIR/codeworld-game-server/.stack-work
+  - $TRAVIS_BUILD_DIR/codeworld-prediction/.stack-work
+  - $TRAVIS_BUILD_DIR/codeworld-server/.stack-work
 
 addons:
   apt:

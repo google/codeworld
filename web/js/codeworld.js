@@ -809,6 +809,10 @@ function formatSource() {
     sendHttp('POST', 'indent', data, request => {
         if (request.status === 200) {
             codeworldEditor.getDoc().setValue(request.responseText);
+        } else if (request.status === 500) {
+            sweetAlert('Oops!',
+                'Could not format your code.  It may contains errors.',
+                'error');
         }
     });
 }

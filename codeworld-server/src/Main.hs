@@ -2,6 +2,8 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
 {-# OPTIONS_GHC
     -fno-warn-incomplete-patterns
     -fno-warn-name-shadowing
@@ -41,6 +43,7 @@ import Control.Concurrent (forkIO)
 import Control.Concurrent.MSem (MSem)
 import qualified Control.Concurrent.MSem as MSem
 import Control.Exception (bracket_)
+import Control.Exception.Lifted (catch)
 import Control.Monad
 import Control.Monad.Trans
 import Data.Aeson
@@ -57,8 +60,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
 import qualified Data.Vector as V
-import HIndent (reformat)
-import HIndent.Types (defaultConfig)
+import Ormolu (ormolu, defaultConfig, OrmoluException)
 import Network.HTTP.Simple
 import Snap.Core
 import Snap.Http.Server (quickHttpServe)
@@ -463,13 +465,15 @@ indentHandler :: CodeWorldHandler
 indentHandler = public $ \ctx -> do
     mode <- getBuildMode
     Just source <- getParam "source"
-    case reformat defaultConfig Nothing Nothing source of
-        Left err -> do
-            modifyResponse $ setResponseCode 500 . setContentType "text/plain"
-            writeLBS $ LB.fromStrict $ BC.pack err
-        Right res -> do
-            modifyResponse $ setContentType "text/x-haskell"
-            writeLBS $ toLazyByteString res
+    reformat source `catch` handleError
+  where
+    reformat source = do
+        result <- ormolu defaultConfig "program.hs" (T.unpack (T.decodeUtf8 source))
+        modifyResponse $ setContentType "text/x-haskell"
+        writeBS $ T.encodeUtf8 result
+    handleError (e :: OrmoluException) = do
+        modifyResponse $ setResponseCode 500 . setContentType "text/plain"
+        writeLBS $ LB.fromStrict $ BC.pack (show e)
 
 galleryHandler :: CodeWorldHandler
 galleryHandler = public $ const $ do

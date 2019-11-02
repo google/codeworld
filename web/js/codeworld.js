@@ -147,7 +147,7 @@ function initCodeworld() {
         styleActiveLine: !WURFL || !WURFL.is_mobile,
         showTrailingSpace: true,
         indentWithTabs: false,
-        indentUnit: 4,
+        indentUnit: window.buildMode === 'codeworld' ? 4 : 2,
         autoClearEmptyLines: true,
         highlightSelectionMatches: {
             showToken: /\w/,
@@ -808,7 +808,9 @@ function formatSource() {
 
     sendHttp('POST', 'indent', data, request => {
         if (request.status === 200) {
-            codeworldEditor.getDoc().setValue(request.responseText);
+            if (request.responseText !== src) {
+                codeworldEditor.getDoc().setValue(request.responseText);
+            }
         } else if (request.status === 500) {
             sweetAlert('Oops!',
                 'Could not format your code.  It may contains errors.',

@@ -269,15 +269,16 @@ ifSucceeding m = do
     status <- gets compileStatus
     when (status == CompileSuccess) m
 
-withTimeout :: Int -> IO a -> IO (Maybe a)
+withTimeout :: forall a. Int -> IO a -> IO (Maybe a)
 withTimeout micros action = do
-    result <- newEmptyMVar
+    result :: MVar (Maybe (Either SomeException a)) <- newEmptyMVar
     killer <- forkIO $ threadDelay micros >> putMVar result Nothing
-    runner <- forkIO $ action >>= putMVar result . Just
+    runner <- forkIO $ do
+        try action >>= putMVar result . Just
     r <- takeMVar result
     killThread killer
     killThread runner
-    return r
+    sequence $ either throwM return <$> r
 
 -- Runs a command, where if the thread terminates, the subprocess is automatically
 -- killed.

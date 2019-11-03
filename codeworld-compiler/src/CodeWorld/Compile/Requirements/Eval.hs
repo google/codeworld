@@ -29,6 +29,7 @@ import CodeWorld.Compile.Framework
 import CodeWorld.Compile.Requirements.Matcher
 import CodeWorld.Compile.Requirements.Types
 import Control.Monad.IO.Class
+import Control.Monad.State
 import Data.Array
 import Data.Char
 import Data.Either
@@ -67,7 +68,7 @@ withParsedCode :: MonadCompile m
                   => (HsModule GhcPs -> m Result)
                   -> m Result
 withParsedCode check = do
-    getGHCParsedCode >>= \pc -> case pc of
+    getMainGHCParsedCode >>= \pc -> case pc of
         GHCNoParse -> abort
         GHCParsed m -> check m       
 
@@ -179,8 +180,8 @@ checkRule (ContainsMatch tmpl topLevel card) = withParsedCode $ \m -> do
        | otherwise -> failure $ "Wrong number of matches."
     
 checkRule (MatchesRegex pat card) = do
-    src <- getSourceCode
-    let n = rangeSize (bounds (src =~ pat :: MatchArray))
+    code <- getMainSourceCode
+    let n = rangeSize (bounds (code =~ pat :: MatchArray))
     if | hasCardinality card n -> success
        | otherwise -> failure $ "Wrong number of matches."
 
@@ -214,8 +215,8 @@ checkRule (NotThis rule) = do
         Nothing -> abort
 
 checkRule (MaxLineLength len) = do
-    src <- getSourceCode
-    if | any (> len) (C.length <$> C.lines src) -> 
+    code <- getMainSourceCode
+    if | any (> len) (C.length <$> C.lines code) -> 
             failure $ "One or more lines longer than " ++ show len ++ " characters."
        | otherwise -> success
 

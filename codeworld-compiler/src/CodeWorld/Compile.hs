@@ -40,6 +40,7 @@ import Control.Monad.State
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import Data.List
+import qualified Data.Map as Map
 import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
@@ -73,21 +74,25 @@ writeUtf8 f = B.writeFile f . encodeUtf8
 
 compileSource
     :: Stage -> FilePath -> FilePath -> String -> Bool -> IO CompileStatus
-compileSource stage src err mode verbose = fromMaybe CompileAborted <$>
-    withTimeout timeout (compileStatus <$> execStateT build initialState)
+compileSource stage src err mode verbose = fromMaybe CompileAborted <$> do
+    withTimeout timeout $
+        withSystemTempDirectory "build" $ \tmpdir ->
+            compileStatus <$> execStateT build (initialState tmpdir)
   where
-    initialState = CompileState {
+    initialState buildDir = CompileState {
         compileMode = mode,
         compileStage = stage,
-        compileSourcePath = src,
+        compileBuildDir = buildDir,
+        compileSourcePaths = [src],
         compileOutputPath = err,
         compileVerbose = verbose,
         compileTimeout = timeout,
         compileStatus = CompileSuccess,
         compileErrors = [],
-        compileReadSource = Nothing,
-        compileParsedSource = Nothing,
-        compileGHCParsedSource = Nothing
+        compileMainSourcePath = Nothing,
+        compileReadSource = Map.empty,
+        compileParsedSource = Map.empty,
+        compileGHCParsedSource = Map.empty
         }
     timeout = case stage of
         GenBase _ _ _ _ -> maxBound :: Int
@@ -109,7 +114,8 @@ build = do
     liftIO $ B.writeFile errPath $ encodeUtf8 $ formatDiagnostics diags
 
 compileCode :: MonadCompile m => m ()
-compileCode = ifSucceeding $ withSystemTempDirectory "build" $ \tmpdir -> do
+compileCode = ifSucceeding $ do
+    tmpdir <- gets compileBuildDir
     ghcjsArgs <- prepareCompile tmpdir
 
     timeout <- gets compileTimeout
@@ -126,8 +132,13 @@ compileCode = ifSucceeding $ withSystemTempDirectory "build" $ \tmpdir -> do
 
 prepareCompile :: MonadCompile m => FilePath -> m [String]
 prepareCompile dir = do
-    src <- gets compileSourcePath
-    liftIO $ copyFile src (dir </> "program.hs")
+    srcs <- gets compileSourcePaths
+    mainSrc <- getMainSourcePath
+    localSrcs <- forM srcs $ \src -> do
+        let dest | src == mainSrc = "program.hs"
+                 | otherwise = takeFileName src
+        liftIO $ copyFile src (dir </> dest)
+        return dest
 
     mode <- gets compileMode
     stage <- gets compileStage
@@ -141,7 +152,7 @@ prepareCompile dir = do
             liftIO $ copyFile syms (dir </> "out.base.symbs")
             return ["-dedupe", "-use-base", "out.base.symbs"]
 
-    return $ ["program.hs"] ++ buildArgs mode ++ linkArgs
+    return $ localSrcs ++ buildArgs mode ++ linkArgs
 
 buildArgs :: SourceMode -> [String]
 buildArgs "codeworld" =

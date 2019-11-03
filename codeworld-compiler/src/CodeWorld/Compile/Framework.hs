@@ -60,6 +60,7 @@ import qualified "ghc-lib-parser" HsExtension as GHCParse
 import qualified "ghc-lib-parser" HsSyn as GHCParse
 import qualified "ghc-lib-parser" HscTypes as GHCParse
 import qualified "ghc-lib-parser" Lexer as GHCParse
+import qualified "ghc-lib-parser" Module as GHCParse
 import qualified "ghc-lib-parser" Panic as GHCParse
 import qualified "ghc-lib-parser" Parser as GHCParse
 import qualified "ghc-lib-parser" GHC.Platform as GHCParse
@@ -88,15 +89,18 @@ data CompileStatus
 data CompileState = CompileState {
     compileMode            :: SourceMode,
     compileStage           :: Stage,
-    compileSourcePath      :: FilePath,
+    compileBuildDir        :: FilePath,
+    compileSourcePaths     :: [FilePath],
+    compileExtraSources    :: [FilePath],
     compileOutputPath      :: FilePath,
     compileVerbose         :: Bool,
     compileTimeout         :: Int,
     compileStatus          :: CompileStatus,
     compileErrors          :: [Diagnostic],
-    compileReadSource      :: Maybe ByteString,
-    compileParsedSource    :: Maybe ParsedCode,
-    compileGHCParsedSource :: Maybe GHCParsedCode
+    compileMainSourcePath  :: Maybe FilePath,
+    compileReadSource      :: Map FilePath ByteString,
+    compileParsedSource    :: Map FilePath ParsedCode,
+    compileGHCParsedSource :: Map FilePath GHCParsedCode
     }
 
 type MonadCompile m = (MonadState CompileState m, MonadIO m, MonadMask m)
@@ -109,38 +113,65 @@ data ParsedCode = Parsed (Module SrcSpanInfo) | NoParse deriving Show
 
 data GHCParsedCode = GHCParsed (GHCParse.HsModule GHCParse.GhcPs) | GHCNoParse
 
-getSourceCode :: MonadCompile m => m ByteString
-getSourceCode = do
+getSourceCode :: MonadCompile m => FilePath -> m ByteString
+getSourceCode src = do
     cached <- gets compileReadSource
-    case cached of
+    case M.lookup src cached of
         Just source -> return source
         Nothing -> do
-            src <- gets compileSourcePath
             source <- liftIO $ B.readFile src
-            modify $ \state -> state { compileReadSource = Just source }
+            modify $ \state -> state { compileReadSource = M.insert src source cached }
             return source
 
-getParsedCode :: MonadCompile m => m ParsedCode
-getParsedCode = do
+getParsedCode :: MonadCompile m => FilePath -> m ParsedCode
+getParsedCode src = do
     cached <- gets compileParsedSource
-    case cached of
+    case M.lookup src cached of
         Just parsed -> return parsed
         Nothing -> do
-            source <- getSourceCode
+            source <- getSourceCode src
             parsed <- parseCode ["TupleSections"] (decodeUtf8 source)
-            modify $ \state -> state { compileParsedSource = Just parsed }
+            modify $ \state -> state { compileParsedSource = M.insert src parsed cached }
             return parsed
 
-getGHCParsedCode :: MonadCompile m => m GHCParsedCode
-getGHCParsedCode = do
+getGHCParsedCode :: MonadCompile m => FilePath -> m GHCParsedCode
+getGHCParsedCode src = do
     cached <- gets compileGHCParsedSource
-    case cached of
+    case M.lookup src cached of
         Just parsed -> return parsed
         Nothing -> do
-            source <- getSourceCode
+            source <- getSourceCode src
             parsed <- ghcParseCode ["TupleSections"] (decodeUtf8 source)
-            modify $ \state -> state { compileGHCParsedSource = Just parsed }
+            modify $ \state -> state { compileGHCParsedSource = M.insert src parsed cached }
             return parsed
+
+getMainSourcePath :: MonadCompile m => m FilePath
+getMainSourcePath = do
+    mainPath <- gets compileMainSourcePath
+    case mainPath of
+        Just path -> return path
+        Nothing -> do
+            srcs <- gets compileSourcePaths
+            parsed <- mapM getGHCParsedCode srcs
+            let matched = [ src | (src, GHCParsed mod) <- zip srcs parsed
+                                , isMainModName (GHCParse.hsmodName mod) ]
+            let result = head (matched ++ srcs)
+            modify $ \state -> state { compileMainSourcePath = Just result }
+            return result
+  where
+    isMainModName Nothing = True
+    isMainModName (Just (GHCParse.L _ modName))
+        = GHCParse.moduleNameString modName == "Main"
+    isMainModName _ = False
+
+getMainSourceCode :: MonadCompile m => m ByteString
+getMainSourceCode = getMainSourcePath >>= getSourceCode
+
+getMainParsedCode :: MonadCompile m => m ParsedCode
+getMainParsedCode = getMainSourcePath >>= getParsedCode
+
+getMainGHCParsedCode :: MonadCompile m => m GHCParsedCode
+getMainGHCParsedCode = getMainSourcePath >>= getGHCParsedCode
 
 getDiagnostics :: MonadCompile m => m [Diagnostic]
 getDiagnostics = do

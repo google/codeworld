@@ -28,6 +28,7 @@ import CodeWorld.Compile.Requirements.Types
 import Codec.Compression.Zlib
 import Control.Exception
 import Control.Monad
+import Control.Monad.State
 import Data.Array
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -67,13 +68,15 @@ codedPattern = "{-+[[:space:]]*XREQUIRES\\b((\n|[^-]|-[^}])*)-}"
 
 extractRequirementsSource :: MonadCompile m => m [(SrcSpanInfo, Text)]
 extractRequirementsSource = do
-    src <- decodeUtf8 <$> getSourceCode
-    let plain = extractSubmatches plainPattern src
-    let blocks = map (fmap deobfuscate) (extractSubmatches codedPattern src)
-    addDiagnostics [ (spn, CompileSuccess, "warning: Coded requirements were corrupted.")
-                     | (spn, Nothing) <- blocks ]
-    let coded = [ (spn, rule) | (spn, Just block) <- blocks, rule <- block ]
-    return (plain ++ coded)
+    srcs <- gets compileSourcePaths
+    fmap concat $ forM srcs $ \src -> do
+        code <- decodeUtf8 <$> getSourceCode src
+        let plain = extractSubmatches plainPattern code
+        let blocks = map (fmap deobfuscate) (extractSubmatches codedPattern code)
+        addDiagnostics [ (spn, CompileSuccess, "warning: Coded requirements were corrupted.")
+                         | (spn, Nothing) <- blocks ]
+        let coded = [ (spn, rule) | (spn, Just block) <- blocks, rule <- block ]
+        return (plain ++ coded)
 
 extractSubmatches :: Text -> Text -> [(SrcSpanInfo, Text)]
 extractSubmatches pattern src =

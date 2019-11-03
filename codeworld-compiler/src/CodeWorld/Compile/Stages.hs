@@ -73,20 +73,22 @@ checkCodeConventions = do
 -- trust haskell-src-exts to correctly parse the source.
 checkDangerousSource :: MonadCompile m => m ()
 checkDangerousSource = do
-    src <- decodeUtf8 <$> getSourceCode
-    let matches = src =~ (".*(TemplateHaskell|QuasiQuotes|glasgow-exts).*" :: Text) :: [MatchArray]
-    when (not (null matches)) $ do
-        let (off, len) = matches !! 0 ! 1
-        addDiagnostics
-            [ (srcSpanFor src off len, CompileError,
-               "error:\n    Sorry, but your program uses forbidden language features.")
-            ]
+    srcs <- gets compileSourcePaths
+    forM_ srcs $ \src -> do
+        code <- decodeUtf8 <$> getSourceCode src
+        let matches = code =~ (".*(TemplateHaskell|QuasiQuotes|glasgow-exts).*" :: Text) :: [MatchArray]
+        when (not (null matches)) $ do
+            let (off, len) = matches !! 0 ! 1
+            addDiagnostics
+                [ (srcSpanFor code off len, CompileError,
+                   "error:\n    Sorry, but your program uses forbidden language features.")
+                ]
 
 -- Look for modules defined by LSU's computational thinking curriculum.  These
 -- must be compiled on LSU's server, so we tell students to go there instead.
 checkLsuModules :: MonadCompile m => m ()
-checkLsuModules =
-    getParsedCode >>= \parsed -> case parsed of
+checkLsuModules = do
+    getMainParsedCode >>= \parsed -> case parsed of
         Parsed mod -> addDiagnostics $ everything (++) (mkQ [] checkImp) mod
         _ -> return ()
   where checkImp :: ImportDecl SrcSpanInfo -> [Diagnostic]
@@ -105,7 +107,7 @@ checkLsuModules =
 -- Add a custom error message for this case.
 checkOldStyleMain :: MonadCompile m => m ()
 checkOldStyleMain =
-    getParsedCode >>= \parsed -> case parsed of
+    getMainParsedCode >>= \parsed -> case parsed of
         Parsed mod | Nothing <- getTopLevelDef mod "program",
                      Just d <- getTopLevelDef mod "main" ->
             addDiagnostics [(ann d, CompileSuccess, errorMsg)]
@@ -130,7 +132,7 @@ getTopLevelDef _ _ = Nothing
 -- use some Haskell-specific features, such as do-blocks and character literals.
 checkExcludedSyntax :: MonadCompile m => m ()
 checkExcludedSyntax =
-    getParsedCode >>= \parsed -> case parsed of
+    getMainParsedCode >>= \parsed -> case parsed of
         Parsed mod -> addDiagnostics $ dedupErrorSpans $
             everything (++) (mkQ [] checkExps) mod ++
             everything (++) (mkQ [] checkPats) mod
@@ -159,7 +161,7 @@ checkExcludedSyntax =
 -- type signature was changed, so there's a custom error message.
 checkOldStyleMixed :: MonadCompile m => SourceMode -> m ()
 checkOldStyleMixed mode =
-    getParsedCode >>= \parsed -> case parsed of
+    getMainParsedCode >>= \parsed -> case parsed of
         Parsed mod -> addDiagnostics $
             everything (++) (mkQ [] (oldStyleMixed mode)) mod
         _ -> return ()
@@ -184,7 +186,7 @@ checkOldStyleMixed mode =
 -- message.
 checkOldStyleGray :: MonadCompile m => m ()
 checkOldStyleGray =
-    getParsedCode >>= \parsed -> case parsed of
+    getMainParsedCode >>= \parsed -> case parsed of
         Parsed mod -> addDiagnostics $
             everything (++) (mkQ [] oldStyleGray) mod
         _ -> return ()
@@ -206,7 +208,7 @@ checkOldStyleGray =
 -- Look for functions whose equations are not contiguous.
 checkNoncontiguousEquations :: MonadCompile m => m ()
 checkNoncontiguousEquations =
-    getParsedCode >>= \parsed -> case parsed of
+    getMainParsedCode >>= \parsed -> case parsed of
         Parsed mod -> addDiagnostics $
             everything (++) (mkQ [] checkModule) mod ++
             everything (++) (mkQ [] checkBinds) mod
@@ -250,7 +252,7 @@ checkNoncontiguousEquations =
 -- parentheses.
 checkFunctionParentheses :: MonadCompile m => m ()
 checkFunctionParentheses =
-    getParsedCode >>= \parsed -> case parsed of
+    getMainParsedCode >>= \parsed -> case parsed of
         Parsed mod -> addDiagnostics $
             dedupErrorSpans (everything (++) (mkQ [] badExpApps) mod) ++
             everything (++) (mkQ [] badMatchApps) mod ++
@@ -431,7 +433,7 @@ isLikelyNumberExp _ = False
 
 checkVarlessPatterns :: MonadCompile m => m ()
 checkVarlessPatterns =
-    getParsedCode >>= \parsed -> case parsed of
+    getMainParsedCode >>= \parsed -> case parsed of
         Parsed mod -> addDiagnostics $
             everything (++) (mkQ [] varlessPatBinds) mod
         _ -> return ()
@@ -452,7 +454,7 @@ isPatVar _ = False
 
 checkPatternGuards :: MonadCompile m => m ()
 checkPatternGuards =
-    getParsedCode >>= \parsed -> case parsed of
+    getMainParsedCode >>= \parsed -> case parsed of
         Parsed mod -> addDiagnostics $
             everything (++) (mkQ [] patternGuards) mod
         _ -> return ()
@@ -466,7 +468,7 @@ patternGuards (GuardedRhs _ stmts _) =
 
 checkExtraCommas :: MonadCompile m => m ()
 checkExtraCommas =
-    getParsedCode >>= \parsed -> case parsed of
+    getMainParsedCode >>= \parsed -> case parsed of
         Parsed mod -> addDiagnostics $
             everything (++) (mkQ [] extraCommas) mod
         _ -> return ()
@@ -499,7 +501,7 @@ extraCommas _ = []
 
 checkAndOnPrograms :: MonadCompile m => m ()
 checkAndOnPrograms =
-    getParsedCode >>= \parsed -> case parsed of
+    getMainParsedCode >>= \parsed -> case parsed of
         Parsed mod -> addDiagnostics $ dedupErrorSpans $
             everything (++) (mkQ [] andOnPrograms) mod
         _ -> return ()
@@ -527,7 +529,7 @@ checkAndOnPrograms =
 
 checkAndInAnimation :: MonadCompile m => m ()
 checkAndInAnimation =
-    getParsedCode >>= \parsed -> case parsed of
+    getMainParsedCode >>= \parsed -> case parsed of
         Parsed mod -> addDiagnostics $ dedupErrorSpans $
             everything (++) (mkQ [] andInAnimation) mod
         _ -> return ()
@@ -552,7 +554,7 @@ checkAndInAnimation =
 
 checkCodeWorldImport :: MonadCompile m => m ()
 checkCodeWorldImport =
-    getParsedCode >>= \parsed -> case parsed of
+    getMainParsedCode >>= \parsed -> case parsed of
         Parsed mod -> addDiagnostics $
             everything (++) (mkQ [] codeWorldImport) mod
         _ -> return ()

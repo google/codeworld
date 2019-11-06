@@ -99,9 +99,9 @@ function run {
 #
 
 function cabal_install {
-  cabal v1-install -j$NPROC --symlink-bindir=$BUILD/bin --reorder-goals --disable-library-profiling --force-reinstalls --global --prefix=$BUILD $@
+  cabal v1-install -fstrictbuild -j$NPROC --symlink-bindir=$BUILD/bin --reorder-goals --disable-library-profiling --force-reinstalls --global --prefix=$BUILD $@
 }
 
 function cabal_configure {
-  cabal v1-configure --disable-library-profiling --global --prefix=$BUILD $@
+  cabal v1-configure -fstrictbuild --disable-library-profiling --global --prefix=$BUILD $@
 }

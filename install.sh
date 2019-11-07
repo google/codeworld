@@ -239,7 +239,7 @@ fi
 if [ ! -f $BUILD/progress/codemirror ]; then
   run $BUILD            rm -rf $BUILD/CodeMirror
   run $BUILD            git clone https://github.com/codemirror/CodeMirror.git
-  run $BUILD/CodeMirror git checkout tags/5.43.0
+  run $BUILD/CodeMirror git checkout dde0e5cb51b243c61de9c43405b60c69a86dfb24
   run $BUILD/CodeMirror npm install
   run $BUILD/CodeMirror npm install -s uglify-js https://github.com/angelozerr/CodeMirror-Extension
 

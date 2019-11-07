@@ -19,6 +19,7 @@ cache:
 
 addons:
   apt:
+    update: true
     packages:
       - libgmp-dev
 
@@ -32,55 +33,11 @@ jobs:
         - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
         - stack setup
     - stage: Build dependencies
-      name: "root"
+      name: "Build dependencies"
       script:
+        # - stack clean --full  # if unreliability persists
         - export PATH=$HOME/.local/bin:$PATH
         - stack build --dependencies-only
-    - stage: Build dependencies
-      name: "Account"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build --dependencies-only codeworld-account
-    - stage: Build dependencies
-      name: "API"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build --dependencies-only codeworld-api
-    - stage: Build dependencies
-      name: "Auth"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build --dependencies-only codeworld-auth
-    - stage: Build dependencies
-      name: "Compiler"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build --dependencies-only codeworld-compiler
-    - stage: Build dependencies
-      name: "Error Sanitizer"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build --dependencies-only codeworld-error-sanitizer
-    - stage: Build dependencies
-      name: "Game API"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build --dependencies-only codeworld-game-api
-    - stage: Build dependencies
-      name: "Game Server"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build --dependencies-only codeworld-game-server
-    - stage: Build dependencies
-      name: "Prediction"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build --dependencies-only codeworld-prediction
-    - stage: Build dependencies
-      name: "Server"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build --dependencies-only codeworld-server
     - stage: Build
       name: "root"
       script:

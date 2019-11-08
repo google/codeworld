@@ -91,23 +91,31 @@ If you make changes to CodeWorld, you can rebuild it without rebuilding the depe
 2. Run `./build.sh` to recompile just CodeWorld itself, using previously installed tools and libraries.
 3. Run `./run.sh` to start the server.
 
+### Docker
+
+It's also possible to build and run the server using Docker.  This is not yet the
+recommended way to develop with CodeWorld, but it could get there soon.
+
+Commands to try for docker:
+
+    sudo docker built -t codeworld https://github.com/google/codeworld.git
+    sudo docker run -p 80:8080 -t codeworld
+
+For now, the docker container has no way to access a client id, mount a shared NFS
+drive, or other setup steps.  It will work, but it won't be complete.  In the
+future, this should become the standard way to deploy CodeWorld.
+
 ### Stack
 
-The `stack.yaml` in the project's root is present to partially support Intero and [Travis CI](https://travis-ci.org/google/codeworld/).  On Travis, `codeworld-compiler` tests do not run; `codeworld-base` and `funblocks-client` are not built or tested.
+The `stack.yaml` in the project's root is present to partially support Intero and
+[Travis CI](https://travis-ci.org/google/codeworld/).  On Travis, `codeworld-compiler`
+tests do not run; `codeworld-base` and `funblocks-client` are not built or tested.
 
-Building and running CodeWorld locally with Stack is unsupported; Stack cannot yet substitute for the Shell scripts described above.
+Building and running CodeWorld locally with Stack is unsupported, and in fact doesn't
+work.  Stack cannot yet substitute for the shell scripts or docker usage above.
 
 Caveats
 -------
-
-### Leaky GHCJS Sandboxing ###
-
-While the installation process installs most of its files inside `codeworld/build`, it does
-clobber `~/.ghc`, `~/.ghcjs`, and `~/.cabal`.  I recommend that you run CodeWorld as a
-dedicated user account to avoid causing problems for other Haskell installations.  If you
-don't, note that you will lose your user package database.
-
-See bug [#4](https://github.com/google/codeworld/issues/4) for details.
 
 ### Authentication
 

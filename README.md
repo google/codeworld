@@ -98,7 +98,7 @@ recommended way to develop with CodeWorld, but it could get there soon.
 
 Commands to try for docker:
 
-    sudo docker built -t codeworld https://github.com/google/codeworld.git
+    sudo docker build -t codeworld https://github.com/google/codeworld.git
     sudo docker run -p 80:8080 -t codeworld
 
 For now, the docker container has no way to access a client id, mount a shared NFS

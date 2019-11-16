@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
@@ -23,7 +24,8 @@
 -}
 
 module CodeWorld.Compile.Stages
-    ( checkDangerousSource
+    ( findAllModules
+    , checkDangerousSource
     , checkCodeConventions
     , checkRequirements
     ) where
@@ -35,6 +37,7 @@ import Control.Monad.State
 import Data.Array
 import Data.Function (on)
 import Data.Generics
+import qualified Data.Map as M
 import Data.Maybe
 import Data.Monoid
 import Data.List
@@ -44,7 +47,41 @@ import Language.Haskell.Exts
 import Text.Regex.TDFA
 import Text.Regex.TDFA.Text
 
--- Checks a full list of conventions that are enforced by the CodeWorld
+import qualified "ghc" HsSyn as GHC
+import qualified "ghc" Module as GHC
+import qualified "ghc" SrcLoc as GHC
+
+-- Expands the source list to include modules that are imported and
+-- found by the module finder.
+findAllModules :: MonadCompile m => m ()
+findAllModules = do
+    startPaths <- gets compileSourcePaths
+    newPaths <- M.elems <$> execStateT (mapM_ findImportsInModule startPaths) M.empty
+    modify $ \state -> state { compileSourcePaths = startPaths ++ newPaths }
+
+findImportsInModule :: MonadCompile m => FilePath -> StateT (M.Map String FilePath) m ()
+findImportsInModule path = do
+    parsed <- lift $ getGHCParsedCode path
+    case parsed of
+        GHCParsed mod -> forM_ (GHC.hsmodImports mod) $ \(GHC.L _ idecl) ->
+            findModule $ GHC.moduleNameString $ GHC.unLoc $ GHC.ideclName idecl
+        _ -> return ()
+
+findModule :: MonadCompile m => String -> StateT (M.Map String FilePath) m ()
+findModule mod = do
+    alreadyFound <- get
+    if M.member mod alreadyFound then return () else do
+        finder <- lift $ gets compileModuleFinder
+        orig <- liftIO (finder mod)
+        case orig of
+            Nothing -> return ()
+            Just f -> do
+                copyResult <- lift $ copyModuleWithName f mod
+                case copyResult of
+                    Just copy -> do
+                        modify (M.insert mod copy)
+                        findImportsInModule copy
+
 -- compiler for "codeworld" mode.  In other modes, this has no effect.
 checkCodeConventions :: MonadCompile m => m ()
 checkCodeConventions = do

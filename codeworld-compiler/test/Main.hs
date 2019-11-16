@@ -34,10 +34,14 @@ compilerOutput testName =
         compileSource
             ErrorCheck
             ("test/testcases" </> testName </> "source.hs")
+            noModuleFinder
             (dir </> "output.txt")
             "codeworld"
             False
         readFile (dir </> "output.txt")
+
+noModuleFinder :: String -> IO (Maybe FilePath)
+noModuleFinder _ = return Nothing
 
 trim :: String -> String
 trim = dropWhile isSpace . dropWhileEnd isSpace

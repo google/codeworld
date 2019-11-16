@@ -562,7 +562,7 @@ compileIncrementally ctx mode programId = do
             let baseURL = "runBaseJS?version=" ++ T.unpack ver
             let stage = UseBase target (baseSymbolFile ver) baseURL
 
-            status <- compileSource stage source result (getMode mode) False
+            status <- compileSource stage source noModuleFinder result (getMode mode) False
             T.writeFile baseVer ver
 
             -- It's possible that a new library was built during the compile.  If so, then the code
@@ -583,7 +583,7 @@ buildBaseIfNeeded ctx ver = do
                 let err = tmpdir </> "output.txt"
                 generateBaseBundle basePaths baseIgnore "codeworld" linkMain linkBase
                 let stage = GenBase "LinkBase" linkBase (baseCodeFile ver) (baseSymbolFile ver)
-                compileSource stage linkMain err "codeworld" False
+                compileSource stage linkMain noModuleFinder err "codeworld" False
         else return CompileSuccess
 
 basePaths :: [FilePath]
@@ -598,10 +598,13 @@ errorCheck ctx mode source = withSystemTempDirectory "cw_errorCheck" $ \dir -> d
     let errFile = dir </> "output.txt"
     B.writeFile srcFile source
     status <- MSem.with (errorSem ctx) $ MSem.with (compileSem ctx) $
-        compileSource ErrorCheck srcFile errFile (getMode mode) False
+        compileSource ErrorCheck srcFile noModuleFinder errFile (getMode mode) False
     hasOutput <- doesFileExist errFile
     output <- if hasOutput then B.readFile errFile else return B.empty
     return (status, output)
 
 getMode :: BuildMode -> String
 getMode (BuildMode m) = m
+
+noModuleFinder :: String -> IO (Maybe FilePath)
+noModuleFinder _ = return Nothing

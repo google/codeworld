@@ -42,9 +42,9 @@ import Data.Void
 import qualified Language.Haskell.Exts as Exts
 import Text.Regex.TDFA hiding (match)
 
-import "ghc-lib-parser" HsSyn
-import "ghc-lib-parser" Outputable
-import "ghc-lib-parser" SrcLoc
+import "ghc" HsSyn
+import "ghc" Outputable
+import "ghc" SrcLoc
 
 evalRequirement :: MonadCompile m => Requirement -> m (Maybe Bool, [String])
 evalRequirement Requirement{..} = do
@@ -113,15 +113,15 @@ checkRule (HasSimpleParams a) = withParsedCode $ \m -> do
         matchParams (L _ (Match{m_pats=pats})) = pats
         matchParams _ = []
 
-        isSimpleParam :: LPat GhcPs -> Bool
+        isSimpleParam :: Pat GhcPs -> Bool
         isSimpleParam (VarPat _ (L _ nm)) = isLower (head (idName nm))
-        isSimpleParam (TuplePat _ pats _) = all isSimpleParam pats
-        isSimpleParam (ParPat _ pat) = isSimpleParam pat
+        isSimpleParam (TuplePat _ pats _) = all isSimpleParam [ pat | L _ pat <- pats ]
+        isSimpleParam (ParPat _ (L _ pat)) = isSimpleParam pat
         isSimpleParam (WildPat _) = True
         isSimpleParam _ = False
 
     if | null paramPatterns -> failure $ "`" ++ a ++ "` is not defined as a function."
-       | all isSimpleParam paramPatterns -> success
+       | all (isSimpleParam . unLoc) paramPatterns -> success
        | otherwise -> failure $ "`" ++ a ++ "` has equations with pattern matching."
 
 checkRule (UsesAllParams a) = withParsedCode $ \m -> do
@@ -139,7 +139,7 @@ checkRule (UsesAllParams a) = withParsedCode $ \m -> do
 
         patVars ps = concatMap (everything (++) (mkQ [] patShallowVars)) ps
 
-        patShallowVars :: LPat GhcPs -> [String]
+        patShallowVars :: Pat GhcPs -> [String]
         patShallowVars (VarPat _ (L _ v)) = [idName v]
         patShallowVars (NPlusKPat _ (L _ v) _ _ _ _) = [idName v]
         patShallowVars (AsPat _ (L _ v) _) = [idName v]
@@ -261,9 +261,9 @@ checkRule _ = abort
 allDefinitionsOf :: String -> HsModule GhcPs -> [GRHSs GhcPs (LHsExpr GhcPs)]
 allDefinitionsOf a m = everything (++) (mkQ [] defs) m
   where defs :: HsBind GhcPs -> [GRHSs GhcPs (LHsExpr GhcPs)]
-        defs (FunBind{fun_id=(L _ funid), fun_matches=(MG{mg_alts=(L _ matches)})}) 
+        defs (FunBind{ fun_id = L _ funid, fun_matches = MG{ mg_alts = L _ matches }})
             | idName funid == a = concat $ funcDefs <$> matches
-        defs (PatBind{pat_lhs=pat, pat_rhs=rhs}) | patDefines pat a = [rhs]
+        defs (PatBind{ pat_lhs = L _ pat, pat_rhs = rhs }) | patDefines pat a = [rhs]
         defs _ = []
 
         funcDefs :: LMatch GhcPs (LHsExpr GhcPs) -> [GRHSs GhcPs (LHsExpr GhcPs)]
@@ -273,20 +273,20 @@ allDefinitionsOf a m = everything (++) (mkQ [] defs) m
 allBindingsOf :: String -> HsModule GhcPs -> [SDoc]
 allBindingsOf a m = everything (++) (mkQ [] binds) m
   where binds :: HsBind GhcPs -> [SDoc]
-        binds (FunBind{fun_id=(L _ funid), fun_matches=matches}) | idName funid == a = [pprFunBind matches]
-        binds (PatBind{pat_lhs=pat, pat_rhs=rhs}) | patDefines pat a = [pprPatBind pat rhs]
+        binds (FunBind{ fun_id = L _ funid, fun_matches=matches }) | idName funid == a = [pprFunBind matches]
+        binds (PatBind{ pat_lhs = lpat, pat_rhs = rhs }) | patDefines (unLoc lpat) a = [pprPatBind lpat rhs]
         binds _ = []
 
 topLevelNames :: HsModule GhcPs -> [String]
 topLevelNames (HsModule {hsmodDecls=decls}) = concat $ names <$> decls
   where names :: LHsDecl GhcPs -> [String]
-        names (L _ (ValD _ FunBind{fun_id=(L _ funid)})) = [idName funid]
-        names (L _ (ValD _ PatBind{pat_lhs=pat})) = [patName pat]
+        names (L _ (ValD _ FunBind{ fun_id = L _ funid })) = [idName funid]
+        names (L _ (ValD _ PatBind{ pat_lhs = L _ pat })) = [patName pat]
         names _ = []
 
-        patName :: LPat GhcPs -> String
+        patName :: Pat GhcPs -> String
         patName (VarPat _ (L _ patid)) = idName patid
-        patName (ParPat _ pat) = patName pat
+        patName (ParPat _ (L _ pat)) = patName pat
         patName _ = []
 
 typeSignatures :: HsModule GhcPs -> [String]
@@ -297,8 +297,7 @@ typeSignatures (HsModule {hsmodDecls=decls}) = concat $ typeSigNames <$> decls
 
         locatedIdName (L _ s) = idName s
 
-patDefines :: LPat GhcPs -> String -> Bool
+patDefines :: Pat GhcPs -> String -> Bool
 patDefines (VarPat _ (L _ patid)) a = idName patid == a
-patDefines (ParPat _ pat) a = patDefines pat a
+patDefines (ParPat _ (L _ pat)) a = patDefines pat a
 patDefines _ a = False
-

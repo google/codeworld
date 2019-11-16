@@ -73,8 +73,8 @@ writeUtf8 :: FilePath -> Text -> IO ()
 writeUtf8 f = B.writeFile f . encodeUtf8
 
 compileSource
-    :: Stage -> FilePath -> FilePath -> String -> Bool -> IO CompileStatus
-compileSource stage src err mode verbose = fromMaybe CompileAborted <$> do
+    :: Stage -> FilePath -> (String -> IO (Maybe FilePath)) -> FilePath -> String -> Bool -> IO CompileStatus
+compileSource stage src moduleFinder err mode verbose = fromMaybe CompileAborted <$> do
     withTimeout timeout $
         withSystemTempDirectory "build" $ \tmpdir ->
             compileStatus <$> execStateT build (initialState tmpdir)
@@ -84,6 +84,7 @@ compileSource stage src err mode verbose = fromMaybe CompileAborted <$> do
         compileStage = stage,
         compileBuildDir = buildDir,
         compileSourcePaths = [src],
+        compileModuleFinder = moduleFinder,
         compileOutputPath = err,
         compileVerbose = verbose,
         compileTimeout = timeout,
@@ -103,6 +104,7 @@ userCompileMicros = 30 * 1000000
 
 build :: MonadCompile m => m ()
 build = do
+    findAllModules
     checkDangerousSource
     ifSucceeding checkCodeConventions
     ifSucceeding compileCode

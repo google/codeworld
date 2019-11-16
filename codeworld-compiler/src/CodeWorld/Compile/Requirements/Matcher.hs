@@ -27,10 +27,10 @@ import Data.Generics.Twins
 import Data.List
 import Data.Maybe
 
-import "ghc-lib-parser" HsSyn
-import "ghc-lib-parser" OccName
-import "ghc-lib-parser" RdrName
-import "ghc-lib-parser" SrcLoc
+import "ghc" HsSyn
+import "ghc" OccName
+import "ghc" RdrName
+import "ghc" SrcLoc
 
 class (Data a, Typeable a) => Template a where
   toSplice :: a -> Maybe (HsSplice GhcPs)
@@ -44,19 +44,18 @@ class (Data a, Typeable a) => Template a where
   toNum :: a -> Maybe a
   toChar :: a -> Maybe a
   toStr :: a -> Maybe a
-  toName :: a -> Maybe a
 
 instance Template (Pat GhcPs) where
   toSplice (SplicePat _ s) = Just s
   toSplice _ = Nothing
 
-  fromBracket (PatBr _ p) = Just p
+  fromBracket (PatBr _ (L _ p)) = Just p
   fromBracket _ = Nothing
 
-  toParens (ParPat _ x) = Just x
+  toParens (ParPat _ (L _ x)) = Just x
   toParens _ = Nothing
 
-  toTuple (TuplePat _ ps _) = Just ps
+  toTuple (TuplePat _ ps _) = Just [ p | L _ p <- ps ]
   toTuple _ = Nothing
 
   toVar x@(VarPat _ _) = Just x

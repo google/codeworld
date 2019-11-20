@@ -546,31 +546,51 @@ compileIfNeeded ctx mode programId = do
     if | hasResult && hasTarget -> return CompileSuccess
        | hasResult -> return CompileError
        | otherwise ->
-             MSem.with (compileSem ctx) $ compileIncrementally ctx mode programId
+             MSem.with (compileSem ctx) $ compileProgram ctx mode programId
 
-compileIncrementally :: Context -> BuildMode -> ProgramId -> IO CompileStatus
-compileIncrementally ctx mode programId = do
+compileProgram :: Context -> BuildMode -> ProgramId -> IO CompileStatus
+compileProgram ctx mode programId = do
     ver <- baseVersion
     baseStatus <- buildBaseIfNeeded ctx ver
 
     case baseStatus of
         CompileSuccess -> do
-            let source = sourceRootDir mode </> sourceFile programId
-            let target = buildRootDir mode </> targetFile programId
-            let result = buildRootDir mode </> resultFile programId
-            let baseVer = buildRootDir mode </> baseVersionFile programId
-            let baseURL = "runBaseJS?version=" ++ T.unpack ver
-            let stage = UseBase target (baseSymbolFile ver) baseURL
-
-            status <- compileSource stage source noModuleFinder result (getMode mode) False
-            T.writeFile baseVer ver
+            status <- compileIncrementally mode programId ver
+            T.writeFile (buildRootDir mode </> baseVersionFile programId) ver
 
             -- It's possible that a new library was built during the compile.  If so, then the code
             -- we've just built is suspect, and it's better to just build it anew!
             checkVer <- baseVersion
             if ver == checkVer then return status
-                               else compileIncrementally ctx mode programId
+                               else compileProgram ctx mode programId
         _ -> return CompileAborted
+
+compileIncrementally :: BuildMode -> ProgramId -> Text -> IO CompileStatus
+compileIncrementally mode programId ver =
+    compileSource stage source (projectModuleFinder mode) result (getMode mode) False
+  where
+    source = sourceRootDir mode </> sourceFile programId
+    target = buildRootDir mode </> targetFile programId
+    result = buildRootDir mode </> resultFile programId
+    baseURL = "runBaseJS?version=" ++ T.unpack ver
+    stage = UseBase target (baseSymbolFile ver) baseURL
+
+projectModuleFinder :: BuildMode -> String -> IO (Maybe FilePath)
+projectModuleFinder mode modName
+  | length modName /= 31 = return Nothing
+  | length (filter (== '.') modName) /= 1 = return Nothing
+  | "Project.P" `isPrefixOf` modName = go (ProgramId (T.pack (drop 8 modName)))
+  | "Project.D" `isPrefixOf` modName = do
+      let deployId = DeployId (T.pack (drop 8 modName))
+      resolveDeployId mode deployId >>= go
+  | otherwise = return Nothing
+  where go programId = do
+            let path = sourceRootDir mode </> sourceFile programId
+            exists <- doesFileExist path
+            if exists then return (Just path) else return Nothing
+
+noModuleFinder :: String -> IO (Maybe FilePath)
+noModuleFinder _ = return Nothing
 
 buildBaseIfNeeded :: Context -> Text -> IO CompileStatus
 buildBaseIfNeeded ctx ver = do
@@ -598,13 +618,10 @@ errorCheck ctx mode source = withSystemTempDirectory "cw_errorCheck" $ \dir -> d
     let errFile = dir </> "output.txt"
     B.writeFile srcFile source
     status <- MSem.with (errorSem ctx) $ MSem.with (compileSem ctx) $
-        compileSource ErrorCheck srcFile noModuleFinder errFile (getMode mode) False
+        compileSource ErrorCheck srcFile (projectModuleFinder mode) errFile (getMode mode) False
     hasOutput <- doesFileExist errFile
     output <- if hasOutput then B.readFile errFile else return B.empty
     return (status, output)
 
 getMode :: BuildMode -> String
 getMode (BuildMode m) = m
-
-noModuleFinder :: String -> IO (Maybe FilePath)
-noModuleFinder _ = return Nothing

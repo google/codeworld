@@ -152,10 +152,14 @@ projectFile :: ProjectId -> FilePath
 projectFile projectId = projectBase projectId <.> "cw"
 
 sourceToProgramId :: ByteString -> ProgramId
-sourceToProgramId = ProgramId . hashToId "P"
+sourceToProgramId = ProgramId . T.map dashToUnderscore . hashToId "P"
 
 sourceToDeployId :: ByteString -> DeployId
-sourceToDeployId = DeployId . hashToId "D" . ("DEPLOY_ID" <>)
+sourceToDeployId = DeployId . T.map dashToUnderscore . hashToId "D" . ("DEPLOY_ID" <>)
+
+dashToUnderscore :: Char -> Char
+dashToUnderscore '-' = '_'
+dashToUnderscore c = c
 
 nameToProjectId :: Text -> ProjectId
 nameToProjectId = ProjectId . hashToId "S" . T.encodeUtf8

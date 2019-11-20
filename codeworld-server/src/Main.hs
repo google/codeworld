@@ -577,11 +577,10 @@ compileIncrementally mode programId ver =
 
 projectModuleFinder :: BuildMode -> String -> IO (Maybe FilePath)
 projectModuleFinder mode modName
-  | length modName /= 31 = return Nothing
-  | length (filter (== '.') modName) /= 1 = return Nothing
-  | "Project.P" `isPrefixOf` modName = go (ProgramId (T.pack (drop 8 modName)))
-  | "Project.D" `isPrefixOf` modName = do
-      let deployId = DeployId (T.pack (drop 8 modName))
+  | length modName /= 23 || '.' `elem` modName = return Nothing
+  | "P" `isPrefixOf` modName = go (ProgramId (T.pack modName))
+  | "D" `isPrefixOf` modName = do
+      let deployId = DeployId (T.pack modName)
       resolveDeployId mode deployId >>= go
   | otherwise = return Nothing
   where go programId = do

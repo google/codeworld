@@ -28,20 +28,25 @@ import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.HUnit hiding (Test)
 
+magicModuleFinder :: FilePath -> String -> IO (Maybe FilePath)
+magicModuleFinder dir modName
+    | "Magic." `isPrefixOf` modName = do
+        let source = "magic" ++ drop 6 modName ++ " = 42"
+        f <- writeTempFile dir "magic.hs" source
+        return (Just f)
+    | otherwise = return Nothing
+
 compilerOutput :: String -> IO String
 compilerOutput testName =
     withSystemTempDirectory "cwtest" $ \dir -> do
         compileSource
             ErrorCheck
             ("test/testcases" </> testName </> "source.hs")
-            noModuleFinder
+            (magicModuleFinder dir)
             (dir </> "output.txt")
             "codeworld"
             False
         readFile (dir </> "output.txt")
-
-noModuleFinder :: String -> IO (Maybe FilePath)
-noModuleFinder _ = return Nothing
 
 trim :: String -> String
 trim = dropWhile isSpace . dropWhileEnd isSpace

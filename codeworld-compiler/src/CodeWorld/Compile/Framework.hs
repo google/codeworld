@@ -279,18 +279,21 @@ parsePragmasIntoDynFlags dflags f src =
             (dflagsWithPragmas, _, _) <- GHC.parseDynamicFilePragma dflags opts
             return $ Just dflagsWithPragmas
 
-copyModuleWithName :: MonadCompile m => FilePath -> String -> m (Maybe FilePath)
-copyModuleWithName f modName = do
+copyModuleWithTransform
+    :: MonadCompile m
+    => FilePath
+    -> (GHC.HsModule GHC.GhcPs -> GHC.HsModule GHC.GhcPs)
+    -> m (Maybe FilePath)
+copyModuleWithTransform f transform = do
     src <- liftIO $ decodeUtf8 <$> B.readFile f
     parseResult <- ghcParseCode [] src
     case parseResult of
         GHCNoParse -> return Nothing
         GHCParsed mod -> do
-            let mod' = mod { GHC.hsmodName = Just (GHC.noLoc (GHC.mkModuleName modName)) }
             buildDir <- gets compileBuildDir
             liftIO $ do
                 (out, h) <- openTempFile buildDir "imported.hs"
-                GHC.printForUser fakeDynFlags h GHC.neverQualify $ GHC.ppr mod'
+                GHC.printForUser fakeDynFlags h GHC.neverQualify $ GHC.ppr (transform mod)
                 hClose h
                 return (Just out)
 

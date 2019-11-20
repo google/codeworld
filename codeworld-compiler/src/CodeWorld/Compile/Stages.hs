@@ -49,6 +49,8 @@ import Text.Regex.TDFA.Text
 
 import qualified "ghc" HsSyn as GHC
 import qualified "ghc" Module as GHC
+import qualified "ghc" OccName as GHC
+import qualified "ghc" RdrName as GHC
 import qualified "ghc" SrcLoc as GHC
 
 -- Expands the source list to include modules that are imported and
@@ -68,19 +70,31 @@ findImportsInModule path = do
         _ -> return ()
 
 findModule :: MonadCompile m => String -> StateT (M.Map String FilePath) m ()
-findModule mod = do
+findModule modName = do
+    mode <- lift $ gets compileMode
     alreadyFound <- get
-    if M.member mod alreadyFound then return () else do
+    if M.member modName alreadyFound then return () else do
         finder <- lift $ gets compileModuleFinder
-        orig <- liftIO (finder mod)
+        orig <- liftIO (finder modName)
         case orig of
             Nothing -> return ()
             Just f -> do
-                copyResult <- lift $ copyModuleWithName f mod
+                copyResult <- lift $ copyModuleWithTransform f (transform mode)
                 case copyResult of
                     Just copy -> do
-                        modify (M.insert mod copy)
+                        modify (M.insert modName copy)
                         findImportsInModule copy
+  where transform "codeworld" = renameIdentInModule "program" "renamed__program" . renameModule
+        transform _ = renameIdentInModule "main" "renamed__main" . renameModule
+
+        renameModule mod = mod { GHC.hsmodName = Just (GHC.noLoc (GHC.mkModuleName modName)) }
+
+        renameIdentInModule from to = everywhere (mkT (renameIdent from to))
+
+        renameIdent :: String -> String -> GHC.RdrName -> GHC.RdrName
+        renameIdent from to (GHC.Unqual n)
+            | n == GHC.mkVarOcc from = GHC.Unqual (GHC.mkVarOcc to)
+            | otherwise = GHC.Unqual n
 
 -- compiler for "codeworld" mode.  In other modes, this has no effect.
 checkCodeConventions :: MonadCompile m => m ()

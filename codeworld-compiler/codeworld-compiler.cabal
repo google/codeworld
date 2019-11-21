@@ -56,7 +56,6 @@ Library
     filepath,
     ghc == 8.6.5,
     ghc-boot-th == 8.6.5,
-    ghc-exactprint,
     hashable,
     haskell-src-exts >= 1.20,
     megaparsec,

@@ -42,22 +42,19 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import ErrorSanitizer
-import Language.Haskell.Exts hiding (exactPrint)
-import Language.Haskell.GHC.ExactPrint
-import Language.Haskell.GHC.ExactPrint.Delta
-import Language.Haskell.GHC.ExactPrint.Parsers
+import Language.Haskell.Exts
 import System.Exit (ExitCode(..))
 import System.Directory
 import System.FilePath
 import System.IO
-import System.IO.Temp (withSystemTempDirectory, writeTempFile)
+import System.IO.Temp (withSystemTempDirectory)
 import System.Process
 
 import qualified "ghc" Config as GHC
 import qualified "ghc" DynFlags as GHC
 import qualified "ghc" FastString as GHC
 import qualified "ghc" Fingerprint as GHC
-import qualified "ghc" GHC as GHC hiding (parseModule)
+import qualified "ghc-boot-th" GHC.LanguageExtensions.Type as GHC
 import qualified "ghc" HeaderInfo as GHC
 import qualified "ghc" HsExtension as GHC
 import qualified "ghc" HsSyn as GHC
@@ -70,8 +67,7 @@ import qualified "ghc" Parser as GHC
 import qualified "ghc" Platform as GHC
 import qualified "ghc" SrcLoc as GHC
 import qualified "ghc" StringBuffer as GHC
-
-import qualified "ghc-boot-th" GHC.LanguageExtensions.Type as GHC
+-- import qualified "ghc" ToolSettings as GHC
 
 data Stage
     = ErrorCheck
@@ -236,25 +232,20 @@ applyExtensionToFlags dflags name
 
 ghcParseCode :: MonadCompile m => [String] -> Text -> m GHCParsedCode
 ghcParseCode extraExts src = do
-    dflags <- getDynFlagsForFile extraExts src
-    let buffer = GHC.stringToStringBuffer (T.unpack src)
-        location = GHC.mkRealSrcLoc (GHC.mkFastString "program.hs") 1 1
-        state    = GHC.mkPState dflags buffer location
-    case GHC.unP GHC.parseModule state of
-        GHC.POk _ (GHC.L _ mod) -> return (GHCParsed mod)
-        GHC.PFailed _ _ _ -> return GHCNoParse
-
-getDynFlagsForFile :: MonadCompile m => [String] -> Text -> m (GHC.DynFlags)
-getDynFlagsForFile extraExts src = do
     sourceMode <- gets compileMode
     let buffer = GHC.stringToStringBuffer (T.unpack src)
         exts | sourceMode == "codeworld" = codeworldModeExts ++ extraExts
              | otherwise                 = extraExts
         dflags = foldl' applyExtensionToFlags fakeDynFlags exts
-    liftIO $ fromMaybe dflags <$>
-        parsePragmasIntoDynFlags dflags "program.hs" buffer
+    dflagsWithPragmas <- liftIO $
+        fromMaybe dflags <$> parsePragmasIntoDynFlags dflags "program.hs" buffer
+    let location = GHC.mkRealSrcLoc (GHC.mkFastString "program.hs") 1 1
+        state    = GHC.mkPState dflagsWithPragmas buffer location
+    return $ case GHC.unP GHC.parseModule state of
+        GHC.POk _ (GHC.L _ mod) -> GHCParsed mod
+        GHC.PFailed _ _ _       -> GHCNoParse
 
-fakeDynFlags :: GHC.DynFlags
+fakeDynFlags ::GHC.DynFlags
 fakeDynFlags = GHC.defaultDynFlags fakeSettings fakeLlvmConfig
 
 fakeSettings :: GHC.Settings
@@ -294,30 +285,17 @@ copyModuleWithTransform
     -> (GHC.HsModule GHC.GhcPs -> GHC.HsModule GHC.GhcPs)
     -> m (Maybe FilePath)
 copyModuleWithTransform f transform = do
-    src0 <- liftIO $ decodeUtf8 <$> B.readFile f
-    dflags <- getDynFlagsForFile [] src0
-    parseResult <- liftIO $ ghcWrapper $
-        flip postParseTransform normalLayout <$>
-            parseModuleApiAnnsWithCppInternal defaultCppOptions dflags f
+    src <- liftIO $ decodeUtf8 <$> B.readFile f
+    parseResult <- ghcParseCode [] src
     case parseResult of
-        Right (anns, GHC.L loc mod0) -> do
-            verbose <- gets compileVerbose
-            when verbose $ liftIO $ do
-                putStrLn $ "Original source for " ++ f
-                putStrLn $ exactPrint (GHC.L loc mod0) anns
-
-            let mod1 = transform mod0
-            let anns1 = addAnnotationsForPretty [] (GHC.L loc mod1) anns
-            let src = exactPrint (GHC.L loc mod1) anns1
-
-            when verbose $ liftIO $ do
-                putStrLn $ "Modified source for " ++ f
-                putStrLn $ src
-
+        GHCNoParse -> return Nothing
+        GHCParsed mod -> do
             buildDir <- gets compileBuildDir
-            out <- liftIO $ writeTempFile buildDir "imported.hs" src
-            return (Just out)
-        Left _ -> return Nothing
+            liftIO $ do
+                (out, h) <- openTempFile buildDir "imported.hs"
+                GHC.printForUser fakeDynFlags h GHC.neverQualify $ GHC.ppr (transform mod)
+                hClose h
+                return (Just out)
 
 addDiagnostics :: MonadCompile m => [Diagnostic] -> m ()
 addDiagnostics diags = modify $ \state -> state {

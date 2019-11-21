@@ -24,8 +24,6 @@ extra-deps:
   - containers-0.6.2.1
   - dependent-map-0.3
   - dependent-sum-0.6.1
-  - ghc-boot-8.6.5
-  - ghc-exactprint-0.6.1
   - ghc-lib-parser-0.20190909
   - haskell-src-exts-1.20.3
   - hpc-0.6.0.3

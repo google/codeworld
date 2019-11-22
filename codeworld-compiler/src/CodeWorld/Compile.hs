@@ -154,10 +154,11 @@ prepareCompile dir = do
             liftIO $ copyFile syms (dir </> "out.base.symbs")
             return ["-dedupe", "-use-base", "out.base.symbs"]
 
-    return $ localSrcs ++ buildArgs mode ++ linkArgs
+    mainMod <- getMainModuleName
+    return $ localSrcs ++ buildArgs mainMod mode ++ linkArgs
 
-buildArgs :: SourceMode -> [String]
-buildArgs "codeworld" =
+buildArgs :: String -> SourceMode -> [String]
+buildArgs mainMod "codeworld" =
     [ "-DGHCJS_BROWSER"
     , "-ferror-spans"
     , "-fno-diagnostics-show-caret"
@@ -202,16 +203,17 @@ buildArgs "codeworld" =
     , "-XTypeOperators"
     , "-XViewPatterns"
     , "-XImplicitPrelude" -- MUST come after RebindableSyntax.
-    , "-main-is", "Main.program"
+    , "-main-is", mainMod ++ ".program"
     ]
 
-buildArgs "haskell" =
+buildArgs mainMod "haskell" =
     [ "-DGHCJS_BROWSER"
     , "-ferror-spans"
     , "-fno-diagnostics-show-caret"
     , "-package", "codeworld-api"
     , "-package", "QuickCheck"
     , "-package", "reflex"
+    , "-main-is", mainMod ++ ".main"
     ]
 
 runCompiler :: FilePath -> Int -> [String] -> Bool -> IO (ExitCode, Text)

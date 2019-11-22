@@ -176,6 +176,15 @@ getMainParsedCode = getMainSourcePath >>= getParsedCode
 getMainGHCParsedCode :: MonadCompile m => m GHCParsedCode
 getMainGHCParsedCode = getMainSourcePath >>= getGHCParsedCode
 
+getMainModuleName :: MonadCompile m => m String
+getMainModuleName = do
+    result <- getMainGHCParsedCode
+    return $ case result of
+        GHCNoParse -> "Main"
+        GHCParsed mod -> case GHC.hsmodName mod of
+            Nothing -> "Main"
+            Just (GHC.L _ name) -> GHC.moduleNameString name
+
 getDiagnostics :: MonadCompile m => m [Diagnostic]
 getDiagnostics = do
     diags <- gets compileErrors

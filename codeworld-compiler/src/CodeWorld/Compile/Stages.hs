@@ -84,17 +84,22 @@ findModule modName = do
                     Just copy -> do
                         modify (M.insert modName copy)
                         findImportsInModule copy
-  where transform "codeworld" = renameIdentInModule "program" "renamed__program" . renameModule
-        transform _ = renameIdentInModule "main" "renamed__main" . renameModule
+  where transform "codeworld" = renameIdentInModule "program" . renameModule
+        transform _ = renameIdentInModule "main" . renameModule
 
         renameModule mod = mod { GHC.hsmodName = Just (GHC.noLoc (GHC.mkModuleName modName)) }
 
-        renameIdentInModule from to = everywhere (mkT (renameIdent from to))
+        renameIdentInModule ident = everywhere (mkT (renameIdent ident))
 
-        renameIdent :: String -> String -> GHC.RdrName -> GHC.RdrName
-        renameIdent from to (GHC.Unqual n)
-            | n == GHC.mkVarOcc from = GHC.Unqual (GHC.mkVarOcc to)
+        renameIdent :: String -> GHC.RdrName -> GHC.RdrName
+        renameIdent ident (GHC.Unqual n)
+            | n == GHC.mkVarOcc ident = GHC.Unqual (GHC.mkVarOcc (renamed ident))
             | otherwise = GHC.Unqual n
+
+        renamed ident = ident ++ "_" ++ map dotToUnderscore modName
+
+        dotToUnderscore '.' = '_'
+        dotToUnderscore c = c
 
 -- compiler for "codeworld" mode.  In other modes, this has no effect.
 checkCodeConventions :: MonadCompile m => m ()

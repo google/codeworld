@@ -40,6 +40,7 @@ import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import ErrorSanitizer
 import Language.Haskell.Exts
@@ -49,6 +50,8 @@ import System.FilePath
 import System.IO
 import System.IO.Temp (withSystemTempDirectory)
 import System.Process
+import Text.Regex.TDFA
+import Text.Regex.TDFA.Text
 
 import qualified "ghc" Config as GHC
 import qualified "ghc" DynFlags as GHC
@@ -286,6 +289,7 @@ copyModuleWithTransform
     -> m (Maybe FilePath)
 copyModuleWithTransform f transform = do
     src <- liftIO $ decodeUtf8 <$> B.readFile f
+    let commentsAndPragmas = filter (=~ ("\\s*{-.*-}\\s*" :: Text)) (T.lines src)
     parseResult <- ghcParseCode [] src
     case parseResult of
         GHCNoParse -> return Nothing
@@ -293,6 +297,7 @@ copyModuleWithTransform f transform = do
             buildDir <- gets compileBuildDir
             liftIO $ do
                 (out, h) <- openTempFile buildDir "imported.hs"
+                T.hPutStrLn h (T.unlines commentsAndPragmas)
                 GHC.printForUser fakeDynFlags h GHC.neverQualify $ GHC.ppr (transform mod)
                 hClose h
                 return (Just out)

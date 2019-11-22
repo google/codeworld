@@ -28,12 +28,15 @@ import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.HUnit hiding (Test)
 
-magicModuleFinder :: FilePath -> String -> IO (Maybe FilePath)
-magicModuleFinder dir modName
+magicModuleFinder :: String -> FilePath -> String -> IO (Maybe FilePath)
+magicModuleFinder testName dir modName
     | "Magic." `isPrefixOf` modName = do
         let source = "magic" ++ drop 6 modName ++ " = 42"
         f <- writeTempFile dir "magic.hs" source
         return (Just f)
+    | "Local." `isPrefixOf` modName = do
+        cwd <- getCurrentDirectory
+        return (Just (cwd </> "test/testcases" </> testName </> drop 6 modName <.> "hs"))
     | otherwise = return Nothing
 
 compilerOutput :: String -> IO String
@@ -42,7 +45,7 @@ compilerOutput testName =
         compileSource
             ErrorCheck
             ("test/testcases" </> testName </> "source.hs")
-            (magicModuleFinder dir)
+            (magicModuleFinder testName dir)
             (dir </> "output.txt")
             "codeworld"
             False

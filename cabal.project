@@ -8,5 +8,6 @@ packages:
   codeworld-game-server/
   codeworld-prediction/
   codeworld-server/
-  -- codeworld-base/
-
+  codeworld-base/
+  -- can't compile this without GHCJS
+  -- funblocks-client/

@@ -10,6 +10,7 @@ cache:
   - $TRAVIS_BUILD_DIR/codeworld-account/.stack-work
   - $TRAVIS_BUILD_DIR/codeworld-api/.stack-work
   - $TRAVIS_BUILD_DIR/codeworld-auth/.stack-work
+  - $TRAVIS_BUILD_DIR/codeworld-base/.stack-work
   - $TRAVIS_BUILD_DIR/codeworld-compiler/.stack-work
   - $TRAVIS_BUILD_DIR/codeworld-error-sanitizer/.stack-work
   - $TRAVIS_BUILD_DIR/codeworld-game-api/.stack-work
@@ -58,6 +59,11 @@ jobs:
       script:
         - export PATH=$HOME/.local/bin:$PATH
         - stack build codeworld-auth
+    - stage: Build
+      name: "Base"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack build codeworld-base
     - stage: Build
       name: "Compiler"
       script:
@@ -108,6 +114,11 @@ jobs:
       script:
         - export PATH=$HOME/.local/bin:$PATH
         - stack test codeworld-auth
+    - stage: Test
+      name: "Base"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack test codeworld-base
     # - stage: Test
     #   name: "Compiler"
     #   script:

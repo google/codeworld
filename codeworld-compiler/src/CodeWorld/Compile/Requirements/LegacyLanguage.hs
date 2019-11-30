@@ -31,6 +31,7 @@ import qualified Data.Text as T
 import Data.Void
 import Text.Megaparsec
 import Text.Megaparsec.Char
+import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char.Lexer as L
 import Text.Regex.TDFA ((=~))
 import Text.Regex.TDFA.Text ()
@@ -145,7 +146,9 @@ parseLegacyRequirement :: Int -> Int -> Text -> Either String Requirement
 parseLegacyRequirement ln col txt =
     either (Left . errorBundlePretty) Right $
         snd $ runParser' legacyRequirementParser initialState
-  where str = T.unpack txt
-        initialState = State str 0 posState
-        posState = PosState str 0 srcPos (mkPos 8) (replicate (col - 1) ' ')
-        srcPos = SourcePos "program.hs" (mkPos ln) (mkPos col)
+  where
+    str = T.unpack txt
+    initialState :: MP.State String
+    initialState = MP.State str 0 posState
+    posState = PosState str 0 srcPos (mkPos 8) (replicate (col - 1) ' ')
+    srcPos = SourcePos "program.hs" (mkPos ln) (mkPos col)

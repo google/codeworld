@@ -25,3 +25,4 @@ dist-*
 *.swp
 .stack-work
 stack.yaml.lock
+cabal.project.local

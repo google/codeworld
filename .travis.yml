@@ -171,7 +171,7 @@ jobs:
         - ./utils/makePackages.sh
         - cabal new-update
         - cabal new-configure
-        - cabal new-build --only-dependencies
+        - cabal new-build -j --only-dependencies --disable-optimization
     - stage: Build GHCJS
       name: "Build GHCJS"
       script:
@@ -188,7 +188,7 @@ jobs:
         - cd ghcjs
         - git submodule update --init --recursive
         - ./utils/makePackages.sh
-        - cabal new-build
+        - cabal new-build -j
     - stage: install GHCJS
       name: "install GHCJS"
       script:
@@ -236,7 +236,7 @@ jobs:
         - git submodule update --init --recursive
         - ./utils/makePackages.sh
         - ghcjs --version
-        - ghcjs-boot -j 2 -s $TRAVIS_BUILD_DIR/ghcjs/lib/boot --no-haddock --no-prof
+        - ghcjs-boot -j -s $TRAVIS_BUILD_DIR/ghcjs/lib/boot --no-haddock --no-prof
         - cabal --ghcjs --version
     - stage: Build_with_GHCJS
       name: "API (with ghcjs)"
@@ -260,7 +260,7 @@ jobs:
         - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-boot
         - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-run
         - cabal --ghcjs new-configure $PACKAGE
-        - cabal --ghcjs new-build $PACKAGE
+        - cabal --ghcjs new-build -j $PACKAGE
     - stage: Build_with_GHCJS
       name: "Base (with ghcjs)"
       env: PACKAGE="codeworld-base"

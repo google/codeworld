@@ -37,6 +37,7 @@ addons:
     update: true
     packages:
       - libgmp-dev
+      - haskell-stack
 
 jobs:
   include:
@@ -45,19 +46,24 @@ jobs:
         - export DIR=~/.local/bin
         - if [ ! -d "$DIR" ]; then mkdir -p ~/.local/bin; fi
         - export PATH=$HOME/.local/bin:$PATH
-        - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+        - stack upgrade
+        - hash -r
         - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
     - stage: Build dependencies
       name: "Build dependencies"
       script:
         # - stack clean --full  # if unreliability persists
         - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade
+        - hash -r
         - stack build --dependencies-only
     - stage: Build
       name: "root"
       env: PACKAGE="."
       script: &build
         - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade
+        - hash -r
         - stack build $PACKAGE
     - stage: Build
       name: "Account"
@@ -108,6 +114,8 @@ jobs:
       env: PACKAGE="codeworld-account"
       script: &test
         - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade
+        - hash -r
         - stack test $PACKAGE
     - stage: Test
       name: "API"
@@ -152,6 +160,8 @@ jobs:
         - sudo apt-get update
         - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
         - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade
+        - hash -r
         - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
@@ -169,6 +179,8 @@ jobs:
         - sudo apt-get update
         - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
         - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade
+        - hash -r
         - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
@@ -184,6 +196,8 @@ jobs:
         - sudo apt-get update
         - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
         - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade
+        - hash -r
         - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
@@ -205,6 +219,8 @@ jobs:
         - sudo apt-get update
         - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
         - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade
+        - hash -r
         - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
@@ -230,6 +246,8 @@ jobs:
         - sudo apt-get update
         - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
         - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade
+        - hash -r
         - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
@@ -260,6 +278,8 @@ jobs:
         - sudo apt-get update
         - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
         - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade
+        - hash -r
         - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH

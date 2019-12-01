@@ -1,5 +1,6 @@
 # https://docs.haskellstack.org/en/stable/travis_ci/
 
+sudo: true
 dist: bionic
 language: generic
 cache:
@@ -17,6 +18,19 @@ cache:
   - $TRAVIS_BUILD_DIR/codeworld-game-server/.stack-work
   - $TRAVIS_BUILD_DIR/codeworld-prediction/.stack-work
   - $TRAVIS_BUILD_DIR/codeworld-server/.stack-work
+  - $HOME/.ghcjs
+  - $HOME/.ghc
+  - $HOME/.cabal
+  - $TRAVIS_BUILD_DIR/ghcjs/.cabal-sandbox
+  - $TRAVIS_BUILD_DIR/ghcjs/data
+  - $TRAVIS_BUILD_DIR/ghcjs/dist
+  - $TRAVIS_BUILD_DIR/ghcjs/dist-newstyle
+  - $TRAVIS_BUILD_DIR/ghcjs/ghcjs-boot
+  - $TRAVIS_BUILD_DIR/ghcjs/lib
+  - $TRAVIS_BUILD_DIR/ghcjs/lib/boot/data
+  - $TRAVIS_BUILD_DIR/ghcjs/lib/boot/pkg
+  - $TRAVIS_BUILD_DIR/ghcjs/utils
+  - $TRAVIS_BUILD_DIR/ghcjs/vendor
 
 addons:
   apt:
@@ -32,7 +46,7 @@ jobs:
         - if [ ! -d "$DIR" ]; then mkdir -p ~/.local/bin; fi
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
-        - stack setup
+        - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
     - stage: Build dependencies
       name: "Build dependencies"
       script:
@@ -41,111 +55,195 @@ jobs:
         - stack build --dependencies-only
     - stage: Build
       name: "root"
-      script:
+      env: PACKAGE="."
+      script: &build
         - export PATH=$HOME/.local/bin:$PATH
-        - stack build
+        - stack build $PACKAGE
     - stage: Build
       name: "Account"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-account
+      env: PACKAGE="codeworld-account"
+      script: *build
     - stage: Build
       name: "API"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-api
+      env: PACKAGE="codeworld-api"
+      script: *build
     - stage: Build
       name: "Auth"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-auth
+      env: PACKAGE="codeworld-auth"
+      script: *build
     - stage: Build
-      name: "Base"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-base
+      name: "Base (with ghcjs-base-stub)"
+      env: PACKAGE="codeworld-base"
+      script: *build
     - stage: Build
       name: "Compiler"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-compiler
+      env: PACKAGE="codeworld-compiler"
+      script: *build
     - stage: Build
       name: "Error Sanitizer"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-error-sanitizer
+      env: PACKAGE="codeworld-error-sanitizer"
+      script: *build
     - stage: Build
       name: "Game API"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-game-api
+      env: PACKAGE="codeworld-game-api"
+      script: *build
     - stage: Build
       name: "Game Server"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-game-server
+      env: PACKAGE="codeworld-game-server"
+      script: *build
     - stage: Build
       name: "Prediction"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-prediction
+      env: PACKAGE="codeworld-prediction"
+      script: *build
     - stage: Build
       name: "Server"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-server
+      env: PACKAGE="codeworld-server"
+      script: *build
     # - stage: Test
     #   name: "root"
-    #   script:
-    #     - export PATH=$HOME/.local/bin:$PATH
-    #     - stack test
+    #  env: PACKAGE="*"
+    #   script: *test
     - stage: Test
       name: "Account"
-      script:
+      env: PACKAGE="codeworld-account"
+      script: &test
         - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-account
+        - stack test $PACKAGE
     - stage: Test
       name: "API"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-api
+      env: PACKAGE="codeworld-api"
+      script: *test
     - stage: Test
       name: "Auth"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-auth
+      env: PACKAGE="codeworld-auth"
+      script: *test
     - stage: Test
       name: "Base"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-base
+      env: PACKAGE="codeworld-base"
+      script: *test
     # - stage: Test
     #   name: "Compiler"
-    #   script:
-    #     - export PATH=$HOME/.local/bin:$PATH
-    #     - stack test codeworld-compiler
+    #   env: PACKAGE="codeworld-compiler"
+    #   script: *test
     - stage: Test
       name: "Error Sanitizer"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-error-sanitizer
+      env: PACKAGE="codeworld-error-sanitizer"
+      script: *test
     - stage: Test
       name: "Game API"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-game-api
+      env: PACKAGE="codeworld-game-api"
+      script: *test
     - stage: Test
       name: "Game Server"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-game-server
+      env: PACKAGE="codeworld-game-server"
+      script: *test
     - stage: Test
       name: "Prediction"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-prediction
+      env: PACKAGE="codeworld-prediction"
+      script: *test
     - stage: Test
       name: "Server"
+      env: PACKAGE="codeworld-server"
+      script: *test
+    - stage: Build GHCJS dependencies
+      name: "Build GHCJS dependencies"
       script:
+        - sudo add-apt-repository --yes ppa:hvr/ghc
+        - sudo apt-get update
+        - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
         - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-server
+        - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
+        - nvm install 10
+        - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
+        - export
+        - cd ghcjs
+        - git submodule update --init --recursive
+        - ./utils/makePackages.sh
+        - cabal new-update
+        - cabal new-configure
+        - cabal new-build --only-dependencies
+    - stage: Build GHCJS
+      name: "Build GHCJS"
+      script:
+        - sudo add-apt-repository --yes ppa:hvr/ghc
+        - sudo apt-get update
+        - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
+        - nvm install 10
+        - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
+        - export
+        - cd ghcjs
+        - git submodule update --init --recursive
+        - ./utils/makePackages.sh
+        - cabal new-build
+    - stage: install GHCJS
+      name: "install GHCJS"
+      script:
+        - sudo add-apt-repository --yes ppa:hvr/ghc
+        - sudo apt-get update
+        - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
+        - nvm install 10
+        - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
+        - export
+        - cd ghcjs
+        - git submodule update --init --recursive
+        - ./utils/makePackages.sh
+        - cabal new-install --only-dependencies --lib
+        - cabal new-install -v --lib
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-pkg
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/haddock-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/hsc2hs-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-boot
+    - stage: GHCJS Boot
+      name: "GHCJS Boot"
+      script:
+        - sudo add-apt-repository --yes ppa:hvr/ghc
+        - sudo apt-get update
+        - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
+        - nvm install 10
+        - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
+        - export
+        - git submodule update --init --recursive
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-pkg
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/haddock-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/hsc2hs-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-boot
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-run
+        - cd ghcjs
+        - git submodule update --init --recursive
+        - ./utils/makePackages.sh
+        - ghcjs --version
+        - ghcjs-boot -j 2 -s $TRAVIS_BUILD_DIR/ghcjs/lib/boot --no-haddock --no-prof
+        - cabal --ghcjs --version
+    - stage: Build_with_GHCJS
+      name: "API (with ghcjs)"
+      env: PACKAGE="codeworld-api"
+      script: &build_with_ghcjs
+        - sudo add-apt-repository --yes ppa:hvr/ghc
+        - sudo apt-get update
+        - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
+        - nvm install 10
+        - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
+        - export
+        - git submodule update --init --recursive
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-pkg
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/haddock-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/hsc2hs-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-boot
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-run
+        - cabal --ghcjs new-configure $PACKAGE
+        - cabal --ghcjs new-build $PACKAGE
+    - stage: Build_with_GHCJS
+      name: "Base (with ghcjs)"
+      env: PACKAGE="codeworld-base"
+      script: *build_with_ghcjs

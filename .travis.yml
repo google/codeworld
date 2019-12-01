@@ -4,6 +4,7 @@ sudo: true
 dist: bionic
 language: generic
 cache:
+  timeout: 2000
   directories:
   - $HOME/.local/bin
   - $HOME/.stack
@@ -259,6 +260,10 @@ jobs:
         - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/hsc2hs-ghcjs
         - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-boot
         - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-run
+        - cd ghcjs
+        - git submodule update --init --recursive
+        - ./utils/makePackages.sh
+        - cd $TRAVIS_BUILD_DIR
         - cabal --ghcjs new-configure $PACKAGE
         - cabal --ghcjs new-build -j $PACKAGE
     - stage: Build_with_GHCJS
@@ -291,6 +296,10 @@ jobs:
         - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/hsc2hs-ghcjs
         - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-boot
         - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-run
+        - cd ghcjs
+        - git submodule update --init --recursive
+        - ./utils/makePackages.sh
+        - cd $TRAVIS_BUILD_DIR
         - cabal --ghcjs new-configure $PACKAGE
         - cabal --ghcjs new-test $PACKAGE
     - stage: Test_with_GHCJS

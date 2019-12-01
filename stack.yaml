@@ -1,5 +1,8 @@
 resolver: lts-14.11
 
+# ghc-options:
+#     "$locals": -dynamic
+
 packages: 
   - codeworld-account
   - codeworld-api

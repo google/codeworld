@@ -27,12 +27,19 @@ import Data.Time.Clock
 import Data.Time.LocalTime
 import System.IO.Unsafe
 
+type Conversion = Double -> Double
+
 data Parameter where
     Parameter :: forall state. state
+              -> Conversion
               -> (Event -> state -> state)
-              -> (state -> Picture)
+              -> (Conversion -> state -> Picture)
               -> (state -> Double)
               -> Parameter
+
+withConversion :: Conversion -> Parameter -> Parameter
+withConversion c1 (Parameter state c0 handler pic val) =
+    Parameter state (c1 . c0) handler pic val
 
 parametricDrawingOf :: [Parameter] -> ([Double] -> Picture) -> IO ()
 parametricDrawingOf initialParams mainPic = do
@@ -41,19 +48,30 @@ parametricDrawingOf initialParams mainPic = do
     change event params = map (changeParam event) params
     picture params = pictures (map showParam params) & mainPic (map getParam params)
 
-    changeParam event (Parameter state handler pic val) =
-        Parameter (handler event state) handler pic val
-    showParam (Parameter state _ pic _) = pic state
-    getParam (Parameter state _ _ val) = val state
+    changeParam event (Parameter state conv handler pic val) =
+        Parameter (handler event state) conv handler pic val
+    showParam (Parameter state conv _ pic _) = pic conv state
+    getParam (Parameter state conv _ _ val) = conv (val state)
 
 timer :: Parameter
-timer = Parameter 0 timeChange timePic id
+timer = Parameter 0 id timeChange timePic id
   where timeChange (TimePassing dt) t = t + dt
         timeChange _ t = t
-        timePic t = lettering (pack (show t)) & colored (light gray) (solidRectangle 10 1)
+        timePic conv t = lettering (pack (show (conv t)))
+                       & colored (light gray) (solidRectangle 10 1)
+
+currentHour :: Parameter
+currentHour = Parameter () id (const id) (\_ _ -> blank) get
+  where get :: () -> Double
+        get () = unsafePerformIO $ do
+            now <- getCurrentTime
+            timezone <- getCurrentTimeZone
+            let zoneNow = utcToLocalTime timezone now
+            let timeNow = localTimeOfDay zoneNow
+            return (fromIntegral (todMin timeNow))
 
 currentMinute :: Parameter
-currentMinute = Parameter () (const id) (const blank) get
+currentMinute = Parameter () id (const id) (\_ _ -> blank) get
   where get :: () -> Double
         get () = unsafePerformIO $ do
             now <- getCurrentTime
@@ -63,7 +81,7 @@ currentMinute = Parameter () (const id) (const blank) get
             return (fromIntegral (todMin timeNow))
 
 currentSecond :: Parameter
-currentSecond = Parameter () (const id) (const blank) get
+currentSecond = Parameter () id (const id) (\_ _ -> blank) get
   where get :: () -> Double
         get () = unsafePerformIO $ do
             now <- getCurrentTime

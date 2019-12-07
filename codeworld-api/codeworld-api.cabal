@@ -34,6 +34,7 @@ Library
                        CodeWorld.App,
                        CodeWorld.App2,
                        CodeWorld.Image,
+                       CodeWorld.Parameter,
                        CodeWorld.Reflex,
                        CodeWorld.Sketches
   Other-modules:       CodeWorld.CanvasM,
@@ -62,7 +63,8 @@ Library
                        ref-tf               >= 0.4   && < 0.5,
                        reflex               >= 0.6.2.3   && < 0.7,
                        template-haskell     >= 2.8   && < 2.15,
-                       text                 >= 1.2.2 && < 1.3
+                       text                 >= 1.2.2 && < 1.3,
+                       time                 >= 1.8   && < 2.0
 
   if impl(ghcjs)
     Js-sources:        jsbits/sim_fp.js
@@ -119,7 +121,8 @@ Test-suite unit-tests
                        ref-tf               >= 0.4   && < 0.5,
                        reflex               >= 0.6   && < 0.7,
                        template-haskell     >= 2.8   && < 2.15,
-                       text                 >= 1.2.2 && < 1.3
+                       text                 >= 1.2.2 && < 1.3,
+                       time                 >= 1.8   && < 2.0
 
   if impl(ghcjs)
     Js-sources:        jsbits/sim_fp.js

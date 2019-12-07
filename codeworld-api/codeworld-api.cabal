@@ -33,6 +33,7 @@ Library
   Exposed-modules:     CodeWorld,
                        CodeWorld.App,
                        CodeWorld.App2,
+                       CodeWorld.Image,
                        CodeWorld.Reflex,
                        CodeWorld.Sketches
   Other-modules:       CodeWorld.CanvasM,

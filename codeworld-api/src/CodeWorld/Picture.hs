@@ -346,14 +346,14 @@ codeWorldLogo =
 -- | An image from a standard image format.  The image can be any universally
 -- supported format, including SVG, PNG, JPG, etc.  SVG should be preferred, as
 -- it behaves better with transformations.
-userImage
+image
   :: HasCallStack
   => Text  -- ^ Name for the picture, used for debugging
   -> Text  -- ^ Data-scheme URI for the image data
   -> Double  -- ^ Width, in CodeWorld screen units
   -> Double  -- ^ Height, in CodeWorld screen units
   -> Picture
-userImage = Sketch (getDebugSrcLoc callStack)
+image = Sketch (getDebugSrcLoc callStack)
 
 getDebugSrcLoc :: CallStack -> Maybe SrcLoc
 getDebugSrcLoc cs = Data.List.find ((== "main") . srcLocPackage) locs

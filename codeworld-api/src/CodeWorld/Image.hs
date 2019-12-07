@@ -14,9 +14,6 @@
   limitations under the License.
 -}
 
-module CodeWorld.Image
-  {-# WARNING "This is an experimental API.  It can change at any time." #-}
-  ( userImage )
-where
+module CodeWorld.Image (image) where
 
-import CodeWorld.Picture (userImage)
+import CodeWorld.Picture

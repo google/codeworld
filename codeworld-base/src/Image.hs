@@ -25,7 +25,7 @@ import Internal.Picture
 import Internal.Text
 import "base" Prelude (($))
 
--- | @userImage(name, url, w, h)@ is an image from a standard image format.
+-- | @image(name, url, w, h)@ is an image from a standard image format.
 --
 -- * @name@ is a name for the picture, used for debugging.
 -- * @url@ is a data-scheme URI for the image data.
@@ -35,6 +35,6 @@ import "base" Prelude (($))
 -- The image can be any universally supported format, including SVG, PNG,
 -- JPG, etc.  SVG should be preferred, as it behaves better with
 -- transformations.
-userImage :: HasCallStack => (Text, Text, Number, Number) -> Picture
-userImage (name, url, w, h) = withFrozenCallStack $ CWPic $
-    CW.userImage (fromCWText name) (fromCWText url) (toDouble w) (toDouble h)
+image :: HasCallStack => (Text, Text, Number, Number) -> Picture
+image (name, url, w, h) = withFrozenCallStack $ CWPic $
+    CW.image (fromCWText name) (fromCWText url) (toDouble w) (toDouble h)

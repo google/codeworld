@@ -28,8 +28,66 @@ window.addEventListener('message', event => {
 
     if (event.data.type === 'graphicsShown') {
         window.dispatchEvent(new Event('resize'));
+    } else if (event.data.type === 'startRecord') {
+        const canvas = document.getElementById('screen');
+        canvasRecorder = new CanvasRecorder(canvas, 30);
+        canvasRecorder.recorder.start();
+    } else if (event.data.type === 'stopRecord') {
+        if (canvasRecorder && canvasRecorder.recorder.state === 'recording') {
+            canvasRecorder.recorder.stop();
+        }
     }
 });
+
+class CanvasRecorder {
+    constructor(canvas, framerate) {
+        const cStream = canvas.captureStream(framerate);
+
+        this.chunks = [];
+        this.recorder = new MediaRecorder(cStream);
+        this.recorder.ondataavailable = this.addChunk(this.chunks);
+        this.recorder.onstop = this.exportStream(this.chunks);
+    }
+
+    addChunk(chunks) {
+        return e => {
+            chunks.push(e.data);
+        };
+    }
+
+    exportStream(chunks) {
+        return () => {
+            const blob = new Blob(chunks);
+
+            // Reset data
+            chunks = [];
+
+            // Set file name
+            const d = new Date();
+            const videoFileName = `codeworld_recording_${ 
+                d.toDateString().split(' ').join('_')}_${ 
+                d.getHours()}:${d.getMinutes()}:${d.getSeconds() 
+            }.webm`;
+
+            // Create a new video link
+            const a = document.createElement('a');
+            document.body.appendChild(a);
+            a.style = 'display: none';
+
+            // Save the video
+            const url = window.URL.createObjectURL(blob);
+            a.href = url;
+            a.download = videoFileName;
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            // Remove the video link
+            a.remove();
+        };
+    }
+}
+
+let canvasRecorder;
 
 function addMessage(type, str) {
     const recentStart = Date.now() - window.programStartTime < 1000;

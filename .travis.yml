@@ -30,13 +30,27 @@ jobs:
         - export DIR=~/.local/bin
         - if [ ! -d "$DIR" ]; then mkdir -p ~/.local/bin; fi
         - export PATH=$HOME/.local/bin:$PATH
+        - rm -rf $HOME/.stack
+        - rm -rf $HOME/.ghcjs
+        - rm -rf $HOME/.ghc
+        - rm -rf $HOME/.cabal
+        - rm -rf $TRAVIS_BUILD_DIR/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-account/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-api/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-auth/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-compiler/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-error-sanitizer/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-game-api/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-game-server/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-prediction/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-server/.stack-work
         - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
         - stack setup
     - stage: Build dependencies
       name: "Build dependencies"
       script:
-        # - stack clean --full  # if unreliability persists
         - export PATH=$HOME/.local/bin:$PATH
+        - stack clean --full
         - stack build --dependencies-only
     - stage: Build
       name: "root"

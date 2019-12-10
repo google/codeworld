@@ -64,7 +64,7 @@ jobs:
         - stack upgrade --binary-only
         - hash -r
         - stack --version
-        - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
+        # - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 # include for GHCJS
     - stage: build_some_dependencies
       name: "Build some dependencies"
       script:

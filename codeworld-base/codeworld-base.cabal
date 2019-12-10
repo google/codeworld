@@ -36,16 +36,29 @@ Library
                        Internal.Event,
                        Internal.CodeWorld,
                        Internal.Truth
-  Build-depends:       base,
-                       bytestring,
-                       codeworld-error-sanitizer,
-                       codeworld-api,
-                       ghc-prim,
-                       ghcjs-base,
-                       ghcjs-dom,
-                       mtl,
-                       random,
-                       random-shuffle,
-                       text,
-                       time
+  if impl(ghcjs -any)
+    Build-depends:       base,
+                         bytestring,
+                         codeworld-error-sanitizer,
+                         codeworld-api,
+                         ghc-prim,
+                         ghcjs-base,
+                         ghcjs-dom,
+                         mtl,
+                         random,
+                         random-shuffle,
+                         text,
+                         time
+  else
+    Build-depends:       base,
+                         bytestring,
+                         codeworld-error-sanitizer,
+                         codeworld-api,
+                         ghc-prim,
+                         ghcjs-base-stub,
+                         mtl,
+                         random,
+                         random-shuffle,
+                         text,
+                         time
   Exposed:             False

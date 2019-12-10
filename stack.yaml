@@ -10,8 +10,8 @@ packages:
   - codeworld-game-server
   - codeworld-prediction
   - codeworld-server
-  # can't compile these
-  # - codeworld-base  
+  - codeworld-base
+  # can't compile this without GHCJS
   # - funblocks-client
 
 allow-newer: false
@@ -25,12 +25,13 @@ extra-deps:
   - dependent-map-0.3
   - dependent-sum-0.6.1
   - ghc-lib-parser-0.20190909
+  - ghcjs-base-stub-0.3.0.2
   - haskell-src-exts-1.20.3
   - hpc-0.6.0.3
-  - ormolu-0.0.1.0
   - kansas-comet-0.4
   - monoidal-containers-0.6
   - network-2.6.3.6
+  - ormolu-0.0.1.0
   - ref-tf-0.4.0.2
   - reflex-0.6.2.4
   - text-1.2.4.0

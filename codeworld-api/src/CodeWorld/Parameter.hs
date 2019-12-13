@@ -38,8 +38,9 @@ module CodeWorld.Parameter
 where
 
 import CodeWorld
-import CodeWorld.Picture
+import CodeWorld.Picture (clipped)
 import Data.Text (Text, pack)
+import qualified Data.Text as T
 import Data.Time.Clock
 import Data.Time.LocalTime
 import Numeric (showFFloatAlt)
@@ -54,165 +55,156 @@ parametricDrawingOf initialParams mainPic =
   activityOf transformedParams change picture
   where
     transformedParams =
-      [ paramTranslation x y
-          $ paramResize 0.5
-          $ p
+      [ framedParam x y True p
         | p <- initialParams
-        | x <- [-7.5, -2.5 ..],
-          y <- [9, 7 .. -9]
+        | x <- [-7, -1 ..],
+          y <- [8, 6 .. -8]
       ]
     change event params = map (changeParam event) params
     picture params =
       pictures (map showParam params)
         & mainPic (map getParam params)
-    changeParam event (Parameter handle _ _) = handle event
-    showParam (Parameter _ val pic) = pic val
-    getParam (Parameter _ val _) = val
+    changeParam event (Parameter _ handle _ _) = handle event
+    showParam (Parameter _ _ _ pic) = pic
+    getParam (Parameter _ _ val _) = val
 
 data Parameter where
   Parameter ::
+    Text ->
     (Event -> Parameter) ->
     Double ->
-    (Double -> Picture) ->
+    Picture ->
     Parameter
 
 parameterOf ::
+  Text ->
   state ->
   (Event -> state -> state) ->
   (state -> Double) ->
-  (Double -> state -> Picture) ->
+  (state -> Picture) ->
   Parameter
-parameterOf initial change value picture =
+parameterOf name initial change value picture =
   Parameter
-    (\e -> parameterOf (change e initial) change value picture)
+    name
+    (\e -> parameterOf name (change e initial) change value picture)
     (value initial)
-    (\v -> picture v initial)
+    (picture initial)
 
 paramConversion :: Conversion -> Parameter -> Parameter
-paramConversion c (Parameter handle val pic) =
-  Parameter (paramConversion c . handle) (c val) pic
+paramConversion c (Parameter name handle val pic) =
+  Parameter name (paramConversion c . handle) (c val) pic
 
-paramTranslation :: Double -> Double -> Parameter -> Parameter
-paramTranslation x y (Parameter handle val pic) =
-  Parameter
-    (paramTranslation x y . handle . untranslate)
-    val
-    (translated x y . pic)
+framedParam :: Double -> Double -> Bool -> Parameter -> Parameter
+framedParam ix iy iopen iparam =
+  parameterOf
+    (paramName iparam)
+    (iparam, (ix, iy), iopen, Nothing)
+    frameHandle
+    frameValue
+    framePicture
   where
-    untranslate (PointerPress (px, py)) = PointerPress (px - x, py - y)
-    untranslate (PointerRelease (px, py)) = PointerRelease (px - x, py - y)
-    untranslate (PointerMovement (px, py)) = PointerMovement (px - x, py - y)
-    untranslate other = other
-
-paramResize :: Double -> Parameter -> Parameter
-paramResize k (Parameter handle val pic) =
-  Parameter
-    (paramResize k . handle . unsize)
-    val
-    (dilated k . pic)
-  where
-    unsize (PointerPress (px, py)) = PointerPress (px / k, py / k)
-    unsize (PointerRelease (px, py)) = PointerRelease (px / k, py / k)
-    unsize (PointerMovement (px, py)) = PointerMovement (px / k, py / k)
-    unsize other = other
+    frameHandle (PointerPress (px, py)) (param, (x, y), open, anchor)
+      | onOpenButton = (param, (x, y), not open, anchor)
+      | onTitleBar = (param, (x, y), open, Just (px, py))
+      where
+        onTitleBar = abs (px - x) < 2.5 && abs (py - y - 0.85) < 0.35
+        onOpenButton = abs (px - x - 2.15) < 0.2 && abs (py - y - 0.85) < 0.2
+    frameHandle (PointerRelease _) (param, loc, open, Just _) =
+      (param, loc, open, Nothing)
+    frameHandle (PointerMovement (px, py)) (param, (x, y), open, Just (ax, ay)) =
+      (param, (x + px - ax, y + py - ay), open, Just (px, py))
+    frameHandle event (Parameter _ handle _ _, (x, y), True, anchor) =
+      (handle (untranslate x y event), (x, y), True, anchor)
+    frameHandle (TimePassing dt) (Parameter _ handle _ _, loc, open, anchor) =
+      (handle (TimePassing dt), loc, open, anchor)
+    frameHandle _ other = other
+    frameValue (Parameter _ _ v _, _, _, _) = v
+    framePicture (Parameter n _ v picture, (x, y), open, _) =
+      translated x y $
+        translated 0 0.85 (titleBar n v open)
+          & if open then clientArea picture else blank
+    titleBar n v open =
+      rectangle 5 0.7
+        & translated 2.15 0 (if open then collapseButton else expandButton)
+        & translated (-0.35) 0 (clipped 4.3 0.7 (dilated 0.5 (lettering (titleText n v))))
+        & colored titleColor (solidRectangle 5 0.7)
+    titleText n v
+      | T.length n > 10 = T.take 8 n <> "... = " <> formatVal v
+      | otherwise = n <> " = " <> formatVal v
+    collapseButton = rectangle 0.4 0.4 & solidPolygon [(-0.1, -0.1), (0.1, -0.1), (0, 0.1)]
+    expandButton = rectangle 0.4 0.4 & solidPolygon [(-0.1, 0.1), (0.1, 0.1), (0, -0.1)]
+    clientArea pic =
+      rectangle 5 1
+        & clipped 5 1 pic
+        & colored bgColor (solidRectangle 5 1)
+    untranslate x y (PointerPress (px, py)) = PointerPress (px - x, py - y)
+    untranslate x y (PointerRelease (px, py)) = PointerRelease (px - x, py - y)
+    untranslate x y (PointerMovement (px, py)) = PointerMovement (px - x, py - y)
+    untranslate _ _ other = other
+    paramName (Parameter n _ _ _) = n
+    formatVal v = pack (showFFloatAlt (Just 2) v "")
 
 constant :: Text -> Double -> Parameter
-constant name n = parameterOf n (const id) id picture
-  where
-    picture val _ = clipped 8 2 $
-      lettering (name <> ": " <> pack (showFFloatAlt (Just 2) val ""))
-        & rectangle 8 2
-        & colored bgColor (solidRectangle 8 2)
+constant name n = parameterOf name n (const id) id (const blank)
 
 toggle :: Text -> Parameter
-toggle name = parameterOf False change value picture
+toggle name = parameterOf name False change value picture
   where
     change (PointerPress (px, py))
       | abs px < 4, abs py < 1 = not
     change _ = id
     value True = 1
     value False = 0
-    picture val True = clipped 8 2 $
-      lettering ("\x2611 " <> name <> ": " <> pack (showFFloatAlt (Just 2) val ""))
-        & rectangle 8 2
-        & colored bgColor (solidRectangle 8 2)
-    picture val False =
-      lettering ("\x2610 " <> name <> ": " <> pack (showFFloatAlt (Just 2) val ""))
-        & rectangle 8 2
-        & colored bgColor (solidRectangle 8 2)
+    picture True = dilated 0.5 $ lettering "\x2611"
+    picture False = dilated 0.5 $ lettering "\x2610"
 
 slider :: Text -> Parameter
-slider name = parameterOf (0.5, False) change fst picture
+slider name = parameterOf name (0.5, False) change fst picture
   where
     change (PointerPress (px, py)) (_, _)
-      | abs px < 4, abs py < 1 = ((px + 3.5) / 7, True)
+      | abs px < 2, abs py < 0.25 = (min 1 $ max 0 $ (px + 2) / 4, True)
     change (PointerRelease _) (v, _) = (v, False)
     change (PointerMovement (px, _)) (_, True) =
-      (min 1 $ max 0 $ (px + 4) / 8, True)
+      (min 1 $ max 0 $ (px + 2) / 4, True)
     change _ state = state
-    picture val (raw, _) = clipped 8 3 $
-      translated (-2.5) 0.5 (lettering name)
-        & translated 2.5 0.5 (lettering (pack (showFFloatAlt (Just 2) val "")))
-        & translated (raw * 7 - 3.5) (-0.5) (solidRectangle 0.25 1)
-        & translated 0 (-0.5) (solidRectangle 7 0.2)
-        & rectangle 8 3
-        & colored bgColor (solidRectangle 8 3)
+    picture (v, _) =
+      translated (v * 4 - 2) 0 (solidRectangle 0.125 0.5)
+        & solidRectangle 4 0.1
 
 random :: Text -> Parameter
-random name = parameterOf (next (unsafePerformIO newStdGen)) change value picture
+random name = parameterOf name (next (unsafePerformIO newStdGen)) change value picture
   where
     change (PointerPress (px, py))
       | abs px < 4, abs py < 1 = next . snd
     change _ = id
     value = fst
-    picture val _ = clipped 8 2 $
-      lettering ("\x21ba " <> name <> ": " <> pack (showFFloatAlt (Just 2) val ""))
-        & rectangle 8 2
-        & colored bgColor (solidRectangle 8 2)
+    picture _ = dilated 0.5 $ lettering "\x21ba Regenerate"
     next = randomR (0.0, 1.0)
 
 timer :: Text -> Parameter
-timer name = parameterOf (0, 1) change fst picture
+timer name = parameterOf name (0, 1) change fst picture
   where
     change (TimePassing dt) (t, r) = (t + r * dt, r)
     change (PointerPress (px, py)) (t, r)
       | abs px < 4, abs py < 0.75 = (t, 1 - r)
     change _ state = state
-    picture val (_, 0) = clipped 8 2 $
-      lettering ("\x23e9 " <> name <> ": " <> pack (showFFloatAlt (Just 2) val ""))
-        & rectangle 8 2
-        & colored bgColor (solidRectangle 8 2)
-    picture val _ = clipped 8 2 $
-      lettering ("\x23f8 " <> name <> ": " <> pack (showFFloatAlt (Just 2) val ""))
-        & rectangle 8 2
-        & colored bgColor (solidRectangle 8 2)
+    picture (_, 0) = dilated 0.5 $ lettering "\x23e9"
+    picture _ = dilated 0.5 $ lettering "\x23f8"
 
 currentHour :: Parameter
-currentHour = parameterOf () (const id) value picture
+currentHour = parameterOf "hour" () (const id) value (const blank)
   where
     value () = unsafePerformIO $ fromIntegral <$> todHour <$> getTimeOfDay
-    picture val _ = clipped 8 2 $
-      lettering ("hour: " <> pack (showFFloatAlt (Just 2) val ""))
-        & rectangle 8 2
-        & colored bgColor (solidRectangle 8 2)
 
 currentMinute :: Parameter
-currentMinute = parameterOf () (const id) value picture
+currentMinute = parameterOf "minute" () (const id) value (const blank)
   where
     value () = unsafePerformIO $ fromIntegral <$> todMin <$> getTimeOfDay
-    picture val _ = clipped 8 2 $
-      lettering ("minute: " <> pack (showFFloatAlt (Just 2) val ""))
-        & rectangle 8 2
-        & colored bgColor (solidRectangle 8 2)
 
 currentSecond :: Parameter
-currentSecond = parameterOf () (const id) value picture
+currentSecond = parameterOf "second" () (const id) value (const blank)
   where
     value () = unsafePerformIO $ realToFrac <$> todSec <$> getTimeOfDay
-    picture val _ = clipped 8 2 $
-      lettering ("second: " <> pack (showFFloatAlt (Just 2) val ""))
-        & rectangle 8 2
-        & colored bgColor (solidRectangle 8 2)
 
 getTimeOfDay :: IO TimeOfDay
 getTimeOfDay = do
@@ -220,5 +212,8 @@ getTimeOfDay = do
   timezone <- getCurrentTimeZone
   return (localTimeOfDay (utcToLocalTime timezone now))
 
+titleColor :: Color
+titleColor = RGBA 0.7 0.7 0.7 0.9
+
 bgColor :: Color
-bgColor = RGB 0.8 0.85 0.95
+bgColor = RGBA 0.8 0.85 0.95 0.8

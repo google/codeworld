@@ -66,6 +66,7 @@ module CodeWorld
     scaled,
     dilated,
     rotated,
+    clipped,
     pictures,
     (<>),
     (&),

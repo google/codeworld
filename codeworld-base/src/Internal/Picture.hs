@@ -277,6 +277,11 @@ dilated (p, k) = withFrozenCallStack $ CWPic (CW.dilated (toDouble k) (toCWPic p
 rotated :: HasCallStack => (Picture, Number) -> Picture
 rotated (p, th) = withFrozenCallStack $ CWPic (CW.rotated (toDouble (pi * th / 180)) (toCWPic p))
 
+-- | A picture clipped to a rectangle of this width and height.
+clipped :: HasCallStack => (Picture, Number, Number) -> Picture
+clipped (p, w, h) =
+    withFrozenCallStack $ CWPic (CW.clipped (toDouble w) (toDouble h) (toCWPic p))
+
 -- | A picture made by drawing this list of pictures, ordered from front to back.
 pictures :: HasCallStack => [Picture] -> Picture
 pictures ps = withFrozenCallStack $ CWPic (CW.pictures (map toCWPic ps))

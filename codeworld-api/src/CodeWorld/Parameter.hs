@@ -38,6 +38,7 @@ module CodeWorld.Parameter
 where
 
 import CodeWorld
+import CodeWorld.Picture
 import Data.Text (Text, pack)
 import Data.Time.Clock
 import Data.Time.LocalTime
@@ -118,7 +119,7 @@ paramResize k (Parameter handle val pic) =
 constant :: Text -> Double -> Parameter
 constant name n = parameterOf n (const id) id picture
   where
-    picture val _ =
+    picture val _ = clipped 8 2 $
       lettering (name <> ": " <> pack (showFFloatAlt (Just 2) val ""))
         & rectangle 8 2
         & colored bgColor (solidRectangle 8 2)
@@ -131,7 +132,7 @@ toggle name = parameterOf False change value picture
     change _ = id
     value True = 1
     value False = 0
-    picture val True =
+    picture val True = clipped 8 2 $
       lettering ("\x2611 " <> name <> ": " <> pack (showFFloatAlt (Just 2) val ""))
         & rectangle 8 2
         & colored bgColor (solidRectangle 8 2)
@@ -149,7 +150,7 @@ slider name = parameterOf (0.5, False) change fst picture
     change (PointerMovement (px, _)) (_, True) =
       (min 1 $ max 0 $ (px + 4) / 8, True)
     change _ state = state
-    picture val (raw, _) =
+    picture val (raw, _) = clipped 8 3 $
       translated (-2.5) 0.5 (lettering name)
         & translated 2.5 0.5 (lettering (pack (showFFloatAlt (Just 2) val "")))
         & translated (raw * 7 - 3.5) (-0.5) (solidRectangle 0.25 1)
@@ -164,7 +165,7 @@ random name = parameterOf (next (unsafePerformIO newStdGen)) change value pictur
       | abs px < 4, abs py < 1 = next . snd
     change _ = id
     value = fst
-    picture val _ =
+    picture val _ = clipped 8 2 $
       lettering ("\x21ba " <> name <> ": " <> pack (showFFloatAlt (Just 2) val ""))
         & rectangle 8 2
         & colored bgColor (solidRectangle 8 2)
@@ -177,11 +178,11 @@ timer name = parameterOf (0, 1) change fst picture
     change (PointerPress (px, py)) (t, r)
       | abs px < 4, abs py < 0.75 = (t, 1 - r)
     change _ state = state
-    picture val (_, 0) =
+    picture val (_, 0) = clipped 8 2 $
       lettering ("\x23e9 " <> name <> ": " <> pack (showFFloatAlt (Just 2) val ""))
         & rectangle 8 2
         & colored bgColor (solidRectangle 8 2)
-    picture val _ =
+    picture val _ = clipped 8 2 $
       lettering ("\x23f8 " <> name <> ": " <> pack (showFFloatAlt (Just 2) val ""))
         & rectangle 8 2
         & colored bgColor (solidRectangle 8 2)
@@ -190,7 +191,7 @@ currentHour :: Parameter
 currentHour = parameterOf () (const id) value picture
   where
     value () = unsafePerformIO $ fromIntegral <$> todHour <$> getTimeOfDay
-    picture val _ =
+    picture val _ = clipped 8 2 $
       lettering ("hour: " <> pack (showFFloatAlt (Just 2) val ""))
         & rectangle 8 2
         & colored bgColor (solidRectangle 8 2)
@@ -199,7 +200,7 @@ currentMinute :: Parameter
 currentMinute = parameterOf () (const id) value picture
   where
     value () = unsafePerformIO $ fromIntegral <$> todMin <$> getTimeOfDay
-    picture val _ =
+    picture val _ = clipped 8 2 $
       lettering ("minute: " <> pack (showFFloatAlt (Just 2) val ""))
         & rectangle 8 2
         & colored bgColor (solidRectangle 8 2)
@@ -208,7 +209,7 @@ currentSecond :: Parameter
 currentSecond = parameterOf () (const id) value picture
   where
     value () = unsafePerformIO $ realToFrac <$> todSec <$> getTimeOfDay
-    picture val _ =
+    picture val _ = clipped 8 2 $
       lettering ("second: " <> pack (showFFloatAlt (Just 2) val ""))
         & rectangle 8 2
         & colored bgColor (solidRectangle 8 2)

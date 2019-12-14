@@ -39,6 +39,7 @@ where
 
 import CodeWorld
 import CodeWorld.Picture (clipped)
+import Data.Maybe (catMaybes)
 import Data.Text (Text, pack)
 import qualified Data.Text as T
 import Data.Time.Clock
@@ -52,17 +53,20 @@ type Conversion = Double -> Double
 -- | A drawing that depends on parameters.  A parameter is a
 parametricDrawingOf :: [Parameter] -> ([Double] -> Picture) -> IO ()
 parametricDrawingOf initialParams mainPic =
-  activityOf transformedParams change picture
+  activityOf (layout (-7) 9.5 initialParams) change picture
   where
-    transformedParams =
-      [ framedParam x y True p
-        | p <- initialParams
-        | x <- [-7, -1 ..],
-          y <- [8, 6 .. -8]
-      ]
+    layout _ _ [] = []
+    layout x y (p : ps)
+      | y > (-9.5) + h + 0.7 =
+        framedParam x (y - 1.2) p : layout x (y - h - 1.2) ps
+      | otherwise = layout (x + 6) 9.5 (p : ps)
+      where
+        h
+          | Parameter _ _ _ Nothing <- p = 0
+          | otherwise = 1
     change event params = map (changeParam event) params
     picture params =
-      pictures (map showParam params)
+      pictures (catMaybes (map showParam params))
         & mainPic (map getParam params)
     changeParam event (Parameter _ handle _ _) = handle event
     showParam (Parameter _ _ _ pic) = pic
@@ -73,7 +77,7 @@ data Parameter where
     Text ->
     (Event -> Parameter) ->
     Double ->
-    Picture ->
+    Maybe Picture ->
     Parameter
 
 parameterOf ::
@@ -81,7 +85,7 @@ parameterOf ::
   state ->
   (Event -> state -> state) ->
   (state -> Double) ->
-  (state -> Picture) ->
+  (state -> Maybe Picture) ->
   Parameter
 parameterOf name initial change value picture =
   Parameter
@@ -94,11 +98,11 @@ paramConversion :: Conversion -> Parameter -> Parameter
 paramConversion c (Parameter name handle val pic) =
   Parameter name (paramConversion c . handle) (c val) pic
 
-framedParam :: Double -> Double -> Bool -> Parameter -> Parameter
-framedParam ix iy iopen iparam =
+framedParam :: Double -> Double -> Parameter -> Parameter
+framedParam ix iy iparam =
   parameterOf
     (paramName iparam)
-    (iparam, (ix, iy), iopen, Nothing)
+    (iparam, (ix, iy), True, Nothing)
     frameHandle
     frameValue
     framePicture
@@ -120,23 +124,29 @@ framedParam ix iy iopen iparam =
     frameHandle _ other = other
     frameValue (Parameter _ _ v _, _, _, _) = v
     framePicture (Parameter n _ v picture, (x, y), open, _) =
-      translated x y $
-        translated 0 0.85 (titleBar n v open)
-          & if open then clientArea picture else blank
-    titleBar n v open =
+      Just
+        $ translated x y
+        $ translated 0 0.85 (titleBar n v open picture)
+          & clientArea open picture
+    titleBar n v open (Just _) =
       rectangle 5 0.7
         & translated 2.15 0 (if open then collapseButton else expandButton)
         & translated (-0.35) 0 (clipped 4.3 0.7 (dilated 0.5 (lettering (titleText n v))))
+        & colored titleColor (solidRectangle 5 0.7)
+    titleBar n v _ Nothing =
+      rectangle 5 0.7
+        & clipped 5 0.7 (dilated 0.5 (lettering (titleText n v)))
         & colored titleColor (solidRectangle 5 0.7)
     titleText n v
       | T.length n > 10 = T.take 8 n <> "... = " <> formatVal v
       | otherwise = n <> " = " <> formatVal v
     collapseButton = rectangle 0.4 0.4 & solidPolygon [(-0.1, -0.1), (0.1, -0.1), (0, 0.1)]
     expandButton = rectangle 0.4 0.4 & solidPolygon [(-0.1, 0.1), (0.1, 0.1), (0, -0.1)]
-    clientArea pic =
+    clientArea True (Just pic) =
       rectangle 5 1
         & clipped 5 1 pic
         & colored bgColor (solidRectangle 5 1)
+    clientArea _ _ = blank
     untranslate x y (PointerPress (px, py)) = PointerPress (px - x, py - y)
     untranslate x y (PointerRelease (px, py)) = PointerRelease (px - x, py - y)
     untranslate x y (PointerMovement (px, py)) = PointerMovement (px - x, py - y)
@@ -145,7 +155,7 @@ framedParam ix iy iopen iparam =
     formatVal v = pack (showFFloatAlt (Just 2) v "")
 
 constant :: Text -> Double -> Parameter
-constant name n = parameterOf name n (const id) id (const blank)
+constant name n = parameterOf name n (const id) id (const Nothing)
 
 toggle :: Text -> Parameter
 toggle name = parameterOf name False change value picture
@@ -155,8 +165,8 @@ toggle name = parameterOf name False change value picture
     change _ = id
     value True = 1
     value False = 0
-    picture True = dilated 0.5 $ lettering "\x2611"
-    picture False = dilated 0.5 $ lettering "\x2610"
+    picture True = Just $ dilated 0.5 $ lettering "\x2611"
+    picture False = Just $ dilated 0.5 $ lettering "\x2610"
 
 slider :: Text -> Parameter
 slider name = parameterOf name (0.5, False) change fst picture
@@ -168,8 +178,9 @@ slider name = parameterOf name (0.5, False) change fst picture
       (min 1 $ max 0 $ (px + 2) / 4, True)
     change _ state = state
     picture (v, _) =
-      translated (v * 4 - 2) 0 (solidRectangle 0.125 0.5)
-        & solidRectangle 4 0.1
+      Just $
+        translated (v * 4 - 2) 0 (solidRectangle 0.125 0.5)
+          & solidRectangle 4 0.1
 
 random :: Text -> Parameter
 random name = parameterOf name (next (unsafePerformIO newStdGen)) change value picture
@@ -178,7 +189,7 @@ random name = parameterOf name (next (unsafePerformIO newStdGen)) change value p
       | abs px < 4, abs py < 1 = next . snd
     change _ = id
     value = fst
-    picture _ = dilated 0.5 $ lettering "\x21ba Regenerate"
+    picture _ = Just $ dilated 0.5 $ lettering "\x21ba Regenerate"
     next = randomR (0.0, 1.0)
 
 timer :: Text -> Parameter
@@ -188,21 +199,21 @@ timer name = parameterOf name (0, 1) change fst picture
     change (PointerPress (px, py)) (t, r)
       | abs px < 4, abs py < 0.75 = (t, 1 - r)
     change _ state = state
-    picture (_, 0) = dilated 0.5 $ lettering "\x23e9"
-    picture _ = dilated 0.5 $ lettering "\x23f8"
+    picture (_, 0) = Just $ dilated 0.5 $ lettering "\x23e9"
+    picture _ = Just $ dilated 0.5 $ lettering "\x23f8"
 
 currentHour :: Parameter
-currentHour = parameterOf "hour" () (const id) value (const blank)
+currentHour = parameterOf "hour" () (const id) value (const Nothing)
   where
     value () = unsafePerformIO $ fromIntegral <$> todHour <$> getTimeOfDay
 
 currentMinute :: Parameter
-currentMinute = parameterOf "minute" () (const id) value (const blank)
+currentMinute = parameterOf "minute" () (const id) value (const Nothing)
   where
     value () = unsafePerformIO $ fromIntegral <$> todMin <$> getTimeOfDay
 
 currentSecond :: Parameter
-currentSecond = parameterOf "second" () (const id) value (const blank)
+currentSecond = parameterOf "second" () (const id) value (const Nothing)
   where
     value () = unsafePerformIO $ realToFrac <$> todSec <$> getTimeOfDay
 

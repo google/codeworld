@@ -197,10 +197,15 @@ timer name = parameterOf name (0, 1) change fst picture
   where
     change (TimePassing dt) (t, r) = (t + r * dt, r)
     change (PointerPress (px, py)) (t, r)
-      | abs px < 4, abs py < 0.75 = (t, 1 - r)
+      | abs (px - 5/6) < 5/6, abs py < 0.75 = (t, 1 - r)
+      | abs (px + 5/6) < 5/6, abs py < 0.75 = (0, 0)
     change _ state = state
-    picture (_, 0) = Just $ dilated 0.5 $ lettering "\x23e9"
-    picture _ = Just $ dilated 0.5 $ lettering "\x23f8"
+    picture (_, 0) = Just $
+      (translated (5/6) 0 $ dilated 0.5 $ lettering "\x23e9") &
+      (translated (-5/6) 0 $ dilated 0.5 $ lettering "\x23ee")
+    picture _ = Just $
+      (translated (5/6) 0 $ dilated 0.5 $ lettering "\x23f8") &
+      (translated (-5/6) 0 $ dilated 0.5 $ lettering "\x23ee")
 
 currentHour :: Parameter
 currentHour = parameterOf "hour" () (const id) value (const Nothing)

@@ -53,7 +53,7 @@ type Conversion = Double -> Double
 -- | A drawing that depends on parameters.  A parameter is a
 parametricDrawingOf :: [Parameter] -> ([Double] -> Picture) -> IO ()
 parametricDrawingOf initialParams mainPic =
-  activityOf (layout (-7) 9.5 initialParams) change picture
+  activityOf (layout (-7) 9.5 initialParams, True, 5) change picture
   where
     layout _ _ [] = []
     layout x y (p : ps)
@@ -64,13 +64,31 @@ parametricDrawingOf initialParams mainPic =
         h
           | Parameter _ _ _ Nothing <- p = 0
           | otherwise = 1
-    change event params = map (changeParam event) params
-    picture params =
-      pictures (catMaybes (map showParam params))
+    change (KeyPress " ") (params, vis, _) = (params, not vis, 2)
+    change event (params, vis, t) =
+      (map (changeParam event) params, vis, changeTime event t)
+    picture (params, False, t) =
+      showHideBanner t
+        & mainPic (map getParam params)
+    picture (params, True, t) =
+      showHideBanner t
+        & pictures (catMaybes (map showParam params))
         & mainPic (map getParam params)
     changeParam event (Parameter _ handle _ _) = handle event
     showParam (Parameter _ _ _ pic) = pic
     getParam (Parameter _ _ val _) = val
+    changeTime (TimePassing dt) t = max 0 (t - dt)
+    changeTime _ t = t
+    showHideBanner 0 = blank
+    showHideBanner t = dilated 0.7 $
+      colored (RGBA 0 0 0 t) (rectangle 10 2.5)
+        & colored
+          (RGBA 0 0 0 t)
+          (translated 0 0.5 $ lettering "Press 'Space' to")
+        & colored
+          (RGBA 0 0 0 t)
+          (translated 0 (-0.5) $ lettering "show/hide parameters.")
+        & colored (RGBA 0.75 0.75 0.75 (min 0.8 t)) (solidRectangle 10 2.5)
 
 data Parameter where
   Parameter ::
@@ -197,15 +215,17 @@ timer name = parameterOf name (0, 1) change fst picture
   where
     change (TimePassing dt) (t, r) = (t + r * dt, r)
     change (PointerPress (px, py)) (t, r)
-      | abs (px - 5/6) < 5/6, abs py < 0.75 = (t, 1 - r)
-      | abs (px + 5/6) < 5/6, abs py < 0.75 = (0, 0)
+      | abs (px - 5 / 6) < 5 / 6, abs py < 0.75 = (t, 1 - r)
+      | abs (px + 5 / 6) < 5 / 6, abs py < 0.75 = (0, 0)
     change _ state = state
-    picture (_, 0) = Just $
-      (translated (5/6) 0 $ dilated 0.5 $ lettering "\x23e9") &
-      (translated (-5/6) 0 $ dilated 0.5 $ lettering "\x23ee")
-    picture _ = Just $
-      (translated (5/6) 0 $ dilated 0.5 $ lettering "\x23f8") &
-      (translated (-5/6) 0 $ dilated 0.5 $ lettering "\x23ee")
+    picture (_, 0) =
+      Just $
+        (translated (5 / 6) 0 $ dilated 0.5 $ lettering "\x23e9")
+          & (translated (-5 / 6) 0 $ dilated 0.5 $ lettering "\x23ee")
+    picture _ =
+      Just $
+        (translated (5 / 6) 0 $ dilated 0.5 $ lettering "\x23f8")
+          & (translated (-5 / 6) 0 $ dilated 0.5 $ lettering "\x23ee")
 
 currentHour :: Parameter
 currentHour = parameterOf "hour" () (const id) value (const Nothing)

@@ -48,8 +48,6 @@ import Numeric (showFFloatAlt)
 import System.IO.Unsafe (unsafePerformIO)
 import System.Random (newStdGen, randomR)
 
-type Conversion = Double -> Double
-
 -- | A drawing that depends on parameters.  A parameter is a
 parametricDrawingOf :: [Parameter] -> ([Double] -> Picture) -> IO ()
 parametricDrawingOf initialParams mainPic =
@@ -119,7 +117,7 @@ parameterOf name initial change value picture =
     (value initial)
     (picture initial)
 
-paramConversion :: Conversion -> Parameter -> Parameter
+paramConversion :: (Double -> Double) -> Parameter -> Parameter
 paramConversion c (Parameter name handle val pic) =
   Parameter name (paramConversion c . handle) (c val) pic
 

@@ -48,6 +48,14 @@ import Numeric (showFFloatAlt)
 import System.IO.Unsafe (unsafePerformIO)
 import System.Random (newStdGen, randomR)
 
+data Parameter where
+  Parameter ::
+    Text ->
+    Double ->
+    Maybe Picture ->
+    (Event -> Parameter) ->
+    Parameter
+
 -- | A drawing that depends on parameters.  A parameter is a
 parametricDrawingOf :: [Parameter] -> ([Double] -> Picture) -> IO ()
 parametricDrawingOf initialParams mainPic =
@@ -65,7 +73,7 @@ parametricDrawingOf initialParams mainPic =
       | otherwise = layout (x + 6) 9.5 (p : ps)
       where
         h
-          | Parameter _ _ _ Nothing <- p = 0
+          | Parameter _ _ Nothing _ <- p = 0
           | otherwise = 1
     change (KeyPress " ") (params, vis, _) = (params, not vis, 2)
     change event (params, vis, t) =
@@ -78,9 +86,9 @@ parametricDrawingOf initialParams mainPic =
         & pictures (catMaybes (map showParam params))
         & mainPic (map getParam params)
     rawPicture (params, _, _) = mainPic (map getParam params)
-    changeParam event (Parameter _ handle _ _) = handle event
-    showParam (Parameter _ _ _ pic) = pic
-    getParam (Parameter _ _ val _) = val
+    changeParam event (Parameter _ _ _ handle) = handle event
+    showParam (Parameter _ _ pic _) = pic
+    getParam (Parameter _ val _ _) = val
     changeTime (TimePassing dt) t = max 0 (t - dt)
     changeTime _ t = t
     showHideBanner 0 = blank
@@ -95,14 +103,6 @@ parametricDrawingOf initialParams mainPic =
             (translated 0 (-0.5) $ lettering "show/hide parameters.")
           & colored (RGBA 0.75 0.75 0.75 (min 0.8 t)) (solidRectangle 10 2.5)
 
-data Parameter where
-  Parameter ::
-    Text ->
-    (Event -> Parameter) ->
-    Double ->
-    Maybe Picture ->
-    Parameter
-
 parameterOf ::
   Text ->
   state ->
@@ -113,13 +113,13 @@ parameterOf ::
 parameterOf name initial change value picture =
   Parameter
     name
-    (\e -> parameterOf name (change e initial) change value picture)
     (value initial)
     (picture initial)
+    (\e -> parameterOf name (change e initial) change value picture)
 
 paramConversion :: (Double -> Double) -> Parameter -> Parameter
-paramConversion c (Parameter name handle val pic) =
-  Parameter name (paramConversion c . handle) (c val) pic
+paramConversion c (Parameter name val pic handle) =
+  Parameter name (c val) pic (paramConversion c . handle)
 
 framedParam :: Double -> Double -> Parameter -> Parameter
 framedParam ix iy iparam =
@@ -140,13 +140,13 @@ framedParam ix iy iparam =
       (param, loc, open, Nothing)
     frameHandle (PointerMovement (px, py)) (param, (x, y), open, Just (ax, ay)) =
       (param, (x + px - ax, y + py - ay), open, Just (px, py))
-    frameHandle event (Parameter _ handle _ _, (x, y), True, anchor) =
+    frameHandle event (Parameter _ _ _ handle, (x, y), True, anchor) =
       (handle (untranslate x y event), (x, y), True, anchor)
-    frameHandle (TimePassing dt) (Parameter _ handle _ _, loc, open, anchor) =
+    frameHandle (TimePassing dt) (Parameter _ _ _ handle, loc, open, anchor) =
       (handle (TimePassing dt), loc, open, anchor)
     frameHandle _ other = other
-    frameValue (Parameter _ _ v _, _, _, _) = v
-    framePicture (Parameter n _ v picture, (x, y), open, _) =
+    frameValue (Parameter _ v _ _, _, _, _) = v
+    framePicture (Parameter n v picture _, (x, y), open, _) =
       Just
         $ translated x y
         $ translated 0 0.85 (titleBar n v open picture)

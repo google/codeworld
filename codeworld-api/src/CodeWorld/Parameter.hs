@@ -39,7 +39,6 @@ where
 
 import CodeWorld
 import CodeWorld.Driver (runInspect)
-import Data.Maybe (catMaybes)
 import Data.Text (Text, pack)
 import qualified Data.Text as T
 import Data.Time.Clock
@@ -54,7 +53,7 @@ data Parameter where
   Parameter ::
     Text ->
     Double ->
-    Maybe Picture ->
+    Picture ->
     Bounds ->
     (Event -> Parameter) ->
     Parameter
@@ -75,9 +74,7 @@ parametricDrawingOf initialParams mainPic =
         framedParam x (y - 1.2) p : layout x (y - h - 1.2) ps
       | otherwise = layout (x + 6) 9.5 (p : ps)
       where
-        h
-          | Parameter _ _ Nothing _ _ <- p = 0
-          | otherwise = 1
+        Parameter _ _ _ (_, _, _, h) _ = p
     change (KeyPress " ") (params, vis, _) = (params, not vis, 2)
     change event (params, vis, t) =
       (map (changeParam event) params, vis, changeTime event t)
@@ -86,7 +83,7 @@ parametricDrawingOf initialParams mainPic =
         & mainPic (map getParam params)
     picture (params, True, t) =
       showHideBanner t
-        & pictures (catMaybes (map showParam params))
+        & pictures (map showParam params)
         & mainPic (map getParam params)
     rawPicture (params, _, _) = mainPic (map getParam params)
     changeParam event (Parameter _ _ _ _ handle) = handle event
@@ -111,7 +108,7 @@ parameterOf ::
   state ->
   (Event -> state -> state) ->
   (state -> Double) ->
-  (state -> Maybe Picture) ->
+  (state -> Picture) ->
   (state -> Bounds) ->
   Parameter
 parameterOf name initial change value picture bounds =
@@ -146,36 +143,40 @@ framedParam ix iy iparam =
       (param, loc, open, Nothing)
     frameHandle (PointerMovement (px, py)) (param, (x, y), open, Just (ax, ay)) =
       (param, (x + px - ax, y + py - ay), open, Just (px, py))
-    frameHandle event (Parameter _ _ _ _ handle, (x, y), True, anchor) =
-      (handle (untranslate x y event), (x, y), True, anchor)
     frameHandle (TimePassing dt) (Parameter _ _ _ _ handle, loc, open, anchor) =
       (handle (TimePassing dt), loc, open, anchor)
+    frameHandle event (Parameter _ _ _ _ handle, (x, y), True, anchor) =
+      (handle (untranslate x y event), (x, y), True, anchor)
     frameHandle _ other = other
     frameValue (Parameter _ v _ _ _, _, _, _) = v
-    framePicture (Parameter n v picture _ _, (x, y), open, _) =
-      Just
-        $ translated x y
-        $ translated 0 0.85 (titleBar n v open picture)
-          & clientArea open picture
-    frameBounds _ = (-10, -10, 20, 20)
-    titleBar n v open (Just _) =
-      rectangle 5 0.7
-        & translated 2.15 0 (if open then collapseButton else expandButton)
-        & translated (-0.35) 0 (clipped 4.3 0.7 (dilated 0.5 (lettering (titleText n v))))
-        & colored titleColor (solidRectangle 5 0.7)
-    titleBar n v _ Nothing =
-      rectangle 5 0.7
-        & clipped 5 0.7 (dilated 0.5 (lettering (titleText n v)))
-        & colored titleColor (solidRectangle 5 0.7)
+    framePicture (param, (x, y), open, _) =
+      translated x y $
+        translated 0 0.85 (titleBar param open)
+          & clientArea param open
+    frameBounds (Parameter _ _ _ (left, top, w, h) _, (x, y), True, _) =
+      (x + left, y + top + 0.7, w, h + 0.7)
+    frameBounds (Parameter _ _ _ (left, top, w, _) _, (x, y), False, _) =
+      (x + left, y + top + 0.7, w, 0.7)
+    titleBar (Parameter n v _ (_, _, w, h) _) open
+      | w * h > 0 =
+        rectangle 5 0.7
+          & translated 2.15 0 (if open then collapseButton else expandButton)
+          & translated (-0.35) 0 (clipped 4.3 0.7 (dilated 0.5 (lettering (titleText n v))))
+          & colored titleColor (solidRectangle 5 0.7)
+      | otherwise =
+        rectangle 5 0.7
+          & clipped 5 0.7 (dilated 0.5 (lettering (titleText n v)))
+          & colored titleColor (solidRectangle 5 0.7)
     titleText n v
       | T.length n > 10 = T.take 8 n <> "... = " <> formatVal v
       | otherwise = n <> " = " <> formatVal v
     collapseButton = rectangle 0.4 0.4 & solidPolygon [(-0.1, -0.1), (0.1, -0.1), (0, 0.1)]
     expandButton = rectangle 0.4 0.4 & solidPolygon [(-0.1, 0.1), (0.1, 0.1), (0, -0.1)]
-    clientArea True (Just pic) =
-      rectangle 5 1
-        & clipped 5 1 pic
-        & colored bgColor (solidRectangle 5 1)
+    clientArea (Parameter _ _ pic (_, _, w, h) _) True
+      | w * h > 0 =
+        rectangle 5 1
+          & clipped 5 1 pic
+          & colored bgColor (solidRectangle 5 1)
     clientArea _ _ = blank
     untranslate x y (PointerPress (px, py)) = PointerPress (px - x, py - y)
     untranslate x y (PointerRelease (px, py)) = PointerRelease (px - x, py - y)
@@ -191,7 +192,7 @@ constant name n =
     n
     (const id)
     id
-    (const Nothing)
+    (const blank)
     (const (0, 0, 0, 0))
 
 toggle :: Text -> Parameter
@@ -209,8 +210,8 @@ toggle name =
     change _ = id
     value True = 1
     value False = 0
-    picture True = Just $ dilated 0.5 $ lettering "\x2611"
-    picture False = Just $ dilated 0.5 $ lettering "\x2610"
+    picture True = dilated 0.5 $ lettering "\x2611"
+    picture False = dilated 0.5 $ lettering "\x2610"
 
 slider :: Text -> Parameter
 slider name =
@@ -229,9 +230,8 @@ slider name =
       (min 1 $ max 0 $ (px + 2) / 4, True)
     change _ state = state
     picture (v, _) =
-      Just $
-        translated (v * 4 - 2) 0 (solidRectangle 0.125 0.5)
-          & solidRectangle 4 0.1
+      translated (v * 4 - 2) 0 (solidRectangle 0.125 0.5)
+        & solidRectangle 4 0.1
 
 random :: Text -> Parameter
 random name =
@@ -240,7 +240,7 @@ random name =
     (next (unsafePerformIO newStdGen))
     change
     fst
-    (const $ Just $ dilated 0.5 $ lettering "\x21ba Regenerate")
+    (const $ dilated 0.5 $ lettering "\x21ba Regenerate")
     (const (-2.5, 0.5, 5, 1))
   where
     change (PointerPress (px, py))
@@ -264,13 +264,11 @@ timer name =
       | abs (px + 5 / 6) < 5 / 6, abs py < 0.75 = (0, 0)
     change _ state = state
     picture (_, 0) =
-      Just $
-        (translated (5 / 6) 0 $ dilated 0.5 $ lettering "\x23e9")
-          & (translated (-5 / 6) 0 $ dilated 0.5 $ lettering "\x23ee")
+      (translated (5 / 6) 0 $ dilated 0.5 $ lettering "\x23e9")
+        & (translated (-5 / 6) 0 $ dilated 0.5 $ lettering "\x23ee")
     picture _ =
-      Just $
-        (translated (5 / 6) 0 $ dilated 0.5 $ lettering "\x23f8")
-          & (translated (-5 / 6) 0 $ dilated 0.5 $ lettering "\x23ee")
+      (translated (5 / 6) 0 $ dilated 0.5 $ lettering "\x23f8")
+        & (translated (-5 / 6) 0 $ dilated 0.5 $ lettering "\x23ee")
 
 currentHour :: Parameter
 currentHour =
@@ -278,8 +276,8 @@ currentHour =
     "hour"
     ()
     (const id)
-    (const $ unsafePerformIO $ fromIntegral <$> todHour <$> getTimeOfDay)
-    (const Nothing)
+    (\_ -> unsafePerformIO $ fromIntegral <$> todHour <$> getTimeOfDay)
+    (const blank)
     (const (0, 0, 0, 0))
 
 currentMinute :: Parameter
@@ -288,8 +286,8 @@ currentMinute =
     "minute"
     ()
     (const id)
-    (const $ unsafePerformIO $ fromIntegral <$> todMin <$> getTimeOfDay)
-    (const Nothing)
+    (\_ -> unsafePerformIO $ fromIntegral <$> todMin <$> getTimeOfDay)
+    (const blank)
     (const (0, 0, 0, 0))
 
 currentSecond :: Parameter
@@ -298,8 +296,8 @@ currentSecond =
     "second"
     ()
     (const id)
-    (const $ unsafePerformIO $ realToFrac <$> todSec <$> getTimeOfDay)
-    (const Nothing)
+    (\_ -> unsafePerformIO $ realToFrac <$> todSec <$> getTimeOfDay)
+    (const blank)
     (const (0, 0, 0, 0))
 
 getTimeOfDay :: IO TimeOfDay

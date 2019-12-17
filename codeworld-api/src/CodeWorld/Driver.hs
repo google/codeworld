@@ -156,15 +156,16 @@ viaOffscreen :: MonadCanvas m => Color -> (Color -> m ()) -> m ()
 viaOffscreen (RGBA r g b a) pic = do
     w <- CM.getScreenWidth
     h <- CM.getScreenHeight
-    img <- CM.newImage (round w) (round h)
-    CM.withImage img $ do
-        setupScreenContext (round w) (round h)
-        pic (RGBA r g b 1)
-    CM.saveRestore $ do
-        px <- pixelSize
-        CM.scale px (-px)
-        CM.globalAlpha a
-        CM.drawImage img (round (-w/2)) (round (-h/2)) (round w) (round h)
+    when (w > 0.5 && h > 0.5) $ do
+        img <- CM.newImage (round w) (round h)
+        CM.withImage img $ do
+            setupScreenContext (round w) (round h)
+            pic (RGBA r g b 1)
+        CM.saveRestore $ do
+            px <- pixelSize
+            CM.scale px (-px)
+            CM.globalAlpha a
+            CM.drawImage img (round (-w/2)) (round (-h/2)) (round w) (round h)
 
 followPath :: MonadCanvas m => [Point] -> Bool -> Bool -> m ()
 followPath [] _ _ = return ()
@@ -756,7 +757,7 @@ createFrameRenderer canvas = do
         withScreen (elementFromCanvas offscreenCanvas) rect (drawFrame pic)
         cw <- ClientRect.getWidth rect
         ch <- ClientRect.getHeight rect
-        when (cw > 0 && ch > 0) $
+        when (cw > 0.5 && ch > 0.5) $
             canvasDrawImage screen (elementFromCanvas offscreenCanvas)
                             0 0 (round cw) (round ch)
 

@@ -1,3 +1,7 @@
 [submodule "third_party/blockly"]
   path = third_party/blockly
   url = https://github.com/stefan-j/blockly
+[submodule "ghcjs"]
+  path = ghcjs
+  url = https://github.com/ghcjs/ghcjs.git
+  branch = 8.6

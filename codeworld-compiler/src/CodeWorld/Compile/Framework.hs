@@ -6,6 +6,7 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
+{-# OPTIONS_GHC -Wno-missing-fields #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.

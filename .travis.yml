@@ -19,6 +19,19 @@ cache:
   - $TRAVIS_BUILD_DIR/codeworld-game-server/.stack-work
   - $TRAVIS_BUILD_DIR/codeworld-prediction/.stack-work
   - $TRAVIS_BUILD_DIR/codeworld-server/.stack-work
+  - $HOME/.ghcjs
+  - $HOME/.ghc
+  - $HOME/.cabal
+  - $TRAVIS_BUILD_DIR/ghcjs/.cabal-sandbox
+  - $TRAVIS_BUILD_DIR/ghcjs/data
+  - $TRAVIS_BUILD_DIR/ghcjs/dist
+  - $TRAVIS_BUILD_DIR/ghcjs/dist-newstyle
+  - $TRAVIS_BUILD_DIR/ghcjs/ghcjs-boot
+  - $TRAVIS_BUILD_DIR/ghcjs/lib
+  - $TRAVIS_BUILD_DIR/ghcjs/lib/boot/data
+  - $TRAVIS_BUILD_DIR/ghcjs/lib/boot/pkg
+  - $TRAVIS_BUILD_DIR/ghcjs/utils
+  - $TRAVIS_BUILD_DIR/ghcjs/vendor
 
 addons:
   apt:
@@ -33,13 +46,12 @@ stages:
   - build_dependencies
   - build
   - test
-  # WIP on branch `peterbecich:cabal-project`
-  # - build_ghcjs_dependencies
-  # - build_ghcjs
-  # - install_ghcjs
-  # - boot_ghcjs
-  # - build_with_ghcjs
-  # - test_with_ghcjs
+  - build_ghcjs_dependencies
+  - build_ghcjs
+  - install_ghcjs
+  - boot_ghcjs
+  - build_with_ghcjs
+  - test_with_ghcjs
 
 jobs:
   include:
@@ -50,6 +62,9 @@ jobs:
         - if [ ! -d "$DIR" ]; then mkdir -p ~/.local/bin; fi
         - export PATH=$HOME/.local/bin:$PATH
         - rm -rf $HOME/.stack
+        - rm -rf $HOME/.ghcjs
+        - rm -rf $HOME/.ghc
+        - rm -rf $HOME/.cabal
         - rm -rf $TRAVIS_BUILD_DIR/.stack-work
         - rm -rf $TRAVIS_BUILD_DIR/codeworld-account/.stack-work
         - rm -rf $TRAVIS_BUILD_DIR/codeworld-api/.stack-work
@@ -61,10 +76,20 @@ jobs:
         - rm -rf $TRAVIS_BUILD_DIR/codeworld-game-server/.stack-work
         - rm -rf $TRAVIS_BUILD_DIR/codeworld-prediction/.stack-work
         - rm -rf $TRAVIS_BUILD_DIR/codeworld-server/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/ghcjs/.cabal-sandbox
+        - rm -rf $TRAVIS_BUILD_DIR/ghcjs/data
+        - rm -rf $TRAVIS_BUILD_DIR/ghcjs/dist
+        - rm -rf $TRAVIS_BUILD_DIR/ghcjs/dist-newstyle
+        - rm -rf $TRAVIS_BUILD_DIR/ghcjs/ghcjs-boot
+        - rm -rf $TRAVIS_BUILD_DIR/ghcjs/lib
+        - rm -rf $TRAVIS_BUILD_DIR/ghcjs/lib/boot/data
+        - rm -rf $TRAVIS_BUILD_DIR/ghcjs/lib/boot/pkg
+        - rm -rf $TRAVIS_BUILD_DIR/ghcjs/utils
+        - rm -rf $TRAVIS_BUILD_DIR/ghcjs/vendor
         - stack upgrade --binary-only
         - hash -r
         - stack --version
-        # - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 # include for GHCJS
+        - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
     - stage: build_some_dependencies
       name: "Build some dependencies"
       script:
@@ -190,3 +215,160 @@ jobs:
       name: "Server"
       env: PACKAGE="codeworld-server"
       script: *test
+    - stage: build_ghcjs_dependencies
+      name: "Build GHCJS dependencies"
+      script:
+        - sudo add-apt-repository --yes ppa:hvr/ghc
+        - sudo apt-get update
+        - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade --binary-only
+        - hash -r
+        - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
+        - nvm install 10
+        - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
+        - export
+        - cd ghcjs
+        - git submodule update --init --recursive
+        - ./utils/makePackages.sh
+        - cabal new-update
+        - cabal new-configure
+        - cabal new-build -j --only-dependencies --disable-optimization
+    - stage: build_ghcjs
+      name: "Build GHCJS"
+      script:
+        - sudo add-apt-repository --yes ppa:hvr/ghc
+        - sudo apt-get update
+        - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade --binary-only
+        - hash -r
+        - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
+        - nvm install 10
+        - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
+        - export
+        - cd ghcjs
+        - git submodule update --init --recursive
+        - ./utils/makePackages.sh
+        - cabal new-build -j
+    - stage: install_ghcjs
+      name: "Install GHCJS"
+      script:
+        - sudo add-apt-repository --yes ppa:hvr/ghc
+        - sudo apt-get update
+        - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade --binary-only
+        - hash -r
+        - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
+        - nvm install 10
+        - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
+        - export
+        - cd ghcjs
+        - git submodule update --init --recursive
+        - ./utils/makePackages.sh
+        - cabal new-install --only-dependencies --lib
+        - cabal new-install -v --lib
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-pkg
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/haddock-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/hsc2hs-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-boot
+    - stage: boot_ghcjs
+      name: "Boot GHCJS"
+      script:
+        - sudo add-apt-repository --yes ppa:hvr/ghc
+        - sudo apt-get update
+        - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade --binary-only
+        - hash -r
+        - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
+        - nvm install 10
+        - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
+        - export
+        - git submodule update --init --recursive
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-pkg
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/haddock-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/hsc2hs-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-boot
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-run
+        - cd ghcjs
+        - git submodule update --init --recursive
+        - ./utils/makePackages.sh
+        - ghcjs --version
+        - ghcjs-boot -j 2 -s $TRAVIS_BUILD_DIR/ghcjs/lib/boot --no-haddock --no-prof
+        - cabal --ghcjs --version
+    - stage: build_with_ghcjs
+      name: "API (with ghcjs)"
+      env: PACKAGE="codeworld-api"
+      script: &build_with_ghcjs
+        - sudo add-apt-repository --yes ppa:hvr/ghc
+        - sudo apt-get update
+        - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade --binary-only
+        - hash -r
+        - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
+        - nvm install 10
+        - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
+        - export
+        - git submodule update --init --recursive
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-pkg
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/haddock-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/hsc2hs-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-boot
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-run
+        - cd ghcjs
+        - git submodule update --init --recursive
+        - ./utils/makePackages.sh
+        - cd $TRAVIS_BUILD_DIR
+        - cabal --ghcjs new-configure $PACKAGE
+        - cabal --ghcjs new-build -j $PACKAGE
+    - stage: build_with_ghcjs
+      name: "Base (with ghcjs)"
+      env: PACKAGE="codeworld-base"
+      script: *build_with_ghcjs
+    # succeeds, but can't be build yet without GHCJS and therefore omitted from cabal.project` file
+    # - stage: Build_with_GHCJS`
+    #   name: "Funblocks-client (with ghcjs)"
+    #   env: PACKAGE="funblocks-client"
+    #   script: *build_with_ghcjs
+    - stage: test_with_ghcjs
+      name: "API (with ghcjs)"
+      env: PACKAGE="codeworld-api"
+      script: &test_with_ghcjs
+        - sudo add-apt-repository --yes ppa:hvr/ghc
+        - sudo apt-get update
+        - sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade --binary-only
+        - hash -r
+        - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4
+        - nvm install 10
+        - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
+        - export
+        - git submodule update --init --recursive
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-pkg
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/haddock-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/hsc2hs-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-boot
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-run
+        - cd ghcjs
+        - git submodule update --init --recursive
+        - ./utils/makePackages.sh
+        - cd $TRAVIS_BUILD_DIR
+        - cabal --ghcjs new-configure $PACKAGE
+        - cabal --ghcjs new-test $PACKAGE
+    - stage: test_with_ghcjs
+      name: "Prediction (with ghcjs)"
+      env: PACKAGE="codeworld-prediction"
+      script: *test_with_ghcjs
+    # succeeds, but can't be build yet without GHCJS and therefore omitted from cabal.project` file
+    # - stage: test_with_GHCJS
+    #   name: "Funblocks-client (with ghcjs)"
+    #   env: PACKAGE="funblocks-client"
+    #   script: *test_with_ghcjs

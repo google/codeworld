@@ -62,19 +62,21 @@ data Parameter where
 parametricDrawingOf :: [Parameter] -> ([Double] -> Picture) -> IO ()
 parametricDrawingOf initialParams mainPic =
   runInspect
-    (layout (-7) 9.5 initialParams, True, 5)
+    (layout 0 (-9.5) 9.5 initialParams, True, 5)
     (const id)
     change
     picture
     rawPicture
   where
-    layout _ _ [] = []
-    layout x y (p : ps)
-      | y > (-9.5) + h + 0.7 =
-        framedParam x (y - 1.2) p : layout x (y - h - 1.2) ps
-      | otherwise = layout (x + 6) 9.5 (p : ps)
+    layout _ _ _ [] = []
+    layout maxw x y (p : ps)
+      | y > (-9.5) + h + titleHeight =
+        framedParam (x - left) (y - top - titleHeight) p
+          : layout (max maxw w) x (y - h - titleHeight - gap) ps
+      | otherwise = layout 0 (x + maxw + gap) 9.5 (p : ps)
       where
-        Parameter _ _ _ (_, _, _, h) _ = p
+        Parameter _ _ _ (left, top, w, h) _ = p
+        gap = 0.5
     change (KeyPress " ") (params, vis, _) = (params, not vis, 2)
     change event (params, vis, t) =
       (map (changeParam event) params, vis, changeTime event t)
@@ -93,15 +95,12 @@ parametricDrawingOf initialParams mainPic =
     changeTime _ t = t
     showHideBanner 0 = blank
     showHideBanner t =
-      dilated 0.7 $
-        colored (RGBA 0 0 0 t) (rectangle 10 2.5)
-          & colored
-            (RGBA 0 0 0 t)
-            (translated 0 0.5 $ lettering "Press 'Space' to")
-          & colored
-            (RGBA 0 0 0 t)
-            (translated 0 (-0.5) $ lettering "show/hide parameters.")
-          & colored (RGBA 0.75 0.75 0.75 (min 0.8 t)) (solidRectangle 10 2.5)
+      translated 0 (-9)
+        $ dilated 0.5
+        $ colored
+          (RGBA 0 0 0 t)
+          (rectangle 18 2 & lettering "Press Space to show/hide parameters.")
+          & colored (RGBA 0.75 0.75 0.75 (min 0.8 t)) (solidRectangle 18 2)
 
 parameterOf ::
   Text ->
@@ -137,8 +136,15 @@ framedParam ix iy iparam =
       | onOpenButton = (param, (x, y), not open, anchor)
       | onTitleBar = (param, (x, y), open, Just (px, py))
       where
-        onTitleBar = abs (px - x) < 2.5 && abs (py - y - 0.85) < 0.35
-        onOpenButton = abs (px - x - 2.15) < 0.2 && abs (py - y - 0.85) < 0.2
+        Parameter _ _ _ (left, top, w, h) _ = param
+        onTitleBar =
+          abs (px - x - (left + w / 2)) < w / 2
+            && abs (py - y - top - titleHeight / 2) < titleHeight / 2
+        onOpenButton
+          | w * h > 0 =
+            abs (px - x - (left + w - titleHeight / 2)) < 0.2
+              && abs (py - y - (top + titleHeight / 2)) < 0.2
+          | otherwise = False
     frameHandle (PointerRelease _) (param, loc, open, Just _) =
       (param, loc, open, Nothing)
     frameHandle (PointerMovement (px, py)) (param, (x, y), open, Just (ax, ay)) =
@@ -149,24 +155,34 @@ framedParam ix iy iparam =
       (handle (untranslate x y event), (x, y), True, anchor)
     frameHandle _ other = other
     frameValue (Parameter _ v _ _ _, _, _, _) = v
-    framePicture (param, (x, y), open, _) =
+    framePicture (param@(Parameter _ _ _ (left, top, w, h) _), (x, y), open, _) =
       translated x y $
-        translated 0 0.85 (titleBar param open)
-          & clientArea param open
+        translated (left + w / 2) (top + titleHeight / 2) (titleBar param open)
+          & translated (left + w / 2) (top - h / 2) (clientArea param open)
     frameBounds (Parameter _ _ _ (left, top, w, h) _, (x, y), True, _) =
-      (x + left, y + top + 0.7, w, h + 0.7)
+      (x + left, y + top + titleHeight, w, h + titleHeight)
     frameBounds (Parameter _ _ _ (left, top, w, _) _, (x, y), False, _) =
-      (x + left, y + top + 0.7, w, 0.7)
+      (x + left, y + top + titleHeight, w, titleHeight)
     titleBar (Parameter n v _ (_, _, w, h) _) open
       | w * h > 0 =
-        rectangle 5 0.7
-          & translated 2.15 0 (if open then collapseButton else expandButton)
-          & translated (-0.35) 0 (clipped 4.3 0.7 (dilated 0.5 (lettering (titleText n v))))
-          & colored titleColor (solidRectangle 5 0.7)
+        rectangle w titleHeight
+          & translated
+            ((w - titleHeight) / 2)
+            0
+            (if open then collapseButton else expandButton)
+          & translated
+            (- titleHeight / 2)
+            0
+            ( clipped
+                (w - titleHeight)
+                titleHeight
+                (dilated 0.5 (lettering (titleText n v)))
+            )
+          & colored titleColor (solidRectangle w titleHeight)
       | otherwise =
-        rectangle 5 0.7
-          & clipped 5 0.7 (dilated 0.5 (lettering (titleText n v)))
-          & colored titleColor (solidRectangle 5 0.7)
+        rectangle w titleHeight
+          & clipped w titleHeight (dilated 0.5 (lettering (titleText n v)))
+          & colored titleColor (solidRectangle w titleHeight)
     titleText n v
       | T.length n > 10 = T.take 8 n <> "... = " <> formatVal v
       | otherwise = n <> " = " <> formatVal v
@@ -174,8 +190,8 @@ framedParam ix iy iparam =
     expandButton = rectangle 0.4 0.4 & solidPolygon [(-0.1, 0.1), (0.1, 0.1), (0, -0.1)]
     clientArea (Parameter _ _ pic (_, _, w, h) _) True
       | w * h > 0 =
-        rectangle 5 1
-          & clipped 5 1 pic
+        rectangle w h
+          & clipped w h pic
           & colored bgColor (solidRectangle 5 1)
     clientArea _ _ = blank
     untranslate x y (PointerPress (px, py)) = PointerPress (px - x, py - y)
@@ -185,6 +201,9 @@ framedParam ix iy iparam =
     paramName (Parameter n _ _ _ _) = n
     formatVal v = pack (showFFloatAlt (Just 2) v "")
 
+titleHeight :: Double
+titleHeight = 0.7
+
 constant :: Text -> Double -> Parameter
 constant name n =
   parameterOf
@@ -193,7 +212,7 @@ constant name n =
     (const id)
     id
     (const blank)
-    (const (0, 0, 0, 0))
+    (const (-2.5, 0, 5, 0))
 
 toggle :: Text -> Parameter
 toggle name =
@@ -203,7 +222,7 @@ toggle name =
     change
     value
     picture
-    (const (-2.5, -0.5, 5, 1))
+    (const (-2.5, 0.5, 5, 1))
   where
     change (PointerPress (px, py))
       | abs px < 4, abs py < 1 = not
@@ -278,7 +297,7 @@ currentHour =
     (const id)
     (\_ -> unsafePerformIO $ fromIntegral <$> todHour <$> getTimeOfDay)
     (const blank)
-    (const (0, 0, 0, 0))
+    (const (-2.5, 0, 5, 0))
 
 currentMinute :: Parameter
 currentMinute =
@@ -288,7 +307,7 @@ currentMinute =
     (const id)
     (\_ -> unsafePerformIO $ fromIntegral <$> todMin <$> getTimeOfDay)
     (const blank)
-    (const (0, 0, 0, 0))
+    (const (-2.5, 0, 5, 0))
 
 currentSecond :: Parameter
 currentSecond =
@@ -298,7 +317,7 @@ currentSecond =
     (const id)
     (\_ -> unsafePerformIO $ realToFrac <$> todSec <$> getTimeOfDay)
     (const blank)
-    (const (0, 0, 0, 0))
+    (const (-2.5, 0, 5, 0))
 
 getTimeOfDay :: IO TimeOfDay
 getTimeOfDay = do

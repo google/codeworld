@@ -39,6 +39,8 @@ where
 
 import CodeWorld
 import CodeWorld.Driver (runInspect)
+import Data.Function (on)
+import Data.List (sortBy)
 import Data.Text (Text, pack)
 import qualified Data.Text as T
 import Data.Time.Clock
@@ -62,7 +64,7 @@ data Parameter where
 parametricDrawingOf :: [Parameter] -> ([Double] -> Picture) -> IO ()
 parametricDrawingOf initialParams mainPic =
   runInspect
-    (layout 0 (-9.5) 9.5 initialParams, True, 5)
+    (zip [0 :: Int ..] (layout 0 (-9.5) 9.5 initialParams), True, 5)
     (const id)
     change
     picture
@@ -78,16 +80,18 @@ parametricDrawingOf initialParams mainPic =
         Parameter _ _ _ (left, top, w, h) _ = p
         gap = 0.5
     change (KeyPress " ") (params, vis, _) = (params, not vis, 2)
+    change (PointerPress pt) (params, vis, t) =
+      case (vis, pullMatch (hitTest pt . snd) params) of
+        (True, (Just p, ps)) -> (fmap (changeParam (PointerPress pt)) p : ps, vis, t)
+        _ -> (params, vis, t)
     change event (params, vis, t) =
-      (map (changeParam event) params, vis, changeTime event t)
-    picture (params, False, t) =
+      (map (fmap (changeParam event)) params, vis, changeTime event t)
+    picture (params, vis, t) =
       showHideBanner t
-        & mainPic (map getParam params)
-    picture (params, True, t) =
-      showHideBanner t
-        & pictures (map showParam params)
-        & mainPic (map getParam params)
-    rawPicture (params, _, _) = mainPic (map getParam params)
+        & (if vis then pictures (map (showParam . snd) params) else blank)
+        & rawPicture (params, vis, t)
+    rawPicture (params, _, _) =
+      mainPic (map (getParam . snd) (sortBy (compare `on` fst) params))
     changeParam event (Parameter _ _ _ _ handle) = handle event
     showParam (Parameter _ _ pic _ _) = pic
     getParam (Parameter _ val _ _ _) = val
@@ -101,6 +105,16 @@ parametricDrawingOf initialParams mainPic =
           (RGBA 0 0 0 t)
           (rectangle 18 2 & lettering "Press Space to show/hide parameters.")
           & colored (RGBA 0.75 0.75 0.75 (min 0.8 t)) (solidRectangle 18 2)
+
+pullMatch :: (a -> Bool) -> [a] -> (Maybe a, [a])
+pullMatch _ [] = (Nothing, [])
+pullMatch p (a : as)
+  | p a = (Just a, as)
+  | otherwise = fmap (a :) (pullMatch p as)
+
+hitTest :: Point -> Parameter -> Bool
+hitTest (x, y) (Parameter _ _ _ (left, top, w, h) _) =
+  x > left && x < left + w && y < top && y > top - h
 
 parameterOf ::
   Text ->

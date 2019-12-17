@@ -566,9 +566,9 @@ trim x y
   | otherwise = take mid y ++ "..." ++ (reverse $ take mid $ reverse y)
   where mid = (x - 3) `div` 2
 
-showFloat :: Double -> String
-showFloat x
-  | haskellMode && x < 0 = "(" ++ result ++ ")"
+showFloat :: Bool -> Double -> String
+showFloat needNegParens x
+  | needNegParens && x < 0 = "(" ++ result ++ ")"
   | otherwise = result
   where result = stripZeros (showFFloatAlt (Just 4) x "")
         stripZeros = reverse . dropWhile (== '.') . dropWhile (== '0') . reverse
@@ -577,7 +577,7 @@ showPoints :: [Point] -> String
 showPoints pts =
     "[" ++
     intercalate ", " [
-        "(" ++ showFloat x ++ ", " ++ showFloat y ++ ")"
+        "(" ++ showFloat False x ++ ", " ++ showFloat False y ++ ")"
         | (x, y) <- pts
     ] ++
     "]"
@@ -595,30 +595,34 @@ showColor c@(RGBA r g b a)
   | c == pink = "pink"
   | c == purple = "purple"
   | c == gray = "gray"
-  | haskellMode, a == 1 = printf "(RGB %s %s %s)" (showFloat r) (showFloat g) (showFloat b)
-  | a == 1 = printf "RGB(%s, %s, %s)" (showFloat r) (showFloat g) (showFloat b)
-  | haskellMode = printf "(RGBA %s %s %s %s)" (showFloat r) (showFloat g) (showFloat b) (showFloat a)
-  | otherwise = printf "RGBA(%s, %s, %s, %s)" (showFloat r) (showFloat g) (showFloat b) (showFloat a)
+  | haskellMode, a == 1 =
+      printf "(RGB %s %s %s)" (showFloat True r) (showFloat True g) (showFloat True b)
+  | a == 1 =
+      printf "RGB(%s, %s, %s)" (showFloat False r) (showFloat False g) (showFloat False b)
+  | haskellMode =
+      printf "(RGBA %s %s %s %s)" (showFloat True r) (showFloat True g) (showFloat True b) (showFloat True a)
+  | otherwise =
+      printf "RGBA(%s, %s, %s, %s)" (showFloat False r) (showFloat False g) (showFloat False b) (showFloat False a)
 
 describePicture :: Picture -> String
 describePicture (Rectangle _ w h)
-  | haskellMode = printf "rectangle %s %s" (showFloat w) (showFloat h)
-  | otherwise   = printf "rectangle(%s, %s)" (showFloat w) (showFloat h)
+  | haskellMode = printf "rectangle %s %s" (showFloat True w) (showFloat True h)
+  | otherwise   = printf "rectangle(%s, %s)" (showFloat False w) (showFloat False h)
 describePicture (SolidRectangle _ w h)
-  | haskellMode = printf "solidRectangle %s %s" (showFloat w) (showFloat h)
-  | otherwise   = printf "solidRectangle(%s, %s)" (showFloat w) (showFloat h)
+  | haskellMode = printf "solidRectangle %s %s" (showFloat True w) (showFloat True h)
+  | otherwise   = printf "solidRectangle(%s, %s)" (showFloat False w) (showFloat False h)
 describePicture (ThickRectangle _ lw w h)
-  | haskellMode = printf "thickRectangle %s %s %s" (showFloat lw) (showFloat w) (showFloat h)
-  | otherwise   = printf "thickRectangle(%s, %s, %s)" (showFloat w) (showFloat h) (showFloat lw)
+  | haskellMode = printf "thickRectangle %s %s %s" (showFloat True lw) (showFloat True w) (showFloat True h)
+  | otherwise   = printf "thickRectangle(%s, %s, %s)" (showFloat False w) (showFloat False h) (showFloat False lw)
 describePicture (Circle _ r)
-  | haskellMode = printf "circle %s" (showFloat r)
-  | otherwise   = printf "circle(%s)" (showFloat r)
+  | haskellMode = printf "circle %s" (showFloat True r)
+  | otherwise   = printf "circle(%s)" (showFloat False r)
 describePicture (SolidCircle _ r)
-  | haskellMode = printf "solidCircle %s" (showFloat r)
-  | otherwise   = printf "solidCircle(%s)" (showFloat r)
+  | haskellMode = printf "solidCircle %s" (showFloat True r)
+  | otherwise   = printf "solidCircle(%s)" (showFloat False r)
 describePicture (ThickCircle _ lw r)
-  | haskellMode = printf "thickCircle %s %s" (showFloat lw) (showFloat r)
-  | otherwise   = printf "thickCircle(%s, %s)" (showFloat r) (showFloat lw)
+  | haskellMode = printf "thickCircle %s %s" (showFloat True lw) (showFloat True r)
+  | otherwise   = printf "thickCircle(%s, %s)" (showFloat False r) (showFloat False lw)
 describePicture (SolidPolygon _ pts)
   | haskellMode = printf "solidPolygon %s" (showPoints pts)
   | otherwise   = printf "solidPolygon(%s)" (showPoints pts)
@@ -629,35 +633,35 @@ describePicture (Polygon _ pts)
   | haskellMode = printf "polygon %s" (showPoints pts)
   | otherwise   = printf "polygon(%s)" (showPoints pts)
 describePicture (ThickPolygon _ pts w)
-  | haskellMode = printf "thickPolygon %s %s" (showFloat w) (showPoints pts)
-  | otherwise   = printf "thickPolygon(%s, %s)" (showPoints pts) (showFloat w)
+  | haskellMode = printf "thickPolygon %s %s" (showFloat True w) (showPoints pts)
+  | otherwise   = printf "thickPolygon(%s, %s)" (showPoints pts) (showFloat False w)
 describePicture (ClosedCurve _ pts)
   | haskellMode = printf "closedCurve %s" (showPoints pts)
   | otherwise   = printf "closedCurve(%s)" (showPoints pts)
 describePicture (ThickClosedCurve _ pts w)
-  | haskellMode = printf "thickClosedCurve %s %s" (showFloat w) (showPoints pts)
-  | otherwise   = printf "thickClosedCurve(%s, %s)" (showPoints pts) (showFloat w)
+  | haskellMode = printf "thickClosedCurve %s %s" (showFloat True w) (showPoints pts)
+  | otherwise   = printf "thickClosedCurve(%s, %s)" (showPoints pts) (showFloat False w)
 describePicture (Polyline _ pts)
   | haskellMode = printf "polyline %s" (showPoints pts)
   | otherwise   = printf "polyline(%s)" (showPoints pts)
 describePicture (ThickPolyline _ pts w)
-  | haskellMode = printf "thickPolyline %s %s" (showFloat w) (showPoints pts)
-  | otherwise   = printf "thickPolyline(%s, %s)" (showPoints pts) (showFloat w)
+  | haskellMode = printf "thickPolyline %s %s" (showFloat True w) (showPoints pts)
+  | otherwise   = printf "thickPolyline(%s, %s)" (showPoints pts) (showFloat False w)
 describePicture (Curve _ pts)
   | haskellMode = printf "curve %s" (showPoints pts)
   | otherwise   = printf "curve(%s)" (showPoints pts)
 describePicture (ThickCurve _ pts w)
-  | haskellMode = printf "thickCurve %s %s" (showFloat w) (showPoints pts)
-  | otherwise   = printf "thickCurve(%s, %s)" (showPoints pts) (showFloat w)
+  | haskellMode = printf "thickCurve %s %s" (showFloat True w) (showPoints pts)
+  | otherwise   = printf "thickCurve(%s, %s)" (showPoints pts) (showFloat False w)
 describePicture (Sector _ b e r)
-  | haskellMode = printf "sector %s %s %s" (showFloat b) (showFloat e) (showFloat r)
-  | otherwise   = printf "sector(%s°, %s°, %s)" (showFloat (180 * b / pi)) (showFloat (180 * e / pi)) (showFloat r)
+  | haskellMode = printf "sector %s %s %s" (showFloat True b) (showFloat True e) (showFloat True r)
+  | otherwise   = printf "sector(%s°, %s°, %s)" (showFloat False (180 * b / pi)) (showFloat False (180 * e / pi)) (showFloat False r)
 describePicture (Arc _ b e r)
-  | haskellMode = printf "arc %s %s %s" (showFloat b) (showFloat e) (showFloat r)
-  | otherwise   = printf "arc(%s°, %s°, %s)" (showFloat (180 * b / pi)) (showFloat (180 * e / pi)) (showFloat r)
+  | haskellMode = printf "arc %s %s %s" (showFloat True b) (showFloat True e) (showFloat True r)
+  | otherwise   = printf "arc(%s°, %s°, %s)" (showFloat False (180 * b / pi)) (showFloat False (180 * e / pi)) (showFloat False r)
 describePicture (ThickArc _ b e r w)
-  | haskellMode = printf "thickArc %s %s %s %s" (showFloat w) (showFloat b) (showFloat e) (showFloat r)
-  | otherwise   = printf "thickArc(%s°, %s°, %s, %s)" (showFloat (180 * b / pi)) (showFloat (180 * e / pi)) (showFloat r) (showFloat w)
+  | haskellMode = printf "thickArc %s %s %s %s" (showFloat True w) (showFloat True b) (showFloat True e) (showFloat True r)
+  | otherwise   = printf "thickArc(%s°, %s°, %s, %s)" (showFloat False (180 * b / pi)) (showFloat False (180 * e / pi)) (showFloat False r) (showFloat False w)
 describePicture (Lettering _ txt)
   | haskellMode = printf "lettering %s" (show txt)
   | otherwise   = printf "lettering(%s)" (show txt)
@@ -669,20 +673,20 @@ describePicture (Color _ c _)
   | haskellMode = printf "colored %s" (showColor c)
   | otherwise   = printf "colored(..., %s)" (showColor c)
 describePicture (Translate _ x y _)
-  | haskellMode = printf "translated %s %s" (showFloat x) (showFloat y)
-  | otherwise   = printf "translated(..., %s, %s)" (showFloat x) (showFloat y)
+  | haskellMode = printf "translated %s %s" (showFloat True x) (showFloat True y)
+  | otherwise   = printf "translated(..., %s, %s)" (showFloat False x) (showFloat False y)
 describePicture (Scale _ x y _)
-  | haskellMode = printf "scaled %s %s" (showFloat x) (showFloat y)
-  | otherwise   = printf "scaled(..., %s, %s)" (showFloat x) (showFloat y)
+  | haskellMode = printf "scaled %s %s" (showFloat True x) (showFloat True y)
+  | otherwise   = printf "scaled(..., %s, %s)" (showFloat False x) (showFloat False y)
 describePicture (Rotate _ angle _)
-  | haskellMode = printf "rotated %s" (showFloat angle)
-  | otherwise   = printf "rotated(..., %s°)" (showFloat (180 * angle / pi))
+  | haskellMode = printf "rotated %s" (showFloat True angle)
+  | otherwise   = printf "rotated(..., %s°)" (showFloat False (180 * angle / pi))
 describePicture (Clip _ x y _)
-  | haskellMode = printf "clipped %s %s" (showFloat x) (showFloat y)
-  | otherwise   = printf "rotated(..., %s, %s)" (showFloat x) (showFloat y)
+  | haskellMode = printf "clipped %s %s" (showFloat True x) (showFloat True y)
+  | otherwise   = printf "rotated(..., %s, %s)" (showFloat False x) (showFloat False y)
 describePicture (Dilate _ k _)
-  | haskellMode = printf "dilated %s" (showFloat k)
-  | otherwise   = printf "dilated(..., %s)" (showFloat k)
+  | haskellMode = printf "dilated %s" (showFloat True k)
+  | otherwise   = printf "dilated(..., %s)" (showFloat False k)
 describePicture (Sketch _ name _ _ _) = T.unpack name
 describePicture (CoordinatePlane _) = "coordinatePlane"
 describePicture (Pictures _ _)

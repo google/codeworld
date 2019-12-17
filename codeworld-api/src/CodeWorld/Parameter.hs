@@ -49,8 +49,13 @@ import Numeric (showFFloatAlt)
 import System.IO.Unsafe (unsafePerformIO)
 import System.Random (newStdGen, randomR)
 
+-- | Bounds information for a parameter UI.  The fields are the
+-- left and top coordinate, then the width and height.
 type Bounds = (Double, Double, Double, Double)
 
+-- | The source for a parameter that can be adjusted in a parametric
+-- drawing.  Parameters can get their values from sliders, buttons,
+-- counters, timers, etc.
 data Parameter where
   Parameter ::
     Text ->
@@ -60,25 +65,19 @@ data Parameter where
     (Event -> Parameter) ->
     Parameter
 
--- | A drawing that depends on parameters.  A parameter is a
+-- | A drawing that depends on parameters.  The first argument is a
+-- list of parameters.  The second is a picture, which depends on the
+-- values of those parameters.  Each number used to retrieve the picture
+-- is the value of the corresponding parameter in the first list.
 parametricDrawingOf :: [Parameter] -> ([Double] -> Picture) -> IO ()
 parametricDrawingOf initialParams mainPic =
   runInspect
-    (zip [0 :: Int ..] (layout 0 (-9.5) 9.5 initialParams), True, 5)
+    (zip [0 :: Int ..] (layoutParams 0 (-9.5) 9.5 initialParams), True, 5)
     (const id)
     change
     picture
     rawPicture
   where
-    layout _ _ _ [] = []
-    layout maxw x y (p : ps)
-      | y > (-9.5) + h + titleHeight =
-        framedParam (x - left) (y - top - titleHeight) p
-          : layout (max maxw w) x (y - h - titleHeight - gap) ps
-      | otherwise = layout 0 (x + maxw + gap) 9.5 (p : ps)
-      where
-        Parameter _ _ _ (left, top, w, h) _ = p
-        gap = 0.5
     change (KeyPress " ") (params, vis, _) = (params, not vis, 2)
     change (PointerPress pt) (params, vis, t) =
       case (vis, pullMatch (hitTest pt . snd) params) of
@@ -101,17 +100,34 @@ parametricDrawingOf initialParams mainPic =
     showHideBanner t =
       translated 0 (-9)
         $ dilated 0.5
-        $ colored
-          (RGBA 0 0 0 t)
-          (rectangle 18 2 & lettering "Press Space to show/hide parameters.")
+        $ colored (RGBA 0 0 0 t) (rectangle 18 2)
+          & colored
+            (RGBA 0 0 0 t)
+            (lettering "Press Space to show/hide parameters.")
           & colored (RGBA 0.75 0.75 0.75 (min 0.8 t)) (solidRectangle 18 2)
 
+-- | Wraps a list of parameters in frames to lay them out on the screen.
+layoutParams :: Double -> Double -> Double -> [Parameter] -> [Parameter]
+layoutParams _ _ _ [] = []
+layoutParams maxw x y (p : ps)
+  | y > (-9.5) + h + titleHeight =
+    framedParam (x - left) (y - top - titleHeight) p
+      : layoutParams (max maxw w) x (y - h - titleHeight - gap) ps
+  | otherwise = layoutParams 0 (x + maxw + gap) 9.5 (p : ps)
+  where
+    Parameter _ _ _ (left, top, w, h) _ = p
+    gap = 0.5
+
+-- | Finds the first element of a list that matches the predicate, if any,
+-- and removes it from the list, returning it separately from the remaining
+-- elements.
 pullMatch :: (a -> Bool) -> [a] -> (Maybe a, [a])
 pullMatch _ [] = (Nothing, [])
 pullMatch p (a : as)
   | p a = (Just a, as)
   | otherwise = fmap (a :) (pullMatch p as)
 
+-- | Determines if a point is inside the screen area for a given parameter.
 hitTest :: Point -> Parameter -> Bool
 hitTest (x, y) (Parameter _ _ _ (left, top, w, h) _) =
   x > left && x < left + w && y < top && y > top - h

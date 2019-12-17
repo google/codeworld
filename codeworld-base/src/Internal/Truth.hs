@@ -41,6 +41,8 @@ import Unsafe.Coerce
 import GHCJS.Foreign
 import GHCJS.Types
 import JavaScript.Array
+#else
+import "base" Prelude (error)
 #endif
 type Truth = Bool
 

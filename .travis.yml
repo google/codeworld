@@ -1,8 +1,10 @@
 # https://docs.haskellstack.org/en/stable/travis_ci/
 
+sudo: false
 dist: bionic
 language: generic
 cache:
+  timeout: 2000
   directories:
   - $HOME/.local/bin
   - $HOME/.stack
@@ -10,6 +12,7 @@ cache:
   - $TRAVIS_BUILD_DIR/codeworld-account/.stack-work
   - $TRAVIS_BUILD_DIR/codeworld-api/.stack-work
   - $TRAVIS_BUILD_DIR/codeworld-auth/.stack-work
+  - $TRAVIS_BUILD_DIR/codeworld-base/.stack-work
   - $TRAVIS_BUILD_DIR/codeworld-compiler/.stack-work
   - $TRAVIS_BUILD_DIR/codeworld-error-sanitizer/.stack-work
   - $TRAVIS_BUILD_DIR/codeworld-game-api/.stack-work
@@ -22,119 +25,168 @@ addons:
     update: true
     packages:
       - libgmp-dev
+      - haskell-stack
+
+stages:
+  - upgrade_stack
+  - build_some_dependencies
+  - build_dependencies
+  - build
+  - test
+  # WIP on branch `peterbecich:cabal-project`
+  # - build_ghcjs_dependencies
+  # - build_ghcjs
+  # - install_ghcjs
+  # - boot_ghcjs
+  # - build_with_ghcjs
+  # - test_with_ghcjs
 
 jobs:
   include:
-    - stage: Install Stack
+    - stage: upgrade_stack
+      name: "Upgrade Stack"
       script:
         - export DIR=~/.local/bin
         - if [ ! -d "$DIR" ]; then mkdir -p ~/.local/bin; fi
         - export PATH=$HOME/.local/bin:$PATH
-        - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
-        - stack setup
-    - stage: Build dependencies
+        - rm -rf $HOME/.stack
+        - rm -rf $TRAVIS_BUILD_DIR/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-account/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-api/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-auth/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-base/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-compiler/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-error-sanitizer/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-game-api/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-game-server/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-prediction/.stack-work
+        - rm -rf $TRAVIS_BUILD_DIR/codeworld-server/.stack-work
+        - stack upgrade --binary-only
+        - hash -r
+        - stack --version
+        # - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 # include for GHCJS
+    - stage: build_some_dependencies
+      name: "Build some dependencies"
+      script:
+        - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade --binary-only
+        - hash -r
+        - stack clean --full
+        - |
+          stack build \
+            base-compat \
+            base-compat-batteries \
+            basement \
+            cereal \
+            colour \
+            cryptonite \
+            hashable \
+            haskell-src-exts \
+            lens \
+            network \
+            old-time \
+            sqlite-simple
+    - stage: build_dependencies
       name: "Build dependencies"
       script:
-        # - stack clean --full  # if unreliability persists
         - export PATH=$HOME/.local/bin:$PATH
+        - stack upgrade --binary-only
+        - hash -r
+        - stack clean --full
         - stack build --dependencies-only
-    - stage: Build
+    - stage: build
       name: "root"
-      script:
+      env: PACKAGE="."
+      script: &build
         - export PATH=$HOME/.local/bin:$PATH
-        - stack build
-    - stage: Build
+        - stack upgrade --binary-only
+        - hash -r
+        - stack build $PACKAGE # --ghc-options="-dynamic"
+    - stage: build
       name: "Account"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-account
-    - stage: Build
+      env: PACKAGE="codeworld-account"
+      script: *build
+    - stage: build
       name: "API"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-api
-    - stage: Build
+      env: PACKAGE="codeworld-api"
+      script: *build
+    - stage: build
       name: "Auth"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-auth
-    - stage: Build
+      env: PACKAGE="codeworld-auth"
+      script: *build
+    - stage: build
+      name: "Base (with ghcjs-base-stub)"
+      env: PACKAGE="codeworld-base"
+      script: *build
+    - stage: build
       name: "Compiler"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-compiler
-    - stage: Build
+      env: PACKAGE="codeworld-compiler"
+      script: *build
+    - stage: build
       name: "Error Sanitizer"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-error-sanitizer
-    - stage: Build
+      env: PACKAGE="codeworld-error-sanitizer"
+      script: *build
+    - stage: build
       name: "Game API"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-game-api
-    - stage: Build
+      env: PACKAGE="codeworld-game-api"
+      script: *build
+    - stage: build
       name: "Game Server"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-game-server
-    - stage: Build
+      env: PACKAGE="codeworld-game-server"
+      script: *build
+    - stage: build
       name: "Prediction"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-prediction
-    - stage: Build
+      env: PACKAGE="codeworld-prediction"
+      script: *build
+    - stage: build
       name: "Server"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack build codeworld-server
+      env: PACKAGE="codeworld-server"
+      script: *build
     # - stage: Test
     #   name: "root"
-    #   script:
-    #     - export PATH=$HOME/.local/bin:$PATH
-    #     - stack test
-    - stage: Test
+    #  env: PACKAGE="*"
+    #   script: *test
+    - stage: test
       name: "Account"
-      script:
+      env: PACKAGE="codeworld-account"
+      script: &test
         - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-account
-    - stage: Test
+        - stack upgrade --binary-only
+        - hash -r
+        - stack test $PACKAGE
+    - stage: test
       name: "API"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-api
-    - stage: Test
+      env: PACKAGE="codeworld-api"
+      script: *test
+    - stage: test
       name: "Auth"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-auth
-    # - stage: Test
+      env: PACKAGE="codeworld-auth"
+      script: *test
+    - stage: test
+      name: "Base (with ghcjs-base-stub)"
+      env: PACKAGE="codeworld-base"
+      script: *test
+    # - stage: test
     #   name: "Compiler"
-    #   script:
-    #     - export PATH=$HOME/.local/bin:$PATH
-    #     - stack test codeworld-compiler
-    - stage: Test
+    #   env: PACKAGE="codeworld-compiler"
+    #   script: *test
+    - stage: test
       name: "Error Sanitizer"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-error-sanitizer
-    - stage: Test
+      env: PACKAGE="codeworld-error-sanitizer"
+      script: *test
+    - stage: test
       name: "Game API"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-game-api
-    - stage: Test
+      env: PACKAGE="codeworld-game-api"
+      script: *test
+    - stage: test
       name: "Game Server"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-game-server
-    - stage: Test
+      env: PACKAGE="codeworld-game-server"
+      script: *test
+    - stage: test
       name: "Prediction"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-prediction
-    - stage: Test
+      env: PACKAGE="codeworld-prediction"
+      script: *test
+    - stage: test
       name: "Server"
-      script:
-        - export PATH=$HOME/.local/bin:$PATH
-        - stack test codeworld-server
+      env: PACKAGE="codeworld-server"
+      script: *test

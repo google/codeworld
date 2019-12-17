@@ -115,6 +115,7 @@ data Picture
     | Scale (Maybe SrcLoc) !Double !Double !Picture
     | Dilate (Maybe SrcLoc) !Double !Picture
     | Rotate (Maybe SrcLoc) !Double !Picture
+    | Clip (Maybe SrcLoc) !Double !Double !Picture
     | CoordinatePlane (Maybe SrcLoc)
     | Sketch (Maybe SrcLoc) !Text !Text !Double !Double
     | Pictures (Maybe SrcLoc) [Picture]
@@ -297,6 +298,10 @@ dilated = Dilate (getDebugSrcLoc callStack)
 -- Angles are in radians.
 rotated :: HasCallStack => Double -> Picture -> Picture
 rotated = Rotate (getDebugSrcLoc callStack)
+
+-- | A picture clipped to a rectangle around the origin with this width and height.
+clipped :: HasCallStack => Double -> Double -> Picture -> Picture
+clipped = Clip (getDebugSrcLoc callStack)
 
 -- A picture made by drawing these pictures, ordered from top to bottom.
 pictures :: HasCallStack => [Picture] -> Picture

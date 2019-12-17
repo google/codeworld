@@ -44,6 +44,7 @@ module Internal.Exports (
     , scaled
     , dilated
     , rotated
+    , clipped
     , polyline
     , thickPolyline
     , polygon

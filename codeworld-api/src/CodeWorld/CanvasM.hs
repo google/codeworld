@@ -76,6 +76,7 @@ class (Monad m, MonadIO m) => MonadCanvas m where
            (Double, Double) -> (Double, Double) -> (Double, Double) -> m ()
     arc :: Double -> Double -> Double -> Double -> Double -> Bool -> m ()
     rect :: Double -> Double -> Double -> Double -> m ()
+    clip :: m ()
     fill :: m ()
     stroke :: m ()
     fillRect :: Double -> Double -> Double -> Double -> m ()
@@ -192,6 +193,7 @@ instance MonadCanvas CanvasM where
         CanvasM (const (Canvas.bezierCurveTo x1 y1 x2 y2 x3 y3))
     arc x y r a1 a2 dir = CanvasM (const (Canvas.arc x y r a1 a2 dir))
     rect x y w h = CanvasM (const (Canvas.rect x y w h))
+    clip = CanvasM (const Canvas.clip)
     fill = CanvasM (const Canvas.fill)
     stroke = CanvasM (const Canvas.stroke)
     fillRect x y w h = CanvasM (const (Canvas.fillRect x y w h))
@@ -301,6 +303,7 @@ instance MonadCanvas CanvasM where
     arc x y r a1 a2 dir = liftCanvas $
         Canvas.arc (x, y, r, a1, a2, dir)
     rect x y w h = liftCanvas $ Canvas.rect (x, y, w, h)
+    clip = liftCanvas $ Canvas.clip ()
     fill = liftCanvas $ Canvas.fill ()
     stroke = liftCanvas $ Canvas.stroke ()
     fillRect x y w h = liftCanvas $ Canvas.fillRect (x, y, w, h)

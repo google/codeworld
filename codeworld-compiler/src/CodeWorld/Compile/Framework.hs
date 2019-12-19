@@ -369,9 +369,9 @@ formatLocation spn@(SrcSpanInfo (SrcSpan fn l1 c1 l2 c2) _)
                        show (max 1 (c2 - 1))
   | otherwise        = fn ++ ":" ++ show l1 ++ ":" ++ show c1
 
-srcSpanFor :: Text -> Int -> Int -> SrcSpanInfo
-srcSpanFor src off len =
-    SrcSpanInfo (SrcSpan "program.hs" ln1 col1 ln2 col2) []
+srcSpanFor :: FilePath -> Text -> Int -> Int -> SrcSpanInfo
+srcSpanFor f src off len =
+    SrcSpanInfo (SrcSpan (takeFileName f) ln1 col1 ln2 col2) []
   where (_, ln1, col1) = T.foldl' next (off, 1, 1) pre
         (_, ln2, col2) = T.foldl' next (len, ln1, col1) mid
 

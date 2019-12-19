@@ -179,6 +179,8 @@ checkDangerousSource :: MonadCompile m => m ()
 checkDangerousSource = do
   srcs <- gets compileSourcePaths
   forM_ srcs $ \src -> do
+    let errPath | src == head srcs = "program.hs"
+                | otherwise = takeFileName src
     code <- decodeUtf8 <$> getSourceCode src
     let matches =
           code
@@ -187,7 +189,7 @@ checkDangerousSource = do
     when (not (null matches)) $ do
       let (off, len) = matches !! 0 ! 1
       addDiagnostics
-        [ ( srcSpanFor code off len,
+        [ ( srcSpanFor errPath code off len,
             CompileError,
             "error:\n    Sorry, but your program uses forbidden language features."
           )

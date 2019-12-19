@@ -14,10 +14,6 @@
   limitations under the License.
 -}
 
-{-|
-Functions and types for handling user accounts
--}
-
 module CodeWorld.Account
     ( module CodeWorld.Account.Actions
     , module CodeWorld.Account.Hashing

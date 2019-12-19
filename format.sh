@@ -22,12 +22,31 @@ mkdir -p $BUILD/node_modules
 run $BUILD npm install --silent js-beautify
 run $BUILD npm install --silent eslint
 
-function format {
+function formatall_js {
     nodejs build/node_modules/js-beautify/js/bin/js-beautify.js -n -m 2 $(find web/js -regex .*\\.js$ -type f)
     nodejs build/node_modules/js-beautify/js/bin/css-beautify.js -n $(find web/css -regex .*\\.css$ -type f)
     nodejs build/node_modules/js-beautify/js/bin/html-beautify.js -n $(find web -regex .*\\.html$ -type f)
 
-    nodejs build/node_modules/eslint/bin/eslint.js --fix $(find web/js -regex .*\\.js$ -type f)
+    nodejs build/node_modules/eslint/bin/eslint.js --fix $(find web/js -regex .*\\.js$ -type f) || true
 }
 
-run . format
+run . formatall_js
+
+function format_hs {
+    tmpfile=$(mktemp /tmp/fmtXXXXXX.hs)
+    cp "$1" "$tmpfile"
+    sed -i -E 's/^(#[a-z])/-- !!! \1/' "$tmpfile"
+    ormolu -p --mode inplace "$tmpfile"
+    sed -i -E 's/^-- !!! (#[a-z])/\1/' "$tmpfile"
+    cp "$tmpfile" "$1.formatted"
+    rm "$tmpfile"
+}
+
+function formatall_hs {
+    for f in $(find */src -regex .*\\.hs$ -type f)
+    do
+        format_hs $f || true
+    done
+}
+
+run . formatall_hs

@@ -66,8 +66,8 @@ formatDiagnostics = do
   let (local, remote) = partition inMainModule diags
   let remoteErrorFiles =
         [ srcSpanFilename (srcInfoSpan loc)
-          | (loc, severity, _) <- remote,
-            severity > CompileSuccess
+          | (loc, severity, msg) <- remote,
+            severity > CompileSuccess || "error:" `isPrefixOf` msg
         ]
   importLocations <- gets compileImportLocations
   let badImports =
@@ -268,16 +268,18 @@ addParsedDiagnostics output = addDiagnostics newDiags
 
 parseDiagnostic :: Text -> Diagnostic
 parseDiagnostic msg
-  | ( ( _ : (readT -> Just ln) :
+  | ( ( _ : fname :
+          (readT -> Just ln) :
           (readT -> Just col) :
           body :
           _
         ) :
         _
       ) <-
-      msg =~ ("^program.hs:([0-9]+):([0-9]+): ((.|\n)*)$" :: Text) =
-    (srcSpanFrom ln ln col (col + 1), CompileSuccess, T.unpack body)
-  | ( ( _ : (readT -> Just ln) :
+      msg =~ ("^([a-zA-Z0-9_-]*\\.hs):([0-9]+):([0-9]+): ((.|\n)*)$" :: Text) =
+    (srcSpanFrom fname ln ln col (col + 1), CompileSuccess, T.unpack body)
+  | ( ( _ : fname :
+          (readT -> Just ln) :
           (readT -> Just col1) :
           (readT -> Just col2) :
           body :
@@ -285,9 +287,10 @@ parseDiagnostic msg
         ) :
         _
       ) <-
-      msg =~ ("^program.hs:([0-9]+):([0-9]+)-([0-9]+): ((.|\n)*)$" :: Text) =
-    (srcSpanFrom ln ln col1 (col2 + 1), CompileSuccess, T.unpack body)
-  | ( ( _ : (readT -> Just ln1) :
+      msg =~ ("^([a-zA-Z0-9_-]*\\.hs):([0-9]+):([0-9]+)-([0-9]+): ((.|\n)*)$" :: Text) =
+    (srcSpanFrom fname ln ln col1 (col2 + 1), CompileSuccess, T.unpack body)
+  | ( ( _ : fname :
+          (readT -> Just ln1) :
           (readT -> Just col1) :
           (readT -> Just ln2) :
           (readT -> Just col2) :
@@ -297,18 +300,18 @@ parseDiagnostic msg
         _
       ) <-
       msg
-        =~ ( "^program.hs:[(]([0-9]+),([0-9]+)[)]"
+        =~ ( "^([a-zA-Z0-9_-]*\\.hs):[(]([0-9]+),([0-9]+)[)]"
                <> "-[(]([0-9]+),([0-9]+)[)]: ((.|\n)*)$" ::
                Text
            ) =
-    (srcSpanFrom ln1 ln2 col1 (col2 + 1), CompileSuccess, T.unpack body)
+    (srcSpanFrom fname ln1 ln2 col1 (col2 + 1), CompileSuccess, T.unpack body)
   | otherwise = (noSrcSpan, CompileSuccess, T.unpack msg ++ " (no loc)")
   where
     readT = readMaybe . T.unpack
 
-srcSpanFrom :: Int -> Int -> Int -> Int -> SrcSpanInfo
-srcSpanFrom l1 l2 c1 c2 =
-  SrcSpanInfo (SrcSpan "program.hs" l1 c1 l2 c2) []
+srcSpanFrom :: Text -> Int -> Int -> Int -> Int -> SrcSpanInfo
+srcSpanFrom fname l1 l2 c1 c2 =
+  SrcSpanInfo (SrcSpan (T.unpack fname) l1 c1 l2 c2) []
 
 copyOutputFrom :: MonadCompile m => FilePath -> m ()
 copyOutputFrom target = gets compileStage >>= \stage -> case stage of

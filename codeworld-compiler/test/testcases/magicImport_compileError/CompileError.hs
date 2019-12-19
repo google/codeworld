@@ -14,6 +14,7 @@
   limitations under the License.
 -}
 
-import Local.NoParse
+-- Should parse, but give a compile error.  This is actually tricky,
+-- since parse and scope errors are deferred until runtime.
 
-program = drawingOf(blank)
+type RecursiveAlias = Number -> RecursiveAlias

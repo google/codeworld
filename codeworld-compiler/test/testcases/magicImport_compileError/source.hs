@@ -14,6 +14,6 @@
   limitations under the License.
 -}
 
-import Local.NoParse
+import Local.CompileError
 
 program = drawingOf(blank)

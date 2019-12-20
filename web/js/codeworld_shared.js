@@ -1437,7 +1437,9 @@ function preFormatMessage(msg) {
         .replace(/program\.hs:(\d+):((\d+)(-\d+)?)/g,
             '<a href="#" onclick="goto($1, $3); return false;">Line $1, Column $2</a>')
         .replace(/program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
-            '<a href="#" onclick="goto($1, $2); return false;">Line $1-$3, Column $2-$4</a>');
+            '<a href="#" onclick="goto($1, $2); return false;">Line $1-$3, Column $2-$4</a>')
+        .replace(/[A-Za-z0-9_-]*\.hs:(\d+):((\d+)(-\d+)?)/g, 'In an imported module')
+        .replace(/program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g, 'In an imported module');
     return msg;
 }
 
@@ -1545,7 +1547,8 @@ function sendUnhelpfulReport(event, message, reportLink) {
 }
 
 function scrubError(msg) {
-    return msg.replace(/program[.]hs:[0-9:-]*/g, '(loc)');
+    return msg.replace(/[a-zA-Z0-9_-]+\.hs:(\d+):((\d+)(-\d+)?)/g, '(loc)')
+        .replace(/[a-zA-Z0-9_-]+\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g, '(loc)');
 }
 
 function clearMessages() {

@@ -1,0 +1,2 @@
+program.hs:17:1-19: error:
+    There is an error in this imported module.

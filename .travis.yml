@@ -6,26 +6,15 @@ language: generic
 cache:
   timeout: 2000
   directories:
+  - $HOME/.cabal
+  - $HOME/.ghc
   - $HOME/.local/bin
   - $HOME/.stack
   - $TRAVIS_BUILD_DIR/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-account/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-api/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-auth/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-base/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-compiler/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-error-sanitizer/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-game-api/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-game-server/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-prediction/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-server/.stack-work
 
 addons:
   apt:
-    update: true
-    packages:
-      - libgmp-dev
-      - haskell-stack
+    update: false
 
 stages:
   - upgrade_stack
@@ -45,33 +34,69 @@ jobs:
   include:
     - stage: upgrade_stack
       name: "Upgrade Stack"
-      script:
+      name: "root"
+      env: PACKAGE="."
+      script: &upgrade_stack
+        - travis_retry sudo apt-get update
+        - travis_retry sudo apt-get install libgmp-dev haskell-stack
         - export DIR=~/.local/bin
         - if [ ! -d "$DIR" ]; then mkdir -p ~/.local/bin; fi
         - export PATH=$HOME/.local/bin:$PATH
-        - rm -rf $HOME/.stack
-        - rm -rf $TRAVIS_BUILD_DIR/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-account/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-api/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-auth/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-base/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-compiler/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-error-sanitizer/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-game-api/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-game-server/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-prediction/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-server/.stack-work
-        - stack upgrade --binary-only
+        - travis_retry stack upgrade --binary-only
         - hash -r
+        - stack setup
         - stack --version
         # - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 # include for GHCJS
+    - stage: upgrade_stack
+      name: "Account"
+      env: PACKAGE="codeworld-account"
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "API"
+      env: PACKAGE="codeworld-api"
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Auth"
+      env: PACKAGE="codeworld-auth"
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Base (with ghcjs-base-stub)"
+      env: PACKAGE="codeworld-base"
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Compiler"
+      env: PACKAGE="codeworld-compiler"
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Error Sanitizer"
+      env: PACKAGE="codeworld-error-sanitizer"
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Game API"
+      env: PACKAGE="codeworld-game-api"
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Game Server"
+      env: PACKAGE="codeworld-game-server"
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Prediction"
+      env: PACKAGE="codeworld-prediction"
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Server"
+      env: PACKAGE="codeworld-server"
+      script: *upgrade_stack
     - stage: build_some_dependencies
       name: "Build some dependencies"
-      script:
+      name: "root"
+      env: PACKAGE="."
+      script: &build_some_dependencies
+        - travis_retry sudo apt-get update
+        - travis_retry sudo apt-get install libgmp-dev haskell-stack
         - export PATH=$HOME/.local/bin:$PATH
-        - stack upgrade --binary-only
+        - travis_retry stack upgrade --binary-only
         - hash -r
-        - stack clean --full
         - |
           stack build \
             base-compat \
@@ -86,21 +111,108 @@ jobs:
             network \
             old-time \
             sqlite-simple
+    - stage: build_some_dependencies
+      name: "Account"
+      env: PACKAGE="codeworld-account"
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "API"
+      env: PACKAGE="codeworld-api"
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Auth"
+      env: PACKAGE="codeworld-auth"
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Base (with ghcjs-base-stub)"
+      env: PACKAGE="codeworld-base"
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Compiler"
+      env: PACKAGE="codeworld-compiler"
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Error Sanitizer"
+      env: PACKAGE="codeworld-error-sanitizer"
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Game API"
+      env: PACKAGE="codeworld-game-api"
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Game Server"
+      env: PACKAGE="codeworld-game-server"
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Prediction"
+      env: PACKAGE="codeworld-prediction"
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Server"
+      env: PACKAGE="codeworld-server"
+      script: *build_some_dependencies
     - stage: build_dependencies
       name: "Build dependencies"
-      script:
+      name: "root"
+      env: PACKAGE="."
+      script: &build_dependencies
+        - travis_retry sudo apt-get update
+        - travis_retry sudo apt-get install libgmp-dev haskell-stack
         - export PATH=$HOME/.local/bin:$PATH
-        - stack upgrade --binary-only
+        - travis_retry stack upgrade --binary-only
         - hash -r
         - stack clean --full
         - stack build --dependencies-only
+    - stage: build_dependencies
+      name: "Account"
+      env: PACKAGE="codeworld-account"
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "API"
+      env: PACKAGE="codeworld-api"
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Auth"
+      env: PACKAGE="codeworld-auth"
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Base (with ghcjs-base-stub)"
+      env: PACKAGE="codeworld-base"
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Compiler"
+      env: PACKAGE="codeworld-compiler"
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Error Sanitizer"
+      env: PACKAGE="codeworld-error-sanitizer"
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Game API"
+      env: PACKAGE="codeworld-game-api"
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Game Server"
+      env: PACKAGE="codeworld-game-server"
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Prediction"
+      env: PACKAGE="codeworld-prediction"
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Server"
+      env: PACKAGE="codeworld-server"
+      script: *build_dependencies
     - stage: build
       name: "root"
       env: PACKAGE="."
       script: &build
+        - travis_retry sudo apt-get update
+        - travis_retry sudo apt-get install libgmp-dev haskell-stack
         - export PATH=$HOME/.local/bin:$PATH
-        - stack upgrade --binary-only
+        - travis_retry stack upgrade --binary-only
         - hash -r
+        - stack setup
         - stack build $PACKAGE # --ghc-options="-dynamic"
     - stage: build
       name: "Account"
@@ -150,9 +262,12 @@ jobs:
       name: "Account"
       env: PACKAGE="codeworld-account"
       script: &test
+        - travis_retry sudo apt-get update
+        - travis_retry sudo apt-get install libgmp-dev haskell-stack
         - export PATH=$HOME/.local/bin:$PATH
-        - stack upgrade --binary-only
+        - travis_retry stack upgrade --binary-only
         - hash -r
+        - stack setup
         - stack test $PACKAGE
     - stage: test
       name: "API"

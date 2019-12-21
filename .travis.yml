@@ -39,7 +39,6 @@ jobs:
         - PACKAGE="."
         - JOB=1
       script: &upgrade_stack
-        # - export TRAVIS_JOB_DECIMAL="$(cut -d "." -f 2 <<< "$TRAVIS_JOB_NUMBER")"
         - sleep $(((JOB - 1) * 20))
         - travis_retry eval $"sudo apt-get update ; sleep 30"
         - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"
@@ -118,7 +117,6 @@ jobs:
         - PACKAGE="."
         - JOB=1
       script: &build_some_dependencies
-        # - export TRAVIS_JOB_DECIMAL="$(cut -d "." -f 2 <<< "$TRAVIS_JOB_NUMBER")"
         - sleep $(((JOB - 1) * 20))
         - travis_retry eval $"sudo apt-get update ; sleep 30"
         - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"
@@ -206,7 +204,6 @@ jobs:
         - PACKAGE="."
         - JOB=1
       script: &build_dependencies
-        # - export TRAVIS_JOB_DECIMAL="$(cut -d "." -f 2 <<< "$TRAVIS_JOB_NUMBER")"
         - sleep $(((JOB - 1) * 20))
         - travis_retry eval $"sudo apt-get update ; sleep 30"
         - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"
@@ -281,7 +278,6 @@ jobs:
         - PACKAGE="."
         - JOB=1
       script: &build
-        # - export TRAVIS_JOB_DECIMAL="$(cut -d "." -f 2 <<< "$TRAVIS_JOB_NUMBER")"
         - sleep $(((JOB - 1) * 20))
         - travis_retry eval $"sudo apt-get update ; sleep 30"
         - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"
@@ -362,7 +358,6 @@ jobs:
         - PACKAGE="codeworld-account"
         - JOB=2
       script: &test
-        # - export TRAVIS_JOB_DECIMAL="$(cut -d "." -f 2 <<< "$TRAVIS_JOB_NUMBER")"
         - sleep $(((JOB - 1) * 20))
         - travis_retry eval $"sudo apt-get update ; sleep 30"
         - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"

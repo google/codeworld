@@ -265,11 +265,15 @@ translated :: HasCallStack => (Picture, Number, Number) -> Picture
 translated (p, x, y) =
     withFrozenCallStack $ CWPic (CW.translated (toDouble x) (toDouble y) (toCWPic p))
 
--- | A picture scaled by these factors.
+-- | A picture scaled by these factors. Pictures can be scaled by
+-- negative factors to achieve reflection over the corresponding axis.
+-- E.g. to mirror a picture over the x-axis: @scaled(p, -1, 1)@.
 scaled :: HasCallStack => (Picture, Number, Number) -> Picture
 scaled (p, x, y) = withFrozenCallStack $ CWPic (CW.scaled (toDouble x) (toDouble y) (toCWPic p))
 
--- | A picture scaled by these factors.
+-- | A picture with both dimensions scaled by the given factor.
+-- Factors greater than @1@ make the picture bigger and less than @1@
+-- make it smaller. Negative factors add a rotation by 180 degrees.
 dilated :: HasCallStack => (Picture, Number) -> Picture
 dilated (p, k) = withFrozenCallStack $ CWPic (CW.dilated (toDouble k) (toCWPic p))
 

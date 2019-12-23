@@ -6,26 +6,15 @@ language: generic
 cache:
   timeout: 2000
   directories:
+  - $HOME/.cabal
+  - $HOME/.ghc
   - $HOME/.local/bin
   - $HOME/.stack
   - $TRAVIS_BUILD_DIR/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-account/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-api/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-auth/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-base/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-compiler/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-error-sanitizer/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-game-api/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-game-server/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-prediction/.stack-work
-  - $TRAVIS_BUILD_DIR/codeworld-server/.stack-work
 
 addons:
   apt:
-    update: true
-    packages:
-      - libgmp-dev
-      - haskell-stack
+    update: false
 
 stages:
   - upgrade_stack
@@ -45,33 +34,95 @@ jobs:
   include:
     - stage: upgrade_stack
       name: "Upgrade Stack"
-      script:
+      name: "root"
+      env:
+        - PACKAGE="."
+        - JOB=1
+      script: &upgrade_stack
+        - sleep $(((JOB - 1) * 20))
+        - travis_retry eval $"sudo apt-get update ; sleep 30"
+        - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"
         - export DIR=~/.local/bin
         - if [ ! -d "$DIR" ]; then mkdir -p ~/.local/bin; fi
         - export PATH=$HOME/.local/bin:$PATH
-        - rm -rf $HOME/.stack
-        - rm -rf $TRAVIS_BUILD_DIR/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-account/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-api/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-auth/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-base/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-compiler/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-error-sanitizer/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-game-api/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-game-server/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-prediction/.stack-work
-        - rm -rf $TRAVIS_BUILD_DIR/codeworld-server/.stack-work
-        - stack upgrade --binary-only
+        - travis_retry stack upgrade --binary-only
         - hash -r
+        - stack setup
         - stack --version
         # - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 # include for GHCJS
+    - stage: upgrade_stack
+      name: "Account"
+      env:
+        - PACKAGE="codeworld-account"
+        - JOB=2
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "API"
+      env:
+        - PACKAGE="codeworld-api"
+        - JOB=3
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Auth"
+      env:
+        - PACKAGE="codeworld-auth"
+        - JOB=4
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Base (with ghcjs-base-stub)"
+      env:
+        - PACKAGE="codeworld-base"
+        - JOB=5
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Compiler"
+      env:
+        - PACKAGE="codeworld-compiler"
+        - JOB=6
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Error Sanitizer"
+      env:
+        - PACKAGE="codeworld-error-sanitizer"
+        - JOB=7
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Game API"
+      env:
+        - PACKAGE="codeworld-game-api"
+        - JOB=8
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Game Server"
+      env:
+        - PACKAGE="codeworld-game-server"
+        - JOB=9
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Prediction"
+      env:
+        - PACKAGE="codeworld-prediction"
+        - JOB=10
+      script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Server"
+      env:
+        - PACKAGE="codeworld-server"
+        - JOB=11
+      script: *upgrade_stack
     - stage: build_some_dependencies
       name: "Build some dependencies"
-      script:
+      name: "root"
+      env:
+        - PACKAGE="."
+        - JOB=1
+      script: &build_some_dependencies
+        - sleep $(((JOB - 1) * 20))
+        - travis_retry eval $"sudo apt-get update ; sleep 30"
+        - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"
         - export PATH=$HOME/.local/bin:$PATH
-        - stack upgrade --binary-only
+        - travis_retry stack upgrade --binary-only
         - hash -r
-        - stack clean --full
         - |
           stack build \
             base-compat \
@@ -86,107 +137,286 @@ jobs:
             network \
             old-time \
             sqlite-simple
+    - stage: build_some_dependencies
+      name: "Account"
+      env:
+        - PACKAGE="codeworld-account"
+        - JOB=2
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "API"
+      env:
+        - PACKAGE="codeworld-api"
+        - JOB=3
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Auth"
+      env:
+        - PACKAGE="codeworld-auth"
+        - JOB=4
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Base (with ghcjs-base-stub)"
+      env:
+        - PACKAGE="codeworld-base"
+        - JOB=5
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Compiler"
+      env:
+        - PACKAGE="codeworld-compiler"
+        - JOB=6
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Error Sanitizer"
+      env:
+        - PACKAGE="codeworld-error-sanitizer"
+        - JOB=7
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Game API"
+      env:
+        - PACKAGE="codeworld-game-api"
+        - JOB=8
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Game Server"
+      env:
+        - PACKAGE="codeworld-game-server"
+        - JOB=9
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Prediction"
+      env:
+        - PACKAGE="codeworld-prediction"
+        - JOB=10
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Server"
+      env:
+        - PACKAGE="codeworld-server"
+        - JOB=11
+      script: *build_some_dependencies
     - stage: build_dependencies
       name: "Build dependencies"
-      script:
+      name: "root"
+      env:
+        - PACKAGE="."
+        - JOB=1
+      script: &build_dependencies
+        - sleep $(((JOB - 1) * 20))
+        - travis_retry eval $"sudo apt-get update ; sleep 30"
+        - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"
         - export PATH=$HOME/.local/bin:$PATH
-        - stack upgrade --binary-only
+        - travis_retry stack upgrade --binary-only
         - hash -r
         - stack clean --full
         - stack build --dependencies-only
+    - stage: build_dependencies
+      name: "Account"
+      env:
+        - PACKAGE="codeworld-account"
+        - JOB=2
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "API"
+      env:
+        - PACKAGE="codeworld-api"
+        - JOB=3
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Auth"
+      env:
+        - PACKAGE="codeworld-auth"
+        - JOB=4
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Base (with ghcjs-base-stub)"
+      env:
+        - PACKAGE="codeworld-base"
+        - JOB=5
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Compiler"
+      env:
+        - PACKAGE="codeworld-compiler"
+        - JOB=6
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Error Sanitizer"
+      env:
+        - PACKAGE="codeworld-error-sanitizer"
+        - JOB=7
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Game API"
+      env:
+        - PACKAGE="codeworld-game-api"
+        - JOB=8
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Game Server"
+      env:
+        - PACKAGE="codeworld-game-server"
+        - JOB=9
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Prediction"
+      env:
+        - PACKAGE="codeworld-prediction"
+        - JOB=10
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Server"
+      env:
+        - PACKAGE="codeworld-server"
+        - JOB=11
+      script: *build_dependencies
     - stage: build
       name: "root"
-      env: PACKAGE="."
+      env:
+        - PACKAGE="."
+        - JOB=1
       script: &build
+        - sleep $(((JOB - 1) * 20))
+        - travis_retry eval $"sudo apt-get update ; sleep 30"
+        - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"
         - export PATH=$HOME/.local/bin:$PATH
-        - stack upgrade --binary-only
+        - travis_retry stack upgrade --binary-only
         - hash -r
+        - stack setup
         - stack build $PACKAGE # --ghc-options="-dynamic"
     - stage: build
       name: "Account"
-      env: PACKAGE="codeworld-account"
+      env:
+        - PACKAGE="codeworld-account"
+        - JOB=2
       script: *build
     - stage: build
       name: "API"
-      env: PACKAGE="codeworld-api"
+      env:
+        - PACKAGE="codeworld-api"
+        - JOB=3
       script: *build
     - stage: build
       name: "Auth"
-      env: PACKAGE="codeworld-auth"
+      env:
+        - PACKAGE="codeworld-auth"
+        - JOB=4
       script: *build
     - stage: build
       name: "Base (with ghcjs-base-stub)"
-      env: PACKAGE="codeworld-base"
+      env:
+        - PACKAGE="codeworld-base"
+        - JOB=5
       script: *build
     - stage: build
       name: "Compiler"
-      env: PACKAGE="codeworld-compiler"
+      env:
+        - PACKAGE="codeworld-compiler"
+        - JOB=6
       script: *build
     - stage: build
       name: "Error Sanitizer"
-      env: PACKAGE="codeworld-error-sanitizer"
+      env:
+        - PACKAGE="codeworld-error-sanitizer"
+        - JOB=7
       script: *build
     - stage: build
       name: "Game API"
-      env: PACKAGE="codeworld-game-api"
+      env:
+        - PACKAGE="codeworld-game-api"
+        - JOB=8
       script: *build
     - stage: build
       name: "Game Server"
-      env: PACKAGE="codeworld-game-server"
+      env:
+        - PACKAGE="codeworld-game-server"
+        - JOB=9
       script: *build
     - stage: build
       name: "Prediction"
-      env: PACKAGE="codeworld-prediction"
+      env:
+        - PACKAGE="codeworld-prediction"
+        - JOB=10
       script: *build
     - stage: build
       name: "Server"
-      env: PACKAGE="codeworld-server"
+      env:
+        - PACKAGE="codeworld-server"
+        - JOB=11
       script: *build
     # - stage: Test
     #   name: "root"
-    #  env: PACKAGE="*"
+    #  env:
+        # - PACKAGE="*"
+        # - JOB=1
     #   script: *test
     - stage: test
       name: "Account"
-      env: PACKAGE="codeworld-account"
+      env:
+        - PACKAGE="codeworld-account"
+        - JOB=2
       script: &test
+        - sleep $(((JOB - 1) * 20))
+        - travis_retry eval $"sudo apt-get update ; sleep 30"
+        - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"
         - export PATH=$HOME/.local/bin:$PATH
-        - stack upgrade --binary-only
+        - travis_retry stack upgrade --binary-only
         - hash -r
+        - stack setup
         - stack test $PACKAGE
     - stage: test
       name: "API"
-      env: PACKAGE="codeworld-api"
+      env:
+        - PACKAGE="codeworld-api"
+        - JOB=3
       script: *test
     - stage: test
       name: "Auth"
-      env: PACKAGE="codeworld-auth"
+      env:
+        - PACKAGE="codeworld-auth"
+        - JOB=4
       script: *test
     - stage: test
       name: "Base (with ghcjs-base-stub)"
-      env: PACKAGE="codeworld-base"
+      env:
+        - PACKAGE="codeworld-base"
+        - JOB=5
       script: *test
     # - stage: test
     #   name: "Compiler"
-    #   env: PACKAGE="codeworld-compiler"
+    #   env:
+        # - PACKAGE="codeworld-compiler"
+        # - JOB=1
     #   script: *test
     - stage: test
       name: "Error Sanitizer"
-      env: PACKAGE="codeworld-error-sanitizer"
+      env:
+        - PACKAGE="codeworld-error-sanitizer"
+        - JOB=7
       script: *test
     - stage: test
       name: "Game API"
-      env: PACKAGE="codeworld-game-api"
+      env:
+        - PACKAGE="codeworld-game-api"
+        - JOB=8
       script: *test
     - stage: test
       name: "Game Server"
-      env: PACKAGE="codeworld-game-server"
+      env:
+        - PACKAGE="codeworld-game-server"
+        - JOB=9
       script: *test
     - stage: test
       name: "Prediction"
-      env: PACKAGE="codeworld-prediction"
+      env:
+        - PACKAGE="codeworld-prediction"
+        - JOB=10
       script: *test
     - stage: test
       name: "Server"
-      env: PACKAGE="codeworld-server"
+      env:
+        - PACKAGE="codeworld-server"
+        - JOB=11
       script: *test

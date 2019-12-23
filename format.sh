@@ -43,6 +43,7 @@ function format_hs {
 }
 
 function formatall_hs {
+    cabal_install ormolu >= 0.0.2
     for f in $(find */src -regex .*\\.hs$ -type f)
     do
         format_hs $f || true

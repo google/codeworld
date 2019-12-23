@@ -101,7 +101,7 @@ function addMessage(type, str) {
             window.buildMode === 'codeworld' &&
             /[(]deferred.*error[)]/.test(str)) {
             if (printDeferred) {
-                const match = /^(program.hs:[^ ]*)?/.exec(str);
+                const match = /^(program[.]hs:[^ ]*)/.exec(str);
                 if (match) str = `${match[1]} Giving up because of the error here.`;
                 else str = 'Giving up because of errors in the code.';
             } else {

@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
 
@@ -13,12 +15,6 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
-{-|
-High-level functions for working with local account databases
--}
-
-{-# LANGUAGE OverloadedStrings #-}
 
 module CodeWorld.Account.Actions
     ( createAccount

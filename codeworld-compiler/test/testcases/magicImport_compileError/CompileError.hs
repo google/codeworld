@@ -14,12 +14,7 @@
   limitations under the License.
 -}
 
-module CodeWorld.Account
-    ( module CodeWorld.Account.Actions
-    , module CodeWorld.Account.Hashing
-    , module CodeWorld.Account.Types
-    ) where
+-- Should parse, but give a compile error.  This is actually tricky,
+-- since parse and scope errors are deferred until runtime.
 
-import CodeWorld.Account.Actions
-import CodeWorld.Account.Hashing
-import CodeWorld.Account.Types
+type RecursiveAlias = Number -> RecursiveAlias

@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
 
@@ -14,12 +16,4 @@
   limitations under the License.
 -}
 
-module CodeWorld.Account
-    ( module CodeWorld.Account.Actions
-    , module CodeWorld.Account.Hashing
-    , module CodeWorld.Account.Types
-    ) where
-
-import CodeWorld.Account.Actions
-import CodeWorld.Account.Hashing
-import CodeWorld.Account.Types
+foo = 42

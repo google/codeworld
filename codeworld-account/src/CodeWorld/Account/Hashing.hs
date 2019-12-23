@@ -14,10 +14,6 @@
   limitations under the License.
 -}
 
-{-|
-Functions for hashing passwords and verifying password hashes
--}
-
 module CodeWorld.Account.Hashing
     ( hash
     , validate

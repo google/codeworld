@@ -14,12 +14,6 @@
   limitations under the License.
 -}
 
-module CodeWorld.Account
-    ( module CodeWorld.Account.Actions
-    , module CodeWorld.Account.Hashing
-    , module CodeWorld.Account.Types
-    ) where
+import Local.NoParse
 
-import CodeWorld.Account.Actions
-import CodeWorld.Account.Hashing
-import CodeWorld.Account.Types
+program = drawingOf(blank)

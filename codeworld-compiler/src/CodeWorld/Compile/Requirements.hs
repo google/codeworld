@@ -71,16 +71,16 @@ extractRequirementsSource = do
     srcs <- gets compileSourcePaths
     fmap concat $ forM srcs $ \src -> do
         code <- decodeUtf8 <$> getSourceCode src
-        let plain = extractSubmatches plainPattern code
-        let blocks = map (fmap deobfuscate) (extractSubmatches codedPattern code)
+        let plain = extractSubmatches src plainPattern code
+        let blocks = map (fmap deobfuscate) (extractSubmatches src codedPattern code)
         addDiagnostics [ (spn, CompileSuccess, "warning: Coded requirements were corrupted.")
                          | (spn, Nothing) <- blocks ]
         let coded = [ (spn, rule) | (spn, Just block) <- blocks, rule <- block ]
         return (plain ++ coded)
 
-extractSubmatches :: Text -> Text -> [(SrcSpanInfo, Text)]
-extractSubmatches pattern src =
-    [ (srcSpanFor src off len, T.take len (T.drop off src))
+extractSubmatches :: FilePath -> Text -> Text -> [(SrcSpanInfo, Text)]
+extractSubmatches f pattern src =
+    [ (srcSpanFor f src off len, T.take len (T.drop off src))
       | matchArray :: MatchArray <- src =~ pattern
       , rangeSize (bounds matchArray) > 1
       , let (off, len) = matchArray ! 1 ]

@@ -73,6 +73,17 @@ rotateDS r = mapDSAT $ \(AffineTransformation a b c d e f) ->
     e
     f
 
+reflectDS :: Double -> DrawState -> DrawState
+reflectDS th = mapDSAT $ \(AffineTransformation a b c d e f) ->
+  AffineTransformation
+    (a * cos r + c * sin r)
+    (b * cos r + d * sin r)
+    (a * sin r - c * cos r)
+    (b * sin r - d * cos r)
+    e
+    f
+  where r = 2 * th
+
 setColorDS :: Color -> DrawState -> DrawState
 setColorDS col = mapDSColor $ \mcol ->
   case (col, mcol) of

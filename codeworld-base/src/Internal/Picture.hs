@@ -47,6 +47,10 @@ rotatedPoint :: (Point, Number) -> Point
 rotatedPoint (p, a) =
     fromCWPoint (CW.rotatedPoint (toDouble (pi * a / 180)) (toCWPoint p))
 
+reflectedPoint :: (Point, Number) -> Point
+reflectedPoint (p, a) =
+    fromCWPoint (CW.reflectedPoint (toDouble (pi * a / 180)) (toCWPoint p))
+
 -- | Scales a given point by given x and y scaling factor.  Scaling by a
 -- negative factor also reflects across that axis.
 scaledPoint :: (Point, Number, Number) -> Point
@@ -305,6 +309,14 @@ dilated (p, k) = withFrozenCallStack $ CWPic (CW.dilated (toDouble k) (toCWPic p
 -- | A picture rotated by this angle.
 rotated :: HasCallStack => (Picture, Number) -> Picture
 rotated (p, th) = withFrozenCallStack $ CWPic (CW.rotated (toDouble (pi * th / 180)) (toCWPic p))
+
+-- | A picture reflected across a line through the origin at this angle, in
+-- degrees.  For example, an angle of 0 reflects the picture vertically
+-- across the x axis, while an angle of 90 reflects the picture
+-- horizontally across the y axis, and an agle of 45 reflects the picture
+-- across the main diagonal.
+reflected :: HasCallStack => (Picture, Number) -> Picture
+reflected (p, th) = withFrozenCallStack $ CWPic (CW.reflected (toDouble (pi * th / 180)) (toCWPic p))
 
 -- | A picture clipped to a rectangle of this width and height.
 clipped :: HasCallStack => (Picture, Number, Number) -> Picture

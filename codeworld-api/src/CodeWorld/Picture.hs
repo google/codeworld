@@ -50,6 +50,14 @@ translatedPoint tx ty (x, y) = (x + tx, y + ty)
 rotatedPoint :: Double -> Point -> Point
 rotatedPoint = rotatedVector
 
+-- | Reflects a given point across a line through the origin at this
+-- angle, in radians.  For example, an angle of 0 reflects the point
+-- vertically across the x axis, while an angle of @pi / 2@ reflects the
+-- point horizontally across the y axis.
+reflectedPoint :: Double -> Point -> Point
+reflectedPoint th (x, y) = (x * cos a + y * sin a, x * sin a - y * cos a)
+  where a = 2 * th
+
 -- | Scales a given point by given x and y scaling factor.  Scaling by a
 -- negative factor also reflects across that axis.
 --
@@ -152,6 +160,7 @@ data Picture
     | Scale (Maybe SrcLoc) !Double !Double !Picture
     | Dilate (Maybe SrcLoc) !Double !Picture
     | Rotate (Maybe SrcLoc) !Double !Picture
+    | Reflect (Maybe SrcLoc) !Double !Picture
     | Clip (Maybe SrcLoc) !Double !Double !Picture
     | CoordinatePlane (Maybe SrcLoc)
     | Sketch (Maybe SrcLoc) !Text !Text !Double !Double
@@ -345,6 +354,13 @@ dilated = Dilate (getDebugSrcLoc callStack)
 -- Angles are in radians.
 rotated :: HasCallStack => Double -> Picture -> Picture
 rotated = Rotate (getDebugSrcLoc callStack)
+
+-- | A picture reflected across a line through the origin at this angle, in
+-- radians.  For example, an angle of 0 reflects the picture vertically
+-- across the x axis, while an angle of @pi / 2@ reflects the picture
+-- horizontally across the y axis.
+reflected :: HasCallStack => Double -> Picture -> Picture
+reflected = Reflect (getDebugSrcLoc callStack)
 
 -- | A picture clipped to a rectangle around the origin with this width and height.
 clipped :: HasCallStack => Double -> Double -> Picture -> Picture

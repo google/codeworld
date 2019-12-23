@@ -282,6 +282,7 @@ drawPicture (Translate _ x y p) ds = drawPicture p (translateDS x y ds)
 drawPicture (Scale _ x y p) ds = drawPicture p (scaleDS x y ds)
 drawPicture (Dilate _ k p) ds = drawPicture p (scaleDS k k ds)
 drawPicture (Rotate _ r p) ds = drawPicture p (rotateDS r ds)
+drawPicture (Reflect _ r p) ds = drawPicture p (reflectDS r ds)
 drawPicture (Clip _ x y p) ds = do
     withDS ds $ followPath (rectangleVertices x y) True False
     CM.saveRestore $ CM.clip >> drawPicture p ds
@@ -318,6 +319,7 @@ pictureContains (Translate _ x y p) ds pt = pictureContains p (translateDS x y d
 pictureContains (Scale _ x y p) ds pt = pictureContains p (scaleDS x y ds) pt
 pictureContains (Dilate _ k p) ds pt = pictureContains p (scaleDS k k ds) pt
 pictureContains (Rotate _ r p) ds pt = pictureContains p (rotateDS r ds) pt
+pictureContains (Reflect _ r p) ds pt = pictureContains p (reflectDS r ds) pt
 pictureContains (Clip _ x y p) ds pt =
     (&&) <$> polygonContains (rectangleVertices x y) False ds pt
          <*> pictureContains p ds pt
@@ -335,6 +337,7 @@ isSimplePic (Translate _ _ _ p) = isSimplePic p
 isSimplePic (Scale _ _ _ p) = isSimplePic p
 isSimplePic (Dilate _ _ p) = isSimplePic p
 isSimplePic (Rotate _ _ p) = isSimplePic p
+isSimplePic (Reflect _ _ p) = isSimplePic p
 isSimplePic (Clip _ _ _ p) = isSimplePic p
 isSimplePic (Color _ c p) = not (isOpaque c) || isSimplePic p
 isSimplePic _ = True
@@ -503,6 +506,7 @@ getChildNodes (Translate _ _ _ p) = [p]
 getChildNodes (Scale _ _ _ p) = [p]
 getChildNodes (Dilate _ _ p) = [p]
 getChildNodes (Rotate _ _ p) = [p]
+getChildNodes (Reflect _ _ p) = [p]
 getChildNodes (Clip _ _ _ p) = [p]
 getChildNodes (Pictures _ ps) = ps
 getChildNodes (PictureAnd _ ps) = ps
@@ -525,6 +529,8 @@ findTopShape ds pic x y = do
         fmap (+ 1) <$> searchSingle (scaleDS k k ds) p x y
     searchSingle ds (Rotate _ a p) x y =
         fmap (+ 1) <$> searchSingle (rotateDS a ds) p x y
+    searchSingle ds (Reflect _ a p) x y =
+        fmap (+ 1) <$> searchSingle (reflectDS a ds) p x y
     searchSingle ds (Clip _ w h p) x y = do
         inClip <- polygonContains (rectangleVertices w h) False ds (x, y)
         fmap (+ 1) <$> case inClip of
@@ -681,6 +687,9 @@ describePicture (Scale _ x y _)
 describePicture (Rotate _ angle _)
   | haskellMode = printf "rotated %s" (showFloat True angle)
   | otherwise   = printf "rotated(..., %s°)" (showFloat False (180 * angle / pi))
+describePicture (Reflect _ angle _)
+  | haskellMode = printf "reflected %s" (showFloat True angle)
+  | otherwise   = printf "reflected(..., %s°)" (showFloat False (180 * angle / pi))
 describePicture (Clip _ x y _)
   | haskellMode = printf "clipped %s %s" (showFloat True x) (showFloat True y)
   | otherwise   = printf "rotated(..., %s, %s)" (showFloat False x) (showFloat False y)
@@ -724,6 +733,7 @@ getPictureSrcLoc (Translate loc _ _ _) = loc
 getPictureSrcLoc (Scale loc _ _ _) = loc
 getPictureSrcLoc (Dilate loc _ _) = loc
 getPictureSrcLoc (Rotate loc _ _) = loc
+getPictureSrcLoc (Reflect loc _ _) = loc
 getPictureSrcLoc (Clip loc _ _ _) = loc
 getPictureSrcLoc (Sketch loc _ _ _ _) = loc
 getPictureSrcLoc (CoordinatePlane loc) = loc
@@ -813,6 +823,7 @@ pictureToNode = flip State.evalState (NodeId 0) . go
         Scale _ _ _ p -> nodeWithChild pic p
         Dilate _ _ p -> nodeWithChild pic p
         Rotate _ _ p -> nodeWithChild pic p
+        Reflect _ _ p -> nodeWithChild pic p
         Clip _ _ _ p -> nodeWithChild pic p
         SolidPolygon _ _ -> leafNode pic
         SolidClosedCurve _ _ -> leafNode pic
@@ -1437,6 +1448,8 @@ indexNode True i n (Dilate loc k p)
     = Dilate loc k <$> indexNode True (i + 1) n p
 indexNode True i n (Rotate loc r p)
     = Rotate loc r <$> indexNode True (i + 1) n p
+indexNode True i n (Reflect loc r p)
+    = Reflect loc r <$> indexNode True (i + 1) n p
 indexNode True i n (Clip loc x y p)
     = Clip loc x y <$> indexNode True (i + 1) n p
 indexNode keepTx i n p = go keepTx (i + 1) (getChildNodes p)

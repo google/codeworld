@@ -31,7 +31,7 @@ extra-deps:
   - kansas-comet-0.4
   - monoidal-containers-0.6
   - network-2.6.3.6
-  - ormolu-0.0.1.0
+  - ormolu-0.0.2.0
   - ref-tf-0.4.0.2
   - reflex-0.6.2.4
   - text-1.2.4.0

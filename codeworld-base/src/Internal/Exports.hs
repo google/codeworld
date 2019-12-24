@@ -44,6 +44,7 @@ module Internal.Exports (
     , scaled
     , dilated
     , rotated
+    , reflected
     , clipped
     , polyline
     , thickPolyline
@@ -99,6 +100,7 @@ module Internal.Exports (
     , Point
     , translatedPoint
     , rotatedPoint
+    , reflectedPoint
     , scaledPoint
     , dilatedPoint
     , Vector

@@ -26,6 +26,9 @@ import Internal.Num
 import Internal.Text
 import "base" Prelude ((.), ($), map)
 
+-- | A point in two dimensions.  A point is written with the x coordinate
+-- first, and the y coordinate second.  For example, (3, -2) is the point
+-- with x coordinate 3 a y coordinate -2.
 type Point = (Number, Number)
 
 toCWPoint :: Point -> CW.Point
@@ -34,22 +37,33 @@ toCWPoint (x, y) = (toDouble x, toDouble y)
 fromCWPoint :: CW.Point -> Point
 fromCWPoint (x, y) = (fromDouble x, fromDouble y)
 
+-- | Moves a given point by given x and y offsets
 translatedPoint :: (Point, Number, Number) -> Point
 translatedPoint (p, x, y) =
     fromCWPoint (CW.translatedPoint (toDouble x) (toDouble y) (toCWPoint p))
 
+-- | Rotates a given point by given angle, in degrees
 rotatedPoint :: (Point, Number) -> Point
 rotatedPoint (p, a) =
     fromCWPoint (CW.rotatedPoint (toDouble (pi * a / 180)) (toCWPoint p))
 
+reflectedPoint :: (Point, Number) -> Point
+reflectedPoint (p, a) =
+    fromCWPoint (CW.reflectedPoint (toDouble (pi * a / 180)) (toCWPoint p))
+
+-- | Scales a given point by given x and y scaling factor.  Scaling by a
+-- negative factor also reflects across that axis.
 scaledPoint :: (Point, Number, Number) -> Point
 scaledPoint (p, x, y) =
     fromCWPoint (CW.scaledPoint (toDouble x) (toDouble y) (toCWPoint p))
 
+-- | Dilates a given point by given uniform scaling factor.  Dilating by a
+-- negative factor also reflects across the origin.
 dilatedPoint :: (Point, Number) -> Point
 dilatedPoint (p, k) =
     fromCWPoint (CW.dilatedPoint (toDouble k) (toCWPoint p))
 
+-- | A two-dimensional vector
 type Vector = (Number, Number)
 
 toCWVect :: Vector -> CW.Vector
@@ -58,26 +72,33 @@ toCWVect = toCWPoint
 fromCWVect :: CW.Vector -> Vector
 fromCWVect = fromCWPoint
 
+-- | The length of the given vector
 vectorLength :: Vector -> Number
 vectorLength v = fromDouble (CW.vectorLength (toCWVect v))
 
+-- | The counter-clockwise angle, in degrees, that a given vector make with the X-axis
 vectorDirection :: Vector -> Number
 vectorDirection v = 180 / pi * fromDouble (CW.vectorDirection (toCWVect v))
 
+-- | The sum of two vectors
 vectorSum :: (Vector, Vector) -> Vector
 vectorSum (v, w) = fromCWVect (CW.vectorSum (toCWVect v) (toCWVect w))
 
+-- | The difference of two vectors
 vectorDifference :: (Vector, Vector) -> Vector
 vectorDifference (v, w) =
     fromCWVect (CW.vectorDifference (toCWVect v) (toCWVect w))
 
+-- | Scales a given vector by a given scalar multiplier
 scaledVector :: (Vector, Number) -> Vector
 scaledVector (v, k) = fromCWVect (CW.scaledVector (toDouble k) (toCWVect v))
 
+-- | Rotates a given vector by a given angle in radians
 rotatedVector :: (Vector, Number) -> Vector
 rotatedVector (v, k) =
     fromCWVect (CW.rotatedVector (toDouble (pi * k / 180)) (toCWVect v))
 
+-- | The dot product of two vectors
 dotProduct :: (Vector, Vector) -> Number
 dotProduct (v, w) = fromDouble (CW.dotProduct (toCWVect v) (toCWVect w))
 
@@ -86,7 +107,9 @@ dotProduct (v, w) = fromDouble (CW.dotProduct (toCWVect v) (toCWVect w))
 -- Pictures can be created from geometry functions such as 'circle'
 -- and 'rectangle'.  They can be combined by overlaying them with '&'.
 -- They can be modified using transformations like 'translated',
--- 'rotated', 'dilated', 'colored', and 'scaled'.
+-- 'rotated', 'dilated', 'colored', and 'scaled'.  Ultimately, a picture
+-- can be drawn on the screen using one of the CodeWorld entry points
+-- such as 'drawingOf'.
 newtype Picture = CWPic
     { toCWPic :: CW.Picture
     }
@@ -265,17 +288,35 @@ translated :: HasCallStack => (Picture, Number, Number) -> Picture
 translated (p, x, y) =
     withFrozenCallStack $ CWPic (CW.translated (toDouble x) (toDouble y) (toCWPic p))
 
--- | A picture scaled by these factors.
+-- | A picture scaled by these factors in the x and y directions.
+-- Factors greater than @1@ stretch the picture larger in that direction, and
+-- less than @1@ squish it smaller in that direction.
+--
+-- Negative factors also reflect the picture across that axis. For example, to mirror
+-- a picture over the x-axis: @scaled(p, -1, 1)@.
 scaled :: HasCallStack => (Picture, Number, Number) -> Picture
 scaled (p, x, y) = withFrozenCallStack $ CWPic (CW.scaled (toDouble x) (toDouble y) (toCWPic p))
 
--- | A picture scaled by these factors.
+-- | A picture with both dimensions scaled by the given factor.
+-- Factors greater than @1@ make the picture bigger and less than @1@
+-- make it smaller.
+--
+-- Negative factors reflect the picture across the origin, which is the same as
+-- rotating it by 180 degrees.
 dilated :: HasCallStack => (Picture, Number) -> Picture
 dilated (p, k) = withFrozenCallStack $ CWPic (CW.dilated (toDouble k) (toCWPic p))
 
 -- | A picture rotated by this angle.
 rotated :: HasCallStack => (Picture, Number) -> Picture
 rotated (p, th) = withFrozenCallStack $ CWPic (CW.rotated (toDouble (pi * th / 180)) (toCWPic p))
+
+-- | A picture reflected across a line through the origin at this angle, in
+-- degrees.  For example, an angle of 0 reflects the picture vertically
+-- across the x axis, while an angle of 90 reflects the picture
+-- horizontally across the y axis, and an agle of 45 reflects the picture
+-- across the main diagonal.
+reflected :: HasCallStack => (Picture, Number) -> Picture
+reflected (p, th) = withFrozenCallStack $ CWPic (CW.reflected (toDouble (pi * th / 180)) (toCWPic p))
 
 -- | A picture clipped to a rectangle of this width and height.
 clipped :: HasCallStack => (Picture, Number, Number) -> Picture

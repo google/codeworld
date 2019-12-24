@@ -38,10 +38,11 @@ function format_hs {
     sed -i -E 's/^(#[a-z])/-- !!! \1/' "$tmpfile"
     ormolu -p --mode inplace "$tmpfile"
     sed -i -E 's/^-- !!! (#[a-z])/\1/' "$tmpfile"
-    cp "$tmpfile" "$1.formatted"
+    cp "$tmpfile" "$1"
     rm "$tmpfile"
 }
 
+run . cabal_install ormolu-0.0.2.0
 function formatall_hs {
     for f in $(find */src -regex .*\\.hs$ -type f)
     do
@@ -49,4 +50,4 @@ function formatall_hs {
     done
 }
 
-run . formatall_hs
+# run . formatall_hs

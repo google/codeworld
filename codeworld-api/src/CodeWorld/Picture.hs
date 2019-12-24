@@ -29,65 +29,110 @@ import GHC.Generics (Generic)
 import GHC.Stack
 import Util.EmbedAsUrl
 
+-- | A point in two dimensions.  A point is written with the x coordinate
+-- first, and the y coordinate second.  For example, (3, -2) is the point
+-- with x coordinate 3 a y coordinate -2.
 type Point = (Double, Double)
 
--- | Move given point by given X-axis and Y-axis offsets
--- >>> translatedPoint 1 2 (10,10)
--- (11.0,12.0)
--- >>> translatedPoint (-1) (-2) (0,0)
--- (-1.0,-2.0)
+-- | Moves a given point by given x and y offsets
+--
+-- >>> translatedPoint 1 2 (10, 10)
+-- (11.0, 12.0)
+-- >>> translatedPoint (-1) (-2) (0, 0)
+-- (-1.0, -2.0)
 translatedPoint :: Double -> Double -> Point -> Point
 translatedPoint tx ty (x, y) = (x + tx, y + ty)
 
+-- | Rotates a given point by given angle, in radians
+--
+-- >>> rotatedPoint 45 (10, 0)
+-- (7.071, 7.071)
 rotatedPoint :: Double -> Point -> Point
 rotatedPoint = rotatedVector
 
+-- | Reflects a given point across a line through the origin at this
+-- angle, in radians.  For example, an angle of 0 reflects the point
+-- vertically across the x axis, while an angle of @pi / 2@ reflects the
+-- point horizontally across the y axis.
+reflectedPoint :: Double -> Point -> Point
+reflectedPoint th (x, y) = (x * cos a + y * sin a, x * sin a - y * cos a)
+  where a = 2 * th
+
+-- | Scales a given point by given x and y scaling factor.  Scaling by a
+-- negative factor also reflects across that axis.
+--
+-- >>> scaledPoint 2 3 (10, 10)
+-- (20, 30)
 scaledPoint :: Double -> Double -> Point -> Point
 scaledPoint kx ky (x, y) = (kx * x, ky * y)
 
+-- | Dilates a given point by given uniform scaling factor.  Dilating by a
+-- negative factor also reflects across the origin.
+--
+-- >>> dilatedPoint 2 (10, 10)
+-- (20, 20)
 dilatedPoint :: Double -> Point -> Point
 dilatedPoint k (x, y) = (k * x, k * y)
 
+-- | A two-dimensional vector
 type Vector = (Double, Double)
 
+-- | The length of the given vector.
+--
+-- >>> vectorLength (10, 10)
+-- 14.14
 vectorLength :: Vector -> Double
 vectorLength (x, y) = sqrt (x*x + y*y)
 
-{-| Given vector, calculate angle in radians that it has with the X-axis.
-
->>> vectorDirection (1,0)
-0.0
->>> vectorDirection (1,1)
-0.7853981633974483
->>> vectorDirection (0,1)
-1.5707963267948966
--}
+-- | The counter-clockwise angle, in radians, that a given vector make with the X-axis
+--
+-- >>> vectorDirection (1,0)
+-- 0.0
+-- >>> vectorDirection (1,1)
+-- 0.7853981633974483
+-- >>> vectorDirection (0,1)
+-- 1.5707963267948966
 vectorDirection :: Vector -> Double
 vectorDirection (x, y) = atan2 y x
 
+-- | The sum of two vectors
 vectorSum :: Vector -> Vector -> Vector
 vectorSum (x1, y1) (x2, y2) = (x1 + x2, y1 + y2)
 
+-- | The difference of two vectors
 vectorDifference :: Vector -> Vector -> Vector
 vectorDifference (x1, y1) (x2, y2) = (x1 - x2, y1 - y2)
 
+-- | Scales a given vector by a given scalar multiplier.
+--
+-- >>> scaledPoint 2 (10, 10)
+-- (20, 20)
 scaledVector :: Double -> Vector -> Vector
 scaledVector k (x, y) = (k * x, k * y)
 
-{-| Rotate given vector by given angle in radians
-
->>> rotatedVector pi (1.0, 0.0)
-(-1.0,1.2246467991473532e-16)
->>> rotatedVector (pi / 2) (1.0, 0.0)
-(6.123233995736766e-17,1.0)
- -}
+-- | Rotates a given vector by a given angle in radians
+--
+-- >>> rotatedVector pi (1.0, 0.0)
+-- (-1.0, 1.2246467991473532e-16)
+-- >>> rotatedVector (pi / 2) (1.0, 0.0)
+-- (6.123233995736766e-17, 1.0)
 rotatedVector :: Double -> Vector -> Vector
 rotatedVector angle (x, y) =
     (x * cos angle - y * sin angle, x * sin angle + y * cos angle)
 
+-- | The dot product of two vectors
 dotProduct :: Vector -> Vector -> Double
 dotProduct (x1, y1) (x2, y2) = x1 * x2 + y1 * y2
 
+-- | A design, diagram, or drawing that can be displayed and seen.
+-- In technical terms, a picture is an assignment of a color to
+-- every point of the coordinate plane.  CodeWorld contains functions
+-- to create pictures from simple geometry primitives, to transform
+-- existing pictures, and to combine simpler pictures into more
+-- complex compositions.
+--
+-- Ultimately, a picture can be drawn on the screen using one of the
+-- CodeWorld entry points such as 'drawingOf'.
 data Picture
     = SolidPolygon (Maybe SrcLoc) [Point]
     | SolidClosedCurve (Maybe SrcLoc) [Point]
@@ -115,6 +160,7 @@ data Picture
     | Scale (Maybe SrcLoc) !Double !Double !Picture
     | Dilate (Maybe SrcLoc) !Double !Picture
     | Rotate (Maybe SrcLoc) !Double !Picture
+    | Reflect (Maybe SrcLoc) !Double !Picture
     | Clip (Maybe SrcLoc) !Double !Double !Picture
     | CoordinatePlane (Maybe SrcLoc)
     | Sketch (Maybe SrcLoc) !Text !Text !Double !Double
@@ -125,14 +171,22 @@ data Picture
 
 instance NFData Picture
 
+-- A style in which to draw lettering.  Either 'Plain', 'Bold', or
+-- 'Italic'
 data TextStyle
-    = Plain
-    | Bold
-    | Italic
+    = Plain   -- ^ Plain letters with no style
+    | Bold    -- ^ Heavy, thick lettering used for emphasis
+    | Italic  -- ^ Slanted script-like lettering used for emphasis
     deriving (Generic, Show)
 
 instance NFData TextStyle
 
+-- A font in which to draw lettering.  There are several built-in
+-- font families ('SansSerif', 'Serif', 'Monospace', 'Handwriting',
+-- and 'Fancy') that can look different on each screen.  'NamedFont'
+-- can be used for a specific font.  However, if the font is not
+-- installed on the computer running your program, a different font
+-- may be used instead.
 data Font
     = SansSerif
     | Serif
@@ -285,19 +339,28 @@ coloured = colored
 translated :: HasCallStack => Double -> Double -> Picture -> Picture
 translated = Translate (getDebugSrcLoc callStack)
 
--- | A picture scaled by these factors in the x and y directions.
+-- | A picture scaled by these factors in the x and y directions.  Scaling
+-- by a negative factoralso reflects across that axis.
 scaled :: HasCallStack => Double -> Double -> Picture -> Picture
 scaled = Scale (getDebugSrcLoc callStack)
 
 -- | A picture scaled uniformly in all directions by this scale factor.
+-- Dilating by a negative factor also reflects across the origin.
 dilated :: HasCallStack => Double -> Picture -> Picture
 dilated = Dilate (getDebugSrcLoc callStack)
 
--- | A picture rotated by this angle.
+-- | A picture rotated by this angle about the origin.
 --
 -- Angles are in radians.
 rotated :: HasCallStack => Double -> Picture -> Picture
 rotated = Rotate (getDebugSrcLoc callStack)
+
+-- | A picture reflected across a line through the origin at this angle, in
+-- radians.  For example, an angle of 0 reflects the picture vertically
+-- across the x axis, while an angle of @pi / 2@ reflects the picture
+-- horizontally across the y axis.
+reflected :: HasCallStack => Double -> Picture -> Picture
+reflected = Reflect (getDebugSrcLoc callStack)
 
 -- | A picture clipped to a rectangle around the origin with this width and height.
 clipped :: HasCallStack => Double -> Double -> Picture -> Picture

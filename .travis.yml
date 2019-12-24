@@ -450,7 +450,7 @@ jobs:
         - cd ghcjs
         - travis_retry git submodule update --init --recursive
         - ./utils/makePackages.sh
-        - cabal new-update
+        - travis_retry eval $"cabal new-update ; sleep 30"
         - cabal new-configure
         - cabal new-build -j --only-dependencies --disable-optimization
     - stage: build_ghcjs_dependencies

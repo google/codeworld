@@ -74,11 +74,13 @@ findImportsInModule ::
 findImportsInModule topLoc path = do
   parsed <- lift $ getGHCParsedCode path
   case parsed of
-    GHCParsed mod -> forM_ (GHC.hsmodImports mod) $ \(GHC.L loc idecl) ->
-      findModule (fromMaybe (convertSpan loc) topLoc)
-        $ GHC.moduleNameString
-        $ GHC.unLoc
-        $ GHC.ideclName idecl
+    GHCParsed mod -> do
+      forM_ (GHC.hsmodImports mod) $ \(GHC.L loc idecl) ->
+        findModule (fromMaybe (convertSpan loc) topLoc)
+          $ GHC.moduleNameString
+          $ GHC.unLoc
+          $ GHC.ideclName idecl
+      findModule (fromMaybe defaultSpan topLoc) "Prelude"
     _ -> return ()
   where
     convertSpan span = case (GHC.srcSpanStart span, GHC.srcSpanEnd span) of
@@ -93,6 +95,7 @@ findImportsInModule topLoc path = do
           )
           []
       _ -> noSrcSpan
+    defaultSpan = SrcSpanInfo (SrcSpan (takeFileName path) 1 1 1 1) []
 
 findModule ::
   MonadCompile m => SrcSpanInfo -> String -> StateT (M.Map String FilePath) m ()
@@ -129,12 +132,13 @@ findModule loc modName = do
                       M.insert (takeFileName f) loc (compileImportLocations cs)
                   }
               modify (M.insert modName f)
-              lift $ addDiagnostics
-                [ ( SrcSpanInfo (SrcSpan (takeFileName f) 1 1 1 1) [],
-                    CompileError,
-                    "error: Parse error."
-                  )
-                ]
+              lift $
+                addDiagnostics
+                  [ ( SrcSpanInfo (SrcSpan (takeFileName f) 1 1 1 1) [],
+                      CompileError,
+                      "error: Parse error."
+                    )
+                  ]
   where
     transform "codeworld" = renameIdentInModule "program" . renameModule
     transform _ = renameIdentInModule "main" . renameModule
@@ -144,7 +148,9 @@ findModule loc modName = do
     renameIdent :: String -> GHC.RdrName -> GHC.RdrName
     renameIdent ident (GHC.Unqual n)
       | n == GHC.mkVarOcc ident = GHC.Unqual (GHC.mkVarOcc (renamed ident))
-      | otherwise = GHC.Unqual n
+    renameIdent ident (GHC.Qual qualifier n)
+      | n == GHC.mkVarOcc ident = GHC.Qual qualifier (GHC.mkVarOcc (renamed ident))
+    renameIdent _ other = other
     renamed ident = ident ++ "_" ++ map dotToUnderscore modName
     dotToUnderscore '.' = '_'
     dotToUnderscore c = c
@@ -179,8 +185,9 @@ checkDangerousSource :: MonadCompile m => m ()
 checkDangerousSource = do
   srcs <- gets compileSourcePaths
   forM_ srcs $ \src -> do
-    let errPath | src == head srcs = "program.hs"
-                | otherwise = takeFileName src
+    let errPath
+          | src == head srcs = "program.hs"
+          | otherwise = takeFileName src
     code <- decodeUtf8 <$> getSourceCode src
     let matches =
           code

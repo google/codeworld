@@ -1,2 +1,2 @@
-program.hs:17:1-19: error:
+program.hs:17:1-13: error:
     There is an error in this imported module.

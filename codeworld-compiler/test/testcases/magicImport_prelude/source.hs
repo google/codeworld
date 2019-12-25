@@ -14,6 +14,4 @@
   limitations under the License.
 -}
 
-import NoParse
-
-program = drawingOf(blank)
+program = drawingOf(circle(foo))

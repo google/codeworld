@@ -57,7 +57,7 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 30"
         - hash -r
-        - stack setup
+        - travis_retry eval $"stack setup --reinstall ; sleep 30"
         - stack --version
         - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 30"
     - stage: upgrade_stack
@@ -294,7 +294,7 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 30"
         - hash -r
-        - stack setup
+        - travis_retry eval $"stack setup --reinstall ; sleep 30"
         - stack build $PACKAGE # --ghc-options="-dynamic"
     - stage: build
       name: "Account"
@@ -374,7 +374,7 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 30"
         - hash -r
-        - stack setup
+        - travis_retry eval $"stack setup --reinstall ; sleep 30"
         - stack test $PACKAGE
     - stage: test
       name: "API"

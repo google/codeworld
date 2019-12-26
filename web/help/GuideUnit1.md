@@ -600,18 +600,18 @@ Transformations
 ===============
 
 The nametags you built in the last section were pretty cool!  Still, they
-had some limitations.  First, they were black and white.  Colors would
+had some big limitations.  First, they were black and white.  Colors would
 make them much more exciting.  And second, all the shapes were in the
 center of the screen.  You can fix both of these problems using
 *transformations*.
 
 A **transformation** is a function that receives a picture called the
-original, and a description of something to change about it, and
-produces a new picture that is like the original except for that change.
+preimage, and a description of something to change about it, and
+produces a new picture that is like the preimage except for that change.
 
 *************************************************
 *               .----------------.
-* original o--->|                |
+* preimage o--->|                |
 *               | transformation +---->o result
 * changes o---->|                |
 *               '----------------'
@@ -626,9 +626,9 @@ Coloring
 
 The first transformation you will use is coloring.  The `colored` function
 changes the color of a picture. This function expects two arguments: the
-original, and a new color.  The colors of the original don't matter at
+preimage, and a new color.  The colors of the preimage don't matter at
 all; only the shapes involved.  The result of the `colored` function is a new
-picture, which is just like the original, except for the different color.
+picture, which is just like the preimage, except for the different color.
 
 ~~~~~ . clickable
 program  = drawingOf(redWheel)
@@ -723,11 +723,11 @@ Translation: Moving
 -------------------
 
 The second transformation you can use in your programs is translation.  The
-`translated` function changes the location of a picture.  Its inputs are the
-original picture, and two distances to move the picture.  The result of
-`translated` is a new picture with the same content as the original, but
-shifted either horizontally (that is, left or right) or vertically
-(that is, up or down) or both.
+`translated` function shifts a picture up, down, left, or right.  Its inputs
+are the preimage, and two distances to move the picture.  The result of
+`translated` is a new picture with the same content as the preimage, but
+shifted either horizontally (that is, left or right) or vertically (that is,
+up or down) or both.
 
 When you give distances to the `translated` function, you will list the
 horizontal change first, and the vertical change second.  A useful tool for
@@ -748,21 +748,25 @@ This tool combines of two number lines.
 1. The first number line is *horizontal*, with positive numbers to the right
    and negative numbers to the left.  You can use this line to describe how
    far left or right to move a picture.
-2. The second number line is vertical, with positive numbers on top, and
+2. The second number line is *vertical*, with positive numbers on top, and
    negative numbers on the bottom.  You use that number line to describe
    how far up or down to move a picture.
 
-With both numbers together, you can move a picture anywhere you like.
+With both numbers together, you can move a picture anywhere you like.  The
+basic shapes you have learned are drawn with their center at the *origin* --
+the point (0, 0) -- on the coordinate plane, so you should measure your x
+and y distances from there.  As you define your own pictures, it's a good
+idea to continue doing the same thing.
 
 For example, if you wanted a circle representing the sun in the top left
 corner of the screen.  First, you could look at the horizontal number line,
 and see that negative numbers are used to move a shape to the left.  You might
-pick -5, which is a bit left on the screen.  Next, you could look at the
+pick -5, which is five units left on the screen.  Next, you could look at the
 vertical number line, and see that positive numbers are used to move an object
 up.  You might pick 7, which is most of the way to the top of the screen.
 
 The expression describing a picture of the sun in the right place is now
-`translated(sun, -5, 7)`.  The first argument is the original, which you
+`translated(sun, -5, 7)`.  The first argument is the preimage, which you
 would define elsewhere in the program.  The second and third arguments are
 the distances to move the shape in your new picture, with horizontal first,
 then vertical.
@@ -775,12 +779,12 @@ pic = translated(sun, -5, 7)
 sun = solidCircle(2)
 ~~~~~
 
-!!! collapsible: What if you only wanted to move the original to the side?
+!!! collapsible: What if you only wanted to move the preimage to the side?
     Functions always need the same number of arguments!  The `translated`
     function expects three of them, so you *must* give all three arguments
     to use it.
 
-    If you only want to move the original in one direction, use zero (`0`)
+    If you only want to move the preimage in one direction, use zero (`0`)
     for the other direction.  For example, `translated(sun, 0, 5)` describes
     the sun at midday.  It has still been moved up, but not at all to the
     right or left, because the second argument is zero.
@@ -790,7 +794,7 @@ sun = solidCircle(2)
     about it!
 
     If you do not move the picture in either direction, then the result is
-    the same as the original!  That is, `translated(pic, 0, 0)` is another
+    the same as the preimage!  That is, `translated(pic, 0, 0)` is another
     expression that describes the same picture as `pic`.  It makes no
     difference to the computer which expression you use.
 
@@ -835,7 +839,7 @@ try:
   use **`&`**, the first picture goes in front, so keep your backdrop at
   the end!
 * Even applying more than one transformation--such as a coloring and a
-  translation, starting from one original.
+  translation, starting from one preimage.
 
 You will define a lot of variables as you work.  To draw a sunset, you
 might write something like this.
@@ -868,9 +872,9 @@ Rotation: Turning
 
 The next transformation to try is turning a picture.  Turning is also
 called **rotation**, so this third transformation is done with the `rotated`
-function.  The `rotated` function needs two arguments: the original picture,
-and an angle to rotate (or turn) it.  Because `rotated` is a transformation,
-the result is a new picture that is just like the first, except that it has
+function.  The `rotated` function needs two arguments: the preimage, and an
+angle to rotate (or turn) it.  Because `rotated` is a transformation, the
+result is a new picture that is just like the first, except that it has
 been rotated.
 
 To guide yourself in thinking about rotations, imagine a protractor, like
@@ -940,14 +944,61 @@ rotated rectangles, lettering, and more.
     box = solidRectangle(2, 2)
     ~~~~~
 
+Reflection: Flipping
+--------------------
+
+Another transformation that you can use is reflection, which flips the
+picture over some line.  The resulting picture is backwards, as if viewed
+as a reflection in a mirror.  This transformation is done with the
+`reflected` function.  This function needs two arguments: the preimage,
+and an angle for the line of reflection (the line you're reflecting the
+picture across).
+
+Use the same protractor as you did for reflections to choose an angle for
+the line of reflection.  For example:
+
+| Angle | Effect                                                                  |
+|:-----:|-------------------------------------------------------------------------|
+|  `0`  | Line of reflection is horizontal; picture flips top to bottom.          |
+|  `90` | Line of reflection is vertical; picture flips left to right.            |
+|  `45` | Line of reflection is diagonal; picture flips top-left to bottom-right. |
+
+You can use this to draw the CodeWorld logo backwards, like this:
+
+~~~~~ . clickable
+program = drawingOf(backwardLogo)
+backwardLogo = reflected(codeWorldLogo, 90)
+~~~~~
+
+!!! collapsible: Why does the picture flip horizontally when the angle is 90 degrees?
+    On the protractor, the 90 degree mark points up.  You might be surprised that the
+    picture flips horizontally, not vertically!
+
+    The key to this puzzle is that the angle defines the *line* *of* *reflection*.
+    The picture flips *across* that line.  So if the line of reflection is vertical,
+    then the picture will flip from left to right.
+
+    This animation shows the line of reflection and the flipping, and may clear it up.
+
+    <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=DkVZbEJpBVW64qwAGbfamGg" width=250 height=250 style="border: none;"></iframe></div>
+
+!!! Note: Translation, rotation, and reflection make *congruent* pictures.
+
+    In geometry, two shapes are called *congruent* if they have the same side
+    lengths and angles, but might differ in the location or orientation of the
+    image.  All of the last three transformations: translation, rotation, and
+    reflection, produce congruent pictures.  In fact, these are all of the
+    transformations you ever need to turn an image into any other image that's
+    congruent to it.
+
 Dilation: Resizing
 ------------------
 
 Yet another transformation is used to change the size of a picture.
 Changing size is also called **dilation**, so this transformation is done
 with the `dilated` function.  This function needs two arguments: the
-original picture, and a scale factor.  The scale factor says how much
-larger or smaller the result should be.  For example:
+preimage, and a scale factor.  The scale factor says how much larger or
+smaller the result should be.  For example:
 
 | Scale Factor   | Result                   |
 |:--------------:|--------------------------|
@@ -955,7 +1006,7 @@ larger or smaller the result should be.  For example:
 |      `3`       | Three times as large     |
 | `1/2` or `0.5` | Half the size            |
 | `1/5` or `0.2` | One fifth the size       |
-|      `1`       | The same as the original |
+|      `1`       | The same as the preimage |
 
 Here is an example of a program using the `dilated` function.
 
@@ -995,7 +1046,9 @@ separately.
     the center.
 
 !!! collapsible: What happens if you dilate by a negative number?
-    This might seem weird, but dilating by a negative scale factor turns your
+    Dilating by a negative scale factor reflects your picture across the
+    origin, (0, 0); meaning that each point on your picture moves to the
+    opposite side of the origin.  This is actually the same as turning your
     picture upside down!  In other words, `dilated(pic, -1)` is always the
     same picture as `rotated(pic, 180)`.
 
@@ -1010,15 +1063,25 @@ separately.
     adding, rather than multiplying.  Rotating or translating by 0 doesn't
     change the picture.
 
+!!! Note: Translation, rotation, reflection, and dilation make *similar* pictures.
+
+    In geometry, two shapes are called *similar* if they have the same angles
+    between sides, but might differ in the distances, location, or orientation
+    of the image.  This is a weaker statement than being congruent: congruent
+    shapes are also the same size, while similar shapes can be different sizes.
+    All of the last four transformations: translation, rotation, reflection, and
+    dilation, produce similar pictures.  In fact, these are all of the
+    transformations you ever need to turn an image into any other image that's
+    similar to it.
+
 Scaling: Stretching
 -------------------
 
-Finally, scaling is used to stretch or flip a picture.  The `scaled`
-function needs three arguments: the original, and two different scale
-factors in the horizontal and vertical directions.  If the two scale
-factors are the same, then scaling is just like dilation.  But when they
-are different, scaling lets you stretch a picture in one direction more
-or less than the other.
+Scaling is used to stretch or flip a picture.  The `scaled` function needs three
+arguments: the preimage, and two different scale factors in the horizontal and
+vertical directions.  If the two scale factors are the same, then scaling is
+just like dilation.  But when they are different, scaling lets you stretch a
+picture in one direction more or less than the other.
 
 ~~~~~ . clickable
 program = drawingOf(ellipse)
@@ -1032,23 +1095,33 @@ pictures that you define yourself.
 
 !!! collapsible: How are the scale factors different between `scaled` and `dilated`?
     The scale factors in the `scaled` function work much the same way as they
-    do for `dilated`--just in one direction at a time.  A scale factor of zero
-    still produces a blank picture, and one still leaves the picture
+    do for `dilated`--just in one direction at a time.  A scale factor of 0
+    still produces a blank picture, and 1 still leaves the picture
     unchanged.  Numbers larger than one stretch the picture larger, and
     numbers smaller than one squishes the picture to be smaller than the
-    original.
+    preimage.
 
-    One difference is in the meaning of negative numbers.  A negative scale
-    factor in one direction will *reflect* the original picture in that
-    direction.
+    For any values of `pic` and `k`, `dilated(pic, k)` is the same as
+    `scaled(pic, k, k)`.  The extra power of the `scaled` function is that
+    you can choose different scale factors in different directions.
 
-    <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=DRp_AUpr0hMAVvPcWCndLgw" width=250 height=250 style="border: none;"></iframe></div>
+!!! collapsible: What happens if you scale by a negative number?
+    A negative scale factor in one direction will *reflect* the preimage in
+    that direction.  In other words, `scaled(pic, -1, 1)` is the same as
+    `reflected(pic, 90)` (it reflects across the y axis), and `scaled(pic, 1, -1)`
+    is the same as `reflected(pic, 0)` (it reflects across the x axis).
 
-    If you scale by a negative scale factor in both directions, though,
-    then you've just turned the picture upside down.  You can try this
-    with a card or slip of paper: if you flip it horizontally, then flip
-    it again vertically, it ends up in the same position as if you'd
-    turned it 180 degrees.
+    If you scale by a negative scale factor in both directions, this reflects
+    across the x and y axes at the same time.  This is sometimes called a
+    reflection across the origin.  It's also the same as rotation by 180
+    degrees.  You can try this with a card or slip of paper: if you flip it
+    horizontally, then flip it again vertically, it ends up in the same
+    position as if you'd turned it 180 degrees.
+
+!!! Note: The `scaled` function doesn't produce congruent or similar shapes.
+    Unlike the earlier transformations, scaled pictures are not necessarily
+    *either* congruent or similar to the preimage.  They can be, but only if
+    the magnitudes of the scale factors are the same.
 
 Expression structure
 ====================

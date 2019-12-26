@@ -37,6 +37,7 @@ stages:
   - build_ghcjs
   - install_ghcjs
   - boot_ghcjs
+  - build_with_ghcjs_dependencies
   - build_with_ghcjs
   - test_with_ghcjs
 
@@ -604,6 +605,55 @@ jobs:
         - PACKAGE="funblocks-client"
         - JOB=12
       script: *boot_ghcjs
+    - stage: build_with_ghcjs_dependencies
+      name: "API (with ghcjs)"
+      env:
+        - PACKAGE="codeworld-api"
+        - JOB=3
+      script: &build_with_ghcjs_dependencies
+        - sleep $(((JOB - 1) * 10))
+        - travis_retry sudo add-apt-repository --yes ppa:hvr/ghc
+        - travis_retry eval $"sudo apt-get update ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 10"
+        - export PATH=$HOME/.local/bin:$PATH
+        - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
+        - hash -r
+        - travis_retry eval $"stack setup --reinstall ; sleep 10"
+        - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
+        - nvm install 10
+        - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
+        - export
+        - travis_retry git submodule update --init --recursive
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-pkg
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/haddock-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/hsc2hs-ghcjs
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-boot
+        - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-run
+        - cd ghcjs
+        - travis_retry git submodule update --init --recursive
+        - ./utils/makePackages.sh
+        - cd $TRAVIS_BUILD_DIR
+        - travis_retry eval $"cabal new-update ; sleep 10"
+        - cabal --ghcjs new-configure $PACKAGE
+        - cabal --ghcjs new-build -j --only-dependencies $PACKAGE
+    - stage: build_with_ghcjs_dependencies
+      name: "Base (with ghcjs)"
+      env:
+        - PACKAGE="codeworld-base"
+        - JOB=5
+      script: *build_with_ghcjs_dependencies
+    - stage: build_with_ghcjs_dependencies
+      name: "Prediction (with ghcjs)"
+      env:
+        - PACKAGE="codeworld-prediction"
+        - JOB=10
+      script: *build_with_ghcjs_dependencies
+    # succeeds, but can't be build yet without GHCJS and therefore omitted from cabal.project` file
+    # - stage: build_with_ghcjs_dependencies
+    #   name: "Funblocks-client (with ghcjs)"
+    #   env: PACKAGE="funblocks-client"
+    #   script: *build_with_ghcjs_dependencies
     - stage: build_with_ghcjs
       name: "API (with ghcjs)"
       env:
@@ -641,6 +691,12 @@ jobs:
       env:
         - PACKAGE="codeworld-base"
         - JOB=5
+      script: *build_with_ghcjs
+    - stage: build_with_ghcjs
+      name: "Prediction (with ghcjs)"
+      env:
+        - PACKAGE="codeworld-prediction"
+        - JOB=10
       script: *build_with_ghcjs
     # succeeds, but can't be build yet without GHCJS and therefore omitted from cabal.project` file
     # - stage: Build_with_GHCJS`

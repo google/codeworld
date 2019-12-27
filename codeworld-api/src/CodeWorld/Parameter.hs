@@ -254,6 +254,7 @@ converted :: (Double -> Double) -> Parameter -> Parameter
 converted c (Parameter name val pic bounds handle) =
   Parameter name (c val) pic bounds (converted c . handle)
 
+-- | Changes the name of an existing parameter.
 renamed :: Text -> Parameter -> Parameter
 renamed name (Parameter _ val pic bounds handle) =
   Parameter name val pic bounds (renamed name . handle)
@@ -305,7 +306,7 @@ toggle name = buttonOf name False not value picture
     picture True = dilated 0.5 $ lettering "\x2611"
     picture False = dilated 0.5 $ lettering "\x2610"
 
--- | A 'Parameter' that can be toggled between 0 (off) and 1 (on).
+-- | A 'Parameter' that counts how many times it has been clicked.
 counter :: Text -> Parameter
 counter name = buttonOf name 0 (+ 1) id picture
   where

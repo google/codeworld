@@ -40,16 +40,16 @@ jobs:
         - JOB=1
       script: &upgrade_stack
         - sleep $(((JOB - 1) * 20))
-        - travis_retry eval $"sudo apt-get update ; sleep 30"
-        - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"
+        - travis_retry eval $"sudo apt-get update ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes libgmp-dev haskell-stack ; sleep 10"
         - export DIR=~/.local/bin
         - if [ ! -d "$DIR" ]; then mkdir -p ~/.local/bin; fi
         - export PATH=$HOME/.local/bin:$PATH
-        - travis_retry stack upgrade --binary-only
+        - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 30"
+        - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - stack --version
-        # - stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 # include for GHCJS
+        # - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
     - stage: upgrade_stack
       name: "Account"
       env:
@@ -118,10 +118,10 @@ jobs:
         - JOB=1
       script: &build_some_dependencies
         - sleep $(((JOB - 1) * 20))
-        - travis_retry eval $"sudo apt-get update ; sleep 30"
-        - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"
+        - travis_retry eval $"sudo apt-get update ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes libgmp-dev haskell-stack ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
-        - travis_retry stack upgrade --binary-only
+        - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
         - |
           stack build \
@@ -205,10 +205,10 @@ jobs:
         - JOB=1
       script: &build_dependencies
         - sleep $(((JOB - 1) * 20))
-        - travis_retry eval $"sudo apt-get update ; sleep 30"
-        - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"
+        - travis_retry eval $"sudo apt-get update ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes libgmp-dev haskell-stack ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
-        - travis_retry stack upgrade --binary-only
+        - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
         - stack clean --full
         - stack build --dependencies-only
@@ -279,12 +279,12 @@ jobs:
         - JOB=1
       script: &build
         - sleep $(((JOB - 1) * 20))
-        - travis_retry eval $"sudo apt-get update ; sleep 30"
-        - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"
+        - travis_retry eval $"sudo apt-get update ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes libgmp-dev haskell-stack ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
-        - travis_retry stack upgrade --binary-only
+        - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 30"
+        - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - stack build $PACKAGE # --ghc-options="-dynamic"
     - stage: build
       name: "Account"
@@ -359,12 +359,12 @@ jobs:
         - JOB=2
       script: &test
         - sleep $(((JOB - 1) * 20))
-        - travis_retry eval $"sudo apt-get update ; sleep 30"
-        - travis_retry eval $"sudo apt-get install libgmp-dev haskell-stack ; sleep 30"
+        - travis_retry eval $"sudo apt-get update ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes libgmp-dev haskell-stack ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
-        - travis_retry stack upgrade --binary-only
+        - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 30"
+        - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - stack test $PACKAGE
     - stage: test
       name: "API"

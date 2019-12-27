@@ -14,6 +14,6 @@
   limitations under the License.
 -}
 
-import Magic.Foo
+import Foo
 
-program = drawingOf(circle(magicFoo))
+program = drawingOf(circle(foo))

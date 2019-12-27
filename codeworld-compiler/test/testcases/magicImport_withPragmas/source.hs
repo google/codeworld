@@ -11,6 +11,6 @@
   limitations under the License.
 -}
 
-import Local.WithPragma
+import WithPragma
 
 program = drawingOf(circle(foo))

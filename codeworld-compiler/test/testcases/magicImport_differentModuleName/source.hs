@@ -11,6 +11,6 @@
   limitations under the License.
 -}
 
-import Local.UnusualName
+import UnusualName
 
 program = drawingOf(circle(foo))

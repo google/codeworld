@@ -14,6 +14,6 @@
   limitations under the License.
 -}
 
-import Local.CompileError
+import CompileError
 
 program = drawingOf(blank)

@@ -14,6 +14,6 @@
   limitations under the License.
 -}
 
-import Local.WithTH
+import WithTH
 
 program = drawingOf(blank)

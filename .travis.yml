@@ -464,6 +464,12 @@ jobs:
         - JOB=5
       script: *build_ghcjs_dependencies
     - stage: build_ghcjs_dependencies
+      name: "Compiler"
+      env:
+        - PACKAGE="codeworld-compiler"
+        - JOB=6
+      script: *build_ghcjs_dependencies
+    - stage: build_ghcjs_dependencies
       name: "Prediction"
       env:
         - PACKAGE="codeworld-prediction"
@@ -502,6 +508,12 @@ jobs:
       env:
         - PACKAGE="codeworld-base"
         - JOB=5
+      script: *build_ghcjs
+    - stage: build_ghcjs
+      name: "Compiler"
+      env:
+        - PACKAGE="codeworld-compiler"
+        - JOB=6
       script: *build_ghcjs
     - stage: build_ghcjs
       name: "Prediction"
@@ -548,6 +560,12 @@ jobs:
       env:
         - PACKAGE="codeworld-base"
         - JOB=5
+      script: *install_ghcjs
+    - stage: install_ghcjs
+      name: "Compiler"
+      env:
+        - PACKAGE="codeworld-compiler"
+        - JOB=6
       script: *install_ghcjs
     - stage: install_ghcjs
       name: "Prediction"
@@ -597,6 +615,12 @@ jobs:
       env:
         - PACKAGE="codeworld-base"
         - JOB=5
+      script: *boot_ghcjs
+    - stage: boot_ghcjs
+      name: "Compiler"
+      env:
+        - PACKAGE="codeworld-compiler"
+        - JOB=6
       script: *boot_ghcjs
     - stage: boot_ghcjs
       name: "Prediction"
@@ -649,6 +673,12 @@ jobs:
         - JOB=5
       script: *build_with_ghcjs_dependencies
     - stage: build_with_ghcjs_dependencies
+      name: "Compiler (with ghcjs)"
+      env:
+        - PACKAGE="codeworld-compiler"
+        - JOB=6
+      script: *build_with_ghcjs_dependencies
+    - stage: build_with_ghcjs_dependencies
       name: "Prediction (with ghcjs)"
       env:
         - PACKAGE="codeworld-prediction"
@@ -698,6 +728,12 @@ jobs:
         - JOB=5
       script: *build_with_ghcjs
     - stage: build_with_ghcjs
+      name: "Compiler (with ghcjs)"
+      env:
+        - PACKAGE="codeworld-compiler"
+        - JOB=6
+      script: *build_with_ghcjs
+    - stage: build_with_ghcjs
       name: "Prediction (with ghcjs)"
       env:
         - PACKAGE="codeworld-prediction"
@@ -740,6 +776,12 @@ jobs:
         - travis_retry eval $"cabal new-update ; sleep 10"
         - cabal --ghcjs new-configure $PACKAGE
         - cabal --ghcjs new-test $PACKAGE
+    - stage: test_with_ghcjs
+      name: "Compiler (with ghcjs)"
+      env:
+        - PACKAGE="codeworld-compiler"
+        - JOB=6
+      script: *test_with_ghcjs
     - stage: test_with_ghcjs
       name: "Prediction (with ghcjs)"
       env:

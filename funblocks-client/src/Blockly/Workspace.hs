@@ -1,6 +1,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE JavaScriptFFI #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CPP #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -109,7 +110,7 @@ loadXml :: Workspace -> JSString -> IO ()
 loadXml workspace dat = js_loadXml workspace dat
 
 --- FFI
-
+#ifdef ghcjs_HOST_OS
 -- TODO Maybe use a list of properties ?
 foreign import javascript unsafe "Blockly.inject($1, { toolbox: document.getElementById($2), css: false, disable: false, comments: false, zoom:{wheel:true, controls: true}})"
   js_blocklyInject :: JSString -> JSString -> IO Workspace
@@ -149,3 +150,45 @@ foreign import javascript unsafe "$1.addChangeListener(Blockly.Events.warnOnDisc
 
 foreign import javascript unsafe "Blockly.getMainWorkspace()"
   js_getMainWorkspace :: Workspace
+
+#else
+
+js_blocklyInject :: JSString -> JSString -> IO Workspace
+js_blocklyInject = error "GHCJS required"
+js_blocklyWorkspaceToCode :: Workspace -> IO JSString
+js_blocklyWorkspaceToCode = error "GHCJS required"
+
+js_isTopBlock :: Workspace -> Block -> Bool
+js_isTopBlock = error "GHCJS required"
+
+js_isWarning :: Workspace -> IO JA.JSArray
+js_isWarning = error "GHCJS required"
+
+js_getById :: JSString -> Workspace
+js_getById = error "GHCJS required"
+
+js_getBlockById :: Workspace -> JSString -> JSVal
+js_getBlockById = error "GHCJS required"
+
+js_getTopBlocksLength :: Workspace -> Int
+js_getTopBlocksLength = error "GHCJS required"
+
+js_getTopBlocks :: Workspace -> IO JA.JSArray
+js_getTopBlocks = error "GHCJS required"
+
+js_getTopBlocks_ :: Workspace -> IO JA.JSArray
+js_getTopBlocks_ = error "GHCJS required"
+
+js_loadXml :: Workspace -> JSString -> IO ()
+js_loadXml = error "GHCJS required"
+
+js_addDisableOrphans :: Workspace -> IO ()
+js_addDisableOrphans = error "GHCJS required"
+
+js_addWarnOnInputs :: Workspace -> IO ()
+js_addWarnOnInputs = error "GHCJS required"
+
+js_getMainWorkspace :: Workspace
+js_getMainWorkspace = error "GHCJS required"
+
+#endif

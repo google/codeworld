@@ -1,5 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE JavaScriptFFI #-}
+{-# LANGUAGE CPP #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -78,6 +79,8 @@ addChangeListener workspace func = do
 
 --- FFI
 
+#ifdef ghcjs_HOST_OS
+
 foreign import javascript unsafe "$1.addChangeListener($2)"
   js_addChangeListener :: Workspace -> Callback a -> IO ()
 
@@ -102,3 +105,24 @@ foreign import javascript unsafe "$1.group"
 foreign import javascript unsafe "$1.ids"
   js_ids :: Event -> JSArray
 
+#else
+
+js_addChangeListener :: Workspace -> Callback a -> IO ()
+js_addChangeListener = error "GHCJS required"
+
+js_type :: Event -> JSString
+js_type = error "GHCJS required"
+
+js_workspaceId :: Event -> JSString
+js_workspaceId = error "GHCJS required"
+
+js_blockId :: Event -> JSString
+js_blockId = error "GHCJS required"
+
+js_group :: Event -> JSString
+js_group = error "GHCJS required"
+
+js_ids :: Event -> JSArray
+js_ids = error "GHCJS required"
+
+#endif

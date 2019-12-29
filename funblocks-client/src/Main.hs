@@ -1,5 +1,6 @@
 -- {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CPP #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -21,6 +22,10 @@ module Main (
     main
 ) where
 
+#ifdef ghcjs_HOST_OS
+#else
+import qualified Prelude
+#endif
 import GHCJS.DOM
        (currentDocument, )
 import GHCJS.DOM.NonElementParentNode
@@ -33,6 +38,7 @@ import GHCJS.DOM.Types
 import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
+import qualified GHCJS.Foreign.Callback as Callback
 import GHCJS.Marshal
 import Data.JSString.Text
 import qualified Data.JSString as JStr
@@ -137,7 +143,7 @@ funblocks = do
 
 
 main = do
-  Just doc <- currentDocument 
+  Just doc <- currentDocument
   mayTool <- getElementById doc "toolbox" 
   case mayTool of
     Just _ -> funblocks
@@ -157,17 +163,19 @@ setRunFunc ws = do
 
 -- FFI
 
+#ifdef ghcjs_HOST_OS
+
 -- call blockworld.js compile
 foreign import javascript unsafe "compile($1)"
-  js_cwcompile :: JSString -> IO ()
+  js_cwcompile :: JStr.JSString -> IO ()
 
 foreign import javascript unsafe "compile($1,true)"
-  js_cwcompilesilent :: JSString -> IO ()
+  js_cwcompilesilent :: JStr.JSString -> IO ()
 
 -- call blockworld.js run
 -- run (xmlHash, codeHash, msg, error)
 foreign import javascript unsafe "run()"
-  js_cwrun :: JSString -> JSString -> JSString -> Bool -> IO ()
+  js_cwrun :: JStr.JSString -> JStr.JSString -> JStr.JSString -> Bool -> IO ()
 
 -- call blockworld.js updateUI
 foreign import javascript unsafe "updateUI()"
@@ -178,10 +186,10 @@ foreign import javascript unsafe "run('','','',false)"
   js_stop :: IO ()
 
 foreign import javascript unsafe "run('','',$1,true)"
-  js_stopErr :: JSString -> IO ()
+  js_stopErr :: JStr.JSString -> IO ()
 
 foreign import javascript unsafe "updateEditor($1)"
-  js_updateEditor :: JSString -> IO ()
+  js_updateEditor :: JStr.JSString -> IO ()
 
 foreign import javascript unsafe "setTimeout(removeErrors,5000)"
   js_removeErrorsDelay :: IO ()
@@ -193,7 +201,47 @@ foreign import javascript unsafe "window.mainLayout.open('east')"
   js_openEast :: IO ()
 
 foreign import javascript unsafe "Blockly.inject($1, {});"
-  js_injectReadOnly :: JSString -> IO Workspace
+  js_injectReadOnly :: JStr.JSString -> IO Workspace
 
 foreign import javascript unsafe "runFunc = $1"
-  js_setRunFunc :: Callback a -> IO ()
+  js_setRunFunc :: Callback.Callback a -> IO ()
+
+#else
+
+js_cwcompile :: JStr.JSString -> Prelude.IO ()
+js_cwcompile = Prelude.error "GHCJS required"
+
+js_cwcompilesilent :: JStr.JSString -> Prelude.IO ()
+js_cwcompilesilent = Prelude.error "GHCJS required"
+
+js_cwrun :: JStr.JSString -> JStr.JSString -> JStr.JSString -> Bool -> Prelude.IO ()
+js_cwrun = Prelude.error "GHCJS required"
+
+js_updateUI :: Prelude.IO ()
+js_updateUI = Prelude.error "GHCJS required"
+
+js_stop :: Prelude.IO ()
+js_stop = Prelude.error "GHCJS required"
+
+js_stopErr :: JStr.JSString -> Prelude.IO ()
+js_stopErr = Prelude.error "GHCJS required"
+
+js_updateEditor :: JStr.JSString -> Prelude.IO ()
+js_updateEditor = Prelude.error "GHCJS required"
+
+js_removeErrorsDelay :: Prelude.IO ()
+js_removeErrorsDelay = Prelude.error "GHCJS required"
+
+js_showEast :: Prelude.IO ()
+js_showEast = Prelude.error "GHCJS required"
+
+js_openEast :: Prelude.IO ()
+js_openEast = Prelude.error "GHCJS required"
+
+js_injectReadOnly :: JStr.JSString -> Prelude.IO Workspace
+js_injectReadOnly = Prelude.error "GHCJS required"
+
+js_setRunFunc :: Callback.Callback a -> Prelude.IO ()
+js_setRunFunc = Prelude.error "GHCJS required"
+
+#endif

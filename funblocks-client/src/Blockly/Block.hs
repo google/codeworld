@@ -1,5 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE JavaScriptFFI #-}
+{-# LANGUAGE CPP #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -137,6 +138,7 @@ getValueInputNames block = map unpack $ map (\n -> unsafeCoerce n :: JSString) $
 
 --- FFI
 
+#ifdef ghcjs_HOST_OS
 
 foreign import javascript unsafe "$1.getValueInputNames()"
   js_getValueInputNames :: Block -> JA.JSArray
@@ -209,3 +211,76 @@ foreign import javascript unsafe "$1.setWarningText(null)"
 -- fetches the block associated with the input name or else null
 foreign import javascript unsafe "$1.getInputTargetBlock($2)"
   js_getInputTargetBlock :: Block -> JSString -> JSVal
+
+#else
+
+js_getValueInputNames :: Block -> JA.JSArray
+js_getValueInputNames = error "GHCJS required"
+
+js_itemCount :: Block -> Int
+js_itemCount = error "GHCJS required"
+
+js_getFieldValue :: Block -> JSString -> JSString
+js_getFieldValue = error "GHCJS required"
+
+js_setAsFunction :: Block -> JSString ->  IO ()
+js_setAsFunction = error "GHCJS required"
+
+js_setAsLiteral :: Block -> JSString ->  IO ()
+js_setAsLiteral = error "GHCJS required"
+
+js_type :: Block -> JSString
+js_type = error "GHCJS required"
+
+js_outputConnection' :: Block -> JSVal
+js_outputConnection' = error "GHCJS required"
+
+js_outputConnection :: Block -> Connection
+js_outputConnection = error "GHCJS required"
+
+js_disabled :: Block -> Bool
+js_disabled = error "GHCJS required"
+
+js_allInputsConnected :: Block -> Bool
+js_allInputsConnected = error "GHCJS required"
+
+js_outputConnectionBlock' :: JSVal -> JSVal
+js_outputConnectionBlock' = error "GHCJS required"
+
+js_outputConnectionBlock :: Connection -> Block
+js_outputConnectionBlock = error "GHCJS required"
+
+js_testOutputConnection :: Block -> IO ()
+js_testOutputConnection = error "GHCJS required"
+
+js_getColour :: Block -> Int
+js_getColour = error "GHCJS required"
+
+js_setColour :: Block -> Int -> IO ()
+js_setColour = error "GHCJS required"
+
+js_setDisabled :: Block -> Bool -> IO ()
+js_setDisabled = error "GHCJS required"
+
+js_select :: Block -> IO ()
+js_select = error "GHCJS required"
+
+js_addSelect :: Block -> IO ()
+js_addSelect = error "GHCJS required"
+
+js_addErrorSelect :: Block -> IO ()
+js_addErrorSelect = error "GHCJS required"
+
+js_getFunctionName :: Block -> JSString
+js_getFunctionName = error "GHCJS required"
+
+js_setWarningText :: Block -> JSString -> IO ()
+js_setWarningText = error "GHCJS required"
+
+js_disableWarningText :: Block -> IO ()
+js_disableWarningText = error "GHCJS required"
+
+js_getInputTargetBlock :: Block -> JSString -> JSVal
+js_getInputTargetBlock = error "GHCJS required"
+
+#endif

@@ -1,5 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE JavaScriptFFI #-}
+{-# LANGUAGE CPP #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -180,6 +181,8 @@ newtype FieldInput = FieldInput JSVal
 --   where
 --     typeExprs = TE.toJSArray $ map typeToTypeExpr tps
 
+#ifdef ghcjs_HOST_OS
+
 foreign import javascript unsafe "Blockly.Blocks[$1] = { init: function() { $2(this); }}"
   js_setGenFunction :: JSString -> Callback a -> IO ()
 
@@ -224,3 +227,52 @@ foreign import javascript unsafe "$1.setAlign(Blockly.ALIGN_RIGHT)"
 
 foreign import javascript unsafe "$1.setInputsInline($2)"
   js_setInputsInline :: Block -> Bool -> IO ()
+
+#else
+
+js_setGenFunction :: JSString -> Callback a -> IO ()
+js_setGenFunction = error "GHCJS required"
+
+js_setColor :: Block -> Int -> IO ()
+js_setColor = error "GHCJS required"
+
+js_enableOutput :: Block -> IO ()
+js_enableOutput = error "GHCJS required"
+
+js_disableOutput:: Block -> IO ()
+js_disableOutput = error "GHCJS required"
+
+js_setTooltip :: Block -> JSString -> IO ()
+js_setTooltip = error "GHCJS required"
+
+js_appendDummyInput :: Block -> IO FieldInput
+js_appendDummyInput = error "GHCJS required"
+
+js_defineFunction :: JSString -> TE.Type_ -> IO ()
+js_defineFunction = error "GHCJS required"
+
+js_appendValueInput :: Block -> JSString -> IO FieldInput
+js_appendValueInput = error "GHCJS required"
+
+js_appendTextField :: FieldInput -> JSString -> IO FieldInput
+js_appendTextField = error "GHCJS required"
+
+js_appendTextFieldEmph :: FieldInput -> JSString -> IO FieldInput
+js_appendTextFieldEmph = error "GHCJS required"
+
+js_appendFieldImage:: FieldInput -> JSString -> Int -> Int -> IO FieldInput
+js_appendFieldImage = error "GHCJS required"
+
+js_appendTextInputField :: FieldInput -> JSString -> JSString -> IO FieldInput
+js_appendTextInputField = error "GHCJS required"
+
+js_setCheck :: FieldInput -> JSString -> IO ()
+js_setCheck = error "GHCJS required"
+
+js_setAlignRight :: FieldInput -> IO ()
+js_setAlignRight = error "GHCJS required"
+
+js_setInputsInline :: Block -> Bool -> IO ()
+js_setInputsInline = error "GHCJS required"
+
+#endif

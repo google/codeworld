@@ -34,8 +34,15 @@ Executable funblocks-client
                      , Blocks.Printer
                      , Blocks.Types
   Default-language:    Haskell2010
-  Build-depends:       ghcjs-base,
-                       text,
-                       containers,
-                       ghcjs-dom,
-                       mtl
+  if impl(ghcjs -any)
+    Build-depends:       ghcjs-base,
+                         text,
+                         containers,
+                         ghcjs-dom,
+                         mtl
+  else
+    Build-depends:       ghcjs-base-stub,
+                         text,
+                         containers,
+                         ghcjs-dom,
+                         mtl

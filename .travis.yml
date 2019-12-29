@@ -1,6 +1,6 @@
 # https://docs.haskellstack.org/en/stable/travis_ci/
 
-sudo: false
+sudo: enabled
 dist: bionic
 language: generic
 cache:
@@ -30,6 +30,7 @@ addons:
 stages:
   - upgrade_stack
   - build_some_dependencies
+  - build_some_more_dependencies
   - build_dependencies
   - build
   - test
@@ -142,7 +143,7 @@ jobs:
         - hash -r
         - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - |
-          travis_wait 30 stack build \
+          travis_wait 30 stack build -j 1 --fast \
             base-compat \
             base-compat-batteries \
             basement \
@@ -152,6 +153,7 @@ jobs:
             hashable \
             haskell-src-exts \
             lens \
+            transformers \
             network \
             old-time \
             sqlite-simple
@@ -221,6 +223,93 @@ jobs:
         - PACKAGE="funblocks-client"
         - JOB=12
       script: *build_some_dependencies
+    - stage: build_some_more_dependencies
+      name: "Build some more dependencies"
+      name: "root"
+      env:
+        - PACKAGE="."
+        - JOB=1
+      script: &build_some_more_dependencies
+        - sleep $(((JOB - 1) * 20))
+        - travis_retry eval $"sudo apt-get update ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes libgmp-dev haskell-stack ; sleep 10"
+        - export PATH=$HOME/.local/bin:$PATH
+        - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
+        - hash -r
+        - travis_retry eval $"stack setup --reinstall ; sleep 10"
+        - sudo fallocate -l 4G /swapfile
+        - sudo chmod 600 /swapfile
+        - sudo mkswap /swapfile
+        - sudo swapon /swapfile
+        - sudo sysctl vm.swappiness=90
+        - travis_wait 30 stack build -j1 --fast jsaddle-dom
+        - sudo swapoff -a
+    - stage: build_some_more_dependencies
+      name: "Account"
+      env:
+        - PACKAGE="codeworld-account"
+        - JOB=2
+      script: *build_some_more_dependencies
+    - stage: build_some_more_dependencies
+      name: "API"
+      env:
+        - PACKAGE="codeworld-api"
+        - JOB=3
+      script: *build_some_more_dependencies
+    - stage: build_some_more_dependencies
+      name: "Auth"
+      env:
+        - PACKAGE="codeworld-auth"
+        - JOB=4
+      script: *build_some_more_dependencies
+    - stage: build_some_more_dependencies
+      name: "Base (with ghcjs-base-stub)"
+      env:
+        - PACKAGE="codeworld-base"
+        - JOB=5
+      script: *build_some_more_dependencies
+    - stage: build_some_more_dependencies
+      name: "Compiler"
+      env:
+        - PACKAGE="codeworld-compiler"
+        - JOB=6
+      script: *build_some_more_dependencies
+    - stage: build_some_more_dependencies
+      name: "Error Sanitizer"
+      env:
+        - PACKAGE="codeworld-error-sanitizer"
+        - JOB=7
+      script: *build_some_more_dependencies
+    - stage: build_some_more_dependencies
+      name: "Game API"
+      env:
+        - PACKAGE="codeworld-game-api"
+        - JOB=8
+      script: *build_some_more_dependencies
+    - stage: build_some_more_dependencies
+      name: "Game Server"
+      env:
+        - PACKAGE="codeworld-game-server"
+        - JOB=9
+      script: *build_some_more_dependencies
+    - stage: build_some_more_dependencies
+      name: "Prediction"
+      env:
+        - PACKAGE="codeworld-prediction"
+        - JOB=10
+      script: *build_some_more_dependencies
+    - stage: build_some_more_dependencies
+      name: "Server"
+      env:
+        - PACKAGE="codeworld-server"
+        - JOB=11
+      script: *build_some_more_dependencies
+    - stage: build_some_more_dependencies
+      name: "Funblocks Client (with ghcjs-base-stub)"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
+      script: *build_some_more_dependencies
     - stage: build_dependencies
       name: "Build dependencies"
       name: "root"
@@ -234,9 +323,8 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - stack clean --full
-        - travis_wait 30 stack build --dependencies-only
+        - travis_retry eval $"stack setup --reinstall ; sleep 10" # - stack clean --full
+        - travis_wait 30 stack build --fast --dependencies-only
     - stage: build_dependencies
       name: "Account"
       env:
@@ -316,7 +404,7 @@ jobs:
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
         - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - travis_wait 30 stack build $PACKAGE # --ghc-options="-dynamic"
+        - travis_wait 30 stack build --fast $PACKAGE # --ghc-options="-dynamic"
     - stage: build
       name: "Account"
       env:
@@ -402,7 +490,7 @@ jobs:
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
         - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - stack test $PACKAGE
+        - stack test --fast $PACKAGE
     - stage: test
       name: "API"
       env:

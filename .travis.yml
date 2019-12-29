@@ -121,6 +121,12 @@ jobs:
         - PACKAGE="codeworld-server"
         - JOB=11
       script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Funblocks Client"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
+      script: *upgrade_stack
     - stage: build_some_dependencies
       name: "Build some dependencies"
       name: "root"
@@ -209,6 +215,12 @@ jobs:
         - PACKAGE="codeworld-server"
         - JOB=11
       script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Funblocks Client"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
+      script: *build_some_dependencies
     - stage: build_dependencies
       name: "Build dependencies"
       name: "root"
@@ -285,6 +297,12 @@ jobs:
         - PACKAGE="codeworld-server"
         - JOB=11
       script: *build_dependencies
+    - stage: build_dependencies
+      name: "Funblocks Client"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
+      script: *build_dependencies
     - stage: build
       name: "root"
       env:
@@ -358,6 +376,12 @@ jobs:
       env:
         - PACKAGE="codeworld-server"
         - JOB=11
+      script: *build
+    - stage: build
+      name: "Funblocks Client"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
       script: *build
     # - stage: Test
     #   name: "root"
@@ -433,6 +457,12 @@ jobs:
         - PACKAGE="codeworld-server"
         - JOB=11
       script: *test
+    # - stage: test
+    #   name: "Funblocks Client"
+    #   env:
+    #     - PACKAGE="funblocks-client"
+    #     - JOB=12
+    #   script: *test
     - stage: build_ghcjs_dependencies
       name: "API"
       env:
@@ -654,11 +684,12 @@ jobs:
         - PACKAGE="codeworld-prediction"
         - JOB=10
       script: *build_with_ghcjs_dependencies
-    # succeeds, but can't be build yet without GHCJS and therefore omitted from cabal.project` file
-    # - stage: build_with_ghcjs_dependencies
-    #   name: "Funblocks-client (with ghcjs)"
-    #   env: PACKAGE="funblocks-client"
-    #   script: *build_with_ghcjs_dependencies
+    - stage: build_with_ghcjs_dependencies
+      name: "Funblocks Client (with ghcjs)"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
+      script: *build_with_ghcjs_dependencies
     - stage: build_with_ghcjs
       name: "API (with ghcjs)"
       env:
@@ -703,11 +734,12 @@ jobs:
         - PACKAGE="codeworld-prediction"
         - JOB=10
       script: *build_with_ghcjs
-    # succeeds, but can't be build yet without GHCJS and therefore omitted from cabal.project` file
-    # - stage: Build_with_GHCJS`
-    #   name: "Funblocks-client (with ghcjs)"
-    #   env: PACKAGE="funblocks-client"
-    #   script: *build_with_ghcjs
+    - stage: build_with_ghcjs
+      name: "Funblocks Client (with ghcjs)"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
+      script: *build_with_ghcjs
     - stage: test_with_ghcjs
       name: "API (with ghcjs)"
       env:
@@ -746,8 +778,9 @@ jobs:
         - PACKAGE="codeworld-prediction"
         - JOB=10
       script: *test_with_ghcjs
-    # succeeds, but can't be build yet without GHCJS and therefore omitted from cabal.project file
-    # - stage: test_with_GHCJS
-    #   name: "Funblocks-client (with ghcjs)"
-    #   env: PACKAGE="funblocks-client"
-    #   script: *test_with_ghcjs
+    - stage: test_with_ghcjs
+      name: "Funblocks Client (with ghcjs)"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
+      script: *test_with_ghcjs

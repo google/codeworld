@@ -109,7 +109,7 @@ future, this should become the standard way to deploy CodeWorld.
 
 The `stack.yaml` in the project's root is present to partially support Intero and
 [Travis CI](https://travis-ci.org/google/codeworld/).  On Travis, `codeworld-compiler`
-tests do not run; `funblocks-client` is not built or tested.
+tests do not run.
 
 Building and running CodeWorld locally with Stack is unsupported, and in fact doesn't
 work.  Stack cannot yet substitute for the shell scripts or docker usage above.

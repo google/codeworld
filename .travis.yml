@@ -134,6 +134,7 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
+        - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - |
           stack build \
             base-compat \
@@ -221,6 +222,7 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
+        - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - stack clean --full
         - stack build --dependencies-only
     - stage: build_dependencies
@@ -444,6 +446,7 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
+        - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
@@ -485,6 +488,7 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
+        - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
@@ -524,6 +528,7 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
+        - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH

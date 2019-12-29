@@ -142,7 +142,7 @@ jobs:
         - hash -r
         - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - |
-          stack build \
+          travis_wait 30 stack build \
             base-compat \
             base-compat-batteries \
             basement \
@@ -236,7 +236,7 @@ jobs:
         - hash -r
         - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - stack clean --full
-        - stack build --dependencies-only
+        - travis_wait 30 stack build --dependencies-only
     - stage: build_dependencies
       name: "Account"
       env:
@@ -316,7 +316,7 @@ jobs:
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
         - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - stack build $PACKAGE # --ghc-options="-dynamic"
+        - travis_wait 30 stack build $PACKAGE # --ghc-options="-dynamic"
     - stage: build
       name: "Account"
       env:

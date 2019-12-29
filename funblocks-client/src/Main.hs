@@ -22,40 +22,39 @@ module Main (
     main
 ) where
 
-#ifdef ghcjs_HOST_OS
-#else
-import qualified Prelude
-#endif
-import GHCJS.DOM
-       (currentDocument, )
-import GHCJS.DOM.NonElementParentNode
-import GHCJS.DOM.GlobalEventHandlers
-import GHCJS.DOM.Document (getBody, Document(..))
-import GHCJS.DOM.Element (setInnerHTML, Element)
-import GHCJS.DOM.HTMLButtonElement
-import GHCJS.DOM.EventM (on)
-import GHCJS.DOM.Types
-import GHCJS.Types
-import GHCJS.Foreign
-import GHCJS.Foreign.Callback
-import qualified GHCJS.Foreign.Callback as Callback
-import GHCJS.Marshal
-import Data.JSString.Text
-import qualified Data.JSString as JStr
-import qualified Data.Text as T
-import Control.Monad.Trans (liftIO, lift)
-import Blockly.Workspace hiding (workspaceToCode)
-import Blocks.Parser
-import Blocks.CodeGen
-import Blocks.Types
+import Blockly.Block
 import Blockly.Event
 import Blockly.General
-import Blockly.Block 
-import Data.Monoid 
+import Blockly.Workspace hiding (workspaceToCode)
+import Blocks.CodeGen
+import Blocks.Parser
+import Blocks.Types
 import Control.Monad
+import Control.Monad.Fail (MonadFail)
+import Control.Monad.Trans (liftIO, lift)
+import Data.JSString.Text
+import Data.Monoid
+import GHCJS.DOM (currentDocument)
+import GHCJS.DOM.Document (getBody, Document(..))
+import GHCJS.DOM.Element (setInnerHTML, Element)
+import GHCJS.DOM.EventM (on)
+import GHCJS.DOM.GlobalEventHandlers
+import GHCJS.DOM.HTMLButtonElement
+import GHCJS.DOM.NonElementParentNode
+import GHCJS.DOM.Types
+import GHCJS.Foreign
+import GHCJS.Foreign.Callback
+import GHCJS.Marshal
+import GHCJS.Types
+import Prelude hiding (error)
+import qualified Data.JSString as JStr
+import qualified Data.Text as T
+import qualified GHCJS.Foreign.Callback as Callback
 
 pack = textToJSString
 unpack = textFromJSString
+
+#ifdef ghcjs_HOST_OS
 
 setErrorMessage msg = do
   Just doc <- liftIO currentDocument
@@ -124,7 +123,7 @@ help = do
       js_injectReadOnly (JStr.pack "blocklyDiv")
       liftIO setBlockTypes 
 
-funblocks = do 
+funblocks = do
       Just doc <- currentDocument 
       Just body <- getBody doc
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
@@ -141,10 +140,9 @@ funblocks = do
       -- when (T.length hash > 0) $ liftIO $ runOrError workspace
       return ()
 
-
 main = do
   Just doc <- currentDocument
-  mayTool <- getElementById doc "toolbox" 
+  mayTool <- getElementById doc "toolbox"
   case mayTool of
     Just _ -> funblocks
     Nothing -> help
@@ -162,8 +160,6 @@ setRunFunc ws = do
       js_setRunFunc cb
 
 -- FFI
-
-#ifdef ghcjs_HOST_OS
 
 -- call blockworld.js compile
 foreign import javascript unsafe "compile($1)"
@@ -207,41 +203,42 @@ foreign import javascript unsafe "runFunc = $1"
   js_setRunFunc :: Callback.Callback a -> IO ()
 
 #else
+main = undefined
 
-js_cwcompile :: JStr.JSString -> Prelude.IO ()
-js_cwcompile = Prelude.error "GHCJS required"
+js_cwcompile :: JStr.JSString -> IO ()
+js_cwcompile = undefined
 
-js_cwcompilesilent :: JStr.JSString -> Prelude.IO ()
-js_cwcompilesilent = Prelude.error "GHCJS required"
+js_cwcompilesilent :: JStr.JSString -> IO ()
+js_cwcompilesilent = undefined
 
-js_cwrun :: JStr.JSString -> JStr.JSString -> JStr.JSString -> Bool -> Prelude.IO ()
-js_cwrun = Prelude.error "GHCJS required"
+js_cwrun :: JStr.JSString -> JStr.JSString -> JStr.JSString -> Bool -> IO ()
+js_cwrun = undefined
 
-js_updateUI :: Prelude.IO ()
-js_updateUI = Prelude.error "GHCJS required"
+js_updateUI :: IO ()
+js_updateUI = undefined
 
-js_stop :: Prelude.IO ()
-js_stop = Prelude.error "GHCJS required"
+js_stop :: IO ()
+js_stop = undefined
 
-js_stopErr :: JStr.JSString -> Prelude.IO ()
-js_stopErr = Prelude.error "GHCJS required"
+js_stopErr :: JStr.JSString -> IO ()
+js_stopErr = undefined
 
-js_updateEditor :: JStr.JSString -> Prelude.IO ()
-js_updateEditor = Prelude.error "GHCJS required"
+js_updateEditor :: JStr.JSString -> IO ()
+js_updateEditor = undefined
 
-js_removeErrorsDelay :: Prelude.IO ()
-js_removeErrorsDelay = Prelude.error "GHCJS required"
+js_removeErrorsDelay :: IO ()
+js_removeErrorsDelay = undefined
 
-js_showEast :: Prelude.IO ()
-js_showEast = Prelude.error "GHCJS required"
+js_showEast :: IO ()
+js_showEast = undefined
 
-js_openEast :: Prelude.IO ()
-js_openEast = Prelude.error "GHCJS required"
+js_openEast :: IO ()
+js_openEast = undefined
 
-js_injectReadOnly :: JStr.JSString -> Prelude.IO Workspace
-js_injectReadOnly = Prelude.error "GHCJS required"
+js_injectReadOnly :: JStr.JSString -> IO Workspace
+js_injectReadOnly = undefined
 
-js_setRunFunc :: Callback.Callback a -> Prelude.IO ()
-js_setRunFunc = Prelude.error "GHCJS required"
+js_setRunFunc :: Callback.Callback a -> IO ()
+js_setRunFunc = undefined
 
 #endif

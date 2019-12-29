@@ -122,7 +122,7 @@ jobs:
         - JOB=11
       script: *upgrade_stack
     - stage: upgrade_stack
-      name: "Funblocks Client"
+      name: "Funblocks Client (with ghcjs-base-stub)"
       env:
         - PACKAGE="funblocks-client"
         - JOB=12
@@ -216,7 +216,7 @@ jobs:
         - JOB=11
       script: *build_some_dependencies
     - stage: build_some_dependencies
-      name: "Funblocks Client"
+      name: "Funblocks Client (with ghcjs-base-stub)"
       env:
         - PACKAGE="funblocks-client"
         - JOB=12
@@ -298,7 +298,7 @@ jobs:
         - JOB=11
       script: *build_dependencies
     - stage: build_dependencies
-      name: "Funblocks Client"
+      name: "Funblocks Client (with ghcjs-base-stub)"
       env:
         - PACKAGE="funblocks-client"
         - JOB=12
@@ -378,7 +378,7 @@ jobs:
         - JOB=11
       script: *build
     - stage: build
-      name: "Funblocks Client"
+      name: "Funblocks Client (with ghcjs-base-stub)"
       env:
         - PACKAGE="funblocks-client"
         - JOB=12
@@ -458,7 +458,7 @@ jobs:
         - JOB=11
       script: *test
     # - stage: test
-    #   name: "Funblocks Client"
+    #   name: "Funblocks Client (with ghcjs-base-stub)"
     #   env:
     #     - PACKAGE="funblocks-client"
     #     - JOB=12

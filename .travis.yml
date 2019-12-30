@@ -30,7 +30,6 @@ addons:
 stages:
   - upgrade_stack
   - build_some_dependencies
-  - build_some_more_dependencies
   - build_dependencies
   - build
   - test
@@ -143,7 +142,7 @@ jobs:
         - hash -r
         - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - |
-          travis_wait 30 stack build -j 1 --fast \
+          travis_wait 30 stack build --fast \
             base-compat \
             base-compat-batteries \
             basement \
@@ -157,86 +156,6 @@ jobs:
             network \
             old-time \
             sqlite-simple
-    - stage: build_some_dependencies
-      name: "Account"
-      env:
-        - PACKAGE="codeworld-account"
-        - JOB=2
-      script: *build_some_dependencies
-    - stage: build_some_dependencies
-      name: "API"
-      env:
-        - PACKAGE="codeworld-api"
-        - JOB=3
-      script: *build_some_dependencies
-    - stage: build_some_dependencies
-      name: "Auth"
-      env:
-        - PACKAGE="codeworld-auth"
-        - JOB=4
-      script: *build_some_dependencies
-    - stage: build_some_dependencies
-      name: "Base (with ghcjs-base-stub)"
-      env:
-        - PACKAGE="codeworld-base"
-        - JOB=5
-      script: *build_some_dependencies
-    - stage: build_some_dependencies
-      name: "Compiler"
-      env:
-        - PACKAGE="codeworld-compiler"
-        - JOB=6
-      script: *build_some_dependencies
-    - stage: build_some_dependencies
-      name: "Error Sanitizer"
-      env:
-        - PACKAGE="codeworld-error-sanitizer"
-        - JOB=7
-      script: *build_some_dependencies
-    - stage: build_some_dependencies
-      name: "Game API"
-      env:
-        - PACKAGE="codeworld-game-api"
-        - JOB=8
-      script: *build_some_dependencies
-    - stage: build_some_dependencies
-      name: "Game Server"
-      env:
-        - PACKAGE="codeworld-game-server"
-        - JOB=9
-      script: *build_some_dependencies
-    - stage: build_some_dependencies
-      name: "Prediction"
-      env:
-        - PACKAGE="codeworld-prediction"
-        - JOB=10
-      script: *build_some_dependencies
-    - stage: build_some_dependencies
-      name: "Server"
-      env:
-        - PACKAGE="codeworld-server"
-        - JOB=11
-      script: *build_some_dependencies
-    - stage: build_some_dependencies
-      name: "Funblocks Client (with ghcjs-base-stub)"
-      env:
-        - PACKAGE="funblocks-client"
-        - JOB=12
-      script: *build_some_dependencies
-    - stage: build_some_more_dependencies
-      name: "Build some more dependencies"
-      name: "root"
-      env:
-        - PACKAGE="."
-        - JOB=1
-      script: &build_some_more_dependencies
-        - sleep $(((JOB - 1) * 20))
-        - travis_retry eval $"sudo apt-get update ; sleep 10"
-        - travis_retry eval $"sudo apt-get install --yes libgmp-dev haskell-stack ; sleep 10"
-        - export PATH=$HOME/.local/bin:$PATH
-        - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
-        - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - sudo fallocate -l 4G /swapfile
         - sudo chmod 600 /swapfile
         - sudo mkswap /swapfile
@@ -244,72 +163,72 @@ jobs:
         - sudo sysctl vm.swappiness=90
         - travis_wait 30 stack build -j1 --fast jsaddle-dom
         - sudo swapoff -a
-    - stage: build_some_more_dependencies
+    - stage: build_some_dependencies
       name: "Account"
       env:
         - PACKAGE="codeworld-account"
         - JOB=2
-      script: *build_some_more_dependencies
-    - stage: build_some_more_dependencies
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
       name: "API"
       env:
         - PACKAGE="codeworld-api"
         - JOB=3
-      script: *build_some_more_dependencies
-    - stage: build_some_more_dependencies
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
       name: "Auth"
       env:
         - PACKAGE="codeworld-auth"
         - JOB=4
-      script: *build_some_more_dependencies
-    - stage: build_some_more_dependencies
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
       name: "Base (with ghcjs-base-stub)"
       env:
         - PACKAGE="codeworld-base"
         - JOB=5
-      script: *build_some_more_dependencies
-    - stage: build_some_more_dependencies
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
       name: "Compiler"
       env:
         - PACKAGE="codeworld-compiler"
         - JOB=6
-      script: *build_some_more_dependencies
-    - stage: build_some_more_dependencies
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
       name: "Error Sanitizer"
       env:
         - PACKAGE="codeworld-error-sanitizer"
         - JOB=7
-      script: *build_some_more_dependencies
-    - stage: build_some_more_dependencies
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
       name: "Game API"
       env:
         - PACKAGE="codeworld-game-api"
         - JOB=8
-      script: *build_some_more_dependencies
-    - stage: build_some_more_dependencies
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
       name: "Game Server"
       env:
         - PACKAGE="codeworld-game-server"
         - JOB=9
-      script: *build_some_more_dependencies
-    - stage: build_some_more_dependencies
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
       name: "Prediction"
       env:
         - PACKAGE="codeworld-prediction"
         - JOB=10
-      script: *build_some_more_dependencies
-    - stage: build_some_more_dependencies
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
       name: "Server"
       env:
         - PACKAGE="codeworld-server"
         - JOB=11
-      script: *build_some_more_dependencies
-    - stage: build_some_more_dependencies
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
       name: "Funblocks Client (with ghcjs-base-stub)"
       env:
         - PACKAGE="funblocks-client"
         - JOB=12
-      script: *build_some_more_dependencies
+      script: *build_some_dependencies
     - stage: build_dependencies
       name: "Build dependencies"
       name: "root"

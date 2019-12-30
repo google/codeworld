@@ -375,11 +375,18 @@ function initCodeworld() {
 function backspace() {
     if (window.buildMode === 'codeworld' && !window.codeworldEditor.somethingSelected()) {
         const cursor = window.codeworldEditor.getCursor();
-        const prefix =
-            window.codeworldEditor.getDoc().getLine(cursor.line).slice(0, cursor.ch);
-        if (/^[\s]+$/.test(prefix)) {
-            window.codeworldEditor.execCommand('indentLess');
-            return;
+        const line = window.codeworldEditor.getDoc().getLine(cursor.line);
+        const lineStart = window.codeworldEditor.getTokenAt({
+            line: cursor.line,
+            ch: 0
+        });
+        if (/^[\s]+$/.test(line.slice(0, cursor.ch)) &&
+            /^([^\s]|$).*/.test(line.slice(cursor.ch))) {
+            const smartIndent = getSmartIndent(lineStart.state, line.slice(cursor.ch), cursor.ch - 1, 'add');
+            if (cursor.ch === smartIndent) {
+                window.codeworldEditor.execCommand('indentLess');
+                return;
+            }
         }
     }
     window.codeworldEditor.execCommand('delCharBefore');

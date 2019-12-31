@@ -221,10 +221,18 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 state.contexts = state.contexts.slice(0, i);
                 break;
             }
+        }
 
+        // Update alignment columns for the innermost bracket.
+        if (state.contexts.length > 0) {
+            const ctx = state.contexts[state.contexts.length - 1];
             if (ctx.fresh) {
-                ctx.column = column;
-                ctx.fresh = false;
+                const sameLine = state.line === ctx.ln;
+                const openBracket = RE_OPENBRACKET.test(token);
+                if (!sameLine || !openBracket) {
+                    ctx.column = column;
+                    ctx.fresh = false;
+                }
             } else {
                 ctx.column = Math.min(ctx.column, column);
             }
@@ -261,6 +269,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         state.lastTokens = state.lastTokens.slice(-1);
         state.lastTokens.push(token);
 
+        const topContext = () => state.contexts[state.contexts.length - 1];
+
         // Close contexts when syntax demands that we do so.
         if (token === ',') {
             // Close implicit contexts on comma.
@@ -280,7 +290,19 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             state.contexts.reverse();
             if (reverseIndex >= 0) {
                 const index = state.contexts.length - reverseIndex - 1;
-                while (state.contexts.length > index) state.contexts.pop();
+                while (state.contexts.length > index) {
+                    const child = topContext();
+                    state.contexts.pop();
+                    const parent = topContext();
+                    if (isBracket(parent)) {
+                        if (parent.fresh) {
+                            parent.fresh = false;
+                            parent.column = Math.min(child.ch, child.column);
+                        } else {
+                            parent.column = Math.min(parent.column, child.ch, child.column);
+                        }
+                    }
+                }
                 if (token !== 'in') {
                     // Update the style to indicate bracket level.
                     const level = state.contexts.filter(isBracket).length;
@@ -288,7 +310,6 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 }
             }
         } else if (token === 'where') {
-            const topContext = () => state.contexts[state.contexts.length - 1];
             while (state.contexts.length > 0 && ['let', 'of', 'do', 'case'].indexOf(topContext().value) >= 0) {
                 state.contexts.pop();
             }
@@ -316,13 +337,13 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 }
             }
 
-            let newColumn = 0;
+            let parentCol = 0;
             if (state.contexts.length > 0) {
-                newColumn = state.contexts[state.contexts.length - 1].column + config.indentUnit;
+                parentCol = state.contexts[state.contexts.length - 1].column;
             }
             state.contexts.push({
                 value: token,
-                column: newColumn,
+                column: parentCol + config.indentUnit,
                 ln: state.line,
                 ch: column,
                 functionName,

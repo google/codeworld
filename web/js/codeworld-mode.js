@@ -212,11 +212,22 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
     function updateLayout(token, column, style, state) {
         // Close any implicit contexts when there are tokens in columns to
         // the left.
-        const toClose = state.contexts.findIndex(ctx => !isBracket(ctx) && ctx.column > column);
         let foundLet = false;
-        if (toClose >= 0) {
-            foundLet = state.contexts[toClose].value === 'let';
-            while (state.contexts.length > toClose) state.contexts.pop();
+        for (let i = 0; i < state.contexts.length; ++i) {
+            const ctx = state.contexts[i];
+
+            if (ctx.column > column && !isBracket(ctx)) {
+                foundLet = ctx.value === 'let';
+                state.contexts = state.contexts.slice(0, i);
+                break;
+            }
+
+            if (ctx.fresh) {
+                ctx.column = column;
+                ctx.fresh = false;
+            } else {
+                ctx.column = Math.min(ctx.column, column);
+            }
         }
 
         // Create any new implicit contexts called for by layout rules.
@@ -291,15 +302,6 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             state.contexts = state.contexts.slice(0, layoutCtx + 1);
         }
 
-        // Update the indent for brackets, when encountering the first token
-        // inside.
-        const prevToken = state.lastTokens[state.lastTokens.length - 2];
-        const prevLayout = state.contexts[state.contexts.length - 1];
-        if (prevToken === prevLayout.value &&
-            RE_OPENBRACKET.test(prevToken) &&
-            !RE_CLOSEBRACKET.test(token)) {
-           prevLayout.column = column;
-        }
         // Open new contexts for brackets.  These should be inside the
         // implicit contexts created by layout.
         if (RE_OPENBRACKET.test(token)) {
@@ -324,7 +326,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 ln: state.line,
                 ch: column,
                 functionName,
-                argIndex: 0
+                argIndex: 0,
+                fresh: true
             });
         }
 
@@ -354,7 +357,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                         ln: ctx.ln,
                         ch: ctx.ch,
                         functionName: ctx.functionName,
-                        argIndex: ctx.argIndex || 0
+                        argIndex: ctx.argIndex || 0,
+                        fresh: ctx.fresh
                     };
                 }),
                 lastTokens: state.lastTokens.map(t => t),

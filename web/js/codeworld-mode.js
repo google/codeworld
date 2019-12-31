@@ -406,7 +406,15 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
 
             // Compute the rightmost surrounding layout column, which should be respected
             // by indent rules.
-            let parentColumn = topLayout > 0 ? state.contexts[topLayout - 1].column : 0;
+            let parentColumn, minIndent;
+            if (topLayout > 0) {
+                const parent = state.contexts[topLayout - 1];
+                parentColumn = parent.column;
+                minIndent = isBracket(parent) ? parentColumn : parentColumn + 1;
+            } else {
+                parentColumn = 0;
+                minIndent = 0;
+            }
 
             if (isBracket(ctx) && token && opening(token[0]) === ctx.value) {
                 // Close brackets should be aligned to the open bracket if the inside indent
@@ -417,12 +425,12 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 let desiredIndent;
                 if (ctx.column <= ctx.ch) desiredIndent = parentColumn + config.indentUnit;
                 else desiredIndent = ctx.ch;
-                return Math.max(parentColumn + 1, desiredIndent);
+                return Math.max(minIndent, desiredIndent);
             } else if (isBracket(ctx) && token && token[0] === ',') {
                 // In order to align elements, commas should be placed two columns to the left
                 // of the bracket's internal alignment, if possible.
 
-                return Math.max(parentColumn + 1, ctx.column - 2);
+                return Math.max(minIndent, ctx.column - 2);
             } else if (/^(where\b|[|]($|[^:!#$%&*+./<=>?@\\^|~-]+))/.test(textAfter)) {
                 // Guards and where clauses are indented a half-indent beyond the parent
                 // context.  This is reasonably common, and helps them stand out from wrapped

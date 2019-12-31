@@ -147,7 +147,7 @@ function initCodeworld() {
         styleActiveLine: !WURFL || !WURFL.is_mobile,
         showTrailingSpace: true,
         indentWithTabs: false,
-        indentUnit: window.buildMode === 'codeworld' ? 4 : 2,
+        indentUnit: 2,
         autoClearEmptyLines: true,
         highlightSelectionMatches: {
             showToken: /\w/,
@@ -751,7 +751,19 @@ function loadProject(name, path) {
 
 function formatSource() {
     if (window.buildMode === 'codeworld') {
-        // Unfortunately, there isn't an acceptable style for CodeWorld yet.
+        const doc = codeworldEditor.getDoc();
+        const pos = { line: 0, ch: 1 };
+        const mode = codeworldEditor.getMode();
+        while (pos.line <= doc.lineCount()) {
+            const initialState = mode.copyState(codeworldEditor.getTokenAt(pos, true).state);
+            window.codeworldEditor.indentLine(pos.line);
+            while (true) {
+                const newState = codeworldEditor.getTokenAt(pos, true).state;
+                if (newState.contexts.length <= initialState.contexts.length) break;
+                window.codeworldEditor.indentLine(pos.line, "subtract");
+            }
+            ++pos.line;
+        }
         return;
     }
 

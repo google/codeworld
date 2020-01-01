@@ -752,7 +752,10 @@ function loadProject(name, path) {
 function formatSource() {
     if (window.buildMode === 'codeworld') {
         const doc = codeworldEditor.getDoc();
-        const pos = { line: 0, ch: 1 };
+        const pos = {
+            line: 0,
+            ch: 1
+        };
         const mode = codeworldEditor.getMode();
         while (pos.line <= doc.lineCount()) {
             const initialState = mode.copyState(codeworldEditor.getTokenAt(pos, true).state);
@@ -760,7 +763,7 @@ function formatSource() {
             while (true) {
                 const newState = codeworldEditor.getTokenAt(pos, true).state;
                 if (newState.contexts.length <= initialState.contexts.length) break;
-                window.codeworldEditor.indentLine(pos.line, "subtract");
+                window.codeworldEditor.indentLine(pos.line, 'subtract');
             }
             ++pos.line;
         }

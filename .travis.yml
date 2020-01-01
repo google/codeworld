@@ -785,9 +785,9 @@ jobs:
         - PACKAGE="codeworld-prediction"
         - JOB=10
       script: *test_with_ghcjs
-    - stage: test_with_ghcjs
-      name: "Funblocks Client (with ghcjs)"
-      env:
-        - PACKAGE="funblocks-client"
-        - JOB=12
-      script: *test_with_ghcjs
+    # - stage: test_with_ghcjs
+    #   name: "Funblocks Client (with ghcjs)"
+    #   env:
+    #     - PACKAGE="funblocks-client"
+    #     - JOB=12
+    #   script: *test_with_ghcjs

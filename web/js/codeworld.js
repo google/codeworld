@@ -355,6 +355,24 @@ function initCodeworld() {
         window.updateUI();
     });
 
+    window.codeworldEditor.on('cursorActivity', () => {
+        if (window.codeworldEditor.getDoc().somethingSelected()) {
+            window.codeworldEditor.setOption('electricChars', false);
+            window.codeworldEditor.setOption('electricIndentLine', -1);
+            return;
+        }
+
+        const active = window.codeworldEditor.getOption('electricChars');
+        const oldLine = window.codeworldEditor.getOption('electricIndentLine') || 0;
+        const line = window.codeworldEditor.getDoc().getCursor().line;
+
+        if (active || line !== oldLine) {
+            const {prev, smart} = getIndentsAt(line, 'smart');
+            window.codeworldEditor.setOption('electricChars', prev === smart);
+            window.codeworldEditor.setOption('electricIndentLine', line);
+        }
+    });
+
     window.onbeforeunload = event => {
         if (!isEditorClean()) {
             const msg = 'There are unsaved changes to your project. ' +
@@ -376,13 +394,21 @@ function backspace() {
     if (window.buildMode === 'codeworld' && !window.codeworldEditor.somethingSelected()) {
         const cursor = window.codeworldEditor.getCursor();
         const line = window.codeworldEditor.getDoc().getLine(cursor.line);
-        const lineStart = window.codeworldEditor.getTokenAt({
-            line: cursor.line,
-            ch: 0
-        });
-        if (/^[\s]+$/.test(line.slice(0, cursor.ch)) &&
-            /^([^\s]|$).*/.test(line.slice(cursor.ch))) {
-            const smartIndent = getSmartIndent(lineStart.state, line.slice(cursor.ch), cursor.ch - 1, 'add');
+        const prevIndent = /^[\s]*/.exec(line)[0].length;
+        if (cursor.ch > 0 && cursor.ch === prevIndent) {
+            // We ask the question: if this line were one space less
+            // indented, would this be the next indent point?  If so,
+            // then backspace should delete the indent, rather than a
+            // single character.
+            const startToken = window.codeworldEditor.getTokenAt({
+                line: cursor.line,
+                ch: 0
+            });
+            const smartIndent = getSmartIndent(
+                       startToken.state,
+                       line.slice(prevIndent),
+                       cursor.ch - 1,
+                       'add');
             if (cursor.ch === smartIndent) {
                 window.codeworldEditor.execCommand('indentLess');
                 return;
@@ -396,41 +422,65 @@ function changeIndent(how) {
     if (window.buildMode === 'codeworld') {
         const range = window.codeworldEditor.listSelections()[0];
         const lineNum = Math.min(range.anchor.line, range.head.line);
-        const line = window.codeworldEditor.getDoc().getLine(lineNum);
-        const lineStart = window.codeworldEditor.getTokenAt({
-            line: lineNum,
-            ch: 0
-        });
-        if (lineStart) {
-            let prevIndent = 0;
-            while (prevIndent < line.length && line.charAt(prevIndent) === ' ') {
-                prevIndent++;
-            }
+        const {prev, smart} = getIndentsAt(lineNum, how);
 
-            const textAfter = line.slice(prevIndent);
-            const smartIndent = getSmartIndent(lineStart.state, textAfter, prevIndent, how);
-            if (smartIndent >= 0) {
-                window.codeworldEditor.indentSelection(smartIndent - prevIndent);
-                return;
-            }
+        if (smart >= 0) {
+            window.codeworldEditor.indentSelection(smart - prev);
+            return;
         }
     }
     window.codeworldEditor.indentSelection(how);
 }
 
-function getSmartIndent(state, textAfter, prevIndent, how) {
-    if (how !== 'add' && how !== 'subtract') return -1;
-    const dir = how === 'add' ? {
-        start: 0,
-        end: state.contexts.length + 1,
-        inc: 1,
-        predicate: n => n > prevIndent
-    } : {
-        start: state.contexts.length,
-        end: -1,
-        inc: -1,
-        predicate: n => n < prevIndent
+function getIndentsAt(lineNum, how) {
+    const lineStart = window.codeworldEditor.getTokenAt({
+        line: lineNum,
+        ch: 0
+    });
+    if (!lineStart) return -1;
+
+    const line = window.codeworldEditor.getDoc().getLine(lineNum);
+    const prevIndent = /^[\s]*/.exec(line)[0].length;
+    const textAfter = line.slice(prevIndent);
+    return {
+        prev: prevIndent,
+        smart: getSmartIndent(lineStart.state, textAfter, prevIndent, how)
     };
+}
+
+function getSmartIndent(state, textAfter, prevIndent, how) {
+    let dir;
+    switch (how) {
+        case 'add':
+            dir = {
+                start: 0,
+                end: state.contexts.length + 1,
+                inc: 1,
+                predicate: n => n > prevIndent
+            };
+            break;
+
+        case 'subtract':
+            dir = {
+                start: state.contexts.length,
+                end: -1,
+                inc: -1,
+                predicate: n => n < prevIndent
+            };
+            break;
+
+        case 'smart':
+            dir = {
+                start: state.contexts.length,
+                end: state.contexts.length + 1,
+                inc: 1,
+                predicate: n => n >= 0
+            };
+            break;
+
+        default:
+            return -1;
+    }
 
     const mode = window.codeworldEditor.getDoc().getMode();
 

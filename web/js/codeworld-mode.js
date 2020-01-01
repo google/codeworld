@@ -402,7 +402,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             state.line++;
         },
         indent: (state, textAfter) => {
-            if (state.commentLevel > 0 || state.contexts.length < 1) return CodeMirror.Pass;
+            if (state.commentLevel > 0) return CodeMirror.Pass;
+            if (state.contexts.length < 1) return 0;
 
             // Find the top context.  If the next token closes a layout context, then this
             // is the context above the one that's closed. Otherwise, it's the top of the stack.

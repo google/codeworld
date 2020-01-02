@@ -63,6 +63,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
     //                 column: base indent column for the context,
     //                 ln: line at which the context started
     //                 ch: column at which the context started
+    //                 fresh: for brackets, indicates alignment is undecided
+    //                 guardAlign: column to indent guards, or -1
     //                 functionName: string (optional)
     //                 argIndex: integer (optional)
     //               }
@@ -223,7 +225,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             }
         }
 
-        // Update alignment columns for the innermost bracket.
+        // Update alignment columns for the innermost context.
         if (state.contexts.length > 0) {
             const ctx = state.contexts[state.contexts.length - 1];
             if (ctx.fresh) {
@@ -236,6 +238,10 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             } else {
                 ctx.column = Math.min(ctx.column, column);
             }
+
+            if (ctx.guardAlign === -1 && token === '|') {
+                ctx.guardAlign = column;
+            }
         }
 
         // Create any new implicit contexts called for by layout rules.
@@ -245,7 +251,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                     value: 'where', // There's an implied "module Main where"
                     column: column,
                     ln: state.line,
-                    ch: column
+                    ch: column,
+                    guardAlign: -1
                 });
             }
         } else {
@@ -260,7 +267,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                     value: state.lastTokens.slice(-1)[0],
                     column: column,
                     ln: state.line,
-                    ch: column
+                    ch: column,
+                    guardAlign: -1
                 });
             }
         }
@@ -321,6 +329,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         const isLayout = layoutCtx >= 0 && !isBracket(state.contexts[layoutCtx]);
         if (isLayout) {
             state.contexts = state.contexts.slice(0, layoutCtx + 1);
+            state.contexts[state.contexts.length - 1].guardAlign = -1;
         }
 
         // Open new contexts for brackets.  These should be inside the
@@ -348,7 +357,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 ch: column,
                 functionName,
                 argIndex: 0,
-                fresh: true
+                fresh: true,
+                guardAlign: -1
             });
         }
 
@@ -377,9 +387,10 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                         column: ctx.column,
                         ln: ctx.ln,
                         ch: ctx.ch,
+                        fresh: ctx.fresh,
+                        guardAlign: ctx.guardAlign,
                         functionName: ctx.functionName,
-                        argIndex: ctx.argIndex || 0,
-                        fresh: ctx.fresh
+                        argIndex: ctx.argIndex || 0
                     };
                 }),
                 lastTokens: state.lastTokens.map(t => t),
@@ -458,11 +469,17 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
 
                 return Math.max(minIndent, ctx.column - 2);
             } else if (/^(where\b|[|]($|[^:!#$%&*+./<=>?@\\^|~-]+))/.test(textAfter)) {
-                // Guards and where clauses are indented a half-indent beyond the parent
-                // context.  This is reasonably common, and helps them stand out from wrapped
-                // expressions.
+                if (textAfter.startsWith('|') && ctx.guardAlign >= 0) {
+                    // Guards should be aligned.
 
-                return ctx.column + Math.ceil(config.indentUnit / 2);
+                    return Math.max(minIndent, ctx.guardAlign);
+                } else {
+                    // Guards and where clauses are indented a half-indent beyond the parent
+                    // context.  This is reasonably common, and helps them stand out from wrapped
+                    // expressions.
+
+                    return ctx.column + Math.ceil(config.indentUnit / 2);
+                }
             } else if (RE_DASHES.exec(textAfter) && RE_DASHES.exec(textAfter).index === 0) {
                 // Comments are aligned at the current level.  Special case to avoid
                 // mistaking them for operators.

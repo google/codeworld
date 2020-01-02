@@ -29,3 +29,4 @@ Editor Shortcuts
     | Ctrl + Shift +  U, or Alt + U  | Redo selection               |
     | Tab, or Ctrl + ]               | Indent                       |
     | Shift + Tab, or Ctrl + [       | Unindent                     |
+    | Ctrl + I                       | Reformat all code            |

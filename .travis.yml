@@ -12,6 +12,7 @@ cache:
   - $HOME/.local/bin
   - $HOME/.stack
   - $TRAVIS_BUILD_DIR/.stack-work
+  - $TRAVIS_BUILD_DIR/build
   - $TRAVIS_BUILD_DIR/ghcjs/.cabal-sandbox
   - $TRAVIS_BUILD_DIR/ghcjs/data
   - $TRAVIS_BUILD_DIR/ghcjs/dist
@@ -442,7 +443,7 @@ jobs:
         - sleep $(((JOB - 1) * 10))
         - travis_retry sudo add-apt-repository --yes ppa:hvr/ghc
         - travis_retry eval $"sudo apt-get update ; sleep 10"
-        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack patch ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
@@ -453,6 +454,7 @@ jobs:
         - export
         - cd ghcjs
         - travis_retry git submodule update --init --recursive
+        - patch -p0 -u -d $TRAVIS_BUILD_DIR/build < $TRAVIS_BUILD_DIR/ghc-artifacts/ghcjs-8.6-default-main.patch
         - ./utils/makePackages.sh
         - travis_retry eval $"cabal new-update ; sleep 10"
         - cabal new-configure
@@ -490,7 +492,7 @@ jobs:
         - sleep $(((JOB - 1) * 10))
         - travis_retry sudo add-apt-repository --yes ppa:hvr/ghc
         - travis_retry eval $"sudo apt-get update ; sleep 10"
-        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack patch ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
@@ -501,6 +503,7 @@ jobs:
         - export
         - cd ghcjs
         - travis_retry git submodule update --init --recursive
+        - patch -p0 -u -d $TRAVIS_BUILD_DIR/build < $TRAVIS_BUILD_DIR/ghc-artifacts/ghcjs-8.6-default-main.patch
         - ./utils/makePackages.sh
         - cabal new-build -j
     - stage: build_ghcjs
@@ -536,7 +539,7 @@ jobs:
         - sleep $(((JOB - 1) * 10))
         - travis_retry sudo add-apt-repository --yes ppa:hvr/ghc
         - travis_retry eval $"sudo apt-get update ; sleep 10"
-        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack patch ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
@@ -547,6 +550,7 @@ jobs:
         - export
         - cd ghcjs
         - travis_retry git submodule update --init --recursive
+        - patch -p0 -u -d $TRAVIS_BUILD_DIR/build < $TRAVIS_BUILD_DIR/ghc-artifacts/ghcjs-8.6-default-main.patch
         - ./utils/makePackages.sh
         - cabal new-install --only-dependencies --lib
         - cabal new-install -v --lib
@@ -588,7 +592,7 @@ jobs:
         - sleep $(((JOB - 1) * 10))
         - travis_retry sudo add-apt-repository --yes ppa:hvr/ghc
         - travis_retry eval $"sudo apt-get update ; sleep 10"
-        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack patch ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
@@ -606,6 +610,7 @@ jobs:
         - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-run
         - cd ghcjs
         - travis_retry git submodule update --init --recursive
+        - patch -p0 -u -d $TRAVIS_BUILD_DIR/build < $TRAVIS_BUILD_DIR/ghc-artifacts/ghcjs-8.6-default-main.patch
         - ./utils/makePackages.sh
         - ghcjs --version
         - ghcjs-boot -j 2 -s $TRAVIS_BUILD_DIR/ghcjs/lib/boot --no-haddock --no-prof
@@ -643,7 +648,7 @@ jobs:
         - sleep $(((JOB - 1) * 10))
         - travis_retry sudo add-apt-repository --yes ppa:hvr/ghc
         - travis_retry eval $"sudo apt-get update ; sleep 10"
-        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack patch ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
@@ -661,6 +666,7 @@ jobs:
         - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-run
         - cd ghcjs
         - travis_retry git submodule update --init --recursive
+        - patch -p0 -u -d $TRAVIS_BUILD_DIR/build < $TRAVIS_BUILD_DIR/ghc-artifacts/ghcjs-8.6-default-main.patch
         - ./utils/makePackages.sh
         - cd $TRAVIS_BUILD_DIR
         - travis_retry eval $"cabal new-update ; sleep 10"
@@ -698,7 +704,7 @@ jobs:
         - sleep $(((JOB - 1) * 10))
         - travis_retry sudo add-apt-repository --yes ppa:hvr/ghc
         - travis_retry eval $"sudo apt-get update ; sleep 10"
-        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack patch ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
@@ -716,6 +722,7 @@ jobs:
         - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-run
         - cd ghcjs
         - travis_retry git submodule update --init --recursive
+        - patch -p0 -u -d $TRAVIS_BUILD_DIR/build < $TRAVIS_BUILD_DIR/ghc-artifacts/ghcjs-8.6-default-main.patch
         - ./utils/makePackages.sh
         - cd $TRAVIS_BUILD_DIR
         - travis_retry eval $"cabal new-update ; sleep 10"
@@ -753,7 +760,7 @@ jobs:
         - sleep $(((JOB - 1) * 10))
         - travis_retry sudo add-apt-repository --yes ppa:hvr/ghc
         - travis_retry eval $"sudo apt-get update ; sleep 10"
-        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack patch ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
@@ -771,6 +778,7 @@ jobs:
         - sudo ln -fs $TRAVIS_BUILD_DIR/ghcjs/utils/dist-newstyle-wrapper.sh /usr/bin/ghcjs-run
         - cd ghcjs
         - travis_retry git submodule update --init --recursive
+        - patch -p0 -u -d $TRAVIS_BUILD_DIR/build < $TRAVIS_BUILD_DIR/ghc-artifacts/ghcjs-8.6-default-main.patch
         - ./utils/makePackages.sh
         - cd $TRAVIS_BUILD_DIR
         - travis_retry eval $"cabal new-update ; sleep 10"

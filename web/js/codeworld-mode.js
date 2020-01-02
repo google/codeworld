@@ -50,6 +50,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
     const RE_ENDCOMMENT = /-}/;
     const RE_ELECTRIC_START = /^\s*(?:[:!#$%&*+./<=>?@^|~,)\]}-]+|where\b|in\b|of\b|then\b|else\b|deriving\b)/;
     const RE_ELECTRIC_INPUT = /^\s*(?:[:!#$%&*+./<=>?@^|~,)\]}-]+|where|in|of|then|else|deriving).?$/;
+    const RE_NEGATIVE_NUM = /^\s*[-]($|[^!#$%&*+./<=>?@\\^|~-])/;
 
     // The state has the following properties:
     //
@@ -536,7 +537,9 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 return ctx.column;
             }
 
-            if (continued || RE_ELECTRIC_START.test(textAfter)) {
+            const mustContinue = RE_ELECTRIC_START.test(textAfter) &&
+                !RE_NEGATIVE_NUM.test(textAfter);
+            if (continued || mustContinue) {
                 // This is a continuation line, because either the end of the last line or
                 // the beginning of this one are not suitable for this to be a new statement.
 

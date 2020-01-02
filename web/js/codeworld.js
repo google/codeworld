@@ -804,16 +804,39 @@ function formatSource() {
         const doc = codeworldEditor.getDoc();
         const pos = {
             line: 0,
-            ch: 1
+            ch: 0
         };
+        const getState = () => {
+            const line = window.codeworldEditor.getDoc().getLine(pos.line);
+            pos.ch = Math.min(line.length, /^[\s]*/.exec(line)[0].length + 1);
+            const token = codeworldEditor.getTokenAt(pos, true);
+            if (token.type === 'comment') return null;
+            else return token.state;
+        }
         const mode = codeworldEditor.getMode();
-        while (pos.line <= doc.lineCount()) {
-            const initialState = mode.copyState(codeworldEditor.getTokenAt(pos, true).state);
+        while (pos.line < doc.lineCount()) {
+            if (!getState()) {
+                ++pos.line;
+                continue;
+            }
+
+            const initialState = mode.copyState(getState());
             window.codeworldEditor.indentLine(pos.line);
-            while (true) {
-                const newState = codeworldEditor.getTokenAt(pos, true).state;
-                if (newState.contexts.length <= initialState.contexts.length) break;
-                window.codeworldEditor.indentLine(pos.line, 'subtract');
+            while (getState().contexts.length > initialState.contexts.length) {
+                const {prev, smart} = getIndentsAt(pos.line, 'subtract');
+                if (smart >= 0 && smart !== prev) {
+                    window.codeworldEditor.indentLine(pos.line, smart - prev);
+                } else {
+                    break;
+                }
+            }
+            while (getState().contexts.length < initialState.contexts.length) {
+                const {prev, smart} = getIndentsAt(pos.line, 'add');
+                if (smart >= 0 && smart !== prev) {
+                    window.codeworldEditor.indentLine(pos.line, smart - prev);
+                } else {
+                    break;
+                }
             }
             ++pos.line;
         }

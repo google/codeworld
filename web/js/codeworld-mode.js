@@ -65,6 +65,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
     //                 ch: column at which the context started
     //                 fresh: for brackets, indicates alignment is undecided
     //                 guardAlign: column to indent guards, or -1
+    //                 eqLine: Line number for the latest equal sign
+    //                 rhsAlign: column to indent equation right-hand side, or -1
     //                 functionName: string (optional)
     //                 argIndex: integer (optional)
     //               }
@@ -227,10 +229,11 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
 
         // Update alignment columns for the innermost context.
         if (state.contexts.length > 0) {
+            const openBracket = RE_OPENBRACKET.test(token);
             const ctx = state.contexts[state.contexts.length - 1];
+
             if (ctx.fresh) {
                 const sameLine = state.line === ctx.ln;
-                const openBracket = RE_OPENBRACKET.test(token);
                 if (!sameLine || !openBracket) {
                     ctx.column = column;
                     ctx.fresh = false;
@@ -242,6 +245,39 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             if (ctx.guardAlign === -1 && token === '|') {
                 ctx.guardAlign = column;
             }
+
+            if (ctx.rhsAlign === -1 && ctx.eqLine >= 0) {
+                const sameLine = ctx.eqLine === state.line;
+                if (!sameLine || !openBracket) {
+                    // We must update this and all parent alignments, because some
+                    // parents may be deferred by an open bracket.
+                    let target = column;
+                    for (let i = state.contexts.length - 1; i >= 0; --i) {
+                        if (ctx.rhsAlign === -1) ctx.rhsAlign = target;
+                        target = Math.min(target, ctx.ch);
+                        if (!ctx.fresh) target = Math.min(target, ctx.column);
+                    }
+                }
+            }
+
+            if (ctx.rhsAlign === -1 && token === '=') {
+                ctx.eqLine = state.line;
+            }
+
+            if (token == '|' || token == 'where') {
+                ctx.rhsAlign = -1;
+                ctx.eqLine = -1;
+            }
+
+            for (let i = 0; i < state.contexts.length; ++i) {
+                if (column < state.contexts[i].rhsAlign) {
+                    state.contexts[i].rhsAlign = -1;
+                    state.contexts[i].eqLine = -1;
+                }
+                if (column < state.contexts[i].guardAlign) {
+                    state.contexts[i].guardAlign = -1;
+                }
+            }
         }
 
         // Create any new implicit contexts called for by layout rules.
@@ -252,7 +288,9 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                     column: column,
                     ln: state.line,
                     ch: column,
-                    guardAlign: -1
+                    guardAlign: -1,
+                    rhsAlign: -1,
+                    eqLine: -1
                 });
             }
         } else {
@@ -268,7 +306,9 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                     column: column,
                     ln: state.line,
                     ch: column,
-                    guardAlign: -1
+                    guardAlign: -1,
+                    rhsAlign: -1,
+                    eqLine: -1
                 });
             }
         }
@@ -330,6 +370,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         if (isLayout) {
             state.contexts = state.contexts.slice(0, layoutCtx + 1);
             state.contexts[state.contexts.length - 1].guardAlign = -1;
+            state.contexts[state.contexts.length - 1].rhsAlign = -1;
+            state.contexts[state.contexts.length - 1].eqLine = -1;
         }
 
         // Open new contexts for brackets.  These should be inside the
@@ -346,19 +388,23 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 }
             }
 
-            let parentCol = 0;
+            let newColumn = 0;
             if (state.contexts.length > 0) {
-                parentCol = state.contexts[state.contexts.length - 1].column;
+                const parent = state.contexts[state.contexts.length - 1]
+                if (parent.rhsAlign >= 0 && state.line !== parent.eqLine) newColumn = parent.rhsAlign;
+                else newColumn = parent.column + config.indentUnit;
             }
             state.contexts.push({
                 value: token,
-                column: parentCol + config.indentUnit,
+                column: newColumn,
                 ln: state.line,
                 ch: column,
                 functionName,
                 argIndex: 0,
                 fresh: true,
-                guardAlign: -1
+                guardAlign: -1,
+                rhsAlign: -1,
+                eqLine: -1,
             });
         }
 
@@ -389,6 +435,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                         ch: ctx.ch,
                         fresh: ctx.fresh,
                         guardAlign: ctx.guardAlign,
+                        rhsAlign: ctx.rhsAlign,
+                        eqLine: ctx.eqLine,
                         functionName: ctx.functionName,
                         argIndex: ctx.argIndex || 0
                     };
@@ -439,7 +487,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 if (!isBracket(state.contexts[topLayout])) --topLayout;
             }
 
-            const ctx = state.contexts[topLayout];
+            let ctx = state.contexts[topLayout];
 
             // Compute the rightmost surrounding layout column, which should be respected
             // by indent rules.
@@ -453,16 +501,17 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 minIndent = 0;
             }
 
+            let continued = state.continued;
             if (isBracket(ctx) && token && opening(token[0]) === ctx.value) {
                 // Close brackets should be aligned to the open bracket if the inside indent
-                // is always less than that. or the
-                // indent level inside.  However, if the parent is a layout context, they must
-                // be indented beyond the layout column.
+                // is always more than that.  Otherwise, they are indented like a continued
+                // line in the parent context.
 
-                let desiredIndent;
-                if (ctx.column <= ctx.ch) desiredIndent = parentColumn + config.indentUnit;
-                else desiredIndent = ctx.ch;
-                return Math.max(minIndent, desiredIndent);
+                if (ctx.column > ctx.ch) return Math.max(minIndent, ctx.ch);
+                if (topLayout == 0) return 0;
+
+                ctx = state.contexts[topLayout - 1];
+                continued = true;
             } else if (isBracket(ctx) && token && token[0] === ',') {
                 // In order to align elements, commas should be placed two columns to the left
                 // of the bracket's internal alignment, if possible.
@@ -470,7 +519,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 return Math.max(minIndent, ctx.column - 2);
             } else if (/^(where\b|[|]($|[^:!#$%&*+./<=>?@\\^|~-]+))/.test(textAfter)) {
                 if (textAfter.startsWith('|') && ctx.guardAlign >= 0) {
-                    // Guards should be aligned.
+                    // Guards should be aligned if there's an alignment set.
 
                     return Math.max(minIndent, ctx.guardAlign);
                 } else {
@@ -485,11 +534,14 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 // mistaking them for operators.
 
                 return ctx.column;
-            } else if (state.continued || RE_ELECTRIC_START.test(textAfter)) {
+            }
+
+            if (continued || RE_ELECTRIC_START.test(textAfter)) {
                 // This is a continuation line, because either the end of the last line or
                 // the beginning of this one are not suitable for this to be a new statement.
 
-                return ctx.column + config.indentUnit;
+                if (ctx.rhsAlign >= 0) return ctx.rhsAlign;
+                else return ctx.column + config.indentUnit;
             } else {
                 return ctx.column;
             }

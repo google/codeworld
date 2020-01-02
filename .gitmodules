@@ -4,4 +4,4 @@
 [submodule "ghcjs"]
   path = ghcjs
   url = https://github.com/ghcjs/ghcjs.git
-  branch = 8.6
+  branch = eeeb0cde48e093e278fc1a4f418b48a2d23aa08c

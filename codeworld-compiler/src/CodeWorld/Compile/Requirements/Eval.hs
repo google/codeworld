@@ -256,8 +256,6 @@ checkRule (Whitelist wl) = withParsedCode $ \m -> do
        | otherwise -> failure $ "The symbol `" ++ head notWhitelisted
            ++ "` is not whitelisted."
 
-checkRule _ = abort
-
 allDefinitionsOf :: String -> HsModule GhcPs -> [GRHSs GhcPs (LHsExpr GhcPs)]
 allDefinitionsOf a m = everything (++) (mkQ [] defs) m
   where defs :: HsBind GhcPs -> [GRHSs GhcPs (LHsExpr GhcPs)]

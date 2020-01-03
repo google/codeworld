@@ -1,4 +1,5 @@
 {-# LANGUAGE JavaScriptFFI #-}
+{-# LANGUAGE CPP #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -64,6 +65,8 @@ instance FromJSVal Type_ where
 toJSArray :: [Type_] -> JA.JSArray
 toJSArray tps = JA.fromList $ map (\(Type_ a) -> a) tps 
 
+#ifdef ghcjs_HOST_OS
+
 foreign import javascript unsafe "new Blockly.TypeExpr($1,$2)"
   js_createTypeExpr :: JSString -> JA.JSArray -> JSVal
 
@@ -78,3 +81,22 @@ foreign import javascript unsafe "Type.Func($1,$2)"
 
 foreign import javascript unsafe "Type.fromList($1)"
   js_fromList :: JA.JSArray -> Type_
+
+#else
+
+js_createTypeExpr :: JSString -> JA.JSArray -> JSVal
+js_createTypeExpr = error "GHCJS required"
+
+js_createVar :: JSString -> Type_
+js_createVar = error "GHCJS required"
+
+js_createLit :: JSString -> JA.JSArray -> Type_
+js_createLit = error "GHCJS required"
+
+js_createFunc :: Type_ -> Type_ -> Type_
+js_createFunc = error "GHCJS required"
+
+js_fromList :: JA.JSArray -> Type_
+js_fromList = error "GHCJS required"
+
+#endif

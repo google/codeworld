@@ -1,5 +1,6 @@
 -- {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CPP #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -21,35 +22,39 @@ module Main (
     main
 ) where
 
-import GHCJS.DOM
-       (currentDocument, )
-import GHCJS.DOM.NonElementParentNode
-import GHCJS.DOM.GlobalEventHandlers
+import Blockly.Block
+import Blockly.Event
+import Blockly.General
+import Blockly.Workspace hiding (workspaceToCode)
+import Blocks.CodeGen
+import Blocks.Parser
+import Blocks.Types
+import Control.Monad
+import Control.Monad.Fail (MonadFail)
+import Control.Monad.Trans (liftIO, lift)
+import Data.JSString.Text
+import Data.Monoid
+import GHCJS.DOM (currentDocument)
 import GHCJS.DOM.Document (getBody, Document(..))
 import GHCJS.DOM.Element (setInnerHTML, Element)
-import GHCJS.DOM.HTMLButtonElement
 import GHCJS.DOM.EventM (on)
+import GHCJS.DOM.GlobalEventHandlers
+import GHCJS.DOM.HTMLButtonElement
+import GHCJS.DOM.NonElementParentNode
 import GHCJS.DOM.Types
-import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
 import GHCJS.Marshal
-import Data.JSString.Text
+import GHCJS.Types
+import Prelude hiding (error)
 import qualified Data.JSString as JStr
 import qualified Data.Text as T
-import Control.Monad.Trans (liftIO, lift)
-import Blockly.Workspace hiding (workspaceToCode)
-import Blocks.Parser
-import Blocks.CodeGen
-import Blocks.Types
-import Blockly.Event
-import Blockly.General
-import Blockly.Block 
-import Data.Monoid 
-import Control.Monad
+import qualified GHCJS.Foreign.Callback as Callback
 
 pack = textToJSString
 unpack = textFromJSString
+
+#ifdef ghcjs_HOST_OS
 
 setErrorMessage msg = do
   Just doc <- liftIO currentDocument
@@ -118,7 +123,7 @@ help = do
       js_injectReadOnly (JStr.pack "blocklyDiv")
       liftIO setBlockTypes 
 
-funblocks = do 
+funblocks = do
       Just doc <- currentDocument 
       Just body <- getBody doc
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
@@ -135,10 +140,9 @@ funblocks = do
       -- when (T.length hash > 0) $ liftIO $ runOrError workspace
       return ()
 
-
 main = do
-  Just doc <- currentDocument 
-  mayTool <- getElementById doc "toolbox" 
+  Just doc <- currentDocument
+  mayTool <- getElementById doc "toolbox"
   case mayTool of
     Just _ -> funblocks
     Nothing -> help
@@ -159,15 +163,15 @@ setRunFunc ws = do
 
 -- call blockworld.js compile
 foreign import javascript unsafe "compile($1)"
-  js_cwcompile :: JSString -> IO ()
+  js_cwcompile :: JStr.JSString -> IO ()
 
 foreign import javascript unsafe "compile($1,true)"
-  js_cwcompilesilent :: JSString -> IO ()
+  js_cwcompilesilent :: JStr.JSString -> IO ()
 
 -- call blockworld.js run
 -- run (xmlHash, codeHash, msg, error)
 foreign import javascript unsafe "run()"
-  js_cwrun :: JSString -> JSString -> JSString -> Bool -> IO ()
+  js_cwrun :: JStr.JSString -> JStr.JSString -> JStr.JSString -> Bool -> IO ()
 
 -- call blockworld.js updateUI
 foreign import javascript unsafe "updateUI()"
@@ -178,10 +182,10 @@ foreign import javascript unsafe "run('','','',false)"
   js_stop :: IO ()
 
 foreign import javascript unsafe "run('','',$1,true)"
-  js_stopErr :: JSString -> IO ()
+  js_stopErr :: JStr.JSString -> IO ()
 
 foreign import javascript unsafe "updateEditor($1)"
-  js_updateEditor :: JSString -> IO ()
+  js_updateEditor :: JStr.JSString -> IO ()
 
 foreign import javascript unsafe "setTimeout(removeErrors,5000)"
   js_removeErrorsDelay :: IO ()
@@ -193,7 +197,48 @@ foreign import javascript unsafe "window.mainLayout.open('east')"
   js_openEast :: IO ()
 
 foreign import javascript unsafe "Blockly.inject($1, {});"
-  js_injectReadOnly :: JSString -> IO Workspace
+  js_injectReadOnly :: JStr.JSString -> IO Workspace
 
 foreign import javascript unsafe "runFunc = $1"
-  js_setRunFunc :: Callback a -> IO ()
+  js_setRunFunc :: Callback.Callback a -> IO ()
+
+#else
+main = undefined
+
+js_cwcompile :: JStr.JSString -> IO ()
+js_cwcompile = undefined
+
+js_cwcompilesilent :: JStr.JSString -> IO ()
+js_cwcompilesilent = undefined
+
+js_cwrun :: JStr.JSString -> JStr.JSString -> JStr.JSString -> Bool -> IO ()
+js_cwrun = undefined
+
+js_updateUI :: IO ()
+js_updateUI = undefined
+
+js_stop :: IO ()
+js_stop = undefined
+
+js_stopErr :: JStr.JSString -> IO ()
+js_stopErr = undefined
+
+js_updateEditor :: JStr.JSString -> IO ()
+js_updateEditor = undefined
+
+js_removeErrorsDelay :: IO ()
+js_removeErrorsDelay = undefined
+
+js_showEast :: IO ()
+js_showEast = undefined
+
+js_openEast :: IO ()
+js_openEast = undefined
+
+js_injectReadOnly :: JStr.JSString -> IO Workspace
+js_injectReadOnly = undefined
+
+js_setRunFunc :: Callback.Callback a -> IO ()
+js_setRunFunc = undefined
+
+#endif

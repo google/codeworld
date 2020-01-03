@@ -9,5 +9,4 @@ packages:
   codeworld-prediction/
   codeworld-server/
   codeworld-base/
-  -- fix compilation without ghcjs
-  -- funblocks-client/
+  funblocks-client/

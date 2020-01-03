@@ -1,4 +1,5 @@
 {-# LANGUAGE ForeignFunctionInterface, JavaScriptFFI, OverloadedStrings, ScopedTypeVariables #-}
+{-# LANGUAGE CPP #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -202,9 +203,18 @@ blockIf block = do
     return $ If ifexpr thenexpr elseexpr
 
 
+#ifdef ghcjs_HOST_OS
+
 -- Let function block with parameters
 foreign import javascript unsafe "$1.arguments_"
   js_funcargs :: Block -> JA.JSArray
+
+#else
+
+js_funcargs :: Block -> JA.JSArray
+js_funcargs = error "GHCJS required"
+
+#endif
 
 blockLetFunc :: ParserFunction
 blockLetFunc block = do 
@@ -312,6 +322,8 @@ blockNumGenStep block = do
     return $ ListSpecStep left next right
 
 -- LIST COMPREHENSION
+#ifdef ghcjs_HOST_OS
+
 foreign import javascript unsafe "$1.varCount_"
   js_blockVarCount :: Block -> Int
 
@@ -320,6 +332,19 @@ foreign import javascript unsafe "$1.guardCount_"
 
 foreign import javascript unsafe "$1.vars_"
   js_blockVars :: Block -> JA.JSArray
+
+#else
+
+js_blockVarCount :: Block -> Int
+js_blockVarCount = error "GHCJS required"
+
+js_blockGuardCount :: Block -> Int
+js_blockGuardCount = error "GHCJS required"
+
+js_blockVars :: Block -> JA.JSArray
+js_blockVars = error "GHCJS required"
+
+#endif
 
 -- ListComp Expr [(T.Text,Expr)] [Expr] -- [action | var <- expr, var <- expr, guards]
 blockListComp :: ParserFunction
@@ -337,8 +362,17 @@ blockListComp block = do
 
 -- TYPES
 
+#ifdef ghcjs_HOST_OS
+
 foreign import javascript unsafe "$1.itemCount_"
   js_itemCount :: Block -> Int
+
+#else
+
+js_itemCount :: Block -> Int
+js_itemCount = error "GHCJS required"
+
+#endif
 
 blockUserType :: ParserFunction
 blockUserType block = do 
@@ -383,11 +417,23 @@ blockSum block = do
 
 -- CASE
 
+#ifdef ghcjs_HOST_OS
+
 foreign import javascript unsafe "$1.getInputVars($2)"
   js_getCaseInputVars :: Block -> Int -> JA.JSArray
 
 foreign import javascript unsafe "$1.getInputConstructor($2)"
   js_getCaseInputConstructor :: Block -> Int -> JSString
+
+#else
+
+js_getCaseInputVars :: Block -> Int -> JA.JSArray
+js_getCaseInputVars = error "GHCJS required"
+
+js_getCaseInputConstructor :: Block -> Int -> JSString
+js_getCaseInputConstructor = error "GHCJS required"
+
+#endif
 
 blockCase:: ParserFunction
 blockCase block = do 

@@ -1,6 +1,6 @@
 # https://docs.haskellstack.org/en/stable/travis_ci/
 
-sudo: false
+sudo: enabled
 dist: bionic
 language: generic
 cache:
@@ -121,6 +121,12 @@ jobs:
         - PACKAGE="codeworld-server"
         - JOB=11
       script: *upgrade_stack
+    - stage: upgrade_stack
+      name: "Funblocks Client (with ghcjs-base-stub)"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
+      script: *upgrade_stack
     - stage: build_some_dependencies
       name: "Build some dependencies"
       name: "root"
@@ -136,7 +142,7 @@ jobs:
         - hash -r
         - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - |
-          stack build \
+          travis_wait 30 stack build --fast \
             base-compat \
             base-compat-batteries \
             basement \
@@ -146,9 +152,17 @@ jobs:
             hashable \
             haskell-src-exts \
             lens \
+            transformers \
             network \
             old-time \
             sqlite-simple
+        - sudo fallocate -l 4G /swapfile
+        - sudo chmod 600 /swapfile
+        - sudo mkswap /swapfile
+        - sudo swapon /swapfile
+        - sudo sysctl vm.swappiness=90
+        - travis_wait 30 stack build -j1 --fast jsaddle-dom
+        - sudo swapoff -a
     - stage: build_some_dependencies
       name: "Account"
       env:
@@ -208,6 +222,12 @@ jobs:
       env:
         - PACKAGE="codeworld-server"
         - JOB=11
+      script: *build_some_dependencies
+    - stage: build_some_dependencies
+      name: "Funblocks Client (with ghcjs-base-stub)"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
       script: *build_some_dependencies
     - stage: build_dependencies
       name: "Build dependencies"
@@ -222,9 +242,8 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - stack clean --full
-        - stack build --dependencies-only
+        - travis_retry eval $"stack setup --reinstall ; sleep 10" # - stack clean --full
+        - travis_wait 30 stack build --fast --dependencies-only
     - stage: build_dependencies
       name: "Account"
       env:
@@ -284,6 +303,12 @@ jobs:
       env:
         - PACKAGE="codeworld-server"
         - JOB=11
+      script: *build_dependencies
+    - stage: build_dependencies
+      name: "Funblocks Client (with ghcjs-base-stub)"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
       script: *build_dependencies
     - stage: build
       name: "root"
@@ -298,7 +323,7 @@ jobs:
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
         - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - stack build $PACKAGE # --ghc-options="-dynamic"
+        - travis_wait 30 stack build --fast $PACKAGE # --ghc-options="-dynamic"
     - stage: build
       name: "Account"
       env:
@@ -358,6 +383,12 @@ jobs:
       env:
         - PACKAGE="codeworld-server"
         - JOB=11
+      script: *build
+    - stage: build
+      name: "Funblocks Client (with ghcjs-base-stub)"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
       script: *build
     # - stage: Test
     #   name: "root"
@@ -378,7 +409,7 @@ jobs:
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
         - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - stack test $PACKAGE
+        - stack test --fast $PACKAGE
     - stage: test
       name: "API"
       env:
@@ -433,6 +464,12 @@ jobs:
         - PACKAGE="codeworld-server"
         - JOB=11
       script: *test
+    # - stage: test
+    #   name: "Funblocks Client (with ghcjs-base-stub)"
+    #   env:
+    #     - PACKAGE="funblocks-client"
+    #     - JOB=12
+    #   script: *test
     - stage: build_ghcjs_dependencies
       name: "API"
       env:
@@ -654,11 +691,12 @@ jobs:
         - PACKAGE="codeworld-prediction"
         - JOB=10
       script: *build_with_ghcjs_dependencies
-    # succeeds, but can't be build yet without GHCJS and therefore omitted from cabal.project` file
-    # - stage: build_with_ghcjs_dependencies
-    #   name: "Funblocks-client (with ghcjs)"
-    #   env: PACKAGE="funblocks-client"
-    #   script: *build_with_ghcjs_dependencies
+    - stage: build_with_ghcjs_dependencies
+      name: "Funblocks Client (with ghcjs)"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
+      script: *build_with_ghcjs_dependencies
     - stage: build_with_ghcjs
       name: "API (with ghcjs)"
       env:
@@ -703,11 +741,12 @@ jobs:
         - PACKAGE="codeworld-prediction"
         - JOB=10
       script: *build_with_ghcjs
-    # succeeds, but can't be build yet without GHCJS and therefore omitted from cabal.project` file
-    # - stage: Build_with_GHCJS`
-    #   name: "Funblocks-client (with ghcjs)"
-    #   env: PACKAGE="funblocks-client"
-    #   script: *build_with_ghcjs
+    - stage: build_with_ghcjs
+      name: "Funblocks Client (with ghcjs)"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
+      script: *build_with_ghcjs
     - stage: test_with_ghcjs
       name: "API (with ghcjs)"
       env:
@@ -746,8 +785,9 @@ jobs:
         - PACKAGE="codeworld-prediction"
         - JOB=10
       script: *test_with_ghcjs
-    # succeeds, but can't be build yet without GHCJS and therefore omitted from cabal.project file
-    # - stage: test_with_GHCJS
-    #   name: "Funblocks-client (with ghcjs)"
-    #   env: PACKAGE="funblocks-client"
+    # - stage: test_with_ghcjs
+    #   name: "Funblocks Client (with ghcjs)"
+    #   env:
+    #     - PACKAGE="funblocks-client"
+    #     - JOB=12
     #   script: *test_with_ghcjs

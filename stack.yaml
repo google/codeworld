@@ -1,4 +1,4 @@
-resolver: lts-14.11
+resolver: lts-14.19
 
 packages: 
   - codeworld-account
@@ -11,8 +11,7 @@ packages:
   - codeworld-prediction
   - codeworld-server
   - codeworld-base
-  # can't compile this without GHCJS
-  # - funblocks-client
+  - funblocks-client
 
 allow-newer: false
   
@@ -25,8 +24,12 @@ extra-deps:
   - dependent-sum-0.6.1
   - ghc-lib-parser-8.8.1
   - ghcjs-base-stub-0.3.0.2
+  - ghcjs-dom-0.9.4.0
+  - ghcjs-dom-jsaddle-0.9.4.0
   - haskell-src-exts-1.20.3
   - hpc-0.6.0.3
+  - jsaddle-0.9.6.0
+  - jsaddle-dom-0.9.3.2
   - kansas-comet-0.4
   - monoidal-containers-0.6
   - network-2.6.3.6

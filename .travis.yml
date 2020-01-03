@@ -604,15 +604,15 @@ jobs:
         - PACKAGE="codeworld-api"
         - JOB=3
       script: &boot_ghcjs
-        - sleep $(((JOB - 1) * 10))
+        - sleep $(((JOB - 1) * 1))
         - travis_retry sudo add-apt-repository --yes ppa:hvr/ghc
-        - travis_retry eval $"sudo apt-get update ; sleep 10"
-        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 10"
+        - travis_retry eval $"sudo apt-get update ; sleep 1"
+        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 1"
         - export PATH=$HOME/.local/bin:$PATH
-        - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
+        - travis_retry eval $"stack upgrade --binary-only ; sleep 1"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
+        - travis_retry eval $"stack setup --reinstall ; sleep 1"
+        - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 1"
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
         - export
@@ -627,7 +627,7 @@ jobs:
         - travis_retry git submodule update --init --recursive
         - ./utils/makePackages.sh
         - ghcjs --version
-        - ghcjs-boot -j 2 -s $TRAVIS_BUILD_DIR/ghcjs/lib/boot --no-haddock --no-prof
+        - ghcjs-boot --verbosity 0 -j 2 -s $TRAVIS_BUILD_DIR/ghcjs/lib/boot --no-haddock --no-prof
         - cabal --ghcjs --version
     - stage: boot_ghcjs
       name: "Base"

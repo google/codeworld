@@ -51,16 +51,17 @@ jobs:
         - JOB=1
       script: &upgrade_stack
         - sleep $(((JOB - 1) * 20))
+        - travis_retry sudo add-apt-repository --yes ppa:hvr/ghc
         - travis_retry eval $"sudo apt-get update ; sleep 10"
-        - travis_retry eval $"sudo apt-get install --yes libgmp-dev haskell-stack ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 10"
         - export DIR=~/.local/bin
         - if [ ! -d "$DIR" ]; then mkdir -p ~/.local/bin; fi
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10"
+        # - travis_retry eval $"stack setup --reinstall ; sleep 10"
         - stack --version
-        - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
+        - travis_retry eval $"stack install --system-ghc --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
     - stage: upgrade_stack
       name: "Account"
       env:
@@ -135,14 +136,20 @@ jobs:
         - JOB=1
       script: &build_some_dependencies
         - sleep $(((JOB - 1) * 20))
+        - travis_retry sudo add-apt-repository --yes ppa:hvr/ghc
         - travis_retry eval $"sudo apt-get update ; sleep 10"
-        - travis_retry eval $"sudo apt-get install --yes libgmp-dev haskell-stack ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10"
+        # - travis_retry eval $"stack setup --reinstall ; sleep 10"
+        - sudo fallocate -l 4G /swapfile
+        - sudo chmod 600 /swapfile
+        - sudo mkswap /swapfile
+        - sudo swapon /swapfile
+        - sudo sysctl vm.swappiness=10
         - |
-          travis_wait 30 stack build --fast \
+          travis_wait 30 stack build --system-ghc --fast \
             base-compat \
             base-compat-batteries \
             basement \
@@ -156,12 +163,7 @@ jobs:
             network \
             old-time \
             sqlite-simple
-        - sudo fallocate -l 4G /swapfile
-        - sudo chmod 600 /swapfile
-        - sudo mkswap /swapfile
-        - sudo swapon /swapfile
-        - sudo sysctl vm.swappiness=90
-        - travis_wait 30 stack build -j1 --fast jsaddle-dom
+        - travis_wait 30 stack build --system-ghc -j1 --fast jsaddle-dom
         - sudo swapoff -a
     - stage: build_some_dependencies
       name: "Account"
@@ -237,13 +239,20 @@ jobs:
         - JOB=1
       script: &build_dependencies
         - sleep $(((JOB - 1) * 20))
+        - travis_retry sudo add-apt-repository --yes ppa:hvr/ghc
         - travis_retry eval $"sudo apt-get update ; sleep 10"
-        - travis_retry eval $"sudo apt-get install --yes libgmp-dev haskell-stack ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10" # - stack clean --full
-        - travis_wait 30 stack build --fast --dependencies-only
+        # - travis_retry eval $"stack setup --reinstall ; sleep 10" # - stack clean --full
+        - sudo fallocate -l 4G /swapfile
+        - sudo chmod 600 /swapfile
+        - sudo mkswap /swapfile
+        - sudo swapon /swapfile
+        - sudo sysctl vm.swappiness=10
+        - travis_wait 30 stack build --system-ghc --fast --dependencies-only
+        - sudo swapoff -a
     - stage: build_dependencies
       name: "Account"
       env:
@@ -317,13 +326,20 @@ jobs:
         - JOB=1
       script: &build
         - sleep $(((JOB - 1) * 20))
+        - travis_retry sudo add-apt-repository --yes ppa:hvr/ghc
         - travis_retry eval $"sudo apt-get update ; sleep 10"
-        - travis_retry eval $"sudo apt-get install --yes libgmp-dev haskell-stack ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - travis_wait 30 stack build --fast $PACKAGE # --ghc-options="-dynamic"
+        # - travis_retry eval $"stack setup --reinstall ; sleep 10"
+        - sudo fallocate -l 4G /swapfile
+        - sudo chmod 600 /swapfile
+        - sudo mkswap /swapfile
+        - sudo swapon /swapfile
+        - sudo sysctl vm.swappiness=10
+        - travis_wait 30 stack build --system-ghc --fast $PACKAGE # --ghc-options="-dynamic"
+        - sudo swapoff -a
     - stage: build
       name: "Account"
       env:
@@ -403,13 +419,20 @@ jobs:
         - JOB=2
       script: &test
         - sleep $(((JOB - 1) * 20))
+        - travis_retry sudo add-apt-repository --yes ppa:hvr/ghc
         - travis_retry eval $"sudo apt-get update ; sleep 10"
-        - travis_retry eval $"sudo apt-get install --yes libgmp-dev haskell-stack ; sleep 10"
+        - travis_retry eval $"sudo apt-get install --yes build-essential cabal-install-2.4 ghc-8.6.5 libgmp-dev haskell-stack ; sleep 10"
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10"
+        # - travis_retry eval $"stack setup --reinstall ; sleep 10"
+        - sudo fallocate -l 4G /swapfile
+        - sudo chmod 600 /swapfile
+        - sudo mkswap /swapfile
+        - sudo swapon /swapfile
+        - sudo sysctl vm.swappiness=10
         - stack test --fast $PACKAGE
+        - sudo swapoff -a
     - stage: test
       name: "API"
       env:
@@ -483,8 +506,8 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
+        # - travis_retry eval $"stack setup --reinstall ; sleep 10"
+        - travis_retry eval $"stack install --system-ghc --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
         - export
@@ -525,8 +548,8 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
+        # - travis_retry eval $"stack setup --reinstall ; sleep 10"
+        - travis_retry eval $"stack install --system-ghc --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
         - export
@@ -565,8 +588,8 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
+        # - travis_retry eval $"stack setup --reinstall ; sleep 10"
+        - travis_retry eval $"stack install --system-ghc --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
         - export
@@ -611,8 +634,8 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 1"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 1"
-        - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 1"
+        # - travis_retry eval $"stack setup --reinstall ; sleep 1"
+        - travis_retry eval $"stack install --system-ghc --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 1"
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
         - export
@@ -660,8 +683,8 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
+        # - travis_retry eval $"stack setup --reinstall ; sleep 10"
+        - travis_retry eval $"stack install --system-ghc --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
         - export
@@ -710,8 +733,8 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
+        # - travis_retry eval $"stack setup --reinstall ; sleep 10"
+        - travis_retry eval $"stack install --system-ghc --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
         - export
@@ -760,8 +783,8 @@ jobs:
         - export PATH=$HOME/.local/bin:$PATH
         - travis_retry eval $"stack upgrade --binary-only ; sleep 10"
         - hash -r
-        - travis_retry eval $"stack setup --reinstall ; sleep 10"
-        - travis_retry eval $"stack install --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
+        # - travis_retry eval $"stack setup --reinstall ; sleep 10"
+        - travis_retry eval $"stack install --system-ghc --resolver lts-14.11 happy-1.19.9 alex-3.2.4 ; sleep 10"
         - nvm install 10
         - export PATH=$PWD/.cabal-sandbox/bin:$HOME/.cabal/bin:/opt/ghc/8.6.5/bin:/opt/cabal/2.4/bin:$PATH
         - export

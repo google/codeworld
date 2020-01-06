@@ -65,7 +65,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
     //                 ln: line at which the context started
     //                 ch: column at which the context started
     //                 fresh: for brackets, indicates alignment is undecided
-    //                 guardAlign: column to indent guards, or -1
+    //                 guardCol: column to align '|' characters for guards, or -1
+    //                 guardAlign: column to align guards after '|' characters, or -1
     //                 eqLine: Line number for the latest equal sign
     //                 rhsAlign: column to indent equation right-hand side, or -1
     //                 functionName: string (optional)
@@ -243,8 +244,16 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 ctx.column = Math.min(ctx.column, column);
             }
 
-            if (ctx.guardAlign === -1 && token === '|') {
-                ctx.guardAlign = column;
+            if (ctx.guardAlign === -1 && ctx.guardCol >= 0) {
+                let target = column;
+                for (let i = state.contexts.length - 1; i >= 0; --i) {
+                    if (ctx.guardAlign === -1) ctx.guardAlign = target;
+                    target = Math.min(target, ctx.ch, ctx.column);
+                }
+            }
+
+            if (ctx.guardCol === -1 && token === '|') {
+                ctx.guardCol = column;
             }
 
             if (ctx.rhsAlign === -1 && ctx.eqLine >= 0) {
@@ -275,7 +284,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                     state.contexts[i].rhsAlign = -1;
                     state.contexts[i].eqLine = -1;
                 }
-                if (column < state.contexts[i].guardAlign) {
+                if (column < state.contexts[i].guardCol) {
+                    state.contexts[i].guardCol = -1;
                     state.contexts[i].guardAlign = -1;
                 }
             }
@@ -289,6 +299,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                     column: column,
                     ln: state.line,
                     ch: column,
+                    guardCol: -1,
                     guardAlign: -1,
                     rhsAlign: -1,
                     eqLine: -1
@@ -307,6 +318,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                     column: column,
                     ln: state.line,
                     ch: column,
+                    guardCol: -1,
                     guardAlign: -1,
                     rhsAlign: -1,
                     eqLine: -1
@@ -370,6 +382,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         const isLayout = layoutCtx >= 0 && !isBracket(state.contexts[layoutCtx]);
         if (isLayout) {
             state.contexts = state.contexts.slice(0, layoutCtx + 1);
+            state.contexts[state.contexts.length - 1].guardCol = -1;
             state.contexts[state.contexts.length - 1].guardAlign = -1;
             state.contexts[state.contexts.length - 1].rhsAlign = -1;
             state.contexts[state.contexts.length - 1].eqLine = -1;
@@ -403,6 +416,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 functionName,
                 argIndex: 0,
                 fresh: true,
+                guardCol: -1,
                 guardAlign: -1,
                 rhsAlign: -1,
                 eqLine: -1,
@@ -435,6 +449,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                         ln: ctx.ln,
                         ch: ctx.ch,
                         fresh: ctx.fresh,
+                        guardCol: ctx.guardCol,
                         guardAlign: ctx.guardAlign,
                         rhsAlign: ctx.rhsAlign,
                         eqLine: ctx.eqLine,
@@ -471,8 +486,11 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             const token = textAfter.match(/^(in\b|where\b|[,)\]}])/);
 
             if (token && token[0] === ',') {
-                // Commas close all non-bracket contexts, by rule 5
-                while (topLayout > 0 && !isBracket(state.contexts[topLayout])) {
+                // By rule 5, commas close all non-bracket contexts unless they occur in a guard.
+                while (topLayout > 0 &&
+                       !isBracket(state.contexts[topLayout]) &&
+                       (state.contexts[topLayout].guardCol === -1 ||
+                        state.contexts[topLayout].eqLine !== -1)) {
                     --topLayout;
                 }
             } else if (token && token[0] === 'where') {
@@ -517,12 +535,16 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 // In order to align elements, commas should be placed two columns to the left
                 // of the bracket's internal alignment, if possible.
 
-                return Math.max(minIndent, ctx.column - 2);
+                let gap;
+                if (textAfter === ',') gap = 2;
+                else gap = /^,\s*/.exec(textAfter)[0].length;
+
+                return Math.max(minIndent, ctx.column - gap);
             } else if (/^(where\b|[|]($|[^:!#$%&*+./<=>?@\\^|~-]+))/.test(textAfter)) {
-                if (textAfter.startsWith('|') && ctx.guardAlign >= 0) {
+                if (textAfter.startsWith('|') && ctx.guardCol >= 0) {
                     // Guards should be aligned if there's an alignment set.
 
-                    return Math.max(minIndent, ctx.guardAlign);
+                    return Math.max(minIndent, ctx.guardCol);
                 } else {
                     // Guards and where clauses are indented a half-indent beyond the parent
                     // context.  This is reasonably common, and helps them stand out from wrapped
@@ -537,13 +559,15 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 return ctx.column;
             }
 
-            const mustContinue = RE_ELECTRIC_START.test(textAfter) &&
-                !RE_NEGATIVE_NUM.test(textAfter);
+            const mustContinue =
+                (RE_ELECTRIC_START.test(textAfter) && !RE_NEGATIVE_NUM.test(textAfter)) ||
+                (state.lastTokens.slice(-1).join('') === ',' && ctx.guardAlign >= 0);
             if (continued || mustContinue) {
                 // This is a continuation line, because either the end of the last line or
                 // the beginning of this one are not suitable for this to be a new statement.
 
                 if (ctx.rhsAlign >= 0) return ctx.rhsAlign;
+                else if (ctx.guardAlign >= 0) return ctx.guardAlign;
                 else return ctx.column + config.indentUnit;
             } else {
                 return ctx.column;

@@ -230,7 +230,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         }
 
         // Update alignment columns for the innermost context.
-        if (state.contexts.length > 0) {
+        if (state.contexts.length > 0 && token !== ',') {
             const openBracket = RE_OPENBRACKET.test(token);
             const ctx = state.contexts[state.contexts.length - 1];
 

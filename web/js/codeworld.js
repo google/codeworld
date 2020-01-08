@@ -807,7 +807,7 @@ function formatSource() {
                 line: lineNum,
                 ch: Math.min(lineText.length, /^[\s]*/.exec(lineText)[0].length + 1)
             };
-            const token = codeworldEditor.getTokenAt(pos, true);
+            const token = window.codeworldEditor.getTokenAt(pos, true);
             if (token.type === 'comment') return -1;
 
             const isItem = (token.type || '').split(' ').indexOf('layout') >= 0;
@@ -825,6 +825,7 @@ function formatSource() {
         for (let line = 0; line < codeworldEditor.getDoc().lineCount(); ++line) {
             if (oldLevel[line] === -1) continue;
 
+            getLevel(line);  // Forces an update to the token state.
             window.codeworldEditor.indentLine(line);
             while (getLevel(line) > oldLevel[line]) {
                 const {prev, smart} = getIndentsAt(line, 'subtract');

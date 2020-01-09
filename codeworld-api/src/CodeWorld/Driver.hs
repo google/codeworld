@@ -10,6 +10,7 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE JavaScriptFFI #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
@@ -43,6 +44,7 @@ import CodeWorld.Color
 import CodeWorld.DrawState
 import CodeWorld.Event
 import CodeWorld.Picture
+import Control.Applicative (liftA2)
 import Control.Concurrent
 import Control.Exception
 import Control.Monad
@@ -1772,15 +1774,13 @@ runReactiveProgram
     -> m (R.Dynamic t Picture, R.Dynamic t Picture)
 runReactiveProgram (ReactiveProgram program) input = do
     ((), output) <- R.runDynamicWriterT (runReaderT program input)
-    return $ R.splitDynPure $ do
-        pics <- userPictures <$> output
-        let userPicture = case pics of
-                []  -> blank
-                [p] -> p
-                ps  -> pictures ps
-        tform <- userTransform <$> output
-        sysPic <- systemPicture <$> output
-        return (userPicture, sysPic & tform userPicture)
+    let userPicture = R.ffor (userPictures <$> output) $ \case
+          [] -> blank
+          [p] -> p
+          ps -> pictures ps
+        tform = userTransform <$> output
+        sysPic = systemPicture <$> output
+    return (userPicture, liftA2 (&) sysPic (tform <*> userPicture))
 
 withReactiveInput
     :: ReactiveInput t

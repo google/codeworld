@@ -1771,16 +1771,14 @@ runReactiveProgram
     -> ReactiveInput t
     -> m (R.Dynamic t Picture, R.Dynamic t Picture)
 runReactiveProgram (ReactiveProgram program) input = do
-    ((), output) <- R.runDynamicWriterT (runReaderT program input)
-    return $ R.splitDynPure $ do
-        pics <- userPictures <$> output
-        let userPicture = case pics of
-                []  -> blank
-                [p] -> p
-                ps  -> pictures ps
-        tform <- userTransform <$> output
-        sysPic <- systemPicture <$> output
-        return (userPicture, sysPic & tform userPicture)
+    (_, output) <- R.runDynamicWriterT (runReaderT program input)
+    let pic = coalescePics <$> userPictures <$> output
+    let sysPic = (&) <$> (systemPicture <$> output)
+                     <*> (userTransform <$> output <*> pic)
+    return (pic, sysPic)
+  where coalescePics []  = blank
+        coalescePics [p] = p
+        coalescePics ps  = pictures ps
 
 withReactiveInput
     :: ReactiveInput t
@@ -1846,10 +1844,6 @@ instance (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
     getTimePassing = ReactiveProgram $ asks timePassing
 
     draw = ReactiveProgram . R.tellDyn . fmap (\a -> mempty { userPictures = [a] })
-
-splitDyn :: forall t a. R.Reflex t => R.Dynamic t (a -> Bool) -> R.Event t a -> (R.Event t a, R.Event t a)
-splitDyn predicate e = R.fanEither $ R.attachPromptlyDynWith f predicate e
-  where f pred val = if pred val then Right val else Left val
 
 gateDyn :: forall t a. R.Reflex t => R.Dynamic t Bool -> R.Event t a -> R.Event t a
 gateDyn dyn e = R.switchDyn (bool R.never e <$> dyn)

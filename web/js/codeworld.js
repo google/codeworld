@@ -355,23 +355,25 @@ function initCodeworld() {
         window.updateUI();
     });
 
-    window.codeworldEditor.on('cursorActivity', () => {
-        if (window.codeworldEditor.getDoc().somethingSelected()) {
-            window.codeworldEditor.setOption('electricChars', false);
-            window.codeworldEditor.setOption('electricIndentLine', -1);
-            return;
-        }
+    if (window.buildMode === 'codeworld') {
+        window.codeworldEditor.on('cursorActivity', () => {
+            if (window.codeworldEditor.getDoc().somethingSelected()) {
+                window.codeworldEditor.setOption('electricChars', false);
+                window.codeworldEditor.setOption('electricIndentLine', -1);
+                return;
+            }
 
-        const active = window.codeworldEditor.getOption('electricChars');
-        const oldLine = window.codeworldEditor.getOption('electricIndentLine') || 0;
-        const line = window.codeworldEditor.getDoc().getCursor().line;
+            const active = window.codeworldEditor.getOption('electricChars');
+            const oldLine = window.codeworldEditor.getOption('electricIndentLine') || 0;
+            const line = window.codeworldEditor.getDoc().getCursor().line;
 
-        if (active || line !== oldLine) {
-            const {prev, smart} = getIndentsAt(line, 'smart');
-            window.codeworldEditor.setOption('electricChars', prev === smart);
-            window.codeworldEditor.setOption('electricIndentLine', line);
-        }
-    });
+            if (active || line !== oldLine) {
+                const {prev, smart} = getIndentsAt(line, 'smart');
+                window.codeworldEditor.setOption('electricChars', prev === smart);
+                window.codeworldEditor.setOption('electricIndentLine', line);
+            }
+        });
+    }
 
     window.onbeforeunload = event => {
         if (!isEditorClean()) {

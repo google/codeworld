@@ -125,7 +125,7 @@ This activity has both an x and y coordinate as state.
 program                           = activityOf(initial, change, picture)
 initial(rs)                       = (0, 0)
 change(point, PointerPress(x, y)) = (x, y)
-change(point, other)              = p
+change(point, other)              = point
 picture(x, y)                     = translated(rectangle(1, 1), x, y)
 ~~~~~
 

@@ -63,7 +63,6 @@ import Text.Regex.TDFA.Text
 formatDiagnostics :: MonadCompile m => m Text
 formatDiagnostics = do
   diags <- gets compileErrors
-  liftIO $ print diags
   let (local, remote) = partition inMainModule diags
   let remoteErrorFiles =
         [ srcSpanFilename (srcInfoSpan loc)

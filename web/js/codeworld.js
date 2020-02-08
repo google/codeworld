@@ -229,6 +229,12 @@ function initCodeworld() {
             callback: cm => saveProject()
         },
         {
+            class: 'cw-toolbar-button mdi mdi-backup-restore',
+            label: '',
+            title: 'Auto Save',
+            callback: cm => toggleAutoSave()
+        },
+        {
             class: 'cw-toolbar-button mdi mdi-file-find',
             label: '',
             title: 'Search',
@@ -1160,6 +1166,29 @@ function signinCallback(result) {
     isFirstSignin = false;
 }
 
+function toggleAutoSave() {
+    function autosave () {
+        const doc = window.codeworldEditor.getDoc();
+        if (window.saveID && doc.isClean(window.saveID)) return false; // No changes have occured since last save.
+        saveProject();
+    }
+
+    if (window.AUTOSAVE) {
+        clearInterval(window.autosaveIntervalID);
+        window.AUTOSAVE = false;
+        document.getElementsByClassName("mdi-backup-restore")[0].style.color = "var(--cw-toolbar-button)"
+    } else {
+        window.AUTOSAVE = true;
+        autosave();
+        document.getElementsByClassName("mdi-backup-restore")[0].style.color = "var(--cw-toolbar-button-hover)"
+        window.autosaveIntervalID = setInterval(autosave, 15000); // schedule autoSave after every 10 seconds.
+    }
+}
+
+function saveCallback() {
+    
+}
+
 function saveProject() {
     function successFunc() {
         const selected = $('#directoryTree').tree('getSelectedNode');
@@ -1169,6 +1198,9 @@ function saveProject() {
         const doc = window.codeworldEditor.getDoc();
         window.savedGeneration = doc.changeGeneration(true);
         window.codeworldEditor.focus();
+        window.saveID = doc.changeGeneration();
+        window.saveTimestamp = Date.now();
+        saveCallback();
     }
     if (window.openProjectName) {
         saveProjectBase(
@@ -1187,6 +1219,9 @@ function saveProjectAs() {
         const doc = window.codeworldEditor.getDoc();
         window.savedGeneration = doc.changeGeneration(true);
         window.codeworldEditor.focus();
+        window.saveID = doc.changeGeneration();
+        window.saveTimestamp = Date.now();
+        if (window.AUTOSAVE) autosaveCallback();
     }
     saveProjectAsBase(successFunc);
 }

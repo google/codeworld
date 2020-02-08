@@ -1048,16 +1048,18 @@ function saveProjectBase(path, projectName, mode, successFunc) {
     if (!projectName) return;
 
     function go() {
-        sweetAlert({
-            title: Alert.title(`Saving ${projectName} ...`),
-            text: 'Saving your project.  Please wait.',
-            showConfirmButton: false,
-            showCancelButton: false,
-            showCloseButton: false,
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            allowEnterKey: false
-        });
+        if (!window.AUTOSAVE) {
+            sweetAlert({
+                title: Alert.title(`Saving ${projectName} ...`),
+                text: 'Saving your project.  Please wait.',
+                showConfirmButton: false,
+                showCancelButton: false,
+                showCloseButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                allowEnterKey: false
+            });
+        }
 
         const project = getCurrentProject();
         project['name'] = projectName;
@@ -1069,7 +1071,7 @@ function saveProjectBase(path, projectName, mode, successFunc) {
 
         sendHttp('POST', 'saveProject', data, request => {
             sweetAlert.close();
-            if (request.status !== 200) {
+            if (request.status !== 200 && !window.AUTOSAVE) {
                 sweetAlert('Oops!',
                     'Could not save your project!!!  Please try again.',
                     'error');

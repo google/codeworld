@@ -1186,7 +1186,7 @@ function toggleAutoSave() {
 }
 
 function saveCallback() {
-    
+    document.getElementsByClassName("saveInfo")[0].innerText = `Last Saved Today at ${window.saveTimestamp.getHours()}:${window.saveTimestamp.getMinutes()}`;
 }
 
 function saveProject() {
@@ -1199,7 +1199,7 @@ function saveProject() {
         window.savedGeneration = doc.changeGeneration(true);
         window.codeworldEditor.focus();
         window.saveID = doc.changeGeneration();
-        window.saveTimestamp = Date.now();
+        window.saveTimestamp = new Date();
         saveCallback();
     }
     if (window.openProjectName) {
@@ -1221,7 +1221,7 @@ function saveProjectAs() {
         window.codeworldEditor.focus();
         window.saveID = doc.changeGeneration();
         window.saveTimestamp = Date.now();
-        if (window.AUTOSAVE) autosaveCallback();
+        if (window.AUTOSAVE) saveCallback();
     }
     saveProjectAsBase(successFunc);
 }

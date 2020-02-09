@@ -212,7 +212,10 @@ function fix_libexec_binary {
 }
 
 if [ ! -f $BUILD/progress/ghcjs ]; then
-  run .            cabal v2-install happy-1.19.9 alex --symlink-bindir=$BUILD/bin
+  run .            cabal v2-install alex --symlink-bindir=$BUILD/bin
+  # Forces re-install an older buggy version of happy required to build ghc
+  # older than 8.8.1: https://gitlab.haskell.org/ghc/ghc/issues/16652
+  run .            cabal v2-install happy-1.19.9 --symlink-bindir=$BUILD/bin --overwrite-policy=always
   run $BUILD       rm -rf ghcjs
   run $BUILD       git clone --recurse-submodules --branch ghc-8.6 --single-branch https://github.com/ghcjs/ghcjs.git
   # The following two commands can be combined in git 2.13 using --recurse-submodules.

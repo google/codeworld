@@ -87,6 +87,7 @@ body {
 
 #toolbar .saveInfo {
     font-size:0.8em;
+    color: var(--save-info-text);
 }
 
 #nav {

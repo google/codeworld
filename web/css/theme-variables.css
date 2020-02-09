@@ -69,6 +69,7 @@
     --dir-tree-ui-highlight: #505050;
     --wrong-login-color: #666;
     --wrong-login-background: #f0f0f0;
+    --save-info-text: #000;
 
     /* codeworld-cm.css */
     --builtin: #30a;
@@ -212,6 +213,7 @@
     --dir-tree-ui-highlight: #F0F0F0;
     --wrong-login-color: #aaa;
     --wrong-login-background: #000000;
+    --save-info-text: #fff;
 
     /* codeworld-cm.css */
     --builtin: #CCFF55;

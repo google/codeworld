@@ -1221,7 +1221,7 @@ function saveProjectAs() {
         window.codeworldEditor.focus();
         window.saveID = doc.changeGeneration();
         window.saveTimestamp = Date.now();
-        if (window.AUTOSAVE) saveCallback();
+        saveCallback();
     }
     saveProjectAsBase(successFunc);
 }

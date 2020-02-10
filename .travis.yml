@@ -33,13 +33,13 @@ stages:
   - build_dependencies
   - build
   - test
-  - build_ghcjs_dependencies
-  - build_ghcjs
-  - install_ghcjs
-  - boot_ghcjs
-  - build_with_ghcjs_dependencies
-  - build_with_ghcjs
-  - test_with_ghcjs
+  # - build_ghcjs_dependencies
+  # - build_ghcjs
+  # - install_ghcjs
+  # - boot_ghcjs
+  # - build_with_ghcjs_dependencies
+  # - build_with_ghcjs
+  # - test_with_ghcjs
 
 jobs:
   include:

@@ -33,8 +33,8 @@ export BOOTSTRAP_HASKELL_NONINTERACTIVE=1
 #
 # Parallelism
 #
-
-export NPROC=$(grep -c ^processor /proc/cpuinfo)
+# Forced to 1 by https://github.com/google/codeworld/issues/1308
+export NPROC=1
 
 #
 # Set up terminal colors.

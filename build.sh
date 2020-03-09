@@ -25,7 +25,10 @@ run .  cabal_install --ghcjs ./codeworld-prediction \
                              ./codeworld-base \
                              ./codeworld-game-api \
                              QuickCheck \
-                             linear
+                             linear \
+                             parsec \
+                             megaparsec \
+                             lens
 
 run codeworld-base  cabal configure --ghcjs
 run codeworld-base  cabal haddock --html

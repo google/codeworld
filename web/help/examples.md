@@ -284,13 +284,11 @@ up = (0,1); down = (0,-1); right = (1,0); left = (-1, 0)
 addDirToPoint :: (Point, Vector) -> Point
 addDirToPoint(p, d) = vectorSum(p, d)
 
-reverseDoor :: Door -> Door
-reverseDoor((fx, fy), (tx, ty)) = ((tx, ty), (fx, fy))
-
 addDoor :: (Maze, Door) -> Maze
 addDoor(MazeOf(w, h, vis, ds), d) = MazeOf(w, h, vis, addIfMissing(ds, d))
 
-containsDoor(ds, d) = contains(ds, d) || contains(ds, reverseDoor(d))
+containsDoor(ds, (a, b)) =
+  any([ a == c && b == d || a == d && b == c | (c, d) <- ds ])
 
 markVisitedAt :: (Maze, Point) -> Maze
 markVisitedAt(MazeOf(w, h, vis, ds), p) =

@@ -49,7 +49,6 @@ import Control.Monad.Trans
 import Data.Aeson
 import qualified Data.ByteString as B
 import Data.ByteString.Builder (toLazyByteString)
-import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as LB
 import Data.Char (isSpace)
 import Data.List
@@ -185,7 +184,7 @@ dirConfig = defaultDirectoryConfig {preServeHook = disableCache}
 createFolderHandler :: CodeWorldHandler
 createFolderHandler = private $ \userId ctx -> do
     mode <- getBuildMode
-    Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
+    Just path <- fmap (splitDirectories . T.unpack . T.decodeUtf8) <$> getParam "path"
     let pathText = map T.pack path
         dirIds = map nameToDirId pathText
         finalDir = joinPath $ map dirBase dirIds
@@ -201,7 +200,7 @@ createFolderHandler = private $ \userId ctx -> do
 deleteFolderHandler :: CodeWorldHandler
 deleteFolderHandler = private $ \userId ctx -> do
     mode <- getBuildMode
-    Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
+    Just path <- fmap (splitDirectories . T.unpack . T.decodeUtf8) <$> getParam "path"
     let dirIds = map (nameToDirId . T.pack) path
     let finalDir = joinPath $ map dirBase dirIds
     liftIO $ ensureUserDir mode userId finalDir
@@ -214,7 +213,7 @@ loadProjectHandler = private $ \userId ctx -> do
     Just name <- getParam "name"
     let projectName = T.decodeUtf8 name
     let projectId = nameToProjectId projectName
-    Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
+    Just path <- fmap (splitDirectories . T.unpack . T.decodeUtf8) <$> getParam "path"
     let dirIds = map (nameToDirId . T.pack) path
     let finalDir = joinPath $ map dirBase dirIds
     liftIO $ ensureProjectDir mode userId finalDir projectId
@@ -227,7 +226,7 @@ loadProjectHandler = private $ \userId ctx -> do
 saveProjectHandler :: CodeWorldHandler
 saveProjectHandler = private $ \userId ctx -> do
     mode <- getBuildMode
-    Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
+    Just path <- fmap (splitDirectories . T.unpack . T.decodeUtf8) <$> getParam "path"
     let dirIds = map (nameToDirId . T.pack) path
     let finalDir = joinPath $ map dirBase dirIds
     Just project <- decode . LB.fromStrict . fromJust <$> getParam "project"
@@ -244,7 +243,7 @@ deleteProjectHandler = private $ \userId ctx -> do
     Just name <- getParam "name"
     let projectName = T.decodeUtf8 name
     let projectId = nameToProjectId projectName
-    Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
+    Just path <- fmap (splitDirectories . T.unpack . T.decodeUtf8) <$> getParam "path"
     let dirIds = map (nameToDirId . T.pack) path
     let finalDir = joinPath $ map dirBase dirIds
     liftIO $ ensureProjectDir mode userId finalDir projectId
@@ -256,7 +255,7 @@ deleteProjectHandler = private $ \userId ctx -> do
 listFolderHandler :: CodeWorldHandler
 listFolderHandler = private $ \userId ctx -> do
     mode <- getBuildMode
-    Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
+    Just path <- fmap (splitDirectories . T.unpack . T.decodeUtf8) <$> getParam "path"
     let dirIds = map (nameToDirId . T.pack) path
     let finalDir = joinPath $ map dirBase dirIds
     liftIO $ ensureUserBaseDir mode userId finalDir
@@ -273,7 +272,7 @@ updateChildrenIndexesHandler = private $ \userId ctx -> do
     let projectDir = userProjectDir mode userId
     Just path <- fmap ((\p -> projectDir </> p </> "order.info") .
                         joinPath . (map (dirBase . nameToDirId . T.pack)) .
-                        splitDirectories . BC.unpack)
+                        splitDirectories . T.unpack . T.decodeUtf8)
                     <$> getParam "path"
     param <- getParam "entries"
     -- Encoding just to check if request param is correct
@@ -283,7 +282,7 @@ updateChildrenIndexesHandler = private $ \userId ctx -> do
 shareFolderHandler :: CodeWorldHandler
 shareFolderHandler = private $ \userId ctx -> do
     mode <- getBuildMode
-    Just path <- fmap (splitDirectories . BC.unpack) <$> getParam "path"
+    Just path <- fmap (splitDirectories . T.unpack . T.decodeUtf8) <$> getParam "path"
     let dirIds = map (nameToDirId . T.pack) path
     let finalDir = joinPath $ map dirBase dirIds
     checkSum <-
@@ -291,7 +290,7 @@ shareFolderHandler = private $ \userId ctx -> do
     liftIO $ ensureShareDir mode $ ShareId checkSum
     liftIO $
         B.writeFile (shareRootDir mode </> shareLink (ShareId checkSum)) $
-        BC.pack (userProjectDir mode userId </> finalDir)
+        T.encodeUtf8 (T.pack (userProjectDir mode userId </> finalDir))
     modifyResponse $ setContentType "text/plain"
     writeBS $ T.encodeUtf8 checkSum
 
@@ -303,12 +302,11 @@ shareContentHandler = private $ \userId ctx -> do
         liftIO $
         B.readFile
             (shareRootDir mode </> shareLink (ShareId $ T.decodeUtf8 shash))
-    Just nameBC <- getParam "name"
-    let name = T.decodeUtf8 nameBC
-        dirPath = dirBase $ nameToDirId name
+    Just name <- fmap T.decodeUtf8 <$> getParam "name"
+    let dirPath = dirBase $ nameToDirId name
     liftIO $ ensureUserBaseDir mode userId dirPath
     liftIO $
-        copyDirIfExists (BC.unpack sharingFolder) $
+        copyDirIfExists (T.unpack (T.decodeUtf8 sharingFolder)) $
         userProjectDir mode userId </> dirPath
     liftIO $
         T.writeFile
@@ -318,9 +316,9 @@ shareContentHandler = private $ \userId ctx -> do
 moveProjectHandler :: CodeWorldHandler
 moveProjectHandler = private $ \userId ctx -> do
     mode <- getBuildMode
-    Just moveTo <- fmap (splitDirectories . BC.unpack) <$> getParam "moveTo"
+    Just moveTo <- fmap (splitDirectories . T.unpack . T.decodeUtf8) <$> getParam "moveTo"
     let moveToDir = joinPath $ map (dirBase . nameToDirId . T.pack) moveTo
-    Just moveFrom <- fmap (splitDirectories . BC.unpack) <$> getParam "moveFrom"
+    Just moveFrom <- fmap (splitDirectories . T.unpack . T.decodeUtf8) <$> getParam "moveFrom"
     let projectDir = userProjectDir mode userId
     let moveFromDir =
             projectDir </>
@@ -473,7 +471,7 @@ indentHandler = public $ \ctx -> do
         writeBS $ T.encodeUtf8 result
     handleError (e :: OrmoluException) = do
         modifyResponse $ setResponseCode 500 . setContentType "text/plain"
-        writeLBS $ LB.fromStrict $ BC.pack (show e)
+        writeLBS $ LB.fromStrict $ T.encodeUtf8 $ T.pack (show e)
 
 galleryHandler :: CodeWorldHandler
 galleryHandler = public $ const $ do
@@ -481,7 +479,7 @@ galleryHandler = public $ const $ do
     Just shareHash <- getParam "shareHash"
     let shareId = ShareId (T.decodeUtf8 shareHash)
     gallery <- liftIO $ do
-        folder <- BC.unpack <$> B.readFile (shareRootDir mode </> shareLink shareId)
+        folder <- T.unpack . T.decodeUtf8 <$> B.readFile (shareRootDir mode </> shareLink shareId)
         files <- sort <$> projectFileNames folder
         Gallery <$> mapM (galleryItemFromProject mode folder) files
     writeLBS $ encode gallery

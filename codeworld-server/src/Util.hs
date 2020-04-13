@@ -30,7 +30,6 @@ import Data.ByteString (ByteString)
 import Data.List (sort, sortOn)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
-import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as LB
 import Data.Maybe
 import Data.Text (Text)
@@ -303,9 +302,9 @@ dirToCheckSum path = do
     let cryptoContext = Crypto.hashInitWith Crypto.MD5
     return $
         (T.pack "F" <>) .
+        T.takeWhile (/= '=') .
+        T.map toWebSafe .
         T.decodeUtf8 .
-        BC.takeWhile (/= '=') .
-        BC.map toWebSafe .
         B64.encode .
         convert . Crypto.hashFinalize . Crypto.hashUpdates cryptoContext $
         fileContents
@@ -317,9 +316,12 @@ dirToCheckSum path = do
 hashToId :: Text -> ByteString -> Text
 hashToId pfx =
     (pfx <>) .
+    T.takeWhile (/= '=') .
+    T.map toWebSafe .
     T.decodeUtf8 .
-    BC.takeWhile (/= '=') .
-    BC.map toWebSafe . B64.encode . convert . Crypto.hashWith Crypto.MD5
+    B64.encode .
+    convert .
+    Crypto.hashWith Crypto.MD5
   where
     toWebSafe '/' = '_'
     toWebSafe '+' = '-'

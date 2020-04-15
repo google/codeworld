@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -Wno-name-shadowing -Wno-orphans -Wno-unticked-promoted-constructors #-}
 
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -10,7 +9,6 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE JavaScriptFFI #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE RankNTypes #-}
@@ -173,7 +171,7 @@ followPath [_] _ _ = return ()
 followPath ((sx, sy):ps) closed False = do
     CM.moveTo (sx, sy)
     forM_ ps $ \(x, y) -> CM.lineTo (x, y)
-    when closed $ CM.closePath
+    when closed CM.closePath
 followPath [p1, p2] False True = followPath [p1, p2] False False
 followPath ps False True = do
     let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = take 3 ps
@@ -244,7 +242,7 @@ drawFigure ds w figure = do
 
 fillFigure :: MonadCanvas m => DrawState -> m () -> m ()
 fillFigure ds figure = do
-    withDS ds $ figure
+    withDS ds figure
     applyColor ds
     CM.fill
 
@@ -364,7 +362,7 @@ pathContains ps w closed smooth ds p = do
     CM.isPointInStroke p
 
 drawSector :: MonadCanvas m => Double -> Double -> Double -> DrawState -> m ()
-drawSector b e r ds = do
+drawSector b e r ds =
     fillFigure ds $ CM.arc 0 0 (abs r) b e (b > e) >> CM.lineTo (0, 0)
 
 sectorContains :: MonadCanvas m => Double -> Double -> Double -> DrawState -> Point -> m Bool
@@ -373,7 +371,7 @@ sectorContains b e r ds p = do
     CM.isPointInPath p
 
 drawArc :: MonadCanvas m => Double -> Double -> Double -> Double -> DrawState -> m ()
-drawArc b e r w ds = do
+drawArc b e r w ds =
     drawFigure ds w $ CM.arc 0 0 (abs r) b e (b > e)
 
 arcContains :: MonadCanvas m => Double -> Double -> Double -> Double -> DrawState -> Point -> m Bool
@@ -429,7 +427,7 @@ drawImage name url imgw imgh ds = case getColorDS ds of
         CM.fillRect (-w/2) (-h/2) w h
         CM.globalCompositeOperation "destination-in"
         withDS ds $ do
-            CM.scale (1) (-1)
+            CM.scale 1 (-1)
             CM.drawImgURL name url imgw imgh
 
 imageContains :: MonadCanvas m => Text -> Text -> Double -> Double -> DrawState -> Point -> m Bool
@@ -533,25 +531,25 @@ findTopShape ds pic x y = do
         fmap (+ 1) <$> searchSingle (reflectDS a ds) p x y
     searchSingle ds (Clip _ w h p) x y = do
         inClip <- polygonContains (rectangleVertices w h) False ds (x, y)
-        fmap (+ 1) <$> case inClip of
-            True -> searchSingle ds p x y
-            False -> return (False, countNodes p)
+        fmap (+ 1) <$> if inClip
+                       then searchSingle ds p x y
+                       else return (False, countNodes p)
     searchSingle ds (Pictures _ ps) x y =
         fmap (+ 1) <$> searchMulti ds ps x y
     searchSingle ds (PictureAnd _ ps) x y =
         fmap (+ 1) <$> searchMulti ds ps x y
     searchSingle ds p x y = do
         contained <- pictureContains p ds (x, y)
-        case contained of
-            True -> return (True, 0)
-            False -> return (False, 1)
+        if contained
+          then pure (True, 0)
+          else pure (False, 1)
 
     searchMulti _ [] _ _ = return (False, 0)
     searchMulti ds (pic:pics) x y = do
         (found, count) <- searchSingle ds pic x y
-        case found of
-            True -> return (True, count)
-            False -> fmap (+ count) <$> searchMulti ds pics x y
+        if found
+          then pure (True, count)
+          else fmap (+ count) <$> searchMulti ds pics x y
 
     countNodes p = 1 + sum (map countNodes (getChildNodes p))
 
@@ -569,7 +567,7 @@ findTopShapeFromPoint (x, y) pic = do
 trim :: Int -> String -> String
 trim x y
   | x >= length y = y
-  | otherwise = take mid y ++ "..." ++ (reverse $ take mid $ reverse y)
+  | otherwise = take mid y ++ "..." ++ reverse (take mid $ reverse y)
   where mid = (x - 3) `div` 2
 
 showFloat :: Bool -> Double -> String
@@ -997,7 +995,7 @@ ifDifferent f s0 = unsafePerformIO $ do
 
 modifyMVarIfDifferent :: MVar s -> (s -> s) -> IO Bool
 modifyMVarIfDifferent var f =
-    modifyMVar var $ \s0 -> do
+    modifyMVar var $ \s0 ->
         case ifDifferent f s0 of
             Nothing -> return (s0, False)
             Just s1 -> return (s1, True)

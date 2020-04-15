@@ -221,7 +221,7 @@ fsEntries dir = do
     let hashedFiles = dirFilter subHashedDirs 'S'
         hashedDirs = dirFilter subHashedDirs 'D'
     projNames <- sort <$> mapM projName hashedFiles
-    dirNames  <- sort <$> mapM dirName hashedDirs
+    dirNames  <- sort <$> catMaybes <$> mapM dirName hashedDirs
     haveSavedOrderFile <- doesFileExist $ dir </> "order.info"
     case haveSavedOrderFile of
         True -> do
@@ -248,7 +248,9 @@ fsEntries dir = do
         projName path = do
             Just project <- decode <$> LB.readFile path
             return $ projectName project
-        dirName path = T.readFile (path </> "dir.info")
+        dirName path = do
+            hasInfo <- doesFileExist (path </> "dir.info")
+            if hasInfo then Just <$> T.readFile (path </> "dir.info") else return Nothing
 
 projectFileNames :: FilePath -> IO [Text]
 projectFileNames dir = do

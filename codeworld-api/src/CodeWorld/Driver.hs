@@ -1748,6 +1748,7 @@ deriving instance Functor m => Functor (ReactiveProgram t m)
 deriving instance Monad m => Applicative (ReactiveProgram t m)
 deriving instance Monad m => Monad (ReactiveProgram t m)
 deriving instance MonadFix m => MonadFix (ReactiveProgram t m)
+deriving instance MonadIO m => MonadIO (ReactiveProgram t m)
 deriving instance R.MonadSample t m => R.MonadSample t (ReactiveProgram t m)
 deriving instance R.MonadHold t m => R.MonadHold t (ReactiveProgram t m)
 deriving instance R.PerformEvent t m => R.PerformEvent t (ReactiveProgram t m)
@@ -1796,9 +1797,17 @@ transformUserPicture =
     ReactiveProgram . R.tellDyn . fmap (\a -> mempty { userTransform = a })
 
 -- | Type class for the builder monad of a CodeWorld/Reflex app.
-class (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
-       R.Adjustable t m, MonadIO (R.Performable m), R.PostBuild t m)
-  => ReflexCodeWorld t m | m -> t where
+class
+  (
+    R.Reflex t,
+    R.Adjustable t m,
+    R.MonadHold t m,
+    R.PostBuild t m,
+    R.PerformEvent t m,
+    MonadFix m,
+    MonadIO m,
+    MonadIO (R.Performable m)
+  ) => ReflexCodeWorld t m | m -> t where
     -- | Gets an Event of key presses.  The event value is a logical key name.
     getKeyPress :: m (R.Event t Text)
 
@@ -1824,9 +1833,17 @@ class (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
     -- | Emits a given Dynamic picture to be drawn to the screen.
     draw :: R.Dynamic t Picture -> m ()
 
-instance (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
-          R.Adjustable t m, MonadIO (R.Performable m), R.PostBuild t m)
-  => ReflexCodeWorld t (ReactiveProgram t m) where
+instance
+  (
+    R.Reflex t,
+    R.Adjustable t m,
+    R.MonadHold t m,
+    R.PostBuild t m,
+    R.PerformEvent t m,
+    MonadFix m,
+    MonadIO m,
+    MonadIO (R.Performable m)
+  ) => ReflexCodeWorld t (ReactiveProgram t m) where
     getKeyPress = ReactiveProgram $ asks keyPress
 
     getKeyRelease = ReactiveProgram $ asks keyRelease
@@ -1935,9 +1952,16 @@ inspectLogicalInput debugState physicalInput = do
             }
 
 runReactive
-    :: (forall t m. (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
-                     R.Adjustable t m, MonadIO (R.Performable m), R.PostBuild t m)
-        => (ReactiveInput t -> m (R.Dynamic t Picture, R.Dynamic t Picture)))
+    :: (forall t m.
+        ( R.Reflex t,
+          R.Adjustable t m,
+          R.MonadHold t m,
+          R.PostBuild t m,
+          R.PerformEvent t m,
+          MonadFix m,
+          MonadIO m,
+          MonadIO (R.Performable m)
+        ) => (ReactiveInput t -> m (R.Dynamic t Picture, R.Dynamic t Picture)))
     -> IO ()
 runReactive program = do
     showCanvas
@@ -2002,9 +2026,16 @@ runReactive program = do
 #else
 
 runReactive
-    :: (forall t m. (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
-                     R.Adjustable t m, MonadIO (R.Performable m), R.PostBuild t m)
-        => (ReactiveInput t -> m (R.Dynamic t Picture, R.Dynamic t Picture)))
+    :: (forall t m.
+        ( R.Reflex t,
+          R.Adjustable t m,
+          R.MonadHold t m,
+          R.PostBuild t m,
+          R.PerformEvent t m,
+          MonadFix m,
+          MonadIO m,
+          MonadIO (R.Performable m)
+        ) => (ReactiveInput t -> m (R.Dynamic t Picture, R.Dynamic t Picture)))
     -> IO ()
 runReactive program = runBlankCanvas $ \context -> do
     let cw = Canvas.width context

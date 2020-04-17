@@ -1753,6 +1753,7 @@ deriving instance MonadFix m => MonadFix (ReactiveProgram t m)
 deriving instance MonadIO m => MonadIO (ReactiveProgram t m)
 deriving instance R.MonadSample t m => R.MonadSample t (ReactiveProgram t m)
 deriving instance R.MonadHold t m => R.MonadHold t (ReactiveProgram t m)
+deriving instance R.NotReady t m => R.NotReady t (ReactiveProgram t m)
 deriving instance R.PerformEvent t m => R.PerformEvent t (ReactiveProgram t m)
 deriving instance R.TriggerEvent t m => R.TriggerEvent t (ReactiveProgram t m)
 deriving instance R.PostBuild t m => R.PostBuild t (ReactiveProgram t m)
@@ -1805,6 +1806,7 @@ class
     R.Reflex t,
     R.Adjustable t m,
     R.MonadHold t m,
+    R.NotReady t m,
     R.PostBuild t m,
     R.PerformEvent t m,
     R.TriggerEvent t m,
@@ -1842,6 +1844,7 @@ instance
     R.Reflex t,
     R.Adjustable t m,
     R.MonadHold t m,
+    R.NotReady t m,
     R.PostBuild t m,
     R.PerformEvent t m,
     R.TriggerEvent t m,
@@ -1988,6 +1991,7 @@ runReactive
         ( R.Reflex t,
           R.Adjustable t m,
           R.MonadHold t m,
+          R.NotReady t m,
           R.PostBuild t m,
           R.PerformEvent t m,
           R.TriggerEvent t m,
@@ -2060,6 +2064,7 @@ runReactive
         ( R.Reflex t,
           R.Adjustable t m,
           R.MonadHold t m,
+          R.NotReady t m,
           R.PostBuild t m,
           R.PerformEvent t m,
           R.TriggerEvent t m,

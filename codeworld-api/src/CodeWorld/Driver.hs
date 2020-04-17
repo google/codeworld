@@ -1871,11 +1871,11 @@ gateDyn dyn e = R.switchDyn (bool R.never e <$> dyn)
 type EventChannel t = Chan [DSum (R.EventTriggerRef t) R.TriggerInvocation]
 
 -- | Handle the event channel used with 'runTriggerEventT'.
-processEventTriggers
+asyncProcessEventTriggers
     :: EventChannel t
     -> R.FireCommand t (R.SpiderHost R.Global)
-    -> IO ()
-processEventTriggers events fireCommand = do
+    -> IO ThreadId
+asyncProcessEventTriggers events fireCommand = forkIO . forever $ do
     -- Collect event triggers, and fire callbacks after propagation
     eventsAndTriggers <- readChan events
     eventsToFire <- flip wither eventsAndTriggers $
@@ -2050,7 +2050,7 @@ runReactive program = do
 
     sendEvent fireCommand postBuildTriggerRef ()
 
-    void . forkIO . forever $ processEventTriggers eventTriggers fireCommand
+    void $ asyncProcessEventTriggers eventTriggers fireCommand
     waitForever
 
 #else
@@ -2135,14 +2135,15 @@ runReactive program = runBlankCanvas $ \context -> do
                     sendEvent' pointerMovementTrigger pos
                 _ -> return ()
 
-            processEventTriggers triggeredEvents fireCommand
-
             tn <- getCurrentTime
             threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
             t2 <- getCurrentTime
             let dt = realToFrac (t2 `diffUTCTime` t1)
             sendEvent' timePassingTrigger dt
             go t2
-    go t0
+    bracket
+        (asyncProcessEventTriggers triggeredEvents fireCommand)
+        killThread
+        (const $ go t0)
 
 #endif

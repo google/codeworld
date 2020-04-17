@@ -254,6 +254,7 @@ freezeDyn predicate dyn = do
 
 reactiveDebugControls ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
     MonadIO m,
     MonadIO (Performable m),
@@ -321,6 +322,7 @@ getHoverAlpha = do
 
 playPauseButton ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
     MonadIO m,
     MonadIO (Performable m),
@@ -356,6 +358,7 @@ playPauseButton hoverAlpha running pos = do
 
 stepButton ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
     MonadIO m,
     MonadIO (Performable m),
@@ -385,6 +388,7 @@ stepButton hoverAlpha pos running = do
 
 fastForwardButton ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
     MonadIO m,
     MonadIO (Performable m),
@@ -411,6 +415,7 @@ fastForwardButton hoverAlpha pos = do
 
 speedSlider ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
     MonadIO m,
     MonadIO (Performable m),
@@ -445,6 +450,7 @@ speedSlider hoverAlpha pos speedFactor = do
 
 resetViewButton ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
     MonadIO m,
     MonadIO (Performable m),
@@ -470,6 +476,7 @@ resetViewButton hoverAlpha pos needsReset = do
 
 panControls ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
     MonadIO m,
     MonadIO (Performable m),
@@ -500,6 +507,7 @@ panControls running resetClick = do
 
 zoomControls ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
     MonadIO m,
     MonadIO (Performable m),
@@ -528,6 +536,7 @@ zoomControls hoverAlpha (x, y) resetClick = do
 
 zoomInButton ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
     MonadIO m,
     MonadIO (Performable m),
@@ -559,6 +568,7 @@ zoomInButton hoverAlpha pos = do
 
 zoomOutButton ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
     MonadIO m,
     MonadIO (Performable m),
@@ -589,6 +599,7 @@ zoomOutButton hoverAlpha pos = do
 
 zoomSlider ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
     MonadIO m,
     MonadIO (Performable m),

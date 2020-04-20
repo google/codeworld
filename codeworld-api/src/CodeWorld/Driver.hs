@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -Wno-name-shadowing -Wno-orphans -Wno-unticked-promoted-constructors #-}
 
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -10,7 +9,6 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE JavaScriptFFI #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE RankNTypes #-}
@@ -53,6 +51,7 @@ import Control.Monad.Ref
 import Data.Bool
 import Data.Char (chr)
 import Data.Dependent.Sum
+import Data.Foldable
 import Data.IORef
 import Data.List (zip4, intercalate)
 import Data.Maybe
@@ -60,6 +59,7 @@ import Data.Serialize
 import Data.Serialize.Text ()
 import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Witherable
 import GHC.Fingerprint.Type
 import GHC.Generics
 import GHC.Stack
@@ -173,7 +173,7 @@ followPath [_] _ _ = return ()
 followPath ((sx, sy):ps) closed False = do
     CM.moveTo (sx, sy)
     forM_ ps $ \(x, y) -> CM.lineTo (x, y)
-    when closed $ CM.closePath
+    when closed CM.closePath
 followPath [p1, p2] False True = followPath [p1, p2] False False
 followPath ps False True = do
     let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = take 3 ps
@@ -244,7 +244,7 @@ drawFigure ds w figure = do
 
 fillFigure :: MonadCanvas m => DrawState -> m () -> m ()
 fillFigure ds figure = do
-    withDS ds $ figure
+    withDS ds figure
     applyColor ds
     CM.fill
 
@@ -364,7 +364,7 @@ pathContains ps w closed smooth ds p = do
     CM.isPointInStroke p
 
 drawSector :: MonadCanvas m => Double -> Double -> Double -> DrawState -> m ()
-drawSector b e r ds = do
+drawSector b e r ds =
     fillFigure ds $ CM.arc 0 0 (abs r) b e (b > e) >> CM.lineTo (0, 0)
 
 sectorContains :: MonadCanvas m => Double -> Double -> Double -> DrawState -> Point -> m Bool
@@ -373,7 +373,7 @@ sectorContains b e r ds p = do
     CM.isPointInPath p
 
 drawArc :: MonadCanvas m => Double -> Double -> Double -> Double -> DrawState -> m ()
-drawArc b e r w ds = do
+drawArc b e r w ds =
     drawFigure ds w $ CM.arc 0 0 (abs r) b e (b > e)
 
 arcContains :: MonadCanvas m => Double -> Double -> Double -> Double -> DrawState -> Point -> m Bool
@@ -429,7 +429,7 @@ drawImage name url imgw imgh ds = case getColorDS ds of
         CM.fillRect (-w/2) (-h/2) w h
         CM.globalCompositeOperation "destination-in"
         withDS ds $ do
-            CM.scale (1) (-1)
+            CM.scale 1 (-1)
             CM.drawImgURL name url imgw imgh
 
 imageContains :: MonadCanvas m => Text -> Text -> Double -> Double -> DrawState -> Point -> m Bool
@@ -533,25 +533,25 @@ findTopShape ds pic x y = do
         fmap (+ 1) <$> searchSingle (reflectDS a ds) p x y
     searchSingle ds (Clip _ w h p) x y = do
         inClip <- polygonContains (rectangleVertices w h) False ds (x, y)
-        fmap (+ 1) <$> case inClip of
-            True -> searchSingle ds p x y
-            False -> return (False, countNodes p)
+        fmap (+ 1) <$> if inClip
+                       then searchSingle ds p x y
+                       else return (False, countNodes p)
     searchSingle ds (Pictures _ ps) x y =
         fmap (+ 1) <$> searchMulti ds ps x y
     searchSingle ds (PictureAnd _ ps) x y =
         fmap (+ 1) <$> searchMulti ds ps x y
     searchSingle ds p x y = do
         contained <- pictureContains p ds (x, y)
-        case contained of
-            True -> return (True, 0)
-            False -> return (False, 1)
+        if contained
+          then pure (True, 0)
+          else pure (False, 1)
 
     searchMulti _ [] _ _ = return (False, 0)
     searchMulti ds (pic:pics) x y = do
         (found, count) <- searchSingle ds pic x y
-        case found of
-            True -> return (True, count)
-            False -> fmap (+ count) <$> searchMulti ds pics x y
+        if found
+          then pure (True, count)
+          else fmap (+ count) <$> searchMulti ds pics x y
 
     countNodes p = 1 + sum (map countNodes (getChildNodes p))
 
@@ -569,7 +569,7 @@ findTopShapeFromPoint (x, y) pic = do
 trim :: Int -> String -> String
 trim x y
   | x >= length y = y
-  | otherwise = take mid y ++ "..." ++ (reverse $ take mid $ reverse y)
+  | otherwise = take mid y ++ "..." ++ reverse (take mid $ reverse y)
   where mid = (x - 3) `div` 2
 
 showFloat :: Bool -> Double -> String
@@ -997,7 +997,7 @@ ifDifferent f s0 = unsafePerformIO $ do
 
 modifyMVarIfDifferent :: MVar s -> (s -> s) -> IO Bool
 modifyMVarIfDifferent var f =
-    modifyMVar var $ \s0 -> do
+    modifyMVar var $ \s0 ->
         case ifDifferent f s0 of
             Nothing -> return (s0, False)
             Just s1 -> return (s1, True)
@@ -1750,9 +1750,12 @@ deriving instance Functor m => Functor (ReactiveProgram t m)
 deriving instance Monad m => Applicative (ReactiveProgram t m)
 deriving instance Monad m => Monad (ReactiveProgram t m)
 deriving instance MonadFix m => MonadFix (ReactiveProgram t m)
+deriving instance MonadIO m => MonadIO (ReactiveProgram t m)
 deriving instance R.MonadSample t m => R.MonadSample t (ReactiveProgram t m)
 deriving instance R.MonadHold t m => R.MonadHold t (ReactiveProgram t m)
+deriving instance R.NotReady t m => R.NotReady t (ReactiveProgram t m)
 deriving instance R.PerformEvent t m => R.PerformEvent t (ReactiveProgram t m)
+deriving instance R.TriggerEvent t m => R.TriggerEvent t (ReactiveProgram t m)
 deriving instance R.PostBuild t m => R.PostBuild t (ReactiveProgram t m)
 
 instance (MonadFix m, R.MonadHold t m, R.Adjustable t m) => R.Adjustable t (ReactiveProgram t m) where
@@ -1772,7 +1775,7 @@ runReactiveProgram
     -> m (R.Dynamic t Picture, R.Dynamic t Picture)
 runReactiveProgram (ReactiveProgram program) input = do
     (_, output) <- R.runDynamicWriterT (runReaderT program input)
-    let pic = coalescePics <$> userPictures <$> output
+    let pic = coalescePics . userPictures <$> output
     let sysPic = (&) <$> (systemPicture <$> output)
                      <*> (userTransform <$> output <*> pic)
     return (pic, sysPic)
@@ -1798,9 +1801,19 @@ transformUserPicture =
     ReactiveProgram . R.tellDyn . fmap (\a -> mempty { userTransform = a })
 
 -- | Type class for the builder monad of a CodeWorld/Reflex app.
-class (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
-       R.Adjustable t m, MonadIO (R.Performable m), R.PostBuild t m)
-  => ReflexCodeWorld t m | m -> t where
+class
+  (
+    R.Reflex t,
+    R.Adjustable t m,
+    R.MonadHold t m,
+    R.NotReady t m,
+    R.PostBuild t m,
+    R.PerformEvent t m,
+    R.TriggerEvent t m,
+    MonadFix m,
+    MonadIO m,
+    MonadIO (R.Performable m)
+  ) => ReflexCodeWorld t m | m -> t where
     -- | Gets an Event of key presses.  The event value is a logical key name.
     getKeyPress :: m (R.Event t Text)
 
@@ -1826,9 +1839,19 @@ class (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
     -- | Emits a given Dynamic picture to be drawn to the screen.
     draw :: R.Dynamic t Picture -> m ()
 
-instance (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
-          R.Adjustable t m, MonadIO (R.Performable m), R.PostBuild t m)
-  => ReflexCodeWorld t (ReactiveProgram t m) where
+instance
+  (
+    R.Reflex t,
+    R.Adjustable t m,
+    R.MonadHold t m,
+    R.NotReady t m,
+    R.PostBuild t m,
+    R.PerformEvent t m,
+    R.TriggerEvent t m,
+    MonadFix m,
+    MonadIO m,
+    MonadIO (R.Performable m)
+  ) => ReflexCodeWorld t (ReactiveProgram t m) where
     getKeyPress = ReactiveProgram $ asks keyPress
 
     getKeyRelease = ReactiveProgram $ asks keyRelease
@@ -1847,6 +1870,33 @@ instance (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
 
 gateDyn :: forall t a. R.Reflex t => R.Dynamic t Bool -> R.Event t a -> R.Event t a
 gateDyn dyn e = R.switchDyn (bool R.never e <$> dyn)
+
+type EventChannel t = Chan [DSum (R.EventTriggerRef t) R.TriggerInvocation]
+
+-- | Handle the event channel used with 'runTriggerEventT'.
+asyncProcessEventTriggers
+    :: EventChannel t
+    -> R.FireCommand t (R.SpiderHost R.Global)
+    -> IO ThreadId
+asyncProcessEventTriggers events fireCommand = forkIO . forever $ do
+    -- Collect event triggers, and fire callbacks after propagation
+    eventsAndTriggers <- readChan events
+    eventsToFire <- flip wither eventsAndTriggers $
+        \(R.EventTriggerRef ref :=> R.TriggerInvocation a _) ->
+            fmap (==> a) <$> readRef ref
+    void . R.runSpiderHost $
+        R.runFireCommand fireCommand eventsToFire (pure ())
+    -- Run callbacks
+    traverse_ (\(_ :=> R.TriggerInvocation _ cb) -> cb) eventsAndTriggers
+
+sendEvent
+    :: R.FireCommand t (R.SpiderHost R.Global)
+    -> IORef (Maybe (R.EventTrigger t a))
+    -> a
+    -> IO ()
+sendEvent (R.FireCommand fire) triggerRef a =
+    R.runSpiderHost $ readRef triggerRef
+        >>= traverse_ (\t -> fire [t ==> a] (pure ()))
 
 #ifdef ghcjs_HOST_OS
 
@@ -1905,7 +1955,7 @@ createPhysicalReactiveInput window canvas fire = do
 
     pointerPosition <- R.holdDyn (0, 0) pointerMovement
     pointerDown <- R.holdDyn False $
-        R.mergeWith (&&) [True <$ pointerPress, False <$ pointerRelease]
+        R.leftmost [True <$ pointerPress, False <$ pointerRelease]
 
     return ReactiveInput{..}
 
@@ -1937,9 +1987,18 @@ inspectLogicalInput debugState physicalInput = do
             }
 
 runReactive
-    :: (forall t m. (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
-                     R.Adjustable t m, MonadIO (R.Performable m), R.PostBuild t m)
-        => (ReactiveInput t -> m (R.Dynamic t Picture, R.Dynamic t Picture)))
+    :: (forall t m.
+        ( R.Reflex t,
+          R.Adjustable t m,
+          R.MonadHold t m,
+          R.NotReady t m,
+          R.PostBuild t m,
+          R.PerformEvent t m,
+          R.TriggerEvent t m,
+          MonadFix m,
+          MonadIO m,
+          MonadIO (R.Performable m)
+        ) => (ReactiveInput t -> m (R.Dynamic t Picture, R.Dynamic t Picture)))
     -> IO ()
 runReactive program = do
     showCanvas
@@ -1968,12 +2027,16 @@ runReactive program = do
         resizeEvent <- R.runSpiderHost $ R.newEventWithTrigger $ \trigger -> do
             on window resize $ liftIO $ fireAndRedraw [trigger ==> ()]
         logicalInput <- R.runSpiderHost $ inspectLogicalInput debugState physicalInput
+        eventTriggers <- newChan
         (inspectPicture, fireCommand) <- R.runSpiderHost $ R.hostPerformEventT $ do
-            (inspectPicture, displayPicture) <- R.runPostBuildT (program logicalInput) postBuild
+            (inspectPicture, displayPicture) <-
+                flip R.runTriggerEventT eventTriggers .
+                flip R.runPostBuildT postBuild $
+                program logicalInput
             let logicalPicture = drawDebugState <$> debugState
                                                 <*> inspectPicture
                                                 <*> displayPicture
-            R.performEvent_ $ liftIO <$> R.mergeWith const [
+            R.performEvent_ $ liftIO <$> R.leftmost [
                 (setCanvasSize canvas canvas >>) . asyncRender <$>
                     R.tagPromptlyDyn logicalPicture resizeEvent,
                 asyncRender <$> R.updated logicalPicture,
@@ -1984,29 +2047,31 @@ runReactive program = do
         let fireAndRedraw events = R.runSpiderHost $ void $
                 R.runFireCommand fireCommand events (return ())
 
-    let fireDebugUpdateAndRedraw f = R.runSpiderHost $ do
-            state <- readRef debugUpdateTriggerRef
-            case state of
-                Just trigger -> void $
-                    R.runFireCommand fireCommand [trigger ==> f] (return ())
-                Nothing -> return ()
-    let samplePicture = R.runSpiderHost $ R.runHostFrame $ R.sample $ R.current inspectPicture
+    let
+        fireDebugUpdateAndRedraw = sendEvent fireCommand debugUpdateTriggerRef
+        samplePicture = R.runSpiderHost $ R.runHostFrame $ R.sample $ R.current inspectPicture
     connectInspect canvas samplePicture fireDebugUpdateAndRedraw
 
-    maybePostBuildTrigger <- readRef postBuildTriggerRef
-    case maybePostBuildTrigger of
-        Just trigger -> R.runSpiderHost $ void $
-            R.runFireCommand fireCommand [trigger ==> ()] (return ())
-        Nothing -> return ()
+    sendEvent fireCommand postBuildTriggerRef ()
 
+    void $ asyncProcessEventTriggers eventTriggers fireCommand
     waitForever
 
 #else
 
 runReactive
-    :: (forall t m. (R.Reflex t, R.MonadHold t m, MonadFix m, R.PerformEvent t m,
-                     R.Adjustable t m, MonadIO (R.Performable m), R.PostBuild t m)
-        => (ReactiveInput t -> m (R.Dynamic t Picture, R.Dynamic t Picture)))
+    :: (forall t m.
+        ( R.Reflex t,
+          R.Adjustable t m,
+          R.MonadHold t m,
+          R.NotReady t m,
+          R.PostBuild t m,
+          R.PerformEvent t m,
+          R.TriggerEvent t m,
+          MonadFix m,
+          MonadIO m,
+          MonadIO (R.Performable m)
+        ) => (ReactiveInput t -> m (R.Dynamic t Picture, R.Dynamic t Picture)))
     -> IO ()
 runReactive program = runBlankCanvas $ \context -> do
     let cw = Canvas.width context
@@ -2032,31 +2097,29 @@ runReactive program = runBlankCanvas $ \context -> do
 
     pointerPosition <- R.runSpiderHost $ R.holdDyn (0, 0) pointerMovement
     pointerDown <- R.runSpiderHost $ R.holdDyn False $
-        R.mergeWith (&&) [True <$ pointerPress, False <$ pointerRelease]
+        R.leftmost [True <$ pointerPress, False <$ pointerRelease]
 
     let input = ReactiveInput{..}
 
+    triggeredEvents <- newChan
     (_, fireCommand) <- R.runSpiderHost $ R.hostPerformEventT $ do
-        (_inspectPicture, displayPicture) <- R.runPostBuildT (program input) postBuild
-        R.performEvent_ $ liftIO <$> R.mergeWith const [
+        (_inspectPicture, displayPicture) <-
+            flip R.runTriggerEventT triggeredEvents .
+            flip R.runPostBuildT postBuild $
+            program input
+        R.performEvent_ $ liftIO <$> R.leftmost [
             frame <$> R.updated displayPicture,
             frame <$> R.tagPromptlyDyn displayPicture postBuild
             ]
         return ()
 
-    let sendEvent :: forall a. IORef (Maybe (R.EventTrigger (R.SpiderTimeline R.Global) a)) -> a -> IO ()
-        sendEvent triggerRef val = do
-            mtrigger <- readRef triggerRef
-            case mtrigger of
-                Just trigger -> R.runSpiderHost $ void $
-                    R.runFireCommand fireCommand [trigger ==> val] (return ())
-                Nothing -> return ()
+    let sendEvent'
+            :: IORef (Maybe (R.EventTrigger (R.SpiderTimeline R.Global) a))
+            -> a
+            -> IO ()
+        sendEvent' = sendEvent fireCommand
 
-    maybePostBuildTrigger <- readRef postBuildTriggerRef
-    case maybePostBuildTrigger of
-        Just trigger -> R.runSpiderHost $ void $
-            R.runFireCommand fireCommand [trigger ==> ()] (return ())
-        Nothing -> return ()
+    sendEvent' postBuildTriggerRef ()
 
     t0 <- getCurrentTime
     let go t1 = do
@@ -2064,25 +2127,28 @@ runReactive program = runBlankCanvas $ \context -> do
             forM_ events $ \event -> case Canvas.eType event of
                 "keydown" | Just code <- Canvas.eWhich event -> do
                     let keyName = keyCodeToText (fromIntegral code)
-                    sendEvent keyPressTrigger keyName
-                    when (T.length keyName == 1) $ sendEvent textEntryTrigger keyName
+                    sendEvent' keyPressTrigger keyName
+                    when (T.length keyName == 1) $ sendEvent' textEntryTrigger keyName
                 "keyup" | Just code <- Canvas.eWhich event -> do
                     let keyName = keyCodeToText (fromIntegral code)
-                    sendEvent keyReleaseTrigger keyName
+                    sendEvent' keyReleaseTrigger keyName
                 "mousedown" | Just pos <- getMousePos (cw, ch) <$> Canvas.ePageXY event -> do
-                    sendEvent pointerPressTrigger pos
+                    sendEvent' pointerPressTrigger pos
                 "mouseup" | Just pos <- getMousePos (cw, ch) <$> Canvas.ePageXY event -> do
-                    sendEvent pointerReleaseTrigger pos
+                    sendEvent' pointerReleaseTrigger pos
                 "mousemove" | Just pos <- getMousePos (cw, ch) <$> Canvas.ePageXY event -> do
-                    sendEvent pointerMovementTrigger pos
+                    sendEvent' pointerMovementTrigger pos
                 _ -> return ()
 
             tn <- getCurrentTime
             threadDelay $ max 0 (50000 - (round ((tn `diffUTCTime` t0) * 1000000)))
             t2 <- getCurrentTime
             let dt = realToFrac (t2 `diffUTCTime` t1)
-            sendEvent timePassingTrigger dt
+            sendEvent' timePassingTrigger dt
             go t2
-    go t0
+    bracket
+        (asyncProcessEventTriggers triggeredEvents fireCommand)
+        killThread
+        (const $ go t0)
 
 #endif

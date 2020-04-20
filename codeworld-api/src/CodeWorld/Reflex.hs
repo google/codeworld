@@ -186,9 +186,12 @@ reflexOf ::
     ( Reflex t,
       MonadHold t m,
       MonadFix m,
+      TriggerEvent t m,
       PerformEvent t m,
+      MonadIO m,
       MonadIO (Performable m),
       Adjustable t m,
+      NotReady t m,
       PostBuild t m
     ) =>
     ReactiveInput t ->
@@ -254,7 +257,10 @@ freezeDyn predicate dyn = do
 
 reactiveDebugControls ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
+    NotReady t m,
+    MonadIO m,
     MonadIO (Performable m),
     PostBuild t m,
     MonadHold t m,
@@ -320,7 +326,10 @@ getHoverAlpha = do
 
 playPauseButton ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
+    NotReady t m,
+    MonadIO m,
     MonadIO (Performable m),
     PostBuild t m,
     MonadHold t m,
@@ -354,7 +363,10 @@ playPauseButton hoverAlpha running pos = do
 
 stepButton ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
+    NotReady t m,
+    MonadIO m,
     MonadIO (Performable m),
     PostBuild t m,
     MonadHold t m,
@@ -382,7 +394,10 @@ stepButton hoverAlpha pos running = do
 
 fastForwardButton ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
+    NotReady t m,
+    MonadIO m,
     MonadIO (Performable m),
     PostBuild t m,
     MonadHold t m,
@@ -407,7 +422,10 @@ fastForwardButton hoverAlpha pos = do
 
 speedSlider ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
+    NotReady t m,
+    MonadIO m,
     MonadIO (Performable m),
     PostBuild t m,
     MonadHold t m,
@@ -440,7 +458,10 @@ speedSlider hoverAlpha pos speedFactor = do
 
 resetViewButton ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
+    NotReady t m,
+    MonadIO m,
     MonadIO (Performable m),
     PostBuild t m,
     MonadHold t m,
@@ -464,7 +485,10 @@ resetViewButton hoverAlpha pos needsReset = do
 
 panControls ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
+    NotReady t m,
+    MonadIO m,
     MonadIO (Performable m),
     PostBuild t m,
     MonadHold t m,
@@ -493,7 +517,10 @@ panControls running resetClick = do
 
 zoomControls ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
+    NotReady t m,
+    MonadIO m,
     MonadIO (Performable m),
     PostBuild t m,
     MonadHold t m,
@@ -520,7 +547,10 @@ zoomControls hoverAlpha (x, y) resetClick = do
 
 zoomInButton ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
+    NotReady t m,
+    MonadIO m,
     MonadIO (Performable m),
     PostBuild t m,
     MonadHold t m,
@@ -550,7 +580,10 @@ zoomInButton hoverAlpha pos = do
 
 zoomOutButton ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
+    NotReady t m,
+    MonadIO m,
     MonadIO (Performable m),
     PostBuild t m,
     MonadHold t m,
@@ -579,7 +612,10 @@ zoomOutButton hoverAlpha pos = do
 
 zoomSlider ::
   ( PerformEvent t m,
+    TriggerEvent t m,
     Adjustable t m,
+    NotReady t m,
+    MonadIO m,
     MonadIO (Performable m),
     PostBuild t m,
     MonadHold t m,

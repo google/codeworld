@@ -1,4 +1,4 @@
-resolver: lts-14.19
+resolver: lts-14.27
 
 packages: 
   - codeworld-account
@@ -17,12 +17,12 @@ allow-newer: false
   
 extra-deps:
   - binary-0.8.7.0
-  - blank-canvas-0.6.3
-  - colour-2.3.4
+  - blank-canvas-0.7.1
+  - colour-2.3.5
   - constraints-extras-0.3.0.2
   - dependent-map-0.3
   - dependent-sum-0.6.1
-  - ghc-lib-parser-8.8.1
+  - ghc-lib-parser-8.10.1.20200412
   - ghcjs-base-stub-0.3.0.2
   - ghcjs-dom-0.9.4.0
   - ghcjs-dom-jsaddle-0.9.4.0
@@ -33,8 +33,9 @@ extra-deps:
   - kansas-comet-0.4
   - monoidal-containers-0.6
   - network-2.6.3.6
-  - ormolu-0.0.2.0
+  - ormolu-0.0.4.0
+  - patch-0.0.3.1
   - ref-tf-0.4.0.2
-  - reflex-0.6.2.4
+  - reflex-0.6.4.1
   - text-1.2.4.0
   - witherable-0.3.1

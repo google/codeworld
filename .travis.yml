@@ -7,7 +7,7 @@ cache:
   timeout: 2000
   directories:
   - $HOME/.cabal
-  # - $HOME/.ghc
+  ## - $HOME/.ghc
   # - $HOME/.ghcjs
   - $HOME/.local/bin
   - $HOME/.stack

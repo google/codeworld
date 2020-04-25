@@ -42,6 +42,7 @@ module Internal.Prelude
     -- List functions
     , (P.++)
     , empty
+    , filter
     , contains
     , length
     , at
@@ -138,6 +139,13 @@ fail msg = withFrozenCallStack (P.error msg)
 empty :: [a] -> Truth
 empty [] = P.True
 empty _ = P.False
+
+-- | Returns also elements satisfying a condition.
+filter :: (a -> Bool) -> [a] -> [a]
+filter cond []    = []
+filter cond (x:xs)
+  | cond x         = x : filter cond xs
+  | otherwise      = filter cond xs
 
 -- | Determines whether a value is a member of a list or not.
 contains :: ([a], a) -> Truth

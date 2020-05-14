@@ -25,10 +25,32 @@ run .  cabal_install --ghcjs ./codeworld-prediction \
                              ./codeworld-base \
                              ./codeworld-game-api \
                              QuickCheck \
-                             linear \
                              parsec \
                              megaparsec \
-                             lens
+                             lens \
+                             generic-lens \
+                             conduit \
+                             aeson \
+                             hspec \
+                             text \
+                             resourcet \
+                             semigroups \
+                             trifecta \
+                             attoparsec \
+                             adjunctions \
+                             statistics \
+                             extra \
+                             free \
+                             tasty \
+                             linear \
+                             ad \
+                             dejafu \
+                             semigroupoids \
+                             profunctors \
+                             comonad \
+                             binary \
+                             comonad-transformers \
+                             bifunctors
 
 run codeworld-base  cabal configure --ghcjs
 run codeworld-base  cabal haddock --html

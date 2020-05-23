@@ -1,16 +1,14 @@
-diff -ru ghcjs/ghc/compiler/typecheck/TcRnExports.hs ghcjs-patched/ghc/compiler/typecheck/TcRnExports.hs
---- ghcjs/ghc/compiler/typecheck/TcRnExports.hs	2019-06-02 05:59:15.378156624 +0000
-+++ ghcjs-patched/ghc/compiler/typecheck/TcRnExports.hs	2019-06-02 06:25:01.041390515 +0000
-@@ -33,7 +33,7 @@
- import PatSyn
+--- ghcjs/ghc/compiler/typecheck/TcRnExports.hs	2020-05-23 01:33:13.884689946 +0000
++++ ghcjs-patched/ghc/compiler/typecheck/TcRnExports.hs	2020-05-23 01:32:23.253286558 +0000
+@@ -34,6 +34,7 @@
  import Maybes
  import Util (capitalise)
--
+ 
 +import FastString (fsLit)
  
  import Control.Monad
  import DynFlags
-@@ -131,12 +131,17 @@
+@@ -131,12 +132,18 @@
          -- Reason: don't want to complain about 'main' not in scope
          --         in interactive mode
          ; dflags <- getDynFlags
@@ -19,13 +17,16 @@ diff -ru ghcjs/ghc/compiler/typecheck/TcRnExports.hs ghcjs-patched/ghc/compiler/
 +                 Just main_fun
 +                     | is_main_mod -> mkUnqual varName (fsLit main_fun)
 +                 _                 -> main_RDR_Unqual
++        ; has_main <- lookupGlobalOccRn_maybe default_main >>= return . isJust
          ; let real_exports
                   | explicit_mod = exports
-                  | ghcLink dflags == LinkInMemory = Nothing
-                  | otherwise
+-                 | ghcLink dflags == LinkInMemory = Nothing
+-                 | otherwise
++                 | has_main
                            = Just (noLoc [noLoc (IEVar noExt
 -                                     (noLoc (IEName $ noLoc main_RDR_Unqual)))])
 +                                     (noLoc (IEName $ noLoc default_main)))])
++                 | otherwise = Nothing
                          -- ToDo: the 'noLoc' here is unhelpful if 'main'
                          --       turns out to be out of scope
  

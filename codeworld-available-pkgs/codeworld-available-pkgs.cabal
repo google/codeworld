@@ -1,0 +1,72 @@
+Cabal-version:       2.2
+
+Name:                codeworld-available-pkgs
+Version:             0.1.0.0
+License:             Apache-2.0
+License-file:        LICENSE
+Author:              The CodeWorld Authors
+Maintainer:          Chris Smith <cdsmith@gmail.com>
+Copyright:           (c) 2019, The CodeWorld Authors
+Bug-reports:         https://github.com/google/codeworld/issues
+
+Library
+  Build-depends:       base,
+                       ad,
+                       adjunctions,
+                       aeson,
+                       async,
+                       attoparsec,
+                       base64-bytestring,
+                       basement,
+                       bifunctors,
+                       binary,
+                       blaze-builder,
+                       bytestring,
+                       case-insensitive,
+                       comonad,
+                       comonad-transformers,
+                       conduit,
+                       containers,
+                       contravariant,
+                       cryptonite,
+                       deepseq,
+                       dejafu,
+                       digestive-functors,
+                       distributive,
+                       dlist,
+                       either,
+                       exceptions,
+                       extra,
+                       fclabels,
+                       free,
+                       generic-deriving,
+                       generic-lens,
+                       hashable,
+                       hspec,
+                       kan-extensions,
+                       lens,
+                       linear,
+                       megaparsec,
+                       microlens,
+                       monad-control,
+                       mono-traversable,
+                       parsec,
+                       path,
+                       profunctors,
+                       QuickCheck,
+                       reflection,
+                       resourcet,
+                       safe,
+                       scientific,
+                       semigroupoids,
+                       semigroups,
+                       split,
+                       statistics,
+                       syb,
+                       tasty,
+                       text,
+                       trifecta,
+                       unordered-containers,
+                       vector,
+                       
+  Default-language:    Haskell2010

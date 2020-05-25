@@ -93,7 +93,7 @@ vectorDifference (v, w) =
 scaledVector :: (Vector, Number) -> Vector
 scaledVector (v, k) = fromCWVect (CW.scaledVector (toDouble k) (toCWVect v))
 
--- | Rotates a given vector by a given angle in radians
+-- | Rotates a given vector by a given angle in degrees
 rotatedVector :: (Vector, Number) -> Vector
 rotatedVector (v, k) =
     fromCWVect (CW.rotatedVector (toDouble (pi * k / 180)) (toCWVect v))

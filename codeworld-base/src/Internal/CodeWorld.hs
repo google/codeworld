@@ -93,8 +93,9 @@ animationOf f = CW.animationOf (toCWPic . f . fromDouble) `catch` reportError
 -- with three arguments:
 --
 -- 1. A function to create an initial world.  The argument to
---    this function is an infinite sequence of random numbers,
---    which you can use to create a randomly chosen world.
+--    this function is an infinite sequence of random numbers
+--    (chosen uniformly between 0 and 1) which you can use to
+--    create a different world each time your program is run.
 -- 2. A function that describes how the world changes when
 --    things happen.  The function receives an old world and
 --    an 'Event' that occurs, and maps it to a new world.
@@ -105,7 +106,8 @@ animationOf f = CW.animationOf (toCWPic . f . fromDouble) `catch` reportError
 --
 -- > program = activityOf(initial, change, picture)
 -- >
--- > initial(rs) = 0
+-- > initial(randoms) = x0
+-- >   where x0 = 10 * randoms#1 - 5
 -- >
 -- > change(x, KeyPress("A")) = x - 1
 -- > change(x, KeyPress("D")) = x + 1

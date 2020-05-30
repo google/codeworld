@@ -23,22 +23,8 @@
 -- | Module for using CodeWorld pictures in Reflex-based FRP applications.
 module CodeWorld.Reflex
   ( -- $intro
-    -- $old
     reflexOf,
-    ReactiveInput,
-    keyPress,
-    keyRelease,
-    textEntry,
-    pointerPress,
-    pointerRelease,
-    pointerPosition,
-    pointerDown,
-    timePassing,
-
-    -- * New Entry Point
-    -- $new
-    reactiveOf,
-    debugReactiveOf,
+    debugReflexOf,
     ReflexCodeWorld,
     getKeyPress,
     getKeyRelease,
@@ -81,6 +67,8 @@ module CodeWorld.Reflex
     scaled,
     dilated,
     rotated,
+    reflected,
+    clipped,
     pictures,
     (<>),
     (&),
@@ -152,73 +140,26 @@ import Reflex
 -- the Reflex library.  You should import this __instead__ of 'CodeWorld', since
 -- the 'CodeWorld' module exports conflict with Reflex names.
 --
--- You'll provide a function whose input can be used to access the user's
--- actions with keys, the mouse pointer, and time, and whose output is a
--- 'Picture'.  The 'Picture' value is built with the same combinators as the
--- main 'CodeWorld' library.
+-- When using this module, you can build pictures using the same combinators as
+-- the main 'CodeWorld' module.  However, the way you handle user input and draw
+-- to the screen is different.  The 'ReflexCodeWorld' constraint gives you a
+-- a monad that has access to Reflex versions of input, such as keys, the mouse
+-- pointer, and the time.  Based on these inputs, you'll use 'draw' to draw
+-- output to the screen.
 --
 -- The Reflex API is documented in many places, but a great reference is
 -- available in the <https://github.com/reflex-frp/reflex/blob/develop/Quickref.md Reflex Quick Reference>.
 
--- $old
---
--- The old API consists of the function `reflexOf`.  WARNING: This API will soon
--- be deleted in favor of the newer API described below.
---
--- A simple example:
---
--- @
--- import CodeWorld.Reflex
--- import Reflex
---
--- main :: IO ()
--- main = reflexOf $ \\input -> do
---     angle <- foldDyn (+) 0 (gate (current (pointerDown input)) (timePassing input))
---     return $ (uncurry translated \<$> pointerPosition input \<*>)
---            $ (colored \<$> bool red green \<$> pointerDown input \<*>)
---            $ (rotated \<$> angle \<*>)
---            $ constDyn (solidRectangle 2 2)
--- @
+-- | Runs a reactive program, discharging the 'ReflexCodeWorld' constraint.
+-- This is the starting point for Reflex programs in CodeWorld.
+reflexOf :: (forall t m. ReflexCodeWorld t m => m ()) -> IO ()
+reflexOf program = runReactive $ \input -> runReactiveProgram program input
 
--- | The entry point for running Reflex-based CodeWorld programs.
-reflexOf ::
-  ( forall t m.
-    ( Reflex t,
-      MonadHold t m,
-      MonadFix m,
-      TriggerEvent t m,
-      PerformEvent t m,
-      MonadIO m,
-      MonadIO (Performable m),
-      Adjustable t m,
-      NotReady t m,
-      PostBuild t m
-    ) =>
-    ReactiveInput t ->
-    m (Dynamic t Picture)
-  ) ->
-  IO ()
-reflexOf program = runReactive $ \input -> do
-  pic <- program input
-  return (pic, pic)
-{-# WARNING
-  reflexOf
-  [ "Please use reactiveOf instead of reflexOf.",
-    "reflexOf will be removed and replaced soon."
-  ]
-  #-}
-
-reactiveOf :: (forall t m. ReflexCodeWorld t m => m ()) -> IO ()
-reactiveOf program = runReactive $ \input -> runReactiveProgram program input
-{-# WARNING
-  reactiveOf
-  [ "After the current migration is complete,",
-    "reactiveOf will probably be renamed to reflexOf."
-  ]
-  #-}
-
-debugReactiveOf :: (forall t m. ReflexCodeWorld t m => m ()) -> IO ()
-debugReactiveOf program = runReactive $ \input -> flip runReactiveProgram input $ do
+-- | A variant of 'reflexOf' that includes some on-screen debugging controls.
+-- You can use this during development, but should usually switch back to
+-- 'reflexOf' when you're done debugging.
+debugReflexOf :: (forall t m. ReflexCodeWorld t m => m ()) -> IO ()
+debugReflexOf program = runReactive $ \input -> flip runReactiveProgram input $ do
   hoverAlpha <- getHoverAlpha
   controlState <- reactiveDebugControls hoverAlpha
   logicalInputs <- makeLogicalInputs controlState =<< getReactiveInput
@@ -298,13 +239,6 @@ reactiveDebugControls hoverAlpha = do
     }
   where
     transformPoint z (dx, dy) (x, y) = ((x - dx) / z, (y - dy) / z)
-
-{-# WARNING
-  debugReactiveOf
-  [ "After the current migration is complete,",
-    "debugReactiveOf will probably be renamed to debugReflexOf."
-  ]
-  #-}
 
 getHoverAlpha :: ReflexCodeWorld t m => m (Dynamic t Double)
 getHoverAlpha = do

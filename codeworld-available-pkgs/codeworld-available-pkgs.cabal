@@ -29,6 +29,7 @@ Library
                        containers,
                        contravariant,
                        cryptonite,
+                       Decimal,
                        deepseq,
                        dejafu,
                        digestive-functors,

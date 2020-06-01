@@ -1,5 +1,5 @@
 Name:                codeworld-api
-Version:             0.5.0
+Version:             0.6.0
 Synopsis:            Graphics library for CodeWorld
 License:             Apache
 License-file:        LICENSE
@@ -8,7 +8,7 @@ Maintainer:          Chris Smith <cdsmith@gmail.com>
 Copyright:           (c) 2019, The CodeWorld Authors
 Bug-reports:         https://github.com/google/codeworld/issues
 Build-type:          Simple
-Cabal-version:       >=1.8
+Cabal-version:       >=1.10
 
 Description:
   This module provides the drawing code for CodeWorld.  It is heavily inspired by
@@ -83,6 +83,8 @@ Library
   if flag(strictbuild)
     Ghc-options:       -Werror
 
+  Default-language:    Haskell2010
+
 Test-suite unit-tests
   Type:                exitcode-stdio-1.0
   Main-is:             Main.hs
@@ -140,3 +142,5 @@ Test-suite unit-tests
 
   Ghc-options:         -O2
   Cpp-options:         -DCODEWORLD_UNIT_TEST
+
+  Default-language:    Haskell2010

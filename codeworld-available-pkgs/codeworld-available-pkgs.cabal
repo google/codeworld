@@ -244,6 +244,7 @@ Library
     typelits-witnesses,
     unagi-chan,
     unbounded-delays,
+    unexceptionalio,
     unicode,
     unique,
     unliftio,

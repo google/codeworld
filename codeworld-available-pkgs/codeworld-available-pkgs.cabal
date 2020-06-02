@@ -164,6 +164,7 @@ Library
     mwc-random,
     nats,
     netwire,
+    network-uri,
     newtype,
     newtype-generics,
     non-empty,

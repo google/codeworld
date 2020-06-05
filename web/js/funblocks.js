@@ -119,11 +119,11 @@ function initCodeworld() {
 }
 
 function getCurrentProject() {
-  return {
-    name: utils.directoryTree.getCurrentProjectName() || 'Untitled',
-    source: getWorkspaceXMLText(),
-    history: '',
-  }
+    return {
+        name: utils.directoryTree.getCurrentProjectName() || 'Untitled',
+        source: getWorkspaceXMLText(),
+        history: '',
+    };
 }
 
 // Sets the generated code
@@ -317,7 +317,7 @@ function updateUI() {
         document.getElementById('shareFolderButton').style.display = 'none';
     }
 
-    let title = utils.directoryTree.getCurrentProjectName() || '(new)'
+    let title = utils.directoryTree.getCurrentProjectName() || '(new)';
 
     if (!isEditorClean()) {
         title = `* ${title}`;
@@ -374,23 +374,23 @@ function saveProject() {
         window.lastXML = getWorkspaceXMLText();
     }
 
-    const currentProjectName = utils.directoryTree.getCurrentProjectName()
+    const currentProjectName = utils.directoryTree.getCurrentProjectName();
 
     if (currentProjectName) {
-      saveProjectBase(
-        getNearestDirectory(),
-        currentProjectName,
-        window.projectEnv,
-        successFunc,
-      )
+        saveProjectBase(
+            getNearestDirectory(),
+            currentProjectName,
+            window.projectEnv,
+            successFunc,
+        );
     } else {
-      saveProjectAs()
+        saveProjectAs();
     }
 }
 
 function saveProjectAs() {
     function successFunc(name) {
-      window.lastXML = getWorkspaceXMLText();
+        window.lastXML = getWorkspaceXMLText();
     }
     saveProjectAsBase(successFunc);
 }
@@ -398,10 +398,10 @@ function saveProjectAs() {
 function deleteFolder() {
     const path = getNearestDirectory();
     if (
-      path === '' ||
-      utils.directoryTree.getCurrentProjectName() !== null
+        path === '' ||
+        utils.directoryTree.getCurrentProjectName() !== null
     ) {
-      return
+        return;
     }
 
     function successFunc() {
@@ -413,7 +413,7 @@ function deleteFolder() {
 
 function deleteProject() {
     if (!utils.directoryTree.getCurrentProjectName()) {
-        return deleteFolder()
+        return deleteFolder();
     }
 
     function successFunc() {
@@ -457,13 +457,13 @@ function clearRunCode() {
 }
 
 function clearWorkspace() {
-  const workspace = Blockly.mainWorkspace;
+    const workspace = Blockly.mainWorkspace;
 
-  utils.directoryTree.clearSelectedNode()
-  workspace.clear();
+    utils.directoryTree.clearSelectedNode();
+    workspace.clear();
 }
 
 function clearCode() {
-  const workspace = Blockly.mainWorkspace
-  workspace.clear()
+    const workspace = Blockly.mainWorkspace;
+    workspace.clear();
 }

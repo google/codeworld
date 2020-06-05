@@ -1,1 +1,3 @@
-window.utils = {}
+'use strict'
+
+window.utils = {};

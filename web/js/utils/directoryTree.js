@@ -1,34 +1,38 @@
-const directoryTreeId = '#directoryTree'
+'use strict'
+
+const directoryTreeId = '#directoryTree';
 
 function clearSelectedNode() {
-  const directoryTree = $(directoryTreeId)
+    const directoryTree = $(directoryTreeId);
 
-  const state = directoryTree.tree('getState')
-  state.selected_node = []
-  directoryTree.tree('setState', state)
+    const state = directoryTree.tree('getState');
+    state.selected_node = [];
+    directoryTree.tree('setState', state);
 }
 
 function createNodeId(type, name) {
-  return `jqtree-element__${type}__${name}`
+    return `jqtree-element__${type}__${name}`;
 }
 
 function getCurrentProjectName() {
-  const directoryTree = $(directoryTreeId)
-  
-  const state = directoryTree.tree('getState')
-  const selectedNodeId = state.selected_node[0]
+    const directoryTree = $(directoryTreeId);
 
-  if (!selectedNodeId) {
-    return null
-  }
+    const state = directoryTree.tree('getState');
+    const selectedNodeId = state.selected_node[0];
 
-  const { name } = directoryTree.tree('getNodeById', selectedNodeId)
+    if (!selectedNodeId) {
+        return null;
+    }
 
-  return name
+    const {
+        name
+    } = directoryTree.tree('getNodeById', selectedNodeId);
+
+    return name;
 }
 
 window.utils.directoryTree = {
-  clearSelectedNode,
-  createNodeId,
-  getCurrentProjectName
-}
+    clearSelectedNode,
+    createNodeId,
+    getCurrentProjectName
+};

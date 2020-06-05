@@ -782,9 +782,9 @@ function loadSample(code) {
 }
 
 function newProject() {
-    utils.directoryTree.clearSelectedNode();
-
     warnIfUnsaved(() => {
+        utils.directoryTree.clearSelectedNode();
+
         setCode('');
     });
 }

@@ -1168,7 +1168,6 @@ function signinCallback(result) {
 
 function saveProject() {
     function successFunc() {
-      const selected = $('#directoryTree').tree('getSelectedNode');
       const doc = window.codeworldEditor.getDoc()
 
       window.savedGeneration = doc.changeGeneration(true)

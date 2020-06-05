@@ -274,7 +274,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 ctx.eqLine = state.line;
             }
 
-            if (token == '|' || token == 'where') {
+            if (token === '|' || token === 'where') {
                 ctx.rhsAlign = -1;
                 ctx.eqLine = -1;
             }
@@ -404,7 +404,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
 
             let newColumn = 0;
             if (state.contexts.length > 0) {
-                const parent = state.contexts[state.contexts.length - 1]
+                const parent = state.contexts[state.contexts.length - 1];
                 if (parent.rhsAlign >= 0 && state.line !== parent.eqLine) newColumn = parent.rhsAlign;
                 else newColumn = parent.column + config.indentUnit;
             }
@@ -527,7 +527,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                 // line in the parent context.
 
                 if (ctx.column > ctx.ch) return Math.max(minIndent, ctx.ch);
-                if (topLayout == 0) return 0;
+                if (topLayout === 0) return 0;
 
                 ctx = state.contexts[topLayout - 1];
                 continued = true;

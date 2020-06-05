@@ -15,7 +15,6 @@
  */
 'use strict';
 
-window.openProjectName = '';
 window.lastXML = '';
 
 // This will get bound in Haskell to a function that runs the program
@@ -120,11 +119,11 @@ function initCodeworld() {
 }
 
 function getCurrentProject() {
-    return {
-        'name': window.openProjectName || 'Untitled',
-        'source': getWorkspaceXMLText(),
-        'history': ''
-    };
+  return {
+    name: utils.directoryTree.getCurrentProjectName() || 'Untitled',
+    source: getWorkspaceXMLText(),
+    history: '',
+  }
 }
 
 // Sets the generated code
@@ -290,7 +289,7 @@ function updateUI() {
         } else {
             document.getElementById('deleteButton').style.display = 'none';
         }
-        if (window.openProjectName) {
+        if (utils.directoryTree.getCurrentProjectName()) {
             document.getElementById('saveButton').style.display = '';
         } else {
             document.getElementById('saveButton').style.display = 'none';
@@ -318,12 +317,7 @@ function updateUI() {
         document.getElementById('shareFolderButton').style.display = 'none';
     }
 
-    let title;
-    if (window.openProjectName) {
-        title = window.openProjectName;
-    } else {
-        title = '(new)';
-    }
+    let title = utils.directoryTree.getCurrentProjectName() || '(new)'
 
     if (!isEditorClean()) {
         title = `* ${title}`;
@@ -344,7 +338,7 @@ function updateUI() {
 function help() {
     const url = 'doc.html?shelf=help/blocks.shelf';
     sweetAlert({
-        html: `<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="${ 
+        html: `<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="${
             url}"></iframe>`,
         customClass: 'helpdoc',
         allowEscapeKey: true,
@@ -358,18 +352,15 @@ function signinCallback() {
 }
 
 function signOut() {
-
     // call shared sign out
     signout();
 
     document.getElementById('projects').innerHTML = '';
-    window.openProjectName = null;
     updateUI();
 }
 
 function loadProject(name, index) {
     function successFunc(project) {
-        window.openProjectName = name;
         clearRunCode();
         loadWorkspace(project.source);
         Blockly.getMainWorkspace().clearUndo();
@@ -383,29 +374,34 @@ function saveProject() {
         window.lastXML = getWorkspaceXMLText();
     }
 
-    if (window.openProjectName) {
-        saveProjectBase(
-            getNearestDirectory(),
-            window.openProjectName,
-            window.projectEnv,
-            successFunc);
+    const currentProjectName = utils.directoryTree.getCurrentProjectName()
+
+    if (currentProjectName) {
+      saveProjectBase(
+        getNearestDirectory(),
+        currentProjectName,
+        window.projectEnv,
+        successFunc,
+      )
     } else {
-        saveProjectAs();
+      saveProjectAs()
     }
 }
 
 function saveProjectAs() {
     function successFunc(name) {
-        window.lastXML = getWorkspaceXMLText();
-        window.openProjectName = name;
+      window.lastXML = getWorkspaceXMLText();
     }
     saveProjectAsBase(successFunc);
 }
 
 function deleteFolder() {
     const path = getNearestDirectory();
-    if (path === '' || window.openProjectName !== null) {
-        return;
+    if (
+      path === '' ||
+      utils.directoryTree.getCurrentProjectName() !== null
+    ) {
+      return
     }
 
     function successFunc() {
@@ -416,9 +412,8 @@ function deleteFolder() {
 }
 
 function deleteProject() {
-    if (!window.openProjectName) {
-        deleteFolder();
-        return;
+    if (!utils.directoryTree.getCurrentProjectName()) {
+        return deleteFolder()
     }
 
     function successFunc() {
@@ -462,17 +457,13 @@ function clearRunCode() {
 }
 
 function clearWorkspace() {
-    window.openProjectName = null;
-    const workspace = Blockly.mainWorkspace;
-    // Deselect nodes
-    const treeState = $('#directoryTree').tree('getState');
-    treeState.selected_node = [];
-    $('#directoryTree').tree('setState', treeState);
-    workspace.clear();
+  const workspace = Blockly.mainWorkspace;
+
+  utils.directoryTree.clearSelectedNode()
+  workspace.clear();
 }
 
 function clearCode() {
-    window.openProjectName = null;
-    const workspace = Blockly.mainWorkspace;
-    workspace.clear();
+  const workspace = Blockly.mainWorkspace
+  workspace.clear()
 }

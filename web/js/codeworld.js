@@ -37,8 +37,6 @@ async function init() {
 
     initDirectoryTree();
 
-    window.openProjectName = null;
-
     window.savedGeneration = null;
     window.runningGeneration = null;
     window.debugAvailable = false;
@@ -591,12 +589,13 @@ function setMode(force) {
 }
 
 function getCurrentProject() {
-    const doc = window.codeworldEditor.getDoc();
-    return {
-        'name': window.openProjectName || 'Untitled',
-        'source': doc.getValue(),
-        'history': doc.getHistory()
-    };
+  const doc = window.codeworldEditor.getDoc()
+
+  return {
+    name: utils.directoryTree.getCurrentProjectName() || 'Untitled',
+    source: doc.getValue(),
+    history: doc.getHistory()
+  }
 }
 
 /*
@@ -663,12 +662,7 @@ function updateUI() {
     document.getElementById('saveAsButton').style.display = '';
     document.getElementById('runButtons').style.display = '';
 
-    let title;
-    if (window.openProjectName) {
-        title = window.openProjectName;
-    } else {
-        title = '(new)';
-    }
+    let title = utils.directoryTree.getCurrentProjectName() || '(new)'
 
     if (!isEditorClean()) {
         title = `* ${title}`;
@@ -737,7 +731,7 @@ function help() {
     }
 
     sweetAlert({
-        html: `<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="${ 
+        html: `<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="${
             url}"></iframe>`,
         customClass: customClass,
         allowEscapeKey: true,
@@ -761,8 +755,6 @@ function isEditorClean() {
 }
 
 function setCode(code, history, name, autostart) {
-    window.openProjectName = name;
-
     const doc = codeworldEditor.getDoc();
     doc.setValue(code);
     window.savedGeneration = doc.changeGeneration(true);
@@ -790,9 +782,11 @@ function loadSample(code) {
 }
 
 function newProject() {
-    warnIfUnsaved(() => {
-        setCode('');
-    });
+  utils.directoryTree.clearSelectedNode()
+
+  warnIfUnsaved(() => {
+    setCode('')
+  })
 }
 
 function newFolder() {
@@ -1032,11 +1026,11 @@ function showRequiredChecksInDialog(msg) {
     const itemsHtml = items.map(item => {
         const head = item[1];
         const rest = item.slice(2).join('<br>');
-        const details = rest ? `<br><span class="req-details">${rest 
+        const details = rest ? `<br><span class="req-details">${rest
         }</span>` : '';
         const itemclass = (item[0] === undefined) ? 'req-indet' : (item[0] ?
             'req-yes' : 'req-no');
-        return `<li class="${itemclass}">${head}${details 
+        return `<li class="${itemclass}">${head}${details
         }</li>`;
     });
     sweetAlert({
@@ -1174,49 +1168,54 @@ function signinCallback(result) {
 
 function saveProject() {
     function successFunc() {
-        const selected = $('#directoryTree').tree('getSelectedNode');
-        if (selected) {
-            window.openProjectName = selected.name;
-        }
-        const doc = window.codeworldEditor.getDoc();
-        window.savedGeneration = doc.changeGeneration(true);
-        window.codeworldEditor.focus();
+      const selected = $('#directoryTree').tree('getSelectedNode');
+      const doc = window.codeworldEditor.getDoc()
+
+      window.savedGeneration = doc.changeGeneration(true)
+      window.codeworldEditor.focus()
     }
-    if (window.openProjectName) {
-        saveProjectBase(
-            getNearestDirectory(),
-            window.openProjectName,
-            window.projectEnv,
-            successFunc);
+
+    const currentProjectName = utils.directoryTree.getCurrentProjectName()
+
+    if (currentProjectName) {
+      saveProjectBase(
+        getNearestDirectory(),
+        currentProjectName,
+        window.projectEnv,
+        successFunc,
+      )
     } else {
-        saveProjectAs();
+      saveProjectAs();
     }
 }
 
 function saveProjectAs() {
-    function successFunc(name) {
-        window.openProjectName = name;
-        const doc = window.codeworldEditor.getDoc();
-        window.savedGeneration = doc.changeGeneration(true);
-        window.codeworldEditor.focus();
-    }
-    saveProjectAsBase(successFunc);
+  function successFunc(name) {
+    const doc = window.codeworldEditor.getDoc()
+
+    window.savedGeneration = doc.changeGeneration(true)
+    window.codeworldEditor.focus()
+  }
+
+  saveProjectAsBase(successFunc)
 }
 
 function deleteFolder() {
-    const path = getNearestDirectory();
-    if (path === '' || window.openProjectName) {
-        return;
+    const path = getNearestDirectory()
+
+    if (path === '' || utils.directoryTree.getCurrentProjectName()) {
+      return
     }
 
     deleteFolder_(path, window.projectEnv, () => {
-        window.savedGeneration = codeworldEditor.getDoc().changeGeneration(true);
-        clearWorkspace();
-    });
+      window.savedGeneration = codeworldEditor.getDoc().changeGeneration(true)
+
+      clearWorkspace()
+    })
 }
 
 function deleteProject() {
-    if (!window.openProjectName) {
+    if (!utils.directoryTree.getCurrentProjectName()) {
         deleteFolder();
         return;
     }
@@ -1238,8 +1237,9 @@ function downloadProject() {
             type: 'text/plain',
             endings: 'native'
         });
-    let filename = 'untitled.hs';
-    if (window.openProjectName) filename = `${window.openProjectName}.hs`;
+    let filename = `
+      ${utils.directoryTree.getCurrentProjectName() || 'untitled'}.hs
+    `
 
     if (window.navigator.msSaveBlob) {
         window.navigator.msSaveBlob(blob, filename);
@@ -1326,15 +1326,11 @@ function parseCompileErrors(rawErrors) {
 }
 
 function clearWorkspace() {
-    window.openProjectName = null;
-    // Deselect nodes
-    const treeState = $('#directoryTree').tree('getState');
-    treeState.selected_node = [];
-    $('#directoryTree').tree('setState', treeState);
-    setCode('');
+  utils.directoryTree.clearSelectedNode()
+
+  setCode('')
 }
 
 function clearCode() {
-    window.openProjectName = null;
-    setCode('');
+  setCode('');
 }

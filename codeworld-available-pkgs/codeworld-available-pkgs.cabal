@@ -164,6 +164,7 @@ Library
     mtl,
     mtl-compat,
     mutable-containers,
+    mwc-probability,
     mwc-random,
     nats,
     natural-transformation,

@@ -510,13 +510,11 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
 
             // Compute the rightmost surrounding layout column, which should be respected
             // by indent rules.
-            let parentColumn, minIndent;
+            let minIndent;
             if (topLayout > 0) {
                 const parent = state.contexts[topLayout - 1];
-                parentColumn = parent.column;
-                minIndent = isBracket(parent) ? parentColumn : parentColumn + 1;
+                minIndent = isBracket(parent) ? parent.column : parent.column + 1;
             } else {
-                parentColumn = 0;
                 minIndent = 0;
             }
 

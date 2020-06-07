@@ -368,7 +368,10 @@ function initCodeworld() {
             const line = window.codeworldEditor.getDoc().getCursor().line;
 
             if (active || line !== oldLine) {
-                const {prev, smart} = getIndentsAt(line, 'smart');
+                const {
+                    prev,
+                    smart
+                } = getIndentsAt(line, 'smart');
                 window.codeworldEditor.setOption('electricChars', prev === smart);
                 window.codeworldEditor.setOption('electricIndentLine', line);
             }
@@ -407,10 +410,10 @@ function backspace() {
                 ch: 0
             });
             const smartIndent = getSmartIndent(
-                       startToken.state,
-                       line.slice(prevIndent),
-                       cursor.ch - 1,
-                       'add');
+                startToken.state,
+                line.slice(prevIndent),
+                cursor.ch - 1,
+                'add');
             if (cursor.ch === smartIndent) {
                 window.codeworldEditor.execCommand('indentLess');
                 return;
@@ -424,7 +427,10 @@ function changeIndent(how) {
     if (window.buildMode === 'codeworld') {
         const range = window.codeworldEditor.listSelections()[0];
         const lineNum = Math.min(range.anchor.line, range.head.line);
-        const {prev, smart} = getIndentsAt(lineNum, how);
+        const {
+            prev,
+            smart
+        } = getIndentsAt(lineNum, how);
 
         if (smart >= 0) {
             window.codeworldEditor.indentSelection(smart - prev);
@@ -453,35 +459,35 @@ function getIndentsAt(lineNum, how) {
 function getSmartIndent(state, textAfter, prevIndent, how) {
     let dir;
     switch (how) {
-        case 'add':
-            dir = {
-                start: 0,
-                end: state.contexts.length + 1,
-                inc: 1,
-                predicate: n => n > prevIndent
-            };
-            break;
+    case 'add':
+        dir = {
+            start: 0,
+            end: state.contexts.length + 1,
+            inc: 1,
+            predicate: n => n > prevIndent
+        };
+        break;
 
-        case 'subtract':
-            dir = {
-                start: state.contexts.length,
-                end: -1,
-                inc: -1,
-                predicate: n => n < prevIndent
-            };
-            break;
+    case 'subtract':
+        dir = {
+            start: state.contexts.length,
+            end: -1,
+            inc: -1,
+            predicate: n => n < prevIndent
+        };
+        break;
 
-        case 'smart':
-            dir = {
-                start: state.contexts.length,
-                end: state.contexts.length + 1,
-                inc: 1,
-                predicate: n => n >= 0
-            };
-            break;
+    case 'smart':
+        dir = {
+            start: state.contexts.length,
+            end: state.contexts.length + 1,
+            inc: 1,
+            predicate: n => n >= 0
+        };
+        break;
 
-        default:
-            return -1;
+    default:
+        return -1;
     }
 
     const mode = window.codeworldEditor.getDoc().getMode();
@@ -818,7 +824,7 @@ function formatSource() {
             } else {
                 return token.state.contexts.length + 0.5;
             }
-        }
+        };
 
         const oldLevel = [];
         for (let line = 0; line < codeworldEditor.getDoc().lineCount(); ++line) {
@@ -827,10 +833,13 @@ function formatSource() {
         for (let line = 0; line < codeworldEditor.getDoc().lineCount(); ++line) {
             if (oldLevel[line] === -1) continue;
 
-            getLevel(line);  // Forces an update to the token state.
+            getLevel(line); // Forces an update to the token state.
             window.codeworldEditor.indentLine(line);
             while (getLevel(line) > oldLevel[line]) {
-                const {prev, smart} = getIndentsAt(line, 'subtract');
+                const {
+                    prev,
+                    smart
+                } = getIndentsAt(line, 'subtract');
                 if (prev === 0) {
                     break;
                 } else if (smart >= 0 && smart !== prev) {
@@ -840,7 +849,10 @@ function formatSource() {
                 }
             }
             while (getLevel(line) < oldLevel[line]) {
-                const {prev, smart} = getIndentsAt(line, 'add');
+                const {
+                    prev,
+                    smart
+                } = getIndentsAt(line, 'add');
                 if (smart >= 0 && smart !== prev) {
                     window.codeworldEditor.indentLine(line, smart - prev);
                 } else {

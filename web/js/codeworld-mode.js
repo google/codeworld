@@ -488,8 +488,8 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             if (token && token[0] === ',') {
                 // By rule 5, commas close all non-bracket contexts unless they occur in a guard.
                 while (topLayout > 0 &&
-                       !isBracket(state.contexts[topLayout]) &&
-                       (state.contexts[topLayout].guardCol === -1 ||
+                    !isBracket(state.contexts[topLayout]) &&
+                    (state.contexts[topLayout].guardCol === -1 ||
                         state.contexts[topLayout].eqLine !== -1)) {
                     --topLayout;
                 }

@@ -1,6 +1,10 @@
-'use strict'
+'use strict';
 
 const directoryTreeId = '#directoryTree';
+const nodeTypes = {
+    DIRECTORY: 'directory',
+    PROJECT: 'project',
+};
 
 function clearSelectedNode() {
     const directoryTree = $(directoryTreeId);
@@ -10,29 +14,40 @@ function clearSelectedNode() {
     directoryTree.tree('setState', state);
 }
 
-function createNodeId(type, name) {
-    return `jqtree-element__${type}__${name}`;
+function selectNode(node) {
+    $(directoryTreeId).tree('selectNode', node);
 }
 
-function getCurrentProjectName() {
-    const directoryTree = $(directoryTreeId);
+function createNodeId(type, name) {
+    return (
+        `jqtree-element__${type}__${name}__${Math.floor(Math.random() * 1000000)}`
+    );
+}
 
-    const state = directoryTree.tree('getState');
-    const selectedNodeId = state.selected_node[0];
+function getSelectedNode() {
+    const node = $(directoryTreeId).tree('getSelectedNode');
 
-    if (!selectedNodeId) {
-        return null;
-    }
+    return node ? node : null;
+}
 
-    const {
-        name
-    } = directoryTree.tree('getNodeById', selectedNodeId);
+function isDirectory(node) {
+    return node ?
+        node.type === nodeTypes.DIRECTORY :
+        false;
+}
 
-    return name;
+function isProject(node) {
+    return node ?
+        node.type === nodeTypes.PROJECT :
+        false;
 }
 
 window.utils.directoryTree = {
-    clearSelectedNode,
     createNodeId,
-    getCurrentProjectName
+    selectNode,
+    clearSelectedNode,
+    getSelectedNode,
+    isDirectory,
+    isProject,
+    nodeTypes
 };

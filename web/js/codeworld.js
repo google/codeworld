@@ -114,7 +114,7 @@ async function init() {
             sendHttp('GET', `loadSource?hash=${hash}&mode=${window.buildMode}`,
                 null, request => {
                     if (request.status === 200) {
-                        setCode(request.responseText, null, null, true);
+                        setCode(request.responseText, null, true);
                     }
                 });
         } else if (hash[0] !== 'F') {
@@ -590,9 +590,10 @@ function setMode(force) {
 
 function getCurrentProject() {
     const doc = window.codeworldEditor.getDoc();
+    const selectedNode = utils.directoryTree.getSelectedNode();
 
     return {
-        name: utils.directoryTree.getCurrentProjectName() || 'Untitled',
+        name: selectedNode ? selectedNode.name : 'Untitled',
         source: doc.getValue(),
         history: doc.getHistory()
     };
@@ -604,9 +605,9 @@ function getCurrentProject() {
  * to get the visual presentation to match.
  */
 function updateUI() {
-    const isSignedIn = signedIn();
-    const selected = $('#directoryTree').tree('getSelectedNode');
-    if (isSignedIn) {
+    const selectedNode = utils.directoryTree.getSelectedNode();
+
+    if (signedIn()) {
         if (document.getElementById('signout').style.display === 'none') {
             document.getElementById('signin').style.display = 'none';
             document.getElementById('signout').style.display = '';
@@ -615,17 +616,23 @@ function updateUI() {
             window.mainLayout.open('west');
         }
 
-        if (selected) {
+        if (selectedNode) {
             document.getElementById('deleteButton').style.display = '';
         } else {
             document.getElementById('deleteButton').style.display = 'none';
         }
 
-        if (selected && selected.type === 'project') {
+        if (
+            selectedNode &&
+            utils.directoryTree.isProject(selectedNode)
+        ) {
             document.getElementById('saveButton').style.display = '';
             document.getElementById('downloadButton').style.display = '';
             document.getElementById('shareFolderButton').style.display = 'none';
-        } else if (selected && selected.type === 'directory') {
+        } else if (
+            selectedNode &&
+            utils.directoryTree.isDirectory(selectedNode)
+        ) {
             document.getElementById('saveButton').style.display = 'none';
             document.getElementById('downloadButton').style.display = 'none';
             document.getElementById('shareFolderButton').style.display = '';
@@ -662,13 +669,14 @@ function updateUI() {
     document.getElementById('saveAsButton').style.display = '';
     document.getElementById('runButtons').style.display = '';
 
-    let title = utils.directoryTree.getCurrentProjectName() || '(new)';
+    let title = selectedNode ? selectedNode.name : '(new)';
 
     if (!isEditorClean()) {
         title = `* ${title}`;
-        const selected = $('#directoryTree').tree('getSelectedNode');
-        if (selected && selected.type === 'project') {
-            const asterisk = selected.element.getElementsByClassName('unsaved-changes')[0];
+
+        if (selectedNode && utils.directoryTree.isProject(selectedNode)) {
+            const asterisk = selectedNode.element
+                .getElementsByClassName('unsaved-changes')[0];
             if (asterisk) {
                 asterisk.style.display = '';
             }
@@ -783,7 +791,17 @@ function loadSample(code) {
 
 function newProject() {
     warnIfUnsaved(() => {
-        utils.directoryTree.clearSelectedNode();
+        const selectedNode = utils.directoryTree.getSelectedNode();
+
+        if (selectedNode && utils.directoryTree.isProject(selectedNode)) {
+            utils.directoryTree.clearSelectedNode();
+
+            // Select parent folder (if any) as new project's location is
+            // determined by the selection in the directory tree.
+            if (pathToRootDir(selectedNode)) {
+                utils.directoryTree.selectNode(selectedNode.parent);
+            }
+        }
 
         setCode('');
     });
@@ -797,7 +815,7 @@ function newFolder() {
 
 function loadProject(name, path) {
     loadProject_(path, name, window.buildMode, project => {
-        setCode(project.source, project.history, name);
+        setCode(project.source, project.history);
     });
 }
 
@@ -1174,12 +1192,12 @@ function saveProject() {
         window.codeworldEditor.focus();
     }
 
-    const currentProjectName = utils.directoryTree.getCurrentProjectName();
+    const selectedNode = utils.directoryTree.getSelectedNode();
 
-    if (currentProjectName) {
+    if (selectedNode) {
         saveProjectBase(
             getNearestDirectory(),
-            currentProjectName,
+            selectedNode.name,
             window.projectEnv,
             successFunc,
         );
@@ -1202,7 +1220,7 @@ function saveProjectAs() {
 function deleteFolder() {
     const path = getNearestDirectory();
 
-    if (path === '' || utils.directoryTree.getCurrentProjectName()) {
+    if (path === '') {
         return;
     }
 
@@ -1214,7 +1232,9 @@ function deleteFolder() {
 }
 
 function deleteProject() {
-    if (!utils.directoryTree.getCurrentProjectName()) {
+    const selectedNode = utils.directoryTree.getSelectedNode();
+
+    if (selectedNode && utils.directoryTree.isDirectory(selectedNode)) {
         deleteFolder();
         return;
     }
@@ -1236,9 +1256,8 @@ function downloadProject() {
             type: 'text/plain',
             endings: 'native'
         });
-    const filename = `
-      ${utils.directoryTree.getCurrentProjectName() || 'untitled'}.hs
-    `;
+    const selectedNode = utils.directoryTree.getSelectedNode();
+    const filename = `${selectedNode ? selectedNode.name : 'untitled'}.hs`;
 
     if (window.navigator.msSaveBlob) {
         window.navigator.msSaveBlob(blob, filename);
@@ -1327,9 +1346,5 @@ function parseCompileErrors(rawErrors) {
 function clearWorkspace() {
     utils.directoryTree.clearSelectedNode();
 
-    setCode('');
-}
-
-function clearCode() {
     setCode('');
 }

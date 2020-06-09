@@ -89,11 +89,13 @@ import qualified Data.JSString
 import qualified GHCJS.DOM.ClientRect as ClientRect
 import GHCJS.Concurrent (withoutPreemption)
 import GHCJS.DOM
+import GHCJS.DOM.Document (createElement, getBodyUnsafe)
 import GHCJS.DOM.Element
 import GHCJS.DOM.EventM
 import GHCJS.DOM.GlobalEventHandlers hiding (error, keyPress)
 import GHCJS.DOM.KeyboardEvent
 import GHCJS.DOM.MouseEvent
+import GHCJS.DOM.Node (appendChild)
 import GHCJS.DOM.NonElementParentNode
 import GHCJS.DOM.Types (Window, Element, unElement)
 import GHCJS.Foreign.Callback
@@ -752,8 +754,26 @@ foreign import javascript unsafe "$1.drawImage($2, $3, $4, $5, $6);"
 foreign import javascript unsafe "$1.getContext('2d', { alpha: false })"
     getCodeWorldContext :: Canvas.Canvas -> IO Canvas.Context
 
+getCanvas :: IO Element
+getCanvas = do
+    js_showCanvas
+    Just doc <- currentDocument
+    mcanvas <- getElementById doc ("screen" :: JSString)
+    case mcanvas of
+        Just canvas -> return canvas
+        Nothing -> do
+            body <- getBodyUnsafe doc
+            setAttribute body ("style" :: JSString)
+                ("margin: 0; overflow: hidden" :: JSString)
+            canvas <- createElement doc ("canvas" :: JSString)
+            setAttribute canvas ("id" :: JSString) ("screen" :: JSString)
+            setAttribute canvas ("style" :: JSString)
+                ("cursor: default; width: 100vw; height: 100vh;" :: JSString)
+            _ <- appendChild body canvas
+            return canvas
+
 foreign import javascript unsafe "showCanvas()"
-    showCanvas :: IO ()
+    js_showCanvas :: IO ()
 
 canvasFromElement :: Element -> Canvas.Canvas
 canvasFromElement = Canvas.Canvas . unElement
@@ -1292,15 +1312,12 @@ runGame token numPlayers initial stepHandler eventHandler drawHandler = do
     enableDeterministicMath
     let fullStepHandler dt = stepHandler dt . eventHandler (-1) (TimePassing dt)
 
-    Just window <- currentWindow
-    Just doc <- currentDocument
-    Just canvas <- getElementById doc ("screen" :: JSString)
-
+    canvas <- getCanvas
     setCanvasSize canvas canvas
+
+    Just window <- currentWindow
     _ <- on window resize $ do
         liftIO $ setCanvasSize canvas canvas
-
-    showCanvas
 
     frameRenderer <- createFrameRenderer canvas
 
@@ -1344,17 +1361,14 @@ run :: s
 run initial stepHandler eventHandler drawHandler injectTime = do
     let fullStepHandler dt = stepHandler dt . eventHandler (injectTime dt)
 
-    Just window <- currentWindow
-    Just doc <- currentDocument
-    Just canvas <- getElementById doc ("screen" :: JSString)
+    canvas <- getCanvas
 
     needsRedraw <- newMVar ()
+    Just window <- currentWindow
     _ <- on window resize $ void $ liftIO $ do
         setCanvasSize canvas canvas
         tryPutMVar needsRedraw ()
     setCanvasSize canvas canvas
-
-    showCanvas
 
     frameRenderer <- createFrameRenderer canvas
     currentState <- newMVar initial
@@ -1584,8 +1598,6 @@ runInspect initial step event draw rawDraw = do
     -- there are deferred type errors that are effectively compile errors.
     evaluate $ rnf $ rawDraw initial
 
-    Just doc <- currentDocument
-    Just canvas <- getElementById doc ("screen" :: JSString)
     let debugInitial = (debugStateInit, initial)
         debugStep dt s@(debugState, _) =
             case debugStateActive debugState of
@@ -1601,8 +1613,11 @@ runInspect initial step event draw rawDraw = do
         debugRawDraw (_debugState, s) = rawDraw s
     (sendEvent, getState) <-
         run debugInitial debugStep debugEvent debugDraw (Right . TimePassing)
+
+    canvas <- getCanvas
     onEvents canvas (sendEvent . Right)
     connectInspect canvas (debugRawDraw <$> getState) (sendEvent . Left)
+
     waitForever
 
 #else
@@ -2001,11 +2016,7 @@ runReactive
         ) => (ReactiveInput t -> m (R.Dynamic t Picture, R.Dynamic t Picture)))
     -> IO ()
 runReactive program = do
-    showCanvas
-
-    Just window <- currentWindow
-    Just doc <- currentDocument
-    Just canvas <- getElementById doc ("screen" :: JSString)
+    canvas <- getCanvas
     setCanvasSize canvas canvas
 
     frameRenderer <- createFrameRenderer canvas
@@ -2020,6 +2031,8 @@ runReactive program = do
 
     (debugUpdate, debugUpdateTriggerRef) <- R.runSpiderHost R.newEventWithTriggerRef
     debugState <- R.runSpiderHost $ R.holdUniqDyn =<< R.foldDyn ($) debugStateInit debugUpdate
+
+    Just window <- currentWindow
 
     rec
         physicalInput <- R.runSpiderHost $

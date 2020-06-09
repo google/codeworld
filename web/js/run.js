@@ -136,24 +136,7 @@ function notifyStarted() {
     }
 }
 
-function showCanvas() {
-    window.hasObservableOutput = true;
-
-    // Catch exceptions to protect against cross-domain access errors.
-    // If the frame is cross-domain, then it's embedded, in which case
-    // there is no need to show it.
-    try {
-        if (!window.parent) {
-            return;
-        }
-
-        window.parent.postMessage({
-            type: 'showGraphics'
-        }, '*');
-    } catch (e) {
-        // Ignore, and assume the canvas is already shown.
-    }
-}
+function showCanvas() {}
 
 function start() {
     const modeMatch = /\bmode=([A-Za-z0-9]*)\b/.exec(location.search);
@@ -199,7 +182,22 @@ function start() {
     notifyStarted();
 
     const showObserver = new MutationObserver(() => {
-        showCanvas();
+        window.hasObservableOutput = true;
+
+        // Catch exceptions to protect against cross-domain access errors.
+        // If the frame is cross-domain, then it's embedded, in which case
+        // there is no need to show it.
+        try {
+            if (!window.parent) {
+                return;
+            }
+
+            window.parent.postMessage({
+                type: 'showGraphics'
+            }, '*');
+        } catch (e) {
+            // Ignore, and assume the canvas is already shown.
+        }
         showObserver.disconnect();
     });
     showObserver.observe(document, {

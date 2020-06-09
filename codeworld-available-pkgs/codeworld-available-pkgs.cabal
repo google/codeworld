@@ -32,6 +32,7 @@ Library
     async,
     attoparsec,
     auto,
+    -- axiom, (depends on transient, which fails to build)
     backprop,
     base,
     base-compat,
@@ -119,6 +120,7 @@ Library
     ghc-prim,
     ghcjs-base,
     ghcjs-dom,
+    ghcjs-perch,
     ghcjs-prim,
     half,
     -- hamilton, (depends on hmatrix, which uses native libs)
@@ -249,6 +251,7 @@ Library
     transformers,
     transformers-base,
     transformers-compat,
+    -- transient, (build fails: missing Semigroup instance for TransIO)
     trifecta,
     type-equality,
     typelits-witnesses,

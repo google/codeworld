@@ -86,9 +86,9 @@ import qualified Control.Monad.Trans.State as State
 import Data.Aeson (ToJSON(..), (.=), object)
 import Data.Hashable
 import qualified Data.JSString
-import qualified GHCJS.DOM.ClientRect as ClientRect
 import GHCJS.Concurrent (withoutPreemption)
 import GHCJS.DOM
+import qualified GHCJS.DOM.DOMRect as DOMRect
 import GHCJS.DOM.Document (createElement, getBodyUnsafe)
 import GHCJS.DOM.Element
 import GHCJS.DOM.EventM
@@ -103,7 +103,6 @@ import GHCJS.Marshal
 import GHCJS.Marshal.Pure
 import GHCJS.Types
 import JavaScript.Object
-import JavaScript.Web.AnimationFrame
 import qualified JavaScript.Web.Canvas as Canvas
 import qualified JavaScript.Web.Canvas.Internal as Canvas
 import qualified JavaScript.Web.Location as Loc
@@ -789,8 +788,8 @@ createFrameRenderer canvas = do
         setCanvasSize (elementFromCanvas offscreenCanvas) canvas
         rect <- getBoundingClientRect canvas
         withScreen (elementFromCanvas offscreenCanvas) rect (drawFrame pic)
-        cw <- ClientRect.getWidth rect
-        ch <- ClientRect.getHeight rect
+        cw <- DOMRect.getWidth rect
+        ch <- DOMRect.getHeight rect
         when (cw > 0.5 && ch > 0.5) $
             canvasDrawImage screen (elementFromCanvas offscreenCanvas)
                             0 0 (round cw) (round ch)
@@ -884,10 +883,10 @@ pictureToNode = flip State.evalState (NodeId 0) . go
 foreign import javascript unsafe "/\\bmode=haskell\\b/.test(location.search)"
     haskellMode :: Bool
 
-withScreen :: Element -> ClientRect.ClientRect -> CanvasM a -> IO a
+withScreen :: Element -> DOMRect.DOMRect -> CanvasM a -> IO a
 withScreen canvas rect action = do
-    cw <- realToFrac <$> ClientRect.getWidth rect
-    ch <- realToFrac <$> ClientRect.getHeight rect
+    cw <- realToFrac <$> DOMRect.getWidth rect
+    ch <- realToFrac <$> DOMRect.getHeight rect
     ctx <- getCodeWorldContext (canvasFromElement canvas)
     runCanvasM (cw, ch) ctx $ CM.saveRestore $ do
         setupScreenContext (round cw) (round ch)
@@ -896,8 +895,8 @@ withScreen canvas rect action = do
 setCanvasSize :: Element -> Element -> IO ()
 setCanvasSize target canvas = do
     rect <- getBoundingClientRect canvas
-    cx <- ClientRect.getWidth rect
-    cy <- ClientRect.getHeight rect
+    cx <- DOMRect.getWidth rect
+    cy <- DOMRect.getHeight rect
     setAttribute target ("width" :: JSString) (show (round cx :: Int))
     setAttribute target ("height" :: JSString) (show (round cy :: Int))
 
@@ -1051,10 +1050,10 @@ instance Serialize GameToken
 screenCoordsToPoint :: Element -> Double -> Double -> IO Point
 screenCoordsToPoint canvas sx sy = do
     rect <- getBoundingClientRect canvas
-    cx <- realToFrac <$> ClientRect.getLeft rect
-    cy <- realToFrac <$> ClientRect.getTop rect
-    cw <- realToFrac <$> ClientRect.getWidth rect
-    ch <- realToFrac <$> ClientRect.getHeight rect
+    cx <- realToFrac <$> DOMRect.getX rect
+    cy <- realToFrac <$> DOMRect.getY rect
+    cw <- realToFrac <$> DOMRect.getWidth rect
+    ch <- realToFrac <$> DOMRect.getHeight rect
     let unitLen = min cw ch / 20
     let midx = cx + cw / 2
     let midy = cy + ch / 2
@@ -1414,10 +1413,10 @@ run initial stepHandler eventHandler drawHandler injectTime = do
 getNodeAtCoords :: Element -> Double -> Double -> Picture -> IO (Maybe NodeId)
 getNodeAtCoords canvas x y pic = do
     rect <- getBoundingClientRect canvas
-    cx <- realToFrac <$> ClientRect.getLeft rect
-    cy <- realToFrac <$> ClientRect.getTop rect
-    cw <- realToFrac <$> ClientRect.getWidth rect
-    ch <- realToFrac <$> ClientRect.getHeight rect
+    cx <- realToFrac <$> DOMRect.getX rect
+    cy <- realToFrac <$> DOMRect.getY rect
+    cw <- realToFrac <$> DOMRect.getWidth rect
+    ch <- realToFrac <$> DOMRect.getHeight rect
 
     -- It's safe to pass undefined for the context because
     -- findTopShapeFromPoint only draws to an offscreen buffer.

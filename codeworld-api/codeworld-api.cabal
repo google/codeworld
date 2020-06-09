@@ -73,7 +73,7 @@ Library
                        ghcjs-prim,
                        codeworld-game-api,
                        codeworld-prediction,
-                       ghcjs-dom             >= 0.8 && < 0.9,
+                       ghcjs-dom             >= 0.9 && < 0.10,
                        transformers
   else
     Build-depends:     blank-canvas          >= 0.6 && < 0.8,
@@ -134,7 +134,7 @@ Test-suite unit-tests
                        ghcjs-prim,
                        codeworld-game-api,
                        codeworld-prediction,
-                       ghcjs-dom             >= 0.8 && < 0.9,
+                       ghcjs-dom             >= 0.9 && < 0.10,
                        transformers
   else
     Build-depends:     blank-canvas          >= 0.6 && < 0.8,

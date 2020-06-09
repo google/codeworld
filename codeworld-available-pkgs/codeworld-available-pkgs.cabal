@@ -39,6 +39,7 @@ Library
     base64-bytestring,
     basement,
     bifunctors,
+    bimap,
     binary,
     binary-orphans,
     blaze-builder,
@@ -137,7 +138,9 @@ Library
     integer-logarithms,
     interpolation,
     invariant,
+    jsaddle,
     kan-extensions,
+    keycode,
     latex,
     leancheck,
     lens,
@@ -207,6 +210,8 @@ Library
     ref-tf,
     reflection,
     reflex,
+    reflex-dom,
+    reflex-dom-core,
     relude,
     resourcet,
     rio,
@@ -266,6 +271,7 @@ Library
     vinyl,
     void,
     witherable,
-    wl-pprint-annotated
+    wl-pprint-annotated,
+    zenc
 
   Default-language:    Haskell2010

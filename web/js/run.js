@@ -214,34 +214,33 @@ function start() {
 
 function init() {
     let paramList = location.search.slice(1).split('&');
-    let params = {};
+    const params = {};
     for (let i = 0; i < paramList.length; i++) {
-        let name = decodeURIComponent(paramList[i].split('=')[0]);
-        let value = decodeURIComponent(paramList[i].slice(name.length + 1));
+        const name = decodeURIComponent(paramList[i].split('=')[0]);
+        const value = decodeURIComponent(paramList[i].slice(name.length + 1));
         params[name] = value;
     }
     // params from the hash
     paramList = location.hash.slice(1).split('&');
     for (let i = 0; i < paramList.length; i++) {
-        let name = decodeURIComponent(paramList[i].split('=')[0]);
-        let value = decodeURIComponent(paramList[i].slice(name.length + 1));
+        const name = decodeURIComponent(paramList[i].split('=')[0]);
+        const value = decodeURIComponent(paramList[i].slice(name.length + 1));
         params[name] = value;
     }
 
-    let hash = params['hash'];
-    let dhash = params['dhash'];
+    const hash = params['hash'];
+    const dhash = params['dhash'];
     let mode = params['mode'];
 
-    let gid = params['gid'];
     if (!mode) mode = 'codeworld';
 
-    let query = '?mode=' + encodeURIComponent(mode);
-    if (hash) query += '&hash=' + encodeURIComponent(hash);
-    if (dhash) query += '&dhash=' + encodeURIComponent(dhash);
+    let query = `?mode=${encodeURIComponent(mode)}`;
+    if (hash) query += `&hash=${encodeURIComponent(hash)}`;
+    if (dhash) query += `&dhash=${encodeURIComponent(dhash)}`;
 
-    let uri = 'runJS' + query;
+    const uri = `runJS${query}`;
 
-    let loadScript = document.createElement('script');
+    const loadScript = document.createElement('script');
     loadScript.setAttribute('type', 'text/javascript');
     loadScript.setAttribute('src', uri);
     document.body.appendChild(loadScript);

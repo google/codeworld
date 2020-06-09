@@ -50,6 +50,9 @@
 
         if (canvas === null) {
             canvas = document.getElementById('screen');
+            if (canvas === null) {
+                return;
+            }
 
             canvas.addEventListener('mousemove', evt => {
                 if (active) {

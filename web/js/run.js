@@ -30,8 +30,10 @@ window.addEventListener('message', event => {
         window.dispatchEvent(new Event('resize'));
     } else if (event.data.type === 'startRecord') {
         const canvas = document.getElementById('screen');
-        canvasRecorder = new CanvasRecorder(canvas, 30);
-        canvasRecorder.recorder.start();
+        if (canvas !== null) {
+            canvasRecorder = new CanvasRecorder(canvas, 30);
+            canvasRecorder.recorder.start();
+        }
     } else if (event.data.type === 'stopRecord') {
         if (canvasRecorder && canvasRecorder.recorder.state === 'recording') {
             canvasRecorder.recorder.stop();
@@ -196,5 +198,51 @@ function start() {
     window.programStartTime = Date.now();
     notifyStarted();
 
+    const showObserver = new MutationObserver(() => {
+        showCanvas();
+        showObserver.disconnect();
+    });
+    showObserver.observe(document, {
+        childList: true,
+        attributes: true,
+        characterData: true,
+        subtree: true
+    });
+
     window.h$run(window.h$mainZCZCMainzimain);
+}
+
+function init() {
+    let paramList = location.search.slice(1).split('&');
+    let params = {};
+    for (let i = 0; i < paramList.length; i++) {
+        let name = decodeURIComponent(paramList[i].split('=')[0]);
+        let value = decodeURIComponent(paramList[i].slice(name.length + 1));
+        params[name] = value;
+    }
+    // params from the hash
+    paramList = location.hash.slice(1).split('&');
+    for (let i = 0; i < paramList.length; i++) {
+        let name = decodeURIComponent(paramList[i].split('=')[0]);
+        let value = decodeURIComponent(paramList[i].slice(name.length + 1));
+        params[name] = value;
+    }
+
+    let hash = params['hash'];
+    let dhash = params['dhash'];
+    let mode = params['mode'];
+
+    let gid = params['gid'];
+    if (!mode) mode = 'codeworld';
+
+    let query = '?mode=' + encodeURIComponent(mode);
+    if (hash) query += '&hash=' + encodeURIComponent(hash);
+    if (dhash) query += '&dhash=' + encodeURIComponent(dhash);
+
+    let uri = 'runJS' + query;
+
+    let loadScript = document.createElement('script');
+    loadScript.setAttribute('type', 'text/javascript');
+    loadScript.setAttribute('src', uri);
+    document.body.appendChild(loadScript);
 }

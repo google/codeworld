@@ -12,42 +12,7 @@
     <canvas id="screen"></canvas>
 </body>
 <script type="text/javascript" src="js/run.js"></script>
-<script type="text/javascript">
-    // params from the URL
-    let paramList = location.search.slice(1).split('&');
-    let params = {};
-    for (let i = 0; i < paramList.length; i++) {
-        let name = decodeURIComponent(paramList[i].split('=')[0]);
-        let value = decodeURIComponent(paramList[i].slice(name.length + 1));
-        params[name] = value;
-    }
-    // params from the hash
-    paramList = location.hash.slice(1).split('&');
-    for (let i = 0; i < paramList.length; i++) {
-        let name = decodeURIComponent(paramList[i].split('=')[0]);
-        let value = decodeURIComponent(paramList[i].slice(name.length + 1));
-        params[name] = value;
-    }
-
-    let hash = params['hash'];
-    let dhash = params['dhash'];
-    let mode = params['mode'];
-    // Game id is just dumped in the global JS namespace and read there by gameOf
-    let gid = params['gid'];
-    if (!mode) mode = 'codeworld';
-
-    let query = '?mode=' + encodeURIComponent(mode);
-    if (hash) query += '&hash=' + encodeURIComponent(hash);
-    if (dhash) query += '&dhash=' + encodeURIComponent(dhash);
-
-    let uri = 'runJS' + query;
-
-    let loadScript = document.createElement('script');
-    loadScript.setAttribute('type', 'text/javascript');
-    loadScript.setAttribute('src', uri);
-    document.body.appendChild(loadScript);
-
-</script>
 <script type="text/javascript" src="js/debugmode.js"></script>
+<script type="text/javascript">init();</script>
 
 </html>

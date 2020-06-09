@@ -153,8 +153,6 @@
     --treedialog-piclink-selected: yellow;
 
     /* runner.css */
-    --infobox-bg: white;
-    --infobox-shadow: #000;
     --stack-item-bg: #eee;
     --stack-item-hover-bg: #ccc;
     --stack-list-a: black;
@@ -296,8 +294,6 @@
     --treedialog-piclink-selected: yellow;
 
     /* runner.css */
-    --infobox-bg: #000000;
-    --infobox-shadow: #FFFFFF;
     --stack-item-bg: #111111;
     --stack-item-hover-bg: #333333;
     --stack-list-a: #FFFFFF;

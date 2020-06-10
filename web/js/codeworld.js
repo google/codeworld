@@ -762,26 +762,6 @@ function isEditorClean() {
     else return doc.isClean(window.savedGeneration);
 }
 
-function setCode(code, history, name, autostart) {
-    const doc = codeworldEditor.getDoc();
-    doc.setValue(code);
-    window.savedGeneration = doc.changeGeneration(true);
-
-    if (history) {
-        doc.setHistory(history);
-    } else {
-        doc.clearHistory();
-    }
-
-    codeworldEditor.focus();
-    parseSymbolsFromCurrentCode();
-    if (autostart) {
-        compile();
-    } else {
-        stopRun();
-    }
-}
-
 function loadSample(code) {
     if (isEditorClean()) sweetAlert.close();
     warnIfUnsaved(() => {
@@ -791,17 +771,7 @@ function loadSample(code) {
 
 function newProject() {
     warnIfUnsaved(() => {
-        const selectedNode = utils.directoryTree.getSelectedNode();
-
-        if (selectedNode && utils.directoryTree.isProject(selectedNode)) {
-            utils.directoryTree.clearSelectedNode();
-
-            // Select parent folder (if any) as new project's location is
-            // determined by the selection in the directory tree.
-            if (pathToRootDir(selectedNode)) {
-                utils.directoryTree.selectNode(selectedNode.parent);
-            }
-        }
+        updateTreeOnNewProjectCreation();
 
         setCode('');
     });

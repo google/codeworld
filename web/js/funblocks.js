@@ -395,15 +395,12 @@ function saveProjectAs() {
 
 function deleteFolder() {
     const path = getNearestDirectory();
-    if (
-        path === '' ||
-        utils.directoryTree.getSelectedNode() !== null
-    ) {
+    if (!path) {
         return;
     }
 
     function successFunc() {
-        clearWorkspace();
+        Blockly.mainWorkspace.clear();
         Blockly.getMainWorkspace().clearUndo();
     }
     deleteFolder_(path, window.projectEnv, successFunc);
@@ -417,7 +414,7 @@ function deleteProject() {
     }
 
     function successFunc() {
-        clearWorkspace();
+        Blockly.mainWorkspace.clear();
         Blockly.getMainWorkspace().clearUndo();
     }
     const path = getNearestDirectory();
@@ -440,8 +437,9 @@ function shareFolder() {
 
 function newProject() {
     warnIfUnsaved(() => {
+        updateTreeOnNewProjectCreation();
         clearRunCode();
-        clearWorkspace();
+        Blockly.mainWorkspace.clear();
         updateUI();
         window.lastXML = getWorkspaceXMLText();
         Blockly.getMainWorkspace().clearUndo();
@@ -454,13 +452,6 @@ function clearRunCode() {
     const runner = document.getElementById('runner');
     runner.contentWindow.location.replace('about:blank');
     updateEditor('');
-}
-
-function clearWorkspace() {
-    const workspace = Blockly.mainWorkspace;
-
-    utils.directoryTree.clearSelectedNode();
-    workspace.clear();
 }
 
 function clearCode() {

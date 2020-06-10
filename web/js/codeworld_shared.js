@@ -956,6 +956,30 @@ function moveDirTreeNode(moveFrom, moveTo, isFile, name, buildMode, successFunc)
     });
 }
 
+function setCode(code, history, name, autostart) {
+    if (!window.codeworldEditor) {
+        return;
+    }
+
+    const doc = window.codeworldEditor.getDoc();
+    doc.setValue(code);
+    window.savedGeneration = doc.changeGeneration(true);
+
+    if (history) {
+        doc.setHistory(history);
+    } else {
+        doc.clearHistory();
+    }
+
+    window.codeworldEditor.focus();
+    parseSymbolsFromCurrentCode();
+    if (autostart) {
+        compile();
+    } else {
+        stopRun();
+    }
+}
+
 function warnIfUnsaved(action) {
     if (isEditorClean()) {
         action();
@@ -993,12 +1017,10 @@ function saveProjectAsBase(successFunc) {
                     .text(getNearestDirectory())
                     .html()
                     .replace(/ /g, '&nbsp;')
-            }:` :
-            'Enter a name for your project:',
+            }:` : 'Enter a name for your project:',
         input: 'text',
         inputValue: selectedNode && !isDirectoryNode ?
-            selectedNode.name :
-            '',
+            selectedNode.name : '',
         confirmButtonText: 'Save',
         showCancelButton: true,
         closeOnConfirm: false,
@@ -1924,4 +1946,18 @@ function updateChildrenIndexes(node) {
         data.append('entries', JSON.stringify(repacked));
         sendHttp('POST', 'updateChildrenIndexes', data, () => {});
     } else updateUI();
+}
+
+function updateTreeOnNewProjectCreation() {
+    const selectedNode = getSelectedNode();
+
+    if (selectedNode && utils.directoryTree.isProject(selectedNode)) {
+        utils.directoryTree.clearSelectedNode();
+
+        // Select parent folder (if any) as new project's location is
+        // determined by the selection in the directory tree.
+        if (pathToRootDir(selectedNode)) {
+            utils.directoryTree.selectNode(selectedNode.parent);
+        }
+    }
 }

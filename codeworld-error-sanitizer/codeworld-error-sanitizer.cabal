@@ -5,7 +5,7 @@ License:             Apache-2.0
 License-file:        LICENSE
 Author:              Chris Smith
 Maintainer:          cdsmith@gmail.com
-Copyright:           (c) 2019, The CodeWorld Authors
+Copyright:           (c) 2020, The CodeWorld Authors
 Build-type:          Simple
 Cabal-version:       >=1.10
 

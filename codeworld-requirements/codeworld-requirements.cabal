@@ -7,7 +7,7 @@ synopsis:            Requirements checker for CodeWorld
 license-file:        LICENSE
 author:              The CodeWorld Authors
 maintainer:          Daniel Marshall <dmarshall2@sheffield.ac.uk>
-copyright:           (c) 2019, The CodeWorld Authors
+copyright:           (c) 2020, The CodeWorld Authors
 build-type:          Simple
 extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10

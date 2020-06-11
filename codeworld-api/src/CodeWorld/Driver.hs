@@ -880,7 +880,7 @@ pictureToNode = flip State.evalState (NodeId 0) . go
         let nodeName = trim 80 . describePicture $ pic
         let nodeSrcLoc = getPictureSrcLoc pic
         nodeSubs <- getSubNodes
-        pure Node{..}
+        pure (Node {..})
 
 foreign import javascript unsafe "/\\bmode=haskell\\b/.test(location.search)"
     haskellMode :: Bool
@@ -1642,7 +1642,7 @@ getMousePos (w, h) (x, y) =
     my = h' / 2
 
 toEvent :: (Int, Int) -> Canvas.Event -> Maybe Event
-toEvent rect Canvas.Event {..}
+toEvent rect (Canvas.Event {..})
     | eType == "keydown"
     , Just code <- eWhich = Just $ KeyPress (keyCodeToText (fromIntegral code))
     | eType == "keyup"
@@ -1995,7 +1995,7 @@ createPhysicalReactiveInput window canvas fire = do
     pointerDown <- R.holdDyn False $
         R.leftmost [True <$ pointerPress, False <$ pointerRelease]
 
-    return ReactiveInput{..}
+    return (ReactiveInput {..})
 
 inspectLogicalInput
     :: forall t m. (R.Reflex t, R.MonadHold t m)
@@ -2135,7 +2135,7 @@ runReactive program = runBlankCanvas $ \context -> do
     pointerDown <- R.runSpiderHost $ R.holdDyn False $
         R.leftmost [True <$ pointerPress, False <$ pointerRelease]
 
-    let input = ReactiveInput{..}
+    let input = ReactiveInput {..}
 
     triggeredEvents <- newChan
     (_, fireCommand) <- R.runSpiderHost $ R.hostPerformEventT $ do

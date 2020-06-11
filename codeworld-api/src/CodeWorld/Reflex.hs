@@ -173,7 +173,7 @@ data ControlState t = ControlState
   }
 
 makeLogicalInputs :: (Reflex t, MonadHold t m) => ControlState t -> ReactiveInput t -> m (ReactiveInput t)
-makeLogicalInputs ControlState {..} input = do
+makeLogicalInputs (ControlState {..}) input = do
   keyPress <- return $ gateDyn csRunning $ keyPress input
   keyRelease <- return $ gateDyn csRunning $ keyRelease input
   textEntry <- return $ gateDyn csRunning $ textEntry input
@@ -188,7 +188,7 @@ makeLogicalInputs ControlState {..} input = do
         [ gateDyn csRunning $ attachWith (*) (current csTimeDilation) (timePassing input),
           0.1 <$ csSyntheticStep
         ]
-  return ReactiveInput {..}
+  return (ReactiveInput {..})
 
 freezeDyn :: (Reflex t, MonadHold t m) => Dynamic t Bool -> Dynamic t a -> m (Dynamic t a)
 freezeDyn predicate dyn = do

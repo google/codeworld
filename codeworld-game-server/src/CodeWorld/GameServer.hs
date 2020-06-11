@@ -257,7 +257,7 @@ initGameServer = do
   started <- getCurrentTime
   totalStats <- newMVar (TotalStats 0 0 0 0)
   games <- newMVar HM.empty
-  return ServerState {..}
+  return (ServerState {..})
 
 -- | A snap handler
 gameServer :: MonadSnap m => ServerState -> m ()

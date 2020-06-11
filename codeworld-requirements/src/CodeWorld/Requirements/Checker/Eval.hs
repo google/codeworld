@@ -54,7 +54,7 @@ import Text.Regex.TDFA hiding (match)
 import Var
 
 evalRequirement :: DynFlags -> Messages -> TcGblEnv -> HsModule GhcPs -> C.ByteString -> Requirement -> (Maybe Bool, [String])
-evalRequirement f c e m s Requirement {..} =
+evalRequirement f c e m s (Requirement {..}) =
   let results = map (checkRule f c e m s) requiredRules
       evals = if any isNothing results then Nothing else Just $ concat (catMaybes results)
    in case evals of

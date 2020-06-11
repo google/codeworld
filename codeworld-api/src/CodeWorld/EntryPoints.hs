@@ -111,34 +111,34 @@ newTimeline :: a -> Timeline a
 newTimeline x = Timeline [] x []
 
 applyToTimeline :: (a -> a) -> Timeline a -> Timeline a
-applyToTimeline f timeline@Timeline {..}
+applyToTimeline f timeline@(Timeline {..})
   | identical present new = timeline
   | otherwise = Timeline (present : past) new []
   where
     new = f present
 
 undoTimeline :: Timeline a -> Timeline a
-undoTimeline timeline@Timeline {..} = case past of
+undoTimeline timeline@(Timeline {..}) = case past of
   [] -> timeline
   (x : xs) -> Timeline xs x (present : future)
 
 redoTimeline :: Timeline a -> Timeline a
-redoTimeline timeline@Timeline {..} = case future of
+redoTimeline timeline@(Timeline {..}) = case future of
   [] -> timeline
   (x : xs) -> Timeline (present : past) x xs
 
 restartTimeline :: Timeline a -> Timeline a
-restartTimeline timeline@Timeline {..}
+restartTimeline timeline@(Timeline {..})
   | null past = timeline
   | otherwise = Timeline [] x (xs ++ present : future)
   where
     x : xs = reverse past
 
 timelineLength :: Timeline a -> Int
-timelineLength Timeline {..} = length past + 1 + length future
+timelineLength (Timeline {..}) = length past + 1 + length future
 
 travelToTime :: Double -> Timeline a -> Timeline a
-travelToTime t timeline@Timeline {..}
+travelToTime t timeline@(Timeline {..})
   | diff >= 0 = iterate redoTimeline timeline !! diff
   | otherwise = iterate undoTimeline timeline !! (- diff)
   where
@@ -147,7 +147,7 @@ travelToTime t timeline@Timeline {..}
     diff = desiredPast - actualPast
 
 timelinePos :: Timeline a -> Double
-timelinePos Timeline {..}
+timelinePos (Timeline {..})
   | null past && null future = 1
   | otherwise = fromIntegral (length past) / fromIntegral (length past + length future)
 

@@ -34,7 +34,7 @@ import Text.Read
 import Text.Regex
 
 connect :: Config -> WS.ClientApp a -> IO a
-connect Config {..} = WS.runClient hostname port path
+connect (Config {..}) = WS.runClient hostname port path
 
 type Timestamp = Double
 

@@ -47,7 +47,7 @@ import "ghc" SrcLoc
 import Text.Regex.TDFA hiding (match)
 
 evalRequirement :: MonadCompile m => Requirement -> m (Maybe Bool, [String])
-evalRequirement Requirement {..} = do
+evalRequirement (Requirement {..}) = do
   results <- fmap concat <$> (sequence <$> mapM checkRule requiredRules)
   return $ case results of
     Nothing -> (Nothing, ["Could not check this requirement."])

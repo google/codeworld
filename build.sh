@@ -28,6 +28,7 @@ run .  cabal_install --ghcjs ./codeworld-prediction \
 
 # Hide packages that conflict with modules in more popular choices.
 run . ghcjs-pkg hide ghcjs-dom-jsffi
+run . ghcjs-pkg hide matrices
 
 run codeworld-base  cabal configure --ghcjs
 run codeworld-base  cabal haddock --html

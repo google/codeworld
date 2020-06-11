@@ -410,7 +410,8 @@ function deleteProject() {
     const selectedNode = utils.directoryTree.getSelectedNode();
 
     if (selectedNode && utils.directoryTree.isDirectory(selectedNode)) {
-        return deleteFolder();
+        deleteFolder();
+        return;
     }
 
     function successFunc() {

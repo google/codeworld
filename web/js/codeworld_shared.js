@@ -1070,8 +1070,8 @@ function saveProjectAsBase(successFunc) {
 function saveProjectBase(path, projectName, mode, successFunc) {
     if (!signedIn()) {
         sweetAlert('Oops!', 'You must sign in to save files.', 'error');
-
-        return updateUI();
+        updateUI();
+        return;
     }
 
     if (!projectName) return;
@@ -1100,11 +1100,12 @@ function saveProjectBase(path, projectName, mode, successFunc) {
             sweetAlert.close();
 
             if (request.status !== 200) {
-                return sweetAlert(
+                sweetAlert(
                     'Oops!',
                     'Could not save your project!!!  Please try again.',
                     'error'
                 );
+                return;
             }
 
             successFunc();
@@ -1148,7 +1149,8 @@ function deleteProject_(path, buildMode, successFunc) {
 
     if (!signedIn()) {
         sweetAlert('Oops', 'You must sign in to delete a project.', 'error');
-        return updateUI();
+        updateUI();
+        return;
     }
 
     const currentProjectName = selectedNode.name;
@@ -1234,7 +1236,8 @@ function createFolder(path, buildMode, successFunc) {
                 'You must sign in to create a folder.',
                 'error'
             );
-            return updateUI();
+            updateUI();
+            return;
         }
 
         sweetAlert({
@@ -1264,11 +1267,12 @@ function createFolder(path, buildMode, successFunc) {
 
             sendHttp('POST', 'createFolder', data, request => {
                 if (request.status !== 200) {
-                    return sweetAlert(
+                    sweetAlert(
                         'Oops',
                         'Could not create your directory! Please try again.',
                         'error',
                     );
+                    return;
                 }
 
                 successFunc();
@@ -1427,7 +1431,8 @@ function shareFolder_(mode) {
 
     if (!getNearestDirectory() || (selectedNode && selectedNode.name)) {
         sweetAlert('Oops!', 'You must select a folder to share!', 'error');
-        return updateUI();
+        updateUI();
+        return;
     }
 
     const folderName = Html.encode(getNearestDirectory_().name);

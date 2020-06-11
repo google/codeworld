@@ -18,9 +18,11 @@ function selectNode(node) {
     $(directoryTreeId).tree('selectNode', node);
 }
 
+let idCounter = 0;
 function createNodeId(type, name) {
+
     return (
-        `jqtree-element__${type}__${name}__${Math.floor(Math.random() * 1000000)}`
+        `jqtree-element__${type}__${name}__${idCounter++}}`
     );
 }
 

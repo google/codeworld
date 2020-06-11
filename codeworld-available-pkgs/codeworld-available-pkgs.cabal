@@ -28,7 +28,7 @@ Library
     adjunctions,
     -- accelerate, (does not build with GHCJS)
     aeson,
-    -- alga, (containers dependency is too old)
+    algebraic-graphs,
     apportionment,
     array,
     assoc,
@@ -156,6 +156,7 @@ Library
     http-api-data,
     http-media,
     http-types,
+    ieee754,
     indexed-list-literals,
     indexed-profunctors,
     integer-gmp,
@@ -173,6 +174,7 @@ Library
     lifted-async,
     lifted-base,
     linear,
+    log-domain,
     loop,
     markov-chain,
     massiv,
@@ -185,9 +187,11 @@ Library
     microlens-mtl,
     miso,
     mmorph,
-    -- monad-bayes, (hackage snapshot is too old to contain this)
+    monad-bayes,
     monad-control,
+    monad-coroutine,
     monad-loops,
+    monad-parallel,
     monad-unlift,
     mono-traversable,
     monoid-extras,

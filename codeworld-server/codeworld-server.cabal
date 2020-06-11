@@ -44,7 +44,7 @@ Executable codeworld-server
     lifted-base,
     memory,
     mtl,
-    ormolu >= 0.0.2,
+    ormolu >= 0.1,
     process,
     regex-compat,
     regex-tdfa,

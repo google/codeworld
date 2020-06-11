@@ -86,7 +86,7 @@ if [ ! -f $BUILD/progress/system-pkgs ]; then
 
     # Needed for GHCJS
     run . sudo apt-get install -y gnupg
-    run --quiet . curl -sL https://deb.nodesource.com/setup_8.x | run . sudo -E bash -
+    run --quiet . curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
     run . sudo apt-get install -y nodejs
 
     # Needed for ghcjs-boot --dev
@@ -194,7 +194,7 @@ fi
 
 if [ ! -f $BUILD/progress/cabal-install ]; then
   run .                  ghcup install-cabal 2.4.1.0
-  run .                  cabal update --index-state='2020-02-09T20:18:48Z'
+  run .                  cabal update --index-state='2020-06-10T22:10:39Z'
 
   touch $BUILD/progress/cabal-install
 fi

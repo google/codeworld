@@ -484,7 +484,7 @@ drawRandom (Widget {..}) = drawLabel & drawSelection & drawHighlight
       | highlight = translated (outline, x, y)
       | otherwise = colored (translated (outline, x, y), grey)
 
-updateWidget (PointerPress (mx, my)) (w@Widget {..})
+updateWidget (PointerPress (mx, my)) w@(Widget {..})
   | widget == Button,
     hit (mx, my, w) =
     w
@@ -537,7 +537,7 @@ updateWidget (PointerPress (mx, my)) (w@Widget {..})
   | otherwise = w
 updateWidget (PointerMovement (mx, my)) (w) =
   w .# updateHighlight (mx, my) .# updateSlider (mx)
-updateWidget (PointerRelease (_)) (w@Widget {..})
+updateWidget (PointerRelease (_)) w@(Widget {..})
   | widget == Toggle = w
   | widget == Timer = w
   | selected =
@@ -547,7 +547,7 @@ updateWidget (PointerRelease (_)) (w@Widget {..})
         value_ = if widget == Button then 0 else value_
       }
   | otherwise = w
-updateWidget (TimePassing (dt)) (w@Widget {..})
+updateWidget (TimePassing (dt)) w@(Widget {..})
   | widget == Timer, selected = w {value_ = dt + value_}
   | otherwise = w
 updateWidget (_) (widget) = widget
@@ -556,11 +556,11 @@ updateHighlight (mx, my) (w)
   | hit (mx, my, w) = w {highlight = True}
   | otherwise = w {highlight = False}
 
-updateSlider (mx) (w@Widget {..})
+updateSlider (mx) w@(Widget {..})
   | widget == Slider, selected = w {value_ = updateSliderValue (mx, w)}
   | otherwise = w
 
-updateSliderValue (mx, s@Widget {..}) =
+updateSliderValue (mx, s@(Widget {..})) =
   (mx' - x + width / 2) / width
   where
     mx' = max (x - width / 2, min (x + width / 2, mx))

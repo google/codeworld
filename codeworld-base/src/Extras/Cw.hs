@@ -194,15 +194,15 @@ randomAutoSlideshow (mkslides, period) = simulationOf (initial, update, render)
           slides = mkslides (randomNumbers (r))
         }
     update (ss, dt) = update_wrap (update_current (update_time (ss, dt)))
-    update_time (ss@SS {..}, dt) = ss {time = time + dt}
-    update_current (ss@SS {..})
+    update_time (ss@(SS {..}), dt) = ss {time = time + dt}
+    update_current ss@(SS {..})
       | time - tlast > period =
         ss
           { tlast = tlast + period,
             current = current + 1
           }
       | otherwise = ss
-    update_wrap (ss@SS {..})
+    update_wrap ss@(SS {..})
       | current > length (slides) =
         ss
           { current = 1,
@@ -237,7 +237,7 @@ randomSlideshow_ (mkslides) = interactionOf (initial, update, handle, render)
           random = rs,
           slides = mkslides (randomNumbers (r))
         }
-    update (ss@SS {..}, dt) = ss {time = time + dt}
+    update (ss@(SS {..}), dt) = ss {time = time + dt}
     render (SS {..})
       | empty (slides) = pictures ([])
       | otherwise = showSlide & slides #current
@@ -283,7 +283,7 @@ randomSlideshow_ (mkslides) = interactionOf (initial, update, handle, render)
                 | i <- [1 ..]
               ]
         mayHandleEvent (ss) = wrap (handleEvent (ss))
-        handleEvent (ss@SS {..}) =
+        handleEvent ss@(SS {..}) =
           ss
             { current = nextCurrent,
               tlast = time,
@@ -291,7 +291,7 @@ randomSlideshow_ (mkslides) = interactionOf (initial, update, handle, render)
             }
           where
             nextCurrent = handleNav (current, slides)
-        remake (ss@SS {..}) =
+        remake ss@(SS {..}) =
           ss
             { random = rs,
               slides = mkslides (randomNumbers (r))
@@ -299,7 +299,7 @@ randomSlideshow_ (mkslides) = interactionOf (initial, update, handle, render)
           where
             r : rs = random
         realign (ss, newCurrent) = ss {current = newCurrent}
-        wrap (ss@SS {..})
+        wrap ss@(SS {..})
           | current > nslides = wrap (realign (remake (ss), current - nslides))
           | current < 1 = wrap (realign (remake (ss), current + nslides))
           | otherwise = ss

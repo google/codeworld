@@ -956,7 +956,7 @@ function moveDirTreeNode(moveFrom, moveTo, isFile, name, buildMode, successFunc)
     });
 }
 
-function setCode(code, history, name, autostart) {
+function setCode(code, history, autostart) {
     if (!window.codeworldEditor) {
         return;
     }

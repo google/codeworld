@@ -14,148 +14,141 @@
  * limitations under the License.
  */
 
-'use strict';
+"use strict";
 
-goog.provide('Blockly.Blocks.cwProgram');
+goog.provide("Blockly.Blocks.cwProgram");
 
-goog.require('Blockly.Blocks');
+goog.require("Blockly.Blocks");
 
-Blockly.Blocks['cwActivityOf'] = {
-    /**
-     * Block for comparison operator.
-     * @this Blockly.Block
-     */
-    init() {
-        this.setColour(0);
-        this.setOutput(false);
-        this.appendValueInput('INITIAL')
-            .appendField(new Blockly.FieldLabel('activityOf', 'blocklyTextEmph'))
-            .appendField('(');
-        this.appendValueInput('EVENT')
-            .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(',');
-        this.appendValueInput('DRAW')
-            .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(',');
-        this.appendDummyInput()
-            .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(')');
-        this.setInputsInline(true);
+Blockly.Blocks["cwActivityOf"] = {
+  /**
+   * Block for comparison operator.
+   * @this Blockly.Block
+   */
+  init() {
+    this.setColour(0);
+    this.setOutput(false);
+    this.appendValueInput("INITIAL")
+      .appendField(new Blockly.FieldLabel("activityOf", "blocklyTextEmph"))
+      .appendField("(");
+    this.appendValueInput("EVENT")
+      .setAlign(Blockly.ALIGN_RIGHT)
+      .appendField(",");
+    this.appendValueInput("DRAW")
+      .setAlign(Blockly.ALIGN_RIGHT)
+      .appendField(",");
+    this.appendDummyInput().setAlign(Blockly.ALIGN_RIGHT).appendField(")");
+    this.setInputsInline(true);
 
-        const worldTp = Type.Var('a');
-        const numTp = Type.Lit('Number');
-        const initTp = Type.fromList([Type.Lit('list', [numTp]), worldTp]);
-        const eventTp = Type.fromList([worldTp, Type.Lit('Event'), worldTp]);
-        const drawTp = Type.fromList([worldTp, Type.Lit('Picture')]);
+    const worldTp = Type.Var("a");
+    const numTp = Type.Lit("Number");
+    const initTp = Type.fromList([Type.Lit("list", [numTp]), worldTp]);
+    const eventTp = Type.fromList([worldTp, Type.Lit("Event"), worldTp]);
+    const drawTp = Type.fromList([worldTp, Type.Lit("Picture")]);
 
-        Blockly.TypeInf.defineFunction('activityOf', Type.fromList([
-            initTp, eventTp, drawTp, Type.Lit('Program')
-        ]));
-        this.setAsFunction('activityOf');
-    }
+    Blockly.TypeInf.defineFunction(
+      "activityOf",
+      Type.fromList([initTp, eventTp, drawTp, Type.Lit("Program")])
+    );
+    this.setAsFunction("activityOf");
+  },
 };
 
-Blockly.Blocks['cwSimulationOf'] = {
-    /**
-     * Block for comparison operator.
-     * @this Blockly.Block
-     */
-    init() {
-        this.setColour(0);
-        this.setOutput(false);
-        this.appendValueInput('INITIAL')
-            .appendField(new Blockly.FieldImage('ims/car-wash.svg', 20, 20))
-            .appendField(new Blockly.FieldLabel('simulationOf',
-                'blocklyTextEmph'))
-            .appendField('(');
-        this.appendValueInput('STEP')
-            .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(',');
-        this.appendValueInput('DRAW')
-            .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(',');
-        this.appendDummyInput()
-            .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(')');
-        this.setInputsInline(true);
+Blockly.Blocks["cwSimulationOf"] = {
+  /**
+   * Block for comparison operator.
+   * @this Blockly.Block
+   */
+  init() {
+    this.setColour(0);
+    this.setOutput(false);
+    this.appendValueInput("INITIAL")
+      .appendField(new Blockly.FieldImage("ims/car-wash.svg", 20, 20))
+      .appendField(new Blockly.FieldLabel("simulationOf", "blocklyTextEmph"))
+      .appendField("(");
+    this.appendValueInput("STEP")
+      .setAlign(Blockly.ALIGN_RIGHT)
+      .appendField(",");
+    this.appendValueInput("DRAW")
+      .setAlign(Blockly.ALIGN_RIGHT)
+      .appendField(",");
+    this.appendDummyInput().setAlign(Blockly.ALIGN_RIGHT).appendField(")");
+    this.setInputsInline(true);
 
-        const worldTp = Type.Var('a');
-        const numTp = Type.Lit('Number');
-        const initTp = Type.fromList([Type.Lit('list', [numTp]), worldTp]);
-        const stepTp = Type.fromList([worldTp, numTp, worldTp]);
-        const drawTp = Type.fromList([worldTp, Type.Lit('Picture')]);
+    const worldTp = Type.Var("a");
+    const numTp = Type.Lit("Number");
+    const initTp = Type.fromList([Type.Lit("list", [numTp]), worldTp]);
+    const stepTp = Type.fromList([worldTp, numTp, worldTp]);
+    const drawTp = Type.fromList([worldTp, Type.Lit("Picture")]);
 
-        Blockly.TypeInf.defineFunction('simulationOf', Type.fromList([
-            initTp, stepTp, drawTp, Type.Lit('Program')
-        ]));
-        this.setAsFunction('simulationOf');
-    }
+    Blockly.TypeInf.defineFunction(
+      "simulationOf",
+      Type.fromList([initTp, stepTp, drawTp, Type.Lit("Program")])
+    );
+    this.setAsFunction("simulationOf");
+  },
 };
 
-Blockly.Blocks['cwInteractionOf'] = {
-    /**
-     * Block for comparison operator.
-     * @this Blockly.Block
-     */
-    init() {
-        this.setColour(0);
-        this.setOutput(false);
-        this.appendValueInput('INITIAL')
-            .appendField(new Blockly.FieldImage('ims/human-handsup.svg', 20,
-                20))
-            .appendField(new Blockly.FieldLabel('interactionOf',
-                'blocklyTextEmph'))
-            .appendField('(');
-        this.appendValueInput('STEP')
-            .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(',');
-        this.appendValueInput('EVENT')
-            .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(',');
-        this.appendValueInput('DRAW')
-            .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(',');
-        this.appendDummyInput()
-            .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(')');
-        this.setInputsInline(true);
+Blockly.Blocks["cwInteractionOf"] = {
+  /**
+   * Block for comparison operator.
+   * @this Blockly.Block
+   */
+  init() {
+    this.setColour(0);
+    this.setOutput(false);
+    this.appendValueInput("INITIAL")
+      .appendField(new Blockly.FieldImage("ims/human-handsup.svg", 20, 20))
+      .appendField(new Blockly.FieldLabel("interactionOf", "blocklyTextEmph"))
+      .appendField("(");
+    this.appendValueInput("STEP")
+      .setAlign(Blockly.ALIGN_RIGHT)
+      .appendField(",");
+    this.appendValueInput("EVENT")
+      .setAlign(Blockly.ALIGN_RIGHT)
+      .appendField(",");
+    this.appendValueInput("DRAW")
+      .setAlign(Blockly.ALIGN_RIGHT)
+      .appendField(",");
+    this.appendDummyInput().setAlign(Blockly.ALIGN_RIGHT).appendField(")");
+    this.setInputsInline(true);
 
-        const worldTp = Type.Var('a');
-        const numTp = Type.Lit('Number');
-        const initTp = Type.fromList([Type.Lit('list', [numTp]), worldTp]);
-        const stepTp = Type.fromList([worldTp, numTp, worldTp]);
-        const eventTp = Type.fromList([worldTp, Type.Lit('Event'), worldTp]);
-        const drawTp = Type.fromList([worldTp, Type.Lit('Picture')]);
+    const worldTp = Type.Var("a");
+    const numTp = Type.Lit("Number");
+    const initTp = Type.fromList([Type.Lit("list", [numTp]), worldTp]);
+    const stepTp = Type.fromList([worldTp, numTp, worldTp]);
+    const eventTp = Type.fromList([worldTp, Type.Lit("Event"), worldTp]);
+    const drawTp = Type.fromList([worldTp, Type.Lit("Picture")]);
 
-        Blockly.TypeInf.defineFunction('interactionOf', Type.fromList([
-            initTp, stepTp, eventTp, drawTp, Type.Lit('Program')
-        ]));
-        this.setAsFunction('interactionOf');
-    }
+    Blockly.TypeInf.defineFunction(
+      "interactionOf",
+      Type.fromList([initTp, stepTp, eventTp, drawTp, Type.Lit("Program")])
+    );
+    this.setAsFunction("interactionOf");
+  },
 };
 
-Blockly.Blocks['cwAnimationOf'] = {
-    /**
-     * Block for comparison operator.
-     * @this Blockly.Block
-     */
-    init() {
-        this.setColour(0);
-        this.setOutput(false);
-        this.appendValueInput('FUNC')
-            .appendField(new Blockly.FieldImage('ims/car.svg', 20, 20))
-            .appendField(new Blockly.FieldLabel('animationOf',
-                'blocklyTextEmph'))
-            .appendField('(');
-        this.appendDummyInput()
-            .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField(')');
-        this.setInputsInline(true);
+Blockly.Blocks["cwAnimationOf"] = {
+  /**
+   * Block for comparison operator.
+   * @this Blockly.Block
+   */
+  init() {
+    this.setColour(0);
+    this.setOutput(false);
+    this.appendValueInput("FUNC")
+      .appendField(new Blockly.FieldImage("ims/car.svg", 20, 20))
+      .appendField(new Blockly.FieldLabel("animationOf", "blocklyTextEmph"))
+      .appendField("(");
+    this.appendDummyInput().setAlign(Blockly.ALIGN_RIGHT).appendField(")");
+    this.setInputsInline(true);
 
-        const stepTp = Type.Func(Type.Lit('Number'), Type.Lit('Picture'));
+    const stepTp = Type.Func(Type.Lit("Number"), Type.Lit("Picture"));
 
-        Blockly.TypeInf.defineFunction('animationOf', Type.Func(stepTp,
-            Type.Lit('Program')));
-        this.setAsFunction('animationOf');
-    }
+    Blockly.TypeInf.defineFunction(
+      "animationOf",
+      Type.Func(stepTp, Type.Lit("Program"))
+    );
+    this.setAsFunction("animationOf");
+  },
 };

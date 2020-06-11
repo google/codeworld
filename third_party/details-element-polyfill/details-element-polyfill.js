@@ -2,14 +2,14 @@
 Details Element Polyfill 2.3.0
 Copyright © 2019 Javan Makhmali
  */
-(function() {
+(function () {
   "use strict";
   var element = document.createElement("details");
   element.innerHTML = "<summary>a</summary>b";
   element.setAttribute("style", "position: absolute; left: -9999px");
   var support = {
     open: "open" in element && elementExpands(),
-    toggle: "ontoggle" in element
+    toggle: "ontoggle" in element,
   };
   function elementExpands() {
     (document.body || document.documentElement).appendChild(element);
@@ -19,8 +19,11 @@ Copyright © 2019 Javan Makhmali
     element.parentNode.removeChild(element);
     return closedHeight != openedHeight;
   }
-  var styles = '\ndetails, summary {\n  display: block;\n}\ndetails:not([open]) > *:not(summary) {\n  display: none;\n}\nsummary::before {\n  content: "►";\n  padding-right: 0.3rem;\n  font-size: 0.6rem;\n  cursor: default;\n}\n[open] > summary::before {\n  content: "▼";\n}\n';
-  var _ref = [], forEach = _ref.forEach, slice = _ref.slice;
+  var styles =
+    '\ndetails, summary {\n  display: block;\n}\ndetails:not([open]) > *:not(summary) {\n  display: none;\n}\nsummary::before {\n  content: "►";\n  padding-right: 0.3rem;\n  font-size: 0.6rem;\n  cursor: default;\n}\n[open] > summary::before {\n  content: "▼";\n}\n';
+  var _ref = [],
+    forEach = _ref.forEach,
+    slice = _ref.slice;
   if (!support.open) {
     polyfillStyles();
     polyfillProperties();
@@ -31,11 +34,15 @@ Copyright © 2019 Javan Makhmali
     polyfillToggleEvent();
   }
   function polyfillStyles() {
-    document.head.insertAdjacentHTML("afterbegin", "<style>" + styles + "</style>");
+    document.head.insertAdjacentHTML(
+      "afterbegin",
+      "<style>" + styles + "</style>"
+    );
   }
   function polyfillProperties() {
     var prototype = document.createElement("details").constructor.prototype;
-    var setAttribute = prototype.setAttribute, removeAttribute = prototype.removeAttribute;
+    var setAttribute = prototype.setAttribute,
+      removeAttribute = prototype.removeAttribute;
     var open = Object.getOwnPropertyDescriptor(prototype, "open");
     Object.defineProperties(prototype, {
       open: {
@@ -50,13 +57,15 @@ Copyright © 2019 Javan Makhmali
         },
         set: function set(value) {
           if (this.tagName == "DETAILS") {
-            return value ? this.setAttribute("open", "") : this.removeAttribute("open");
+            return value
+              ? this.setAttribute("open", "")
+              : this.removeAttribute("open");
           } else {
             if (open && open.set) {
               return open.set.call(this, value);
             }
           }
-        }
+        },
       },
       setAttribute: {
         value: function value(name, _value) {
@@ -75,7 +84,7 @@ Copyright © 2019 Javan Makhmali
             return result;
           }
           return call();
-        }
+        },
       },
       removeAttribute: {
         value: function value(name) {
@@ -94,32 +103,35 @@ Copyright © 2019 Javan Makhmali
             return result;
           }
           return call();
-        }
-      }
+        },
+      },
     });
   }
   function polyfillToggle() {
-    onTogglingTrigger(function(element) {
-      element.hasAttribute("open") ? element.removeAttribute("open") : element.setAttribute("open", "");
+    onTogglingTrigger(function (element) {
+      element.hasAttribute("open")
+        ? element.removeAttribute("open")
+        : element.setAttribute("open", "");
     });
   }
   function polyfillToggleEvent() {
     if (window.MutationObserver) {
-      new MutationObserver(function(mutations) {
-        forEach.call(mutations, function(mutation) {
-          var target = mutation.target, attributeName = mutation.attributeName;
+      new MutationObserver(function (mutations) {
+        forEach.call(mutations, function (mutation) {
+          var target = mutation.target,
+            attributeName = mutation.attributeName;
           if (target.tagName == "DETAILS" && attributeName == "open") {
             triggerToggle(toggle);
           }
         });
       }).observe(document.documentElement, {
         attributes: true,
-        subtree: true
+        subtree: true,
       });
     } else {
-      onTogglingTrigger(function(element) {
+      onTogglingTrigger(function (element) {
         var wasOpen = element.getAttribute("open");
-        setTimeout(function() {
+        setTimeout(function () {
           var isOpen = element.getAttribute("open");
           if (wasOpen != isOpen) {
             triggerToggle(element);
@@ -131,53 +143,82 @@ Copyright © 2019 Javan Makhmali
   function polyfillAccessibility() {
     setAccessibilityAttributes(document);
     if (window.MutationObserver) {
-      new MutationObserver(function(mutations) {
-        forEach.call(mutations, function(mutation) {
+      new MutationObserver(function (mutations) {
+        forEach.call(mutations, function (mutation) {
           forEach.call(mutation.addedNodes, setAccessibilityAttributes);
         });
       }).observe(document.documentElement, {
         subtree: true,
-        childList: true
+        childList: true,
       });
     } else {
-      document.addEventListener("DOMNodeInserted", function(event) {
+      document.addEventListener("DOMNodeInserted", function (event) {
         setAccessibilityAttributes(event.target);
       });
     }
   }
   function setAccessibilityAttributes(root) {
-    findElementsWithTagName(root, "SUMMARY").forEach(function(summary) {
+    findElementsWithTagName(root, "SUMMARY").forEach(function (summary) {
       var details = findClosestElementWithTagName(summary, "DETAILS");
       summary.setAttribute("aria-expanded", details.hasAttribute("open"));
-      if (!summary.hasAttribute("tabindex")) summary.setAttribute("tabindex", "0");
+      if (!summary.hasAttribute("tabindex"))
+        summary.setAttribute("tabindex", "0");
       if (!summary.hasAttribute("role")) summary.setAttribute("role", "button");
     });
   }
   function eventIsSignificant(event) {
-    return !(event.defaultPrevented || event.ctrlKey || event.metaKey || event.shiftKey || event.target.isContentEditable);
+    return !(
+      event.defaultPrevented ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      event.target.isContentEditable
+    );
   }
   function onTogglingTrigger(callback) {
-    addEventListener("click", function(event) {
-      if (eventIsSignificant(event)) {
-        if (event.which <= 1) {
-          var element = findClosestElementWithTagName(event.target, "SUMMARY");
-          if (element && element.parentNode && element.parentNode.tagName == "DETAILS") {
-            callback(element.parentNode);
+    addEventListener(
+      "click",
+      function (event) {
+        if (eventIsSignificant(event)) {
+          if (event.which <= 1) {
+            var element = findClosestElementWithTagName(
+              event.target,
+              "SUMMARY"
+            );
+            if (
+              element &&
+              element.parentNode &&
+              element.parentNode.tagName == "DETAILS"
+            ) {
+              callback(element.parentNode);
+            }
           }
         }
-      }
-    }, false);
-    addEventListener("keydown", function(event) {
-      if (eventIsSignificant(event)) {
-        if (event.keyCode == 13 || event.keyCode == 32) {
-          var element = findClosestElementWithTagName(event.target, "SUMMARY");
-          if (element && element.parentNode && element.parentNode.tagName == "DETAILS") {
-            callback(element.parentNode);
-            event.preventDefault();
+      },
+      false
+    );
+    addEventListener(
+      "keydown",
+      function (event) {
+        if (eventIsSignificant(event)) {
+          if (event.keyCode == 13 || event.keyCode == 32) {
+            var element = findClosestElementWithTagName(
+              event.target,
+              "SUMMARY"
+            );
+            if (
+              element &&
+              element.parentNode &&
+              element.parentNode.tagName == "DETAILS"
+            ) {
+              callback(element.parentNode);
+              event.preventDefault();
+            }
           }
         }
-      }
-    }, false);
+      },
+      false
+    );
   }
   function triggerToggle(element) {
     var event = document.createEvent("Event");
@@ -185,7 +226,11 @@ Copyright © 2019 Javan Makhmali
     element.dispatchEvent(event);
   }
   function findElementsWithTagName(root, tagName) {
-    return (root.tagName == tagName ? [ root ] : []).concat(typeof root.getElementsByTagName == "function" ? slice.call(root.getElementsByTagName(tagName)) : []);
+    return (root.tagName == tagName ? [root] : []).concat(
+      typeof root.getElementsByTagName == "function"
+        ? slice.call(root.getElementsByTagName(tagName))
+        : []
+    );
   }
   function findClosestElementWithTagName(element, tagName) {
     if (typeof element.closest == "function") {

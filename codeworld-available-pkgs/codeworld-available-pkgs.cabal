@@ -140,6 +140,7 @@ Library
     ghcjs-dom,
     ghcjs-perch,
     ghcjs-prim,
+    gray-code,
     groups,
     half,
     -- hamilton, (depends on hmatrix, which uses native libs)
@@ -182,6 +183,7 @@ Library
     matrix,
     megaparsec,
     memory,
+    mersenne-random-pure64,
     mfsolve,
     microlens,
     microlens-mtl,
@@ -197,6 +199,7 @@ Library
     monoid-extras,
     monoid-transformer,
     monoidal-containers,
+    moo,
     mtl,
     mtl-compat,
     mutable-containers,

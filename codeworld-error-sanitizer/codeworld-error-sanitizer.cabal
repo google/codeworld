@@ -28,6 +28,7 @@ Library
                        regex-tdfa,
                        regex-tdfa-text
 
+  Default-language:    Haskell2010
   Exposed: True
 
 Test-suite unit-tests
@@ -51,3 +52,4 @@ Test-suite unit-tests
                        regex-tdfa,
                        regex-tdfa-text
 
+  Default-language:    Haskell2010

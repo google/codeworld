@@ -1,40 +1,40 @@
-"use strict";
+'use strict'
 
-const directoryTreeId = "#directoryTree";
+const directoryTreeId = '#directoryTree'
 const nodeTypes = {
-  DIRECTORY: "directory",
-  PROJECT: "project",
-};
-
-function clearSelectedNode() {
-  const directoryTree = $(directoryTreeId);
-
-  const state = directoryTree.tree("getState");
-  state.selected_node = [];
-  directoryTree.tree("setState", state);
+  DIRECTORY: 'directory',
+  PROJECT: 'project'
 }
 
-function selectNode(node) {
-  $(directoryTreeId).tree("selectNode", node);
+function clearSelectedNode () {
+  const directoryTree = $(directoryTreeId)
+
+  const state = directoryTree.tree('getState')
+  state.selected_node = []
+  directoryTree.tree('setState', state)
 }
 
-let idCounter = 0;
-function createNodeId(type, name) {
-  return `jqtree-element__${type}__${name}__${idCounter++}}`;
+function selectNode (node) {
+  $(directoryTreeId).tree('selectNode', node)
 }
 
-function getSelectedNode() {
-  const node = $(directoryTreeId).tree("getSelectedNode");
-
-  return node ? node : null;
+let idCounter = 0
+function createNodeId (type, name) {
+  return `jqtree-element__${type}__${name}__${idCounter++}}`
 }
 
-function isDirectory(node) {
-  return node ? node.type === nodeTypes.DIRECTORY : false;
+function getSelectedNode () {
+  const node = $(directoryTreeId).tree('getSelectedNode')
+
+  return node || null
 }
 
-function isProject(node) {
-  return node ? node.type === nodeTypes.PROJECT : false;
+function isDirectory (node) {
+  return node ? node.type === nodeTypes.DIRECTORY : false
+}
+
+function isProject (node) {
+  return node ? node.type === nodeTypes.PROJECT : false
 }
 
 window.utils.directoryTree = {
@@ -44,5 +44,5 @@ window.utils.directoryTree = {
   getSelectedNode,
   isDirectory,
   isProject,
-  nodeTypes,
-};
+  nodeTypes
+}

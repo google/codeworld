@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 
-"use strict";
+'use strict'
 
-goog.provide("Blockly.Blocks.cwText");
+goog.provide('Blockly.Blocks.cwText')
 
-goog.require("Blockly.Blocks");
+goog.require('Blockly.Blocks')
 
-const textHUE = 45;
+const textHUE = 45
 
-Blockly.Blocks["text_typed"] = {
+Blockly.Blocks.text_typed = {
   /**
    * Block for text value.
    * @this Blockly.Block
    */
-  init() {
-    this.setHelpUrl(Blockly.Msg.TEXT_TEXT_HELPURL);
-    this.setColour(45);
+  init () {
+    this.setHelpUrl(Blockly.Msg.TEXT_TEXT_HELPURL)
+    this.setColour(45)
     this.appendDummyInput()
       .appendField(this.newQuote_(true))
-      .appendField(new Blockly.FieldTextInput(""), "TEXT")
-      .appendField(this.newQuote_(false));
-    this.setOutput(true);
-    this.setTooltip("Gives the given text");
-    this.setAsLiteral("Text");
+      .appendField(new Blockly.FieldTextInput(''), 'TEXT')
+      .appendField(this.newQuote_(false))
+    this.setOutput(true)
+    this.setTooltip('Gives the given text')
+    this.setAsLiteral('Text')
   },
   /**
    * Create an image of an open or closed quote.
@@ -45,185 +45,185 @@ Blockly.Blocks["text_typed"] = {
    * @this Blockly.Block
    * @private
    */
-  newQuote_(open) {
-    let file;
+  newQuote_ (open) {
+    let file
     if (open === this.RTL) {
       file =
-        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAKCAQAAAAqJXdxAAAAqUlEQVQI1z3KvUpCcRiA8ef9E4JNHhI0aFEacm1o0BsI0Slx8wa8gLauoDnoBhq7DcfWhggONDmJJgqCPA7neJ7p934EOOKOnM8Q7PDElo/4x4lFb2DmuUjcUzS3URnGib9qaPNbuXvBO3sGPHJDRG6fGVdMSeWDP2q99FQdFrz26Gu5Tq7dFMzUvbXy8KXeAj57cOklgA+u1B5AoslLtGIHQMaCVnwDnADZIFIrXsoXrgAAAABJRU5ErkJggg==";
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAKCAQAAAAqJXdxAAAAqUlEQVQI1z3KvUpCcRiA8ef9E4JNHhI0aFEacm1o0BsI0Slx8wa8gLauoDnoBhq7DcfWhggONDmJJgqCPA7neJ7p934EOOKOnM8Q7PDElo/4x4lFb2DmuUjcUzS3URnGib9qaPNbuXvBO3sGPHJDRG6fGVdMSeWDP2q99FQdFrz26Gu5Tq7dFMzUvbXy8KXeAj57cOklgA+u1B5AoslLtGIHQMaCVnwDnADZIFIrXsoXrgAAAABJRU5ErkJggg=='
     } else {
       file =
-        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAKCAQAAAAqJXdxAAAAn0lEQVQI1z3OMa5BURSF4f/cQhAKjUQhuQmFNwGJEUi0RKN5rU7FHKhpjEH3TEMtkdBSCY1EIv8r7nFX9e29V7EBAOvu7RPjwmWGH/VuF8CyN9/OAdvqIXYLvtRaNjx9mMTDyo+NjAN1HNcl9ZQ5oQMM3dgDUqDo1l8DzvwmtZN7mnD+PkmLa+4mhrxVA9fRowBWmVBhFy5gYEjKMfz9AylsaRRgGzvZAAAAAElFTkSuQmCC";
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAKCAQAAAAqJXdxAAAAn0lEQVQI1z3OMa5BURSF4f/cQhAKjUQhuQmFNwGJEUi0RKN5rU7FHKhpjEH3TEMtkdBSCY1EIv8r7nFX9e29V7EBAOvu7RPjwmWGH/VuF8CyN9/OAdvqIXYLvtRaNjx9mMTDyo+NjAN1HNcl9ZQ5oQMM3dgDUqDo1l8DzvwmtZN7mnD+PkmLa+4mhrxVA9fRowBWmVBhFy5gYEjKMfz9AylsaRRgGzvZAAAAAElFTkSuQmCC'
     }
-    return new Blockly.FieldImage(file, 12, 12, '"');
-  },
-};
+    return new Blockly.FieldImage(file, 12, 12, '"')
+  }
+}
 
-Blockly.Blocks["txtConcat"] = {
-  init() {
-    this.appendValueInput("STR0");
-    this.appendValueInput("STR1").appendField(
-      new Blockly.FieldLabel("<>", "blocklyTextEmph")
-    );
-    this.setColour(textHUE);
-    this.setMutator(new Blockly.Mutator(["text_combine_ele"]));
-    this.setTooltip("Concatenate multiple text");
-    this.itemCount_ = 2;
-    this.functionName = "Literal";
-    this.setOutput(true);
+Blockly.Blocks.txtConcat = {
+  init () {
+    this.appendValueInput('STR0')
+    this.appendValueInput('STR1').appendField(
+      new Blockly.FieldLabel('<>', 'blocklyTextEmph')
+    )
+    this.setColour(textHUE)
+    this.setMutator(new Blockly.Mutator(['text_combine_ele']))
+    this.setTooltip('Concatenate multiple text')
+    this.itemCount_ = 2
+    this.functionName = 'Literal'
+    this.setOutput(true)
     Blockly.TypeInf.defineFunction(
-      "<>",
-      Type.fromList([Type.Lit("Text"), Type.Lit("Text"), Type.Lit("Text")])
-    );
-    this.setAsFunction("<>");
+      '<>',
+      Type.fromList([Type.Lit('Text'), Type.Lit('Text'), Type.Lit('Text')])
+    )
+    this.setAsFunction('<>')
   },
 
-  foldr1(fn, xs) {
-    let result = xs[xs.length - 1];
+  foldr1 (fn, xs) {
+    let result = xs[xs.length - 1]
     for (let i = xs.length - 2; i > -1; i--) {
-      result = fn(xs[i], result);
+      result = fn(xs[i], result)
     }
-    return result;
+    return result
   },
 
-  getExpr() {
-    let exps = [];
+  getExpr () {
+    let exps = []
     this.inputList.forEach((inp) => {
       if (inp.connection.isConnected()) {
-        exps.push(inp.connection.targetBlock().getExpr());
+        exps.push(inp.connection.targetBlock().getExpr())
       } else {
-        exps.push(Exp.Var("undef"));
+        exps.push(Exp.Var('undef'))
       }
-    });
+    })
     if (exps.length < 2) {
       // If the block has less than 2 inputs, warn the user
-      exps = [];
-      exps.push(Exp.Var("undef"));
-      exps.push(Exp.Var("undef"));
+      exps = []
+      exps.push(Exp.Var('undef'))
+      exps.push(Exp.Var('undef'))
     }
 
-    const func = (a, b) => Exp.AppFunc([a, b], Exp.Var("<>"));
-    const e = this.foldr1(func, exps);
-    return e;
+    const func = (a, b) => Exp.AppFunc([a, b], Exp.Var('<>'))
+    const e = this.foldr1(func, exps)
+    return e
   },
 
-  decompose(workspace) {
-    const containerBlock = workspace.newBlock("text_combine_container");
-    containerBlock.initSvg();
-    let connection = containerBlock.getInput("STACK").connection;
+  decompose (workspace) {
+    const containerBlock = workspace.newBlock('text_combine_container')
+    containerBlock.initSvg()
+    let connection = containerBlock.getInput('STACK').connection
 
     for (let x = 0; x < this.itemCount_; x++) {
-      const itemBlock = workspace.newBlock("text_combine_ele");
-      itemBlock.initSvg();
-      connection.connect(itemBlock.previousConnection);
-      connection = itemBlock.nextConnection;
+      const itemBlock = workspace.newBlock('text_combine_ele')
+      itemBlock.initSvg()
+      connection.connect(itemBlock.previousConnection)
+      connection = itemBlock.nextConnection
     }
 
-    return containerBlock;
+    return containerBlock
   },
 
-  compose(containerBlock) {
+  compose (containerBlock) {
     for (let x = 0; x < this.itemCount_; x++) {
-      this.removeInput(`STR${x}`);
+      this.removeInput(`STR${x}`)
     }
 
-    this.itemCount_ = 0;
+    this.itemCount_ = 0
     // Rebuild the block's inputs.
-    let itemBlock = containerBlock.getInputTargetBlock("STACK");
-    const tps = [];
+    let itemBlock = containerBlock.getInputTargetBlock('STACK')
+    const tps = []
     while (itemBlock) {
-      const input = this.appendValueInput(`STR${this.itemCount_}`);
-      tps.push(new Type.Lit("Text"));
+      const input = this.appendValueInput(`STR${this.itemCount_}`)
+      tps.push(new Type.Lit('Text'))
 
       if (this.itemCount_ > 0) {
-        input.appendField(new Blockly.FieldLabel("<>", "blocklyTextEmph"));
+        input.appendField(new Blockly.FieldLabel('<>', 'blocklyTextEmph'))
       }
       if (itemBlock.valueConnection_) {
-        input.connection.connect(itemBlock.valueConnection_);
+        input.connection.connect(itemBlock.valueConnection_)
       }
-      this.itemCount_++;
+      this.itemCount_++
       itemBlock =
-        itemBlock.nextConnection && itemBlock.nextConnection.targetBlock();
+        itemBlock.nextConnection && itemBlock.nextConnection.targetBlock()
     }
-    this.renderMoveConnections_();
-    tps.push(new Type.Lit("Text"));
-    this.arrows = Type.fromList(tps);
-    this.initArrows();
+    this.renderMoveConnections_()
+    tps.push(new Type.Lit('Text'))
+    this.arrows = Type.fromList(tps)
+    this.initArrows()
 
     if (this.itemCount_ < 2) {
-      this.setWarningText("This block requires at least 2 inputs");
+      this.setWarningText('This block requires at least 2 inputs')
     } else {
-      this.setWarningText(null);
+      this.setWarningText(null)
     }
   },
 
-  mutationToDom() {
-    const container = document.createElement("mutation");
-    container.setAttribute("items", this.itemCount_);
-    return container;
+  mutationToDom () {
+    const container = document.createElement('mutation')
+    container.setAttribute('items', this.itemCount_)
+    return container
   },
 
-  domToMutation(xmlElement) {
-    this.itemCount_ = parseInt(xmlElement.getAttribute("items"), 10);
+  domToMutation (xmlElement) {
+    this.itemCount_ = parseInt(xmlElement.getAttribute('items'), 10)
 
-    this.inputList = [];
-    const tps = [];
+    this.inputList = []
+    const tps = []
     for (let i = 0; i < this.itemCount_; i++) {
-      const input = this.appendValueInput(`STR${i}`);
-      tps.push(new Type.Lit("Text"));
+      const input = this.appendValueInput(`STR${i}`)
+      tps.push(new Type.Lit('Text'))
       if (i > 0) {
-        input.appendField(new Blockly.FieldLabel("<>", "blocklyTextEmph"));
+        input.appendField(new Blockly.FieldLabel('<>', 'blocklyTextEmph'))
       }
     }
-    tps.push(new Type.Lit("Text"));
+    tps.push(new Type.Lit('Text'))
 
-    this.arrows = Type.fromList(tps);
-    this.initArrows();
+    this.arrows = Type.fromList(tps)
+    this.initArrows()
   },
 
-  saveConnections(containerBlock) {
-    let itemBlock = containerBlock.getInputTargetBlock("STACK");
-    let x = 0;
+  saveConnections (containerBlock) {
+    let itemBlock = containerBlock.getInputTargetBlock('STACK')
+    let x = 0
     while (itemBlock) {
-      const input = this.getInput(`STR${x}`);
+      const input = this.getInput(`STR${x}`)
       if (input && input.connection.targetConnection) {
         if (input.connection.targetBlock().isShadow_) {
-          x++;
+          x++
           itemBlock =
-            itemBlock.nextConnection && itemBlock.nextConnection.targetBlock();
-          continue;
+            itemBlock.nextConnection && itemBlock.nextConnection.targetBlock()
+          continue
         }
       }
-      itemBlock.valueConnection_ = input && input.connection.targetConnection;
-      x++;
+      itemBlock.valueConnection_ = input && input.connection.targetConnection
+      x++
       itemBlock =
-        itemBlock.nextConnection && itemBlock.nextConnection.targetBlock();
+        itemBlock.nextConnection && itemBlock.nextConnection.targetBlock()
     }
-  },
-};
+  }
+}
 
-Blockly.Blocks["text_combine_ele"] = {
+Blockly.Blocks.text_combine_ele = {
   /**
    * Mutator block for procedure argument.
    * @this Blockly.Block
    */
-  init() {
-    this.appendDummyInput().appendField("text");
-    this.setPreviousStatement(true);
-    this.setNextStatement(true);
-    this.setColour(textHUE);
-    this.setTooltip("Adds a text input");
-    this.contextMenu = false;
+  init () {
+    this.appendDummyInput().appendField('text')
+    this.setPreviousStatement(true)
+    this.setNextStatement(true)
+    this.setColour(textHUE)
+    this.setTooltip('Adds a text input')
+    this.contextMenu = false
   },
-  getExpr: null,
-};
+  getExpr: null
+}
 
-Blockly.Blocks["text_combine_container"] = {
-  init() {
-    this.setColour(textHUE);
-    this.appendDummyInput().appendField("Text inputs");
-    this.appendStatementInput("STACK");
-    this.setTooltip("A list of inputs that the combine block should have");
-    this.contextMenu = false;
+Blockly.Blocks.text_combine_container = {
+  init () {
+    this.setColour(textHUE)
+    this.appendDummyInput().appendField('Text inputs')
+    this.appendStatementInput('STACK')
+    this.setTooltip('A list of inputs that the combine block should have')
+    this.contextMenu = false
   },
-  getExpr: null,
-};
+  getExpr: null
+}

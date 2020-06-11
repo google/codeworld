@@ -14,47 +14,47 @@
  * limitations under the License.
  */
 
-"use strict";
+'use strict'
 
-goog.provide("Blockly.Blocks.cwMath");
+goog.provide('Blockly.Blocks.cwMath')
 
-goog.require("Blockly.Blocks");
+goog.require('Blockly.Blocks')
 
 // Stefan
-Blockly.Blocks["numNumber"] = {
+Blockly.Blocks.numNumber = {
   /**
    * Block for numeric value.
    * @this Blockly.Block
    */
-  init() {
-    this.setHelpUrl(Blockly.Msg.MATH_NUMBER_HELPURL);
-    this.setColour(210);
-    const field = new Blockly.FieldNumber("0");
-    field.setValidator(Blockly.FieldNumber.prototype.basicNumberValidator);
-    this.appendDummyInput().appendField(field, "NUMBER");
-    this.setOutput(true);
-    this.setTooltip(Blockly.Msg.MATH_NUMBER_TOOLTIP);
-    this.setAsLiteral("Number");
-  },
-};
+  init () {
+    this.setHelpUrl(Blockly.Msg.MATH_NUMBER_HELPURL)
+    this.setColour(210)
+    const field = new Blockly.FieldNumber('0')
+    field.setValidator(Blockly.FieldNumber.prototype.basicNumberValidator)
+    this.appendDummyInput().appendField(field, 'NUMBER')
+    this.setOutput(true)
+    this.setTooltip(Blockly.Msg.MATH_NUMBER_TOOLTIP)
+    this.setAsLiteral('Number')
+  }
+}
 
 // TODO, moves these to Haskell
-Blockly.Blocks["numNumberPerc"] = {
+Blockly.Blocks.numNumberPerc = {
   /**
    * Block for numeric value.
    * @this Blockly.Block
    */
-  init() {
-    this.setHelpUrl(Blockly.Msg.MATH_NUMBER_HELPURL);
-    this.setColour(210);
-    const field = new Blockly.FieldNumber("0");
-    field.setValidator(Blockly.FieldNumber.prototype.basicNumberValidator);
+  init () {
+    this.setHelpUrl(Blockly.Msg.MATH_NUMBER_HELPURL)
+    this.setColour(210)
+    const field = new Blockly.FieldNumber('0')
+    field.setValidator(Blockly.FieldNumber.prototype.basicNumberValidator)
     this.appendDummyInput()
-      .appendField(field, "NUMBER")
-      .appendField(new Blockly.FieldLabel("%", "blocklyTextEmph"));
-    this.setOutput(true, "Number");
+      .appendField(field, 'NUMBER')
+      .appendField(new Blockly.FieldLabel('%', 'blocklyTextEmph'))
+    this.setOutput(true, 'Number')
     // Sorin
-    this.setAsLiteral("Number");
-    this.setTooltip(Blockly.Msg.MATH_NUMBER_TOOLTIP);
-  },
-};
+    this.setAsLiteral('Number')
+    this.setTooltip(Blockly.Msg.MATH_NUMBER_TOOLTIP)
+  }
+}

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-"use strict";
+'use strict'
 
 /*
  * Utility function for sending an HTTP request to fetch a resource.
@@ -27,102 +27,102 @@
  * If provided, the callback will be given the XmlHttpRequest object, so
  * it can inspect the response code and headers as well as the contents.
  */
-function sendHttp(method, url, body, callback) {
-  const sendHttpFunc = signedIn() ? window.auth2.sendHttpAuth : sendHttpRaw;
-  return sendHttpFunc(method, url, body, callback);
+function sendHttp (method, url, body, callback) {
+  const sendHttpFunc = signedIn() ? window.auth2.sendHttpAuth : sendHttpRaw
+  return sendHttpFunc(method, url, body, callback)
 }
 
-function sendHttpRaw(method, url, body, callback) {
-  const request = new XMLHttpRequest();
+function sendHttpRaw (method, url, body, callback) {
+  const request = new XMLHttpRequest()
 
   if (callback) {
     request.onreadystatechange = () => {
-      if (request.readyState === 4) callback(request);
-    };
+      if (request.readyState === 4) callback(request)
+    }
   }
 
-  request.open(method, url, true);
-  request.send(body);
+  request.open(method, url, true)
+  request.send(body)
 
-  return request;
+  return request
 }
 
 const Html = (() => {
-  const mine = {};
+  const mine = {}
 
-  mine.encode = (str) => $("<div/>").text(str).html();
+  mine.encode = (str) => $('<div/>').text(str).html()
 
-  return mine;
-})();
+  return mine
+})()
 
 const Alert = (() => {
-  const mine = {};
+  const mine = {}
 
   mine.init = () =>
     Promise.resolve(
       $.getScript(
-        "https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js"
+        'https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js'
       )
-    ).catch((e) => console.log("Alert.init failed"));
+    ).catch((e) => console.log('Alert.init failed'))
 
   // Build SweetAlert title HTML
   mine.title = (text, iconClass) =>
-    `<i class="mdi mdi-72px ${iconClass}"></i>&nbsp; ${Html.encode(text)}`;
+    `<i class="mdi mdi-72px ${iconClass}"></i>&nbsp; ${Html.encode(text)}`
 
-  return mine;
-})();
+  return mine
+})()
 
 const hintBlacklist = [
   // Symbols that only exist to implement RebindableSyntax or map to
   // built-in Haskell types.
-  "Bool",
-  "IO",
-  "fail",
-  "fromCWText",
-  "fromDouble",
-  "fromInt",
-  "fromInteger",
-  "fromRational",
-  "fromString",
-  "ifThenElse",
-  "toCWText",
-  "toDouble",
-  "toInt",
+  'Bool',
+  'IO',
+  'fail',
+  'fromCWText',
+  'fromDouble',
+  'fromInt',
+  'fromInteger',
+  'fromRational',
+  'fromString',
+  'ifThenElse',
+  'toCWText',
+  'toDouble',
+  'toInt',
 
   // Deprecated exports.
-  "path",
-  "thickPath",
-  "text",
-  "styledText",
-  "collaborationOf",
-  "simulationOf",
-  "interactionOf",
-  "debugInteractionOf",
-  "debugSimulationOf",
-  "cyan",
-  "magenta",
-  "azure",
-  "chartreuse",
-  "aquamarine",
-  "violet",
-  "rose",
-  "hue",
-  "saturation",
-  "luminosity",
-  "alpha",
-];
+  'path',
+  'thickPath',
+  'text',
+  'styledText',
+  'collaborationOf',
+  'simulationOf',
+  'interactionOf',
+  'debugInteractionOf',
+  'debugSimulationOf',
+  'cyan',
+  'magenta',
+  'azure',
+  'chartreuse',
+  'aquamarine',
+  'violet',
+  'rose',
+  'hue',
+  'saturation',
+  'luminosity',
+  'alpha'
+]
 
-const VAR_OR_CON = /^[a-zA-Z_][A-Za-z_0-9']*$/;
-const QUALIFIER = /^[A-Z][A-Za-z_0-9']*[.]$/;
+const VAR_OR_CON = /^[a-zA-Z_][A-Za-z_0-9']*$/
+const QUALIFIER = /^[A-Z][A-Za-z_0-9']*[.]$/
 
-function definePanelExtension() {
-  CodeMirror.defineExtension("addPanel", function (node) {
-    const originWrapper = this.getWrapperElement();
-    const wrapper = document.createElement("div");
-    originWrapper.parentNode.insertBefore(wrapper, originWrapper);
-    wrapper.appendChild(originWrapper);
-    wrapper.insertBefore(node, wrapper.firstChild);
-  });
+function definePanelExtension () {
+  CodeMirror.defineExtension('addPanel', function (node) {
+    const originWrapper = this.getWrapperElement()
+    const wrapper = document.createElement('div')
+    originWrapper.parentNode.insertBefore(wrapper, originWrapper)
+    wrapper.appendChild(originWrapper)
+    wrapper.insertBefore(node, wrapper.firstChild)
+  })
 }
 
 // codeWorldSymbols is a variable containing annotations and documentation
@@ -137,162 +137,162 @@ function definePanelExtension() {
 //     doc: "The CodeWorld logo."
 //   }
 // }
-window.codeWorldSymbols = {};
+window.codeWorldSymbols = {}
 window.codeWorldModules = {
-  Prelude: {},
-};
+  Prelude: {}
+}
 window.codeWorldBuiltins = {
   program: {
-    declaration: "program :: Program",
-    doc: "Your program.",
+    declaration: 'program :: Program',
+    doc: 'Your program.',
     symbolStart: 0,
     symbolEnd: 7,
-    insertText: "program",
-  },
-};
-
-window.alreadyReportedErrors = new Set();
-
-function getWordStart(word, line) {
-  return line.indexOf(word);
-}
-
-function getWordEnd(word, line) {
-  const wordStart = getWordStart(word, line);
-  if (wordStart !== -1) {
-    return wordStart + word.length;
+    insertText: 'program'
   }
-  return -1;
 }
 
-function parseSymbolsFromCurrentCode() {
-  const lines = window.codeworldEditor.getValue().split("\n");
-  const parseResults = {};
-  let lineIndex = 0;
+window.alreadyReportedErrors = new Set()
 
-  const imports = [];
+function getWordStart (word, line) {
+  return line.indexOf(word)
+}
+
+function getWordEnd (word, line) {
+  const wordStart = getWordStart(word, line)
+  if (wordStart !== -1) {
+    return wordStart + word.length
+  }
+  return -1
+}
+
+function parseSymbolsFromCurrentCode () {
+  const lines = window.codeworldEditor.getValue().split('\n')
+  const parseResults = {}
+  let lineIndex = 0
+
+  const imports = []
 
   lines.forEach((line) => {
-    lineIndex++;
+    lineIndex++
 
-    const importExp = /^import\s+(qualified)?\s*([A-Z][A-Za-z0-9.']*)(\s+(as)\s+([A-Z][A-Za-z0-9.']*))?(\s+(hiding))?\s*([(]([^()]*|([(][^()]*[)])*)[)])?\s*$/;
+    const importExp = /^import\s+(qualified)?\s*([A-Z][A-Za-z0-9.']*)(\s+(as)\s+([A-Z][A-Za-z0-9.']*))?(\s+(hiding))?\s*([(]([^()]*|([(][^()]*[)])*)[)])?\s*$/
     if (importExp.test(line)) {
-      const match = importExp.exec(line);
-      const qualified = Boolean(match[1]);
-      const module = match[2];
-      const asName = match[5] !== undefined ? match[5] : module;
-      const hiding = Boolean(match[7]);
+      const match = importExp.exec(line)
+      const qualified = Boolean(match[1])
+      const module = match[2]
+      const asName = match[5] !== undefined ? match[5] : module
+      const hiding = Boolean(match[7])
       const importList =
         match[9] &&
         match[9]
-          .split(",")
+          .split(',')
           .map((s) => s.trim())
-          .map((s) => (/[(].*[)]/.test(s) ? s.substr(1, s.length - 2) : s));
+          .map((s) => (/[(].*[)]/.test(s) ? s.substr(1, s.length - 2) : s))
       imports.push({
         module: module,
         asName: asName,
         qualified: qualified,
         hiding: hiding,
-        importList: importList,
-      });
-      return;
+        importList: importList
+      })
+      return
     }
 
-    const docString = `Defined in your code on line ${lineIndex}.`;
+    const docString = `Defined in your code on line ${lineIndex}.`
 
     if (/^\w+\(.*/.test(line)) {
       // f(x, y) =
-      const word = line.split("(")[0].trim();
-      if (parseResults[word]) return;
+      const word = line.split('(')[0].trim()
+      if (parseResults[word]) return
       parseResults[word] = {
         declaration: word,
         insertText: word,
-        doc: docString,
-      };
+        doc: docString
+      }
     } else if (/^\S+\s*=/.test(line)) {
       // foo =
-      const word = line.split("=")[0].trim();
-      if (parseResults[word]) return;
+      const word = line.split('=')[0].trim()
+      if (parseResults[word]) return
       parseResults[word] = {
         declaration: word,
         insertText: word,
-        doc: docString,
-      };
+        doc: docString
+      }
     } else if (/^data\s.+/.test(line)) {
       // data Foo
-      const match = /^data\s+(\S+)\b.*/.exec(line);
-      const word = match[1];
-      if (parseResults[word]) return;
+      const match = /^data\s+(\S+)\b.*/.exec(line)
+      const word = match[1]
+      if (parseResults[word]) return
       parseResults[word] = {
         declaration: line.slice(0, getWordEnd(word, line)),
         symbolStart: getWordStart(word, line),
         symbolEnd: getWordEnd(word, line),
         insertText: word,
-        doc: docString,
-      };
+        doc: docString
+      }
     } else if (/^type\s.+/.test(line)) {
       // type Foo = Bar
-      const match = /^type\s+(\S+\b).*/.exec(line);
-      const word = match[1];
-      if (parseResults[word]) return;
+      const match = /^type\s+(\S+\b).*/.exec(line)
+      const word = match[1]
+      if (parseResults[word]) return
       parseResults[word] = {
         declaration: line,
         symbolStart: getWordStart(word, line),
         symbolEnd: getWordEnd(word, line),
         insertText: word,
-        doc: docString,
-      };
+        doc: docString
+      }
     } else if (/^\([^()]+\)\s*::/.test(line)) {
       // (*#^) :: Type
-      const splitted = line.split("::");
-      let word = splitted[0].trim();
-      word = word.slice(1, word.length - 1);
-      if (parseResults[word]) return;
+      const splitted = line.split('::')
+      let word = splitted[0].trim()
+      word = word.slice(1, word.length - 1)
+      if (parseResults[word]) return
       parseResults[word] = {
         declaration: line,
         symbolStart: getWordStart(word, line),
         symbolEnd: getWordEnd(word, line),
         insertText: word,
-        doc: docString,
-      };
+        doc: docString
+      }
     } else if (/^\S+\s*::/.test(line)) {
       // foo :: Type
-      const splitted = line.split("::");
-      const word = splitted[0].trim();
-      if (parseResults[word]) return;
+      const splitted = line.split('::')
+      const word = splitted[0].trim()
+      if (parseResults[word]) return
       parseResults[word] = {
         declaration: line,
         symbolStart: getWordStart(word, line),
         symbolEnd: getWordEnd(word, line),
         insertText: word,
-        doc: docString,
-      };
+        doc: docString
+      }
     }
-  });
+  })
 
-  if (!imports.find((i) => i.module === "Prelude")) {
+  if (!imports.find((i) => i.module === 'Prelude')) {
     imports.push({
-      module: "Prelude",
-      asName: "Prelude",
+      module: 'Prelude',
+      asName: 'Prelude',
       qualified: false,
       hiding: false,
-      importList: undefined,
-    });
+      importList: undefined
+    })
   }
 
-  if (window.buildMode === "codeworld") {
-    const symbols = Object.assign({}, window.codeWorldBuiltins);
+  if (window.buildMode === 'codeworld') {
+    const symbols = Object.assign({}, window.codeWorldBuiltins)
     for (const i of imports) {
       if (i.module in window.codeWorldModules) {
         for (const symbol in window.codeWorldModules[i.module]) {
           if (i.importList) {
-            if (i.hiding && i.importList.includes(symbol)) continue;
-            if (!i.hiding && !i.importList.includes(symbol)) continue;
+            if (i.hiding && i.importList.includes(symbol)) continue
+            if (!i.hiding && !i.importList.includes(symbol)) continue
           }
           symbols[`${i.asName}.${symbol}`] =
-            window.codeWorldModules[i.module][symbol];
+            window.codeWorldModules[i.module][symbol]
           if (!i.qualified) {
-            symbols[symbol] = window.codeWorldModules[i.module][symbol];
+            symbols[symbol] = window.codeWorldModules[i.module][symbol]
           }
         }
         symbols[i.asName] = {
@@ -301,61 +301,61 @@ function parseSymbolsFromCurrentCode() {
           symbolEnd: 7 + i.asName.length,
           insertText: `${i.asName}.`,
           module: true,
-          doc: null,
-        };
+          doc: null
+        }
       }
     }
-    window.codeWorldSymbols = Object.assign(symbols, parseResults);
+    window.codeWorldSymbols = Object.assign(symbols, parseResults)
   } else {
-    window.codeWorldSymbols = Object.assign({}, parseResults);
+    window.codeWorldSymbols = Object.assign({}, parseResults)
   }
 }
 
-function renderDeclaration(decl, keywordData, maxLen, argIndex = -1) {
-  let column = 0;
+function renderDeclaration (decl, keywordData, maxLen, argIndex = -1) {
+  let column = 0
 
-  function addSegment(text, isWord, isBold) {
-    function addSpan(content, wrappable) {
-      const span = document.createElement("span");
-      if (isWord) span.className = "hint-word";
-      if (isBold) span.style.fontWeight = "bold";
-      if (!wrappable) span.style.whiteSpace = "nowrap";
-      span.appendChild(document.createTextNode(content));
-      decl.appendChild(span);
-      column += content.length;
+  function addSegment (text, isWord, isBold) {
+    function addSpan (content, wrappable) {
+      const span = document.createElement('span')
+      if (isWord) span.className = 'hint-word'
+      if (isBold) span.style.fontWeight = 'bold'
+      if (!wrappable) span.style.whiteSpace = 'nowrap'
+      span.appendChild(document.createTextNode(content))
+      decl.appendChild(span)
+      column += content.length
     }
 
-    function trimFromTail(excess) {
-      const tailLen = decl.lastChild.textContent.length;
+    function trimFromTail (excess) {
+      const tailLen = decl.lastChild.textContent.length
       if (tailLen <= excess) {
-        decl.removeChild(decl.lastChild);
-        trimFromTail(excess - tailLen);
+        decl.removeChild(decl.lastChild)
+        trimFromTail(excess - tailLen)
       } else {
         decl.lastChild.textContent = decl.lastChild.textContent.slice(
           0,
           tailLen - excess
-        );
+        )
       }
     }
 
-    const SYM = /^([:!#$%&*+./<=>?@\\^|~-]+)[^:!#$%&*+./<=>?@\\^|~-].*/;
-    const NONSYM = /^([^:!#$%&*+./<=>?@\\^|~-]+)[:!#$%&*+./<=>?@\\^|~-].*/;
+    const SYM = /^([:!#$%&*+./<=>?@\\^|~-]+)[^:!#$%&*+./<=>?@\\^|~-].*/
+    const NONSYM = /^([^:!#$%&*+./<=>?@\\^|~-]+)[:!#$%&*+./<=>?@\\^|~-].*/
     while (text.length > 0) {
-      const sym = SYM.exec(text);
-      const split = sym || NONSYM.exec(text) || [text, text];
+      const sym = SYM.exec(text)
+      const split = sym || NONSYM.exec(text) || [text, text]
 
-      addSpan(split[1], !sym);
-      text = text.slice(split[1].length);
+      addSpan(split[1], !sym)
+      text = text.slice(split[1].length)
     }
 
     if (column > maxLen) {
-      trimFromTail(column - maxLen + 3);
-      addSpan("...", false);
+      trimFromTail(column - maxLen + 3)
+      addSpan('...', false)
     }
   }
 
   if (keywordData.symbolStart > 0) {
-    addSegment(keywordData.declaration.slice(0, keywordData.symbolStart));
+    addSegment(keywordData.declaration.slice(0, keywordData.symbolStart))
   }
 
   addSegment(
@@ -365,182 +365,182 @@ function renderDeclaration(decl, keywordData, maxLen, argIndex = -1) {
     ),
     true,
     false
-  );
+  )
 
   if (keywordData.symbolEnd < keywordData.declaration.length) {
     const leftover = keywordData.declaration
       .slice(keywordData.symbolEnd)
-      .replace(/\s+/g, " ");
+      .replace(/\s+/g, ' ')
     if (argIndex >= 0) {
       // TODO: use a more sophisticated parser to fetch arguments,
       // and remove unnecessary subsequent checks.
       const parsedFunction = /^(\s*::\s*[(]?)([\w,\s]*)([)]?\s*->.*)$/.exec(
         leftover
-      );
-      if (!parsedFunction || parsedFunction.length <= 1) return null;
+      )
+      if (!parsedFunction || parsedFunction.length <= 1) return null
 
-      const [head, args, tail] = parsedFunction.slice(1);
-      const tokens = args.split(",");
-      argIndex = Math.min(argIndex, tokens.length - 1);
+      const [head, args, tail] = parsedFunction.slice(1)
+      const tokens = args.split(',')
+      argIndex = Math.min(argIndex, tokens.length - 1)
 
-      addSegment(head, false, false);
+      addSegment(head, false, false)
       for (let i = 0; i < tokens.length; i++) {
-        if (i > 0) addSegment(",", false, false);
-        addSegment(tokens[i], false, argIndex === i);
+        if (i > 0) addSegment(',', false, false)
+        addSegment(tokens[i], false, argIndex === i)
       }
-      addSegment(tail, false, false);
+      addSegment(tail, false, false)
     } else {
-      addSegment(leftover, false, false);
+      addSegment(leftover, false, false)
     }
   }
-  return decl;
+  return decl
 }
 
-function renderHover(keywordData) {
-  if (!keywordData) return;
+function renderHover (keywordData) {
+  if (!keywordData) return
 
-  const topDiv = document.createElement("div");
-  const docDiv = document.createElement("div");
+  const topDiv = document.createElement('div')
+  const docDiv = document.createElement('div')
 
-  const annotation = document.createElement("div");
-  renderDeclaration(annotation, keywordData, 9999);
-  annotation.className = "hover-decl";
-  docDiv.appendChild(annotation);
+  const annotation = document.createElement('div')
+  renderDeclaration(annotation, keywordData, 9999)
+  annotation.className = 'hover-decl'
+  docDiv.appendChild(annotation)
 
   if (keywordData.doc) {
-    const description = document.createElement("div");
-    description.innerHTML = keywordData.doc;
-    description.className = "hover-doc";
-    docDiv.appendChild(description);
+    const description = document.createElement('div')
+    description.innerHTML = keywordData.doc
+    description.className = 'hover-doc'
+    docDiv.appendChild(description)
   }
 
-  const fadeDiv = document.createElement("div");
-  fadeDiv.className = "fade";
+  const fadeDiv = document.createElement('div')
+  fadeDiv.className = 'fade'
 
-  topDiv.appendChild(docDiv);
-  topDiv.appendChild(fadeDiv);
-  return topDiv;
+  topDiv.appendChild(docDiv)
+  topDiv.appendChild(fadeDiv)
+  return topDiv
 }
 
-function onHover(cm, data, node) {
+function onHover (cm, data, node) {
   if (data && data.token && data.token.string) {
     const prefix = getQualifierPrefix(
       cm,
       CodeMirror.Pos(data.token.state.line, data.token.start)
-    );
-    const token_name = data.token.string;
+    )
+    const token_name = data.token.string
     if (hintBlacklist.indexOf(token_name) === -1) {
-      const info = window.codeWorldSymbols[prefix + token_name];
-      return renderHover(info);
+      const info = window.codeWorldSymbols[prefix + token_name]
+      return renderHover(info)
     }
   }
 }
 
-function getQualifierPrefix(cm, pos) {
-  let prefix = "";
-  let start = pos.ch;
+function getQualifierPrefix (cm, pos) {
+  let prefix = ''
+  let start = pos.ch
   while (start > 1) {
-    let qtoken = cm.getTokenAt(CodeMirror.Pos(pos.line, start));
-    let qual = qtoken.string;
-    if (qtoken.string === ".") {
-      qtoken = cm.getTokenAt(CodeMirror.Pos(pos.line, qtoken.start));
-      qual = `${qtoken.string}.`;
+    let qtoken = cm.getTokenAt(CodeMirror.Pos(pos.line, start))
+    let qual = qtoken.string
+    if (qtoken.string === '.') {
+      qtoken = cm.getTokenAt(CodeMirror.Pos(pos.line, qtoken.start))
+      qual = `${qtoken.string}.`
     }
-    if (!QUALIFIER.test(qual)) break;
+    if (!QUALIFIER.test(qual)) break
 
-    prefix = qual + prefix;
-    start = qtoken.start;
+    prefix = qual + prefix
+    start = qtoken.start
   }
-  return prefix;
+  return prefix
 }
 
-function substitutionCost(a, b, fixedLen) {
-  const insertCost = 1;
-  const deleteCost = 1.5;
-  const transCost = 1;
-  const substCost = 1.5;
-  const caseCost = 0.1;
+function substitutionCost (a, b, fixedLen) {
+  const insertCost = 1
+  const deleteCost = 1.5
+  const transCost = 1
+  const substCost = 1.5
+  const caseCost = 0.1
 
   const d = Array(b.length + 1)
     .fill()
-    .map(() => Array(a.length + 1));
+    .map(() => Array(a.length + 1))
 
-  function scale(i) {
-    return i >= fixedLen ? 10 : 100;
+  function scale (i) {
+    return i >= fixedLen ? 10 : 100
   }
 
   for (let i = 0; i <= a.length; i += 1) {
     for (let j = 0; j <= b.length; j += 1) {
       if (i === 0 && j === 0) {
-        d[j][i] = 0;
-        continue;
+        d[j][i] = 0
+        continue
       } else if (i === 0) {
-        d[j][i] = d[j - 1][i] + insertCost * scale(i);
+        d[j][i] = d[j - 1][i] + insertCost * scale(i)
       } else if (j === 0) {
-        d[j][i] = d[j][i - 1] + deleteCost * scale(i - 1);
+        d[j][i] = d[j][i - 1] + deleteCost * scale(i - 1)
       } else {
         const replaceCost =
           a[i - 1] === b[j - 1]
             ? 0
             : a[i - 1].toLowerCase() === b[j - 1].toLowerCase()
-            ? caseCost
-            : substCost;
+              ? caseCost
+              : substCost
 
         d[j][i] = Math.min(
           d[j][i - 1] + deleteCost * scale(i - 1),
           d[j - 1][i] + insertCost * scale(i),
           d[j - 1][i - 1] + replaceCost * scale(i - 1)
-        );
+        )
         if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
           d[j][i] = Math.min(
             d[j][i],
             d[j - 2][i - 2] + transCost * scale(i - 2)
-          );
+          )
         }
       }
     }
   }
 
-  return d[b.length][a.length] + scale(fixedLen) * (a.length - b.length);
+  return d[b.length][a.length] + scale(fixedLen) * (a.length - b.length)
 }
 
 // Hints and hover tooltips
-function registerStandardHints(successFunc) {
-  CodeMirror.registerHelper("hint", "codeworld", (cm) => {
+function registerStandardHints (successFunc) {
+  CodeMirror.registerHelper('hint', 'codeworld', (cm) => {
     const deleteOldHintDocs = () => {
-      $(".hint-description").remove();
-    };
-
-    deleteOldHintDocs();
-
-    const cur = cm.getCursor();
-    const token = cm.getTokenAt(cur);
-
-    // If the current token is whitespace, it can be split.
-    let term = token.string.substr(0, cur.ch - token.start);
-    let from = CodeMirror.Pos(cur.line, token.start);
-
-    if (!VAR_OR_CON.test(term)) {
-      term = "";
-      from = cur;
+      $('.hint-description').remove()
     }
 
-    const prefix = getQualifierPrefix(cm, from);
+    deleteOldHintDocs()
+
+    const cur = cm.getCursor()
+    const token = cm.getTokenAt(cur)
+
+    // If the current token is whitespace, it can be split.
+    let term = token.string.substr(0, cur.ch - token.start)
+    let from = CodeMirror.Pos(cur.line, token.start)
+
+    if (!VAR_OR_CON.test(term)) {
+      term = ''
+      from = cur
+    }
+
+    const prefix = getQualifierPrefix(cm, from)
 
     // The found collection is organized into three tiers:
     //
     // 1. Exact match for the current token.
     // 2. Current token is a case-sensitive prefix.
     // 3. Others, to be presented as fuzzy matches.
-    const found = [[], [], []];
+    const found = [[], [], []]
 
-    const hints = Object.keys(window.codeWorldSymbols);
+    const hints = Object.keys(window.codeWorldSymbols)
     for (let i = 0; i < hints.length; i++) {
-      const hint = hints[i];
-      const parts = hint.split(/\.(?=[^.]+$)/);
-      const hintPrefix = parts.length < 2 ? "" : `${parts[0]}.`;
-      const hintIdent = parts.length < 2 ? hint : parts[1];
-      if (!VAR_OR_CON.test(hintIdent)) continue;
+      const hint = hints[i]
+      const parts = hint.split(/\.(?=[^.]+$)/)
+      const hintPrefix = parts.length < 2 ? '' : `${parts[0]}.`
+      const hintIdent = parts.length < 2 ? hint : parts[1]
+      if (!VAR_OR_CON.test(hintIdent)) continue
       if (window.codeWorldSymbols[hint].module) {
         if (hint.startsWith(prefix)) {
           const candidate = {
@@ -549,15 +549,15 @@ function registerStandardHints(successFunc) {
             ),
             details: window.codeWorldSymbols[hint],
             render: (elem) => {
-              renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
-            },
-          };
+              renderDeclaration(elem, window.codeWorldSymbols[hint], 50)
+            }
+          }
           if (hint === prefix + token.string) {
-            found[0].push(candidate);
+            found[0].push(candidate)
           } else if (hint.startsWith(prefix + term)) {
-            found[1].push(candidate);
+            found[1].push(candidate)
           } else {
-            found[2].push(candidate);
+            found[2].push(candidate)
           }
         }
       } else if (hintPrefix === prefix) {
@@ -565,15 +565,15 @@ function registerStandardHints(successFunc) {
           text: window.codeWorldSymbols[hint].insertText,
           details: window.codeWorldSymbols[hint],
           render: (elem) => {
-            renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
-          },
-        };
+            renderDeclaration(elem, window.codeWorldSymbols[hint], 50)
+          }
+        }
         if (hintIdent === token.string) {
-          found[0].push(candidate);
+          found[0].push(candidate)
         } else if (hintIdent.startsWith(term)) {
-          found[1].push(candidate);
+          found[1].push(candidate)
         } else {
-          found[2].push(candidate);
+          found[2].push(candidate)
         }
       }
     }
@@ -581,384 +581,383 @@ function registerStandardHints(successFunc) {
     // If there's a chance to find an exact match, clear out the fuzzy matches
     // so that the exact match is chosen.
     if (found[0].length + found[1].length === 1) {
-      found[2] = [];
+      found[2] = []
     }
 
-    const options = found[0].concat(found[1]).concat(found[2]);
+    const options = found[0].concat(found[1]).concat(found[2])
     for (const candidate of options) {
       candidate.cost = substitutionCost(
         token.string,
         candidate.text,
         term.length
-      );
+      )
     }
 
     if (options.length > 0) {
       options.sort((a, b) => {
-        if (a.cost < b.cost) return -1;
-        if (a.cost > b.cost) return 1;
-        return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1;
-      });
+        if (a.cost < b.cost) return -1
+        if (a.cost > b.cost) return 1
+        return a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1
+      })
 
-      let numGood;
+      let numGood
       for (numGood = 1; numGood < options.length; numGood++) {
-        if (numGood >= 16 && options[numGood].cost > 2 * options[0].cost + 50)
-          break;
+        if (numGood >= 16 && options[numGood].cost > 2 * options[0].cost + 50) { break }
       }
-      const goodOptions = options.slice(0, numGood);
+      const goodOptions = options.slice(0, numGood)
 
       const data = {
         list: goodOptions,
         from: from,
-        to: VAR_OR_CON.test(term) ? CodeMirror.Pos(cur.line, token.end) : cur,
-      };
+        to: VAR_OR_CON.test(term) ? CodeMirror.Pos(cur.line, token.end) : cur
+      }
 
-      CodeMirror.on(data, "close", deleteOldHintDocs);
-      CodeMirror.on(data, "pick", deleteOldHintDocs);
-      CodeMirror.on(data, "pick", (completion) => {
-        if (completion.details.module) cm.showHint();
-      });
+      CodeMirror.on(data, 'close', deleteOldHintDocs)
+      CodeMirror.on(data, 'pick', deleteOldHintDocs)
+      CodeMirror.on(data, 'pick', (completion) => {
+        if (completion.details.module) cm.showHint()
+      })
 
       // Tracking of hint selection
-      CodeMirror.on(data, "select", (selection, elem) => {
-        const hintsWidgetRect = elem.parentElement.getBoundingClientRect();
-        const doc = document.createElement("div");
-        deleteOldHintDocs();
-        const hover = renderHover(selection.details);
+      CodeMirror.on(data, 'select', (selection, elem) => {
+        const hintsWidgetRect = elem.parentElement.getBoundingClientRect()
+        const doc = document.createElement('div')
+        deleteOldHintDocs()
+        const hover = renderHover(selection.details)
         if (hover) {
-          doc.className += "hint-description";
-          doc.style.top = `${hintsWidgetRect.top}px`;
-          doc.style.left = `${hintsWidgetRect.right}px`;
-          doc.appendChild(hover);
-          document.body.appendChild(doc);
+          doc.className += 'hint-description'
+          doc.style.top = `${hintsWidgetRect.top}px`
+          doc.style.left = `${hintsWidgetRect.right}px`
+          doc.appendChild(hover)
+          document.body.appendChild(doc)
         }
-      });
-      return data;
+      })
+      return data
     }
-  });
+  })
 
-  sendHttp("GET", "codeworld-base.txt", null, (request) => {
-    let lines = [];
+  sendHttp('GET', 'codeworld-base.txt', null, (request) => {
+    let lines = []
     if (request.status !== 200) {
-      console.log("Failed to load autocomplete word list.");
+      console.log('Failed to load autocomplete word list.')
     } else {
-      lines = request.responseText.split("\n");
+      lines = request.responseText.split('\n')
     }
 
     // Special case for "program", since it is morally a built-in name.
-    window.codeworldKeywords["program"] = "builtin";
+    window.codeworldKeywords.program = 'builtin'
 
-    window.codeWorldModules = {};
-    let module = null;
-    let doc = "";
+    window.codeWorldModules = {}
+    let module = null
+    let doc = ''
     lines.forEach((line) => {
-      if (line.startsWith("module ")) {
-        module = line.substr(7);
+      if (line.startsWith('module ')) {
+        module = line.substr(7)
         if (!window.codeWorldModules[module]) {
-          window.codeWorldModules[module] = {};
+          window.codeWorldModules[module] = {}
         }
-        doc = "";
-        return;
+        doc = ''
+        return
       }
 
       if (!module) {
         // Ignore anything outside of a module.
-        doc = "";
-        return;
+        doc = ''
+        return
       }
 
-      if (module === "Prelude" && line.startsWith("type Program")) {
+      if (module === 'Prelude' && line.startsWith('type Program')) {
         // We must intervene to hide the IO type.
-        line = "data Program";
-      } else if (module === "Prelude" && line.startsWith("type Truth")) {
-        line = "data Truth";
-      } else if (module === "Prelude" && line.startsWith("True ::")) {
-        line = "True :: Truth";
-      } else if (module === "Prelude" && line.startsWith("False ::")) {
-        line = "False :: Truth";
-      } else if (line.startsWith("newtype ")) {
+        line = 'data Program'
+      } else if (module === 'Prelude' && line.startsWith('type Truth')) {
+        line = 'data Truth'
+      } else if (module === 'Prelude' && line.startsWith('True ::')) {
+        line = 'True :: Truth'
+      } else if (module === 'Prelude' && line.startsWith('False ::')) {
+        line = 'False :: Truth'
+      } else if (line.startsWith('newtype ')) {
         // Hide the distinction between newtype and data.
-        line = `data ${line.substr(8)}`;
-      } else if (line.startsWith("pattern ")) {
+        line = `data ${line.substr(8)}`
+      } else if (line.startsWith('pattern ')) {
         // Hide the distinction between patterns and constructors.
-        line = line.substr(8);
-      } else if (line.startsWith("class ")) {
-        doc = "";
-        return;
-      } else if (line.startsWith("instance ")) {
-        doc = "";
-        return;
-      } else if (line.startsWith("infix ")) {
-        doc = "";
-        return;
-      } else if (line.startsWith("infixl ")) {
-        doc = "";
-        return;
-      } else if (line.startsWith("infixr ")) {
-        doc = "";
-        return;
+        line = line.substr(8)
+      } else if (line.startsWith('class ')) {
+        doc = ''
+        return
+      } else if (line.startsWith('instance ')) {
+        doc = ''
+        return
+      } else if (line.startsWith('infix ')) {
+        doc = ''
+        return
+      } else if (line.startsWith('infixl ')) {
+        doc = ''
+        return
+      } else if (line.startsWith('infixr ')) {
+        doc = ''
+        return
       }
 
       // Filter out strictness annotations.
-      line = line.replace(/(\s)!([A-Za-z([])/g, "$1$2");
+      line = line.replace(/(\s)!([A-Za-z([])/g, '$1$2')
 
       // Filter out CallStack constraints.
-      line = line.replace(/:: HasCallStack =>/g, "::");
+      line = line.replace(/:: HasCallStack =>/g, '::')
 
-      if (line.startsWith("-- |")) {
-        doc = `${line.replace(/-- \| /g, "")}\n`;
-      } else if (line.startsWith("-- ")) {
-        doc += `${line.replace(/-- {3}/g, "")}\n`;
+      if (line.startsWith('-- |')) {
+        doc = `${line.replace(/-- \| /g, '')}\n`
+      } else if (line.startsWith('-- ')) {
+        doc += `${line.replace(/-- {3}/g, '')}\n`
       } else {
-        let wordStart = 0;
-        if (line.startsWith("type ") || line.startsWith("data ")) {
-          wordStart += 5;
+        let wordStart = 0
+        if (line.startsWith('type ') || line.startsWith('data ')) {
+          wordStart += 5
 
           // Hide kind annotations.
-          const kindIndex = line.indexOf(" ::");
+          const kindIndex = line.indexOf(' ::')
           if (kindIndex !== -1) {
-            line = line.substr(0, kindIndex);
+            line = line.substr(0, kindIndex)
           }
         }
 
-        let wordEnd = line.indexOf(" ", wordStart);
+        let wordEnd = line.indexOf(' ', wordStart)
         if (wordEnd === -1) {
-          wordEnd = line.length;
+          wordEnd = line.length
         }
         if (wordStart === wordEnd) {
-          doc = "";
-          return;
+          doc = ''
+          return
         }
 
-        if (line[wordStart] === "(" && line[wordEnd - 1] === ")") {
-          wordStart++;
-          wordEnd--;
+        if (line[wordStart] === '(' && line[wordEnd - 1] === ')') {
+          wordStart++
+          wordEnd--
         }
 
-        const word = line.substr(wordStart, wordEnd - wordStart);
-        let isBlacklisted = false;
-        if (module === "Prelude") {
-          if (hintBlacklist.indexOf(word) >= 0) isBlacklisted = true;
+        const word = line.substr(wordStart, wordEnd - wordStart)
+        let isBlacklisted = false
+        if (module === 'Prelude') {
+          if (hintBlacklist.indexOf(word) >= 0) isBlacklisted = true
         } else {
-          if (["RGB", "HSL", "RGBA"].indexOf(word) >= 0) isBlacklisted = true;
+          if (['RGB', 'HSL', 'RGBA'].indexOf(word) >= 0) isBlacklisted = true
         }
         if (!isBlacklisted) {
           window.codeWorldModules[module][word] = {
             declaration: line,
             symbolStart: wordStart,
             symbolEnd: wordEnd,
-            insertText: word,
-          };
+            insertText: word
+          }
           if (doc) {
-            window.codeWorldModules[module][word].doc = doc;
+            window.codeWorldModules[module][word].doc = doc
           }
         }
 
-        if (module === "Prelude") {
+        if (module === 'Prelude') {
           if (hintBlacklist.indexOf(word) >= 0) {
-            window.codeworldKeywords[word] = "deprecated";
+            window.codeworldKeywords[word] = 'deprecated'
           } else if (/^[A-Z:]/.test(word)) {
-            window.codeworldKeywords[word] = "builtin-2";
+            window.codeworldKeywords[word] = 'builtin-2'
           } else {
-            window.codeworldKeywords[word] = "builtin";
+            window.codeworldKeywords[word] = 'builtin'
           }
         }
 
-        doc = "";
+        doc = ''
       }
-    });
+    })
 
-    successFunc();
-  });
+    successFunc()
+  })
 }
 
-function signin() {
+function signin () {
   if (window.auth2) {
     window.auth2.signIn({
-      prompt: "login",
-    });
+      prompt: 'login'
+    })
   }
 }
 
-function signout() {
+function signout () {
   warnIfUnsaved(() => {
-    clearWorkspace();
-    if (window.auth2) window.auth2.signOut();
-  });
+    clearWorkspace()
+    if (window.auth2) window.auth2.signOut()
+  })
 }
 
-function signedIn() {
-  return Boolean(window.auth2 && window.auth2.isSignedIn.get());
+function signedIn () {
+  return Boolean(window.auth2 && window.auth2.isSignedIn.get())
 }
 
 const Auth = (() => {
-  const mine = {};
+  const mine = {}
 
-  function initLocalAuth() {
-    Promise.resolve($.getScript("js/codeworld_local_auth.js"))
+  function initLocalAuth () {
+    Promise.resolve($.getScript('js/codeworld_local_auth.js'))
       .then(() => onAuthInitialized(LocalAuth.init()))
-      .catch((e) => console.log("initLocalAuth failed", e));
+      .catch((e) => console.log('initLocalAuth failed', e))
   }
 
-  function initGoogleAuth() {
-    Promise.resolve($.getScript("https://apis.google.com/js/platform.js"))
+  function initGoogleAuth () {
+    Promise.resolve($.getScript('https://apis.google.com/js/platform.js'))
       .then(() =>
-        gapi.load("auth2", () =>
+        gapi.load('auth2', () =>
           withClientId((clientId) => {
-            function sendHttpAuth(method, url, body, callback) {
+            function sendHttpAuth (method, url, body, callback) {
               if (body !== null && signedIn()) {
                 const idToken = window.auth2.currentUser.get().getAuthResponse()
-                  .id_token;
-                body.append("id_token", idToken);
+                  .id_token
+                body.append('id_token', idToken)
               }
 
-              const request = new XMLHttpRequest();
+              const request = new XMLHttpRequest()
 
               if (callback) {
                 request.onreadystatechange = () => {
                   if (request.readyState === 4) {
-                    callback(request);
+                    callback(request)
                   }
-                };
+                }
               }
 
-              request.open(method, url, true);
-              request.send(body);
+              request.open(method, url, true)
+              request.send(body)
 
-              return request;
+              return request
             }
 
             const auth2 = Object.assign(
               {
-                sendHttpAuth: sendHttpAuth,
+                sendHttpAuth: sendHttpAuth
               },
               gapi.auth2.init({
                 client_id: clientId,
-                scope: "openid",
-                fetch_basic_profile: false,
+                scope: 'openid',
+                fetch_basic_profile: false
               })
-            );
+            )
 
-            onAuthInitialized(auth2);
+            onAuthInitialized(auth2)
           })
         )
       )
-      .catch((e) => console.log("initGoogleAuth failed"));
+      .catch((e) => console.log('initGoogleAuth failed'))
   }
 
-  function onAuthInitialized(auth) {
-    window.auth2 = auth;
-    window.auth2.currentUser.listen(signinCallback);
+  function onAuthInitialized (auth) {
+    window.auth2 = auth
+    window.auth2.currentUser.listen(signinCallback)
 
-    discoverProjects("");
+    discoverProjects('')
   }
 
-  function onAuthDisabled() {
-    window.auth2 = null;
-    document.getElementById("signin").style.display = "none";
-    discoverProjects("");
+  function onAuthDisabled () {
+    window.auth2 = null
+    document.getElementById('signin').style.display = 'none'
+    discoverProjects('')
   }
 
   mine.init = () =>
-    sendHttp("GET", "authMethod", null, (resp) => {
+    sendHttp('GET', 'authMethod', null, (resp) => {
       if (resp.status === 200) {
-        const obj = JSON.parse(resp.responseText);
+        const obj = JSON.parse(resp.responseText)
         switch (obj.authMethod) {
-          case "Local":
-            initLocalAuth();
-            break;
-          case "Google":
-            initGoogleAuth();
-            break;
+          case 'Local':
+            initLocalAuth()
+            break
+          case 'Google':
+            initGoogleAuth()
+            break
           default:
-            onAuthDisabled();
-            break;
+            onAuthDisabled()
+            break
         }
       } else {
-        onAuthDisabled();
+        onAuthDisabled()
       }
-    });
+    })
 
-  return mine;
-})();
+  return mine
+})()
 
-function withClientId(f) {
-  if (window.clientId) return f(window.clientId);
+function withClientId (f) {
+  if (window.clientId) return f(window.clientId)
 
-  sendHttp("GET", "clientId.txt", null, (request) => {
-    if (request.status !== 200 || request.responseText === "") {
+  sendHttp('GET', 'clientId.txt', null, (request) => {
+    if (request.status !== 200 || request.responseText === '') {
       sweetAlert(
-        "Oops!",
-        "Missing API client key.  You will not be able to sign in.",
-        "warning"
-      );
-      return null;
+        'Oops!',
+        'Missing API client key.  You will not be able to sign in.',
+        'warning'
+      )
+      return null
     }
 
-    window.clientId = request.responseText.trim();
-    return f(window.clientId);
-  });
+    window.clientId = request.responseText.trim()
+    return f(window.clientId)
+  })
 }
 
-function loadTreeNodesAtPath(path, node, callback) {
-  const data = new FormData();
-  data.append("mode", window.projectEnv);
-  data.append("path", path);
+function loadTreeNodesAtPath (path, node, callback) {
+  const data = new FormData()
+  data.append('mode', window.projectEnv)
+  data.append('path', path)
 
-  showLoadingAnimation(node);
+  showLoadingAnimation(node)
 
-  sendHttp("POST", "listFolder", data, (request) => {
+  sendHttp('POST', 'listFolder', data, (request) => {
     if (request.status === 200) {
-      const treeNodes = JSON.parse(request.responseText);
+      const treeNodes = JSON.parse(request.responseText)
 
       treeNodes.forEach((node) => {
         if (!node.id) {
-          node.id = utils.directoryTree.createNodeId(node.type, node.name);
+          node.id = utils.directoryTree.createNodeId(node.type, node.name)
         }
-      });
+      })
 
-      $("#directoryTree").tree(
-        "loadData",
+      $('#directoryTree').tree(
+        'loadData',
         treeNodes.sort((a, b) => a.index > b.index),
         node
-      );
+      )
 
       if (node) {
-        $("#directoryTree").tree("openNode", node);
+        $('#directoryTree').tree('openNode', node)
       }
 
       if (callback) {
-        callback();
+        callback()
       }
     }
 
-    updateUI();
-    hideLoadingAnimation();
-  });
+    updateUI()
+    hideLoadingAnimation()
+  })
 }
 
-function loadSubTree(node, callback) {
+function loadSubTree (node, callback) {
   if (signedIn()) {
     // Root node already loaded
-    if (node === $("#directoryTree").tree("getTree") && callback) {
-      callback();
+    if (node === $('#directoryTree').tree('getTree') && callback) {
+      callback()
     } else if (utils.directoryTree.isDirectory(node)) {
-      loadTreeNodesAtPath(getNearestDirectory(node), node, callback);
+      loadTreeNodesAtPath(getNearestDirectory(node), node, callback)
     }
   } else {
-    updateUI();
+    updateUI()
   }
 }
 
-function discoverProjects(path) {
+function discoverProjects (path) {
   if (signedIn()) {
-    loadTreeNodesAtPath(path);
+    loadTreeNodesAtPath(path)
   } else {
-    updateUI();
+    updateUI()
   }
 }
 
-function moveDirTreeNode(
+function moveDirTreeNode (
   moveFrom,
   moveTo,
   isFile,
@@ -967,133 +966,133 @@ function moveDirTreeNode(
   successFunc
 ) {
   if (!signedIn()) {
-    sweetAlert("Oops!", "You must sign in before moving.", "error");
-    return;
+    sweetAlert('Oops!', 'You must sign in before moving.', 'error')
+    return
   }
-  const data = new FormData();
-  data.append("mode", buildMode);
-  data.append("moveTo", moveTo);
-  data.append("moveFrom", moveFrom);
+  const data = new FormData()
+  data.append('mode', buildMode)
+  data.append('moveTo', moveTo)
+  data.append('moveFrom', moveFrom)
   if (isFile) {
-    data.append("isFile", "true");
-    data.append("name", name);
+    data.append('isFile', 'true')
+    data.append('name', name)
   } else {
-    data.append("isFile", "false");
+    data.append('isFile', 'false')
   }
 
-  sendHttp("POST", "moveProject", data, (request) => {
+  sendHttp('POST', 'moveProject', data, (request) => {
     if (request.status !== 200) {
       sweetAlert(
-        "Oops",
-        "Could not move your project! Please try again.",
-        "error"
-      );
-      return;
+        'Oops',
+        'Could not move your project! Please try again.',
+        'error'
+      )
+      return
     }
-    successFunc();
-  });
+    successFunc()
+  })
 }
 
-function setCode(code, history, name, autostart) {
+function setCode (code, history, name, autostart) {
   if (!window.codeworldEditor) {
-    return;
+    return
   }
 
-  const doc = window.codeworldEditor.getDoc();
-  doc.setValue(code);
-  window.savedGeneration = doc.changeGeneration(true);
+  const doc = window.codeworldEditor.getDoc()
+  doc.setValue(code)
+  window.savedGeneration = doc.changeGeneration(true)
 
   if (history) {
-    doc.setHistory(history);
+    doc.setHistory(history)
   } else {
-    doc.clearHistory();
+    doc.clearHistory()
   }
 
-  window.codeworldEditor.focus();
-  parseSymbolsFromCurrentCode();
+  window.codeworldEditor.focus()
+  parseSymbolsFromCurrentCode()
   if (autostart) {
-    compile();
+    compile()
   } else {
-    stopRun();
+    stopRun()
   }
 }
 
-function warnIfUnsaved(action) {
+function warnIfUnsaved (action) {
   if (isEditorClean()) {
-    action();
+    action()
   } else {
     const msg =
-      "There are unsaved changes to your project. " +
-      "Continue and throw away your changes?";
+      'There are unsaved changes to your project. ' +
+      'Continue and throw away your changes?'
     sweetAlert({
-      title: Alert.title("Warning"),
+      title: Alert.title('Warning'),
       text: msg,
-      type: "warning",
+      type: 'warning',
       showCancelButton: true,
-      confirmButtonColor: "#DD6B55",
-      confirmButtonText: "Yes, discard my changes!",
+      confirmButtonColor: '#DD6B55',
+      confirmButtonText: 'Yes, discard my changes!'
     }).then((result) => {
-      if (result && result.value) action();
-    });
+      if (result && result.value) action()
+    })
   }
 }
 
-function saveProjectAsBase(successFunc) {
+function saveProjectAsBase (successFunc) {
   if (!signedIn()) {
-    sweetAlert("Oops!", "You must sign in to save files.", "error");
-    updateUI();
-    return;
+    sweetAlert('Oops!', 'You must sign in to save files.', 'error')
+    updateUI()
+    return
   }
 
-  const selectedNode = utils.directoryTree.getSelectedNode();
-  const isDirectoryNode = utils.directoryTree.isDirectory(selectedNode);
+  const selectedNode = utils.directoryTree.getSelectedNode()
+  const isDirectoryNode = utils.directoryTree.isDirectory(selectedNode)
 
   sweetAlert({
-    title: Alert.title("Save As", "mdi-cloud-upload"),
+    title: Alert.title('Save As', 'mdi-cloud-upload'),
     html:
       selectedNode && isDirectoryNode
-        ? `Enter a name for your project in folder <b>${$("<div>")
+        ? `Enter a name for your project in folder <b>${$('<div>')
             .text(getNearestDirectory())
             .html()
-            .replace(/ /g, "&nbsp;")}:`
-        : "Enter a name for your project:",
-    input: "text",
-    inputValue: selectedNode && !isDirectoryNode ? selectedNode.name : "",
-    confirmButtonText: "Save",
+            .replace(/ /g, '&nbsp;')}:`
+        : 'Enter a name for your project:',
+    input: 'text',
+    inputValue: selectedNode && !isDirectoryNode ? selectedNode.name : '',
+    confirmButtonText: 'Save',
     showCancelButton: true,
-    closeOnConfirm: false,
+    closeOnConfirm: false
   }).then((result) => {
-    const parent = getNearestDirectory_();
+    const parent = getNearestDirectory_()
 
-    function localSuccessFunc() {
+    function localSuccessFunc () {
       const matches = parent.children.filter(
         (node) =>
           node.name === result.value && utils.directoryTree.isProject(node)
-      );
-      let node;
-      const type = utils.directoryTree.nodeTypes.PROJECT;
-      const name = result.value;
+      )
+      let node
+      const type = utils.directoryTree.nodeTypes.PROJECT
+      const name = result.value
 
       if (matches.length === 0) {
-        node = $("#directoryTree").tree(
-          "appendNode",
+        node = $('#directoryTree').tree(
+          'appendNode',
           {
             id: utils.directoryTree.createNodeId(type, name),
             name,
             type,
-            data: JSON.stringify(getCurrentProject()),
+            data: JSON.stringify(getCurrentProject())
           },
           parent
-        );
+        )
       } else {
-        node = matches[0];
+        node = matches[0]
       }
 
-      $("#directoryTree").tree("selectNode", node);
+      $('#directoryTree').tree('selectNode', node)
 
-      updateChildrenIndexes(parent);
+      updateChildrenIndexes(parent)
 
-      successFunc(result.value);
+      successFunc(result.value)
     }
     if (result && result.value) {
       saveProjectBase(
@@ -1101,58 +1100,58 @@ function saveProjectAsBase(successFunc) {
         result.value,
         window.projectEnv,
         localSuccessFunc
-      );
+      )
     }
-  });
+  })
 }
 
-function saveProjectBase(path, projectName, mode, successFunc) {
+function saveProjectBase (path, projectName, mode, successFunc) {
   if (!signedIn()) {
-    sweetAlert("Oops!", "You must sign in to save files.", "error");
-    updateUI();
-    return;
+    sweetAlert('Oops!', 'You must sign in to save files.', 'error')
+    updateUI()
+    return
   }
 
-  if (!projectName) return;
+  if (!projectName) return
 
-  function go() {
+  function go () {
     sweetAlert({
       title: Alert.title(`Saving ${projectName} ...`),
-      text: "Saving your project.  Please wait.",
+      text: 'Saving your project.  Please wait.',
       showConfirmButton: false,
       showCancelButton: false,
       showCloseButton: false,
       allowOutsideClick: false,
       allowEscapeKey: false,
-      allowEnterKey: false,
-    });
+      allowEnterKey: false
+    })
 
-    const project = getCurrentProject();
-    project["name"] = projectName;
+    const project = getCurrentProject()
+    project.name = projectName
 
-    const data = new FormData();
-    data.append(utils.directoryTree.nodeTypes.PROJECT, JSON.stringify(project));
-    data.append("mode", mode);
-    data.append("path", path);
+    const data = new FormData()
+    data.append(utils.directoryTree.nodeTypes.PROJECT, JSON.stringify(project))
+    data.append('mode', mode)
+    data.append('path', path)
 
-    sendHttp("POST", "saveProject", data, (request) => {
-      sweetAlert.close();
+    sendHttp('POST', 'saveProject', data, (request) => {
+      sweetAlert.close()
 
       if (request.status !== 200) {
         sweetAlert(
-          "Oops!",
-          "Could not save your project!!!  Please try again.",
-          "error"
-        );
-        return;
+          'Oops!',
+          'Could not save your project!!!  Please try again.',
+          'error'
+        )
+        return
       }
 
-      successFunc();
-      updateUI();
-    });
+      successFunc()
+      updateUI()
+    })
   }
 
-  const selectedNode = utils.directoryTree.getSelectedNode();
+  const selectedNode = utils.directoryTree.getSelectedNode()
 
   if (
     (selectedNode && projectName === selectedNode.name) ||
@@ -1160,381 +1159,380 @@ function saveProjectBase(path, projectName, mode, successFunc) {
       (node) => node.name === projectName && utils.directoryTree.isProject(node)
     ).length === 0
   ) {
-    go();
+    go()
   } else {
     const msg = `${
-      "Are you sure you want to save over another project?\n\n" +
-      "The previous contents of "
-    }${projectName} will be permanently destroyed!`;
+      'Are you sure you want to save over another project?\n\n' +
+      'The previous contents of '
+    }${projectName} will be permanently destroyed!`
     sweetAlert({
-      title: Alert.title("Warning"),
+      title: Alert.title('Warning'),
       text: msg,
-      type: "warning",
+      type: 'warning',
       showCancelButton: true,
-      confirmButtonColor: "#DD6B55",
-      confirmButtonText: "Yes, overwrite it!",
+      confirmButtonColor: '#DD6B55',
+      confirmButtonText: 'Yes, overwrite it!'
     }).then((result) => {
       if (result && result.value) {
-        go();
+        go()
       }
-    });
+    })
   }
 }
 
-function deleteProject_(path, buildMode, successFunc) {
-  const selectedNode = utils.directoryTree.getSelectedNode();
-  if (!selectedNode) return;
+function deleteProject_ (path, buildMode, successFunc) {
+  const selectedNode = utils.directoryTree.getSelectedNode()
+  if (!selectedNode) return
 
   if (!signedIn()) {
-    sweetAlert("Oops", "You must sign in to delete a project.", "error");
-    updateUI();
-    return;
+    sweetAlert('Oops', 'You must sign in to delete a project.', 'error')
+    updateUI()
+    return
   }
 
-  const currentProjectName = selectedNode.name;
+  const currentProjectName = selectedNode.name
   const msg =
-    "Deleting a project will throw away all work, and cannot be undone. " +
-    `Are you sure you want to delete ${currentProjectName}?`;
+    'Deleting a project will throw away all work, and cannot be undone. ' +
+    `Are you sure you want to delete ${currentProjectName}?`
 
   sweetAlert({
-    title: Alert.title("Warning"),
+    title: Alert.title('Warning'),
     text: msg,
-    type: "warning",
+    type: 'warning',
     showCancelButton: true,
-    confirmButtonColor: "#DD6B55",
-    confirmButtonText: "Yes, delete it!",
+    confirmButtonColor: '#DD6B55',
+    confirmButtonText: 'Yes, delete it!'
   }).then((result) => {
     if (
       result.dismiss === sweetAlert.DismissReason.cancel ||
       result.dismiss === sweetAlert.DismissReason.backdrop
     ) {
-      return;
+      return
     }
 
-    const data = new FormData();
-    data.append("name", currentProjectName);
-    data.append("mode", buildMode);
-    data.append("path", path);
+    const data = new FormData()
+    data.append('name', currentProjectName)
+    data.append('mode', buildMode)
+    data.append('path', path)
 
-    sendHttp("POST", "deleteProject", data, (request) => {
+    sendHttp('POST', 'deleteProject', data, (request) => {
       if (request.status === 200) {
-        successFunc();
+        successFunc()
 
-        $("#directoryTree").tree("removeNode", selectedNode);
+        $('#directoryTree').tree('removeNode', selectedNode)
 
-        updateUI();
+        updateUI()
       }
-    });
-  });
+    })
+  })
 }
 
-function deleteFolder_(path, buildMode, successFunc) {
+function deleteFolder_ (path, buildMode, successFunc) {
   if (!signedIn()) {
-    sweetAlert("Oops", "You must sign in to delete a folder.", "error");
-    updateUI();
-    return;
+    sweetAlert('Oops', 'You must sign in to delete a folder.', 'error')
+    updateUI()
+    return
   }
 
   const msg =
-    "Deleting a folder will throw away all of its content, cannot be undone. " +
-    "Are you sure?";
+    'Deleting a folder will throw away all of its content, cannot be undone. ' +
+    'Are you sure?'
 
   sweetAlert({
-    title: Alert.title("Warning"),
+    title: Alert.title('Warning'),
     text: msg,
-    type: "warning",
+    type: 'warning',
     showCancelButton: true,
-    confirmButtonColor: "#DD6B55",
-    confirmButtonText: "Yes, delete it!",
+    confirmButtonColor: '#DD6B55',
+    confirmButtonText: 'Yes, delete it!'
   }).then((result) => {
     if (
       result.dismiss === sweetAlert.DismissReason.cancel ||
       result.dismiss === sweetAlert.DismissReason.backdrop
     ) {
-      return;
+      return
     }
 
-    const data = new FormData();
-    data.append("mode", buildMode);
-    data.append("path", path);
+    const data = new FormData()
+    data.append('mode', buildMode)
+    data.append('path', path)
 
-    sendHttp("POST", "deleteFolder", data, (request) => {
+    sendHttp('POST', 'deleteFolder', data, (request) => {
       if (request.status === 200) {
-        const selectedNode = utils.directoryTree.getSelectedNode();
-        $("#directoryTree").tree("removeNode", selectedNode);
-        successFunc();
-        updateUI();
+        const selectedNode = utils.directoryTree.getSelectedNode()
+        $('#directoryTree').tree('removeNode', selectedNode)
+        successFunc()
+        updateUI()
       }
-    });
-  });
+    })
+  })
 }
 
-function createFolder(path, buildMode, successFunc) {
+function createFolder (path, buildMode, successFunc) {
   warnIfUnsaved(() => {
     if (!signedIn()) {
-      sweetAlert("Oops!", "You must sign in to create a folder.", "error");
-      updateUI();
-      return;
+      sweetAlert('Oops!', 'You must sign in to create a folder.', 'error')
+      updateUI()
+      return
     }
 
     sweetAlert({
-      title: Alert.title("Create Folder", "mdi-folder-plus"),
-      text: "Enter a name for your folder:",
-      input: "text",
-      inputValue: "",
-      confirmButtonText: "Create",
-      showCancelButton: true,
+      title: Alert.title('Create Folder', 'mdi-folder-plus'),
+      text: 'Enter a name for your folder:',
+      input: 'text',
+      inputValue: '',
+      confirmButtonText: 'Create',
+      showCancelButton: true
     }).then((result) => {
       if (!result.value) {
-        return;
+        return
       }
 
-      sweetAlert.close();
-      const data = new FormData();
-      data.append("mode", buildMode);
+      sweetAlert.close()
+      const data = new FormData()
+      data.append('mode', buildMode)
 
       if (!path) {
-        data.append("path", result.value);
+        data.append('path', result.value)
       } else {
-        data.append("path", `${path}/${result.value}`);
+        data.append('path', `${path}/${result.value}`)
       }
 
-      sendHttp("POST", "createFolder", data, (request) => {
+      sendHttp('POST', 'createFolder', data, (request) => {
         if (request.status !== 200) {
           sweetAlert(
-            "Oops",
-            "Could not create your directory! Please try again.",
-            "error"
-          );
-          return;
+            'Oops',
+            'Could not create your directory! Please try again.',
+            'error'
+          )
+          return
         }
 
-        successFunc();
+        successFunc()
 
-        let selectedNode = utils.directoryTree.getSelectedNode();
-        const type = utils.directoryTree.nodeTypes.DIRECTORY;
-        const name = result.value;
+        let selectedNode = utils.directoryTree.getSelectedNode()
+        const type = utils.directoryTree.nodeTypes.DIRECTORY
+        const name = result.value
 
         if (!selectedNode) {
-          selectedNode = $("#directoryTree").tree("getTree");
+          selectedNode = $('#directoryTree').tree('getTree')
         }
         if (selectedNode && !utils.directoryTree.isDirectory(selectedNode)) {
-          selectedNode = selectedNode.parent;
+          selectedNode = selectedNode.parent
         }
 
-        $("#directoryTree").tree(
-          "appendNode",
+        $('#directoryTree').tree(
+          'appendNode',
           {
             id: utils.directoryTree.createNodeId(type, name),
             name,
             type,
-            children: [],
+            children: []
           },
           selectedNode
-        );
+        )
 
-        updateChildrenIndexes(selectedNode);
-      });
-    });
-  });
+        updateChildrenIndexes(selectedNode)
+      })
+    })
+  })
 }
 
-function loadProject_(path, name, buildMode, successFunc) {
+function loadProject_ (path, name, buildMode, successFunc) {
   if (!signedIn()) {
-    sweetAlert("Oops!", "You must sign in to open projects.", "error");
-    updateUI();
-    return;
+    sweetAlert('Oops!', 'You must sign in to open projects.', 'error')
+    updateUI()
+    return
   }
 
   sweetAlert({
     title: Alert.title(`Loading ${name} ...`),
-    text: "Please wait.",
+    text: 'Please wait.',
     showConfirmButton: false,
     showCancelButton: false,
     showCloseButton: false,
     allowOutsideClick: false,
     allowEscapeKey: false,
-    allowEnterKey: false,
-  });
+    allowEnterKey: false
+  })
 
-  setCode("");
+  setCode('')
 
-  const data = new FormData();
-  data.append("name", name);
-  data.append("mode", buildMode);
-  data.append("path", path);
+  const data = new FormData()
+  data.append('name', name)
+  data.append('mode', buildMode)
+  data.append('path', path)
 
-  sendHttp("POST", "loadProject", data, (request) => {
-    sweetAlert.close();
+  sendHttp('POST', 'loadProject', data, (request) => {
+    sweetAlert.close()
     if (request.status === 200) {
-      const project = JSON.parse(request.responseText);
-      successFunc(project);
-      updateUI();
+      const project = JSON.parse(request.responseText)
+      successFunc(project)
+      updateUI()
     } else {
       sweetAlert(
-        "Oops!",
-        "Could not load the project!!!  Please try again.",
-        "error"
-      );
-      return;
+        'Oops!',
+        'Could not load the project!!!  Please try again.',
+        'error'
+      )
     }
-  });
+  })
 }
 
-function share() {
-  let offerSource = true;
+function share () {
+  let offerSource = true
 
-  function go() {
-    let url;
-    let msg;
-    let showConfirm;
-    let confirmText;
+  function go () {
+    let url
+    let msg
+    let showConfirm
+    let confirmText
 
     if (!window.deployHash) {
-      url = window.location.href;
-      msg = "Copy this link to share your program and code with others!";
-      showConfirm = false;
+      url = window.location.href
+      msg = 'Copy this link to share your program and code with others!'
+      showConfirm = false
     } else if (offerSource) {
-      url = window.location.href;
-      msg = "Copy this link to share your program and code with others!";
-      showConfirm = true;
-      confirmText = "Share Without Code";
+      url = window.location.href
+      msg = 'Copy this link to share your program and code with others!'
+      showConfirm = true
+      confirmText = 'Share Without Code'
     } else {
-      const a = document.createElement("a");
-      a.href = `run.html?mode=${window.buildMode}&dhash=${window.deployHash}`;
+      const a = document.createElement('a')
+      a.href = `run.html?mode=${window.buildMode}&dhash=${window.deployHash}`
 
-      url = a.href;
-      msg = "Copy this link to share your program (but not code) with others!";
-      showConfirm = true;
-      confirmText = "Share With Code";
+      url = a.href
+      msg = 'Copy this link to share your program (but not code) with others!'
+      showConfirm = true
+      confirmText = 'Share With Code'
     }
 
     sweetAlert({
-      title: Alert.title("Share", "mdi-share"),
+      title: Alert.title('Share', 'mdi-share'),
       html: msg,
-      input: "text",
+      input: 'text',
       inputValue: url,
       showConfirmButton: showConfirm,
       confirmButtonText: confirmText,
       closeOnConfirm: false,
       showCancelButton: true,
-      cancelButtonText: "Done",
-      animation: "slide-from-bottom",
+      cancelButtonText: 'Done',
+      animation: 'slide-from-bottom'
     }).then((result) => {
       if (result && result.value) {
-        offerSource = !offerSource;
-        go();
+        offerSource = !offerSource
+        go()
       }
-    });
+    })
   }
 
   if (window.runningGeneration) {
     if (!window.codeworldEditor.getDoc().isClean(window.runningGeneration)) {
       sweetAlert({
-        type: "warning",
+        type: 'warning',
         text:
-          "You have changed your code since running the program. " +
-          " Rebuild so that you can share your latest code?",
-        confirmButtonText: "Yes, Rebuild",
-        cancelButtonText: "No, Share Old Program",
+          'You have changed your code since running the program. ' +
+          ' Rebuild so that you can share your latest code?',
+        confirmButtonText: 'Yes, Rebuild',
+        cancelButtonText: 'No, Share Old Program',
         showConfirmButton: true,
-        showCancelButton: true,
+        showCancelButton: true
       }).then((result) => {
         if (result && result.value) {
-          compile();
+          compile()
         } else {
-          go();
+          go()
         }
-      });
-      return;
+      })
+      return
     }
   }
 
-  go();
+  go()
 }
 
-function shareFolder_(mode) {
+function shareFolder_ (mode) {
   if (!signedIn()) {
-    sweetAlert("Oops!", "You must sign in to share your folder.", "error");
-    updateUI();
-    return;
+    sweetAlert('Oops!', 'You must sign in to share your folder.', 'error')
+    updateUI()
+    return
   }
 
-  const selectedNode = utils.directoryTree.getSelectedNode();
+  const selectedNode = utils.directoryTree.getSelectedNode()
 
   if (!getNearestDirectory() || (selectedNode && selectedNode.name)) {
-    sweetAlert("Oops!", "You must select a folder to share!", "error");
-    updateUI();
-    return;
+    sweetAlert('Oops!', 'You must select a folder to share!', 'error')
+    updateUI()
+    return
   }
 
-  const folderName = Html.encode(getNearestDirectory_().name);
+  const folderName = Html.encode(getNearestDirectory_().name)
 
-  const data = new FormData();
-  data.append("mode", mode);
-  data.append("path", getNearestDirectory());
+  const data = new FormData()
+  data.append('mode', mode)
+  data.append('path', getNearestDirectory())
 
-  sendHttp("POST", "shareFolder", data, (request) => {
+  sendHttp('POST', 'shareFolder', data, (request) => {
     if (request.status !== 200) {
       sweetAlert(
-        "Oops!",
-        "Could not share your folder! Please try again.",
-        "error"
-      );
-      return;
+        'Oops!',
+        'Could not share your folder! Please try again.',
+        'error'
+      )
+      return
     }
 
-    const baseURL = window.location.origin + window.location.pathname;
-    const shareHash = request.responseText;
-    let gallery = false;
+    const baseURL = window.location.origin + window.location.pathname
+    const shareHash = request.responseText
+    let gallery = false
 
-    function go() {
-      let title;
-      let url;
-      let msg;
-      let confirmText;
+    function go () {
+      let title
+      let url
+      let msg
+      let confirmText
 
       if (gallery) {
-        title = Alert.title("Share Gallery", "mdi-presentation-play");
-        msg = `Copy this link to make a gallery out of ${folderName}!`;
+        title = Alert.title('Share Gallery', 'mdi-presentation-play')
+        msg = `Copy this link to make a gallery out of ${folderName}!`
         url = new URL(
           `/gallery.html?path=/gallery/${shareHash}?mode=${mode}`,
           baseURL
-        ).toString();
-        confirmText = "Share as Folder";
+        ).toString()
+        confirmText = 'Share as Folder'
       } else {
-        (title = Alert.title("Share Folder", "mdi-folder-account-outline")),
-          (msg = `Copy this link to share code in ${folderName} with others!`);
-        url = `${baseURL}#${shareHash}`;
-        confirmText = "Share as Gallery";
+        (title = Alert.title('Share Folder', 'mdi-folder-account-outline')),
+        (msg = `Copy this link to share code in ${folderName} with others!`)
+        url = `${baseURL}#${shareHash}`
+        confirmText = 'Share as Gallery'
       }
 
       sweetAlert({
         title: title,
         html: msg,
-        input: "text",
+        input: 'text',
         inputValue: url,
         showConfirmButton: true,
         confirmButtonText: confirmText,
         closeOnConfirm: false,
         showCancelButton: true,
-        cancelButtonText: "Done",
-        animation: "slide-from-bottom",
+        cancelButtonText: 'Done',
+        animation: 'slide-from-bottom'
       }).then((result) => {
         if (result && result.value) {
-          gallery = !gallery;
-          go();
+          gallery = !gallery
+          go()
         }
-      });
+      })
     }
 
-    go();
-  });
+    go()
+  })
 }
 
-function preFormatMessage(msg) {
+function preFormatMessage (msg) {
   while (msg.match(/(\r\n|[^\x08]|)\x08/)) {
-    msg = msg.replace(/(\r\n|[^\x08])\x08/g, "");
+    msg = msg.replace(/(\r\n|[^\x08])\x08/g, '')
   }
 
   msg = Html.encode(msg)
@@ -1548,216 +1546,215 @@ function preFormatMessage(msg) {
     )
     .replace(
       /[A-Za-z0-9_-]*\.hs:(\d+):((\d+)(-\d+)?)/g,
-      "In an imported module"
+      'In an imported module'
     )
     .replace(
       /program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
-      "In an imported module"
-    );
-  return msg;
+      'In an imported module'
+    )
+  return msg
 }
 
-function printMessage(type, message) {
-  const outputDiv = document.getElementById("message");
+function printMessage (type, message) {
+  const outputDiv = document.getElementById('message')
 
-  let box = outputDiv.lastChild;
-  let messageContent;
-  if (box && type === "log" && box.classList.contains("log")) {
-    box.rawMessage += message;
-    messageContent = box.lastChild;
+  let box = outputDiv.lastChild
+  let messageContent
+  if (box && type === 'log' && box.classList.contains('log')) {
+    box.rawMessage += message
+    messageContent = box.lastChild
   } else {
-    box = document.createElement("div");
-    box.classList.add("message-box");
-    box.classList.add(type);
+    box = document.createElement('div')
+    box.classList.add('message-box')
+    box.classList.add(type)
 
-    const messageGutter = document.createElement("div");
-    messageGutter.classList.add("message-gutter");
+    const messageGutter = document.createElement('div')
+    messageGutter.classList.add('message-gutter')
 
-    messageContent = document.createElement("div");
-    messageContent.classList.add("message-content");
+    messageContent = document.createElement('div')
+    messageContent.classList.add('message-content')
 
-    box.appendChild(messageGutter);
-    box.appendChild(messageContent);
+    box.appendChild(messageGutter)
+    box.appendChild(messageContent)
 
-    box.rawMessage = message;
+    box.rawMessage = message
   }
 
-  const formatted = preFormatMessage(box.rawMessage);
-  const lines = formatted.trim().split("\n");
+  const formatted = preFormatMessage(box.rawMessage)
+  const lines = formatted.trim().split('\n')
 
-  messageContent.innerHTML = "";
+  messageContent.innerHTML = ''
 
-  let firstLine;
+  let firstLine
   if (lines.length < 2) {
-    const singleLineMsg = document.createElement("div");
-    singleLineMsg.innerHTML = formatted;
-    messageContent.appendChild(singleLineMsg);
-    firstLine = messageContent;
+    const singleLineMsg = document.createElement('div')
+    singleLineMsg.innerHTML = formatted
+    messageContent.appendChild(singleLineMsg)
+    firstLine = messageContent
   } else {
-    const summary = document.createElement("summary");
-    summary.innerHTML = lines[0];
-    firstLine = summary;
+    const summary = document.createElement('summary')
+    summary.innerHTML = lines[0]
+    firstLine = summary
 
-    const details = document.createElement("details");
-    details.setAttribute("open", "");
-    details.innerHTML = lines.slice(1).join("\n");
+    const details = document.createElement('details')
+    details.setAttribute('open', '')
+    details.innerHTML = lines.slice(1).join('\n')
 
-    details.insertBefore(summary, details.firstChild);
-    messageContent.appendChild(details);
+    details.insertBefore(summary, details.firstChild)
+    messageContent.appendChild(details)
   }
 
-  if (type === "error" || type === "warning") {
+  if (type === 'error' || type === 'warning') {
     if (!window.alreadyReportedErrors.has(scrubError(message))) {
-      const reportLink = document.createElement("a");
-      reportLink.setAttribute("href", "#");
-      reportLink.classList.add("report-unhelpful");
+      const reportLink = document.createElement('a')
+      reportLink.setAttribute('href', '#')
+      reportLink.classList.add('report-unhelpful')
       reportLink.onclick = (event) =>
-        sendUnhelpfulReport(event, message, reportLink);
-      reportLink.innerText = "Not helpful?";
-      firstLine.appendChild(reportLink);
+        sendUnhelpfulReport(event, message, reportLink)
+      reportLink.innerText = 'Not helpful?'
+      firstLine.appendChild(reportLink)
     }
   }
 
-  outputDiv.appendChild(box);
-  outputDiv.scrollTop = outputDiv.scrollHeight;
+  outputDiv.appendChild(box)
+  outputDiv.scrollTop = outputDiv.scrollHeight
 }
 
-function sendUnhelpfulReport(event, message, reportLink) {
+function sendUnhelpfulReport (event, message, reportLink) {
   if (window.alreadyReportedErrors.has(scrubError(message))) {
     sweetAlert({
-      type: "info",
+      type: 'info',
       text:
-        "You have already reported this message.  Thank you for your feedback.",
-    });
-    reportLink.style.display = "none";
-    return;
+        'You have already reported this message.  Thank you for your feedback.'
+    })
+    reportLink.style.display = 'none'
+    return
   }
   sweetAlert({
-    title: Alert.title("Report unhelpful message:", "mdi-flag-variant"),
-    text: "The report will include your code.",
-    input: "textarea",
-    inputPlaceholder: "Anything else to add?",
+    title: Alert.title('Report unhelpful message:', 'mdi-flag-variant'),
+    text: 'The report will include your code.',
+    input: 'textarea',
+    inputPlaceholder: 'Anything else to add?',
     showConfirmButton: true,
-    showCancelButton: true,
+    showCancelButton: true
   }).then((result) => {
-    if (!result || result.dismiss !== sweetAlert.DismissReason.confirm) return;
+    if (!result || result.dismiss !== sweetAlert.DismissReason.confirm) return
 
-    const data = new FormData();
-    data.append("title", "User-reported unhelpful error message");
-    data.append("label", "error-message");
+    const data = new FormData()
+    data.append('title', 'User-reported unhelpful error message')
+    data.append('label', 'error-message')
 
-    let report = `**Program:** ${window.location.href}`;
-    if (result.value) report += `\n\n**Comment:**\n\n${result.value}`;
-    report += `\n\n**Message:**\n\n${message.replace(/^/gm, "    ")}`;
-    data.append("message", report);
-    sendHttp("POST", "log", data);
+    let report = `**Program:** ${window.location.href}`
+    if (result.value) report += `\n\n**Comment:**\n\n${result.value}`
+    report += `\n\n**Message:**\n\n${message.replace(/^/gm, '    ')}`
+    data.append('message', report)
+    sendHttp('POST', 'log', data)
     sweetAlert({
-      type: "success",
-      text: "Thank you for your feedback.",
-    });
+      type: 'success',
+      text: 'Thank you for your feedback.'
+    })
 
-    reportLink.style.display = "none";
-    window.alreadyReportedErrors.add(scrubError(message));
-  });
-  event.preventDefault();
+    reportLink.style.display = 'none'
+    window.alreadyReportedErrors.add(scrubError(message))
+  })
+  event.preventDefault()
 }
 
-function scrubError(msg) {
+function scrubError (msg) {
   return msg
-    .replace(/[a-zA-Z0-9_-]+\.hs:(\d+):((\d+)(-\d+)?)/g, "(loc)")
-    .replace(/[a-zA-Z0-9_-]+\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g, "(loc)");
+    .replace(/[a-zA-Z0-9_-]+\.hs:(\d+):((\d+)(-\d+)?)/g, '(loc)')
+    .replace(/[a-zA-Z0-9_-]+\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g, '(loc)')
 }
 
-function clearMessages() {
-  const outputDiv = document.getElementById("message");
-  outputDiv.innerHTML = "";
-  outputDiv.classList.remove("error");
+function clearMessages () {
+  const outputDiv = document.getElementById('message')
+  outputDiv.innerHTML = ''
+  outputDiv.classList.remove('error')
 }
 
-function markFailed() {
-  const outputDiv = document.getElementById("message");
-  outputDiv.classList.add("error");
+function markFailed () {
+  const outputDiv = document.getElementById('message')
+  outputDiv.classList.add('error')
 }
 
 // Get path to root dir in format root/sub1/sub2/etc
 // starting from parent.
-function pathToRootDir(nodeInit) {
-  let node = Object.assign(nodeInit);
-  const path = [];
-  while (node.parent && node.parent.name !== "") {
-    node = node.parent;
-    path.push(node.name);
+function pathToRootDir (nodeInit) {
+  let node = Object.assign(nodeInit)
+  const path = []
+  while (node.parent && node.parent.name !== '') {
+    node = node.parent
+    path.push(node.name)
   }
-  path.reverse();
-  return path.join("/");
+  path.reverse()
+  return path.join('/')
 }
 
-function initDirectoryTree() {
-  $("#directoryTree").tree({
+function initDirectoryTree () {
+  $('#directoryTree').tree({
     data: [],
     autoOpen: true,
-    saveState: "directoryTree",
+    saveState: 'directoryTree',
     dragAndDrop: true,
     keyboardSupport: false,
     onCanSelectNode: (node) => {
-      if (node.type === "loadNotification") return false;
-      return true;
+      if (node.type === 'loadNotification') return false
+      return true
     },
     onCanMove: (node) => {
-      if (node.type === "loadNotification") return false;
-      return true;
+      if (node.type === 'loadNotification') return false
+      return true
     },
     onCanMoveTo: (moving_node, target_node, position) => {
       // Forbid move inside project node,
       // but allow to move before and after
-      if (utils.directoryTree.isProject(target_node) && position === "inside")
-        return false;
-      if (target_node.type === "loadNotification") return false;
-      return true;
+      if (utils.directoryTree.isProject(target_node) && position === 'inside') { return false }
+      if (target_node.type === 'loadNotification') return false
+      return true
     },
     closedIcon: $('<i class="mdi mdi-18px mdi-chevron-right"></i>'),
     openedIcon: $('<i class="mdi mdi-18px mdi-chevron-down"></i>'),
     onCreateLi: function (node, $li) {
-      const titleElem = $li.find(".jqtree-element .jqtree-title");
+      const titleElem = $li.find('.jqtree-element .jqtree-title')
 
       if (utils.directoryTree.isDirectory(node)) {
         if (node.is_open) {
-          titleElem.before($('<i class="mdi mdi-18px mdi-folder-open"></i>'));
+          titleElem.before($('<i class="mdi mdi-18px mdi-folder-open"></i>'))
         } else {
-          titleElem.before($('<i class="mdi mdi-18px mdi-folder"></i>'));
+          titleElem.before($('<i class="mdi mdi-18px mdi-folder"></i>'))
         }
-      } else if (node.type === "loadNotification") {
-        titleElem.before($('<div style="float: left" class="loader"></div>'));
+      } else if (node.type === 'loadNotification') {
+        titleElem.before($('<div style="float: left" class="loader"></div>'))
       } else if (utils.directoryTree.isProject(node)) {
-        const asterisk = $('<i class="unsaved-changes"></i>');
-        asterisk.css("display", "none");
-        titleElem.before($('<i class="mdi mdi-18px mdi-cube"></i>'));
-        titleElem.after(asterisk);
+        const asterisk = $('<i class="unsaved-changes"></i>')
+        asterisk.css('display', 'none')
+        titleElem.before($('<i class="mdi mdi-18px mdi-cube"></i>'))
+        titleElem.after(asterisk)
       }
-    },
-  });
-  $("#directoryTree").on("tree.move", (event) => {
-    event.preventDefault();
+    }
+  })
+  $('#directoryTree').on('tree.move', (event) => {
+    event.preventDefault()
     warnIfUnsaved(() => {
       if (!signedIn()) {
         sweetAlert(
-          "Oops!",
-          "You must sign in to move this project or folder.",
-          "error"
-        );
-        updateUI();
-        return;
+          'Oops!',
+          'You must sign in to move this project or folder.',
+          'error'
+        )
+        updateUI()
+        return
       }
-      const movedNode = event.move_info.moved_node;
-      const isFile = utils.directoryTree.isProject(movedNode);
-      let fromPath, name;
-      fromPath = pathToRootDir(movedNode);
+      const movedNode = event.move_info.moved_node
+      const isFile = utils.directoryTree.isProject(movedNode)
+      let fromPath, name
+      fromPath = pathToRootDir(movedNode)
       if (isFile) {
-        name = movedNode.name;
+        name = movedNode.name
       } else if (fromPath) {
-        fromPath = [fromPath, movedNode.name].join("/");
+        fromPath = [fromPath, movedNode.name].join('/')
       } else {
-        fromPath = movedNode.name;
+        fromPath = movedNode.name
       }
       const haveChildWithSameNameAndType = (movedNode, toNode) => {
         // check if target node have child node
@@ -1765,51 +1762,51 @@ function initDirectoryTree() {
         // and not equals to moving node
         return (
           toNode.children.filter((ch) => {
-            return ch.type === movedNode.type && ch.name === movedNode.name;
+            return ch.type === movedNode.type && ch.name === movedNode.name
           }).length !== 0
-        );
-      };
-      let toNode = event.move_info.target_node;
-      const position = event.move_info.position;
-      if (position === "before" || position === "after") {
-        toNode = toNode.parent;
+        )
+      }
+      let toNode = event.move_info.target_node
+      const position = event.move_info.position
+      if (position === 'before' || position === 'after') {
+        toNode = toNode.parent
       }
       if (event.move_info.previous_parent === toNode) {
         // Reordering in same directory
-        event.move_info.do_move();
-        updateChildrenIndexes(toNode);
-        return;
+        event.move_info.do_move()
+        updateChildrenIndexes(toNode)
+        return
       }
       // Load content of directory before move something inside
       loadSubTree(toNode, () => {
-        let toPath = pathToRootDir(toNode);
+        let toPath = pathToRootDir(toNode)
         if (toPath) {
-          toPath = `${toPath}/${toNode.name}`;
+          toPath = `${toPath}/${toNode.name}`
         } else {
-          toPath = toNode.name;
+          toPath = toNode.name
         }
         if (haveChildWithSameNameAndType(movedNode, toNode)) {
           // Replacement of existing project
-          let msg, confirmText;
+          let msg, confirmText
           if (utils.directoryTree.isProject(movedNode)) {
             msg = `${
-              "Are you sure you want to save over another project?\n\n" +
-              "The previous contents of "
-            }${name} will be permanently destroyed!`;
-            confirmText = "Yes, overwrite it!";
+              'Are you sure you want to save over another project?\n\n' +
+              'The previous contents of '
+            }${name} will be permanently destroyed!`
+            confirmText = 'Yes, overwrite it!'
           } else {
             msg =
-              "Are you sure you want to merge content of these directories?";
-            confirmText = "Yes, merge them!";
+              'Are you sure you want to merge content of these directories?'
+            confirmText = 'Yes, merge them!'
           }
 
           sweetAlert({
-            title: Alert.title("Warning"),
+            title: Alert.title('Warning'),
             text: msg,
-            type: "warning",
+            type: 'warning',
             showCancelButton: true,
-            confirmButtonColor: "#DD6B55",
-            confirmButtonText: confirmText,
+            confirmButtonColor: '#DD6B55',
+            confirmButtonText: confirmText
           }).then((result) => {
             if (result && result.value) {
               moveDirTreeNode(
@@ -1824,18 +1821,18 @@ function initDirectoryTree() {
                       movedNode === n ||
                       n.name !== movedNode.name ||
                       n.type !== movedNode.type
-                    );
-                  });
-                  event.move_info.do_move();
-                  updateChildrenIndexes(toNode);
+                    )
+                  })
+                  event.move_info.do_move()
+                  updateChildrenIndexes(toNode)
                   if (utils.directoryTree.isDirectory(movedNode)) {
-                    loadSubTree(movedNode);
-                    setCode("");
+                    loadSubTree(movedNode)
+                    setCode('')
                   }
                 }
-              );
+              )
             }
-          });
+          })
         } else {
           // Regular moving
           moveDirTreeNode(
@@ -1845,172 +1842,172 @@ function initDirectoryTree() {
             name,
             window.projectEnv,
             () => {
-              event.move_info.do_move();
-              updateChildrenIndexes(toNode);
+              event.move_info.do_move()
+              updateChildrenIndexes(toNode)
             }
-          );
+          )
         }
-      });
-    });
-  });
-  $("#directoryTree").on("tree.open", (event) => {
+      })
+    })
+  })
+  $('#directoryTree').on('tree.open', (event) => {
     const folderIcon = event.node.element.getElementsByClassName(
-      "mdi-folder"
-    )[0];
+      'mdi-folder'
+    )[0]
     if (folderIcon) {
-      folderIcon.classList.replace("mdi-folder", "mdi-folder-open");
+      folderIcon.classList.replace('mdi-folder', 'mdi-folder-open')
     }
-  });
-  $("#directoryTree").on("tree.close", (event) => {
+  })
+  $('#directoryTree').on('tree.close', (event) => {
     const folderIcon = event.node.element.getElementsByClassName(
-      "mdi-folder-open"
-    )[0];
+      'mdi-folder-open'
+    )[0]
     if (folderIcon) {
-      folderIcon.classList.replace("mdi-folder-open", "mdi-folder");
+      folderIcon.classList.replace('mdi-folder-open', 'mdi-folder')
     }
-  });
-  $("#directoryTree").on("tree.click", (event) => {
-    event.preventDefault();
+  })
+  $('#directoryTree').on('tree.click', (event) => {
+    event.preventDefault()
 
-    const { node } = event;
-    const isProjectNode = utils.directoryTree.isProject(node);
+    const { node } = event
+    const isProjectNode = utils.directoryTree.isProject(node)
 
     // Deselection of selected project. Cancel it and do nothing.
-    if (isProjectNode && $("#directoryTree").tree("isNodeSelected", node)) {
-      return;
+    if (isProjectNode && $('#directoryTree').tree('isNodeSelected', node)) {
+      return
     }
     warnIfUnsaved(() => {
       if (isProjectNode) {
-        const path = pathToRootDir(node);
+        const path = pathToRootDir(node)
 
-        loadProject(node.name, path);
-        $("#directoryTree").tree("selectNode", node);
+        loadProject(node.name, path)
+        $('#directoryTree').tree('selectNode', node)
       } else if (utils.directoryTree.isDirectory(node)) {
         if (node.children.length === 0) {
-          loadSubTree(node);
+          loadSubTree(node)
         }
-        setCode("");
-        $("#directoryTree").tree("selectNode", node);
+        setCode('')
+        $('#directoryTree').tree('selectNode', node)
       }
-    });
-    updateUI();
-  });
+    })
+    updateUI()
+  })
 }
 
 // Get directory nearest to selected node, or root if there is no selection
-function getNearestDirectory_(node) {
+function getNearestDirectory_ (node) {
   if (node) {
-    const isDir = utils.directoryTree.isDirectory(node);
-    const hasParent = Boolean(node.parent);
+    const isDir = utils.directoryTree.isDirectory(node)
+    const hasParent = Boolean(node.parent)
 
     if (isDir) {
-      return node;
+      return node
     } else if (hasParent) {
-      return node.parent;
+      return node.parent
     }
     // root node
-    return node;
+    return node
   }
 
-  const selectedNode = utils.directoryTree.getSelectedNode();
+  const selectedNode = utils.directoryTree.getSelectedNode()
 
   if (!selectedNode) {
     // nearest directory is root
-    return $("#directoryTree").tree("getTree");
+    return $('#directoryTree').tree('getTree')
   } else if (selectedNode && utils.directoryTree.isProject(selectedNode)) {
-    return selectedNode.parent;
+    return selectedNode.parent
   } else if (selectedNode && utils.directoryTree.isDirectory(selectedNode)) {
-    return selectedNode;
+    return selectedNode
   }
 }
 
-function getNearestDirectory(node) {
-  const selected = getNearestDirectory_(node);
-  const path = pathToRootDir(selected);
+function getNearestDirectory (node) {
+  const selected = getNearestDirectory_(node)
+  const path = pathToRootDir(selected)
   if (utils.directoryTree.isDirectory(selected)) {
-    return path ? `${path}/${selected.name}` : selected.name;
+    return path ? `${path}/${selected.name}` : selected.name
   }
-  return path;
+  return path
 }
 
-function showLoadingAnimation(node) {
+function showLoadingAnimation (node) {
   if (!node) {
-    node = $("#directoryTree").tree("getTree");
+    node = $('#directoryTree').tree('getTree')
   }
-  if (node === $("#directoryTree").tree("getTree")) {
-    $("#directoryTree").tree(
-      "appendNode",
+  if (node === $('#directoryTree').tree('getTree')) {
+    $('#directoryTree').tree(
+      'appendNode',
       {
-        name: "Loading...",
-        type: "loadNotification",
+        name: 'Loading...',
+        type: 'loadNotification'
       },
       node
-    );
+    )
   } else {
     const target = node.element.getElementsByClassName(
-      "jqtree-title jqtree_common"
-    )[0];
-    const elem = document.createElement("div");
-    elem.classList.add("loader"); // float left
-    elem.style.marginLeft = "5px";
-    target.after(elem);
+      'jqtree-title jqtree_common'
+    )[0]
+    const elem = document.createElement('div')
+    elem.classList.add('loader') // float left
+    elem.style.marginLeft = '5px'
+    target.after(elem)
   }
 }
 
-function hideLoadingAnimation(node) {
+function hideLoadingAnimation (node) {
   if (!node) {
-    node = $("#directoryTree").tree("getTree");
+    node = $('#directoryTree').tree('getTree')
   }
-  if (node === $("#directoryTree").tree("getTree")) {
+  if (node === $('#directoryTree').tree('getTree')) {
     node.children
       .filter((c) => {
-        return c.type === "loadNotification";
+        return c.type === 'loadNotification'
       })
       .forEach((c) => {
-        $("#directoryTree").tree("removeNode", c);
-      });
+        $('#directoryTree').tree('removeNode', c)
+      })
   } else {
-    $(".loader").remove();
+    $('.loader').remove()
   }
 }
 
-function recalcChildrenIndexes(node) {
-  let index = 0;
+function recalcChildrenIndexes (node) {
+  let index = 0
   node.children.forEach((n) => {
-    n.index = index;
-    index++;
-  });
+    n.index = index
+    index++
+  })
 }
 
-function updateChildrenIndexes(node) {
+function updateChildrenIndexes (node) {
   if (signedIn() && node && node.children) {
-    recalcChildrenIndexes(node);
-    const repacked = [];
+    recalcChildrenIndexes(node)
+    const repacked = []
     for (let i = 0; i < node.children.length; i++) {
       repacked.push({
         type: node.children[i].type,
         name: node.children[i].name,
-        index: node.children[i].index,
-      });
+        index: node.children[i].index
+      })
     }
-    const data = new FormData();
-    data.append("mode", window.projectEnv);
-    data.append("path", getNearestDirectory(node));
-    data.append("entries", JSON.stringify(repacked));
-    sendHttp("POST", "updateChildrenIndexes", data, () => {});
-  } else updateUI();
+    const data = new FormData()
+    data.append('mode', window.projectEnv)
+    data.append('path', getNearestDirectory(node))
+    data.append('entries', JSON.stringify(repacked))
+    sendHttp('POST', 'updateChildrenIndexes', data, () => {})
+  } else updateUI()
 }
 
-function updateTreeOnNewProjectCreation() {
-  const selectedNode = getSelectedNode();
+function updateTreeOnNewProjectCreation () {
+  const selectedNode = getSelectedNode()
 
   if (selectedNode && utils.directoryTree.isProject(selectedNode)) {
-    utils.directoryTree.clearSelectedNode();
+    utils.directoryTree.clearSelectedNode()
 
     // Select parent folder (if any) as new project's location is
     // determined by the selection in the directory tree.
     if (pathToRootDir(selectedNode)) {
-      utils.directoryTree.selectNode(selectedNode.parent);
+      utils.directoryTree.selectNode(selectedNode.parent)
     }
   }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-"use strict";
+'use strict';
 
 (() => {
   // These functions are provided by a debugmode-supported entrypoint when
@@ -21,137 +21,137 @@
   //  debugGetNode :: { x :: Double, y :: Double } -> Int
   //   Returns the nodeId of the shape at the coordinate (x,y) of the canvas.
   //   Negative return indicates no shape at that point.
-  let debugGetNode = null;
+  let debugGetNode = null
   //  debugSetActive :: Bool -> ()
   //   Indicates to the entry point when debugmode has been turned off and on
-  let debugSetActive = null;
+  let debugSetActive = null
   //  debugGetPicture :: () -> Object
   //   Gets an object showing the current state of the Picture being drawn. Is
   //   only called directly after debugSetActive(true).
-  let debugGetPicture = null;
+  let debugGetPicture = null
   //  debugHighlightShape :: (Bool, Int) -> ()
   //   Indicates to the entry point should highlight or select a shape or tree
   //   of shapes. A true value indicates highlight (change color and bring to
   //   front) and false indicates select (change color and do not change
   //   position). A negative value indicates to stop highlighting or selecting.
   //   At most one shape may be highlighted and one shape selected at a time.
-  let debugHighlightShape = null;
+  let debugHighlightShape = null
 
-  let canvas = null; // Null if debugging isn't enabled.
-  let active = false;
+  let canvas = null // Null if debugging isn't enabled.
+  let active = false
 
   // Globals
 
-  function initDebugMode(getNode, setActive, getPicture, highlightShape) {
-    debugGetNode = getNode;
-    debugSetActive = setActive;
-    debugGetPicture = getPicture;
-    debugHighlightShape = highlightShape;
+  function initDebugMode (getNode, setActive, getPicture, highlightShape) {
+    debugGetNode = getNode
+    debugSetActive = setActive
+    debugGetPicture = getPicture
+    debugHighlightShape = highlightShape
 
     if (canvas === null) {
-      canvas = document.getElementById("screen");
+      canvas = document.getElementById('screen')
       if (canvas === null) {
-        return;
+        return
       }
 
-      canvas.addEventListener("mousemove", (evt) => {
+      canvas.addEventListener('mousemove', (evt) => {
         if (active) {
           const nodeId = debugGetNode({
             x: evt.clientX,
-            y: evt.clientY,
-          });
+            y: evt.clientY
+          })
 
-          debugHighlightShape(true, nodeId);
+          debugHighlightShape(true, nodeId)
           parent.postMessage(
             {
-              type: "nodeHovered",
-              nodeId: nodeId,
+              type: 'nodeHovered',
+              nodeId: nodeId
             },
-            "*"
-          );
+            '*'
+          )
         }
-      });
+      })
 
-      canvas.addEventListener("mouseout", (evt) => {
+      canvas.addEventListener('mouseout', (evt) => {
         if (active) {
-          debugHighlightShape(true, -1);
+          debugHighlightShape(true, -1)
           parent.postMessage(
             {
-              type: "nodeHovered",
-              nodeId: -1,
+              type: 'nodeHovered',
+              nodeId: -1
             },
-            "*"
-          );
+            '*'
+          )
         }
-      });
+      })
 
-      canvas.addEventListener("click", (evt) => {
+      canvas.addEventListener('click', (evt) => {
         if (active) {
           const nodeId = debugGetNode({
             x: evt.clientX,
-            y: evt.clientY,
-          });
+            y: evt.clientY
+          })
 
           parent.postMessage(
             {
-              type: "nodeClicked",
-              nodeId: nodeId,
+              type: 'nodeClicked',
+              nodeId: nodeId
             },
-            "*"
-          );
+            '*'
+          )
         }
-      });
+      })
 
       if (parent) {
         parent.postMessage(
           {
-            type: "debugReady",
+            type: 'debugReady'
           },
-          "*"
-        );
+          '*'
+        )
       }
     }
   }
-  window.initDebugMode = initDebugMode;
+  window.initDebugMode = initDebugMode
 
-  function startDebug() {
-    active = true;
-    debugSetActive(true);
-    debugHighlightShape(true, -1);
-
-    parent.postMessage(
-      {
-        type: "debugActive",
-        fullPic: debugGetPicture(),
-      },
-      "*"
-    );
-  }
-
-  function stopDebug() {
-    active = false;
-    debugSetActive(false);
-    debugHighlightShape(true, -1);
+  function startDebug () {
+    active = true
+    debugSetActive(true)
+    debugHighlightShape(true, -1)
 
     parent.postMessage(
       {
-        type: "debugFinished",
+        type: 'debugActive',
+        fullPic: debugGetPicture()
       },
-      "*"
-    );
+      '*'
+    )
   }
 
-  window.addEventListener("message", (event) => {
-    if (!event.data.type) return;
+  function stopDebug () {
+    active = false
+    debugSetActive(false)
+    debugHighlightShape(true, -1)
 
-    if (event.data.type === "debugHighlight") {
-      if (active) debugHighlightShape(true, event.data.nodeId);
-    } else if (event.data.type === "debugSelect") {
-      if (active) debugHighlightShape(false, event.data.nodeId);
-    } else if (event.data.type === "stopDebug") {
-      stopDebug();
-    } else if (event.data.type === "startDebug") {
-      startDebug();
+    parent.postMessage(
+      {
+        type: 'debugFinished'
+      },
+      '*'
+    )
+  }
+
+  window.addEventListener('message', (event) => {
+    if (!event.data.type) return
+
+    if (event.data.type === 'debugHighlight') {
+      if (active) debugHighlightShape(true, event.data.nodeId)
+    } else if (event.data.type === 'debugSelect') {
+      if (active) debugHighlightShape(false, event.data.nodeId)
+    } else if (event.data.type === 'stopDebug') {
+      stopDebug()
+    } else if (event.data.type === 'startDebug') {
+      startDebug()
     }
-  });
-})();
+  })
+})()

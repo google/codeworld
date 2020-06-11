@@ -13,296 +13,296 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-"use strict";
+'use strict';
 
 (() => {
-  let dialog = null,
-    content = null,
-    fullPic = null,
-    currentPic = null,
-    marker = null,
-    open = false;
+  let dialog = null
+  let content = null
+  let fullPic = null
+  let currentPic = null
+  let marker = null
+  let open = false
 
-  function openDialog() {
-    dialog.dialog("open");
-    open = true;
+  function openDialog () {
+    dialog.dialog('open')
+    open = true
   }
 
-  function closeDialog() {
-    dialog.dialog("close");
-    open = false;
+  function closeDialog () {
+    dialog.dialog('close')
+    open = false
   }
 
-  function buildNestedList(id) {
+  function buildNestedList (id) {
     const go = (p, to, open) => {
-      const ul = document.createElement("ul");
-      const span = document.createElement("span");
-      const toggleButton = document.createElement("span");
+      const ul = document.createElement('ul')
+      const span = document.createElement('span')
+      const toggleButton = document.createElement('span')
 
-      let collapsed = false;
+      let collapsed = false
       const collapse = () => {
-        ul.style.display = "none";
-        toggleButton.innerHTML = "&#x25B6;";
-        collapsed = true;
-      };
+        ul.style.display = 'none'
+        toggleButton.innerHTML = '&#x25B6;'
+        collapsed = true
+      }
       const decollapse = () => {
-        ul.style.display = "";
-        toggleButton.innerHTML = "&#x25BC;";
-        collapsed = false;
-      };
+        ul.style.display = ''
+        toggleButton.innerHTML = '&#x25BC;'
+        collapsed = false
+      }
 
       if (p.picture || p.pictures) {
-        toggleButton.classList.add("collapse-button");
-        toggleButton.addEventListener("click", (evt) => {
+        toggleButton.classList.add('collapse-button')
+        toggleButton.addEventListener('click', (evt) => {
           if (collapsed) {
-            decollapse();
+            decollapse()
           } else {
-            collapse();
+            collapse()
           }
-        });
+        })
 
         if (open) {
-          decollapse();
+          decollapse()
         } else {
-          collapse();
+          collapse()
         }
       } else {
-        toggleButton.classList.add("collapse-spacer");
+        toggleButton.classList.add('collapse-spacer')
       }
-      span.appendChild(toggleButton);
+      span.appendChild(toggleButton)
 
-      const link = createPicLink(p);
-      p.link = link;
+      const link = createPicLink(p)
+      p.link = link
       if (open) {
-        link.click();
+        link.click()
       }
-      span.appendChild(link);
-      to.appendChild(span);
+      span.appendChild(link)
+      to.appendChild(span)
 
       if (p.picture) {
-        const li = document.createElement("li");
-        go(p.picture, li, open);
-        ul.appendChild(li);
-        to.appendChild(ul);
+        const li = document.createElement('li')
+        go(p.picture, li, open)
+        ul.appendChild(li)
+        to.appendChild(ul)
       } else if (p.pictures) {
         for (let i = 0; i < p.pictures.length; i++) {
-          const li = document.createElement("li");
+          const li = document.createElement('li')
           const op =
             open &&
             id >= p.pictures[i].id &&
-            (i === p.pictures.length - 1 || id < p.pictures[i + 1].id);
-          go(p.pictures[i], li, op);
-          ul.appendChild(li);
+            (i === p.pictures.length - 1 || id < p.pictures[i + 1].id)
+          go(p.pictures[i], li, op)
+          ul.appendChild(li)
         }
-        to.appendChild(ul);
+        to.appendChild(ul)
       }
-    };
+    }
 
-    const ul = document.createElement("ul");
-    const li = document.createElement("li");
+    const ul = document.createElement('ul')
+    const li = document.createElement('li')
 
-    go(fullPic, li, true);
-    ul.appendChild(li);
-    return ul;
+    go(fullPic, li, true)
+    ul.appendChild(li)
+    return ul
   }
 
-  function getPicNode(id, cb) {
-    let current = fullPic;
-    if (!cb) cb = (x) => {};
+  function getPicNode (id, cb) {
+    let current = fullPic
+    if (!cb) cb = (x) => {}
 
     while (current.id <= id) {
-      cb(current);
+      cb(current)
 
       if (current.id === id) {
-        return current;
+        return current
       } else if (current.picture) {
-        current = current.picture;
+        current = current.picture
       } else if (current.pictures) {
-        let i = current.pictures.length - 1;
-        while (current.pictures[i].id > id) i--;
-        current = current.pictures[i];
+        let i = current.pictures.length - 1
+        while (current.pictures[i].id > id) i--
+        current = current.pictures[i]
       } else {
-        return null;
+        return null
       }
     }
   }
 
-  function createPicLink(pic) {
-    const a = document.createElement("a");
+  function createPicLink (pic) {
+    const a = document.createElement('a')
 
-    a.appendChild(document.createTextNode(pic.name));
-    a.href = "javascript: void(0);";
-    a.classList.add("treedialog-piclink");
-    a.addEventListener("click", (evt) => {
-      select(pic.id);
+    a.appendChild(document.createTextNode(pic.name))
+    a.href = 'javascript: void(0);'
+    a.classList.add('treedialog-piclink')
+    a.addEventListener('click', (evt) => {
+      select(pic.id)
 
-      if (marker) marker.clear();
+      if (marker) marker.clear()
 
       getPicNode(currentPic.id, (node) => {
-        node.link.classList.remove("piclink-selected");
-      });
+        node.link.classList.remove('piclink-selected')
+      })
       getPicNode(pic.id, (node) => {
-        node.link.classList.add("piclink-selected");
-      });
+        node.link.classList.add('piclink-selected')
+      })
 
-      currentPic = pic;
-      dialog.dialog("option", "title", pic.name);
+      currentPic = pic
+      dialog.dialog('option', 'title', pic.name)
       if (pic.startLine && pic.startCol && pic.endLine && pic.endCol) {
         codeworldEditor.setSelection(
           {
             line: pic.startLine - 1,
-            ch: pic.startCol - 1,
+            ch: pic.startCol - 1
           },
           {
             line: pic.endLine - 1,
-            ch: pic.endCol - 1,
+            ch: pic.endCol - 1
           },
           {
-            origin: "+treedialog",
+            origin: '+treedialog'
           }
-        );
+        )
       }
-    });
-    a.addEventListener("mouseover", (evt) => {
-      highlight(pic.id);
+    })
+    a.addEventListener('mouseover', (evt) => {
+      highlight(pic.id)
 
       if (pic.startLine && pic.startCol && pic.endLine && pic.endCol) {
-        if (marker) marker.clear();
+        if (marker) marker.clear()
         marker = codeworldEditor.markText(
           {
             line: pic.startLine - 1,
-            ch: pic.startCol - 1,
+            ch: pic.startCol - 1
           },
           {
             line: pic.endLine - 1,
-            ch: pic.endCol - 1,
+            ch: pic.endCol - 1
           },
           {
-            origin: "+treedialog",
-            className: "marked",
+            origin: '+treedialog',
+            className: 'marked'
           }
-        );
+        )
       }
-    });
-    a.addEventListener("mouseout", (evt) => {
-      highlight(-1);
+    })
+    a.addEventListener('mouseout', (evt) => {
+      highlight(-1)
 
       if (marker) {
-        marker.clear();
-        marker = null;
+        marker.clear()
+        marker = null
       }
-    });
-    return a;
+    })
+    return a
   }
 
   // Globals
 
-  function highlight(nodeId) {
-    const runner = document.getElementById("runner");
+  function highlight (nodeId) {
+    const runner = document.getElementById('runner')
     runner.contentWindow.postMessage(
       {
-        type: "debugHighlight",
-        nodeId: nodeId,
+        type: 'debugHighlight',
+        nodeId: nodeId
       },
-      "*"
-    );
+      '*'
+    )
   }
 
-  function select(nodeId) {
-    const runner = document.getElementById("runner");
+  function select (nodeId) {
+    const runner = document.getElementById('runner')
     runner.contentWindow.postMessage(
       {
-        type: "debugSelect",
-        nodeId: nodeId,
+        type: 'debugSelect',
+        nodeId: nodeId
       },
-      "*"
-    );
+      '*'
+    )
   }
 
-  function cancelDebug() {
-    const runner = document.getElementById("runner");
+  function cancelDebug () {
+    const runner = document.getElementById('runner')
     runner.contentWindow.postMessage(
       {
-        type: "stopDebug",
+        type: 'stopDebug'
       },
-      "*"
-    );
+      '*'
+    )
   }
 
-  function initTreeDialog(pic) {
-    fullPic = pic;
+  function initTreeDialog (pic) {
+    fullPic = pic
 
-    const div = document.createElement("div");
+    const div = document.createElement('div')
     dialog = $(div).dialog({
-      dialogClass: "treedialog",
-      title: "Picture Browser",
-      closeText: "",
+      dialogClass: 'treedialog',
+      title: 'Picture Browser',
+      closeText: '',
       autoOpen: false,
       height: 650,
       width: 650,
       close: () => {
-        open = false;
-        highlight(-1);
-        select(-1);
-        cancelDebug();
-      },
-    });
+        open = false
+        highlight(-1)
+        select(-1)
+        cancelDebug()
+      }
+    })
 
-    content = document.createElement("div");
-    content.classList.add("treedialog-content");
-    dialog.append(content);
+    content = document.createElement('div')
+    content.classList.add('treedialog-content')
+    dialog.append(content)
   }
-  window.initTreeDialog = initTreeDialog;
+  window.initTreeDialog = initTreeDialog
 
-  function selectNode(id) {
+  function selectNode (id) {
     if (!open) {
-      openDialog();
+      openDialog()
     }
 
-    select(id);
+    select(id)
 
-    const picture = getPicNode(id);
-    currentPic = picture;
+    const picture = getPicNode(id)
+    currentPic = picture
 
-    content.innerHTML = "";
+    content.innerHTML = ''
 
-    content.appendChild(buildNestedList(id));
+    content.appendChild(buildNestedList(id))
 
-    dialog.dialog("option", "title", picture.name);
+    dialog.dialog('option', 'title', picture.name)
   }
 
-  function closeTreeDialog() {
-    closeDialog();
+  function closeTreeDialog () {
+    closeDialog()
   }
-  window.closeTreeDialog = closeTreeDialog;
+  window.closeTreeDialog = closeTreeDialog
 
-  function destroyTreeDialog() {
+  function destroyTreeDialog () {
     if (open) {
-      closeDialog();
+      closeDialog()
     }
     if (dialog) {
-      dialog.remove();
+      dialog.remove()
     }
-    highlight(-1);
-    dialog = null;
-    content = null;
+    highlight(-1)
+    dialog = null
+    content = null
   }
-  window.destroyTreeDialog = destroyTreeDialog;
+  window.destroyTreeDialog = destroyTreeDialog
 
-  window.addEventListener("message", (event) => {
-    if (!event.data.type) return;
+  window.addEventListener('message', (event) => {
+    if (!event.data.type) return
 
-    if (event.data.type === "debugActive") {
-      initTreeDialog(event.data.fullPic);
-      selectNode(0);
+    if (event.data.type === 'debugActive') {
+      initTreeDialog(event.data.fullPic)
+      selectNode(0)
     }
-    if (event.data.type === "nodeClicked") {
-      selectNode(event.data.nodeId);
+    if (event.data.type === 'nodeClicked') {
+      selectNode(event.data.nodeId)
     }
-    if (event.data.type === "nodeHovered") {
+    if (event.data.type === 'nodeHovered') {
       // For now, do nothing.
-    } else if (event.data.type === "debugFinished") {
-      destroyTreeDialog();
+    } else if (event.data.type === 'debugFinished') {
+      destroyTreeDialog()
     }
-  });
-})();
+  })
+})()

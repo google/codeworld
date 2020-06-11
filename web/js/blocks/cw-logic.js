@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
-"use strict";
+'use strict'
 
-goog.provide("Blockly.Blocks.cwLogic");
-goog.require("Blockly.Blocks");
+goog.provide('Blockly.Blocks.cwLogic')
+goog.require('Blockly.Blocks')
 
-const colorPoly = 180;
+const colorPoly = 180
 
-Blockly.Blocks["conIf"] = {
-  init() {
-    this.setColour(colorPoly);
-    this.appendValueInput("IF").appendField("if");
-    this.appendValueInput("THEN").appendField("then");
-    this.appendValueInput("ELSE").appendField("else");
-    this.setInputsInline(true);
-    this.setOutput(true);
+Blockly.Blocks.conIf = {
+  init () {
+    this.setColour(colorPoly)
+    this.appendValueInput('IF').appendField('if')
+    this.appendValueInput('THEN').appendField('then')
+    this.appendValueInput('ELSE').appendField('else')
+    this.setInputsInline(true)
+    this.setOutput(true)
     Blockly.TypeInf.defineFunction(
-      "if",
+      'if',
       Type.fromList([
-        Type.Lit("Truth"),
-        Type.Var("a"),
-        Type.Var("a"),
-        Type.Var("a"),
+        Type.Lit('Truth'),
+        Type.Var('a'),
+        Type.Var('a'),
+        Type.Var('a')
       ])
-    );
-    this.setAsFunction("if");
-  },
-};
+    )
+    this.setAsFunction('if')
+  }
+}

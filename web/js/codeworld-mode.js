@@ -19,38 +19,38 @@
 // CodeMirror is copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
-"use strict";
+'use strict'
 
-CodeMirror.defineMode("codeworld", (config, modeConfig) => {
+CodeMirror.defineMode('codeworld', (config, modeConfig) => {
   // This is a regular expression used in multiple contexts.
   const MULTICHAR_ESCAPE_REGEX =
-    "\\\\NUL|\\\\SOH|\\\\STX|\\\\ETX|\\\\EOT|\\\\ENQ|\\\\ACK|\\\\BEL|\\\\BS|" +
-    "\\\\HT|\\\\LF|\\\\VT|\\\\FF|\\\\CR|\\\\SO|\\\\SI|\\\\DLE|\\\\DC1|\\\\DC2|" +
-    "\\\\DC3|\\\\DC4|\\\\NAK|\\\\SYN|\\\\ETB|\\\\CAN|\\\\EM|\\\\SUB|\\\\ESC|" +
-    "\\\\FS|\\\\GS|\\\\RS|\\\\US|\\\\SP|\\\\DEL";
-  const RE_WHITESPACE = /[ \v\t\f]+/;
-  const RE_STARTMETA = /{-#/;
-  const RE_STARTCOMMENT = /{-/;
-  const RE_DASHES = /--+(?=$|[^:!#$%&*+./<=>?@\\^|~-]+)/;
-  const RE_QUAL = /[A-Z][A-Za-z_0-9']*\.(?=[A-Za-z_:!#$%&*+./<=>?@\\^|~]|-[^-])/;
-  const RE_VARID = /[a-z_][A-Za-z_0-9']*/;
-  const RE_CONID = /[A-Z][A-Za-z_0-9']*/;
-  const RE_VARSYM = /[!#$%&*+./<=>?@\\^|~-][:!#$%&*+./<=>?@\\^|~-]*/;
-  const RE_CONSYM = /:[:!#$%&*+./<=>?@\\^|~-]*/;
-  const RE_NUMBER = /[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|0[oO][0-7]+|0[xX][0-9a-fA-F]+/;
+    '\\\\NUL|\\\\SOH|\\\\STX|\\\\ETX|\\\\EOT|\\\\ENQ|\\\\ACK|\\\\BEL|\\\\BS|' +
+    '\\\\HT|\\\\LF|\\\\VT|\\\\FF|\\\\CR|\\\\SO|\\\\SI|\\\\DLE|\\\\DC1|\\\\DC2|' +
+    '\\\\DC3|\\\\DC4|\\\\NAK|\\\\SYN|\\\\ETB|\\\\CAN|\\\\EM|\\\\SUB|\\\\ESC|' +
+    '\\\\FS|\\\\GS|\\\\RS|\\\\US|\\\\SP|\\\\DEL'
+  const RE_WHITESPACE = /[ \v\t\f]+/
+  const RE_STARTMETA = /{-#/
+  const RE_STARTCOMMENT = /{-/
+  const RE_DASHES = /--+(?=$|[^:!#$%&*+./<=>?@\\^|~-]+)/
+  const RE_QUAL = /[A-Z][A-Za-z_0-9']*\.(?=[A-Za-z_:!#$%&*+./<=>?@\\^|~]|-[^-])/
+  const RE_VARID = /[a-z_][A-Za-z_0-9']*/
+  const RE_CONID = /[A-Z][A-Za-z_0-9']*/
+  const RE_VARSYM = /[!#$%&*+./<=>?@\\^|~-][:!#$%&*+./<=>?@\\^|~-]*/
+  const RE_CONSYM = /:[:!#$%&*+./<=>?@\\^|~-]*/
+  const RE_NUMBER = /[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|0[oO][0-7]+|0[xX][0-9a-fA-F]+/
   const RE_CHAR = new RegExp(
     `'(?:[^\\\\']|\\\\[abfnrtv\\\\"']|\\\\^[A-Z@[\\\\\\]^_]|${MULTICHAR_ESCAPE_REGEX})'`
-  );
+  )
   const RE_STRING = new RegExp(
     `"(?:[^\\\\"]|\\\\[abfnrtv\\\\"'&]|\\\\^[A-Z@[\\\\\\]^_]|${MULTICHAR_ESCAPE_REGEX})*"`
-  );
-  const RE_OPENBRACKET = /[([{]/;
-  const RE_CLOSEBRACKET = /[)\]}]/;
-  const RE_INCOMMENT = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/;
-  const RE_ENDCOMMENT = /-}/;
-  const RE_ELECTRIC_START = /^\s*(?:[:!#$%&*+./<=>?@^|~,)\]}-]+|where\b|in\b|of\b|then\b|else\b|deriving\b)/;
-  const RE_ELECTRIC_INPUT = /^\s*(?:[:!#$%&*+./<=>?@^|~,)\]}-]+|where|in|of|then|else|deriving).?$/;
-  const RE_NEGATIVE_NUM = /^\s*[-]($|[^!#$%&*+./<=>?@\\^|~-])/;
+  )
+  const RE_OPENBRACKET = /[([{]/
+  const RE_CLOSEBRACKET = /[)\]}]/
+  const RE_INCOMMENT = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/
+  const RE_ENDCOMMENT = /-}/
+  const RE_ELECTRIC_START = /^\s*(?:[:!#$%&*+./<=>?@^|~,)\]}-]+|where\b|in\b|of\b|then\b|else\b|deriving\b)/
+  const RE_ELECTRIC_INPUT = /^\s*(?:[:!#$%&*+./<=>?@^|~,)\]}-]+|where|in|of|then|else|deriving).?$/
+  const RE_NEGATIVE_NUM = /^\s*[-]($|[^!#$%&*+./<=>?@\\^|~-])/
 
   // The state has the following properties:
   //
@@ -75,292 +75,292 @@ CodeMirror.defineMode("codeworld", (config, modeConfig) => {
   // lastTokens:   Array of last up-to-two tokens encountered.
   // line:         Current line number
 
-  function isBracket(context) {
-    return context.value.length === 1;
+  function isBracket (context) {
+    return context.value.length === 1
   }
 
-  function normal(stream, column, state) {
-    if (stream.match(RE_WHITESPACE)) return null;
+  function normal (stream, column, state) {
+    if (stream.match(RE_WHITESPACE)) return null
 
     if (stream.match(RE_STARTMETA)) {
-      state.func = blockComment("meta");
-      ++state.commentLevel;
-      return state.func(stream, column, state);
+      state.func = blockComment('meta')
+      ++state.commentLevel
+      return state.func(stream, column, state)
     }
 
     if (stream.match(RE_STARTCOMMENT)) {
-      state.func = blockComment("comment");
-      ++state.commentLevel;
-      return state.func(stream, column, state);
+      state.func = blockComment('comment')
+      ++state.commentLevel
+      return state.func(stream, column, state)
     }
 
     if (stream.match(RE_DASHES)) {
-      stream.skipToEnd();
-      return "comment";
+      stream.skipToEnd()
+      return 'comment'
     }
 
-    state.continued = false;
+    state.continued = false
 
-    if (stream.match(RE_QUAL)) return "qualifier";
-    if (stream.match(RE_CONID)) return "variable-2";
-    if (stream.match(RE_NUMBER)) return "number";
-    if (stream.match(RE_CHAR) || stream.match(RE_STRING)) return "string";
-    if (stream.match(RE_CLOSEBRACKET)) return "bracket";
+    if (stream.match(RE_QUAL)) return 'qualifier'
+    if (stream.match(RE_CONID)) return 'variable-2'
+    if (stream.match(RE_NUMBER)) return 'number'
+    if (stream.match(RE_CHAR) || stream.match(RE_STRING)) return 'string'
+    if (stream.match(RE_CLOSEBRACKET)) return 'bracket'
     if (stream.match(RE_OPENBRACKET)) {
-      state.continued = true;
-      return "bracket";
+      state.continued = true
+      return 'bracket'
     }
 
     if (stream.match(RE_VARID)) {
       if (
         [
-          "case",
-          "of",
-          "class",
-          "data",
-          "instance",
-          "deriving",
-          "do",
-          "if",
-          "then",
-          "else",
-          "import",
-          "infix",
-          "infixl",
-          "infixr",
-          "instance",
-          "let",
-          "in",
-          "module",
-          "newtype",
-          "type",
-          "where",
+          'case',
+          'of',
+          'class',
+          'data',
+          'instance',
+          'deriving',
+          'do',
+          'if',
+          'then',
+          'else',
+          'import',
+          'infix',
+          'infixl',
+          'infixr',
+          'instance',
+          'let',
+          'in',
+          'module',
+          'newtype',
+          'type',
+          'where'
         ].indexOf(stream.current()) >= 0
       ) {
-        state.continued = true;
+        state.continued = true
       }
-      return "variable";
+      return 'variable'
     }
 
     if (stream.match(RE_VARSYM)) {
-      state.continued = true;
-      return "variable";
+      state.continued = true
+      return 'variable'
     }
 
     if (stream.match(RE_CONSYM)) {
-      state.continued = true;
-      return "variable-2";
+      state.continued = true
+      return 'variable-2'
     }
 
-    if (stream.eat(",")) {
+    if (stream.eat(',')) {
       // Set continued to false, so next item is aligned.
-      state.continued = false;
-      return "comma";
+      state.continued = false
+      return 'comma'
     }
 
-    stream.next();
-    return "error";
+    stream.next()
+    return 'error'
   }
 
-  function blockComment(tokenType) {
+  function blockComment (tokenType) {
     return (stream, column, state) => {
       if (state.commentLevel === 0) {
-        state.func = normal;
-        return tokenType;
+        state.func = normal
+        return tokenType
       }
 
-      stream.match(RE_INCOMMENT);
+      stream.match(RE_INCOMMENT)
       if (stream.match(RE_STARTCOMMENT)) {
-        ++state.commentLevel;
-        return state.func(stream, column, state);
+        ++state.commentLevel
+        return state.func(stream, column, state)
       }
       if (stream.match(RE_ENDCOMMENT)) {
-        --state.commentLevel;
-        return state.func(stream, column, state);
+        --state.commentLevel
+        return state.func(stream, column, state)
       }
-      return tokenType;
-    };
+      return tokenType
+    }
   }
 
   const wellKnownWords = (() => {
-    const result = {};
+    const result = {}
 
     const keywords = [
-      "case",
-      "class",
-      "data",
-      "default",
-      "deriving",
-      "do",
-      "else",
-      "foreign",
-      "if",
-      "import",
-      "in",
-      "infix",
-      "infixl",
-      "infixr",
-      "instance",
-      "let",
-      "module",
-      "newtype",
-      "of",
-      "then",
-      "type",
-      "where",
-      "_",
-      "..",
-      ":",
-      "=",
-      "::",
-      "\\",
-      "<-",
-      "->",
-      "@",
-      "~",
-      "=>",
-      "|",
-    ];
+      'case',
+      'class',
+      'data',
+      'default',
+      'deriving',
+      'do',
+      'else',
+      'foreign',
+      'if',
+      'import',
+      'in',
+      'infix',
+      'infixl',
+      'infixr',
+      'instance',
+      'let',
+      'module',
+      'newtype',
+      'of',
+      'then',
+      'type',
+      'where',
+      '_',
+      '..',
+      ':',
+      '=',
+      '::',
+      '\\',
+      '<-',
+      '->',
+      '@',
+      '~',
+      '=>',
+      '|'
+    ]
 
     for (let i = 0; i < keywords.length; ++i) {
-      result[keywords[i]] = "keyword";
+      result[keywords[i]] = 'keyword'
     }
 
-    const override = modeConfig.overrideKeywords;
+    const override = modeConfig.overrideKeywords
     if (override) {
       for (const word in override) {
         if (override.hasOwnProperty(word)) {
-          result[word] = override[word];
+          result[word] = override[word]
         }
       }
     }
 
-    return result;
-  })();
+    return result
+  })()
 
-  function parseToken(stream, state) {
-    const t = state.func(stream, stream.column(), state);
-    if (["variable", "variable-2"].indexOf(t) !== -1) {
-      const w = stream.current();
+  function parseToken (stream, state) {
+    const t = state.func(stream, stream.column(), state)
+    if (['variable', 'variable-2'].indexOf(t) !== -1) {
+      const w = stream.current()
       if (wellKnownWords.hasOwnProperty(w)) {
-        return wellKnownWords[w];
+        return wellKnownWords[w]
       }
       if (
-        w === "qualified" &&
-        state.lastTokens.slice(-1).join(" ") === "import"
+        w === 'qualified' &&
+        state.lastTokens.slice(-1).join(' ') === 'import'
       ) {
-        return "keyword";
+        return 'keyword'
       }
     }
-    return t;
+    return t
   }
 
-  function opening(bracket) {
-    if (bracket === ")") return "(";
-    if (bracket === "]") return "[";
-    if (bracket === "}") return "{";
-    if (bracket === "in") return "let";
+  function opening (bracket) {
+    if (bracket === ')') return '('
+    if (bracket === ']') return '['
+    if (bracket === '}') return '{'
+    if (bracket === 'in') return 'let'
   }
 
-  function updateLayout(token, column, style, state) {
+  function updateLayout (token, column, style, state) {
     // Close any implicit contexts when there are tokens in columns to
     // the left.
-    let foundLet = false;
+    let foundLet = false
     for (let i = 0; i < state.contexts.length; ++i) {
-      const ctx = state.contexts[i];
+      const ctx = state.contexts[i]
 
       if (ctx.column > column && !isBracket(ctx)) {
-        foundLet = ctx.value === "let";
-        state.contexts = state.contexts.slice(0, i);
-        break;
+        foundLet = ctx.value === 'let'
+        state.contexts = state.contexts.slice(0, i)
+        break
       }
     }
 
     // Update alignment columns for the innermost context.
-    if (state.contexts.length > 0 && token !== ",") {
-      const openBracket = RE_OPENBRACKET.test(token);
-      const ctx = state.contexts[state.contexts.length - 1];
+    if (state.contexts.length > 0 && token !== ',') {
+      const openBracket = RE_OPENBRACKET.test(token)
+      const ctx = state.contexts[state.contexts.length - 1]
 
       if (ctx.fresh) {
-        const sameLine = state.line === ctx.ln;
+        const sameLine = state.line === ctx.ln
         if (!sameLine || !openBracket) {
-          ctx.column = column;
-          ctx.fresh = false;
+          ctx.column = column
+          ctx.fresh = false
         }
       } else {
-        ctx.column = Math.min(ctx.column, column);
+        ctx.column = Math.min(ctx.column, column)
       }
 
       if (ctx.guardAlign === -1 && ctx.guardCol >= 0) {
-        let target = column;
+        let target = column
         for (let i = state.contexts.length - 1; i >= 0; --i) {
-          if (ctx.guardAlign === -1) ctx.guardAlign = target;
-          target = Math.min(target, ctx.ch, ctx.column);
+          if (ctx.guardAlign === -1) ctx.guardAlign = target
+          target = Math.min(target, ctx.ch, ctx.column)
         }
       }
 
-      if (ctx.guardCol === -1 && token === "|") {
-        ctx.guardCol = column;
+      if (ctx.guardCol === -1 && token === '|') {
+        ctx.guardCol = column
       }
 
       if (ctx.rhsAlign === -1 && ctx.eqLine >= 0) {
-        const sameLine = ctx.eqLine === state.line;
+        const sameLine = ctx.eqLine === state.line
         if (!sameLine || !openBracket) {
           // We must update this and all parent alignments, because some
           // parents may be deferred by an open bracket.
-          let target = column;
+          let target = column
           for (let i = state.contexts.length - 1; i >= 0; --i) {
-            if (ctx.rhsAlign === -1) ctx.rhsAlign = target;
-            target = Math.min(target, ctx.ch);
-            if (!ctx.fresh) target = Math.min(target, ctx.column);
+            if (ctx.rhsAlign === -1) ctx.rhsAlign = target
+            target = Math.min(target, ctx.ch)
+            if (!ctx.fresh) target = Math.min(target, ctx.column)
           }
         }
       }
 
-      if (ctx.rhsAlign === -1 && token === "=") {
-        ctx.eqLine = state.line;
+      if (ctx.rhsAlign === -1 && token === '=') {
+        ctx.eqLine = state.line
       }
 
-      if (token === "|" || token === "where") {
-        ctx.rhsAlign = -1;
-        ctx.eqLine = -1;
+      if (token === '|' || token === 'where') {
+        ctx.rhsAlign = -1
+        ctx.eqLine = -1
       }
 
       for (let i = 0; i < state.contexts.length; ++i) {
         if (column < state.contexts[i].rhsAlign) {
-          state.contexts[i].rhsAlign = -1;
-          state.contexts[i].eqLine = -1;
+          state.contexts[i].rhsAlign = -1
+          state.contexts[i].eqLine = -1
         }
         if (column < state.contexts[i].guardCol) {
-          state.contexts[i].guardCol = -1;
-          state.contexts[i].guardAlign = -1;
+          state.contexts[i].guardCol = -1
+          state.contexts[i].guardAlign = -1
         }
       }
     }
 
     // Create any new implicit contexts called for by layout rules.
     if (state.lastTokens.length === 0) {
-      if (token !== "module" && token !== "{") {
+      if (token !== 'module' && token !== '{') {
         state.contexts.push({
-          value: "where", // There's an implied "module Main where"
+          value: 'where', // There's an implied "module Main where"
           column: column,
           ln: state.line,
           ch: column,
           guardCol: -1,
           guardAlign: -1,
           rhsAlign: -1,
-          eqLine: -1,
-        });
+          eqLine: -1
+        })
       }
     } else {
       const triggered =
-        state.lastTokens.slice(-1).join(" ") === "where" ||
-        state.lastTokens.slice(-1).join(" ") === "of" ||
-        state.lastTokens.slice(-1).join(" ") === "do" ||
-        state.lastTokens.slice(-1).join(" ") === "let" ||
-        state.lastTokens.slice(-2).join(" ") === "\\ case";
+        state.lastTokens.slice(-1).join(' ') === 'where' ||
+        state.lastTokens.slice(-1).join(' ') === 'of' ||
+        state.lastTokens.slice(-1).join(' ') === 'do' ||
+        state.lastTokens.slice(-1).join(' ') === 'let' ||
+        state.lastTokens.slice(-2).join(' ') === '\\ case'
 
-      if (triggered && token !== "{") {
+      if (triggered && token !== '{') {
         state.contexts.push({
           value: state.lastTokens.slice(-1)[0],
           column: column,
@@ -369,98 +369,96 @@ CodeMirror.defineMode("codeworld", (config, modeConfig) => {
           guardCol: -1,
           guardAlign: -1,
           rhsAlign: -1,
-          eqLine: -1,
-        });
+          eqLine: -1
+        })
       }
     }
 
     // Update lastTokens so that layout rules can be applied next time.
-    state.lastTokens = state.lastTokens.slice(-1);
-    state.lastTokens.push(token);
+    state.lastTokens = state.lastTokens.slice(-1)
+    state.lastTokens.push(token)
 
-    const topContext = () => state.contexts[state.contexts.length - 1];
+    const topContext = () => state.contexts[state.contexts.length - 1]
 
     // Close contexts when syntax demands that we do so.
-    if (token === ",") {
+    if (token === ',') {
       // Close implicit contexts on comma.
       while (state.contexts.length) {
-        const topContext = state.contexts.pop();
+        const topContext = state.contexts.pop()
         if (!state.contexts.length || isBracket(topContext)) {
-          if (topContext.hasOwnProperty("argIndex")) topContext.argIndex++;
-          state.contexts.push(topContext);
-          break;
+          if (topContext.hasOwnProperty('argIndex')) topContext.argIndex++
+          state.contexts.push(topContext)
+          break
         }
       }
-    } else if (RE_CLOSEBRACKET.test(token) || (!foundLet && token === "in")) {
+    } else if (RE_CLOSEBRACKET.test(token) || (!foundLet && token === 'in')) {
       // Close contexts inside brackets when the brackets are closed.
       // Note that let/in counts as a bracket pair for this purposes.
-      state.contexts.reverse();
+      state.contexts.reverse()
       const reverseIndex = state.contexts.findIndex(
         (ctx) => ctx.value === opening(token)
-      );
-      state.contexts.reverse();
+      )
+      state.contexts.reverse()
       if (reverseIndex >= 0) {
-        const index = state.contexts.length - reverseIndex - 1;
+        const index = state.contexts.length - reverseIndex - 1
         while (state.contexts.length > index) {
-          const child = topContext();
-          state.contexts.pop();
-          const parent = topContext();
+          const child = topContext()
+          state.contexts.pop()
+          const parent = topContext()
           if (isBracket(parent)) {
             if (parent.fresh) {
-              parent.fresh = false;
-              parent.column = Math.min(child.ch, child.column);
+              parent.fresh = false
+              parent.column = Math.min(child.ch, child.column)
             } else {
-              parent.column = Math.min(parent.column, child.ch, child.column);
+              parent.column = Math.min(parent.column, child.ch, child.column)
             }
           }
         }
-        if (token !== "in") {
+        if (token !== 'in') {
           // Update the style to indicate bracket level.
-          const level = state.contexts.filter(isBracket).length;
-          if (level <= 6) style = `${style}-${level}`;
+          const level = state.contexts.filter(isBracket).length
+          if (level <= 6) style = `${style}-${level}`
         }
       }
-    } else if (token === "where") {
+    } else if (token === 'where') {
       while (
         state.contexts.length > 0 &&
-        ["let", "of", "do", "case"].indexOf(topContext().value) >= 0
+        ['let', 'of', 'do', 'case'].indexOf(topContext().value) >= 0
       ) {
-        state.contexts.pop();
+        state.contexts.pop()
       }
     }
 
     // Decide if this is a new layout statement, whether it's in a new layout context
     // or an existing one.  If so, then any pre-existing brackets should be closed.
-    const layoutCtx = state.contexts.findIndex((ctx) => ctx.column === column);
-    const isLayout = layoutCtx >= 0 && !isBracket(state.contexts[layoutCtx]);
+    const layoutCtx = state.contexts.findIndex((ctx) => ctx.column === column)
+    const isLayout = layoutCtx >= 0 && !isBracket(state.contexts[layoutCtx])
     if (isLayout) {
-      state.contexts = state.contexts.slice(0, layoutCtx + 1);
-      state.contexts[state.contexts.length - 1].guardCol = -1;
-      state.contexts[state.contexts.length - 1].guardAlign = -1;
-      state.contexts[state.contexts.length - 1].rhsAlign = -1;
-      state.contexts[state.contexts.length - 1].eqLine = -1;
+      state.contexts = state.contexts.slice(0, layoutCtx + 1)
+      state.contexts[state.contexts.length - 1].guardCol = -1
+      state.contexts[state.contexts.length - 1].guardAlign = -1
+      state.contexts[state.contexts.length - 1].rhsAlign = -1
+      state.contexts[state.contexts.length - 1].eqLine = -1
     }
 
     // Open new contexts for brackets.  These should be inside the
     // implicit contexts created by layout.
     if (RE_OPENBRACKET.test(token)) {
-      const level = state.contexts.filter(isBracket).length;
-      if (level <= 6) style = `${style}-${level}`;
+      const level = state.contexts.filter(isBracket).length
+      if (level <= 6) style = `${style}-${level}`
 
-      let functionName = null;
-      if (token === "(" && state.lastTokens.length > 1) {
-        const nextToLast = state.lastTokens[state.lastTokens.length - 2];
+      let functionName = null
+      if (token === '(' && state.lastTokens.length > 1) {
+        const nextToLast = state.lastTokens[state.lastTokens.length - 2]
         if (RE_VARID.test(nextToLast) || RE_CONID.test(nextToLast)) {
-          functionName = nextToLast;
+          functionName = nextToLast
         }
       }
 
-      let newColumn = 0;
+      let newColumn = 0
       if (state.contexts.length > 0) {
-        const parent = state.contexts[state.contexts.length - 1];
-        if (parent.rhsAlign >= 0 && state.line !== parent.eqLine)
-          newColumn = parent.rhsAlign;
-        else newColumn = parent.column + config.indentUnit;
+        const parent = state.contexts[state.contexts.length - 1]
+        if (parent.rhsAlign >= 0 && state.line !== parent.eqLine) { newColumn = parent.rhsAlign } else newColumn = parent.column + config.indentUnit
       }
       state.contexts.push({
         value: token,
@@ -473,11 +471,11 @@ CodeMirror.defineMode("codeworld", (config, modeConfig) => {
         guardCol: -1,
         guardAlign: -1,
         rhsAlign: -1,
-        eqLine: -1,
-      });
+        eqLine: -1
+      })
     }
 
-    return isLayout ? `${style} layout` : style;
+    return isLayout ? `${style} layout` : style
   }
 
   return {
@@ -488,8 +486,8 @@ CodeMirror.defineMode("codeworld", (config, modeConfig) => {
         continued: false,
         contexts: [],
         lastTokens: [],
-        line: 0,
-      };
+        line: 0
+      }
     },
     copyState: (state) => {
       return {
@@ -508,38 +506,38 @@ CodeMirror.defineMode("codeworld", (config, modeConfig) => {
             rhsAlign: ctx.rhsAlign,
             eqLine: ctx.eqLine,
             functionName: ctx.functionName,
-            argIndex: ctx.argIndex || 0,
-          };
+            argIndex: ctx.argIndex || 0
+          }
         }),
         lastTokens: state.lastTokens.map((t) => t),
-        line: state.line,
-      };
+        line: state.line
+      }
     },
     token: (stream, state) => {
-      const column = stream.column();
-      let style = parseToken(stream, state);
+      const column = stream.column()
+      let style = parseToken(stream, state)
 
       // Ignore whitespaces and comments for layout purposes.
-      if (style !== null && style !== "comment" && style !== "meta") {
-        style = updateLayout(stream.current(), column, style, state);
+      if (style !== null && style !== 'comment' && style !== 'meta') {
+        style = updateLayout(stream.current(), column, style, state)
       }
 
-      if (stream.eol()) state.line++;
-      return style;
+      if (stream.eol()) state.line++
+      return style
     },
     blankLine: (state) => {
-      state.line++;
+      state.line++
     },
     indent: (state, textAfter) => {
-      if (state.commentLevel > 0) return CodeMirror.Pass;
-      if (state.contexts.length < 1) return 0;
+      if (state.commentLevel > 0) return CodeMirror.Pass
+      if (state.contexts.length < 1) return 0
 
       // Find the top context.  If the next token closes a layout context, then this
       // is the context above the one that's closed. Otherwise, it's the top of the stack.
-      let topLayout = state.contexts.length - 1;
-      const token = textAfter.match(/^(in\b|where\b|[,)\]}])/);
+      let topLayout = state.contexts.length - 1
+      const token = textAfter.match(/^(in\b|where\b|[,)\]}])/)
 
-      if (token && token[0] === ",") {
+      if (token && token[0] === ',') {
         // By rule 5, commas close all non-bracket contexts unless they occur in a guard.
         while (
           topLayout > 0 &&
@@ -547,17 +545,17 @@ CodeMirror.defineMode("codeworld", (config, modeConfig) => {
           (state.contexts[topLayout].guardCol === -1 ||
             state.contexts[topLayout].eqLine !== -1)
         ) {
-          --topLayout;
+          --topLayout
         }
-      } else if (token && token[0] === "where") {
+      } else if (token && token[0] === 'where') {
         // 'where' cannot occur in expression context, so closes a lot.
         while (
           topLayout > 0 &&
-          ["let", "of", "do", "case"].indexOf(
+          ['let', 'of', 'do', 'case'].indexOf(
             state.contexts[topLayout].value
           ) >= 0
         ) {
-          --topLayout;
+          --topLayout
         }
       } else if (
         token &&
@@ -565,56 +563,56 @@ CodeMirror.defineMode("codeworld", (config, modeConfig) => {
       ) {
         // Brackets close up to and including the top layout that matches.
         while (state.contexts[topLayout].value !== opening(token[0])) {
-          --topLayout;
+          --topLayout
         }
-        if (!isBracket(state.contexts[topLayout])) --topLayout;
+        if (!isBracket(state.contexts[topLayout])) --topLayout
       }
 
-      let ctx = state.contexts[topLayout];
+      let ctx = state.contexts[topLayout]
 
       // Compute the rightmost surrounding layout column, which should be respected
       // by indent rules.
-      let minIndent;
+      let minIndent
       if (topLayout > 0) {
-        const parent = state.contexts[topLayout - 1];
-        minIndent = isBracket(parent) ? parent.column : parent.column + 1;
+        const parent = state.contexts[topLayout - 1]
+        minIndent = isBracket(parent) ? parent.column : parent.column + 1
       } else {
-        minIndent = 0;
+        minIndent = 0
       }
 
-      let continued = state.continued;
+      let continued = state.continued
       if (isBracket(ctx) && token && opening(token[0]) === ctx.value) {
         // Close brackets should be aligned to the open bracket if the inside indent
         // is always more than that.  Otherwise, they are indented like a continued
         // line in the parent context.
 
-        if (ctx.column > ctx.ch) return Math.max(minIndent, ctx.ch);
-        if (topLayout === 0) return 0;
+        if (ctx.column > ctx.ch) return Math.max(minIndent, ctx.ch)
+        if (topLayout === 0) return 0
 
-        ctx = state.contexts[topLayout - 1];
-        continued = true;
-      } else if (isBracket(ctx) && token && token[0] === ",") {
+        ctx = state.contexts[topLayout - 1]
+        continued = true
+      } else if (isBracket(ctx) && token && token[0] === ',') {
         // In order to align elements, commas should be placed two columns to the left
         // of the bracket's internal alignment, if possible.
 
-        let gap;
-        if (textAfter === ",") gap = 2;
-        else gap = /^,\s*/.exec(textAfter)[0].length;
+        let gap
+        if (textAfter === ',') gap = 2
+        else gap = /^,\s*/.exec(textAfter)[0].length
 
-        return Math.max(minIndent, ctx.column - gap);
+        return Math.max(minIndent, ctx.column - gap)
       } else if (
         /^(where\b|[|]($|[^:!#$%&*+./<=>?@\\^|~-]+))/.test(textAfter)
       ) {
-        if (textAfter.startsWith("|") && ctx.guardCol >= 0) {
+        if (textAfter.startsWith('|') && ctx.guardCol >= 0) {
           // Guards should be aligned if there's an alignment set.
 
-          return Math.max(minIndent, ctx.guardCol);
+          return Math.max(minIndent, ctx.guardCol)
         } else {
           // Guards and where clauses are indented a half-indent beyond the parent
           // context.  This is reasonably common, and helps them stand out from wrapped
           // expressions.
 
-          return ctx.column + Math.ceil(config.indentUnit / 2);
+          return ctx.column + Math.ceil(config.indentUnit / 2)
         }
       } else if (
         RE_DASHES.exec(textAfter) &&
@@ -623,27 +621,27 @@ CodeMirror.defineMode("codeworld", (config, modeConfig) => {
         // Comments are aligned at the current level.  Special case to avoid
         // mistaking them for operators.
 
-        return ctx.column;
+        return ctx.column
       }
 
       const mustContinue =
         (RE_ELECTRIC_START.test(textAfter) &&
           !RE_NEGATIVE_NUM.test(textAfter)) ||
-        (state.lastTokens.slice(-1).join("") === "," && ctx.guardAlign >= 0);
+        (state.lastTokens.slice(-1).join('') === ',' && ctx.guardAlign >= 0)
       if (continued || mustContinue) {
         // This is a continuation line, because either the end of the last line or
         // the beginning of this one are not suitable for this to be a new statement.
 
-        if (ctx.rhsAlign >= 0) return ctx.rhsAlign;
-        else if (ctx.guardAlign >= 0) return ctx.guardAlign;
-        else return ctx.column + config.indentUnit;
+        if (ctx.rhsAlign >= 0) return ctx.rhsAlign
+        else if (ctx.guardAlign >= 0) return ctx.guardAlign
+        else return ctx.column + config.indentUnit
       } else {
-        return ctx.column;
+        return ctx.column
       }
     },
     electricInput: RE_ELECTRIC_INPUT,
-    blockCommentStart: "{-",
-    blockCommentEnd: "-}",
-    lineComment: "--",
-  };
-});
+    blockCommentStart: '{-',
+    blockCommentEnd: '-}',
+    lineComment: '--'
+  }
+})

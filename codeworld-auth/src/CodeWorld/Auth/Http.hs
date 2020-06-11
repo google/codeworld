@@ -13,46 +13,44 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
-{-|
-Helpers for working with Snap: helpers for parsing "Authorization" headers
-as well as for generating various types of response body
--}
-
 {-# LANGUAGE OverloadedStrings #-}
 
+-- |
+-- Helpers for working with Snap: helpers for parsing "Authorization" headers
+-- as well as for generating various types of response body
 module CodeWorld.Auth.Http
-    ( badRequest400
-    , forbidden403
-    , internalServerError500
-    , json
-    , ok200
-    , ok200Json
-    , parseBasicAuthHeader
-    , parseBearerAuthHeader
-    , unauthorized401
-    , unauthorized401Json
-    ) where
+  ( badRequest400,
+    forbidden403,
+    internalServerError500,
+    json,
+    ok200,
+    ok200Json,
+    parseBasicAuthHeader,
+    parseBearerAuthHeader,
+    unauthorized401,
+    unauthorized401Json,
+  )
+where
 
-import           CodeWorld.Account (Password(..), UserId(..))
-import           Data.Aeson (ToJSON)
+import CodeWorld.Account (Password (..), UserId (..))
+import Data.Aeson (ToJSON)
 import qualified Data.Aeson as Aeson (encode)
-import           Data.ByteString (ByteString)
+import Data.ByteString (ByteString)
 import qualified Data.ByteString.Base64 as Base64 (decode)
 import qualified Data.ByteString.Char8 as Char8 (pack, unpack)
-import           Data.List.Split (splitOn)
-import           Data.Text (Text)
+import Data.List.Split (splitOn)
+import Data.Text (Text)
 import qualified Data.Text as Text (pack)
-import           Snap.Core
-                    ( Response
-                    , Snap
-                    , emptyResponse
-                    , modifyResponse
-                    , setContentType
-                    , setHeader
-                    , setResponseCode
-                    , writeLBS
-                    )
+import Snap.Core
+  ( Response,
+    Snap,
+    emptyResponse,
+    modifyResponse,
+    setContentType,
+    setHeader,
+    setResponseCode,
+    writeLBS,
+  )
 
 empty :: Int -> Response
 empty code = setResponseCode code emptyResponse
@@ -74,34 +72,34 @@ internalServerError500 = empty 500
 
 json :: ToJSON a => Int -> a -> Snap ()
 json code obj = do
-    modifyResponse $ setResponseCode code . setContentType "application/json"
-    writeLBS $ Aeson.encode obj
+  modifyResponse $ setResponseCode code . setContentType "application/json"
+  writeLBS $ Aeson.encode obj
 
 ok200Json :: ToJSON a => a -> Snap ()
 ok200Json = json 200
 
 unauthorized401Json :: ToJSON a => ByteString -> a -> Snap ()
 unauthorized401Json authType obj = do
-    modifyResponse $ setHeader "WWW-Authenticate" authType
-    json 401 obj
+  modifyResponse $ setHeader "WWW-Authenticate" authType
+  json 401 obj
 
 parseBasicAuthHeader :: ByteString -> Maybe (UserId, Password)
 parseBasicAuthHeader bs = do
-    t <- parseAuthValue "Basic" bs
-    case Base64.decode (Char8.pack t) of
-        Left _ -> Nothing
-        Right s ->
-            case splitOn ":" (Char8.unpack s) of
-                [userIdRaw, passwordRaw] -> Just (UserId userIdRaw, Password passwordRaw)
-                _ -> Nothing
+  t <- parseAuthValue "Basic" bs
+  case Base64.decode (Char8.pack t) of
+    Left _ -> Nothing
+    Right s ->
+      case splitOn ":" (Char8.unpack s) of
+        [userIdRaw, passwordRaw] -> Just (UserId userIdRaw, Password passwordRaw)
+        _ -> Nothing
 
 parseBearerAuthHeader :: ByteString -> Maybe Text
 parseBearerAuthHeader bs = do
-    t <- parseAuthValue "Bearer" bs
-    return $ Text.pack t
+  t <- parseAuthValue "Bearer" bs
+  return $ Text.pack t
 
 parseAuthValue :: String -> ByteString -> Maybe String
 parseAuthValue authType bs =
-    case splitOn " " (Char8.unpack bs) of
-        [authType', t] -> if authType /= authType' then Nothing else Just t
-        _ -> Nothing
+  case splitOn " " (Char8.unpack bs) of
+    [authType', t] -> if authType /= authType' then Nothing else Just t
+    _ -> Nothing

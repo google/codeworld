@@ -85,8 +85,9 @@ formatDiagnostics = do
   return (T.intercalate "\n\n" (map formatDiagnostic revisedDiags))
 
 inMainModule :: Diagnostic -> Bool
-inMainModule (src, _, _) = src == noSrcSpan ||
-    srcSpanFilename (srcInfoSpan src) == "program.hs"
+inMainModule (src, _, _) =
+  src == noSrcSpan
+    || srcSpanFilename (srcInfoSpan src) == "program.hs"
 
 formatDiagnostic :: Diagnostic -> Text
 formatDiagnostic (loc, _, msg) =
@@ -106,23 +107,24 @@ compileSource stage src moduleFinder err mode verbose = fromMaybe CompileAborted
     $ \tmpdir ->
       compileStatus <$> execStateT build (initialState tmpdir)
   where
-    initialState buildDir = CompileState
-      { compileMode = mode,
-        compileStage = stage,
-        compileBuildDir = buildDir,
-        compileSourcePaths = [src],
-        compileModuleFinder = moduleFinder,
-        compileOutputPath = err,
-        compileVerbose = verbose,
-        compileTimeout = timeout,
-        compileStatus = CompileSuccess,
-        compileErrors = [],
-        compileMainSourcePath = Nothing,
-        compileReadSource = Map.empty,
-        compileParsedSource = Map.empty,
-        compileGHCParsedSource = Map.empty,
-        compileImportLocations = Map.empty
-      }
+    initialState buildDir =
+      CompileState
+        { compileMode = mode,
+          compileStage = stage,
+          compileBuildDir = buildDir,
+          compileSourcePaths = [src],
+          compileModuleFinder = moduleFinder,
+          compileOutputPath = err,
+          compileVerbose = verbose,
+          compileTimeout = timeout,
+          compileStatus = CompileSuccess,
+          compileErrors = [],
+          compileMainSourcePath = Nothing,
+          compileReadSource = Map.empty,
+          compileParsedSource = Map.empty,
+          compileGHCParsedSource = Map.empty,
+          compileImportLocations = Map.empty
+        }
     timeout = case stage of
       GenBase _ _ _ _ -> maxBound :: Int
       _ -> userCompileMicros
@@ -270,36 +272,36 @@ addParsedDiagnostics output = addDiagnostics newDiags
 
 parseDiagnostic :: Text -> Diagnostic
 parseDiagnostic msg
-  | ( ( _ : fname :
-          (readT -> Just ln) :
-          (readT -> Just col) :
-          body :
-          _
-        ) :
-        _
+  | ( ( _ : fname
+          : (readT -> Just ln)
+          : (readT -> Just col)
+          : body
+          : _
+        )
+        : _
       ) <-
       msg =~ ("^([a-zA-Z0-9_-]*\\.hs):([0-9]+):([0-9]+): ((.|\n)*)$" :: Text) =
     (srcSpanFrom fname ln ln col (col + 1), CompileSuccess, T.unpack body)
-  | ( ( _ : fname :
-          (readT -> Just ln) :
-          (readT -> Just col1) :
-          (readT -> Just col2) :
-          body :
-          _
-        ) :
-        _
+  | ( ( _ : fname
+          : (readT -> Just ln)
+          : (readT -> Just col1)
+          : (readT -> Just col2)
+          : body
+          : _
+        )
+        : _
       ) <-
       msg =~ ("^([a-zA-Z0-9_-]*\\.hs):([0-9]+):([0-9]+)-([0-9]+): ((.|\n)*)$" :: Text) =
     (srcSpanFrom fname ln ln col1 (col2 + 1), CompileSuccess, T.unpack body)
-  | ( ( _ : fname :
-          (readT -> Just ln1) :
-          (readT -> Just col1) :
-          (readT -> Just ln2) :
-          (readT -> Just col2) :
-          body :
-          _
-        ) :
-        _
+  | ( ( _ : fname
+          : (readT -> Just ln1)
+          : (readT -> Just col1)
+          : (readT -> Just ln2)
+          : (readT -> Just col2)
+          : body
+          : _
+        )
+        : _
       ) <-
       msg
         =~ ( "^([a-zA-Z0-9_-]*\\.hs):[(]([0-9]+),([0-9]+)[)]"

@@ -14,43 +14,48 @@
   limitations under the License.
 -}
 
-{-|
-Functions for generating, reading and writing secrets for use with
-local authentication method
--}
-
+-- |
+-- Functions for generating, reading and writing secrets for use with
+-- local authentication method
 module CodeWorld.Auth.Secret
-    ( Secret(..)
-    , generateSecret
-    , readSecret
-    , writeSecret
-    ) where
+  ( Secret (..),
+    generateSecret,
+    readSecret,
+    writeSecret,
+  )
+where
 
-import           Crypto.Random (getRandomBytes)
-import           Data.ByteString (ByteString)
+import Crypto.Random (getRandomBytes)
+import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString (readFile, writeFile)
 import qualified Data.ByteString.Base64 as Base64 (decode, encode)
 
-data Secret = Secret ByteString deriving Eq
+data Secret = Secret ByteString deriving (Eq)
 
--- |Generates a new, random secret
+-- | Generates a new, random secret
 generateSecret ::
-    IO Secret   -- ^ Secret
+  -- | Secret
+  IO Secret
 generateSecret = Secret <$> getRandomBytes 32
 
--- |Writes a secret to a file
+-- | Writes a secret to a file
 writeSecret ::
-    FilePath    -- ^ File path
-    -> Secret   -- ^ Secret
-    -> IO ()    -- ^ Result
+  -- | File path
+  FilePath ->
+  -- | Secret
+  Secret ->
+  -- | Result
+  IO ()
 writeSecret path (Secret bytes) = ByteString.writeFile path (Base64.encode bytes)
 
--- |Reads a secret from a file
+-- | Reads a secret from a file
 readSecret ::
-    FilePath        -- ^ File path
-    -> IO Secret    -- ^ Result
+  -- | File path
+  FilePath ->
+  -- | Result
+  IO Secret
 readSecret path = do
-    s <- ByteString.readFile path
-    case Base64.decode s of
-        Left e -> error e
-        Right bytes -> return $ Secret bytes
+  s <- ByteString.readFile path
+  case Base64.decode s of
+    Left e -> error e
+    Right bytes -> return $ Secret bytes

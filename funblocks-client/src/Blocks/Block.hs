@@ -14,26 +14,29 @@
   limitations under the License.
 -}
 
-module Block.Block (Type(..)
-                   ,Input(..)
-                   ,BlockI(..)
-                   ) 
-  where
+module Block.Block
+  ( Type (..),
+    Input (..),
+    BlockI (..),
+  )
+where
 
 import qualified Data.Map
 
 -- input : name type connectedBlock
-data Type = Number
-          | Bool
-          | Color
-          | Picture
-          | Program
-          | Poly Int
-          | Empty
+data Type
+  = Number
+  | Bool
+  | Color
+  | Picture
+  | Program
+  | Poly Int
+  | Empty
 
-data Input = Input Type Block
-            | Text Type String
-            | Disconnected
-  deriving Show
+data Input
+  = Input Type Block
+  | Text Type String
+  | Disconnected
+  deriving (Show)
 
 data Block = Block {name :: String, inputs :: M.Map String Input, outputType :: Type}

@@ -34,8 +34,12 @@ module Parameter
   )
 where
 
-import CodeWorld.Parameter (
-  Parameter, currentHour, currentMinute, currentSecond)
+import CodeWorld.Parameter
+  ( Parameter,
+    currentHour,
+    currentMinute,
+    currentSecond,
+  )
 import qualified CodeWorld.Parameter as CW
 import Internal.Picture
 import Internal.Text
@@ -48,7 +52,7 @@ import "base" Prelude ((.), map)
 -- is the value of the corresponding parameter in the first list.
 parametricDrawingOf :: ([Parameter], [Number] -> Picture) -> Program
 parametricDrawingOf (params, pic) =
-    CW.parametricDrawingOf params (toCWPic . pic . map fromDouble)
+  CW.parametricDrawingOf params (toCWPic . pic . map fromDouble)
 
 -- | Adjusts the output of a parameter by passing it through a conversion
 -- function.  Built-in parameters usually range from 0 to 1, and conversions

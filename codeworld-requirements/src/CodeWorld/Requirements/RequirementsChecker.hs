@@ -16,40 +16,39 @@
 
 module CodeWorld.Requirements.RequirementsChecker (plugin) where
 
-    import CodeWorld.Requirements.Framework
-    import CodeWorld.Requirements.Requirements
-    import qualified Data.ByteString as B
-    import Data.Text.Encoding
+import CodeWorld.Requirements.Framework
+import CodeWorld.Requirements.Requirements
+import qualified Data.ByteString as B
+import Data.Text.Encoding
+import ErrUtils
+import HscTypes
+import Outputable
+import Plugins
+import TcRnMonad
 
-    import ErrUtils
-    import HscTypes
-    import Outputable
-    import Plugins
-    import TcRnMonad
-
-    plugin :: Plugin
-    plugin = defaultPlugin {
-        renamedResultAction = keepRenamedSource,
-        typeCheckResultAction = \_args -> requirementsChecker
+plugin :: Plugin
+plugin =
+  defaultPlugin
+    { renamedResultAction = keepRenamedSource,
+      typeCheckResultAction = \_args -> requirementsChecker
     }
 
-    requirementsChecker :: ModSummary -> TcGblEnv -> TcM TcGblEnv
-    requirementsChecker summary env = do
-        src <- liftIO (B.readFile $ ms_hspp_file summary)
+requirementsChecker :: ModSummary -> TcGblEnv -> TcM TcGblEnv
+requirementsChecker summary env = do
+  src <- liftIO (B.readFile $ ms_hspp_file summary)
 
-        let flags = ms_hspp_opts summary
-            parsed = ghcParseCode flags [] $ decodeUtf8 src
-        
-        case parsed of
-            GHCParsed code -> do
-                lcl <- getLclEnv
-                errs <- readTcRef $ tcl_errs lcl
-                let req = checkRequirements flags errs env code src
+  let flags = ms_hspp_opts summary
+      parsed = ghcParseCode flags [] $ decodeUtf8 src
 
-                case req of
-                    Nothing -> return ()
-                    Just r -> liftIO (putMsg flags $ text r)
+  case parsed of
+    GHCParsed code -> do
+      lcl <- getLclEnv
+      errs <- readTcRef $ tcl_errs lcl
+      let req = checkRequirements flags errs env code src
 
-            GHCNoParse -> return ()
+      case req of
+        Nothing -> return ()
+        Just r -> liftIO (putMsg flags $ text r)
+    GHCNoParse -> return ()
 
-        pure env
+  pure env

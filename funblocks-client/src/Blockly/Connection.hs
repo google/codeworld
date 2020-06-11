@@ -16,12 +16,11 @@
   limitations under the License.
 -}
 
-module Blockly.Connection ( Connection(..) )
-  where
+module Blockly.Connection (Connection (..)) where
 
-import GHCJS.Types
 import GHCJS.Foreign
 import GHCJS.Marshal
+import GHCJS.Types
 
 newtype Connection = Connection JSVal
 
@@ -32,4 +31,3 @@ instance ToJSVal Connection where
 
 instance FromJSVal Connection where
   fromJSVal v = return $ Just $ Connection v
-

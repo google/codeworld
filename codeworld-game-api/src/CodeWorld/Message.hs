@@ -59,20 +59,25 @@ type Signature = ByteString
 
 -- Message representation
 data ClientMessage
-    = NewGame Int
-              Signature
-    | JoinGame GameId
-               Signature
-    | InEvent String
-    deriving (Show, Read)
+  = NewGame
+      Int
+      Signature
+  | JoinGame
+      GameId
+      Signature
+  | InEvent String
+  deriving (Show, Read)
 
 data ServerMessage
-    = JoinedAs PlayerId
-               GameId
-    | PlayersWaiting Int
-                     Int
-    | Started
-    | OutEvent PlayerId
-               String
-    | GameAborted
-    deriving (Show, Read, Eq) -- Eq is only for testing
+  = JoinedAs
+      PlayerId
+      GameId
+  | PlayersWaiting
+      Int
+      Int
+  | Started
+  | OutEvent
+      PlayerId
+      String
+  | GameAborted
+  deriving (Show, Read, Eq) -- Eq is only for testing

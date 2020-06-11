@@ -17,15 +17,16 @@
 -- | Minimal set of imports needed to support basic CodeWorld syntax.
 -- Many of these are not directly used by students, but are needed for
 -- desugaring with the RebindableSyntax extension.
-module Core (
-    Program,
+module Core
+  ( Program,
     Number,
     Text,
     Truth,
-    Bool(..),
+    Bool (..),
     fromInteger,
     fromRational,
     fromString,
     ifThenElse,
-    fail
-    ) where
+    fail,
+  )
+where

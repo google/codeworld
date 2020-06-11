@@ -2,9 +2,9 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE JavaScriptFFI #-}
 {-# LANGUAGE MagicHash #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -33,10 +33,11 @@ module Internal.Truth where
 import Control.Exception (evaluate)
 import Control.Monad
 import GHC.Prim (reallyUnsafePtrEquality#)
-import qualified "base" Prelude as P
-import "base" Prelude (Bool, IO, Int, ($))
 import System.IO.Unsafe
 import Unsafe.Coerce
+import qualified "base" Prelude as P
+import "base" Prelude (($), Bool, IO, Int)
+
 #ifdef ghcjs_HOST_OS
 import GHCJS.Foreign
 import GHCJS.Types
@@ -48,9 +49,9 @@ type Truth = Bool
 
 ifThenElse :: Truth -> a -> a -> a
 ifThenElse a b c =
-    if a
-        then b
-        else c
+  if a
+    then b
+    else c
 
 infix 4 ==, /=
 
@@ -61,14 +62,14 @@ infixr 2 ||
 -- | Compares values to see if they are equal.
 (==) :: a -> a -> Truth
 a == b =
-    a `P.seq` b `P.seq`
-    case reallyUnsafePtrEquality# a b of
-        1# -> P.True
-        _ -> deepEq a b
+  a `P.seq` b
+    `P.seq` case reallyUnsafePtrEquality# a b of
+      1# -> P.True
+      _ -> deepEq a b
 
 {-# RULES
-"equality/bool" forall (x :: P.Bool) . (==) x = (P.==) x
- #-}
+"equality/bool" forall (x :: P.Bool). (==) x = (P.==) x
+  #-}
 
 -- | Compares values to see if they are not equal.
 -- Note that @a /= b@ is the same as @not (a == b)@.
@@ -86,6 +87,7 @@ not = P.not
 
 otherwise :: Truth
 otherwise = P.otherwise
+
 #ifdef ghcjs_HOST_OS
 -- traverse the object and get the thunks out of it
 foreign import javascript unsafe "cw$getThunks($1)" js_getThunks ::

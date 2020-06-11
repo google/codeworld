@@ -46,53 +46,53 @@ import Text.Printf
 #endif
 
 class (Monad m, MonadIO m) => MonadCanvas m where
-    type Image m
+  type Image m
 
-    save :: m ()
-    restore :: m ()
-    transform ::
-           Double -> Double -> Double -> Double -> Double -> Double -> m ()
-    translate :: Double -> Double -> m ()
-    scale :: Double -> Double -> m ()
-    newImage :: Int -> Int -> m (Image m)
-    builtinImage :: Text -> m (Maybe (Image m))
-    withImage :: Image m -> m a -> m a
-    drawImage :: Image m -> Int -> Int -> Int -> Int -> m ()
-    drawImgURL :: Text -> Text -> Double -> Double -> m ()
-    globalCompositeOperation :: Text -> m ()
-    globalAlpha :: Double -> m ()
-    lineWidth :: Double -> m ()
-    strokeColor :: Int -> Int -> Int -> Double -> m ()
-    fillColor :: Int -> Int -> Int -> Double -> m ()
-    font :: Text -> m ()
-    textCenter :: m ()
-    textMiddle :: m ()
-    beginPath :: m ()
-    closePath :: m ()
-    moveTo :: (Double, Double) -> m ()
-    lineTo :: (Double, Double) -> m ()
-    quadraticCurveTo :: (Double, Double) -> (Double, Double) -> m ()
-    bezierCurveTo ::
-           (Double, Double) -> (Double, Double) -> (Double, Double) -> m ()
-    arc :: Double -> Double -> Double -> Double -> Double -> Bool -> m ()
-    rect :: Double -> Double -> Double -> Double -> m ()
-    clip :: m ()
-    fill :: m ()
-    stroke :: m ()
-    fillRect :: Double -> Double -> Double -> Double -> m ()
-    fillText :: Text -> (Double, Double) -> m ()
-    measureText :: Text -> m Double
-    isPointInPath :: (Double, Double) -> m Bool
-    isPointInStroke :: (Double, Double) -> m Bool
-    getScreenWidth :: m Double
-    getScreenHeight :: m Double
+  save :: m ()
+  restore :: m ()
+  transform ::
+    Double -> Double -> Double -> Double -> Double -> Double -> m ()
+  translate :: Double -> Double -> m ()
+  scale :: Double -> Double -> m ()
+  newImage :: Int -> Int -> m (Image m)
+  builtinImage :: Text -> m (Maybe (Image m))
+  withImage :: Image m -> m a -> m a
+  drawImage :: Image m -> Int -> Int -> Int -> Int -> m ()
+  drawImgURL :: Text -> Text -> Double -> Double -> m ()
+  globalCompositeOperation :: Text -> m ()
+  globalAlpha :: Double -> m ()
+  lineWidth :: Double -> m ()
+  strokeColor :: Int -> Int -> Int -> Double -> m ()
+  fillColor :: Int -> Int -> Int -> Double -> m ()
+  font :: Text -> m ()
+  textCenter :: m ()
+  textMiddle :: m ()
+  beginPath :: m ()
+  closePath :: m ()
+  moveTo :: (Double, Double) -> m ()
+  lineTo :: (Double, Double) -> m ()
+  quadraticCurveTo :: (Double, Double) -> (Double, Double) -> m ()
+  bezierCurveTo ::
+    (Double, Double) -> (Double, Double) -> (Double, Double) -> m ()
+  arc :: Double -> Double -> Double -> Double -> Double -> Bool -> m ()
+  rect :: Double -> Double -> Double -> Double -> m ()
+  clip :: m ()
+  fill :: m ()
+  stroke :: m ()
+  fillRect :: Double -> Double -> Double -> Double -> m ()
+  fillText :: Text -> (Double, Double) -> m ()
+  measureText :: Text -> m Double
+  isPointInPath :: (Double, Double) -> m Bool
+  isPointInStroke :: (Double, Double) -> m Bool
+  getScreenWidth :: m Double
+  getScreenHeight :: m Double
 
 saveRestore :: MonadCanvas m => m a -> m a
 saveRestore m = do
-    save
-    r <- m
-    restore
-    return r
+  save
+  r <- m
+  restore
+  return r
 
 #if defined(ghcjs_HOST_OS)
 

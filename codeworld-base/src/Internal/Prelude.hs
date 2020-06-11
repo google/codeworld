@@ -1,6 +1,6 @@
 {-# LANGUAGE GADTSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -18,74 +18,71 @@
   limitations under the License.
 -}
 module Internal.Prelude
-    ( ifThenElse -- For RebindableSyntax
-    , fail -- for RebindableSyntax
+  ( ifThenElse, -- For RebindableSyntax
+    fail, -- for RebindableSyntax
     -- Comparison
-    , (==)
-    , (/=)
+    (==),
+    (/=),
     -- Truth
-    , Truth
-    , Bool(..)
-    , (&&)
-    , (||)
-    , not
-    , otherwise
+    Truth,
+    Bool (..),
+    (&&),
+    (||),
+    not,
+    otherwise,
     -- Currying and uncurrying
-    , toOperator
-    , fromOperator
+    toOperator,
+    fromOperator,
     -- Tuples
-    , firstOfPair
-    , secondOfPair
+    firstOfPair,
+    secondOfPair,
     -- Failures
-    , error -- Text version
-    , undefined
+    error, -- Text version
+    undefined,
     -- List functions
-    , (P.++)
-    , empty
-    , contains
-    , length
-    , at
-    , ( # )
-    , any
-    , all
-    , none
-    , repeated
-    , repeating
-    , first
-    , last
-    , rest
-    , groups
-    , while
-    , until
-    , after
-    , concatenation
-    , L.subsequences
-    , L.permutations
-    , sorted
-    , reversed
-    , unique
-    , transposed
+    (P.++),
+    empty,
+    contains,
+    length,
+    at,
+    (#),
+    any,
+    all,
+    none,
+    repeated,
+    repeating,
+    first,
+    last,
+    rest,
+    groups,
+    while,
+    until,
+    after,
+    concatenation,
+    L.subsequences,
+    L.permutations,
+    sorted,
+    reversed,
+    unique,
+    transposed,
     -- Random numbers
-    , randomsFrom
-    , randomNumbers
-    , shuffled
-    ) where
-
-import qualified "base" Prelude as P
-import "base" Prelude (Bool, ($), (.))
+    randomsFrom,
+    randomNumbers,
+    shuffled,
+  )
+where
 
 import Data.Bits (xor)
 import Data.Function (on)
 import qualified Data.List as L
-
+import GHC.Stack (HasCallStack, withFrozenCallStack)
 import Internal.Num
 import Internal.Text
 import Internal.Truth
-
 import System.Random hiding (split)
 import System.Random.Shuffle (shuffle')
-
-import GHC.Stack (HasCallStack, withFrozenCallStack)
+import qualified "base" Prelude as P
+import "base" Prelude (($), (.), Bool)
 
 -- | Converts a function to an operator.
 --
@@ -151,25 +148,25 @@ length = fromInt . P.length
 -- Indices start at 1.
 at :: HasCallStack => ([a], a, Number) -> [a]
 at (list, val, idx)
-    | not (isInteger (idx)) = withFrozenCallStack $ idxErrorNonInt idx
-    | idx <= 0 = withFrozenCallStack $ idxErrorNonPos idx
-    | otherwise = withFrozenCallStack $ go idx list
+  | not (isInteger (idx)) = withFrozenCallStack $ idxErrorNonInt idx
+  | idx <= 0 = withFrozenCallStack $ idxErrorNonPos idx
+  | otherwise = withFrozenCallStack $ go idx list
   where
     go _ [] = idxErrorTooLarge idx
-    go 1 (x:xs) = val : xs
-    go n (x:xs) = x : go (n - 1) xs
+    go 1 (x : xs) = val : xs
+    go n (x : xs) = x : go (n - 1) xs
 
 -- | Gives the member of a list at a given index.
 -- Indices start at 1.
 (#) :: HasCallStack => [a] -> Number -> a
 list # idx
-    | not (isInteger (idx)) = withFrozenCallStack $ idxErrorNonInt idx
-    | idx <= 0 = withFrozenCallStack $ idxErrorNonPos idx
-    | otherwise = withFrozenCallStack $ go idx list
+  | not (isInteger (idx)) = withFrozenCallStack $ idxErrorNonInt idx
+  | idx <= 0 = withFrozenCallStack $ idxErrorNonPos idx
+  | otherwise = withFrozenCallStack $ go idx list
   where
     go _ [] = idxErrorTooLarge idx
-    go 1 (x:xs) = x
-    go n (x:xs) = go (n - 1) xs
+    go 1 (x : xs) = x
+    go n (x : xs) = go (n - 1) xs
 
 infixl 9 #
 
@@ -178,7 +175,7 @@ idxErrorNonInt idx = P.error "Non-integer list index is not allowed."
 
 idxErrorNonPos :: HasCallStack => Number -> a
 idxErrorNonPos idx =
-    P.error "List index must be positive. Numbering starts at 1."
+  P.error "List index must be positive. Numbering starts at 1."
 
 idxErrorTooLarge :: HasCallStack => Number -> a
 idxErrorTooLarge idx = P.error "List index is too large."
@@ -230,7 +227,8 @@ rest (xs, n) = withFrozenCallStack (P.drop (toInt n) xs)
 -- For example, @[ (x, y) | [x, y] <- groups(randomNumbers(42), 2) ]@.
 groups :: ([a], Number) -> [[a]]
 groups ([], n) = []
-groups (xs, n) = withFrozenCallStack $
+groups (xs, n) =
+  withFrozenCallStack $
     P.take (toInt n) xs : groups (P.drop (toInt n) xs, n)
 
 -- | Gives the longest prefix of a list for which a condition is true.

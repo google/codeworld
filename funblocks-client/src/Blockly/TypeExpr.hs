@@ -1,5 +1,5 @@
-{-# LANGUAGE JavaScriptFFI #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE JavaScriptFFI #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -17,29 +17,30 @@
   limitations under the License.
 -}
 
-module Blockly.TypeExpr ( Type(..)
-                         ,Type_
-                         ,createType
-                         ,fromList
-                         ,toJSArray
-                         )
-  where
+module Blockly.TypeExpr
+  ( Type (..),
+    Type_,
+    createType,
+    fromList,
+    toJSArray,
+  )
+where
 
-import GHCJS.Types
+import Data.JSString.Text
+import qualified Data.Text as T
+import Data.Text (Text)
 import GHCJS.Foreign
 import GHCJS.Marshal
+import GHCJS.Types
 import qualified JavaScript.Array as JA
-import qualified Data.Text as T
-import Data.JSString.Text
-import Data.Text (Text);
 
 newtype TypeExpr = TypeExpr JSVal
 
-data Type = Func Type Type
-          | Lit Text [Type]
-          | TypeVar Text
+data Type
+  = Func Type Type
+  | Lit Text [Type]
+  | TypeVar Text
   deriving (Show)
-
 
 newtype Type_ = Type_ JSVal
 
@@ -52,6 +53,7 @@ fromList :: [Type] -> Type_
 fromList tps = js_fromList $ toJSArray $ map createType tps
 
 pack = textToJSString
+
 unpack = textFromJSString
 
 instance IsJSVal Type_
@@ -63,7 +65,7 @@ instance FromJSVal Type_ where
   fromJSVal v = return $ Just $ Type_ v
 
 toJSArray :: [Type_] -> JA.JSArray
-toJSArray tps = JA.fromList $ map (\(Type_ a) -> a) tps 
+toJSArray tps = JA.fromList $ map (\(Type_ a) -> a) tps
 
 #ifdef ghcjs_HOST_OS
 
@@ -77,7 +79,7 @@ foreign import javascript unsafe "Type.Lit($1,$2)"
   js_createLit :: JSString -> JA.JSArray -> Type_
 
 foreign import javascript unsafe "Type.Func($1,$2)"
-  js_createFunc :: Type_ -> Type_ -> Type_ 
+  js_createFunc :: Type_ -> Type_ -> Type_
 
 foreign import javascript unsafe "Type.fromList($1)"
   js_fromList :: JA.JSArray -> Type_

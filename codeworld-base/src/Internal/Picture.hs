@@ -1,6 +1,6 @@
+{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE PackageImports #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -24,7 +24,7 @@ import GHC.Stack
 import Internal.Color
 import Internal.Num
 import Internal.Text
-import "base" Prelude ((.), ($), map)
+import "base" Prelude (($), (.), map)
 
 -- | A point in two dimensions.  A point is written with the x coordinate
 -- first, and the y coordinate second.  For example, (3, -2) is the point
@@ -40,28 +40,28 @@ fromCWPoint (x, y) = (fromDouble x, fromDouble y)
 -- | Moves a given point by given x and y offsets
 translatedPoint :: (Point, Number, Number) -> Point
 translatedPoint (p, x, y) =
-    fromCWPoint (CW.translatedPoint (toDouble x) (toDouble y) (toCWPoint p))
+  fromCWPoint (CW.translatedPoint (toDouble x) (toDouble y) (toCWPoint p))
 
 -- | Rotates a given point by given angle, in degrees
 rotatedPoint :: (Point, Number) -> Point
 rotatedPoint (p, a) =
-    fromCWPoint (CW.rotatedPoint (toDouble (pi * a / 180)) (toCWPoint p))
+  fromCWPoint (CW.rotatedPoint (toDouble (pi * a / 180)) (toCWPoint p))
 
 reflectedPoint :: (Point, Number) -> Point
 reflectedPoint (p, a) =
-    fromCWPoint (CW.reflectedPoint (toDouble (pi * a / 180)) (toCWPoint p))
+  fromCWPoint (CW.reflectedPoint (toDouble (pi * a / 180)) (toCWPoint p))
 
 -- | Scales a given point by given x and y scaling factor.  Scaling by a
 -- negative factor also reflects across that axis.
 scaledPoint :: (Point, Number, Number) -> Point
 scaledPoint (p, x, y) =
-    fromCWPoint (CW.scaledPoint (toDouble x) (toDouble y) (toCWPoint p))
+  fromCWPoint (CW.scaledPoint (toDouble x) (toDouble y) (toCWPoint p))
 
 -- | Dilates a given point by given uniform scaling factor.  Dilating by a
 -- negative factor also reflects across the origin.
 dilatedPoint :: (Point, Number) -> Point
 dilatedPoint (p, k) =
-    fromCWPoint (CW.dilatedPoint (toDouble k) (toCWPoint p))
+  fromCWPoint (CW.dilatedPoint (toDouble k) (toCWPoint p))
 
 -- | A two-dimensional vector
 type Vector = (Number, Number)
@@ -87,7 +87,7 @@ vectorSum (v, w) = fromCWVect (CW.vectorSum (toCWVect v) (toCWVect w))
 -- | The difference of two vectors
 vectorDifference :: (Vector, Vector) -> Vector
 vectorDifference (v, w) =
-    fromCWVect (CW.vectorDifference (toCWVect v) (toCWVect w))
+  fromCWVect (CW.vectorDifference (toCWVect v) (toCWVect w))
 
 -- | Scales a given vector by a given scalar multiplier
 scaledVector :: (Vector, Number) -> Vector
@@ -96,7 +96,7 @@ scaledVector (v, k) = fromCWVect (CW.scaledVector (toDouble k) (toCWVect v))
 -- | Rotates a given vector by a given angle in degrees
 rotatedVector :: (Vector, Number) -> Vector
 rotatedVector (v, k) =
-    fromCWVect (CW.rotatedVector (toDouble (pi * k / 180)) (toCWVect v))
+  fromCWVect (CW.rotatedVector (toDouble (pi * k / 180)) (toCWVect v))
 
 -- | The dot product of two vectors
 dotProduct :: (Vector, Vector) -> Number
@@ -111,8 +111,8 @@ dotProduct (v, w) = fromDouble (CW.dotProduct (toCWVect v) (toCWVect w))
 -- can be drawn on the screen using one of the CodeWorld entry points
 -- such as 'drawingOf'.
 newtype Picture = CWPic
-    { toCWPic :: CW.Picture
-    }
+  { toCWPic :: CW.Picture
+  }
 
 -- | A font in which lettering can be drawn.  Fonts are used with the
 -- 'styledLettering' function.
@@ -121,19 +121,19 @@ newtype Picture = CWPic
 -- computers where that font is installed, so you are encouraged to
 -- use one of the other values.
 data Font
-    = Serif
-    | SansSerif
-    | Monospace
-    | Handwriting
-    | Fancy
-    | NamedFont !Text
+  = Serif
+  | SansSerif
+  | Monospace
+  | Handwriting
+  | Fancy
+  | NamedFont !Text
 
 -- | A style in which lettering can be drawn.  Text styles are used
 -- with the 'styledLettering' function.
 data TextStyle
-    = Plain
-    | Italic
-    | Bold
+  = Plain
+  | Italic
+  | Bold
 
 -- | A blank picture
 blank :: HasCallStack => Picture
@@ -146,9 +146,12 @@ polyline ps = withFrozenCallStack $ CWPic (CW.polyline (map toCWVect ps))
 -- | A thin sequence of line segments with these endpoints
 path :: HasCallStack => [Point] -> Picture
 path ps = withFrozenCallStack $ CWPic (CW.path (map toCWVect ps))
-
-{-# WARNING path ["Please use polyline(...) instead of path(...).",
-                  "path may be removed July 2020."] #-}
+{-# WARNING
+  path
+  [ "Please use polyline(...) instead of path(...).",
+    "path may be removed July 2020."
+  ]
+  #-}
 
 -- | A thin sequence of line segments, with these endpoints and line width
 thickPolyline :: HasCallStack => ([Point], Number) -> Picture
@@ -157,9 +160,12 @@ thickPolyline (ps, n) = withFrozenCallStack $ CWPic (CW.thickPolyline (toDouble 
 -- | A thin sequence of line segments, with these endpoints and line width
 thickPath :: HasCallStack => ([Point], Number) -> Picture
 thickPath (ps, n) = withFrozenCallStack $ CWPic (CW.thickPath (toDouble n) (map toCWVect ps))
-
-{-# WARNING thickPath ["Please use thickPolyline(...) instead of thickPath(...).",
-                       "thickPath may be removed July 2020."] #-}
+{-# WARNING
+  thickPath
+  [ "Please use thickPolyline(...) instead of thickPath(...).",
+    "thickPath may be removed July 2020."
+  ]
+  #-}
 
 -- | A thin polygon with these points as vertices
 polygon :: HasCallStack => [Point] -> Picture
@@ -204,7 +210,7 @@ solidRectangle (w, h) = withFrozenCallStack $ CWPic (CW.solidRectangle (toDouble
 -- | A thick rectangle, with this width and height and line width
 thickRectangle :: HasCallStack => (Number, Number, Number) -> Picture
 thickRectangle (w, h, lw) =
-    withFrozenCallStack $ CWPic (CW.thickRectangle (toDouble lw) (toDouble w) (toDouble h))
+  withFrozenCallStack $ CWPic (CW.thickRectangle (toDouble lw) (toDouble w) (toDouble h))
 
 -- | A thin circle, with this radius
 circle :: HasCallStack => Number -> Picture
@@ -220,27 +226,35 @@ thickCircle (r, w) = withFrozenCallStack $ CWPic (CW.thickCircle (toDouble w) (t
 
 -- | A thin arc, starting and ending at these angles, with this radius
 arc :: HasCallStack => (Number, Number, Number) -> Picture
-arc (b, e, r) = withFrozenCallStack $ CWPic
-    (CW.arc (toDouble (pi * b / 180)) (toDouble (pi * e / 180)) (toDouble r))
+arc (b, e, r) =
+  withFrozenCallStack $
+    CWPic
+      (CW.arc (toDouble (pi * b / 180)) (toDouble (pi * e / 180)) (toDouble r))
 
 -- | A solid sector of a circle (i.e., a pie slice) starting and ending at these
 -- angles, with this radius
 sector :: HasCallStack => (Number, Number, Number) -> Picture
-sector (b, e, r) = withFrozenCallStack $ CWPic
-    (CW.sector
-         (toDouble (pi * b / 180))
-         (toDouble (pi * e / 180))
-         (toDouble r))
+sector (b, e, r) =
+  withFrozenCallStack $
+    CWPic
+      ( CW.sector
+          (toDouble (pi * b / 180))
+          (toDouble (pi * e / 180))
+          (toDouble r)
+      )
 
 -- | A thick arc, starting and ending at these angles, with this radius and
 -- line width
 thickArc :: HasCallStack => (Number, Number, Number, Number) -> Picture
-thickArc (b, e, r, w) = withFrozenCallStack $ CWPic
-    (CW.thickArc
-        (toDouble w)
-        (toDouble (pi * b / 180))
-        (toDouble (pi * e / 180))
-        (toDouble r))
+thickArc (b, e, r, w) =
+  withFrozenCallStack $
+    CWPic
+      ( CW.thickArc
+          (toDouble w)
+          (toDouble (pi * b / 180))
+          (toDouble (pi * e / 180))
+          (toDouble r)
+      )
 
 -- | A rendering of text characters.
 lettering :: HasCallStack => Text -> Picture
@@ -249,14 +263,17 @@ lettering t = withFrozenCallStack $ CWPic (CW.lettering (fromCWText t))
 -- | A rendering of text characters.
 text :: HasCallStack => Text -> Picture
 text t = withFrozenCallStack $ CWPic (CW.lettering (fromCWText t))
-
-{-# WARNING text ["Please use lettering(...) instead of text(...).",
-                  "text may be removed July 2020."] #-}
+{-# WARNING
+  text
+  [ "Please use lettering(...) instead of text(...).",
+    "text may be removed July 2020."
+  ]
+  #-}
 
 -- | A rendering of text characters, with a specific choice of font and style.
 styledLettering :: HasCallStack => (Text, Font, TextStyle) -> Picture
 styledLettering (t, f, s) =
-    withFrozenCallStack $ CWPic (CW.styledLettering (fromCWStyle s) (fromCWFont f) (fromCWText t))
+  withFrozenCallStack $ CWPic (CW.styledLettering (fromCWStyle s) (fromCWFont f) (fromCWText t))
   where
     fromCWStyle Plain = CW.Plain
     fromCWStyle Bold = CW.Bold
@@ -271,9 +288,12 @@ styledLettering (t, f, s) =
 -- | A rendering of text characters, with a specific choice of font and style.
 styledText :: HasCallStack => (Text, Font, TextStyle) -> Picture
 styledText args = withFrozenCallStack $ styledLettering args
-
-{-# WARNING styledText ["Please use styledLettering(...) instead of styledText(...).",
-                        "styledText may be removed July 2020."] #-}
+{-# WARNING
+  styledText
+  [ "Please use styledLettering(...) instead of styledText(...).",
+    "styledText may be removed July 2020."
+  ]
+  #-}
 
 -- | A picture drawn entirely in this color.
 colored :: HasCallStack => (Picture, Color) -> Picture
@@ -286,7 +306,7 @@ coloured args = withFrozenCallStack $ colored args
 -- | A picture drawn translated in these directions.
 translated :: HasCallStack => (Picture, Number, Number) -> Picture
 translated (p, x, y) =
-    withFrozenCallStack $ CWPic (CW.translated (toDouble x) (toDouble y) (toCWPic p))
+  withFrozenCallStack $ CWPic (CW.translated (toDouble x) (toDouble y) (toCWPic p))
 
 -- | A picture scaled by these factors in the x and y directions.
 -- Factors greater than @1@ stretch the picture larger in that direction, and
@@ -321,7 +341,7 @@ reflected (p, th) = withFrozenCallStack $ CWPic (CW.reflected (toDouble (pi * th
 -- | A picture clipped to a rectangle of this width and height.
 clipped :: HasCallStack => (Picture, Number, Number) -> Picture
 clipped (p, w, h) =
-    withFrozenCallStack $ CWPic (CW.clipped (toDouble w) (toDouble h) (toCWPic p))
+  withFrozenCallStack $ CWPic (CW.clipped (toDouble w) (toDouble h) (toCWPic p))
 
 -- | A picture made by drawing this list of pictures, ordered from front to back.
 pictures :: HasCallStack => [Picture] -> Picture
@@ -329,6 +349,7 @@ pictures ps = withFrozenCallStack $ CWPic (CW.pictures (map toCWPic ps))
 
 -- | A binary operation that overlays one picture in from of the other.
 (&) :: HasCallStack => Picture -> Picture -> Picture
+
 infixr 0 &
 
 a & b = withFrozenCallStack $ CWPic (toCWPic a CW.& toCWPic b)

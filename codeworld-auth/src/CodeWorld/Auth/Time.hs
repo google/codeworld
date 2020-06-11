@@ -14,20 +14,19 @@
   limitations under the License.
 -}
 
-{-|
-Time utility functions
--}
-
+-- |
+-- Time utility functions
 module CodeWorld.Auth.Time
-    ( minutes
-    , numericDateToUTCTime
-    , seconds
-    , utcTimeToNumericDate
-    ) where
+  ( minutes,
+    numericDateToUTCTime,
+    seconds,
+    utcTimeToNumericDate,
+  )
+where
 
-import           Data.Time.Clock (NominalDiffTime, UTCTime)
-import           Data.Time.Clock.POSIX (posixSecondsToUTCTime, utcTimeToPOSIXSeconds)
-import           Web.JWT (NumericDate, numericDate, secondsSinceEpoch)
+import Data.Time.Clock (NominalDiffTime, UTCTime)
+import Data.Time.Clock.POSIX (posixSecondsToUTCTime, utcTimeToPOSIXSeconds)
+import Web.JWT (NumericDate, numericDate, secondsSinceEpoch)
 
 utcTimeToNumericDate :: UTCTime -> Maybe NumericDate
 utcTimeToNumericDate = numericDate . utcTimeToPOSIXSeconds

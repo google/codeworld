@@ -82,7 +82,8 @@ reflectDS th = mapDSAT $ \(AffineTransformation a b c d e f) ->
     (b * sin r - d * cos r)
     e
     f
-  where r = 2 * th
+  where
+    r = 2 * th
 
 setColorDS :: Color -> DrawState -> DrawState
 setColorDS col = mapDSColor $ \mcol ->

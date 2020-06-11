@@ -26,7 +26,6 @@ import Data.Generics
 import Data.Generics.Twins
 import Data.List
 import Data.Maybe
-
 import "ghc" HsSyn
 import "ghc" OccName
 import "ghc" RdrName
@@ -55,7 +54,7 @@ instance Template (Pat GhcPs) where
   toParens (ParPat _ (L _ x)) = Just x
   toParens _ = Nothing
 
-  toTuple (TuplePat _ ps _) = Just [ p | L _ p <- ps ]
+  toTuple (TuplePat _ ps _) = Just [p | L _ p <- ps]
   toTuple _ = Nothing
 
   toVar x@(VarPat _ _) = Just x
@@ -119,7 +118,7 @@ instance Template (HsExpr GhcPs) where
   toNum x@(HsLit _ (HsWord64Prim _ _)) = Just x
   toNum x@(HsLit _ (HsFloatPrim _ _)) = Just x
   toNum x@(HsLit _ (HsDoublePrim _ _)) = Just x
-  toNum x@(NegApp _ (L _ (toNum -> Just _)) _)= Just x
+  toNum x@(NegApp _ (L _ (toNum -> Just _)) _) = Just x
   toNum _ = Nothing
 
   toChar x@(HsLit _ (HsChar _ _)) = Just x
@@ -138,12 +137,13 @@ match :: Data a => a -> a -> Bool
 match tmpl val = matchQ tmpl val
 
 matchQ :: GenericQ (GenericQ Bool)
-matchQ = matchesGhcPs
-      ||| (matchesSpecials :: (Pat GhcPs) -> (Pat GhcPs) -> Maybe Bool)
-      ||| (matchesSpecials :: (HsExpr GhcPs) -> (HsExpr GhcPs) -> Maybe Bool)
-      ||| matchesWildcard
-      ||| mismatchedNames
-      ||| structuralEq
+matchQ =
+  matchesGhcPs
+    ||| (matchesSpecials :: (Pat GhcPs) -> (Pat GhcPs) -> Maybe Bool)
+    ||| (matchesSpecials :: (HsExpr GhcPs) -> (HsExpr GhcPs) -> Maybe Bool)
+    ||| matchesWildcard
+    ||| mismatchedNames
+    ||| structuralEq
 
 matchesGhcPs :: GhcPs -> GhcPs -> Maybe Bool
 matchesGhcPs _ _ = Just True
@@ -151,23 +151,41 @@ matchesGhcPs _ _ = Just True
 matchesSpecials :: Template a => a -> a -> Maybe Bool
 matchesSpecials (toParens -> Just x) y = Just (matchQ x y)
 matchesSpecials x (toParens -> Just y) = Just (matchQ x y)
-matchesSpecials (toSplice -> 
-  Just (HsTypedSplice _ _ _ (L _ (HsApp _ op (L _ (HsBracket _ (fromBracket -> Just tmpl))))))) x = 
+matchesSpecials
+  ( toSplice ->
+      Just (HsTypedSplice _ _ _ (L _ (HsApp _ op (L _ (HsBracket _ (fromBracket -> Just tmpl))))))
+    )
+  x =
     matchBrackets op tmpl x
-matchesSpecials (toSplice -> 
-  Just (HsUntypedSplice _ _ _ (L _ (HsApp _ op (L _ (HsBracket _ (fromBracket -> Just tmpl))))))) x = 
+matchesSpecials
+  ( toSplice ->
+      Just (HsUntypedSplice _ _ _ (L _ (HsApp _ op (L _ (HsBracket _ (fromBracket -> Just tmpl))))))
+    )
+  x =
     matchBrackets op tmpl x
-matchesSpecials (toSplice -> 
-  Just (HsTypedSplice _ _ _ (L _ (HsApp _ op (L _ (ExplicitList _ _ (sequence . map (\(L _ (HsBracket _ b)) -> fromBracket b) -> Just xs))))))) x = 
+matchesSpecials
+  ( toSplice ->
+      Just (HsTypedSplice _ _ _ (L _ (HsApp _ op (L _ (ExplicitList _ _ (sequence . map (\(L _ (HsBracket _ b)) -> fromBracket b) -> Just xs))))))
+    )
+  x =
     matchLogical op xs x
-matchesSpecials (toSplice -> 
-  Just (HsUntypedSplice _ _ _ (L _ (HsApp _ op (L _ (ExplicitList _ _ (sequence . map (\(L _ (HsBracket _ b)) -> fromBracket b) -> Just xs))))))) x = 
+matchesSpecials
+  ( toSplice ->
+      Just (HsUntypedSplice _ _ _ (L _ (HsApp _ op (L _ (ExplicitList _ _ (sequence . map (\(L _ (HsBracket _ b)) -> fromBracket b) -> Just xs))))))
+    )
+  x =
     matchLogical op xs x
-matchesSpecials (toSplice -> 
-  Just (HsTypedSplice _ _ _ (L _ (HsVar _ (L _ id))))) x =
+matchesSpecials
+  ( toSplice ->
+      Just (HsTypedSplice _ _ _ (L _ (HsVar _ (L _ id))))
+    )
+  x =
     matchSimple id x
-matchesSpecials (toSplice -> 
-  Just (HsUntypedSplice _ _ _ (L _ (HsVar _ (L _ id))))) x =
+matchesSpecials
+  ( toSplice ->
+      Just (HsUntypedSplice _ _ _ (L _ (HsVar _ (L _ id))))
+    )
+  x =
     matchSimple id x
 matchesSpecials _ _ = Nothing
 
@@ -211,11 +229,13 @@ mismatchedNames x y = if idName x /= idName y then Just False else Nothing
 structuralEq :: (Data a, Data b) => a -> b -> Bool
 structuralEq x y = toConstr x == toConstr y && and (gzipWithQ matchQ x y)
 
-(|||) :: (Typeable a, Typeable b, Typeable x)
-    => (x -> x -> Maybe Bool)
-    -> (a -> b -> Bool)
-    -> (a -> b -> Bool)
+(|||) ::
+  (Typeable a, Typeable b, Typeable x) =>
+  (x -> x -> Maybe Bool) ->
+  (a -> b -> Bool) ->
+  (a -> b -> Bool)
 f ||| g = \x y -> fromMaybe (g x y) (join (f <$> cast x <*> cast y))
+
 infixr 0 |||
 
 idName :: IdP GhcPs -> String

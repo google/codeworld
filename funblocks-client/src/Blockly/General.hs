@@ -14,7 +14,6 @@
   limitations under the License.
 -}
 
-module Blockly.General ( UUID(..) )
-  where
+module Blockly.General (UUID (..)) where
 
 newtype UUID = UUID String

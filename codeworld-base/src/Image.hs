@@ -36,5 +36,6 @@ import "base" Prelude (($))
 -- JPG, etc.  SVG should be preferred, as it behaves better with
 -- transformations.
 image :: HasCallStack => (Text, Text, Number, Number) -> Picture
-image (name, url, w, h) = withFrozenCallStack $ CWPic $
+image (name, url, w, h) =
+  withFrozenCallStack $ CWPic $
     CW.image (fromCWText name) (fromCWText url) (toDouble w) (toDouble h)

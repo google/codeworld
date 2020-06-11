@@ -1,6 +1,6 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE JavaScriptFFI #-}
-{-# LANGUAGE CPP #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -18,43 +18,46 @@
   limitations under the License.
 -}
 
-module Blockly.Block ( Block(..)
-                     , getFieldValue
-                     , getBlockType
-                     , getOutputBlock
-                     , getOutputConnection
-                     , getColour
-                     , getValueInputNames
-                     , getFunctionName
-                     , getItemCount
-                     , setAsFunction
-                     , setAsLiteral
-                     , setColour
-                     , isDisabled
-                     , areAllInputsConnected
-                     , select
-                     , addSelect
-                     , addErrorSelect
-                     , setWarningText
-                     , disableWarningText
-                     , setDisabled
-                     , getInputBlock)
-  where
+module Blockly.Block
+  ( Block (..),
+    getFieldValue,
+    getBlockType,
+    getOutputBlock,
+    getOutputConnection,
+    getColour,
+    getValueInputNames,
+    getFunctionName,
+    getItemCount,
+    setAsFunction,
+    setAsLiteral,
+    setColour,
+    isDisabled,
+    areAllInputsConnected,
+    select,
+    addSelect,
+    addErrorSelect,
+    setWarningText,
+    disableWarningText,
+    setDisabled,
+    getInputBlock,
+  )
+where
 
-import GHCJS.Types
+import Blockly.Connection
 import Data.JSString.Text
+import qualified Data.Text as T
 import GHCJS.Foreign
 import GHCJS.Marshal
-import Unsafe.Coerce
-import Blockly.Connection
-import qualified Data.Text as T
+import GHCJS.Types
 import qualified JavaScript.Array as JA
+import Unsafe.Coerce
 
 newtype Block = Block JSVal
 
 instance IsJSVal Block
 
 pack = textToJSString
+
 unpack = textFromJSString
 
 getFieldValue :: Block -> T.Text -> T.Text
@@ -70,15 +73,22 @@ getBlockType :: Block -> T.Text
 getBlockType = unpack . js_type
 
 getOutputBlock :: Block -> Maybe Block
-getOutputBlock block = if isNull con then Nothing
-                       else let block = js_outputConnectionBlock' con in 
-                         if isNull block then Nothing
-                         else Just $ unsafeCoerce block
-  where con = js_outputConnection' block
+getOutputBlock block =
+  if isNull con
+    then Nothing
+    else
+      let block = js_outputConnectionBlock' con
+       in if isNull block
+            then Nothing
+            else Just $ unsafeCoerce block
+  where
+    con = js_outputConnection' block
 
 getOutputConnection :: Block -> Maybe Connection
-getOutputConnection block = if isNull con then Nothing
-                      else Just $ Connection con 
+getOutputConnection block =
+  if isNull con
+    then Nothing
+    else Just $ Connection con
   where
     con = js_outputConnection' block
 
@@ -86,39 +96,42 @@ blockTest :: Block -> IO ()
 blockTest = js_testOutputConnection
 
 setColour :: Block -> Int -> IO ()
-setColour = js_setColour 
+setColour = js_setColour
 
 getColour :: Block -> Int
-getColour = js_getColour 
+getColour = js_getColour
 
 getFunctionName :: Block -> T.Text
-getFunctionName = unpack . js_getFunctionName 
+getFunctionName = unpack . js_getFunctionName
 
 getInputBlock :: Block -> T.Text -> Maybe Block
-getInputBlock block name = if isNull val then Nothing
-                           else Just $ Block val
-  where val = js_getInputTargetBlock block (pack name)
+getInputBlock block name =
+  if isNull val
+    then Nothing
+    else Just $ Block val
+  where
+    val = js_getInputTargetBlock block (pack name)
 
 select :: Block -> IO ()
-select = js_select 
+select = js_select
 
 addSelect :: Block -> IO ()
-addSelect = js_addSelect 
+addSelect = js_addSelect
 
 addErrorSelect :: Block -> IO ()
-addErrorSelect = js_addErrorSelect 
+addErrorSelect = js_addErrorSelect
 
 setWarningText :: Block -> T.Text -> IO ()
 setWarningText block text = js_setWarningText block (pack text)
 
-disableWarningText :: Block ->  IO ()
-disableWarningText = js_disableWarningText 
+disableWarningText :: Block -> IO ()
+disableWarningText = js_disableWarningText
 
 setDisabled :: Block -> Bool -> IO ()
-setDisabled = js_setDisabled 
+setDisabled = js_setDisabled
 
 isDisabled :: Block -> Bool
-isDisabled = js_disabled 
+isDisabled = js_disabled
 
 areAllInputsConnected :: Block -> Bool
 areAllInputsConnected = js_allInputsConnected
@@ -133,8 +146,10 @@ setAsLiteral :: Block -> T.Text -> IO ()
 setAsLiteral block name = js_setAsLiteral block (pack name)
 
 getValueInputNames :: Block -> [T.Text]
-getValueInputNames block = map unpack $ map (\n -> unsafeCoerce n :: JSString) $ 
-                           JA.toList $ js_getValueInputNames block
+getValueInputNames block =
+  map unpack $ map (\n -> unsafeCoerce n :: JSString)
+    $ JA.toList
+    $ js_getValueInputNames block
 
 --- FFI
 

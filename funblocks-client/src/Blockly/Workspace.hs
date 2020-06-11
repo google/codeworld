@@ -1,7 +1,7 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE JavaScriptFFI #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE CPP #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -19,33 +19,34 @@
   limitations under the License.
 -}
 
-module Blockly.Workspace ( Workspace(..)
-                          ,setWorkspace
-                          ,workspaceToCode
-                          ,isTopBlock
-                          ,getById
-                          ,loadXml
-                          ,getTopBlocksLength
-                          ,getBlockById
-                          ,getTopBlocks
-                          ,getTopBlocksTrue
-                          ,isWarning
-                          ,disableOrphans
-                          ,warnOnInputs
-                          ,mainWorkspace
-                          )
-  where
+module Blockly.Workspace
+  ( Workspace (..),
+    setWorkspace,
+    workspaceToCode,
+    isTopBlock,
+    getById,
+    loadXml,
+    getTopBlocksLength,
+    getBlockById,
+    getTopBlocks,
+    getTopBlocksTrue,
+    isWarning,
+    disableOrphans,
+    warnOnInputs,
+    mainWorkspace,
+  )
+where
 
-import GHCJS.Types
+import Blockly.Block (Block (..))
+import Blockly.General
 import Data.JSString (pack, unpack)
+import Data.JSString.Text
+import qualified Data.Text as T
 import GHCJS.Foreign
 import GHCJS.Marshal
-import Unsafe.Coerce
-import qualified Data.Text as T
-import Blockly.General
-import Blockly.Block (Block(..))
+import GHCJS.Types
 import qualified JavaScript.Array as JA
-import Data.JSString.Text 
+import Unsafe.Coerce
 
 newtype Workspace = Workspace JSVal
 
@@ -57,9 +58,8 @@ instance ToJSVal Workspace where
 instance FromJSVal Workspace where
   fromJSVal v = return $ Just $ Workspace v
 
-
 setWorkspace :: String -> String -> IO Workspace
-setWorkspace canvasId toolboxId =  js_blocklyInject (pack canvasId) (pack toolboxId)
+setWorkspace canvasId toolboxId = js_blocklyInject (pack canvasId) (pack toolboxId)
 
 workspaceToCode :: Workspace -> IO String
 workspaceToCode workspace = js_blocklyWorkspaceToCode workspace >>= return . unpack
@@ -68,9 +68,12 @@ getById :: UUID -> Workspace
 getById (UUID uuidStr) = js_getById (pack uuidStr)
 
 getBlockById :: Workspace -> UUID -> Maybe Block
-getBlockById workspace (UUID uuidstr) = if isNull val then Nothing
-                                        else Just $ unsafeCoerce val
-  where val = js_getBlockById workspace (pack uuidstr)
+getBlockById workspace (UUID uuidstr) =
+  if isNull val
+    then Nothing
+    else Just $ unsafeCoerce val
+  where
+    val = js_getBlockById workspace (pack uuidstr)
 
 isTopBlock :: Workspace -> Block -> Bool
 isTopBlock = js_isTopBlock
@@ -96,7 +99,6 @@ getTopBlocksTrue ws = do
   let vs = JA.toList vals
   return $ map Block vs
 
-
 mainWorkspace :: Workspace
 mainWorkspace = js_getMainWorkspace
 
@@ -119,10 +121,10 @@ foreign import javascript unsafe "Blockly.FunBlocks.workspaceToCode($1)"
   js_blocklyWorkspaceToCode :: Workspace -> IO JSString
 
 foreign import javascript unsafe "$1.isTopBlock($2)"
-  js_isTopBlock :: Workspace -> Block -> Bool 
+  js_isTopBlock :: Workspace -> Block -> Bool
 
 foreign import javascript unsafe "$1.isWarning()"
-  js_isWarning :: Workspace -> IO JA.JSArray 
+  js_isWarning :: Workspace -> IO JA.JSArray
 
 foreign import javascript unsafe "Blockly.Workspace.getById($1)"
   js_getById :: JSString -> Workspace

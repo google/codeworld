@@ -13,6 +13,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
+{-# LANGUAGE TupleSections #-}
+
 -- |
 -- Module       : Data.MultiMap
 -- Copyright    : (c) CodeWorld Authors 2017
@@ -26,19 +28,18 @@
 -- 'Data.Sequence.Seq' for efficient insert-at-end and other improved speeds.
 --
 -- Also only supports the operations required by CodeWorld for now.
-{-# LANGUAGE TupleSections #-}
-
 module Data.MultiMap
-    ( MultiMap
-    , empty
-    , null
-    , insertL
-    , insertR
-    , toList
-    , spanAntitone
-    , union
-    , keys
-    ) where
+  ( MultiMap,
+    empty,
+    null,
+    insertL,
+    insertR,
+    toList,
+    spanAntitone,
+    union,
+    keys,
+  )
+where
 
 import Data.Bifunctor
 import Data.Coerce
@@ -47,9 +48,9 @@ import qualified Data.Map as M
 import qualified Data.Sequence as S
 import Prelude hiding (null)
 
-newtype MultiMap k v =
-    MM (M.Map k (S.Seq v))
-    deriving (Show, Eq)
+newtype MultiMap k v
+  = MM (M.Map k (S.Seq v))
+  deriving (Show, Eq)
 
 empty :: MultiMap k v
 empty = MM M.empty
@@ -69,8 +70,9 @@ toList (MM m) = [(k, v) | (k, vs) <- M.toList m, v <- Data.Foldable.toList vs]
 -- TODO: replace with M.spanAntitone once containers is updated
 mapSpanAntitone :: (k -> Bool) -> M.Map k a -> (M.Map k a, M.Map k a)
 mapSpanAntitone p =
-    bimap M.fromDistinctAscList M.fromDistinctAscList .
-    span (p . fst) . M.toList
+  bimap M.fromDistinctAscList M.fromDistinctAscList
+    . span (p . fst)
+    . M.toList
 
 spanAntitone :: (k -> Bool) -> MultiMap k v -> (MultiMap k v, MultiMap k v)
 spanAntitone p (MM m) = coerce (mapSpanAntitone p m)

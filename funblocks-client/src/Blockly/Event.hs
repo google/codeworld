@@ -1,6 +1,6 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE JavaScriptFFI #-}
-{-# LANGUAGE CPP #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -18,44 +18,44 @@
   limitations under the License.
 -}
 
-module Blockly.Event ( Event(..)
-                      ,EventType(..)
-                      ,getType
-                      ,getWorkspaceId
-                      ,getBlockId
---                      ,getIds
-                      ,addChangeListener
-                      )
-  where
+module Blockly.Event
+  ( Event (..),
+    EventType (..),
+    getType,
+    getWorkspaceId,
+    getBlockId,
+    --                      ,getIds
+    addChangeListener,
+  )
+where
 
-import GHCJS.Types
-import Data.JSString (pack, unpack)
-import GHCJS.Foreign
-import GHCJS.Marshal
-import GHCJS.Foreign.Callback
 import Blockly.General
 import Blockly.Workspace
+import Data.JSString (pack, unpack)
+import GHCJS.Foreign
+import GHCJS.Foreign.Callback
+import GHCJS.Marshal
+import GHCJS.Types
 import JavaScript.Array (JSArray)
 
 newtype Event = Event JSVal
 
-data EventType = CreateEvent Event
-              | DeleteEvent Event
-              | ChangeEvent Event
-              | MoveEvent Event
-              | UIEvent Event
-              | GeneralEvent Event
-
+data EventType
+  = CreateEvent Event
+  | DeleteEvent Event
+  | ChangeEvent Event
+  | MoveEvent Event
+  | UIEvent Event
+  | GeneralEvent Event
 
 getType :: Event -> EventType
 getType event = case unpack $ js_type event of
-                  "create" -> CreateEvent event
-                  "delete" -> DeleteEvent event
-                  "change" -> ChangeEvent event
-                  "move" -> MoveEvent event
-                  "ui" -> UIEvent event
-                  _ -> GeneralEvent event
-
+  "create" -> CreateEvent event
+  "delete" -> DeleteEvent event
+  "change" -> ChangeEvent event
+  "move" -> MoveEvent event
+  "ui" -> UIEvent event
+  _ -> GeneralEvent event
 
 getWorkspaceId :: Event -> UUID
 getWorkspaceId event = UUID $ unpack $ js_workspaceId event
@@ -69,12 +69,11 @@ getGroup event = UUID $ unpack $ js_group event
 -- getIds :: Event -> UUID
 -- getIds event = UUID $ unpack $ js_ids event
 
-
-type EventCallback = Event -> IO () 
+type EventCallback = Event -> IO ()
 
 addChangeListener :: Workspace -> EventCallback -> IO ()
 addChangeListener workspace func = do
-  cb <- syncCallback1 ContinueAsync  (func . Event)
+  cb <- syncCallback1 ContinueAsync (func . Event)
   js_addChangeListener workspace cb
 
 --- FFI
@@ -93,7 +92,7 @@ foreign import javascript unsafe "$1.type"
 foreign import javascript unsafe "$1.workspaceId"
   js_workspaceId :: Event -> JSString
 
--- UUID of block. 
+-- UUID of block.
 foreign import javascript unsafe "$1.blockId"
   js_blockId :: Event -> JSString
 

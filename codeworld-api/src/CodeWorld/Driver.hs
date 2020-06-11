@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wno-name-shadowing -Wno-orphans -Wno-unticked-promoted-constructors #-}
-
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -18,6 +16,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -Wno-name-shadowing -Wno-orphans -Wno-unticked-promoted-constructors #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -53,7 +52,7 @@ import Data.Char (chr)
 import Data.Dependent.Sum
 import Data.Foldable
 import Data.IORef
-import Data.List (zip4, intercalate)
+import Data.List (intercalate, zip4)
 import Data.Maybe
 import Data.Serialize
 import Data.Serialize.Text ()
@@ -126,28 +125,28 @@ import System.Environment
 -- the action that sets up the geometry.
 withDS :: MonadCanvas m => DrawState -> m a -> m a
 withDS (DrawState (AffineTransformation ta tb tc td te tf) _col) action =
-    CM.saveRestore $ do
-        CM.transform ta tb tc td te tf
-        CM.beginPath
-        action
+  CM.saveRestore $ do
+    CM.transform ta tb tc td te tf
+    CM.beginPath
+    action
 
 setColor :: MonadCanvas m => Color -> m ()
 setColor (RGBA r g b a) = do
-    CM.strokeColor
-        (round $ r * 255)
-        (round $ g * 255)
-        (round $ b * 255)
-        a
-    CM.fillColor
-        (round $ r * 255)
-        (round $ g * 255)
-        (round $ b * 255)
-        a
+  CM.strokeColor
+    (round $ r * 255)
+    (round $ g * 255)
+    (round $ b * 255)
+    a
+  CM.fillColor
+    (round $ r * 255)
+    (round $ g * 255)
+    (round $ b * 255)
+    a
 
 applyColor :: MonadCanvas m => DrawState -> m ()
 applyColor ds = case getColorDS ds of
-    Nothing -> setColor (RGBA 0 0 0 1)
-    Just c -> setColor c
+  Nothing -> setColor (RGBA 0 0 0 1)
+  Just c -> setColor c
 
 -- | A slower way to draw a picture, which has some useful properties.  It
 -- can draw images in non-standard colors, and apply transparent colors
@@ -155,75 +154,75 @@ applyColor ds = case getColorDS ds of
 -- color in the DrawState.
 viaOffscreen :: MonadCanvas m => Color -> (Color -> m ()) -> m ()
 viaOffscreen (RGBA r g b a) pic = do
-    w <- CM.getScreenWidth
-    h <- CM.getScreenHeight
-    when (w > 0.5 && h > 0.5) $ do
-        img <- CM.newImage (round w) (round h)
-        CM.withImage img $ do
-            setupScreenContext (round w) (round h)
-            pic (RGBA r g b 1)
-        CM.saveRestore $ do
-            px <- pixelSize
-            CM.scale px (-px)
-            CM.globalAlpha a
-            CM.drawImage img (round (-w/2)) (round (-h/2)) (round w) (round h)
+  w <- CM.getScreenWidth
+  h <- CM.getScreenHeight
+  when (w > 0.5 && h > 0.5) $ do
+    img <- CM.newImage (round w) (round h)
+    CM.withImage img $ do
+      setupScreenContext (round w) (round h)
+      pic (RGBA r g b 1)
+    CM.saveRestore $ do
+      px <- pixelSize
+      CM.scale px (- px)
+      CM.globalAlpha a
+      CM.drawImage img (round (- w / 2)) (round (- h / 2)) (round w) (round h)
 
 followPath :: MonadCanvas m => [Point] -> Bool -> Bool -> m ()
 followPath [] _ _ = return ()
 followPath [_] _ _ = return ()
-followPath ((sx, sy):ps) closed False = do
-    CM.moveTo (sx, sy)
-    forM_ ps $ \(x, y) -> CM.lineTo (x, y)
-    when closed CM.closePath
+followPath ((sx, sy) : ps) closed False = do
+  CM.moveTo (sx, sy)
+  forM_ ps $ \(x, y) -> CM.lineTo (x, y)
+  when closed CM.closePath
 followPath [p1, p2] False True = followPath [p1, p2] False False
 followPath ps False True = do
-    let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = take 3 ps
-        dprev = euclideanDistance p1 p2
-        dnext = euclideanDistance p2 p3
-        p = dprev / (dprev + dnext)
-        cx = x2 + p * (x1 - x3) / 2
-        cy = y2 + p * (y1 - y3) / 2
-    CM.moveTo (x1, y1)
-    CM.quadraticCurveTo (cx, cy) (x2, y2)
-    forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $ \(p1@(x1, y1), p2@(x2, y2), p3@(x3, y3), p4@(x4, y4)) -> do
-        let dp = euclideanDistance p1 p2
-            d1 = euclideanDistance p2 p3
-            d2 = euclideanDistance p3 p4
-            p = d1 / (d1 + d2)
-            r = d1 / (dp + d1)
-            cx1 = x2 + r * (x3 - x1) / 2
-            cy1 = y2 + r * (y3 - y1) / 2
-            cx2 = x3 + p * (x2 - x4) / 2
-            cy2 = y3 + p * (y2 - y4) / 2
-        CM.bezierCurveTo
-            (cx1, cy1)
-            (cx2, cy2)
-            (x3,  y3)
-    let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = reverse $ take 3 $ reverse ps
-        dp = euclideanDistance p1 p2
+  let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = take 3 ps
+      dprev = euclideanDistance p1 p2
+      dnext = euclideanDistance p2 p3
+      p = dprev / (dprev + dnext)
+      cx = x2 + p * (x1 - x3) / 2
+      cy = y2 + p * (y1 - y3) / 2
+  CM.moveTo (x1, y1)
+  CM.quadraticCurveTo (cx, cy) (x2, y2)
+  forM_ (zip4 ps (tail ps) (tail $ tail ps) (tail $ tail $ tail ps)) $ \(p1@(x1, y1), p2@(x2, y2), p3@(x3, y3), p4@(x4, y4)) -> do
+    let dp = euclideanDistance p1 p2
         d1 = euclideanDistance p2 p3
+        d2 = euclideanDistance p3 p4
+        p = d1 / (d1 + d2)
         r = d1 / (dp + d1)
-        cx = x2 + r * (x3 - x1) / 2
-        cy = y2 + r * (y3 - y1) / 2
-    CM.quadraticCurveTo (cx, cy) (x3, y3)
-followPath ps@(_:(sx, sy):_) True True = do
-    CM.moveTo (sx, sy)
-    let rep = cycle ps
-    forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $ \(p1@(x1, y1), p2@(x2, y2), p3@(x3, y3), p4@(x4, y4)) -> do
-        let dp = euclideanDistance p1 p2
-            d1 = euclideanDistance p2 p3
-            d2 = euclideanDistance p3 p4
-            p = d1 / (d1 + d2)
-            r = d1 / (dp + d1)
-            cx1 = x2 + r * (x3 - x1) / 2
-            cy1 = y2 + r * (y3 - y1) / 2
-            cx2 = x3 + p * (x2 - x4) / 2
-            cy2 = y3 + p * (y2 - y4) / 2
-        CM.bezierCurveTo
-            (cx1, cy1)
-            (cx2, cy2)
-            (x3,  y3)
-    CM.closePath
+        cx1 = x2 + r * (x3 - x1) / 2
+        cy1 = y2 + r * (y3 - y1) / 2
+        cx2 = x3 + p * (x2 - x4) / 2
+        cy2 = y3 + p * (y2 - y4) / 2
+    CM.bezierCurveTo
+      (cx1, cy1)
+      (cx2, cy2)
+      (x3, y3)
+  let [p1@(x1, y1), p2@(x2, y2), p3@(x3, y3)] = reverse $ take 3 $ reverse ps
+      dp = euclideanDistance p1 p2
+      d1 = euclideanDistance p2 p3
+      r = d1 / (dp + d1)
+      cx = x2 + r * (x3 - x1) / 2
+      cy = y2 + r * (y3 - y1) / 2
+  CM.quadraticCurveTo (cx, cy) (x3, y3)
+followPath ps@(_ : (sx, sy) : _) True True = do
+  CM.moveTo (sx, sy)
+  let rep = cycle ps
+  forM_ (zip4 ps (tail rep) (tail $ tail rep) (tail $ tail $ tail rep)) $ \(p1@(x1, y1), p2@(x2, y2), p3@(x3, y3), p4@(x4, y4)) -> do
+    let dp = euclideanDistance p1 p2
+        d1 = euclideanDistance p2 p3
+        d2 = euclideanDistance p3 p4
+        p = d1 / (d1 + d2)
+        r = d1 / (dp + d1)
+        cx1 = x2 + r * (x3 - x1) / 2
+        cy1 = y2 + r * (y3 - y1) / 2
+        cx2 = x3 + p * (x2 - x4) / 2
+        cy2 = y3 + p * (y2 - y4) / 2
+    CM.bezierCurveTo
+      (cx1, cy1)
+      (cx2, cy2)
+      (x3, y3)
+  CM.closePath
 
 euclideanDistance :: Point -> Point -> Double
 euclideanDistance (x1, y1) (x2, y2) = sqrt $ square (x2 - x1) + square (y2 - y1)
@@ -232,22 +231,22 @@ euclideanDistance (x1, y1) (x2, y2) = sqrt $ square (x2 - x1) + square (y2 - y1)
 
 drawFigure :: MonadCanvas m => DrawState -> Double -> m () -> m ()
 drawFigure ds w figure = do
-    withDS ds $ do
-        figure
-        when (w /= 0) $ do
-            CM.lineWidth w
-            applyColor ds
-            CM.stroke
-    when (w == 0) $ do
-        CM.lineWidth =<< pixelSize
-        applyColor ds
-        CM.stroke
+  withDS ds $ do
+    figure
+    when (w /= 0) $ do
+      CM.lineWidth w
+      applyColor ds
+      CM.stroke
+  when (w == 0) $ do
+    CM.lineWidth =<< pixelSize
+    applyColor ds
+    CM.stroke
 
 fillFigure :: MonadCanvas m => DrawState -> m () -> m ()
 fillFigure ds figure = do
-    withDS ds figure
-    applyColor ds
-    CM.fill
+  withDS ds figure
+  applyColor ds
+  CM.fill
 
 --------------------------------------------------------------------------------
 
@@ -285,8 +284,8 @@ drawPicture (Dilate _ k p) ds = drawPicture p (scaleDS k k ds)
 drawPicture (Rotate _ r p) ds = drawPicture p (rotateDS r ds)
 drawPicture (Reflect _ r p) ds = drawPicture p (reflectDS r ds)
 drawPicture (Clip _ x y p) ds = do
-    withDS ds $ followPath (rectangleVertices x y) True False
-    CM.saveRestore $ CM.clip >> drawPicture p ds
+  withDS ds $ followPath (rectangleVertices x y) True False
+  CM.saveRestore $ CM.clip >> drawPicture p ds
 drawPicture (Pictures _ ps) ds = forM_ (reverse ps) $ \p -> drawPicture p ds
 drawPicture (PictureAnd _ ps) ds = forM_ (reverse ps) $ \p -> drawPicture p ds
 
@@ -322,8 +321,8 @@ pictureContains (Dilate _ k p) ds pt = pictureContains p (scaleDS k k ds) pt
 pictureContains (Rotate _ r p) ds pt = pictureContains p (rotateDS r ds) pt
 pictureContains (Reflect _ r p) ds pt = pictureContains p (reflectDS r ds) pt
 pictureContains (Clip _ x y p) ds pt =
-    (&&) <$> polygonContains (rectangleVertices x y) False ds pt
-         <*> pictureContains p ds pt
+  (&&) <$> polygonContains (rectangleVertices x y) False ds pt
+    <*> pictureContains p ds pt
 pictureContains (Pictures _ ps) ds pt = orM [pictureContains p ds pt | p <- ps]
 pictureContains (PictureAnd _ ps) ds pt = orM [pictureContains p ds pt | p <- ps]
 
@@ -352,54 +351,54 @@ drawPolygon ps smooth ds = fillFigure ds $ followPath ps True smooth
 
 polygonContains :: MonadCanvas m => [Point] -> Bool -> DrawState -> Point -> m Bool
 polygonContains ps smooth ds p = do
-    withDS ds $ followPath ps True smooth
-    CM.isPointInPath p
+  withDS ds $ followPath ps True smooth
+  CM.isPointInPath p
 
 drawPath :: MonadCanvas m => [Point] -> Double -> Bool -> Bool -> DrawState -> m ()
 drawPath ps w closed smooth ds = drawFigure ds w $ followPath ps closed smooth
 
 pathContains :: MonadCanvas m => [Point] -> Double -> Bool -> Bool -> DrawState -> Point -> m Bool
 pathContains ps w closed smooth ds p = do
-    s <- pixelSize
-    drawFigure ds (max s w) $ followPath ps closed smooth
-    CM.isPointInStroke p
+  s <- pixelSize
+  drawFigure ds (max s w) $ followPath ps closed smooth
+  CM.isPointInStroke p
 
 drawSector :: MonadCanvas m => Double -> Double -> Double -> DrawState -> m ()
 drawSector b e r ds =
-    fillFigure ds $ CM.arc 0 0 (abs r) b e (b > e) >> CM.lineTo (0, 0)
+  fillFigure ds $ CM.arc 0 0 (abs r) b e (b > e) >> CM.lineTo (0, 0)
 
 sectorContains :: MonadCanvas m => Double -> Double -> Double -> DrawState -> Point -> m Bool
 sectorContains b e r ds p = do
-    withDS ds $ CM.arc 0 0 (abs r) b e (b > e) >> CM.lineTo (0, 0)
-    CM.isPointInPath p
+  withDS ds $ CM.arc 0 0 (abs r) b e (b > e) >> CM.lineTo (0, 0)
+  CM.isPointInPath p
 
 drawArc :: MonadCanvas m => Double -> Double -> Double -> Double -> DrawState -> m ()
 drawArc b e r w ds =
-    drawFigure ds w $ CM.arc 0 0 (abs r) b e (b > e)
+  drawFigure ds w $ CM.arc 0 0 (abs r) b e (b > e)
 
 arcContains :: MonadCanvas m => Double -> Double -> Double -> Double -> DrawState -> Point -> m Bool
 arcContains b e r w ds p = do
-    s <- pixelSize
-    let width = max s w
-    CM.lineWidth width
-    drawFigure ds width $
-        CM.arc 0 0 (abs r) b e (b > e)
-    CM.isPointInStroke p
+  s <- pixelSize
+  let width = max s w
+  CM.lineWidth width
+  drawFigure ds width $
+    CM.arc 0 0 (abs r) b e (b > e)
+  CM.isPointInStroke p
 
 drawText :: MonadCanvas m => TextStyle -> Font -> Text -> DrawState -> m ()
 drawText sty fnt txt ds = withDS ds $ do
-    CM.scale (1/25) (-1/25)
-    applyColor ds
-    CM.font (fontString sty fnt)
-    CM.fillText txt (0, 0)
+  CM.scale (1 / 25) (-1 / 25)
+  applyColor ds
+  CM.font (fontString sty fnt)
+  CM.fillText txt (0, 0)
 
 textContains :: MonadCanvas m => TextStyle -> Font -> Text -> DrawState -> Point -> m Bool
 textContains sty fnt txt ds p = do
-    CM.font (fontString sty fnt)
-    width <- (/ 25) <$> CM.measureText txt
-    let height = 1 -- constant, defined in fontString
-    withDS ds $ CM.rect ((-0.5) * width) ((-0.5) * height) width height
-    CM.isPointInPath p
+  CM.font (fontString sty fnt)
+  width <- (/ 25) <$> CM.measureText txt
+  let height = 1 -- constant, defined in fontString
+  withDS ds $ CM.rect ((-0.5) * width) ((-0.5) * height) width height
+  CM.isPointInPath p
 
 fontString :: TextStyle -> Font -> Text
 fontString style font = stylePrefix style <> "25px " <> fontName font
@@ -407,7 +406,6 @@ fontString style font = stylePrefix style <> "25px " <> fontName font
     stylePrefix Plain = ""
     stylePrefix Bold = "bold "
     stylePrefix Italic = "italic "
-
     fontName SansSerif = "sans-serif"
     fontName Serif = "serif"
     fontName Monospace = "monospace"
@@ -417,26 +415,26 @@ fontString style font = stylePrefix style <> "25px " <> fontName font
 
 drawImage :: MonadCanvas m => Text -> Text -> Double -> Double -> DrawState -> m ()
 drawImage name url imgw imgh ds = case getColorDS ds of
-    -- Fast path: draw in original color.
-    Nothing -> withDS ds $ do
-        CM.scale 1 (-1)
-        CM.drawImgURL name url imgw imgh
+  -- Fast path: draw in original color.
+  Nothing -> withDS ds $ do
+    CM.scale 1 (-1)
+    CM.drawImgURL name url imgw imgh
 
-    -- Slow path: draw in a different color via an offscreen canvas.
-    Just oc -> viaOffscreen oc $ \c -> do
-        setColor c
-        w <- CM.getScreenWidth
-        h <- CM.getScreenHeight
-        CM.fillRect (-w/2) (-h/2) w h
-        CM.globalCompositeOperation "destination-in"
-        withDS ds $ do
-            CM.scale 1 (-1)
-            CM.drawImgURL name url imgw imgh
+  -- Slow path: draw in a different color via an offscreen canvas.
+  Just oc -> viaOffscreen oc $ \c -> do
+    setColor c
+    w <- CM.getScreenWidth
+    h <- CM.getScreenHeight
+    CM.fillRect (- w / 2) (- h / 2) w h
+    CM.globalCompositeOperation "destination-in"
+    withDS ds $ do
+      CM.scale 1 (-1)
+      CM.drawImgURL name url imgw imgh
 
 imageContains :: MonadCanvas m => Text -> Text -> Double -> Double -> DrawState -> Point -> m Bool
 imageContains _ _ imgw imgh ds p = withDS ds $ do
-    CM.rect (-imgw / 2) (-imgh / 2) imgw imgh
-    CM.isPointInPath p
+  CM.rect (- imgw / 2) (- imgh / 2) imgw imgh
+  CM.isPointInPath p
 
 coordinatePlanePic :: Picture
 coordinatePlanePic = axes <> numbers <> guidelines
@@ -444,62 +442,62 @@ coordinatePlanePic = axes <> numbers <> guidelines
     xline y = colored (RGBA 0 0 0 0.25) $ polyline [(-10, y), (10, y)]
     xaxis = colored (RGBA 0 0 0 0.75) $ polyline [(-10, 0), (10, 0)]
     axes = xaxis <> rotated (pi / 2) xaxis
-    xguidelines = pictures [xline k | k <- [-10,-9 .. 10]]
+    xguidelines = pictures [xline k | k <- [-10, -9 .. 10]]
     guidelines = xguidelines <> rotated (pi / 2) xguidelines
     numbers = xnumbers <> ynumbers
     xnumbers =
-        pictures
-            [ translated
-                (fromIntegral k)
-                0.3
-                (scaled 0.5 0.5 (lettering (T.pack (show k))))
-            | k <- [-9,-8 .. 9]
-            , k /= (0 :: Int)
-            ]
+      pictures
+        [ translated
+            (fromIntegral k)
+            0.3
+            (scaled 0.5 0.5 (lettering (T.pack (show k))))
+          | k <- [-9, -8 .. 9],
+            k /= (0 :: Int)
+        ]
     ynumbers =
-        pictures
-            [ translated
-                0.3
-                (fromIntegral k)
-                (scaled 0.5 0.5 (lettering (T.pack (show k))))
-            | k <- [-9,-8 .. 9]
-            , k /= (0 :: Int)
-            ]
+      pictures
+        [ translated
+            0.3
+            (fromIntegral k)
+            (scaled 0.5 0.5 (lettering (T.pack (show k))))
+          | k <- [-9, -8 .. 9],
+            k /= (0 :: Int)
+        ]
 
 --------------------------------------------------------------------------------
 
 clearScreen :: MonadCanvas m => m ()
 clearScreen = do
-    w <- CM.getScreenWidth
-    h <- CM.getScreenHeight
-    px <- pixelSize
-    CM.fillColor 255 255 255 1
-    CM.fillRect (-w/2 * px) (-h/2 * px) (w * px) (h * px)
+  w <- CM.getScreenWidth
+  h <- CM.getScreenHeight
+  px <- pixelSize
+  CM.fillColor 255 255 255 1
+  CM.fillRect (- w / 2 * px) (- h / 2 * px) (w * px) (h * px)
 
 drawFrame :: MonadCanvas m => Picture -> m ()
 drawFrame pic = clearScreen >> drawPicture pic initialDS
 
 pixelSize :: MonadCanvas m => m Double
 pixelSize = do
-    cw <- CM.getScreenWidth
-    ch <- CM.getScreenHeight
-    return $ max (20 / realToFrac cw) (20 / realToFrac ch)
+  cw <- CM.getScreenWidth
+  ch <- CM.getScreenHeight
+  return $ max (20 / realToFrac cw) (20 / realToFrac ch)
 
 setupScreenContext :: MonadCanvas m => Int -> Int -> m ()
 setupScreenContext cw ch = do
-    CM.translate (realToFrac cw / 2) (realToFrac ch / 2)
-    s <- pixelSize
-    CM.scale (1/s) (-1/s)
-    CM.lineWidth 0
-    CM.textCenter
-    CM.textMiddle
+  CM.translate (realToFrac cw / 2) (realToFrac ch / 2)
+  s <- pixelSize
+  CM.scale (1 / s) (-1 / s)
+  CM.lineWidth 0
+  CM.textCenter
+  CM.textMiddle
 
 --------------------------------------------------------------------------------
 
 -- A NodeId a unique id for each node in a Picture, chosen by the order the node
 -- appears in DFS.  Always >=0.
-newtype NodeId = NodeId { getNodeId :: Int}
-    deriving (Eq, Ord, Enum, Show)
+newtype NodeId = NodeId {getNodeId :: Int}
+  deriving (Eq, Ord, Enum, Show)
 
 getChildNodes :: Picture -> [Picture]
 getChildNodes (Color _ _ p) = [p]
@@ -515,79 +513,82 @@ getChildNodes _ = []
 
 findTopShape :: MonadCanvas m => DrawState -> Picture -> Double -> Double -> m (Maybe NodeId)
 findTopShape ds pic x y = do
-    (found, n) <- searchSingle ds pic x y
-    return $ if found
-        then Just (NodeId n)
-        else Nothing
+  (found, n) <- searchSingle ds pic x y
+  return $
+    if found
+      then Just (NodeId n)
+      else Nothing
   where
     searchSingle ds (Color _ _ p) x y =
-        fmap (+ 1) <$> searchSingle ds p x y
+      fmap (+ 1) <$> searchSingle ds p x y
     searchSingle ds (Translate _ dx dy p) x y =
-        fmap (+ 1) <$> searchSingle (translateDS dx dy ds) p x y
+      fmap (+ 1) <$> searchSingle (translateDS dx dy ds) p x y
     searchSingle ds (Scale _ sx sy p) x y =
-        fmap (+ 1) <$> searchSingle (scaleDS sx sy ds) p x y
+      fmap (+ 1) <$> searchSingle (scaleDS sx sy ds) p x y
     searchSingle ds (Dilate _ k p) x y =
-        fmap (+ 1) <$> searchSingle (scaleDS k k ds) p x y
+      fmap (+ 1) <$> searchSingle (scaleDS k k ds) p x y
     searchSingle ds (Rotate _ a p) x y =
-        fmap (+ 1) <$> searchSingle (rotateDS a ds) p x y
+      fmap (+ 1) <$> searchSingle (rotateDS a ds) p x y
     searchSingle ds (Reflect _ a p) x y =
-        fmap (+ 1) <$> searchSingle (reflectDS a ds) p x y
+      fmap (+ 1) <$> searchSingle (reflectDS a ds) p x y
     searchSingle ds (Clip _ w h p) x y = do
-        inClip <- polygonContains (rectangleVertices w h) False ds (x, y)
-        fmap (+ 1) <$> if inClip
-                       then searchSingle ds p x y
-                       else return (False, countNodes p)
+      inClip <- polygonContains (rectangleVertices w h) False ds (x, y)
+      fmap (+ 1)
+        <$> if inClip
+          then searchSingle ds p x y
+          else return (False, countNodes p)
     searchSingle ds (Pictures _ ps) x y =
-        fmap (+ 1) <$> searchMulti ds ps x y
+      fmap (+ 1) <$> searchMulti ds ps x y
     searchSingle ds (PictureAnd _ ps) x y =
-        fmap (+ 1) <$> searchMulti ds ps x y
+      fmap (+ 1) <$> searchMulti ds ps x y
     searchSingle ds p x y = do
-        contained <- pictureContains p ds (x, y)
-        if contained
-          then pure (True, 0)
-          else pure (False, 1)
-
+      contained <- pictureContains p ds (x, y)
+      if contained
+        then pure (True, 0)
+        else pure (False, 1)
     searchMulti _ [] _ _ = return (False, 0)
-    searchMulti ds (pic:pics) x y = do
-        (found, count) <- searchSingle ds pic x y
-        if found
-          then pure (True, count)
-          else fmap (+ count) <$> searchMulti ds pics x y
-
+    searchMulti ds (pic : pics) x y = do
+      (found, count) <- searchSingle ds pic x y
+      if found
+        then pure (True, count)
+        else fmap (+ count) <$> searchMulti ds pics x y
     countNodes p = 1 + sum (map countNodes (getChildNodes p))
 
 -- If a picture is found, the result will include an array of the base picture
 -- and all transformations.
 findTopShapeFromPoint :: MonadCanvas m => Point -> Picture -> m (Maybe NodeId)
 findTopShapeFromPoint (x, y) pic = do
-    cw <- CM.getScreenWidth
-    ch <- CM.getScreenHeight
-    img <- CM.newImage (round cw) (round ch)
-    CM.withImage img $ do
-        setupScreenContext (round cw) (round ch)
-        findTopShape initialDS pic x y
+  cw <- CM.getScreenWidth
+  ch <- CM.getScreenHeight
+  img <- CM.newImage (round cw) (round ch)
+  CM.withImage img $ do
+    setupScreenContext (round cw) (round ch)
+    findTopShape initialDS pic x y
 
 trim :: Int -> String -> String
 trim x y
   | x >= length y = y
   | otherwise = take mid y ++ "..." ++ reverse (take mid $ reverse y)
-  where mid = (x - 3) `div` 2
+  where
+    mid = (x - 3) `div` 2
 
 showFloat :: Bool -> Double -> String
 showFloat needNegParens x
   | needNegParens && x < 0 = "(" ++ result ++ ")"
   | otherwise = result
-  where result = stripZeros (showFFloatAlt (Just 4) x "")
-        stripZeros = reverse . dropWhile (== '.') . dropWhile (== '0') . reverse
+  where
+    result = stripZeros (showFFloatAlt (Just 4) x "")
+    stripZeros = reverse . dropWhile (== '.') . dropWhile (== '0') . reverse
 
 showPoints :: [Point] -> String
 showPoints pts =
-    "[" ++
-    intercalate ", " [
-        "(" ++ showFloat False x ++ ", " ++ showFloat False y ++ ")"
+  "["
+    ++ intercalate
+      ", "
+      [ "(" ++ showFloat False x ++ ", " ++ showFloat False y ++ ")"
         | (x, y) <- pts
-    ] ++
-    "]"
+      ]
+    ++ "]"
 
 showColor :: Color -> String
 showColor c@(RGBA r g b a)
@@ -602,109 +603,110 @@ showColor c@(RGBA r g b a)
   | c == pink = "pink"
   | c == purple = "purple"
   | c == gray = "gray"
-  | haskellMode, a == 1 =
-      printf "(RGB %s %s %s)" (showFloat True r) (showFloat True g) (showFloat True b)
+  | haskellMode,
+    a == 1 =
+    printf "(RGB %s %s %s)" (showFloat True r) (showFloat True g) (showFloat True b)
   | a == 1 =
-      printf "RGB(%s, %s, %s)" (showFloat False r) (showFloat False g) (showFloat False b)
+    printf "RGB(%s, %s, %s)" (showFloat False r) (showFloat False g) (showFloat False b)
   | haskellMode =
-      printf "(RGBA %s %s %s %s)" (showFloat True r) (showFloat True g) (showFloat True b) (showFloat True a)
+    printf "(RGBA %s %s %s %s)" (showFloat True r) (showFloat True g) (showFloat True b) (showFloat True a)
   | otherwise =
-      printf "RGBA(%s, %s, %s, %s)" (showFloat False r) (showFloat False g) (showFloat False b) (showFloat False a)
+    printf "RGBA(%s, %s, %s, %s)" (showFloat False r) (showFloat False g) (showFloat False b) (showFloat False a)
 
 describePicture :: Picture -> String
 describePicture (Rectangle _ w h)
   | haskellMode = printf "rectangle %s %s" (showFloat True w) (showFloat True h)
-  | otherwise   = printf "rectangle(%s, %s)" (showFloat False w) (showFloat False h)
+  | otherwise = printf "rectangle(%s, %s)" (showFloat False w) (showFloat False h)
 describePicture (SolidRectangle _ w h)
   | haskellMode = printf "solidRectangle %s %s" (showFloat True w) (showFloat True h)
-  | otherwise   = printf "solidRectangle(%s, %s)" (showFloat False w) (showFloat False h)
+  | otherwise = printf "solidRectangle(%s, %s)" (showFloat False w) (showFloat False h)
 describePicture (ThickRectangle _ lw w h)
   | haskellMode = printf "thickRectangle %s %s %s" (showFloat True lw) (showFloat True w) (showFloat True h)
-  | otherwise   = printf "thickRectangle(%s, %s, %s)" (showFloat False w) (showFloat False h) (showFloat False lw)
+  | otherwise = printf "thickRectangle(%s, %s, %s)" (showFloat False w) (showFloat False h) (showFloat False lw)
 describePicture (Circle _ r)
   | haskellMode = printf "circle %s" (showFloat True r)
-  | otherwise   = printf "circle(%s)" (showFloat False r)
+  | otherwise = printf "circle(%s)" (showFloat False r)
 describePicture (SolidCircle _ r)
   | haskellMode = printf "solidCircle %s" (showFloat True r)
-  | otherwise   = printf "solidCircle(%s)" (showFloat False r)
+  | otherwise = printf "solidCircle(%s)" (showFloat False r)
 describePicture (ThickCircle _ lw r)
   | haskellMode = printf "thickCircle %s %s" (showFloat True lw) (showFloat True r)
-  | otherwise   = printf "thickCircle(%s, %s)" (showFloat False r) (showFloat False lw)
+  | otherwise = printf "thickCircle(%s, %s)" (showFloat False r) (showFloat False lw)
 describePicture (SolidPolygon _ pts)
   | haskellMode = printf "solidPolygon %s" (showPoints pts)
-  | otherwise   = printf "solidPolygon(%s)" (showPoints pts)
+  | otherwise = printf "solidPolygon(%s)" (showPoints pts)
 describePicture (SolidClosedCurve _ pts)
   | haskellMode = printf "solidClosedCurve %s" (showPoints pts)
-  | otherwise   = printf "solidClosedCurve(%s)" (showPoints pts)
+  | otherwise = printf "solidClosedCurve(%s)" (showPoints pts)
 describePicture (Polygon _ pts)
   | haskellMode = printf "polygon %s" (showPoints pts)
-  | otherwise   = printf "polygon(%s)" (showPoints pts)
+  | otherwise = printf "polygon(%s)" (showPoints pts)
 describePicture (ThickPolygon _ pts w)
   | haskellMode = printf "thickPolygon %s %s" (showFloat True w) (showPoints pts)
-  | otherwise   = printf "thickPolygon(%s, %s)" (showPoints pts) (showFloat False w)
+  | otherwise = printf "thickPolygon(%s, %s)" (showPoints pts) (showFloat False w)
 describePicture (ClosedCurve _ pts)
   | haskellMode = printf "closedCurve %s" (showPoints pts)
-  | otherwise   = printf "closedCurve(%s)" (showPoints pts)
+  | otherwise = printf "closedCurve(%s)" (showPoints pts)
 describePicture (ThickClosedCurve _ pts w)
   | haskellMode = printf "thickClosedCurve %s %s" (showFloat True w) (showPoints pts)
-  | otherwise   = printf "thickClosedCurve(%s, %s)" (showPoints pts) (showFloat False w)
+  | otherwise = printf "thickClosedCurve(%s, %s)" (showPoints pts) (showFloat False w)
 describePicture (Polyline _ pts)
   | haskellMode = printf "polyline %s" (showPoints pts)
-  | otherwise   = printf "polyline(%s)" (showPoints pts)
+  | otherwise = printf "polyline(%s)" (showPoints pts)
 describePicture (ThickPolyline _ pts w)
   | haskellMode = printf "thickPolyline %s %s" (showFloat True w) (showPoints pts)
-  | otherwise   = printf "thickPolyline(%s, %s)" (showPoints pts) (showFloat False w)
+  | otherwise = printf "thickPolyline(%s, %s)" (showPoints pts) (showFloat False w)
 describePicture (Curve _ pts)
   | haskellMode = printf "curve %s" (showPoints pts)
-  | otherwise   = printf "curve(%s)" (showPoints pts)
+  | otherwise = printf "curve(%s)" (showPoints pts)
 describePicture (ThickCurve _ pts w)
   | haskellMode = printf "thickCurve %s %s" (showFloat True w) (showPoints pts)
-  | otherwise   = printf "thickCurve(%s, %s)" (showPoints pts) (showFloat False w)
+  | otherwise = printf "thickCurve(%s, %s)" (showPoints pts) (showFloat False w)
 describePicture (Sector _ b e r)
   | haskellMode = printf "sector %s %s %s" (showFloat True b) (showFloat True e) (showFloat True r)
-  | otherwise   = printf "sector(%s°, %s°, %s)" (showFloat False (180 * b / pi)) (showFloat False (180 * e / pi)) (showFloat False r)
+  | otherwise = printf "sector(%s°, %s°, %s)" (showFloat False (180 * b / pi)) (showFloat False (180 * e / pi)) (showFloat False r)
 describePicture (Arc _ b e r)
   | haskellMode = printf "arc %s %s %s" (showFloat True b) (showFloat True e) (showFloat True r)
-  | otherwise   = printf "arc(%s°, %s°, %s)" (showFloat False (180 * b / pi)) (showFloat False (180 * e / pi)) (showFloat False r)
+  | otherwise = printf "arc(%s°, %s°, %s)" (showFloat False (180 * b / pi)) (showFloat False (180 * e / pi)) (showFloat False r)
 describePicture (ThickArc _ b e r w)
   | haskellMode = printf "thickArc %s %s %s %s" (showFloat True w) (showFloat True b) (showFloat True e) (showFloat True r)
-  | otherwise   = printf "thickArc(%s°, %s°, %s, %s)" (showFloat False (180 * b / pi)) (showFloat False (180 * e / pi)) (showFloat False r) (showFloat False w)
+  | otherwise = printf "thickArc(%s°, %s°, %s, %s)" (showFloat False (180 * b / pi)) (showFloat False (180 * e / pi)) (showFloat False r) (showFloat False w)
 describePicture (Lettering _ txt)
   | haskellMode = printf "lettering %s" (show txt)
-  | otherwise   = printf "lettering(%s)" (show txt)
+  | otherwise = printf "lettering(%s)" (show txt)
 describePicture (Blank _) = "blank"
 describePicture (StyledLettering _ style font txt)
   | haskellMode = printf "styledLettering %s %s %s" (showsPrec 10 style "") (showsPrec 10 font "") (show txt)
-  | otherwise   = printf "styledLettering(%s, %s, %s)" (show txt) (show font) (show style)
+  | otherwise = printf "styledLettering(%s, %s, %s)" (show txt) (show font) (show style)
 describePicture (Color _ c _)
   | haskellMode = printf "colored %s" (showColor c)
-  | otherwise   = printf "colored(..., %s)" (showColor c)
+  | otherwise = printf "colored(..., %s)" (showColor c)
 describePicture (Translate _ x y _)
   | haskellMode = printf "translated %s %s" (showFloat True x) (showFloat True y)
-  | otherwise   = printf "translated(..., %s, %s)" (showFloat False x) (showFloat False y)
+  | otherwise = printf "translated(..., %s, %s)" (showFloat False x) (showFloat False y)
 describePicture (Scale _ x y _)
   | haskellMode = printf "scaled %s %s" (showFloat True x) (showFloat True y)
-  | otherwise   = printf "scaled(..., %s, %s)" (showFloat False x) (showFloat False y)
+  | otherwise = printf "scaled(..., %s, %s)" (showFloat False x) (showFloat False y)
 describePicture (Rotate _ angle _)
   | haskellMode = printf "rotated %s" (showFloat True angle)
-  | otherwise   = printf "rotated(..., %s°)" (showFloat False (180 * angle / pi))
+  | otherwise = printf "rotated(..., %s°)" (showFloat False (180 * angle / pi))
 describePicture (Reflect _ angle _)
   | haskellMode = printf "reflected %s" (showFloat True angle)
-  | otherwise   = printf "reflected(..., %s°)" (showFloat False (180 * angle / pi))
+  | otherwise = printf "reflected(..., %s°)" (showFloat False (180 * angle / pi))
 describePicture (Clip _ x y _)
   | haskellMode = printf "clipped %s %s" (showFloat True x) (showFloat True y)
-  | otherwise   = printf "rotated(..., %s, %s)" (showFloat False x) (showFloat False y)
+  | otherwise = printf "rotated(..., %s, %s)" (showFloat False x) (showFloat False y)
 describePicture (Dilate _ k _)
   | haskellMode = printf "dilated %s" (showFloat True k)
-  | otherwise   = printf "dilated(..., %s)" (showFloat False k)
+  | otherwise = printf "dilated(..., %s)" (showFloat False k)
 describePicture (Sketch _ name _ _ _) = T.unpack name
 describePicture (CoordinatePlane _) = "coordinatePlane"
 describePicture (Pictures _ _)
   | haskellMode = "pictures"
-  | otherwise   = "pictures(...)"
+  | otherwise = "pictures(...)"
 describePicture (PictureAnd _ _)
   | haskellMode = "(&)"
-  | otherwise   = "... & ..."
+  | otherwise = "... & ..."
 
 getPictureSrcLoc :: Picture -> Maybe SrcLoc
 getPictureSrcLoc (SolidPolygon loc _) = loc
@@ -935,106 +937,111 @@ runBlankCanvas act = do
 
 keyCodeToText :: Word -> Text
 keyCodeToText n =
-    case n of
-        _ | n >= 47 && n <= 90 -> fromAscii n
-        _ | n >= 96 && n <= 105 -> fromNum (n - 96)
-        _ | n >= 112 && n <= 135 -> "F" <> fromNum (n - 111)
-        3 -> "Cancel"
-        6 -> "Help"
-        8 -> "Backspace"
-        9 -> "Tab"
-        12 -> "5"
-        13 -> "Enter"
-        16 -> "Shift"
-        17 -> "Ctrl"
-        18 -> "Alt"
-        19 -> "Break"
-        20 -> "CapsLock"
-        27 -> "Esc"
-        32 -> " "
-        33 -> "PageUp"
-        34 -> "PageDown"
-        35 -> "End"
-        36 -> "Home"
-        37 -> "Left"
-        38 -> "Up"
-        39 -> "Right"
-        40 -> "Down"
-        42 -> "*"
-        43 -> "+"
-        44 -> "PrintScreen"
-        45 -> "Insert"
-        46 -> "Delete"
-        47 -> "Help"
-        91 -> "OS"
-        92 -> "OS"
-        93 -> "ContextMenu"
-        106 -> "*"
-        107 -> "+"
-        108 -> ","
-        109 -> "-"
-        110 -> "."
-        111 -> "/"
-        144 -> "NumLock"
-        145 -> "ScrollLock"
-        173 -> "-"
-        186 -> ";"
-        187 -> "="
-        188 -> ","
-        189 -> "-"
-        190 -> "."
-        191 -> "/"
-        192 -> "`"
-        193 -> "IntlRo"
-        194 -> ","
-        219 -> "["
-        220 -> "\\"
-        221 -> "]"
-        222 -> "'"
-        225 -> "AltGraph"
-        255 -> "IntlYen"
-        _ -> "Unknown:" <> fromNum n
+  case n of
+    _ | n >= 47 && n <= 90 -> fromAscii n
+    _ | n >= 96 && n <= 105 -> fromNum (n - 96)
+    _ | n >= 112 && n <= 135 -> "F" <> fromNum (n - 111)
+    3 -> "Cancel"
+    6 -> "Help"
+    8 -> "Backspace"
+    9 -> "Tab"
+    12 -> "5"
+    13 -> "Enter"
+    16 -> "Shift"
+    17 -> "Ctrl"
+    18 -> "Alt"
+    19 -> "Break"
+    20 -> "CapsLock"
+    27 -> "Esc"
+    32 -> " "
+    33 -> "PageUp"
+    34 -> "PageDown"
+    35 -> "End"
+    36 -> "Home"
+    37 -> "Left"
+    38 -> "Up"
+    39 -> "Right"
+    40 -> "Down"
+    42 -> "*"
+    43 -> "+"
+    44 -> "PrintScreen"
+    45 -> "Insert"
+    46 -> "Delete"
+    47 -> "Help"
+    91 -> "OS"
+    92 -> "OS"
+    93 -> "ContextMenu"
+    106 -> "*"
+    107 -> "+"
+    108 -> ","
+    109 -> "-"
+    110 -> "."
+    111 -> "/"
+    144 -> "NumLock"
+    145 -> "ScrollLock"
+    173 -> "-"
+    186 -> ";"
+    187 -> "="
+    188 -> ","
+    189 -> "-"
+    190 -> "."
+    191 -> "/"
+    192 -> "`"
+    193 -> "IntlRo"
+    194 -> ","
+    219 -> "["
+    220 -> "\\"
+    221 -> "]"
+    222 -> "'"
+    225 -> "AltGraph"
+    255 -> "IntlYen"
+    _ -> "Unknown:" <> fromNum n
   where
     fromAscii n = T.singleton (chr (fromIntegral n))
     fromNum n = T.pack (show n)
 
 isUniversallyConstant :: (a -> s -> s) -> s -> Bool
 isUniversallyConstant f old =
-    unsafePerformIO $ falseOr $ do
-        oldName <- makeStableName $! old
-        genName <- makeStableName $! f undefined old
-        return (genName == oldName)
+  unsafePerformIO $ falseOr $ do
+    oldName <- makeStableName $! old
+    genName <- makeStableName $! f undefined old
+    return (genName == oldName)
   where
     falseOr x = x `catch` \(_ :: SomeException) -> return False
 
 ifDifferent :: (s -> s) -> s -> Maybe s
 ifDifferent f s0 = unsafePerformIO $ do
-    oldName <- makeStableName $! s0
-    newName <- makeStableName $! s1
-    if newName == oldName then return Nothing else return (Just s1)
-  where s1 = f s0
+  oldName <- makeStableName $! s0
+  newName <- makeStableName $! s1
+  if newName == oldName then return Nothing else return (Just s1)
+  where
+    s1 = f s0
 
 modifyMVarIfDifferent :: MVar s -> (s -> s) -> IO Bool
 modifyMVarIfDifferent var f =
-    modifyMVar var $ \s0 ->
-        case ifDifferent f s0 of
-            Nothing -> return (s0, False)
-            Just s1 -> return (s1, True)
+  modifyMVar var $ \s0 ->
+    case ifDifferent f s0 of
+      Nothing -> return (s0, False)
+      Just s1 -> return (s1, True)
 
 data GameToken
-    = FullToken { tokenDeployHash :: Text
-                , tokenNumPlayers :: Int
-                , tokenInitial :: StaticKey
-                , tokenStep :: StaticKey
-                , tokenEvent :: StaticKey
-                , tokenDraw :: StaticKey }
-    | SteplessToken { tokenDeployHash :: Text
-                    , tokenNumPlayers :: Int
-                    , tokenInitial :: StaticKey
-                    , tokenEvent :: StaticKey
-                    , tokenDraw :: StaticKey }
-    | PartialToken { tokenDeployHash :: Text }
-    deriving (Generic)
+  = FullToken
+      { tokenDeployHash :: Text,
+        tokenNumPlayers :: Int,
+        tokenInitial :: StaticKey,
+        tokenStep :: StaticKey,
+        tokenEvent :: StaticKey,
+        tokenDraw :: StaticKey
+      }
+  | SteplessToken
+      { tokenDeployHash :: Text,
+        tokenNumPlayers :: Int,
+        tokenInitial :: StaticKey,
+        tokenEvent :: StaticKey,
+        tokenDraw :: StaticKey
+      }
+  | PartialToken {tokenDeployHash :: Text}
+  deriving (Generic)
 
 deriving instance Generic Fingerprint
 
@@ -1729,8 +1736,8 @@ runGame = error "game API unimplemented in stand-alone interface mode"
 --------------------------------------------------------------------------------
 -- FRP implementation
 
-data ReactiveInput t = ReactiveInput {
-    keyPress :: R.Event t Text,
+data ReactiveInput t = ReactiveInput
+  { keyPress :: R.Event t Text,
     keyRelease :: R.Event t Text,
     textEntry :: R.Event t Text,
     pointerPress :: R.Event t Point,
@@ -1738,86 +1745,98 @@ data ReactiveInput t = ReactiveInput {
     pointerPosition :: R.Dynamic t Point,
     pointerDown :: R.Dynamic t Bool,
     timePassing :: R.Event t Double
-    }
+  }
 
-data ReactiveOutput = ReactiveOutput {
-    userPictures :: [Picture],
+data ReactiveOutput = ReactiveOutput
+  { userPictures :: [Picture],
     userTransform :: Picture -> Picture,
     systemPicture :: Picture
-    }
+  }
 
 instance Semigroup ReactiveOutput where
-    a <> b = ReactiveOutput {
-        userPictures = userPictures a ++ userPictures b,
+  a <> b =
+    ReactiveOutput
+      { userPictures = userPictures a ++ userPictures b,
         userTransform = userTransform a . userTransform b,
         systemPicture = systemPicture a & systemPicture b
-        }
+      }
 
 instance Monoid ReactiveOutput where
-    mempty = ReactiveOutput [] id blank
+  mempty = ReactiveOutput [] id blank
 
-newtype ReactiveProgram t m a = ReactiveProgram {
-    unReactiveProgram :: ReaderT (ReactiveInput t) (R.DynamicWriterT t ReactiveOutput m) a
-    }
+newtype ReactiveProgram t m a = ReactiveProgram
+  { unReactiveProgram :: ReaderT (ReactiveInput t) (R.DynamicWriterT t ReactiveOutput m) a
+  }
 
 deriving instance Functor m => Functor (ReactiveProgram t m)
+
 deriving instance Monad m => Applicative (ReactiveProgram t m)
+
 deriving instance Monad m => Monad (ReactiveProgram t m)
+
 deriving instance MonadFix m => MonadFix (ReactiveProgram t m)
+
 deriving instance MonadIO m => MonadIO (ReactiveProgram t m)
+
 deriving instance R.MonadSample t m => R.MonadSample t (ReactiveProgram t m)
+
 deriving instance R.MonadHold t m => R.MonadHold t (ReactiveProgram t m)
+
 deriving instance R.NotReady t m => R.NotReady t (ReactiveProgram t m)
+
 deriving instance R.PerformEvent t m => R.PerformEvent t (ReactiveProgram t m)
+
 deriving instance R.TriggerEvent t m => R.TriggerEvent t (ReactiveProgram t m)
+
 deriving instance R.PostBuild t m => R.PostBuild t (ReactiveProgram t m)
 
 instance (MonadFix m, R.MonadHold t m, R.Adjustable t m) => R.Adjustable t (ReactiveProgram t m) where
-    runWithReplace a0 a' =
-        ReactiveProgram $ R.runWithReplace (unReactiveProgram a0) $ fmap unReactiveProgram a'
-    traverseIntMapWithKeyWithAdjust f dm0 dm' =
-        ReactiveProgram $ R.traverseIntMapWithKeyWithAdjust (\k v -> unReactiveProgram (f k v)) dm0 dm'
-    traverseDMapWithKeyWithAdjust f dm0 dm' =
-        ReactiveProgram $ R.traverseDMapWithKeyWithAdjust (\k v -> unReactiveProgram (f k v)) dm0 dm'
-    traverseDMapWithKeyWithAdjustWithMove f dm0 dm' =
-        ReactiveProgram $ R.traverseDMapWithKeyWithAdjustWithMove (\k v -> unReactiveProgram (f k v)) dm0 dm'
+  runWithReplace a0 a' =
+    ReactiveProgram $ R.runWithReplace (unReactiveProgram a0) $ fmap unReactiveProgram a'
+  traverseIntMapWithKeyWithAdjust f dm0 dm' =
+    ReactiveProgram $ R.traverseIntMapWithKeyWithAdjust (\k v -> unReactiveProgram (f k v)) dm0 dm'
+  traverseDMapWithKeyWithAdjust f dm0 dm' =
+    ReactiveProgram $ R.traverseDMapWithKeyWithAdjust (\k v -> unReactiveProgram (f k v)) dm0 dm'
+  traverseDMapWithKeyWithAdjustWithMove f dm0 dm' =
+    ReactiveProgram $ R.traverseDMapWithKeyWithAdjustWithMove (\k v -> unReactiveProgram (f k v)) dm0 dm'
 
-runReactiveProgram
-    :: (R.Reflex t, MonadFix m)
-    => ReactiveProgram t m ()
-    -> ReactiveInput t
-    -> m (R.Dynamic t Picture, R.Dynamic t Picture)
+runReactiveProgram ::
+  (R.Reflex t, MonadFix m) =>
+  ReactiveProgram t m () ->
+  ReactiveInput t ->
+  m (R.Dynamic t Picture, R.Dynamic t Picture)
 runReactiveProgram (ReactiveProgram program) input = do
-    (_, output) <- R.runDynamicWriterT (runReaderT program input)
-    let pic = coalescePics . userPictures <$> output
-    let sysPic = (&) <$> (systemPicture <$> output)
-                     <*> (userTransform <$> output <*> pic)
-    return (pic, sysPic)
-  where coalescePics []  = blank
-        coalescePics [p] = p
-        coalescePics ps  = pictures ps
+  (_, output) <- R.runDynamicWriterT (runReaderT program input)
+  let pic = coalescePics . userPictures <$> output
+  let sysPic =
+        (&) <$> (systemPicture <$> output)
+          <*> (userTransform <$> output <*> pic)
+  return (pic, sysPic)
+  where
+    coalescePics [] = blank
+    coalescePics [p] = p
+    coalescePics ps = pictures ps
 
-withReactiveInput
-    :: ReactiveInput t
-    -> (ReactiveProgram t m a -> ReactiveProgram t m a)
-withReactiveInput input (ReactiveProgram program)
-    = ReactiveProgram (withReaderT (const input) program)
+withReactiveInput ::
+  ReactiveInput t ->
+  (ReactiveProgram t m a -> ReactiveProgram t m a)
+withReactiveInput input (ReactiveProgram program) =
+  ReactiveProgram (withReaderT (const input) program)
 
 getReactiveInput :: Monad m => ReactiveProgram t m (ReactiveInput t)
 getReactiveInput = ReactiveProgram ask
 
 systemDraw :: (R.Reflex t, Monad m) => R.Dynamic t Picture -> ReactiveProgram t m ()
-systemDraw = ReactiveProgram . R.tellDyn . fmap (\a -> mempty { systemPicture = a })
+systemDraw = ReactiveProgram . R.tellDyn . fmap (\a -> mempty {systemPicture = a})
 
-transformUserPicture
-    :: (R.Reflex t, Monad m) => R.Dynamic t (Picture -> Picture) -> ReactiveProgram t m ()
+transformUserPicture ::
+  (R.Reflex t, Monad m) => R.Dynamic t (Picture -> Picture) -> ReactiveProgram t m ()
 transformUserPicture =
-    ReactiveProgram . R.tellDyn . fmap (\a -> mempty { userTransform = a })
+  ReactiveProgram . R.tellDyn . fmap (\a -> mempty {userTransform = a})
 
 -- | Type class for the builder monad of a CodeWorld/Reflex app.
 class
-  (
-    R.Reflex t,
+  ( R.Reflex t,
     R.Adjustable t m,
     R.MonadHold t m,
     R.NotReady t m,
@@ -1827,35 +1846,37 @@ class
     MonadFix m,
     MonadIO m,
     MonadIO (R.Performable m)
-  ) => ReflexCodeWorld t m | m -> t where
-    -- | Gets an Event of key presses.  The event value is a logical key name.
-    getKeyPress :: m (R.Event t Text)
+  ) =>
+  ReflexCodeWorld t m
+    | m -> t
+  where
+  -- | Gets an Event of key presses.  The event value is a logical key name.
+  getKeyPress :: m (R.Event t Text)
 
-    -- | Gets an Event of key presses.  The event value is a logical key name.
-    getKeyRelease :: m (R.Event t Text)
+  -- | Gets an Event of key presses.  The event value is a logical key name.
+  getKeyRelease :: m (R.Event t Text)
 
-    -- | Gets an Event of text entered.  The event value is the typed text.
-    getTextEntry :: m (R.Event t Text)
+  -- | Gets an Event of text entered.  The event value is the typed text.
+  getTextEntry :: m (R.Event t Text)
 
-    -- | Gets an event of pointer clicks.  The event value is the location of
-    -- the click.
-    getPointerClick :: m (R.Event t Point)
+  -- | Gets an event of pointer clicks.  The event value is the location of
+  -- the click.
+  getPointerClick :: m (R.Event t Point)
 
-    -- | Gets the Dynamic position of the pointer.
-    getPointerPosition :: m (R.Dynamic t Point)
+  -- | Gets the Dynamic position of the pointer.
+  getPointerPosition :: m (R.Dynamic t Point)
 
-    -- | Gets a Dynamic indicator whether the pointer is held down.
-    isPointerDown :: m (R.Dynamic t Bool)
+  -- | Gets a Dynamic indicator whether the pointer is held down.
+  isPointerDown :: m (R.Dynamic t Bool)
 
-    -- | Gets an Event indicating the passage of time.
-    getTimePassing :: m (R.Event t Double)
+  -- | Gets an Event indicating the passage of time.
+  getTimePassing :: m (R.Event t Double)
 
-    -- | Emits a given Dynamic picture to be drawn to the screen.
-    draw :: R.Dynamic t Picture -> m ()
+  -- | Emits a given Dynamic picture to be drawn to the screen.
+  draw :: R.Dynamic t Picture -> m ()
 
 instance
-  (
-    R.Reflex t,
+  ( R.Reflex t,
     R.Adjustable t m,
     R.MonadHold t m,
     R.NotReady t m,
@@ -1865,22 +1886,24 @@ instance
     MonadFix m,
     MonadIO m,
     MonadIO (R.Performable m)
-  ) => ReflexCodeWorld t (ReactiveProgram t m) where
-    getKeyPress = ReactiveProgram $ asks keyPress
+  ) =>
+  ReflexCodeWorld t (ReactiveProgram t m)
+  where
+  getKeyPress = ReactiveProgram $ asks keyPress
 
-    getKeyRelease = ReactiveProgram $ asks keyRelease
+  getKeyRelease = ReactiveProgram $ asks keyRelease
 
-    getTextEntry = ReactiveProgram $ asks textEntry
+  getTextEntry = ReactiveProgram $ asks textEntry
 
-    getPointerClick = ReactiveProgram $ asks pointerPress
+  getPointerClick = ReactiveProgram $ asks pointerPress
 
-    getPointerPosition = ReactiveProgram $ asks pointerPosition
+  getPointerPosition = ReactiveProgram $ asks pointerPosition
 
-    isPointerDown = ReactiveProgram $ asks pointerDown
+  isPointerDown = ReactiveProgram $ asks pointerDown
 
-    getTimePassing = ReactiveProgram $ asks timePassing
+  getTimePassing = ReactiveProgram $ asks timePassing
 
-    draw = ReactiveProgram . R.tellDyn . fmap (\a -> mempty { userPictures = [a] })
+  draw = ReactiveProgram . R.tellDyn . fmap (\a -> mempty {userPictures = [a]})
 
 gateDyn :: forall t a. R.Reflex t => R.Dynamic t Bool -> R.Event t a -> R.Event t a
 gateDyn dyn e = R.switchDyn (bool R.never e <$> dyn)
@@ -1888,29 +1911,30 @@ gateDyn dyn e = R.switchDyn (bool R.never e <$> dyn)
 type EventChannel t = Chan [DSum (R.EventTriggerRef t) R.TriggerInvocation]
 
 -- | Handle the event channel used with 'runTriggerEventT'.
-asyncProcessEventTriggers
-    :: EventChannel t
-    -> R.FireCommand t (R.SpiderHost R.Global)
-    -> IO ThreadId
+asyncProcessEventTriggers ::
+  EventChannel t ->
+  R.FireCommand t (R.SpiderHost R.Global) ->
+  IO ThreadId
 asyncProcessEventTriggers events fireCommand = forkIO . forever $ do
-    -- Collect event triggers, and fire callbacks after propagation
-    eventsAndTriggers <- readChan events
-    eventsToFire <- flip wither eventsAndTriggers $
-        \(R.EventTriggerRef ref :=> R.TriggerInvocation a _) ->
-            fmap (==> a) <$> readRef ref
-    void . R.runSpiderHost $
-        R.runFireCommand fireCommand eventsToFire (pure ())
-    -- Run callbacks
-    traverse_ (\(_ :=> R.TriggerInvocation _ cb) -> cb) eventsAndTriggers
+  -- Collect event triggers, and fire callbacks after propagation
+  eventsAndTriggers <- readChan events
+  eventsToFire <- flip wither eventsAndTriggers $
+    \(R.EventTriggerRef ref :=> R.TriggerInvocation a _) ->
+      fmap (==> a) <$> readRef ref
+  void . R.runSpiderHost $
+    R.runFireCommand fireCommand eventsToFire (pure ())
+  -- Run callbacks
+  traverse_ (\(_ :=> R.TriggerInvocation _ cb) -> cb) eventsAndTriggers
 
-sendEvent
-    :: R.FireCommand t (R.SpiderHost R.Global)
-    -> IORef (Maybe (R.EventTrigger t a))
-    -> a
-    -> IO ()
+sendEvent ::
+  R.FireCommand t (R.SpiderHost R.Global) ->
+  IORef (Maybe (R.EventTrigger t a)) ->
+  a ->
+  IO ()
 sendEvent (R.FireCommand fire) triggerRef a =
-    R.runSpiderHost $ readRef triggerRef
-        >>= traverse_ (\t -> fire [t ==> a] (pure ()))
+  R.runSpiderHost $
+    readRef triggerRef
+      >>= traverse_ (\t -> fire [t ==> a] (pure ()))
 
 #ifdef ghcjs_HOST_OS
 

@@ -1,4 +1,5 @@
-{-# LANGUAGE ForeignFunctionInterface, JavaScriptFFI #-}
+{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE JavaScriptFFI #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -16,10 +17,8 @@
   limitations under the License.
 -}
 
-module Blockly.Generator ( Workspace )
-  where
+module Blockly.Generator (Workspace) where
 
 import GHCJS.Types
 
 newtype Workspace = Workspace JSVal
-

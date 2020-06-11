@@ -1,40 +1,77 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE PackageImports    #-}
-{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE ParallelListComp #-}
+{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 -- | Primitive Turtle commands for doing Turtle graphics. The commands
 -- follow the original LOGO naming convention, but they integrate
 -- seamlessly with the rest of CodeWorld.
-module Extras.Turtle(
-    -- $intro
-    Turtle, TurtleCommand, TurtleProgram
-    -- * Standard Turtle commands
-    , fd, bk, rt, lt, seth, setxy, home, pu, pd
-    -- * Specific Turtle commands (only in CodeWorld)
-    , overxy, sethome, origin, turtle
-    , randomized, repeatRandom
-    -- * Program control (re-exported from "Extras.Util")
-    , repeat, run, foreach, forloop
-    -- * Tracks
-    , Track, track, tracks, partialTracks, randomTracks
-    , trackLength, alongTrack
-    -- * Drawing extensions
-    , polylines, thickPolylines, solidPolygons, dottylines, dottyline
-    -- * Examples
-    , turtleExamples
-    -- * Custom Turtles
-    , customTurtle, turtlePosition, turtleAngle,
-    ) where
+module Extras.Turtle
+  ( -- $intro
+    Turtle,
+    TurtleCommand,
+    TurtleProgram,
 
-import Prelude
-import Extras.Cw(slideshow,randomDrawingOf)
+    -- * Standard Turtle commands
+    fd,
+    bk,
+    rt,
+    lt,
+    seth,
+    setxy,
+    home,
+    pu,
+    pd,
+
+    -- * Specific Turtle commands (only in CodeWorld)
+    overxy,
+    sethome,
+    origin,
+    turtle,
+    randomized,
+    repeatRandom,
+
+    -- * Program control (re-exported from "Extras.Util")
+    repeat,
+    run,
+    foreach,
+    forloop,
+
+    -- * Tracks
+    Track,
+    track,
+    tracks,
+    partialTracks,
+    randomTracks,
+    trackLength,
+    alongTrack,
+
+    -- * Drawing extensions
+    polylines,
+    thickPolylines,
+    solidPolygons,
+    dottylines,
+    dottyline,
+
+    -- * Examples
+    turtleExamples,
+
+    -- * Custom Turtles
+    customTurtle,
+    turtlePosition,
+    turtleAngle,
+  )
+where
+
+import Extras.Cw (randomDrawingOf, slideshow)
 import Extras.Op
 import Extras.Util
+import Prelude
 
 -------------------------------------------------------------------------------
+
 -- $intro
 -- = Turtle API
 --
@@ -71,7 +108,6 @@ import Extras.Util
 -- The example above will show a square of side length 1 with
 -- its lower left corner at the origin.
 
-
 -------------------------------------------------------------------------------
 -- Turtle
 -------------------------------------------------------------------------------
@@ -86,28 +122,30 @@ import Extras.Util
 -- down and pointing upwards. You can use the command 'sethome'
 -- to reset the initial position to a different point.
 data Turtle = Turtle
-  { position :: Point
-  , heading :: Point
-  , trace :: [Point]
-  , traces :: [[Point]]
-  , pen :: Pen
-  , rndNumbers :: [Number]
+  { position :: Point,
+    heading :: Point,
+    trace :: [Point],
+    traces :: [[Point]],
+    pen :: Pen,
+    rndNumbers :: [Number]
   }
 
 data Pen = Pu | Pd
 
-homePosition = (0,0)
-homeHeading = (0,1)
+homePosition = (0, 0)
+
+homeHeading = (0, 1)
 
 initialTurtle :: Turtle
-initialTurtle = Turtle
-  { position = homePosition
-  , heading = homeHeading
-  , trace = [homePosition]
-  , traces = []
-  , pen = Pd
-  , rndNumbers = []
-  }
+initialTurtle =
+  Turtle
+    { position = homePosition,
+      heading = homeHeading,
+      trace = [homePosition],
+      traces = [],
+      pen = Pd,
+      rndNumbers = []
+    }
 
 -- | A @customTurtle(x,y,angle)@ is a Turtle positioned at the point @(x,y)@,
 -- which is pointing in the direction specified by the given @angle@,
@@ -147,13 +185,14 @@ initialTurtle = Turtle
 -- and it moves until it reaches either the top or the
 -- right side of the output, whichever is reached first. This example
 -- uses 'randomDrawingOf' from "Extras.Cw" and 'itself' from "Extras.Util".
-customTurtle :: (Number,Number,Number) -> Turtle
-customTurtle(x,y,angle) = initialTurtle
-  { position = (x,y)
-  , heading = rotatedPoint((1,0),angle)
-  , trace = [(x,y)]
-  , pen = Pu
-  }
+customTurtle :: (Number, Number, Number) -> Turtle
+customTurtle (x, y, angle) =
+  initialTurtle
+    { position = (x, y),
+      heading = rotatedPoint ((1, 0), angle),
+      trace = [(x, y)],
+      pen = Pu
+    }
 
 -- | The current position of the given Turtle.
 turtlePosition :: Turtle -> Point
@@ -163,7 +202,7 @@ turtlePosition = position
 -- that CodeWorld uses angles, so that 0 means pointing to
 -- the right, and angles increase counter-clockwise.
 turtleAngle :: Turtle -> Number
-turtleAngle(turtle) = vectorDirection(turtle.#heading)
+turtleAngle (turtle) = vectorDirection (turtle .# heading)
 
 -------------------------------------------------------------------------------
 -- API
@@ -191,7 +230,7 @@ type Track = [Point]
 -- different tracks will be joined together into a single Track, as
 -- if the Turtle pen was always down.
 track :: TurtleCommand -> Track
-track(cmd) = cmd.#tracks.#concatenation
+track (cmd) = cmd .# tracks .# concatenation
 
 -- | Convert a Turtle command into a list of Tracks. A Track ends when
 -- you use the 'pu' Turtle command. After that, the Turtle position
@@ -206,31 +245,29 @@ track(cmd) = cmd.#tracks.#concatenation
 -- >         | t <- tracks(turtleProgram)
 -- >         | c <- repeating([red, purple, blue, green, orange, yellow])
 -- >         ]
--- > 
+-- >
 -- >   turtleProgram = run(foreach([1..360], singleLine))
--- > 
+-- >
 -- >   singleLine(x) = run([pd, fd(x/100), lt(59), pu])
---
 tracks :: TurtleCommand -> [Track]
-tracks(cmd) = initialTurtle.#cmd.#saveTrace.#reversed
+tracks (cmd) = initialTurtle .# cmd .# saveTrace .# reversed
 
 {- The example above in Python:
 
-# Python program to draw  
-# Rainbow Benzene 
-# using Turtle Programming 
-import turtle 
-colors = ['red', 'purple', 'blue', 'green', 'orange', 'yellow'] 
-t = turtle.Pen() 
-turtle.bgcolor('black') 
-for x in range(360): 
-    t.pencolor(colors[x%6]) 
-    t.width(x/100 + 1) 
-    t.forward(x) 
-    t.left(59) 
+# Python program to draw
+# Rainbow Benzene
+# using Turtle Programming
+import turtle
+colors = ['red', 'purple', 'blue', 'green', 'orange', 'yellow']
+t = turtle.Pen()
+turtle.bgcolor('black')
+for x in range(360):
+    t.pencolor(colors[x%6])
+    t.width(x/100 + 1)
+    t.forward(x)
+    t.left(59)
 
 -}
-
 
 -- | A list of all the partial tracks corresponding to the given command.
 -- Useful to observe a step-by-step construction of the tracks.
@@ -239,9 +276,9 @@ for x in range(360):
 --
 -- > import Extras.Turtle
 -- > import Extras.Cw(slideshow)
--- > 
+-- >
 -- > program = slideshow(foreach(slides,\s -> polylines(s)))
--- > 
+-- >
 -- > slides = partialTracks(turtleProgram)
 -- > turtleProgram = repeat(7, [square, rt(360/7)])
 -- > square = repeat(4, [fd(4), rt(90)])
@@ -249,22 +286,21 @@ for x in range(360):
 -- The example above creates a slide show that illustrates the
 -- construction of seven squares. It uses the function 'slideshow'
 -- from the module "Extras.Cw"
---
 partialTracks :: TurtleCommand -> [[Track]]
-partialTracks(turtleProg) = foreach([2..sum(lengths)],partial)
+partialTracks (turtleProg) = foreach ([2 .. sum (lengths)], partial)
   where
-  fullTracks = tracks(turtleProg)
-  fullLength = length(fullTracks)
-  lengths = foreach(fullTracks,length)
-  clengths = cumulativeSums(lengths)
-  ctracks = zipped(clengths,fullTracks)
-  partial(step)
-    | n < fullLength = append(portion,taken)
-    | otherwise = fullTracks
-    where
-    taken = selectedValues(ctracks,(<= step))
-    n = length(taken)
-    portion = first(fullTracks#(n+1),step - (0:clengths)#(n+1))
+    fullTracks = tracks (turtleProg)
+    fullLength = length (fullTracks)
+    lengths = foreach (fullTracks, length)
+    clengths = cumulativeSums (lengths)
+    ctracks = zipped (clengths, fullTracks)
+    partial (step)
+      | n < fullLength = append (portion, taken)
+      | otherwise = fullTracks
+      where
+        taken = selectedValues (ctracks, (<= step))
+        n = length (taken)
+        portion = first (fullTracks # (n + 1), step - (0 : clengths) # (n + 1))
 
 -- | Use this function to run Turtle programs that can use random numbers.
 -- You need to provide an infinite list of numbers, where each of them
@@ -293,23 +329,23 @@ partialTracks(turtleProg) = foreach([2..sum(lengths)],partial)
 -- >   turtleProgram = repeat(500, [ pu, home, randomized(seth,360), fd(2)
 -- >                               , pd, randomized(fd,4)
 -- >                               ])
---
-randomTracks :: ([Number],TurtleCommand) -> [Track]
-randomTracks(randoms,cmd) = turtle.#cmd.#saveTrace.#reversed
-    where
-    turtle = initialTurtle { rndNumbers = randoms }
+randomTracks :: ([Number], TurtleCommand) -> [Track]
+randomTracks (randoms, cmd) = turtle .# cmd .# saveTrace .# reversed
+  where
+    turtle = initialTurtle {rndNumbers = randoms}
 
-
-trackInfo :: Track -> [(Point,Vector)]
-trackInfo(points) = [ (a,vectorDifference(b,a)) 
-                    | a <- points | b <- rest(points,1)
-                    ]
+trackInfo :: Track -> [(Point, Vector)]
+trackInfo (points) =
+  [ (a, vectorDifference (b, a))
+    | a <- points
+    | b <- rest (points, 1)
+  ]
 
 -- | The length of the given Track
 trackLength :: Track -> Number
-trackLength(points) = sum(foreach(trackInfo(points),len))
-    where
-    len(_,dx) = vectorLength(dx)
+trackLength (points) = sum (foreach (trackInfo (points), len))
+  where
+    len (_, dx) = vectorLength (dx)
 
 -- | If @travel = alongTrack(points)@, then @travel@ is a function that can be
 -- used to traverse a track traveling at 1 unit per second. The value
@@ -321,39 +357,38 @@ trackLength(points) = sum(foreach(trackInfo(points),len))
 --
 -- > program = animationOf(movie)
 -- >   where
--- >   movie(t) = placedAlong(turtleShape,travel(remainder(4*t,tlen))) 
+-- >   movie(t) = placedAlong(turtleShape,travel(remainder(4*t,tlen)))
 -- >            & polyline(turtleTrack)
--- > 
+-- >
 -- >   placedAlong(pic,((x,y),a)) = translated(rotated(turtleShape,a),x,y)
 -- >   travel = alongTrack(turtleTrack)
 -- >   tlen = trackLength(turtleTrack)
--- > 
+-- >
 -- >   greenTurtle = colored(turtleShape, green)
 -- >   turtleShape = rotated(thickPolygon(track(turtle),0.1),-90)
 -- >   turtleTrack = track(run(figs(11, poly(7,18/7))))
 -- >   figs(n,fig) = [repeat(n,[run(fig),lt(360/n)])]
 -- >   poly(n,len) = figs(n,[fd(len)])
---
-alongTrack :: Track -> Number -> (Point,Number)
-alongTrack(points)
-  | empty(tinfo) = \t -> ((0,0),0)
+alongTrack :: Track -> Number -> (Point, Number)
+alongTrack (points)
+  | empty (tinfo) = \t -> ((0, 0), 0)
   | otherwise = go
   where
-  tinfo = trackInfo(points)
-  tlens = foreach(tinfo,\(_,dx) -> vectorLength(dx))
-  lerp(t,(ax,ay),(bx,by)) = (ax + t * (bx - ax), ay + t * (by - ay))
-
-  go(t) = if t <= 0 then let (x0,dx) = tinfo#1 in (x0,vectorDirection(dx))
-          else whileloop((t,tlens,tinfo), cond, next, output)
-    
-  cond(t,ls,_) = nonEmpty(ls) && t >= ls#1
-  next(t,ls,xds) = (t - ls#1, rest(ls,1), rest(xds,1))
-  output(_,[],_) = go(0)
-  output(t,ls,xds) = (lerp(t/ls#1,x0,x1),angle)
-    where
-    (x0,dx) = xds#1
-    x1 = vectorSum(x0,dx)
-    angle = vectorDirection(dx)
+    tinfo = trackInfo (points)
+    tlens = foreach (tinfo, \(_, dx) -> vectorLength (dx))
+    lerp (t, (ax, ay), (bx, by)) = (ax + t * (bx - ax), ay + t * (by - ay))
+    go (t) =
+      if t <= 0
+        then let (x0, dx) = tinfo # 1 in (x0, vectorDirection (dx))
+        else whileloop ((t, tlens, tinfo), cond, next, output)
+    cond (t, ls, _) = nonEmpty (ls) && t >= ls # 1
+    next (t, ls, xds) = (t - ls # 1, rest (ls, 1), rest (xds, 1))
+    output (_, [], _) = go (0)
+    output (t, ls, xds) = (lerp (t / ls # 1, x0, x1), angle)
+      where
+        (x0, dx) = xds # 1
+        x1 = vectorSum (x0, dx)
+        angle = vectorDirection (dx)
 
 -------------------------------------------------------------------------------
 -- Turtle Language
@@ -361,79 +396,91 @@ alongTrack(points)
 
 -- | Move the Turtle forward by the given number of units
 fd :: Number -> TurtleCommand
-fd(len)(turtle) = turtle
-  { position = position'
-  , trace = turtle.#addPoint(position')
-  }
+fd (len) (turtle) =
+  turtle
+    { position = position',
+      trace = turtle .# addPoint (position')
+    }
   where
-  position' = (px+len*hx,py+len*hy)
-  (px,py) = turtle.#position
-  (hx,hy) = turtle.#heading
+    position' = (px + len * hx, py + len * hy)
+    (px, py) = turtle .# position
+    (hx, hy) = turtle .# heading
 
 -- | Move the Turtle backward by the given number of units
 bk :: Number -> TurtleCommand
-bk(len)(turtle) = turtle
-  { position = position'
-  , trace = turtle.#addPoint(position')
-  }
+bk (len) (turtle) =
+  turtle
+    { position = position',
+      trace = turtle .# addPoint (position')
+    }
   where
-  position' = (px-len*hx,py-len*hy)
-  (px,py) = turtle.#position
-  (hx,hy) = turtle.#heading
+    position' = (px - len * hx, py - len * hy)
+    (px, py) = turtle .# position
+    (hx, hy) = turtle .# heading
 
 -- | Turn the Turtle right (clockwise) by the given number of degrees
 rt :: Number -> TurtleCommand
-rt(angle)(turtle) = turtle
-  { heading = rotatedPoint(turtle.#heading,-angle) }
-  
+rt (angle) (turtle) =
+  turtle
+    { heading = rotatedPoint (turtle .# heading, - angle)
+    }
+
 -- | Turn the Turle left (counter-clockwise) by the given number of degrees
 lt :: Number -> TurtleCommand
-lt(angle)(turtle) = turtle
-  { heading = rotatedPoint(turtle.#heading,angle) }
+lt (angle) (turtle) =
+  turtle
+    { heading = rotatedPoint (turtle .# heading, angle)
+    }
 
 -- | Set the Turtle heading by first orienting it upright (pointing upwards)
 --   and then rotating it clockwise by the given number of degrees
 seth :: Number -> TurtleCommand
-seth(angle)(turtle) = turtle
-  { heading = rotatedPoint(homeHeading,-angle) }
+seth (angle) (turtle) =
+  turtle
+    { heading = rotatedPoint (homeHeading, - angle)
+    }
 
 -- | Move the Turtle to the absolute position given by the X and Y coordinates
 setxy :: Point -> TurtleCommand
-setxy(x,y)(turtle) = turtle
-  { position = (x,y)
-  , trace = turtle.#addPoint(x,y)
-  }
+setxy (x, y) (turtle) =
+  turtle
+    { position = (x, y),
+      trace = turtle .# addPoint (x, y)
+    }
 
 -- | Move the Turtle to the center and set the heading to upright
 home :: TurtleCommand
-home(turtle) = turtle
-  { heading = homeHeading
-  , position = homePosition
-  , trace = turtle.#addPoint(homePosition)
-  }
+home (turtle) =
+  turtle
+    { heading = homeHeading,
+      position = homePosition,
+      trace = turtle .# addPoint (homePosition)
+    }
 
 -- | Pen Up: Stop tracing the positions of the Turtle.
 -- If the pen was down, this command will end the current
 -- 'Track'. Otherwise, the command is ignored.
 pu :: TurtleCommand
-pu(turtle) = case turtle.#pen of
+pu (turtle) = case turtle .# pen of
   Pu -> turtle
-  Pd -> turtle
-          { trace = []
-          , traces = turtle.#saveTrace
-          , pen = Pu
-          }
+  Pd ->
+    turtle
+      { trace = [],
+        traces = turtle .# saveTrace,
+        pen = Pu
+      }
 
 -- | Pen Down: Start tracing the positions of the Turtle.
 -- If the pen was up, this command will start a new 'Track'.
 -- Otherwise, the command is ignored.
 pd :: TurtleCommand
-pd(turtle) = case turtle.#pen of
+pd (turtle) = case turtle .# pen of
   Pd -> turtle
-  Pu -> turtle
-          { trace = [turtle.#position]
-          , pen = Pd
-          }
+  Pu ->
+    turtle
+      { trace = [turtle .# position],
+        pen = Pd
+      }
 
 -- Turtle Language Extensions
 
@@ -446,7 +493,7 @@ pd(turtle) = case turtle.#pen of
 -- >                 , repeat(6, [overxy(turn) ])
 -- >                 , pu, fd(1), pd
 -- >                 , turtle ]
--- > 
+-- >
 -- > turn(point) = rotatedPoint(point, 360/6)
 --
 -- The example above constructs a hexagon without
@@ -455,12 +502,13 @@ pd(turtle) = case turtle.#pen of
 -- with other CodeWorld functions, such as
 -- 'rotatedPoint'.
 overxy :: (Point -> Point) -> TurtleCommand
-overxy(f)(turtle) = turtle
-  { position = p
-  , trace = turtle.#addPoint(p)
-  }
+overxy (f) (turtle) =
+  turtle
+    { position = p,
+      trace = turtle .# addPoint (p)
+    }
   where
-  p = f(turtle.#position)
+    p = f (turtle .# position)
 
 -- | Set the starting point for the trace to the given coordinates.
 -- Any Track recorded before using this command will be discarded.
@@ -473,14 +521,14 @@ overxy(f)(turtle) = turtle
 --
 -- > turtleProgram :: TurtleProgram
 -- > turtleProgram = [pu,sethome(origin)] ++ otherCommands
---
 sethome :: Point -> TurtleCommand
-sethome(x,y)(turtle) = turtle
-  { position = (x,y)
-  , trace = case turtle.#pen of
-                Pu -> []
-                Pd -> [(x,y)]
-  }
+sethome (x, y) (turtle) =
+  turtle
+    { position = (x, y),
+      trace = case turtle .# pen of
+        Pu -> []
+        Pd -> [(x, y)]
+    }
 
 -- | The origin is at the center of the output window
 origin :: Point
@@ -489,9 +537,23 @@ origin = homePosition
 -- | A simple drawing of a Turtle that can be used to observe
 -- its current position and heading.
 turtle :: TurtleCommand
-turtle = run([ rt(150), fd(0.2), lt(120), fd(0.2), lt(60), fd(0.4), lt(120)
-             , fd(0.4), lt(60), fd(0.2), lt(120), fd(0.2), lt(30)
-             ])
+turtle =
+  run
+    ( [ rt (150),
+        fd (0.2),
+        lt (120),
+        fd (0.2),
+        lt (60),
+        fd (0.4),
+        lt (120),
+        fd (0.4),
+        lt (60),
+        fd (0.2),
+        lt (120),
+        fd (0.2),
+        lt (30)
+      ]
+    )
 
 -- | @randomized(cmd,maxnum)@ can be used to run one of the following
 -- Turtle commands: 'fd', 'bk', 'rt', 'lt', 'seth', or with a custom command
@@ -510,67 +572,66 @@ turtle = run([ rt(150), fd(0.2), lt(120), fd(0.2), lt(60), fd(0.4), lt(120)
 -- >                           ])
 -- >         where
 -- >         random1 = randomNumbers(random#1)
--- >         random2 = [ RGB(r,g,b) 
+-- >         random2 = [ RGB(r,g,b)
 -- >                   | [r,g,b] <- groups(randomNumbers(random#2),3)
 -- >                   ]
--- >     
+-- >
 -- >   turtleProgram = repeat(10, [pd,makeTrack,pu,home])
 -- >   makeTrack = repeat(100, [ randomized(\r -> fd(2*r-1), 1.5)
 -- >                           , randomized(\r -> rt(90*truncation(r)), 4)
 -- >                           ])
---
-randomized :: (Number -> TurtleCommand,Number) -> TurtleCommand
-randomized(cmd,maxnum)(turtleOld) = cmd(num)(turtleNew)
-    where
-    turtleNew = turtleOld { rndNumbers = rest(turtleOld.#rndNumbers,1) }
+randomized :: (Number -> TurtleCommand, Number) -> TurtleCommand
+randomized (cmd, maxnum) (turtleOld) = cmd (num) (turtleNew)
+  where
+    turtleNew = turtleOld {rndNumbers = rest (turtleOld .# rndNumbers, 1)}
     num = maxnum * rnd
-    rnd | empty(turtleOld.#rndNumbers) = 0.5
-        | otherwise = turtleOld.#rndNumbers#1
+    rnd
+      | empty (turtleOld .# rndNumbers) = 0.5
+      | otherwise = turtleOld .# rndNumbers # 1
 
 -- | Repeat a turtle Program a random number of times up to the given
 -- maximum. This is a specialized version of 'randomized'.
-repeatRandom :: (Number,TurtleProgram) -> TurtleCommand
-repeatRandom(maxnum,prog) = randomized(\r -> repeat(r,prog),maxnum)
+repeatRandom :: (Number, TurtleProgram) -> TurtleCommand
+repeatRandom (maxnum, prog) = randomized (\r -> repeat (r, prog), maxnum)
 
 -- Drawing API Extensions
 
 -- | Draw each Track in a list of tracks as a polyline.
 polylines :: [Track] -> Picture
-polylines(ls) = ls.$polyline.#pictures
+polylines (ls) = ls .$ polyline .# pictures
 
 -- | Draw each Track in a list of tracks as a thick polyline
 -- of the given thickness.
-thickPolylines :: ([Track],Number) -> Picture
-thickPolylines(ls,t) = pictures(foreach(ls,\l -> thickPolyline(l,t)))
+thickPolylines :: ([Track], Number) -> Picture
+thickPolylines (ls, t) = pictures (foreach (ls, \l -> thickPolyline (l, t)))
 
 -- | Draw each Track in a list of tracks as a solid polygon.
 solidPolygons :: [Track] -> Picture
-solidPolygons(ls) = ls.$solidPolygon.#pictures
+solidPolygons (ls) = ls .$ solidPolygon .# pictures
 
 -- | Draw all the points in all the polylines of a list of tracks.
 dottylines :: [Track] -> Picture
-dottylines(ls) = ls.$dottyline.#pictures
+dottylines (ls) = ls .$ dottyline .# pictures
 
 -- | Draw the vertices of a polyline as dots
 dottyline :: [Point] -> Picture
-dottyline(pts) = pts.$makeDot.#pictures
+dottyline (pts) = pts .$ makeDot .# pictures
   where
-  makeDot(x,y) = translated(solidCircle(0.05),x,y)
+    makeDot (x, y) = translated (solidCircle (0.05), x, y)
 
 -------------------------------------------------------------------------------
 -- Turtle Aux
 -------------------------------------------------------------------------------
 
 addPoint :: Point -> Turtle -> [Point]
-addPoint(p)(turtle) = case turtle.#pen of
-  Pu -> turtle.#trace
-  Pd -> p : turtle.#trace
+addPoint (p) (turtle) = case turtle .# pen of
+  Pu -> turtle .# trace
+  Pd -> p : turtle .# trace
 
 saveTrace :: Turtle -> [[Point]]
-saveTrace(turtle) = case turtle.#trace of
-  [] -> turtle.#traces
-  pts -> reversed(pts) : turtle.#traces
-            
+saveTrace (turtle) = case turtle .# trace of
+  [] -> turtle .# traces
+  pts -> reversed (pts) : turtle .# traces
 
 -------------------------------------------------------------------------------
 -- Examples
@@ -586,14 +647,12 @@ turtleExample1 = (stars.#run.#tracks.#polylines & anchors.#polyline).#drawingOf
   anchors = foreach([0,4..120], noStar).#run.#tracks.#concatenation
 -}
 
-
-randomExample = randomDrawingOf(draw)
+randomExample = randomDrawingOf (draw)
   where
-  draw(random) = polyline(track(prog(random)))
-  prog(random) = run(foreach(first(random,50), prog1))
-  prog1(r) = run([ prog2(randomNumbers(r)), rt(180) ])
-  prog2(random) = repeat(truncation(100*random#1), [fd(10),bk(9.8),rt(2)])
-  
+    draw (random) = polyline (track (prog (random)))
+    prog (random) = run (foreach (first (random, 50), prog1))
+    prog1 (r) = run ([prog2 (randomNumbers (r)), rt (180)])
+    prog2 (random) = repeat (truncation (100 * random # 1), [fd (10), bk (9.8), rt (2)])
 
 -- | The first example is based on the following code:
 --
@@ -622,37 +681,37 @@ randomExample = randomDrawingOf(draw)
 -- >          in sethome(4,0)
 -- >             : [repeat(16, [ fd'(85), lt(60), fd'(107)
 -- >                           , bk'(72), lt(53), fd'(74)])]
--- >   
+-- >
 -- >   blade = let fd'(x) = fd(x/20)
 -- >               bk'(x) = bk(x/20)
 -- >           in sethome(-3,-4)
 -- >              : [repeat(36,[fd'(60),rt(61),bk'(80),lt(41),fd'(85),rt(41)])]
--- > 
+-- >
 -- >   hypercube = sethome(-3.5,1.5)
 -- >     : [repeat(8,[repeat(4,[rt(90),fd(3)]),bk(3),lt(45)])]
--- >   
+-- >
 -- >   star1 = sethome(-2.5,-3.5)
 -- >     : [repeat(18,[repeat(5,[rt(40),fd(10),rt(120)]),rt(20)])]
--- > 
+-- >
 -- >   fanflower = sethome(-1.5,5)
 -- >               : [repeat(12,[repeat(75,[fd(4),bk(4),rt(2)]),fd(10)])]
--- > 
--- >   jagged1 = sethome(0,-6) 
+-- >
+-- >   jagged1 = sethome(0,-6)
 -- >     : [repeat(4,[repeat(30,[lt(90),fd(0.2),rt(90),fd(0.2)]),rt(90)])]
--- > 
+-- >
 -- >   jagged2 = sethome(4,-6)
 -- >     : [repeat(4,[repeat(20,[lt(160),fd(1.5),rt(160),fd(1.5)]),rt(90)])]
--- > 
+-- >
 -- >   jagged3 = sethome(2.5,-7) : lt(5)
 -- >     : [repeat(8,[repeat(20,[lt(170),fd(1.5),rt(170),fd(1.5)]),rt(45)])]
--- >     
+-- >
 -- >   pentahexa = sethome(-0.5,-2)
 -- >     : [repeat(5,[repeat(6,[fd(4),lt(72)]),lt(144)])]
--- > 
+-- >
 -- >   leaves(n) = -- Useful values for n: 1 to 7
 -- >     sethome(-2.7,-1.2)
 -- >     : [repeat(8,[rt(45),repeat(n,[repeat(90,[fd(0.1),rt(2)]),rt(90)])])]
--- >   
+-- >
 -- >   roses(l,n,k) = foreach([1..360*n],\i -> run([fd(l/10),rt(i+x)]))
 -- >     where
 -- >     x = (2*k - n) / (2*n)
@@ -660,239 +719,248 @@ randomExample = randomDrawingOf(draw)
 -- >     -- roses 5 5 3
 -- >     -- roses 5 7 3
 -- >     -- roses 5 10 7
--- >     -- roses 5 12 5 
--- > 
+-- >     -- roses 5 12 5
+-- >
 -- >   bullring = sethome(-3,-0.5)
 -- >     : foreach([0..1002],\i -> run([fd(0.4),seth(360*i^3 / 1002)]))
--- >     
+-- >
 -- >   squareSpiral = foreach([1..800],\i -> run([fd(i/40),rt(89)]))
--- > 
+-- >
 -- >   diaphragm = foreach([1..100],\i -> let fd'(x) = fd(x/20)
 -- >     in run([fd'(5+i),rt(45),fd'(10+i),rt(60)]))
--- >   
+-- >
 -- >   octagons =
 -- >     foreach( [1..15]
 -- >        , \i -> repeat(5, [repeat(8, [fd (0.4 + i*0.2), rt(45)]), rt(72)])
 -- >        )
--- >     
+-- >
 -- >   circleSpiral = foreach([0,0.05..4],\i -> repeat(180,[fd(i/10),rt(1)]))
--- >   
+-- >
 -- >   pentaStarSpiral =
 -- >     foreach( [0,3..96]
 -- >            , \l -> run([repeat(5,[fd(l/20),rt(144)]),fd(l/20),rt(30)]))
--- >   
+-- >
 -- >   octaStarSpiral =
 -- >     foreach( [0,4..120],
 -- >        \l -> run([repeat(8,[fd(l/30),rt(135)]),pu,fd(2*l/30),rt(30),pd]))
--- > 
+-- >
 -- >   sqcirc1 =
 -- >     foreach( [1..36],
 -- >        \i -> run([repeat(36,[fd(0.5),rt(10)]),fd(i/20),rt(90),fd(i/20)]))
--- >   
+-- >
 -- >   pentapenta =
 -- >     foreach([10,9..1],\i -> repeat(5,[repeat(5,[fd(i/2),lt(72)]),lt(72)]))
--- >   
+-- >
 -- >   hexagon2 = foreach( [100,95..10]
 -- >                 , \i -> repeat(6,[repeat(6,[fd(i/20),lt(60)]),lt(60)]))
--- > 
+-- >
 -- >   hexagon1 = foreach( [100,50..50]
 -- >                 , \i -> repeat(6,[repeat(6,[fd(i/20),lt(60)]),lt(60)]))
--- > 
--- >   jaggystar = fd(-6.5) 
+-- >
+-- >   jaggystar = fd(-6.5)
 -- >             : foreach([0..2200],\i -> run([fd(0.75*sin(i)), rt(i^2)]))
--- > 
+-- >
 -- >   fish1 = foreach([1..360],\t -> run(cmds(t)))
 -- >     where
 -- >     cmds(t) = [ overxy(\(x,y) -> (8*cos(2*t),y))
 -- >               , overxy(\(x,y) -> (x,x*cos(t)))
 -- >               , home
 -- >               ]
--- >   
+-- >
 -- >   fish2 = foreach([-315..315],\t -> setxy(t*sin(t)/50,0.5*t*cos(2*t)/50))
--- >   
+-- >
 -- >   gillyflower =
 -- >     foreach( [1..450]
 -- >            , \i -> let a = 73 * sin(i) in run([fd(a/20),rt(88*cos(a))]))
--- >   
+-- >
 -- >   petals(n) = foreach([0..180],\t -> run([seth(t),fd(10*sin(t*n)),home]))
--- > 
+-- >
 -- >   eye = foreach([1..1800],\i -> run([fd(log(i)/10),bk(sin(i)),rt(10)]))
--- > 
+-- >
 -- >   spirotunnel =
 -- >     forloop( 1,(<= 160),\i -> i + sin(i)
 -- >            , \i -> run([fd(i/80),bk(i/10),rt(51)])
 -- >            )
--- >                      
+-- >
 -- >   neutronStar =
 -- >     forloop(1,(<= 4),\i -> i + sin(i+7)/2
 -- >            ,\i -> let a = 2*i
 -- >                   in run([fd(a),bk(a),rt(41)]))
--- > 
---
+-- >
 turtleExamples :: Program
 turtleExamples =
-  (slides.$make ++ [bullring.#run.#tracks.#dottylines]).#slideshow
+  (slides .$ make ++ [bullring .# run .# tracks .# dottylines]) .# slideshow
   where
-  make(i,l,s) = blank
-    & translated(lettering(i <> ": " <> l),0,9.5) 
-    & translated(colored(solidRectangle(10,1.2),RGB(1,1,1)),0,9.5)
-    & s.#run.#tracks.#polylines
+    make (i, l, s) =
+      blank
+        & translated (lettering (i <> ": " <> l), 0, 9.5)
+        & translated (colored (solidRectangle (10, 1.2), RGB (1, 1, 1)), 0, 9.5)
+        & s .# run .# tracks .# polylines
+    slides =
+      [ ("recursive", "figs(14, poly(7,2))", figs (14, poly (7, 2))),
+        ("rep 1", "ring", ring),
+        ("rep 1", "blade", blade),
+        ("rep 2", "hypercube", hypercube),
+        ("rep 2", "star1", star1),
+        ("rep 2", "fanflower", fanflower),
+        ("rep 2", "jagged1", jagged1),
+        ("rep 2", "jagged2", jagged2),
+        ("rep 2", "jagged3", jagged3),
+        ("rep 2", "pentahexa", pentahexa),
+        ("rep 3", "leaves(3)", leaves (3)),
+        ("rep 3", "leaves(7)", leaves (7)),
+        ("foreach", "roses(5,5,3)", roses (5, 5, 3)),
+        ("foreach", "roses(5,12,5)", roses (5, 12, 5)),
+        ("foreach", "bullring", bullring),
+        ("foreach", "squareSpiral", squareSpiral),
+        ("foreach", "diaphragm", diaphragm),
+        ("foreach+rep 1", "octagons", octagons),
+        ("foreach+rep 1", "circleSpiral", circleSpiral),
+        ("foreach+rep 1", "pentaStarSpiral", pentaStarSpiral),
+        ("foreach+rep 1", "octaStarSpiral", octaStarSpiral),
+        ("foreach+rep 1", "sqcirc1", sqcirc1),
+        ("foreach+rep 2", "pentapenta", pentapenta),
+        ("foreach+rep 2", "hexagon2", hexagon2),
+        ("foreach+rep 2", "hexagon1", hexagon1),
+        ("foreach+trig", "jaggystar", jaggystar),
+        ("foreach+trig", "fish1", fish1),
+        ("foreach+trig", "fish2", fish2),
+        ("foreach+trig", "gillyflower", gillyflower),
+        ("foreach+trig", "petals(7)", petals (7)),
+        ("foreach+trig+log", "eye", eye),
+        ("forloop+trig", "spirotunnel", spirotunnel),
+        ("forloop+trig", "neutronStar", neutronStar)
+      ]
+    test = [repeat (8, [clover, rt (45)])]
+      where
+        n = 3
+        base = repeat (90, [fd (0.1), rt (2)])
+        clover = repeat (n, [base, rt (90)])
+    figs (n, fig) = [repeat (n, [run (fig), lt (360 / n)])]
+    poly (n, len) = figs (n, [fd (len)])
+    ---
+    --- Codes for examples
+    ---
 
-  slides =
-    [ ("recursive", "figs(14, poly(7,2))",figs(14, poly(7,2)))
-    , ("rep 1", "ring",ring)
-    , ("rep 1", "blade",blade)
-    , ("rep 2", "hypercube",hypercube)
-    , ("rep 2", "star1",star1)
-    , ("rep 2", "fanflower",fanflower)
-    , ("rep 2", "jagged1",jagged1)
-    , ("rep 2", "jagged2",jagged2)
-    , ("rep 2", "jagged3",jagged3)
-    , ("rep 2", "pentahexa",pentahexa)
-    , ("rep 3", "leaves(3)",leaves(3))
-    , ("rep 3", "leaves(7)",leaves(7))
-    , ("foreach", "roses(5,5,3)",roses(5,5,3))
-    , ("foreach", "roses(5,12,5)",roses(5,12,5))
-    , ("foreach", "bullring",bullring)
-    , ("foreach", "squareSpiral",squareSpiral)
-    , ("foreach", "diaphragm",diaphragm)
-    , ("foreach+rep 1", "octagons",octagons)
-    , ("foreach+rep 1", "circleSpiral",circleSpiral)
-    , ("foreach+rep 1", "pentaStarSpiral",pentaStarSpiral)
-    , ("foreach+rep 1", "octaStarSpiral",octaStarSpiral)
-    , ("foreach+rep 1", "sqcirc1",sqcirc1)
-    , ("foreach+rep 2", "pentapenta",pentapenta)
-    , ("foreach+rep 2", "hexagon2",hexagon2)
-    , ("foreach+rep 2", "hexagon1",hexagon1)
-    , ("foreach+trig", "jaggystar",jaggystar)
-    , ("foreach+trig", "fish1",fish1)
-    , ("foreach+trig", "fish2",fish2)
-    , ("foreach+trig", "gillyflower",gillyflower)
-    , ("foreach+trig", "petals(7)",petals(7))
-    , ("foreach+trig+log", "eye",eye)
-    , ("forloop+trig", "spirotunnel",spirotunnel)
-    , ("forloop+trig", "neutronStar",neutronStar)
-    ]
-
-  test = [repeat(8,[clover,rt(45)])]
-    where
-    n = 3
-    base = repeat(90,[fd(0.1),rt(2)])
-    clover = repeat(n,[base,rt(90)])
-  
-  figs(n,fig) = [repeat(n,[run(fig),lt(360/n)])]
-  poly(n,len) = figs(n,[fd(len)])
-
----
---- Codes for examples
----
-
-  ring = let fd'(x) = fd(x/20)
-             bk'(x) = bk(x/20)
-         in sethome(4,0)
-            : [repeat(16,[fd'(85),lt(60),fd'(107),bk'(72),lt(53),fd'(74)])]
-  
-  blade = let fd'(x) = fd(x/20)
-              bk'(x) = bk(x/20)
-          in sethome(-3,-4)
-             : [repeat(36,[fd'(60),rt(61),bk'(80),lt(41),fd'(85),rt(41)])]
-
-  hypercube = sethome(-3.5,1.5)
-    : [repeat(8,[repeat(4,[rt(90),fd(3)]),bk(3),lt(45)])]
-  
-  star1 = sethome(-2.5,-3.5)
-    : [repeat(18,[repeat(5,[rt(40),fd(10),rt(120)]),rt(20)])]
-
-  fanflower = sethome(-1.5,5)
-              : [repeat(12,[repeat(75,[fd(4),bk(4),rt(2)]),fd(10)])]
-
-  jagged1 = sethome(0,-6) 
-    : [repeat(4,[repeat(30,[lt(90),fd(0.2),rt(90),fd(0.2)]),rt(90)])]
-
-  jagged2 = sethome(4,-6)
-    : [repeat(4,[repeat(20,[lt(160),fd(1.5),rt(160),fd(1.5)]),rt(90)])]
-
-  jagged3 = sethome(2.5,-7) : lt(5)
-    : [repeat(8,[repeat(20,[lt(170),fd(1.5),rt(170),fd(1.5)]),rt(45)])]
-    
-  pentahexa = sethome(-0.5,-2)
-    : [repeat(5,[repeat(6,[fd(4),lt(72)]),lt(144)])]
-
-  leaves(n) = -- Useful values for n: 1 to 7
-    sethome(-2.7,-1.2)
-    : [repeat(8,[rt(45),repeat(n,[repeat(90,[fd(0.1),rt(2)]),rt(90)])])]
-  
-  roses(l,n,k) = foreach([1..360*n],\i -> run([fd(l/10),rt(i+x)]))
-    where
-    x = (2*k - n) / (2*n)
+    ring =
+      let fd' (x) = fd (x / 20)
+          bk' (x) = bk (x / 20)
+       in sethome (4, 0)
+            : [repeat (16, [fd' (85), lt (60), fd' (107), bk' (72), lt (53), fd' (74)])]
+    blade =
+      let fd' (x) = fd (x / 20)
+          bk' (x) = bk (x / 20)
+       in sethome (-3, -4)
+            : [repeat (36, [fd' (60), rt (61), bk' (80), lt (41), fd' (85), rt (41)])]
+    hypercube =
+      sethome (-3.5, 1.5)
+        : [repeat (8, [repeat (4, [rt (90), fd (3)]), bk (3), lt (45)])]
+    star1 =
+      sethome (-2.5, -3.5)
+        : [repeat (18, [repeat (5, [rt (40), fd (10), rt (120)]), rt (20)])]
+    fanflower =
+      sethome (-1.5, 5)
+        : [repeat (12, [repeat (75, [fd (4), bk (4), rt (2)]), fd (10)])]
+    jagged1 =
+      sethome (0, -6)
+        : [repeat (4, [repeat (30, [lt (90), fd (0.2), rt (90), fd (0.2)]), rt (90)])]
+    jagged2 =
+      sethome (4, -6)
+        : [repeat (4, [repeat (20, [lt (160), fd (1.5), rt (160), fd (1.5)]), rt (90)])]
+    jagged3 =
+      sethome (2.5, -7) : lt (5)
+        : [repeat (8, [repeat (20, [lt (170), fd (1.5), rt (170), fd (1.5)]), rt (45)])]
+    pentahexa =
+      sethome (-0.5, -2)
+        : [repeat (5, [repeat (6, [fd (4), lt (72)]), lt (144)])]
+    leaves (n) =
+      -- Useful values for n: 1 to 7
+      sethome (-2.7, -1.2)
+        : [repeat (8, [rt (45), repeat (n, [repeat (90, [fd (0.1), rt (2)]), rt (90)])])]
+    roses (l, n, k) = foreach ([1 .. 360 * n], \i -> run ([fd (l / 10), rt (i + x)]))
+      where
+        x = (2 * k - n) / (2 * n)
     -- Useful values:
     -- roses 5 5 3
     -- roses 5 7 3
     -- roses 5 10 7
-    -- roses 5 12 5 
+    -- roses 5 12 5
 
-  bullring = sethome(-3,-0.5)
-    : foreach([0..1002],\i -> run([fd(0.4),seth(360*i^3 / 1002)]))
-    
-  squareSpiral = foreach([1..800],\i -> run([fd(i/40),rt(89)]))
-
-  diaphragm = foreach([1..100],\i -> let fd'(x) = fd(x/20)
-    in run([fd'(5+i),rt(45),fd'(10+i),rt(60)]))
-  
-  octagons =
-    foreach( [1..15]
-       , \i -> repeat(5, [repeat(8, [fd (0.4 + i*0.2), rt(45)]), rt(72)])
-       )
-    
-  circleSpiral = foreach([0,0.05..4],\i -> repeat(180,[fd(i/10),rt(1)]))
-  
-  pentaStarSpiral =
-    foreach( [0,3..96]
-           , \l -> run([repeat(5,[fd(l/20),rt(144)]),fd(l/20),rt(30)]))
-  
-  octaStarSpiral =
-    foreach( [0,4..120]
-       , \l -> run([repeat(8,[fd(l/30),rt(135)]),pu,fd(2*l/30),rt(30),pd]))
-
-  sqcirc1 =
-    foreach( [1..36]
-       , \i -> run([repeat(36,[fd(0.5),rt(10)]),fd(i/20),rt(90),fd(i/20)]))
-  
-  pentapenta =
-    foreach([10,9..1],\i -> repeat(5,[repeat(5,[fd(i/2),lt(72)]),lt(72)]))
-  
-  hexagon2 = foreach( [100,95..10]
-                , \i -> repeat(6,[repeat(6,[fd(i/20),lt(60)]),lt(60)]))
-
-  hexagon1 = foreach( [100,50..50]
-                , \i -> repeat(6,[repeat(6,[fd(i/20),lt(60)]),lt(60)]))
-
-  jaggystar = fd(-6.5) 
-            : foreach([0..2200],\i -> run([fd(0.75*sin(i)), rt(i^2)]))
-
-  fish1 = foreach([1..360],\t -> run(cmds(t)))
-    where
-    cmds(t) = [ overxy(\(x,y) -> (8*cos(2*t),y))
-              , overxy(\(x,y) -> (x,x*cos(t)))
-              , home
-              ]
-  
-  fish2 = foreach([-315..315],\t -> setxy(t*sin(t)/50,0.5*t*cos(2*t)/50))
-  
-  gillyflower =
-    foreach( [1..450]
-           , \i -> let a = 73 * sin(i) in run([fd(a/20),rt(88*cos(a))]))
-  
-  petals(n) = foreach([0..180],\t -> run([seth(t),fd(10*sin(t*n)),home]))
-
-  eye = foreach([1..1800],\i -> run([fd(log(i)/10),bk(sin(i)),rt(10)]))
-
-  spirotunnel =
-    forloop( 1,(<= 160),\i -> i + sin(i)
-           , \i -> run([fd(i/80),bk(i/10),rt(51)])
-           )
-                     
-  neutronStar =
-    forloop(1,(<= 4),\i -> i + sin(i+7)/2
-           ,\i -> let a = 2*i
-                  in run([fd(a),bk(a),rt(41)]))
+    bullring =
+      sethome (-3, -0.5)
+        : foreach ([0 .. 1002], \i -> run ([fd (0.4), seth (360 * i ^ 3 / 1002)]))
+    squareSpiral = foreach ([1 .. 800], \i -> run ([fd (i / 40), rt (89)]))
+    diaphragm =
+      foreach
+        ( [1 .. 100],
+          \i ->
+            let fd' (x) = fd (x / 20)
+             in run ([fd' (5 + i), rt (45), fd' (10 + i), rt (60)])
+        )
+    octagons =
+      foreach
+        ( [1 .. 15],
+          \i -> repeat (5, [repeat (8, [fd (0.4 + i * 0.2), rt (45)]), rt (72)])
+        )
+    circleSpiral = foreach ([0, 0.05 .. 4], \i -> repeat (180, [fd (i / 10), rt (1)]))
+    pentaStarSpiral =
+      foreach
+        ( [0, 3 .. 96],
+          \l -> run ([repeat (5, [fd (l / 20), rt (144)]), fd (l / 20), rt (30)])
+        )
+    octaStarSpiral =
+      foreach
+        ( [0, 4 .. 120],
+          \l -> run ([repeat (8, [fd (l / 30), rt (135)]), pu, fd (2 * l / 30), rt (30), pd])
+        )
+    sqcirc1 =
+      foreach
+        ( [1 .. 36],
+          \i -> run ([repeat (36, [fd (0.5), rt (10)]), fd (i / 20), rt (90), fd (i / 20)])
+        )
+    pentapenta =
+      foreach ([10, 9 .. 1], \i -> repeat (5, [repeat (5, [fd (i / 2), lt (72)]), lt (72)]))
+    hexagon2 =
+      foreach
+        ( [100, 95 .. 10],
+          \i -> repeat (6, [repeat (6, [fd (i / 20), lt (60)]), lt (60)])
+        )
+    hexagon1 =
+      foreach
+        ( [100, 50 .. 50],
+          \i -> repeat (6, [repeat (6, [fd (i / 20), lt (60)]), lt (60)])
+        )
+    jaggystar =
+      fd (-6.5)
+        : foreach ([0 .. 2200], \i -> run ([fd (0.75 * sin (i)), rt (i ^ 2)]))
+    fish1 = foreach ([1 .. 360], \t -> run (cmds (t)))
+      where
+        cmds (t) =
+          [ overxy (\(x, y) -> (8 * cos (2 * t), y)),
+            overxy (\(x, y) -> (x, x * cos (t))),
+            home
+          ]
+    fish2 = foreach ([-315 .. 315], \t -> setxy (t * sin (t) / 50, 0.5 * t * cos (2 * t) / 50))
+    gillyflower =
+      foreach
+        ( [1 .. 450],
+          \i -> let a = 73 * sin (i) in run ([fd (a / 20), rt (88 * cos (a))])
+        )
+    petals (n) = foreach ([0 .. 180], \t -> run ([seth (t), fd (10 * sin (t * n)), home]))
+    eye = foreach ([1 .. 1800], \i -> run ([fd (log (i) / 10), bk (sin (i)), rt (10)]))
+    spirotunnel =
+      forloop
+        ( 1,
+          (<= 160),
+          \i -> i + sin (i),
+          \i -> run ([fd (i / 80), bk (i / 10), rt (51)])
+        )
+    neutronStar =
+      forloop
+        ( 1,
+          (<= 4),
+          \i -> i + sin (i + 7) / 2,
+          \i ->
+            let a = 2 * i
+             in run ([fd (a), bk (a), rt (41)])
+        )

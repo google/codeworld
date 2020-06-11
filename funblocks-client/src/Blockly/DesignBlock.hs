@@ -1,6 +1,6 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE JavaScriptFFI #-}
-{-# LANGUAGE CPP #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -18,61 +18,65 @@
   limitations under the License.
 -}
 
-module Blockly.DesignBlock (Type(..)
-                          ,FieldType(..)
-                          ,BlockType(..)
-                          ,Input(..)
-                          ,Field(..)
-                          ,Inline(..)
-                          ,Connection(..)
-                          ,DesignBlock(..)
-                          ,Color(..)
-                          ,Tooltip(..)
-                          ,setBlockType)
-  where
+module Blockly.DesignBlock
+  ( Type (..),
+    FieldType (..),
+    BlockType (..),
+    Input (..),
+    Field (..),
+    Inline (..),
+    Connection (..),
+    DesignBlock (..),
+    Color (..),
+    Tooltip (..),
+    setBlockType,
+  )
+where
 
-import GHCJS.Types
-import Data.JSString.Text
-import GHCJS.Marshal
-import GHCJS.Foreign hiding (Number, String, Function)
-import GHCJS.Foreign.Callback
-import Data.Monoid
-import Control.Monad
-import Data.Ord (comparing)
-import Data.List (maximumBy)
-import qualified Data.Text as T
-import Data.Maybe (fromJust)
-import Data.List (intercalate)
-import qualified Blockly.TypeExpr as TE
-import qualified JavaScript.Array as JA
 import Blockly.Block as B
+import qualified Blockly.TypeExpr as TE
+import Control.Monad
+import Data.JSString.Text
+import Data.List (maximumBy)
+import Data.List (intercalate)
+import Data.Maybe (fromJust)
+import Data.Monoid
+import Data.Ord (comparing)
+import qualified Data.Text as T
+import GHCJS.Foreign hiding (Function, Number, String)
+import GHCJS.Foreign.Callback
+import GHCJS.Marshal
+import GHCJS.Types
+import qualified JavaScript.Array as JA
 
 pack = textToJSString
+
 unpack = textFromJSString
 
 -- Low level bindings to construction of various different type of Blockly
 -- blocks
 
-
-data ADT = Product String [Type]
-          | Sum [ADT]
+data ADT
+  = Product String [Type]
+  | Sum [ADT]
 
 data User = User String ADT
 
 instance Show User where
   show (User name adt) = name
 
-data Type = Arrow [Type]
-          | Number
-          | Str -- Actually Text
-          | Truth
-          | Picture
-          | Col -- Actually Color
-          | List Type -- Have to define kinded types
-          | Custom User
-          | Poly T.Text
-          | Program -- For top level blocks
-          | Comment
+data Type
+  = Arrow [Type]
+  | Number
+  | Str -- Actually Text
+  | Truth
+  | Picture
+  | Col -- Actually Color
+  | List Type -- Have to define kinded types
+  | Custom User
+  | Poly T.Text
+  | Program -- For top level blocks
+  | Comment
 
 instance Show Type where
   show Number = "Number"
@@ -87,32 +91,36 @@ instance Show Type where
   show (Arrow tps) = intercalate " -> " $ map show tps
   show (List tp) = "[" ++ show tp ++ "]"
 
-
 data FieldType = LeftField | RightField | CentreField
 
-data Input = Value T.Text [Field] 
---            | Statement T.Text [Field] Type
-            | Dummy [Field]
+data Input
+  = Value T.Text [Field]
+  | --            | Statement T.Text [Field] Type
+    Dummy [Field]
 
-data Field = Text T.Text
-            | TextE T.Text -- Emphasized Text, for titles
-            | TextInput T.Text T.Text -- displayname, value
-            | FieldImage T.Text Int Int -- src, width, height
-            
+data Field
+  = Text T.Text
+  | TextE T.Text -- Emphasized Text, for titles
+  | TextInput T.Text T.Text -- displayname, value
+  | FieldImage T.Text Int Int -- src, width, height
+
 data Connection = TopCon | BotCon | TopBotCon | LeftCon
+
 newtype Inline = Inline Bool
 
 -- Name functionName inputs connectiontype color outputType tooltip
 -- name funcName
-data BlockType = Literal T.Text
-               | Function T.Text [Type]
-               | Top T.Text [Type]
-               | None -- do nothing !
--- DesignBlock name type inputs isInline Color Tooltip
+data BlockType
+  = Literal T.Text
+  | Function T.Text [Type]
+  | Top T.Text [Type]
+  | None -- do nothing !
+  -- DesignBlock name type inputs isInline Color Tooltip
+
 data DesignBlock = DesignBlock T.Text BlockType [Input] Inline Color Tooltip
 
-
 newtype Color = Color Int
+
 newtype Tooltip = Tooltip T.Text
 
 fieldCode :: FieldInput -> Field -> IO FieldInput
@@ -122,58 +130,69 @@ fieldCode field (TextInput text name) = js_appendTextInputField field (pack text
 fieldCode field (FieldImage src width height) = js_appendFieldImage field (pack src) width height
 
 inputCode :: Bool -> Block -> Input -> IO ()
-inputCode rightAlign block (Dummy fields) = do 
+inputCode rightAlign block (Dummy fields) = do
   fieldInput <- js_appendDummyInput block
   when rightAlign $ js_setAlignRight fieldInput
-  foldr (\ field fi -> do
-      fi_ <- fi
-      fieldCode fi_ field) (return fieldInput) fields
+  foldr
+    ( \field fi -> do
+        fi_ <- fi
+        fieldCode fi_ field
+    )
+    (return fieldInput)
+    fields
   return ()
 inputCode rightAlign block (Value name fields) = do
   fieldInput <- js_appendValueInput block (pack name)
   when rightAlign $ js_setAlignRight fieldInput
-  foldr (\ field fi -> do
-      fi_ <- fi
-      fieldCode fi_ field) (return fieldInput) fields
+  foldr
+    ( \field fi -> do
+        fi_ <- fi
+        fieldCode fi_ field
+    )
+    (return fieldInput)
+    fields
   return ()
 
 typeToTypeExpr :: Type -> TE.Type_
 typeToTypeExpr (Poly a) = TE.createType $ TE.TypeVar a
-typeToTypeExpr t = TE.createType $ TE.Lit (T.pack $ show t ) [] -- Currently still a hack
-
+typeToTypeExpr t = TE.createType $ TE.Lit (T.pack $ show t) [] -- Currently still a hack
 
 -- set block
 setBlockType :: DesignBlock -> IO ()
-setBlockType (DesignBlock name blockType inputs (Inline inline) (Color color) (Tooltip tooltip) ) = do
-      cb <- syncCallback1 ContinueAsync  (\this -> do 
-                                     let block = B.Block this
-                                     js_setColor block color
-                                     forM_ (zip inputs (False : repeat True)) $ \(inp, rightAlign) -> do
-                                       inputCode rightAlign block inp
-                                     case blockType of
-                                       None -> js_disableOutput block
-                                       Top _ _ -> js_disableOutput block
-                                       _ -> js_enableOutput block
-                                     assignBlockType block blockType
-                                     when inline $ js_setInputsInline block True
-                                     return ()
-                                     )
-      js_setGenFunction (pack name) cb
+setBlockType (DesignBlock name blockType inputs (Inline inline) (Color color) (Tooltip tooltip)) = do
+  cb <-
+    syncCallback1
+      ContinueAsync
+      ( \this -> do
+          let block = B.Block this
+          js_setColor block color
+          forM_ (zip inputs (False : repeat True)) $ \(inp, rightAlign) -> do
+            inputCode rightAlign block inp
+          case blockType of
+            None -> js_disableOutput block
+            Top _ _ -> js_disableOutput block
+            _ -> js_enableOutput block
+          assignBlockType block blockType
+          when inline $ js_setInputsInline block True
+          return ()
+      )
+  js_setGenFunction (pack name) cb
 
 typeToType :: Type -> TE.Type
 typeToType (Poly a) = TE.TypeVar a
-typeToType (List tp) = TE.Lit (T.pack "list") [typeToType tp] 
+typeToType (List tp) = TE.Lit (T.pack "list") [typeToType tp]
 typeToType lit = TE.Lit (T.pack $ show lit) []
 
 assignBlockType :: Block -> BlockType -> IO ()
 assignBlockType block (Literal name) = B.setAsLiteral block name
-assignBlockType block (Function name tps) = do 
-    js_defineFunction (pack name) (TE.fromList tp)
-    B.setAsFunction block name
-  where tp = map typeToType tps
+assignBlockType block (Function name tps) = do
+  js_defineFunction (pack name) (TE.fromList tp)
+  B.setAsFunction block name
+  where
+    tp = map typeToType tps
 assignBlockType block (Top name tps) = assignBlockType block (Function name tps)
 assignBlockType _ _ = return ()
-  
+
 newtype FieldInput = FieldInput JSVal
 
 -- setArrows :: Block -> [Type] -> IO ()

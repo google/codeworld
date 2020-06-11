@@ -15,32 +15,38 @@
 -}
 
 module CodeWorld.Account.Hashing
-    ( hash
-    , validate
-    ) where
+  ( hash,
+    validate,
+  )
+where
 
-import           CodeWorld.Account.Types
-import           Crypto.BCrypt
-                    ( hashPasswordUsingPolicy
-                    , slowerBcryptHashingPolicy
-                    , validatePassword
-                    )
+import CodeWorld.Account.Types
+import Crypto.BCrypt
+  ( hashPasswordUsingPolicy,
+    slowerBcryptHashingPolicy,
+    validatePassword,
+  )
 import qualified Data.ByteString.Char8 as Char8 (pack)
 
--- |Hashes a password using default bcrypt algorithm
+-- | Hashes a password using default bcrypt algorithm
 hash ::
-    Password            -- ^ Password
-    -> IO PasswordHash  -- ^ Password hash
+  -- | Password
+  Password ->
+  -- | Password hash
+  IO PasswordHash
 hash (Password passwordRaw) = do
-    mbPasswordHashRaw <- hashPasswordUsingPolicy slowerBcryptHashingPolicy (Char8.pack passwordRaw)
-    case mbPasswordHashRaw of
-        Nothing -> error "Assertion failed"
-        Just passwordHashRaw -> return $ PasswordHash passwordHashRaw
+  mbPasswordHashRaw <- hashPasswordUsingPolicy slowerBcryptHashingPolicy (Char8.pack passwordRaw)
+  case mbPasswordHashRaw of
+    Nothing -> error "Assertion failed"
+    Just passwordHashRaw -> return $ PasswordHash passwordHashRaw
 
--- |Validates a password against a bcrypt password hash
+-- | Validates a password against a bcrypt password hash
 validate ::
-    PasswordHash    -- ^ Password hash
-    -> Password     -- ^ Password
-    -> Bool         -- ^ True if password is valid, False otherwise
+  -- | Password hash
+  PasswordHash ->
+  -- | Password
+  Password ->
+  -- | True if password is valid, False otherwise
+  Bool
 validate (PasswordHash passwordHashRaw) (Password passwordRaw) =
-    validatePassword passwordHashRaw (Char8.pack passwordRaw)
+  validatePassword passwordHashRaw (Char8.pack passwordRaw)

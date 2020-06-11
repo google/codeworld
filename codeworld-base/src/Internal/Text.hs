@@ -1,5 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -17,51 +17,51 @@
   limitations under the License.
 -}
 module Internal.Text
-    ( Text
-    , fromString
-    , toString
-    , fromCWText
-    , toCWText
-    , (<>)
-    , numberOfCharacters
-    , numberOfWords
-    , numberOfLines
-    , lines
-    , unlines
-    , words
-    , unwords
-    , characters
-    , printed
-    , joined
-    , joinedWith
-    , lowercase
-    , uppercase
-    , startsWith
-    , endsWith
-    , substitution
-    , substitutions
-    ) where
-
-import Data.List (foldl')
-import Data.Maybe
-import Numeric
-import qualified "base" Prelude as P
-import "base" Prelude (Bool, String, (.), length, map, show)
+  ( Text,
+    fromString,
+    toString,
+    fromCWText,
+    toCWText,
+    (<>),
+    numberOfCharacters,
+    numberOfWords,
+    numberOfLines,
+    lines,
+    unlines,
+    words,
+    unwords,
+    characters,
+    printed,
+    joined,
+    joinedWith,
+    lowercase,
+    uppercase,
+    startsWith,
+    endsWith,
+    substitution,
+    substitutions,
+  )
+where
 
 import qualified Data.JSString as J
 import qualified Data.JSString.Text as J
+import Data.List (foldl')
+import Data.Maybe
 import qualified Data.Text as T
-
 import Internal.Num
 import Internal.Truth
+import Numeric
+import qualified "base" Prelude as P
+import "base" Prelude ((.), Bool, String, length, map, show)
 
 newtype Text = T
-    { unT :: J.JSString
-    } deriving (P.Eq)
+  { unT :: J.JSString
+  }
+  deriving (P.Eq)
 
 {-# RULES
-"equality/text" forall (x :: Text) . (==) x = (P.==) x
- #-}
+"equality/text" forall (x :: Text). (==) x = (P.==) x
+  #-}
 
 fromString :: String -> Text
 fromString = T . J.pack
@@ -141,4 +141,4 @@ substitution (T text, T from, T to) = T (J.replace from to text)
 --                   ("[score]", printed(score))])
 substitutions :: (Text, [(Text, Text)]) -> Text
 substitutions (T text, replacements) =
-    T (foldl' (\a (T b, T c) -> J.replace b c a) text replacements)
+  T (foldl' (\a (T b, T c) -> J.replace b c a) text replacements)

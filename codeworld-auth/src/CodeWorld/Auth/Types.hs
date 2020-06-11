@@ -14,18 +14,17 @@
   limitations under the License.
 -}
 
-{-|
-Type aliases for simplify Snap type signatures etc.
--}
-
+-- |
+-- Type aliases for simplify Snap type signatures etc.
 module CodeWorld.Auth.Types
-    ( Route
-    , SnapExcept
-    ) where
+  ( Route,
+    SnapExcept,
+  )
+where
 
-import           Control.Monad.Trans.Except (ExceptT(..))
-import           Data.ByteString (ByteString)
-import           Snap.Core (Snap)
+import Control.Monad.Trans.Except (ExceptT (..))
+import Data.ByteString (ByteString)
+import Snap.Core (Snap)
 
 type SnapExcept a = ExceptT (Snap a) Snap a -> Snap a
 

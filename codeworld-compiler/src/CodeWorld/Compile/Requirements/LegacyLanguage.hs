@@ -17,10 +17,11 @@
   limitations under the License.
 -}
 
-module CodeWorld.Compile.Requirements.LegacyLanguage (
-    isLegacyFormat,
-    parseLegacyRequirement
-    ) where
+module CodeWorld.Compile.Requirements.LegacyLanguage
+  ( isLegacyFormat,
+    parseLegacyRequirement,
+  )
+where
 
 import CodeWorld.Compile.Framework
 import CodeWorld.Compile.Requirements.Types
@@ -30,8 +31,8 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void
 import Text.Megaparsec
-import Text.Megaparsec.Char
 import qualified Text.Megaparsec as MP
+import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 import Text.Regex.TDFA ((=~))
 import Text.Regex.TDFA.Text ()
@@ -71,81 +72,83 @@ integer = lexeme L.decimal
 
 legacyRequirementParser :: Parser Requirement
 legacyRequirementParser = do
-    optional ws
-    optional (symbol "REQUIRES")
-    doc <- between quote quote (many nonquote)
-    rules <- many ruleParser
-    eof
-    return (Requirement doc rules)
+  optional ws
+  optional (symbol "REQUIRES")
+  doc <- between quote quote (many nonquote)
+  rules <- many ruleParser
+  eof
+  return (Requirement doc rules)
 
 ruleParser :: Parser Rule
-ruleParser = definedByParser <|>
-             matchesExpectedParser <|>
-             simpleParamsParser <|>
-             usesAllParamsParser <|>
-             notDefinedParser <|>
-             notUsedParser
+ruleParser =
+  definedByParser
+    <|> matchesExpectedParser
+    <|> simpleParamsParser
+    <|> usesAllParamsParser
+    <|> notDefinedParser
+    <|> notUsedParser
 
 definedByParser :: Parser Rule
 definedByParser = do
-    symbol "definedByFunction"
-    symbol "("
-    a <- identifier
-    symbol ","
-    b <- identifier
-    symbol ")"
-    return (DefinedByFunction a b)
+  symbol "definedByFunction"
+  symbol "("
+  a <- identifier
+  symbol ","
+  b <- identifier
+  symbol ")"
+  return (DefinedByFunction a b)
 
 matchesExpectedParser :: Parser Rule
 matchesExpectedParser = do
-    symbol "matchesExpected"
-    symbol "("
-    a <- identifier
-    symbol ","
-    expectedHash <- integer
-    symbol ")"
-    return (MatchesExpected a expectedHash)
+  symbol "matchesExpected"
+  symbol "("
+  a <- identifier
+  symbol ","
+  expectedHash <- integer
+  symbol ")"
+  return (MatchesExpected a expectedHash)
 
 simpleParamsParser :: Parser Rule
 simpleParamsParser = do
-    symbol "hasSimpleParams"
-    symbol "("
-    a <- identifier
-    symbol ")"
-    return (HasSimpleParams a)
+  symbol "hasSimpleParams"
+  symbol "("
+  a <- identifier
+  symbol ")"
+  return (HasSimpleParams a)
 
 usesAllParamsParser :: Parser Rule
 usesAllParamsParser = do
-    symbol "usesAllParams"
-    symbol "("
-    a <- identifier
-    symbol ")"
-    return (UsesAllParams a)
+  symbol "usesAllParams"
+  symbol "("
+  a <- identifier
+  symbol ")"
+  return (UsesAllParams a)
 
 notDefinedParser :: Parser Rule
 notDefinedParser = do
-    symbol "notDefined"
-    symbol "("
-    a <- identifier
-    symbol ")"
-    return (NotDefined a)
+  symbol "notDefined"
+  symbol "("
+  a <- identifier
+  symbol ")"
+  return (NotDefined a)
 
 notUsedParser :: Parser Rule
 notUsedParser = do
-    symbol "notUsed"
-    symbol "("
-    a <- identifier
-    symbol ")"
-    return (NotUsed a)
+  symbol "notUsed"
+  symbol "("
+  a <- identifier
+  symbol ")"
+  return (NotUsed a)
 
 isLegacyFormat :: Text -> Bool
 isLegacyFormat txt =
-    txt =~ ("^[[:space:]]*(REQUIRES)?[[:space:]]*\"[^\n]*\".*" :: Text)
+  txt =~ ("^[[:space:]]*(REQUIRES)?[[:space:]]*\"[^\n]*\".*" :: Text)
 
 parseLegacyRequirement :: Int -> Int -> Text -> Either String Requirement
 parseLegacyRequirement ln col txt =
-    either (Left . errorBundlePretty) Right $
-        snd $ runParser' legacyRequirementParser initialState
+  either (Left . errorBundlePretty) Right
+    $ snd
+    $ runParser' legacyRequirementParser initialState
   where
     str = T.unpack txt
     initialState :: MP.State String

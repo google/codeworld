@@ -13,59 +13,61 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -}
-
-{-|
-Types for working with accounts, bearer tokens etc.
--}
-
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+-- |
+-- Types for working with accounts, bearer tokens etc.
 module CodeWorld.Account.Types
-    ( Password(..)
-    , PasswordHash(..)
-    , Status(..)
-    , Store(..)
-    , TokenId(..)
-    , UserId(..)
-    ) where
+  ( Password (..),
+    PasswordHash (..),
+    Status (..),
+    Store (..),
+    TokenId (..),
+    UserId (..),
+  )
+where
 
-import           Data.ByteString (ByteString)
-import           Data.Hashable (Hashable)
-import           Database.SQLite.Simple (SQLData(..))
-import           Database.SQLite.Simple.FromField (FromField(..), ResultError(..), fieldData, returnError)
-import           Database.SQLite.Simple.Ok (Ok(..))
-import           Database.SQLite.Simple.ToField (ToField(..))
+import Data.ByteString (ByteString)
+import Data.Hashable (Hashable)
+import Database.SQLite.Simple (SQLData (..))
+import Database.SQLite.Simple.FromField (FromField (..), ResultError (..), fieldData, returnError)
+import Database.SQLite.Simple.Ok (Ok (..))
+import Database.SQLite.Simple.ToField (ToField (..))
 
--- |Configuration, including location on disc, of account database
+-- | Configuration, including location on disc, of account database
 data Store = Store FilePath
 
--- |User ID
+-- | User ID
 newtype UserId = UserId String deriving (Eq, Hashable, Show)
 
--- |Password
+-- | Password
 newtype Password = Password String deriving (Eq, Show)
 
--- |Password hash
-newtype PasswordHash = PasswordHash ByteString deriving Eq
+-- | Password hash
+newtype PasswordHash = PasswordHash ByteString deriving (Eq)
 
--- |Monotonically-increasing token identifier used to invalidate
--- refresh tokens issued by bearer-token-based authentication systems
--- including local auth system
+-- | Monotonically-increasing token identifier used to invalidate
+--  refresh tokens issued by bearer-token-based authentication systems
+--  including local auth system
 newtype TokenId = TokenId Int deriving (Eq, Show)
 
--- |Account status
-data Status =
-    Active      -- ^ Active
-    | Expired   -- ^ Expired
-    deriving Show
+-- | Account status
+data Status
+  = -- | Active
+    Active
+  | -- | Expired
+    Expired
+  deriving (Show)
 
 instance ToField Status where
-    toField Active = SQLText "Active"
-    toField Expired = SQLText "Expired"
+  toField Active = SQLText "Active"
+  toField Expired = SQLText "Expired"
 
 instance FromField Status where
-    fromField f = let d = fieldData f in case d of
-                    SQLText "Active" -> Ok Active
-                    SQLText "Expired" -> Ok Expired
-                    _ -> returnError ConversionFailed f ("Value must be \"Active\" or \"Expired\", got " ++ show d)
+  fromField f =
+    let d = fieldData f
+     in case d of
+          SQLText "Active" -> Ok Active
+          SQLText "Expired" -> Ok Expired
+          _ -> returnError ConversionFailed f ("Value must be \"Active\" or \"Expired\", got " ++ show d)

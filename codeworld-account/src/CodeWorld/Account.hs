@@ -15,10 +15,11 @@
 -}
 
 module CodeWorld.Account
-    ( module CodeWorld.Account.Actions
-    , module CodeWorld.Account.Hashing
-    , module CodeWorld.Account.Types
-    ) where
+  ( module CodeWorld.Account.Actions,
+    module CodeWorld.Account.Hashing,
+    module CodeWorld.Account.Types,
+  )
+where
 
 import CodeWorld.Account.Actions
 import CodeWorld.Account.Hashing

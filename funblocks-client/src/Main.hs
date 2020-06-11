@@ -1,6 +1,6 @@
+{-# LANGUAGE CPP #-}
 -- {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE CPP #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All Rights Reserved.
@@ -18,9 +18,10 @@
   limitations under the License.
 -}
 
-module Main (
-    main
-) where
+module Main
+  ( main,
+  )
+where
 
 import Blockly.Block
 import Blockly.Event
@@ -31,12 +32,14 @@ import Blocks.Parser
 import Blocks.Types
 import Control.Monad
 import Control.Monad.Fail (MonadFail)
-import Control.Monad.Trans (liftIO, lift)
+import Control.Monad.Trans (lift, liftIO)
+import qualified Data.JSString as JStr
 import Data.JSString.Text
 import Data.Monoid
+import qualified Data.Text as T
 import GHCJS.DOM (currentDocument)
-import GHCJS.DOM.Document (getBody, Document(..))
-import GHCJS.DOM.Element (setInnerHTML, Element)
+import GHCJS.DOM.Document (Document (..), getBody)
+import GHCJS.DOM.Element (Element, setInnerHTML)
 import GHCJS.DOM.EventM (on)
 import GHCJS.DOM.GlobalEventHandlers
 import GHCJS.DOM.HTMLButtonElement
@@ -44,14 +47,13 @@ import GHCJS.DOM.NonElementParentNode
 import GHCJS.DOM.Types
 import GHCJS.Foreign
 import GHCJS.Foreign.Callback
+import qualified GHCJS.Foreign.Callback as Callback
 import GHCJS.Marshal
 import GHCJS.Types
 import Prelude hiding (error)
-import qualified Data.JSString as JStr
-import qualified Data.Text as T
-import qualified GHCJS.Foreign.Callback as Callback
 
 pack = textToJSString
+
 unpack = textFromJSString
 
 #ifdef ghcjs_HOST_OS
@@ -66,7 +68,7 @@ setErrorMessage msg = do
 programBlocks :: [T.Text]
 programBlocks = map T.pack ["cwActivityOf", "cwDrawingOf","cwAnimationOf", "cwSimulationOf", "cwInteractionOf"]
 
-btnStopClick = do 
+btnStopClick = do
   liftIO js_stop
 
 
@@ -74,7 +76,7 @@ runOrError :: Workspace -> IO ()
 runOrError ws = do
         (code,errors) <- workspaceToCode ws
         case errors of
-          ((Error msg block):es) -> do 
+          ((Error msg block):es) -> do
                                       putStrLn $ T.unpack msg
                                       setWarningText block msg
                                       addErrorSelect block
@@ -105,14 +107,14 @@ btnRunClick ws = do
     liftIO $ addErrorSelect block
     liftIO $ js_removeErrorsDelay
   else do
-    if not $ containsProgramBlock blocks 
-      then do 
+    if not $ containsProgramBlock blocks
+      then do
         setErrorMessage "No Program block on the workspace"
       else do
         liftIO $ runOrError ws
     return ()
   where
-    containsProgramBlock = any (\b -> getBlockType b `elem` programBlocks) 
+    containsProgramBlock = any (\b -> getBlockType b `elem` programBlocks)
 
 hookEvent elementName evType func = do
   Just doc <- currentDocument
@@ -121,10 +123,10 @@ hookEvent elementName evType func = do
 
 help = do
       js_injectReadOnly (JStr.pack "blocklyDiv")
-      liftIO setBlockTypes 
+      liftIO setBlockTypes
 
 funblocks = do
-      Just doc <- currentDocument 
+      Just doc <- currentDocument
       Just body <- getBody doc
       workspace <- liftIO $ setWorkspace "blocklyDiv" "toolbox"
       liftIO $ disableOrphans workspace -- Disable disconnected non-top level blocks
@@ -148,15 +150,15 @@ main = do
     Nothing -> help
 
 -- Update code in real time
-onChange ws event = do 
+onChange ws event = do
                       (code, errs) <- workspaceToCode ws
                       js_updateEditor (pack code)
 
 
 setRunFunc :: Workspace -> IO ()
 setRunFunc ws = do
-      cb <- syncCallback ContinueAsync (do 
-                                        runOrError ws) 
+      cb <- syncCallback ContinueAsync (do
+                                        runOrError ws)
       js_setRunFunc cb
 
 -- FFI

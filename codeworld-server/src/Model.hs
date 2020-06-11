@@ -1,7 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS_GHC
-    -fno-warn-unused-imports
-#-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -23,82 +21,87 @@ module Model where
 import Control.Applicative
 import Control.Monad
 import Data.Aeson
+import Data.ByteString (ByteString)
 import Data.Text (Text)
 import System.FilePath (FilePath)
-import Data.ByteString (ByteString)
 
 data Project = Project
-    { projectName :: Text
-    , projectSource :: Text
-    , projectHistory :: Value
-    }
+  { projectName :: Text,
+    projectSource :: Text,
+    projectHistory :: Value
+  }
 
 instance FromJSON Project where
-    parseJSON (Object v) =
-        Project <$> v .: "name" <*> v .: "source" <*> v .: "history"
-    parseJSON _ = mzero
+  parseJSON (Object v) =
+    Project <$> v .: "name" <*> v .: "source" <*> v .: "history"
+  parseJSON _ = mzero
 
 instance ToJSON Project where
-    toJSON p =
-        object
-            [ "name" .= projectName p
-            , "source" .= projectSource p
-            , "history" .= projectHistory p
-            , "type" .= ("project" :: Text)
-            ]
+  toJSON p =
+    object
+      [ "name" .= projectName p,
+        "source" .= projectSource p,
+        "history" .= projectHistory p,
+        "type" .= ("project" :: Text)
+      ]
 
 data FileSystemEntryType = Dir | Proj deriving (Eq, Ord, Show)
 
 instance ToJSON FileSystemEntryType where
-    toJSON Dir  = Data.Aeson.String "directory"
-    toJSON Proj = Data.Aeson.String "project"
+  toJSON Dir = Data.Aeson.String "directory"
+  toJSON Proj = Data.Aeson.String "project"
 
 instance FromJSON FileSystemEntryType where
-    parseJSON (Data.Aeson.String "directory") = return $ Dir
-    parseJSON (Data.Aeson.String "project")   = return $ Proj
-    parseJSON _ = mzero
+  parseJSON (Data.Aeson.String "directory") = return $ Dir
+  parseJSON (Data.Aeson.String "project") = return $ Proj
+  parseJSON _ = mzero
 
-data FileSystemEntry = FSEntry 
-    { fsEntryIndex :: Int
-    , fsEntryName  :: Text
-    , fsEntryType  :: FileSystemEntryType        
-    } deriving (Eq, Ord, Show)
-        
+data FileSystemEntry = FSEntry
+  { fsEntryIndex :: Int,
+    fsEntryName :: Text,
+    fsEntryType :: FileSystemEntryType
+  }
+  deriving (Eq, Ord, Show)
+
 instance ToJSON FileSystemEntry where
-    toJSON entry = object 
-        [ "index" .= fsEntryIndex entry
-        , "name"  .= fsEntryName entry
-        , "type"  .= fsEntryType entry
-        ]
+  toJSON entry =
+    object
+      [ "index" .= fsEntryIndex entry,
+        "name" .= fsEntryName entry,
+        "type" .= fsEntryType entry
+      ]
 
 instance FromJSON FileSystemEntry where
-    parseJSON (Object v) =
-        FSEntry <$>  v .: "index" <*> v .: "name" <*> v .: "type"
-    parseJSON _ = mzero
+  parseJSON (Object v) =
+    FSEntry <$> v .: "index" <*> v .: "name" <*> v .: "type"
+  parseJSON _ = mzero
 
 data CompileResult = CompileResult
-    { compileHash :: Text
-    , compileDeployHash :: Text
-    }
+  { compileHash :: Text,
+    compileDeployHash :: Text
+  }
 
 instance ToJSON CompileResult where
-    toJSON cr =
-        object ["hash" .= compileHash cr, "dhash" .= compileDeployHash cr]
+  toJSON cr =
+    object ["hash" .= compileHash cr, "dhash" .= compileDeployHash cr]
 
-data Gallery = Gallery { galleryItems :: [GalleryItem] }
+data Gallery = Gallery {galleryItems :: [GalleryItem]}
+
 data GalleryItem = GalleryItem
-    { galleryItemName :: Text,
-      galleryItemURL  :: Text,
-      galleryItemCode :: Maybe Text
-    }
+  { galleryItemName :: Text,
+    galleryItemURL :: Text,
+    galleryItemCode :: Maybe Text
+  }
 
 instance ToJSON Gallery where
-    toJSON g = object [ "items" .= galleryItems g ]
+  toJSON g = object ["items" .= galleryItems g]
 
 instance ToJSON GalleryItem where
-    toJSON item = case galleryItemCode item of
-        Nothing -> object base
-        Just code -> object (("code" .= code) : base)
-      where base = [ "name" .= galleryItemName item
-                   , "url" .= galleryItemURL item
-                   ]
+  toJSON item = case galleryItemCode item of
+    Nothing -> object base
+    Just code -> object (("code" .= code) : base)
+    where
+      base =
+        [ "name" .= galleryItemName item,
+          "url" .= galleryItemURL item
+        ]

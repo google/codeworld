@@ -1,8 +1,8 @@
-{-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 {-
   Copyright 2019 The CodeWorld Authors. All rights reserved.
@@ -43,43 +43,59 @@ import "base" Prelude ((.))
 -- names and the 'RGB' and 'HSL' constructors only produce opaque
 -- colors, but 'RGBA' and the 'translucent' function work with
 -- transparency.
-newtype Color = Color { toCWColor :: CW.Color } deriving (P.Eq)
+newtype Color = Color {toCWColor :: CW.Color} deriving (P.Eq)
 
 -- | A synonym for 'Color', using the non-US spelling.
 type Colour = Color
 
 {-# RULES
-"equality/color" forall (x :: Color) . (==) x = (P.==) x
- #-}
+"equality/color" forall (x :: Color). (==) x = (P.==) x
+  #-}
 
 pattern RGBA :: (Number, Number, Number, Number) -> Color
-pattern RGBA components <- (toRGBA -> components)
-  where RGBA components
-          = let (r, g, b, a) = components
-            in Color (CW.RGBA (toDouble r) (toDouble g)
-                              (toDouble b) (toDouble a))
+pattern RGBA components <-
+  (toRGBA -> components)
+  where
+    RGBA components =
+      let (r, g, b, a) = components
+       in Color
+            ( CW.RGBA
+                (toDouble r)
+                (toDouble g)
+                (toDouble b)
+                (toDouble a)
+            )
 
 -- Utility function for RGB pattern synonym.
 toRGBA :: Color -> (Number, Number, Number, Number)
 toRGBA (Color (CW.RGBA r g b a)) =
-    (fromDouble r, fromDouble g, fromDouble b, fromDouble a)
+  (fromDouble r, fromDouble g, fromDouble b, fromDouble a)
 
 pattern RGB :: (Number, Number, Number) -> Color
-pattern RGB components <- (toRGB -> P.Just components)
-  where RGB components
-          = let (r, g, b) = components
-            in Color (CW.RGBA (toDouble r) (toDouble g)
-                              (toDouble b) (toDouble 1))
+pattern RGB components <-
+  (toRGB -> P.Just components)
+  where
+    RGB components =
+      let (r, g, b) = components
+       in Color
+            ( CW.RGBA
+                (toDouble r)
+                (toDouble g)
+                (toDouble b)
+                (toDouble 1)
+            )
 
 -- Utility function for RGB pattern synonym.
 toRGB :: Color -> P.Maybe (Number, Number, Number)
 toRGB (Color (CW.RGBA r g b (fromDouble -> 1))) =
-    P.Just (fromDouble r, fromDouble g, fromDouble b)
+  P.Just (fromDouble r, fromDouble g, fromDouble b)
 toRGB _ = P.Nothing
 
 pattern HSL :: (Number, Number, Number) -> Color
-pattern HSL components <- (toHSL -> P.Just components)
-  where HSL components = fromHSL components
+pattern HSL components <-
+  (toHSL -> P.Just components)
+  where
+    HSL components = fromHSL components
 
 -- Utility functions for HSL pattern synonym.
 toHSL :: Color -> P.Maybe (Number, Number, Number)
@@ -88,7 +104,7 @@ toHSL _ = P.Nothing
 
 fromHSL :: (Number, Number, Number) -> Color
 fromHSL (h, s, l) =
-    Color (CW.HSL (toDouble (pi * h / 180)) (toDouble s) (toDouble l))
+  Color (CW.HSL (toDouble (pi * h / 180)) (toDouble s) (toDouble l))
 
 -- | Produces a color by mixing other colors in equal proportion.
 --
@@ -184,37 +200,34 @@ assortedColors = P.map Color CW.assortedColors
 
 hue, saturation, luminosity, alpha :: Color -> Number
 hue = (180 *) . (/ pi) . fromDouble . CW.hue . toCWColor
-
 saturation = fromDouble . CW.saturation . toCWColor
-
 luminosity = fromDouble . CW.luminosity . toCWColor
-
 alpha = fromDouble . CW.alpha . toCWColor
 
 -- New style colors
 
 -- | The color white
 white :: Color
-white  = Color CW.white
+white = Color CW.white
 
 -- | The color black
 black :: Color
-black  = Color CW.black
+black = Color CW.black
 
 -- | The color gray
 gray :: Color
-gray   = Color CW.gray
+gray = Color CW.gray
 
 -- | The color grey
 --
 -- This is the same color as 'gray', but with a non-US
 -- spelling.
 grey :: Color
-grey   = Color CW.grey
+grey = Color CW.grey
 
 -- | The color red
 red :: Color
-red    = Color CW.red
+red = Color CW.red
 
 -- | The color orange
 orange :: Color
@@ -226,11 +239,11 @@ yellow = Color CW.yellow
 
 -- | The color green
 green :: Color
-green  = Color CW.green
+green = Color CW.green
 
 -- | The color blue
 blue :: Color
-blue   = Color CW.blue
+blue = Color CW.blue
 
 -- | The color purple
 purple :: Color
@@ -238,11 +251,11 @@ purple = Color CW.purple
 
 -- | The color pink
 pink :: Color
-pink   = Color CW.pink
+pink = Color CW.pink
 
 -- | The color brown
 brown :: Color
-brown  = Color CW.brown
+brown = Color CW.brown
 
 cyan, magenta, rose, chartreuse, aquamarine, violet, azure :: Color
 cyan = Color CW.cyan
@@ -252,26 +265,73 @@ chartreuse = Color CW.chartreuse
 aquamarine = Color CW.aquamarine
 violet = Color CW.violet
 azure = Color CW.azure
+{-# WARNING
+  magenta
+  [ "Please use HSL(300, 0.75, 0.5) instead of magenta.",
+    "The variable magenta may be removed July 2020."
+  ]
+  #-}
+{-# WARNING
+  cyan
+  [ "Please use HSL(180, 0.75, 0.5) instead of cyan.",
+    "The variable cyan may be removed July 2020."
+  ]
+  #-}
+{-# WARNING
+  chartreuse
+  [ "Please use HSL(90, 0.75, 0.5) instead of chartreuse.",
+    "The variable chartreuse may be removed July 2020."
+  ]
+  #-}
+{-# WARNING
+  aquamarine
+  [ "Please use HSL(150, 0.75, 0.5) instead of aquamarine.",
+    "The variable aquamarine may be removed July 2020."
+  ]
+  #-}
+{-# WARNING
+  azure
+  [ "Please use HSL(210, 0.75, 0.5) instead of azure.",
+    "The variable azure may be removed July 2020."
+  ]
+  #-}
+{-# WARNING
+  rose
+  [ "Please use HSL(330, 0.75, 0.5) instead of rose.",
+    "The variable rose may be removed July 2020."
+  ]
+  #-}
+{-# WARNING
+  violet
+  [ "Please use purple instead of violet.",
+    "The variable violet may be removed July 2020."
+  ]
+  #-}
 
-{-# WARNING magenta    [ "Please use HSL(300, 0.75, 0.5) instead of magenta."
-                       , "The variable magenta may be removed July 2020." ] #-}
-{-# WARNING cyan       [ "Please use HSL(180, 0.75, 0.5) instead of cyan."
-                       , "The variable cyan may be removed July 2020." ] #-}
-{-# WARNING chartreuse [ "Please use HSL(90, 0.75, 0.5) instead of chartreuse."
-                       , "The variable chartreuse may be removed July 2020." ] #-}
-{-# WARNING aquamarine [ "Please use HSL(150, 0.75, 0.5) instead of aquamarine."
-                       , "The variable aquamarine may be removed July 2020." ] #-}
-{-# WARNING azure      [ "Please use HSL(210, 0.75, 0.5) instead of azure."
-                       , "The variable azure may be removed July 2020." ] #-}
-{-# WARNING rose       [ "Please use HSL(330, 0.75, 0.5) instead of rose."
-                       , "The variable rose may be removed July 2020." ] #-}
-{-# WARNING violet     [ "Please use purple instead of violet."
-                       , "The variable violet may be removed July 2020." ] #-}
-{-# WARNING hue        [ "Please match HSL(...) instead of using hue(...)."
-                       , "The hue function may be removed July 2020." ] #-}
-{-# WARNING saturation [ "Please match HSL(...) instead of using saturation(...)."
-                       , "The saturation function may be removed July 2020." ] #-}
-{-# WARNING luminosity [ "Please match HSL(...) instead of using luminosity(...)."
-                       , "The luminosity function may be removed July 2020." ] #-}
-{-# WARNING alpha      [ "Please match RGBA(...) instead of using alpha(...)."
-                       , "The alpha function may be removed July 2020." ] #-}
+{-# WARNING
+  hue
+  [ "Please match HSL(...) instead of using hue(...).",
+    "The hue function may be removed July 2020."
+  ]
+  #-}
+
+{-# WARNING
+  saturation
+  [ "Please match HSL(...) instead of using saturation(...).",
+    "The saturation function may be removed July 2020."
+  ]
+  #-}
+
+{-# WARNING
+  luminosity
+  [ "Please match HSL(...) instead of using luminosity(...).",
+    "The luminosity function may be removed July 2020."
+  ]
+  #-}
+
+{-# WARNING
+  alpha
+  [ "Please match RGBA(...) instead of using alpha(...).",
+    "The alpha function may be removed July 2020."
+  ]
+  #-}

@@ -165,13 +165,12 @@ debugReflexOf program = runReactive $ \input -> flip runReactiveProgram input $ 
   logicalInputs <- makeLogicalInputs controlState =<< getReactiveInput
   withReactiveInput logicalInputs program
 
-data ControlState t
-  = ControlState
-      { csRunning :: Dynamic t Bool,
-        csTimeDilation :: Dynamic t Double,
-        csPointTransform :: Dynamic t (Point -> Point),
-        csSyntheticStep :: Event t ()
-      }
+data ControlState t = ControlState
+  { csRunning :: Dynamic t Bool,
+    csTimeDilation :: Dynamic t Double,
+    csPointTransform :: Dynamic t (Point -> Point),
+    csSyntheticStep :: Event t ()
+  }
 
 makeLogicalInputs :: (Reflex t, MonadHold t m) => ControlState t -> ReactiveInput t -> m (ReactiveInput t)
 makeLogicalInputs ControlState {..} input = do
@@ -231,12 +230,13 @@ reactiveDebugControls hoverAlpha = do
   stepClick <- stepButton hoverAlpha (-2, -9) running
   transformUserPicture $ uncurry translated <$> panOffset
   transformUserPicture $ dilated <$> zoomFactor
-  return $ ControlState
-    { csRunning = running,
-      csTimeDilation = speedFactor,
-      csPointTransform = transformPoint <$> zoomFactor <*> panOffset,
-      csSyntheticStep = stepClick
-    }
+  return $
+    ControlState
+      { csRunning = running,
+        csTimeDilation = speedFactor,
+        csPointTransform = transformPoint <$> zoomFactor <*> panOffset,
+        csSyntheticStep = stepClick
+      }
   where
     transformPoint z (dx, dy) (x, y) = ((x - dx) / z, (y - dy) / z)
 

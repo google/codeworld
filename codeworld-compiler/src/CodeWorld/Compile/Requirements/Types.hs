@@ -16,44 +16,45 @@
 
 module CodeWorld.Compile.Requirements.Types where
 
-data Requirement = Requirement {
-    requiredDescription :: String,
+data Requirement = Requirement
+  { requiredDescription :: String,
     requiredRules :: [Rule]
-    }
-    deriving Show
+  }
+  deriving (Show)
 
-data Rule = DefinedByFunction String String
-          | MatchesExpected String Int
-          | HasSimpleParams String
-          | UsesAllParams String
-          | NotDefined String
-          | NotUsed String
-          | ContainsMatch {
-                matchTemplate :: String,
-                matchTopLevel :: Bool,
-                matchCardinality :: Cardinality
-            }
-          | MatchesRegex {
-                regexPattern :: String,
-                regexCardinality :: Cardinality
-            }
-          | OnFailure String Rule
-          | IfThen Rule Rule
-          | AllOf [Rule]
-          | AnyOf [Rule]
-          | NotThis Rule
-          | MaxLineLength Int
-          | NoWarningsExcept [String]
-          | TypeSignatures Bool
-          | Blacklist [String]
-          | Whitelist [String]
-    deriving Show
+data Rule
+  = DefinedByFunction String String
+  | MatchesExpected String Int
+  | HasSimpleParams String
+  | UsesAllParams String
+  | NotDefined String
+  | NotUsed String
+  | ContainsMatch
+      { matchTemplate :: String,
+        matchTopLevel :: Bool,
+        matchCardinality :: Cardinality
+      }
+  | MatchesRegex
+      { regexPattern :: String,
+        regexCardinality :: Cardinality
+      }
+  | OnFailure String Rule
+  | IfThen Rule Rule
+  | AllOf [Rule]
+  | AnyOf [Rule]
+  | NotThis Rule
+  | MaxLineLength Int
+  | NoWarningsExcept [String]
+  | TypeSignatures Bool
+  | Blacklist [String]
+  | Whitelist [String]
+  deriving (Show)
 
-data Cardinality = Cardinality {
-    atLeast :: Maybe Int,
+data Cardinality = Cardinality
+  { atLeast :: Maybe Int,
     atMost :: Maybe Int
-    }
-    deriving Show
+  }
+  deriving (Show)
 
 anyNumber, exactlyOne, atLeastOne :: Cardinality
 anyNumber = Cardinality Nothing Nothing

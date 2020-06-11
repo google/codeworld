@@ -101,12 +101,11 @@ interactionOf initial step event draw = do
   ]
   #-}
 
-data Timeline a
-  = Timeline
-      { past :: [a], -- reversed list of past states
-        present :: !a, -- present state
-        future :: [a] -- list of future states
-      }
+data Timeline a = Timeline
+  { past :: [a], -- reversed list of past states
+    present :: !a, -- present state
+    future :: [a] -- list of future states
+  }
 
 newTimeline :: a -> Timeline a
 newTimeline x = Timeline [] x []
@@ -175,32 +174,32 @@ data StrictPoint = SP !Double !Double deriving (Eq, Show)
 
 data StrictMaybe a = SNothing | SJust !a deriving (Functor, Show)
 
-data Wrapped a
-  = Wrapped
-      { state :: a,
-        playbackSpeed :: !Double,
-        lastInteractionTime :: !Double,
-        zoomFactor :: !Double,
-        panCenter :: !StrictPoint,
-        panDraggingAnchor :: !(StrictMaybe StrictPoint),
-        isDraggingSpeed :: !Bool,
-        isDraggingHistory :: !Bool,
-        isDraggingZoom :: !Bool
-      }
+data Wrapped a = Wrapped
+  { state :: a,
+    playbackSpeed :: !Double,
+    lastInteractionTime :: !Double,
+    zoomFactor :: !Double,
+    panCenter :: !StrictPoint,
+    panDraggingAnchor :: !(StrictMaybe StrictPoint),
+    isDraggingSpeed :: !Bool,
+    isDraggingHistory :: !Bool,
+    isDraggingZoom :: !Bool
+  }
   deriving (Show, Functor)
 
 wrappedInitial :: a -> Wrapped a
-wrappedInitial w = Wrapped
-  { state = w,
-    playbackSpeed = 1,
-    lastInteractionTime = 1000,
-    zoomFactor = 1,
-    panCenter = SP 0 0,
-    panDraggingAnchor = SNothing,
-    isDraggingSpeed = False,
-    isDraggingHistory = False,
-    isDraggingZoom = False
-  }
+wrappedInitial w =
+  Wrapped
+    { state = w,
+      playbackSpeed = 1,
+      lastInteractionTime = 1000,
+      zoomFactor = 1,
+      panCenter = SP 0 0,
+      panDraggingAnchor = SNothing,
+      isDraggingSpeed = False,
+      isDraggingHistory = False,
+      isDraggingZoom = False
+    }
 
 identical :: a -> a -> Bool
 identical !x !y = isTrue# (reallyUnsafePtrEquality# x y)

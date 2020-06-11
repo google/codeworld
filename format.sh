@@ -32,21 +32,11 @@ function formatall_js {
 
 run . formatall_js
 
-function format_hs {
-    tmpfile=$(mktemp /tmp/fmtXXXXXX.hs)
-    cp "$1" "$tmpfile"
-    sed -i -E 's/^(#[a-z])/-- !!! \1/' "$tmpfile"
-    ormolu -p --mode inplace "$tmpfile"
-    sed -i -E 's/^-- !!! (#[a-z])/\1/' "$tmpfile"
-    cp "$tmpfile" "$1"
-    rm "$tmpfile"
-}
-
 function formatall_hs {
-    for f in $(find */src -regex .*\\.hs$ -type f)
+    for f in $(find */src -regex .*\\.hs$ -type f | grep -v '^ghcjs/')
     do
-        format_hs $f || true
+        ormolu --mode inplace $f
     done
 }
 
-# run . formatall_hs
+run . formatall_hs

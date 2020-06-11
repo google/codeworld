@@ -11,32 +11,31 @@
   limitations under the License.
 -}
 
-{-|
-Snap helper functions
--}
-
+-- |
+-- Snap helper functions
 module CodeWorld.Auth.Util
-    ( getRequiredParam
-    , hoistEither
-    , hoistMaybe
-    , m
-    , withSnapExcept
-    ) where
+  ( getRequiredParam,
+    hoistEither,
+    hoistMaybe,
+    m,
+    withSnapExcept,
+  )
+where
 
-import           CodeWorld.Auth.Http
-import           CodeWorld.Auth.Types
-import           Control.Monad.Trans.Except (ExceptT(..), runExceptT, throwE)
-import           Data.ByteString (ByteString)
-import           Data.HashMap.Strict (HashMap)
+import CodeWorld.Auth.Http
+import CodeWorld.Auth.Types
+import Control.Monad.Trans.Except (ExceptT (..), runExceptT, throwE)
+import Data.ByteString (ByteString)
+import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HashMap (fromList)
-import           Snap.Core (Snap, finishWith, getParam)
+import Snap.Core (Snap, finishWith, getParam)
 
 getRequiredParam :: ByteString -> Snap ByteString
 getRequiredParam name = do
-    mbValue <- getParam name
-    case mbValue of
-        Nothing -> finishWith badRequest400
-        Just value -> return value
+  mbValue <- getParam name
+  case mbValue of
+    Nothing -> finishWith badRequest400
+    Just value -> return value
 
 m :: [(String, String)] -> HashMap String String
 m = HashMap.fromList

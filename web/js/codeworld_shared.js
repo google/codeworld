@@ -601,7 +601,7 @@ function registerStandardHints(successFunc) {
                     if (hover) {
                         doc.className += 'hint-description';
                         doc.style.top = `${hintsWidgetRect.top}px`;
-                        doc.style.left = `${hintsWidgetRect.right 
+                        doc.style.left = `${hintsWidgetRect.right
                         }px`;
                         doc.appendChild(hover);
                         document.body.appendChild(doc);
@@ -871,32 +871,51 @@ function withClientId(f) {
     });
 }
 
-function loadSubTree(node, callback) {
-    if (signedIn() && node === $('#directoryTree').tree('getTree')) {
-        // Root node already loaded
-        if (callback) callback();
-    } else if (signedIn() && node.type === 'directory') {
-        const data = new FormData();
-        data.append('mode', window.projectEnv);
-        data.append('path', getNearestDirectory(node));
-        showLoadingAnimation(node);
-        sendHttp('POST', 'listFolder', data, request => {
-            if (request.status === 200) {
-                $('#directoryTree').tree(
-                    'loadData',
-                    JSON.parse(request.responseText).sort(
-                        (a, b) => {
-                            return a.index > b.index;
-                        }
-                    ),
-                    node
-                );
+function loadTreeNodesAtPath(path, node, callback) {
+    const data = new FormData();
+    data.append('mode', window.projectEnv);
+    data.append('path', path);
+
+    showLoadingAnimation(node);
+
+    sendHttp('POST', 'listFolder', data, request => {
+        if (request.status === 200) {
+            const treeNodes = JSON.parse(request.responseText);
+
+            treeNodes.forEach((node) => {
+                if (!node.id) {
+                    node.id = utils.directoryTree.createNodeId(node.type, node.name);
+                }
+            });
+
+            $('#directoryTree').tree(
+                'loadData',
+                treeNodes.sort((a, b) => a.index > b.index),
+                node,
+            );
+
+            if (node) {
                 $('#directoryTree').tree('openNode', node);
-                if (callback) callback();
             }
-            updateUI();
-            hideLoadingAnimation();
-        });
+
+            if (callback) {
+                callback();
+            }
+        }
+
+        updateUI();
+        hideLoadingAnimation();
+    });
+}
+
+function loadSubTree(node, callback) {
+    if (signedIn()) {
+        // Root node already loaded
+        if (node === $('#directoryTree').tree('getTree') && callback) {
+            callback();
+        } else if (utils.directoryTree.isDirectory(node)) {
+            loadTreeNodesAtPath(getNearestDirectory(node), node, callback);
+        }
     } else {
         updateUI();
     }
@@ -904,24 +923,10 @@ function loadSubTree(node, callback) {
 
 function discoverProjects(path) {
     if (signedIn()) {
-        const data = new FormData();
-        data.append('mode', window.projectEnv);
-        data.append('path', path);
-        showLoadingAnimation();
-        sendHttp('POST', 'listFolder', data, request => {
-            if (request.status === 200) {
-                hideLoadingAnimation();
-                $('#directoryTree').tree(
-                    'loadData',
-                    JSON.parse(request.responseText).sort(
-                        (a, b) => {
-                            return a.index > b.index;
-                        }
-                    ));
-            }
-            updateUI();
-        });
-    } else updateUI();
+        loadTreeNodesAtPath(path);
+    } else {
+        updateUI();
+    }
 }
 
 function moveDirTreeNode(moveFrom, moveTo, isFile, name, buildMode, successFunc) {
@@ -951,6 +956,30 @@ function moveDirTreeNode(moveFrom, moveTo, isFile, name, buildMode, successFunc)
     });
 }
 
+function setCode(code, history, name, autostart) {
+    if (!window.codeworldEditor) {
+        return;
+    }
+
+    const doc = window.codeworldEditor.getDoc();
+    doc.setValue(code);
+    window.savedGeneration = doc.changeGeneration(true);
+
+    if (history) {
+        doc.setHistory(history);
+    } else {
+        doc.clearHistory();
+    }
+
+    window.codeworldEditor.focus();
+    parseSymbolsFromCurrentCode();
+    if (autostart) {
+        compile();
+    } else {
+        stopRun();
+    }
+}
+
 function warnIfUnsaved(action) {
     if (isEditorClean()) {
         action();
@@ -977,46 +1006,43 @@ function saveProjectAsBase(successFunc) {
         return;
     }
 
-    let text;
-    let pathToRoot = '';
-    const selected = $('#directoryTree').tree('getSelectedNode');
-    if (selected) pathToRoot = pathToRootDir(selected);
-    if (pathToRoot !== '') {
-        text = `Enter a name for your project in folder <b>${ 
-            $('<div>').text(getNearestDirectory()).html().replace(/ /g,
-                '&nbsp;') 
-        }:`;
-    } else {
-        text = 'Enter a name for your project:';
-    }
-
-    let defaultName;
-    if (window.openProjectName) {
-        defaultName = window.openProjectName;
-    } else {
-        defaultName = '';
-    }
+    const selectedNode = utils.directoryTree.getSelectedNode();
+    const isDirectoryNode = utils.directoryTree.isDirectory(selectedNode);
 
     sweetAlert({
         title: Alert.title('Save As', 'mdi-cloud-upload'),
-        html: text,
+        html: selectedNode && isDirectoryNode ?
+            `Enter a name for your project in folder <b>${
+                $('<div>')
+                    .text(getNearestDirectory())
+                    .html()
+                    .replace(/ /g, '&nbsp;')
+            }:` : 'Enter a name for your project:',
         input: 'text',
-        inputValue: defaultName,
+        inputValue: selectedNode && !isDirectoryNode ?
+            selectedNode.name : '',
         confirmButtonText: 'Save',
         showCancelButton: true,
-        closeOnConfirm: false
+        closeOnConfirm: false,
     }).then(result => {
         const parent = getNearestDirectory_();
 
         function localSuccessFunc() {
-            const matches = parent.children.filter(n => n.name === result.value && n.type === 'project');
+            const matches = parent.children
+                .filter((node) => (
+                    node.name === result.value && utils.directoryTree.isProject(node)
+                ));
             let node;
+            const type = utils.directoryTree.nodeTypes.PROJECT;
+            const name = result.value;
+
             if (matches.length === 0) {
                 node = $('#directoryTree').tree(
                     'appendNode', {
-                        name: result.value,
-                        type: 'project',
-                        data: JSON.stringify(getCurrentProject())
+                        id: utils.directoryTree.createNodeId(type, name),
+                        name,
+                        type,
+                        data: JSON.stringify(getCurrentProject()),
                     },
                     parent
                 );
@@ -1025,7 +1051,9 @@ function saveProjectAsBase(successFunc) {
             }
 
             $('#directoryTree').tree('selectNode', node);
+
             updateChildrenIndexes(parent);
+
             successFunc(result.value);
         }
         if (result && result.value) {
@@ -1033,7 +1061,8 @@ function saveProjectAsBase(successFunc) {
                 getNearestDirectory(),
                 result.value,
                 window.projectEnv,
-                localSuccessFunc);
+                localSuccessFunc,
+            );
         }
     });
 }
@@ -1056,39 +1085,48 @@ function saveProjectBase(path, projectName, mode, successFunc) {
             showCloseButton: false,
             allowOutsideClick: false,
             allowEscapeKey: false,
-            allowEnterKey: false
+            allowEnterKey: false,
         });
 
         const project = getCurrentProject();
         project['name'] = projectName;
 
         const data = new FormData();
-        data.append('project', JSON.stringify(project));
+        data.append(utils.directoryTree.nodeTypes.PROJECT, JSON.stringify(project));
         data.append('mode', mode);
         data.append('path', path);
 
         sendHttp('POST', 'saveProject', data, request => {
             sweetAlert.close();
+
             if (request.status !== 200) {
-                sweetAlert('Oops!',
+                sweetAlert(
+                    'Oops!',
                     'Could not save your project!!!  Please try again.',
-                    'error');
+                    'error'
+                );
                 return;
             }
+
             successFunc();
             updateUI();
         });
     }
 
-    if (projectName === window.openProjectName ||
-        getNearestDirectory_().children.filter((n) => {
-            return n.name === projectName && n.type === 'project';
-        }).length === 0
+    const selectedNode = utils.directoryTree.getSelectedNode();
+
+    if (
+        (selectedNode && projectName === selectedNode.name) ||
+        getNearestDirectory_().children
+            .filter((node) => (
+                node.name === projectName && utils.directoryTree.isProject(node)
+            ))
+            .length === 0
     ) {
         go();
     } else {
         const msg = `${'Are you sure you want to save over another project?\n\n' +
-            'The previous contents of '}${projectName 
+          'The previous contents of '}${projectName
         } will be permanently destroyed!`;
         sweetAlert({
             title: Alert.title('Warning'),
@@ -1097,14 +1135,17 @@ function saveProjectBase(path, projectName, mode, successFunc) {
             showCancelButton: true,
             confirmButtonColor: '#DD6B55',
             confirmButtonText: 'Yes, overwrite it!'
-        }).then(result => {
-            if (result && result.value) go();
+        }).then((result) => {
+            if (result && result.value) {
+                go();
+            }
         });
     }
 }
 
 function deleteProject_(path, buildMode, successFunc) {
-    if (!window.openProjectName) return;
+    const selectedNode = utils.directoryTree.getSelectedNode();
+    if (!selectedNode) return;
 
     if (!signedIn()) {
         sweetAlert('Oops', 'You must sign in to delete a project.', 'error');
@@ -1112,9 +1153,10 @@ function deleteProject_(path, buildMode, successFunc) {
         return;
     }
 
+    const currentProjectName = selectedNode.name;
     const msg =
         'Deleting a project will throw away all work, and cannot be undone. ' +
-        `Are you sure you want to delete ${window.openProjectName}?`;
+        `Are you sure you want to delete ${currentProjectName}?`;
 
     sweetAlert({
         title: Alert.title('Warning'),
@@ -1122,22 +1164,26 @@ function deleteProject_(path, buildMode, successFunc) {
         type: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#DD6B55',
-        confirmButtonText: 'Yes, delete it!'
-    }).then(result => {
-        if (result.dismiss === sweetAlert.DismissReason.cancel || result.dismiss === sweetAlert.DismissReason.backdrop) {
+        confirmButtonText: 'Yes, delete it!',
+    }).then((result) => {
+        if (
+            result.dismiss === sweetAlert.DismissReason.cancel ||
+            result.dismiss === sweetAlert.DismissReason.backdrop
+        ) {
             return;
         }
 
         const data = new FormData();
-        data.append('name', window.openProjectName);
+        data.append('name', currentProjectName);
         data.append('mode', buildMode);
         data.append('path', path);
 
         sendHttp('POST', 'deleteProject', data, request => {
             if (request.status === 200) {
                 successFunc();
-                const node = $('#directoryTree').tree('getSelectedNode');
-                $('#directoryTree').tree('removeNode', node);
+
+                $('#directoryTree').tree('removeNode', selectedNode);
+
                 updateUI();
             }
         });
@@ -1145,9 +1191,6 @@ function deleteProject_(path, buildMode, successFunc) {
 }
 
 function deleteFolder_(path, buildMode, successFunc) {
-    if (path === '' || window.openProjectName) {
-        return;
-    }
     if (!signedIn()) {
         sweetAlert('Oops', 'You must sign in to delete a folder.', 'error');
         updateUI();
@@ -1176,8 +1219,8 @@ function deleteFolder_(path, buildMode, successFunc) {
 
         sendHttp('POST', 'deleteFolder', data, request => {
             if (request.status === 200) {
-                const node = $('#directoryTree').tree('getSelectedNode');
-                $('#directoryTree').tree('removeNode', node);
+                const selectedNode = utils.directoryTree.getSelectedNode();
+                $('#directoryTree').tree('removeNode', selectedNode);
                 successFunc();
                 updateUI();
             }
@@ -1188,20 +1231,25 @@ function deleteFolder_(path, buildMode, successFunc) {
 function createFolder(path, buildMode, successFunc) {
     warnIfUnsaved(() => {
         if (!signedIn()) {
-            sweetAlert('Oops!', 'You must sign in to create a folder.',
-                'error');
+            sweetAlert(
+                'Oops!',
+                'You must sign in to create a folder.',
+                'error'
+            );
             updateUI();
             return;
         }
 
         sweetAlert({
-            title: Alert.title('Create Folder',
-                'mdi-folder-plus'),
+            title: Alert.title(
+                'Create Folder',
+                'mdi-folder-plus'
+            ),
             text: 'Enter a name for your folder:',
             input: 'text',
             inputValue: '',
             confirmButtonText: 'Create',
-            showCancelButton: true
+            showCancelButton: true,
         }).then(result => {
             if (!result.value) {
                 return;
@@ -1210,7 +1258,8 @@ function createFolder(path, buildMode, successFunc) {
             sweetAlert.close();
             const data = new FormData();
             data.append('mode', buildMode);
-            if (path === '') {
+
+            if (!path) {
                 data.append('path', result.value);
             } else {
                 data.append('path', `${path}/${result.value}`);
@@ -1218,24 +1267,41 @@ function createFolder(path, buildMode, successFunc) {
 
             sendHttp('POST', 'createFolder', data, request => {
                 if (request.status !== 200) {
-                    sweetAlert('Oops',
+                    sweetAlert(
+                        'Oops',
                         'Could not create your directory! Please try again.',
-                        'error');
+                        'error',
+                    );
                     return;
                 }
+
                 successFunc();
-                let node = $('#directoryTree').tree('getSelectedNode');
-                if (!node) node = $('#directoryTree').tree('getTree');
-                if (node.type !== 'directory') node = node.parent;
+
+                let selectedNode = utils.directoryTree.getSelectedNode();
+                const type = utils.directoryTree.nodeTypes.DIRECTORY;
+                const name = result.value;
+
+                if (!selectedNode) {
+                    selectedNode = $('#directoryTree').tree('getTree');
+                }
+                if (
+                    selectedNode &&
+                    !utils.directoryTree.isDirectory(selectedNode)
+                ) {
+                    selectedNode = selectedNode.parent;
+                }
+
                 $('#directoryTree').tree(
                     'appendNode', {
-                        name: result.value,
-                        type: 'directory',
-                        children: []
+                        id: utils.directoryTree.createNodeId(type, name),
+                        name,
+                        type,
+                        children: [],
                     },
-                    node
+                    selectedNode
                 );
-                updateChildrenIndexes(node);
+
+                updateChildrenIndexes(selectedNode);
             });
         });
     });
@@ -1260,7 +1326,7 @@ function loadProject_(path, name, buildMode, successFunc) {
         allowEnterKey: false
     });
 
-    clearCode();
+    setCode('');
 
     const data = new FormData();
     data.append('name', name);
@@ -1360,7 +1426,10 @@ function shareFolder_(mode) {
         updateUI();
         return;
     }
-    if (!getNearestDirectory() || window.openProjectName) {
+
+    const selectedNode = utils.directoryTree.getSelectedNode();
+
+    if (!getNearestDirectory() || (selectedNode && selectedNode.name)) {
         sweetAlert('Oops!', 'You must select a folder to share!', 'error');
         updateUI();
         return;
@@ -1578,6 +1647,8 @@ function pathToRootDir(nodeInit) {
 function initDirectoryTree() {
     $('#directoryTree').tree({
         data: [],
+        autoOpen: true,
+        saveState: 'directoryTree',
         dragAndDrop: true,
         keyboardSupport: false,
         onCanSelectNode: (node) => {
@@ -1591,7 +1662,7 @@ function initDirectoryTree() {
         onCanMoveTo: (moving_node, target_node, position) => {
             // Forbid move inside project node,
             // but allow to move before and after
-            if (target_node.type === 'project' && position === 'inside') return false;
+            if (utils.directoryTree.isProject(target_node) && position === 'inside') return false;
             if (target_node.type === 'loadNotification') return false;
             return true;
         },
@@ -1599,19 +1670,22 @@ function initDirectoryTree() {
         openedIcon: $('<i class="mdi mdi-18px mdi-chevron-down"></i>'),
         onCreateLi: function(node, $li) {
             const titleElem = $li.find('.jqtree-element .jqtree-title');
-            if (node.type === 'directory' && node.is_open) {
-                titleElem.before(
-                    $('<i class="mdi mdi-18px mdi-folder-open"></i>')
-                );
-            } else if (node.type === 'directory') {
-                titleElem.before(
-                    $('<i class="mdi mdi-18px mdi-folder"></i>')
-                );
+
+            if (utils.directoryTree.isDirectory(node)) {
+                if (node.is_open) {
+                    titleElem.before(
+                        $('<i class="mdi mdi-18px mdi-folder-open"></i>')
+                    );
+                } else {
+                    titleElem.before(
+                        $('<i class="mdi mdi-18px mdi-folder"></i>')
+                    );
+                }
             } else if (node.type === 'loadNotification') {
                 titleElem.before(
                     $('<div style="float: left" class="loader"></div>')
                 );
-            } else if (node.type === 'project') {
+            } else if (utils.directoryTree.isProject(node)) {
                 const asterisk = $('<i class="unsaved-changes"></i>');
                 asterisk.css('display', 'none');
                 titleElem.before(
@@ -1634,7 +1708,7 @@ function initDirectoryTree() {
                     return;
                 }
                 const movedNode = event.move_info.moved_node;
-                const isFile = movedNode.type === 'project';
+                const isFile = utils.directoryTree.isProject(movedNode);
                 let fromPath, name;
                 fromPath = pathToRootDir(movedNode);
                 if (isFile) {
@@ -1675,9 +1749,9 @@ function initDirectoryTree() {
                     if (haveChildWithSameNameAndType(movedNode, toNode)) {
                         // Replacement of existing project
                         let msg, confirmText;
-                        if (movedNode.type === 'project') {
+                        if (utils.directoryTree.isProject(movedNode)) {
                             msg = `${'Are you sure you want to save over another project?\n\n' +
-                            'The previous contents of '}${name 
+                            'The previous contents of '}${name
                             } will be permanently destroyed!`;
                             confirmText = 'Yes, overwrite it!';
                         } else {
@@ -1701,9 +1775,9 @@ function initDirectoryTree() {
                                     });
                                     event.move_info.do_move();
                                     updateChildrenIndexes(toNode);
-                                    if (movedNode.type === 'directory') {
+                                    if (utils.directoryTree.isDirectory(movedNode)) {
                                         loadSubTree(movedNode);
-                                        clearCode();
+                                        setCode('');
                                     }
                                 });
                             }
@@ -1740,23 +1814,31 @@ function initDirectoryTree() {
         'tree.click',
         (event) => {
             event.preventDefault();
+
+            const {
+                node
+            } = event;
+            const isProjectNode = utils.directoryTree.isProject(node);
+
             // Deselection of selected project. Cancel it and do nothing.
-            if (event.node.type === 'project' && $('#directoryTree').tree('isNodeSelected', event.node)) {
+            if (
+                isProjectNode &&
+                $('#directoryTree').tree('isNodeSelected', node)
+            ) {
                 return;
             }
             warnIfUnsaved(() => {
-                if (event.node.type === 'project') {
-                    const node = event.node;
+                if (isProjectNode) {
                     const path = pathToRootDir(node);
-                    window.openProjectName = node.name;
+
                     loadProject(node.name, path);
-                    $('#directoryTree').tree('selectNode', event.node);
-                } else if (event.node.type === 'directory') {
-                    if (event.node.children.length === 0) {
-                        loadSubTree(event.node);
+                    $('#directoryTree').tree('selectNode', node);
+                } else if (utils.directoryTree.isDirectory(node)) {
+                    if (node.children.length === 0) {
+                        loadSubTree(node);
                     }
-                    clearCode();
-                    $('#directoryTree').tree('selectNode', event.node);
+                    setCode('');
+                    $('#directoryTree').tree('selectNode', node);
                 }
             });
             updateUI();
@@ -1767,31 +1849,40 @@ function initDirectoryTree() {
 // Get directory nearest to selected node, or root if there is no selection
 function getNearestDirectory_(node) {
     if (node) {
-        const isdir = node.type === 'directory';
-        const haveParent = Boolean(node.parent);
-        if (isdir) {
+        const isDir = utils.directoryTree.isDirectory(node);
+        const hasParent = Boolean(node.parent);
+
+        if (isDir) {
             return node;
-        } else if (haveParent) {
+        } else if (hasParent) {
             return node.parent;
         }
         // root node
         return node;
     }
-    const selected = $('#directoryTree').tree('getSelectedNode');
-    if (!selected) {
+
+    const selectedNode = utils.directoryTree.getSelectedNode();
+
+    if (!selectedNode) {
         // nearest directory is root
         return $('#directoryTree').tree('getTree');
-    } else if (selected.type === 'project') {
-        return selected.parent;
-    } else if (selected.type === 'directory') {
-        return selected;
+    } else if (
+        selectedNode &&
+        utils.directoryTree.isProject(selectedNode)
+    ) {
+        return selectedNode.parent;
+    } else if (
+        selectedNode &&
+        utils.directoryTree.isDirectory(selectedNode)
+    ) {
+        return selectedNode;
     }
 }
 
 function getNearestDirectory(node) {
     const selected = getNearestDirectory_(node);
     const path = pathToRootDir(selected);
-    if (selected.type === 'directory') {
+    if (utils.directoryTree.isDirectory(selected)) {
         return path ? `${path}/${selected.name}` : selected.name;
     }
     return path;
@@ -1860,4 +1951,18 @@ function updateChildrenIndexes(node) {
         data.append('entries', JSON.stringify(repacked));
         sendHttp('POST', 'updateChildrenIndexes', data, () => {});
     } else updateUI();
+}
+
+function updateTreeOnNewProjectCreation() {
+    const selectedNode = getSelectedNode();
+
+    if (selectedNode && utils.directoryTree.isProject(selectedNode)) {
+        utils.directoryTree.clearSelectedNode();
+
+        // Select parent folder (if any) as new project's location is
+        // determined by the selection in the directory tree.
+        if (pathToRootDir(selectedNode)) {
+            utils.directoryTree.selectNode(selectedNode.parent);
+        }
+    }
 }

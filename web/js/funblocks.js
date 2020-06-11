@@ -15,7 +15,6 @@
  */
 'use strict';
 
-window.openProjectName = '';
 window.lastXML = '';
 
 // This will get bound in Haskell to a function that runs the program
@@ -120,10 +119,11 @@ function initCodeworld() {
 }
 
 function getCurrentProject() {
+    const selectedNode = utils.directoryTree.getSelectedNode();
     return {
-        'name': window.openProjectName || 'Untitled',
-        'source': getWorkspaceXMLText(),
-        'history': ''
+        name: selectedNode ? selectedNode.name : 'Untitled',
+        source: getWorkspaceXMLText(),
+        history: '',
     };
 }
 
@@ -276,6 +276,8 @@ function compile(src, silent) {
  */
 function updateUI() {
     const isSignedIn = signedIn();
+    const selectedNode = utils.directoryTree.getSelectedNode();
+
     if (isSignedIn) {
         if (document.getElementById('signout').style.display === 'none') {
             document.getElementById('signin').style.display = 'none';
@@ -285,14 +287,11 @@ function updateUI() {
             window.mainLayout.open('west');
         }
 
-        if ($('#directoryTree').tree('getSelectedNode')) {
+        if (selectedNode) {
             document.getElementById('deleteButton').style.display = '';
-        } else {
-            document.getElementById('deleteButton').style.display = 'none';
-        }
-        if (window.openProjectName) {
             document.getElementById('saveButton').style.display = '';
         } else {
+            document.getElementById('deleteButton').style.display = 'none';
             document.getElementById('saveButton').style.display = 'none';
         }
     } else {
@@ -310,26 +309,19 @@ function updateUI() {
     document.getElementById('saveAsButton').style.display = '';
     document.getElementById('runButtons').style.display = '';
 
-    const selected = $('#directoryTree').tree('getSelectedNode');
-
-    if (selected && selected.type === 'directory') {
+    if (selectedNode && utils.directoryTree.isDirectory(selectedNode)) {
         document.getElementById('shareFolderButton').style.display = '';
     } else {
         document.getElementById('shareFolderButton').style.display = 'none';
     }
 
-    let title;
-    if (window.openProjectName) {
-        title = window.openProjectName;
-    } else {
-        title = '(new)';
-    }
+    let title = selectedNode ? selectedNode.name : '(new)';
 
     if (!isEditorClean()) {
         title = `* ${title}`;
-        const selected = $('#directoryTree').tree('getSelectedNode');
-        if (selected && selected.type === 'project') {
-            const asterisk = selected.element.getElementsByClassName('unsaved-changes')[0];
+
+        if (selectedNode && utils.directoryTree.isProject(selectedNode)) {
+            const asterisk = selectedNode.element.getElementsByClassName('unsaved-changes')[0];
             if (asterisk) {
                 asterisk.style.display = '';
             }
@@ -344,7 +336,7 @@ function updateUI() {
 function help() {
     const url = 'doc.html?shelf=help/blocks.shelf';
     sweetAlert({
-        html: `<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="${ 
+        html: `<iframe id="doc" style="width: 100%; height: 100%" class="dropbox" src="${
             url}"></iframe>`,
         customClass: 'helpdoc',
         allowEscapeKey: true,
@@ -358,18 +350,15 @@ function signinCallback() {
 }
 
 function signOut() {
-
     // call shared sign out
     signout();
 
     document.getElementById('projects').innerHTML = '';
-    window.openProjectName = null;
     updateUI();
 }
 
 function loadProject(name, index) {
     function successFunc(project) {
-        window.openProjectName = name;
         clearRunCode();
         loadWorkspace(project.source);
         Blockly.getMainWorkspace().clearUndo();
@@ -383,12 +372,15 @@ function saveProject() {
         window.lastXML = getWorkspaceXMLText();
     }
 
-    if (window.openProjectName) {
+    const selectedNode = utils.directoryTree.getSelectedNode();
+
+    if (selectedNode) {
         saveProjectBase(
             getNearestDirectory(),
-            window.openProjectName,
+            selectedNode.name,
             window.projectEnv,
-            successFunc);
+            successFunc,
+        );
     } else {
         saveProjectAs();
     }
@@ -397,32 +389,33 @@ function saveProject() {
 function saveProjectAs() {
     function successFunc(name) {
         window.lastXML = getWorkspaceXMLText();
-        window.openProjectName = name;
     }
     saveProjectAsBase(successFunc);
 }
 
 function deleteFolder() {
     const path = getNearestDirectory();
-    if (path === '' || window.openProjectName !== null) {
+    if (!path) {
         return;
     }
 
     function successFunc() {
-        clearWorkspace();
+        Blockly.mainWorkspace.clear();
         Blockly.getMainWorkspace().clearUndo();
     }
     deleteFolder_(path, window.projectEnv, successFunc);
 }
 
 function deleteProject() {
-    if (!window.openProjectName) {
+    const selectedNode = utils.directoryTree.getSelectedNode();
+
+    if (selectedNode && utils.directoryTree.isDirectory(selectedNode)) {
         deleteFolder();
         return;
     }
 
     function successFunc() {
-        clearWorkspace();
+        Blockly.mainWorkspace.clear();
         Blockly.getMainWorkspace().clearUndo();
     }
     const path = getNearestDirectory();
@@ -445,8 +438,9 @@ function shareFolder() {
 
 function newProject() {
     warnIfUnsaved(() => {
+        updateTreeOnNewProjectCreation();
         clearRunCode();
-        clearWorkspace();
+        Blockly.mainWorkspace.clear();
         updateUI();
         window.lastXML = getWorkspaceXMLText();
         Blockly.getMainWorkspace().clearUndo();
@@ -461,18 +455,7 @@ function clearRunCode() {
     updateEditor('');
 }
 
-function clearWorkspace() {
-    window.openProjectName = null;
-    const workspace = Blockly.mainWorkspace;
-    // Deselect nodes
-    const treeState = $('#directoryTree').tree('getState');
-    treeState.selected_node = [];
-    $('#directoryTree').tree('setState', treeState);
-    workspace.clear();
-}
-
 function clearCode() {
-    window.openProjectName = null;
     const workspace = Blockly.mainWorkspace;
     workspace.clear();
 }

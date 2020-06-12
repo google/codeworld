@@ -240,12 +240,6 @@ buildArgs mainMod "haskell" =
   [ "-DGHCJS_BROWSER",
     "-ferror-spans",
     "-fno-diagnostics-show-caret",
-    "-package",
-    "codeworld-api",
-    "-package",
-    "QuickCheck",
-    "-package",
-    "reflex",
     "-main-is",
     mainMod ++ ".main"
   ]

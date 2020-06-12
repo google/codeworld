@@ -19,6 +19,7 @@ function selectNode(node) {
 }
 
 let idCounter = 0;
+
 function createNodeId(type, name) {
 
     return (

@@ -1,5 +1,5 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RecordWildCards #-}
 
 {-
   Copyright 2020 The CodeWorld Authors. All rights reserved.
@@ -20,9 +20,9 @@ module Main where
 
 import Control.Monad
 import Data.ByteString (ByteString)
+import Data.List
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.List
 import GHC.PackageDb
 import System.Environment
 import System.Exit
@@ -31,27 +31,52 @@ instance BinaryStringRep ByteString where
   fromStringRep = id
   toStringRep = id
 
-type BSPkg = InstalledPackageInfo
-  ByteString ByteString ByteString ByteString BSUnitId ByteString BSModule
+type BSPkg =
+  InstalledPackageInfo
+    ByteString
+    ByteString
+    ByteString
+    ByteString
+    BSUnitId
+    ByteString
+    BSModule
 
-newtype BSModule = BSModule (DbModule ByteString ByteString BSUnitId ByteString BSModule) deriving Show
-newtype BSUnitId = BSUnitId (DbUnitId ByteString ByteString BSUnitId ByteString BSModule) deriving Show
+newtype BSModule
+  = BSModule
+      (DbModule ByteString ByteString BSUnitId ByteString BSModule)
+  deriving (Show)
 
-instance DbUnitIdModuleRep ByteString ByteString BSUnitId ByteString BSModule where
+newtype BSUnitId
+  = BSUnitId
+      (DbUnitId ByteString ByteString BSUnitId ByteString BSModule)
+  deriving (Show)
+
+instance
+  DbUnitIdModuleRep
+    ByteString
+    ByteString
+    BSUnitId
+    ByteString
+    BSModule
+  where
   fromDbModule = BSModule
   toDbModule (BSModule mod) = mod
   fromDbUnitId = BSUnitId
   toDbUnitId (BSUnitId uid) = uid
 
 getModuleMap :: BSPkg -> [(ByteString, [ByteString])]
-getModuleMap pkg@(InstalledPackageInfo{..}) =
-    [ (modname, [uid]) | exposed, (modname, mod) <- exposedModules, Just uid <- [ modToUnitId mod ] ]
-  where modToUnitId Nothing = Just unitId
-        modToUnitId (Just (BSModule (DbModule uid _))) = toUnitId uid
-        modToUnidId _ = Nothing
-
-        toUnitId (BSUnitId (DbInstalledUnitId uid)) = Just uid
-        toUnitId _ = error "TODO"
+getModuleMap pkg@(InstalledPackageInfo {..}) =
+  [ (modname, [uid])
+    | exposed,
+      (modname, mod) <- exposedModules,
+      Just uid <- [modToUnitId mod]
+  ]
+  where
+    modToUnitId Nothing = Just unitId
+    modToUnitId (Just (BSModule (DbModule uid _))) = toUnitId uid
+    modToUnidId _ = Nothing
+    toUnitId (BSUnitId (DbInstalledUnitId uid)) = Just uid
+    toUnitId _ = error "TODO"
 
 main :: IO ()
 main = do

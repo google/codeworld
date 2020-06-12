@@ -317,3 +317,13 @@ Library
     zenc
 
   Default-language:    Haskell2010
+
+Executable find-dup-modules
+  Hs-source-dirs:      src
+  Main-is:             Main.hs
+  Build-depends:       base,
+                       bytestring,
+                       containers,
+                       ghc-boot
+
+  Default-language:    Haskell2010

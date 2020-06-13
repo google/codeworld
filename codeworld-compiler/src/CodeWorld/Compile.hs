@@ -170,6 +170,8 @@ prepareCompile dir = do
     return dest
   mode <- gets compileMode
   stage <- gets compileStage
+  extraPkgs <- getExtraPkgs
+  let extraPkgArgs = concatMap (\p -> ["-package", p]) extraPkgs
   linkArgs <- case stage of
     ErrorCheck -> return ["-fno-code"]
     FullBuild _ -> return ["-dedupe"]
@@ -182,7 +184,7 @@ prepareCompile dir = do
   mainMod <- case stage of
     ErrorCheck -> return "Some_Other_Module"
     _ -> getMainModuleName
-  return $ localSrcs ++ buildArgs mainMod mode ++ linkArgs
+  return $ localSrcs ++ buildArgs mainMod mode ++ extraPkgArgs ++ linkArgs
 
 buildArgs :: String -> SourceMode -> [String]
 buildArgs mainMod "codeworld" =

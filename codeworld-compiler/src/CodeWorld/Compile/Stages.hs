@@ -25,6 +25,7 @@
 
 module CodeWorld.Compile.Stages
   ( findAllModules,
+    getExtraPkgs,
     checkDangerousSource,
     checkCodeConventions,
     checkRequirements,
@@ -47,6 +48,7 @@ import Data.Text.Encoding (decodeUtf8)
 import qualified "ghc" FastString as GHC
 import qualified "ghc" HsSyn as GHC
 import Language.Haskell.Exts
+import qualified "ghc" BasicTypes as GHC
 import qualified "ghc" Module as GHC
 import qualified "ghc" OccName as GHC
 import qualified "ghc" RdrName as GHC
@@ -154,6 +156,20 @@ findModule loc modName = do
     renamed ident = ident ++ "_" ++ map dotToUnderscore modName
     dotToUnderscore '.' = '_'
     dotToUnderscore c = c
+
+-- Look for package imports.  We want to add these packages to the
+-- command line.
+getExtraPkgs :: MonadCompile m => m [String]
+getExtraPkgs = do
+  srcs <- gets compileSourcePaths
+  fmap nub . fmap concat . forM srcs $ \src ->
+    getGHCParsedCode src >>= \parsed -> case parsed of
+      GHCParsed mod -> do
+        return . catMaybes . flip map (GHC.hsmodImports mod) $ \i -> case i of
+          GHC.L _ (GHC.ImportDecl { GHC.ideclPkgQual = Just pkg }) ->
+            Just (GHC.unpackFS (GHC.sl_fs pkg))
+          _ -> Nothing
+      _ -> return []
 
 -- compiler for "codeworld" mode.  In other modes, this has no effect.
 checkCodeConventions :: MonadCompile m => m ()

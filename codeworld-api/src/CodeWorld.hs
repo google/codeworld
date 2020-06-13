@@ -23,12 +23,6 @@ module CodeWorld
     debugActivityOf,
     groupActivityOf,
     unsafeGroupActivityOf,
-    simulationOf,
-    debugSimulationOf,
-    interactionOf,
-    debugInteractionOf,
-    collaborationOf,
-    unsafeCollaborationOf,
 
     -- * Pictures
     Picture,

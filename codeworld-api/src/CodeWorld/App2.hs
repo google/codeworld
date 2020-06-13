@@ -22,7 +22,6 @@ module CodeWorld.App2
   {-# WARNING "This is an experimental API.  It can change at any time." #-}
   ( Application,
     defaultApplication,
-    withTimeStep,
     withEventHandler,
     withPicture,
     withMultiEventHandler,
@@ -37,46 +36,38 @@ import CodeWorld
 data Application :: * -> * where
   App ::
     state ->
-    (Double -> state -> state) ->
     (Int -> Event -> state -> state) ->
     (Int -> state -> Picture) ->
     Application state
 
 defaultApplication :: state -> Application state
 defaultApplication s =
-  App s (const id) (const (const id)) (const (const blank))
-
-withTimeStep ::
-  (Double -> state -> state) ->
-  Application state ->
-  Application state
-withTimeStep f (App initial step event picture) =
-  App initial (\dt -> f dt . step dt) event picture
+  App s (const (const id)) (const (const blank))
 
 withEventHandler ::
   (Event -> state -> state) ->
   Application state ->
   Application state
-withEventHandler f (App initial step event picture) =
-  App initial step (\k ev -> f ev . event k ev) picture
+withEventHandler f (App initial event picture) =
+  App initial (\k ev -> f ev . event k ev) picture
 
 withPicture :: (state -> Picture) -> Application state -> Application state
-withPicture f (App initial step event picture) =
-  App initial step event (\k s -> f s & picture k s)
+withPicture f (App initial event picture) =
+  App initial event (\k s -> f s & picture k s)
 
 withMultiEventHandler ::
   (Int -> Event -> state -> state) ->
   Application state ->
   Application state
-withMultiEventHandler f (App initial step event picture) =
-  App initial step (\k ev -> f k ev . event k ev) picture
+withMultiEventHandler f (App initial event picture) =
+  App initial (\k ev -> f k ev . event k ev) picture
 
 withMultiPicture ::
   (Int -> state -> Picture) ->
   Application state ->
   Application state
-withMultiPicture f (App initial step event picture) =
-  App initial step event (\k s -> f k s & picture k s)
+withMultiPicture f (App initial event picture) =
+  App initial event (\k s -> f k s & picture k s)
 
 subapplication ::
   (a -> b) ->
@@ -84,13 +75,12 @@ subapplication ::
   Application b ->
   (b -> a) ->
   Application a
-subapplication getter setter (App initial step event picture) f =
+subapplication getter setter (App initial event picture) f =
   App
     (f initial)
-    (\dt s -> setter (step dt (getter s)) s)
     (\k ev s -> setter (event k ev (getter s)) s)
     (\k -> picture k . getter)
 
 applicationOf :: Application world -> IO ()
-applicationOf (App initial step event picture) =
-  interactionOf initial step (event 0) (picture 0)
+applicationOf (App initial event picture) =
+  activityOf initial (event 0) (picture 0)

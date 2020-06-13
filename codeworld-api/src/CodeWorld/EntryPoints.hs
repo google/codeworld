@@ -72,34 +72,9 @@ activityOf ::
   --   the state into a picture to display.
   (world -> Picture) ->
   IO ()
-activityOf initial change picture =
-  interactionOf initial (const id) change picture
-
--- | Runs an interactive event-driven CodeWorld program.  This is a
--- generalization of simulations that can respond to events like key presses
--- and mouse movement.
-interactionOf ::
-  -- | The initial state of the interaction.
-  world ->
-  -- | The time step function, which advances
-  --   the state given the time difference.
-  (Double -> world -> world) ->
-  -- | The event handling function, which updates
-  --   the state given a user interface event.
-  (Event -> world -> world) ->
-  -- | The visualization function, which converts
-  --   the state into a picture to display.
-  (world -> Picture) ->
-  IO ()
-interactionOf initial step event draw = do
+activityOf initial change picture = do
   hFlush stdout
-  runInspect initial step event draw draw
-{-# WARNING
-  interactionOf
-  [ "Please use activityOf instead of interactionOf.",
-    "interactionOf may be removed July 2020."
-  ]
-  #-}
+  runInspect initial (const id) change picture picture
 
 data Timeline a = Timeline
   { past :: [a], -- reversed list of past states
@@ -678,95 +653,6 @@ statefulDebugControls w
       | playbackSpeed w == 0 = [PanningLayer]
       | otherwise = []
 
--- | Shows a simulation, which is essentially a continuous-time dynamical
--- system described by an initial value and step function.
-simulationOf ::
-  -- | The initial state of the simulation.
-  world ->
-  -- | The time step function, which advances
-  --   the state given the time difference.
-  (Double -> world -> world) ->
-  -- | The visualization function, which converts
-  --   the state into a picture to display.
-  (world -> Picture) ->
-  IO ()
-simulationOf initial step draw = do
-  hFlush stdout
-  runInspect
-    (wrappedInitial initial)
-    (wrappedStep step)
-    (wrappedEvent simulationControls step (const id))
-    (wrappedDraw simulationControls draw)
-    (draw . state)
-{-# WARNING
-  simulationOf
-  [ "Please use activityOf instead of simulationOf.",
-    "simulationOf may be removed July 2020."
-  ]
-  #-}
-
-debugSimulationOf ::
-  -- | The initial state of the simulation.
-  world ->
-  -- | The time step function, which advances
-  --   the state given the time difference.
-  (Double -> world -> world) ->
-  -- | The visualization function, which converts
-  --   the state into a picture to display.
-  (world -> Picture) ->
-  IO ()
-debugSimulationOf simInitial simStep simDraw = do
-  hFlush stdout
-  runInspect
-    (wrappedInitial initial)
-    (wrappedStep step)
-    (wrappedEvent statefulDebugControls step (const id))
-    (wrappedDraw statefulDebugControls draw)
-    (draw . state)
-  where
-    initial = newTimeline simInitial
-    step = applyToTimeline . simStep
-    draw = simDraw . present
-{-# WARNING
-  debugSimulationOf
-  [ "Please use debugActivityOf instead of debugSimulationOf.",
-    "debugSimulationOf may be removed July 2020."
-  ]
-  #-}
-
-debugInteractionOf ::
-  -- | The initial state of the interaction.
-  world ->
-  -- | The time step function, which advances
-  --   the state given the time difference.
-  (Double -> world -> world) ->
-  -- | The event handling function, which updates
-  --   the state given a user interface event.
-  (Event -> world -> world) ->
-  -- | The visualization function, which converts
-  --   the state into a picture to display.
-  (world -> Picture) ->
-  IO ()
-debugInteractionOf baseInitial baseStep baseEvent baseDraw = do
-  hFlush stdout
-  runInspect
-    (wrappedInitial initial)
-    (wrappedStep step)
-    (wrappedEvent statefulDebugControls step event)
-    (wrappedDraw statefulDebugControls draw)
-    (draw . state)
-  where
-    initial = newTimeline baseInitial
-    step = applyToTimeline . baseStep
-    event = applyToTimeline . baseEvent
-    draw = baseDraw . present
-{-# WARNING
-  debugInteractionOf
-  [ "Please use debugActivityOf instead of debugInteractionOf.",
-    "debugInteractionOf may be removed July 2020."
-  ]
-  #-}
-
 -- | A version of 'activityOf' which runs an interactive CodeWorld program
 -- in debugging mode.  In this mode, the program gets controls to pause and
 -- manipulate time, and even go back in time to look at past states.
@@ -780,8 +666,14 @@ debugActivityOf ::
   --   the state into a picture to display.
   (world -> Picture) ->
   IO ()
-debugActivityOf initial change picture =
-  debugInteractionOf initial (const id) change picture
+debugActivityOf initial change picture = do
+  hFlush stdout
+  runInspect
+    (wrappedInitial (newTimeline initial))
+    (wrappedStep (const id))
+    (wrappedEvent statefulDebugControls (const id) (applyToTimeline . change))
+    (wrappedDraw statefulDebugControls (picture . present))
+    (picture . present . state)
 
 -- | Runs an interactive multi-user CodeWorld program that is joined by several
 -- participants over the internet.
@@ -845,82 +737,11 @@ unsafeGroupActivityOf ::
   --   and the state into a picture to display.
   (Int -> world -> Picture) ->
   IO ()
-unsafeGroupActivityOf numPlayers initial event draw =
-  unsafeCollaborationOf numPlayers initial (const id) event draw
-
--- | A version of 'collaborationOf' that avoids static pointers, and does not
--- check for consistent parameters.
-unsafeCollaborationOf ::
-  -- | The number of participants to expect.  The participants will be
-  -- numbered starting at 0.
-  Int ->
-  -- | The initial state of the collaboration.
-  (StdGen -> world) ->
-  -- | The time step function, which advances the state given the time
-  --   difference.
-  (Double -> world -> world) ->
-  -- | The event handling function, which updates the state given a
-  --   participant number and user interface event.
-  (Int -> Event -> world -> world) ->
-  -- | The visualization function, which converts a participant number
-  --   and the state into a picture to display.
-  (Int -> world -> Picture) ->
-  IO ()
-unsafeCollaborationOf numPlayers initial step event draw = do
+unsafeGroupActivityOf numPlayers initial event draw = do
   hFlush stdout
   dhash <- getDeployHash
   let token = PartialToken dhash
-  runGame token numPlayers initial step event draw
-{-# WARNING
-  unsafeCollaborationOf
-  [ "Please use unsafeGroupActivityOf instead of unsafeCollaborationOf.",
-    "unsafeCollaborationOf may be removed July 2020."
-  ]
-  #-}
-
--- | Runs an interactive multi-user CodeWorld program, involving multiple
--- participants over the internet.
-collaborationOf ::
-  -- | The number of participants to expect.  The participants will be
-  -- numbered starting at 0.
-  Int ->
-  -- | The initial state of the collaboration.
-  StaticPtr (StdGen -> world) ->
-  -- | The time step function, which advances the state given the time
-  --   difference.
-  StaticPtr (Double -> world -> world) ->
-  -- | The event handling function, which updates the state given a
-  --   participant number and user interface event.
-  StaticPtr (Int -> Event -> world -> world) ->
-  -- | The visualization function, which converts a participant number
-  --   and the state into a picture to display.
-  StaticPtr (Int -> world -> Picture) ->
-  IO ()
-collaborationOf numPlayers initial step event draw = do
-  hFlush stdout
-  dhash <- getDeployHash
-  let token =
-        FullToken
-          { tokenDeployHash = dhash,
-            tokenNumPlayers = numPlayers,
-            tokenInitial = staticKey initial,
-            tokenStep = staticKey step,
-            tokenEvent = staticKey event,
-            tokenDraw = staticKey draw
-          }
-  runGame
-    token
-    numPlayers
-    (deRefStaticPtr initial)
-    (deRefStaticPtr step)
-    (deRefStaticPtr event)
-    (deRefStaticPtr draw)
-{-# WARNING
-  collaborationOf
-  [ "Please use groupActivityOf instead of collaborationOf.",
-    "collaborationOf may be removed July 2020."
-  ]
-  #-}
+  runGame token numPlayers initial (const id) event draw
 
 -- | Prints a debug message to the CodeWorld console when a value is forced.
 -- This is equivalent to the similarly named function in `Debug.Trace`, except

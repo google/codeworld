@@ -145,10 +145,9 @@ autoSlideshow (slides, period) = animationOf (sshow)
 -- on the output. The width and the height will vary randomly between 1
 -- and 10 units.
 randomDrawingOf :: ([Number] -> Picture) -> Program
-randomDrawingOf (makeDrawing) = interactionOf (initial, update, handle, draw)
+randomDrawingOf (makeDrawing) = activityOf (initial, handle, draw)
   where
     initial rs = rs
-    update (model, _) = model
     handle (r : rs, PointerPress (_)) = rs
     handle (model, _) = model
     draw (r : _) = makeDrawing (randomNumbers (r))
@@ -167,10 +166,10 @@ randomDrawingOf (makeDrawing) = interactionOf (initial, update, handle, draw)
 -- the origin. When you click on the output, a different random rectangle
 -- will be shown, which will also be rotating around the origin.
 randomAnimationOf :: (([Number], Number) -> Picture) -> Program
-randomAnimationOf (movie) = interactionOf (initial, update, handle, draw)
+randomAnimationOf (movie) = activityOf (initial, handle, draw)
   where
     initial (seed : rs) = (rs, 0, seed)
-    update ((rs, t, seed), dt) = (rs, t + dt, seed)
+    handle ((rs, t, seed), TimePassing(dt)) = (rs, t + dt, seed)
     handle ((rs, t, seed), PointerPress (_)) = (newrs, t, newseed)
       where
         newseed : newrs = randomNumbers (seed)
@@ -183,7 +182,7 @@ randomSlideshow = randomSlideshow_
 
 -- | A randomized version of 'autoSlideshow'
 randomAutoSlideshow :: ([Number] -> [Picture], Number) -> Program
-randomAutoSlideshow (mkslides, period) = simulationOf (initial, update, render)
+randomAutoSlideshow (mkslides, period) = activityOf (initial, update, render)
   where
     initial (r : rs) =
       SS
@@ -193,7 +192,8 @@ randomAutoSlideshow (mkslides, period) = simulationOf (initial, update, render)
           random = rs,
           slides = mkslides (randomNumbers (r))
         }
-    update (ss, dt) = update_wrap (update_current (update_time (ss, dt)))
+    update (ss, TimePassing(dt)) = update_wrap (update_current (update_time (ss, dt)))
+    update (ss, _) = ss
     update_time (ss@(SS {..}), dt) = ss {time = time + dt}
     update_current ss@(SS {..})
       | time - tlast > period =
@@ -227,7 +227,7 @@ data SS = SS
   }
 
 randomSlideshow_ :: ([Number] -> [Picture]) -> Program
-randomSlideshow_ (mkslides) = interactionOf (initial, update, handle, render)
+randomSlideshow_ (mkslides) = activityOf (initial, handle, render)
   where
     initial (r : rs) =
       SS
@@ -237,7 +237,6 @@ randomSlideshow_ (mkslides) = interactionOf (initial, update, handle, render)
           random = rs,
           slides = mkslides (randomNumbers (r))
         }
-    update (ss@(SS {..}), dt) = ss {time = time + dt}
     render (SS {..})
       | empty (slides) = pictures ([])
       | otherwise = showSlide & slides #current
@@ -248,6 +247,7 @@ randomSlideshow_ (mkslides) = interactionOf (initial, update, handle, render)
         mark =
           scaled (lettering (printed (current)), 0.5, 0.5)
             & colored (solidRectangle (1, 1), RGB (0.9, 0.9, 0.9))
+    handle (ss@(SS {..}), TimePassing(dt)) = ss {time = time + dt}
     handle (ss, event) = mayHandleEvent (ss)
       where
         handleNav (c, s) = case event of

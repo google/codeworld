@@ -32,6 +32,7 @@ module CodeWorld.Compile.Stages
   )
 where
 
+import qualified "ghc" BasicTypes as GHC
 import CodeWorld.Compile.Framework
 import CodeWorld.Compile.Requirements
 import Control.Monad
@@ -48,7 +49,6 @@ import Data.Text.Encoding (decodeUtf8)
 import qualified "ghc" FastString as GHC
 import qualified "ghc" HsSyn as GHC
 import Language.Haskell.Exts
-import qualified "ghc" BasicTypes as GHC
 import qualified "ghc" Module as GHC
 import qualified "ghc" OccName as GHC
 import qualified "ghc" RdrName as GHC
@@ -166,7 +166,7 @@ getExtraPkgs = do
     getGHCParsedCode src >>= \parsed -> case parsed of
       GHCParsed mod -> do
         return . catMaybes . flip map (GHC.hsmodImports mod) $ \i -> case i of
-          GHC.L _ (GHC.ImportDecl { GHC.ideclPkgQual = Just pkg }) ->
+          GHC.L _ (GHC.ImportDecl {GHC.ideclPkgQual = Just pkg}) ->
             Just (GHC.unpackFS (GHC.sl_fs pkg))
           _ -> Nothing
       _ -> return []

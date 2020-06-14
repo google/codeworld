@@ -169,7 +169,7 @@ randomAnimationOf :: (([Number], Number) -> Picture) -> Program
 randomAnimationOf (movie) = activityOf (initial, handle, draw)
   where
     initial (seed : rs) = (rs, 0, seed)
-    handle ((rs, t, seed), TimePassing(dt)) = (rs, t + dt, seed)
+    handle ((rs, t, seed), TimePassing (dt)) = (rs, t + dt, seed)
     handle ((rs, t, seed), PointerPress (_)) = (newrs, t, newseed)
       where
         newseed : newrs = randomNumbers (seed)
@@ -192,7 +192,7 @@ randomAutoSlideshow (mkslides, period) = activityOf (initial, update, render)
           random = rs,
           slides = mkslides (randomNumbers (r))
         }
-    update (ss, TimePassing(dt)) = update_wrap (update_current (update_time (ss, dt)))
+    update (ss, TimePassing (dt)) = update_wrap (update_current (update_time (ss, dt)))
     update (ss, _) = ss
     update_time (ss@(SS {..}), dt) = ss {time = time + dt}
     update_current ss@(SS {..})
@@ -247,7 +247,7 @@ randomSlideshow_ (mkslides) = activityOf (initial, handle, render)
         mark =
           scaled (lettering (printed (current)), 0.5, 0.5)
             & colored (solidRectangle (1, 1), RGB (0.9, 0.9, 0.9))
-    handle (ss@(SS {..}), TimePassing(dt)) = ss {time = time + dt}
+    handle (ss@(SS {..}), TimePassing (dt)) = ss {time = time + dt}
     handle (ss, event) = mayHandleEvent (ss)
       where
         handleNav (c, s) = case event of

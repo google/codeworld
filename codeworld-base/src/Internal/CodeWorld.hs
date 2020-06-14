@@ -124,7 +124,8 @@ activityOf ::
     world -> Picture
   ) ->
   Program
-activityOf (initial, event, draw) = do
+activityOf (initial, event, draw) =
+  do
     rs <- chooseRandoms
     CW.activityOf
       (initial rs)
@@ -143,7 +144,8 @@ debugActivityOf ::
     world -> Picture
   ) ->
   Program
-debugActivityOf (initial, event, draw) = do
+debugActivityOf (initial, event, draw) =
+  do
     rs <- chooseRandoms
     CW.debugActivityOf
       (initial rs)

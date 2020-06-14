@@ -181,9 +181,7 @@ prepareCompile dir = do
     UseBase _ syms _ -> do
       liftIO $ copyFile syms (dir </> "out.base.symbs")
       return ["-dedupe", "-use-base", "out.base.symbs"]
-  mainMod <- case stage of
-    ErrorCheck -> return "Some_Other_Module"
-    _ -> getMainModuleName
+  mainMod <- getMainModuleName
   return $ localSrcs ++ buildArgs mainMod mode ++ extraPkgArgs ++ linkArgs
 
 buildArgs :: String -> SourceMode -> [String]

@@ -176,97 +176,40 @@ luminosity (fenceColor -> RGBA r g b _) = (lo + hi) / 2
 alpha :: Color -> Double
 alpha (RGBA _ _ _ a) = fence a
 
--- Old-style colors
+-- Named colors
 
-white, black, red, green, blue, cyan, magenta, yellow :: Color
-
-orange, rose, chartreuse, aquamarine, violet, azure :: Color
-
-gray, grey, brown, purple, pink :: Color
-
+white :: Color
 white = HSL 0.00 0.00 1.00
 
+black :: Color
 black = HSL 0.00 0.00 0.00
 
+gray :: Color
 gray = HSL 0.00 0.00 0.50
 
+grey :: Color
 grey = HSL 0.00 0.00 0.50
 
+red :: Color
 red = HSL 0.00 0.75 0.50
 
+orange :: Color
 orange = HSL 0.61 0.75 0.50
 
+yellow :: Color
 yellow = HSL 0.98 0.75 0.50
 
+green :: Color
 green = HSL 2.09 0.75 0.50
 
+blue :: Color
 blue = HSL 3.84 0.75 0.50
 
+purple :: Color
 purple = HSL 4.80 0.75 0.50
 
+pink :: Color
 pink = HSL 5.76 0.75 0.75
 
+brown :: Color
 brown = HSL 0.52 0.60 0.40
-
-cyan = HSL (3 / 3 * pi) 0.75 0.5
-
-magenta = HSL (5 / 3 * pi) 0.75 0.5
-
-chartreuse = HSL (3 / 6 * pi) 0.75 0.5
-
-aquamarine = HSL (5 / 6 * pi) 0.75 0.5
-
-azure = HSL (7 / 6 * pi) 0.75 0.5
-
-violet = HSL (9 / 6 * pi) 0.75 0.5
-
-rose = HSL (11 / 6 * pi) 0.75 0.5
-
-{-# WARNING
-  magenta
-  [ "Please use HSL(5 * pi / 3, 0.75, 0.5) instead of magenta.",
-    "The variable magenta may be removed July 2020."
-  ]
-  #-}
-
-{-# WARNING
-  cyan
-  [ "Please use HSL(pi, 0.75, 0.5) instead of cyan.",
-    "The variable cyan may be removed July 2020."
-  ]
-  #-}
-
-{-# WARNING
-  chartreuse
-  [ "Please use HSL(pi / 2, 0.75, 0.5) instead of chartreuse.",
-    "The variable chartreuse may be removed July 2020."
-  ]
-  #-}
-
-{-# WARNING
-  aquamarine
-  [ "Please use HSL(5 * pi / 6, 0.75, 0.5) instead of aquamarine.",
-    "The variable aquamarine may be removed July 2020."
-  ]
-  #-}
-
-{-# WARNING
-  azure
-  [ "Please use HSL(7 * pi / 6, 0.75, 0.5) instead of azure.",
-    "The variable azure may be removed July 2020."
-  ]
-  #-}
-
-{-# WARNING
-  rose
-  [ "Please use HSL(11 * pi / 6, 0.75, 0.5) instead of rose.",
-    "The variable rose may be removed July 2020."
-  ]
-  #-}
-
-{-# WARNING
-  violet
-  [ "Please use purple instead of violet.",
-    "The variable violet may be removed July 2020."
-  ]
-  #-}

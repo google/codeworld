@@ -210,29 +210,9 @@ blank = Blank (getDebugSrcLoc callStack)
 polyline :: HasCallStack => [Point] -> Picture
 polyline ps = Polyline (getDebugSrcLoc callStack) ps
 
--- | A thin sequence of line segments, with these points as endpoints
-path :: HasCallStack => [Point] -> Picture
-path ps = Polyline (getDebugSrcLoc callStack) ps
-{-# WARNING
-  path
-  [ "Please use polyline instead of path.",
-    "path may be removed July 2020."
-  ]
-  #-}
-
 -- | A thick sequence of line segments, with given line width and endpoints
 thickPolyline :: HasCallStack => Double -> [Point] -> Picture
 thickPolyline n ps = ThickPolyline (getDebugSrcLoc callStack) ps n
-
--- | A thick sequence of line segments, with given line width and endpoints
-thickPath :: HasCallStack => Double -> [Point] -> Picture
-thickPath n ps = ThickPolyline (getDebugSrcLoc callStack) ps n
-{-# WARNING
-  thickPath
-  [ "Please used thickPolyline instead of thickPath.",
-    "thickPath may be removed July 2020."
-  ]
-  #-}
 
 -- | A thin polygon with these points as vertices
 polygon :: HasCallStack => [Point] -> Picture
@@ -315,28 +295,8 @@ sector :: HasCallStack => Double -> Double -> Double -> Picture
 sector = Sector (getDebugSrcLoc callStack)
 
 -- | A rendering of text characters.
-text :: HasCallStack => Text -> Picture
-text = Lettering (getDebugSrcLoc callStack)
-{-# WARNING
-  text
-  [ "Please used lettering instead of text.",
-    "text may be removed July 2020."
-  ]
-  #-}
-
--- | A rendering of text characters.
 lettering :: HasCallStack => Text -> Picture
 lettering = Lettering (getDebugSrcLoc callStack)
-
--- | A rendering of text characters, with a specific choice of font and style.
-styledText :: HasCallStack => TextStyle -> Font -> Text -> Picture
-styledText = StyledLettering (getDebugSrcLoc callStack)
-{-# WARNING
-  styledText
-  [ "Please used styledLettering instead of styledText.",
-    "styledText may be removed July 2020."
-  ]
-  #-}
 
 -- | A rendering of text characters onto a Picture, with a specific
 -- choice of font and style.

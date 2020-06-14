@@ -94,10 +94,6 @@ module Internal.Exports
     darker,
     brighter,
     duller,
-    hue,
-    saturation,
-    luminosity,
-    alpha,
 
     -- * Points and vectors
     Point,
@@ -120,19 +116,6 @@ module Internal.Exports
 
     -- * Debugging
     traced,
-
-    -- * Deprecated definitions (do not use)
-    path,
-    thickPath,
-    text,
-    styledText,
-    cyan,
-    magenta,
-    aquamarine,
-    azure,
-    violet,
-    chartreuse,
-    rose,
   )
 where
 

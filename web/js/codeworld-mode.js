@@ -355,7 +355,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
                     const child = topContext();
                     state.contexts.pop();
                     const parent = topContext();
-                    if (isBracket(parent)) {
+                    if (parent && isBracket(parent)) {
                         if (parent.fresh) {
                             parent.fresh = false;
                             parent.column = Math.min(child.ch, child.column);

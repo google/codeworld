@@ -225,6 +225,11 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
             if (ctx.column > column && !isBracket(ctx)) {
                 foundLet = ctx.value === 'let';
                 state.contexts = state.contexts.slice(0, i);
+
+                // Can't start a layout context when we're breaking one.
+                // This also allows a new top-level implied context to
+                // start if we break the existing top-level context.
+                state.lastTokens = [];
                 break;
             }
         }
@@ -292,7 +297,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
         }
 
         // Create any new implicit contexts called for by layout rules.
-        if (state.lastTokens.length === 0) {
+        if (state.lastTokens.length === 0 && state.contexts.length === 0) {
             if (token !== 'module' && token !== '{') {
                 state.contexts.push({
                     value: 'where', // There's an implied "module Main where"

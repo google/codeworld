@@ -1,5 +1,3 @@
-'use strict';
-
 const directoryTreeId = '#directoryTree';
 const nodeTypes = {
   DIRECTORY: 'directory',
@@ -38,7 +36,7 @@ function isProject(node) {
   return node ? node.type === nodeTypes.PROJECT : false;
 }
 
-window.utils.directoryTree = {
+export {
   createNodeId,
   selectNode,
   clearSelectedNode,

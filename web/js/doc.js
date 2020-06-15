@@ -15,6 +15,10 @@
  */
 'use strict';
 
+import {
+  registerStandardHints
+} from './codeworld_shared.js'
+
 window.env = parent;
 const params = new URLSearchParams(window.location.search);
 

@@ -223,17 +223,21 @@ window.onscroll = event => {
         help.appendChild(popdiv);
     }
 
+    function resolvePath(path, baseURL) {
+        const url = new URL(path, baseURL);
+        if (baseURL.origin === url.origin && baseURL.pathname === url.pathname) {
+            return url.hash;
+        } else {
+            return url.href;
+        }
+    }
+
     function relativizeLinks(base, root, tag, attr) {
         const elems = root.getElementsByTagName(tag);
         for (const elem of elems) {
             if (elem.hasAttribute(attr)) {
-                let url = new URL(elem.getAttribute(attr), base);
-                if (base.origin === url.origin && base.pathname === url.pathname) {
-                    url = url.hash;
-                } else {
-                    url = url.href;
-                }
-                elem.setAttribute(attr, url);
+                elem.setAttribute(attr,
+                    resolvePath(elem.getAttribute(attr), base));
             }
         }
     }
@@ -363,6 +367,34 @@ window.onscroll = event => {
         });
     }
 
+    function resolveShelfPath(path, baseURL) {
+        // The first three cases are for backward-compatibility in case
+        // caching on the shelf file is different from the js file.  The
+        // plan is to migrate in three steps:
+        //
+        // 1. Change just this JavaScript file.  Let it propagate.
+        // 2. Change the shelf files to use proper relative paths.
+        // 3. Remove the compatibility cases here.
+        //
+        // There will be enough time between steps to refresh the caches
+        // of most users.
+        if (path.startsWith('help/')) {
+            path = path.slice(5);
+        } else if (path.startsWith('doc/') ||
+            path.startsWith('doc-haskell/')) {
+            path = `../${path}`;
+        }
+
+        return resolvePath(path, baseURL);
+    }
+
+    function resolveShelfPaths(shelf, baseURL) {
+        shelf.default = resolveShelfPath(shelf.default, baseURL);
+        for (const page in shelf.named) {
+            shelf.named[page] = resolveShelfPath(shelf.named[page], baseURL);
+        }
+    }
+
     const markdeepStyle = document.createElement('style');
     document.head.appendChild(markdeepStyle);
     markdeepStyle.outerHTML = window.markdeep.stylesheet();
@@ -376,6 +408,8 @@ window.onscroll = event => {
             }
 
             shelf = JSON.parse(request.responseText);
+            const shelfURL = new URL(params.get('shelf'), location.href);
+            resolveShelfPaths(shelf, shelfURL);
             loadSidebar();
             loadPath(position.path);
         };

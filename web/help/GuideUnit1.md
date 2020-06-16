@@ -880,7 +880,7 @@ been rotated.
 To guide yourself in thinking about rotations, imagine a protractor, like
 this one.
 
-![](protractor.png width=70%)
+![](/help/protractor.png width=70%)
 
 As you can see, a fourth of a turn is 90 degrees, and half a turn is
 180 degrees.  Positive angles represent turning the picture counterclockwise.
@@ -983,7 +983,6 @@ backwardLogo = reflected(codeWorldLogo, 90)
     <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=DkVZbEJpBVW64qwAGbfamGg" width=250 height=250 style="border: none;"></iframe></div>
 
 !!! Note: Translation, rotation, and reflection make *congruent* pictures.
-
     In geometry, two shapes are called *congruent* if they have the same side
     lengths and angles, but might differ in the location or orientation of the
     image.  All of the last three transformations: translation, rotation, and
@@ -1064,7 +1063,6 @@ separately.
     change the picture.
 
 !!! Note: Translation, rotation, reflection, and dilation make *similar* pictures.
-
     In geometry, two shapes are called *similar* if they have the same angles
     between sides, but might differ in the distances, location, or orientation
     of the image.  This is a weaker statement than being congruent: congruent

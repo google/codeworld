@@ -253,5 +253,7 @@ fi
 run . git submodule init
 run . git submodule update
 
+run . git config core.hooksPath .githooks
+
 # Go ahead and run a first build, which installs more local packages.
 ./build.sh

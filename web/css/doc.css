@@ -15,165 +15,165 @@
  */
 
 body {
-    margin: 0px 0px 0px 0px;
+  margin: 0px 0px 0px 0px;
 }
 
 #popout {
-    display: block;
-    float: right;
-    clear: both;
-    top: 10px;
-    right: 10px;
+  display: block;
+  float: right;
+  clear: both;
+  top: 10px;
+  right: 10px;
 }
 
 #popout a {
-    text-decoration: none;
-    font-weight: bold;
-    padding: 3px;
-    border: dotted var(--doc-popuout-a-border) 1px;
-    border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
+  padding: 3px;
+  border: dotted var(--doc-popuout-a-border) 1px;
+  border-radius: 5px;
 }
 
 pre {
-    background: var(--doc-pre-background) !important;
+  background: var(--doc-pre-background) !important;
 }
 
 .md pre.tilde {
-    background-color: var(--doc-tilde-bg) !important;
+  background-color: var(--doc-tilde-bg) !important;
 }
 
 .md pre.tilde.clickable:hover {
-    background-color: var(--doc-tilde-clickable-hover-bg) !important;
-    cursor: pointer;
+  background-color: var(--doc-tilde-clickable-hover-bg) !important;
+  cursor: pointer;
 }
 
 .md div.admonition.collapsible {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .md div.admonition.collapsible::before {
-    content: "+";
-    font-weight: bold;
-    font-size: 150%;
-    position: relative;
-    top: 2px;
-    color: var(--doc-before-admonition-collapsible);
-    left: -2.95rem;
-    display: block;
-    width: 0;
-    height: 0;
+  content: "+";
+  font-weight: bold;
+  font-size: 150%;
+  position: relative;
+  top: 2px;
+  color: var(--doc-before-admonition-collapsible);
+  left: -2.95rem;
+  display: block;
+  width: 0;
+  height: 0;
 }
 
 .md div.admonition.collapsible.expanded::before {
-    content: "\2013";
-    font-weight: bold;
-    font-size: 150%;
-    position: relative;
-    top: 2px;
-    color: var(--doc-before-admonition-collapsible-expanded);
-    left: -2.95rem;
-    display: block;
-    width: 0;
-    height: 0;
+  content: "\2013";
+  font-weight: bold;
+  font-size: 150%;
+  position: relative;
+  top: 2px;
+  color: var(--doc-before-admonition-collapsible-expanded);
+  left: -2.95rem;
+  display: block;
+  width: 0;
+  height: 0;
 }
 
-.md div.admonition.collapsible:not(.expanded)>.admonition-title::after {
-    content: "Click to expand...";
-    color: var(--doc-after-admonition-title);
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 11pt;
-    font-weight: normal;
-    padding-right: 1em;
-    float: right;
+.md div.admonition.collapsible:not(.expanded) > .admonition-title::after {
+  content: "Click to expand...";
+  color: var(--doc-after-admonition-title);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11pt;
+  font-weight: normal;
+  padding-right: 1em;
+  float: right;
 }
 
-.md div.admonition.collapsible:not(.expanded)>.admonition-title {
-    border-bottom: none;
+.md div.admonition.collapsible:not(.expanded) > .admonition-title {
+  border-bottom: none;
 }
 
-.md div.admonition.collapsible:not(.expanded)> :not(.admonition-title) {
-    display: none;
+.md div.admonition.collapsible:not(.expanded) > :not(.admonition-title) {
+  display: none;
 }
 
 .md table.table tr:nth-child(even) {
-    background: var(--doc-tr-even-bg) !important;
+  background: var(--doc-tr-even-bg) !important;
 }
 
 .md table.table tr:nth-child(odd) {
-    background: var(--doc-tr-odd-bg);
+  background: var(--doc-tr-odd-bg);
 }
 
 #helpacc {
-    position: fixed;
-    overflow: auto;
-    width: 19em;
-    height: 100%;
-    margin: 0px 0px 0px 0px;
-    padding: 0px 0px 0px 0px;
-    border-right: solid var(--doc-helpacc-border-right) 3px;
-    background: var(--doc-bg);
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 11pt;
+  position: fixed;
+  overflow: auto;
+  width: 19em;
+  height: 100%;
+  margin: 0px 0px 0px 0px;
+  padding: 0px 0px 0px 0px;
+  border-right: solid var(--doc-helpacc-border-right) 3px;
+  background: var(--doc-bg);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11pt;
 }
 
 #helpacc .accentry {
-    padding: 0px 0px 0px 0px;
+  padding: 0px 0px 0px 0px;
 }
 
 #help {
-    position: relative;
-    overflow: auto;
-    color: var(--doc-color);
-    background: var(--doc-bg);
+  position: relative;
+  overflow: auto;
+  color: var(--doc-color);
+  background: var(--doc-bg);
 }
 
-#helpacc+#help {
-    margin-left: 20em;
+#helpacc + #help {
+  margin-left: 20em;
 }
 
 #help #package-header {
-    display: none;
+  display: none;
 }
 
 #help .subs.instances {
-    display: none;
+  display: none;
 }
 
 h3.ui-accordion-header {
-    color: var(--doc-accordion-color);
-    background: var(--doc-accordion-background);
+  color: var(--doc-accordion-color);
+  background: var(--doc-accordion-background);
 }
 
 h3.ui-accordion-header-active {
-    color: var(--doc-expanded-accordion-color);
-    background: var(--doc-expanded-accordion-background);
+  color: var(--doc-expanded-accordion-color);
+  background: var(--doc-expanded-accordion-background);
 }
 
 div.ui-accordion-content {
-    background: var(--doc-accordion-background);
+  background: var(--doc-accordion-background);
 }
 
 .ui-widget-content a {
-    color: var(--doc-accordion-color);
+  color: var(--doc-accordion-color);
 }
 
 .md svg.diagram {
-    fill: var(--doc-svg-fill) !important;
-    stroke: var(--doc-svg-stroke) !important;
+  fill: var(--doc-svg-fill) !important;
+  stroke: var(--doc-svg-stroke) !important;
 }
 
 .src {
-    background: var(--haddock-p-bg) !important;
+  background: var(--haddock-p-bg) !important;
 }
 
 table.info {
-    background-color: var(--haddock-lang-nameplate) !important;
+  background-color: var(--haddock-lang-nameplate) !important;
 }
 
 #interface .src .selflink {
-    background: var(--haddock-selflink-bg) !important;
+  background: var(--haddock-selflink-bg) !important;
 }
 
 #table-of-contents {
-    background: var(--haddock-toc-bg) !important;
+  background: var(--haddock-toc-bg) !important;
 }

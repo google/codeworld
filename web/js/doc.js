@@ -286,6 +286,7 @@ window.onscroll = (event) => {
         if (path.endsWith('.md')) {
           content.innerHTML = window.markdeep.format(raw, false);
           relativizeLinks(source, content, 'img', 'src');
+          relativizeLinks(source, content, 'a', 'href');
           if (shelf && shelf.blocks) {
             linkFunBlocks(content);
             linkCodeBlocks(content, false);

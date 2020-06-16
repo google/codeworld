@@ -24,7 +24,7 @@ CodeWorld logo in the *canvas* on the right side of the screen.
     which shows up on the right side of your screen, in a pink shaded window.
     These messages tell you what went wrong.
 
-    ![](/help/cw-error-notinscope.png)
+    ![](cw-error-notinscope.png)
 
     * If you see "not in scope", this means you have misspelled a word, or
       used the wrong capitalization.
@@ -59,7 +59,7 @@ Here's the code you just wrote, and what its parts mean.
     letter--so leave out the spaces.  To make it easier to tell when a new word
     starts, you can capitalize the *second* and *later* words.
 
-    ![](/help/camel.png width="30%")
+    ![](camel.png width="30%")
 
     In your first programs, `drawingOf` and `codeWorldLogo` were written in
     this way.  It's often called **camel case**.  Why?  Because the variable
@@ -461,7 +461,7 @@ above.
     arguments to a function.  The name of the function, at the beginning,
     adds a handle to that ring, forming something like a frying pan.
 
-    ![](/help/cw-frying-pan.png)
+    ![](cw-frying-pan.png)
 
     Go over some programs you've written up to this point, and see if you
     can see the frying pans for every function that's used.
@@ -733,7 +733,7 @@ When you give distances to the `translated` function, you will list the
 horizontal change first, and the vertical change second.  A useful tool for
 finding these numbers is the **coordinate plane**.
 
-![](/help/coordinate-plane.png width=50%)
+![](coordinate-plane.png width=50%)
 
 !!! Tip: Get your own coordinate plane
     The coordinate plane is a picture that your computer knows about in
@@ -880,7 +880,7 @@ been rotated.
 To guide yourself in thinking about rotations, imagine a protractor, like
 this one.
 
-![](/help/protractor.png width=70%)
+![](protractor.png width=70%)
 
 As you can see, a fourth of a turn is 90 degrees, and half a turn is
 180 degrees.  Positive angles represent turning the picture counterclockwise.
@@ -1680,7 +1680,7 @@ Points and coordinates
 
 To draw more precise shapes, we can use points on a "coordinate plane".
 
-![](/help/coordinate-plane.png width="50%")
+![](coordinate-plane.png width="50%")
 
 You can include a coordinate plane in your CodeWorld drawings, too, by
 using the `coordinatePlane` variable, like this:
@@ -1815,7 +1815,7 @@ The key to drawing arcs and sectors is using angles to describe which portion
 of a circle you want to draw.  The angles you can use are described in this
 diagram.
 
-![](/help/polar-angles.png width="75%")
+![](polar-angles.png width="75%")
 
 Arcs and sectors are drawn with these functions:
 

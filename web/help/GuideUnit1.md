@@ -36,7 +36,7 @@ CodeWorld logo in the *canvas* on the right side of the screen.
 Dissecting your first program
 -----------------------------
 
-If you've done coding before, you may have heard that code is like a recipe
+If you have done coding before, you may have heard that code is like a recipe
 that tells a computer step-by-step what to do.  In CodeWorld, though, code is
 more like a *dictionary* or *glossary*. It tells the computer what words mean.
 

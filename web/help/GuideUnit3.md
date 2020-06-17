@@ -29,13 +29,16 @@ program      = animationOf(propellor)
 propellor(t) = rotated(solidRectangle(10, 1), 60 * t)
 ~~~~~
 
-See if you can explain to yourself or someone else what is happening here.
+See if you can explain to yourself or someone else what is happening here.  Then
+read on to check your understanding.
 
 ### Analyzing the animation ###
 
-The first line asks for an animation, by using the `animationOf` function.  The
-parameter is a *function* that can be used to produce the frames of the
-animation.  In our example, this function is called `propellor`.
+The first line asks for an animation, by using the `animationOf` function.  In the
+past, you've used `drawingOf`, and its parameter is a `Picture` value to draw.
+The parameter to `animationOf` is not just one picture, but a *function* that can
+be used to produce many pictures: the frames of the animation.  In our example,
+this function is called `propellor`.
 
 The second line defines the `propellor` function.  The argument to this function,
 which we will usually call `t`, stands for the time in seconds since the program
@@ -44,18 +47,26 @@ to display at that time.  Unlike movies and television shows, which only have a
 fixed sequence of frames, computers can work as fast as possible to draw as many
 frames as they can, by following the same pattern.
 
-> (Have you ever heard of the graphics in video games described in "frames per
-> second"?  This is, literally, the number of different frames the computer is
-> capable of drawing in one second.  Slower computers can't draw as many frames,
-> which can make motion appear jerky and uneven.  Faster computers can draw more
-> frames, which makes the motion appear smooth and natural.)
+!!! collapsible: Why are video game graphics described with "frames per second"?
+    Frames per second means, literally, the number of different frames the
+    computer is capable of drawing in one second.  Slower computers can't draw
+    as many frames, which can make motion appear jerky and uneven.  Faster
+    computers can draw more frames, which makes the motion appear smooth and
+    realistic.
 
-We write the *result* of the `propellor` function as `propellor(t)`, and it's
-just an ordinary picture - one frame of the animation.  But what exactly this
-frame looks like depends on `t`.  Instead of a specific angle of rotation, an
-expression `60 * t` is used.  Just as with any function, this is evaluated by
-substitution.  So the frame that is drawn 4.5 seconds in is rotated by an angle
-of `60 * 4.5`, which is 270 degrees.
+Since `propellor` is a function, some of its results are `propellor(0)` or
+`propellor(0.1)` or `propellor(0.2)`.  These are the frames of your animation.
+Just like with other functions, the `t` in the definition stands for whatever
+number is provided as input to the function.  This time, though, it's not you
+that's going to be evaluating the function with different arguments;
+`animationOf` does that job for you.
+
+In this function, the input is used to calculate an angle to rotate the
+propellor.  The angle is `60 * t`, so it's calculated by taking the time in
+seconds, and multiplying by 60.  Just as with any function, this is evaluated by
+substitution: `t` is replaced by the number of seconds, and everything else
+stays the same.  For example, the frame that is drawn 4.5 seconds in is rotated
+by an angle of `60 * 4.5`, which is 270 degrees.
 
 It might help to make a table, like this:
 
@@ -69,10 +80,13 @@ It might help to make a table, like this:
 |    `0.5`    | `rotated(solidRectangle(10, 1), 30)` |
 
 See how each frame draws a picture that's similar to the previous one, but just
-a few degrees different in rotation?  It makes a flipbook, but in one easy
-expression.
+a few degrees different in rotation?  This is just like a flipbook, but it only
+took one expression to define all those pictures.
 
-How fast (in degrees per second) is the propellor rotating?
+!!! collapsible: How fast (in degrees per second) is the propellor rotating?
+    When `t` is zero, the propellor is rotated by `60 * 0`, which is 0 degrees.
+    When `t` is one, the propellor is rotated by `60 * 1`, which is 60 degrees.
+    That's a speed of 60 degrees per second.
 
 ### Continuity ###
 
@@ -93,12 +107,13 @@ be close, as well.  In other words:
 * You don't want your animation function to always give exactly the *same*
   picture. The animation wouldn't move.
 * But you do want your animation function to give *similar* pictures.  It's the
-  small, slight changes from one frame to the next that create a smooth
-  animation.
+  tiny, slight changes from one frame to the next that create that illusion of
+  something moving
 
 Lucky for you, most of the simple math expressions you can write with `t` in
-them are continuous!  But keep this in mind, because in more complex animations
-later, you'll have to think harder to make sure your animation is continuous.
+them are continuous.  But keep this in mind, because in more complicated
+animations, you'll have to think a little but to make sure your animation is
+continuous.
 
 Kinds of motion
 ---------------
@@ -126,11 +141,29 @@ wheel(t) = translated(rotated(tire, -60 * t), t - 10, 3)
 tire     = circle(1) & solidRectangle(0.1, 2)
 ~~~~~
 
+Take a moment to understand what's going on yourself.  Then check your
+understanding.
+
+!!! collapsible: What's going on?
+    This program is built with `animationOf`, so it's an animation.  The
+    argument to `animationOf`, called `wheel`, is the function that describes
+    the frames of the animation.
+
+    In the definition of `wheel`, the argument is called `t`, and it appears
+    two places: the rotation of the tire, and then x component of the
+    translation.  Everything else stays the same.
+
+    Finally, `tire` is just an ordinary picture, made of a circle and a solid
+    rectangle.  (The rectangle makes it easier to tell that it's rotating.)
+    This is just an ordinary picture, not an animation.  This is important!
+    Since animations include ordinary pictures, all of the picture skills you
+    have learned can still be used here.
+
 Top-down animation
 ------------------
 
 With drawings, soon after learning how to create a single drawing, you learned
-how to build more complicated drawings out of simpler building blocks.  The
+how to create more complicated drawings out of simpler building blocks.  The
 same idea applies to animation.  However, it's important to be aware of the
 difference between pictures and animations.
 

@@ -26,12 +26,12 @@ CodeWorld logo in the *canvas* on the right side of the screen.
 
     ![](cw-error-notinscope.png)
 
-    * If you see "not in scope", this means you have misspelled a word, or
+    * If you see "not in scope", this means you have misspelled a word or
       used the wrong capitalization.
     * If you see "parse error", this can mean you've left out or have
       extra punctuation marks or symbols.
 
-    Check your code carefully, and try again.
+    Check your code carefully and try again.
 
 Dissecting your first program
 -----------------------------
@@ -47,14 +47,14 @@ Here's the code you just wrote, and what its parts mean.
     | My program | is  | a drawing of | the CodeWorld logo. |     |
 
 * `program` is the **variable** that you're defining. A variable is a name for
-  something.  In most math, variables are just one letter long, and they stand
+  something.  In most math, variables are just one letter long and they stand
   for numbers.  In CodeWorld, though, variables can name many different types of
   values: numbers, pictures, colors, text, and even whole programs.  Because
-  you will use so many of them, you can name variables with with whole words,
+  you will use so many of them, you can name variables with whole words,
   always starting with a *lower-case* letter.
 
 !!! collapsible: Camel case
-    Sometimes, you may want more than one word to name a variable!  The
+    Sometimes you may want more than one word to name a variable!  The
     computer needs each variable to be a single word starting with a lower-case
     letter--so leave out the spaces.  To make it easier to tell when a new word
     starts, you can capitalize the *second* and *later* words.
@@ -68,9 +68,9 @@ Here's the code you just wrote, and what its parts mean.
 * The **equal sign** means "is", and tells the computer that two expressions mean
   the same thing.  It is used to connect a variable with its definition.
 
-* `drawingOf` is called a **function**.  You'll use functions a lot, and you'll
+* `drawingOf` is called a **function**.  You'll use functions a lot and you'll
   learn more about them later!  This particular function, `drawingOf`, tells the
-  computer that your program is a drawing.  So instead of playing a game or
+  computer that your program is a drawing.  So, instead of playing a game or
   animation, it will just show a picture.
 
 * `codeWorldLogo` is the specific picture your program will show.  Your
@@ -91,7 +91,7 @@ program = drawingOf(nametag)
 ~~~~~
 
 **This program doesn't work!**  If you've typed everything correctly you should
-see an error message, `Variable not in scope: nametag :: Picture`.
+see an error message: `Variable not in scope: nametag :: Picture`.
 This is your computer telling you that it doesn't know what `nametag` means!
 
 !!! Tip: Run your program often
@@ -109,7 +109,7 @@ This is your computer telling you that it doesn't know what `nametag` means!
     Did you notice that your computer already told you that nametag is a
     picture?  It figured that out from context.  Because you asked for a
     *drawing* of `nametag`, it is expecting `nametag` to be a picture.
-    Just one more way the computer lets you know what it's thinking.
+    This is just one more way the computer lets you know what it's thinking.
 
 To finish your code, you'll need to define the variable `nametag`, and
 describe to your computer exactly what a nametag is.  To start, you can
@@ -120,15 +120,15 @@ program = drawingOf(nametag)
 nametag = lettering("Camille")
 ~~~~~
 
-You've used a new function, **`lettering`**.  This function describes a
+You've used a new function: **`lettering`**.  This function describes a
 picture with letters (or any other kind of text) on it.
 
 Next, you can add a border to your nametag.  You might be tempted to add
 a new line like `nametag = ...` to your code, but you can't! Remember,
-your code is like a dictionary, and each definition in it should give
+your code is like a dictionary and each definition in it should give
 the whole definition for that word.  To include a second shape in your
 nametag, you'll use **`&`**, which you can read as "and" or "in front
-of". To describe the border itself, two more functions -- **`circle`**
+of". To describe the border itself, two more functions: -- **`circle`**
 and **`rectangle`** -- are useful.
 
 Here's a name tag with a border:
@@ -138,8 +138,8 @@ program = drawingOf(nametag)
 nametag = lettering("Camille") & circle(4) & rectangle(8, 8)
 ~~~~~
 
-Here are the shape functions you can use in your nametag, and the
-**arguments**, or information inside the parentheses, that each one
+Here are the shape functions you can use in your nametag and the
+**arguments**, the information inside the parentheses, that each one
 expects.
 
 | Function    | Expected arguments (inside parentheses)            | Example            |
@@ -158,7 +158,7 @@ Try these examples to learn more:
 
     The `circle` function needs only a single number, which is the *radius*
     of the circle.  Radius means the number of units from the center of
-    the circle to the edge.
+    the circle to the edge or perimeter.
 
 !!! : Nested rectangles
     ~~~~~ . clickable

@@ -16,12 +16,12 @@ CodeWorld logo in the *canvas* on the right side of the screen.
 
     Computers can be very picky, so make sure you have typed *exactly* what
     you see above.  That means everything needs to be spelled correctly, the
-    same letters need to be capitalized, and you need parentheses just where
+    same letters need to be capitalized and you need parentheses just where
     they are.  There should be nothing else in your editor except that one
     line.
 
     When you make a mistake, the computer usually shows you an *error message*,
-    which shows up on the right side of your screen, in a pink shaded window.
+    which shows up on the right side of your screen in a pink shaded window.
     These messages tell you what went wrong.
 
     ![](cw-error-notinscope.png)
@@ -40,7 +40,7 @@ If you have done coding before, you may have heard that code is like a recipe
 that tells a computer step-by-step what to do.  In CodeWorld, though, code is
 more like a *dictionary* or *glossary*. It tells the computer what words mean.
 
-Here's the code you just wrote, and what its parts mean.
+Here's the code you just wrote and what its parts mean.
 
     | `program`  | `=` | `drawingOf(` | `codeWorldLogo`     | `)` |
     |------------|-----|--------------|---------------------|-----|
@@ -49,7 +49,7 @@ Here's the code you just wrote, and what its parts mean.
 * `program` is the **variable** that you're defining. A variable is a name for
   something.  In most math, variables are just one letter long and they stand
   for numbers.  In CodeWorld, though, variables can name many different types of
-  values: numbers, pictures, colors, text, and even whole programs.  Because
+  values: numbers, pictures, colors, text and even whole programs.  Because
   you will use so many of them, you can name variables with whole words,
   always starting with a *lower-case* letter.
 
@@ -65,7 +65,7 @@ Here's the code you just wrote, and what its parts mean.
     this way.  It's often called **camel case**.  Why?  Because the variable
     name has humps!
 
-* The **equal sign** means "is", and tells the computer that two expressions mean
+* The **equal sign** means "is" and tells the computer that two expressions mean
   the same thing.  It is used to connect a variable with its definition.
 
 * `drawingOf` is called a **function**.  You'll use functions a lot and you'll
@@ -90,11 +90,11 @@ of a nametag.
 program = drawingOf(nametag)
 ~~~~~
 
-**This program doesn't work!**  If you've typed everything correctly you should
+**This program doesn't work!**  If you've typed everything correctly, you should
 see an error message: `Variable not in scope: nametag :: Picture`.
 This is your computer telling you that it doesn't know what `nametag` means!
 
-!!! Tip: Run your program often
+!!! Tip: Run your program often!
     Even though your code was not finished, it didn't hurt to click **Run**.
     You can think of error messages as being a conversation with your
     computer.  You're just asking what it needs next!
@@ -128,10 +128,10 @@ a new line like `nametag = ...` to your code, but you can't! Remember,
 your code is like a dictionary and each definition in it should give
 the whole definition for that word.  To include a second shape in your
 nametag, you'll use **`&`**, which you can read as "and" or "in front
-of". To describe the border itself, two more functions: -- **`circle`**
-and **`rectangle`** -- are useful.
+of". To describe the border itself, two more functions, -- **`circle`**
+and **`rectangle`** --, are useful.
 
-Here's a name tag with a border:
+Here's a name tag with a border
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
@@ -148,7 +148,7 @@ expects.
 | `circle`    | A radius--the distance from the center to the edge | circle(7)          |
 | `rectangle` | The width *and* height of the rectangle            | rectangle(5, 3)    |
 
-Try these examples to learn more:
+Try these examples to learn more
 
 !!! : Concentric circles
     ~~~~~ . clickable
@@ -167,7 +167,7 @@ Try these examples to learn more:
     ~~~~~
 
     The `rectangle` function needs **two** numbers.  The first is how many
-    units wide it should be, and the second is how many units tall.
+    units wide you want it to be and the second is how many units tall you want it to be.
 
 !!! : Overlapping rectangles
     ~~~~~ . clickable
@@ -179,10 +179,10 @@ Try these examples to learn more:
     Notice how the definition of `nametag` got too long?  It's okay to
     start a new line, but you **must** indent the new line.  That is,
     leave some blank spaces at the beginning.  If you forget to indent,
-    the computer will be confused, and think you're defining a new
+    the computer will be confused and think you're defining a new
     variable.  This can cause a `Parse error` message.
 
-Once you've understood these examples, try your own combinations, as well.
+Once you've understood these examples, try your own combinations as well.
 
 Understanding mistakes
 ----------------------
@@ -193,7 +193,7 @@ went wrong.
 
 !!! collapsible: `Parse error: naked expression at top level`
     This message means there's something in your program that doesn't look
-    like a definition.  For example, if you wrote this:
+    like a definition.  For example, if you wrote this
 
     ~~~~~
     program = drawingOf(nametag)
@@ -203,8 +203,8 @@ went wrong.
 
     On the second line, instead of an *equation* to define `nametag`, this
     program just wrote an expression.  Remember that your code is a
-    glossary, and everything in it should define a word.  To correct this
-    mistake, you would add `nametag =` to the beginning of the second line.
+    glossary and everything in it should define a word.  To correct this
+    mistake you would add `nametag =` to the beginning of the second line.
 
     ~~~~~ . clickable
     program = drawingOf(nametag)
@@ -223,10 +223,10 @@ went wrong.
     ~~~~~
 
     Here, the programmer meant for `circle(10)` to be part of the
-    definition of `nametag`.  The computer doesn't understand this, and
+    definition of `nametag`.  The computer doesn't understand this and
     believes it should be a new definition, because it starts against the
     left margin.  To fix this mistake, you would add a few spaces at the
-    beginning of the last line, to indent it.
+    beginning of the last line to indent it.
 
     ~~~~~ . clickable
     program = drawingOf(nametag)
@@ -239,12 +239,12 @@ went wrong.
 
 !!! collapsible: `Multiple declarations of nametag`
     This message tells you that you defined the same word in two different
-    ways.  Sometimes this happens in human languages, and we call them
-    homonyms -- for example, "duck" could mean an animal, or it could mean
-    dodging a flying object!  Your computer, though, can't deal with this
+    ways.  Sometimes this happens in human languages and we call them
+    homonyms -- for example, "duck" could mean an animal or it could mean
+    dodging a flying object!  Your computer can't deal with this though,
     each variable can only be defined once.
 
-    Take a look at this program.
+    Take a look at this program
 
     ~~~~~
     program = drawingOf(nametag)
@@ -253,11 +253,11 @@ went wrong.
     nametag = circle(10)
     ~~~~~
 
-    One line says `nametag` means a picture of the text "Victor", but the
-    second line says that `nametag` instead means a circle with a radius of
+    The first line says `nametag` means a picture of the text "Victor" but the
+    second line says that `nametag` means a circle with a radius of
     10.  So which is it?  You probably meant for `nametag` to include both.
-    To do that, you would write one definition for `nametag`, and use
-    **`&`** to combine the parts.  Like this:
+    To do that, you would write one definition for `nametag` and use
+    **`&`** to combine the parts.  Like this
 
     ~~~~~ . clickable
     program = drawingOf(nametag)
@@ -268,7 +268,7 @@ went wrong.
 !!! collapsible: `Couldn't match type Program with Picture`
     Once you've got the hang of using **`&`** to combine pictures, you
     might be tempted to use it everywhere! For example, you might try to
-    write this.
+    write this
 
     ~~~~~
     program = drawingOf(nametag) & drawingOf(border)
@@ -281,8 +281,8 @@ went wrong.
     `drawingOf` function turns a picture into a *computer program*, and
     you cannot use **`&`** to combine two different computer programs!
 
-    The solution here is to combine the pictures, before using the
-    `drawingOf` function.  That looks like this.
+    The solution here is to combine the pictures before using the
+    `drawingOf` function.  That looks like this
 
     ~~~~~ . clickable
     program = drawingOf(nametag & border)
@@ -294,14 +294,14 @@ went wrong.
 !!! collapsible: `Couldn't match type Picture with Text`
     Just like there's a difference between a computer program and a
     picture, there's also a difference between *text* and *pictures*.
-    Consider this code.
+    Consider this code
 
     ~~~~~
     program = drawingOf(nametag)
     nametag = "Haruto" & circle(10)
     ~~~~~
 
-    The text, "Haruto", isn't a picture yet, so it cannot by combined
+    The text, "Haruto", isn't a picture yet, so it cannot be combined
     using **`&`**.  Use the `lettering` function to exchange the text
     for a picture first, then combine it.  Like this:
 

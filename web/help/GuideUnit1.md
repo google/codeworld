@@ -682,7 +682,7 @@ program by asking and answering a question.
     The final program draws a wheel in red, because you defined the
     **program** to be a drawing of `redWheel`.
 
-    Can you guess what the result of this code is?
+Can you guess what the result of this code is?
 
     ~~~~~ . clickable
     program  = drawingOf(wheel)
@@ -690,8 +690,9 @@ program by asking and answering a question.
     wheel    = solidCircle(4)
     ~~~~~
 
-    If you ran this, you see a black circle. `redWheel` is still
-    defined to be a red circle, but that doesn't change anything. Why?
+    If you ran this, you would see a black circle. `redWheel` is still
+    defined to be a red circle, but that doesn't change anything. 
+    Why?
     It is because `program` is defined to be a drawing of `wheel`, which
     is still black. The original input was 'wheel` and 'wheel` is defined 
     as a `solidCircle` of radius 4 and the call for the input `wheel` in the 
@@ -702,6 +703,7 @@ When you use `colored` in a program, a *whole expression* like
 `colored(pic, blue)` describes a picture, so you can use an expression
 like this in all the same places you could use any other description of
 a picture.  
+
 For example, you might define `nametag` like this
 
 ~~~~~ . clickable
@@ -752,52 +754,57 @@ Translation: Moving
 
 The second transformation you can use in your programs is translation.  The
 `translated` function shifts a picture up, down, left, or right.  Its inputs
-are the preimage, and two distances to move the picture.  The result of
-`translated` is a new picture with the same content as the preimage, but
-shifted either horizontally (that is, left or right) or vertically (that is,
-up or down) or both.
+are the preimage and two numbers, which are distances that we want
+to move the picture.  The result of `translated` transformation is a new picture 
+with the same content as the preimage, but shifted either horizontally 
+(left or right) or vertically (up or down) or both.
 
 When you give distances to the `translated` function, you will list the
-horizontal change first, and the vertical change second.  A useful tool for
-finding these numbers is the **coordinate plane**.
+horizontal change first, and the vertical change second.  
+
+A useful tool for finding these numbers is the **coordinate plane**.
 
 ![](coordinate-plane.png width=50%)
 
 !!! Tip: Get your own coordinate plane
     The coordinate plane is a picture that your computer knows about in
-    CodeWorld.  To make your own coordinate plane, use this code:
+    CodeWorld.  
+    
+To make your own coordinate plane, use this code
 
     ~~~~~ . clickable
     program = drawingOf(coordinatePlane)
     ~~~~~
 
-This tool combines of two number lines.
+This tool is a combination of two number lines:
 
-1. The first number line is *horizontal*, with positive numbers to the right
-   and negative numbers to the left.  You can use this line to describe how
-   far left or right to move a picture.
-2. The second number line is *vertical*, with positive numbers on top, and
-   negative numbers on the bottom.  You use that number line to describe
-   how far up or down to move a picture.
+1. The first number line is *horizontal*, like the *x-axis*, with positive numbers 
+   to the right and negative numbers to the left.  
+   You can use this line to describe how far left or right to move a picture.
+2. The second number line is *vertical*, like the *y-axis*, with positive numbers 
+   on top, and negative numbers on the bottom.  
+   You use that number line to describe how far up or down to move a picture.
 
-With both numbers together, you can move a picture anywhere you like.  The
-basic shapes you have learned are drawn with their center at the *origin* --
+Using combinations of both coordinates together, you can move a picture anywhere you like.  
+
+The basic shapes you have learned are drawn with their center at the *origin* --
 the point (0, 0) -- on the coordinate plane, so you should measure your x
 and y distances from there.  As you define your own pictures, it's a good
-idea to continue doing the same thing.
+idea to continue this practice.
 
-For example, if you wanted a circle representing the sun in the top left
-corner of the screen.  First, you could look at the horizontal number line,
+For example, suppose you wanted a circle representing the sun in the top left
+corner of the screen.  First, you could look at the horizontal number line
 and see that negative numbers are used to move a shape to the left.  You might
-pick -5, which is five units left on the screen.  Next, you could look at the
-vertical number line, and see that positive numbers are used to move an object
-up.  You might pick 7, which is most of the way to the top of the screen.
+pick x = -5, which is five units moving left from the origin on the screen.  
+Next, you could look at the vertical number line and see that positive numbers are 
+used to move an object up.  You might pick 7, which is most of the way 
+to the top of the screen. This should give you a proper placement for the sun in your image.
 
-The expression describing a picture of the sun in the right place is now
-`translated(sun, -5, 7)`.  The first argument is the preimage, which you
-would define elsewhere in the program.  The second and third arguments are
-the distances to move the shape in your new picture, with horizontal first,
-then vertical.
+The expression that would move a sun from the center of the screen and 
+place it in the upper left corner would be `translated(sun, -5, 7)`.  
+The first argument is the preimage, the sun, which you would define elsewhere in the program.  
+The second argument is the horizontal distance the preimage would move and the
+third arguments is the vertical distance the preimage would move.
 
 Here is a complete program:
 

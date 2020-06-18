@@ -1,8 +1,8 @@
-Getting started
+Getting Started
 ===============
 
 To build your first program in CodeWorld, type (or just click on) this
-code:
+code
 
 ~~~~~ . clickable
 program = drawingOf(codeWorldLogo)
@@ -33,7 +33,7 @@ CodeWorld logo in the *canvas* on the right side of the screen.
 
     Check your code carefully and try again.
 
-Dissecting your first program
+Dissecting Your First Program
 -----------------------------
 
 If you have done coding before, you may have heard that code is like a recipe
@@ -78,7 +78,7 @@ Here's the code you just wrote and what its parts mean.
   easy program to write.  Most of your own programs will need to describe
   the picture that you want to show in more detail.
 
-Building a nametag
+Building a Nametag
 ------------------
 
 Of course, you can do a lot more in CodeWorld than just look at the CodeWorld
@@ -112,8 +112,8 @@ This is your computer telling you that it doesn't know what `nametag` means!
     This is just one more way the computer lets you know what it's thinking.
 
 To finish your code, you'll need to define the variable `nametag`, and
-describe to your computer exactly what a nametag is.  To start, you can
-add your name, like this!
+describe to your computer exactly what a nametag is.  
+To start, you can add your name, like this!
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
@@ -184,7 +184,7 @@ Try these examples to learn more
 
 Once you've understood these examples, try your own combinations as well.
 
-Understanding mistakes
+Understanding Mistakes
 ----------------------
 
 As you experminent with your programs, you're likely to try a few things
@@ -193,7 +193,8 @@ went wrong.
 
 !!! collapsible: `Parse error: naked expression at top level`
     This message means there's something in your program that doesn't look
-    like a definition.  For example, if you wrote this
+    like a definition.   
+    If you wrote this
 
     ~~~~~
     program = drawingOf(nametag)
@@ -213,7 +214,8 @@ went wrong.
     ~~~~~
 
 !!! collapsible: `parse error (possibly incorrect indentation or mismatched brackets)`
-    This message can come from a missing *indent*.  For example, consider this code:
+    This message can come from a missing *indent*.  
+    For example, consider this code
 
     ~~~~~
     program = drawingOf(nametag)
@@ -241,7 +243,7 @@ went wrong.
     This message tells you that you defined the same word in two different
     ways.  Sometimes this happens in human languages and we call them
     homonyms -- for example, "duck" could mean an animal or it could mean
-    dodging a flying object!  Your computer can't deal with this though,
+    dodging a flying object!  Your computer can't deal with this because
     each variable can only be defined once.
 
     Take a look at this program
@@ -267,8 +269,8 @@ went wrong.
 
 !!! collapsible: `Couldn't match type Program with Picture`
     Once you've got the hang of using **`&`** to combine pictures, you
-    might be tempted to use it everywhere! For example, you might try to
-    write this
+    might be tempted to use it everywhere! 
+    For example, you might try to write this
 
     ~~~~~
     program = drawingOf(nametag) & drawingOf(border)
@@ -316,12 +318,13 @@ your code where the error was recognized.  (Be careful. Sometimes your
 actual mistake could be earlier!)  So just read over it and double-check
 that you've typed what you intended.
 
-Defining variables
+Defining Variables
 ------------------
 
 In the nametags above you defined *variables* called `program` and `nametag`.
 Because your code is like a dictionary or glossary, you can define as many
-variables as you like. For example, you might write
+variables as you like. 
+For example, you might write
 
 ~~~~~
 name = "Han"
@@ -331,7 +334,7 @@ favoriteColor = blue
 
 !!! Warning
     This isn't a complete program!  If you try to run this example, you will see
-    an error message:
+    an error message
 
     `The variable program is not defined in your code.`
 
@@ -341,8 +344,8 @@ Each of these lines is an **equation**, which says that two expressions are
 *equal* or have the same value.  In math, you use equations in many
 ways, but in CodeWorld they are used specifically to *define variables*.
 
-When you define a variable, you can use it in the rest of your code, like
-this
+When you define a variable, you can use it in the rest of your code. 
+Look at this example
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
@@ -362,7 +365,7 @@ is written on the name tag.
     written on it.  Oops!
 
     Quotation marks tell the computer *not* to interpret something as code,
-    but just as a piece of text.  Variables are code, so don't put
+    but only as a piece of text.  Variables are code and you never put
     quotation marks around your code.
 
 You'll want to remember that defining a variable doesn't do anything by itself.
@@ -376,7 +379,8 @@ border = circle(5)
 
 If you run the code, you might be surprised to find there is no border!
 You've told your computer what the word `border` means, but you didn't
-say you wanted one in your program!  You might try this instead
+say you wanted one in your program!  
+You might try this instead
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
@@ -387,7 +391,7 @@ border = circle(5)
 That extra `& border` tells your computer that you actually *want* a
 border in the name tag.  Defining it isn't enough.
 
-### The `program` variable
+### The `program` Variable
 
 Remember that defining a variable doesn't do anything by itself.  But your
 code is nothing but a bunch of definitions, just like a glossary or
@@ -418,15 +422,15 @@ something else used in program, or so on.)
     because it isn't used anywhere in the meaning of that special
     `program` variable.
 
-All about functions
+All About Functions
 -------------------
 
 All of the code you've written so far has made use of functions.  These are
-important tools you'll use in your coding, so let's investigate them in more
-detail.
+important tools you'll be using very often in your coding. 
+Let's investigate them in more detail.
 
-> A **function** is a relationship that associates each possible input with a
-> specific result.
+> A **function** is a relationship that associates each possible argument or input with a
+> specific result or output.
 
 **************************************************
 *    input     .----------.     output
@@ -435,7 +439,8 @@ detail.
 **************************************************
 
 The type of input a function expects is called its *domain* and the type of
-result it produces is called its *range*.  Here are the functions you've used so far
+result it produces is called its *range*.  
+Here's a list of the functions you've used so far, with their domains and ranges
 
 Function    | Domain             | Range
 ------------|--------------------|---------
@@ -450,15 +455,16 @@ a name.)
 
 **Applying** a function means using the function to describe its result for
 a specific input.  To apply a function to some input, you write the name of
-the function, an open parenthesis, the input values (called **arguments**),
-and then a close-parenthesis.  When there is more than one argument to a
+the function, an open parenthesis, the input values (called **arguments**)
+and then a close-parenthesis.  
+When there is more than one argument to a
 function, you can write the domain in CodeWorld by listing them all in
 parentheses, separated by commas, like you see in `rectangle` in the table
 above.
 
 !!! Tip
     Parentheses always come in pairs and are used like a ring around the
-    arguments to a function.  Picture the name of the function at the beginning
+    arguments to a function.  Picture the name of the function at the beginning as
     adding a handle to that ring, forming something like a frying pan.
 
     ![](cw-frying-pan.png)
@@ -466,36 +472,37 @@ above.
     Go over some of the programs you've written up to this point and see if you
     can see the frying pans for each function that you've used.
 
-### Exploring available functions
+### Exploring Available Functions
 
 Determining how you can use a function in your code will depend on its domain and range.
-There's a short notation that's useful for saying what the domain and range
-of a function are, and it looks like this
+There's a type of short notation that's useful for stating what the domain and range
+of a function are. 
+Here's what it looks like
 
 ~~~~~
 drawingOf :: Picture -> Program
 lettering :: Text -> Picture
-circle :: Number -> Picture
+circle :: (Number) -> Picture
 rectangle :: (Number, Number) -> Picture
 ~~~~~
 
 These lines, called **type signatures**, don't *define* the functions, they
 just provide a little bit of information about what arguments they need
-and what type of result they have.  Read the two colons (**`::`**) as
-"has the type" and the arrow (**`->`**) as meaning a *function* from one
-kind of thing to another.  So the first line says "`drawingOf` has the type:
-function from pictures to programs".
+and what type of results they have.  The two colons (**`::`**) should be read as
+"has the type", while the arrow (**`->`**) denotes a *function* from one
+kind of thing to another.  So, the first line saying "`drawingOf` has the type
+"function from picture to program".
 
 You can explore all of the functions the computer already knows when you
-use CodeWorld, by pressing Shift-Space or Ctrl-Space on a blank line in the
+use CodeWorld by pressing Shift-Space or Ctrl-Space on a blank line in the
 CodeWorld editor.  Try it!  The list gives all the names your computer
-already knows, and there are a lot of them!  By typing the first few
+already knows and there are a lot of them!  By typing the first few
 letters of the function you want, you can narrow down the list.  The type
 signatures tell you what types of information you need to provide to apply
 the function, and what type you can expect to end up with.
 
 For practice, see if you can write code using each of the following
-functions.  Start by looking up their domain and range using Shift-Space or
+functions.  Start by looking up their domain and range, using Shift-Space or
 Ctrl-Space, and see if you can use them with just that hint.  If you need
 more hints, expand the sections below for an example and explanation.
 
@@ -504,9 +511,9 @@ more hints, expand the sections below for an example and explanation.
     solidCircle :: Number -> Picture
     ~~~~~
 
-    This type signature tells you that the only argument to `solidCircle`
-    is a number, and the result is a picture.  Here's an example of a
-    program that uses `solidCircle`.
+    This type signature tells you that the only argument of `solidCircle`
+    is a number and the result is a picture.  Here's an example of a
+    program that uses `solidCircle`
 
     ~~~~~ . clickable
     program = drawingOf(pic)
@@ -525,15 +532,15 @@ more hints, expand the sections below for an example and explanation.
     ~~~~~
 
     This type signature tells you that `solidRectangle` needs two
-    arguments, both numbers, and the result is a picture.  Here's an
-    example of a program that uses `solidRectangle`.
+    arguments, both of them being numbers, and the result is a picture.  Here's an
+    example of a program that uses `solidRectangle`
 
     ~~~~~ . clickable
     program = drawingOf(pic)
     pic = solidRectangle(7, 3)
     ~~~~~
 
-    The first number is the width of the rectangle, and the second
+    The first number is the width of the rectangle and the second
     number is the height.
 
 !!! collapsible: `thickCircle`
@@ -542,7 +549,7 @@ more hints, expand the sections below for an example and explanation.
     ~~~~~
 
     This type signature tells you that `thickCircle` needs two arguments,
-    both numbers, and the result is a picture.  Here's an example of a
+    both of them being numbers, and the result is a picture.  Here's an example of a
     program that uses `thickCircle`.
 
     ~~~~~ . clickable
@@ -550,10 +557,10 @@ more hints, expand the sections below for an example and explanation.
     pic = thickCircle(5, 1)
     ~~~~~
 
-    Functions beginning with "thick" draw shapes with a thick line, and
-    the thickness of that line is the last argument to the function.  So
-    The first argument is the radius of the circle, and the second is
-    the line thickness the circle is drawn at.
+    Functions beginning with "thick" draw shapes with a thick perimeter line, and
+    the thickness of that line is the last argument to the function.  So,
+    the first argument is the radius of the circle and the second is
+    the thickness of the perimeter line of the circle.
 
 !!! collapsible: `thickRectangle`
     ~~~~~
@@ -561,7 +568,7 @@ more hints, expand the sections below for an example and explanation.
     ~~~~~
 
     This time, the type signature tells you that `thickRectangle` needs
-    three arguments, a new record!  All three arguments are numbers, and
+    three arguments, a new record!  All three arguments are numbers and
     the result is a picture.  Here's an example of a program that uses
     `thickRectangle`.
 

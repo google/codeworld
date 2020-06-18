@@ -53,7 +53,7 @@ Here's the code you just wrote and what its parts mean.
   you will use so many of them, you can name variables with whole words,
   always starting with a *lower-case* letter.
 
-!!! collapsible: Camel case
+!!! collapsible: Camel Case:
     Sometimes you may want more than one word to name a variable!  The
     computer needs each variable to be a single word starting with a lower-case
     letter--so leave out the spaces.  To make it easier to tell when a new word
@@ -303,7 +303,7 @@ went wrong.
 
     The text, "Haruto", isn't a picture yet, so it cannot be combined
     using **`&`**.  Use the `lettering` function to exchange the text
-    for a picture first, then combine it.  Like this:
+    for a picture first, then combine it.  Like this
 
     ~~~~~ . clickable
     program = drawingOf(nametag)
@@ -312,16 +312,16 @@ went wrong.
 
 Regardless of the message, you can always click on the line and column
 number next to an error message, and get straight to the location in
-your code where the error was recognized.  (Sometimes, though, your
+your code where the error was recognized.  (Be careful. Sometimes your
 actual mistake could be earlier!)  So just read over it and double-check
 that you've typed what you intended.
 
 Defining variables
 ------------------
 
-In the nametags above, you defined *variables* called `program` and `nametag`.
+In the nametags above you defined *variables* called `program` and `nametag`.
 Because your code is like a dictionary or glossary, you can define as many
-variables as you like. For example, you might write:
+variables as you like. For example, you might write
 
 ~~~~~
 name = "Han"
@@ -338,11 +338,11 @@ favoriteColor = blue
     More on that later!
 
 Each of these lines is an **equation**, which says that two expressions are
-*equal*, or have the same value.  In math, you use equations in many
+*equal* or have the same value.  In math, you use equations in many
 ways, but in CodeWorld they are used specifically to *define variables*.
 
 When you define a variable, you can use it in the rest of your code, like
-this:
+this
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
@@ -351,12 +351,12 @@ name = "Guiseppe"
 ~~~~~
 
 This code says that your program is a drawing of a nametag, a nametag
-contains lettering of the name, and the name is "Guiseppe".  So "Guiseppe"
+contains lettering of the name and the name is "Guiseppe".  So "Guiseppe"
 is written on the name tag.
 
 !!! Warning
     Don't put quotes around a variable!
-    This code includes the expression `lettering(name)`, **without**
+    This code includes the expression `lettering(name)` **without**
     quotation marks.  What would happen if you write `lettering("name")`
     with the quotation marks?  You'd see a nametag with the word "name"
     written on it.  Oops!
@@ -365,8 +365,8 @@ is written on the name tag.
     but just as a piece of text.  Variables are code, so don't put
     quotation marks around your code.
 
-Remember, though, that defining a variable doesn't do anything by itself.
-Suppose you wrote this code:
+You'll want to remember that defining a variable doesn't do anything by itself.
+Suppose you wrote this code
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
@@ -376,7 +376,7 @@ border = circle(5)
 
 If you run the code, you might be surprised to find there is no border!
 You've told your computer what the word `border` means, but you didn't
-say you wanted one in your program!  You might try this instead.
+say you wanted one in your program!  You might try this instead
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
@@ -397,10 +397,10 @@ The answer lies in a special variable called `program`.  Every CodeWorld
 project needs *exactly one* definition for the `program` variable.
 This is where the computer will look for a description of the program it
 should run.  Sometimes, like in the very first program you wrote, this
-is the only definition you need.  But usually, you will use other
+is the only definition you need.  But usually you will use other
 variables that the computer doesn't know *in* your definition of
 CodeWorld. Just like you might if you were studying, the computer will look
-up those words, too. And if their definitions use more words the computer
+up those words too. And if their definitions use more words the computer
 doesn't know, it will look up *those* words, and so on until it
 understands everything.
 
@@ -414,7 +414,7 @@ something else used in program, or so on.)
     that lets you know about a problem, even though your program runs.
 
     One warning you might see is `defined but not used`.  This warning
-    tells you that you've defined a variable, but it's not necessary,
+    tells you that you've defined a variable that is not necessary,
     because it isn't used anywhere in the meaning of that special
     `program` variable.
 
@@ -434,8 +434,8 @@ detail.
 * (arguments)  '----------'    (result)
 **************************************************
 
-The type of input a function expects is called its *domain*, and the type of
-result is called its *range*.  Here are the functions you've used so far.
+The type of input a function expects is called its *domain* and the type of
+result it produces is called its *range*.  Here are the functions you've used so far
 
 Function    | Domain             | Range
 ------------|--------------------|---------
@@ -444,8 +444,8 @@ Function    | Domain             | Range
 `circle`    | `Number`           | `Picture`
 `rectangle` | `(Number, Number)` | `Picture`
 
-(In addition to this, **`&`** is a binary operator.  It's a kind of
-function, too, but it looks different because it is a symbol, rather than
+(In addition to this, you've used **`&`** , which is a binary operator.  It's a kind of
+function too, but it looks different because it is a symbol, rather than
 a name.)
 
 **Applying** a function means using the function to describe its result for
@@ -457,20 +457,20 @@ parentheses, separated by commas, like you see in `rectangle` in the table
 above.
 
 !!! Tip
-    Parentheses always come in pairs, and are used like a ring around the
-    arguments to a function.  The name of the function, at the beginning,
-    adds a handle to that ring, forming something like a frying pan.
+    Parentheses always come in pairs and are used like a ring around the
+    arguments to a function.  Picture the name of the function at the beginning
+    adding a handle to that ring, forming something like a frying pan.
 
     ![](cw-frying-pan.png)
 
-    Go over some programs you've written up to this point, and see if you
-    can see the frying pans for every function that's used.
+    Go over some of the programs you've written up to this point and see if you
+    can see the frying pans for each function that you've used.
 
 ### Exploring available functions
 
-How you can use a function in your code depends on its domain and range.
+Determining how you can use a function in your code will depend on its domain and range.
 There's a short notation that's useful for saying what the domain and range
-of a function are, and it looks like this:
+of a function are, and it looks like this
 
 ~~~~~
 drawingOf :: Picture -> Program
@@ -479,10 +479,10 @@ circle :: Number -> Picture
 rectangle :: (Number, Number) -> Picture
 ~~~~~
 
-These lines, called **type signatures**, don't *define* the functions; they
-just provide a little bit of information about what arguments they need,
+These lines, called **type signatures**, don't *define* the functions, they
+just provide a little bit of information about what arguments they need
 and what type of result they have.  Read the two colons (**`::`**) as
-"has the type", and the arrow (**`->`**) as meaning a *function* from one
+"has the type" and the arrow (**`->`**) as meaning a *function* from one
 kind of thing to another.  So the first line says "`drawingOf` has the type:
 function from pictures to programs".
 

@@ -21,6 +21,7 @@ import CodeWorld
 import CodeWorld.Message
 import Control.Concurrent
 import Control.Concurrent.Async
+import Control.Concurrent.MVar
 import Control.Exception
 import Control.Monad
 import qualified Data.ByteString.Char8 as BS
@@ -46,7 +47,9 @@ decodeEvent = readMaybe
 
 sendClientMessage :: Config -> WS.Connection -> ClientMessage -> IO ()
 sendClientMessage config conn msg = do
-  when (debug config) $ putStrLn $ "→ " ++ show msg
+  when (debug config) $ do
+    tid <- myThreadId
+    putStrLn $ show tid ++ " → " ++ show msg
   WS.sendTextData conn (T.pack (show msg))
 
 getServerMessage :: Config -> WS.Connection -> IO ServerMessage
@@ -54,14 +57,34 @@ getServerMessage config conn = do
   msg <- WS.receiveData conn
   case readMaybe (T.unpack msg) of
     Just msg -> do
-      when (debug config) $ putStrLn $ "← " ++ show msg
+      when (debug config) $ do
+        tid <- myThreadId
+        putStrLn $ show tid ++ " ← " ++ show msg
       return msg
     Nothing -> fail "Invalid server message"
 
-joinGame :: Config -> IO [ServerMessage]
-joinGame config =
+run :: Config -> MVar (Maybe GameId) -> IO [ServerMessage]
+run config game = do
+  mgame <- takeMVar game
+  case mgame of
+    Just gameid -> do
+      putMVar game (Just gameid)
+      joinGame config gameid
+    Nothing -> do
+      newGame config game
+
+newGame :: Config -> MVar (Maybe GameId) -> IO [ServerMessage]
+newGame config game =
   connect config $ \conn -> do
-    sendClientMessage config conn (JoinGame (gameId config) "BOT")
+    sendClientMessage config conn (NewGame (clients config) "BOT")
+    JoinedAs _ gameid <- getServerMessage config conn
+    putMVar game (Just gameid)
+    waitForStart config conn
+
+joinGame :: Config -> GameId -> IO [ServerMessage]
+joinGame config gameId =
+  connect config $ \conn -> do
+    sendClientMessage config conn (JoinGame gameId "BOT")
     JoinedAs _ _ <- getServerMessage config conn
     waitForStart config conn
 
@@ -113,7 +136,7 @@ data Config = Config
     hostname :: String,
     port :: Int,
     path :: String,
-    gameId :: GameId,
+    gameId :: Maybe GameId,
     debug :: Bool
   }
 
@@ -158,15 +181,16 @@ opts =
           ( long "path" <> showDefault <> metavar "PATH" <> value "gameserver"
               <> help "Path"
           )
-        <*> ( T.pack
-                <$> strOption
-                  ( long "gameid" <> showDefault <> metavar "ID"
-                      <> help "The ID of the game to join (4 letters)"
-                  )
-            )
+        <*> optional
+          ( strOption
+              ( long "gameid" <> showDefault <> metavar "ID"
+                  <> help "The ID of the game to join (4 letters)"
+              )
+          )
         <*> switch (long "debug" <> showDefault <> help "Show debugging output")
 
 main = do
   config <- execParser opts
   start <- getTime Monotonic
-  mapConcurrently id $ replicate (clients config) (joinGame config)
+  game <- newMVar (gameId config)
+  mapConcurrently id $ replicate (clients config) (run config game)

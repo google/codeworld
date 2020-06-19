@@ -33,9 +33,24 @@ import Options.Applicative
 import System.Clock
 import Text.Read
 import Text.Regex
+import qualified Wuss as Wuss
 
 connect :: Config -> WS.ClientApp a -> IO a
-connect (Config {..}) = WS.runClient hostname port path
+connect (Config {..})
+  | secure =
+    Wuss.runSecureClientWith
+      hostname
+      (fromIntegral port)
+      path
+      WS.defaultConnectionOptions
+      [("Host", BS.pack hostname)]
+  | otherwise =
+    WS.runClientWith
+      hostname
+      port
+      path
+      WS.defaultConnectionOptions
+      [("Host", BS.pack hostname)]
 
 type Timestamp = Double
 
@@ -132,6 +147,7 @@ timeSpecToS ts = fromIntegral (sec ts) + fromIntegral (nsec ts) * 1E-9
 data Config = Config
   { clients :: Int,
     invert :: Bool,
+    secure :: Bool,
     delay :: Maybe Double,
     hostname :: String,
     port :: Int,
@@ -159,6 +175,8 @@ opts =
           )
         <*> switch
           (long "invert" <> showDefault <> help "Return opposite direction")
+        <*> switch
+          (long "secure" <> short 's' <> help "Use a secure connection")
         <*> optional
           ( option
               auto
@@ -178,7 +196,7 @@ opts =
               <> help "Port"
           )
         <*> strOption
-          ( long "path" <> showDefault <> metavar "PATH" <> value "gameserver"
+          ( long "path" <> showDefault <> metavar "PATH" <> value "/gameserver"
               <> help "Path"
           )
         <*> optional

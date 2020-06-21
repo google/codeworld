@@ -70,7 +70,7 @@ Here's the code you just wrote, and what its parts mean.
 
 * `drawingOf` is called a **function**.  You'll use functions a lot, and you'll
   learn more about them later!  This particular function, `drawingOf`, tells the
-  computer that your program is a drawing.  So instead of playing a game or
+  computer that your program is a drawing.  Instead of playing a game or
   animation, it will just show a picture.
 
 * `codeWorldLogo` is the specific picture your program will show.  Your
@@ -158,7 +158,7 @@ Try these examples to learn more:
 
     The `circle` function needs only a single number, which is the *radius*
     of the circle.  Radius means the number of units from the center of
-    the circle to the edge.
+    the circle to the outside.
 
 !!! : Nested rectangles
     ~~~~~ . clickable
@@ -241,8 +241,8 @@ went wrong.
     This message tells you that you defined the same word in two different
     ways.  Sometimes this happens in human languages, and we call them
     homonyms -- for example, "duck" could mean an animal, or it could mean
-    dodging a flying object!  Your computer, though, can't deal with this
-    each variable can only be defined once.
+    dodging a flying object!  Your computer, though, can't deal with this,
+    so each variable can only be defined once.
 
     Take a look at this program.
 
@@ -255,7 +255,7 @@ went wrong.
 
     One line says `nametag` means a picture of the text "Victor", but the
     second line says that `nametag` instead means a circle with a radius of
-    10.  So which is it?  You probably meant for `nametag` to include both.
+    10.  Which one is it?  You probably meant for `nametag` to include both.
     To do that, you would write one definition for `nametag`, and use
     **`&`** to combine the parts.  Like this:
 
@@ -400,8 +400,8 @@ should run.  Sometimes, like in the very first program you wrote, this
 is the only definition you need.  But usually, you will use other
 variables that the computer doesn't know *in* your definition of
 CodeWorld. Just like you might if you were studying, the computer will look
-up those words, too. And if their definitions use more words the computer
-doesn't know, it will look up *those* words, and so on until it
+up those words, too. If their definitions use more words the computer
+doesn't know, it will look up *those* words, and so on, until it
 understands everything.
 
 Remember: a definition only matters if the variable you're defining is
@@ -415,7 +415,7 @@ something else used in program, or so on.)
 
     One warning you might see is `defined but not used`.  This warning
     tells you that you've defined a variable, but it's not necessary,
-    because it isn't used anywhere in the meaning of that special
+    because it isn't used (directly or indirectly) in the meaning of that special
     `program` variable.
 
 All about functions
@@ -445,12 +445,12 @@ Function    | Domain             | Range
 `rectangle` | `(Number, Number)` | `Picture`
 
 (In addition to this, **`&`** is a binary operator.  It's a kind of
-function, too, but it looks different because it is a symbol, rather than
+function, too, but it looks different because it is a symbol rather than
 a name.)
 
 **Applying** a function means using the function to describe its result for
 a specific input.  To apply a function to some input, you write the name of
-the function, an open parenthesis, the input values (called **arguments**),
+the function, an open-parenthesis, the input values (called **arguments**),
 and then a close-parenthesis.  When there is more than one argument to a
 function, you can write the domain in CodeWorld by listing them all in
 parentheses, separated by commas, like you see in `rectangle` in the table
@@ -468,7 +468,7 @@ above.
 
 ### Exploring available functions
 
-How you can use a function in your code depends on its domain and range.
+The way you can use a function in your code depends on its domain and range.
 There's a short notation that's useful for saying what the domain and range
 of a function are, and it looks like this:
 
@@ -551,7 +551,7 @@ more hints, expand the sections below for an example and explanation.
     ~~~~~
 
     Functions beginning with "thick" draw shapes with a thick line, and
-    the thickness of that line is the last argument to the function.  So
+    the thickness of that line is the last argument to the function.
     The first argument is the radius of the circle, and the second is
     the line thickness the circle is drawn at.
 
@@ -627,7 +627,7 @@ Coloring
 The first transformation you will use is coloring.  The `colored` function
 changes the color of a picture. This function expects two arguments: the
 preimage, and a new color.  The colors of the preimage don't matter at
-all; only the shapes involved.  The result of the `colored` function is a new
+all - only the shapes involved.  The result of the `colored` function is a new
 picture, which is just like the preimage, except for the different color.
 
 ~~~~~ . clickable
@@ -645,7 +645,7 @@ program, by asking and answering a question.
     <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=DrYNeySBqPKubPkzT48dTEA" width=250 height=250 style="border: none;"></iframe></div>
 
     Surprised?  If so, this is a good chance to review what a
-    transformation does--and what it doesn't do.  The equation
+    transformation does and doesn't do.  The equation
     `redWheel = colored(wheel, red)` defines a variable called
     `redWheel`, which is a picture that is just like `wheel`, except
     drawn in red.  The new variable, `redWheel`, is colored red like
@@ -724,8 +724,8 @@ Translation: Moving
 
 The second transformation you can use in your programs is translation.  The
 `translated` function shifts a picture up, down, left, or right.  Its inputs
-are the preimage, and two distances to move the picture.  The result of
-`translated` is a new picture with the same content as the preimage, but
+are the preimage, and two distances to move the picture.  The result of the
+`translated` function is a new picture with the same content as the preimage, but
 shifted either horizontally (that is, left or right) or vertically (that is,
 up or down) or both.
 
@@ -743,14 +743,14 @@ finding these numbers is the **coordinate plane**.
     program = drawingOf(coordinatePlane)
     ~~~~~
 
-This tool combines of two number lines.
+This tool is a combination of two number lines.
 
-1. The first number line is *horizontal*, with positive numbers to the right
-   and negative numbers to the left.  You can use this line to describe how
-   far left or right to move a picture.
-2. The second number line is *vertical*, with positive numbers on top, and
-   negative numbers on the bottom.  You use that number line to describe
-   how far up or down to move a picture.
+1. The first number line is the *x* *axis*.  It is *horizontal*, with positive 
+   numbers to the right and negative numbers to the left.  You can use this line  
+   to describe how far left or right to move a picture. 
+2. The second number line is the *y* *axis*.  It is *vertical*, with positive 
+   numbers on top and negative numbers on the bottom.  You use this number 
+   line to describe how far up or down to move a picture.
 
 With both numbers together, you can move a picture anywhere you like.  The
 basic shapes you have learned are drawn with their center at the *origin* --
@@ -758,11 +758,11 @@ the point (0, 0) -- on the coordinate plane, so you should measure your x
 and y distances from there.  As you define your own pictures, it's a good
 idea to continue doing the same thing.
 
-For example, if you wanted a circle representing the sun in the top left
-corner of the screen.  First, you could look at the horizontal number line,
+For example, suppose you wanted a circle representing the sun in the top left
+corner of the screen.  First, you could look at the *x* *axis*,
 and see that negative numbers are used to move a shape to the left.  You might
 pick -5, which is five units left on the screen.  Next, you could look at the
-vertical number line, and see that positive numbers are used to move an object
+*y* *axis*, and see that positive numbers are used to move an object
 up.  You might pick 7, which is most of the way to the top of the screen.
 
 The expression describing a picture of the sun in the right place is now
@@ -846,11 +846,12 @@ might write something like this.
 
 ~~~~~ . clickable
 program = drawingOf(sunset)
-sunset = translated(ground, 0, -5) &
+sunset = translated(greenGround, 0, -5) &
          translated(orangeSun, 0, 2) &
          blueSky
 orangeSun = colored(sun, orange)
 sun = solidCircle(3)
+greenGround = colored(ground, green)
 ground = solidRectangle(20, 10)
 blueSky = colored(sky, blue)
 sky = solidRectangle(20, 20)
@@ -891,7 +892,7 @@ To turn the picture clockwise instead, use a negative angle.
     represented by positive angles.  Yet, this is how mathematicians
     usually measure angles.  Pay attention, and don't let it fool you.
 
-If you think about it, a diamond could be just a square, turned a bit to the
+If you think about it, a diamond could just be a square, turned a bit to the
 side so that its edges are diagonal.  Here's some code that describes a
 diamond in this way.
 

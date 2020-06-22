@@ -1877,6 +1877,10 @@ function initDirectoryTree() {
     if (folderIcon) {
       folderIcon.classList.replace('mdi-folder-open', 'mdi-folder');
     }
+
+    if ($('#directoryTree').tree('isNodeSelected', event.node)) {
+      utils.directoryTree.clearSelectedNode();
+    }
   });
   $('#directoryTree').on('tree.click', (event) => {
     event.preventDefault();

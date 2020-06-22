@@ -1694,10 +1694,12 @@ function pathToRootDir(nodeInit) {
 }
 
 function initDirectoryTree() {
+  const treeStateStorageKey = 'directoryTree';
+
   $('#directoryTree').tree({
     data: [],
     autoOpen: true,
-    saveState: 'directoryTree',
+    saveState: treeStateStorageKey,
     dragAndDrop: true,
     keyboardSupport: false,
     onCanSelectNode: (node) => {
@@ -1738,6 +1740,11 @@ function initDirectoryTree() {
       }
     },
   });
+
+  if (localStorage.getItem(treeStateStorageKey)) {
+    localStorage.removeItem(treeStateStorageKey);
+  }
+
   $('#directoryTree').on('tree.move', (event) => {
     event.preventDefault();
     warnIfUnsaved(() => {

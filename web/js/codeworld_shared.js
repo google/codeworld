@@ -20,8 +20,6 @@ import * as DirTree from './utils/directoryTree.js';
 import * as Html from './utils/html.js';
 import { sendHttp } from './utils/network.js';
 
-import * as TreeDialog from './treedialog.js';
-
 const hintBlacklist = [
   // Symbols that only exist to implement RebindableSyntax or map to
   // built-in Haskell types.
@@ -259,6 +257,13 @@ function parseSymbolsFromCurrentCode() {
   } else {
     window.codeWorldSymbols = Object.assign({}, parseResults);
   }
+}
+
+// TEMP:
+// Define separate handlers for the main editor and blocks.
+let updateUI = null;
+function registerUpdateUIHandler(handler) {
+  updateUI = handler;
 }
 
 function renderDeclaration(decl, keywordData, maxLen, argIndex = -1) {
@@ -817,6 +822,16 @@ function moveDirTreeNode(
   });
 }
 
+function loadSample(isEditorClean, action, code) {
+  if (isEditorClean()) {
+    sweetAlert.close();
+  }
+
+  warnIfUnsaved(isEditorClean, () => {
+    action(code);
+  });
+}
+
 function setCode(code, history, autostart) {
   if (!window.codeworldEditor) {
     return;
@@ -841,7 +856,7 @@ function setCode(code, history, autostart) {
   }
 }
 
-function warnIfUnsaved(action) {
+function warnIfUnsaved(isEditorClean, action) {
   if (isEditorClean()) {
     action();
   } else {
@@ -1090,8 +1105,8 @@ function deleteFolder_(path, buildMode, successFunc) {
   });
 }
 
-function createFolder(path, buildMode, successFunc) {
-  warnIfUnsaved(() => {
+function createFolder(isEditorClean, path, buildMode, successFunc) {
+  warnIfUnsaved(isEditorClean, () => {
     if (!Auth.signedIn()) {
       sweetAlert('Oops!', 'You must sign in to create a folder.', 'error');
       updateUI();
@@ -1160,7 +1175,7 @@ function createFolder(path, buildMode, successFunc) {
   });
 }
 
-function loadProject_(path, name, buildMode, successFunc) {
+function loadProject(name, path, buildMode, successFunc) {
   if (!Auth.signedIn()) {
     sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
     updateUI();
@@ -1359,6 +1374,9 @@ function goto(line, col) {
   codeworldEditor.focus();
 }
 
+// Expose this method globally - click handlers required it in preFormatMessage().
+window.goto = goto;
+
 function preFormatMessage(msg) {
   while (msg.match(/(\r\n|[^\x08]|)\x08/)) {
     msg = msg.replace(/(\r\n|[^\x08])\x08/g, '');
@@ -1367,17 +1385,11 @@ function preFormatMessage(msg) {
   msg = Html.encode(msg)
     .replace(
       /program\.hs:(\d+):((\d+)(-\d+)?)/g,
-      `<a href="#" onclick=${() => {
-        goto($1, $3);
-        return false;
-      }}>Line $1, Column $2</a>`
+      '<a href="#" onclick="goto($1, $3); return false;">Line $1, Column $2</a>'
     )
     .replace(
       /program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
-      `<a href="#" onclick=${() => {
-        goto($1, $2);
-        return false;
-      }}>Line $1-$3, Column $2-$4</a>`
+      '<a href="#" onclick="goto($1, $2); return false;">Line $1-$3, Column $2-$4</a>'
     )
     .replace(
       /[A-Za-z0-9_-]*\.hs:(\d+):((\d+)(-\d+)?)/g,
@@ -1525,7 +1537,7 @@ function pathToRootDir(nodeInit) {
   return path.join('/');
 }
 
-function initDirectoryTree() {
+function initDirectoryTree(isEditorClean, loadProjectHandler) {
   const treeStateStorageKey = 'directoryTree';
 
   $('#directoryTree').tree({
@@ -1579,7 +1591,7 @@ function initDirectoryTree() {
 
   $('#directoryTree').on('tree.move', (event) => {
     event.preventDefault();
-    warnIfUnsaved(() => {
+    warnIfUnsaved(isEditorClean, () => {
       if (!Auth.signedIn()) {
         sweetAlert(
           'Oops!',
@@ -1724,11 +1736,11 @@ function initDirectoryTree() {
     if (isProjectNode && $('#directoryTree').tree('isNodeSelected', node)) {
       return;
     }
-    warnIfUnsaved(() => {
+    warnIfUnsaved(isEditorClean, () => {
       if (isProjectNode) {
         const path = pathToRootDir(node);
 
-        loadProject(node.name, path);
+        loadProjectHandler(node.name, path);
         $('#directoryTree').tree('selectNode', node);
       } else if (DirTree.isDirectory(node)) {
         if (node.children.length === 0) {
@@ -1866,140 +1878,6 @@ function clearWorkspace() {
   setCode('');
 }
 
-function isEditorClean() {
-  if (!window.codeworldEditor) {
-    return true;
-  }
-
-  const doc = window.codeworldEditor.getDoc();
-
-  if (window.savedGeneration === null) return doc.getValue() === '';
-  else return doc.isClean(window.savedGeneration);
-}
-
-/*
- * Updates all UI components to reflect the current state.  The general pattern
- * is to modify the state stored in variables and such, and then call updateUI
- * to get the visual presentation to match.
- */
-function updateUI() {
-  const selectedNode = DirTree.getSelectedNode();
-
-  const signOutButton = document.getElementById('signout');
-  const signInButton = document.getElementById('signin');
-  const navButton = document.getElementById('navButton');
-  const deleteButton = document.getElementById('deleteButton');
-  const saveButton = document.getElementById('saveButton');
-  const downloadButton = document.getElementById('downloadButton');
-  const shareFolderButton = document.getElementById('shareFolderButton');
-
-  if (Auth.signedIn()) {
-    if (signOutButton.style.display === 'none') {
-      signInButton.style.display = 'none';
-      signOutButton.style.display = '';
-      navButton.style.display = '';
-
-      window.mainLayout.show('west');
-      window.mainLayout.open('west');
-    }
-
-    if (selectedNode) {
-      deleteButton.style.display = '';
-    } else {
-      deleteButton.style.display = 'none';
-    }
-
-    if (selectedNode && DirTree.isProject(selectedNode)) {
-      saveButton.style.display = '';
-      shareFolderButton.style.display = 'none';
-
-      if (downloadButton) {
-        downloadButton.style.display = '';
-      }
-    } else if (selectedNode && DirTree.isDirectory(selectedNode)) {
-      saveButton.style.display = 'none';
-      shareFolderButton.style.display = '';
-
-      if (downloadButton) {
-        downloadButton.style.display = 'none';
-      }
-    } else {
-      saveButton.style.display = 'none';
-      shareFolderButton.style.display = 'none';
-
-      if (downloadButton) {
-        downloadButton.style.display = 'none';
-      }
-    }
-  } else {
-    if (signOutButton.style.display === '') {
-      signInButton.style.display = '';
-      signOutButton.style.display = 'none';
-      saveButton.style.display = 'none';
-
-      window.mainLayout.hide('west');
-    }
-
-    navButton.style.display = 'none';
-    deleteButton.style.display = 'none';
-    shareFolderButton.style.display = 'none';
-  }
-
-  const inspectButton = document.getElementById('inspectButton');
-
-  if (inspectButton) {
-    if (window.debugAvailable) {
-      inspectButton.style.display = '';
-
-      if (window.debugActive) {
-        inspectButton.style.color = 'black';
-      } else {
-        inspectButton.style.color = '';
-      }
-    } else {
-      inspectButton.style.display = 'none';
-    }
-  }
-
-  document.getElementById('newButton').style.display = '';
-  document.getElementById('saveAsButton').style.display = '';
-  document.getElementById('runButtons').style.display = '';
-
-  let title = selectedNode ? selectedNode.name : '(new)';
-
-  if (!isEditorClean()) {
-    title = `* ${title}`;
-
-    if (selectedNode && DirTree.isProject(selectedNode)) {
-      const asterisk = selectedNode.element.getElementsByClassName(
-        'unsaved-changes'
-      )[0];
-      if (asterisk) {
-        asterisk.style.display = '';
-      }
-    }
-  } else {
-    $('.unsaved-changes').css('display', 'none');
-  }
-
-  // If true - code currently in document is not equal to
-  // last compiled code
-  const running = document.getElementById('runner').style.display !== 'none';
-  const obsolete = window.codeworldEditor
-    ? !window.codeworldEditor.getDoc().isClean(window.runningGeneration)
-    : false;
-  const obsoleteAlert = document.getElementById('obsolete-code-alert');
-  if (running && obsolete) {
-    obsoleteAlert.classList.add('obsolete-code-alert-fadein');
-    obsoleteAlert.classList.remove('obsolete-code-alert-fadeout');
-  } else {
-    obsoleteAlert.classList.add('obsolete-code-alert-fadeout');
-    obsoleteAlert.classList.remove('obsolete-code-alert-fadein');
-  }
-
-  document.title = `${title} - CodeWorld`;
-}
-
 function run(hash, dhash, msg, error, generation) {
   window.runningGeneration = generation;
   window.debugAvailable = false;
@@ -2060,21 +1938,6 @@ function run(hash, dhash, msg, error, generation) {
 
   updateUI();
   document.getElementById('runner').addEventListener('load', updateUI);
-}
-
-function stopRun() {
-  if (window.debugActive) {
-    document.getElementById('runner').contentWindow.postMessage(
-      {
-        type: 'stopDebug',
-      },
-      '*'
-    );
-    TreeDialog.destroy();
-  }
-  window.cancelCompile();
-
-  run('', '', '', false, null);
 }
 
 function parseCompileErrors(rawErrors) {
@@ -2162,22 +2025,21 @@ export {
   discoverProjects,
   getNearestDirectory,
   initDirectoryTree,
-  isEditorClean,
-  loadProject_,
+  loadProject,
+  loadSample,
   markFailed,
   onHover,
   parseCompileErrors,
   parseSymbolsFromCurrentCode,
   printMessage,
   registerStandardHints,
+  registerUpdateUIHandler,
   run,
   saveProjectBase,
   saveProjectAsBase,
   setCode,
   share,
   shareFolder_,
-  stopRun,
   updateTreeOnNewProjectCreation,
-  updateUI,
   warnIfUnsaved,
 };

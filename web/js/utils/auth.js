@@ -383,8 +383,8 @@ function LocalAuth() {
         listen: (f) => (_isSignedInCallback = f),
       },
       signIn: (options) => signIn(), // ignore any Google auth-specific options
-      signOut: signOut,
-      sendHttpAuth: sendHttpAuth,
+      signOut,
+      sendHttpAuth,
     };
   };
 
@@ -507,8 +507,8 @@ function signIn() {
   }
 }
 
-function signOut() {
-  warnIfUnsaved(() => {
+function signOut(isEditorClean) {
+  warnIfUnsaved(isEditorClean, () => {
     clearWorkspace();
 
     if (window.auth2) {

@@ -23,25 +23,25 @@ import {
   discoverProjects,
   getNearestDirectory,
   initDirectoryTree,
-  isEditorClean,
-  loadProject_,
+  loadProject,
+  loadSample,
   markFailed,
   onHover,
   parseCompileErrors,
   parseSymbolsFromCurrentCode,
   printMessage,
   registerStandardHints,
+  registerUpdateUIHandler,
   run,
   saveProjectBase,
   saveProjectAsBase,
   setCode,
   share,
   shareFolder_,
-  stopRun,
   updateTreeOnNewProjectCreation,
-  updateUI,
   warnIfUnsaved,
 } from './codeworld_shared.js';
+import * as TreeDialog from './treedialog.js';
 
 import * as Alert from './utils/alert.js';
 import * as Auth from './utils/auth.js';
@@ -51,7 +51,7 @@ import { sendHttp } from './utils/network.js';
 init();
 
 function attachEventListeners() {
-  $('#signout').on('click', Auth.signOut);
+  $('#signout').on('click', () => Auth.signOut(isEditorClean));
   $('#signin').on('click', Auth.signIn);
 
   $('#newButton').on('click', newProject);
@@ -69,8 +69,8 @@ function attachEventListeners() {
   $('#shareButton').on('click', share);
   $('#inspectButton').on('click', inspect);
 
-  $('#startCompilationButton').on('click', compile);
-  $('#stopCompilationButton').on('click', stopRun);
+  $('#startButton').on('click', compile);
+  $('#stopButton').on('click', stopRun);
 }
 
 /*
@@ -78,6 +78,8 @@ function attachEventListeners() {
  * entire document body and other JavaScript has loaded.
  */
 async function init() {
+  registerUpdateUIHandler(updateUI);
+
   await Alert.init();
 
   const autohelpEnabled = location.hash.length <= 2;
@@ -105,12 +107,13 @@ async function init() {
   preloadBaseBundle();
   window.setInterval(preloadBaseBundle, 1000 * 60 * 60);
 
-  function loadProject(name, path) {
-    loadProject_(path, name, window.buildMode, (project) => {
+  function loadProjectHandler(name, path) {
+    function successCallback(project) {
       setCode(project.source, project.history);
-    });
+    }
+    loadProject(name, path, window.buildMode, successCallback);
   }
-  initDirectoryTree(loadProject);
+  initDirectoryTree(isEditorClean, loadProjectHandler);
 
   window.savedGeneration = null;
   window.runningGeneration = null;
@@ -477,6 +480,136 @@ function initCodeworld() {
   };
 }
 
+function isEditorClean() {
+  const doc = window.codeworldEditor.getDoc();
+
+  if (window.savedGeneration === null) return doc.getValue() === '';
+  else return doc.isClean(window.savedGeneration);
+}
+
+/*
+ * Updates all UI components to reflect the current state.  The general pattern
+ * is to modify the state stored in variables and such, and then call updateUI
+ * to get the visual presentation to match.
+ */
+function updateUI() {
+  const selectedNode = DirTree.getSelectedNode();
+
+  const signOutButton = document.getElementById('signout');
+  const signInButton = document.getElementById('signin');
+  const navButton = document.getElementById('navButton');
+  const deleteButton = document.getElementById('deleteButton');
+  const saveButton = document.getElementById('saveButton');
+  const downloadButton = document.getElementById('downloadButton');
+  const shareFolderButton = document.getElementById('shareFolderButton');
+
+  if (Auth.signedIn()) {
+    if (signOutButton.style.display === 'none') {
+      signInButton.style.display = 'none';
+      signOutButton.style.display = '';
+      navButton.style.display = '';
+
+      window.mainLayout.show('west');
+      window.mainLayout.open('west');
+    }
+
+    if (selectedNode) {
+      deleteButton.style.display = '';
+    } else {
+      deleteButton.style.display = 'none';
+    }
+
+    if (selectedNode && DirTree.isProject(selectedNode)) {
+      saveButton.style.display = '';
+      shareFolderButton.style.display = 'none';
+
+      if (downloadButton) {
+        downloadButton.style.display = '';
+      }
+    } else if (selectedNode && DirTree.isDirectory(selectedNode)) {
+      saveButton.style.display = 'none';
+      shareFolderButton.style.display = '';
+
+      if (downloadButton) {
+        downloadButton.style.display = 'none';
+      }
+    } else {
+      saveButton.style.display = 'none';
+      shareFolderButton.style.display = 'none';
+
+      if (downloadButton) {
+        downloadButton.style.display = 'none';
+      }
+    }
+  } else {
+    if (signOutButton.style.display === '') {
+      signInButton.style.display = '';
+      signOutButton.style.display = 'none';
+      saveButton.style.display = 'none';
+
+      window.mainLayout.hide('west');
+    }
+
+    navButton.style.display = 'none';
+    deleteButton.style.display = 'none';
+    shareFolderButton.style.display = 'none';
+  }
+
+  const inspectButton = document.getElementById('inspectButton');
+
+  if (inspectButton) {
+    if (window.debugAvailable) {
+      inspectButton.style.display = '';
+
+      if (window.debugActive) {
+        inspectButton.style.color = 'black';
+      } else {
+        inspectButton.style.color = '';
+      }
+    } else {
+      inspectButton.style.display = 'none';
+    }
+  }
+
+  document.getElementById('newButton').style.display = '';
+  document.getElementById('saveAsButton').style.display = '';
+  document.getElementById('runButtons').style.display = '';
+
+  let title = selectedNode ? selectedNode.name : '(new)';
+
+  if (!isEditorClean()) {
+    title = `* ${title}`;
+
+    if (selectedNode && DirTree.isProject(selectedNode)) {
+      const asterisk = selectedNode.element.getElementsByClassName(
+        'unsaved-changes'
+      )[0];
+      if (asterisk) {
+        asterisk.style.display = '';
+      }
+    }
+  } else {
+    $('.unsaved-changes').css('display', 'none');
+  }
+
+  // If true - code currently in document is not equal to
+  // last compiled code
+  const running = document.getElementById('runner').style.display !== 'none';
+  const obsolete = window.codeworldEditor
+    ? !window.codeworldEditor.getDoc().isClean(window.runningGeneration)
+    : false;
+  const obsoleteAlert = document.getElementById('obsolete-code-alert');
+  if (running && obsolete) {
+    obsoleteAlert.classList.add('obsolete-code-alert-fadein');
+    obsoleteAlert.classList.remove('obsolete-code-alert-fadeout');
+  } else {
+    obsoleteAlert.classList.add('obsolete-code-alert-fadeout');
+    obsoleteAlert.classList.remove('obsolete-code-alert-fadein');
+  }
+
+  document.title = `${title} - CodeWorld`;
+}
+
 function backspace() {
   if (
     window.buildMode === 'codeworld' &&
@@ -728,7 +861,7 @@ function help() {
 }
 
 function newProject() {
-  warnIfUnsaved(() => {
+  warnIfUnsaved(isEditorClean, () => {
     updateTreeOnNewProjectCreation();
 
     setCode('');
@@ -736,9 +869,15 @@ function newProject() {
 }
 
 function newFolder() {
-  createFolder(getNearestDirectory(), window.buildMode, () => {
+  function successCallback() {
     setCode('');
-  });
+  }
+  createFolder(
+    isEditorClean,
+    getNearestDirectory(),
+    window.buildMode,
+    successCallback
+  );
 }
 
 function formatSource() {
@@ -812,9 +951,13 @@ function formatSource() {
 }
 
 window.addEventListener('message', (event) => {
-  if (!event.data.type) return;
+  const { data } = event;
 
-  if (event.data.type === 'programStarted') {
+  switch (data.type) {
+  case 'loadSample':
+    loadSample(isEditorClean, setCode, data.code);
+    break;
+  case 'programStarted':
     if (window.lastRunMessage) {
       const msg = window.lastRunMessage;
       window.lastRunMessage = null;
@@ -822,7 +965,8 @@ window.addEventListener('message', (event) => {
         showRequiredChecksInDialog(msg);
       }, 500);
     }
-  } else if (event.data.type === 'showGraphics') {
+    break;
+  case 'showGraphics': {
     const runner = document.getElementById('runner');
     runner.style.display = '';
     runner.focus();
@@ -833,20 +977,33 @@ window.addEventListener('message', (event) => {
       },
       '*'
     );
-  } else if (event.data.type === 'consoleOut') {
-    if (event.data.str !== '') printMessage(event.data.msgType, event.data.str);
-    if (event.data.msgType === 'error') markFailed();
-  } else if (event.data.type === 'updateUI') {
+    break;
+  }
+  case 'consoleOut':
+    if (data.str) {
+      printMessage(data.msgType, data.str);
+    }
+    if (data.msgType === 'error') {
+      markFailed();
+    }
+    break;
+  case 'updateUI':
     updateUI();
-  } else if (event.data.type === 'debugReady') {
+    break;
+  case 'debugReady':
     window.debugAvailable = true;
     updateUI();
-  } else if (event.data.type === 'debugActive') {
+    break;
+  case 'debugActive':
     window.debugActive = true;
     updateUI();
-  } else if (event.data.type === 'debugFinished') {
+    break;
+  case 'debugFinished':
     window.debugActive = false;
     updateUI();
+    break;
+  default:
+    break;
   }
 });
 
@@ -932,6 +1089,21 @@ const htmlEscapeString = (() => {
     return el.innerHTML;
   };
 })();
+
+function stopRun() {
+  if (window.debugActive) {
+    document.getElementById('runner').contentWindow.postMessage(
+      {
+        type: 'stopDebug',
+      },
+      '*'
+    );
+    TreeDialog.destroy();
+  }
+  window.cancelCompile();
+
+  run('', '', '', false, null);
+}
 
 function compile() {
   stopRun();
@@ -1120,3 +1292,7 @@ function downloadProject() {
     document.body.removeChild(elem);
   }
 }
+
+// TEMP: required by setCode in codeworld_shared.js
+window.compile = compile;
+window.stopRun = stopRun;

@@ -79,13 +79,13 @@
       document.getElementById("blocklyDiv").addEventListener(
         "click",
         () => {
-          if (upperParent) {
+          if (window.top) {
             let workspace = Blockly.getMainWorkspace();
 
             let xml = Blockly.Xml.workspaceToDom(workspace);
             let xml_text = Blockly.Xml.domToText(xml);
 
-            upperParent.loadSample(xml_text);
+            window.top.postMessage({ type: "loadSample", code: xml_text }, "*");
           }
         },
         false

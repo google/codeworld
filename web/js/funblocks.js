@@ -21,10 +21,12 @@ import {
   discoverProjects,
   getNearestDirectory,
   initDirectoryTree,
-  loadProject_,
+  loadProject,
+  loadSample,
   markFailed,
   printMessage,
   registerStandardHints,
+  registerUpdateUIHandler,
   saveProjectAsBase,
   saveProjectBase,
   share,
@@ -48,7 +50,7 @@ window.runFunc = null;
 init();
 
 function attachEventListeners() {
-  $('#signout').on('click', signOut);
+  $('#signout').on('click', () => signOut(isEditorClean));
   $('#signin').on('click', Auth.signIn);
 
   $('#newButton').on('click', newProject);
@@ -61,22 +63,37 @@ function attachEventListeners() {
   $('#shareButton').on('click', share);
 }
 
+window.addEventListener('message', (event) => {
+  const { data } = event;
+
+  switch (data.type) {
+  case 'loadSample':
+    loadSample(isEditorClean, loadWorkspace, data.code);
+    break;
+  default:
+    break;
+  }
+});
+
 async function init() {
+  registerUpdateUIHandler(updateUI);
+
   await Alert.init();
+
   await Auth.init(() => discoverProjects(''));
 
   attachEventListeners();
 
-  function loadProject(name, index) {
-    function successFunc(project) {
+  function loadProjectHandler(name, path) {
+    function successCallback(project) {
       clearRunCode();
       loadWorkspace(project.source);
       Blockly.getMainWorkspace().clearUndo();
     }
 
-    loadProject_(index, name, window.projectEnv, successFunc);
+    loadProject(name, path, window.projectEnv, successCallback);
   }
-  initDirectoryTree(loadProject);
+  initDirectoryTree(isEditorClean, loadProjectHandler);
 
   window.lastXML = null;
   window.showingResult = false;
@@ -385,8 +402,8 @@ function help() {
   });
 }
 
-function signOut() {
-  Auth.signOut();
+function signOut(isEditorClean) {
+  Auth.signOut(isEditorClean);
 
   document.getElementById('projects').innerHTML = '';
   updateUI();
@@ -465,11 +482,16 @@ function newFolder() {
     Blockly.getMainWorkspace().clearUndo();
     window.location.hash = '';
   }
-  createFolder(getNearestDirectory(), window.projectEnv, successFunc);
+  createFolder(
+    isEditorClean,
+    getNearestDirectory(),
+    window.projectEnv,
+    successFunc
+  );
 }
 
 function newProject() {
-  warnIfUnsaved(() => {
+  warnIfUnsaved(isEditorClean, () => {
     updateTreeOnNewProjectCreation();
     clearRunCode();
     Blockly.mainWorkspace.clear();

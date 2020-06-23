@@ -32,7 +32,6 @@ run . ghcjs-pkg hide ghcjs-dom-jsffi     # Use ghcjs-dom
 run . ghcjs-pkg hide matrices            # Conflicts with matrix
 run . ghcjs-pkg hide simple-affine-space # Conflicts with vector-space
 run . ghcjs-pkg hide newtype             # Replaced by newtype-generics
-run . ghcjs-pkg hide enumset             # Conflicts with enummapset
 run . ghcjs-pkg hide non-empty           # Conflicts with semialign
 
 # Check for duplicate modules.  Fail the build if so, since that's a

@@ -222,6 +222,7 @@ if [ ! -f $BUILD/progress/ghcjs ]; then
   run $BUILD/ghcjs git checkout eeeb0cde48e093e278fc1a4f418b48a2d23aa08c
   run $BUILD/ghcjs git submodule update --init
   run .            patch -p0 -u -d $BUILD < ghc-artifacts/ghcjs-8.6-default-main.patch
+  run .            patch -p0 -u -d $BUILD < ghc-artifacts/ghcjs-8.6-dedup-fix.patch
   run $BUILD/ghcjs ./utils/makePackages.sh
   run $BUILD/ghcjs cabal v2-install . --symlink-bindir=$BUILD/bin -j1 --disable-documentation --overwrite-policy=always
 

@@ -175,6 +175,7 @@ Library
     lifted-base,
     linear,
     log-domain,
+    logict,
     loop,
     markov-chain,
     massiv,
@@ -259,6 +260,7 @@ Library
     set-cover,
     singleton-bool,
     -- singletons, (build error related to Int/Integer/Uniq)
+    smallcheck,
     sop-core,
     split,
     splitmix,

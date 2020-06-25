@@ -2,7 +2,7 @@ Getting started
 ===============
 
 To build your first program in CodeWorld, type (or just click on) this
-code:
+code
 
 ~~~~~ . clickable
 program = drawingOf(codeWorldLogo)
@@ -16,22 +16,22 @@ CodeWorld logo in the *canvas* on the right side of the screen.
 
     Computers can be very picky, so make sure you have typed *exactly* what
     you see above.  That means everything needs to be spelled correctly, the
-    same letters need to be capitalized, and you need parentheses just where
+    same letters need to be capitalized and you need parentheses just where
     they are.  There should be nothing else in your editor except that one
     line.
 
     When you make a mistake, the computer usually shows you an *error message*,
-    which shows up on the right side of your screen, in a pink shaded window.
+    which shows up on the right side of your screen in a pink shaded window.
     These messages tell you what went wrong.
 
     ![](cw-error-notinscope.png)
 
-    * If you see "not in scope", this means you have misspelled a word, or
+    * If you see "not in scope", this means you have misspelled a word or
       used the wrong capitalization.
     * If you see "parse error", this can mean you've left out or have
       extra punctuation marks or symbols.
 
-    Check your code carefully, and try again.
+    Check your code carefully and try again.
 
 Dissecting your first program
 -----------------------------
@@ -40,21 +40,21 @@ If you have done coding before, you may have heard that code is like a recipe
 that tells a computer step-by-step what to do.  In CodeWorld, though, code is
 more like a *dictionary* or *glossary*. It tells the computer what words mean.
 
-Here's the code you just wrote, and what its parts mean.
+Here's the code you just wrote and what its parts mean.
 
     | `program`  | `=` | `drawingOf(` | `codeWorldLogo`     | `)` |
     |------------|-----|--------------|---------------------|-----|
     | My program | is  | a drawing of | the CodeWorld logo. |     |
 
 * `program` is the **variable** that you're defining. A variable is a name for
-  something.  In most math, variables are just one letter long, and they stand
+  something.  In most math, variables are just one letter long and they stand
   for numbers.  In CodeWorld, though, variables can name many different types of
-  values: numbers, pictures, colors, text, and even whole programs.  Because
-  you will use so many of them, you can name variables with with whole words,
+  values: numbers, pictures, colors, text and even whole programs.  Because
+  you will use so many of them, you can name variables with whole words,
   always starting with a *lower-case* letter.
 
-!!! collapsible: Camel case
-    Sometimes, you may want more than one word to name a variable!  The
+!!! collapsible: Camel case:
+    Sometimes you may want more than one word to name a variable!  The
     computer needs each variable to be a single word starting with a lower-case
     letter--so leave out the spaces.  To make it easier to tell when a new word
     starts, you can capitalize the *second* and *later* words.
@@ -65,10 +65,10 @@ Here's the code you just wrote, and what its parts mean.
     this way.  It's often called **camel case**.  Why?  Because the variable
     name has humps!
 
-* The **equal sign** means "is", and tells the computer that two expressions mean
+* The **equal sign** means "is" and tells the computer that two expressions mean
   the same thing.  It is used to connect a variable with its definition.
 
-* `drawingOf` is called a **function**.  You'll use functions a lot, and you'll
+* `drawingOf` is called a **function**.  You'll use functions a lot and you'll
   learn more about them later!  This particular function, `drawingOf`, tells the
   computer that your program is a drawing.  Instead of playing a game or
   animation, it will just show a picture.
@@ -90,11 +90,11 @@ of a nametag.
 program = drawingOf(nametag)
 ~~~~~
 
-**This program doesn't work!**  If you've typed everything correctly you should
-see an error message, `Variable not in scope: nametag :: Picture`.
+**This program doesn't work!**  If you've typed everything correctly, you should
+see an error message: `Variable not in scope: nametag :: Picture`.
 This is your computer telling you that it doesn't know what `nametag` means!
 
-!!! Tip: Run your program often
+!!! Tip: Run your program often!
     Even though your code was not finished, it didn't hurt to click **Run**.
     You can think of error messages as being a conversation with your
     computer.  You're just asking what it needs next!
@@ -103,33 +103,34 @@ This is your computer telling you that it doesn't know what `nametag` means!
     define `nametag`.  But if you typed something wrong, you might see
     a different message, like `Parse error` or `Couldn't match types`.
     These are clues that you have made a different mistake.  That's
-    okay, too.  The sooner you know about the mistake, the sooner you
+    okay too.  The sooner you know about the mistake, the sooner you
     can fix it.
 
     Did you notice that your computer already told you that nametag is a
     picture?  It figured that out from context.  Because you asked for a
     *drawing* of `nametag`, it is expecting `nametag` to be a picture.
-    Just one more way the computer lets you know what it's thinking.
+    This is just one more way the computer lets you know what it's thinking.
 
 To finish your code, you'll need to define the variable `nametag`, and
-describe to your computer exactly what a nametag is.  To start, you can
-add your name, like this!
+describe to your computer exactly what a nametag is.  
+
+To start, you can add your name, like this!
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
 nametag = lettering("Camille")
 ~~~~~
 
-You've used a new function, **`lettering`**.  This function describes a
+You've used a new function: **`lettering`**.  This function describes a
 picture with letters (or any other kind of text) on it.
 
 Next, you can add a border to your nametag.  You might be tempted to add
 a new line like `nametag = ...` to your code, but you can't! Remember,
-your code is like a dictionary, and each definition in it should give
+your code is like a dictionary and each definition in it should give
 the whole definition for that word.  To include a second shape in your
 nametag, you'll use **`&`**, which you can read as "and" or "in front
-of". To describe the border itself, two more functions -- **`circle`**
-and **`rectangle`** -- are useful.
+of". To describe the border itself, two more functions, -- **`circle`**
+and **`rectangle`** --, are useful.
 
 Here's a name tag with a border:
 
@@ -138,8 +139,8 @@ program = drawingOf(nametag)
 nametag = lettering("Camille") & circle(4) & rectangle(8, 8)
 ~~~~~
 
-Here are the shape functions you can use in your nametag, and the
-**arguments**, or information inside the parentheses, that each one
+Here are the shape functions you can use in your nametag and the
+**arguments**, the information inside the parentheses, that each one
 expects.
 
 | Function    | Expected arguments (inside parentheses)            | Example            |
@@ -160,6 +161,8 @@ Try these examples to learn more:
     of the circle.  Radius means the number of units from the center of
     the circle to the outside.
 
+    
+    
 !!! : Nested rectangles
     ~~~~~ . clickable
     program = drawingOf(nametag)
@@ -167,7 +170,7 @@ Try these examples to learn more:
     ~~~~~
 
     The `rectangle` function needs **two** numbers.  The first is how many
-    units wide it should be, and the second is how many units tall.
+    units wide you want it to be and the second is how many units tall you want it to be.
 
 !!! : Overlapping rectangles
     ~~~~~ . clickable
@@ -179,10 +182,10 @@ Try these examples to learn more:
     Notice how the definition of `nametag` got too long?  It's okay to
     start a new line, but you **must** indent the new line.  That is,
     leave some blank spaces at the beginning.  If you forget to indent,
-    the computer will be confused, and think you're defining a new
+    the computer will be confused and think you're defining a new
     variable.  This can cause a `Parse error` message.
 
-Once you've understood these examples, try your own combinations, as well.
+Once you've understood these examples, try your own combinations as well.
 
 Understanding mistakes
 ----------------------
@@ -193,7 +196,9 @@ went wrong.
 
 !!! collapsible: `Parse error: naked expression at top level`
     This message means there's something in your program that doesn't look
-    like a definition.  For example, if you wrote this:
+    like a definition.   
+    
+    If you wrote this:
 
     ~~~~~
     program = drawingOf(nametag)
@@ -203,8 +208,8 @@ went wrong.
 
     On the second line, instead of an *equation* to define `nametag`, this
     program just wrote an expression.  Remember that your code is a
-    glossary, and everything in it should define a word.  To correct this
-    mistake, you would add `nametag =` to the beginning of the second line.
+    glossary and everything in it should define a word.  To correct this
+    mistake you would add `nametag =` to the beginning of the second line.
 
     ~~~~~ . clickable
     program = drawingOf(nametag)
@@ -213,7 +218,9 @@ went wrong.
     ~~~~~
 
 !!! collapsible: `parse error (possibly incorrect indentation or mismatched brackets)`
-    This message can come from a missing *indent*.  For example, consider this code:
+    This message can come from a missing *indent*.  
+    
+For example, consider this code:
 
     ~~~~~
     program = drawingOf(nametag)
@@ -223,10 +230,10 @@ went wrong.
     ~~~~~
 
     Here, the programmer meant for `circle(10)` to be part of the
-    definition of `nametag`.  The computer doesn't understand this, and
+    definition of `nametag`.  The computer doesn't understand this and
     believes it should be a new definition, because it starts against the
     left margin.  To fix this mistake, you would add a few spaces at the
-    beginning of the last line, to indent it.
+    beginning of the last line to indent it.
 
     ~~~~~ . clickable
     program = drawingOf(nametag)
@@ -239,25 +246,28 @@ went wrong.
 
 !!! collapsible: `Multiple declarations of nametag`
     This message tells you that you defined the same word in two different
+
     ways.  Sometimes this happens in human languages, and we call them
     homonyms -- for example, "duck" could mean an animal, or it could mean
     dodging a flying object!  Your computer, though, can't deal with this,
     so each variable can only be defined once.
 
-    Take a look at this program.
+    Take a look at this program:
 
     ~~~~~
     program = drawingOf(nametag)
-
     nametag = lettering("Victor")
     nametag = circle(10)
     ~~~~~
+
 
     One line says `nametag` means a picture of the text "Victor", but the
     second line says that `nametag` instead means a circle with a radius of
     10.  Which one is it?  You probably meant for `nametag` to include both.
     To do that, you would write one definition for `nametag`, and use
     **`&`** to combine the parts.  Like this:
+
+
 
     ~~~~~ . clickable
     program = drawingOf(nametag)
@@ -267,8 +277,9 @@ went wrong.
 
 !!! collapsible: `Couldn't match type Program with Picture`
     Once you've got the hang of using **`&`** to combine pictures, you
-    might be tempted to use it everywhere! For example, you might try to
-    write this.
+    might be tempted to use it everywhere! 
+    
+   For example, you might try to write this:
 
     ~~~~~
     program = drawingOf(nametag) & drawingOf(border)
@@ -281,8 +292,10 @@ went wrong.
     `drawingOf` function turns a picture into a *computer program*, and
     you cannot use **`&`** to combine two different computer programs!
 
-    The solution here is to combine the pictures, before using the
-    `drawingOf` function.  That looks like this.
+    The solution here is to combine the pictures before using the
+    `drawingOf` function.  
+    
+   That looks like this:
 
     ~~~~~ . clickable
     program = drawingOf(nametag & border)
@@ -294,16 +307,19 @@ went wrong.
 !!! collapsible: `Couldn't match type Picture with Text`
     Just like there's a difference between a computer program and a
     picture, there's also a difference between *text* and *pictures*.
-    Consider this code.
+    
+Consider this code:
 
     ~~~~~
     program = drawingOf(nametag)
     nametag = "Haruto" & circle(10)
     ~~~~~
 
-    The text, "Haruto", isn't a picture yet, so it cannot by combined
+    The text, "Haruto", isn't a picture yet, so it cannot be combined
     using **`&`**.  Use the `lettering` function to exchange the text
-    for a picture first, then combine it.  Like this:
+    for a picture first, then combine it.  
+   
+Like this:
 
     ~~~~~ . clickable
     program = drawingOf(nametag)
@@ -312,16 +328,18 @@ went wrong.
 
 Regardless of the message, you can always click on the line and column
 number next to an error message, and get straight to the location in
-your code where the error was recognized.  (Sometimes, though, your
+your code where the error was recognized.  (Be careful. Sometimes your
 actual mistake could be earlier!)  So just read over it and double-check
 that you've typed what you intended.
 
 Defining variables
 ------------------
 
-In the nametags above, you defined *variables* called `program` and `nametag`.
+In the nametags above you defined *variables* called `program` and `nametag`.
 Because your code is like a dictionary or glossary, you can define as many
-variables as you like. For example, you might write:
+variables as you like. 
+
+For example, you might write:
 
 ~~~~~
 name = "Han"
@@ -338,11 +356,12 @@ favoriteColor = blue
     More on that later!
 
 Each of these lines is an **equation**, which says that two expressions are
-*equal*, or have the same value.  In math, you use equations in many
+*equal* or have the same value.  In math, you use equations in many
 ways, but in CodeWorld they are used specifically to *define variables*.
 
-When you define a variable, you can use it in the rest of your code, like
-this:
+When you define a variable, you can use it in the rest of your code. 
+
+Look at this example:
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
@@ -351,21 +370,22 @@ name = "Guiseppe"
 ~~~~~
 
 This code says that your program is a drawing of a nametag, a nametag
-contains lettering of the name, and the name is "Guiseppe".  So "Guiseppe"
+contains lettering of the name and the name is "Guiseppe".  So "Guiseppe"
 is written on the name tag.
 
 !!! Warning
     Don't put quotes around a variable!
-    This code includes the expression `lettering(name)`, **without**
+    This code includes the expression `lettering(name)` **without**
     quotation marks.  What would happen if you write `lettering("name")`
     with the quotation marks?  You'd see a nametag with the word "name"
     written on it.  Oops!
 
     Quotation marks tell the computer *not* to interpret something as code,
-    but just as a piece of text.  Variables are code, so don't put
+    but only as a piece of text.  Variables are code and you never put
     quotation marks around your code.
 
-Remember, though, that defining a variable doesn't do anything by itself.
+You'll want to remember that defining a variable doesn't do anything by itself.
+
 Suppose you wrote this code:
 
 ~~~~~ . clickable
@@ -376,7 +396,9 @@ border = circle(5)
 
 If you run the code, you might be surprised to find there is no border!
 You've told your computer what the word `border` means, but you didn't
-say you wanted one in your program!  You might try this instead.
+say you wanted one in your program!  
+
+You might try this instead:
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
@@ -397,7 +419,7 @@ The answer lies in a special variable called `program`.  Every CodeWorld
 project needs *exactly one* definition for the `program` variable.
 This is where the computer will look for a description of the program it
 should run.  Sometimes, like in the very first program you wrote, this
-is the only definition you need.  But usually, you will use other
+is the only definition you need.  But usually you will use other
 variables that the computer doesn't know *in* your definition of
 CodeWorld. Just like you might if you were studying, the computer will look
 up those words, too. If their definitions use more words the computer
@@ -414,6 +436,7 @@ something else used in program, or so on.)
     that lets you know about a problem, even though your program runs.
 
     One warning you might see is `defined but not used`.  This warning
+
     tells you that you've defined a variable, but it's not necessary,
     because it isn't used (directly or indirectly) in the meaning of that special
     `program` variable.
@@ -422,11 +445,11 @@ All about functions
 -------------------
 
 All of the code you've written so far has made use of functions.  These are
-important tools you'll use in your coding, so let's investigate them in more
-detail.
+important tools you'll be using very often in your coding. 
+Let's investigate them in more detail.
 
-> A **function** is a relationship that associates each possible input with a
-> specific result.
+> A **function** is a relationship that associates each possible argument or input with a
+> specific result or output.
 
 **************************************************
 *    input     .----------.     output
@@ -434,8 +457,10 @@ detail.
 * (arguments)  '----------'    (result)
 **************************************************
 
-The type of input a function expects is called its *domain*, and the type of
-result is called its *range*.  Here are the functions you've used so far.
+The type of input a function expects is called its *domain* and the type of
+result it produces is called its *range*.  
+
+Here's a list of the functions you've used so far, with their domains and ranges.
 
 Function    | Domain             | Range
 ------------|--------------------|---------
@@ -457,16 +482,20 @@ parentheses, separated by commas, like you see in `rectangle` in the table
 above.
 
 !!! Tip
-    Parentheses always come in pairs, and are used like a ring around the
-    arguments to a function.  The name of the function, at the beginning,
-    adds a handle to that ring, forming something like a frying pan.
+    Parentheses always come in pairs and are used like a ring around the
+    arguments to a function.  Picture the name of the function at the beginning as
+    adding a handle to that ring, forming something like a frying pan.
 
     ![](cw-frying-pan.png)
 
-    Go over some programs you've written up to this point, and see if you
-    can see the frying pans for every function that's used.
+    Go over some of the programs you've written up to this point and see if you
+    can see the frying pans for each function that you've used.
 
 ### Exploring available functions
+
+Determining how you can use a function in your code will depend on its domain and range.
+There's a type of short notation that's useful for stating what the domain and range
+of a function are. 
 
 The way you can use a function in your code depends on its domain and range.
 There's a short notation that's useful for saying what the domain and range
@@ -475,27 +504,27 @@ of a function are, and it looks like this:
 ~~~~~
 drawingOf :: Picture -> Program
 lettering :: Text -> Picture
-circle :: Number -> Picture
+circle :: (Number) -> Picture
 rectangle :: (Number, Number) -> Picture
 ~~~~~
 
-These lines, called **type signatures**, don't *define* the functions; they
-just provide a little bit of information about what arguments they need,
-and what type of result they have.  Read the two colons (**`::`**) as
-"has the type", and the arrow (**`->`**) as meaning a *function* from one
-kind of thing to another.  So the first line says "`drawingOf` has the type:
-function from pictures to programs".
+These lines, called **type signatures**, don't *define* the functions, they
+just provide a little bit of information about what arguments they need
+and what type of results they have.  The two colons (**`::`**) should be read as
+"has the type", while the arrow (**`->`**) denotes a *function* from one
+kind of thing to another.  So, the first line saying "`drawingOf` has the type
+"function from picture to program".
 
 You can explore all of the functions the computer already knows when you
-use CodeWorld, by pressing Shift-Space or Ctrl-Space on a blank line in the
+use CodeWorld by pressing Shift-Space or Ctrl-Space on a blank line in the
 CodeWorld editor.  Try it!  The list gives all the names your computer
-already knows, and there are a lot of them!  By typing the first few
+already knows and there are a lot of them!  By typing the first few
 letters of the function you want, you can narrow down the list.  The type
 signatures tell you what types of information you need to provide to apply
-the function, and what type you can expect to end up with.
+the function and what type you can expect to end up with.
 
 For practice, see if you can write code using each of the following
-functions.  Start by looking up their domain and range using Shift-Space or
+functions.  Start by looking up their domain and range, using Shift-Space or
 Ctrl-Space, and see if you can use them with just that hint.  If you need
 more hints, expand the sections below for an example and explanation.
 
@@ -504,9 +533,10 @@ more hints, expand the sections below for an example and explanation.
     solidCircle :: Number -> Picture
     ~~~~~
 
-    This type signature tells you that the only argument to `solidCircle`
-    is a number, and the result is a picture.  Here's an example of a
-    program that uses `solidCircle`.
+    This type signature tells you that the only argument of `solidCircle`
+    is a number and the result is a picture.  
+
+    Here's an example of a program that uses `solidCircle`.
 
     ~~~~~ . clickable
     program = drawingOf(pic)
@@ -516,7 +546,7 @@ more hints, expand the sections below for an example and explanation.
     You might have noticed that even though the type signature tells you
     the input is a number, it doesn't tell you what that number means!
     Type signatures just tell you the *form* needed to use the function,
-    not the meaning.  But if you experiment, you may discover that the
+    not the meaning.  But, if you experiment, you may discover that the
     argument is the radius of the circle.
 
 !!! collapsible: `solidRectangle`
@@ -525,15 +555,16 @@ more hints, expand the sections below for an example and explanation.
     ~~~~~
 
     This type signature tells you that `solidRectangle` needs two
-    arguments, both numbers, and the result is a picture.  Here's an
-    example of a program that uses `solidRectangle`.
+    arguments, both of them being numbers, and the result is a picture.  
+    
+    Here's an example of a program that uses `solidRectangle`.
 
     ~~~~~ . clickable
     program = drawingOf(pic)
     pic = solidRectangle(7, 3)
     ~~~~~
 
-    The first number is the width of the rectangle, and the second
+    The first number is the width of the rectangle and the second
     number is the height.
 
 !!! collapsible: `thickCircle`
@@ -542,8 +573,9 @@ more hints, expand the sections below for an example and explanation.
     ~~~~~
 
     This type signature tells you that `thickCircle` needs two arguments,
-    both numbers, and the result is a picture.  Here's an example of a
-    program that uses `thickCircle`.
+    both of them being numbers, and the result is a picture.  
+    
+    Here's an example of a program that uses `thickCircle`.
 
     ~~~~~ . clickable
     program = drawingOf(pic)
@@ -561,9 +593,10 @@ more hints, expand the sections below for an example and explanation.
     ~~~~~
 
     This time, the type signature tells you that `thickRectangle` needs
-    three arguments, a new record!  All three arguments are numbers, and
-    the result is a picture.  Here's an example of a program that uses
-    `thickRectangle`.
+    three arguments, a new record!  All three arguments are numbers and
+    the result is a picture.  
+    
+    Here's an example of a program that uses 'thickRectangle`.
 
     ~~~~~ . clickable
     program = drawingOf(pic)
@@ -571,7 +604,7 @@ more hints, expand the sections below for an example and explanation.
     ~~~~~
 
     The first two arguments are the width and height of the rectangle.
-    The third and final argument is the thickness of the line to draw it
+    The third and final argument is the thickness of the line we use to draw it
     with.
 
 !!! collapsible: `codeWorldLogo`
@@ -581,7 +614,7 @@ more hints, expand the sections below for an example and explanation.
 
     This was a trick question: `codeWorldLogo` isn't a function at all!
     It still has a type signature, but there is no arrow, because it's
-    just a picture.  That means there are no parentheses after it, and
+    just a picture.  That means there are no parentheses after it and it has
     no arguments.
 
     ~~~~~ . clickable
@@ -593,7 +626,7 @@ more hints, expand the sections below for an example and explanation.
 
 As you continue with CodeWorld, you'll learn a few more functions.  For
 now, see if you can spruce up your nametag with some thicker lines.
-Try some solid shapes, too, and think about whether they are useful for
+Try some solid shapes too and think about whether they are useful for
 creating your nametag.
 
 Transformations
@@ -601,13 +634,13 @@ Transformations
 
 The nametags you built in the last section were pretty cool!  Still, they
 had some big limitations.  First, they were black and white.  Colors would
-make them much more exciting.  And second, all the shapes were in the
+make them much more exciting.  Second, all the shapes were in the
 center of the screen.  You can fix both of these problems using
 *transformations*.
 
 A **transformation** is a function that receives a picture called the
-preimage, and a description of something to change about it, and
-produces a new picture that is like the preimage except for that change.
+preimage, with a description of something to change about it, and then
+produces a new picture that is like the preimage, except for that change.
 
 *************************************************
 *               .----------------.
@@ -636,11 +669,11 @@ redWheel = colored(wheel, red)
 wheel    = solidCircle(4)
 ~~~~~
 
-Try that out.  Once you understand it, let's take a closer look at this
-program, by asking and answering a question.
+Try that out.  To help you understand it, let's take a closer look at this
+program by asking and answering a question.
 
 !!! collapsible: What does the picture named `wheel` look like?
-    It's a filled-in circle, of radius 4, drawn in **black**.
+    It's a filled-in circle of radius 4, drawn in **black**.
 
     <div align="center"><iframe src="https://code.world/run.html?mode=codeworld&dhash=DrYNeySBqPKubPkzT48dTEA" width=250 height=250 style="border: none;"></iframe></div>
 
@@ -649,7 +682,7 @@ program, by asking and answering a question.
     `redWheel = colored(wheel, red)` defines a variable called
     `redWheel`, which is a picture that is just like `wheel`, except
     drawn in red.  The new variable, `redWheel`, is colored red like
-    you expected.  But that *doesn't* change the meaning of the other
+    you expected, but that *doesn't* change the meaning of the other
     variable, `wheel`.  Remember that `redWheel` and `wheel` are
     different pictures.
 
@@ -664,23 +697,27 @@ program, by asking and answering a question.
     wheel    = solidCircle(4)
     ~~~~~
 
-    If you ran this, you see a black circle. `redWheel` is still
-    defined to be a red circle; but that doesn't change anything
-    because `program` is defined to be a drawing of `wheel`, which
-    is still black.
+    If you ran this, you would see a black circle. `redWheel` is still
+    defined to be a red circle, but that doesn't change anything. 
+    Why?
+    It is because `program` is defined to be a drawing of `wheel`, which
+    is still black. The original input was 'wheel` and 'wheel` is defined 
+    as a `solidCircle` of radius 4 and the call for the input `wheel` in the 
+    first line `program` overrides the call for the input `wheel` in the second 
+    line `redWheel`.
 
 When you use `colored` in a program, a *whole expression* like
 `colored(pic, blue)` describes a picture, so you can use an expression
 like this in all the same places you could use any other description of
-a picture.  For example, you might define `nametag` like this.
+a picture.  
+
+For example, you might define `nametag` like this:
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
-
 nametag = colored(outerBorder, blue) &
           colored(innerBorder, green) &
           colored(name, red)
-
 outerBorder = thickRectangle(15, 15, 1)
 innerBorder = thickCircle(6, 1)
 name        = lettering("Winona")
@@ -688,10 +725,10 @@ name        = lettering("Winona")
 
 Since `colored(outerBorder, blue)` is an expression that describes a
 picture, you can combine it with other pictures using **`&`**, just
-like you could with `circle(5)`, `rectangle(3, 4)`, or any other
+like you could with `circle(5)`, `rectangle(3, 4)` or any other
 picture expression.
 
-Here is a table of colors you can use:
+Here is a table of colors you can use.
 
 |            |            |            |            |
 |------------|------------|------------|------------|
@@ -716,7 +753,7 @@ Here is a table of colors you can use:
     ~~~~~
 
     If you do this, remember that **`&`** means "in front of", so
-    the shape in front should come first, and your backdrop should
+    the shape in front should come first, while your backdrop should
     come last.
 
 Translation: Moving
@@ -730,14 +767,17 @@ shifted either horizontally (that is, left or right) or vertically (that is,
 up or down) or both.
 
 When you give distances to the `translated` function, you will list the
-horizontal change first, and the vertical change second.  A useful tool for
-finding these numbers is the **coordinate plane**.
+horizontal change first, and the vertical change second.  
+
+A useful tool for finding these numbers is the **coordinate plane**.
 
 ![](coordinate-plane.png width=50%)
 
 !!! Tip: Get your own coordinate plane
     The coordinate plane is a picture that your computer knows about in
-    CodeWorld.  To make your own coordinate plane, use this code:
+    CodeWorld.  
+    
+To make your own coordinate plane, use this code.
 
     ~~~~~ . clickable
     program = drawingOf(coordinatePlane)
@@ -752,11 +792,10 @@ This tool is a combination of two number lines.
    numbers on top and negative numbers on the bottom.  You use this number 
    line to describe how far up or down to move a picture.
 
-With both numbers together, you can move a picture anywhere you like.  The
-basic shapes you have learned are drawn with their center at the *origin* --
+The basic shapes you have learned are drawn with their center at the *origin* --
 the point (0, 0) -- on the coordinate plane, so you should measure your x
 and y distances from there.  As you define your own pictures, it's a good
-idea to continue doing the same thing.
+idea to continue this practice.
 
 For example, suppose you wanted a circle representing the sun in the top left
 corner of the screen.  First, you could look at the *x* *axis*,

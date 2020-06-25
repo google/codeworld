@@ -53,7 +53,7 @@ Here's the code you just wrote and what its parts mean.
   you will use so many of them, you can name variables with whole words,
   always starting with a *lower-case* letter.
 
-!!! collapsible: Camel case:
+!!! collapsible: Camel case
     Sometimes, you may want more than one word to name a variable!  The
     computer needs each variable to be a single word starting with a lower-case
     letter--so leave out the spaces.  To make it easier to tell when a new word
@@ -139,9 +139,9 @@ program = drawingOf(nametag)
 nametag = lettering("Camille") & circle(4) & rectangle(8, 8)
 ~~~~~
 
-Here are the shape functions you can use in your nametag and the
-**arguments**, the information inside the parentheses, that each one
-expects.
+Here are the shape functions you can use in your nametag, and the
+**arguments** (the information inside the parentheses that each one
+expects.)
 
 | Function    | Expected arguments (inside parentheses)            | Example            |
 |-------------|----------------------------------------------------|--------------------|
@@ -170,7 +170,7 @@ Try these examples to learn more:
     ~~~~~
 
     The `rectangle` function needs **two** numbers.  The first is how many
-    units wide you want it to be and the second is how many units tall you want it to be.
+    units wide you want it to be, and the second is how many units tall you want it to be.
 
 !!! : Overlapping rectangles
     ~~~~~ . clickable
@@ -208,7 +208,7 @@ went wrong.
 
     On the second line, instead of an *equation* to define `nametag`, this
     program just wrote an expression.  Remember that your code is a
-    glossary and everything in it should define a word.  To correct this
+    glossary, and everything in it should define a word.  To correct this
     mistake you would add `nametag =` to the beginning of the second line.
 
     ~~~~~ . clickable
@@ -380,7 +380,7 @@ is written on the name tag.
     written on it.  Oops!
 
     Quotation marks tell the computer *not* to interpret something as code,
-    but only as a piece of text.  Variables are code and you never put
+    but only as a piece of text.  Variables are code, and you never put
     quotation marks around your code.
 
 You'll want to remember that defining a variable doesn't do anything by itself.
@@ -419,7 +419,7 @@ This is where the computer will look for a description of the program it
 should run.  Sometimes, like in the very first program you wrote, this
 is the only definition you need.  But usually you will use other
 variables that the computer doesn't know *in* your definition of
-CodeWorld. Just like you might if you were studying, the computer will look
+`program`. Just like you might if you were studying, the computer will look
 up those words, too. If their definitions use more words the computer
 doesn't know, it will look up *those* words, and so on, until it
 understands everything.
@@ -454,7 +454,7 @@ Let's investigate them in more detail.
 * (arguments)  '----------'    (result)
 **************************************************
 
-The type of input a function expects is called its *domain* and the type of
+The type of input a function expects is called its *domain*, and the type of
 result it produces is called its *range*.  
 
 Here's a list of the functions you've used so far, with their domains and ranges.
@@ -492,10 +492,7 @@ above.
 
 The way that you use a function in your code will depend on its domain and range.
 There's a type of short notation that's useful for stating what the domain and range
-of a function are. 
-
-The way you can use a function in your code depends on its domain and range.
-There's a short notation that's useful for saying what the domain and range
+of a function are.  There's a short notation that's useful for saying what the domain and range
 of a function are, and it looks like this:
 
 ~~~~~
@@ -657,7 +654,7 @@ Coloring
 The first transformation you will use is coloring.  The `colored` function
 changes the color of a picture. This function expects two arguments: the
 preimage, and a new color.  The colors of the preimage don't matter at
-all - only the shapes involved.  The result of the `colored` function is a new
+all -- only the shapes involved.  The result of the `colored` function is a new
 picture, which is just like the preimage, except for the different color.
 
 ~~~~~ . clickable
@@ -695,8 +692,7 @@ program by asking and answering a question.
     ~~~~~
 
     If you ran this, you would see a black circle. `redWheel` is still
-    defined to be a red circle, but that doesn't change anything. 
-    Why?
+    defined to be a red circle, but that doesn't change anything. Why?
     It is because `program` is defined to be a drawing of `wheel`, which
     is still black. 
 

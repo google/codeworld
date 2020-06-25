@@ -49,6 +49,7 @@ Executable codeworld-game-bot
                        bytestring,
                        text,
                        websockets >= 0.12.3.0,
+                       wuss,
                        codeworld-game-api,
                        codeworld-api,
                        async,

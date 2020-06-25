@@ -1,26 +1,38 @@
-#!/bin/sh
+#!/bin/bash
 set -euo pipefail
 
 FILES_PRETTIER=$(git diff --cached --name-only --diff-filter=ACMR "*.js" "*.css" "*.html" "*.json" | sed 's| |\\ |g')
 FILES_ESLINT=$(git diff --cached --name-only --diff-filter=ACMR "*.js" | sed 's| |\\ |g')
 FILES_ORMOLU=$(git diff --cached --name-only --diff-filter=ACMR "*.hs" | sed 's| |\\ |g')
 
-echo "Reprinting any staged JS, CSS and HTML files with Prettier ..."
-echo "$FILES_PRETTIER" | xargs npx prettier --write
-echo "Reprinting complete."
-echo "Linting any staged JS files with ESLint ..."
-echo "$FILES_ESLINT" | xargs npx eslint --fix
-echo "Linting complete."
-echo "Formatting any staged Haskell files with Ormolu ..."
-for f in $FILES_ORMOLU
-do
-    ormolu --mode inplace $f
-done
-echo "Formatting complete."
+if [ -n "$FILES_PRETTIER" ]
+then
+  echo "Reprinting staged JS, CSS and HTML files with Prettier ..."
+  echo "$FILES_PRETTIER" | xargs npx prettier --write
+  echo "Reprinting complete."
+fi
+
+if [ -n "$FILES_ESLINT" ];
+then
+  echo "Linting staged JS files with ESLint ..."
+  echo "$FILES_ESLINT" | xargs npx eslint --fix
+  echo "Linting complete."
+fi
+
+if [ -n "$FILES_ORMOLU" ];
+then
+  echo "Formatting staged Haskell files with Ormolu ..."
+  for f in $FILES_ORMOLU
+  do
+    build/bin/ormolu --mode inplace $f
+  done
+  echo "Formatting complete."
+fi
 
 # Add modified files back to staging
-echo "$FILES_PRETTIER" | xargs git add
-echo "$FILES_ESLINT" | xargs git add
-echo "$FILES_ORMOLU" | xargs git add
+if [ -n "$FILES_PRETTIER" -o -n "$FILES_ESLINT" -o -n "$FILES_ORMOLU" ]
+then
+  echo "$FILES_PRETTIER $FILES_ESLINT $FILES_ORMOLU" | xargs git add
+fi
 
 exit 0

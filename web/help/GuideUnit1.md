@@ -16,7 +16,7 @@ CodeWorld logo in the *canvas* on the right side of the screen.
 
     Computers can be very picky, so make sure you have typed *exactly* what
     you see above.  That means everything needs to be spelled correctly, the
-    same letters need to be capitalized and you need parentheses just where
+    same letters need to be capitalized, and you need parentheses just where
     they are.  There should be nothing else in your editor except that one
     line.
 
@@ -140,8 +140,8 @@ nametag = lettering("Camille") & circle(4) & rectangle(8, 8)
 ~~~~~
 
 Here are the shape functions you can use in your nametag, and the
-**arguments** (the information inside the parentheses that each one
-expects.)
+**arguments** (the information inside the parentheses) that each one
+expects.
 
 | Function    | Expected arguments (inside parentheses)            | Example            |
 |-------------|----------------------------------------------------|--------------------|
@@ -170,7 +170,8 @@ Try these examples to learn more:
     ~~~~~
 
     The `rectangle` function needs **two** numbers.  The first is how many
-    units wide you want it to be, and the second is how many units tall you want it to be.
+    units wide the rectangle should be, and the second is how many units
+    tall it should be.
 
 !!! : Overlapping rectangles
     ~~~~~ . clickable
@@ -368,9 +369,9 @@ nametag = lettering(name) & circle(4)
 name = "Guiseppe"
 ~~~~~
 
-This code says that your program is a drawing of a nametag, a nametag
-contains lettering of the name, and the name is "Guiseppe".  So "Guiseppe"
-is written on the name tag.
+This code says that your program is a drawing of a nametag, that a nametag
+contains lettering of the name, and that the name is "Guiseppe".  So
+"Guiseppe" is written on the name tag.
 
 !!! Warning
     Don't put quotes around a variable!
@@ -419,14 +420,14 @@ This is where the computer will look for a description of the program it
 should run.  Sometimes, like in the very first program you wrote, this
 is the only definition you need.  But usually you will use other
 variables that the computer doesn't know *in* your definition of
-`program`. Just like you might if you were studying, the computer will look
-up those words, too. If their definitions use more words the computer
-doesn't know, it will look up *those* words, and so on, until it
-understands everything.
+`program`. When it sees these new words, the computer will look them up
+as well.  If their definitions use more words the computer
+doesn't know, it will look up *those* words, and so on.
 
 Remember: a definition only matters if the variable you're defining is
-*used* somewhere in the definition of program (or the definition of
-something else used in program, or so on.)
+*used*, either directly or indirectly, in the definition of `program`.
+That is, in the definition of `program`, or the definition of another
+variable that's used in the definition of program, or so on.
 
 !!! Tip: Warnings
     When you write code that is correct, but could be improved, you will
@@ -435,8 +436,8 @@ something else used in program, or so on.)
 
     One warning you might see is `defined but not used`.  This warning
     tells you that you've defined a variable, but it's not necessary,
-    because it isn't used (directly or indirectly) in the meaning of that special
-    `program` variable.
+    because it isn't used (directly or indirectly) in the meaning of
+    that special `program` variable.
 
 All about functions
 -------------------
@@ -491,9 +492,8 @@ above.
 ### Exploring available functions
 
 The way that you use a function in your code will depend on its domain and range.
-There's a type of short notation that's useful for stating what the domain and range
-of a function are.  There's a short notation that's useful for saying what the domain and range
-of a function are, and it looks like this:
+There's a type of short notation that's useful for stating the domain and range
+of a function.  It looks like this:
 
 ~~~~~
 drawingOf :: Picture -> Program
@@ -528,7 +528,7 @@ more hints, expand the sections below for an example and explanation.
     ~~~~~
 
     This type signature tells you that the only argument of `solidCircle`
-    is a number and the result is a picture.  
+    is a number and that the result is a picture.  
 
     Here's an example of a program that uses `solidCircle`.
 
@@ -539,9 +539,9 @@ more hints, expand the sections below for an example and explanation.
 
     You might have noticed that even though the type signature tells you
     the input is a number, it doesn't tell you what that number means!
-    Type signatures just tell you the *types* of arguments needed to use the function,
-    not the meaning.  But, if you experiment, you may discover that the
-    argument is the radius of the circle.
+    Type signatures just tell you the *types* of arguments needed to use
+    the function, not their meaning.  If you experiment, you may discover
+    that the argument is the radius of the circle.
 
 !!! collapsible: `solidRectangle`
     ~~~~~
@@ -576,10 +576,13 @@ more hints, expand the sections below for an example and explanation.
     pic = thickCircle(5, 1)
     ~~~~~
 
-    Functions beginning with "thick" draw shapes with a thick line, and
-    the thickness of that line is the last argument to the function.
-    The first argument is the radius of the circle, and the second is
-    the line thickness the circle is drawn at.
+    Functions beginning with "thick" draw shapes with a thick line.  As a
+    general rule, the arguments to these functions are the same as the
+    arguments for the non-`thick` function, along with one extra argument
+    for the thickness of the line.  In this case, the first argument to
+    `thickCircle` (just like the first argument to `circle`) is the radius.
+    The second argument is the line thickness with which the circle is
+    drawn.
 
 !!! collapsible: `thickRectangle`
     ~~~~~
@@ -587,7 +590,7 @@ more hints, expand the sections below for an example and explanation.
     ~~~~~
 
     This time, the type signature tells you that `thickRectangle` needs
-    three arguments, a new record!  All three arguments are numbers and
+    three arguments, a new record!  All three arguments are numbers, and
     the result is a picture.  
     
     Here's an example of a program that uses 'thickRectangle`.
@@ -608,8 +611,8 @@ more hints, expand the sections below for an example and explanation.
 
     This was a trick question: `codeWorldLogo` isn't a function at all!
     It still has a type signature, but there is no arrow, because it's
-    just a picture.  That means there are no parentheses after it, and it has
-    no arguments.
+    just a picture.  That means there are no parentheses after it, and it
+    has no arguments.
 
     ~~~~~ . clickable
     program = drawingOf(pic)
@@ -632,9 +635,14 @@ make them much more exciting.  Second, all the shapes were in the
 center of the screen.  You can fix both of these problems using
 *transformations*.
 
-A **transformation** is a function that receives a picture called the
-preimage, and a description of something to change about it, and then
-produces a new picture that is like the preimage, except for that change.
+A **transformation** is a function that turns one picture into a different
+one.  It receives as its arguments:
+
+1. a picture called the **preimage**
+2. more arguments describing what to chage about it
+
+The result of the transformation is a *new* picture, which is like the
+preimage except for that change.
 
 *************************************************
 *               .----------------.
@@ -692,9 +700,8 @@ program by asking and answering a question.
     ~~~~~
 
     If you ran this, you would see a black circle. `redWheel` is still
-    defined to be a red circle, but that doesn't change anything. Why?
-    It is because `program` is defined to be a drawing of `wheel`, which
-    is still black. 
+    defined to be a red circle.  However, `program` is defined to be a
+    drawing of `wheel`, which is still black.
 
 When you use `colored` in a program, a *whole expression* like
 `colored(pic, blue)` describes a picture, so you can use an expression
@@ -705,9 +712,11 @@ For example, you might define `nametag` like this:
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
+
 nametag = colored(outerBorder, blue) &
           colored(innerBorder, green) &
           colored(name, red)
+
 outerBorder = thickRectangle(15, 15, 1)
 innerBorder = thickCircle(6, 1)
 name        = lettering("Winona")
@@ -875,13 +884,17 @@ might write something like this.
 
 ~~~~~ . clickable
 program = drawingOf(sunset)
+
 sunset = translated(greenGround, 0, -5) &
          translated(orangeSun, 0, 2) &
          blueSky
+
 orangeSun = colored(sun, orange)
 sun = solidCircle(3)
+
 greenGround = colored(ground, green)
 ground = solidRectangle(20, 10)
+
 blueSky = colored(sky, blue)
 sky = solidRectangle(20, 20)
 ~~~~~

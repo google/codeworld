@@ -99,6 +99,13 @@ function attachCustomEventListeners() {
 
     window.mainLayout.hide('west');
   });
+
+  $('#directoryTree').on(DirTree.events.SELECTION_CLEARED, () => {
+    $('#deleteButton').hide();
+    $('#saveButton').hide();
+    $('#shareFolderButton').hide();
+    $('#downloadButton').hide();
+  });
 }
 
 window.addEventListener('message', (event) => {
@@ -380,29 +387,6 @@ function compile(src, silent) {
  */
 function updateUI() {
   const selectedNode = DirTree.getSelectedNode();
-
-  if (Auth.signedIn()) {
-    if (selectedNode) {
-      document.getElementById('deleteButton').style.display = '';
-      document.getElementById('saveButton').style.display = '';
-    } else {
-      document.getElementById('deleteButton').style.display = 'none';
-      document.getElementById('saveButton').style.display = 'none';
-    }
-  } else {
-    document.getElementById('navButton').style.display = 'none';
-    document.getElementById('deleteButton').style.display = 'none';
-  }
-
-  document.getElementById('newButton').style.display = '';
-  document.getElementById('saveAsButton').style.display = '';
-  document.getElementById('runButtons').style.display = '';
-
-  if (selectedNode && DirTree.isDirectory(selectedNode)) {
-    document.getElementById('shareFolderButton').style.display = '';
-  } else {
-    document.getElementById('shareFolderButton').style.display = 'none';
-  }
 
   let title = selectedNode ? selectedNode.name : '(new)';
 

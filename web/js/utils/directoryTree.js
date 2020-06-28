@@ -3,6 +3,9 @@ const nodeTypes = {
   DIRECTORY: 'directory',
   PROJECT: 'project',
 };
+const events = {
+  SELECTION_CLEARED: 'selectionCleared',
+};
 
 function clearSelectedNode() {
   const directoryTree = $(directoryTreeId);
@@ -10,6 +13,8 @@ function clearSelectedNode() {
   const state = directoryTree.tree('getState');
   state.selected_node = [];
   directoryTree.tree('setState', state);
+
+  directoryTree.trigger(events.SELECTION_CLEARED);
 }
 
 function selectNode(node) {
@@ -44,4 +49,5 @@ export {
   isDirectory,
   isProject,
   nodeTypes,
+  events,
 };

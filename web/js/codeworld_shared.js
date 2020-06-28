@@ -915,7 +915,7 @@ function deleteProject_(path, buildMode, successFunc) {
 
         $('#directoryTree').tree('removeNode', selectedNode);
 
-        updateUI();
+        DirTree.clearSelectedNode();
       }
     });
   });
@@ -1752,6 +1752,28 @@ function initDirectoryTree(isEditorClean, loadProjectHandler) {
     });
     updateUI();
   });
+  $('#directoryTree').on('tree.select', (event) => {
+    const selectedNode = DirTree.getSelectedNode();
+
+    const $deleteButton = $('#deleteButton');
+    const $saveButton = $('#saveButton');
+    const $downloadButton = $('#downloadButton');
+    const $shareFolderButton = $('#shareFolderButton');
+
+    $deleteButton.show();
+
+    if (DirTree.isProject(selectedNode)) {
+      $saveButton.show();
+      $downloadButton.show();
+
+      $shareFolderButton.hide();
+    } else {
+      $saveButton.hide();
+      $downloadButton.hide();
+
+      $shareFolderButton.show();
+    }
+  });
 }
 
 // Get directory nearest to selected node, or root if there is no selection
@@ -1914,6 +1936,7 @@ function run(hash, dhash, msg, error, generation) {
   if (hash || msg) {
     window.mainLayout.show('east');
     window.mainLayout.open('east');
+
     document.getElementById('shareFolderButton').style.display = 'none';
   } else {
     document.getElementById('shareFolderButton').style.display = '';

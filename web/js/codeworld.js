@@ -98,6 +98,16 @@ function attachCustomEventListeners() {
 
     window.mainLayout.hide('west');
   });
+
+  $('#directoryTree').on(
+    DirTree.events.SELECTION_CLEARED,
+    () => {
+      $('#deleteButton').hide();
+      $('#saveButton').hide();
+      $('#shareFolderButton').hide();
+      $('#downloadButton').hide();
+    }
+  );
 }
 
 const autohelpEnabled = location.hash.length <= 2;
@@ -528,42 +538,6 @@ function isEditorClean() {
 function updateUI() {
   const selectedNode = DirTree.getSelectedNode();
 
-  const deleteButton = document.getElementById('deleteButton');
-  const saveButton = document.getElementById('saveButton');
-  const downloadButton = document.getElementById('downloadButton');
-  const shareFolderButton = document.getElementById('shareFolderButton');
-
-  if (Auth.signedIn()) {
-    if (selectedNode) {
-      deleteButton.style.display = '';
-    } else {
-      deleteButton.style.display = 'none';
-    }
-
-    if (selectedNode && DirTree.isProject(selectedNode)) {
-      saveButton.style.display = '';
-      shareFolderButton.style.display = 'none';
-
-      if (downloadButton) {
-        downloadButton.style.display = '';
-      }
-    } else if (selectedNode && DirTree.isDirectory(selectedNode)) {
-      saveButton.style.display = 'none';
-      shareFolderButton.style.display = '';
-
-      if (downloadButton) {
-        downloadButton.style.display = 'none';
-      }
-    } else {
-      saveButton.style.display = 'none';
-      shareFolderButton.style.display = 'none';
-
-      if (downloadButton) {
-        downloadButton.style.display = 'none';
-      }
-    }
-  }
-
   const inspectButton = document.getElementById('inspectButton');
 
   if (inspectButton) {
@@ -579,10 +553,6 @@ function updateUI() {
       inspectButton.style.display = 'none';
     }
   }
-
-  $('#newButton').css('display', '');
-  $('#saveAsButton').css('display', '');
-  $('#runButtons').css('display', '');
 
   let title = selectedNode ? selectedNode.name : '(new)';
 

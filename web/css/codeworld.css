@@ -120,6 +120,18 @@ body {
   display: none;
 }
 
+#saveButton {
+  display: none;
+}
+
+#downloadButton {
+  display: none;
+}
+
+#shareFolderButton {
+  display: none;
+}
+
 #keyboard-shortcuts {
   text-align: center;
   height: 50vh;

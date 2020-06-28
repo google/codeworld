@@ -1,9 +1,5 @@
 import { sendHttp } from './network.js';
-import {
-  clearWorkspace,
-  discoverProjects,
-  warnIfUnsaved,
-} from '../codeworld_shared.js';
+import { discoverProjects, warnIfUnsaved } from '../codeworld_shared.js';
 
 function LocalAuth() {
   const mine = {};
@@ -416,7 +412,7 @@ function withClientId(f) {
   });
 }
 
-function initGoogleAuth(signInCallback) {
+function initGoogleAuth(initCallback) {
   Promise.resolve($.getScript('https://apis.google.com/js/platform.js'))
     .then(() =>
       gapi.load('auth2', () =>
@@ -455,39 +451,38 @@ function initGoogleAuth(signInCallback) {
             })
           );
 
-          onAuthInitialized(auth2, signInCallback);
+          onAuthInitialized(auth2, initCallback);
         })
       )
     )
     .catch((e) => console.log('initGoogleAuth failed'));
 }
 
-function onAuthInitialized(auth, signInCallback) {
-  window.auth2 = auth;
-  window.auth2.currentUser.listen(signInCallback);
+function onAuthInitialized(auth2, callback) {
+  window.auth2 = auth2;
 
-  discoverProjects('');
+  callback();
 }
 
 function onAuthDisabled() {
   window.auth2 = null;
 
-  document.getElementById('signin').style.display = 'none';
+  $('#signin').css('display', 'none');
 
   discoverProjects('');
 }
 
-function init(signInCallback) {
+function init(initCallback) {
   sendHttp('GET', 'authMethod', null, (response) => {
     if (response.status === 200) {
       const obj = JSON.parse(response.responseText);
 
       switch (obj.authMethod) {
       case 'Local':
-        onAuthInitialized(LocalAuth().init(), signInCallback);
+        onAuthInitialized(LocalAuth().init(), initCallback);
         break;
       case 'Google':
-        initGoogleAuth(signInCallback);
+        initGoogleAuth(initCallback);
         break;
       default:
         onAuthDisabled();
@@ -499,20 +494,36 @@ function init(signInCallback) {
   });
 }
 
-function signIn() {
-  if (window.auth2) {
-    window.auth2.signIn({
+function signIn(callback) {
+  const { auth2 } = window;
+
+  if (auth2) {
+    auth2.isSignedIn.listen(() => {
+      if (auth2.isSignedIn.get()) {
+        callback();
+      }
+    });
+
+    auth2.signIn({
       prompt: 'login',
     });
   }
 }
 
-function signOut(isEditorClean) {
+function signOut(isEditorClean, clearWorkspace, callback) {
   warnIfUnsaved(isEditorClean, () => {
     clearWorkspace();
 
-    if (window.auth2) {
-      window.auth2.signOut();
+    const { auth2 } = window;
+
+    if (auth2) {
+      auth2.isSignedIn.listen(() => {
+        if (!auth2.isSignedIn.get()) {
+          callback();
+        }
+      });
+
+      auth2.signOut();
     }
   });
 }

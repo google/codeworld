@@ -15,7 +15,6 @@
  */
 
 import {
-  clearWorkspace,
   createFolder,
   definePanelExtension,
   deleteFolder_,
@@ -51,8 +50,18 @@ import { sendHttp } from './utils/network.js';
 init();
 
 function attachEventListeners() {
-  $('#signout').on('click', () => Auth.signOut(isEditorClean));
-  $('#signin').on('click', Auth.signIn);
+  $('#signout').on('click', () => {
+    Auth.signOut(isEditorClean, clearWorkspace, () => {
+      $('#nav').trigger('hide');
+    });
+  });
+  $('#signin').on('click', () => {
+    Auth.signIn(() => {
+      discoverProjects('');
+
+      $('#nav').trigger('show');
+    });
+  });
 
   $('#newButton').on('click', newProject);
   $('#newFolderButton').on('click', newFolder);
@@ -73,6 +82,27 @@ function attachEventListeners() {
   $('#stopButton').on('click', stopRun);
 }
 
+function attachCustomEventListeners() {
+  $('#nav').on('show', () => {
+    $('#signin').css('display', 'none');
+    $('#signout, #navButton').css('display', 'block');
+
+    window.mainLayout.show('west');
+  });
+
+  $('#nav').on('hide', () => {
+    $('#signin').css('display', 'block');
+    $(
+      '#signout, #saveButton, #navButton, #deleteButton, #shareFolderButton'
+    ).css('display', 'none');
+
+    window.mainLayout.hide('west');
+  });
+}
+
+const autohelpEnabled = location.hash.length <= 2;
+let isFirstSignin = true;
+
 /*
  * Initializes the programming environment.  This is called after the
  * entire document body and other JavaScript has loaded.
@@ -82,20 +112,18 @@ async function init() {
 
   await Alert.init();
 
-  const autohelpEnabled = location.hash.length <= 2;
-  let isFirstSignin = true;
+  await Auth.init(() => {
+    window.auth2.isSignedIn.listen(() => {
+      if (window.auth2.isSignedIn.get()) {
+        discoverProjects('');
 
-  function signInCallback() {
-    discoverProjects('');
-
-    if (isFirstSignin && !Auth.signedIn() && autohelpEnabled) {
-      help();
-    }
-    isFirstSignin = false;
-  }
-  await Auth.init(signInCallback);
+        $('#nav').trigger('show');
+      }
+    });
+  });
 
   attachEventListeners();
+  attachCustomEventListeners();
 
   // Keep the base bundle preloaded by retrying regularly.
   function preloadBaseBundle() {
@@ -128,6 +156,11 @@ async function init() {
     window.projectEnv = 'codeworld';
   }
   document.documentElement.classList.add(window.buildMode);
+
+  if (isFirstSignin && !Auth.signedIn() && autohelpEnabled) {
+    help();
+  }
+  isFirstSignin = false;
 
   window.cancelCompile = () => {};
   window.clipboard = '';
@@ -495,24 +528,12 @@ function isEditorClean() {
 function updateUI() {
   const selectedNode = DirTree.getSelectedNode();
 
-  const signOutButton = document.getElementById('signout');
-  const signInButton = document.getElementById('signin');
-  const navButton = document.getElementById('navButton');
   const deleteButton = document.getElementById('deleteButton');
   const saveButton = document.getElementById('saveButton');
   const downloadButton = document.getElementById('downloadButton');
   const shareFolderButton = document.getElementById('shareFolderButton');
 
   if (Auth.signedIn()) {
-    if (signOutButton.style.display === 'none') {
-      signInButton.style.display = 'none';
-      signOutButton.style.display = '';
-      navButton.style.display = '';
-
-      window.mainLayout.show('west');
-      window.mainLayout.open('west');
-    }
-
     if (selectedNode) {
       deleteButton.style.display = '';
     } else {
@@ -541,18 +562,6 @@ function updateUI() {
         downloadButton.style.display = 'none';
       }
     }
-  } else {
-    if (signOutButton.style.display === '') {
-      signInButton.style.display = '';
-      signOutButton.style.display = 'none';
-      saveButton.style.display = 'none';
-
-      window.mainLayout.hide('west');
-    }
-
-    navButton.style.display = 'none';
-    deleteButton.style.display = 'none';
-    shareFolderButton.style.display = 'none';
   }
 
   const inspectButton = document.getElementById('inspectButton');
@@ -571,9 +580,9 @@ function updateUI() {
     }
   }
 
-  document.getElementById('newButton').style.display = '';
-  document.getElementById('saveAsButton').style.display = '';
-  document.getElementById('runButtons').style.display = '';
+  $('#newButton').css('display', '');
+  $('#saveAsButton').css('display', '');
+  $('#runButtons').css('display', '');
 
   let title = selectedNode ? selectedNode.name : '(new)';
 
@@ -1238,6 +1247,12 @@ function saveProjectAs() {
   }
 
   saveProjectAsBase(successFunc, getCurrentProject());
+}
+
+function clearWorkspace() {
+  DirTree.clearSelectedNode();
+
+  setCode('');
 }
 
 function deleteFolder() {

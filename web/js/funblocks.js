@@ -50,8 +50,28 @@ window.runFunc = null;
 init();
 
 function attachEventListeners() {
-  $('#signout').on('click', () => signOut(isEditorClean));
-  $('#signin').on('click', Auth.signIn);
+  $('#signout').on('click', () => {
+    Auth.signOut(
+      isEditorClean,
+      () => {
+        Blockly.mainWorkspace.clear();
+      },
+      () => {
+        $('#nav').trigger('hide');
+      }
+    );
+
+    $('#projects').html('');
+
+    updateUI();
+  });
+  $('#signin').on('click', () => {
+    Auth.signIn(() => {
+      discoverProjects('');
+
+      $('#nav').trigger('show');
+    });
+  });
 
   $('#newButton').on('click', newProject);
   $('#newFolderButton').on('click', newFolder);
@@ -61,6 +81,24 @@ function attachEventListeners() {
   $('#docButton').on('click', help);
   $('#shareFolderButton').on('click', () => shareFolder_(window.projectEnv));
   $('#shareButton').on('click', share);
+}
+
+function attachCustomEventListeners() {
+  $('#nav').on('show', () => {
+    $('#signin').css('display', 'none');
+    $('#signout, #navButton').css('display', 'block');
+
+    window.mainLayout.show('west');
+  });
+
+  $('#nav').on('hide', () => {
+    $('#signin').css('display', 'block');
+    $(
+      '#signout, #saveButton, #navButton, #deleteButton, #shareFolderButton'
+    ).css('display', 'none');
+
+    window.mainLayout.hide('west');
+  });
 }
 
 window.addEventListener('message', (event) => {
@@ -80,9 +118,18 @@ async function init() {
 
   await Alert.init();
 
-  await Auth.init(() => discoverProjects(''));
+  await Auth.init(() => {
+    window.auth2.isSignedIn.listen(() => {
+      if (window.auth2.isSignedIn.get()) {
+        discoverProjects('');
+
+        $('#nav').trigger('show');
+      }
+    });
+  });
 
   attachEventListeners();
+  attachCustomEventListeners();
 
   function loadProjectHandler(name, path) {
     function successCallback(project) {
@@ -335,14 +382,6 @@ function updateUI() {
   const selectedNode = DirTree.getSelectedNode();
 
   if (Auth.signedIn()) {
-    if (document.getElementById('signout').style.display === 'none') {
-      document.getElementById('signin').style.display = 'none';
-      document.getElementById('signout').style.display = '';
-      document.getElementById('navButton').style.display = '';
-      window.mainLayout.show('west');
-      window.mainLayout.open('west');
-    }
-
     if (selectedNode) {
       document.getElementById('deleteButton').style.display = '';
       document.getElementById('saveButton').style.display = '';
@@ -351,12 +390,6 @@ function updateUI() {
       document.getElementById('saveButton').style.display = 'none';
     }
   } else {
-    if (document.getElementById('signout').style.display === '') {
-      document.getElementById('signin').style.display = '';
-      document.getElementById('signout').style.display = 'none';
-      document.getElementById('saveButton').style.display = 'none';
-      window.mainLayout.hide('west');
-    }
     document.getElementById('navButton').style.display = 'none';
     document.getElementById('deleteButton').style.display = 'none';
   }
@@ -400,13 +433,6 @@ function help() {
     allowOutsideClick: true,
     showConfirmButton: false,
   });
-}
-
-function signOut(isEditorClean) {
-  Auth.signOut(isEditorClean);
-
-  document.getElementById('projects').innerHTML = '';
-  updateUI();
 }
 
 function getCurrentProject() {

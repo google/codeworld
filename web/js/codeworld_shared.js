@@ -1872,12 +1872,6 @@ function updateTreeOnNewProjectCreation() {
   }
 }
 
-function clearWorkspace() {
-  DirTree.clearSelectedNode();
-
-  setCode('');
-}
-
 function run(hash, dhash, msg, error, generation) {
   window.runningGeneration = generation;
   window.debugAvailable = false;
@@ -2017,7 +2011,6 @@ function parseCompileErrors(rawErrors) {
 
 export {
   clearMessages,
-  clearWorkspace,
   createFolder,
   definePanelExtension,
   deleteFolder_,

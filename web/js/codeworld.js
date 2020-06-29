@@ -520,6 +520,21 @@ function initCodeworld() {
     }
 
     document.title = `${title} - CodeWorld`;
+
+    // If true - code currently in document is not equal to
+    // last compiled code
+    const running = document.getElementById('runner').style.display !== 'none';
+    const obsolete = window.codeworldEditor
+      ? !window.codeworldEditor.getDoc().isClean(window.runningGeneration)
+      : false;
+    const obsoleteAlert = document.getElementById('obsolete-code-alert');
+    if (running && obsolete) {
+      obsoleteAlert.classList.add('obsolete-code-alert-fadein');
+      obsoleteAlert.classList.remove('obsolete-code-alert-fadeout');
+    } else {
+      obsoleteAlert.classList.add('obsolete-code-alert-fadeout');
+      obsoleteAlert.classList.remove('obsolete-code-alert-fadein');
+    }
   });
 
   if (window.buildMode === 'codeworld') {
@@ -574,22 +589,7 @@ function isEditorClean() {
  * is to modify the state stored in variables and such, and then call updateUI
  * to get the visual presentation to match.
  */
-function updateUI() {
-  // If true - code currently in document is not equal to
-  // last compiled code
-  const running = document.getElementById('runner').style.display !== 'none';
-  const obsolete = window.codeworldEditor
-    ? !window.codeworldEditor.getDoc().isClean(window.runningGeneration)
-    : false;
-  const obsoleteAlert = document.getElementById('obsolete-code-alert');
-  if (running && obsolete) {
-    obsoleteAlert.classList.add('obsolete-code-alert-fadein');
-    obsoleteAlert.classList.remove('obsolete-code-alert-fadeout');
-  } else {
-    obsoleteAlert.classList.add('obsolete-code-alert-fadeout');
-    obsoleteAlert.classList.remove('obsolete-code-alert-fadein');
-  }
-}
+function updateUI() {}
 
 function backspace() {
   if (

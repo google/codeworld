@@ -46,6 +46,7 @@ import * as Alert from './utils/alert.js';
 import * as Auth from './utils/auth.js';
 import * as DirTree from './utils/directoryTree.js';
 import { sendHttp } from './utils/network.js';
+import { onObjectPropertyChange } from './utils/object.js';
 
 init();
 
@@ -104,6 +105,24 @@ function attachCustomEventListeners() {
     $('#saveButton').hide();
     $('#shareFolderButton').hide();
     $('#downloadButton').hide();
+  });
+
+  const $inspectButton = $('#inspectButton');
+
+  onObjectPropertyChange(window, 'debugAvailable', () => {
+    if (window.debugAvailable) {
+      $inspectButton.show();
+    } else {
+      $inspectButton.hide();
+    }
+  });
+
+  onObjectPropertyChange(window, 'debugActive', () => {
+    if (window.debugActive) {
+      $inspectButton.css('color', 'black');
+    } else {
+      $inspectButton.css('color', 'white');
+    }
   });
 }
 
@@ -556,22 +575,6 @@ function isEditorClean() {
  * to get the visual presentation to match.
  */
 function updateUI() {
-  const inspectButton = document.getElementById('inspectButton');
-
-  if (inspectButton) {
-    if (window.debugAvailable) {
-      inspectButton.style.display = '';
-
-      if (window.debugActive) {
-        inspectButton.style.color = 'black';
-      } else {
-        inspectButton.style.color = '';
-      }
-    } else {
-      inspectButton.style.display = 'none';
-    }
-  }
-
   // If true - code currently in document is not equal to
   // last compiled code
   const running = document.getElementById('runner').style.display !== 'none';

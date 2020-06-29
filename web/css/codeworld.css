@@ -132,6 +132,10 @@ body {
   display: none;
 }
 
+#inspectButton {
+  display: none;
+}
+
 #keyboard-shortcuts {
   text-align: center;
   height: 50vh;

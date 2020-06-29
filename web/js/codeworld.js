@@ -99,15 +99,12 @@ function attachCustomEventListeners() {
     window.mainLayout.hide('west');
   });
 
-  $('#directoryTree').on(
-    DirTree.events.SELECTION_CLEARED,
-    () => {
-      $('#deleteButton').hide();
-      $('#saveButton').hide();
-      $('#shareFolderButton').hide();
-      $('#downloadButton').hide();
-    }
-  );
+  $('#directoryTree').on(DirTree.events.SELECTION_CLEARED, () => {
+    $('#deleteButton').hide();
+    $('#saveButton').hide();
+    $('#shareFolderButton').hide();
+    $('#downloadButton').hide();
+  });
 }
 
 const autohelpEnabled = location.hash.length <= 2;
@@ -478,10 +475,32 @@ function initCodeworld() {
   };
 
   window.reparseTimeoutId = null;
-  window.codeworldEditor.on('changes', () => {
-    if (window.reparseTimeoutId) clearTimeout(window.reparseTimeoutId);
+  window.codeworldEditor.on('changes', ({ doc }, changes) => {
+    if (window.reparseTimeoutId) {
+      clearTimeout(window.reparseTimeoutId);
+    }
     window.reparseTimeoutId = setTimeout(parseSymbolsFromCurrentCode, 1500);
-    updateUI();
+
+    const selectedNode = DirTree.getSelectedNode();
+    let title = selectedNode ? selectedNode.name : '(new)';
+
+    const isInitialDocWrite = changes[0].text[0] === doc.getValue();
+
+    if (!isEditorClean() && !isInitialDocWrite) {
+      title = `* ${title}`;
+
+      if (selectedNode && DirTree.isProject(selectedNode)) {
+        const asterisk = selectedNode.element.getElementsByClassName(
+          'unsaved-changes'
+        )[0];
+
+        if (asterisk) {
+          asterisk.style.display = '';
+        }
+      }
+    }
+
+    document.title = `${title} - CodeWorld`;
   });
 
   if (window.buildMode === 'codeworld') {
@@ -526,8 +545,9 @@ function initCodeworld() {
 function isEditorClean() {
   const doc = window.codeworldEditor.getDoc();
 
-  if (window.savedGeneration === null) return doc.getValue() === '';
-  else return doc.isClean(window.savedGeneration);
+  return window.savedGeneration
+    ? doc.isClean(window.savedGeneration)
+    : doc.getValue();
 }
 
 /*
@@ -536,8 +556,6 @@ function isEditorClean() {
  * to get the visual presentation to match.
  */
 function updateUI() {
-  const selectedNode = DirTree.getSelectedNode();
-
   const inspectButton = document.getElementById('inspectButton');
 
   if (inspectButton) {
@@ -554,23 +572,6 @@ function updateUI() {
     }
   }
 
-  let title = selectedNode ? selectedNode.name : '(new)';
-
-  if (!isEditorClean()) {
-    title = `* ${title}`;
-
-    if (selectedNode && DirTree.isProject(selectedNode)) {
-      const asterisk = selectedNode.element.getElementsByClassName(
-        'unsaved-changes'
-      )[0];
-      if (asterisk) {
-        asterisk.style.display = '';
-      }
-    }
-  } else {
-    $('.unsaved-changes').css('display', 'none');
-  }
-
   // If true - code currently in document is not equal to
   // last compiled code
   const running = document.getElementById('runner').style.display !== 'none';
@@ -585,8 +586,6 @@ function updateUI() {
     obsoleteAlert.classList.add('obsolete-code-alert-fadeout');
     obsoleteAlert.classList.remove('obsolete-code-alert-fadein');
   }
-
-  document.title = `${title} - CodeWorld`;
 }
 
 function backspace() {
@@ -844,6 +843,8 @@ function newProject() {
     updateTreeOnNewProjectCreation();
 
     setCode('');
+
+    document.title = '(new) - CodeWorld';
   });
 }
 
@@ -1185,14 +1186,17 @@ function getCurrentProject() {
   };
 }
 
+function saveProjectCallback() {
+  window.savedGeneration = window.codeworldEditor
+    .getDoc()
+    .changeGeneration(true);
+  window.codeworldEditor.focus();
+
+  document.title = document.title.replace('* ', '');
+  $('.unsaved-changes').hide();
+}
+
 function saveProject() {
-  function successFunc() {
-    const doc = window.codeworldEditor.getDoc();
-
-    window.savedGeneration = doc.changeGeneration(true);
-    window.codeworldEditor.focus();
-  }
-
   const selectedNode = DirTree.getSelectedNode();
 
   if (selectedNode) {
@@ -1200,7 +1204,7 @@ function saveProject() {
       getNearestDirectory(),
       selectedNode.name,
       window.projectEnv,
-      successFunc,
+      saveProjectCallback,
       getCurrentProject()
     );
   } else {
@@ -1209,14 +1213,7 @@ function saveProject() {
 }
 
 function saveProjectAs() {
-  function successFunc(name) {
-    const doc = window.codeworldEditor.getDoc();
-
-    window.savedGeneration = doc.changeGeneration(true);
-    window.codeworldEditor.focus();
-  }
-
-  saveProjectAsBase(successFunc, getCurrentProject());
+  saveProjectAsBase(saveProjectCallback, getCurrentProject());
 }
 
 function clearWorkspace() {

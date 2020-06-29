@@ -246,6 +246,7 @@ function loadXmlHash(hash, autostart) {
 // Sets the generated code
 function updateEditor(code) {
   const editor = document.getElementById('genCode');
+
   CodeMirror.runMode(
     code,
     {
@@ -254,7 +255,24 @@ function updateEditor(code) {
     },
     editor
   );
-  updateUI();
+
+  const selectedNode = DirTree.getSelectedNode();
+  let title = selectedNode ? selectedNode.name : '(new)';
+
+  if (!isEditorClean()) {
+    title = `* ${title}`;
+
+    if (selectedNode && DirTree.isProject(selectedNode)) {
+      const asterisk = selectedNode.element.getElementsByClassName(
+        'unsaved-changes'
+      )[0];
+      if (asterisk) {
+        asterisk.style.display = '';
+      }
+    }
+  }
+
+  document.title = `${title} - CodeWorld`;
 }
 
 function run(xmlHash, codeHash, msg, error, dhash) {
@@ -385,28 +403,7 @@ function compile(src, silent) {
  * is to modify the state stored in variables and such, and then call updateUI
  * to get the visual presentation to match.
  */
-function updateUI() {
-  const selectedNode = DirTree.getSelectedNode();
-
-  let title = selectedNode ? selectedNode.name : '(new)';
-
-  if (!isEditorClean()) {
-    title = `* ${title}`;
-
-    if (selectedNode && DirTree.isProject(selectedNode)) {
-      const asterisk = selectedNode.element.getElementsByClassName(
-        'unsaved-changes'
-      )[0];
-      if (asterisk) {
-        asterisk.style.display = '';
-      }
-    }
-  } else {
-    $('.unsaved-changes').css('display', 'none');
-  }
-
-  document.title = `${title} - CodeWorld`;
-}
+function updateUI() {}
 
 function help() {
   const url = 'doc.html?shelf=help/blocks.shelf';
@@ -429,11 +426,14 @@ function getCurrentProject() {
   };
 }
 
-function saveProject() {
-  function successFunc() {
-    window.lastXML = getWorkspaceXMLText();
-  }
+function saveProjectCallback() {
+  window.lastXML = getWorkspaceXMLText();
 
+  document.title = document.title.replace('* ', '');
+  $('.unsaved-changes').css('display', 'none');
+}
+
+function saveProject() {
   const selectedNode = DirTree.getSelectedNode();
 
   if (selectedNode) {
@@ -441,7 +441,7 @@ function saveProject() {
       getNearestDirectory(),
       selectedNode.name,
       window.projectEnv,
-      successFunc,
+      saveProjectCallback,
       getCurrentProject()
     );
   } else {
@@ -450,10 +450,7 @@ function saveProject() {
 }
 
 function saveProjectAs() {
-  function successFunc(name) {
-    window.lastXML = getWorkspaceXMLText();
-  }
-  saveProjectAsBase(successFunc, getCurrentProject());
+  saveProjectAsBase(saveProjectCallback, getCurrentProject());
 }
 
 function deleteFolder() {
@@ -509,6 +506,8 @@ function newProject() {
     window.lastXML = getWorkspaceXMLText();
     Blockly.getMainWorkspace().clearUndo();
     window.location.hash = '';
+
+    document.title = '(new) - CodeWorld';
   });
 }
 

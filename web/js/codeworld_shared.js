@@ -1031,7 +1031,6 @@ function saveProjectBase(path, projectName, mode, successFunc, currentProject) {
       }
 
       successFunc();
-      updateUI();
     });
   }
 
@@ -1773,6 +1772,9 @@ function initDirectoryTree(isEditorClean, loadProjectHandler) {
 
       $shareFolderButton.show();
     }
+
+    document.title = `${selectedNode.name} - CodeWorld`;
+    $('.unsaved-changes').hide();
   });
 }
 

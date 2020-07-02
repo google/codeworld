@@ -2052,6 +2052,7 @@ export {
   printMessage,
   registerStandardHints,
   registerUpdateUIHandler,
+  renderDeclaration,
   run,
   saveProjectBase,
   saveProjectAsBase,

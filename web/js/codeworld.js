@@ -31,6 +31,7 @@ import {
   printMessage,
   registerStandardHints,
   registerUpdateUIHandler,
+  renderDeclaration,
   run,
   saveProjectBase,
   saveProjectAsBase,

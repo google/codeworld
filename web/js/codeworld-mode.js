@@ -399,6 +399,14 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
     } else if (RE_CLOSEBRACKET.test(token) || (!foundLet && token === 'in')) {
       // Close contexts inside brackets when the brackets are closed.
       // Note that let/in counts as a bracket pair for this purposes.
+
+      const correspondingOpeningBracket =
+        state.contexts[state.contexts.length - 1].value;
+      // Mark close bracket in a non-matching pair for highlighting in UI.
+      if (opening(token) !== correspondingOpeningBracket) {
+        style = `${style} non_matching_bracket`;
+      }
+
       state.contexts.reverse();
       const reverseIndex = state.contexts.findIndex(
         (ctx) => ctx.value === opening(token)

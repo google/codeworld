@@ -147,13 +147,25 @@ div.CodeMirror span.cm-error {
   color: var(bracket-7);
 }
 
-/* Make bracket matching look nicer. */
+/*
+  Make matching and non-matching brackets look nicer.
+  Both classes starting with CodeMirror are applied only
+  when the cursor is adjacent to the bracket.
+*/
 div.CodeMirror span.CodeMirror-matchingbracket {
   outline: solid var(--matchingbracket) 0.1em;
 }
 
 div.CodeMirror span.CodeMirror-nonmatchingbracket {
   outline: solid var(--nonmatchingbracket) 0.1em;
+}
+
+/*
+  Always highlight non-matching closing bracket,
+  regardless of the cursor position.
+*/
+.cm-non_matching_bracket {
+  border: 3px solid var(--nonmatchingbracket);
 }
 
 /* Highlighting for matches to the selected word. */

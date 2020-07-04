@@ -26,7 +26,6 @@ import {
   markFailed,
   printMessage,
   registerStandardHints,
-  registerUpdateUIHandler,
   saveProjectAsBase,
   saveProjectBase,
   share,
@@ -62,8 +61,6 @@ function attachEventListeners() {
     );
 
     $('#projects').html('');
-
-    updateUI();
   });
   $('#signin').on('click', () => {
     Auth.signIn(() => {
@@ -121,8 +118,6 @@ window.addEventListener('message', (event) => {
 });
 
 async function init() {
-  registerUpdateUIHandler(updateUI);
-
   await Alert.init();
 
   await Auth.init(() => {
@@ -329,7 +324,6 @@ function run(xmlHash, codeHash, msg, error, dhash) {
 
   document.getElementById('editButton').setAttribute('href', `/#${codeHash}`);
   window.deployHash = dhash;
-  updateUI();
 }
 
 function getWorkspaceXMLText() {
@@ -403,13 +397,6 @@ function compile(src, silent) {
     });
   });
 }
-
-/*
- * Updates all UI components to reflect the current state.  The general pattern
- * is to modify the state stored in variables and such, and then call updateUI
- * to get the visual presentation to match.
- */
-function updateUI() {}
 
 function help() {
   const url = 'doc.html?shelf=help/blocks.shelf';
@@ -508,7 +495,6 @@ function newProject() {
     updateTreeOnNewProjectCreation();
     clearRunCode();
     Blockly.mainWorkspace.clear();
-    updateUI();
     window.lastXML = getWorkspaceXMLText();
     Blockly.getMainWorkspace().clearUndo();
     window.location.hash = '';

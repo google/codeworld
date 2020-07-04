@@ -30,7 +30,6 @@ import {
   parseSymbolsFromCurrentCode,
   printMessage,
   registerStandardHints,
-  registerUpdateUIHandler,
   renderDeclaration,
   run,
   saveProjectBase,
@@ -139,8 +138,6 @@ let isFirstSignin = true;
  * entire document body and other JavaScript has loaded.
  */
 async function init() {
-  registerUpdateUIHandler(updateUI);
-
   await Alert.init();
 
   await Auth.init(() => {
@@ -242,14 +239,9 @@ async function init() {
             );
           }
           discoverProjects('');
-          updateUI();
         });
       });
-    } else {
-      updateUI();
     }
-  } else {
-    updateUI();
   }
 
   if (hash.length > 0) {
@@ -588,13 +580,6 @@ function isEditorClean() {
     ? doc.isClean(window.savedGeneration)
     : doc.getValue();
 }
-
-/*
- * Updates all UI components to reflect the current state.  The general pattern
- * is to modify the state stored in variables and such, and then call updateUI
- * to get the visual presentation to match.
- */
-function updateUI() {}
 
 function backspace() {
   if (
@@ -975,20 +960,14 @@ window.addEventListener('message', (event) => {
       markFailed();
     }
     break;
-  case 'updateUI':
-    updateUI();
-    break;
   case 'debugReady':
     window.debugAvailable = true;
-    updateUI();
     break;
   case 'debugActive':
     window.debugActive = true;
-    updateUI();
     break;
   case 'debugFinished':
     window.debugActive = false;
-    updateUI();
     break;
   default:
     break;
@@ -1011,7 +990,6 @@ function inspect() {
       '*'
     );
   }
-  updateUI();
 }
 
 function showRequiredChecksInDialog(msg) {

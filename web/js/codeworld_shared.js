@@ -259,13 +259,6 @@ function parseSymbolsFromCurrentCode() {
   }
 }
 
-// TEMP:
-// Define separate handlers for the main editor and blocks.
-let updateUI = null;
-function registerUpdateUIHandler(handler) {
-  updateUI = handler;
-}
-
 function renderDeclaration(decl, keywordData, maxLen, argIndex = -1) {
   let column = 0;
 
@@ -760,7 +753,6 @@ function loadTreeNodesAtPath(path, node, callback) {
       }
     }
 
-    updateUI();
     hideLoadingAnimation();
   });
 }
@@ -773,16 +765,12 @@ function loadSubTree(node, callback) {
     } else if (DirTree.isDirectory(node)) {
       loadTreeNodesAtPath(getNearestDirectory(node), node, callback);
     }
-  } else {
-    updateUI();
   }
 }
 
 function discoverProjects(path) {
   if (Auth.signedIn()) {
     loadTreeNodesAtPath(path);
-  } else {
-    updateUI();
   }
 }
 
@@ -880,7 +868,6 @@ function deleteProject_(path, buildMode, successFunc) {
 
   if (!Auth.signedIn()) {
     sweetAlert('Oops', 'You must sign in to delete a project.', 'error');
-    updateUI();
     return;
   }
 
@@ -924,7 +911,6 @@ function deleteProject_(path, buildMode, successFunc) {
 function saveProjectAsBase(successFunc, currentProject) {
   if (!Auth.signedIn()) {
     sweetAlert('Oops!', 'You must sign in to save files.', 'error');
-    updateUI();
     return;
   }
 
@@ -992,7 +978,6 @@ function saveProjectAsBase(successFunc, currentProject) {
 function saveProjectBase(path, projectName, mode, successFunc, currentProject) {
   if (!Auth.signedIn()) {
     sweetAlert('Oops!', 'You must sign in to save files.', 'error');
-    updateUI();
     return;
   }
 
@@ -1066,7 +1051,6 @@ function saveProjectBase(path, projectName, mode, successFunc, currentProject) {
 function deleteFolder_(path, buildMode, successFunc) {
   if (!Auth.signedIn()) {
     sweetAlert('Oops', 'You must sign in to delete a folder.', 'error');
-    updateUI();
     return;
   }
 
@@ -1098,7 +1082,6 @@ function deleteFolder_(path, buildMode, successFunc) {
         const selectedNode = DirTree.getSelectedNode();
         $('#directoryTree').tree('removeNode', selectedNode);
         successFunc();
-        updateUI();
       }
     });
   });
@@ -1108,7 +1091,6 @@ function createFolder(isEditorClean, path, buildMode, successFunc) {
   warnIfUnsaved(isEditorClean, () => {
     if (!Auth.signedIn()) {
       sweetAlert('Oops!', 'You must sign in to create a folder.', 'error');
-      updateUI();
       return;
     }
 
@@ -1177,7 +1159,6 @@ function createFolder(isEditorClean, path, buildMode, successFunc) {
 function loadProject(name, path, buildMode, successFunc) {
   if (!Auth.signedIn()) {
     sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
-    updateUI();
     return;
   }
 
@@ -1204,7 +1185,6 @@ function loadProject(name, path, buildMode, successFunc) {
     if (request.status === 200) {
       const project = JSON.parse(request.responseText);
       successFunc(project);
-      updateUI();
     } else {
       sweetAlert(
         'Oops!',
@@ -1291,7 +1271,6 @@ function share() {
 function shareFolder_(mode) {
   if (!Auth.signedIn()) {
     sweetAlert('Oops!', 'You must sign in to share your folder.', 'error');
-    updateUI();
     return;
   }
 
@@ -1299,7 +1278,6 @@ function shareFolder_(mode) {
 
   if (!getNearestDirectory() || !(selectedNode && selectedNode.name)) {
     sweetAlert('Oops!', 'You must select a folder to share!', 'error');
-    updateUI();
     return;
   }
 
@@ -1597,7 +1575,6 @@ function initDirectoryTree(isEditorClean, loadProjectHandler) {
           'You must sign in to move this project or folder.',
           'error'
         );
-        updateUI();
         return;
       }
       const movedNode = event.move_info.moved_node;
@@ -1749,7 +1726,6 @@ function initDirectoryTree(isEditorClean, loadProjectHandler) {
         $('#directoryTree').tree('selectNode', node);
       }
     });
-    updateUI();
   });
   $('#directoryTree').on('tree.select', (event) => {
     const selectedNode = DirTree.getSelectedNode();
@@ -1879,7 +1855,7 @@ function updateChildrenIndexes(node) {
     data.append('path', getNearestDirectory(node));
     data.append('entries', JSON.stringify(repacked));
     sendHttp('POST', 'updateChildrenIndexes', data, () => {});
-  } else updateUI();
+  }
 }
 
 function updateTreeOnNewProjectCreation() {
@@ -1958,8 +1934,10 @@ function run(hash, dhash, msg, error, generation) {
 
   window.deployHash = dhash;
 
-  updateUI();
-  document.getElementById('runner').addEventListener('load', updateUI);
+  // TODO: double-check what's needed here.
+  document.getElementById('runner').addEventListener('load', () => {
+    // updateUI
+  });
 }
 
 function parseCompileErrors(rawErrors) {
@@ -2054,7 +2032,6 @@ export {
   parseSymbolsFromCurrentCode,
   printMessage,
   registerStandardHints,
-  registerUpdateUIHandler,
   renderDeclaration,
   run,
   saveProjectBase,

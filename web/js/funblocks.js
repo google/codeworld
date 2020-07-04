@@ -278,14 +278,20 @@ function updateEditor(code) {
 function run(xmlHash, codeHash, msg, error, dhash) {
   const hash = codeHash;
 
+  const $shareFolderButton = $('#shareFolderButton');
+
   if (hash) {
     window.location.hash = `#${xmlHash}`;
+
     document.getElementById('shareButton').style.display = '';
-    document.getElementById('shareFolderButton').style.display = 'none';
+
+    $shareFolderButton.hide();
   } else {
     window.location.hash = '';
+
     document.getElementById('shareButton').style.display = 'none';
-    document.getElementById('shareFolderButton').style.display = '';
+
+    $shareFolderButton.show();
   }
 
   window.showingResult = hash || msg;

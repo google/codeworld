@@ -1935,13 +1935,16 @@ function run(hash, dhash, msg, error, generation) {
     document.getElementById('startRecButton').style.display = 'none';
   }
 
+  const $shareFolderButton = $('#shareFolderButton');
+
   if (hash || msg) {
+    $shareFolderButton.hide();
+
     window.mainLayout.show('east');
     window.mainLayout.open('east');
-
-    document.getElementById('shareFolderButton').style.display = 'none';
   } else {
-    document.getElementById('shareFolderButton').style.display = '';
+    $shareFolderButton.show();
+
     window.mainLayout.hide('east');
   }
 

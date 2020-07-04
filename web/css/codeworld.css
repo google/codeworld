@@ -116,24 +116,22 @@ body {
   margin: 0px;
 }
 
-#navButton {
-  display: none;
-}
-
-#saveButton {
-  display: none;
-}
-
-#downloadButton {
-  display: none;
-}
-
-#shareFolderButton {
-  display: none;
-}
-
+#signout,
+#navButton,
+#saveButton,
+#deleteButton,
+#downloadButton,
+#shareFolderButton,
 #inspectButton {
   display: none;
+}
+
+.inspect-button {
+  color: white;
+}
+
+.inspect-button__active {
+  color: black;
 }
 
 #keyboard-shortcuts {

@@ -80,23 +80,25 @@ function attachEventListeners() {
   $('#shareButton').on('click', share);
   $('#inspectButton').on('click', inspect);
 
-  $('#startButton').on('click', compile);
+  $('#runButton').on('click', compile);
   $('#stopButton').on('click', stopRun);
 }
 
 function attachCustomEventListeners() {
   $('#nav').on('show', () => {
-    $('#signin').css('display', 'none');
-    $('#signout, #navButton').css('display', 'block');
+    $('#signin').hide();
+
+    $('#signout, #navButton').show();
 
     window.mainLayout.show('west');
   });
 
   $('#nav').on('hide', () => {
-    $('#signin').css('display', 'block');
+    $('#signin').show();
+
     $(
       '#signout, #saveButton, #navButton, #deleteButton, #shareFolderButton'
-    ).css('display', 'none');
+    ).hide();
 
     window.mainLayout.hide('west');
   });
@@ -119,10 +121,12 @@ function attachCustomEventListeners() {
   });
 
   onObjectPropertyChange(window, 'debugActive', () => {
+    const activeClass = 'inspect-button__active';
+
     if (window.debugActive) {
-      $inspectButton.css('color', 'black');
+      $inspectButton.toggleClass(activeClass);
     } else {
-      $inspectButton.css('color', 'white');
+      $inspectButton.toggleClass(activeClass);
     }
   });
 }

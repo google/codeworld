@@ -1559,78 +1559,84 @@ function preFormatMessage(msg) {
 }
 
 function printMessage(type, message) {
-  const outputDiv = document.getElementById('message');
+  const $outputBlock = $('#message');
 
-  let box = outputDiv.lastChild;
-  let messageContent;
-  if (box && type === 'log' && box.classList.contains('log')) {
-    box.rawMessage += message;
-    messageContent = box.lastChild;
-  } else {
-    box = document.createElement('div');
-    box.classList.add('message-box');
-    box.classList.add(type);
+  let $box = $outputBlock.find('.message-box');
+  let $messageContent = $outputBlock.find('.message-content');
 
-    const messageGutter = document.createElement('div');
-    messageGutter.classList.add('message-gutter');
+  if (!$box.length && !$messageContent.length) {
+    $box = $('<div>');
+    $box.addClass(`message-box ${type}`);
 
-    messageContent = document.createElement('div');
-    messageContent.classList.add('message-content');
+    const $messageGutter = $('<div>');
+    $messageGutter.addClass('message-gutter');
 
-    box.appendChild(messageGutter);
-    box.appendChild(messageContent);
+    $messageContent = $('<div>');
+    $messageContent.addClass('message-content');
 
-    box.rawMessage = message;
+    $box.append($messageGutter, $messageContent);
+    $outputBlock.append($box);
   }
 
-  const formatted = preFormatMessage(box.rawMessage);
-  const lines = formatted.trim().split('\n');
+  const formattedMessage = preFormatMessage(message);
+  const lines = formattedMessage.trim().split('\n');
 
-  messageContent.innerHTML = '';
+  let $details = $messageContent.find('details');
+  let $summary = $messageContent.find('summary');
+  let $firstLine;
 
-  let firstLine;
   if (lines.length < 2) {
-    const singleLineMsg = document.createElement('div');
-    singleLineMsg.innerHTML = formatted;
-    messageContent.appendChild(singleLineMsg);
-    firstLine = messageContent;
+    const $singleLineMsg = $('<div>');
+    $singleLineMsg.html(formattedMessage);
+
+    $messageContent.append($singleLineMsg);
+
+    $firstLine = $messageContent;
   } else {
-    const summary = document.createElement('summary');
-    summary.innerHTML = lines[0];
-    firstLine = summary;
+    const messageFirstLine = lines[0];
+    const messageWithoutFirstLine = lines.slice(1).join('\n');
 
-    const details = document.createElement('details');
-    details.setAttribute('open', '');
-    details.innerHTML = lines.slice(1).join('\n');
+    if (!$details.length && !$summary.length) {
+      $details = $('<details>');
+      $details.attr('open', '');
 
-    details.insertBefore(summary, details.firstChild);
-    messageContent.appendChild(details);
+      $summary = $('<summary>');
+      $details.append($summary);
+
+      $messageContent.append($details);
+    }
+
+    $summary.html(messageFirstLine);
+    $firstLine = $summary;
+
+    $details.append(messageWithoutFirstLine);
   }
 
   if (type === 'error' || type === 'warning') {
     if (!window.alreadyReportedErrors.has(scrubError(message))) {
-      const reportLink = document.createElement('a');
-      reportLink.setAttribute('href', '#');
-      reportLink.classList.add('report-unhelpful');
-      reportLink.onclick = (event) =>
-        sendUnhelpfulReport(event, message, reportLink);
-      reportLink.innerText = 'Not helpful?';
-      firstLine.appendChild(reportLink);
+      const $reportLink = $('<a>');
+      $reportLink.attr('href', '#');
+      $reportLink.addClass('report-unhelpful');
+      $reportLink.on('click', (event) =>
+        sendUnhelpfulReport(event, message, $reportLink)
+      );
+      $reportLink.text('Not helpful?');
+
+      $firstLine.append($reportLink);
     }
   }
 
-  outputDiv.appendChild(box);
-  outputDiv.scrollTop = outputDiv.scrollHeight;
+  $outputBlock.scrollTop($outputBlock.prop('scrollHeight'));
 }
 
-function sendUnhelpfulReport(event, message, reportLink) {
+function sendUnhelpfulReport(event, message, $reportLink) {
   if (window.alreadyReportedErrors.has(scrubError(message))) {
     sweetAlert({
       type: 'info',
       text:
         'You have already reported this message.  Thank you for your feedback.',
     });
-    reportLink.style.display = 'none';
+    $reportLink.hide();
     return;
   }
   sweetAlert({
@@ -1657,7 +1663,7 @@ function sendUnhelpfulReport(event, message, reportLink) {
       text: 'Thank you for your feedback.',
     });
 
-    reportLink.style.display = 'none';
+    $reportLink.hide();
     window.alreadyReportedErrors.add(scrubError(message));
   });
   event.preventDefault();

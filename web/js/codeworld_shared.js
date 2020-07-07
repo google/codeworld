@@ -1560,56 +1560,62 @@ function preFormatMessage(msg) {
 
 function printMessage(type, message) {
   const $outputBlock = $('#message');
+  const $lastOutputBlock = $outputBlock.children().last();
 
-  let $box = $outputBlock.find('.message-box');
-  let $messageContent = $outputBlock.find('.message-content');
+  const formattedMessage = preFormatMessage(message);
+  const lines = formattedMessage.trim().split('\n');
 
-  if (!$box.length && !$messageContent.length) {
-    $box = $('<div>');
+  // Combine sequential log messages.
+  if (
+    type === 'log' &&
+    $lastOutputBlock.length &&
+    $lastOutputBlock.attr('class').includes('log')
+  ) {
+    const $messageContent = $lastOutputBlock.find('.message-content');
+
+    if ($messageContent.children().length) {
+      $messageContent.append(lines);
+    } else {
+      $messageContent.replaceWith(
+        `${'<details open="open" class="message-content">' +
+          `<summary>${$messageContent.html()}</summary>`}${ 
+          lines 
+        }</details>`
+      );
+    }
+  } else {
+    const $box = $('<div>');
     $box.addClass(`message-box ${type}`);
 
     const $messageGutter = $('<div>');
     $messageGutter.addClass('message-gutter');
 
-    $messageContent = $('<div>');
-    $messageContent.addClass('message-content');
+    const $messageContent = $('<div>');
+    $messageContent.addClass('message-wrapper');
 
     $box.append($messageGutter, $messageContent);
     $outputBlock.append($box);
-  }
 
-  const formattedMessage = preFormatMessage(message);
-  const lines = formattedMessage.trim().split('\n');
+    if (lines.length < 2) {
+      const $singleLineMsg = $('<div>');
+      $singleLineMsg.addClass('message-content');
+      $singleLineMsg.html(formattedMessage);
 
-  let $details = $messageContent.find('details');
-  let $summary = $messageContent.find('summary');
-  let $firstLine;
+      $messageContent.append($singleLineMsg);
+    } else {
+      const formattedMessageFirstLine = lines[0];
+      const formattedMessageWithoutFirstLine = lines.slice(1).join('\n');
 
-  if (lines.length < 2) {
-    const $singleLineMsg = $('<div>');
-    $singleLineMsg.html(formattedMessage);
+      const $summary = $('<summary>');
+      $summary.html(formattedMessageFirstLine);
 
-    $messageContent.append($singleLineMsg);
-
-    $firstLine = $messageContent;
-  } else {
-    const messageFirstLine = lines[0];
-    const messageWithoutFirstLine = lines.slice(1).join('\n');
-
-    if (!$details.length && !$summary.length) {
-      $details = $('<details>');
+      const $details = $('<details>');
+      $details.addClass('message-content');
       $details.attr('open', '');
-
-      $summary = $('<summary>');
-      $details.append($summary);
+      $details.append($summary, formattedMessageWithoutFirstLine);
 
       $messageContent.append($details);
     }
-
-    $summary.html(messageFirstLine);
-    $firstLine = $summary;
-
-    $details.append(messageWithoutFirstLine);
   }
 
   if (type === 'error' || type === 'warning') {
@@ -1622,7 +1628,18 @@ function printMessage(type, message) {
       );
       $reportLink.text('Not helpful?');
 
-      $firstLine.append($reportLink);
+      const $lastOutputBlockMessageContent = $lastOutputBlock.find(
+        '.message-content'
+      );
+
+      if ($lastOutputBlockMessageContent.children().length) {
+        $lastOutputBlockMessageContent
+          .children()
+          .find('summary')
+          .append($reportLink);
+      } else {
+        $lastOutputBlockMessageContent.append($reportLink);
+      }
     }
   }
 

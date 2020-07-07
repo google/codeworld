@@ -164,8 +164,10 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {
   Always highlight non-matching closing bracket,
   regardless of the cursor position.
 */
-.cm-non_matching_bracket {
-  border: 3px solid var(--nonmatchingbracket);
+pre.cm-s-default span.cm-non_matching_bracket,
+div.CodeMirror span.cm-non_matching_bracket {
+  font-weight: bold;
+  color: var(--nonmatchingbracket);
 }
 
 /* Highlighting for matches to the selected word. */

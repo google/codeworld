@@ -1571,16 +1571,18 @@ function printMessage(type, message) {
     $lastOutputBlock.length &&
     $lastOutputBlock.attr('class').includes('log')
   ) {
-    const $messageContent = $lastOutputBlock.find('.message-content');
+    const $lastOutputBlockMessageContent = $lastOutputBlock.find(
+      '.message-content'
+    );
 
-    if ($messageContent.children().length) {
-      $messageContent.append(lines);
+    if ($lastOutputBlockMessageContent.children().length) {
+      $lastOutputBlockMessageContent.append(lines);
     } else {
-      $messageContent.replaceWith(
-        `${'<details open="open" class="message-content">' +
-          `<summary>${$messageContent.html()}</summary>`}${ 
-          lines 
-        }</details>`
+      $lastOutputBlockMessageContent.replaceWith(
+        `${
+          '<details open="open" class="message-content">' +
+          `<summary>${$lastOutputBlockMessageContent.html()}</summary>`
+        }${lines}</details>`
       );
     }
   } else {
@@ -1607,6 +1609,7 @@ function printMessage(type, message) {
       const formattedMessageWithoutFirstLine = lines.slice(1).join('\n');
 
       const $summary = $('<summary>');
+      $summary.addClass('message-summary');
       $summary.html(formattedMessageFirstLine);
 
       const $details = $('<details>');
@@ -1628,14 +1631,14 @@ function printMessage(type, message) {
       );
       $reportLink.text('Not helpful?');
 
-      const $lastOutputBlockMessageContent = $lastOutputBlock.find(
-        '.message-content'
-      );
+      const $lastOutputBlockMessageContent = $outputBlock
+        .children()
+        .last()
+        .find('.message-content');
 
       if ($lastOutputBlockMessageContent.children().length) {
         $lastOutputBlockMessageContent
-          .children()
-          .find('summary')
+          .find('.message-summary')
           .append($reportLink);
       } else {
         $lastOutputBlockMessageContent.append($reportLink);

@@ -329,6 +329,15 @@ function run(xmlHash, codeHash, msg, error, dhash) {
   window.deployHash = dhash;
 }
 
+function removeErrors() {
+  $('.blocklyDraggable').removeClass('blocklyErrorSelected');
+  const blocks = Blockly.getMainWorkspace().getAllBlocks();
+
+  blocks.forEach((block) => {
+    block.removeErrorSelect();
+  });
+}
+
 function getWorkspaceXMLText() {
   const workspace = Blockly.getMainWorkspace();
   const xml = Blockly.Xml.workspaceToDom(workspace);
@@ -517,3 +526,4 @@ function clearRunCode() {
 window.updateEditor = updateEditor;
 window.compile = compile;
 window.run = run;
+window.removeErrors = removeErrors;

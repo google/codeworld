@@ -1919,7 +1919,9 @@ function run(hash, dhash, msg, error, generation) {
     window.mainLayout.show('east');
     window.mainLayout.open('east');
   } else {
-    $shareFolderButton.show();
+    if ($shareFolderButton.css('display') !== 'none') {
+      $shareFolderButton.show();
+    }
 
     window.mainLayout.hide('east');
   }

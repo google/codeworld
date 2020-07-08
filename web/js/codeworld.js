@@ -37,6 +37,7 @@ import {
   setCode,
   share,
   shareFolder_,
+  toggleObsoleteCodeAlert,
   updateTreeOnNewProjectCreation,
   warnIfUnsaved,
 } from './codeworld_shared.js';
@@ -81,6 +82,8 @@ function attachEventListeners() {
 
   $('#runButton').on('click', compile);
   $('#stopButton').on('click', stopRun);
+
+  $('#runner').on('load', toggleObsoleteCodeAlert);
 }
 
 function attachCustomEventListeners() {
@@ -518,20 +521,7 @@ function initCodeworld() {
 
     document.title = `${title} - CodeWorld`;
 
-    // If true - code currently in document is not equal to
-    // last compiled code
-    const running = document.getElementById('runner').style.display !== 'none';
-    const obsolete = window.codeworldEditor
-      ? !window.codeworldEditor.getDoc().isClean(window.runningGeneration)
-      : false;
-    const obsoleteAlert = document.getElementById('obsolete-code-alert');
-    if (running && obsolete) {
-      obsoleteAlert.classList.add('obsolete-code-alert-fadein');
-      obsoleteAlert.classList.remove('obsolete-code-alert-fadeout');
-    } else {
-      obsoleteAlert.classList.add('obsolete-code-alert-fadeout');
-      obsoleteAlert.classList.remove('obsolete-code-alert-fadein');
-    }
+    toggleObsoleteCodeAlert();
   });
 
   if (window.buildMode === 'codeworld') {

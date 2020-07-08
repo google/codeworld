@@ -30,6 +30,7 @@ import {
   saveProjectBase,
   share,
   shareFolder_,
+  toggleObsoleteCodeAlert,
   updateTreeOnNewProjectCreation,
   warnIfUnsaved,
 } from './codeworld_shared.js';
@@ -78,6 +79,8 @@ function attachEventListeners() {
   $('#docButton').on('click', help);
   $('#shareFolderButton').on('click', () => shareFolder_(window.projectEnv));
   $('#shareButton').on('click', share);
+
+  $('#runner').on('load', toggleObsoleteCodeAlert);
 }
 
 function attachCustomEventListeners() {

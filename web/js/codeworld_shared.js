@@ -1933,11 +1933,23 @@ function run(hash, dhash, msg, error, generation) {
   if (error) markFailed();
 
   window.deployHash = dhash;
+}
 
-  // TODO: double-check what's needed here.
-  document.getElementById('runner').addEventListener('load', () => {
-    // updateUI
-  });
+function toggleObsoleteCodeAlert() {
+  const isRunning = $('#runner').css('display') !== 'none';
+  // If true, current code isn't equal to previously compiled code.
+  const isObsolete = window.codeworldEditor
+    ? !window.codeworldEditor.getDoc().isClean(window.runningGeneration)
+    : false;
+  const $obsoleteAlert = $('#obsolete-code-alert');
+
+  if (isRunning && isObsolete) {
+    $obsoleteAlert.addClass('obsolete-code-alert-fadein');
+    $obsoleteAlert.removeClass('obsolete-code-alert-fadeout');
+  } else {
+    $obsoleteAlert.addClass('obsolete-code-alert-fadeout');
+    $obsoleteAlert.removeClass('obsolete-code-alert-fadein');
+  }
 }
 
 function parseCompileErrors(rawErrors) {
@@ -2039,6 +2051,7 @@ export {
   setCode,
   share,
   shareFolder_,
+  toggleObsoleteCodeAlert,
   updateTreeOnNewProjectCreation,
   warnIfUnsaved,
 };

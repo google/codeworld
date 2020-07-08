@@ -123,9 +123,9 @@ function attachCustomEventListeners() {
     const activeClass = 'inspect-button__active';
 
     if (window.debugActive) {
-      $inspectButton.toggleClass(activeClass);
+      $inspectButton.addClass(activeClass);
     } else {
-      $inspectButton.toggleClass(activeClass);
+      $inspectButton.removeClass(activeClass);
     }
   });
 }

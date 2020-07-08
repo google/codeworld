@@ -126,11 +126,7 @@ body {
   display: none;
 }
 
-.inspect-button {
-  color: white;
-}
-
-.inspect-button__active {
+.cw-button.inspect-button__active {
   color: black;
 }
 

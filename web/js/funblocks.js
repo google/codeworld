@@ -57,7 +57,7 @@ function attachEventListeners() {
         Blockly.mainWorkspace.clear();
       },
       () => {
-        $('#nav').trigger('hide');
+        $('#nav').trigger('disable');
       }
     );
 
@@ -67,7 +67,7 @@ function attachEventListeners() {
     Auth.signIn(() => {
       discoverProjects('');
 
-      $('#nav').trigger('show');
+      $('#nav').trigger('enable');
     });
   });
 
@@ -84,14 +84,14 @@ function attachEventListeners() {
 }
 
 function attachCustomEventListeners() {
-  $('#nav').on('show', () => {
+  $('#nav').on('enable', () => {
     $('#signin').css('display', 'none');
     $('#signout, #navButton').css('display', 'block');
 
     window.mainLayout.show('west');
   });
 
-  $('#nav').on('hide', () => {
+  $('#nav').on('disable', () => {
     $('#signin').css('display', 'block');
     $(
       '#signout, #saveButton, #navButton, #deleteButton, #shareFolderButton'
@@ -128,7 +128,7 @@ async function init() {
       if (window.auth2.isSignedIn.get()) {
         discoverProjects('');
 
-        $('#nav').trigger('show');
+        $('#nav').trigger('enable');
       }
     });
   });

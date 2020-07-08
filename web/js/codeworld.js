@@ -54,14 +54,14 @@ init();
 function attachEventListeners() {
   $('#signout').on('click', () => {
     Auth.signOut(isEditorClean, clearWorkspace, () => {
-      $('#nav').trigger('hide');
+      $('#nav').trigger('disable');
     });
   });
   $('#signin').on('click', () => {
     Auth.signIn(() => {
       discoverProjects('');
 
-      $('#nav').trigger('show');
+      $('#nav').trigger('enable');
     });
   });
 
@@ -87,7 +87,7 @@ function attachEventListeners() {
 }
 
 function attachCustomEventListeners() {
-  $('#nav').on('show', () => {
+  $('#nav').on('enable', () => {
     $('#signin').hide();
 
     $('#signout, #navButton').show();
@@ -95,7 +95,7 @@ function attachCustomEventListeners() {
     window.mainLayout.show('west');
   });
 
-  $('#nav').on('hide', () => {
+  $('#nav').on('disable', () => {
     $('#signin').show();
 
     $(
@@ -148,7 +148,7 @@ async function init() {
       if (window.auth2.isSignedIn.get()) {
         discoverProjects('');
 
-        $('#nav').trigger('show');
+        $('#nav').trigger('enable');
       }
     });
   });

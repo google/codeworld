@@ -1559,78 +1559,104 @@ function preFormatMessage(msg) {
 }
 
 function printMessage(type, message) {
-  const outputDiv = document.getElementById('message');
+  const $outputBlock = $('#message');
+  const $lastOutputBlock = $outputBlock.children().last();
 
-  let box = outputDiv.lastChild;
-  let messageContent;
-  if (box && type === 'log' && box.classList.contains('log')) {
-    box.rawMessage += message;
-    messageContent = box.lastChild;
+  const formattedMessage = preFormatMessage(message);
+  const lines = formattedMessage.trim().split('\n');
+
+  // Combine sequential log messages.
+  if (
+    type === 'log' &&
+    $lastOutputBlock.length &&
+    $lastOutputBlock.attr('class').includes('log')
+  ) {
+    const $lastOutputBlockMessageContent = $lastOutputBlock.find(
+      '.message-content'
+    );
+
+    if ($lastOutputBlockMessageContent.children().length) {
+      $lastOutputBlockMessageContent.append(lines);
+    } else {
+      $lastOutputBlockMessageContent.replaceWith(
+        `${
+          '<details open="open" class="message-content">' +
+          `<summary>${$lastOutputBlockMessageContent.html()}</summary>`
+        }${lines}</details>`
+      );
+    }
   } else {
-    box = document.createElement('div');
-    box.classList.add('message-box');
-    box.classList.add(type);
+    const $box = $('<div>');
+    $box.addClass(`message-box ${type}`);
 
-    const messageGutter = document.createElement('div');
-    messageGutter.classList.add('message-gutter');
+    const $messageGutter = $('<div>');
+    $messageGutter.addClass('message-gutter');
 
-    messageContent = document.createElement('div');
-    messageContent.classList.add('message-content');
+    const $messageContent = $('<div>');
+    $messageContent.addClass('message-wrapper');
 
-    box.appendChild(messageGutter);
-    box.appendChild(messageContent);
+    $box.append($messageGutter, $messageContent);
+    $outputBlock.append($box);
 
-    box.rawMessage = message;
-  }
+    if (lines.length < 2) {
+      const $singleLineMsg = $('<div>');
+      $singleLineMsg.addClass('message-content');
+      $singleLineMsg.html(formattedMessage);
 
-  const formatted = preFormatMessage(box.rawMessage);
-  const lines = formatted.trim().split('\n');
+      $messageContent.append($singleLineMsg);
+    } else {
+      const formattedMessageFirstLine = lines[0];
+      const formattedMessageWithoutFirstLine = lines.slice(1).join('\n');
 
-  messageContent.innerHTML = '';
+      const $summary = $('<summary>');
+      $summary.addClass('message-summary');
+      $summary.html(formattedMessageFirstLine);
 
-  let firstLine;
-  if (lines.length < 2) {
-    const singleLineMsg = document.createElement('div');
-    singleLineMsg.innerHTML = formatted;
-    messageContent.appendChild(singleLineMsg);
-    firstLine = messageContent;
-  } else {
-    const summary = document.createElement('summary');
-    summary.innerHTML = lines[0];
-    firstLine = summary;
+      const $details = $('<details>');
+      $details.addClass('message-content');
+      $details.attr('open', '');
+      $details.append($summary, formattedMessageWithoutFirstLine);
 
-    const details = document.createElement('details');
-    details.setAttribute('open', '');
-    details.innerHTML = lines.slice(1).join('\n');
-
-    details.insertBefore(summary, details.firstChild);
-    messageContent.appendChild(details);
+      $messageContent.append($details);
+    }
   }
 
   if (type === 'error' || type === 'warning') {
     if (!window.alreadyReportedErrors.has(scrubError(message))) {
-      const reportLink = document.createElement('a');
-      reportLink.setAttribute('href', '#');
-      reportLink.classList.add('report-unhelpful');
-      reportLink.onclick = (event) =>
-        sendUnhelpfulReport(event, message, reportLink);
-      reportLink.innerText = 'Not helpful?';
-      firstLine.appendChild(reportLink);
+      const $reportLink = $('<a>');
+      $reportLink.attr('href', '#');
+      $reportLink.addClass('report-unhelpful');
+      $reportLink.on('click', (event) =>
+        sendUnhelpfulReport(event, message, $reportLink)
+      );
+      $reportLink.text('Not helpful?');
+
+      const $lastOutputBlockMessageContent = $outputBlock
+        .children()
+        .last()
+        .find('.message-content');
+
+      if ($lastOutputBlockMessageContent.children().length) {
+        $lastOutputBlockMessageContent
+          .find('.message-summary')
+          .append($reportLink);
+      } else {
+        $lastOutputBlockMessageContent.append($reportLink);
+      }
     }
   }
 
-  outputDiv.appendChild(box);
-  outputDiv.scrollTop = outputDiv.scrollHeight;
+  $outputBlock.scrollTop($outputBlock.prop('scrollHeight'));
 }
 
-function sendUnhelpfulReport(event, message, reportLink) {
+function sendUnhelpfulReport(event, message, $reportLink) {
   if (window.alreadyReportedErrors.has(scrubError(message))) {
     sweetAlert({
       type: 'info',
       text:
         'You have already reported this message.  Thank you for your feedback.',
     });
-    reportLink.style.display = 'none';
+    $reportLink.hide();
     return;
   }
   sweetAlert({
@@ -1657,7 +1683,7 @@ function sendUnhelpfulReport(event, message, reportLink) {
       text: 'Thank you for your feedback.',
     });
 
-    reportLink.style.display = 'none';
+    $reportLink.hide();
     window.alreadyReportedErrors.add(scrubError(message));
   });
   event.preventDefault();

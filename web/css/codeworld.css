@@ -201,7 +201,7 @@ body {
   padding-bottom: 1em;
 }
 
-.message-content {
+.message-wrapper {
   width: 100%;
 }
 
@@ -237,7 +237,8 @@ body {
 }
 
 .message-box .report-unhelpful {
-  float: right;
+  position: absolute;
+  right: 0.5rem;
   white-space: nowrap;
   font-family: sans-serif;
   font-style: italic;

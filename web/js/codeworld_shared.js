@@ -1699,7 +1699,7 @@ function initDirectoryTree(isEditorClean, loadProjectHandler) {
     }
 
     if ($('#directoryTree').tree('isNodeSelected', event.node)) {
-      utils.directoryTree.clearSelectedNode();
+      DirTree.clearSelectedNode();
     }
   });
   $('#directoryTree').on('tree.click', (event) => {

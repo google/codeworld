@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 
@@ -23,6 +24,7 @@ import Control.Monad
 import Data.Aeson
 import Data.ByteString (ByteString)
 import Data.Text (Text)
+import GHC.Generics (Generic)
 import System.FilePath (FilePath)
 
 data Project = Project
@@ -59,22 +61,28 @@ instance FromJSON FileSystemEntryType where
 data FileSystemEntry = FSEntry
   { fsEntryIndex :: Int,
     fsEntryName :: Text,
-    fsEntryType :: FileSystemEntryType
+    fsEntryType :: FileSystemEntryType,
+    fsEntryChildren :: Maybe [FileSystemEntry]
   }
-  deriving (Eq, Ord, Show)
+  deriving (Generic, Eq, Ord, Show)
+
+fsEntryJSONOptions :: Options
+fsEntryJSONOptions =
+  defaultOptions
+    { fieldLabelModifier = \f -> case f of
+        "fsEntryIndex" -> "index"
+        "fsEntryName" -> "name"
+        "fsEntryType" -> "type"
+        "fsEntryChildren" -> "children"
+        _ -> f,
+      omitNothingFields = True
+    }
 
 instance ToJSON FileSystemEntry where
-  toJSON entry =
-    object
-      [ "index" .= fsEntryIndex entry,
-        "name" .= fsEntryName entry,
-        "type" .= fsEntryType entry
-      ]
+  toJSON = genericToJSON fsEntryJSONOptions
 
 instance FromJSON FileSystemEntry where
-  parseJSON (Object v) =
-    FSEntry <$> v .: "index" <*> v .: "name" <*> v .: "type"
-  parseJSON _ = mzero
+  parseJSON = genericParseJSON fsEntryJSONOptions
 
 data CompileResult = CompileResult
   { compileHash :: Text,

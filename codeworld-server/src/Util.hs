@@ -217,15 +217,15 @@ listDirectoryWithPrefixRecursive filePath = do
 dirFilter :: [FilePath] -> Char -> [FilePath]
 dirFilter dirs char = filter (\x -> head (takeBaseName x) == char) dirs
 
-fsEntries :: FilePath -> IO [FileSystemEntry]
-fsEntries dir = do
+fsEntries :: Bool -> FilePath -> IO [FileSystemEntry]
+fsEntries recurse dir = do
   subHashedDirs <- listDirectoryWithPrefix dir
   let hashedFiles = dirFilter subHashedDirs 'S'
       hashedDirs = dirFilter subHashedDirs 'D'
   projNames <- sort <$> mapM projName hashedFiles
   dirNames <- sort <$> catMaybes <$> mapM dirName hashedDirs
   haveSavedOrderFile <- doesFileExist $ dir </> "order.info"
-  case haveSavedOrderFile of
+  shallowResult <- case haveSavedOrderFile of
     True -> do
       dumpedEntries <- fromJust . decode <$> LB.readFile (dir </> "order.info")
       let (dumpedDirs, dumpedProjects) = span (\x -> fsEntryType x == Dir) $ sortOn fsEntryType dumpedEntries
@@ -235,22 +235,30 @@ fsEntries dir = do
         updateOrder Dir existingDirs dirNames
           ++ updateOrder Proj existingProjects projNames
     False -> return $ updateOrder Dir [] dirNames ++ updateOrder Proj [] projNames
+  if recurse then recurseInto shallowResult else return shallowResult
   where
     onlyExisting :: [FileSystemEntry] -> [Text] -> [FileSystemEntry]
     onlyExisting dumped existing = filter (\d -> fsEntryName d `elem` existing) dumped
     updateOrder :: FileSystemEntryType -> [FileSystemEntry] -> [Text] -> [FileSystemEntry]
     updateOrder _ [] [] = []
     updateOrder _ (_ : _) [] = []
-    updateOrder defType [] (name : names) = (FSEntry 0 name defType) : updateOrder defType [] names
-    updateOrder defType (entry@(FSEntry _ dumpedName _) : entries) (name : names)
+    updateOrder defType [] (name : names) = (FSEntry 0 name defType Nothing) : updateOrder defType [] names
+    updateOrder defType (entry@(FSEntry _ dumpedName _ _) : entries) (name : names)
       | dumpedName == name = entry : updateOrder defType entries names
-      | otherwise = (FSEntry 0 name defType) : updateOrder defType (entry : entries) names
+      | otherwise = (FSEntry 0 name defType Nothing) : updateOrder defType (entry : entries) names
     projName path = do
       Just project <- decode <$> LB.readFile path
       return $ projectName project
     dirName path = do
       hasInfo <- doesFileExist (path </> "dir.info")
       if hasInfo then Just <$> T.readFile (path </> "dir.info") else return Nothing
+    recurseInto :: [FileSystemEntry] -> IO [FileSystemEntry]
+    recurseInto [] = return []
+    recurseInto (e : es) = (:) <$> expand e <*> recurseInto es
+    expand :: FileSystemEntry -> IO FileSystemEntry
+    expand (FSEntry i name Dir _) =
+      FSEntry i name Dir <$> Just <$> fsEntries True (dir </> dirBase (nameToDirId name))
+    expand otherEntry = return otherEntry
 
 projectFileNames :: FilePath -> IO [Text]
 projectFileNames dir = do

@@ -147,7 +147,8 @@ site ctx =
           ("deleteProject", deleteProjectHandler ctx),
           ("createFolder", createFolderHandler ctx),
           ("deleteFolder", deleteFolderHandler ctx),
-          ("listFolder", listFolderHandler ctx),
+          ("listFolder", listFolderHandler False ctx),
+          ("listFolders", listFolderHandler True ctx),
           ("updateChildrenIndexes", updateChildrenIndexesHandler ctx),
           ("shareFolder", shareFolderHandler ctx),
           ("shareContent", shareContentHandler ctx),
@@ -249,8 +250,8 @@ deleteProjectHandler = private $ \userId ctx -> do
           </> projectFile projectId
   liftIO $ removeFileIfExists file
 
-listFolderHandler :: CodeWorldHandler
-listFolderHandler = private $ \userId ctx -> do
+listFolderHandler :: Bool -> CodeWorldHandler
+listFolderHandler recurse = private $ \userId ctx -> do
   mode <- getBuildMode
   Just path <- fmap (splitDirectories . T.unpack . T.decodeUtf8) <$> getParam "path"
   let dirIds = map (nameToDirId . T.pack) path
@@ -258,7 +259,7 @@ listFolderHandler = private $ \userId ctx -> do
   liftIO $ ensureUserBaseDir mode userId finalDir
   liftIO $ ensureUserDir mode userId finalDir
   let projectDir = userProjectDir mode userId
-  entries <- liftIO $ fsEntries (projectDir </> finalDir)
+  entries <- liftIO $ fsEntries recurse (projectDir </> finalDir)
   modifyResponse $ setContentType "application/json"
   writeLBS (encode entries)
 

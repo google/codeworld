@@ -136,7 +136,6 @@ window.onscroll = (event) => {
         const currentTarget = e.currentTarget;
         const contentWindow = currentTarget.contentWindow;
 
-        contentWindow.setParent(parent);
         contentWindow.setId(iframe);
         contentWindow.loadXml.call(iframe.contentWindow, text);
       });

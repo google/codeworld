@@ -47,7 +47,6 @@
 
     <script src="../js/blocks_runmain.js"></script>
     <script>
-      let upperParent = null;
       let frameId = null;
 
       function loadXml(data) {
@@ -70,10 +69,6 @@
 
       function setId(j_id_param) {
         frameId = j_id_param;
-      }
-
-      function setParent(par) {
-        upperParent = par;
       }
 
       document.getElementById("blocklyDiv").addEventListener(

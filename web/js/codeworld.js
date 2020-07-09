@@ -133,9 +133,6 @@ function attachCustomEventListeners() {
   });
 }
 
-const autohelpEnabled = location.hash.length <= 2;
-let isFirstSignin = true;
-
 /*
  * Initializes the programming environment.  This is called after the
  * entire document body and other JavaScript has loaded.
@@ -144,6 +141,17 @@ async function init() {
   await Alert.init();
 
   await Auth.init(() => {
+    const autohelpEnabled = location.hash.length <= 2;
+    let isFirstSignin = true;
+
+    window.auth2.currentUser.listen(() => {
+      if (isFirstSignin && !Auth.signedIn() && autohelpEnabled) {
+        help();
+      }
+
+      isFirstSignin = false;
+    });
+
     window.auth2.isSignedIn.listen(() => {
       if (window.auth2.isSignedIn.get()) {
         discoverProjects('');
@@ -187,11 +195,6 @@ async function init() {
     window.projectEnv = 'codeworld';
   }
   document.documentElement.classList.add(window.buildMode);
-
-  if (isFirstSignin && !Auth.signedIn() && autohelpEnabled) {
-    help();
-  }
-  isFirstSignin = false;
 
   window.cancelCompile = () => {};
   window.clipboard = '';

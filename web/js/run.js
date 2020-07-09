@@ -217,7 +217,12 @@ window.start = function () {
   window.programStartTime = Date.now();
   notifyStarted();
 
+  h$gcInterval = 25;
   window.h$run(window.h$mainZCZCMainzimain);
+
+  setTimeout(() => {
+    h$gcInterval = 1000;
+  }, 200);
 };
 
 window.init = function () {

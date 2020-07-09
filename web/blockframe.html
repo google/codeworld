@@ -47,7 +47,6 @@
 
     <script src="../js/blocks_runmain.js"></script>
     <script>
-      let upperParent = null;
       let frameId = null;
 
       function loadXml(data) {
@@ -72,20 +71,19 @@
         frameId = j_id_param;
       }
 
-      function setParent(par) {
-        upperParent = par;
-      }
-
       document.getElementById("blocklyDiv").addEventListener(
         "click",
         () => {
-          if (upperParent) {
+          if (window.parent) {
             let workspace = Blockly.getMainWorkspace();
 
             let xml = Blockly.Xml.workspaceToDom(workspace);
             let xml_text = Blockly.Xml.domToText(xml);
 
-            upperParent.loadSample(xml_text);
+            window.parent.postMessage(
+              { type: "loadSample", code: xml_text },
+              "*"
+            );
           }
         },
         false

@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
-window.LocalAuth = (() => {
+import { sendHttp } from './network.js';
+import { discoverProjects, warnIfUnsaved } from '../codeworld_shared.js';
+
+function LocalAuth() {
   const mine = {};
 
   const ERROR_TITLE = 'Oops!';
@@ -393,8 +395,8 @@ window.LocalAuth = (() => {
         listen: (f) => (_isSignedInCallback = f),
       },
       signIn: (options) => signIn(), // ignore any Google auth-specific options
-      signOut: signOut,
-      sendHttpAuth: sendHttpAuth,
+      signOut,
+      sendHttpAuth,
     };
   };
 
@@ -406,4 +408,132 @@ window.LocalAuth = (() => {
   });
 
   return mine;
-})();
+}
+
+function withClientId(f) {
+  if (window.clientId) return f(window.clientId);
+
+  sendHttp('GET', 'clientId.txt', null, (request) => {
+    if (request.status !== 200 || request.responseText === '') {
+      sweetAlert(
+        'Oops!',
+        'Missing API client key.  You will not be able to sign in.',
+        'warning'
+      );
+      return null;
+    }
+
+    window.clientId = request.responseText.trim();
+    return f(window.clientId);
+  });
+}
+
+function initGoogleAuth(initCallback) {
+  Promise.resolve($.getScript('https://apis.google.com/js/platform.js'))
+    .then(() =>
+      gapi.load('auth2', () =>
+        withClientId((clientId) => {
+          function sendHttpAuth(method, url, body, callback) {
+            if (body !== null && signedIn()) {
+              const idToken = window.auth2.currentUser.get().getAuthResponse()
+                .id_token;
+              body.append('id_token', idToken);
+            }
+
+            const request = new XMLHttpRequest();
+
+            if (callback) {
+              request.onreadystatechange = () => {
+                if (request.readyState === 4) {
+                  callback(request);
+                }
+              };
+            }
+
+            request.open(method, url, true);
+            request.send(body);
+
+            return request;
+          }
+
+          const auth2 = Object.assign(
+            {
+              sendHttpAuth: sendHttpAuth,
+            },
+            gapi.auth2.init({
+              client_id: clientId,
+              scope: 'openid',
+              fetch_basic_profile: false,
+            })
+          );
+
+          onAuthInitialized(auth2, initCallback);
+        })
+      )
+    )
+    .catch((e) => console.log('initGoogleAuth failed'));
+}
+
+function onAuthInitialized(auth2, callback) {
+  window.auth2 = auth2;
+
+  callback();
+}
+
+function onAuthDisabled() {
+  window.auth2 = null;
+
+  $('#signin').css('display', 'none');
+
+  discoverProjects('');
+}
+
+function init(initCallback) {
+  sendHttp('GET', 'authMethod', null, (response) => {
+    if (response.status === 200) {
+      const obj = JSON.parse(response.responseText);
+
+      switch (obj.authMethod) {
+      case 'Local':
+        onAuthInitialized(LocalAuth().init(), initCallback);
+        break;
+      case 'Google':
+        initGoogleAuth(initCallback);
+        break;
+      default:
+        onAuthDisabled();
+        break;
+      }
+    } else {
+      onAuthDisabled();
+    }
+  });
+}
+
+function signIn(callback) {
+  const { auth2 } = window;
+
+  if (auth2) {
+    auth2.signIn({
+      prompt: 'login',
+    });
+  }
+}
+
+function signOut(isEditorClean, clearWorkspace) {
+  warnIfUnsaved(isEditorClean, () => {
+    clearWorkspace();
+
+    const { auth2 } = window;
+
+    if (auth2) {
+      auth2.signOut();
+    }
+  });
+}
+
+function signedIn() {
+  return Boolean(window.auth2 && window.auth2.isSignedIn.get());
+}
+
+export { init, signIn, signOut, signedIn };

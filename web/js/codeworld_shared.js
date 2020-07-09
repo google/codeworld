@@ -13,64 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
-/*
- * Utility function for sending an HTTP request to fetch a resource.
- *
- * Args:
- *   - method: The HTTP method to use, such as 'GET'
- *   - url: The URL to fetch, whether absolute or relative.
- *   - body: The request body to send.  Use null for no body.
- *   - callback: A callback function to send when complete.  (optional)
- *
- * If provided, the callback will be given the XmlHttpRequest object, so
- * it can inspect the response code and headers as well as the contents.
- */
-function sendHttp(method, url, body, callback) {
-  const sendHttpFunc = signedIn() ? window.auth2.sendHttpAuth : sendHttpRaw;
-  return sendHttpFunc(method, url, body, callback);
-}
-
-function sendHttpRaw(method, url, body, callback) {
-  const request = new XMLHttpRequest();
-
-  if (callback) {
-    request.onreadystatechange = () => {
-      if (request.readyState === 4) callback(request);
-    };
-  }
-
-  request.open(method, url, true);
-  request.send(body);
-
-  return request;
-}
-
-const Html = (() => {
-  const mine = {};
-
-  mine.encode = (str) => $('<div/>').text(str).html();
-
-  return mine;
-})();
-
-const Alert = (() => {
-  const mine = {};
-
-  mine.init = () =>
-    Promise.resolve(
-      $.getScript(
-        'https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js'
-      )
-    ).catch((e) => console.log('Alert.init failed'));
-
-  // Build SweetAlert title HTML
-  mine.title = (text, iconClass) =>
-    `<i class="mdi mdi-72px ${iconClass}"></i>&nbsp; ${Html.encode(text)}`;
-
-  return mine;
-})();
+import * as Alert from './utils/alert.js';
+import * as Auth from './utils/auth.js';
+import * as DirTree from './utils/directoryTree.js';
+import * as Html from './utils/html.js';
+import { sendHttp } from './utils/network.js';
 
 const hintBlacklist = [
   // Symbols that only exist to implement RebindableSyntax or map to
@@ -773,134 +721,6 @@ function registerStandardHints(successFunc) {
   });
 }
 
-function signin() {
-  if (window.auth2) {
-    window.auth2.signIn({
-      prompt: 'login',
-    });
-  }
-}
-
-function signout() {
-  warnIfUnsaved(() => {
-    clearWorkspace();
-    if (window.auth2) window.auth2.signOut();
-  });
-}
-
-function signedIn() {
-  return Boolean(window.auth2 && window.auth2.isSignedIn.get());
-}
-
-const Auth = (() => {
-  const mine = {};
-
-  function initLocalAuth() {
-    Promise.resolve($.getScript('js/codeworld_local_auth.js'))
-      .then(() => onAuthInitialized(LocalAuth.init()))
-      .catch((e) => console.log('initLocalAuth failed', e));
-  }
-
-  function initGoogleAuth() {
-    Promise.resolve($.getScript('https://apis.google.com/js/platform.js'))
-      .then(() =>
-        gapi.load('auth2', () =>
-          withClientId((clientId) => {
-            function sendHttpAuth(method, url, body, callback) {
-              if (body !== null && signedIn()) {
-                const idToken = window.auth2.currentUser.get().getAuthResponse()
-                  .id_token;
-                body.append('id_token', idToken);
-              }
-
-              const request = new XMLHttpRequest();
-
-              if (callback) {
-                request.onreadystatechange = () => {
-                  if (request.readyState === 4) {
-                    callback(request);
-                  }
-                };
-              }
-
-              request.open(method, url, true);
-              request.send(body);
-
-              return request;
-            }
-
-            const auth2 = Object.assign(
-              {
-                sendHttpAuth: sendHttpAuth,
-              },
-              gapi.auth2.init({
-                client_id: clientId,
-                scope: 'openid',
-                fetch_basic_profile: false,
-              })
-            );
-
-            onAuthInitialized(auth2);
-          })
-        )
-      )
-      .catch((e) => console.log('initGoogleAuth failed'));
-  }
-
-  function onAuthInitialized(auth) {
-    window.auth2 = auth;
-    window.auth2.currentUser.listen(signinCallback);
-
-    discoverProjects('');
-  }
-
-  function onAuthDisabled() {
-    window.auth2 = null;
-    document.getElementById('signin').style.display = 'none';
-    discoverProjects('');
-  }
-
-  mine.init = () =>
-    sendHttp('GET', 'authMethod', null, (resp) => {
-      if (resp.status === 200) {
-        const obj = JSON.parse(resp.responseText);
-        switch (obj.authMethod) {
-        case 'Local':
-          initLocalAuth();
-          break;
-        case 'Google':
-          initGoogleAuth();
-          break;
-        default:
-          onAuthDisabled();
-          break;
-        }
-      } else {
-        onAuthDisabled();
-      }
-    });
-
-  return mine;
-})();
-
-function withClientId(f) {
-  if (window.clientId) return f(window.clientId);
-
-  sendHttp('GET', 'clientId.txt', null, (request) => {
-    if (request.status !== 200 || request.responseText === '') {
-      sweetAlert(
-        'Oops!',
-        'Missing API client key.  You will not be able to sign in.',
-        'warning'
-      );
-      return null;
-    }
-
-    window.clientId = request.responseText.trim();
-    return f(window.clientId);
-  });
-}
-
 function loadTreeNodesAtPath(path, node, callback) {
   const data = new FormData();
   data.append('mode', window.projectEnv);
@@ -914,7 +734,7 @@ function loadTreeNodesAtPath(path, node, callback) {
 
       treeNodes.forEach((node) => {
         if (!node.id) {
-          node.id = utils.directoryTree.createNodeId(node.type, node.name);
+          node.id = DirTree.createNodeId(node.type, node.name);
         }
       });
 
@@ -933,29 +753,24 @@ function loadTreeNodesAtPath(path, node, callback) {
       }
     }
 
-    updateUI();
     hideLoadingAnimation();
   });
 }
 
 function loadSubTree(node, callback) {
-  if (signedIn()) {
+  if (Auth.signedIn()) {
     // Root node already loaded
     if (node === $('#directoryTree').tree('getTree') && callback) {
       callback();
-    } else if (utils.directoryTree.isDirectory(node)) {
+    } else if (DirTree.isDirectory(node)) {
       loadTreeNodesAtPath(getNearestDirectory(node), node, callback);
     }
-  } else {
-    updateUI();
   }
 }
 
 function discoverProjects(path) {
-  if (signedIn()) {
+  if (Auth.signedIn()) {
     loadTreeNodesAtPath(path);
-  } else {
-    updateUI();
   }
 }
 
@@ -967,7 +782,7 @@ function moveDirTreeNode(
   buildMode,
   successFunc
 ) {
-  if (!signedIn()) {
+  if (!Auth.signedIn()) {
     sweetAlert('Oops!', 'You must sign in before moving.', 'error');
     return;
   }
@@ -995,6 +810,16 @@ function moveDirTreeNode(
   });
 }
 
+function loadSample(isEditorClean, action, code) {
+  if (isEditorClean()) {
+    sweetAlert.close();
+  }
+
+  warnIfUnsaved(isEditorClean, () => {
+    action(code);
+  });
+}
+
 function setCode(code, history, autostart) {
   if (!window.codeworldEditor) {
     return;
@@ -1019,16 +844,14 @@ function setCode(code, history, autostart) {
   }
 }
 
-function warnIfUnsaved(action) {
+function warnIfUnsaved(isEditorClean, action) {
   if (isEditorClean()) {
     action();
   } else {
-    const msg =
-      'There are unsaved changes to your project. ' +
-      'Continue and throw away your changes?';
     sweetAlert({
       title: Alert.title('Warning'),
-      text: msg,
+      text:
+        'There are unsaved changes to your project. Continue and throw away your changes?',
       type: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#DD6B55',
@@ -1039,156 +862,12 @@ function warnIfUnsaved(action) {
   }
 }
 
-function saveProjectAsBase(successFunc) {
-  if (!signedIn()) {
-    sweetAlert('Oops!', 'You must sign in to save files.', 'error');
-    updateUI();
-    return;
-  }
-
-  const selectedNode = utils.directoryTree.getSelectedNode();
-  const isDirectoryNode = utils.directoryTree.isDirectory(selectedNode);
-
-  sweetAlert({
-    title: Alert.title('Save As', 'mdi-cloud-upload'),
-    html:
-      selectedNode && isDirectoryNode
-        ? `Enter a name for your project in folder <b>${$('<div>')
-          .text(getNearestDirectory())
-          .html()
-          .replace(/ /g, '&nbsp;')}:`
-        : 'Enter a name for your project:',
-    input: 'text',
-    inputValue: selectedNode && !isDirectoryNode ? selectedNode.name : '',
-    confirmButtonText: 'Save',
-    showCancelButton: true,
-    closeOnConfirm: false,
-  }).then((result) => {
-    const parent = getNearestDirectory_();
-
-    function localSuccessFunc() {
-      const matches = parent.children.filter(
-        (node) =>
-          node.name === result.value && utils.directoryTree.isProject(node)
-      );
-      let node;
-      const type = utils.directoryTree.nodeTypes.PROJECT;
-      const name = result.value;
-
-      if (matches.length === 0) {
-        node = $('#directoryTree').tree(
-          'appendNode',
-          {
-            id: utils.directoryTree.createNodeId(type, name),
-            name,
-            type,
-            data: JSON.stringify(getCurrentProject()),
-          },
-          parent
-        );
-      } else {
-        node = matches[0];
-      }
-
-      $('#directoryTree').tree('selectNode', node);
-
-      updateChildrenIndexes(parent);
-
-      successFunc(result.value);
-    }
-    if (result && result.value) {
-      saveProjectBase(
-        getNearestDirectory(),
-        result.value,
-        window.projectEnv,
-        localSuccessFunc
-      );
-    }
-  });
-}
-
-function saveProjectBase(path, projectName, mode, successFunc) {
-  if (!signedIn()) {
-    sweetAlert('Oops!', 'You must sign in to save files.', 'error');
-    updateUI();
-    return;
-  }
-
-  if (!projectName) return;
-
-  function go() {
-    sweetAlert({
-      title: Alert.title(`Saving ${projectName} ...`),
-      text: 'Saving your project.  Please wait.',
-      showConfirmButton: false,
-      showCancelButton: false,
-      showCloseButton: false,
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      allowEnterKey: false,
-    });
-
-    const project = getCurrentProject();
-    project['name'] = projectName;
-
-    const data = new FormData();
-    data.append(utils.directoryTree.nodeTypes.PROJECT, JSON.stringify(project));
-    data.append('mode', mode);
-    data.append('path', path);
-
-    sendHttp('POST', 'saveProject', data, (request) => {
-      sweetAlert.close();
-
-      if (request.status !== 200) {
-        sweetAlert(
-          'Oops!',
-          'Could not save your project!!!  Please try again.',
-          'error'
-        );
-        return;
-      }
-
-      successFunc();
-      updateUI();
-    });
-  }
-
-  const selectedNode = utils.directoryTree.getSelectedNode();
-
-  if (
-    (selectedNode && projectName === selectedNode.name) ||
-    getNearestDirectory_().children.filter(
-      (node) => node.name === projectName && utils.directoryTree.isProject(node)
-    ).length === 0
-  ) {
-    go();
-  } else {
-    const msg = `${
-      'Are you sure you want to save over another project?\n\n' +
-      'The previous contents of '
-    }${projectName} will be permanently destroyed!`;
-    sweetAlert({
-      title: Alert.title('Warning'),
-      text: msg,
-      type: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#DD6B55',
-      confirmButtonText: 'Yes, overwrite it!',
-    }).then((result) => {
-      if (result && result.value) {
-        go();
-      }
-    });
-  }
-}
-
 function deleteProject_(path, buildMode, successFunc) {
-  const selectedNode = utils.directoryTree.getSelectedNode();
+  const selectedNode = DirTree.getSelectedNode();
   if (!selectedNode) return;
 
-  if (!signedIn()) {
+  if (!Auth.signedIn()) {
     sweetAlert('Oops', 'You must sign in to delete a project.', 'error');
-    updateUI();
     return;
   }
 
@@ -1223,16 +902,155 @@ function deleteProject_(path, buildMode, successFunc) {
 
         $('#directoryTree').tree('removeNode', selectedNode);
 
-        updateUI();
+        DirTree.clearSelectedNode();
       }
     });
   });
 }
 
+function saveProjectAsBase(successFunc, currentProject) {
+  if (!Auth.signedIn()) {
+    sweetAlert('Oops!', 'You must sign in to save files.', 'error');
+    return;
+  }
+
+  const selectedNode = DirTree.getSelectedNode();
+  const isDirectoryNode = DirTree.isDirectory(selectedNode);
+
+  sweetAlert({
+    title: Alert.title('Save As', 'mdi-cloud-upload'),
+    html:
+      selectedNode && isDirectoryNode
+        ? `Enter a name for your project in folder <b>${$('<div>')
+          .text(getNearestDirectory())
+          .html()
+          .replace(/ /g, '&nbsp;')}:`
+        : 'Enter a name for your project:',
+    input: 'text',
+    inputValue: selectedNode && !isDirectoryNode ? selectedNode.name : '',
+    confirmButtonText: 'Save',
+    showCancelButton: true,
+    closeOnConfirm: false,
+  }).then((result) => {
+    const parent = getNearestDirectory_();
+
+    function localSuccessFunc() {
+      const matches = parent.children.filter(
+        (node) => node.name === result.value && DirTree.isProject(node)
+      );
+      let node;
+      const type = DirTree.nodeTypes.PROJECT;
+      const name = result.value;
+
+      if (matches.length === 0) {
+        node = $('#directoryTree').tree(
+          'appendNode',
+          {
+            id: DirTree.createNodeId(type, name),
+            name,
+            type,
+            data: JSON.stringify(currentProject),
+          },
+          parent
+        );
+      } else {
+        node = matches[0];
+      }
+
+      $('#directoryTree').tree('selectNode', node);
+
+      updateChildrenIndexes(parent);
+
+      successFunc(result.value);
+    }
+    if (result && result.value) {
+      saveProjectBase(
+        getNearestDirectory(),
+        result.value,
+        window.projectEnv,
+        localSuccessFunc,
+        currentProject
+      );
+    }
+  });
+}
+
+function saveProjectBase(path, projectName, mode, successFunc, currentProject) {
+  if (!Auth.signedIn()) {
+    sweetAlert('Oops!', 'You must sign in to save files.', 'error');
+    return;
+  }
+
+  if (!projectName) return;
+
+  function go() {
+    sweetAlert({
+      title: Alert.title(`Saving ${projectName} ...`),
+      text: 'Saving your project. Please wait.',
+      showConfirmButton: false,
+      showCancelButton: false,
+      showCloseButton: false,
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      allowEnterKey: false,
+    });
+
+    const project = { ...currentProject };
+    project['name'] = projectName;
+
+    const data = new FormData();
+    data.append(DirTree.nodeTypes.PROJECT, JSON.stringify(project));
+    data.append('mode', mode);
+    data.append('path', path);
+
+    sendHttp('POST', 'saveProject', data, (request) => {
+      sweetAlert.close();
+
+      if (request.status !== 200) {
+        sweetAlert(
+          'Oops!',
+          'Could not save your project!!!  Please try again.',
+          'error'
+        );
+        return;
+      }
+
+      successFunc();
+    });
+  }
+
+  const selectedNode = DirTree.getSelectedNode();
+
+  if (
+    (selectedNode && projectName === selectedNode.name) ||
+    getNearestDirectory_().children.filter(
+      (node) => node.name === projectName && DirTree.isProject(node)
+    ).length === 0
+  ) {
+    go();
+  } else {
+    const msg = `${
+      'Are you sure you want to save over another project?\n\n' +
+      'The previous contents of '
+    }${projectName} will be permanently destroyed!`;
+    sweetAlert({
+      title: Alert.title('Warning'),
+      text: msg,
+      type: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#DD6B55',
+      confirmButtonText: 'Yes, overwrite it!',
+    }).then((result) => {
+      if (result && result.value) {
+        go();
+      }
+    });
+  }
+}
+
 function deleteFolder_(path, buildMode, successFunc) {
-  if (!signedIn()) {
+  if (!Auth.signedIn()) {
     sweetAlert('Oops', 'You must sign in to delete a folder.', 'error');
-    updateUI();
     return;
   }
 
@@ -1261,20 +1079,18 @@ function deleteFolder_(path, buildMode, successFunc) {
 
     sendHttp('POST', 'deleteFolder', data, (request) => {
       if (request.status === 200) {
-        const selectedNode = utils.directoryTree.getSelectedNode();
+        const selectedNode = DirTree.getSelectedNode();
         $('#directoryTree').tree('removeNode', selectedNode);
         successFunc();
-        updateUI();
       }
     });
   });
 }
 
-function createFolder(path, buildMode, successFunc) {
-  warnIfUnsaved(() => {
-    if (!signedIn()) {
+function createFolder(isEditorClean, path, buildMode, successFunc) {
+  warnIfUnsaved(isEditorClean, () => {
+    if (!Auth.signedIn()) {
       sweetAlert('Oops!', 'You must sign in to create a folder.', 'error');
-      updateUI();
       return;
     }
 
@@ -1312,21 +1128,21 @@ function createFolder(path, buildMode, successFunc) {
 
         successFunc();
 
-        let selectedNode = utils.directoryTree.getSelectedNode();
-        const type = utils.directoryTree.nodeTypes.DIRECTORY;
+        let selectedNode = DirTree.getSelectedNode();
+        const type = DirTree.nodeTypes.DIRECTORY;
         const name = result.value;
 
         if (!selectedNode) {
           selectedNode = $('#directoryTree').tree('getTree');
         }
-        if (selectedNode && !utils.directoryTree.isDirectory(selectedNode)) {
+        if (selectedNode && !DirTree.isDirectory(selectedNode)) {
           selectedNode = selectedNode.parent;
         }
 
         $('#directoryTree').tree(
           'appendNode',
           {
-            id: utils.directoryTree.createNodeId(type, name),
+            id: DirTree.createNodeId(type, name),
             name,
             type,
             children: [],
@@ -1340,10 +1156,9 @@ function createFolder(path, buildMode, successFunc) {
   });
 }
 
-function loadProject_(path, name, buildMode, successFunc) {
-  if (!signedIn()) {
+function loadProject(name, path, buildMode, successFunc) {
+  if (!Auth.signedIn()) {
     sweetAlert('Oops!', 'You must sign in to open projects.', 'error');
-    updateUI();
     return;
   }
 
@@ -1370,7 +1185,6 @@ function loadProject_(path, name, buildMode, successFunc) {
     if (request.status === 200) {
       const project = JSON.parse(request.responseText);
       successFunc(project);
-      updateUI();
     } else {
       sweetAlert(
         'Oops!',
@@ -1455,17 +1269,15 @@ function share() {
 }
 
 function shareFolder_(mode) {
-  if (!signedIn()) {
+  if (!Auth.signedIn()) {
     sweetAlert('Oops!', 'You must sign in to share your folder.', 'error');
-    updateUI();
     return;
   }
 
-  const selectedNode = utils.directoryTree.getSelectedNode();
+  const selectedNode = DirTree.getSelectedNode();
 
-  if (!getNearestDirectory() || (selectedNode && selectedNode.name)) {
+  if (!getNearestDirectory() || !(selectedNode && selectedNode.name)) {
     sweetAlert('Oops!', 'You must select a folder to share!', 'error');
-    updateUI();
     return;
   }
 
@@ -1532,6 +1344,15 @@ function shareFolder_(mode) {
     go();
   });
 }
+
+function goto(line, col) {
+  codeworldEditor.getDoc().setCursor(line - 1, col - 1);
+  codeworldEditor.scrollIntoView(null, 100);
+  codeworldEditor.focus();
+}
+
+// Expose this method globally - click handlers required it in preFormatMessage().
+window.goto = goto;
 
 function preFormatMessage(msg) {
   while (msg.match(/(\r\n|[^\x08]|)\x08/)) {
@@ -1719,7 +1540,7 @@ function pathToRootDir(nodeInit) {
   return path.join('/');
 }
 
-function initDirectoryTree() {
+function initDirectoryTree(isEditorClean, loadProjectHandler) {
   const treeStateStorageKey = 'directoryTree';
 
   $('#directoryTree').tree({
@@ -1739,7 +1560,7 @@ function initDirectoryTree() {
     onCanMoveTo: (moving_node, target_node, position) => {
       // Forbid move inside project node,
       // but allow to move before and after
-      if (utils.directoryTree.isProject(target_node) && position === 'inside') {
+      if (DirTree.isProject(target_node) && position === 'inside') {
         return false;
       }
       if (target_node.type === 'loadNotification') return false;
@@ -1750,7 +1571,7 @@ function initDirectoryTree() {
     onCreateLi: function (node, $li) {
       const titleElem = $li.find('.jqtree-element .jqtree-title');
 
-      if (utils.directoryTree.isDirectory(node)) {
+      if (DirTree.isDirectory(node)) {
         if (node.is_open) {
           titleElem.before($('<i class="mdi mdi-18px mdi-folder-open"></i>'));
         } else {
@@ -1758,7 +1579,7 @@ function initDirectoryTree() {
         }
       } else if (node.type === 'loadNotification') {
         titleElem.before($('<div style="float: left" class="loader"></div>'));
-      } else if (utils.directoryTree.isProject(node)) {
+      } else if (DirTree.isProject(node)) {
         const asterisk = $('<i class="unsaved-changes"></i>');
         asterisk.css('display', 'none');
         titleElem.before($('<i class="mdi mdi-18px mdi-cube"></i>'));
@@ -1773,18 +1594,17 @@ function initDirectoryTree() {
 
   $('#directoryTree').on('tree.move', (event) => {
     event.preventDefault();
-    warnIfUnsaved(() => {
-      if (!signedIn()) {
+    warnIfUnsaved(isEditorClean, () => {
+      if (!Auth.signedIn()) {
         sweetAlert(
           'Oops!',
           'You must sign in to move this project or folder.',
           'error'
         );
-        updateUI();
         return;
       }
       const movedNode = event.move_info.moved_node;
-      const isFile = utils.directoryTree.isProject(movedNode);
+      const isFile = DirTree.isProject(movedNode);
       let fromPath, name;
       fromPath = pathToRootDir(movedNode);
       if (isFile) {
@@ -1826,7 +1646,7 @@ function initDirectoryTree() {
         if (haveChildWithSameNameAndType(movedNode, toNode)) {
           // Replacement of existing project
           let msg, confirmText;
-          if (utils.directoryTree.isProject(movedNode)) {
+          if (DirTree.isProject(movedNode)) {
             msg = `${
               'Are you sure you want to save over another project?\n\n' +
               'The previous contents of '
@@ -1863,7 +1683,7 @@ function initDirectoryTree() {
                   });
                   event.move_info.do_move();
                   updateChildrenIndexes(toNode);
-                  if (utils.directoryTree.isDirectory(movedNode)) {
+                  if (DirTree.isDirectory(movedNode)) {
                     loadSubTree(movedNode);
                     setCode('');
                   }
@@ -1905,26 +1725,26 @@ function initDirectoryTree() {
     }
 
     if ($('#directoryTree').tree('isNodeSelected', event.node)) {
-      utils.directoryTree.clearSelectedNode();
+      DirTree.clearSelectedNode();
     }
   });
   $('#directoryTree').on('tree.click', (event) => {
     event.preventDefault();
 
     const { node } = event;
-    const isProjectNode = utils.directoryTree.isProject(node);
+    const isProjectNode = DirTree.isProject(node);
 
     // Deselection of selected project. Cancel it and do nothing.
     if (isProjectNode && $('#directoryTree').tree('isNodeSelected', node)) {
       return;
     }
-    warnIfUnsaved(() => {
+    warnIfUnsaved(isEditorClean, () => {
       if (isProjectNode) {
         const path = pathToRootDir(node);
 
-        loadProject(node.name, path);
+        loadProjectHandler(node.name, path);
         $('#directoryTree').tree('selectNode', node);
-      } else if (utils.directoryTree.isDirectory(node)) {
+      } else if (DirTree.isDirectory(node)) {
         if (node.children.length === 0) {
           loadSubTree(node);
         }
@@ -1932,14 +1752,38 @@ function initDirectoryTree() {
         $('#directoryTree').tree('selectNode', node);
       }
     });
-    updateUI();
+  });
+  $('#directoryTree').on('tree.select', (event) => {
+    const selectedNode = DirTree.getSelectedNode();
+
+    const $deleteButton = $('#deleteButton');
+    const $saveButton = $('#saveButton');
+    const $downloadButton = $('#downloadButton');
+    const $shareFolderButton = $('#shareFolderButton');
+
+    $deleteButton.show();
+
+    if (DirTree.isProject(selectedNode)) {
+      $saveButton.show();
+      $downloadButton.show();
+
+      $shareFolderButton.hide();
+    } else {
+      $saveButton.hide();
+      $downloadButton.hide();
+
+      $shareFolderButton.show();
+    }
+
+    document.title = `${selectedNode.name} - CodeWorld`;
+    $('.unsaved-changes').hide();
   });
 }
 
 // Get directory nearest to selected node, or root if there is no selection
 function getNearestDirectory_(node) {
   if (node) {
-    const isDir = utils.directoryTree.isDirectory(node);
+    const isDir = DirTree.isDirectory(node);
     const hasParent = Boolean(node.parent);
 
     if (isDir) {
@@ -1951,14 +1795,14 @@ function getNearestDirectory_(node) {
     return node;
   }
 
-  const selectedNode = utils.directoryTree.getSelectedNode();
+  const selectedNode = DirTree.getSelectedNode();
 
   if (!selectedNode) {
     // nearest directory is root
     return $('#directoryTree').tree('getTree');
-  } else if (selectedNode && utils.directoryTree.isProject(selectedNode)) {
+  } else if (selectedNode && DirTree.isProject(selectedNode)) {
     return selectedNode.parent;
-  } else if (selectedNode && utils.directoryTree.isDirectory(selectedNode)) {
+  } else if (selectedNode && DirTree.isDirectory(selectedNode)) {
     return selectedNode;
   }
 }
@@ -1966,7 +1810,7 @@ function getNearestDirectory_(node) {
 function getNearestDirectory(node) {
   const selected = getNearestDirectory_(node);
   const path = pathToRootDir(selected);
-  if (utils.directoryTree.isDirectory(selected)) {
+  if (DirTree.isDirectory(selected)) {
     return path ? `${path}/${selected.name}` : selected.name;
   }
   return path;
@@ -2022,7 +1866,7 @@ function recalcChildrenIndexes(node) {
 }
 
 function updateChildrenIndexes(node) {
-  if (signedIn() && node && node.children) {
+  if (Auth.signedIn() && node && node.children) {
     recalcChildrenIndexes(node);
     const repacked = [];
     for (let i = 0; i < node.children.length; i++) {
@@ -2037,19 +1881,205 @@ function updateChildrenIndexes(node) {
     data.append('path', getNearestDirectory(node));
     data.append('entries', JSON.stringify(repacked));
     sendHttp('POST', 'updateChildrenIndexes', data, () => {});
-  } else updateUI();
+  }
 }
 
 function updateTreeOnNewProjectCreation() {
-  const selectedNode = getSelectedNode();
+  const selectedNode = DirTree.getSelectedNode();
 
-  if (selectedNode && utils.directoryTree.isProject(selectedNode)) {
-    utils.directoryTree.clearSelectedNode();
+  if (selectedNode && DirTree.isProject(selectedNode)) {
+    DirTree.clearSelectedNode();
 
     // Select parent folder (if any) as new project's location is
     // determined by the selection in the directory tree.
     if (pathToRootDir(selectedNode)) {
-      utils.directoryTree.selectNode(selectedNode.parent);
+      DirTree.selectNode(selectedNode.parent);
     }
   }
 }
+
+function run(hash, dhash, msg, error, generation) {
+  window.runningGeneration = generation;
+  window.debugAvailable = false;
+  window.debugActive = false;
+  window.lastRunMessage = msg;
+
+  const runner = document.getElementById('runner');
+
+  // Stop canvas recording if the recorder is active
+  document.getElementById('runner').contentWindow.postMessage(
+    {
+      type: 'stopRecord',
+    },
+    '*'
+  );
+
+  if (hash) {
+    window.location.hash = `#${hash}`;
+    document.getElementById('shareButton').style.display = '';
+  } else {
+    window.location.hash = '';
+    document.getElementById('shareButton').style.display = 'none';
+  }
+
+  if (dhash) {
+    const loc = `run.html?dhash=${dhash}&mode=${window.buildMode}`;
+    runner.contentWindow.location.replace(loc);
+    if (
+      Boolean(navigator.mediaDevices) &&
+      Boolean(navigator.mediaDevices.getUserMedia)
+    ) {
+      document.getElementById('startRecButton').style.display = '';
+    }
+  } else {
+    runner.contentWindow.location.replace('about:blank');
+    document.getElementById('runner').style.display = 'none';
+    document.getElementById('startRecButton').style.display = 'none';
+  }
+
+  const $shareFolderButton = $('#shareFolderButton');
+
+  if (hash || msg) {
+    $shareFolderButton.hide();
+
+    window.mainLayout.show('east');
+    window.mainLayout.open('east');
+  } else {
+    if ($shareFolderButton.css('display') !== 'none') {
+      $shareFolderButton.show();
+    }
+
+    window.mainLayout.hide('east');
+  }
+
+  clearMessages();
+
+  parseCompileErrors(msg).forEach((cmError) => {
+    printMessage(cmError.severity, cmError.fullText);
+  });
+
+  if (error) markFailed();
+
+  window.deployHash = dhash;
+}
+
+function toggleObsoleteCodeAlert() {
+  const isRunning = $('#runner').css('display') !== 'none';
+  // If true, current code isn't equal to previously compiled code.
+  const isObsolete = window.codeworldEditor
+    ? !window.codeworldEditor.getDoc().isClean(window.runningGeneration)
+    : false;
+  const $obsoleteAlert = $('#obsolete-code-alert');
+
+  if (isRunning && isObsolete) {
+    $obsoleteAlert.addClass('obsolete-code-alert-fadein');
+    $obsoleteAlert.removeClass('obsolete-code-alert-fadeout');
+  } else {
+    $obsoleteAlert.addClass('obsolete-code-alert-fadeout');
+    $obsoleteAlert.removeClass('obsolete-code-alert-fadein');
+  }
+}
+
+function parseCompileErrors(rawErrors) {
+  const errors = [];
+  rawErrors = rawErrors.split('\n\n');
+  rawErrors.forEach((err) => {
+    const lines = err.trim().split('\n');
+    const firstLine = lines[0].trim();
+    const otherLines = lines
+      .slice(1)
+      .map((ln) => ln.trim())
+      .join('\n');
+    const re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/;
+    const re2 = /^program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\): (\w+):(.*)/;
+
+    if (err.trim() === '') {
+      // Ignore empty messages.
+    } else if (re1.test(firstLine)) {
+      const match = re1.exec(firstLine);
+
+      const line = Number(match[1]) - 1;
+      let startCol = Number(match[3]) - 1;
+      let endCol;
+      if (match[4]) {
+        endCol = Number(match[4]);
+      } else {
+        const token = window.codeworldEditor
+          .getLineTokens(line)
+          .find((t) => t.start === startCol);
+        if (token) {
+          endCol = token.end;
+        } else if (
+          startCol >= window.codeworldEditor.getDoc().getLine(line).length
+        ) {
+          endCol = startCol;
+          --startCol;
+        } else {
+          endCol = startCol + 1;
+        }
+      }
+
+      const message = ((match[6] ? `${match[6].trim()}\n` : '') + otherLines)
+        .replace(/program\.hs:(\d+):((\d+)(-\d+)?)/g, 'Line $1, Column $2')
+        .replace(
+          /program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
+          'Line $1-$3, Column $2-$4'
+        );
+
+      errors.push({
+        from: CodeMirror.Pos(line, startCol),
+        to: CodeMirror.Pos(line, endCol),
+        severity: match[5],
+        fullText: err,
+        message: message,
+      });
+    } else if (re2.test(firstLine)) {
+      const match = re2.exec(firstLine);
+
+      const startLine = Number(match[1]) - 1;
+      const startCol = Number(match[2]) - 1;
+      const endLine = Number(match[3]) - 1;
+      const endCol = Number(match[4]);
+
+      errors.push({
+        from: CodeMirror.Pos(startLine, startCol),
+        to: CodeMirror.Pos(endLine, endCol),
+        severity: match[5],
+        fullText: err,
+        message: (match[6] ? `${match[6].trim()}\n` : '') + otherLines,
+      });
+    } else {
+      console.log('Can not parse error header:', firstLine);
+    }
+  });
+  return errors;
+}
+
+export {
+  clearMessages,
+  createFolder,
+  definePanelExtension,
+  deleteFolder_,
+  deleteProject_,
+  discoverProjects,
+  getNearestDirectory,
+  initDirectoryTree,
+  loadProject,
+  loadSample,
+  markFailed,
+  onHover,
+  parseCompileErrors,
+  parseSymbolsFromCurrentCode,
+  printMessage,
+  registerStandardHints,
+  renderDeclaration,
+  run,
+  saveProjectBase,
+  saveProjectAsBase,
+  setCode,
+  share,
+  shareFolder_,
+  toggleObsoleteCodeAlert,
+  updateTreeOnNewProjectCreation,
+  warnIfUnsaved,
+};

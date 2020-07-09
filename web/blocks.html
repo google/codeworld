@@ -37,33 +37,19 @@
       <div class="ui-layout-container">
         <div id="nav" class="dropbox ui-layout-west">
           <div class="nav_items">
-            <a id="newFolderButton" class="cw-button red" onclick="newFolder()">
+            <a id="newFolderButton" class="cw-button red">
               <i class="mdi mdi-18px mdi-folder"></i>&nbsp; New Folder
             </a>
-            <a id="newButton" class="cw-button red" onclick="newProject()">
+            <a id="newButton" class="cw-button red">
               <i class="mdi mdi-18px mdi-plus"></i>&nbsp; New
             </a>
-            <a
-              id="saveButton"
-              class="cw-button blue"
-              style="display: none;"
-              onclick="saveProject()"
-            >
+            <a id="saveButton" class="cw-button blue" style="display: none;">
               <i class="mdi mdi-18px mdi-cloud-upload"></i>&nbsp; Save
             </a>
-            <a
-              id="saveAsButton"
-              class="cw-button blue"
-              onclick="saveProjectAs()"
-            >
+            <a id="saveAsButton" class="cw-button blue">
               <i class="mdi mdi-18px mdi-dots-horizontal"></i>&nbsp; Save As
             </a>
-            <a
-              id="deleteButton"
-              class="cw-button red"
-              style="display: none;"
-              onclick="deleteProject()"
-            >
+            <a id="deleteButton" class="cw-button red" style="display: none;">
               <i class="mdi mdi-18px mdi-delete"></i>&nbsp; Delete
             </a>
           </div>
@@ -119,19 +105,16 @@
             id="navButton"
             class="cw-button blue"
             onclick="window.mainLayout.toggle('west')"
+            style="display: none;"
             ><i class="mdi mdi-18px mdi-menu"></i
           ></a>
-          <a id="signin" class="cw-button blue" onclick="signin()"
+          <a id="signin" class="cw-button blue"
             ><i class="mdi mdi-18px mdi-login"></i>&nbsp; Sign In</a
           >
-          <a
-            id="signout"
-            class="cw-button blue"
-            style="display: none;"
-            onclick="signout()"
+          <a id="signout" class="cw-button blue" style="display: none;"
             ><i class="mdi mdi-18px mdi-logout"></i>&nbsp; Sign Out</a
           >
-          <a id="docButton" class="cw-button blue" onclick="help()"
+          <a id="docButton" class="cw-button blue"
             ><i class="mdi mdi-18px mdi-book-open-variant"></i>&nbsp; Guide</a
           >
           <a
@@ -148,21 +131,16 @@
             id="shareFolderButton"
             class="cw-button yellow"
             style="display: none;"
-            onclick="shareFolder()"
             ><i class="mdi mdi-18px mdi-folder-outline"></i>&nbsp; Share
             Folder</a
           >
-          <a
-            id="shareButton"
-            class="cw-button yellow"
-            style="display: none;"
-            onclick="share()"
+          <a id="shareButton" class="cw-button yellow" style="display: none;"
             ><i class="mdi mdi-18px mdi-share"></i>&nbsp; Share</a
           >
-          <a class="cw-button red" id="btnStop"
+          <a id="btnStop" class="cw-button red"
             ><i class="mdi mdi-18px mdi-stop"></i>&nbsp; Stop</a
           >
-          <a class="cw-button green" id="btnRun"
+          <a id="btnRun" class="cw-button green"
             ><i class="mdi mdi-18px mdi-play"></i>&nbsp; Run</a
           >
         </div>
@@ -176,10 +154,7 @@
     ></script>
 
     <!-- Initialization in JS -->
-    <script src="js/utils/index.js"></script>
-    <script src="js/utils/directoryTree.js"></script>
-    <script src="js/codeworld_shared.js"></script>
-    <script src="js/funblocks.js"></script>
+    <script type="module" src="js/funblocks.js"></script>
 
     <script language="javascript" src="js/blocks_rts.js"></script>
     <script language="javascript" src="js/blocks_lib.js"></script>
@@ -257,10 +232,6 @@
       type="text/javascript"
       src="https://cdn.jsdelivr.net/npm/promise-polyfill@7.1.0/dist/promise.min.js"
     ></script>
-
-    <script type="text/javascript">
-      init();
-    </script>
 
     <xml id="toolbox" style="display: none;">
       <category name="Programs">

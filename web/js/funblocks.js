@@ -13,7 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
+
+import {
+  createFolder,
+  deleteFolder_,
+  deleteProject_,
+  discoverProjects,
+  getNearestDirectory,
+  initDirectoryTree,
+  loadProject,
+  loadSample,
+  markFailed,
+  printMessage,
+  registerStandardHints,
+  saveProjectAsBase,
+  saveProjectBase,
+  share,
+  shareFolder_,
+  toggleObsoleteCodeAlert,
+  updateTreeOnNewProjectCreation,
+  warnIfUnsaved,
+} from './codeworld_shared.js';
+
+import * as Alert from './utils/alert.js';
+import * as Auth from './utils/auth.js';
+import * as DirTree from './utils/directoryTree.js';
+import { sendHttp } from './utils/network.js';
 
 window.lastXML = '';
 
@@ -22,11 +47,163 @@ window.runFunc = null;
 
 // Helper functions /////////////////////////////////////////////////
 
-function loadSample(code) {
-  if (isEditorClean()) sweetAlert.close();
-  warnIfUnsaved(() => {
-    loadWorkspace(code);
+init();
+
+function attachEventListeners() {
+  $('#signout').on('click', () => {
+    Auth.signOut(isEditorClean, () => Blockly.mainWorkspace.clear());
+
+    $('#projects').html('');
   });
+  $('#signin').on('click', Auth.signIn);
+
+  $('#newButton').on('click', newProject);
+  $('#newFolderButton').on('click', newFolder);
+  $('#saveButton').on('click', saveProject);
+  $('#saveAsButton').on('click', saveProjectAs);
+  $('#deleteButton').on('click', deleteProject);
+  $('#docButton').on('click', help);
+  $('#shareFolderButton').on('click', () => shareFolder_(window.projectEnv));
+  $('#shareButton').on('click', share);
+
+  $('#runner').on('load', toggleObsoleteCodeAlert);
+}
+
+function attachCustomEventListeners() {
+  $('#directoryTree').on(DirTree.events.SELECTION_CLEARED, () => {
+    $('#deleteButton').hide();
+    $('#saveButton').hide();
+    $('#shareFolderButton').hide();
+    $('#downloadButton').hide();
+  });
+}
+
+window.addEventListener('message', (event) => {
+  const { data } = event;
+
+  switch (data.type) {
+  case 'loadSample':
+    loadSample(isEditorClean, loadWorkspace, data.code);
+    break;
+  default:
+    break;
+  }
+});
+
+async function init() {
+  await Alert.init();
+
+  await Auth.init(() => {
+    const autohelpEnabled = location.hash.length <= 2;
+    let isFirstSignin = true;
+
+    window.auth2.currentUser.listen(() => {
+      if (isFirstSignin && !Auth.signedIn() && autohelpEnabled) {
+        help();
+      }
+
+      isFirstSignin = false;
+    });
+
+    window.auth2.isSignedIn.listen(() => {
+      if (Auth.signedIn()) {
+        discoverProjects('');
+
+        $('#signin').hide();
+        $('#signout, #navButton').show();
+        window.mainLayout.show('west');
+      } else {
+        $('#signin').show();
+        $(
+          '#signout, #saveButton, #navButton, #deleteButton, #shareFolderButton'
+        ).hide();
+        window.mainLayout.hide('west');
+      }
+    });
+  });
+
+  attachEventListeners();
+  attachCustomEventListeners();
+
+  function loadProjectHandler(name, path) {
+    function successCallback(project) {
+      clearRunCode();
+      loadWorkspace(project.source);
+      Blockly.getMainWorkspace().clearUndo();
+    }
+
+    loadProject(name, path, window.projectEnv, successCallback);
+  }
+  initDirectoryTree(isEditorClean, loadProjectHandler);
+
+  window.lastXML = null;
+  window.showingResult = false;
+  window.buildMode = 'codeworld';
+  window.projectEnv = 'blocklyXML';
+
+  let hash = location.hash.slice(1);
+  if (hash.length > 0) {
+    if (hash.slice(-2) === '==') {
+      hash = hash.slice(0, -2);
+    }
+    if (hash[0] === 'F') {
+      sweetAlert({
+        title: Alert.title('Save As', 'mdi-cloud-upload'),
+        html: 'Enter a name for the shared folder:',
+        input: 'text',
+        confirmButtonText: 'Save',
+        showCancelButton: false,
+      }).then((result) => {
+        if (!result) {
+          return;
+        }
+
+        const data = new FormData();
+        data.append('mode', window.projectEnv);
+        data.append('shash', hash);
+        data.append('name', result.value);
+
+        sendHttp('POST', 'shareContent', data, (request) => {
+          window.location.hash = '';
+          if (request.status === 200) {
+            sweetAlert(
+              'Success!',
+              'The shared folder is moved into your root directory.',
+              'success'
+            );
+          } else {
+            sweetAlert(
+              'Oops!',
+              'Could not load the shared directory. Please try again.',
+              'error'
+            );
+          }
+          initCodeworld();
+          discoverProjects('');
+        });
+      });
+    } else {
+      initCodeworld();
+      loadXmlHash(hash, true);
+    }
+  } else {
+    initCodeworld();
+  }
+}
+
+function initCodeworld() {
+  window.codeworldKeywords = {};
+  registerStandardHints(() => {});
+
+  window.onbeforeunload = (event) => {
+    if (containsUnsavedChanges()) {
+      const msg =
+        'There are unsaved changes to your project. ' +
+        'If you continue, they will be lost!';
+      if (event) event.returnValue = msg;
+      return msg;
+    }
+  };
 }
 
 function loadWorkspace(text) {
@@ -53,94 +230,10 @@ function loadXmlHash(hash, autostart) {
   );
 }
 
-function init() {
-  Alert.init()
-    .then(Auth.init)
-    .then(() => {
-      initDirectoryTree();
-      window.lastXML = null;
-      window.showingResult = false;
-      window.buildMode = 'codeworld';
-      window.projectEnv = 'blocklyXML';
-
-      let hash = location.hash.slice(1);
-      if (hash.length > 0) {
-        if (hash.slice(-2) === '==') {
-          hash = hash.slice(0, -2);
-        }
-        if (hash[0] === 'F') {
-          sweetAlert({
-            title: Alert.title('Save As', 'mdi-cloud-upload'),
-            html: 'Enter a name for the shared folder:',
-            input: 'text',
-            confirmButtonText: 'Save',
-            showCancelButton: false,
-          }).then((result) => {
-            if (!result) {
-              return;
-            }
-
-            const data = new FormData();
-            data.append('mode', window.projectEnv);
-            data.append('shash', hash);
-            data.append('name', result.value);
-
-            sendHttp('POST', 'shareContent', data, (request) => {
-              window.location.hash = '';
-              if (request.status === 200) {
-                sweetAlert(
-                  'Success!',
-                  'The shared folder is moved into your root directory.',
-                  'success'
-                );
-              } else {
-                sweetAlert(
-                  'Oops!',
-                  'Could not load the shared directory. Please try again.',
-                  'error'
-                );
-              }
-              initCodeworld();
-              discoverProjects('');
-            });
-          });
-        } else {
-          initCodeworld();
-          loadXmlHash(hash, true);
-        }
-      } else {
-        initCodeworld();
-      }
-    });
-}
-
-function initCodeworld() {
-  window.codeworldKeywords = {};
-  registerStandardHints(() => {});
-
-  window.onbeforeunload = (event) => {
-    if (containsUnsavedChanges()) {
-      const msg =
-        'There are unsaved changes to your project. ' +
-        'If you continue, they will be lost!';
-      if (event) event.returnValue = msg;
-      return msg;
-    }
-  };
-}
-
-function getCurrentProject() {
-  const selectedNode = utils.directoryTree.getSelectedNode();
-  return {
-    name: selectedNode ? selectedNode.name : 'Untitled',
-    source: getWorkspaceXMLText(),
-    history: '',
-  };
-}
-
 // Sets the generated code
 function updateEditor(code) {
   const editor = document.getElementById('genCode');
+
   CodeMirror.runMode(
     code,
     {
@@ -149,20 +242,43 @@ function updateEditor(code) {
     },
     editor
   );
-  updateUI();
+
+  const selectedNode = DirTree.getSelectedNode();
+  let title = selectedNode ? selectedNode.name : '(new)';
+
+  if (!isEditorClean()) {
+    title = `* ${title}`;
+
+    if (selectedNode && DirTree.isProject(selectedNode)) {
+      const asterisk = selectedNode.element.getElementsByClassName(
+        'unsaved-changes'
+      )[0];
+      if (asterisk) {
+        asterisk.style.display = '';
+      }
+    }
+  }
+
+  document.title = `${title} - CodeWorld`;
 }
 
 function run(xmlHash, codeHash, msg, error, dhash) {
   const hash = codeHash;
 
+  const $shareFolderButton = $('#shareFolderButton');
+
   if (hash) {
     window.location.hash = `#${xmlHash}`;
+
     document.getElementById('shareButton').style.display = '';
-    document.getElementById('shareFolderButton').style.display = 'none';
+
+    $shareFolderButton.hide();
   } else {
     window.location.hash = '';
+
     document.getElementById('shareButton').style.display = 'none';
-    document.getElementById('shareFolderButton').style.display = '';
+
+    $shareFolderButton.show();
   }
 
   window.showingResult = hash || msg;
@@ -200,7 +316,6 @@ function run(xmlHash, codeHash, msg, error, dhash) {
 
   document.getElementById('editButton').setAttribute('href', `/#${codeHash}`);
   window.deployHash = dhash;
-  updateUI();
 }
 
 function removeErrors() {
@@ -284,72 +399,6 @@ function compile(src, silent) {
   });
 }
 
-/*
- * Updates all UI components to reflect the current state.  The general pattern
- * is to modify the state stored in variables and such, and then call updateUI
- * to get the visual presentation to match.
- */
-function updateUI() {
-  const isSignedIn = signedIn();
-  const selectedNode = utils.directoryTree.getSelectedNode();
-
-  if (isSignedIn) {
-    if (document.getElementById('signout').style.display === 'none') {
-      document.getElementById('signin').style.display = 'none';
-      document.getElementById('signout').style.display = '';
-      document.getElementById('navButton').style.display = '';
-      window.mainLayout.show('west');
-      window.mainLayout.open('west');
-    }
-
-    if (selectedNode) {
-      document.getElementById('deleteButton').style.display = '';
-      document.getElementById('saveButton').style.display = '';
-    } else {
-      document.getElementById('deleteButton').style.display = 'none';
-      document.getElementById('saveButton').style.display = 'none';
-    }
-  } else {
-    if (document.getElementById('signout').style.display === '') {
-      document.getElementById('signin').style.display = '';
-      document.getElementById('signout').style.display = 'none';
-      document.getElementById('saveButton').style.display = 'none';
-      window.mainLayout.hide('west');
-    }
-    document.getElementById('navButton').style.display = 'none';
-    document.getElementById('deleteButton').style.display = 'none';
-  }
-
-  document.getElementById('newButton').style.display = '';
-  document.getElementById('saveAsButton').style.display = '';
-  document.getElementById('runButtons').style.display = '';
-
-  if (selectedNode && utils.directoryTree.isDirectory(selectedNode)) {
-    document.getElementById('shareFolderButton').style.display = '';
-  } else {
-    document.getElementById('shareFolderButton').style.display = 'none';
-  }
-
-  let title = selectedNode ? selectedNode.name : '(new)';
-
-  if (!isEditorClean()) {
-    title = `* ${title}`;
-
-    if (selectedNode && utils.directoryTree.isProject(selectedNode)) {
-      const asterisk = selectedNode.element.getElementsByClassName(
-        'unsaved-changes'
-      )[0];
-      if (asterisk) {
-        asterisk.style.display = '';
-      }
-    }
-  } else {
-    $('.unsaved-changes').css('display', 'none');
-  }
-
-  document.title = `${title} - CodeWorld`;
-}
-
 function help() {
   const url = 'doc.html?shelf=help/blocks.shelf';
   sweetAlert({
@@ -361,40 +410,33 @@ function help() {
   });
 }
 
-function signinCallback() {
-  discoverProjects('');
+function getCurrentProject() {
+  const selectedNode = DirTree.getSelectedNode();
+
+  return {
+    name: selectedNode ? selectedNode.name : 'Untitled',
+    source: getWorkspaceXMLText(),
+    history: '',
+  };
 }
 
-function signOut() {
-  // call shared sign out
-  signout();
+function saveProjectCallback() {
+  window.lastXML = getWorkspaceXMLText();
 
-  document.getElementById('projects').innerHTML = '';
-  updateUI();
-}
-
-function loadProject(name, index) {
-  function successFunc(project) {
-    clearRunCode();
-    loadWorkspace(project.source);
-    Blockly.getMainWorkspace().clearUndo();
-  }
-  loadProject_(index, name, window.projectEnv, successFunc);
+  document.title = document.title.replace('* ', '');
+  $('.unsaved-changes').css('display', 'none');
 }
 
 function saveProject() {
-  function successFunc() {
-    window.lastXML = getWorkspaceXMLText();
-  }
-
-  const selectedNode = utils.directoryTree.getSelectedNode();
+  const selectedNode = DirTree.getSelectedNode();
 
   if (selectedNode) {
     saveProjectBase(
       getNearestDirectory(),
       selectedNode.name,
       window.projectEnv,
-      successFunc
+      saveProjectCallback,
+      getCurrentProject()
     );
   } else {
     saveProjectAs();
@@ -402,10 +444,7 @@ function saveProject() {
 }
 
 function saveProjectAs() {
-  function successFunc(name) {
-    window.lastXML = getWorkspaceXMLText();
-  }
-  saveProjectAsBase(successFunc);
+  saveProjectAsBase(saveProjectCallback, getCurrentProject());
 }
 
 function deleteFolder() {
@@ -422,9 +461,9 @@ function deleteFolder() {
 }
 
 function deleteProject() {
-  const selectedNode = utils.directoryTree.getSelectedNode();
+  const selectedNode = DirTree.getSelectedNode();
 
-  if (selectedNode && utils.directoryTree.isDirectory(selectedNode)) {
+  if (selectedNode && DirTree.isDirectory(selectedNode)) {
     deleteFolder();
     return;
   }
@@ -444,22 +483,24 @@ function newFolder() {
     Blockly.getMainWorkspace().clearUndo();
     window.location.hash = '';
   }
-  createFolder(getNearestDirectory(), window.projectEnv, successFunc);
-}
-
-function shareFolder() {
-  shareFolder_(window.projectEnv);
+  createFolder(
+    isEditorClean,
+    getNearestDirectory(),
+    window.projectEnv,
+    successFunc
+  );
 }
 
 function newProject() {
-  warnIfUnsaved(() => {
+  warnIfUnsaved(isEditorClean, () => {
     updateTreeOnNewProjectCreation();
     clearRunCode();
     Blockly.mainWorkspace.clear();
-    updateUI();
     window.lastXML = getWorkspaceXMLText();
     Blockly.getMainWorkspace().clearUndo();
     window.location.hash = '';
+
+    document.title = '(new) - CodeWorld';
   });
 }
 
@@ -470,7 +511,8 @@ function clearRunCode() {
   updateEditor('');
 }
 
-function clearCode() {
-  const workspace = Blockly.mainWorkspace;
-  workspace.clear();
-}
+// Compilation process relies on these methods.
+window.updateEditor = updateEditor;
+window.compile = compile;
+window.run = run;
+window.removeErrors = removeErrors;

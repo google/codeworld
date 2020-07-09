@@ -13,9 +13,99 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
-const autohelpEnabled = location.hash.length <= 2;
+import {
+  createFolder,
+  definePanelExtension,
+  deleteFolder_,
+  deleteProject_,
+  discoverProjects,
+  getNearestDirectory,
+  initDirectoryTree,
+  loadProject,
+  loadSample,
+  markFailed,
+  onHover,
+  parseCompileErrors,
+  parseSymbolsFromCurrentCode,
+  printMessage,
+  registerStandardHints,
+  renderDeclaration,
+  run,
+  saveProjectBase,
+  saveProjectAsBase,
+  setCode,
+  share,
+  shareFolder_,
+  toggleObsoleteCodeAlert,
+  updateTreeOnNewProjectCreation,
+  warnIfUnsaved,
+} from './codeworld_shared.js';
+import * as TreeDialog from './treedialog.js';
+
+import * as Alert from './utils/alert.js';
+import * as Auth from './utils/auth.js';
+import * as DirTree from './utils/directoryTree.js';
+import { sendHttp } from './utils/network.js';
+import { onObjectPropertyChange } from './utils/object.js';
+
+init();
+
+function attachEventListeners() {
+  $('#signout').on('click', () => {
+    Auth.signOut(isEditorClean, clearWorkspace);
+  });
+  $('#signin').on('click', Auth.signIn);
+
+  $('#newButton').on('click', newProject);
+  $('#newFolderButton').on('click', newFolder);
+  $('#deleteButton').on('click', deleteProject);
+  $('#saveButton').on('click', saveProject);
+  $('#saveAsButton').on('click', saveProjectAs);
+  $('#downloadButton').on('click', downloadProject);
+  $('#docButton').on('click', help);
+  $('#toggleThemeButton').on('click', toggleTheme);
+  $('#shareFolderButton').on('click', shareFolder);
+
+  $('#startRecButton').on('click', captureStart);
+  $('#stopRecButton').on('click', stopRecording);
+  $('#shareButton').on('click', share);
+  $('#inspectButton').on('click', inspect);
+
+  $('#runButton').on('click', compile);
+  $('#stopButton').on('click', stopRun);
+
+  $('#runner').on('load', toggleObsoleteCodeAlert);
+}
+
+function attachCustomEventListeners() {
+  $('#directoryTree').on(DirTree.events.SELECTION_CLEARED, () => {
+    $('#deleteButton').hide();
+    $('#saveButton').hide();
+    $('#shareFolderButton').hide();
+    $('#downloadButton').hide();
+  });
+
+  const $inspectButton = $('#inspectButton');
+
+  onObjectPropertyChange(window, 'debugAvailable', () => {
+    if (window.debugAvailable) {
+      $inspectButton.show();
+    } else {
+      $inspectButton.hide();
+    }
+  });
+
+  onObjectPropertyChange(window, 'debugActive', () => {
+    const activeClass = 'inspect-button__active';
+
+    if (window.debugActive) {
+      $inspectButton.addClass(activeClass);
+    } else {
+      $inspectButton.removeClass(activeClass);
+    }
+  });
+}
 
 /*
  * Initializes the programming environment.  This is called after the
@@ -23,7 +113,38 @@ const autohelpEnabled = location.hash.length <= 2;
  */
 async function init() {
   await Alert.init();
-  await Auth.init();
+
+  await Auth.init(() => {
+    const autohelpEnabled = location.hash.length <= 2;
+    let isFirstSignin = true;
+
+    window.auth2.currentUser.listen(() => {
+      if (isFirstSignin && !Auth.signedIn() && autohelpEnabled) {
+        help();
+      }
+
+      isFirstSignin = false;
+    });
+
+    window.auth2.isSignedIn.listen(() => {
+      if (Auth.signedIn()) {
+        discoverProjects('');
+
+        $('#signin').hide();
+        $('#signout, #navButton').show();
+        window.mainLayout.show('west');
+      } else {
+        $('#signin').show();
+        $(
+          '#signout, #saveButton, #navButton, #deleteButton, #shareFolderButton'
+        ).hide();
+        window.mainLayout.hide('west');
+      }
+    });
+  });
+
+  attachEventListeners();
+  attachCustomEventListeners();
 
   // Keep the base bundle preloaded by retrying regularly.
   function preloadBaseBundle() {
@@ -35,7 +156,13 @@ async function init() {
   preloadBaseBundle();
   window.setInterval(preloadBaseBundle, 1000 * 60 * 60);
 
-  initDirectoryTree();
+  function loadProjectHandler(name, path) {
+    function successCallback(project) {
+      setCode(project.source, project.history);
+    }
+    loadProject(name, path, window.buildMode, successCallback);
+  }
+  initDirectoryTree(isEditorClean, loadProjectHandler);
 
   window.savedGeneration = null;
   window.runningGeneration = null;
@@ -100,14 +227,9 @@ async function init() {
             );
           }
           discoverProjects('');
-          updateUI();
         });
       });
-    } else {
-      updateUI();
     }
-  } else {
-    updateUI();
   }
 
   if (hash.length > 0) {
@@ -357,10 +479,34 @@ function initCodeworld() {
   };
 
   window.reparseTimeoutId = null;
-  window.codeworldEditor.on('changes', () => {
-    if (window.reparseTimeoutId) clearTimeout(window.reparseTimeoutId);
+  window.codeworldEditor.on('changes', ({ doc }, changes) => {
+    if (window.reparseTimeoutId) {
+      clearTimeout(window.reparseTimeoutId);
+    }
     window.reparseTimeoutId = setTimeout(parseSymbolsFromCurrentCode, 1500);
-    window.updateUI();
+
+    const selectedNode = DirTree.getSelectedNode();
+    let title = selectedNode ? selectedNode.name : '(new)';
+
+    const isInitialDocWrite = changes[0].text[0] === doc.getValue();
+
+    if (!isEditorClean() && !isInitialDocWrite) {
+      title = `* ${title}`;
+
+      if (selectedNode && DirTree.isProject(selectedNode)) {
+        const asterisk = selectedNode.element.getElementsByClassName(
+          'unsaved-changes'
+        )[0];
+
+        if (asterisk) {
+          asterisk.style.display = '';
+        }
+      }
+    }
+
+    document.title = `${title} - CodeWorld`;
+
+    toggleObsoleteCodeAlert();
   });
 
   if (window.buildMode === 'codeworld') {
@@ -400,6 +546,14 @@ function initCodeworld() {
       window.codeworldEditor.setSize();
     }, 1000);
   };
+}
+
+function isEditorClean() {
+  const doc = window.codeworldEditor.getDoc();
+
+  return window.savedGeneration
+    ? doc.isClean(window.savedGeneration)
+    : doc.getValue();
 }
 
 function backspace() {
@@ -605,116 +759,6 @@ function setMode(force) {
   }
 }
 
-function getCurrentProject() {
-  const doc = window.codeworldEditor.getDoc();
-  const selectedNode = utils.directoryTree.getSelectedNode();
-
-  return {
-    name: selectedNode ? selectedNode.name : 'Untitled',
-    source: doc.getValue(),
-    history: doc.getHistory(),
-  };
-}
-
-/*
- * Updates all UI components to reflect the current state.  The general pattern
- * is to modify the state stored in variables and such, and then call updateUI
- * to get the visual presentation to match.
- */
-function updateUI() {
-  const selectedNode = utils.directoryTree.getSelectedNode();
-
-  if (signedIn()) {
-    if (document.getElementById('signout').style.display === 'none') {
-      document.getElementById('signin').style.display = 'none';
-      document.getElementById('signout').style.display = '';
-      document.getElementById('navButton').style.display = '';
-      window.mainLayout.show('west');
-      window.mainLayout.open('west');
-    }
-
-    if (selectedNode) {
-      document.getElementById('deleteButton').style.display = '';
-    } else {
-      document.getElementById('deleteButton').style.display = 'none';
-    }
-
-    if (selectedNode && utils.directoryTree.isProject(selectedNode)) {
-      document.getElementById('saveButton').style.display = '';
-      document.getElementById('downloadButton').style.display = '';
-      document.getElementById('shareFolderButton').style.display = 'none';
-    } else if (selectedNode && utils.directoryTree.isDirectory(selectedNode)) {
-      document.getElementById('saveButton').style.display = 'none';
-      document.getElementById('downloadButton').style.display = 'none';
-      document.getElementById('shareFolderButton').style.display = '';
-    } else {
-      document.getElementById('saveButton').style.display = 'none';
-      document.getElementById('shareFolderButton').style.display = 'none';
-      document.getElementById('downloadButton').style.display = 'none';
-    }
-  } else {
-    if (document.getElementById('signout').style.display === '') {
-      document.getElementById('signin').style.display = '';
-      document.getElementById('signout').style.display = 'none';
-      document.getElementById('saveButton').style.display = 'none';
-      window.mainLayout.hide('west');
-    }
-    document.getElementById('navButton').style.display = 'none';
-    document.getElementById('deleteButton').style.display = 'none';
-    document.getElementById('shareFolderButton').style.display = 'none';
-  }
-
-  if (window.debugAvailable) {
-    document.getElementById('inspectButton').style.display = '';
-
-    if (window.debugActive) {
-      document.getElementById('inspectButton').style.color = 'black';
-    } else {
-      document.getElementById('inspectButton').style.color = '';
-    }
-  } else {
-    document.getElementById('inspectButton').style.display = 'none';
-  }
-
-  document.getElementById('newButton').style.display = '';
-  document.getElementById('saveAsButton').style.display = '';
-  document.getElementById('runButtons').style.display = '';
-
-  let title = selectedNode ? selectedNode.name : '(new)';
-
-  if (!isEditorClean()) {
-    title = `* ${title}`;
-
-    if (selectedNode && utils.directoryTree.isProject(selectedNode)) {
-      const asterisk = selectedNode.element.getElementsByClassName(
-        'unsaved-changes'
-      )[0];
-      if (asterisk) {
-        asterisk.style.display = '';
-      }
-    }
-  } else {
-    $('.unsaved-changes').css('display', 'none');
-  }
-
-  // If true - code currently in document is not equal to
-  // last compiled code
-  const running = document.getElementById('runner').style.display !== 'none';
-  const obsolete = window.codeworldEditor
-    ? !window.codeworldEditor.getDoc().isClean(window.runningGeneration)
-    : false;
-  const obsoleteAlert = document.getElementById('obsolete-code-alert');
-  if (running && obsolete) {
-    obsoleteAlert.classList.add('obsolete-code-alert-fadein');
-    obsoleteAlert.classList.remove('obsolete-code-alert-fadeout');
-  } else {
-    obsoleteAlert.classList.add('obsolete-code-alert-fadeout');
-    obsoleteAlert.classList.remove('obsolete-code-alert-fadein');
-  }
-
-  document.title = `${title} - CodeWorld`;
-}
-
 function toggleTheme() {
   document.body.classList.toggle('dark-theme');
   const dark = document.body.classList.contains('dark-theme');
@@ -762,42 +806,26 @@ function help() {
   });
 }
 
-function isEditorClean() {
-  if (!window.codeworldEditor) {
-    return true;
-  }
-
-  const doc = window.codeworldEditor.getDoc();
-
-  if (window.savedGeneration === null) return doc.getValue() === '';
-  else return doc.isClean(window.savedGeneration);
-}
-
-function loadSample(code) {
-  if (isEditorClean()) sweetAlert.close();
-  warnIfUnsaved(() => {
-    setCode(code);
-  });
-}
-
 function newProject() {
-  warnIfUnsaved(() => {
+  warnIfUnsaved(isEditorClean, () => {
     updateTreeOnNewProjectCreation();
 
     setCode('');
+
+    document.title = '(new) - CodeWorld';
   });
 }
 
 function newFolder() {
-  createFolder(getNearestDirectory(), window.buildMode, () => {
+  function successCallback() {
     setCode('');
-  });
-}
-
-function loadProject(name, path) {
-  loadProject_(path, name, window.buildMode, (project) => {
-    setCode(project.source, project.history);
-  });
+  }
+  createFolder(
+    isEditorClean,
+    getNearestDirectory(),
+    window.buildMode,
+    successCallback
+  );
 }
 
 function formatSource() {
@@ -870,25 +898,14 @@ function formatSource() {
   });
 }
 
-function stopRun() {
-  if (window.debugActive) {
-    document.getElementById('runner').contentWindow.postMessage(
-      {
-        type: 'stopDebug',
-      },
-      '*'
-    );
-    destroyTreeDialog();
-  }
-  window.cancelCompile();
-
-  run('', '', '', false, null);
-}
-
 window.addEventListener('message', (event) => {
-  if (!event.data.type) return;
+  const { data } = event;
 
-  if (event.data.type === 'programStarted') {
+  switch (data.type) {
+  case 'loadSample':
+    loadSample(isEditorClean, setCode, data.code);
+    break;
+  case 'programStarted':
     if (window.lastRunMessage) {
       const msg = window.lastRunMessage;
       window.lastRunMessage = null;
@@ -896,7 +913,8 @@ window.addEventListener('message', (event) => {
         showRequiredChecksInDialog(msg);
       }, 500);
     }
-  } else if (event.data.type === 'showGraphics') {
+    break;
+  case 'showGraphics': {
     const runner = document.getElementById('runner');
     runner.style.display = '';
     runner.focus();
@@ -907,20 +925,27 @@ window.addEventListener('message', (event) => {
       },
       '*'
     );
-  } else if (event.data.type === 'consoleOut') {
-    if (event.data.str !== '') printMessage(event.data.msgType, event.data.str);
-    if (event.data.msgType === 'error') markFailed();
-  } else if (event.data.type === 'updateUI') {
-    updateUI();
-  } else if (event.data.type === 'debugReady') {
+    break;
+  }
+  case 'consoleOut':
+    if (data.str) {
+      printMessage(data.msgType, data.str);
+    }
+    if (data.msgType === 'error') {
+      markFailed();
+    }
+    break;
+  case 'debugReady':
     window.debugAvailable = true;
-    updateUI();
-  } else if (event.data.type === 'debugActive') {
+    break;
+  case 'debugActive':
     window.debugActive = true;
-    updateUI();
-  } else if (event.data.type === 'debugFinished') {
+    break;
+  case 'debugFinished':
     window.debugActive = false;
-    updateUI();
+    break;
+  default:
+    break;
   }
 });
 
@@ -940,69 +965,6 @@ function inspect() {
       '*'
     );
   }
-  updateUI();
-}
-
-function run(hash, dhash, msg, error, generation) {
-  window.runningGeneration = generation;
-  window.debugAvailable = false;
-  window.debugActive = false;
-  window.lastRunMessage = msg;
-
-  const runner = document.getElementById('runner');
-
-  // Stop canvas recording if the recorder is active
-  document.getElementById('runner').contentWindow.postMessage(
-    {
-      type: 'stopRecord',
-    },
-    '*'
-  );
-
-  if (hash) {
-    window.location.hash = `#${hash}`;
-    document.getElementById('shareButton').style.display = '';
-  } else {
-    window.location.hash = '';
-    document.getElementById('shareButton').style.display = 'none';
-  }
-
-  if (dhash) {
-    const loc = `run.html?dhash=${dhash}&mode=${window.buildMode}`;
-    runner.contentWindow.location.replace(loc);
-    if (
-      Boolean(navigator.mediaDevices) &&
-      Boolean(navigator.mediaDevices.getUserMedia)
-    ) {
-      document.getElementById('startRecButton').style.display = '';
-    }
-  } else {
-    runner.contentWindow.location.replace('about:blank');
-    document.getElementById('runner').style.display = 'none';
-    document.getElementById('startRecButton').style.display = 'none';
-  }
-
-  if (hash || msg) {
-    window.mainLayout.show('east');
-    window.mainLayout.open('east');
-    document.getElementById('shareFolderButton').style.display = 'none';
-  } else {
-    document.getElementById('shareFolderButton').style.display = '';
-    window.mainLayout.hide('east');
-  }
-
-  clearMessages();
-
-  parseCompileErrors(msg).forEach((cmError) => {
-    printMessage(cmError.severity, cmError.fullText);
-  });
-
-  if (error) markFailed();
-
-  window.deployHash = dhash;
-
-  updateUI();
-  document.getElementById('runner').addEventListener('load', updateUI);
 }
 
 function showRequiredChecksInDialog(msg) {
@@ -1069,10 +1031,19 @@ const htmlEscapeString = (() => {
   };
 })();
 
-function goto(line, col) {
-  codeworldEditor.getDoc().setCursor(line - 1, col - 1);
-  codeworldEditor.scrollIntoView(null, 100);
-  codeworldEditor.focus();
+function stopRun() {
+  if (window.debugActive) {
+    document.getElementById('runner').contentWindow.postMessage(
+      {
+        type: 'stopDebug',
+      },
+      '*'
+    );
+    TreeDialog.destroy();
+  }
+  window.cancelCompile();
+
+  run('', '', '', false, null);
 }
 
 function compile() {
@@ -1165,32 +1136,37 @@ function compile() {
   });
 }
 
-let isFirstSignin = true;
+function getCurrentProject() {
+  const doc = window.codeworldEditor.getDoc();
+  const selectedNode = DirTree.getSelectedNode();
 
-function signinCallback(result) {
-  discoverProjects('');
-  if (isFirstSignin && !signedIn() && autohelpEnabled) {
-    help();
-  }
-  isFirstSignin = false;
+  return {
+    name: selectedNode ? selectedNode.name : 'Untitled',
+    source: doc.getValue(),
+    history: doc.getHistory(),
+  };
+}
+
+function saveProjectCallback() {
+  window.savedGeneration = window.codeworldEditor
+    .getDoc()
+    .changeGeneration(true);
+  window.codeworldEditor.focus();
+
+  document.title = document.title.replace('* ', '');
+  $('.unsaved-changes').hide();
 }
 
 function saveProject() {
-  function successFunc() {
-    const doc = window.codeworldEditor.getDoc();
-
-    window.savedGeneration = doc.changeGeneration(true);
-    window.codeworldEditor.focus();
-  }
-
-  const selectedNode = utils.directoryTree.getSelectedNode();
+  const selectedNode = DirTree.getSelectedNode();
 
   if (selectedNode) {
     saveProjectBase(
       getNearestDirectory(),
       selectedNode.name,
       window.projectEnv,
-      successFunc
+      saveProjectCallback,
+      getCurrentProject()
     );
   } else {
     saveProjectAs();
@@ -1198,14 +1174,13 @@ function saveProject() {
 }
 
 function saveProjectAs() {
-  function successFunc(name) {
-    const doc = window.codeworldEditor.getDoc();
+  saveProjectAsBase(saveProjectCallback, getCurrentProject());
+}
 
-    window.savedGeneration = doc.changeGeneration(true);
-    window.codeworldEditor.focus();
-  }
+function clearWorkspace() {
+  DirTree.clearSelectedNode();
 
-  saveProjectAsBase(successFunc);
+  setCode('');
 }
 
 function deleteFolder() {
@@ -1223,9 +1198,9 @@ function deleteFolder() {
 }
 
 function deleteProject() {
-  const selectedNode = utils.directoryTree.getSelectedNode();
+  const selectedNode = DirTree.getSelectedNode();
 
-  if (selectedNode && utils.directoryTree.isDirectory(selectedNode)) {
+  if (selectedNode && DirTree.isDirectory(selectedNode)) {
     deleteFolder();
     return;
   }
@@ -1246,7 +1221,7 @@ function downloadProject() {
     type: 'text/plain',
     endings: 'native',
   });
-  const selectedNode = utils.directoryTree.getSelectedNode();
+  const selectedNode = DirTree.getSelectedNode();
   const filename = `${selectedNode ? selectedNode.name : 'untitled'}.hs`;
 
   if (window.navigator.msSaveBlob) {
@@ -1261,83 +1236,6 @@ function downloadProject() {
   }
 }
 
-function parseCompileErrors(rawErrors) {
-  const errors = [];
-  rawErrors = rawErrors.split('\n\n');
-  rawErrors.forEach((err) => {
-    const lines = err.trim().split('\n');
-    const firstLine = lines[0].trim();
-    const otherLines = lines
-      .slice(1)
-      .map((ln) => ln.trim())
-      .join('\n');
-    const re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/;
-    const re2 = /^program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\): (\w+):(.*)/;
-
-    if (err.trim() === '') {
-      // Ignore empty messages.
-    } else if (re1.test(firstLine)) {
-      const match = re1.exec(firstLine);
-
-      const line = Number(match[1]) - 1;
-      let startCol = Number(match[3]) - 1;
-      let endCol;
-      if (match[4]) {
-        endCol = Number(match[4]);
-      } else {
-        const token = window.codeworldEditor
-          .getLineTokens(line)
-          .find((t) => t.start === startCol);
-        if (token) {
-          endCol = token.end;
-        } else if (
-          startCol >= window.codeworldEditor.getDoc().getLine(line).length
-        ) {
-          endCol = startCol;
-          --startCol;
-        } else {
-          endCol = startCol + 1;
-        }
-      }
-
-      const message = ((match[6] ? `${match[6].trim()}\n` : '') + otherLines)
-        .replace(/program\.hs:(\d+):((\d+)(-\d+)?)/g, 'Line $1, Column $2')
-        .replace(
-          /program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\)/g,
-          'Line $1-$3, Column $2-$4'
-        );
-
-      errors.push({
-        from: CodeMirror.Pos(line, startCol),
-        to: CodeMirror.Pos(line, endCol),
-        severity: match[5],
-        fullText: err,
-        message: message,
-      });
-    } else if (re2.test(firstLine)) {
-      const match = re2.exec(firstLine);
-
-      const startLine = Number(match[1]) - 1;
-      const startCol = Number(match[2]) - 1;
-      const endLine = Number(match[3]) - 1;
-      const endCol = Number(match[4]);
-
-      errors.push({
-        from: CodeMirror.Pos(startLine, startCol),
-        to: CodeMirror.Pos(endLine, endCol),
-        severity: match[5],
-        fullText: err,
-        message: (match[6] ? `${match[6].trim()}\n` : '') + otherLines,
-      });
-    } else {
-      console.log('Can not parse error header:', firstLine);
-    }
-  });
-  return errors;
-}
-
-function clearWorkspace() {
-  utils.directoryTree.clearSelectedNode();
-
-  setCode('');
-}
+// TEMP: required by setCode in codeworld_shared.js
+window.compile = compile;
+window.stopRun = stopRun;

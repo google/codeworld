@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
+
+import { registerStandardHints } from './codeworld_shared.js';
 
 window.env = parent;
 const params = new URLSearchParams(window.location.search);
@@ -95,9 +96,9 @@ window.onscroll = (event) => {
           if (linkable && clickable) {
             pre.classList.add('clickable');
             pre.onclick = () => {
-              if (env && env.loadSample) {
+              if (env) {
                 savePosition();
-                env.loadSample(text);
+                env.postMessage({ type: 'loadSample', code: text }, '*');
               }
             };
           }
@@ -135,7 +136,6 @@ window.onscroll = (event) => {
         const currentTarget = e.currentTarget;
         const contentWindow = currentTarget.contentWindow;
 
-        contentWindow.setParent(parent);
         contentWindow.setId(iframe);
         contentWindow.loadXml.call(iframe.contentWindow, text);
       });

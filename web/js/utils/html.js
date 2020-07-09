@@ -13,3 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+function encode(str) {
+  return $('<div>').text(str).html();
+}
+
+export { encode };

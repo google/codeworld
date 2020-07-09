@@ -514,31 +514,19 @@ function signIn(callback) {
   const { auth2 } = window;
 
   if (auth2) {
-    auth2.isSignedIn.listen(() => {
-      if (auth2.isSignedIn.get()) {
-        callback();
-      }
-    });
-
     auth2.signIn({
       prompt: 'login',
     });
   }
 }
 
-function signOut(isEditorClean, clearWorkspace, callback) {
+function signOut(isEditorClean, clearWorkspace) {
   warnIfUnsaved(isEditorClean, () => {
     clearWorkspace();
 
     const { auth2 } = window;
 
     if (auth2) {
-      auth2.isSignedIn.listen(() => {
-        if (!auth2.isSignedIn.get()) {
-          callback();
-        }
-      });
-
       auth2.signOut();
     }
   });

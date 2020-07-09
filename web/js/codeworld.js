@@ -53,17 +53,9 @@ init();
 
 function attachEventListeners() {
   $('#signout').on('click', () => {
-    Auth.signOut(isEditorClean, clearWorkspace, () => {
-      $('#nav').trigger('disable');
-    });
+    Auth.signOut(isEditorClean, clearWorkspace);
   });
-  $('#signin').on('click', () => {
-    Auth.signIn(() => {
-      discoverProjects('');
-
-      $('#nav').trigger('enable');
-    });
-  });
+  $('#signin').on('click', Auth.signIn);
 
   $('#newButton').on('click', newProject);
   $('#newFolderButton').on('click', newFolder);
@@ -87,24 +79,6 @@ function attachEventListeners() {
 }
 
 function attachCustomEventListeners() {
-  $('#nav').on('enable', () => {
-    $('#signin').hide();
-
-    $('#signout, #navButton').show();
-
-    window.mainLayout.show('west');
-  });
-
-  $('#nav').on('disable', () => {
-    $('#signin').show();
-
-    $(
-      '#signout, #saveButton, #navButton, #deleteButton, #shareFolderButton'
-    ).hide();
-
-    window.mainLayout.hide('west');
-  });
-
   $('#directoryTree').on(DirTree.events.SELECTION_CLEARED, () => {
     $('#deleteButton').hide();
     $('#saveButton').hide();
@@ -153,10 +127,18 @@ async function init() {
     });
 
     window.auth2.isSignedIn.listen(() => {
-      if (window.auth2.isSignedIn.get()) {
+      if (Auth.signedIn()) {
         discoverProjects('');
 
-        $('#nav').trigger('enable');
+        $('#signin').hide();
+        $('#signout, #navButton').show();
+        window.mainLayout.show('west');
+      } else {
+        $('#signin').show();
+        $(
+          '#signout, #saveButton, #navButton, #deleteButton, #shareFolderButton'
+        ).hide();
+        window.mainLayout.hide('west');
       }
     });
   });

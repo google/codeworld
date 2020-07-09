@@ -51,25 +51,11 @@ init();
 
 function attachEventListeners() {
   $('#signout').on('click', () => {
-    Auth.signOut(
-      isEditorClean,
-      () => {
-        Blockly.mainWorkspace.clear();
-      },
-      () => {
-        $('#nav').trigger('disable');
-      }
-    );
+    Auth.signOut(isEditorClean, () => Blockly.mainWorkspace.clear());
 
     $('#projects').html('');
   });
-  $('#signin').on('click', () => {
-    Auth.signIn(() => {
-      discoverProjects('');
-
-      $('#nav').trigger('enable');
-    });
-  });
+  $('#signin').on('click', Auth.signIn);
 
   $('#newButton').on('click', newProject);
   $('#newFolderButton').on('click', newFolder);
@@ -84,22 +70,6 @@ function attachEventListeners() {
 }
 
 function attachCustomEventListeners() {
-  $('#nav').on('enable', () => {
-    $('#signin').css('display', 'none');
-    $('#signout, #navButton').css('display', 'block');
-
-    window.mainLayout.show('west');
-  });
-
-  $('#nav').on('disable', () => {
-    $('#signin').css('display', 'block');
-    $(
-      '#signout, #saveButton, #navButton, #deleteButton, #shareFolderButton'
-    ).css('display', 'none');
-
-    window.mainLayout.hide('west');
-  });
-
   $('#directoryTree').on(DirTree.events.SELECTION_CLEARED, () => {
     $('#deleteButton').hide();
     $('#saveButton').hide();
@@ -124,11 +94,30 @@ async function init() {
   await Alert.init();
 
   await Auth.init(() => {
+    const autohelpEnabled = location.hash.length <= 2;
+    let isFirstSignin = true;
+
+    window.auth2.currentUser.listen(() => {
+      if (isFirstSignin && !Auth.signedIn() && autohelpEnabled) {
+        help();
+      }
+
+      isFirstSignin = false;
+    });
+
     window.auth2.isSignedIn.listen(() => {
-      if (window.auth2.isSignedIn.get()) {
+      if (Auth.signedIn()) {
         discoverProjects('');
 
-        $('#nav').trigger('enable');
+        $('#signin').hide();
+        $('#signout, #navButton').show();
+        window.mainLayout.show('west');
+      } else {
+        $('#signin').show();
+        $(
+          '#signout, #saveButton, #navButton, #deleteButton, #shareFolderButton'
+        ).hide();
+        window.mainLayout.hide('west');
       }
     });
   });

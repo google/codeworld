@@ -43,13 +43,13 @@
             <a id="newButton" class="cw-button red">
               <i class="mdi mdi-18px mdi-plus"></i>&nbsp; New
             </a>
-            <a id="saveButton" class="cw-button blue">
+            <a id="saveButton" class="cw-button blue" style="display: none;">
               <i class="mdi mdi-18px mdi-cloud-upload"></i>&nbsp; Save
             </a>
             <a id="saveAsButton" class="cw-button blue">
               <i class="mdi mdi-18px mdi-dots-horizontal"></i>&nbsp; Save As
             </a>
-            <a id="deleteButton" class="cw-button red">
+            <a id="deleteButton" class="cw-button red" style="display: none;">
               <i class="mdi mdi-18px mdi-delete"></i>&nbsp; Delete
             </a>
           </div>
@@ -105,12 +105,13 @@
             id="navButton"
             class="cw-button blue"
             onclick="window.mainLayout.toggle('west')"
+            style="display: none;"
             ><i class="mdi mdi-18px mdi-menu"></i
           ></a>
           <a id="signin" class="cw-button blue"
             ><i class="mdi mdi-18px mdi-login"></i>&nbsp; Sign In</a
           >
-          <a id="signout" class="cw-button blue"
+          <a id="signout" class="cw-button blue" style="display: none;"
             ><i class="mdi mdi-18px mdi-logout"></i>&nbsp; Sign Out</a
           >
           <a id="docButton" class="cw-button blue"
@@ -126,7 +127,10 @@
         </div>
         <span></span>
         <div id="runButtons">
-          <a id="shareFolderButton" class="cw-button yellow"
+          <a
+            id="shareFolderButton"
+            class="cw-button yellow"
+            style="display: none;"
             ><i class="mdi mdi-18px mdi-folder-outline"></i>&nbsp; Share
             Folder</a
           >

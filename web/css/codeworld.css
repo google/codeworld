@@ -116,16 +116,6 @@ body {
   margin: 0px;
 }
 
-#signout,
-#navButton,
-#saveButton,
-#deleteButton,
-#downloadButton,
-#shareFolderButton,
-#inspectButton {
-  display: none;
-}
-
 .cw-button.inspect-button__active {
   color: black;
 }

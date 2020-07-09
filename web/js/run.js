@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
 // Tracks when the program started, and whether the program has done
 // anything observable (as best we can tell).  This is used to decide
@@ -144,9 +143,9 @@ function notifyStarted() {
   }
 }
 
-function showCanvas() {}
+window.showCanvas = function () {};
 
-function start() {
+window.start = function () {
   const modeMatch = /\bmode=([A-Za-z0-9]*)\b/.exec(location.search);
   window.buildMode = modeMatch ? modeMatch[1] : 'codeworld';
 
@@ -185,10 +184,6 @@ function start() {
   window.h$base_stderr_fd.write = window.h$base_writeStderr;
   window.h$base_stdin_fd.read = window.h$base_readStdin;
 
-  // Update program start time in case loading/setup took a while.
-  window.programStartTime = Date.now();
-  notifyStarted();
-
   const showObserver = new MutationObserver(() => {
     window.hasObservableOutput = true;
 
@@ -218,10 +213,14 @@ function start() {
     subtree: true,
   });
 
-  window.h$run(window.h$mainZCZCMainzimain);
-}
+  // Update program start time in case loading/setup took a while.
+  window.programStartTime = Date.now();
+  notifyStarted();
 
-function init() {
+  window.h$run(window.h$mainZCZCMainzimain);
+};
+
+window.init = function () {
   let paramList = location.search.slice(1).split('&');
   const params = {};
   for (let i = 0; i < paramList.length; i++) {
@@ -253,4 +252,4 @@ function init() {
   loadScript.setAttribute('type', 'text/javascript');
   loadScript.setAttribute('src', uri);
   document.body.appendChild(loadScript);
-}
+};

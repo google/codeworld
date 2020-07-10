@@ -820,27 +820,35 @@ function loadSample(isEditorClean, action, code) {
   });
 }
 
-function setCode(code, history, autostart) {
-  if (!window.codeworldEditor) {
-    return;
+function updateDocumentTitle(isEditorClean) {
+  const selectedNode = DirTree.getSelectedNode();
+  let title = `${selectedNode ? selectedNode.name : '(new)'} - Codeworld`;
+
+  if (isEditorClean && !isEditorClean()) {
+    title = `* ${title}`;
   }
 
-  const doc = window.codeworldEditor.getDoc();
-  doc.setValue(code);
-  window.savedGeneration = doc.changeGeneration(true);
+  document.title = title;
+}
 
-  if (history) {
-    doc.setHistory(history);
-  } else {
-    doc.clearHistory();
-  }
+function updateProjectChangeMark(isEditorClean) {
+  const selectedNode = DirTree.getSelectedNode();
 
-  window.codeworldEditor.focus();
-  parseSymbolsFromCurrentCode();
-  if (autostart) {
-    compile();
+  if (
+    isEditorClean &&
+    !isEditorClean() &&
+    selectedNode &&
+    DirTree.isProject(selectedNode)
+  ) {
+    const asterisk = selectedNode.element.getElementsByClassName(
+      'unsaved-changes'
+    )[0];
+
+    if (asterisk) {
+      asterisk.style.display = '';
+    }
   } else {
-    stopRun();
+    $('.unsaved-changes').hide();
   }
 }
 
@@ -1172,8 +1180,6 @@ function loadProject(name, path, buildMode, successFunc) {
     allowEscapeKey: false,
     allowEnterKey: false,
   });
-
-  setCode('');
 
   const data = new FormData();
   data.append('name', name);
@@ -1530,7 +1536,7 @@ function pathToRootDir(nodeInit) {
   return path.join('/');
 }
 
-function initDirectoryTree(isEditorClean, loadProjectHandler) {
+function initDirectoryTree(isEditorClean, loadProjectHandler, clearEditor) {
   const treeStateStorageKey = 'directoryTree';
 
   $('#directoryTree').tree({
@@ -1675,7 +1681,7 @@ function initDirectoryTree(isEditorClean, loadProjectHandler) {
                   updateChildrenIndexes(toNode);
                   if (DirTree.isDirectory(movedNode)) {
                     loadSubTree(movedNode);
-                    setCode('');
+                    clearEditor();
                   }
                 }
               );
@@ -1716,6 +1722,7 @@ function initDirectoryTree(isEditorClean, loadProjectHandler) {
 
     if ($('#directoryTree').tree('isNodeSelected', event.node)) {
       DirTree.clearSelectedNode();
+      updateDocumentTitle();
     }
   });
   $('#directoryTree').on('tree.click', (event) => {
@@ -1738,7 +1745,7 @@ function initDirectoryTree(isEditorClean, loadProjectHandler) {
         if (node.children.length === 0) {
           loadSubTree(node);
         }
-        setCode('');
+        clearEditor();
         $('#directoryTree').tree('selectNode', node);
       }
     });
@@ -1765,8 +1772,7 @@ function initDirectoryTree(isEditorClean, loadProjectHandler) {
       $shareFolderButton.show();
     }
 
-    document.title = `${selectedNode.name} - CodeWorld`;
-    $('.unsaved-changes').hide();
+    updateDocumentTitle();
   });
 }
 
@@ -2066,10 +2072,11 @@ export {
   run,
   saveProjectBase,
   saveProjectAsBase,
-  setCode,
   share,
   shareFolder_,
   toggleObsoleteCodeAlert,
+  updateDocumentTitle,
+  updateProjectChangeMark,
   updateTreeOnNewProjectCreation,
   warnIfUnsaved,
 };

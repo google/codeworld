@@ -34,10 +34,11 @@ import {
   run,
   saveProjectBase,
   saveProjectAsBase,
-  setCode,
   share,
   shareFolder_,
   toggleObsoleteCodeAlert,
+  updateDocumentTitle,
+  updateProjectChangeMark,
   updateTreeOnNewProjectCreation,
   warnIfUnsaved,
 } from './codeworld_shared.js';
@@ -105,6 +106,11 @@ function attachCustomEventListeners() {
       $inspectButton.removeClass(activeClass);
     }
   });
+
+  onObjectPropertyChange(window, 'savedGeneration', () => {
+    updateDocumentTitle();
+    updateProjectChangeMark();
+  });
 }
 
 /*
@@ -162,7 +168,7 @@ async function init() {
     }
     loadProject(name, path, window.buildMode, successCallback);
   }
-  initDirectoryTree(isEditorClean, loadProjectHandler);
+  initDirectoryTree(isEditorClean, loadProjectHandler, () => setCode(''));
 
   window.savedGeneration = null;
   window.runningGeneration = null;
@@ -485,26 +491,8 @@ function initCodeworld() {
     }
     window.reparseTimeoutId = setTimeout(parseSymbolsFromCurrentCode, 1500);
 
-    const selectedNode = DirTree.getSelectedNode();
-    let title = selectedNode ? selectedNode.name : '(new)';
-
-    const isInitialDocWrite = changes[0].text[0] === doc.getValue();
-
-    if (!isEditorClean() && !isInitialDocWrite) {
-      title = `* ${title}`;
-
-      if (selectedNode && DirTree.isProject(selectedNode)) {
-        const asterisk = selectedNode.element.getElementsByClassName(
-          'unsaved-changes'
-        )[0];
-
-        if (asterisk) {
-          asterisk.style.display = '';
-        }
-      }
-    }
-
-    document.title = `${title} - CodeWorld`;
+    updateDocumentTitle(isEditorClean);
+    updateProjectChangeMark(isEditorClean);
 
     toggleObsoleteCodeAlert();
   });
@@ -548,12 +536,38 @@ function initCodeworld() {
   };
 }
 
+function setCode(code, history, autostart) {
+  if (!window.codeworldEditor) {
+    return;
+  }
+
+  const doc = window.codeworldEditor.getDoc();
+  doc.setValue(code);
+
+  const nextDocGeneration = doc.changeGeneration(true);
+  window.savedGeneration = nextDocGeneration;
+
+  if (history) {
+    doc.setHistory(history);
+  } else {
+    doc.clearHistory();
+  }
+
+  window.codeworldEditor.focus();
+  parseSymbolsFromCurrentCode();
+  if (autostart) {
+    compile();
+  } else {
+    stopRun();
+  }
+}
+
 function isEditorClean() {
   const doc = window.codeworldEditor.getDoc();
 
   return window.savedGeneration
     ? doc.isClean(window.savedGeneration)
-    : doc.getValue();
+    : Boolean(!doc.getValue());
 }
 
 function backspace() {

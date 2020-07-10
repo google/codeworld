@@ -1396,7 +1396,7 @@ function printMessage(type, message) {
     );
     $lastOutputBlockMessageContent.append(formattedMessage);
   } else {
-    const lines = formattedMessage.split('\n');
+    const lines = formattedMessage.trim().split('\n');
     const $box = $('<div>');
     $box.addClass(`message-box ${type}`);
 

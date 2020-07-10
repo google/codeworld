@@ -31,6 +31,8 @@ import {
   share,
   shareFolder_,
   toggleObsoleteCodeAlert,
+  updateDocumentTitle,
+  updateProjectChangeMark,
   updateTreeOnNewProjectCreation,
   warnIfUnsaved,
 } from './codeworld_shared.js';
@@ -134,7 +136,9 @@ async function init() {
 
     loadProject(name, path, window.projectEnv, successCallback);
   }
-  initDirectoryTree(isEditorClean, loadProjectHandler);
+  initDirectoryTree(isEditorClean, loadProjectHandler, () =>
+    Blockly.mainWorkspace.clear()
+  );
 
   window.lastXML = null;
   window.showingResult = false;
@@ -243,23 +247,8 @@ function updateEditor(code) {
     editor
   );
 
-  const selectedNode = DirTree.getSelectedNode();
-  let title = selectedNode ? selectedNode.name : '(new)';
-
-  if (!isEditorClean()) {
-    title = `* ${title}`;
-
-    if (selectedNode && DirTree.isProject(selectedNode)) {
-      const asterisk = selectedNode.element.getElementsByClassName(
-        'unsaved-changes'
-      )[0];
-      if (asterisk) {
-        asterisk.style.display = '';
-      }
-    }
-  }
-
-  document.title = `${title} - CodeWorld`;
+  updateDocumentTitle(isEditorClean);
+  updateProjectChangeMark(isEditorClean);
 }
 
 function run(xmlHash, codeHash, msg, error, dhash) {

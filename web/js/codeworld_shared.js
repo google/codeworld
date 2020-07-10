@@ -1384,7 +1384,6 @@ function printMessage(type, message) {
   const $lastOutputBlock = $outputBlock.children().last();
 
   const formattedMessage = preFormatMessage(message);
-  const lines = formattedMessage.trim().split('\n');
 
   // Combine sequential log messages.
   if (
@@ -1395,18 +1394,9 @@ function printMessage(type, message) {
     const $lastOutputBlockMessageContent = $lastOutputBlock.find(
       '.message-content'
     );
-
-    if ($lastOutputBlockMessageContent.children().length) {
-      $lastOutputBlockMessageContent.append(lines);
-    } else {
-      $lastOutputBlockMessageContent.replaceWith(
-        `${
-          '<details open="open" class="message-content">' +
-          `<summary>${$lastOutputBlockMessageContent.html()}</summary>`
-        }${lines}</details>`
-      );
-    }
+    $lastOutputBlockMessageContent.append(formattedMessage);
   } else {
+    const lines = formattedMessage.split('\n');
     const $box = $('<div>');
     $box.addClass(`message-box ${type}`);
 
@@ -1419,7 +1409,7 @@ function printMessage(type, message) {
     $box.append($messageGutter, $messageContent);
     $outputBlock.append($box);
 
-    if (lines.length < 2) {
+    if (lines.length < 2 || type === 'log') {
       const $singleLineMsg = $('<div>');
       $singleLineMsg.addClass('message-content');
       $singleLineMsg.html(formattedMessage);

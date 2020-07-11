@@ -249,6 +249,15 @@ body {
   font-weight: bold;
 }
 
+.message-box .message-content {
+  overflow-wrap: normal;
+  min-width: 40em;
+}
+
+.message-box.log .message-content {
+  overflow-wrap: anywhere;
+}
+
 .cw-button {
   border-radius: 4px;
   cursor: pointer;

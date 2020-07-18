@@ -18,11 +18,11 @@ import {
   createFolder,
   deleteFolder_,
   deleteProject_,
-  discoverProjects,
   getNearestDirectory,
   initDirectoryTree,
   loadProject,
   loadSample,
+  loadTreeNodesAtPath,
   markFailed,
   printMessage,
   registerStandardHints,
@@ -109,7 +109,7 @@ async function init() {
 
     window.auth2.isSignedIn.listen(() => {
       if (Auth.signedIn()) {
-        discoverProjects('');
+        loadTreeNodesAtPath('');
 
         $('#signin').hide();
         $('#signout, #navButton').show();
@@ -183,7 +183,7 @@ async function init() {
             );
           }
           initCodeworld();
-          discoverProjects('');
+          loadTreeNodesAtPath('');
         });
       });
     } else {

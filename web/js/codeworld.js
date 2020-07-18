@@ -892,6 +892,7 @@ function formatSource() {
     return;
   }
 
+  const oldCursorPosition = window.codeworldEditor.doc.getCursor();
   const src = window.codeworldEditor.getValue();
   const data = new FormData();
   data.append('source', src);
@@ -901,6 +902,11 @@ function formatSource() {
     if (request.status === 200) {
       if (request.responseText !== src) {
         codeworldEditor.getDoc().setValue(request.responseText);
+
+        window.codeworldEditor.doc.setCursor(
+          oldCursorPosition.line,
+          oldCursorPosition.ch
+        );
       }
     } else if (request.status === 500) {
       sweetAlert(

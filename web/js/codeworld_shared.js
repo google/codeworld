@@ -1647,7 +1647,6 @@ function initDirectoryTree(isEditorClean, loadProjectHandler, clearEditor) {
 
               if (DirTree.isDirectory(movedNode)) {
                 loadTreeNodesAtPath(getNearestDirectory(movedNode), movedNode);
-                DirTree.clearSelectedNode();
                 clearEditor();
               }
             });
@@ -1663,14 +1662,34 @@ function initDirectoryTree(isEditorClean, loadProjectHandler, clearEditor) {
     });
   });
   $('#directoryTree').on('tree.open', (event) => {
-    const { node } = event;
+    const { node: openedNode } = event;
 
-    const folderIcon = node.element.getElementsByClassName('mdi-folder')[0];
+    const folderIcon = openedNode.element.getElementsByClassName(
+      'mdi-folder'
+    )[0];
     if (folderIcon) {
       folderIcon.classList.replace('mdi-folder', 'mdi-folder-open');
     }
 
-    loadTreeNodesAtPath(getNearestDirectory(node), node);
+    loadTreeNodesAtPath(getNearestDirectory(openedNode), openedNode);
+
+    const selectedNode = DirTree.getSelectedNode();
+
+    if (selectedNode) {
+      for (
+        let parent = selectedNode.parent;
+        parent !== null;
+        parent = parent.parent
+      ) {
+        if (parent.id === openedNode.id) {
+          DirTree.clearSelectedNode();
+          updateDocumentTitle();
+          clearEditor();
+
+          break;
+        }
+      }
+    }
   });
   $('#directoryTree').on('tree.close', (event) => {
     const folderIcon = event.node.element.getElementsByClassName(

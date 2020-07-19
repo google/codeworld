@@ -15,12 +15,12 @@
  */
 
 const directoryTreeId = '#directoryTree';
+const events = {
+  SELECTION_CLEARED: 'selectionCleared',
+};
 const nodeTypes = {
   DIRECTORY: 'directory',
   PROJECT: 'project',
-};
-const events = {
-  SELECTION_CLEARED: 'selectionCleared',
 };
 
 function clearSelectedNode() {
@@ -33,14 +33,14 @@ function clearSelectedNode() {
   directoryTree.trigger(events.SELECTION_CLEARED);
 }
 
-function selectNode(node) {
-  $(directoryTreeId).tree('selectNode', node);
-}
-
 let idCounter = 0;
 
 function createNodeId(type, name) {
   return `jqtree-element__${type}__${name}__${idCounter++}}`;
+}
+
+function getRootNode() {
+  return $(directoryTreeId).tree('getTree');
 }
 
 function getSelectedNode() {
@@ -57,13 +57,18 @@ function isProject(node) {
   return node ? node.type === nodeTypes.PROJECT : false;
 }
 
+function selectNode(node) {
+  $(directoryTreeId).tree('selectNode', node);
+}
+
 export {
-  createNodeId,
-  selectNode,
+  events,
+  nodeTypes,
   clearSelectedNode,
+  createNodeId,
+  getRootNode,
   getSelectedNode,
   isDirectory,
   isProject,
-  nodeTypes,
-  events,
+  selectNode,
 };

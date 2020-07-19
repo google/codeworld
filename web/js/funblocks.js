@@ -22,7 +22,7 @@ import {
   initDirectoryTree,
   loadProject,
   loadSample,
-  loadTreeNodesAtPath,
+  loadTreeNodes,
   markFailed,
   printMessage,
   registerStandardHints,
@@ -109,7 +109,7 @@ async function init() {
 
     window.auth2.isSignedIn.listen(() => {
       if (Auth.signedIn()) {
-        loadTreeNodesAtPath('');
+        loadTreeNodes(DirTree.getRootNode());
 
         $('#signin').hide();
         $('#signout, #navButton').show();
@@ -183,7 +183,7 @@ async function init() {
             );
           }
           initCodeworld();
-          loadTreeNodesAtPath('');
+          loadTreeNodes(DirTree.getRootNode());
         });
       });
     } else {

@@ -721,12 +721,12 @@ function registerStandardHints(successFunc) {
   });
 }
 
-function loadTreeNodesAtPath(path, node) {
+function loadTreeNodes(atNode) {
   const data = new FormData();
   data.append('mode', window.projectEnv);
-  data.append('path', path);
+  data.append('path', getNearestDirectory(atNode));
 
-  showLoadingAnimation(node);
+  showLoadingAnimation(atNode);
 
   sendHttp('POST', 'listFolders', data, (request) => {
     if (request.status === 200) {
@@ -741,12 +741,10 @@ function loadTreeNodesAtPath(path, node) {
       $('#directoryTree').tree(
         'loadData',
         treeNodes.sort((a, b) => a.index > b.index),
-        node
+        atNode
       );
 
-      if (node) {
-        $('#directoryTree').tree('openNode', node);
-      }
+      $('#directoryTree').tree('openNode', atNode);
     }
 
     hideLoadingAnimation();
@@ -1646,7 +1644,7 @@ function initDirectoryTree(isEditorClean, loadProjectHandler, clearEditor) {
               updateChildrenIndexes(toNode);
 
               if (DirTree.isDirectory(movedNode)) {
-                loadTreeNodesAtPath(getNearestDirectory(movedNode), movedNode);
+                loadTreeNodes(movedNode);
                 clearEditor();
               }
             });
@@ -1671,7 +1669,7 @@ function initDirectoryTree(isEditorClean, loadProjectHandler, clearEditor) {
       folderIcon.classList.replace('mdi-folder', 'mdi-folder-open');
     }
 
-    loadTreeNodesAtPath(getNearestDirectory(openedNode), openedNode);
+    loadTreeNodes(openedNode);
 
     const selectedNode = DirTree.getSelectedNode();
 
@@ -2035,7 +2033,7 @@ export {
   initDirectoryTree,
   loadProject,
   loadSample,
-  loadTreeNodesAtPath,
+  loadTreeNodes,
   markFailed,
   onHover,
   parseCompileErrors,

@@ -23,7 +23,7 @@ import {
   initDirectoryTree,
   loadProject,
   loadSample,
-  loadTreeNodesAtPath,
+  loadTreeNodes,
   markFailed,
   onHover,
   parseCompileErrors,
@@ -134,7 +134,7 @@ async function init() {
 
     window.auth2.isSignedIn.listen(() => {
       if (Auth.signedIn()) {
-        loadTreeNodesAtPath('');
+        loadTreeNodes(DirTree.getRootNode());
 
         $('#signin').hide();
         $('#signout, #navButton').show();
@@ -232,7 +232,7 @@ async function init() {
               'error'
             );
           }
-          loadTreeNodesAtPath('');
+          loadTreeNodes(DirTree.getRootNode());
         });
       });
     }

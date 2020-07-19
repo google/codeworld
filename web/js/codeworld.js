@@ -900,11 +900,41 @@ function formatSource() {
 
   sendHttp('POST', 'indent', data, (request) => {
     if (request.status === 200) {
-      if (request.responseText !== src) {
-        codeworldEditor.getDoc().setValue(request.responseText);
+      const reformattedSrc = request.responseText;
+
+      if (reformattedSrc !== src) {
+        codeworldEditor.getDoc().setValue(reformattedSrc);
+
+        let oldLine = 0;
+        let newLine = 0;
+        const newCursorPosition = {
+          line: 0,
+          ch: 0,
+        };
+
+        Diff.diffLines(src, reformattedSrc).forEach((diff) => {
+          const { count, added, removed } = diff;
+
+          if (added) {
+            if (oldCursorPosition.line <= oldLine) {
+              newCursorPosition.line = newLine;
+            }
+
+            newLine += count;
+          } else if (removed) {
+            oldLine += count;
+
+            if (oldCursorPosition.line >= oldLine) {
+              newCursorPosition.line = newLine;
+            }
+          } else {
+            newLine += count;
+            oldLine += count;
+          }
+        });
 
         window.codeworldEditor.doc.setCursor(
-          oldCursorPosition.line,
+          newCursorPosition.line,
           oldCursorPosition.ch
         );
       }

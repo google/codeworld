@@ -15,7 +15,7 @@
  */
 
 import { sendHttp } from './network.js';
-import { discoverProjects, warnIfUnsaved } from '../codeworld_shared.js';
+import { warnIfUnsaved } from '../codeworld_shared.js';
 
 function LocalAuth() {
   const mine = {};
@@ -484,8 +484,6 @@ function onAuthDisabled() {
   window.auth2 = null;
 
   $('#signin').css('display', 'none');
-
-  discoverProjects('');
 }
 
 function init(initCallback) {

@@ -19,11 +19,11 @@ import {
   definePanelExtension,
   deleteFolder_,
   deleteProject_,
-  discoverProjects,
   getNearestDirectory,
   initDirectoryTree,
   loadProject,
   loadSample,
+  loadTreeNodes,
   markFailed,
   onHover,
   parseCompileErrors,
@@ -134,7 +134,7 @@ async function init() {
 
     window.auth2.isSignedIn.listen(() => {
       if (Auth.signedIn()) {
-        discoverProjects('');
+        loadTreeNodes(DirTree.getRootNode());
 
         $('#signin').hide();
         $('#signout, #navButton').show();
@@ -232,7 +232,7 @@ async function init() {
               'error'
             );
           }
-          discoverProjects('');
+          loadTreeNodes(DirTree.getRootNode());
         });
       });
     }

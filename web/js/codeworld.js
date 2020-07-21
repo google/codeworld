@@ -843,9 +843,11 @@ function newFolder() {
 }
 
 function formatSource() {
+  const doc = window.codeworldEditor.doc;
+
   if (window.buildMode === 'codeworld') {
     const getLevel = (lineNum) => {
-      const lineText = window.codeworldEditor.getDoc().getLine(lineNum);
+      const lineText = doc.getLine(lineNum);
       const pos = {
         line: lineNum,
         ch: Math.min(lineText.length, /^[\s]*/.exec(lineText)[0].length + 1),
@@ -892,32 +894,44 @@ function formatSource() {
     return;
   }
 
-  const oldCursorPosition = window.codeworldEditor.doc.getCursor();
-  const src = window.codeworldEditor.getValue();
+  const src = doc.getValue();
   const data = new FormData();
   data.append('source', src);
   data.append('mode', window.buildMode);
+
+  const oldCursorPosition = doc.getCursor();
+  const lineContentAtOldCursorPosition = doc.getLine(oldCursorPosition.line);
 
   sendHttp('POST', 'indent', data, (request) => {
     if (request.status === 200) {
       const reformattedSrc = request.responseText;
 
       if (reformattedSrc !== src) {
-        codeworldEditor.getDoc().setValue(reformattedSrc);
+        doc.setValue(reformattedSrc);
 
         let oldLine = 0;
         let newLine = 0;
-        const newCursorPosition = {
-          line: 0,
-          ch: 0,
-        };
 
         Diff.diffLines(src, reformattedSrc).forEach((diff) => {
-          const { count, added, removed } = diff;
+          const { value, count, added, removed } = diff;
 
           if (added) {
             if (oldCursorPosition.line <= oldLine) {
-              newCursorPosition.line = newLine;
+              doc.setCursor(newLine, oldCursorPosition.ch);
+            }
+
+            const currentLine = doc.getCursor().line;
+            if (currentLine === newLine) {
+              const trimmedLineContent = lineContentAtOldCursorPosition.trimLeft();
+              const numberOfDeletedSpaces =
+                lineContentAtOldCursorPosition.length -
+                trimmedLineContent.length;
+              const newCharPosition =
+                value.indexOf(trimmedLineContent) +
+                oldCursorPosition.ch -
+                numberOfDeletedSpaces;
+
+              doc.setCursor(currentLine, newCharPosition);
             }
 
             newLine += count;
@@ -925,18 +939,13 @@ function formatSource() {
             oldLine += count;
 
             if (oldCursorPosition.line >= oldLine) {
-              newCursorPosition.line = newLine;
+              doc.setCursor(newLine, oldCursorPosition.ch);
             }
           } else {
             newLine += count;
             oldLine += count;
           }
         });
-
-        window.codeworldEditor.doc.setCursor(
-          newCursorPosition.line,
-          oldCursorPosition.ch
-        );
       }
     } else if (request.status === 500) {
       sweetAlert(

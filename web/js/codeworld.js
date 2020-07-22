@@ -843,7 +843,7 @@ function newFolder() {
 }
 
 function formatSource() {
-  const doc = window.codeworldEditor.doc;
+  const { doc } = window.codeworldEditor;
 
   if (window.buildMode === 'codeworld') {
     const getLevel = (lineNum) => {
@@ -899,53 +899,39 @@ function formatSource() {
   data.append('source', src);
   data.append('mode', window.buildMode);
 
-  const oldCursorPosition = doc.getCursor();
-  const lineContentAtOldCursorPosition = doc.getLine(oldCursorPosition.line);
-
   sendHttp('POST', 'indent', data, (request) => {
     if (request.status === 200) {
       const reformattedSrc = request.responseText;
+      const indexAtOldCursorPosition = doc.indexFromPos(doc.getCursor());
 
       if (reformattedSrc !== src) {
         doc.setValue(reformattedSrc);
 
-        let oldLine = 0;
-        let newLine = 0;
+        let oldIndex = 0;
+        let newIndex = 0;
 
-        Diff.diffLines(src, reformattedSrc).forEach((diff) => {
-          const { value, count, added, removed } = diff;
+        for (const diff of Diff.diffChars(src, reformattedSrc)) {
+          const { count, added, removed } = diff;
 
-          if (added) {
-            if (oldCursorPosition.line <= oldLine) {
-              doc.setCursor(newLine, oldCursorPosition.ch);
+          if (removed) {
+            if (oldIndex + count > indexAtOldCursorPosition) {
+              break;
             }
-
-            const currentLine = doc.getCursor().line;
-            if (currentLine === newLine) {
-              const trimmedLineContent = lineContentAtOldCursorPosition.trimLeft();
-              const numberOfDeletedSpaces =
-                lineContentAtOldCursorPosition.length -
-                trimmedLineContent.length;
-              const newCharPosition =
-                value.indexOf(trimmedLineContent) +
-                oldCursorPosition.ch -
-                numberOfDeletedSpaces;
-
-              doc.setCursor(currentLine, newCharPosition);
-            }
-
-            newLine += count;
-          } else if (removed) {
-            oldLine += count;
-
-            if (oldCursorPosition.line >= oldLine) {
-              doc.setCursor(newLine, oldCursorPosition.ch);
-            }
+            oldIndex += count;
+          } else if (added) {
+            newIndex += count;
           } else {
-            newLine += count;
-            oldLine += count;
+            if (oldIndex + count >= indexAtOldCursorPosition) {
+              newIndex += indexAtOldCursorPosition - oldIndex;
+              break;
+            }
+
+            oldIndex += count;
+            newIndex += count;
           }
-        });
+        }
+
+        doc.setCursor(doc.posFromIndex(newIndex));
       }
     } else if (request.status === 500) {
       sweetAlert(

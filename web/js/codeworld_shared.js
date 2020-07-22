@@ -532,13 +532,36 @@ function registerStandardHints(successFunc) {
       found[2] = [];
     }
 
-    const options = found[0].concat(found[1]).concat(found[2]);
+    const mappedTerms = {
+      square: 'rectangle',
+      triangle: 'polygon',
+    };
+
+    for (const [lookedUpTerm, substitute] of Object.entries(mappedTerms)) {
+      if (lookedUpTerm.startsWith(term)) {
+        found[2].push({
+          text: window.codeWorldSymbols[substitute].insertText,
+          details: window.codeWorldSymbols[substitute],
+          render: (elem) => {
+            renderDeclaration(elem, window.codeWorldSymbols[substitute], 50);
+          },
+          isSubstitute: true,
+          originalTerm: lookedUpTerm,
+        });
+        break;
+      }
+    }
+
+    const options = found[0].concat(found[1], found[2]);
     for (const candidate of options) {
-      candidate.cost = substitutionCost(
-        token.string,
-        candidate.text,
-        term.length
-      );
+      const { isSubstitute, originalTerm, text } = candidate;
+
+      if (isSubstitute) {
+        candidate.cost =
+          substitutionCost(token.string, originalTerm, term.length) + 5;
+      } else {
+        candidate.cost = substitutionCost(token.string, text, term.length);
+      }
     }
 
     if (options.length > 0) {

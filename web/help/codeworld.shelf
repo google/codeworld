@@ -12,14 +12,18 @@
     "Part 7: Computation": "help/GuideUnit7.md",
     "Part 8: Abstraction": "help/GuideUnit8.md",
     "Part 9: Modeling":    "help/GuideUnit9.md",
-    "Appendix: Editor":    "help/editor.md",
-    "Appendix: Examples":  "help/examples.md",
-    "Appendix: Reference": "doc/Prelude.html",
-    "Appendix: Reference (Extras.Colors)": "doc/Extras-Colors.html",
-    "Appendix: Reference (Extras.Cw)": "doc/Extras-Cw.html",
-    "Appendix: Reference (Extras.Turtle)": "doc/Extras-Turtle.html",
-    "Appendix: Reference (Extras.Util)": "doc/Extras-Util.html",
-    "Appendix: Reference (Extras.Widget)": "doc/Extras-Widget.html",
-    "Appendix: Reference (Sketches)": "doc/Sketches.html"
+    "Appendix": {
+      "Editor":    "help/editor.md",
+      "Examples":  "help/examples.md",
+      "Reference": "doc/Prelude.html",
+      "Extras": {
+        "Colors": "doc/Extras-Colors.html",
+        "Cw": "doc/Extras-Cw.html",
+        "Turtle": "doc/Extras-Turtle.html",
+        "Util": "doc/Extras-Util.html",
+        "Widget": "doc/Extras-Widget.html",
+        "Sketches": "doc/Sketches.html"
+      }
+    }
   }
 }

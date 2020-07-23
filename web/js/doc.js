@@ -46,8 +46,9 @@ function loadPosition() {
 }
 
 function setTheme(el) {
-  if (params.get('theme')) {
-    el.classList.add(params.get('theme'));
+  const theme = params.get('theme');
+  if (theme) {
+    el.classList.add(theme);
   }
 }
 
@@ -326,46 +327,82 @@ window.onscroll = (event) => {
 
     let activeIndex = false;
 
-    const acc = document.createElement('div');
-    acc.id = 'helpacc';
-    setTheme(acc);
+    const $rootAccordion = $('<div>');
+    $rootAccordion.addClass('accordion');
 
-    let paneNum = 0;
-    for (const doc in shelf.named) {
-      const hdr = document.createElement('h3');
-      hdr.innerText = doc;
-      acc.appendChild(hdr);
-
-      const entry = document.createElement('div');
-      entry.classList.add('accentry');
-      entry.innerHTML = '<div>Loading...</div>';
-      acc.appendChild(entry);
-
-      contents[shelf.named[doc]] = {
-        title: doc,
-        header: hdr,
-        outline: entry,
-        index: paneNum,
-        elem: null,
-      };
-
-      if (shelf.named[doc] === path) activeIndex = paneNum;
-      paneNum++;
-    }
-
-    document.body.insertBefore(acc, document.body.firstChild);
-    $(acc).accordion({
+    const accordionOptions = {
       collapsible: true,
-      active: activeIndex,
       heightStyle: 'content',
       beforeActivate: (event, ui) => {
         position.scrollLeft = 0;
         position.scrollTop = 0;
-        const name = ui.newHeader.text();
-        const path = name && shelf.named[name];
-        if (path) loadPath(path);
+
+        const title = ui.newHeader.text();
+        const path = title && getPath(shelf.named, title);
+        if (path) {
+          loadPath(path);
+        }
       },
-    });
+    };
+
+    setTheme($rootAccordion[0]);
+
+    let paneNum = 0;
+
+    function createAccordionEntries(tableOfContents, $accordion) {
+      for (const [title, link] of Object.entries(tableOfContents)) {
+        const $header = $('<h3>');
+        $header.text(title);
+
+        const $entry = $('<div>');
+        $entry.addClass('accentry');
+        $entry.html('<div>Loading...</div>');
+
+        if (typeof link === 'object') {
+          const $nestedAccordion = $('<div>');
+          $nestedAccordion.addClass('accordion');
+          $accordion.append($header, $nestedAccordion);
+
+          createAccordionEntries(link, $nestedAccordion);
+        } else {
+          contents[tableOfContents[title]] = {
+            title,
+            header: $header[0],
+            outline: $entry[0],
+            index: paneNum,
+            elem: null,
+          };
+
+          if (tableOfContents[title] === path) {
+            activeIndex = paneNum;
+          }
+          paneNum++;
+
+          $accordion.append($header, $entry);
+        }
+      }
+
+      $accordion.accordion({
+        ...accordionOptions,
+        active: activeIndex,
+      });
+    }
+
+    createAccordionEntries(shelf.named, $rootAccordion);
+
+    $($rootAccordion).insertBefore('#help');
+
+    function getPath(tableOfContents, targetTitle) {
+      for (const [title, link] of Object.entries(tableOfContents)) {
+        if (typeof link === 'object') {
+          return getPath(link, targetTitle);
+        } else {
+          if (title === targetTitle) {
+            return link;
+          }
+        }
+      }
+    }
   }
 
   function resolveShelfPath(path, baseURL) {
@@ -390,9 +427,22 @@ window.onscroll = (event) => {
 
   function resolveShelfPaths(shelf, baseURL) {
     shelf.default = resolveShelfPath(shelf.default, baseURL);
-    for (const page in shelf.named) {
-      shelf.named[page] = resolveShelfPath(shelf.named[page], baseURL);
+
+    function convertLinksFromRelativeToAbsolute(tableOfContents) {
+      for (const [title, link] of Object.entries(tableOfContents)) {
+        // This indicates that there are nested chapters.
+        if (typeof link === 'object') {
+          convertLinksFromRelativeToAbsolute(link);
+        } else {
+          tableOfContents[title] = resolveShelfPath(
+            tableOfContents[title],
+            baseURL
+          );
+        }
+      }
     }
+
+    convertLinksFromRelativeToAbsolute(shelf.named);
   }
 
   const markdeepStyle = document.createElement('style');

@@ -843,16 +843,17 @@ function newFolder() {
 }
 
 function formatSource() {
-  const { doc } = window.codeworldEditor;
+  const { codeworldEditor, buildMode } = window;
+  const { doc } = codeworldEditor;
 
-  if (window.buildMode === 'codeworld') {
+  if (buildMode === 'codeworld') {
     const getLevel = (lineNum) => {
       const lineText = doc.getLine(lineNum);
       const pos = {
         line: lineNum,
         ch: Math.min(lineText.length, /^[\s]*/.exec(lineText)[0].length + 1),
       };
-      const token = window.codeworldEditor.getTokenAt(pos, true);
+      const token = codeworldEditor.getTokenAt(pos, true);
       if (token.type === 'comment') return -1;
 
       const isItem = (token.type || '').split(' ').indexOf('layout') >= 0;
@@ -864,30 +865,30 @@ function formatSource() {
     };
 
     const oldLevel = [];
-    for (let line = 0; line < codeworldEditor.getDoc().lineCount(); ++line) {
+    for (let line = 0; line < doc.lineCount(); ++line) {
       oldLevel.push(getLevel(line));
     }
-    for (let line = 0; line < codeworldEditor.getDoc().lineCount(); ++line) {
+    for (let line = 0; line < doc.lineCount(); ++line) {
       if (oldLevel[line] === -1) continue;
 
       getLevel(line); // Forces an update to the token state.
-      window.codeworldEditor.indentLine(line);
+      codeworldEditor.indentLine(line);
       while (getLevel(line) > oldLevel[line]) {
         const { prev, smart } = getIndentsAt(line, 'subtract');
         if (prev === 0) {
           break;
         } else if (smart >= 0 && smart !== prev) {
-          window.codeworldEditor.indentLine(line, smart - prev);
+          codeworldEditor.indentLine(line, smart - prev);
         } else {
-          window.codeworldEditor.indentLine(line, 'subtract');
+          codeworldEditor.indentLine(line, 'subtract');
         }
       }
       while (getLevel(line) < oldLevel[line]) {
         const { prev, smart } = getIndentsAt(line, 'add');
         if (smart >= 0 && smart !== prev) {
-          window.codeworldEditor.indentLine(line, smart - prev);
+          codeworldEditor.indentLine(line, smart - prev);
         } else {
-          window.codeworldEditor.indentLine(line, 'add');
+          codeworldEditor.indentLine(line, 'add');
         }
       }
     }
@@ -897,7 +898,7 @@ function formatSource() {
   const src = doc.getValue();
   const data = new FormData();
   data.append('source', src);
-  data.append('mode', window.buildMode);
+  data.append('mode', buildMode);
 
   sendHttp('POST', 'indent', data, (request) => {
     if (request.status === 200) {
@@ -939,7 +940,7 @@ function formatSource() {
         const cursorShiftY =
           newCursorCoordinates.top - oldCursorCoordinates.top;
 
-        window.codeworldEditor.scrollTo(
+        codeworldEditor.scrollTo(
           oldScrollInfo.left,
           oldScrollInfo.top + cursorShiftY
         );

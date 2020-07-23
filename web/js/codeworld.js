@@ -902,6 +902,8 @@ function formatSource() {
   sendHttp('POST', 'indent', data, (request) => {
     if (request.status === 200) {
       const reformattedSrc = request.responseText;
+      const oldScrollInfo = window.codeworldEditor.getScrollInfo();
+      const oldCursorCoordinates = window.codeworldEditor.cursorCoords();
       const indexAtOldCursorPosition = doc.indexFromPos(doc.getCursor());
 
       if (reformattedSrc !== src) {
@@ -932,6 +934,15 @@ function formatSource() {
         }
 
         doc.setCursor(doc.posFromIndex(newIndex));
+
+        const newCursorCoordinates = window.codeworldEditor.cursorCoords();
+        const cursorShiftY =
+          newCursorCoordinates.top - oldCursorCoordinates.top;
+
+        window.codeworldEditor.scrollTo(
+          oldScrollInfo.left,
+          oldScrollInfo.top + cursorShiftY
+        );
       }
     } else if (request.status === 500) {
       sweetAlert(

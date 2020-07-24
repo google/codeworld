@@ -904,7 +904,10 @@ function formatSource() {
     if (request.status === 200) {
       const reformattedSrc = request.responseText;
       const oldScrollInfo = window.codeworldEditor.getScrollInfo();
-      const oldCursorCoordinates = window.codeworldEditor.cursorCoords();
+      const oldCursorCoordinates = window.codeworldEditor.cursorCoords(
+        null,
+        'local'
+      );
       const indexAtOldCursorPosition = doc.indexFromPos(doc.getCursor());
 
       if (reformattedSrc !== src) {
@@ -936,7 +939,10 @@ function formatSource() {
 
         doc.setCursor(doc.posFromIndex(newIndex));
 
-        const newCursorCoordinates = window.codeworldEditor.cursorCoords();
+        const newCursorCoordinates = window.codeworldEditor.cursorCoords(
+          null,
+          'local'
+        );
         const cursorShiftY =
           newCursorCoordinates.top - oldCursorCoordinates.top;
 

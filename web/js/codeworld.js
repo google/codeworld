@@ -844,7 +844,7 @@ function newFolder() {
 
 function formatSource() {
   const { codeworldEditor, buildMode } = window;
-  const { doc } = codeworldEditor;
+  const doc = codeworldEditor.getDoc();
 
   if (buildMode === 'codeworld') {
     const getLevel = (lineNum) => {

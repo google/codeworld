@@ -843,14 +843,17 @@ function newFolder() {
 }
 
 function formatSource() {
-  if (window.buildMode === 'codeworld') {
+  const { codeworldEditor, buildMode } = window;
+  const doc = codeworldEditor.getDoc();
+
+  if (buildMode === 'codeworld') {
     const getLevel = (lineNum) => {
-      const lineText = window.codeworldEditor.getDoc().getLine(lineNum);
+      const lineText = doc.getLine(lineNum);
       const pos = {
         line: lineNum,
         ch: Math.min(lineText.length, /^[\s]*/.exec(lineText)[0].length + 1),
       };
-      const token = window.codeworldEditor.getTokenAt(pos, true);
+      const token = codeworldEditor.getTokenAt(pos, true);
       if (token.type === 'comment') return -1;
 
       const isItem = (token.type || '').split(' ').indexOf('layout') >= 0;
@@ -862,45 +865,91 @@ function formatSource() {
     };
 
     const oldLevel = [];
-    for (let line = 0; line < codeworldEditor.getDoc().lineCount(); ++line) {
+    for (let line = 0; line < doc.lineCount(); ++line) {
       oldLevel.push(getLevel(line));
     }
-    for (let line = 0; line < codeworldEditor.getDoc().lineCount(); ++line) {
+    for (let line = 0; line < doc.lineCount(); ++line) {
       if (oldLevel[line] === -1) continue;
 
       getLevel(line); // Forces an update to the token state.
-      window.codeworldEditor.indentLine(line);
+      codeworldEditor.indentLine(line);
       while (getLevel(line) > oldLevel[line]) {
         const { prev, smart } = getIndentsAt(line, 'subtract');
         if (prev === 0) {
           break;
         } else if (smart >= 0 && smart !== prev) {
-          window.codeworldEditor.indentLine(line, smart - prev);
+          codeworldEditor.indentLine(line, smart - prev);
         } else {
-          window.codeworldEditor.indentLine(line, 'subtract');
+          codeworldEditor.indentLine(line, 'subtract');
         }
       }
       while (getLevel(line) < oldLevel[line]) {
         const { prev, smart } = getIndentsAt(line, 'add');
         if (smart >= 0 && smart !== prev) {
-          window.codeworldEditor.indentLine(line, smart - prev);
+          codeworldEditor.indentLine(line, smart - prev);
         } else {
-          window.codeworldEditor.indentLine(line, 'add');
+          codeworldEditor.indentLine(line, 'add');
         }
       }
     }
     return;
   }
 
-  const src = window.codeworldEditor.getValue();
+  const src = doc.getValue();
   const data = new FormData();
   data.append('source', src);
-  data.append('mode', window.buildMode);
+  data.append('mode', buildMode);
 
   sendHttp('POST', 'indent', data, (request) => {
     if (request.status === 200) {
-      if (request.responseText !== src) {
-        codeworldEditor.getDoc().setValue(request.responseText);
+      const reformattedSrc = request.responseText;
+      const oldScrollInfo = window.codeworldEditor.getScrollInfo();
+      const oldCursorCoordinates = window.codeworldEditor.cursorCoords(
+        null,
+        'local'
+      );
+      const indexAtOldCursorPosition = doc.indexFromPos(doc.getCursor());
+
+      if (reformattedSrc !== src) {
+        doc.setValue(reformattedSrc);
+
+        let oldIndex = 0;
+        let newIndex = 0;
+
+        for (const diff of Diff.diffChars(src, reformattedSrc)) {
+          const { count, added, removed } = diff;
+
+          if (removed) {
+            if (oldIndex + count > indexAtOldCursorPosition) {
+              break;
+            }
+            oldIndex += count;
+          } else if (added) {
+            newIndex += count;
+          } else {
+            if (oldIndex + count >= indexAtOldCursorPosition) {
+              newIndex += indexAtOldCursorPosition - oldIndex;
+              break;
+            }
+
+            oldIndex += count;
+            newIndex += count;
+          }
+        }
+
+        doc.setCursor(doc.posFromIndex(newIndex));
+
+        const newCursorCoordinates = window.codeworldEditor.cursorCoords(
+          null,
+          'local'
+        );
+        const cursorShiftY =
+          newCursorCoordinates.top - oldCursorCoordinates.top;
+
+        codeworldEditor.scrollTo(
+          oldScrollInfo.left,
+          oldScrollInfo.top + cursorShiftY
+        );
       }
     } else if (request.status === 500) {
       sweetAlert(

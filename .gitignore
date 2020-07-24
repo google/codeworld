@@ -26,3 +26,4 @@ dist-*
 .stack-work
 stack.yaml.lock
 cabal.project.local
+.DS_Store

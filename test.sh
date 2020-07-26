@@ -16,7 +16,7 @@
 
 source base.sh
 
-for i in $(grep -l -i Test-Suite */*.cabal); do
+for i in $(grep -l -i Test-Suite */*.cabal | grep -v ghcjs); do
     TARGET=$(dirname $i)
 
     run $TARGET cabal_install --enable-tests --only-dependencies

@@ -543,18 +543,7 @@ function registerStandardHints(successFunc) {
     };
 
     for (const [lookedUpTerm, replacementTerm] of Object.entries(mappedTerms)) {
-      let matchingCandidate;
-      for (const bucket of found) {
-        matchingCandidate = bucket.find(({ text }) =>
-          replacementTerm.includes(text)
-        );
-
-        if (matchingCandidate) {
-          break;
-        }
-      }
-
-      if (window.codeWorldSymbols[replacementTerm] && !matchingCandidate) {
+      if (window.codeWorldSymbols[replacementTerm]) {
         found[2].push({
           text: window.codeWorldSymbols[replacementTerm].insertText,
           details: window.codeWorldSymbols[replacementTerm],
@@ -595,7 +584,14 @@ function registerStandardHints(successFunc) {
           break;
         }
       }
-      const goodOptions = options.slice(0, numGood);
+
+      const goodOptions = options
+        .slice(0, numGood)
+        .reduce((result, current) => {
+          const duplicate = result.find(({ text }) => text === current.text);
+
+          return duplicate ? result : result.concat(current);
+        }, []);
 
       const data = {
         list: goodOptions,

@@ -543,11 +543,18 @@ function registerStandardHints(successFunc) {
     };
 
     for (const [lookedUpTerm, replacementTerm] of Object.entries(mappedTerms)) {
-      const matchingFuzzyCandidate = found[2].find(
-        ({ text }) => text === replacementTerm
-      );
+      let matchingCandidate;
+      for (const bucket of found) {
+        matchingCandidate = bucket.find(({ text }) =>
+          replacementTerm.includes(text)
+        );
 
-      if (window.codeWorldSymbols[replacementTerm] && !matchingFuzzyCandidate) {
+        if (matchingCandidate) {
+          break;
+        }
+      }
+
+      if (window.codeWorldSymbols[replacementTerm] && !matchingCandidate) {
         found[2].push({
           text: window.codeWorldSymbols[replacementTerm].insertText,
           details: window.codeWorldSymbols[replacementTerm],
@@ -592,7 +599,7 @@ function registerStandardHints(successFunc) {
 
       const data = {
         list: goodOptions,
-        from: from,
+        from,
         to: VAR_OR_CON.test(term) ? CodeMirror.Pos(cur.line, token.end) : cur,
       };
 

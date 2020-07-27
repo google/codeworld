@@ -344,30 +344,37 @@ function renderDeclaration(decl, keywordData, maxLen, argIndex = -1) {
   return decl;
 }
 
-function renderHover(keywordData) {
+function renderHover(keywordData, isTermReplaced) {
   if (!keywordData) return;
 
-  const topDiv = document.createElement('div');
-  const docDiv = document.createElement('div');
+  const $wrapper = $('<div>');
+  const $documentationContainer = $('<div>');
+  const $fadeDiv = $('<div>');
+  $fadeDiv.addClass('fade');
+  const $annotation = $('<div>');
+  renderDeclaration($annotation[0], keywordData, 9999);
+  $annotation.addClass('hover-decl');
 
-  const annotation = document.createElement('div');
-  renderDeclaration(annotation, keywordData, 9999);
-  annotation.className = 'hover-decl';
-  docDiv.appendChild(annotation);
+  $documentationContainer.append($annotation);
 
   if (keywordData.doc) {
-    const description = document.createElement('div');
-    description.innerHTML = keywordData.doc;
-    description.className = 'hover-doc';
-    docDiv.appendChild(description);
+    const $description = $('<div>');
+    $description.html(keywordData.doc);
+    $description.addClass('hover-doc');
+    $documentationContainer.append($description);
+
+    if (isTermReplaced) {
+      const $noteAboutReplacement = $('<p>');
+      $noteAboutReplacement.addClass('hint-description-replacement-note');
+      $noteAboutReplacement.text('REPLACEMENT NOTE');
+      $description.append($noteAboutReplacement);
+    }
   }
 
-  const fadeDiv = document.createElement('div');
-  fadeDiv.className = 'fade';
+  $wrapper.append($documentationContainer);
+  $wrapper.append($fadeDiv);
 
-  topDiv.appendChild(docDiv);
-  topDiv.appendChild(fadeDiv);
-  return topDiv;
+  return $wrapper[0];
 }
 
 function onHover(cm, data, node) {
@@ -610,7 +617,7 @@ function registerStandardHints(successFunc) {
         const hintsWidgetRect = elem.parentElement.getBoundingClientRect();
         const doc = document.createElement('div');
         deleteOldHintDocs();
-        const hover = renderHover(selection.details);
+        const hover = renderHover(selection.details, selection.isTermReplaced);
         if (hover) {
           doc.className += 'hint-description';
           doc.style.top = `${hintsWidgetRect.top}px`;

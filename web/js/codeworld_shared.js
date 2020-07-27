@@ -402,12 +402,13 @@ function getQualifierPrefix(cm, pos) {
   return prefix;
 }
 
-function substitutionCost(a, b, fixedLen) {
+function substitutionCost(a, b, fixedLen, isTermReplaced) {
   const insertCost = 1;
   const deleteCost = 1.5;
   const transCost = 1;
   const substCost = 1.5;
   const caseCost = 0.1;
+  const penalty = 5;
 
   const d = Array(b.length + 1)
     .fill()
@@ -449,7 +450,11 @@ function substitutionCost(a, b, fixedLen) {
     }
   }
 
-  return d[b.length][a.length] + scale(fixedLen) * (a.length - b.length);
+  return (
+    d[b.length][a.length] +
+    scale(fixedLen) * (a.length - b.length) +
+    (isTermReplaced ? penalty : 0)
+  );
 }
 
 // Hints and hover tooltips
@@ -533,35 +538,41 @@ function registerStandardHints(successFunc) {
     }
 
     const mappedTerms = {
-      square: 'rectangle',
-      triangle: 'polygon',
+      square: 'Prelude.rectangle',
+      triangle: 'Prelude.polygon',
     };
 
-    for (const [lookedUpTerm, substitute] of Object.entries(mappedTerms)) {
-      if (lookedUpTerm.startsWith(term)) {
+    for (const [lookedUpTerm, replacementTerm] of Object.entries(mappedTerms)) {
+      const matchingFuzzyCandidate = found[2].find(
+        ({ text }) => text === replacementTerm
+      );
+
+      if (window.codeWorldSymbols[replacementTerm] && !matchingFuzzyCandidate) {
         found[2].push({
-          text: window.codeWorldSymbols[substitute].insertText,
-          details: window.codeWorldSymbols[substitute],
+          text: window.codeWorldSymbols[replacementTerm].insertText,
+          details: window.codeWorldSymbols[replacementTerm],
           render: (elem) => {
-            renderDeclaration(elem, window.codeWorldSymbols[substitute], 50);
+            renderDeclaration(
+              elem,
+              window.codeWorldSymbols[replacementTerm],
+              50
+            );
           },
-          isSubstitute: true,
+          isTermReplaced: true,
           originalTerm: lookedUpTerm,
         });
-        break;
       }
     }
 
     const options = found[0].concat(found[1], found[2]);
     for (const candidate of options) {
-      const { isSubstitute, originalTerm, text } = candidate;
-
-      if (isSubstitute) {
-        candidate.cost =
-          substitutionCost(token.string, originalTerm, term.length) + 5;
-      } else {
-        candidate.cost = substitutionCost(token.string, text, term.length);
-      }
+      const { isTermReplaced, originalTerm, text } = candidate;
+      candidate.cost = substitutionCost(
+        token.string,
+        isTermReplaced ? originalTerm : text,
+        term.length,
+        isTermReplaced
+      );
     }
 
     if (options.length > 0) {

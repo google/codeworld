@@ -697,6 +697,7 @@ function registerStandardHints(successFunc) {
             symbolStart: wordStart,
             symbolEnd: wordEnd,
             insertText: word,
+            definingModule: module,
           };
           if (doc) {
             window.codeWorldModules[module][word].doc = doc;

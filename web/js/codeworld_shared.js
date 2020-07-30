@@ -466,7 +466,13 @@ function substitutionCost(a, b, fixedLen, isTermReplaced) {
 
 // Hints and hover tooltips
 function registerStandardHints(successFunc) {
-  CodeMirror.registerHelper('hint', 'codeworld', (cm) => {
+  let replacementTerms;
+
+  CodeMirror.registerHelper('hint', 'codeworld', async (cm) => {
+    if (!replacementTerms) {
+      const blob = await fetch('./replacement_terms.json');
+      replacementTerms = await blob.json();
+    }
     const deleteOldHintDocs = () => {
       $('.hint-description').remove();
     };
@@ -544,12 +550,9 @@ function registerStandardHints(successFunc) {
       found[2] = [];
     }
 
-    const mappedTerms = {
-      square: 'Prelude.rectangle',
-      triangle: 'Prelude.polygon',
-    };
-
-    for (const [lookedUpTerm, replacementTerm] of Object.entries(mappedTerms)) {
+    for (const [lookedUpTerm, replacementTerm] of Object.entries(
+      replacementTerms
+    )) {
       if (window.codeWorldSymbols[replacementTerm]) {
         found[2].push({
           text: window.codeWorldSymbols[replacementTerm].insertText,

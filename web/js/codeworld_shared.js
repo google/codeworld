@@ -344,7 +344,7 @@ function renderDeclaration(decl, keywordData, maxLen, argIndex = -1) {
   return decl;
 }
 
-function renderHover(keywordData, isTermReplaced) {
+function renderHover(keywordData, replacementExplanation) {
   if (!keywordData) return;
 
   const $wrapper = $('<div>');
@@ -363,10 +363,10 @@ function renderHover(keywordData, isTermReplaced) {
     $description.addClass('hover-doc');
     $documentationContainer.append($description);
 
-    if (isTermReplaced) {
+    if (replacementExplanation) {
       const $noteAboutReplacement = $('<p>');
       $noteAboutReplacement.addClass('hint-description-replacement-note');
-      $noteAboutReplacement.text('REPLACEMENT NOTE');
+      $noteAboutReplacement.text(replacementExplanation);
       $description.append($noteAboutReplacement);
     }
   }
@@ -550,9 +550,14 @@ function registerStandardHints(successFunc) {
       found[2] = [];
     }
 
-    for (const [lookedUpTerm, replacementTerm] of Object.entries(
+    for (const [lookedUpTerm, replacementEntry] of Object.entries(
       replacementTerms
     )) {
+      const replacementTerm =
+        typeof replacementEntry === 'object'
+          ? replacementEntry.value
+          : replacementEntry;
+
       if (window.codeWorldSymbols[replacementTerm]) {
         found[2].push({
           text: window.codeWorldSymbols[replacementTerm].insertText,
@@ -565,6 +570,7 @@ function registerStandardHints(successFunc) {
             );
           },
           isTermReplaced: true,
+          replacementExplanation: replacementEntry.explanation,
           originalTerm: lookedUpTerm,
         });
       }
@@ -620,7 +626,10 @@ function registerStandardHints(successFunc) {
         const hintsWidgetRect = elem.parentElement.getBoundingClientRect();
         const doc = document.createElement('div');
         deleteOldHintDocs();
-        const hover = renderHover(selection.details, selection.isTermReplaced);
+        const hover = renderHover(
+          selection.details,
+          selection.replacementExplanation
+        );
         if (hover) {
           doc.className += 'hint-description';
           doc.style.top = `${hintsWidgetRect.top}px`;

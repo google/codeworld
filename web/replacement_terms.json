@@ -17,7 +17,10 @@
   "MouseClick": "PointerPress",
   "PointerClick": "PointerPress",
   "MouseRelease": "PointerRelease (from a deprecation)",
-  "triangle": "polygon",
+  "triangle": {
+    "value": "polygon",
+    "explanation": "A triangle is a polygon with three vertices."
+  },
   "quadrilateral": "polygon",
   "parallelogram": "polygon",
   "trapezoid": "polygon",

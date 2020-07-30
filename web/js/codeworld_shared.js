@@ -415,7 +415,7 @@ function substitutionCost(a, b, fixedLen, isTermReplaced) {
   const transCost = 1;
   const substCost = 1.5;
   const caseCost = 0.1;
-  const penalty = 5;
+  const redirectPenalty = 5;
 
   const d = Array(b.length + 1)
     .fill()
@@ -460,7 +460,7 @@ function substitutionCost(a, b, fixedLen, isTermReplaced) {
   return (
     d[b.length][a.length] +
     scale(fixedLen) * (a.length - b.length) +
-    (isTermReplaced ? penalty : 0)
+    (isTermReplaced ? redirectPenalty : 0)
   );
 }
 

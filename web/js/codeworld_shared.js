@@ -553,12 +553,13 @@ function registerStandardHints(successFunc) {
     for (const [replacementTerm, lookedUpTerms] of Object.entries(
       replacementTerms
     )) {
-      lookedUpTerms.forEach((
-        lookedUpTerm
-      ) => {
+      lookedUpTerms.forEach((lookedUpTerm) => {
         const withOptions = typeof lookedUpTerm === 'object';
 
-        if (window.codeWorldSymbols[replacementTerm]) {
+        if (
+          window.codeWorldSymbols[replacementTerm] &&
+          window.codeWorldSymbols[replacementTerm].definingModule
+        ) {
           found[2].push({
             text: window.codeWorldSymbols[replacementTerm].insertText,
             details: window.codeWorldSymbols[replacementTerm],

@@ -550,30 +550,31 @@ function registerStandardHints(successFunc) {
       found[2] = [];
     }
 
-    for (const [lookedUpTerm, replacementEntry] of Object.entries(
+    for (const [replacementTerm, lookedUpTerms] of Object.entries(
       replacementTerms
     )) {
-      const replacementTerm =
-        typeof replacementEntry === 'object'
-          ? replacementEntry.value
-          : replacementEntry;
+      lookedUpTerms.forEach((
+        lookedUpTerm
+      ) => {
+        const withOptions = typeof lookedUpTerm === 'object';
 
-      if (window.codeWorldSymbols[replacementTerm]) {
-        found[2].push({
-          text: window.codeWorldSymbols[replacementTerm].insertText,
-          details: window.codeWorldSymbols[replacementTerm],
-          render: (elem) => {
-            renderDeclaration(
-              elem,
-              window.codeWorldSymbols[replacementTerm],
-              50
-            );
-          },
-          isTermReplaced: true,
-          replacementExplanation: replacementEntry.explanation,
-          originalTerm: lookedUpTerm,
-        });
-      }
+        if (window.codeWorldSymbols[replacementTerm]) {
+          found[2].push({
+            text: window.codeWorldSymbols[replacementTerm].insertText,
+            details: window.codeWorldSymbols[replacementTerm],
+            render: (elem) => {
+              renderDeclaration(
+                elem,
+                window.codeWorldSymbols[replacementTerm],
+                50
+              );
+            },
+            isTermReplaced: true,
+            replacementExplanation: withOptions && lookedUpTerm.explanation,
+            originalTerm: withOptions ? lookedUpTerm.value : lookedUpTerm,
+          });
+        }
+      });
     }
 
     const options = found[0].concat(found[1], found[2]);

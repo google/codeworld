@@ -465,14 +465,11 @@ function substitutionCost(a, b, fixedLen, isTermReplaced) {
 }
 
 // Hints and hover tooltips
-function registerStandardHints(successFunc) {
-  let replacementTerms;
+async function registerStandardHints(successFunc) {
+  const blob = await fetch('./replacement_terms.json');
+  const replacementTerms = await blob.json();
 
-  CodeMirror.registerHelper('hint', 'codeworld', async (cm) => {
-    if (!replacementTerms) {
-      const blob = await fetch('./replacement_terms.json');
-      replacementTerms = await blob.json();
-    }
+  CodeMirror.registerHelper('hint', 'codeworld', (cm) => {
     const deleteOldHintDocs = () => {
       $('.hint-description').remove();
     };

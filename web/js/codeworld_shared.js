@@ -497,38 +497,42 @@ async function registerStandardHints(successFunc) {
     // 3. Others, to be presented as fuzzy matches.
     const found = [[], [], []];
 
-    const hints = Object.keys(window.codeWorldSymbols);
-    for (let i = 0; i < hints.length; i++) {
-      const hint = hints[i];
-      const parts = hint.split(/\.(?=[^.]+$)/);
+    for (const [hintName, hintProps] of Object.entries(
+      window.codeWorldSymbols
+    )) {
+      const parts = hintName.split(/\.(?=[^.]+$)/);
       const hintPrefix = parts.length < 2 ? '' : `${parts[0]}.`;
-      const hintIdent = parts.length < 2 ? hint : parts[1];
-      if (!VAR_OR_CON.test(hintIdent)) continue;
-      if (window.codeWorldSymbols[hint].module) {
-        if (hint.startsWith(prefix)) {
+      const hintIdent = parts.length < 2 ? hintName : parts[1];
+
+      if (!VAR_OR_CON.test(hintIdent)) {
+        continue;
+      }
+
+      if (hintProps.module) {
+        if (hintName.startsWith(prefix)) {
           const candidate = {
-            text: window.codeWorldSymbols[hint].insertText.substr(
-              prefix.length
-            ),
-            details: window.codeWorldSymbols[hint],
+            text: hintProps.insertText.substr(prefix.length),
+            details: hintProps,
             render: (elem) => {
-              renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
+              renderDeclaration(elem, hintProps, 50);
             },
           };
-          if (hint === prefix + token.string) {
+          if (hintName === prefix + token.string) {
             found[0].push(candidate);
-          } else if (hint.startsWith(prefix + term)) {
+          } else if (hintName.startsWith(prefix + term)) {
             found[1].push(candidate);
           } else {
-            found[2].push(candidate);
+            if (hintProps.definingModule === replacementTerms.definingModule) {
+              found[2].push(candidate);
+            }
           }
         }
       } else if (hintPrefix === prefix) {
         const candidate = {
-          text: window.codeWorldSymbols[hint].insertText,
-          details: window.codeWorldSymbols[hint],
+          text: hintProps.insertText,
+          details: hintProps,
           render: (elem) => {
-            renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
+            renderDeclaration(elem, hintProps, 50);
           },
         };
         if (hintIdent === token.string) {
@@ -536,7 +540,9 @@ async function registerStandardHints(successFunc) {
         } else if (hintIdent.startsWith(term)) {
           found[1].push(candidate);
         } else {
-          found[2].push(candidate);
+          if (hintProps.definingModule === replacementTerms.definingModule) {
+            found[2].push(candidate);
+          }
         }
       }
     }
@@ -547,44 +553,49 @@ async function registerStandardHints(successFunc) {
       found[2] = [];
     }
 
-    for (const [replacementTerm, lookedUpTerms] of Object.entries(
-      replacementTerms
-    )) {
-      lookedUpTerms.forEach((lookedUpTerm) => {
-        const withOptions = typeof lookedUpTerm === 'object';
-
-        if (
-          window.codeWorldSymbols[replacementTerm] &&
-          window.codeWorldSymbols[replacementTerm].definingModule
-        ) {
-          found[2].push({
-            text: window.codeWorldSymbols[replacementTerm].insertText,
-            details: window.codeWorldSymbols[replacementTerm],
-            render: (elem) => {
-              renderDeclaration(
-                elem,
-                window.codeWorldSymbols[replacementTerm],
-                50
-              );
-            },
-            isTermReplaced: true,
-            replacementExplanation: withOptions && lookedUpTerm.explanation,
-            originalTerm: withOptions ? lookedUpTerm.value : lookedUpTerm,
-          });
-        }
-      });
-    }
-
     const options = found[0].concat(found[1], found[2]);
-    for (const candidate of options) {
-      const { isTermReplaced, originalTerm, text } = candidate;
-      candidate.cost = substitutionCost(
+
+    options.forEach((candidate) => {
+      const { text } = candidate;
+      const originalTermCost = substitutionCost(
         token.string,
-        isTermReplaced ? originalTerm : text,
-        term.length,
-        isTermReplaced
+        text,
+        term.length
       );
-    }
+
+      const mappedTerms =
+        Object.prototype.hasOwnProperty.call(replacementTerms.mapping, text) &&
+        replacementTerms.mapping[text];
+      if (mappedTerms) {
+        const mappedTermsWithCosts = mappedTerms.map((mappedTerm) => {
+          return {
+            replacementExplanation: mappedTerm.explanation,
+            cost: substitutionCost(
+              token.string,
+              mappedTerm.value ? mappedTerm.value : mappedTerm,
+              term.length,
+              true
+            ),
+          };
+        });
+
+        const lowestCost = Math.min(
+          ...mappedTermsWithCosts.map(({ cost }) => cost),
+          originalTermCost
+        );
+        candidate.cost = lowestCost;
+
+        const winningMappedTerm = mappedTermsWithCosts.find(
+          ({ cost }) => cost === lowestCost
+        );
+        if (winningMappedTerm) {
+          candidate.replacementExplanation =
+            winningMappedTerm.replacementExplanation;
+        }
+      } else {
+        candidate.cost = originalTermCost;
+      }
+    });
 
     if (options.length > 0) {
       options.sort((a, b) => {

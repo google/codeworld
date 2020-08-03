@@ -34,7 +34,6 @@ module Internal.Num
     min,
     negate,
     abs,
-    absoluteValue,
     signum,
     truncation,
     rounded,
@@ -45,7 +44,6 @@ module Internal.Num
     pi,
     exp,
     sqrt,
-    squareRoot,
     log,
     logBase,
     sin,
@@ -235,9 +233,6 @@ negate = P.negate
 abs :: Number -> Number
 abs = fromDouble . P.abs . toDouble
 
-absoluteValue :: Number -> Number
-absoluteValue = abs
-
 -- | Gives the sign of a number.
 --
 --  If the number is negative, the signum is -1.  If it's positive, the signum
@@ -315,9 +310,6 @@ sqrt (Number x)
   | x P.< 0 =
     withFrozenCallStack (P.error "Negative numbers have no square root.")
   | otherwise = fromDouble (P.sqrt x)
-
-squareRoot :: HasCallStack => Number -> Number
-squareRoot = sqrt
 
 -- | Gives the natural log of a number.  This is the opposite of the exp
 --    function.

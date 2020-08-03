@@ -21,6 +21,7 @@ Library
     NumInstances,
     Only,
     QuickCheck,
+    SHA,
     StateVar,
     Yampa,
     active,
@@ -54,6 +55,7 @@ Library
     bool8,
     bytes,
     bytestring,
+    bytestring-builder,
     call-stack,
     capability,
     case-insensitive,
@@ -240,6 +242,7 @@ Library
     random,
     random-shuffle,
     reactive-banana,
+    -- reanimate, (depends on chiphunk, which depends on native library)
     reducers,
     ref-tf,
     reflection,

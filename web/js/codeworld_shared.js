@@ -466,8 +466,9 @@ function substitutionCost(a, b, fixedLen, isTermReplaced) {
 
 // Hints and hover tooltips
 async function registerStandardHints(successFunc) {
+  let replacementTerms = {};
   const blob = await fetch('./replacement_terms.json');
-  const replacementTerms = await blob.json();
+  replacementTerms = await blob.json();
 
   CodeMirror.registerHelper('hint', 'codeworld', (cm) => {
     const deleteOldHintDocs = () => {
@@ -522,9 +523,7 @@ async function registerStandardHints(successFunc) {
           } else if (hintName.startsWith(prefix + term)) {
             found[1].push(candidate);
           } else {
-            if (hintProps.definingModule === replacementTerms.definingModule) {
-              found[2].push(candidate);
-            }
+            found[2].push(candidate);
           }
         }
       } else if (hintPrefix === prefix) {
@@ -540,9 +539,7 @@ async function registerStandardHints(successFunc) {
         } else if (hintIdent.startsWith(term)) {
           found[1].push(candidate);
         } else {
-          if (hintProps.definingModule === replacementTerms.definingModule) {
-            found[2].push(candidate);
-          }
+          found[2].push(candidate);
         }
       }
     }
@@ -563,37 +560,40 @@ async function registerStandardHints(successFunc) {
         term.length
       );
 
-      const mappedTerms =
-        Object.prototype.hasOwnProperty.call(replacementTerms.mapping, text) &&
-        replacementTerms.mapping[text];
-      if (mappedTerms) {
-        const mappedTermsWithCosts = mappedTerms.map((mappedTerm) => {
-          return {
-            replacementExplanation: mappedTerm.explanation,
-            cost: substitutionCost(
-              token.string,
-              mappedTerm.value ? mappedTerm.value : mappedTerm,
-              term.length,
-              true
-            ),
-          };
-        });
+      for (const [module, mapping] of Object.entries(replacementTerms)) {
+        const mappedTerms =
+          Object.prototype.hasOwnProperty.call(mapping, text) && mapping[text];
+        const { definingModule } = window.codeWorldSymbols[text];
 
-        const lowestCost = Math.min(
-          ...mappedTermsWithCosts.map(({ cost }) => cost),
-          originalTermCost
-        );
-        candidate.cost = lowestCost;
+        if (mappedTerms && definingModule && definingModule === module) {
+          const mappedTermsWithCosts = mappedTerms.map((mappedTerm) => {
+            return {
+              replacementExplanation: mappedTerm.explanation,
+              cost: substitutionCost(
+                token.string,
+                mappedTerm.value ? mappedTerm.value : mappedTerm,
+                term.length,
+                true
+              ),
+            };
+          });
 
-        const winningMappedTerm = mappedTermsWithCosts.find(
-          ({ cost }) => cost === lowestCost
-        );
-        if (winningMappedTerm) {
-          candidate.replacementExplanation =
-            winningMappedTerm.replacementExplanation;
+          const lowestCost = Math.min(
+            ...mappedTermsWithCosts.map(({ cost }) => cost),
+            originalTermCost
+          );
+          candidate.cost = lowestCost;
+
+          const winningMappedTerm = mappedTermsWithCosts.find(
+            ({ cost }) => cost === lowestCost
+          );
+          if (winningMappedTerm) {
+            candidate.replacementExplanation =
+              winningMappedTerm.replacementExplanation;
+          }
+        } else {
+          candidate.cost = originalTermCost;
         }
-      } else {
-        candidate.cost = originalTermCost;
       }
     });
 
@@ -611,13 +611,7 @@ async function registerStandardHints(successFunc) {
         }
       }
 
-      const goodOptions = options
-        .slice(0, numGood)
-        .reduce((result, current) => {
-          const duplicate = result.find(({ text }) => text === current.text);
-
-          return duplicate ? result : result.concat(current);
-        }, []);
+      const goodOptions = options.slice(0, numGood);
 
       const data = {
         list: goodOptions,

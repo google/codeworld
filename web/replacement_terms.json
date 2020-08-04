@@ -1,6 +1,5 @@
 {
-  "definingModule": "Prelude",
-  "mapping": {
+  "Prelude": {
     "abs": ["positive", "magnitude"],
     "acos": ["arccos"],
     "activityOf": ["interactionOf"],

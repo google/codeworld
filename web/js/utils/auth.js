@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import * as Alert from './alert.js';
+import * as Html from './html.js';
 import { sendHttp } from './network.js';
 import { warnIfUnsaved } from '../codeworld_shared.js';
 
@@ -37,19 +39,12 @@ function LocalAuth() {
 
   function httpPost(opts) {
     return new Promise((resolve, reject) =>
-      $.ajax(
-        Object.assign(
-          {
-            method: 'POST',
-          },
-          opts
-        )
-      )
+      $.ajax({ ...opts, method: 'POST' })
         .done((result, status, xhr) =>
           resolve({
-            result: result,
-            status: status,
-            xhr: xhr,
+            result,
+            status,
+            xhr,
           })
         )
         .fail(reject)
@@ -185,7 +180,7 @@ function LocalAuth() {
 
       sweetAlert({
         title: Alert.title(ERROR_TITLE),
-        html: html,
+        html,
         type: 'error',
       });
     }
@@ -456,16 +451,14 @@ function initGoogleAuth(initCallback) {
             return request;
           }
 
-          const auth2 = Object.assign(
-            {
-              sendHttpAuth: sendHttpAuth,
-            },
-            gapi.auth2.init({
+          const auth2 = {
+            ...gapi.auth2.init({
               client_id: clientId,
               scope: 'openid',
               fetch_basic_profile: false,
-            })
-          );
+            }),
+            sendHttpAuth,
+          };
 
           onAuthInitialized(auth2, initCallback);
         })
@@ -483,7 +476,7 @@ function onAuthInitialized(auth2, callback) {
 function onAuthDisabled() {
   window.auth2 = null;
 
-  $('#signin').css('display', 'none');
+  $('#signin').hide();
 }
 
 function init(initCallback) {

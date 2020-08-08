@@ -104,7 +104,7 @@ pre {
 }
 
 .accordion {
-  height: 100%;
+  height: fit-content;
   margin: 0;
   padding: 0;
   background: var(--doc-bg);
@@ -114,6 +114,7 @@ pre {
 
 .accordion:first-of-type {
   position: fixed;
+  height: 100%;
   width: 19rem;
   overflow-y: auto;
   border-right: 3px solid var(--doc-helpacc-border-right);

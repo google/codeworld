@@ -413,11 +413,13 @@ window.onscroll = (event) => {
     function getPath(tableOfContents, targetTitle) {
       for (const [title, link] of Object.entries(tableOfContents)) {
         if (typeof link === 'object') {
-          return getPath(link, targetTitle);
-        } else {
-          if (title === targetTitle) {
-            return link;
+          const nestedLink = getPath(link, targetTitle);
+
+          if (nestedLink) {
+            return nestedLink;
           }
+        } else if (title === targetTitle) {
+          return link;
         }
       }
     }

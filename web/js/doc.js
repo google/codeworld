@@ -321,14 +321,28 @@ window.onscroll = (event) => {
     }
   }
 
+  function expandOuterAccordion($innerAccordion) {
+    const innerAccordionTitle = $innerAccordion.attr('data-accordion-title');
+    const $outerAccordion = $innerAccordion.parent();
+
+    $outerAccordion.children().each((index, child) => {
+      if (child.innerText === innerAccordionTitle) {
+        $outerAccordion.accordion('option', 'active', Math.min(index / 2));
+      }
+    });
+
+    if ($outerAccordion.parent().hasClass('accordion')) {
+      expandOuterAccordion($outerAccordion);
+    }
+  }
+
   function loadSidebar() {
     let path = position.path;
     if (!path) path = shelf.default;
 
-    let activeIndex = false;
-
     const $rootAccordion = $('<div>');
     $rootAccordion.addClass('accordion');
+    $rootAccordion.insertBefore('#help');
 
     const accordionOptions = {
       collapsible: true,
@@ -347,9 +361,9 @@ window.onscroll = (event) => {
 
     setTheme($rootAccordion[0]);
 
-    let paneNum = 0;
-
     function createAccordionEntries(tableOfContents, $accordion) {
+      let childToExpandIndex = false;
+
       for (const [title, link] of Object.entries(tableOfContents)) {
         const $header = $('<h3>');
         $header.text(title);
@@ -361,6 +375,7 @@ window.onscroll = (event) => {
         if (typeof link === 'object') {
           const $nestedAccordion = $('<div>');
           $nestedAccordion.addClass('accordion');
+          $nestedAccordion.attr('data-accordion-title', title);
           $accordion.append($header, $nestedAccordion);
 
           createAccordionEntries(link, $nestedAccordion);
@@ -369,14 +384,13 @@ window.onscroll = (event) => {
             title,
             header: $header[0],
             outline: $entry[0],
-            index: paneNum,
+            index: Object.keys(tableOfContents).indexOf(title),
             elem: null,
           };
 
           if (tableOfContents[title] === path) {
-            activeIndex = paneNum;
+            childToExpandIndex = Object.values(tableOfContents).indexOf(path);
           }
-          paneNum++;
 
           $accordion.append($header, $entry);
         }
@@ -384,13 +398,17 @@ window.onscroll = (event) => {
 
       $accordion.accordion({
         ...accordionOptions,
-        active: activeIndex,
+        active: childToExpandIndex,
       });
     }
 
     createAccordionEntries(shelf.named, $rootAccordion);
 
-    $($rootAccordion).insertBefore('#help');
+    $('.accordion').each((index, accordion) => {
+      if ($(accordion).accordion('option', 'active') !== false) {
+        expandOuterAccordion($(accordion));
+      }
+    });
 
     function getPath(tableOfContents, targetTitle) {
       for (const [title, link] of Object.entries(tableOfContents)) {

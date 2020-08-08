@@ -38,6 +38,9 @@ function savePosition() {
   sessionStorage.setItem(getPositionKey(), JSON.stringify(position));
 }
 
+// Hack to let the parent frame call savePosition via the DOM.
+window.savePosition = savePosition;
+
 function loadPosition() {
   const savedPosition = sessionStorage.getItem(getPositionKey());
   if (savedPosition && savedPosition !== 'undefined') {

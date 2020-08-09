@@ -143,9 +143,9 @@ function notifyStarted() {
   }
 }
 
-window.showCanvas = function () {};
+function showCanvas() {}
 
-window.start = function () {
+function start() {
   const modeMatch = /\bmode=([A-Za-z0-9]*)\b/.exec(location.search);
   window.buildMode = modeMatch ? modeMatch[1] : 'codeworld';
 
@@ -223,9 +223,9 @@ window.start = function () {
   setTimeout(() => {
     h$gcInterval = 1000;
   }, 200);
-};
+}
 
-window.init = function () {
+function init() {
   let paramList = location.search.slice(1).split('&');
   const params = {};
   for (let i = 0; i < paramList.length; i++) {
@@ -257,4 +257,10 @@ window.init = function () {
   loadScript.setAttribute('type', 'text/javascript');
   loadScript.setAttribute('src', uri);
   document.body.appendChild(loadScript);
-};
+}
+
+init();
+
+window.init = init;
+window.start = start;
+window.showCanvas = showCanvas;

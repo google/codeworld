@@ -60,7 +60,14 @@ window.onscroll = (event) => {
   position.scrollTop = event.target.scrollingElement.scrollTop;
 };
 
-(() => {
+(async () => {
+  window.markdeepOptions = {
+    mode: 'script',
+  };
+  await $.getScript(
+    'https://casual-effects.com/markdeep/latest/markdeep.min.js'
+  );
+
   loadPosition();
 
   let shelf = {};

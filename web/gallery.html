@@ -80,52 +80,6 @@
         margin: 0px;
       }
     </style>
-    <script>
-      let fileName = new URLSearchParams(window.location.search).get("path");
-      if (!fileName) {
-        fileName = location.href
-          .split("/")
-          .pop()
-          .replace(/\.html$/, ".json");
-      }
-      $(() => {
-        $.getJSON(fileName, (data) => {
-          $.each(data.items, (i, item) => {
-            let btn = document.createElement("li");
-            let a = document.createElement("a");
-            btn.setAttribute("class", "choice");
-            btn.append(a);
-            a.innerText = item.name;
-            let clickHandler = (event) => {
-              $(".choice").removeClass("sel");
-              $(btn).addClass("sel");
-              $("#screen").attr("src", item.url).focus();
-              $("#info-title").text(item.name);
-              $("#info-text").text(item.desc || "");
-              if (item.code) {
-                $("#info-link").show().attr("href", item.code);
-              } else {
-                $("#info-link").hide();
-              }
-              event.preventDefault();
-            };
-            $(a).click(clickHandler);
-            // $(btn).click(clickHandler);
-            $("#choices").append(btn);
-          });
-        });
-        $(window).resize((event) => {
-          let sz =
-            Math.min(
-              $("#screen_container").width(),
-              $("#screen_container").height()
-            ) - 50;
-          $("#screen").css("width", sz + "px");
-          $("#screen").css("height", sz + "px");
-        });
-        $(window).resize();
-      });
-    </script>
   </head>
 
   <body style="text-align: center;">
@@ -145,5 +99,7 @@
         <a id="info-link" style="display: none;">View and edit this code</a>
       </div>
     </div>
+
+    <script src="js/gallery.js"></script>
   </body>
 </html>

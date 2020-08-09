@@ -21,6 +21,8 @@ import {
   deleteProject_,
   getNearestDirectory,
   initDirectoryTree,
+  initializeLayoutContainer,
+  LAYOUT_CONTAINER_CLASSNAME,
   loadProject,
   loadSample,
   loadTreeNodes,
@@ -57,6 +59,10 @@ function attachEventListeners() {
     Auth.signOut(isEditorClean, clearWorkspace);
   });
   $('#signin').on('click', Auth.signIn);
+
+  $('#navButton').on('click', () => {
+    $(LAYOUT_CONTAINER_CLASSNAME).layout().toggle('west');
+  });
 
   $('#newButton').on('click', newProject);
   $('#newFolderButton').on('click', newFolder);
@@ -113,6 +119,50 @@ function attachCustomEventListeners() {
   });
 }
 
+function initializeLayout() {
+  initializeLayoutContainer({
+    default: {},
+    west: {
+      initHidden: true,
+      minSize: 50,
+      enableCursorHotkey: false,
+    },
+    east: {
+      initHidden: true,
+      resizable: true,
+      size: 510,
+      enableCursorHotkey: false,
+      onresize: () => {
+        $runner = $('#runner');
+        $runner.css({
+          height: `${$runner.width()}px`,
+        });
+      },
+    },
+  });
+
+  let wasDraggingEast = false;
+  new MutationObserver(() => {
+    const isDraggingEast =
+      document.getElementsByClassName('ui-layout-resizer-east-dragging')
+        .length > 0;
+    const runner = $('#runner');
+    if (!wasDraggingEast && isDraggingEast) {
+      runner.css({
+        'pointer-events': 'none',
+      });
+    } else if (wasDraggingEast && !isDraggingEast) {
+      runner.css({
+        'pointer-events': 'auto',
+      });
+      runner.focus();
+    }
+    wasDraggingEast = isDraggingEast;
+  }).observe(document.querySelector('.ui-layout-container'), {
+    childList: true,
+  });
+}
+
 /*
  * Initializes the programming environment.  This is called after the
  * entire document body and other JavaScript has loaded.
@@ -133,24 +183,28 @@ async function init() {
     });
 
     window.auth2.isSignedIn.listen(() => {
+      const layoutHandler = $(LAYOUT_CONTAINER_CLASSNAME).layout();
+
       if (Auth.signedIn()) {
         loadTreeNodes(DirTree.getRootNode());
 
         $('#signin').hide();
         $('#signout, #navButton').show();
-        window.mainLayout.show('west');
+        layoutHandler.show('west');
       } else {
         $('#signin').show();
         $(
           '#signout, #saveButton, #navButton, #deleteButton, #shareFolderButton'
         ).hide();
-        window.mainLayout.hide('west');
+        layoutHandler.hide('west');
       }
     });
   });
 
   attachEventListeners();
   attachCustomEventListeners();
+
+  initializeLayout();
 
   // Keep the base bundle preloaded by retrying regularly.
   function preloadBaseBundle() {

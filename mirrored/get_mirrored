@@ -1,0 +1,35 @@
+#!/bin/bash
+TO_MIRROR=(
+    'http://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css'
+    'http://code.jquery.com/jquery-2.2.4.min.js'
+    'http://code.jquery.com/jquery-1.12.4.min.js'
+    'http://code.jquery.com/jquery-1.12.4.js'
+    'http://code.jquery.com/ui/1.12.0/jquery-ui.min.js'
+    'http://cdn.materialdesignicons.com/3.6.95/css/materialdesignicons.min.css'
+    'http://casual-effects.com/markdeep/latest/markdeep.min.js'
+    'http://cdnjs.cloudflare.com/ajax/libs/jquery-layout/1.4.3/jquery.layout_and_plugins.min.js'
+    'http://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js'
+    'http://cdnjs.cloudflare.com/ajax/libs/jqtree/1.4.10/tree.jquery.js'
+    'http://cdn.jsdelivr.net/npm/promise-polyfill@7.1.0/dist/promise.min.js'
+    )
+MASTER_HASHES=sums.txt
+
+shopt -s extglob
+
+exitstat=0
+
+for url in "${TO_MIRROR[@]}"; do
+    file=".${url#http?(s):/}"
+    [ -f "${file}" ] || wget --no-verbose --force-directories "${url}" || exitstat=1
+    if ! (sed 's/[^ ]*  *//' "${MASTER_HASHES}" | fgrep -x -q "${file}"); then
+        echo "Warning: First download of ${url}; adding hash to ${MASTER_HASHES}"
+	sha256sum "${file}" >> ${MASTER_HASHES}
+   fi
+done
+
+if ! sha256sum --quiet --check "${MASTER_HASHES}"; then
+    exitstat="$?"
+    echo "DANGER: Validation failed for downloaded third-party code; tampered with?" 1>&2
+fi
+
+exit "${exitstat}"

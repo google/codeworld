@@ -173,6 +173,15 @@ if [ ! -f $BUILD/progress/system-pkgs ]; then
   touch $BUILD/progress/system-pkgs
 fi
 
+# Locally mirror various third-party JavaScript, CSS, etc, so that we don't
+# have to have user's browsers retrieve code from random remote locations.
+
+if [ ! -f $BUILD/progress/third-party-mirror ]; then
+  run mirrored           ./get_mirrored
+
+  touch $BUILD/progress/third-party-mirror
+fi
+
 # Install ghcup, a minimal tool for installing GHC.
 
 if [ ! -f $BUILD/progress/ghcup ]; then

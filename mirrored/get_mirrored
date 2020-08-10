@@ -6,6 +6,7 @@ TO_MIRROR=(
     'http://code.jquery.com/jquery-1.12.4.js'
     'http://code.jquery.com/ui/1.12.0/jquery-ui.min.js'
     'http://cdn.materialdesignicons.com/3.6.95/css/materialdesignicons.min.css'
+    'http://cdn.materialdesignicons.com/3.6.95/fonts/materialdesignicons-webfont.ttf?v=3.6.95'
     'http://casual-effects.com/markdeep/latest/markdeep.min.js'
     'http://cdnjs.cloudflare.com/ajax/libs/jquery-layout/1.4.3/jquery.layout_and_plugins.min.js'
     'http://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js'

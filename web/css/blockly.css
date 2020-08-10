@@ -326,8 +326,7 @@
 
 .blocklyWidgetDiv .goog-option-selected .goog-menuitem-checkbox,
 .blocklyWidgetDiv .goog-option-selected .goog-menuitem-icon {
-  background: url(https://blockly-demo.appspot.com/static/media/sprites.png)
-    no-repeat -48px -16px !important;
+  background: url(../blockly/media/sprites.png) no-repeat -48px -16px !important;
 }
 
 .blocklyToolboxDiv {
@@ -395,7 +394,7 @@
 }
 
 .blocklyTreeIcon {
-  background-image: url(https://blockly-demo.appspot.com/static/media/sprites.png);
+  background-image: url(../blockly/media/sprites.png);
   height: 16px;
   vertical-align: middle;
   width: 16px;

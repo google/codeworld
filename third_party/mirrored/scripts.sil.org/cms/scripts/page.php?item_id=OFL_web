@@ -1,0 +1,253 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>OFL web version</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="keywords" content="OFL, font, typography, license, FLOSS">
+<script src="/cdn-cgi/apps/head/J_KwU8hb4ULpd61OQNbPzC6LNcI.js"></script><link rel="stylesheet" href="/cms/assets/misc/css/default.css" type="text/css">
+<link rel="stylesheet" href="../sites/nrsi/themes/default/_css/default.css" type="text/css">
+
+<style type="text/css">
+<!--
+
+A.GlobalNavLink, A.GlobalNavLink:visited {
+	color: #FFFF00;
+	font-size: smaller;
+	font-weight: bold;
+}
+
+-->
+
+</style>
+
+<!-- START Google Analytics -->
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+var pageTracker = _gat._getTracker("UA-5469534-1");
+pageTracker._trackPageview();
+</script>
+<!-- END Google Analytics -->
+
+
+	<title>OFL web version</title>
+</head>
+
+<body style="padding:0; margin:0">
+
+
+<table width="100%" height="100%" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td style="background: #0068a6; padding-left:20; padding-top:10; white-space:nowrap;" width="110" valign="top">
+		<p><a href="http://www.sil.org/">
+<!-- <img src="../sites/nrsi/themes/default/_media/SIL_logo_left_column.gif" width="86" height="80" border="0"> -->
+<img src="../sites/nrsi/themes/default/_media/SIL_Logo_TM_Blue_2014.png" width="85" height="95" border="0" alt="">
+</a><br><br></p>
+    	<p class="Cat1"><a class="Cat1" href="page.php?cat_id=Home">Home</a></p>
+<p class="Cat1"><a class="Cat1" href="page.php?cat_id=ContactUs">Contact Us</a></p>
+<p class="Cat1"><a class="Cat1" href="page.php?cat_id=General">General</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=Babel">Initiative B@bel</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=WSI_Guidelines">WSI Guidelines</a></p>
+<p class="Cat1"><a class="Cat1" href="page.php?cat_id=Encoding">Encoding</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=EncodingPrinciples">Principles</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=Unicode">Unicode</a></p>
+<p class="Cat3"><a class="Cat3" href="page.php?cat_id=UnicodeTraining">Training</a></p>
+<p class="Cat3"><a class="Cat3" href="page.php?cat_id=UnicodeTutorials">Tutorials</a></p>
+<p class="Cat3"><a class="Cat3" href="page.php?cat_id=UnicodePUA">PUA</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=Conversion">Conversion</a></p>
+<p class="Cat3"><a class="Cat3" href="page.php?cat_id=EncConvRes">Resources</a></p>
+<p class="Cat3"><a class="Cat3" href="page.php?cat_id=ConversionUtilities">Utilities</a></p>
+<p class="Cat4"><a class="Cat4" href="page.php?cat_id=TECkit">TECkit</a></p>
+<p class="Cat3"><a class="Cat3" href="page.php?cat_id=ConversionMaps">Maps</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=EncodingResources">Resources</a></p>
+<p class="Cat1"><a class="Cat1" href="page.php?cat_id=Input">Input</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=InputPrinciples">Principles</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=InputUtilities">Utilities</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=InputTutorials">Tutorials</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=InputResources">Resources</a></p>
+<p class="Cat1"><a class="Cat1" href="page.php?cat_id=TypeDesign">Type Design</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=TypeDesignPrinciples">Principles</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=FontDesignTools">Design Tools</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=FontFormats">Formats</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=TypeDesignResources">Resources</a></p>
+<p class="Cat3"><a class="Cat3" href="page.php?cat_id=FontDownloads">Font Downloads</a></p>
+<p class="Cat3"><a class="Cat3" href="page.php?cat_id=FontDownloadsGentium">Gentium</a></p>
+<p class="Cat3"><a class="Cat3" href="page.php?cat_id=FontDownloadsDoulos">Doulos</a></p>
+<p class="Cat3"><a class="Cat3" href="page.php?cat_id=FontDownloadsIPA">IPA</a></p>
+<p class="Cat1"><a class="Cat1" href="page.php?cat_id=Rendering">Rendering</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=RenderingPrinciples">Principles</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=RenderingTechnologies">Technologies</a></p>
+<p class="Cat3"><a class="Cat3" href="page.php?cat_id=RenderingOpenType">OpenType</a></p>
+<p class="Cat3"><a class="Cat3" href="page.php?cat_id=RenderingGraphite">Graphite</a></p>
+<p class="Cat2"><a class="Cat2" href="page.php?cat_id=RenderingResources">Resources</a></p>
+<p class="Cat3"><a class="Cat3" href="page.php?cat_id=FontFAQ">Font FAQ</a></p>
+<p class="Cat1"><a class="Cat1" href="page.php?cat_id=Links">Links</a></p>
+<p class="Cat1"><a class="Cat1" href="page.php?cat_id=Glossary">Glossary</a></p>
+
+    	<br>
+	</td>
+
+    <td valign="top" style="padding:0" xwidth="650">
+		<div style="background: #6699CC url(../sites/nrsi/themes/default/_media/home_banner_gradient.gif) no-repeat right; padding:0 0 0 25; height:36px; margin:0; color:#FFFFFF;">
+			<p style="font-family:Times New Roman; font-size:25px; color:#FFFFFF; padding:10 0 0 0; margin:0 0 0 0">Computers & Writing Systems</p>
+		</div>
+		<div style="padding:0 0 0 0; background-color:#000000; color:#FFFFFF">
+			<table width='100%'>
+				<tr>
+					<td style="padding: 0 0 0 25px"><a class="GlobalNavLink" href="http://www.sil.org/">SIL HOME</a>
+| <a class="GlobalNavLink" href="https://software.sil.org/products/">SIL SOFTWARE</a>
+| <a class="GlobalNavLink" href="https://scripts.sil.org/support">SUPPORT</a>
+| <a class="GlobalNavLink" href="https://www.givedirect.org/donate/?cid=13536">DONATE</a>
+| <a class="GlobalNavLink" href="https://scripts.sil.org/privacy-policy">PRIVACY POLICY</a>
+					</td>
+					<td align='right'>
+						<div id="google_translate_element"></div>
+					</td>
+					<td align='right' width='20%'>
+						<p><!-- RegionBegin: region_type='SearchForm' id='ee0c1cc9' --><form action='/cms/scripts/page.php?' method='POST' name='search_form'><input style='font-size:9' maxlength='200' name='search_query' size='30' value=''/> <input style='font-size:9' type='submit' value='Search'/></form><!-- RegionEnd: region_type='SearchForm' id='ee0c1cc9' --></p>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<div style="padding:0 25 25 25">
+			<p class='CategoryPath'>You are here: <a class='CategoryPath' href='page.php?cat_id=TypeDesign'>Type Design</a><br>
+			Short URL: <a href='https://scripts.sil.org/OFL_web'>https://scripts.sil.org/OFL_web</a></p>
+			
+			<!-- 
+			 -->
+<!-- 
+<div class='Warning'  >
+	<p class='Warning_heading'  >
+		Site unavailability
+	</p>
+	<p>
+		Due to essential repairs, this website may be unavailable at times during September 6 (Tue) and 7 (Wed). We apologize for the inconvenience.
+	</p>
+</div>
+-->
+			<h1>OFL web version
+</h1>
+<p> <span class='author_date_hits'>Nicolas Spalinger & Victor Gaultney, 2007-02-26</span></p><div class='Sidebar'><p><a href='page.php?item_id=OFL'>General Information</a></p>
+<p><a href='page.php?item_id=OFL_web'>Text of the SIL Open Font License</a></p>
+<p><a href='page.php?item_id=OFL-FAQ_web'>The OFL FAQ</a></p>
+<p><a href='page.php?item_id=OFL_fonts'>Fonts licensed via the OFL</a></p>
+<p><a href='page.php?item_id=OFL_logo'>OFL Graphics</a></p>
+<div class='mediacontainer'>
+  <a href='https://scripts.sil.org/OFL'><img src='https://scripts.sil.org/cms/scripts/../sites/nrsi/media/OFL_logo_rect_color.png' height='31' width='88'></a>
+</div>
+</div><p></p>
+<div class='Note'><p class='Note_heading'>Note</p><p>The Google translate widget on this page should not be used to provide a rough translation. Only the English original should be considered official and authoritative. See our translation policy in the OFL-FAQ section 8.5.</p>
+</div><p>Copyright (c) &lt;dates&gt;, &lt;Copyright Holder&gt; (&lt;URL|email&gt;),<br />
+with Reserved Font Name &lt;Reserved Font Name&gt;.</p>
+<p>Copyright (c) &lt;dates&gt;, &lt;additional Copyright Holder&gt; (&lt;URL|email&gt;),<br />
+with Reserved Font Name &lt;additional Reserved Font Name&gt;.</p>
+<p>Copyright (c) &lt;dates&gt;, &lt;additional Copyright Holder&gt; (&lt;URL|email&gt;).</p>
+<p>This Font Software is licensed under the SIL Open Font License, Version 1.1.</p>
+<p>This license is copied below, and is also available with a FAQ at: <a href='https://scripts.sil.org/OFL'>https://scripts.sil.org/OFL</a></p>
+<a name='949d16a9'></a>
+<h2> SIL OPEN FONT LICENSE </h2>
+
+<p>Version 1.1 - 26 February 2007</p>
+<a name='c6e67051'></a>
+<h3> PREAMBLE</h3>
+
+<p>The goals of the Open Font License (OFL) are to stimulate worldwide<br />
+development of collaborative font projects, to support the font creation<br />
+efforts of academic and linguistic communities, and to provide a free and<br />
+open framework in which fonts may be shared and improved in partnership<br />
+with others.</p>
+<p>The OFL allows the licensed fonts to be used, studied, modified and<br />
+redistributed freely as long as they are not sold by themselves. The<br />
+fonts, including any derivative works, can be bundled, embedded, <br />
+redistributed and/or sold with any software provided that any reserved<br />
+names are not used by derivative works. The fonts and derivatives,<br />
+however, cannot be released under any other type of license. The<br />
+requirement for fonts to remain under this license does not apply<br />
+to any document created using the fonts or their derivatives.</p>
+<a name='ebb1469e'></a>
+<h3> DEFINITIONS</h3>
+
+<p>"Font Software" refers to the set of files released by the Copyright<br />
+Holder(s) under this license and clearly marked as such. This may<br />
+include source files, build scripts and documentation.</p>
+<p>"Reserved Font Name" refers to any names specified as such after the<br />
+copyright statement(s).</p>
+<p>"Original Version" refers to the collection of Font Software components as<br />
+distributed by the Copyright Holder(s).</p>
+<p>"Modified Version" refers to any derivative made by adding to, deleting,<br />
+or substituting &mdash; in part or in whole &mdash; any of the components of the<br />
+Original Version, by changing formats or by porting the Font Software to a<br />
+new environment.</p>
+<p>"Author" refers to any designer, engineer, programmer, technical<br />
+writer or other person who contributed to the Font Software.</p>
+<a name='eb655f4e'></a>
+<h3>PERMISSION &amp; CONDITIONS</h3>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining<br />
+a copy of the Font Software, to use, study, copy, merge, embed, modify,<br />
+redistribute, and sell modified and unmodified copies of the Font<br />
+Software, subject to the following conditions:</p>
+<p>1) Neither the Font Software nor any of its individual components,<br />
+in Original or Modified Versions, may be sold by itself.</p>
+<p>2) Original or Modified Versions of the Font Software may be bundled,<br />
+redistributed and/or sold with any software, provided that each copy<br />
+contains the above copyright notice and this license. These can be<br />
+included either as stand-alone text files, human-readable headers or<br />
+in the appropriate machine-readable metadata fields within text or<br />
+binary files as long as those fields can be easily viewed by the user.</p>
+<p>3) No Modified Version of the Font Software may use the Reserved Font<br />
+Name(s) unless explicit written permission is granted by the corresponding<br />
+Copyright Holder. This restriction only applies to the primary font name as<br />
+presented to the users.</p>
+<p>4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font<br />
+Software shall not be used to promote, endorse or advertise any<br />
+Modified Version, except to acknowledge the contribution(s) of the<br />
+Copyright Holder(s) and the Author(s) or with their explicit written<br />
+permission.</p>
+<p>5) The Font Software, modified or unmodified, in part or in whole,<br />
+must be distributed entirely under this license, and must not be<br />
+distributed under any other license. The requirement for fonts to<br />
+remain under this license does not apply to any document created<br />
+using the Font Software.</p>
+<a name='81bc75c5'></a>
+<h3>TERMINATION</h3>
+
+<p>This license becomes null and void if any of the above conditions are<br />
+not met.</p>
+<a name='c6abc7e0'></a>
+<h3>DISCLAIMER</h3>
+
+<p>THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,<br />
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF<br />
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT<br />
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE<br />
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,<br />
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL<br />
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING<br />
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM<br />
+OTHER DEALINGS IN THE FONT SOFTWARE.</p>
+
+
+			<hr>
+			
+			<p><small>© 2003-2020 <a href='http://www.sil.org/' target='_blank'>SIL International</a>, all rights reserved, unless otherwise noted elsewhere on this page.<br>
+			Provided by SIL's Writing Systems Technology team (formerly known as NRSI). Read our <a href="https://scripts.sil.org/privacy-policy">Privacy Policy</a>. <a href='https://scripts.sil.org/support'>Contact us here.</a></small></p>
+		</div>
+    </td>
+<!-- START Google Translate -->
+<script>
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en'
+  }, 'google_translate_element');
+}
+</script><script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<!-- END Google Translate -->
+
+</table>
+</body>
+
+</html>

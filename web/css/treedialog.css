@@ -48,3 +48,14 @@
 .treedialog .piclink-selected {
   background: var(--treedialog-piclink-selected);
 }
+
+.inspect-dialog__section {
+  position: relative;
+  width: calc(100% - 10px);
+}
+
+.inspect-dialog {
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+}

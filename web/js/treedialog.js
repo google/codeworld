@@ -225,8 +225,6 @@ function initTreeDialog(pic) {
     title: 'Picture Browser',
     closeText: '',
     autoOpen: false,
-    height: 650,
-    width: 650,
     close: () => {
       highlight(-1);
       select(-1);
@@ -257,10 +255,11 @@ function selectNode(id) {
 }
 
 function destroy() {
-  if ($dialog.dialog('isOpen')) {
-    $dialog.dialog('close');
-  }
   if ($dialog) {
+    if ($dialog.dialog('isOpen')) {
+      $dialog.dialog('close');
+    }
+
     $dialog.remove();
   }
   highlight(-1);
@@ -273,6 +272,14 @@ window.addEventListener('message', (event) => {
 
   if (event.data.type === 'debugActive') {
     initTreeDialog(event.data.fullPic);
+
+    const $sectionWrapper = $('.inspect-dialog__section');
+    const $dialogWrapper = $('.ui-dialog');
+    $('#message').hide();
+    $sectionWrapper.show();
+    $dialogWrapper.addClass('inspect-dialog');
+    $sectionWrapper.append($dialogWrapper);
+
     selectNode(0);
   }
   if (event.data.type === 'nodeClicked') {
@@ -282,6 +289,9 @@ window.addEventListener('message', (event) => {
     // For now, do nothing.
   } else if (event.data.type === 'debugFinished') {
     destroy();
+
+    $('#message').show();
+    $('.inspect-dialog__section').hide();
   }
 });
 

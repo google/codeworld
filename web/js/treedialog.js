@@ -14,25 +14,14 @@
  * limitations under the License.
  */
 
-let dialog = null,
-  content = null,
-  fullPic = null,
-  currentPic = null,
-  marker = null,
-  open = false;
-
-function openDialog() {
-  dialog.dialog('open');
-  open = true;
-}
-
-function closeDialog() {
-  dialog.dialog('close');
-  open = false;
-}
+let $dialog;
+let $content;
+let fullPic;
+let currentPic;
+let marker;
 
 function buildNestedList(id) {
-  const go = (p, to, open) => {
+  const go = (p, to, isDialogOpen) => {
     const ul = document.createElement('ul');
     const span = document.createElement('span');
     const toggleButton = document.createElement('span');
@@ -59,7 +48,7 @@ function buildNestedList(id) {
         }
       });
 
-      if (open) {
+      if (isDialogOpen) {
         decollapse();
       } else {
         collapse();
@@ -71,7 +60,7 @@ function buildNestedList(id) {
 
     const link = createPicLink(p);
     p.link = link;
-    if (open) {
+    if (isDialogOpen) {
       link.click();
     }
     span.appendChild(link);
@@ -79,17 +68,17 @@ function buildNestedList(id) {
 
     if (p.picture) {
       const li = document.createElement('li');
-      go(p.picture, li, open);
+      go(p.picture, li, isDialogOpen);
       ul.appendChild(li);
       to.appendChild(ul);
     } else if (p.pictures) {
       for (let i = 0; i < p.pictures.length; i++) {
         const li = document.createElement('li');
-        const op =
-          open &&
+        const _isDialogOpen =
+          isDialogOpen &&
           id >= p.pictures[i].id &&
           (i === p.pictures.length - 1 || id < p.pictures[i + 1].id);
-        go(p.pictures[i], li, op);
+        go(p.pictures[i], li, _isDialogOpen);
         ul.appendChild(li);
       }
       to.appendChild(ul);
@@ -144,7 +133,7 @@ function createPicLink(pic) {
     });
 
     currentPic = pic;
-    dialog.dialog('option', 'title', pic.name);
+    $dialog.dialog('option', 'title', pic.name);
     if (pic.startLine && pic.startCol && pic.endLine && pic.endCol) {
       codeworldEditor.setSelection(
         {
@@ -230,8 +219,8 @@ function cancelDebug() {
 function initTreeDialog(pic) {
   fullPic = pic;
 
-  const div = document.createElement('div');
-  dialog = $(div).dialog({
+  const $container = $('<div>');
+  $dialog = $container.dialog({
     dialogClass: 'treedialog',
     title: 'Picture Browser',
     closeText: '',
@@ -239,21 +228,20 @@ function initTreeDialog(pic) {
     height: 650,
     width: 650,
     close: () => {
-      open = false;
       highlight(-1);
       select(-1);
       cancelDebug();
     },
   });
 
-  content = document.createElement('div');
-  content.classList.add('treedialog-content');
-  dialog.append(content);
+  $content = $('<div>');
+  $content.addClass('treedialog-content');
+  $dialog.append($content);
 }
 
 function selectNode(id) {
-  if (!open) {
-    openDialog();
+  if (!$dialog.dialog('isOpen')) {
+    $dialog.dialog('open');
   }
 
   select(id);
@@ -261,23 +249,23 @@ function selectNode(id) {
   const picture = getPicNode(id);
   currentPic = picture;
 
-  content.innerHTML = '';
+  $content.html('');
 
-  content.appendChild(buildNestedList(id));
+  $content.append(buildNestedList(id));
 
-  dialog.dialog('option', 'title', picture.name);
+  $dialog.dialog('option', 'title', picture.name);
 }
 
 function destroy() {
-  if (open) {
-    closeDialog();
+  if ($dialog.dialog('isOpen')) {
+    $dialog.dialog('close');
   }
-  if (dialog) {
-    dialog.remove();
+  if ($dialog) {
+    $dialog.remove();
   }
   highlight(-1);
-  dialog = null;
-  content = null;
+  $dialog = null;
+  $content = null;
 }
 
 window.addEventListener('message', (event) => {

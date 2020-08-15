@@ -350,14 +350,14 @@ window.onscroll = (event) => {
     const accordionOptions = {
       collapsible: true,
       heightStyle: 'content',
-      beforeActivate: (event, ui) => {
-        position.scrollLeft = 0;
-        position.scrollTop = 0;
-
+      beforeActivate: function loadArticle(event, ui) {
         const title = ui.newHeader.text();
         const path = title && getPath(shelf.named, title);
         if (path) {
           loadPath(path);
+
+          position.scrollLeft = 0;
+          position.scrollTop = 0;
         }
       },
     };

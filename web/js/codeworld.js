@@ -1178,6 +1178,7 @@ function compile() {
       if (success) {
         run(hash, dhash, msg, false, compileGeneration);
       } else {
+        sweetAlert.close();
         run(hash, '', msg, true, compileGeneration);
       }
     });

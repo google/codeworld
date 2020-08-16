@@ -47,26 +47,23 @@ Here's the code you just wrote and what its parts mean.
     | My program | is  | a drawing of | the CodeWorld logo. |     |
 
 * `program` is the **variable** that you're defining. A variable is a name for
-  something.  In most math, variables are just one letter long, and they stand
-  for numbers.  In CodeWorld, though, variables can name many different types of
-  values: numbers, pictures, colors, text, and even whole programs.  Because
-  you will use so many of them, you can name variables with whole words,
-  always starting with a *lower-case* letter.
+  something.  Usually in math, variables are just one letter long and store
+  numbers.  In CodeWorld, though, variables can store many different types of
+  things: numbers, pictures, colors, text, and even whole programs.  Because
+  you will use so many of them, you can name variables with whole words. There are some rules for naming variables. Most importantly, they must start with a *lower-case* letter and cannot contain spaces.
 
 !!! collapsible: Camel case
     Sometimes, you may want more than one word to name a variable!  The
-    computer needs each variable to be a single word starting with a lower-case
-    letter--so leave out the spaces.  To make it easier to tell when a new word
-    starts, you can capitalize the *second* and *later* words.
+    computer needs each variable to be a single word or collection of words starting with a lower-case
+    letter. But leave out spaces between words.  To make it easier to tell when a new word starts, you can capitalize the *second* and *later* words.
 
     ![](camel.png width="30%")
 
-    In your first programs, `drawingOf` and `codeWorldLogo` were written in
+    In your first program, `drawingOf` and `codeWorldLogo` were written in
     this way.  It's often called **camel case**.  Why?  Because the variable
     name has humps!
 
-* The **equal sign** means "is" and tells the computer that two expressions mean
-  the same thing.  It is used to connect a variable with its definition.
+* The **equal sign** means "is" and assigns the expressions on the right to the variable on the left. The variable must always be on the left.
 
 * `drawingOf` is called a **function**.  You'll use functions a lot, and you'll
   learn more about them later!  This particular function, `drawingOf`, tells the
@@ -84,13 +81,13 @@ Building a nametag
 Of course, you can do a lot more in CodeWorld than just look at the CodeWorld
 logo!  Next, you can build a digital nametag for yourself.  To do this,
 you'll start by telling your computer that your program should be a drawing
-of a nametag.
+of a nametag. Type (or just click on) this code:
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
 ~~~~~
 
-**This program doesn't work!**  If you've typed everything correctly, you should
+**This program doesn't work!**  When you click the **Run** button, you should
 see an error message: `Variable not in scope: nametag :: Picture`.
 This is your computer telling you that it doesn't know what `nametag` means!
 
@@ -124,13 +121,17 @@ nametag = lettering("Camille")
 You've used a new function: **`lettering`**.  This function describes a
 picture with letters (or any other kind of text) on it.
 
+Did you notice the word **Compiling** popped up and went away? This is the computer reading your instructions to make sure they are correct before executing them.
+
 Next, you can add a border to your nametag.  You might be tempted to add
 a new line like `nametag = ...` to your code, but you can't! Remember,
 your code is like a dictionary, and each definition in it should give
 the whole definition for that word.  To include a second shape in your
-nametag, you'll use **`&`**, which you can read as "and" or "in front
+nametag, you'll use an *operator*, **`&`**, which you can read as "and" or "in front
 of". To describe the border itself, two more functions -- **`circle`**
 and **`rectangle`** -- are useful.
+
+An **operator**, as you will see later, allows you to perform an operation. In this case, combine two things together.
 
 Here's a name tag with a border:
 
@@ -186,7 +187,7 @@ Try these examples to learn more:
     the computer will be confused and think you're defining a new
     variable.  This can cause a `Parse error` message.
 
-Once you've understood these examples, try your own combinations as well.
+Once you've understood these examples, try changing the numbers or making other changes.
 
 Understanding mistakes
 ----------------------
@@ -239,7 +240,8 @@ went wrong.
     ~~~~~ . clickable
     program = drawingOf(nametag)
 
-    nametag = lettering("Emma") & circle(10)
+    nametag = lettering("Emma") & 
+        circle(10)
     ~~~~~
 
     This error can also tell you that you have an open parethesis -- **(** --
@@ -355,9 +357,7 @@ favoriteColor = blue
 
     More on that later!
 
-Each of these lines is an **equation**, which says that two expressions are
-*equal*, or have the same value.  In math, you use equations in many
-ways, but in CodeWorld they are used specifically to *define variables*.
+Each of these is a type of **equation**, which says assign the value on the right to the name on the left. You have seen this type of equation in math, often with variables x and y. For example, in math, you might see x=10 and y=20.
 
 When you define a variable, you can use it in the rest of your code. 
 
@@ -395,7 +395,7 @@ border = circle(5)
 
 If you run the code, you might be surprised to find there is no border!
 You've told your computer what the word `border` means, but you didn't
-say you wanted one in your program!  
+say you wanted to use it in your program!  
 
 You might try this instead:
 
@@ -427,7 +427,7 @@ doesn't know, it will look up *those* words, and so on.
 Remember: a definition only matters if the variable you're defining is
 *used*, either directly or indirectly, in the definition of `program`.
 That is, in the definition of `program`, or the definition of another
-variable that's used in the definition of program, or so on.
+variable that's used in the definition of program, and so on.
 
 !!! Tip: Warnings
     When you write code that is correct, but could be improved, you will
@@ -516,6 +516,16 @@ already knows, and there are a lot of them!  By typing the first few
 letters of the function you want, you can narrow down the list.  The type
 signatures tell you what types of information you need to provide to apply
 the function and what type you can expect to end up with.
+
+**Important**: The names of functions are *reserved*. That means you cannot use them as variable names. You would not be able to write program like this:
+
+program=drawingOf(circle)
+circle=circle(5)
+
+Wherease this would be okay:
+
+program=drawingOf(myCircle)
+myCircle=circle(5)
 
 For practice, see if you can write code using each of the following
 functions.  Start by looking up their domain and range, using Shift-Space or
@@ -660,10 +670,9 @@ Coloring
 --------
 
 The first transformation you will use is coloring.  The `colored` function
-changes the color of a picture. This function expects two arguments: the
-preimage, and a new color.  The colors of the preimage don't matter at
+changes (transforms) the color of a picture. This function expects two arguments: the preimage, and a new color.  The colors of the preimage don't matter at
 all -- only the shapes involved.  The result of the `colored` function is a new
-picture, which is just like the preimage, except for the different color.
+picture, which is just like the preimage, except for the different color. It has been transformed!
 
 ~~~~~ . clickable
 program  = drawingOf(redWheel)
@@ -796,7 +805,14 @@ the point (0, 0) -- on the coordinate plane, so you should measure your x
 and y distances from there.  As you define your own pictures, it's a good
 idea to continue this practice.
 
-For example, suppose you wanted a circle representing the sun in the top left
+To see a circle with radius 5 drawn on the corrdinate plane, use this code:
+
+    ~~~~~ . clickable
+    program = drawingOf(coordinatePlane & circle(5))
+    ~~~~~
+
+
+Suppose you wanted a circle representing the sun in the top left
 corner of the screen.  First, you could look at the *x* *axis*,
 and see that negative numbers are used to move a shape to the left.  You might
 pick -5, which is five units left on the screen.  Next, you could look at the

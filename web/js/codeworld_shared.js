@@ -465,10 +465,11 @@ function substitutionCost(a, b, fixedLen, isTermReplaced) {
 }
 
 // Hints and hover tooltips
-async function registerStandardHints(successFunc) {
+function registerStandardHints(successFunc) {
   let replacementTerms = {};
-  const blob = await fetch('./replacement_terms.json');
-  replacementTerms = await blob.json();
+  fetch('./replacement_terms.json')
+    .then((blob) => blob.json())
+    .then((result) => (replacementTerms = result));
 
   CodeMirror.registerHelper('hint', 'codeworld', (cm) => {
     const deleteOldHintDocs = () => {
@@ -561,38 +562,41 @@ async function registerStandardHints(successFunc) {
       );
 
       for (const [module, mapping] of Object.entries(replacementTerms)) {
-        const mappedTerms =
-          Object.prototype.hasOwnProperty.call(mapping, text) && mapping[text];
-        const { definingModule } = window.codeWorldSymbols[text];
+        if (window.codeWorldSymbols[text]) {
+          const mappedTerms =
+            Object.prototype.hasOwnProperty.call(mapping, text) &&
+            mapping[text];
+          const { definingModule } = window.codeWorldSymbols[text];
 
-        if (mappedTerms && definingModule && definingModule === module) {
-          const mappedTermsWithCosts = mappedTerms.map((mappedTerm) => {
-            return {
-              replacementExplanation: mappedTerm.explanation,
-              cost: substitutionCost(
-                token.string,
-                mappedTerm.value ? mappedTerm.value : mappedTerm,
-                term.length,
-                true
-              ),
-            };
-          });
+          if (mappedTerms && definingModule && definingModule === module) {
+            const mappedTermsWithCosts = mappedTerms.map((mappedTerm) => {
+              return {
+                replacementExplanation: mappedTerm.explanation,
+                cost: substitutionCost(
+                  token.string,
+                  mappedTerm.value ? mappedTerm.value : mappedTerm,
+                  term.length,
+                  true
+                ),
+              };
+            });
 
-          const lowestCost = Math.min(
-            ...mappedTermsWithCosts.map(({ cost }) => cost),
-            originalTermCost
-          );
-          candidate.cost = lowestCost;
+            const lowestCost = Math.min(
+              ...mappedTermsWithCosts.map(({ cost }) => cost),
+              originalTermCost
+            );
+            candidate.cost = lowestCost;
 
-          const winningMappedTerm = mappedTermsWithCosts.find(
-            ({ cost }) => cost === lowestCost
-          );
-          if (winningMappedTerm) {
-            candidate.replacementExplanation =
-              winningMappedTerm.replacementExplanation;
+            const winningMappedTerm = mappedTermsWithCosts.find(
+              ({ cost }) => cost === lowestCost
+            );
+            if (winningMappedTerm) {
+              candidate.replacementExplanation =
+                winningMappedTerm.replacementExplanation;
+            }
+          } else {
+            candidate.cost = originalTermCost;
           }
-        } else {
-          candidate.cost = originalTermCost;
         }
       }
     });

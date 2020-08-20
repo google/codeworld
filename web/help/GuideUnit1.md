@@ -47,15 +47,15 @@ Here's the code you just wrote and what its parts mean.
     | My program | is  | a drawing of | the CodeWorld logo. |     |
 
 * `program` is the **variable** that you're defining. A variable is a name for
-  something.  Usually in math, variables are just one letter long and store
-  numbers.  In CodeWorld, though, variables can store many different types of
-  things: numbers, pictures, colors, text, and even whole programs.  Because
-  you will use so many of them, you can name variables with whole words. There are some rules for naming variables. Most importantly, they must start with a *lower-case* letter and cannot contain spaces.
+  something.  Usually in math, variables are just one letter long and stand for
+  numbers.  In CodeWorld, though, variables can name many different types of
+  values: numbers, pictures, colors, text, and even whole programs.  Because
+  you will use so many of them, you can name variables with whole words. 
+  There are some rules for naming variables. Most importantly, they must start
+  with a *lower-case* letter and cannot contain spaces.
 
 !!! collapsible: Camel case
-    Sometimes, you may want more than one word to name a variable!  The
-    computer needs each variable to be a single word or collection of words starting with a lower-case
-    letter. But leave out spaces between words.  To make it easier to tell when a new word starts, you can capitalize the *second* and *later* words.
+    Sometimes, you may want more than one word to name a variable!  Since variables cannot have spaces, you should leave them out and just run words together.  To make it easier to tell when a new word starts, you can capitalize the *second* and *later* words.
 
     ![](camel.png width="30%")
 
@@ -120,8 +120,6 @@ nametag = lettering("Camille")
 
 You've used a new function: **`lettering`**.  This function describes a
 picture with letters (or any other kind of text) on it.
-
-Did you notice the word **Compiling** popped up and went away? This is the computer reading your instructions to make sure they are correct before executing them.
 
 Next, you can add a border to your nametag.  You might be tempted to add
 a new line like `nametag = ...` to your code, but you can't! Remember,

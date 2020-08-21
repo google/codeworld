@@ -130,8 +130,6 @@ nametag, you'll use an *operator*, **`&`**, which you can read as "and" or "in f
 of". To describe the border itself, two more functions -- **`circle`**
 and **`rectangle`** -- are useful.
 
-An **operator**, as you will see later, allows you to perform an operation. In this case, combine two things together.
-
 Here's a name tag with a border:
 
 ~~~~~ . clickable

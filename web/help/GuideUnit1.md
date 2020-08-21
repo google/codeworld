@@ -63,7 +63,8 @@ Here's the code you just wrote and what its parts mean.
     this way.  It's often called **camel case**.  Why?  Because the variable
     name has humps!
 
-* The **equal sign** means "is" and assigns the expressions on the right to the variable on the left. The variable must always be on the left.
+* The **equal sign** means "is" and tells the computer that the two expressions mean the
+  same thing. It is used to connect a variable with its definition.
 
 * `drawingOf` is called a **function**.  You'll use functions a lot, and you'll
   learn more about them later!  This particular function, `drawingOf`, tells the

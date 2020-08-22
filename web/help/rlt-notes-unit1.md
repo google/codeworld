@@ -1,12 +1,14 @@
-If you do not leave a space before and after the & the popup does not show
-If the student makes change and clicks an example they get a warning. It might be beneficial to mention something about this and/or saving.
+Did you mean to reference a butterfly but not draw one?
+I understand your point. Just wondering if the student might be
+expecting a butterfly? Probably not if they understand polyline
+at this point but just making sure.
 
-Should variable really be constant since you cannot re-assign it a new value?
-Ex. program=xxx
-nameTag=xxx
-nameTag=yyy
+ A neat trick is to use the coordinate plane as you write your code. Say you want to draw a butterfly. You might start by writing:
 
-Might want to mention the red x error shows when using a variable before it's defined.
+program   = drawingOf(butterfly & coordinatePlane)
+butterfly = polyline([ ])
+
+
 
 
 

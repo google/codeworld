@@ -344,30 +344,37 @@ function renderDeclaration(decl, keywordData, maxLen, argIndex = -1) {
   return decl;
 }
 
-function renderHover(keywordData) {
+function renderHover(keywordData, replacementExplanation) {
   if (!keywordData) return;
 
-  const topDiv = document.createElement('div');
-  const docDiv = document.createElement('div');
+  const $wrapper = $('<div>');
+  const $documentationContainer = $('<div>');
+  const $fadeDiv = $('<div>');
+  $fadeDiv.addClass('fade');
+  const $annotation = $('<div>');
+  renderDeclaration($annotation[0], keywordData, 9999);
+  $annotation.addClass('hover-decl');
 
-  const annotation = document.createElement('div');
-  renderDeclaration(annotation, keywordData, 9999);
-  annotation.className = 'hover-decl';
-  docDiv.appendChild(annotation);
+  $documentationContainer.append($annotation);
 
   if (keywordData.doc) {
-    const description = document.createElement('div');
-    description.innerHTML = keywordData.doc;
-    description.className = 'hover-doc';
-    docDiv.appendChild(description);
+    const $description = $('<div>');
+    $description.html(keywordData.doc);
+    $description.addClass('hover-doc');
+    $documentationContainer.append($description);
+
+    if (replacementExplanation) {
+      const $noteAboutReplacement = $('<p>');
+      $noteAboutReplacement.addClass('hint-description-replacement-note');
+      $noteAboutReplacement.text(replacementExplanation);
+      $description.append($noteAboutReplacement);
+    }
   }
 
-  const fadeDiv = document.createElement('div');
-  fadeDiv.className = 'fade';
+  $wrapper.append($documentationContainer);
+  $wrapper.append($fadeDiv);
 
-  topDiv.appendChild(docDiv);
-  topDiv.appendChild(fadeDiv);
-  return topDiv;
+  return $wrapper[0];
 }
 
 function onHover(cm, data, node) {
@@ -402,12 +409,13 @@ function getQualifierPrefix(cm, pos) {
   return prefix;
 }
 
-function substitutionCost(a, b, fixedLen) {
+function substitutionCost(a, b, fixedLen, isTermReplaced) {
   const insertCost = 1;
   const deleteCost = 1.5;
   const transCost = 1;
   const substCost = 1.5;
   const caseCost = 0.1;
+  const redirectPenalty = 5;
 
   const d = Array(b.length + 1)
     .fill()
@@ -449,11 +457,20 @@ function substitutionCost(a, b, fixedLen) {
     }
   }
 
-  return d[b.length][a.length] + scale(fixedLen) * (a.length - b.length);
+  return (
+    d[b.length][a.length] +
+    scale(fixedLen) * (a.length - b.length) +
+    (isTermReplaced ? redirectPenalty : 0)
+  );
 }
 
 // Hints and hover tooltips
 function registerStandardHints(successFunc) {
+  let replacementTerms = {};
+  fetch('./replacement_terms.json')
+    .then((blob) => blob.json())
+    .then((result) => (replacementTerms = result));
+
   CodeMirror.registerHelper('hint', 'codeworld', (cm) => {
     const deleteOldHintDocs = () => {
       $('.hint-description').remove();
@@ -482,27 +499,29 @@ function registerStandardHints(successFunc) {
     // 3. Others, to be presented as fuzzy matches.
     const found = [[], [], []];
 
-    const hints = Object.keys(window.codeWorldSymbols);
-    for (let i = 0; i < hints.length; i++) {
-      const hint = hints[i];
-      const parts = hint.split(/\.(?=[^.]+$)/);
+    for (const [hintName, hintProps] of Object.entries(
+      window.codeWorldSymbols
+    )) {
+      const parts = hintName.split(/\.(?=[^.]+$)/);
       const hintPrefix = parts.length < 2 ? '' : `${parts[0]}.`;
-      const hintIdent = parts.length < 2 ? hint : parts[1];
-      if (!VAR_OR_CON.test(hintIdent)) continue;
-      if (window.codeWorldSymbols[hint].module) {
-        if (hint.startsWith(prefix)) {
+      const hintIdent = parts.length < 2 ? hintName : parts[1];
+
+      if (!VAR_OR_CON.test(hintIdent)) {
+        continue;
+      }
+
+      if (hintProps.module) {
+        if (hintName.startsWith(prefix)) {
           const candidate = {
-            text: window.codeWorldSymbols[hint].insertText.substr(
-              prefix.length
-            ),
-            details: window.codeWorldSymbols[hint],
+            text: hintProps.insertText.substr(prefix.length),
+            details: hintProps,
             render: (elem) => {
-              renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
+              renderDeclaration(elem, hintProps, 50);
             },
           };
-          if (hint === prefix + token.string) {
+          if (hintName === prefix + token.string) {
             found[0].push(candidate);
-          } else if (hint.startsWith(prefix + term)) {
+          } else if (hintName.startsWith(prefix + term)) {
             found[1].push(candidate);
           } else {
             found[2].push(candidate);
@@ -510,10 +529,10 @@ function registerStandardHints(successFunc) {
         }
       } else if (hintPrefix === prefix) {
         const candidate = {
-          text: window.codeWorldSymbols[hint].insertText,
-          details: window.codeWorldSymbols[hint],
+          text: hintProps.insertText,
+          details: hintProps,
           render: (elem) => {
-            renderDeclaration(elem, window.codeWorldSymbols[hint], 50);
+            renderDeclaration(elem, hintProps, 50);
           },
         };
         if (hintIdent === token.string) {
@@ -532,14 +551,55 @@ function registerStandardHints(successFunc) {
       found[2] = [];
     }
 
-    const options = found[0].concat(found[1]).concat(found[2]);
-    for (const candidate of options) {
-      candidate.cost = substitutionCost(
+    const options = found[0].concat(found[1], found[2]);
+
+    options.forEach((candidate) => {
+      const { text } = candidate;
+      const originalTermCost = substitutionCost(
         token.string,
-        candidate.text,
+        text,
         term.length
       );
-    }
+
+      for (const [module, mapping] of Object.entries(replacementTerms)) {
+        if (window.codeWorldSymbols[text]) {
+          const mappedTerms =
+            Object.prototype.hasOwnProperty.call(mapping, text) &&
+            mapping[text];
+          const { definingModule } = window.codeWorldSymbols[text];
+
+          if (mappedTerms && definingModule && definingModule === module) {
+            const mappedTermsWithCosts = mappedTerms.map((mappedTerm) => {
+              return {
+                replacementExplanation: mappedTerm.explanation,
+                cost: substitutionCost(
+                  token.string,
+                  mappedTerm.value ? mappedTerm.value : mappedTerm,
+                  term.length,
+                  true
+                ),
+              };
+            });
+
+            const lowestCost = Math.min(
+              ...mappedTermsWithCosts.map(({ cost }) => cost),
+              originalTermCost
+            );
+            candidate.cost = lowestCost;
+
+            const winningMappedTerm = mappedTermsWithCosts.find(
+              ({ cost }) => cost === lowestCost
+            );
+            if (winningMappedTerm) {
+              candidate.replacementExplanation =
+                winningMappedTerm.replacementExplanation;
+            }
+          } else {
+            candidate.cost = originalTermCost;
+          }
+        }
+      }
+    });
 
     if (options.length > 0) {
       options.sort((a, b) => {
@@ -554,11 +614,12 @@ function registerStandardHints(successFunc) {
           break;
         }
       }
+
       const goodOptions = options.slice(0, numGood);
 
       const data = {
         list: goodOptions,
-        from: from,
+        from,
         to: VAR_OR_CON.test(term) ? CodeMirror.Pos(cur.line, token.end) : cur,
       };
 
@@ -573,7 +634,10 @@ function registerStandardHints(successFunc) {
         const hintsWidgetRect = elem.parentElement.getBoundingClientRect();
         const doc = document.createElement('div');
         deleteOldHintDocs();
-        const hover = renderHover(selection.details);
+        const hover = renderHover(
+          selection.details,
+          selection.replacementExplanation
+        );
         if (hover) {
           doc.className += 'hint-description';
           doc.style.top = `${hintsWidgetRect.top}px`;

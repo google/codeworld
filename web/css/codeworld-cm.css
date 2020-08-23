@@ -256,6 +256,12 @@ li.CodeMirror-hint-active {
   color: var(--hint-description-color);
 }
 
+.hint-description-replacement-note {
+  border-top: 1px solid black;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
 .function-tooltip-styling .hover-decl {
   white-space: nowrap;
 }

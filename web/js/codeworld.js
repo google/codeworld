@@ -955,6 +955,8 @@ window.addEventListener('message', (event) => {
         showRequiredChecksInDialog(msg);
       }, 500);
     }
+
+    sweetAlert.close();
     break;
   case 'showGraphics': {
     const runner = document.getElementById('runner');
@@ -1121,24 +1123,26 @@ function compile() {
     allowEscapeKey: false,
     allowEnterKey: false,
   }).then(() => {
-    window.cancelCompile();
+    stopRun();
   });
 
   sendHttp('POST', 'compile', data, (request) => {
     if (compileFinished) return;
-    sweetAlert.close();
+
+    const { status, responseText } = request;
+
     window.cancelCompile();
 
-    const success = request.status === 200;
+    const success = status === 200;
 
     let hash, dhash;
-    if (request.status < 500) {
-      if (request.responseText.length === 23) {
-        hash = request.responseText;
+    if (status < 500) {
+      if (responseText.length === 23) {
+        hash = responseText;
         dhash = null;
       } else {
         try {
-          const obj = JSON.parse(request.responseText);
+          const obj = JSON.parse(responseText);
           hash = obj.hash;
           dhash = obj.dhash;
         } catch (e) {
@@ -1161,10 +1165,12 @@ function compile() {
     data.append('mode', window.buildMode);
 
     sendHttp('POST', 'runMsg', data, (request) => {
+      const { status, responseText } = request;
       let msg = '';
-      if (request.status === 200) {
-        msg = request.responseText.replace(/^[\r\n]+|[\r\n]+$/g, '');
-      } else if (request.status >= 400) {
+
+      if (status === 200) {
+        msg = responseText.replace(/^[\r\n]+|[\r\n]+$/g, '');
+      } else if (status >= 400) {
         msg = 'Sorry!  Your program couldn\'t be run right now.';
       }
       if (msg !== '') msg += '\n\n';
@@ -1172,6 +1178,7 @@ function compile() {
       if (success) {
         run(hash, dhash, msg, false, compileGeneration);
       } else {
+        sweetAlert.close();
         run(hash, '', msg, true, compileGeneration);
       }
     });

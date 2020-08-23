@@ -66,7 +66,7 @@ function attachEventListeners() {
   $('#deleteButton').on('click', deleteProject);
   $('#docButton').on('click', help);
   $('#shareFolderButton').on('click', () => shareFolder_(window.projectEnv));
-  $('#shareButton').on('click', share);
+  $('#shareButton').on('click', () => share(compile));
 
   $('#runner').on('load', toggleObsoleteCodeAlert);
 }

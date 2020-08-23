@@ -1174,7 +1174,7 @@ function loadProject(name, path, buildMode, successFunc) {
   });
 }
 
-function share() {
+function share(compile) {
   let offerSource = true;
 
   function go() {

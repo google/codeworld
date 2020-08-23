@@ -70,7 +70,7 @@ function attachEventListeners() {
 
   $('#startRecButton').on('click', captureStart);
   $('#stopRecButton').on('click', stopRecording);
-  $('#shareButton').on('click', share);
+  $('#shareButton').on('click', () => share(compile));
   $('#inspectButton').on('click', inspect);
 
   $('#runButton').on('click', compile);
@@ -1277,7 +1277,3 @@ function downloadProject() {
     document.body.removeChild(elem);
   }
 }
-
-// TEMP: required by setCode in codeworld_shared.js
-window.compile = compile;
-window.stopRun = stopRun;

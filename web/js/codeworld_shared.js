@@ -545,61 +545,72 @@ function registerStandardHints(successFunc) {
       }
     }
 
-    // If there's a chance to find an exact match, clear out the fuzzy matches
-    // so that the exact match is chosen.
-    if (found[0].length + found[1].length === 1) {
-      found[2] = [];
-    }
-
-    const options = found[0].concat(found[1], found[2]);
-
+    let options = found[0].concat(found[1], found[2]);
+    let foundReplacementPrefix = false;
     options.forEach((candidate) => {
       const { text } = candidate;
-      const originalTermCost = substitutionCost(
-        token.string,
-        text,
-        term.length
-      );
+      candidate.cost = substitutionCost(token.string, text, term.length);
 
-      for (const [module, mapping] of Object.entries(replacementTerms)) {
-        if (window.codeWorldSymbols[text]) {
-          const mappedTerms =
-            Object.prototype.hasOwnProperty.call(mapping, text) &&
-            mapping[text];
-          const { definingModule } = window.codeWorldSymbols[text];
+      if (!window.codeWorldSymbols[text]) {
+        return;
+      }
 
-          if (mappedTerms && definingModule && definingModule === module) {
-            const mappedTermsWithCosts = mappedTerms.map((mappedTerm) => {
-              return {
-                replacementExplanation: mappedTerm.explanation,
-                cost: substitutionCost(
-                  token.string,
-                  mappedTerm.value ? mappedTerm.value : mappedTerm,
-                  term.length,
-                  true
-                ),
-              };
-            });
+      const { definingModule } = window.codeWorldSymbols[text];
+      if (!definingModule) {
+        return;
+      }
 
-            const lowestCost = Math.min(
-              ...mappedTermsWithCosts.map(({ cost }) => cost),
-              originalTermCost
-            );
-            candidate.cost = lowestCost;
+      const mapping = replacementTerms[definingModule];
+      const mappedTerms =
+        Object.prototype.hasOwnProperty.call(mapping, text) && mapping[text];
 
-            const winningMappedTerm = mappedTermsWithCosts.find(
-              ({ cost }) => cost === lowestCost
-            );
-            if (winningMappedTerm) {
-              candidate.replacementExplanation =
-                winningMappedTerm.replacementExplanation;
-            }
-          } else {
-            candidate.cost = originalTermCost;
-          }
+      if (!mappedTerms) {
+        return;
+      }
+
+      const mappedTermsWithCosts = mappedTerms.map((mappedTerm) => {
+        const replacementWord = mappedTerm.value
+          ? mappedTerm.value
+          : mappedTerm;
+        if (replacementWord.startsWith(term)) {
+          foundReplacementPrefix = true;
         }
+
+        return {
+          replacementExplanation: mappedTerm.explanation,
+          cost: substitutionCost(
+            token.string,
+            mappedTerm.value ? mappedTerm.value : mappedTerm,
+            term.length,
+            true
+          ),
+        };
+      });
+
+      const lowestCost = Math.min(
+        ...mappedTermsWithCosts.map(({ cost }) => cost),
+        candidate.cost
+      );
+      candidate.cost = lowestCost;
+
+      const winningMappedTerm = mappedTermsWithCosts.find(
+        ({ cost }) => cost === lowestCost
+      );
+      if (winningMappedTerm) {
+        candidate.replacementExplanation =
+          winningMappedTerm.replacementExplanation;
       }
     });
+
+    // If there's a chance to complete an exact prefix, clear out the fuzzy
+    // matches so that the exact match is chosen.
+    if (
+      found[0].length === 0 &&
+      found[1].length === 1 &&
+      !foundReplacementPrefix
+    ) {
+      options = found[1];
+    }
 
     if (options.length > 0) {
       options.sort((a, b) => {

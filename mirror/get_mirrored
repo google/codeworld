@@ -22,6 +22,7 @@ TO_MIRROR=(
     'http://code.jquery.com/jquery-1.12.4.js'
     'http://code.jquery.com/ui/1.12.0/jquery-ui.min.js'
     'http://cdn.materialdesignicons.com/3.6.95/css/materialdesignicons.min.css'
+    'http://cdn.materialdesignicons.com/3.6.95/css/materialdesignicons.min.css.map'
     'http://cdn.materialdesignicons.com/3.6.95/fonts/materialdesignicons-webfont.ttf'
     'http://cdn.materialdesignicons.com/3.6.95/fonts/materialdesignicons-webfont.woff2'
     'http://casual-effects.com/markdeep/latest/markdeep.min.js'

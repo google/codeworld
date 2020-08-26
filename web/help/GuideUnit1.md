@@ -1842,7 +1842,9 @@ you want to draw a butterfly.  You might start by writing:
 
 ~~~~~ . clickable
 program   = drawingOf(butterfly & coordinatePlane)
-butterfly = polyline([ ])
+butterfly=leftWing & rightWing
+leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),(-4,-4),(-3,-4),(-1,-2),(0,0) ])
+rightWing= polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),(4,-4),(3,-4),(1,-2),(0,0) ])
 ~~~~~
 
 Now run your program, and you have a coordinate plane to measure what

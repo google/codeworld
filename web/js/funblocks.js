@@ -66,7 +66,7 @@ function attachEventListeners() {
   $('#deleteButton').on('click', deleteProject);
   $('#docButton').on('click', help);
   $('#shareFolderButton').on('click', () => shareFolder_(window.projectEnv));
-  $('#shareButton').on('click', () => share(compile));
+  $('#shareButton').on('click', share);
 
   $('#runner').on('load', toggleObsoleteCodeAlert);
 }
@@ -259,13 +259,9 @@ function run(xmlHash, codeHash, msg, error, dhash) {
   if (hash) {
     window.location.hash = `#${xmlHash}`;
 
-    document.getElementById('shareButton').style.display = '';
-
     $shareFolderButton.hide();
   } else {
     window.location.hash = '';
-
-    document.getElementById('shareButton').style.display = 'none';
 
     $shareFolderButton.show();
   }

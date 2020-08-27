@@ -70,7 +70,7 @@ function attachEventListeners() {
 
   $('#startRecButton').on('click', captureStart);
   $('#stopRecButton').on('click', stopRecording);
-  $('#shareButton').on('click', () => share(compile));
+  $('#shareButton').on('click', share);
   $('#inspectButton').on('click', inspect);
 
   $('#runButton').on('click', compile);
@@ -490,6 +490,14 @@ function initCodeworld() {
       clearTimeout(window.reparseTimeoutId);
     }
     window.reparseTimeoutId = setTimeout(parseSymbolsFromCurrentCode, 1500);
+
+    const shareButton = document.getElementById('shareButton');
+
+    if (doc.getValue()) {
+      shareButton.classList.remove('cw-button--disabled');
+    } else {
+      shareButton.classList.add('cw-button--disabled');
+    }
 
     updateDocumentTitle(isEditorClean);
     updateProjectChangeMark(isEditorClean);

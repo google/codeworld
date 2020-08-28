@@ -42,7 +42,7 @@ import {
   updateTreeOnNewProjectCreation,
   warnIfUnsaved,
 } from './codeworld_shared.js';
-import * as TreeDialog from './treedialog.js';
+import * as CodeExplorer from './codeExplorer.js';
 
 import * as Alert from './utils/alert.js';
 import * as Auth from './utils/auth.js';
@@ -1081,7 +1081,7 @@ function stopRun() {
       },
       '*'
     );
-    TreeDialog.destroy();
+    CodeExplorer.toggle();
   }
   window.cancelCompile();
 

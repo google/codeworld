@@ -145,13 +145,6 @@
   --haddock-selflink-bg: #f0f0f0;
   --haddock-toc-bg: #faf9dc;
 
-  /* treedialog.css */
-  --treedialog-border: #000;
-  --treedialog-bg: #fff;
-  --treedialog-shadow: #000;
-  --treedialog-piclink: black;
-  --treedialog-piclink-selected: yellow;
-
   /* runner.css */
   --stack-item-bg: #eee;
   --stack-item-hover-bg: #ccc;
@@ -285,13 +278,6 @@
   --haddock-lang-nameplate: #000000;
   --haddock-selflink-bg: #333333;
   --haddock-toc-bg: #050623;
-
-  /* treedialog.css */
-  --treedialog-border: white;
-  --treedialog-bg: black;
-  --treedialog-shadow: white;
-  --treedialog-piclink: white;
-  --treedialog-piclink-selected: yellow;
 
   /* runner.css */
   --stack-item-bg: #111111;

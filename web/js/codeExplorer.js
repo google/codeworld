@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-let $dialog;
-let $content;
 let fullPic;
 let currentPic;
 let marker;
 
 function buildNestedList(id) {
-  const go = (p, to, isDialogOpen) => {
+  const go = (p, to, isExplorerOpen) => {
     const ul = document.createElement('ul');
     const span = document.createElement('span');
     const toggleButton = document.createElement('span');
@@ -39,7 +37,7 @@ function buildNestedList(id) {
     };
 
     if (p.picture || p.pictures) {
-      toggleButton.classList.add('collapse-button');
+      toggleButton.classList.add('code-explorer__collapse-button');
       toggleButton.addEventListener('click', (evt) => {
         if (collapsed) {
           decollapse();
@@ -48,19 +46,19 @@ function buildNestedList(id) {
         }
       });
 
-      if (isDialogOpen) {
+      if (isExplorerOpen) {
         decollapse();
       } else {
         collapse();
       }
     } else {
-      toggleButton.classList.add('collapse-spacer');
+      toggleButton.classList.add('code-explorer__collapse-spacer');
     }
     span.appendChild(toggleButton);
 
     const link = createPicLink(p);
     p.link = link;
-    if (isDialogOpen) {
+    if (isExplorerOpen) {
       link.click();
     }
     span.appendChild(link);
@@ -68,17 +66,17 @@ function buildNestedList(id) {
 
     if (p.picture) {
       const li = document.createElement('li');
-      go(p.picture, li, isDialogOpen);
+      go(p.picture, li, isExplorerOpen);
       ul.appendChild(li);
       to.appendChild(ul);
     } else if (p.pictures) {
       for (let i = 0; i < p.pictures.length; i++) {
         const li = document.createElement('li');
-        const _isDialogOpen =
-          isDialogOpen &&
+        const _isExplorerOpen =
+          isExplorerOpen &&
           id >= p.pictures[i].id &&
           (i === p.pictures.length - 1 || id < p.pictures[i + 1].id);
-        go(p.pictures[i], li, _isDialogOpen);
+        go(p.pictures[i], li, _isExplorerOpen);
         ul.appendChild(li);
       }
       to.appendChild(ul);
@@ -119,21 +117,20 @@ function createPicLink(pic) {
 
   a.appendChild(document.createTextNode(pic.name));
   a.href = 'javascript: void(0);';
-  a.classList.add('treedialog-piclink');
+  a.classList.add('code-explorer__picture-link');
   a.addEventListener('click', (evt) => {
     select(pic.id);
 
     if (marker) marker.clear();
 
     getPicNode(currentPic.id, (node) => {
-      node.link.classList.remove('piclink-selected');
+      node.link.classList.remove('code-explorer__picture-link--selected');
     });
     getPicNode(pic.id, (node) => {
-      node.link.classList.add('piclink-selected');
+      node.link.classList.add('code-explorer__picture-link--selected');
     });
 
     currentPic = pic;
-    $dialog.dialog('option', 'title', pic.name);
     if (pic.startLine && pic.startCol && pic.endLine && pic.endCol) {
       codeworldEditor.setSelection(
         {
@@ -206,80 +203,35 @@ function select(nodeId) {
   );
 }
 
-function cancelDebug() {
-  const runner = document.getElementById('runner');
-  runner.contentWindow.postMessage(
-    {
-      type: 'stopDebug',
-    },
-    '*'
-  );
-}
-
-function initTreeDialog(pic) {
-  fullPic = pic;
-
-  const $container = $('<div>');
-  $dialog = $container.dialog({
-    dialogClass: 'treedialog',
-    title: 'Picture Browser',
-    closeText: '',
-    autoOpen: false,
-    close: () => {
-      highlight(-1);
-      select(-1);
-      cancelDebug();
-    },
-  });
-
-  $content = $('<div>');
-  $content.addClass('treedialog-content');
-  $dialog.append($content);
-}
-
 function selectNode(id) {
-  if (!$dialog.dialog('isOpen')) {
-    $dialog.dialog('open');
-  }
-
   select(id);
 
   const picture = getPicNode(id);
   currentPic = picture;
 
-  $content.html('');
-
-  $content.append(buildNestedList(id));
-
-  $dialog.dialog('option', 'title', picture.name);
+  $('.code-explorer').html(buildNestedList(id));
 }
 
-function destroy() {
-  if ($dialog) {
-    if ($dialog.dialog('isOpen')) {
-      $dialog.dialog('close');
-    }
+function toggle() {
+  const codeExplorer = $('.code-explorer');
+  const messageArea = $('#message');
 
-    $dialog.remove();
+  if (codeExplorer.is(':visible')) {
+    messageArea.show();
+    codeExplorer.hide();
+  } else {
+    messageArea.hide();
+    codeExplorer.show();
   }
-  highlight(-1);
-  $dialog = null;
-  $content = null;
 }
 
 window.addEventListener('message', (event) => {
   if (!event.data.type) return;
 
   if (event.data.type === 'debugActive') {
-    initTreeDialog(event.data.fullPic);
+    fullPic = event.data.fullPic;
 
-    const $sectionWrapper = $('.inspect-dialog__section');
-    const $dialogWrapper = $('.ui-dialog');
-    $('#message').hide();
-    $sectionWrapper.show();
-    $dialogWrapper.addClass('inspect-dialog');
-    $sectionWrapper.append($dialogWrapper);
-
+    toggle();
     selectNode(0);
   }
   if (event.data.type === 'nodeClicked') {
@@ -288,11 +240,8 @@ window.addEventListener('message', (event) => {
   if (event.data.type === 'nodeHovered') {
     // For now, do nothing.
   } else if (event.data.type === 'debugFinished') {
-    destroy();
-
-    $('#message').show();
-    $('.inspect-dialog__section').hide();
+    toggle();
   }
 });
 
-export { destroy };
+export { toggle };

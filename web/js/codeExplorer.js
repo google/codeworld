@@ -186,7 +186,7 @@ function highlight(nodeId) {
   runner.contentWindow.postMessage(
     {
       type: 'debugHighlight',
-      nodeId: nodeId,
+      nodeId,
     },
     '*'
   );
@@ -197,7 +197,7 @@ function select(nodeId) {
   runner.contentWindow.postMessage(
     {
       type: 'debugSelect',
-      nodeId: nodeId,
+      nodeId,
     },
     '*'
   );
@@ -226,21 +226,28 @@ function toggle() {
 }
 
 window.addEventListener('message', (event) => {
-  if (!event.data.type) return;
+  const { type } = event.data;
 
-  if (event.data.type === 'debugActive') {
+  if (!type) return;
+
+  switch (type) {
+  case 'debugActive':
     fullPic = event.data.fullPic;
 
     toggle();
     selectNode(0);
-  }
-  if (event.data.type === 'nodeClicked') {
+    break;
+  case 'nodeClicked':
     selectNode(event.data.nodeId);
-  }
-  if (event.data.type === 'nodeHovered') {
-    // For now, do nothing.
-  } else if (event.data.type === 'debugFinished') {
+    break;
+  case 'debugFinished':
     toggle();
+    break;
+  case 'nodeHovered':
+    // For now, do nothing.
+    break;
+  default:
+    console.log(`Unsupported message type: ${type}`);
   }
 });
 

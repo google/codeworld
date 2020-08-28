@@ -1,0 +1,131 @@
+#!/bin/bash
+# This script is normally invoked from build.sh, but can be run
+# interactively from anywhere in the CodeWorld source tree.
+#
+# It mirrors static content from various places on the Web and puts it
+# in subdirectories of "${BUILD}/mirrored", which is in turn linked
+# into the CodeWorld "web" hierarchy, where the mirrored files are
+# available to be loaded from our own Web server instead of having
+# pages retrieve a lot of static content from "remote" sources.
+#
+# The files are checksummed to make sure the content matches
+# what's expected.
+#
+
+## Configuration variables
+
+# These are the URLS to be copied in.
+TO_MIRROR=(
+    'http://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css'
+    'http://code.jquery.com/jquery-2.2.4.min.js'
+    'http://code.jquery.com/jquery-1.12.4.min.js'
+    'http://code.jquery.com/jquery-1.12.4.js'
+    'http://code.jquery.com/ui/1.12.0/jquery-ui.min.js'
+    'http://cdn.materialdesignicons.com/3.6.95/css/materialdesignicons.min.css'
+    'http://cdn.materialdesignicons.com/3.6.95/css/materialdesignicons.min.css.map'
+    'http://cdn.materialdesignicons.com/3.6.95/fonts/materialdesignicons-webfont.ttf'
+    'http://cdn.materialdesignicons.com/3.6.95/fonts/materialdesignicons-webfont.woff2'
+    'http://casual-effects.com/markdeep/latest/markdeep.min.js'
+    'http://cdnjs.cloudflare.com/ajax/libs/jquery-layout/1.4.3/jquery.layout_and_plugins.min.js'
+    'http://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.2/sweetalert2.all.min.js'
+    'http://cdnjs.cloudflare.com/ajax/libs/jqtree/1.4.10/tree.jquery.js'
+    'http://cdn.jsdelivr.net/npm/promise-polyfill@7.1.0/dist/promise.min.js'
+)
+
+# Files that are already in the build tree aren't normally
+# re-downloaded...  except that files older than "MAX_DAYS" are
+# deleted and treated as if they hadn't existed. If the original
+# source has withdrawn or modifieda file, there'll be a download error
+# a checksum error, which may alert a maintainer or admin to a change
+# that needs to be dealt with.
+MAX_DAYS=30
+
+# The "frozen" hash file may be checked into git to force the checksums expected
+# for mirrored files starting from the very first download of each file. If a file
+# isn't listed, any checksum will be accepted on the first download, but any subsequent
+# downloads must have the same checksum (until the file is removed from the list of
+# cached hashes).
+#
+FROZEN_HASHES="sums.txt.frozen"    # In the script directory, if it exists
+CACHED_HASHES="sums.txt"           # In the mirrorored directory (location computed below)
+
+## Global shell behavior
+shopt -s extglob
+
+## Prelimininaries, mostly to make it convenient to run this script
+## interactively for administrative or debugging purproses. Also
+## does a couple of minor sanity checks on the build tree.
+
+# Where is this script?
+script_dir="${0%/*}"
+
+# We may be run interactively from unpredictable places, so have a way
+# of guessing the root of the CodeWorld source tree if we need it
+cw_base() {
+    if [ -z "${cw_base}" ]; then
+	if [ -f "base.sh" ]; then
+	    cw_base="$(pwd)"
+	elif cw_base="$(cd "$(git rev-parse --show-cdup)"; pwd)" && [ -f "${cw_base}/base.sh" ]; then
+	     :
+	else
+	    echo "Can't find root of Codeworld source tree" 1>&2
+	    exit 1
+	fi
+    fi
+    echo "${cw_base}"
+    return
+}
+
+# Find the build directory. Normally this will be passed to us from
+# build.sh.
+if [ -z "${BUILD}" ]; then
+    pushd "$(cw_base)" > /dev/null
+        . base.sh
+    popd > /dev/null
+    if [ -z "${BUILD}" ]; then
+	BUILD="$(cw_base)/build"
+	if [ ! -d "${BUILD}" ]; then
+            echo "Won't create build directory in a guessed location  (${BUILD})" 1>&2
+            exit 1
+	fi
+    fi
+fi
+
+## The meat of the script
+
+mirror_dir="${BUILD}/mirrored"
+mkdir -p "${mirror_dir}" || exit 1
+
+cached_hash_file="${mirror_dir}/${CACHED_HASHES}"
+frozen_hash_file="${script_dir}/${FROZEN_HASHES}"
+if [ ! -e "${cached_hash_file}" ]; then
+     if  [ -f "${frozen_hash_file}" ]; then
+	 cp "${frozen_hash_file}" "${cached_hash_file}" || exit 1
+     else
+	 touch "${cached_hash_file}"
+     fi
+fi
+
+# Now do the actual work
+exitstat=0
+
+for url in "${TO_MIRROR[@]}"; do
+    file_relative=".${url#http?(s):/}"
+    file="${mirror_dir}/${file_relative}"
+    [ -e "${file}" ] && (find "${file}" -type f -mtime "+${MAX_DAYS}" -print0 | xargs -0 -r rm) || exitstat=1
+    [ -f "${file}" ] || \
+	wget --no-verbose --no-use-server-timestamps \
+	     --directory-prefix="${mirror_dir}" --force-directories "${url}" || \
+	exitstat=1
+    if ! (sed 's/[^ ]*  *//' "${cached_hash_file}" | grep -F -x -q "${file_relative}"); then
+        echo "Warning: First download of ${url}; adding hash to ${cached_hash_file}"
+        (cd "${mirror_dir}"; sha256sum "${file_relative}") >> "${cached_hash_file}" || exitstat=1
+    fi
+done
+
+if ! (cd "${mirror_dir}"; sha256sum --quiet --check -) < "${cached_hash_file}"; then
+    exitstat="$?"
+    echo "DANGER: Validation failed for downloaded third-party code; tampered with?" 1>&2
+fi
+
+exit "${exitstat}"

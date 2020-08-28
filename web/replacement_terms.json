@@ -1,0 +1,110 @@
+{
+  "Prelude": {
+    "abs": ["positive", "magnitude", "absoluteValue"],
+    "acos": ["arccos"],
+    "activityOf": ["interactionOf"],
+    "arc": [
+      {
+        "value": "semicircle",
+        "explanation": "Hint: A semicircle is an arc with the start and end angles 180 degrees apart."
+      }
+    ],
+    "asin": ["arcsin"],
+    "atan": ["arctan"],
+    "mixed": ["blend"],
+    "assortedColors": ["colors"],
+    "closedCurve": ["loop", "oval"],
+    "cos": ["cosine"],
+    "lettering": ["text"],
+    "PointerMovement": ["MouseMovement"],
+    "PointerPress": ["MousePress", "MouseClick", "PointerClick"],
+    "PointerRelease": ["MouseRelease"],
+    "polygon": [
+      {
+        "value": "triangle",
+        "explanation": "Hint: A triangle is a polygon with three vertices."
+      },
+      {
+        "value": "quadrilateral",
+        "explanation": "Hint: A quadrilateral is a polygon with four vertices."
+      },
+      {
+        "value": "parallelogram",
+        "explanation": "Hint: A parallelogram is a polygon with four vertices and parallel sides."
+      },
+      {
+        "value": "trapezoid",
+        "explanation": "Hint: A trapezoid is a polygon with four vertices and one pair of parallel sides."
+      },
+      {
+        "value": "rhombus",
+        "explanation": "Hint: A rhombus is a polygon with four vertices and equal side lengths."
+      },
+      {
+        "value": "pentagon",
+        "explanation": "Hint: A pentagon is a polygon with five vertices."
+      },
+      {
+        "value": "hexagon",
+        "explanation": "Hint: A hexagon is a polygon with six vertices."
+      },
+      {
+        "value": "heptagon",
+        "explanation": "Hint: A heptagon is a polygon with seven vertices."
+      },
+      {
+        "value": "octagon",
+        "explanation": "Hint: An octagon is a polygon with eight vertices."
+      }
+    ],
+    "polyline": ["line"],
+    "program": ["main"],
+    "rectangle": [
+      {
+        "value": "square",
+        "explanation": "Hint: A square is a rectangle with the height and width equal."
+      }
+    ],
+    "reflected": ["mirror", "flip"],
+    "rotated": ["turn", "flip"],
+    "scaled": [
+      "stretch",
+      {
+        "value": "ellipse",
+        "explanation": "Hint: An ellipse is a scaled circle."
+      }
+    ],
+    "sector": ["solidArc", "pie"],
+    "sin": ["sine"],
+    "solidClosedCurve": ["solidCurve", "solidLoop", "solidOval"],
+    "solidPolygon": [
+      "solidTriangle",
+      "solidQuadrilateral",
+      "solidParallelogram",
+      "solidTrapezoid",
+      "solidRhombus",
+      "solidPentagon",
+      "solidHexagon",
+      "solidHeptagon",
+      "solidOctagon"
+    ],
+    "solidRectangle": ["solidSquare"],
+    "sqrt": ["root", "radical", "squareRoot"],
+    "tan": ["tangent"],
+    "thickClosedCurve": ["thickLoop", "thickOval"],
+    "thickPolygon": [
+      "thickTriangle",
+      "thickQuadrilateral",
+      "thickParallelogram",
+      "thickTrapezoid",
+      "thickRhombus",
+      "thickPentagon",
+      "thickHexagon",
+      "thickHeptagon",
+      "thickOctagon"
+    ],
+    "thickPolyline": ["thickLine"],
+    "thickRectangle": ["thickSquare"],
+    "translated": ["move", "shift", "position"]
+  }
+}

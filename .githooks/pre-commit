@@ -1,9 +1,16 @@
 #!/bin/bash
-set -euo pipefail
 
-FILES_PRETTIER=$(git diff --cached --name-only --diff-filter=ACMR "*.js" "*.css" "*.html" "*.json" | sed 's| |\\ |g')
-FILES_ESLINT=$(git diff --cached --name-only --diff-filter=ACMR "*.js" | sed 's| |\\ |g')
-FILES_ORMOLU=$(git diff --cached --name-only --diff-filter=ACMR "*.hs" | sed 's| |\\ |g')
+FILES_PRETTIER=$(git diff --cached --name-only --diff-filter=ACMR "*.js" "*.css" "*.html" "*.json" | \
+		     sed 's| |\\ |g' | \
+		     grep -v '^third_party/')
+FILES_ESLINT=$(git diff --cached --name-only --diff-filter=ACMR "*.js" | \
+		   sed 's| |\\ |g' | \
+		   grep -v '^third_party/')
+FILES_ORMOLU=$(git diff --cached --name-only --diff-filter=ACMR "*.hs" | \
+		   sed 's| |\\ |g' | \
+		   grep -v '^third_party/')
+
+set -euo pipefail
 
 if [ -n "$FILES_PRETTIER" ]
 then

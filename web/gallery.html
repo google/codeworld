@@ -4,131 +4,10 @@
     <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=default,Array.prototype.find,Number.isFinite,Number.isInteger,console,console.log,document.head,performance.now"></script>
     <title>CodeWorld Gallery</title>
     <script src="mirrored/code.jquery.com/jquery-1.12.4.js"></script>
-    <style type="text/css">
-      body {
-        background-color: #222222;
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;
-        height: 100vh;
-        overflow: hidden;
-      }
-
-      #choice_container {
-        flex: 0 0 auto;
-        width: 20em;
-        min-width: 20em;
-        height: 100vh;
-        overflow: auto;
-      }
-
-      #screen_container {
-        flex: 1 1 auto;
-        width: 30em;
-        height: 100vh;
-      }
-
-      #info_container {
-        flex: 0 0 auto;
-        width: 20em;
-        min-width: 20em;
-        height: 100vh;
-        overflow: auto;
-      }
-
-      #screen {
-        cursor: default;
-        border: 0px;
-      }
-
-      #choices {
-        list-style: none;
-        display: flex;
-        flex-direction: column;
-        flex-wrap: nowrap;
-        margin: 0;
-        padding: 0;
-      }
-
-      .choice {
-        flex: 0 0 auto;
-        margin: 0;
-        padding: 0vh 0vw;
-        cursor: pointer;
-        font-size: 11pt;
-        background-color: #dddddd;
-        white-space: normal;
-      }
-
-      .choice:hover {
-        background-color: #aaaaaa;
-      }
-
-      .choice.sel {
-        background-color: #cccccc;
-      }
-
-      .choice a {
-        display: block;
-        margin: 0;
-        padding: 1vh 1vw;
-      }
-
-      #info_container > div {
-        background-color: #dddddd;
-        padding: 1vh;
-        margin: 0px;
-      }
-    </style>
-    <script>
-      let fileName = new URLSearchParams(window.location.search).get("path");
-      if (!fileName) {
-        fileName = location.href
-          .split("/")
-          .pop()
-          .replace(/\.html$/, ".json");
-      }
-      $(() => {
-        $.getJSON(fileName, (data) => {
-          $.each(data.items, (i, item) => {
-            let btn = document.createElement("li");
-            let a = document.createElement("a");
-            btn.setAttribute("class", "choice");
-            btn.append(a);
-            a.innerText = item.name;
-            let clickHandler = (event) => {
-              $(".choice").removeClass("sel");
-              $(btn).addClass("sel");
-              $("#screen").attr("src", item.url).focus();
-              $("#info-title").text(item.name);
-              $("#info-text").text(item.desc || "");
-              if (item.code) {
-                $("#info-link").show().attr("href", item.code);
-              } else {
-                $("#info-link").hide();
-              }
-              event.preventDefault();
-            };
-            $(a).click(clickHandler);
-            // $(btn).click(clickHandler);
-            $("#choices").append(btn);
-          });
-        });
-        $(window).resize((event) => {
-          let sz =
-            Math.min(
-              $("#screen_container").width(),
-              $("#screen_container").height()
-            ) - 50;
-          $("#screen").css("width", sz + "px");
-          $("#screen").css("height", sz + "px");
-        });
-        $(window).resize();
-      });
-    </script>
+    <link rel="stylesheet" href="css/gallery.css" />
   </head>
 
-  <body style="text-align: center;">
+  <body>
     <div id="choice_container">
       <ul id="choices"></ul>
     </div>
@@ -142,8 +21,10 @@
       <div>
         <h3 id="info-title">CodeWorld Gallery</h3>
         <p id="info-text">Select CodeWorld projects on the left.</p>
-        <a id="info-link" style="display: none;">View and edit this code</a>
+        <a id="info-link" style="display: none">View and edit this code</a>
       </div>
     </div>
+
+    <script src="js/gallery.js"></script>
   </body>
 </html>

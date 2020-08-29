@@ -1824,6 +1824,12 @@ function initDirectoryTree(isEditorClean, loadProjectHandler, clearEditor) {
   });
 }
 
+const LAYOUT_CONTAINER_CLASSNAME = '.ui-layout-container';
+
+function initializeLayoutContainer(options) {
+  $(LAYOUT_CONTAINER_CLASSNAME).layout(options);
+}
+
 // Get directory nearest to selected node, or root if there is no selection
 function getNearestDirectory_(node) {
   if (node) {
@@ -1982,18 +1988,19 @@ function run(hash, dhash, msg, error, generation) {
   }
 
   const $shareFolderButton = $('#shareFolderButton');
+  const layoutHandler = $(LAYOUT_CONTAINER_CLASSNAME).layout();
 
   if (hash || msg) {
     $shareFolderButton.hide();
 
-    window.mainLayout.show('east');
-    window.mainLayout.open('east');
+    layoutHandler.show('east');
+    layoutHandler.open('east');
   } else {
     if ($shareFolderButton.css('display') !== 'none') {
       $shareFolderButton.show();
     }
 
-    window.mainLayout.hide('east');
+    layoutHandler.hide('east');
   }
 
   clearMessages();
@@ -2107,6 +2114,8 @@ export {
   deleteProject_,
   getNearestDirectory,
   initDirectoryTree,
+  initializeLayoutContainer,
+  LAYOUT_CONTAINER_CLASSNAME,
   loadProject,
   loadSample,
   loadTreeNodes,

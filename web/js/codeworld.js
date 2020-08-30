@@ -133,9 +133,11 @@ function initializeLayout() {
       size: 510,
       enableCursorHotkey: false,
       onresize: () => {
-        $runner = $('#runner');
+        const $runner = $('#runner');
+        const runnerWidth = $runner.width();
+
         $runner.css({
-          height: `${$runner.width()}px`,
+          height: `${runnerWidth}px`,
         });
       },
     },

@@ -1842,9 +1842,7 @@ you want to draw a butterfly.  You might start by writing:
 
 ~~~~~ . clickable
 program   = drawingOf(butterfly & coordinatePlane)
-butterfly=leftWing & rightWing
-leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),(-4,-4),(-3,-4),(-1,-2),(0,0) ])
-rightWing= polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),(4,-4),(3,-4),(1,-2),(0,0) ])
+butterfly = polyline([ ])
 ~~~~~
 
 Now run your program, and you have a coordinate plane to measure what
@@ -1858,7 +1856,7 @@ lines back to the starting point or curving all over the place.  Once your
 points are in the right place, it's easy to change the function to the one
 you want.
 
-You can see what your shape looks like so far by trying your code out
+You can see what your shape looks like at each step by running your code
 often.  Every new vertex or two is a great time to click that Run button
 and make sure the shape looks the way you expected.
 
@@ -1896,11 +1894,36 @@ y axis, since those are the angles in between the numbers -90 and 90.  But the
 expression `arc(270, 90, 5)` covers the angles to the left of the y axis,
 because those are the numbers between 270 and 90.
 
+To see a half circle with radius 5 drawn on the corrdinate plane, use this code:
+
+~~~~~ . clickable
+program   = drawingOf(halfCircle & coordinatePlane)
+halfCircle=arc(-90,90,5)
+~~~~~
+
 Following the same pattern as most other shapes, the `thickArc` function is
 just like `arc`, except that you give it one extra number representing the
-thickness of the line to draw.  The `sector` function is sort of like the
+thickness of the line to draw.
+
+To draw half of a tire, use this code:
+
+~~~~~ . clickable
+program   = drawingOf(halfTire & coordinatePlane)
+halfTire=thickArc(-90,90,5,4)
+~~~~~
+
+Notice the thickness is split between both sides of the arc.
+
+The `sector` function is sort of like the
 solid variant of `arc`, in that it draws one slice of a solid circle.  That
 looks like a piece of pie or pizza.
+
+To draw a slice of pizza, use the code:
+
+~~~~~ . clickable
+program   = drawingOf(pizzaSlice & coordinatePlane)
+pizzaSlice=sector(0,45,5)
+~~~~~
 
 Transforming colors
 -------------------

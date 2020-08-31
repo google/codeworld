@@ -1850,34 +1850,34 @@ points to use in your shapes.  (When you're done, just remove the
 `& coordinatePlane` to get rid of the guidelines.)
 
 !!! collapsible: Using the coordinate plane to help draw a butterfly
-Let's start the butterfly by first drawing the left wing.
-program = drawingOf(butterfly & coordinatePlane)
-butterfly=leftWing
-leftWing = polyline([(0,0),(-1,2)])
-The corrdinate plane helps us see where we want to draw next. 
-Extend the left wing to coordinate (-3,4) using,
-leftWing = polyline([(0,0),(-1,2),(-3,4)])
-Add a few more vertices to leftWing.
-leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3)])
-Finish off the left wing using,
-leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),(-4,-4),
-(-3,-4),(-1,-2),(0,0) ])
-Using a simiar approach, draw the right wing and modify our program
-as so,
-program = drawingOf(butterfly & coordinatePlane)
-butterfly=leftWing & rightWing
-leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),(-4,-4),
-(-3,-4),(-1,-2),(0,0) ])
-rightWing= polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),(4,-4),(3,-4),
-(1,-2),(0,0) ])
-Finally, remove the coordinate plane to see the butterfly.
-program = drawingOf(butterfly)
-butterfly=leftWing & rightWing
-leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),(-4,-4),
-(-3,-4),(-1,-2),(0,0) ])
-rightWing= polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),(4,-4),(3,-4),
-(1,-2),(0,0) ])
-Add back in the cooridinate plane and improve the butterfly!
+        Let's start the butterfly by first drawing the left wing.
+    program = drawingOf(butterfly & coordinatePlane)
+    butterfly=leftWing
+    leftWing = polyline([(0,0),(-1,2)])
+    The corrdinate plane helps us see where we want to draw next. 
+    Extend the left wing to coordinate (-3,4) using,
+    leftWing = polyline([(0,0),(-1,2),(-3,4)])
+    Add a few more vertices to leftWing.
+    leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3)])
+    Finish off the left wing using,
+    leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),
+    (-4,-4),(-3,-4),(-1,-2),(0,0) ])
+    Using a simiar approach, draw the right wing and modify our
+    program as so,
+    program = drawingOf(butterfly & coordinatePlane)
+    butterfly=leftWing & rightWing
+    leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),
+    (-4,-4),(-3,-4),(-1,-2),(0,0) ])
+    rightWing= polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),
+    (4,-4),(3,-4),(1,-2),(0,0) ])
+    Finally, remove the coordinate plane to see the butterfly.
+    program = drawingOf(butterfly)
+    butterfly=leftWing & rightWing
+    leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),
+    (-4,-4),(-3,-4),(-1,-2),(0,0) ])
+    rightWing= polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),
+    (4,-4),(3,-4),(1,-2),(0,0) ])
+    Add back in the cooridinate plane and improve the butterfly!
 
 No matter which exact kind of line, curve, or polygon you want in the end,
 it's usually easier to start with `polyline`.  That's because `polyline`

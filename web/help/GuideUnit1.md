@@ -1849,6 +1849,36 @@ Now run your program, and you have a coordinate plane to measure what
 points to use in your shapes.  (When you're done, just remove the
 `& coordinatePlane` to get rid of the guidelines.)
 
+!!! collapsible: Using the coordinate plane to help draw a butterfly
+Let's start the butterfly by first drawing the left wing.
+program = drawingOf(butterfly & coordinatePlane)
+butterfly=leftWing
+leftWing = polyline([(0,0),(-1,2)])
+The corrdinate plane helps us see where we want to draw next. 
+Extend the left wing to coordinate (-3,4) using,
+leftWing = polyline([(0,0),(-1,2),(-3,4)])
+Add a few more vertices to leftWing.
+leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3)])
+Finish off the left wing using,
+leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),(-4,-4),
+(-3,-4),(-1,-2),(0,0) ])
+Using a simiar approach, draw the right wing and modify our program
+as so,
+program = drawingOf(butterfly & coordinatePlane)
+butterfly=leftWing & rightWing
+leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),(-4,-4),
+(-3,-4),(-1,-2),(0,0) ])
+rightWing= polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),(4,-4),(3,-4),
+(1,-2),(0,0) ])
+Finally, remove the coordinate plane to see the butterfly.
+program = drawingOf(butterfly)
+butterfly=leftWing & rightWing
+leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),(-4,-4),
+(-3,-4),(-1,-2),(0,0) ])
+rightWing= polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),(4,-4),(3,-4),
+(1,-2),(0,0) ])
+Add back in the cooridinate plane and improve the butterfly!
+
 No matter which exact kind of line, curve, or polygon you want in the end,
 it's usually easier to start with `polyline`.  That's because `polyline`
 shows you exactly where the points you've chosen are, without drawing extra
@@ -1897,8 +1927,8 @@ because those are the numbers between 270 and 90.
 To see a half circle with radius 5 drawn on the corrdinate plane, use this code:
 
 ~~~~~ . clickable
-program   = drawingOf(halfCircle & coordinatePlane)
-halfCircle=arc(-90,90,5)
+program = drawingOf(halfCircle & coordinatePlane)
+halfCircle = arc(-90,90,5)
 ~~~~~
 
 Following the same pattern as most other shapes, the `thickArc` function is
@@ -1908,11 +1938,13 @@ thickness of the line to draw.
 To draw half of a tire, use this code:
 
 ~~~~~ . clickable
-program   = drawingOf(halfTire & coordinatePlane)
-halfTire=thickArc(-90,90,5,4)
+program = drawingOf(halfTire & coordinatePlane)
+halfTire = thickArc(-90,90,5,4)
 ~~~~~
 
-Notice the thickness is split between both sides of the arc.
+How is thickness applied to the arc? Notice where the curve intersects
+the x axis, it is centered around an x value of 5, but  the thickness
+extends all the way from 3 through 7.
 
 The `sector` function is sort of like the
 solid variant of `arc`, in that it draws one slice of a solid circle.  That
@@ -1921,8 +1953,8 @@ looks like a piece of pie or pizza.
 To draw a slice of pizza, use the code:
 
 ~~~~~ . clickable
-program   = drawingOf(pizzaSlice & coordinatePlane)
-pizzaSlice=sector(0,45,5)
+program = drawingOf(pizzaSlice & coordinatePlane)
+pizzaSlice = sector(0,45,5)
 ~~~~~
 
 Transforming colors

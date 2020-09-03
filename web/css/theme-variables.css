@@ -150,6 +150,11 @@
   --stack-item-hover-bg: #ccc;
   --stack-list-a: black;
   --shape-info-hover-bg: #aaa;
+
+  --code-explorer-background-color: white;
+  --code-explorer-collapse-button-color: black;
+  --code-explorer-picture-link-color: black;
+  --code-explorer-picture-link-selected-color: yellow;
 }
 
 .dark-theme {
@@ -284,4 +289,9 @@
   --stack-item-hover-bg: #333333;
   --stack-list-a: #ffffff;
   --shape-info-hover-bg: #555555;
+
+  --code-explorer-background-color: black;
+  --code-explorer-collapse-button-color: white;
+  --code-explorer-picture-link-color: white;
+  --code-explorer-picture-link-selected-color: var(--cw-button-bg-5);
 }

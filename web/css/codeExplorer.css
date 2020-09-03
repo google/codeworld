@@ -3,13 +3,17 @@
   padding: 1rem;
   padding-left: 0;
   font-family: sans-serif;
-  background-color: white;
+  background-color: var(--code-explorer-background-color);
 }
 
 .code-explorer ul {
   list-style: none;
   padding-left: 1rem;
   margin: 0;
+}
+
+.code-explorer__collapse-button {
+  color: var(--code-explorer-collapse-button-color);
 }
 
 .code-explorer__collapse-button,
@@ -24,9 +28,10 @@
 }
 
 .code-explorer__picture-link {
-  color: black;
+  color: var(--code-explorer-picture-link-color);
 }
 
 .code-explorer__picture-link--selected {
-  background: yellow;
+  background-color: var(--code-explorer-picture-link-selected-color);
+  padding: 0 0.25rem;
 }

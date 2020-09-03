@@ -21,6 +21,8 @@ import {
   deleteProject_,
   getNearestDirectory,
   initDirectoryTree,
+  initializeLayoutContainer,
+  LAYOUT_CONTAINER_CLASSNAME,
   loadProject,
   loadSample,
   loadTreeNodes,
@@ -57,6 +59,10 @@ function attachEventListeners() {
     Auth.signOut(isEditorClean, clearWorkspace);
   });
   $('#signin').on('click', Auth.signIn);
+
+  $('#navButton').on('click', () => {
+    $(LAYOUT_CONTAINER_CLASSNAME).layout().toggle('west');
+  });
 
   $('#newButton').on('click', newProject);
   $('#newFolderButton').on('click', newFolder);
@@ -113,6 +119,52 @@ function attachCustomEventListeners() {
   });
 }
 
+function initializeLayout() {
+  initializeLayoutContainer({
+    default: {},
+    west: {
+      initHidden: true,
+      minSize: 50,
+      enableCursorHotkey: false,
+    },
+    east: {
+      initHidden: true,
+      resizable: true,
+      size: 510,
+      enableCursorHotkey: false,
+      onresize: () => {
+        const $runner = $('#runner');
+        const runnerWidth = $runner.width();
+
+        $runner.css({
+          height: `${runnerWidth}px`,
+        });
+      },
+    },
+  });
+
+  let wasDraggingEast = false;
+  new MutationObserver(() => {
+    const isDraggingEast =
+      document.getElementsByClassName('ui-layout-resizer-east-dragging')
+        .length > 0;
+    const runner = $('#runner');
+    if (!wasDraggingEast && isDraggingEast) {
+      runner.css({
+        'pointer-events': 'none',
+      });
+    } else if (wasDraggingEast && !isDraggingEast) {
+      runner.css({
+        'pointer-events': 'auto',
+      });
+      runner.focus();
+    }
+    wasDraggingEast = isDraggingEast;
+  }).observe(document.querySelector('.ui-layout-container'), {
+    childList: true,
+  });
+}
+
 /*
  * Initializes the programming environment.  This is called after the
  * entire document body and other JavaScript has loaded.
@@ -133,24 +185,28 @@ async function init() {
     });
 
     window.auth2.isSignedIn.listen(() => {
+      const layoutHandler = $(LAYOUT_CONTAINER_CLASSNAME).layout();
+
       if (Auth.signedIn()) {
         loadTreeNodes(DirTree.getRootNode());
 
         $('#signin').hide();
         $('#signout, #navButton').show();
-        window.mainLayout.show('west');
+        layoutHandler.show('west');
       } else {
         $('#signin').show();
         $(
           '#signout, #saveButton, #navButton, #deleteButton, #shareFolderButton'
         ).hide();
-        window.mainLayout.hide('west');
+        layoutHandler.hide('west');
       }
     });
   });
 
   attachEventListeners();
   attachCustomEventListeners();
+
+  initializeLayout();
 
   // Keep the base bundle preloaded by retrying regularly.
   function preloadBaseBundle() {
@@ -955,6 +1011,8 @@ window.addEventListener('message', (event) => {
         showRequiredChecksInDialog(msg);
       }, 500);
     }
+
+    sweetAlert.close();
     break;
   case 'showGraphics': {
     const runner = document.getElementById('runner');
@@ -1121,24 +1179,26 @@ function compile() {
     allowEscapeKey: false,
     allowEnterKey: false,
   }).then(() => {
-    window.cancelCompile();
+    stopRun();
   });
 
   sendHttp('POST', 'compile', data, (request) => {
     if (compileFinished) return;
-    sweetAlert.close();
+
+    const { status, responseText } = request;
+
     window.cancelCompile();
 
-    const success = request.status === 200;
+    const success = status === 200;
 
     let hash, dhash;
-    if (request.status < 500) {
-      if (request.responseText.length === 23) {
-        hash = request.responseText;
+    if (status < 500) {
+      if (responseText.length === 23) {
+        hash = responseText;
         dhash = null;
       } else {
         try {
-          const obj = JSON.parse(request.responseText);
+          const obj = JSON.parse(responseText);
           hash = obj.hash;
           dhash = obj.dhash;
         } catch (e) {
@@ -1161,10 +1221,12 @@ function compile() {
     data.append('mode', window.buildMode);
 
     sendHttp('POST', 'runMsg', data, (request) => {
+      const { status, responseText } = request;
       let msg = '';
-      if (request.status === 200) {
-        msg = request.responseText.replace(/^[\r\n]+|[\r\n]+$/g, '');
-      } else if (request.status >= 400) {
+
+      if (status === 200) {
+        msg = responseText.replace(/^[\r\n]+|[\r\n]+$/g, '');
+      } else if (status >= 400) {
         msg = 'Sorry!  Your program couldn\'t be run right now.';
       }
       if (msg !== '') msg += '\n\n';
@@ -1172,6 +1234,7 @@ function compile() {
       if (success) {
         run(hash, dhash, msg, false, compileGeneration);
       } else {
+        sweetAlert.close();
         run(hash, '', msg, true, compileGeneration);
       }
     });

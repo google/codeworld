@@ -18,6 +18,11 @@ cwd=$(pwd)
 
 source base.sh
 
+# Locally mirror various third-party JavaScript, CSS, etc, so that we don't
+# have to have user's browsers retrieve code from random remote locations.
+
+run .           mirror/get_mirrored
+
 # Install the codeworld-base and codeworld-api packages
 run .  cabal_install --ghcjs ./codeworld-prediction \
                              ./codeworld-error-sanitizer \

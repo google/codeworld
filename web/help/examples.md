@@ -179,7 +179,7 @@ mandelbrot(n, k) = rotated(scaled(pic, 5, 5), 90)
         spot(x, y, m) = translated(shade(solidRectangle(width, width), m), x, y)
         shade(p, m)   = colored(p, HSL(0, 0, (1 - 1/m)^5))
 
-program = drawingOf(mandelbrot(500, 25))
+program = drawingOf(mandelbrot(150, 15))
 ~~~~~
 
 Example: Bounce

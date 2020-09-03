@@ -20,6 +20,8 @@ import {
   deleteProject_,
   getNearestDirectory,
   initDirectoryTree,
+  initializeLayoutContainer,
+  LAYOUT_CONTAINER_CLASSNAME,
   loadProject,
   loadSample,
   loadTreeNodes,
@@ -58,6 +60,10 @@ function attachEventListeners() {
     $('#projects').html('');
   });
   $('#signin').on('click', Auth.signIn);
+
+  $('#navButton').on('click', () => {
+    $(LAYOUT_CONTAINER_CLASSNAME).layout().toggle('west');
+  });
 
   $('#newButton').on('click', newProject);
   $('#newFolderButton').on('click', newFolder);
@@ -108,24 +114,48 @@ async function init() {
     });
 
     window.auth2.isSignedIn.listen(() => {
+      const layoutHandler = $(LAYOUT_CONTAINER_CLASSNAME).layout();
+
       if (Auth.signedIn()) {
         loadTreeNodes(DirTree.getRootNode());
 
         $('#signin').hide();
         $('#signout, #navButton').show();
-        window.mainLayout.show('west');
+        layoutHandler.show('west');
       } else {
         $('#signin').show();
         $(
           '#signout, #saveButton, #navButton, #deleteButton, #shareFolderButton'
         ).hide();
-        window.mainLayout.hide('west');
+        layoutHandler.hide('west');
       }
     });
   });
 
   attachEventListeners();
   attachCustomEventListeners();
+
+  initializeLayoutContainer({
+    default: {},
+    west: {
+      initHidden: true,
+      minSize: 50,
+      enableCursorHotkey: false,
+    },
+    east: {
+      initHidden: true,
+      resizable: false,
+      size: 508,
+      enableCursorHotkey: false,
+    },
+    onresize: () => {
+      Blockly.resizeSvgContents(Blockly.getMainWorkspace());
+      Blockly.getMainWorkspace().resize();
+
+      window.dispatchEvent(new Event('resize'));
+      $(window).trigger('resize');
+    },
+  });
 
   function loadProjectHandler(name, path) {
     function successCallback(project) {

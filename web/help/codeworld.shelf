@@ -16,13 +16,13 @@
       "Editor":    "help/editor.md",
       "Examples":  "help/examples.md",
       "Reference": "doc/Prelude.html",
+      "Reference: Sketches": "doc/Sketches.html",
       "Extras": {
         "Colors": "doc/Extras-Colors.html",
         "Cw": "doc/Extras-Cw.html",
         "Turtle": "doc/Extras-Turtle.html",
         "Util": "doc/Extras-Util.html",
-        "Widget": "doc/Extras-Widget.html",
-        "Sketches": "doc/Sketches.html"
+        "Widget": "doc/Extras-Widget.html"
       }
     }
   }

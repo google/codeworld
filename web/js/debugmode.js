@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 // These functions are provided by a debugmode-supported entrypoint when
 // calling initDebugMode
 //  debugGetNode :: { x :: Double, y :: Double } -> Int

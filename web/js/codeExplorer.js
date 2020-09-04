@@ -14,25 +14,12 @@
  * limitations under the License.
  */
 
-let dialog = null,
-  content = null,
-  fullPic = null,
-  currentPic = null,
-  marker = null,
-  open = false;
-
-function openDialog() {
-  dialog.dialog('open');
-  open = true;
-}
-
-function closeDialog() {
-  dialog.dialog('close');
-  open = false;
-}
+let fullPic;
+let currentPic;
+let marker;
 
 function buildNestedList(id) {
-  const go = (p, to, open) => {
+  const go = (p, to, isExplorerOpen) => {
     const ul = document.createElement('ul');
     const span = document.createElement('span');
     const toggleButton = document.createElement('span');
@@ -50,7 +37,7 @@ function buildNestedList(id) {
     };
 
     if (p.picture || p.pictures) {
-      toggleButton.classList.add('collapse-button');
+      toggleButton.classList.add('code-explorer__collapse-button');
       toggleButton.addEventListener('click', (evt) => {
         if (collapsed) {
           decollapse();
@@ -59,19 +46,19 @@ function buildNestedList(id) {
         }
       });
 
-      if (open) {
+      if (isExplorerOpen) {
         decollapse();
       } else {
         collapse();
       }
     } else {
-      toggleButton.classList.add('collapse-spacer');
+      toggleButton.classList.add('code-explorer__collapse-spacer');
     }
     span.appendChild(toggleButton);
 
     const link = createPicLink(p);
     p.link = link;
-    if (open) {
+    if (isExplorerOpen) {
       link.click();
     }
     span.appendChild(link);
@@ -79,17 +66,17 @@ function buildNestedList(id) {
 
     if (p.picture) {
       const li = document.createElement('li');
-      go(p.picture, li, open);
+      go(p.picture, li, isExplorerOpen);
       ul.appendChild(li);
       to.appendChild(ul);
     } else if (p.pictures) {
       for (let i = 0; i < p.pictures.length; i++) {
         const li = document.createElement('li');
-        const op =
-          open &&
+        const _isExplorerOpen =
+          isExplorerOpen &&
           id >= p.pictures[i].id &&
           (i === p.pictures.length - 1 || id < p.pictures[i + 1].id);
-        go(p.pictures[i], li, op);
+        go(p.pictures[i], li, _isExplorerOpen);
         ul.appendChild(li);
       }
       to.appendChild(ul);
@@ -130,21 +117,20 @@ function createPicLink(pic) {
 
   a.appendChild(document.createTextNode(pic.name));
   a.href = 'javascript: void(0);';
-  a.classList.add('treedialog-piclink');
+  a.classList.add('code-explorer__picture-link');
   a.addEventListener('click', (evt) => {
     select(pic.id);
 
     if (marker) marker.clear();
 
     getPicNode(currentPic.id, (node) => {
-      node.link.classList.remove('piclink-selected');
+      node.link.classList.remove('code-explorer__picture-link--selected');
     });
     getPicNode(pic.id, (node) => {
-      node.link.classList.add('piclink-selected');
+      node.link.classList.add('code-explorer__picture-link--selected');
     });
 
     currentPic = pic;
-    dialog.dialog('option', 'title', pic.name);
     if (pic.startLine && pic.startCol && pic.endLine && pic.endCol) {
       codeworldEditor.setSelection(
         {
@@ -200,7 +186,7 @@ function highlight(nodeId) {
   runner.contentWindow.postMessage(
     {
       type: 'debugHighlight',
-      nodeId: nodeId,
+      nodeId,
     },
     '*'
   );
@@ -211,90 +197,58 @@ function select(nodeId) {
   runner.contentWindow.postMessage(
     {
       type: 'debugSelect',
-      nodeId: nodeId,
+      nodeId,
     },
     '*'
   );
-}
-
-function cancelDebug() {
-  const runner = document.getElementById('runner');
-  runner.contentWindow.postMessage(
-    {
-      type: 'stopDebug',
-    },
-    '*'
-  );
-}
-
-function initTreeDialog(pic) {
-  fullPic = pic;
-
-  const div = document.createElement('div');
-  dialog = $(div).dialog({
-    dialogClass: 'treedialog',
-    title: 'Picture Browser',
-    closeText: '',
-    autoOpen: false,
-    height: 650,
-    width: 650,
-    close: () => {
-      open = false;
-      highlight(-1);
-      select(-1);
-      cancelDebug();
-    },
-  });
-
-  content = document.createElement('div');
-  content.classList.add('treedialog-content');
-  dialog.append(content);
 }
 
 function selectNode(id) {
-  if (!open) {
-    openDialog();
-  }
-
   select(id);
 
   const picture = getPicNode(id);
   currentPic = picture;
 
-  content.innerHTML = '';
-
-  content.appendChild(buildNestedList(id));
-
-  dialog.dialog('option', 'title', picture.name);
+  $('.code-explorer').html(buildNestedList(id));
 }
 
-function destroy() {
-  if (open) {
-    closeDialog();
+function toggle() {
+  const codeExplorer = $('.code-explorer');
+  const messageArea = $('#message');
+
+  if (codeExplorer.is(':visible')) {
+    messageArea.show();
+    codeExplorer.hide();
+  } else {
+    messageArea.hide();
+    codeExplorer.show();
   }
-  if (dialog) {
-    dialog.remove();
-  }
-  highlight(-1);
-  dialog = null;
-  content = null;
 }
 
 window.addEventListener('message', (event) => {
-  if (!event.data.type) return;
+  const { type } = event.data;
 
-  if (event.data.type === 'debugActive') {
-    initTreeDialog(event.data.fullPic);
+  if (!type) return;
+
+  switch (type) {
+  case 'debugActive':
+    fullPic = event.data.fullPic;
+
+    toggle();
     selectNode(0);
-  }
-  if (event.data.type === 'nodeClicked') {
+    break;
+  case 'nodeClicked':
     selectNode(event.data.nodeId);
-  }
-  if (event.data.type === 'nodeHovered') {
+    break;
+  case 'debugFinished':
+    toggle();
+    break;
+  case 'nodeHovered':
     // For now, do nothing.
-  } else if (event.data.type === 'debugFinished') {
-    destroy();
+    break;
+  default:
+    console.log(`Unsupported message type: ${type}`);
   }
 });
 
-export { destroy };
+export { toggle };

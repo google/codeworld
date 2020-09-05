@@ -4,6 +4,7 @@
   padding-left: 0;
   font-family: sans-serif;
   background-color: var(--code-explorer-background-color);
+  overflow: auto;
 }
 
 .code-explorer ul {

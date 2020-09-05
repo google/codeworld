@@ -1538,12 +1538,6 @@ connectInspect canvas samplePicture fireUpdate = do
     -- Sample the current user picture to return the scene tree.
     getPicCB <- syncCallback' $ samplePicture >>= toJSVal_aeson . pictureToNode
 
-    -- Sample the current user picture to draw to a canvas.
-    drawCB <- syncCallback2 ContinueAsync $ \c n -> do
-        let canvas = unsafeCoerce c :: Element
-        let nodeId = NodeId (pFromJSVal n)
-        drawPartialPic canvas nodeId =<< samplePicture
-
     -- Fire an event to change debug active state.
     setActiveCB <- syncCallback1 ContinueAsync $ \ active -> case pFromJSVal active of
         True  -> fireUpdate startDebugState
@@ -1557,13 +1551,12 @@ connectInspect canvas samplePicture fireUpdate = do
         if isHighlight then fireUpdate (highlightDebugState nodeId)
                        else fireUpdate (selectDebugState nodeId)
 
-    js_initDebugMode getNodeCB setActiveCB getPicCB highlightCB drawCB
+    js_initDebugMode getNodeCB setActiveCB getPicCB highlightCB
 
-foreign import javascript unsafe "initDebugMode($1,$2,$3,$4,$5)"
+foreign import javascript unsafe "initDebugMode($1,$2,$3,$4)"
     js_initDebugMode :: Callback (JSVal -> IO JSVal)
                      -> Callback (JSVal -> IO ())
                      -> Callback (IO JSVal)
-                     -> Callback (JSVal -> JSVal -> IO ())
                      -> Callback (JSVal -> JSVal -> IO ())
                      -> IO ()
 

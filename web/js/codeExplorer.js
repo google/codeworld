@@ -246,8 +246,6 @@ window.addEventListener('message', (event) => {
   case 'nodeHovered':
     // For now, do nothing.
     break;
-  default:
-    console.log(`Unsupported message type: ${type}`);
   }
 });
 

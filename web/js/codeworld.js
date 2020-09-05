@@ -1133,12 +1133,6 @@ const htmlEscapeString = (() => {
 
 function stopRun() {
   if (window.debugActive) {
-    document.getElementById('runner').contentWindow.postMessage(
-      {
-        type: 'stopDebug',
-      },
-      '*'
-    );
     CodeExplorer.toggle();
   }
   window.cancelCompile();

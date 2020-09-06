@@ -212,21 +212,10 @@ function selectNode(id) {
   $('.code-explorer').html(buildNestedList(id));
 }
 
-function toggle() {
-  const codeExplorer = $('.code-explorer');
-  const messageArea = $('#message');
-
-  if (codeExplorer.is(':visible')) {
-    messageArea.show();
-    codeExplorer.hide();
-  } else {
-    messageArea.hide();
-    codeExplorer.show();
-  }
-}
-
 window.addEventListener('message', (event) => {
   const { type } = event.data;
+  const $codeExplorer = $('.code-explorer');
+  const $messageArea = $('#message');
 
   if (!type) return;
 
@@ -234,19 +223,20 @@ window.addEventListener('message', (event) => {
   case 'debugActive':
     fullPic = event.data.fullPic;
 
-    toggle();
+    $codeExplorer.show();
+    $messageArea.hide();
+
     selectNode(0);
     break;
   case 'nodeClicked':
     selectNode(event.data.nodeId);
     break;
   case 'debugFinished':
-    toggle();
+    $messageArea.show();
+    $codeExplorer.hide();
     break;
   case 'nodeHovered':
     // For now, do nothing.
     break;
   }
 });
-
-export { toggle };

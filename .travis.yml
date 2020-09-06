@@ -29,6 +29,7 @@ addons:
 
 # `stages` apparently has no effect when `jobs` defined
 # stages:
+#   - clean_stack
 #   - upgrade_stack
 #   - build_some_dependencies
 #   - build_dependencies
@@ -44,6 +45,80 @@ addons:
 
 jobs:
   include:
+    - stage: clean_stack
+      name: "Clean Stack"
+      name: "root"
+      env:
+        - PACKAGE="."
+        - JOB=1
+      script: &clean_stack
+        - rm -f $HOME/.stack/pantry/pantry.sqlite3
+    - stage: clean_stack
+      name: "Account"
+      env:
+        - PACKAGE="codeworld-account"
+        - JOB=2
+      script: *clean_stack
+    - stage: clean_stack
+      name: "API"
+      env:
+        - PACKAGE="codeworld-api"
+        - JOB=3
+      script: *clean_stack
+    - stage: clean_stack
+      name: "Auth"
+      env:
+        - PACKAGE="codeworld-auth"
+        - JOB=4
+      script: *clean_stack
+    - stage: clean_stack
+      name: "Base (with ghcjs-base-stub)"
+      env:
+        - PACKAGE="codeworld-base"
+        - JOB=5
+      script: *clean_stack
+    - stage: clean_stack
+      name: "Compiler"
+      env:
+        - PACKAGE="codeworld-compiler"
+        - JOB=6
+      script: *clean_stack
+    - stage: clean_stack
+      name: "Error Sanitizer"
+      env:
+        - PACKAGE="codeworld-error-sanitizer"
+        - JOB=7
+      script: *clean_stack
+    - stage: clean_stack
+      name: "Game API"
+      env:
+        - PACKAGE="codeworld-game-api"
+        - JOB=8
+      script: *clean_stack
+    - stage: clean_stack
+      name: "Game Server"
+      env:
+        - PACKAGE="codeworld-game-server"
+        - JOB=9
+      script: *clean_stack
+    - stage: clean_stack
+      name: "Prediction"
+      env:
+        - PACKAGE="codeworld-prediction"
+        - JOB=10
+      script: *clean_stack
+    - stage: clean_stack
+      name: "Server"
+      env:
+        - PACKAGE="codeworld-server"
+        - JOB=11
+      script: *clean_stack
+    - stage: clean_stack
+      name: "Funblocks Client (with ghcjs-base-stub)"
+      env:
+        - PACKAGE="funblocks-client"
+        - JOB=12
+      script: *clean_stack
     - stage: upgrade_stack
       name: "Upgrade Stack"
       name: "root"

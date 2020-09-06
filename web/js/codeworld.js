@@ -44,7 +44,6 @@ import {
   updateTreeOnNewProjectCreation,
   warnIfUnsaved,
 } from './codeworld_shared.js';
-import * as CodeExplorer from './codeExplorer.js';
 
 import * as Alert from './utils/alert.js';
 import * as Auth from './utils/auth.js';
@@ -1133,7 +1132,8 @@ const htmlEscapeString = (() => {
 
 function stopRun() {
   if (window.debugActive) {
-    CodeExplorer.toggle();
+    $('.code-explorer').hide();
+    $('#message').show();
   }
   window.cancelCompile();
 

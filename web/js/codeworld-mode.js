@@ -19,8 +19,6 @@
 // CodeMirror is copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
-'use strict';
-
 CodeMirror.defineMode('codeworld', (config, modeConfig) => {
   // This is a regular expression used in multiple contexts.
   const MULTICHAR_ESCAPE_REGEX =
@@ -229,7 +227,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
     const override = modeConfig.overrideKeywords;
     if (override) {
       for (const word in override) {
-        if (override.hasOwnProperty(word)) {
+        if (Object.prototype.hasOwnProperty.call(override, word)) {
           result[word] = override[word];
         }
       }
@@ -242,7 +240,7 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
     const t = state.func(stream, stream.column(), state);
     if (['variable', 'variable-2'].indexOf(t) !== -1) {
       const w = stream.current();
-      if (wellKnownWords.hasOwnProperty(w)) {
+      if (Object.prototype.hasOwnProperty.call(wellKnownWords, w)) {
         return wellKnownWords[w];
       }
       if (
@@ -391,7 +389,9 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
       while (state.contexts.length) {
         const topContext = state.contexts.pop();
         if (!state.contexts.length || isBracket(topContext)) {
-          if (topContext.hasOwnProperty('argIndex')) topContext.argIndex++;
+          if (Object.prototype.hasOwnProperty.call(topContext, 'argIndex')) {
+            topContext.argIndex++;
+          }
           state.contexts.push(topContext);
           break;
         }

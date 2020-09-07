@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-'use strict';
-
 goog.provide('Blockly.Blocks.cwLogic');
 goog.require('Blockly.Blocks');
 

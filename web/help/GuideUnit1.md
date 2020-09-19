@@ -1849,8 +1849,8 @@ Now run your program, and you have a coordinate plane to measure what
 points to use in your shapes.  (When you're done, just remove the
 `& coordinatePlane` to get rid of the guidelines.)
 
-!!! collapsible: Using the coordinate plane to help draw a simple
-    butterfly. Start the butterfly by first drawing the left wing.
+!!! collapsible: Using the coordinate plane to help draw a simple butterfly.
+    Start the butterfly by first drawing the left wing.
 
     ~~~~~ . clickable
     program = drawingOf(butterfly & coordinatePlane)
@@ -1896,7 +1896,7 @@ points to use in your shapes.  (When you're done, just remove the
     rightWing= polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),
     (4,-4),(3,-4),(1,-2),(0,0) ])
     ~~~~~
-    
+
     Your turn. Add back in the cooridinate plane and improve the butterfly!
 
 No matter which exact kind of line, curve, or polygon you want in the end,

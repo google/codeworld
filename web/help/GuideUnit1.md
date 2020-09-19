@@ -187,7 +187,7 @@ Try these examples to learn more:
 
 Once you've understood these examples, try changing the numbers or making other changes.
 
-What to do when you make a mistake.
+What to do when you make a mistake
 ----------------------
 
 As you experminent with your programs, you're likely to try a few things
@@ -196,10 +196,10 @@ that don't work.
 The error indicator and message on the left can help you figure out
 what and where the error is. Keep in mind, however, the error is not always
 on the same line as the indicator. This is just the point at which the computer 
-says *I no lomger understand what you are doing.*  
+says *I no longer understand what you are doing.*  
 
 You may also see the error message on the right after clicking **Run**.
-In this case, note the error message but, more importantly, the *line and
+In this case, note the error message. But, more importantly, the *line and
 column numbers*. For example, `Line 6, Column 36`. This is the exact
 point at which the computer stopped understanding.
 

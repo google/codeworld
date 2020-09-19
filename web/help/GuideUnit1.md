@@ -89,7 +89,8 @@ program = drawingOf(nametag)
 ~~~~~
 
 **This program doesn't work!**  When you click the **Run** button, you should
-see an error message: `Variable not in scope: nametag :: Picture`.
+see an error indicator on the left. Mousing over the indictaor you will see
+the message: `Variable not in scope: nametag :: Picture`.
 This is your computer telling you that it doesn't know what `nametag` means!
 
 !!! Tip: Run your program often!
@@ -1854,24 +1855,34 @@ points to use in your shapes.  (When you're done, just remove the
 
     ~~~~~ . clickable
     program = drawingOf(butterfly & coordinatePlane)
-    butterfly=leftWing
+    butterfly = leftWing
     leftWing = polyline([(0,0),(-1,2)])
     ~~~~~
 
     The corrdinate plane helps us see where we want to draw next. 
-    Extend the left wing to coordinate (-3,4) using,
+    Extend the left wing to coordinate `(-3,4)` using,
 
     ~~~~~ . clickable
+    program = drawingOf(butterfly & coordinatePlane)
+    butterfly = leftWing
     leftWing = polyline([(0,0),(-1,2),(-3,4)])
     ~~~~~
 
     Add a few more vertices to leftWing.
 
     ~~~~~ . clickable
+    program = drawingOf(butterfly & coordinatePlane)
+    butterfly = leftWing
     leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3)])
+    ~~~~~
+
     Finish off the left wing using,
+
+    ~~~~~ . clickable
+    program = drawingOf(butterfly & coordinatePlane)
+    butterfly = leftWing
     leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),
-    (-4,-4),(-3,-4),(-1,-2),(0,0) ])
+        (-4,-4),(-3,-4),(-1,-2),(0,0) ])
     ~~~~~
 
     Using a similar approach, draw the right wing and modify our
@@ -1879,22 +1890,22 @@ points to use in your shapes.  (When you're done, just remove the
 
     ~~~~~ . clickable
     program = drawingOf(butterfly & coordinatePlane)
-    butterfly=leftWing & rightWing
+    butterfly = leftWing & rightWing
     leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),
-    (-4,-4),(-3,-4),(-1,-2),(0,0) ])
-    rightWing= polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),
-    (4,-4),(3,-4),(1,-2),(0,0) ])
+        (-4,-4),(-3,-4),(-1,-2),(0,0) ])
+    rightWing = polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),
+        (4,-4),(3,-4),(1,-2),(0,0) ])
     ~~~~~
 
     Finally, remove the coordinate plane to see the butterfly.
 
     ~~~~~ . clickable
     program = drawingOf(butterfly)
-    butterfly=leftWing & rightWing
+    butterfly = leftWing & rightWing
     leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),
-    (-4,-4),(-3,-4),(-1,-2),(0,0) ])
-    rightWing= polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),
-    (4,-4),(3,-4),(1,-2),(0,0) ])
+        (-4,-4),(-3,-4),(-1,-2),(0,0) ])
+    rightWing = polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),
+        (4,-4),(3,-4),(1,-2),(0,0) ])
     ~~~~~
 
     Your turn. Add back in the cooridinate plane and improve the butterfly!

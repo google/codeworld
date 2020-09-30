@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { handleIncomingMessage as passMessageToCodeExplorer } from './codeExplorer.js';
 import {
   createFolder,
   definePanelExtension,
@@ -997,6 +998,8 @@ function reformatHaskell() {
 
 window.addEventListener('message', (event) => {
   const { data } = event;
+
+  passMessageToCodeExplorer(data);
 
   switch (data.type) {
   case 'loadSample':

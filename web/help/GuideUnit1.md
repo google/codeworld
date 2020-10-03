@@ -190,7 +190,7 @@ Once you've understood these examples, try changing the numbers or making other 
 !!! collapsible: `Exercise`
     Use the knowledge gained so far to create this picture.
 
-     ![](nametag_exercise_1.2.jpg width="30%")
+     ![](nametag-exercise1-2.jpg width="30%")
     
 
 !!! collapsible: `Exercise Solution`

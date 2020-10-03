@@ -308,7 +308,7 @@ border in the name tag.  Defining it isn't enough.
           circle(4) & circle(5) & circle(6) 
     ~~~~~
 
-    Use a variable to define the name.
+    Define the name with a variable.
 
     By defining the name with a variable, you could create
     multiple name tags with different names in them by 

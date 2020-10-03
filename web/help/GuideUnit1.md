@@ -1245,13 +1245,10 @@ As you nest expressions deeper, though, it becomes more challenging to
 match up these parentheses.
 
 !!! collapsible: `Parse error: Are you missing a parenthesis?`
-    This is one error you may get if your parentheses do not
-    match. The part telling you the line and column can
-    help you track where the computer noticed the error.
-
-    That, along with the information in this section, can help you
-    track down the mismatch.  
-    
+    This is one prse error you may get if your parentheses 
+    do not match. The part of the error message telling you the
+    line and column numbers may help you track where the computer noticed the error.
+  
     If you wrote this, with a missing right parenthesis after the 5,
     you would get the error:
 
@@ -1263,8 +1260,9 @@ match up these parentheses.
     end of the program.
 
 !!! collapsible: `Parse error on input`
-    This is another error you may get if your parentheses do not
-    match. This one is often caused by a missing left parenthesis.
+    This is another parse error you may get if your parentheses 
+    do not match. This one is often caused by a missing left
+    parenthesis.
 
     If you wrote this, with a missing left parenthesis before the 5,
     you would get the error:
@@ -1272,9 +1270,6 @@ match up these parentheses.
     ~~~~~
     program = drawingOf(colored(circle 5) & rectangle(1, 2), blue))
     ~~~~~
-
-    Notice that often the computer does not catch it until the
-    end of the program.
 
 
 A good way to start matching parentheses is to look at each pair as making

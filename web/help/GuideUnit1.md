@@ -187,6 +187,22 @@ Try these examples to learn more:
 
 Once you've understood these examples, try changing the numbers or making other changes.
 
+!!! collapsible: `Exercise`
+    Use the knowledge gained so far to create this picture.
+
+     ![](nametag_exercise_1.2.jpg width="30%")
+    
+
+!!! collapsible: `Exercise Solution`
+    This is one solution to the exercise.
+
+    ~~~~~ . clickable
+    program = drawingOf(nametag)
+    nametag = lettering("Diego") & rectangle(6, 2) &
+              circle(4) & circle(5) & circle(6)
+    ~~~~~
+
+
 What to do when you make a mistake
 ----------------------
 

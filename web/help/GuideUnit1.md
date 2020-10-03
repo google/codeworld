@@ -299,6 +299,34 @@ border = circle(5)
 That extra `& border` tells your computer that you actually *want* a
 border in the name tag.  Defining it isn't enough.
 
+!!! collapsible: `Exercise`
+    Use this code from the exercise in section 1.2.
+
+    program = drawingOf(nametag)
+    nametag = lettering("Diego") & rectangle(6, 2)  & 
+          circle(4) & circle(5) & circle(6) 
+
+    Use a variable to define the name.
+
+    By defining the name with a variable, you could create
+    multiple name tags with different names in them by 
+    simply changing the definition of the variable.
+
+    
+!!! collapsible: `Exercise Solution`
+    This is one solution to the exercise.
+
+    ~~~~~ . clickable
+    program = drawingOf(nametag)
+    nametag = lettering(name) & rectangle(6, 2) &
+              circle(4) & circle(5) & circle(6)
+    name = "Jane"
+    ~~~~~
+
+    Try changing name to some other value and re-run the
+    program.
+    
+
 ### The `program` variable
 
 Remember that defining a variable doesn't do anything by itself.  But your

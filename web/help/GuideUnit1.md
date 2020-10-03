@@ -302,9 +302,11 @@ border in the name tag.  Defining it isn't enough.
 !!! collapsible: `Exercise`
     Use this code from the exercise in section 1.2.
 
+    ~~~~~ . clickable
     program = drawingOf(nametag)
     nametag = lettering("Diego") & rectangle(6, 2)  & 
           circle(4) & circle(5) & circle(6) 
+    ~~~~~
 
     Use a variable to define the name.
 
@@ -323,9 +325,25 @@ border in the name tag.  Defining it isn't enough.
     name = "Jane"
     ~~~~~
 
-    Try changing name to some other value and re-run the
-    program.
+    Try changing the name variable to some other value than "Jane"
+    and re-run the program.
+
+!!! collapsible: `Exercise`
+    Modify the previous exercise so that the circles
+    are defined in a variable.
+
     
+!!! collapsible: `Exercise Solution`
+    This is one solution to the exercise.
+
+    ~~~~~ . clickable
+    program = drawingOf(nametag)
+    nametag = lettering(name) & circles
+    name = "Jane"
+    circles = rectangle(6, 2)  & 
+            circle(4) & circle(5) & circle(6)
+    ~~~~~
+
 
 ### The `program` variable
 

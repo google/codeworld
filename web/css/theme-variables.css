@@ -145,18 +145,16 @@
   --haddock-selflink-bg: #f0f0f0;
   --haddock-toc-bg: #faf9dc;
 
-  /* treedialog.css */
-  --treedialog-border: #000;
-  --treedialog-bg: #fff;
-  --treedialog-shadow: #000;
-  --treedialog-piclink: black;
-  --treedialog-piclink-selected: yellow;
-
   /* runner.css */
   --stack-item-bg: #eee;
   --stack-item-hover-bg: #ccc;
   --stack-list-a: black;
   --shape-info-hover-bg: #aaa;
+
+  --code-explorer-background-color: white;
+  --code-explorer-collapse-button-color: black;
+  --code-explorer-picture-link-color: black;
+  --code-explorer-picture-link-selected-color: yellow;
 }
 
 .dark-theme {
@@ -286,16 +284,14 @@
   --haddock-selflink-bg: #333333;
   --haddock-toc-bg: #050623;
 
-  /* treedialog.css */
-  --treedialog-border: white;
-  --treedialog-bg: black;
-  --treedialog-shadow: white;
-  --treedialog-piclink: white;
-  --treedialog-piclink-selected: yellow;
-
   /* runner.css */
   --stack-item-bg: #111111;
   --stack-item-hover-bg: #333333;
   --stack-list-a: #ffffff;
   --shape-info-hover-bg: #555555;
+
+  --code-explorer-background-color: black;
+  --code-explorer-collapse-button-color: white;
+  --code-explorer-picture-link-color: white;
+  --code-explorer-picture-link-selected-color: var(--cw-button-bg-5);
 }

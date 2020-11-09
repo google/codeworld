@@ -1,0 +1,2 @@
+program.hs:17:18-33: error: The range of this function is another function type.
+	If this is what you intended, add parentheses around the range.

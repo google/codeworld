@@ -101,11 +101,7 @@
       </div>
       <div id="toolbar">
         <div id="buttons">
-          <a
-            id="navButton"
-            class="cw-button blue"
-            onclick="window.mainLayout.toggle('west')"
-            style="display: none"
+          <a id="navButton" class="cw-button blue" style="display: none"
             ><i class="mdi mdi-18px mdi-menu"></i
           ></a>
           <a id="signin" class="cw-button blue"
@@ -197,30 +193,6 @@
       type="text/javascript"
       src="mirrored/cdnjs.cloudflare.com/ajax/libs/jqtree/1.4.10/tree.jquery.js"
     ></script>
-    <script type="text/javascript">
-      window.mainLayout = $(".ui-layout-container").layout({
-        default: {},
-        west: {
-          initHidden: true,
-          minSize: 50,
-          enableCursorHotkey: false,
-        },
-        east: {
-          initHidden: true,
-          resizable: false,
-          size: 508,
-          enableCursorHotkey: false,
-        },
-        onresize: () => {
-          Blockly.resizeSvgContents(Blockly.getMainWorkspace());
-          Blockly.getMainWorkspace().resize();
-
-          window.dispatchEvent(new Event("resize"));
-          $(window).trigger("resize");
-        },
-      });
-    </script>
-
     <script src="js/blocks_runmain.js"></script>
     <script
       type="text/javascript"

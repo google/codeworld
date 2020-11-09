@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-'use strict';
-
 goog.provide('Blockly.Blocks.cwMath');
 
 goog.require('Blockly.Blocks');

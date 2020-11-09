@@ -182,6 +182,7 @@ checkCodeConventions = do
     checkOldStyleMain
     checkExcludedSyntax
     checkFunctionParentheses
+    checkFunctionReturningFunction
     checkVarlessPatterns
     checkPatternGuards
     checkExtraCommas
@@ -620,6 +621,24 @@ isLikelyNumberExp (NegApp _ _) = True
 isLikelyNumberExp (App _ _ _) = True
 isLikelyNumberExp (Paren _ _) = True
 isLikelyNumberExp _ = False
+
+checkFunctionReturningFunction :: MonadCompile m => m ()
+checkFunctionReturningFunction =
+  getMainParsedCode >>= \parsed -> case parsed of
+    Parsed mod ->
+      addDiagnostics $
+        everything (++) (mkQ [] functionsReturningFunctions) mod
+    _ -> return ()
+
+functionsReturningFunctions :: Type SrcSpanInfo -> [Diagnostic]
+functionsReturningFunctions (TyFun _ _ (TyFun loc _ _)) =
+  [ ( loc,
+      CompileError,
+      "error: The range of this function is another function type.\n\t"
+        ++ "If this is what you intended, add parentheses around the range."
+    )
+  ]
+functionsReturningFunctions _ = []
 
 checkVarlessPatterns :: MonadCompile m => m ()
 checkVarlessPatterns =

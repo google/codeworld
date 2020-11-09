@@ -60,7 +60,14 @@ window.onscroll = (event) => {
   position.scrollTop = event.target.scrollingElement.scrollTop;
 };
 
-(() => {
+(async () => {
+  window.markdeepOptions = {
+    mode: 'script',
+  };
+  await $.getScript(
+    'mirrored/casual-effects.com/markdeep/latest/markdeep.min.js'
+  );
+
   loadPosition();
 
   let shelf = {};
@@ -99,12 +106,12 @@ window.onscroll = (event) => {
 
           if (linkable && clickable) {
             pre.classList.add('clickable');
-            pre.onclick = () => {
+            $(pre).on('click', () => {
               if (env) {
                 savePosition();
                 env.postMessage({ type: 'loadSample', code: text }, '*');
               }
-            };
+            });
           }
         })();
       }
@@ -115,13 +122,13 @@ window.onscroll = (event) => {
     const elems = root.getElementsByClassName('collapsible');
     for (let i = 0; i < elems.length; ++i) {
       const elem = elems[i];
-      elem.onclick = () => {
+      $(elem).on('click', () => {
         if (elem.classList.contains('expanded')) {
           elem.classList.remove('expanded');
         } else {
           elem.classList.add('expanded');
         }
-      };
+      });
     }
   }
 
@@ -136,7 +143,7 @@ window.onscroll = (event) => {
       iframe.setAttribute('frameborder', '0');
       iframe.setAttribute('scrolling', 'no');
 
-      iframe.addEventListener('load', (e) => {
+      $(iframe).on('load', (e) => {
         const currentTarget = e.currentTarget;
         const contentWindow = currentTarget.contentWindow;
 
@@ -215,16 +222,16 @@ window.onscroll = (event) => {
       '<i class="mdi mdi-18px mdi-open-in-new"></i>&nbsp;Open the Help in a New Tab';
     popout.target = '_blank';
     popout.href = document.location.href;
-    popout.onclick = (e) => {
-      const tab = open(this.href);
-      tab.addEventListener('load', () => {
+    $(popout).on('click', (e) => {
+      const tab = open(popout.href);
+      $(tab).on('load', () => {
         tab.env = parent;
         if (parent.sweetAlert) {
           parent.sweetAlert.close();
         }
       });
       e.preventDefault();
-    };
+    });
     popdiv.appendChild(popout);
     help.appendChild(popdiv);
   }
@@ -351,13 +358,13 @@ window.onscroll = (event) => {
       collapsible: true,
       heightStyle: 'content',
       beforeActivate: (event, ui) => {
-        position.scrollLeft = 0;
-        position.scrollTop = 0;
-
         const title = ui.newHeader.text();
         const path = title && getPath(shelf.named, title);
         if (path) {
           loadPath(path);
+
+          position.scrollLeft = 0;
+          position.scrollTop = 0;
         }
       },
     };

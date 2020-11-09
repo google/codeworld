@@ -43,51 +43,9 @@
   </head>
 
   <body>
-    <div id="blocklyDiv" style="height: 100%; width: 100%;"></div>
+    <div id="blocklyDiv" style="height: 100%; width: 100%"></div>
 
     <script src="../js/blocks_runmain.js"></script>
-    <script>
-      let frameId = null;
-
-      function loadXml(data) {
-        let workspace = Blockly.getMainWorkspace();
-        if (!workspace) {
-          setTimeout(() => {
-            loadXml(data);
-          }, 100);
-          return; // Try again a little later
-        }
-        let xml = Blockly.Xml.textToDom(data);
-        Blockly.Xml.domToWorkspace(xml, workspace);
-
-        let metrics = workspace.getMetrics();
-        let maxX = metrics.contentWidth + 50;
-        let maxY = metrics.contentHeight + 50;
-        frameId.setAttribute("width", maxX);
-        frameId.setAttribute("height", maxY);
-      }
-
-      function setId(j_id_param) {
-        frameId = j_id_param;
-      }
-
-      document.getElementById("blocklyDiv").addEventListener(
-        "click",
-        () => {
-          if (window.parent) {
-            let workspace = Blockly.getMainWorkspace();
-
-            let xml = Blockly.Xml.workspaceToDom(workspace);
-            let xml_text = Blockly.Xml.domToText(xml);
-
-            window.parent.postMessage(
-              { type: "loadSample", code: xml_text },
-              "*"
-            );
-          }
-        },
-        false
-      );
-    </script>
+    <script src="js/blockframe.js"></script>
   </body>
 </html>

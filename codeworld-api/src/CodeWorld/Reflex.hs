@@ -143,7 +143,7 @@ import Reflex
 -- When using this module, you can build pictures using the same combinators as
 -- the main 'CodeWorld' module.  However, the way you handle user input and draw
 -- to the screen is different.  The 'ReflexCodeWorld' constraint gives you a
--- a monad that has access to Reflex versions of input, such as keys, the mouse
+-- monad that has access to Reflex versions of input, such as keys, the mouse
 -- pointer, and the time.  Based on these inputs, you'll use 'draw' to draw
 -- output to the screen.
 --

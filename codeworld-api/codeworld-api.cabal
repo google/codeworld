@@ -56,13 +56,13 @@ Library
                        deepseq              >= 1.4   && < 1.5,
                        dependent-sum        >= 0.4   && < 0.6.2,
                        ghc-prim             >= 0.3.1 && < 0.6,
-                       hashable             >= 1.2.4 && < 1.3,
+                       hashable             >= 1.2.4 && < 1.4,
                        monad-loops          >= 0.3   && < 0.5,
                        mtl                  >= 2.2.1 && < 2.3,
                        random               >= 1.1   && < 1.2,
                        ref-tf               >= 0.4   && < 0.5,
                        reflex               >= 0.6.3 && < 0.7,
-                       template-haskell     >= 2.8   && < 2.15,
+                       template-haskell     >= 2.8   && < 2.16,
                        text                 >= 1.2.2 && < 1.3,
                        time                 >= 1.8   && < 2.0,
                        witherable           >= 0.3   && < 0.4
@@ -77,7 +77,7 @@ Library
                        transformers
   else
     Build-depends:     blank-canvas          >= 0.6 && < 0.8,
-                       time                  >= 1.6.0 && < 1.9
+                       time                  >= 1.8 && < 2.0
 
   Ghc-options:         -O2 -Wall
   if flag(strictbuild)
@@ -117,13 +117,13 @@ Test-suite unit-tests
                        deepseq              >= 1.4   && < 1.5,
                        dependent-sum        >= 0.4   && < 0.6.2,
                        ghc-prim             >= 0.3.1 && < 0.6,
-                       hashable             >= 1.2.4 && < 1.3,
+                       hashable             >= 1.2.4 && < 1.4,
                        monad-loops          >= 0.3   && < 0.5,
                        mtl                  >= 2.2.1 && < 2.3,
                        random               >= 1.1   && < 1.2,
                        ref-tf               >= 0.4   && < 0.5,
                        reflex               >= 0.6.3 && < 0.7,
-                       template-haskell     >= 2.8   && < 2.15,
+                       template-haskell     >= 2.8   && < 2.16,
                        text                 >= 1.2.2 && < 1.3,
                        time                 >= 1.8   && < 2.0,
                        witherable           >= 0.3   && < 0.4
@@ -138,7 +138,7 @@ Test-suite unit-tests
                        transformers
   else
     Build-depends:     blank-canvas          >= 0.6 && < 0.8,
-                       time                  >= 1.6.0 && < 1.9
+                       time                  >= 1.8 && < 2.0
 
   Ghc-options:         -O2
   Cpp-options:         -DCODEWORLD_UNIT_TEST

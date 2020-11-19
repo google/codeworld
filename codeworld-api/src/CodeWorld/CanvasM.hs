@@ -113,6 +113,9 @@ instance Monad CanvasM where
         x <- unCanvasM m dim ctx
         unCanvasM (f x) dim ctx
 
+foreign import javascript "$6.drawImage($1, $2, $3, $4, $5);"
+    js_drawImage :: Element -> Double -> Double -> Double -> Double -> Canvas.Context -> IO ()
+
 foreign import javascript "$2.globalCompositeOperation = $1;"
     js_globalCompositeOperation :: JSString -> Canvas.Context -> IO ()
 
@@ -167,13 +170,7 @@ instance MonadCanvas CanvasM where
         CanvasM (const (Canvas.drawImage (Canvas.Image c) x y w h))
     drawImgURL name url w h = CanvasM $ \ _ ctx -> do
         img <- createOrGetImage name url
-        Canvas.drawImage
-            (Canvas.Image (unElement img))
-            (round (-w/2))
-            (round (-h/2))
-            (round w)
-            (round h)
-            ctx
+        js_drawImage img (-w/2) (-h/2) w h ctx
     globalCompositeOperation op =
         CanvasM (const (js_globalCompositeOperation (textToJSString op)))
     globalAlpha a = CanvasM (const (js_globalAlpha a))

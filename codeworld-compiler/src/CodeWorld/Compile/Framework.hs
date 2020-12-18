@@ -1,10 +1,13 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TupleSections #-}
 {-# OPTIONS_GHC -Wno-missing-fields #-}
 
@@ -29,12 +32,15 @@ module CodeWorld.Compile.Framework where
 import qualified "ghc" Config as GHC
 import Control.Applicative
 import Control.Concurrent
+import Control.Exception (evaluate)
 import Control.Monad
 import Control.Monad.Catch
 import Control.Monad.IO.Class
 import Control.Monad.State
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import Data.Functor.Identity
+import Data.Generics
 import Data.List (foldl', intercalate, isPrefixOf)
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -70,8 +76,6 @@ import System.IO.Temp (withSystemTempDirectory)
 import System.Process
 import Text.Regex.TDFA
 import Text.Regex.TDFA.Text
-
--- import qualified "ghc" ToolSettings as GHC
 
 data Stage
   = ErrorCheck
@@ -125,9 +129,11 @@ type SourceMode = String -- typically "codeworld" or "haskell"
 
 type Diagnostic = (SrcSpanInfo, CompileStatus, String)
 
-data ParsedCode = Parsed (Module SrcSpanInfo) | NoParse deriving (Show)
+data ParsedCode = Parsed (Module SrcSpanInfo) | NoParse
+  deriving (Typeable, Data, Show)
 
 data GHCParsedCode = GHCParsed (GHC.HsModule GHC.GhcPs) | GHCNoParse
+  deriving (Typeable, Data)
 
 getSourceCode :: MonadCompile m => FilePath -> m ByteString
 getSourceCode src = do
@@ -139,6 +145,15 @@ getSourceCode src = do
       modify $ \state -> state {compileReadSource = M.insert src source cached}
       return source
 
+gmapT' :: GenericT -> GenericT
+gmapT' f x0 = runIdentity (gfoldl k Identity x0)
+  where
+    k :: Data d => Identity (d -> b) -> d -> Identity b
+    k (Identity c) x = Identity $! c $! f x
+
+strictify :: GenericT
+strictify = gmapT' strictify
+
 getParsedCode :: MonadCompile m => FilePath -> m ParsedCode
 getParsedCode src = do
   cached <- gets compileParsedSource
@@ -147,6 +162,13 @@ getParsedCode src = do
     Nothing -> do
       source <- getSourceCode src
       parsed <- parseCode ["TupleSections"] (decodeUtf8 source)
+
+      parsed <-
+        liftIO $
+          catch
+            (evaluate (strictify parsed))
+            (\(e :: SomeException) -> (return NoParse))
+
       modify $ \state -> state {compileParsedSource = M.insert src parsed cached}
       return parsed
 
@@ -158,6 +180,13 @@ getGHCParsedCode src = do
     Nothing -> do
       source <- getSourceCode src
       parsed <- ghcParseCode ["TupleSections"] (decodeUtf8 source)
+
+      parsed <-
+        liftIO $
+          catch
+            (evaluate (strictify parsed))
+            (\(e :: SomeException) -> (return GHCNoParse))
+
       modify $ \state -> state {compileGHCParsedSource = M.insert src parsed cached}
       return parsed
 

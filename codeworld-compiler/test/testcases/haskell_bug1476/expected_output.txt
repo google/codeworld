@@ -1,0 +1,5 @@
+program.hs:6:19-24: error:
+    Unexpected do block in function application:
+        do rec
+    You could write it with parentheses
+    Or perhaps you meant to enable BlockArguments?

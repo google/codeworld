@@ -1,4 +1,4 @@
-program.hs:6:19-24: error:
+program.hs:8:5-13: error:
     Unexpected do block in function application:
         do rec
     You could write it with parentheses

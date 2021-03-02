@@ -151,6 +151,7 @@ Library
     haskell-src-exts,
     haskell-src-meta,
     hedgehog,
+    hgeometry >= 0.12,
     hspec,
     hspec-core,
     hspec-expectations,
@@ -193,7 +194,8 @@ Library
     mmorph,
     monad-bayes,
     monad-control,
-    monad-coroutine,
+    -- monad-coroutine 0.9.1 broken for old base
+    monad-coroutine < 0.9.1,
     monad-loops,
     monad-parallel,
     monad-unlift,

@@ -179,6 +179,7 @@ if [ ! -f $BUILD/progress/ghcup ]; then
   run .                  mkdir -p $BUILD/.ghcup/bin
   run $BUILD/.ghcup/bin  wget https://gitlab.haskell.org/haskell/ghcup/raw/master/ghcup
   run .                  chmod +x $BUILD/.ghcup/bin/ghcup
+  run .                  ghcup upgrade
 
   touch $BUILD/progress/ghcup
 fi
@@ -194,7 +195,7 @@ fi
 
 if [ ! -f $BUILD/progress/cabal-install ]; then
   run .                  ghcup install-cabal 2.4.1.0
-  run .                  cabal update --index-state='2020-06-10T22:10:39Z'
+  run .                  cabal update --index-state='2021-03-01T13:17:43Z'
 
   touch $BUILD/progress/cabal-install
 fi

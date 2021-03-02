@@ -32,12 +32,13 @@ run .  cabal_install --ghcjs ./codeworld-prediction \
                              ./codeworld-available-pkgs
 
 # Hide packages that conflict with modules in more popular choices.
-run . ghcjs-pkg hide base-compat         # Use base-compat-batteries
-run . ghcjs-pkg hide ghcjs-dom-jsffi     # Use ghcjs-dom
-run . ghcjs-pkg hide matrices            # Conflicts with matrix
-run . ghcjs-pkg hide simple-affine-space # Conflicts with vector-space
-run . ghcjs-pkg hide newtype             # Replaced by newtype-generics
-run . ghcjs-pkg hide non-empty           # Conflicts with semialign
+run . ghcjs-pkg hide base-compat             # Use base-compat-batteries
+run . ghcjs-pkg hide ghcjs-dom-jsffi         # Use ghcjs-dom
+run . ghcjs-pkg hide matrices                # Conflicts with matrix
+run . ghcjs-pkg hide simple-affine-space     # Conflicts with vector-space
+run . ghcjs-pkg hide newtype                 # Replaced by newtype-generics
+run . ghcjs-pkg hide non-empty               # Conflicts with semialign
+run . ghcjs-pkg hide hgeometry-combinatorial # Conflicts with random-shuffle
 
 # Check for duplicate modules.  Fail the build if so, since that's a
 # poor user experience.

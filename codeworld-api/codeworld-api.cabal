@@ -55,7 +55,7 @@ Library
                        containers           >= 0.5.7 && < 0.7,
                        deepseq              >= 1.4   && < 1.5,
                        dependent-sum        >= 0.4   && < 0.6.2,
-                       ghc-prim             >= 0.3.1 && < 0.7,
+                       ghc-prim             >= 0.3.1 && < 0.8,
                        hashable             >= 1.2.4 && < 1.4,
                        monad-loops          >= 0.3   && < 0.5,
                        mtl                  >= 2.2.1 && < 2.3,

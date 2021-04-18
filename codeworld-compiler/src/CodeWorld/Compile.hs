@@ -236,6 +236,7 @@ buildArgs mainMod "codeworld" =
     "-XTypeOperators",
     "-XViewPatterns",
     "-XImplicitPrelude", -- MUST come after RebindableSyntax.
+    "-O",
     "-main-is",
     mainMod ++ ".program"
   ]
@@ -243,6 +244,7 @@ buildArgs mainMod "haskell" =
   [ "-DGHCJS_BROWSER",
     "-ferror-spans",
     "-fno-diagnostics-show-caret",
+    "-O",
     "-main-is",
     mainMod ++ ".main"
   ]

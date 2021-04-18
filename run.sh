@@ -26,7 +26,6 @@ fuser -k -n tcp 9160
 mkdir -p data/codeworld/projects
 mkdir -p data/haskell/projects
 mkdir -p data/blocklyXML/projects
-run . codeworld-server-migrate
 
 mkdir -p log
 

@@ -320,7 +320,7 @@ parseDiagnostic msg
                Text
            ) =
     (srcSpanFrom fname ln1 ln2 col1 (col2 + 1), CompileSuccess, T.unpack body)
-  | otherwise = (noSrcSpan, CompileSuccess, T.unpack msg ++ " (no loc)")
+  | otherwise = (noSrcSpan, CompileSuccess, T.unpack msg)
   where
     readT = readMaybe . T.unpack
 

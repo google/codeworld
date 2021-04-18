@@ -44,6 +44,7 @@ Library
   Build-depends:
     aeson >= 1.1,
     array,
+    async,
     base,
     base64-bytestring,
     bytestring,

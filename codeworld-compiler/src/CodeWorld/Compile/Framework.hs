@@ -32,6 +32,7 @@ module CodeWorld.Compile.Framework where
 import qualified "ghc" Config as GHC
 import Control.Applicative
 import Control.Concurrent
+import Control.Concurrent.Async
 import Control.Exception (evaluate)
 import Control.Monad
 import Control.Monad.Catch
@@ -338,12 +339,12 @@ parsePragmasIntoDynFlags ::
   GHC.StringBuffer ->
   IO (Maybe GHC.DynFlags)
 parsePragmasIntoDynFlags dflags f src =
-  GHC.handleGhcException (const $ return Nothing)
-    $ GHC.handleSourceError (const $ return Nothing)
-    $ do
-      let opts = GHC.getOptions dflags src f
-      (dflagsWithPragmas, _, _) <- GHC.parseDynamicFilePragma dflags opts
-      return $ Just dflagsWithPragmas
+  GHC.handleGhcException (const $ return Nothing) $
+    GHC.handleSourceError (const $ return Nothing) $
+      do
+        let opts = GHC.getOptions dflags src f
+        (dflagsWithPragmas, _, _) <- GHC.parseDynamicFilePragma dflags opts
+        return $ Just dflagsWithPragmas
 
 copyModuleWithTransform ::
   MonadCompile m =>
@@ -411,11 +412,14 @@ runSync dir cmd args = mask $ \restore -> do
           close_fds = True
         }
   let cleanup (e :: SomeException) = terminateProcess pid >> throwM e
-  handle cleanup $ restore $ do
-    result <- decodeUtf8 <$> B.hGetContents errh
-    hClose outh
-    exitCode <- waitForProcess pid
-    return (exitCode, result)
+  handle cleanup $
+    restore $ do
+      (resultOut, resultErr) <-
+        concurrently
+          (decodeUtf8 <$> B.hGetContents outh)
+          (decodeUtf8 <$> B.hGetContents errh)
+      exitCode <- waitForProcess pid
+      return (exitCode, resultOut <> "\n" <> resultErr)
 
 formatLocation :: SrcSpanInfo -> String
 formatLocation spn@(SrcSpanInfo (SrcSpan fn l1 c1 l2 c2) _)

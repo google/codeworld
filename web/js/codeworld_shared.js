@@ -2043,7 +2043,8 @@ function parseCompileErrors(rawErrors) {
       .join('\n');
     const re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/;
     const re2 = /^program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\): (\w+):(.*)/;
-    const reLink = /: Linking program[.]jsexe.*/;
+    const reCompile = /: \[[0-9]+ of [0-9]+\] Compiling .*/;
+    const reLink = /: Linking program[.]jsexe\b.*/;
 
     if (err.trim() === '') {
       // Ignore empty messages.
@@ -2100,7 +2101,7 @@ function parseCompileErrors(rawErrors) {
         fullText: err,
         message: (match[6] ? `${match[6].trim()}\n` : '') + otherLines,
       });
-    } else if (!reLink.test(firstLine)) {
+    } else if (!reCompile.test(firstLine) && !reLink.test(firstLine)) {
       errors.push({
         fullText: err,
         message: err,

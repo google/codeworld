@@ -388,7 +388,7 @@ function initCodeworld() {
 
           if (request.status === 400 || request.status === 200) {
             const messages = parseCompileErrors(request.responseText);
-            callback(messages);
+            callback(messages.filter((msg) => msg.from && msg.to));
           } else if (request.status === 0) {
             // Request was cancelled because of a later change.  Do nothing.
           } else {

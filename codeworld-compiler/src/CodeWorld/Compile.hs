@@ -71,8 +71,10 @@ formatDiagnostics = do
         ]
   importLocations <- gets compileImportLocations
   let badImports =
-        Set.toList $ Set.fromList $ catMaybes $
-          map (flip Map.lookup importLocations . takeFileName) remoteErrorFiles
+        Set.toList $
+          Set.fromList $
+            catMaybes $
+              map (flip Map.lookup importLocations . takeFileName) remoteErrorFiles
   let revisedDiags =
         sort $
           local
@@ -101,11 +103,12 @@ writeUtf8 f = B.writeFile f . encodeUtf8
 
 compileSource ::
   Stage -> FilePath -> (String -> IO (Maybe FilePath)) -> FilePath -> String -> Bool -> IO CompileStatus
-compileSource stage src moduleFinder err mode verbose = fromMaybe CompileAborted <$> do
-  withTimeout timeout
-    $ withSystemTempDirectory "build"
-    $ \tmpdir ->
-      compileStatus <$> execStateT build (initialState tmpdir)
+compileSource stage src moduleFinder err mode verbose =
+  fromMaybe CompileAborted <$> do
+    withTimeout timeout $
+      withSystemTempDirectory "build" $
+        \tmpdir ->
+          compileStatus <$> execStateT build (initialState tmpdir)
   where
     initialState buildDir =
       CompileState
@@ -252,8 +255,9 @@ runCompiler dir timeout args verbose =
     firstAttemptTimeout = timeout `div` 2
     attempt :: [String] -> IO (ExitCode, Text)
     attempt currentArgs = do
-      when verbose $ hPutStrLn stderr $
-        "COMMAND: ghcjs " ++ intercalate " " args
+      when verbose $
+        hPutStrLn stderr $
+          "COMMAND: ghcjs " ++ intercalate " " args
       (exitCode, result) <- runSync dir "ghcjs" args
       when verbose $ hPutStrLn stderr $ "RESULT: " ++ show exitCode
       return (exitCode, result)
@@ -261,8 +265,21 @@ runCompiler dir timeout args verbose =
 addParsedDiagnostics :: MonadCompile m => Text -> m ()
 addParsedDiagnostics output = addDiagnostics newDiags
   where
-    messages = filter (/= "") $ T.splitOn "\n\n" (T.strip output)
+    messages = splitDiagnostics output
     newDiags = [parseDiagnostic msg | msg <- messages]
+
+splitDiagnostics :: Text -> [Text]
+splitDiagnostics t = go Nothing (T.lines t)
+  where
+    go Nothing [] = []
+    go (Just msg) [] = [msg]
+    go Nothing (ln : lns)
+      | T.strip ln == "" = go Nothing lns
+      | otherwise = go (Just ln) lns
+    go (Just msg) (ln : lns)
+      | T.strip ln == "" = msg : go Nothing lns
+      | " " `T.isPrefixOf` ln = go (Just (msg <> "\n" <> ln)) lns
+      | otherwise = msg : go (Just ln) lns
 
 parseDiagnostic :: Text -> Diagnostic
 parseDiagnostic msg
@@ -312,40 +329,41 @@ srcSpanFrom fname l1 l2 c1 c2 =
   SrcSpanInfo (SrcSpan (T.unpack fname) l1 c1 l2 c2) []
 
 copyOutputFrom :: MonadCompile m => FilePath -> m ()
-copyOutputFrom target = gets compileStage >>= \stage -> case stage of
-  GenBase _ _ out syms -> liftIO $ do
-    rtsCode <- readUtf8 (target </> "rts.js")
-    libCode <- readUtf8 (target </> "lib.base.js")
-    outCode <- readUtf8 (target </> "out.base.js")
-    createDirectoryIfMissing True (takeDirectory out)
-    writeUtf8 out (rtsCode <> libCode <> outCode)
-    createDirectoryIfMissing True (takeDirectory syms)
-    copyFile (target </> "out.base.symbs") syms
-  UseBase out _ baseURL -> liftIO $ do
-    let prefix =
-          T.pack $
-            "var el = document.createElement('script');"
-              ++ "el.type = 'text/javascript';"
-              ++ "el.src = '"
-              ++ baseURL
-              ++ "';"
-              ++ "el.async = false;"
-              ++ "el.onload = function() {"
-    let suffix =
-          T.pack $
-            "window.h$mainZCZCMainzimain = h$mainZCZCMainzimain;"
-              ++ "start();"
-              ++ "start = function() {};"
-              ++ "};"
-              ++ "document.body.appendChild(el);"
-    libCode <- readUtf8 (target </> "lib.js")
-    outCode <- readUtf8 (target </> "out.js")
-    createDirectoryIfMissing True (takeDirectory out)
-    writeUtf8 out (prefix <> libCode <> outCode <> suffix)
-  FullBuild out -> liftIO $ do
-    rtsCode <- readUtf8 (target </> "rts.js")
-    libCode <- readUtf8 (target </> "lib.js")
-    outCode <- readUtf8 (target </> "out.js")
-    createDirectoryIfMissing True (takeDirectory out)
-    writeUtf8 out (rtsCode <> libCode <> outCode)
-  ErrorCheck -> return ()
+copyOutputFrom target =
+  gets compileStage >>= \stage -> case stage of
+    GenBase _ _ out syms -> liftIO $ do
+      rtsCode <- readUtf8 (target </> "rts.js")
+      libCode <- readUtf8 (target </> "lib.base.js")
+      outCode <- readUtf8 (target </> "out.base.js")
+      createDirectoryIfMissing True (takeDirectory out)
+      writeUtf8 out (rtsCode <> libCode <> outCode)
+      createDirectoryIfMissing True (takeDirectory syms)
+      copyFile (target </> "out.base.symbs") syms
+    UseBase out _ baseURL -> liftIO $ do
+      let prefix =
+            T.pack $
+              "var el = document.createElement('script');"
+                ++ "el.type = 'text/javascript';"
+                ++ "el.src = '"
+                ++ baseURL
+                ++ "';"
+                ++ "el.async = false;"
+                ++ "el.onload = function() {"
+      let suffix =
+            T.pack $
+              "window.h$mainZCZCMainzimain = h$mainZCZCMainzimain;"
+                ++ "start();"
+                ++ "start = function() {};"
+                ++ "};"
+                ++ "document.body.appendChild(el);"
+      libCode <- readUtf8 (target </> "lib.js")
+      outCode <- readUtf8 (target </> "out.js")
+      createDirectoryIfMissing True (takeDirectory out)
+      writeUtf8 out (prefix <> libCode <> outCode <> suffix)
+    FullBuild out -> liftIO $ do
+      rtsCode <- readUtf8 (target </> "rts.js")
+      libCode <- readUtf8 (target </> "lib.js")
+      outCode <- readUtf8 (target </> "out.js")
+      createDirectoryIfMissing True (takeDirectory out)
+      writeUtf8 out (rtsCode <> libCode <> outCode)
+    ErrorCheck -> return ()

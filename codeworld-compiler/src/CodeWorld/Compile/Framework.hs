@@ -353,7 +353,7 @@ copyModuleWithTransform ::
   m (Maybe FilePath)
 copyModuleWithTransform f transform = do
   src <- liftIO $ decodeUtf8 <$> B.readFile f
-  let commentsAndPragmas = filter (=~ ("\\s*{-.*-}\\s*" :: Text)) (T.lines src)
+  let savedPragmas = concatMap pragmasToSave (T.lines src)
   parseResult <- ghcParseCode [] src
   case parseResult of
     GHCNoParse -> return Nothing
@@ -361,10 +361,17 @@ copyModuleWithTransform f transform = do
       buildDir <- gets compileBuildDir
       liftIO $ do
         (out, h) <- openTempFile buildDir "imported.hs"
-        T.hPutStrLn h (T.unlines commentsAndPragmas)
+        T.hPutStrLn h (T.unlines savedPragmas)
         GHC.printForUser fakeDynFlags h GHC.neverQualify $ GHC.ppr (transform mod)
         hClose h
         return (Just out)
+  where
+    pragmasToSave :: Text -> [Text]
+    pragmasToSave ln =
+      [ decl :: Text
+        | [decl, name] <- ln =~ ("{-#[ \\t]+([A-Z]+)\\b.*#-}" :: Text),
+          not (name `elem` ["INLINE", "RULES"])
+      ]
 
 addDiagnostics :: MonadCompile m => [Diagnostic] -> m ()
 addDiagnostics diags = modify $ \state ->

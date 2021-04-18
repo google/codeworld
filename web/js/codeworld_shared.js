@@ -2043,6 +2043,7 @@ function parseCompileErrors(rawErrors) {
       .join('\n');
     const re1 = /^program\.hs:(\d+):((\d+)-?(\d+)?): (\w+):(.*)/;
     const re2 = /^program\.hs:\((\d+),(\d+)\)-\((\d+),(\d+)\): (\w+):(.*)/;
+    const reLink = /: Linking program[.]jsexe.*/;
 
     if (err.trim() === '') {
       // Ignore empty messages.
@@ -2099,8 +2100,11 @@ function parseCompileErrors(rawErrors) {
         fullText: err,
         message: (match[6] ? `${match[6].trim()}\n` : '') + otherLines,
       });
-    } else {
-      console.log('Can not parse error header:', firstLine);
+    } else if (!reLink.test(firstLine)) {
+      errors.push({
+        fullText: err,
+        message: err,
+      });
     }
   });
   return errors;

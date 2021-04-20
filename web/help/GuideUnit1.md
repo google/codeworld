@@ -47,26 +47,24 @@ Here's the code you just wrote and what its parts mean.
     | My program | is  | a drawing of | the CodeWorld logo. |     |
 
 * `program` is the **variable** that you're defining. A variable is a name for
-  something.  In most math, variables are just one letter long, and they stand
-  for numbers.  In CodeWorld, though, variables can name many different types of
+  something.  Usually in math, variables are just one letter long and stand for
+  numbers.  In CodeWorld, though, variables can name many different types of
   values: numbers, pictures, colors, text, and even whole programs.  Because
-  you will use so many of them, you can name variables with whole words,
-  always starting with a *lower-case* letter.
+  you will use so many of them, you can name variables with whole words. 
+  There are some rules for naming variables. Most importantly, they must start
+  with a *lower-case* letter and cannot contain spaces.
 
 !!! collapsible: Camel case
-    Sometimes, you may want more than one word to name a variable!  The
-    computer needs each variable to be a single word starting with a lower-case
-    letter--so leave out the spaces.  To make it easier to tell when a new word
-    starts, you can capitalize the *second* and *later* words.
+    Sometimes, you may want more than one word to name a variable!  Since variables cannot have spaces, you should leave them out and just run words together.  To make it easier to tell when a new word starts, you can capitalize the *second* and *later* words.
 
     ![](camel.png width="30%")
 
-    In your first programs, `drawingOf` and `codeWorldLogo` were written in
+    In your first program, `drawingOf` and `codeWorldLogo` were written in
     this way.  It's often called **camel case**.  Why?  Because the variable
     name has humps!
 
-* The **equal sign** means "is" and tells the computer that two expressions mean
-  the same thing.  It is used to connect a variable with its definition.
+* The **equal sign** means "is" and tells the computer that the two expressions mean the
+  same thing. It is used to connect a variable with its definition.
 
 * `drawingOf` is called a **function**.  You'll use functions a lot, and you'll
   learn more about them later!  This particular function, `drawingOf`, tells the
@@ -84,14 +82,15 @@ Building a nametag
 Of course, you can do a lot more in CodeWorld than just look at the CodeWorld
 logo!  Next, you can build a digital nametag for yourself.  To do this,
 you'll start by telling your computer that your program should be a drawing
-of a nametag.
+of a nametag. Type (or just click on) this code:
 
 ~~~~~ . clickable
 program = drawingOf(nametag)
 ~~~~~
 
-**This program doesn't work!**  If you've typed everything correctly, you should
-see an error message: `Variable not in scope: nametag :: Picture`.
+**This program doesn't work!**  When you click the **Run** button, you should
+see an error indicator on the left. Mousing over the indictaor you will see
+the message: `Variable not in scope: nametag :: Picture`.
 This is your computer telling you that it doesn't know what `nametag` means!
 
 !!! Tip: Run your program often!
@@ -128,7 +127,7 @@ Next, you can add a border to your nametag.  You might be tempted to add
 a new line like `nametag = ...` to your code, but you can't! Remember,
 your code is like a dictionary, and each definition in it should give
 the whole definition for that word.  To include a second shape in your
-nametag, you'll use **`&`**, which you can read as "and" or "in front
+nametag, you'll use an *operator*, **`&`**, which you can read as "and" or "in front
 of". To describe the border itself, two more functions -- **`circle`**
 and **`rectangle`** -- are useful.
 
@@ -186,151 +185,45 @@ Try these examples to learn more:
     the computer will be confused and think you're defining a new
     variable.  This can cause a `Parse error` message.
 
-Once you've understood these examples, try your own combinations as well.
+Once you've understood these examples, try changing the numbers or making other changes.
 
-Understanding mistakes
+!!! collapsible: `Exercise`
+    Use the knowledge gained so far to create this picture.
+
+     ![](nametag-exercise1-2.jpg width="30%")
+    
+
+!!! collapsible: `Exercise Solution`
+    This is one solution to the exercise.
+
+    ~~~~~ . clickable
+    program = drawingOf(nametag)
+    nametag = lettering("Diego") & rectangle(6, 2) &
+              circle(4) & circle(5) & circle(6)
+    ~~~~~
+
+
+What to do when you make a mistake
 ----------------------
 
 As you experminent with your programs, you're likely to try a few things
-that don't work.  Explore these common error messages to understand what
-went wrong.
+that don't work.  
 
-!!! collapsible: `Parse error: naked expression at top level`
-    This message means there's something in your program that doesn't look
-    like a definition.   
-    
-    If you wrote this:
+The error indicator and message on the left can help you figure out
+what and where the error is. Keep in mind, however, the error is not always
+on the same line as the indicator. This is just the point at which the computer 
+says *I no longer understand what you are doing.*  
 
-    ~~~~~
-    program = drawingOf(nametag)
-    
-    lettering("Jonas") & circle(5)
-    ~~~~~
-
-    On the second line, instead of an *equation* to define `nametag`, this
-    program just wrote an expression.  Remember that your code is a
-    glossary, and everything in it should define a word.  To correct this
-    mistake you would add `nametag =` to the beginning of the second line.
-
-    ~~~~~ . clickable
-    program = drawingOf(nametag)
-
-    nametag = lettering("Jonas") & circle(5)
-    ~~~~~
-
-!!! collapsible: `parse error (possibly incorrect indentation or mismatched brackets)`
-    This message can come from a missing *indent*.  
-    
-    For example, consider this code:
-
-    ~~~~~
-    program = drawingOf(nametag)
-
-    nametag = lettering("Emma") &
-    circle(10)
-    ~~~~~
-
-    Here, the programmer meant for `circle(10)` to be part of the
-    definition of `nametag`.  The computer doesn't understand this and
-    believes it should be a new definition, because it starts against the
-    left margin.  To fix this mistake, you would add a few spaces at the
-    beginning of the last line to indent it.
-
-    ~~~~~ . clickable
-    program = drawingOf(nametag)
-
-    nametag = lettering("Emma") & circle(10)
-    ~~~~~
-
-    This error can also tell you that you have an open parethesis -- **(** --
-    without a matching close parenthesis -- **)**.
-
-!!! collapsible: `Multiple declarations of nametag`
-    This message tells you that you defined the same word in two different
-    ways.  Sometimes this happens in human languages, and we call them
-    homonyms -- for example, "duck" could mean an animal, or it could mean
-    dodging a flying object!  Your computer, though, can't deal with this,
-    so each variable can only be defined once.
-
-    Take a look at this program:
-
-    ~~~~~
-    program = drawingOf(nametag)
-    nametag = lettering("Victor")
-    nametag = circle(10)
-    ~~~~~
-
-
-    One line says `nametag` means a picture of the text "Victor", but the
-    second line says that `nametag` instead means a circle with a radius of
-    10.  Which one is it?  You probably meant for `nametag` to include both.
-    To do that, you would write one definition for `nametag`, and use
-    **`&`** to combine the parts.  Like this:
-
-
-
-    ~~~~~ . clickable
-    program = drawingOf(nametag)
-
-    nametag = lettering("Victor") & circle(10)
-    ~~~~~
-
-!!! collapsible: `Couldn't match type Program with Picture`
-    Once you've got the hang of using **`&`** to combine pictures, you
-    might be tempted to use it everywhere! 
-    
-    For example, you might try to write this:
-
-    ~~~~~
-    program = drawingOf(nametag) & drawingOf(border)
-
-    nametag = lettering("Miriam")
-    border = circle(10)
-    ~~~~~
-
-    The problem here is that **`&`** can only combine *pictures*.  The
-    `drawingOf` function turns a picture into a *computer program*, and
-    you cannot use **`&`** to combine two different computer programs!
-
-    The solution here is to combine the pictures before using the
-    `drawingOf` function.  
-    
-    That looks like this:
-
-    ~~~~~ . clickable
-    program = drawingOf(nametag & border)
-
-    nametag = lettering("Miriam")
-    border = circle(10)
-    ~~~~~
-
-!!! collapsible: `Couldn't match type Picture with Text`
-    Just like there's a difference between a computer program and a
-    picture, there's also a difference between *text* and *pictures*.
-    
-    Consider this code:
-
-    ~~~~~
-    program = drawingOf(nametag)
-    nametag = "Haruto" & circle(10)
-    ~~~~~
-
-    The text, "Haruto", isn't a picture yet, so it cannot be combined
-    using **`&`**.  Use the `lettering` function to exchange the text
-    for a picture first, then combine it.  
-   
-    Like this:
-
-    ~~~~~ . clickable
-    program = drawingOf(nametag)
-    nametag = lettering("Haruto") & circle(10)
-    ~~~~~
+You may also see the error message on the right after clicking **Run**.
+In this case, note the error message. But, more importantly, the *line and
+column numbers*. For example, `Line 6, Column 36`. This is the exact
+point at which the computer stopped understanding.
 
 Regardless of the message, you can always click on the line and column
 number next to an error message, and get straight to the location in
-your code where the error was recognized.  (Be careful. Sometimes your
+your code where the error was recognized.  (Remember. Sometimes your
 actual mistake could be earlier!)  So just read over it and double-check
-that you've typed what you intended.
+that you've typed what you intended from that point backwards.
 
 Defining variables
 ------------------
@@ -355,9 +248,7 @@ favoriteColor = blue
 
     More on that later!
 
-Each of these lines is an **equation**, which says that two expressions are
-*equal*, or have the same value.  In math, you use equations in many
-ways, but in CodeWorld they are used specifically to *define variables*.
+Each of these is a type of **equation**, which says assign the value on the right to the name on the left. You have seen this type of equation in math, often with variables x and y. For example, in math, you might see x=10 and y=20.
 
 When you define a variable, you can use it in the rest of your code. 
 
@@ -395,7 +286,7 @@ border = circle(5)
 
 If you run the code, you might be surprised to find there is no border!
 You've told your computer what the word `border` means, but you didn't
-say you wanted one in your program!  
+say you wanted to use it in your program!  
 
 You might try this instead:
 
@@ -407,6 +298,52 @@ border = circle(5)
 
 That extra `& border` tells your computer that you actually *want* a
 border in the name tag.  Defining it isn't enough.
+
+!!! collapsible: `Exercise`
+    Use this code from the exercise in section 1.2.
+
+    ~~~~~ . clickable
+    program = drawingOf(nametag)
+    nametag = lettering("Diego") & rectangle(6, 2)  & 
+          circle(4) & circle(5) & circle(6) 
+    ~~~~~
+
+    Define the name with a variable.
+
+    By defining the name with a variable, you could create
+    multiple name tags with different names in them by 
+    simply changing the definition of the variable.
+
+    
+!!! collapsible: `Exercise Solution`
+    This is one solution to the exercise.
+
+    ~~~~~ . clickable
+    program = drawingOf(nametag)
+    nametag = lettering(name) & rectangle(6, 2) &
+              circle(4) & circle(5) & circle(6)
+    name = "Jane"
+    ~~~~~
+
+    Try changing the name variable to some other value than "Jane"
+    and re-run the program.
+
+!!! collapsible: `Exercise`
+    Modify the previous exercise so that the circles
+    are defined in a variable.
+
+    
+!!! collapsible: `Exercise Solution`
+    This is one solution to the exercise.
+
+    ~~~~~ . clickable
+    program = drawingOf(nametag)
+    nametag = lettering(name) & circles
+    name = "Jane"
+    circles = rectangle(6, 2)  & 
+            circle(4) & circle(5) & circle(6)
+    ~~~~~
+
 
 ### The `program` variable
 
@@ -427,7 +364,7 @@ doesn't know, it will look up *those* words, and so on.
 Remember: a definition only matters if the variable you're defining is
 *used*, either directly or indirectly, in the definition of `program`.
 That is, in the definition of `program`, or the definition of another
-variable that's used in the definition of program, or so on.
+variable that's used in the definition of program, and so on.
 
 !!! Tip: Warnings
     When you write code that is correct, but could be improved, you will
@@ -516,6 +453,16 @@ already knows, and there are a lot of them!  By typing the first few
 letters of the function you want, you can narrow down the list.  The type
 signatures tell you what types of information you need to provide to apply
 the function and what type you can expect to end up with.
+
+**Important**: The names of functions are *reserved*. That means you cannot use them as variable names. You would not be able to write program like this:
+
+program=drawingOf(circle)
+circle=circle(5)
+
+Wherease this would be okay:
+
+program=drawingOf(myCircle)
+myCircle=circle(5)
 
 For practice, see if you can write code using each of the following
 functions.  Start by looking up their domain and range, using Shift-Space or
@@ -660,10 +607,9 @@ Coloring
 --------
 
 The first transformation you will use is coloring.  The `colored` function
-changes the color of a picture. This function expects two arguments: the
-preimage, and a new color.  The colors of the preimage don't matter at
+changes (transforms) the color of a picture. This function expects two arguments: the preimage, and a new color.  The colors of the preimage don't matter at
 all -- only the shapes involved.  The result of the `colored` function is a new
-picture, which is just like the preimage, except for the different color.
+picture, which is just like the preimage, except for the different color. It has been transformed!
 
 ~~~~~ . clickable
 program  = drawingOf(redWheel)
@@ -796,7 +742,14 @@ the point (0, 0) -- on the coordinate plane, so you should measure your x
 and y distances from there.  As you define your own pictures, it's a good
 idea to continue this practice.
 
-For example, suppose you wanted a circle representing the sun in the top left
+To see a circle with radius 5 drawn on the corrdinate plane, use this code:
+
+    ~~~~~ . clickable
+    program = drawingOf(coordinatePlane & circle(5))
+    ~~~~~
+
+
+Suppose you wanted a circle representing the sun in the top left
 corner of the screen.  First, you could look at the *x* *axis*,
 and see that negative numbers are used to move a shape to the left.  You might
 pick -5, which is five units left on the screen.  Next, you could look at the
@@ -1353,6 +1306,34 @@ parenthesis -- and help divide up your code into logical parts.
 As you nest expressions deeper, though, it becomes more challenging to
 match up these parentheses.
 
+!!! collapsible: `Parse error: Are you missing a parenthesis?`
+    This is one prse error you may get if your parentheses 
+    do not match. The part of the error message telling you the
+    line and column numbers may help you track where the computer noticed the error.
+  
+    If you wrote this, with a missing right parenthesis after the 5,
+    you would get the error:
+
+    ~~~~~
+    program = drawingOf(colored(circle(5 & rectangle(1, 2), blue))
+    ~~~~~
+
+    Notice that often the computer does not catch it until the
+    end of the program.
+
+!!! collapsible: `Parse error on input`
+    This is another parse error you may get if your parentheses 
+    do not match. This one is often caused by a missing left
+    parenthesis.
+
+    If you wrote this, with a missing left parenthesis before the 5,
+    you would get the error:
+
+    ~~~~~
+    program = drawingOf(colored(circle 5) & rectangle(1, 2), blue))
+    ~~~~~
+
+
 A good way to start matching parentheses is to look at each pair as making
 a ring around the code inside them.  If you write the expression on paper,
 you can complete the ring by joining the edges of the parentheses.  You
@@ -1836,6 +1817,66 @@ Now run your program, and you have a coordinate plane to measure what
 points to use in your shapes.  (When you're done, just remove the
 `& coordinatePlane` to get rid of the guidelines.)
 
+!!! collapsible: Using the coordinate plane to help draw a simple butterfly.
+    Start the butterfly by first drawing the left wing.
+
+    ~~~~~ . clickable
+    program = drawingOf(butterfly & coordinatePlane)
+    butterfly = leftWing
+    leftWing = polyline([(0,0),(-1,2)])
+    ~~~~~
+
+    The corrdinate plane helps us see where we want to draw next. 
+    Extend the left wing to coordinate `(-3,4)` using,
+
+    ~~~~~ . clickable
+    program = drawingOf(butterfly & coordinatePlane)
+    butterfly = leftWing
+    leftWing = polyline([(0,0),(-1,2),(-3,4)])
+    ~~~~~
+
+    Add a few more vertices to leftWing.
+
+    ~~~~~ . clickable
+    program = drawingOf(butterfly & coordinatePlane)
+    butterfly = leftWing
+    leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3)])
+    ~~~~~
+
+    Finish off the left wing using,
+
+    ~~~~~ . clickable
+    program = drawingOf(butterfly & coordinatePlane)
+    butterfly = leftWing
+    leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),
+        (-4,-4),(-3,-4),(-1,-2),(0,0) ])
+    ~~~~~
+
+    Using a similar approach, draw the right wing and modify our
+    program as so,
+
+    ~~~~~ . clickable
+    program = drawingOf(butterfly & coordinatePlane)
+    butterfly = leftWing & rightWing
+    leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),
+        (-4,-4),(-3,-4),(-1,-2),(0,0) ])
+    rightWing = polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),
+        (4,-4),(3,-4),(1,-2),(0,0) ])
+    ~~~~~
+
+    Finally, remove the coordinate plane to see the butterfly.
+
+    ~~~~~ . clickable
+    program = drawingOf(butterfly)
+    butterfly = leftWing & rightWing
+    leftWing = polyline([(0,0),(-1,2),(-3,4),(-4,4),(-5,3),(-5,-3),
+        (-4,-4),(-3,-4),(-1,-2),(0,0) ])
+    rightWing = polyline([(0,0),(1,2),(3,4),(4,4),(5,3),(5,-3),
+        (4,-4),(3,-4),(1,-2),(0,0) ])
+    ~~~~~
+
+    Your turn. Add back in the cooridinate plane and improve the butterfly!
+
 No matter which exact kind of line, curve, or polygon you want in the end,
 it's usually easier to start with `polyline`.  That's because `polyline`
 shows you exactly where the points you've chosen are, without drawing extra
@@ -1843,7 +1884,7 @@ lines back to the starting point or curving all over the place.  Once your
 points are in the right place, it's easy to change the function to the one
 you want.
 
-You can see what your shape looks like so far by trying your code out
+You can see what your shape looks like at each step by running your code
 often.  Every new vertex or two is a great time to click that Run button
 and make sure the shape looks the way you expected.
 
@@ -1881,11 +1922,38 @@ y axis, since those are the angles in between the numbers -90 and 90.  But the
 expression `arc(270, 90, 5)` covers the angles to the left of the y axis,
 because those are the numbers between 270 and 90.
 
+To see a half circle with radius 5 drawn on the corrdinate plane, use this code:
+
+~~~~~ . clickable
+program = drawingOf(halfCircle & coordinatePlane)
+halfCircle = arc(-90,90,5)
+~~~~~
+
 Following the same pattern as most other shapes, the `thickArc` function is
 just like `arc`, except that you give it one extra number representing the
-thickness of the line to draw.  The `sector` function is sort of like the
+thickness of the line to draw.
+
+To draw half of a tire, use this code:
+
+~~~~~ . clickable
+program = drawingOf(halfTire & coordinatePlane)
+halfTire = thickArc(-90,90,5,4)
+~~~~~
+
+How is thickness applied to the arc? Notice where the curve intersects
+the x axis, it is centered around an x value of 5, but  the thickness
+extends all the way from 3 through 7.
+
+The `sector` function is sort of like the
 solid variant of `arc`, in that it draws one slice of a solid circle.  That
 looks like a piece of pie or pizza.
+
+To draw a slice of pizza, use the code:
+
+~~~~~ . clickable
+program = drawingOf(pizzaSlice & coordinatePlane)
+pizzaSlice = sector(0,45,5)
+~~~~~
 
 Transforming colors
 -------------------

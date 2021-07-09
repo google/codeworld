@@ -107,9 +107,9 @@ window.onscroll = (event) => {
           if (linkable && clickable) {
             pre.classList.add('clickable');
             $(pre).on('click', () => {
-              if (env) {
+              if (window.env) {
                 savePosition();
-                env.postMessage({ type: 'loadSample', code: text }, '*');
+                window.env.postMessage({ type: 'loadSample', code: text }, '*');
               }
             });
           }

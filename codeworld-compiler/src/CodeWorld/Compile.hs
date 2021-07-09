@@ -40,6 +40,7 @@ import Control.Monad.IO.Class
 import Control.Monad.State
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import Data.Function
 import Data.List
 import qualified Data.Map as Map
 import Data.Maybe
@@ -76,7 +77,7 @@ formatDiagnostics = do
             catMaybes $
               map (flip Map.lookup importLocations . takeFileName) remoteErrorFiles
   let revisedDiags =
-        sort $
+        sortDiagnostics $
           local
             ++ [ ( loc,
                    CompileError,
@@ -85,6 +86,9 @@ formatDiagnostics = do
                  | loc <- badImports
                ]
   return (T.intercalate "\n\n" (map formatDiagnostic revisedDiags))
+
+sortDiagnostics :: [Diagnostic] -> [Diagnostic]
+sortDiagnostics = sortBy (compare `on` loc) where loc (l, _, _) = l
 
 inMainModule :: Diagnostic -> Bool
 inMainModule (src, _, _) =

@@ -32,7 +32,6 @@ module CodeWorld.Compile.Framework where
 import qualified "ghc" Config as GHC
 import Control.Applicative
 import Control.Concurrent
-import Control.Concurrent.Async
 import Control.Exception (evaluate)
 import Control.Monad
 import Control.Monad.Catch
@@ -409,24 +408,21 @@ withTimeout micros action = do
 -- killed.
 runSync :: FilePath -> String -> [String] -> IO (ExitCode, Text)
 runSync dir cmd args = mask $ \restore -> do
-  (Nothing, Just outh, Just errh, pid) <-
+  (Nothing, Just outh, Nothing, pid) <-
     createProcess
-      (proc cmd args)
+      (shell (intercalate " " (cmd : args) ++ " 2>&1"))
         { cwd = Just dir,
           std_in = NoStream,
           std_out = CreatePipe,
-          std_err = CreatePipe,
+          std_err = NoStream,
           close_fds = True
         }
   let cleanup (e :: SomeException) = terminateProcess pid >> throwM e
   handle cleanup $
     restore $ do
-      (resultOut, resultErr) <-
-        concurrently
-          (decodeUtf8 <$> B.hGetContents outh)
-          (decodeUtf8 <$> B.hGetContents errh)
+      result <- decodeUtf8 <$> B.hGetContents outh
       exitCode <- waitForProcess pid
-      return (exitCode, resultOut <> "\n" <> resultErr)
+      return (exitCode, result)
 
 formatLocation :: SrcSpanInfo -> String
 formatLocation spn@(SrcSpanInfo (SrcSpan fn l1 c1 l2 c2) _)

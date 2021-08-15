@@ -39,6 +39,8 @@ run . ghcjs-pkg hide simple-affine-space     # Conflicts with vector-space
 run . ghcjs-pkg hide newtype                 # Replaced by newtype-generics
 run . ghcjs-pkg hide non-empty               # Conflicts with semialign
 run . ghcjs-pkg hide hgeometry-combinatorial # Conflicts with random-shuffle
+run . ghcjs-pkg hide Cabal                   # Conflicts between multiple versions
+run . ghcjs-pkg hide cabal-doctest           # Conflicts between multiple versions
 
 # Check for duplicate modules.  Fail the build if so, since that's a
 # poor user experience.

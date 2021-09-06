@@ -1,0 +1,62 @@
+# modified from https://github.com/jgm/pandoc/blob/master/.github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches:
+    - '**'
+    paths-ignore: []
+  pull_request:
+    paths-ignore: []
+
+jobs:
+  linux:
+
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        versions:
+          - ghc: '8.6.5'
+            cabal: '3.4'
+    steps:
+    - uses: actions/checkout@v2
+
+    # need to install older cabal/ghc versions from ppa repository
+
+    - name: Install recent cabal/ghc
+      uses: haskell/actions/setup@v1
+      with:
+        ghc-version: ${{ matrix.versions.ghc }}
+        cabal-version: ${{ matrix.versions.cabal }}
+
+    # declare/restore cached things
+    # caching doesn't work for scheduled runs yet
+    # https://github.com/actions/cache/issues/63
+
+    - name: Cache cabal global package db
+      id:   cabal-global
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cabal
+        key: ${{ runner.os }}-${{ matrix.versions.ghc }}-${{ matrix.versions.cabal }}-cabal-global-${{ hashFiles('cabal.project') }}
+
+    - name: Cache cabal work
+      id:   cabal-local
+      uses: actions/cache@v2
+      with:
+        path: |
+          dist-newstyle
+        key: ${{ runner.os }}-${{ matrix.versions.ghc }}-${{ matrix.versions.cabal }}-cabal-local
+
+    - name: Install dependencies
+      run: |
+        cabal update
+        cabal build all --dependencies-only --enable-tests --disable-optimization
+    - name: Build
+      run: |
+        cabal build all --enable-tests --disable-optimization 2>&1 | tee build.log
+    # - name: Test # needs GHCJS
+    #   run: |
+    #     cabal test all --disable-optimization

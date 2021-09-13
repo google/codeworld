@@ -1,0 +1,56 @@
+steps:
+  - simple_align:
+      cases: always
+      top_level_patterns: always
+      records: always
+      multi_way_if: always
+
+  # Import cleanup
+  - imports:
+      align: none
+
+      list_align: after_alias
+
+      pad_module_names: true
+
+      long_list_align: multiline
+
+      empty_list_align: inherit
+
+      list_padding: 4
+
+      separate_lists: true
+
+      space_surround: false
+
+      ghc_lib_parser: false
+
+  # Language pragmas
+  - language_pragmas:
+      style: vertical
+
+      align: false
+
+      remove_redundant: true
+
+      language_prefix: LANGUAGE
+
+  # Replace tabs by spaces. This is disabled by default.
+  # - tabs:
+  #     # Number of spaces to use for each tab. Default: 8, as specified by the
+  #     # Haskell report.
+  #     spaces: 8
+
+  # Remove trailing whitespace
+  - trailing_whitespace: {}
+
+  # Squash multiple spaces between the left and right hand sides of some
+  # elements into single spaces. Basically, this undoes the effect of
+  # simple_align but is a bit less conservative.
+  # - squash: {}
+
+columns: 80
+
+newline: native
+
+cabal: true

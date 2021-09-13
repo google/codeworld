@@ -22,10 +22,10 @@ where
 
 import CodeWorld.Account.Types
 import Crypto.BCrypt
-  ( hashPasswordUsingPolicy,
-    slowerBcryptHashingPolicy,
-    validatePassword,
-  )
+    ( hashPasswordUsingPolicy
+    , slowerBcryptHashingPolicy
+    , validatePassword
+    )
 import qualified Data.ByteString.Char8 as Char8 (pack)
 
 -- | Hashes a password using default bcrypt algorithm
@@ -37,7 +37,7 @@ hash ::
 hash (Password passwordRaw) = do
   mbPasswordHashRaw <- hashPasswordUsingPolicy slowerBcryptHashingPolicy (Char8.pack passwordRaw)
   case mbPasswordHashRaw of
-    Nothing -> error "Assertion failed"
+    Nothing              -> error "Assertion failed"
     Just passwordHashRaw -> return $ PasswordHash passwordHashRaw
 
 -- | Validates a password against a bcrypt password hash

@@ -31,28 +31,24 @@ where
 
 import qualified CodeWorld.Account.Hashing as Hashing
 import CodeWorld.Account.Types
-import Control.Monad.Trans.State.Strict
-  ( State,
-    execState,
-    modify,
-  )
+import Control.Monad.Trans.State.Strict (State, execState, modify)
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import qualified Data.Text as Text (intercalate, pack)
 import Database.SQLite.Simple
-  ( Connection,
-    NamedParam (..),
-    Only (..),
-    Query (..),
-    SQLData (..),
-    execute,
-    executeNamed,
-    execute_,
-    queryNamed,
-    query_,
-    withConnection,
-    withTransaction,
-  )
+    ( Connection
+    , NamedParam (..)
+    , Only (..)
+    , Query (..)
+    , SQLData (..)
+    , execute
+    , executeNamed
+    , execute_
+    , queryNamed
+    , query_
+    , withConnection
+    , withTransaction
+    )
 import Database.SQLite.Simple.ToField (ToField (..))
 import System.Directory (doesFileExist)
 
@@ -95,7 +91,7 @@ updateAccount store (UserId userIdRaw) mbStatus mbPasswordHash =
       (q, ps) = renderInsert "accounts" "userId" (SQLText $ Text.pack userIdRaw) params
    in case ps of
         [_] -> pure ()
-        _ -> withStore store $ \conn -> executeNamed conn q ps
+        _   -> withStore store $ \conn -> executeNamed conn q ps
 
 deleteAccount :: Store -> UserId -> IO ()
 deleteAccount store (UserId userIdRaw) =
@@ -145,8 +141,8 @@ incrementTokenId store (UserId userIdRaw) = withStore store $ \conn -> do
       params
   case result of
     [(Only tokenIdRaw)] -> return $ Just (TokenId tokenIdRaw)
-    [] -> return Nothing
-    _ -> error "Assertion failure"
+    []                  -> return Nothing
+    _                   -> error "Assertion failure"
 
 -- | Verifies that token ID is valid for active user
 verifyTokenId ::

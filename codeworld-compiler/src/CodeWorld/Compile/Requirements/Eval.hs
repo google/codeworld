@@ -40,7 +40,27 @@ import Data.Hashable
 import Data.List
 import qualified Data.Text as T
 import Data.Void
-import "ghc" HsSyn
+import "ghc" GHC.Hs
+  ( GRHS (..),
+    GRHSs (..),
+    GhcPs,
+    GhciLStmt,
+    HsBind,
+    HsBindLR (..),
+    HsExpr (HsApp, HsLet, HsPar, HsVar),
+    HsModule (..),
+    ImportDecl,
+    LHsDecl,
+    LHsExpr,
+    LMatch,
+    Match (..),
+    MatchGroup (..),
+    Sig (TypeSig),
+    pprFunBind,
+    pprPatBind,
+  )
+import "ghc" GHC.Hs.Decls
+import "ghc" GHC.Hs.Pat
 import qualified Language.Haskell.Exts as Exts
 import "ghc" Outputable
 import "ghc" SrcLoc
@@ -192,8 +212,9 @@ checkRule (AllOf rules) = do
   return (concat <$> results)
 checkRule (AnyOf rules) = do
   results <- sequence <$> mapM checkRule rules
-  return $ (<$> results) $ \errs ->
-    if any null errs then [] else ["No alternatives succeeded."]
+  return $
+    (<$> results) $ \errs ->
+      if any null errs then [] else ["No alternatives succeeded."]
 checkRule (NotThis rule) = do
   result <- checkRule rule
   case result of

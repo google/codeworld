@@ -47,7 +47,7 @@ import Data.Monoid
 import Data.Text (Text, unpack)
 import Data.Text.Encoding (decodeUtf8)
 import qualified "ghc" FastString as GHC
-import qualified "ghc" HsSyn as GHC
+import qualified "ghc" GHC.Hs as GHC
 import Language.Haskell.Exts
 import qualified "ghc" Module as GHC
 import qualified "ghc" OccName as GHC

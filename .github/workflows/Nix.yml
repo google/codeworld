@@ -1,0 +1,27 @@
+name: Nix
+
+on:
+  push:
+    branches:
+    - '**'
+    paths-ignore: []
+  pull_request:
+    paths-ignore: []
+
+jobs:
+  linux:
+
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v2
+
+    # https://github.com/marketplace/actions/install-nix
+    - name: Install Nix
+      uses: cachix/install-nix-action@v14
+      with:
+        extra_nix_config: |
+          trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+          substituters = https://hydra.iohk.io https://cache.nixos.org/
+    - run: nix-build

@@ -2,7 +2,8 @@ CodeWorld
 =========
 
 [![Build Status](https://travis-ci.org/google/codeworld.svg?branch=master)](https://travis-ci.org/google/codeworld)
-[![Build status](https://github.com/google/codeworld/actions/workflows/ci.yml/badge.svg)](https://github.com/google/codeworld/actions/workflows/ci.yml)
+[![Build status](https://github.com/google/codeworld/actions/workflows/Cabal.yml/badge.svg)](https://github.com/google/codeworld/actions/workflows/Cabal.yml)
+[![Build status](https://github.com/google/codeworld/actions/workflows/Nix.yml/badge.svg)](https://github.com/google/codeworld/actions/workflows/Nix.yml)
 
 CodeWorld is an educational environment using Haskell. It provides a simple
 mathematical model for geometric figures, animations, and interactive and

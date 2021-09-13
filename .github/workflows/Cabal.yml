@@ -1,5 +1,5 @@
 # modified from https://github.com/jgm/pandoc/blob/master/.github/workflows/ci.yml
-name: CI
+name: Cabal
 
 on:
   push:

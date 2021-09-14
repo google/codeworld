@@ -39,7 +39,7 @@ Executable codeworld-server
     fast-logger,
     filelock,
     filepath,
-    haskell-src-exts < 1.21,
+    haskell-src-exts,
     http-conduit,
     lifted-base,
     memory,

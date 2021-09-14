@@ -138,7 +138,7 @@ Library
     generics-sop,
     ghc-prim,
     ghcjs-base,
-    ghcjs-dom,
+    ghcjs-dom >=0.9,
     ghcjs-perch,
     ghcjs-prim,
     gray-code,

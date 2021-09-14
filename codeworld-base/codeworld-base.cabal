@@ -45,7 +45,7 @@ Library
                          codeworld-api,
                          ghc-prim,
                          ghcjs-base,
-                         ghcjs-dom,
+                         ghcjs-dom >=0.9,
                          mtl,
                          random,
                          random-shuffle,

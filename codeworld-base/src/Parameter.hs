@@ -44,7 +44,7 @@ import qualified CodeWorld.Parameter as CW
 import Internal.Picture
 import Internal.Text
 import Prelude
-import "base" Prelude ((.), map)
+import "base" Prelude (map, (.))
 
 -- | A drawing that depends on parameters.  The first argument is a
 -- list of parameters.  The second is a picture, which depends on the

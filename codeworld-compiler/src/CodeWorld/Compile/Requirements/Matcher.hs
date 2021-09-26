@@ -26,7 +26,8 @@ import Data.Generics
 import Data.Generics.Twins
 import Data.List
 import Data.Maybe
-import "ghc" HsSyn
+import "ghc" RdrHsSyn
+import "ghc" GHC.Hs
 import "ghc" OccName
 import "ghc" RdrName
 import "ghc" SrcLoc

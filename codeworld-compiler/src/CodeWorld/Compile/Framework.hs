@@ -56,16 +56,22 @@ import qualified "ghc" FastString as GHC
 import qualified "ghc" Fingerprint as GHC
 import qualified "ghc-boot-th" GHC.LanguageExtensions.Type as GHC
 import qualified "ghc" HeaderInfo as GHC
-import qualified "ghc" HsExtension as GHC
-import qualified "ghc" HsSyn as GHC
+import qualified "ghc" GHC.Hs.Extension as GHC
+import qualified "ghc" GHC.Hs as GHC
+import qualified "ghc" RdrHsSyn as GHC
+import qualified "ghc" TcHsSyn as GHC
 import qualified "ghc" HscTypes as GHC
 import Language.Haskell.Exts
 import qualified "ghc" Lexer as GHC
+import qualified "ghc" Fingerprint as GHC
 import qualified "ghc" Module as GHC
 import qualified "ghc" Outputable as GHC
 import qualified "ghc" Panic as GHC
 import qualified "ghc" Parser as GHC
-import qualified "ghc" Platform as GHC
+import qualified "ghc" GhcNameVersion as GHC
+import qualified "ghc" FileSettings as GHC
+import qualified "ghc" ToolSettings as GHC
+import qualified "ghc-boot" GHC.Platform as GHC
 import qualified "ghc" SrcLoc as GHC
 import qualified "ghc" StringBuffer as GHC
 import System.Directory
@@ -305,32 +311,95 @@ ghcParseCode extraExts src = do
       state = GHC.mkPState dflagsWithPragmas buffer location
   return $ case GHC.unP GHC.parseModule state of
     GHC.POk _ (GHC.L _ mod) -> GHCParsed mod
-    GHC.PFailed _ _ _ -> GHCNoParse
+    GHC.PFailed _ -> GHCNoParse
 
 fakeDynFlags :: GHC.DynFlags
 fakeDynFlags = GHC.defaultDynFlags fakeSettings fakeLlvmConfig
 
+fakePlatformMisc :: GHC.PlatformMisc
+fakePlatformMisc = GHC.PlatformMisc
+  mempty
+  mempty
+  GHC.IntegerSimple
+  False
+  False
+  False
+  mempty
+  False
+  False
+  False
+  False
+  False
+  False
+  mempty
+
+fakeToolSettings :: GHC.ToolSettings
+fakeToolSettings = GHC.ToolSettings
+  True
+  True
+  True
+  True
+  True
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  (GHC.Fingerprint (read mempty) (read mempty))
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+  mempty
+
 fakeSettings :: GHC.Settings
 fakeSettings =
   GHC.Settings
-    { GHC.sProgramName = "ghcjs",
-      GHC.sProjectVersion = GHC.cProjectVersion,
+    { GHC.sGhcNameVersion = GHC.GhcNameVersion "foo" "foo",
+      GHC.sFileSettings = GHC.FileSettings mempty mempty Nothing mempty mempty mempty,
+      GHC.sToolSettings = fakeToolSettings,
       GHC.sTargetPlatform =
         GHC.Platform
-          { GHC.platformWordSize = 8,
-            GHC.platformOS = GHC.OSUnknown,
-            GHC.platformUnregisterised = True
+          { GHC.platformWordSize = GHC.PW8,
+            GHC.platformMini = GHC.PlatformMini GHC.ArchX86_64 GHC.OSUnknown,
+            GHC.platformUnregisterised = True,
+            GHC.platformHasGnuNonexecStack = True,
+            GHC.platformIsCrossCompiling = True,
+            GHC.platformHasSubsectionsViaSymbols = True
           },
       GHC.sPlatformConstants =
         GHC.PlatformConstants
           { GHC.pc_DYNAMIC_BY_DEFAULT = False,
             GHC.pc_WORD_SIZE = 8
           },
-      GHC.sOpt_P_fingerprint = GHC.fingerprint0
+      GHC.sPlatformMisc = fakePlatformMisc
     }
 
-fakeLlvmConfig :: (GHC.LlvmTargets, GHC.LlvmPasses)
-fakeLlvmConfig = ([], [])
+fakeLlvmConfig :: GHC.LlvmConfig
+fakeLlvmConfig = GHC.LlvmConfig mempty mempty
 
 parsePragmasIntoDynFlags ::
   GHC.DynFlags ->

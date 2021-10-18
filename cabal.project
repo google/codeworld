@@ -1,13 +1,14 @@
+profiling: false
 packages:
-  codeworld-account/
-  codeworld-api/
-  codeworld-auth/
-  -- codeworld-available-pkgs/
-  codeworld-compiler/
-  codeworld-error-sanitizer/
+--  codeworld-account/
+--  codeworld-api/
+--  codeworld-auth/
+--  codeworld-available-pkgs/
+--  codeworld-compiler/
+--  codeworld-error-sanitizer/
   codeworld-game-api/
-  -- codeworld-game-server/
+--  codeworld-game-server/
   codeworld-prediction/
-  -- codeworld-server/
-  -- codeworld-base/
+--  codeworld-server/
+--  codeworld-base/
   funblocks-client/

@@ -57,7 +57,6 @@ Library
     ghc,
     ghc-boot,
     ghc-boot-th,
-    ghc-lib-parser ==8.8.*,
     hashable,
     haskell-src-exts >= 1.20,
     megaparsec >= 7.0.0 && < 8.0.0,

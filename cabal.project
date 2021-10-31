@@ -4,11 +4,11 @@ packages:
   codeworld-api/
   codeworld-auth/
   codeworld-available-pkgs/
+  codeworld-base/
   codeworld-compiler/
   codeworld-error-sanitizer/
   codeworld-game-api/
   codeworld-game-server/
   codeworld-prediction/
   codeworld-server/
-  codeworld-base/
   funblocks-client/

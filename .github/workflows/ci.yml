@@ -18,7 +18,7 @@ jobs:
       matrix:
         versions:
           - ghc: '8.6.5'
-            cabal: '3.4'
+            cabal: 'latest'
     steps:
     - uses: actions/checkout@v2
 
@@ -52,6 +52,8 @@ jobs:
 
     - name: Install dependencies
       run: |
+        sudo apt update
+        sudo apt install -y libwebkit2gtk-4.0-dev libgirepository1.0-dev
         cabal update
         cabal build all --dependencies-only --enable-tests --disable-optimization
     - name: Build

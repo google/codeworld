@@ -26,29 +26,33 @@ CodeMirror.defineMode('codeworld', (config, modeConfig) => {
     '\\\\HT|\\\\LF|\\\\VT|\\\\FF|\\\\CR|\\\\SO|\\\\SI|\\\\DLE|\\\\DC1|\\\\DC2|' +
     '\\\\DC3|\\\\DC4|\\\\NAK|\\\\SYN|\\\\ETB|\\\\CAN|\\\\EM|\\\\SUB|\\\\ESC|' +
     '\\\\FS|\\\\GS|\\\\RS|\\\\US|\\\\SP|\\\\DEL';
-  const RE_WHITESPACE = /[ \v\t\f]+/;
-  const RE_STARTMETA = /{-#/;
-  const RE_STARTCOMMENT = /{-/;
-  const RE_DASHES = /--+(?=$|[^:!#$%&*+./<=>?@\\^|~-]+)/;
-  const RE_QUAL = /[A-Z][A-Za-z_0-9']*\.(?=[A-Za-z_:!#$%&*+./<=>?@\\^|~]|-[^-])/;
-  const RE_VARID = /[a-z_][A-Za-z_0-9']*/;
-  const RE_CONID = /[A-Z][A-Za-z_0-9']*/;
-  const RE_VARSYM = /[!#$%&*+./<=>?@\\^|~-][:!#$%&*+./<=>?@\\^|~-]*/;
-  const RE_CONSYM = /:[:!#$%&*+./<=>?@\\^|~-]*/;
-  const RE_NUMBER = /[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|0[oO][0-7]+|0[xX][0-9a-fA-F]+/;
+  const RE_WHITESPACE = /[ \v\t\f]+/u;
+  const RE_STARTMETA = /\{-#/u;
+  const RE_STARTCOMMENT = /\{-/u;
+  const RE_DASHES = /--+(?=$|[^:!#$%&*+./<=>?@\\^|~-]+)/u;
+  const RE_QUAL =
+    /\p{Lu}(\p{L}|[_0-9'])*\.(?=\p{L}|[_:!#$%&*+./<=>?@\\^|~]|-[^-])/u;
+  const RE_VARID = /(\p{Ll}|_)(\p{L}|[_0-9'])*/u;
+  const RE_CONID = /\p{Lu}(\p{L}|[_0-9'])*/u;
+  const RE_VARSYM = /[!#$%&*+./<=>?@\\^|~-][:!#$%&*+./<=>?@\\^|~-]*/u;
+  const RE_CONSYM = /:[:!#$%&*+./<=>?@\\^|~-]*/u;
+  const RE_NUMBER =
+    /[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|0[oO][0-7]+|0[xX][0-9a-fA-F]+/u;
   const RE_CHAR = new RegExp(
     `'(?:[^\\\\']|\\\\[abfnrtv\\\\"']|\\\\^[A-Z@[\\\\\\]^_]|${MULTICHAR_ESCAPE_REGEX})'`
   );
   const RE_STRING = new RegExp(
     `"(?:[^\\\\"]|\\\\[abfnrtv\\\\"'&]|\\\\^[A-Z@[\\\\\\]^_]|${MULTICHAR_ESCAPE_REGEX})*"`
   );
-  const RE_OPENBRACKET = /[([{]/;
-  const RE_CLOSEBRACKET = /[)\]}]/;
-  const RE_INCOMMENT = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/;
-  const RE_ENDCOMMENT = /-}/;
-  const RE_ELECTRIC_START = /^\s*(?:[:!#$%&*+./<=>?@^|~,)\]}-]+|where\b|in\b|of\b|then\b|else\b|deriving\b)/;
-  const RE_ELECTRIC_INPUT = /^\s*(?:[:!#$%&*+./<=>?@^|~,)\]}-]+|where|in|of|then|else|deriving).?$/;
-  const RE_NEGATIVE_NUM = /^\s*[-]($|[^!#$%&*+./<=>?@\\^|~-])/;
+  const RE_OPENBRACKET = /[([{]/u;
+  const RE_CLOSEBRACKET = /[)\]}]/u;
+  const RE_INCOMMENT = /(?:[^{-]|-(?=$|[^}])|\{(?=$|[^-]))*/u;
+  const RE_ENDCOMMENT = /-\}/u;
+  const RE_ELECTRIC_START =
+    /^\s*(?:[:!#$%&*+./<=>?@^|~,)\]}-]+|where\b|in\b|of\b|then\b|else\b|deriving\b)/u;
+  const RE_ELECTRIC_INPUT =
+    /^\s*(?:[:!#$%&*+./<=>?@^|~,)\]}-]+|where|in|of|then|else|deriving).?$/u;
+  const RE_NEGATIVE_NUM = /^\s*[-]($|[^!#$%&*+./<=>?@\\^|~-])/u;
 
   // The state has the following properties:
   //

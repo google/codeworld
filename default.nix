@@ -1,6 +1,7 @@
 # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started/
 { compiler ? "ghc865",
-  # ghcjs ? "ghcjs",
+  ghcjsVersion ? "8.6.0.0.10",
+  ghcVersion ? "8.6.5",
   withCoverage ? false
 }:
   let
@@ -22,8 +23,9 @@
       ];
 
   in
-    pkgs.haskell-nix.project {
-      projectFileName = "cabal.project";
+    pkgs.haskell-nix.ghcjsProject {
+      # projectFileName = "cabal.project";
+      ghcjsVersion = "8.6.0.0.10";
       src = pkgs.haskell-nix.haskellLib.cleanGit {
         name = "codeworld";
         src = ./.;

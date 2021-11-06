@@ -1,12 +1,32 @@
+profiling: false
 packages:
   codeworld-account/
   codeworld-api/
   codeworld-auth/
+  -- codeworld-available-pkgs/
+  codeworld-base/
   codeworld-compiler/
   codeworld-error-sanitizer/
   codeworld-game-api/
   codeworld-game-server/
   codeworld-prediction/
   codeworld-server/
-  codeworld-base/
   funblocks-client/
+
+source-repository-package
+  type: git
+  location: https://github.com/peterbecich/hgeometry.git
+  tag: f898c5580c609320f0c7cc776e80f609711d19c5
+  subdir: hgeometry
+  --sha256: 0bmcb3dh1sfz6k7i30czcqqvarm1mzn55xdnimpnp19kj8v5g8nj
+
+source-repository-package
+  type: git
+  location: https://github.com/peterbecich/hgeometry.git
+  tag: f898c5580c609320f0c7cc776e80f609711d19c5
+  subdir: hgeometry-combinatorial
+  --sha256: 0bmcb3dh1sfz6k7i30czcqqvarm1mzn55xdnimpnp19kj8v5g8nj
+  
+allow-newer:
+    reflex:witherable
+  , patch:witherable

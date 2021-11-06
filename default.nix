@@ -1,6 +1,6 @@
 # https://input-output-hk.github.io/haskell.nix/tutorials/getting-started/
 { compiler ? "ghc865",
-  ghcjs ? "ghcjs",
+  # ghcjs ? "ghcjs",
   withCoverage ? false
 }:
   let
@@ -9,8 +9,19 @@
     pkgs = import
       haskellNix.sources.nixpkgs-unstable
       haskellNix.nixpkgsArgs;
+      overlays = [
+        (self: super:
+          {
+            m = self.stdenv.mkDerivation {
+              name = "m";
+              unpackPhase = "true";
+              installPhase = "mkdir -p $out";
+            };
+          }
+        )
+      ];
+
   in
-    # pkgs.pkgsCross.ghcjs.haskell-nix.project {
     pkgs.haskell-nix.project {
       projectFileName = "cabal.project";
       src = pkgs.haskell-nix.haskellLib.cleanGit {

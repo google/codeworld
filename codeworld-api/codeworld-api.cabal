@@ -65,7 +65,7 @@ Library
                        template-haskell     >= 2.8   && < 2.18,
                        text                 >= 1.2.2 && < 1.3,
                        time                 >= 1.8   && < 2.0,
-                       witherable           >= 0.3   && < 0.4
+                       witherable           >= 0.3
 
   if impl(ghcjs)
     Js-sources:        jsbits/sim_fp.js
@@ -126,7 +126,7 @@ Test-suite unit-tests
                        template-haskell     >= 2.8   && < 2.18,
                        text                 >= 1.2.2 && < 1.3,
                        time                 >= 1.8   && < 2.0,
-                       witherable           >= 0.3   && < 0.4
+                       witherable           >= 0.3
 
   if impl(ghcjs)
     Js-sources:        jsbits/sim_fp.js

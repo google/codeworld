@@ -10,6 +10,7 @@ Copyright:           (c) 2020, The CodeWorld Authors
 Bug-reports:         https://github.com/google/codeworld/issues
 
 Library
+  extra-libraries: m
   if impl(ghcjs -any)
     Build-depends:
       Boolean,

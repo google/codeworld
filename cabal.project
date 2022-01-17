@@ -10,6 +10,3 @@ packages:
   codeworld-server/
   codeworld-base/
   funblocks-client/
-
-constraints:
-  ghcjs-dom ==0.9.5.0

@@ -10,3 +10,6 @@ packages:
   codeworld-server/
   codeworld-base/
   funblocks-client/
+
+constraints:
+  haskell-src-meta ==0.8.7

@@ -47,7 +47,7 @@ Executable codeworld-server
     ormolu >= 0.1,
     process,
     regex-compat,
-    regex-tdfa,
+    regex-tdfa >= 1.3.1.0,
     SafeSemaphore,
     snap-core,
     snap-server,

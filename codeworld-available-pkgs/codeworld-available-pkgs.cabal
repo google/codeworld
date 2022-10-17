@@ -236,6 +236,7 @@ Library
     prettyprinter,
     prim-uniq,
     primitive,
+    prob,
     probability,
     profunctors,
     protolude,

@@ -16,7 +16,11 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS_GHC -Wno-name-shadowing -Wno-orphans -Wno-unticked-promoted-constructors #-}
+{-# OPTIONS_GHC -Wno-name-shadowing
+                -Wno-orphans
+                -Wno-unticked-promoted-constructors
+                -Wno-incomplete-uni-patterns
+  #-}
 
 {-
   Copyright 2020 The CodeWorld Authors. All rights reserved.
@@ -58,7 +62,6 @@ import Data.Serialize
 import Data.Serialize.Text ()
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Witherable
 import GHC.Fingerprint.Type
 import GHC.Generics
 import GHC.Stack
@@ -71,6 +74,12 @@ import System.Mem.StableName
 import System.Random
 import Text.Printf
 import Text.Read
+
+#if MIN_VERSION_witherable(0, 4, 0)
+import Witherable
+#else
+import Data.Witherable
+#endif
 
 #ifdef ghcjs_HOST_OS
 
@@ -1044,7 +1053,9 @@ data GameToken
   | PartialToken {tokenDeployHash :: Text}
   deriving (Generic)
 
+#if !MIN_VERSION_base(4,15,0)
 deriving instance Generic Fingerprint
+#endif
 
 instance Serialize Fingerprint
 

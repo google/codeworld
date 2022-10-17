@@ -21,7 +21,6 @@
 module CodeWorld.CanvasM where
 
 import Control.Monad.Reader
-import Control.Monad.Trans (MonadIO)
 import Data.Text (Text)
 
 #ifdef ghcjs_HOST_OS

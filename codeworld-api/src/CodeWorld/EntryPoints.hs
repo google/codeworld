@@ -5,7 +5,9 @@
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# OPTIONS_GHC -Wno-name-shadowing #-}
+{-# OPTIONS_GHC -Wno-name-shadowing -Wno-star-is-type #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Redundant bracket" #-}
 
 {-
   Copyright 2020 The CodeWorld Authors. All rights reserved.
@@ -103,11 +105,9 @@ redoTimeline timeline@(Timeline {..}) = case future of
   (x : xs) -> Timeline (present : past) x xs
 
 restartTimeline :: Timeline a -> Timeline a
-restartTimeline timeline@(Timeline {..})
-  | null past = timeline
-  | otherwise = Timeline [] x (xs ++ present : future)
-  where
-    x : xs = reverse past
+restartTimeline timeline@(Timeline {..}) = case reverse past of
+  [] -> timeline
+  x : xs -> Timeline [] x (xs ++ present : future)
 
 timelineLength :: Timeline a -> Int
 timelineLength (Timeline {..}) = length past + 1 + length future
@@ -236,7 +236,7 @@ xToPlaybackSpeed :: Double -> Double
 xToPlaybackSpeed x = snapSlider 0.2 [1 .. 4] $ scaleRange (-1.4, 1.4) (0, 5) x
 
 playbackSpeedToX :: Double -> Double
-playbackSpeedToX s = scaleRange (0, 5) (-1.4, 1.4) s
+playbackSpeedToX = scaleRange (0, 5) (-1.4, 1.4)
 
 zoomIncrement :: Double
 zoomIncrement = 8 ** (1 / 10)

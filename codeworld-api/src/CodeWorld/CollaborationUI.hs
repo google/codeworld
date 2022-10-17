@@ -6,7 +6,10 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
-{-# OPTIONS_GHC -Wno-unticked-promoted-constructors -Wno-name-shadowing #-}
+{-# OPTIONS_GHC -Wno-unticked-promoted-constructors
+                -Wno-name-shadowing
+                -Wno-star-is-type
+  #-}
 
 {-
   Copyright 2020 The CodeWorld Authors. All rights reserved.

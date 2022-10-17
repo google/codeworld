@@ -1,6 +1,6 @@
 {-# LANGUAGE GADTSyntax #-}
 {-# LANGUAGE KindSignatures #-}
-{-# OPTIONS_GHC -Wno-deprecations -Wno-name-shadowing #-}
+{-# OPTIONS_GHC -Wno-deprecations -Wno-name-shadowing -Wno-star-is-type #-}
 
 {-
   Copyright 2020 The CodeWorld Authors. All rights reserved.

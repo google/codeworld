@@ -46,26 +46,26 @@ Library
                        CodeWorld.Event,
                        CodeWorld.Picture,
                        Util.EmbedAsUrl
-  Build-depends:       aeson                >= 1.4.3 && < 1.5,
+  Build-depends:       aeson                >= 1.4.3 && < 2.2,
                        base                 >= 4.11  && < 5,
-                       base64-bytestring    >= 1.0   && < 1.1,
-                       bytestring           >= 0.9   && < 0.11,
+                       base64-bytestring    >= 1.0   && < 1.3,
+                       bytestring           >= 0.9   && < 0.12,
                        cereal               >= 0.5.4 && < 0.6,
                        cereal-text          >= 0.1.0 && < 0.2,
                        containers           >= 0.5.7 && < 0.7,
                        deepseq              >= 1.4   && < 1.5,
-                       dependent-sum        >= 0.4   && < 0.6.2,
-                       ghc-prim             >= 0.3.1 && < 0.8,
-                       hashable             >= 1.2.4 && < 1.4,
+                       dependent-sum        >= 0.4   && < 0.8,
+                       ghc-prim             >= 0.3.1 && < 0.10,
+                       hashable             >= 1.2.4 && < 1.5,
                        monad-loops          >= 0.3   && < 0.5,
                        mtl                  >= 2.2.1 && < 2.3,
-                       random               >= 1.1   && < 1.2,
-                       ref-tf               >= 0.4   && < 0.5,
+                       random               >= 1.1   && < 1.3,
+                       ref-tf               >= 0.4   && < 0.6,
                        reflex               >= 0.6.3 && < 0.9,
-                       template-haskell     >= 2.8   && < 2.18,
-                       text                 >= 1.2.2 && < 1.3,
+                       template-haskell     >= 2.8   && < 2.20,
+                       text                 >= 1.2.2 && < 2.1,
                        time                 >= 1.8   && < 2.0,
-                       witherable           >= 0.3   && < 0.4
+                       witherable           >= 0.3   && < 0.5
 
   if impl(ghcjs)
     Js-sources:        jsbits/sim_fp.js
@@ -107,26 +107,26 @@ Test-suite unit-tests
                        test-framework-hunit
 
   -- Copy of the build dependencies above
-  Build-depends:       aeson                >= 1.4.3 && < 1.5,
+  Build-depends:       aeson                >= 1.4.3 && < 2.2,
                        base                 >= 4.11  && < 5,
-                       base64-bytestring    >= 1.0   && < 1.1,
-                       bytestring           >= 0.9   && < 0.11,
+                       base64-bytestring    >= 1.0   && < 1.3,
+                       bytestring           >= 0.9   && < 0.12,
                        cereal               >= 0.5.4 && < 0.6,
                        cereal-text          >= 0.1.0 && < 0.2,
                        containers           >= 0.5.7 && < 0.7,
                        deepseq              >= 1.4   && < 1.5,
-                       dependent-sum        >= 0.4   && < 0.6.2,
-                       ghc-prim             >= 0.3.1 && < 0.8,
-                       hashable             >= 1.2.4 && < 1.4,
+                       dependent-sum        >= 0.4   && < 0.8,
+                       ghc-prim             >= 0.3.1 && < 0.10,
+                       hashable             >= 1.2.4 && < 1.5,
                        monad-loops          >= 0.3   && < 0.5,
                        mtl                  >= 2.2.1 && < 2.3,
-                       random               >= 1.1   && < 1.2,
-                       ref-tf               >= 0.4   && < 0.5,
+                       random               >= 1.1   && < 1.3,
+                       ref-tf               >= 0.4   && < 0.6,
                        reflex               >= 0.6.3 && < 0.9,
-                       template-haskell     >= 2.8   && < 2.18,
-                       text                 >= 1.2.2 && < 1.3,
+                       template-haskell     >= 2.8   && < 2.20,
+                       text                 >= 1.2.2 && < 2.1,
                        time                 >= 1.8   && < 2.0,
-                       witherable           >= 0.3   && < 0.4
+                       witherable           >= 0.3   && < 0.5
 
   if impl(ghcjs)
     Js-sources:        jsbits/sim_fp.js

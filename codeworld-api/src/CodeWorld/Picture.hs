@@ -23,7 +23,6 @@ module CodeWorld.Picture where
 import CodeWorld.Color
 import Control.DeepSeq
 import Data.List
-import Data.Monoid ((<>))
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import GHC.Stack
@@ -359,15 +358,10 @@ a & b = PictureAnd (getDebugSrcLoc callStack) [a, b]
 
 instance Monoid Picture where
   mempty = blank
-  mappend = (&)
   mconcat = pictures
 
-#if MIN_VERSION_base(4,11,0)
-
 instance Semigroup Picture where
-    (<>) = (&)
-
-#endif
+  (<>) = (&)
 
 -- | A coordinate plane.  Adding this to your pictures can help you measure distances
 -- more accurately.

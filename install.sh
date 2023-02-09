@@ -195,7 +195,7 @@ fi
 
 if [ ! -f $BUILD/progress/cabal-install ]; then
   run .                  ghcup install-cabal 2.4.1.0
-  run .                  cabal update --index-state='2021-03-01T13:17:43Z'
+  run .                  cabal update --index-state='2023-02-09T01:33:22Z'
 
   touch $BUILD/progress/cabal-install
 fi

@@ -185,6 +185,7 @@ Library
     math-functions,
     matrix,
     megaparsec,
+    memoize,
     memory,
     mersenne-random-pure64,
     mfsolve,

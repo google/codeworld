@@ -243,7 +243,8 @@ Library
     protolude,
     psqueues,
     quickcheck-io,
-    random,
+    -- auto doesn't build with random 1.2
+    random < 1.2,
     random-shuffle,
     reactive-banana,
     -- reanimate, (depends on chiphunk, which depends on native library)

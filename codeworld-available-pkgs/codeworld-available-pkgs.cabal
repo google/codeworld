@@ -318,7 +318,8 @@ Library
     vector-binary-instances,
     vector-builder,
     vector-space,
-    vinyl,
+    -- backprop doesn't build with vinyl 0.14
+    vinyl < 0.14,
     void,
     witherable,
     wl-pprint-annotated,

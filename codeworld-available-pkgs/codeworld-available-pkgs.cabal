@@ -173,7 +173,8 @@ Library
     keycode,
     latex,
     leancheck,
-    lens,
+    -- hgeometry doesn't build with lens 5
+    lens < 5,
     lifted-async,
     lifted-base,
     linear,

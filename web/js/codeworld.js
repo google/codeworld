@@ -334,7 +334,7 @@ function initCodeworld() {
     lineNumbers: true,
     autofocus: true,
     matchBrackets: true,
-    styleActiveLine: !WURFL || !WURFL.is_mobile,
+    styleActiveLine: !window.WURFL || !window.WURFL.is_mobile,
     showTrailingSpace: true,
     indentWithTabs: false,
     indentUnit: 2,

@@ -17,6 +17,7 @@
 import * as Alert from './utils/alert.js';
 import * as Auth from './utils/auth.js';
 import * as DirTree from './utils/directoryTree.js';
+import { partialRight } from './utils/functional.js';
 import * as Html from './utils/html.js';
 import { sendHttp } from './utils/network.js';
 
@@ -1250,75 +1251,118 @@ function loadProject(name, path, buildMode, successFunc) {
 }
 
 function share() {
+  const { hash } = window.location;
+  const { deployHash } = window;
+
+  const data = new FormData();
+  data.append('source', window.codeworldEditor.getValue());
+  data.append('mode', window.buildMode);
+
+  const messages = {
+    includeCode: 'Copy this link to share your program and code with others!',
+    noCode: 'Copy this link to share your program (but not code) with others!',
+    errorsDetected:
+      '<i>Please keep in mind that you are about to share code that contains errors. You can see what those errors are by actually running the program.</i><br><br>',
+  };
+
+  function constructMessage(message, withErrors) {
+    return `${withErrors ? messages.errorsDetected : ''}${message}`;
+  }
+
   let offerSource = true;
 
-  function go() {
+  function showDialog(hash, deployHash) {
+    const { origin } = window.location;
+
     let url;
-    let msg;
+    let message;
     let showConfirm;
     let confirmText;
+    let withErrors = false;
 
-    if (!window.deployHash) {
-      url = window.location.href;
-      msg = 'Copy this link to share your program and code with others!';
-      showConfirm = false;
-    } else if (offerSource) {
-      url = window.location.href;
-      msg = 'Copy this link to share your program and code with others!';
-      showConfirm = true;
-      confirmText = 'Share Without Code';
-    } else {
-      const a = document.createElement('a');
-      a.href = `run.html?mode=${window.buildMode}&dhash=${window.deployHash}`;
-
-      url = a.href;
-      msg = 'Copy this link to share your program (but not code) with others!';
-      showConfirm = true;
-      confirmText = 'Share With Code';
-    }
-
-    sweetAlert({
-      title: Alert.title('Share', 'mdi-share'),
-      html: msg,
-      input: 'text',
-      inputValue: url,
-      showConfirmButton: showConfirm,
-      confirmButtonText: confirmText,
-      closeOnConfirm: false,
-      showCancelButton: true,
-      cancelButtonText: 'Done',
-      animation: 'slide-from-bottom',
-    }).then((result) => {
-      if (result && result.value) {
-        offerSource = !offerSource;
-        go();
+    sendHttp('POST', 'errorCheck', data, ({ status }) => {
+      if (status === 400) {
+        withErrors = true;
       }
+
+      const constructErrorAwareMessage = partialRight(constructMessage, [
+        withErrors,
+      ]);
+
+      if (!deployHash) {
+        url = `${origin}/#${hash}`;
+        message = constructErrorAwareMessage(messages.includeCode);
+        showConfirm = false;
+      } else if (offerSource) {
+        url = `${origin}/#${hash}`;
+        message = constructErrorAwareMessage(messages.includeCode);
+        showConfirm = true;
+        confirmText = 'Share Without Code';
+      } else {
+        url = `${origin}/run.html?mode=${window.buildMode}&dhash=${deployHash}`;
+        message = constructErrorAwareMessage(messages.noCode);
+        showConfirm = true;
+        confirmText = 'Share With Code';
+      }
+
+      sweetAlert({
+        title: Alert.title('Share', 'mdi-share'),
+        html: message,
+        input: 'text',
+        inputValue: url,
+        showConfirmButton: showConfirm,
+        confirmButtonText: confirmText,
+        closeOnConfirm: false,
+        showCancelButton: true,
+        cancelButtonText: 'Done',
+        animation: 'slide-from-bottom',
+      }).then((result) => {
+        if (result && result.value) {
+          offerSource = !offerSource;
+          showDialog(hash, deployHash);
+        }
+      });
     });
   }
 
-  if (window.runningGeneration) {
-    if (!window.codeworldEditor.getDoc().isClean(window.runningGeneration)) {
-      sweetAlert({
-        type: 'warning',
-        text:
-          'You have changed your code since running the program. ' +
-          ' Rebuild so that you can share your latest code?',
-        confirmButtonText: 'Yes, Rebuild',
-        cancelButtonText: 'No, Share Old Program',
-        showConfirmButton: true,
-        showCancelButton: true,
-      }).then((result) => {
-        if (result && result.value) {
-          compile();
+  function storeCode(callback) {
+    sendHttp('POST', 'compile', data, (request) => {
+      let hash;
+      let deployHash;
+
+      if (request.status < 500) {
+        if (request.responseText.length === 23) {
+          hash = request.responseText;
+          deployHash = null;
         } else {
-          go();
+          try {
+            const obj = JSON.parse(request.responseText);
+            hash = obj.hash;
+            deployHash = obj.dhash;
+          } catch (e) {
+            hash = '';
+          }
         }
-      });
-      return;
-    }
+      }
+
+      if (!hash) {
+        sweetAlert({
+          title: Alert.title('Could not share'),
+          text: 'Sharing is currently unavailable. Please try again later.',
+          type: 'error',
+        });
+        return;
+      }
+
+      callback(hash, deployHash);
+    });
   }
 
-  go();
+  if (hash && deployHash) {
+    showDialog(hash, deployHash);
+  } else {
+    storeCode(showDialog);
+  }
 }
 
 function shareFolder_(mode) {
@@ -1966,10 +2010,8 @@ function run(hash, dhash, msg, error, generation) {
 
   if (hash) {
     window.location.hash = `#${hash}`;
-    document.getElementById('shareButton').style.display = '';
   } else {
     window.location.hash = '';
-    document.getElementById('shareButton').style.display = 'none';
   }
 
   if (dhash) {

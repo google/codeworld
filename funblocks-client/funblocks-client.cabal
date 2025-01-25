@@ -38,11 +38,11 @@ Executable funblocks-client
     Build-depends:       ghcjs-base,
                          text,
                          containers,
-                         ghcjs-dom,
+                         ghcjs-dom >= 0.9.5,
                          mtl
   else
     Build-depends:       ghcjs-base-stub,
                          text,
                          containers,
-                         ghcjs-dom,
+                         ghcjs-dom >= 0.9.5,
                          mtl

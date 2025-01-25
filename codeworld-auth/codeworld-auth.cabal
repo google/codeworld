@@ -31,7 +31,7 @@ library
                                           , directory
                                           , filepath
                                           , http-conduit
-                                          , jwt >= 0.10.0
+                                          , jwt == 0.10.*
                                           , snap-core
                                           , split
                                           , text

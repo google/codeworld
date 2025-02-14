@@ -26,7 +26,7 @@ library
                                           , bytestring
                                           , directory
                                           , hashable
-                                          , sqlite-simple
+                                          , sqlite-simple == 0.4.18.0
                                           , text
                                           , transformers
   exposed-modules:                          CodeWorld.Account

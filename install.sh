@@ -76,7 +76,7 @@ if [ ! -f $BUILD/progress/system-pkgs ]; then
     run . sudo apt-get install -y psmisc
 
     run . sudo apt-get install -y zlib1g-dev
-    run . sudo apt-get install -y libncurses5{,-dev}
+    run . sudo apt-get install -y libncurses-dev
 
     # Needed for GHC
     run . sudo apt-get install -y make
@@ -86,6 +86,13 @@ if [ ! -f $BUILD/progress/system-pkgs ]; then
 
     # Needed for GHCJS
     run . sudo apt-get install -y gnupg
+    # If there is version depreciation warning for nodejs,
+    # Feel free to ignore the below two commands and install nodejs manually in root directory
+    # Install Node 12 -> $nvm install 12.22.12
+    # Install specific npm version -> $npm install -g npm@6.14.16
+    # Verify versions
+    # $node --version     Should show v12.22.12
+    # $npm --version      Should show 6.14.16
     run --quiet . curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
     run . sudo apt-get install -y nodejs
 

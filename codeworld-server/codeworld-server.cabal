@@ -40,7 +40,7 @@ Executable codeworld-server
     filelock,
     filepath,
     haskell-src-exts < 1.21,
-    http-conduit,
+    http-conduit >= 2.3.0 && < 2.3.9,
     lifted-base,
     memory,
     mtl,

@@ -289,13 +289,9 @@ function run(xmlHash, codeHash, msg, error, dhash) {
   if (hash) {
     window.location.hash = `#${xmlHash}`;
 
-    document.getElementById('shareButton').style.display = '';
-
     $shareFolderButton.hide();
   } else {
     window.location.hash = '';
-
-    document.getElementById('shareButton').style.display = 'none';
 
     $shareFolderButton.show();
   }

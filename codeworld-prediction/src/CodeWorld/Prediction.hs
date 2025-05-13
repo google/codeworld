@@ -169,7 +169,7 @@ addEvent step rate player now mbEvent f =
     $ recordActivity step rate player now
     $ f {pending = maybe id (M.insertR (now, player)) mbEvent $ pending f}
 
--- | Updates the 'lastEvents' field, and possibly updates the commmitted state
+-- | Updates the 'lastEvents' field, and possibly updates the committed state
 recordActivity ::
   StepFun s ->
   AnimationRate ->

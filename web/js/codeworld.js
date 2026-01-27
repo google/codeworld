@@ -547,6 +547,14 @@ function initCodeworld() {
     }
     window.reparseTimeoutId = setTimeout(parseSymbolsFromCurrentCode, 1500);
 
+    const shareButton = document.getElementById('shareButton');
+
+    if (doc.getValue()) {
+      shareButton.classList.remove('cw-button--disabled');
+    } else {
+      shareButton.classList.add('cw-button--disabled');
+    }
+
     updateDocumentTitle(isEditorClean);
     updateProjectChangeMark(isEditorClean);
 
@@ -1337,7 +1345,3 @@ function downloadProject() {
     document.body.removeChild(elem);
   }
 }
-
-// TEMP: required by setCode in codeworld_shared.js
-window.compile = compile;
-window.stopRun = stopRun;

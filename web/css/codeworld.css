@@ -259,6 +259,10 @@ body {
 }
 
 .cw-button {
+  display: grid;
+  grid-auto-flow: column;
+  align-items: center;
+  justify-content: left;
   border-radius: 4px;
   cursor: pointer;
   text-align: left;
@@ -268,11 +272,16 @@ body {
   margin: 3px 3px 0px 3px;
   padding: 6px 6px 6px 6px;
   text-decoration: none;
-  display: inline-block;
   font-weight: bold;
   color: var(--cw-button-color);
   white-space: nowrap;
   overflow: hidden;
+}
+
+.cw-button.cw-button--disabled {
+  color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  pointer-events: none;
 }
 
 #toolbar .cw-button {

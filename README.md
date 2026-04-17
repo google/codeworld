@@ -1,8 +1,7 @@
 CodeWorld
 =========
 
-[![Build Status](https://travis-ci.org/google/codeworld.svg?branch=master)](https://travis-ci.org/google/codeworld)
-[![Build status](https://github.com/google/codeworld/actions/workflows/ci.yml/badge.svg)](https://github.com/google/codeworld/actions/workflows/ci.yml)
+![Build status](https://github.com/google/codeworld/actions/workflows/ci.yml/badge.svg)](https://github.com/google/codeworld/actions/workflows/ci.yml)
 
 CodeWorld is an educational environment using Haskell. It provides a simple
 mathematical model for geometric figures, animations, and interactive and
@@ -108,9 +107,7 @@ future, this should become the standard way to deploy CodeWorld.
 
 ### Stack
 
-The `stack.yaml` in the project's root is present to partially support Intero and
-[Travis CI](https://travis-ci.org/google/codeworld/).  On Travis, `codeworld-compiler`
-tests do not run.
+The `stack.yaml` in the project's root is present to partially support Intero and, in the past, [Travis CI](https://travis-ci.org/google/codeworld/).
 
 Building and running CodeWorld locally with Stack is unsupported, and in fact doesn't
 work.  Stack cannot yet substitute for the shell scripts or docker usage above.

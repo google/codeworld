@@ -301,16 +301,19 @@ shareFolderHandler = private $ \userId ctx -> do
 shareContentHandler :: CodeWorldHandler
 shareContentHandler = private $ \userId ctx -> do
   mode <- getBuildMode
-  Just shash <- getParam "shash"
+  shash <- getValidHashParam "shash"
   sharingFolder <-
     liftIO $
       B.readFile
-        (shareRootDir mode </> shareLink (ShareId $ T.decodeUtf8 shash))
+        (shareRootDir mode </> shareLink (ShareId shash))
+  folder <- case T.decodeUtf8' sharingFolder of
+    Right t | isValidShareTarget mode (T.unpack t) -> return (T.unpack t)
+    _ -> pass
   Just name <- fmap T.decodeUtf8 <$> getParam "name"
   let dirPath = dirBase $ nameToDirId name
   liftIO $ ensureUserBaseDir mode userId dirPath
   liftIO
-    $ copyDirIfExists (T.unpack (T.decodeUtf8 sharingFolder))
+    $ copyDirIfExists folder
     $ userProjectDir mode userId </> dirPath
   liftIO $
     T.writeFile
@@ -394,16 +397,19 @@ errorCheckHandler = public $ \ctx -> do
   modifyResponse $ setContentType "text/plain"
   writeBS output
 
+getValidHashParam :: B.ByteString -> Snap Text
+getValidHashParam name =
+  getParam name >>= maybe pass return . (decodeValidHashParam =<<)
+
 getHashParam :: Bool -> BuildMode -> Snap ProgramId
 getHashParam allowDeploy mode = do
   maybeHash <- getParam "hash"
   case maybeHash of
-    Just h -> return (ProgramId (T.decodeUtf8 h))
+    Just h -> maybe pass (return . ProgramId) (decodeValidHashParam h)
     Nothing
       | allowDeploy -> do
-        Just dh <- getParam "dhash"
-        let deployId = DeployId (T.decodeUtf8 dh)
-        liftIO $ resolveDeployId mode deployId
+        dh <- getValidHashParam "dhash"
+        liftIO $ resolveDeployId mode (DeployId dh)
       | otherwise -> pass
 
 loadXMLHandler :: CodeWorldHandler
@@ -438,12 +444,15 @@ runHandler = public $ \ctx -> do
 
 runBaseHandler :: CodeWorldHandler
 runBaseHandler = public $ \ctx -> do
-  maybeVer <- fmap T.decodeUtf8 <$> getParam "version"
+  maybeVer <- getParam "version"
   hasProgram <-
     (\mode hash dhash -> mode && (hash || dhash))
       <$> hasParam "mode" <*> hasParam "hash" <*> hasParam "dhash"
   case maybeVer of
-    Just ver -> serveFile (baseCodeFile ver)
+    Just verBS ->
+      case decodeValidHashParam verBS of
+        Just ver -> serveFile (baseCodeFile ver)
+        Nothing -> pass
     Nothing | hasProgram -> do
       mode <- getBuildMode
       programId <- getHashParam True mode
@@ -489,10 +498,15 @@ indentHandler = public $ \ctx -> do
 galleryHandler :: CodeWorldHandler
 galleryHandler = public $ const $ do
   mode <- getBuildMode
-  Just shareHash <- getParam "shareHash"
-  let shareId = ShareId (T.decodeUtf8 shareHash)
+  shareHash <- getValidHashParam "shareHash"
+  let shareId = ShareId shareHash
+  sharingFolder <-
+    liftIO $
+      B.readFile (shareRootDir mode </> shareLink shareId)
+  folder <- case T.decodeUtf8' sharingFolder of
+    Right t | isValidShareTarget mode (T.unpack t) -> return (T.unpack t)
+    _ -> pass
   gallery <- liftIO $ do
-    folder <- T.unpack . T.decodeUtf8 <$> B.readFile (shareRootDir mode </> shareLink shareId)
     files <- sort <$> projectFileNames folder
     Gallery <$> mapM (galleryItemFromProject mode folder) files
   writeLBS $ encode gallery

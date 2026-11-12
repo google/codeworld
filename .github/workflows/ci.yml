@@ -20,12 +20,12 @@ jobs:
           - ghc: '8.6.5'
             cabal: '3.4'
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v7
 
     # need to install older cabal/ghc versions from ppa repository
 
     - name: Install recent cabal/ghc
-      uses: haskell/actions/setup@v1
+      uses: haskell-actions/setup@v2
       with:
         ghc-version: ${{ matrix.versions.ghc }}
         cabal-version: ${{ matrix.versions.cabal }}
@@ -36,7 +36,7 @@ jobs:
 
     - name: Cache cabal global package db
       id:   cabal-global
-      uses: actions/cache@v2
+      uses: actions/cache@v6
       with:
         path: |
           ~/.cabal
@@ -44,7 +44,7 @@ jobs:
 
     - name: Cache cabal work
       id:   cabal-local
-      uses: actions/cache@v2
+      uses: actions/cache@v6
       with:
         path: |
           dist-newstyle

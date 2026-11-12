@@ -9,10 +9,14 @@ on:
   pull_request:
     paths-ignore: []
 
+permissions: {}
+
 jobs:
   linux:
 
     runs-on: 'ubuntu-24.04'
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -20,12 +24,12 @@ jobs:
           - ghc: '8.6.5'
             cabal: '3.4'
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
     # need to install older cabal/ghc versions from ppa repository
 
     - name: Install recent cabal/ghc
-      uses: haskell-actions/setup@v2
+      uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2.12.1
       with:
         ghc-version: ${{ matrix.versions.ghc }}
         cabal-version: ${{ matrix.versions.cabal }}
@@ -36,7 +40,7 @@ jobs:
 
     - name: Cache cabal global package db
       id:   cabal-global
-      uses: actions/cache@v6
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: |
           ~/.cabal
@@ -44,7 +48,7 @@ jobs:
 
     - name: Cache cabal work
       id:   cabal-local
-      uses: actions/cache@v6
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: |
           dist-newstyle

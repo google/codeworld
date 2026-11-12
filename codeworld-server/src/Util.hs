@@ -28,7 +28,8 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Lazy as LB
-import Data.List (sort, sortOn)
+import Data.Char (isAlphaNum, isAscii)
+import Data.List (isPrefixOf, sort, sortOn)
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -69,6 +70,36 @@ newtype ShareId = ShareId
   deriving (Eq)
 
 type BaseVersion = Text
+
+-- | Validates that a hash or version identifier consists of non-empty ASCII
+-- base64url-style characters ([A-Za-z0-9_-]) within the expected length bound.
+isValidHashParam :: Text -> Bool
+isValidHashParam t =
+  not (T.null t)
+    && T.length t <= 128
+    && T.all isValidChar t
+  where
+    isValidChar c = isAscii c && (isAlphaNum c || c == '_' || c == '-')
+
+-- | Decodes a UTF-8 byte string and validates it with 'isValidHashParam'.
+decodeValidHashParam :: ByteString -> Maybe Text
+decodeValidHashParam bs =
+  case T.decodeUtf8' bs of
+    Right t | isValidHashParam t -> Just t
+    _ -> Nothing
+
+-- | Validates that a directory path from a share link is a relative path
+-- inside projectRootDir for the given BuildMode.
+isValidShareTarget :: BuildMode -> FilePath -> Bool
+isValidShareTarget mode path =
+  isRelative path
+    && ".." `notElem` comps
+    && "." `notElem` comps
+    && rootComps `isPrefixOf` comps
+    && length comps > length rootComps
+  where
+    comps = splitDirectories path
+    rootComps = splitDirectories (projectRootDir mode)
 
 autocompletePath :: FilePath
 autocompletePath = "web/codeworld-base.txt"
@@ -288,7 +319,13 @@ writeDeployLink mode deployId (ProgramId p) = do
     f = deployRootDir mode </> deployLink deployId
 
 resolveDeployId :: BuildMode -> DeployId -> IO ProgramId
-resolveDeployId mode deployId = ProgramId . T.decodeUtf8 <$> B.readFile f
+resolveDeployId mode deployId = do
+  unless (isValidHashParam (unDeployId deployId)) $
+    ioError (userError "Invalid deploy ID")
+  bs <- B.readFile f
+  case decodeValidHashParam bs of
+    Just p -> return (ProgramId p)
+    Nothing -> ioError (userError "Invalid program ID in deploy link")
   where
     f = deployRootDir mode </> deployLink deployId
 
